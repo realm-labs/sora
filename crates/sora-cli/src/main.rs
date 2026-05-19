@@ -2,7 +2,7 @@ use std::path::PathBuf;
 
 use anyhow::{Context, Result, bail};
 use clap::{Args, Parser, Subcommand};
-use sora_core::{CodegenTarget, ExportOutput, OutputKind};
+use sora_core::{CodegenTarget, ExportOutput, OutputKind, TomlProjectInput, TomlSchemaInput};
 
 #[derive(Debug, Parser)]
 #[command(name = "sora")]
@@ -73,7 +73,8 @@ fn main() -> Result<()> {
 
     match cli.command {
         Command::Check(args) => {
-            sora_core::check_schema(&args.schema)
+            let input = TomlSchemaInput::new(&args.schema);
+            sora_core::check_schema(&input)
                 .with_context(|| format!("failed to check schema `{}`", args.schema.display()))?;
         }
         Command::Gen { target } => match target {
@@ -82,7 +83,8 @@ fn main() -> Result<()> {
         },
         Command::Export(args) => export(args)?,
         Command::ExcelTemplate(args) => {
-            sora_core::generate_excel_template(&args.schema, &args.out).with_context(|| {
+            let input = TomlSchemaInput::new(&args.schema);
+            sora_core::generate_excel_template(&input, &args.out).with_context(|| {
                 format!(
                     "failed to generate Excel templates from `{}`",
                     args.schema.display()
@@ -95,7 +97,8 @@ fn main() -> Result<()> {
 }
 
 fn generate(args: GenArgs, target: CodegenTarget) -> Result<()> {
-    sora_core::generate_code(&args.schema, target, &args.out).with_context(|| {
+    let input = TomlSchemaInput::new(&args.schema);
+    sora_core::generate_code(&input, target, &args.out).with_context(|| {
         format!(
             "failed to generate code from `{}` into `{}`",
             args.schema.display(),
@@ -117,7 +120,8 @@ fn export(args: ExportArgs) -> Result<()> {
         }
     };
 
-    sora_core::export_data(&args.schema, &args.data_root, &args.format, output).with_context(|| {
+    let input = TomlProjectInput::new(&args.schema, &args.data_root);
+    sora_core::export_data(&input, &args.format, output).with_context(|| {
         format!(
             "failed to export `{}` data from `{}`",
             args.format,

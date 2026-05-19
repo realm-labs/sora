@@ -4,34 +4,39 @@ use std::{
     time::{SystemTime, UNIX_EPOCH},
 };
 
-use sora_core::{CodegenTarget, ExportOutput};
+use sora_core::{CodegenTarget, ExportOutput, TomlProjectInput, TomlSchemaInput};
 
 #[test]
 fn simple_example_pipeline_generates_all_artifacts() {
     let root = workspace_root();
     let schema = root.join("examples/simple/schema.toml");
     let data_root = root.join("examples/simple/data");
+    let schema_input = TomlSchemaInput::new(&schema);
+    let project_input = TomlProjectInput::new(&schema, &data_root);
     let out_dir = temp_dir();
 
-    sora_core::check_schema(&schema).unwrap();
+    sora_core::check_schema(&schema_input).unwrap();
 
-    sora_core::generate_code(&schema, CodegenTarget::Rust, &out_dir.join("rust")).unwrap();
-    sora_core::generate_code(&schema, CodegenTarget::Kotlin, &out_dir.join("kotlin")).unwrap();
+    sora_core::generate_code(&schema_input, CodegenTarget::Rust, &out_dir.join("rust")).unwrap();
+    sora_core::generate_code(
+        &schema_input,
+        CodegenTarget::Kotlin,
+        &out_dir.join("kotlin"),
+    )
+    .unwrap();
     sora_core::export_data(
-        &schema,
-        &data_root,
+        &project_input,
         "binary",
         ExportOutput::File(out_dir.join("config.sora")),
     )
     .unwrap();
     sora_core::export_data(
-        &schema,
-        &data_root,
+        &project_input,
         "json-debug",
         ExportOutput::Directory(out_dir.join("debug-json")),
     )
     .unwrap();
-    sora_core::generate_excel_template(&schema, &out_dir.join("excel")).unwrap();
+    sora_core::generate_excel_template(&schema_input, &out_dir.join("excel")).unwrap();
 
     assert!(
         fs::read_to_string(out_dir.join("rust/item.rs"))

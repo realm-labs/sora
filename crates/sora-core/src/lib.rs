@@ -7,27 +7,28 @@ use sora_excel::ExcelTemplateGenerator;
 pub use sora_export::ExportOutput;
 pub use sora_export::OutputKind;
 use sora_export::{ExportRequest, ExporterRegistry};
+pub use sora_input::{
+    DataInput, LoadedInput, ProjectInput, SchemaInput, TomlProjectInput, TomlSchemaInput,
+};
 use sora_ir::{ConfigIr, normalize_schema};
-use sora_schema::load_schema_file;
 
-pub fn check_schema(schema_path: &Path) -> Result<()> {
-    let _ = load_ir(schema_path)?;
+pub fn check_schema(input: &impl SchemaInput) -> Result<()> {
+    let _ = load_ir(input)?;
     Ok(())
 }
 
-pub fn generate_code(schema_path: &Path, target: CodegenTarget, out_dir: &Path) -> Result<()> {
-    let ir = load_ir(schema_path)?;
+pub fn generate_code(
+    input: &impl SchemaInput,
+    target: CodegenTarget,
+    out_dir: &Path,
+) -> Result<()> {
+    let ir = load_ir(input)?;
     generator_for_target(target).generate(&ir, out_dir)
 }
 
-pub fn export_data(
-    schema_path: &Path,
-    data_root: &Path,
-    format: &str,
-    output: ExportOutput,
-) -> Result<()> {
-    let ir = load_ir(schema_path)?;
-    let data = sora_data::load_config_data(&ir, data_root)?;
+pub fn export_data(input: &impl ProjectInput, format: &str, output: ExportOutput) -> Result<()> {
+    let ir = load_ir(input)?;
+    let data = input.load_data(&ir)?;
     sora_data::validate_config_data(&ir, &data)?;
 
     let registry = ExporterRegistry::with_builtin_exporters();
@@ -45,8 +46,8 @@ pub fn export_data(
     })
 }
 
-pub fn generate_excel_template(schema_path: &Path, out_dir: &Path) -> Result<()> {
-    let ir = load_ir(schema_path)?;
+pub fn generate_excel_template(input: &impl SchemaInput, out_dir: &Path) -> Result<()> {
+    let ir = load_ir(input)?;
     ExcelTemplateGenerator.generate(&ir, out_dir)
 }
 
@@ -60,14 +61,17 @@ pub fn export_output_kind(format: &str) -> Option<OutputKind> {
         .map(|exporter| exporter.output_kind())
 }
 
-fn load_ir(schema_path: &Path) -> Result<ConfigIr> {
-    normalize_schema(load_schema_file(schema_path)?)
+fn load_ir(input: &impl SchemaInput) -> Result<ConfigIr> {
+    normalize_schema(input.load_schema()?)
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use sora_data::{ConfigData, RowData, TableData, Value};
+    use sora_schema::SchemaFile;
     use std::{
+        collections::BTreeMap,
         fs,
         sync::atomic::{AtomicU64, Ordering},
     };
@@ -78,11 +82,12 @@ mod tests {
     fn checks_schema_and_generates_outputs() {
         let base = temp_dir();
         let schema_path = write_example(&base);
+        let input = TomlSchemaInput::new(&schema_path);
 
-        check_schema(&schema_path).unwrap();
-        generate_code(&schema_path, CodegenTarget::Rust, &base.join("rust")).unwrap();
-        generate_code(&schema_path, CodegenTarget::Kotlin, &base.join("kotlin")).unwrap();
-        generate_excel_template(&schema_path, &base.join("excel")).unwrap();
+        check_schema(&input).unwrap();
+        generate_code(&input, CodegenTarget::Rust, &base.join("rust")).unwrap();
+        generate_code(&input, CodegenTarget::Kotlin, &base.join("kotlin")).unwrap();
+        generate_excel_template(&input, &base.join("excel")).unwrap();
 
         assert!(base.join("rust/item.rs").exists());
         assert!(base.join("kotlin/Item.kt").exists());
@@ -95,17 +100,16 @@ mod tests {
     fn exports_data_through_registry() {
         let base = temp_dir();
         let schema_path = write_example(&base);
+        let input = TomlProjectInput::new(&schema_path, base.join("data"));
 
         export_data(
-            &schema_path,
-            &base.join("data"),
+            &input,
             "binary",
             ExportOutput::File(base.join("config.sora")),
         )
         .unwrap();
         export_data(
-            &schema_path,
-            &base.join("data"),
+            &input,
             "json-debug",
             ExportOutput::Directory(base.join("debug-json")),
         )
@@ -121,19 +125,37 @@ mod tests {
     fn reports_unknown_export_format() {
         let base = temp_dir();
         let schema_path = write_example(&base);
+        let input = TomlProjectInput::new(&schema_path, base.join("data"));
 
-        let error = export_data(
-            &schema_path,
-            &base.join("data"),
-            "nope",
-            ExportOutput::File(base.join("out.bin")),
-        )
-        .unwrap_err();
+        let error =
+            export_data(&input, "nope", ExportOutput::File(base.join("out.bin"))).unwrap_err();
 
         assert!(matches!(
             error,
             SoraError::UnknownExportFormat { format, .. } if format == "nope"
         ));
+
+        let _ = fs::remove_dir_all(base);
+    }
+
+    #[test]
+    fn accepts_loaded_input_adapter() {
+        let base = temp_dir();
+        let input = LoadedInput::with_data(example_schema(), example_data());
+
+        check_schema(&input).unwrap();
+        generate_code(&input, CodegenTarget::Rust, &base.join("rust")).unwrap();
+        export_data(
+            &input,
+            "json-debug",
+            ExportOutput::Directory(base.join("debug-json")),
+        )
+        .unwrap();
+        generate_excel_template(&input, &base.join("excel")).unwrap();
+
+        assert!(base.join("rust/item.rs").exists());
+        assert!(base.join("debug-json/Item.json").exists());
+        assert!(base.join("excel/Item.xlsx").exists());
 
         let _ = fs::remove_dir_all(base);
     }
@@ -201,5 +223,65 @@ max_stack = 1
     fn temp_dir() -> std::path::PathBuf {
         let unique = TEMP_COUNTER.fetch_add(1, Ordering::Relaxed);
         std::env::temp_dir().join(format!("sora-core-test-{unique}"))
+    }
+
+    fn example_schema() -> SchemaFile {
+        toml::from_str(
+            r#"
+package = "game_config"
+
+[[enums]]
+name = "ItemType"
+values = ["Weapon", "Armor", "Material", "Consumable"]
+
+[[tables]]
+name = "Item"
+mode = "map"
+key = "id"
+source = "items.toml"
+
+[[tables.fields]]
+name = "id"
+type = "i32"
+key = true
+required = true
+comment = "Item id"
+
+[[tables.fields]]
+name = "name"
+type = "string"
+required = true
+comment = "Display name"
+
+[[tables.fields]]
+name = "item_type"
+type = "enum<ItemType>"
+required = true
+comment = "Item type"
+
+[[tables.fields]]
+name = "max_stack"
+type = "i32"
+required = true
+comment = "Max stack count"
+"#,
+        )
+        .unwrap()
+    }
+
+    fn example_data() -> ConfigData {
+        ConfigData {
+            tables: vec![TableData {
+                name: "Item".to_owned(),
+                rows: vec![RowData {
+                    values: BTreeMap::from([
+                        ("id".to_owned(), Value::Integer(1001)),
+                        ("name".to_owned(), Value::String("Iron Sword".to_owned())),
+                        ("item_type".to_owned(), Value::String("Weapon".to_owned())),
+                        ("max_stack".to_owned(), Value::Integer(1)),
+                    ]),
+                }],
+            }],
+        }
     }
 }

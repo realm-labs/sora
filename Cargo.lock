@@ -342,6 +342,7 @@ dependencies = [
  "sora-diagnostics",
  "sora-excel",
  "sora-export",
+ "sora-input",
  "sora-ir",
  "sora-schema",
  "toml",
@@ -389,6 +390,16 @@ dependencies = [
  "sora-ir",
  "sora-schema",
  "toml",
+]
+
+[[package]]
+name = "sora-input"
+version = "0.1.0"
+dependencies = [
+ "sora-data",
+ "sora-diagnostics",
+ "sora-ir",
+ "sora-schema",
 ]
 
 [[package]]

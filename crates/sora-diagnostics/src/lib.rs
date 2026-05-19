@@ -87,6 +87,9 @@ pub enum SoraError {
 
     #[error("table `{table}` does not declare a data source")]
     MissingTableSource { table: String },
+
+    #[error("input source does not provide data")]
+    MissingInputData,
 }
 
 pub type Result<T> = std::result::Result<T, SoraError>;

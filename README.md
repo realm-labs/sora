@@ -49,6 +49,7 @@ cargo run -p sora-cli -- excel-template \
 
 - `sora-cli`: command-line interface.
 - `sora-core`: pipeline orchestration.
+- `sora-input`: input adapter traits and built-in TOML adapters.
 - `sora-schema`: TOML schema loading.
 - `sora-ir`: normalized schema IR and type parsing.
 - `sora-data`: data IR, TOML data loading, and validation.
@@ -61,6 +62,10 @@ cargo run -p sora-cli -- excel-template \
 ## Schema Format
 
 Schemas are TOML files that define packages, enums, structs, tables, fields, keys, comments, source files, and future aggregation metadata. Field type strings are normalized into IR types such as `i32`, `string`, `enum<ItemType>`, `list<i32>`, `array<i32,3>`, `ref<Item.id>`, and `optional<string>`.
+
+## Input Architecture
+
+Sora core consumes input through `SchemaInput` and `DataInput` traits. TOML is the first built-in adapter, not a core assumption. Future adapters, such as a Luban compatibility importer, should translate their source format into `SchemaFile` and `ConfigData` before entering the normal IR, validation, codegen, and exporter pipeline.
 
 ## Data Format
 

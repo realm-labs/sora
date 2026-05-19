@@ -1,18 +1,11 @@
 [package]
-name = "sora-core"
+name = "sora-input"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
 
 [dependencies]
-sora-codegen = { path = "../sora-codegen" }
 sora-data = { path = "../sora-data" }
 sora-diagnostics = { path = "../sora-diagnostics" }
-sora-excel = { path = "../sora-excel" }
-sora-export = { path = "../sora-export" }
-sora-input = { path = "../sora-input" }
 sora-ir = { path = "../sora-ir" }
 sora-schema = { path = "../sora-schema" }
-
-[dev-dependencies]
-toml.workspace = true
