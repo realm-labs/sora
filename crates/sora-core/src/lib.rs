@@ -5,6 +5,7 @@ use sora_codegen::generator_for_target;
 use sora_diagnostics::{Result, SoraError};
 use sora_excel::ExcelTemplateGenerator;
 pub use sora_export::ExportOutput;
+pub use sora_export::OutputKind;
 use sora_export::{ExportRequest, ExporterRegistry};
 use sora_ir::{ConfigIr, normalize_schema};
 use sora_schema::load_schema_file;
@@ -51,6 +52,12 @@ pub fn generate_excel_template(schema_path: &Path, out_dir: &Path) -> Result<()>
 
 pub fn supported_export_formats() -> Vec<&'static str> {
     ExporterRegistry::with_builtin_exporters().supported_formats()
+}
+
+pub fn export_output_kind(format: &str) -> Option<OutputKind> {
+    ExporterRegistry::with_builtin_exporters()
+        .get(format)
+        .map(|exporter| exporter.output_kind())
 }
 
 fn load_ir(schema_path: &Path) -> Result<ConfigIr> {

@@ -9,3 +9,6 @@ name = "sora"
 path = "src/main.rs"
 
 [dependencies]
+anyhow.workspace = true
+clap.workspace = true
+sora-core = { path = "../sora-core" }
