@@ -1,0 +1,7 @@
+package {{ package }}
+
+data class {{ record.pascal_name }}(
+{%- for field in record.fields %}
+    val {{ field.kotlin_name }}: {{ field.kotlin_type }},
+{%- endfor %}
+)

@@ -5,3 +5,13 @@ edition.workspace = true
 license.workspace = true
 
 [dependencies]
+heck.workspace = true
+minijinja.workspace = true
+serde.workspace = true
+sora-diagnostics = { path = "../sora-diagnostics" }
+sora-ir = { path = "../sora-ir" }
+sora-templates = { path = "../sora-templates" }
+
+[dev-dependencies]
+sora-schema = { path = "../sora-schema" }
+toml.workspace = true

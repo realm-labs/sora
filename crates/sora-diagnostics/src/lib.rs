@@ -8,6 +8,18 @@ pub enum SoraError {
         source: std::io::Error,
     },
 
+    #[error("failed to write file `{path}`: {source}")]
+    WriteFile {
+        path: PathBuf,
+        source: std::io::Error,
+    },
+
+    #[error("failed to create directory `{path}`: {source}")]
+    CreateDir {
+        path: PathBuf,
+        source: std::io::Error,
+    },
+
     #[error("failed to parse schema `{path}`: {source}")]
     ParseSchema {
         path: PathBuf,
@@ -28,6 +40,9 @@ pub enum SoraError {
 
     #[error("invalid schema: {0}")]
     InvalidSchema(String),
+
+    #[error("failed to render template `{template}`: {message}")]
+    RenderTemplate { template: String, message: String },
 
     #[error("unknown export format `{format}`; supported formats: {supported}")]
     UnknownExportFormat { format: String, supported: String },

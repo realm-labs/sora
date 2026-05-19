@@ -1,0 +1,9 @@
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+pub struct {{ record.pascal_name }} {
+{%- for field in record.fields %}
+{%- if field.comment %}
+    /// {{ field.comment }}
+{%- endif %}
+    pub {{ field.rust_name }}: {{ field.rust_type }},
+{%- endfor %}
+}

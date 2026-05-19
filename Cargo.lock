@@ -15,6 +15,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ed5909b6e89a2db4456e54cd5f673791d7eca6732202bbf2a9cc504fe2f9b84a"
 
 [[package]]
+name = "heck"
+version = "0.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2304e00983f87ffb38b55b444b5e3b60a884b5d30c0fca7d82fe33449bbe55ea"
+
+[[package]]
 name = "indexmap"
 version = "2.14.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -29,6 +35,22 @@ name = "memchr"
 version = "2.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f8ca58f447f06ed17d5fc4043ce1b10dd205e060fb3ce5b979b8ed8e59ff3f79"
+
+[[package]]
+name = "memo-map"
+version = "0.3.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "38d1115007560874e373613744c6fba374c17688327a71c1476d1a5954cc857b"
+
+[[package]]
+name = "minijinja"
+version = "2.19.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "805bfd7352166bae857ee569628b52bcd85a1cecf7810861ebceb1686b72b75d"
+dependencies = [
+ "memo-map",
+ "serde",
+]
 
 [[package]]
 name = "proc-macro2"
@@ -94,6 +116,16 @@ version = "0.1.0"
 [[package]]
 name = "sora-codegen"
 version = "0.1.0"
+dependencies = [
+ "heck",
+ "minijinja",
+ "serde",
+ "sora-diagnostics",
+ "sora-ir",
+ "sora-schema",
+ "sora-templates",
+ "toml",
+]
 
 [[package]]
 name = "sora-core"
@@ -148,6 +180,9 @@ dependencies = [
 [[package]]
 name = "sora-templates"
 version = "0.1.0"
+dependencies = [
+ "sora-diagnostics",
+]
 
 [[package]]
 name = "syn"
