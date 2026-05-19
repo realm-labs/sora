@@ -1,0 +1,11 @@
+[[rows]]
+id = 1001
+name = "Iron Sword"
+item_type = "Weapon"
+max_stack = 1
+
+[[rows]]
+id = 1002
+name = "Magic Stone"
+item_type = "Material"
+max_stack = 999
