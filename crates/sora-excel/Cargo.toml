@@ -5,3 +5,9 @@ edition.workspace = true
 license.workspace = true
 
 [dependencies]
+sora-diagnostics = { path = "../sora-diagnostics" }
+sora-ir = { path = "../sora-ir" }
+
+[dev-dependencies]
+sora-schema = { path = "../sora-schema" }
+toml.workspace = true

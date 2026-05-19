@@ -173,6 +173,12 @@ dependencies = [
 [[package]]
 name = "sora-excel"
 version = "0.1.0"
+dependencies = [
+ "sora-diagnostics",
+ "sora-ir",
+ "sora-schema",
+ "toml",
+]
 
 [[package]]
 name = "sora-export"
