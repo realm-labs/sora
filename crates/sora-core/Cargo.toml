@@ -5,3 +5,13 @@ edition.workspace = true
 license.workspace = true
 
 [dependencies]
+sora-codegen = { path = "../sora-codegen" }
+sora-data = { path = "../sora-data" }
+sora-diagnostics = { path = "../sora-diagnostics" }
+sora-excel = { path = "../sora-excel" }
+sora-export = { path = "../sora-export" }
+sora-ir = { path = "../sora-ir" }
+sora-schema = { path = "../sora-schema" }
+
+[dev-dependencies]
+toml.workspace = true

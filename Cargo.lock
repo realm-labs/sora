@@ -149,6 +149,16 @@ dependencies = [
 [[package]]
 name = "sora-core"
 version = "0.1.0"
+dependencies = [
+ "sora-codegen",
+ "sora-data",
+ "sora-diagnostics",
+ "sora-excel",
+ "sora-export",
+ "sora-ir",
+ "sora-schema",
+ "toml",
+]
 
 [[package]]
 name = "sora-data"
