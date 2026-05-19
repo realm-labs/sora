@@ -122,6 +122,12 @@ version = "0.1.0"
 [[package]]
 name = "sora-ir"
 version = "0.1.0"
+dependencies = [
+ "serde",
+ "sora-diagnostics",
+ "sora-schema",
+ "toml",
+]
 
 [[package]]
 name = "sora-schema"

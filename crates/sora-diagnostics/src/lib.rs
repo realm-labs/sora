@@ -20,6 +20,9 @@ pub enum SoraError {
     #[error("invalid type `{0}`")]
     InvalidType(String),
 
+    #[error("invalid schema: {0}")]
+    InvalidSchema(String),
+
     #[error("unknown export format `{format}`; supported formats: {supported}")]
     UnknownExportFormat { format: String, supported: String },
 
