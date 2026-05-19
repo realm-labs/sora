@@ -25,7 +25,20 @@ anyhow = "1"
 clap = { version = "4", features = ["derive"] }
 heck = "0.5"
 minijinja = "2"
+rust_xlsxwriter = "0.95"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
+sora-cli = { path = "crates/sora-cli" }
+sora-codegen = { path = "crates/sora-codegen" }
+sora-core = { path = "crates/sora-core" }
+sora-data = { path = "crates/sora-data" }
+sora-diagnostics = { path = "crates/sora-diagnostics" }
+sora-excel = { path = "crates/sora-excel" }
+sora-export = { path = "crates/sora-export" }
+sora-input = { path = "crates/sora-input" }
+sora-input-toml = { path = "crates/sora-input-toml" }
+sora-ir = { path = "crates/sora-ir" }
+sora-schema = { path = "crates/sora-schema" }
+sora-templates = { path = "crates/sora-templates" }
 thiserror = "2"
 toml = "0.8"

@@ -11,5 +11,5 @@ path = "src/main.rs"
 [dependencies]
 anyhow.workspace = true
 clap.workspace = true
-sora-core = { path = "../sora-core" }
-sora-input-toml = { path = "../sora-input-toml" }
+sora-core.workspace = true
+sora-input-toml.workspace = true

@@ -6,8 +6,8 @@ license.workspace = true
 
 [dependencies]
 serde.workspace = true
-sora-diagnostics = { path = "../sora-diagnostics" }
-sora-schema = { path = "../sora-schema" }
+sora-diagnostics.workspace = true
+sora-schema.workspace = true
 
 [dev-dependencies]
 toml.workspace = true

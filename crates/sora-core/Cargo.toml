@@ -5,15 +5,15 @@ edition.workspace = true
 license.workspace = true
 
 [dependencies]
-sora-codegen = { path = "../sora-codegen" }
-sora-data = { path = "../sora-data" }
-sora-diagnostics = { path = "../sora-diagnostics" }
-sora-excel = { path = "../sora-excel" }
-sora-export = { path = "../sora-export" }
-sora-input = { path = "../sora-input" }
-sora-ir = { path = "../sora-ir" }
-sora-schema = { path = "../sora-schema" }
+sora-codegen.workspace = true
+sora-data.workspace = true
+sora-diagnostics.workspace = true
+sora-excel.workspace = true
+sora-export.workspace = true
+sora-input.workspace = true
+sora-ir.workspace = true
+sora-schema.workspace = true
 
 [dev-dependencies]
-sora-input-toml = { path = "../sora-input-toml" }
+sora-input-toml.workspace = true
 toml.workspace = true

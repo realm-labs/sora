@@ -5,4 +5,4 @@ edition.workspace = true
 license.workspace = true
 
 [dependencies]
-sora-diagnostics = { path = "../sora-diagnostics" }
+sora-diagnostics.workspace = true
