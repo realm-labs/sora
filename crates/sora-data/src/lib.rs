@@ -1,8 +1,4 @@
-use std::{
-    collections::{BTreeMap, BTreeSet},
-    fs,
-    path::Path,
-};
+use std::collections::{BTreeMap, BTreeSet};
 
 use serde::{Deserialize, Serialize};
 use sora_diagnostics::{Result, SoraError};
@@ -33,55 +29,6 @@ pub enum Value {
     List(Vec<Value>),
     Object(BTreeMap<String, Value>),
     Null,
-}
-
-#[derive(Debug, Deserialize)]
-struct TomlRows {
-    #[serde(default)]
-    rows: Vec<BTreeMap<String, toml::Value>>,
-}
-
-pub fn load_config_data(ir: &ConfigIr, data_root: &Path) -> Result<ConfigData> {
-    let mut tables = Vec::new();
-
-    for table in &ir.tables {
-        let source = table
-            .source
-            .as_ref()
-            .ok_or_else(|| SoraError::MissingTableSource {
-                table: table.name.clone(),
-            })?;
-        tables.push(load_table_data_file(&table.name, &data_root.join(source))?);
-    }
-
-    Ok(ConfigData { tables })
-}
-
-pub fn load_table_data_file(table_name: &str, path: &Path) -> Result<TableData> {
-    let content = fs::read_to_string(path).map_err(|source| SoraError::ReadFile {
-        path: path.to_path_buf(),
-        source,
-    })?;
-    let parsed: TomlRows = toml::from_str(&content).map_err(|source| SoraError::ParseData {
-        path: path.to_path_buf(),
-        source,
-    })?;
-
-    Ok(TableData {
-        name: table_name.to_owned(),
-        rows: parsed
-            .rows
-            .into_iter()
-            .map(|row| {
-                Ok(RowData {
-                    values: row
-                        .into_iter()
-                        .map(|(key, value)| Ok((key, convert_toml_value(value)?)))
-                        .collect::<Result<BTreeMap<_, _>>>()?,
-                })
-            })
-            .collect::<Result<Vec<_>>>()?,
-    })
 }
 
 pub fn validate_config_data(ir: &ConfigIr, data: &ConfigData) -> Result<()> {
@@ -218,28 +165,6 @@ fn value_matches_type(
     })
 }
 
-fn convert_toml_value(value: toml::Value) -> Result<Value> {
-    Ok(match value {
-        toml::Value::String(value) => Value::String(value),
-        toml::Value::Integer(value) => Value::Integer(value),
-        toml::Value::Float(value) => Value::Float(value),
-        toml::Value::Boolean(value) => Value::Bool(value),
-        toml::Value::Array(values) => Value::List(
-            values
-                .into_iter()
-                .map(convert_toml_value)
-                .collect::<Result<Vec<_>>>()?,
-        ),
-        toml::Value::Table(values) => Value::Object(
-            values
-                .into_iter()
-                .map(|(key, value)| Ok((key, convert_toml_value(value)?)))
-                .collect::<Result<BTreeMap<_, _>>>()?,
-        ),
-        toml::Value::Datetime(value) => Value::String(value.to_string()),
-    })
-}
-
 fn stable_key(value: &Value) -> String {
     match value {
         Value::Bool(value) => value.to_string(),
@@ -271,32 +196,6 @@ mod tests {
     use super::*;
     use sora_ir::normalize_schema;
     use sora_schema::SchemaFile;
-    use std::time::{SystemTime, UNIX_EPOCH};
-
-    #[test]
-    fn loads_toml_data() {
-        let path = write_temp_data(
-            r#"
-[[rows]]
-id = 1001
-name = "Iron Sword"
-item_type = "Weapon"
-max_stack = 1
-"#,
-        );
-
-        let table = load_table_data_file("Item", &path).unwrap();
-
-        assert_eq!(table.name, "Item");
-        assert_eq!(table.rows.len(), 1);
-        assert_eq!(table.rows[0].values["id"], Value::Integer(1001));
-        assert_eq!(
-            table.rows[0].values["name"],
-            Value::String("Iron Sword".to_owned())
-        );
-
-        let _ = fs::remove_file(path);
-    }
 
     #[test]
     fn validates_simple_table_data() {
@@ -447,15 +346,5 @@ required = true
         .unwrap();
 
         normalize_schema(schema).unwrap()
-    }
-
-    fn write_temp_data(content: &str) -> std::path::PathBuf {
-        let unique = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .unwrap()
-            .as_nanos();
-        let path = std::env::temp_dir().join(format!("sora-data-test-{unique}.toml"));
-        fs::write(&path, content).unwrap();
-        path
     }
 }

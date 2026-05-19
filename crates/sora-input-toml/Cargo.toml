@@ -1,14 +1,14 @@
 [package]
-name = "sora-data"
+name = "sora-input-toml"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
 
 [dependencies]
 serde.workspace = true
+sora-data = { path = "../sora-data" }
 sora-diagnostics = { path = "../sora-diagnostics" }
+sora-input = { path = "../sora-input" }
 sora-ir = { path = "../sora-ir" }
-
-[dev-dependencies]
 sora-schema = { path = "../sora-schema" }
 toml.workspace = true

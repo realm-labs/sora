@@ -15,4 +15,5 @@ sora-ir = { path = "../sora-ir" }
 sora-schema = { path = "../sora-schema" }
 
 [dev-dependencies]
+sora-input-toml = { path = "../sora-input-toml" }
 toml.workspace = true

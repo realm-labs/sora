@@ -5,6 +5,7 @@ members = [
     "crates/sora-schema",
     "crates/sora-ir",
     "crates/sora-input",
+    "crates/sora-input-toml",
     "crates/sora-data",
     "crates/sora-codegen",
     "crates/sora-export",

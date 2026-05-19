@@ -20,17 +20,11 @@ pub enum SoraError {
         source: std::io::Error,
     },
 
-    #[error("failed to parse schema `{path}`: {source}")]
-    ParseSchema {
-        path: PathBuf,
-        source: toml::de::Error,
-    },
+    #[error("failed to parse schema `{path}`: {message}")]
+    ParseSchema { path: PathBuf, message: String },
 
-    #[error("failed to parse data `{path}`: {source}")]
-    ParseData {
-        path: PathBuf,
-        source: toml::de::Error,
-    },
+    #[error("failed to parse data `{path}`: {message}")]
+    ParseData { path: PathBuf, message: String },
 
     #[error("failed to serialize data: {0}")]
     SerializeData(serde_json::Error),

@@ -7,9 +7,7 @@ use sora_excel::ExcelTemplateGenerator;
 pub use sora_export::ExportOutput;
 pub use sora_export::OutputKind;
 use sora_export::{ExportRequest, ExporterRegistry};
-pub use sora_input::{
-    DataInput, LoadedInput, ProjectInput, SchemaInput, TomlProjectInput, TomlSchemaInput,
-};
+pub use sora_input::{DataInput, LoadedInput, ProjectInput, SchemaInput};
 use sora_ir::{ConfigIr, normalize_schema};
 
 pub fn check_schema(input: &impl SchemaInput) -> Result<()> {
@@ -69,6 +67,7 @@ fn load_ir(input: &impl SchemaInput) -> Result<ConfigIr> {
 mod tests {
     use super::*;
     use sora_data::{ConfigData, RowData, TableData, Value};
+    use sora_input_toml::{TomlProjectInput, TomlSchemaInput};
     use sora_schema::SchemaFile;
     use std::{
         collections::BTreeMap,

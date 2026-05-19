@@ -317,6 +317,7 @@ dependencies = [
  "anyhow",
  "clap",
  "sora-core",
+ "sora-input-toml",
 ]
 
 [[package]]
@@ -343,6 +344,7 @@ dependencies = [
  "sora-excel",
  "sora-export",
  "sora-input",
+ "sora-input-toml",
  "sora-ir",
  "sora-schema",
  "toml",
@@ -365,7 +367,6 @@ version = "0.1.0"
 dependencies = [
  "serde_json",
  "thiserror",
- "toml",
 ]
 
 [[package]]
@@ -403,6 +404,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "sora-input-toml"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "sora-data",
+ "sora-diagnostics",
+ "sora-input",
+ "sora-ir",
+ "sora-schema",
+ "toml",
+]
+
+[[package]]
 name = "sora-ir"
 version = "0.1.0"
 dependencies = [
@@ -417,7 +431,6 @@ name = "sora-schema"
 version = "0.1.0"
 dependencies = [
  "serde",
- "sora-diagnostics",
  "toml",
 ]
 

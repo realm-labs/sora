@@ -4,7 +4,8 @@ use std::{
     time::{SystemTime, UNIX_EPOCH},
 };
 
-use sora_core::{CodegenTarget, ExportOutput, TomlProjectInput, TomlSchemaInput};
+use sora_core::{CodegenTarget, ExportOutput};
+use sora_input_toml::{TomlProjectInput, TomlSchemaInput};
 
 #[test]
 fn simple_example_pipeline_generates_all_artifacts() {

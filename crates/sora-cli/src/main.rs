@@ -2,7 +2,8 @@ use std::path::PathBuf;
 
 use anyhow::{Context, Result, bail};
 use clap::{Args, Parser, Subcommand};
-use sora_core::{CodegenTarget, ExportOutput, OutputKind, TomlProjectInput, TomlSchemaInput};
+use sora_core::{CodegenTarget, ExportOutput, OutputKind};
+use sora_input_toml::{TomlProjectInput, TomlSchemaInput};
 
 #[derive(Debug, Parser)]
 #[command(name = "sora")]

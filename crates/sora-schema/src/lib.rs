@@ -1,7 +1,4 @@
-use std::{fs, path::Path};
-
 use serde::Deserialize;
-use sora_diagnostics::{Result, SoraError};
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 pub struct SchemaFile {
@@ -84,18 +81,6 @@ pub struct FieldSchema {
     pub parent_key: Option<String>,
     pub child_key: Option<String>,
     pub order_by: Option<String>,
-}
-
-pub fn load_schema_file(path: &Path) -> Result<SchemaFile> {
-    let content = fs::read_to_string(path).map_err(|source| SoraError::ReadFile {
-        path: path.to_path_buf(),
-        source,
-    })?;
-
-    toml::from_str(&content).map_err(|source| SoraError::ParseSchema {
-        path: path.to_path_buf(),
-        source,
-    })
 }
 
 #[cfg(test)]
