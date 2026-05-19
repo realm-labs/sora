@@ -32,6 +32,9 @@ pub enum SoraError {
         source: toml::de::Error,
     },
 
+    #[error("failed to serialize data: {0}")]
+    SerializeData(serde_json::Error),
+
     #[error("unknown type `{0}`")]
     UnknownType(String),
 
@@ -46,6 +49,12 @@ pub enum SoraError {
 
     #[error("unknown export format `{format}`; supported formats: {supported}")]
     UnknownExportFormat { format: String, supported: String },
+
+    #[error("export format `{format}` expects {expected} output")]
+    InvalidExportOutput {
+        format: String,
+        expected: &'static str,
+    },
 
     #[error("missing required field `{field}` in table `{table}`")]
     MissingRequiredField { table: String, field: String },

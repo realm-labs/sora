@@ -5,3 +5,12 @@ edition.workspace = true
 license.workspace = true
 
 [dependencies]
+serde.workspace = true
+serde_json.workspace = true
+sora-data = { path = "../sora-data" }
+sora-diagnostics = { path = "../sora-diagnostics" }
+sora-ir = { path = "../sora-ir" }
+
+[dev-dependencies]
+sora-schema = { path = "../sora-schema" }
+toml.workspace = true
