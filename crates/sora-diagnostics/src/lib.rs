@@ -38,6 +38,54 @@ pub enum SoraError {
     #[error("invalid schema: {0}")]
     InvalidSchema(String),
 
+    #[error("duplicate {kind} `{name}`")]
+    DuplicateSchemaName { kind: &'static str, name: String },
+
+    #[error("duplicate field `{field}` in {owner_kind} `{owner}`")]
+    DuplicateFieldName {
+        owner_kind: &'static str,
+        owner: String,
+        field: String,
+    },
+
+    #[error("unknown {kind} `{name}` referenced by field `{field}` in {owner_kind} `{owner}`")]
+    UnknownTypeReference {
+        kind: &'static str,
+        name: String,
+        owner_kind: &'static str,
+        owner: String,
+        field: String,
+    },
+
+    #[error("table `{table}` key field `{field}` does not exist")]
+    MissingTableKey { table: String, field: String },
+
+    #[error("index `{index}` in table `{table}` references unknown field `{field}`")]
+    UnknownIndexField {
+        table: String,
+        index: String,
+        field: String,
+    },
+
+    #[error("field `{field}` in {owner_kind} `{owner}` references unknown table `{table}`")]
+    UnknownRefTable {
+        owner_kind: &'static str,
+        owner: String,
+        field: String,
+        table: String,
+    },
+
+    #[error(
+        "field `{field}` in {owner_kind} `{owner}` references unknown ref field `{ref_field}` in table `{table}`"
+    )]
+    UnknownRefField {
+        owner_kind: &'static str,
+        owner: String,
+        field: String,
+        table: String,
+        ref_field: String,
+    },
+
     #[error("failed to render template `{template}`: {message}")]
     RenderTemplate { template: String, message: String },
 

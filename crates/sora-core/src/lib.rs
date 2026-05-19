@@ -8,7 +8,7 @@ pub use sora_export::ExportOutput;
 pub use sora_export::OutputKind;
 use sora_export::{ExportRequest, ExporterRegistry};
 pub use sora_input::{DataInput, LoadedInput, ProjectInput, SchemaInput};
-use sora_ir::{ConfigIr, normalize_schema};
+use sora_ir::{ConfigIr, normalize_schema, validate_config_ir};
 
 pub fn check_schema(input: &impl SchemaInput) -> Result<()> {
     let _ = load_ir(input)?;
@@ -60,7 +60,9 @@ pub fn export_output_kind(format: &str) -> Option<OutputKind> {
 }
 
 fn load_ir(input: &impl SchemaInput) -> Result<ConfigIr> {
-    normalize_schema(input.load_schema()?)
+    let ir = normalize_schema(input.load_schema()?)?;
+    validate_config_ir(&ir)?;
+    Ok(ir)
 }
 
 #[cfg(test)]
