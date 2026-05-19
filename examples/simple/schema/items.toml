@@ -6,7 +6,11 @@ values = ["Weapon", "Armor", "Material", "Consumable"]
 name = "Item"
 mode = "map"
 key = "id"
-source = "items.toml"
+
+[tables.source]
+format = "xlsx"
+file = "Item.xlsx"
+sheet = "Item"
 
 [[tables.fields]]
 name = "id"

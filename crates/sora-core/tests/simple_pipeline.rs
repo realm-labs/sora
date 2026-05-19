@@ -4,17 +4,22 @@ use std::{
     time::{SystemTime, UNIX_EPOCH},
 };
 
+use rust_xlsxwriter::Workbook;
 use sora_core::{CodegenTarget, ExportOutput};
-use sora_input_toml::{TomlProjectInput, TomlSchemaInput};
+use sora_excel::table_template_rows;
+use sora_input_toml::TomlSchemaInput;
+use sora_input_xlsx::XlsxProjectInput;
+use sora_ir::{normalize_schema, validate_config_ir};
 
 #[test]
 fn simple_example_pipeline_generates_all_artifacts() {
     let root = workspace_root();
     let project = root.join("examples/simple/project.toml");
-    let data_root = root.join("examples/simple/data");
     let schema_input = TomlSchemaInput::new(&project);
-    let project_input = TomlProjectInput::new(&project, &data_root);
     let out_dir = temp_dir();
+    let data_root = out_dir.join("excel-data");
+    write_item_workbook(&project, &data_root);
+    let project_input = XlsxProjectInput::new(TomlSchemaInput::new(&project), &data_root);
 
     sora_core::check_schema(&schema_input).unwrap();
 
@@ -64,6 +69,39 @@ fn simple_example_pipeline_generates_all_artifacts() {
     );
 
     let _ = fs::remove_dir_all(out_dir);
+}
+
+fn write_item_workbook(project: &Path, out_dir: &Path) {
+    let schema = sora_input_toml::load_project_schema_file(project).unwrap();
+    let ir = normalize_schema(schema).unwrap();
+    validate_config_ir(&ir).unwrap();
+    let table = &ir.tables[0];
+
+    let mut workbook = Workbook::new();
+    let worksheet = workbook.add_worksheet();
+    worksheet.set_name("Item").unwrap();
+    for (row_index, row) in table_template_rows(table).iter().enumerate() {
+        for (column_index, value) in row.iter().enumerate() {
+            worksheet
+                .write_string(row_index as u32, column_index as u16, value)
+                .unwrap();
+        }
+    }
+
+    let rows = [
+        ["1001", "Iron Sword", "Weapon", "1"],
+        ["1002", "Magic Stone", "Material", "999"],
+    ];
+    for (offset, row) in rows.iter().enumerate() {
+        for (column, value) in row.iter().enumerate() {
+            worksheet
+                .write_string((10 + offset) as u32, column as u16, *value)
+                .unwrap();
+        }
+    }
+
+    fs::create_dir_all(out_dir).unwrap();
+    workbook.save(out_dir.join("Item.xlsx")).unwrap();
 }
 
 fn workspace_root() -> PathBuf {

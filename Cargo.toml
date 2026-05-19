@@ -6,6 +6,7 @@ members = [
     "crates/sora-ir",
     "crates/sora-input",
     "crates/sora-input-toml",
+    "crates/sora-input-xlsx",
     "crates/sora-data",
     "crates/sora-codegen",
     "crates/sora-export",
@@ -22,6 +23,7 @@ license = "MIT OR Apache-2.0"
 
 [workspace.dependencies]
 anyhow = "1"
+calamine = "0.35"
 clap = { version = "4", features = ["derive"] }
 heck = "0.5"
 minijinja = "2"
@@ -37,6 +39,7 @@ sora-excel = { path = "crates/sora-excel" }
 sora-export = { path = "crates/sora-export" }
 sora-input = { path = "crates/sora-input" }
 sora-input-toml = { path = "crates/sora-input-toml" }
+sora-input-xlsx = { path = "crates/sora-input-xlsx" }
 sora-ir = { path = "crates/sora-ir" }
 sora-schema = { path = "crates/sora-schema" }
 sora-templates = { path = "crates/sora-templates" }

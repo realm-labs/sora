@@ -4,6 +4,7 @@ use anyhow::{Context, Result, bail};
 use clap::{Args, Parser, Subcommand};
 use sora_core::{CodegenTarget, ExportOutput, OutputKind};
 use sora_input_toml::{TomlProjectInput, TomlSchemaInput};
+use sora_input_xlsx::XlsxProjectInput;
 
 #[derive(Debug, Parser)]
 #[command(name = "sora")]
@@ -50,6 +51,9 @@ struct ExportArgs {
     #[arg(long)]
     format: String,
 
+    #[arg(long, value_enum, default_value_t = DataFormat::Xlsx)]
+    data_format: DataFormat,
+
     #[arg(long)]
     project: PathBuf,
 
@@ -58,6 +62,12 @@ struct ExportArgs {
 
     #[arg(long)]
     out: PathBuf,
+}
+
+#[derive(Debug, Clone, Copy, clap::ValueEnum)]
+enum DataFormat {
+    Toml,
+    Xlsx,
 }
 
 #[derive(Debug, Args)]
@@ -121,8 +131,18 @@ fn export(args: ExportArgs) -> Result<()> {
         }
     };
 
-    let input = TomlProjectInput::new(&args.project, &args.data_root);
-    sora_core::export_data(&input, &args.format, output).with_context(|| {
+    match args.data_format {
+        DataFormat::Toml => {
+            let input = TomlProjectInput::new(&args.project, &args.data_root);
+            sora_core::export_data(&input, &args.format, output)
+        }
+        DataFormat::Xlsx => {
+            let schema_input = TomlSchemaInput::new(&args.project);
+            let input = XlsxProjectInput::new(schema_input, &args.data_root);
+            sora_core::export_data(&input, &args.format, output)
+        }
+    }
+    .with_context(|| {
         format!(
             "failed to export `{}` data from `{}`",
             args.format,

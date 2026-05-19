@@ -187,7 +187,9 @@ values = ["Weapon", "Armor", "Material", "Consumable"]
 name = "Item"
 mode = "map"
 key = "id"
-source = "items.toml"
+[tables.source]
+format = "toml"
+file = "items.toml"
 
 [[tables.fields]]
 name = "id"
@@ -248,7 +250,9 @@ values = ["Weapon", "Armor", "Material", "Consumable"]
 name = "Item"
 mode = "map"
 key = "id"
-source = "items.toml"
+[tables.source]
+format = "toml"
+file = "items.toml"
 
 [[tables.fields]]
 name = "id"

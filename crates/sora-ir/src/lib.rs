@@ -2,7 +2,9 @@ use std::{collections::BTreeSet, fmt};
 
 use serde::{Deserialize, Serialize};
 use sora_diagnostics::{Result, SoraError};
-use sora_schema::{FieldSchema, IndexSchema, SchemaFile, TableModeSchema, TableSchema};
+use sora_schema::{
+    FieldSchema, IndexSchema, SchemaFile, TableModeSchema, TableSchema, TableSourceSchema,
+};
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ConfigIr {
@@ -29,9 +31,16 @@ pub struct TableIr {
     pub name: String,
     pub mode: TableModeIr,
     pub key: Option<String>,
-    pub source: Option<String>,
+    pub source: Option<TableSourceIr>,
     pub fields: Vec<FieldIr>,
     pub indexes: Vec<IndexIr>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct TableSourceIr {
+    pub format: String,
+    pub file: String,
+    pub sheet: Option<String>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -225,7 +234,7 @@ impl TryFrom<TableSchema> for TableIr {
             name: table.name,
             mode: table.mode.into(),
             key: table.key,
-            source: table.source,
+            source: table.source.map(Into::into),
             fields: convert_fields(table.fields)?,
             indexes: table.indexes.into_iter().map(IndexIr::from).collect(),
         })
@@ -248,6 +257,16 @@ impl From<IndexSchema> for IndexIr {
             name: index.name,
             fields: index.fields,
             unique: index.unique,
+        }
+    }
+}
+
+impl From<TableSourceSchema> for TableSourceIr {
+    fn from(source: TableSourceSchema) -> Self {
+        Self {
+            format: source.format,
+            file: source.file,
+            sheet: source.sheet,
         }
     }
 }

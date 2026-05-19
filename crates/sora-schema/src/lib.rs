@@ -38,13 +38,20 @@ pub struct TableSchema {
     pub name: String,
     pub mode: TableModeSchema,
     pub key: Option<String>,
-    pub source: Option<String>,
+    pub source: Option<TableSourceSchema>,
 
     #[serde(default)]
     pub fields: Vec<FieldSchema>,
 
     #[serde(default)]
     pub indexes: Vec<IndexSchema>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
+pub struct TableSourceSchema {
+    pub format: String,
+    pub file: String,
+    pub sheet: Option<String>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize)]
@@ -104,7 +111,10 @@ values = ["Weapon", "Armor"]
 name = "Item"
 mode = "map"
 key = "id"
-source = "items.toml"
+
+[tables.source]
+format = "toml"
+file = "items.toml"
 
 [[tables.fields]]
 name = "id"
@@ -120,6 +130,7 @@ comment = "Item id"
         assert!(schema.includes.is_empty());
         assert_eq!(schema.enums[0].name, "ItemType");
         assert_eq!(schema.tables[0].mode, TableModeSchema::Map);
+        assert_eq!(schema.tables[0].source.as_ref().unwrap().format, "toml");
         assert_eq!(schema.tables[0].fields[0].name, "id");
         assert!(schema.tables[0].fields[0].key);
         assert_eq!(schema.tables[0].fields[0].required, Some(true));

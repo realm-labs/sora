@@ -13,3 +13,4 @@ anyhow.workspace = true
 clap.workspace = true
 sora-core.workspace = true
 sora-input-toml.workspace = true
+sora-input-xlsx.workspace = true

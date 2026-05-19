@@ -1,21 +1,18 @@
 [package]
-name = "sora-core"
+name = "sora-input-xlsx"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
 
 [dependencies]
-sora-codegen.workspace = true
+calamine.workspace = true
 sora-data.workspace = true
 sora-diagnostics.workspace = true
 sora-excel.workspace = true
-sora-export.workspace = true
 sora-input.workspace = true
 sora-ir.workspace = true
 sora-schema.workspace = true
 
 [dev-dependencies]
-sora-input-toml.workspace = true
-sora-input-xlsx.workspace = true
 rust_xlsxwriter.workspace = true
 toml.workspace = true

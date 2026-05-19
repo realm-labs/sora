@@ -28,21 +28,23 @@ cargo run -p sora-cli -- gen kotlin \
   --project examples/simple/project.toml \
   --out generated/kotlin
 
+cargo run -p sora-cli -- excel-template \
+  --project examples/simple/project.toml \
+  --out generated/excel
+
 cargo run -p sora-cli -- export \
   --format binary \
+  --data-format xlsx \
   --project examples/simple/project.toml \
-  --data-root examples/simple/data \
+  --data-root generated/excel \
   --out generated/config.sora
 
 cargo run -p sora-cli -- export \
   --format json-debug \
+  --data-format xlsx \
   --project examples/simple/project.toml \
-  --data-root examples/simple/data \
+  --data-root generated/excel \
   --out generated/debug-json
-
-cargo run -p sora-cli -- excel-template \
-  --project examples/simple/project.toml \
-  --out generated/excel
 ```
 
 ## Workspace Architecture
@@ -51,6 +53,7 @@ cargo run -p sora-cli -- excel-template \
 - `sora-core`: pipeline orchestration.
 - `sora-input`: input adapter traits and loaded in-memory input.
 - `sora-input-toml`: TOML schema and TOML data input adapter.
+- `sora-input-xlsx`: Excel `.xlsx` data input adapter.
 - `sora-schema`: format-neutral schema model.
 - `sora-ir`: normalized schema IR and type parsing.
 - `sora-data`: data IR and validation.
@@ -71,23 +74,33 @@ includes = ["schema/items.toml", "schema/skills.toml"]
 
 Included modules define enums, structs, tables, fields, keys, comments, source files, and future aggregation metadata. Field type strings are normalized into IR types such as `i32`, `string`, `enum<ItemType>`, `list<i32>`, `array<i32,3>`, `ref<Item.id>`, and `optional<string>`.
 
+Table data sources are structured:
+
+```toml
+[tables.source]
+format = "xlsx"
+file = "Item.xlsx"
+sheet = "Item"
+```
+
+Multiple tables may point at different sheets in the same workbook by reusing the same `file` with different `sheet` values.
+
 ## Input Architecture
 
 Sora core consumes input through `SchemaInput` and `DataInput` traits. Concrete source formats live in separate adapter crates. TOML is implemented by `sora-input-toml`, not by `sora-core` or `sora-input`. Future adapters, such as RON, JSON, Excel, or Luban compatibility importers, should translate their source format into `SchemaFile` and `ConfigData` before entering the normal IR, validation, codegen, and exporter pipeline.
 
 ## Data Format
 
-The current data source is one TOML file per table. Each file uses `[[rows]]`:
+The primary data source is generated Excel `.xlsx`. Each table declares its workbook and sheet in schema:
 
 ```toml
-[[rows]]
-id = 1001
-name = "Iron Sword"
-item_type = "Weapon"
-max_stack = 1
+[tables.source]
+format = "xlsx"
+file = "Item.xlsx"
+sheet = "Item"
 ```
 
-Validation currently checks required fields, unknown fields, primitive compatibility, enum values, and duplicate map keys.
+The CLI can still read TOML row data through `--data-format toml` for tests and simple automation. Validation currently checks required fields, unknown fields, primitive compatibility, enum values, and duplicate map keys.
 
 ## Exporter Architecture
 

@@ -166,7 +166,16 @@ pub fn load_config_data(ir: &ConfigIr, data_root: &Path) -> Result<ConfigData> {
             .ok_or_else(|| SoraError::MissingTableSource {
                 table: table.name.clone(),
             })?;
-        tables.push(load_table_data_file(&table.name, &data_root.join(source))?);
+        if source.format != "toml" {
+            return Err(SoraError::InvalidSchema(format!(
+                "table `{}` source format `{}` cannot be loaded by TOML input adapter",
+                table.name, source.format
+            )));
+        }
+        tables.push(load_table_data_file(
+            &table.name,
+            &data_root.join(&source.file),
+        )?);
     }
 
     Ok(ConfigData { tables })
@@ -321,7 +330,9 @@ includes = ["schema/items.toml"]
 name = "Item"
 mode = "map"
 key = "id"
-source = "items.toml"
+[tables.source]
+format = "toml"
+file = "items.toml"
 
 [[tables.fields]]
 name = "id"
