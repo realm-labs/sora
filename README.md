@@ -18,30 +18,30 @@ Sora is in its first milestone. It currently supports TOML schemas, simple TOML 
 
 ```bash
 cargo run -p sora-cli -- check \
-  --schema examples/simple/schema.toml
+  --project examples/simple/project.toml
 
 cargo run -p sora-cli -- gen rust \
-  --schema examples/simple/schema.toml \
+  --project examples/simple/project.toml \
   --out generated/rust
 
 cargo run -p sora-cli -- gen kotlin \
-  --schema examples/simple/schema.toml \
+  --project examples/simple/project.toml \
   --out generated/kotlin
 
 cargo run -p sora-cli -- export \
   --format binary \
-  --schema examples/simple/schema.toml \
+  --project examples/simple/project.toml \
   --data-root examples/simple/data \
   --out generated/config.sora
 
 cargo run -p sora-cli -- export \
   --format json-debug \
-  --schema examples/simple/schema.toml \
+  --project examples/simple/project.toml \
   --data-root examples/simple/data \
   --out generated/debug-json
 
 cargo run -p sora-cli -- excel-template \
-  --schema examples/simple/schema.toml \
+  --project examples/simple/project.toml \
   --out generated/excel
 ```
 
@@ -51,9 +51,9 @@ cargo run -p sora-cli -- excel-template \
 - `sora-core`: pipeline orchestration.
 - `sora-input`: input adapter traits and loaded in-memory input.
 - `sora-input-toml`: TOML schema and TOML data input adapter.
-- `sora-schema`: TOML schema loading.
+- `sora-schema`: format-neutral schema model.
 - `sora-ir`: normalized schema IR and type parsing.
-- `sora-data`: data IR, TOML data loading, and validation.
+- `sora-data`: data IR and validation.
 - `sora-codegen`: Rust and Kotlin code generation.
 - `sora-export`: exporter trait, registry, and built-in exporters.
 - `sora-excel`: Excel `.xlsx` template projection.
@@ -62,7 +62,14 @@ cargo run -p sora-cli -- excel-template \
 
 ## Schema Format
 
-Schemas are TOML files that define packages, enums, structs, tables, fields, keys, comments, source files, and future aggregation metadata. Field type strings are normalized into IR types such as `i32`, `string`, `enum<ItemType>`, `list<i32>`, `array<i32,3>`, `ref<Item.id>`, and `optional<string>`.
+TOML projects use a root manifest plus included schema modules. The root manifest declares the package and module list:
+
+```toml
+package = "game_config"
+includes = ["schema/items.toml", "schema/skills.toml"]
+```
+
+Included modules define enums, structs, tables, fields, keys, comments, source files, and future aggregation metadata. Field type strings are normalized into IR types such as `i32`, `string`, `enum<ItemType>`, `list<i32>`, `array<i32,3>`, `ref<Item.id>`, and `optional<string>`.
 
 ## Input Architecture
 

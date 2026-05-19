@@ -1,5 +1,3 @@
-package = "game_config"
-
 [[enums]]
 name = "ItemType"
 values = ["Weapon", "Armor", "Material", "Consumable"]

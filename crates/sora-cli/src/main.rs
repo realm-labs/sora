@@ -27,7 +27,7 @@ enum Command {
 #[derive(Debug, Args)]
 struct CheckArgs {
     #[arg(long)]
-    schema: PathBuf,
+    project: PathBuf,
 }
 
 #[derive(Debug, Subcommand)]
@@ -39,7 +39,7 @@ enum GenCommand {
 #[derive(Debug, Args)]
 struct GenArgs {
     #[arg(long)]
-    schema: PathBuf,
+    project: PathBuf,
 
     #[arg(long)]
     out: PathBuf,
@@ -51,7 +51,7 @@ struct ExportArgs {
     format: String,
 
     #[arg(long)]
-    schema: PathBuf,
+    project: PathBuf,
 
     #[arg(long)]
     data_root: PathBuf,
@@ -63,7 +63,7 @@ struct ExportArgs {
 #[derive(Debug, Args)]
 struct ExcelTemplateArgs {
     #[arg(long)]
-    schema: PathBuf,
+    project: PathBuf,
 
     #[arg(long)]
     out: PathBuf,
@@ -74,9 +74,9 @@ fn main() -> Result<()> {
 
     match cli.command {
         Command::Check(args) => {
-            let input = TomlSchemaInput::new(&args.schema);
+            let input = TomlSchemaInput::new(&args.project);
             sora_core::check_schema(&input)
-                .with_context(|| format!("failed to check schema `{}`", args.schema.display()))?;
+                .with_context(|| format!("failed to check project `{}`", args.project.display()))?;
         }
         Command::Gen { target } => match target {
             GenCommand::Rust(args) => generate(args, CodegenTarget::Rust)?,
@@ -84,11 +84,11 @@ fn main() -> Result<()> {
         },
         Command::Export(args) => export(args)?,
         Command::ExcelTemplate(args) => {
-            let input = TomlSchemaInput::new(&args.schema);
+            let input = TomlSchemaInput::new(&args.project);
             sora_core::generate_excel_template(&input, &args.out).with_context(|| {
                 format!(
                     "failed to generate Excel templates from `{}`",
-                    args.schema.display()
+                    args.project.display()
                 )
             })?;
         }
@@ -98,11 +98,11 @@ fn main() -> Result<()> {
 }
 
 fn generate(args: GenArgs, target: CodegenTarget) -> Result<()> {
-    let input = TomlSchemaInput::new(&args.schema);
+    let input = TomlSchemaInput::new(&args.project);
     sora_core::generate_code(&input, target, &args.out).with_context(|| {
         format!(
             "failed to generate code from `{}` into `{}`",
-            args.schema.display(),
+            args.project.display(),
             args.out.display()
         )
     })
@@ -121,7 +121,7 @@ fn export(args: ExportArgs) -> Result<()> {
         }
     };
 
-    let input = TomlProjectInput::new(&args.schema, &args.data_root);
+    let input = TomlProjectInput::new(&args.project, &args.data_root);
     sora_core::export_data(&input, &args.format, output).with_context(|| {
         format!(
             "failed to export `{}` data from `{}`",

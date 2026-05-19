@@ -5,6 +5,9 @@ pub struct SchemaFile {
     pub package: String,
 
     #[serde(default)]
+    pub includes: Vec<String>,
+
+    #[serde(default)]
     pub enums: Vec<EnumSchema>,
 
     #[serde(default)]
@@ -114,6 +117,7 @@ comment = "Item id"
         .expect("schema should parse");
 
         assert_eq!(schema.package, "game_config");
+        assert!(schema.includes.is_empty());
         assert_eq!(schema.enums[0].name, "ItemType");
         assert_eq!(schema.tables[0].mode, TableModeSchema::Map);
         assert_eq!(schema.tables[0].fields[0].name, "id");
@@ -126,6 +130,7 @@ comment = "Item id"
         let schema: SchemaFile = toml::from_str(
             r#"
 package = "game_config"
+includes = ["items.toml"]
 
 [[tables]]
 name = "Item"
@@ -139,6 +144,7 @@ type = "string"
         .expect("schema should parse");
 
         assert!(schema.enums.is_empty());
+        assert_eq!(schema.includes, ["items.toml"]);
         assert!(schema.structs.is_empty());
         assert!(schema.tables[0].indexes.is_empty());
         assert!(!schema.tables[0].fields[0].key);

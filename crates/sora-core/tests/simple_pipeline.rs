@@ -10,10 +10,10 @@ use sora_input_toml::{TomlProjectInput, TomlSchemaInput};
 #[test]
 fn simple_example_pipeline_generates_all_artifacts() {
     let root = workspace_root();
-    let schema = root.join("examples/simple/schema.toml");
+    let project = root.join("examples/simple/project.toml");
     let data_root = root.join("examples/simple/data");
-    let schema_input = TomlSchemaInput::new(&schema);
-    let project_input = TomlProjectInput::new(&schema, &data_root);
+    let schema_input = TomlSchemaInput::new(&project);
+    let project_input = TomlProjectInput::new(&project, &data_root);
     let out_dir = temp_dir();
 
     sora_core::check_schema(&schema_input).unwrap();

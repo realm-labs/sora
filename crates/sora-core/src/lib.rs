@@ -82,8 +82,8 @@ mod tests {
     #[test]
     fn checks_schema_and_generates_outputs() {
         let base = temp_dir();
-        let schema_path = write_example(&base);
-        let input = TomlSchemaInput::new(&schema_path);
+        let project_path = write_example(&base);
+        let input = TomlSchemaInput::new(&project_path);
 
         check_schema(&input).unwrap();
         generate_code(&input, CodegenTarget::Rust, &base.join("rust")).unwrap();
@@ -100,8 +100,8 @@ mod tests {
     #[test]
     fn exports_data_through_registry() {
         let base = temp_dir();
-        let schema_path = write_example(&base);
-        let input = TomlProjectInput::new(&schema_path, base.join("data"));
+        let project_path = write_example(&base);
+        let input = TomlProjectInput::new(&project_path, base.join("data"));
 
         export_data(
             &input,
@@ -125,8 +125,8 @@ mod tests {
     #[test]
     fn reports_unknown_export_format() {
         let base = temp_dir();
-        let schema_path = write_example(&base);
-        let input = TomlProjectInput::new(&schema_path, base.join("data"));
+        let project_path = write_example(&base);
+        let input = TomlProjectInput::new(&project_path, base.join("data"));
 
         let error =
             export_data(&input, "nope", ExportOutput::File(base.join("out.bin"))).unwrap_err();
@@ -163,12 +163,21 @@ mod tests {
 
     fn write_example(base: &Path) -> std::path::PathBuf {
         let data_dir = base.join("data");
+        let schema_dir = base.join("schema");
         fs::create_dir_all(&data_dir).unwrap();
-        let schema_path = base.join("schema.toml");
+        fs::create_dir_all(&schema_dir).unwrap();
+        let project_path = base.join("project.toml");
         fs::write(
-            &schema_path,
+            &project_path,
             r#"
 package = "game_config"
+includes = ["schema/items.toml"]
+"#,
+        )
+        .unwrap();
+        fs::write(
+            schema_dir.join("items.toml"),
+            r#"
 
 [[enums]]
 name = "ItemType"
@@ -218,7 +227,7 @@ max_stack = 1
 "#,
         )
         .unwrap();
-        schema_path
+        project_path
     }
 
     fn temp_dir() -> std::path::PathBuf {
