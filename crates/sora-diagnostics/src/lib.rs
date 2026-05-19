@@ -14,6 +14,12 @@ pub enum SoraError {
         source: toml::de::Error,
     },
 
+    #[error("failed to parse data `{path}`: {source}")]
+    ParseData {
+        path: PathBuf,
+        source: toml::de::Error,
+    },
+
     #[error("unknown type `{0}`")]
     UnknownType(String),
 
@@ -28,6 +34,32 @@ pub enum SoraError {
 
     #[error("missing required field `{field}` in table `{table}`")]
     MissingRequiredField { table: String, field: String },
+
+    #[error("unknown field `{field}` in table `{table}`")]
+    UnknownField { table: String, field: String },
+
+    #[error(
+        "type mismatch for field `{field}` in table `{table}`: expected {expected}, got {actual}"
+    )]
+    TypeMismatch {
+        table: String,
+        field: String,
+        expected: String,
+        actual: String,
+    },
+
+    #[error("invalid enum value `{value}` for field `{field}` in table `{table}`")]
+    InvalidEnumValue {
+        table: String,
+        field: String,
+        value: String,
+    },
+
+    #[error("duplicate key `{key}` in table `{table}`")]
+    DuplicateKey { table: String, key: String },
+
+    #[error("table `{table}` does not declare a data source")]
+    MissingTableSource { table: String },
 }
 
 pub type Result<T> = std::result::Result<T, SoraError>;
