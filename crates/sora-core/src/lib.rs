@@ -86,7 +86,7 @@ mod tests {
 
         assert!(base.join("rust/item.rs").exists());
         assert!(base.join("kotlin/Item.kt").exists());
-        assert!(base.join("excel/Item.csv").exists());
+        assert!(base.join("excel/Item.xlsx").exists());
 
         let _ = fs::remove_dir_all(base);
     }

@@ -52,10 +52,9 @@ fn simple_example_pipeline_generates_all_artifacts() {
             .unwrap()
             .contains("Magic Stone")
     );
-    assert!(
-        fs::read_to_string(out_dir.join("excel/Item.csv"))
-            .unwrap()
-            .contains("#field,id,name,item_type,max_stack")
+    assert_eq!(
+        &fs::read(out_dir.join("excel/Item.xlsx")).unwrap()[0..2],
+        b"PK"
     );
 
     let _ = fs::remove_dir_all(out_dir);

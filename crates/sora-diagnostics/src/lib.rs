@@ -47,6 +47,9 @@ pub enum SoraError {
     #[error("failed to render template `{template}`: {message}")]
     RenderTemplate { template: String, message: String },
 
+    #[error("failed to write Excel template `{path}`: {message}")]
+    ExcelTemplate { path: PathBuf, message: String },
+
     #[error("unknown export format `{format}`; supported formats: {supported}")]
     UnknownExportFormat { format: String, supported: String },
 

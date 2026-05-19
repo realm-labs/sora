@@ -1,5 +1,6 @@
 use std::{fs, path::Path};
 
+use rust_xlsxwriter::{Format, Workbook};
 use sora_diagnostics::{Result, SoraError};
 use sora_ir::{ConfigIr, FieldIr, TableIr, TableModeIr};
 
@@ -13,59 +14,55 @@ impl ExcelTemplateGenerator {
         })?;
 
         for table in &ir.tables {
-            let path = out_dir.join(format!("{}.csv", table.name));
-            let content = render_table_template(table);
-            fs::write(&path, content).map_err(|source| SoraError::WriteFile { path, source })?;
+            let path = out_dir.join(format!("{}.xlsx", table.name));
+            write_table_workbook(table, &path)?;
         }
 
         Ok(())
     }
 }
 
-pub fn render_table_template(table: &TableIr) -> String {
-    let mut lines = vec![
-        csv_row(["@table", table.name.as_str()]),
-        csv_row(["@mode", table_mode_name(table.mode)]),
-        csv_row(["@key", table.key.as_deref().unwrap_or("")]),
-        csv_row(["@schema", &schema_hash(table)]),
-        String::new(),
-    ];
-
-    lines.push(csv_row(
-        std::iter::once("#name".to_owned()).chain(
-            table
-                .fields
-                .iter()
-                .map(|field| field_display_name(field).to_owned()),
-        ),
-    ));
-    lines.push(csv_row(
+pub fn table_template_rows(table: &TableIr) -> Vec<Vec<String>> {
+    vec![
+        vec!["@table".to_owned(), table.name.clone()],
+        vec!["@mode".to_owned(), table_mode_name(table.mode).to_owned()],
+        vec![
+            "@key".to_owned(),
+            table.key.as_deref().unwrap_or("").to_owned(),
+        ],
+        vec!["@schema".to_owned(), schema_hash(table)],
+        Vec::new(),
+        std::iter::once("#name".to_owned())
+            .chain(
+                table
+                    .fields
+                    .iter()
+                    .map(|field| field_display_name(field).to_owned()),
+            )
+            .collect(),
         std::iter::once("#field".to_owned())
-            .chain(table.fields.iter().map(|field| field.name.clone())),
-    ));
-    lines.push(csv_row(
+            .chain(table.fields.iter().map(|field| field.name.clone()))
+            .collect(),
         std::iter::once("#type".to_owned())
-            .chain(table.fields.iter().map(|field| field.ty.to_string())),
-    ));
-    lines.push(csv_row(
-        std::iter::once("#rule".to_owned()).chain(
-            table
-                .fields
-                .iter()
-                .map(|field| field_rule(field).to_owned()),
-        ),
-    ));
-    lines.push(csv_row(
-        std::iter::once("#desc".to_owned()).chain(
-            table
-                .fields
-                .iter()
-                .map(|field| field_display_name(field).to_owned()),
-        ),
-    ));
-    lines.push(String::new());
-
-    lines.join("\n")
+            .chain(table.fields.iter().map(|field| field.ty.to_string()))
+            .collect(),
+        std::iter::once("#rule".to_owned())
+            .chain(
+                table
+                    .fields
+                    .iter()
+                    .map(|field| field_rule(field).to_owned()),
+            )
+            .collect(),
+        std::iter::once("#desc".to_owned())
+            .chain(
+                table
+                    .fields
+                    .iter()
+                    .map(|field| field_display_name(field).to_owned()),
+            )
+            .collect(),
+    ]
 }
 
 pub fn schema_hash(table: &TableIr) -> String {
@@ -121,19 +118,47 @@ fn field_rule(field: &FieldIr) -> &'static str {
     }
 }
 
-fn csv_row(cells: impl IntoIterator<Item = impl AsRef<str>>) -> String {
-    cells
-        .into_iter()
-        .map(|cell| csv_cell(cell.as_ref()))
-        .collect::<Vec<_>>()
-        .join(",")
+fn write_table_workbook(table: &TableIr, path: &Path) -> Result<()> {
+    let mut workbook = Workbook::new();
+    let worksheet = workbook.add_worksheet();
+    worksheet
+        .set_name(&table.name)
+        .map_err(|source| excel_error(path, source))?;
+
+    let metadata_format = Format::new().set_bold();
+    for (row_index, row) in table_template_rows(table).iter().enumerate() {
+        for (column_index, value) in row.iter().enumerate() {
+            if column_index == 0 && !value.is_empty() {
+                worksheet
+                    .write_with_format(
+                        row_index as u32,
+                        column_index as u16,
+                        value,
+                        &metadata_format,
+                    )
+                    .map_err(|source| excel_error(path, source))?;
+            } else {
+                worksheet
+                    .write_string(row_index as u32, column_index as u16, value)
+                    .map_err(|source| excel_error(path, source))?;
+            }
+        }
+    }
+
+    worksheet
+        .set_freeze_panes(6, 0)
+        .map_err(|source| excel_error(path, source))?;
+    worksheet.autofit();
+
+    workbook
+        .save(path)
+        .map_err(|source| excel_error(path, source))
 }
 
-fn csv_cell(value: &str) -> String {
-    if value.contains([',', '"', '\n']) {
-        format!("\"{}\"", value.replace('"', "\"\""))
-    } else {
-        value.to_owned()
+fn excel_error(path: &Path, source: impl std::fmt::Display) -> SoraError {
+    SoraError::ExcelTemplate {
+        path: path.to_path_buf(),
+        message: source.to_string(),
     }
 }
 
@@ -145,17 +170,29 @@ mod tests {
     use std::time::{SystemTime, UNIX_EPOCH};
 
     #[test]
-    fn renders_schema_projection_headers() {
+    fn builds_schema_projection_rows() {
         let ir = example_ir();
-        let content = render_table_template(&ir.tables[0]);
+        let rows = table_template_rows(&ir.tables[0]);
 
-        assert!(content.contains("@table,Item"));
-        assert!(content.contains("@mode,map"));
-        assert!(content.contains("@key,id"));
-        assert!(content.contains("#field,id,name,item_type,max_stack"));
-        assert!(content.contains("#type,i32,string,enum<ItemType>,i32"));
-        assert!(content.contains("#rule,key,required,required,required"));
-        assert!(content.contains("#desc,Item id,Display name,Item type,Max stack count"));
+        assert_eq!(rows[0], ["@table", "Item"]);
+        assert_eq!(rows[1], ["@mode", "map"]);
+        assert_eq!(rows[2], ["@key", "id"]);
+        assert_eq!(rows[6], ["#field", "id", "name", "item_type", "max_stack"]);
+        assert_eq!(rows[7], ["#type", "i32", "string", "enum<ItemType>", "i32"]);
+        assert_eq!(
+            rows[8],
+            ["#rule", "key", "required", "required", "required"]
+        );
+        assert_eq!(
+            rows[9],
+            [
+                "#desc",
+                "Item id",
+                "Display name",
+                "Item type",
+                "Max stack count"
+            ]
+        );
     }
 
     #[test]
@@ -166,15 +203,15 @@ mod tests {
     }
 
     #[test]
-    fn writes_csv_template_file() {
+    fn writes_xlsx_template_file() {
         let ir = example_ir();
         let out_dir = temp_dir();
 
         ExcelTemplateGenerator.generate(&ir, &out_dir).unwrap();
 
-        let content = fs::read_to_string(out_dir.join("Item.csv")).unwrap();
-        assert!(content.contains("@schema,"));
-        assert!(content.contains("#name,Item id,Display name,Item type,Max stack count"));
+        let bytes = fs::read(out_dir.join("Item.xlsx")).unwrap();
+        assert_eq!(&bytes[0..2], b"PK");
+        assert!(bytes.len() > 1024);
 
         let _ = fs::remove_dir_all(out_dir);
     }

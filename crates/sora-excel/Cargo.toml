@@ -5,6 +5,7 @@ edition.workspace = true
 license.workspace = true
 
 [dependencies]
+rust_xlsxwriter = "0.95"
 sora-diagnostics = { path = "../sora-diagnostics" }
 sora-ir = { path = "../sora-ir" }
 

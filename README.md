@@ -4,7 +4,7 @@ Sora is a Rust-first game configuration compiler that turns schemas and table da
 
 ## Status
 
-Sora is in its first milestone. It currently supports TOML schemas, simple TOML table data, normalized IR, basic validation, Rust/Kotlin model generation, a pluggable exporter registry, a binary bundle exporter, a debug JSON exporter, and CSV-like Excel template projections.
+Sora is in its first milestone. It currently supports TOML schemas, simple TOML table data, normalized IR, basic validation, Rust/Kotlin model generation, a pluggable exporter registry, a binary bundle exporter, a debug JSON exporter, and generated Excel `.xlsx` template projections.
 
 ## Design Principles
 
@@ -54,7 +54,7 @@ cargo run -p sora-cli -- excel-template \
 - `sora-data`: data IR, TOML data loading, and validation.
 - `sora-codegen`: Rust and Kotlin code generation.
 - `sora-export`: exporter trait, registry, and built-in exporters.
-- `sora-excel`: CSV-like Excel template projection.
+- `sora-excel`: Excel `.xlsx` template projection.
 - `sora-diagnostics`: shared typed errors.
 - `sora-templates`: built-in template location helpers.
 
@@ -91,7 +91,7 @@ Codegen uses MiniJinja templates, but type mapping is computed in Rust before re
 
 ## Excel Template Projection
 
-Sora generates CSV-like templates from schema IR. Header rows include the table name, mode, key, schema hash, field names, field types, rules, and descriptions. These headers are projections for human editing and future verification; they are not authoritative schema.
+Sora generates `.xlsx` templates from schema IR. Header rows include the table name, mode, key, schema hash, field names, field types, rules, and descriptions. These headers are projections for human editing and future verification; they are not authoritative schema.
 
 ## Roadmap
 
