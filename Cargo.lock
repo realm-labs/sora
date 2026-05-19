@@ -388,7 +388,9 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "clap",
+ "sora-codegen",
  "sora-core",
+ "sora-export",
  "sora-input-toml",
  "sora-input-xlsx",
 ]

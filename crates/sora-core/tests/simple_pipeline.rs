@@ -5,11 +5,12 @@ use std::{
 };
 
 use rust_xlsxwriter::Workbook;
-use sora_core::{CodegenTarget, ExportOutput};
-use sora_excel::table_template_rows;
-use sora_input_toml::TomlSchemaInput;
-use sora_input_xlsx::XlsxProjectInput;
-use sora_ir::{normalize_schema, validate_config_ir};
+use sora_codegen::target::CodegenTarget;
+use sora_excel::projection::table_template_rows;
+use sora_export::exporter::ExportOutput;
+use sora_input_toml::{input::TomlSchemaInput, schema::load_project_schema_file};
+use sora_input_xlsx::input::XlsxProjectInput;
+use sora_ir::{normalize::normalize_schema, validate::validate_config_ir};
 
 #[test]
 fn simple_example_pipeline_generates_all_artifacts() {
@@ -21,28 +22,29 @@ fn simple_example_pipeline_generates_all_artifacts() {
     write_item_workbook(&project, &data_root);
     let project_input = XlsxProjectInput::new(TomlSchemaInput::new(&project), &data_root);
 
-    sora_core::check_schema(&schema_input).unwrap();
+    sora_core::pipeline::check_schema(&schema_input).unwrap();
 
-    sora_core::generate_code(&schema_input, CodegenTarget::Rust, &out_dir.join("rust")).unwrap();
-    sora_core::generate_code(
+    sora_core::pipeline::generate_code(&schema_input, CodegenTarget::Rust, &out_dir.join("rust"))
+        .unwrap();
+    sora_core::pipeline::generate_code(
         &schema_input,
         CodegenTarget::Kotlin,
         &out_dir.join("kotlin"),
     )
     .unwrap();
-    sora_core::export_data(
+    sora_core::pipeline::export_data(
         &project_input,
         "binary",
         ExportOutput::File(out_dir.join("config.sora")),
     )
     .unwrap();
-    sora_core::export_data(
+    sora_core::pipeline::export_data(
         &project_input,
         "json-debug",
         ExportOutput::Directory(out_dir.join("debug-json")),
     )
     .unwrap();
-    sora_core::generate_excel_template(&schema_input, &out_dir.join("excel")).unwrap();
+    sora_core::pipeline::generate_excel_template(&schema_input, &out_dir.join("excel")).unwrap();
 
     assert!(
         fs::read_to_string(out_dir.join("rust/item.rs"))
@@ -72,7 +74,7 @@ fn simple_example_pipeline_generates_all_artifacts() {
 }
 
 fn write_item_workbook(project: &Path, out_dir: &Path) {
-    let schema = sora_input_toml::load_project_schema_file(project).unwrap();
+    let schema = load_project_schema_file(project).unwrap();
     let ir = normalize_schema(schema).unwrap();
     validate_config_ir(&ir).unwrap();
     let table = &ir.tables[0];
