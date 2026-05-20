@@ -98,6 +98,7 @@ impl TryFrom<FieldSchema> for FieldIr {
             key: field.key,
             comment: field.comment,
             required: field.required.unwrap_or(false),
+            range: field.range,
             parser: field.parser,
             separator: field.separator,
             prefix: field.prefix,

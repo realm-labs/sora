@@ -127,6 +127,36 @@ pub enum SoraError {
     #[error("duplicate key `{key}` in table `{table}`")]
     DuplicateKey { table: String, key: String },
 
+    #[error(
+        "value `{value}` for field `{field}` in table `{table}` is outside range [{min}, {max}]"
+    )]
+    RangeOutOfBounds {
+        table: String,
+        field: String,
+        value: String,
+        min: i64,
+        max: i64,
+    },
+
+    #[error(
+        "missing reference `{value}` for field `{field}` in table `{table}`; target is `{ref_table}.{ref_field}`"
+    )]
+    MissingReference {
+        table: String,
+        field: String,
+        ref_table: String,
+        ref_field: String,
+        value: String,
+    },
+
+    #[error("invalid row count for `{mode}` table `{table}`: expected {expected}, got {actual}")]
+    InvalidTableRowCount {
+        table: String,
+        mode: &'static str,
+        expected: &'static str,
+        actual: usize,
+    },
+
     #[error("table `{table}` does not declare a data source")]
     MissingTableSource { table: String },
 

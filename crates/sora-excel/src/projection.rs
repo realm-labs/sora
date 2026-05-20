@@ -55,6 +55,13 @@ pub fn schema_hash(table: &TableIr) -> String {
     for field in &table.fields {
         update(&mut hash, &field.name);
         update(&mut hash, &field.ty.to_string());
+        update(
+            &mut hash,
+            &field
+                .range
+                .map(|[min, max]| format!("{min}..{max}"))
+                .unwrap_or_default(),
+        );
         update(&mut hash, field.separator.as_deref().unwrap_or(""));
         update(&mut hash, field.prefix.as_deref().unwrap_or(""));
         update(&mut hash, field.suffix.as_deref().unwrap_or(""));
@@ -96,6 +103,9 @@ fn field_rule(field: &FieldIr) -> String {
 
     if let Some(separator) = &field.separator {
         parts.push(format!("separator={separator}"));
+    }
+    if let Some([min, max]) = field.range {
+        parts.push(format!("range={min}..{max}"));
     }
     if let Some(prefix) = &field.prefix {
         parts.push(format!("prefix={prefix}"));
