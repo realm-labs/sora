@@ -358,7 +358,7 @@ fn validate_aggregation(
         });
     };
 
-    if !types_compatible(&parent_key_field.ty, &child_key_field.ty) {
+    if !types_compatible(&parent_key_field.ty, &child_key_field.ty, tables) {
         return Err(SoraError::InvalidSchema(format!(
             "aggregation field `{}` joins `{}` and `{}` with incompatible key types `{}` and `{}`",
             field.name,
@@ -369,7 +369,7 @@ fn validate_aggregation(
         )));
     }
 
-    validate_aggregation_result_type(field, source_table, structs)?;
+    validate_aggregation_result_type(field, source_table, structs, tables)?;
 
     if let Some(order_by) = &aggregation.order_by
         && !source_table
@@ -393,6 +393,7 @@ fn validate_aggregation_result_type(
     field: &FieldIr,
     source_table: &TableIr,
     structs: &[StructIr],
+    tables: &[TableIr],
 ) -> Result<()> {
     let TypeIr::List(element) = &field.ty else {
         return Err(SoraError::InvalidSchema(format!(
@@ -427,7 +428,7 @@ fn validate_aggregation_result_type(
                 ref_field: struct_field.name.clone(),
             });
         };
-        if !types_compatible(&struct_field.ty, &source_field.ty) {
+        if !types_compatible(&struct_field.ty, &source_field.ty, tables) {
             return Err(SoraError::InvalidSchema(format!(
                 "aggregation field `{}` maps source field `{}` with incompatible type `{}` into `{}`",
                 field.name, source_field.name, source_field.ty, struct_field.ty
@@ -438,8 +439,29 @@ fn validate_aggregation_result_type(
     Ok(())
 }
 
-fn types_compatible(left: &TypeIr, right: &TypeIr) -> bool {
-    left == right
+fn types_compatible(left: &TypeIr, right: &TypeIr, tables: &[TableIr]) -> bool {
+    resolve_ref_type(left, tables) == resolve_ref_type(right, tables)
+}
+
+fn resolve_ref_type<'a>(ty: &'a TypeIr, tables: &'a [TableIr]) -> Option<&'a TypeIr> {
+    let mut current = ty;
+    let max_depth = tables.len().saturating_mul(8).saturating_add(8);
+    for _ in 0..max_depth {
+        match current {
+            TypeIr::Ref { table, field } => {
+                current = &tables
+                    .iter()
+                    .find(|candidate| candidate.name == *table)?
+                    .fields
+                    .iter()
+                    .find(|candidate| candidate.name == *field)?
+                    .ty;
+            }
+            _ => return Some(current),
+        }
+    }
+
+    None
 }
 
 #[cfg(test)]
@@ -665,6 +687,67 @@ type = "ref<Missing.id>"
             validate_config_ir(&bad_ref).unwrap_err(),
             SoraError::UnknownRefTable { table, .. } if table == "Missing"
         ));
+    }
+
+    #[test]
+    fn aggregation_key_compatibility_resolves_ref_types() {
+        let ir = example_ir(
+            r#"
+[[structs]]
+name = "Reward"
+
+[[structs.fields]]
+name = "item_id"
+type = "ref<Item.id>"
+
+[[structs.fields]]
+name = "count"
+type = "i32"
+
+[[tables]]
+name = "Item"
+mode = "map"
+key = "id"
+
+[[tables.fields]]
+name = "id"
+type = "i32"
+
+[[tables]]
+name = "Quest"
+mode = "map"
+key = "id"
+
+[[tables.fields]]
+name = "id"
+type = "i32"
+
+[[tables.fields]]
+name = "rewards"
+type = "list<Reward>"
+source_table = "QuestReward"
+parent_key = "id"
+child_key = "quest_id"
+
+[[tables]]
+name = "QuestReward"
+mode = "list"
+
+[[tables.fields]]
+name = "quest_id"
+type = "ref<Quest.id>"
+
+[[tables.fields]]
+name = "item_id"
+type = "ref<Item.id>"
+
+[[tables.fields]]
+name = "count"
+type = "i32"
+"#,
+        );
+
+        validate_config_ir(&ir).unwrap();
     }
 
     fn example_ir(extra: &str) -> ConfigIr {
