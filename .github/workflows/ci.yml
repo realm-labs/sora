@@ -42,3 +42,50 @@ jobs:
 
       - name: Smoke test showcase build
         run: cargo run -p sora-cli -- build --project examples/showcase/project.toml --target rust
+
+  showcase:
+    name: Showcase runtimes
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: "10.0.x"
+
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: examples/showcase/go/go.mod
+
+      - name: Regenerate showcase outputs
+        run: cargo run -p sora-cli -- build --project examples/showcase/project.toml --clean
+
+      - name: Run Rust showcase
+        run: cargo run -p sora-showcase-rust
+
+      - name: Run Kotlin showcase
+        working-directory: examples/showcase/kotlin
+        run: |
+          chmod +x ./gradlew
+          ./gradlew run --no-daemon
+
+      - name: Run C# showcase
+        run: dotnet run --project examples/showcase/csharp/SoraShowcase.csproj
+
+      - name: Run Java showcase
+        working-directory: examples/showcase/java
+        run: |
+          chmod +x ./gradlew
+          ./gradlew run --no-daemon
+
+      - name: Run Go showcase
+        working-directory: examples/showcase/go
+        run: go run ./cmd/showcase
