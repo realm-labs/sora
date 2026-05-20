@@ -25,12 +25,7 @@ pub fn table_template_rows(table: &TableIr) -> Vec<Vec<String>> {
             .chain(table.fields.iter().map(|field| field.ty.to_string()))
             .collect(),
         std::iter::once("#rule".to_owned())
-            .chain(
-                table
-                    .fields
-                    .iter()
-                    .map(|field| field_rule(field).to_owned()),
-            )
+            .chain(table.fields.iter().map(field_rule))
             .collect(),
         std::iter::once("#desc".to_owned())
             .chain(
@@ -60,6 +55,7 @@ pub fn schema_hash(table: &TableIr) -> String {
     for field in &table.fields {
         update(&mut hash, &field.name);
         update(&mut hash, &field.ty.to_string());
+        update(&mut hash, field.separator.as_deref().unwrap_or(""));
         update(
             &mut hash,
             if field.required {
@@ -86,14 +82,21 @@ fn field_display_name(field: &FieldIr) -> &str {
     field.comment.as_deref().unwrap_or(&field.name)
 }
 
-fn field_rule(field: &FieldIr) -> &'static str {
+fn field_rule(field: &FieldIr) -> String {
+    let mut parts = Vec::new();
     if field.key {
-        "key"
+        parts.push("key".to_owned());
     } else if field.required {
-        "required"
+        parts.push("required".to_owned());
     } else {
-        "optional"
+        parts.push("optional".to_owned());
     }
+
+    if let Some(separator) = &field.separator {
+        parts.push(format!("separator={separator}"));
+    }
+
+    parts.join(";")
 }
 
 #[cfg(test)]

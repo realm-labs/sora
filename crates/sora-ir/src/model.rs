@@ -61,6 +61,7 @@ pub struct FieldIr {
     pub comment: Option<String>,
     pub required: bool,
     pub parser: Option<String>,
+    pub separator: Option<String>,
     pub aggregation: Option<AggregationIr>,
 }
 

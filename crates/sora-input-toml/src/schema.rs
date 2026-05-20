@@ -98,7 +98,9 @@ struct TomlSchemaDocument {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::time::{SystemTime, UNIX_EPOCH};
+    use std::sync::atomic::{AtomicU64, Ordering};
+
+    static TEMP_COUNTER: AtomicU64 = AtomicU64::new(0);
 
     #[test]
     fn loads_project_schema_with_includes() {
@@ -140,10 +142,7 @@ key = "id"
     }
 
     fn temp_dir() -> PathBuf {
-        let unique = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .unwrap()
-            .as_nanos();
-        std::env::temp_dir().join(format!("sora-input-toml-test-{unique}"))
+        let unique = TEMP_COUNTER.fetch_add(1, Ordering::Relaxed);
+        std::env::temp_dir().join(format!("sora-input-toml-schema-test-{unique}"))
     }
 }

@@ -12,6 +12,7 @@ pub(crate) struct CellContext<'a> {
     pub row: usize,
     pub column: usize,
     pub field: &'a str,
+    pub separator: Option<&'a str>,
 }
 
 impl CellContext<'_> {
@@ -39,8 +40,8 @@ pub(crate) fn cell_to_value(cell: &Data, ty: &TypeIr, context: &CellContext<'_>)
         TypeIr::F32 | TypeIr::F64 => float_cell(cell, context)?,
         TypeIr::String | TypeIr::Enum(_) => Value::String(cell_to_string(cell)),
         TypeIr::Struct(_) => json_object_cell(cell, context)?,
-        TypeIr::List(element) => json_array_cell(cell, element, None, context)?,
-        TypeIr::Array { element, len } => json_array_cell(cell, element, Some(*len), context)?,
+        TypeIr::List(element) => separated_cell(cell, element, None, context)?,
+        TypeIr::Array { element, len } => separated_cell(cell, element, Some(*len), context)?,
     })
 }
 
@@ -106,20 +107,23 @@ fn float_cell(cell: &Data, context: &CellContext<'_>) -> Result<Value> {
     }
 }
 
-fn json_array_cell(
+fn separated_cell(
     cell: &Data,
     element: &TypeIr,
     expected_len: Option<usize>,
     context: &CellContext<'_>,
 ) -> Result<Value> {
-    let parsed = parse_json_cell(cell, context)?;
-    let JsonValue::Array(items) = parsed else {
-        return Err(context.error("expected JSON array"));
-    };
+    let separator = context
+        .separator
+        .filter(|separator| !separator.is_empty())
+        .ok_or_else(|| context.error("list and array cells require schema `separator`"))?;
+    let source = cell_to_string(cell);
+    let items = source.split(separator).map(str::trim).collect::<Vec<_>>();
+
     if let Some(expected_len) = expected_len {
         if items.len() != expected_len {
             return Err(context.error(format!(
-                "expected JSON array length {}, got {}",
+                "expected {} separated values, got {}",
                 expected_len,
                 items.len()
             )));
@@ -128,9 +132,53 @@ fn json_array_cell(
 
     let values = items
         .iter()
-        .map(|item| json_to_value(item, element, context))
+        .map(|item| separated_item_to_value(item, element, context))
         .collect::<Result<Vec<_>>>()?;
     Ok(Value::List(values))
+}
+
+fn separated_item_to_value(
+    item: &str,
+    expected_type: &TypeIr,
+    context: &CellContext<'_>,
+) -> Result<Value> {
+    match expected_type {
+        TypeIr::Optional(_) if item.is_empty() => Ok(Value::Null),
+        TypeIr::Optional(inner) => separated_item_to_value(item, inner, context),
+        TypeIr::Bool => match item {
+            value if value.eq_ignore_ascii_case("true") => Ok(Value::Bool(true)),
+            value if value.eq_ignore_ascii_case("false") => Ok(Value::Bool(false)),
+            _ => Err(context.error(format!("expected bool list item, got `{item}`"))),
+        },
+        TypeIr::I32 | TypeIr::I64 | TypeIr::Ref { .. } => item
+            .parse::<i64>()
+            .map(Value::Integer)
+            .map_err(|_| context.error(format!("expected integer list item, got `{item}`"))),
+        TypeIr::F32 | TypeIr::F64 => item
+            .parse::<f64>()
+            .map(Value::Float)
+            .map_err(|_| context.error(format!("expected float list item, got `{item}`"))),
+        TypeIr::String | TypeIr::Enum(_) => Ok(Value::String(item.to_owned())),
+        TypeIr::Struct(_) => {
+            let parsed: JsonValue = serde_json::from_str(item).map_err(|error| {
+                context.error(format!(
+                    "failed to parse JSON object list item `{item}`: {error}"
+                ))
+            })?;
+            let JsonValue::Object(values) = parsed else {
+                return Err(context.error("expected JSON object list item"));
+            };
+            Ok(Value::Object(
+                values
+                    .iter()
+                    .map(|(key, value)| Ok((key.clone(), json_to_untyped_value(value, context)?)))
+                    .collect::<Result<BTreeMap<_, _>>>()?,
+            ))
+        }
+        TypeIr::List(_) | TypeIr::Array { .. } => Err(context.error(format!(
+            "nested list or array item `{item}` cannot be parsed with a single separator"
+        ))),
+    }
 }
 
 fn json_object_cell(cell: &Data, context: &CellContext<'_>) -> Result<Value> {
@@ -152,63 +200,6 @@ fn parse_json_cell(cell: &Data, context: &CellContext<'_>) -> Result<JsonValue> 
     serde_json::from_str(&source).map_err(|error| {
         context.error(format!("failed to parse JSON cell `{}`: {}", source, error))
     })
-}
-
-fn json_to_value(
-    value: &JsonValue,
-    expected_type: &TypeIr,
-    context: &CellContext<'_>,
-) -> Result<Value> {
-    Ok(match expected_type {
-        TypeIr::Optional(_) if value.is_null() => Value::Null,
-        TypeIr::Optional(inner) => json_to_value(value, inner, context)?,
-        TypeIr::Bool => value
-            .as_bool()
-            .map(Value::Bool)
-            .ok_or_else(|| context.error("expected JSON bool"))?,
-        TypeIr::I32 | TypeIr::I64 | TypeIr::Ref { .. } => value
-            .as_i64()
-            .map(Value::Integer)
-            .ok_or_else(|| context.error("expected JSON integer"))?,
-        TypeIr::F32 | TypeIr::F64 => value
-            .as_f64()
-            .map(Value::Float)
-            .ok_or_else(|| context.error("expected JSON number"))?,
-        TypeIr::String | TypeIr::Enum(_) => value
-            .as_str()
-            .map(|value| Value::String(value.to_owned()))
-            .ok_or_else(|| context.error("expected JSON string"))?,
-        TypeIr::Struct(_) => json_to_untyped_value(value, context)?,
-        TypeIr::List(element) => json_array_value(value, element, None, context)?,
-        TypeIr::Array { element, len } => json_array_value(value, element, Some(*len), context)?,
-    })
-}
-
-fn json_array_value(
-    value: &JsonValue,
-    element: &TypeIr,
-    expected_len: Option<usize>,
-    context: &CellContext<'_>,
-) -> Result<Value> {
-    let JsonValue::Array(items) = value else {
-        return Err(context.error("expected JSON array"));
-    };
-    if let Some(expected_len) = expected_len {
-        if items.len() != expected_len {
-            return Err(context.error(format!(
-                "expected JSON array length {}, got {}",
-                expected_len,
-                items.len()
-            )));
-        }
-    }
-
-    Ok(Value::List(
-        items
-            .iter()
-            .map(|item| json_to_value(item, element, context))
-            .collect::<Result<Vec<_>>>()?,
-    ))
 }
 
 fn json_to_untyped_value(value: &JsonValue, context: &CellContext<'_>) -> Result<Value> {

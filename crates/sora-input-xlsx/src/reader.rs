@@ -63,6 +63,7 @@ fn load_xlsx_table_data_from_range(
                 row: row_index,
                 column,
                 field: &field.name,
+                separator: field.separator.as_deref(),
             };
             values.insert(
                 field_names[column].to_owned(),
@@ -88,8 +89,10 @@ mod tests {
     use std::{
         collections::BTreeMap,
         path::PathBuf,
-        time::{SystemTime, UNIX_EPOCH},
+        sync::atomic::{AtomicU64, Ordering},
     };
+
+    static TEMP_COUNTER: AtomicU64 = AtomicU64::new(0);
 
     #[test]
     fn loads_xlsx_rows_from_generated_projection() {
@@ -129,8 +132,8 @@ mod tests {
             &[vec![
                 "1001",
                 "",
-                "[\"sharp\",\"rare\"]",
-                "[1,2]",
+                "sharp|rare",
+                "1|2",
                 "{\"item_id\":1001,\"count\":2}",
             ]],
         );
@@ -268,10 +271,12 @@ type = "optional<string>"
 [[tables.fields]]
 name = "tags"
 type = "list<string>"
+separator = "|"
 
 [[tables.fields]]
 name = "coords"
 type = "array<i32,2>"
+separator = "|"
 
 [[tables.fields]]
 name = "reward"
@@ -310,10 +315,7 @@ type = "struct<Reward>"
     }
 
     fn temp_dir() -> PathBuf {
-        let unique = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .unwrap()
-            .as_nanos();
+        let unique = TEMP_COUNTER.fetch_add(1, Ordering::Relaxed);
         std::env::temp_dir().join(format!("sora-input-xlsx-test-{unique}"))
     }
 }
