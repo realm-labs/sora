@@ -509,6 +509,7 @@ dependencies = [
  "sora-diagnostics",
  "sora-ir",
  "sora-schema",
+ "toml",
 ]
 
 [[package]]

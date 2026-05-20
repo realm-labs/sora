@@ -132,6 +132,9 @@ fn field_note_text(ir: &ConfigIr, field: &FieldIr) -> Option<String> {
     if field.required {
         lines.push("Required: yes".to_owned());
     }
+    if let Some(default) = &field.default {
+        lines.push(format!("Default: {default}"));
+    }
     if let Some([min, max]) = field.range {
         lines.push(format!("Range: {min}..{max}"));
     }
@@ -389,6 +392,7 @@ mod tests {
             key: false,
             comment: Some("Reward rows".to_owned()),
             required: true,
+            default: Some("[]".to_owned()),
             range: Some([1, 99]),
             parser: None,
             separator: None,
@@ -409,6 +413,7 @@ mod tests {
         assert!(note_text.contains("Field: rewards"));
         assert!(note_text.contains("Type: list<struct<Reward>>"));
         assert!(note_text.contains("Required: yes"));
+        assert!(note_text.contains("Default: []"));
         assert!(note_text.contains("Range: 1..99"));
         assert!(note_text.contains("Aggregation: Reward.item_id -> id"));
     }
@@ -421,6 +426,7 @@ mod tests {
             key: false,
             comment: Some("   ".to_owned()),
             required: false,
+            default: None,
             range: None,
             parser: None,
             separator: None,
@@ -450,6 +456,7 @@ mod tests {
                         key: false,
                         comment: None,
                         required: true,
+                        default: None,
                         range: None,
                         parser: None,
                         separator: None,
@@ -463,6 +470,7 @@ mod tests {
                         key: false,
                         comment: None,
                         required: true,
+                        default: None,
                         range: None,
                         parser: None,
                         separator: None,
@@ -476,6 +484,7 @@ mod tests {
                         key: false,
                         comment: None,
                         required: true,
+                        default: None,
                         range: None,
                         parser: None,
                         separator: None,
@@ -493,6 +502,7 @@ mod tests {
             key: false,
             comment: None,
             required: true,
+            default: None,
             range: None,
             parser: Some("tuple".to_owned()),
             separator: Some(",".to_owned()),

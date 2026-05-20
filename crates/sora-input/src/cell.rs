@@ -40,6 +40,7 @@ impl CellValue<'_> {
 
 #[derive(Debug, Clone, Copy)]
 pub enum CellLocation<'a> {
+    Default,
     Csv {
         row: usize,
         column: usize,
@@ -66,6 +67,7 @@ pub struct CellContext<'a> {
 impl CellContext<'_> {
     fn error(&self, message: impl Into<String>) -> SoraError {
         let location = match self.location {
+            CellLocation::Default => "schema default".to_owned(),
             CellLocation::Csv { row, column } => format!("CSV row {row}, column {column}"),
             CellLocation::Worksheet { sheet, row, column } => {
                 format!("worksheet `{sheet}` row {row}, column {column}")

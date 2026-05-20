@@ -260,6 +260,7 @@ mod tests {
             key: name == "id",
             comment: None,
             required: true,
+            default: None,
             range: None,
             parser: None,
             separator: None,

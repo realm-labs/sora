@@ -10,3 +10,6 @@ sora-data.workspace = true
 sora-diagnostics.workspace = true
 sora-ir.workspace = true
 sora-schema.workspace = true
+
+[dev-dependencies]
+toml.workspace = true

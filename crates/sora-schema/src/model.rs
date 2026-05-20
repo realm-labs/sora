@@ -85,6 +85,7 @@ pub struct FieldSchema {
 
     pub comment: Option<String>,
     pub required: Option<bool>,
+    pub default: Option<String>,
     pub range: Option<[i64; 2]>,
     pub parser: Option<String>,
     pub separator: Option<String>,

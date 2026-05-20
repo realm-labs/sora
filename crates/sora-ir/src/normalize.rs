@@ -84,6 +84,12 @@ impl TryFrom<FieldSchema> for FieldIr {
         };
 
         let ty = parse_type(&field.ty)?;
+        if field.default.is_some() && aggregation.is_some() {
+            return Err(SoraError::InvalidSchema(format!(
+                "field `{}` declares both `default` and aggregation metadata",
+                field.name
+            )));
+        }
         if aggregation.is_none() {
             validate_parser_format(
                 &field.name,
@@ -115,6 +121,7 @@ impl TryFrom<FieldSchema> for FieldIr {
             key: field.key,
             comment: field.comment,
             required: field.required.unwrap_or(false),
+            default: field.default,
             range: field.range,
             parser: field.parser,
             separator: field.separator,
@@ -279,6 +286,7 @@ type = "list<string>"
 separator = "|"
 prefix = "["
 suffix = "]"
+default = "[\"starter\"]"
 "#,
         )
         .unwrap();
@@ -292,6 +300,10 @@ suffix = "]"
         assert_eq!(ir.tables[0].fields[1].separator.as_deref(), Some("|"));
         assert_eq!(ir.tables[0].fields[1].prefix.as_deref(), Some("["));
         assert_eq!(ir.tables[0].fields[1].suffix.as_deref(), Some("]"));
+        assert_eq!(
+            ir.tables[0].fields[1].default.as_deref(),
+            Some("[\"starter\"]")
+        );
     }
 
     #[test]
@@ -481,5 +493,45 @@ mode = "list"
         let ir = normalize_schema(schema).unwrap();
         assert!(ir.tables[0].fields[1].aggregation.is_some());
         assert_eq!(ir.tables[0].fields[1].separator, None);
+    }
+
+    #[test]
+    fn rejects_default_on_aggregation_fields() {
+        let schema: SchemaFile = toml::from_str(
+            r#"
+package = "game_config"
+
+[[structs]]
+name = "Reward"
+
+[[tables]]
+name = "Item"
+mode = "map"
+key = "id"
+
+[[tables.fields]]
+name = "id"
+type = "i32"
+
+[[tables.fields]]
+name = "rewards"
+type = "list<Reward>"
+source_table = "ItemReward"
+parent_key = "id"
+child_key = "item_id"
+default = "[]"
+
+[[tables]]
+name = "ItemReward"
+mode = "list"
+"#,
+        )
+        .unwrap();
+
+        assert!(matches!(
+            normalize_schema(schema).unwrap_err(),
+            SoraError::InvalidSchema(message)
+                if message.contains("declares both `default` and aggregation")
+        ));
     }
 }

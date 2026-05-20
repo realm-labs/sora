@@ -96,6 +96,7 @@ fn load_validated_data(
     ir: &ConfigIr,
 ) -> Result<sora_data::model::ConfigData> {
     let data = input.load_data(ir)?;
+    let data = sora_input::defaults::materialize_defaults(ir, &data)?;
     let data = sora_data::aggregate::materialize_aggregations(ir, &data)?;
     sora_data::validate::validate_config_data(ir, &data)?;
     Ok(data)
