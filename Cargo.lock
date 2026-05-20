@@ -587,7 +587,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "sora-showcase-rust-smoke"
+name = "sora-showcase-rust"
 version = "0.1.0"
 dependencies = [
  "serde",

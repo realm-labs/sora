@@ -1,8 +1,5 @@
-package game_config_showcase.smoke
+package game_config_showcase
 
-import game_config_showcase.ItemType
-import game_config_showcase.QuestType
-import game_config_showcase.SoraConfig
 import java.nio.file.Paths
 
 fun main() {

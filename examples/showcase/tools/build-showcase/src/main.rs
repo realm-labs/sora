@@ -17,6 +17,8 @@ fn main() -> Result<()> {
     let project = root.join("project.toml");
     let data_root = root.join("data");
     let generated_root = root.join("generated");
+    let rust_generated = root.join("rust/src/generated");
+    let kotlin_generated = root.join("kotlin/src/generated/kotlin");
 
     fs::create_dir_all(&data_root)
         .with_context(|| format!("failed to create `{}`", data_root.display()))?;
@@ -29,22 +31,14 @@ fn main() -> Result<()> {
     let schema_input = TomlSchemaInput::new(&project);
     let project_input = XlsxProjectInput::new(TomlSchemaInput::new(&project), &data_root);
 
-    clean_dir(&generated_root.join("rust"))?;
-    clean_dir(&generated_root.join("kotlin"))?;
+    clean_dir(&rust_generated)?;
+    clean_dir(&kotlin_generated)?;
     clean_dir(&generated_root.join("debug-json"))?;
 
     sora_core::pipeline::check_schema(&schema_input)?;
     sora_core::pipeline::generate_schema_lock(&schema_input, &generated_root.join("schema.lock"))?;
-    sora_core::pipeline::generate_code(
-        &schema_input,
-        CodegenTarget::Rust,
-        &generated_root.join("rust"),
-    )?;
-    sora_core::pipeline::generate_code(
-        &schema_input,
-        CodegenTarget::Kotlin,
-        &generated_root.join("kotlin"),
-    )?;
+    sora_core::pipeline::generate_code(&schema_input, CodegenTarget::Rust, &rust_generated)?;
+    sora_core::pipeline::generate_code(&schema_input, CodegenTarget::Kotlin, &kotlin_generated)?;
     sora_core::pipeline::export_data(
         &project_input,
         "binary",

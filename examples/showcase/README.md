@@ -7,11 +7,14 @@ It keeps a real Excel workbook in `data/GameConfig.xlsx` and generated outputs i
 
 - schema: `project.toml` and `schema/game.toml`
 - Excel data: `data/GameConfig.xlsx`
-- generated Rust: `generated/rust`
-- generated Kotlin: `generated/kotlin`
+- Rust Cargo project: `rust`
+- Kotlin Gradle project: `kotlin`
 - binary bundle: `generated/config.sora`
 - debug JSON: `generated/debug-json`
 - schema lock: `generated/schema.lock`
+
+The Kotlin project uses Gradle Wrapper 9.5.1, Kotlin JVM plugin 2.3.20, and a
+JDK 21 toolchain.
 
 Regenerate everything:
 
@@ -22,11 +25,13 @@ cargo run -p sora-showcase-builder
 Run the Rust smoke example:
 
 ```powershell
-cargo run -p sora-showcase-rust-smoke
+cargo run -p sora-showcase-rust
 ```
 
-Run the Kotlin smoke example when a Kotlin-capable Gradle setup is available:
+Run the Kotlin smoke example with the checked-in Gradle wrapper:
 
 ```powershell
-gradle -p examples/showcase/kotlin-smoke run
+Push-Location examples/showcase/kotlin
+.\gradlew.bat run
+Pop-Location
 ```

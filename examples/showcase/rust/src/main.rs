@@ -1,4 +1,3 @@
-#[path = "../../generated/rust/mod.rs"]
 mod generated;
 
 use generated::{SoraConfig, item_type::ItemType, quest_type::QuestType};

@@ -12,4 +12,4 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "sora-showcase-kotlin-smoke"
+rootProject.name = "sora-showcase-kotlin"
