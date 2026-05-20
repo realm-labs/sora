@@ -6,7 +6,7 @@ use sora_diagnostics::Result;
 use sora_ir::model::{ConfigIr, TableModeIr, TypeIr};
 
 use crate::{
-    generator::{CodeGenerator, ensure_sora_runtime_format},
+    generator::{CodeGenerator, runtime_format_name},
     model::{LanguageBackend, TableNameParts, build_model},
     render::{ensure_dir, render_template, write_file},
     types::csharp_type_name,
@@ -16,16 +16,16 @@ pub struct CSharpCodeGenerator;
 
 impl CodeGenerator for CSharpCodeGenerator {
     fn generate(&self, ir: &ConfigIr, out_dir: &Path) -> Result<()> {
-        ensure_sora_runtime_format("csharp", ir.codegen.csharp.runtime_format)?;
         ensure_dir(out_dir)?;
         let backend = CSharpBackend;
         let model = build_model(ir, &backend)?;
+        let runtime_format = runtime_format_name(ir.codegen.csharp.runtime_format);
 
         for item in &model.enums {
             let rendered = render_template(
                 "csharp",
                 "enum.cs.j2",
-                context! { namespace => &model.package, enum => item },
+                context! { namespace => &model.package, enum => item, runtime_format => runtime_format },
             )?;
             write_file(&out_dir.join(format!("{}.cs", item.name)), rendered)?;
         }
@@ -34,7 +34,7 @@ impl CodeGenerator for CSharpCodeGenerator {
             let rendered = render_template(
                 "csharp",
                 "record.cs.j2",
-                context! { namespace => &model.package, record => record },
+                context! { namespace => &model.package, record => record, runtime_format => runtime_format },
             )?;
             write_file(
                 &out_dir.join(format!("{}.cs", record.pascal_name)),
@@ -46,7 +46,7 @@ impl CodeGenerator for CSharpCodeGenerator {
             let rendered = render_template(
                 "csharp",
                 "union.cs.j2",
-                context! { namespace => &model.package, union => union },
+                context! { namespace => &model.package, union => union, runtime_format => runtime_format },
             )?;
             write_file(&out_dir.join(format!("{}.cs", union.pascal_name)), rendered)?;
         }
@@ -54,11 +54,15 @@ impl CodeGenerator for CSharpCodeGenerator {
         let rendered = render_template(
             "csharp",
             "runtime.cs.j2",
-            context! { namespace => &model.package },
+            context! { namespace => &model.package, runtime_format => runtime_format },
         )?;
         write_file(&out_dir.join("Runtime.cs"), rendered)?;
 
-        let rendered = render_template("csharp", "config.cs.j2", context! { model => &model })?;
+        let rendered = render_template(
+            "csharp",
+            "config.cs.j2",
+            context! { model => &model, runtime_format => runtime_format },
+        )?;
         write_file(&out_dir.join("SoraConfig.cs"), rendered)
     }
 }
@@ -76,6 +80,10 @@ impl LanguageBackend for CSharpBackend {
 
     fn decode_expr(&self, ir: &ConfigIr, ty: &TypeIr) -> String {
         csharp_decode_expr(ir, ty)
+    }
+
+    fn value_decode_expr(&self, ir: &ConfigIr, ty: &TypeIr) -> String {
+        csharp_value_decode_expr(ir, ty, "__VALUE__")
     }
 
     fn row_type(&self, table: &TableNameParts<'_>) -> String {
@@ -129,6 +137,43 @@ fn csharp_decode_expr(ir: &ConfigIr, ty: &TypeIr) -> String {
             format!(
                 "reader.ReadOptional(() => {})",
                 csharp_decode_expr(ir, element)
+            )
+        }
+    }
+}
+
+fn csharp_value_decode_expr(ir: &ConfigIr, ty: &TypeIr, value: &str) -> String {
+    match ty {
+        TypeIr::Bool => format!("{value}.AsBool()"),
+        TypeIr::I32 => format!("{value}.AsInt32()"),
+        TypeIr::I64 => format!("{value}.AsInt64()"),
+        TypeIr::F32 => format!("{value}.AsFloat()"),
+        TypeIr::F64 => format!("{value}.AsDouble()"),
+        TypeIr::String => format!("{value}.AsString()"),
+        TypeIr::Enum(name) => format!("{name}Codec.Decode({value})"),
+        TypeIr::Struct(name) | TypeIr::Union(name) => format!("{name}.Decode({value})"),
+        TypeIr::List(element) | TypeIr::Array { element, .. } => {
+            format!(
+                "{value}.AsList(item => {})",
+                csharp_value_decode_expr(ir, element, "item")
+            )
+        }
+        TypeIr::Ref { table, field } => ir
+            .tables
+            .iter()
+            .find(|candidate| candidate.name == *table)
+            .and_then(|table| {
+                table
+                    .fields
+                    .iter()
+                    .find(|candidate| candidate.name == *field)
+            })
+            .map(|field| csharp_value_decode_expr(ir, &field.ty, value))
+            .unwrap_or_else(|| format!("{value}.AsInt32()")),
+        TypeIr::Optional(element) => {
+            format!(
+                "{value}.IsNull ? default : {}",
+                csharp_value_decode_expr(ir, element, value)
             )
         }
     }

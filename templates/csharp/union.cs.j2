@@ -28,4 +28,22 @@ public abstract record {{ union.pascal_name }}
             var value => throw new SoraReadException($"invalid union ordinal {value} for {{ union.pascal_name }}"),
         };
     }
+
+{%- if runtime_format != "sora" %}
+    internal static {{ union.pascal_name }} Decode(SoraValue value)
+    {
+        var obj = value.AsObject("{{ union.pascal_name }}");
+        return obj.Get("{{ union.tag }}").AsString() switch
+        {
+{%- for variant in union.variants %}
+            "{{ variant.name }}" => new {{ variant.name }}(
+{%- for field in variant.fields %}
+                {{ field.value_decode | replace("__VALUE__", "obj.Get(\"" ~ field.raw_name ~ "\")") }}{% if not loop.last %},{% endif %}
+{%- endfor %}
+            ),
+{%- endfor %}
+            var tag => throw new SoraReadException($"invalid union tag `{tag}` for {{ union.pascal_name }}"),
+        };
+    }
+{%- endif %}
 }

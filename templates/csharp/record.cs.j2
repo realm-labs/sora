@@ -18,4 +18,16 @@ public sealed record {{ record.pascal_name }}(
 {%- endfor %}
         );
     }
+
+{%- if runtime_format != "sora" %}
+    internal static {{ record.pascal_name }} Decode(SoraValue value)
+    {
+        var obj = value.AsObject("{{ record.pascal_name }}");
+        return new {{ record.pascal_name }}(
+{%- for field in record.fields %}
+            {{ field.value_decode | replace("__VALUE__", "obj.Get(\"" ~ field.raw_name ~ "\")") }}{% if not loop.last %},{% endif %}
+{%- endfor %}
+        );
+    }
+{%- endif %}
 }

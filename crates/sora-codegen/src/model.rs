@@ -94,6 +94,7 @@ pub struct CodegenField {
     pub name: String,
     pub type_name: String,
     pub decode: String,
+    pub value_decode: String,
     pub comment: Option<String>,
 }
 
@@ -101,6 +102,9 @@ pub trait LanguageBackend {
     fn field_name(&self, raw_name: &str) -> String;
     fn type_name(&self, ir: &ConfigIr, ty: &TypeIr) -> String;
     fn decode_expr(&self, ir: &ConfigIr, ty: &TypeIr) -> String;
+    fn value_decode_expr(&self, _ir: &ConfigIr, _ty: &TypeIr) -> String {
+        String::new()
+    }
     fn row_type(&self, table: &TableNameParts<'_>) -> String;
     fn container_type(
         &self,
@@ -368,6 +372,7 @@ fn build_field(ir: &ConfigIr, backend: &impl LanguageBackend, field: &FieldIr) -
         name: backend.field_name(&field.name),
         type_name: backend.type_name(ir, &field.ty),
         decode: backend.decode_expr(ir, &field.ty),
+        value_decode: backend.value_decode_expr(ir, &field.ty),
         comment: field.comment.clone(),
     }
 }

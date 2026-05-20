@@ -373,6 +373,37 @@ mod tests {
     }
 
     #[test]
+    fn csharp_supports_export_runtime_formats() {
+        for (runtime_format, parse_function) in [
+            (RuntimeFormatIr::Json, "ParseJson"),
+            (RuntimeFormatIr::Cbor, "ParseCbor"),
+            (RuntimeFormatIr::Protobuf, "ParseProtobuf"),
+        ] {
+            let mut ir = example_ir();
+            ir.codegen.csharp.runtime_format = runtime_format;
+            let base = temp_dir();
+            let csharp_out = base.join("csharp");
+
+            CSharpCodeGenerator.generate(&ir, &csharp_out).unwrap();
+
+            let runtime = std::fs::read_to_string(csharp_out.join("Runtime.cs")).unwrap();
+            let config = std::fs::read_to_string(csharp_out.join("SoraConfig.cs")).unwrap();
+            let item = std::fs::read_to_string(csharp_out.join("Item.cs")).unwrap();
+            let action = std::fs::read_to_string(csharp_out.join("Action.cs")).unwrap();
+
+            assert!(runtime.contains("internal sealed class SoraValueBundle"));
+            assert!(runtime.contains(parse_function));
+            assert!(config.contains(&format!("SoraValueBundle.{parse_function}(bytes)")));
+            assert!(item.contains("internal static Item Decode(SoraValue value)"));
+            assert!(item.contains("obj.Get(\"id\").AsInt32()"));
+            assert!(item.contains("ItemTypeCodec.Decode(obj.Get(\"item_type\"))"));
+            assert!(action.contains("internal static Action Decode(SoraValue value)"));
+
+            let _ = std::fs::remove_dir_all(base);
+        }
+    }
+
+    #[test]
     fn generates_csharp_java_and_go_files() {
         let mut ir = example_ir();
         ir.package = "com.sora.game_config".to_owned();

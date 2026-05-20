@@ -47,9 +47,13 @@ public sealed class {{ table.pascal_name }}Table : ISoraTable
 
     internal static {{ table.pascal_name }}Table Decode(SoraBundle bundle)
     {
+        return FromRows(bundle.DecodeTable<{{ table.row_type }}>("{{ table.name }}", {{ table.row_type }}.Decode));
+    }
+
+    internal static {{ table.pascal_name }}Table FromRows(List<{{ table.row_type }}> rows)
+    {
 {%- if table.mode == "map" and table.key_field_name %}
 {%- if table.unique_indexes or table.non_unique_indexes %}
-        var rows = bundle.DecodeTable<{{ table.row_type }}>("{{ table.name }}", {{ table.row_type }}.Decode);
         return new {{ table.pascal_name }}Table(
             SoraConfig.DecodeMapTable(rows, row => row.{{ table.key_field_name }}){% if table.unique_indexes or table.non_unique_indexes %},{% endif %}
 {%- for index in table.unique_indexes %}
@@ -60,13 +64,12 @@ public sealed class {{ table.pascal_name }}Table : ISoraTable
 {%- endfor %}
         );
 {%- else %}
-        return new {{ table.pascal_name }}Table(SoraConfig.DecodeMapTable(bundle.DecodeTable<{{ table.row_type }}>("{{ table.name }}", {{ table.row_type }}.Decode), row => row.{{ table.key_field_name }}));
+        return new {{ table.pascal_name }}Table(SoraConfig.DecodeMapTable(rows, row => row.{{ table.key_field_name }}));
 {%- endif %}
 {%- elif table.mode == "singleton" %}
-        return new {{ table.pascal_name }}Table(SoraConfig.RequireSingletonTable(bundle.DecodeTable<{{ table.row_type }}>("{{ table.name }}", {{ table.row_type }}.Decode), "{{ table.name }}"));
+        return new {{ table.pascal_name }}Table(SoraConfig.RequireSingletonTable(rows, "{{ table.name }}"));
 {%- else %}
 {%- if table.unique_indexes or table.non_unique_indexes %}
-        var rows = bundle.DecodeTable<{{ table.row_type }}>("{{ table.name }}", {{ table.row_type }}.Decode);
         return new {{ table.pascal_name }}Table(
             rows{% if table.unique_indexes or table.non_unique_indexes %},{% endif %}
 {%- for index in table.unique_indexes %}
@@ -77,7 +80,7 @@ public sealed class {{ table.pascal_name }}Table : ISoraTable
 {%- endfor %}
         );
 {%- else %}
-        return new {{ table.pascal_name }}Table(bundle.DecodeTable<{{ table.row_type }}>("{{ table.name }}", {{ table.row_type }}.Decode));
+        return new {{ table.pascal_name }}Table(rows);
 {%- endif %}
 {%- endif %}
     }
@@ -138,10 +141,22 @@ public sealed class SoraConfig
 
     public static SoraConfig FromBytes(byte[] bytes)
     {
+{%- if runtime_format == "sora" %}
         var bundle = SoraBundle.Parse(bytes);
+{%- elif runtime_format == "json" %}
+        var bundle = SoraValueBundle.ParseJson(bytes);
+{%- elif runtime_format == "cbor" %}
+        var bundle = SoraValueBundle.ParseCbor(bytes);
+{%- elif runtime_format == "protobuf" %}
+        var bundle = SoraValueBundle.ParseProtobuf(bytes);
+{%- endif %}
         var tables = new Dictionary<string, ISoraTable>({{ model.tables | length }});
 {%- for table in model.tables %}
+{%- if runtime_format == "sora" %}
         tables["{{ table.name }}"] = {{ table.pascal_name }}Table.Decode(bundle);
+{%- else %}
+        tables["{{ table.name }}"] = {{ table.pascal_name }}Table.FromRows(bundle.DecodeTable("{{ table.name }}", global::{{ model.package }}.{{ table.row_type }}.Decode));
+{%- endif %}
 {%- endfor %}
         return new SoraConfig(tables);
     }

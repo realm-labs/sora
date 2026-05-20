@@ -37,7 +37,11 @@ public sealed class ItemTable : ISoraTable
 
     internal static ItemTable Decode(SoraBundle bundle)
     {
-        var rows = bundle.DecodeTable<Item>("Item", Item.Decode);
+        return FromRows(bundle.DecodeTable<Item>("Item", Item.Decode));
+    }
+
+    internal static ItemTable FromRows(List<Item> rows)
+    {
         return new ItemTable(
             SoraConfig.DecodeMapTable(rows, row => row.Id),
             SoraConfig.DecodeUniqueIndex(rows, row => row.Name),
@@ -76,7 +80,12 @@ public sealed class SkillTable : ISoraTable
 
     internal static SkillTable Decode(SoraBundle bundle)
     {
-        return new SkillTable(SoraConfig.DecodeMapTable(bundle.DecodeTable<Skill>("Skill", Skill.Decode), row => row.Id));
+        return FromRows(bundle.DecodeTable<Skill>("Skill", Skill.Decode));
+    }
+
+    internal static SkillTable FromRows(List<Skill> rows)
+    {
+        return new SkillTable(SoraConfig.DecodeMapTable(rows, row => row.Id));
     }
 
     public Dictionary<int, Skill> Rows => rows;
@@ -102,7 +111,12 @@ public sealed class QuestTable : ISoraTable
 
     internal static QuestTable Decode(SoraBundle bundle)
     {
-        return new QuestTable(SoraConfig.DecodeMapTable(bundle.DecodeTable<Quest>("Quest", Quest.Decode), row => row.Id));
+        return FromRows(bundle.DecodeTable<Quest>("Quest", Quest.Decode));
+    }
+
+    internal static QuestTable FromRows(List<Quest> rows)
+    {
+        return new QuestTable(SoraConfig.DecodeMapTable(rows, row => row.Id));
     }
 
     public Dictionary<int, Quest> Rows => rows;
@@ -128,7 +142,12 @@ public sealed class QuestRewardTable : ISoraTable
 
     internal static QuestRewardTable Decode(SoraBundle bundle)
     {
-        return new QuestRewardTable(bundle.DecodeTable<QuestReward>("QuestReward", QuestReward.Decode));
+        return FromRows(bundle.DecodeTable<QuestReward>("QuestReward", QuestReward.Decode));
+    }
+
+    internal static QuestRewardTable FromRows(List<QuestReward> rows)
+    {
+        return new QuestRewardTable(rows);
     }
 
     public List<QuestReward> Rows => rows;
@@ -150,7 +169,12 @@ public sealed class GameSettingsTable : ISoraTable
 
     internal static GameSettingsTable Decode(SoraBundle bundle)
     {
-        return new GameSettingsTable(SoraConfig.RequireSingletonTable(bundle.DecodeTable<GameSettings>("GameSettings", GameSettings.Decode), "GameSettings"));
+        return FromRows(bundle.DecodeTable<GameSettings>("GameSettings", GameSettings.Decode));
+    }
+
+    internal static GameSettingsTable FromRows(List<GameSettings> rows)
+    {
+        return new GameSettingsTable(SoraConfig.RequireSingletonTable(rows, "GameSettings"));
     }
 
     public GameSettings Rows => rows;
@@ -172,7 +196,12 @@ public sealed class LocalizationTable : ISoraTable
 
     internal static LocalizationTable Decode(SoraBundle bundle)
     {
-        return new LocalizationTable(SoraConfig.DecodeMapTable(bundle.DecodeTable<Localization>("Localization", Localization.Decode), row => row.Key));
+        return FromRows(bundle.DecodeTable<Localization>("Localization", Localization.Decode));
+    }
+
+    internal static LocalizationTable FromRows(List<Localization> rows)
+    {
+        return new LocalizationTable(SoraConfig.DecodeMapTable(rows, row => row.Key));
     }
 
     public Dictionary<string, Localization> Rows => rows;
@@ -198,7 +227,12 @@ public sealed class LevelExpTable : ISoraTable
 
     internal static LevelExpTable Decode(SoraBundle bundle)
     {
-        return new LevelExpTable(SoraConfig.DecodeMapTable(bundle.DecodeTable<LevelExp>("LevelExp", LevelExp.Decode), row => row.Level));
+        return FromRows(bundle.DecodeTable<LevelExp>("LevelExp", LevelExp.Decode));
+    }
+
+    internal static LevelExpTable FromRows(List<LevelExp> rows)
+    {
+        return new LevelExpTable(SoraConfig.DecodeMapTable(rows, row => row.Level));
     }
 
     public Dictionary<int, LevelExp> Rows => rows;
@@ -224,7 +258,12 @@ public sealed class CharacterTable : ISoraTable
 
     internal static CharacterTable Decode(SoraBundle bundle)
     {
-        return new CharacterTable(SoraConfig.DecodeMapTable(bundle.DecodeTable<Character>("Character", Character.Decode), row => row.Id));
+        return FromRows(bundle.DecodeTable<Character>("Character", Character.Decode));
+    }
+
+    internal static CharacterTable FromRows(List<Character> rows)
+    {
+        return new CharacterTable(SoraConfig.DecodeMapTable(rows, row => row.Id));
     }
 
     public Dictionary<int, Character> Rows => rows;
@@ -250,7 +289,12 @@ public sealed class CharacterSkillTable : ISoraTable
 
     internal static CharacterSkillTable Decode(SoraBundle bundle)
     {
-        return new CharacterSkillTable(bundle.DecodeTable<CharacterSkill>("CharacterSkill", CharacterSkill.Decode));
+        return FromRows(bundle.DecodeTable<CharacterSkill>("CharacterSkill", CharacterSkill.Decode));
+    }
+
+    internal static CharacterSkillTable FromRows(List<CharacterSkill> rows)
+    {
+        return new CharacterSkillTable(rows);
     }
 
     public List<CharacterSkill> Rows => rows;
@@ -272,7 +316,12 @@ public sealed class BuffTable : ISoraTable
 
     internal static BuffTable Decode(SoraBundle bundle)
     {
-        return new BuffTable(SoraConfig.DecodeMapTable(bundle.DecodeTable<Buff>("Buff", Buff.Decode), row => row.Id));
+        return FromRows(bundle.DecodeTable<Buff>("Buff", Buff.Decode));
+    }
+
+    internal static BuffTable FromRows(List<Buff> rows)
+    {
+        return new BuffTable(SoraConfig.DecodeMapTable(rows, row => row.Id));
     }
 
     public Dictionary<int, Buff> Rows => rows;
@@ -298,7 +347,12 @@ public sealed class DropGroupTable : ISoraTable
 
     internal static DropGroupTable Decode(SoraBundle bundle)
     {
-        return new DropGroupTable(SoraConfig.DecodeMapTable(bundle.DecodeTable<DropGroup>("DropGroup", DropGroup.Decode), row => row.Id));
+        return FromRows(bundle.DecodeTable<DropGroup>("DropGroup", DropGroup.Decode));
+    }
+
+    internal static DropGroupTable FromRows(List<DropGroup> rows)
+    {
+        return new DropGroupTable(SoraConfig.DecodeMapTable(rows, row => row.Id));
     }
 
     public Dictionary<int, DropGroup> Rows => rows;
@@ -324,7 +378,12 @@ public sealed class DropEntryTable : ISoraTable
 
     internal static DropEntryTable Decode(SoraBundle bundle)
     {
-        return new DropEntryTable(bundle.DecodeTable<DropEntry>("DropEntry", DropEntry.Decode));
+        return FromRows(bundle.DecodeTable<DropEntry>("DropEntry", DropEntry.Decode));
+    }
+
+    internal static DropEntryTable FromRows(List<DropEntry> rows)
+    {
+        return new DropEntryTable(rows);
     }
 
     public List<DropEntry> Rows => rows;
@@ -346,7 +405,12 @@ public sealed class MonsterTable : ISoraTable
 
     internal static MonsterTable Decode(SoraBundle bundle)
     {
-        return new MonsterTable(SoraConfig.DecodeMapTable(bundle.DecodeTable<Monster>("Monster", Monster.Decode), row => row.Id));
+        return FromRows(bundle.DecodeTable<Monster>("Monster", Monster.Decode));
+    }
+
+    internal static MonsterTable FromRows(List<Monster> rows)
+    {
+        return new MonsterTable(SoraConfig.DecodeMapTable(rows, row => row.Id));
     }
 
     public Dictionary<int, Monster> Rows => rows;
@@ -372,7 +436,12 @@ public sealed class StageTable : ISoraTable
 
     internal static StageTable Decode(SoraBundle bundle)
     {
-        return new StageTable(SoraConfig.DecodeMapTable(bundle.DecodeTable<Stage>("Stage", Stage.Decode), row => row.Id));
+        return FromRows(bundle.DecodeTable<Stage>("Stage", Stage.Decode));
+    }
+
+    internal static StageTable FromRows(List<Stage> rows)
+    {
+        return new StageTable(SoraConfig.DecodeMapTable(rows, row => row.Id));
     }
 
     public Dictionary<int, Stage> Rows => rows;
@@ -398,7 +467,12 @@ public sealed class StageRewardTable : ISoraTable
 
     internal static StageRewardTable Decode(SoraBundle bundle)
     {
-        return new StageRewardTable(bundle.DecodeTable<StageReward>("StageReward", StageReward.Decode));
+        return FromRows(bundle.DecodeTable<StageReward>("StageReward", StageReward.Decode));
+    }
+
+    internal static StageRewardTable FromRows(List<StageReward> rows)
+    {
+        return new StageRewardTable(rows);
     }
 
     public List<StageReward> Rows => rows;
@@ -420,7 +494,12 @@ public sealed class DungeonTable : ISoraTable
 
     internal static DungeonTable Decode(SoraBundle bundle)
     {
-        return new DungeonTable(SoraConfig.DecodeMapTable(bundle.DecodeTable<Dungeon>("Dungeon", Dungeon.Decode), row => row.Id));
+        return FromRows(bundle.DecodeTable<Dungeon>("Dungeon", Dungeon.Decode));
+    }
+
+    internal static DungeonTable FromRows(List<Dungeon> rows)
+    {
+        return new DungeonTable(SoraConfig.DecodeMapTable(rows, row => row.Id));
     }
 
     public Dictionary<int, Dungeon> Rows => rows;
@@ -446,7 +525,12 @@ public sealed class ShopTable : ISoraTable
 
     internal static ShopTable Decode(SoraBundle bundle)
     {
-        return new ShopTable(SoraConfig.DecodeMapTable(bundle.DecodeTable<Shop>("Shop", Shop.Decode), row => row.Id));
+        return FromRows(bundle.DecodeTable<Shop>("Shop", Shop.Decode));
+    }
+
+    internal static ShopTable FromRows(List<Shop> rows)
+    {
+        return new ShopTable(SoraConfig.DecodeMapTable(rows, row => row.Id));
     }
 
     public Dictionary<int, Shop> Rows => rows;
@@ -472,7 +556,12 @@ public sealed class ShopItemTable : ISoraTable
 
     internal static ShopItemTable Decode(SoraBundle bundle)
     {
-        return new ShopItemTable(bundle.DecodeTable<ShopItem>("ShopItem", ShopItem.Decode));
+        return FromRows(bundle.DecodeTable<ShopItem>("ShopItem", ShopItem.Decode));
+    }
+
+    internal static ShopItemTable FromRows(List<ShopItem> rows)
+    {
+        return new ShopItemTable(rows);
     }
 
     public List<ShopItem> Rows => rows;
@@ -494,7 +583,12 @@ public sealed class RecipeTable : ISoraTable
 
     internal static RecipeTable Decode(SoraBundle bundle)
     {
-        return new RecipeTable(SoraConfig.DecodeMapTable(bundle.DecodeTable<Recipe>("Recipe", Recipe.Decode), row => row.Id));
+        return FromRows(bundle.DecodeTable<Recipe>("Recipe", Recipe.Decode));
+    }
+
+    internal static RecipeTable FromRows(List<Recipe> rows)
+    {
+        return new RecipeTable(SoraConfig.DecodeMapTable(rows, row => row.Id));
     }
 
     public Dictionary<int, Recipe> Rows => rows;
@@ -520,7 +614,12 @@ public sealed class GachaPoolTable : ISoraTable
 
     internal static GachaPoolTable Decode(SoraBundle bundle)
     {
-        return new GachaPoolTable(SoraConfig.DecodeMapTable(bundle.DecodeTable<GachaPool>("GachaPool", GachaPool.Decode), row => row.Id));
+        return FromRows(bundle.DecodeTable<GachaPool>("GachaPool", GachaPool.Decode));
+    }
+
+    internal static GachaPoolTable FromRows(List<GachaPool> rows)
+    {
+        return new GachaPoolTable(SoraConfig.DecodeMapTable(rows, row => row.Id));
     }
 
     public Dictionary<int, GachaPool> Rows => rows;
@@ -546,7 +645,12 @@ public sealed class GachaItemTable : ISoraTable
 
     internal static GachaItemTable Decode(SoraBundle bundle)
     {
-        return new GachaItemTable(bundle.DecodeTable<GachaItem>("GachaItem", GachaItem.Decode));
+        return FromRows(bundle.DecodeTable<GachaItem>("GachaItem", GachaItem.Decode));
+    }
+
+    internal static GachaItemTable FromRows(List<GachaItem> rows)
+    {
+        return new GachaItemTable(rows);
     }
 
     public List<GachaItem> Rows => rows;
@@ -568,7 +672,12 @@ public sealed class EquipmentSetTable : ISoraTable
 
     internal static EquipmentSetTable Decode(SoraBundle bundle)
     {
-        return new EquipmentSetTable(SoraConfig.DecodeMapTable(bundle.DecodeTable<EquipmentSet>("EquipmentSet", EquipmentSet.Decode), row => row.Id));
+        return FromRows(bundle.DecodeTable<EquipmentSet>("EquipmentSet", EquipmentSet.Decode));
+    }
+
+    internal static EquipmentSetTable FromRows(List<EquipmentSet> rows)
+    {
+        return new EquipmentSetTable(SoraConfig.DecodeMapTable(rows, row => row.Id));
     }
 
     public Dictionary<int, EquipmentSet> Rows => rows;
@@ -594,7 +703,12 @@ public sealed class AchievementTable : ISoraTable
 
     internal static AchievementTable Decode(SoraBundle bundle)
     {
-        return new AchievementTable(SoraConfig.DecodeMapTable(bundle.DecodeTable<Achievement>("Achievement", Achievement.Decode), row => row.Id));
+        return FromRows(bundle.DecodeTable<Achievement>("Achievement", Achievement.Decode));
+    }
+
+    internal static AchievementTable FromRows(List<Achievement> rows)
+    {
+        return new AchievementTable(SoraConfig.DecodeMapTable(rows, row => row.Id));
     }
 
     public Dictionary<int, Achievement> Rows => rows;
@@ -620,7 +734,12 @@ public sealed class VipLevelTable : ISoraTable
 
     internal static VipLevelTable Decode(SoraBundle bundle)
     {
-        return new VipLevelTable(SoraConfig.DecodeMapTable(bundle.DecodeTable<VipLevel>("VipLevel", VipLevel.Decode), row => row.Level));
+        return FromRows(bundle.DecodeTable<VipLevel>("VipLevel", VipLevel.Decode));
+    }
+
+    internal static VipLevelTable FromRows(List<VipLevel> rows)
+    {
+        return new VipLevelTable(SoraConfig.DecodeMapTable(rows, row => row.Level));
     }
 
     public Dictionary<int, VipLevel> Rows => rows;
@@ -646,7 +765,12 @@ public sealed class MailTemplateTable : ISoraTable
 
     internal static MailTemplateTable Decode(SoraBundle bundle)
     {
-        return new MailTemplateTable(SoraConfig.DecodeMapTable(bundle.DecodeTable<MailTemplate>("MailTemplate", MailTemplate.Decode), row => row.Id));
+        return FromRows(bundle.DecodeTable<MailTemplate>("MailTemplate", MailTemplate.Decode));
+    }
+
+    internal static MailTemplateTable FromRows(List<MailTemplate> rows)
+    {
+        return new MailTemplateTable(SoraConfig.DecodeMapTable(rows, row => row.Id));
     }
 
     public Dictionary<int, MailTemplate> Rows => rows;
@@ -672,7 +796,12 @@ public sealed class MailRewardTable : ISoraTable
 
     internal static MailRewardTable Decode(SoraBundle bundle)
     {
-        return new MailRewardTable(bundle.DecodeTable<MailReward>("MailReward", MailReward.Decode));
+        return FromRows(bundle.DecodeTable<MailReward>("MailReward", MailReward.Decode));
+    }
+
+    internal static MailRewardTable FromRows(List<MailReward> rows)
+    {
+        return new MailRewardTable(rows);
     }
 
     public List<MailReward> Rows => rows;
@@ -694,7 +823,12 @@ public sealed class DialogueTable : ISoraTable
 
     internal static DialogueTable Decode(SoraBundle bundle)
     {
-        return new DialogueTable(SoraConfig.DecodeMapTable(bundle.DecodeTable<Dialogue>("Dialogue", Dialogue.Decode), row => row.Id));
+        return FromRows(bundle.DecodeTable<Dialogue>("Dialogue", Dialogue.Decode));
+    }
+
+    internal static DialogueTable FromRows(List<Dialogue> rows)
+    {
+        return new DialogueTable(SoraConfig.DecodeMapTable(rows, row => row.Id));
     }
 
     public Dictionary<int, Dialogue> Rows => rows;
@@ -720,7 +854,12 @@ public sealed class EventRuleTable : ISoraTable
 
     internal static EventRuleTable Decode(SoraBundle bundle)
     {
-        return new EventRuleTable(SoraConfig.DecodeMapTable(bundle.DecodeTable<EventRule>("EventRule", EventRule.Decode), row => row.Id));
+        return FromRows(bundle.DecodeTable<EventRule>("EventRule", EventRule.Decode));
+    }
+
+    internal static EventRuleTable FromRows(List<EventRule> rows)
+    {
+        return new EventRuleTable(SoraConfig.DecodeMapTable(rows, row => row.Id));
     }
 
     public Dictionary<int, EventRule> Rows => rows;

@@ -21,4 +21,17 @@ internal static class {{ enum.name }}Codec
             var value => throw new SoraReadException($"invalid enum ordinal {value} for {{ enum.name }}"),
         };
     }
+
+{%- if runtime_format != "sora" %}
+    internal static {{ enum.name }} Decode(SoraValue value)
+    {
+        return value.AsString() switch
+        {
+{%- for value in enum.values %}
+            "{{ value }}" => {{ enum.name }}.{{ value }},
+{%- endfor %}
+            var name => throw new SoraReadException($"invalid enum value `{name}` for {{ enum.name }}"),
+        };
+    }
+{%- endif %}
 }
