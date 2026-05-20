@@ -36,4 +36,17 @@ format = "json-debug"
 out = "generated/debug-json"
 
 [codegen.rust]
+runtime_format = "sora"
 map_type = "fx_hash_map"
+
+[codegen.kotlin]
+runtime_format = "sora"
+
+[codegen.csharp]
+runtime_format = "sora"
+
+[codegen.java]
+runtime_format = "sora"
+
+[codegen.go]
+runtime_format = "sora"

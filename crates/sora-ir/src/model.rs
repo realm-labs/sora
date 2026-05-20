@@ -24,6 +24,10 @@ impl ConfigIr {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
 pub struct CodegenIr {
     pub rust: RustCodegenIr,
+    pub kotlin: LanguageCodegenIr,
+    pub csharp: LanguageCodegenIr,
+    pub java: LanguageCodegenIr,
+    pub go: LanguageCodegenIr,
 }
 
 impl CodegenIr {
@@ -34,15 +38,39 @@ impl CodegenIr {
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct RustCodegenIr {
+    pub runtime_format: RuntimeFormatIr,
     pub map_type: RustMapTypeIr,
 }
 
 impl Default for RustCodegenIr {
     fn default() -> Self {
         Self {
+            runtime_format: RuntimeFormatIr::Sora,
             map_type: RustMapTypeIr::Std,
         }
     }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct LanguageCodegenIr {
+    pub runtime_format: RuntimeFormatIr,
+}
+
+impl Default for LanguageCodegenIr {
+    fn default() -> Self {
+        Self {
+            runtime_format: RuntimeFormatIr::Sora,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
+pub enum RuntimeFormatIr {
+    #[default]
+    Sora,
+    Json,
+    Protobuf,
+    Cbor,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]

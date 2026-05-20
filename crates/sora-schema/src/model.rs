@@ -27,10 +27,21 @@ pub struct SchemaFile {
 pub struct CodegenSchema {
     #[serde(default)]
     pub rust: RustCodegenSchema,
+    #[serde(default)]
+    pub kotlin: LanguageCodegenSchema,
+    #[serde(default)]
+    pub csharp: LanguageCodegenSchema,
+    #[serde(default)]
+    pub java: LanguageCodegenSchema,
+    #[serde(default)]
+    pub go: LanguageCodegenSchema,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 pub struct RustCodegenSchema {
+    #[serde(default)]
+    pub runtime_format: RuntimeFormatSchema,
+
     #[serde(default)]
     pub map_type: RustMapTypeSchema,
 }
@@ -38,9 +49,34 @@ pub struct RustCodegenSchema {
 impl Default for RustCodegenSchema {
     fn default() -> Self {
         Self {
+            runtime_format: RuntimeFormatSchema::Sora,
             map_type: RustMapTypeSchema::Std,
         }
     }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
+pub struct LanguageCodegenSchema {
+    #[serde(default)]
+    pub runtime_format: RuntimeFormatSchema,
+}
+
+impl Default for LanguageCodegenSchema {
+    fn default() -> Self {
+        Self {
+            runtime_format: RuntimeFormatSchema::Sora,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, Default)]
+#[serde(rename_all = "snake_case")]
+pub enum RuntimeFormatSchema {
+    #[default]
+    Sora,
+    Json,
+    Protobuf,
+    Cbor,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, Default)]
@@ -242,11 +278,23 @@ type = "string"
 package = "game_config"
 
 [codegen.rust]
+runtime_format = "sora"
 map_type = "fx_hash_map"
+
+[codegen.kotlin]
+runtime_format = "sora"
 "#,
         )
         .expect("schema should parse");
 
+        assert_eq!(
+            schema.codegen.rust.runtime_format,
+            RuntimeFormatSchema::Sora
+        );
         assert_eq!(schema.codegen.rust.map_type, RustMapTypeSchema::FxHashMap);
+        assert_eq!(
+            schema.codegen.kotlin.runtime_format,
+            RuntimeFormatSchema::Sora
+        );
     }
 }

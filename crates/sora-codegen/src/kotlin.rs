@@ -6,7 +6,7 @@ use sora_diagnostics::Result;
 use sora_ir::model::{ConfigIr, TableModeIr, TypeIr};
 
 use crate::{
-    generator::CodeGenerator,
+    generator::{CodeGenerator, ensure_sora_runtime_format},
     model::{LanguageBackend, TableNameParts, build_model},
     render::{ensure_dir, render_template, write_file},
     types::kotlin_type_name,
@@ -16,6 +16,7 @@ pub struct KotlinCodeGenerator;
 
 impl CodeGenerator for KotlinCodeGenerator {
     fn generate(&self, ir: &ConfigIr, out_dir: &Path) -> Result<()> {
+        ensure_sora_runtime_format("kotlin", ir.codegen.kotlin.runtime_format)?;
         ensure_dir(out_dir)?;
         let backend = KotlinBackend;
         let model = build_model(ir, &backend)?;
@@ -170,7 +171,10 @@ mod tests {
         csharp::CSharpCodeGenerator, go::GoCodeGenerator, java::JavaCodeGenerator,
         rust::RustCodeGenerator,
     };
-    use sora_ir::{model::ConfigIr, normalize::normalize_schema};
+    use sora_ir::{
+        model::{ConfigIr, RuntimeFormatIr},
+        normalize::normalize_schema,
+    };
     use sora_schema::model::SchemaFile;
     use std::{
         path::PathBuf,
@@ -345,6 +349,25 @@ mod tests {
         assert!(rust_mod.contains("pub struct ItemTable"));
         assert!(rust_mod.contains("rows: SoraMap<i32, item::Item>"));
         assert!(rust_mod.contains("tables: SoraMap<&'static str, Box<dyn SoraTable>>"));
+
+        let _ = std::fs::remove_dir_all(base);
+    }
+
+    #[test]
+    fn runtime_format_must_be_supported_by_generator() {
+        let mut ir = example_ir();
+        ir.codegen.kotlin.runtime_format = RuntimeFormatIr::Json;
+        let base = temp_dir();
+
+        let error = KotlinCodeGenerator
+            .generate(&ir, &base.join("kotlin"))
+            .unwrap_err();
+
+        assert!(
+            error
+                .to_string()
+                .contains("kotlin codegen runtime_format `json` is not implemented yet")
+        );
 
         let _ = std::fs::remove_dir_all(base);
     }

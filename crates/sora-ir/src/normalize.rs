@@ -1,13 +1,15 @@
 use sora_diagnostics::{Result, SoraError};
 use sora_schema::model::{
-    CodegenSchema, FieldSchema, IndexSchema, RustMapTypeSchema, SchemaFile, TableModeSchema,
-    TableSchema, TableSourceSchema, UnionSchema, UnionVariantSchema,
+    CodegenSchema, FieldSchema, IndexSchema, LanguageCodegenSchema, RuntimeFormatSchema,
+    RustMapTypeSchema, SchemaFile, TableModeSchema, TableSchema, TableSourceSchema, UnionSchema,
+    UnionVariantSchema,
 };
 
 use crate::{
     model::{
-        AggregationIr, CodegenIr, ConfigIr, EnumIr, FieldIr, IndexIr, RustCodegenIr, RustMapTypeIr,
-        StructIr, TableIr, TableModeIr, TableSourceIr, TypeIr, UnionIr, UnionVariantIr,
+        AggregationIr, CodegenIr, ConfigIr, EnumIr, FieldIr, IndexIr, LanguageCodegenIr,
+        RuntimeFormatIr, RustCodegenIr, RustMapTypeIr, StructIr, TableIr, TableModeIr,
+        TableSourceIr, TypeIr, UnionIr, UnionVariantIr,
     },
     parse::parse_type,
 };
@@ -59,11 +61,35 @@ impl From<CodegenSchema> for CodegenIr {
     fn from(value: CodegenSchema) -> Self {
         Self {
             rust: RustCodegenIr {
+                runtime_format: RuntimeFormatIr::from(value.rust.runtime_format),
                 map_type: match value.rust.map_type {
                     RustMapTypeSchema::Std => RustMapTypeIr::Std,
                     RustMapTypeSchema::FxHashMap => RustMapTypeIr::FxHashMap,
                 },
             },
+            kotlin: LanguageCodegenIr::from(value.kotlin),
+            csharp: LanguageCodegenIr::from(value.csharp),
+            java: LanguageCodegenIr::from(value.java),
+            go: LanguageCodegenIr::from(value.go),
+        }
+    }
+}
+
+impl From<LanguageCodegenSchema> for LanguageCodegenIr {
+    fn from(value: LanguageCodegenSchema) -> Self {
+        Self {
+            runtime_format: RuntimeFormatIr::from(value.runtime_format),
+        }
+    }
+}
+
+impl From<RuntimeFormatSchema> for RuntimeFormatIr {
+    fn from(value: RuntimeFormatSchema) -> Self {
+        match value {
+            RuntimeFormatSchema::Sora => Self::Sora,
+            RuntimeFormatSchema::Json => Self::Json,
+            RuntimeFormatSchema::Protobuf => Self::Protobuf,
+            RuntimeFormatSchema::Cbor => Self::Cbor,
         }
     }
 }
@@ -336,7 +362,7 @@ fn validate_optional_non_empty(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::model::{TableModeIr, TypeIr};
+    use crate::model::{RuntimeFormatIr, TableModeIr, TypeIr};
 
     #[test]
     fn normalizes_schema() {
@@ -373,6 +399,8 @@ length = [1, 3]
 
         let ir = normalize_schema(schema).unwrap();
         assert_eq!(ir.package, "game_config");
+        assert_eq!(ir.codegen.rust.runtime_format, RuntimeFormatIr::Sora);
+        assert_eq!(ir.codegen.kotlin.runtime_format, RuntimeFormatIr::Sora);
         assert_eq!(ir.enums[0].name, "ItemType");
         assert_eq!(ir.tables[0].mode, TableModeIr::Map);
         assert!(ir.tables[0].fields[0].required);

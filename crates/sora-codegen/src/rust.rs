@@ -6,7 +6,7 @@ use sora_diagnostics::Result;
 use sora_ir::model::{ConfigIr, TableModeIr, TypeIr};
 
 use crate::{
-    generator::CodeGenerator,
+    generator::{CodeGenerator, ensure_sora_runtime_format},
     model::{LanguageBackend, TableNameParts, build_model},
     render::{ensure_dir, render_template, write_file},
     types::rust_type_name,
@@ -16,6 +16,7 @@ pub struct RustCodeGenerator;
 
 impl CodeGenerator for RustCodeGenerator {
     fn generate(&self, ir: &ConfigIr, out_dir: &Path) -> Result<()> {
+        ensure_sora_runtime_format("rust", ir.codegen.rust.runtime_format)?;
         ensure_dir(out_dir)?;
         let backend = RustBackend;
         let model = build_model(ir, &backend)?;
