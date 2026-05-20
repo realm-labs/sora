@@ -94,13 +94,13 @@ class SoraBundle private constructor(
                 when (kind) {
                     SECTION_KIND_MANIFEST -> {
                         manifestCount += 1
-                        if (name != "$manifest") {
+                        if (name != "\$manifest") {
                             throw SoraReadException("Sora manifest section must be named `\$manifest`")
                         }
                     }
                     SECTION_KIND_SCHEMA -> {
                         schemaCount += 1
-                        if (name != "$schema") {
+                        if (name != "\$schema") {
                             throw SoraReadException("Sora schema section must be named `\$schema`")
                         }
                     }
