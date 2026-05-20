@@ -84,13 +84,19 @@ impl TryFrom<FieldSchema> for FieldIr {
         };
 
         let ty = parse_type(&field.ty)?;
-        validate_collection_format(
-            &field.name,
-            &ty,
-            field.separator.as_deref(),
-            field.prefix.as_deref(),
-            field.suffix.as_deref(),
-        )?;
+        if aggregation.is_none() {
+            validate_collection_format(
+                &field.name,
+                &ty,
+                field.separator.as_deref(),
+                field.prefix.as_deref(),
+                field.suffix.as_deref(),
+            )?;
+        } else {
+            validate_optional_non_empty(&field.name, "separator", field.separator.as_deref())?;
+            validate_optional_non_empty(&field.name, "prefix", field.prefix.as_deref())?;
+            validate_optional_non_empty(&field.name, "suffix", field.suffix.as_deref())?;
+        }
 
         Ok(Self {
             name: field.name,
@@ -302,5 +308,46 @@ prefix = "["
             normalize_schema(scalar_prefix).unwrap_err(),
             SoraError::InvalidSchema(message) if message.contains("collection format metadata")
         ));
+    }
+
+    #[test]
+    fn aggregation_list_fields_do_not_need_separator_metadata() {
+        let schema: SchemaFile = toml::from_str(
+            r#"
+package = "game_config"
+
+[[structs]]
+name = "Reward"
+
+[[structs.fields]]
+name = "count"
+type = "i32"
+
+[[tables]]
+name = "Item"
+mode = "map"
+key = "id"
+
+[[tables.fields]]
+name = "id"
+type = "i32"
+
+[[tables.fields]]
+name = "rewards"
+type = "list<Reward>"
+source_table = "ItemReward"
+parent_key = "id"
+child_key = "item_id"
+
+[[tables]]
+name = "ItemReward"
+mode = "list"
+"#,
+        )
+        .unwrap();
+
+        let ir = normalize_schema(schema).unwrap();
+        assert!(ir.tables[0].fields[1].aggregation.is_some());
+        assert_eq!(ir.tables[0].fields[1].separator, None);
     }
 }

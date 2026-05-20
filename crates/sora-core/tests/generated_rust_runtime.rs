@@ -55,6 +55,19 @@ includes = ["schema/items.toml"]
 name = "ItemType"
 values = ["Weapon", "Armor", "Material", "Consumable"]
 
+[[structs]]
+name = "Reward"
+
+[[structs.fields]]
+name = "reward_item_id"
+type = "i32"
+required = true
+
+[[structs.fields]]
+name = "count"
+type = "i32"
+required = true
+
 [[tables]]
 name = "Item"
 mode = "map"
@@ -83,6 +96,42 @@ required = true
 name = "max_stack"
 type = "i32"
 required = true
+
+[[tables.fields]]
+name = "rewards"
+type = "list<Reward>"
+source_table = "ItemReward"
+parent_key = "id"
+child_key = "item_id"
+order_by = "seq"
+
+[[tables]]
+name = "ItemReward"
+mode = "list"
+
+[tables.source]
+format = "toml"
+file = "item_rewards.toml"
+
+[[tables.fields]]
+name = "item_id"
+type = "i32"
+required = true
+
+[[tables.fields]]
+name = "seq"
+type = "i32"
+required = true
+
+[[tables.fields]]
+name = "reward_item_id"
+type = "i32"
+required = true
+
+[[tables.fields]]
+name = "count"
+type = "i32"
+required = true
 "#,
     )
     .unwrap();
@@ -100,6 +149,23 @@ id = 1002
 name = "Magic Stone"
 item_type = "Material"
 max_stack = 999
+"#,
+    )
+    .unwrap();
+    fs::write(
+        data_dir.join("item_rewards.toml"),
+        r#"
+[[rows]]
+item_id = 1002
+seq = 2
+reward_item_id = 3002
+count = 5
+
+[[rows]]
+item_id = 1002
+seq = 1
+reward_item_id = 3001
+count = 2
 "#,
     )
     .unwrap();
@@ -138,6 +204,10 @@ mod tests {
         assert_eq!(item.name, "Magic Stone");
         assert_eq!(item.item_type, ItemType::Material);
         assert_eq!(item.max_stack, 999);
+        assert_eq!(item.rewards.len(), 2);
+        assert_eq!(item.rewards[0].reward_item_id, 3001);
+        assert_eq!(item.rewards[0].count, 2);
+        assert_eq!(item.rewards[1].reward_item_id, 3002);
     }
 }
 "#,

@@ -59,8 +59,12 @@ mod tests {
     use crate::rust::RustCodeGenerator;
     use sora_ir::{model::ConfigIr, normalize::normalize_schema};
     use sora_schema::model::SchemaFile;
-    use std::path::PathBuf;
-    use std::time::{SystemTime, UNIX_EPOCH};
+    use std::{
+        path::PathBuf,
+        sync::atomic::{AtomicU64, Ordering},
+    };
+
+    static TEMP_COUNTER: AtomicU64 = AtomicU64::new(0);
 
     #[test]
     fn generates_rust_and_kotlin_files() {
@@ -179,10 +183,7 @@ required = true
     }
 
     fn temp_dir() -> PathBuf {
-        let unique = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .unwrap()
-            .as_nanos();
+        let unique = TEMP_COUNTER.fetch_add(1, Ordering::Relaxed);
         std::env::temp_dir().join(format!("sora-codegen-test-{unique}"))
     }
 }

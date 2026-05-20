@@ -27,6 +27,7 @@ pub fn generate_code(
 pub fn export_data(input: &impl ProjectInput, format: &str, output: ExportOutput) -> Result<()> {
     let ir = load_ir(input)?;
     let data = input.load_data(&ir)?;
+    let data = sora_data::aggregate::materialize_aggregations(&ir, &data)?;
     sora_data::validate::validate_config_data(&ir, &data)?;
 
     let registry = ExporterRegistry::with_builtin_exporters();
