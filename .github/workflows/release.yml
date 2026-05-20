@@ -1,0 +1,104 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+permissions:
+  contents: write
+
+jobs:
+  create-release:
+    name: Create GitHub release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          gh release view "$TAG" >/dev/null 2>&1 || \
+            gh release create "$TAG" \
+              --title "$TAG" \
+              --notes "Sora $TAG release."
+
+  build:
+    name: Build ${{ matrix.package_suffix }}
+    needs: create-release
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            package_suffix: linux-x64
+            archive_ext: tar.gz
+            binary_name: sora
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            package_suffix: windows-x64
+            archive_ext: zip
+            binary_name: sora.exe
+          - os: macos-13
+            target: x86_64-apple-darwin
+            package_suffix: macos-x64
+            archive_ext: tar.gz
+            binary_name: sora
+          - os: macos-latest
+            target: aarch64-apple-darwin
+            package_suffix: macos-arm64
+            archive_ext: tar.gz
+            binary_name: sora
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - name: Build release binary
+        run: cargo build --release -p sora-cli --target ${{ matrix.target }}
+
+      - name: Package binary
+        shell: pwsh
+        env:
+          TARGET: ${{ matrix.target }}
+          PACKAGE_SUFFIX: ${{ matrix.package_suffix }}
+          ARCHIVE_EXT: ${{ matrix.archive_ext }}
+          BINARY_NAME: ${{ matrix.binary_name }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $packageName = "sora-$TAG-$PACKAGE_SUFFIX"
+          $packageDir = Join-Path "dist" $packageName
+          New-Item -ItemType Directory -Force -Path $packageDir | Out-Null
+
+          Copy-Item "target/$TARGET/release/$BINARY_NAME" "$packageDir/$BINARY_NAME"
+          Copy-Item "README.md" "$packageDir/README.md"
+
+          if ($ARCHIVE_EXT -eq "zip") {
+              $archive = "dist/$packageName.zip"
+              Compress-Archive -Path $packageDir -DestinationPath $archive -Force
+          } else {
+              $archive = "dist/$packageName.tar.gz"
+              tar -czf $archive -C "dist" $packageName
+          }
+
+          $hash = (Get-FileHash $archive -Algorithm SHA256).Hash.ToLowerInvariant()
+          $archiveName = Split-Path $archive -Leaf
+          Set-Content -Path "$archive.sha256" -Value "$hash  $archiveName"
+
+      - name: Upload release assets
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+          PACKAGE_SUFFIX: ${{ matrix.package_suffix }}
+          ARCHIVE_EXT: ${{ matrix.archive_ext }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $archive = "dist/sora-$TAG-$PACKAGE_SUFFIX.$ARCHIVE_EXT"
+          gh release upload $TAG $archive "$archive.sha256" --clobber

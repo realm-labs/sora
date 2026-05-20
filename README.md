@@ -14,6 +14,33 @@ Sora is in an early but runnable milestone. It currently supports TOML schemas, 
 - Data exporters are pluggable backends, not hardcoded pipeline stages.
 - Debug JSON is useful for inspection, but it is not special in the core architecture.
 
+## Installation
+
+Download the archive for your platform from the GitHub release page, unpack it, and place the `sora` binary on your `PATH`.
+
+Release asset names follow this pattern:
+
+- `sora-vX.Y.Z-windows-x64.zip`
+- `sora-vX.Y.Z-linux-x64.tar.gz`
+- `sora-vX.Y.Z-macos-x64.tar.gz`
+- `sora-vX.Y.Z-macos-arm64.tar.gz`
+
+Each release also publishes a `.sha256` checksum file next to every archive.
+
+For local development from a checkout:
+
+```bash
+cargo run -p sora-cli -- --version
+cargo install --path crates/sora-cli
+```
+
+Maintainers publish a release by pushing a semver tag:
+
+```bash
+git tag v0.1.0
+git push origin v0.1.0
+```
+
 ## Example Commands
 
 The preferred workflow is to declare build outputs in `project.toml` and run one command:
