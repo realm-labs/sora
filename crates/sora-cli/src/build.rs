@@ -284,10 +284,11 @@ impl BuildTarget {
             "go" => Ok(Self::Go),
             "typescript" | "ts" => Ok(Self::Typescript),
             "javascript" | "js" => Ok(Self::Javascript),
+            "erlang" | "erl" => Ok(Self::Erlang),
             "lua" => Ok(Self::Lua),
             "proto" => Ok(Self::Proto),
             _ => Err(format!(
-                "unsupported codegen target `{value}`; expected rust, kotlin, csharp, java, go, typescript, javascript, lua, or proto"
+                "unsupported codegen target `{value}`; expected rust, kotlin, csharp, java, go, typescript, javascript, erlang, lua, or proto"
             )),
         }
     }
@@ -301,6 +302,7 @@ impl BuildTarget {
             Self::Go => "go",
             Self::Typescript => "typescript",
             Self::Javascript => "javascript",
+            Self::Erlang => "erlang",
             Self::Lua => "lua",
             Self::Proto => "proto",
         }
@@ -317,6 +319,7 @@ impl From<BuildTarget> for CodegenTarget {
             BuildTarget::Go => Self::Go,
             BuildTarget::Typescript => Self::TypeScript,
             BuildTarget::Javascript => Self::JavaScript,
+            BuildTarget::Erlang => Self::Erlang,
             BuildTarget::Lua => Self::Lua,
             BuildTarget::Proto => Self::Proto,
         }
@@ -351,6 +354,7 @@ mod tests {
         assert!(base.join("generated/typescript/item.ts").exists());
         assert!(base.join("generated/javascript/item.js").exists());
         assert!(base.join("generated/javascript/item.d.ts").exists());
+        assert!(base.join("generated/erlang/item.erl").exists());
         assert!(base.join("generated/proto/sora_config.proto").exists());
         assert!(base.join("generated/config.json").exists());
         assert!(base.join("generated/config.pb").exists());
@@ -427,6 +431,10 @@ out = "generated/typescript"
 [[build.codegen]]
 target = "javascript"
 out = "generated/javascript"
+
+[[build.codegen]]
+target = "erlang"
+out = "generated/erlang"
 
 [[build.codegen]]
 target = "proto"

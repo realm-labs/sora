@@ -1,0 +1,99 @@
+-module(sora_config).
+
+-export([
+    from_binary/1,
+    tables/1
+{%- for table in model.tables %}
+    , {{ table.snake_name }}/1
+{%- if table.mode == "map" and table.key_field_name %}
+    , {{ table.snake_name }}_get/2
+    , {{ table.snake_name }}_rows/1
+{%- elif table.mode == "list" %}
+    , {{ table.snake_name }}_rows/1
+{%- endif %}
+{%- for index in table.unique_indexes %}
+    , {{ table.snake_name }}_get_{{ index.name }}/2
+{%- endfor %}
+{%- for index in table.non_unique_indexes %}
+    , {{ table.snake_name }}_find_{{ index.name }}/2
+{%- endfor %}
+{%- endfor %}
+]).
+
+-export_type([t/0]).
+
+-type t() :: map().
+
+-spec from_binary(binary()) -> t().
+from_binary(Bytes) ->
+    Bundle = sora_runtime:parse_bundle(Bytes),
+{%- for table in model.tables %}
+    {{ table.pascal_name }}Rows = sora_runtime:decode_table(Bundle, <<"{{ table.name }}">>, fun {{ table.snake_name }}:decode/1),
+{%- if table.mode == "map" and table.key_field_name %}
+    {{ table.pascal_name }} = sora_runtime:decode_map_table({{ table.pascal_name }}Rows, fun(Row) -> maps:get('{{ table.key_field_name }}', Row) end),
+{%- elif table.mode == "singleton" %}
+    {{ table.pascal_name }} = sora_runtime:require_singleton_table({{ table.pascal_name }}Rows, <<"{{ table.name }}">>),
+{%- else %}
+    {{ table.pascal_name }} = {{ table.pascal_name }}Rows,
+{%- endif %}
+{%- for index in table.unique_indexes %}
+    {{ table.pascal_name }}{{ index.pascal_name }} = sora_runtime:decode_unique_index({{ table.pascal_name }}Rows, fun(Row) -> maps:get('{{ index.field_name }}', Row) end),
+{%- endfor %}
+{%- for index in table.non_unique_indexes %}
+    {{ table.pascal_name }}{{ index.pascal_name }} = sora_runtime:decode_index({{ table.pascal_name }}Rows, fun(Row) -> maps:get('{{ index.field_name }}', Row) end),
+{%- endfor %}
+{%- endfor %}
+    {{ "#{" }}
+{%- for table in model.tables %}
+        '{{ table.snake_name }}' => {{ table.pascal_name }},
+{%- for index in table.unique_indexes %}
+        '{{ table.snake_name }}_{{ index.name }}' => {{ table.pascal_name }}{{ index.pascal_name }},
+{%- endfor %}
+{%- for index in table.non_unique_indexes %}
+        '{{ table.snake_name }}_{{ index.name }}' => {{ table.pascal_name }}{{ index.pascal_name }},
+{%- endfor %}
+{%- endfor %}
+        '__sora_end__' => true
+    }.
+
+-spec tables(t()) -> [term()].
+tables(Config) ->
+    [
+{%- for table in model.tables %}
+        {{ table.snake_name }}(Config){% if not loop.last %},{% endif %}
+{%- endfor %}
+    ].
+
+{%- for table in model.tables %}
+-spec {{ table.snake_name }}(t()) -> {{ table.container_type }}.
+{{ table.snake_name }}(Config) ->
+    maps:get('{{ table.snake_name }}', Config).
+
+{%- if table.mode == "map" and table.key_field_name %}
+-spec {{ table.snake_name }}_get({{ table.key_type }}, t()) -> {{ table.row_type }} | undefined.
+{{ table.snake_name }}_get(Key, Config) ->
+    maps:get(Key, {{ table.snake_name }}(Config), undefined).
+
+-spec {{ table.snake_name }}_rows(t()) -> {{ table.container_type }}.
+{{ table.snake_name }}_rows(Config) ->
+    {{ table.snake_name }}(Config).
+
+{%- elif table.mode == "list" %}
+-spec {{ table.snake_name }}_rows(t()) -> {{ table.container_type }}.
+{{ table.snake_name }}_rows(Config) ->
+    {{ table.snake_name }}(Config).
+
+{%- endif %}
+{%- for index in table.unique_indexes %}
+-spec {{ table.snake_name }}_get_{{ index.name }}({{ index.param_type }}, t()) -> {{ table.row_type }} | undefined.
+{{ table.snake_name }}_get_{{ index.name }}({{ index.param_var_name }}, Config) ->
+    maps:get({{ index.param_var_name }}, maps:get('{{ table.snake_name }}_{{ index.name }}', Config), undefined).
+
+{%- endfor %}
+{%- for index in table.non_unique_indexes %}
+-spec {{ table.snake_name }}_find_{{ index.name }}({{ index.param_type }}, t()) -> [{{ table.row_type }}].
+{{ table.snake_name }}_find_{{ index.name }}({{ index.param_var_name }}, Config) ->
+    maps:get({{ index.param_var_name }}, maps:get('{{ table.snake_name }}_{{ index.name }}', Config), []).
+
+{%- endfor %}
+{%- endfor %}

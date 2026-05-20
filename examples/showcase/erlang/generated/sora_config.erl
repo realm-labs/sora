@@ -1,0 +1,466 @@
+-module(sora_config).
+
+-export([
+    from_binary/1,
+    tables/1
+    , item/1
+    , item_get/2
+    , item_rows/1
+    , item_get_by_name/2
+    , item_find_by_item_type/2
+    , skill/1
+    , skill_get/2
+    , skill_rows/1
+    , quest/1
+    , quest_get/2
+    , quest_rows/1
+    , quest_reward/1
+    , quest_reward_rows/1
+    , game_settings/1
+    , localization/1
+    , localization_get/2
+    , localization_rows/1
+    , level_exp/1
+    , level_exp_get/2
+    , level_exp_rows/1
+    , character/1
+    , character_get/2
+    , character_rows/1
+    , character_skill/1
+    , character_skill_rows/1
+    , buff/1
+    , buff_get/2
+    , buff_rows/1
+    , drop_group/1
+    , drop_group_get/2
+    , drop_group_rows/1
+    , drop_entry/1
+    , drop_entry_rows/1
+    , monster/1
+    , monster_get/2
+    , monster_rows/1
+    , stage/1
+    , stage_get/2
+    , stage_rows/1
+    , stage_reward/1
+    , stage_reward_rows/1
+    , dungeon/1
+    , dungeon_get/2
+    , dungeon_rows/1
+    , shop/1
+    , shop_get/2
+    , shop_rows/1
+    , shop_item/1
+    , shop_item_rows/1
+    , recipe/1
+    , recipe_get/2
+    , recipe_rows/1
+    , gacha_pool/1
+    , gacha_pool_get/2
+    , gacha_pool_rows/1
+    , gacha_item/1
+    , gacha_item_rows/1
+    , equipment_set/1
+    , equipment_set_get/2
+    , equipment_set_rows/1
+    , achievement/1
+    , achievement_get/2
+    , achievement_rows/1
+    , vip_level/1
+    , vip_level_get/2
+    , vip_level_rows/1
+    , mail_template/1
+    , mail_template_get/2
+    , mail_template_rows/1
+    , mail_reward/1
+    , mail_reward_rows/1
+    , dialogue/1
+    , dialogue_get/2
+    , dialogue_rows/1
+    , event_rule/1
+    , event_rule_get/2
+    , event_rule_rows/1
+]).
+
+-export_type([t/0]).
+
+-type t() :: map().
+
+-spec from_binary(binary()) -> t().
+from_binary(Bytes) ->
+    Bundle = sora_runtime:parse_bundle(Bytes),
+    ItemRows = sora_runtime:decode_table(Bundle, <<"Item">>, fun item:decode/1),
+    Item = sora_runtime:decode_map_table(ItemRows, fun(Row) -> maps:get('id', Row) end),
+    ItemByName = sora_runtime:decode_unique_index(ItemRows, fun(Row) -> maps:get('name', Row) end),
+    ItemByItemType = sora_runtime:decode_index(ItemRows, fun(Row) -> maps:get('item_type', Row) end),
+    SkillRows = sora_runtime:decode_table(Bundle, <<"Skill">>, fun skill:decode/1),
+    Skill = sora_runtime:decode_map_table(SkillRows, fun(Row) -> maps:get('id', Row) end),
+    QuestRows = sora_runtime:decode_table(Bundle, <<"Quest">>, fun quest:decode/1),
+    Quest = sora_runtime:decode_map_table(QuestRows, fun(Row) -> maps:get('id', Row) end),
+    QuestRewardRows = sora_runtime:decode_table(Bundle, <<"QuestReward">>, fun quest_reward:decode/1),
+    QuestReward = QuestRewardRows,
+    GameSettingsRows = sora_runtime:decode_table(Bundle, <<"GameSettings">>, fun game_settings:decode/1),
+    GameSettings = sora_runtime:require_singleton_table(GameSettingsRows, <<"GameSettings">>),
+    LocalizationRows = sora_runtime:decode_table(Bundle, <<"Localization">>, fun localization:decode/1),
+    Localization = sora_runtime:decode_map_table(LocalizationRows, fun(Row) -> maps:get('key', Row) end),
+    LevelExpRows = sora_runtime:decode_table(Bundle, <<"LevelExp">>, fun level_exp:decode/1),
+    LevelExp = sora_runtime:decode_map_table(LevelExpRows, fun(Row) -> maps:get('level', Row) end),
+    CharacterRows = sora_runtime:decode_table(Bundle, <<"Character">>, fun character:decode/1),
+    Character = sora_runtime:decode_map_table(CharacterRows, fun(Row) -> maps:get('id', Row) end),
+    CharacterSkillRows = sora_runtime:decode_table(Bundle, <<"CharacterSkill">>, fun character_skill:decode/1),
+    CharacterSkill = CharacterSkillRows,
+    BuffRows = sora_runtime:decode_table(Bundle, <<"Buff">>, fun buff:decode/1),
+    Buff = sora_runtime:decode_map_table(BuffRows, fun(Row) -> maps:get('id', Row) end),
+    DropGroupRows = sora_runtime:decode_table(Bundle, <<"DropGroup">>, fun drop_group:decode/1),
+    DropGroup = sora_runtime:decode_map_table(DropGroupRows, fun(Row) -> maps:get('id', Row) end),
+    DropEntryRows = sora_runtime:decode_table(Bundle, <<"DropEntry">>, fun drop_entry:decode/1),
+    DropEntry = DropEntryRows,
+    MonsterRows = sora_runtime:decode_table(Bundle, <<"Monster">>, fun monster:decode/1),
+    Monster = sora_runtime:decode_map_table(MonsterRows, fun(Row) -> maps:get('id', Row) end),
+    StageRows = sora_runtime:decode_table(Bundle, <<"Stage">>, fun stage:decode/1),
+    Stage = sora_runtime:decode_map_table(StageRows, fun(Row) -> maps:get('id', Row) end),
+    StageRewardRows = sora_runtime:decode_table(Bundle, <<"StageReward">>, fun stage_reward:decode/1),
+    StageReward = StageRewardRows,
+    DungeonRows = sora_runtime:decode_table(Bundle, <<"Dungeon">>, fun dungeon:decode/1),
+    Dungeon = sora_runtime:decode_map_table(DungeonRows, fun(Row) -> maps:get('id', Row) end),
+    ShopRows = sora_runtime:decode_table(Bundle, <<"Shop">>, fun shop:decode/1),
+    Shop = sora_runtime:decode_map_table(ShopRows, fun(Row) -> maps:get('id', Row) end),
+    ShopItemRows = sora_runtime:decode_table(Bundle, <<"ShopItem">>, fun shop_item:decode/1),
+    ShopItem = ShopItemRows,
+    RecipeRows = sora_runtime:decode_table(Bundle, <<"Recipe">>, fun recipe:decode/1),
+    Recipe = sora_runtime:decode_map_table(RecipeRows, fun(Row) -> maps:get('id', Row) end),
+    GachaPoolRows = sora_runtime:decode_table(Bundle, <<"GachaPool">>, fun gacha_pool:decode/1),
+    GachaPool = sora_runtime:decode_map_table(GachaPoolRows, fun(Row) -> maps:get('id', Row) end),
+    GachaItemRows = sora_runtime:decode_table(Bundle, <<"GachaItem">>, fun gacha_item:decode/1),
+    GachaItem = GachaItemRows,
+    EquipmentSetRows = sora_runtime:decode_table(Bundle, <<"EquipmentSet">>, fun equipment_set:decode/1),
+    EquipmentSet = sora_runtime:decode_map_table(EquipmentSetRows, fun(Row) -> maps:get('id', Row) end),
+    AchievementRows = sora_runtime:decode_table(Bundle, <<"Achievement">>, fun achievement:decode/1),
+    Achievement = sora_runtime:decode_map_table(AchievementRows, fun(Row) -> maps:get('id', Row) end),
+    VipLevelRows = sora_runtime:decode_table(Bundle, <<"VipLevel">>, fun vip_level:decode/1),
+    VipLevel = sora_runtime:decode_map_table(VipLevelRows, fun(Row) -> maps:get('level', Row) end),
+    MailTemplateRows = sora_runtime:decode_table(Bundle, <<"MailTemplate">>, fun mail_template:decode/1),
+    MailTemplate = sora_runtime:decode_map_table(MailTemplateRows, fun(Row) -> maps:get('id', Row) end),
+    MailRewardRows = sora_runtime:decode_table(Bundle, <<"MailReward">>, fun mail_reward:decode/1),
+    MailReward = MailRewardRows,
+    DialogueRows = sora_runtime:decode_table(Bundle, <<"Dialogue">>, fun dialogue:decode/1),
+    Dialogue = sora_runtime:decode_map_table(DialogueRows, fun(Row) -> maps:get('id', Row) end),
+    EventRuleRows = sora_runtime:decode_table(Bundle, <<"EventRule">>, fun event_rule:decode/1),
+    EventRule = sora_runtime:decode_map_table(EventRuleRows, fun(Row) -> maps:get('id', Row) end),
+    #{
+        'item' => Item,
+        'item_by_name' => ItemByName,
+        'item_by_item_type' => ItemByItemType,
+        'skill' => Skill,
+        'quest' => Quest,
+        'quest_reward' => QuestReward,
+        'game_settings' => GameSettings,
+        'localization' => Localization,
+        'level_exp' => LevelExp,
+        'character' => Character,
+        'character_skill' => CharacterSkill,
+        'buff' => Buff,
+        'drop_group' => DropGroup,
+        'drop_entry' => DropEntry,
+        'monster' => Monster,
+        'stage' => Stage,
+        'stage_reward' => StageReward,
+        'dungeon' => Dungeon,
+        'shop' => Shop,
+        'shop_item' => ShopItem,
+        'recipe' => Recipe,
+        'gacha_pool' => GachaPool,
+        'gacha_item' => GachaItem,
+        'equipment_set' => EquipmentSet,
+        'achievement' => Achievement,
+        'vip_level' => VipLevel,
+        'mail_template' => MailTemplate,
+        'mail_reward' => MailReward,
+        'dialogue' => Dialogue,
+        'event_rule' => EventRule,
+        '__sora_end__' => true
+    }.
+
+-spec tables(t()) -> [term()].
+tables(Config) ->
+    [
+        item(Config),
+        skill(Config),
+        quest(Config),
+        quest_reward(Config),
+        game_settings(Config),
+        localization(Config),
+        level_exp(Config),
+        character(Config),
+        character_skill(Config),
+        buff(Config),
+        drop_group(Config),
+        drop_entry(Config),
+        monster(Config),
+        stage(Config),
+        stage_reward(Config),
+        dungeon(Config),
+        shop(Config),
+        shop_item(Config),
+        recipe(Config),
+        gacha_pool(Config),
+        gacha_item(Config),
+        equipment_set(Config),
+        achievement(Config),
+        vip_level(Config),
+        mail_template(Config),
+        mail_reward(Config),
+        dialogue(Config),
+        event_rule(Config)
+    ].
+-spec item(t()) -> #{integer() => item:t()}.
+item(Config) ->
+    maps:get('item', Config).
+-spec item_get(integer(), t()) -> item:t() | undefined.
+item_get(Key, Config) ->
+    maps:get(Key, item(Config), undefined).
+
+-spec item_rows(t()) -> #{integer() => item:t()}.
+item_rows(Config) ->
+    item(Config).
+-spec item_get_by_name(binary(), t()) -> item:t() | undefined.
+item_get_by_name(Name, Config) ->
+    maps:get(Name, maps:get('item_by_name', Config), undefined).
+-spec item_find_by_item_type(item_type:t(), t()) -> [item:t()].
+item_find_by_item_type(ItemType, Config) ->
+    maps:get(ItemType, maps:get('item_by_item_type', Config), []).
+-spec skill(t()) -> #{integer() => skill:t()}.
+skill(Config) ->
+    maps:get('skill', Config).
+-spec skill_get(integer(), t()) -> skill:t() | undefined.
+skill_get(Key, Config) ->
+    maps:get(Key, skill(Config), undefined).
+
+-spec skill_rows(t()) -> #{integer() => skill:t()}.
+skill_rows(Config) ->
+    skill(Config).
+-spec quest(t()) -> #{integer() => quest:t()}.
+quest(Config) ->
+    maps:get('quest', Config).
+-spec quest_get(integer(), t()) -> quest:t() | undefined.
+quest_get(Key, Config) ->
+    maps:get(Key, quest(Config), undefined).
+
+-spec quest_rows(t()) -> #{integer() => quest:t()}.
+quest_rows(Config) ->
+    quest(Config).
+-spec quest_reward(t()) -> [quest_reward:t()].
+quest_reward(Config) ->
+    maps:get('quest_reward', Config).
+-spec quest_reward_rows(t()) -> [quest_reward:t()].
+quest_reward_rows(Config) ->
+    quest_reward(Config).
+-spec game_settings(t()) -> game_settings:t().
+game_settings(Config) ->
+    maps:get('game_settings', Config).
+-spec localization(t()) -> #{binary() => localization:t()}.
+localization(Config) ->
+    maps:get('localization', Config).
+-spec localization_get(binary(), t()) -> localization:t() | undefined.
+localization_get(Key, Config) ->
+    maps:get(Key, localization(Config), undefined).
+
+-spec localization_rows(t()) -> #{binary() => localization:t()}.
+localization_rows(Config) ->
+    localization(Config).
+-spec level_exp(t()) -> #{integer() => level_exp:t()}.
+level_exp(Config) ->
+    maps:get('level_exp', Config).
+-spec level_exp_get(integer(), t()) -> level_exp:t() | undefined.
+level_exp_get(Key, Config) ->
+    maps:get(Key, level_exp(Config), undefined).
+
+-spec level_exp_rows(t()) -> #{integer() => level_exp:t()}.
+level_exp_rows(Config) ->
+    level_exp(Config).
+-spec character(t()) -> #{integer() => character:t()}.
+character(Config) ->
+    maps:get('character', Config).
+-spec character_get(integer(), t()) -> character:t() | undefined.
+character_get(Key, Config) ->
+    maps:get(Key, character(Config), undefined).
+
+-spec character_rows(t()) -> #{integer() => character:t()}.
+character_rows(Config) ->
+    character(Config).
+-spec character_skill(t()) -> [character_skill:t()].
+character_skill(Config) ->
+    maps:get('character_skill', Config).
+-spec character_skill_rows(t()) -> [character_skill:t()].
+character_skill_rows(Config) ->
+    character_skill(Config).
+-spec buff(t()) -> #{integer() => buff:t()}.
+buff(Config) ->
+    maps:get('buff', Config).
+-spec buff_get(integer(), t()) -> buff:t() | undefined.
+buff_get(Key, Config) ->
+    maps:get(Key, buff(Config), undefined).
+
+-spec buff_rows(t()) -> #{integer() => buff:t()}.
+buff_rows(Config) ->
+    buff(Config).
+-spec drop_group(t()) -> #{integer() => drop_group:t()}.
+drop_group(Config) ->
+    maps:get('drop_group', Config).
+-spec drop_group_get(integer(), t()) -> drop_group:t() | undefined.
+drop_group_get(Key, Config) ->
+    maps:get(Key, drop_group(Config), undefined).
+
+-spec drop_group_rows(t()) -> #{integer() => drop_group:t()}.
+drop_group_rows(Config) ->
+    drop_group(Config).
+-spec drop_entry(t()) -> [drop_entry:t()].
+drop_entry(Config) ->
+    maps:get('drop_entry', Config).
+-spec drop_entry_rows(t()) -> [drop_entry:t()].
+drop_entry_rows(Config) ->
+    drop_entry(Config).
+-spec monster(t()) -> #{integer() => monster:t()}.
+monster(Config) ->
+    maps:get('monster', Config).
+-spec monster_get(integer(), t()) -> monster:t() | undefined.
+monster_get(Key, Config) ->
+    maps:get(Key, monster(Config), undefined).
+
+-spec monster_rows(t()) -> #{integer() => monster:t()}.
+monster_rows(Config) ->
+    monster(Config).
+-spec stage(t()) -> #{integer() => stage:t()}.
+stage(Config) ->
+    maps:get('stage', Config).
+-spec stage_get(integer(), t()) -> stage:t() | undefined.
+stage_get(Key, Config) ->
+    maps:get(Key, stage(Config), undefined).
+
+-spec stage_rows(t()) -> #{integer() => stage:t()}.
+stage_rows(Config) ->
+    stage(Config).
+-spec stage_reward(t()) -> [stage_reward:t()].
+stage_reward(Config) ->
+    maps:get('stage_reward', Config).
+-spec stage_reward_rows(t()) -> [stage_reward:t()].
+stage_reward_rows(Config) ->
+    stage_reward(Config).
+-spec dungeon(t()) -> #{integer() => dungeon:t()}.
+dungeon(Config) ->
+    maps:get('dungeon', Config).
+-spec dungeon_get(integer(), t()) -> dungeon:t() | undefined.
+dungeon_get(Key, Config) ->
+    maps:get(Key, dungeon(Config), undefined).
+
+-spec dungeon_rows(t()) -> #{integer() => dungeon:t()}.
+dungeon_rows(Config) ->
+    dungeon(Config).
+-spec shop(t()) -> #{integer() => shop:t()}.
+shop(Config) ->
+    maps:get('shop', Config).
+-spec shop_get(integer(), t()) -> shop:t() | undefined.
+shop_get(Key, Config) ->
+    maps:get(Key, shop(Config), undefined).
+
+-spec shop_rows(t()) -> #{integer() => shop:t()}.
+shop_rows(Config) ->
+    shop(Config).
+-spec shop_item(t()) -> [shop_item:t()].
+shop_item(Config) ->
+    maps:get('shop_item', Config).
+-spec shop_item_rows(t()) -> [shop_item:t()].
+shop_item_rows(Config) ->
+    shop_item(Config).
+-spec recipe(t()) -> #{integer() => recipe:t()}.
+recipe(Config) ->
+    maps:get('recipe', Config).
+-spec recipe_get(integer(), t()) -> recipe:t() | undefined.
+recipe_get(Key, Config) ->
+    maps:get(Key, recipe(Config), undefined).
+
+-spec recipe_rows(t()) -> #{integer() => recipe:t()}.
+recipe_rows(Config) ->
+    recipe(Config).
+-spec gacha_pool(t()) -> #{integer() => gacha_pool:t()}.
+gacha_pool(Config) ->
+    maps:get('gacha_pool', Config).
+-spec gacha_pool_get(integer(), t()) -> gacha_pool:t() | undefined.
+gacha_pool_get(Key, Config) ->
+    maps:get(Key, gacha_pool(Config), undefined).
+
+-spec gacha_pool_rows(t()) -> #{integer() => gacha_pool:t()}.
+gacha_pool_rows(Config) ->
+    gacha_pool(Config).
+-spec gacha_item(t()) -> [gacha_item:t()].
+gacha_item(Config) ->
+    maps:get('gacha_item', Config).
+-spec gacha_item_rows(t()) -> [gacha_item:t()].
+gacha_item_rows(Config) ->
+    gacha_item(Config).
+-spec equipment_set(t()) -> #{integer() => equipment_set:t()}.
+equipment_set(Config) ->
+    maps:get('equipment_set', Config).
+-spec equipment_set_get(integer(), t()) -> equipment_set:t() | undefined.
+equipment_set_get(Key, Config) ->
+    maps:get(Key, equipment_set(Config), undefined).
+
+-spec equipment_set_rows(t()) -> #{integer() => equipment_set:t()}.
+equipment_set_rows(Config) ->
+    equipment_set(Config).
+-spec achievement(t()) -> #{integer() => achievement:t()}.
+achievement(Config) ->
+    maps:get('achievement', Config).
+-spec achievement_get(integer(), t()) -> achievement:t() | undefined.
+achievement_get(Key, Config) ->
+    maps:get(Key, achievement(Config), undefined).
+
+-spec achievement_rows(t()) -> #{integer() => achievement:t()}.
+achievement_rows(Config) ->
+    achievement(Config).
+-spec vip_level(t()) -> #{integer() => vip_level:t()}.
+vip_level(Config) ->
+    maps:get('vip_level', Config).
+-spec vip_level_get(integer(), t()) -> vip_level:t() | undefined.
+vip_level_get(Key, Config) ->
+    maps:get(Key, vip_level(Config), undefined).
+
+-spec vip_level_rows(t()) -> #{integer() => vip_level:t()}.
+vip_level_rows(Config) ->
+    vip_level(Config).
+-spec mail_template(t()) -> #{integer() => mail_template:t()}.
+mail_template(Config) ->
+    maps:get('mail_template', Config).
+-spec mail_template_get(integer(), t()) -> mail_template:t() | undefined.
+mail_template_get(Key, Config) ->
+    maps:get(Key, mail_template(Config), undefined).
+
+-spec mail_template_rows(t()) -> #{integer() => mail_template:t()}.
+mail_template_rows(Config) ->
+    mail_template(Config).
+-spec mail_reward(t()) -> [mail_reward:t()].
+mail_reward(Config) ->
+    maps:get('mail_reward', Config).
+-spec mail_reward_rows(t()) -> [mail_reward:t()].
+mail_reward_rows(Config) ->
+    mail_reward(Config).
+-spec dialogue(t()) -> #{integer() => dialogue:t()}.
+dialogue(Config) ->
+    maps:get('dialogue', Config).
+-spec dialogue_get(integer(), t()) -> dialogue:t() | undefined.
+dialogue_get(Key, Config) ->
+    maps:get(Key, dialogue(Config), undefined).
+
+-spec dialogue_rows(t()) -> #{integer() => dialogue:t()}.
+dialogue_rows(Config) ->
+    dialogue(Config).
+-spec event_rule(t()) -> #{integer() => event_rule:t()}.
+event_rule(Config) ->
+    maps:get('event_rule', Config).
+-spec event_rule_get(integer(), t()) -> event_rule:t() | undefined.
+event_rule_get(Key, Config) ->
+    maps:get(Key, event_rule(Config), undefined).
+
+-spec event_rule_rows(t()) -> #{integer() => event_rule:t()}.
+event_rule_rows(Config) ->
+    event_rule(Config).

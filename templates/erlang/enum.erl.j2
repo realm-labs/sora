@@ -1,0 +1,34 @@
+-module({{ enum.snake_name }}).
+
+-export([decode/1]).
+-export_type([t/0]).
+
+{%- if options.enum_is_integer %}
+-type t() ::
+{%- for value in enum.values %}
+    {{ loop.index0 }}{% if not loop.last %} |{% else %}.{% endif %}
+{%- else %}
+    none().
+{%- endfor %}
+{%- else %}
+-type t() ::
+{%- for atom in enum.atom_values %}
+    '{{ atom }}'{% if not loop.last %} |{% else %}.{% endif %}
+{%- else %}
+    none().
+{%- endfor %}
+{%- endif %}
+
+-spec decode(sora_runtime:reader()) -> {t(), sora_runtime:reader()}.
+decode(Reader0) ->
+    {Ordinal, Reader1} = sora_runtime:read_u32(Reader0),
+    case Ordinal of
+{%- for atom in enum.atom_values %}
+{%- if options.enum_is_integer %}
+        {{ loop.index0 }} -> {Ordinal, Reader1}{% if not loop.last %};{% else %};{% endif %}
+{%- else %}
+        {{ loop.index0 }} -> {'{{ atom }}', Reader1}{% if not loop.last %};{% else %};{% endif %}
+{%- endif %}
+{%- endfor %}
+        _ -> error({invalid_enum_ordinal, {{ enum.snake_name }}, Ordinal})
+    end.

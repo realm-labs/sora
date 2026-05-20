@@ -36,6 +36,10 @@ target = "javascript"
 out = "javascript/generated"
 
 [[build.codegen]]
+target = "erlang"
+out = "erlang/generated"
+
+[[build.codegen]]
 target = "lua"
 out = "lua/generated"
 
@@ -91,6 +95,10 @@ enum_repr = "string"
 runtime_format = "sora"
 enum_repr = "string"
 emit_dts = true
+
+[codegen.erlang]
+runtime_format = "sora"
+enum_repr = "atom"
 
 [codegen.lua]
 runtime_format = "sora"

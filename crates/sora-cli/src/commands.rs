@@ -24,6 +24,7 @@ pub fn run(command: Command) -> Result<()> {
             GenCommand::Go(args) => generate(args, CodegenTarget::Go),
             GenCommand::Typescript(args) => generate(args, CodegenTarget::TypeScript),
             GenCommand::Javascript(args) => generate(args, CodegenTarget::JavaScript),
+            GenCommand::Erlang(args) => generate(args, CodegenTarget::Erlang),
             GenCommand::Lua(args) => generate(args, CodegenTarget::Lua),
             GenCommand::Proto(args) => generate(args, CodegenTarget::Proto),
         },

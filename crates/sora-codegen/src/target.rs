@@ -7,6 +7,7 @@ pub enum CodegenTarget {
     Go,
     TypeScript,
     JavaScript,
+    Erlang,
     Lua,
     Proto,
 }

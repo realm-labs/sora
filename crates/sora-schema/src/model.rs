@@ -40,6 +40,8 @@ pub struct CodegenSchema {
     #[serde(default)]
     pub javascript: JavaScriptCodegenSchema,
     #[serde(default)]
+    pub erlang: ErlangCodegenSchema,
+    #[serde(default)]
     pub lua: LuaCodegenSchema,
 }
 
@@ -120,6 +122,24 @@ fn default_emit_dts() -> bool {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
+pub struct ErlangCodegenSchema {
+    #[serde(default)]
+    pub runtime_format: RuntimeFormatSchema,
+
+    #[serde(default)]
+    pub enum_repr: ErlangEnumReprSchema,
+}
+
+impl Default for ErlangCodegenSchema {
+    fn default() -> Self {
+        Self {
+            runtime_format: RuntimeFormatSchema::Sora,
+            enum_repr: ErlangEnumReprSchema::Atom,
+        }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 pub struct LuaCodegenSchema {
     #[serde(default)]
     pub runtime_format: RuntimeFormatSchema,
@@ -183,6 +203,14 @@ pub enum EnumReprSchema {
     Integer,
     #[default]
     String,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, Default)]
+#[serde(rename_all = "snake_case")]
+pub enum ErlangEnumReprSchema {
+    Integer,
+    #[default]
+    Atom,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, Default)]
@@ -399,6 +427,10 @@ runtime_format = "sora"
 enum_repr = "integer"
 emit_dts = false
 
+[codegen.erlang]
+runtime_format = "sora"
+enum_repr = "atom"
+
 [codegen.lua]
 runtime_format = "sora"
 module = "generated.lua"
@@ -428,6 +460,11 @@ enum_repr = "string"
         );
         assert_eq!(schema.codegen.javascript.enum_repr, EnumReprSchema::Integer);
         assert!(!schema.codegen.javascript.emit_dts);
+        assert_eq!(
+            schema.codegen.erlang.runtime_format,
+            RuntimeFormatSchema::Sora
+        );
+        assert_eq!(schema.codegen.erlang.enum_repr, ErlangEnumReprSchema::Atom);
         assert_eq!(schema.codegen.lua.runtime_format, RuntimeFormatSchema::Sora);
         assert_eq!(schema.codegen.lua.module.as_deref(), Some("generated.lua"));
         assert_eq!(schema.codegen.lua.lua_version, LuaVersionSchema::Lua54);

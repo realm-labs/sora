@@ -1,0 +1,18 @@
+-module(quest_type).
+
+-export([decode/1]).
+-export_type([t/0]).
+-type t() ::
+    'main' |
+    'side' |
+    'daily'.
+
+-spec decode(sora_runtime:reader()) -> {t(), sora_runtime:reader()}.
+decode(Reader0) ->
+    {Ordinal, Reader1} = sora_runtime:read_u32(Reader0),
+    case Ordinal of
+        0 -> {'main', Reader1};
+        1 -> {'side', Reader1};
+        2 -> {'daily', Reader1};
+        _ -> error({invalid_enum_ordinal, quest_type, Ordinal})
+    end.

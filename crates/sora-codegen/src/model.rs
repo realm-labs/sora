@@ -23,6 +23,7 @@ pub struct CodegenModel {
 pub struct CodegenEnum {
     pub name: String,
     pub snake_name: String,
+    pub atom_values: Vec<String>,
     pub values: Vec<String>,
 }
 
@@ -39,6 +40,8 @@ pub struct CodegenUnion {
 #[derive(Debug, Clone, Serialize)]
 pub struct CodegenUnionVariant {
     pub name: String,
+    pub snake_name: String,
+    pub reader_var: String,
     pub fields: Vec<CodegenField>,
 }
 
@@ -48,6 +51,7 @@ pub struct CodegenRecord {
     pub pascal_name: String,
     pub snake_name: String,
     pub camel_name: String,
+    pub reader_var: String,
     pub imports: Vec<CodegenImport>,
     pub fields: Vec<CodegenField>,
 }
@@ -84,6 +88,7 @@ pub struct CodegenIndex {
     pub field_name: String,
     pub param_name: String,
     pub param_camel_name: String,
+    pub param_var_name: String,
     pub param_type: String,
     pub key_type: String,
     pub key_is_copy: bool,
@@ -93,6 +98,7 @@ pub struct CodegenIndex {
 pub struct CodegenField {
     pub raw_name: String,
     pub name: String,
+    pub var_name: String,
     pub type_name: String,
     pub decode: String,
     pub value_decode: String,
@@ -146,6 +152,11 @@ pub fn build_model(ir: &ConfigIr, backend: &impl LanguageBackend) -> Result<Code
         .map(|item| CodegenEnum {
             name: item.name.clone(),
             snake_name: item.name.to_snake_case(),
+            atom_values: item
+                .values
+                .iter()
+                .map(|value| value.to_snake_case())
+                .collect(),
             values: item.values.clone(),
         })
         .collect::<Vec<_>>();
@@ -228,6 +239,8 @@ fn build_union(
             }
             Ok(CodegenUnionVariant {
                 name: variant.name.to_pascal_case(),
+                snake_name: variant.name.to_snake_case(),
+                reader_var: format!("Reader{}", variant.fields.len() + 1),
                 fields: variant
                     .fields
                     .iter()
@@ -341,6 +354,7 @@ fn build_index(
         field_name: backend.field_name(&field.name),
         param_name: field.name.to_snake_case(),
         param_camel_name: field.name.to_lower_camel_case(),
+        param_var_name: field.name.to_pascal_case(),
         param_type: backend.key_param_type(ir, &field.ty),
         key_type: backend.index_key_type(ir, &field.ty),
         key_is_copy: backend.key_is_copy(ir, &field.ty),
@@ -363,6 +377,7 @@ fn build_record(
         pascal_name: item.name.to_pascal_case(),
         snake_name: item.name.to_snake_case(),
         camel_name: item.name.to_lower_camel_case(),
+        reader_var: format!("Reader{}", fields.len()),
         imports: build_imports(ir, item),
         fields,
     })
@@ -372,6 +387,7 @@ fn build_field(ir: &ConfigIr, backend: &impl LanguageBackend, field: &FieldIr) -
     CodegenField {
         raw_name: field.name.clone(),
         name: backend.field_name(&field.name),
+        var_name: field.name.to_pascal_case(),
         type_name: backend.type_name(ir, &field.ty),
         decode: backend.decode_expr(ir, &field.ty),
         value_decode: backend.value_decode_expr(ir, &field.ty),

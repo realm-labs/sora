@@ -1,17 +1,18 @@
 use sora_diagnostics::{Result, SoraError};
 use sora_schema::model::{
-    CodegenSchema, EnumReprSchema, FieldSchema, IndexSchema, JavaScriptCodegenSchema,
-    LanguageCodegenSchema, LuaCodegenSchema, LuaEnumReprSchema, LuaVersionSchema,
-    RuntimeFormatSchema, RustMapTypeSchema, SchemaFile, TableModeSchema, TableSchema,
-    TableSourceSchema, TypeScriptCodegenSchema, UnionSchema, UnionVariantSchema,
+    CodegenSchema, EnumReprSchema, ErlangCodegenSchema, ErlangEnumReprSchema, FieldSchema,
+    IndexSchema, JavaScriptCodegenSchema, LanguageCodegenSchema, LuaCodegenSchema,
+    LuaEnumReprSchema, LuaVersionSchema, RuntimeFormatSchema, RustMapTypeSchema, SchemaFile,
+    TableModeSchema, TableSchema, TableSourceSchema, TypeScriptCodegenSchema, UnionSchema,
+    UnionVariantSchema,
 };
 
 use crate::{
     model::{
-        AggregationIr, CodegenIr, ConfigIr, EnumIr, EnumReprIr, FieldIr, IndexIr,
-        JavaScriptCodegenIr, LanguageCodegenIr, LuaCodegenIr, LuaEnumReprIr, LuaVersionIr,
-        RuntimeFormatIr, RustCodegenIr, RustMapTypeIr, StructIr, TableIr, TableModeIr,
-        TableSourceIr, TypeIr, TypeScriptCodegenIr, UnionIr, UnionVariantIr,
+        AggregationIr, CodegenIr, ConfigIr, EnumIr, EnumReprIr, ErlangCodegenIr, ErlangEnumReprIr,
+        FieldIr, IndexIr, JavaScriptCodegenIr, LanguageCodegenIr, LuaCodegenIr, LuaEnumReprIr,
+        LuaVersionIr, RuntimeFormatIr, RustCodegenIr, RustMapTypeIr, StructIr, TableIr,
+        TableModeIr, TableSourceIr, TypeIr, TypeScriptCodegenIr, UnionIr, UnionVariantIr,
     },
     parse::parse_type,
 };
@@ -75,6 +76,7 @@ impl From<CodegenSchema> for CodegenIr {
             go: LanguageCodegenIr::from(value.go),
             typescript: TypeScriptCodegenIr::from(value.typescript),
             javascript: JavaScriptCodegenIr::from(value.javascript),
+            erlang: ErlangCodegenIr::from(value.erlang),
             lua: LuaCodegenIr::from(value.lua),
         }
     }
@@ -103,6 +105,15 @@ impl From<JavaScriptCodegenSchema> for JavaScriptCodegenIr {
             runtime_format: RuntimeFormatIr::from(value.runtime_format),
             enum_repr: EnumReprIr::from(value.enum_repr),
             emit_dts: value.emit_dts,
+        }
+    }
+}
+
+impl From<ErlangCodegenSchema> for ErlangCodegenIr {
+    fn from(value: ErlangCodegenSchema) -> Self {
+        Self {
+            runtime_format: RuntimeFormatIr::from(value.runtime_format),
+            enum_repr: ErlangEnumReprIr::from(value.enum_repr),
         }
     }
 }
@@ -155,6 +166,15 @@ impl From<EnumReprSchema> for EnumReprIr {
         match value {
             EnumReprSchema::Integer => Self::Integer,
             EnumReprSchema::String => Self::String,
+        }
+    }
+}
+
+impl From<ErlangEnumReprSchema> for ErlangEnumReprIr {
+    fn from(value: ErlangEnumReprSchema) -> Self {
+        match value {
+            ErlangEnumReprSchema::Integer => Self::Integer,
+            ErlangEnumReprSchema::Atom => Self::Atom,
         }
     }
 }
@@ -428,7 +448,8 @@ fn validate_optional_non_empty(
 mod tests {
     use super::*;
     use crate::model::{
-        EnumReprIr, LuaEnumReprIr, LuaVersionIr, RuntimeFormatIr, TableModeIr, TypeIr,
+        EnumReprIr, ErlangEnumReprIr, LuaEnumReprIr, LuaVersionIr, RuntimeFormatIr, TableModeIr,
+        TypeIr,
     };
 
     #[test]
@@ -473,6 +494,8 @@ length = [1, 3]
         assert_eq!(ir.codegen.javascript.runtime_format, RuntimeFormatIr::Sora);
         assert_eq!(ir.codegen.javascript.enum_repr, EnumReprIr::String);
         assert!(ir.codegen.javascript.emit_dts);
+        assert_eq!(ir.codegen.erlang.runtime_format, RuntimeFormatIr::Sora);
+        assert_eq!(ir.codegen.erlang.enum_repr, ErlangEnumReprIr::Atom);
         assert_eq!(ir.codegen.lua.runtime_format, RuntimeFormatIr::Sora);
         assert_eq!(ir.codegen.lua.lua_version, LuaVersionIr::Lua54);
         assert_eq!(ir.codegen.lua.enum_repr, LuaEnumReprIr::String);

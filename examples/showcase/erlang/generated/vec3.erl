@@ -1,0 +1,21 @@
+-module(vec3).
+
+-export([decode/1]).
+-export_type([t/0]).
+
+-type t() :: #{
+    'x' := float(),
+    'y' := float(),
+    'z' := float()
+}.
+
+-spec decode(sora_runtime:reader()) -> {t(), sora_runtime:reader()}.
+decode(Reader0) ->
+    {X, Reader1 } = (fun sora_runtime:read_f32/1)(Reader0),
+    {Y, Reader2 } = (fun sora_runtime:read_f32/1)(Reader1),
+    {Z, Reader3 } = (fun sora_runtime:read_f32/1)(Reader2),
+    { #{
+        'x' => X,
+        'y' => Y,
+        'z' => Z
+    }, Reader3}.

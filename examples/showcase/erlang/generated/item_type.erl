@@ -1,0 +1,22 @@
+-module(item_type).
+
+-export([decode/1]).
+-export_type([t/0]).
+-type t() ::
+    'weapon' |
+    'armor' |
+    'currency' |
+    'material' |
+    'consumable'.
+
+-spec decode(sora_runtime:reader()) -> {t(), sora_runtime:reader()}.
+decode(Reader0) ->
+    {Ordinal, Reader1} = sora_runtime:read_u32(Reader0),
+    case Ordinal of
+        0 -> {'weapon', Reader1};
+        1 -> {'armor', Reader1};
+        2 -> {'currency', Reader1};
+        3 -> {'material', Reader1};
+        4 -> {'consumable', Reader1};
+        _ -> error({invalid_enum_ordinal, item_type, Ordinal})
+    end.

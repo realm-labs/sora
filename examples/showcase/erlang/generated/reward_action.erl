@@ -1,0 +1,59 @@
+-module(reward_action).
+
+-export([decode/1]).
+-export_type([t/0]).
+
+-type t() ::
+    #{
+        'type' := 'add_item'
+        , 'item_id' := integer()
+        , 'count' := integer()
+    } |
+    #{
+        'type' := 'add_buff'
+        , 'buff_id' := integer()
+        , 'duration' := float()
+    } |
+    #{
+        'type' := 'unlock_stage'
+        , 'stage_id' := integer()
+    } |
+    #{
+        'type' := 'send_mail'
+        , 'mail_id' := integer()
+    }.
+
+-spec decode(sora_runtime:reader()) -> {t(), sora_runtime:reader()}.
+decode(Reader0) ->
+    {Ordinal, Reader1} = sora_runtime:read_u32(Reader0),
+    case Ordinal of
+        0 ->
+            {ItemId, Reader2 } = (fun sora_runtime:read_i32/1)(Reader1),
+            {Count, Reader3 } = (fun sora_runtime:read_i32/1)(Reader2),
+            { #{
+                'type' => 'add_item'
+                , 'item_id' => ItemId
+                , 'count' => Count
+            }, Reader3};
+        1 ->
+            {BuffId, Reader2 } = (fun sora_runtime:read_i32/1)(Reader1),
+            {Duration, Reader3 } = (fun sora_runtime:read_f32/1)(Reader2),
+            { #{
+                'type' => 'add_buff'
+                , 'buff_id' => BuffId
+                , 'duration' => Duration
+            }, Reader3};
+        2 ->
+            {StageId, Reader2 } = (fun sora_runtime:read_i32/1)(Reader1),
+            { #{
+                'type' => 'unlock_stage'
+                , 'stage_id' => StageId
+            }, Reader2};
+        3 ->
+            {MailId, Reader2 } = (fun sora_runtime:read_i32/1)(Reader1),
+            { #{
+                'type' => 'send_mail'
+                , 'mail_id' => MailId
+            }, Reader2};
+        _ -> error({invalid_union_ordinal, reward_action, Ordinal})
+    end.

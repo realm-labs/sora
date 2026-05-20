@@ -1,0 +1,30 @@
+-module(monster).
+
+-export([decode/1]).
+-export_type([t/0]).
+
+-type t() :: #{
+    'id' := integer(),
+    'name' := binary(),
+    'level' := integer(),
+    'element' := element_type:t(),
+    'drop_group' := integer(),
+    'spawn_pos' := vec3:t()
+}.
+
+-spec decode(sora_runtime:reader()) -> {t(), sora_runtime:reader()}.
+decode(Reader0) ->
+    {Id, Reader1 } = (fun sora_runtime:read_i32/1)(Reader0),
+    {Name, Reader2 } = (fun sora_runtime:read_string/1)(Reader1),
+    {Level, Reader3 } = (fun sora_runtime:read_i32/1)(Reader2),
+    {Element, Reader4 } = (fun element_type:decode/1)(Reader3),
+    {DropGroup, Reader5 } = (fun sora_runtime:read_i32/1)(Reader4),
+    {SpawnPos, Reader6 } = (fun vec3:decode/1)(Reader5),
+    { #{
+        'id' => Id,
+        'name' => Name,
+        'level' => Level,
+        'element' => Element,
+        'drop_group' => DropGroup,
+        'spawn_pos' => SpawnPos
+    }, Reader6}.

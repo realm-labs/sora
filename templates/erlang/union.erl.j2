@@ -1,0 +1,35 @@
+-module({{ union.snake_name }}).
+
+-export([decode/1]).
+-export_type([t/0]).
+
+-type t() ::
+{%- for variant in union.variants %}
+    {{ "#{" }}
+        '{{ union.tag }}' := '{{ variant.snake_name }}'
+{%- for field in variant.fields %}
+        , '{{ field.name }}' := {{ field.type_name }}
+{%- endfor %}
+    }{% if not loop.last %} |{% else %}.{% endif %}
+{%- else %}
+    none().
+{%- endfor %}
+
+-spec decode(sora_runtime:reader()) -> {t(), sora_runtime:reader()}.
+decode(Reader0) ->
+    {Ordinal, Reader1} = sora_runtime:read_u32(Reader0),
+    case Ordinal of
+{%- for variant in union.variants %}
+        {{ loop.index0 }} ->
+{%- for field in variant.fields %}
+            { {{- field.var_name -}}, Reader{{ loop.index + 1 }} } = ({{ field.decode }})(Reader{{ loop.index }}),
+{%- endfor %}
+            { {{ "#{" }}
+                '{{ union.tag }}' => '{{ variant.snake_name }}'
+{%- for field in variant.fields %}
+                , '{{ field.name }}' => {{ field.var_name }}
+{%- endfor %}
+            }, {{ variant.reader_var }}}{% if not loop.last %};{% else %};{% endif %}
+{%- endfor %}
+        _ -> error({invalid_union_ordinal, {{ union.snake_name }}, Ordinal})
+    end.

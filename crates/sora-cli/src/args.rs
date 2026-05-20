@@ -43,6 +43,7 @@ pub enum GenCommand {
     Go(GenArgs),
     Typescript(GenArgs),
     Javascript(GenArgs),
+    Erlang(GenArgs),
     Lua(GenArgs),
     Proto(GenArgs),
 }
@@ -126,6 +127,7 @@ pub enum BuildTarget {
     Go,
     Typescript,
     Javascript,
+    Erlang,
     Lua,
     Proto,
 }

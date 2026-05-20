@@ -30,6 +30,7 @@ pub struct CodegenIr {
     pub go: LanguageCodegenIr,
     pub typescript: TypeScriptCodegenIr,
     pub javascript: JavaScriptCodegenIr,
+    pub erlang: ErlangCodegenIr,
     pub lua: LuaCodegenIr,
 }
 
@@ -100,6 +101,21 @@ impl Default for JavaScriptCodegenIr {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct ErlangCodegenIr {
+    pub runtime_format: RuntimeFormatIr,
+    pub enum_repr: ErlangEnumReprIr,
+}
+
+impl Default for ErlangCodegenIr {
+    fn default() -> Self {
+        Self {
+            runtime_format: RuntimeFormatIr::Sora,
+            enum_repr: ErlangEnumReprIr::Atom,
+        }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct LuaCodegenIr {
     pub runtime_format: RuntimeFormatIr,
     pub module: Option<String>,
@@ -149,6 +165,13 @@ pub enum EnumReprIr {
     Integer,
     #[default]
     String,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
+pub enum ErlangEnumReprIr {
+    Integer,
+    #[default]
+    Atom,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]

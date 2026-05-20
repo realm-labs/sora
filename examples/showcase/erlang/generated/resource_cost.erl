@@ -1,0 +1,21 @@
+-module(resource_cost).
+
+-export([decode/1]).
+-export_type([t/0]).
+
+-type t() :: #{
+    'kind' := resource_kind:t(),
+    'id' := integer(),
+    'count' := integer()
+}.
+
+-spec decode(sora_runtime:reader()) -> {t(), sora_runtime:reader()}.
+decode(Reader0) ->
+    {Kind, Reader1 } = (fun resource_kind:decode/1)(Reader0),
+    {Id, Reader2 } = (fun sora_runtime:read_i32/1)(Reader1),
+    {Count, Reader3 } = (fun sora_runtime:read_i32/1)(Reader2),
+    { #{
+        'kind' => Kind,
+        'id' => Id,
+        'count' => Count
+    }, Reader3}.
