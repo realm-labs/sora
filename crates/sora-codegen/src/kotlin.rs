@@ -1,13 +1,16 @@
 use std::path::{Path, PathBuf};
 
-use heck::ToLowerCamelCase;
 use minijinja::context;
+use serde::Serialize;
 use sora_diagnostics::Result;
 use sora_ir::model::{ConfigIr, TableModeIr, TypeIr};
 
 use crate::{
     generator::{CodeGenerator, runtime_format_name},
-    model::{LanguageBackend, TableNameParts, build_model},
+    model::{
+        BaseField, BaseIndex, BaseModel, BaseRecord, BaseTable, BaseUnion, BaseUnionVariant,
+        build_base_model,
+    },
     render::{ensure_dir, render_template, write_file},
     types::kotlin_type_name,
 };
@@ -17,8 +20,7 @@ pub struct KotlinCodeGenerator;
 impl CodeGenerator for KotlinCodeGenerator {
     fn generate(&self, ir: &ConfigIr, out_dir: &Path) -> Result<()> {
         ensure_dir(out_dir)?;
-        let backend = KotlinBackend;
-        let model = build_model(ir, &backend)?;
+        let model = KotlinModel::from_base_model(ir, build_base_model(ir)?);
         let package_dir = kotlin_package_dir(out_dir, &model.package)?;
         let runtime_format = runtime_format_name(ir.codegen.kotlin.runtime_format);
 
@@ -74,44 +76,202 @@ impl CodeGenerator for KotlinCodeGenerator {
     }
 }
 
-struct KotlinBackend;
+#[derive(Debug, Clone, Serialize)]
+struct KotlinModel {
+    package: String,
+    enums: Vec<KotlinEnum>,
+    unions: Vec<KotlinUnion>,
+    records: Vec<KotlinRecord>,
+    tables: Vec<KotlinTable>,
+}
 
-impl LanguageBackend for KotlinBackend {
-    fn field_name(&self, raw_name: &str) -> String {
-        raw_name.to_lower_camel_case()
-    }
+#[derive(Debug, Clone, Serialize)]
+struct KotlinEnum {
+    name: String,
+    values: Vec<String>,
+}
 
-    fn type_name(&self, ir: &ConfigIr, ty: &TypeIr) -> String {
-        kotlin_type_name(ir, ty)
-    }
+#[derive(Debug, Clone, Serialize)]
+struct KotlinUnion {
+    pascal_name: String,
+    tag: String,
+    variants: Vec<KotlinUnionVariant>,
+}
 
-    fn decode_expr(&self, ir: &ConfigIr, ty: &TypeIr) -> String {
-        kotlin_decode_expr(ir, ty)
-    }
+#[derive(Debug, Clone, Serialize)]
+struct KotlinUnionVariant {
+    name: String,
+    fields: Vec<KotlinField>,
+}
 
-    fn value_decode_expr(&self, ir: &ConfigIr, ty: &TypeIr) -> String {
-        kotlin_value_decode_expr(ir, ty, "__VALUE__")
-    }
+#[derive(Debug, Clone, Serialize)]
+struct KotlinRecord {
+    pascal_name: String,
+    fields: Vec<KotlinField>,
+}
 
-    fn row_type(&self, table: &TableNameParts<'_>) -> String {
-        table.pascal_name.to_owned()
-    }
+#[derive(Debug, Clone, Serialize)]
+struct KotlinTable {
+    name: String,
+    pascal_name: String,
+    camel_name: String,
+    snake_name: String,
+    mode: String,
+    container_type: String,
+    row_type: String,
+    key_name: Option<String>,
+    key_field_name: Option<String>,
+    key_type: Option<String>,
+    unique_indexes: Vec<KotlinIndex>,
+    non_unique_indexes: Vec<KotlinIndex>,
+}
 
-    fn container_type(
-        &self,
-        _table: &TableNameParts<'_>,
-        mode: TableModeIr,
-        row_type: &str,
-        key_type: Option<&str>,
-    ) -> String {
-        match mode {
-            TableModeIr::List => format!("List<{row_type}>"),
-            TableModeIr::Map => match key_type {
-                Some(key_type) => format!("Map<{key_type}, {row_type}>"),
-                None => format!("List<{row_type}>"),
-            },
-            TableModeIr::Singleton => row_type.to_owned(),
+#[derive(Debug, Clone, Serialize)]
+struct KotlinIndex {
+    pascal_name: String,
+    field_name: String,
+    param_camel_name: String,
+    key_type: String,
+}
+
+#[derive(Debug, Clone, Serialize)]
+struct KotlinField {
+    raw_name: String,
+    name: String,
+    type_name: String,
+    decode: String,
+    value_decode: String,
+}
+
+impl KotlinModel {
+    fn from_base_model(ir: &ConfigIr, model: BaseModel) -> Self {
+        Self {
+            package: model.package,
+            enums: model
+                .enums
+                .into_iter()
+                .map(|item| KotlinEnum {
+                    name: item.pascal_name,
+                    values: item.values,
+                })
+                .collect(),
+            unions: model
+                .unions
+                .into_iter()
+                .map(|item| kotlin_union(ir, item))
+                .collect(),
+            records: model
+                .records
+                .into_iter()
+                .map(|item| kotlin_record(ir, item))
+                .collect(),
+            tables: model
+                .tables
+                .into_iter()
+                .map(|item| kotlin_table(ir, item))
+                .collect(),
         }
+    }
+}
+
+fn kotlin_union(ir: &ConfigIr, union: BaseUnion) -> KotlinUnion {
+    KotlinUnion {
+        pascal_name: union.pascal_name,
+        tag: union.tag,
+        variants: union
+            .variants
+            .into_iter()
+            .map(|variant| kotlin_variant(ir, variant))
+            .collect(),
+    }
+}
+
+fn kotlin_variant(ir: &ConfigIr, variant: BaseUnionVariant) -> KotlinUnionVariant {
+    KotlinUnionVariant {
+        name: variant.pascal_name,
+        fields: variant
+            .fields
+            .into_iter()
+            .map(|field| kotlin_field(ir, field))
+            .collect(),
+    }
+}
+
+fn kotlin_record(ir: &ConfigIr, record: BaseRecord) -> KotlinRecord {
+    KotlinRecord {
+        pascal_name: record.pascal_name,
+        fields: record
+            .fields
+            .into_iter()
+            .map(|field| kotlin_field(ir, field))
+            .collect(),
+    }
+}
+
+fn kotlin_table(ir: &ConfigIr, table: BaseTable) -> KotlinTable {
+    let row_type = table.pascal_name.clone();
+    let key_type = table
+        .key_field
+        .as_ref()
+        .map(|field| kotlin_type_name(ir, &field.ty));
+    let container_type = kotlin_container_type(table.mode, &row_type, key_type.as_deref());
+    let key_field_name = table
+        .key_field
+        .as_ref()
+        .map(|field| field.camel_name.clone());
+
+    KotlinTable {
+        name: table.name,
+        pascal_name: table.pascal_name,
+        camel_name: table.camel_name,
+        snake_name: table.snake_name,
+        mode: table.mode_name,
+        container_type,
+        row_type,
+        key_name: table.key_name,
+        key_field_name,
+        key_type,
+        unique_indexes: table
+            .unique_indexes
+            .into_iter()
+            .map(|index| kotlin_index(ir, index))
+            .collect(),
+        non_unique_indexes: table
+            .non_unique_indexes
+            .into_iter()
+            .map(|index| kotlin_index(ir, index))
+            .collect(),
+    }
+}
+
+fn kotlin_index(ir: &ConfigIr, index: BaseIndex) -> KotlinIndex {
+    KotlinIndex {
+        pascal_name: index.pascal_name,
+        field_name: index.field.camel_name.clone(),
+        param_camel_name: index.field.camel_name,
+        key_type: kotlin_type_name(ir, &index.field.ty),
+    }
+}
+
+fn kotlin_field(ir: &ConfigIr, field: BaseField) -> KotlinField {
+    let value_decode = kotlin_value_decode_expr(ir, &field.ty, "__VALUE__");
+    KotlinField {
+        raw_name: field.raw_name,
+        name: field.camel_name,
+        type_name: kotlin_type_name(ir, &field.ty),
+        decode: kotlin_decode_expr(ir, &field.ty),
+        value_decode,
+    }
+}
+
+fn kotlin_container_type(mode: TableModeIr, row_type: &str, key_type: Option<&str>) -> String {
+    match mode {
+        TableModeIr::List => format!("List<{row_type}>"),
+        TableModeIr::Map => match key_type {
+            Some(key_type) => format!("Map<{key_type}, {row_type}>"),
+            None => format!("List<{row_type}>"),
+        },
+        TableModeIr::Singleton => row_type.to_owned(),
     }
 }
 
