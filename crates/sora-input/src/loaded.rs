@@ -32,6 +32,6 @@ impl SchemaInput for LoadedInput {
 
 impl DataInput for LoadedInput {
     fn load_data(&self, _ir: &ConfigIr) -> Result<ConfigData> {
-        self.data.clone().ok_or_else(|| SoraError::MissingInputData)
+        self.data.clone().ok_or(SoraError::MissingInputData)
     }
 }

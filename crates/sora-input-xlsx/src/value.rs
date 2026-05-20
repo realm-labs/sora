@@ -127,14 +127,14 @@ fn separated_cell(
     let source = strip_bounds(&source, context)?;
     let items = source.split(separator).map(str::trim).collect::<Vec<_>>();
 
-    if let Some(expected_len) = expected_len {
-        if items.len() != expected_len {
-            return Err(context.error(format!(
-                "expected {} separated values, got {}",
-                expected_len,
-                items.len()
-            )));
-        }
+    if let Some(expected_len) = expected_len
+        && items.len() != expected_len
+    {
+        return Err(context.error(format!(
+            "expected {} separated values, got {}",
+            expected_len,
+            items.len()
+        )));
     }
 
     let values = items
@@ -178,14 +178,14 @@ fn json_array_cell(
     let JsonValue::Array(items) = parsed else {
         return Err(context.error("expected JSON array"));
     };
-    if let Some(expected_len) = expected_len {
-        if items.len() != expected_len {
-            return Err(context.error(format!(
-                "expected JSON array length {}, got {}",
-                expected_len,
-                items.len()
-            )));
-        }
+    if let Some(expected_len) = expected_len
+        && items.len() != expected_len
+    {
+        return Err(context.error(format!(
+            "expected JSON array length {}, got {}",
+            expected_len,
+            items.len()
+        )));
     }
 
     Ok(Value::List(

@@ -202,9 +202,11 @@ fn validate_typed_value(
             config_data,
             table,
             path,
-            ty,
-            element,
-            *len,
+            ArrayExpectation {
+                ty,
+                element,
+                len: *len,
+            },
             range,
             value,
         ),
@@ -335,22 +337,26 @@ fn validate_list(
     Ok(())
 }
 
+struct ArrayExpectation<'a> {
+    ty: &'a TypeIr,
+    element: &'a TypeIr,
+    len: usize,
+}
+
 fn validate_array(
     ir: &ConfigIr,
     config_data: &ConfigData,
     table: &str,
     path: &str,
-    ty: &TypeIr,
-    element: &TypeIr,
-    len: usize,
+    expectation: ArrayExpectation<'_>,
     range: Option<[i64; 2]>,
     value: &Value,
 ) -> Result<()> {
     let Value::List(items) = value else {
-        return type_mismatch(table, path, ty, value);
+        return type_mismatch(table, path, expectation.ty, value);
     };
-    if items.len() != len {
-        return type_mismatch(table, path, ty, value);
+    if items.len() != expectation.len {
+        return type_mismatch(table, path, expectation.ty, value);
     }
 
     for (index, item) in items.iter().enumerate() {
@@ -359,7 +365,7 @@ fn validate_array(
             config_data,
             table,
             &format!("{path}[{index}]"),
-            element,
+            expectation.element,
             range,
             item,
         )?;
