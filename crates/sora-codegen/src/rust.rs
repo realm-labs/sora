@@ -2,12 +2,16 @@ use std::path::Path;
 
 use heck::ToSnakeCase;
 use minijinja::context;
+use serde::Serialize;
 use sora_diagnostics::Result;
 use sora_ir::model::{ConfigIr, TableModeIr, TypeIr};
 
 use crate::{
     generator::{CodeGenerator, runtime_format_name},
-    model::{LanguageBackend, TableNameParts, build_model},
+    model::{
+        BaseField, BaseImport, BaseIndex, BaseModel, BaseRecord, BaseTable, BaseUnion,
+        BaseUnionVariant, build_base_model,
+    },
     render::{ensure_dir, render_template, write_file},
     types::rust_type_name,
 };
@@ -17,8 +21,7 @@ pub struct RustCodeGenerator;
 impl CodeGenerator for RustCodeGenerator {
     fn generate(&self, ir: &ConfigIr, out_dir: &Path) -> Result<()> {
         ensure_dir(out_dir)?;
-        let backend = RustBackend;
-        let model = build_model(ir, &backend)?;
+        let model = RustModel::from_base_model(ir, build_base_model(ir)?);
         let runtime_format = runtime_format_name(ir.codegen.rust.runtime_format);
 
         for item in &model.enums {
@@ -59,57 +62,243 @@ impl CodeGenerator for RustCodeGenerator {
     }
 }
 
-struct RustBackend;
+#[derive(Debug, Clone, Serialize)]
+struct RustModel {
+    package: String,
+    enums: Vec<RustEnum>,
+    unions: Vec<RustUnion>,
+    records: Vec<RustRecord>,
+    tables: Vec<RustTable>,
+    modules: Vec<String>,
+}
 
-impl LanguageBackend for RustBackend {
-    fn field_name(&self, raw_name: &str) -> String {
-        raw_name.to_snake_case()
-    }
+#[derive(Debug, Clone, Serialize)]
+struct RustEnum {
+    name: String,
+    snake_name: String,
+    values: Vec<String>,
+}
 
-    fn type_name(&self, ir: &ConfigIr, ty: &TypeIr) -> String {
-        rust_type_name(ir, ty)
-    }
+#[derive(Debug, Clone, Serialize)]
+struct RustUnion {
+    pascal_name: String,
+    snake_name: String,
+    tag: String,
+    variants: Vec<RustUnionVariant>,
+    imports: Vec<RustImport>,
+}
 
-    fn decode_expr(&self, _ir: &ConfigIr, _ty: &TypeIr) -> String {
-        String::new()
-    }
+#[derive(Debug, Clone, Serialize)]
+struct RustUnionVariant {
+    name: String,
+    fields: Vec<RustField>,
+}
 
-    fn row_type(&self, table: &TableNameParts<'_>) -> String {
-        format!("{}::{}", table.snake_name, table.pascal_name)
-    }
+#[derive(Debug, Clone, Serialize)]
+struct RustRecord {
+    pascal_name: String,
+    snake_name: String,
+    imports: Vec<RustImport>,
+    fields: Vec<RustField>,
+}
 
-    fn container_type(
-        &self,
-        _table: &TableNameParts<'_>,
-        mode: TableModeIr,
-        row_type: &str,
-        key_type: Option<&str>,
-    ) -> String {
-        match mode {
-            TableModeIr::List => format!("Vec<{row_type}>"),
-            TableModeIr::Map => match key_type {
-                Some(key_type) => format!("SoraMap<{key_type}, {row_type}>"),
-                None => format!("Vec<{row_type}>"),
-            },
-            TableModeIr::Singleton => row_type.to_owned(),
+#[derive(Debug, Clone, Serialize)]
+struct RustImport {
+    module: String,
+    name: String,
+}
+
+#[derive(Debug, Clone, Serialize)]
+struct RustTable {
+    name: String,
+    pascal_name: String,
+    snake_name: String,
+    mode: String,
+    container_type: String,
+    row_type: String,
+    key_name: Option<String>,
+    key_field_name: Option<String>,
+    key_type: Option<String>,
+    key_is_copy: bool,
+    unique_indexes: Vec<RustIndex>,
+    non_unique_indexes: Vec<RustIndex>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+struct RustIndex {
+    name: String,
+    method_name: String,
+    field_name: String,
+    param_name: String,
+    param_type: String,
+    key_type: String,
+    key_is_copy: bool,
+}
+
+#[derive(Debug, Clone, Serialize)]
+struct RustField {
+    raw_name: String,
+    name: String,
+    type_name: String,
+    comment: Option<String>,
+}
+
+impl RustModel {
+    fn from_base_model(ir: &ConfigIr, model: BaseModel) -> Self {
+        Self {
+            package: model.package,
+            enums: model
+                .enums
+                .into_iter()
+                .map(|item| RustEnum {
+                    name: item.pascal_name,
+                    snake_name: item.snake_name,
+                    values: item.values,
+                })
+                .collect(),
+            unions: model
+                .unions
+                .into_iter()
+                .map(|item| rust_union(ir, item))
+                .collect(),
+            records: model
+                .records
+                .into_iter()
+                .map(|item| rust_record(ir, item))
+                .collect(),
+            tables: model
+                .tables
+                .into_iter()
+                .map(|item| rust_table(ir, item))
+                .collect(),
+            modules: model.modules,
         }
     }
+}
 
-    fn key_is_copy(&self, ir: &ConfigIr, ty: &TypeIr) -> bool {
-        rust_key_type_is_copy(ir, ty)
+fn rust_union(ir: &ConfigIr, union: BaseUnion) -> RustUnion {
+    RustUnion {
+        pascal_name: union.pascal_name,
+        snake_name: union.snake_name,
+        tag: union.tag,
+        variants: union
+            .variants
+            .into_iter()
+            .map(|variant| rust_variant(ir, variant))
+            .collect(),
+        imports: union.imports.into_iter().map(rust_import).collect(),
     }
+}
 
-    fn key_param_type(&self, ir: &ConfigIr, ty: &TypeIr) -> String {
-        let type_name = rust_type_name(ir, ty);
-        if type_name == "String" {
-            "str".to_owned()
-        } else {
-            type_name
-        }
+fn rust_variant(ir: &ConfigIr, variant: BaseUnionVariant) -> RustUnionVariant {
+    RustUnionVariant {
+        name: variant.pascal_name,
+        fields: variant
+            .fields
+            .into_iter()
+            .map(|field| rust_field(ir, field))
+            .collect(),
     }
+}
 
-    fn table_key_type(&self, ir: &ConfigIr, ty: &TypeIr) -> String {
-        rust_table_key_type(ir, ty)
+fn rust_record(ir: &ConfigIr, record: BaseRecord) -> RustRecord {
+    RustRecord {
+        pascal_name: record.pascal_name,
+        snake_name: record.snake_name,
+        imports: record.imports.into_iter().map(rust_import).collect(),
+        fields: record
+            .fields
+            .into_iter()
+            .map(|field| rust_field(ir, field))
+            .collect(),
+    }
+}
+
+fn rust_table(ir: &ConfigIr, table: BaseTable) -> RustTable {
+    let row_type = format!("{}::{}", table.snake_name, table.pascal_name);
+    let key_type = table
+        .key_field
+        .as_ref()
+        .map(|field| rust_table_key_type(ir, &field.ty));
+    let container_type = rust_container_type(table.mode, &row_type, key_type.as_deref());
+    let key_field_name = table
+        .key_field
+        .as_ref()
+        .map(|field| field.snake_name.clone());
+    let key_is_copy = table
+        .key_field
+        .as_ref()
+        .is_some_and(|field| rust_key_type_is_copy(ir, &field.ty));
+
+    RustTable {
+        name: table.name,
+        pascal_name: table.pascal_name,
+        snake_name: table.snake_name,
+        mode: table.mode_name,
+        container_type,
+        row_type,
+        key_name: table.key_name,
+        key_field_name,
+        key_type,
+        key_is_copy,
+        unique_indexes: table
+            .unique_indexes
+            .into_iter()
+            .map(|index| rust_index(ir, index))
+            .collect(),
+        non_unique_indexes: table
+            .non_unique_indexes
+            .into_iter()
+            .map(|index| rust_index(ir, index))
+            .collect(),
+    }
+}
+
+fn rust_index(ir: &ConfigIr, index: BaseIndex) -> RustIndex {
+    RustIndex {
+        name: index.snake_name,
+        method_name: index.method_name,
+        field_name: index.field.snake_name.clone(),
+        param_name: index.field.snake_name.clone(),
+        param_type: rust_key_param_type(ir, &index.field.ty),
+        key_type: rust_table_key_type(ir, &index.field.ty),
+        key_is_copy: rust_key_type_is_copy(ir, &index.field.ty),
+    }
+}
+
+fn rust_field(ir: &ConfigIr, field: BaseField) -> RustField {
+    RustField {
+        raw_name: field.raw_name,
+        name: field.snake_name,
+        type_name: rust_type_name(ir, &field.ty),
+        comment: field.comment,
+    }
+}
+
+fn rust_import(import: BaseImport) -> RustImport {
+    RustImport {
+        module: import.module,
+        name: import.name,
+    }
+}
+
+fn rust_container_type(mode: TableModeIr, row_type: &str, key_type: Option<&str>) -> String {
+    match mode {
+        TableModeIr::List => format!("Vec<{row_type}>"),
+        TableModeIr::Map => match key_type {
+            Some(key_type) => format!("SoraMap<{key_type}, {row_type}>"),
+            None => format!("Vec<{row_type}>"),
+        },
+        TableModeIr::Singleton => row_type.to_owned(),
+    }
+}
+
+fn rust_key_param_type(ir: &ConfigIr, ty: &TypeIr) -> String {
+    let type_name = rust_type_name(ir, ty);
+    if type_name == "String" {
+        "str".to_owned()
+    } else {
+        type_name
     }
 }
 
