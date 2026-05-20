@@ -36,6 +36,9 @@ pub struct CheckArgs {
 pub enum GenCommand {
     Rust(GenArgs),
     Kotlin(GenArgs),
+    Csharp(GenArgs),
+    Java(GenArgs),
+    Go(GenArgs),
 }
 
 #[derive(Debug, Args)]

@@ -1,0 +1,26 @@
+package {{ package }}
+
+import "fmt"
+
+type {{ enum.name }} int32
+
+const (
+{%- for value in enum.values %}
+    {{ enum.name }}{{ value }} {{ enum.name }} = {{ loop.index0 }}
+{%- endfor %}
+)
+
+func decode{{ enum.name }}(reader *SoraReader) ({{ enum.name }}, error) {
+    ordinal, err := reader.ReadUInt32()
+    if err != nil {
+        return 0, err
+    }
+    switch ordinal {
+{%- for value in enum.values %}
+    case {{ loop.index0 }}:
+        return {{ enum.name }}{{ value }}, nil
+{%- endfor %}
+    default:
+        return 0, fmt.Errorf("invalid enum ordinal %d for {{ enum.name }}", ordinal)
+    }
+}

@@ -1,0 +1,39 @@
+package {{ package }}
+
+import "fmt"
+
+type {{ union.pascal_name }} interface {
+    is{{ union.pascal_name }}()
+}
+
+{%- for variant in union.variants %}
+type {{ union.pascal_name }}{{ variant.name }} struct {
+{%- for field in variant.fields %}
+    {{ field.go_name }} {{ field.go_type }}
+{%- endfor %}
+}
+
+func ({{ union.pascal_name }}{{ variant.name }}) is{{ union.pascal_name }}() {}
+
+{%- endfor %}
+func decode{{ union.pascal_name }}(reader *SoraReader) ({{ union.pascal_name }}, error) {
+    ordinal, err := reader.ReadUInt32()
+    if err != nil {
+        return nil, err
+    }
+    switch ordinal {
+{%- for variant in union.variants %}
+    case {{ loop.index0 }}:
+        var value {{ union.pascal_name }}{{ variant.name }}
+{%- for field in variant.fields %}
+        value.{{ field.go_name }}, err = {{ field.go_decode }}
+        if err != nil {
+            return nil, err
+        }
+{%- endfor %}
+        return value, nil
+{%- endfor %}
+    default:
+        return nil, fmt.Errorf("invalid union ordinal %d for {{ union.pascal_name }}", ordinal)
+    }
+}

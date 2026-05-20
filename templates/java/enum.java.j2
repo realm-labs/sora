@@ -1,0 +1,18 @@
+package {{ package }};
+
+public enum {{ enum.name }} {
+{%- for value in enum.values %}
+    {{ value }}{% if not loop.last %},{% else %};{% endif %}
+{%- endfor %}
+
+    static {{ enum.name }} decode(SoraReader reader) {
+        switch (reader.readU32()) {
+{%- for value in enum.values %}
+            case {{ loop.index0 }}:
+                return {{ value }};
+{%- endfor %}
+            default:
+                throw new SoraReadException("invalid enum ordinal for {{ enum.name }}");
+        }
+    }
+}

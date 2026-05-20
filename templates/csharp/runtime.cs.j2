@@ -1,0 +1,359 @@
+#nullable enable
+
+using System;
+using System.Collections.Generic;
+using System.Text;
+
+namespace {{ namespace }};
+
+public sealed class SoraReadException : Exception
+{
+    public SoraReadException(string message) : base(message)
+    {
+    }
+}
+
+internal sealed record SoraSection(int Kind, int Compression, string Name, int Offset, int Length, int UncompressedLength);
+
+internal sealed class SoraBundle
+{
+    private const int BundleVersion = 1;
+    private const int HeaderLength = 24;
+    private const int SectionKindManifest = 0;
+    private const int SectionKindSchema = 1;
+    private const int SectionKindTable = 2;
+    private const int CompressionNone = 0;
+
+    private readonly byte[] bytes;
+    private readonly List<SoraSection> sections;
+
+    private SoraBundle(byte[] bytes, List<SoraSection> sections)
+    {
+        this.bytes = bytes;
+        this.sections = sections;
+    }
+
+    internal List<T> DecodeTable<T>(string name, Func<SoraReader, T> decode)
+    {
+        var section = sections.Find(value => value.Kind == SectionKindTable && value.Name == name)
+            ?? throw new SoraReadException($"missing Sora table section `{name}`");
+        if (section.Compression != CompressionNone)
+        {
+            throw new SoraReadException($"unsupported compression {section.Compression} for table `{name}`");
+        }
+        if (section.UncompressedLength != section.Length)
+        {
+            throw new SoraReadException($"table `{name}` has invalid uncompressed length");
+        }
+        var payload = new byte[section.Length];
+        Array.Copy(bytes, section.Offset, payload, 0, section.Length);
+        return DecodeRows(payload, decode);
+    }
+
+    internal static SoraBundle Parse(byte[] bytes)
+    {
+        if (bytes.Length < HeaderLength)
+        {
+            throw new SoraReadException("Sora bundle is shorter than header");
+        }
+        if (Encoding.ASCII.GetString(bytes, 0, 4) != "SORA")
+        {
+            throw new SoraReadException("invalid Sora bundle magic");
+        }
+        var version = ReadInt32At(bytes, 4);
+        if (version != BundleVersion)
+        {
+            throw new SoraReadException($"unsupported Sora bundle version {version}");
+        }
+
+        var headerLength = ReadInt32At(bytes, 8);
+        var directoryLength = ReadInt32At(bytes, 12);
+        var sectionCount = ReadInt32At(bytes, 16);
+        var flags = ReadInt32At(bytes, 20);
+        if (flags != 0)
+        {
+            throw new SoraReadException($"unsupported Sora bundle flags {flags}");
+        }
+        if (headerLength != HeaderLength || headerLength > bytes.Length)
+        {
+            throw new SoraReadException("invalid Sora bundle header length");
+        }
+        var directoryEnd = CheckedAdd(headerLength, directoryLength, "Sora section directory length overflow");
+        if (directoryEnd > bytes.Length)
+        {
+            throw new SoraReadException("Sora section directory exceeds bundle length");
+        }
+
+        var cursor = headerLength;
+        var sections = new List<SoraSection>(sectionCount);
+        var manifestCount = 0;
+        var schemaCount = 0;
+        var tableNames = new HashSet<string>();
+        for (var i = 0; i < sectionCount; i++)
+        {
+            if (cursor + 40 > directoryEnd)
+            {
+                throw new SoraReadException("truncated Sora section directory entry");
+            }
+            var kind = ReadInt32At(bytes, cursor);
+            var compression = ReadInt32At(bytes, cursor + 4);
+            var nameLength = ReadInt32At(bytes, cursor + 8);
+            var entryFlags = ReadInt32At(bytes, cursor + 12);
+            var offset = CheckedLongToInt(ReadInt64At(bytes, cursor + 16), "Sora section offset exceeds Int32.MaxValue");
+            var length = CheckedLongToInt(ReadInt64At(bytes, cursor + 24), "Sora section length exceeds Int32.MaxValue");
+            var uncompressedLength = CheckedLongToInt(ReadInt64At(bytes, cursor + 32), "Sora section uncompressed length exceeds Int32.MaxValue");
+            if (entryFlags != 0)
+            {
+                throw new SoraReadException($"unsupported Sora section flags {entryFlags}");
+            }
+            var nameStart = cursor + 40;
+            var nameEnd = CheckedAdd(nameStart, nameLength, "Sora section name length overflow");
+            if (nameEnd > directoryEnd)
+            {
+                throw new SoraReadException("Sora section name exceeds directory");
+            }
+            var payloadEnd = CheckedAdd(offset, length, "Sora section payload length overflow");
+            if (payloadEnd > bytes.Length)
+            {
+                throw new SoraReadException("Sora section payload exceeds bundle length");
+            }
+            var name = Encoding.UTF8.GetString(bytes, nameStart, nameLength);
+            if (kind == SectionKindManifest)
+            {
+                manifestCount++;
+                if (name != "$manifest")
+                {
+                    throw new SoraReadException("Sora manifest section must be named `$manifest`");
+                }
+            }
+            else if (kind == SectionKindSchema)
+            {
+                schemaCount++;
+                if (name != "$schema")
+                {
+                    throw new SoraReadException("Sora schema section must be named `$schema`");
+                }
+            }
+            else if (kind == SectionKindTable)
+            {
+                if (!tableNames.Add(name))
+                {
+                    throw new SoraReadException($"duplicate Sora table section `{name}`");
+                }
+            }
+            else
+            {
+                throw new SoraReadException($"unknown Sora section kind {kind}");
+            }
+            if (compression == CompressionNone && uncompressedLength != length)
+            {
+                throw new SoraReadException("uncompressed Sora section length mismatch");
+            }
+            sections.Add(new SoraSection(kind, compression, name, offset, length, uncompressedLength));
+            cursor = nameEnd;
+        }
+        if (cursor != directoryEnd)
+        {
+            throw new SoraReadException("Sora section directory has trailing bytes");
+        }
+        if (manifestCount != 1)
+        {
+            throw new SoraReadException($"expected exactly 1 Sora manifest section, got {manifestCount}");
+        }
+        if (schemaCount != 1)
+        {
+            throw new SoraReadException($"expected exactly 1 Sora schema section, got {schemaCount}");
+        }
+        return new SoraBundle(bytes, sections);
+    }
+
+    private static List<T> DecodeRows<T>(byte[] payload, Func<SoraReader, T> decode)
+    {
+        if (payload.Length < 12)
+        {
+            throw new SoraReadException("Sora table section is too short");
+        }
+        var rowCount = ReadInt32At(payload, 0);
+        var offsetsLength = CheckedAdd(rowCount, 1, "Sora row offset count overflow");
+        var rowDataStart = CheckedAdd(4, CheckedMultiply(offsetsLength, 8, "Sora row offsets overflow"), "Sora row data offset overflow");
+        if (rowDataStart > payload.Length)
+        {
+            throw new SoraReadException("Sora row offset table exceeds payload length");
+        }
+
+        var rows = new List<T>(rowCount);
+        for (var index = 0; index < rowCount; index++)
+        {
+            var start = CheckedLongToInt(ReadInt64At(payload, 4 + index * 8), "Sora row start exceeds Int32.MaxValue");
+            var end = CheckedLongToInt(ReadInt64At(payload, 4 + (index + 1) * 8), "Sora row end exceeds Int32.MaxValue");
+            if (start > end)
+            {
+                throw new SoraReadException("Sora row offsets are not monotonic");
+            }
+            var absoluteStart = CheckedAdd(rowDataStart, start, "Sora row start overflow");
+            var absoluteEnd = CheckedAdd(rowDataStart, end, "Sora row end overflow");
+            if (absoluteEnd > payload.Length)
+            {
+                throw new SoraReadException("Sora row exceeds payload length");
+            }
+            var rowBytes = new byte[absoluteEnd - absoluteStart];
+            Array.Copy(payload, absoluteStart, rowBytes, 0, rowBytes.Length);
+            var reader = new SoraReader(rowBytes);
+            var row = decode(reader);
+            if (!reader.IsFinished)
+            {
+                throw new SoraReadException("Sora row has trailing bytes");
+            }
+            rows.Add(row);
+        }
+        return rows;
+    }
+
+    internal static int ReadInt32At(byte[] bytes, int offset)
+    {
+        if (offset + 4 > bytes.Length)
+        {
+            throw new SoraReadException("unexpected end while reading i32");
+        }
+        return (bytes[offset] & 0xff) |
+            ((bytes[offset + 1] & 0xff) << 8) |
+            ((bytes[offset + 2] & 0xff) << 16) |
+            ((bytes[offset + 3] & 0xff) << 24);
+    }
+
+    internal static long ReadInt64At(byte[] bytes, int offset)
+    {
+        if (offset + 8 > bytes.Length)
+        {
+            throw new SoraReadException("unexpected end while reading i64");
+        }
+        var value = 0L;
+        for (var i = 0; i < 8; i++)
+        {
+            value |= ((long)bytes[offset + i] & 0xffL) << (i * 8);
+        }
+        return value;
+    }
+
+    internal static int CheckedAdd(int left, int right, string message)
+    {
+        var value = (long)left + right;
+        if (value > int.MaxValue || value < int.MinValue)
+        {
+            throw new SoraReadException(message);
+        }
+        return (int)value;
+    }
+
+    private static int CheckedMultiply(int left, int right, string message)
+    {
+        var value = (long)left * right;
+        if (value > int.MaxValue || value < int.MinValue)
+        {
+            throw new SoraReadException(message);
+        }
+        return (int)value;
+    }
+
+    private static int CheckedLongToInt(long value, string message)
+    {
+        if (value > int.MaxValue || value < int.MinValue)
+        {
+            throw new SoraReadException(message);
+        }
+        return (int)value;
+    }
+}
+
+internal sealed class SoraReader
+{
+    private readonly byte[] bytes;
+    private int cursor;
+
+    internal SoraReader(byte[] bytes)
+    {
+        this.bytes = bytes;
+    }
+
+    internal bool IsFinished => cursor == bytes.Length;
+
+    internal int ReadByte()
+    {
+        return Take(1)[0] & 0xff;
+    }
+
+    internal bool ReadBool()
+    {
+        return ReadByte() switch
+        {
+            0 => false,
+            1 => true,
+            var value => throw new SoraReadException($"invalid bool value {value}"),
+        };
+    }
+
+    internal int ReadUInt32()
+    {
+        return ReadInt32();
+    }
+
+    internal int ReadInt32()
+    {
+        return SoraBundle.ReadInt32At(Take(4), 0);
+    }
+
+    internal long ReadInt64()
+    {
+        return SoraBundle.ReadInt64At(Take(8), 0);
+    }
+
+    internal float ReadFloat()
+    {
+        return BitConverter.Int32BitsToSingle(ReadInt32());
+    }
+
+    internal double ReadDouble()
+    {
+        return BitConverter.Int64BitsToDouble(ReadInt64());
+    }
+
+    internal string ReadString()
+    {
+        var length = ReadUInt32();
+        return Encoding.UTF8.GetString(Take(length));
+    }
+
+    internal T? ReadOptional<T>(Func<T> read)
+    {
+        return ReadByte() switch
+        {
+            0 => default,
+            1 => read(),
+            var value => throw new SoraReadException($"invalid option presence {value}"),
+        };
+    }
+
+    internal List<T> ReadList<T>(Func<T> read)
+    {
+        var length = ReadUInt32();
+        var values = new List<T>(length);
+        for (var i = 0; i < length; i++)
+        {
+            values.Add(read());
+        }
+        return values;
+    }
+
+    private byte[] Take(int length)
+    {
+        var end = SoraBundle.CheckedAdd(cursor, length, "Sora reader cursor overflow");
+        if (end > bytes.Length)
+        {
+            throw new SoraReadException("Sora reader reached end of row");
+        }
+        var chunk = new byte[length];
+        Array.Copy(bytes, cursor, chunk, 0, length);
+        cursor = end;
+        return chunk;
+    }
+}

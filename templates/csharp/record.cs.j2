@@ -1,0 +1,21 @@
+#nullable enable
+
+using System.Collections.Generic;
+
+namespace {{ namespace }};
+
+public sealed record {{ record.pascal_name }}(
+{%- for field in record.fields %}
+    {{ field.csharp_type }} {{ field.csharp_name }}{% if not loop.last %},{% endif %}
+{%- endfor %}
+)
+{
+    internal static {{ record.pascal_name }} Decode(SoraReader reader)
+    {
+        return new {{ record.pascal_name }}(
+{%- for field in record.fields %}
+            {{ field.csharp_decode }}{% if not loop.last %},{% endif %}
+{%- endfor %}
+        );
+    }
+}

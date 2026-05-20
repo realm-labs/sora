@@ -3,7 +3,9 @@ use serde::Serialize;
 use sora_diagnostics::Result;
 use sora_ir::model::{ConfigIr, FieldIr, RustMapTypeIr, TableIr, TableModeIr, TypeIr};
 
-use crate::types::{kotlin_type_name, rust_type_name};
+use crate::types::{
+    csharp_type_name, go_type_name, java_type_name, kotlin_type_name, rust_type_name,
+};
 
 #[derive(Debug, Clone, Serialize)]
 pub struct CodegenModel {
@@ -73,6 +75,18 @@ pub struct CodegenTable {
     pub kotlin_row_type: String,
     pub key_kotlin_name: Option<String>,
     pub key_kotlin_type: Option<String>,
+    pub csharp_container_type: String,
+    pub csharp_row_type: String,
+    pub key_csharp_name: Option<String>,
+    pub key_csharp_type: Option<String>,
+    pub java_container_type: String,
+    pub java_row_type: String,
+    pub key_java_name: Option<String>,
+    pub key_java_type: Option<String>,
+    pub go_container_type: String,
+    pub go_row_type: String,
+    pub key_go_name: Option<String>,
+    pub key_go_type: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -83,6 +97,15 @@ pub struct CodegenField {
     pub kotlin_name: String,
     pub kotlin_type: String,
     pub kotlin_decode: String,
+    pub csharp_name: String,
+    pub csharp_type: String,
+    pub csharp_decode: String,
+    pub java_name: String,
+    pub java_type: String,
+    pub java_decode: String,
+    pub go_name: String,
+    pub go_type: String,
+    pub go_decode: String,
     pub comment: Option<String>,
 }
 
@@ -171,6 +194,15 @@ fn build_union(ir: &ConfigIr, item: &sora_ir::model::UnionIr) -> Result<CodegenU
                             kotlin_name: field.name.to_lower_camel_case(),
                             kotlin_type: kotlin_type_name(ir, &field.ty),
                             kotlin_decode: kotlin_decode_expr(ir, &field.ty),
+                            csharp_name: field.name.to_pascal_case(),
+                            csharp_type: csharp_type_name(ir, &field.ty),
+                            csharp_decode: csharp_decode_expr(ir, &field.ty),
+                            java_name: field.name.to_lower_camel_case(),
+                            java_type: java_type_name(ir, &field.ty),
+                            java_decode: java_decode_expr(ir, &field.ty),
+                            go_name: field.name.to_pascal_case(),
+                            go_type: go_type_name(ir, &field.ty),
+                            go_decode: go_decode_expr(ir, &field.ty),
                             comment: field.comment.clone(),
                         })
                     })
@@ -198,6 +230,9 @@ fn build_table(ir: &ConfigIr, table: &TableIr) -> Result<CodegenTable> {
     let snake_name = table.name.to_snake_case();
     let rust_row_type = format!("{snake_name}::{pascal_name}");
     let kotlin_row_type = pascal_name.clone();
+    let csharp_row_type = pascal_name.clone();
+    let java_row_type = pascal_name.clone();
+    let go_row_type = pascal_name.clone();
     let key_field = table.key.as_ref().and_then(|key| {
         table
             .fields
@@ -207,8 +242,12 @@ fn build_table(ir: &ConfigIr, table: &TableIr) -> Result<CodegenTable> {
                 (
                     field.name.to_snake_case(),
                     field.name.to_lower_camel_case(),
+                    field.name.to_pascal_case(),
                     rust_type_name(ir, &field.ty),
                     kotlin_type_name(ir, &field.ty),
+                    csharp_type_name(ir, &field.ty),
+                    java_type_name(ir, &field.ty),
+                    go_type_name(ir, &field.ty),
                     rust_key_type_is_copy(ir, &field.ty),
                 )
             })
@@ -216,7 +255,9 @@ fn build_table(ir: &ConfigIr, table: &TableIr) -> Result<CodegenTable> {
     let rust_container_type = match table.mode {
         TableModeIr::List => format!("Vec<{rust_row_type}>"),
         TableModeIr::Map => match &key_field {
-            Some((_, _, key_type, _, _)) => format!("SoraMap<{key_type}, {rust_row_type}>"),
+            Some((_, _, _, key_type, _, _, _, _, _)) => {
+                format!("SoraMap<{key_type}, {rust_row_type}>")
+            }
             None => format!("Vec<{rust_row_type}>"),
         },
         TableModeIr::Singleton => rust_row_type.clone(),
@@ -224,10 +265,42 @@ fn build_table(ir: &ConfigIr, table: &TableIr) -> Result<CodegenTable> {
     let kotlin_container_type = match table.mode {
         TableModeIr::List => format!("List<{kotlin_row_type}>"),
         TableModeIr::Map => match &key_field {
-            Some((_, _, _, key_type, _)) => format!("Map<{key_type}, {kotlin_row_type}>"),
+            Some((_, _, _, _, key_type, _, _, _, _)) => {
+                format!("Map<{key_type}, {kotlin_row_type}>")
+            }
             None => format!("List<{kotlin_row_type}>"),
         },
         TableModeIr::Singleton => kotlin_row_type.clone(),
+    };
+    let csharp_container_type = match table.mode {
+        TableModeIr::List => format!("List<{csharp_row_type}>"),
+        TableModeIr::Map => match &key_field {
+            Some((_, _, _, _, _, key_type, _, _, _)) => {
+                format!("Dictionary<{key_type}, {csharp_row_type}>")
+            }
+            None => format!("List<{csharp_row_type}>"),
+        },
+        TableModeIr::Singleton => csharp_row_type.clone(),
+    };
+    let java_container_type = match table.mode {
+        TableModeIr::List => format!("java.util.List<{java_row_type}>"),
+        TableModeIr::Map => match &key_field {
+            Some((_, _, _, _, _, _, key_type, _, _)) => {
+                format!("java.util.Map<{key_type}, {java_row_type}>")
+            }
+            None => format!("java.util.List<{java_row_type}>"),
+        },
+        TableModeIr::Singleton => java_row_type.clone(),
+    };
+    let go_container_type = match table.mode {
+        TableModeIr::List => format!("[]{go_row_type}"),
+        TableModeIr::Map => match &key_field {
+            Some((_, _, _, _, _, _, _, key_type, _)) => {
+                format!("map[{key_type}]{go_row_type}")
+            }
+            None => format!("[]{go_row_type}"),
+        },
+        TableModeIr::Singleton => go_row_type.clone(),
     };
 
     Ok(CodegenTable {
@@ -244,15 +317,47 @@ fn build_table(ir: &ConfigIr, table: &TableIr) -> Result<CodegenTable> {
         rust_container_type,
         rust_row_type,
         key_name: table.key.clone(),
-        key_rust_name: key_field.as_ref().map(|(name, _, _, _, _)| name.clone()),
-        key_rust_type: key_field.as_ref().map(|(_, _, ty, _, _)| ty.clone()),
+        key_rust_name: key_field
+            .as_ref()
+            .map(|(name, _, _, _, _, _, _, _, _)| name.clone()),
+        key_rust_type: key_field
+            .as_ref()
+            .map(|(_, _, _, ty, _, _, _, _, _)| ty.clone()),
         key_is_copy: key_field
             .as_ref()
-            .is_some_and(|(_, _, _, _, is_copy)| *is_copy),
+            .is_some_and(|(_, _, _, _, _, _, _, _, is_copy)| *is_copy),
         kotlin_container_type,
         kotlin_row_type,
-        key_kotlin_name: key_field.as_ref().map(|(_, name, _, _, _)| name.clone()),
-        key_kotlin_type: key_field.as_ref().map(|(_, _, _, ty, _)| ty.clone()),
+        key_kotlin_name: key_field
+            .as_ref()
+            .map(|(_, name, _, _, _, _, _, _, _)| name.clone()),
+        key_kotlin_type: key_field
+            .as_ref()
+            .map(|(_, _, _, _, ty, _, _, _, _)| ty.clone()),
+        csharp_container_type,
+        csharp_row_type,
+        key_csharp_name: key_field
+            .as_ref()
+            .map(|(_, _, name, _, _, _, _, _, _)| name.clone()),
+        key_csharp_type: key_field
+            .as_ref()
+            .map(|(_, _, _, _, _, ty, _, _, _)| ty.clone()),
+        java_container_type,
+        java_row_type,
+        key_java_name: key_field
+            .as_ref()
+            .map(|(_, name, _, _, _, _, _, _, _)| name.clone()),
+        key_java_type: key_field
+            .as_ref()
+            .map(|(_, _, _, _, _, _, ty, _, _)| ty.clone()),
+        go_container_type,
+        go_row_type,
+        key_go_name: key_field
+            .as_ref()
+            .map(|(_, _, name, _, _, _, _, _, _)| name.clone()),
+        key_go_type: key_field
+            .as_ref()
+            .map(|(_, _, _, _, _, _, _, ty, _)| ty.clone()),
     })
 }
 
@@ -293,6 +398,15 @@ fn build_record(ir: &ConfigIr, item: &TableLike<'_>) -> Result<CodegenRecord> {
                 kotlin_name: field.name.to_lower_camel_case(),
                 kotlin_type: kotlin_type_name(ir, &field.ty),
                 kotlin_decode: kotlin_decode_expr(ir, &field.ty),
+                csharp_name: field.name.to_pascal_case(),
+                csharp_type: csharp_type_name(ir, &field.ty),
+                csharp_decode: csharp_decode_expr(ir, &field.ty),
+                java_name: field.name.to_lower_camel_case(),
+                java_type: java_type_name(ir, &field.ty),
+                java_decode: java_decode_expr(ir, &field.ty),
+                go_name: field.name.to_pascal_case(),
+                go_type: go_type_name(ir, &field.ty),
+                go_decode: go_decode_expr(ir, &field.ty),
                 comment: field.comment.clone(),
             })
         })
@@ -306,6 +420,115 @@ fn build_record(ir: &ConfigIr, item: &TableLike<'_>) -> Result<CodegenRecord> {
         imports: build_imports(ir, item),
         fields,
     })
+}
+
+fn csharp_decode_expr(ir: &ConfigIr, ty: &TypeIr) -> String {
+    match ty {
+        TypeIr::Bool => "reader.ReadBool()".to_owned(),
+        TypeIr::I32 => "reader.ReadInt32()".to_owned(),
+        TypeIr::I64 => "reader.ReadInt64()".to_owned(),
+        TypeIr::F32 => "reader.ReadFloat()".to_owned(),
+        TypeIr::F64 => "reader.ReadDouble()".to_owned(),
+        TypeIr::String => "reader.ReadString()".to_owned(),
+        TypeIr::Enum(name) => format!("{name}Codec.Decode(reader)"),
+        TypeIr::Struct(name) | TypeIr::Union(name) => format!("{name}.Decode(reader)"),
+        TypeIr::List(element) | TypeIr::Array { element, .. } => {
+            format!("reader.ReadList(() => {})", csharp_decode_expr(ir, element))
+        }
+        TypeIr::Ref { table, field } => ir
+            .tables
+            .iter()
+            .find(|candidate| candidate.name == *table)
+            .and_then(|table| {
+                table
+                    .fields
+                    .iter()
+                    .find(|candidate| candidate.name == *field)
+            })
+            .map(|field| csharp_decode_expr(ir, &field.ty))
+            .unwrap_or_else(|| "reader.ReadInt32()".to_owned()),
+        TypeIr::Optional(element) => {
+            format!(
+                "reader.ReadOptional(() => {})",
+                csharp_decode_expr(ir, element)
+            )
+        }
+    }
+}
+
+fn java_decode_expr(ir: &ConfigIr, ty: &TypeIr) -> String {
+    match ty {
+        TypeIr::Bool => "reader.readBool()".to_owned(),
+        TypeIr::I32 => "reader.readI32()".to_owned(),
+        TypeIr::I64 => "reader.readI64()".to_owned(),
+        TypeIr::F32 => "reader.readF32()".to_owned(),
+        TypeIr::F64 => "reader.readF64()".to_owned(),
+        TypeIr::String => "reader.readString()".to_owned(),
+        TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => {
+            format!("{name}.decode(reader)")
+        }
+        TypeIr::List(element) | TypeIr::Array { element, .. } => {
+            format!("reader.readList(() -> {})", java_decode_expr(ir, element))
+        }
+        TypeIr::Ref { table, field } => ir
+            .tables
+            .iter()
+            .find(|candidate| candidate.name == *table)
+            .and_then(|table| {
+                table
+                    .fields
+                    .iter()
+                    .find(|candidate| candidate.name == *field)
+            })
+            .map(|field| java_decode_expr(ir, &field.ty))
+            .unwrap_or_else(|| "reader.readI32()".to_owned()),
+        TypeIr::Optional(element) => {
+            format!(
+                "reader.readOptional(() -> {})",
+                java_decode_expr(ir, element)
+            )
+        }
+    }
+}
+
+fn go_decode_expr(ir: &ConfigIr, ty: &TypeIr) -> String {
+    match ty {
+        TypeIr::Bool => "reader.ReadBool()".to_owned(),
+        TypeIr::I32 => "reader.ReadInt32()".to_owned(),
+        TypeIr::I64 => "reader.ReadInt64()".to_owned(),
+        TypeIr::F32 => "reader.ReadFloat32()".to_owned(),
+        TypeIr::F64 => "reader.ReadFloat64()".to_owned(),
+        TypeIr::String => "reader.ReadString()".to_owned(),
+        TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => {
+            format!("decode{name}(reader)")
+        }
+        TypeIr::List(element) | TypeIr::Array { element, .. } => {
+            format!(
+                "ReadList(reader, func(reader *SoraReader) ({}, error) {{ return {} }})",
+                go_type_name(ir, element),
+                go_decode_expr(ir, element)
+            )
+        }
+        TypeIr::Ref { table, field } => ir
+            .tables
+            .iter()
+            .find(|candidate| candidate.name == *table)
+            .and_then(|table| {
+                table
+                    .fields
+                    .iter()
+                    .find(|candidate| candidate.name == *field)
+            })
+            .map(|field| go_decode_expr(ir, &field.ty))
+            .unwrap_or_else(|| "reader.ReadInt32()".to_owned()),
+        TypeIr::Optional(element) => {
+            format!(
+                "ReadOptional(reader, func(reader *SoraReader) ({}, error) {{ return {} }})",
+                go_type_name(ir, element),
+                go_decode_expr(ir, element)
+            )
+        }
+    }
 }
 
 fn kotlin_decode_expr(ir: &ConfigIr, ty: &TypeIr) -> String {

@@ -1,0 +1,138 @@
+package {{ package }}
+
+import "fmt"
+
+type SoraTableMode int
+
+const (
+    SoraTableModeList SoraTableMode = iota
+    SoraTableModeMap
+    SoraTableModeSingleton
+)
+
+type SoraTable interface {
+    Name() string
+    Mode() SoraTableMode
+    Key() string
+    RowType() string
+    Len() int
+}
+
+{%- for table in model.tables %}
+type {{ table.pascal_name }}Table struct {
+    rows {{ table.go_container_type }}
+}
+
+func decode{{ table.pascal_name }}Table(bundle *SoraBundle) (*{{ table.pascal_name }}Table, error) {
+    rows, err := DecodeTable(bundle, "{{ table.name }}", decode{{ table.go_row_type }})
+    if err != nil {
+        return nil, err
+    }
+{%- if table.mode == "map" and table.key_go_name %}
+    return &{{ table.pascal_name }}Table{rows: DecodeMapTable(rows, func(row {{ table.go_row_type }}) {{ table.key_go_type }} { return row.{{ table.key_go_name }} })}, nil
+{%- elif table.mode == "singleton" %}
+    row, err := RequireSingletonTable(rows, "{{ table.name }}")
+    if err != nil {
+        return nil, err
+    }
+    return &{{ table.pascal_name }}Table{rows: row}, nil
+{%- else %}
+    return &{{ table.pascal_name }}Table{rows: rows}, nil
+{%- endif %}
+}
+
+func (table *{{ table.pascal_name }}Table) Rows() {{ table.go_container_type }} {
+    return table.rows
+}
+
+{%- if table.mode == "map" and table.key_go_name %}
+func (table *{{ table.pascal_name }}Table) Get(key {{ table.key_go_type }}) ({{ table.go_row_type }}, bool) {
+    value, ok := table.rows[key]
+    return value, ok
+}
+
+{%- endif %}
+func (table *{{ table.pascal_name }}Table) Name() string {
+    return "{{ table.name }}"
+}
+
+func (table *{{ table.pascal_name }}Table) Mode() SoraTableMode {
+{%- if table.mode == "map" %}
+    return SoraTableModeMap
+{%- elif table.mode == "singleton" %}
+    return SoraTableModeSingleton
+{%- else %}
+    return SoraTableModeList
+{%- endif %}
+}
+
+func (table *{{ table.pascal_name }}Table) Key() string {
+{%- if table.key_name %}
+    return "{{ table.key_name }}"
+{%- else %}
+    return ""
+{%- endif %}
+}
+
+func (table *{{ table.pascal_name }}Table) RowType() string {
+    return "{{ table.go_row_type }}"
+}
+
+func (table *{{ table.pascal_name }}Table) Len() int {
+{%- if table.mode == "singleton" %}
+    return 1
+{%- else %}
+    return len(table.rows)
+{%- endif %}
+}
+
+{%- endfor %}
+type SoraConfig struct {
+    tables map[string]SoraTable
+}
+
+func NewSoraConfigFromBytes(bytes []byte) (*SoraConfig, error) {
+    bundle, err := ParseSoraBundle(bytes)
+    if err != nil {
+        return nil, err
+    }
+    tables := make(map[string]SoraTable, {{ model.tables | length }})
+{%- for table in model.tables %}
+    {{ table.camel_name }}Table, err := decode{{ table.pascal_name }}Table(bundle)
+    if err != nil {
+        return nil, err
+    }
+    tables["{{ table.name }}"] = {{ table.camel_name }}Table
+{%- endfor %}
+    return &SoraConfig{tables: tables}, nil
+}
+
+func (config *SoraConfig) Tables() []SoraTable {
+    tables := make([]SoraTable, 0, len(config.tables))
+    for _, table := range config.tables {
+        tables = append(tables, table)
+    }
+    return tables
+}
+
+{%- for table in model.tables %}
+func (config *SoraConfig) {{ table.pascal_name }}() *{{ table.pascal_name }}Table {
+    return config.tables["{{ table.name }}"].(*{{ table.pascal_name }}Table)
+}
+
+{%- endfor %}
+func DecodeMapTable[K comparable, V any](rows []V, key func(V) K) map[K]V {
+    values := make(map[K]V, len(rows))
+    for _, row := range rows {
+        values[key(row)] = row
+    }
+    return values
+}
+
+func RequireSingletonTable[T any](rows []T, name string) (T, error) {
+    var zero T
+    if len(rows) != 1 {
+        return zero, fmt.Errorf("expected singleton table `%s` to contain exactly 1 row, got %d", name, len(rows))
+    }
+    return rows[0], nil
+}

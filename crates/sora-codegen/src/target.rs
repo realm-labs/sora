@@ -2,4 +2,7 @@
 pub enum CodegenTarget {
     Rust,
     Kotlin,
+    CSharp,
+    Java,
+    Go,
 }

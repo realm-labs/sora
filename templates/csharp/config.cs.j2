@@ -1,0 +1,126 @@
+#nullable enable
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+namespace {{ model.package }};
+
+public enum SoraTableMode
+{
+    List,
+    Map,
+    Singleton,
+}
+
+public interface ISoraTable
+{
+    string Name { get; }
+    SoraTableMode Mode { get; }
+    string? Key { get; }
+    string RowType { get; }
+    int Count { get; }
+}
+
+{%- for table in model.tables %}
+
+public sealed class {{ table.pascal_name }}Table : ISoraTable
+{
+    private readonly {{ table.csharp_container_type }} rows;
+
+    internal {{ table.pascal_name }}Table({{ table.csharp_container_type }} rows)
+    {
+        this.rows = rows;
+    }
+
+    internal static {{ table.pascal_name }}Table Decode(SoraBundle bundle)
+    {
+{%- if table.mode == "map" and table.key_csharp_name %}
+        return new {{ table.pascal_name }}Table(SoraConfig.DecodeMapTable(bundle.DecodeTable<{{ table.csharp_row_type }}>("{{ table.name }}", {{ table.csharp_row_type }}.Decode), row => row.{{ table.key_csharp_name }}));
+{%- elif table.mode == "singleton" %}
+        return new {{ table.pascal_name }}Table(SoraConfig.RequireSingletonTable(bundle.DecodeTable<{{ table.csharp_row_type }}>("{{ table.name }}", {{ table.csharp_row_type }}.Decode), "{{ table.name }}"));
+{%- else %}
+        return new {{ table.pascal_name }}Table(bundle.DecodeTable<{{ table.csharp_row_type }}>("{{ table.name }}", {{ table.csharp_row_type }}.Decode));
+{%- endif %}
+    }
+
+    public {{ table.csharp_container_type }} Rows => rows;
+
+{%- if table.mode == "map" and table.key_csharp_name %}
+    public {{ table.csharp_row_type }}? Get({{ table.key_csharp_type }} key)
+    {
+        return rows.TryGetValue(key, out var row) ? row : default;
+    }
+
+{%- endif %}
+    public string Name => "{{ table.name }}";
+{%- if table.mode == "map" %}
+    public SoraTableMode Mode => SoraTableMode.Map;
+{%- elif table.mode == "singleton" %}
+    public SoraTableMode Mode => SoraTableMode.Singleton;
+{%- else %}
+    public SoraTableMode Mode => SoraTableMode.List;
+{%- endif %}
+{%- if table.key_name %}
+    public string? Key => "{{ table.key_name }}";
+{%- else %}
+    public string? Key => null;
+{%- endif %}
+    public string RowType => "{{ table.csharp_row_type }}";
+{%- if table.mode == "singleton" %}
+    public int Count => 1;
+{%- else %}
+    public int Count => rows.Count;
+{%- endif %}
+}
+{%- endfor %}
+
+public sealed class SoraConfig
+{
+    private readonly Dictionary<string, ISoraTable> tables;
+
+    private SoraConfig(Dictionary<string, ISoraTable> tables)
+    {
+        this.tables = tables;
+    }
+
+    public static SoraConfig FromBytes(byte[] bytes)
+    {
+        var bundle = SoraBundle.Parse(bytes);
+        var tables = new Dictionary<string, ISoraTable>({{ model.tables | length }});
+{%- for table in model.tables %}
+        tables["{{ table.name }}"] = {{ table.pascal_name }}Table.Decode(bundle);
+{%- endfor %}
+        return new SoraConfig(tables);
+    }
+
+    public IEnumerable<ISoraTable> Tables => tables.Values;
+
+    private T Table<T>(string name) where T : class, ISoraTable
+    {
+        if (tables.TryGetValue(name, out var table) && table is T typed)
+        {
+            return typed;
+        }
+        throw new SoraReadException($"generated SoraConfig is missing table `{name}` or has an unexpected table type");
+    }
+
+{%- for table in model.tables %}
+    public {{ table.pascal_name }}Table {{ table.pascal_name }} => Table<{{ table.pascal_name }}Table>("{{ table.name }}");
+
+{%- endfor %}
+    internal static Dictionary<TKey, TValue> DecodeMapTable<TKey, TValue>(List<TValue> rows, Func<TValue, TKey> key)
+        where TKey : notnull
+    {
+        return rows.ToDictionary(key);
+    }
+
+    internal static T RequireSingletonTable<T>(List<T> rows, string name)
+    {
+        if (rows.Count != 1)
+        {
+            throw new SoraReadException($"expected singleton table `{name}` to contain exactly 1 row, got {rows.Count}");
+        }
+        return rows[0];
+    }
+}

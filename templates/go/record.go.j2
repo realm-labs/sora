@@ -1,0 +1,19 @@
+package {{ package }}
+
+type {{ record.pascal_name }} struct {
+{%- for field in record.fields %}
+    {{ field.go_name }} {{ field.go_type }}
+{%- endfor %}
+}
+
+func decode{{ record.pascal_name }}(reader *SoraReader) ({{ record.pascal_name }}, error) {
+    var value {{ record.pascal_name }}
+    var err error
+{%- for field in record.fields %}
+    value.{{ field.go_name }}, err = {{ field.go_decode }}
+    if err != nil {
+        return value, err
+    }
+{%- endfor %}
+    return value, nil
+}

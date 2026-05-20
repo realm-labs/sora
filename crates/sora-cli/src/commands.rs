@@ -16,6 +16,9 @@ pub fn run(command: Command) -> Result<()> {
         Command::Gen { target } => match target {
             GenCommand::Rust(args) => generate(args, CodegenTarget::Rust),
             GenCommand::Kotlin(args) => generate(args, CodegenTarget::Kotlin),
+            GenCommand::Csharp(args) => generate(args, CodegenTarget::CSharp),
+            GenCommand::Java(args) => generate(args, CodegenTarget::Java),
+            GenCommand::Go(args) => generate(args, CodegenTarget::Go),
         },
         Command::Export(args) => export(args),
         Command::Diff(args) => diff(args),

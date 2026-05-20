@@ -1,0 +1,24 @@
+#nullable enable
+
+namespace {{ namespace }};
+
+public enum {{ enum.name }}
+{
+{%- for value in enum.values %}
+    {{ value }},
+{%- endfor %}
+}
+
+internal static class {{ enum.name }}Codec
+{
+    internal static {{ enum.name }} Decode(SoraReader reader)
+    {
+        return reader.ReadUInt32() switch
+        {
+{%- for value in enum.values %}
+            {{ loop.index0 }} => {{ enum.name }}.{{ value }},
+{%- endfor %}
+            var value => throw new SoraReadException($"invalid enum ordinal {value} for {{ enum.name }}"),
+        };
+    }
+}

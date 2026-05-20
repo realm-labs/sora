@@ -91,7 +91,10 @@ fn is_kotlin_package_segment(segment: &str) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::rust::RustCodeGenerator;
+    use crate::{
+        csharp::CSharpCodeGenerator, go::GoCodeGenerator, java::JavaCodeGenerator,
+        rust::RustCodeGenerator,
+    };
     use sora_ir::{model::ConfigIr, normalize::normalize_schema};
     use sora_schema::model::SchemaFile;
     use std::{
@@ -247,6 +250,44 @@ mod tests {
         assert!(rust_mod.contains("pub type SoraMap<K, V> = rustc_hash::FxHashMap<K, V>;"));
         assert!(rust_mod.contains("pub struct ItemTable(SoraMap<i32, item::Item>)"));
         assert!(rust_mod.contains("tables: SoraMap<&'static str, Box<dyn SoraTable>>"));
+
+        let _ = std::fs::remove_dir_all(base);
+    }
+
+    #[test]
+    fn generates_csharp_java_and_go_files() {
+        let mut ir = example_ir();
+        ir.package = "com.sora.game_config".to_owned();
+        let base = temp_dir();
+        let csharp_out = base.join("csharp");
+        let java_out = base.join("java");
+        let go_out = base.join("go");
+
+        CSharpCodeGenerator.generate(&ir, &csharp_out).unwrap();
+        JavaCodeGenerator.generate(&ir, &java_out).unwrap();
+        GoCodeGenerator.generate(&ir, &go_out).unwrap();
+
+        let csharp_item = std::fs::read_to_string(csharp_out.join("Item.cs")).unwrap();
+        let csharp_config = std::fs::read_to_string(csharp_out.join("SoraConfig.cs")).unwrap();
+        let java_item =
+            std::fs::read_to_string(java_out.join("com/sora/game_config/Item.java")).unwrap();
+        let java_config =
+            std::fs::read_to_string(java_out.join("com/sora/game_config/SoraConfig.java")).unwrap();
+        let go_item = std::fs::read_to_string(go_out.join("item.go")).unwrap();
+        let go_config = std::fs::read_to_string(go_out.join("config.go")).unwrap();
+
+        assert!(csharp_item.contains("namespace com.sora.game_config;"));
+        assert!(csharp_item.contains("public sealed record Item"));
+        assert!(csharp_config.contains("public sealed class SoraConfig"));
+        assert!(csharp_config.contains("Dictionary<int, Item>"));
+        assert!(java_item.contains("package com.sora.game_config;"));
+        assert!(java_item.contains("public final class Item"));
+        assert!(java_config.contains("public final class SoraConfig"));
+        assert!(java_config.contains("java.util.Map<Integer, Item>"));
+        assert!(go_item.contains("package game_config"));
+        assert!(go_item.contains("type Item struct"));
+        assert!(go_config.contains("type SoraConfig struct"));
+        assert!(go_config.contains("map[int32]Item"));
 
         let _ = std::fs::remove_dir_all(base);
     }

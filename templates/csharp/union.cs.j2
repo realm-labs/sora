@@ -1,0 +1,31 @@
+#nullable enable
+
+using System.Collections.Generic;
+
+namespace {{ namespace }};
+
+public abstract record {{ union.pascal_name }}
+{
+{%- for variant in union.variants %}
+    public sealed record {{ variant.name }}(
+{%- for field in variant.fields %}
+        {{ field.csharp_type }} {{ field.csharp_name }}{% if not loop.last %},{% endif %}
+{%- endfor %}
+    ) : {{ union.pascal_name }};
+
+{%- endfor %}
+    internal static {{ union.pascal_name }} Decode(SoraReader reader)
+    {
+        return reader.ReadUInt32() switch
+        {
+{%- for variant in union.variants %}
+            {{ loop.index0 }} => new {{ variant.name }}(
+{%- for field in variant.fields %}
+                {{ field.csharp_decode }}{% if not loop.last %},{% endif %}
+{%- endfor %}
+            ),
+{%- endfor %}
+            var value => throw new SoraReadException($"invalid union ordinal {value} for {{ union.pascal_name }}"),
+        };
+    }
+}

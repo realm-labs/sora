@@ -1,0 +1,36 @@
+package {{ package }};
+
+public interface {{ union.pascal_name }} {
+{%- for variant in union.variants %}
+    final class {{ variant.name }} implements {{ union.pascal_name }} {
+{%- for field in variant.fields %}
+        public final {{ field.java_type }} {{ field.java_name }};
+{%- endfor %}
+
+        public {{ variant.name }}(
+{%- for field in variant.fields %}
+            {{ field.java_type }} {{ field.java_name }}{% if not loop.last %},{% endif %}
+{%- endfor %}
+        ) {
+{%- for field in variant.fields %}
+            this.{{ field.java_name }} = {{ field.java_name }};
+{%- endfor %}
+        }
+    }
+
+{%- endfor %}
+    static {{ union.pascal_name }} decode(SoraReader reader) {
+        switch (reader.readU32()) {
+{%- for variant in union.variants %}
+            case {{ loop.index0 }}:
+                return new {{ variant.name }}(
+{%- for field in variant.fields %}
+                    {{ field.java_decode }}{% if not loop.last %},{% endif %}
+{%- endfor %}
+                );
+{%- endfor %}
+            default:
+                throw new SoraReadException("invalid union ordinal for {{ union.pascal_name }}");
+        }
+    }
+}
