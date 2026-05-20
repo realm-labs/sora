@@ -20,7 +20,6 @@ local Rarity = {
     Epic = "Epic",
     Legendary = "Legendary",
 }
-
 local values = {
     [0] = Rarity.Common,
     [1] = Rarity.Uncommon,

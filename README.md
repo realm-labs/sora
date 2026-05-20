@@ -232,7 +232,7 @@ The binary bundle uses a language-neutral sectioned layout: a fixed header, a se
 
 ## Codegen Architecture
 
-Codegen uses MiniJinja templates embedded into the CLI binary, but type mapping is computed in Rust before rendering. Rust, Kotlin, C#, Java, Go, and Lua generation include models plus small binary runtime readers for `.sora` bundles. Lua generation also emits EmmyLua annotations for editor type hints and supports `lua_version = "5.1"`, `"5.2"`, `"5.3"`, `"5.4"`, or `"luajit"`; Lua 5.3/5.4 use `string.unpack`, while older runtimes get a generated compatibility decoder. Future targets may include TypeScript and Python.
+Codegen uses MiniJinja templates embedded into the CLI binary, but type mapping is computed in Rust before rendering. Rust, Kotlin, C#, Java, Go, and Lua generation include models plus small binary runtime readers for `.sora` bundles. Lua generation also emits EmmyLua annotations for editor type hints and supports `lua_version = "5.1"`, `"5.2"`, `"5.3"`, `"5.4"`, or `"luajit"`; Lua 5.3/5.4 use `string.unpack`, while older runtimes get a generated compatibility decoder. Lua also supports `i64_mode = "string" | "number" | "integer"` and `enum_repr = "string" | "integer"`. Future targets may include TypeScript and Python.
 
 ## Excel Template Projection
 

@@ -14,7 +14,6 @@ local QuestType = {
     Side = "Side",
     Daily = "Daily",
 }
-
 local values = {
     [0] = QuestType.Main,
     [1] = QuestType.Side,

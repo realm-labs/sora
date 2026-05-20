@@ -2,7 +2,7 @@
 
 ---@class LevelExp
 ---@field level integer
----@field exp integer
+---@field exp string
 ---@field unlockFeature string?
 
 local LevelExp = {}
@@ -12,7 +12,7 @@ local LevelExp = {}
 function LevelExp.decode(reader)
     return {
         level = reader:read_i32(),
-        exp = reader:read_i64(),
+        exp = reader:read_i64_string(),
         unlockFeature = reader:read_optional(function() return reader:read_string() end),
     }
 end

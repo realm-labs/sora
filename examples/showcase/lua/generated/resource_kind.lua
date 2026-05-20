@@ -14,7 +14,6 @@ local ResourceKind = {
     Gold = "Gold",
     Diamond = "Diamond",
 }
-
 local values = {
     [0] = ResourceKind.Item,
     [1] = ResourceKind.Gold,

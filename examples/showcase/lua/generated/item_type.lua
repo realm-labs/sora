@@ -20,7 +20,6 @@ local ItemType = {
     Material = "Material",
     Consumable = "Consumable",
 }
-
 local values = {
     [0] = ItemType.Weapon,
     [1] = ItemType.Armor,

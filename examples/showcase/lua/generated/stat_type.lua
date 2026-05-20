@@ -20,7 +20,6 @@ local StatType = {
     Speed = "Speed",
     CritRate = "CritRate",
 }
-
 local values = {
     [0] = StatType.Hp,
     [1] = StatType.Attack,

@@ -1,7 +1,11 @@
 ---@alias {{ enum.name }}
+{%- if options.enum_is_integer %}
+---| integer
+{%- else %}
 {%- for value in enum.values %}
 ---| '"{{ value }}"'
 {%- endfor %}
+{%- endif %}
 
 ---@class {{ enum.name }}Values
 {%- for value in enum.values %}
@@ -11,25 +15,44 @@
 ---@type {{ enum.name }}Values
 local {{ enum.name }} = {
 {%- for value in enum.values %}
+{%- if options.enum_is_integer %}
+    {{ value }} = {{ loop.index0 }},
+{%- else %}
     {{ value }} = "{{ value }}",
+{%- endif %}
 {%- endfor %}
 }
 
+{%- if options.enum_is_integer %}
+local values = {
+{%- for value in enum.values %}
+    [{{ loop.index0 }}] = true,
+{%- endfor %}
+}
+{%- else %}
 local values = {
 {%- for value in enum.values %}
     [{{ loop.index0 }}] = {{ enum.name }}.{{ value }},
 {%- endfor %}
 }
+{%- endif %}
 
 ---@param reader SoraReader
 ---@return {{ enum.name }}
 function {{ enum.name }}.decode(reader)
     local ordinal = reader:read_u32()
+{%- if options.enum_is_integer %}
+    if not values[ordinal] then
+        error("invalid enum ordinal " .. tostring(ordinal) .. " for {{ enum.name }}")
+    end
+    return ordinal
+{%- else %}
     local value = values[ordinal]
     if value == nil then
         error("invalid enum ordinal " .. tostring(ordinal) .. " for {{ enum.name }}")
     end
     return value
+{%- endif %}
 end
 
 return {{ enum.name }}

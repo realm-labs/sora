@@ -17,7 +17,6 @@ local ElementType = {
     Lightning = "Lightning",
     Physical = "Physical",
 }
-
 local values = {
     [0] = ElementType.Fire,
     [1] = ElementType.Ice,

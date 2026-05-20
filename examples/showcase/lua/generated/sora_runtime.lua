@@ -210,6 +210,13 @@ function SoraReader:read_i64()
     return value
 end
 
+---@return string
+function SoraReader:read_i64_string()
+    local value, next_cursor = string.unpack("<i8", self.bytes, self.cursor)
+    self.cursor = next_cursor
+    return tostring(value)
+end
+
 ---@return number
 function SoraReader:read_f32()
     local value, next_cursor = string.unpack("<f", self.bytes, self.cursor)
@@ -372,6 +379,16 @@ function read_u64_at(bytes, offset)
         error("unexpected end while reading u64")
     end
     return string.unpack("<I8", bytes, offset + 1)
+end
+
+---@param bytes string
+---@param offset integer
+---@return string
+function read_i64_string_at(bytes, offset)
+    if offset + 8 > #bytes then
+        error("unexpected end while reading i64")
+    end
+    return tostring(string.unpack("<i8", bytes, offset + 1))
 end
 
 Runtime.SoraBundle = SoraBundle

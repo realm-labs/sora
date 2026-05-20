@@ -4,13 +4,12 @@ use heck::{ToLowerCamelCase, ToSnakeCase};
 use minijinja::context;
 use serde::Serialize;
 use sora_diagnostics::Result;
-use sora_ir::model::{ConfigIr, LuaVersionIr, TableModeIr, TypeIr};
+use sora_ir::model::{ConfigIr, LuaEnumReprIr, LuaI64ModeIr, LuaVersionIr, TableModeIr, TypeIr};
 
 use crate::{
     generator::{CodeGenerator, ensure_sora_runtime_format},
     model::{LanguageBackend, TableNameParts, build_model},
     render::{ensure_dir, render_template, write_file},
-    types::lua_type_name,
 };
 
 pub struct LuaCodeGenerator;
@@ -21,13 +20,23 @@ impl CodeGenerator for LuaCodeGenerator {
         ensure_supported_lua_version(ir.codegen.lua.lua_version)?;
         ensure_dir(out_dir)?;
 
-        let options =
-            LuaOptionsView::new(ir.codegen.lua.module.as_deref(), ir.codegen.lua.lua_version);
-        let backend = LuaBackend;
+        let options = LuaOptionsView::new(
+            ir.codegen.lua.module.as_deref(),
+            ir.codegen.lua.lua_version,
+            ir.codegen.lua.i64_mode,
+            ir.codegen.lua.enum_repr,
+        );
+        let backend = LuaBackend {
+            options: options.clone(),
+        };
         let model = build_model(ir, &backend)?;
 
         for item in &model.enums {
-            let rendered = render_template("lua", "enum.lua.j2", context! { enum => item })?;
+            let rendered = render_template(
+                "lua",
+                "enum.lua.j2",
+                context! { enum => item, options => &options },
+            )?;
             write_file(
                 &out_dir.join(format!("{}.lua", item.name.to_snake_case())),
                 rendered,
@@ -71,11 +80,20 @@ impl CodeGenerator for LuaCodeGenerator {
 struct LuaOptionsView {
     require_prefix: String,
     lua_version: &'static str,
+    i64_mode: &'static str,
+    enum_repr: &'static str,
     uses_string_unpack: bool,
+    i64_is_string: bool,
+    enum_is_integer: bool,
 }
 
 impl LuaOptionsView {
-    fn new(module: Option<&str>, lua_version: LuaVersionIr) -> Self {
+    fn new(
+        module: Option<&str>,
+        lua_version: LuaVersionIr,
+        i64_mode: LuaI64ModeIr,
+        enum_repr: LuaEnumReprIr,
+    ) -> Self {
         let require_prefix = module
             .filter(|module| !module.trim().is_empty())
             .map(|module| format!("{module}."))
@@ -83,12 +101,19 @@ impl LuaOptionsView {
         Self {
             require_prefix,
             lua_version: lua_version_name(lua_version),
+            i64_mode: lua_i64_mode_name(i64_mode),
+            enum_repr: lua_enum_repr_name(enum_repr),
             uses_string_unpack: uses_string_unpack(lua_version),
+            i64_is_string: i64_mode == LuaI64ModeIr::String,
+            enum_is_integer: enum_repr == LuaEnumReprIr::Integer,
         }
     }
 }
 
-struct LuaBackend;
+#[derive(Debug, Clone)]
+struct LuaBackend {
+    options: LuaOptionsView,
+}
 
 impl LanguageBackend for LuaBackend {
     fn field_name(&self, raw_name: &str) -> String {
@@ -96,11 +121,11 @@ impl LanguageBackend for LuaBackend {
     }
 
     fn type_name(&self, ir: &ConfigIr, ty: &TypeIr) -> String {
-        lua_type_name(ir, ty)
+        self.lua_type_name(ir, ty)
     }
 
     fn decode_expr(&self, ir: &ConfigIr, ty: &TypeIr) -> String {
-        lua_decode_expr(ir, ty)
+        self.lua_decode_expr(ir, ty)
     }
 
     fn row_type(&self, table: &TableNameParts<'_>) -> String {
@@ -118,41 +143,79 @@ impl LanguageBackend for LuaBackend {
     }
 }
 
-fn lua_decode_expr(ir: &ConfigIr, ty: &TypeIr) -> String {
-    match ty {
-        TypeIr::Bool => "reader:read_bool()".to_owned(),
-        TypeIr::I32 => "reader:read_i32()".to_owned(),
-        TypeIr::I64 => "reader:read_i64()".to_owned(),
-        TypeIr::F32 => "reader:read_f32()".to_owned(),
-        TypeIr::F64 => "reader:read_f64()".to_owned(),
-        TypeIr::String => "reader:read_string()".to_owned(),
-        TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => {
-            format!("{name}.decode(reader)")
+impl LuaBackend {
+    fn lua_type_name(&self, ir: &ConfigIr, ty: &TypeIr) -> String {
+        match ty {
+            TypeIr::Bool => "boolean".to_owned(),
+            TypeIr::I32 => "integer".to_owned(),
+            TypeIr::I64 => match self.options.i64_mode {
+                "string" => "string".to_owned(),
+                "number" => "number".to_owned(),
+                _ => "integer".to_owned(),
+            },
+            TypeIr::F32 | TypeIr::F64 => "number".to_owned(),
+            TypeIr::String => "string".to_owned(),
+            TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => name.clone(),
+            TypeIr::List(element) | TypeIr::Array { element, .. } => {
+                format!("{}[]", self.lua_type_name(ir, element))
+            }
+            TypeIr::Ref { table, field } => self
+                .ref_target_type(ir, table, field)
+                .map(|ty| self.lua_type_name(ir, ty))
+                .unwrap_or_else(|| "integer".to_owned()),
+            TypeIr::Optional(element) => format!("{}?", self.lua_type_name(ir, element)),
         }
-        TypeIr::List(element) | TypeIr::Array { element, .. } => {
-            format!(
-                "reader:read_list(function() return {} end)",
-                lua_decode_expr(ir, element)
-            )
+    }
+
+    fn lua_decode_expr(&self, ir: &ConfigIr, ty: &TypeIr) -> String {
+        match ty {
+            TypeIr::Bool => "reader:read_bool()".to_owned(),
+            TypeIr::I32 => "reader:read_i32()".to_owned(),
+            TypeIr::I64 => match self.options.i64_mode {
+                "string" => "reader:read_i64_string()".to_owned(),
+                _ => "reader:read_i64()".to_owned(),
+            },
+            TypeIr::F32 => "reader:read_f32()".to_owned(),
+            TypeIr::F64 => "reader:read_f64()".to_owned(),
+            TypeIr::String => "reader:read_string()".to_owned(),
+            TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => {
+                format!("{name}.decode(reader)")
+            }
+            TypeIr::List(element) | TypeIr::Array { element, .. } => {
+                format!(
+                    "reader:read_list(function() return {} end)",
+                    self.lua_decode_expr(ir, element)
+                )
+            }
+            TypeIr::Ref { table, field } => self
+                .ref_target_type(ir, table, field)
+                .map(|ty| self.lua_decode_expr(ir, ty))
+                .unwrap_or_else(|| "reader:read_i32()".to_owned()),
+            TypeIr::Optional(element) => {
+                format!(
+                    "reader:read_optional(function() return {} end)",
+                    self.lua_decode_expr(ir, element)
+                )
+            }
         }
-        TypeIr::Ref { table, field } => ir
-            .tables
+    }
+
+    fn ref_target_type<'a>(
+        &self,
+        ir: &'a ConfigIr,
+        table: &str,
+        field: &str,
+    ) -> Option<&'a TypeIr> {
+        ir.tables
             .iter()
-            .find(|candidate| candidate.name == *table)
+            .find(|candidate| candidate.name == table)
             .and_then(|table| {
                 table
                     .fields
                     .iter()
                     .find(|candidate| candidate.name == *field)
             })
-            .map(|field| lua_decode_expr(ir, &field.ty))
-            .unwrap_or_else(|| "reader:read_i32()".to_owned()),
-        TypeIr::Optional(element) => {
-            format!(
-                "reader:read_optional(function() return {} end)",
-                lua_decode_expr(ir, element)
-            )
-        }
+            .map(|field| &field.ty)
     }
 }
 
@@ -168,6 +231,21 @@ fn ensure_supported_lua_version(version: LuaVersionIr) -> Result<()> {
 
 fn uses_string_unpack(version: LuaVersionIr) -> bool {
     matches!(version, LuaVersionIr::Lua53 | LuaVersionIr::Lua54)
+}
+
+fn lua_i64_mode_name(mode: LuaI64ModeIr) -> &'static str {
+    match mode {
+        LuaI64ModeIr::Integer => "integer",
+        LuaI64ModeIr::Number => "number",
+        LuaI64ModeIr::String => "string",
+    }
+}
+
+fn lua_enum_repr_name(repr: LuaEnumReprIr) -> &'static str {
+    match repr {
+        LuaEnumReprIr::Integer => "integer",
+        LuaEnumReprIr::String => "string",
+    }
 }
 
 fn lua_version_name(version: LuaVersionIr) -> &'static str {
@@ -209,9 +287,11 @@ mod tests {
         assert!(item.contains("---@class Item"));
         assert!(item.ends_with('\n'));
         assert!(item.contains("---@field itemType ItemType"));
+        assert!(item.contains("---@field largeId string"));
         assert!(item.contains("local ItemType = require(\"generated.lua.item_type\")"));
         assert!(item.contains("function Item.decode(reader)"));
         assert!(item.contains("itemType = ItemType.decode(reader)"));
+        assert!(item.contains("largeId = reader:read_i64_string()"));
         assert!(item_type.contains("---@alias ItemType"));
         assert!(item_type.contains("---| '\"Weapon\"'"));
         assert!(action.contains("---@alias Action"));
@@ -227,6 +307,27 @@ mod tests {
         assert!(config.contains("function SoraConfig.from_bytes(bytes)"));
         assert!(config.contains("function SoraConfig:item()"));
         assert!(config.ends_with('\n'));
+
+        let _ = std::fs::remove_dir_all(base);
+    }
+
+    #[test]
+    fn lua_i64_and_enum_options_change_generated_api() {
+        let mut ir = example_ir();
+        ir.codegen.lua.i64_mode = LuaI64ModeIr::Number;
+        ir.codegen.lua.enum_repr = LuaEnumReprIr::Integer;
+        let base = temp_dir();
+
+        LuaCodeGenerator.generate(&ir, &base).unwrap();
+
+        let item = std::fs::read_to_string(base.join("item.lua")).unwrap();
+        let item_type = std::fs::read_to_string(base.join("item_type.lua")).unwrap();
+
+        assert!(item.contains("---@field largeId number"));
+        assert!(item.contains("largeId = reader:read_i64()"));
+        assert!(item_type.contains("---| integer"));
+        assert!(item_type.contains("Weapon = 0"));
+        assert!(item_type.contains("return ordinal"));
 
         let _ = std::fs::remove_dir_all(base);
     }
@@ -285,6 +386,11 @@ required = true
 [[tables.fields]]
 name = "item_type"
 type = "enum<ItemType>"
+required = true
+
+[[tables.fields]]
+name = "large_id"
+type = "i64"
 required = true
 
 [[tables.fields]]

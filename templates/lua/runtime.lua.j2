@@ -236,6 +236,19 @@ function SoraReader:read_i64()
 {%- endif %}
 end
 
+---@return string
+function SoraReader:read_i64_string()
+{%- if options.uses_string_unpack %}
+    local value, next_cursor = string.unpack("<i8", self.bytes, self.cursor)
+    self.cursor = next_cursor
+    return tostring(value)
+{%- else %}
+    local value = read_i64_string_at(self.bytes, self.cursor - 1)
+    self.cursor = self.cursor + 8
+    return value
+{%- endif %}
+end
+
 ---@return number
 function SoraReader:read_f32()
 {%- if options.uses_string_unpack %}
@@ -424,6 +437,40 @@ function read_u64_at(bytes, offset)
 {%- endif %}
 end
 
+---@param bytes string
+---@param offset integer
+---@return string
+function read_i64_string_at(bytes, offset)
+    if offset + 8 > #bytes then
+        error("unexpected end while reading i64")
+    end
+{%- if options.uses_string_unpack %}
+    return tostring(string.unpack("<i8", bytes, offset + 1))
+{%- else %}
+    local raw = { string.byte(bytes, offset + 1, offset + 8) }
+    local negative = raw[8] >= 128
+    if negative then
+        local carry = 1
+        for index = 1, 8 do
+            local value = 255 - raw[index] + carry
+            if value >= 256 then
+                raw[index] = value - 256
+                carry = 1
+            else
+                raw[index] = value
+                carry = 0
+            end
+        end
+    end
+
+    local value = decimal_from_le_bytes(raw)
+    if negative and value ~= "0" then
+        return "-" .. value
+    end
+    return value
+{%- endif %}
+end
+
 {%- if not options.uses_string_unpack %}
 ---@param bytes string
 ---@param offset integer
@@ -526,6 +573,30 @@ function checked_safe_integer(value, type_name)
         error(type_name .. " value " .. tostring(value) .. " exceeds Lua number safe integer range")
     end
     return value
+end
+
+---@param bytes integer[]
+---@return string
+function decimal_from_le_bytes(bytes)
+    local digits = { 0 }
+    for index = 8, 1, -1 do
+        local carry = bytes[index]
+        for digit_index = 1, #digits do
+            local value = digits[digit_index] * 256 + carry
+            digits[digit_index] = value % 10
+            carry = math.floor(value / 10)
+        end
+        while carry > 0 do
+            digits[#digits + 1] = carry % 10
+            carry = math.floor(carry / 10)
+        end
+    end
+
+    local out = {}
+    for index = #digits, 1, -1 do
+        out[#out + 1] = tostring(digits[index])
+    end
+    return table.concat(out)
 end
 {%- endif %}
 

@@ -14,7 +14,6 @@ local MailType = {
     Event = "Event",
     Compensation = "Compensation",
 }
-
 local values = {
     [0] = MailType.System,
     [1] = MailType.Event,

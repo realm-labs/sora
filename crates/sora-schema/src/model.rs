@@ -80,6 +80,12 @@ pub struct LuaCodegenSchema {
 
     #[serde(default)]
     pub lua_version: LuaVersionSchema,
+
+    #[serde(default)]
+    pub i64_mode: LuaI64ModeSchema,
+
+    #[serde(default)]
+    pub enum_repr: LuaEnumReprSchema,
 }
 
 impl Default for LuaCodegenSchema {
@@ -88,6 +94,8 @@ impl Default for LuaCodegenSchema {
             runtime_format: RuntimeFormatSchema::Sora,
             module: None,
             lua_version: LuaVersionSchema::Lua54,
+            i64_mode: LuaI64ModeSchema::String,
+            enum_repr: LuaEnumReprSchema::String,
         }
     }
 }
@@ -115,6 +123,23 @@ pub enum LuaVersionSchema {
     Lua54,
     #[serde(rename = "luajit")]
     LuaJit,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, Default)]
+#[serde(rename_all = "snake_case")]
+pub enum LuaI64ModeSchema {
+    Integer,
+    Number,
+    #[default]
+    String,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, Default)]
+#[serde(rename_all = "snake_case")]
+pub enum LuaEnumReprSchema {
+    Integer,
+    #[default]
+    String,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, Default)]
@@ -326,6 +351,8 @@ runtime_format = "sora"
 runtime_format = "sora"
 module = "generated.lua"
 lua_version = "5.4"
+i64_mode = "string"
+enum_repr = "string"
 "#,
         )
         .expect("schema should parse");
@@ -342,5 +369,7 @@ lua_version = "5.4"
         assert_eq!(schema.codegen.lua.runtime_format, RuntimeFormatSchema::Sora);
         assert_eq!(schema.codegen.lua.module.as_deref(), Some("generated.lua"));
         assert_eq!(schema.codegen.lua.lua_version, LuaVersionSchema::Lua54);
+        assert_eq!(schema.codegen.lua.i64_mode, LuaI64ModeSchema::String);
+        assert_eq!(schema.codegen.lua.enum_repr, LuaEnumReprSchema::String);
     }
 }

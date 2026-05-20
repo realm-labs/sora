@@ -113,7 +113,8 @@ fn go_type_name_inner(ir: &ConfigIr, ty: &TypeIr) -> String {
 fn lua_type_name_inner(ir: &ConfigIr, ty: &TypeIr) -> String {
     match ty {
         TypeIr::Bool => "boolean".to_owned(),
-        TypeIr::I32 | TypeIr::I64 => "integer".to_owned(),
+        TypeIr::I32 => "integer".to_owned(),
+        TypeIr::I64 => "string".to_owned(),
         TypeIr::F32 | TypeIr::F64 => "number".to_owned(),
         TypeIr::String => "string".to_owned(),
         TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => name.clone(),
@@ -279,7 +280,7 @@ mod tests {
         let cases = [
             ("bool", "boolean"),
             ("i32", "integer"),
-            ("i64", "integer"),
+            ("i64", "string"),
             ("f32", "number"),
             ("f64", "number"),
             ("string", "string"),

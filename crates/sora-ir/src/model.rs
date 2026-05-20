@@ -70,6 +70,8 @@ pub struct LuaCodegenIr {
     pub runtime_format: RuntimeFormatIr,
     pub module: Option<String>,
     pub lua_version: LuaVersionIr,
+    pub i64_mode: LuaI64ModeIr,
+    pub enum_repr: LuaEnumReprIr,
 }
 
 impl Default for LuaCodegenIr {
@@ -78,6 +80,8 @@ impl Default for LuaCodegenIr {
             runtime_format: RuntimeFormatIr::Sora,
             module: None,
             lua_version: LuaVersionIr::Lua54,
+            i64_mode: LuaI64ModeIr::String,
+            enum_repr: LuaEnumReprIr::String,
         }
     }
 }
@@ -99,6 +103,21 @@ pub enum LuaVersionIr {
     #[default]
     Lua54,
     LuaJit,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
+pub enum LuaI64ModeIr {
+    Integer,
+    Number,
+    #[default]
+    String,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
+pub enum LuaEnumReprIr {
+    Integer,
+    #[default]
+    String,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
