@@ -109,17 +109,22 @@ mod tests {
         assert!(rust_mod.contains("pub struct SoraConfig"));
         assert!(rust_mod.contains("from_bytes"));
         assert!(rust_mod.contains("pub type SoraMap<K, V> = std::collections::HashMap<K, V>;"));
-        assert!(
-            rust_mod
-                .contains("tables: SoraMap<&'static str, Box<dyn std::any::Any + Send + Sync>>")
-        );
+        assert!(rust_mod.contains("pub trait SoraTable: std::any::Any + Send + Sync"));
+        assert!(rust_mod.contains("tables: SoraMap<&'static str, Box<dyn SoraTable>>"));
         assert!(rust_mod.contains("pub struct ItemTable(SoraMap<i32, item::Item>)"));
+        assert!(rust_mod.contains("impl SoraTable for ItemTable"));
+        assert!(rust_mod.contains("fn key(&self) -> Option<&'static str>"));
+        assert!(rust_mod.contains("Some(\"id\")"));
+        assert!(rust_mod.contains("pub fn tables(&self) -> impl Iterator<Item = &dyn SoraTable>"));
         assert!(rust_mod.contains("impl std::ops::Deref for ItemTable"));
         assert!(
             rust_mod.contains("tables.insert(\"Item\", Box::new(ItemTable::decode(&bundle)?));")
         );
         assert!(rust_mod.contains("|row| row.id"));
-        assert!(rust_mod.contains("fn table<T: 'static>(&self, name: &'static str) -> &T"));
+        assert!(
+            rust_mod.contains("fn table<T: SoraTable + 'static>(&self, name: &'static str) -> &T")
+        );
+        assert!(rust_mod.contains("table.as_any().downcast_ref::<T>()"));
         assert!(rust_mod.contains("pub fn item(&self) -> &ItemTable"));
         assert!(rust_mod.contains("pub fn get(&self, key: i32) -> Option<&item::Item>"));
         assert!(!rust_mod.contains("pub fn get_item"));
@@ -173,10 +178,7 @@ mod tests {
         let rust_mod = std::fs::read_to_string(rust_out.join("mod.rs")).unwrap();
         assert!(rust_mod.contains("pub type SoraMap<K, V> = rustc_hash::FxHashMap<K, V>;"));
         assert!(rust_mod.contains("pub struct ItemTable(SoraMap<i32, item::Item>)"));
-        assert!(
-            rust_mod
-                .contains("tables: SoraMap<&'static str, Box<dyn std::any::Any + Send + Sync>>")
-        );
+        assert!(rust_mod.contains("tables: SoraMap<&'static str, Box<dyn SoraTable>>"));
 
         let _ = std::fs::remove_dir_all(base);
     }

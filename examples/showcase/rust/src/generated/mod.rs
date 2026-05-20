@@ -45,8 +45,24 @@ pub mod vec3;
 pub mod vip_level;
 pub type SoraMap<K, V> = rustc_hash::FxHashMap<K, V>;
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum SoraTableMode {
+    List,
+    Map,
+    Singleton,
+}
+
+pub trait SoraTable: std::any::Any + Send + Sync {
+    fn name(&self) -> &'static str;
+    fn mode(&self) -> SoraTableMode;
+    fn key(&self) -> Option<&'static str>;
+    fn row_type(&self) -> &'static str;
+    fn len(&self) -> usize;
+    fn as_any(&self) -> &dyn std::any::Any;
+}
+
 pub struct SoraConfig {
-    tables: SoraMap<&'static str, Box<dyn std::any::Any + Send + Sync>>,
+    tables: SoraMap<&'static str, Box<dyn SoraTable>>,
 }
 
 impl std::fmt::Debug for SoraConfig {
@@ -82,6 +98,32 @@ impl std::ops::Deref for ItemTable {
     }
 }
 
+impl SoraTable for ItemTable {
+    fn name(&self) -> &'static str {
+        "Item"
+    }
+
+    fn mode(&self) -> SoraTableMode {
+        SoraTableMode::Map
+    }
+
+    fn key(&self) -> Option<&'static str> {
+        Some("id")
+    }
+
+    fn row_type(&self) -> &'static str {
+        "item::Item"
+    }
+
+    fn len(&self) -> usize {
+        self.0.len()
+    }
+
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct SkillTable(SoraMap<i32, skill::Skill>);
 
@@ -102,6 +144,32 @@ impl std::ops::Deref for SkillTable {
 
     fn deref(&self) -> &Self::Target {
         &self.0
+    }
+}
+
+impl SoraTable for SkillTable {
+    fn name(&self) -> &'static str {
+        "Skill"
+    }
+
+    fn mode(&self) -> SoraTableMode {
+        SoraTableMode::Map
+    }
+
+    fn key(&self) -> Option<&'static str> {
+        Some("id")
+    }
+
+    fn row_type(&self) -> &'static str {
+        "skill::Skill"
+    }
+
+    fn len(&self) -> usize {
+        self.0.len()
+    }
+
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
     }
 }
 
@@ -128,6 +196,32 @@ impl std::ops::Deref for QuestTable {
     }
 }
 
+impl SoraTable for QuestTable {
+    fn name(&self) -> &'static str {
+        "Quest"
+    }
+
+    fn mode(&self) -> SoraTableMode {
+        SoraTableMode::Map
+    }
+
+    fn key(&self) -> Option<&'static str> {
+        Some("id")
+    }
+
+    fn row_type(&self) -> &'static str {
+        "quest::Quest"
+    }
+
+    fn len(&self) -> usize {
+        self.0.len()
+    }
+
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct QuestRewardTable(Vec<quest_reward::QuestReward>);
 
@@ -144,6 +238,32 @@ impl std::ops::Deref for QuestRewardTable {
 
     fn deref(&self) -> &Self::Target {
         &self.0
+    }
+}
+
+impl SoraTable for QuestRewardTable {
+    fn name(&self) -> &'static str {
+        "QuestReward"
+    }
+
+    fn mode(&self) -> SoraTableMode {
+        SoraTableMode::List
+    }
+
+    fn key(&self) -> Option<&'static str> {
+        None
+    }
+
+    fn row_type(&self) -> &'static str {
+        "quest_reward::QuestReward"
+    }
+
+    fn len(&self) -> usize {
+        self.0.len()
+    }
+
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
     }
 }
 
@@ -164,6 +284,32 @@ impl std::ops::Deref for GameSettingsTable {
 
     fn deref(&self) -> &Self::Target {
         &self.0
+    }
+}
+
+impl SoraTable for GameSettingsTable {
+    fn name(&self) -> &'static str {
+        "GameSettings"
+    }
+
+    fn mode(&self) -> SoraTableMode {
+        SoraTableMode::Singleton
+    }
+
+    fn key(&self) -> Option<&'static str> {
+        None
+    }
+
+    fn row_type(&self) -> &'static str {
+        "game_settings::GameSettings"
+    }
+
+    fn len(&self) -> usize {
+        1
+    }
+
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
     }
 }
 
@@ -190,6 +336,32 @@ impl std::ops::Deref for LocalizationTable {
     }
 }
 
+impl SoraTable for LocalizationTable {
+    fn name(&self) -> &'static str {
+        "Localization"
+    }
+
+    fn mode(&self) -> SoraTableMode {
+        SoraTableMode::Map
+    }
+
+    fn key(&self) -> Option<&'static str> {
+        Some("key")
+    }
+
+    fn row_type(&self) -> &'static str {
+        "localization::Localization"
+    }
+
+    fn len(&self) -> usize {
+        self.0.len()
+    }
+
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct LevelExpTable(SoraMap<i32, level_exp::LevelExp>);
 
@@ -210,6 +382,32 @@ impl std::ops::Deref for LevelExpTable {
 
     fn deref(&self) -> &Self::Target {
         &self.0
+    }
+}
+
+impl SoraTable for LevelExpTable {
+    fn name(&self) -> &'static str {
+        "LevelExp"
+    }
+
+    fn mode(&self) -> SoraTableMode {
+        SoraTableMode::Map
+    }
+
+    fn key(&self) -> Option<&'static str> {
+        Some("level")
+    }
+
+    fn row_type(&self) -> &'static str {
+        "level_exp::LevelExp"
+    }
+
+    fn len(&self) -> usize {
+        self.0.len()
+    }
+
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
     }
 }
 
@@ -236,6 +434,32 @@ impl std::ops::Deref for CharacterTable {
     }
 }
 
+impl SoraTable for CharacterTable {
+    fn name(&self) -> &'static str {
+        "Character"
+    }
+
+    fn mode(&self) -> SoraTableMode {
+        SoraTableMode::Map
+    }
+
+    fn key(&self) -> Option<&'static str> {
+        Some("id")
+    }
+
+    fn row_type(&self) -> &'static str {
+        "character::Character"
+    }
+
+    fn len(&self) -> usize {
+        self.0.len()
+    }
+
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct CharacterSkillTable(Vec<character_skill::CharacterSkill>);
 
@@ -252,6 +476,32 @@ impl std::ops::Deref for CharacterSkillTable {
 
     fn deref(&self) -> &Self::Target {
         &self.0
+    }
+}
+
+impl SoraTable for CharacterSkillTable {
+    fn name(&self) -> &'static str {
+        "CharacterSkill"
+    }
+
+    fn mode(&self) -> SoraTableMode {
+        SoraTableMode::List
+    }
+
+    fn key(&self) -> Option<&'static str> {
+        None
+    }
+
+    fn row_type(&self) -> &'static str {
+        "character_skill::CharacterSkill"
+    }
+
+    fn len(&self) -> usize {
+        self.0.len()
+    }
+
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
     }
 }
 
@@ -278,6 +528,32 @@ impl std::ops::Deref for BuffTable {
     }
 }
 
+impl SoraTable for BuffTable {
+    fn name(&self) -> &'static str {
+        "Buff"
+    }
+
+    fn mode(&self) -> SoraTableMode {
+        SoraTableMode::Map
+    }
+
+    fn key(&self) -> Option<&'static str> {
+        Some("id")
+    }
+
+    fn row_type(&self) -> &'static str {
+        "buff::Buff"
+    }
+
+    fn len(&self) -> usize {
+        self.0.len()
+    }
+
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct DropGroupTable(SoraMap<i32, drop_group::DropGroup>);
 
@@ -301,6 +577,32 @@ impl std::ops::Deref for DropGroupTable {
     }
 }
 
+impl SoraTable for DropGroupTable {
+    fn name(&self) -> &'static str {
+        "DropGroup"
+    }
+
+    fn mode(&self) -> SoraTableMode {
+        SoraTableMode::Map
+    }
+
+    fn key(&self) -> Option<&'static str> {
+        Some("id")
+    }
+
+    fn row_type(&self) -> &'static str {
+        "drop_group::DropGroup"
+    }
+
+    fn len(&self) -> usize {
+        self.0.len()
+    }
+
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct DropEntryTable(Vec<drop_entry::DropEntry>);
 
@@ -317,6 +619,32 @@ impl std::ops::Deref for DropEntryTable {
 
     fn deref(&self) -> &Self::Target {
         &self.0
+    }
+}
+
+impl SoraTable for DropEntryTable {
+    fn name(&self) -> &'static str {
+        "DropEntry"
+    }
+
+    fn mode(&self) -> SoraTableMode {
+        SoraTableMode::List
+    }
+
+    fn key(&self) -> Option<&'static str> {
+        None
+    }
+
+    fn row_type(&self) -> &'static str {
+        "drop_entry::DropEntry"
+    }
+
+    fn len(&self) -> usize {
+        self.0.len()
+    }
+
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
     }
 }
 
@@ -343,6 +671,32 @@ impl std::ops::Deref for MonsterTable {
     }
 }
 
+impl SoraTable for MonsterTable {
+    fn name(&self) -> &'static str {
+        "Monster"
+    }
+
+    fn mode(&self) -> SoraTableMode {
+        SoraTableMode::Map
+    }
+
+    fn key(&self) -> Option<&'static str> {
+        Some("id")
+    }
+
+    fn row_type(&self) -> &'static str {
+        "monster::Monster"
+    }
+
+    fn len(&self) -> usize {
+        self.0.len()
+    }
+
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct StageTable(SoraMap<i32, stage::Stage>);
 
@@ -366,6 +720,32 @@ impl std::ops::Deref for StageTable {
     }
 }
 
+impl SoraTable for StageTable {
+    fn name(&self) -> &'static str {
+        "Stage"
+    }
+
+    fn mode(&self) -> SoraTableMode {
+        SoraTableMode::Map
+    }
+
+    fn key(&self) -> Option<&'static str> {
+        Some("id")
+    }
+
+    fn row_type(&self) -> &'static str {
+        "stage::Stage"
+    }
+
+    fn len(&self) -> usize {
+        self.0.len()
+    }
+
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct StageRewardTable(Vec<stage_reward::StageReward>);
 
@@ -382,6 +762,32 @@ impl std::ops::Deref for StageRewardTable {
 
     fn deref(&self) -> &Self::Target {
         &self.0
+    }
+}
+
+impl SoraTable for StageRewardTable {
+    fn name(&self) -> &'static str {
+        "StageReward"
+    }
+
+    fn mode(&self) -> SoraTableMode {
+        SoraTableMode::List
+    }
+
+    fn key(&self) -> Option<&'static str> {
+        None
+    }
+
+    fn row_type(&self) -> &'static str {
+        "stage_reward::StageReward"
+    }
+
+    fn len(&self) -> usize {
+        self.0.len()
+    }
+
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
     }
 }
 
@@ -408,6 +814,32 @@ impl std::ops::Deref for DungeonTable {
     }
 }
 
+impl SoraTable for DungeonTable {
+    fn name(&self) -> &'static str {
+        "Dungeon"
+    }
+
+    fn mode(&self) -> SoraTableMode {
+        SoraTableMode::Map
+    }
+
+    fn key(&self) -> Option<&'static str> {
+        Some("id")
+    }
+
+    fn row_type(&self) -> &'static str {
+        "dungeon::Dungeon"
+    }
+
+    fn len(&self) -> usize {
+        self.0.len()
+    }
+
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct ShopTable(SoraMap<i32, shop::Shop>);
 
@@ -431,6 +863,32 @@ impl std::ops::Deref for ShopTable {
     }
 }
 
+impl SoraTable for ShopTable {
+    fn name(&self) -> &'static str {
+        "Shop"
+    }
+
+    fn mode(&self) -> SoraTableMode {
+        SoraTableMode::Map
+    }
+
+    fn key(&self) -> Option<&'static str> {
+        Some("id")
+    }
+
+    fn row_type(&self) -> &'static str {
+        "shop::Shop"
+    }
+
+    fn len(&self) -> usize {
+        self.0.len()
+    }
+
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct ShopItemTable(Vec<shop_item::ShopItem>);
 
@@ -447,6 +905,32 @@ impl std::ops::Deref for ShopItemTable {
 
     fn deref(&self) -> &Self::Target {
         &self.0
+    }
+}
+
+impl SoraTable for ShopItemTable {
+    fn name(&self) -> &'static str {
+        "ShopItem"
+    }
+
+    fn mode(&self) -> SoraTableMode {
+        SoraTableMode::List
+    }
+
+    fn key(&self) -> Option<&'static str> {
+        None
+    }
+
+    fn row_type(&self) -> &'static str {
+        "shop_item::ShopItem"
+    }
+
+    fn len(&self) -> usize {
+        self.0.len()
+    }
+
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
     }
 }
 
@@ -473,6 +957,32 @@ impl std::ops::Deref for RecipeTable {
     }
 }
 
+impl SoraTable for RecipeTable {
+    fn name(&self) -> &'static str {
+        "Recipe"
+    }
+
+    fn mode(&self) -> SoraTableMode {
+        SoraTableMode::Map
+    }
+
+    fn key(&self) -> Option<&'static str> {
+        Some("id")
+    }
+
+    fn row_type(&self) -> &'static str {
+        "recipe::Recipe"
+    }
+
+    fn len(&self) -> usize {
+        self.0.len()
+    }
+
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct GachaPoolTable(SoraMap<i32, gacha_pool::GachaPool>);
 
@@ -496,6 +1006,32 @@ impl std::ops::Deref for GachaPoolTable {
     }
 }
 
+impl SoraTable for GachaPoolTable {
+    fn name(&self) -> &'static str {
+        "GachaPool"
+    }
+
+    fn mode(&self) -> SoraTableMode {
+        SoraTableMode::Map
+    }
+
+    fn key(&self) -> Option<&'static str> {
+        Some("id")
+    }
+
+    fn row_type(&self) -> &'static str {
+        "gacha_pool::GachaPool"
+    }
+
+    fn len(&self) -> usize {
+        self.0.len()
+    }
+
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct GachaItemTable(Vec<gacha_item::GachaItem>);
 
@@ -512,6 +1048,32 @@ impl std::ops::Deref for GachaItemTable {
 
     fn deref(&self) -> &Self::Target {
         &self.0
+    }
+}
+
+impl SoraTable for GachaItemTable {
+    fn name(&self) -> &'static str {
+        "GachaItem"
+    }
+
+    fn mode(&self) -> SoraTableMode {
+        SoraTableMode::List
+    }
+
+    fn key(&self) -> Option<&'static str> {
+        None
+    }
+
+    fn row_type(&self) -> &'static str {
+        "gacha_item::GachaItem"
+    }
+
+    fn len(&self) -> usize {
+        self.0.len()
+    }
+
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
     }
 }
 
@@ -538,6 +1100,32 @@ impl std::ops::Deref for EquipmentSetTable {
     }
 }
 
+impl SoraTable for EquipmentSetTable {
+    fn name(&self) -> &'static str {
+        "EquipmentSet"
+    }
+
+    fn mode(&self) -> SoraTableMode {
+        SoraTableMode::Map
+    }
+
+    fn key(&self) -> Option<&'static str> {
+        Some("id")
+    }
+
+    fn row_type(&self) -> &'static str {
+        "equipment_set::EquipmentSet"
+    }
+
+    fn len(&self) -> usize {
+        self.0.len()
+    }
+
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct AchievementTable(SoraMap<i32, achievement::Achievement>);
 
@@ -558,6 +1146,32 @@ impl std::ops::Deref for AchievementTable {
 
     fn deref(&self) -> &Self::Target {
         &self.0
+    }
+}
+
+impl SoraTable for AchievementTable {
+    fn name(&self) -> &'static str {
+        "Achievement"
+    }
+
+    fn mode(&self) -> SoraTableMode {
+        SoraTableMode::Map
+    }
+
+    fn key(&self) -> Option<&'static str> {
+        Some("id")
+    }
+
+    fn row_type(&self) -> &'static str {
+        "achievement::Achievement"
+    }
+
+    fn len(&self) -> usize {
+        self.0.len()
+    }
+
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
     }
 }
 
@@ -584,6 +1198,32 @@ impl std::ops::Deref for VipLevelTable {
     }
 }
 
+impl SoraTable for VipLevelTable {
+    fn name(&self) -> &'static str {
+        "VipLevel"
+    }
+
+    fn mode(&self) -> SoraTableMode {
+        SoraTableMode::Map
+    }
+
+    fn key(&self) -> Option<&'static str> {
+        Some("level")
+    }
+
+    fn row_type(&self) -> &'static str {
+        "vip_level::VipLevel"
+    }
+
+    fn len(&self) -> usize {
+        self.0.len()
+    }
+
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct MailTemplateTable(SoraMap<i32, mail_template::MailTemplate>);
 
@@ -607,6 +1247,32 @@ impl std::ops::Deref for MailTemplateTable {
     }
 }
 
+impl SoraTable for MailTemplateTable {
+    fn name(&self) -> &'static str {
+        "MailTemplate"
+    }
+
+    fn mode(&self) -> SoraTableMode {
+        SoraTableMode::Map
+    }
+
+    fn key(&self) -> Option<&'static str> {
+        Some("id")
+    }
+
+    fn row_type(&self) -> &'static str {
+        "mail_template::MailTemplate"
+    }
+
+    fn len(&self) -> usize {
+        self.0.len()
+    }
+
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct MailRewardTable(Vec<mail_reward::MailReward>);
 
@@ -623,6 +1289,32 @@ impl std::ops::Deref for MailRewardTable {
 
     fn deref(&self) -> &Self::Target {
         &self.0
+    }
+}
+
+impl SoraTable for MailRewardTable {
+    fn name(&self) -> &'static str {
+        "MailReward"
+    }
+
+    fn mode(&self) -> SoraTableMode {
+        SoraTableMode::List
+    }
+
+    fn key(&self) -> Option<&'static str> {
+        None
+    }
+
+    fn row_type(&self) -> &'static str {
+        "mail_reward::MailReward"
+    }
+
+    fn len(&self) -> usize {
+        self.0.len()
+    }
+
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
     }
 }
 
@@ -649,6 +1341,32 @@ impl std::ops::Deref for DialogueTable {
     }
 }
 
+impl SoraTable for DialogueTable {
+    fn name(&self) -> &'static str {
+        "Dialogue"
+    }
+
+    fn mode(&self) -> SoraTableMode {
+        SoraTableMode::Map
+    }
+
+    fn key(&self) -> Option<&'static str> {
+        Some("id")
+    }
+
+    fn row_type(&self) -> &'static str {
+        "dialogue::Dialogue"
+    }
+
+    fn len(&self) -> usize {
+        self.0.len()
+    }
+
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct EventRuleTable(SoraMap<i32, event_rule::EventRule>);
 
@@ -672,11 +1390,36 @@ impl std::ops::Deref for EventRuleTable {
     }
 }
 
+impl SoraTable for EventRuleTable {
+    fn name(&self) -> &'static str {
+        "EventRule"
+    }
+
+    fn mode(&self) -> SoraTableMode {
+        SoraTableMode::Map
+    }
+
+    fn key(&self) -> Option<&'static str> {
+        Some("id")
+    }
+
+    fn row_type(&self) -> &'static str {
+        "event_rule::EventRule"
+    }
+
+    fn len(&self) -> usize {
+        self.0.len()
+    }
+
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
+    }
+}
+
 impl SoraConfig {
     pub fn from_bytes(bytes: &[u8]) -> Result<Self, runtime::SoraReadError> {
         let bundle = runtime::SoraBundle::parse(bytes)?;
-        let mut tables: SoraMap<&'static str, Box<dyn std::any::Any + Send + Sync>> =
-            sora_map_with_capacity(28);
+        let mut tables: SoraMap<&'static str, Box<dyn SoraTable>> = sora_map_with_capacity(28);
         tables.insert("Item", Box::new(ItemTable::decode(&bundle)?));
         tables.insert("Skill", Box::new(SkillTable::decode(&bundle)?));
         tables.insert("Quest", Box::new(QuestTable::decode(&bundle)?));
@@ -723,16 +1466,20 @@ impl SoraConfig {
         Ok(Self { tables })
     }
 
-    fn table<T: 'static>(&self, name: &'static str) -> &T {
+    fn table<T: SoraTable + 'static>(&self, name: &'static str) -> &T {
         self.tables
             .get(name)
-            .and_then(|table| table.as_ref().downcast_ref::<T>())
+            .and_then(|table| table.as_any().downcast_ref::<T>())
             .unwrap_or_else(|| {
                 panic!(
                     "generated SoraConfig is missing table `{}` or has an unexpected table type",
                     name
                 )
             })
+    }
+
+    pub fn tables(&self) -> impl Iterator<Item = &dyn SoraTable> {
+        self.tables.values().map(Box::as_ref)
     }
 
     pub fn item(&self) -> &ItemTable {

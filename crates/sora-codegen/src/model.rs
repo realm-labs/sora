@@ -65,6 +65,7 @@ pub struct CodegenTable {
     pub mode: String,
     pub rust_container_type: String,
     pub rust_row_type: String,
+    pub key_name: Option<String>,
     pub key_rust_name: Option<String>,
     pub key_rust_type: Option<String>,
     pub key_is_copy: bool,
@@ -242,6 +243,7 @@ fn build_table(ir: &ConfigIr, table: &TableIr) -> Result<CodegenTable> {
         .to_owned(),
         rust_container_type,
         rust_row_type,
+        key_name: table.key.clone(),
         key_rust_name: key_field.as_ref().map(|(name, _, _, _, _)| name.clone()),
         key_rust_type: key_field.as_ref().map(|(_, _, ty, _, _)| ty.clone()),
         key_is_copy: key_field

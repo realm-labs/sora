@@ -11,8 +11,24 @@ pub type SoraMap<K, V> = rustc_hash::FxHashMap<K, V>;
 pub type SoraMap<K, V> = std::collections::HashMap<K, V>;
 {%- endif %}
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum SoraTableMode {
+    List,
+    Map,
+    Singleton,
+}
+
+pub trait SoraTable: std::any::Any + Send + Sync {
+    fn name(&self) -> &'static str;
+    fn mode(&self) -> SoraTableMode;
+    fn key(&self) -> Option<&'static str>;
+    fn row_type(&self) -> &'static str;
+    fn len(&self) -> usize;
+    fn as_any(&self) -> &dyn std::any::Any;
+}
+
 pub struct SoraConfig {
-    tables: SoraMap<&'static str, Box<dyn std::any::Any + Send + Sync>>,
+    tables: SoraMap<&'static str, Box<dyn SoraTable>>,
 }
 
 impl std::fmt::Debug for SoraConfig {
@@ -65,12 +81,52 @@ impl std::ops::Deref for {{ table.pascal_name }}Table {
         &self.0
     }
 }
+
+impl SoraTable for {{ table.pascal_name }}Table {
+    fn name(&self) -> &'static str {
+        "{{ table.name }}"
+    }
+
+    fn mode(&self) -> SoraTableMode {
+{%- if table.mode == "map" %}
+        SoraTableMode::Map
+{%- elif table.mode == "singleton" %}
+        SoraTableMode::Singleton
+{%- else %}
+        SoraTableMode::List
+{%- endif %}
+    }
+
+    fn key(&self) -> Option<&'static str> {
+{%- if table.key_name %}
+        Some("{{ table.key_name }}")
+{%- else %}
+        None
+{%- endif %}
+    }
+
+    fn row_type(&self) -> &'static str {
+        "{{ table.rust_row_type }}"
+    }
+
+    fn len(&self) -> usize {
+{%- if table.mode == "singleton" %}
+        1
+{%- else %}
+        self.0.len()
+{%- endif %}
+    }
+
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
+    }
+}
 {%- endfor %}
 
 impl SoraConfig {
     pub fn from_bytes(bytes: &[u8]) -> Result<Self, runtime::SoraReadError> {
         let bundle = runtime::SoraBundle::parse(bytes)?;
-        let mut tables: SoraMap<&'static str, Box<dyn std::any::Any + Send + Sync>> =
+        let mut tables: SoraMap<&'static str, Box<dyn SoraTable>> =
             sora_map_with_capacity({{ model.tables | length }});
 {%- for table in model.tables %}
         tables.insert("{{ table.name }}", Box::new({{ table.pascal_name }}Table::decode(&bundle)?));
@@ -78,16 +134,20 @@ impl SoraConfig {
         Ok(Self { tables })
     }
 
-    fn table<T: 'static>(&self, name: &'static str) -> &T {
+    fn table<T: SoraTable + 'static>(&self, name: &'static str) -> &T {
         self.tables
             .get(name)
-            .and_then(|table| table.as_ref().downcast_ref::<T>())
+            .and_then(|table| table.as_any().downcast_ref::<T>())
             .unwrap_or_else(|| {
                 panic!(
                     "generated SoraConfig is missing table `{}` or has an unexpected table type",
                     name
                 )
             })
+    }
+
+    pub fn tables(&self) -> impl Iterator<Item = &dyn SoraTable> {
+        self.tables.values().map(Box::as_ref)
     }
 {%- for table in model.tables %}
 
