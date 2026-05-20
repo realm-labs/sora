@@ -1,0 +1,163 @@
+{
+  "table": {
+    "name": "Item",
+    "rows": [
+      {
+        "values": {
+          "id": {
+            "Integer": 1001
+          },
+          "item_type": {
+            "String": "Weapon"
+          },
+          "max_stack": {
+            "Integer": 1
+          },
+          "name": {
+            "String": "Iron Sword"
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 120
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "tags": {
+            "List": [
+              {
+                "String": "starter"
+              },
+              {
+                "String": "melee"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 1002
+          },
+          "item_type": {
+            "String": "Material"
+          },
+          "max_stack": {
+            "Integer": 999
+          },
+          "name": {
+            "String": "Magic Crystal"
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 3
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Diamond"
+              }
+            }
+          },
+          "tags": {
+            "List": [
+              {
+                "String": "craft"
+              },
+              {
+                "String": "rare"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 2001
+          },
+          "item_type": {
+            "String": "Consumable"
+          },
+          "max_stack": {
+            "Integer": 50
+          },
+          "name": {
+            "String": "Health Potion"
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 25
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "tags": {
+            "List": [
+              {
+                "String": "potion"
+              },
+              {
+                "String": "recover"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 3001
+          },
+          "item_type": {
+            "String": "Currency"
+          },
+          "max_stack": {
+            "Integer": 1
+          },
+          "name": {
+            "String": "Training Medal"
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 1
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "tags": {
+            "List": [
+              {
+                "String": "quest"
+              },
+              {
+                "String": "token"
+              }
+            ]
+          }
+        }
+      }
+    ]
+  }
+}

@@ -1,0 +1,26 @@
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, serde::Serialize, serde::Deserialize)]
+pub enum ItemType {
+    Weapon,
+    Armor,
+    Currency,
+    Material,
+    Consumable,
+}
+
+impl super::runtime::SoraDecode for ItemType {
+    fn decode(
+        reader: &mut super::runtime::SoraReader<'_>,
+    ) -> Result<Self, super::runtime::SoraReadError> {
+        match reader.read_u32()? {
+            0 => Ok(Self::Weapon),
+            1 => Ok(Self::Armor),
+            2 => Ok(Self::Currency),
+            3 => Ok(Self::Material),
+            4 => Ok(Self::Consumable),
+            value => Err(super::runtime::SoraReadError::new(format!(
+                "invalid enum ordinal {} for ItemType",
+                value
+            ))),
+        }
+    }
+}

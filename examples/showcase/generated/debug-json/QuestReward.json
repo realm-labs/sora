@@ -1,0 +1,55 @@
+{
+  "table": {
+    "name": "QuestReward",
+    "rows": [
+      {
+        "values": {
+          "count": {
+            "Integer": 5
+          },
+          "item_id": {
+            "Integer": 3001
+          },
+          "quest_id": {
+            "Integer": 5001
+          },
+          "seq": {
+            "Integer": 1
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 3
+          },
+          "item_id": {
+            "Integer": 2001
+          },
+          "quest_id": {
+            "Integer": 5001
+          },
+          "seq": {
+            "Integer": 2
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 1
+          },
+          "item_id": {
+            "Integer": 1002
+          },
+          "quest_id": {
+            "Integer": 5002
+          },
+          "seq": {
+            "Integer": 1
+          }
+        }
+      }
+    ]
+  }
+}

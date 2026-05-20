@@ -1,0 +1,425 @@
+const SORA_BUNDLE_VERSION: u32 = 1;
+const SORA_HEADER_LEN: usize = 24;
+const SECTION_KIND_MANIFEST: u32 = 0;
+const SECTION_KIND_SCHEMA: u32 = 1;
+const SECTION_KIND_TABLE: u32 = 2;
+const COMPRESSION_NONE: u32 = 0;
+
+#[derive(Debug, Clone)]
+pub struct SoraReadError {
+    message: String,
+}
+
+impl SoraReadError {
+    pub fn new(message: impl Into<String>) -> Self {
+        Self {
+            message: message.into(),
+        }
+    }
+}
+
+impl std::fmt::Display for SoraReadError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(&self.message)
+    }
+}
+
+impl std::error::Error for SoraReadError {}
+
+pub trait SoraDecode: Sized {
+    fn decode(reader: &mut SoraReader<'_>) -> Result<Self, SoraReadError>;
+}
+
+pub struct SoraBundle<'a> {
+    bytes: &'a [u8],
+    sections: Vec<Section>,
+}
+
+#[derive(Debug, Clone)]
+struct Section {
+    kind: u32,
+    compression: u32,
+    name: String,
+    offset: usize,
+    len: usize,
+    uncompressed_len: usize,
+}
+
+impl<'a> SoraBundle<'a> {
+    pub fn parse(bytes: &'a [u8]) -> Result<Self, SoraReadError> {
+        if bytes.len() < SORA_HEADER_LEN {
+            return Err(SoraReadError::new("Sora bundle is shorter than header"));
+        }
+        if &bytes[0..4] != b"SORA" {
+            return Err(SoraReadError::new("invalid Sora bundle magic"));
+        }
+        let version = read_u32_at(bytes, 4)?;
+        if version != SORA_BUNDLE_VERSION {
+            return Err(SoraReadError::new(format!(
+                "unsupported Sora bundle version {}",
+                version
+            )));
+        }
+        let header_len = read_u32_at(bytes, 8)? as usize;
+        let directory_len = read_u32_at(bytes, 12)? as usize;
+        let section_count = read_u32_at(bytes, 16)? as usize;
+        let flags = read_u32_at(bytes, 20)?;
+        if flags != 0 {
+            return Err(SoraReadError::new(format!(
+                "unsupported Sora bundle flags {}",
+                flags
+            )));
+        }
+        if header_len != SORA_HEADER_LEN || header_len > bytes.len() {
+            return Err(SoraReadError::new("invalid Sora bundle header length"));
+        }
+        let directory_end = header_len
+            .checked_add(directory_len)
+            .ok_or_else(|| SoraReadError::new("Sora section directory length overflow"))?;
+        if directory_end > bytes.len() {
+            return Err(SoraReadError::new(
+                "Sora section directory exceeds bundle length",
+            ));
+        }
+
+        let mut cursor = header_len;
+        let mut sections = Vec::with_capacity(section_count);
+        let mut manifest_count = 0usize;
+        let mut schema_count = 0usize;
+        let mut table_names = std::collections::HashSet::new();
+        for _ in 0..section_count {
+            if cursor + 40 > directory_end {
+                return Err(SoraReadError::new("truncated Sora section directory entry"));
+            }
+            let kind = read_u32_at(bytes, cursor)?;
+            let compression = read_u32_at(bytes, cursor + 4)?;
+            let name_len = read_u32_at(bytes, cursor + 8)? as usize;
+            let entry_flags = read_u32_at(bytes, cursor + 12)?;
+            let offset = read_u64_at(bytes, cursor + 16)? as usize;
+            let len = read_u64_at(bytes, cursor + 24)? as usize;
+            let uncompressed_len = read_u64_at(bytes, cursor + 32)? as usize;
+            if entry_flags != 0 {
+                return Err(SoraReadError::new(format!(
+                    "unsupported Sora section flags {}",
+                    entry_flags
+                )));
+            }
+            let name_start = cursor + 40;
+            let name_end = name_start
+                .checked_add(name_len)
+                .ok_or_else(|| SoraReadError::new("Sora section name length overflow"))?;
+            if name_end > directory_end {
+                return Err(SoraReadError::new("Sora section name exceeds directory"));
+            }
+            let payload_end = offset
+                .checked_add(len)
+                .ok_or_else(|| SoraReadError::new("Sora section payload length overflow"))?;
+            if payload_end > bytes.len() {
+                return Err(SoraReadError::new(
+                    "Sora section payload exceeds bundle length",
+                ));
+            }
+            let name = std::str::from_utf8(&bytes[name_start..name_end])
+                .map_err(|error| {
+                    SoraReadError::new(format!("invalid Sora section name: {}", error))
+                })?
+                .to_owned();
+            match kind {
+                SECTION_KIND_MANIFEST => {
+                    manifest_count += 1;
+                    if name != "$manifest" {
+                        return Err(SoraReadError::new(
+                            "Sora manifest section must be named `$manifest`",
+                        ));
+                    }
+                }
+                SECTION_KIND_SCHEMA => {
+                    schema_count += 1;
+                    if name != "$schema" {
+                        return Err(SoraReadError::new(
+                            "Sora schema section must be named `$schema`",
+                        ));
+                    }
+                }
+                SECTION_KIND_TABLE => {
+                    if !table_names.insert(name.clone()) {
+                        return Err(SoraReadError::new(format!(
+                            "duplicate Sora table section `{}`",
+                            name
+                        )));
+                    }
+                }
+                _ => {
+                    return Err(SoraReadError::new(format!(
+                        "unknown Sora section kind {}",
+                        kind
+                    )));
+                }
+            }
+            if compression == COMPRESSION_NONE && uncompressed_len != len {
+                return Err(SoraReadError::new(
+                    "uncompressed Sora section length mismatch",
+                ));
+            }
+            sections.push(Section {
+                kind,
+                compression,
+                name,
+                offset,
+                len,
+                uncompressed_len,
+            });
+            cursor = name_end;
+        }
+        if cursor != directory_end {
+            return Err(SoraReadError::new(
+                "Sora section directory has trailing bytes",
+            ));
+        }
+        if manifest_count != 1 {
+            return Err(SoraReadError::new(format!(
+                "expected exactly 1 Sora manifest section, got {}",
+                manifest_count
+            )));
+        }
+        if schema_count != 1 {
+            return Err(SoraReadError::new(format!(
+                "expected exactly 1 Sora schema section, got {}",
+                schema_count
+            )));
+        }
+
+        Ok(Self { bytes, sections })
+    }
+
+    pub fn decode_table<T: SoraDecode>(&self, name: &str) -> Result<Vec<T>, SoraReadError> {
+        let section = self
+            .sections
+            .iter()
+            .find(|section| section.kind == SECTION_KIND_TABLE && section.name == name)
+            .ok_or_else(|| SoraReadError::new(format!("missing Sora table section `{}`", name)))?;
+        if section.compression != COMPRESSION_NONE {
+            return Err(SoraReadError::new(format!(
+                "unsupported compression {} for table `{}`",
+                section.compression, name
+            )));
+        }
+        if section.uncompressed_len != section.len {
+            return Err(SoraReadError::new(format!(
+                "table `{}` has invalid uncompressed length",
+                name
+            )));
+        }
+        let payload = &self.bytes[section.offset..section.offset + section.len];
+        decode_rows(payload)
+    }
+}
+
+fn decode_rows<T: SoraDecode>(payload: &[u8]) -> Result<Vec<T>, SoraReadError> {
+    if payload.len() < 12 {
+        return Err(SoraReadError::new("Sora table section is too short"));
+    }
+    let row_count = read_u32_at(payload, 0)? as usize;
+    let offsets_len = row_count
+        .checked_add(1)
+        .ok_or_else(|| SoraReadError::new("Sora row offset count overflow"))?;
+    let row_data_start = 4usize
+        .checked_add(
+            offsets_len
+                .checked_mul(8)
+                .ok_or_else(|| SoraReadError::new("Sora row offsets overflow"))?,
+        )
+        .ok_or_else(|| SoraReadError::new("Sora row data offset overflow"))?;
+    if row_data_start > payload.len() {
+        return Err(SoraReadError::new(
+            "Sora row offset table exceeds payload length",
+        ));
+    }
+
+    let mut rows = Vec::with_capacity(row_count);
+    for index in 0..row_count {
+        let start = read_u64_at(payload, 4 + index * 8)? as usize;
+        let end = read_u64_at(payload, 4 + (index + 1) * 8)? as usize;
+        if start > end {
+            return Err(SoraReadError::new("Sora row offsets are not monotonic"));
+        }
+        let absolute_start = row_data_start
+            .checked_add(start)
+            .ok_or_else(|| SoraReadError::new("Sora row start overflow"))?;
+        let absolute_end = row_data_start
+            .checked_add(end)
+            .ok_or_else(|| SoraReadError::new("Sora row end overflow"))?;
+        if absolute_end > payload.len() {
+            return Err(SoraReadError::new("Sora row exceeds payload length"));
+        }
+        let mut reader = SoraReader::new(&payload[absolute_start..absolute_end]);
+        let row = T::decode(&mut reader)?;
+        if !reader.is_finished() {
+            return Err(SoraReadError::new("Sora row has trailing bytes"));
+        }
+        rows.push(row);
+    }
+
+    Ok(rows)
+}
+
+pub struct SoraReader<'a> {
+    bytes: &'a [u8],
+    cursor: usize,
+}
+
+impl<'a> SoraReader<'a> {
+    pub fn new(bytes: &'a [u8]) -> Self {
+        Self { bytes, cursor: 0 }
+    }
+
+    pub fn is_finished(&self) -> bool {
+        self.cursor == self.bytes.len()
+    }
+
+    pub fn read_u8(&mut self) -> Result<u8, SoraReadError> {
+        let bytes = self.take(1)?;
+        Ok(bytes[0])
+    }
+
+    pub fn read_bool(&mut self) -> Result<bool, SoraReadError> {
+        match self.read_u8()? {
+            0 => Ok(false),
+            1 => Ok(true),
+            value => Err(SoraReadError::new(format!("invalid bool value {}", value))),
+        }
+    }
+
+    pub fn read_u32(&mut self) -> Result<u32, SoraReadError> {
+        let bytes = self.take(4)?;
+        Ok(u32::from_le_bytes(bytes.try_into().unwrap()))
+    }
+
+    pub fn read_i32(&mut self) -> Result<i32, SoraReadError> {
+        let bytes = self.take(4)?;
+        Ok(i32::from_le_bytes(bytes.try_into().unwrap()))
+    }
+
+    pub fn read_i64(&mut self) -> Result<i64, SoraReadError> {
+        let bytes = self.take(8)?;
+        Ok(i64::from_le_bytes(bytes.try_into().unwrap()))
+    }
+
+    pub fn read_f32(&mut self) -> Result<f32, SoraReadError> {
+        let bytes = self.take(4)?;
+        Ok(f32::from_le_bytes(bytes.try_into().unwrap()))
+    }
+
+    pub fn read_f64(&mut self) -> Result<f64, SoraReadError> {
+        let bytes = self.take(8)?;
+        Ok(f64::from_le_bytes(bytes.try_into().unwrap()))
+    }
+
+    pub fn read_string(&mut self) -> Result<String, SoraReadError> {
+        let len = self.read_u32()? as usize;
+        let bytes = self.take(len)?;
+        std::str::from_utf8(bytes)
+            .map(|value| value.to_owned())
+            .map_err(|error| SoraReadError::new(format!("invalid UTF-8 string: {}", error)))
+    }
+
+    fn take(&mut self, len: usize) -> Result<&'a [u8], SoraReadError> {
+        let end = self
+            .cursor
+            .checked_add(len)
+            .ok_or_else(|| SoraReadError::new("Sora reader cursor overflow"))?;
+        if end > self.bytes.len() {
+            return Err(SoraReadError::new("Sora reader reached end of row"));
+        }
+        let bytes = &self.bytes[self.cursor..end];
+        self.cursor = end;
+        Ok(bytes)
+    }
+}
+
+impl SoraDecode for bool {
+    fn decode(reader: &mut SoraReader<'_>) -> Result<Self, SoraReadError> {
+        reader.read_bool()
+    }
+}
+
+impl SoraDecode for i32 {
+    fn decode(reader: &mut SoraReader<'_>) -> Result<Self, SoraReadError> {
+        reader.read_i32()
+    }
+}
+
+impl SoraDecode for i64 {
+    fn decode(reader: &mut SoraReader<'_>) -> Result<Self, SoraReadError> {
+        reader.read_i64()
+    }
+}
+
+impl SoraDecode for f32 {
+    fn decode(reader: &mut SoraReader<'_>) -> Result<Self, SoraReadError> {
+        reader.read_f32()
+    }
+}
+
+impl SoraDecode for f64 {
+    fn decode(reader: &mut SoraReader<'_>) -> Result<Self, SoraReadError> {
+        reader.read_f64()
+    }
+}
+
+impl SoraDecode for String {
+    fn decode(reader: &mut SoraReader<'_>) -> Result<Self, SoraReadError> {
+        reader.read_string()
+    }
+}
+
+impl<T: SoraDecode> SoraDecode for Option<T> {
+    fn decode(reader: &mut SoraReader<'_>) -> Result<Self, SoraReadError> {
+        match reader.read_u8()? {
+            0 => Ok(None),
+            1 => T::decode(reader).map(Some),
+            value => Err(SoraReadError::new(format!(
+                "invalid option presence {}",
+                value
+            ))),
+        }
+    }
+}
+
+impl<T: SoraDecode> SoraDecode for Vec<T> {
+    fn decode(reader: &mut SoraReader<'_>) -> Result<Self, SoraReadError> {
+        let len = reader.read_u32()? as usize;
+        let mut values = Vec::with_capacity(len);
+        for _ in 0..len {
+            values.push(T::decode(reader)?);
+        }
+        Ok(values)
+    }
+}
+
+impl<T: SoraDecode, const N: usize> SoraDecode for [T; N] {
+    fn decode(reader: &mut SoraReader<'_>) -> Result<Self, SoraReadError> {
+        let values = Vec::<T>::decode(reader)?;
+        values.try_into().map_err(|values: Vec<T>| {
+            SoraReadError::new(format!("expected array length {}, got {}", N, values.len()))
+        })
+    }
+}
+
+fn read_u32_at(bytes: &[u8], offset: usize) -> Result<u32, SoraReadError> {
+    if offset + 4 > bytes.len() {
+        return Err(SoraReadError::new("unexpected end while reading u32"));
+    }
+    Ok(u32::from_le_bytes(
+        bytes[offset..offset + 4].try_into().unwrap(),
+    ))
+}
+
+fn read_u64_at(bytes: &[u8], offset: usize) -> Result<u64, SoraReadError> {
+    if offset + 8 > bytes.len() {
+        return Err(SoraReadError::new("unexpected end while reading u64"));
+    }
+    Ok(u64::from_le_bytes(
+        bytes[offset..offset + 8].try_into().unwrap(),
+    ))
+}

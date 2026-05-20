@@ -1,0 +1,43 @@
+{
+  "table": {
+    "name": "GameSettings",
+    "rows": [
+      {
+        "values": {
+          "daily_reset_hour": {
+            "Integer": 5
+          },
+          "spawn_pos": {
+            "Object": {
+              "x": {
+                "Float": 0.0
+              },
+              "y": {
+                "Float": 0.0
+              },
+              "z": {
+                "Float": 0.0
+              }
+            }
+          },
+          "starter_items": {
+            "List": [
+              {
+                "Integer": 1001
+              },
+              {
+                "Integer": 2001
+              }
+            ]
+          },
+          "starting_gold": {
+            "Integer": 100
+          },
+          "version": {
+            "String": "2026.05"
+          }
+        }
+      }
+    ]
+  }
+}

@@ -14,6 +14,8 @@ members = [
     "crates/sora-excel",
     "crates/sora-diagnostics",
     "crates/sora-templates",
+    "examples/showcase/tools/build-showcase",
+    "examples/showcase/rust-smoke",
 ]
 resolver = "3"
 

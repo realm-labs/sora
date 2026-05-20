@@ -572,6 +572,28 @@ dependencies = [
 ]
 
 [[package]]
+name = "sora-showcase-builder"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "rust_xlsxwriter",
+ "sora-codegen",
+ "sora-core",
+ "sora-excel",
+ "sora-export",
+ "sora-input-toml",
+ "sora-input-xlsx",
+ "sora-ir",
+]
+
+[[package]]
+name = "sora-showcase-rust-smoke"
+version = "0.1.0"
+dependencies = [
+ "serde",
+]
+
+[[package]]
 name = "sora-templates"
 version = "0.1.0"
 dependencies = [

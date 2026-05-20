@@ -1,0 +1,17 @@
+package game_config_showcase
+
+enum class ResourceKind {
+    Item,
+    Gold,
+    Diamond;
+
+    companion object {
+        fun decode(reader: SoraReader): ResourceKind =
+            when (val ordinal = reader.readU32()) {
+                0 -> Item
+                1 -> Gold
+                2 -> Diamond
+                else -> throw SoraReadException("invalid enum ordinal $ordinal for ResourceKind")
+            }
+    }
+}

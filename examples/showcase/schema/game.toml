@@ -1,0 +1,333 @@
+[[enums]]
+name = "ItemType"
+values = ["Weapon", "Armor", "Currency", "Material", "Consumable"]
+
+[[enums]]
+name = "ResourceKind"
+values = ["Item", "Gold", "Diamond"]
+
+[[enums]]
+name = "ElementType"
+values = ["Fire", "Ice", "Lightning", "Physical"]
+
+[[enums]]
+name = "QuestType"
+values = ["Main", "Side", "Daily"]
+
+[[structs]]
+name = "ResourceCost"
+
+[[structs.fields]]
+name = "kind"
+type = "enum<ResourceKind>"
+required = true
+
+[[structs.fields]]
+name = "id"
+type = "i32"
+required = true
+
+[[structs.fields]]
+name = "count"
+type = "i32"
+required = true
+range = [1, 999999]
+
+[[structs]]
+name = "Vec3"
+
+[[structs.fields]]
+name = "x"
+type = "f32"
+required = true
+
+[[structs.fields]]
+name = "y"
+type = "f32"
+required = true
+
+[[structs.fields]]
+name = "z"
+type = "f32"
+required = true
+
+[[structs]]
+name = "SkillEffect"
+
+[[structs.fields]]
+name = "element"
+type = "enum<ElementType>"
+required = true
+
+[[structs.fields]]
+name = "power"
+type = "i32"
+required = true
+range = [1, 9999]
+
+[[structs.fields]]
+name = "radius"
+type = "f32"
+default = "1.0"
+
+[[structs]]
+name = "Reward"
+
+[[structs.fields]]
+name = "item_id"
+type = "ref<Item.id>"
+required = true
+
+[[structs.fields]]
+name = "count"
+type = "i32"
+required = true
+range = [1, 9999]
+
+[[tables]]
+name = "Item"
+mode = "map"
+key = "id"
+
+[tables.source]
+format = "xlsx"
+file = "GameConfig.xlsx"
+sheet = "Item"
+
+[[tables.fields]]
+name = "id"
+type = "i32"
+key = true
+required = true
+comment = "Item id"
+
+[[tables.fields]]
+name = "name"
+type = "string"
+required = true
+comment = "Display name"
+length = [2, 32]
+
+[[tables.fields]]
+name = "item_type"
+type = "enum<ItemType>"
+required = true
+comment = "Item category"
+
+[[tables.fields]]
+name = "max_stack"
+type = "i32"
+default = "1"
+range = [1, 9999]
+comment = "Stack limit; blank cells use the default"
+
+[[tables.fields]]
+name = "price"
+type = "struct<ResourceCost>"
+parser = "tuple"
+separator = ","
+required = true
+comment = "Tuple: kind,id,count"
+
+[[tables.fields]]
+name = "tags"
+type = "list<string>"
+separator = ","
+prefix = "["
+suffix = "]"
+default = "[\"misc\"]"
+length = [1, 5]
+comment = "JSON string array"
+
+[[tables.indexes]]
+name = "by_name"
+fields = ["name"]
+unique = true
+
+[[tables]]
+name = "Skill"
+mode = "map"
+key = "id"
+
+[tables.source]
+format = "xlsx"
+file = "GameConfig.xlsx"
+sheet = "Skill"
+
+[[tables.fields]]
+name = "id"
+type = "i32"
+key = true
+required = true
+
+[[tables.fields]]
+name = "name"
+type = "string"
+required = true
+length = [2, 32]
+
+[[tables.fields]]
+name = "element"
+type = "enum<ElementType>"
+required = true
+
+[[tables.fields]]
+name = "cost"
+type = "struct<ResourceCost>"
+parser = "tuple"
+separator = ","
+required = true
+comment = "Tuple cost, e.g. Gold,0,150"
+
+[[tables.fields]]
+name = "effect"
+type = "struct<SkillEffect>"
+required = true
+comment = "JSON object with element/power/radius"
+
+[[tables.fields]]
+name = "required_level"
+type = "i32"
+default = "1"
+range = [1, 100]
+
+[[tables.fields]]
+name = "required_item"
+type = "optional<ref<Item.id>>"
+comment = "Optional item requirement"
+
+[[tables.fields]]
+name = "cast_origin"
+type = "struct<Vec3>"
+parser = "tuple"
+separator = ","
+required = true
+
+[[tables]]
+name = "Quest"
+mode = "map"
+key = "id"
+
+[tables.source]
+format = "xlsx"
+file = "GameConfig.xlsx"
+sheet = "Quest"
+
+[[tables.fields]]
+name = "id"
+type = "i32"
+key = true
+required = true
+
+[[tables.fields]]
+name = "quest_type"
+type = "enum<QuestType>"
+required = true
+
+[[tables.fields]]
+name = "title"
+type = "string"
+required = true
+length = [4, 64]
+
+[[tables.fields]]
+name = "required_item"
+type = "ref<Item.id>"
+required = true
+
+[[tables.fields]]
+name = "unlock_skills"
+type = "list<ref<Skill.id>>"
+separator = ","
+prefix = "["
+suffix = "]"
+length = [1, 3]
+required = true
+
+[[tables.fields]]
+name = "start_pos"
+type = "struct<Vec3>"
+parser = "tuple"
+separator = ","
+required = true
+
+[[tables.fields]]
+name = "rewards"
+type = "list<Reward>"
+source_table = "QuestReward"
+parent_key = "id"
+child_key = "quest_id"
+order_by = "seq"
+comment = "Materialized from QuestReward child rows"
+
+[[tables]]
+name = "QuestReward"
+mode = "list"
+
+[tables.source]
+format = "xlsx"
+file = "GameConfig.xlsx"
+sheet = "QuestReward"
+
+[[tables.fields]]
+name = "quest_id"
+type = "ref<Quest.id>"
+required = true
+
+[[tables.fields]]
+name = "seq"
+type = "i32"
+required = true
+
+[[tables.fields]]
+name = "item_id"
+type = "ref<Item.id>"
+required = true
+
+[[tables.fields]]
+name = "count"
+type = "i32"
+required = true
+range = [1, 9999]
+
+[[tables]]
+name = "GameSettings"
+mode = "singleton"
+
+[tables.source]
+format = "xlsx"
+file = "GameConfig.xlsx"
+sheet = "GameSettings"
+
+[[tables.fields]]
+name = "version"
+type = "string"
+required = true
+
+[[tables.fields]]
+name = "daily_reset_hour"
+type = "i32"
+required = true
+range = [0, 23]
+
+[[tables.fields]]
+name = "starting_gold"
+type = "i32"
+default = "100"
+range = [0, 999999]
+
+[[tables.fields]]
+name = "spawn_pos"
+type = "struct<Vec3>"
+parser = "tuple"
+separator = ","
+required = true
+
+[[tables.fields]]
+name = "starter_items"
+type = "list<ref<Item.id>>"
+separator = ","
+prefix = "["
+suffix = "]"
+length = [1, 4]
+required = true

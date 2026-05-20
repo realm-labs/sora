@@ -1,0 +1,2 @@
+package = "game_config_showcase"
+includes = ["schema/game.toml"]

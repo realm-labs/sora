@@ -1,0 +1,14 @@
+package game_config_showcase
+
+data class Reward(
+    val itemId: Int,
+    val count: Int,
+) {
+    companion object {
+        fun decode(reader: SoraReader): Reward =
+            Reward(
+                itemId = reader.readI32(),
+                count = reader.readI32(),
+            )
+    }
+}

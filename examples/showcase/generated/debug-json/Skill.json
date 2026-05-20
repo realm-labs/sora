@@ -1,0 +1,121 @@
+{
+  "table": {
+    "name": "Skill",
+    "rows": [
+      {
+        "values": {
+          "cast_origin": {
+            "Object": {
+              "x": {
+                "Float": 0.0
+              },
+              "y": {
+                "Float": 1.2
+              },
+              "z": {
+                "Float": 0.0
+              }
+            }
+          },
+          "cost": {
+            "Object": {
+              "count": {
+                "Integer": 150
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "effect": {
+            "Object": {
+              "element": {
+                "String": "Fire"
+              },
+              "power": {
+                "Integer": 120
+              },
+              "radius": {
+                "Float": 2.5
+              }
+            }
+          },
+          "element": {
+            "String": "Fire"
+          },
+          "id": {
+            "Integer": 101
+          },
+          "name": {
+            "String": "Flame Slash"
+          },
+          "required_item": {
+            "Integer": 1001
+          },
+          "required_level": {
+            "Integer": 3
+          }
+        }
+      },
+      {
+        "values": {
+          "cast_origin": {
+            "Object": {
+              "x": {
+                "Float": 0.0
+              },
+              "y": {
+                "Float": 1.5
+              },
+              "z": {
+                "Float": 3.0
+              }
+            }
+          },
+          "cost": {
+            "Object": {
+              "count": {
+                "Integer": 2
+              },
+              "id": {
+                "Integer": 1002
+              },
+              "kind": {
+                "String": "Item"
+              }
+            }
+          },
+          "effect": {
+            "Object": {
+              "element": {
+                "String": "Ice"
+              },
+              "power": {
+                "Integer": 95
+              },
+              "radius": {
+                "Float": 1.0
+              }
+            }
+          },
+          "element": {
+            "String": "Ice"
+          },
+          "id": {
+            "Integer": 102
+          },
+          "name": {
+            "String": "Ice Lance"
+          },
+          "required_item": "Null",
+          "required_level": {
+            "Integer": 1
+          }
+        }
+      }
+    ]
+  }
+}

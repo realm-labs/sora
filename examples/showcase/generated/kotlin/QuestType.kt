@@ -1,0 +1,17 @@
+package game_config_showcase
+
+enum class QuestType {
+    Main,
+    Side,
+    Daily;
+
+    companion object {
+        fun decode(reader: SoraReader): QuestType =
+            when (val ordinal = reader.readU32()) {
+                0 -> Main
+                1 -> Side
+                2 -> Daily
+                else -> throw SoraReadException("invalid enum ordinal $ordinal for QuestType")
+            }
+    }
+}

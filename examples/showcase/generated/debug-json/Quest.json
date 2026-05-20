@@ -1,0 +1,120 @@
+{
+  "table": {
+    "name": "Quest",
+    "rows": [
+      {
+        "values": {
+          "id": {
+            "Integer": 5001
+          },
+          "quest_type": {
+            "String": "Main"
+          },
+          "required_item": {
+            "Integer": 1001
+          },
+          "rewards": {
+            "List": [
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 5
+                  },
+                  "item_id": {
+                    "Integer": 3001
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 3
+                  },
+                  "item_id": {
+                    "Integer": 2001
+                  }
+                }
+              }
+            ]
+          },
+          "start_pos": {
+            "Object": {
+              "x": {
+                "Float": 12.0
+              },
+              "y": {
+                "Float": 0.0
+              },
+              "z": {
+                "Float": 5.0
+              }
+            }
+          },
+          "title": {
+            "String": "First Trial"
+          },
+          "unlock_skills": {
+            "List": [
+              {
+                "Integer": 101
+              },
+              {
+                "Integer": 102
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 5002
+          },
+          "quest_type": {
+            "String": "Daily"
+          },
+          "required_item": {
+            "Integer": 1002
+          },
+          "rewards": {
+            "List": [
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 1
+                  },
+                  "item_id": {
+                    "Integer": 1002
+                  }
+                }
+              }
+            ]
+          },
+          "start_pos": {
+            "Object": {
+              "x": {
+                "Float": 2.0
+              },
+              "y": {
+                "Float": 0.0
+              },
+              "z": {
+                "Float": 8.0
+              }
+            }
+          },
+          "title": {
+            "String": "Crystal Supply"
+          },
+          "unlock_skills": {
+            "List": [
+              {
+                "Integer": 102
+              }
+            ]
+          }
+        }
+      }
+    ]
+  }
+}

@@ -1,0 +1,24 @@
+use super::vec3::Vec3;
+
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+pub struct GameSettings {
+    pub version: String,
+    pub daily_reset_hour: i32,
+    pub starting_gold: i32,
+    pub spawn_pos: Vec3,
+    pub starter_items: Vec<i32>,
+}
+
+impl super::runtime::SoraDecode for GameSettings {
+    fn decode(
+        reader: &mut super::runtime::SoraReader<'_>,
+    ) -> Result<Self, super::runtime::SoraReadError> {
+        Ok(Self {
+            version: <String as super::runtime::SoraDecode>::decode(reader)?,
+            daily_reset_hour: <i32 as super::runtime::SoraDecode>::decode(reader)?,
+            starting_gold: <i32 as super::runtime::SoraDecode>::decode(reader)?,
+            spawn_pos: <Vec3 as super::runtime::SoraDecode>::decode(reader)?,
+            starter_items: <Vec<i32> as super::runtime::SoraDecode>::decode(reader)?,
+        })
+    }
+}

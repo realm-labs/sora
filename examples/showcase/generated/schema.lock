@@ -1,0 +1,873 @@
+{
+  "version": 1,
+  "package": "game_config_showcase",
+  "fingerprint": "6b4d349e41232b25",
+  "schema": {
+    "package": "game_config_showcase",
+    "enums": [
+      {
+        "name": "ItemType",
+        "values": [
+          "Weapon",
+          "Armor",
+          "Currency",
+          "Material",
+          "Consumable"
+        ]
+      },
+      {
+        "name": "ResourceKind",
+        "values": [
+          "Item",
+          "Gold",
+          "Diamond"
+        ]
+      },
+      {
+        "name": "ElementType",
+        "values": [
+          "Fire",
+          "Ice",
+          "Lightning",
+          "Physical"
+        ]
+      },
+      {
+        "name": "QuestType",
+        "values": [
+          "Main",
+          "Side",
+          "Daily"
+        ]
+      }
+    ],
+    "structs": [
+      {
+        "name": "ResourceCost",
+        "fields": [
+          {
+            "name": "kind",
+            "ty": {
+              "Enum": "ResourceKind"
+            },
+            "key": false,
+            "comment": null,
+            "required": true,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "separator": null,
+            "prefix": null,
+            "suffix": null,
+            "aggregation": null
+          },
+          {
+            "name": "id",
+            "ty": "I32",
+            "key": false,
+            "comment": null,
+            "required": true,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "separator": null,
+            "prefix": null,
+            "suffix": null,
+            "aggregation": null
+          },
+          {
+            "name": "count",
+            "ty": "I32",
+            "key": false,
+            "comment": null,
+            "required": true,
+            "default": null,
+            "range": [
+              1,
+              999999
+            ],
+            "length": null,
+            "parser": null,
+            "separator": null,
+            "prefix": null,
+            "suffix": null,
+            "aggregation": null
+          }
+        ]
+      },
+      {
+        "name": "Vec3",
+        "fields": [
+          {
+            "name": "x",
+            "ty": "F32",
+            "key": false,
+            "comment": null,
+            "required": true,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "separator": null,
+            "prefix": null,
+            "suffix": null,
+            "aggregation": null
+          },
+          {
+            "name": "y",
+            "ty": "F32",
+            "key": false,
+            "comment": null,
+            "required": true,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "separator": null,
+            "prefix": null,
+            "suffix": null,
+            "aggregation": null
+          },
+          {
+            "name": "z",
+            "ty": "F32",
+            "key": false,
+            "comment": null,
+            "required": true,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "separator": null,
+            "prefix": null,
+            "suffix": null,
+            "aggregation": null
+          }
+        ]
+      },
+      {
+        "name": "SkillEffect",
+        "fields": [
+          {
+            "name": "element",
+            "ty": {
+              "Enum": "ElementType"
+            },
+            "key": false,
+            "comment": null,
+            "required": true,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "separator": null,
+            "prefix": null,
+            "suffix": null,
+            "aggregation": null
+          },
+          {
+            "name": "power",
+            "ty": "I32",
+            "key": false,
+            "comment": null,
+            "required": true,
+            "default": null,
+            "range": [
+              1,
+              9999
+            ],
+            "length": null,
+            "parser": null,
+            "separator": null,
+            "prefix": null,
+            "suffix": null,
+            "aggregation": null
+          },
+          {
+            "name": "radius",
+            "ty": "F32",
+            "key": false,
+            "comment": null,
+            "required": false,
+            "default": "1.0",
+            "range": null,
+            "length": null,
+            "parser": null,
+            "separator": null,
+            "prefix": null,
+            "suffix": null,
+            "aggregation": null
+          }
+        ]
+      },
+      {
+        "name": "Reward",
+        "fields": [
+          {
+            "name": "item_id",
+            "ty": {
+              "Ref": {
+                "table": "Item",
+                "field": "id"
+              }
+            },
+            "key": false,
+            "comment": null,
+            "required": true,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "separator": null,
+            "prefix": null,
+            "suffix": null,
+            "aggregation": null
+          },
+          {
+            "name": "count",
+            "ty": "I32",
+            "key": false,
+            "comment": null,
+            "required": true,
+            "default": null,
+            "range": [
+              1,
+              9999
+            ],
+            "length": null,
+            "parser": null,
+            "separator": null,
+            "prefix": null,
+            "suffix": null,
+            "aggregation": null
+          }
+        ]
+      }
+    ],
+    "tables": [
+      {
+        "name": "Item",
+        "mode": "Map",
+        "key": "id",
+        "source": {
+          "format": "xlsx",
+          "file": "GameConfig.xlsx",
+          "sheet": "Item"
+        },
+        "fields": [
+          {
+            "name": "id",
+            "ty": "I32",
+            "key": true,
+            "comment": "Item id",
+            "required": true,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "separator": null,
+            "prefix": null,
+            "suffix": null,
+            "aggregation": null
+          },
+          {
+            "name": "name",
+            "ty": "String",
+            "key": false,
+            "comment": "Display name",
+            "required": true,
+            "default": null,
+            "range": null,
+            "length": [
+              2,
+              32
+            ],
+            "parser": null,
+            "separator": null,
+            "prefix": null,
+            "suffix": null,
+            "aggregation": null
+          },
+          {
+            "name": "item_type",
+            "ty": {
+              "Enum": "ItemType"
+            },
+            "key": false,
+            "comment": "Item category",
+            "required": true,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "separator": null,
+            "prefix": null,
+            "suffix": null,
+            "aggregation": null
+          },
+          {
+            "name": "max_stack",
+            "ty": "I32",
+            "key": false,
+            "comment": "Stack limit; blank cells use the default",
+            "required": false,
+            "default": "1",
+            "range": [
+              1,
+              9999
+            ],
+            "length": null,
+            "parser": null,
+            "separator": null,
+            "prefix": null,
+            "suffix": null,
+            "aggregation": null
+          },
+          {
+            "name": "price",
+            "ty": {
+              "Struct": "ResourceCost"
+            },
+            "key": false,
+            "comment": "Tuple: kind,id,count",
+            "required": true,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": "tuple",
+            "separator": ",",
+            "prefix": null,
+            "suffix": null,
+            "aggregation": null
+          },
+          {
+            "name": "tags",
+            "ty": {
+              "List": "String"
+            },
+            "key": false,
+            "comment": "JSON string array",
+            "required": false,
+            "default": "[\"misc\"]",
+            "range": null,
+            "length": [
+              1,
+              5
+            ],
+            "parser": null,
+            "separator": ",",
+            "prefix": "[",
+            "suffix": "]",
+            "aggregation": null
+          }
+        ],
+        "indexes": [
+          {
+            "name": "by_name",
+            "fields": [
+              "name"
+            ],
+            "unique": true
+          }
+        ]
+      },
+      {
+        "name": "Skill",
+        "mode": "Map",
+        "key": "id",
+        "source": {
+          "format": "xlsx",
+          "file": "GameConfig.xlsx",
+          "sheet": "Skill"
+        },
+        "fields": [
+          {
+            "name": "id",
+            "ty": "I32",
+            "key": true,
+            "comment": null,
+            "required": true,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "separator": null,
+            "prefix": null,
+            "suffix": null,
+            "aggregation": null
+          },
+          {
+            "name": "name",
+            "ty": "String",
+            "key": false,
+            "comment": null,
+            "required": true,
+            "default": null,
+            "range": null,
+            "length": [
+              2,
+              32
+            ],
+            "parser": null,
+            "separator": null,
+            "prefix": null,
+            "suffix": null,
+            "aggregation": null
+          },
+          {
+            "name": "element",
+            "ty": {
+              "Enum": "ElementType"
+            },
+            "key": false,
+            "comment": null,
+            "required": true,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "separator": null,
+            "prefix": null,
+            "suffix": null,
+            "aggregation": null
+          },
+          {
+            "name": "cost",
+            "ty": {
+              "Struct": "ResourceCost"
+            },
+            "key": false,
+            "comment": "Tuple cost, e.g. Gold,0,150",
+            "required": true,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": "tuple",
+            "separator": ",",
+            "prefix": null,
+            "suffix": null,
+            "aggregation": null
+          },
+          {
+            "name": "effect",
+            "ty": {
+              "Struct": "SkillEffect"
+            },
+            "key": false,
+            "comment": "JSON object with element/power/radius",
+            "required": true,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "separator": null,
+            "prefix": null,
+            "suffix": null,
+            "aggregation": null
+          },
+          {
+            "name": "required_level",
+            "ty": "I32",
+            "key": false,
+            "comment": null,
+            "required": false,
+            "default": "1",
+            "range": [
+              1,
+              100
+            ],
+            "length": null,
+            "parser": null,
+            "separator": null,
+            "prefix": null,
+            "suffix": null,
+            "aggregation": null
+          },
+          {
+            "name": "required_item",
+            "ty": {
+              "Optional": {
+                "Ref": {
+                  "table": "Item",
+                  "field": "id"
+                }
+              }
+            },
+            "key": false,
+            "comment": "Optional item requirement",
+            "required": false,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "separator": null,
+            "prefix": null,
+            "suffix": null,
+            "aggregation": null
+          },
+          {
+            "name": "cast_origin",
+            "ty": {
+              "Struct": "Vec3"
+            },
+            "key": false,
+            "comment": null,
+            "required": true,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": "tuple",
+            "separator": ",",
+            "prefix": null,
+            "suffix": null,
+            "aggregation": null
+          }
+        ],
+        "indexes": []
+      },
+      {
+        "name": "Quest",
+        "mode": "Map",
+        "key": "id",
+        "source": {
+          "format": "xlsx",
+          "file": "GameConfig.xlsx",
+          "sheet": "Quest"
+        },
+        "fields": [
+          {
+            "name": "id",
+            "ty": "I32",
+            "key": true,
+            "comment": null,
+            "required": true,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "separator": null,
+            "prefix": null,
+            "suffix": null,
+            "aggregation": null
+          },
+          {
+            "name": "quest_type",
+            "ty": {
+              "Enum": "QuestType"
+            },
+            "key": false,
+            "comment": null,
+            "required": true,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "separator": null,
+            "prefix": null,
+            "suffix": null,
+            "aggregation": null
+          },
+          {
+            "name": "title",
+            "ty": "String",
+            "key": false,
+            "comment": null,
+            "required": true,
+            "default": null,
+            "range": null,
+            "length": [
+              4,
+              64
+            ],
+            "parser": null,
+            "separator": null,
+            "prefix": null,
+            "suffix": null,
+            "aggregation": null
+          },
+          {
+            "name": "required_item",
+            "ty": {
+              "Ref": {
+                "table": "Item",
+                "field": "id"
+              }
+            },
+            "key": false,
+            "comment": null,
+            "required": true,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "separator": null,
+            "prefix": null,
+            "suffix": null,
+            "aggregation": null
+          },
+          {
+            "name": "unlock_skills",
+            "ty": {
+              "List": {
+                "Ref": {
+                  "table": "Skill",
+                  "field": "id"
+                }
+              }
+            },
+            "key": false,
+            "comment": null,
+            "required": true,
+            "default": null,
+            "range": null,
+            "length": [
+              1,
+              3
+            ],
+            "parser": null,
+            "separator": ",",
+            "prefix": "[",
+            "suffix": "]",
+            "aggregation": null
+          },
+          {
+            "name": "start_pos",
+            "ty": {
+              "Struct": "Vec3"
+            },
+            "key": false,
+            "comment": null,
+            "required": true,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": "tuple",
+            "separator": ",",
+            "prefix": null,
+            "suffix": null,
+            "aggregation": null
+          },
+          {
+            "name": "rewards",
+            "ty": {
+              "List": {
+                "Struct": "Reward"
+              }
+            },
+            "key": false,
+            "comment": "Materialized from QuestReward child rows",
+            "required": false,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "separator": null,
+            "prefix": null,
+            "suffix": null,
+            "aggregation": {
+              "source_table": "QuestReward",
+              "parent_key": "id",
+              "child_key": "quest_id",
+              "order_by": "seq"
+            }
+          }
+        ],
+        "indexes": []
+      },
+      {
+        "name": "QuestReward",
+        "mode": "List",
+        "key": null,
+        "source": {
+          "format": "xlsx",
+          "file": "GameConfig.xlsx",
+          "sheet": "QuestReward"
+        },
+        "fields": [
+          {
+            "name": "quest_id",
+            "ty": {
+              "Ref": {
+                "table": "Quest",
+                "field": "id"
+              }
+            },
+            "key": false,
+            "comment": null,
+            "required": true,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "separator": null,
+            "prefix": null,
+            "suffix": null,
+            "aggregation": null
+          },
+          {
+            "name": "seq",
+            "ty": "I32",
+            "key": false,
+            "comment": null,
+            "required": true,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "separator": null,
+            "prefix": null,
+            "suffix": null,
+            "aggregation": null
+          },
+          {
+            "name": "item_id",
+            "ty": {
+              "Ref": {
+                "table": "Item",
+                "field": "id"
+              }
+            },
+            "key": false,
+            "comment": null,
+            "required": true,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "separator": null,
+            "prefix": null,
+            "suffix": null,
+            "aggregation": null
+          },
+          {
+            "name": "count",
+            "ty": "I32",
+            "key": false,
+            "comment": null,
+            "required": true,
+            "default": null,
+            "range": [
+              1,
+              9999
+            ],
+            "length": null,
+            "parser": null,
+            "separator": null,
+            "prefix": null,
+            "suffix": null,
+            "aggregation": null
+          }
+        ],
+        "indexes": []
+      },
+      {
+        "name": "GameSettings",
+        "mode": "Singleton",
+        "key": null,
+        "source": {
+          "format": "xlsx",
+          "file": "GameConfig.xlsx",
+          "sheet": "GameSettings"
+        },
+        "fields": [
+          {
+            "name": "version",
+            "ty": "String",
+            "key": false,
+            "comment": null,
+            "required": true,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "separator": null,
+            "prefix": null,
+            "suffix": null,
+            "aggregation": null
+          },
+          {
+            "name": "daily_reset_hour",
+            "ty": "I32",
+            "key": false,
+            "comment": null,
+            "required": true,
+            "default": null,
+            "range": [
+              0,
+              23
+            ],
+            "length": null,
+            "parser": null,
+            "separator": null,
+            "prefix": null,
+            "suffix": null,
+            "aggregation": null
+          },
+          {
+            "name": "starting_gold",
+            "ty": "I32",
+            "key": false,
+            "comment": null,
+            "required": false,
+            "default": "100",
+            "range": [
+              0,
+              999999
+            ],
+            "length": null,
+            "parser": null,
+            "separator": null,
+            "prefix": null,
+            "suffix": null,
+            "aggregation": null
+          },
+          {
+            "name": "spawn_pos",
+            "ty": {
+              "Struct": "Vec3"
+            },
+            "key": false,
+            "comment": null,
+            "required": true,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": "tuple",
+            "separator": ",",
+            "prefix": null,
+            "suffix": null,
+            "aggregation": null
+          },
+          {
+            "name": "starter_items",
+            "ty": {
+              "List": {
+                "Ref": {
+                  "table": "Item",
+                  "field": "id"
+                }
+              }
+            },
+            "key": false,
+            "comment": null,
+            "required": true,
+            "default": null,
+            "range": null,
+            "length": [
+              1,
+              4
+            ],
+            "parser": null,
+            "separator": ",",
+            "prefix": "[",
+            "suffix": "]",
+            "aggregation": null
+          }
+        ],
+        "indexes": []
+      }
+    ]
+  }
+}
