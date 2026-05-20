@@ -2,14 +2,14 @@ package {{ package }}
 
 data class {{ record.pascal_name }}(
 {%- for field in record.fields %}
-    val {{ field.kotlin_name }}: {{ field.kotlin_type }},
+    val {{ field.name }}: {{ field.type_name }},
 {%- endfor %}
 ) {
     companion object {
         fun decode(reader: SoraReader): {{ record.pascal_name }} =
             {{ record.pascal_name }}(
 {%- for field in record.fields %}
-                {{ field.kotlin_name }} = {{ field.kotlin_decode }},
+                {{ field.name }} = {{ field.decode }},
 {%- endfor %}
             )
     }

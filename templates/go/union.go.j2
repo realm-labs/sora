@@ -9,7 +9,7 @@ type {{ union.pascal_name }} interface {
 {%- for variant in union.variants %}
 type {{ union.pascal_name }}{{ variant.name }} struct {
 {%- for field in variant.fields %}
-    {{ field.go_name }} {{ field.go_type }}
+    {{ field.name }} {{ field.type_name }}
 {%- endfor %}
 }
 
@@ -26,7 +26,7 @@ func decode{{ union.pascal_name }}(reader *SoraReader) ({{ union.pascal_name }},
     case {{ loop.index0 }}:
         var value {{ union.pascal_name }}{{ variant.name }}
 {%- for field in variant.fields %}
-        value.{{ field.go_name }}, err = {{ field.go_decode }}
+        value.{{ field.name }}, err = {{ field.decode }}
         if err != nil {
             return nil, err
         }

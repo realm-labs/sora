@@ -23,28 +23,28 @@ interface SoraTable {
 {%- for table in model.tables %}
 
 final class {{ table.pascal_name }}Table implements SoraTable {
-    private final {{ table.java_container_type }} rows;
+    private final {{ table.container_type }} rows;
 
-    private {{ table.pascal_name }}Table({{ table.java_container_type }} rows) {
+    private {{ table.pascal_name }}Table({{ table.container_type }} rows) {
         this.rows = rows;
     }
 
     static {{ table.pascal_name }}Table decode(SoraBundle bundle) {
-{%- if table.mode == "map" and table.key_java_name %}
-        return new {{ table.pascal_name }}Table(SoraConfig.decodeMapTable(bundle.decodeTable("{{ table.name }}", {{ table.java_row_type }}::decode), row -> row.{{ table.key_java_name }}));
+{%- if table.mode == "map" and table.key_field_name %}
+        return new {{ table.pascal_name }}Table(SoraConfig.decodeMapTable(bundle.decodeTable("{{ table.name }}", {{ table.row_type }}::decode), row -> row.{{ table.key_field_name }}));
 {%- elif table.mode == "singleton" %}
-        return new {{ table.pascal_name }}Table(SoraConfig.requireSingletonTable(bundle.decodeTable("{{ table.name }}", {{ table.java_row_type }}::decode), "{{ table.name }}"));
+        return new {{ table.pascal_name }}Table(SoraConfig.requireSingletonTable(bundle.decodeTable("{{ table.name }}", {{ table.row_type }}::decode), "{{ table.name }}"));
 {%- else %}
-        return new {{ table.pascal_name }}Table(bundle.decodeTable("{{ table.name }}", {{ table.java_row_type }}::decode));
+        return new {{ table.pascal_name }}Table(bundle.decodeTable("{{ table.name }}", {{ table.row_type }}::decode));
 {%- endif %}
     }
 
-    public {{ table.java_container_type }} rows() {
+    public {{ table.container_type }} rows() {
         return rows;
     }
 
-{%- if table.mode == "map" and table.key_java_name %}
-    public {{ table.java_row_type }} get({{ table.key_java_type }} key) {
+{%- if table.mode == "map" and table.key_field_name %}
+    public {{ table.row_type }} get({{ table.key_type }} key) {
         return rows.get(key);
     }
 
@@ -76,7 +76,7 @@ final class {{ table.pascal_name }}Table implements SoraTable {
 
     @Override
     public String rowType() {
-        return "{{ table.java_row_type }}";
+        return "{{ table.row_type }}";
     }
 
     @Override

@@ -9,7 +9,7 @@ public abstract record {{ union.pascal_name }}
 {%- for variant in union.variants %}
     public sealed record {{ variant.name }}(
 {%- for field in variant.fields %}
-        {{ field.csharp_type }} {{ field.csharp_name }}{% if not loop.last %},{% endif %}
+        {{ field.type_name }} {{ field.name }}{% if not loop.last %},{% endif %}
 {%- endfor %}
     ) : {{ union.pascal_name }};
 
@@ -21,7 +21,7 @@ public abstract record {{ union.pascal_name }}
 {%- for variant in union.variants %}
             {{ loop.index0 }} => new {{ variant.name }}(
 {%- for field in variant.fields %}
-                {{ field.csharp_decode }}{% if not loop.last %},{% endif %}
+                {{ field.decode }}{% if not loop.last %},{% endif %}
 {%- endfor %}
             ),
 {%- endfor %}

@@ -2,23 +2,23 @@ package {{ package }};
 
 public final class {{ record.pascal_name }} {
 {%- for field in record.fields %}
-    public final {{ field.java_type }} {{ field.java_name }};
+    public final {{ field.type_name }} {{ field.name }};
 {%- endfor %}
 
     public {{ record.pascal_name }}(
 {%- for field in record.fields %}
-        {{ field.java_type }} {{ field.java_name }}{% if not loop.last %},{% endif %}
+        {{ field.type_name }} {{ field.name }}{% if not loop.last %},{% endif %}
 {%- endfor %}
     ) {
 {%- for field in record.fields %}
-        this.{{ field.java_name }} = {{ field.java_name }};
+        this.{{ field.name }} = {{ field.name }};
 {%- endfor %}
     }
 
     static {{ record.pascal_name }} decode(SoraReader reader) {
         return new {{ record.pascal_name }}(
 {%- for field in record.fields %}
-            {{ field.java_decode }}{% if not loop.last %},{% endif %}
+            {{ field.decode }}{% if not loop.last %},{% endif %}
 {%- endfor %}
         );
     }

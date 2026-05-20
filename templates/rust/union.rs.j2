@@ -7,7 +7,7 @@ pub enum {{ union.pascal_name }} {
 {%- for variant in union.variants %}
     {{ variant.name }} {
 {%- for field in variant.fields %}
-        {{ field.rust_name }}: {{ field.rust_type }},
+        {{ field.name }}: {{ field.type_name }},
 {%- endfor %}
     },
 {%- endfor %}
@@ -19,7 +19,7 @@ impl super::runtime::SoraDecode for {{ union.pascal_name }} {
 {%- for variant in union.variants %}
             {{ loop.index0 }} => Ok(Self::{{ variant.name }} {
 {%- for field in variant.fields %}
-                {{ field.rust_name }}: <{{ field.rust_type }} as super::runtime::SoraDecode>::decode(reader)?,
+                {{ field.name }}: <{{ field.type_name }} as super::runtime::SoraDecode>::decode(reader)?,
 {%- endfor %}
             }),
 {%- endfor %}

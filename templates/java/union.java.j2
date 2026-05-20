@@ -4,16 +4,16 @@ public interface {{ union.pascal_name }} {
 {%- for variant in union.variants %}
     final class {{ variant.name }} implements {{ union.pascal_name }} {
 {%- for field in variant.fields %}
-        public final {{ field.java_type }} {{ field.java_name }};
+        public final {{ field.type_name }} {{ field.name }};
 {%- endfor %}
 
         public {{ variant.name }}(
 {%- for field in variant.fields %}
-            {{ field.java_type }} {{ field.java_name }}{% if not loop.last %},{% endif %}
+            {{ field.type_name }} {{ field.name }}{% if not loop.last %},{% endif %}
 {%- endfor %}
         ) {
 {%- for field in variant.fields %}
-            this.{{ field.java_name }} = {{ field.java_name }};
+            this.{{ field.name }} = {{ field.name }};
 {%- endfor %}
         }
     }
@@ -25,7 +25,7 @@ public interface {{ union.pascal_name }} {
             case {{ loop.index0 }}:
                 return new {{ variant.name }}(
 {%- for field in variant.fields %}
-                    {{ field.java_decode }}{% if not loop.last %},{% endif %}
+                    {{ field.decode }}{% if not loop.last %},{% endif %}
 {%- endfor %}
                 );
 {%- endfor %}

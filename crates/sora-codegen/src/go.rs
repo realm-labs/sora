@@ -1,14 +1,15 @@
 use std::path::Path;
 
-use heck::ToSnakeCase;
+use heck::{ToPascalCase, ToSnakeCase};
 use minijinja::context;
 use sora_diagnostics::{Result, SoraError};
-use sora_ir::model::ConfigIr;
+use sora_ir::model::{ConfigIr, TableModeIr, TypeIr};
 
 use crate::{
     generator::CodeGenerator,
-    model::build_model,
+    model::{LanguageBackend, TableNameParts, build_model},
     render::{ensure_dir, render_template, write_file},
+    types::go_type_name,
 };
 
 pub struct GoCodeGenerator;
@@ -16,7 +17,8 @@ pub struct GoCodeGenerator;
 impl CodeGenerator for GoCodeGenerator {
     fn generate(&self, ir: &ConfigIr, out_dir: &Path) -> Result<()> {
         ensure_dir(out_dir)?;
-        let model = build_model(ir)?;
+        let backend = GoBackend;
+        let model = build_model(ir, &backend)?;
         let package = go_package_name(&model.package)?;
 
         for item in &model.enums {
@@ -58,6 +60,83 @@ impl CodeGenerator for GoCodeGenerator {
             context! { package => &package, model => &model },
         )?;
         write_file(&out_dir.join("config.go"), rendered)
+    }
+}
+
+struct GoBackend;
+
+impl LanguageBackend for GoBackend {
+    fn field_name(&self, raw_name: &str) -> String {
+        raw_name.to_pascal_case()
+    }
+
+    fn type_name(&self, ir: &ConfigIr, ty: &TypeIr) -> String {
+        go_type_name(ir, ty)
+    }
+
+    fn decode_expr(&self, ir: &ConfigIr, ty: &TypeIr) -> String {
+        go_decode_expr(ir, ty)
+    }
+
+    fn row_type(&self, table: &TableNameParts<'_>) -> String {
+        table.pascal_name.to_owned()
+    }
+
+    fn container_type(
+        &self,
+        _table: &TableNameParts<'_>,
+        mode: TableModeIr,
+        row_type: &str,
+        key_type: Option<&str>,
+    ) -> String {
+        match mode {
+            TableModeIr::List => format!("[]{row_type}"),
+            TableModeIr::Map => match key_type {
+                Some(key_type) => format!("map[{key_type}]{row_type}"),
+                None => format!("[]{row_type}"),
+            },
+            TableModeIr::Singleton => row_type.to_owned(),
+        }
+    }
+}
+
+fn go_decode_expr(ir: &ConfigIr, ty: &TypeIr) -> String {
+    match ty {
+        TypeIr::Bool => "reader.ReadBool()".to_owned(),
+        TypeIr::I32 => "reader.ReadInt32()".to_owned(),
+        TypeIr::I64 => "reader.ReadInt64()".to_owned(),
+        TypeIr::F32 => "reader.ReadFloat32()".to_owned(),
+        TypeIr::F64 => "reader.ReadFloat64()".to_owned(),
+        TypeIr::String => "reader.ReadString()".to_owned(),
+        TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => {
+            format!("decode{name}(reader)")
+        }
+        TypeIr::List(element) | TypeIr::Array { element, .. } => {
+            format!(
+                "ReadList(reader, func(reader *SoraReader) ({}, error) {{ return {} }})",
+                go_type_name(ir, element),
+                go_decode_expr(ir, element)
+            )
+        }
+        TypeIr::Ref { table, field } => ir
+            .tables
+            .iter()
+            .find(|candidate| candidate.name == *table)
+            .and_then(|table| {
+                table
+                    .fields
+                    .iter()
+                    .find(|candidate| candidate.name == *field)
+            })
+            .map(|field| go_decode_expr(ir, &field.ty))
+            .unwrap_or_else(|| "reader.ReadInt32()".to_owned()),
+        TypeIr::Optional(element) => {
+            format!(
+                "ReadOptional(reader, func(reader *SoraReader) ({}, error) {{ return {} }})",
+                go_type_name(ir, element),
+                go_decode_expr(ir, element)
+            )
+        }
     }
 }
 

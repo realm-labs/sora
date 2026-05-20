@@ -2,18 +2,18 @@ package {{ model.package }}
 
 data class SoraConfig(
 {%- for table in model.tables %}
-    val {{ table.snake_name }}: {{ table.kotlin_container_type }},
+    val {{ table.snake_name }}: {{ table.container_type }},
 {%- endfor %}
 ) {
 {%- for table in model.tables %}
-{%- if table.mode == "map" and table.key_kotlin_name %}
-    fun get{{ table.pascal_name }}(key: {{ table.key_kotlin_type }}): {{ table.kotlin_row_type }}? = {{ table.snake_name }}[key]
+{%- if table.mode == "map" and table.key_field_name %}
+    fun get{{ table.pascal_name }}(key: {{ table.key_type }}): {{ table.row_type }}? = {{ table.snake_name }}[key]
 
-    fun {{ table.camel_name }}Values(): Collection<{{ table.kotlin_row_type }}> = {{ table.snake_name }}.values
+    fun {{ table.camel_name }}Values(): Collection<{{ table.row_type }}> = {{ table.snake_name }}.values
 {%- elif table.mode == "list" %}
-    fun {{ table.camel_name }}Rows(): List<{{ table.kotlin_row_type }}> = {{ table.snake_name }}
+    fun {{ table.camel_name }}Rows(): List<{{ table.row_type }}> = {{ table.snake_name }}
 {%- elif table.mode == "singleton" %}
-    fun {{ table.camel_name }}Row(): {{ table.kotlin_row_type }} = {{ table.snake_name }}
+    fun {{ table.camel_name }}Row(): {{ table.row_type }} = {{ table.snake_name }}
 {%- endif %}
 {%- endfor %}
 
@@ -22,12 +22,12 @@ data class SoraConfig(
             val bundle = SoraBundle.parse(bytes)
             return SoraConfig(
 {%- for table in model.tables %}
-{%- if table.mode == "map" and table.key_kotlin_name %}
-                {{ table.snake_name }} = bundle.decodeTable("{{ table.name }}", {{ table.kotlin_row_type }}::decode).associateBy { it.{{ table.key_kotlin_name }} },
+{%- if table.mode == "map" and table.key_field_name %}
+                {{ table.snake_name }} = bundle.decodeTable("{{ table.name }}", {{ table.row_type }}::decode).associateBy { it.{{ table.key_field_name }} },
 {%- elif table.mode == "singleton" %}
-                {{ table.snake_name }} = requireSingletonTable(bundle.decodeTable("{{ table.name }}", {{ table.kotlin_row_type }}::decode), "{{ table.name }}"),
+                {{ table.snake_name }} = requireSingletonTable(bundle.decodeTable("{{ table.name }}", {{ table.row_type }}::decode), "{{ table.name }}"),
 {%- else %}
-                {{ table.snake_name }} = bundle.decodeTable("{{ table.name }}", {{ table.kotlin_row_type }}::decode),
+                {{ table.snake_name }} = bundle.decodeTable("{{ table.name }}", {{ table.row_type }}::decode),
 {%- endif %}
 {%- endfor %}
             )

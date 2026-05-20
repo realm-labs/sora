@@ -20,16 +20,16 @@ type SoraTable interface {
 
 {%- for table in model.tables %}
 type {{ table.pascal_name }}Table struct {
-    rows {{ table.go_container_type }}
+    rows {{ table.container_type }}
 }
 
 func decode{{ table.pascal_name }}Table(bundle *SoraBundle) (*{{ table.pascal_name }}Table, error) {
-    rows, err := DecodeTable(bundle, "{{ table.name }}", decode{{ table.go_row_type }})
+    rows, err := DecodeTable(bundle, "{{ table.name }}", decode{{ table.row_type }})
     if err != nil {
         return nil, err
     }
-{%- if table.mode == "map" and table.key_go_name %}
-    return &{{ table.pascal_name }}Table{rows: DecodeMapTable(rows, func(row {{ table.go_row_type }}) {{ table.key_go_type }} { return row.{{ table.key_go_name }} })}, nil
+{%- if table.mode == "map" and table.key_field_name %}
+    return &{{ table.pascal_name }}Table{rows: DecodeMapTable(rows, func(row {{ table.row_type }}) {{ table.key_type }} { return row.{{ table.key_field_name }} })}, nil
 {%- elif table.mode == "singleton" %}
     row, err := RequireSingletonTable(rows, "{{ table.name }}")
     if err != nil {
@@ -41,12 +41,12 @@ func decode{{ table.pascal_name }}Table(bundle *SoraBundle) (*{{ table.pascal_na
 {%- endif %}
 }
 
-func (table *{{ table.pascal_name }}Table) Rows() {{ table.go_container_type }} {
+func (table *{{ table.pascal_name }}Table) Rows() {{ table.container_type }} {
     return table.rows
 }
 
-{%- if table.mode == "map" and table.key_go_name %}
-func (table *{{ table.pascal_name }}Table) Get(key {{ table.key_go_type }}) ({{ table.go_row_type }}, bool) {
+{%- if table.mode == "map" and table.key_field_name %}
+func (table *{{ table.pascal_name }}Table) Get(key {{ table.key_type }}) ({{ table.row_type }}, bool) {
     value, ok := table.rows[key]
     return value, ok
 }
@@ -75,7 +75,7 @@ func (table *{{ table.pascal_name }}Table) Key() string {
 }
 
 func (table *{{ table.pascal_name }}Table) RowType() string {
-    return "{{ table.go_row_type }}"
+    return "{{ table.row_type }}"
 }
 
 func (table *{{ table.pascal_name }}Table) Len() int {

@@ -5,7 +5,7 @@ pub mod runtime;
 pub mod {{ module }};
 {%- endfor %}
 
-{%- if model.rust_map_type == "fx_hash_map" %}
+{%- if rust_map_type == "fx_hash_map" %}
 pub type SoraMap<K, V> = rustc_hash::FxHashMap<K, V>;
 {%- else %}
 pub type SoraMap<K, V> = std::collections::HashMap<K, V>;
@@ -41,31 +41,31 @@ impl std::fmt::Debug for SoraConfig {
 {%- for table in model.tables %}
 
 #[derive(Debug, Clone)]
-pub struct {{ table.pascal_name }}Table({{ table.rust_container_type }});
+pub struct {{ table.pascal_name }}Table({{ table.container_type }});
 
 impl {{ table.pascal_name }}Table {
     fn decode(bundle: &runtime::SoraBundle<'_>) -> Result<Self, runtime::SoraReadError> {
-{%- if table.mode == "map" and table.key_rust_name %}
+{%- if table.mode == "map" and table.key_field_name %}
 {%- if table.key_is_copy %}
-        Ok(Self(decode_map_table(bundle.decode_table::<{{ table.rust_row_type }}>("{{ table.name }}")?, |row| row.{{ table.key_rust_name }})))
+        Ok(Self(decode_map_table(bundle.decode_table::<{{ table.row_type }}>("{{ table.name }}")?, |row| row.{{ table.key_field_name }})))
 {%- else %}
-        Ok(Self(decode_map_table(bundle.decode_table::<{{ table.rust_row_type }}>("{{ table.name }}")?, |row| row.{{ table.key_rust_name }}.clone())))
+        Ok(Self(decode_map_table(bundle.decode_table::<{{ table.row_type }}>("{{ table.name }}")?, |row| row.{{ table.key_field_name }}.clone())))
 {%- endif %}
 {%- elif table.mode == "singleton" %}
-        Ok(Self(decode_singleton_table(bundle.decode_table::<{{ table.rust_row_type }}>("{{ table.name }}")?, "{{ table.name }}")?))
+        Ok(Self(decode_singleton_table(bundle.decode_table::<{{ table.row_type }}>("{{ table.name }}")?, "{{ table.name }}")?))
 {%- else %}
-        Ok(Self(bundle.decode_table::<{{ table.rust_row_type }}>("{{ table.name }}")?))
+        Ok(Self(bundle.decode_table::<{{ table.row_type }}>("{{ table.name }}")?))
 {%- endif %}
     }
 
-{%- if table.mode == "map" and table.key_rust_name %}
+{%- if table.mode == "map" and table.key_field_name %}
 
 {%- if table.key_is_copy %}
-    pub fn get(&self, key: {{ table.key_rust_type }}) -> Option<&{{ table.rust_row_type }}> {
+    pub fn get(&self, key: {{ table.key_type }}) -> Option<&{{ table.row_type }}> {
         self.0.get(&key)
     }
 {%- else %}
-    pub fn get(&self, key: &{{ table.key_rust_type }}) -> Option<&{{ table.rust_row_type }}> {
+    pub fn get(&self, key: &{{ table.key_type }}) -> Option<&{{ table.row_type }}> {
         self.0.get(key)
     }
 {%- endif %}
@@ -74,7 +74,7 @@ impl {{ table.pascal_name }}Table {
 }
 
 impl std::ops::Deref for {{ table.pascal_name }}Table {
-    type Target = {{ table.rust_container_type }};
+    type Target = {{ table.container_type }};
 
     fn deref(&self) -> &Self::Target {
         &self.0
@@ -105,7 +105,7 @@ impl SoraTable for {{ table.pascal_name }}Table {
     }
 
     fn row_type(&self) -> &'static str {
-        "{{ table.rust_row_type }}"
+        "{{ table.row_type }}"
     }
 
     fn len(&self) -> usize {
@@ -160,7 +160,7 @@ fn sora_map_with_capacity<K, V>(capacity: usize) -> SoraMap<K, V>
 where
     K: std::cmp::Eq + std::hash::Hash,
 {
-{%- if model.rust_map_type == "fx_hash_map" %}
+{%- if rust_map_type == "fx_hash_map" %}
     SoraMap::with_capacity_and_hasher(capacity, Default::default())
 {%- else %}
     SoraMap::with_capacity(capacity)

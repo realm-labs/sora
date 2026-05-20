@@ -6,7 +6,7 @@ namespace {{ namespace }};
 
 public sealed record {{ record.pascal_name }}(
 {%- for field in record.fields %}
-    {{ field.csharp_type }} {{ field.csharp_name }}{% if not loop.last %},{% endif %}
+    {{ field.type_name }} {{ field.name }}{% if not loop.last %},{% endif %}
 {%- endfor %}
 )
 {
@@ -14,7 +14,7 @@ public sealed record {{ record.pascal_name }}(
     {
         return new {{ record.pascal_name }}(
 {%- for field in record.fields %}
-            {{ field.csharp_decode }}{% if not loop.last %},{% endif %}
+            {{ field.decode }}{% if not loop.last %},{% endif %}
 {%- endfor %}
         );
     }

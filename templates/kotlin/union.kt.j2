@@ -4,7 +4,7 @@ sealed class {{ union.pascal_name }} {
 {%- for variant in union.variants %}
     data class {{ variant.name }}(
 {%- for field in variant.fields %}
-        val {{ field.kotlin_name }}: {{ field.kotlin_type }},
+        val {{ field.name }}: {{ field.type_name }},
 {%- endfor %}
     ) : {{ union.pascal_name }}()
 {%- endfor %}
@@ -15,7 +15,7 @@ sealed class {{ union.pascal_name }} {
 {%- for variant in union.variants %}
                 {{ loop.index0 }} -> {{ variant.name }}(
 {%- for field in variant.fields %}
-                    {{ field.kotlin_name }} = {{ field.kotlin_decode }},
+                    {{ field.name }} = {{ field.decode }},
 {%- endfor %}
                 )
 {%- endfor %}
