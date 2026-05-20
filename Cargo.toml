@@ -33,7 +33,9 @@ heck = "0.5"
 minijinja = "2"
 rust_xlsxwriter = "0.95"
 rustc-hash = "2"
+prost = "0.14"
 serde = { version = "1", features = ["derive"] }
+serde_cbor = "0.11"
 serde_json = "1"
 sora-cli = { path = "crates/sora-cli" }
 sora-codegen = { path = "crates/sora-codegen" }

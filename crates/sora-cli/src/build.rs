@@ -335,6 +335,9 @@ mod tests {
         assert!(base.join("generated/schema.lock").exists());
         assert!(base.join("generated/excel/Item.xlsx").exists());
         assert!(base.join("generated/rust/item.rs").exists());
+        assert!(base.join("generated/config.json").exists());
+        assert!(base.join("generated/config.pb").exists());
+        assert!(base.join("generated/config.cbor").exists());
         assert!(base.join("generated/debug-json/Item.json").exists());
 
         let _ = fs::remove_dir_all(base);
@@ -394,6 +397,18 @@ out = "generated/rust"
 [[build.codegen]]
 target = "kotlin"
 out = "generated/kotlin"
+
+[[build.exports]]
+format = "json"
+out = "generated/config.json"
+
+[[build.exports]]
+format = "protobuf"
+out = "generated/config.pb"
+
+[[build.exports]]
+format = "cbor"
+out = "generated/config.cbor"
 
 [[build.exports]]
 format = "json-debug"

@@ -1,6 +1,9 @@
 use std::collections::BTreeMap;
 
-use crate::{binary::BinaryBundleExporter, debug_json::DebugJsonExporter, exporter::DataExporter};
+use crate::{
+    binary::BinaryBundleExporter, cbor::CborBundleExporter, debug_json::DebugJsonExporter,
+    exporter::DataExporter, json::JsonBundleExporter, protobuf::ProtobufBundleExporter,
+};
 
 #[derive(Default)]
 pub struct ExporterRegistry {
@@ -15,7 +18,10 @@ impl ExporterRegistry {
     pub fn with_builtin_exporters() -> Self {
         let mut registry = Self::new();
         registry.register(BinaryBundleExporter);
+        registry.register(CborBundleExporter);
         registry.register(DebugJsonExporter);
+        registry.register(JsonBundleExporter);
+        registry.register(ProtobufBundleExporter);
         registry
     }
 
@@ -57,7 +63,22 @@ mod tests {
             registry.get("json-debug").unwrap().output_kind(),
             OutputKind::Directory
         );
+        assert_eq!(
+            registry.get("json").unwrap().output_kind(),
+            OutputKind::File
+        );
+        assert_eq!(
+            registry.get("cbor").unwrap().output_kind(),
+            OutputKind::File
+        );
+        assert_eq!(
+            registry.get("protobuf").unwrap().output_kind(),
+            OutputKind::File
+        );
         assert!(registry.get("unknown").is_none());
-        assert_eq!(registry.supported_formats(), vec!["binary", "json-debug"]);
+        assert_eq!(
+            registry.supported_formats(),
+            vec!["binary", "cbor", "json", "json-debug", "protobuf"]
+        );
     }
 }

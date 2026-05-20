@@ -15,3 +15,11 @@ pub(crate) fn create_dir_all(path: &Path) -> Result<()> {
 pub(crate) fn write_file(path: PathBuf, content: impl AsRef<[u8]>) -> Result<()> {
     fs::write(&path, content).map_err(|source| SoraError::WriteFile { path, source })
 }
+
+pub(crate) fn create_parent_dir(path: &Path) -> Result<()> {
+    if let Some(parent) = path.parent() {
+        create_dir_all(parent)?;
+    }
+
+    Ok(())
+}

@@ -29,6 +29,12 @@ pub enum SoraError {
     #[error("failed to serialize data: {0}")]
     SerializeData(serde_json::Error),
 
+    #[error("failed to serialize data as {format}: {message}")]
+    SerializeDataFormat {
+        format: &'static str,
+        message: String,
+    },
+
     #[error("unknown type `{0}`")]
     UnknownType(String),
 

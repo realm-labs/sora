@@ -32,6 +32,18 @@ format = "binary"
 out = "generated/config.sora"
 
 [[build.exports]]
+format = "json"
+out = "generated/config.json"
+
+[[build.exports]]
+format = "protobuf"
+out = "generated/config.pb"
+
+[[build.exports]]
+format = "cbor"
+out = "generated/config.cbor"
+
+[[build.exports]]
 format = "json-debug"
 out = "generated/debug-json"
 

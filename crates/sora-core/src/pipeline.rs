@@ -165,6 +165,14 @@ mod tests {
             ExportOutput::File(base.join("config.sora")),
         )
         .unwrap();
+        export_data(&input, "json", ExportOutput::File(base.join("config.json"))).unwrap();
+        export_data(
+            &input,
+            "protobuf",
+            ExportOutput::File(base.join("config.pb")),
+        )
+        .unwrap();
+        export_data(&input, "cbor", ExportOutput::File(base.join("config.cbor"))).unwrap();
         export_data(
             &input,
             "json-debug",
@@ -173,6 +181,9 @@ mod tests {
         .unwrap();
 
         assert!(base.join("config.sora").exists());
+        assert!(base.join("config.json").exists());
+        assert!(base.join("config.pb").exists());
+        assert!(base.join("config.cbor").exists());
         assert!(base.join("debug-json/Item.json").exists());
 
         let _ = fs::remove_dir_all(base);

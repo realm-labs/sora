@@ -42,6 +42,9 @@ fn main() -> Result<()> {
     clean_dir(&java_generated)?;
     clean_dir(&go_generated)?;
     clean_dir(&generated_root.join("debug-json"))?;
+    clean_file(&generated_root.join("config.json"))?;
+    clean_file(&generated_root.join("config.pb"))?;
+    clean_file(&generated_root.join("config.cbor"))?;
 
     sora_core::pipeline::check_schema(&schema_input)?;
     sora_core::pipeline::generate_schema_lock(&schema_input, &generated_root.join("schema.lock"))?;
@@ -54,6 +57,21 @@ fn main() -> Result<()> {
         &project_input,
         "binary",
         ExportOutput::File(generated_root.join("config.sora")),
+    )?;
+    sora_core::pipeline::export_data(
+        &project_input,
+        "json",
+        ExportOutput::File(generated_root.join("config.json")),
+    )?;
+    sora_core::pipeline::export_data(
+        &project_input,
+        "protobuf",
+        ExportOutput::File(generated_root.join("config.pb")),
+    )?;
+    sora_core::pipeline::export_data(
+        &project_input,
+        "cbor",
+        ExportOutput::File(generated_root.join("config.cbor")),
     )?;
     sora_core::pipeline::export_data(
         &project_input,
@@ -670,6 +688,13 @@ fn clean_dir(path: &Path) -> Result<()> {
     if path.exists() {
         fs::remove_dir_all(path)
             .with_context(|| format!("failed to remove `{}`", path.display()))?;
+    }
+    Ok(())
+}
+
+fn clean_file(path: &Path) -> Result<()> {
+    if path.exists() {
+        fs::remove_file(path).with_context(|| format!("failed to remove `{}`", path.display()))?;
     }
     Ok(())
 }
