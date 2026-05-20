@@ -58,7 +58,6 @@ pub trait SoraTable: std::any::Any + Send + Sync {
     fn key(&self) -> Option<&'static str>;
     fn row_type(&self) -> &'static str;
     fn len(&self) -> usize;
-    fn as_any(&self) -> &dyn std::any::Any;
 }
 
 pub struct SoraConfig {
@@ -118,10 +117,6 @@ impl SoraTable for ItemTable {
     fn len(&self) -> usize {
         self.0.len()
     }
-
-    fn as_any(&self) -> &dyn std::any::Any {
-        self
-    }
 }
 
 #[derive(Debug, Clone)]
@@ -166,10 +161,6 @@ impl SoraTable for SkillTable {
 
     fn len(&self) -> usize {
         self.0.len()
-    }
-
-    fn as_any(&self) -> &dyn std::any::Any {
-        self
     }
 }
 
@@ -216,10 +207,6 @@ impl SoraTable for QuestTable {
     fn len(&self) -> usize {
         self.0.len()
     }
-
-    fn as_any(&self) -> &dyn std::any::Any {
-        self
-    }
 }
 
 #[derive(Debug, Clone)]
@@ -260,10 +247,6 @@ impl SoraTable for QuestRewardTable {
 
     fn len(&self) -> usize {
         self.0.len()
-    }
-
-    fn as_any(&self) -> &dyn std::any::Any {
-        self
     }
 }
 
@@ -306,10 +289,6 @@ impl SoraTable for GameSettingsTable {
 
     fn len(&self) -> usize {
         1
-    }
-
-    fn as_any(&self) -> &dyn std::any::Any {
-        self
     }
 }
 
@@ -356,10 +335,6 @@ impl SoraTable for LocalizationTable {
     fn len(&self) -> usize {
         self.0.len()
     }
-
-    fn as_any(&self) -> &dyn std::any::Any {
-        self
-    }
 }
 
 #[derive(Debug, Clone)]
@@ -404,10 +379,6 @@ impl SoraTable for LevelExpTable {
 
     fn len(&self) -> usize {
         self.0.len()
-    }
-
-    fn as_any(&self) -> &dyn std::any::Any {
-        self
     }
 }
 
@@ -454,10 +425,6 @@ impl SoraTable for CharacterTable {
     fn len(&self) -> usize {
         self.0.len()
     }
-
-    fn as_any(&self) -> &dyn std::any::Any {
-        self
-    }
 }
 
 #[derive(Debug, Clone)]
@@ -498,10 +465,6 @@ impl SoraTable for CharacterSkillTable {
 
     fn len(&self) -> usize {
         self.0.len()
-    }
-
-    fn as_any(&self) -> &dyn std::any::Any {
-        self
     }
 }
 
@@ -548,10 +511,6 @@ impl SoraTable for BuffTable {
     fn len(&self) -> usize {
         self.0.len()
     }
-
-    fn as_any(&self) -> &dyn std::any::Any {
-        self
-    }
 }
 
 #[derive(Debug, Clone)]
@@ -597,10 +556,6 @@ impl SoraTable for DropGroupTable {
     fn len(&self) -> usize {
         self.0.len()
     }
-
-    fn as_any(&self) -> &dyn std::any::Any {
-        self
-    }
 }
 
 #[derive(Debug, Clone)]
@@ -641,10 +596,6 @@ impl SoraTable for DropEntryTable {
 
     fn len(&self) -> usize {
         self.0.len()
-    }
-
-    fn as_any(&self) -> &dyn std::any::Any {
-        self
     }
 }
 
@@ -691,10 +642,6 @@ impl SoraTable for MonsterTable {
     fn len(&self) -> usize {
         self.0.len()
     }
-
-    fn as_any(&self) -> &dyn std::any::Any {
-        self
-    }
 }
 
 #[derive(Debug, Clone)]
@@ -740,10 +687,6 @@ impl SoraTable for StageTable {
     fn len(&self) -> usize {
         self.0.len()
     }
-
-    fn as_any(&self) -> &dyn std::any::Any {
-        self
-    }
 }
 
 #[derive(Debug, Clone)]
@@ -784,10 +727,6 @@ impl SoraTable for StageRewardTable {
 
     fn len(&self) -> usize {
         self.0.len()
-    }
-
-    fn as_any(&self) -> &dyn std::any::Any {
-        self
     }
 }
 
@@ -834,10 +773,6 @@ impl SoraTable for DungeonTable {
     fn len(&self) -> usize {
         self.0.len()
     }
-
-    fn as_any(&self) -> &dyn std::any::Any {
-        self
-    }
 }
 
 #[derive(Debug, Clone)]
@@ -883,10 +818,6 @@ impl SoraTable for ShopTable {
     fn len(&self) -> usize {
         self.0.len()
     }
-
-    fn as_any(&self) -> &dyn std::any::Any {
-        self
-    }
 }
 
 #[derive(Debug, Clone)]
@@ -927,10 +858,6 @@ impl SoraTable for ShopItemTable {
 
     fn len(&self) -> usize {
         self.0.len()
-    }
-
-    fn as_any(&self) -> &dyn std::any::Any {
-        self
     }
 }
 
@@ -977,10 +904,6 @@ impl SoraTable for RecipeTable {
     fn len(&self) -> usize {
         self.0.len()
     }
-
-    fn as_any(&self) -> &dyn std::any::Any {
-        self
-    }
 }
 
 #[derive(Debug, Clone)]
@@ -1026,10 +949,6 @@ impl SoraTable for GachaPoolTable {
     fn len(&self) -> usize {
         self.0.len()
     }
-
-    fn as_any(&self) -> &dyn std::any::Any {
-        self
-    }
 }
 
 #[derive(Debug, Clone)]
@@ -1070,10 +989,6 @@ impl SoraTable for GachaItemTable {
 
     fn len(&self) -> usize {
         self.0.len()
-    }
-
-    fn as_any(&self) -> &dyn std::any::Any {
-        self
     }
 }
 
@@ -1120,10 +1035,6 @@ impl SoraTable for EquipmentSetTable {
     fn len(&self) -> usize {
         self.0.len()
     }
-
-    fn as_any(&self) -> &dyn std::any::Any {
-        self
-    }
 }
 
 #[derive(Debug, Clone)]
@@ -1168,10 +1079,6 @@ impl SoraTable for AchievementTable {
 
     fn len(&self) -> usize {
         self.0.len()
-    }
-
-    fn as_any(&self) -> &dyn std::any::Any {
-        self
     }
 }
 
@@ -1218,10 +1125,6 @@ impl SoraTable for VipLevelTable {
     fn len(&self) -> usize {
         self.0.len()
     }
-
-    fn as_any(&self) -> &dyn std::any::Any {
-        self
-    }
 }
 
 #[derive(Debug, Clone)]
@@ -1267,10 +1170,6 @@ impl SoraTable for MailTemplateTable {
     fn len(&self) -> usize {
         self.0.len()
     }
-
-    fn as_any(&self) -> &dyn std::any::Any {
-        self
-    }
 }
 
 #[derive(Debug, Clone)]
@@ -1311,10 +1210,6 @@ impl SoraTable for MailRewardTable {
 
     fn len(&self) -> usize {
         self.0.len()
-    }
-
-    fn as_any(&self) -> &dyn std::any::Any {
-        self
     }
 }
 
@@ -1361,10 +1256,6 @@ impl SoraTable for DialogueTable {
     fn len(&self) -> usize {
         self.0.len()
     }
-
-    fn as_any(&self) -> &dyn std::any::Any {
-        self
-    }
 }
 
 #[derive(Debug, Clone)]
@@ -1409,10 +1300,6 @@ impl SoraTable for EventRuleTable {
 
     fn len(&self) -> usize {
         self.0.len()
-    }
-
-    fn as_any(&self) -> &dyn std::any::Any {
-        self
     }
 }
 
@@ -1469,7 +1356,10 @@ impl SoraConfig {
     fn table<T: SoraTable + 'static>(&self, name: &'static str) -> &T {
         self.tables
             .get(name)
-            .and_then(|table| table.as_any().downcast_ref::<T>())
+            .and_then(|table| {
+                let table: &dyn std::any::Any = table.as_ref();
+                table.downcast_ref::<T>()
+            })
             .unwrap_or_else(|| {
                 panic!(
                     "generated SoraConfig is missing table `{}` or has an unexpected table type",

@@ -124,7 +124,9 @@ mod tests {
         assert!(
             rust_mod.contains("fn table<T: SoraTable + 'static>(&self, name: &'static str) -> &T")
         );
-        assert!(rust_mod.contains("table.as_any().downcast_ref::<T>()"));
+        assert!(!rust_mod.contains("as_any"));
+        assert!(rust_mod.contains("let table: &dyn std::any::Any = table.as_ref();"));
+        assert!(rust_mod.contains("table.downcast_ref::<T>()"));
         assert!(rust_mod.contains("pub fn item(&self) -> &ItemTable"));
         assert!(rust_mod.contains("pub fn get(&self, key: i32) -> Option<&item::Item>"));
         assert!(!rust_mod.contains("pub fn get_item"));
