@@ -3,11 +3,12 @@ use std::{collections::BTreeMap, path::Path};
 use calamine::{Data, Reader, open_workbook_auto};
 use sora_data::model::{ConfigData, RowData, TableData};
 use sora_diagnostics::{Result, SoraError};
+use sora_input::cell::{CellContext, CellLocation};
 use sora_ir::model::{ConfigIr, TableIr, TypeIr};
 
 use crate::{
     projection::verify_projection,
-    value::{CellContext, cell_is_empty, cell_to_value},
+    value::{cell_is_empty, cell_to_value},
     workbook::{group_xlsx_tables, load_grouped_ranges},
 };
 
@@ -74,9 +75,11 @@ fn load_xlsx_table_data_from_range(
             let context = CellContext {
                 path,
                 ir,
-                sheet,
-                row: row_index,
-                column,
+                location: CellLocation::Worksheet {
+                    sheet,
+                    row: row_index + 1,
+                    column: column + 1,
+                },
                 field: &field.name,
                 parser: field.parser.as_deref(),
                 separator: field.separator.as_deref(),

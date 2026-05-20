@@ -6,7 +6,6 @@ license.workspace = true
 
 [dependencies]
 calamine.workspace = true
-serde_json.workspace = true
 sora-data.workspace = true
 sora-diagnostics.workspace = true
 sora-excel.workspace = true
