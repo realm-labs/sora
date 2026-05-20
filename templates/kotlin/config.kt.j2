@@ -33,7 +33,15 @@ data class SoraConfig(
 
     companion object {
         fun fromBytes(bytes: ByteArray): SoraConfig {
+{%- if runtime_format == "sora" %}
             val bundle = SoraBundle.parse(bytes)
+{%- elif runtime_format == "json" %}
+            val bundle = SoraValueBundle.parseJson(bytes)
+{%- elif runtime_format == "cbor" %}
+            val bundle = SoraValueBundle.parseCbor(bytes)
+{%- elif runtime_format == "protobuf" %}
+            val bundle = SoraValueBundle.parseProtobuf(bytes)
+{%- endif %}
 {%- for table in model.tables %}
 {%- if table.unique_indexes or table.non_unique_indexes %}
             val {{ table.camel_name }}Rows = bundle.decodeTable("{{ table.name }}", {{ table.row_type }}::decode)

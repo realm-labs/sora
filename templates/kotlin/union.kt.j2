@@ -21,5 +21,21 @@ sealed class {{ union.pascal_name }} {
 {%- endfor %}
                 else -> throw SoraReadException("invalid union ordinal $ordinal for {{ union.pascal_name }}")
             }
+
+{%- if runtime_format != "sora" %}
+        fun decode(value: SoraValue): {{ union.pascal_name }} {
+            val obj = value.asObject()
+            return when (val tag = obj.get("{{ union.tag }}").asString()) {
+{%- for variant in union.variants %}
+                "{{ variant.name }}" -> {{ variant.name }}(
+{%- for field in variant.fields %}
+                    {{ field.name }} = {{ field.value_decode | replace("__VALUE__", "obj.get(\"" ~ field.raw_name ~ "\")") }},
+{%- endfor %}
+                )
+{%- endfor %}
+                else -> throw SoraReadException("invalid union tag $tag for {{ union.pascal_name }}")
+            }
+        }
+{%- endif %}
     }
 }

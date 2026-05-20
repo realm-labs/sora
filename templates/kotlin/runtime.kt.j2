@@ -1,5 +1,13 @@
 package {{ package }}
 
+{%- if runtime_format == "json" or runtime_format == "cbor" %}
+import com.fasterxml.jackson.core.type.TypeReference
+import com.fasterxml.jackson.databind.ObjectMapper
+{%- endif %}
+{%- if runtime_format == "cbor" %}
+import com.fasterxml.jackson.dataformat.cbor.CBORFactory
+{%- endif %}
+
 class SoraReadException(message: String) : RuntimeException(message)
 
 private const val SORA_BUNDLE_VERSION = 1
@@ -278,3 +286,315 @@ private fun checkedLongToInt(value: Long, message: String): Int {
     }
     return value.toInt()
 }
+
+{%- if runtime_format != "sora" %}
+
+class SoraValueBundle private constructor(
+    private val tables: Map<String, List<SoraValue>>,
+) {
+    fun <T> decodeTable(name: String, decode: (SoraValue) -> T): List<T> {
+        val values = tables[name] ?: throw SoraReadException("missing table `$name`")
+        return values.map(decode)
+    }
+
+    companion object {
+{%- if runtime_format == "json" %}
+        fun parseJson(bytes: ByteArray): SoraValueBundle {
+            val mapper = ObjectMapper()
+            val root = mapper.readValue(bytes, object : TypeReference<Map<String, Any?>>() {})
+            return fromRoot("json", SoraValue.fromJava(root))
+        }
+{%- endif %}
+
+{%- if runtime_format == "cbor" %}
+        fun parseCbor(bytes: ByteArray): SoraValueBundle {
+            val mapper = ObjectMapper(CBORFactory())
+            val root = mapper.readValue(bytes, object : TypeReference<Map<String, Any?>>() {})
+            return fromRoot("cbor", SoraValue.fromJava(root))
+        }
+{%- endif %}
+
+{%- if runtime_format == "protobuf" %}
+        fun parseProtobuf(bytes: ByteArray): SoraValueBundle =
+            fromRoot("protobuf", ProtoReader(bytes).readBundle())
+{%- endif %}
+
+        private fun fromRoot(expectedFormat: String, rootValue: SoraValue): SoraValueBundle {
+            val root = rootValue.asObject()
+            val format = root.get("format").asString()
+            if (format != expectedFormat) {
+                throw SoraReadException("expected $expectedFormat bundle, got $format")
+            }
+            val version = root.get("format_version").asLong()
+            if (version != SORA_BUNDLE_VERSION.toLong()) {
+                throw SoraReadException("unsupported $expectedFormat bundle version $version")
+            }
+            val data = root.get("data").asObject()
+            val tables = data.get("tables").asRawList().associate { tableValue ->
+                val table = tableValue.asObject()
+                table.get("name").asString() to table.get("rows").asRawList()
+            }
+            return SoraValueBundle(tables)
+        }
+    }
+}
+
+class SoraObject(private val fields: Map<String, SoraValue>) {
+    fun get(name: String): SoraValue = fields[name] ?: SoraValue(null)
+}
+
+class SoraValue(private val value: Any?) {
+    fun isNull(): Boolean = value == null
+
+    fun asObject(): SoraObject =
+        value as? SoraObject ?: throw SoraReadException("expected object")
+
+    fun asRawList(): List<SoraValue> =
+        @Suppress("UNCHECKED_CAST")
+        (value as? List<SoraValue> ?: throw SoraReadException("expected list"))
+
+    fun <T> asList(decode: (SoraValue) -> T): List<T> = asRawList().map(decode)
+
+    fun asBool(): Boolean =
+        value as? Boolean ?: throw SoraReadException("expected bool")
+
+    fun asInt(): Int {
+        val value = asLong()
+        if (value < Int.MIN_VALUE || value > Int.MAX_VALUE) {
+            throw SoraReadException("integer exceeds Int")
+        }
+        return value.toInt()
+    }
+
+    fun asLong(): Long =
+        when (value) {
+            is Int -> value.toLong()
+            is Long -> value
+            is Number -> {
+                val doubleValue = value.toDouble()
+                if (java.lang.Math.rint(doubleValue) != doubleValue || doubleValue < Long.MIN_VALUE.toDouble() || doubleValue > Long.MAX_VALUE.toDouble()) {
+                    throw SoraReadException("expected integer")
+                }
+                doubleValue.toLong()
+            }
+            else -> throw SoraReadException("expected integer")
+        }
+
+    fun asFloat(): Float = asDouble().toFloat()
+
+    fun asDouble(): Double =
+        (value as? Number)?.toDouble() ?: throw SoraReadException("expected float")
+
+    fun asString(): String =
+        value as? String ?: throw SoraReadException("expected string")
+
+    companion object {
+        fun fromJava(value: Any?): SoraValue =
+            when (value) {
+                is Map<*, *> -> {
+                    val fields = LinkedHashMap<String, SoraValue>(value.size)
+                    for ((key, item) in value) {
+                        fields[key as String] = fromJava(item)
+                    }
+                    SoraValue(SoraObject(fields))
+                }
+                is List<*> -> SoraValue(value.map { fromJava(it) })
+                else -> SoraValue(value)
+            }
+    }
+}
+
+{%- endif %}
+
+{%- if runtime_format == "protobuf" %}
+
+private class ProtoReader(private val bytes: ByteArray) {
+    private var cursor: Int = 0
+
+    fun readBundle(): SoraValue {
+        val tables = ArrayList<SoraValue>()
+        val data = SoraObject(linkedMapOf("tables" to SoraValue(tables)))
+        val obj = linkedMapOf("data" to SoraValue(data))
+        while (!isFinished()) {
+            val key = readKey()
+            when (key.field) {
+                1 -> obj["format_version"] = SoraValue(readVarintField(key.wire))
+                2 -> obj["format"] = SoraValue(readStringField(key.wire))
+                5 -> tables += ProtoReader(readBytesField(key.wire)).readTable()
+                else -> skip(key.wire)
+            }
+        }
+        return SoraValue(SoraObject(obj))
+    }
+
+    private fun readTable(): SoraValue {
+        val rows = ArrayList<SoraValue>()
+        val obj = linkedMapOf("rows" to SoraValue(rows))
+        while (!isFinished()) {
+            val key = readKey()
+            when (key.field) {
+                1 -> obj["name"] = SoraValue(readStringField(key.wire))
+                2 -> rows += ProtoReader(readBytesField(key.wire)).readRow()
+                else -> skip(key.wire)
+            }
+        }
+        return SoraValue(SoraObject(obj))
+    }
+
+    private fun readRow(): SoraValue {
+        val obj = LinkedHashMap<String, SoraValue>()
+        while (!isFinished()) {
+            val key = readKey()
+            if (key.field == 1) {
+                val field = ProtoReader(readBytesField(key.wire)).readField()
+                obj[field.name] = field.value
+            } else {
+                skip(key.wire)
+            }
+        }
+        return SoraValue(SoraObject(obj))
+    }
+
+    private fun readField(): ProtoFieldValue {
+        var name: String? = null
+        var value: SoraValue? = null
+        while (!isFinished()) {
+            val key = readKey()
+            when (key.field) {
+                1 -> name = readStringField(key.wire)
+                2 -> value = ProtoReader(readBytesField(key.wire)).readValue()
+                else -> skip(key.wire)
+            }
+        }
+        return ProtoFieldValue(
+            name ?: throw SoraReadException("protobuf field is missing name"),
+            value ?: throw SoraReadException("protobuf field is missing value"),
+        )
+    }
+
+    private fun readValue(): SoraValue {
+        var value = SoraValue(null)
+        while (!isFinished()) {
+            val key = readKey()
+            value = when (key.field) {
+                1 -> SoraValue(readVarintField(key.wire) != 0L)
+                2 -> SoraValue(readVarintField(key.wire))
+                3 -> SoraValue(Double.fromBits(readI64At(readFixed64Field(key.wire), 0)))
+                4 -> SoraValue(readStringField(key.wire))
+                5 -> ProtoReader(readBytesField(key.wire)).readList()
+                6 -> ProtoReader(readBytesField(key.wire)).readObject()
+                7 -> {
+                    readVarintField(key.wire)
+                    SoraValue(null)
+                }
+                else -> {
+                    skip(key.wire)
+                    value
+                }
+            }
+        }
+        return value
+    }
+
+    private fun readList(): SoraValue {
+        val values = ArrayList<SoraValue>()
+        while (!isFinished()) {
+            val key = readKey()
+            if (key.field == 1) {
+                values += ProtoReader(readBytesField(key.wire)).readValue()
+            } else {
+                skip(key.wire)
+            }
+        }
+        return SoraValue(values)
+    }
+
+    private fun readObject(): SoraValue {
+        val obj = LinkedHashMap<String, SoraValue>()
+        while (!isFinished()) {
+            val key = readKey()
+            if (key.field == 1) {
+                val field = ProtoReader(readBytesField(key.wire)).readField()
+                obj[field.name] = field.value
+            } else {
+                skip(key.wire)
+            }
+        }
+        return SoraValue(SoraObject(obj))
+    }
+
+    private fun readKey(): ProtoKey {
+        val key = readVarint()
+        return ProtoKey((key shr 3).toInt(), (key and 0x7).toInt())
+    }
+
+    private fun readVarintField(wire: Int): Long {
+        if (wire != 0) {
+            throw SoraReadException("expected protobuf varint wire type, got $wire")
+        }
+        return readVarint()
+    }
+
+    private fun readFixed64Field(wire: Int): ByteArray {
+        if (wire != 1) {
+            throw SoraReadException("expected protobuf fixed64 wire type, got $wire")
+        }
+        return take(8)
+    }
+
+    private fun readBytesField(wire: Int): ByteArray {
+        if (wire != 2) {
+            throw SoraReadException("expected protobuf length-delimited wire type, got $wire")
+        }
+        val length = readVarint()
+        if (length > Int.MAX_VALUE) {
+            throw SoraReadException("protobuf length exceeds Int.MAX_VALUE")
+        }
+        return take(length.toInt())
+    }
+
+    private fun readStringField(wire: Int): String = String(readBytesField(wire), Charsets.UTF_8)
+
+    private fun readVarint(): Long {
+        var value = 0L
+        var shift = 0
+        while (shift < 64) {
+            val byte = readByte()
+            value = value or ((byte and 0x7f).toLong() shl shift)
+            if (byte and 0x80 == 0) {
+                return value
+            }
+            shift += 7
+        }
+        throw SoraReadException("protobuf varint overflow")
+    }
+
+    private fun skip(wire: Int) {
+        when (wire) {
+            0 -> readVarint()
+            1 -> take(8)
+            2 -> readBytesField(wire)
+            5 -> take(4)
+            else -> throw SoraReadException("unsupported protobuf wire type $wire")
+        }
+    }
+
+    private fun readByte(): Int = take(1)[0].toInt() and 0xff
+
+    private fun take(length: Int): ByteArray {
+        val end = checkedAdd(cursor, length, "protobuf reader cursor overflow")
+        if (end > bytes.size) {
+            throw SoraReadException("unexpected end of protobuf data")
+        }
+        val chunk = bytes.copyOfRange(cursor, end)
+        cursor = end
+        return chunk
+    }
+
+    private fun isFinished(): Boolean = cursor == bytes.size
+
+    private data class ProtoKey(val field: Int, val wire: Int)
+    private data class ProtoFieldValue(val name: String, val value: SoraValue)
+}
+
+{%- endif %}

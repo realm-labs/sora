@@ -8,6 +8,11 @@ kotlin {
     sourceSets["main"].kotlin.srcDirs("src/generated/kotlin", "src/main/kotlin")
 }
 
+dependencies {
+    implementation("com.fasterxml.jackson.core:jackson-databind:2.21.3")
+    implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-cbor:2.21.3")
+}
+
 application {
     mainClass.set("com.sora.showcase.MainKt")
 }

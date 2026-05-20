@@ -13,5 +13,15 @@ enum class {{ enum.name }} {
 {%- endfor %}
                 else -> throw SoraReadException("invalid enum ordinal $ordinal for {{ enum.name }}")
             }
+
+{%- if runtime_format != "sora" %}
+        fun decode(value: SoraValue): {{ enum.name }} =
+            when (val name = value.asString()) {
+{%- for value in enum.values %}
+                "{{ value }}" -> {{ value }}
+{%- endfor %}
+                else -> throw SoraReadException("invalid enum value $name for {{ enum.name }}")
+            }
+{%- endif %}
     }
 }

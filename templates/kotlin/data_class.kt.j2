@@ -12,5 +12,16 @@ data class {{ record.pascal_name }}(
                 {{ field.name }} = {{ field.decode }},
 {%- endfor %}
             )
+
+{%- if runtime_format != "sora" %}
+        fun decode(value: SoraValue): {{ record.pascal_name }} {
+            val obj = value.asObject()
+            return {{ record.pascal_name }}(
+{%- for field in record.fields %}
+                {{ field.name }} = {{ field.value_decode | replace("__VALUE__", "obj.get(\"" ~ field.raw_name ~ "\")") }},
+{%- endfor %}
+            )
+        }
+{%- endif %}
     }
 }
