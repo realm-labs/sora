@@ -1,8 +1,10 @@
 use std::path::Path;
 
-use rust_xlsxwriter::{Color, DataValidation, Format, FormatAlign, FormatBorder, Workbook};
+use rust_xlsxwriter::{
+    Color, DataValidation, DataValidationRule, Format, FormatAlign, FormatBorder, Workbook,
+};
 use sora_diagnostics::{Result, SoraError};
-use sora_ir::model::{ConfigIr, TableIr, TypeIr};
+use sora_ir::model::{ConfigIr, FieldIr, TableIr, TypeIr};
 
 use crate::projection::table_template_rows;
 
@@ -66,28 +68,9 @@ fn apply_data_validations(
     path: &Path,
 ) -> Result<()> {
     for (index, field) in table.fields.iter().enumerate() {
-        let TypeIr::Enum(enum_name) = &field.ty else {
+        let Some(data_validation) = data_validation_for_field(ir, field, path)? else {
             continue;
         };
-        let Some(enum_values) = enum_values(ir, enum_name) else {
-            continue;
-        };
-        if enum_values.is_empty() {
-            continue;
-        }
-
-        let values = enum_values.iter().map(String::as_str).collect::<Vec<_>>();
-        let data_validation = DataValidation::new()
-            .allow_list_strings(&values)
-            .map_err(|source| excel_error(path, source))?
-            .set_input_title(format!("{} enum", enum_name))
-            .map_err(|source| excel_error(path, source))?
-            .set_input_message("Select a value from the dropdown.")
-            .map_err(|source| excel_error(path, source))?
-            .set_error_title("Invalid enum value")
-            .map_err(|source| excel_error(path, source))?
-            .set_error_message(format!("Value must be one of: {}", enum_values.join(", ")))
-            .map_err(|source| excel_error(path, source))?;
 
         let column = (index + 1) as u16;
         worksheet
@@ -102,6 +85,114 @@ fn apply_data_validations(
     }
 
     Ok(())
+}
+
+fn data_validation_for_field(
+    ir: &ConfigIr,
+    field: &FieldIr,
+    path: &Path,
+) -> Result<Option<DataValidation>> {
+    Ok(match &field.ty {
+        TypeIr::Bool => Some(bool_validation(path)?),
+        TypeIr::Enum(enum_name) => enum_validation(ir, enum_name, path)?,
+        TypeIr::I32 | TypeIr::I64 => integer_validation(field, path)?,
+        TypeIr::F32 | TypeIr::F64 => decimal_validation(field, path)?,
+        TypeIr::Optional(inner) => data_validation_for_type(ir, inner, field, path)?,
+        _ => None,
+    })
+}
+
+fn data_validation_for_type(
+    ir: &ConfigIr,
+    ty: &TypeIr,
+    field: &FieldIr,
+    path: &Path,
+) -> Result<Option<DataValidation>> {
+    Ok(match ty {
+        TypeIr::Bool => Some(bool_validation(path)?),
+        TypeIr::Enum(enum_name) => enum_validation(ir, enum_name, path)?,
+        TypeIr::I32 | TypeIr::I64 => integer_validation(field, path)?,
+        TypeIr::F32 | TypeIr::F64 => decimal_validation(field, path)?,
+        _ => None,
+    })
+}
+
+fn bool_validation(path: &Path) -> Result<DataValidation> {
+    DataValidation::new()
+        .allow_list_strings(&["true", "false"])
+        .map_err(|source| excel_error(path, source))?
+        .set_input_title("Boolean")
+        .map_err(|source| excel_error(path, source))?
+        .set_input_message("Select true or false.")
+        .map_err(|source| excel_error(path, source))?
+        .set_error_title("Invalid boolean value")
+        .map_err(|source| excel_error(path, source))?
+        .set_error_message("Value must be true or false.")
+        .map_err(|source| excel_error(path, source))
+}
+
+fn enum_validation(ir: &ConfigIr, enum_name: &str, path: &Path) -> Result<Option<DataValidation>> {
+    let Some(enum_values) = enum_values(ir, enum_name) else {
+        return Ok(None);
+    };
+    if enum_values.is_empty() {
+        return Ok(None);
+    }
+
+    let values = enum_values.iter().map(String::as_str).collect::<Vec<_>>();
+    let data_validation = DataValidation::new()
+        .allow_list_strings(&values)
+        .map_err(|source| excel_error(path, source))?
+        .set_input_title(format!("{} enum", enum_name))
+        .map_err(|source| excel_error(path, source))?
+        .set_input_message("Select a value from the dropdown.")
+        .map_err(|source| excel_error(path, source))?
+        .set_error_title("Invalid enum value")
+        .map_err(|source| excel_error(path, source))?
+        .set_error_message(format!("Value must be one of: {}", enum_values.join(", ")))
+        .map_err(|source| excel_error(path, source))?;
+    Ok(Some(data_validation))
+}
+
+fn integer_validation(field: &FieldIr, path: &Path) -> Result<Option<DataValidation>> {
+    let Some([min, max]) = field.range else {
+        return Ok(None);
+    };
+    let (Ok(min), Ok(max)) = (i32::try_from(min), i32::try_from(max)) else {
+        return Ok(None);
+    };
+
+    let data_validation = DataValidation::new()
+        .allow_whole_number(DataValidationRule::Between(min, max))
+        .set_input_title("Integer range")
+        .map_err(|source| excel_error(path, source))?
+        .set_input_message(format!("Enter an integer from {min} to {max}."))
+        .map_err(|source| excel_error(path, source))?
+        .set_error_title("Value outside range")
+        .map_err(|source| excel_error(path, source))?
+        .set_error_message(format!("Value must be an integer from {min} to {max}."))
+        .map_err(|source| excel_error(path, source))?;
+    Ok(Some(data_validation))
+}
+
+fn decimal_validation(field: &FieldIr, path: &Path) -> Result<Option<DataValidation>> {
+    let Some([min, max]) = field.range else {
+        return Ok(None);
+    };
+    let min = min as f64;
+    let max = max as f64;
+
+    let data_validation = DataValidation::new()
+        .allow_decimal_number(DataValidationRule::Between(min, max))
+        .set_input_title("Number range")
+        .map_err(|source| excel_error(path, source))?
+        .set_input_message(format!("Enter a number from {min} to {max}."))
+        .map_err(|source| excel_error(path, source))?
+        .set_error_title("Value outside range")
+        .map_err(|source| excel_error(path, source))?
+        .set_error_message(format!("Value must be a number from {min} to {max}."))
+        .map_err(|source| excel_error(path, source))?;
+    Ok(Some(data_validation))
 }
 
 fn enum_values<'a>(ir: &'a ConfigIr, enum_name: &str) -> Option<&'a [String]> {
