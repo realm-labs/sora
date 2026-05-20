@@ -3,6 +3,9 @@ package {{ model.package }}
 data class SoraConfig(
 {%- for table in model.tables %}
     val {{ table.snake_name }}: {{ table.container_type }},
+{%- for index in table.unique_indexes %}
+    private val {{ table.camel_name }}{{ index.pascal_name }}: Map<{{ index.key_type }}, {{ table.row_type }}>,
+{%- endfor %}
 {%- endfor %}
 ) {
 {%- for table in model.tables %}
@@ -15,19 +18,42 @@ data class SoraConfig(
 {%- elif table.mode == "singleton" %}
     fun {{ table.camel_name }}Row(): {{ table.row_type }} = {{ table.snake_name }}
 {%- endif %}
+{%- for index in table.unique_indexes %}
+
+    fun get{{ table.pascal_name }}{{ index.pascal_name }}({{ index.param_camel_name }}: {{ index.key_type }}): {{ table.row_type }}? = {{ table.camel_name }}{{ index.pascal_name }}[{{ index.param_camel_name }}]
+{%- endfor %}
 {%- endfor %}
 
     companion object {
         fun fromBytes(bytes: ByteArray): SoraConfig {
             val bundle = SoraBundle.parse(bytes)
+{%- for table in model.tables %}
+{%- if table.unique_indexes %}
+            val {{ table.camel_name }}Rows = bundle.decodeTable("{{ table.name }}", {{ table.row_type }}::decode)
+{%- endif %}
+{%- endfor %}
             return SoraConfig(
 {%- for table in model.tables %}
 {%- if table.mode == "map" and table.key_field_name %}
+{%- if table.unique_indexes %}
+                {{ table.snake_name }} = {{ table.camel_name }}Rows.associateBy { it.{{ table.key_field_name }} },
+{%- for index in table.unique_indexes %}
+                {{ table.camel_name }}{{ index.pascal_name }} = {{ table.camel_name }}Rows.associateBy { it.{{ index.field_name }} },
+{%- endfor %}
+{%- else %}
                 {{ table.snake_name }} = bundle.decodeTable("{{ table.name }}", {{ table.row_type }}::decode).associateBy { it.{{ table.key_field_name }} },
+{%- endif %}
 {%- elif table.mode == "singleton" %}
                 {{ table.snake_name }} = requireSingletonTable(bundle.decodeTable("{{ table.name }}", {{ table.row_type }}::decode), "{{ table.name }}"),
 {%- else %}
+{%- if table.unique_indexes %}
+                {{ table.snake_name }} = {{ table.camel_name }}Rows,
+{%- for index in table.unique_indexes %}
+                {{ table.camel_name }}{{ index.pascal_name }} = {{ table.camel_name }}Rows.associateBy { it.{{ index.field_name }} },
+{%- endfor %}
+{%- else %}
                 {{ table.snake_name }} = bundle.decodeTable("{{ table.name }}", {{ table.row_type }}::decode),
+{%- endif %}
 {%- endif %}
 {%- endfor %}
             )

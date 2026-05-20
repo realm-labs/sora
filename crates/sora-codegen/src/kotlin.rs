@@ -254,7 +254,11 @@ mod tests {
         assert!(kotlin_runtime.contains("class SoraBundle"));
         assert!(kotlin_config.contains("data class SoraConfig"));
         assert!(kotlin_config.contains("val item: Map<Int, Item>"));
+        assert!(kotlin_config.contains("private val itemByName: Map<String, Item>"));
         assert!(kotlin_config.contains("fun getItem(key: Int): Item? = item[key]"));
+        assert!(
+            kotlin_config.contains("fun getItemByName(name: String): Item? = itemByName[name]")
+        );
         assert!(kotlin_config.contains("fun itemValues(): Collection<Item> = item.values"));
         assert!(kotlin_config.contains("fun fromBytes(bytes: ByteArray): SoraConfig"));
 
@@ -362,14 +366,20 @@ mod tests {
         assert!(csharp_item.contains("public sealed record Item"));
         assert!(csharp_config.contains("public sealed class SoraConfig"));
         assert!(csharp_config.contains("Dictionary<int, Item>"));
+        assert!(csharp_config.contains("private readonly Dictionary<string, Item> byName"));
+        assert!(csharp_config.contains("public Item? GetByName(string name)"));
         assert!(java_item.contains("package com.sora.game_config;"));
         assert!(java_item.contains("public final class Item"));
         assert!(java_config.contains("public final class SoraConfig"));
         assert!(java_config.contains("java.util.Map<Integer, Item>"));
+        assert!(java_config.contains("private final Map<String, Item> byName"));
+        assert!(java_config.contains("public Item getByName(String name)"));
         assert!(go_item.contains("package game_config"));
         assert!(go_item.contains("type Item struct"));
         assert!(go_config.contains("type SoraConfig struct"));
         assert!(go_config.contains("map[int32]Item"));
+        assert!(go_config.contains("byName map[string]Item"));
+        assert!(go_config.contains("func (table *ItemTable) GetByName(name string) (Item, bool)"));
 
         let _ = std::fs::remove_dir_all(base);
     }

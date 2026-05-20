@@ -8,10 +8,12 @@ public final class Main {
         var bytes = Files.readAllBytes(Paths.get("..", "generated", "config.sora"));
         var config = SoraConfig.fromBytes(bytes);
         var sword = config.item().get(1001);
+        var swordByName = config.item().getByName("Iron Sword");
         var quest = config.quest().get(5001);
         var settings = config.gameSettings().rows();
 
         check(sword.name.equals("Iron Sword"));
+        check(swordByName.id == 1001);
         check(sword.itemType == ItemType.Weapon);
         check(quest.title.equals("First Trial"));
         check(quest.questType == QuestType.Main);

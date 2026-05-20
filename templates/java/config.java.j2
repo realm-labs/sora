@@ -24,18 +24,44 @@ interface SoraTable {
 
 final class {{ table.pascal_name }}Table implements SoraTable {
     private final {{ table.container_type }} rows;
+{%- for index in table.unique_indexes %}
+    private final Map<{{ index.key_type }}, {{ table.row_type }}> {{ index.camel_name }};
+{%- endfor %}
 
-    private {{ table.pascal_name }}Table({{ table.container_type }} rows) {
+    private {{ table.pascal_name }}Table({{ table.container_type }} rows{%- for index in table.unique_indexes %}, Map<{{ index.key_type }}, {{ table.row_type }}> {{ index.camel_name }}{%- endfor %}) {
         this.rows = rows;
+{%- for index in table.unique_indexes %}
+        this.{{ index.camel_name }} = {{ index.camel_name }};
+{%- endfor %}
     }
 
     static {{ table.pascal_name }}Table decode(SoraBundle bundle) {
 {%- if table.mode == "map" and table.key_field_name %}
+{%- if table.unique_indexes %}
+        var rows = bundle.decodeTable("{{ table.name }}", {{ table.row_type }}::decode);
+        return new {{ table.pascal_name }}Table(
+            SoraConfig.decodeMapTable(rows, row -> row.{{ table.key_field_name }}),
+{%- for index in table.unique_indexes %}
+            SoraConfig.decodeUniqueIndex(rows, row -> row.{{ index.field_name }}){% if not loop.last %},{% endif %}
+{%- endfor %}
+        );
+{%- else %}
         return new {{ table.pascal_name }}Table(SoraConfig.decodeMapTable(bundle.decodeTable("{{ table.name }}", {{ table.row_type }}::decode), row -> row.{{ table.key_field_name }}));
+{%- endif %}
 {%- elif table.mode == "singleton" %}
         return new {{ table.pascal_name }}Table(SoraConfig.requireSingletonTable(bundle.decodeTable("{{ table.name }}", {{ table.row_type }}::decode), "{{ table.name }}"));
 {%- else %}
+{%- if table.unique_indexes %}
+        var rows = bundle.decodeTable("{{ table.name }}", {{ table.row_type }}::decode);
+        return new {{ table.pascal_name }}Table(
+            rows,
+{%- for index in table.unique_indexes %}
+            SoraConfig.decodeUniqueIndex(rows, row -> row.{{ index.field_name }}){% if not loop.last %},{% endif %}
+{%- endfor %}
+        );
+{%- else %}
         return new {{ table.pascal_name }}Table(bundle.decodeTable("{{ table.name }}", {{ table.row_type }}::decode));
+{%- endif %}
 {%- endif %}
     }
 
@@ -49,6 +75,12 @@ final class {{ table.pascal_name }}Table implements SoraTable {
     }
 
 {%- endif %}
+{%- for index in table.unique_indexes %}
+    public {{ table.row_type }} get{{ index.pascal_name }}({{ index.key_type }} {{ index.param_camel_name }}) {
+        return {{ index.camel_name }}.get({{ index.param_camel_name }});
+    }
+
+{%- endfor %}
     @Override
     public String name() {
         return "{{ table.name }}";
@@ -132,6 +164,16 @@ public final class SoraConfig {
         return map;
     }
 
+{%- if model.has_unique_indexes %}
+    static <K, V> Map<K, V> decodeUniqueIndex(List<V> rows, Function<V, K> key) {
+        var map = new HashMap<K, V>(rows.size());
+        for (var row : rows) {
+            map.put(key.apply(row), row);
+        }
+        return map;
+    }
+
+{%- endif %}
     static <T> T requireSingletonTable(List<T> rows, String name) {
         if (rows.size() != 1) {
             throw new SoraReadException("expected singleton table `" + name + "` to contain exactly 1 row, got " + rows.size());

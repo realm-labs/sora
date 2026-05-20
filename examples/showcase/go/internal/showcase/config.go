@@ -18,7 +18,8 @@ type SoraTable interface {
 	Len() int
 }
 type ItemTable struct {
-	rows map[int32]Item
+	rows   map[int32]Item
+	byName map[string]Item
 }
 
 func decodeItemTable(bundle *SoraBundle) (*ItemTable, error) {
@@ -26,7 +27,10 @@ func decodeItemTable(bundle *SoraBundle) (*ItemTable, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &ItemTable{rows: DecodeMapTable(rows, func(row Item) int32 { return row.Id })}, nil
+	return &ItemTable{
+		rows:   DecodeMapTable(rows, func(row Item) int32 { return row.Id }),
+		byName: DecodeUniqueIndex(rows, func(row Item) string { return row.Name }),
+	}, nil
 }
 
 func (table *ItemTable) Rows() map[int32]Item {
@@ -34,6 +38,10 @@ func (table *ItemTable) Rows() map[int32]Item {
 }
 func (table *ItemTable) Get(key int32) (Item, bool) {
 	value, ok := table.rows[key]
+	return value, ok
+}
+func (table *ItemTable) GetByName(name string) (Item, bool) {
+	value, ok := table.byName[name]
 	return value, ok
 }
 func (table *ItemTable) Name() string {
@@ -1326,6 +1334,14 @@ func (config *SoraConfig) EventRule() *EventRuleTable {
 	return config.tables["EventRule"].(*EventRuleTable)
 }
 func DecodeMapTable[K comparable, V any](rows []V, key func(V) K) map[K]V {
+	values := make(map[K]V, len(rows))
+	for _, row := range rows {
+		values[key(row)] = row
+	}
+	return values
+}
+
+func DecodeUniqueIndex[K comparable, V any](rows []V, key func(V) K) map[K]V {
 	values := make(map[K]V, len(rows))
 	for _, row := range rows {
 		values[key(row)] = row

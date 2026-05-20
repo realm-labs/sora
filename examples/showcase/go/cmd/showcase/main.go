@@ -15,11 +15,14 @@ func main() {
 
 	sword, ok := cfg.Item().Get(1001)
 	check(ok)
+	swordByName, ok := cfg.Item().GetByName("Iron Sword")
+	check(ok)
 	quest, ok := cfg.Quest().Get(5001)
 	check(ok)
 	settings := cfg.GameSettings().Rows()
 
 	check(sword.Name == "Iron Sword")
+	check(swordByName.Id == 1001)
 	check(sword.ItemType == config.ItemTypeWeapon)
 	check(quest.Title == "First Trial")
 	check(quest.QuestType == config.QuestTypeMain)

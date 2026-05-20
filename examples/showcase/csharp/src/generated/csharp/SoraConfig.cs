@@ -25,21 +25,31 @@ public interface ISoraTable
 public sealed class ItemTable : ISoraTable
 {
     private readonly Dictionary<int, Item> rows;
+    private readonly Dictionary<string, Item> byName;
 
-    internal ItemTable(Dictionary<int, Item> rows)
+    internal ItemTable(Dictionary<int, Item> rows, Dictionary<string, Item> byName)
     {
         this.rows = rows;
+        this.byName = byName;
     }
 
     internal static ItemTable Decode(SoraBundle bundle)
     {
-        return new ItemTable(SoraConfig.DecodeMapTable(bundle.DecodeTable<Item>("Item", Item.Decode), row => row.Id));
+        var rows = bundle.DecodeTable<Item>("Item", Item.Decode);
+        return new ItemTable(
+            SoraConfig.DecodeMapTable(rows, row => row.Id),
+            SoraConfig.DecodeUniqueIndex(rows, row => row.Name)
+        );
     }
 
     public Dictionary<int, Item> Rows => rows;
     public Item? Get(int key)
     {
         return rows.TryGetValue(key, out var row) ? row : default;
+    }
+    public Item? GetByName(string name)
+    {
+        return byName.TryGetValue(name, out var row) ? row : default;
     }
     public string Name => "Item";
     public SoraTableMode Mode => SoraTableMode.Map;
@@ -801,6 +811,12 @@ public sealed class SoraConfig
     public DialogueTable Dialogue => Table<DialogueTable>("Dialogue");
     public EventRuleTable EventRule => Table<EventRuleTable>("EventRule");
     internal static Dictionary<TKey, TValue> DecodeMapTable<TKey, TValue>(List<TValue> rows, Func<TValue, TKey> key)
+        where TKey : notnull
+    {
+        return rows.ToDictionary(key);
+    }
+
+    internal static Dictionary<TKey, TValue> DecodeUniqueIndex<TKey, TValue>(List<TValue> rows, Func<TValue, TKey> key)
         where TKey : notnull
     {
         return rows.ToDictionary(key);

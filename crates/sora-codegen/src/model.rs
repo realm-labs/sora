@@ -73,9 +73,12 @@ pub struct CodegenTable {
 #[derive(Debug, Clone, Serialize)]
 pub struct CodegenUniqueIndex {
     pub name: String,
+    pub pascal_name: String,
+    pub camel_name: String,
     pub method_name: String,
     pub field_name: String,
     pub param_name: String,
+    pub param_camel_name: String,
     pub param_type: String,
     pub key_type: String,
     pub key_is_copy: bool,
@@ -297,9 +300,12 @@ fn build_unique_index(
         .find(|field| field.name == index.fields[0])?;
     Some(CodegenUniqueIndex {
         name: index.name.to_snake_case(),
+        pascal_name: index.name.to_pascal_case(),
+        camel_name: index.name.to_lower_camel_case(),
         method_name: format!("get_{}", index.name.to_snake_case()),
         field_name: backend.field_name(&field.name),
         param_name: field.name.to_snake_case(),
+        param_camel_name: field.name.to_lower_camel_case(),
         param_type: backend.key_param_type(ir, &field.ty),
         key_type: backend.type_name(ir, &field.ty),
         key_is_copy: backend.key_is_copy(ir, &field.ty),

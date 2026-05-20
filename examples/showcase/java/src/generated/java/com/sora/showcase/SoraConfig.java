@@ -22,13 +22,19 @@ interface SoraTable {
 
 final class ItemTable implements SoraTable {
     private final java.util.Map<Integer, Item> rows;
+    private final Map<String, Item> byName;
 
-    private ItemTable(java.util.Map<Integer, Item> rows) {
+    private ItemTable(java.util.Map<Integer, Item> rows, Map<String, Item> byName) {
         this.rows = rows;
+        this.byName = byName;
     }
 
     static ItemTable decode(SoraBundle bundle) {
-        return new ItemTable(SoraConfig.decodeMapTable(bundle.decodeTable("Item", Item::decode), row -> row.id));
+        var rows = bundle.decodeTable("Item", Item::decode);
+        return new ItemTable(
+            SoraConfig.decodeMapTable(rows, row -> row.id),
+            SoraConfig.decodeUniqueIndex(rows, row -> row.name)
+        );
     }
 
     public java.util.Map<Integer, Item> rows() {
@@ -36,6 +42,9 @@ final class ItemTable implements SoraTable {
     }
     public Item get(Integer key) {
         return rows.get(key);
+    }
+    public Item getByName(String name) {
+        return byName.get(name);
     }
     @Override
     public String name() {
@@ -1337,6 +1346,14 @@ public final class SoraConfig {
         return table("EventRule", EventRuleTable.class);
     }
     static <K, V> Map<K, V> decodeMapTable(List<V> rows, Function<V, K> key) {
+        var map = new HashMap<K, V>(rows.size());
+        for (var row : rows) {
+            map.put(key.apply(row), row);
+        }
+        return map;
+    }
+
+    static <K, V> Map<K, V> decodeUniqueIndex(List<V> rows, Function<V, K> key) {
         var map = new HashMap<K, V>(rows.size());
         for (var row : rows) {
             map.put(key.apply(row), row);

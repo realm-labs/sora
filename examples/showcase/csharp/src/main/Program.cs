@@ -11,10 +11,12 @@ internal static class Program
         var bytes = File.ReadAllBytes(ConfigPath());
         var config = SoraConfig.FromBytes(bytes);
         var sword = config.Item.Get(1001) ?? throw new InvalidOperationException("item 1001");
+        var swordByName = config.Item.GetByName("Iron Sword") ?? throw new InvalidOperationException("Iron Sword");
         var quest = config.Quest.Get(5001) ?? throw new InvalidOperationException("quest 5001");
         var settings = config.GameSettings.Rows;
 
         Check(sword.Name == "Iron Sword");
+        Check(swordByName.Id == 1001);
         Check(sword.ItemType == ItemType.Weapon);
         Check(quest.Title == "First Trial");
         Check(quest.QuestType == QuestType.Main);

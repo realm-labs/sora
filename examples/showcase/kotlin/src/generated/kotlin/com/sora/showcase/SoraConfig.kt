@@ -2,6 +2,7 @@ package com.sora.showcase
 
 data class SoraConfig(
     val item: Map<Int, Item>,
+    private val itemByName: Map<String, Item>,
     val skill: Map<Int, Skill>,
     val quest: Map<Int, Quest>,
     val quest_reward: List<QuestReward>,
@@ -33,6 +34,8 @@ data class SoraConfig(
     fun getItem(key: Int): Item? = item[key]
 
     fun itemValues(): Collection<Item> = item.values
+
+    fun getItemByName(name: String): Item? = itemByName[name]
     fun getSkill(key: Int): Skill? = skill[key]
 
     fun skillValues(): Collection<Skill> = skill.values
@@ -102,8 +105,10 @@ data class SoraConfig(
     companion object {
         fun fromBytes(bytes: ByteArray): SoraConfig {
             val bundle = SoraBundle.parse(bytes)
+            val itemRows = bundle.decodeTable("Item", Item::decode)
             return SoraConfig(
-                item = bundle.decodeTable("Item", Item::decode).associateBy { it.id },
+                item = itemRows.associateBy { it.id },
+                itemByName = itemRows.associateBy { it.name },
                 skill = bundle.decodeTable("Skill", Skill::decode).associateBy { it.id },
                 quest = bundle.decodeTable("Quest", Quest::decode).associateBy { it.id },
                 quest_reward = bundle.decodeTable("QuestReward", QuestReward::decode),

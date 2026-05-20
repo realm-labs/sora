@@ -6,10 +6,12 @@ fun main() {
     val bytes = Paths.get("..", "generated", "config.sora").toFile().readBytes()
     val config = SoraConfig.fromBytes(bytes)
     val sword = config.getItem(1001) ?: error("item 1001")
+    val swordByName = config.getItemByName("Iron Sword") ?: error("Iron Sword")
     val quest = config.getQuest(5001) ?: error("quest 5001")
     val settings = config.gameSettingsRow()
 
     check(sword.name == "Iron Sword")
+    check(swordByName.id == 1001)
     check(sword.itemType == ItemType.Weapon)
     check(quest.title == "First Trial")
     check(quest.questType == QuestType.Main)
