@@ -3,11 +3,12 @@ use std::path::Path;
 use calamine::Data;
 use sora_diagnostics::{Result, SoraError};
 use sora_excel::projection::schema_hash;
-use sora_ir::model::TableIr;
+use sora_ir::model::{ConfigIr, TableIr};
 
 use crate::value::cell_to_string;
 
 pub(crate) fn verify_projection(
+    ir: &ConfigIr,
     table: &TableIr,
     path: &Path,
     sheet: &str,
@@ -16,7 +17,7 @@ pub(crate) fn verify_projection(
     expect_cell(path, sheet, range, 0, 0, "@table")?;
     expect_cell(path, sheet, range, 0, 1, &table.name)?;
     expect_cell(path, sheet, range, 3, 0, "@schema")?;
-    expect_cell(path, sheet, range, 3, 1, &schema_hash(table))?;
+    expect_cell(path, sheet, range, 3, 1, &schema_hash(ir, table))?;
     expect_cell(path, sheet, range, 6, 0, "#field")?;
 
     for (index, field) in table.fields.iter().enumerate() {

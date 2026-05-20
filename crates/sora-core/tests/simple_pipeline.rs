@@ -92,7 +92,7 @@ fn write_item_workbook(project: &Path, out_dir: &Path) {
     let mut workbook = Workbook::new();
     let worksheet = workbook.add_worksheet();
     worksheet.set_name("Item").unwrap();
-    for (row_index, row) in table_template_rows(table).iter().enumerate() {
+    for (row_index, row) in table_template_rows(&ir, table).iter().enumerate() {
         for (column_index, value) in row.iter().enumerate() {
             worksheet
                 .write_string(row_index as u32, column_index as u16, value)

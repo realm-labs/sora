@@ -22,13 +22,17 @@ pub fn load_csv_config_data(ir: &ConfigIr, data_root: &Path) -> Result<ConfigDat
                 table.name, source.format
             )));
         }
-        tables.push(load_csv_table_data(table, &data_root.join(&source.file))?);
+        tables.push(load_csv_table_data(
+            ir,
+            table,
+            &data_root.join(&source.file),
+        )?);
     }
 
     Ok(ConfigData { tables })
 }
 
-pub fn load_csv_table_data(table: &TableIr, path: &Path) -> Result<TableData> {
+pub fn load_csv_table_data(ir: &ConfigIr, table: &TableIr, path: &Path) -> Result<TableData> {
     let mut reader = csv::Reader::from_path(path).map_err(|source| csv_error(path, source))?;
     let headers = reader
         .headers()
@@ -56,9 +60,11 @@ pub fn load_csv_table_data(table: &TableIr, path: &Path) -> Result<TableData> {
 
             let context = CsvCellContext {
                 path,
+                ir,
                 row: record_index + 2,
                 column: column + 1,
                 field: &field.name,
+                parser: field.parser.as_deref(),
                 separator: field.separator.as_deref(),
                 prefix: field.prefix.as_deref(),
                 suffix: field.suffix.as_deref(),
@@ -121,9 +127,11 @@ fn validate_headers(
 
 struct CsvCellContext<'a> {
     path: &'a Path,
+    ir: &'a ConfigIr,
     row: usize,
     column: usize,
     field: &'a str,
+    parser: Option<&'a str>,
     separator: Option<&'a str>,
     prefix: Option<&'a str>,
     suffix: Option<&'a str>,
@@ -153,6 +161,9 @@ fn string_to_value(source: &str, ty: &TypeIr, context: &CsvCellContext<'_>) -> R
         TypeIr::I32 | TypeIr::I64 | TypeIr::Ref { .. } => integer_value(source, context)?,
         TypeIr::F32 | TypeIr::F64 => float_value(source, context)?,
         TypeIr::String | TypeIr::Enum(_) => Value::String(source.to_owned()),
+        TypeIr::Struct(struct_name) if context.parser == Some("tuple") => {
+            tuple_object_value(source, struct_name, context)?
+        }
         TypeIr::Struct(_) => json_object_value(source, context)?,
         TypeIr::List(element) => separated_value(source, element, None, context)?,
         TypeIr::Array { element, len } => separated_value(source, element, Some(*len), context)?,
@@ -330,6 +341,63 @@ fn json_object_value(source: &str, context: &CsvCellContext<'_>) -> Result<Value
     ))
 }
 
+fn tuple_object_value(
+    source: &str,
+    struct_name: &str,
+    context: &CsvCellContext<'_>,
+) -> Result<Value> {
+    let separator = context
+        .separator
+        .filter(|separator| !separator.is_empty())
+        .ok_or_else(|| context.error("tuple parser requires schema `separator`"))?;
+    let struct_ir = context
+        .ir
+        .structs
+        .iter()
+        .find(|candidate| candidate.name == struct_name)
+        .ok_or_else(|| context.error(format!("unknown struct `{struct_name}`")))?;
+    let source = strip_bounds(source, context)?;
+    let items = source.split(separator).map(str::trim).collect::<Vec<_>>();
+    if items.len() != struct_ir.fields.len() {
+        return Err(context.error(format!(
+            "tuple `{struct_name}` expects {} values ({}) but got {}",
+            struct_ir.fields.len(),
+            struct_ir
+                .fields
+                .iter()
+                .map(|field| format!("{}: {}", field.name, field.ty))
+                .collect::<Vec<_>>()
+                .join(", "),
+            items.len()
+        )));
+    }
+
+    Ok(Value::Object(
+        struct_ir
+            .fields
+            .iter()
+            .zip(items)
+            .map(|(field, item)| {
+                let nested_context = CsvCellContext {
+                    path: context.path,
+                    ir: context.ir,
+                    row: context.row,
+                    column: context.column,
+                    field: &field.name,
+                    parser: field.parser.as_deref(),
+                    separator: field.separator.as_deref(),
+                    prefix: field.prefix.as_deref(),
+                    suffix: field.suffix.as_deref(),
+                };
+                Ok((
+                    field.name.clone(),
+                    string_to_value(item, &field.ty, &nested_context)?,
+                ))
+            })
+            .collect::<Result<BTreeMap<_, _>>>()?,
+    ))
+}
+
 fn json_to_value(
     value: &JsonValue,
     expected_type: &TypeIr,
@@ -495,6 +563,43 @@ mod tests {
         let _ = fs::remove_dir_all(base);
     }
 
+    #[test]
+    fn loads_tuple_struct_cells() {
+        let ir = tuple_ir();
+        let base = temp_dir();
+        fs::create_dir_all(&base).unwrap();
+        fs::write(base.join("Reward.csv"), "cost\n\"Item,2003,4\"\n").unwrap();
+
+        let data = load_csv_config_data(&ir, &base).unwrap();
+
+        assert_eq!(
+            data.tables[0].rows[0].values["cost"],
+            Value::Object(BTreeMap::from([
+                ("count".to_owned(), Value::Integer(4)),
+                ("id".to_owned(), Value::Integer(2003)),
+                ("kind".to_owned(), Value::String("Item".to_owned())),
+            ]))
+        );
+
+        let _ = fs::remove_dir_all(base);
+    }
+
+    #[test]
+    fn rejects_tuple_struct_cells_with_wrong_arity() {
+        let ir = tuple_ir();
+        let base = temp_dir();
+        fs::create_dir_all(&base).unwrap();
+        fs::write(base.join("Reward.csv"), "cost\n\"Item,2003\"\n").unwrap();
+
+        let error = load_csv_config_data(&ir, &base).unwrap_err();
+
+        assert!(error.to_string().contains(
+            "tuple `ResourceCost` expects 3 values (kind: enum<ResourceType>, id: i32, count: i32) but got 2"
+        ));
+
+        let _ = fs::remove_dir_all(base);
+    }
+
     fn example_ir() -> ConfigIr {
         let schema = toml::from_str(
             r#"
@@ -537,6 +642,51 @@ required = true
 [[tables.fields]]
 name = "tags"
 type = "list<string>"
+separator = ","
+"#,
+        )
+        .unwrap();
+        let ir = normalize_schema(schema).unwrap();
+        validate_config_ir(&ir).unwrap();
+        ir
+    }
+
+    fn tuple_ir() -> ConfigIr {
+        let schema = toml::from_str(
+            r#"
+package = "game_config"
+
+[[enums]]
+name = "ResourceType"
+values = ["Item", "Gold"]
+
+[[structs]]
+name = "ResourceCost"
+
+[[structs.fields]]
+name = "kind"
+type = "enum<ResourceType>"
+
+[[structs.fields]]
+name = "id"
+type = "i32"
+
+[[structs.fields]]
+name = "count"
+type = "i32"
+
+[[tables]]
+name = "Reward"
+mode = "list"
+
+[tables.source]
+format = "csv"
+file = "Reward.csv"
+
+[[tables.fields]]
+name = "cost"
+type = "struct<ResourceCost>"
+parser = "tuple"
 separator = ","
 "#,
         )

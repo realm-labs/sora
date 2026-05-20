@@ -1,6 +1,6 @@
-use sora_ir::model::{FieldIr, TableIr, TableModeIr};
+use sora_ir::model::{ConfigIr, FieldIr, StructIr, TableIr, TableModeIr, TypeIr};
 
-pub fn table_template_rows(table: &TableIr) -> Vec<Vec<String>> {
+pub fn table_template_rows(ir: &ConfigIr, table: &TableIr) -> Vec<Vec<String>> {
     vec![
         vec!["@table".to_owned(), table.name.clone()],
         vec!["@mode".to_owned(), table_mode_name(table.mode).to_owned()],
@@ -8,7 +8,7 @@ pub fn table_template_rows(table: &TableIr) -> Vec<Vec<String>> {
             "@key".to_owned(),
             table.key.as_deref().unwrap_or("").to_owned(),
         ],
-        vec!["@schema".to_owned(), schema_hash(table)],
+        vec!["@schema".to_owned(), schema_hash(ir, table)],
         Vec::new(),
         std::iter::once("#name".to_owned())
             .chain(table.fields.iter().map(|field| field.name.clone()))
@@ -17,7 +17,7 @@ pub fn table_template_rows(table: &TableIr) -> Vec<Vec<String>> {
             .chain(table.fields.iter().map(|field| field.name.clone()))
             .collect(),
         std::iter::once("#type".to_owned())
-            .chain(table.fields.iter().map(|field| field.ty.to_string()))
+            .chain(table.fields.iter().map(|field| field_type_hint(ir, field)))
             .collect(),
         std::iter::once("#rule".to_owned())
             .chain(table.fields.iter().map(field_rule))
@@ -33,7 +33,7 @@ pub fn table_template_rows(table: &TableIr) -> Vec<Vec<String>> {
     ]
 }
 
-pub fn schema_hash(table: &TableIr) -> String {
+pub fn schema_hash(ir: &ConfigIr, table: &TableIr) -> String {
     let mut hash = 0xcbf29ce484222325_u64;
     fn update(hash: &mut u64, value: &str) {
         for byte in value.as_bytes() {
@@ -50,6 +50,12 @@ pub fn schema_hash(table: &TableIr) -> String {
     for field in &table.fields {
         update(&mut hash, &field.name);
         update(&mut hash, &field.ty.to_string());
+        if let Some(parser) = &field.parser {
+            update(&mut hash, parser);
+        }
+        if let Some(tuple_shape) = tuple_shape(ir, field) {
+            update(&mut hash, &tuple_shape);
+        }
         update(
             &mut hash,
             &field
@@ -82,6 +88,53 @@ pub(crate) fn table_mode_name(mode: TableModeIr) -> &'static str {
     }
 }
 
+pub(crate) fn field_type_hint(ir: &ConfigIr, field: &FieldIr) -> String {
+    match struct_type_name(&field.ty)
+        .and_then(|struct_name| struct_ir(ir, struct_name))
+        .filter(|_| field.parser.as_deref() == Some("tuple"))
+    {
+        Some(struct_ir) => format!(
+            "{}({})",
+            field.ty,
+            struct_ir
+                .fields
+                .iter()
+                .map(|field| format!("{}: {}", field.name, field.ty))
+                .collect::<Vec<_>>()
+                .join(", ")
+        ),
+        None => field.ty.to_string(),
+    }
+}
+
+pub(crate) fn tuple_shape(ir: &ConfigIr, field: &FieldIr) -> Option<String> {
+    if field.parser.as_deref() != Some("tuple") {
+        return None;
+    }
+    let struct_name = struct_type_name(&field.ty)?;
+    let struct_ir = struct_ir(ir, struct_name)?;
+    Some(
+        struct_ir
+            .fields
+            .iter()
+            .map(|field| format!("{}: {}", field.name, field.ty))
+            .collect::<Vec<_>>()
+            .join(", "),
+    )
+}
+
+pub(crate) fn struct_ir<'a>(ir: &'a ConfigIr, name: &str) -> Option<&'a StructIr> {
+    ir.structs.iter().find(|item| item.name == name)
+}
+
+fn struct_type_name(ty: &TypeIr) -> Option<&str> {
+    match ty {
+        TypeIr::Struct(name) => Some(name),
+        TypeIr::Optional(inner) => struct_type_name(inner),
+        _ => None,
+    }
+}
+
 fn field_rule(field: &FieldIr) -> String {
     let mut parts = Vec::new();
     if field.key {
@@ -94,6 +147,9 @@ fn field_rule(field: &FieldIr) -> String {
 
     if let Some(separator) = &field.separator {
         parts.push(format!("separator={separator}"));
+    }
+    if let Some(parser) = &field.parser {
+        parts.push(format!("parser={parser}"));
     }
     if let Some([min, max]) = field.range {
         parts.push(format!("range={min}..{max}"));
@@ -117,7 +173,7 @@ mod tests {
     #[test]
     fn builds_schema_projection_rows() {
         let ir = example_ir();
-        let rows = table_template_rows(&ir.tables[0]);
+        let rows = table_template_rows(&ir, &ir.tables[0]);
 
         assert_eq!(rows[0], ["@table", "Item"]);
         assert_eq!(rows[1], ["@mode", "map"]);
@@ -145,7 +201,25 @@ mod tests {
     fn schema_hash_is_deterministic() {
         let ir = example_ir();
 
-        assert_eq!(schema_hash(&ir.tables[0]), schema_hash(&ir.tables[0]));
+        assert_eq!(
+            schema_hash(&ir, &ir.tables[0]),
+            schema_hash(&ir, &ir.tables[0])
+        );
+    }
+
+    #[test]
+    fn expands_tuple_struct_type_hints() {
+        let ir = tuple_ir();
+        let rows = table_template_rows(&ir, &ir.tables[0]);
+
+        assert_eq!(
+            rows[7],
+            [
+                "#type",
+                "struct<ResourceCost>(kind: enum<ResourceType>, id: i32, count: i32)"
+            ]
+        );
+        assert_eq!(rows[8], ["#rule", "required;separator=,;parser=tuple"]);
     }
 
     fn example_ir() -> ConfigIr {
@@ -190,6 +264,46 @@ name = "max_stack"
 type = "i32"
 required = true
 comment = "Max stack count"
+"#,
+        )
+        .unwrap();
+        normalize_schema(schema).unwrap()
+    }
+
+    fn tuple_ir() -> ConfigIr {
+        let schema: SchemaFile = toml::from_str(
+            r#"
+package = "game_config"
+
+[[enums]]
+name = "ResourceType"
+values = ["Item"]
+
+[[structs]]
+name = "ResourceCost"
+
+[[structs.fields]]
+name = "kind"
+type = "enum<ResourceType>"
+
+[[structs.fields]]
+name = "id"
+type = "i32"
+
+[[structs.fields]]
+name = "count"
+type = "i32"
+
+[[tables]]
+name = "Reward"
+mode = "list"
+
+[[tables.fields]]
+name = "cost"
+type = "struct<ResourceCost>"
+required = true
+parser = "tuple"
+separator = ","
 "#,
         )
         .unwrap();

@@ -85,14 +85,25 @@ impl TryFrom<FieldSchema> for FieldIr {
 
         let ty = parse_type(&field.ty)?;
         if aggregation.is_none() {
-            validate_collection_format(
+            validate_parser_format(
                 &field.name,
                 &ty,
+                field.parser.as_deref(),
                 field.separator.as_deref(),
                 field.prefix.as_deref(),
                 field.suffix.as_deref(),
             )?;
+            if field.parser.is_none() {
+                validate_collection_format(
+                    &field.name,
+                    &ty,
+                    field.separator.as_deref(),
+                    field.prefix.as_deref(),
+                    field.suffix.as_deref(),
+                )?;
+            }
         } else {
+            validate_optional_non_empty(&field.name, "parser", field.parser.as_deref())?;
             validate_optional_non_empty(&field.name, "separator", field.separator.as_deref())?;
             validate_optional_non_empty(&field.name, "prefix", field.prefix.as_deref())?;
             validate_optional_non_empty(&field.name, "suffix", field.suffix.as_deref())?;
@@ -146,6 +157,41 @@ impl From<TableSourceSchema> for TableSourceIr {
 
 fn convert_fields(fields: Vec<FieldSchema>) -> Result<Vec<FieldIr>> {
     fields.into_iter().map(FieldIr::try_from).collect()
+}
+
+fn validate_parser_format(
+    field_name: &str,
+    ty: &TypeIr,
+    parser: Option<&str>,
+    separator: Option<&str>,
+    prefix: Option<&str>,
+    suffix: Option<&str>,
+) -> Result<()> {
+    let Some(parser) = parser else {
+        return Ok(());
+    };
+
+    match parser {
+        "tuple" => {
+            validate_tuple_target(field_name, ty)?;
+            validate_required_non_empty(field_name, ty, "separator", separator)?;
+            validate_optional_non_empty(field_name, "prefix", prefix)?;
+            validate_optional_non_empty(field_name, "suffix", suffix)
+        }
+        _ => Err(SoraError::InvalidSchema(format!(
+            "field `{field_name}` declares unsupported parser `{parser}`"
+        ))),
+    }
+}
+
+fn validate_tuple_target(field_name: &str, ty: &TypeIr) -> Result<()> {
+    match ty {
+        TypeIr::Struct(_) => Ok(()),
+        TypeIr::Optional(inner) => validate_tuple_target(field_name, inner),
+        _ => Err(SoraError::InvalidSchema(format!(
+            "field `{field_name}` declares parser `tuple` but type `{ty}` is not struct"
+        ))),
+    }
 }
 
 fn validate_collection_format(
@@ -249,6 +295,45 @@ suffix = "]"
     }
 
     #[test]
+    fn normalizes_tuple_struct_parser() {
+        let schema: SchemaFile = toml::from_str(
+            r#"
+package = "game_config"
+
+[[structs]]
+name = "Vec3"
+
+[[structs.fields]]
+name = "x"
+type = "f32"
+
+[[structs.fields]]
+name = "y"
+type = "f32"
+
+[[structs.fields]]
+name = "z"
+type = "f32"
+
+[[tables]]
+name = "Spawn"
+mode = "list"
+
+[[tables.fields]]
+name = "pos"
+type = "struct<Vec3>"
+parser = "tuple"
+separator = ","
+"#,
+        )
+        .unwrap();
+
+        let ir = normalize_schema(schema).unwrap();
+        assert_eq!(ir.tables[0].fields[0].parser.as_deref(), Some("tuple"));
+        assert_eq!(ir.tables[0].fields[0].separator.as_deref(), Some(","));
+    }
+
+    #[test]
     fn validates_collection_separator_metadata() {
         let missing_separator: SchemaFile = toml::from_str(
             r#"
@@ -307,6 +392,53 @@ prefix = "["
         assert!(matches!(
             normalize_schema(scalar_prefix).unwrap_err(),
             SoraError::InvalidSchema(message) if message.contains("collection format metadata")
+        ));
+    }
+
+    #[test]
+    fn rejects_invalid_tuple_parser_metadata() {
+        let missing_separator: SchemaFile = toml::from_str(
+            r#"
+package = "game_config"
+
+[[structs]]
+name = "Vec2"
+
+[[tables]]
+name = "Spawn"
+mode = "list"
+
+[[tables.fields]]
+name = "pos"
+type = "struct<Vec2>"
+parser = "tuple"
+"#,
+        )
+        .unwrap();
+        assert!(matches!(
+            normalize_schema(missing_separator).unwrap_err(),
+            SoraError::InvalidSchema(message) if message.contains("must declare non-empty `separator`")
+        ));
+
+        let scalar_parser: SchemaFile = toml::from_str(
+            r#"
+package = "game_config"
+
+[[tables]]
+name = "Spawn"
+mode = "list"
+
+[[tables.fields]]
+name = "pos"
+type = "string"
+parser = "tuple"
+separator = ","
+"#,
+        )
+        .unwrap();
+        assert!(matches!(
+            normalize_schema(scalar_parser).unwrap_err(),
+            SoraError::InvalidSchema(message) if message.contains("is not struct")
         ));
     }
 

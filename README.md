@@ -109,6 +109,39 @@ sheet = "Item"
 
 The CLI can still read TOML row data through `--data-format toml` for tests and simple automation, and CSV row data through `--data-format csv` when each file has a header row matching schema field names. Validation checks required fields, unknown fields, primitive compatibility, enum values, ranges, struct fields, references, map keys, and singleton row counts.
 
+Inline object fields can use tuple parsing when JSON is too verbose for table editing. Define a struct, then set `parser = "tuple"` and a `separator` on a `struct<T>` field:
+
+```toml
+[[structs]]
+name = "ResourceCost"
+
+[[structs.fields]]
+name = "kind"
+type = "enum<ResourceType>"
+
+[[structs.fields]]
+name = "id"
+type = "i32"
+
+[[structs.fields]]
+name = "count"
+type = "i32"
+
+[[tables.fields]]
+name = "cost"
+type = "struct<ResourceCost>"
+parser = "tuple"
+separator = ","
+```
+
+The table cell is filled in struct field order:
+
+```text
+Item,2003,4
+```
+
+Generated Excel templates expand tuple struct fields in the `#type` row, for example `struct<ResourceCost>(kind: enum<ResourceType>, id: i32, count: i32)`, and include the same shape in the cell note.
+
 ## Exporter Architecture
 
 Exporters implement a common `DataExporter` trait and are selected by format name through `ExporterRegistry`. Built-in formats are:

@@ -13,7 +13,9 @@ use crate::{
 
 pub fn load_xlsx_config_data(ir: &ConfigIr, data_root: &Path) -> Result<ConfigData> {
     let grouped_tables = group_xlsx_tables(ir, data_root)?;
-    let tables = load_grouped_ranges(&grouped_tables, load_xlsx_table_data_from_range)?;
+    let tables = load_grouped_ranges(&grouped_tables, |table, path, sheet, range| {
+        load_xlsx_table_data_from_range(ir, table, path, sheet, range)
+    })?;
     Ok(ConfigData { tables })
 }
 
@@ -29,16 +31,28 @@ pub fn load_xlsx_table_data(table: &TableIr, path: &Path, sheet: &str) -> Result
             message: source.to_string(),
         })?;
 
-    load_xlsx_table_data_from_range(table, path, sheet, range)
+    load_xlsx_table_data_from_range(
+        &ConfigIr {
+            package: String::new(),
+            enums: Vec::new(),
+            structs: Vec::new(),
+            tables: vec![table.clone()],
+        },
+        table,
+        path,
+        sheet,
+        range,
+    )
 }
 
 fn load_xlsx_table_data_from_range(
+    ir: &ConfigIr,
     table: &TableIr,
     path: &Path,
     sheet: &str,
     range: calamine::Range<Data>,
 ) -> Result<TableData> {
-    verify_projection(table, path, sheet, &range)?;
+    verify_projection(ir, table, path, sheet, &range)?;
     let mut rows = Vec::new();
     let field_names = table
         .fields
@@ -59,10 +73,12 @@ fn load_xlsx_table_data_from_range(
             }
             let context = CellContext {
                 path,
+                ir,
                 sheet,
                 row: row_index,
                 column,
                 field: &field.name,
+                parser: field.parser.as_deref(),
                 separator: field.separator.as_deref(),
                 prefix: field.prefix.as_deref(),
                 suffix: field.suffix.as_deref(),
@@ -102,6 +118,7 @@ mod tests {
         let base = temp_dir();
         let xlsx_path = base.join("Item.xlsx");
         write_workbook_rows(
+            &ir,
             &ir.tables[0],
             &xlsx_path,
             &[
@@ -129,6 +146,7 @@ mod tests {
         let base = temp_dir();
         let xlsx_path = base.join("Item.xlsx");
         write_workbook_rows(
+            &ir,
             &ir.tables[0],
             &xlsx_path,
             &[vec![
@@ -172,6 +190,7 @@ mod tests {
         let base = temp_dir();
         let xlsx_path = base.join("Item.xlsx");
         write_workbook_rows(
+            &ir,
             &ir.tables[0],
             &xlsx_path,
             &[vec!["not-an-int", "Iron Sword", "Weapon", "1"]],
@@ -183,6 +202,27 @@ mod tests {
         assert!(message.contains("Item.xlsx"));
         assert!(message.contains("worksheet `Item` row 11, column 1, field `id`"));
         assert!(message.contains("expected integer"));
+
+        let _ = std::fs::remove_dir_all(base);
+    }
+
+    #[test]
+    fn loads_tuple_struct_cell_values() {
+        let ir = tuple_ir();
+        let base = temp_dir();
+        let xlsx_path = base.join("Reward.xlsx");
+        write_workbook_rows(&ir, &ir.tables[0], &xlsx_path, &[vec!["Item,2003,4"]]);
+
+        let data = load_xlsx_config_data(&ir, &base).unwrap();
+
+        assert_eq!(
+            data.tables[0].rows[0].values["cost"],
+            Value::Object(BTreeMap::from([
+                ("count".to_owned(), Value::Integer(4)),
+                ("id".to_owned(), Value::Integer(2003)),
+                ("kind".to_owned(), Value::String("Item".to_owned())),
+            ]))
+        );
 
         let _ = std::fs::remove_dir_all(base);
     }
@@ -295,12 +335,58 @@ type = "struct<Reward>"
         ir
     }
 
-    fn write_workbook_rows(table: &TableIr, path: &Path, rows: &[Vec<&str>]) {
+    fn tuple_ir() -> ConfigIr {
+        let schema = toml::from_str(
+            r#"
+package = "game_config"
+
+[[enums]]
+name = "ResourceType"
+values = ["Item", "Gold"]
+
+[[structs]]
+name = "ResourceCost"
+
+[[structs.fields]]
+name = "kind"
+type = "enum<ResourceType>"
+
+[[structs.fields]]
+name = "id"
+type = "i32"
+
+[[structs.fields]]
+name = "count"
+type = "i32"
+
+[[tables]]
+name = "Reward"
+mode = "list"
+
+[tables.source]
+format = "xlsx"
+file = "Reward.xlsx"
+sheet = "Reward"
+
+[[tables.fields]]
+name = "cost"
+type = "struct<ResourceCost>"
+parser = "tuple"
+separator = ","
+"#,
+        )
+        .unwrap();
+        let ir = normalize_schema(schema).unwrap();
+        validate_config_ir(&ir).unwrap();
+        ir
+    }
+
+    fn write_workbook_rows(ir: &ConfigIr, table: &TableIr, path: &Path, rows: &[Vec<&str>]) {
         let mut workbook = Workbook::new();
         let worksheet = workbook.add_worksheet();
-        worksheet.set_name("Item").unwrap();
+        worksheet.set_name(&table.name).unwrap();
 
-        for (row_index, row) in table_template_rows(table).iter().enumerate() {
+        for (row_index, row) in table_template_rows(ir, table).iter().enumerate() {
             for (column_index, value) in row.iter().enumerate() {
                 worksheet
                     .write_string(row_index as u32, column_index as u16, value)

@@ -6,7 +6,7 @@ use rust_xlsxwriter::{
 use sora_diagnostics::{Result, SoraError};
 use sora_ir::model::{ConfigIr, FieldIr, TableIr, TypeIr};
 
-use crate::projection::table_template_rows;
+use crate::projection::{table_template_rows, tuple_shape};
 
 const DATA_START_ROW: u32 = 10;
 const DATA_VALIDATION_ROWS: u32 = 1000;
@@ -26,7 +26,7 @@ pub(crate) fn write_workbook(ir: &ConfigIr, tables: &[&TableIr], path: &Path) ->
             .set_name(sheet_name)
             .map_err(|source| excel_error(path, source))?;
 
-        for (row_index, row) in table_template_rows(table).iter().enumerate() {
+        for (row_index, row) in table_template_rows(ir, table).iter().enumerate() {
             for (column_index, value) in row.iter().enumerate() {
                 if value.is_empty() {
                     worksheet
@@ -50,7 +50,7 @@ pub(crate) fn write_workbook(ir: &ConfigIr, tables: &[&TableIr], path: &Path) ->
         }
 
         apply_sheet_layout(table, worksheet, &formats, path)?;
-        apply_field_notes(table, worksheet, path)?;
+        apply_field_notes(ir, table, worksheet, path)?;
         apply_data_validations(ir, table, worksheet, path)?;
         worksheet
             .set_freeze_panes(DATA_START_ROW, 1)
@@ -89,12 +89,13 @@ fn apply_data_validations(
 }
 
 fn apply_field_notes(
+    ir: &ConfigIr,
     table: &TableIr,
     worksheet: &mut rust_xlsxwriter::Worksheet,
     path: &Path,
 ) -> Result<()> {
     for (index, field) in table.fields.iter().enumerate() {
-        let Some(note_text) = field_note_text(field) else {
+        let Some(note_text) = field_note_text(ir, field) else {
             continue;
         };
 
@@ -107,18 +108,23 @@ fn apply_field_notes(
     Ok(())
 }
 
-fn field_note_text(field: &FieldIr) -> Option<String> {
+fn field_note_text(ir: &ConfigIr, field: &FieldIr) -> Option<String> {
     let comment = field.comment.as_deref().map(str::trim).unwrap_or_default();
-    if comment.is_empty() {
+    let tuple_shape = tuple_shape(ir, field);
+    if comment.is_empty() && tuple_shape.is_none() {
         return None;
     }
 
-    let mut lines = vec![
-        comment.to_owned(),
-        String::new(),
-        format!("Field: {}", field.name),
-        format!("Type: {}", field.ty),
-    ];
+    let mut lines = Vec::new();
+    if !comment.is_empty() {
+        lines.push(comment.to_owned());
+        lines.push(String::new());
+    }
+    lines.push(format!("Field: {}", field.name));
+    lines.push(format!("Type: {}", field.ty));
+    if let Some(tuple_shape) = tuple_shape {
+        lines.push(format!("Tuple fields: {tuple_shape}"));
+    }
 
     if field.key {
         lines.push("Key: yes".to_owned());
@@ -373,7 +379,7 @@ fn excel_error(path: &Path, source: impl std::fmt::Display) -> SoraError {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use sora_ir::model::{AggregationIr, TypeIr};
+    use sora_ir::model::{AggregationIr, ConfigIr, EnumIr, StructIr, TypeIr};
 
     #[test]
     fn field_note_text_includes_comment_and_metadata() {
@@ -396,7 +402,8 @@ mod tests {
             }),
         };
 
-        let note_text = field_note_text(&field).unwrap();
+        let ir = empty_ir();
+        let note_text = field_note_text(&ir, &field).unwrap();
 
         assert!(note_text.contains("Reward rows"));
         assert!(note_text.contains("Field: rewards"));
@@ -422,6 +429,89 @@ mod tests {
             aggregation: None,
         };
 
-        assert_eq!(field_note_text(&field), None);
+        let ir = empty_ir();
+        assert_eq!(field_note_text(&ir, &field), None);
+    }
+
+    #[test]
+    fn field_note_text_includes_tuple_shape_without_comment() {
+        let ir = ConfigIr {
+            package: "game_config".to_owned(),
+            enums: vec![EnumIr {
+                name: "ResourceType".to_owned(),
+                values: vec!["Item".to_owned()],
+            }],
+            structs: vec![StructIr {
+                name: "ResourceCost".to_owned(),
+                fields: vec![
+                    FieldIr {
+                        name: "kind".to_owned(),
+                        ty: TypeIr::Enum("ResourceType".to_owned()),
+                        key: false,
+                        comment: None,
+                        required: true,
+                        range: None,
+                        parser: None,
+                        separator: None,
+                        prefix: None,
+                        suffix: None,
+                        aggregation: None,
+                    },
+                    FieldIr {
+                        name: "id".to_owned(),
+                        ty: TypeIr::I32,
+                        key: false,
+                        comment: None,
+                        required: true,
+                        range: None,
+                        parser: None,
+                        separator: None,
+                        prefix: None,
+                        suffix: None,
+                        aggregation: None,
+                    },
+                    FieldIr {
+                        name: "count".to_owned(),
+                        ty: TypeIr::I32,
+                        key: false,
+                        comment: None,
+                        required: true,
+                        range: None,
+                        parser: None,
+                        separator: None,
+                        prefix: None,
+                        suffix: None,
+                        aggregation: None,
+                    },
+                ],
+            }],
+            tables: Vec::new(),
+        };
+        let field = FieldIr {
+            name: "cost".to_owned(),
+            ty: TypeIr::Struct("ResourceCost".to_owned()),
+            key: false,
+            comment: None,
+            required: true,
+            range: None,
+            parser: Some("tuple".to_owned()),
+            separator: Some(",".to_owned()),
+            prefix: None,
+            suffix: None,
+            aggregation: None,
+        };
+
+        let note_text = field_note_text(&ir, &field).unwrap();
+
+        assert!(note_text.contains("Tuple fields: kind: enum<ResourceType>, id: i32, count: i32"));
+    }
+
+    fn empty_ir() -> ConfigIr {
+        ConfigIr {
+            package: "game_config".to_owned(),
+            enums: Vec::new(),
+            structs: Vec::new(),
+            tables: Vec::new(),
+        }
     }
 }

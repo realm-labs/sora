@@ -4,14 +4,16 @@ use calamine::Data;
 use serde_json::Value as JsonValue;
 use sora_data::model::Value;
 use sora_diagnostics::{Result, SoraError};
-use sora_ir::model::TypeIr;
+use sora_ir::model::{ConfigIr, TypeIr};
 
 pub(crate) struct CellContext<'a> {
     pub path: &'a Path,
+    pub ir: &'a ConfigIr,
     pub sheet: &'a str,
     pub row: usize,
     pub column: usize,
     pub field: &'a str,
+    pub parser: Option<&'a str>,
     pub separator: Option<&'a str>,
     pub prefix: Option<&'a str>,
     pub suffix: Option<&'a str>,
@@ -41,6 +43,9 @@ pub(crate) fn cell_to_value(cell: &Data, ty: &TypeIr, context: &CellContext<'_>)
         TypeIr::I32 | TypeIr::I64 | TypeIr::Ref { .. } => integer_cell(cell, context)?,
         TypeIr::F32 | TypeIr::F64 => float_cell(cell, context)?,
         TypeIr::String | TypeIr::Enum(_) => Value::String(cell_to_string(cell)),
+        TypeIr::Struct(struct_name) if context.parser == Some("tuple") => {
+            tuple_object_cell(cell, struct_name, context)?
+        }
         TypeIr::Struct(_) => json_object_cell(cell, context)?,
         TypeIr::List(element) => separated_cell(cell, element, None, context)?,
         TypeIr::Array { element, len } => separated_cell(cell, element, Some(*len), context)?,
@@ -142,6 +147,70 @@ fn separated_cell(
         .map(|item| separated_item_to_value(item, element, context))
         .collect::<Result<Vec<_>>>()?;
     Ok(Value::List(values))
+}
+
+fn tuple_object_cell(cell: &Data, struct_name: &str, context: &CellContext<'_>) -> Result<Value> {
+    let source = cell_to_string(cell);
+    tuple_object_value(&source, struct_name, context)
+}
+
+fn tuple_object_value(source: &str, struct_name: &str, context: &CellContext<'_>) -> Result<Value> {
+    let separator = context
+        .separator
+        .filter(|separator| !separator.is_empty())
+        .ok_or_else(|| context.error("tuple parser requires schema `separator`"))?;
+    let struct_ir = context
+        .ir
+        .structs
+        .iter()
+        .find(|candidate| candidate.name == struct_name)
+        .ok_or_else(|| context.error(format!("unknown struct `{struct_name}`")))?;
+    let source = strip_bounds(source, context)?;
+    let items = source.split(separator).map(str::trim).collect::<Vec<_>>();
+    if items.len() != struct_ir.fields.len() {
+        return Err(context.error(format!(
+            "tuple `{struct_name}` expects {} values ({}) but got {}",
+            struct_ir.fields.len(),
+            struct_ir
+                .fields
+                .iter()
+                .map(|field| format!("{}: {}", field.name, field.ty))
+                .collect::<Vec<_>>()
+                .join(", "),
+            items.len()
+        )));
+    }
+
+    Ok(Value::Object(
+        struct_ir
+            .fields
+            .iter()
+            .zip(items)
+            .map(|(field, item)| {
+                let nested_context = CellContext {
+                    path: context.path,
+                    ir: context.ir,
+                    sheet: context.sheet,
+                    row: context.row,
+                    column: context.column,
+                    field: &field.name,
+                    parser: field.parser.as_deref(),
+                    separator: field.separator.as_deref(),
+                    prefix: field.prefix.as_deref(),
+                    suffix: field.suffix.as_deref(),
+                };
+                Ok((
+                    field.name.clone(),
+                    source_to_value(item, &field.ty, &nested_context)?,
+                ))
+            })
+            .collect::<Result<BTreeMap<_, _>>>()?,
+    ))
+}
+
+fn source_to_value(source: &str, ty: &TypeIr, context: &CellContext<'_>) -> Result<Value> {
+    let cell = Data::String(source.trim().to_owned());
+    cell_to_value(&cell, ty, context)
 }
 
 fn strip_bounds<'a>(source: &'a str, context: &CellContext<'_>) -> Result<&'a str> {
