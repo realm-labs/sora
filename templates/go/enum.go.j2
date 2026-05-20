@@ -24,3 +24,20 @@ func decode{{ enum.name }}(reader *SoraReader) ({{ enum.name }}, error) {
         return 0, fmt.Errorf("invalid enum ordinal %d for {{ enum.name }}", ordinal)
     }
 }
+
+{%- if runtime_format != "sora" %}
+func decode{{ enum.name }}Value(value SoraValue) ({{ enum.name }}, error) {
+    name, err := value.AsString()
+    if err != nil {
+        return 0, err
+    }
+    switch name {
+{%- for value in enum.values %}
+    case "{{ value }}":
+        return {{ enum.name }}{{ value }}, nil
+{%- endfor %}
+    default:
+        return 0, fmt.Errorf("invalid enum value %s for {{ enum.name }}", name)
+    }
+}
+{%- endif %}

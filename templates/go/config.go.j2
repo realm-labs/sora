@@ -29,11 +29,7 @@ type {{ table.pascal_name }}Table struct {
 {%- endfor %}
 }
 
-func decode{{ table.pascal_name }}Table(bundle *SoraBundle) (*{{ table.pascal_name }}Table, error) {
-    rows, err := DecodeTable(bundle, "{{ table.name }}", decode{{ table.row_type }})
-    if err != nil {
-        return nil, err
-    }
+func build{{ table.pascal_name }}Table(rows []{{ table.row_type }}) (*{{ table.pascal_name }}Table, error) {
 {%- if table.mode == "map" and table.key_field_name %}
 {%- if table.unique_indexes or table.non_unique_indexes %}
     return &{{ table.pascal_name }}Table{
@@ -70,6 +66,24 @@ func decode{{ table.pascal_name }}Table(bundle *SoraBundle) (*{{ table.pascal_na
 {%- endif %}
 {%- endif %}
 }
+
+func decode{{ table.pascal_name }}Table(bundle *SoraBundle) (*{{ table.pascal_name }}Table, error) {
+    rows, err := DecodeTable(bundle, "{{ table.name }}", decode{{ table.row_type }})
+    if err != nil {
+        return nil, err
+    }
+    return build{{ table.pascal_name }}Table(rows)
+}
+
+{%- if runtime_format != "sora" %}
+func decode{{ table.pascal_name }}TableFromValues(bundle *SoraValueBundle) (*{{ table.pascal_name }}Table, error) {
+    rows, err := DecodeValueTable(bundle, "{{ table.name }}", decode{{ table.row_type }}Value)
+    if err != nil {
+        return nil, err
+    }
+    return build{{ table.pascal_name }}Table(rows)
+}
+{%- endif %}
 
 func (table *{{ table.pascal_name }}Table) Rows() {{ table.container_type }} {
     return table.rows
@@ -135,13 +149,25 @@ type SoraConfig struct {
 }
 
 func NewSoraConfigFromBytes(bytes []byte) (*SoraConfig, error) {
+{%- if runtime_format == "sora" %}
     bundle, err := ParseSoraBundle(bytes)
+{%- elif runtime_format == "json" %}
+    bundle, err := ParseJsonBundle(bytes)
+{%- elif runtime_format == "cbor" %}
+    bundle, err := ParseCborBundle(bytes)
+{%- elif runtime_format == "protobuf" %}
+    bundle, err := ParseProtobufBundle(bytes)
+{%- endif %}
     if err != nil {
         return nil, err
     }
     tables := make(map[string]SoraTable, {{ model.tables | length }})
 {%- for table in model.tables %}
+{%- if runtime_format == "sora" %}
     {{ table.camel_name }}Table, err := decode{{ table.pascal_name }}Table(bundle)
+{%- else %}
+    {{ table.camel_name }}Table, err := decode{{ table.pascal_name }}TableFromValues(bundle)
+{%- endif %}
     if err != nil {
         return nil, err
     }

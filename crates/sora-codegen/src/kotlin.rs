@@ -404,6 +404,37 @@ mod tests {
     }
 
     #[test]
+    fn go_supports_export_runtime_formats() {
+        for (runtime_format, parse_function) in [
+            (RuntimeFormatIr::Json, "ParseJsonBundle"),
+            (RuntimeFormatIr::Cbor, "ParseCborBundle"),
+            (RuntimeFormatIr::Protobuf, "ParseProtobufBundle"),
+        ] {
+            let mut ir = example_ir();
+            ir.codegen.go.runtime_format = runtime_format;
+            let base = temp_dir();
+            let go_out = base.join("go");
+
+            GoCodeGenerator.generate(&ir, &go_out).unwrap();
+
+            let runtime = std::fs::read_to_string(go_out.join("runtime.go")).unwrap();
+            let config = std::fs::read_to_string(go_out.join("config.go")).unwrap();
+            let item = std::fs::read_to_string(go_out.join("item.go")).unwrap();
+            let action = std::fs::read_to_string(go_out.join("action.go")).unwrap();
+
+            assert!(runtime.contains("type SoraValueBundle struct"));
+            assert!(runtime.contains(parse_function));
+            assert!(config.contains(&format!("{parse_function}(bytes)")));
+            assert!(item.contains("func decodeItemValue(input SoraValue) (Item, error)"));
+            assert!(item.contains("obj.Get(\"id\").AsInt32()"));
+            assert!(item.contains("decodeItemTypeValue(obj.Get(\"item_type\"))"));
+            assert!(action.contains("func decodeActionValue(input SoraValue) (Action, error)"));
+
+            let _ = std::fs::remove_dir_all(base);
+        }
+    }
+
+    #[test]
     fn generates_csharp_java_and_go_files() {
         let mut ir = example_ir();
         ir.package = "com.sora.game_config".to_owned();

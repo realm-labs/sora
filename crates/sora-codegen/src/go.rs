@@ -6,7 +6,7 @@ use sora_diagnostics::{Result, SoraError};
 use sora_ir::model::{ConfigIr, TableModeIr, TypeIr};
 
 use crate::{
-    generator::{CodeGenerator, ensure_sora_runtime_format},
+    generator::{CodeGenerator, runtime_format_name},
     model::{LanguageBackend, TableNameParts, build_model},
     render::{ensure_dir, render_template, write_file},
     types::go_type_name,
@@ -16,17 +16,17 @@ pub struct GoCodeGenerator;
 
 impl CodeGenerator for GoCodeGenerator {
     fn generate(&self, ir: &ConfigIr, out_dir: &Path) -> Result<()> {
-        ensure_sora_runtime_format("go", ir.codegen.go.runtime_format)?;
         ensure_dir(out_dir)?;
         let backend = GoBackend;
         let model = build_model(ir, &backend)?;
         let package = go_package_name(&model.package)?;
+        let runtime_format = runtime_format_name(ir.codegen.go.runtime_format);
 
         for item in &model.enums {
             let rendered = render_template(
                 "go",
                 "enum.go.j2",
-                context! { package => &package, enum => item },
+                context! { package => &package, enum => item, runtime_format => runtime_format },
             )?;
             write_file(
                 &out_dir.join(format!("{}.go", item.name.to_snake_case())),
@@ -38,7 +38,7 @@ impl CodeGenerator for GoCodeGenerator {
             let rendered = render_template(
                 "go",
                 "record.go.j2",
-                context! { package => &package, record => record },
+                context! { package => &package, record => record, runtime_format => runtime_format },
             )?;
             write_file(&out_dir.join(format!("{}.go", record.snake_name)), rendered)?;
         }
@@ -47,18 +47,22 @@ impl CodeGenerator for GoCodeGenerator {
             let rendered = render_template(
                 "go",
                 "union.go.j2",
-                context! { package => &package, union => union },
+                context! { package => &package, union => union, runtime_format => runtime_format },
             )?;
             write_file(&out_dir.join(format!("{}.go", union.snake_name)), rendered)?;
         }
 
-        let rendered = render_template("go", "runtime.go.j2", context! { package => &package })?;
+        let rendered = render_template(
+            "go",
+            "runtime.go.j2",
+            context! { package => &package, runtime_format => runtime_format },
+        )?;
         write_file(&out_dir.join("runtime.go"), rendered)?;
 
         let rendered = render_template(
             "go",
             "config.go.j2",
-            context! { package => &package, model => &model },
+            context! { package => &package, model => &model, runtime_format => runtime_format },
         )?;
         write_file(&out_dir.join("config.go"), rendered)
     }
@@ -77,6 +81,10 @@ impl LanguageBackend for GoBackend {
 
     fn decode_expr(&self, ir: &ConfigIr, ty: &TypeIr) -> String {
         go_decode_expr(ir, ty)
+    }
+
+    fn value_decode_expr(&self, ir: &ConfigIr, ty: &TypeIr) -> String {
+        go_value_decode_expr(ir, ty, "__VALUE__")
     }
 
     fn row_type(&self, table: &TableNameParts<'_>) -> String {
@@ -136,6 +144,46 @@ fn go_decode_expr(ir: &ConfigIr, ty: &TypeIr) -> String {
                 "ReadOptional(reader, func(reader *SoraReader) ({}, error) {{ return {} }})",
                 go_type_name(ir, element),
                 go_decode_expr(ir, element)
+            )
+        }
+    }
+}
+
+fn go_value_decode_expr(ir: &ConfigIr, ty: &TypeIr, value: &str) -> String {
+    match ty {
+        TypeIr::Bool => format!("{value}.AsBool()"),
+        TypeIr::I32 => format!("{value}.AsInt32()"),
+        TypeIr::I64 => format!("{value}.AsInt64()"),
+        TypeIr::F32 => format!("{value}.AsFloat32()"),
+        TypeIr::F64 => format!("{value}.AsFloat64()"),
+        TypeIr::String => format!("{value}.AsString()"),
+        TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => {
+            format!("decode{name}Value({value})")
+        }
+        TypeIr::List(element) | TypeIr::Array { element, .. } => {
+            format!(
+                "DecodeSoraValueList({value}, func(item SoraValue) ({}, error) {{ return {} }})",
+                go_type_name(ir, element),
+                go_value_decode_expr(ir, element, "item")
+            )
+        }
+        TypeIr::Ref { table, field } => ir
+            .tables
+            .iter()
+            .find(|candidate| candidate.name == *table)
+            .and_then(|table| {
+                table
+                    .fields
+                    .iter()
+                    .find(|candidate| candidate.name == *field)
+            })
+            .map(|field| go_value_decode_expr(ir, &field.ty, value))
+            .unwrap_or_else(|| format!("{value}.AsInt32()")),
+        TypeIr::Optional(element) => {
+            format!(
+                "DecodeOptionalSoraValue({value}, func(item SoraValue) ({}, error) {{ return {} }})",
+                go_type_name(ir, element),
+                go_value_decode_expr(ir, element, "item")
             )
         }
     }

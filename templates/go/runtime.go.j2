@@ -1,10 +1,19 @@
 package {{ package }}
 
 import (
+{%- if runtime_format == "json" %}
+    "bytes"
+{%- endif %}
     "encoding/binary"
+{%- if runtime_format != "sora" %}
+    "encoding/json"
+{%- endif %}
     "errors"
     "fmt"
     "math"
+{%- if runtime_format != "sora" %}
+    "strconv"
+{%- endif %}
 )
 
 const (
@@ -371,3 +380,835 @@ func checkedInt64ToInt(value int64, message string) (int, error) {
     }
     return int(value), nil
 }
+
+{%- if runtime_format != "sora" %}
+
+type SoraValue struct {
+    value any
+}
+
+type SoraObject map[string]SoraValue
+
+type SoraValueBundle struct {
+    tables map[string][]SoraValue
+}
+
+func DecodeValueTable[T any](bundle *SoraValueBundle, name string, decode func(SoraValue) (T, error)) ([]T, error) {
+    values, ok := bundle.tables[name]
+    if !ok {
+        return nil, fmt.Errorf("missing table `%s`", name)
+    }
+    rows := make([]T, 0, len(values))
+    for _, value := range values {
+        row, err := decode(value)
+        if err != nil {
+            return nil, err
+        }
+        rows = append(rows, row)
+    }
+    return rows, nil
+}
+
+func (object SoraObject) Get(name string) SoraValue {
+    value, ok := object[name]
+    if !ok {
+        return SoraValue{}
+    }
+    return value
+}
+
+func (value SoraValue) IsNull() bool {
+    return value.value == nil
+}
+
+func (value SoraValue) AsObject() (SoraObject, error) {
+    object, ok := value.value.(SoraObject)
+    if !ok {
+        return nil, fmt.Errorf("expected object")
+    }
+    return object, nil
+}
+
+func (value SoraValue) AsList() ([]SoraValue, error) {
+    values, ok := value.value.([]SoraValue)
+    if !ok {
+        return nil, fmt.Errorf("expected list")
+    }
+    return values, nil
+}
+
+func (value SoraValue) AsBool() (bool, error) {
+    typed, ok := value.value.(bool)
+    if !ok {
+        return false, fmt.Errorf("expected bool")
+    }
+    return typed, nil
+}
+
+func (value SoraValue) AsInt32() (int32, error) {
+    typed, err := value.AsInt64()
+    if err != nil {
+        return 0, err
+    }
+    if typed < math.MinInt32 || typed > math.MaxInt32 {
+        return 0, fmt.Errorf("integer %d exceeds int32", typed)
+    }
+    return int32(typed), nil
+}
+
+func (value SoraValue) AsInt64() (int64, error) {
+    switch typed := value.value.(type) {
+    case int64:
+        return typed, nil
+    case uint64:
+        if typed > math.MaxInt64 {
+            return 0, fmt.Errorf("integer %d exceeds int64", typed)
+        }
+        return int64(typed), nil
+    case float64:
+        if math.Trunc(typed) != typed || typed < math.MinInt64 || typed > math.MaxInt64 {
+            return 0, fmt.Errorf("number %v is not an int64", typed)
+        }
+        return int64(typed), nil
+    case json.Number:
+        value, err := strconv.ParseInt(string(typed), 10, 64)
+        if err == nil {
+            return value, nil
+        }
+        number, floatErr := strconv.ParseFloat(string(typed), 64)
+        if floatErr != nil || math.Trunc(number) != number || number < math.MinInt64 || number > math.MaxInt64 {
+            return 0, fmt.Errorf("number %s is not an int64", typed)
+        }
+        return int64(number), nil
+    default:
+        return 0, fmt.Errorf("expected integer")
+    }
+}
+
+func (value SoraValue) AsFloat32() (float32, error) {
+    typed, err := value.AsFloat64()
+    if err != nil {
+        return 0, err
+    }
+    return float32(typed), nil
+}
+
+func (value SoraValue) AsFloat64() (float64, error) {
+    switch typed := value.value.(type) {
+    case float64:
+        return typed, nil
+    case int64:
+        return float64(typed), nil
+    case uint64:
+        return float64(typed), nil
+    case json.Number:
+        number, err := strconv.ParseFloat(string(typed), 64)
+        if err != nil {
+            return 0, err
+        }
+        return number, nil
+    default:
+        return 0, fmt.Errorf("expected float")
+    }
+}
+
+func (value SoraValue) AsString() (string, error) {
+    typed, ok := value.value.(string)
+    if !ok {
+        return "", fmt.Errorf("expected string")
+    }
+    return typed, nil
+}
+
+func DecodeSoraValueList[T any](value SoraValue, decode func(SoraValue) (T, error)) ([]T, error) {
+    values, err := value.AsList()
+    if err != nil {
+        return nil, err
+    }
+    decoded := make([]T, 0, len(values))
+    for _, item := range values {
+        value, err := decode(item)
+        if err != nil {
+            return nil, err
+        }
+        decoded = append(decoded, value)
+    }
+    return decoded, nil
+}
+
+func DecodeOptionalSoraValue[T any](value SoraValue, decode func(SoraValue) (T, error)) (*T, error) {
+    if value.IsNull() {
+        return nil, nil
+    }
+    decoded, err := decode(value)
+    if err != nil {
+        return nil, err
+    }
+    return &decoded, nil
+}
+
+func newSoraValueBundle(expectedFormat string, root SoraValue) (*SoraValueBundle, error) {
+    object, err := root.AsObject()
+    if err != nil {
+        return nil, err
+    }
+    format, err := object.Get("format").AsString()
+    if err != nil {
+        return nil, err
+    }
+    if format != expectedFormat {
+        return nil, fmt.Errorf("expected %s bundle, got %s", expectedFormat, format)
+    }
+    version, err := object.Get("format_version").AsInt64()
+    if err != nil {
+        return nil, err
+    }
+    if version != soraBundleVersion {
+        return nil, fmt.Errorf("unsupported %s bundle version %d", expectedFormat, version)
+    }
+    data, err := object.Get("data").AsObject()
+    if err != nil {
+        return nil, err
+    }
+    tables, err := data.Get("tables").AsList()
+    if err != nil {
+        return nil, err
+    }
+    decoded := make(map[string][]SoraValue, len(tables))
+    for _, tableValue := range tables {
+        table, err := tableValue.AsObject()
+        if err != nil {
+            return nil, err
+        }
+        name, err := table.Get("name").AsString()
+        if err != nil {
+            return nil, err
+        }
+        rows, err := table.Get("rows").AsList()
+        if err != nil {
+            return nil, err
+        }
+        decoded[name] = rows
+    }
+    return &SoraValueBundle{tables: decoded}, nil
+}
+
+func soraValueFromJson(value any) SoraValue {
+    switch typed := value.(type) {
+    case map[string]any:
+        object := make(SoraObject, len(typed))
+        for key, value := range typed {
+            object[key] = soraValueFromJson(value)
+        }
+        return SoraValue{value: object}
+    case []any:
+        values := make([]SoraValue, 0, len(typed))
+        for _, value := range typed {
+            values = append(values, soraValueFromJson(value))
+        }
+        return SoraValue{value: values}
+    default:
+        return SoraValue{value: typed}
+    }
+}
+
+{%- endif %}
+
+{%- if runtime_format == "json" %}
+
+func ParseJsonBundle(bytesValue []byte) (*SoraValueBundle, error) {
+    decoder := json.NewDecoder(bytes.NewReader(bytesValue))
+    decoder.UseNumber()
+    var root any
+    if err := decoder.Decode(&root); err != nil {
+        return nil, err
+    }
+    return newSoraValueBundle("json", soraValueFromJson(root))
+}
+
+{%- endif %}
+
+{%- if runtime_format == "cbor" %}
+
+func ParseCborBundle(bytes []byte) (*SoraValueBundle, error) {
+    reader := cborReader{bytes: bytes}
+    root, err := reader.ReadValue()
+    if err != nil {
+        return nil, err
+    }
+    if reader.cursor != len(bytes) {
+        return nil, fmt.Errorf("CBOR bundle has trailing bytes")
+    }
+    return newSoraValueBundle("cbor", root)
+}
+
+type cborReader struct {
+    bytes  []byte
+    cursor int
+}
+
+func (reader *cborReader) ReadValue() (SoraValue, error) {
+    initial, err := reader.readByte()
+    if err != nil {
+        return SoraValue{}, err
+    }
+    major := initial >> 5
+    additional := initial & 0x1f
+    switch major {
+    case 0:
+        value, err := reader.readArgument(additional)
+        return SoraValue{value: uint64(value)}, err
+    case 1:
+        value, err := reader.readArgument(additional)
+        return SoraValue{value: -1 - int64(value)}, err
+    case 2:
+        length, err := reader.readLength(additional)
+        if err != nil {
+            return SoraValue{}, err
+        }
+        bytes, err := reader.take(length)
+        if err != nil {
+            return SoraValue{}, err
+        }
+        copied := append([]byte(nil), bytes...)
+        return SoraValue{value: copied}, nil
+    case 3:
+        length, err := reader.readLength(additional)
+        if err != nil {
+            return SoraValue{}, err
+        }
+        bytes, err := reader.take(length)
+        if err != nil {
+            return SoraValue{}, err
+        }
+        return SoraValue{value: string(bytes)}, nil
+    case 4:
+        length, err := reader.readLength(additional)
+        if err != nil {
+            return SoraValue{}, err
+        }
+        values := make([]SoraValue, 0, length)
+        for i := 0; i < length; i++ {
+            value, err := reader.ReadValue()
+            if err != nil {
+                return SoraValue{}, err
+            }
+            values = append(values, value)
+        }
+        return SoraValue{value: values}, nil
+    case 5:
+        length, err := reader.readLength(additional)
+        if err != nil {
+            return SoraValue{}, err
+        }
+        object := make(SoraObject, length)
+        for i := 0; i < length; i++ {
+            key, err := reader.ReadValue()
+            if err != nil {
+                return SoraValue{}, err
+            }
+            keyString, err := key.AsString()
+            if err != nil {
+                return SoraValue{}, fmt.Errorf("CBOR map key is not a string")
+            }
+            value, err := reader.ReadValue()
+            if err != nil {
+                return SoraValue{}, err
+            }
+            object[keyString] = value
+        }
+        return SoraValue{value: object}, nil
+    case 7:
+        switch additional {
+        case 20:
+            return SoraValue{value: false}, nil
+        case 21:
+            return SoraValue{value: true}, nil
+        case 22:
+            return SoraValue{}, nil
+        case 25:
+            bytes, err := reader.take(2)
+            if err != nil {
+                return SoraValue{}, err
+            }
+            return SoraValue{value: cborHalfFloatToFloat64(binary.BigEndian.Uint16(bytes))}, nil
+        case 26:
+            bytes, err := reader.take(4)
+            if err != nil {
+                return SoraValue{}, err
+            }
+            return SoraValue{value: float64(math.Float32frombits(binary.BigEndian.Uint32(bytes)))}, nil
+        case 27:
+            bytes, err := reader.take(8)
+            if err != nil {
+                return SoraValue{}, err
+            }
+            return SoraValue{value: math.Float64frombits(binary.BigEndian.Uint64(bytes))}, nil
+        default:
+            return SoraValue{}, fmt.Errorf("unsupported CBOR simple value %d", additional)
+        }
+    default:
+        return SoraValue{}, fmt.Errorf("unsupported CBOR major type %d", major)
+    }
+}
+
+func cborHalfFloatToFloat64(bits uint16) float64 {
+    sign := 1.0
+    if bits&0x8000 != 0 {
+        sign = -1.0
+    }
+    exponent := int((bits >> 10) & 0x1f)
+    fraction := int(bits & 0x03ff)
+    switch exponent {
+    case 0:
+        return sign * math.Ldexp(float64(fraction), -24)
+    case 31:
+        if fraction == 0 {
+            return sign * math.Inf(1)
+        }
+        return math.NaN()
+    default:
+        return sign * math.Ldexp(float64(1024+fraction), exponent-25)
+    }
+}
+
+func (reader *cborReader) readLength(additional byte) (int, error) {
+    value, err := reader.readArgument(additional)
+    if err != nil {
+        return 0, err
+    }
+    if value > uint64(^uint(0)>>1) {
+        return 0, fmt.Errorf("CBOR length exceeds int")
+    }
+    return int(value), nil
+}
+
+func (reader *cborReader) readArgument(additional byte) (uint64, error) {
+    switch {
+    case additional < 24:
+        return uint64(additional), nil
+    case additional == 24:
+        value, err := reader.readByte()
+        return uint64(value), err
+    case additional == 25:
+        bytes, err := reader.take(2)
+        if err != nil {
+            return 0, err
+        }
+        return uint64(binary.BigEndian.Uint16(bytes)), nil
+    case additional == 26:
+        bytes, err := reader.take(4)
+        if err != nil {
+            return 0, err
+        }
+        return uint64(binary.BigEndian.Uint32(bytes)), nil
+    case additional == 27:
+        bytes, err := reader.take(8)
+        if err != nil {
+            return 0, err
+        }
+        return binary.BigEndian.Uint64(bytes), nil
+    default:
+        return 0, fmt.Errorf("unsupported CBOR additional info %d", additional)
+    }
+}
+
+func (reader *cborReader) readByte() (byte, error) {
+    bytes, err := reader.take(1)
+    if err != nil {
+        return 0, err
+    }
+    return bytes[0], nil
+}
+
+func (reader *cborReader) take(length int) ([]byte, error) {
+    end := reader.cursor + length
+    if end < reader.cursor || end > len(reader.bytes) {
+        return nil, fmt.Errorf("unexpected end of CBOR data")
+    }
+    bytes := reader.bytes[reader.cursor:end]
+    reader.cursor = end
+    return bytes, nil
+}
+
+{%- endif %}
+
+{%- if runtime_format == "protobuf" %}
+
+func ParseProtobufBundle(bytes []byte) (*SoraValueBundle, error) {
+    reader := protoReader{bytes: bytes}
+    bundle, err := reader.readBundle()
+    if err != nil {
+        return nil, err
+    }
+    return newSoraValueBundle("protobuf", bundle)
+}
+
+type protoReader struct {
+    bytes  []byte
+    cursor int
+}
+
+func (reader *protoReader) readBundle() (SoraValue, error) {
+    object := SoraObject{"data": SoraValue{value: SoraObject{"tables": SoraValue{value: []SoraValue{}}}}}
+    tables := []SoraValue{}
+    for !reader.isFinished() {
+        field, wire, err := reader.readKey()
+        if err != nil {
+            return SoraValue{}, err
+        }
+        switch field {
+        case 1:
+            value, err := reader.readVarintField(wire)
+            if err != nil {
+                return SoraValue{}, err
+            }
+            object["format_version"] = SoraValue{value: int64(value)}
+        case 2:
+            value, err := reader.readStringField(wire)
+            if err != nil {
+                return SoraValue{}, err
+            }
+            object["format"] = SoraValue{value: value}
+        case 5:
+            bytes, err := reader.readBytesField(wire)
+            if err != nil {
+                return SoraValue{}, err
+            }
+            tableReader := protoReader{bytes: bytes}
+            table, err := tableReader.readTable()
+            if err != nil {
+                return SoraValue{}, err
+            }
+            tables = append(tables, table)
+        default:
+            if err := reader.skip(wire); err != nil {
+                return SoraValue{}, err
+            }
+        }
+    }
+    data := object["data"].value.(SoraObject)
+    data["tables"] = SoraValue{value: tables}
+    return SoraValue{value: object}, nil
+}
+
+func (reader *protoReader) readTable() (SoraValue, error) {
+    object := SoraObject{"rows": SoraValue{value: []SoraValue{}}}
+    rows := []SoraValue{}
+    for !reader.isFinished() {
+        field, wire, err := reader.readKey()
+        if err != nil {
+            return SoraValue{}, err
+        }
+        switch field {
+        case 1:
+            value, err := reader.readStringField(wire)
+            if err != nil {
+                return SoraValue{}, err
+            }
+            object["name"] = SoraValue{value: value}
+        case 2:
+            bytes, err := reader.readBytesField(wire)
+            if err != nil {
+                return SoraValue{}, err
+            }
+            rowReader := protoReader{bytes: bytes}
+            row, err := rowReader.readRow()
+            if err != nil {
+                return SoraValue{}, err
+            }
+            rows = append(rows, row)
+        default:
+            if err := reader.skip(wire); err != nil {
+                return SoraValue{}, err
+            }
+        }
+    }
+    object["rows"] = SoraValue{value: rows}
+    return SoraValue{value: object}, nil
+}
+
+func (reader *protoReader) readRow() (SoraValue, error) {
+    object := SoraObject{}
+    for !reader.isFinished() {
+        field, wire, err := reader.readKey()
+        if err != nil {
+            return SoraValue{}, err
+        }
+        if field != 1 {
+            if err := reader.skip(wire); err != nil {
+                return SoraValue{}, err
+            }
+            continue
+        }
+        bytes, err := reader.readBytesField(wire)
+        if err != nil {
+            return SoraValue{}, err
+        }
+        fieldReader := protoReader{bytes: bytes}
+        name, value, err := fieldReader.readField()
+        if err != nil {
+            return SoraValue{}, err
+        }
+        object[name] = value
+    }
+    return SoraValue{value: object}, nil
+}
+
+func (reader *protoReader) readField() (string, SoraValue, error) {
+    var name string
+    var value SoraValue
+    for !reader.isFinished() {
+        field, wire, err := reader.readKey()
+        if err != nil {
+            return "", SoraValue{}, err
+        }
+        switch field {
+        case 1:
+            name, err = reader.readStringField(wire)
+            if err != nil {
+                return "", SoraValue{}, err
+            }
+        case 2:
+            bytes, err := reader.readBytesField(wire)
+            if err != nil {
+                return "", SoraValue{}, err
+            }
+            valueReader := protoReader{bytes: bytes}
+            value, err = valueReader.readValue()
+            if err != nil {
+                return "", SoraValue{}, err
+            }
+        default:
+            if err := reader.skip(wire); err != nil {
+                return "", SoraValue{}, err
+            }
+        }
+    }
+    if name == "" {
+        return "", SoraValue{}, fmt.Errorf("protobuf field is missing name")
+    }
+    return name, value, nil
+}
+
+func (reader *protoReader) readValue() (SoraValue, error) {
+    var value SoraValue
+    for !reader.isFinished() {
+        field, wire, err := reader.readKey()
+        if err != nil {
+            return SoraValue{}, err
+        }
+        switch field {
+        case 1:
+            raw, err := reader.readVarintField(wire)
+            if err != nil {
+                return SoraValue{}, err
+            }
+            value = SoraValue{value: raw != 0}
+        case 2:
+            raw, err := reader.readVarintField(wire)
+            if err != nil {
+                return SoraValue{}, err
+            }
+            value = SoraValue{value: int64(raw)}
+        case 3:
+            bytes, err := reader.readFixed64Field(wire)
+            if err != nil {
+                return SoraValue{}, err
+            }
+            value = SoraValue{value: math.Float64frombits(binary.LittleEndian.Uint64(bytes))}
+        case 4:
+            text, err := reader.readStringField(wire)
+            if err != nil {
+                return SoraValue{}, err
+            }
+            value = SoraValue{value: text}
+        case 5:
+            bytes, err := reader.readBytesField(wire)
+            if err != nil {
+                return SoraValue{}, err
+            }
+            listReader := protoReader{bytes: bytes}
+            value, err = listReader.readList()
+            if err != nil {
+                return SoraValue{}, err
+            }
+        case 6:
+            bytes, err := reader.readBytesField(wire)
+            if err != nil {
+                return SoraValue{}, err
+            }
+            objectReader := protoReader{bytes: bytes}
+            value, err = objectReader.readObject()
+            if err != nil {
+                return SoraValue{}, err
+            }
+        case 7:
+            if _, err := reader.readVarintField(wire); err != nil {
+                return SoraValue{}, err
+            }
+            value = SoraValue{}
+        default:
+            if err := reader.skip(wire); err != nil {
+                return SoraValue{}, err
+            }
+        }
+    }
+    return value, nil
+}
+
+func (reader *protoReader) readList() (SoraValue, error) {
+    values := []SoraValue{}
+    for !reader.isFinished() {
+        field, wire, err := reader.readKey()
+        if err != nil {
+            return SoraValue{}, err
+        }
+        if field != 1 {
+            if err := reader.skip(wire); err != nil {
+                return SoraValue{}, err
+            }
+            continue
+        }
+        bytes, err := reader.readBytesField(wire)
+        if err != nil {
+            return SoraValue{}, err
+        }
+        valueReader := protoReader{bytes: bytes}
+        value, err := valueReader.readValue()
+        if err != nil {
+            return SoraValue{}, err
+        }
+        values = append(values, value)
+    }
+    return SoraValue{value: values}, nil
+}
+
+func (reader *protoReader) readObject() (SoraValue, error) {
+    object := SoraObject{}
+    for !reader.isFinished() {
+        field, wire, err := reader.readKey()
+        if err != nil {
+            return SoraValue{}, err
+        }
+        if field != 1 {
+            if err := reader.skip(wire); err != nil {
+                return SoraValue{}, err
+            }
+            continue
+        }
+        bytes, err := reader.readBytesField(wire)
+        if err != nil {
+            return SoraValue{}, err
+        }
+        fieldReader := protoReader{bytes: bytes}
+        name, value, err := fieldReader.readField()
+        if err != nil {
+            return SoraValue{}, err
+        }
+        object[name] = value
+    }
+    return SoraValue{value: object}, nil
+}
+
+func (reader *protoReader) readKey() (int, int, error) {
+    key, err := reader.readVarint()
+    if err != nil {
+        return 0, 0, err
+    }
+    return int(key >> 3), int(key & 0x7), nil
+}
+
+func (reader *protoReader) readVarintField(wire int) (uint64, error) {
+    if wire != 0 {
+        return 0, fmt.Errorf("expected protobuf varint wire type, got %d", wire)
+    }
+    return reader.readVarint()
+}
+
+func (reader *protoReader) readFixed64Field(wire int) ([]byte, error) {
+    if wire != 1 {
+        return nil, fmt.Errorf("expected protobuf fixed64 wire type, got %d", wire)
+    }
+    return reader.take(8)
+}
+
+func (reader *protoReader) readBytesField(wire int) ([]byte, error) {
+    if wire != 2 {
+        return nil, fmt.Errorf("expected protobuf length-delimited wire type, got %d", wire)
+    }
+    length, err := reader.readVarint()
+    if err != nil {
+        return nil, err
+    }
+    if length > uint64(^uint(0)>>1) {
+        return nil, fmt.Errorf("protobuf length exceeds int")
+    }
+    return reader.take(int(length))
+}
+
+func (reader *protoReader) readStringField(wire int) (string, error) {
+    bytes, err := reader.readBytesField(wire)
+    if err != nil {
+        return "", err
+    }
+    return string(bytes), nil
+}
+
+func (reader *protoReader) readVarint() (uint64, error) {
+    var value uint64
+    for shift := 0; shift < 64; shift += 7 {
+        b, err := reader.readByte()
+        if err != nil {
+            return 0, err
+        }
+        value |= uint64(b&0x7f) << shift
+        if b&0x80 == 0 {
+            return value, nil
+        }
+    }
+    return 0, fmt.Errorf("protobuf varint overflow")
+}
+
+func (reader *protoReader) skip(wire int) error {
+    switch wire {
+    case 0:
+        _, err := reader.readVarint()
+        return err
+    case 1:
+        _, err := reader.take(8)
+        return err
+    case 2:
+        _, err := reader.readBytesField(wire)
+        return err
+    case 5:
+        _, err := reader.take(4)
+        return err
+    default:
+        return fmt.Errorf("unsupported protobuf wire type %d", wire)
+    }
+}
+
+func (reader *protoReader) readByte() (byte, error) {
+    bytes, err := reader.take(1)
+    if err != nil {
+        return 0, err
+    }
+    return bytes[0], nil
+}
+
+func (reader *protoReader) take(length int) ([]byte, error) {
+    end := reader.cursor + length
+    if end < reader.cursor || end > len(reader.bytes) {
+        return nil, fmt.Errorf("unexpected end of protobuf data")
+    }
+    bytes := reader.bytes[reader.cursor:end]
+    reader.cursor = end
+    return bytes, nil
+}
+
+func (reader *protoReader) isFinished() bool {
+    return reader.cursor == len(reader.bytes)
+}
+
+{%- endif %}

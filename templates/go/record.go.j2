@@ -17,3 +17,20 @@ func decode{{ record.pascal_name }}(reader *SoraReader) ({{ record.pascal_name }
 {%- endfor %}
     return value, nil
 }
+
+{%- if runtime_format != "sora" %}
+func decode{{ record.pascal_name }}Value(input SoraValue) ({{ record.pascal_name }}, error) {
+    var value {{ record.pascal_name }}
+    obj, err := input.AsObject()
+    if err != nil {
+        return value, err
+    }
+{%- for field in record.fields %}
+    value.{{ field.name }}, err = {{ field.value_decode | replace("__VALUE__", "obj.Get(\"" ~ field.raw_name ~ "\")") }}
+    if err != nil {
+        return value, err
+    }
+{%- endfor %}
+    return value, nil
+}
+{%- endif %}

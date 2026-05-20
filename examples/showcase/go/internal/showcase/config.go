@@ -23,16 +23,20 @@ type ItemTable struct {
 	byItemType map[ItemType][]Item
 }
 
-func decodeItemTable(bundle *SoraBundle) (*ItemTable, error) {
-	rows, err := DecodeTable(bundle, "Item", decodeItem)
-	if err != nil {
-		return nil, err
-	}
+func buildItemTable(rows []Item) (*ItemTable, error) {
 	return &ItemTable{
 		rows:       DecodeMapTable(rows, func(row Item) int32 { return row.Id }),
 		byName:     DecodeUniqueIndex(rows, func(row Item) string { return row.Name }),
 		byItemType: DecodeIndex(rows, func(row Item) ItemType { return row.ItemType }),
 	}, nil
+}
+
+func decodeItemTable(bundle *SoraBundle) (*ItemTable, error) {
+	rows, err := DecodeTable(bundle, "Item", decodeItem)
+	if err != nil {
+		return nil, err
+	}
+	return buildItemTable(rows)
 }
 
 func (table *ItemTable) Rows() map[int32]Item {
@@ -73,12 +77,16 @@ type SkillTable struct {
 	rows map[int32]Skill
 }
 
+func buildSkillTable(rows []Skill) (*SkillTable, error) {
+	return &SkillTable{rows: DecodeMapTable(rows, func(row Skill) int32 { return row.Id })}, nil
+}
+
 func decodeSkillTable(bundle *SoraBundle) (*SkillTable, error) {
 	rows, err := DecodeTable(bundle, "Skill", decodeSkill)
 	if err != nil {
 		return nil, err
 	}
-	return &SkillTable{rows: DecodeMapTable(rows, func(row Skill) int32 { return row.Id })}, nil
+	return buildSkillTable(rows)
 }
 
 func (table *SkillTable) Rows() map[int32]Skill {
@@ -112,12 +120,16 @@ type QuestTable struct {
 	rows map[int32]Quest
 }
 
+func buildQuestTable(rows []Quest) (*QuestTable, error) {
+	return &QuestTable{rows: DecodeMapTable(rows, func(row Quest) int32 { return row.Id })}, nil
+}
+
 func decodeQuestTable(bundle *SoraBundle) (*QuestTable, error) {
 	rows, err := DecodeTable(bundle, "Quest", decodeQuest)
 	if err != nil {
 		return nil, err
 	}
-	return &QuestTable{rows: DecodeMapTable(rows, func(row Quest) int32 { return row.Id })}, nil
+	return buildQuestTable(rows)
 }
 
 func (table *QuestTable) Rows() map[int32]Quest {
@@ -151,12 +163,16 @@ type QuestRewardTable struct {
 	rows []QuestReward
 }
 
+func buildQuestRewardTable(rows []QuestReward) (*QuestRewardTable, error) {
+	return &QuestRewardTable{rows: rows}, nil
+}
+
 func decodeQuestRewardTable(bundle *SoraBundle) (*QuestRewardTable, error) {
 	rows, err := DecodeTable(bundle, "QuestReward", decodeQuestReward)
 	if err != nil {
 		return nil, err
 	}
-	return &QuestRewardTable{rows: rows}, nil
+	return buildQuestRewardTable(rows)
 }
 
 func (table *QuestRewardTable) Rows() []QuestReward {
@@ -186,16 +202,20 @@ type GameSettingsTable struct {
 	rows GameSettings
 }
 
-func decodeGameSettingsTable(bundle *SoraBundle) (*GameSettingsTable, error) {
-	rows, err := DecodeTable(bundle, "GameSettings", decodeGameSettings)
-	if err != nil {
-		return nil, err
-	}
+func buildGameSettingsTable(rows []GameSettings) (*GameSettingsTable, error) {
 	row, err := RequireSingletonTable(rows, "GameSettings")
 	if err != nil {
 		return nil, err
 	}
 	return &GameSettingsTable{rows: row}, nil
+}
+
+func decodeGameSettingsTable(bundle *SoraBundle) (*GameSettingsTable, error) {
+	rows, err := DecodeTable(bundle, "GameSettings", decodeGameSettings)
+	if err != nil {
+		return nil, err
+	}
+	return buildGameSettingsTable(rows)
 }
 
 func (table *GameSettingsTable) Rows() GameSettings {
@@ -225,12 +245,16 @@ type LocalizationTable struct {
 	rows map[string]Localization
 }
 
+func buildLocalizationTable(rows []Localization) (*LocalizationTable, error) {
+	return &LocalizationTable{rows: DecodeMapTable(rows, func(row Localization) string { return row.Key })}, nil
+}
+
 func decodeLocalizationTable(bundle *SoraBundle) (*LocalizationTable, error) {
 	rows, err := DecodeTable(bundle, "Localization", decodeLocalization)
 	if err != nil {
 		return nil, err
 	}
-	return &LocalizationTable{rows: DecodeMapTable(rows, func(row Localization) string { return row.Key })}, nil
+	return buildLocalizationTable(rows)
 }
 
 func (table *LocalizationTable) Rows() map[string]Localization {
@@ -264,12 +288,16 @@ type LevelExpTable struct {
 	rows map[int32]LevelExp
 }
 
+func buildLevelExpTable(rows []LevelExp) (*LevelExpTable, error) {
+	return &LevelExpTable{rows: DecodeMapTable(rows, func(row LevelExp) int32 { return row.Level })}, nil
+}
+
 func decodeLevelExpTable(bundle *SoraBundle) (*LevelExpTable, error) {
 	rows, err := DecodeTable(bundle, "LevelExp", decodeLevelExp)
 	if err != nil {
 		return nil, err
 	}
-	return &LevelExpTable{rows: DecodeMapTable(rows, func(row LevelExp) int32 { return row.Level })}, nil
+	return buildLevelExpTable(rows)
 }
 
 func (table *LevelExpTable) Rows() map[int32]LevelExp {
@@ -303,12 +331,16 @@ type CharacterTable struct {
 	rows map[int32]Character
 }
 
+func buildCharacterTable(rows []Character) (*CharacterTable, error) {
+	return &CharacterTable{rows: DecodeMapTable(rows, func(row Character) int32 { return row.Id })}, nil
+}
+
 func decodeCharacterTable(bundle *SoraBundle) (*CharacterTable, error) {
 	rows, err := DecodeTable(bundle, "Character", decodeCharacter)
 	if err != nil {
 		return nil, err
 	}
-	return &CharacterTable{rows: DecodeMapTable(rows, func(row Character) int32 { return row.Id })}, nil
+	return buildCharacterTable(rows)
 }
 
 func (table *CharacterTable) Rows() map[int32]Character {
@@ -342,12 +374,16 @@ type CharacterSkillTable struct {
 	rows []CharacterSkill
 }
 
+func buildCharacterSkillTable(rows []CharacterSkill) (*CharacterSkillTable, error) {
+	return &CharacterSkillTable{rows: rows}, nil
+}
+
 func decodeCharacterSkillTable(bundle *SoraBundle) (*CharacterSkillTable, error) {
 	rows, err := DecodeTable(bundle, "CharacterSkill", decodeCharacterSkill)
 	if err != nil {
 		return nil, err
 	}
-	return &CharacterSkillTable{rows: rows}, nil
+	return buildCharacterSkillTable(rows)
 }
 
 func (table *CharacterSkillTable) Rows() []CharacterSkill {
@@ -377,12 +413,16 @@ type BuffTable struct {
 	rows map[int32]Buff
 }
 
+func buildBuffTable(rows []Buff) (*BuffTable, error) {
+	return &BuffTable{rows: DecodeMapTable(rows, func(row Buff) int32 { return row.Id })}, nil
+}
+
 func decodeBuffTable(bundle *SoraBundle) (*BuffTable, error) {
 	rows, err := DecodeTable(bundle, "Buff", decodeBuff)
 	if err != nil {
 		return nil, err
 	}
-	return &BuffTable{rows: DecodeMapTable(rows, func(row Buff) int32 { return row.Id })}, nil
+	return buildBuffTable(rows)
 }
 
 func (table *BuffTable) Rows() map[int32]Buff {
@@ -416,12 +456,16 @@ type DropGroupTable struct {
 	rows map[int32]DropGroup
 }
 
+func buildDropGroupTable(rows []DropGroup) (*DropGroupTable, error) {
+	return &DropGroupTable{rows: DecodeMapTable(rows, func(row DropGroup) int32 { return row.Id })}, nil
+}
+
 func decodeDropGroupTable(bundle *SoraBundle) (*DropGroupTable, error) {
 	rows, err := DecodeTable(bundle, "DropGroup", decodeDropGroup)
 	if err != nil {
 		return nil, err
 	}
-	return &DropGroupTable{rows: DecodeMapTable(rows, func(row DropGroup) int32 { return row.Id })}, nil
+	return buildDropGroupTable(rows)
 }
 
 func (table *DropGroupTable) Rows() map[int32]DropGroup {
@@ -455,12 +499,16 @@ type DropEntryTable struct {
 	rows []DropEntry
 }
 
+func buildDropEntryTable(rows []DropEntry) (*DropEntryTable, error) {
+	return &DropEntryTable{rows: rows}, nil
+}
+
 func decodeDropEntryTable(bundle *SoraBundle) (*DropEntryTable, error) {
 	rows, err := DecodeTable(bundle, "DropEntry", decodeDropEntry)
 	if err != nil {
 		return nil, err
 	}
-	return &DropEntryTable{rows: rows}, nil
+	return buildDropEntryTable(rows)
 }
 
 func (table *DropEntryTable) Rows() []DropEntry {
@@ -490,12 +538,16 @@ type MonsterTable struct {
 	rows map[int32]Monster
 }
 
+func buildMonsterTable(rows []Monster) (*MonsterTable, error) {
+	return &MonsterTable{rows: DecodeMapTable(rows, func(row Monster) int32 { return row.Id })}, nil
+}
+
 func decodeMonsterTable(bundle *SoraBundle) (*MonsterTable, error) {
 	rows, err := DecodeTable(bundle, "Monster", decodeMonster)
 	if err != nil {
 		return nil, err
 	}
-	return &MonsterTable{rows: DecodeMapTable(rows, func(row Monster) int32 { return row.Id })}, nil
+	return buildMonsterTable(rows)
 }
 
 func (table *MonsterTable) Rows() map[int32]Monster {
@@ -529,12 +581,16 @@ type StageTable struct {
 	rows map[int32]Stage
 }
 
+func buildStageTable(rows []Stage) (*StageTable, error) {
+	return &StageTable{rows: DecodeMapTable(rows, func(row Stage) int32 { return row.Id })}, nil
+}
+
 func decodeStageTable(bundle *SoraBundle) (*StageTable, error) {
 	rows, err := DecodeTable(bundle, "Stage", decodeStage)
 	if err != nil {
 		return nil, err
 	}
-	return &StageTable{rows: DecodeMapTable(rows, func(row Stage) int32 { return row.Id })}, nil
+	return buildStageTable(rows)
 }
 
 func (table *StageTable) Rows() map[int32]Stage {
@@ -568,12 +624,16 @@ type StageRewardTable struct {
 	rows []StageReward
 }
 
+func buildStageRewardTable(rows []StageReward) (*StageRewardTable, error) {
+	return &StageRewardTable{rows: rows}, nil
+}
+
 func decodeStageRewardTable(bundle *SoraBundle) (*StageRewardTable, error) {
 	rows, err := DecodeTable(bundle, "StageReward", decodeStageReward)
 	if err != nil {
 		return nil, err
 	}
-	return &StageRewardTable{rows: rows}, nil
+	return buildStageRewardTable(rows)
 }
 
 func (table *StageRewardTable) Rows() []StageReward {
@@ -603,12 +663,16 @@ type DungeonTable struct {
 	rows map[int32]Dungeon
 }
 
+func buildDungeonTable(rows []Dungeon) (*DungeonTable, error) {
+	return &DungeonTable{rows: DecodeMapTable(rows, func(row Dungeon) int32 { return row.Id })}, nil
+}
+
 func decodeDungeonTable(bundle *SoraBundle) (*DungeonTable, error) {
 	rows, err := DecodeTable(bundle, "Dungeon", decodeDungeon)
 	if err != nil {
 		return nil, err
 	}
-	return &DungeonTable{rows: DecodeMapTable(rows, func(row Dungeon) int32 { return row.Id })}, nil
+	return buildDungeonTable(rows)
 }
 
 func (table *DungeonTable) Rows() map[int32]Dungeon {
@@ -642,12 +706,16 @@ type ShopTable struct {
 	rows map[int32]Shop
 }
 
+func buildShopTable(rows []Shop) (*ShopTable, error) {
+	return &ShopTable{rows: DecodeMapTable(rows, func(row Shop) int32 { return row.Id })}, nil
+}
+
 func decodeShopTable(bundle *SoraBundle) (*ShopTable, error) {
 	rows, err := DecodeTable(bundle, "Shop", decodeShop)
 	if err != nil {
 		return nil, err
 	}
-	return &ShopTable{rows: DecodeMapTable(rows, func(row Shop) int32 { return row.Id })}, nil
+	return buildShopTable(rows)
 }
 
 func (table *ShopTable) Rows() map[int32]Shop {
@@ -681,12 +749,16 @@ type ShopItemTable struct {
 	rows []ShopItem
 }
 
+func buildShopItemTable(rows []ShopItem) (*ShopItemTable, error) {
+	return &ShopItemTable{rows: rows}, nil
+}
+
 func decodeShopItemTable(bundle *SoraBundle) (*ShopItemTable, error) {
 	rows, err := DecodeTable(bundle, "ShopItem", decodeShopItem)
 	if err != nil {
 		return nil, err
 	}
-	return &ShopItemTable{rows: rows}, nil
+	return buildShopItemTable(rows)
 }
 
 func (table *ShopItemTable) Rows() []ShopItem {
@@ -716,12 +788,16 @@ type RecipeTable struct {
 	rows map[int32]Recipe
 }
 
+func buildRecipeTable(rows []Recipe) (*RecipeTable, error) {
+	return &RecipeTable{rows: DecodeMapTable(rows, func(row Recipe) int32 { return row.Id })}, nil
+}
+
 func decodeRecipeTable(bundle *SoraBundle) (*RecipeTable, error) {
 	rows, err := DecodeTable(bundle, "Recipe", decodeRecipe)
 	if err != nil {
 		return nil, err
 	}
-	return &RecipeTable{rows: DecodeMapTable(rows, func(row Recipe) int32 { return row.Id })}, nil
+	return buildRecipeTable(rows)
 }
 
 func (table *RecipeTable) Rows() map[int32]Recipe {
@@ -755,12 +831,16 @@ type GachaPoolTable struct {
 	rows map[int32]GachaPool
 }
 
+func buildGachaPoolTable(rows []GachaPool) (*GachaPoolTable, error) {
+	return &GachaPoolTable{rows: DecodeMapTable(rows, func(row GachaPool) int32 { return row.Id })}, nil
+}
+
 func decodeGachaPoolTable(bundle *SoraBundle) (*GachaPoolTable, error) {
 	rows, err := DecodeTable(bundle, "GachaPool", decodeGachaPool)
 	if err != nil {
 		return nil, err
 	}
-	return &GachaPoolTable{rows: DecodeMapTable(rows, func(row GachaPool) int32 { return row.Id })}, nil
+	return buildGachaPoolTable(rows)
 }
 
 func (table *GachaPoolTable) Rows() map[int32]GachaPool {
@@ -794,12 +874,16 @@ type GachaItemTable struct {
 	rows []GachaItem
 }
 
+func buildGachaItemTable(rows []GachaItem) (*GachaItemTable, error) {
+	return &GachaItemTable{rows: rows}, nil
+}
+
 func decodeGachaItemTable(bundle *SoraBundle) (*GachaItemTable, error) {
 	rows, err := DecodeTable(bundle, "GachaItem", decodeGachaItem)
 	if err != nil {
 		return nil, err
 	}
-	return &GachaItemTable{rows: rows}, nil
+	return buildGachaItemTable(rows)
 }
 
 func (table *GachaItemTable) Rows() []GachaItem {
@@ -829,12 +913,16 @@ type EquipmentSetTable struct {
 	rows map[int32]EquipmentSet
 }
 
+func buildEquipmentSetTable(rows []EquipmentSet) (*EquipmentSetTable, error) {
+	return &EquipmentSetTable{rows: DecodeMapTable(rows, func(row EquipmentSet) int32 { return row.Id })}, nil
+}
+
 func decodeEquipmentSetTable(bundle *SoraBundle) (*EquipmentSetTable, error) {
 	rows, err := DecodeTable(bundle, "EquipmentSet", decodeEquipmentSet)
 	if err != nil {
 		return nil, err
 	}
-	return &EquipmentSetTable{rows: DecodeMapTable(rows, func(row EquipmentSet) int32 { return row.Id })}, nil
+	return buildEquipmentSetTable(rows)
 }
 
 func (table *EquipmentSetTable) Rows() map[int32]EquipmentSet {
@@ -868,12 +956,16 @@ type AchievementTable struct {
 	rows map[int32]Achievement
 }
 
+func buildAchievementTable(rows []Achievement) (*AchievementTable, error) {
+	return &AchievementTable{rows: DecodeMapTable(rows, func(row Achievement) int32 { return row.Id })}, nil
+}
+
 func decodeAchievementTable(bundle *SoraBundle) (*AchievementTable, error) {
 	rows, err := DecodeTable(bundle, "Achievement", decodeAchievement)
 	if err != nil {
 		return nil, err
 	}
-	return &AchievementTable{rows: DecodeMapTable(rows, func(row Achievement) int32 { return row.Id })}, nil
+	return buildAchievementTable(rows)
 }
 
 func (table *AchievementTable) Rows() map[int32]Achievement {
@@ -907,12 +999,16 @@ type VipLevelTable struct {
 	rows map[int32]VipLevel
 }
 
+func buildVipLevelTable(rows []VipLevel) (*VipLevelTable, error) {
+	return &VipLevelTable{rows: DecodeMapTable(rows, func(row VipLevel) int32 { return row.Level })}, nil
+}
+
 func decodeVipLevelTable(bundle *SoraBundle) (*VipLevelTable, error) {
 	rows, err := DecodeTable(bundle, "VipLevel", decodeVipLevel)
 	if err != nil {
 		return nil, err
 	}
-	return &VipLevelTable{rows: DecodeMapTable(rows, func(row VipLevel) int32 { return row.Level })}, nil
+	return buildVipLevelTable(rows)
 }
 
 func (table *VipLevelTable) Rows() map[int32]VipLevel {
@@ -946,12 +1042,16 @@ type MailTemplateTable struct {
 	rows map[int32]MailTemplate
 }
 
+func buildMailTemplateTable(rows []MailTemplate) (*MailTemplateTable, error) {
+	return &MailTemplateTable{rows: DecodeMapTable(rows, func(row MailTemplate) int32 { return row.Id })}, nil
+}
+
 func decodeMailTemplateTable(bundle *SoraBundle) (*MailTemplateTable, error) {
 	rows, err := DecodeTable(bundle, "MailTemplate", decodeMailTemplate)
 	if err != nil {
 		return nil, err
 	}
-	return &MailTemplateTable{rows: DecodeMapTable(rows, func(row MailTemplate) int32 { return row.Id })}, nil
+	return buildMailTemplateTable(rows)
 }
 
 func (table *MailTemplateTable) Rows() map[int32]MailTemplate {
@@ -985,12 +1085,16 @@ type MailRewardTable struct {
 	rows []MailReward
 }
 
+func buildMailRewardTable(rows []MailReward) (*MailRewardTable, error) {
+	return &MailRewardTable{rows: rows}, nil
+}
+
 func decodeMailRewardTable(bundle *SoraBundle) (*MailRewardTable, error) {
 	rows, err := DecodeTable(bundle, "MailReward", decodeMailReward)
 	if err != nil {
 		return nil, err
 	}
-	return &MailRewardTable{rows: rows}, nil
+	return buildMailRewardTable(rows)
 }
 
 func (table *MailRewardTable) Rows() []MailReward {
@@ -1020,12 +1124,16 @@ type DialogueTable struct {
 	rows map[int32]Dialogue
 }
 
+func buildDialogueTable(rows []Dialogue) (*DialogueTable, error) {
+	return &DialogueTable{rows: DecodeMapTable(rows, func(row Dialogue) int32 { return row.Id })}, nil
+}
+
 func decodeDialogueTable(bundle *SoraBundle) (*DialogueTable, error) {
 	rows, err := DecodeTable(bundle, "Dialogue", decodeDialogue)
 	if err != nil {
 		return nil, err
 	}
-	return &DialogueTable{rows: DecodeMapTable(rows, func(row Dialogue) int32 { return row.Id })}, nil
+	return buildDialogueTable(rows)
 }
 
 func (table *DialogueTable) Rows() map[int32]Dialogue {
@@ -1059,12 +1167,16 @@ type EventRuleTable struct {
 	rows map[int32]EventRule
 }
 
+func buildEventRuleTable(rows []EventRule) (*EventRuleTable, error) {
+	return &EventRuleTable{rows: DecodeMapTable(rows, func(row EventRule) int32 { return row.Id })}, nil
+}
+
 func decodeEventRuleTable(bundle *SoraBundle) (*EventRuleTable, error) {
 	rows, err := DecodeTable(bundle, "EventRule", decodeEventRule)
 	if err != nil {
 		return nil, err
 	}
-	return &EventRuleTable{rows: DecodeMapTable(rows, func(row EventRule) int32 { return row.Id })}, nil
+	return buildEventRuleTable(rows)
 }
 
 func (table *EventRuleTable) Rows() map[int32]EventRule {
