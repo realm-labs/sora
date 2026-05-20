@@ -1,0 +1,397 @@
+{
+  "table": {
+    "name": "Dungeon",
+    "rows": [
+      {
+        "values": {
+          "entry_cost": {
+            "Object": {
+              "count": {
+                "Integer": 100
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "id": {
+            "Integer": 9501
+          },
+          "name": {
+            "String": "Dungeon 1"
+          },
+          "stage_ids": {
+            "List": [
+              {
+                "Integer": 9001
+              },
+              {
+                "Integer": 9002
+              },
+              {
+                "Integer": 9003
+              },
+              {
+                "Integer": 9004
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "entry_cost": {
+            "Object": {
+              "count": {
+                "Integer": 200
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "id": {
+            "Integer": 9502
+          },
+          "name": {
+            "String": "Dungeon 2"
+          },
+          "stage_ids": {
+            "List": [
+              {
+                "Integer": 9005
+              },
+              {
+                "Integer": 9006
+              },
+              {
+                "Integer": 9007
+              },
+              {
+                "Integer": 9008
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "entry_cost": {
+            "Object": {
+              "count": {
+                "Integer": 300
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "id": {
+            "Integer": 9503
+          },
+          "name": {
+            "String": "Dungeon 3"
+          },
+          "stage_ids": {
+            "List": [
+              {
+                "Integer": 9009
+              },
+              {
+                "Integer": 9010
+              },
+              {
+                "Integer": 9011
+              },
+              {
+                "Integer": 9012
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "entry_cost": {
+            "Object": {
+              "count": {
+                "Integer": 400
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "id": {
+            "Integer": 9504
+          },
+          "name": {
+            "String": "Dungeon 4"
+          },
+          "stage_ids": {
+            "List": [
+              {
+                "Integer": 9013
+              },
+              {
+                "Integer": 9014
+              },
+              {
+                "Integer": 9015
+              },
+              {
+                "Integer": 9016
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "entry_cost": {
+            "Object": {
+              "count": {
+                "Integer": 500
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "id": {
+            "Integer": 9505
+          },
+          "name": {
+            "String": "Dungeon 5"
+          },
+          "stage_ids": {
+            "List": [
+              {
+                "Integer": 9017
+              },
+              {
+                "Integer": 9018
+              },
+              {
+                "Integer": 9019
+              },
+              {
+                "Integer": 9020
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "entry_cost": {
+            "Object": {
+              "count": {
+                "Integer": 600
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "id": {
+            "Integer": 9506
+          },
+          "name": {
+            "String": "Dungeon 6"
+          },
+          "stage_ids": {
+            "List": [
+              {
+                "Integer": 9021
+              },
+              {
+                "Integer": 9022
+              },
+              {
+                "Integer": 9023
+              },
+              {
+                "Integer": 9024
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "entry_cost": {
+            "Object": {
+              "count": {
+                "Integer": 700
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "id": {
+            "Integer": 9507
+          },
+          "name": {
+            "String": "Dungeon 7"
+          },
+          "stage_ids": {
+            "List": [
+              {
+                "Integer": 9025
+              },
+              {
+                "Integer": 9026
+              },
+              {
+                "Integer": 9027
+              },
+              {
+                "Integer": 9028
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "entry_cost": {
+            "Object": {
+              "count": {
+                "Integer": 800
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "id": {
+            "Integer": 9508
+          },
+          "name": {
+            "String": "Dungeon 8"
+          },
+          "stage_ids": {
+            "List": [
+              {
+                "Integer": 9029
+              },
+              {
+                "Integer": 9030
+              },
+              {
+                "Integer": 9031
+              },
+              {
+                "Integer": 9032
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "entry_cost": {
+            "Object": {
+              "count": {
+                "Integer": 900
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "id": {
+            "Integer": 9509
+          },
+          "name": {
+            "String": "Dungeon 9"
+          },
+          "stage_ids": {
+            "List": [
+              {
+                "Integer": 9033
+              },
+              {
+                "Integer": 9034
+              },
+              {
+                "Integer": 9035
+              },
+              {
+                "Integer": 9036
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "entry_cost": {
+            "Object": {
+              "count": {
+                "Integer": 1000
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "id": {
+            "Integer": 9510
+          },
+          "name": {
+            "String": "Dungeon 10"
+          },
+          "stage_ids": {
+            "List": [
+              {
+                "Integer": 9037
+              },
+              {
+                "Integer": 9038
+              },
+              {
+                "Integer": 9039
+              },
+              {
+                "Integer": 9040
+              }
+            ]
+          }
+        }
+      }
+    ]
+  }
+}

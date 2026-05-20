@@ -15,10 +15,14 @@ fun main() {
     check(quest.questType == QuestType.Main)
     check(quest.rewards.size == 2)
     check(settings.startingGold == 100)
+    check(config.stageValues().size == 40)
+    check(config.monsterValues().size == 80)
+    check(config.localizationValues().size == 80)
 
     println(
         "loaded ${config.itemValues().size} items, " +
             "${config.skillValues().size} skills, " +
-            "${config.questValues().size} quests; first quest rewards: ${quest.rewards.size}",
+            "${config.questValues().size} quests, " +
+            "${config.stageValues().size} stages; first quest rewards: ${quest.rewards.size}",
     )
 }

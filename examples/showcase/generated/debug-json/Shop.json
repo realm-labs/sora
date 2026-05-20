@@ -1,0 +1,72 @@
+{
+  "table": {
+    "name": "Shop",
+    "rows": [
+      {
+        "values": {
+          "currency": {
+            "String": "Gold"
+          },
+          "id": {
+            "Integer": 10001
+          },
+          "name": {
+            "String": "Shop 1"
+          }
+        }
+      },
+      {
+        "values": {
+          "currency": {
+            "String": "Diamond"
+          },
+          "id": {
+            "Integer": 10002
+          },
+          "name": {
+            "String": "Shop 2"
+          }
+        }
+      },
+      {
+        "values": {
+          "currency": {
+            "String": "Gold"
+          },
+          "id": {
+            "Integer": 10003
+          },
+          "name": {
+            "String": "Shop 3"
+          }
+        }
+      },
+      {
+        "values": {
+          "currency": {
+            "String": "Diamond"
+          },
+          "id": {
+            "Integer": 10004
+          },
+          "name": {
+            "String": "Shop 4"
+          }
+        }
+      },
+      {
+        "values": {
+          "currency": {
+            "String": "Gold"
+          },
+          "id": {
+            "Integer": 10005
+          },
+          "name": {
+            "String": "Shop 5"
+          }
+        }
+      }
+    ]
+  }
+}

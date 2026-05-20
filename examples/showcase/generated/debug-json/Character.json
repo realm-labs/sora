@@ -1,0 +1,907 @@
+{
+  "table": {
+    "name": "Character",
+    "rows": [
+      {
+        "values": {
+          "base_level": {
+            "Integer": 2
+          },
+          "base_skill": {
+            "Integer": 112
+          },
+          "id": {
+            "Integer": 4001
+          },
+          "name": {
+            "String": "Hero 4001"
+          },
+          "rarity": {
+            "String": "Uncommon"
+          },
+          "spawn_pos": {
+            "Object": {
+              "x": {
+                "Float": 1.0
+              },
+              "y": {
+                "Float": 0.0
+              },
+              "z": {
+                "Float": 5.0
+              }
+            }
+          },
+          "starter_items": {
+            "List": [
+              {
+                "Integer": 1001
+              },
+              {
+                "Integer": 1110
+              },
+              {
+                "Integer": 1111
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "base_level": {
+            "Integer": 3
+          },
+          "base_skill": {
+            "Integer": 113
+          },
+          "id": {
+            "Integer": 4002
+          },
+          "name": {
+            "String": "Hero 4002"
+          },
+          "rarity": {
+            "String": "Rare"
+          },
+          "spawn_pos": {
+            "Object": {
+              "x": {
+                "Float": 2.0
+              },
+              "y": {
+                "Float": 0.0
+              },
+              "z": {
+                "Float": 0.0
+              }
+            }
+          },
+          "starter_items": {
+            "List": [
+              {
+                "Integer": 1001
+              },
+              {
+                "Integer": 1111
+              },
+              {
+                "Integer": 1112
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "base_level": {
+            "Integer": 4
+          },
+          "base_skill": {
+            "Integer": 114
+          },
+          "id": {
+            "Integer": 4003
+          },
+          "name": {
+            "String": "Hero 4003"
+          },
+          "rarity": {
+            "String": "Epic"
+          },
+          "spawn_pos": {
+            "Object": {
+              "x": {
+                "Float": 3.0
+              },
+              "y": {
+                "Float": 0.0
+              },
+              "z": {
+                "Float": 1.0
+              }
+            }
+          },
+          "starter_items": {
+            "List": [
+              {
+                "Integer": 1001
+              },
+              {
+                "Integer": 1112
+              },
+              {
+                "Integer": 1113
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "base_level": {
+            "Integer": 5
+          },
+          "base_skill": {
+            "Integer": 115
+          },
+          "id": {
+            "Integer": 4004
+          },
+          "name": {
+            "String": "Hero 4004"
+          },
+          "rarity": {
+            "String": "Legendary"
+          },
+          "spawn_pos": {
+            "Object": {
+              "x": {
+                "Float": 4.0
+              },
+              "y": {
+                "Float": 0.0
+              },
+              "z": {
+                "Float": 2.0
+              }
+            }
+          },
+          "starter_items": {
+            "List": [
+              {
+                "Integer": 1001
+              },
+              {
+                "Integer": 1113
+              },
+              {
+                "Integer": 1114
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "base_level": {
+            "Integer": 6
+          },
+          "base_skill": {
+            "Integer": 116
+          },
+          "id": {
+            "Integer": 4005
+          },
+          "name": {
+            "String": "Hero 4005"
+          },
+          "rarity": {
+            "String": "Common"
+          },
+          "spawn_pos": {
+            "Object": {
+              "x": {
+                "Float": 5.0
+              },
+              "y": {
+                "Float": 0.0
+              },
+              "z": {
+                "Float": 3.0
+              }
+            }
+          },
+          "starter_items": {
+            "List": [
+              {
+                "Integer": 1001
+              },
+              {
+                "Integer": 1114
+              },
+              {
+                "Integer": 1115
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "base_level": {
+            "Integer": 7
+          },
+          "base_skill": {
+            "Integer": 117
+          },
+          "id": {
+            "Integer": 4006
+          },
+          "name": {
+            "String": "Hero 4006"
+          },
+          "rarity": {
+            "String": "Uncommon"
+          },
+          "spawn_pos": {
+            "Object": {
+              "x": {
+                "Float": 6.0
+              },
+              "y": {
+                "Float": 0.0
+              },
+              "z": {
+                "Float": 4.0
+              }
+            }
+          },
+          "starter_items": {
+            "List": [
+              {
+                "Integer": 1001
+              },
+              {
+                "Integer": 1115
+              },
+              {
+                "Integer": 1116
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "base_level": {
+            "Integer": 8
+          },
+          "base_skill": {
+            "Integer": 118
+          },
+          "id": {
+            "Integer": 4007
+          },
+          "name": {
+            "String": "Hero 4007"
+          },
+          "rarity": {
+            "String": "Rare"
+          },
+          "spawn_pos": {
+            "Object": {
+              "x": {
+                "Float": 7.0
+              },
+              "y": {
+                "Float": 0.0
+              },
+              "z": {
+                "Float": 5.0
+              }
+            }
+          },
+          "starter_items": {
+            "List": [
+              {
+                "Integer": 1001
+              },
+              {
+                "Integer": 1116
+              },
+              {
+                "Integer": 1117
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "base_level": {
+            "Integer": 9
+          },
+          "base_skill": {
+            "Integer": 119
+          },
+          "id": {
+            "Integer": 4008
+          },
+          "name": {
+            "String": "Hero 4008"
+          },
+          "rarity": {
+            "String": "Epic"
+          },
+          "spawn_pos": {
+            "Object": {
+              "x": {
+                "Float": 0.0
+              },
+              "y": {
+                "Float": 0.0
+              },
+              "z": {
+                "Float": 0.0
+              }
+            }
+          },
+          "starter_items": {
+            "List": [
+              {
+                "Integer": 1001
+              },
+              {
+                "Integer": 1117
+              },
+              {
+                "Integer": 1118
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "base_level": {
+            "Integer": 10
+          },
+          "base_skill": {
+            "Integer": 120
+          },
+          "id": {
+            "Integer": 4009
+          },
+          "name": {
+            "String": "Hero 4009"
+          },
+          "rarity": {
+            "String": "Legendary"
+          },
+          "spawn_pos": {
+            "Object": {
+              "x": {
+                "Float": 1.0
+              },
+              "y": {
+                "Float": 0.0
+              },
+              "z": {
+                "Float": 1.0
+              }
+            }
+          },
+          "starter_items": {
+            "List": [
+              {
+                "Integer": 1001
+              },
+              {
+                "Integer": 1118
+              },
+              {
+                "Integer": 1119
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "base_level": {
+            "Integer": 11
+          },
+          "base_skill": {
+            "Integer": 121
+          },
+          "id": {
+            "Integer": 4010
+          },
+          "name": {
+            "String": "Hero 4010"
+          },
+          "rarity": {
+            "String": "Common"
+          },
+          "spawn_pos": {
+            "Object": {
+              "x": {
+                "Float": 2.0
+              },
+              "y": {
+                "Float": 0.0
+              },
+              "z": {
+                "Float": 2.0
+              }
+            }
+          },
+          "starter_items": {
+            "List": [
+              {
+                "Integer": 1001
+              },
+              {
+                "Integer": 1119
+              },
+              {
+                "Integer": 1120
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "base_level": {
+            "Integer": 12
+          },
+          "base_skill": {
+            "Integer": 122
+          },
+          "id": {
+            "Integer": 4011
+          },
+          "name": {
+            "String": "Hero 4011"
+          },
+          "rarity": {
+            "String": "Uncommon"
+          },
+          "spawn_pos": {
+            "Object": {
+              "x": {
+                "Float": 3.0
+              },
+              "y": {
+                "Float": 0.0
+              },
+              "z": {
+                "Float": 3.0
+              }
+            }
+          },
+          "starter_items": {
+            "List": [
+              {
+                "Integer": 1001
+              },
+              {
+                "Integer": 1120
+              },
+              {
+                "Integer": 1003
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "base_level": {
+            "Integer": 13
+          },
+          "base_skill": {
+            "Integer": 123
+          },
+          "id": {
+            "Integer": 4012
+          },
+          "name": {
+            "String": "Hero 4012"
+          },
+          "rarity": {
+            "String": "Rare"
+          },
+          "spawn_pos": {
+            "Object": {
+              "x": {
+                "Float": 4.0
+              },
+              "y": {
+                "Float": 0.0
+              },
+              "z": {
+                "Float": 4.0
+              }
+            }
+          },
+          "starter_items": {
+            "List": [
+              {
+                "Integer": 1001
+              },
+              {
+                "Integer": 1003
+              },
+              {
+                "Integer": 1004
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "base_level": {
+            "Integer": 14
+          },
+          "base_skill": {
+            "Integer": 124
+          },
+          "id": {
+            "Integer": 4013
+          },
+          "name": {
+            "String": "Hero 4013"
+          },
+          "rarity": {
+            "String": "Epic"
+          },
+          "spawn_pos": {
+            "Object": {
+              "x": {
+                "Float": 5.0
+              },
+              "y": {
+                "Float": 0.0
+              },
+              "z": {
+                "Float": 5.0
+              }
+            }
+          },
+          "starter_items": {
+            "List": [
+              {
+                "Integer": 1001
+              },
+              {
+                "Integer": 1004
+              },
+              {
+                "Integer": 1005
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "base_level": {
+            "Integer": 15
+          },
+          "base_skill": {
+            "Integer": 125
+          },
+          "id": {
+            "Integer": 4014
+          },
+          "name": {
+            "String": "Hero 4014"
+          },
+          "rarity": {
+            "String": "Legendary"
+          },
+          "spawn_pos": {
+            "Object": {
+              "x": {
+                "Float": 6.0
+              },
+              "y": {
+                "Float": 0.0
+              },
+              "z": {
+                "Float": 0.0
+              }
+            }
+          },
+          "starter_items": {
+            "List": [
+              {
+                "Integer": 1001
+              },
+              {
+                "Integer": 1005
+              },
+              {
+                "Integer": 1006
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "base_level": {
+            "Integer": 16
+          },
+          "base_skill": {
+            "Integer": 126
+          },
+          "id": {
+            "Integer": 4015
+          },
+          "name": {
+            "String": "Hero 4015"
+          },
+          "rarity": {
+            "String": "Common"
+          },
+          "spawn_pos": {
+            "Object": {
+              "x": {
+                "Float": 7.0
+              },
+              "y": {
+                "Float": 0.0
+              },
+              "z": {
+                "Float": 1.0
+              }
+            }
+          },
+          "starter_items": {
+            "List": [
+              {
+                "Integer": 1001
+              },
+              {
+                "Integer": 1006
+              },
+              {
+                "Integer": 1007
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "base_level": {
+            "Integer": 17
+          },
+          "base_skill": {
+            "Integer": 127
+          },
+          "id": {
+            "Integer": 4016
+          },
+          "name": {
+            "String": "Hero 4016"
+          },
+          "rarity": {
+            "String": "Uncommon"
+          },
+          "spawn_pos": {
+            "Object": {
+              "x": {
+                "Float": 0.0
+              },
+              "y": {
+                "Float": 0.0
+              },
+              "z": {
+                "Float": 2.0
+              }
+            }
+          },
+          "starter_items": {
+            "List": [
+              {
+                "Integer": 1001
+              },
+              {
+                "Integer": 1007
+              },
+              {
+                "Integer": 1008
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "base_level": {
+            "Integer": 18
+          },
+          "base_skill": {
+            "Integer": 128
+          },
+          "id": {
+            "Integer": 4017
+          },
+          "name": {
+            "String": "Hero 4017"
+          },
+          "rarity": {
+            "String": "Rare"
+          },
+          "spawn_pos": {
+            "Object": {
+              "x": {
+                "Float": 1.0
+              },
+              "y": {
+                "Float": 0.0
+              },
+              "z": {
+                "Float": 3.0
+              }
+            }
+          },
+          "starter_items": {
+            "List": [
+              {
+                "Integer": 1001
+              },
+              {
+                "Integer": 1008
+              },
+              {
+                "Integer": 1009
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "base_level": {
+            "Integer": 19
+          },
+          "base_skill": {
+            "Integer": 129
+          },
+          "id": {
+            "Integer": 4018
+          },
+          "name": {
+            "String": "Hero 4018"
+          },
+          "rarity": {
+            "String": "Epic"
+          },
+          "spawn_pos": {
+            "Object": {
+              "x": {
+                "Float": 2.0
+              },
+              "y": {
+                "Float": 0.0
+              },
+              "z": {
+                "Float": 4.0
+              }
+            }
+          },
+          "starter_items": {
+            "List": [
+              {
+                "Integer": 1001
+              },
+              {
+                "Integer": 1009
+              },
+              {
+                "Integer": 1010
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "base_level": {
+            "Integer": 20
+          },
+          "base_skill": {
+            "Integer": 130
+          },
+          "id": {
+            "Integer": 4019
+          },
+          "name": {
+            "String": "Hero 4019"
+          },
+          "rarity": {
+            "String": "Legendary"
+          },
+          "spawn_pos": {
+            "Object": {
+              "x": {
+                "Float": 3.0
+              },
+              "y": {
+                "Float": 0.0
+              },
+              "z": {
+                "Float": 5.0
+              }
+            }
+          },
+          "starter_items": {
+            "List": [
+              {
+                "Integer": 1001
+              },
+              {
+                "Integer": 1010
+              },
+              {
+                "Integer": 1011
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "base_level": {
+            "Integer": 21
+          },
+          "base_skill": {
+            "Integer": 101
+          },
+          "id": {
+            "Integer": 4020
+          },
+          "name": {
+            "String": "Hero 4020"
+          },
+          "rarity": {
+            "String": "Common"
+          },
+          "spawn_pos": {
+            "Object": {
+              "x": {
+                "Float": 4.0
+              },
+              "y": {
+                "Float": 0.0
+              },
+              "z": {
+                "Float": 0.0
+              }
+            }
+          },
+          "starter_items": {
+            "List": [
+              {
+                "Integer": 1001
+              },
+              {
+                "Integer": 1011
+              },
+              {
+                "Integer": 1012
+              }
+            ]
+          }
+        }
+      }
+    ]
+  }
+}

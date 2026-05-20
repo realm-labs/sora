@@ -1,12 +1,14 @@
 # Sora Showcase Example
 
-This example is intentionally larger than `examples/simple`.
+This example is intentionally much larger than `examples/simple`.
 
-It keeps a real Excel workbook in `data/GameConfig.xlsx` and generated outputs in
-`generated/` so the whole pipeline is easy to inspect:
+It keeps real Excel workbooks in `data/` and generated outputs in `generated/`
+so the whole pipeline is easy to inspect. The showcase currently covers 27
+tables across core, battle, economy, and quest domains, with hundreds of rows
+and mixed map/list/singleton table modes.
 
 - schema: `project.toml` and `schema/game.toml`
-- Excel data: `data/GameConfig.xlsx`
+- Excel data: `data/Core.xlsx`, `data/Battle.xlsx`, `data/Economy.xlsx`, `data/Quest.xlsx`
 - Rust Cargo project: `rust`
 - Kotlin Gradle project: `kotlin`
 - binary bundle: `generated/config.sora`

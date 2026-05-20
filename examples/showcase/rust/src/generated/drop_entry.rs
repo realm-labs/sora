@@ -1,0 +1,34 @@
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+pub struct DropEntry {
+    pub group_id: i32,
+    pub seq: i32,
+    pub item_id: i32,
+    pub count: i32,
+    pub weight: f32,
+}
+
+impl super::runtime::SoraDecode for DropEntry {
+    fn decode(
+        reader: &mut super::runtime::SoraReader<'_>,
+    ) -> Result<Self, super::runtime::SoraReadError> {
+        Ok(Self {
+            group_id: <i32 as super::runtime::SoraDecode>::decode(reader)?,
+            seq: <i32 as super::runtime::SoraDecode>::decode(reader)?,
+            item_id: <i32 as super::runtime::SoraDecode>::decode(reader)?,
+            count: <i32 as super::runtime::SoraDecode>::decode(reader)?,
+            weight: <f32 as super::runtime::SoraDecode>::decode(reader)?,
+        })
+    }
+}
+
+impl std::fmt::Display for DropEntry {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut builder = f.debug_struct("DropEntry");
+        builder.field("group_id", &self.group_id);
+        builder.field("seq", &self.seq);
+        builder.field("item_id", &self.item_id);
+        builder.field("count", &self.count);
+        builder.field("weight", &self.weight);
+        builder.finish()
+    }
+}

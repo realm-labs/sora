@@ -1,0 +1,16 @@
+package game_config_showcase
+
+data class Shop(
+    val id: Int,
+    val name: String,
+    val currency: ResourceKind,
+) {
+    companion object {
+        fun decode(reader: SoraReader): Shop =
+            Shop(
+                id = reader.readI32(),
+                name = reader.readString(),
+                currency = ResourceKind.decode(reader),
+            )
+    }
+}

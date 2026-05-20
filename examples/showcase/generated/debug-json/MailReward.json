@@ -1,0 +1,647 @@
+{
+  "table": {
+    "name": "MailReward",
+    "rows": [
+      {
+        "values": {
+          "count": {
+            "Integer": 2
+          },
+          "item_id": {
+            "Integer": 1005
+          },
+          "mail_id": {
+            "Integer": 15001
+          },
+          "seq": {
+            "Integer": 1
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 4
+          },
+          "item_id": {
+            "Integer": 1006
+          },
+          "mail_id": {
+            "Integer": 15001
+          },
+          "seq": {
+            "Integer": 2
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 2
+          },
+          "item_id": {
+            "Integer": 1006
+          },
+          "mail_id": {
+            "Integer": 15002
+          },
+          "seq": {
+            "Integer": 1
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 4
+          },
+          "item_id": {
+            "Integer": 1007
+          },
+          "mail_id": {
+            "Integer": 15002
+          },
+          "seq": {
+            "Integer": 2
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 2
+          },
+          "item_id": {
+            "Integer": 1007
+          },
+          "mail_id": {
+            "Integer": 15003
+          },
+          "seq": {
+            "Integer": 1
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 4
+          },
+          "item_id": {
+            "Integer": 1008
+          },
+          "mail_id": {
+            "Integer": 15003
+          },
+          "seq": {
+            "Integer": 2
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 2
+          },
+          "item_id": {
+            "Integer": 1008
+          },
+          "mail_id": {
+            "Integer": 15004
+          },
+          "seq": {
+            "Integer": 1
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 4
+          },
+          "item_id": {
+            "Integer": 1009
+          },
+          "mail_id": {
+            "Integer": 15004
+          },
+          "seq": {
+            "Integer": 2
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 2
+          },
+          "item_id": {
+            "Integer": 1009
+          },
+          "mail_id": {
+            "Integer": 15005
+          },
+          "seq": {
+            "Integer": 1
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 4
+          },
+          "item_id": {
+            "Integer": 1010
+          },
+          "mail_id": {
+            "Integer": 15005
+          },
+          "seq": {
+            "Integer": 2
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 2
+          },
+          "item_id": {
+            "Integer": 1010
+          },
+          "mail_id": {
+            "Integer": 15006
+          },
+          "seq": {
+            "Integer": 1
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 4
+          },
+          "item_id": {
+            "Integer": 1011
+          },
+          "mail_id": {
+            "Integer": 15006
+          },
+          "seq": {
+            "Integer": 2
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 2
+          },
+          "item_id": {
+            "Integer": 1011
+          },
+          "mail_id": {
+            "Integer": 15007
+          },
+          "seq": {
+            "Integer": 1
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 4
+          },
+          "item_id": {
+            "Integer": 1012
+          },
+          "mail_id": {
+            "Integer": 15007
+          },
+          "seq": {
+            "Integer": 2
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 2
+          },
+          "item_id": {
+            "Integer": 1012
+          },
+          "mail_id": {
+            "Integer": 15008
+          },
+          "seq": {
+            "Integer": 1
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 4
+          },
+          "item_id": {
+            "Integer": 1013
+          },
+          "mail_id": {
+            "Integer": 15008
+          },
+          "seq": {
+            "Integer": 2
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 2
+          },
+          "item_id": {
+            "Integer": 1013
+          },
+          "mail_id": {
+            "Integer": 15009
+          },
+          "seq": {
+            "Integer": 1
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 4
+          },
+          "item_id": {
+            "Integer": 1014
+          },
+          "mail_id": {
+            "Integer": 15009
+          },
+          "seq": {
+            "Integer": 2
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 2
+          },
+          "item_id": {
+            "Integer": 1014
+          },
+          "mail_id": {
+            "Integer": 15010
+          },
+          "seq": {
+            "Integer": 1
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 4
+          },
+          "item_id": {
+            "Integer": 1015
+          },
+          "mail_id": {
+            "Integer": 15010
+          },
+          "seq": {
+            "Integer": 2
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 2
+          },
+          "item_id": {
+            "Integer": 1015
+          },
+          "mail_id": {
+            "Integer": 15011
+          },
+          "seq": {
+            "Integer": 1
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 4
+          },
+          "item_id": {
+            "Integer": 1016
+          },
+          "mail_id": {
+            "Integer": 15011
+          },
+          "seq": {
+            "Integer": 2
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 2
+          },
+          "item_id": {
+            "Integer": 1016
+          },
+          "mail_id": {
+            "Integer": 15012
+          },
+          "seq": {
+            "Integer": 1
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 4
+          },
+          "item_id": {
+            "Integer": 1017
+          },
+          "mail_id": {
+            "Integer": 15012
+          },
+          "seq": {
+            "Integer": 2
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 2
+          },
+          "item_id": {
+            "Integer": 1017
+          },
+          "mail_id": {
+            "Integer": 15013
+          },
+          "seq": {
+            "Integer": 1
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 4
+          },
+          "item_id": {
+            "Integer": 1018
+          },
+          "mail_id": {
+            "Integer": 15013
+          },
+          "seq": {
+            "Integer": 2
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 2
+          },
+          "item_id": {
+            "Integer": 1018
+          },
+          "mail_id": {
+            "Integer": 15014
+          },
+          "seq": {
+            "Integer": 1
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 4
+          },
+          "item_id": {
+            "Integer": 1019
+          },
+          "mail_id": {
+            "Integer": 15014
+          },
+          "seq": {
+            "Integer": 2
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 2
+          },
+          "item_id": {
+            "Integer": 1019
+          },
+          "mail_id": {
+            "Integer": 15015
+          },
+          "seq": {
+            "Integer": 1
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 4
+          },
+          "item_id": {
+            "Integer": 1020
+          },
+          "mail_id": {
+            "Integer": 15015
+          },
+          "seq": {
+            "Integer": 2
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 2
+          },
+          "item_id": {
+            "Integer": 1020
+          },
+          "mail_id": {
+            "Integer": 15016
+          },
+          "seq": {
+            "Integer": 1
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 4
+          },
+          "item_id": {
+            "Integer": 1021
+          },
+          "mail_id": {
+            "Integer": 15016
+          },
+          "seq": {
+            "Integer": 2
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 2
+          },
+          "item_id": {
+            "Integer": 1021
+          },
+          "mail_id": {
+            "Integer": 15017
+          },
+          "seq": {
+            "Integer": 1
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 4
+          },
+          "item_id": {
+            "Integer": 1022
+          },
+          "mail_id": {
+            "Integer": 15017
+          },
+          "seq": {
+            "Integer": 2
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 2
+          },
+          "item_id": {
+            "Integer": 1022
+          },
+          "mail_id": {
+            "Integer": 15018
+          },
+          "seq": {
+            "Integer": 1
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 4
+          },
+          "item_id": {
+            "Integer": 1023
+          },
+          "mail_id": {
+            "Integer": 15018
+          },
+          "seq": {
+            "Integer": 2
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 2
+          },
+          "item_id": {
+            "Integer": 1023
+          },
+          "mail_id": {
+            "Integer": 15019
+          },
+          "seq": {
+            "Integer": 1
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 4
+          },
+          "item_id": {
+            "Integer": 1024
+          },
+          "mail_id": {
+            "Integer": 15019
+          },
+          "seq": {
+            "Integer": 2
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 2
+          },
+          "item_id": {
+            "Integer": 1024
+          },
+          "mail_id": {
+            "Integer": 15020
+          },
+          "seq": {
+            "Integer": 1
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 4
+          },
+          "item_id": {
+            "Integer": 1025
+          },
+          "mail_id": {
+            "Integer": 15020
+          },
+          "seq": {
+            "Integer": 2
+          }
+        }
+      }
+    ]
+  }
+}

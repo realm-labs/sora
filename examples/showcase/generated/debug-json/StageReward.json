@@ -1,0 +1,1287 @@
+{
+  "table": {
+    "name": "StageReward",
+    "rows": [
+      {
+        "values": {
+          "count": {
+            "Integer": 3
+          },
+          "item_id": {
+            "Integer": 1037
+          },
+          "seq": {
+            "Integer": 1
+          },
+          "stage_id": {
+            "Integer": 9001
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 6
+          },
+          "item_id": {
+            "Integer": 1038
+          },
+          "seq": {
+            "Integer": 2
+          },
+          "stage_id": {
+            "Integer": 9001
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 3
+          },
+          "item_id": {
+            "Integer": 1038
+          },
+          "seq": {
+            "Integer": 1
+          },
+          "stage_id": {
+            "Integer": 9002
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 6
+          },
+          "item_id": {
+            "Integer": 1039
+          },
+          "seq": {
+            "Integer": 2
+          },
+          "stage_id": {
+            "Integer": 9002
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 3
+          },
+          "item_id": {
+            "Integer": 1039
+          },
+          "seq": {
+            "Integer": 1
+          },
+          "stage_id": {
+            "Integer": 9003
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 6
+          },
+          "item_id": {
+            "Integer": 1040
+          },
+          "seq": {
+            "Integer": 2
+          },
+          "stage_id": {
+            "Integer": 9003
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 3
+          },
+          "item_id": {
+            "Integer": 1040
+          },
+          "seq": {
+            "Integer": 1
+          },
+          "stage_id": {
+            "Integer": 9004
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 6
+          },
+          "item_id": {
+            "Integer": 1041
+          },
+          "seq": {
+            "Integer": 2
+          },
+          "stage_id": {
+            "Integer": 9004
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 3
+          },
+          "item_id": {
+            "Integer": 1041
+          },
+          "seq": {
+            "Integer": 1
+          },
+          "stage_id": {
+            "Integer": 9005
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 6
+          },
+          "item_id": {
+            "Integer": 1042
+          },
+          "seq": {
+            "Integer": 2
+          },
+          "stage_id": {
+            "Integer": 9005
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 3
+          },
+          "item_id": {
+            "Integer": 1042
+          },
+          "seq": {
+            "Integer": 1
+          },
+          "stage_id": {
+            "Integer": 9006
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 6
+          },
+          "item_id": {
+            "Integer": 1043
+          },
+          "seq": {
+            "Integer": 2
+          },
+          "stage_id": {
+            "Integer": 9006
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 3
+          },
+          "item_id": {
+            "Integer": 1043
+          },
+          "seq": {
+            "Integer": 1
+          },
+          "stage_id": {
+            "Integer": 9007
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 6
+          },
+          "item_id": {
+            "Integer": 1044
+          },
+          "seq": {
+            "Integer": 2
+          },
+          "stage_id": {
+            "Integer": 9007
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 3
+          },
+          "item_id": {
+            "Integer": 1044
+          },
+          "seq": {
+            "Integer": 1
+          },
+          "stage_id": {
+            "Integer": 9008
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 6
+          },
+          "item_id": {
+            "Integer": 1045
+          },
+          "seq": {
+            "Integer": 2
+          },
+          "stage_id": {
+            "Integer": 9008
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 3
+          },
+          "item_id": {
+            "Integer": 1045
+          },
+          "seq": {
+            "Integer": 1
+          },
+          "stage_id": {
+            "Integer": 9009
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 6
+          },
+          "item_id": {
+            "Integer": 1046
+          },
+          "seq": {
+            "Integer": 2
+          },
+          "stage_id": {
+            "Integer": 9009
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 3
+          },
+          "item_id": {
+            "Integer": 1046
+          },
+          "seq": {
+            "Integer": 1
+          },
+          "stage_id": {
+            "Integer": 9010
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 6
+          },
+          "item_id": {
+            "Integer": 1047
+          },
+          "seq": {
+            "Integer": 2
+          },
+          "stage_id": {
+            "Integer": 9010
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 3
+          },
+          "item_id": {
+            "Integer": 1047
+          },
+          "seq": {
+            "Integer": 1
+          },
+          "stage_id": {
+            "Integer": 9011
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 6
+          },
+          "item_id": {
+            "Integer": 1048
+          },
+          "seq": {
+            "Integer": 2
+          },
+          "stage_id": {
+            "Integer": 9011
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 3
+          },
+          "item_id": {
+            "Integer": 1048
+          },
+          "seq": {
+            "Integer": 1
+          },
+          "stage_id": {
+            "Integer": 9012
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 6
+          },
+          "item_id": {
+            "Integer": 1049
+          },
+          "seq": {
+            "Integer": 2
+          },
+          "stage_id": {
+            "Integer": 9012
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 3
+          },
+          "item_id": {
+            "Integer": 1049
+          },
+          "seq": {
+            "Integer": 1
+          },
+          "stage_id": {
+            "Integer": 9013
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 6
+          },
+          "item_id": {
+            "Integer": 1050
+          },
+          "seq": {
+            "Integer": 2
+          },
+          "stage_id": {
+            "Integer": 9013
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 3
+          },
+          "item_id": {
+            "Integer": 1050
+          },
+          "seq": {
+            "Integer": 1
+          },
+          "stage_id": {
+            "Integer": 9014
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 6
+          },
+          "item_id": {
+            "Integer": 1051
+          },
+          "seq": {
+            "Integer": 2
+          },
+          "stage_id": {
+            "Integer": 9014
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 3
+          },
+          "item_id": {
+            "Integer": 1051
+          },
+          "seq": {
+            "Integer": 1
+          },
+          "stage_id": {
+            "Integer": 9015
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 6
+          },
+          "item_id": {
+            "Integer": 1052
+          },
+          "seq": {
+            "Integer": 2
+          },
+          "stage_id": {
+            "Integer": 9015
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 3
+          },
+          "item_id": {
+            "Integer": 1052
+          },
+          "seq": {
+            "Integer": 1
+          },
+          "stage_id": {
+            "Integer": 9016
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 6
+          },
+          "item_id": {
+            "Integer": 1053
+          },
+          "seq": {
+            "Integer": 2
+          },
+          "stage_id": {
+            "Integer": 9016
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 3
+          },
+          "item_id": {
+            "Integer": 1053
+          },
+          "seq": {
+            "Integer": 1
+          },
+          "stage_id": {
+            "Integer": 9017
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 6
+          },
+          "item_id": {
+            "Integer": 1054
+          },
+          "seq": {
+            "Integer": 2
+          },
+          "stage_id": {
+            "Integer": 9017
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 3
+          },
+          "item_id": {
+            "Integer": 1054
+          },
+          "seq": {
+            "Integer": 1
+          },
+          "stage_id": {
+            "Integer": 9018
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 6
+          },
+          "item_id": {
+            "Integer": 1055
+          },
+          "seq": {
+            "Integer": 2
+          },
+          "stage_id": {
+            "Integer": 9018
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 3
+          },
+          "item_id": {
+            "Integer": 1055
+          },
+          "seq": {
+            "Integer": 1
+          },
+          "stage_id": {
+            "Integer": 9019
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 6
+          },
+          "item_id": {
+            "Integer": 1056
+          },
+          "seq": {
+            "Integer": 2
+          },
+          "stage_id": {
+            "Integer": 9019
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 3
+          },
+          "item_id": {
+            "Integer": 1056
+          },
+          "seq": {
+            "Integer": 1
+          },
+          "stage_id": {
+            "Integer": 9020
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 6
+          },
+          "item_id": {
+            "Integer": 1057
+          },
+          "seq": {
+            "Integer": 2
+          },
+          "stage_id": {
+            "Integer": 9020
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 3
+          },
+          "item_id": {
+            "Integer": 1057
+          },
+          "seq": {
+            "Integer": 1
+          },
+          "stage_id": {
+            "Integer": 9021
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 6
+          },
+          "item_id": {
+            "Integer": 1058
+          },
+          "seq": {
+            "Integer": 2
+          },
+          "stage_id": {
+            "Integer": 9021
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 3
+          },
+          "item_id": {
+            "Integer": 1058
+          },
+          "seq": {
+            "Integer": 1
+          },
+          "stage_id": {
+            "Integer": 9022
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 6
+          },
+          "item_id": {
+            "Integer": 1059
+          },
+          "seq": {
+            "Integer": 2
+          },
+          "stage_id": {
+            "Integer": 9022
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 3
+          },
+          "item_id": {
+            "Integer": 1059
+          },
+          "seq": {
+            "Integer": 1
+          },
+          "stage_id": {
+            "Integer": 9023
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 6
+          },
+          "item_id": {
+            "Integer": 1060
+          },
+          "seq": {
+            "Integer": 2
+          },
+          "stage_id": {
+            "Integer": 9023
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 3
+          },
+          "item_id": {
+            "Integer": 1060
+          },
+          "seq": {
+            "Integer": 1
+          },
+          "stage_id": {
+            "Integer": 9024
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 6
+          },
+          "item_id": {
+            "Integer": 1061
+          },
+          "seq": {
+            "Integer": 2
+          },
+          "stage_id": {
+            "Integer": 9024
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 3
+          },
+          "item_id": {
+            "Integer": 1061
+          },
+          "seq": {
+            "Integer": 1
+          },
+          "stage_id": {
+            "Integer": 9025
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 6
+          },
+          "item_id": {
+            "Integer": 1062
+          },
+          "seq": {
+            "Integer": 2
+          },
+          "stage_id": {
+            "Integer": 9025
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 3
+          },
+          "item_id": {
+            "Integer": 1062
+          },
+          "seq": {
+            "Integer": 1
+          },
+          "stage_id": {
+            "Integer": 9026
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 6
+          },
+          "item_id": {
+            "Integer": 1063
+          },
+          "seq": {
+            "Integer": 2
+          },
+          "stage_id": {
+            "Integer": 9026
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 3
+          },
+          "item_id": {
+            "Integer": 1063
+          },
+          "seq": {
+            "Integer": 1
+          },
+          "stage_id": {
+            "Integer": 9027
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 6
+          },
+          "item_id": {
+            "Integer": 1064
+          },
+          "seq": {
+            "Integer": 2
+          },
+          "stage_id": {
+            "Integer": 9027
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 3
+          },
+          "item_id": {
+            "Integer": 1064
+          },
+          "seq": {
+            "Integer": 1
+          },
+          "stage_id": {
+            "Integer": 9028
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 6
+          },
+          "item_id": {
+            "Integer": 1065
+          },
+          "seq": {
+            "Integer": 2
+          },
+          "stage_id": {
+            "Integer": 9028
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 3
+          },
+          "item_id": {
+            "Integer": 1065
+          },
+          "seq": {
+            "Integer": 1
+          },
+          "stage_id": {
+            "Integer": 9029
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 6
+          },
+          "item_id": {
+            "Integer": 1066
+          },
+          "seq": {
+            "Integer": 2
+          },
+          "stage_id": {
+            "Integer": 9029
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 3
+          },
+          "item_id": {
+            "Integer": 1066
+          },
+          "seq": {
+            "Integer": 1
+          },
+          "stage_id": {
+            "Integer": 9030
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 6
+          },
+          "item_id": {
+            "Integer": 1067
+          },
+          "seq": {
+            "Integer": 2
+          },
+          "stage_id": {
+            "Integer": 9030
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 3
+          },
+          "item_id": {
+            "Integer": 1067
+          },
+          "seq": {
+            "Integer": 1
+          },
+          "stage_id": {
+            "Integer": 9031
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 6
+          },
+          "item_id": {
+            "Integer": 1068
+          },
+          "seq": {
+            "Integer": 2
+          },
+          "stage_id": {
+            "Integer": 9031
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 3
+          },
+          "item_id": {
+            "Integer": 1068
+          },
+          "seq": {
+            "Integer": 1
+          },
+          "stage_id": {
+            "Integer": 9032
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 6
+          },
+          "item_id": {
+            "Integer": 1069
+          },
+          "seq": {
+            "Integer": 2
+          },
+          "stage_id": {
+            "Integer": 9032
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 3
+          },
+          "item_id": {
+            "Integer": 1069
+          },
+          "seq": {
+            "Integer": 1
+          },
+          "stage_id": {
+            "Integer": 9033
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 6
+          },
+          "item_id": {
+            "Integer": 1070
+          },
+          "seq": {
+            "Integer": 2
+          },
+          "stage_id": {
+            "Integer": 9033
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 3
+          },
+          "item_id": {
+            "Integer": 1070
+          },
+          "seq": {
+            "Integer": 1
+          },
+          "stage_id": {
+            "Integer": 9034
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 6
+          },
+          "item_id": {
+            "Integer": 1071
+          },
+          "seq": {
+            "Integer": 2
+          },
+          "stage_id": {
+            "Integer": 9034
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 3
+          },
+          "item_id": {
+            "Integer": 1071
+          },
+          "seq": {
+            "Integer": 1
+          },
+          "stage_id": {
+            "Integer": 9035
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 6
+          },
+          "item_id": {
+            "Integer": 1072
+          },
+          "seq": {
+            "Integer": 2
+          },
+          "stage_id": {
+            "Integer": 9035
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 3
+          },
+          "item_id": {
+            "Integer": 1072
+          },
+          "seq": {
+            "Integer": 1
+          },
+          "stage_id": {
+            "Integer": 9036
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 6
+          },
+          "item_id": {
+            "Integer": 1073
+          },
+          "seq": {
+            "Integer": 2
+          },
+          "stage_id": {
+            "Integer": 9036
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 3
+          },
+          "item_id": {
+            "Integer": 1073
+          },
+          "seq": {
+            "Integer": 1
+          },
+          "stage_id": {
+            "Integer": 9037
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 6
+          },
+          "item_id": {
+            "Integer": 1074
+          },
+          "seq": {
+            "Integer": 2
+          },
+          "stage_id": {
+            "Integer": 9037
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 3
+          },
+          "item_id": {
+            "Integer": 1074
+          },
+          "seq": {
+            "Integer": 1
+          },
+          "stage_id": {
+            "Integer": 9038
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 6
+          },
+          "item_id": {
+            "Integer": 1075
+          },
+          "seq": {
+            "Integer": 2
+          },
+          "stage_id": {
+            "Integer": 9038
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 3
+          },
+          "item_id": {
+            "Integer": 1075
+          },
+          "seq": {
+            "Integer": 1
+          },
+          "stage_id": {
+            "Integer": 9039
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 6
+          },
+          "item_id": {
+            "Integer": 1076
+          },
+          "seq": {
+            "Integer": 2
+          },
+          "stage_id": {
+            "Integer": 9039
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 3
+          },
+          "item_id": {
+            "Integer": 1076
+          },
+          "seq": {
+            "Integer": 1
+          },
+          "stage_id": {
+            "Integer": 9040
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 6
+          },
+          "item_id": {
+            "Integer": 1077
+          },
+          "seq": {
+            "Integer": 2
+          },
+          "stage_id": {
+            "Integer": 9040
+          }
+        }
+      }
+    ]
+  }
+}

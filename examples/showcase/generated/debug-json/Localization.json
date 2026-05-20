@@ -1,0 +1,1143 @@
+{
+  "table": {
+    "name": "Localization",
+    "rows": [
+      {
+        "values": {
+          "en_us": {
+            "String": "English Text 1"
+          },
+          "key": {
+            "String": "loc_001"
+          },
+          "note": "Null",
+          "zh_cn": {
+            "String": "中文文本 1"
+          }
+        }
+      },
+      {
+        "values": {
+          "en_us": {
+            "String": "English Text 2"
+          },
+          "key": {
+            "String": "loc_002"
+          },
+          "note": "Null",
+          "zh_cn": {
+            "String": "中文文本 2"
+          }
+        }
+      },
+      {
+        "values": {
+          "en_us": {
+            "String": "English Text 3"
+          },
+          "key": {
+            "String": "loc_003"
+          },
+          "note": "Null",
+          "zh_cn": {
+            "String": "中文文本 3"
+          }
+        }
+      },
+      {
+        "values": {
+          "en_us": {
+            "String": "English Text 4"
+          },
+          "key": {
+            "String": "loc_004"
+          },
+          "note": "Null",
+          "zh_cn": {
+            "String": "中文文本 4"
+          }
+        }
+      },
+      {
+        "values": {
+          "en_us": {
+            "String": "English Text 5"
+          },
+          "key": {
+            "String": "loc_005"
+          },
+          "note": "Null",
+          "zh_cn": {
+            "String": "中文文本 5"
+          }
+        }
+      },
+      {
+        "values": {
+          "en_us": {
+            "String": "English Text 6"
+          },
+          "key": {
+            "String": "loc_006"
+          },
+          "note": "Null",
+          "zh_cn": {
+            "String": "中文文本 6"
+          }
+        }
+      },
+      {
+        "values": {
+          "en_us": {
+            "String": "English Text 7"
+          },
+          "key": {
+            "String": "loc_007"
+          },
+          "note": "Null",
+          "zh_cn": {
+            "String": "中文文本 7"
+          }
+        }
+      },
+      {
+        "values": {
+          "en_us": {
+            "String": "English Text 8"
+          },
+          "key": {
+            "String": "loc_008"
+          },
+          "note": "Null",
+          "zh_cn": {
+            "String": "中文文本 8"
+          }
+        }
+      },
+      {
+        "values": {
+          "en_us": {
+            "String": "English Text 9"
+          },
+          "key": {
+            "String": "loc_009"
+          },
+          "note": "Null",
+          "zh_cn": {
+            "String": "中文文本 9"
+          }
+        }
+      },
+      {
+        "values": {
+          "en_us": {
+            "String": "English Text 10"
+          },
+          "key": {
+            "String": "loc_010"
+          },
+          "note": {
+            "String": "note 10"
+          },
+          "zh_cn": {
+            "String": "中文文本 10"
+          }
+        }
+      },
+      {
+        "values": {
+          "en_us": {
+            "String": "English Text 11"
+          },
+          "key": {
+            "String": "loc_011"
+          },
+          "note": "Null",
+          "zh_cn": {
+            "String": "中文文本 11"
+          }
+        }
+      },
+      {
+        "values": {
+          "en_us": {
+            "String": "English Text 12"
+          },
+          "key": {
+            "String": "loc_012"
+          },
+          "note": "Null",
+          "zh_cn": {
+            "String": "中文文本 12"
+          }
+        }
+      },
+      {
+        "values": {
+          "en_us": {
+            "String": "English Text 13"
+          },
+          "key": {
+            "String": "loc_013"
+          },
+          "note": "Null",
+          "zh_cn": {
+            "String": "中文文本 13"
+          }
+        }
+      },
+      {
+        "values": {
+          "en_us": {
+            "String": "English Text 14"
+          },
+          "key": {
+            "String": "loc_014"
+          },
+          "note": "Null",
+          "zh_cn": {
+            "String": "中文文本 14"
+          }
+        }
+      },
+      {
+        "values": {
+          "en_us": {
+            "String": "English Text 15"
+          },
+          "key": {
+            "String": "loc_015"
+          },
+          "note": "Null",
+          "zh_cn": {
+            "String": "中文文本 15"
+          }
+        }
+      },
+      {
+        "values": {
+          "en_us": {
+            "String": "English Text 16"
+          },
+          "key": {
+            "String": "loc_016"
+          },
+          "note": "Null",
+          "zh_cn": {
+            "String": "中文文本 16"
+          }
+        }
+      },
+      {
+        "values": {
+          "en_us": {
+            "String": "English Text 17"
+          },
+          "key": {
+            "String": "loc_017"
+          },
+          "note": "Null",
+          "zh_cn": {
+            "String": "中文文本 17"
+          }
+        }
+      },
+      {
+        "values": {
+          "en_us": {
+            "String": "English Text 18"
+          },
+          "key": {
+            "String": "loc_018"
+          },
+          "note": "Null",
+          "zh_cn": {
+            "String": "中文文本 18"
+          }
+        }
+      },
+      {
+        "values": {
+          "en_us": {
+            "String": "English Text 19"
+          },
+          "key": {
+            "String": "loc_019"
+          },
+          "note": "Null",
+          "zh_cn": {
+            "String": "中文文本 19"
+          }
+        }
+      },
+      {
+        "values": {
+          "en_us": {
+            "String": "English Text 20"
+          },
+          "key": {
+            "String": "loc_020"
+          },
+          "note": {
+            "String": "note 20"
+          },
+          "zh_cn": {
+            "String": "中文文本 20"
+          }
+        }
+      },
+      {
+        "values": {
+          "en_us": {
+            "String": "English Text 21"
+          },
+          "key": {
+            "String": "loc_021"
+          },
+          "note": "Null",
+          "zh_cn": {
+            "String": "中文文本 21"
+          }
+        }
+      },
+      {
+        "values": {
+          "en_us": {
+            "String": "English Text 22"
+          },
+          "key": {
+            "String": "loc_022"
+          },
+          "note": "Null",
+          "zh_cn": {
+            "String": "中文文本 22"
+          }
+        }
+      },
+      {
+        "values": {
+          "en_us": {
+            "String": "English Text 23"
+          },
+          "key": {
+            "String": "loc_023"
+          },
+          "note": "Null",
+          "zh_cn": {
+            "String": "中文文本 23"
+          }
+        }
+      },
+      {
+        "values": {
+          "en_us": {
+            "String": "English Text 24"
+          },
+          "key": {
+            "String": "loc_024"
+          },
+          "note": "Null",
+          "zh_cn": {
+            "String": "中文文本 24"
+          }
+        }
+      },
+      {
+        "values": {
+          "en_us": {
+            "String": "English Text 25"
+          },
+          "key": {
+            "String": "loc_025"
+          },
+          "note": "Null",
+          "zh_cn": {
+            "String": "中文文本 25"
+          }
+        }
+      },
+      {
+        "values": {
+          "en_us": {
+            "String": "English Text 26"
+          },
+          "key": {
+            "String": "loc_026"
+          },
+          "note": "Null",
+          "zh_cn": {
+            "String": "中文文本 26"
+          }
+        }
+      },
+      {
+        "values": {
+          "en_us": {
+            "String": "English Text 27"
+          },
+          "key": {
+            "String": "loc_027"
+          },
+          "note": "Null",
+          "zh_cn": {
+            "String": "中文文本 27"
+          }
+        }
+      },
+      {
+        "values": {
+          "en_us": {
+            "String": "English Text 28"
+          },
+          "key": {
+            "String": "loc_028"
+          },
+          "note": "Null",
+          "zh_cn": {
+            "String": "中文文本 28"
+          }
+        }
+      },
+      {
+        "values": {
+          "en_us": {
+            "String": "English Text 29"
+          },
+          "key": {
+            "String": "loc_029"
+          },
+          "note": "Null",
+          "zh_cn": {
+            "String": "中文文本 29"
+          }
+        }
+      },
+      {
+        "values": {
+          "en_us": {
+            "String": "English Text 30"
+          },
+          "key": {
+            "String": "loc_030"
+          },
+          "note": {
+            "String": "note 30"
+          },
+          "zh_cn": {
+            "String": "中文文本 30"
+          }
+        }
+      },
+      {
+        "values": {
+          "en_us": {
+            "String": "English Text 31"
+          },
+          "key": {
+            "String": "loc_031"
+          },
+          "note": "Null",
+          "zh_cn": {
+            "String": "中文文本 31"
+          }
+        }
+      },
+      {
+        "values": {
+          "en_us": {
+            "String": "English Text 32"
+          },
+          "key": {
+            "String": "loc_032"
+          },
+          "note": "Null",
+          "zh_cn": {
+            "String": "中文文本 32"
+          }
+        }
+      },
+      {
+        "values": {
+          "en_us": {
+            "String": "English Text 33"
+          },
+          "key": {
+            "String": "loc_033"
+          },
+          "note": "Null",
+          "zh_cn": {
+            "String": "中文文本 33"
+          }
+        }
+      },
+      {
+        "values": {
+          "en_us": {
+            "String": "English Text 34"
+          },
+          "key": {
+            "String": "loc_034"
+          },
+          "note": "Null",
+          "zh_cn": {
+            "String": "中文文本 34"
+          }
+        }
+      },
+      {
+        "values": {
+          "en_us": {
+            "String": "English Text 35"
+          },
+          "key": {
+            "String": "loc_035"
+          },
+          "note": "Null",
+          "zh_cn": {
+            "String": "中文文本 35"
+          }
+        }
+      },
+      {
+        "values": {
+          "en_us": {
+            "String": "English Text 36"
+          },
+          "key": {
+            "String": "loc_036"
+          },
+          "note": "Null",
+          "zh_cn": {
+            "String": "中文文本 36"
+          }
+        }
+      },
+      {
+        "values": {
+          "en_us": {
+            "String": "English Text 37"
+          },
+          "key": {
+            "String": "loc_037"
+          },
+          "note": "Null",
+          "zh_cn": {
+            "String": "中文文本 37"
+          }
+        }
+      },
+      {
+        "values": {
+          "en_us": {
+            "String": "English Text 38"
+          },
+          "key": {
+            "String": "loc_038"
+          },
+          "note": "Null",
+          "zh_cn": {
+            "String": "中文文本 38"
+          }
+        }
+      },
+      {
+        "values": {
+          "en_us": {
+            "String": "English Text 39"
+          },
+          "key": {
+            "String": "loc_039"
+          },
+          "note": "Null",
+          "zh_cn": {
+            "String": "中文文本 39"
+          }
+        }
+      },
+      {
+        "values": {
+          "en_us": {
+            "String": "English Text 40"
+          },
+          "key": {
+            "String": "loc_040"
+          },
+          "note": {
+            "String": "note 40"
+          },
+          "zh_cn": {
+            "String": "中文文本 40"
+          }
+        }
+      },
+      {
+        "values": {
+          "en_us": {
+            "String": "English Text 41"
+          },
+          "key": {
+            "String": "loc_041"
+          },
+          "note": "Null",
+          "zh_cn": {
+            "String": "中文文本 41"
+          }
+        }
+      },
+      {
+        "values": {
+          "en_us": {
+            "String": "English Text 42"
+          },
+          "key": {
+            "String": "loc_042"
+          },
+          "note": "Null",
+          "zh_cn": {
+            "String": "中文文本 42"
+          }
+        }
+      },
+      {
+        "values": {
+          "en_us": {
+            "String": "English Text 43"
+          },
+          "key": {
+            "String": "loc_043"
+          },
+          "note": "Null",
+          "zh_cn": {
+            "String": "中文文本 43"
+          }
+        }
+      },
+      {
+        "values": {
+          "en_us": {
+            "String": "English Text 44"
+          },
+          "key": {
+            "String": "loc_044"
+          },
+          "note": "Null",
+          "zh_cn": {
+            "String": "中文文本 44"
+          }
+        }
+      },
+      {
+        "values": {
+          "en_us": {
+            "String": "English Text 45"
+          },
+          "key": {
+            "String": "loc_045"
+          },
+          "note": "Null",
+          "zh_cn": {
+            "String": "中文文本 45"
+          }
+        }
+      },
+      {
+        "values": {
+          "en_us": {
+            "String": "English Text 46"
+          },
+          "key": {
+            "String": "loc_046"
+          },
+          "note": "Null",
+          "zh_cn": {
+            "String": "中文文本 46"
+          }
+        }
+      },
+      {
+        "values": {
+          "en_us": {
+            "String": "English Text 47"
+          },
+          "key": {
+            "String": "loc_047"
+          },
+          "note": "Null",
+          "zh_cn": {
+            "String": "中文文本 47"
+          }
+        }
+      },
+      {
+        "values": {
+          "en_us": {
+            "String": "English Text 48"
+          },
+          "key": {
+            "String": "loc_048"
+          },
+          "note": "Null",
+          "zh_cn": {
+            "String": "中文文本 48"
+          }
+        }
+      },
+      {
+        "values": {
+          "en_us": {
+            "String": "English Text 49"
+          },
+          "key": {
+            "String": "loc_049"
+          },
+          "note": "Null",
+          "zh_cn": {
+            "String": "中文文本 49"
+          }
+        }
+      },
+      {
+        "values": {
+          "en_us": {
+            "String": "English Text 50"
+          },
+          "key": {
+            "String": "loc_050"
+          },
+          "note": {
+            "String": "note 50"
+          },
+          "zh_cn": {
+            "String": "中文文本 50"
+          }
+        }
+      },
+      {
+        "values": {
+          "en_us": {
+            "String": "English Text 51"
+          },
+          "key": {
+            "String": "loc_051"
+          },
+          "note": "Null",
+          "zh_cn": {
+            "String": "中文文本 51"
+          }
+        }
+      },
+      {
+        "values": {
+          "en_us": {
+            "String": "English Text 52"
+          },
+          "key": {
+            "String": "loc_052"
+          },
+          "note": "Null",
+          "zh_cn": {
+            "String": "中文文本 52"
+          }
+        }
+      },
+      {
+        "values": {
+          "en_us": {
+            "String": "English Text 53"
+          },
+          "key": {
+            "String": "loc_053"
+          },
+          "note": "Null",
+          "zh_cn": {
+            "String": "中文文本 53"
+          }
+        }
+      },
+      {
+        "values": {
+          "en_us": {
+            "String": "English Text 54"
+          },
+          "key": {
+            "String": "loc_054"
+          },
+          "note": "Null",
+          "zh_cn": {
+            "String": "中文文本 54"
+          }
+        }
+      },
+      {
+        "values": {
+          "en_us": {
+            "String": "English Text 55"
+          },
+          "key": {
+            "String": "loc_055"
+          },
+          "note": "Null",
+          "zh_cn": {
+            "String": "中文文本 55"
+          }
+        }
+      },
+      {
+        "values": {
+          "en_us": {
+            "String": "English Text 56"
+          },
+          "key": {
+            "String": "loc_056"
+          },
+          "note": "Null",
+          "zh_cn": {
+            "String": "中文文本 56"
+          }
+        }
+      },
+      {
+        "values": {
+          "en_us": {
+            "String": "English Text 57"
+          },
+          "key": {
+            "String": "loc_057"
+          },
+          "note": "Null",
+          "zh_cn": {
+            "String": "中文文本 57"
+          }
+        }
+      },
+      {
+        "values": {
+          "en_us": {
+            "String": "English Text 58"
+          },
+          "key": {
+            "String": "loc_058"
+          },
+          "note": "Null",
+          "zh_cn": {
+            "String": "中文文本 58"
+          }
+        }
+      },
+      {
+        "values": {
+          "en_us": {
+            "String": "English Text 59"
+          },
+          "key": {
+            "String": "loc_059"
+          },
+          "note": "Null",
+          "zh_cn": {
+            "String": "中文文本 59"
+          }
+        }
+      },
+      {
+        "values": {
+          "en_us": {
+            "String": "English Text 60"
+          },
+          "key": {
+            "String": "loc_060"
+          },
+          "note": {
+            "String": "note 60"
+          },
+          "zh_cn": {
+            "String": "中文文本 60"
+          }
+        }
+      },
+      {
+        "values": {
+          "en_us": {
+            "String": "English Text 61"
+          },
+          "key": {
+            "String": "loc_061"
+          },
+          "note": "Null",
+          "zh_cn": {
+            "String": "中文文本 61"
+          }
+        }
+      },
+      {
+        "values": {
+          "en_us": {
+            "String": "English Text 62"
+          },
+          "key": {
+            "String": "loc_062"
+          },
+          "note": "Null",
+          "zh_cn": {
+            "String": "中文文本 62"
+          }
+        }
+      },
+      {
+        "values": {
+          "en_us": {
+            "String": "English Text 63"
+          },
+          "key": {
+            "String": "loc_063"
+          },
+          "note": "Null",
+          "zh_cn": {
+            "String": "中文文本 63"
+          }
+        }
+      },
+      {
+        "values": {
+          "en_us": {
+            "String": "English Text 64"
+          },
+          "key": {
+            "String": "loc_064"
+          },
+          "note": "Null",
+          "zh_cn": {
+            "String": "中文文本 64"
+          }
+        }
+      },
+      {
+        "values": {
+          "en_us": {
+            "String": "English Text 65"
+          },
+          "key": {
+            "String": "loc_065"
+          },
+          "note": "Null",
+          "zh_cn": {
+            "String": "中文文本 65"
+          }
+        }
+      },
+      {
+        "values": {
+          "en_us": {
+            "String": "English Text 66"
+          },
+          "key": {
+            "String": "loc_066"
+          },
+          "note": "Null",
+          "zh_cn": {
+            "String": "中文文本 66"
+          }
+        }
+      },
+      {
+        "values": {
+          "en_us": {
+            "String": "English Text 67"
+          },
+          "key": {
+            "String": "loc_067"
+          },
+          "note": "Null",
+          "zh_cn": {
+            "String": "中文文本 67"
+          }
+        }
+      },
+      {
+        "values": {
+          "en_us": {
+            "String": "English Text 68"
+          },
+          "key": {
+            "String": "loc_068"
+          },
+          "note": "Null",
+          "zh_cn": {
+            "String": "中文文本 68"
+          }
+        }
+      },
+      {
+        "values": {
+          "en_us": {
+            "String": "English Text 69"
+          },
+          "key": {
+            "String": "loc_069"
+          },
+          "note": "Null",
+          "zh_cn": {
+            "String": "中文文本 69"
+          }
+        }
+      },
+      {
+        "values": {
+          "en_us": {
+            "String": "English Text 70"
+          },
+          "key": {
+            "String": "loc_070"
+          },
+          "note": {
+            "String": "note 70"
+          },
+          "zh_cn": {
+            "String": "中文文本 70"
+          }
+        }
+      },
+      {
+        "values": {
+          "en_us": {
+            "String": "English Text 71"
+          },
+          "key": {
+            "String": "loc_071"
+          },
+          "note": "Null",
+          "zh_cn": {
+            "String": "中文文本 71"
+          }
+        }
+      },
+      {
+        "values": {
+          "en_us": {
+            "String": "English Text 72"
+          },
+          "key": {
+            "String": "loc_072"
+          },
+          "note": "Null",
+          "zh_cn": {
+            "String": "中文文本 72"
+          }
+        }
+      },
+      {
+        "values": {
+          "en_us": {
+            "String": "English Text 73"
+          },
+          "key": {
+            "String": "loc_073"
+          },
+          "note": "Null",
+          "zh_cn": {
+            "String": "中文文本 73"
+          }
+        }
+      },
+      {
+        "values": {
+          "en_us": {
+            "String": "English Text 74"
+          },
+          "key": {
+            "String": "loc_074"
+          },
+          "note": "Null",
+          "zh_cn": {
+            "String": "中文文本 74"
+          }
+        }
+      },
+      {
+        "values": {
+          "en_us": {
+            "String": "English Text 75"
+          },
+          "key": {
+            "String": "loc_075"
+          },
+          "note": "Null",
+          "zh_cn": {
+            "String": "中文文本 75"
+          }
+        }
+      },
+      {
+        "values": {
+          "en_us": {
+            "String": "English Text 76"
+          },
+          "key": {
+            "String": "loc_076"
+          },
+          "note": "Null",
+          "zh_cn": {
+            "String": "中文文本 76"
+          }
+        }
+      },
+      {
+        "values": {
+          "en_us": {
+            "String": "English Text 77"
+          },
+          "key": {
+            "String": "loc_077"
+          },
+          "note": "Null",
+          "zh_cn": {
+            "String": "中文文本 77"
+          }
+        }
+      },
+      {
+        "values": {
+          "en_us": {
+            "String": "English Text 78"
+          },
+          "key": {
+            "String": "loc_078"
+          },
+          "note": "Null",
+          "zh_cn": {
+            "String": "中文文本 78"
+          }
+        }
+      },
+      {
+        "values": {
+          "en_us": {
+            "String": "English Text 79"
+          },
+          "key": {
+            "String": "loc_079"
+          },
+          "note": "Null",
+          "zh_cn": {
+            "String": "中文文本 79"
+          }
+        }
+      },
+      {
+        "values": {
+          "en_us": {
+            "String": "English Text 80"
+          },
+          "key": {
+            "String": "loc_080"
+          },
+          "note": {
+            "String": "note 80"
+          },
+          "zh_cn": {
+            "String": "中文文本 80"
+          }
+        }
+      }
+    ]
+  }
+}

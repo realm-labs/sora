@@ -1,0 +1,307 @@
+{
+  "table": {
+    "name": "VipLevel",
+    "rows": [
+      {
+        "values": {
+          "cost": {
+            "Object": {
+              "count": {
+                "Integer": 100
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Diamond"
+              }
+            }
+          },
+          "level": {
+            "Integer": 1
+          },
+          "perks": {
+            "List": [
+              {
+                "String": "fast_battle"
+              },
+              {
+                "String": "shop_discount_1"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "cost": {
+            "Object": {
+              "count": {
+                "Integer": 200
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Diamond"
+              }
+            }
+          },
+          "level": {
+            "Integer": 2
+          },
+          "perks": {
+            "List": [
+              {
+                "String": "fast_battle"
+              },
+              {
+                "String": "shop_discount_2"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "cost": {
+            "Object": {
+              "count": {
+                "Integer": 300
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Diamond"
+              }
+            }
+          },
+          "level": {
+            "Integer": 3
+          },
+          "perks": {
+            "List": [
+              {
+                "String": "fast_battle"
+              },
+              {
+                "String": "shop_discount_3"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "cost": {
+            "Object": {
+              "count": {
+                "Integer": 400
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Diamond"
+              }
+            }
+          },
+          "level": {
+            "Integer": 4
+          },
+          "perks": {
+            "List": [
+              {
+                "String": "fast_battle"
+              },
+              {
+                "String": "shop_discount_4"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "cost": {
+            "Object": {
+              "count": {
+                "Integer": 500
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Diamond"
+              }
+            }
+          },
+          "level": {
+            "Integer": 5
+          },
+          "perks": {
+            "List": [
+              {
+                "String": "fast_battle"
+              },
+              {
+                "String": "shop_discount_5"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "cost": {
+            "Object": {
+              "count": {
+                "Integer": 600
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Diamond"
+              }
+            }
+          },
+          "level": {
+            "Integer": 6
+          },
+          "perks": {
+            "List": [
+              {
+                "String": "fast_battle"
+              },
+              {
+                "String": "shop_discount_6"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "cost": {
+            "Object": {
+              "count": {
+                "Integer": 700
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Diamond"
+              }
+            }
+          },
+          "level": {
+            "Integer": 7
+          },
+          "perks": {
+            "List": [
+              {
+                "String": "fast_battle"
+              },
+              {
+                "String": "shop_discount_7"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "cost": {
+            "Object": {
+              "count": {
+                "Integer": 800
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Diamond"
+              }
+            }
+          },
+          "level": {
+            "Integer": 8
+          },
+          "perks": {
+            "List": [
+              {
+                "String": "fast_battle"
+              },
+              {
+                "String": "shop_discount_8"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "cost": {
+            "Object": {
+              "count": {
+                "Integer": 900
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Diamond"
+              }
+            }
+          },
+          "level": {
+            "Integer": 9
+          },
+          "perks": {
+            "List": [
+              {
+                "String": "fast_battle"
+              },
+              {
+                "String": "shop_discount_9"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "cost": {
+            "Object": {
+              "count": {
+                "Integer": 1000
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Diamond"
+              }
+            }
+          },
+          "level": {
+            "Integer": 10
+          },
+          "perks": {
+            "List": [
+              {
+                "String": "fast_battle"
+              },
+              {
+                "String": "shop_discount_10"
+              }
+            ]
+          }
+        }
+      }
+    ]
+  }
+}

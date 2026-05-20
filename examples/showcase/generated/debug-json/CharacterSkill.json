@@ -1,0 +1,787 @@
+{
+  "table": {
+    "name": "CharacterSkill",
+    "rows": [
+      {
+        "values": {
+          "character_id": {
+            "Integer": 4001
+          },
+          "skill_id": {
+            "Integer": 112
+          },
+          "unlock_level": {
+            "Integer": 1
+          }
+        }
+      },
+      {
+        "values": {
+          "character_id": {
+            "Integer": 4001
+          },
+          "skill_id": {
+            "Integer": 113
+          },
+          "unlock_level": {
+            "Integer": 11
+          }
+        }
+      },
+      {
+        "values": {
+          "character_id": {
+            "Integer": 4001
+          },
+          "skill_id": {
+            "Integer": 114
+          },
+          "unlock_level": {
+            "Integer": 21
+          }
+        }
+      },
+      {
+        "values": {
+          "character_id": {
+            "Integer": 4002
+          },
+          "skill_id": {
+            "Integer": 113
+          },
+          "unlock_level": {
+            "Integer": 1
+          }
+        }
+      },
+      {
+        "values": {
+          "character_id": {
+            "Integer": 4002
+          },
+          "skill_id": {
+            "Integer": 114
+          },
+          "unlock_level": {
+            "Integer": 11
+          }
+        }
+      },
+      {
+        "values": {
+          "character_id": {
+            "Integer": 4002
+          },
+          "skill_id": {
+            "Integer": 115
+          },
+          "unlock_level": {
+            "Integer": 21
+          }
+        }
+      },
+      {
+        "values": {
+          "character_id": {
+            "Integer": 4003
+          },
+          "skill_id": {
+            "Integer": 114
+          },
+          "unlock_level": {
+            "Integer": 1
+          }
+        }
+      },
+      {
+        "values": {
+          "character_id": {
+            "Integer": 4003
+          },
+          "skill_id": {
+            "Integer": 115
+          },
+          "unlock_level": {
+            "Integer": 11
+          }
+        }
+      },
+      {
+        "values": {
+          "character_id": {
+            "Integer": 4003
+          },
+          "skill_id": {
+            "Integer": 116
+          },
+          "unlock_level": {
+            "Integer": 21
+          }
+        }
+      },
+      {
+        "values": {
+          "character_id": {
+            "Integer": 4004
+          },
+          "skill_id": {
+            "Integer": 115
+          },
+          "unlock_level": {
+            "Integer": 1
+          }
+        }
+      },
+      {
+        "values": {
+          "character_id": {
+            "Integer": 4004
+          },
+          "skill_id": {
+            "Integer": 116
+          },
+          "unlock_level": {
+            "Integer": 11
+          }
+        }
+      },
+      {
+        "values": {
+          "character_id": {
+            "Integer": 4004
+          },
+          "skill_id": {
+            "Integer": 117
+          },
+          "unlock_level": {
+            "Integer": 21
+          }
+        }
+      },
+      {
+        "values": {
+          "character_id": {
+            "Integer": 4005
+          },
+          "skill_id": {
+            "Integer": 116
+          },
+          "unlock_level": {
+            "Integer": 1
+          }
+        }
+      },
+      {
+        "values": {
+          "character_id": {
+            "Integer": 4005
+          },
+          "skill_id": {
+            "Integer": 117
+          },
+          "unlock_level": {
+            "Integer": 11
+          }
+        }
+      },
+      {
+        "values": {
+          "character_id": {
+            "Integer": 4005
+          },
+          "skill_id": {
+            "Integer": 118
+          },
+          "unlock_level": {
+            "Integer": 21
+          }
+        }
+      },
+      {
+        "values": {
+          "character_id": {
+            "Integer": 4006
+          },
+          "skill_id": {
+            "Integer": 117
+          },
+          "unlock_level": {
+            "Integer": 1
+          }
+        }
+      },
+      {
+        "values": {
+          "character_id": {
+            "Integer": 4006
+          },
+          "skill_id": {
+            "Integer": 118
+          },
+          "unlock_level": {
+            "Integer": 11
+          }
+        }
+      },
+      {
+        "values": {
+          "character_id": {
+            "Integer": 4006
+          },
+          "skill_id": {
+            "Integer": 119
+          },
+          "unlock_level": {
+            "Integer": 21
+          }
+        }
+      },
+      {
+        "values": {
+          "character_id": {
+            "Integer": 4007
+          },
+          "skill_id": {
+            "Integer": 118
+          },
+          "unlock_level": {
+            "Integer": 1
+          }
+        }
+      },
+      {
+        "values": {
+          "character_id": {
+            "Integer": 4007
+          },
+          "skill_id": {
+            "Integer": 119
+          },
+          "unlock_level": {
+            "Integer": 11
+          }
+        }
+      },
+      {
+        "values": {
+          "character_id": {
+            "Integer": 4007
+          },
+          "skill_id": {
+            "Integer": 120
+          },
+          "unlock_level": {
+            "Integer": 21
+          }
+        }
+      },
+      {
+        "values": {
+          "character_id": {
+            "Integer": 4008
+          },
+          "skill_id": {
+            "Integer": 119
+          },
+          "unlock_level": {
+            "Integer": 1
+          }
+        }
+      },
+      {
+        "values": {
+          "character_id": {
+            "Integer": 4008
+          },
+          "skill_id": {
+            "Integer": 120
+          },
+          "unlock_level": {
+            "Integer": 11
+          }
+        }
+      },
+      {
+        "values": {
+          "character_id": {
+            "Integer": 4008
+          },
+          "skill_id": {
+            "Integer": 121
+          },
+          "unlock_level": {
+            "Integer": 21
+          }
+        }
+      },
+      {
+        "values": {
+          "character_id": {
+            "Integer": 4009
+          },
+          "skill_id": {
+            "Integer": 120
+          },
+          "unlock_level": {
+            "Integer": 1
+          }
+        }
+      },
+      {
+        "values": {
+          "character_id": {
+            "Integer": 4009
+          },
+          "skill_id": {
+            "Integer": 121
+          },
+          "unlock_level": {
+            "Integer": 11
+          }
+        }
+      },
+      {
+        "values": {
+          "character_id": {
+            "Integer": 4009
+          },
+          "skill_id": {
+            "Integer": 122
+          },
+          "unlock_level": {
+            "Integer": 21
+          }
+        }
+      },
+      {
+        "values": {
+          "character_id": {
+            "Integer": 4010
+          },
+          "skill_id": {
+            "Integer": 121
+          },
+          "unlock_level": {
+            "Integer": 1
+          }
+        }
+      },
+      {
+        "values": {
+          "character_id": {
+            "Integer": 4010
+          },
+          "skill_id": {
+            "Integer": 122
+          },
+          "unlock_level": {
+            "Integer": 11
+          }
+        }
+      },
+      {
+        "values": {
+          "character_id": {
+            "Integer": 4010
+          },
+          "skill_id": {
+            "Integer": 123
+          },
+          "unlock_level": {
+            "Integer": 21
+          }
+        }
+      },
+      {
+        "values": {
+          "character_id": {
+            "Integer": 4011
+          },
+          "skill_id": {
+            "Integer": 122
+          },
+          "unlock_level": {
+            "Integer": 1
+          }
+        }
+      },
+      {
+        "values": {
+          "character_id": {
+            "Integer": 4011
+          },
+          "skill_id": {
+            "Integer": 123
+          },
+          "unlock_level": {
+            "Integer": 11
+          }
+        }
+      },
+      {
+        "values": {
+          "character_id": {
+            "Integer": 4011
+          },
+          "skill_id": {
+            "Integer": 124
+          },
+          "unlock_level": {
+            "Integer": 21
+          }
+        }
+      },
+      {
+        "values": {
+          "character_id": {
+            "Integer": 4012
+          },
+          "skill_id": {
+            "Integer": 123
+          },
+          "unlock_level": {
+            "Integer": 1
+          }
+        }
+      },
+      {
+        "values": {
+          "character_id": {
+            "Integer": 4012
+          },
+          "skill_id": {
+            "Integer": 124
+          },
+          "unlock_level": {
+            "Integer": 11
+          }
+        }
+      },
+      {
+        "values": {
+          "character_id": {
+            "Integer": 4012
+          },
+          "skill_id": {
+            "Integer": 125
+          },
+          "unlock_level": {
+            "Integer": 21
+          }
+        }
+      },
+      {
+        "values": {
+          "character_id": {
+            "Integer": 4013
+          },
+          "skill_id": {
+            "Integer": 124
+          },
+          "unlock_level": {
+            "Integer": 1
+          }
+        }
+      },
+      {
+        "values": {
+          "character_id": {
+            "Integer": 4013
+          },
+          "skill_id": {
+            "Integer": 125
+          },
+          "unlock_level": {
+            "Integer": 11
+          }
+        }
+      },
+      {
+        "values": {
+          "character_id": {
+            "Integer": 4013
+          },
+          "skill_id": {
+            "Integer": 126
+          },
+          "unlock_level": {
+            "Integer": 21
+          }
+        }
+      },
+      {
+        "values": {
+          "character_id": {
+            "Integer": 4014
+          },
+          "skill_id": {
+            "Integer": 125
+          },
+          "unlock_level": {
+            "Integer": 1
+          }
+        }
+      },
+      {
+        "values": {
+          "character_id": {
+            "Integer": 4014
+          },
+          "skill_id": {
+            "Integer": 126
+          },
+          "unlock_level": {
+            "Integer": 11
+          }
+        }
+      },
+      {
+        "values": {
+          "character_id": {
+            "Integer": 4014
+          },
+          "skill_id": {
+            "Integer": 127
+          },
+          "unlock_level": {
+            "Integer": 21
+          }
+        }
+      },
+      {
+        "values": {
+          "character_id": {
+            "Integer": 4015
+          },
+          "skill_id": {
+            "Integer": 126
+          },
+          "unlock_level": {
+            "Integer": 1
+          }
+        }
+      },
+      {
+        "values": {
+          "character_id": {
+            "Integer": 4015
+          },
+          "skill_id": {
+            "Integer": 127
+          },
+          "unlock_level": {
+            "Integer": 11
+          }
+        }
+      },
+      {
+        "values": {
+          "character_id": {
+            "Integer": 4015
+          },
+          "skill_id": {
+            "Integer": 128
+          },
+          "unlock_level": {
+            "Integer": 21
+          }
+        }
+      },
+      {
+        "values": {
+          "character_id": {
+            "Integer": 4016
+          },
+          "skill_id": {
+            "Integer": 127
+          },
+          "unlock_level": {
+            "Integer": 1
+          }
+        }
+      },
+      {
+        "values": {
+          "character_id": {
+            "Integer": 4016
+          },
+          "skill_id": {
+            "Integer": 128
+          },
+          "unlock_level": {
+            "Integer": 11
+          }
+        }
+      },
+      {
+        "values": {
+          "character_id": {
+            "Integer": 4016
+          },
+          "skill_id": {
+            "Integer": 129
+          },
+          "unlock_level": {
+            "Integer": 21
+          }
+        }
+      },
+      {
+        "values": {
+          "character_id": {
+            "Integer": 4017
+          },
+          "skill_id": {
+            "Integer": 128
+          },
+          "unlock_level": {
+            "Integer": 1
+          }
+        }
+      },
+      {
+        "values": {
+          "character_id": {
+            "Integer": 4017
+          },
+          "skill_id": {
+            "Integer": 129
+          },
+          "unlock_level": {
+            "Integer": 11
+          }
+        }
+      },
+      {
+        "values": {
+          "character_id": {
+            "Integer": 4017
+          },
+          "skill_id": {
+            "Integer": 130
+          },
+          "unlock_level": {
+            "Integer": 21
+          }
+        }
+      },
+      {
+        "values": {
+          "character_id": {
+            "Integer": 4018
+          },
+          "skill_id": {
+            "Integer": 129
+          },
+          "unlock_level": {
+            "Integer": 1
+          }
+        }
+      },
+      {
+        "values": {
+          "character_id": {
+            "Integer": 4018
+          },
+          "skill_id": {
+            "Integer": 130
+          },
+          "unlock_level": {
+            "Integer": 11
+          }
+        }
+      },
+      {
+        "values": {
+          "character_id": {
+            "Integer": 4018
+          },
+          "skill_id": {
+            "Integer": 101
+          },
+          "unlock_level": {
+            "Integer": 21
+          }
+        }
+      },
+      {
+        "values": {
+          "character_id": {
+            "Integer": 4019
+          },
+          "skill_id": {
+            "Integer": 130
+          },
+          "unlock_level": {
+            "Integer": 1
+          }
+        }
+      },
+      {
+        "values": {
+          "character_id": {
+            "Integer": 4019
+          },
+          "skill_id": {
+            "Integer": 101
+          },
+          "unlock_level": {
+            "Integer": 11
+          }
+        }
+      },
+      {
+        "values": {
+          "character_id": {
+            "Integer": 4019
+          },
+          "skill_id": {
+            "Integer": 102
+          },
+          "unlock_level": {
+            "Integer": 21
+          }
+        }
+      },
+      {
+        "values": {
+          "character_id": {
+            "Integer": 4020
+          },
+          "skill_id": {
+            "Integer": 101
+          },
+          "unlock_level": {
+            "Integer": 1
+          }
+        }
+      },
+      {
+        "values": {
+          "character_id": {
+            "Integer": 4020
+          },
+          "skill_id": {
+            "Integer": 102
+          },
+          "unlock_level": {
+            "Integer": 11
+          }
+        }
+      },
+      {
+        "values": {
+          "character_id": {
+            "Integer": 4020
+          },
+          "skill_id": {
+            "Integer": 103
+          },
+          "unlock_level": {
+            "Integer": 21
+          }
+        }
+      }
+    ]
+  }
+}

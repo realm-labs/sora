@@ -1,0 +1,1147 @@
+{
+  "table": {
+    "name": "DropEntry",
+    "rows": [
+      {
+        "values": {
+          "count": {
+            "Integer": 3
+          },
+          "group_id": {
+            "Integer": 7001
+          },
+          "item_id": {
+            "Integer": 1043
+          },
+          "seq": {
+            "Integer": 1
+          },
+          "weight": {
+            "Float": 15.0
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 5
+          },
+          "group_id": {
+            "Integer": 7001
+          },
+          "item_id": {
+            "Integer": 1044
+          },
+          "seq": {
+            "Integer": 2
+          },
+          "weight": {
+            "Float": 20.0
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 7
+          },
+          "group_id": {
+            "Integer": 7001
+          },
+          "item_id": {
+            "Integer": 1045
+          },
+          "seq": {
+            "Integer": 3
+          },
+          "weight": {
+            "Float": 25.0
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 3
+          },
+          "group_id": {
+            "Integer": 7002
+          },
+          "item_id": {
+            "Integer": 1044
+          },
+          "seq": {
+            "Integer": 1
+          },
+          "weight": {
+            "Float": 15.0
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 5
+          },
+          "group_id": {
+            "Integer": 7002
+          },
+          "item_id": {
+            "Integer": 1045
+          },
+          "seq": {
+            "Integer": 2
+          },
+          "weight": {
+            "Float": 20.0
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 7
+          },
+          "group_id": {
+            "Integer": 7002
+          },
+          "item_id": {
+            "Integer": 1046
+          },
+          "seq": {
+            "Integer": 3
+          },
+          "weight": {
+            "Float": 25.0
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 3
+          },
+          "group_id": {
+            "Integer": 7003
+          },
+          "item_id": {
+            "Integer": 1045
+          },
+          "seq": {
+            "Integer": 1
+          },
+          "weight": {
+            "Float": 15.0
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 5
+          },
+          "group_id": {
+            "Integer": 7003
+          },
+          "item_id": {
+            "Integer": 1046
+          },
+          "seq": {
+            "Integer": 2
+          },
+          "weight": {
+            "Float": 20.0
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 7
+          },
+          "group_id": {
+            "Integer": 7003
+          },
+          "item_id": {
+            "Integer": 1047
+          },
+          "seq": {
+            "Integer": 3
+          },
+          "weight": {
+            "Float": 25.0
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 3
+          },
+          "group_id": {
+            "Integer": 7004
+          },
+          "item_id": {
+            "Integer": 1046
+          },
+          "seq": {
+            "Integer": 1
+          },
+          "weight": {
+            "Float": 15.0
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 5
+          },
+          "group_id": {
+            "Integer": 7004
+          },
+          "item_id": {
+            "Integer": 1047
+          },
+          "seq": {
+            "Integer": 2
+          },
+          "weight": {
+            "Float": 20.0
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 7
+          },
+          "group_id": {
+            "Integer": 7004
+          },
+          "item_id": {
+            "Integer": 1048
+          },
+          "seq": {
+            "Integer": 3
+          },
+          "weight": {
+            "Float": 25.0
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 3
+          },
+          "group_id": {
+            "Integer": 7005
+          },
+          "item_id": {
+            "Integer": 1047
+          },
+          "seq": {
+            "Integer": 1
+          },
+          "weight": {
+            "Float": 15.0
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 5
+          },
+          "group_id": {
+            "Integer": 7005
+          },
+          "item_id": {
+            "Integer": 1048
+          },
+          "seq": {
+            "Integer": 2
+          },
+          "weight": {
+            "Float": 20.0
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 7
+          },
+          "group_id": {
+            "Integer": 7005
+          },
+          "item_id": {
+            "Integer": 1049
+          },
+          "seq": {
+            "Integer": 3
+          },
+          "weight": {
+            "Float": 25.0
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 3
+          },
+          "group_id": {
+            "Integer": 7006
+          },
+          "item_id": {
+            "Integer": 1048
+          },
+          "seq": {
+            "Integer": 1
+          },
+          "weight": {
+            "Float": 15.0
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 5
+          },
+          "group_id": {
+            "Integer": 7006
+          },
+          "item_id": {
+            "Integer": 1049
+          },
+          "seq": {
+            "Integer": 2
+          },
+          "weight": {
+            "Float": 20.0
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 7
+          },
+          "group_id": {
+            "Integer": 7006
+          },
+          "item_id": {
+            "Integer": 1050
+          },
+          "seq": {
+            "Integer": 3
+          },
+          "weight": {
+            "Float": 25.0
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 3
+          },
+          "group_id": {
+            "Integer": 7007
+          },
+          "item_id": {
+            "Integer": 1049
+          },
+          "seq": {
+            "Integer": 1
+          },
+          "weight": {
+            "Float": 15.0
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 5
+          },
+          "group_id": {
+            "Integer": 7007
+          },
+          "item_id": {
+            "Integer": 1050
+          },
+          "seq": {
+            "Integer": 2
+          },
+          "weight": {
+            "Float": 20.0
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 7
+          },
+          "group_id": {
+            "Integer": 7007
+          },
+          "item_id": {
+            "Integer": 1051
+          },
+          "seq": {
+            "Integer": 3
+          },
+          "weight": {
+            "Float": 25.0
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 3
+          },
+          "group_id": {
+            "Integer": 7008
+          },
+          "item_id": {
+            "Integer": 1050
+          },
+          "seq": {
+            "Integer": 1
+          },
+          "weight": {
+            "Float": 15.0
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 5
+          },
+          "group_id": {
+            "Integer": 7008
+          },
+          "item_id": {
+            "Integer": 1051
+          },
+          "seq": {
+            "Integer": 2
+          },
+          "weight": {
+            "Float": 20.0
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 7
+          },
+          "group_id": {
+            "Integer": 7008
+          },
+          "item_id": {
+            "Integer": 1052
+          },
+          "seq": {
+            "Integer": 3
+          },
+          "weight": {
+            "Float": 25.0
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 3
+          },
+          "group_id": {
+            "Integer": 7009
+          },
+          "item_id": {
+            "Integer": 1051
+          },
+          "seq": {
+            "Integer": 1
+          },
+          "weight": {
+            "Float": 15.0
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 5
+          },
+          "group_id": {
+            "Integer": 7009
+          },
+          "item_id": {
+            "Integer": 1052
+          },
+          "seq": {
+            "Integer": 2
+          },
+          "weight": {
+            "Float": 20.0
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 7
+          },
+          "group_id": {
+            "Integer": 7009
+          },
+          "item_id": {
+            "Integer": 1053
+          },
+          "seq": {
+            "Integer": 3
+          },
+          "weight": {
+            "Float": 25.0
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 3
+          },
+          "group_id": {
+            "Integer": 7010
+          },
+          "item_id": {
+            "Integer": 1052
+          },
+          "seq": {
+            "Integer": 1
+          },
+          "weight": {
+            "Float": 15.0
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 5
+          },
+          "group_id": {
+            "Integer": 7010
+          },
+          "item_id": {
+            "Integer": 1053
+          },
+          "seq": {
+            "Integer": 2
+          },
+          "weight": {
+            "Float": 20.0
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 7
+          },
+          "group_id": {
+            "Integer": 7010
+          },
+          "item_id": {
+            "Integer": 1054
+          },
+          "seq": {
+            "Integer": 3
+          },
+          "weight": {
+            "Float": 25.0
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 3
+          },
+          "group_id": {
+            "Integer": 7011
+          },
+          "item_id": {
+            "Integer": 1053
+          },
+          "seq": {
+            "Integer": 1
+          },
+          "weight": {
+            "Float": 15.0
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 5
+          },
+          "group_id": {
+            "Integer": 7011
+          },
+          "item_id": {
+            "Integer": 1054
+          },
+          "seq": {
+            "Integer": 2
+          },
+          "weight": {
+            "Float": 20.0
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 7
+          },
+          "group_id": {
+            "Integer": 7011
+          },
+          "item_id": {
+            "Integer": 1055
+          },
+          "seq": {
+            "Integer": 3
+          },
+          "weight": {
+            "Float": 25.0
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 3
+          },
+          "group_id": {
+            "Integer": 7012
+          },
+          "item_id": {
+            "Integer": 1054
+          },
+          "seq": {
+            "Integer": 1
+          },
+          "weight": {
+            "Float": 15.0
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 5
+          },
+          "group_id": {
+            "Integer": 7012
+          },
+          "item_id": {
+            "Integer": 1055
+          },
+          "seq": {
+            "Integer": 2
+          },
+          "weight": {
+            "Float": 20.0
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 7
+          },
+          "group_id": {
+            "Integer": 7012
+          },
+          "item_id": {
+            "Integer": 1056
+          },
+          "seq": {
+            "Integer": 3
+          },
+          "weight": {
+            "Float": 25.0
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 3
+          },
+          "group_id": {
+            "Integer": 7013
+          },
+          "item_id": {
+            "Integer": 1055
+          },
+          "seq": {
+            "Integer": 1
+          },
+          "weight": {
+            "Float": 15.0
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 5
+          },
+          "group_id": {
+            "Integer": 7013
+          },
+          "item_id": {
+            "Integer": 1056
+          },
+          "seq": {
+            "Integer": 2
+          },
+          "weight": {
+            "Float": 20.0
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 7
+          },
+          "group_id": {
+            "Integer": 7013
+          },
+          "item_id": {
+            "Integer": 1057
+          },
+          "seq": {
+            "Integer": 3
+          },
+          "weight": {
+            "Float": 25.0
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 3
+          },
+          "group_id": {
+            "Integer": 7014
+          },
+          "item_id": {
+            "Integer": 1056
+          },
+          "seq": {
+            "Integer": 1
+          },
+          "weight": {
+            "Float": 15.0
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 5
+          },
+          "group_id": {
+            "Integer": 7014
+          },
+          "item_id": {
+            "Integer": 1057
+          },
+          "seq": {
+            "Integer": 2
+          },
+          "weight": {
+            "Float": 20.0
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 7
+          },
+          "group_id": {
+            "Integer": 7014
+          },
+          "item_id": {
+            "Integer": 1058
+          },
+          "seq": {
+            "Integer": 3
+          },
+          "weight": {
+            "Float": 25.0
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 3
+          },
+          "group_id": {
+            "Integer": 7015
+          },
+          "item_id": {
+            "Integer": 1057
+          },
+          "seq": {
+            "Integer": 1
+          },
+          "weight": {
+            "Float": 15.0
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 5
+          },
+          "group_id": {
+            "Integer": 7015
+          },
+          "item_id": {
+            "Integer": 1058
+          },
+          "seq": {
+            "Integer": 2
+          },
+          "weight": {
+            "Float": 20.0
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 7
+          },
+          "group_id": {
+            "Integer": 7015
+          },
+          "item_id": {
+            "Integer": 1059
+          },
+          "seq": {
+            "Integer": 3
+          },
+          "weight": {
+            "Float": 25.0
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 3
+          },
+          "group_id": {
+            "Integer": 7016
+          },
+          "item_id": {
+            "Integer": 1058
+          },
+          "seq": {
+            "Integer": 1
+          },
+          "weight": {
+            "Float": 15.0
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 5
+          },
+          "group_id": {
+            "Integer": 7016
+          },
+          "item_id": {
+            "Integer": 1059
+          },
+          "seq": {
+            "Integer": 2
+          },
+          "weight": {
+            "Float": 20.0
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 7
+          },
+          "group_id": {
+            "Integer": 7016
+          },
+          "item_id": {
+            "Integer": 1060
+          },
+          "seq": {
+            "Integer": 3
+          },
+          "weight": {
+            "Float": 25.0
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 3
+          },
+          "group_id": {
+            "Integer": 7017
+          },
+          "item_id": {
+            "Integer": 1059
+          },
+          "seq": {
+            "Integer": 1
+          },
+          "weight": {
+            "Float": 15.0
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 5
+          },
+          "group_id": {
+            "Integer": 7017
+          },
+          "item_id": {
+            "Integer": 1060
+          },
+          "seq": {
+            "Integer": 2
+          },
+          "weight": {
+            "Float": 20.0
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 7
+          },
+          "group_id": {
+            "Integer": 7017
+          },
+          "item_id": {
+            "Integer": 1061
+          },
+          "seq": {
+            "Integer": 3
+          },
+          "weight": {
+            "Float": 25.0
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 3
+          },
+          "group_id": {
+            "Integer": 7018
+          },
+          "item_id": {
+            "Integer": 1060
+          },
+          "seq": {
+            "Integer": 1
+          },
+          "weight": {
+            "Float": 15.0
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 5
+          },
+          "group_id": {
+            "Integer": 7018
+          },
+          "item_id": {
+            "Integer": 1061
+          },
+          "seq": {
+            "Integer": 2
+          },
+          "weight": {
+            "Float": 20.0
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 7
+          },
+          "group_id": {
+            "Integer": 7018
+          },
+          "item_id": {
+            "Integer": 1062
+          },
+          "seq": {
+            "Integer": 3
+          },
+          "weight": {
+            "Float": 25.0
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 3
+          },
+          "group_id": {
+            "Integer": 7019
+          },
+          "item_id": {
+            "Integer": 1061
+          },
+          "seq": {
+            "Integer": 1
+          },
+          "weight": {
+            "Float": 15.0
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 5
+          },
+          "group_id": {
+            "Integer": 7019
+          },
+          "item_id": {
+            "Integer": 1062
+          },
+          "seq": {
+            "Integer": 2
+          },
+          "weight": {
+            "Float": 20.0
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 7
+          },
+          "group_id": {
+            "Integer": 7019
+          },
+          "item_id": {
+            "Integer": 1063
+          },
+          "seq": {
+            "Integer": 3
+          },
+          "weight": {
+            "Float": 25.0
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 3
+          },
+          "group_id": {
+            "Integer": 7020
+          },
+          "item_id": {
+            "Integer": 1062
+          },
+          "seq": {
+            "Integer": 1
+          },
+          "weight": {
+            "Float": 15.0
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 5
+          },
+          "group_id": {
+            "Integer": 7020
+          },
+          "item_id": {
+            "Integer": 1063
+          },
+          "seq": {
+            "Integer": 2
+          },
+          "weight": {
+            "Float": 20.0
+          }
+        }
+      },
+      {
+        "values": {
+          "count": {
+            "Integer": 7
+          },
+          "group_id": {
+            "Integer": 7020
+          },
+          "item_id": {
+            "Integer": 1064
+          },
+          "seq": {
+            "Integer": 3
+          },
+          "weight": {
+            "Float": 25.0
+          }
+        }
+      }
+    ]
+  }
+}

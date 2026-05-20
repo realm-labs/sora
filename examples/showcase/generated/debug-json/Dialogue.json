@@ -1,0 +1,407 @@
+{
+  "table": {
+    "name": "Dialogue",
+    "rows": [
+      {
+        "values": {
+          "id": {
+            "Integer": 16001
+          },
+          "lines": {
+            "List": [
+              {
+                "String": "dialogue line 1-1"
+              },
+              {
+                "String": "dialogue line 1-2"
+              }
+            ]
+          },
+          "speaker_key": {
+            "String": "loc_041"
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 16002
+          },
+          "lines": {
+            "List": [
+              {
+                "String": "dialogue line 2-1"
+              },
+              {
+                "String": "dialogue line 2-2"
+              }
+            ]
+          },
+          "speaker_key": {
+            "String": "loc_042"
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 16003
+          },
+          "lines": {
+            "List": [
+              {
+                "String": "dialogue line 3-1"
+              },
+              {
+                "String": "dialogue line 3-2"
+              }
+            ]
+          },
+          "speaker_key": {
+            "String": "loc_043"
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 16004
+          },
+          "lines": {
+            "List": [
+              {
+                "String": "dialogue line 4-1"
+              },
+              {
+                "String": "dialogue line 4-2"
+              }
+            ]
+          },
+          "speaker_key": {
+            "String": "loc_044"
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 16005
+          },
+          "lines": {
+            "List": [
+              {
+                "String": "dialogue line 5-1"
+              },
+              {
+                "String": "dialogue line 5-2"
+              }
+            ]
+          },
+          "speaker_key": {
+            "String": "loc_045"
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 16006
+          },
+          "lines": {
+            "List": [
+              {
+                "String": "dialogue line 6-1"
+              },
+              {
+                "String": "dialogue line 6-2"
+              }
+            ]
+          },
+          "speaker_key": {
+            "String": "loc_046"
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 16007
+          },
+          "lines": {
+            "List": [
+              {
+                "String": "dialogue line 7-1"
+              },
+              {
+                "String": "dialogue line 7-2"
+              }
+            ]
+          },
+          "speaker_key": {
+            "String": "loc_047"
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 16008
+          },
+          "lines": {
+            "List": [
+              {
+                "String": "dialogue line 8-1"
+              },
+              {
+                "String": "dialogue line 8-2"
+              }
+            ]
+          },
+          "speaker_key": {
+            "String": "loc_048"
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 16009
+          },
+          "lines": {
+            "List": [
+              {
+                "String": "dialogue line 9-1"
+              },
+              {
+                "String": "dialogue line 9-2"
+              }
+            ]
+          },
+          "speaker_key": {
+            "String": "loc_049"
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 16010
+          },
+          "lines": {
+            "List": [
+              {
+                "String": "dialogue line 10-1"
+              },
+              {
+                "String": "dialogue line 10-2"
+              }
+            ]
+          },
+          "speaker_key": {
+            "String": "loc_050"
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 16011
+          },
+          "lines": {
+            "List": [
+              {
+                "String": "dialogue line 11-1"
+              },
+              {
+                "String": "dialogue line 11-2"
+              }
+            ]
+          },
+          "speaker_key": {
+            "String": "loc_051"
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 16012
+          },
+          "lines": {
+            "List": [
+              {
+                "String": "dialogue line 12-1"
+              },
+              {
+                "String": "dialogue line 12-2"
+              }
+            ]
+          },
+          "speaker_key": {
+            "String": "loc_052"
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 16013
+          },
+          "lines": {
+            "List": [
+              {
+                "String": "dialogue line 13-1"
+              },
+              {
+                "String": "dialogue line 13-2"
+              }
+            ]
+          },
+          "speaker_key": {
+            "String": "loc_053"
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 16014
+          },
+          "lines": {
+            "List": [
+              {
+                "String": "dialogue line 14-1"
+              },
+              {
+                "String": "dialogue line 14-2"
+              }
+            ]
+          },
+          "speaker_key": {
+            "String": "loc_054"
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 16015
+          },
+          "lines": {
+            "List": [
+              {
+                "String": "dialogue line 15-1"
+              },
+              {
+                "String": "dialogue line 15-2"
+              }
+            ]
+          },
+          "speaker_key": {
+            "String": "loc_055"
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 16016
+          },
+          "lines": {
+            "List": [
+              {
+                "String": "dialogue line 16-1"
+              },
+              {
+                "String": "dialogue line 16-2"
+              }
+            ]
+          },
+          "speaker_key": {
+            "String": "loc_056"
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 16017
+          },
+          "lines": {
+            "List": [
+              {
+                "String": "dialogue line 17-1"
+              },
+              {
+                "String": "dialogue line 17-2"
+              }
+            ]
+          },
+          "speaker_key": {
+            "String": "loc_057"
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 16018
+          },
+          "lines": {
+            "List": [
+              {
+                "String": "dialogue line 18-1"
+              },
+              {
+                "String": "dialogue line 18-2"
+              }
+            ]
+          },
+          "speaker_key": {
+            "String": "loc_058"
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 16019
+          },
+          "lines": {
+            "List": [
+              {
+                "String": "dialogue line 19-1"
+              },
+              {
+                "String": "dialogue line 19-2"
+              }
+            ]
+          },
+          "speaker_key": {
+            "String": "loc_059"
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 16020
+          },
+          "lines": {
+            "List": [
+              {
+                "String": "dialogue line 20-1"
+              },
+              {
+                "String": "dialogue line 20-2"
+              }
+            ]
+          },
+          "speaker_key": {
+            "String": "loc_060"
+          }
+        }
+      }
+    ]
+  }
+}

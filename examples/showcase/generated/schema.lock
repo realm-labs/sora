@@ -1,7 +1,7 @@
 {
   "version": 1,
   "package": "game_config_showcase",
-  "fingerprint": "6b4d349e41232b25",
+  "fingerprint": "a71b0dd03218fd92",
   "schema": {
     "package": "game_config_showcase",
     "enums": [
@@ -38,6 +38,34 @@
           "Main",
           "Side",
           "Daily"
+        ]
+      },
+      {
+        "name": "Rarity",
+        "values": [
+          "Common",
+          "Uncommon",
+          "Rare",
+          "Epic",
+          "Legendary"
+        ]
+      },
+      {
+        "name": "StatType",
+        "values": [
+          "Hp",
+          "Attack",
+          "Defense",
+          "Speed",
+          "CritRate"
+        ]
+      },
+      {
+        "name": "MailType",
+        "values": [
+          "System",
+          "Event",
+          "Compensation"
         ]
       }
     ],
@@ -244,6 +272,58 @@
             "aggregation": null
           }
         ]
+      },
+      {
+        "name": "StatModifier",
+        "fields": [
+          {
+            "name": "stat",
+            "ty": {
+              "Enum": "StatType"
+            },
+            "key": false,
+            "comment": null,
+            "required": true,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "separator": null,
+            "prefix": null,
+            "suffix": null,
+            "aggregation": null
+          },
+          {
+            "name": "value",
+            "ty": "F32",
+            "key": false,
+            "comment": null,
+            "required": true,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "separator": null,
+            "prefix": null,
+            "suffix": null,
+            "aggregation": null
+          },
+          {
+            "name": "is_percent",
+            "ty": "Bool",
+            "key": false,
+            "comment": null,
+            "required": false,
+            "default": "false",
+            "range": null,
+            "length": null,
+            "parser": null,
+            "separator": null,
+            "prefix": null,
+            "suffix": null,
+            "aggregation": null
+          }
+        ]
       }
     ],
     "tables": [
@@ -253,7 +333,7 @@
         "key": "id",
         "source": {
           "format": "xlsx",
-          "file": "GameConfig.xlsx",
+          "file": "Core.xlsx",
           "sheet": "Item"
         },
         "fields": [
@@ -379,7 +459,7 @@
         "key": "id",
         "source": {
           "format": "xlsx",
-          "file": "GameConfig.xlsx",
+          "file": "Battle.xlsx",
           "sheet": "Skill"
         },
         "fields": [
@@ -533,7 +613,7 @@
         "key": "id",
         "source": {
           "format": "xlsx",
-          "file": "GameConfig.xlsx",
+          "file": "Quest.xlsx",
           "sheet": "Quest"
         },
         "fields": [
@@ -682,7 +762,7 @@
         "key": null,
         "source": {
           "format": "xlsx",
-          "file": "GameConfig.xlsx",
+          "file": "Quest.xlsx",
           "sheet": "QuestReward"
         },
         "fields": [
@@ -768,7 +848,7 @@
         "key": null,
         "source": {
           "format": "xlsx",
-          "file": "GameConfig.xlsx",
+          "file": "Core.xlsx",
           "sheet": "GameSettings"
         },
         "fields": [
@@ -858,6 +938,1831 @@
             "length": [
               1,
               4
+            ],
+            "parser": null,
+            "separator": ",",
+            "prefix": "[",
+            "suffix": "]",
+            "aggregation": null
+          }
+        ],
+        "indexes": []
+      },
+      {
+        "name": "Localization",
+        "mode": "Map",
+        "key": "key",
+        "source": {
+          "format": "xlsx",
+          "file": "Core.xlsx",
+          "sheet": "Localization"
+        },
+        "fields": [
+          {
+            "name": "key",
+            "ty": "String",
+            "key": true,
+            "comment": null,
+            "required": true,
+            "default": null,
+            "range": null,
+            "length": [
+              3,
+              64
+            ],
+            "parser": null,
+            "separator": null,
+            "prefix": null,
+            "suffix": null,
+            "aggregation": null
+          },
+          {
+            "name": "zh_cn",
+            "ty": "String",
+            "key": false,
+            "comment": null,
+            "required": true,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "separator": null,
+            "prefix": null,
+            "suffix": null,
+            "aggregation": null
+          },
+          {
+            "name": "en_us",
+            "ty": "String",
+            "key": false,
+            "comment": null,
+            "required": true,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "separator": null,
+            "prefix": null,
+            "suffix": null,
+            "aggregation": null
+          },
+          {
+            "name": "note",
+            "ty": {
+              "Optional": "String"
+            },
+            "key": false,
+            "comment": null,
+            "required": false,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "separator": null,
+            "prefix": null,
+            "suffix": null,
+            "aggregation": null
+          }
+        ],
+        "indexes": []
+      },
+      {
+        "name": "LevelExp",
+        "mode": "Map",
+        "key": "level",
+        "source": {
+          "format": "xlsx",
+          "file": "Core.xlsx",
+          "sheet": "LevelExp"
+        },
+        "fields": [
+          {
+            "name": "level",
+            "ty": "I32",
+            "key": true,
+            "comment": null,
+            "required": true,
+            "default": null,
+            "range": [
+              1,
+              100
+            ],
+            "length": null,
+            "parser": null,
+            "separator": null,
+            "prefix": null,
+            "suffix": null,
+            "aggregation": null
+          },
+          {
+            "name": "exp",
+            "ty": "I64",
+            "key": false,
+            "comment": null,
+            "required": true,
+            "default": null,
+            "range": [
+              0,
+              999999999
+            ],
+            "length": null,
+            "parser": null,
+            "separator": null,
+            "prefix": null,
+            "suffix": null,
+            "aggregation": null
+          },
+          {
+            "name": "unlock_feature",
+            "ty": {
+              "Optional": "String"
+            },
+            "key": false,
+            "comment": null,
+            "required": false,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "separator": null,
+            "prefix": null,
+            "suffix": null,
+            "aggregation": null
+          }
+        ],
+        "indexes": []
+      },
+      {
+        "name": "Character",
+        "mode": "Map",
+        "key": "id",
+        "source": {
+          "format": "xlsx",
+          "file": "Battle.xlsx",
+          "sheet": "Character"
+        },
+        "fields": [
+          {
+            "name": "id",
+            "ty": "I32",
+            "key": true,
+            "comment": null,
+            "required": true,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "separator": null,
+            "prefix": null,
+            "suffix": null,
+            "aggregation": null
+          },
+          {
+            "name": "name",
+            "ty": "String",
+            "key": false,
+            "comment": null,
+            "required": true,
+            "default": null,
+            "range": null,
+            "length": [
+              2,
+              32
+            ],
+            "parser": null,
+            "separator": null,
+            "prefix": null,
+            "suffix": null,
+            "aggregation": null
+          },
+          {
+            "name": "rarity",
+            "ty": {
+              "Enum": "Rarity"
+            },
+            "key": false,
+            "comment": null,
+            "required": true,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "separator": null,
+            "prefix": null,
+            "suffix": null,
+            "aggregation": null
+          },
+          {
+            "name": "base_level",
+            "ty": {
+              "Ref": {
+                "table": "LevelExp",
+                "field": "level"
+              }
+            },
+            "key": false,
+            "comment": null,
+            "required": true,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "separator": null,
+            "prefix": null,
+            "suffix": null,
+            "aggregation": null
+          },
+          {
+            "name": "base_skill",
+            "ty": {
+              "Ref": {
+                "table": "Skill",
+                "field": "id"
+              }
+            },
+            "key": false,
+            "comment": null,
+            "required": true,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "separator": null,
+            "prefix": null,
+            "suffix": null,
+            "aggregation": null
+          },
+          {
+            "name": "starter_items",
+            "ty": {
+              "List": {
+                "Ref": {
+                  "table": "Item",
+                  "field": "id"
+                }
+              }
+            },
+            "key": false,
+            "comment": null,
+            "required": true,
+            "default": null,
+            "range": null,
+            "length": [
+              1,
+              4
+            ],
+            "parser": null,
+            "separator": ",",
+            "prefix": "[",
+            "suffix": "]",
+            "aggregation": null
+          },
+          {
+            "name": "spawn_pos",
+            "ty": {
+              "Struct": "Vec3"
+            },
+            "key": false,
+            "comment": null,
+            "required": true,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": "tuple",
+            "separator": ",",
+            "prefix": null,
+            "suffix": null,
+            "aggregation": null
+          }
+        ],
+        "indexes": []
+      },
+      {
+        "name": "CharacterSkill",
+        "mode": "List",
+        "key": null,
+        "source": {
+          "format": "xlsx",
+          "file": "Battle.xlsx",
+          "sheet": "CharacterSkill"
+        },
+        "fields": [
+          {
+            "name": "character_id",
+            "ty": {
+              "Ref": {
+                "table": "Character",
+                "field": "id"
+              }
+            },
+            "key": false,
+            "comment": null,
+            "required": true,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "separator": null,
+            "prefix": null,
+            "suffix": null,
+            "aggregation": null
+          },
+          {
+            "name": "skill_id",
+            "ty": {
+              "Ref": {
+                "table": "Skill",
+                "field": "id"
+              }
+            },
+            "key": false,
+            "comment": null,
+            "required": true,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "separator": null,
+            "prefix": null,
+            "suffix": null,
+            "aggregation": null
+          },
+          {
+            "name": "unlock_level",
+            "ty": {
+              "Ref": {
+                "table": "LevelExp",
+                "field": "level"
+              }
+            },
+            "key": false,
+            "comment": null,
+            "required": true,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "separator": null,
+            "prefix": null,
+            "suffix": null,
+            "aggregation": null
+          }
+        ],
+        "indexes": []
+      },
+      {
+        "name": "Buff",
+        "mode": "Map",
+        "key": "id",
+        "source": {
+          "format": "xlsx",
+          "file": "Battle.xlsx",
+          "sheet": "Buff"
+        },
+        "fields": [
+          {
+            "name": "id",
+            "ty": "I32",
+            "key": true,
+            "comment": null,
+            "required": true,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "separator": null,
+            "prefix": null,
+            "suffix": null,
+            "aggregation": null
+          },
+          {
+            "name": "name",
+            "ty": "String",
+            "key": false,
+            "comment": null,
+            "required": true,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "separator": null,
+            "prefix": null,
+            "suffix": null,
+            "aggregation": null
+          },
+          {
+            "name": "duration",
+            "ty": "F32",
+            "key": false,
+            "comment": null,
+            "required": true,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "separator": null,
+            "prefix": null,
+            "suffix": null,
+            "aggregation": null
+          },
+          {
+            "name": "modifiers",
+            "ty": {
+              "List": {
+                "Struct": "StatModifier"
+              }
+            },
+            "key": false,
+            "comment": null,
+            "required": true,
+            "default": null,
+            "range": null,
+            "length": [
+              1,
+              3
+            ],
+            "parser": null,
+            "separator": ",",
+            "prefix": "[",
+            "suffix": "]",
+            "aggregation": null
+          }
+        ],
+        "indexes": []
+      },
+      {
+        "name": "DropGroup",
+        "mode": "Map",
+        "key": "id",
+        "source": {
+          "format": "xlsx",
+          "file": "Battle.xlsx",
+          "sheet": "DropGroup"
+        },
+        "fields": [
+          {
+            "name": "id",
+            "ty": "I32",
+            "key": true,
+            "comment": null,
+            "required": true,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "separator": null,
+            "prefix": null,
+            "suffix": null,
+            "aggregation": null
+          },
+          {
+            "name": "name",
+            "ty": "String",
+            "key": false,
+            "comment": null,
+            "required": true,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "separator": null,
+            "prefix": null,
+            "suffix": null,
+            "aggregation": null
+          }
+        ],
+        "indexes": []
+      },
+      {
+        "name": "DropEntry",
+        "mode": "List",
+        "key": null,
+        "source": {
+          "format": "xlsx",
+          "file": "Battle.xlsx",
+          "sheet": "DropEntry"
+        },
+        "fields": [
+          {
+            "name": "group_id",
+            "ty": {
+              "Ref": {
+                "table": "DropGroup",
+                "field": "id"
+              }
+            },
+            "key": false,
+            "comment": null,
+            "required": true,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "separator": null,
+            "prefix": null,
+            "suffix": null,
+            "aggregation": null
+          },
+          {
+            "name": "seq",
+            "ty": "I32",
+            "key": false,
+            "comment": null,
+            "required": true,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "separator": null,
+            "prefix": null,
+            "suffix": null,
+            "aggregation": null
+          },
+          {
+            "name": "item_id",
+            "ty": {
+              "Ref": {
+                "table": "Item",
+                "field": "id"
+              }
+            },
+            "key": false,
+            "comment": null,
+            "required": true,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "separator": null,
+            "prefix": null,
+            "suffix": null,
+            "aggregation": null
+          },
+          {
+            "name": "count",
+            "ty": "I32",
+            "key": false,
+            "comment": null,
+            "required": true,
+            "default": null,
+            "range": [
+              1,
+              9999
+            ],
+            "length": null,
+            "parser": null,
+            "separator": null,
+            "prefix": null,
+            "suffix": null,
+            "aggregation": null
+          },
+          {
+            "name": "weight",
+            "ty": "F32",
+            "key": false,
+            "comment": null,
+            "required": true,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "separator": null,
+            "prefix": null,
+            "suffix": null,
+            "aggregation": null
+          }
+        ],
+        "indexes": []
+      },
+      {
+        "name": "Monster",
+        "mode": "Map",
+        "key": "id",
+        "source": {
+          "format": "xlsx",
+          "file": "Battle.xlsx",
+          "sheet": "Monster"
+        },
+        "fields": [
+          {
+            "name": "id",
+            "ty": "I32",
+            "key": true,
+            "comment": null,
+            "required": true,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "separator": null,
+            "prefix": null,
+            "suffix": null,
+            "aggregation": null
+          },
+          {
+            "name": "name",
+            "ty": "String",
+            "key": false,
+            "comment": null,
+            "required": true,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "separator": null,
+            "prefix": null,
+            "suffix": null,
+            "aggregation": null
+          },
+          {
+            "name": "level",
+            "ty": {
+              "Ref": {
+                "table": "LevelExp",
+                "field": "level"
+              }
+            },
+            "key": false,
+            "comment": null,
+            "required": true,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "separator": null,
+            "prefix": null,
+            "suffix": null,
+            "aggregation": null
+          },
+          {
+            "name": "element",
+            "ty": {
+              "Enum": "ElementType"
+            },
+            "key": false,
+            "comment": null,
+            "required": true,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "separator": null,
+            "prefix": null,
+            "suffix": null,
+            "aggregation": null
+          },
+          {
+            "name": "drop_group",
+            "ty": {
+              "Ref": {
+                "table": "DropGroup",
+                "field": "id"
+              }
+            },
+            "key": false,
+            "comment": null,
+            "required": true,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "separator": null,
+            "prefix": null,
+            "suffix": null,
+            "aggregation": null
+          },
+          {
+            "name": "spawn_pos",
+            "ty": {
+              "Struct": "Vec3"
+            },
+            "key": false,
+            "comment": null,
+            "required": true,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": "tuple",
+            "separator": ",",
+            "prefix": null,
+            "suffix": null,
+            "aggregation": null
+          }
+        ],
+        "indexes": []
+      },
+      {
+        "name": "Stage",
+        "mode": "Map",
+        "key": "id",
+        "source": {
+          "format": "xlsx",
+          "file": "Battle.xlsx",
+          "sheet": "Stage"
+        },
+        "fields": [
+          {
+            "name": "id",
+            "ty": "I32",
+            "key": true,
+            "comment": null,
+            "required": true,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "separator": null,
+            "prefix": null,
+            "suffix": null,
+            "aggregation": null
+          },
+          {
+            "name": "name",
+            "ty": "String",
+            "key": false,
+            "comment": null,
+            "required": true,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "separator": null,
+            "prefix": null,
+            "suffix": null,
+            "aggregation": null
+          },
+          {
+            "name": "monster_ids",
+            "ty": {
+              "List": {
+                "Ref": {
+                  "table": "Monster",
+                  "field": "id"
+                }
+              }
+            },
+            "key": false,
+            "comment": null,
+            "required": true,
+            "default": null,
+            "range": null,
+            "length": [
+              1,
+              5
+            ],
+            "parser": null,
+            "separator": ",",
+            "prefix": "[",
+            "suffix": "]",
+            "aggregation": null
+          },
+          {
+            "name": "recommended_power",
+            "ty": "I32",
+            "key": false,
+            "comment": null,
+            "required": true,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "separator": null,
+            "prefix": null,
+            "suffix": null,
+            "aggregation": null
+          },
+          {
+            "name": "first_clear_rewards",
+            "ty": {
+              "List": {
+                "Struct": "Reward"
+              }
+            },
+            "key": false,
+            "comment": null,
+            "required": false,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "separator": null,
+            "prefix": null,
+            "suffix": null,
+            "aggregation": {
+              "source_table": "StageReward",
+              "parent_key": "id",
+              "child_key": "stage_id",
+              "order_by": "seq"
+            }
+          }
+        ],
+        "indexes": []
+      },
+      {
+        "name": "StageReward",
+        "mode": "List",
+        "key": null,
+        "source": {
+          "format": "xlsx",
+          "file": "Battle.xlsx",
+          "sheet": "StageReward"
+        },
+        "fields": [
+          {
+            "name": "stage_id",
+            "ty": {
+              "Ref": {
+                "table": "Stage",
+                "field": "id"
+              }
+            },
+            "key": false,
+            "comment": null,
+            "required": true,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "separator": null,
+            "prefix": null,
+            "suffix": null,
+            "aggregation": null
+          },
+          {
+            "name": "seq",
+            "ty": "I32",
+            "key": false,
+            "comment": null,
+            "required": true,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "separator": null,
+            "prefix": null,
+            "suffix": null,
+            "aggregation": null
+          },
+          {
+            "name": "item_id",
+            "ty": {
+              "Ref": {
+                "table": "Item",
+                "field": "id"
+              }
+            },
+            "key": false,
+            "comment": null,
+            "required": true,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "separator": null,
+            "prefix": null,
+            "suffix": null,
+            "aggregation": null
+          },
+          {
+            "name": "count",
+            "ty": "I32",
+            "key": false,
+            "comment": null,
+            "required": true,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "separator": null,
+            "prefix": null,
+            "suffix": null,
+            "aggregation": null
+          }
+        ],
+        "indexes": []
+      },
+      {
+        "name": "Dungeon",
+        "mode": "Map",
+        "key": "id",
+        "source": {
+          "format": "xlsx",
+          "file": "Battle.xlsx",
+          "sheet": "Dungeon"
+        },
+        "fields": [
+          {
+            "name": "id",
+            "ty": "I32",
+            "key": true,
+            "comment": null,
+            "required": true,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "separator": null,
+            "prefix": null,
+            "suffix": null,
+            "aggregation": null
+          },
+          {
+            "name": "name",
+            "ty": "String",
+            "key": false,
+            "comment": null,
+            "required": true,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "separator": null,
+            "prefix": null,
+            "suffix": null,
+            "aggregation": null
+          },
+          {
+            "name": "stage_ids",
+            "ty": {
+              "List": {
+                "Ref": {
+                  "table": "Stage",
+                  "field": "id"
+                }
+              }
+            },
+            "key": false,
+            "comment": null,
+            "required": true,
+            "default": null,
+            "range": null,
+            "length": [
+              2,
+              6
+            ],
+            "parser": null,
+            "separator": ",",
+            "prefix": "[",
+            "suffix": "]",
+            "aggregation": null
+          },
+          {
+            "name": "entry_cost",
+            "ty": {
+              "Struct": "ResourceCost"
+            },
+            "key": false,
+            "comment": null,
+            "required": true,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": "tuple",
+            "separator": ",",
+            "prefix": null,
+            "suffix": null,
+            "aggregation": null
+          }
+        ],
+        "indexes": []
+      },
+      {
+        "name": "Shop",
+        "mode": "Map",
+        "key": "id",
+        "source": {
+          "format": "xlsx",
+          "file": "Economy.xlsx",
+          "sheet": "Shop"
+        },
+        "fields": [
+          {
+            "name": "id",
+            "ty": "I32",
+            "key": true,
+            "comment": null,
+            "required": true,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "separator": null,
+            "prefix": null,
+            "suffix": null,
+            "aggregation": null
+          },
+          {
+            "name": "name",
+            "ty": "String",
+            "key": false,
+            "comment": null,
+            "required": true,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "separator": null,
+            "prefix": null,
+            "suffix": null,
+            "aggregation": null
+          },
+          {
+            "name": "currency",
+            "ty": {
+              "Enum": "ResourceKind"
+            },
+            "key": false,
+            "comment": null,
+            "required": true,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "separator": null,
+            "prefix": null,
+            "suffix": null,
+            "aggregation": null
+          }
+        ],
+        "indexes": []
+      },
+      {
+        "name": "ShopItem",
+        "mode": "List",
+        "key": null,
+        "source": {
+          "format": "xlsx",
+          "file": "Economy.xlsx",
+          "sheet": "ShopItem"
+        },
+        "fields": [
+          {
+            "name": "shop_id",
+            "ty": {
+              "Ref": {
+                "table": "Shop",
+                "field": "id"
+              }
+            },
+            "key": false,
+            "comment": null,
+            "required": true,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "separator": null,
+            "prefix": null,
+            "suffix": null,
+            "aggregation": null
+          },
+          {
+            "name": "seq",
+            "ty": "I32",
+            "key": false,
+            "comment": null,
+            "required": true,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "separator": null,
+            "prefix": null,
+            "suffix": null,
+            "aggregation": null
+          },
+          {
+            "name": "item_id",
+            "ty": {
+              "Ref": {
+                "table": "Item",
+                "field": "id"
+              }
+            },
+            "key": false,
+            "comment": null,
+            "required": true,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "separator": null,
+            "prefix": null,
+            "suffix": null,
+            "aggregation": null
+          },
+          {
+            "name": "price",
+            "ty": {
+              "Struct": "ResourceCost"
+            },
+            "key": false,
+            "comment": null,
+            "required": true,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": "tuple",
+            "separator": ",",
+            "prefix": null,
+            "suffix": null,
+            "aggregation": null
+          },
+          {
+            "name": "daily_limit",
+            "ty": {
+              "Optional": "I32"
+            },
+            "key": false,
+            "comment": null,
+            "required": false,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "separator": null,
+            "prefix": null,
+            "suffix": null,
+            "aggregation": null
+          }
+        ],
+        "indexes": []
+      },
+      {
+        "name": "Recipe",
+        "mode": "Map",
+        "key": "id",
+        "source": {
+          "format": "xlsx",
+          "file": "Economy.xlsx",
+          "sheet": "Recipe"
+        },
+        "fields": [
+          {
+            "name": "id",
+            "ty": "I32",
+            "key": true,
+            "comment": null,
+            "required": true,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "separator": null,
+            "prefix": null,
+            "suffix": null,
+            "aggregation": null
+          },
+          {
+            "name": "result_item",
+            "ty": {
+              "Ref": {
+                "table": "Item",
+                "field": "id"
+              }
+            },
+            "key": false,
+            "comment": null,
+            "required": true,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "separator": null,
+            "prefix": null,
+            "suffix": null,
+            "aggregation": null
+          },
+          {
+            "name": "materials",
+            "ty": {
+              "List": {
+                "Struct": "ResourceCost"
+              }
+            },
+            "key": false,
+            "comment": null,
+            "required": true,
+            "default": null,
+            "range": null,
+            "length": [
+              1,
+              4
+            ],
+            "parser": null,
+            "separator": ",",
+            "prefix": "[",
+            "suffix": "]",
+            "aggregation": null
+          }
+        ],
+        "indexes": []
+      },
+      {
+        "name": "GachaPool",
+        "mode": "Map",
+        "key": "id",
+        "source": {
+          "format": "xlsx",
+          "file": "Economy.xlsx",
+          "sheet": "GachaPool"
+        },
+        "fields": [
+          {
+            "name": "id",
+            "ty": "I32",
+            "key": true,
+            "comment": null,
+            "required": true,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "separator": null,
+            "prefix": null,
+            "suffix": null,
+            "aggregation": null
+          },
+          {
+            "name": "name",
+            "ty": "String",
+            "key": false,
+            "comment": null,
+            "required": true,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "separator": null,
+            "prefix": null,
+            "suffix": null,
+            "aggregation": null
+          },
+          {
+            "name": "cost",
+            "ty": {
+              "Struct": "ResourceCost"
+            },
+            "key": false,
+            "comment": null,
+            "required": true,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": "tuple",
+            "separator": ",",
+            "prefix": null,
+            "suffix": null,
+            "aggregation": null
+          }
+        ],
+        "indexes": []
+      },
+      {
+        "name": "GachaItem",
+        "mode": "List",
+        "key": null,
+        "source": {
+          "format": "xlsx",
+          "file": "Economy.xlsx",
+          "sheet": "GachaItem"
+        },
+        "fields": [
+          {
+            "name": "pool_id",
+            "ty": {
+              "Ref": {
+                "table": "GachaPool",
+                "field": "id"
+              }
+            },
+            "key": false,
+            "comment": null,
+            "required": true,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "separator": null,
+            "prefix": null,
+            "suffix": null,
+            "aggregation": null
+          },
+          {
+            "name": "item_id",
+            "ty": {
+              "Ref": {
+                "table": "Item",
+                "field": "id"
+              }
+            },
+            "key": false,
+            "comment": null,
+            "required": true,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "separator": null,
+            "prefix": null,
+            "suffix": null,
+            "aggregation": null
+          },
+          {
+            "name": "rarity",
+            "ty": {
+              "Enum": "Rarity"
+            },
+            "key": false,
+            "comment": null,
+            "required": true,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "separator": null,
+            "prefix": null,
+            "suffix": null,
+            "aggregation": null
+          },
+          {
+            "name": "weight",
+            "ty": "F32",
+            "key": false,
+            "comment": null,
+            "required": true,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "separator": null,
+            "prefix": null,
+            "suffix": null,
+            "aggregation": null
+          }
+        ],
+        "indexes": []
+      },
+      {
+        "name": "EquipmentSet",
+        "mode": "Map",
+        "key": "id",
+        "source": {
+          "format": "xlsx",
+          "file": "Economy.xlsx",
+          "sheet": "EquipmentSet"
+        },
+        "fields": [
+          {
+            "name": "id",
+            "ty": "I32",
+            "key": true,
+            "comment": null,
+            "required": true,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "separator": null,
+            "prefix": null,
+            "suffix": null,
+            "aggregation": null
+          },
+          {
+            "name": "name",
+            "ty": "String",
+            "key": false,
+            "comment": null,
+            "required": true,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "separator": null,
+            "prefix": null,
+            "suffix": null,
+            "aggregation": null
+          },
+          {
+            "name": "item_ids",
+            "ty": {
+              "List": {
+                "Ref": {
+                  "table": "Item",
+                  "field": "id"
+                }
+              }
+            },
+            "key": false,
+            "comment": null,
+            "required": true,
+            "default": null,
+            "range": null,
+            "length": [
+              2,
+              4
+            ],
+            "parser": null,
+            "separator": ",",
+            "prefix": "[",
+            "suffix": "]",
+            "aggregation": null
+          },
+          {
+            "name": "bonus_effect",
+            "ty": {
+              "Struct": "SkillEffect"
+            },
+            "key": false,
+            "comment": null,
+            "required": true,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "separator": null,
+            "prefix": null,
+            "suffix": null,
+            "aggregation": null
+          }
+        ],
+        "indexes": []
+      },
+      {
+        "name": "Achievement",
+        "mode": "Map",
+        "key": "id",
+        "source": {
+          "format": "xlsx",
+          "file": "Economy.xlsx",
+          "sheet": "Achievement"
+        },
+        "fields": [
+          {
+            "name": "id",
+            "ty": "I32",
+            "key": true,
+            "comment": null,
+            "required": true,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "separator": null,
+            "prefix": null,
+            "suffix": null,
+            "aggregation": null
+          },
+          {
+            "name": "title_key",
+            "ty": "String",
+            "key": false,
+            "comment": null,
+            "required": true,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "separator": null,
+            "prefix": null,
+            "suffix": null,
+            "aggregation": null
+          },
+          {
+            "name": "target_count",
+            "ty": "I64",
+            "key": false,
+            "comment": null,
+            "required": true,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "separator": null,
+            "prefix": null,
+            "suffix": null,
+            "aggregation": null
+          },
+          {
+            "name": "reward",
+            "ty": {
+              "Struct": "ResourceCost"
+            },
+            "key": false,
+            "comment": null,
+            "required": true,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": "tuple",
+            "separator": ",",
+            "prefix": null,
+            "suffix": null,
+            "aggregation": null
+          }
+        ],
+        "indexes": []
+      },
+      {
+        "name": "VipLevel",
+        "mode": "Map",
+        "key": "level",
+        "source": {
+          "format": "xlsx",
+          "file": "Economy.xlsx",
+          "sheet": "VipLevel"
+        },
+        "fields": [
+          {
+            "name": "level",
+            "ty": "I32",
+            "key": true,
+            "comment": null,
+            "required": true,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "separator": null,
+            "prefix": null,
+            "suffix": null,
+            "aggregation": null
+          },
+          {
+            "name": "cost",
+            "ty": {
+              "Struct": "ResourceCost"
+            },
+            "key": false,
+            "comment": null,
+            "required": true,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": "tuple",
+            "separator": ",",
+            "prefix": null,
+            "suffix": null,
+            "aggregation": null
+          },
+          {
+            "name": "perks",
+            "ty": {
+              "List": "String"
+            },
+            "key": false,
+            "comment": null,
+            "required": true,
+            "default": null,
+            "range": null,
+            "length": [
+              1,
+              5
+            ],
+            "parser": null,
+            "separator": ",",
+            "prefix": "[",
+            "suffix": "]",
+            "aggregation": null
+          }
+        ],
+        "indexes": []
+      },
+      {
+        "name": "MailTemplate",
+        "mode": "Map",
+        "key": "id",
+        "source": {
+          "format": "xlsx",
+          "file": "Quest.xlsx",
+          "sheet": "MailTemplate"
+        },
+        "fields": [
+          {
+            "name": "id",
+            "ty": "I32",
+            "key": true,
+            "comment": null,
+            "required": true,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "separator": null,
+            "prefix": null,
+            "suffix": null,
+            "aggregation": null
+          },
+          {
+            "name": "mail_type",
+            "ty": {
+              "Enum": "MailType"
+            },
+            "key": false,
+            "comment": null,
+            "required": true,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "separator": null,
+            "prefix": null,
+            "suffix": null,
+            "aggregation": null
+          },
+          {
+            "name": "title_key",
+            "ty": "String",
+            "key": false,
+            "comment": null,
+            "required": true,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "separator": null,
+            "prefix": null,
+            "suffix": null,
+            "aggregation": null
+          },
+          {
+            "name": "body_key",
+            "ty": "String",
+            "key": false,
+            "comment": null,
+            "required": true,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "separator": null,
+            "prefix": null,
+            "suffix": null,
+            "aggregation": null
+          },
+          {
+            "name": "rewards",
+            "ty": {
+              "List": {
+                "Struct": "Reward"
+              }
+            },
+            "key": false,
+            "comment": null,
+            "required": false,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "separator": null,
+            "prefix": null,
+            "suffix": null,
+            "aggregation": {
+              "source_table": "MailReward",
+              "parent_key": "id",
+              "child_key": "mail_id",
+              "order_by": "seq"
+            }
+          }
+        ],
+        "indexes": []
+      },
+      {
+        "name": "MailReward",
+        "mode": "List",
+        "key": null,
+        "source": {
+          "format": "xlsx",
+          "file": "Quest.xlsx",
+          "sheet": "MailReward"
+        },
+        "fields": [
+          {
+            "name": "mail_id",
+            "ty": {
+              "Ref": {
+                "table": "MailTemplate",
+                "field": "id"
+              }
+            },
+            "key": false,
+            "comment": null,
+            "required": true,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "separator": null,
+            "prefix": null,
+            "suffix": null,
+            "aggregation": null
+          },
+          {
+            "name": "seq",
+            "ty": "I32",
+            "key": false,
+            "comment": null,
+            "required": true,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "separator": null,
+            "prefix": null,
+            "suffix": null,
+            "aggregation": null
+          },
+          {
+            "name": "item_id",
+            "ty": {
+              "Ref": {
+                "table": "Item",
+                "field": "id"
+              }
+            },
+            "key": false,
+            "comment": null,
+            "required": true,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "separator": null,
+            "prefix": null,
+            "suffix": null,
+            "aggregation": null
+          },
+          {
+            "name": "count",
+            "ty": "I32",
+            "key": false,
+            "comment": null,
+            "required": true,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "separator": null,
+            "prefix": null,
+            "suffix": null,
+            "aggregation": null
+          }
+        ],
+        "indexes": []
+      },
+      {
+        "name": "Dialogue",
+        "mode": "Map",
+        "key": "id",
+        "source": {
+          "format": "xlsx",
+          "file": "Quest.xlsx",
+          "sheet": "Dialogue"
+        },
+        "fields": [
+          {
+            "name": "id",
+            "ty": "I32",
+            "key": true,
+            "comment": null,
+            "required": true,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "separator": null,
+            "prefix": null,
+            "suffix": null,
+            "aggregation": null
+          },
+          {
+            "name": "speaker_key",
+            "ty": "String",
+            "key": false,
+            "comment": null,
+            "required": true,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "separator": null,
+            "prefix": null,
+            "suffix": null,
+            "aggregation": null
+          },
+          {
+            "name": "lines",
+            "ty": {
+              "List": "String"
+            },
+            "key": false,
+            "comment": null,
+            "required": true,
+            "default": null,
+            "range": null,
+            "length": [
+              1,
+              5
             ],
             "parser": null,
             "separator": ",",

@@ -1,0 +1,367 @@
+{
+  "table": {
+    "name": "EquipmentSet",
+    "rows": [
+      {
+        "values": {
+          "bonus_effect": {
+            "Object": {
+              "element": {
+                "String": "Ice"
+              },
+              "power": {
+                "Integer": 51
+              },
+              "radius": {
+                "Float": 1.0
+              }
+            }
+          },
+          "id": {
+            "Integer": 13001
+          },
+          "item_ids": {
+            "List": [
+              {
+                "Integer": 1004
+              },
+              {
+                "Integer": 1005
+              },
+              {
+                "Integer": 1006
+              }
+            ]
+          },
+          "name": {
+            "String": "Set 1"
+          }
+        }
+      },
+      {
+        "values": {
+          "bonus_effect": {
+            "Object": {
+              "element": {
+                "String": "Lightning"
+              },
+              "power": {
+                "Integer": 52
+              },
+              "radius": {
+                "Float": 1.0
+              }
+            }
+          },
+          "id": {
+            "Integer": 13002
+          },
+          "item_ids": {
+            "List": [
+              {
+                "Integer": 1005
+              },
+              {
+                "Integer": 1006
+              },
+              {
+                "Integer": 1007
+              }
+            ]
+          },
+          "name": {
+            "String": "Set 2"
+          }
+        }
+      },
+      {
+        "values": {
+          "bonus_effect": {
+            "Object": {
+              "element": {
+                "String": "Physical"
+              },
+              "power": {
+                "Integer": 53
+              },
+              "radius": {
+                "Float": 1.0
+              }
+            }
+          },
+          "id": {
+            "Integer": 13003
+          },
+          "item_ids": {
+            "List": [
+              {
+                "Integer": 1006
+              },
+              {
+                "Integer": 1007
+              },
+              {
+                "Integer": 1008
+              }
+            ]
+          },
+          "name": {
+            "String": "Set 3"
+          }
+        }
+      },
+      {
+        "values": {
+          "bonus_effect": {
+            "Object": {
+              "element": {
+                "String": "Fire"
+              },
+              "power": {
+                "Integer": 54
+              },
+              "radius": {
+                "Float": 1.0
+              }
+            }
+          },
+          "id": {
+            "Integer": 13004
+          },
+          "item_ids": {
+            "List": [
+              {
+                "Integer": 1007
+              },
+              {
+                "Integer": 1008
+              },
+              {
+                "Integer": 1009
+              }
+            ]
+          },
+          "name": {
+            "String": "Set 4"
+          }
+        }
+      },
+      {
+        "values": {
+          "bonus_effect": {
+            "Object": {
+              "element": {
+                "String": "Ice"
+              },
+              "power": {
+                "Integer": 55
+              },
+              "radius": {
+                "Float": 1.0
+              }
+            }
+          },
+          "id": {
+            "Integer": 13005
+          },
+          "item_ids": {
+            "List": [
+              {
+                "Integer": 1008
+              },
+              {
+                "Integer": 1009
+              },
+              {
+                "Integer": 1010
+              }
+            ]
+          },
+          "name": {
+            "String": "Set 5"
+          }
+        }
+      },
+      {
+        "values": {
+          "bonus_effect": {
+            "Object": {
+              "element": {
+                "String": "Lightning"
+              },
+              "power": {
+                "Integer": 56
+              },
+              "radius": {
+                "Float": 1.0
+              }
+            }
+          },
+          "id": {
+            "Integer": 13006
+          },
+          "item_ids": {
+            "List": [
+              {
+                "Integer": 1009
+              },
+              {
+                "Integer": 1010
+              },
+              {
+                "Integer": 1011
+              }
+            ]
+          },
+          "name": {
+            "String": "Set 6"
+          }
+        }
+      },
+      {
+        "values": {
+          "bonus_effect": {
+            "Object": {
+              "element": {
+                "String": "Physical"
+              },
+              "power": {
+                "Integer": 57
+              },
+              "radius": {
+                "Float": 1.0
+              }
+            }
+          },
+          "id": {
+            "Integer": 13007
+          },
+          "item_ids": {
+            "List": [
+              {
+                "Integer": 1010
+              },
+              {
+                "Integer": 1011
+              },
+              {
+                "Integer": 1012
+              }
+            ]
+          },
+          "name": {
+            "String": "Set 7"
+          }
+        }
+      },
+      {
+        "values": {
+          "bonus_effect": {
+            "Object": {
+              "element": {
+                "String": "Fire"
+              },
+              "power": {
+                "Integer": 58
+              },
+              "radius": {
+                "Float": 1.0
+              }
+            }
+          },
+          "id": {
+            "Integer": 13008
+          },
+          "item_ids": {
+            "List": [
+              {
+                "Integer": 1011
+              },
+              {
+                "Integer": 1012
+              },
+              {
+                "Integer": 1013
+              }
+            ]
+          },
+          "name": {
+            "String": "Set 8"
+          }
+        }
+      },
+      {
+        "values": {
+          "bonus_effect": {
+            "Object": {
+              "element": {
+                "String": "Ice"
+              },
+              "power": {
+                "Integer": 59
+              },
+              "radius": {
+                "Float": 1.0
+              }
+            }
+          },
+          "id": {
+            "Integer": 13009
+          },
+          "item_ids": {
+            "List": [
+              {
+                "Integer": 1012
+              },
+              {
+                "Integer": 1013
+              },
+              {
+                "Integer": 1014
+              }
+            ]
+          },
+          "name": {
+            "String": "Set 9"
+          }
+        }
+      },
+      {
+        "values": {
+          "bonus_effect": {
+            "Object": {
+              "element": {
+                "String": "Lightning"
+              },
+              "power": {
+                "Integer": 60
+              },
+              "radius": {
+                "Float": 1.0
+              }
+            }
+          },
+          "id": {
+            "Integer": 13010
+          },
+          "item_ids": {
+            "List": [
+              {
+                "Integer": 1013
+              },
+              {
+                "Integer": 1014
+              },
+              {
+                "Integer": 1015
+              }
+            ]
+          },
+          "name": {
+            "String": "Set 10"
+          }
+        }
+      }
+    ]
+  }
+}

@@ -1,0 +1,607 @@
+{
+  "table": {
+    "name": "Buff",
+    "rows": [
+      {
+        "values": {
+          "duration": {
+            "Float": 4.0
+          },
+          "id": {
+            "Integer": 6001
+          },
+          "modifiers": {
+            "List": [
+              {
+                "Object": {
+                  "is_percent": {
+                    "Bool": false
+                  },
+                  "stat": {
+                    "String": "Attack"
+                  },
+                  "value": {
+                    "Integer": 6
+                  }
+                }
+              }
+            ]
+          },
+          "name": {
+            "String": "Buff 6001"
+          }
+        }
+      },
+      {
+        "values": {
+          "duration": {
+            "Float": 5.0
+          },
+          "id": {
+            "Integer": 6002
+          },
+          "modifiers": {
+            "List": [
+              {
+                "Object": {
+                  "is_percent": {
+                    "Bool": true
+                  },
+                  "stat": {
+                    "String": "Defense"
+                  },
+                  "value": {
+                    "Integer": 7
+                  }
+                }
+              }
+            ]
+          },
+          "name": {
+            "String": "Buff 6002"
+          }
+        }
+      },
+      {
+        "values": {
+          "duration": {
+            "Float": 6.0
+          },
+          "id": {
+            "Integer": 6003
+          },
+          "modifiers": {
+            "List": [
+              {
+                "Object": {
+                  "is_percent": {
+                    "Bool": false
+                  },
+                  "stat": {
+                    "String": "Speed"
+                  },
+                  "value": {
+                    "Integer": 8
+                  }
+                }
+              }
+            ]
+          },
+          "name": {
+            "String": "Buff 6003"
+          }
+        }
+      },
+      {
+        "values": {
+          "duration": {
+            "Float": 7.0
+          },
+          "id": {
+            "Integer": 6004
+          },
+          "modifiers": {
+            "List": [
+              {
+                "Object": {
+                  "is_percent": {
+                    "Bool": true
+                  },
+                  "stat": {
+                    "String": "CritRate"
+                  },
+                  "value": {
+                    "Integer": 9
+                  }
+                }
+              }
+            ]
+          },
+          "name": {
+            "String": "Buff 6004"
+          }
+        }
+      },
+      {
+        "values": {
+          "duration": {
+            "Float": 8.0
+          },
+          "id": {
+            "Integer": 6005
+          },
+          "modifiers": {
+            "List": [
+              {
+                "Object": {
+                  "is_percent": {
+                    "Bool": false
+                  },
+                  "stat": {
+                    "String": "Hp"
+                  },
+                  "value": {
+                    "Integer": 10
+                  }
+                }
+              }
+            ]
+          },
+          "name": {
+            "String": "Buff 6005"
+          }
+        }
+      },
+      {
+        "values": {
+          "duration": {
+            "Float": 9.0
+          },
+          "id": {
+            "Integer": 6006
+          },
+          "modifiers": {
+            "List": [
+              {
+                "Object": {
+                  "is_percent": {
+                    "Bool": true
+                  },
+                  "stat": {
+                    "String": "Attack"
+                  },
+                  "value": {
+                    "Integer": 11
+                  }
+                }
+              }
+            ]
+          },
+          "name": {
+            "String": "Buff 6006"
+          }
+        }
+      },
+      {
+        "values": {
+          "duration": {
+            "Float": 10.0
+          },
+          "id": {
+            "Integer": 6007
+          },
+          "modifiers": {
+            "List": [
+              {
+                "Object": {
+                  "is_percent": {
+                    "Bool": false
+                  },
+                  "stat": {
+                    "String": "Defense"
+                  },
+                  "value": {
+                    "Integer": 12
+                  }
+                }
+              }
+            ]
+          },
+          "name": {
+            "String": "Buff 6007"
+          }
+        }
+      },
+      {
+        "values": {
+          "duration": {
+            "Float": 3.0
+          },
+          "id": {
+            "Integer": 6008
+          },
+          "modifiers": {
+            "List": [
+              {
+                "Object": {
+                  "is_percent": {
+                    "Bool": true
+                  },
+                  "stat": {
+                    "String": "Speed"
+                  },
+                  "value": {
+                    "Integer": 13
+                  }
+                }
+              }
+            ]
+          },
+          "name": {
+            "String": "Buff 6008"
+          }
+        }
+      },
+      {
+        "values": {
+          "duration": {
+            "Float": 4.0
+          },
+          "id": {
+            "Integer": 6009
+          },
+          "modifiers": {
+            "List": [
+              {
+                "Object": {
+                  "is_percent": {
+                    "Bool": false
+                  },
+                  "stat": {
+                    "String": "CritRate"
+                  },
+                  "value": {
+                    "Integer": 14
+                  }
+                }
+              }
+            ]
+          },
+          "name": {
+            "String": "Buff 6009"
+          }
+        }
+      },
+      {
+        "values": {
+          "duration": {
+            "Float": 5.0
+          },
+          "id": {
+            "Integer": 6010
+          },
+          "modifiers": {
+            "List": [
+              {
+                "Object": {
+                  "is_percent": {
+                    "Bool": true
+                  },
+                  "stat": {
+                    "String": "Hp"
+                  },
+                  "value": {
+                    "Integer": 15
+                  }
+                }
+              }
+            ]
+          },
+          "name": {
+            "String": "Buff 6010"
+          }
+        }
+      },
+      {
+        "values": {
+          "duration": {
+            "Float": 6.0
+          },
+          "id": {
+            "Integer": 6011
+          },
+          "modifiers": {
+            "List": [
+              {
+                "Object": {
+                  "is_percent": {
+                    "Bool": false
+                  },
+                  "stat": {
+                    "String": "Attack"
+                  },
+                  "value": {
+                    "Integer": 16
+                  }
+                }
+              }
+            ]
+          },
+          "name": {
+            "String": "Buff 6011"
+          }
+        }
+      },
+      {
+        "values": {
+          "duration": {
+            "Float": 7.0
+          },
+          "id": {
+            "Integer": 6012
+          },
+          "modifiers": {
+            "List": [
+              {
+                "Object": {
+                  "is_percent": {
+                    "Bool": true
+                  },
+                  "stat": {
+                    "String": "Defense"
+                  },
+                  "value": {
+                    "Integer": 17
+                  }
+                }
+              }
+            ]
+          },
+          "name": {
+            "String": "Buff 6012"
+          }
+        }
+      },
+      {
+        "values": {
+          "duration": {
+            "Float": 8.0
+          },
+          "id": {
+            "Integer": 6013
+          },
+          "modifiers": {
+            "List": [
+              {
+                "Object": {
+                  "is_percent": {
+                    "Bool": false
+                  },
+                  "stat": {
+                    "String": "Speed"
+                  },
+                  "value": {
+                    "Integer": 18
+                  }
+                }
+              }
+            ]
+          },
+          "name": {
+            "String": "Buff 6013"
+          }
+        }
+      },
+      {
+        "values": {
+          "duration": {
+            "Float": 9.0
+          },
+          "id": {
+            "Integer": 6014
+          },
+          "modifiers": {
+            "List": [
+              {
+                "Object": {
+                  "is_percent": {
+                    "Bool": true
+                  },
+                  "stat": {
+                    "String": "CritRate"
+                  },
+                  "value": {
+                    "Integer": 19
+                  }
+                }
+              }
+            ]
+          },
+          "name": {
+            "String": "Buff 6014"
+          }
+        }
+      },
+      {
+        "values": {
+          "duration": {
+            "Float": 10.0
+          },
+          "id": {
+            "Integer": 6015
+          },
+          "modifiers": {
+            "List": [
+              {
+                "Object": {
+                  "is_percent": {
+                    "Bool": false
+                  },
+                  "stat": {
+                    "String": "Hp"
+                  },
+                  "value": {
+                    "Integer": 20
+                  }
+                }
+              }
+            ]
+          },
+          "name": {
+            "String": "Buff 6015"
+          }
+        }
+      },
+      {
+        "values": {
+          "duration": {
+            "Float": 3.0
+          },
+          "id": {
+            "Integer": 6016
+          },
+          "modifiers": {
+            "List": [
+              {
+                "Object": {
+                  "is_percent": {
+                    "Bool": true
+                  },
+                  "stat": {
+                    "String": "Attack"
+                  },
+                  "value": {
+                    "Integer": 21
+                  }
+                }
+              }
+            ]
+          },
+          "name": {
+            "String": "Buff 6016"
+          }
+        }
+      },
+      {
+        "values": {
+          "duration": {
+            "Float": 4.0
+          },
+          "id": {
+            "Integer": 6017
+          },
+          "modifiers": {
+            "List": [
+              {
+                "Object": {
+                  "is_percent": {
+                    "Bool": false
+                  },
+                  "stat": {
+                    "String": "Defense"
+                  },
+                  "value": {
+                    "Integer": 22
+                  }
+                }
+              }
+            ]
+          },
+          "name": {
+            "String": "Buff 6017"
+          }
+        }
+      },
+      {
+        "values": {
+          "duration": {
+            "Float": 5.0
+          },
+          "id": {
+            "Integer": 6018
+          },
+          "modifiers": {
+            "List": [
+              {
+                "Object": {
+                  "is_percent": {
+                    "Bool": true
+                  },
+                  "stat": {
+                    "String": "Speed"
+                  },
+                  "value": {
+                    "Integer": 23
+                  }
+                }
+              }
+            ]
+          },
+          "name": {
+            "String": "Buff 6018"
+          }
+        }
+      },
+      {
+        "values": {
+          "duration": {
+            "Float": 6.0
+          },
+          "id": {
+            "Integer": 6019
+          },
+          "modifiers": {
+            "List": [
+              {
+                "Object": {
+                  "is_percent": {
+                    "Bool": false
+                  },
+                  "stat": {
+                    "String": "CritRate"
+                  },
+                  "value": {
+                    "Integer": 24
+                  }
+                }
+              }
+            ]
+          },
+          "name": {
+            "String": "Buff 6019"
+          }
+        }
+      },
+      {
+        "values": {
+          "duration": {
+            "Float": 7.0
+          },
+          "id": {
+            "Integer": 6020
+          },
+          "modifiers": {
+            "List": [
+              {
+                "Object": {
+                  "is_percent": {
+                    "Bool": true
+                  },
+                  "stat": {
+                    "String": "Hp"
+                  },
+                  "value": {
+                    "Integer": 5
+                  }
+                }
+              }
+            ]
+          },
+          "name": {
+            "String": "Buff 6020"
+          }
+        }
+      }
+    ]
+  }
+}

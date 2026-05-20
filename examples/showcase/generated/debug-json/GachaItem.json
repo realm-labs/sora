@@ -1,0 +1,967 @@
+{
+  "table": {
+    "name": "GachaItem",
+    "rows": [
+      {
+        "values": {
+          "item_id": {
+            "Integer": 1034
+          },
+          "pool_id": {
+            "Integer": 12001
+          },
+          "rarity": {
+            "String": "Uncommon"
+          },
+          "weight": {
+            "Float": 2.0
+          }
+        }
+      },
+      {
+        "values": {
+          "item_id": {
+            "Integer": 1035
+          },
+          "pool_id": {
+            "Integer": 12001
+          },
+          "rarity": {
+            "String": "Rare"
+          },
+          "weight": {
+            "Float": 3.0
+          }
+        }
+      },
+      {
+        "values": {
+          "item_id": {
+            "Integer": 1036
+          },
+          "pool_id": {
+            "Integer": 12001
+          },
+          "rarity": {
+            "String": "Epic"
+          },
+          "weight": {
+            "Float": 4.0
+          }
+        }
+      },
+      {
+        "values": {
+          "item_id": {
+            "Integer": 1037
+          },
+          "pool_id": {
+            "Integer": 12001
+          },
+          "rarity": {
+            "String": "Legendary"
+          },
+          "weight": {
+            "Float": 5.0
+          }
+        }
+      },
+      {
+        "values": {
+          "item_id": {
+            "Integer": 1038
+          },
+          "pool_id": {
+            "Integer": 12001
+          },
+          "rarity": {
+            "String": "Common"
+          },
+          "weight": {
+            "Float": 6.0
+          }
+        }
+      },
+      {
+        "values": {
+          "item_id": {
+            "Integer": 1039
+          },
+          "pool_id": {
+            "Integer": 12001
+          },
+          "rarity": {
+            "String": "Uncommon"
+          },
+          "weight": {
+            "Float": 7.0
+          }
+        }
+      },
+      {
+        "values": {
+          "item_id": {
+            "Integer": 1040
+          },
+          "pool_id": {
+            "Integer": 12001
+          },
+          "rarity": {
+            "String": "Rare"
+          },
+          "weight": {
+            "Float": 8.0
+          }
+        }
+      },
+      {
+        "values": {
+          "item_id": {
+            "Integer": 1041
+          },
+          "pool_id": {
+            "Integer": 12001
+          },
+          "rarity": {
+            "String": "Epic"
+          },
+          "weight": {
+            "Float": 9.0
+          }
+        }
+      },
+      {
+        "values": {
+          "item_id": {
+            "Integer": 1042
+          },
+          "pool_id": {
+            "Integer": 12001
+          },
+          "rarity": {
+            "String": "Legendary"
+          },
+          "weight": {
+            "Float": 10.0
+          }
+        }
+      },
+      {
+        "values": {
+          "item_id": {
+            "Integer": 1043
+          },
+          "pool_id": {
+            "Integer": 12001
+          },
+          "rarity": {
+            "String": "Common"
+          },
+          "weight": {
+            "Float": 1.0
+          }
+        }
+      },
+      {
+        "values": {
+          "item_id": {
+            "Integer": 1044
+          },
+          "pool_id": {
+            "Integer": 12001
+          },
+          "rarity": {
+            "String": "Uncommon"
+          },
+          "weight": {
+            "Float": 2.0
+          }
+        }
+      },
+      {
+        "values": {
+          "item_id": {
+            "Integer": 1045
+          },
+          "pool_id": {
+            "Integer": 12001
+          },
+          "rarity": {
+            "String": "Rare"
+          },
+          "weight": {
+            "Float": 3.0
+          }
+        }
+      },
+      {
+        "values": {
+          "item_id": {
+            "Integer": 1046
+          },
+          "pool_id": {
+            "Integer": 12001
+          },
+          "rarity": {
+            "String": "Epic"
+          },
+          "weight": {
+            "Float": 4.0
+          }
+        }
+      },
+      {
+        "values": {
+          "item_id": {
+            "Integer": 1047
+          },
+          "pool_id": {
+            "Integer": 12001
+          },
+          "rarity": {
+            "String": "Legendary"
+          },
+          "weight": {
+            "Float": 5.0
+          }
+        }
+      },
+      {
+        "values": {
+          "item_id": {
+            "Integer": 1048
+          },
+          "pool_id": {
+            "Integer": 12001
+          },
+          "rarity": {
+            "String": "Common"
+          },
+          "weight": {
+            "Float": 6.0
+          }
+        }
+      },
+      {
+        "values": {
+          "item_id": {
+            "Integer": 1049
+          },
+          "pool_id": {
+            "Integer": 12001
+          },
+          "rarity": {
+            "String": "Uncommon"
+          },
+          "weight": {
+            "Float": 7.0
+          }
+        }
+      },
+      {
+        "values": {
+          "item_id": {
+            "Integer": 1050
+          },
+          "pool_id": {
+            "Integer": 12001
+          },
+          "rarity": {
+            "String": "Rare"
+          },
+          "weight": {
+            "Float": 8.0
+          }
+        }
+      },
+      {
+        "values": {
+          "item_id": {
+            "Integer": 1051
+          },
+          "pool_id": {
+            "Integer": 12001
+          },
+          "rarity": {
+            "String": "Epic"
+          },
+          "weight": {
+            "Float": 9.0
+          }
+        }
+      },
+      {
+        "values": {
+          "item_id": {
+            "Integer": 1052
+          },
+          "pool_id": {
+            "Integer": 12001
+          },
+          "rarity": {
+            "String": "Legendary"
+          },
+          "weight": {
+            "Float": 10.0
+          }
+        }
+      },
+      {
+        "values": {
+          "item_id": {
+            "Integer": 1053
+          },
+          "pool_id": {
+            "Integer": 12001
+          },
+          "rarity": {
+            "String": "Common"
+          },
+          "weight": {
+            "Float": 1.0
+          }
+        }
+      },
+      {
+        "values": {
+          "item_id": {
+            "Integer": 1064
+          },
+          "pool_id": {
+            "Integer": 12002
+          },
+          "rarity": {
+            "String": "Uncommon"
+          },
+          "weight": {
+            "Float": 2.0
+          }
+        }
+      },
+      {
+        "values": {
+          "item_id": {
+            "Integer": 1065
+          },
+          "pool_id": {
+            "Integer": 12002
+          },
+          "rarity": {
+            "String": "Rare"
+          },
+          "weight": {
+            "Float": 3.0
+          }
+        }
+      },
+      {
+        "values": {
+          "item_id": {
+            "Integer": 1066
+          },
+          "pool_id": {
+            "Integer": 12002
+          },
+          "rarity": {
+            "String": "Epic"
+          },
+          "weight": {
+            "Float": 4.0
+          }
+        }
+      },
+      {
+        "values": {
+          "item_id": {
+            "Integer": 1067
+          },
+          "pool_id": {
+            "Integer": 12002
+          },
+          "rarity": {
+            "String": "Legendary"
+          },
+          "weight": {
+            "Float": 5.0
+          }
+        }
+      },
+      {
+        "values": {
+          "item_id": {
+            "Integer": 1068
+          },
+          "pool_id": {
+            "Integer": 12002
+          },
+          "rarity": {
+            "String": "Common"
+          },
+          "weight": {
+            "Float": 6.0
+          }
+        }
+      },
+      {
+        "values": {
+          "item_id": {
+            "Integer": 1069
+          },
+          "pool_id": {
+            "Integer": 12002
+          },
+          "rarity": {
+            "String": "Uncommon"
+          },
+          "weight": {
+            "Float": 7.0
+          }
+        }
+      },
+      {
+        "values": {
+          "item_id": {
+            "Integer": 1070
+          },
+          "pool_id": {
+            "Integer": 12002
+          },
+          "rarity": {
+            "String": "Rare"
+          },
+          "weight": {
+            "Float": 8.0
+          }
+        }
+      },
+      {
+        "values": {
+          "item_id": {
+            "Integer": 1071
+          },
+          "pool_id": {
+            "Integer": 12002
+          },
+          "rarity": {
+            "String": "Epic"
+          },
+          "weight": {
+            "Float": 9.0
+          }
+        }
+      },
+      {
+        "values": {
+          "item_id": {
+            "Integer": 1072
+          },
+          "pool_id": {
+            "Integer": 12002
+          },
+          "rarity": {
+            "String": "Legendary"
+          },
+          "weight": {
+            "Float": 10.0
+          }
+        }
+      },
+      {
+        "values": {
+          "item_id": {
+            "Integer": 1073
+          },
+          "pool_id": {
+            "Integer": 12002
+          },
+          "rarity": {
+            "String": "Common"
+          },
+          "weight": {
+            "Float": 1.0
+          }
+        }
+      },
+      {
+        "values": {
+          "item_id": {
+            "Integer": 1074
+          },
+          "pool_id": {
+            "Integer": 12002
+          },
+          "rarity": {
+            "String": "Uncommon"
+          },
+          "weight": {
+            "Float": 2.0
+          }
+        }
+      },
+      {
+        "values": {
+          "item_id": {
+            "Integer": 1075
+          },
+          "pool_id": {
+            "Integer": 12002
+          },
+          "rarity": {
+            "String": "Rare"
+          },
+          "weight": {
+            "Float": 3.0
+          }
+        }
+      },
+      {
+        "values": {
+          "item_id": {
+            "Integer": 1076
+          },
+          "pool_id": {
+            "Integer": 12002
+          },
+          "rarity": {
+            "String": "Epic"
+          },
+          "weight": {
+            "Float": 4.0
+          }
+        }
+      },
+      {
+        "values": {
+          "item_id": {
+            "Integer": 1077
+          },
+          "pool_id": {
+            "Integer": 12002
+          },
+          "rarity": {
+            "String": "Legendary"
+          },
+          "weight": {
+            "Float": 5.0
+          }
+        }
+      },
+      {
+        "values": {
+          "item_id": {
+            "Integer": 1078
+          },
+          "pool_id": {
+            "Integer": 12002
+          },
+          "rarity": {
+            "String": "Common"
+          },
+          "weight": {
+            "Float": 6.0
+          }
+        }
+      },
+      {
+        "values": {
+          "item_id": {
+            "Integer": 1079
+          },
+          "pool_id": {
+            "Integer": 12002
+          },
+          "rarity": {
+            "String": "Uncommon"
+          },
+          "weight": {
+            "Float": 7.0
+          }
+        }
+      },
+      {
+        "values": {
+          "item_id": {
+            "Integer": 1080
+          },
+          "pool_id": {
+            "Integer": 12002
+          },
+          "rarity": {
+            "String": "Rare"
+          },
+          "weight": {
+            "Float": 8.0
+          }
+        }
+      },
+      {
+        "values": {
+          "item_id": {
+            "Integer": 1081
+          },
+          "pool_id": {
+            "Integer": 12002
+          },
+          "rarity": {
+            "String": "Epic"
+          },
+          "weight": {
+            "Float": 9.0
+          }
+        }
+      },
+      {
+        "values": {
+          "item_id": {
+            "Integer": 1082
+          },
+          "pool_id": {
+            "Integer": 12002
+          },
+          "rarity": {
+            "String": "Legendary"
+          },
+          "weight": {
+            "Float": 10.0
+          }
+        }
+      },
+      {
+        "values": {
+          "item_id": {
+            "Integer": 1083
+          },
+          "pool_id": {
+            "Integer": 12002
+          },
+          "rarity": {
+            "String": "Common"
+          },
+          "weight": {
+            "Float": 1.0
+          }
+        }
+      },
+      {
+        "values": {
+          "item_id": {
+            "Integer": 1094
+          },
+          "pool_id": {
+            "Integer": 12003
+          },
+          "rarity": {
+            "String": "Uncommon"
+          },
+          "weight": {
+            "Float": 2.0
+          }
+        }
+      },
+      {
+        "values": {
+          "item_id": {
+            "Integer": 1095
+          },
+          "pool_id": {
+            "Integer": 12003
+          },
+          "rarity": {
+            "String": "Rare"
+          },
+          "weight": {
+            "Float": 3.0
+          }
+        }
+      },
+      {
+        "values": {
+          "item_id": {
+            "Integer": 1096
+          },
+          "pool_id": {
+            "Integer": 12003
+          },
+          "rarity": {
+            "String": "Epic"
+          },
+          "weight": {
+            "Float": 4.0
+          }
+        }
+      },
+      {
+        "values": {
+          "item_id": {
+            "Integer": 1097
+          },
+          "pool_id": {
+            "Integer": 12003
+          },
+          "rarity": {
+            "String": "Legendary"
+          },
+          "weight": {
+            "Float": 5.0
+          }
+        }
+      },
+      {
+        "values": {
+          "item_id": {
+            "Integer": 1098
+          },
+          "pool_id": {
+            "Integer": 12003
+          },
+          "rarity": {
+            "String": "Common"
+          },
+          "weight": {
+            "Float": 6.0
+          }
+        }
+      },
+      {
+        "values": {
+          "item_id": {
+            "Integer": 1099
+          },
+          "pool_id": {
+            "Integer": 12003
+          },
+          "rarity": {
+            "String": "Uncommon"
+          },
+          "weight": {
+            "Float": 7.0
+          }
+        }
+      },
+      {
+        "values": {
+          "item_id": {
+            "Integer": 1100
+          },
+          "pool_id": {
+            "Integer": 12003
+          },
+          "rarity": {
+            "String": "Rare"
+          },
+          "weight": {
+            "Float": 8.0
+          }
+        }
+      },
+      {
+        "values": {
+          "item_id": {
+            "Integer": 1101
+          },
+          "pool_id": {
+            "Integer": 12003
+          },
+          "rarity": {
+            "String": "Epic"
+          },
+          "weight": {
+            "Float": 9.0
+          }
+        }
+      },
+      {
+        "values": {
+          "item_id": {
+            "Integer": 1102
+          },
+          "pool_id": {
+            "Integer": 12003
+          },
+          "rarity": {
+            "String": "Legendary"
+          },
+          "weight": {
+            "Float": 10.0
+          }
+        }
+      },
+      {
+        "values": {
+          "item_id": {
+            "Integer": 1103
+          },
+          "pool_id": {
+            "Integer": 12003
+          },
+          "rarity": {
+            "String": "Common"
+          },
+          "weight": {
+            "Float": 1.0
+          }
+        }
+      },
+      {
+        "values": {
+          "item_id": {
+            "Integer": 1104
+          },
+          "pool_id": {
+            "Integer": 12003
+          },
+          "rarity": {
+            "String": "Uncommon"
+          },
+          "weight": {
+            "Float": 2.0
+          }
+        }
+      },
+      {
+        "values": {
+          "item_id": {
+            "Integer": 1105
+          },
+          "pool_id": {
+            "Integer": 12003
+          },
+          "rarity": {
+            "String": "Rare"
+          },
+          "weight": {
+            "Float": 3.0
+          }
+        }
+      },
+      {
+        "values": {
+          "item_id": {
+            "Integer": 1106
+          },
+          "pool_id": {
+            "Integer": 12003
+          },
+          "rarity": {
+            "String": "Epic"
+          },
+          "weight": {
+            "Float": 4.0
+          }
+        }
+      },
+      {
+        "values": {
+          "item_id": {
+            "Integer": 1107
+          },
+          "pool_id": {
+            "Integer": 12003
+          },
+          "rarity": {
+            "String": "Legendary"
+          },
+          "weight": {
+            "Float": 5.0
+          }
+        }
+      },
+      {
+        "values": {
+          "item_id": {
+            "Integer": 1108
+          },
+          "pool_id": {
+            "Integer": 12003
+          },
+          "rarity": {
+            "String": "Common"
+          },
+          "weight": {
+            "Float": 6.0
+          }
+        }
+      },
+      {
+        "values": {
+          "item_id": {
+            "Integer": 1109
+          },
+          "pool_id": {
+            "Integer": 12003
+          },
+          "rarity": {
+            "String": "Uncommon"
+          },
+          "weight": {
+            "Float": 7.0
+          }
+        }
+      },
+      {
+        "values": {
+          "item_id": {
+            "Integer": 1110
+          },
+          "pool_id": {
+            "Integer": 12003
+          },
+          "rarity": {
+            "String": "Rare"
+          },
+          "weight": {
+            "Float": 8.0
+          }
+        }
+      },
+      {
+        "values": {
+          "item_id": {
+            "Integer": 1111
+          },
+          "pool_id": {
+            "Integer": 12003
+          },
+          "rarity": {
+            "String": "Epic"
+          },
+          "weight": {
+            "Float": 9.0
+          }
+        }
+      },
+      {
+        "values": {
+          "item_id": {
+            "Integer": 1112
+          },
+          "pool_id": {
+            "Integer": 12003
+          },
+          "rarity": {
+            "String": "Legendary"
+          },
+          "weight": {
+            "Float": 10.0
+          }
+        }
+      },
+      {
+        "values": {
+          "item_id": {
+            "Integer": 1113
+          },
+          "pool_id": {
+            "Integer": 12003
+          },
+          "rarity": {
+            "String": "Common"
+          },
+          "weight": {
+            "Float": 1.0
+          }
+        }
+      }
+    ]
+  }
+}

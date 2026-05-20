@@ -1,0 +1,76 @@
+{
+  "table": {
+    "name": "GachaPool",
+    "rows": [
+      {
+        "values": {
+          "cost": {
+            "Object": {
+              "count": {
+                "Integer": 10
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Diamond"
+              }
+            }
+          },
+          "id": {
+            "Integer": 12001
+          },
+          "name": {
+            "String": "Pool 1"
+          }
+        }
+      },
+      {
+        "values": {
+          "cost": {
+            "Object": {
+              "count": {
+                "Integer": 20
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Diamond"
+              }
+            }
+          },
+          "id": {
+            "Integer": 12002
+          },
+          "name": {
+            "String": "Pool 2"
+          }
+        }
+      },
+      {
+        "values": {
+          "cost": {
+            "Object": {
+              "count": {
+                "Integer": 30
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Diamond"
+              }
+            }
+          },
+          "id": {
+            "Integer": 12003
+          },
+          "name": {
+            "String": "Pool 3"
+          }
+        }
+      }
+    ]
+  }
+}

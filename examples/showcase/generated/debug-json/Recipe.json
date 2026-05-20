@@ -1,0 +1,1207 @@
+{
+  "table": {
+    "name": "Recipe",
+    "rows": [
+      {
+        "values": {
+          "id": {
+            "Integer": 11001
+          },
+          "materials": {
+            "List": [
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 3
+                  },
+                  "id": {
+                    "Integer": 1005
+                  },
+                  "kind": {
+                    "String": "Item"
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 110
+                  },
+                  "id": {
+                    "Integer": 0
+                  },
+                  "kind": {
+                    "String": "Gold"
+                  }
+                }
+              }
+            ]
+          },
+          "result_item": {
+            "Integer": 1004
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 11002
+          },
+          "materials": {
+            "List": [
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 4
+                  },
+                  "id": {
+                    "Integer": 1006
+                  },
+                  "kind": {
+                    "String": "Item"
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 120
+                  },
+                  "id": {
+                    "Integer": 0
+                  },
+                  "kind": {
+                    "String": "Gold"
+                  }
+                }
+              }
+            ]
+          },
+          "result_item": {
+            "Integer": 1005
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 11003
+          },
+          "materials": {
+            "List": [
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 5
+                  },
+                  "id": {
+                    "Integer": 1007
+                  },
+                  "kind": {
+                    "String": "Item"
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 130
+                  },
+                  "id": {
+                    "Integer": 0
+                  },
+                  "kind": {
+                    "String": "Gold"
+                  }
+                }
+              }
+            ]
+          },
+          "result_item": {
+            "Integer": 1006
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 11004
+          },
+          "materials": {
+            "List": [
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 2
+                  },
+                  "id": {
+                    "Integer": 1008
+                  },
+                  "kind": {
+                    "String": "Item"
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 140
+                  },
+                  "id": {
+                    "Integer": 0
+                  },
+                  "kind": {
+                    "String": "Gold"
+                  }
+                }
+              }
+            ]
+          },
+          "result_item": {
+            "Integer": 1007
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 11005
+          },
+          "materials": {
+            "List": [
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 3
+                  },
+                  "id": {
+                    "Integer": 1009
+                  },
+                  "kind": {
+                    "String": "Item"
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 150
+                  },
+                  "id": {
+                    "Integer": 0
+                  },
+                  "kind": {
+                    "String": "Gold"
+                  }
+                }
+              }
+            ]
+          },
+          "result_item": {
+            "Integer": 1008
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 11006
+          },
+          "materials": {
+            "List": [
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 4
+                  },
+                  "id": {
+                    "Integer": 1010
+                  },
+                  "kind": {
+                    "String": "Item"
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 160
+                  },
+                  "id": {
+                    "Integer": 0
+                  },
+                  "kind": {
+                    "String": "Gold"
+                  }
+                }
+              }
+            ]
+          },
+          "result_item": {
+            "Integer": 1009
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 11007
+          },
+          "materials": {
+            "List": [
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 5
+                  },
+                  "id": {
+                    "Integer": 1011
+                  },
+                  "kind": {
+                    "String": "Item"
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 170
+                  },
+                  "id": {
+                    "Integer": 0
+                  },
+                  "kind": {
+                    "String": "Gold"
+                  }
+                }
+              }
+            ]
+          },
+          "result_item": {
+            "Integer": 1010
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 11008
+          },
+          "materials": {
+            "List": [
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 2
+                  },
+                  "id": {
+                    "Integer": 1012
+                  },
+                  "kind": {
+                    "String": "Item"
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 180
+                  },
+                  "id": {
+                    "Integer": 0
+                  },
+                  "kind": {
+                    "String": "Gold"
+                  }
+                }
+              }
+            ]
+          },
+          "result_item": {
+            "Integer": 1011
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 11009
+          },
+          "materials": {
+            "List": [
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 3
+                  },
+                  "id": {
+                    "Integer": 1013
+                  },
+                  "kind": {
+                    "String": "Item"
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 190
+                  },
+                  "id": {
+                    "Integer": 0
+                  },
+                  "kind": {
+                    "String": "Gold"
+                  }
+                }
+              }
+            ]
+          },
+          "result_item": {
+            "Integer": 1012
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 11010
+          },
+          "materials": {
+            "List": [
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 4
+                  },
+                  "id": {
+                    "Integer": 1014
+                  },
+                  "kind": {
+                    "String": "Item"
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 200
+                  },
+                  "id": {
+                    "Integer": 0
+                  },
+                  "kind": {
+                    "String": "Gold"
+                  }
+                }
+              }
+            ]
+          },
+          "result_item": {
+            "Integer": 1013
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 11011
+          },
+          "materials": {
+            "List": [
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 5
+                  },
+                  "id": {
+                    "Integer": 1015
+                  },
+                  "kind": {
+                    "String": "Item"
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 210
+                  },
+                  "id": {
+                    "Integer": 0
+                  },
+                  "kind": {
+                    "String": "Gold"
+                  }
+                }
+              }
+            ]
+          },
+          "result_item": {
+            "Integer": 1014
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 11012
+          },
+          "materials": {
+            "List": [
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 2
+                  },
+                  "id": {
+                    "Integer": 1016
+                  },
+                  "kind": {
+                    "String": "Item"
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 220
+                  },
+                  "id": {
+                    "Integer": 0
+                  },
+                  "kind": {
+                    "String": "Gold"
+                  }
+                }
+              }
+            ]
+          },
+          "result_item": {
+            "Integer": 1015
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 11013
+          },
+          "materials": {
+            "List": [
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 3
+                  },
+                  "id": {
+                    "Integer": 1017
+                  },
+                  "kind": {
+                    "String": "Item"
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 230
+                  },
+                  "id": {
+                    "Integer": 0
+                  },
+                  "kind": {
+                    "String": "Gold"
+                  }
+                }
+              }
+            ]
+          },
+          "result_item": {
+            "Integer": 1016
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 11014
+          },
+          "materials": {
+            "List": [
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 4
+                  },
+                  "id": {
+                    "Integer": 1018
+                  },
+                  "kind": {
+                    "String": "Item"
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 240
+                  },
+                  "id": {
+                    "Integer": 0
+                  },
+                  "kind": {
+                    "String": "Gold"
+                  }
+                }
+              }
+            ]
+          },
+          "result_item": {
+            "Integer": 1017
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 11015
+          },
+          "materials": {
+            "List": [
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 5
+                  },
+                  "id": {
+                    "Integer": 1019
+                  },
+                  "kind": {
+                    "String": "Item"
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 250
+                  },
+                  "id": {
+                    "Integer": 0
+                  },
+                  "kind": {
+                    "String": "Gold"
+                  }
+                }
+              }
+            ]
+          },
+          "result_item": {
+            "Integer": 1018
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 11016
+          },
+          "materials": {
+            "List": [
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 2
+                  },
+                  "id": {
+                    "Integer": 1020
+                  },
+                  "kind": {
+                    "String": "Item"
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 260
+                  },
+                  "id": {
+                    "Integer": 0
+                  },
+                  "kind": {
+                    "String": "Gold"
+                  }
+                }
+              }
+            ]
+          },
+          "result_item": {
+            "Integer": 1019
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 11017
+          },
+          "materials": {
+            "List": [
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 3
+                  },
+                  "id": {
+                    "Integer": 1021
+                  },
+                  "kind": {
+                    "String": "Item"
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 270
+                  },
+                  "id": {
+                    "Integer": 0
+                  },
+                  "kind": {
+                    "String": "Gold"
+                  }
+                }
+              }
+            ]
+          },
+          "result_item": {
+            "Integer": 1020
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 11018
+          },
+          "materials": {
+            "List": [
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 4
+                  },
+                  "id": {
+                    "Integer": 1022
+                  },
+                  "kind": {
+                    "String": "Item"
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 280
+                  },
+                  "id": {
+                    "Integer": 0
+                  },
+                  "kind": {
+                    "String": "Gold"
+                  }
+                }
+              }
+            ]
+          },
+          "result_item": {
+            "Integer": 1021
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 11019
+          },
+          "materials": {
+            "List": [
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 5
+                  },
+                  "id": {
+                    "Integer": 1023
+                  },
+                  "kind": {
+                    "String": "Item"
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 290
+                  },
+                  "id": {
+                    "Integer": 0
+                  },
+                  "kind": {
+                    "String": "Gold"
+                  }
+                }
+              }
+            ]
+          },
+          "result_item": {
+            "Integer": 1022
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 11020
+          },
+          "materials": {
+            "List": [
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 2
+                  },
+                  "id": {
+                    "Integer": 1024
+                  },
+                  "kind": {
+                    "String": "Item"
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 300
+                  },
+                  "id": {
+                    "Integer": 0
+                  },
+                  "kind": {
+                    "String": "Gold"
+                  }
+                }
+              }
+            ]
+          },
+          "result_item": {
+            "Integer": 1023
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 11021
+          },
+          "materials": {
+            "List": [
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 3
+                  },
+                  "id": {
+                    "Integer": 1025
+                  },
+                  "kind": {
+                    "String": "Item"
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 310
+                  },
+                  "id": {
+                    "Integer": 0
+                  },
+                  "kind": {
+                    "String": "Gold"
+                  }
+                }
+              }
+            ]
+          },
+          "result_item": {
+            "Integer": 1024
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 11022
+          },
+          "materials": {
+            "List": [
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 4
+                  },
+                  "id": {
+                    "Integer": 1026
+                  },
+                  "kind": {
+                    "String": "Item"
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 320
+                  },
+                  "id": {
+                    "Integer": 0
+                  },
+                  "kind": {
+                    "String": "Gold"
+                  }
+                }
+              }
+            ]
+          },
+          "result_item": {
+            "Integer": 1025
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 11023
+          },
+          "materials": {
+            "List": [
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 5
+                  },
+                  "id": {
+                    "Integer": 1027
+                  },
+                  "kind": {
+                    "String": "Item"
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 330
+                  },
+                  "id": {
+                    "Integer": 0
+                  },
+                  "kind": {
+                    "String": "Gold"
+                  }
+                }
+              }
+            ]
+          },
+          "result_item": {
+            "Integer": 1026
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 11024
+          },
+          "materials": {
+            "List": [
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 2
+                  },
+                  "id": {
+                    "Integer": 1028
+                  },
+                  "kind": {
+                    "String": "Item"
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 340
+                  },
+                  "id": {
+                    "Integer": 0
+                  },
+                  "kind": {
+                    "String": "Gold"
+                  }
+                }
+              }
+            ]
+          },
+          "result_item": {
+            "Integer": 1027
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 11025
+          },
+          "materials": {
+            "List": [
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 3
+                  },
+                  "id": {
+                    "Integer": 1029
+                  },
+                  "kind": {
+                    "String": "Item"
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 350
+                  },
+                  "id": {
+                    "Integer": 0
+                  },
+                  "kind": {
+                    "String": "Gold"
+                  }
+                }
+              }
+            ]
+          },
+          "result_item": {
+            "Integer": 1028
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 11026
+          },
+          "materials": {
+            "List": [
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 4
+                  },
+                  "id": {
+                    "Integer": 1030
+                  },
+                  "kind": {
+                    "String": "Item"
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 360
+                  },
+                  "id": {
+                    "Integer": 0
+                  },
+                  "kind": {
+                    "String": "Gold"
+                  }
+                }
+              }
+            ]
+          },
+          "result_item": {
+            "Integer": 1029
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 11027
+          },
+          "materials": {
+            "List": [
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 5
+                  },
+                  "id": {
+                    "Integer": 1031
+                  },
+                  "kind": {
+                    "String": "Item"
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 370
+                  },
+                  "id": {
+                    "Integer": 0
+                  },
+                  "kind": {
+                    "String": "Gold"
+                  }
+                }
+              }
+            ]
+          },
+          "result_item": {
+            "Integer": 1030
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 11028
+          },
+          "materials": {
+            "List": [
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 2
+                  },
+                  "id": {
+                    "Integer": 1032
+                  },
+                  "kind": {
+                    "String": "Item"
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 380
+                  },
+                  "id": {
+                    "Integer": 0
+                  },
+                  "kind": {
+                    "String": "Gold"
+                  }
+                }
+              }
+            ]
+          },
+          "result_item": {
+            "Integer": 1031
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 11029
+          },
+          "materials": {
+            "List": [
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 3
+                  },
+                  "id": {
+                    "Integer": 1033
+                  },
+                  "kind": {
+                    "String": "Item"
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 390
+                  },
+                  "id": {
+                    "Integer": 0
+                  },
+                  "kind": {
+                    "String": "Gold"
+                  }
+                }
+              }
+            ]
+          },
+          "result_item": {
+            "Integer": 1032
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 11030
+          },
+          "materials": {
+            "List": [
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 4
+                  },
+                  "id": {
+                    "Integer": 1034
+                  },
+                  "kind": {
+                    "String": "Item"
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 400
+                  },
+                  "id": {
+                    "Integer": 0
+                  },
+                  "kind": {
+                    "String": "Gold"
+                  }
+                }
+              }
+            ]
+          },
+          "result_item": {
+            "Integer": 1033
+          }
+        }
+      }
+    ]
+  }
+}

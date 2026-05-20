@@ -114,6 +114,1455 @@
             ]
           }
         }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 5003
+          },
+          "quest_type": {
+            "String": "Daily"
+          },
+          "required_item": {
+            "Integer": 1050
+          },
+          "rewards": {
+            "List": [
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 2
+                  },
+                  "item_id": {
+                    "Integer": 1051
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 4
+                  },
+                  "item_id": {
+                    "Integer": 1052
+                  }
+                }
+              }
+            ]
+          },
+          "start_pos": {
+            "Object": {
+              "x": {
+                "Float": 3.0
+              },
+              "y": {
+                "Float": 0.0
+              },
+              "z": {
+                "Float": 23.0
+              }
+            }
+          },
+          "title": {
+            "String": "Quest 5003"
+          },
+          "unlock_skills": {
+            "List": [
+              {
+                "Integer": 124
+              },
+              {
+                "Integer": 125
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 5004
+          },
+          "quest_type": {
+            "String": "Main"
+          },
+          "required_item": {
+            "Integer": 1051
+          },
+          "rewards": {
+            "List": [
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 2
+                  },
+                  "item_id": {
+                    "Integer": 1052
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 4
+                  },
+                  "item_id": {
+                    "Integer": 1053
+                  }
+                }
+              }
+            ]
+          },
+          "start_pos": {
+            "Object": {
+              "x": {
+                "Float": 4.0
+              },
+              "y": {
+                "Float": 0.0
+              },
+              "z": {
+                "Float": 24.0
+              }
+            }
+          },
+          "title": {
+            "String": "Quest 5004"
+          },
+          "unlock_skills": {
+            "List": [
+              {
+                "Integer": 125
+              },
+              {
+                "Integer": 126
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 5005
+          },
+          "quest_type": {
+            "String": "Side"
+          },
+          "required_item": {
+            "Integer": 1052
+          },
+          "rewards": {
+            "List": [
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 2
+                  },
+                  "item_id": {
+                    "Integer": 1053
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 4
+                  },
+                  "item_id": {
+                    "Integer": 1054
+                  }
+                }
+              }
+            ]
+          },
+          "start_pos": {
+            "Object": {
+              "x": {
+                "Float": 5.0
+              },
+              "y": {
+                "Float": 0.0
+              },
+              "z": {
+                "Float": 25.0
+              }
+            }
+          },
+          "title": {
+            "String": "Quest 5005"
+          },
+          "unlock_skills": {
+            "List": [
+              {
+                "Integer": 126
+              },
+              {
+                "Integer": 127
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 5006
+          },
+          "quest_type": {
+            "String": "Daily"
+          },
+          "required_item": {
+            "Integer": 1053
+          },
+          "rewards": {
+            "List": [
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 2
+                  },
+                  "item_id": {
+                    "Integer": 1054
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 4
+                  },
+                  "item_id": {
+                    "Integer": 1055
+                  }
+                }
+              }
+            ]
+          },
+          "start_pos": {
+            "Object": {
+              "x": {
+                "Float": 6.0
+              },
+              "y": {
+                "Float": 0.0
+              },
+              "z": {
+                "Float": 26.0
+              }
+            }
+          },
+          "title": {
+            "String": "Quest 5006"
+          },
+          "unlock_skills": {
+            "List": [
+              {
+                "Integer": 127
+              },
+              {
+                "Integer": 128
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 5007
+          },
+          "quest_type": {
+            "String": "Main"
+          },
+          "required_item": {
+            "Integer": 1054
+          },
+          "rewards": {
+            "List": [
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 2
+                  },
+                  "item_id": {
+                    "Integer": 1055
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 4
+                  },
+                  "item_id": {
+                    "Integer": 1056
+                  }
+                }
+              }
+            ]
+          },
+          "start_pos": {
+            "Object": {
+              "x": {
+                "Float": 7.0
+              },
+              "y": {
+                "Float": 0.0
+              },
+              "z": {
+                "Float": 27.0
+              }
+            }
+          },
+          "title": {
+            "String": "Quest 5007"
+          },
+          "unlock_skills": {
+            "List": [
+              {
+                "Integer": 128
+              },
+              {
+                "Integer": 129
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 5008
+          },
+          "quest_type": {
+            "String": "Side"
+          },
+          "required_item": {
+            "Integer": 1055
+          },
+          "rewards": {
+            "List": [
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 2
+                  },
+                  "item_id": {
+                    "Integer": 1056
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 4
+                  },
+                  "item_id": {
+                    "Integer": 1057
+                  }
+                }
+              }
+            ]
+          },
+          "start_pos": {
+            "Object": {
+              "x": {
+                "Float": 8.0
+              },
+              "y": {
+                "Float": 0.0
+              },
+              "z": {
+                "Float": 28.0
+              }
+            }
+          },
+          "title": {
+            "String": "Quest 5008"
+          },
+          "unlock_skills": {
+            "List": [
+              {
+                "Integer": 129
+              },
+              {
+                "Integer": 130
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 5009
+          },
+          "quest_type": {
+            "String": "Daily"
+          },
+          "required_item": {
+            "Integer": 1056
+          },
+          "rewards": {
+            "List": [
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 2
+                  },
+                  "item_id": {
+                    "Integer": 1057
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 4
+                  },
+                  "item_id": {
+                    "Integer": 1058
+                  }
+                }
+              }
+            ]
+          },
+          "start_pos": {
+            "Object": {
+              "x": {
+                "Float": 9.0
+              },
+              "y": {
+                "Float": 0.0
+              },
+              "z": {
+                "Float": 29.0
+              }
+            }
+          },
+          "title": {
+            "String": "Quest 5009"
+          },
+          "unlock_skills": {
+            "List": [
+              {
+                "Integer": 130
+              },
+              {
+                "Integer": 101
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 5010
+          },
+          "quest_type": {
+            "String": "Main"
+          },
+          "required_item": {
+            "Integer": 1057
+          },
+          "rewards": {
+            "List": [
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 2
+                  },
+                  "item_id": {
+                    "Integer": 1058
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 4
+                  },
+                  "item_id": {
+                    "Integer": 1059
+                  }
+                }
+              }
+            ]
+          },
+          "start_pos": {
+            "Object": {
+              "x": {
+                "Float": 10.0
+              },
+              "y": {
+                "Float": 0.0
+              },
+              "z": {
+                "Float": 0.0
+              }
+            }
+          },
+          "title": {
+            "String": "Quest 5010"
+          },
+          "unlock_skills": {
+            "List": [
+              {
+                "Integer": 101
+              },
+              {
+                "Integer": 102
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 5011
+          },
+          "quest_type": {
+            "String": "Side"
+          },
+          "required_item": {
+            "Integer": 1058
+          },
+          "rewards": {
+            "List": [
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 2
+                  },
+                  "item_id": {
+                    "Integer": 1059
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 4
+                  },
+                  "item_id": {
+                    "Integer": 1060
+                  }
+                }
+              }
+            ]
+          },
+          "start_pos": {
+            "Object": {
+              "x": {
+                "Float": 11.0
+              },
+              "y": {
+                "Float": 0.0
+              },
+              "z": {
+                "Float": 1.0
+              }
+            }
+          },
+          "title": {
+            "String": "Quest 5011"
+          },
+          "unlock_skills": {
+            "List": [
+              {
+                "Integer": 102
+              },
+              {
+                "Integer": 103
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 5012
+          },
+          "quest_type": {
+            "String": "Daily"
+          },
+          "required_item": {
+            "Integer": 1059
+          },
+          "rewards": {
+            "List": [
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 2
+                  },
+                  "item_id": {
+                    "Integer": 1060
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 4
+                  },
+                  "item_id": {
+                    "Integer": 1061
+                  }
+                }
+              }
+            ]
+          },
+          "start_pos": {
+            "Object": {
+              "x": {
+                "Float": 12.0
+              },
+              "y": {
+                "Float": 0.0
+              },
+              "z": {
+                "Float": 2.0
+              }
+            }
+          },
+          "title": {
+            "String": "Quest 5012"
+          },
+          "unlock_skills": {
+            "List": [
+              {
+                "Integer": 103
+              },
+              {
+                "Integer": 104
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 5013
+          },
+          "quest_type": {
+            "String": "Main"
+          },
+          "required_item": {
+            "Integer": 1060
+          },
+          "rewards": {
+            "List": [
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 2
+                  },
+                  "item_id": {
+                    "Integer": 1061
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 4
+                  },
+                  "item_id": {
+                    "Integer": 1062
+                  }
+                }
+              }
+            ]
+          },
+          "start_pos": {
+            "Object": {
+              "x": {
+                "Float": 13.0
+              },
+              "y": {
+                "Float": 0.0
+              },
+              "z": {
+                "Float": 3.0
+              }
+            }
+          },
+          "title": {
+            "String": "Quest 5013"
+          },
+          "unlock_skills": {
+            "List": [
+              {
+                "Integer": 104
+              },
+              {
+                "Integer": 105
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 5014
+          },
+          "quest_type": {
+            "String": "Side"
+          },
+          "required_item": {
+            "Integer": 1061
+          },
+          "rewards": {
+            "List": [
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 2
+                  },
+                  "item_id": {
+                    "Integer": 1062
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 4
+                  },
+                  "item_id": {
+                    "Integer": 1063
+                  }
+                }
+              }
+            ]
+          },
+          "start_pos": {
+            "Object": {
+              "x": {
+                "Float": 14.0
+              },
+              "y": {
+                "Float": 0.0
+              },
+              "z": {
+                "Float": 4.0
+              }
+            }
+          },
+          "title": {
+            "String": "Quest 5014"
+          },
+          "unlock_skills": {
+            "List": [
+              {
+                "Integer": 105
+              },
+              {
+                "Integer": 106
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 5015
+          },
+          "quest_type": {
+            "String": "Daily"
+          },
+          "required_item": {
+            "Integer": 1062
+          },
+          "rewards": {
+            "List": [
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 2
+                  },
+                  "item_id": {
+                    "Integer": 1063
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 4
+                  },
+                  "item_id": {
+                    "Integer": 1064
+                  }
+                }
+              }
+            ]
+          },
+          "start_pos": {
+            "Object": {
+              "x": {
+                "Float": 15.0
+              },
+              "y": {
+                "Float": 0.0
+              },
+              "z": {
+                "Float": 5.0
+              }
+            }
+          },
+          "title": {
+            "String": "Quest 5015"
+          },
+          "unlock_skills": {
+            "List": [
+              {
+                "Integer": 106
+              },
+              {
+                "Integer": 107
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 5016
+          },
+          "quest_type": {
+            "String": "Main"
+          },
+          "required_item": {
+            "Integer": 1063
+          },
+          "rewards": {
+            "List": [
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 2
+                  },
+                  "item_id": {
+                    "Integer": 1064
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 4
+                  },
+                  "item_id": {
+                    "Integer": 1065
+                  }
+                }
+              }
+            ]
+          },
+          "start_pos": {
+            "Object": {
+              "x": {
+                "Float": 16.0
+              },
+              "y": {
+                "Float": 0.0
+              },
+              "z": {
+                "Float": 6.0
+              }
+            }
+          },
+          "title": {
+            "String": "Quest 5016"
+          },
+          "unlock_skills": {
+            "List": [
+              {
+                "Integer": 107
+              },
+              {
+                "Integer": 108
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 5017
+          },
+          "quest_type": {
+            "String": "Side"
+          },
+          "required_item": {
+            "Integer": 1064
+          },
+          "rewards": {
+            "List": [
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 2
+                  },
+                  "item_id": {
+                    "Integer": 1065
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 4
+                  },
+                  "item_id": {
+                    "Integer": 1066
+                  }
+                }
+              }
+            ]
+          },
+          "start_pos": {
+            "Object": {
+              "x": {
+                "Float": 17.0
+              },
+              "y": {
+                "Float": 0.0
+              },
+              "z": {
+                "Float": 7.0
+              }
+            }
+          },
+          "title": {
+            "String": "Quest 5017"
+          },
+          "unlock_skills": {
+            "List": [
+              {
+                "Integer": 108
+              },
+              {
+                "Integer": 109
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 5018
+          },
+          "quest_type": {
+            "String": "Daily"
+          },
+          "required_item": {
+            "Integer": 1065
+          },
+          "rewards": {
+            "List": [
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 2
+                  },
+                  "item_id": {
+                    "Integer": 1066
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 4
+                  },
+                  "item_id": {
+                    "Integer": 1067
+                  }
+                }
+              }
+            ]
+          },
+          "start_pos": {
+            "Object": {
+              "x": {
+                "Float": 18.0
+              },
+              "y": {
+                "Float": 0.0
+              },
+              "z": {
+                "Float": 8.0
+              }
+            }
+          },
+          "title": {
+            "String": "Quest 5018"
+          },
+          "unlock_skills": {
+            "List": [
+              {
+                "Integer": 109
+              },
+              {
+                "Integer": 110
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 5019
+          },
+          "quest_type": {
+            "String": "Main"
+          },
+          "required_item": {
+            "Integer": 1066
+          },
+          "rewards": {
+            "List": [
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 2
+                  },
+                  "item_id": {
+                    "Integer": 1067
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 4
+                  },
+                  "item_id": {
+                    "Integer": 1068
+                  }
+                }
+              }
+            ]
+          },
+          "start_pos": {
+            "Object": {
+              "x": {
+                "Float": 19.0
+              },
+              "y": {
+                "Float": 0.0
+              },
+              "z": {
+                "Float": 9.0
+              }
+            }
+          },
+          "title": {
+            "String": "Quest 5019"
+          },
+          "unlock_skills": {
+            "List": [
+              {
+                "Integer": 110
+              },
+              {
+                "Integer": 111
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 5020
+          },
+          "quest_type": {
+            "String": "Side"
+          },
+          "required_item": {
+            "Integer": 1067
+          },
+          "rewards": {
+            "List": [
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 2
+                  },
+                  "item_id": {
+                    "Integer": 1068
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 4
+                  },
+                  "item_id": {
+                    "Integer": 1069
+                  }
+                }
+              }
+            ]
+          },
+          "start_pos": {
+            "Object": {
+              "x": {
+                "Float": 20.0
+              },
+              "y": {
+                "Float": 0.0
+              },
+              "z": {
+                "Float": 10.0
+              }
+            }
+          },
+          "title": {
+            "String": "Quest 5020"
+          },
+          "unlock_skills": {
+            "List": [
+              {
+                "Integer": 111
+              },
+              {
+                "Integer": 112
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 5021
+          },
+          "quest_type": {
+            "String": "Daily"
+          },
+          "required_item": {
+            "Integer": 1068
+          },
+          "rewards": {
+            "List": [
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 2
+                  },
+                  "item_id": {
+                    "Integer": 1069
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 4
+                  },
+                  "item_id": {
+                    "Integer": 1070
+                  }
+                }
+              }
+            ]
+          },
+          "start_pos": {
+            "Object": {
+              "x": {
+                "Float": 21.0
+              },
+              "y": {
+                "Float": 0.0
+              },
+              "z": {
+                "Float": 11.0
+              }
+            }
+          },
+          "title": {
+            "String": "Quest 5021"
+          },
+          "unlock_skills": {
+            "List": [
+              {
+                "Integer": 112
+              },
+              {
+                "Integer": 113
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 5022
+          },
+          "quest_type": {
+            "String": "Main"
+          },
+          "required_item": {
+            "Integer": 1069
+          },
+          "rewards": {
+            "List": [
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 2
+                  },
+                  "item_id": {
+                    "Integer": 1070
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 4
+                  },
+                  "item_id": {
+                    "Integer": 1071
+                  }
+                }
+              }
+            ]
+          },
+          "start_pos": {
+            "Object": {
+              "x": {
+                "Float": 22.0
+              },
+              "y": {
+                "Float": 0.0
+              },
+              "z": {
+                "Float": 12.0
+              }
+            }
+          },
+          "title": {
+            "String": "Quest 5022"
+          },
+          "unlock_skills": {
+            "List": [
+              {
+                "Integer": 113
+              },
+              {
+                "Integer": 114
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 5023
+          },
+          "quest_type": {
+            "String": "Side"
+          },
+          "required_item": {
+            "Integer": 1070
+          },
+          "rewards": {
+            "List": [
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 2
+                  },
+                  "item_id": {
+                    "Integer": 1071
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 4
+                  },
+                  "item_id": {
+                    "Integer": 1072
+                  }
+                }
+              }
+            ]
+          },
+          "start_pos": {
+            "Object": {
+              "x": {
+                "Float": 23.0
+              },
+              "y": {
+                "Float": 0.0
+              },
+              "z": {
+                "Float": 13.0
+              }
+            }
+          },
+          "title": {
+            "String": "Quest 5023"
+          },
+          "unlock_skills": {
+            "List": [
+              {
+                "Integer": 114
+              },
+              {
+                "Integer": 115
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 5024
+          },
+          "quest_type": {
+            "String": "Daily"
+          },
+          "required_item": {
+            "Integer": 1071
+          },
+          "rewards": {
+            "List": [
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 2
+                  },
+                  "item_id": {
+                    "Integer": 1072
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 4
+                  },
+                  "item_id": {
+                    "Integer": 1073
+                  }
+                }
+              }
+            ]
+          },
+          "start_pos": {
+            "Object": {
+              "x": {
+                "Float": 24.0
+              },
+              "y": {
+                "Float": 0.0
+              },
+              "z": {
+                "Float": 14.0
+              }
+            }
+          },
+          "title": {
+            "String": "Quest 5024"
+          },
+          "unlock_skills": {
+            "List": [
+              {
+                "Integer": 115
+              },
+              {
+                "Integer": 116
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 5025
+          },
+          "quest_type": {
+            "String": "Main"
+          },
+          "required_item": {
+            "Integer": 1072
+          },
+          "rewards": {
+            "List": [
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 2
+                  },
+                  "item_id": {
+                    "Integer": 1073
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 4
+                  },
+                  "item_id": {
+                    "Integer": 1074
+                  }
+                }
+              }
+            ]
+          },
+          "start_pos": {
+            "Object": {
+              "x": {
+                "Float": 25.0
+              },
+              "y": {
+                "Float": 0.0
+              },
+              "z": {
+                "Float": 15.0
+              }
+            }
+          },
+          "title": {
+            "String": "Quest 5025"
+          },
+          "unlock_skills": {
+            "List": [
+              {
+                "Integer": 116
+              },
+              {
+                "Integer": 117
+              }
+            ]
+          }
+        }
       }
     ]
   }

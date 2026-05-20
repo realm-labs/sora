@@ -1,0 +1,1127 @@
+{
+  "table": {
+    "name": "LevelExp",
+    "rows": [
+      {
+        "values": {
+          "exp": {
+            "Integer": 100
+          },
+          "level": {
+            "Integer": 1
+          },
+          "unlock_feature": "Null"
+        }
+      },
+      {
+        "values": {
+          "exp": {
+            "Integer": 400
+          },
+          "level": {
+            "Integer": 2
+          },
+          "unlock_feature": "Null"
+        }
+      },
+      {
+        "values": {
+          "exp": {
+            "Integer": 900
+          },
+          "level": {
+            "Integer": 3
+          },
+          "unlock_feature": "Null"
+        }
+      },
+      {
+        "values": {
+          "exp": {
+            "Integer": 1600
+          },
+          "level": {
+            "Integer": 4
+          },
+          "unlock_feature": "Null"
+        }
+      },
+      {
+        "values": {
+          "exp": {
+            "Integer": 2500
+          },
+          "level": {
+            "Integer": 5
+          },
+          "unlock_feature": "Null"
+        }
+      },
+      {
+        "values": {
+          "exp": {
+            "Integer": 3600
+          },
+          "level": {
+            "Integer": 6
+          },
+          "unlock_feature": "Null"
+        }
+      },
+      {
+        "values": {
+          "exp": {
+            "Integer": 4900
+          },
+          "level": {
+            "Integer": 7
+          },
+          "unlock_feature": "Null"
+        }
+      },
+      {
+        "values": {
+          "exp": {
+            "Integer": 6400
+          },
+          "level": {
+            "Integer": 8
+          },
+          "unlock_feature": "Null"
+        }
+      },
+      {
+        "values": {
+          "exp": {
+            "Integer": 8100
+          },
+          "level": {
+            "Integer": 9
+          },
+          "unlock_feature": "Null"
+        }
+      },
+      {
+        "values": {
+          "exp": {
+            "Integer": 10000
+          },
+          "level": {
+            "Integer": 10
+          },
+          "unlock_feature": {
+            "String": "feature_10"
+          }
+        }
+      },
+      {
+        "values": {
+          "exp": {
+            "Integer": 12100
+          },
+          "level": {
+            "Integer": 11
+          },
+          "unlock_feature": "Null"
+        }
+      },
+      {
+        "values": {
+          "exp": {
+            "Integer": 14400
+          },
+          "level": {
+            "Integer": 12
+          },
+          "unlock_feature": "Null"
+        }
+      },
+      {
+        "values": {
+          "exp": {
+            "Integer": 16900
+          },
+          "level": {
+            "Integer": 13
+          },
+          "unlock_feature": "Null"
+        }
+      },
+      {
+        "values": {
+          "exp": {
+            "Integer": 19600
+          },
+          "level": {
+            "Integer": 14
+          },
+          "unlock_feature": "Null"
+        }
+      },
+      {
+        "values": {
+          "exp": {
+            "Integer": 22500
+          },
+          "level": {
+            "Integer": 15
+          },
+          "unlock_feature": "Null"
+        }
+      },
+      {
+        "values": {
+          "exp": {
+            "Integer": 25600
+          },
+          "level": {
+            "Integer": 16
+          },
+          "unlock_feature": "Null"
+        }
+      },
+      {
+        "values": {
+          "exp": {
+            "Integer": 28900
+          },
+          "level": {
+            "Integer": 17
+          },
+          "unlock_feature": "Null"
+        }
+      },
+      {
+        "values": {
+          "exp": {
+            "Integer": 32400
+          },
+          "level": {
+            "Integer": 18
+          },
+          "unlock_feature": "Null"
+        }
+      },
+      {
+        "values": {
+          "exp": {
+            "Integer": 36100
+          },
+          "level": {
+            "Integer": 19
+          },
+          "unlock_feature": "Null"
+        }
+      },
+      {
+        "values": {
+          "exp": {
+            "Integer": 40000
+          },
+          "level": {
+            "Integer": 20
+          },
+          "unlock_feature": {
+            "String": "feature_20"
+          }
+        }
+      },
+      {
+        "values": {
+          "exp": {
+            "Integer": 44100
+          },
+          "level": {
+            "Integer": 21
+          },
+          "unlock_feature": "Null"
+        }
+      },
+      {
+        "values": {
+          "exp": {
+            "Integer": 48400
+          },
+          "level": {
+            "Integer": 22
+          },
+          "unlock_feature": "Null"
+        }
+      },
+      {
+        "values": {
+          "exp": {
+            "Integer": 52900
+          },
+          "level": {
+            "Integer": 23
+          },
+          "unlock_feature": "Null"
+        }
+      },
+      {
+        "values": {
+          "exp": {
+            "Integer": 57600
+          },
+          "level": {
+            "Integer": 24
+          },
+          "unlock_feature": "Null"
+        }
+      },
+      {
+        "values": {
+          "exp": {
+            "Integer": 62500
+          },
+          "level": {
+            "Integer": 25
+          },
+          "unlock_feature": "Null"
+        }
+      },
+      {
+        "values": {
+          "exp": {
+            "Integer": 67600
+          },
+          "level": {
+            "Integer": 26
+          },
+          "unlock_feature": "Null"
+        }
+      },
+      {
+        "values": {
+          "exp": {
+            "Integer": 72900
+          },
+          "level": {
+            "Integer": 27
+          },
+          "unlock_feature": "Null"
+        }
+      },
+      {
+        "values": {
+          "exp": {
+            "Integer": 78400
+          },
+          "level": {
+            "Integer": 28
+          },
+          "unlock_feature": "Null"
+        }
+      },
+      {
+        "values": {
+          "exp": {
+            "Integer": 84100
+          },
+          "level": {
+            "Integer": 29
+          },
+          "unlock_feature": "Null"
+        }
+      },
+      {
+        "values": {
+          "exp": {
+            "Integer": 90000
+          },
+          "level": {
+            "Integer": 30
+          },
+          "unlock_feature": {
+            "String": "feature_30"
+          }
+        }
+      },
+      {
+        "values": {
+          "exp": {
+            "Integer": 96100
+          },
+          "level": {
+            "Integer": 31
+          },
+          "unlock_feature": "Null"
+        }
+      },
+      {
+        "values": {
+          "exp": {
+            "Integer": 102400
+          },
+          "level": {
+            "Integer": 32
+          },
+          "unlock_feature": "Null"
+        }
+      },
+      {
+        "values": {
+          "exp": {
+            "Integer": 108900
+          },
+          "level": {
+            "Integer": 33
+          },
+          "unlock_feature": "Null"
+        }
+      },
+      {
+        "values": {
+          "exp": {
+            "Integer": 115600
+          },
+          "level": {
+            "Integer": 34
+          },
+          "unlock_feature": "Null"
+        }
+      },
+      {
+        "values": {
+          "exp": {
+            "Integer": 122500
+          },
+          "level": {
+            "Integer": 35
+          },
+          "unlock_feature": "Null"
+        }
+      },
+      {
+        "values": {
+          "exp": {
+            "Integer": 129600
+          },
+          "level": {
+            "Integer": 36
+          },
+          "unlock_feature": "Null"
+        }
+      },
+      {
+        "values": {
+          "exp": {
+            "Integer": 136900
+          },
+          "level": {
+            "Integer": 37
+          },
+          "unlock_feature": "Null"
+        }
+      },
+      {
+        "values": {
+          "exp": {
+            "Integer": 144400
+          },
+          "level": {
+            "Integer": 38
+          },
+          "unlock_feature": "Null"
+        }
+      },
+      {
+        "values": {
+          "exp": {
+            "Integer": 152100
+          },
+          "level": {
+            "Integer": 39
+          },
+          "unlock_feature": "Null"
+        }
+      },
+      {
+        "values": {
+          "exp": {
+            "Integer": 160000
+          },
+          "level": {
+            "Integer": 40
+          },
+          "unlock_feature": {
+            "String": "feature_40"
+          }
+        }
+      },
+      {
+        "values": {
+          "exp": {
+            "Integer": 168100
+          },
+          "level": {
+            "Integer": 41
+          },
+          "unlock_feature": "Null"
+        }
+      },
+      {
+        "values": {
+          "exp": {
+            "Integer": 176400
+          },
+          "level": {
+            "Integer": 42
+          },
+          "unlock_feature": "Null"
+        }
+      },
+      {
+        "values": {
+          "exp": {
+            "Integer": 184900
+          },
+          "level": {
+            "Integer": 43
+          },
+          "unlock_feature": "Null"
+        }
+      },
+      {
+        "values": {
+          "exp": {
+            "Integer": 193600
+          },
+          "level": {
+            "Integer": 44
+          },
+          "unlock_feature": "Null"
+        }
+      },
+      {
+        "values": {
+          "exp": {
+            "Integer": 202500
+          },
+          "level": {
+            "Integer": 45
+          },
+          "unlock_feature": "Null"
+        }
+      },
+      {
+        "values": {
+          "exp": {
+            "Integer": 211600
+          },
+          "level": {
+            "Integer": 46
+          },
+          "unlock_feature": "Null"
+        }
+      },
+      {
+        "values": {
+          "exp": {
+            "Integer": 220900
+          },
+          "level": {
+            "Integer": 47
+          },
+          "unlock_feature": "Null"
+        }
+      },
+      {
+        "values": {
+          "exp": {
+            "Integer": 230400
+          },
+          "level": {
+            "Integer": 48
+          },
+          "unlock_feature": "Null"
+        }
+      },
+      {
+        "values": {
+          "exp": {
+            "Integer": 240100
+          },
+          "level": {
+            "Integer": 49
+          },
+          "unlock_feature": "Null"
+        }
+      },
+      {
+        "values": {
+          "exp": {
+            "Integer": 250000
+          },
+          "level": {
+            "Integer": 50
+          },
+          "unlock_feature": {
+            "String": "feature_50"
+          }
+        }
+      },
+      {
+        "values": {
+          "exp": {
+            "Integer": 260100
+          },
+          "level": {
+            "Integer": 51
+          },
+          "unlock_feature": "Null"
+        }
+      },
+      {
+        "values": {
+          "exp": {
+            "Integer": 270400
+          },
+          "level": {
+            "Integer": 52
+          },
+          "unlock_feature": "Null"
+        }
+      },
+      {
+        "values": {
+          "exp": {
+            "Integer": 280900
+          },
+          "level": {
+            "Integer": 53
+          },
+          "unlock_feature": "Null"
+        }
+      },
+      {
+        "values": {
+          "exp": {
+            "Integer": 291600
+          },
+          "level": {
+            "Integer": 54
+          },
+          "unlock_feature": "Null"
+        }
+      },
+      {
+        "values": {
+          "exp": {
+            "Integer": 302500
+          },
+          "level": {
+            "Integer": 55
+          },
+          "unlock_feature": "Null"
+        }
+      },
+      {
+        "values": {
+          "exp": {
+            "Integer": 313600
+          },
+          "level": {
+            "Integer": 56
+          },
+          "unlock_feature": "Null"
+        }
+      },
+      {
+        "values": {
+          "exp": {
+            "Integer": 324900
+          },
+          "level": {
+            "Integer": 57
+          },
+          "unlock_feature": "Null"
+        }
+      },
+      {
+        "values": {
+          "exp": {
+            "Integer": 336400
+          },
+          "level": {
+            "Integer": 58
+          },
+          "unlock_feature": "Null"
+        }
+      },
+      {
+        "values": {
+          "exp": {
+            "Integer": 348100
+          },
+          "level": {
+            "Integer": 59
+          },
+          "unlock_feature": "Null"
+        }
+      },
+      {
+        "values": {
+          "exp": {
+            "Integer": 360000
+          },
+          "level": {
+            "Integer": 60
+          },
+          "unlock_feature": {
+            "String": "feature_60"
+          }
+        }
+      },
+      {
+        "values": {
+          "exp": {
+            "Integer": 372100
+          },
+          "level": {
+            "Integer": 61
+          },
+          "unlock_feature": "Null"
+        }
+      },
+      {
+        "values": {
+          "exp": {
+            "Integer": 384400
+          },
+          "level": {
+            "Integer": 62
+          },
+          "unlock_feature": "Null"
+        }
+      },
+      {
+        "values": {
+          "exp": {
+            "Integer": 396900
+          },
+          "level": {
+            "Integer": 63
+          },
+          "unlock_feature": "Null"
+        }
+      },
+      {
+        "values": {
+          "exp": {
+            "Integer": 409600
+          },
+          "level": {
+            "Integer": 64
+          },
+          "unlock_feature": "Null"
+        }
+      },
+      {
+        "values": {
+          "exp": {
+            "Integer": 422500
+          },
+          "level": {
+            "Integer": 65
+          },
+          "unlock_feature": "Null"
+        }
+      },
+      {
+        "values": {
+          "exp": {
+            "Integer": 435600
+          },
+          "level": {
+            "Integer": 66
+          },
+          "unlock_feature": "Null"
+        }
+      },
+      {
+        "values": {
+          "exp": {
+            "Integer": 448900
+          },
+          "level": {
+            "Integer": 67
+          },
+          "unlock_feature": "Null"
+        }
+      },
+      {
+        "values": {
+          "exp": {
+            "Integer": 462400
+          },
+          "level": {
+            "Integer": 68
+          },
+          "unlock_feature": "Null"
+        }
+      },
+      {
+        "values": {
+          "exp": {
+            "Integer": 476100
+          },
+          "level": {
+            "Integer": 69
+          },
+          "unlock_feature": "Null"
+        }
+      },
+      {
+        "values": {
+          "exp": {
+            "Integer": 490000
+          },
+          "level": {
+            "Integer": 70
+          },
+          "unlock_feature": {
+            "String": "feature_70"
+          }
+        }
+      },
+      {
+        "values": {
+          "exp": {
+            "Integer": 504100
+          },
+          "level": {
+            "Integer": 71
+          },
+          "unlock_feature": "Null"
+        }
+      },
+      {
+        "values": {
+          "exp": {
+            "Integer": 518400
+          },
+          "level": {
+            "Integer": 72
+          },
+          "unlock_feature": "Null"
+        }
+      },
+      {
+        "values": {
+          "exp": {
+            "Integer": 532900
+          },
+          "level": {
+            "Integer": 73
+          },
+          "unlock_feature": "Null"
+        }
+      },
+      {
+        "values": {
+          "exp": {
+            "Integer": 547600
+          },
+          "level": {
+            "Integer": 74
+          },
+          "unlock_feature": "Null"
+        }
+      },
+      {
+        "values": {
+          "exp": {
+            "Integer": 562500
+          },
+          "level": {
+            "Integer": 75
+          },
+          "unlock_feature": "Null"
+        }
+      },
+      {
+        "values": {
+          "exp": {
+            "Integer": 577600
+          },
+          "level": {
+            "Integer": 76
+          },
+          "unlock_feature": "Null"
+        }
+      },
+      {
+        "values": {
+          "exp": {
+            "Integer": 592900
+          },
+          "level": {
+            "Integer": 77
+          },
+          "unlock_feature": "Null"
+        }
+      },
+      {
+        "values": {
+          "exp": {
+            "Integer": 608400
+          },
+          "level": {
+            "Integer": 78
+          },
+          "unlock_feature": "Null"
+        }
+      },
+      {
+        "values": {
+          "exp": {
+            "Integer": 624100
+          },
+          "level": {
+            "Integer": 79
+          },
+          "unlock_feature": "Null"
+        }
+      },
+      {
+        "values": {
+          "exp": {
+            "Integer": 640000
+          },
+          "level": {
+            "Integer": 80
+          },
+          "unlock_feature": {
+            "String": "feature_80"
+          }
+        }
+      },
+      {
+        "values": {
+          "exp": {
+            "Integer": 656100
+          },
+          "level": {
+            "Integer": 81
+          },
+          "unlock_feature": "Null"
+        }
+      },
+      {
+        "values": {
+          "exp": {
+            "Integer": 672400
+          },
+          "level": {
+            "Integer": 82
+          },
+          "unlock_feature": "Null"
+        }
+      },
+      {
+        "values": {
+          "exp": {
+            "Integer": 688900
+          },
+          "level": {
+            "Integer": 83
+          },
+          "unlock_feature": "Null"
+        }
+      },
+      {
+        "values": {
+          "exp": {
+            "Integer": 705600
+          },
+          "level": {
+            "Integer": 84
+          },
+          "unlock_feature": "Null"
+        }
+      },
+      {
+        "values": {
+          "exp": {
+            "Integer": 722500
+          },
+          "level": {
+            "Integer": 85
+          },
+          "unlock_feature": "Null"
+        }
+      },
+      {
+        "values": {
+          "exp": {
+            "Integer": 739600
+          },
+          "level": {
+            "Integer": 86
+          },
+          "unlock_feature": "Null"
+        }
+      },
+      {
+        "values": {
+          "exp": {
+            "Integer": 756900
+          },
+          "level": {
+            "Integer": 87
+          },
+          "unlock_feature": "Null"
+        }
+      },
+      {
+        "values": {
+          "exp": {
+            "Integer": 774400
+          },
+          "level": {
+            "Integer": 88
+          },
+          "unlock_feature": "Null"
+        }
+      },
+      {
+        "values": {
+          "exp": {
+            "Integer": 792100
+          },
+          "level": {
+            "Integer": 89
+          },
+          "unlock_feature": "Null"
+        }
+      },
+      {
+        "values": {
+          "exp": {
+            "Integer": 810000
+          },
+          "level": {
+            "Integer": 90
+          },
+          "unlock_feature": {
+            "String": "feature_90"
+          }
+        }
+      },
+      {
+        "values": {
+          "exp": {
+            "Integer": 828100
+          },
+          "level": {
+            "Integer": 91
+          },
+          "unlock_feature": "Null"
+        }
+      },
+      {
+        "values": {
+          "exp": {
+            "Integer": 846400
+          },
+          "level": {
+            "Integer": 92
+          },
+          "unlock_feature": "Null"
+        }
+      },
+      {
+        "values": {
+          "exp": {
+            "Integer": 864900
+          },
+          "level": {
+            "Integer": 93
+          },
+          "unlock_feature": "Null"
+        }
+      },
+      {
+        "values": {
+          "exp": {
+            "Integer": 883600
+          },
+          "level": {
+            "Integer": 94
+          },
+          "unlock_feature": "Null"
+        }
+      },
+      {
+        "values": {
+          "exp": {
+            "Integer": 902500
+          },
+          "level": {
+            "Integer": 95
+          },
+          "unlock_feature": "Null"
+        }
+      },
+      {
+        "values": {
+          "exp": {
+            "Integer": 921600
+          },
+          "level": {
+            "Integer": 96
+          },
+          "unlock_feature": "Null"
+        }
+      },
+      {
+        "values": {
+          "exp": {
+            "Integer": 940900
+          },
+          "level": {
+            "Integer": 97
+          },
+          "unlock_feature": "Null"
+        }
+      },
+      {
+        "values": {
+          "exp": {
+            "Integer": 960400
+          },
+          "level": {
+            "Integer": 98
+          },
+          "unlock_feature": "Null"
+        }
+      },
+      {
+        "values": {
+          "exp": {
+            "Integer": 980100
+          },
+          "level": {
+            "Integer": 99
+          },
+          "unlock_feature": "Null"
+        }
+      },
+      {
+        "values": {
+          "exp": {
+            "Integer": 1000000
+          },
+          "level": {
+            "Integer": 100
+          },
+          "unlock_feature": {
+            "String": "feature_100"
+          }
+        }
+      }
+    ]
+  }
+}

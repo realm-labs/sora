@@ -14,6 +14,18 @@ values = ["Fire", "Ice", "Lightning", "Physical"]
 name = "QuestType"
 values = ["Main", "Side", "Daily"]
 
+[[enums]]
+name = "Rarity"
+values = ["Common", "Uncommon", "Rare", "Epic", "Legendary"]
+
+[[enums]]
+name = "StatType"
+values = ["Hp", "Attack", "Defense", "Speed", "CritRate"]
+
+[[enums]]
+name = "MailType"
+values = ["System", "Event", "Compensation"]
+
 [[structs]]
 name = "ResourceCost"
 
@@ -84,6 +96,24 @@ type = "i32"
 required = true
 range = [1, 9999]
 
+[[structs]]
+name = "StatModifier"
+
+[[structs.fields]]
+name = "stat"
+type = "enum<StatType>"
+required = true
+
+[[structs.fields]]
+name = "value"
+type = "f32"
+required = true
+
+[[structs.fields]]
+name = "is_percent"
+type = "bool"
+default = "false"
+
 [[tables]]
 name = "Item"
 mode = "map"
@@ -91,7 +121,7 @@ key = "id"
 
 [tables.source]
 format = "xlsx"
-file = "GameConfig.xlsx"
+file = "Core.xlsx"
 sheet = "Item"
 
 [[tables.fields]]
@@ -151,7 +181,7 @@ key = "id"
 
 [tables.source]
 format = "xlsx"
-file = "GameConfig.xlsx"
+file = "Battle.xlsx"
 sheet = "Skill"
 
 [[tables.fields]]
@@ -210,7 +240,7 @@ key = "id"
 
 [tables.source]
 format = "xlsx"
-file = "GameConfig.xlsx"
+file = "Quest.xlsx"
 sheet = "Quest"
 
 [[tables.fields]]
@@ -266,7 +296,7 @@ mode = "list"
 
 [tables.source]
 format = "xlsx"
-file = "GameConfig.xlsx"
+file = "Quest.xlsx"
 sheet = "QuestReward"
 
 [[tables.fields]]
@@ -296,7 +326,7 @@ mode = "singleton"
 
 [tables.source]
 format = "xlsx"
-file = "GameConfig.xlsx"
+file = "Core.xlsx"
 sheet = "GameSettings"
 
 [[tables.fields]]
@@ -330,4 +360,728 @@ separator = ","
 prefix = "["
 suffix = "]"
 length = [1, 4]
+required = true
+
+[[tables]]
+name = "Localization"
+mode = "map"
+key = "key"
+
+[tables.source]
+format = "xlsx"
+file = "Core.xlsx"
+sheet = "Localization"
+
+[[tables.fields]]
+name = "key"
+type = "string"
+key = true
+required = true
+length = [3, 64]
+
+[[tables.fields]]
+name = "zh_cn"
+type = "string"
+required = true
+
+[[tables.fields]]
+name = "en_us"
+type = "string"
+required = true
+
+[[tables.fields]]
+name = "note"
+type = "optional<string>"
+
+[[tables]]
+name = "LevelExp"
+mode = "map"
+key = "level"
+
+[tables.source]
+format = "xlsx"
+file = "Core.xlsx"
+sheet = "LevelExp"
+
+[[tables.fields]]
+name = "level"
+type = "i32"
+key = true
+required = true
+range = [1, 100]
+
+[[tables.fields]]
+name = "exp"
+type = "i64"
+required = true
+range = [0, 999999999]
+
+[[tables.fields]]
+name = "unlock_feature"
+type = "optional<string>"
+
+[[tables]]
+name = "Character"
+mode = "map"
+key = "id"
+
+[tables.source]
+format = "xlsx"
+file = "Battle.xlsx"
+sheet = "Character"
+
+[[tables.fields]]
+name = "id"
+type = "i32"
+key = true
+required = true
+
+[[tables.fields]]
+name = "name"
+type = "string"
+required = true
+length = [2, 32]
+
+[[tables.fields]]
+name = "rarity"
+type = "enum<Rarity>"
+required = true
+
+[[tables.fields]]
+name = "base_level"
+type = "ref<LevelExp.level>"
+required = true
+
+[[tables.fields]]
+name = "base_skill"
+type = "ref<Skill.id>"
+required = true
+
+[[tables.fields]]
+name = "starter_items"
+type = "list<ref<Item.id>>"
+separator = ","
+prefix = "["
+suffix = "]"
+length = [1, 4]
+required = true
+
+[[tables.fields]]
+name = "spawn_pos"
+type = "struct<Vec3>"
+parser = "tuple"
+separator = ","
+required = true
+
+[[tables]]
+name = "CharacterSkill"
+mode = "list"
+
+[tables.source]
+format = "xlsx"
+file = "Battle.xlsx"
+sheet = "CharacterSkill"
+
+[[tables.fields]]
+name = "character_id"
+type = "ref<Character.id>"
+required = true
+
+[[tables.fields]]
+name = "skill_id"
+type = "ref<Skill.id>"
+required = true
+
+[[tables.fields]]
+name = "unlock_level"
+type = "ref<LevelExp.level>"
+required = true
+
+[[tables]]
+name = "Buff"
+mode = "map"
+key = "id"
+
+[tables.source]
+format = "xlsx"
+file = "Battle.xlsx"
+sheet = "Buff"
+
+[[tables.fields]]
+name = "id"
+type = "i32"
+key = true
+required = true
+
+[[tables.fields]]
+name = "name"
+type = "string"
+required = true
+
+[[tables.fields]]
+name = "duration"
+type = "f32"
+required = true
+
+[[tables.fields]]
+name = "modifiers"
+type = "list<StatModifier>"
+separator = ","
+prefix = "["
+suffix = "]"
+length = [1, 3]
+required = true
+
+[[tables]]
+name = "DropGroup"
+mode = "map"
+key = "id"
+
+[tables.source]
+format = "xlsx"
+file = "Battle.xlsx"
+sheet = "DropGroup"
+
+[[tables.fields]]
+name = "id"
+type = "i32"
+key = true
+required = true
+
+[[tables.fields]]
+name = "name"
+type = "string"
+required = true
+
+[[tables]]
+name = "DropEntry"
+mode = "list"
+
+[tables.source]
+format = "xlsx"
+file = "Battle.xlsx"
+sheet = "DropEntry"
+
+[[tables.fields]]
+name = "group_id"
+type = "ref<DropGroup.id>"
+required = true
+
+[[tables.fields]]
+name = "seq"
+type = "i32"
+required = true
+
+[[tables.fields]]
+name = "item_id"
+type = "ref<Item.id>"
+required = true
+
+[[tables.fields]]
+name = "count"
+type = "i32"
+required = true
+range = [1, 9999]
+
+[[tables.fields]]
+name = "weight"
+type = "f32"
+required = true
+
+[[tables]]
+name = "Monster"
+mode = "map"
+key = "id"
+
+[tables.source]
+format = "xlsx"
+file = "Battle.xlsx"
+sheet = "Monster"
+
+[[tables.fields]]
+name = "id"
+type = "i32"
+key = true
+required = true
+
+[[tables.fields]]
+name = "name"
+type = "string"
+required = true
+
+[[tables.fields]]
+name = "level"
+type = "ref<LevelExp.level>"
+required = true
+
+[[tables.fields]]
+name = "element"
+type = "enum<ElementType>"
+required = true
+
+[[tables.fields]]
+name = "drop_group"
+type = "ref<DropGroup.id>"
+required = true
+
+[[tables.fields]]
+name = "spawn_pos"
+type = "struct<Vec3>"
+parser = "tuple"
+separator = ","
+required = true
+
+[[tables]]
+name = "Stage"
+mode = "map"
+key = "id"
+
+[tables.source]
+format = "xlsx"
+file = "Battle.xlsx"
+sheet = "Stage"
+
+[[tables.fields]]
+name = "id"
+type = "i32"
+key = true
+required = true
+
+[[tables.fields]]
+name = "name"
+type = "string"
+required = true
+
+[[tables.fields]]
+name = "monster_ids"
+type = "list<ref<Monster.id>>"
+separator = ","
+prefix = "["
+suffix = "]"
+length = [1, 5]
+required = true
+
+[[tables.fields]]
+name = "recommended_power"
+type = "i32"
+required = true
+
+[[tables.fields]]
+name = "first_clear_rewards"
+type = "list<Reward>"
+source_table = "StageReward"
+parent_key = "id"
+child_key = "stage_id"
+order_by = "seq"
+
+[[tables]]
+name = "StageReward"
+mode = "list"
+
+[tables.source]
+format = "xlsx"
+file = "Battle.xlsx"
+sheet = "StageReward"
+
+[[tables.fields]]
+name = "stage_id"
+type = "ref<Stage.id>"
+required = true
+
+[[tables.fields]]
+name = "seq"
+type = "i32"
+required = true
+
+[[tables.fields]]
+name = "item_id"
+type = "ref<Item.id>"
+required = true
+
+[[tables.fields]]
+name = "count"
+type = "i32"
+required = true
+
+[[tables]]
+name = "Dungeon"
+mode = "map"
+key = "id"
+
+[tables.source]
+format = "xlsx"
+file = "Battle.xlsx"
+sheet = "Dungeon"
+
+[[tables.fields]]
+name = "id"
+type = "i32"
+key = true
+required = true
+
+[[tables.fields]]
+name = "name"
+type = "string"
+required = true
+
+[[tables.fields]]
+name = "stage_ids"
+type = "list<ref<Stage.id>>"
+separator = ","
+prefix = "["
+suffix = "]"
+length = [2, 6]
+required = true
+
+[[tables.fields]]
+name = "entry_cost"
+type = "struct<ResourceCost>"
+parser = "tuple"
+separator = ","
+required = true
+
+[[tables]]
+name = "Shop"
+mode = "map"
+key = "id"
+
+[tables.source]
+format = "xlsx"
+file = "Economy.xlsx"
+sheet = "Shop"
+
+[[tables.fields]]
+name = "id"
+type = "i32"
+key = true
+required = true
+
+[[tables.fields]]
+name = "name"
+type = "string"
+required = true
+
+[[tables.fields]]
+name = "currency"
+type = "enum<ResourceKind>"
+required = true
+
+[[tables]]
+name = "ShopItem"
+mode = "list"
+
+[tables.source]
+format = "xlsx"
+file = "Economy.xlsx"
+sheet = "ShopItem"
+
+[[tables.fields]]
+name = "shop_id"
+type = "ref<Shop.id>"
+required = true
+
+[[tables.fields]]
+name = "seq"
+type = "i32"
+required = true
+
+[[tables.fields]]
+name = "item_id"
+type = "ref<Item.id>"
+required = true
+
+[[tables.fields]]
+name = "price"
+type = "struct<ResourceCost>"
+parser = "tuple"
+separator = ","
+required = true
+
+[[tables.fields]]
+name = "daily_limit"
+type = "optional<i32>"
+
+[[tables]]
+name = "Recipe"
+mode = "map"
+key = "id"
+
+[tables.source]
+format = "xlsx"
+file = "Economy.xlsx"
+sheet = "Recipe"
+
+[[tables.fields]]
+name = "id"
+type = "i32"
+key = true
+required = true
+
+[[tables.fields]]
+name = "result_item"
+type = "ref<Item.id>"
+required = true
+
+[[tables.fields]]
+name = "materials"
+type = "list<ResourceCost>"
+separator = ","
+prefix = "["
+suffix = "]"
+length = [1, 4]
+required = true
+
+[[tables]]
+name = "GachaPool"
+mode = "map"
+key = "id"
+
+[tables.source]
+format = "xlsx"
+file = "Economy.xlsx"
+sheet = "GachaPool"
+
+[[tables.fields]]
+name = "id"
+type = "i32"
+key = true
+required = true
+
+[[tables.fields]]
+name = "name"
+type = "string"
+required = true
+
+[[tables.fields]]
+name = "cost"
+type = "struct<ResourceCost>"
+parser = "tuple"
+separator = ","
+required = true
+
+[[tables]]
+name = "GachaItem"
+mode = "list"
+
+[tables.source]
+format = "xlsx"
+file = "Economy.xlsx"
+sheet = "GachaItem"
+
+[[tables.fields]]
+name = "pool_id"
+type = "ref<GachaPool.id>"
+required = true
+
+[[tables.fields]]
+name = "item_id"
+type = "ref<Item.id>"
+required = true
+
+[[tables.fields]]
+name = "rarity"
+type = "enum<Rarity>"
+required = true
+
+[[tables.fields]]
+name = "weight"
+type = "f32"
+required = true
+
+[[tables]]
+name = "EquipmentSet"
+mode = "map"
+key = "id"
+
+[tables.source]
+format = "xlsx"
+file = "Economy.xlsx"
+sheet = "EquipmentSet"
+
+[[tables.fields]]
+name = "id"
+type = "i32"
+key = true
+required = true
+
+[[tables.fields]]
+name = "name"
+type = "string"
+required = true
+
+[[tables.fields]]
+name = "item_ids"
+type = "list<ref<Item.id>>"
+separator = ","
+prefix = "["
+suffix = "]"
+length = [2, 4]
+required = true
+
+[[tables.fields]]
+name = "bonus_effect"
+type = "struct<SkillEffect>"
+required = true
+
+[[tables]]
+name = "Achievement"
+mode = "map"
+key = "id"
+
+[tables.source]
+format = "xlsx"
+file = "Economy.xlsx"
+sheet = "Achievement"
+
+[[tables.fields]]
+name = "id"
+type = "i32"
+key = true
+required = true
+
+[[tables.fields]]
+name = "title_key"
+type = "string"
+required = true
+
+[[tables.fields]]
+name = "target_count"
+type = "i64"
+required = true
+
+[[tables.fields]]
+name = "reward"
+type = "struct<ResourceCost>"
+parser = "tuple"
+separator = ","
+required = true
+
+[[tables]]
+name = "VipLevel"
+mode = "map"
+key = "level"
+
+[tables.source]
+format = "xlsx"
+file = "Economy.xlsx"
+sheet = "VipLevel"
+
+[[tables.fields]]
+name = "level"
+type = "i32"
+key = true
+required = true
+
+[[tables.fields]]
+name = "cost"
+type = "struct<ResourceCost>"
+parser = "tuple"
+separator = ","
+required = true
+
+[[tables.fields]]
+name = "perks"
+type = "list<string>"
+separator = ","
+prefix = "["
+suffix = "]"
+length = [1, 5]
+required = true
+
+[[tables]]
+name = "MailTemplate"
+mode = "map"
+key = "id"
+
+[tables.source]
+format = "xlsx"
+file = "Quest.xlsx"
+sheet = "MailTemplate"
+
+[[tables.fields]]
+name = "id"
+type = "i32"
+key = true
+required = true
+
+[[tables.fields]]
+name = "mail_type"
+type = "enum<MailType>"
+required = true
+
+[[tables.fields]]
+name = "title_key"
+type = "string"
+required = true
+
+[[tables.fields]]
+name = "body_key"
+type = "string"
+required = true
+
+[[tables.fields]]
+name = "rewards"
+type = "list<Reward>"
+source_table = "MailReward"
+parent_key = "id"
+child_key = "mail_id"
+order_by = "seq"
+
+[[tables]]
+name = "MailReward"
+mode = "list"
+
+[tables.source]
+format = "xlsx"
+file = "Quest.xlsx"
+sheet = "MailReward"
+
+[[tables.fields]]
+name = "mail_id"
+type = "ref<MailTemplate.id>"
+required = true
+
+[[tables.fields]]
+name = "seq"
+type = "i32"
+required = true
+
+[[tables.fields]]
+name = "item_id"
+type = "ref<Item.id>"
+required = true
+
+[[tables.fields]]
+name = "count"
+type = "i32"
+required = true
+
+[[tables]]
+name = "Dialogue"
+mode = "map"
+key = "id"
+
+[tables.source]
+format = "xlsx"
+file = "Quest.xlsx"
+sheet = "Dialogue"
+
+[[tables.fields]]
+name = "id"
+type = "i32"
+key = true
+required = true
+
+[[tables.fields]]
+name = "speaker_key"
+type = "string"
+required = true
+
+[[tables.fields]]
+name = "lines"
+type = "list<string>"
+separator = ","
+prefix = "["
+suffix = "]"
+length = [1, 5]
 required = true

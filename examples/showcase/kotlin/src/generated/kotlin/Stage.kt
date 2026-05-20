@@ -1,0 +1,20 @@
+package game_config_showcase
+
+data class Stage(
+    val id: Int,
+    val name: String,
+    val monsterIds: List<Int>,
+    val recommendedPower: Int,
+    val firstClearRewards: List<Reward>,
+) {
+    companion object {
+        fun decode(reader: SoraReader): Stage =
+            Stage(
+                id = reader.readI32(),
+                name = reader.readString(),
+                monsterIds = reader.readList { reader.readI32() },
+                recommendedPower = reader.readI32(),
+                firstClearRewards = reader.readList { Reward.decode(reader) },
+            )
+    }
+}

@@ -1,0 +1,207 @@
+{
+  "table": {
+    "name": "DropGroup",
+    "rows": [
+      {
+        "values": {
+          "id": {
+            "Integer": 7001
+          },
+          "name": {
+            "String": "Drop Group 7001"
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 7002
+          },
+          "name": {
+            "String": "Drop Group 7002"
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 7003
+          },
+          "name": {
+            "String": "Drop Group 7003"
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 7004
+          },
+          "name": {
+            "String": "Drop Group 7004"
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 7005
+          },
+          "name": {
+            "String": "Drop Group 7005"
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 7006
+          },
+          "name": {
+            "String": "Drop Group 7006"
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 7007
+          },
+          "name": {
+            "String": "Drop Group 7007"
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 7008
+          },
+          "name": {
+            "String": "Drop Group 7008"
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 7009
+          },
+          "name": {
+            "String": "Drop Group 7009"
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 7010
+          },
+          "name": {
+            "String": "Drop Group 7010"
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 7011
+          },
+          "name": {
+            "String": "Drop Group 7011"
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 7012
+          },
+          "name": {
+            "String": "Drop Group 7012"
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 7013
+          },
+          "name": {
+            "String": "Drop Group 7013"
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 7014
+          },
+          "name": {
+            "String": "Drop Group 7014"
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 7015
+          },
+          "name": {
+            "String": "Drop Group 7015"
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 7016
+          },
+          "name": {
+            "String": "Drop Group 7016"
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 7017
+          },
+          "name": {
+            "String": "Drop Group 7017"
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 7018
+          },
+          "name": {
+            "String": "Drop Group 7018"
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 7019
+          },
+          "name": {
+            "String": "Drop Group 7019"
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 7020
+          },
+          "name": {
+            "String": "Drop Group 7020"
+          }
+        }
+      }
+    ]
+  }
+}

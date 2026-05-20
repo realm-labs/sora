@@ -115,6 +115,1592 @@
             "Integer": 1
           }
         }
+      },
+      {
+        "values": {
+          "cast_origin": {
+            "Object": {
+              "x": {
+                "Float": 3.0
+              },
+              "y": {
+                "Float": 4.0
+              },
+              "z": {
+                "Float": 5.0
+              }
+            }
+          },
+          "cost": {
+            "Object": {
+              "count": {
+                "Integer": 309
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "effect": {
+            "Object": {
+              "element": {
+                "String": "Physical"
+              },
+              "power": {
+                "Integer": 183
+              },
+              "radius": {
+                "Float": 2.5
+              }
+            }
+          },
+          "element": {
+            "String": "Physical"
+          },
+          "id": {
+            "Integer": 103
+          },
+          "name": {
+            "String": "Physical Skill 103"
+          },
+          "required_item": "Null",
+          "required_level": {
+            "Integer": 4
+          }
+        }
+      },
+      {
+        "values": {
+          "cast_origin": {
+            "Object": {
+              "x": {
+                "Float": 4.0
+              },
+              "y": {
+                "Float": 1.0
+              },
+              "z": {
+                "Float": 6.0
+              }
+            }
+          },
+          "cost": {
+            "Object": {
+              "count": {
+                "Integer": 312
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "effect": {
+            "Object": {
+              "element": {
+                "String": "Fire"
+              },
+              "power": {
+                "Integer": 184
+              },
+              "radius": {
+                "Integer": 3
+              }
+            }
+          },
+          "element": {
+            "String": "Fire"
+          },
+          "id": {
+            "Integer": 104
+          },
+          "name": {
+            "String": "Fire Skill 104"
+          },
+          "required_item": "Null",
+          "required_level": {
+            "Integer": 5
+          }
+        }
+      },
+      {
+        "values": {
+          "cast_origin": {
+            "Object": {
+              "x": {
+                "Float": 0.0
+              },
+              "y": {
+                "Float": 2.0
+              },
+              "z": {
+                "Float": 0.0
+              }
+            }
+          },
+          "cost": {
+            "Object": {
+              "count": {
+                "Integer": 315
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "effect": {
+            "Object": {
+              "element": {
+                "String": "Ice"
+              },
+              "power": {
+                "Integer": 185
+              },
+              "radius": {
+                "Integer": 1
+              }
+            }
+          },
+          "element": {
+            "String": "Ice"
+          },
+          "id": {
+            "Integer": 105
+          },
+          "name": {
+            "String": "Ice Skill 105"
+          },
+          "required_item": {
+            "Integer": 1002
+          },
+          "required_level": {
+            "Integer": 6
+          }
+        }
+      },
+      {
+        "values": {
+          "cast_origin": {
+            "Object": {
+              "x": {
+                "Float": 1.0
+              },
+              "y": {
+                "Float": 3.0
+              },
+              "z": {
+                "Float": 1.0
+              }
+            }
+          },
+          "cost": {
+            "Object": {
+              "count": {
+                "Integer": 318
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "effect": {
+            "Object": {
+              "element": {
+                "String": "Lightning"
+              },
+              "power": {
+                "Integer": 186
+              },
+              "radius": {
+                "Float": 1.5
+              }
+            }
+          },
+          "element": {
+            "String": "Lightning"
+          },
+          "id": {
+            "Integer": 106
+          },
+          "name": {
+            "String": "Lightning Skill 106"
+          },
+          "required_item": "Null",
+          "required_level": {
+            "Integer": 7
+          }
+        }
+      },
+      {
+        "values": {
+          "cast_origin": {
+            "Object": {
+              "x": {
+                "Float": 2.0
+              },
+              "y": {
+                "Float": 4.0
+              },
+              "z": {
+                "Float": 2.0
+              }
+            }
+          },
+          "cost": {
+            "Object": {
+              "count": {
+                "Integer": 321
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "effect": {
+            "Object": {
+              "element": {
+                "String": "Physical"
+              },
+              "power": {
+                "Integer": 187
+              },
+              "radius": {
+                "Integer": 2
+              }
+            }
+          },
+          "element": {
+            "String": "Physical"
+          },
+          "id": {
+            "Integer": 107
+          },
+          "name": {
+            "String": "Physical Skill 107"
+          },
+          "required_item": "Null",
+          "required_level": {
+            "Integer": 8
+          }
+        }
+      },
+      {
+        "values": {
+          "cast_origin": {
+            "Object": {
+              "x": {
+                "Float": 3.0
+              },
+              "y": {
+                "Float": 1.0
+              },
+              "z": {
+                "Float": 3.0
+              }
+            }
+          },
+          "cost": {
+            "Object": {
+              "count": {
+                "Integer": 324
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "effect": {
+            "Object": {
+              "element": {
+                "String": "Fire"
+              },
+              "power": {
+                "Integer": 188
+              },
+              "radius": {
+                "Float": 2.5
+              }
+            }
+          },
+          "element": {
+            "String": "Fire"
+          },
+          "id": {
+            "Integer": 108
+          },
+          "name": {
+            "String": "Fire Skill 108"
+          },
+          "required_item": {
+            "Integer": 1002
+          },
+          "required_level": {
+            "Integer": 9
+          }
+        }
+      },
+      {
+        "values": {
+          "cast_origin": {
+            "Object": {
+              "x": {
+                "Float": 4.0
+              },
+              "y": {
+                "Float": 2.0
+              },
+              "z": {
+                "Float": 4.0
+              }
+            }
+          },
+          "cost": {
+            "Object": {
+              "count": {
+                "Integer": 327
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "effect": {
+            "Object": {
+              "element": {
+                "String": "Ice"
+              },
+              "power": {
+                "Integer": 189
+              },
+              "radius": {
+                "Integer": 3
+              }
+            }
+          },
+          "element": {
+            "String": "Ice"
+          },
+          "id": {
+            "Integer": 109
+          },
+          "name": {
+            "String": "Ice Skill 109"
+          },
+          "required_item": "Null",
+          "required_level": {
+            "Integer": 10
+          }
+        }
+      },
+      {
+        "values": {
+          "cast_origin": {
+            "Object": {
+              "x": {
+                "Float": 0.0
+              },
+              "y": {
+                "Float": 3.0
+              },
+              "z": {
+                "Float": 5.0
+              }
+            }
+          },
+          "cost": {
+            "Object": {
+              "count": {
+                "Integer": 330
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "effect": {
+            "Object": {
+              "element": {
+                "String": "Lightning"
+              },
+              "power": {
+                "Integer": 190
+              },
+              "radius": {
+                "Integer": 1
+              }
+            }
+          },
+          "element": {
+            "String": "Lightning"
+          },
+          "id": {
+            "Integer": 110
+          },
+          "name": {
+            "String": "Lightning Skill 110"
+          },
+          "required_item": "Null",
+          "required_level": {
+            "Integer": 11
+          }
+        }
+      },
+      {
+        "values": {
+          "cast_origin": {
+            "Object": {
+              "x": {
+                "Float": 1.0
+              },
+              "y": {
+                "Float": 4.0
+              },
+              "z": {
+                "Float": 6.0
+              }
+            }
+          },
+          "cost": {
+            "Object": {
+              "count": {
+                "Integer": 333
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "effect": {
+            "Object": {
+              "element": {
+                "String": "Physical"
+              },
+              "power": {
+                "Integer": 191
+              },
+              "radius": {
+                "Float": 1.5
+              }
+            }
+          },
+          "element": {
+            "String": "Physical"
+          },
+          "id": {
+            "Integer": 111
+          },
+          "name": {
+            "String": "Physical Skill 111"
+          },
+          "required_item": {
+            "Integer": 1002
+          },
+          "required_level": {
+            "Integer": 12
+          }
+        }
+      },
+      {
+        "values": {
+          "cast_origin": {
+            "Object": {
+              "x": {
+                "Float": 2.0
+              },
+              "y": {
+                "Float": 1.0
+              },
+              "z": {
+                "Float": 0.0
+              }
+            }
+          },
+          "cost": {
+            "Object": {
+              "count": {
+                "Integer": 336
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "effect": {
+            "Object": {
+              "element": {
+                "String": "Fire"
+              },
+              "power": {
+                "Integer": 192
+              },
+              "radius": {
+                "Integer": 2
+              }
+            }
+          },
+          "element": {
+            "String": "Fire"
+          },
+          "id": {
+            "Integer": 112
+          },
+          "name": {
+            "String": "Fire Skill 112"
+          },
+          "required_item": "Null",
+          "required_level": {
+            "Integer": 13
+          }
+        }
+      },
+      {
+        "values": {
+          "cast_origin": {
+            "Object": {
+              "x": {
+                "Float": 3.0
+              },
+              "y": {
+                "Float": 2.0
+              },
+              "z": {
+                "Float": 1.0
+              }
+            }
+          },
+          "cost": {
+            "Object": {
+              "count": {
+                "Integer": 339
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "effect": {
+            "Object": {
+              "element": {
+                "String": "Ice"
+              },
+              "power": {
+                "Integer": 193
+              },
+              "radius": {
+                "Float": 2.5
+              }
+            }
+          },
+          "element": {
+            "String": "Ice"
+          },
+          "id": {
+            "Integer": 113
+          },
+          "name": {
+            "String": "Ice Skill 113"
+          },
+          "required_item": "Null",
+          "required_level": {
+            "Integer": 14
+          }
+        }
+      },
+      {
+        "values": {
+          "cast_origin": {
+            "Object": {
+              "x": {
+                "Float": 4.0
+              },
+              "y": {
+                "Float": 3.0
+              },
+              "z": {
+                "Float": 2.0
+              }
+            }
+          },
+          "cost": {
+            "Object": {
+              "count": {
+                "Integer": 342
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "effect": {
+            "Object": {
+              "element": {
+                "String": "Lightning"
+              },
+              "power": {
+                "Integer": 194
+              },
+              "radius": {
+                "Integer": 3
+              }
+            }
+          },
+          "element": {
+            "String": "Lightning"
+          },
+          "id": {
+            "Integer": 114
+          },
+          "name": {
+            "String": "Lightning Skill 114"
+          },
+          "required_item": {
+            "Integer": 1002
+          },
+          "required_level": {
+            "Integer": 15
+          }
+        }
+      },
+      {
+        "values": {
+          "cast_origin": {
+            "Object": {
+              "x": {
+                "Float": 0.0
+              },
+              "y": {
+                "Float": 4.0
+              },
+              "z": {
+                "Float": 3.0
+              }
+            }
+          },
+          "cost": {
+            "Object": {
+              "count": {
+                "Integer": 345
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "effect": {
+            "Object": {
+              "element": {
+                "String": "Physical"
+              },
+              "power": {
+                "Integer": 195
+              },
+              "radius": {
+                "Integer": 1
+              }
+            }
+          },
+          "element": {
+            "String": "Physical"
+          },
+          "id": {
+            "Integer": 115
+          },
+          "name": {
+            "String": "Physical Skill 115"
+          },
+          "required_item": "Null",
+          "required_level": {
+            "Integer": 16
+          }
+        }
+      },
+      {
+        "values": {
+          "cast_origin": {
+            "Object": {
+              "x": {
+                "Float": 1.0
+              },
+              "y": {
+                "Float": 1.0
+              },
+              "z": {
+                "Float": 4.0
+              }
+            }
+          },
+          "cost": {
+            "Object": {
+              "count": {
+                "Integer": 348
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "effect": {
+            "Object": {
+              "element": {
+                "String": "Fire"
+              },
+              "power": {
+                "Integer": 196
+              },
+              "radius": {
+                "Float": 1.5
+              }
+            }
+          },
+          "element": {
+            "String": "Fire"
+          },
+          "id": {
+            "Integer": 116
+          },
+          "name": {
+            "String": "Fire Skill 116"
+          },
+          "required_item": "Null",
+          "required_level": {
+            "Integer": 17
+          }
+        }
+      },
+      {
+        "values": {
+          "cast_origin": {
+            "Object": {
+              "x": {
+                "Float": 2.0
+              },
+              "y": {
+                "Float": 2.0
+              },
+              "z": {
+                "Float": 5.0
+              }
+            }
+          },
+          "cost": {
+            "Object": {
+              "count": {
+                "Integer": 351
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "effect": {
+            "Object": {
+              "element": {
+                "String": "Ice"
+              },
+              "power": {
+                "Integer": 197
+              },
+              "radius": {
+                "Integer": 2
+              }
+            }
+          },
+          "element": {
+            "String": "Ice"
+          },
+          "id": {
+            "Integer": 117
+          },
+          "name": {
+            "String": "Ice Skill 117"
+          },
+          "required_item": {
+            "Integer": 1002
+          },
+          "required_level": {
+            "Integer": 18
+          }
+        }
+      },
+      {
+        "values": {
+          "cast_origin": {
+            "Object": {
+              "x": {
+                "Float": 3.0
+              },
+              "y": {
+                "Float": 3.0
+              },
+              "z": {
+                "Float": 6.0
+              }
+            }
+          },
+          "cost": {
+            "Object": {
+              "count": {
+                "Integer": 354
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "effect": {
+            "Object": {
+              "element": {
+                "String": "Lightning"
+              },
+              "power": {
+                "Integer": 198
+              },
+              "radius": {
+                "Float": 2.5
+              }
+            }
+          },
+          "element": {
+            "String": "Lightning"
+          },
+          "id": {
+            "Integer": 118
+          },
+          "name": {
+            "String": "Lightning Skill 118"
+          },
+          "required_item": "Null",
+          "required_level": {
+            "Integer": 19
+          }
+        }
+      },
+      {
+        "values": {
+          "cast_origin": {
+            "Object": {
+              "x": {
+                "Float": 4.0
+              },
+              "y": {
+                "Float": 4.0
+              },
+              "z": {
+                "Float": 0.0
+              }
+            }
+          },
+          "cost": {
+            "Object": {
+              "count": {
+                "Integer": 357
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "effect": {
+            "Object": {
+              "element": {
+                "String": "Physical"
+              },
+              "power": {
+                "Integer": 199
+              },
+              "radius": {
+                "Integer": 3
+              }
+            }
+          },
+          "element": {
+            "String": "Physical"
+          },
+          "id": {
+            "Integer": 119
+          },
+          "name": {
+            "String": "Physical Skill 119"
+          },
+          "required_item": "Null",
+          "required_level": {
+            "Integer": 20
+          }
+        }
+      },
+      {
+        "values": {
+          "cast_origin": {
+            "Object": {
+              "x": {
+                "Float": 0.0
+              },
+              "y": {
+                "Float": 1.0
+              },
+              "z": {
+                "Float": 1.0
+              }
+            }
+          },
+          "cost": {
+            "Object": {
+              "count": {
+                "Integer": 360
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "effect": {
+            "Object": {
+              "element": {
+                "String": "Fire"
+              },
+              "power": {
+                "Integer": 200
+              },
+              "radius": {
+                "Integer": 1
+              }
+            }
+          },
+          "element": {
+            "String": "Fire"
+          },
+          "id": {
+            "Integer": 120
+          },
+          "name": {
+            "String": "Fire Skill 120"
+          },
+          "required_item": {
+            "Integer": 1002
+          },
+          "required_level": {
+            "Integer": 21
+          }
+        }
+      },
+      {
+        "values": {
+          "cast_origin": {
+            "Object": {
+              "x": {
+                "Float": 1.0
+              },
+              "y": {
+                "Float": 2.0
+              },
+              "z": {
+                "Float": 2.0
+              }
+            }
+          },
+          "cost": {
+            "Object": {
+              "count": {
+                "Integer": 363
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "effect": {
+            "Object": {
+              "element": {
+                "String": "Ice"
+              },
+              "power": {
+                "Integer": 201
+              },
+              "radius": {
+                "Float": 1.5
+              }
+            }
+          },
+          "element": {
+            "String": "Ice"
+          },
+          "id": {
+            "Integer": 121
+          },
+          "name": {
+            "String": "Ice Skill 121"
+          },
+          "required_item": "Null",
+          "required_level": {
+            "Integer": 22
+          }
+        }
+      },
+      {
+        "values": {
+          "cast_origin": {
+            "Object": {
+              "x": {
+                "Float": 2.0
+              },
+              "y": {
+                "Float": 3.0
+              },
+              "z": {
+                "Float": 3.0
+              }
+            }
+          },
+          "cost": {
+            "Object": {
+              "count": {
+                "Integer": 366
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "effect": {
+            "Object": {
+              "element": {
+                "String": "Lightning"
+              },
+              "power": {
+                "Integer": 202
+              },
+              "radius": {
+                "Integer": 2
+              }
+            }
+          },
+          "element": {
+            "String": "Lightning"
+          },
+          "id": {
+            "Integer": 122
+          },
+          "name": {
+            "String": "Lightning Skill 122"
+          },
+          "required_item": "Null",
+          "required_level": {
+            "Integer": 23
+          }
+        }
+      },
+      {
+        "values": {
+          "cast_origin": {
+            "Object": {
+              "x": {
+                "Float": 3.0
+              },
+              "y": {
+                "Float": 4.0
+              },
+              "z": {
+                "Float": 4.0
+              }
+            }
+          },
+          "cost": {
+            "Object": {
+              "count": {
+                "Integer": 369
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "effect": {
+            "Object": {
+              "element": {
+                "String": "Physical"
+              },
+              "power": {
+                "Integer": 203
+              },
+              "radius": {
+                "Float": 2.5
+              }
+            }
+          },
+          "element": {
+            "String": "Physical"
+          },
+          "id": {
+            "Integer": 123
+          },
+          "name": {
+            "String": "Physical Skill 123"
+          },
+          "required_item": {
+            "Integer": 1002
+          },
+          "required_level": {
+            "Integer": 24
+          }
+        }
+      },
+      {
+        "values": {
+          "cast_origin": {
+            "Object": {
+              "x": {
+                "Float": 4.0
+              },
+              "y": {
+                "Float": 1.0
+              },
+              "z": {
+                "Float": 5.0
+              }
+            }
+          },
+          "cost": {
+            "Object": {
+              "count": {
+                "Integer": 372
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "effect": {
+            "Object": {
+              "element": {
+                "String": "Fire"
+              },
+              "power": {
+                "Integer": 204
+              },
+              "radius": {
+                "Integer": 3
+              }
+            }
+          },
+          "element": {
+            "String": "Fire"
+          },
+          "id": {
+            "Integer": 124
+          },
+          "name": {
+            "String": "Fire Skill 124"
+          },
+          "required_item": "Null",
+          "required_level": {
+            "Integer": 25
+          }
+        }
+      },
+      {
+        "values": {
+          "cast_origin": {
+            "Object": {
+              "x": {
+                "Float": 0.0
+              },
+              "y": {
+                "Float": 2.0
+              },
+              "z": {
+                "Float": 6.0
+              }
+            }
+          },
+          "cost": {
+            "Object": {
+              "count": {
+                "Integer": 375
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "effect": {
+            "Object": {
+              "element": {
+                "String": "Ice"
+              },
+              "power": {
+                "Integer": 205
+              },
+              "radius": {
+                "Integer": 1
+              }
+            }
+          },
+          "element": {
+            "String": "Ice"
+          },
+          "id": {
+            "Integer": 125
+          },
+          "name": {
+            "String": "Ice Skill 125"
+          },
+          "required_item": "Null",
+          "required_level": {
+            "Integer": 26
+          }
+        }
+      },
+      {
+        "values": {
+          "cast_origin": {
+            "Object": {
+              "x": {
+                "Float": 1.0
+              },
+              "y": {
+                "Float": 3.0
+              },
+              "z": {
+                "Float": 0.0
+              }
+            }
+          },
+          "cost": {
+            "Object": {
+              "count": {
+                "Integer": 378
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "effect": {
+            "Object": {
+              "element": {
+                "String": "Lightning"
+              },
+              "power": {
+                "Integer": 206
+              },
+              "radius": {
+                "Float": 1.5
+              }
+            }
+          },
+          "element": {
+            "String": "Lightning"
+          },
+          "id": {
+            "Integer": 126
+          },
+          "name": {
+            "String": "Lightning Skill 126"
+          },
+          "required_item": {
+            "Integer": 1002
+          },
+          "required_level": {
+            "Integer": 27
+          }
+        }
+      },
+      {
+        "values": {
+          "cast_origin": {
+            "Object": {
+              "x": {
+                "Float": 2.0
+              },
+              "y": {
+                "Float": 4.0
+              },
+              "z": {
+                "Float": 1.0
+              }
+            }
+          },
+          "cost": {
+            "Object": {
+              "count": {
+                "Integer": 381
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "effect": {
+            "Object": {
+              "element": {
+                "String": "Physical"
+              },
+              "power": {
+                "Integer": 207
+              },
+              "radius": {
+                "Integer": 2
+              }
+            }
+          },
+          "element": {
+            "String": "Physical"
+          },
+          "id": {
+            "Integer": 127
+          },
+          "name": {
+            "String": "Physical Skill 127"
+          },
+          "required_item": "Null",
+          "required_level": {
+            "Integer": 28
+          }
+        }
+      },
+      {
+        "values": {
+          "cast_origin": {
+            "Object": {
+              "x": {
+                "Float": 3.0
+              },
+              "y": {
+                "Float": 1.0
+              },
+              "z": {
+                "Float": 2.0
+              }
+            }
+          },
+          "cost": {
+            "Object": {
+              "count": {
+                "Integer": 384
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "effect": {
+            "Object": {
+              "element": {
+                "String": "Fire"
+              },
+              "power": {
+                "Integer": 208
+              },
+              "radius": {
+                "Float": 2.5
+              }
+            }
+          },
+          "element": {
+            "String": "Fire"
+          },
+          "id": {
+            "Integer": 128
+          },
+          "name": {
+            "String": "Fire Skill 128"
+          },
+          "required_item": "Null",
+          "required_level": {
+            "Integer": 29
+          }
+        }
+      },
+      {
+        "values": {
+          "cast_origin": {
+            "Object": {
+              "x": {
+                "Float": 4.0
+              },
+              "y": {
+                "Float": 2.0
+              },
+              "z": {
+                "Float": 3.0
+              }
+            }
+          },
+          "cost": {
+            "Object": {
+              "count": {
+                "Integer": 387
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "effect": {
+            "Object": {
+              "element": {
+                "String": "Ice"
+              },
+              "power": {
+                "Integer": 209
+              },
+              "radius": {
+                "Integer": 3
+              }
+            }
+          },
+          "element": {
+            "String": "Ice"
+          },
+          "id": {
+            "Integer": 129
+          },
+          "name": {
+            "String": "Ice Skill 129"
+          },
+          "required_item": {
+            "Integer": 1002
+          },
+          "required_level": {
+            "Integer": 30
+          }
+        }
+      },
+      {
+        "values": {
+          "cast_origin": {
+            "Object": {
+              "x": {
+                "Float": 0.0
+              },
+              "y": {
+                "Float": 3.0
+              },
+              "z": {
+                "Float": 4.0
+              }
+            }
+          },
+          "cost": {
+            "Object": {
+              "count": {
+                "Integer": 390
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "effect": {
+            "Object": {
+              "element": {
+                "String": "Lightning"
+              },
+              "power": {
+                "Integer": 210
+              },
+              "radius": {
+                "Integer": 1
+              }
+            }
+          },
+          "element": {
+            "String": "Lightning"
+          },
+          "id": {
+            "Integer": 130
+          },
+          "name": {
+            "String": "Lightning Skill 130"
+          },
+          "required_item": "Null",
+          "required_level": {
+            "Integer": 31
+          }
+        }
       }
     ]
   }

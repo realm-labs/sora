@@ -1,0 +1,2567 @@
+{
+  "table": {
+    "name": "Monster",
+    "rows": [
+      {
+        "values": {
+          "drop_group": {
+            "Integer": 7002
+          },
+          "element": {
+            "String": "Ice"
+          },
+          "id": {
+            "Integer": 8001
+          },
+          "level": {
+            "Integer": 2
+          },
+          "name": {
+            "String": "Monster 8001"
+          },
+          "spawn_pos": {
+            "Object": {
+              "x": {
+                "Float": 1.0
+              },
+              "y": {
+                "Float": 0.0
+              },
+              "z": {
+                "Float": 6.0
+              }
+            }
+          }
+        }
+      },
+      {
+        "values": {
+          "drop_group": {
+            "Integer": 7003
+          },
+          "element": {
+            "String": "Lightning"
+          },
+          "id": {
+            "Integer": 8002
+          },
+          "level": {
+            "Integer": 3
+          },
+          "name": {
+            "String": "Monster 8002"
+          },
+          "spawn_pos": {
+            "Object": {
+              "x": {
+                "Float": 2.0
+              },
+              "y": {
+                "Float": 0.0
+              },
+              "z": {
+                "Float": 7.0
+              }
+            }
+          }
+        }
+      },
+      {
+        "values": {
+          "drop_group": {
+            "Integer": 7004
+          },
+          "element": {
+            "String": "Physical"
+          },
+          "id": {
+            "Integer": 8003
+          },
+          "level": {
+            "Integer": 4
+          },
+          "name": {
+            "String": "Monster 8003"
+          },
+          "spawn_pos": {
+            "Object": {
+              "x": {
+                "Float": 3.0
+              },
+              "y": {
+                "Float": 0.0
+              },
+              "z": {
+                "Float": 8.0
+              }
+            }
+          }
+        }
+      },
+      {
+        "values": {
+          "drop_group": {
+            "Integer": 7005
+          },
+          "element": {
+            "String": "Fire"
+          },
+          "id": {
+            "Integer": 8004
+          },
+          "level": {
+            "Integer": 5
+          },
+          "name": {
+            "String": "Monster 8004"
+          },
+          "spawn_pos": {
+            "Object": {
+              "x": {
+                "Float": 4.0
+              },
+              "y": {
+                "Float": 0.0
+              },
+              "z": {
+                "Float": 9.0
+              }
+            }
+          }
+        }
+      },
+      {
+        "values": {
+          "drop_group": {
+            "Integer": 7006
+          },
+          "element": {
+            "String": "Ice"
+          },
+          "id": {
+            "Integer": 8005
+          },
+          "level": {
+            "Integer": 6
+          },
+          "name": {
+            "String": "Monster 8005"
+          },
+          "spawn_pos": {
+            "Object": {
+              "x": {
+                "Float": 5.0
+              },
+              "y": {
+                "Float": 0.0
+              },
+              "z": {
+                "Float": 10.0
+              }
+            }
+          }
+        }
+      },
+      {
+        "values": {
+          "drop_group": {
+            "Integer": 7007
+          },
+          "element": {
+            "String": "Lightning"
+          },
+          "id": {
+            "Integer": 8006
+          },
+          "level": {
+            "Integer": 7
+          },
+          "name": {
+            "String": "Monster 8006"
+          },
+          "spawn_pos": {
+            "Object": {
+              "x": {
+                "Float": 6.0
+              },
+              "y": {
+                "Float": 0.0
+              },
+              "z": {
+                "Float": 11.0
+              }
+            }
+          }
+        }
+      },
+      {
+        "values": {
+          "drop_group": {
+            "Integer": 7008
+          },
+          "element": {
+            "String": "Physical"
+          },
+          "id": {
+            "Integer": 8007
+          },
+          "level": {
+            "Integer": 8
+          },
+          "name": {
+            "String": "Monster 8007"
+          },
+          "spawn_pos": {
+            "Object": {
+              "x": {
+                "Float": 7.0
+              },
+              "y": {
+                "Float": 0.0
+              },
+              "z": {
+                "Float": 12.0
+              }
+            }
+          }
+        }
+      },
+      {
+        "values": {
+          "drop_group": {
+            "Integer": 7009
+          },
+          "element": {
+            "String": "Fire"
+          },
+          "id": {
+            "Integer": 8008
+          },
+          "level": {
+            "Integer": 9
+          },
+          "name": {
+            "String": "Monster 8008"
+          },
+          "spawn_pos": {
+            "Object": {
+              "x": {
+                "Float": 8.0
+              },
+              "y": {
+                "Float": 0.0
+              },
+              "z": {
+                "Float": 13.0
+              }
+            }
+          }
+        }
+      },
+      {
+        "values": {
+          "drop_group": {
+            "Integer": 7010
+          },
+          "element": {
+            "String": "Ice"
+          },
+          "id": {
+            "Integer": 8009
+          },
+          "level": {
+            "Integer": 10
+          },
+          "name": {
+            "String": "Monster 8009"
+          },
+          "spawn_pos": {
+            "Object": {
+              "x": {
+                "Float": 9.0
+              },
+              "y": {
+                "Float": 0.0
+              },
+              "z": {
+                "Float": 14.0
+              }
+            }
+          }
+        }
+      },
+      {
+        "values": {
+          "drop_group": {
+            "Integer": 7011
+          },
+          "element": {
+            "String": "Lightning"
+          },
+          "id": {
+            "Integer": 8010
+          },
+          "level": {
+            "Integer": 11
+          },
+          "name": {
+            "String": "Monster 8010"
+          },
+          "spawn_pos": {
+            "Object": {
+              "x": {
+                "Float": 10.0
+              },
+              "y": {
+                "Float": 0.0
+              },
+              "z": {
+                "Float": 0.0
+              }
+            }
+          }
+        }
+      },
+      {
+        "values": {
+          "drop_group": {
+            "Integer": 7012
+          },
+          "element": {
+            "String": "Physical"
+          },
+          "id": {
+            "Integer": 8011
+          },
+          "level": {
+            "Integer": 12
+          },
+          "name": {
+            "String": "Monster 8011"
+          },
+          "spawn_pos": {
+            "Object": {
+              "x": {
+                "Float": 11.0
+              },
+              "y": {
+                "Float": 0.0
+              },
+              "z": {
+                "Float": 1.0
+              }
+            }
+          }
+        }
+      },
+      {
+        "values": {
+          "drop_group": {
+            "Integer": 7013
+          },
+          "element": {
+            "String": "Fire"
+          },
+          "id": {
+            "Integer": 8012
+          },
+          "level": {
+            "Integer": 13
+          },
+          "name": {
+            "String": "Monster 8012"
+          },
+          "spawn_pos": {
+            "Object": {
+              "x": {
+                "Float": 12.0
+              },
+              "y": {
+                "Float": 0.0
+              },
+              "z": {
+                "Float": 2.0
+              }
+            }
+          }
+        }
+      },
+      {
+        "values": {
+          "drop_group": {
+            "Integer": 7014
+          },
+          "element": {
+            "String": "Ice"
+          },
+          "id": {
+            "Integer": 8013
+          },
+          "level": {
+            "Integer": 14
+          },
+          "name": {
+            "String": "Monster 8013"
+          },
+          "spawn_pos": {
+            "Object": {
+              "x": {
+                "Float": 13.0
+              },
+              "y": {
+                "Float": 0.0
+              },
+              "z": {
+                "Float": 3.0
+              }
+            }
+          }
+        }
+      },
+      {
+        "values": {
+          "drop_group": {
+            "Integer": 7015
+          },
+          "element": {
+            "String": "Lightning"
+          },
+          "id": {
+            "Integer": 8014
+          },
+          "level": {
+            "Integer": 15
+          },
+          "name": {
+            "String": "Monster 8014"
+          },
+          "spawn_pos": {
+            "Object": {
+              "x": {
+                "Float": 14.0
+              },
+              "y": {
+                "Float": 0.0
+              },
+              "z": {
+                "Float": 4.0
+              }
+            }
+          }
+        }
+      },
+      {
+        "values": {
+          "drop_group": {
+            "Integer": 7016
+          },
+          "element": {
+            "String": "Physical"
+          },
+          "id": {
+            "Integer": 8015
+          },
+          "level": {
+            "Integer": 16
+          },
+          "name": {
+            "String": "Monster 8015"
+          },
+          "spawn_pos": {
+            "Object": {
+              "x": {
+                "Float": 15.0
+              },
+              "y": {
+                "Float": 0.0
+              },
+              "z": {
+                "Float": 5.0
+              }
+            }
+          }
+        }
+      },
+      {
+        "values": {
+          "drop_group": {
+            "Integer": 7017
+          },
+          "element": {
+            "String": "Fire"
+          },
+          "id": {
+            "Integer": 8016
+          },
+          "level": {
+            "Integer": 17
+          },
+          "name": {
+            "String": "Monster 8016"
+          },
+          "spawn_pos": {
+            "Object": {
+              "x": {
+                "Float": 16.0
+              },
+              "y": {
+                "Float": 0.0
+              },
+              "z": {
+                "Float": 6.0
+              }
+            }
+          }
+        }
+      },
+      {
+        "values": {
+          "drop_group": {
+            "Integer": 7018
+          },
+          "element": {
+            "String": "Ice"
+          },
+          "id": {
+            "Integer": 8017
+          },
+          "level": {
+            "Integer": 18
+          },
+          "name": {
+            "String": "Monster 8017"
+          },
+          "spawn_pos": {
+            "Object": {
+              "x": {
+                "Float": 17.0
+              },
+              "y": {
+                "Float": 0.0
+              },
+              "z": {
+                "Float": 7.0
+              }
+            }
+          }
+        }
+      },
+      {
+        "values": {
+          "drop_group": {
+            "Integer": 7019
+          },
+          "element": {
+            "String": "Lightning"
+          },
+          "id": {
+            "Integer": 8018
+          },
+          "level": {
+            "Integer": 19
+          },
+          "name": {
+            "String": "Monster 8018"
+          },
+          "spawn_pos": {
+            "Object": {
+              "x": {
+                "Float": 18.0
+              },
+              "y": {
+                "Float": 0.0
+              },
+              "z": {
+                "Float": 8.0
+              }
+            }
+          }
+        }
+      },
+      {
+        "values": {
+          "drop_group": {
+            "Integer": 7020
+          },
+          "element": {
+            "String": "Physical"
+          },
+          "id": {
+            "Integer": 8019
+          },
+          "level": {
+            "Integer": 20
+          },
+          "name": {
+            "String": "Monster 8019"
+          },
+          "spawn_pos": {
+            "Object": {
+              "x": {
+                "Float": 19.0
+              },
+              "y": {
+                "Float": 0.0
+              },
+              "z": {
+                "Float": 9.0
+              }
+            }
+          }
+        }
+      },
+      {
+        "values": {
+          "drop_group": {
+            "Integer": 7001
+          },
+          "element": {
+            "String": "Fire"
+          },
+          "id": {
+            "Integer": 8020
+          },
+          "level": {
+            "Integer": 21
+          },
+          "name": {
+            "String": "Monster 8020"
+          },
+          "spawn_pos": {
+            "Object": {
+              "x": {
+                "Float": 0.0
+              },
+              "y": {
+                "Float": 0.0
+              },
+              "z": {
+                "Float": 10.0
+              }
+            }
+          }
+        }
+      },
+      {
+        "values": {
+          "drop_group": {
+            "Integer": 7002
+          },
+          "element": {
+            "String": "Ice"
+          },
+          "id": {
+            "Integer": 8021
+          },
+          "level": {
+            "Integer": 22
+          },
+          "name": {
+            "String": "Monster 8021"
+          },
+          "spawn_pos": {
+            "Object": {
+              "x": {
+                "Float": 1.0
+              },
+              "y": {
+                "Float": 0.0
+              },
+              "z": {
+                "Float": 11.0
+              }
+            }
+          }
+        }
+      },
+      {
+        "values": {
+          "drop_group": {
+            "Integer": 7003
+          },
+          "element": {
+            "String": "Lightning"
+          },
+          "id": {
+            "Integer": 8022
+          },
+          "level": {
+            "Integer": 23
+          },
+          "name": {
+            "String": "Monster 8022"
+          },
+          "spawn_pos": {
+            "Object": {
+              "x": {
+                "Float": 2.0
+              },
+              "y": {
+                "Float": 0.0
+              },
+              "z": {
+                "Float": 12.0
+              }
+            }
+          }
+        }
+      },
+      {
+        "values": {
+          "drop_group": {
+            "Integer": 7004
+          },
+          "element": {
+            "String": "Physical"
+          },
+          "id": {
+            "Integer": 8023
+          },
+          "level": {
+            "Integer": 24
+          },
+          "name": {
+            "String": "Monster 8023"
+          },
+          "spawn_pos": {
+            "Object": {
+              "x": {
+                "Float": 3.0
+              },
+              "y": {
+                "Float": 0.0
+              },
+              "z": {
+                "Float": 13.0
+              }
+            }
+          }
+        }
+      },
+      {
+        "values": {
+          "drop_group": {
+            "Integer": 7005
+          },
+          "element": {
+            "String": "Fire"
+          },
+          "id": {
+            "Integer": 8024
+          },
+          "level": {
+            "Integer": 25
+          },
+          "name": {
+            "String": "Monster 8024"
+          },
+          "spawn_pos": {
+            "Object": {
+              "x": {
+                "Float": 4.0
+              },
+              "y": {
+                "Float": 0.0
+              },
+              "z": {
+                "Float": 14.0
+              }
+            }
+          }
+        }
+      },
+      {
+        "values": {
+          "drop_group": {
+            "Integer": 7006
+          },
+          "element": {
+            "String": "Ice"
+          },
+          "id": {
+            "Integer": 8025
+          },
+          "level": {
+            "Integer": 26
+          },
+          "name": {
+            "String": "Monster 8025"
+          },
+          "spawn_pos": {
+            "Object": {
+              "x": {
+                "Float": 5.0
+              },
+              "y": {
+                "Float": 0.0
+              },
+              "z": {
+                "Float": 0.0
+              }
+            }
+          }
+        }
+      },
+      {
+        "values": {
+          "drop_group": {
+            "Integer": 7007
+          },
+          "element": {
+            "String": "Lightning"
+          },
+          "id": {
+            "Integer": 8026
+          },
+          "level": {
+            "Integer": 27
+          },
+          "name": {
+            "String": "Monster 8026"
+          },
+          "spawn_pos": {
+            "Object": {
+              "x": {
+                "Float": 6.0
+              },
+              "y": {
+                "Float": 0.0
+              },
+              "z": {
+                "Float": 1.0
+              }
+            }
+          }
+        }
+      },
+      {
+        "values": {
+          "drop_group": {
+            "Integer": 7008
+          },
+          "element": {
+            "String": "Physical"
+          },
+          "id": {
+            "Integer": 8027
+          },
+          "level": {
+            "Integer": 28
+          },
+          "name": {
+            "String": "Monster 8027"
+          },
+          "spawn_pos": {
+            "Object": {
+              "x": {
+                "Float": 7.0
+              },
+              "y": {
+                "Float": 0.0
+              },
+              "z": {
+                "Float": 2.0
+              }
+            }
+          }
+        }
+      },
+      {
+        "values": {
+          "drop_group": {
+            "Integer": 7009
+          },
+          "element": {
+            "String": "Fire"
+          },
+          "id": {
+            "Integer": 8028
+          },
+          "level": {
+            "Integer": 29
+          },
+          "name": {
+            "String": "Monster 8028"
+          },
+          "spawn_pos": {
+            "Object": {
+              "x": {
+                "Float": 8.0
+              },
+              "y": {
+                "Float": 0.0
+              },
+              "z": {
+                "Float": 3.0
+              }
+            }
+          }
+        }
+      },
+      {
+        "values": {
+          "drop_group": {
+            "Integer": 7010
+          },
+          "element": {
+            "String": "Ice"
+          },
+          "id": {
+            "Integer": 8029
+          },
+          "level": {
+            "Integer": 30
+          },
+          "name": {
+            "String": "Monster 8029"
+          },
+          "spawn_pos": {
+            "Object": {
+              "x": {
+                "Float": 9.0
+              },
+              "y": {
+                "Float": 0.0
+              },
+              "z": {
+                "Float": 4.0
+              }
+            }
+          }
+        }
+      },
+      {
+        "values": {
+          "drop_group": {
+            "Integer": 7011
+          },
+          "element": {
+            "String": "Lightning"
+          },
+          "id": {
+            "Integer": 8030
+          },
+          "level": {
+            "Integer": 31
+          },
+          "name": {
+            "String": "Monster 8030"
+          },
+          "spawn_pos": {
+            "Object": {
+              "x": {
+                "Float": 10.0
+              },
+              "y": {
+                "Float": 0.0
+              },
+              "z": {
+                "Float": 5.0
+              }
+            }
+          }
+        }
+      },
+      {
+        "values": {
+          "drop_group": {
+            "Integer": 7012
+          },
+          "element": {
+            "String": "Physical"
+          },
+          "id": {
+            "Integer": 8031
+          },
+          "level": {
+            "Integer": 32
+          },
+          "name": {
+            "String": "Monster 8031"
+          },
+          "spawn_pos": {
+            "Object": {
+              "x": {
+                "Float": 11.0
+              },
+              "y": {
+                "Float": 0.0
+              },
+              "z": {
+                "Float": 6.0
+              }
+            }
+          }
+        }
+      },
+      {
+        "values": {
+          "drop_group": {
+            "Integer": 7013
+          },
+          "element": {
+            "String": "Fire"
+          },
+          "id": {
+            "Integer": 8032
+          },
+          "level": {
+            "Integer": 33
+          },
+          "name": {
+            "String": "Monster 8032"
+          },
+          "spawn_pos": {
+            "Object": {
+              "x": {
+                "Float": 12.0
+              },
+              "y": {
+                "Float": 0.0
+              },
+              "z": {
+                "Float": 7.0
+              }
+            }
+          }
+        }
+      },
+      {
+        "values": {
+          "drop_group": {
+            "Integer": 7014
+          },
+          "element": {
+            "String": "Ice"
+          },
+          "id": {
+            "Integer": 8033
+          },
+          "level": {
+            "Integer": 34
+          },
+          "name": {
+            "String": "Monster 8033"
+          },
+          "spawn_pos": {
+            "Object": {
+              "x": {
+                "Float": 13.0
+              },
+              "y": {
+                "Float": 0.0
+              },
+              "z": {
+                "Float": 8.0
+              }
+            }
+          }
+        }
+      },
+      {
+        "values": {
+          "drop_group": {
+            "Integer": 7015
+          },
+          "element": {
+            "String": "Lightning"
+          },
+          "id": {
+            "Integer": 8034
+          },
+          "level": {
+            "Integer": 35
+          },
+          "name": {
+            "String": "Monster 8034"
+          },
+          "spawn_pos": {
+            "Object": {
+              "x": {
+                "Float": 14.0
+              },
+              "y": {
+                "Float": 0.0
+              },
+              "z": {
+                "Float": 9.0
+              }
+            }
+          }
+        }
+      },
+      {
+        "values": {
+          "drop_group": {
+            "Integer": 7016
+          },
+          "element": {
+            "String": "Physical"
+          },
+          "id": {
+            "Integer": 8035
+          },
+          "level": {
+            "Integer": 36
+          },
+          "name": {
+            "String": "Monster 8035"
+          },
+          "spawn_pos": {
+            "Object": {
+              "x": {
+                "Float": 15.0
+              },
+              "y": {
+                "Float": 0.0
+              },
+              "z": {
+                "Float": 10.0
+              }
+            }
+          }
+        }
+      },
+      {
+        "values": {
+          "drop_group": {
+            "Integer": 7017
+          },
+          "element": {
+            "String": "Fire"
+          },
+          "id": {
+            "Integer": 8036
+          },
+          "level": {
+            "Integer": 37
+          },
+          "name": {
+            "String": "Monster 8036"
+          },
+          "spawn_pos": {
+            "Object": {
+              "x": {
+                "Float": 16.0
+              },
+              "y": {
+                "Float": 0.0
+              },
+              "z": {
+                "Float": 11.0
+              }
+            }
+          }
+        }
+      },
+      {
+        "values": {
+          "drop_group": {
+            "Integer": 7018
+          },
+          "element": {
+            "String": "Ice"
+          },
+          "id": {
+            "Integer": 8037
+          },
+          "level": {
+            "Integer": 38
+          },
+          "name": {
+            "String": "Monster 8037"
+          },
+          "spawn_pos": {
+            "Object": {
+              "x": {
+                "Float": 17.0
+              },
+              "y": {
+                "Float": 0.0
+              },
+              "z": {
+                "Float": 12.0
+              }
+            }
+          }
+        }
+      },
+      {
+        "values": {
+          "drop_group": {
+            "Integer": 7019
+          },
+          "element": {
+            "String": "Lightning"
+          },
+          "id": {
+            "Integer": 8038
+          },
+          "level": {
+            "Integer": 39
+          },
+          "name": {
+            "String": "Monster 8038"
+          },
+          "spawn_pos": {
+            "Object": {
+              "x": {
+                "Float": 18.0
+              },
+              "y": {
+                "Float": 0.0
+              },
+              "z": {
+                "Float": 13.0
+              }
+            }
+          }
+        }
+      },
+      {
+        "values": {
+          "drop_group": {
+            "Integer": 7020
+          },
+          "element": {
+            "String": "Physical"
+          },
+          "id": {
+            "Integer": 8039
+          },
+          "level": {
+            "Integer": 40
+          },
+          "name": {
+            "String": "Monster 8039"
+          },
+          "spawn_pos": {
+            "Object": {
+              "x": {
+                "Float": 19.0
+              },
+              "y": {
+                "Float": 0.0
+              },
+              "z": {
+                "Float": 14.0
+              }
+            }
+          }
+        }
+      },
+      {
+        "values": {
+          "drop_group": {
+            "Integer": 7001
+          },
+          "element": {
+            "String": "Fire"
+          },
+          "id": {
+            "Integer": 8040
+          },
+          "level": {
+            "Integer": 41
+          },
+          "name": {
+            "String": "Monster 8040"
+          },
+          "spawn_pos": {
+            "Object": {
+              "x": {
+                "Float": 0.0
+              },
+              "y": {
+                "Float": 0.0
+              },
+              "z": {
+                "Float": 0.0
+              }
+            }
+          }
+        }
+      },
+      {
+        "values": {
+          "drop_group": {
+            "Integer": 7002
+          },
+          "element": {
+            "String": "Ice"
+          },
+          "id": {
+            "Integer": 8041
+          },
+          "level": {
+            "Integer": 42
+          },
+          "name": {
+            "String": "Monster 8041"
+          },
+          "spawn_pos": {
+            "Object": {
+              "x": {
+                "Float": 1.0
+              },
+              "y": {
+                "Float": 0.0
+              },
+              "z": {
+                "Float": 1.0
+              }
+            }
+          }
+        }
+      },
+      {
+        "values": {
+          "drop_group": {
+            "Integer": 7003
+          },
+          "element": {
+            "String": "Lightning"
+          },
+          "id": {
+            "Integer": 8042
+          },
+          "level": {
+            "Integer": 43
+          },
+          "name": {
+            "String": "Monster 8042"
+          },
+          "spawn_pos": {
+            "Object": {
+              "x": {
+                "Float": 2.0
+              },
+              "y": {
+                "Float": 0.0
+              },
+              "z": {
+                "Float": 2.0
+              }
+            }
+          }
+        }
+      },
+      {
+        "values": {
+          "drop_group": {
+            "Integer": 7004
+          },
+          "element": {
+            "String": "Physical"
+          },
+          "id": {
+            "Integer": 8043
+          },
+          "level": {
+            "Integer": 44
+          },
+          "name": {
+            "String": "Monster 8043"
+          },
+          "spawn_pos": {
+            "Object": {
+              "x": {
+                "Float": 3.0
+              },
+              "y": {
+                "Float": 0.0
+              },
+              "z": {
+                "Float": 3.0
+              }
+            }
+          }
+        }
+      },
+      {
+        "values": {
+          "drop_group": {
+            "Integer": 7005
+          },
+          "element": {
+            "String": "Fire"
+          },
+          "id": {
+            "Integer": 8044
+          },
+          "level": {
+            "Integer": 45
+          },
+          "name": {
+            "String": "Monster 8044"
+          },
+          "spawn_pos": {
+            "Object": {
+              "x": {
+                "Float": 4.0
+              },
+              "y": {
+                "Float": 0.0
+              },
+              "z": {
+                "Float": 4.0
+              }
+            }
+          }
+        }
+      },
+      {
+        "values": {
+          "drop_group": {
+            "Integer": 7006
+          },
+          "element": {
+            "String": "Ice"
+          },
+          "id": {
+            "Integer": 8045
+          },
+          "level": {
+            "Integer": 46
+          },
+          "name": {
+            "String": "Monster 8045"
+          },
+          "spawn_pos": {
+            "Object": {
+              "x": {
+                "Float": 5.0
+              },
+              "y": {
+                "Float": 0.0
+              },
+              "z": {
+                "Float": 5.0
+              }
+            }
+          }
+        }
+      },
+      {
+        "values": {
+          "drop_group": {
+            "Integer": 7007
+          },
+          "element": {
+            "String": "Lightning"
+          },
+          "id": {
+            "Integer": 8046
+          },
+          "level": {
+            "Integer": 47
+          },
+          "name": {
+            "String": "Monster 8046"
+          },
+          "spawn_pos": {
+            "Object": {
+              "x": {
+                "Float": 6.0
+              },
+              "y": {
+                "Float": 0.0
+              },
+              "z": {
+                "Float": 6.0
+              }
+            }
+          }
+        }
+      },
+      {
+        "values": {
+          "drop_group": {
+            "Integer": 7008
+          },
+          "element": {
+            "String": "Physical"
+          },
+          "id": {
+            "Integer": 8047
+          },
+          "level": {
+            "Integer": 48
+          },
+          "name": {
+            "String": "Monster 8047"
+          },
+          "spawn_pos": {
+            "Object": {
+              "x": {
+                "Float": 7.0
+              },
+              "y": {
+                "Float": 0.0
+              },
+              "z": {
+                "Float": 7.0
+              }
+            }
+          }
+        }
+      },
+      {
+        "values": {
+          "drop_group": {
+            "Integer": 7009
+          },
+          "element": {
+            "String": "Fire"
+          },
+          "id": {
+            "Integer": 8048
+          },
+          "level": {
+            "Integer": 49
+          },
+          "name": {
+            "String": "Monster 8048"
+          },
+          "spawn_pos": {
+            "Object": {
+              "x": {
+                "Float": 8.0
+              },
+              "y": {
+                "Float": 0.0
+              },
+              "z": {
+                "Float": 8.0
+              }
+            }
+          }
+        }
+      },
+      {
+        "values": {
+          "drop_group": {
+            "Integer": 7010
+          },
+          "element": {
+            "String": "Ice"
+          },
+          "id": {
+            "Integer": 8049
+          },
+          "level": {
+            "Integer": 50
+          },
+          "name": {
+            "String": "Monster 8049"
+          },
+          "spawn_pos": {
+            "Object": {
+              "x": {
+                "Float": 9.0
+              },
+              "y": {
+                "Float": 0.0
+              },
+              "z": {
+                "Float": 9.0
+              }
+            }
+          }
+        }
+      },
+      {
+        "values": {
+          "drop_group": {
+            "Integer": 7011
+          },
+          "element": {
+            "String": "Lightning"
+          },
+          "id": {
+            "Integer": 8050
+          },
+          "level": {
+            "Integer": 51
+          },
+          "name": {
+            "String": "Monster 8050"
+          },
+          "spawn_pos": {
+            "Object": {
+              "x": {
+                "Float": 10.0
+              },
+              "y": {
+                "Float": 0.0
+              },
+              "z": {
+                "Float": 10.0
+              }
+            }
+          }
+        }
+      },
+      {
+        "values": {
+          "drop_group": {
+            "Integer": 7012
+          },
+          "element": {
+            "String": "Physical"
+          },
+          "id": {
+            "Integer": 8051
+          },
+          "level": {
+            "Integer": 52
+          },
+          "name": {
+            "String": "Monster 8051"
+          },
+          "spawn_pos": {
+            "Object": {
+              "x": {
+                "Float": 11.0
+              },
+              "y": {
+                "Float": 0.0
+              },
+              "z": {
+                "Float": 11.0
+              }
+            }
+          }
+        }
+      },
+      {
+        "values": {
+          "drop_group": {
+            "Integer": 7013
+          },
+          "element": {
+            "String": "Fire"
+          },
+          "id": {
+            "Integer": 8052
+          },
+          "level": {
+            "Integer": 53
+          },
+          "name": {
+            "String": "Monster 8052"
+          },
+          "spawn_pos": {
+            "Object": {
+              "x": {
+                "Float": 12.0
+              },
+              "y": {
+                "Float": 0.0
+              },
+              "z": {
+                "Float": 12.0
+              }
+            }
+          }
+        }
+      },
+      {
+        "values": {
+          "drop_group": {
+            "Integer": 7014
+          },
+          "element": {
+            "String": "Ice"
+          },
+          "id": {
+            "Integer": 8053
+          },
+          "level": {
+            "Integer": 54
+          },
+          "name": {
+            "String": "Monster 8053"
+          },
+          "spawn_pos": {
+            "Object": {
+              "x": {
+                "Float": 13.0
+              },
+              "y": {
+                "Float": 0.0
+              },
+              "z": {
+                "Float": 13.0
+              }
+            }
+          }
+        }
+      },
+      {
+        "values": {
+          "drop_group": {
+            "Integer": 7015
+          },
+          "element": {
+            "String": "Lightning"
+          },
+          "id": {
+            "Integer": 8054
+          },
+          "level": {
+            "Integer": 55
+          },
+          "name": {
+            "String": "Monster 8054"
+          },
+          "spawn_pos": {
+            "Object": {
+              "x": {
+                "Float": 14.0
+              },
+              "y": {
+                "Float": 0.0
+              },
+              "z": {
+                "Float": 14.0
+              }
+            }
+          }
+        }
+      },
+      {
+        "values": {
+          "drop_group": {
+            "Integer": 7016
+          },
+          "element": {
+            "String": "Physical"
+          },
+          "id": {
+            "Integer": 8055
+          },
+          "level": {
+            "Integer": 56
+          },
+          "name": {
+            "String": "Monster 8055"
+          },
+          "spawn_pos": {
+            "Object": {
+              "x": {
+                "Float": 15.0
+              },
+              "y": {
+                "Float": 0.0
+              },
+              "z": {
+                "Float": 0.0
+              }
+            }
+          }
+        }
+      },
+      {
+        "values": {
+          "drop_group": {
+            "Integer": 7017
+          },
+          "element": {
+            "String": "Fire"
+          },
+          "id": {
+            "Integer": 8056
+          },
+          "level": {
+            "Integer": 57
+          },
+          "name": {
+            "String": "Monster 8056"
+          },
+          "spawn_pos": {
+            "Object": {
+              "x": {
+                "Float": 16.0
+              },
+              "y": {
+                "Float": 0.0
+              },
+              "z": {
+                "Float": 1.0
+              }
+            }
+          }
+        }
+      },
+      {
+        "values": {
+          "drop_group": {
+            "Integer": 7018
+          },
+          "element": {
+            "String": "Ice"
+          },
+          "id": {
+            "Integer": 8057
+          },
+          "level": {
+            "Integer": 58
+          },
+          "name": {
+            "String": "Monster 8057"
+          },
+          "spawn_pos": {
+            "Object": {
+              "x": {
+                "Float": 17.0
+              },
+              "y": {
+                "Float": 0.0
+              },
+              "z": {
+                "Float": 2.0
+              }
+            }
+          }
+        }
+      },
+      {
+        "values": {
+          "drop_group": {
+            "Integer": 7019
+          },
+          "element": {
+            "String": "Lightning"
+          },
+          "id": {
+            "Integer": 8058
+          },
+          "level": {
+            "Integer": 59
+          },
+          "name": {
+            "String": "Monster 8058"
+          },
+          "spawn_pos": {
+            "Object": {
+              "x": {
+                "Float": 18.0
+              },
+              "y": {
+                "Float": 0.0
+              },
+              "z": {
+                "Float": 3.0
+              }
+            }
+          }
+        }
+      },
+      {
+        "values": {
+          "drop_group": {
+            "Integer": 7020
+          },
+          "element": {
+            "String": "Physical"
+          },
+          "id": {
+            "Integer": 8059
+          },
+          "level": {
+            "Integer": 60
+          },
+          "name": {
+            "String": "Monster 8059"
+          },
+          "spawn_pos": {
+            "Object": {
+              "x": {
+                "Float": 19.0
+              },
+              "y": {
+                "Float": 0.0
+              },
+              "z": {
+                "Float": 4.0
+              }
+            }
+          }
+        }
+      },
+      {
+        "values": {
+          "drop_group": {
+            "Integer": 7001
+          },
+          "element": {
+            "String": "Fire"
+          },
+          "id": {
+            "Integer": 8060
+          },
+          "level": {
+            "Integer": 61
+          },
+          "name": {
+            "String": "Monster 8060"
+          },
+          "spawn_pos": {
+            "Object": {
+              "x": {
+                "Float": 0.0
+              },
+              "y": {
+                "Float": 0.0
+              },
+              "z": {
+                "Float": 5.0
+              }
+            }
+          }
+        }
+      },
+      {
+        "values": {
+          "drop_group": {
+            "Integer": 7002
+          },
+          "element": {
+            "String": "Ice"
+          },
+          "id": {
+            "Integer": 8061
+          },
+          "level": {
+            "Integer": 62
+          },
+          "name": {
+            "String": "Monster 8061"
+          },
+          "spawn_pos": {
+            "Object": {
+              "x": {
+                "Float": 1.0
+              },
+              "y": {
+                "Float": 0.0
+              },
+              "z": {
+                "Float": 6.0
+              }
+            }
+          }
+        }
+      },
+      {
+        "values": {
+          "drop_group": {
+            "Integer": 7003
+          },
+          "element": {
+            "String": "Lightning"
+          },
+          "id": {
+            "Integer": 8062
+          },
+          "level": {
+            "Integer": 63
+          },
+          "name": {
+            "String": "Monster 8062"
+          },
+          "spawn_pos": {
+            "Object": {
+              "x": {
+                "Float": 2.0
+              },
+              "y": {
+                "Float": 0.0
+              },
+              "z": {
+                "Float": 7.0
+              }
+            }
+          }
+        }
+      },
+      {
+        "values": {
+          "drop_group": {
+            "Integer": 7004
+          },
+          "element": {
+            "String": "Physical"
+          },
+          "id": {
+            "Integer": 8063
+          },
+          "level": {
+            "Integer": 64
+          },
+          "name": {
+            "String": "Monster 8063"
+          },
+          "spawn_pos": {
+            "Object": {
+              "x": {
+                "Float": 3.0
+              },
+              "y": {
+                "Float": 0.0
+              },
+              "z": {
+                "Float": 8.0
+              }
+            }
+          }
+        }
+      },
+      {
+        "values": {
+          "drop_group": {
+            "Integer": 7005
+          },
+          "element": {
+            "String": "Fire"
+          },
+          "id": {
+            "Integer": 8064
+          },
+          "level": {
+            "Integer": 65
+          },
+          "name": {
+            "String": "Monster 8064"
+          },
+          "spawn_pos": {
+            "Object": {
+              "x": {
+                "Float": 4.0
+              },
+              "y": {
+                "Float": 0.0
+              },
+              "z": {
+                "Float": 9.0
+              }
+            }
+          }
+        }
+      },
+      {
+        "values": {
+          "drop_group": {
+            "Integer": 7006
+          },
+          "element": {
+            "String": "Ice"
+          },
+          "id": {
+            "Integer": 8065
+          },
+          "level": {
+            "Integer": 66
+          },
+          "name": {
+            "String": "Monster 8065"
+          },
+          "spawn_pos": {
+            "Object": {
+              "x": {
+                "Float": 5.0
+              },
+              "y": {
+                "Float": 0.0
+              },
+              "z": {
+                "Float": 10.0
+              }
+            }
+          }
+        }
+      },
+      {
+        "values": {
+          "drop_group": {
+            "Integer": 7007
+          },
+          "element": {
+            "String": "Lightning"
+          },
+          "id": {
+            "Integer": 8066
+          },
+          "level": {
+            "Integer": 67
+          },
+          "name": {
+            "String": "Monster 8066"
+          },
+          "spawn_pos": {
+            "Object": {
+              "x": {
+                "Float": 6.0
+              },
+              "y": {
+                "Float": 0.0
+              },
+              "z": {
+                "Float": 11.0
+              }
+            }
+          }
+        }
+      },
+      {
+        "values": {
+          "drop_group": {
+            "Integer": 7008
+          },
+          "element": {
+            "String": "Physical"
+          },
+          "id": {
+            "Integer": 8067
+          },
+          "level": {
+            "Integer": 68
+          },
+          "name": {
+            "String": "Monster 8067"
+          },
+          "spawn_pos": {
+            "Object": {
+              "x": {
+                "Float": 7.0
+              },
+              "y": {
+                "Float": 0.0
+              },
+              "z": {
+                "Float": 12.0
+              }
+            }
+          }
+        }
+      },
+      {
+        "values": {
+          "drop_group": {
+            "Integer": 7009
+          },
+          "element": {
+            "String": "Fire"
+          },
+          "id": {
+            "Integer": 8068
+          },
+          "level": {
+            "Integer": 69
+          },
+          "name": {
+            "String": "Monster 8068"
+          },
+          "spawn_pos": {
+            "Object": {
+              "x": {
+                "Float": 8.0
+              },
+              "y": {
+                "Float": 0.0
+              },
+              "z": {
+                "Float": 13.0
+              }
+            }
+          }
+        }
+      },
+      {
+        "values": {
+          "drop_group": {
+            "Integer": 7010
+          },
+          "element": {
+            "String": "Ice"
+          },
+          "id": {
+            "Integer": 8069
+          },
+          "level": {
+            "Integer": 70
+          },
+          "name": {
+            "String": "Monster 8069"
+          },
+          "spawn_pos": {
+            "Object": {
+              "x": {
+                "Float": 9.0
+              },
+              "y": {
+                "Float": 0.0
+              },
+              "z": {
+                "Float": 14.0
+              }
+            }
+          }
+        }
+      },
+      {
+        "values": {
+          "drop_group": {
+            "Integer": 7011
+          },
+          "element": {
+            "String": "Lightning"
+          },
+          "id": {
+            "Integer": 8070
+          },
+          "level": {
+            "Integer": 71
+          },
+          "name": {
+            "String": "Monster 8070"
+          },
+          "spawn_pos": {
+            "Object": {
+              "x": {
+                "Float": 10.0
+              },
+              "y": {
+                "Float": 0.0
+              },
+              "z": {
+                "Float": 0.0
+              }
+            }
+          }
+        }
+      },
+      {
+        "values": {
+          "drop_group": {
+            "Integer": 7012
+          },
+          "element": {
+            "String": "Physical"
+          },
+          "id": {
+            "Integer": 8071
+          },
+          "level": {
+            "Integer": 72
+          },
+          "name": {
+            "String": "Monster 8071"
+          },
+          "spawn_pos": {
+            "Object": {
+              "x": {
+                "Float": 11.0
+              },
+              "y": {
+                "Float": 0.0
+              },
+              "z": {
+                "Float": 1.0
+              }
+            }
+          }
+        }
+      },
+      {
+        "values": {
+          "drop_group": {
+            "Integer": 7013
+          },
+          "element": {
+            "String": "Fire"
+          },
+          "id": {
+            "Integer": 8072
+          },
+          "level": {
+            "Integer": 73
+          },
+          "name": {
+            "String": "Monster 8072"
+          },
+          "spawn_pos": {
+            "Object": {
+              "x": {
+                "Float": 12.0
+              },
+              "y": {
+                "Float": 0.0
+              },
+              "z": {
+                "Float": 2.0
+              }
+            }
+          }
+        }
+      },
+      {
+        "values": {
+          "drop_group": {
+            "Integer": 7014
+          },
+          "element": {
+            "String": "Ice"
+          },
+          "id": {
+            "Integer": 8073
+          },
+          "level": {
+            "Integer": 74
+          },
+          "name": {
+            "String": "Monster 8073"
+          },
+          "spawn_pos": {
+            "Object": {
+              "x": {
+                "Float": 13.0
+              },
+              "y": {
+                "Float": 0.0
+              },
+              "z": {
+                "Float": 3.0
+              }
+            }
+          }
+        }
+      },
+      {
+        "values": {
+          "drop_group": {
+            "Integer": 7015
+          },
+          "element": {
+            "String": "Lightning"
+          },
+          "id": {
+            "Integer": 8074
+          },
+          "level": {
+            "Integer": 75
+          },
+          "name": {
+            "String": "Monster 8074"
+          },
+          "spawn_pos": {
+            "Object": {
+              "x": {
+                "Float": 14.0
+              },
+              "y": {
+                "Float": 0.0
+              },
+              "z": {
+                "Float": 4.0
+              }
+            }
+          }
+        }
+      },
+      {
+        "values": {
+          "drop_group": {
+            "Integer": 7016
+          },
+          "element": {
+            "String": "Physical"
+          },
+          "id": {
+            "Integer": 8075
+          },
+          "level": {
+            "Integer": 76
+          },
+          "name": {
+            "String": "Monster 8075"
+          },
+          "spawn_pos": {
+            "Object": {
+              "x": {
+                "Float": 15.0
+              },
+              "y": {
+                "Float": 0.0
+              },
+              "z": {
+                "Float": 5.0
+              }
+            }
+          }
+        }
+      },
+      {
+        "values": {
+          "drop_group": {
+            "Integer": 7017
+          },
+          "element": {
+            "String": "Fire"
+          },
+          "id": {
+            "Integer": 8076
+          },
+          "level": {
+            "Integer": 77
+          },
+          "name": {
+            "String": "Monster 8076"
+          },
+          "spawn_pos": {
+            "Object": {
+              "x": {
+                "Float": 16.0
+              },
+              "y": {
+                "Float": 0.0
+              },
+              "z": {
+                "Float": 6.0
+              }
+            }
+          }
+        }
+      },
+      {
+        "values": {
+          "drop_group": {
+            "Integer": 7018
+          },
+          "element": {
+            "String": "Ice"
+          },
+          "id": {
+            "Integer": 8077
+          },
+          "level": {
+            "Integer": 78
+          },
+          "name": {
+            "String": "Monster 8077"
+          },
+          "spawn_pos": {
+            "Object": {
+              "x": {
+                "Float": 17.0
+              },
+              "y": {
+                "Float": 0.0
+              },
+              "z": {
+                "Float": 7.0
+              }
+            }
+          }
+        }
+      },
+      {
+        "values": {
+          "drop_group": {
+            "Integer": 7019
+          },
+          "element": {
+            "String": "Lightning"
+          },
+          "id": {
+            "Integer": 8078
+          },
+          "level": {
+            "Integer": 79
+          },
+          "name": {
+            "String": "Monster 8078"
+          },
+          "spawn_pos": {
+            "Object": {
+              "x": {
+                "Float": 18.0
+              },
+              "y": {
+                "Float": 0.0
+              },
+              "z": {
+                "Float": 8.0
+              }
+            }
+          }
+        }
+      },
+      {
+        "values": {
+          "drop_group": {
+            "Integer": 7020
+          },
+          "element": {
+            "String": "Physical"
+          },
+          "id": {
+            "Integer": 8079
+          },
+          "level": {
+            "Integer": 80
+          },
+          "name": {
+            "String": "Monster 8079"
+          },
+          "spawn_pos": {
+            "Object": {
+              "x": {
+                "Float": 19.0
+              },
+              "y": {
+                "Float": 0.0
+              },
+              "z": {
+                "Float": 9.0
+              }
+            }
+          }
+        }
+      },
+      {
+        "values": {
+          "drop_group": {
+            "Integer": 7001
+          },
+          "element": {
+            "String": "Fire"
+          },
+          "id": {
+            "Integer": 8080
+          },
+          "level": {
+            "Integer": 1
+          },
+          "name": {
+            "String": "Monster 8080"
+          },
+          "spawn_pos": {
+            "Object": {
+              "x": {
+                "Float": 0.0
+              },
+              "y": {
+                "Float": 0.0
+              },
+              "z": {
+                "Float": 10.0
+              }
+            }
+          }
+        }
+      }
+    ]
+  }
+}

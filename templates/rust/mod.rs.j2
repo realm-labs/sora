@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 pub mod runtime;
 {%- for module in model.modules %}
 pub mod {{ module }};

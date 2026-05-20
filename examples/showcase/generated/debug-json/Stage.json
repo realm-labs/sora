@@ -1,0 +1,2007 @@
+{
+  "table": {
+    "name": "Stage",
+    "rows": [
+      {
+        "values": {
+          "first_clear_rewards": {
+            "List": [
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 3
+                  },
+                  "item_id": {
+                    "Integer": 1037
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 6
+                  },
+                  "item_id": {
+                    "Integer": 1038
+                  }
+                }
+              }
+            ]
+          },
+          "id": {
+            "Integer": 9001
+          },
+          "monster_ids": {
+            "List": [
+              {
+                "Integer": 8042
+              },
+              {
+                "Integer": 8043
+              },
+              {
+                "Integer": 8044
+              }
+            ]
+          },
+          "name": {
+            "String": "Stage 9001"
+          },
+          "recommended_power": {
+            "Integer": 108012
+          }
+        }
+      },
+      {
+        "values": {
+          "first_clear_rewards": {
+            "List": [
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 3
+                  },
+                  "item_id": {
+                    "Integer": 1038
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 6
+                  },
+                  "item_id": {
+                    "Integer": 1039
+                  }
+                }
+              }
+            ]
+          },
+          "id": {
+            "Integer": 9002
+          },
+          "monster_ids": {
+            "List": [
+              {
+                "Integer": 8043
+              },
+              {
+                "Integer": 8044
+              },
+              {
+                "Integer": 8045
+              }
+            ]
+          },
+          "name": {
+            "String": "Stage 9002"
+          },
+          "recommended_power": {
+            "Integer": 108024
+          }
+        }
+      },
+      {
+        "values": {
+          "first_clear_rewards": {
+            "List": [
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 3
+                  },
+                  "item_id": {
+                    "Integer": 1039
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 6
+                  },
+                  "item_id": {
+                    "Integer": 1040
+                  }
+                }
+              }
+            ]
+          },
+          "id": {
+            "Integer": 9003
+          },
+          "monster_ids": {
+            "List": [
+              {
+                "Integer": 8044
+              },
+              {
+                "Integer": 8045
+              },
+              {
+                "Integer": 8046
+              }
+            ]
+          },
+          "name": {
+            "String": "Stage 9003"
+          },
+          "recommended_power": {
+            "Integer": 108036
+          }
+        }
+      },
+      {
+        "values": {
+          "first_clear_rewards": {
+            "List": [
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 3
+                  },
+                  "item_id": {
+                    "Integer": 1040
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 6
+                  },
+                  "item_id": {
+                    "Integer": 1041
+                  }
+                }
+              }
+            ]
+          },
+          "id": {
+            "Integer": 9004
+          },
+          "monster_ids": {
+            "List": [
+              {
+                "Integer": 8045
+              },
+              {
+                "Integer": 8046
+              },
+              {
+                "Integer": 8047
+              }
+            ]
+          },
+          "name": {
+            "String": "Stage 9004"
+          },
+          "recommended_power": {
+            "Integer": 108048
+          }
+        }
+      },
+      {
+        "values": {
+          "first_clear_rewards": {
+            "List": [
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 3
+                  },
+                  "item_id": {
+                    "Integer": 1041
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 6
+                  },
+                  "item_id": {
+                    "Integer": 1042
+                  }
+                }
+              }
+            ]
+          },
+          "id": {
+            "Integer": 9005
+          },
+          "monster_ids": {
+            "List": [
+              {
+                "Integer": 8046
+              },
+              {
+                "Integer": 8047
+              },
+              {
+                "Integer": 8048
+              }
+            ]
+          },
+          "name": {
+            "String": "Stage 9005"
+          },
+          "recommended_power": {
+            "Integer": 108060
+          }
+        }
+      },
+      {
+        "values": {
+          "first_clear_rewards": {
+            "List": [
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 3
+                  },
+                  "item_id": {
+                    "Integer": 1042
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 6
+                  },
+                  "item_id": {
+                    "Integer": 1043
+                  }
+                }
+              }
+            ]
+          },
+          "id": {
+            "Integer": 9006
+          },
+          "monster_ids": {
+            "List": [
+              {
+                "Integer": 8047
+              },
+              {
+                "Integer": 8048
+              },
+              {
+                "Integer": 8049
+              }
+            ]
+          },
+          "name": {
+            "String": "Stage 9006"
+          },
+          "recommended_power": {
+            "Integer": 108072
+          }
+        }
+      },
+      {
+        "values": {
+          "first_clear_rewards": {
+            "List": [
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 3
+                  },
+                  "item_id": {
+                    "Integer": 1043
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 6
+                  },
+                  "item_id": {
+                    "Integer": 1044
+                  }
+                }
+              }
+            ]
+          },
+          "id": {
+            "Integer": 9007
+          },
+          "monster_ids": {
+            "List": [
+              {
+                "Integer": 8048
+              },
+              {
+                "Integer": 8049
+              },
+              {
+                "Integer": 8050
+              }
+            ]
+          },
+          "name": {
+            "String": "Stage 9007"
+          },
+          "recommended_power": {
+            "Integer": 108084
+          }
+        }
+      },
+      {
+        "values": {
+          "first_clear_rewards": {
+            "List": [
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 3
+                  },
+                  "item_id": {
+                    "Integer": 1044
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 6
+                  },
+                  "item_id": {
+                    "Integer": 1045
+                  }
+                }
+              }
+            ]
+          },
+          "id": {
+            "Integer": 9008
+          },
+          "monster_ids": {
+            "List": [
+              {
+                "Integer": 8049
+              },
+              {
+                "Integer": 8050
+              },
+              {
+                "Integer": 8051
+              }
+            ]
+          },
+          "name": {
+            "String": "Stage 9008"
+          },
+          "recommended_power": {
+            "Integer": 108096
+          }
+        }
+      },
+      {
+        "values": {
+          "first_clear_rewards": {
+            "List": [
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 3
+                  },
+                  "item_id": {
+                    "Integer": 1045
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 6
+                  },
+                  "item_id": {
+                    "Integer": 1046
+                  }
+                }
+              }
+            ]
+          },
+          "id": {
+            "Integer": 9009
+          },
+          "monster_ids": {
+            "List": [
+              {
+                "Integer": 8050
+              },
+              {
+                "Integer": 8051
+              },
+              {
+                "Integer": 8052
+              }
+            ]
+          },
+          "name": {
+            "String": "Stage 9009"
+          },
+          "recommended_power": {
+            "Integer": 108108
+          }
+        }
+      },
+      {
+        "values": {
+          "first_clear_rewards": {
+            "List": [
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 3
+                  },
+                  "item_id": {
+                    "Integer": 1046
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 6
+                  },
+                  "item_id": {
+                    "Integer": 1047
+                  }
+                }
+              }
+            ]
+          },
+          "id": {
+            "Integer": 9010
+          },
+          "monster_ids": {
+            "List": [
+              {
+                "Integer": 8051
+              },
+              {
+                "Integer": 8052
+              },
+              {
+                "Integer": 8053
+              }
+            ]
+          },
+          "name": {
+            "String": "Stage 9010"
+          },
+          "recommended_power": {
+            "Integer": 108120
+          }
+        }
+      },
+      {
+        "values": {
+          "first_clear_rewards": {
+            "List": [
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 3
+                  },
+                  "item_id": {
+                    "Integer": 1047
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 6
+                  },
+                  "item_id": {
+                    "Integer": 1048
+                  }
+                }
+              }
+            ]
+          },
+          "id": {
+            "Integer": 9011
+          },
+          "monster_ids": {
+            "List": [
+              {
+                "Integer": 8052
+              },
+              {
+                "Integer": 8053
+              },
+              {
+                "Integer": 8054
+              }
+            ]
+          },
+          "name": {
+            "String": "Stage 9011"
+          },
+          "recommended_power": {
+            "Integer": 108132
+          }
+        }
+      },
+      {
+        "values": {
+          "first_clear_rewards": {
+            "List": [
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 3
+                  },
+                  "item_id": {
+                    "Integer": 1048
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 6
+                  },
+                  "item_id": {
+                    "Integer": 1049
+                  }
+                }
+              }
+            ]
+          },
+          "id": {
+            "Integer": 9012
+          },
+          "monster_ids": {
+            "List": [
+              {
+                "Integer": 8053
+              },
+              {
+                "Integer": 8054
+              },
+              {
+                "Integer": 8055
+              }
+            ]
+          },
+          "name": {
+            "String": "Stage 9012"
+          },
+          "recommended_power": {
+            "Integer": 108144
+          }
+        }
+      },
+      {
+        "values": {
+          "first_clear_rewards": {
+            "List": [
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 3
+                  },
+                  "item_id": {
+                    "Integer": 1049
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 6
+                  },
+                  "item_id": {
+                    "Integer": 1050
+                  }
+                }
+              }
+            ]
+          },
+          "id": {
+            "Integer": 9013
+          },
+          "monster_ids": {
+            "List": [
+              {
+                "Integer": 8054
+              },
+              {
+                "Integer": 8055
+              },
+              {
+                "Integer": 8056
+              }
+            ]
+          },
+          "name": {
+            "String": "Stage 9013"
+          },
+          "recommended_power": {
+            "Integer": 108156
+          }
+        }
+      },
+      {
+        "values": {
+          "first_clear_rewards": {
+            "List": [
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 3
+                  },
+                  "item_id": {
+                    "Integer": 1050
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 6
+                  },
+                  "item_id": {
+                    "Integer": 1051
+                  }
+                }
+              }
+            ]
+          },
+          "id": {
+            "Integer": 9014
+          },
+          "monster_ids": {
+            "List": [
+              {
+                "Integer": 8055
+              },
+              {
+                "Integer": 8056
+              },
+              {
+                "Integer": 8057
+              }
+            ]
+          },
+          "name": {
+            "String": "Stage 9014"
+          },
+          "recommended_power": {
+            "Integer": 108168
+          }
+        }
+      },
+      {
+        "values": {
+          "first_clear_rewards": {
+            "List": [
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 3
+                  },
+                  "item_id": {
+                    "Integer": 1051
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 6
+                  },
+                  "item_id": {
+                    "Integer": 1052
+                  }
+                }
+              }
+            ]
+          },
+          "id": {
+            "Integer": 9015
+          },
+          "monster_ids": {
+            "List": [
+              {
+                "Integer": 8056
+              },
+              {
+                "Integer": 8057
+              },
+              {
+                "Integer": 8058
+              }
+            ]
+          },
+          "name": {
+            "String": "Stage 9015"
+          },
+          "recommended_power": {
+            "Integer": 108180
+          }
+        }
+      },
+      {
+        "values": {
+          "first_clear_rewards": {
+            "List": [
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 3
+                  },
+                  "item_id": {
+                    "Integer": 1052
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 6
+                  },
+                  "item_id": {
+                    "Integer": 1053
+                  }
+                }
+              }
+            ]
+          },
+          "id": {
+            "Integer": 9016
+          },
+          "monster_ids": {
+            "List": [
+              {
+                "Integer": 8057
+              },
+              {
+                "Integer": 8058
+              },
+              {
+                "Integer": 8059
+              }
+            ]
+          },
+          "name": {
+            "String": "Stage 9016"
+          },
+          "recommended_power": {
+            "Integer": 108192
+          }
+        }
+      },
+      {
+        "values": {
+          "first_clear_rewards": {
+            "List": [
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 3
+                  },
+                  "item_id": {
+                    "Integer": 1053
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 6
+                  },
+                  "item_id": {
+                    "Integer": 1054
+                  }
+                }
+              }
+            ]
+          },
+          "id": {
+            "Integer": 9017
+          },
+          "monster_ids": {
+            "List": [
+              {
+                "Integer": 8058
+              },
+              {
+                "Integer": 8059
+              },
+              {
+                "Integer": 8060
+              }
+            ]
+          },
+          "name": {
+            "String": "Stage 9017"
+          },
+          "recommended_power": {
+            "Integer": 108204
+          }
+        }
+      },
+      {
+        "values": {
+          "first_clear_rewards": {
+            "List": [
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 3
+                  },
+                  "item_id": {
+                    "Integer": 1054
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 6
+                  },
+                  "item_id": {
+                    "Integer": 1055
+                  }
+                }
+              }
+            ]
+          },
+          "id": {
+            "Integer": 9018
+          },
+          "monster_ids": {
+            "List": [
+              {
+                "Integer": 8059
+              },
+              {
+                "Integer": 8060
+              },
+              {
+                "Integer": 8061
+              }
+            ]
+          },
+          "name": {
+            "String": "Stage 9018"
+          },
+          "recommended_power": {
+            "Integer": 108216
+          }
+        }
+      },
+      {
+        "values": {
+          "first_clear_rewards": {
+            "List": [
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 3
+                  },
+                  "item_id": {
+                    "Integer": 1055
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 6
+                  },
+                  "item_id": {
+                    "Integer": 1056
+                  }
+                }
+              }
+            ]
+          },
+          "id": {
+            "Integer": 9019
+          },
+          "monster_ids": {
+            "List": [
+              {
+                "Integer": 8060
+              },
+              {
+                "Integer": 8061
+              },
+              {
+                "Integer": 8062
+              }
+            ]
+          },
+          "name": {
+            "String": "Stage 9019"
+          },
+          "recommended_power": {
+            "Integer": 108228
+          }
+        }
+      },
+      {
+        "values": {
+          "first_clear_rewards": {
+            "List": [
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 3
+                  },
+                  "item_id": {
+                    "Integer": 1056
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 6
+                  },
+                  "item_id": {
+                    "Integer": 1057
+                  }
+                }
+              }
+            ]
+          },
+          "id": {
+            "Integer": 9020
+          },
+          "monster_ids": {
+            "List": [
+              {
+                "Integer": 8061
+              },
+              {
+                "Integer": 8062
+              },
+              {
+                "Integer": 8063
+              }
+            ]
+          },
+          "name": {
+            "String": "Stage 9020"
+          },
+          "recommended_power": {
+            "Integer": 108240
+          }
+        }
+      },
+      {
+        "values": {
+          "first_clear_rewards": {
+            "List": [
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 3
+                  },
+                  "item_id": {
+                    "Integer": 1057
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 6
+                  },
+                  "item_id": {
+                    "Integer": 1058
+                  }
+                }
+              }
+            ]
+          },
+          "id": {
+            "Integer": 9021
+          },
+          "monster_ids": {
+            "List": [
+              {
+                "Integer": 8062
+              },
+              {
+                "Integer": 8063
+              },
+              {
+                "Integer": 8064
+              }
+            ]
+          },
+          "name": {
+            "String": "Stage 9021"
+          },
+          "recommended_power": {
+            "Integer": 108252
+          }
+        }
+      },
+      {
+        "values": {
+          "first_clear_rewards": {
+            "List": [
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 3
+                  },
+                  "item_id": {
+                    "Integer": 1058
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 6
+                  },
+                  "item_id": {
+                    "Integer": 1059
+                  }
+                }
+              }
+            ]
+          },
+          "id": {
+            "Integer": 9022
+          },
+          "monster_ids": {
+            "List": [
+              {
+                "Integer": 8063
+              },
+              {
+                "Integer": 8064
+              },
+              {
+                "Integer": 8065
+              }
+            ]
+          },
+          "name": {
+            "String": "Stage 9022"
+          },
+          "recommended_power": {
+            "Integer": 108264
+          }
+        }
+      },
+      {
+        "values": {
+          "first_clear_rewards": {
+            "List": [
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 3
+                  },
+                  "item_id": {
+                    "Integer": 1059
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 6
+                  },
+                  "item_id": {
+                    "Integer": 1060
+                  }
+                }
+              }
+            ]
+          },
+          "id": {
+            "Integer": 9023
+          },
+          "monster_ids": {
+            "List": [
+              {
+                "Integer": 8064
+              },
+              {
+                "Integer": 8065
+              },
+              {
+                "Integer": 8066
+              }
+            ]
+          },
+          "name": {
+            "String": "Stage 9023"
+          },
+          "recommended_power": {
+            "Integer": 108276
+          }
+        }
+      },
+      {
+        "values": {
+          "first_clear_rewards": {
+            "List": [
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 3
+                  },
+                  "item_id": {
+                    "Integer": 1060
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 6
+                  },
+                  "item_id": {
+                    "Integer": 1061
+                  }
+                }
+              }
+            ]
+          },
+          "id": {
+            "Integer": 9024
+          },
+          "monster_ids": {
+            "List": [
+              {
+                "Integer": 8065
+              },
+              {
+                "Integer": 8066
+              },
+              {
+                "Integer": 8067
+              }
+            ]
+          },
+          "name": {
+            "String": "Stage 9024"
+          },
+          "recommended_power": {
+            "Integer": 108288
+          }
+        }
+      },
+      {
+        "values": {
+          "first_clear_rewards": {
+            "List": [
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 3
+                  },
+                  "item_id": {
+                    "Integer": 1061
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 6
+                  },
+                  "item_id": {
+                    "Integer": 1062
+                  }
+                }
+              }
+            ]
+          },
+          "id": {
+            "Integer": 9025
+          },
+          "monster_ids": {
+            "List": [
+              {
+                "Integer": 8066
+              },
+              {
+                "Integer": 8067
+              },
+              {
+                "Integer": 8068
+              }
+            ]
+          },
+          "name": {
+            "String": "Stage 9025"
+          },
+          "recommended_power": {
+            "Integer": 108300
+          }
+        }
+      },
+      {
+        "values": {
+          "first_clear_rewards": {
+            "List": [
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 3
+                  },
+                  "item_id": {
+                    "Integer": 1062
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 6
+                  },
+                  "item_id": {
+                    "Integer": 1063
+                  }
+                }
+              }
+            ]
+          },
+          "id": {
+            "Integer": 9026
+          },
+          "monster_ids": {
+            "List": [
+              {
+                "Integer": 8067
+              },
+              {
+                "Integer": 8068
+              },
+              {
+                "Integer": 8069
+              }
+            ]
+          },
+          "name": {
+            "String": "Stage 9026"
+          },
+          "recommended_power": {
+            "Integer": 108312
+          }
+        }
+      },
+      {
+        "values": {
+          "first_clear_rewards": {
+            "List": [
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 3
+                  },
+                  "item_id": {
+                    "Integer": 1063
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 6
+                  },
+                  "item_id": {
+                    "Integer": 1064
+                  }
+                }
+              }
+            ]
+          },
+          "id": {
+            "Integer": 9027
+          },
+          "monster_ids": {
+            "List": [
+              {
+                "Integer": 8068
+              },
+              {
+                "Integer": 8069
+              },
+              {
+                "Integer": 8070
+              }
+            ]
+          },
+          "name": {
+            "String": "Stage 9027"
+          },
+          "recommended_power": {
+            "Integer": 108324
+          }
+        }
+      },
+      {
+        "values": {
+          "first_clear_rewards": {
+            "List": [
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 3
+                  },
+                  "item_id": {
+                    "Integer": 1064
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 6
+                  },
+                  "item_id": {
+                    "Integer": 1065
+                  }
+                }
+              }
+            ]
+          },
+          "id": {
+            "Integer": 9028
+          },
+          "monster_ids": {
+            "List": [
+              {
+                "Integer": 8069
+              },
+              {
+                "Integer": 8070
+              },
+              {
+                "Integer": 8071
+              }
+            ]
+          },
+          "name": {
+            "String": "Stage 9028"
+          },
+          "recommended_power": {
+            "Integer": 108336
+          }
+        }
+      },
+      {
+        "values": {
+          "first_clear_rewards": {
+            "List": [
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 3
+                  },
+                  "item_id": {
+                    "Integer": 1065
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 6
+                  },
+                  "item_id": {
+                    "Integer": 1066
+                  }
+                }
+              }
+            ]
+          },
+          "id": {
+            "Integer": 9029
+          },
+          "monster_ids": {
+            "List": [
+              {
+                "Integer": 8070
+              },
+              {
+                "Integer": 8071
+              },
+              {
+                "Integer": 8072
+              }
+            ]
+          },
+          "name": {
+            "String": "Stage 9029"
+          },
+          "recommended_power": {
+            "Integer": 108348
+          }
+        }
+      },
+      {
+        "values": {
+          "first_clear_rewards": {
+            "List": [
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 3
+                  },
+                  "item_id": {
+                    "Integer": 1066
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 6
+                  },
+                  "item_id": {
+                    "Integer": 1067
+                  }
+                }
+              }
+            ]
+          },
+          "id": {
+            "Integer": 9030
+          },
+          "monster_ids": {
+            "List": [
+              {
+                "Integer": 8071
+              },
+              {
+                "Integer": 8072
+              },
+              {
+                "Integer": 8073
+              }
+            ]
+          },
+          "name": {
+            "String": "Stage 9030"
+          },
+          "recommended_power": {
+            "Integer": 108360
+          }
+        }
+      },
+      {
+        "values": {
+          "first_clear_rewards": {
+            "List": [
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 3
+                  },
+                  "item_id": {
+                    "Integer": 1067
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 6
+                  },
+                  "item_id": {
+                    "Integer": 1068
+                  }
+                }
+              }
+            ]
+          },
+          "id": {
+            "Integer": 9031
+          },
+          "monster_ids": {
+            "List": [
+              {
+                "Integer": 8072
+              },
+              {
+                "Integer": 8073
+              },
+              {
+                "Integer": 8074
+              }
+            ]
+          },
+          "name": {
+            "String": "Stage 9031"
+          },
+          "recommended_power": {
+            "Integer": 108372
+          }
+        }
+      },
+      {
+        "values": {
+          "first_clear_rewards": {
+            "List": [
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 3
+                  },
+                  "item_id": {
+                    "Integer": 1068
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 6
+                  },
+                  "item_id": {
+                    "Integer": 1069
+                  }
+                }
+              }
+            ]
+          },
+          "id": {
+            "Integer": 9032
+          },
+          "monster_ids": {
+            "List": [
+              {
+                "Integer": 8073
+              },
+              {
+                "Integer": 8074
+              },
+              {
+                "Integer": 8075
+              }
+            ]
+          },
+          "name": {
+            "String": "Stage 9032"
+          },
+          "recommended_power": {
+            "Integer": 108384
+          }
+        }
+      },
+      {
+        "values": {
+          "first_clear_rewards": {
+            "List": [
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 3
+                  },
+                  "item_id": {
+                    "Integer": 1069
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 6
+                  },
+                  "item_id": {
+                    "Integer": 1070
+                  }
+                }
+              }
+            ]
+          },
+          "id": {
+            "Integer": 9033
+          },
+          "monster_ids": {
+            "List": [
+              {
+                "Integer": 8074
+              },
+              {
+                "Integer": 8075
+              },
+              {
+                "Integer": 8076
+              }
+            ]
+          },
+          "name": {
+            "String": "Stage 9033"
+          },
+          "recommended_power": {
+            "Integer": 108396
+          }
+        }
+      },
+      {
+        "values": {
+          "first_clear_rewards": {
+            "List": [
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 3
+                  },
+                  "item_id": {
+                    "Integer": 1070
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 6
+                  },
+                  "item_id": {
+                    "Integer": 1071
+                  }
+                }
+              }
+            ]
+          },
+          "id": {
+            "Integer": 9034
+          },
+          "monster_ids": {
+            "List": [
+              {
+                "Integer": 8075
+              },
+              {
+                "Integer": 8076
+              },
+              {
+                "Integer": 8077
+              }
+            ]
+          },
+          "name": {
+            "String": "Stage 9034"
+          },
+          "recommended_power": {
+            "Integer": 108408
+          }
+        }
+      },
+      {
+        "values": {
+          "first_clear_rewards": {
+            "List": [
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 3
+                  },
+                  "item_id": {
+                    "Integer": 1071
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 6
+                  },
+                  "item_id": {
+                    "Integer": 1072
+                  }
+                }
+              }
+            ]
+          },
+          "id": {
+            "Integer": 9035
+          },
+          "monster_ids": {
+            "List": [
+              {
+                "Integer": 8076
+              },
+              {
+                "Integer": 8077
+              },
+              {
+                "Integer": 8078
+              }
+            ]
+          },
+          "name": {
+            "String": "Stage 9035"
+          },
+          "recommended_power": {
+            "Integer": 108420
+          }
+        }
+      },
+      {
+        "values": {
+          "first_clear_rewards": {
+            "List": [
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 3
+                  },
+                  "item_id": {
+                    "Integer": 1072
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 6
+                  },
+                  "item_id": {
+                    "Integer": 1073
+                  }
+                }
+              }
+            ]
+          },
+          "id": {
+            "Integer": 9036
+          },
+          "monster_ids": {
+            "List": [
+              {
+                "Integer": 8077
+              },
+              {
+                "Integer": 8078
+              },
+              {
+                "Integer": 8079
+              }
+            ]
+          },
+          "name": {
+            "String": "Stage 9036"
+          },
+          "recommended_power": {
+            "Integer": 108432
+          }
+        }
+      },
+      {
+        "values": {
+          "first_clear_rewards": {
+            "List": [
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 3
+                  },
+                  "item_id": {
+                    "Integer": 1073
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 6
+                  },
+                  "item_id": {
+                    "Integer": 1074
+                  }
+                }
+              }
+            ]
+          },
+          "id": {
+            "Integer": 9037
+          },
+          "monster_ids": {
+            "List": [
+              {
+                "Integer": 8078
+              },
+              {
+                "Integer": 8079
+              },
+              {
+                "Integer": 8080
+              }
+            ]
+          },
+          "name": {
+            "String": "Stage 9037"
+          },
+          "recommended_power": {
+            "Integer": 108444
+          }
+        }
+      },
+      {
+        "values": {
+          "first_clear_rewards": {
+            "List": [
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 3
+                  },
+                  "item_id": {
+                    "Integer": 1074
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 6
+                  },
+                  "item_id": {
+                    "Integer": 1075
+                  }
+                }
+              }
+            ]
+          },
+          "id": {
+            "Integer": 9038
+          },
+          "monster_ids": {
+            "List": [
+              {
+                "Integer": 8079
+              },
+              {
+                "Integer": 8080
+              },
+              {
+                "Integer": 8001
+              }
+            ]
+          },
+          "name": {
+            "String": "Stage 9038"
+          },
+          "recommended_power": {
+            "Integer": 108456
+          }
+        }
+      },
+      {
+        "values": {
+          "first_clear_rewards": {
+            "List": [
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 3
+                  },
+                  "item_id": {
+                    "Integer": 1075
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 6
+                  },
+                  "item_id": {
+                    "Integer": 1076
+                  }
+                }
+              }
+            ]
+          },
+          "id": {
+            "Integer": 9039
+          },
+          "monster_ids": {
+            "List": [
+              {
+                "Integer": 8080
+              },
+              {
+                "Integer": 8001
+              },
+              {
+                "Integer": 8002
+              }
+            ]
+          },
+          "name": {
+            "String": "Stage 9039"
+          },
+          "recommended_power": {
+            "Integer": 108468
+          }
+        }
+      },
+      {
+        "values": {
+          "first_clear_rewards": {
+            "List": [
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 3
+                  },
+                  "item_id": {
+                    "Integer": 1076
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 6
+                  },
+                  "item_id": {
+                    "Integer": 1077
+                  }
+                }
+              }
+            ]
+          },
+          "id": {
+            "Integer": 9040
+          },
+          "monster_ids": {
+            "List": [
+              {
+                "Integer": 8001
+              },
+              {
+                "Integer": 8002
+              },
+              {
+                "Integer": 8003
+              }
+            ]
+          },
+          "name": {
+            "String": "Stage 9040"
+          },
+          "recommended_power": {
+            "Integer": 108480
+          }
+        }
+      }
+    ]
+  }
+}

@@ -1,0 +1,807 @@
+{
+  "table": {
+    "name": "MailTemplate",
+    "rows": [
+      {
+        "values": {
+          "body_key": {
+            "String": "loc_021"
+          },
+          "id": {
+            "Integer": 15001
+          },
+          "mail_type": {
+            "String": "Event"
+          },
+          "rewards": {
+            "List": [
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 2
+                  },
+                  "item_id": {
+                    "Integer": 1005
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 4
+                  },
+                  "item_id": {
+                    "Integer": 1006
+                  }
+                }
+              }
+            ]
+          },
+          "title_key": {
+            "String": "loc_001"
+          }
+        }
+      },
+      {
+        "values": {
+          "body_key": {
+            "String": "loc_022"
+          },
+          "id": {
+            "Integer": 15002
+          },
+          "mail_type": {
+            "String": "Compensation"
+          },
+          "rewards": {
+            "List": [
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 2
+                  },
+                  "item_id": {
+                    "Integer": 1006
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 4
+                  },
+                  "item_id": {
+                    "Integer": 1007
+                  }
+                }
+              }
+            ]
+          },
+          "title_key": {
+            "String": "loc_002"
+          }
+        }
+      },
+      {
+        "values": {
+          "body_key": {
+            "String": "loc_023"
+          },
+          "id": {
+            "Integer": 15003
+          },
+          "mail_type": {
+            "String": "System"
+          },
+          "rewards": {
+            "List": [
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 2
+                  },
+                  "item_id": {
+                    "Integer": 1007
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 4
+                  },
+                  "item_id": {
+                    "Integer": 1008
+                  }
+                }
+              }
+            ]
+          },
+          "title_key": {
+            "String": "loc_003"
+          }
+        }
+      },
+      {
+        "values": {
+          "body_key": {
+            "String": "loc_024"
+          },
+          "id": {
+            "Integer": 15004
+          },
+          "mail_type": {
+            "String": "Event"
+          },
+          "rewards": {
+            "List": [
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 2
+                  },
+                  "item_id": {
+                    "Integer": 1008
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 4
+                  },
+                  "item_id": {
+                    "Integer": 1009
+                  }
+                }
+              }
+            ]
+          },
+          "title_key": {
+            "String": "loc_004"
+          }
+        }
+      },
+      {
+        "values": {
+          "body_key": {
+            "String": "loc_025"
+          },
+          "id": {
+            "Integer": 15005
+          },
+          "mail_type": {
+            "String": "Compensation"
+          },
+          "rewards": {
+            "List": [
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 2
+                  },
+                  "item_id": {
+                    "Integer": 1009
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 4
+                  },
+                  "item_id": {
+                    "Integer": 1010
+                  }
+                }
+              }
+            ]
+          },
+          "title_key": {
+            "String": "loc_005"
+          }
+        }
+      },
+      {
+        "values": {
+          "body_key": {
+            "String": "loc_026"
+          },
+          "id": {
+            "Integer": 15006
+          },
+          "mail_type": {
+            "String": "System"
+          },
+          "rewards": {
+            "List": [
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 2
+                  },
+                  "item_id": {
+                    "Integer": 1010
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 4
+                  },
+                  "item_id": {
+                    "Integer": 1011
+                  }
+                }
+              }
+            ]
+          },
+          "title_key": {
+            "String": "loc_006"
+          }
+        }
+      },
+      {
+        "values": {
+          "body_key": {
+            "String": "loc_027"
+          },
+          "id": {
+            "Integer": 15007
+          },
+          "mail_type": {
+            "String": "Event"
+          },
+          "rewards": {
+            "List": [
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 2
+                  },
+                  "item_id": {
+                    "Integer": 1011
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 4
+                  },
+                  "item_id": {
+                    "Integer": 1012
+                  }
+                }
+              }
+            ]
+          },
+          "title_key": {
+            "String": "loc_007"
+          }
+        }
+      },
+      {
+        "values": {
+          "body_key": {
+            "String": "loc_028"
+          },
+          "id": {
+            "Integer": 15008
+          },
+          "mail_type": {
+            "String": "Compensation"
+          },
+          "rewards": {
+            "List": [
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 2
+                  },
+                  "item_id": {
+                    "Integer": 1012
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 4
+                  },
+                  "item_id": {
+                    "Integer": 1013
+                  }
+                }
+              }
+            ]
+          },
+          "title_key": {
+            "String": "loc_008"
+          }
+        }
+      },
+      {
+        "values": {
+          "body_key": {
+            "String": "loc_029"
+          },
+          "id": {
+            "Integer": 15009
+          },
+          "mail_type": {
+            "String": "System"
+          },
+          "rewards": {
+            "List": [
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 2
+                  },
+                  "item_id": {
+                    "Integer": 1013
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 4
+                  },
+                  "item_id": {
+                    "Integer": 1014
+                  }
+                }
+              }
+            ]
+          },
+          "title_key": {
+            "String": "loc_009"
+          }
+        }
+      },
+      {
+        "values": {
+          "body_key": {
+            "String": "loc_030"
+          },
+          "id": {
+            "Integer": 15010
+          },
+          "mail_type": {
+            "String": "Event"
+          },
+          "rewards": {
+            "List": [
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 2
+                  },
+                  "item_id": {
+                    "Integer": 1014
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 4
+                  },
+                  "item_id": {
+                    "Integer": 1015
+                  }
+                }
+              }
+            ]
+          },
+          "title_key": {
+            "String": "loc_010"
+          }
+        }
+      },
+      {
+        "values": {
+          "body_key": {
+            "String": "loc_031"
+          },
+          "id": {
+            "Integer": 15011
+          },
+          "mail_type": {
+            "String": "Compensation"
+          },
+          "rewards": {
+            "List": [
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 2
+                  },
+                  "item_id": {
+                    "Integer": 1015
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 4
+                  },
+                  "item_id": {
+                    "Integer": 1016
+                  }
+                }
+              }
+            ]
+          },
+          "title_key": {
+            "String": "loc_011"
+          }
+        }
+      },
+      {
+        "values": {
+          "body_key": {
+            "String": "loc_032"
+          },
+          "id": {
+            "Integer": 15012
+          },
+          "mail_type": {
+            "String": "System"
+          },
+          "rewards": {
+            "List": [
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 2
+                  },
+                  "item_id": {
+                    "Integer": 1016
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 4
+                  },
+                  "item_id": {
+                    "Integer": 1017
+                  }
+                }
+              }
+            ]
+          },
+          "title_key": {
+            "String": "loc_012"
+          }
+        }
+      },
+      {
+        "values": {
+          "body_key": {
+            "String": "loc_033"
+          },
+          "id": {
+            "Integer": 15013
+          },
+          "mail_type": {
+            "String": "Event"
+          },
+          "rewards": {
+            "List": [
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 2
+                  },
+                  "item_id": {
+                    "Integer": 1017
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 4
+                  },
+                  "item_id": {
+                    "Integer": 1018
+                  }
+                }
+              }
+            ]
+          },
+          "title_key": {
+            "String": "loc_013"
+          }
+        }
+      },
+      {
+        "values": {
+          "body_key": {
+            "String": "loc_034"
+          },
+          "id": {
+            "Integer": 15014
+          },
+          "mail_type": {
+            "String": "Compensation"
+          },
+          "rewards": {
+            "List": [
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 2
+                  },
+                  "item_id": {
+                    "Integer": 1018
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 4
+                  },
+                  "item_id": {
+                    "Integer": 1019
+                  }
+                }
+              }
+            ]
+          },
+          "title_key": {
+            "String": "loc_014"
+          }
+        }
+      },
+      {
+        "values": {
+          "body_key": {
+            "String": "loc_035"
+          },
+          "id": {
+            "Integer": 15015
+          },
+          "mail_type": {
+            "String": "System"
+          },
+          "rewards": {
+            "List": [
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 2
+                  },
+                  "item_id": {
+                    "Integer": 1019
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 4
+                  },
+                  "item_id": {
+                    "Integer": 1020
+                  }
+                }
+              }
+            ]
+          },
+          "title_key": {
+            "String": "loc_015"
+          }
+        }
+      },
+      {
+        "values": {
+          "body_key": {
+            "String": "loc_036"
+          },
+          "id": {
+            "Integer": 15016
+          },
+          "mail_type": {
+            "String": "Event"
+          },
+          "rewards": {
+            "List": [
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 2
+                  },
+                  "item_id": {
+                    "Integer": 1020
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 4
+                  },
+                  "item_id": {
+                    "Integer": 1021
+                  }
+                }
+              }
+            ]
+          },
+          "title_key": {
+            "String": "loc_016"
+          }
+        }
+      },
+      {
+        "values": {
+          "body_key": {
+            "String": "loc_037"
+          },
+          "id": {
+            "Integer": 15017
+          },
+          "mail_type": {
+            "String": "Compensation"
+          },
+          "rewards": {
+            "List": [
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 2
+                  },
+                  "item_id": {
+                    "Integer": 1021
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 4
+                  },
+                  "item_id": {
+                    "Integer": 1022
+                  }
+                }
+              }
+            ]
+          },
+          "title_key": {
+            "String": "loc_017"
+          }
+        }
+      },
+      {
+        "values": {
+          "body_key": {
+            "String": "loc_038"
+          },
+          "id": {
+            "Integer": 15018
+          },
+          "mail_type": {
+            "String": "System"
+          },
+          "rewards": {
+            "List": [
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 2
+                  },
+                  "item_id": {
+                    "Integer": 1022
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 4
+                  },
+                  "item_id": {
+                    "Integer": 1023
+                  }
+                }
+              }
+            ]
+          },
+          "title_key": {
+            "String": "loc_018"
+          }
+        }
+      },
+      {
+        "values": {
+          "body_key": {
+            "String": "loc_039"
+          },
+          "id": {
+            "Integer": 15019
+          },
+          "mail_type": {
+            "String": "Event"
+          },
+          "rewards": {
+            "List": [
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 2
+                  },
+                  "item_id": {
+                    "Integer": 1023
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 4
+                  },
+                  "item_id": {
+                    "Integer": 1024
+                  }
+                }
+              }
+            ]
+          },
+          "title_key": {
+            "String": "loc_019"
+          }
+        }
+      },
+      {
+        "values": {
+          "body_key": {
+            "String": "loc_040"
+          },
+          "id": {
+            "Integer": 15020
+          },
+          "mail_type": {
+            "String": "Compensation"
+          },
+          "rewards": {
+            "List": [
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 2
+                  },
+                  "item_id": {
+                    "Integer": 1024
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 4
+                  },
+                  "item_id": {
+                    "Integer": 1025
+                  }
+                }
+              }
+            ]
+          },
+          "title_key": {
+            "String": "loc_020"
+          }
+        }
+      }
+    ]
+  }
+}

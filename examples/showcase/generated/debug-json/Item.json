@@ -157,6 +157,4608 @@
             ]
           }
         }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 1003
+          },
+          "item_type": {
+            "String": "Material"
+          },
+          "max_stack": {
+            "Integer": 14
+          },
+          "name": {
+            "String": "Item 1003"
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 13
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "tags": {
+            "List": [
+              {
+                "String": "auto"
+              },
+              {
+                "String": "material"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 1004
+          },
+          "item_type": {
+            "String": "Consumable"
+          },
+          "max_stack": {
+            "Integer": 15
+          },
+          "name": {
+            "String": "Item 1004"
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 14
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "tags": {
+            "List": [
+              {
+                "String": "auto"
+              },
+              {
+                "String": "consumable"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 1005
+          },
+          "item_type": {
+            "String": "Weapon"
+          },
+          "max_stack": {
+            "Integer": 1
+          },
+          "name": {
+            "String": "Item 1005"
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 15
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "tags": {
+            "List": [
+              {
+                "String": "auto"
+              },
+              {
+                "String": "weapon"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 1006
+          },
+          "item_type": {
+            "String": "Armor"
+          },
+          "max_stack": {
+            "Integer": 1
+          },
+          "name": {
+            "String": "Item 1006"
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 16
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "tags": {
+            "List": [
+              {
+                "String": "auto"
+              },
+              {
+                "String": "armor"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 1007
+          },
+          "item_type": {
+            "String": "Currency"
+          },
+          "max_stack": {
+            "Integer": 18
+          },
+          "name": {
+            "String": "Item 1007"
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 17
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "tags": {
+            "List": [
+              {
+                "String": "auto"
+              },
+              {
+                "String": "currency"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 1008
+          },
+          "item_type": {
+            "String": "Material"
+          },
+          "max_stack": {
+            "Integer": 19
+          },
+          "name": {
+            "String": "Item 1008"
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 18
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "tags": {
+            "List": [
+              {
+                "String": "auto"
+              },
+              {
+                "String": "material"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 1009
+          },
+          "item_type": {
+            "String": "Consumable"
+          },
+          "max_stack": {
+            "Integer": 20
+          },
+          "name": {
+            "String": "Item 1009"
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 19
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "tags": {
+            "List": [
+              {
+                "String": "auto"
+              },
+              {
+                "String": "consumable"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 1010
+          },
+          "item_type": {
+            "String": "Weapon"
+          },
+          "max_stack": {
+            "Integer": 1
+          },
+          "name": {
+            "String": "Item 1010"
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 20
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "tags": {
+            "List": [
+              {
+                "String": "auto"
+              },
+              {
+                "String": "weapon"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 1011
+          },
+          "item_type": {
+            "String": "Armor"
+          },
+          "max_stack": {
+            "Integer": 1
+          },
+          "name": {
+            "String": "Item 1011"
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 21
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "tags": {
+            "List": [
+              {
+                "String": "auto"
+              },
+              {
+                "String": "armor"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 1012
+          },
+          "item_type": {
+            "String": "Currency"
+          },
+          "max_stack": {
+            "Integer": 23
+          },
+          "name": {
+            "String": "Item 1012"
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 22
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "tags": {
+            "List": [
+              {
+                "String": "auto"
+              },
+              {
+                "String": "currency"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 1013
+          },
+          "item_type": {
+            "String": "Material"
+          },
+          "max_stack": {
+            "Integer": 24
+          },
+          "name": {
+            "String": "Item 1013"
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 23
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "tags": {
+            "List": [
+              {
+                "String": "auto"
+              },
+              {
+                "String": "material"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 1014
+          },
+          "item_type": {
+            "String": "Consumable"
+          },
+          "max_stack": {
+            "Integer": 25
+          },
+          "name": {
+            "String": "Item 1014"
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 24
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "tags": {
+            "List": [
+              {
+                "String": "auto"
+              },
+              {
+                "String": "consumable"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 1015
+          },
+          "item_type": {
+            "String": "Weapon"
+          },
+          "max_stack": {
+            "Integer": 1
+          },
+          "name": {
+            "String": "Item 1015"
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 25
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "tags": {
+            "List": [
+              {
+                "String": "auto"
+              },
+              {
+                "String": "weapon"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 1016
+          },
+          "item_type": {
+            "String": "Armor"
+          },
+          "max_stack": {
+            "Integer": 1
+          },
+          "name": {
+            "String": "Item 1016"
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 26
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "tags": {
+            "List": [
+              {
+                "String": "auto"
+              },
+              {
+                "String": "armor"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 1017
+          },
+          "item_type": {
+            "String": "Currency"
+          },
+          "max_stack": {
+            "Integer": 28
+          },
+          "name": {
+            "String": "Item 1017"
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 27
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "tags": {
+            "List": [
+              {
+                "String": "auto"
+              },
+              {
+                "String": "currency"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 1018
+          },
+          "item_type": {
+            "String": "Material"
+          },
+          "max_stack": {
+            "Integer": 29
+          },
+          "name": {
+            "String": "Item 1018"
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 28
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "tags": {
+            "List": [
+              {
+                "String": "auto"
+              },
+              {
+                "String": "material"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 1019
+          },
+          "item_type": {
+            "String": "Consumable"
+          },
+          "max_stack": {
+            "Integer": 30
+          },
+          "name": {
+            "String": "Item 1019"
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 29
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "tags": {
+            "List": [
+              {
+                "String": "auto"
+              },
+              {
+                "String": "consumable"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 1020
+          },
+          "item_type": {
+            "String": "Weapon"
+          },
+          "max_stack": {
+            "Integer": 1
+          },
+          "name": {
+            "String": "Item 1020"
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 30
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "tags": {
+            "List": [
+              {
+                "String": "auto"
+              },
+              {
+                "String": "weapon"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 1021
+          },
+          "item_type": {
+            "String": "Armor"
+          },
+          "max_stack": {
+            "Integer": 1
+          },
+          "name": {
+            "String": "Item 1021"
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 31
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "tags": {
+            "List": [
+              {
+                "String": "auto"
+              },
+              {
+                "String": "armor"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 1022
+          },
+          "item_type": {
+            "String": "Currency"
+          },
+          "max_stack": {
+            "Integer": 33
+          },
+          "name": {
+            "String": "Item 1022"
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 32
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "tags": {
+            "List": [
+              {
+                "String": "auto"
+              },
+              {
+                "String": "currency"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 1023
+          },
+          "item_type": {
+            "String": "Material"
+          },
+          "max_stack": {
+            "Integer": 34
+          },
+          "name": {
+            "String": "Item 1023"
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 33
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "tags": {
+            "List": [
+              {
+                "String": "auto"
+              },
+              {
+                "String": "material"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 1024
+          },
+          "item_type": {
+            "String": "Consumable"
+          },
+          "max_stack": {
+            "Integer": 35
+          },
+          "name": {
+            "String": "Item 1024"
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 34
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "tags": {
+            "List": [
+              {
+                "String": "auto"
+              },
+              {
+                "String": "consumable"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 1025
+          },
+          "item_type": {
+            "String": "Weapon"
+          },
+          "max_stack": {
+            "Integer": 1
+          },
+          "name": {
+            "String": "Item 1025"
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 35
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "tags": {
+            "List": [
+              {
+                "String": "auto"
+              },
+              {
+                "String": "weapon"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 1026
+          },
+          "item_type": {
+            "String": "Armor"
+          },
+          "max_stack": {
+            "Integer": 1
+          },
+          "name": {
+            "String": "Item 1026"
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 36
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "tags": {
+            "List": [
+              {
+                "String": "auto"
+              },
+              {
+                "String": "armor"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 1027
+          },
+          "item_type": {
+            "String": "Currency"
+          },
+          "max_stack": {
+            "Integer": 38
+          },
+          "name": {
+            "String": "Item 1027"
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 37
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "tags": {
+            "List": [
+              {
+                "String": "auto"
+              },
+              {
+                "String": "currency"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 1028
+          },
+          "item_type": {
+            "String": "Material"
+          },
+          "max_stack": {
+            "Integer": 39
+          },
+          "name": {
+            "String": "Item 1028"
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 38
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "tags": {
+            "List": [
+              {
+                "String": "auto"
+              },
+              {
+                "String": "material"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 1029
+          },
+          "item_type": {
+            "String": "Consumable"
+          },
+          "max_stack": {
+            "Integer": 40
+          },
+          "name": {
+            "String": "Item 1029"
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 39
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "tags": {
+            "List": [
+              {
+                "String": "auto"
+              },
+              {
+                "String": "consumable"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 1030
+          },
+          "item_type": {
+            "String": "Weapon"
+          },
+          "max_stack": {
+            "Integer": 1
+          },
+          "name": {
+            "String": "Item 1030"
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 40
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "tags": {
+            "List": [
+              {
+                "String": "auto"
+              },
+              {
+                "String": "weapon"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 1031
+          },
+          "item_type": {
+            "String": "Armor"
+          },
+          "max_stack": {
+            "Integer": 1
+          },
+          "name": {
+            "String": "Item 1031"
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 41
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "tags": {
+            "List": [
+              {
+                "String": "auto"
+              },
+              {
+                "String": "armor"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 1032
+          },
+          "item_type": {
+            "String": "Currency"
+          },
+          "max_stack": {
+            "Integer": 43
+          },
+          "name": {
+            "String": "Item 1032"
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 42
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "tags": {
+            "List": [
+              {
+                "String": "auto"
+              },
+              {
+                "String": "currency"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 1033
+          },
+          "item_type": {
+            "String": "Material"
+          },
+          "max_stack": {
+            "Integer": 44
+          },
+          "name": {
+            "String": "Item 1033"
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 43
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "tags": {
+            "List": [
+              {
+                "String": "auto"
+              },
+              {
+                "String": "material"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 1034
+          },
+          "item_type": {
+            "String": "Consumable"
+          },
+          "max_stack": {
+            "Integer": 45
+          },
+          "name": {
+            "String": "Item 1034"
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 44
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "tags": {
+            "List": [
+              {
+                "String": "auto"
+              },
+              {
+                "String": "consumable"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 1035
+          },
+          "item_type": {
+            "String": "Weapon"
+          },
+          "max_stack": {
+            "Integer": 1
+          },
+          "name": {
+            "String": "Item 1035"
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 45
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "tags": {
+            "List": [
+              {
+                "String": "auto"
+              },
+              {
+                "String": "weapon"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 1036
+          },
+          "item_type": {
+            "String": "Armor"
+          },
+          "max_stack": {
+            "Integer": 1
+          },
+          "name": {
+            "String": "Item 1036"
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 46
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "tags": {
+            "List": [
+              {
+                "String": "auto"
+              },
+              {
+                "String": "armor"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 1037
+          },
+          "item_type": {
+            "String": "Currency"
+          },
+          "max_stack": {
+            "Integer": 48
+          },
+          "name": {
+            "String": "Item 1037"
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 47
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "tags": {
+            "List": [
+              {
+                "String": "auto"
+              },
+              {
+                "String": "currency"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 1038
+          },
+          "item_type": {
+            "String": "Material"
+          },
+          "max_stack": {
+            "Integer": 49
+          },
+          "name": {
+            "String": "Item 1038"
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 48
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "tags": {
+            "List": [
+              {
+                "String": "auto"
+              },
+              {
+                "String": "material"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 1039
+          },
+          "item_type": {
+            "String": "Consumable"
+          },
+          "max_stack": {
+            "Integer": 50
+          },
+          "name": {
+            "String": "Item 1039"
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 49
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "tags": {
+            "List": [
+              {
+                "String": "auto"
+              },
+              {
+                "String": "consumable"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 1040
+          },
+          "item_type": {
+            "String": "Weapon"
+          },
+          "max_stack": {
+            "Integer": 1
+          },
+          "name": {
+            "String": "Item 1040"
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 50
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "tags": {
+            "List": [
+              {
+                "String": "auto"
+              },
+              {
+                "String": "weapon"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 1041
+          },
+          "item_type": {
+            "String": "Armor"
+          },
+          "max_stack": {
+            "Integer": 1
+          },
+          "name": {
+            "String": "Item 1041"
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 51
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "tags": {
+            "List": [
+              {
+                "String": "auto"
+              },
+              {
+                "String": "armor"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 1042
+          },
+          "item_type": {
+            "String": "Currency"
+          },
+          "max_stack": {
+            "Integer": 53
+          },
+          "name": {
+            "String": "Item 1042"
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 52
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "tags": {
+            "List": [
+              {
+                "String": "auto"
+              },
+              {
+                "String": "currency"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 1043
+          },
+          "item_type": {
+            "String": "Material"
+          },
+          "max_stack": {
+            "Integer": 54
+          },
+          "name": {
+            "String": "Item 1043"
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 53
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "tags": {
+            "List": [
+              {
+                "String": "auto"
+              },
+              {
+                "String": "material"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 1044
+          },
+          "item_type": {
+            "String": "Consumable"
+          },
+          "max_stack": {
+            "Integer": 55
+          },
+          "name": {
+            "String": "Item 1044"
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 54
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "tags": {
+            "List": [
+              {
+                "String": "auto"
+              },
+              {
+                "String": "consumable"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 1045
+          },
+          "item_type": {
+            "String": "Weapon"
+          },
+          "max_stack": {
+            "Integer": 1
+          },
+          "name": {
+            "String": "Item 1045"
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 55
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "tags": {
+            "List": [
+              {
+                "String": "auto"
+              },
+              {
+                "String": "weapon"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 1046
+          },
+          "item_type": {
+            "String": "Armor"
+          },
+          "max_stack": {
+            "Integer": 1
+          },
+          "name": {
+            "String": "Item 1046"
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 56
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "tags": {
+            "List": [
+              {
+                "String": "auto"
+              },
+              {
+                "String": "armor"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 1047
+          },
+          "item_type": {
+            "String": "Currency"
+          },
+          "max_stack": {
+            "Integer": 58
+          },
+          "name": {
+            "String": "Item 1047"
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 57
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "tags": {
+            "List": [
+              {
+                "String": "auto"
+              },
+              {
+                "String": "currency"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 1048
+          },
+          "item_type": {
+            "String": "Material"
+          },
+          "max_stack": {
+            "Integer": 59
+          },
+          "name": {
+            "String": "Item 1048"
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 58
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "tags": {
+            "List": [
+              {
+                "String": "auto"
+              },
+              {
+                "String": "material"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 1049
+          },
+          "item_type": {
+            "String": "Consumable"
+          },
+          "max_stack": {
+            "Integer": 60
+          },
+          "name": {
+            "String": "Item 1049"
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 59
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "tags": {
+            "List": [
+              {
+                "String": "auto"
+              },
+              {
+                "String": "consumable"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 1050
+          },
+          "item_type": {
+            "String": "Weapon"
+          },
+          "max_stack": {
+            "Integer": 1
+          },
+          "name": {
+            "String": "Item 1050"
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 60
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "tags": {
+            "List": [
+              {
+                "String": "auto"
+              },
+              {
+                "String": "weapon"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 1051
+          },
+          "item_type": {
+            "String": "Armor"
+          },
+          "max_stack": {
+            "Integer": 1
+          },
+          "name": {
+            "String": "Item 1051"
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 61
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "tags": {
+            "List": [
+              {
+                "String": "auto"
+              },
+              {
+                "String": "armor"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 1052
+          },
+          "item_type": {
+            "String": "Currency"
+          },
+          "max_stack": {
+            "Integer": 63
+          },
+          "name": {
+            "String": "Item 1052"
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 62
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "tags": {
+            "List": [
+              {
+                "String": "auto"
+              },
+              {
+                "String": "currency"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 1053
+          },
+          "item_type": {
+            "String": "Material"
+          },
+          "max_stack": {
+            "Integer": 64
+          },
+          "name": {
+            "String": "Item 1053"
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 63
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "tags": {
+            "List": [
+              {
+                "String": "auto"
+              },
+              {
+                "String": "material"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 1054
+          },
+          "item_type": {
+            "String": "Consumable"
+          },
+          "max_stack": {
+            "Integer": 65
+          },
+          "name": {
+            "String": "Item 1054"
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 64
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "tags": {
+            "List": [
+              {
+                "String": "auto"
+              },
+              {
+                "String": "consumable"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 1055
+          },
+          "item_type": {
+            "String": "Weapon"
+          },
+          "max_stack": {
+            "Integer": 1
+          },
+          "name": {
+            "String": "Item 1055"
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 65
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "tags": {
+            "List": [
+              {
+                "String": "auto"
+              },
+              {
+                "String": "weapon"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 1056
+          },
+          "item_type": {
+            "String": "Armor"
+          },
+          "max_stack": {
+            "Integer": 1
+          },
+          "name": {
+            "String": "Item 1056"
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 66
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "tags": {
+            "List": [
+              {
+                "String": "auto"
+              },
+              {
+                "String": "armor"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 1057
+          },
+          "item_type": {
+            "String": "Currency"
+          },
+          "max_stack": {
+            "Integer": 68
+          },
+          "name": {
+            "String": "Item 1057"
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 67
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "tags": {
+            "List": [
+              {
+                "String": "auto"
+              },
+              {
+                "String": "currency"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 1058
+          },
+          "item_type": {
+            "String": "Material"
+          },
+          "max_stack": {
+            "Integer": 69
+          },
+          "name": {
+            "String": "Item 1058"
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 68
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "tags": {
+            "List": [
+              {
+                "String": "auto"
+              },
+              {
+                "String": "material"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 1059
+          },
+          "item_type": {
+            "String": "Consumable"
+          },
+          "max_stack": {
+            "Integer": 70
+          },
+          "name": {
+            "String": "Item 1059"
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 69
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "tags": {
+            "List": [
+              {
+                "String": "auto"
+              },
+              {
+                "String": "consumable"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 1060
+          },
+          "item_type": {
+            "String": "Weapon"
+          },
+          "max_stack": {
+            "Integer": 1
+          },
+          "name": {
+            "String": "Item 1060"
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 70
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "tags": {
+            "List": [
+              {
+                "String": "auto"
+              },
+              {
+                "String": "weapon"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 1061
+          },
+          "item_type": {
+            "String": "Armor"
+          },
+          "max_stack": {
+            "Integer": 1
+          },
+          "name": {
+            "String": "Item 1061"
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 71
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "tags": {
+            "List": [
+              {
+                "String": "auto"
+              },
+              {
+                "String": "armor"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 1062
+          },
+          "item_type": {
+            "String": "Currency"
+          },
+          "max_stack": {
+            "Integer": 73
+          },
+          "name": {
+            "String": "Item 1062"
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 72
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "tags": {
+            "List": [
+              {
+                "String": "auto"
+              },
+              {
+                "String": "currency"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 1063
+          },
+          "item_type": {
+            "String": "Material"
+          },
+          "max_stack": {
+            "Integer": 74
+          },
+          "name": {
+            "String": "Item 1063"
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 73
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "tags": {
+            "List": [
+              {
+                "String": "auto"
+              },
+              {
+                "String": "material"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 1064
+          },
+          "item_type": {
+            "String": "Consumable"
+          },
+          "max_stack": {
+            "Integer": 75
+          },
+          "name": {
+            "String": "Item 1064"
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 74
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "tags": {
+            "List": [
+              {
+                "String": "auto"
+              },
+              {
+                "String": "consumable"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 1065
+          },
+          "item_type": {
+            "String": "Weapon"
+          },
+          "max_stack": {
+            "Integer": 1
+          },
+          "name": {
+            "String": "Item 1065"
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 75
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "tags": {
+            "List": [
+              {
+                "String": "auto"
+              },
+              {
+                "String": "weapon"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 1066
+          },
+          "item_type": {
+            "String": "Armor"
+          },
+          "max_stack": {
+            "Integer": 1
+          },
+          "name": {
+            "String": "Item 1066"
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 76
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "tags": {
+            "List": [
+              {
+                "String": "auto"
+              },
+              {
+                "String": "armor"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 1067
+          },
+          "item_type": {
+            "String": "Currency"
+          },
+          "max_stack": {
+            "Integer": 78
+          },
+          "name": {
+            "String": "Item 1067"
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 77
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "tags": {
+            "List": [
+              {
+                "String": "auto"
+              },
+              {
+                "String": "currency"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 1068
+          },
+          "item_type": {
+            "String": "Material"
+          },
+          "max_stack": {
+            "Integer": 79
+          },
+          "name": {
+            "String": "Item 1068"
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 78
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "tags": {
+            "List": [
+              {
+                "String": "auto"
+              },
+              {
+                "String": "material"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 1069
+          },
+          "item_type": {
+            "String": "Consumable"
+          },
+          "max_stack": {
+            "Integer": 80
+          },
+          "name": {
+            "String": "Item 1069"
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 79
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "tags": {
+            "List": [
+              {
+                "String": "auto"
+              },
+              {
+                "String": "consumable"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 1070
+          },
+          "item_type": {
+            "String": "Weapon"
+          },
+          "max_stack": {
+            "Integer": 1
+          },
+          "name": {
+            "String": "Item 1070"
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 80
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "tags": {
+            "List": [
+              {
+                "String": "auto"
+              },
+              {
+                "String": "weapon"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 1071
+          },
+          "item_type": {
+            "String": "Armor"
+          },
+          "max_stack": {
+            "Integer": 1
+          },
+          "name": {
+            "String": "Item 1071"
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 81
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "tags": {
+            "List": [
+              {
+                "String": "auto"
+              },
+              {
+                "String": "armor"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 1072
+          },
+          "item_type": {
+            "String": "Currency"
+          },
+          "max_stack": {
+            "Integer": 83
+          },
+          "name": {
+            "String": "Item 1072"
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 82
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "tags": {
+            "List": [
+              {
+                "String": "auto"
+              },
+              {
+                "String": "currency"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 1073
+          },
+          "item_type": {
+            "String": "Material"
+          },
+          "max_stack": {
+            "Integer": 84
+          },
+          "name": {
+            "String": "Item 1073"
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 83
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "tags": {
+            "List": [
+              {
+                "String": "auto"
+              },
+              {
+                "String": "material"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 1074
+          },
+          "item_type": {
+            "String": "Consumable"
+          },
+          "max_stack": {
+            "Integer": 85
+          },
+          "name": {
+            "String": "Item 1074"
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 84
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "tags": {
+            "List": [
+              {
+                "String": "auto"
+              },
+              {
+                "String": "consumable"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 1075
+          },
+          "item_type": {
+            "String": "Weapon"
+          },
+          "max_stack": {
+            "Integer": 1
+          },
+          "name": {
+            "String": "Item 1075"
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 85
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "tags": {
+            "List": [
+              {
+                "String": "auto"
+              },
+              {
+                "String": "weapon"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 1076
+          },
+          "item_type": {
+            "String": "Armor"
+          },
+          "max_stack": {
+            "Integer": 1
+          },
+          "name": {
+            "String": "Item 1076"
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 86
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "tags": {
+            "List": [
+              {
+                "String": "auto"
+              },
+              {
+                "String": "armor"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 1077
+          },
+          "item_type": {
+            "String": "Currency"
+          },
+          "max_stack": {
+            "Integer": 88
+          },
+          "name": {
+            "String": "Item 1077"
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 87
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "tags": {
+            "List": [
+              {
+                "String": "auto"
+              },
+              {
+                "String": "currency"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 1078
+          },
+          "item_type": {
+            "String": "Material"
+          },
+          "max_stack": {
+            "Integer": 89
+          },
+          "name": {
+            "String": "Item 1078"
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 88
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "tags": {
+            "List": [
+              {
+                "String": "auto"
+              },
+              {
+                "String": "material"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 1079
+          },
+          "item_type": {
+            "String": "Consumable"
+          },
+          "max_stack": {
+            "Integer": 90
+          },
+          "name": {
+            "String": "Item 1079"
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 89
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "tags": {
+            "List": [
+              {
+                "String": "auto"
+              },
+              {
+                "String": "consumable"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 1080
+          },
+          "item_type": {
+            "String": "Weapon"
+          },
+          "max_stack": {
+            "Integer": 1
+          },
+          "name": {
+            "String": "Item 1080"
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 90
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "tags": {
+            "List": [
+              {
+                "String": "auto"
+              },
+              {
+                "String": "weapon"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 1081
+          },
+          "item_type": {
+            "String": "Armor"
+          },
+          "max_stack": {
+            "Integer": 1
+          },
+          "name": {
+            "String": "Item 1081"
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 91
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "tags": {
+            "List": [
+              {
+                "String": "auto"
+              },
+              {
+                "String": "armor"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 1082
+          },
+          "item_type": {
+            "String": "Currency"
+          },
+          "max_stack": {
+            "Integer": 93
+          },
+          "name": {
+            "String": "Item 1082"
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 92
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "tags": {
+            "List": [
+              {
+                "String": "auto"
+              },
+              {
+                "String": "currency"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 1083
+          },
+          "item_type": {
+            "String": "Material"
+          },
+          "max_stack": {
+            "Integer": 94
+          },
+          "name": {
+            "String": "Item 1083"
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 93
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "tags": {
+            "List": [
+              {
+                "String": "auto"
+              },
+              {
+                "String": "material"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 1084
+          },
+          "item_type": {
+            "String": "Consumable"
+          },
+          "max_stack": {
+            "Integer": 95
+          },
+          "name": {
+            "String": "Item 1084"
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 94
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "tags": {
+            "List": [
+              {
+                "String": "auto"
+              },
+              {
+                "String": "consumable"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 1085
+          },
+          "item_type": {
+            "String": "Weapon"
+          },
+          "max_stack": {
+            "Integer": 1
+          },
+          "name": {
+            "String": "Item 1085"
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 95
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "tags": {
+            "List": [
+              {
+                "String": "auto"
+              },
+              {
+                "String": "weapon"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 1086
+          },
+          "item_type": {
+            "String": "Armor"
+          },
+          "max_stack": {
+            "Integer": 1
+          },
+          "name": {
+            "String": "Item 1086"
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 96
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "tags": {
+            "List": [
+              {
+                "String": "auto"
+              },
+              {
+                "String": "armor"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 1087
+          },
+          "item_type": {
+            "String": "Currency"
+          },
+          "max_stack": {
+            "Integer": 98
+          },
+          "name": {
+            "String": "Item 1087"
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 97
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "tags": {
+            "List": [
+              {
+                "String": "auto"
+              },
+              {
+                "String": "currency"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 1088
+          },
+          "item_type": {
+            "String": "Material"
+          },
+          "max_stack": {
+            "Integer": 99
+          },
+          "name": {
+            "String": "Item 1088"
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 98
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "tags": {
+            "List": [
+              {
+                "String": "auto"
+              },
+              {
+                "String": "material"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 1089
+          },
+          "item_type": {
+            "String": "Consumable"
+          },
+          "max_stack": {
+            "Integer": 1
+          },
+          "name": {
+            "String": "Item 1089"
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 99
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "tags": {
+            "List": [
+              {
+                "String": "auto"
+              },
+              {
+                "String": "consumable"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 1090
+          },
+          "item_type": {
+            "String": "Weapon"
+          },
+          "max_stack": {
+            "Integer": 1
+          },
+          "name": {
+            "String": "Item 1090"
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 100
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "tags": {
+            "List": [
+              {
+                "String": "auto"
+              },
+              {
+                "String": "weapon"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 1091
+          },
+          "item_type": {
+            "String": "Armor"
+          },
+          "max_stack": {
+            "Integer": 1
+          },
+          "name": {
+            "String": "Item 1091"
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 101
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "tags": {
+            "List": [
+              {
+                "String": "auto"
+              },
+              {
+                "String": "armor"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 1092
+          },
+          "item_type": {
+            "String": "Currency"
+          },
+          "max_stack": {
+            "Integer": 4
+          },
+          "name": {
+            "String": "Item 1092"
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 102
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "tags": {
+            "List": [
+              {
+                "String": "auto"
+              },
+              {
+                "String": "currency"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 1093
+          },
+          "item_type": {
+            "String": "Material"
+          },
+          "max_stack": {
+            "Integer": 5
+          },
+          "name": {
+            "String": "Item 1093"
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 103
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "tags": {
+            "List": [
+              {
+                "String": "auto"
+              },
+              {
+                "String": "material"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 1094
+          },
+          "item_type": {
+            "String": "Consumable"
+          },
+          "max_stack": {
+            "Integer": 6
+          },
+          "name": {
+            "String": "Item 1094"
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 104
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "tags": {
+            "List": [
+              {
+                "String": "auto"
+              },
+              {
+                "String": "consumable"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 1095
+          },
+          "item_type": {
+            "String": "Weapon"
+          },
+          "max_stack": {
+            "Integer": 1
+          },
+          "name": {
+            "String": "Item 1095"
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 105
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "tags": {
+            "List": [
+              {
+                "String": "auto"
+              },
+              {
+                "String": "weapon"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 1096
+          },
+          "item_type": {
+            "String": "Armor"
+          },
+          "max_stack": {
+            "Integer": 1
+          },
+          "name": {
+            "String": "Item 1096"
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 106
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "tags": {
+            "List": [
+              {
+                "String": "auto"
+              },
+              {
+                "String": "armor"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 1097
+          },
+          "item_type": {
+            "String": "Currency"
+          },
+          "max_stack": {
+            "Integer": 9
+          },
+          "name": {
+            "String": "Item 1097"
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 107
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "tags": {
+            "List": [
+              {
+                "String": "auto"
+              },
+              {
+                "String": "currency"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 1098
+          },
+          "item_type": {
+            "String": "Material"
+          },
+          "max_stack": {
+            "Integer": 10
+          },
+          "name": {
+            "String": "Item 1098"
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 108
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "tags": {
+            "List": [
+              {
+                "String": "auto"
+              },
+              {
+                "String": "material"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 1099
+          },
+          "item_type": {
+            "String": "Consumable"
+          },
+          "max_stack": {
+            "Integer": 11
+          },
+          "name": {
+            "String": "Item 1099"
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 109
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "tags": {
+            "List": [
+              {
+                "String": "auto"
+              },
+              {
+                "String": "consumable"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 1100
+          },
+          "item_type": {
+            "String": "Weapon"
+          },
+          "max_stack": {
+            "Integer": 1
+          },
+          "name": {
+            "String": "Item 1100"
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 110
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "tags": {
+            "List": [
+              {
+                "String": "auto"
+              },
+              {
+                "String": "weapon"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 1101
+          },
+          "item_type": {
+            "String": "Armor"
+          },
+          "max_stack": {
+            "Integer": 1
+          },
+          "name": {
+            "String": "Item 1101"
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 111
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "tags": {
+            "List": [
+              {
+                "String": "auto"
+              },
+              {
+                "String": "armor"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 1102
+          },
+          "item_type": {
+            "String": "Currency"
+          },
+          "max_stack": {
+            "Integer": 14
+          },
+          "name": {
+            "String": "Item 1102"
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 112
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "tags": {
+            "List": [
+              {
+                "String": "auto"
+              },
+              {
+                "String": "currency"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 1103
+          },
+          "item_type": {
+            "String": "Material"
+          },
+          "max_stack": {
+            "Integer": 15
+          },
+          "name": {
+            "String": "Item 1103"
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 113
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "tags": {
+            "List": [
+              {
+                "String": "auto"
+              },
+              {
+                "String": "material"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 1104
+          },
+          "item_type": {
+            "String": "Consumable"
+          },
+          "max_stack": {
+            "Integer": 16
+          },
+          "name": {
+            "String": "Item 1104"
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 114
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "tags": {
+            "List": [
+              {
+                "String": "auto"
+              },
+              {
+                "String": "consumable"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 1105
+          },
+          "item_type": {
+            "String": "Weapon"
+          },
+          "max_stack": {
+            "Integer": 1
+          },
+          "name": {
+            "String": "Item 1105"
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 115
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "tags": {
+            "List": [
+              {
+                "String": "auto"
+              },
+              {
+                "String": "weapon"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 1106
+          },
+          "item_type": {
+            "String": "Armor"
+          },
+          "max_stack": {
+            "Integer": 1
+          },
+          "name": {
+            "String": "Item 1106"
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 116
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "tags": {
+            "List": [
+              {
+                "String": "auto"
+              },
+              {
+                "String": "armor"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 1107
+          },
+          "item_type": {
+            "String": "Currency"
+          },
+          "max_stack": {
+            "Integer": 19
+          },
+          "name": {
+            "String": "Item 1107"
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 117
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "tags": {
+            "List": [
+              {
+                "String": "auto"
+              },
+              {
+                "String": "currency"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 1108
+          },
+          "item_type": {
+            "String": "Material"
+          },
+          "max_stack": {
+            "Integer": 20
+          },
+          "name": {
+            "String": "Item 1108"
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 118
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "tags": {
+            "List": [
+              {
+                "String": "auto"
+              },
+              {
+                "String": "material"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 1109
+          },
+          "item_type": {
+            "String": "Consumable"
+          },
+          "max_stack": {
+            "Integer": 21
+          },
+          "name": {
+            "String": "Item 1109"
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 119
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "tags": {
+            "List": [
+              {
+                "String": "auto"
+              },
+              {
+                "String": "consumable"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 1110
+          },
+          "item_type": {
+            "String": "Weapon"
+          },
+          "max_stack": {
+            "Integer": 1
+          },
+          "name": {
+            "String": "Item 1110"
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 120
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "tags": {
+            "List": [
+              {
+                "String": "auto"
+              },
+              {
+                "String": "weapon"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 1111
+          },
+          "item_type": {
+            "String": "Armor"
+          },
+          "max_stack": {
+            "Integer": 1
+          },
+          "name": {
+            "String": "Item 1111"
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 121
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "tags": {
+            "List": [
+              {
+                "String": "auto"
+              },
+              {
+                "String": "armor"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 1112
+          },
+          "item_type": {
+            "String": "Currency"
+          },
+          "max_stack": {
+            "Integer": 24
+          },
+          "name": {
+            "String": "Item 1112"
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 122
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "tags": {
+            "List": [
+              {
+                "String": "auto"
+              },
+              {
+                "String": "currency"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 1113
+          },
+          "item_type": {
+            "String": "Material"
+          },
+          "max_stack": {
+            "Integer": 25
+          },
+          "name": {
+            "String": "Item 1113"
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 123
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "tags": {
+            "List": [
+              {
+                "String": "auto"
+              },
+              {
+                "String": "material"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 1114
+          },
+          "item_type": {
+            "String": "Consumable"
+          },
+          "max_stack": {
+            "Integer": 26
+          },
+          "name": {
+            "String": "Item 1114"
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 124
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "tags": {
+            "List": [
+              {
+                "String": "auto"
+              },
+              {
+                "String": "consumable"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 1115
+          },
+          "item_type": {
+            "String": "Weapon"
+          },
+          "max_stack": {
+            "Integer": 1
+          },
+          "name": {
+            "String": "Item 1115"
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 125
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "tags": {
+            "List": [
+              {
+                "String": "auto"
+              },
+              {
+                "String": "weapon"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 1116
+          },
+          "item_type": {
+            "String": "Armor"
+          },
+          "max_stack": {
+            "Integer": 1
+          },
+          "name": {
+            "String": "Item 1116"
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 126
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "tags": {
+            "List": [
+              {
+                "String": "auto"
+              },
+              {
+                "String": "armor"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 1117
+          },
+          "item_type": {
+            "String": "Currency"
+          },
+          "max_stack": {
+            "Integer": 29
+          },
+          "name": {
+            "String": "Item 1117"
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 127
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "tags": {
+            "List": [
+              {
+                "String": "auto"
+              },
+              {
+                "String": "currency"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 1118
+          },
+          "item_type": {
+            "String": "Material"
+          },
+          "max_stack": {
+            "Integer": 30
+          },
+          "name": {
+            "String": "Item 1118"
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 128
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "tags": {
+            "List": [
+              {
+                "String": "auto"
+              },
+              {
+                "String": "material"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 1119
+          },
+          "item_type": {
+            "String": "Consumable"
+          },
+          "max_stack": {
+            "Integer": 31
+          },
+          "name": {
+            "String": "Item 1119"
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 129
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "tags": {
+            "List": [
+              {
+                "String": "auto"
+              },
+              {
+                "String": "consumable"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 1120
+          },
+          "item_type": {
+            "String": "Weapon"
+          },
+          "max_stack": {
+            "Integer": 1
+          },
+          "name": {
+            "String": "Item 1120"
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 130
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "tags": {
+            "List": [
+              {
+                "String": "auto"
+              },
+              {
+                "String": "weapon"
+              }
+            ]
+          }
+        }
       }
     ]
   }

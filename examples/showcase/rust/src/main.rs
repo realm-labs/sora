@@ -16,15 +16,19 @@ fn main() {
     assert_eq!(quest.title, "First Trial");
     assert!(matches!(quest.quest_type, QuestType::Main));
     assert_eq!(quest.rewards.len(), 2);
-    assert_eq!(config.quest_reward().len(), 3);
-    assert_eq!(config.quest_reward().iter().count(), 3);
+    assert_eq!(config.quest_reward().len(), 49);
+    assert_eq!(config.quest_reward().iter().count(), 49);
+    assert_eq!(config.stage().len(), 40);
+    assert_eq!(config.monster().len(), 80);
+    assert_eq!(config.localization().len(), 80);
     assert_eq!(settings.starting_gold, 100);
 
     println!(
-        "loaded {} items, {} skills, {} quests; first quest rewards: {}",
+        "loaded {} items, {} skills, {} quests, {} stages; first quest rewards: {}",
         config.item().values().count(),
         config.skill().values().count(),
         config.quest().values().count(),
+        config.stage().values().count(),
         quest.rewards.len()
     );
 }

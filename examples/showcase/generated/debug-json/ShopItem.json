@@ -1,0 +1,1387 @@
+{
+  "table": {
+    "name": "ShopItem",
+    "rows": [
+      {
+        "values": {
+          "daily_limit": "Null",
+          "item_id": {
+            "Integer": 1014
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 27
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "seq": {
+            "Integer": 1
+          },
+          "shop_id": {
+            "Integer": 10001
+          }
+        }
+      },
+      {
+        "values": {
+          "daily_limit": "Null",
+          "item_id": {
+            "Integer": 1015
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 34
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "seq": {
+            "Integer": 2
+          },
+          "shop_id": {
+            "Integer": 10001
+          }
+        }
+      },
+      {
+        "values": {
+          "daily_limit": {
+            "Integer": 5
+          },
+          "item_id": {
+            "Integer": 1016
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 41
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "seq": {
+            "Integer": 3
+          },
+          "shop_id": {
+            "Integer": 10001
+          }
+        }
+      },
+      {
+        "values": {
+          "daily_limit": "Null",
+          "item_id": {
+            "Integer": 1017
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 48
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "seq": {
+            "Integer": 4
+          },
+          "shop_id": {
+            "Integer": 10001
+          }
+        }
+      },
+      {
+        "values": {
+          "daily_limit": "Null",
+          "item_id": {
+            "Integer": 1018
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 55
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "seq": {
+            "Integer": 5
+          },
+          "shop_id": {
+            "Integer": 10001
+          }
+        }
+      },
+      {
+        "values": {
+          "daily_limit": {
+            "Integer": 5
+          },
+          "item_id": {
+            "Integer": 1019
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 62
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "seq": {
+            "Integer": 6
+          },
+          "shop_id": {
+            "Integer": 10001
+          }
+        }
+      },
+      {
+        "values": {
+          "daily_limit": "Null",
+          "item_id": {
+            "Integer": 1020
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 69
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "seq": {
+            "Integer": 7
+          },
+          "shop_id": {
+            "Integer": 10001
+          }
+        }
+      },
+      {
+        "values": {
+          "daily_limit": "Null",
+          "item_id": {
+            "Integer": 1021
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 76
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "seq": {
+            "Integer": 8
+          },
+          "shop_id": {
+            "Integer": 10001
+          }
+        }
+      },
+      {
+        "values": {
+          "daily_limit": {
+            "Integer": 5
+          },
+          "item_id": {
+            "Integer": 1022
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 83
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "seq": {
+            "Integer": 9
+          },
+          "shop_id": {
+            "Integer": 10001
+          }
+        }
+      },
+      {
+        "values": {
+          "daily_limit": "Null",
+          "item_id": {
+            "Integer": 1023
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 90
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "seq": {
+            "Integer": 10
+          },
+          "shop_id": {
+            "Integer": 10001
+          }
+        }
+      },
+      {
+        "values": {
+          "daily_limit": "Null",
+          "item_id": {
+            "Integer": 1024
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 27
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "seq": {
+            "Integer": 1
+          },
+          "shop_id": {
+            "Integer": 10002
+          }
+        }
+      },
+      {
+        "values": {
+          "daily_limit": "Null",
+          "item_id": {
+            "Integer": 1025
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 34
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "seq": {
+            "Integer": 2
+          },
+          "shop_id": {
+            "Integer": 10002
+          }
+        }
+      },
+      {
+        "values": {
+          "daily_limit": {
+            "Integer": 5
+          },
+          "item_id": {
+            "Integer": 1026
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 41
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "seq": {
+            "Integer": 3
+          },
+          "shop_id": {
+            "Integer": 10002
+          }
+        }
+      },
+      {
+        "values": {
+          "daily_limit": "Null",
+          "item_id": {
+            "Integer": 1027
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 48
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "seq": {
+            "Integer": 4
+          },
+          "shop_id": {
+            "Integer": 10002
+          }
+        }
+      },
+      {
+        "values": {
+          "daily_limit": "Null",
+          "item_id": {
+            "Integer": 1028
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 55
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "seq": {
+            "Integer": 5
+          },
+          "shop_id": {
+            "Integer": 10002
+          }
+        }
+      },
+      {
+        "values": {
+          "daily_limit": {
+            "Integer": 5
+          },
+          "item_id": {
+            "Integer": 1029
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 62
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "seq": {
+            "Integer": 6
+          },
+          "shop_id": {
+            "Integer": 10002
+          }
+        }
+      },
+      {
+        "values": {
+          "daily_limit": "Null",
+          "item_id": {
+            "Integer": 1030
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 69
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "seq": {
+            "Integer": 7
+          },
+          "shop_id": {
+            "Integer": 10002
+          }
+        }
+      },
+      {
+        "values": {
+          "daily_limit": "Null",
+          "item_id": {
+            "Integer": 1031
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 76
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "seq": {
+            "Integer": 8
+          },
+          "shop_id": {
+            "Integer": 10002
+          }
+        }
+      },
+      {
+        "values": {
+          "daily_limit": {
+            "Integer": 5
+          },
+          "item_id": {
+            "Integer": 1032
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 83
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "seq": {
+            "Integer": 9
+          },
+          "shop_id": {
+            "Integer": 10002
+          }
+        }
+      },
+      {
+        "values": {
+          "daily_limit": "Null",
+          "item_id": {
+            "Integer": 1033
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 90
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "seq": {
+            "Integer": 10
+          },
+          "shop_id": {
+            "Integer": 10002
+          }
+        }
+      },
+      {
+        "values": {
+          "daily_limit": "Null",
+          "item_id": {
+            "Integer": 1034
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 27
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "seq": {
+            "Integer": 1
+          },
+          "shop_id": {
+            "Integer": 10003
+          }
+        }
+      },
+      {
+        "values": {
+          "daily_limit": "Null",
+          "item_id": {
+            "Integer": 1035
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 34
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "seq": {
+            "Integer": 2
+          },
+          "shop_id": {
+            "Integer": 10003
+          }
+        }
+      },
+      {
+        "values": {
+          "daily_limit": {
+            "Integer": 5
+          },
+          "item_id": {
+            "Integer": 1036
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 41
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "seq": {
+            "Integer": 3
+          },
+          "shop_id": {
+            "Integer": 10003
+          }
+        }
+      },
+      {
+        "values": {
+          "daily_limit": "Null",
+          "item_id": {
+            "Integer": 1037
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 48
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "seq": {
+            "Integer": 4
+          },
+          "shop_id": {
+            "Integer": 10003
+          }
+        }
+      },
+      {
+        "values": {
+          "daily_limit": "Null",
+          "item_id": {
+            "Integer": 1038
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 55
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "seq": {
+            "Integer": 5
+          },
+          "shop_id": {
+            "Integer": 10003
+          }
+        }
+      },
+      {
+        "values": {
+          "daily_limit": {
+            "Integer": 5
+          },
+          "item_id": {
+            "Integer": 1039
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 62
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "seq": {
+            "Integer": 6
+          },
+          "shop_id": {
+            "Integer": 10003
+          }
+        }
+      },
+      {
+        "values": {
+          "daily_limit": "Null",
+          "item_id": {
+            "Integer": 1040
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 69
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "seq": {
+            "Integer": 7
+          },
+          "shop_id": {
+            "Integer": 10003
+          }
+        }
+      },
+      {
+        "values": {
+          "daily_limit": "Null",
+          "item_id": {
+            "Integer": 1041
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 76
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "seq": {
+            "Integer": 8
+          },
+          "shop_id": {
+            "Integer": 10003
+          }
+        }
+      },
+      {
+        "values": {
+          "daily_limit": {
+            "Integer": 5
+          },
+          "item_id": {
+            "Integer": 1042
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 83
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "seq": {
+            "Integer": 9
+          },
+          "shop_id": {
+            "Integer": 10003
+          }
+        }
+      },
+      {
+        "values": {
+          "daily_limit": "Null",
+          "item_id": {
+            "Integer": 1043
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 90
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "seq": {
+            "Integer": 10
+          },
+          "shop_id": {
+            "Integer": 10003
+          }
+        }
+      },
+      {
+        "values": {
+          "daily_limit": "Null",
+          "item_id": {
+            "Integer": 1044
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 27
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "seq": {
+            "Integer": 1
+          },
+          "shop_id": {
+            "Integer": 10004
+          }
+        }
+      },
+      {
+        "values": {
+          "daily_limit": "Null",
+          "item_id": {
+            "Integer": 1045
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 34
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "seq": {
+            "Integer": 2
+          },
+          "shop_id": {
+            "Integer": 10004
+          }
+        }
+      },
+      {
+        "values": {
+          "daily_limit": {
+            "Integer": 5
+          },
+          "item_id": {
+            "Integer": 1046
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 41
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "seq": {
+            "Integer": 3
+          },
+          "shop_id": {
+            "Integer": 10004
+          }
+        }
+      },
+      {
+        "values": {
+          "daily_limit": "Null",
+          "item_id": {
+            "Integer": 1047
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 48
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "seq": {
+            "Integer": 4
+          },
+          "shop_id": {
+            "Integer": 10004
+          }
+        }
+      },
+      {
+        "values": {
+          "daily_limit": "Null",
+          "item_id": {
+            "Integer": 1048
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 55
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "seq": {
+            "Integer": 5
+          },
+          "shop_id": {
+            "Integer": 10004
+          }
+        }
+      },
+      {
+        "values": {
+          "daily_limit": {
+            "Integer": 5
+          },
+          "item_id": {
+            "Integer": 1049
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 62
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "seq": {
+            "Integer": 6
+          },
+          "shop_id": {
+            "Integer": 10004
+          }
+        }
+      },
+      {
+        "values": {
+          "daily_limit": "Null",
+          "item_id": {
+            "Integer": 1050
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 69
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "seq": {
+            "Integer": 7
+          },
+          "shop_id": {
+            "Integer": 10004
+          }
+        }
+      },
+      {
+        "values": {
+          "daily_limit": "Null",
+          "item_id": {
+            "Integer": 1051
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 76
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "seq": {
+            "Integer": 8
+          },
+          "shop_id": {
+            "Integer": 10004
+          }
+        }
+      },
+      {
+        "values": {
+          "daily_limit": {
+            "Integer": 5
+          },
+          "item_id": {
+            "Integer": 1052
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 83
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "seq": {
+            "Integer": 9
+          },
+          "shop_id": {
+            "Integer": 10004
+          }
+        }
+      },
+      {
+        "values": {
+          "daily_limit": "Null",
+          "item_id": {
+            "Integer": 1053
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 90
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "seq": {
+            "Integer": 10
+          },
+          "shop_id": {
+            "Integer": 10004
+          }
+        }
+      },
+      {
+        "values": {
+          "daily_limit": "Null",
+          "item_id": {
+            "Integer": 1054
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 27
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "seq": {
+            "Integer": 1
+          },
+          "shop_id": {
+            "Integer": 10005
+          }
+        }
+      },
+      {
+        "values": {
+          "daily_limit": "Null",
+          "item_id": {
+            "Integer": 1055
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 34
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "seq": {
+            "Integer": 2
+          },
+          "shop_id": {
+            "Integer": 10005
+          }
+        }
+      },
+      {
+        "values": {
+          "daily_limit": {
+            "Integer": 5
+          },
+          "item_id": {
+            "Integer": 1056
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 41
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "seq": {
+            "Integer": 3
+          },
+          "shop_id": {
+            "Integer": 10005
+          }
+        }
+      },
+      {
+        "values": {
+          "daily_limit": "Null",
+          "item_id": {
+            "Integer": 1057
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 48
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "seq": {
+            "Integer": 4
+          },
+          "shop_id": {
+            "Integer": 10005
+          }
+        }
+      },
+      {
+        "values": {
+          "daily_limit": "Null",
+          "item_id": {
+            "Integer": 1058
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 55
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "seq": {
+            "Integer": 5
+          },
+          "shop_id": {
+            "Integer": 10005
+          }
+        }
+      },
+      {
+        "values": {
+          "daily_limit": {
+            "Integer": 5
+          },
+          "item_id": {
+            "Integer": 1059
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 62
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "seq": {
+            "Integer": 6
+          },
+          "shop_id": {
+            "Integer": 10005
+          }
+        }
+      },
+      {
+        "values": {
+          "daily_limit": "Null",
+          "item_id": {
+            "Integer": 1060
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 69
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "seq": {
+            "Integer": 7
+          },
+          "shop_id": {
+            "Integer": 10005
+          }
+        }
+      },
+      {
+        "values": {
+          "daily_limit": "Null",
+          "item_id": {
+            "Integer": 1061
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 76
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "seq": {
+            "Integer": 8
+          },
+          "shop_id": {
+            "Integer": 10005
+          }
+        }
+      },
+      {
+        "values": {
+          "daily_limit": {
+            "Integer": 5
+          },
+          "item_id": {
+            "Integer": 1062
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 83
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "seq": {
+            "Integer": 9
+          },
+          "shop_id": {
+            "Integer": 10005
+          }
+        }
+      },
+      {
+        "values": {
+          "daily_limit": "Null",
+          "item_id": {
+            "Integer": 1063
+          },
+          "price": {
+            "Object": {
+              "count": {
+                "Integer": 90
+              },
+              "id": {
+                "Integer": 0
+              },
+              "kind": {
+                "String": "Gold"
+              }
+            }
+          },
+          "seq": {
+            "Integer": 10
+          },
+          "shop_id": {
+            "Integer": 10005
+          }
+        }
+      }
+    ]
+  }
+}
