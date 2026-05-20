@@ -1,4 +1,4 @@
-use std::path::Path;
+use std::{fs, path::Path};
 
 use sora_codegen::{generator::generator_for_target, target::CodegenTarget};
 use sora_diagnostics::{Result, SoraError};
@@ -10,6 +10,7 @@ use sora_export::{
 use sora_input::traits::{ProjectInput, SchemaInput};
 use sora_ir::{model::ConfigIr, normalize::normalize_schema, validate::validate_config_ir};
 
+use crate::diff::{ConfigDiff, diff_config_data};
 use crate::schema_lock::{read_schema_lock_file, verify_schema_lock, write_schema_lock_file};
 
 pub fn check_schema(input: &impl SchemaInput) -> Result<()> {
@@ -39,9 +40,7 @@ pub fn generate_code(
 
 pub fn export_data(input: &impl ProjectInput, format: &str, output: ExportOutput) -> Result<()> {
     let ir = load_ir(input)?;
-    let data = input.load_data(&ir)?;
-    let data = sora_data::aggregate::materialize_aggregations(&ir, &data)?;
-    sora_data::validate::validate_config_data(&ir, &data)?;
+    let data = load_validated_data(input, &ir)?;
 
     let registry = ExporterRegistry::with_builtin_exporters();
     let exporter = registry
@@ -56,6 +55,19 @@ pub fn export_data(input: &impl ProjectInput, format: &str, output: ExportOutput
         data: &data,
         output,
     })
+}
+
+pub fn diff_data(
+    left: &impl ProjectInput,
+    right: &impl ProjectInput,
+    output_path: &Path,
+) -> Result<ConfigDiff> {
+    let ir = load_ir(left)?;
+    let left_data = load_validated_data(left, &ir)?;
+    let right_data = load_validated_data(right, &ir)?;
+    let diff = diff_config_data(&ir, &left_data, &right_data)?;
+    write_json_file(output_path, &diff)?;
+    Ok(diff)
 }
 
 pub fn generate_excel_template(input: &impl SchemaInput, out_dir: &Path) -> Result<()> {
@@ -77,6 +89,30 @@ fn load_ir(input: &impl SchemaInput) -> Result<ConfigIr> {
     let ir = normalize_schema(input.load_schema()?)?;
     validate_config_ir(&ir)?;
     Ok(ir)
+}
+
+fn load_validated_data(
+    input: &impl ProjectInput,
+    ir: &ConfigIr,
+) -> Result<sora_data::model::ConfigData> {
+    let data = input.load_data(ir)?;
+    let data = sora_data::aggregate::materialize_aggregations(ir, &data)?;
+    sora_data::validate::validate_config_data(ir, &data)?;
+    Ok(data)
+}
+
+fn write_json_file<T: serde::Serialize>(path: &Path, value: &T) -> Result<()> {
+    if let Some(parent) = path.parent() {
+        fs::create_dir_all(parent).map_err(|source| SoraError::CreateDir {
+            path: parent.to_path_buf(),
+            source,
+        })?;
+    }
+    let bytes = serde_json::to_vec_pretty(value).map_err(SoraError::SerializeData)?;
+    fs::write(path, bytes).map_err(|source| SoraError::WriteFile {
+        path: path.to_path_buf(),
+        source,
+    })
 }
 
 #[cfg(test)]
@@ -176,6 +212,22 @@ mod tests {
         assert!(base.join("rust/item.rs").exists());
         assert!(base.join("debug-json/Item.json").exists());
         assert!(base.join("excel/Item.xlsx").exists());
+
+        let _ = fs::remove_dir_all(base);
+    }
+
+    #[test]
+    fn diffs_loaded_project_data() {
+        let base = temp_dir();
+        let left = LoadedInput::with_data(example_schema(), example_data());
+        let right = LoadedInput::with_data(example_schema(), changed_example_data());
+
+        let diff = diff_data(&left, &right, &base.join("diff/config.diff.json")).unwrap();
+
+        assert!(diff.has_changes());
+        assert!(base.join("diff/config.diff.json").exists());
+        assert_eq!(diff.tables[0].name, "Item");
+        assert_eq!(diff.tables[0].changed[0].fields[0].name, "max_stack");
 
         let _ = fs::remove_dir_all(base);
     }
@@ -312,6 +364,22 @@ comment = "Max stack count"
                         ("name".to_owned(), Value::String("Iron Sword".to_owned())),
                         ("item_type".to_owned(), Value::String("Weapon".to_owned())),
                         ("max_stack".to_owned(), Value::Integer(1)),
+                    ]),
+                }],
+            }],
+        }
+    }
+
+    fn changed_example_data() -> ConfigData {
+        ConfigData {
+            tables: vec![TableData {
+                name: "Item".to_owned(),
+                rows: vec![RowData {
+                    values: BTreeMap::from([
+                        ("id".to_owned(), Value::Integer(1001)),
+                        ("name".to_owned(), Value::String("Iron Sword".to_owned())),
+                        ("item_type".to_owned(), Value::String("Weapon".to_owned())),
+                        ("max_stack".to_owned(), Value::Integer(99)),
                     ]),
                 }],
             }],

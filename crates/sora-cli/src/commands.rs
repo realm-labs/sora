@@ -6,7 +6,7 @@ use sora_input_toml::input::{TomlProjectInput, TomlSchemaInput};
 use sora_input_xlsx::input::XlsxProjectInput;
 
 use crate::args::{
-    CheckArgs, Command, DataFormat, ExcelTemplateArgs, ExportArgs, GenArgs, GenCommand,
+    CheckArgs, Command, DataFormat, DiffArgs, ExcelTemplateArgs, ExportArgs, GenArgs, GenCommand,
     SchemaLockArgs,
 };
 
@@ -18,6 +18,7 @@ pub fn run(command: Command) -> Result<()> {
             GenCommand::Kotlin(args) => generate(args, CodegenTarget::Kotlin),
         },
         Command::Export(args) => export(args),
+        Command::Diff(args) => diff(args),
         Command::ExcelTemplate(args) => excel_template(args),
         Command::SchemaLock(args) => schema_lock(args),
     }
@@ -108,4 +109,38 @@ fn export(args: ExportArgs) -> Result<()> {
             args.data_root.display()
         )
     })
+}
+
+fn diff(args: DiffArgs) -> Result<()> {
+    match args.data_format {
+        DataFormat::Csv => {
+            let left_schema = TomlSchemaInput::new(&args.project);
+            let right_schema = TomlSchemaInput::new(&args.project);
+            let left = CsvProjectInput::new(left_schema, &args.left_root);
+            let right = CsvProjectInput::new(right_schema, &args.right_root);
+            sora_core::pipeline::diff_data(&left, &right, &args.out)
+        }
+        DataFormat::Toml => {
+            let left = TomlProjectInput::new(&args.project, &args.left_root);
+            let right = TomlProjectInput::new(&args.project, &args.right_root);
+            sora_core::pipeline::diff_data(&left, &right, &args.out)
+        }
+        DataFormat::Xlsx => {
+            let left_schema = TomlSchemaInput::new(&args.project);
+            let right_schema = TomlSchemaInput::new(&args.project);
+            let left = XlsxProjectInput::new(left_schema, &args.left_root);
+            let right = XlsxProjectInput::new(right_schema, &args.right_root);
+            sora_core::pipeline::diff_data(&left, &right, &args.out)
+        }
+    }
+    .with_context(|| {
+        format!(
+            "failed to diff `{}` against `{}` into `{}`",
+            args.left_root.display(),
+            args.right_root.display(),
+            args.out.display()
+        )
+    })?;
+
+    Ok(())
 }

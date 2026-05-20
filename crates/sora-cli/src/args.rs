@@ -18,6 +18,7 @@ pub enum Command {
         target: GenCommand,
     },
     Export(ExportArgs),
+    Diff(DiffArgs),
     ExcelTemplate(ExcelTemplateArgs),
     SchemaLock(SchemaLockArgs),
 }
@@ -59,6 +60,24 @@ pub struct ExportArgs {
 
     #[arg(long)]
     pub data_root: PathBuf,
+
+    #[arg(long)]
+    pub out: PathBuf,
+}
+
+#[derive(Debug, Args)]
+pub struct DiffArgs {
+    #[arg(long, value_enum, default_value_t = DataFormat::Xlsx)]
+    pub data_format: DataFormat,
+
+    #[arg(long)]
+    pub project: PathBuf,
+
+    #[arg(long)]
+    pub left_root: PathBuf,
+
+    #[arg(long)]
+    pub right_root: PathBuf,
 
     #[arg(long)]
     pub out: PathBuf,
