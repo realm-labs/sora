@@ -1,12 +1,13 @@
 use sora_diagnostics::{Result, SoraError};
 
+mod encoder;
+
 use crate::{
     exporter::{DataExporter, ExportOutput, ExportRequest, OutputKind},
-    fs_util::{create_dir_all, deterministic_json_bytes, write_file},
+    fs_util::{create_dir_all, write_file},
 };
 
-const BINARY_MAGIC: &[u8; 4] = b"SORA";
-const BINARY_VERSION: u32 = 1;
+use self::encoder::BinaryEncoder;
 
 pub struct BinaryBundleExporter;
 
@@ -31,15 +32,7 @@ impl DataExporter for BinaryBundleExporter {
             create_dir_all(parent)?;
         }
 
-        let schema_payload = deterministic_json_bytes(request.ir)?;
-        let data_payload = deterministic_json_bytes(request.data)?;
-        let mut bundle = Vec::with_capacity(16 + schema_payload.len() + data_payload.len());
-        bundle.extend_from_slice(BINARY_MAGIC);
-        bundle.extend_from_slice(&BINARY_VERSION.to_le_bytes());
-        bundle.extend_from_slice(&(schema_payload.len() as u32).to_le_bytes());
-        bundle.extend_from_slice(&(data_payload.len() as u32).to_le_bytes());
-        bundle.extend_from_slice(&schema_payload);
-        bundle.extend_from_slice(&data_payload);
+        let bundle = BinaryEncoder::new(request.ir, request.data).encode()?;
 
         write_file(path, bundle)
     }
@@ -76,8 +69,26 @@ mod tests {
         let bytes = fs::read(&path).unwrap();
         assert_eq!(&bytes[0..4], b"SORA");
         assert_eq!(u32::from_le_bytes(bytes[4..8].try_into().unwrap()), 1);
-        assert!(u32::from_le_bytes(bytes[8..12].try_into().unwrap()) > 0);
+        assert_eq!(u32::from_le_bytes(bytes[8..12].try_into().unwrap()), 24);
         assert!(u32::from_le_bytes(bytes[12..16].try_into().unwrap()) > 0);
+        assert_eq!(u32::from_le_bytes(bytes[16..20].try_into().unwrap()), 2);
+
+        let sections = read_sections(&bytes);
+        assert_eq!(sections[0].kind, 1);
+        assert_eq!(sections[0].compression, 0);
+        assert_eq!(sections[0].name, "$schema");
+        assert_eq!(sections[1].kind, 2);
+        assert_eq!(sections[1].compression, 0);
+        assert_eq!(sections[1].name, "Item");
+
+        let table_payload = &bytes[sections[1].offset..sections[1].offset + sections[1].len];
+        assert_eq!(read_u32(table_payload, 0), 1);
+        assert_eq!(read_u64(table_payload, 4), 0);
+        assert_eq!(read_u64(table_payload, 12), 4);
+        assert_eq!(
+            i32::from_le_bytes(table_payload[20..24].try_into().unwrap()),
+            1001
+        );
 
         let _ = fs::remove_dir_all(path.parent().unwrap());
     }
@@ -122,5 +133,51 @@ required = true
             .unwrap()
             .as_nanos();
         std::env::temp_dir().join(format!("sora-export-test-{unique}"))
+    }
+
+    #[derive(Debug)]
+    struct TestSection {
+        kind: u32,
+        compression: u32,
+        name: String,
+        offset: usize,
+        len: usize,
+    }
+
+    fn read_sections(bytes: &[u8]) -> Vec<TestSection> {
+        let directory_len = read_u32(bytes, 12) as usize;
+        let section_count = read_u32(bytes, 16) as usize;
+        let mut cursor = 24;
+        let directory_end = cursor + directory_len;
+        let mut sections = Vec::new();
+        while cursor < directory_end {
+            let kind = read_u32(bytes, cursor);
+            let compression = read_u32(bytes, cursor + 4);
+            let name_len = read_u32(bytes, cursor + 8) as usize;
+            let offset = read_u64(bytes, cursor + 16) as usize;
+            let len = read_u64(bytes, cursor + 24) as usize;
+            let name_start = cursor + 40;
+            let name = std::str::from_utf8(&bytes[name_start..name_start + name_len])
+                .unwrap()
+                .to_owned();
+            sections.push(TestSection {
+                kind,
+                compression,
+                name,
+                offset,
+                len,
+            });
+            cursor = name_start + name_len;
+        }
+        assert_eq!(sections.len(), section_count);
+        sections
+    }
+
+    fn read_u32(bytes: &[u8], offset: usize) -> u32 {
+        u32::from_le_bytes(bytes[offset..offset + 4].try_into().unwrap())
+    }
+
+    fn read_u64(bytes: &[u8], offset: usize) -> u64 {
+        u64::from_le_bytes(bytes[offset..offset + 8].try_into().unwrap())
     }
 }

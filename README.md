@@ -4,7 +4,7 @@ Sora is a Rust-first game configuration compiler that turns schemas and table da
 
 ## Status
 
-Sora is in its first milestone. It currently supports TOML schemas, simple TOML table data, normalized IR, basic validation, Rust/Kotlin model generation, a pluggable exporter registry, a binary bundle exporter, a debug JSON exporter, and generated Excel `.xlsx` template projections.
+Sora is in its first milestone. It currently supports TOML schemas, TOML and Excel `.xlsx` table data, normalized IR, recursive data validation, Rust/Kotlin model generation, a pluggable exporter registry, a native sectioned binary exporter, a debug JSON exporter, and generated Excel `.xlsx` template projections.
 
 ## Design Principles
 
@@ -100,7 +100,7 @@ file = "Item.xlsx"
 sheet = "Item"
 ```
 
-The CLI can still read TOML row data through `--data-format toml` for tests and simple automation. Validation currently checks required fields, unknown fields, primitive compatibility, enum values, and duplicate map keys.
+The CLI can still read TOML row data through `--data-format toml` for tests and simple automation. Validation checks required fields, unknown fields, primitive compatibility, enum values, ranges, struct fields, references, map keys, and singleton row counts.
 
 ## Exporter Architecture
 
@@ -109,7 +109,7 @@ Exporters implement a common `DataExporter` trait and are selected by format nam
 - `binary`: writes a production-oriented `.sora` bundle file.
 - `json-debug`: writes deterministic per-table JSON files for inspection.
 
-The binary bundle currently stores deterministic JSON payloads inside a simple binary container. That payload format is intentionally replaceable.
+The binary bundle uses a language-neutral sectioned layout: a fixed header, a section directory, a schema section, and one raw table section per table. Compression is currently `none` at the section level, leaving room for future LZ4/Zstd without changing the table row encoding.
 
 ## Codegen Architecture
 
@@ -123,12 +123,10 @@ Sora generates `.xlsx` templates from schema IR. Header rows include the table n
 
 Phase 2:
 
-- CSV data source.
-- Real Excel `.xlsx` reader.
-- Schema hash verification for Excel headers.
-- Ref validation.
-- Range validation.
 - Generated Rust runtime loader.
+- Stable binary reader API.
+- CSV data source.
+- Excel comments, dropdowns, and validation rules.
 
 Phase 3:
 
