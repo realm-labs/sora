@@ -1,7 +1,7 @@
 use std::path::Path;
 
 use rust_xlsxwriter::{
-    Color, DataValidation, DataValidationRule, Format, FormatAlign, FormatBorder, Workbook,
+    Color, DataValidation, DataValidationRule, Format, FormatAlign, FormatBorder, Note, Workbook,
 };
 use sora_diagnostics::{Result, SoraError};
 use sora_ir::model::{ConfigIr, FieldIr, TableIr, TypeIr};
@@ -50,6 +50,7 @@ pub(crate) fn write_workbook(ir: &ConfigIr, tables: &[&TableIr], path: &Path) ->
         }
 
         apply_sheet_layout(table, worksheet, &formats, path)?;
+        apply_field_notes(table, worksheet, path)?;
         apply_data_validations(ir, table, worksheet, path)?;
         worksheet
             .set_freeze_panes(DATA_START_ROW, 1)
@@ -85,6 +86,57 @@ fn apply_data_validations(
     }
 
     Ok(())
+}
+
+fn apply_field_notes(
+    table: &TableIr,
+    worksheet: &mut rust_xlsxwriter::Worksheet,
+    path: &Path,
+) -> Result<()> {
+    for (index, field) in table.fields.iter().enumerate() {
+        let Some(note_text) = field_note_text(field) else {
+            continue;
+        };
+
+        let note = Note::new(note_text).set_author("Sora");
+        worksheet
+            .insert_note(5, (index + 1) as u16, &note)
+            .map_err(|source| excel_error(path, source))?;
+    }
+
+    Ok(())
+}
+
+fn field_note_text(field: &FieldIr) -> Option<String> {
+    let comment = field.comment.as_deref().map(str::trim).unwrap_or_default();
+    if comment.is_empty() {
+        return None;
+    }
+
+    let mut lines = vec![
+        comment.to_owned(),
+        String::new(),
+        format!("Field: {}", field.name),
+        format!("Type: {}", field.ty),
+    ];
+
+    if field.key {
+        lines.push("Key: yes".to_owned());
+    }
+    if field.required {
+        lines.push("Required: yes".to_owned());
+    }
+    if let Some([min, max]) = field.range {
+        lines.push(format!("Range: {min}..{max}"));
+    }
+    if let Some(aggregation) = &field.aggregation {
+        lines.push(format!(
+            "Aggregation: {}.{} -> {}",
+            aggregation.source_table, aggregation.child_key, aggregation.parent_key
+        ));
+    }
+
+    Some(lines.join("\n"))
 }
 
 fn data_validation_for_field(
@@ -315,5 +367,61 @@ fn excel_error(path: &Path, source: impl std::fmt::Display) -> SoraError {
     SoraError::ExcelTemplate {
         path: path.to_path_buf(),
         message: source.to_string(),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use sora_ir::model::{AggregationIr, TypeIr};
+
+    #[test]
+    fn field_note_text_includes_comment_and_metadata() {
+        let field = FieldIr {
+            name: "rewards".to_owned(),
+            ty: TypeIr::List(Box::new(TypeIr::Struct("Reward".to_owned()))),
+            key: false,
+            comment: Some("Reward rows".to_owned()),
+            required: true,
+            range: Some([1, 99]),
+            parser: None,
+            separator: None,
+            prefix: None,
+            suffix: None,
+            aggregation: Some(AggregationIr {
+                source_table: "Reward".to_owned(),
+                parent_key: "id".to_owned(),
+                child_key: "item_id".to_owned(),
+                order_by: Some("rank".to_owned()),
+            }),
+        };
+
+        let note_text = field_note_text(&field).unwrap();
+
+        assert!(note_text.contains("Reward rows"));
+        assert!(note_text.contains("Field: rewards"));
+        assert!(note_text.contains("Type: list<struct<Reward>>"));
+        assert!(note_text.contains("Required: yes"));
+        assert!(note_text.contains("Range: 1..99"));
+        assert!(note_text.contains("Aggregation: Reward.item_id -> id"));
+    }
+
+    #[test]
+    fn field_note_text_skips_empty_comments() {
+        let field = FieldIr {
+            name: "name".to_owned(),
+            ty: TypeIr::String,
+            key: false,
+            comment: Some("   ".to_owned()),
+            required: false,
+            range: None,
+            parser: None,
+            separator: None,
+            prefix: None,
+            suffix: None,
+            aggregation: None,
+        };
+
+        assert_eq!(field_note_text(&field), None);
     }
 }
