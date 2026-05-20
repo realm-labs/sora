@@ -11,12 +11,7 @@ pub fn table_template_rows(table: &TableIr) -> Vec<Vec<String>> {
         vec!["@schema".to_owned(), schema_hash(table)],
         Vec::new(),
         std::iter::once("#name".to_owned())
-            .chain(
-                table
-                    .fields
-                    .iter()
-                    .map(|field| field_display_name(field).to_owned()),
-            )
+            .chain(table.fields.iter().map(|field| field.name.clone()))
             .collect(),
         std::iter::once("#field".to_owned())
             .chain(table.fields.iter().map(|field| field.name.clone()))
@@ -32,7 +27,7 @@ pub fn table_template_rows(table: &TableIr) -> Vec<Vec<String>> {
                 table
                     .fields
                     .iter()
-                    .map(|field| field_display_name(field).to_owned()),
+                    .map(|field| field.comment.clone().unwrap_or_default()),
             )
             .collect(),
     ]
@@ -87,10 +82,6 @@ pub(crate) fn table_mode_name(mode: TableModeIr) -> &'static str {
     }
 }
 
-fn field_display_name(field: &FieldIr) -> &str {
-    field.comment.as_deref().unwrap_or(&field.name)
-}
-
 fn field_rule(field: &FieldIr) -> String {
     let mut parts = Vec::new();
     if field.key {
@@ -131,6 +122,7 @@ mod tests {
         assert_eq!(rows[0], ["@table", "Item"]);
         assert_eq!(rows[1], ["@mode", "map"]);
         assert_eq!(rows[2], ["@key", "id"]);
+        assert_eq!(rows[5], ["#name", "id", "name", "item_type", "max_stack"]);
         assert_eq!(rows[6], ["#field", "id", "name", "item_type", "max_stack"]);
         assert_eq!(rows[7], ["#type", "i32", "string", "enum<ItemType>", "i32"]);
         assert_eq!(
