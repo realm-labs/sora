@@ -56,6 +56,8 @@ pub fn schema_hash(table: &TableIr) -> String {
         update(&mut hash, &field.name);
         update(&mut hash, &field.ty.to_string());
         update(&mut hash, field.separator.as_deref().unwrap_or(""));
+        update(&mut hash, field.prefix.as_deref().unwrap_or(""));
+        update(&mut hash, field.suffix.as_deref().unwrap_or(""));
         update(
             &mut hash,
             if field.required {
@@ -94,6 +96,12 @@ fn field_rule(field: &FieldIr) -> String {
 
     if let Some(separator) = &field.separator {
         parts.push(format!("separator={separator}"));
+    }
+    if let Some(prefix) = &field.prefix {
+        parts.push(format!("prefix={prefix}"));
+    }
+    if let Some(suffix) = &field.suffix {
+        parts.push(format!("suffix={suffix}"));
     }
 
     parts.join(";")

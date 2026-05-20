@@ -64,6 +64,8 @@ fn load_xlsx_table_data_from_range(
                 column,
                 field: &field.name,
                 separator: field.separator.as_deref(),
+                prefix: field.prefix.as_deref(),
+                suffix: field.suffix.as_deref(),
             };
             values.insert(
                 field_names[column].to_owned(),
@@ -132,8 +134,8 @@ mod tests {
             &[vec![
                 "1001",
                 "",
-                "sharp|rare",
-                "1|2",
+                "[\"sharp\",\"rare\"]",
+                "[1,2]",
                 "{\"item_id\":1001,\"count\":2}",
             ]],
         );
@@ -271,12 +273,16 @@ type = "optional<string>"
 [[tables.fields]]
 name = "tags"
 type = "list<string>"
-separator = "|"
+separator = ","
+prefix = "["
+suffix = "]"
 
 [[tables.fields]]
 name = "coords"
 type = "array<i32,2>"
-separator = "|"
+separator = ","
+prefix = "["
+suffix = "]"
 
 [[tables.fields]]
 name = "reward"

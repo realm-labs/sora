@@ -84,7 +84,13 @@ impl TryFrom<FieldSchema> for FieldIr {
         };
 
         let ty = parse_type(&field.ty)?;
-        validate_separator(&field.name, &ty, field.separator.as_deref())?;
+        validate_collection_format(
+            &field.name,
+            &ty,
+            field.separator.as_deref(),
+            field.prefix.as_deref(),
+            field.suffix.as_deref(),
+        )?;
 
         Ok(Self {
             name: field.name,
@@ -94,6 +100,8 @@ impl TryFrom<FieldSchema> for FieldIr {
             required: field.required.unwrap_or(false),
             parser: field.parser,
             separator: field.separator,
+            prefix: field.prefix,
+            suffix: field.suffix,
             aggregation,
         })
     }
@@ -133,17 +141,54 @@ fn convert_fields(fields: Vec<FieldSchema>) -> Result<Vec<FieldIr>> {
     fields.into_iter().map(FieldIr::try_from).collect()
 }
 
-fn validate_separator(field_name: &str, ty: &TypeIr, separator: Option<&str>) -> Result<()> {
+fn validate_collection_format(
+    field_name: &str,
+    ty: &TypeIr,
+    separator: Option<&str>,
+    prefix: Option<&str>,
+    suffix: Option<&str>,
+) -> Result<()> {
     match ty {
-        TypeIr::List(_) | TypeIr::Array { .. } => match separator {
-            Some(separator) if !separator.is_empty() => Ok(()),
-            _ => Err(SoraError::InvalidSchema(format!(
-                "field `{field_name}` with type `{ty}` must declare non-empty `separator`"
-            ))),
-        },
-        TypeIr::Optional(inner) => validate_separator(field_name, inner, separator),
-        _ if separator.is_some() => Err(SoraError::InvalidSchema(format!(
-            "field `{field_name}` declares `separator` but type `{ty}` is not list or array"
+        TypeIr::List(_) | TypeIr::Array { .. } => {
+            validate_required_non_empty(field_name, ty, "separator", separator)?;
+            validate_optional_non_empty(field_name, "prefix", prefix)?;
+            validate_optional_non_empty(field_name, "suffix", suffix)?;
+            Ok(())
+        }
+        TypeIr::Optional(inner) => {
+            validate_collection_format(field_name, inner, separator, prefix, suffix)
+        }
+        _ if separator.is_some() || prefix.is_some() || suffix.is_some() => {
+            Err(SoraError::InvalidSchema(format!(
+                "field `{field_name}` declares collection format metadata but type `{ty}` is not list or array"
+            )))
+        }
+        _ => Ok(()),
+    }
+}
+
+fn validate_required_non_empty(
+    field_name: &str,
+    ty: &TypeIr,
+    key: &'static str,
+    value: Option<&str>,
+) -> Result<()> {
+    match value {
+        Some(value) if !value.is_empty() => Ok(()),
+        _ => Err(SoraError::InvalidSchema(format!(
+            "field `{field_name}` with type `{ty}` must declare non-empty `{key}`"
+        ))),
+    }
+}
+
+fn validate_optional_non_empty(
+    field_name: &str,
+    key: &'static str,
+    value: Option<&str>,
+) -> Result<()> {
+    match value {
+        Some("") => Err(SoraError::InvalidSchema(format!(
+            "field `{field_name}` declares empty `{key}`"
         ))),
         _ => Ok(()),
     }
@@ -179,6 +224,8 @@ required = true
 name = "tags"
 type = "list<string>"
 separator = "|"
+prefix = "["
+suffix = "]"
 "#,
         )
         .unwrap();
@@ -190,6 +237,8 @@ separator = "|"
         assert!(ir.tables[0].fields[0].required);
         assert_eq!(ir.tables[0].fields[0].ty, TypeIr::I32);
         assert_eq!(ir.tables[0].fields[1].separator.as_deref(), Some("|"));
+        assert_eq!(ir.tables[0].fields[1].prefix.as_deref(), Some("["));
+        assert_eq!(ir.tables[0].fields[1].suffix.as_deref(), Some("]"));
     }
 
     #[test]
@@ -230,7 +279,27 @@ separator = "|"
         .unwrap();
         assert!(matches!(
             normalize_schema(invalid_separator).unwrap_err(),
-            SoraError::InvalidSchema(message) if message.contains("is not list or array")
+            SoraError::InvalidSchema(message) if message.contains("collection format metadata")
+        ));
+
+        let scalar_prefix: SchemaFile = toml::from_str(
+            r#"
+package = "game_config"
+
+[[tables]]
+name = "Item"
+mode = "list"
+
+[[tables.fields]]
+name = "name"
+type = "string"
+prefix = "["
+"#,
+        )
+        .unwrap();
+        assert!(matches!(
+            normalize_schema(scalar_prefix).unwrap_err(),
+            SoraError::InvalidSchema(message) if message.contains("collection format metadata")
         ));
     }
 }

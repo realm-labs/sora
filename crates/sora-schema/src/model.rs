@@ -88,6 +88,8 @@ pub struct FieldSchema {
     pub range: Option<[i64; 2]>,
     pub parser: Option<String>,
     pub separator: Option<String>,
+    pub prefix: Option<String>,
+    pub suffix: Option<String>,
     pub source_table: Option<String>,
     pub parent_key: Option<String>,
     pub child_key: Option<String>,
@@ -128,6 +130,8 @@ comment = "Item id"
 name = "tags"
 type = "list<string>"
 separator = "|"
+prefix = "["
+suffix = "]"
 "#,
         )
         .expect("schema should parse");
@@ -141,6 +145,8 @@ separator = "|"
         assert!(schema.tables[0].fields[0].key);
         assert_eq!(schema.tables[0].fields[0].required, Some(true));
         assert_eq!(schema.tables[0].fields[1].separator.as_deref(), Some("|"));
+        assert_eq!(schema.tables[0].fields[1].prefix.as_deref(), Some("["));
+        assert_eq!(schema.tables[0].fields[1].suffix.as_deref(), Some("]"));
     }
 
     #[test]
