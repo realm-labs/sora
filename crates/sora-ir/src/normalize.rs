@@ -1,16 +1,15 @@
 use sora_diagnostics::{Result, SoraError};
 use sora_schema::model::{
     CodegenSchema, FieldSchema, IndexSchema, LanguageCodegenSchema, LuaCodegenSchema,
-    LuaEnumReprSchema, LuaI64ModeSchema, LuaVersionSchema, RuntimeFormatSchema, RustMapTypeSchema,
-    SchemaFile, TableModeSchema, TableSchema, TableSourceSchema, UnionSchema, UnionVariantSchema,
+    LuaEnumReprSchema, LuaVersionSchema, RuntimeFormatSchema, RustMapTypeSchema, SchemaFile,
+    TableModeSchema, TableSchema, TableSourceSchema, UnionSchema, UnionVariantSchema,
 };
 
 use crate::{
     model::{
         AggregationIr, CodegenIr, ConfigIr, EnumIr, FieldIr, IndexIr, LanguageCodegenIr,
-        LuaCodegenIr, LuaEnumReprIr, LuaI64ModeIr, LuaVersionIr, RuntimeFormatIr, RustCodegenIr,
-        RustMapTypeIr, StructIr, TableIr, TableModeIr, TableSourceIr, TypeIr, UnionIr,
-        UnionVariantIr,
+        LuaCodegenIr, LuaEnumReprIr, LuaVersionIr, RuntimeFormatIr, RustCodegenIr, RustMapTypeIr,
+        StructIr, TableIr, TableModeIr, TableSourceIr, TypeIr, UnionIr, UnionVariantIr,
     },
     parse::parse_type,
 };
@@ -91,7 +90,6 @@ impl From<LuaCodegenSchema> for LuaCodegenIr {
             runtime_format: RuntimeFormatIr::from(value.runtime_format),
             module: value.module,
             lua_version: LuaVersionIr::from(value.lua_version),
-            i64_mode: LuaI64ModeIr::from(value.i64_mode),
             enum_repr: LuaEnumReprIr::from(value.enum_repr),
         }
     }
@@ -116,16 +114,6 @@ impl From<LuaVersionSchema> for LuaVersionIr {
             LuaVersionSchema::Lua53 => Self::Lua53,
             LuaVersionSchema::Lua54 => Self::Lua54,
             LuaVersionSchema::LuaJit => Self::LuaJit,
-        }
-    }
-}
-
-impl From<LuaI64ModeSchema> for LuaI64ModeIr {
-    fn from(value: LuaI64ModeSchema) -> Self {
-        match value {
-            LuaI64ModeSchema::Integer => Self::Integer,
-            LuaI64ModeSchema::Number => Self::Number,
-            LuaI64ModeSchema::String => Self::String,
         }
     }
 }
@@ -407,9 +395,7 @@ fn validate_optional_non_empty(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::model::{
-        LuaEnumReprIr, LuaI64ModeIr, LuaVersionIr, RuntimeFormatIr, TableModeIr, TypeIr,
-    };
+    use crate::model::{LuaEnumReprIr, LuaVersionIr, RuntimeFormatIr, TableModeIr, TypeIr};
 
     #[test]
     fn normalizes_schema() {
@@ -450,7 +436,6 @@ length = [1, 3]
         assert_eq!(ir.codegen.kotlin.runtime_format, RuntimeFormatIr::Sora);
         assert_eq!(ir.codegen.lua.runtime_format, RuntimeFormatIr::Sora);
         assert_eq!(ir.codegen.lua.lua_version, LuaVersionIr::Lua54);
-        assert_eq!(ir.codegen.lua.i64_mode, LuaI64ModeIr::String);
         assert_eq!(ir.codegen.lua.enum_repr, LuaEnumReprIr::String);
         assert_eq!(ir.enums[0].name, "ItemType");
         assert_eq!(ir.tables[0].mode, TableModeIr::Map);
