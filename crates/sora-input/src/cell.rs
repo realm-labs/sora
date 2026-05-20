@@ -96,7 +96,7 @@ pub fn cell_to_value(
         TypeIr::Struct(struct_name) if context.parser == Some("tuple") => {
             tuple_object_value(&cell.display_text(), struct_name, context)?
         }
-        TypeIr::Struct(_) => json_object_value(&cell.display_text(), context)?,
+        TypeIr::Struct(_) | TypeIr::Union(_) => json_object_value(&cell.display_text(), context)?,
         TypeIr::List(element) => separated_value(&cell.display_text(), element, None, context)?,
         TypeIr::Array { element, len } => {
             separated_value(&cell.display_text(), element, Some(*len), context)?
@@ -302,7 +302,7 @@ fn separated_item_to_value(
             .map(Value::Float)
             .map_err(|_| context.error(format!("expected float list item, got `{item}`"))),
         TypeIr::String | TypeIr::Enum(_) => string_item_to_value(item, context),
-        TypeIr::Struct(_) => {
+        TypeIr::Struct(_) | TypeIr::Union(_) => {
             let parsed: JsonValue = serde_json::from_str(item).map_err(|error| {
                 context.error(format!(
                     "failed to parse JSON object list item `{item}`: {error}"
@@ -382,7 +382,7 @@ fn json_to_value(
             .as_str()
             .map(|value| Value::String(value.to_owned()))
             .ok_or_else(|| context.error("expected JSON string"))?,
-        TypeIr::Struct(_) => json_to_untyped_value(value, context)?,
+        TypeIr::Struct(_) | TypeIr::Union(_) => json_to_untyped_value(value, context)?,
         TypeIr::List(_) | TypeIr::Array { .. } => {
             return Err(context.error("nested JSON arrays are not supported in separated cells"));
         }

@@ -1,0 +1,1228 @@
+{
+  "table": {
+    "name": "EventRule",
+    "rows": [
+      {
+        "values": {
+          "actions": {
+            "List": [
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 3
+                  },
+                  "item_id": {
+                    "Integer": 1007
+                  },
+                  "type": {
+                    "String": "AddItem"
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "buff_id": {
+                    "Integer": 6002
+                  },
+                  "duration": {
+                    "Integer": 6
+                  },
+                  "type": {
+                    "String": "AddBuff"
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "stage_id": {
+                    "Integer": 9002
+                  },
+                  "type": {
+                    "String": "UnlockStage"
+                  }
+                }
+              }
+            ]
+          },
+          "condition": {
+            "Object": {
+              "quest_id": {
+                "Integer": 5002
+              },
+              "type": {
+                "String": "QuestCompleted"
+              }
+            }
+          },
+          "id": {
+            "Integer": 17001
+          },
+          "name": {
+            "String": "Event Rule 1"
+          }
+        }
+      },
+      {
+        "values": {
+          "actions": {
+            "List": [
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 4
+                  },
+                  "item_id": {
+                    "Integer": 1008
+                  },
+                  "type": {
+                    "String": "AddItem"
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "buff_id": {
+                    "Integer": 6003
+                  },
+                  "duration": {
+                    "Integer": 7
+                  },
+                  "type": {
+                    "String": "AddBuff"
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "stage_id": {
+                    "Integer": 9003
+                  },
+                  "type": {
+                    "String": "UnlockStage"
+                  }
+                }
+              }
+            ]
+          },
+          "condition": {
+            "Object": {
+              "count": {
+                "Integer": 3
+              },
+              "item_id": {
+                "Integer": 1005
+              },
+              "type": {
+                "String": "HasItem"
+              }
+            }
+          },
+          "id": {
+            "Integer": 17002
+          },
+          "name": {
+            "String": "Event Rule 2"
+          }
+        }
+      },
+      {
+        "values": {
+          "actions": {
+            "List": [
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 5
+                  },
+                  "item_id": {
+                    "Integer": 1009
+                  },
+                  "type": {
+                    "String": "AddItem"
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "buff_id": {
+                    "Integer": 6004
+                  },
+                  "duration": {
+                    "Integer": 8
+                  },
+                  "type": {
+                    "String": "AddBuff"
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "stage_id": {
+                    "Integer": 9004
+                  },
+                  "type": {
+                    "String": "UnlockStage"
+                  }
+                }
+              }
+            ]
+          },
+          "condition": {
+            "Object": {
+              "level": {
+                "Integer": 4
+              },
+              "type": {
+                "String": "LevelAtLeast"
+              }
+            }
+          },
+          "id": {
+            "Integer": 17003
+          },
+          "name": {
+            "String": "Event Rule 3"
+          }
+        }
+      },
+      {
+        "values": {
+          "actions": {
+            "List": [
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 2
+                  },
+                  "item_id": {
+                    "Integer": 1010
+                  },
+                  "type": {
+                    "String": "AddItem"
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "buff_id": {
+                    "Integer": 6005
+                  },
+                  "duration": {
+                    "Integer": 9
+                  },
+                  "type": {
+                    "String": "AddBuff"
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "stage_id": {
+                    "Integer": 9005
+                  },
+                  "type": {
+                    "String": "UnlockStage"
+                  }
+                }
+              }
+            ]
+          },
+          "condition": {
+            "Object": {
+              "quest_id": {
+                "Integer": 5005
+              },
+              "type": {
+                "String": "QuestCompleted"
+              }
+            }
+          },
+          "id": {
+            "Integer": 17004
+          },
+          "name": {
+            "String": "Event Rule 4"
+          }
+        }
+      },
+      {
+        "values": {
+          "actions": {
+            "List": [
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 3
+                  },
+                  "item_id": {
+                    "Integer": 1011
+                  },
+                  "type": {
+                    "String": "AddItem"
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "buff_id": {
+                    "Integer": 6006
+                  },
+                  "duration": {
+                    "Integer": 5
+                  },
+                  "type": {
+                    "String": "AddBuff"
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "stage_id": {
+                    "Integer": 9006
+                  },
+                  "type": {
+                    "String": "UnlockStage"
+                  }
+                }
+              }
+            ]
+          },
+          "condition": {
+            "Object": {
+              "count": {
+                "Integer": 1
+              },
+              "item_id": {
+                "Integer": 1008
+              },
+              "type": {
+                "String": "HasItem"
+              }
+            }
+          },
+          "id": {
+            "Integer": 17005
+          },
+          "name": {
+            "String": "Event Rule 5"
+          }
+        }
+      },
+      {
+        "values": {
+          "actions": {
+            "List": [
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 4
+                  },
+                  "item_id": {
+                    "Integer": 1012
+                  },
+                  "type": {
+                    "String": "AddItem"
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "buff_id": {
+                    "Integer": 6007
+                  },
+                  "duration": {
+                    "Integer": 6
+                  },
+                  "type": {
+                    "String": "AddBuff"
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "stage_id": {
+                    "Integer": 9007
+                  },
+                  "type": {
+                    "String": "UnlockStage"
+                  }
+                }
+              }
+            ]
+          },
+          "condition": {
+            "Object": {
+              "level": {
+                "Integer": 7
+              },
+              "type": {
+                "String": "LevelAtLeast"
+              }
+            }
+          },
+          "id": {
+            "Integer": 17006
+          },
+          "name": {
+            "String": "Event Rule 6"
+          }
+        }
+      },
+      {
+        "values": {
+          "actions": {
+            "List": [
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 5
+                  },
+                  "item_id": {
+                    "Integer": 1013
+                  },
+                  "type": {
+                    "String": "AddItem"
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "buff_id": {
+                    "Integer": 6008
+                  },
+                  "duration": {
+                    "Integer": 7
+                  },
+                  "type": {
+                    "String": "AddBuff"
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "stage_id": {
+                    "Integer": 9008
+                  },
+                  "type": {
+                    "String": "UnlockStage"
+                  }
+                }
+              }
+            ]
+          },
+          "condition": {
+            "Object": {
+              "quest_id": {
+                "Integer": 5008
+              },
+              "type": {
+                "String": "QuestCompleted"
+              }
+            }
+          },
+          "id": {
+            "Integer": 17007
+          },
+          "name": {
+            "String": "Event Rule 7"
+          }
+        }
+      },
+      {
+        "values": {
+          "actions": {
+            "List": [
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 2
+                  },
+                  "item_id": {
+                    "Integer": 1014
+                  },
+                  "type": {
+                    "String": "AddItem"
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "buff_id": {
+                    "Integer": 6009
+                  },
+                  "duration": {
+                    "Integer": 8
+                  },
+                  "type": {
+                    "String": "AddBuff"
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "stage_id": {
+                    "Integer": 9009
+                  },
+                  "type": {
+                    "String": "UnlockStage"
+                  }
+                }
+              }
+            ]
+          },
+          "condition": {
+            "Object": {
+              "count": {
+                "Integer": 4
+              },
+              "item_id": {
+                "Integer": 1011
+              },
+              "type": {
+                "String": "HasItem"
+              }
+            }
+          },
+          "id": {
+            "Integer": 17008
+          },
+          "name": {
+            "String": "Event Rule 8"
+          }
+        }
+      },
+      {
+        "values": {
+          "actions": {
+            "List": [
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 3
+                  },
+                  "item_id": {
+                    "Integer": 1015
+                  },
+                  "type": {
+                    "String": "AddItem"
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "buff_id": {
+                    "Integer": 6010
+                  },
+                  "duration": {
+                    "Integer": 9
+                  },
+                  "type": {
+                    "String": "AddBuff"
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "stage_id": {
+                    "Integer": 9010
+                  },
+                  "type": {
+                    "String": "UnlockStage"
+                  }
+                }
+              }
+            ]
+          },
+          "condition": {
+            "Object": {
+              "level": {
+                "Integer": 10
+              },
+              "type": {
+                "String": "LevelAtLeast"
+              }
+            }
+          },
+          "id": {
+            "Integer": 17009
+          },
+          "name": {
+            "String": "Event Rule 9"
+          }
+        }
+      },
+      {
+        "values": {
+          "actions": {
+            "List": [
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 4
+                  },
+                  "item_id": {
+                    "Integer": 1016
+                  },
+                  "type": {
+                    "String": "AddItem"
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "buff_id": {
+                    "Integer": 6011
+                  },
+                  "duration": {
+                    "Integer": 5
+                  },
+                  "type": {
+                    "String": "AddBuff"
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "stage_id": {
+                    "Integer": 9011
+                  },
+                  "type": {
+                    "String": "UnlockStage"
+                  }
+                }
+              }
+            ]
+          },
+          "condition": {
+            "Object": {
+              "quest_id": {
+                "Integer": 5011
+              },
+              "type": {
+                "String": "QuestCompleted"
+              }
+            }
+          },
+          "id": {
+            "Integer": 17010
+          },
+          "name": {
+            "String": "Event Rule 10"
+          }
+        }
+      },
+      {
+        "values": {
+          "actions": {
+            "List": [
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 5
+                  },
+                  "item_id": {
+                    "Integer": 1017
+                  },
+                  "type": {
+                    "String": "AddItem"
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "buff_id": {
+                    "Integer": 6012
+                  },
+                  "duration": {
+                    "Integer": 6
+                  },
+                  "type": {
+                    "String": "AddBuff"
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "stage_id": {
+                    "Integer": 9012
+                  },
+                  "type": {
+                    "String": "UnlockStage"
+                  }
+                }
+              }
+            ]
+          },
+          "condition": {
+            "Object": {
+              "count": {
+                "Integer": 2
+              },
+              "item_id": {
+                "Integer": 1014
+              },
+              "type": {
+                "String": "HasItem"
+              }
+            }
+          },
+          "id": {
+            "Integer": 17011
+          },
+          "name": {
+            "String": "Event Rule 11"
+          }
+        }
+      },
+      {
+        "values": {
+          "actions": {
+            "List": [
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 2
+                  },
+                  "item_id": {
+                    "Integer": 1018
+                  },
+                  "type": {
+                    "String": "AddItem"
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "buff_id": {
+                    "Integer": 6013
+                  },
+                  "duration": {
+                    "Integer": 7
+                  },
+                  "type": {
+                    "String": "AddBuff"
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "stage_id": {
+                    "Integer": 9013
+                  },
+                  "type": {
+                    "String": "UnlockStage"
+                  }
+                }
+              }
+            ]
+          },
+          "condition": {
+            "Object": {
+              "level": {
+                "Integer": 13
+              },
+              "type": {
+                "String": "LevelAtLeast"
+              }
+            }
+          },
+          "id": {
+            "Integer": 17012
+          },
+          "name": {
+            "String": "Event Rule 12"
+          }
+        }
+      },
+      {
+        "values": {
+          "actions": {
+            "List": [
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 3
+                  },
+                  "item_id": {
+                    "Integer": 1019
+                  },
+                  "type": {
+                    "String": "AddItem"
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "buff_id": {
+                    "Integer": 6014
+                  },
+                  "duration": {
+                    "Integer": 8
+                  },
+                  "type": {
+                    "String": "AddBuff"
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "stage_id": {
+                    "Integer": 9014
+                  },
+                  "type": {
+                    "String": "UnlockStage"
+                  }
+                }
+              }
+            ]
+          },
+          "condition": {
+            "Object": {
+              "quest_id": {
+                "Integer": 5014
+              },
+              "type": {
+                "String": "QuestCompleted"
+              }
+            }
+          },
+          "id": {
+            "Integer": 17013
+          },
+          "name": {
+            "String": "Event Rule 13"
+          }
+        }
+      },
+      {
+        "values": {
+          "actions": {
+            "List": [
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 4
+                  },
+                  "item_id": {
+                    "Integer": 1020
+                  },
+                  "type": {
+                    "String": "AddItem"
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "buff_id": {
+                    "Integer": 6015
+                  },
+                  "duration": {
+                    "Integer": 9
+                  },
+                  "type": {
+                    "String": "AddBuff"
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "stage_id": {
+                    "Integer": 9015
+                  },
+                  "type": {
+                    "String": "UnlockStage"
+                  }
+                }
+              }
+            ]
+          },
+          "condition": {
+            "Object": {
+              "count": {
+                "Integer": 5
+              },
+              "item_id": {
+                "Integer": 1017
+              },
+              "type": {
+                "String": "HasItem"
+              }
+            }
+          },
+          "id": {
+            "Integer": 17014
+          },
+          "name": {
+            "String": "Event Rule 14"
+          }
+        }
+      },
+      {
+        "values": {
+          "actions": {
+            "List": [
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 5
+                  },
+                  "item_id": {
+                    "Integer": 1021
+                  },
+                  "type": {
+                    "String": "AddItem"
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "buff_id": {
+                    "Integer": 6016
+                  },
+                  "duration": {
+                    "Integer": 5
+                  },
+                  "type": {
+                    "String": "AddBuff"
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "stage_id": {
+                    "Integer": 9016
+                  },
+                  "type": {
+                    "String": "UnlockStage"
+                  }
+                }
+              }
+            ]
+          },
+          "condition": {
+            "Object": {
+              "level": {
+                "Integer": 16
+              },
+              "type": {
+                "String": "LevelAtLeast"
+              }
+            }
+          },
+          "id": {
+            "Integer": 17015
+          },
+          "name": {
+            "String": "Event Rule 15"
+          }
+        }
+      },
+      {
+        "values": {
+          "actions": {
+            "List": [
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 2
+                  },
+                  "item_id": {
+                    "Integer": 1022
+                  },
+                  "type": {
+                    "String": "AddItem"
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "buff_id": {
+                    "Integer": 6017
+                  },
+                  "duration": {
+                    "Integer": 6
+                  },
+                  "type": {
+                    "String": "AddBuff"
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "stage_id": {
+                    "Integer": 9017
+                  },
+                  "type": {
+                    "String": "UnlockStage"
+                  }
+                }
+              }
+            ]
+          },
+          "condition": {
+            "Object": {
+              "quest_id": {
+                "Integer": 5017
+              },
+              "type": {
+                "String": "QuestCompleted"
+              }
+            }
+          },
+          "id": {
+            "Integer": 17016
+          },
+          "name": {
+            "String": "Event Rule 16"
+          }
+        }
+      },
+      {
+        "values": {
+          "actions": {
+            "List": [
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 3
+                  },
+                  "item_id": {
+                    "Integer": 1023
+                  },
+                  "type": {
+                    "String": "AddItem"
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "buff_id": {
+                    "Integer": 6018
+                  },
+                  "duration": {
+                    "Integer": 7
+                  },
+                  "type": {
+                    "String": "AddBuff"
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "stage_id": {
+                    "Integer": 9018
+                  },
+                  "type": {
+                    "String": "UnlockStage"
+                  }
+                }
+              }
+            ]
+          },
+          "condition": {
+            "Object": {
+              "count": {
+                "Integer": 3
+              },
+              "item_id": {
+                "Integer": 1020
+              },
+              "type": {
+                "String": "HasItem"
+              }
+            }
+          },
+          "id": {
+            "Integer": 17017
+          },
+          "name": {
+            "String": "Event Rule 17"
+          }
+        }
+      },
+      {
+        "values": {
+          "actions": {
+            "List": [
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 4
+                  },
+                  "item_id": {
+                    "Integer": 1024
+                  },
+                  "type": {
+                    "String": "AddItem"
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "buff_id": {
+                    "Integer": 6019
+                  },
+                  "duration": {
+                    "Integer": 8
+                  },
+                  "type": {
+                    "String": "AddBuff"
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "stage_id": {
+                    "Integer": 9019
+                  },
+                  "type": {
+                    "String": "UnlockStage"
+                  }
+                }
+              }
+            ]
+          },
+          "condition": {
+            "Object": {
+              "level": {
+                "Integer": 19
+              },
+              "type": {
+                "String": "LevelAtLeast"
+              }
+            }
+          },
+          "id": {
+            "Integer": 17018
+          },
+          "name": {
+            "String": "Event Rule 18"
+          }
+        }
+      },
+      {
+        "values": {
+          "actions": {
+            "List": [
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 5
+                  },
+                  "item_id": {
+                    "Integer": 1025
+                  },
+                  "type": {
+                    "String": "AddItem"
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "buff_id": {
+                    "Integer": 6020
+                  },
+                  "duration": {
+                    "Integer": 9
+                  },
+                  "type": {
+                    "String": "AddBuff"
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "stage_id": {
+                    "Integer": 9020
+                  },
+                  "type": {
+                    "String": "UnlockStage"
+                  }
+                }
+              }
+            ]
+          },
+          "condition": {
+            "Object": {
+              "quest_id": {
+                "Integer": 5020
+              },
+              "type": {
+                "String": "QuestCompleted"
+              }
+            }
+          },
+          "id": {
+            "Integer": 17019
+          },
+          "name": {
+            "String": "Event Rule 19"
+          }
+        }
+      },
+      {
+        "values": {
+          "actions": {
+            "List": [
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 2
+                  },
+                  "item_id": {
+                    "Integer": 1026
+                  },
+                  "type": {
+                    "String": "AddItem"
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "buff_id": {
+                    "Integer": 6001
+                  },
+                  "duration": {
+                    "Integer": 5
+                  },
+                  "type": {
+                    "String": "AddBuff"
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "stage_id": {
+                    "Integer": 9021
+                  },
+                  "type": {
+                    "String": "UnlockStage"
+                  }
+                }
+              }
+            ]
+          },
+          "condition": {
+            "Object": {
+              "count": {
+                "Integer": 1
+              },
+              "item_id": {
+                "Integer": 1023
+              },
+              "type": {
+                "String": "HasItem"
+              }
+            }
+          },
+          "id": {
+            "Integer": 17020
+          },
+          "name": {
+            "String": "Event Rule 20"
+          }
+        }
+      }
+    ]
+  }
+}

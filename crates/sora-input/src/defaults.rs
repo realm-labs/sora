@@ -2,7 +2,7 @@ use std::{borrow::Cow, collections::BTreeMap, path::Path};
 
 use sora_data::model::{ConfigData, RowData, Value};
 use sora_diagnostics::Result;
-use sora_ir::model::{ConfigIr, FieldIr, StructIr, TypeIr};
+use sora_ir::model::{ConfigIr, FieldIr, StructIr, TypeIr, UnionIr};
 
 use crate::cell::{CellContext, CellLocation, CellValue, cell_to_value};
 
@@ -52,6 +52,18 @@ fn materialize_nested_defaults(ir: &ConfigIr, ty: &TypeIr, value: &mut Value) ->
             }
             Ok(())
         }
+        (TypeIr::Union(union_name), Value::Object(values)) => {
+            if let Some(union_ir) = union_ir(ir, union_name)
+                && let Some(Value::String(variant_name)) = values.get(&union_ir.tag)
+                && let Some(variant) = union_ir
+                    .variants
+                    .iter()
+                    .find(|candidate| candidate.name == *variant_name)
+            {
+                materialize_field_defaults_in_object(ir, &variant.fields, values)?;
+            }
+            Ok(())
+        }
         (TypeIr::List(element), Value::List(values))
         | (TypeIr::Array { element, .. }, Value::List(values)) => {
             for value in values {
@@ -68,7 +80,15 @@ fn materialize_object_defaults(
     struct_ir: &StructIr,
     values: &mut BTreeMap<String, Value>,
 ) -> Result<()> {
-    for field in &struct_ir.fields {
+    materialize_field_defaults_in_object(ir, &struct_ir.fields, values)
+}
+
+fn materialize_field_defaults_in_object(
+    ir: &ConfigIr,
+    fields: &[FieldIr],
+    values: &mut BTreeMap<String, Value>,
+) -> Result<()> {
+    for field in fields {
         if !values.contains_key(&field.name)
             && let Some(default) = &field.default
         {
@@ -103,6 +123,10 @@ fn default_to_value(ir: &ConfigIr, field: &FieldIr, source: &str) -> Result<Valu
 
 fn struct_ir<'a>(ir: &'a ConfigIr, name: &str) -> Option<&'a StructIr> {
     ir.structs.iter().find(|candidate| candidate.name == name)
+}
+
+fn union_ir<'a>(ir: &'a ConfigIr, name: &str) -> Option<&'a UnionIr> {
+    ir.unions.iter().find(|candidate| candidate.name == name)
 }
 
 #[cfg(test)]

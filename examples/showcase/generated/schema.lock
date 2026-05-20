@@ -1,7 +1,7 @@
 {
   "version": 1,
   "package": "game_config_showcase",
-  "fingerprint": "a71b0dd03218fd92",
+  "fingerprint": "f118350ff704b40e",
   "schema": {
     "package": "game_config_showcase",
     "enums": [
@@ -322,6 +322,246 @@
             "prefix": null,
             "suffix": null,
             "aggregation": null
+          }
+        ]
+      }
+    ],
+    "unions": [
+      {
+        "name": "EventCondition",
+        "tag": "type",
+        "variants": [
+          {
+            "name": "LevelAtLeast",
+            "fields": [
+              {
+                "name": "level",
+                "ty": {
+                  "Ref": {
+                    "table": "LevelExp",
+                    "field": "level"
+                  }
+                },
+                "key": false,
+                "comment": null,
+                "required": true,
+                "default": null,
+                "range": null,
+                "length": null,
+                "parser": null,
+                "separator": null,
+                "prefix": null,
+                "suffix": null,
+                "aggregation": null
+              }
+            ]
+          },
+          {
+            "name": "QuestCompleted",
+            "fields": [
+              {
+                "name": "quest_id",
+                "ty": {
+                  "Ref": {
+                    "table": "Quest",
+                    "field": "id"
+                  }
+                },
+                "key": false,
+                "comment": null,
+                "required": true,
+                "default": null,
+                "range": null,
+                "length": null,
+                "parser": null,
+                "separator": null,
+                "prefix": null,
+                "suffix": null,
+                "aggregation": null
+              }
+            ]
+          },
+          {
+            "name": "HasItem",
+            "fields": [
+              {
+                "name": "item_id",
+                "ty": {
+                  "Ref": {
+                    "table": "Item",
+                    "field": "id"
+                  }
+                },
+                "key": false,
+                "comment": null,
+                "required": true,
+                "default": null,
+                "range": null,
+                "length": null,
+                "parser": null,
+                "separator": null,
+                "prefix": null,
+                "suffix": null,
+                "aggregation": null
+              },
+              {
+                "name": "count",
+                "ty": "I32",
+                "key": false,
+                "comment": null,
+                "required": true,
+                "default": null,
+                "range": [
+                  1,
+                  9999
+                ],
+                "length": null,
+                "parser": null,
+                "separator": null,
+                "prefix": null,
+                "suffix": null,
+                "aggregation": null
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "name": "RewardAction",
+        "tag": "type",
+        "variants": [
+          {
+            "name": "AddItem",
+            "fields": [
+              {
+                "name": "item_id",
+                "ty": {
+                  "Ref": {
+                    "table": "Item",
+                    "field": "id"
+                  }
+                },
+                "key": false,
+                "comment": null,
+                "required": true,
+                "default": null,
+                "range": null,
+                "length": null,
+                "parser": null,
+                "separator": null,
+                "prefix": null,
+                "suffix": null,
+                "aggregation": null
+              },
+              {
+                "name": "count",
+                "ty": "I32",
+                "key": false,
+                "comment": null,
+                "required": true,
+                "default": null,
+                "range": [
+                  1,
+                  9999
+                ],
+                "length": null,
+                "parser": null,
+                "separator": null,
+                "prefix": null,
+                "suffix": null,
+                "aggregation": null
+              }
+            ]
+          },
+          {
+            "name": "AddBuff",
+            "fields": [
+              {
+                "name": "buff_id",
+                "ty": {
+                  "Ref": {
+                    "table": "Buff",
+                    "field": "id"
+                  }
+                },
+                "key": false,
+                "comment": null,
+                "required": true,
+                "default": null,
+                "range": null,
+                "length": null,
+                "parser": null,
+                "separator": null,
+                "prefix": null,
+                "suffix": null,
+                "aggregation": null
+              },
+              {
+                "name": "duration",
+                "ty": "F32",
+                "key": false,
+                "comment": null,
+                "required": false,
+                "default": "10.0",
+                "range": null,
+                "length": null,
+                "parser": null,
+                "separator": null,
+                "prefix": null,
+                "suffix": null,
+                "aggregation": null
+              }
+            ]
+          },
+          {
+            "name": "UnlockStage",
+            "fields": [
+              {
+                "name": "stage_id",
+                "ty": {
+                  "Ref": {
+                    "table": "Stage",
+                    "field": "id"
+                  }
+                },
+                "key": false,
+                "comment": null,
+                "required": true,
+                "default": null,
+                "range": null,
+                "length": null,
+                "parser": null,
+                "separator": null,
+                "prefix": null,
+                "suffix": null,
+                "aggregation": null
+              }
+            ]
+          },
+          {
+            "name": "SendMail",
+            "fields": [
+              {
+                "name": "mail_id",
+                "ty": {
+                  "Ref": {
+                    "table": "MailTemplate",
+                    "field": "id"
+                  }
+                },
+                "key": false,
+                "comment": null,
+                "required": true,
+                "default": null,
+                "range": null,
+                "length": null,
+                "parser": null,
+                "separator": null,
+                "prefix": null,
+                "suffix": null,
+                "aggregation": null
+              }
+            ]
           }
         ]
       }
@@ -2763,6 +3003,88 @@
             "length": [
               1,
               5
+            ],
+            "parser": null,
+            "separator": ",",
+            "prefix": "[",
+            "suffix": "]",
+            "aggregation": null
+          }
+        ],
+        "indexes": []
+      },
+      {
+        "name": "EventRule",
+        "mode": "Map",
+        "key": "id",
+        "source": {
+          "format": "xlsx",
+          "file": "Quest.xlsx",
+          "sheet": "EventRule"
+        },
+        "fields": [
+          {
+            "name": "id",
+            "ty": "I32",
+            "key": true,
+            "comment": null,
+            "required": true,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "separator": null,
+            "prefix": null,
+            "suffix": null,
+            "aggregation": null
+          },
+          {
+            "name": "name",
+            "ty": "String",
+            "key": false,
+            "comment": null,
+            "required": true,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "separator": null,
+            "prefix": null,
+            "suffix": null,
+            "aggregation": null
+          },
+          {
+            "name": "condition",
+            "ty": {
+              "Union": "EventCondition"
+            },
+            "key": false,
+            "comment": null,
+            "required": true,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "separator": null,
+            "prefix": null,
+            "suffix": null,
+            "aggregation": null
+          },
+          {
+            "name": "actions",
+            "ty": {
+              "List": {
+                "Union": "RewardAction"
+              }
+            },
+            "key": false,
+            "comment": null,
+            "required": true,
+            "default": null,
+            "range": null,
+            "length": [
+              1,
+              4
             ],
             "parser": null,
             "separator": ",",

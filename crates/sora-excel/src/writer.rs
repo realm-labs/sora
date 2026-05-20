@@ -503,6 +503,7 @@ mod tests {
                     },
                 ],
             }],
+            unions: Vec::new(),
             tables: Vec::new(),
         };
         let field = FieldIr {
@@ -531,6 +532,7 @@ mod tests {
             package: "game_config".to_owned(),
             enums: Vec::new(),
             structs: Vec::new(),
+            unions: Vec::new(),
             tables: Vec::new(),
         }
     }

@@ -6,7 +6,7 @@ use std::{
 
 use serde::Deserialize;
 use sora_diagnostics::{Result, SoraError};
-use sora_schema::model::{EnumSchema, SchemaFile, StructSchema, TableSchema};
+use sora_schema::model::{EnumSchema, SchemaFile, StructSchema, TableSchema, UnionSchema};
 
 pub fn load_project_schema_file(path: &Path) -> Result<SchemaFile> {
     let mut visited = BTreeSet::new();
@@ -22,6 +22,7 @@ pub fn load_project_schema_file(path: &Path) -> Result<SchemaFile> {
         includes: root.includes.clone(),
         enums: root.enums,
         structs: root.structs,
+        unions: root.unions,
         tables: root.tables,
     };
 
@@ -59,6 +60,7 @@ fn merge_includes(
 
         merged.enums.extend(module.enums);
         merged.structs.extend(module.structs);
+        merged.unions.extend(module.unions);
         merged.tables.extend(module.tables);
         merge_includes(&include_path, &module.includes, merged, visited)?;
     }
@@ -90,6 +92,9 @@ struct TomlSchemaDocument {
 
     #[serde(default)]
     pub structs: Vec<StructSchema>,
+
+    #[serde(default)]
+    pub unions: Vec<UnionSchema>,
 
     #[serde(default)]
     pub tables: Vec<TableSchema>,

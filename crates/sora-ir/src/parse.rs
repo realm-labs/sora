@@ -25,6 +25,9 @@ fn parse_type_inner(input: &str) -> Result<TypeIr> {
             } else if let Some(inner) = generic_inner(input, "struct") {
                 require_identifier(inner)?;
                 TypeIr::Struct(inner.to_owned())
+            } else if let Some(inner) = generic_inner(input, "union") {
+                require_identifier(inner)?;
+                TypeIr::Union(inner.to_owned())
             } else if let Some(inner) = generic_inner(input, "list") {
                 TypeIr::List(Box::new(parse_nested_type(inner)?))
             } else if let Some(inner) = generic_inner(input, "optional") {
@@ -110,6 +113,7 @@ mod tests {
             ("string", TypeIr::String),
             ("enum<ItemType>", TypeIr::Enum("ItemType".to_owned())),
             ("struct<Reward>", TypeIr::Struct("Reward".to_owned())),
+            ("union<Action>", TypeIr::Union("Action".to_owned())),
             ("list<i32>", TypeIr::List(Box::new(TypeIr::I32))),
             (
                 "list<Reward>",

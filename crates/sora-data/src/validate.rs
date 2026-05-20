@@ -1,7 +1,7 @@
 use std::collections::{BTreeMap, BTreeSet};
 
 use sora_diagnostics::{Result, SoraError};
-use sora_ir::model::{ConfigIr, FieldIr, IndexIr, StructIr, TableIr, TableModeIr, TypeIr};
+use sora_ir::model::{ConfigIr, FieldIr, IndexIr, StructIr, TableIr, TableModeIr, TypeIr, UnionIr};
 
 use crate::model::{ConfigData, RowData, TableData, Value};
 
@@ -268,6 +268,9 @@ fn validate_typed_value(
         TypeIr::Struct(struct_name) => {
             validate_struct(ir, config_data, table, path, ty, struct_name, value)
         }
+        TypeIr::Union(union_name) => {
+            validate_union(ir, config_data, table, path, ty, union_name, value)
+        }
         TypeIr::List(element) => {
             validate_list(ir, config_data, table, path, element, constraints, value)
         }
@@ -365,6 +368,86 @@ fn validate_object_fields(
     }
 
     for field in &struct_ir.fields {
+        let child_path = format!("{path}.{}", field.name);
+        match values.get(&field.name) {
+            Some(value) => {
+                validate_field_value(ir, config_data, table, field, &child_path, value)?;
+            }
+            None if field.required => {
+                return Err(SoraError::MissingRequiredField {
+                    table: table.to_owned(),
+                    field: child_path,
+                });
+            }
+            None => {}
+        }
+    }
+
+    Ok(())
+}
+
+fn validate_union(
+    ir: &ConfigIr,
+    config_data: &ConfigData,
+    table: &str,
+    path: &str,
+    ty: &TypeIr,
+    union_name: &str,
+    value: &Value,
+) -> Result<()> {
+    let Value::Object(values) = value else {
+        return type_mismatch(table, path, ty, value);
+    };
+    let Some(union_ir) = ir
+        .unions
+        .iter()
+        .find(|candidate| candidate.name == union_name)
+    else {
+        return type_mismatch(table, path, ty, value);
+    };
+    validate_union_object(ir, config_data, table, path, ty, union_ir, values)
+}
+
+fn validate_union_object(
+    ir: &ConfigIr,
+    config_data: &ConfigData,
+    table: &str,
+    path: &str,
+    ty: &TypeIr,
+    union_ir: &UnionIr,
+    values: &BTreeMap<String, Value>,
+) -> Result<()> {
+    let Some(Value::String(variant_name)) = values.get(&union_ir.tag) else {
+        return type_mismatch(table, &format!("{path}.{}", union_ir.tag), ty, &Value::Null);
+    };
+    let Some(variant) = union_ir
+        .variants
+        .iter()
+        .find(|candidate| candidate.name == *variant_name)
+    else {
+        return Err(SoraError::InvalidEnumValue {
+            table: table.to_owned(),
+            field: format!("{path}.{}", union_ir.tag),
+            value: variant_name.clone(),
+        });
+    };
+
+    let field_names = variant
+        .fields
+        .iter()
+        .map(|field| field.name.as_str())
+        .chain(std::iter::once(union_ir.tag.as_str()))
+        .collect::<BTreeSet<_>>();
+    for field_name in values.keys() {
+        if !field_names.contains(field_name.as_str()) {
+            return Err(SoraError::UnknownField {
+                table: table.to_owned(),
+                field: format!("{path}.{field_name}"),
+            });
+        }
+    }
+
+    for field in &variant.fields {
         let child_path = format!("{path}.{}", field.name);
         match values.get(&field.name) {
             Some(value) => {

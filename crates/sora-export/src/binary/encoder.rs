@@ -1,6 +1,6 @@
 use sora_data::model::{ConfigData, TableData, Value};
 use sora_diagnostics::{Result, SoraError};
-use sora_ir::model::{ConfigIr, FieldIr, StructIr, TableIr, TypeIr};
+use sora_ir::model::{ConfigIr, FieldIr, StructIr, TableIr, TypeIr, UnionIr};
 
 const MAGIC: &[u8; 4] = b"SORA";
 const VERSION: u32 = 1;
@@ -175,6 +175,34 @@ impl<'a> BinaryEncoder<'a> {
                     self.encode_value(&field.ty, value, out)?;
                 }
             }
+            TypeIr::Union(union_name) => {
+                let Value::Object(values) = value else {
+                    return Err(type_error(ty, value));
+                };
+                let union_ir = self.union_ir(union_name)?;
+                let Some(Value::String(variant_name)) = values.get(&union_ir.tag) else {
+                    return Err(binary_error(format!(
+                        "union `{union_name}` value is missing string tag `{}`",
+                        union_ir.tag
+                    )));
+                };
+                let Some((ordinal, variant)) = union_ir
+                    .variants
+                    .iter()
+                    .enumerate()
+                    .find(|(_, candidate)| candidate.name == *variant_name)
+                else {
+                    return Err(binary_error(format!(
+                        "unknown union variant `{union_name}.{variant_name}`"
+                    )));
+                };
+                write_u32(out, checked_u32(ordinal, "union ordinal")?);
+                for field in &variant.fields {
+                    let null = Value::Null;
+                    let value = values.get(&field.name).unwrap_or(&null);
+                    self.encode_value(&field.ty, value, out)?;
+                }
+            }
             TypeIr::List(element) => {
                 let Value::List(values) = value else {
                     return Err(type_error(ty, value));
@@ -227,6 +255,14 @@ impl<'a> BinaryEncoder<'a> {
             .iter()
             .find(|candidate| candidate.name == struct_name)
             .ok_or_else(|| binary_error(format!("unknown struct `{struct_name}`")))
+    }
+
+    fn union_ir(&self, union_name: &str) -> Result<&UnionIr> {
+        self.ir
+            .unions
+            .iter()
+            .find(|candidate| candidate.name == union_name)
+            .ok_or_else(|| binary_error(format!("unknown union `{union_name}`")))
     }
 
     fn ref_target_type(&self, table_name: &str, field_name: &str) -> Result<&TypeIr> {
@@ -352,6 +388,7 @@ fn fingerprint_hex(bytes: &[u8]) -> String {
         hash ^= u64::from(*byte);
         hash = hash.wrapping_mul(0x100000001b3);
     }
+
     format!("{hash:016x}")
 }
 

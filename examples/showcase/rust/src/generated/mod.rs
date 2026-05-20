@@ -10,6 +10,8 @@ pub mod drop_group;
 pub mod dungeon;
 pub mod element_type;
 pub mod equipment_set;
+pub mod event_condition;
+pub mod event_rule;
 pub mod gacha_item;
 pub mod gacha_pool;
 pub mod game_settings;
@@ -29,6 +31,7 @@ pub mod recipe;
 pub mod resource_cost;
 pub mod resource_kind;
 pub mod reward;
+pub mod reward_action;
 pub mod runtime;
 pub mod shop;
 pub mod shop_item;
@@ -645,13 +648,36 @@ impl std::ops::Deref for DialogueTable {
     }
 }
 
+#[derive(Debug, Clone)]
+pub struct EventRuleTable(std::collections::HashMap<i32, event_rule::EventRule>);
+
+impl EventRuleTable {
+    fn decode(bundle: &runtime::SoraBundle<'_>) -> Result<Self, runtime::SoraReadError> {
+        Ok(Self(decode_map_table(
+            bundle.decode_table::<event_rule::EventRule>("EventRule")?,
+            |row| row.id,
+        )))
+    }
+    pub fn get(&self, key: i32) -> Option<&event_rule::EventRule> {
+        self.0.get(&key)
+    }
+}
+
+impl std::ops::Deref for EventRuleTable {
+    type Target = std::collections::HashMap<i32, event_rule::EventRule>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
 impl SoraConfig {
     pub fn from_bytes(bytes: &[u8]) -> Result<Self, runtime::SoraReadError> {
         let bundle = runtime::SoraBundle::parse(bytes)?;
         let mut tables: std::collections::HashMap<
             &'static str,
             Box<dyn std::any::Any + Send + Sync>,
-        > = std::collections::HashMap::with_capacity(27);
+        > = std::collections::HashMap::with_capacity(28);
         tables.insert("Item", Box::new(ItemTable::decode(&bundle)?));
         tables.insert("Skill", Box::new(SkillTable::decode(&bundle)?));
         tables.insert("Quest", Box::new(QuestTable::decode(&bundle)?));
@@ -694,6 +720,7 @@ impl SoraConfig {
         );
         tables.insert("MailReward", Box::new(MailRewardTable::decode(&bundle)?));
         tables.insert("Dialogue", Box::new(DialogueTable::decode(&bundle)?));
+        tables.insert("EventRule", Box::new(EventRuleTable::decode(&bundle)?));
         Ok(Self { tables })
     }
 
@@ -815,6 +842,10 @@ impl SoraConfig {
 
     pub fn dialogue(&self) -> &DialogueTable {
         self.table("Dialogue")
+    }
+
+    pub fn event_rule(&self) -> &EventRuleTable {
+        self.table("EventRule")
     }
 }
 

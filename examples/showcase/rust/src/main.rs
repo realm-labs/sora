@@ -1,6 +1,9 @@
 mod generated;
 
-use generated::{SoraConfig, item_type::ItemType, quest_type::QuestType};
+use generated::{
+    SoraConfig, event_condition::EventCondition, item_type::ItemType, quest_type::QuestType,
+    reward_action::RewardAction,
+};
 
 fn main() {
     let config =
@@ -21,14 +24,29 @@ fn main() {
     assert_eq!(config.stage().len(), 40);
     assert_eq!(config.monster().len(), 80);
     assert_eq!(config.localization().len(), 80);
+    assert_eq!(config.event_rule().len(), 20);
+
+    let event_rule = config.event_rule().get(17001).expect("event rule 17001");
+    assert!(matches!(
+        &event_rule.condition,
+        EventCondition::QuestCompleted { quest_id: 5002 }
+    ));
+    assert!(matches!(
+        &event_rule.actions[0],
+        RewardAction::AddItem {
+            item_id: 1007,
+            count: 3
+        }
+    ));
     assert_eq!(settings.starting_gold, 100);
 
     println!(
-        "loaded {} items, {} skills, {} quests, {} stages; first quest rewards: {}",
+        "loaded {} items, {} skills, {} quests, {} stages, {} event rules; first quest rewards: {}",
         config.item().values().count(),
         config.skill().values().count(),
         config.quest().values().count(),
         config.stage().values().count(),
+        config.event_rule().values().count(),
         quest.rewards.len()
     );
 }

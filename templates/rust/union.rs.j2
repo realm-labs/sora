@@ -1,0 +1,49 @@
+{%- for import in union.imports %}
+use super::{{ import.module }}::{{ import.name }};
+{%- endfor %}
+
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+pub enum {{ union.pascal_name }} {
+{%- for variant in union.variants %}
+    {{ variant.name }} {
+{%- for field in variant.fields %}
+        {{ field.rust_name }}: {{ field.rust_type }},
+{%- endfor %}
+    },
+{%- endfor %}
+}
+
+impl super::runtime::SoraDecode for {{ union.pascal_name }} {
+    fn decode(reader: &mut super::runtime::SoraReader<'_>) -> Result<Self, super::runtime::SoraReadError> {
+        match reader.read_u32()? {
+{%- for variant in union.variants %}
+            {{ loop.index0 }} => Ok(Self::{{ variant.name }} {
+{%- for field in variant.fields %}
+                {{ field.rust_name }}: <{{ field.rust_type }} as super::runtime::SoraDecode>::decode(reader)?,
+{%- endfor %}
+            }),
+{%- endfor %}
+            value => Err(super::runtime::SoraReadError::new(format!("invalid union ordinal {} for {{ union.pascal_name }}", value))),
+        }
+    }
+}
+
+impl std::fmt::Display for {{ union.pascal_name }} {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+{%- for variant in union.variants %}
+            Self::{{ variant.name }} {
+{%- for field in variant.fields %}
+                {{ field.rust_name }},
+{%- endfor %}
+            } => {
+                let mut builder = f.debug_struct("{{ union.pascal_name }}::{{ variant.name }}");
+{%- for field in variant.fields %}
+                builder.field("{{ field.rust_name }}", {{ field.rust_name }});
+{%- endfor %}
+                builder.finish()
+            }
+{%- endfor %}
+        }
+    }
+}

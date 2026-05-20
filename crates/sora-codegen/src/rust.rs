@@ -31,6 +31,11 @@ impl CodeGenerator for RustCodeGenerator {
             write_file(&out_dir.join(format!("{}.rs", record.snake_name)), rendered)?;
         }
 
+        for union in &model.unions {
+            let rendered = render_template("rust", "union.rs.j2", context! { union => union })?;
+            write_file(&out_dir.join(format!("{}.rs", union.snake_name)), rendered)?;
+        }
+
         let rendered = render_template("rust", "mod.rs.j2", context! { model => &model })?;
         write_file(&out_dir.join("mod.rs"), rendered)?;
 

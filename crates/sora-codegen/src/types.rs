@@ -16,7 +16,7 @@ fn rust_type_name_inner(ir: &ConfigIr, ty: &TypeIr) -> String {
         TypeIr::F32 => "f32".to_owned(),
         TypeIr::F64 => "f64".to_owned(),
         TypeIr::String => "String".to_owned(),
-        TypeIr::Enum(name) | TypeIr::Struct(name) => name.clone(),
+        TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => name.clone(),
         TypeIr::List(element) => format!("Vec<{}>", rust_type_name_inner(ir, element)),
         TypeIr::Array { element, len } => {
             format!("[{}; {len}]", rust_type_name_inner(ir, element))
@@ -34,7 +34,7 @@ fn kotlin_type_name_inner(ir: &ConfigIr, ty: &TypeIr) -> String {
         TypeIr::F32 => "Float".to_owned(),
         TypeIr::F64 => "Double".to_owned(),
         TypeIr::String => "String".to_owned(),
-        TypeIr::Enum(name) | TypeIr::Struct(name) => name.clone(),
+        TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => name.clone(),
         TypeIr::List(element) | TypeIr::Array { element, .. } => {
             format!("List<{}>", kotlin_type_name_inner(ir, element))
         }
@@ -76,6 +76,7 @@ mod tests {
             ("string", "String"),
             ("enum<ItemType>", "ItemType"),
             ("struct<Reward>", "Reward"),
+            ("union<Action>", "Action"),
             ("list<i32>", "Vec<i32>"),
             ("array<i32,3>", "[i32; 3]"),
             ("optional<string>", "Option<String>"),
@@ -99,6 +100,7 @@ mod tests {
             ("string", "String"),
             ("enum<ItemType>", "ItemType"),
             ("struct<Reward>", "Reward"),
+            ("union<Action>", "Action"),
             ("list<i32>", "List<Int>"),
             ("array<i32,3>", "List<Int>"),
             ("optional<string>", "String?"),
@@ -121,6 +123,16 @@ package = "game_config"
 [[enums]]
 name = "ItemType"
 values = ["Weapon", "Armor", "Material", "Consumable"]
+
+[[unions]]
+name = "Action"
+
+[[unions.variants]]
+name = "AddItem"
+
+[[unions.variants.fields]]
+name = "item_id"
+type = "i32"
 
 [[tables]]
 name = "Item"

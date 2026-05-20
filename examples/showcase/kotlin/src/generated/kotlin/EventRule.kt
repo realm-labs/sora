@@ -1,0 +1,18 @@
+package game_config_showcase
+
+data class EventRule(
+    val id: Int,
+    val name: String,
+    val condition: EventCondition,
+    val actions: List<RewardAction>,
+) {
+    companion object {
+        fun decode(reader: SoraReader): EventRule =
+            EventRule(
+                id = reader.readI32(),
+                name = reader.readString(),
+                condition = EventCondition.decode(reader),
+                actions = reader.readList { RewardAction.decode(reader) },
+            )
+    }
+}

@@ -1,0 +1,25 @@
+package {{ package }}
+
+sealed class {{ union.pascal_name }} {
+{%- for variant in union.variants %}
+    data class {{ variant.name }}(
+{%- for field in variant.fields %}
+        val {{ field.kotlin_name }}: {{ field.kotlin_type }},
+{%- endfor %}
+    ) : {{ union.pascal_name }}()
+{%- endfor %}
+
+    companion object {
+        fun decode(reader: SoraReader): {{ union.pascal_name }} =
+            when (val ordinal = reader.readU32()) {
+{%- for variant in union.variants %}
+                {{ loop.index0 }} -> {{ variant.name }}(
+{%- for field in variant.fields %}
+                    {{ field.kotlin_name }} = {{ field.kotlin_decode }},
+{%- endfor %}
+                )
+{%- endfor %}
+                else -> throw SoraReadException("invalid union ordinal $ordinal for {{ union.pascal_name }}")
+            }
+    }
+}

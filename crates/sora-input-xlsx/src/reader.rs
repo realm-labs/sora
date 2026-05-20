@@ -37,6 +37,7 @@ pub fn load_xlsx_table_data(table: &TableIr, path: &Path, sheet: &str) -> Result
             package: String::new(),
             enums: Vec::new(),
             structs: Vec::new(),
+            unions: Vec::new(),
             tables: vec![table.clone()],
         },
         table,

@@ -14,6 +14,9 @@ pub struct SchemaFile {
     pub structs: Vec<StructSchema>,
 
     #[serde(default)]
+    pub unions: Vec<UnionSchema>,
+
+    #[serde(default)]
     pub tables: Vec<TableSchema>,
 }
 
@@ -31,6 +34,29 @@ pub struct StructSchema {
 
     #[serde(default)]
     pub fields: Vec<FieldSchema>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
+pub struct UnionSchema {
+    pub name: String,
+
+    #[serde(default = "default_union_tag")]
+    pub tag: String,
+
+    #[serde(default)]
+    pub variants: Vec<UnionVariantSchema>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
+pub struct UnionVariantSchema {
+    pub name: String,
+
+    #[serde(default)]
+    pub fields: Vec<FieldSchema>,
+}
+
+fn default_union_tag() -> String {
+    "type".to_owned()
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]

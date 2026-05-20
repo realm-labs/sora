@@ -527,6 +527,33 @@ fn showcase_rows(table: &str) -> Vec<Vec<String>> {
                 ]
             })
             .collect(),
+        "EventRule" => (1..=20)
+            .map(|index| {
+                let condition = match index % 3 {
+                    0 => format!("{{\"type\":\"LevelAtLeast\",\"level\":{}}}", 1 + index),
+                    1 => format!("{{\"type\":\"QuestCompleted\",\"quest_id\":{}}}", 5001 + index % 25),
+                    _ => format!(
+                        "{{\"type\":\"HasItem\",\"item_id\":{},\"count\":{}}}",
+                        item_id(index),
+                        1 + index % 5
+                    ),
+                };
+                let actions = format!(
+                    "[{{\"type\":\"AddItem\",\"item_id\":{},\"count\":{} }},{{\"type\":\"AddBuff\",\"buff_id\":{},\"duration\":{} }},{{\"type\":\"UnlockStage\",\"stage_id\":{} }}]",
+                    item_id(index + 3),
+                    2 + index % 4,
+                    6001 + index % 20,
+                    5.0 + (index % 5) as f32,
+                    9001 + index % 40
+                );
+                vec![
+                    (17000 + index).to_string(),
+                    format!("Event Rule {index}"),
+                    condition,
+                    actions,
+                ]
+            })
+            .collect(),
         _ => Vec::new(),
     }
 }

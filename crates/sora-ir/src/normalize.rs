@@ -1,12 +1,13 @@
 use sora_diagnostics::{Result, SoraError};
 use sora_schema::model::{
     FieldSchema, IndexSchema, SchemaFile, TableModeSchema, TableSchema, TableSourceSchema,
+    UnionSchema, UnionVariantSchema,
 };
 
 use crate::{
     model::{
         AggregationIr, ConfigIr, EnumIr, FieldIr, IndexIr, StructIr, TableIr, TableModeIr,
-        TableSourceIr, TypeIr,
+        TableSourceIr, TypeIr, UnionIr, UnionVariantIr,
     },
     parse::parse_type,
 };
@@ -39,11 +40,50 @@ impl TryFrom<SchemaFile> for ConfigIr {
                     })
                 })
                 .collect::<Result<Vec<_>>>()?,
+            unions: schema
+                .unions
+                .into_iter()
+                .map(UnionIr::try_from)
+                .collect::<Result<Vec<_>>>()?,
             tables: schema
                 .tables
                 .into_iter()
                 .map(TableIr::try_from)
                 .collect::<Result<Vec<_>>>()?,
+        })
+    }
+}
+
+impl TryFrom<UnionSchema> for UnionIr {
+    type Error = SoraError;
+
+    fn try_from(union: UnionSchema) -> Result<Self> {
+        if union.tag.is_empty() {
+            return Err(SoraError::InvalidSchema(format!(
+                "union `{}` declares empty `tag`",
+                union.name
+            )));
+        }
+
+        Ok(Self {
+            name: union.name,
+            tag: union.tag,
+            variants: union
+                .variants
+                .into_iter()
+                .map(UnionVariantIr::try_from)
+                .collect::<Result<Vec<_>>>()?,
+        })
+    }
+}
+
+impl TryFrom<UnionVariantSchema> for UnionVariantIr {
+    type Error = SoraError;
+
+    fn try_from(variant: UnionVariantSchema) -> Result<Self> {
+        Ok(Self {
+            name: variant.name,
+            fields: convert_fields(variant.fields)?,
         })
     }
 }

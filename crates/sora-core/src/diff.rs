@@ -212,6 +212,7 @@ mod tests {
             package: "game_config".to_owned(),
             enums: Vec::new(),
             structs: Vec::new(),
+            unions: Vec::new(),
             tables: vec![TableIr {
                 name: "Item".to_owned(),
                 mode: TableModeIr::Map,

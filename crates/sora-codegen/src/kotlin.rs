@@ -38,6 +38,15 @@ impl CodeGenerator for KotlinCodeGenerator {
             )?;
         }
 
+        for union in &model.unions {
+            let rendered = render_template(
+                "kotlin",
+                "union.kt.j2",
+                context! { package => &model.package, union => union },
+            )?;
+            write_file(&out_dir.join(format!("{}.kt", union.pascal_name)), rendered)?;
+        }
+
         let rendered = render_template(
             "kotlin",
             "runtime.kt.j2",
@@ -78,19 +87,26 @@ mod tests {
 
         let rust_item = std::fs::read_to_string(rust_out.join("item.rs")).unwrap();
         let rust_item_type = std::fs::read_to_string(rust_out.join("item_type.rs")).unwrap();
+        let rust_action = std::fs::read_to_string(rust_out.join("action.rs")).unwrap();
         let rust_runtime = std::fs::read_to_string(rust_out.join("runtime.rs")).unwrap();
         let rust_mod = std::fs::read_to_string(rust_out.join("mod.rs")).unwrap();
         let kotlin_item = std::fs::read_to_string(kotlin_out.join("Item.kt")).unwrap();
+        let kotlin_action = std::fs::read_to_string(kotlin_out.join("Action.kt")).unwrap();
         let kotlin_runtime = std::fs::read_to_string(kotlin_out.join("Runtime.kt")).unwrap();
         let kotlin_config = std::fs::read_to_string(kotlin_out.join("SoraConfig.kt")).unwrap();
 
         assert!(rust_item.contains("pub struct Item"));
         assert!(rust_item.contains("pub item_type: ItemType"));
+        assert!(rust_item.contains("pub action: Action"));
         assert!(rust_item.contains("impl super::runtime::SoraDecode for Item"));
         assert!(rust_item.contains("impl std::fmt::Display for Item"));
         assert!(rust_item.contains("builder.field(\"item_type\", &self.item_type);"));
         assert!(rust_item_type.contains("impl std::fmt::Display for ItemType"));
         assert!(rust_item_type.contains("Self::Weapon => f.write_str(\"Weapon\")"));
+        assert!(rust_action.contains("pub enum Action"));
+        assert!(rust_action.contains("AddItem {"));
+        assert!(rust_action.contains("impl super::runtime::SoraDecode for Action"));
+        assert!(rust_action.contains("impl std::fmt::Display for Action"));
         assert!(rust_runtime.contains("pub struct SoraBundle"));
         assert!(rust_mod.contains("pub struct SoraConfig"));
         assert!(rust_mod.contains("from_bytes"));
@@ -113,6 +129,10 @@ mod tests {
         assert!(!rust_mod.contains("decode_singleton_table"));
         assert!(kotlin_item.contains("data class Item"));
         assert!(kotlin_item.contains("val itemType: ItemType"));
+        assert!(kotlin_item.contains("val action: Action"));
+        assert!(kotlin_action.contains("sealed class Action"));
+        assert!(kotlin_action.contains("data class AddItem"));
+        assert!(kotlin_action.contains("fun decode(reader: SoraReader): Action"));
         assert!(kotlin_item.contains("fun decode(reader: SoraReader): Item"));
         assert!(kotlin_runtime.contains("class SoraBundle"));
         assert!(kotlin_config.contains("data class SoraConfig"));
@@ -154,6 +174,16 @@ package = "game_config"
 name = "ItemType"
 values = ["Weapon", "Armor", "Material", "Consumable"]
 
+[[unions]]
+name = "Action"
+
+[[unions.variants]]
+name = "AddItem"
+
+[[unions.variants.fields]]
+name = "item_id"
+type = "i32"
+
 [[tables]]
 name = "Item"
 mode = "map"
@@ -171,6 +201,12 @@ name = "item_type"
 type = "enum<ItemType>"
 required = true
 comment = "Item type"
+
+[[tables.fields]]
+name = "action"
+type = "union<Action>"
+required = true
+comment = "Action"
 "#,
         )
         .unwrap();

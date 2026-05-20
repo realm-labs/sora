@@ -7,6 +7,7 @@ pub struct ConfigIr {
     pub package: String,
     pub enums: Vec<EnumIr>,
     pub structs: Vec<StructIr>,
+    pub unions: Vec<UnionIr>,
     pub tables: Vec<TableIr>,
 }
 
@@ -18,6 +19,19 @@ pub struct EnumIr {
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct StructIr {
+    pub name: String,
+    pub fields: Vec<FieldIr>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct UnionIr {
+    pub name: String,
+    pub tag: String,
+    pub variants: Vec<UnionVariantIr>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct UnionVariantIr {
     pub name: String,
     pub fields: Vec<FieldIr>,
 }
@@ -88,6 +102,7 @@ pub enum TypeIr {
     String,
     Enum(String),
     Struct(String),
+    Union(String),
     List(Box<TypeIr>),
     Array { element: Box<TypeIr>, len: usize },
     Ref { table: String, field: String },
@@ -105,6 +120,7 @@ impl fmt::Display for TypeIr {
             TypeIr::String => f.write_str("string"),
             TypeIr::Enum(name) => write!(f, "enum<{name}>"),
             TypeIr::Struct(name) => write!(f, "struct<{name}>"),
+            TypeIr::Union(name) => write!(f, "union<{name}>"),
             TypeIr::List(element) => write!(f, "list<{element}>"),
             TypeIr::Array { element, len } => write!(f, "array<{element},{len}>"),
             TypeIr::Ref { table, field } => write!(f, "ref<{table}.{field}>"),

@@ -28,6 +28,7 @@ data class SoraConfig(
     val mail_template: Map<Int, MailTemplate>,
     val mail_reward: List<MailReward>,
     val dialogue: Map<Int, Dialogue>,
+    val event_rule: Map<Int, EventRule>,
 ) {
     fun getItem(key: Int): Item? = item[key]
 
@@ -94,6 +95,9 @@ data class SoraConfig(
     fun getDialogue(key: Int): Dialogue? = dialogue[key]
 
     fun dialogueValues(): Collection<Dialogue> = dialogue.values
+    fun getEventRule(key: Int): EventRule? = event_rule[key]
+
+    fun eventRuleValues(): Collection<EventRule> = event_rule.values
 
     companion object {
         fun fromBytes(bytes: ByteArray): SoraConfig {
@@ -126,6 +130,7 @@ data class SoraConfig(
                 mail_template = bundle.decodeTable("MailTemplate", MailTemplate::decode).associateBy { it.id },
                 mail_reward = bundle.decodeTable("MailReward", MailReward::decode),
                 dialogue = bundle.decodeTable("Dialogue", Dialogue::decode).associateBy { it.id },
+                event_rule = bundle.decodeTable("EventRule", EventRule::decode).associateBy { it.id },
             )
         }
     }

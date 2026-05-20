@@ -7,6 +7,7 @@ use crate::model::{AggregationIr, ConfigIr, FieldIr, StructIr, TableIr, TableMod
 pub fn validate_config_ir(ir: &ConfigIr) -> Result<()> {
     validate_unique_names("enum", ir.enums.iter().map(|item| item.name.as_str()))?;
     validate_unique_names("struct", ir.structs.iter().map(|item| item.name.as_str()))?;
+    validate_unique_names("union", ir.unions.iter().map(|item| item.name.as_str()))?;
     validate_unique_names("table", ir.tables.iter().map(|item| item.name.as_str()))?;
 
     let enum_names = ir
@@ -16,6 +17,11 @@ pub fn validate_config_ir(ir: &ConfigIr) -> Result<()> {
         .collect::<BTreeSet<_>>();
     let struct_names = ir
         .structs
+        .iter()
+        .map(|item| item.name.as_str())
+        .collect::<BTreeSet<_>>();
+    let union_names = ir
+        .unions
         .iter()
         .map(|item| item.name.as_str())
         .collect::<BTreeSet<_>>();
@@ -37,11 +43,40 @@ pub fn validate_config_ir(ir: &ConfigIr) -> Result<()> {
             &ValidationContext {
                 enum_names: &enum_names,
                 struct_names: &struct_names,
+                union_names: &union_names,
                 table_names: &table_names,
                 structs: &ir.structs,
                 tables: &ir.tables,
             },
         )?;
+    }
+
+    for item in &ir.unions {
+        validate_unique_names(
+            "union variant",
+            item.variants.iter().map(|variant| variant.name.as_str()),
+        )?;
+        for variant in &item.variants {
+            if variant.fields.iter().any(|field| field.name == item.tag) {
+                return Err(SoraError::InvalidSchema(format!(
+                    "union `{}` variant `{}` field conflicts with tag `{}`",
+                    item.name, variant.name, item.tag
+                )));
+            }
+            validate_fields(
+                "union",
+                &item.name,
+                &variant.fields,
+                &ValidationContext {
+                    enum_names: &enum_names,
+                    struct_names: &struct_names,
+                    union_names: &union_names,
+                    table_names: &table_names,
+                    structs: &ir.structs,
+                    tables: &ir.tables,
+                },
+            )?;
+        }
     }
 
     for table in &ir.tables {
@@ -52,6 +87,7 @@ pub fn validate_config_ir(ir: &ConfigIr) -> Result<()> {
             &ValidationContext {
                 enum_names: &enum_names,
                 struct_names: &struct_names,
+                union_names: &union_names,
                 table_names: &table_names,
                 structs: &ir.structs,
                 tables: &ir.tables,
@@ -147,6 +183,7 @@ fn validate_fields<'a>(
             &TypeReferenceContext {
                 enum_names: context.enum_names,
                 struct_names: context.struct_names,
+                union_names: context.union_names,
                 table_names: context.table_names,
                 tables: context.tables,
             },
@@ -170,6 +207,7 @@ fn validate_fields<'a>(
 struct ValidationContext<'a> {
     enum_names: &'a BTreeSet<&'a str>,
     struct_names: &'a BTreeSet<&'a str>,
+    union_names: &'a BTreeSet<&'a str>,
     table_names: &'a BTreeSet<&'a str>,
     structs: &'a [StructIr],
     tables: &'a [TableIr],
@@ -178,6 +216,7 @@ struct ValidationContext<'a> {
 struct TypeReferenceContext<'a> {
     enum_names: &'a BTreeSet<&'a str>,
     struct_names: &'a BTreeSet<&'a str>,
+    union_names: &'a BTreeSet<&'a str>,
     table_names: &'a BTreeSet<&'a str>,
     tables: &'a [TableIr],
 }
@@ -202,6 +241,15 @@ fn validate_type_references(
         TypeIr::Struct(name) if !context.struct_names.contains(name.as_str()) => {
             Err(SoraError::UnknownTypeReference {
                 kind: "struct",
+                name: name.clone(),
+                owner_kind,
+                owner: owner.to_owned(),
+                field: field_name.to_owned(),
+            })
+        }
+        TypeIr::Union(name) if !context.union_names.contains(name.as_str()) => {
+            Err(SoraError::UnknownTypeReference {
+                kind: "union",
                 name: name.clone(),
                 owner_kind,
                 owner: owner.to_owned(),
@@ -292,6 +340,7 @@ fn is_valid_map_key_type(ty: &TypeIr, tables: &[TableIr]) -> bool {
         TypeIr::F32
         | TypeIr::F64
         | TypeIr::Struct(_)
+        | TypeIr::Union(_)
         | TypeIr::List(_)
         | TypeIr::Array { .. }
         | TypeIr::Optional(_) => false,

@@ -9,6 +9,7 @@ use crate::types::{kotlin_type_name, rust_type_name};
 pub struct CodegenModel {
     pub package: String,
     pub enums: Vec<CodegenEnum>,
+    pub unions: Vec<CodegenUnion>,
     pub records: Vec<CodegenRecord>,
     pub tables: Vec<CodegenTable>,
     pub modules: Vec<String>,
@@ -20,6 +21,22 @@ pub struct CodegenModel {
 pub struct CodegenEnum {
     pub name: String,
     pub values: Vec<String>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct CodegenUnion {
+    pub name: String,
+    pub pascal_name: String,
+    pub snake_name: String,
+    pub tag: String,
+    pub variants: Vec<CodegenUnionVariant>,
+    pub imports: Vec<CodegenImport>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct CodegenUnionVariant {
+    pub name: String,
+    pub fields: Vec<CodegenField>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -92,6 +109,12 @@ pub fn build_model(ir: &ConfigIr) -> Result<CodegenModel> {
         .chain(ir.tables.iter().map(|item| build_record(ir, &item.into())))
         .collect::<Result<Vec<_>>>()?;
 
+    let unions = ir
+        .unions
+        .iter()
+        .map(|item| build_union(ir, item))
+        .collect::<Result<Vec<_>>>()?;
+
     let tables = ir
         .tables
         .iter()
@@ -102,11 +125,13 @@ pub fn build_model(ir: &ConfigIr) -> Result<CodegenModel> {
         .iter()
         .map(|item| item.name.to_snake_case())
         .chain(records.iter().map(|item| item.snake_name.clone()))
+        .chain(unions.iter().map(|item| item.snake_name.clone()))
         .collect();
 
     Ok(CodegenModel {
         package: ir.package.clone(),
         enums,
+        unions,
         records,
         has_map_tables: tables
             .iter()
@@ -114,6 +139,49 @@ pub fn build_model(ir: &ConfigIr) -> Result<CodegenModel> {
         has_singleton_tables: tables.iter().any(|table| table.mode == "singleton"),
         tables,
         modules,
+    })
+}
+
+fn build_union(ir: &ConfigIr, item: &sora_ir::model::UnionIr) -> Result<CodegenUnion> {
+    let mut imports = Vec::new();
+    let variants = item
+        .variants
+        .iter()
+        .map(|variant| {
+            for field in &variant.fields {
+                collect_type_imports(ir, &item.name, &field.ty, &mut imports);
+            }
+            Ok(CodegenUnionVariant {
+                name: variant.name.to_pascal_case(),
+                fields: variant
+                    .fields
+                    .iter()
+                    .map(|field| {
+                        Ok(CodegenField {
+                            raw_name: field.name.clone(),
+                            rust_name: field.name.to_snake_case(),
+                            rust_type: rust_type_name(ir, &field.ty),
+                            kotlin_name: field.name.to_lower_camel_case(),
+                            kotlin_type: kotlin_type_name(ir, &field.ty),
+                            kotlin_decode: kotlin_decode_expr(ir, &field.ty),
+                            comment: field.comment.clone(),
+                        })
+                    })
+                    .collect::<Result<Vec<_>>>()?,
+            })
+        })
+        .collect::<Result<Vec<_>>>()?;
+
+    imports.sort_by(|a, b| a.module.cmp(&b.module).then(a.name.cmp(&b.name)));
+    imports.dedup_by(|a, b| a.module == b.module && a.name == b.name);
+
+    Ok(CodegenUnion {
+        name: item.name.clone(),
+        pascal_name: item.name.to_pascal_case(),
+        snake_name: item.name.to_snake_case(),
+        tag: item.tag.clone(),
+        variants,
+        imports,
     })
 }
 
@@ -199,7 +267,11 @@ fn rust_key_type_is_copy(ir: &ConfigIr, ty: &TypeIr) -> bool {
             })
             .is_some_and(|field| rust_key_type_is_copy(ir, &field.ty)),
         TypeIr::Optional(element) => rust_key_type_is_copy(ir, element),
-        TypeIr::String | TypeIr::Struct(_) | TypeIr::List(_) | TypeIr::Array { .. } => false,
+        TypeIr::String
+        | TypeIr::Struct(_)
+        | TypeIr::Union(_)
+        | TypeIr::List(_)
+        | TypeIr::Array { .. } => false,
     }
 }
 
@@ -238,7 +310,9 @@ fn kotlin_decode_expr(ir: &ConfigIr, ty: &TypeIr) -> String {
         TypeIr::F32 => "reader.readF32()".to_owned(),
         TypeIr::F64 => "reader.readF64()".to_owned(),
         TypeIr::String => "reader.readString()".to_owned(),
-        TypeIr::Enum(name) | TypeIr::Struct(name) => format!("{name}.decode(reader)"),
+        TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => {
+            format!("{name}.decode(reader)")
+        }
         TypeIr::List(element) | TypeIr::Array { element, .. } => {
             format!("reader.readList {{ {} }}", kotlin_decode_expr(ir, element))
         }
@@ -280,7 +354,9 @@ fn collect_type_imports(
     imports: &mut Vec<CodegenImport>,
 ) {
     match ty {
-        TypeIr::Enum(name) | TypeIr::Struct(name) => push_named_import(owner_name, name, imports),
+        TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => {
+            push_named_import(owner_name, name, imports)
+        }
         TypeIr::List(element) | TypeIr::Optional(element) => {
             collect_type_imports(ir, owner_name, element, imports);
         }
