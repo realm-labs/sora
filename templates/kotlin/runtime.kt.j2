@@ -2,12 +2,20 @@ package {{ package }}
 
 class SoraReadException(message: String) : RuntimeException(message)
 
+private const val SORA_BUNDLE_VERSION = 1
+private const val SORA_HEADER_LENGTH = 24
+private const val SECTION_KIND_MANIFEST = 0
+private const val SECTION_KIND_SCHEMA = 1
+private const val SECTION_KIND_TABLE = 2
+private const val COMPRESSION_NONE = 0
+
 private data class SoraSection(
     val kind: Int,
     val compression: Int,
     val name: String,
     val offset: Int,
     val length: Int,
+    val uncompressedLength: Int,
 )
 
 class SoraBundle private constructor(
@@ -15,31 +23,38 @@ class SoraBundle private constructor(
     private val sections: List<SoraSection>,
 ) {
     fun <T> decodeTable(name: String, decode: (SoraReader) -> T): List<T> {
-        val section = sections.firstOrNull { it.kind == 2 && it.name == name }
+        val section = sections.firstOrNull { it.kind == SECTION_KIND_TABLE && it.name == name }
             ?: throw SoraReadException("missing Sora table section `$name`")
-        if (section.compression != 0) {
+        if (section.compression != COMPRESSION_NONE) {
             throw SoraReadException("unsupported compression ${section.compression} for table `$name`")
+        }
+        if (section.uncompressedLength != section.length) {
+            throw SoraReadException("table `$name` has invalid uncompressed length")
         }
         return decodeRows(bytes.copyOfRange(section.offset, section.offset + section.length), decode)
     }
 
     companion object {
         fun parse(bytes: ByteArray): SoraBundle {
-            if (bytes.size < 24) {
+            if (bytes.size < SORA_HEADER_LENGTH) {
                 throw SoraReadException("Sora bundle is shorter than header")
             }
             if (String(bytes.copyOfRange(0, 4), Charsets.US_ASCII) != "SORA") {
                 throw SoraReadException("invalid Sora bundle magic")
             }
             val version = readI32At(bytes, 4)
-            if (version != 1) {
+            if (version != SORA_BUNDLE_VERSION) {
                 throw SoraReadException("unsupported Sora bundle version $version")
             }
 
             val headerLength = readI32At(bytes, 8)
             val directoryLength = readI32At(bytes, 12)
             val sectionCount = readI32At(bytes, 16)
-            if (headerLength < 24 || headerLength > bytes.size) {
+            val flags = readI32At(bytes, 20)
+            if (flags != 0) {
+                throw SoraReadException("unsupported Sora bundle flags $flags")
+            }
+            if (headerLength != SORA_HEADER_LENGTH || headerLength > bytes.size) {
                 throw SoraReadException("invalid Sora bundle header length")
             }
             val directoryEnd = checkedAdd(headerLength, directoryLength, "Sora section directory length overflow")
@@ -49,6 +64,9 @@ class SoraBundle private constructor(
 
             var cursor = headerLength
             val sections = ArrayList<SoraSection>(sectionCount)
+            var manifestCount = 0
+            var schemaCount = 0
+            val tableNames = HashSet<String>()
             repeat(sectionCount) {
                 if (cursor + 40 > directoryEnd) {
                     throw SoraReadException("truncated Sora section directory entry")
@@ -56,8 +74,13 @@ class SoraBundle private constructor(
                 val kind = readI32At(bytes, cursor)
                 val compression = readI32At(bytes, cursor + 4)
                 val nameLength = readI32At(bytes, cursor + 8)
+                val entryFlags = readI32At(bytes, cursor + 12)
                 val offset = checkedLongToInt(readI64At(bytes, cursor + 16), "Sora section offset exceeds Int.MAX_VALUE")
                 val length = checkedLongToInt(readI64At(bytes, cursor + 24), "Sora section length exceeds Int.MAX_VALUE")
+                val uncompressedLength = checkedLongToInt(readI64At(bytes, cursor + 32), "Sora section uncompressed length exceeds Int.MAX_VALUE")
+                if (entryFlags != 0) {
+                    throw SoraReadException("unsupported Sora section flags $entryFlags")
+                }
                 val nameStart = cursor + 40
                 val nameEnd = checkedAdd(nameStart, nameLength, "Sora section name length overflow")
                 if (nameEnd > directoryEnd) {
@@ -67,14 +90,48 @@ class SoraBundle private constructor(
                 if (payloadEnd > bytes.size) {
                     throw SoraReadException("Sora section payload exceeds bundle length")
                 }
+                val name = String(bytes.copyOfRange(nameStart, nameEnd), Charsets.UTF_8)
+                when (kind) {
+                    SECTION_KIND_MANIFEST -> {
+                        manifestCount += 1
+                        if (name != "$manifest") {
+                            throw SoraReadException("Sora manifest section must be named `\$manifest`")
+                        }
+                    }
+                    SECTION_KIND_SCHEMA -> {
+                        schemaCount += 1
+                        if (name != "$schema") {
+                            throw SoraReadException("Sora schema section must be named `\$schema`")
+                        }
+                    }
+                    SECTION_KIND_TABLE -> {
+                        if (!tableNames.add(name)) {
+                            throw SoraReadException("duplicate Sora table section `$name`")
+                        }
+                    }
+                    else -> throw SoraReadException("unknown Sora section kind $kind")
+                }
+                if (compression == COMPRESSION_NONE && uncompressedLength != length) {
+                    throw SoraReadException("uncompressed Sora section length mismatch")
+                }
                 sections += SoraSection(
                     kind = kind,
                     compression = compression,
-                    name = String(bytes.copyOfRange(nameStart, nameEnd), Charsets.UTF_8),
+                    name = name,
                     offset = offset,
                     length = length,
+                    uncompressedLength = uncompressedLength,
                 )
                 cursor = nameEnd
+            }
+            if (cursor != directoryEnd) {
+                throw SoraReadException("Sora section directory has trailing bytes")
+            }
+            if (manifestCount != 1) {
+                throw SoraReadException("expected exactly 1 Sora manifest section, got $manifestCount")
+            }
+            if (schemaCount != 1) {
+                throw SoraReadException("expected exactly 1 Sora schema section, got $schemaCount")
             }
 
             return SoraBundle(bytes, sections)

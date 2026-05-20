@@ -5,6 +5,7 @@ use sora_ir::model::{ConfigIr, FieldIr, StructIr, TableIr, TypeIr};
 const MAGIC: &[u8; 4] = b"SORA";
 const VERSION: u32 = 1;
 const HEADER_LEN: u32 = 24;
+const SECTION_KIND_MANIFEST: u32 = 0;
 const SECTION_KIND_SCHEMA: u32 = 1;
 const SECTION_KIND_TABLE: u32 = 2;
 const COMPRESSION_NONE: u32 = 0;
@@ -21,6 +22,12 @@ impl<'a> BinaryEncoder<'a> {
 
     pub(crate) fn encode(&self) -> Result<Vec<u8>> {
         let mut sections = Vec::new();
+        sections.push(Section {
+            kind: SECTION_KIND_MANIFEST,
+            compression: COMPRESSION_NONE,
+            name: "$manifest".to_owned(),
+            payload: serde_json::to_vec(&self.manifest()?).map_err(SoraError::SerializeData)?,
+        });
         sections.push(Section {
             kind: SECTION_KIND_SCHEMA,
             compression: COMPRESSION_NONE,
@@ -39,6 +46,25 @@ impl<'a> BinaryEncoder<'a> {
         }
 
         encode_bundle(sections)
+    }
+
+    fn manifest(&self) -> Result<BundleManifest> {
+        let schema_bytes = serde_json::to_vec(self.ir).map_err(SoraError::SerializeData)?;
+        let mut tables = Vec::new();
+        for table in &self.ir.tables {
+            let table_data = self.table_data(&table.name)?;
+            tables.push(ManifestTable {
+                name: table.name.clone(),
+                rows: table_data.rows.len(),
+            });
+        }
+
+        Ok(BundleManifest {
+            format_version: VERSION,
+            package: self.ir.package.clone(),
+            schema_fingerprint: fingerprint_hex(&schema_bytes),
+            tables,
+        })
     }
 
     fn table_data(&self, table_name: &str) -> Result<&'a TableData> {
@@ -214,6 +240,20 @@ impl<'a> BinaryEncoder<'a> {
     }
 }
 
+#[derive(serde::Serialize)]
+struct BundleManifest {
+    format_version: u32,
+    package: String,
+    schema_fingerprint: String,
+    tables: Vec<ManifestTable>,
+}
+
+#[derive(serde::Serialize)]
+struct ManifestTable {
+    name: String,
+    rows: usize,
+}
+
 struct Section {
     kind: u32,
     compression: u32,
@@ -304,6 +344,15 @@ fn write_string(out: &mut Vec<u8>, value: &str) -> Result<()> {
 
 fn checked_u32(value: usize, kind: &'static str) -> Result<u32> {
     u32::try_from(value).map_err(|_| binary_error(format!("{kind} exceeds u32::MAX")))
+}
+
+fn fingerprint_hex(bytes: &[u8]) -> String {
+    let mut hash = 0xcbf29ce484222325_u64;
+    for byte in bytes {
+        hash ^= u64::from(*byte);
+        hash = hash.wrapping_mul(0x100000001b3);
+    }
+    format!("{hash:016x}")
 }
 
 fn type_error(ty: &TypeIr, value: &Value) -> SoraError {

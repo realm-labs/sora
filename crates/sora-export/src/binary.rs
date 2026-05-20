@@ -71,17 +71,33 @@ mod tests {
         assert_eq!(u32::from_le_bytes(bytes[4..8].try_into().unwrap()), 1);
         assert_eq!(u32::from_le_bytes(bytes[8..12].try_into().unwrap()), 24);
         assert!(u32::from_le_bytes(bytes[12..16].try_into().unwrap()) > 0);
-        assert_eq!(u32::from_le_bytes(bytes[16..20].try_into().unwrap()), 2);
+        assert_eq!(u32::from_le_bytes(bytes[16..20].try_into().unwrap()), 3);
 
         let sections = read_sections(&bytes);
-        assert_eq!(sections[0].kind, 1);
+        assert_eq!(sections[0].kind, 0);
         assert_eq!(sections[0].compression, 0);
-        assert_eq!(sections[0].name, "$schema");
-        assert_eq!(sections[1].kind, 2);
-        assert_eq!(sections[1].compression, 0);
-        assert_eq!(sections[1].name, "Item");
+        assert_eq!(sections[0].name, "$manifest");
+        assert_eq!(sections[0].len, sections[0].uncompressed_len);
+        let manifest: serde_json::Value = serde_json::from_slice(
+            &bytes[sections[0].offset..sections[0].offset + sections[0].len],
+        )
+        .unwrap();
+        assert_eq!(manifest["format_version"], 1);
+        assert_eq!(manifest["package"], "game_config");
+        assert_eq!(manifest["tables"][0]["name"], "Item");
+        assert_eq!(manifest["tables"][0]["rows"], 1);
+        assert!(manifest["schema_fingerprint"].as_str().unwrap().len() > 8);
 
-        let table_payload = &bytes[sections[1].offset..sections[1].offset + sections[1].len];
+        assert_eq!(sections[1].kind, 1);
+        assert_eq!(sections[1].compression, 0);
+        assert_eq!(sections[1].name, "$schema");
+        assert_eq!(sections[1].len, sections[1].uncompressed_len);
+        assert_eq!(sections[2].kind, 2);
+        assert_eq!(sections[2].compression, 0);
+        assert_eq!(sections[2].name, "Item");
+        assert_eq!(sections[2].len, sections[2].uncompressed_len);
+
+        let table_payload = &bytes[sections[2].offset..sections[2].offset + sections[2].len];
         assert_eq!(read_u32(table_payload, 0), 1);
         assert_eq!(read_u64(table_payload, 4), 0);
         assert_eq!(read_u64(table_payload, 12), 4);
@@ -142,6 +158,7 @@ required = true
         name: String,
         offset: usize,
         len: usize,
+        uncompressed_len: usize,
     }
 
     fn read_sections(bytes: &[u8]) -> Vec<TestSection> {
@@ -156,6 +173,7 @@ required = true
             let name_len = read_u32(bytes, cursor + 8) as usize;
             let offset = read_u64(bytes, cursor + 16) as usize;
             let len = read_u64(bytes, cursor + 24) as usize;
+            let uncompressed_len = read_u64(bytes, cursor + 32) as usize;
             let name_start = cursor + 40;
             let name = std::str::from_utf8(&bytes[name_start..name_start + name_len])
                 .unwrap()
@@ -166,6 +184,7 @@ required = true
                 name,
                 offset,
                 len,
+                uncompressed_len,
             });
             cursor = name_start + name_len;
         }

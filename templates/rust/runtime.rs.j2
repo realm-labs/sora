@@ -1,3 +1,10 @@
+const SORA_BUNDLE_VERSION: u32 = 1;
+const SORA_HEADER_LEN: usize = 24;
+const SECTION_KIND_MANIFEST: u32 = 0;
+const SECTION_KIND_SCHEMA: u32 = 1;
+const SECTION_KIND_TABLE: u32 = 2;
+const COMPRESSION_NONE: u32 = 0;
+
 #[derive(Debug, Clone)]
 pub struct SoraReadError {
     message: String,
@@ -35,24 +42,29 @@ struct Section {
     name: String,
     offset: usize,
     len: usize,
+    uncompressed_len: usize,
 }
 
 impl<'a> SoraBundle<'a> {
     pub fn parse(bytes: &'a [u8]) -> Result<Self, SoraReadError> {
-        if bytes.len() < 24 {
+        if bytes.len() < SORA_HEADER_LEN {
             return Err(SoraReadError::new("Sora bundle is shorter than header"));
         }
         if &bytes[0..4] != b"SORA" {
             return Err(SoraReadError::new("invalid Sora bundle magic"));
         }
         let version = read_u32_at(bytes, 4)?;
-        if version != 1 {
+        if version != SORA_BUNDLE_VERSION {
             return Err(SoraReadError::new(format!("unsupported Sora bundle version {}", version)));
         }
         let header_len = read_u32_at(bytes, 8)? as usize;
         let directory_len = read_u32_at(bytes, 12)? as usize;
         let section_count = read_u32_at(bytes, 16)? as usize;
-        if header_len < 24 || header_len > bytes.len() {
+        let flags = read_u32_at(bytes, 20)?;
+        if flags != 0 {
+            return Err(SoraReadError::new(format!("unsupported Sora bundle flags {}", flags)));
+        }
+        if header_len != SORA_HEADER_LEN || header_len > bytes.len() {
             return Err(SoraReadError::new("invalid Sora bundle header length"));
         }
         let directory_end = header_len
@@ -64,6 +76,9 @@ impl<'a> SoraBundle<'a> {
 
         let mut cursor = header_len;
         let mut sections = Vec::with_capacity(section_count);
+        let mut manifest_count = 0usize;
+        let mut schema_count = 0usize;
+        let mut table_names = std::collections::HashSet::new();
         for _ in 0..section_count {
             if cursor + 40 > directory_end {
                 return Err(SoraReadError::new("truncated Sora section directory entry"));
@@ -71,8 +86,13 @@ impl<'a> SoraBundle<'a> {
             let kind = read_u32_at(bytes, cursor)?;
             let compression = read_u32_at(bytes, cursor + 4)?;
             let name_len = read_u32_at(bytes, cursor + 8)? as usize;
+            let entry_flags = read_u32_at(bytes, cursor + 12)?;
             let offset = read_u64_at(bytes, cursor + 16)? as usize;
             let len = read_u64_at(bytes, cursor + 24)? as usize;
+            let uncompressed_len = read_u64_at(bytes, cursor + 32)? as usize;
+            if entry_flags != 0 {
+                return Err(SoraReadError::new(format!("unsupported Sora section flags {}", entry_flags)));
+            }
             let name_start = cursor + 40;
             let name_end = name_start
                 .checked_add(name_len)
@@ -89,14 +109,49 @@ impl<'a> SoraBundle<'a> {
             let name = std::str::from_utf8(&bytes[name_start..name_end])
                 .map_err(|error| SoraReadError::new(format!("invalid Sora section name: {}", error)))?
                 .to_owned();
+            match kind {
+                SECTION_KIND_MANIFEST => {
+                    manifest_count += 1;
+                    if name != "$manifest" {
+                        return Err(SoraReadError::new("Sora manifest section must be named `$manifest`"));
+                    }
+                }
+                SECTION_KIND_SCHEMA => {
+                    schema_count += 1;
+                    if name != "$schema" {
+                        return Err(SoraReadError::new("Sora schema section must be named `$schema`"));
+                    }
+                }
+                SECTION_KIND_TABLE => {
+                    if !table_names.insert(name.clone()) {
+                        return Err(SoraReadError::new(format!("duplicate Sora table section `{}`", name)));
+                    }
+                }
+                _ => {
+                    return Err(SoraReadError::new(format!("unknown Sora section kind {}", kind)));
+                }
+            }
+            if compression == COMPRESSION_NONE && uncompressed_len != len {
+                return Err(SoraReadError::new("uncompressed Sora section length mismatch"));
+            }
             sections.push(Section {
                 kind,
                 compression,
                 name,
                 offset,
                 len,
+                uncompressed_len,
             });
             cursor = name_end;
+        }
+        if cursor != directory_end {
+            return Err(SoraReadError::new("Sora section directory has trailing bytes"));
+        }
+        if manifest_count != 1 {
+            return Err(SoraReadError::new(format!("expected exactly 1 Sora manifest section, got {}", manifest_count)));
+        }
+        if schema_count != 1 {
+            return Err(SoraReadError::new(format!("expected exactly 1 Sora schema section, got {}", schema_count)));
         }
 
         Ok(Self { bytes, sections })
@@ -106,13 +161,16 @@ impl<'a> SoraBundle<'a> {
         let section = self
             .sections
             .iter()
-            .find(|section| section.kind == 2 && section.name == name)
+            .find(|section| section.kind == SECTION_KIND_TABLE && section.name == name)
             .ok_or_else(|| SoraReadError::new(format!("missing Sora table section `{}`", name)))?;
-        if section.compression != 0 {
+        if section.compression != COMPRESSION_NONE {
             return Err(SoraReadError::new(format!(
                 "unsupported compression {} for table `{}`",
                 section.compression, name
             )));
+        }
+        if section.uncompressed_len != section.len {
+            return Err(SoraReadError::new(format!("table `{}` has invalid uncompressed length", name)));
         }
         let payload = &self.bytes[section.offset..section.offset + section.len];
         decode_rows(payload)
