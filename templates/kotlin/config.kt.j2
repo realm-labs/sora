@@ -5,6 +5,18 @@ data class SoraConfig(
     val {{ table.snake_name }}: {{ table.kotlin_container_type }},
 {%- endfor %}
 ) {
+{%- for table in model.tables %}
+{%- if table.mode == "map" and table.key_kotlin_name %}
+    fun get{{ table.pascal_name }}(key: {{ table.key_kotlin_type }}): {{ table.kotlin_row_type }}? = {{ table.snake_name }}[key]
+
+    fun {{ table.camel_name }}Values(): Collection<{{ table.kotlin_row_type }}> = {{ table.snake_name }}.values
+{%- elif table.mode == "list" %}
+    fun {{ table.camel_name }}Rows(): List<{{ table.kotlin_row_type }}> = {{ table.snake_name }}
+{%- elif table.mode == "singleton" %}
+    fun {{ table.camel_name }}Row(): {{ table.kotlin_row_type }} = {{ table.snake_name }}
+{%- endif %}
+{%- endfor %}
+
     companion object {
         fun fromBytes(bytes: ByteArray): SoraConfig {
             val bundle = SoraBundle.parse(bytes)

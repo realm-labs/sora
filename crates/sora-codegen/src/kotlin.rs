@@ -91,6 +91,8 @@ mod tests {
         assert!(rust_mod.contains("from_bytes"));
         assert!(rust_mod.contains("pub item: std::collections::HashMap<i32, item::Item>"));
         assert!(rust_mod.contains("|row| row.id"));
+        assert!(rust_mod.contains("pub fn get_item(&self, key: i32) -> Option<&item::Item>"));
+        assert!(rust_mod.contains("pub fn iter_item(&self) -> impl Iterator<Item = &item::Item>"));
         assert!(!rust_mod.contains("decode_singleton_table"));
         assert!(kotlin_item.contains("data class Item"));
         assert!(kotlin_item.contains("val itemType: ItemType"));
@@ -98,6 +100,8 @@ mod tests {
         assert!(kotlin_runtime.contains("class SoraBundle"));
         assert!(kotlin_config.contains("data class SoraConfig"));
         assert!(kotlin_config.contains("val item: Map<Int, Item>"));
+        assert!(kotlin_config.contains("fun getItem(key: Int): Item? = item[key]"));
+        assert!(kotlin_config.contains("fun itemValues(): Collection<Item> = item.values"));
         assert!(kotlin_config.contains("fun fromBytes(bytes: ByteArray): SoraConfig"));
 
         let _ = std::fs::remove_dir_all(base);
@@ -114,6 +118,7 @@ mod tests {
         let rust_mod = std::fs::read_to_string(rust_out.join("mod.rs")).unwrap();
         assert!(rust_mod.contains("pub item: std::collections::HashMap<i32, item::Item>"));
         assert!(rust_mod.contains("pub settings: settings::Settings"));
+        assert!(rust_mod.contains("pub fn settings_row(&self) -> &settings::Settings"));
         assert!(rust_mod.contains("decode_singleton_table"));
 
         let _ = std::fs::remove_dir_all(base);

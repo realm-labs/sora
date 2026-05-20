@@ -29,6 +29,38 @@ impl SoraConfig {
 {%- endfor %}
         })
     }
+{%- for table in model.tables %}
+{%- if table.mode == "map" and table.key_rust_name %}
+
+{%- if table.key_is_copy %}
+    pub fn get_{{ table.snake_name }}(&self, key: {{ table.key_rust_type }}) -> Option<&{{ table.rust_row_type }}> {
+        self.{{ table.snake_name }}.get(&key)
+    }
+{%- else %}
+    pub fn get_{{ table.snake_name }}(&self, key: &{{ table.key_rust_type }}) -> Option<&{{ table.rust_row_type }}> {
+        self.{{ table.snake_name }}.get(key)
+    }
+{%- endif %}
+
+    pub fn iter_{{ table.snake_name }}(&self) -> impl Iterator<Item = &{{ table.rust_row_type }}> {
+        self.{{ table.snake_name }}.values()
+    }
+{%- elif table.mode == "list" %}
+
+    pub fn {{ table.snake_name }}_rows(&self) -> &[{{ table.rust_row_type }}] {
+        &self.{{ table.snake_name }}
+    }
+
+    pub fn iter_{{ table.snake_name }}(&self) -> impl Iterator<Item = &{{ table.rust_row_type }}> {
+        self.{{ table.snake_name }}.iter()
+    }
+{%- elif table.mode == "singleton" %}
+
+    pub fn {{ table.snake_name }}_row(&self) -> &{{ table.rust_row_type }} {
+        &self.{{ table.snake_name }}
+    }
+{%- endif %}
+{%- endfor %}
 }
 
 {%- if model.has_map_tables %}

@@ -42,6 +42,7 @@ pub struct CodegenImport {
 pub struct CodegenTable {
     pub name: String,
     pub pascal_name: String,
+    pub camel_name: String,
     pub snake_name: String,
     pub mode: String,
     pub rust_container_type: String,
@@ -52,6 +53,7 @@ pub struct CodegenTable {
     pub kotlin_container_type: String,
     pub kotlin_row_type: String,
     pub key_kotlin_name: Option<String>,
+    pub key_kotlin_type: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -117,6 +119,7 @@ pub fn build_model(ir: &ConfigIr) -> Result<CodegenModel> {
 
 fn build_table(ir: &ConfigIr, table: &TableIr) -> Result<CodegenTable> {
     let pascal_name = table.name.to_pascal_case();
+    let camel_name = table.name.to_lower_camel_case();
     let snake_name = table.name.to_snake_case();
     let rust_row_type = format!("{snake_name}::{pascal_name}");
     let kotlin_row_type = pascal_name.clone();
@@ -157,6 +160,7 @@ fn build_table(ir: &ConfigIr, table: &TableIr) -> Result<CodegenTable> {
     Ok(CodegenTable {
         name: table.name.clone(),
         pascal_name,
+        camel_name,
         snake_name,
         mode: match table.mode {
             TableModeIr::List => "list",
@@ -174,6 +178,7 @@ fn build_table(ir: &ConfigIr, table: &TableIr) -> Result<CodegenTable> {
         kotlin_container_type,
         kotlin_row_type,
         key_kotlin_name: key_field.as_ref().map(|(_, name, _, _, _)| name.clone()),
+        key_kotlin_type: key_field.as_ref().map(|(_, _, _, ty, _)| ty.clone()),
     })
 }
 
