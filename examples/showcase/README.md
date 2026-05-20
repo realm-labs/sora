@@ -14,7 +14,7 @@ and mixed map/list/singleton table modes.
 - C# .NET project: `csharp`
 - Java Gradle project: `java`
 - Go module: `go`
-- Lua generated modules with EmmyLua annotations: `lua/generated`
+- Lua generated modules with EmmyLua annotations: `lua/generated` (configured for Lua 5.4)
 - binary bundle: `generated/config.sora`
 - debug JSON: `generated/debug-json`
 - schema lock: `generated/schema.lock`

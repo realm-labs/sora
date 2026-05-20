@@ -3,7 +3,7 @@ use std::path::Path;
 use heck::{ToLowerCamelCase, ToSnakeCase};
 use minijinja::context;
 use serde::Serialize;
-use sora_diagnostics::{Result, SoraError};
+use sora_diagnostics::Result;
 use sora_ir::model::{ConfigIr, LuaVersionIr, TableModeIr, TypeIr};
 
 use crate::{
@@ -71,6 +71,7 @@ impl CodeGenerator for LuaCodeGenerator {
 struct LuaOptionsView {
     require_prefix: String,
     lua_version: &'static str,
+    uses_string_unpack: bool,
 }
 
 impl LuaOptionsView {
@@ -82,6 +83,7 @@ impl LuaOptionsView {
         Self {
             require_prefix,
             lua_version: lua_version_name(lua_version),
+            uses_string_unpack: uses_string_unpack(lua_version),
         }
     }
 }
@@ -156,14 +158,16 @@ fn lua_decode_expr(ir: &ConfigIr, ty: &TypeIr) -> String {
 
 fn ensure_supported_lua_version(version: LuaVersionIr) -> Result<()> {
     match version {
-        LuaVersionIr::Lua53 | LuaVersionIr::Lua54 => Ok(()),
-        LuaVersionIr::Lua51 | LuaVersionIr::Lua52 | LuaVersionIr::LuaJit => {
-            Err(SoraError::InvalidSchema(format!(
-                "lua codegen lua_version `{}` is not implemented yet; supported lua_version: 5.3, 5.4",
-                lua_version_name(version)
-            )))
-        }
+        LuaVersionIr::Lua51
+        | LuaVersionIr::Lua52
+        | LuaVersionIr::Lua53
+        | LuaVersionIr::Lua54
+        | LuaVersionIr::LuaJit => Ok(()),
     }
+}
+
+fn uses_string_unpack(version: LuaVersionIr) -> bool {
+    matches!(version, LuaVersionIr::Lua53 | LuaVersionIr::Lua54)
 }
 
 fn lua_version_name(version: LuaVersionIr) -> &'static str {
@@ -228,18 +232,18 @@ mod tests {
     }
 
     #[test]
-    fn rejects_unimplemented_lua_versions() {
+    fn lua_compat_runtime_avoids_string_unpack() {
         let mut ir = example_ir();
         ir.codegen.lua.lua_version = LuaVersionIr::LuaJit;
         let base = temp_dir();
 
-        let error = LuaCodeGenerator.generate(&ir, &base).unwrap_err();
+        LuaCodeGenerator.generate(&ir, &base).unwrap();
 
-        assert!(
-            error
-                .to_string()
-                .contains("lua codegen lua_version `luajit` is not implemented yet")
-        );
+        let runtime = std::fs::read_to_string(base.join("sora_runtime.lua")).unwrap();
+        assert!(!runtime.contains("string.unpack"));
+        assert!(runtime.contains("function read_f32_at(bytes, offset)"));
+        assert!(runtime.contains("function read_i64_at(bytes, offset)"));
+        assert!(runtime.contains("safe integer range"));
 
         let _ = std::fs::remove_dir_all(base);
     }

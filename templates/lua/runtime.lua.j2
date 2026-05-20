@@ -6,6 +6,14 @@ local SECTION_KIND_MANIFEST = 0
 local SECTION_KIND_SCHEMA = 1
 local SECTION_KIND_TABLE = 2
 local COMPRESSION_NONE = 0
+{%- if not options.uses_string_unpack %}
+local MAX_SAFE_INTEGER = 9007199254740991
+local TWO_23 = 8388608
+local TWO_31 = 2147483648
+local TWO_32 = 4294967296
+local TWO_52 = 4503599627370496
+local ldexp = math.ldexp or function(value, exponent) return value * 2 ^ exponent end
+{%- endif %}
 
 ---@class SoraSection
 ---@field kind integer
@@ -191,37 +199,67 @@ end
 
 ---@return integer
 function SoraReader:read_u32()
+{%- if options.uses_string_unpack %}
     local value, next_cursor = string.unpack("<I4", self.bytes, self.cursor)
     self.cursor = next_cursor
     return value
+{%- else %}
+    local value = read_u32_at(self.bytes, self.cursor - 1)
+    self.cursor = self.cursor + 4
+    return value
+{%- endif %}
 end
 
 ---@return integer
 function SoraReader:read_i32()
+{%- if options.uses_string_unpack %}
     local value, next_cursor = string.unpack("<i4", self.bytes, self.cursor)
     self.cursor = next_cursor
     return value
+{%- else %}
+    local value = read_i32_at(self.bytes, self.cursor - 1)
+    self.cursor = self.cursor + 4
+    return value
+{%- endif %}
 end
 
 ---@return integer
 function SoraReader:read_i64()
+{%- if options.uses_string_unpack %}
     local value, next_cursor = string.unpack("<i8", self.bytes, self.cursor)
     self.cursor = next_cursor
     return value
+{%- else %}
+    local value = read_i64_at(self.bytes, self.cursor - 1)
+    self.cursor = self.cursor + 8
+    return value
+{%- endif %}
 end
 
 ---@return number
 function SoraReader:read_f32()
+{%- if options.uses_string_unpack %}
     local value, next_cursor = string.unpack("<f", self.bytes, self.cursor)
     self.cursor = next_cursor
     return value
+{%- else %}
+    local value = read_f32_at(self.bytes, self.cursor - 1)
+    self.cursor = self.cursor + 4
+    return value
+{%- endif %}
 end
 
 ---@return number
 function SoraReader:read_f64()
+{%- if options.uses_string_unpack %}
     local value, next_cursor = string.unpack("<d", self.bytes, self.cursor)
     self.cursor = next_cursor
     return value
+{%- else %}
+    local value = read_f64_at(self.bytes, self.cursor - 1)
+    self.cursor = self.cursor + 8
+    return value
+{%- endif %}
 end
 
 ---@return string
@@ -361,7 +399,12 @@ function read_u32_at(bytes, offset)
     if offset + 4 > #bytes then
         error("unexpected end while reading u32")
     end
+{%- if options.uses_string_unpack %}
     return string.unpack("<I4", bytes, offset + 1)
+{%- else %}
+    local b1, b2, b3, b4 = string.byte(bytes, offset + 1, offset + 4)
+    return b1 + b2 * 256 + b3 * 65536 + b4 * 16777216
+{%- endif %}
 end
 
 ---@param bytes string
@@ -371,8 +414,120 @@ function read_u64_at(bytes, offset)
     if offset + 8 > #bytes then
         error("unexpected end while reading u64")
     end
+{%- if options.uses_string_unpack %}
     return string.unpack("<I8", bytes, offset + 1)
+{%- else %}
+    local b1, b2, b3, b4, b5, b6, b7, b8 = string.byte(bytes, offset + 1, offset + 8)
+    local low = b1 + b2 * 256 + b3 * 65536 + b4 * 16777216
+    local high = b5 + b6 * 256 + b7 * 65536 + b8 * 16777216
+    return checked_safe_integer(high * TWO_32 + low, "u64")
+{%- endif %}
 end
+
+{%- if not options.uses_string_unpack %}
+---@param bytes string
+---@param offset integer
+---@return integer
+function read_i32_at(bytes, offset)
+    local value = read_u32_at(bytes, offset)
+    if value >= TWO_31 then
+        return value - TWO_32
+    end
+    return value
+end
+
+---@param bytes string
+---@param offset integer
+---@return integer
+function read_i64_at(bytes, offset)
+    if offset + 8 > #bytes then
+        error("unexpected end while reading i64")
+    end
+    local b1, b2, b3, b4, b5, b6, b7, b8 = string.byte(bytes, offset + 1, offset + 8)
+    local low = b1 + b2 * 256 + b3 * 65536 + b4 * 16777216
+    local high = b5 + b6 * 256 + b7 * 65536 + b8 * 16777216
+    if high >= TWO_31 then
+        return checked_safe_integer((high - TWO_32) * TWO_32 + low, "i64")
+    end
+    return checked_safe_integer(high * TWO_32 + low, "i64")
+end
+
+---@param bytes string
+---@param offset integer
+---@return number
+function read_f32_at(bytes, offset)
+    if offset + 4 > #bytes then
+        error("unexpected end while reading f32")
+    end
+    local b1, b2, b3, b4 = string.byte(bytes, offset + 1, offset + 4)
+    local sign = 1
+    if b4 >= 128 then
+        sign = -1
+        b4 = b4 - 128
+    end
+    local exponent = b4 * 2 + math.floor(b3 / 128)
+    local fraction = (b3 % 128) * 65536 + b2 * 256 + b1
+    if exponent == 255 then
+        if fraction == 0 then
+            return sign * math.huge
+        end
+        return 0 / 0
+    end
+    if exponent == 0 then
+        if fraction == 0 then
+            return sign * 0
+        end
+        return sign * ldexp(fraction, -149)
+    end
+    return sign * ldexp(TWO_23 + fraction, exponent - 150)
+end
+
+---@param bytes string
+---@param offset integer
+---@return number
+function read_f64_at(bytes, offset)
+    if offset + 8 > #bytes then
+        error("unexpected end while reading f64")
+    end
+    local b1, b2, b3, b4, b5, b6, b7, b8 = string.byte(bytes, offset + 1, offset + 8)
+    local sign = 1
+    if b8 >= 128 then
+        sign = -1
+        b8 = b8 - 128
+    end
+    local exponent = b8 * 16 + math.floor(b7 / 16)
+    local fraction = (b7 % 16) * 281474976710656
+        + b6 * 1099511627776
+        + b5 * 4294967296
+        + b4 * 16777216
+        + b3 * 65536
+        + b2 * 256
+        + b1
+    if exponent == 2047 then
+        if fraction == 0 then
+            return sign * math.huge
+        end
+        return 0 / 0
+    end
+    if exponent == 0 then
+        if fraction == 0 then
+            return sign * 0
+        end
+        return sign * ldexp(fraction, -1074)
+    end
+    return sign * ldexp(TWO_52 + fraction, exponent - 1075)
+end
+
+---@param value number
+---@param type_name string
+---@return integer
+function checked_safe_integer(value, type_name)
+    if value < -MAX_SAFE_INTEGER or value > MAX_SAFE_INTEGER then
+        error(type_name .. " value " .. tostring(value) .. " exceeds Lua number safe integer range")
+    end
+    return value
+end
+{%- endif %}
 
 Runtime.SoraBundle = SoraBundle
 Runtime.SoraReader = SoraReader
