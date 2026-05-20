@@ -1,0 +1,25 @@
+from __future__ import annotations
+
+from dataclasses import dataclass
+from typing import TYPE_CHECKING
+
+from .sora_runtime import SoraReader
+
+
+if TYPE_CHECKING:
+    pass
+
+
+@dataclass(frozen=True, slots=True)
+class Reward:
+    item_id: int
+    count: int
+
+    @staticmethod
+    def decode(reader: SoraReader) -> Reward:
+        item_id = reader.read_i32()
+        count = reader.read_i32()
+        return Reward(
+            item_id=item_id,
+            count=count,
+        )

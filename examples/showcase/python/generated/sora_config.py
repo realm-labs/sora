@@ -1,0 +1,1363 @@
+from __future__ import annotations
+
+from .sora_runtime import (
+    SoraBundle,
+    decode_index,
+    decode_map_table,
+    decode_unique_index,
+    require_singleton_table,
+)
+from .item import Item
+from .skill import Skill
+from .quest import Quest
+from .quest_reward import QuestReward
+from .game_settings import GameSettings
+from .localization import Localization
+from .level_exp import LevelExp
+from .character import Character
+from .character_skill import CharacterSkill
+from .buff import Buff
+from .drop_group import DropGroup
+from .drop_entry import DropEntry
+from .monster import Monster
+from .stage import Stage
+from .stage_reward import StageReward
+from .dungeon import Dungeon
+from .shop import Shop
+from .shop_item import ShopItem
+from .recipe import Recipe
+from .gacha_pool import GachaPool
+from .gacha_item import GachaItem
+from .equipment_set import EquipmentSet
+from .achievement import Achievement
+from .vip_level import VipLevel
+from .mail_template import MailTemplate
+from .mail_reward import MailReward
+from .dialogue import Dialogue
+from .event_rule import EventRule
+from .item_type import ItemType
+from .resource_kind import ResourceKind
+from .element_type import ElementType
+from .quest_type import QuestType
+from .rarity import Rarity
+from .stat_type import StatType
+from .mail_type import MailType
+
+
+class SoraConfigTable:
+    def name(self) -> str:
+        raise NotImplementedError()
+
+    def mode(self) -> str:
+        raise NotImplementedError()
+
+    def key(self) -> str | None:
+        raise NotImplementedError()
+
+    def len(self) -> int:
+        raise NotImplementedError()
+
+    def __len__(self) -> int:
+        return self.len()
+
+
+class ItemTable(SoraConfigTable):
+    def __init__(
+        self,
+        rows: dict[int, Item],
+        by_name: dict[str, Item],
+        by_item_type: dict[ItemType, list[Item]],
+    ) -> None:
+        self._rows = rows
+        self._by_name = by_name
+        self._by_item_type = by_item_type
+
+    @staticmethod
+    def decode(rows: list[Item]) -> ItemTable:
+        return ItemTable(
+            decode_map_table(rows, lambda row: row.id),
+            decode_unique_index(rows, lambda row: row.name),
+            decode_index(rows, lambda row: row.item_type),
+        )
+
+    def name(self) -> str:
+        return "Item"
+
+    def mode(self) -> str:
+        return "map"
+
+    def key(self) -> str | None:
+        return "id"
+
+    def len(self) -> int:
+        return len(self._rows)
+
+
+    def get(self, key: int) -> Item | None:
+        return self._rows.get(key)
+
+    def rows(self) -> dict[int, Item]:
+        return self._rows
+
+
+    def get_by_name(
+        self,
+        name: str,
+    ) -> Item | None:
+        return self._by_name.get(name)
+
+
+
+    def find_by_item_type(
+        self,
+        item_type: ItemType,
+    ) -> list[Item]:
+        return self._by_item_type.get(item_type, [])
+
+
+
+
+class SkillTable(SoraConfigTable):
+    def __init__(
+        self,
+        rows: dict[int, Skill],
+    ) -> None:
+        self._rows = rows
+
+    @staticmethod
+    def decode(rows: list[Skill]) -> SkillTable:
+        return SkillTable(
+            decode_map_table(rows, lambda row: row.id),
+        )
+
+    def name(self) -> str:
+        return "Skill"
+
+    def mode(self) -> str:
+        return "map"
+
+    def key(self) -> str | None:
+        return "id"
+
+    def len(self) -> int:
+        return len(self._rows)
+
+
+    def get(self, key: int) -> Skill | None:
+        return self._rows.get(key)
+
+    def rows(self) -> dict[int, Skill]:
+        return self._rows
+
+
+
+
+
+class QuestTable(SoraConfigTable):
+    def __init__(
+        self,
+        rows: dict[int, Quest],
+    ) -> None:
+        self._rows = rows
+
+    @staticmethod
+    def decode(rows: list[Quest]) -> QuestTable:
+        return QuestTable(
+            decode_map_table(rows, lambda row: row.id),
+        )
+
+    def name(self) -> str:
+        return "Quest"
+
+    def mode(self) -> str:
+        return "map"
+
+    def key(self) -> str | None:
+        return "id"
+
+    def len(self) -> int:
+        return len(self._rows)
+
+
+    def get(self, key: int) -> Quest | None:
+        return self._rows.get(key)
+
+    def rows(self) -> dict[int, Quest]:
+        return self._rows
+
+
+
+
+
+class QuestRewardTable(SoraConfigTable):
+    def __init__(
+        self,
+        rows: list[QuestReward],
+    ) -> None:
+        self._rows = rows
+
+    @staticmethod
+    def decode(rows: list[QuestReward]) -> QuestRewardTable:
+        return QuestRewardTable(
+            rows,
+        )
+
+    def name(self) -> str:
+        return "QuestReward"
+
+    def mode(self) -> str:
+        return "list"
+
+    def key(self) -> str | None:
+        return None
+
+    def len(self) -> int:
+        return len(self._rows)
+
+
+    def rows(self) -> list[QuestReward]:
+        return self._rows
+
+
+
+
+
+class GameSettingsTable(SoraConfigTable):
+    def __init__(
+        self,
+        row: GameSettings,
+    ) -> None:
+        self._row = row
+
+    @staticmethod
+    def decode(rows: list[GameSettings]) -> GameSettingsTable:
+        return GameSettingsTable(
+            require_singleton_table(rows, "GameSettings"),
+        )
+
+    def name(self) -> str:
+        return "GameSettings"
+
+    def mode(self) -> str:
+        return "singleton"
+
+    def key(self) -> str | None:
+        return None
+
+    def len(self) -> int:
+        return 1
+
+
+    def row(self) -> GameSettings:
+        return self._row
+
+
+
+
+
+class LocalizationTable(SoraConfigTable):
+    def __init__(
+        self,
+        rows: dict[str, Localization],
+    ) -> None:
+        self._rows = rows
+
+    @staticmethod
+    def decode(rows: list[Localization]) -> LocalizationTable:
+        return LocalizationTable(
+            decode_map_table(rows, lambda row: row.key),
+        )
+
+    def name(self) -> str:
+        return "Localization"
+
+    def mode(self) -> str:
+        return "map"
+
+    def key(self) -> str | None:
+        return "key"
+
+    def len(self) -> int:
+        return len(self._rows)
+
+
+    def get(self, key: str) -> Localization | None:
+        return self._rows.get(key)
+
+    def rows(self) -> dict[str, Localization]:
+        return self._rows
+
+
+
+
+
+class LevelExpTable(SoraConfigTable):
+    def __init__(
+        self,
+        rows: dict[int, LevelExp],
+    ) -> None:
+        self._rows = rows
+
+    @staticmethod
+    def decode(rows: list[LevelExp]) -> LevelExpTable:
+        return LevelExpTable(
+            decode_map_table(rows, lambda row: row.level),
+        )
+
+    def name(self) -> str:
+        return "LevelExp"
+
+    def mode(self) -> str:
+        return "map"
+
+    def key(self) -> str | None:
+        return "level"
+
+    def len(self) -> int:
+        return len(self._rows)
+
+
+    def get(self, key: int) -> LevelExp | None:
+        return self._rows.get(key)
+
+    def rows(self) -> dict[int, LevelExp]:
+        return self._rows
+
+
+
+
+
+class CharacterTable(SoraConfigTable):
+    def __init__(
+        self,
+        rows: dict[int, Character],
+    ) -> None:
+        self._rows = rows
+
+    @staticmethod
+    def decode(rows: list[Character]) -> CharacterTable:
+        return CharacterTable(
+            decode_map_table(rows, lambda row: row.id),
+        )
+
+    def name(self) -> str:
+        return "Character"
+
+    def mode(self) -> str:
+        return "map"
+
+    def key(self) -> str | None:
+        return "id"
+
+    def len(self) -> int:
+        return len(self._rows)
+
+
+    def get(self, key: int) -> Character | None:
+        return self._rows.get(key)
+
+    def rows(self) -> dict[int, Character]:
+        return self._rows
+
+
+
+
+
+class CharacterSkillTable(SoraConfigTable):
+    def __init__(
+        self,
+        rows: list[CharacterSkill],
+    ) -> None:
+        self._rows = rows
+
+    @staticmethod
+    def decode(rows: list[CharacterSkill]) -> CharacterSkillTable:
+        return CharacterSkillTable(
+            rows,
+        )
+
+    def name(self) -> str:
+        return "CharacterSkill"
+
+    def mode(self) -> str:
+        return "list"
+
+    def key(self) -> str | None:
+        return None
+
+    def len(self) -> int:
+        return len(self._rows)
+
+
+    def rows(self) -> list[CharacterSkill]:
+        return self._rows
+
+
+
+
+
+class BuffTable(SoraConfigTable):
+    def __init__(
+        self,
+        rows: dict[int, Buff],
+    ) -> None:
+        self._rows = rows
+
+    @staticmethod
+    def decode(rows: list[Buff]) -> BuffTable:
+        return BuffTable(
+            decode_map_table(rows, lambda row: row.id),
+        )
+
+    def name(self) -> str:
+        return "Buff"
+
+    def mode(self) -> str:
+        return "map"
+
+    def key(self) -> str | None:
+        return "id"
+
+    def len(self) -> int:
+        return len(self._rows)
+
+
+    def get(self, key: int) -> Buff | None:
+        return self._rows.get(key)
+
+    def rows(self) -> dict[int, Buff]:
+        return self._rows
+
+
+
+
+
+class DropGroupTable(SoraConfigTable):
+    def __init__(
+        self,
+        rows: dict[int, DropGroup],
+    ) -> None:
+        self._rows = rows
+
+    @staticmethod
+    def decode(rows: list[DropGroup]) -> DropGroupTable:
+        return DropGroupTable(
+            decode_map_table(rows, lambda row: row.id),
+        )
+
+    def name(self) -> str:
+        return "DropGroup"
+
+    def mode(self) -> str:
+        return "map"
+
+    def key(self) -> str | None:
+        return "id"
+
+    def len(self) -> int:
+        return len(self._rows)
+
+
+    def get(self, key: int) -> DropGroup | None:
+        return self._rows.get(key)
+
+    def rows(self) -> dict[int, DropGroup]:
+        return self._rows
+
+
+
+
+
+class DropEntryTable(SoraConfigTable):
+    def __init__(
+        self,
+        rows: list[DropEntry],
+    ) -> None:
+        self._rows = rows
+
+    @staticmethod
+    def decode(rows: list[DropEntry]) -> DropEntryTable:
+        return DropEntryTable(
+            rows,
+        )
+
+    def name(self) -> str:
+        return "DropEntry"
+
+    def mode(self) -> str:
+        return "list"
+
+    def key(self) -> str | None:
+        return None
+
+    def len(self) -> int:
+        return len(self._rows)
+
+
+    def rows(self) -> list[DropEntry]:
+        return self._rows
+
+
+
+
+
+class MonsterTable(SoraConfigTable):
+    def __init__(
+        self,
+        rows: dict[int, Monster],
+    ) -> None:
+        self._rows = rows
+
+    @staticmethod
+    def decode(rows: list[Monster]) -> MonsterTable:
+        return MonsterTable(
+            decode_map_table(rows, lambda row: row.id),
+        )
+
+    def name(self) -> str:
+        return "Monster"
+
+    def mode(self) -> str:
+        return "map"
+
+    def key(self) -> str | None:
+        return "id"
+
+    def len(self) -> int:
+        return len(self._rows)
+
+
+    def get(self, key: int) -> Monster | None:
+        return self._rows.get(key)
+
+    def rows(self) -> dict[int, Monster]:
+        return self._rows
+
+
+
+
+
+class StageTable(SoraConfigTable):
+    def __init__(
+        self,
+        rows: dict[int, Stage],
+    ) -> None:
+        self._rows = rows
+
+    @staticmethod
+    def decode(rows: list[Stage]) -> StageTable:
+        return StageTable(
+            decode_map_table(rows, lambda row: row.id),
+        )
+
+    def name(self) -> str:
+        return "Stage"
+
+    def mode(self) -> str:
+        return "map"
+
+    def key(self) -> str | None:
+        return "id"
+
+    def len(self) -> int:
+        return len(self._rows)
+
+
+    def get(self, key: int) -> Stage | None:
+        return self._rows.get(key)
+
+    def rows(self) -> dict[int, Stage]:
+        return self._rows
+
+
+
+
+
+class StageRewardTable(SoraConfigTable):
+    def __init__(
+        self,
+        rows: list[StageReward],
+    ) -> None:
+        self._rows = rows
+
+    @staticmethod
+    def decode(rows: list[StageReward]) -> StageRewardTable:
+        return StageRewardTable(
+            rows,
+        )
+
+    def name(self) -> str:
+        return "StageReward"
+
+    def mode(self) -> str:
+        return "list"
+
+    def key(self) -> str | None:
+        return None
+
+    def len(self) -> int:
+        return len(self._rows)
+
+
+    def rows(self) -> list[StageReward]:
+        return self._rows
+
+
+
+
+
+class DungeonTable(SoraConfigTable):
+    def __init__(
+        self,
+        rows: dict[int, Dungeon],
+    ) -> None:
+        self._rows = rows
+
+    @staticmethod
+    def decode(rows: list[Dungeon]) -> DungeonTable:
+        return DungeonTable(
+            decode_map_table(rows, lambda row: row.id),
+        )
+
+    def name(self) -> str:
+        return "Dungeon"
+
+    def mode(self) -> str:
+        return "map"
+
+    def key(self) -> str | None:
+        return "id"
+
+    def len(self) -> int:
+        return len(self._rows)
+
+
+    def get(self, key: int) -> Dungeon | None:
+        return self._rows.get(key)
+
+    def rows(self) -> dict[int, Dungeon]:
+        return self._rows
+
+
+
+
+
+class ShopTable(SoraConfigTable):
+    def __init__(
+        self,
+        rows: dict[int, Shop],
+    ) -> None:
+        self._rows = rows
+
+    @staticmethod
+    def decode(rows: list[Shop]) -> ShopTable:
+        return ShopTable(
+            decode_map_table(rows, lambda row: row.id),
+        )
+
+    def name(self) -> str:
+        return "Shop"
+
+    def mode(self) -> str:
+        return "map"
+
+    def key(self) -> str | None:
+        return "id"
+
+    def len(self) -> int:
+        return len(self._rows)
+
+
+    def get(self, key: int) -> Shop | None:
+        return self._rows.get(key)
+
+    def rows(self) -> dict[int, Shop]:
+        return self._rows
+
+
+
+
+
+class ShopItemTable(SoraConfigTable):
+    def __init__(
+        self,
+        rows: list[ShopItem],
+    ) -> None:
+        self._rows = rows
+
+    @staticmethod
+    def decode(rows: list[ShopItem]) -> ShopItemTable:
+        return ShopItemTable(
+            rows,
+        )
+
+    def name(self) -> str:
+        return "ShopItem"
+
+    def mode(self) -> str:
+        return "list"
+
+    def key(self) -> str | None:
+        return None
+
+    def len(self) -> int:
+        return len(self._rows)
+
+
+    def rows(self) -> list[ShopItem]:
+        return self._rows
+
+
+
+
+
+class RecipeTable(SoraConfigTable):
+    def __init__(
+        self,
+        rows: dict[int, Recipe],
+    ) -> None:
+        self._rows = rows
+
+    @staticmethod
+    def decode(rows: list[Recipe]) -> RecipeTable:
+        return RecipeTable(
+            decode_map_table(rows, lambda row: row.id),
+        )
+
+    def name(self) -> str:
+        return "Recipe"
+
+    def mode(self) -> str:
+        return "map"
+
+    def key(self) -> str | None:
+        return "id"
+
+    def len(self) -> int:
+        return len(self._rows)
+
+
+    def get(self, key: int) -> Recipe | None:
+        return self._rows.get(key)
+
+    def rows(self) -> dict[int, Recipe]:
+        return self._rows
+
+
+
+
+
+class GachaPoolTable(SoraConfigTable):
+    def __init__(
+        self,
+        rows: dict[int, GachaPool],
+    ) -> None:
+        self._rows = rows
+
+    @staticmethod
+    def decode(rows: list[GachaPool]) -> GachaPoolTable:
+        return GachaPoolTable(
+            decode_map_table(rows, lambda row: row.id),
+        )
+
+    def name(self) -> str:
+        return "GachaPool"
+
+    def mode(self) -> str:
+        return "map"
+
+    def key(self) -> str | None:
+        return "id"
+
+    def len(self) -> int:
+        return len(self._rows)
+
+
+    def get(self, key: int) -> GachaPool | None:
+        return self._rows.get(key)
+
+    def rows(self) -> dict[int, GachaPool]:
+        return self._rows
+
+
+
+
+
+class GachaItemTable(SoraConfigTable):
+    def __init__(
+        self,
+        rows: list[GachaItem],
+    ) -> None:
+        self._rows = rows
+
+    @staticmethod
+    def decode(rows: list[GachaItem]) -> GachaItemTable:
+        return GachaItemTable(
+            rows,
+        )
+
+    def name(self) -> str:
+        return "GachaItem"
+
+    def mode(self) -> str:
+        return "list"
+
+    def key(self) -> str | None:
+        return None
+
+    def len(self) -> int:
+        return len(self._rows)
+
+
+    def rows(self) -> list[GachaItem]:
+        return self._rows
+
+
+
+
+
+class EquipmentSetTable(SoraConfigTable):
+    def __init__(
+        self,
+        rows: dict[int, EquipmentSet],
+    ) -> None:
+        self._rows = rows
+
+    @staticmethod
+    def decode(rows: list[EquipmentSet]) -> EquipmentSetTable:
+        return EquipmentSetTable(
+            decode_map_table(rows, lambda row: row.id),
+        )
+
+    def name(self) -> str:
+        return "EquipmentSet"
+
+    def mode(self) -> str:
+        return "map"
+
+    def key(self) -> str | None:
+        return "id"
+
+    def len(self) -> int:
+        return len(self._rows)
+
+
+    def get(self, key: int) -> EquipmentSet | None:
+        return self._rows.get(key)
+
+    def rows(self) -> dict[int, EquipmentSet]:
+        return self._rows
+
+
+
+
+
+class AchievementTable(SoraConfigTable):
+    def __init__(
+        self,
+        rows: dict[int, Achievement],
+    ) -> None:
+        self._rows = rows
+
+    @staticmethod
+    def decode(rows: list[Achievement]) -> AchievementTable:
+        return AchievementTable(
+            decode_map_table(rows, lambda row: row.id),
+        )
+
+    def name(self) -> str:
+        return "Achievement"
+
+    def mode(self) -> str:
+        return "map"
+
+    def key(self) -> str | None:
+        return "id"
+
+    def len(self) -> int:
+        return len(self._rows)
+
+
+    def get(self, key: int) -> Achievement | None:
+        return self._rows.get(key)
+
+    def rows(self) -> dict[int, Achievement]:
+        return self._rows
+
+
+
+
+
+class VipLevelTable(SoraConfigTable):
+    def __init__(
+        self,
+        rows: dict[int, VipLevel],
+    ) -> None:
+        self._rows = rows
+
+    @staticmethod
+    def decode(rows: list[VipLevel]) -> VipLevelTable:
+        return VipLevelTable(
+            decode_map_table(rows, lambda row: row.level),
+        )
+
+    def name(self) -> str:
+        return "VipLevel"
+
+    def mode(self) -> str:
+        return "map"
+
+    def key(self) -> str | None:
+        return "level"
+
+    def len(self) -> int:
+        return len(self._rows)
+
+
+    def get(self, key: int) -> VipLevel | None:
+        return self._rows.get(key)
+
+    def rows(self) -> dict[int, VipLevel]:
+        return self._rows
+
+
+
+
+
+class MailTemplateTable(SoraConfigTable):
+    def __init__(
+        self,
+        rows: dict[int, MailTemplate],
+    ) -> None:
+        self._rows = rows
+
+    @staticmethod
+    def decode(rows: list[MailTemplate]) -> MailTemplateTable:
+        return MailTemplateTable(
+            decode_map_table(rows, lambda row: row.id),
+        )
+
+    def name(self) -> str:
+        return "MailTemplate"
+
+    def mode(self) -> str:
+        return "map"
+
+    def key(self) -> str | None:
+        return "id"
+
+    def len(self) -> int:
+        return len(self._rows)
+
+
+    def get(self, key: int) -> MailTemplate | None:
+        return self._rows.get(key)
+
+    def rows(self) -> dict[int, MailTemplate]:
+        return self._rows
+
+
+
+
+
+class MailRewardTable(SoraConfigTable):
+    def __init__(
+        self,
+        rows: list[MailReward],
+    ) -> None:
+        self._rows = rows
+
+    @staticmethod
+    def decode(rows: list[MailReward]) -> MailRewardTable:
+        return MailRewardTable(
+            rows,
+        )
+
+    def name(self) -> str:
+        return "MailReward"
+
+    def mode(self) -> str:
+        return "list"
+
+    def key(self) -> str | None:
+        return None
+
+    def len(self) -> int:
+        return len(self._rows)
+
+
+    def rows(self) -> list[MailReward]:
+        return self._rows
+
+
+
+
+
+class DialogueTable(SoraConfigTable):
+    def __init__(
+        self,
+        rows: dict[int, Dialogue],
+    ) -> None:
+        self._rows = rows
+
+    @staticmethod
+    def decode(rows: list[Dialogue]) -> DialogueTable:
+        return DialogueTable(
+            decode_map_table(rows, lambda row: row.id),
+        )
+
+    def name(self) -> str:
+        return "Dialogue"
+
+    def mode(self) -> str:
+        return "map"
+
+    def key(self) -> str | None:
+        return "id"
+
+    def len(self) -> int:
+        return len(self._rows)
+
+
+    def get(self, key: int) -> Dialogue | None:
+        return self._rows.get(key)
+
+    def rows(self) -> dict[int, Dialogue]:
+        return self._rows
+
+
+
+
+
+class EventRuleTable(SoraConfigTable):
+    def __init__(
+        self,
+        rows: dict[int, EventRule],
+    ) -> None:
+        self._rows = rows
+
+    @staticmethod
+    def decode(rows: list[EventRule]) -> EventRuleTable:
+        return EventRuleTable(
+            decode_map_table(rows, lambda row: row.id),
+        )
+
+    def name(self) -> str:
+        return "EventRule"
+
+    def mode(self) -> str:
+        return "map"
+
+    def key(self) -> str | None:
+        return "id"
+
+    def len(self) -> int:
+        return len(self._rows)
+
+
+    def get(self, key: int) -> EventRule | None:
+        return self._rows.get(key)
+
+    def rows(self) -> dict[int, EventRule]:
+        return self._rows
+
+
+
+
+
+class SoraConfig:
+    def __init__(
+        self,
+        item: ItemTable,
+        skill: SkillTable,
+        quest: QuestTable,
+        quest_reward: QuestRewardTable,
+        game_settings: GameSettingsTable,
+        localization: LocalizationTable,
+        level_exp: LevelExpTable,
+        character: CharacterTable,
+        character_skill: CharacterSkillTable,
+        buff: BuffTable,
+        drop_group: DropGroupTable,
+        drop_entry: DropEntryTable,
+        monster: MonsterTable,
+        stage: StageTable,
+        stage_reward: StageRewardTable,
+        dungeon: DungeonTable,
+        shop: ShopTable,
+        shop_item: ShopItemTable,
+        recipe: RecipeTable,
+        gacha_pool: GachaPoolTable,
+        gacha_item: GachaItemTable,
+        equipment_set: EquipmentSetTable,
+        achievement: AchievementTable,
+        vip_level: VipLevelTable,
+        mail_template: MailTemplateTable,
+        mail_reward: MailRewardTable,
+        dialogue: DialogueTable,
+        event_rule: EventRuleTable,
+    ) -> None:
+        self._item = item
+        self._skill = skill
+        self._quest = quest
+        self._quest_reward = quest_reward
+        self._game_settings = game_settings
+        self._localization = localization
+        self._level_exp = level_exp
+        self._character = character
+        self._character_skill = character_skill
+        self._buff = buff
+        self._drop_group = drop_group
+        self._drop_entry = drop_entry
+        self._monster = monster
+        self._stage = stage
+        self._stage_reward = stage_reward
+        self._dungeon = dungeon
+        self._shop = shop
+        self._shop_item = shop_item
+        self._recipe = recipe
+        self._gacha_pool = gacha_pool
+        self._gacha_item = gacha_item
+        self._equipment_set = equipment_set
+        self._achievement = achievement
+        self._vip_level = vip_level
+        self._mail_template = mail_template
+        self._mail_reward = mail_reward
+        self._dialogue = dialogue
+        self._event_rule = event_rule
+
+    @staticmethod
+    def from_bytes(bytes_data: bytes) -> SoraConfig:
+        bundle = SoraBundle.parse(bytes_data)
+        return SoraConfig(
+            ItemTable.decode(
+                bundle.decode_table("Item", Item.decode)
+            ),
+            SkillTable.decode(
+                bundle.decode_table("Skill", Skill.decode)
+            ),
+            QuestTable.decode(
+                bundle.decode_table("Quest", Quest.decode)
+            ),
+            QuestRewardTable.decode(
+                bundle.decode_table("QuestReward", QuestReward.decode)
+            ),
+            GameSettingsTable.decode(
+                bundle.decode_table("GameSettings", GameSettings.decode)
+            ),
+            LocalizationTable.decode(
+                bundle.decode_table("Localization", Localization.decode)
+            ),
+            LevelExpTable.decode(
+                bundle.decode_table("LevelExp", LevelExp.decode)
+            ),
+            CharacterTable.decode(
+                bundle.decode_table("Character", Character.decode)
+            ),
+            CharacterSkillTable.decode(
+                bundle.decode_table("CharacterSkill", CharacterSkill.decode)
+            ),
+            BuffTable.decode(
+                bundle.decode_table("Buff", Buff.decode)
+            ),
+            DropGroupTable.decode(
+                bundle.decode_table("DropGroup", DropGroup.decode)
+            ),
+            DropEntryTable.decode(
+                bundle.decode_table("DropEntry", DropEntry.decode)
+            ),
+            MonsterTable.decode(
+                bundle.decode_table("Monster", Monster.decode)
+            ),
+            StageTable.decode(
+                bundle.decode_table("Stage", Stage.decode)
+            ),
+            StageRewardTable.decode(
+                bundle.decode_table("StageReward", StageReward.decode)
+            ),
+            DungeonTable.decode(
+                bundle.decode_table("Dungeon", Dungeon.decode)
+            ),
+            ShopTable.decode(
+                bundle.decode_table("Shop", Shop.decode)
+            ),
+            ShopItemTable.decode(
+                bundle.decode_table("ShopItem", ShopItem.decode)
+            ),
+            RecipeTable.decode(
+                bundle.decode_table("Recipe", Recipe.decode)
+            ),
+            GachaPoolTable.decode(
+                bundle.decode_table("GachaPool", GachaPool.decode)
+            ),
+            GachaItemTable.decode(
+                bundle.decode_table("GachaItem", GachaItem.decode)
+            ),
+            EquipmentSetTable.decode(
+                bundle.decode_table("EquipmentSet", EquipmentSet.decode)
+            ),
+            AchievementTable.decode(
+                bundle.decode_table("Achievement", Achievement.decode)
+            ),
+            VipLevelTable.decode(
+                bundle.decode_table("VipLevel", VipLevel.decode)
+            ),
+            MailTemplateTable.decode(
+                bundle.decode_table("MailTemplate", MailTemplate.decode)
+            ),
+            MailRewardTable.decode(
+                bundle.decode_table("MailReward", MailReward.decode)
+            ),
+            DialogueTable.decode(
+                bundle.decode_table("Dialogue", Dialogue.decode)
+            ),
+            EventRuleTable.decode(
+                bundle.decode_table("EventRule", EventRule.decode)
+            ),
+        )
+
+    def tables(self) -> list[SoraConfigTable]:
+        return [
+            self._item,
+            self._skill,
+            self._quest,
+            self._quest_reward,
+            self._game_settings,
+            self._localization,
+            self._level_exp,
+            self._character,
+            self._character_skill,
+            self._buff,
+            self._drop_group,
+            self._drop_entry,
+            self._monster,
+            self._stage,
+            self._stage_reward,
+            self._dungeon,
+            self._shop,
+            self._shop_item,
+            self._recipe,
+            self._gacha_pool,
+            self._gacha_item,
+            self._equipment_set,
+            self._achievement,
+            self._vip_level,
+            self._mail_template,
+            self._mail_reward,
+            self._dialogue,
+            self._event_rule,
+        ]
+
+
+    def item(self) -> ItemTable:
+        return self._item
+
+
+    def skill(self) -> SkillTable:
+        return self._skill
+
+
+    def quest(self) -> QuestTable:
+        return self._quest
+
+
+    def quest_reward(self) -> QuestRewardTable:
+        return self._quest_reward
+
+
+    def game_settings(self) -> GameSettingsTable:
+        return self._game_settings
+
+
+    def localization(self) -> LocalizationTable:
+        return self._localization
+
+
+    def level_exp(self) -> LevelExpTable:
+        return self._level_exp
+
+
+    def character(self) -> CharacterTable:
+        return self._character
+
+
+    def character_skill(self) -> CharacterSkillTable:
+        return self._character_skill
+
+
+    def buff(self) -> BuffTable:
+        return self._buff
+
+
+    def drop_group(self) -> DropGroupTable:
+        return self._drop_group
+
+
+    def drop_entry(self) -> DropEntryTable:
+        return self._drop_entry
+
+
+    def monster(self) -> MonsterTable:
+        return self._monster
+
+
+    def stage(self) -> StageTable:
+        return self._stage
+
+
+    def stage_reward(self) -> StageRewardTable:
+        return self._stage_reward
+
+
+    def dungeon(self) -> DungeonTable:
+        return self._dungeon
+
+
+    def shop(self) -> ShopTable:
+        return self._shop
+
+
+    def shop_item(self) -> ShopItemTable:
+        return self._shop_item
+
+
+    def recipe(self) -> RecipeTable:
+        return self._recipe
+
+
+    def gacha_pool(self) -> GachaPoolTable:
+        return self._gacha_pool
+
+
+    def gacha_item(self) -> GachaItemTable:
+        return self._gacha_item
+
+
+    def equipment_set(self) -> EquipmentSetTable:
+        return self._equipment_set
+
+
+    def achievement(self) -> AchievementTable:
+        return self._achievement
+
+
+    def vip_level(self) -> VipLevelTable:
+        return self._vip_level
+
+
+    def mail_template(self) -> MailTemplateTable:
+        return self._mail_template
+
+
+    def mail_reward(self) -> MailRewardTable:
+        return self._mail_reward
+
+
+    def dialogue(self) -> DialogueTable:
+        return self._dialogue
+
+
+    def event_rule(self) -> EventRuleTable:
+        return self._event_rule
+
+

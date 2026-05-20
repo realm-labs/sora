@@ -1,0 +1,32 @@
+from __future__ import annotations
+
+from dataclasses import dataclass
+from typing import TYPE_CHECKING
+
+from .sora_runtime import SoraReader
+
+
+if TYPE_CHECKING:
+    from .stat_modifier import StatModifier
+
+
+@dataclass(frozen=True, slots=True)
+class Buff:
+    id: int
+    name: str
+    duration: float
+    modifiers: list[StatModifier]
+
+    @staticmethod
+    def decode(reader: SoraReader) -> Buff:
+        from .stat_modifier import StatModifier
+        id = reader.read_i32()
+        name = reader.read_string()
+        duration = reader.read_f32()
+        modifiers = reader.read_list(lambda: StatModifier.decode(reader))
+        return Buff(
+            id=id,
+            name=name,
+            duration=duration,
+            modifiers=modifiers,
+        )

@@ -1,0 +1,31 @@
+from __future__ import annotations
+
+from dataclasses import dataclass
+from typing import TYPE_CHECKING
+
+from .sora_runtime import SoraReader
+
+
+if TYPE_CHECKING:
+    pass
+
+
+@dataclass(frozen=True, slots=True)
+class Localization:
+    key: str
+    zh_cn: str
+    en_us: str
+    note: str | None
+
+    @staticmethod
+    def decode(reader: SoraReader) -> Localization:
+        key = reader.read_string()
+        zh_cn = reader.read_string()
+        en_us = reader.read_string()
+        note = reader.read_optional(lambda: reader.read_string())
+        return Localization(
+            key=key,
+            zh_cn=zh_cn,
+            en_us=en_us,
+            note=note,
+        )

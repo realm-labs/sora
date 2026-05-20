@@ -64,6 +64,12 @@ go run ./cmd/showcase
 Pop-Location
 ```
 
+Run the Python smoke example:
+
+```powershell
+python3 examples/showcase/python/main.py
+```
+
 Check generated Lua syntax with a local Lua 5.3+ runtime:
 
 ```powershell

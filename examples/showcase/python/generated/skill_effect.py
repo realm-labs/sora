@@ -1,0 +1,29 @@
+from __future__ import annotations
+
+from dataclasses import dataclass
+from typing import TYPE_CHECKING
+
+from .sora_runtime import SoraReader
+
+
+if TYPE_CHECKING:
+    from .element_type import ElementType
+
+
+@dataclass(frozen=True, slots=True)
+class SkillEffect:
+    element: ElementType
+    power: int
+    radius: float
+
+    @staticmethod
+    def decode(reader: SoraReader) -> SkillEffect:
+        from .element_type import ElementType
+        element = ElementType.decode(reader)
+        power = reader.read_i32()
+        radius = reader.read_f32()
+        return SkillEffect(
+            element=element,
+            power=power,
+            radius=radius,
+        )

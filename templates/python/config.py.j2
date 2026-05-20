@@ -1,0 +1,184 @@
+from __future__ import annotations
+
+from .sora_runtime import (
+    SoraBundle,
+    decode_index,
+    decode_map_table,
+    decode_unique_index,
+    require_singleton_table,
+)
+{%- for table in model.tables %}
+from .{{ table.snake_name }} import {{ table.row_type }}
+{%- endfor %}
+{%- for enum in model.enums %}
+from .{{ enum.snake_name }} import {{ enum.name }}
+{%- endfor %}
+
+
+class SoraConfigTable:
+    def name(self) -> str:
+        raise NotImplementedError()
+
+    def mode(self) -> str:
+        raise NotImplementedError()
+
+    def key(self) -> str | None:
+        raise NotImplementedError()
+
+    def len(self) -> int:
+        raise NotImplementedError()
+
+    def __len__(self) -> int:
+        return self.len()
+
+
+{%- for table in model.tables %}
+
+
+class {{ table.pascal_name }}Table(SoraConfigTable):
+    def __init__(
+        self,
+{%- if table.mode == "map" and table.key_type %}
+        rows: dict[{{ table.key_type }}, {{ table.row_type }}],
+{%- elif table.mode == "singleton" %}
+        row: {{ table.row_type }},
+{%- else %}
+        rows: list[{{ table.row_type }}],
+{%- endif %}
+{%- for index in table.unique_indexes %}
+        {{ index.name }}: dict[{{ index.key_type }}, {{ table.row_type }}],
+{%- endfor %}
+{%- for index in table.non_unique_indexes %}
+        {{ index.name }}: dict[{{ index.key_type }}, list[{{ table.row_type }}]],
+{%- endfor %}
+    ) -> None:
+{%- if table.mode == "map" and table.key_type %}
+        self._rows = rows
+{%- elif table.mode == "singleton" %}
+        self._row = row
+{%- else %}
+        self._rows = rows
+{%- endif %}
+{%- for index in table.unique_indexes %}
+        self._{{ index.name }} = {{ index.name }}
+{%- endfor %}
+{%- for index in table.non_unique_indexes %}
+        self._{{ index.name }} = {{ index.name }}
+{%- endfor %}
+
+    @staticmethod
+    def decode(rows: list[{{ table.row_type }}]) -> {{ table.pascal_name }}Table:
+{%- if table.mode == "map" and table.key_field_name %}
+        return {{ table.pascal_name }}Table(
+            decode_map_table(rows, lambda row: row.{{ table.key_field_name }}),
+{%- for index in table.unique_indexes %}
+            decode_unique_index(rows, lambda row: row.{{ index.field_name }}),
+{%- endfor %}
+{%- for index in table.non_unique_indexes %}
+            decode_index(rows, lambda row: row.{{ index.field_name }}),
+{%- endfor %}
+        )
+{%- elif table.mode == "singleton" %}
+        return {{ table.pascal_name }}Table(
+            require_singleton_table(rows, "{{ table.name }}"),
+        )
+{%- else %}
+        return {{ table.pascal_name }}Table(
+            rows,
+{%- for index in table.unique_indexes %}
+            decode_unique_index(rows, lambda row: row.{{ index.field_name }}),
+{%- endfor %}
+{%- for index in table.non_unique_indexes %}
+            decode_index(rows, lambda row: row.{{ index.field_name }}),
+{%- endfor %}
+        )
+{%- endif %}
+
+    def name(self) -> str:
+        return "{{ table.name }}"
+
+    def mode(self) -> str:
+        return "{{ table.mode }}"
+
+    def key(self) -> str | None:
+{%- if table.key_name %}
+        return "{{ table.key_name }}"
+{%- else %}
+        return None
+{%- endif %}
+
+    def len(self) -> int:
+{%- if table.mode == "singleton" %}
+        return 1
+{%- else %}
+        return len(self._rows)
+{%- endif %}
+
+{% if table.mode == "map" and table.key_field_name %}
+    def get(self, key: {{ table.key_type }}) -> {{ table.row_type }} | None:
+        return self._rows.get(key)
+
+    def rows(self) -> dict[{{ table.key_type }}, {{ table.row_type }}]:
+        return self._rows
+{%- elif table.mode == "singleton" %}
+    def row(self) -> {{ table.row_type }}:
+        return self._row
+{%- else %}
+    def rows(self) -> list[{{ table.row_type }}]:
+        return self._rows
+{%- endif %}
+
+{% for index in table.unique_indexes %}
+    def get_{{ index.name }}(
+        self,
+        {{ index.param_name }}: {{ index.param_type }},
+    ) -> {{ table.row_type }} | None:
+        return self._{{ index.name }}.get({{ index.param_name }})
+
+{% endfor %}
+{% for index in table.non_unique_indexes %}
+    def find_{{ index.name }}(
+        self,
+        {{ index.param_name }}: {{ index.param_type }},
+    ) -> list[{{ table.row_type }}]:
+        return self._{{ index.name }}.get({{ index.param_name }}, [])
+
+{% endfor %}
+
+{%- endfor %}
+
+
+class SoraConfig:
+    def __init__(
+        self,
+{%- for table in model.tables %}
+        {{ table.snake_name }}: {{ table.pascal_name }}Table,
+{%- endfor %}
+    ) -> None:
+{%- for table in model.tables %}
+        self._{{ table.snake_name }} = {{ table.snake_name }}
+{%- endfor %}
+
+    @staticmethod
+    def from_bytes(bytes_data: bytes) -> SoraConfig:
+        bundle = SoraBundle.parse(bytes_data)
+        return SoraConfig(
+{%- for table in model.tables %}
+            {{ table.pascal_name }}Table.decode(
+                bundle.decode_table("{{ table.name }}", {{ table.row_type }}.decode)
+            ),
+{%- endfor %}
+        )
+
+    def tables(self) -> list[SoraConfigTable]:
+        return [
+{%- for table in model.tables %}
+            self._{{ table.snake_name }},
+{%- endfor %}
+        ]
+
+{% for table in model.tables %}
+    def {{ table.snake_name }}(self) -> {{ table.pascal_name }}Table:
+        return self._{{ table.snake_name }}
+
+{% endfor %}

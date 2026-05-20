@@ -1,0 +1,25 @@
+from __future__ import annotations
+
+from dataclasses import dataclass
+from typing import TYPE_CHECKING
+
+from .sora_runtime import SoraReader
+
+
+if TYPE_CHECKING:
+    pass
+
+
+@dataclass(frozen=True, slots=True)
+class DropGroup:
+    id: int
+    name: str
+
+    @staticmethod
+    def decode(reader: SoraReader) -> DropGroup:
+        id = reader.read_i32()
+        name = reader.read_string()
+        return DropGroup(
+            id=id,
+            name=name,
+        )

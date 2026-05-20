@@ -27,6 +27,7 @@ pub fn run(command: Command) -> Result<()> {
             GenCommand::Erlang(args) => generate(args, CodegenTarget::Erlang),
             GenCommand::Lua(args) => generate(args, CodegenTarget::Lua),
             GenCommand::Proto(args) => generate(args, CodegenTarget::Proto),
+            GenCommand::Python(args) => generate(args, CodegenTarget::Python),
         },
         Command::Export(args) => export(args),
         Command::Diff(args) => diff(args),

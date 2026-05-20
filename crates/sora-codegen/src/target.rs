@@ -10,4 +10,5 @@ pub enum CodegenTarget {
     Erlang,
     Lua,
     Proto,
+    Python,
 }

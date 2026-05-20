@@ -47,6 +47,7 @@ pub enum GenCommand {
     Erlang(GenArgs),
     Lua(GenArgs),
     Proto(GenArgs),
+    Python(GenArgs),
 }
 
 #[derive(Debug, Args)]
@@ -134,6 +135,7 @@ pub enum BuildTarget {
     Erlang,
     Lua,
     Proto,
+    Python,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, clap::ValueEnum)]

@@ -1,0 +1,28 @@
+from __future__ import annotations
+
+from dataclasses import dataclass
+from typing import TYPE_CHECKING
+
+from .sora_runtime import SoraReader
+
+
+if TYPE_CHECKING:
+    pass
+
+
+@dataclass(frozen=True, slots=True)
+class LevelExp:
+    level: int
+    exp: int
+    unlock_feature: str | None
+
+    @staticmethod
+    def decode(reader: SoraReader) -> LevelExp:
+        level = reader.read_i32()
+        exp = reader.read_i64()
+        unlock_feature = reader.read_optional(lambda: reader.read_string())
+        return LevelExp(
+            level=level,
+            exp=exp,
+            unlock_feature=unlock_feature,
+        )

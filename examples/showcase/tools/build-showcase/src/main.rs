@@ -23,6 +23,7 @@ fn main() -> Result<()> {
     let csharp_generated = root.join("csharp/src/generated/csharp");
     let java_generated = root.join("java/src/generated/java");
     let go_generated = root.join("go/internal/showcase");
+    let python_generated = root.join("python/generated");
     let proto_generated = generated_root.join("proto");
 
     fs::create_dir_all(&data_root)
@@ -42,6 +43,7 @@ fn main() -> Result<()> {
     clean_dir(&csharp_generated)?;
     clean_dir(&java_generated)?;
     clean_dir(&go_generated)?;
+    clean_dir(&python_generated)?;
     clean_dir(&proto_generated)?;
     clean_dir(&generated_root.join("debug-json"))?;
     clean_file(&generated_root.join("config.json"))?;
@@ -56,6 +58,7 @@ fn main() -> Result<()> {
     sora_core::pipeline::generate_code(&schema_input, CodegenTarget::CSharp, &csharp_generated)?;
     sora_core::pipeline::generate_code(&schema_input, CodegenTarget::Java, &java_generated)?;
     sora_core::pipeline::generate_code(&schema_input, CodegenTarget::Go, &go_generated)?;
+    sora_core::pipeline::generate_code(&schema_input, CodegenTarget::Python, &python_generated)?;
     sora_core::pipeline::generate_code(&schema_input, CodegenTarget::Proto, &proto_generated)?;
     sora_core::pipeline::export_data(
         &project_input,

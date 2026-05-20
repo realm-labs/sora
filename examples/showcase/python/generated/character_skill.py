@@ -1,0 +1,28 @@
+from __future__ import annotations
+
+from dataclasses import dataclass
+from typing import TYPE_CHECKING
+
+from .sora_runtime import SoraReader
+
+
+if TYPE_CHECKING:
+    pass
+
+
+@dataclass(frozen=True, slots=True)
+class CharacterSkill:
+    character_id: int
+    skill_id: int
+    unlock_level: int
+
+    @staticmethod
+    def decode(reader: SoraReader) -> CharacterSkill:
+        character_id = reader.read_i32()
+        skill_id = reader.read_i32()
+        unlock_level = reader.read_i32()
+        return CharacterSkill(
+            character_id=character_id,
+            skill_id=skill_id,
+            unlock_level=unlock_level,
+        )

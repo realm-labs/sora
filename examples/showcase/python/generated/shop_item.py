@@ -1,0 +1,35 @@
+from __future__ import annotations
+
+from dataclasses import dataclass
+from typing import TYPE_CHECKING
+
+from .sora_runtime import SoraReader
+
+
+if TYPE_CHECKING:
+    from .resource_cost import ResourceCost
+
+
+@dataclass(frozen=True, slots=True)
+class ShopItem:
+    shop_id: int
+    seq: int
+    item_id: int
+    price: ResourceCost
+    daily_limit: int | None
+
+    @staticmethod
+    def decode(reader: SoraReader) -> ShopItem:
+        from .resource_cost import ResourceCost
+        shop_id = reader.read_i32()
+        seq = reader.read_i32()
+        item_id = reader.read_i32()
+        price = ResourceCost.decode(reader)
+        daily_limit = reader.read_optional(lambda: reader.read_i32())
+        return ShopItem(
+            shop_id=shop_id,
+            seq=seq,
+            item_id=item_id,
+            price=price,
+            daily_limit=daily_limit,
+        )

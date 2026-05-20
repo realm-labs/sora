@@ -282,6 +282,36 @@ const EMBEDDED_TEMPLATES: &[EmbeddedTemplate] = &[
         file_name: "union.rs.j2",
         source: include_str!("../../../templates/rust/union.rs.j2"),
     },
+    EmbeddedTemplate {
+        target: "python",
+        file_name: "__init__.py.j2",
+        source: include_str!("../../../templates/python/__init__.py.j2"),
+    },
+    EmbeddedTemplate {
+        target: "python",
+        file_name: "config.py.j2",
+        source: include_str!("../../../templates/python/config.py.j2"),
+    },
+    EmbeddedTemplate {
+        target: "python",
+        file_name: "enum.py.j2",
+        source: include_str!("../../../templates/python/enum.py.j2"),
+    },
+    EmbeddedTemplate {
+        target: "python",
+        file_name: "record.py.j2",
+        source: include_str!("../../../templates/python/record.py.j2"),
+    },
+    EmbeddedTemplate {
+        target: "python",
+        file_name: "runtime.py.j2",
+        source: include_str!("../../../templates/python/runtime.py.j2"),
+    },
+    EmbeddedTemplate {
+        target: "python",
+        file_name: "union.py.j2",
+        source: include_str!("../../../templates/python/union.py.j2"),
+    },
 ];
 
 pub fn template_source(target: &str, file_name: &str) -> Option<&'static str> {
@@ -313,7 +343,7 @@ mod tests {
 
     #[test]
     fn embeds_all_templates() {
-        assert_eq!(EMBEDDED_TEMPLATES.len(), 55);
+        assert_eq!(EMBEDDED_TEMPLATES.len(), 61);
         for template in EMBEDDED_TEMPLATES {
             let source = template_source(template.target, template.file_name)
                 .expect("embedded template should be registered");

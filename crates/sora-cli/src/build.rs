@@ -316,8 +316,9 @@ impl BuildTarget {
             "erlang" | "erl" => Ok(Self::Erlang),
             "lua" => Ok(Self::Lua),
             "proto" => Ok(Self::Proto),
+            "python" | "py" => Ok(Self::Python),
             _ => Err(format!(
-                "unsupported codegen target `{value}`; expected rust, kotlin, csharp, java, go, typescript, javascript, erlang, lua, or proto"
+                "unsupported codegen target `{value}`; expected rust, kotlin, csharp, java, go, typescript, javascript, erlang, lua, proto, or python"
             )),
         }
     }
@@ -334,6 +335,7 @@ impl BuildTarget {
             Self::Erlang => "erlang",
             Self::Lua => "lua",
             Self::Proto => "proto",
+            Self::Python => "python",
         }
     }
 }
@@ -351,6 +353,7 @@ impl From<BuildTarget> for CodegenTarget {
             BuildTarget::Erlang => Self::Erlang,
             BuildTarget::Lua => Self::Lua,
             BuildTarget::Proto => Self::Proto,
+            BuildTarget::Python => Self::Python,
         }
     }
 }
@@ -384,6 +387,8 @@ mod tests {
         assert!(base.join("generated/javascript/item.js").exists());
         assert!(base.join("generated/javascript/item.d.ts").exists());
         assert!(base.join("generated/erlang/item.erl").exists());
+        assert!(base.join("generated/python/item.py").exists());
+        assert!(base.join("generated/python/sora_config.py").exists());
         assert!(base.join("generated/proto/sora_config.proto").exists());
         assert!(base.join("generated/config.json").exists());
         assert!(base.join("generated/config.pb").exists());
@@ -465,6 +470,11 @@ out = "generated/javascript"
 [[build.codegen]]
 target = "erlang"
 out = "generated/erlang"
+
+[[build.codegen]]
+target = "python"
+out = "generated/python"
+format = "auto"
 
 [[build.codegen]]
 target = "proto"

@@ -1,0 +1,53 @@
+from __future__ import annotations
+
+from dataclasses import dataclass
+from typing import TYPE_CHECKING
+
+from .sora_runtime import SoraReader
+
+
+if TYPE_CHECKING:
+    from .element_type import ElementType
+    from .resource_cost import ResourceCost
+    from .skill_effect import SkillEffect
+    from .vec3 import Vec3
+
+
+@dataclass(frozen=True, slots=True)
+class Skill:
+    id: int
+    name: str
+    element: ElementType
+    # Tuple cost, e.g. Gold,0,150
+    cost: ResourceCost
+    # JSON object with element/power/radius
+    effect: SkillEffect
+    required_level: int
+    # Optional item requirement
+    required_item: int | None
+    cast_origin: Vec3
+
+    @staticmethod
+    def decode(reader: SoraReader) -> Skill:
+        from .element_type import ElementType
+        from .resource_cost import ResourceCost
+        from .skill_effect import SkillEffect
+        from .vec3 import Vec3
+        id = reader.read_i32()
+        name = reader.read_string()
+        element = ElementType.decode(reader)
+        cost = ResourceCost.decode(reader)
+        effect = SkillEffect.decode(reader)
+        required_level = reader.read_i32()
+        required_item = reader.read_optional(lambda: reader.read_i32())
+        cast_origin = Vec3.decode(reader)
+        return Skill(
+            id=id,
+            name=name,
+            element=element,
+            cost=cost,
+            effect=effect,
+            required_level=required_level,
+            required_item=required_item,
+            cast_origin=cast_origin,
+        )

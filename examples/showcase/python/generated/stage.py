@@ -1,0 +1,35 @@
+from __future__ import annotations
+
+from dataclasses import dataclass
+from typing import TYPE_CHECKING
+
+from .sora_runtime import SoraReader
+
+
+if TYPE_CHECKING:
+    from .reward import Reward
+
+
+@dataclass(frozen=True, slots=True)
+class Stage:
+    id: int
+    name: str
+    monster_ids: list[int]
+    recommended_power: int
+    first_clear_rewards: list[Reward]
+
+    @staticmethod
+    def decode(reader: SoraReader) -> Stage:
+        from .reward import Reward
+        id = reader.read_i32()
+        name = reader.read_string()
+        monster_ids = reader.read_list(lambda: reader.read_i32())
+        recommended_power = reader.read_i32()
+        first_clear_rewards = reader.read_list(lambda: Reward.decode(reader))
+        return Stage(
+            id=id,
+            name=name,
+            monster_ids=monster_ids,
+            recommended_power=recommended_power,
+            first_clear_rewards=first_clear_rewards,
+        )

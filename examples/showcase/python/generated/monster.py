@@ -1,0 +1,40 @@
+from __future__ import annotations
+
+from dataclasses import dataclass
+from typing import TYPE_CHECKING
+
+from .sora_runtime import SoraReader
+
+
+if TYPE_CHECKING:
+    from .element_type import ElementType
+    from .vec3 import Vec3
+
+
+@dataclass(frozen=True, slots=True)
+class Monster:
+    id: int
+    name: str
+    level: int
+    element: ElementType
+    drop_group: int
+    spawn_pos: Vec3
+
+    @staticmethod
+    def decode(reader: SoraReader) -> Monster:
+        from .element_type import ElementType
+        from .vec3 import Vec3
+        id = reader.read_i32()
+        name = reader.read_string()
+        level = reader.read_i32()
+        element = ElementType.decode(reader)
+        drop_group = reader.read_i32()
+        spawn_pos = Vec3.decode(reader)
+        return Monster(
+            id=id,
+            name=name,
+            level=level,
+            element=element,
+            drop_group=drop_group,
+            spawn_pos=spawn_pos,
+        )

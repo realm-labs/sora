@@ -1,0 +1,67 @@
+from __future__ import annotations
+
+from dataclasses import dataclass
+from typing import TYPE_CHECKING, ClassVar
+
+from .sora_runtime import SoraReadError, SoraReader
+
+
+if TYPE_CHECKING:
+    pass
+
+
+class EventCondition:
+    @staticmethod
+    def decode(reader: SoraReader) -> EventCondition:
+        ordinal = reader.read_u32()
+        if ordinal == 0:
+            return EventConditionLevelAtLeast.decode_payload(reader)
+        if ordinal == 1:
+            return EventConditionQuestCompleted.decode_payload(reader)
+        if ordinal == 2:
+            return EventConditionHasItem.decode_payload(reader)
+        raise SoraReadError(f"invalid union ordinal {ordinal} for EventCondition")
+
+
+
+@dataclass(frozen=True, slots=True)
+class EventConditionLevelAtLeast(EventCondition):
+    type: ClassVar[str] = "LevelAtLeast"
+    level: int
+
+    @staticmethod
+    def decode_payload(reader: SoraReader) -> EventConditionLevelAtLeast:
+        level = reader.read_i32()
+        return EventConditionLevelAtLeast(
+            level=level,
+        )
+
+
+@dataclass(frozen=True, slots=True)
+class EventConditionQuestCompleted(EventCondition):
+    type: ClassVar[str] = "QuestCompleted"
+    quest_id: int
+
+    @staticmethod
+    def decode_payload(reader: SoraReader) -> EventConditionQuestCompleted:
+        quest_id = reader.read_i32()
+        return EventConditionQuestCompleted(
+            quest_id=quest_id,
+        )
+
+
+@dataclass(frozen=True, slots=True)
+class EventConditionHasItem(EventCondition):
+    type: ClassVar[str] = "HasItem"
+    item_id: int
+    count: int
+
+    @staticmethod
+    def decode_payload(reader: SoraReader) -> EventConditionHasItem:
+        item_id = reader.read_i32()
+        count = reader.read_i32()
+        return EventConditionHasItem(
+            item_id=item_id,
+            count=count,
+        )
+

@@ -1,0 +1,57 @@
+from __future__ import annotations
+
+from dataclasses import dataclass
+from typing import TYPE_CHECKING, ClassVar
+
+from .sora_runtime import SoraReadError, SoraReader
+
+
+if TYPE_CHECKING:
+{%- for import in union.imports %}
+    from .{{ import.module }} import {{ import.name }}
+{%- else %}
+    pass
+{%- endfor %}
+
+
+class {{ union.pascal_name }}:
+    @staticmethod
+    def decode(reader: SoraReader) -> {{ union.pascal_name }}:
+        ordinal = reader.read_u32()
+{%- for variant in union.variants %}
+        if ordinal == {{ loop.index0 }}:
+            return {{ union.pascal_name }}{{ variant.name }}.decode_payload(reader)
+{%- endfor %}
+        raise SoraReadError(f"invalid union ordinal {ordinal} for {{ union.pascal_name }}")
+
+{% for variant in union.variants %}
+
+@dataclass(frozen=True, slots=True)
+class {{ union.pascal_name }}{{ variant.name }}({{ union.pascal_name }}):
+    {{ union.tag }}: ClassVar[str] = "{{ variant.raw_name }}"
+{%- for field in variant.fields %}
+{%- if field.comment %}
+    # {{ field.comment }}
+{%- endif %}
+    {{ field.name }}: {{ field.type_name }}
+{%- else %}
+    pass
+{%- endfor %}
+
+    @staticmethod
+    def decode_payload(reader: SoraReader) -> {{ union.pascal_name }}{{ variant.name }}:
+{%- if union.imports %}
+{%- for import in union.imports %}
+        from .{{ import.module }} import {{ import.name }}
+{%- endfor %}
+
+{%- endif %}
+{%- for field in variant.fields %}
+        {{ field.name }} = {{ field.decode }}
+{%- endfor %}
+        return {{ union.pascal_name }}{{ variant.name }}(
+{%- for field in variant.fields %}
+            {{ field.name }}={{ field.name }},
+{%- endfor %}
+        )
+{% endfor %}

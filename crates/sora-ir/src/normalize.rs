@@ -78,6 +78,7 @@ impl From<CodegenSchema> for CodegenIr {
             javascript: JavaScriptCodegenIr::from(value.javascript),
             erlang: ErlangCodegenIr::from(value.erlang),
             lua: LuaCodegenIr::from(value.lua),
+            python: LanguageCodegenIr::from(value.python),
         }
     }
 }

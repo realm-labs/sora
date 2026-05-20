@@ -47,6 +47,11 @@ target = "lua"
 out = "lua/generated"
 
 [[build.codegen]]
+target = "python"
+out = "python/generated"
+format = "auto"
+
+[[build.codegen]]
 target = "proto"
 out = "generated/proto"
 
@@ -108,3 +113,6 @@ runtime_format = "sora"
 module = "generated"
 lua_version = "5.4"
 enum_repr = "string"
+
+[codegen.python]
+runtime_format = "sora"

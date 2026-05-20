@@ -1,0 +1,43 @@
+from __future__ import annotations
+
+from dataclasses import dataclass
+from typing import TYPE_CHECKING
+
+from .sora_runtime import SoraReader
+
+
+if TYPE_CHECKING:
+    from .rarity import Rarity
+    from .vec3 import Vec3
+
+
+@dataclass(frozen=True, slots=True)
+class Character:
+    id: int
+    name: str
+    rarity: Rarity
+    base_level: int
+    base_skill: int
+    starter_items: list[int]
+    spawn_pos: Vec3
+
+    @staticmethod
+    def decode(reader: SoraReader) -> Character:
+        from .rarity import Rarity
+        from .vec3 import Vec3
+        id = reader.read_i32()
+        name = reader.read_string()
+        rarity = Rarity.decode(reader)
+        base_level = reader.read_i32()
+        base_skill = reader.read_i32()
+        starter_items = reader.read_list(lambda: reader.read_i32())
+        spawn_pos = Vec3.decode(reader)
+        return Character(
+            id=id,
+            name=name,
+            rarity=rarity,
+            base_level=base_level,
+            base_skill=base_skill,
+            starter_items=starter_items,
+            spawn_pos=spawn_pos,
+        )

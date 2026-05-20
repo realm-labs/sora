@@ -1,0 +1,32 @@
+from __future__ import annotations
+
+from dataclasses import dataclass
+from typing import TYPE_CHECKING
+
+from .sora_runtime import SoraReader
+
+
+if TYPE_CHECKING:
+    from .skill_effect import SkillEffect
+
+
+@dataclass(frozen=True, slots=True)
+class EquipmentSet:
+    id: int
+    name: str
+    item_ids: list[int]
+    bonus_effect: SkillEffect
+
+    @staticmethod
+    def decode(reader: SoraReader) -> EquipmentSet:
+        from .skill_effect import SkillEffect
+        id = reader.read_i32()
+        name = reader.read_string()
+        item_ids = reader.read_list(lambda: reader.read_i32())
+        bonus_effect = SkillEffect.decode(reader)
+        return EquipmentSet(
+            id=id,
+            name=name,
+            item_ids=item_ids,
+            bonus_effect=bonus_effect,
+        )

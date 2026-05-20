@@ -1,4 +1,4 @@
-use heck::{ToLowerCamelCase, ToPascalCase, ToSnakeCase};
+use heck::{ToLowerCamelCase, ToPascalCase, ToShoutySnakeCase, ToSnakeCase};
 use serde::Serialize;
 use sora_diagnostics::Result;
 use sora_ir::model::{ConfigIr, FieldIr, IndexIr, TableIr, TableModeIr, TypeIr};
@@ -24,6 +24,7 @@ pub struct CodegenEnum {
     pub name: String,
     pub snake_name: String,
     pub atom_values: Vec<String>,
+    pub value_names: Vec<String>,
     pub values: Vec<String>,
 }
 
@@ -39,6 +40,7 @@ pub struct CodegenUnion {
 
 #[derive(Debug, Clone, Serialize)]
 pub struct CodegenUnionVariant {
+    pub raw_name: String,
     pub name: String,
     pub snake_name: String,
     pub reader_var: String,
@@ -107,6 +109,15 @@ pub struct CodegenField {
 
 pub trait LanguageBackend {
     fn field_name(&self, raw_name: &str) -> String;
+    fn type_identifier(&self, raw_name: &str) -> String {
+        raw_name.to_pascal_case()
+    }
+    fn module_name(&self, raw_name: &str) -> String {
+        raw_name.to_snake_case()
+    }
+    fn enum_value_name(&self, raw_name: &str) -> String {
+        raw_name.to_shouty_snake_case()
+    }
     fn type_name(&self, ir: &ConfigIr, ty: &TypeIr) -> String;
     fn decode_expr(&self, ir: &ConfigIr, ty: &TypeIr) -> String;
     fn value_decode_expr(&self, _ir: &ConfigIr, _ty: &TypeIr) -> String {
@@ -150,12 +161,17 @@ pub fn build_model(ir: &ConfigIr, backend: &impl LanguageBackend) -> Result<Code
         .enums
         .iter()
         .map(|item| CodegenEnum {
-            name: item.name.clone(),
-            snake_name: item.name.to_snake_case(),
+            name: backend.type_identifier(&item.name),
+            snake_name: backend.module_name(&item.name),
             atom_values: item
                 .values
                 .iter()
                 .map(|value| value.to_snake_case())
+                .collect(),
+            value_names: item
+                .values
+                .iter()
+                .map(|value| backend.enum_value_name(value))
                 .collect(),
             values: item.values.clone(),
         })
@@ -195,7 +211,7 @@ pub fn build_model(ir: &ConfigIr, backend: &impl LanguageBackend) -> Result<Code
 
     let modules = enums
         .iter()
-        .map(|item| item.name.to_snake_case())
+        .map(|item| item.snake_name.clone())
         .chain(records.iter().map(|item| item.snake_name.clone()))
         .chain(unions.iter().map(|item| item.snake_name.clone()))
         .collect();
@@ -235,10 +251,11 @@ fn build_union(
         .iter()
         .map(|variant| {
             for field in &variant.fields {
-                collect_type_imports(ir, &item.name, &field.ty, &mut imports);
+                collect_type_imports(ir, backend, &item.name, &field.ty, &mut imports);
             }
             Ok(CodegenUnionVariant {
-                name: variant.name.to_pascal_case(),
+                raw_name: variant.name.clone(),
+                name: backend.type_identifier(&variant.name),
                 snake_name: variant.name.to_snake_case(),
                 reader_var: format!("Reader{}", variant.fields.len() + 1),
                 fields: variant
@@ -255,8 +272,8 @@ fn build_union(
 
     Ok(CodegenUnion {
         name: item.name.clone(),
-        pascal_name: item.name.to_pascal_case(),
-        snake_name: item.name.to_snake_case(),
+        pascal_name: backend.type_identifier(&item.name),
+        snake_name: backend.module_name(&item.name),
         tag: item.tag.clone(),
         variants,
         imports,
@@ -268,9 +285,9 @@ fn build_table(
     backend: &impl LanguageBackend,
     table: &TableIr,
 ) -> Result<CodegenTable> {
-    let pascal_name = table.name.to_pascal_case();
+    let pascal_name = backend.type_identifier(&table.name);
     let camel_name = table.name.to_lower_camel_case();
-    let snake_name = table.name.to_snake_case();
+    let snake_name = backend.module_name(&table.name);
     let parts = TableNameParts {
         name: &table.name,
         pascal_name: &pascal_name,
@@ -352,7 +369,7 @@ fn build_index(
         camel_name: index.name.to_lower_camel_case(),
         method_name: format!("get_{}", index.name.to_snake_case()),
         field_name: backend.field_name(&field.name),
-        param_name: field.name.to_snake_case(),
+        param_name: backend.field_name(&field.name),
         param_camel_name: field.name.to_lower_camel_case(),
         param_var_name: field.name.to_pascal_case(),
         param_type: backend.key_param_type(ir, &field.ty),
@@ -374,11 +391,11 @@ fn build_record(
 
     Ok(CodegenRecord {
         name: item.name.to_owned(),
-        pascal_name: item.name.to_pascal_case(),
-        snake_name: item.name.to_snake_case(),
+        pascal_name: backend.type_identifier(item.name),
+        snake_name: backend.module_name(item.name),
         camel_name: item.name.to_lower_camel_case(),
         reader_var: format!("Reader{}", fields.len()),
-        imports: build_imports(ir, item),
+        imports: build_imports(ir, backend, item),
         fields,
     })
 }
@@ -395,10 +412,14 @@ fn build_field(ir: &ConfigIr, backend: &impl LanguageBackend, field: &FieldIr) -
     }
 }
 
-fn build_imports(ir: &ConfigIr, item: &TableLike<'_>) -> Vec<CodegenImport> {
+fn build_imports(
+    ir: &ConfigIr,
+    backend: &impl LanguageBackend,
+    item: &TableLike<'_>,
+) -> Vec<CodegenImport> {
     let mut imports = Vec::new();
     for field in item.fields {
-        collect_type_imports(ir, item.name, &field.ty, &mut imports);
+        collect_type_imports(ir, backend, item.name, &field.ty, &mut imports);
     }
     imports.sort_by(|a, b| a.module.cmp(&b.module).then(a.name.cmp(&b.name)));
     imports.dedup_by(|a, b| a.module == b.module && a.name == b.name);
@@ -407,18 +428,21 @@ fn build_imports(ir: &ConfigIr, item: &TableLike<'_>) -> Vec<CodegenImport> {
 
 fn collect_type_imports(
     ir: &ConfigIr,
+    backend: &impl LanguageBackend,
     owner_name: &str,
     ty: &TypeIr,
     imports: &mut Vec<CodegenImport>,
 ) {
     match ty {
         TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => {
-            push_named_import(owner_name, name, imports)
+            push_named_import(backend, owner_name, name, imports)
         }
         TypeIr::List(element) | TypeIr::Optional(element) => {
-            collect_type_imports(ir, owner_name, element, imports);
+            collect_type_imports(ir, backend, owner_name, element, imports);
         }
-        TypeIr::Array { element, .. } => collect_type_imports(ir, owner_name, element, imports),
+        TypeIr::Array { element, .. } => {
+            collect_type_imports(ir, backend, owner_name, element, imports);
+        }
         TypeIr::Ref { table, field } => {
             if let Some(target_field) = ir
                 .tables
@@ -431,20 +455,25 @@ fn collect_type_imports(
                         .find(|candidate| candidate.name == *field)
                 })
             {
-                collect_type_imports(ir, owner_name, &target_field.ty, imports);
+                collect_type_imports(ir, backend, owner_name, &target_field.ty, imports);
             }
         }
         _ => {}
     }
 }
 
-fn push_named_import(owner_name: &str, name: &str, imports: &mut Vec<CodegenImport>) {
+fn push_named_import(
+    backend: &impl LanguageBackend,
+    owner_name: &str,
+    name: &str,
+    imports: &mut Vec<CodegenImport>,
+) {
     if name == owner_name {
         return;
     }
     imports.push(CodegenImport {
-        module: name.to_snake_case(),
-        name: name.to_pascal_case(),
+        module: backend.module_name(name),
+        name: backend.type_identifier(name),
     });
 }
 

@@ -1,0 +1,34 @@
+from __future__ import annotations
+
+from dataclasses import dataclass
+from typing import TYPE_CHECKING
+
+from .sora_runtime import SoraReader
+
+
+if TYPE_CHECKING:
+    from .event_condition import EventCondition
+    from .reward_action import RewardAction
+
+
+@dataclass(frozen=True, slots=True)
+class EventRule:
+    id: int
+    name: str
+    condition: EventCondition
+    actions: list[RewardAction]
+
+    @staticmethod
+    def decode(reader: SoraReader) -> EventRule:
+        from .event_condition import EventCondition
+        from .reward_action import RewardAction
+        id = reader.read_i32()
+        name = reader.read_string()
+        condition = EventCondition.decode(reader)
+        actions = reader.read_list(lambda: RewardAction.decode(reader))
+        return EventRule(
+            id=id,
+            name=name,
+            condition=condition,
+            actions=actions,
+        )

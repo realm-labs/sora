@@ -32,6 +32,7 @@ pub struct CodegenIr {
     pub javascript: JavaScriptCodegenIr,
     pub erlang: ErlangCodegenIr,
     pub lua: LuaCodegenIr,
+    pub python: LanguageCodegenIr,
 }
 
 impl CodegenIr {

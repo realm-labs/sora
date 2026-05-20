@@ -1,0 +1,85 @@
+from __future__ import annotations
+
+from dataclasses import dataclass
+from typing import TYPE_CHECKING, ClassVar
+
+from .sora_runtime import SoraReadError, SoraReader
+
+
+if TYPE_CHECKING:
+    pass
+
+
+class RewardAction:
+    @staticmethod
+    def decode(reader: SoraReader) -> RewardAction:
+        ordinal = reader.read_u32()
+        if ordinal == 0:
+            return RewardActionAddItem.decode_payload(reader)
+        if ordinal == 1:
+            return RewardActionAddBuff.decode_payload(reader)
+        if ordinal == 2:
+            return RewardActionUnlockStage.decode_payload(reader)
+        if ordinal == 3:
+            return RewardActionSendMail.decode_payload(reader)
+        raise SoraReadError(f"invalid union ordinal {ordinal} for RewardAction")
+
+
+
+@dataclass(frozen=True, slots=True)
+class RewardActionAddItem(RewardAction):
+    type: ClassVar[str] = "AddItem"
+    item_id: int
+    count: int
+
+    @staticmethod
+    def decode_payload(reader: SoraReader) -> RewardActionAddItem:
+        item_id = reader.read_i32()
+        count = reader.read_i32()
+        return RewardActionAddItem(
+            item_id=item_id,
+            count=count,
+        )
+
+
+@dataclass(frozen=True, slots=True)
+class RewardActionAddBuff(RewardAction):
+    type: ClassVar[str] = "AddBuff"
+    buff_id: int
+    duration: float
+
+    @staticmethod
+    def decode_payload(reader: SoraReader) -> RewardActionAddBuff:
+        buff_id = reader.read_i32()
+        duration = reader.read_f32()
+        return RewardActionAddBuff(
+            buff_id=buff_id,
+            duration=duration,
+        )
+
+
+@dataclass(frozen=True, slots=True)
+class RewardActionUnlockStage(RewardAction):
+    type: ClassVar[str] = "UnlockStage"
+    stage_id: int
+
+    @staticmethod
+    def decode_payload(reader: SoraReader) -> RewardActionUnlockStage:
+        stage_id = reader.read_i32()
+        return RewardActionUnlockStage(
+            stage_id=stage_id,
+        )
+
+
+@dataclass(frozen=True, slots=True)
+class RewardActionSendMail(RewardAction):
+    type: ClassVar[str] = "SendMail"
+    mail_id: int
+
+    @staticmethod
+    def decode_payload(reader: SoraReader) -> RewardActionSendMail:
+        mail_id = reader.read_i32()
+        return RewardActionSendMail(
+            mail_id=mail_id,
+        )
+

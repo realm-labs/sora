@@ -160,6 +160,7 @@ mod tests {
         generate_code(&input, CodegenTarget::TypeScript, &base.join("typescript")).unwrap();
         generate_code(&input, CodegenTarget::JavaScript, &base.join("javascript")).unwrap();
         generate_code(&input, CodegenTarget::Erlang, &base.join("erlang")).unwrap();
+        generate_code(&input, CodegenTarget::Python, &base.join("python")).unwrap();
         generate_code(&input, CodegenTarget::Proto, &base.join("proto")).unwrap();
         generate_excel_template(&input, &base.join("excel")).unwrap();
 
@@ -168,6 +169,8 @@ mod tests {
         assert!(base.join("typescript/item.ts").exists());
         assert!(base.join("javascript/item.js").exists());
         assert!(base.join("erlang/item.erl").exists());
+        assert!(base.join("python/item.py").exists());
+        assert!(base.join("python/sora_config.py").exists());
         assert!(base.join("proto/sora_config.proto").exists());
         assert!(base.join("excel/Item.xlsx").exists());
         assert!(base.join("schema.lock").exists());

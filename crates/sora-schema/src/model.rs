@@ -43,6 +43,8 @@ pub struct CodegenSchema {
     pub erlang: ErlangCodegenSchema,
     #[serde(default)]
     pub lua: LuaCodegenSchema,
+    #[serde(default)]
+    pub python: LanguageCodegenSchema,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]

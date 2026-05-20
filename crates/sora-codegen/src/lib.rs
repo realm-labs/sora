@@ -10,6 +10,7 @@ pub mod kotlin;
 pub mod lua;
 pub mod model;
 pub mod proto;
+pub mod python;
 mod render;
 pub mod rust;
 pub mod target;

@@ -1,0 +1,29 @@
+from __future__ import annotations
+
+from dataclasses import dataclass
+from typing import TYPE_CHECKING
+
+from .sora_runtime import SoraReader
+
+
+if TYPE_CHECKING:
+    from .resource_cost import ResourceCost
+
+
+@dataclass(frozen=True, slots=True)
+class GachaPool:
+    id: int
+    name: str
+    cost: ResourceCost
+
+    @staticmethod
+    def decode(reader: SoraReader) -> GachaPool:
+        from .resource_cost import ResourceCost
+        id = reader.read_i32()
+        name = reader.read_string()
+        cost = ResourceCost.decode(reader)
+        return GachaPool(
+            id=id,
+            name=name,
+            cost=cost,
+        )

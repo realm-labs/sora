@@ -1,0 +1,32 @@
+from __future__ import annotations
+
+from dataclasses import dataclass
+from typing import TYPE_CHECKING
+
+from .sora_runtime import SoraReader
+
+
+if TYPE_CHECKING:
+    from .rarity import Rarity
+
+
+@dataclass(frozen=True, slots=True)
+class GachaItem:
+    pool_id: int
+    item_id: int
+    rarity: Rarity
+    weight: float
+
+    @staticmethod
+    def decode(reader: SoraReader) -> GachaItem:
+        from .rarity import Rarity
+        pool_id = reader.read_i32()
+        item_id = reader.read_i32()
+        rarity = Rarity.decode(reader)
+        weight = reader.read_f32()
+        return GachaItem(
+            pool_id=pool_id,
+            item_id=item_id,
+            rarity=rarity,
+            weight=weight,
+        )

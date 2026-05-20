@@ -1,0 +1,29 @@
+from __future__ import annotations
+
+from dataclasses import dataclass
+from typing import TYPE_CHECKING
+
+from .sora_runtime import SoraReader
+
+
+if TYPE_CHECKING:
+    from .resource_kind import ResourceKind
+
+
+@dataclass(frozen=True, slots=True)
+class Shop:
+    id: int
+    name: str
+    currency: ResourceKind
+
+    @staticmethod
+    def decode(reader: SoraReader) -> Shop:
+        from .resource_kind import ResourceKind
+        id = reader.read_i32()
+        name = reader.read_string()
+        currency = ResourceKind.decode(reader)
+        return Shop(
+            id=id,
+            name=name,
+            currency=currency,
+        )

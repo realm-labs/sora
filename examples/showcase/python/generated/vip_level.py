@@ -1,0 +1,29 @@
+from __future__ import annotations
+
+from dataclasses import dataclass
+from typing import TYPE_CHECKING
+
+from .sora_runtime import SoraReader
+
+
+if TYPE_CHECKING:
+    from .resource_cost import ResourceCost
+
+
+@dataclass(frozen=True, slots=True)
+class VipLevel:
+    level: int
+    cost: ResourceCost
+    perks: list[str]
+
+    @staticmethod
+    def decode(reader: SoraReader) -> VipLevel:
+        from .resource_cost import ResourceCost
+        level = reader.read_i32()
+        cost = ResourceCost.decode(reader)
+        perks = reader.read_list(lambda: reader.read_string())
+        return VipLevel(
+            level=level,
+            cost=cost,
+            perks=perks,
+        )

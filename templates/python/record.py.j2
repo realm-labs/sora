@@ -1,0 +1,43 @@
+from __future__ import annotations
+
+from dataclasses import dataclass
+from typing import TYPE_CHECKING
+
+from .sora_runtime import SoraReader
+
+
+if TYPE_CHECKING:
+{%- for import in record.imports %}
+    from .{{ import.module }} import {{ import.name }}
+{%- else %}
+    pass
+{%- endfor %}
+
+
+@dataclass(frozen=True, slots=True)
+class {{ record.pascal_name }}:
+{%- for field in record.fields %}
+{%- if field.comment %}
+    # {{ field.comment }}
+{%- endif %}
+    {{ field.name }}: {{ field.type_name }}
+{%- else %}
+    pass
+{%- endfor %}
+
+    @staticmethod
+    def decode(reader: SoraReader) -> {{ record.pascal_name }}:
+{%- if record.imports %}
+{%- for import in record.imports %}
+        from .{{ import.module }} import {{ import.name }}
+{%- endfor %}
+
+{%- endif %}
+{%- for field in record.fields %}
+        {{ field.name }} = {{ field.decode }}
+{%- endfor %}
+        return {{ record.pascal_name }}(
+{%- for field in record.fields %}
+            {{ field.name }}={{ field.name }},
+{%- endfor %}
+        )

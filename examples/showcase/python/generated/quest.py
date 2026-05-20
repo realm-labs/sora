@@ -1,0 +1,46 @@
+from __future__ import annotations
+
+from dataclasses import dataclass
+from typing import TYPE_CHECKING
+
+from .sora_runtime import SoraReader
+
+
+if TYPE_CHECKING:
+    from .quest_type import QuestType
+    from .reward import Reward
+    from .vec3 import Vec3
+
+
+@dataclass(frozen=True, slots=True)
+class Quest:
+    id: int
+    quest_type: QuestType
+    title: str
+    required_item: int
+    unlock_skills: list[int]
+    start_pos: Vec3
+    # Materialized from QuestReward child rows
+    rewards: list[Reward]
+
+    @staticmethod
+    def decode(reader: SoraReader) -> Quest:
+        from .quest_type import QuestType
+        from .reward import Reward
+        from .vec3 import Vec3
+        id = reader.read_i32()
+        quest_type = QuestType.decode(reader)
+        title = reader.read_string()
+        required_item = reader.read_i32()
+        unlock_skills = reader.read_list(lambda: reader.read_i32())
+        start_pos = Vec3.decode(reader)
+        rewards = reader.read_list(lambda: Reward.decode(reader))
+        return Quest(
+            id=id,
+            quest_type=quest_type,
+            title=title,
+            required_item=required_item,
+            unlock_skills=unlock_skills,
+            start_pos=start_pos,
+            rewards=rewards,
+        )

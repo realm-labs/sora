@@ -1,0 +1,25 @@
+from __future__ import annotations
+
+from enum import Enum
+
+from .sora_runtime import SoraReadError, SoraReader
+
+
+class ElementType(Enum):
+    FIRE = "Fire"
+    ICE = "Ice"
+    LIGHTNING = "Lightning"
+    PHYSICAL = "Physical"
+
+    @staticmethod
+    def decode(reader: SoraReader) -> ElementType:
+        ordinal = reader.read_u32()
+        if ordinal == 0:
+            return ElementType.FIRE
+        if ordinal == 1:
+            return ElementType.ICE
+        if ordinal == 2:
+            return ElementType.LIGHTNING
+        if ordinal == 3:
+            return ElementType.PHYSICAL
+        raise SoraReadError(f"invalid enum ordinal {ordinal} for ElementType")

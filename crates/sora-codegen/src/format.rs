@@ -95,6 +95,12 @@ impl Formatter {
                 args: &["-w"],
                 extension: "erl",
             }),
+            CodegenTarget::Python => Some(Self {
+                language: "Python",
+                command: "black",
+                args: &["--quiet"],
+                extension: "py",
+            }),
             CodegenTarget::Kotlin
             | CodegenTarget::CSharp
             | CodegenTarget::Java
@@ -190,6 +196,7 @@ impl CodegenTarget {
             CodegenTarget::Erlang => "Erlang",
             CodegenTarget::Lua => "Lua",
             CodegenTarget::Proto => "Proto",
+            CodegenTarget::Python => "Python",
         }
     }
 }
