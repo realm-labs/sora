@@ -78,20 +78,36 @@ impl std::fmt::Debug for SoraConfig {
 pub struct ItemTable {
     rows: SoraMap<i32, item::Item>,
     by_name: SoraMap<String, i32>,
+    by_item_type: SoraMap<item_type::ItemType, Vec<i32>>,
 }
 
 impl ItemTable {
     fn decode(bundle: &runtime::SoraBundle<'_>) -> Result<Self, runtime::SoraReadError> {
         let rows = bundle.decode_table::<item::Item>("Item")?;
         let by_name = build_unique_map_index(rows.iter(), |row| row.name.clone(), |row| row.id);
+        let by_item_type = build_map_index(rows.iter(), |row| row.item_type, |row| row.id);
         let rows = decode_map_table(rows, |row| row.id);
-        Ok(Self { rows, by_name })
+        Ok(Self {
+            rows,
+            by_name,
+            by_item_type,
+        })
     }
     pub fn get(&self, key: i32) -> Option<&item::Item> {
         self.rows.get(&key)
     }
     pub fn get_by_name(&self, name: &str) -> Option<&item::Item> {
         self.by_name.get(name).and_then(|key| self.rows.get(key))
+    }
+    pub fn find_by_item_type(
+        &self,
+        item_type: item_type::ItemType,
+    ) -> impl Iterator<Item = &item::Item> {
+        self.by_item_type
+            .get(&item_type)
+            .into_iter()
+            .flat_map(|keys| keys.iter())
+            .filter_map(|key| self.rows.get(key))
     }
 }
 
@@ -1579,6 +1595,21 @@ where
     K: std::cmp::Eq + std::hash::Hash,
 {
     rows.into_iter().map(|row| (key(&row), row)).collect()
+}
+fn build_map_index<'a, K, P, V: 'a>(
+    rows: impl Iterator<Item = &'a V>,
+    key: impl Fn(&V) -> K,
+    primary_key: impl Fn(&V) -> P,
+) -> SoraMap<K, Vec<P>>
+where
+    K: std::cmp::Eq + std::hash::Hash,
+    P: std::cmp::Eq + std::hash::Hash,
+{
+    let mut index: SoraMap<K, Vec<P>> = SoraMap::default();
+    for row in rows {
+        index.entry(key(row)).or_default().push(primary_key(row));
+    }
+    index
 }
 
 fn build_unique_list_index<'a, K, V: 'a>(

@@ -1,7 +1,7 @@
 {
   "version": 1,
   "package": "com.sora.showcase",
-  "fingerprint": "249bb4e5f5deb62c",
+  "fingerprint": "2add9c051d08ecd0",
   "schema": {
     "package": "com.sora.showcase",
     "enums": [
@@ -690,6 +690,13 @@
               "name"
             ],
             "unique": true
+          },
+          {
+            "name": "by_item_type",
+            "fields": [
+              "item_type"
+            ],
+            "unique": false
           }
         ]
       },

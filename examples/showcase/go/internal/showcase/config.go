@@ -18,8 +18,9 @@ type SoraTable interface {
 	Len() int
 }
 type ItemTable struct {
-	rows   map[int32]Item
-	byName map[string]Item
+	rows       map[int32]Item
+	byName     map[string]Item
+	byItemType map[ItemType][]Item
 }
 
 func decodeItemTable(bundle *SoraBundle) (*ItemTable, error) {
@@ -28,8 +29,9 @@ func decodeItemTable(bundle *SoraBundle) (*ItemTable, error) {
 		return nil, err
 	}
 	return &ItemTable{
-		rows:   DecodeMapTable(rows, func(row Item) int32 { return row.Id }),
-		byName: DecodeUniqueIndex(rows, func(row Item) string { return row.Name }),
+		rows:       DecodeMapTable(rows, func(row Item) int32 { return row.Id }),
+		byName:     DecodeUniqueIndex(rows, func(row Item) string { return row.Name }),
+		byItemType: DecodeIndex(rows, func(row Item) ItemType { return row.ItemType }),
 	}, nil
 }
 
@@ -43,6 +45,9 @@ func (table *ItemTable) Get(key int32) (Item, bool) {
 func (table *ItemTable) GetByName(name string) (Item, bool) {
 	value, ok := table.byName[name]
 	return value, ok
+}
+func (table *ItemTable) FindByItemType(itemType ItemType) []Item {
+	return table.byItemType[itemType]
 }
 func (table *ItemTable) Name() string {
 	return "Item"
@@ -1340,7 +1345,6 @@ func DecodeMapTable[K comparable, V any](rows []V, key func(V) K) map[K]V {
 	}
 	return values
 }
-
 func DecodeUniqueIndex[K comparable, V any](rows []V, key func(V) K) map[K]V {
 	values := make(map[K]V, len(rows))
 	for _, row := range rows {
@@ -1348,7 +1352,14 @@ func DecodeUniqueIndex[K comparable, V any](rows []V, key func(V) K) map[K]V {
 	}
 	return values
 }
-
+func DecodeIndex[K comparable, V any](rows []V, key func(V) K) map[K][]V {
+	values := make(map[K][]V)
+	for _, row := range rows {
+		indexKey := key(row)
+		values[indexKey] = append(values[indexKey], row)
+	}
+	return values
+}
 func RequireSingletonTable[T any](rows []T, name string) (T, error) {
 	var zero T
 	if len(rows) != 1 {

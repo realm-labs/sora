@@ -14,6 +14,9 @@ pub struct CodegenModel {
     pub has_map_tables: bool,
     pub has_singleton_tables: bool,
     pub has_unique_indexes: bool,
+    pub has_non_unique_indexes: bool,
+    pub has_non_unique_list_indexes: bool,
+    pub has_non_unique_map_indexes: bool,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -67,11 +70,12 @@ pub struct CodegenTable {
     pub key_field_name: Option<String>,
     pub key_type: Option<String>,
     pub key_is_copy: bool,
-    pub unique_indexes: Vec<CodegenUniqueIndex>,
+    pub unique_indexes: Vec<CodegenIndex>,
+    pub non_unique_indexes: Vec<CodegenIndex>,
 }
 
 #[derive(Debug, Clone, Serialize)]
-pub struct CodegenUniqueIndex {
+pub struct CodegenIndex {
     pub name: String,
     pub pascal_name: String,
     pub camel_name: String,
@@ -112,6 +116,14 @@ pub trait LanguageBackend {
 
     fn key_param_type(&self, ir: &ConfigIr, ty: &TypeIr) -> String {
         self.type_name(ir, ty)
+    }
+
+    fn table_key_type(&self, ir: &ConfigIr, ty: &TypeIr) -> String {
+        self.type_name(ir, ty)
+    }
+
+    fn index_key_type(&self, ir: &ConfigIr, ty: &TypeIr) -> String {
+        self.table_key_type(ir, ty)
     }
 }
 
@@ -181,6 +193,15 @@ pub fn build_model(ir: &ConfigIr, backend: &impl LanguageBackend) -> Result<Code
             .any(|table| table.mode == "map" && table.key_field_name.is_some()),
         has_singleton_tables: tables.iter().any(|table| table.mode == "singleton"),
         has_unique_indexes: tables.iter().any(|table| !table.unique_indexes.is_empty()),
+        has_non_unique_indexes: tables
+            .iter()
+            .any(|table| !table.non_unique_indexes.is_empty()),
+        has_non_unique_list_indexes: tables
+            .iter()
+            .any(|table| table.mode == "list" && !table.non_unique_indexes.is_empty()),
+        has_non_unique_map_indexes: tables
+            .iter()
+            .any(|table| table.mode == "map" && !table.non_unique_indexes.is_empty()),
         tables,
         modules,
     })
@@ -246,7 +267,7 @@ fn build_table(
             .map(|field| {
                 (
                     backend.field_name(&field.name),
-                    backend.type_name(ir, &field.ty),
+                    backend.table_key_type(ir, &field.ty),
                     backend.key_is_copy(ir, &field.ty),
                 )
             })
@@ -260,7 +281,14 @@ fn build_table(
     let unique_indexes = table
         .indexes
         .iter()
-        .filter_map(|index| build_unique_index(ir, backend, table, index))
+        .filter(|index| index.unique)
+        .filter_map(|index| build_index(ir, backend, table, index))
+        .collect::<Vec<_>>();
+    let non_unique_indexes = table
+        .indexes
+        .iter()
+        .filter(|index| !index.unique)
+        .filter_map(|index| build_index(ir, backend, table, index))
         .collect::<Vec<_>>();
 
     Ok(CodegenTable {
@@ -281,16 +309,17 @@ fn build_table(
         key_type: key_field.as_ref().map(|(_, ty, _)| ty.clone()),
         key_is_copy: key_field.as_ref().is_some_and(|(_, _, is_copy)| *is_copy),
         unique_indexes,
+        non_unique_indexes,
     })
 }
 
-fn build_unique_index(
+fn build_index(
     ir: &ConfigIr,
     backend: &impl LanguageBackend,
     table: &TableIr,
     index: &IndexIr,
-) -> Option<CodegenUniqueIndex> {
-    if !index.unique || index.fields.len() != 1 || table.mode == TableModeIr::Singleton {
+) -> Option<CodegenIndex> {
+    if index.fields.len() != 1 || table.mode == TableModeIr::Singleton {
         return None;
     }
 
@@ -298,7 +327,7 @@ fn build_unique_index(
         .fields
         .iter()
         .find(|field| field.name == index.fields[0])?;
-    Some(CodegenUniqueIndex {
+    Some(CodegenIndex {
         name: index.name.to_snake_case(),
         pascal_name: index.name.to_pascal_case(),
         camel_name: index.name.to_lower_camel_case(),
@@ -307,7 +336,7 @@ fn build_unique_index(
         param_name: field.name.to_snake_case(),
         param_camel_name: field.name.to_lower_camel_case(),
         param_type: backend.key_param_type(ir, &field.ty),
-        key_type: backend.type_name(ir, &field.ty),
+        key_type: backend.index_key_type(ir, &field.ty),
         key_is_copy: backend.key_is_copy(ir, &field.ty),
     })
 }

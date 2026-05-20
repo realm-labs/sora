@@ -18,6 +18,7 @@ internal static class Program
         Check(sword.Name == "Iron Sword");
         Check(swordByName.Id == 1001);
         Check(sword.ItemType == ItemType.Weapon);
+        Check(config.Item.FindByItemType(ItemType.Weapon).Any(item => item.Id == sword.Id));
         Check(quest.Title == "First Trial");
         Check(quest.QuestType == QuestType.Main);
         Check(quest.Rewards.Count == 2);

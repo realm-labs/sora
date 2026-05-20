@@ -50,15 +50,37 @@ pub struct {{ table.pascal_name }}Table {
     {{ index.name }}: SoraMap<{{ index.key_type }}, usize>,
 {%- endif %}
 {%- endfor %}
+{%- for index in table.non_unique_indexes %}
+{%- if table.mode == "map" %}
+    {{ index.name }}: SoraMap<{{ index.key_type }}, Vec<{{ table.key_type }}>>,
+{%- else %}
+    {{ index.name }}: SoraMap<{{ index.key_type }}, Vec<usize>>,
+{%- endif %}
+{%- endfor %}
 }
 
 impl {{ table.pascal_name }}Table {
     fn decode(bundle: &runtime::SoraBundle<'_>) -> Result<Self, runtime::SoraReadError> {
 {%- if table.mode == "map" and table.key_field_name %}
-{%- if table.unique_indexes %}
+{%- if table.unique_indexes or table.non_unique_indexes %}
         let rows = bundle.decode_table::<{{ table.row_type }}>("{{ table.name }}")?;
 {%- for index in table.unique_indexes %}
         let {{ index.name }} = build_unique_map_index(
+            rows.iter(),
+{%- if index.key_is_copy %}
+            |row| row.{{ index.field_name }},
+{%- else %}
+            |row| row.{{ index.field_name }}.clone(),
+{%- endif %}
+{%- if table.key_is_copy %}
+            |row| row.{{ table.key_field_name }},
+{%- else %}
+            |row| row.{{ table.key_field_name }}.clone(),
+{%- endif %}
+        );
+{%- endfor %}
+{%- for index in table.non_unique_indexes %}
+        let {{ index.name }} = build_map_index(
             rows.iter(),
 {%- if index.key_is_copy %}
             |row| row.{{ index.field_name }},
@@ -78,6 +100,9 @@ impl {{ table.pascal_name }}Table {
 {%- for index in table.unique_indexes %}
             {{ index.name }},
 {%- endfor %}
+{%- for index in table.non_unique_indexes %}
+            {{ index.name }},
+{%- endfor %}
         })
 {%- else %}
 {%- if table.key_is_copy %}
@@ -89,7 +114,7 @@ impl {{ table.pascal_name }}Table {
 {%- elif table.mode == "singleton" %}
         Ok(Self { rows: decode_singleton_table(bundle.decode_table::<{{ table.row_type }}>("{{ table.name }}")?, "{{ table.name }}")? })
 {%- else %}
-{%- if table.unique_indexes %}
+{%- if table.unique_indexes or table.non_unique_indexes %}
         let rows = bundle.decode_table::<{{ table.row_type }}>("{{ table.name }}")?;
 {%- for index in table.unique_indexes %}
         let {{ index.name }} = build_unique_list_index(
@@ -101,9 +126,22 @@ impl {{ table.pascal_name }}Table {
 {%- endif %}
         );
 {%- endfor %}
+{%- for index in table.non_unique_indexes %}
+        let {{ index.name }} = build_list_index(
+            rows.iter(),
+{%- if index.key_is_copy %}
+            |row| row.{{ index.field_name }},
+{%- else %}
+            |row| row.{{ index.field_name }}.clone(),
+{%- endif %}
+        );
+{%- endfor %}
         Ok(Self {
             rows,
 {%- for index in table.unique_indexes %}
+            {{ index.name }},
+{%- endfor %}
+{%- for index in table.non_unique_indexes %}
             {{ index.name }},
 {%- endfor %}
         })
@@ -144,6 +182,28 @@ impl {{ table.pascal_name }}Table {
         self.{{ index.name }}.get(&{{ index.param_name }}).and_then(|index| self.rows.get(*index))
 {%- else %}
         self.{{ index.name }}.get({{ index.param_name }}).and_then(|index| self.rows.get(*index))
+{%- endif %}
+{%- endif %}
+    }
+{%- endfor %}
+{%- for index in table.non_unique_indexes %}
+
+{%- if index.key_is_copy %}
+    pub fn find_{{ index.name }}(&self, {{ index.param_name }}: {{ index.key_type }}) -> impl Iterator<Item = &{{ table.row_type }}> {
+{%- else %}
+    pub fn find_{{ index.name }}(&self, {{ index.param_name }}: &{{ index.param_type }}) -> impl Iterator<Item = &{{ table.row_type }}> {
+{%- endif %}
+{%- if table.mode == "map" %}
+{%- if index.key_is_copy %}
+        self.{{ index.name }}.get(&{{ index.param_name }}).into_iter().flat_map(|keys| keys.iter()).filter_map(|key| self.rows.get(key))
+{%- else %}
+        self.{{ index.name }}.get({{ index.param_name }}).into_iter().flat_map(|keys| keys.iter()).filter_map(|key| self.rows.get(key))
+{%- endif %}
+{%- else %}
+{%- if index.key_is_copy %}
+        self.{{ index.name }}.get(&{{ index.param_name }}).into_iter().flat_map(|indexes| indexes.iter()).filter_map(|index| self.rows.get(*index))
+{%- else %}
+        self.{{ index.name }}.get({{ index.param_name }}).into_iter().flat_map(|indexes| indexes.iter()).filter_map(|index| self.rows.get(*index))
 {%- endif %}
 {%- endif %}
     }
@@ -251,6 +311,41 @@ where
     K: std::cmp::Eq + std::hash::Hash,
 {
     rows.into_iter().map(|row| (key(&row), row)).collect()
+}
+{%- endif %}
+
+{%- if model.has_non_unique_list_indexes %}
+
+fn build_list_index<'a, K, V: 'a>(
+    rows: impl Iterator<Item = &'a V>,
+    key: impl Fn(&V) -> K,
+) -> SoraMap<K, Vec<usize>>
+where
+    K: std::cmp::Eq + std::hash::Hash,
+{
+    let mut index: SoraMap<K, Vec<usize>> = SoraMap::default();
+    for (position, row) in rows.enumerate() {
+        index.entry(key(row)).or_default().push(position);
+    }
+    index
+}
+{%- endif %}
+
+{%- if model.has_non_unique_map_indexes %}
+fn build_map_index<'a, K, P, V: 'a>(
+    rows: impl Iterator<Item = &'a V>,
+    key: impl Fn(&V) -> K,
+    primary_key: impl Fn(&V) -> P,
+) -> SoraMap<K, Vec<P>>
+where
+    K: std::cmp::Eq + std::hash::Hash,
+    P: std::cmp::Eq + std::hash::Hash,
+{
+    let mut index: SoraMap<K, Vec<P>> = SoraMap::default();
+    for row in rows {
+        index.entry(key(row)).or_default().push(primary_key(row));
+    }
+    index
 }
 {%- endif %}
 

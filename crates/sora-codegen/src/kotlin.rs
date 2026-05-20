@@ -221,6 +221,7 @@ mod tests {
         assert!(rust_mod.contains("pub struct ItemTable"));
         assert!(rust_mod.contains("rows: SoraMap<i32, item::Item>"));
         assert!(rust_mod.contains("by_name: SoraMap<String, i32>"));
+        assert!(rust_mod.contains("by_item_type: SoraMap<item_type::ItemType, Vec<i32>>"));
         assert!(rust_mod.contains("impl SoraTable for ItemTable"));
         assert!(rust_mod.contains("fn key(&self) -> Option<&'static str>"));
         assert!(rust_mod.contains("Some(\"id\")"));
@@ -231,6 +232,7 @@ mod tests {
         );
         assert!(rust_mod.contains("|row| row.id"));
         assert!(rust_mod.contains("|row| row.name.clone()"));
+        assert!(rust_mod.contains("|row| row.item_type"));
         assert!(
             rust_mod.contains("fn table<T: SoraTable + 'static>(&self, name: &'static str) -> &T")
         );
@@ -240,6 +242,9 @@ mod tests {
         assert!(rust_mod.contains("pub fn item(&self) -> &ItemTable"));
         assert!(rust_mod.contains("pub fn get(&self, key: i32) -> Option<&item::Item>"));
         assert!(rust_mod.contains("pub fn get_by_name(&self, name: &str) -> Option<&item::Item>"));
+        assert!(rust_mod.contains(
+                "pub fn find_by_item_type(&self, item_type: item_type::ItemType) -> impl Iterator<Item = &item::Item>"
+        ));
         assert!(!rust_mod.contains("pub fn get_item"));
         assert!(!rust_mod.contains("pub fn iter_item"));
         assert!(!rust_mod.contains("decode_singleton_table"));
@@ -255,10 +260,14 @@ mod tests {
         assert!(kotlin_config.contains("data class SoraConfig"));
         assert!(kotlin_config.contains("val item: Map<Int, Item>"));
         assert!(kotlin_config.contains("private val itemByName: Map<String, Item>"));
+        assert!(kotlin_config.contains("private val itemByItemType: Map<ItemType, List<Item>>"));
         assert!(kotlin_config.contains("fun getItem(key: Int): Item? = item[key]"));
         assert!(
             kotlin_config.contains("fun getItemByName(name: String): Item? = itemByName[name]")
         );
+        assert!(kotlin_config.contains(
+            "fun findItemByItemType(itemType: ItemType): List<Item> = itemByItemType[itemType].orEmpty()"
+        ));
         assert!(kotlin_config.contains("fun itemValues(): Collection<Item> = item.values"));
         assert!(kotlin_config.contains("fun fromBytes(bytes: ByteArray): SoraConfig"));
 
@@ -367,19 +376,31 @@ mod tests {
         assert!(csharp_config.contains("public sealed class SoraConfig"));
         assert!(csharp_config.contains("Dictionary<int, Item>"));
         assert!(csharp_config.contains("private readonly Dictionary<string, Item> byName"));
+        assert!(
+            csharp_config.contains("private readonly Dictionary<ItemType, List<Item>> byItemType")
+        );
         assert!(csharp_config.contains("public Item? GetByName(string name)"));
+        assert!(
+            csharp_config.contains("public IReadOnlyList<Item> FindByItemType(ItemType itemType)")
+        );
         assert!(java_item.contains("package com.sora.game_config;"));
         assert!(java_item.contains("public final class Item"));
         assert!(java_config.contains("public final class SoraConfig"));
         assert!(java_config.contains("java.util.Map<Integer, Item>"));
         assert!(java_config.contains("private final Map<String, Item> byName"));
+        assert!(java_config.contains("private final Map<ItemType, List<Item>> byItemType"));
         assert!(java_config.contains("public Item getByName(String name)"));
+        assert!(java_config.contains("public List<Item> findByItemType(ItemType itemType)"));
         assert!(go_item.contains("package game_config"));
         assert!(go_item.contains("type Item struct"));
         assert!(go_config.contains("type SoraConfig struct"));
         assert!(go_config.contains("map[int32]Item"));
         assert!(go_config.contains("byName map[string]Item"));
+        assert!(go_config.contains("byItemType map[ItemType][]Item"));
         assert!(go_config.contains("func (table *ItemTable) GetByName(name string) (Item, bool)"));
+        assert!(
+            go_config.contains("func (table *ItemTable) FindByItemType(itemType ItemType) []Item")
+        );
 
         let _ = std::fs::remove_dir_all(base);
     }
@@ -437,6 +458,10 @@ comment = "Action"
 name = "by_name"
 fields = ["name"]
 unique = true
+
+[[tables.indexes]]
+name = "by_item_type"
+fields = ["item_type"]
 "#,
         )
         .unwrap();

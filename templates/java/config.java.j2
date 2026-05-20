@@ -27,22 +27,31 @@ final class {{ table.pascal_name }}Table implements SoraTable {
 {%- for index in table.unique_indexes %}
     private final Map<{{ index.key_type }}, {{ table.row_type }}> {{ index.camel_name }};
 {%- endfor %}
+{%- for index in table.non_unique_indexes %}
+    private final Map<{{ index.key_type }}, List<{{ table.row_type }}>> {{ index.camel_name }};
+{%- endfor %}
 
-    private {{ table.pascal_name }}Table({{ table.container_type }} rows{%- for index in table.unique_indexes %}, Map<{{ index.key_type }}, {{ table.row_type }}> {{ index.camel_name }}{%- endfor %}) {
+    private {{ table.pascal_name }}Table({{ table.container_type }} rows{%- for index in table.unique_indexes %}, Map<{{ index.key_type }}, {{ table.row_type }}> {{ index.camel_name }}{%- endfor %}{%- for index in table.non_unique_indexes %}, Map<{{ index.key_type }}, List<{{ table.row_type }}>> {{ index.camel_name }}{%- endfor %}) {
         this.rows = rows;
 {%- for index in table.unique_indexes %}
+        this.{{ index.camel_name }} = {{ index.camel_name }};
+{%- endfor %}
+{%- for index in table.non_unique_indexes %}
         this.{{ index.camel_name }} = {{ index.camel_name }};
 {%- endfor %}
     }
 
     static {{ table.pascal_name }}Table decode(SoraBundle bundle) {
 {%- if table.mode == "map" and table.key_field_name %}
-{%- if table.unique_indexes %}
+{%- if table.unique_indexes or table.non_unique_indexes %}
         var rows = bundle.decodeTable("{{ table.name }}", {{ table.row_type }}::decode);
         return new {{ table.pascal_name }}Table(
-            SoraConfig.decodeMapTable(rows, row -> row.{{ table.key_field_name }}),
+            SoraConfig.decodeMapTable(rows, row -> row.{{ table.key_field_name }}){% if table.unique_indexes or table.non_unique_indexes %},{% endif %}
 {%- for index in table.unique_indexes %}
-            SoraConfig.decodeUniqueIndex(rows, row -> row.{{ index.field_name }}){% if not loop.last %},{% endif %}
+            SoraConfig.decodeUniqueIndex(rows, row -> row.{{ index.field_name }}){% if not loop.last or table.non_unique_indexes %},{% endif %}
+{%- endfor %}
+{%- for index in table.non_unique_indexes %}
+            SoraConfig.decodeIndex(rows, row -> row.{{ index.field_name }}){% if not loop.last %},{% endif %}
 {%- endfor %}
         );
 {%- else %}
@@ -51,12 +60,15 @@ final class {{ table.pascal_name }}Table implements SoraTable {
 {%- elif table.mode == "singleton" %}
         return new {{ table.pascal_name }}Table(SoraConfig.requireSingletonTable(bundle.decodeTable("{{ table.name }}", {{ table.row_type }}::decode), "{{ table.name }}"));
 {%- else %}
-{%- if table.unique_indexes %}
+{%- if table.unique_indexes or table.non_unique_indexes %}
         var rows = bundle.decodeTable("{{ table.name }}", {{ table.row_type }}::decode);
         return new {{ table.pascal_name }}Table(
-            rows,
+            rows{% if table.unique_indexes or table.non_unique_indexes %},{% endif %}
 {%- for index in table.unique_indexes %}
-            SoraConfig.decodeUniqueIndex(rows, row -> row.{{ index.field_name }}){% if not loop.last %},{% endif %}
+            SoraConfig.decodeUniqueIndex(rows, row -> row.{{ index.field_name }}){% if not loop.last or table.non_unique_indexes %},{% endif %}
+{%- endfor %}
+{%- for index in table.non_unique_indexes %}
+            SoraConfig.decodeIndex(rows, row -> row.{{ index.field_name }}){% if not loop.last %},{% endif %}
 {%- endfor %}
         );
 {%- else %}
@@ -78,6 +90,12 @@ final class {{ table.pascal_name }}Table implements SoraTable {
 {%- for index in table.unique_indexes %}
     public {{ table.row_type }} get{{ index.pascal_name }}({{ index.key_type }} {{ index.param_camel_name }}) {
         return {{ index.camel_name }}.get({{ index.param_camel_name }});
+    }
+
+{%- endfor %}
+{%- for index in table.non_unique_indexes %}
+    public List<{{ table.row_type }}> find{{ index.pascal_name }}({{ index.key_type }} {{ index.param_camel_name }}) {
+        return {{ index.camel_name }}.getOrDefault({{ index.param_camel_name }}, List.of());
     }
 
 {%- endfor %}
@@ -169,6 +187,16 @@ public final class SoraConfig {
         var map = new HashMap<K, V>(rows.size());
         for (var row : rows) {
             map.put(key.apply(row), row);
+        }
+        return map;
+    }
+
+{%- endif %}
+{%- if model.has_non_unique_indexes %}
+    static <K, V> Map<K, List<V>> decodeIndex(List<V> rows, Function<V, K> key) {
+        var map = new HashMap<K, List<V>>();
+        for (var row : rows) {
+            map.computeIfAbsent(key.apply(row), ignored -> new java.util.ArrayList<>()).add(row);
         }
         return map;
     }

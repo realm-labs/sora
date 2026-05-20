@@ -255,6 +255,10 @@ name = "by_name"
 fields = ["name"]
 unique = true
 
+[[tables.indexes]]
+name = "by_item_type"
+fields = ["item_type"]
+
 [[tables]]
 name = "Skill"
 mode = "map"

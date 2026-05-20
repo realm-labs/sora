@@ -24,6 +24,9 @@ type {{ table.pascal_name }}Table struct {
 {%- for index in table.unique_indexes %}
     {{ index.camel_name }} map[{{ index.key_type }}]{{ table.row_type }}
 {%- endfor %}
+{%- for index in table.non_unique_indexes %}
+    {{ index.camel_name }} map[{{ index.key_type }}][]{{ table.row_type }}
+{%- endfor %}
 }
 
 func decode{{ table.pascal_name }}Table(bundle *SoraBundle) (*{{ table.pascal_name }}Table, error) {
@@ -32,11 +35,14 @@ func decode{{ table.pascal_name }}Table(bundle *SoraBundle) (*{{ table.pascal_na
         return nil, err
     }
 {%- if table.mode == "map" and table.key_field_name %}
-{%- if table.unique_indexes %}
+{%- if table.unique_indexes or table.non_unique_indexes %}
     return &{{ table.pascal_name }}Table{
         rows: DecodeMapTable(rows, func(row {{ table.row_type }}) {{ table.key_type }} { return row.{{ table.key_field_name }} }),
 {%- for index in table.unique_indexes %}
         {{ index.camel_name }}: DecodeUniqueIndex(rows, func(row {{ table.row_type }}) {{ index.key_type }} { return row.{{ index.field_name }} }),
+{%- endfor %}
+{%- for index in table.non_unique_indexes %}
+        {{ index.camel_name }}: DecodeIndex(rows, func(row {{ table.row_type }}) {{ index.key_type }} { return row.{{ index.field_name }} }),
 {%- endfor %}
     }, nil
 {%- else %}
@@ -49,11 +55,14 @@ func decode{{ table.pascal_name }}Table(bundle *SoraBundle) (*{{ table.pascal_na
     }
     return &{{ table.pascal_name }}Table{rows: row}, nil
 {%- else %}
-{%- if table.unique_indexes %}
+{%- if table.unique_indexes or table.non_unique_indexes %}
     return &{{ table.pascal_name }}Table{
         rows: rows,
 {%- for index in table.unique_indexes %}
         {{ index.camel_name }}: DecodeUniqueIndex(rows, func(row {{ table.row_type }}) {{ index.key_type }} { return row.{{ index.field_name }} }),
+{%- endfor %}
+{%- for index in table.non_unique_indexes %}
+        {{ index.camel_name }}: DecodeIndex(rows, func(row {{ table.row_type }}) {{ index.key_type }} { return row.{{ index.field_name }} }),
 {%- endfor %}
     }, nil
 {%- else %}
@@ -77,6 +86,12 @@ func (table *{{ table.pascal_name }}Table) Get(key {{ table.key_type }}) ({{ tab
 func (table *{{ table.pascal_name }}Table) Get{{ index.pascal_name }}({{ index.param_camel_name }} {{ index.key_type }}) ({{ table.row_type }}, bool) {
     value, ok := table.{{ index.camel_name }}[{{ index.param_camel_name }}]
     return value, ok
+}
+
+{%- endfor %}
+{%- for index in table.non_unique_indexes %}
+func (table *{{ table.pascal_name }}Table) Find{{ index.pascal_name }}({{ index.param_camel_name }} {{ index.key_type }}) []{{ table.row_type }} {
+    return table.{{ index.camel_name }}[{{ index.param_camel_name }}]
 }
 
 {%- endfor %}
@@ -162,6 +177,17 @@ func DecodeUniqueIndex[K comparable, V any](rows []V, key func(V) K) map[K]V {
     values := make(map[K]V, len(rows))
     for _, row := range rows {
         values[key(row)] = row
+    }
+    return values
+}
+
+{%- endif %}
+{%- if model.has_non_unique_indexes %}
+func DecodeIndex[K comparable, V any](rows []V, key func(V) K) map[K][]V {
+    values := make(map[K][]V)
+    for _, row := range rows {
+        indexKey := key(row)
+        values[indexKey] = append(values[indexKey], row)
     }
     return values
 }

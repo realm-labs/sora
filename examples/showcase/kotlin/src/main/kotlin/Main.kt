@@ -13,6 +13,7 @@ fun main() {
     check(sword.name == "Iron Sword")
     check(swordByName.id == 1001)
     check(sword.itemType == ItemType.Weapon)
+    check(config.findItemByItemType(ItemType.Weapon).any { it.id == sword.id })
     check(quest.title == "First Trial")
     check(quest.questType == QuestType.Main)
     check(quest.rewards.size == 2)

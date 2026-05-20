@@ -127,11 +127,10 @@ pub fn validate_config_ir(ir: &ConfigIr) -> Result<()> {
                         field: field.clone(),
                     });
                 }
-                if index.unique
-                    && let Some(index_field) = table
-                        .fields
-                        .iter()
-                        .find(|candidate| candidate.name == *field)
+                if let Some(index_field) = table
+                    .fields
+                    .iter()
+                    .find(|candidate| candidate.name == *field)
                 {
                     validate_index_field_type(table, &index.name, index_field, &ir.tables)?;
                 }
@@ -319,7 +318,7 @@ fn validate_index_field_type(
     }
 
     Err(SoraError::InvalidSchema(format!(
-        "unique index `{}` in table `{}` field `{}` has unsupported key type `{}`",
+        "index `{}` in table `{}` field `{}` has unsupported key type `{}`",
         index_name, table.name, field.name, field.ty
     )))
 }
@@ -718,7 +717,40 @@ unique = true
         assert!(matches!(
             validate_config_ir(&bad_unique_index_type).unwrap_err(),
             SoraError::InvalidSchema(message)
-                if message.contains("unique index `by_tag`") && message.contains("unsupported key type")
+                if message.contains("index `by_tag`") && message.contains("unsupported key type")
+        ));
+
+        let bad_non_unique_index_type = example_ir(
+            r#"
+[[structs]]
+name = "Tag"
+
+[[structs.fields]]
+name = "name"
+type = "string"
+
+[[tables]]
+name = "Item"
+mode = "map"
+key = "id"
+
+[[tables.fields]]
+name = "id"
+type = "i32"
+
+[[tables.fields]]
+name = "tag"
+type = "struct<Tag>"
+
+[[tables.indexes]]
+name = "by_tag"
+fields = ["tag"]
+"#,
+        );
+        assert!(matches!(
+            validate_config_ir(&bad_non_unique_index_type).unwrap_err(),
+            SoraError::InvalidSchema(message)
+                if message.contains("index `by_tag`") && message.contains("unsupported key type")
         ));
 
         let bad_ref = example_ir(

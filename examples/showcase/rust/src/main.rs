@@ -17,6 +17,12 @@ fn main() {
     assert_eq!(sword.name, "Iron Sword");
     assert_eq!(sword_by_name.id, 1001);
     assert!(matches!(sword.item_type, ItemType::Weapon));
+    assert!(
+        config
+            .item()
+            .find_by_item_type(ItemType::Weapon)
+            .any(|item| item.id == sword.id)
+    );
     assert_eq!(flame_slash.name, "Flame Slash");
     assert_eq!(quest.title, "First Trial");
     assert!(matches!(quest.quest_type, QuestType::Main));

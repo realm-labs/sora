@@ -102,6 +102,31 @@ impl LanguageBackend for RustBackend {
             type_name
         }
     }
+
+    fn table_key_type(&self, ir: &ConfigIr, ty: &TypeIr) -> String {
+        rust_table_key_type(ir, ty)
+    }
+}
+
+fn rust_table_key_type(ir: &ConfigIr, ty: &TypeIr) -> String {
+    match ty {
+        TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => {
+            format!("{}::{}", name.to_snake_case(), rust_type_name(ir, ty))
+        }
+        TypeIr::Ref { table, field } => ir
+            .tables
+            .iter()
+            .find(|candidate| candidate.name == *table)
+            .and_then(|table| {
+                table
+                    .fields
+                    .iter()
+                    .find(|candidate| candidate.name == *field)
+            })
+            .map(|field| rust_table_key_type(ir, &field.ty))
+            .unwrap_or_else(|| rust_type_name(ir, ty)),
+        _ => rust_type_name(ir, ty),
+    }
 }
 
 fn rust_key_type_is_copy(ir: &ConfigIr, ty: &TypeIr) -> bool {

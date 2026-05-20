@@ -26,11 +26,13 @@ public sealed class ItemTable : ISoraTable
 {
     private readonly Dictionary<int, Item> rows;
     private readonly Dictionary<string, Item> byName;
+    private readonly Dictionary<ItemType, List<Item>> byItemType;
 
-    internal ItemTable(Dictionary<int, Item> rows, Dictionary<string, Item> byName)
+    internal ItemTable(Dictionary<int, Item> rows, Dictionary<string, Item> byName, Dictionary<ItemType, List<Item>> byItemType)
     {
         this.rows = rows;
         this.byName = byName;
+        this.byItemType = byItemType;
     }
 
     internal static ItemTable Decode(SoraBundle bundle)
@@ -38,7 +40,8 @@ public sealed class ItemTable : ISoraTable
         var rows = bundle.DecodeTable<Item>("Item", Item.Decode);
         return new ItemTable(
             SoraConfig.DecodeMapTable(rows, row => row.Id),
-            SoraConfig.DecodeUniqueIndex(rows, row => row.Name)
+            SoraConfig.DecodeUniqueIndex(rows, row => row.Name),
+            SoraConfig.DecodeIndex(rows, row => row.ItemType)
         );
     }
 
@@ -50,6 +53,10 @@ public sealed class ItemTable : ISoraTable
     public Item? GetByName(string name)
     {
         return byName.TryGetValue(name, out var row) ? row : default;
+    }
+    public IReadOnlyList<Item> FindByItemType(ItemType itemType)
+    {
+        return byItemType.TryGetValue(itemType, out var rows) ? rows : Array.Empty<Item>();
     }
     public string Name => "Item";
     public SoraTableMode Mode => SoraTableMode.Map;
@@ -815,13 +822,27 @@ public sealed class SoraConfig
     {
         return rows.ToDictionary(key);
     }
-
     internal static Dictionary<TKey, TValue> DecodeUniqueIndex<TKey, TValue>(List<TValue> rows, Func<TValue, TKey> key)
         where TKey : notnull
     {
         return rows.ToDictionary(key);
     }
-
+    internal static Dictionary<TKey, List<TValue>> DecodeIndex<TKey, TValue>(List<TValue> rows, Func<TValue, TKey> key)
+        where TKey : notnull
+    {
+        var index = new Dictionary<TKey, List<TValue>>();
+        foreach (var row in rows)
+        {
+            var indexKey = key(row);
+            if (!index.TryGetValue(indexKey, out var values))
+            {
+                values = new List<TValue>();
+                index[indexKey] = values;
+            }
+            values.Add(row);
+        }
+        return index;
+    }
     internal static T RequireSingletonTable<T>(List<T> rows, string name)
     {
         if (rows.Count != 1)

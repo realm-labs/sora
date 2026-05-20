@@ -15,6 +15,7 @@ public final class Main {
         check(sword.name.equals("Iron Sword"));
         check(swordByName.id == 1001);
         check(sword.itemType == ItemType.Weapon);
+        check(config.item().findByItemType(ItemType.Weapon).stream().anyMatch(item -> item.id == sword.id));
         check(quest.title.equals("First Trial"));
         check(quest.questType == QuestType.Main);
         check(quest.rewards.size() == 2);

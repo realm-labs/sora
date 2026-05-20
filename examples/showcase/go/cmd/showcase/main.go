@@ -24,6 +24,7 @@ func main() {
 	check(sword.Name == "Iron Sword")
 	check(swordByName.Id == 1001)
 	check(sword.ItemType == config.ItemTypeWeapon)
+	check(containsItem(cfg.Item().FindByItemType(config.ItemTypeWeapon), sword.Id))
 	check(quest.Title == "First Trial")
 	check(quest.QuestType == config.QuestTypeMain)
 	check(len(quest.Rewards) == 2)
@@ -61,4 +62,13 @@ func check(condition bool) {
 	if !condition {
 		panic("showcase assertion failed")
 	}
+}
+
+func containsItem(items []config.Item, id int32) bool {
+	for _, item := range items {
+		if item.Id == id {
+			return true
+		}
+	}
+	return false
 }

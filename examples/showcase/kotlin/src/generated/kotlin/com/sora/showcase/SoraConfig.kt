@@ -3,6 +3,7 @@ package com.sora.showcase
 data class SoraConfig(
     val item: Map<Int, Item>,
     private val itemByName: Map<String, Item>,
+    private val itemByItemType: Map<ItemType, List<Item>>,
     val skill: Map<Int, Skill>,
     val quest: Map<Int, Quest>,
     val quest_reward: List<QuestReward>,
@@ -36,6 +37,8 @@ data class SoraConfig(
     fun itemValues(): Collection<Item> = item.values
 
     fun getItemByName(name: String): Item? = itemByName[name]
+
+    fun findItemByItemType(itemType: ItemType): List<Item> = itemByItemType[itemType].orEmpty()
     fun getSkill(key: Int): Skill? = skill[key]
 
     fun skillValues(): Collection<Skill> = skill.values
@@ -109,6 +112,7 @@ data class SoraConfig(
             return SoraConfig(
                 item = itemRows.associateBy { it.id },
                 itemByName = itemRows.associateBy { it.name },
+                itemByItemType = itemRows.groupBy { it.itemType },
                 skill = bundle.decodeTable("Skill", Skill::decode).associateBy { it.id },
                 quest = bundle.decodeTable("Quest", Quest::decode).associateBy { it.id },
                 quest_reward = bundle.decodeTable("QuestReward", QuestReward::decode),

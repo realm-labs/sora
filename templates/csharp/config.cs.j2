@@ -30,11 +30,17 @@ public sealed class {{ table.pascal_name }}Table : ISoraTable
 {%- for index in table.unique_indexes %}
     private readonly Dictionary<{{ index.key_type }}, {{ table.row_type }}> {{ index.camel_name }};
 {%- endfor %}
+{%- for index in table.non_unique_indexes %}
+    private readonly Dictionary<{{ index.key_type }}, List<{{ table.row_type }}>> {{ index.camel_name }};
+{%- endfor %}
 
-    internal {{ table.pascal_name }}Table({{ table.container_type }} rows{%- for index in table.unique_indexes %}, Dictionary<{{ index.key_type }}, {{ table.row_type }}> {{ index.camel_name }}{%- endfor %})
+    internal {{ table.pascal_name }}Table({{ table.container_type }} rows{%- for index in table.unique_indexes %}, Dictionary<{{ index.key_type }}, {{ table.row_type }}> {{ index.camel_name }}{%- endfor %}{%- for index in table.non_unique_indexes %}, Dictionary<{{ index.key_type }}, List<{{ table.row_type }}>> {{ index.camel_name }}{%- endfor %})
     {
         this.rows = rows;
 {%- for index in table.unique_indexes %}
+        this.{{ index.camel_name }} = {{ index.camel_name }};
+{%- endfor %}
+{%- for index in table.non_unique_indexes %}
         this.{{ index.camel_name }} = {{ index.camel_name }};
 {%- endfor %}
     }
@@ -42,12 +48,15 @@ public sealed class {{ table.pascal_name }}Table : ISoraTable
     internal static {{ table.pascal_name }}Table Decode(SoraBundle bundle)
     {
 {%- if table.mode == "map" and table.key_field_name %}
-{%- if table.unique_indexes %}
+{%- if table.unique_indexes or table.non_unique_indexes %}
         var rows = bundle.DecodeTable<{{ table.row_type }}>("{{ table.name }}", {{ table.row_type }}.Decode);
         return new {{ table.pascal_name }}Table(
-            SoraConfig.DecodeMapTable(rows, row => row.{{ table.key_field_name }}),
+            SoraConfig.DecodeMapTable(rows, row => row.{{ table.key_field_name }}){% if table.unique_indexes or table.non_unique_indexes %},{% endif %}
 {%- for index in table.unique_indexes %}
-            SoraConfig.DecodeUniqueIndex(rows, row => row.{{ index.field_name }}){% if not loop.last %},{% endif %}
+            SoraConfig.DecodeUniqueIndex(rows, row => row.{{ index.field_name }}){% if not loop.last or table.non_unique_indexes %},{% endif %}
+{%- endfor %}
+{%- for index in table.non_unique_indexes %}
+            SoraConfig.DecodeIndex(rows, row => row.{{ index.field_name }}){% if not loop.last %},{% endif %}
 {%- endfor %}
         );
 {%- else %}
@@ -56,12 +65,15 @@ public sealed class {{ table.pascal_name }}Table : ISoraTable
 {%- elif table.mode == "singleton" %}
         return new {{ table.pascal_name }}Table(SoraConfig.RequireSingletonTable(bundle.DecodeTable<{{ table.row_type }}>("{{ table.name }}", {{ table.row_type }}.Decode), "{{ table.name }}"));
 {%- else %}
-{%- if table.unique_indexes %}
+{%- if table.unique_indexes or table.non_unique_indexes %}
         var rows = bundle.DecodeTable<{{ table.row_type }}>("{{ table.name }}", {{ table.row_type }}.Decode);
         return new {{ table.pascal_name }}Table(
-            rows,
+            rows{% if table.unique_indexes or table.non_unique_indexes %},{% endif %}
 {%- for index in table.unique_indexes %}
-            SoraConfig.DecodeUniqueIndex(rows, row => row.{{ index.field_name }}){% if not loop.last %},{% endif %}
+            SoraConfig.DecodeUniqueIndex(rows, row => row.{{ index.field_name }}){% if not loop.last or table.non_unique_indexes %},{% endif %}
+{%- endfor %}
+{%- for index in table.non_unique_indexes %}
+            SoraConfig.DecodeIndex(rows, row => row.{{ index.field_name }}){% if not loop.last %},{% endif %}
 {%- endfor %}
         );
 {%- else %}
@@ -83,6 +95,13 @@ public sealed class {{ table.pascal_name }}Table : ISoraTable
     public {{ table.row_type }}? Get{{ index.pascal_name }}({{ index.key_type }} {{ index.param_camel_name }})
     {
         return {{ index.camel_name }}.TryGetValue({{ index.param_camel_name }}, out var row) ? row : default;
+    }
+
+{%- endfor %}
+{%- for index in table.non_unique_indexes %}
+    public IReadOnlyList<{{ table.row_type }}> Find{{ index.pascal_name }}({{ index.key_type }} {{ index.param_camel_name }})
+    {
+        return {{ index.camel_name }}.TryGetValue({{ index.param_camel_name }}, out var rows) ? rows : Array.Empty<{{ table.row_type }}>();
     }
 
 {%- endfor %}
@@ -153,6 +172,25 @@ public sealed class SoraConfig
         where TKey : notnull
     {
         return rows.ToDictionary(key);
+    }
+
+{%- endif %}
+{%- if model.has_non_unique_indexes %}
+    internal static Dictionary<TKey, List<TValue>> DecodeIndex<TKey, TValue>(List<TValue> rows, Func<TValue, TKey> key)
+        where TKey : notnull
+    {
+        var index = new Dictionary<TKey, List<TValue>>();
+        foreach (var row in rows)
+        {
+            var indexKey = key(row);
+            if (!index.TryGetValue(indexKey, out var values))
+            {
+                values = new List<TValue>();
+                index[indexKey] = values;
+            }
+            values.Add(row);
+        }
+        return index;
     }
 
 {%- endif %}

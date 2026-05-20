@@ -23,17 +23,20 @@ interface SoraTable {
 final class ItemTable implements SoraTable {
     private final java.util.Map<Integer, Item> rows;
     private final Map<String, Item> byName;
+    private final Map<ItemType, List<Item>> byItemType;
 
-    private ItemTable(java.util.Map<Integer, Item> rows, Map<String, Item> byName) {
+    private ItemTable(java.util.Map<Integer, Item> rows, Map<String, Item> byName, Map<ItemType, List<Item>> byItemType) {
         this.rows = rows;
         this.byName = byName;
+        this.byItemType = byItemType;
     }
 
     static ItemTable decode(SoraBundle bundle) {
         var rows = bundle.decodeTable("Item", Item::decode);
         return new ItemTable(
             SoraConfig.decodeMapTable(rows, row -> row.id),
-            SoraConfig.decodeUniqueIndex(rows, row -> row.name)
+            SoraConfig.decodeUniqueIndex(rows, row -> row.name),
+            SoraConfig.decodeIndex(rows, row -> row.itemType)
         );
     }
 
@@ -45,6 +48,9 @@ final class ItemTable implements SoraTable {
     }
     public Item getByName(String name) {
         return byName.get(name);
+    }
+    public List<Item> findByItemType(ItemType itemType) {
+        return byItemType.getOrDefault(itemType, List.of());
     }
     @Override
     public String name() {
@@ -1352,7 +1358,6 @@ public final class SoraConfig {
         }
         return map;
     }
-
     static <K, V> Map<K, V> decodeUniqueIndex(List<V> rows, Function<V, K> key) {
         var map = new HashMap<K, V>(rows.size());
         for (var row : rows) {
@@ -1360,7 +1365,13 @@ public final class SoraConfig {
         }
         return map;
     }
-
+    static <K, V> Map<K, List<V>> decodeIndex(List<V> rows, Function<V, K> key) {
+        var map = new HashMap<K, List<V>>();
+        for (var row : rows) {
+            map.computeIfAbsent(key.apply(row), ignored -> new java.util.ArrayList<>()).add(row);
+        }
+        return map;
+    }
     static <T> T requireSingletonTable(List<T> rows, String name) {
         if (rows.size() != 1) {
             throw new SoraReadException("expected singleton table `" + name + "` to contain exactly 1 row, got " + rows.size());

@@ -6,6 +6,9 @@ data class SoraConfig(
 {%- for index in table.unique_indexes %}
     private val {{ table.camel_name }}{{ index.pascal_name }}: Map<{{ index.key_type }}, {{ table.row_type }}>,
 {%- endfor %}
+{%- for index in table.non_unique_indexes %}
+    private val {{ table.camel_name }}{{ index.pascal_name }}: Map<{{ index.key_type }}, List<{{ table.row_type }}>>,
+{%- endfor %}
 {%- endfor %}
 ) {
 {%- for table in model.tables %}
@@ -22,23 +25,30 @@ data class SoraConfig(
 
     fun get{{ table.pascal_name }}{{ index.pascal_name }}({{ index.param_camel_name }}: {{ index.key_type }}): {{ table.row_type }}? = {{ table.camel_name }}{{ index.pascal_name }}[{{ index.param_camel_name }}]
 {%- endfor %}
+{%- for index in table.non_unique_indexes %}
+
+    fun find{{ table.pascal_name }}{{ index.pascal_name }}({{ index.param_camel_name }}: {{ index.key_type }}): List<{{ table.row_type }}> = {{ table.camel_name }}{{ index.pascal_name }}[{{ index.param_camel_name }}].orEmpty()
+{%- endfor %}
 {%- endfor %}
 
     companion object {
         fun fromBytes(bytes: ByteArray): SoraConfig {
             val bundle = SoraBundle.parse(bytes)
 {%- for table in model.tables %}
-{%- if table.unique_indexes %}
+{%- if table.unique_indexes or table.non_unique_indexes %}
             val {{ table.camel_name }}Rows = bundle.decodeTable("{{ table.name }}", {{ table.row_type }}::decode)
 {%- endif %}
 {%- endfor %}
             return SoraConfig(
 {%- for table in model.tables %}
 {%- if table.mode == "map" and table.key_field_name %}
-{%- if table.unique_indexes %}
+{%- if table.unique_indexes or table.non_unique_indexes %}
                 {{ table.snake_name }} = {{ table.camel_name }}Rows.associateBy { it.{{ table.key_field_name }} },
 {%- for index in table.unique_indexes %}
                 {{ table.camel_name }}{{ index.pascal_name }} = {{ table.camel_name }}Rows.associateBy { it.{{ index.field_name }} },
+{%- endfor %}
+{%- for index in table.non_unique_indexes %}
+                {{ table.camel_name }}{{ index.pascal_name }} = {{ table.camel_name }}Rows.groupBy { it.{{ index.field_name }} },
 {%- endfor %}
 {%- else %}
                 {{ table.snake_name }} = bundle.decodeTable("{{ table.name }}", {{ table.row_type }}::decode).associateBy { it.{{ table.key_field_name }} },
@@ -46,10 +56,13 @@ data class SoraConfig(
 {%- elif table.mode == "singleton" %}
                 {{ table.snake_name }} = requireSingletonTable(bundle.decodeTable("{{ table.name }}", {{ table.row_type }}::decode), "{{ table.name }}"),
 {%- else %}
-{%- if table.unique_indexes %}
+{%- if table.unique_indexes or table.non_unique_indexes %}
                 {{ table.snake_name }} = {{ table.camel_name }}Rows,
 {%- for index in table.unique_indexes %}
                 {{ table.camel_name }}{{ index.pascal_name }} = {{ table.camel_name }}Rows.associateBy { it.{{ index.field_name }} },
+{%- endfor %}
+{%- for index in table.non_unique_indexes %}
+                {{ table.camel_name }}{{ index.pascal_name }} = {{ table.camel_name }}Rows.groupBy { it.{{ index.field_name }} },
 {%- endfor %}
 {%- else %}
                 {{ table.snake_name }} = bundle.decodeTable("{{ table.name }}", {{ table.row_type }}::decode),
