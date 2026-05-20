@@ -13,12 +13,12 @@
 
 -spec decode(sora_runtime:reader()) -> {t(), sora_runtime:reader()}.
 decode(Reader0) ->
-    {ShopId, Reader1 } = (fun sora_runtime:read_i32/1)(Reader0),
-    {Seq, Reader2 } = (fun sora_runtime:read_i32/1)(Reader1),
-    {ItemId, Reader3 } = (fun sora_runtime:read_i32/1)(Reader2),
-    {Price, Reader4 } = (fun resource_cost:decode/1)(Reader3),
-    {DailyLimit, Reader5 } = (fun(Reader) -> sora_runtime:read_optional(fun sora_runtime:read_i32/1, Reader) end)(Reader4),
-    { #{
+    {ShopId, Reader1} = (fun sora_runtime:read_i32/1)(Reader0),
+    {Seq, Reader2} = (fun sora_runtime:read_i32/1)(Reader1),
+    {ItemId, Reader3} = (fun sora_runtime:read_i32/1)(Reader2),
+    {Price, Reader4} = (fun resource_cost:decode/1)(Reader3),
+    {DailyLimit, Reader5} = (fun(Reader) -> sora_runtime:read_optional(fun sora_runtime:read_i32/1, Reader) end)(Reader4),
+    {#{
         'shop_id' => ShopId,
         'seq' => Seq,
         'item_id' => ItemId,

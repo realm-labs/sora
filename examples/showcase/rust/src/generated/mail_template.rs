@@ -1,4 +1,3 @@
-
 use super::mail_type::MailType;
 use super::reward::Reward;
 
@@ -17,7 +16,9 @@ pub struct MailTemplate {
 }
 
 impl super::runtime::SoraDecode for MailTemplate {
-    fn decode(reader: &mut super::runtime::SoraReader<'_>) -> Result<Self, super::runtime::SoraReadError> {
+    fn decode(
+        reader: &mut super::runtime::SoraReader<'_>,
+    ) -> Result<Self, super::runtime::SoraReadError> {
         Ok(Self {
             id: <i32 as super::runtime::SoraDecode>::decode(reader)?,
             mail_type: <MailType as super::runtime::SoraDecode>::decode(reader)?,

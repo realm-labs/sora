@@ -1,6 +1,7 @@
 pub mod csharp;
 pub mod ecmascript;
 pub mod erlang;
+pub mod format;
 pub mod generator;
 pub mod go;
 pub mod java;

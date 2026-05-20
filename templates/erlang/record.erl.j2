@@ -12,9 +12,9 @@
 -spec decode(sora_runtime:reader()) -> {t(), sora_runtime:reader()}.
 decode(Reader0) ->
 {%- for field in record.fields %}
-    { {{- field.var_name -}}, Reader{{ loop.index }} } = ({{ field.decode }})(Reader{{ loop.index0 }}),
+    { {{- field.var_name -}}, Reader{{ loop.index }}} = ({{ field.decode }})(Reader{{ loop.index0 }}),
 {%- endfor %}
-    { {{ "#{" }}
+    {{ "{" }}{{ "#{" }}
 {%- for field in record.fields %}
         '{{ field.name }}' => {{ field.var_name }}{% if not loop.last %},{% endif %}
 {%- endfor %}

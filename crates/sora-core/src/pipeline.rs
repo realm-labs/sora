@@ -1,6 +1,10 @@
 use std::{fs, path::Path};
 
-use sora_codegen::{generator::generator_for_target, target::CodegenTarget};
+use sora_codegen::{
+    format::{FormatMode, format_generated_code},
+    generator::generator_for_target,
+    target::CodegenTarget,
+};
 use sora_diagnostics::{Result, SoraError};
 use sora_excel::generator::ExcelTemplateGenerator;
 use sora_export::{
@@ -34,8 +38,18 @@ pub fn generate_code(
     target: CodegenTarget,
     out_dir: &Path,
 ) -> Result<()> {
+    generate_code_with_format(input, target, out_dir, FormatMode::Never)
+}
+
+pub fn generate_code_with_format(
+    input: &impl SchemaInput,
+    target: CodegenTarget,
+    out_dir: &Path,
+    format_mode: FormatMode,
+) -> Result<()> {
     let ir = load_ir(input)?;
-    generator_for_target(target).generate(&ir, out_dir)
+    generator_for_target(target).generate(&ir, out_dir)?;
+    format_generated_code(target, out_dir, format_mode)
 }
 
 pub fn export_data(input: &impl ProjectInput, format: &str, output: ExportOutput) -> Result<()> {

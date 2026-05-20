@@ -10,6 +10,7 @@ excel_templates = "generated/excel"
 [[build.codegen]]
 target = "rust"
 out = "rust/src/generated"
+format = "auto"
 
 [[build.codegen]]
 target = "kotlin"
@@ -26,6 +27,7 @@ out = "java/src/generated/java"
 [[build.codegen]]
 target = "go"
 out = "go/internal/showcase"
+format = "auto"
 
 [[build.codegen]]
 target = "typescript"
@@ -38,6 +40,7 @@ out = "javascript/generated"
 [[build.codegen]]
 target = "erlang"
 out = "erlang/generated"
+format = "auto"
 
 [[build.codegen]]
 target = "lua"

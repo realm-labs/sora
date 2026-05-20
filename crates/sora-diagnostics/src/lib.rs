@@ -95,6 +95,13 @@ pub enum SoraError {
     #[error("failed to render template `{template}`: {message}")]
     RenderTemplate { template: String, message: String },
 
+    #[error("failed to format {language} code with `{command}`: {message}")]
+    FormatCode {
+        language: &'static str,
+        command: String,
+        message: String,
+    },
+
     #[error("failed to write Excel template `{path}`: {message}")]
     ExcelTemplate { path: PathBuf, message: String },
 

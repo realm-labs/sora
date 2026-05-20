@@ -138,6 +138,7 @@ excel_templates = "generated/excel"
 [[build.codegen]]
 target = "rust"
 out = "rust/src/generated"
+format = "auto"
 
 [[build.codegen]]
 target = "kotlin"
@@ -154,6 +155,7 @@ out = "java/src/generated/java"
 [[build.codegen]]
 target = "go"
 out = "go/internal/showcase"
+format = "auto"
 
 [[build.codegen]]
 target = "typescript"
@@ -166,6 +168,7 @@ out = "javascript/generated"
 [[build.codegen]]
 target = "erlang"
 out = "erlang/generated"
+format = "auto"
 
 [[build.codegen]]
 target = "lua"
@@ -181,6 +184,8 @@ out = "generated/debug-json"
 ```
 
 `sora build --project project.toml --target rust --clean` rebuilds only the configured Rust codegen target, while schema lock, Excel templates, and exports still follow the project build config.
+
+Codegen targets can opt into post-generation formatting with `format = "never"`, `format = "auto"`, or `format = "required"`. `auto` runs a supported formatter when the command exists in `PATH`; `required` fails the build if the formatter is missing or exits with an error. Built-in formatter hooks currently cover Rust (`rustfmt`), Go (`gofmt`), and Erlang (`erlfmt`).
 
 Included modules define enums, structs, unions, tables, fields, keys, indexes, comments, source files, and aggregation metadata. Field type strings are normalized into IR types such as `i32`, `string`, `enum<ItemType>`, `struct<ResourceCost>`, `union<RewardAction>`, `list<i32>`, `array<i32,3>`, `ref<Item.id>`, and `optional<string>`.
 

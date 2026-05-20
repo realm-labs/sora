@@ -15,14 +15,14 @@
 
 -spec decode(sora_runtime:reader()) -> {t(), sora_runtime:reader()}.
 decode(Reader0) ->
-    {Id, Reader1 } = (fun sora_runtime:read_i32/1)(Reader0),
-    {Name, Reader2 } = (fun sora_runtime:read_string/1)(Reader1),
-    {Rarity, Reader3 } = (fun rarity:decode/1)(Reader2),
-    {BaseLevel, Reader4 } = (fun sora_runtime:read_i32/1)(Reader3),
-    {BaseSkill, Reader5 } = (fun sora_runtime:read_i32/1)(Reader4),
-    {StarterItems, Reader6 } = (fun(Reader) -> sora_runtime:read_list(fun sora_runtime:read_i32/1, Reader) end)(Reader5),
-    {SpawnPos, Reader7 } = (fun vec3:decode/1)(Reader6),
-    { #{
+    {Id, Reader1} = (fun sora_runtime:read_i32/1)(Reader0),
+    {Name, Reader2} = (fun sora_runtime:read_string/1)(Reader1),
+    {Rarity, Reader3} = (fun rarity:decode/1)(Reader2),
+    {BaseLevel, Reader4} = (fun sora_runtime:read_i32/1)(Reader3),
+    {BaseSkill, Reader5} = (fun sora_runtime:read_i32/1)(Reader4),
+    {StarterItems, Reader6} = (fun(Reader) -> sora_runtime:read_list(fun sora_runtime:read_i32/1, Reader) end)(Reader5),
+    {SpawnPos, Reader7} = (fun vec3:decode/1)(Reader6),
+    {#{
         'id' => Id,
         'name' => Name,
         'rarity' => Rarity,

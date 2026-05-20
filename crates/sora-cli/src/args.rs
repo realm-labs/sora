@@ -1,6 +1,7 @@
 use std::path::PathBuf;
 
 use clap::{Args, Parser, Subcommand};
+use sora_codegen::format::FormatMode;
 
 #[derive(Debug, Parser)]
 #[command(name = "sora")]
@@ -55,6 +56,9 @@ pub struct GenArgs {
 
     #[arg(long)]
     pub out: PathBuf,
+
+    #[arg(long, value_enum, default_value_t = CodeFormatMode::Never)]
+    pub format_code: CodeFormatMode,
 }
 
 #[derive(Debug, Args)]
@@ -130,6 +134,23 @@ pub enum BuildTarget {
     Erlang,
     Lua,
     Proto,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, clap::ValueEnum)]
+pub enum CodeFormatMode {
+    Never,
+    Auto,
+    Required,
+}
+
+impl From<CodeFormatMode> for FormatMode {
+    fn from(value: CodeFormatMode) -> Self {
+        match value {
+            CodeFormatMode::Never => Self::Never,
+            CodeFormatMode::Auto => Self::Auto,
+            CodeFormatMode::Required => Self::Required,
+        }
+    }
 }
 
 #[derive(Debug, Args)]

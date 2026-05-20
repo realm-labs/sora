@@ -1,5 +1,3 @@
-
-
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct CharacterSkill {
     #[serde(rename = "character_id")]
@@ -11,7 +9,9 @@ pub struct CharacterSkill {
 }
 
 impl super::runtime::SoraDecode for CharacterSkill {
-    fn decode(reader: &mut super::runtime::SoraReader<'_>) -> Result<Self, super::runtime::SoraReadError> {
+    fn decode(
+        reader: &mut super::runtime::SoraReader<'_>,
+    ) -> Result<Self, super::runtime::SoraReadError> {
         Ok(Self {
             character_id: <i32 as super::runtime::SoraDecode>::decode(reader)?,
             skill_id: <i32 as super::runtime::SoraDecode>::decode(reader)?,

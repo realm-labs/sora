@@ -1,4 +1,3 @@
-
 use super::element_type::ElementType;
 use super::resource_cost::ResourceCost;
 use super::skill_effect::SkillEffect;
@@ -28,7 +27,9 @@ pub struct Skill {
 }
 
 impl super::runtime::SoraDecode for Skill {
-    fn decode(reader: &mut super::runtime::SoraReader<'_>) -> Result<Self, super::runtime::SoraReadError> {
+    fn decode(
+        reader: &mut super::runtime::SoraReader<'_>,
+    ) -> Result<Self, super::runtime::SoraReadError> {
         Ok(Self {
             id: <i32 as super::runtime::SoraDecode>::decode(reader)?,
             name: <String as super::runtime::SoraDecode>::decode(reader)?,

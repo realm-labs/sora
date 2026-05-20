@@ -12,11 +12,11 @@
 
 -spec decode(sora_runtime:reader()) -> {t(), sora_runtime:reader()}.
 decode(Reader0) ->
-    {PoolId, Reader1 } = (fun sora_runtime:read_i32/1)(Reader0),
-    {ItemId, Reader2 } = (fun sora_runtime:read_i32/1)(Reader1),
-    {Rarity, Reader3 } = (fun rarity:decode/1)(Reader2),
-    {Weight, Reader4 } = (fun sora_runtime:read_f32/1)(Reader3),
-    { #{
+    {PoolId, Reader1} = (fun sora_runtime:read_i32/1)(Reader0),
+    {ItemId, Reader2} = (fun sora_runtime:read_i32/1)(Reader1),
+    {Rarity, Reader3} = (fun rarity:decode/1)(Reader2),
+    {Weight, Reader4} = (fun sora_runtime:read_f32/1)(Reader3),
+    {#{
         'pool_id' => PoolId,
         'item_id' => ItemId,
         'rarity' => Rarity,

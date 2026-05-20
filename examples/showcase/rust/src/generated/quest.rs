@@ -1,4 +1,3 @@
-
 use super::quest_type::QuestType;
 use super::reward::Reward;
 use super::vec3::Vec3;
@@ -23,7 +22,9 @@ pub struct Quest {
 }
 
 impl super::runtime::SoraDecode for Quest {
-    fn decode(reader: &mut super::runtime::SoraReader<'_>) -> Result<Self, super::runtime::SoraReadError> {
+    fn decode(
+        reader: &mut super::runtime::SoraReader<'_>,
+    ) -> Result<Self, super::runtime::SoraReadError> {
         Ok(Self {
             id: <i32 as super::runtime::SoraDecode>::decode(reader)?,
             quest_type: <QuestType as super::runtime::SoraDecode>::decode(reader)?,

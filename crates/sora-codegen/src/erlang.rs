@@ -192,7 +192,7 @@ mod tests {
         assert!(item.contains("-module(item)."));
         assert!(item.contains("-type t() :: #{"));
         assert!(item.contains("'large_id' := integer()"));
-        assert!(item.contains("{LargeId, Reader4 } = (fun sora_runtime:read_i64/1)(Reader3)"));
+        assert!(item.contains("{LargeId, Reader4} = (fun sora_runtime:read_i64/1)(Reader3)"));
         assert!(item_type.contains("-type t() ::"));
         assert!(item_type.contains("'weapon' |"));
         assert!(item_type.contains("'armor'."));

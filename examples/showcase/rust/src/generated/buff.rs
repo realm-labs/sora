@@ -1,4 +1,3 @@
-
 use super::stat_modifier::StatModifier;
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
@@ -14,7 +13,9 @@ pub struct Buff {
 }
 
 impl super::runtime::SoraDecode for Buff {
-    fn decode(reader: &mut super::runtime::SoraReader<'_>) -> Result<Self, super::runtime::SoraReadError> {
+    fn decode(
+        reader: &mut super::runtime::SoraReader<'_>,
+    ) -> Result<Self, super::runtime::SoraReadError> {
         Ok(Self {
             id: <i32 as super::runtime::SoraDecode>::decode(reader)?,
             name: <String as super::runtime::SoraDecode>::decode(reader)?,

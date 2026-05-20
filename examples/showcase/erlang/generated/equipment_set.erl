@@ -12,11 +12,11 @@
 
 -spec decode(sora_runtime:reader()) -> {t(), sora_runtime:reader()}.
 decode(Reader0) ->
-    {Id, Reader1 } = (fun sora_runtime:read_i32/1)(Reader0),
-    {Name, Reader2 } = (fun sora_runtime:read_string/1)(Reader1),
-    {ItemIds, Reader3 } = (fun(Reader) -> sora_runtime:read_list(fun sora_runtime:read_i32/1, Reader) end)(Reader2),
-    {BonusEffect, Reader4 } = (fun skill_effect:decode/1)(Reader3),
-    { #{
+    {Id, Reader1} = (fun sora_runtime:read_i32/1)(Reader0),
+    {Name, Reader2} = (fun sora_runtime:read_string/1)(Reader1),
+    {ItemIds, Reader3} = (fun(Reader) -> sora_runtime:read_list(fun sora_runtime:read_i32/1, Reader) end)(Reader2),
+    {BonusEffect, Reader4} = (fun skill_effect:decode/1)(Reader3),
+    {#{
         'id' => Id,
         'name' => Name,
         'item_ids' => ItemIds,

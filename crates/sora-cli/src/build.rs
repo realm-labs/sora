@@ -5,11 +5,11 @@ use std::{
 
 use anyhow::{Context, Result, bail};
 use serde::Deserialize;
-use sora_codegen::target::CodegenTarget;
+use sora_codegen::{format::FormatMode, target::CodegenTarget};
 use sora_input_toml::input::TomlSchemaInput;
 
 use crate::{
-    args::{BuildArgs, BuildTarget, DataFormat},
+    args::{BuildArgs, BuildTarget, CodeFormatMode, DataFormat},
     commands::export_project_data,
 };
 
@@ -74,16 +74,20 @@ pub fn run(args: BuildArgs) -> Result<()> {
 
     for item in codegen {
         let out = resolve_project_path(project_dir, &item.out);
-        sora_core::pipeline::generate_code(&schema_input, item.target.into(), &out).with_context(
-            || {
-                format!(
-                    "failed to generate {} code from `{}` into `{}`",
-                    item.target.as_str(),
-                    args.project.display(),
-                    out.display()
-                )
-            },
-        )?;
+        sora_core::pipeline::generate_code_with_format(
+            &schema_input,
+            item.target.into(),
+            &out,
+            FormatMode::from(item.format),
+        )
+        .with_context(|| {
+            format!(
+                "failed to generate {} code from `{}` into `{}`",
+                item.target.as_str(),
+                args.project.display(),
+                out.display()
+            )
+        })?;
     }
 
     for item in &build.exports {
@@ -239,6 +243,8 @@ impl BuildConfig {
 struct BuildCodegen {
     target: BuildTarget,
     out: PathBuf,
+    #[serde(default)]
+    format: CodeFormatMode,
 }
 
 #[derive(Debug, Deserialize)]
@@ -271,6 +277,29 @@ impl<'de> Deserialize<'de> for BuildTarget {
     {
         let value = String::deserialize(deserializer)?;
         Self::from_str(&value).map_err(serde::de::Error::custom)
+    }
+}
+
+impl Default for CodeFormatMode {
+    fn default() -> Self {
+        Self::Never
+    }
+}
+
+impl<'de> Deserialize<'de> for CodeFormatMode {
+    fn deserialize<D>(deserializer: D) -> std::result::Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let value = String::deserialize(deserializer)?;
+        match value.as_str() {
+            "never" => Ok(Self::Never),
+            "auto" => Ok(Self::Auto),
+            "required" => Ok(Self::Required),
+            _ => Err(serde::de::Error::custom(format!(
+                "unsupported code format mode `{value}`; expected never, auto, or required"
+            ))),
+        }
     }
 }
 
@@ -415,6 +444,7 @@ excel_templates = "generated/excel"
 [[build.codegen]]
 target = "rust"
 out = "generated/rust"
+format = "auto"
 
 [[build.codegen]]
 target = "kotlin"

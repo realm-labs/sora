@@ -15,14 +15,14 @@
 
 -spec decode(sora_runtime:reader()) -> {t(), sora_runtime:reader()}.
 decode(Reader0) ->
-    {Id, Reader1 } = (fun sora_runtime:read_i32/1)(Reader0),
-    {QuestType, Reader2 } = (fun quest_type:decode/1)(Reader1),
-    {Title, Reader3 } = (fun sora_runtime:read_string/1)(Reader2),
-    {RequiredItem, Reader4 } = (fun sora_runtime:read_i32/1)(Reader3),
-    {UnlockSkills, Reader5 } = (fun(Reader) -> sora_runtime:read_list(fun sora_runtime:read_i32/1, Reader) end)(Reader4),
-    {StartPos, Reader6 } = (fun vec3:decode/1)(Reader5),
-    {Rewards, Reader7 } = (fun(Reader) -> sora_runtime:read_list(fun reward:decode/1, Reader) end)(Reader6),
-    { #{
+    {Id, Reader1} = (fun sora_runtime:read_i32/1)(Reader0),
+    {QuestType, Reader2} = (fun quest_type:decode/1)(Reader1),
+    {Title, Reader3} = (fun sora_runtime:read_string/1)(Reader2),
+    {RequiredItem, Reader4} = (fun sora_runtime:read_i32/1)(Reader3),
+    {UnlockSkills, Reader5} = (fun(Reader) -> sora_runtime:read_list(fun sora_runtime:read_i32/1, Reader) end)(Reader4),
+    {StartPos, Reader6} = (fun vec3:decode/1)(Reader5),
+    {Rewards, Reader7} = (fun(Reader) -> sora_runtime:read_list(fun reward:decode/1, Reader) end)(Reader6),
+    {#{
         'id' => Id,
         'quest_type' => QuestType,
         'title' => Title,

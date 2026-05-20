@@ -11,10 +11,10 @@
 
 -spec decode(sora_runtime:reader()) -> {t(), sora_runtime:reader()}.
 decode(Reader0) ->
-    {Level, Reader1 } = (fun sora_runtime:read_i32/1)(Reader0),
-    {Exp, Reader2 } = (fun sora_runtime:read_i64/1)(Reader1),
-    {UnlockFeature, Reader3 } = (fun(Reader) -> sora_runtime:read_optional(fun sora_runtime:read_string/1, Reader) end)(Reader2),
-    { #{
+    {Level, Reader1} = (fun sora_runtime:read_i32/1)(Reader0),
+    {Exp, Reader2} = (fun sora_runtime:read_i64/1)(Reader1),
+    {UnlockFeature, Reader3} = (fun(Reader) -> sora_runtime:read_optional(fun sora_runtime:read_string/1, Reader) end)(Reader2),
+    {#{
         'level' => Level,
         'exp' => Exp,
         'unlock_feature' => UnlockFeature

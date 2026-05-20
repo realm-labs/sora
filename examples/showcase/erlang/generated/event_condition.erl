@@ -5,17 +5,17 @@
 
 -type t() ::
     #{
-        'type' := 'level_at_least'
-        , 'level' := integer()
+        'type' := 'level_at_least',
+        'level' := integer()
     } |
     #{
-        'type' := 'quest_completed'
-        , 'quest_id' := integer()
+        'type' := 'quest_completed',
+        'quest_id' := integer()
     } |
     #{
-        'type' := 'has_item'
-        , 'item_id' := integer()
-        , 'count' := integer()
+        'type' := 'has_item',
+        'item_id' := integer(),
+        'count' := integer()
     }.
 
 -spec decode(sora_runtime:reader()) -> {t(), sora_runtime:reader()}.
@@ -23,24 +23,24 @@ decode(Reader0) ->
     {Ordinal, Reader1} = sora_runtime:read_u32(Reader0),
     case Ordinal of
         0 ->
-            {Level, Reader2 } = (fun sora_runtime:read_i32/1)(Reader1),
-            { #{
-                'type' => 'level_at_least'
-                , 'level' => Level
+            {Level, Reader2} = (fun sora_runtime:read_i32/1)(Reader1),
+            {#{
+                'type' => 'level_at_least',
+                'level' => Level
             }, Reader2};
         1 ->
-            {QuestId, Reader2 } = (fun sora_runtime:read_i32/1)(Reader1),
-            { #{
-                'type' => 'quest_completed'
-                , 'quest_id' => QuestId
+            {QuestId, Reader2} = (fun sora_runtime:read_i32/1)(Reader1),
+            {#{
+                'type' => 'quest_completed',
+                'quest_id' => QuestId
             }, Reader2};
         2 ->
-            {ItemId, Reader2 } = (fun sora_runtime:read_i32/1)(Reader1),
-            {Count, Reader3 } = (fun sora_runtime:read_i32/1)(Reader2),
-            { #{
-                'type' => 'has_item'
-                , 'item_id' => ItemId
-                , 'count' => Count
+            {ItemId, Reader2} = (fun sora_runtime:read_i32/1)(Reader1),
+            {Count, Reader3} = (fun sora_runtime:read_i32/1)(Reader2),
+            {#{
+                'type' => 'has_item',
+                'item_id' => ItemId,
+                'count' => Count
             }, Reader3};
         _ -> error({invalid_union_ordinal, event_condition, Ordinal})
     end.

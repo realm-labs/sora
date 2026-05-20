@@ -1,35 +1,35 @@
 package showcase
 
 type GameSettings struct {
-    Version string
-    DailyResetHour int32
-    StartingGold int32
-    SpawnPos Vec3
-    StarterItems []int32
+	Version        string
+	DailyResetHour int32
+	StartingGold   int32
+	SpawnPos       Vec3
+	StarterItems   []int32
 }
 
 func decodeGameSettings(reader *SoraReader) (GameSettings, error) {
-    var value GameSettings
-    var err error
-    value.Version, err = reader.ReadString()
-    if err != nil {
-        return value, err
-    }
-    value.DailyResetHour, err = reader.ReadInt32()
-    if err != nil {
-        return value, err
-    }
-    value.StartingGold, err = reader.ReadInt32()
-    if err != nil {
-        return value, err
-    }
-    value.SpawnPos, err = decodeVec3(reader)
-    if err != nil {
-        return value, err
-    }
-    value.StarterItems, err = ReadList(reader, func(reader *SoraReader) (int32, error) { return reader.ReadInt32() })
-    if err != nil {
-        return value, err
-    }
-    return value, nil
+	var value GameSettings
+	var err error
+	value.Version, err = reader.ReadString()
+	if err != nil {
+		return value, err
+	}
+	value.DailyResetHour, err = reader.ReadInt32()
+	if err != nil {
+		return value, err
+	}
+	value.StartingGold, err = reader.ReadInt32()
+	if err != nil {
+		return value, err
+	}
+	value.SpawnPos, err = decodeVec3(reader)
+	if err != nil {
+		return value, err
+	}
+	value.StarterItems, err = ReadList(reader, func(reader *SoraReader) (int32, error) { return reader.ReadInt32() })
+	if err != nil {
+		return value, err
+	}
+	return value, nil
 }

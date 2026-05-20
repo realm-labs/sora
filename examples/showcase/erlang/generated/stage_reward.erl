@@ -12,11 +12,11 @@
 
 -spec decode(sora_runtime:reader()) -> {t(), sora_runtime:reader()}.
 decode(Reader0) ->
-    {StageId, Reader1 } = (fun sora_runtime:read_i32/1)(Reader0),
-    {Seq, Reader2 } = (fun sora_runtime:read_i32/1)(Reader1),
-    {ItemId, Reader3 } = (fun sora_runtime:read_i32/1)(Reader2),
-    {Count, Reader4 } = (fun sora_runtime:read_i32/1)(Reader3),
-    { #{
+    {StageId, Reader1} = (fun sora_runtime:read_i32/1)(Reader0),
+    {Seq, Reader2} = (fun sora_runtime:read_i32/1)(Reader1),
+    {ItemId, Reader3} = (fun sora_runtime:read_i32/1)(Reader2),
+    {Count, Reader4} = (fun sora_runtime:read_i32/1)(Reader3),
+    {#{
         'stage_id' => StageId,
         'seq' => Seq,
         'item_id' => ItemId,

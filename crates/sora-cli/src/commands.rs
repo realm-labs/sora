@@ -54,7 +54,13 @@ fn check(args: CheckArgs) -> Result<()> {
 
 fn generate(args: GenArgs, target: CodegenTarget) -> Result<()> {
     let input = TomlSchemaInput::new(&args.project);
-    sora_core::pipeline::generate_code(&input, target, &args.out).with_context(|| {
+    sora_core::pipeline::generate_code_with_format(
+        &input,
+        target,
+        &args.out,
+        args.format_code.into(),
+    )
+    .with_context(|| {
         format!(
             "failed to generate code from `{}` into `{}`",
             args.project.display(),

@@ -5,24 +5,24 @@ import "fmt"
 type MailType int32
 
 const (
-    MailTypeSystem MailType = 0
-    MailTypeEvent MailType = 1
-    MailTypeCompensation MailType = 2
+	MailTypeSystem       MailType = 0
+	MailTypeEvent        MailType = 1
+	MailTypeCompensation MailType = 2
 )
 
 func decodeMailType(reader *SoraReader) (MailType, error) {
-    ordinal, err := reader.ReadUInt32()
-    if err != nil {
-        return 0, err
-    }
-    switch ordinal {
-    case 0:
-        return MailTypeSystem, nil
-    case 1:
-        return MailTypeEvent, nil
-    case 2:
-        return MailTypeCompensation, nil
-    default:
-        return 0, fmt.Errorf("invalid enum ordinal %d for MailType", ordinal)
-    }
+	ordinal, err := reader.ReadUInt32()
+	if err != nil {
+		return 0, err
+	}
+	switch ordinal {
+	case 0:
+		return MailTypeSystem, nil
+	case 1:
+		return MailTypeEvent, nil
+	case 2:
+		return MailTypeCompensation, nil
+	default:
+		return 0, fmt.Errorf("invalid enum ordinal %d for MailType", ordinal)
+	}
 }

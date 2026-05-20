@@ -1,25 +1,25 @@
 package showcase
 
 type CharacterSkill struct {
-    CharacterId int32
-    SkillId int32
-    UnlockLevel int32
+	CharacterId int32
+	SkillId     int32
+	UnlockLevel int32
 }
 
 func decodeCharacterSkill(reader *SoraReader) (CharacterSkill, error) {
-    var value CharacterSkill
-    var err error
-    value.CharacterId, err = reader.ReadInt32()
-    if err != nil {
-        return value, err
-    }
-    value.SkillId, err = reader.ReadInt32()
-    if err != nil {
-        return value, err
-    }
-    value.UnlockLevel, err = reader.ReadInt32()
-    if err != nil {
-        return value, err
-    }
-    return value, nil
+	var value CharacterSkill
+	var err error
+	value.CharacterId, err = reader.ReadInt32()
+	if err != nil {
+		return value, err
+	}
+	value.SkillId, err = reader.ReadInt32()
+	if err != nil {
+		return value, err
+	}
+	value.UnlockLevel, err = reader.ReadInt32()
+	if err != nil {
+		return value, err
+	}
+	return value, nil
 }
