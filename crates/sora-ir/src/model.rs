@@ -62,6 +62,7 @@ pub struct FieldIr {
     pub required: bool,
     pub default: Option<String>,
     pub range: Option<[i64; 2]>,
+    pub length: Option<[usize; 2]>,
     pub parser: Option<String>,
     pub separator: Option<String>,
     pub prefix: Option<String>,

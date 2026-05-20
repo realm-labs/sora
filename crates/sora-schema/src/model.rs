@@ -87,6 +87,7 @@ pub struct FieldSchema {
     pub required: Option<bool>,
     pub default: Option<String>,
     pub range: Option<[i64; 2]>,
+    pub length: Option<[usize; 2]>,
     pub parser: Option<String>,
     pub separator: Option<String>,
     pub prefix: Option<String>,

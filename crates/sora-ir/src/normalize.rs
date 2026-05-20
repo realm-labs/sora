@@ -84,6 +84,7 @@ impl TryFrom<FieldSchema> for FieldIr {
         };
 
         let ty = parse_type(&field.ty)?;
+        validate_length_constraint(&field.name, &ty, field.length)?;
         if field.default.is_some() && aggregation.is_some() {
             return Err(SoraError::InvalidSchema(format!(
                 "field `{}` declares both `default` and aggregation metadata",
@@ -123,6 +124,7 @@ impl TryFrom<FieldSchema> for FieldIr {
             required: field.required.unwrap_or(false),
             default: field.default,
             range: field.range,
+            length: field.length,
             parser: field.parser,
             separator: field.separator,
             prefix: field.prefix,
@@ -164,6 +166,29 @@ impl From<TableSourceSchema> for TableSourceIr {
 
 fn convert_fields(fields: Vec<FieldSchema>) -> Result<Vec<FieldIr>> {
     fields.into_iter().map(FieldIr::try_from).collect()
+}
+
+fn validate_length_constraint(
+    field_name: &str,
+    ty: &TypeIr,
+    length: Option<[usize; 2]>,
+) -> Result<()> {
+    let Some([min, max]) = length else {
+        return Ok(());
+    };
+    if min > max {
+        return Err(SoraError::InvalidSchema(format!(
+            "field `{field_name}` declares invalid `length` [{min}, {max}]"
+        )));
+    }
+
+    match ty {
+        TypeIr::String | TypeIr::List(_) | TypeIr::Array { .. } => Ok(()),
+        TypeIr::Optional(inner) => validate_length_constraint(field_name, inner, length),
+        _ => Err(SoraError::InvalidSchema(format!(
+            "field `{field_name}` declares `length` but type `{ty}` is not string, list, or array"
+        ))),
+    }
 }
 
 fn validate_parser_format(
@@ -287,6 +312,7 @@ separator = "|"
 prefix = "["
 suffix = "]"
 default = "[\"starter\"]"
+length = [1, 3]
 "#,
         )
         .unwrap();
@@ -304,6 +330,7 @@ default = "[\"starter\"]"
             ir.tables[0].fields[1].default.as_deref(),
             Some("[\"starter\"]")
         );
+        assert_eq!(ir.tables[0].fields[1].length, Some([1, 3]));
     }
 
     #[test]
@@ -404,6 +431,49 @@ prefix = "["
         assert!(matches!(
             normalize_schema(scalar_prefix).unwrap_err(),
             SoraError::InvalidSchema(message) if message.contains("collection format metadata")
+        ));
+    }
+
+    #[test]
+    fn validates_length_constraints() {
+        let invalid_type: SchemaFile = toml::from_str(
+            r#"
+package = "game_config"
+
+[[tables]]
+name = "Item"
+mode = "list"
+
+[[tables.fields]]
+name = "id"
+type = "i32"
+length = [1, 4]
+"#,
+        )
+        .unwrap();
+        assert!(matches!(
+            normalize_schema(invalid_type).unwrap_err(),
+            SoraError::InvalidSchema(message) if message.contains("declares `length`")
+        ));
+
+        let invalid_range: SchemaFile = toml::from_str(
+            r#"
+package = "game_config"
+
+[[tables]]
+name = "Item"
+mode = "list"
+
+[[tables.fields]]
+name = "name"
+type = "string"
+length = [4, 1]
+"#,
+        )
+        .unwrap();
+        assert!(matches!(
+            normalize_schema(invalid_range).unwrap_err(),
+            SoraError::InvalidSchema(message) if message.contains("invalid `length`")
         ));
     }
 

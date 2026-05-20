@@ -262,6 +262,7 @@ mod tests {
             required: true,
             default: None,
             range: None,
+            length: None,
             parser: None,
             separator: None,
             prefix: None,

@@ -146,6 +146,17 @@ pub enum SoraError {
     },
 
     #[error(
+        "length `{actual}` for field `{field}` in table `{table}` is outside range [{min}, {max}]"
+    )]
+    LengthOutOfBounds {
+        table: String,
+        field: String,
+        actual: usize,
+        min: usize,
+        max: usize,
+    },
+
+    #[error(
         "missing reference `{value}` for field `{field}` in table `{table}`; target is `{ref_table}.{ref_field}`"
     )]
     MissingReference {

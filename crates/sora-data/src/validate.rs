@@ -204,7 +204,24 @@ fn validate_field_value(
     path: &str,
     value: &Value,
 ) -> Result<()> {
-    validate_typed_value(ir, config_data, table, path, &field.ty, field.range, value)
+    validate_typed_value(
+        ir,
+        config_data,
+        table,
+        path,
+        &field.ty,
+        ValueConstraints {
+            range: field.range,
+            length: field.length,
+        },
+        value,
+    )
+}
+
+#[derive(Clone, Copy)]
+struct ValueConstraints {
+    range: Option<[i64; 2]>,
+    length: Option<[usize; 2]>,
 }
 
 fn validate_typed_value(
@@ -213,36 +230,47 @@ fn validate_typed_value(
     table: &str,
     path: &str,
     ty: &TypeIr,
-    range: Option<[i64; 2]>,
+    constraints: ValueConstraints,
     value: &Value,
 ) -> Result<()> {
     match ty {
         TypeIr::Optional(element) if matches!(value, Value::Null) => Ok(()),
         TypeIr::Optional(element) => {
-            validate_typed_value(ir, config_data, table, path, element, range, value)
+            validate_typed_value(ir, config_data, table, path, element, constraints, value)
         }
         TypeIr::Bool => expect_type(table, path, ty, value, matches!(value, Value::Bool(_))),
         TypeIr::I32 => match value {
             Value::Integer(number) if i32::try_from(*number).is_ok() => {
-                validate_integer_range(table, path, *number, range)
+                validate_integer_range(table, path, *number, constraints.range)
             }
             _ => type_mismatch(table, path, ty, value),
         },
         TypeIr::I64 => match value {
-            Value::Integer(number) => validate_integer_range(table, path, *number, range),
+            Value::Integer(number) => {
+                validate_integer_range(table, path, *number, constraints.range)
+            }
             _ => type_mismatch(table, path, ty, value),
         },
         TypeIr::F32 | TypeIr::F64 => match value {
-            Value::Integer(number) => validate_float_range(table, path, *number as f64, range),
-            Value::Float(number) => validate_float_range(table, path, *number, range),
+            Value::Integer(number) => {
+                validate_float_range(table, path, *number as f64, constraints.range)
+            }
+            Value::Float(number) => validate_float_range(table, path, *number, constraints.range),
             _ => type_mismatch(table, path, ty, value),
         },
-        TypeIr::String => expect_type(table, path, ty, value, matches!(value, Value::String(_))),
+        TypeIr::String => match value {
+            Value::String(value) => {
+                validate_length(table, path, value.chars().count(), constraints.length)
+            }
+            _ => type_mismatch(table, path, ty, value),
+        },
         TypeIr::Enum(enum_name) => validate_enum(ir, table, path, ty, enum_name, value),
         TypeIr::Struct(struct_name) => {
             validate_struct(ir, config_data, table, path, ty, struct_name, value)
         }
-        TypeIr::List(element) => validate_list(ir, config_data, table, path, element, range, value),
+        TypeIr::List(element) => {
+            validate_list(ir, config_data, table, path, element, constraints, value)
+        }
         TypeIr::Array { element, len } => validate_array(
             ir,
             config_data,
@@ -253,7 +281,7 @@ fn validate_typed_value(
                 element,
                 len: *len,
             },
-            range,
+            constraints,
             value,
         ),
         TypeIr::Ref {
@@ -361,12 +389,13 @@ fn validate_list(
     table: &str,
     path: &str,
     element: &TypeIr,
-    range: Option<[i64; 2]>,
+    constraints: ValueConstraints,
     value: &Value,
 ) -> Result<()> {
     let Value::List(items) = value else {
         return type_mismatch(table, path, &TypeIr::List(Box::new(element.clone())), value);
     };
+    validate_length(table, path, items.len(), constraints.length)?;
 
     for (index, item) in items.iter().enumerate() {
         validate_typed_value(
@@ -375,7 +404,10 @@ fn validate_list(
             table,
             &format!("{path}[{index}]"),
             element,
-            range,
+            ValueConstraints {
+                range: constraints.range,
+                length: None,
+            },
             item,
         )?;
     }
@@ -395,7 +427,7 @@ fn validate_array(
     table: &str,
     path: &str,
     expectation: ArrayExpectation<'_>,
-    range: Option<[i64; 2]>,
+    constraints: ValueConstraints,
     value: &Value,
 ) -> Result<()> {
     let Value::List(items) = value else {
@@ -404,6 +436,7 @@ fn validate_array(
     if items.len() != expectation.len {
         return type_mismatch(table, path, expectation.ty, value);
     }
+    validate_length(table, path, items.len(), constraints.length)?;
 
     for (index, item) in items.iter().enumerate() {
         validate_typed_value(
@@ -412,7 +445,10 @@ fn validate_array(
             table,
             &format!("{path}[{index}]"),
             expectation.element,
-            range,
+            ValueConstraints {
+                range: constraints.range,
+                length: None,
+            },
             item,
         )?;
     }
@@ -474,6 +510,28 @@ fn type_mismatch(table: &str, path: &str, ty: &TypeIr, value: &Value) -> Result<
         expected: ty.to_string(),
         actual: value.kind_name().to_owned(),
     })
+}
+
+fn validate_length(
+    table: &str,
+    path: &str,
+    actual: usize,
+    length: Option<[usize; 2]>,
+) -> Result<()> {
+    let Some([min, max]) = length else {
+        return Ok(());
+    };
+    if actual < min || actual > max {
+        Err(SoraError::LengthOutOfBounds {
+            table: table.to_owned(),
+            field: path.to_owned(),
+            actual,
+            min,
+            max,
+        })
+    } else {
+        Ok(())
+    }
 }
 
 fn validate_integer_range(
@@ -725,6 +783,78 @@ mod tests {
         };
 
         validate_config_data(&ir, &data).unwrap();
+    }
+
+    #[test]
+    fn validates_string_and_collection_lengths() {
+        let ir = length_ir();
+        let valid = ConfigData {
+            tables: vec![TableData {
+                name: "Item".to_owned(),
+                rows: vec![RowData {
+                    values: BTreeMap::from([
+                        ("id".to_owned(), Value::Integer(1001)),
+                        ("name".to_owned(), Value::String("Sword".to_owned())),
+                        (
+                            "tags".to_owned(),
+                            Value::List(vec![
+                                Value::String("sharp".to_owned()),
+                                Value::String("rare".to_owned()),
+                            ]),
+                        ),
+                    ]),
+                }],
+            }],
+        };
+        validate_config_data(&ir, &valid).unwrap();
+
+        let invalid_name = ConfigData {
+            tables: vec![TableData {
+                name: "Item".to_owned(),
+                rows: vec![RowData {
+                    values: BTreeMap::from([
+                        ("id".to_owned(), Value::Integer(1001)),
+                        ("name".to_owned(), Value::String("A".to_owned())),
+                        (
+                            "tags".to_owned(),
+                            Value::List(vec![Value::String("x".to_owned())]),
+                        ),
+                    ]),
+                }],
+            }],
+        };
+        let error = validate_config_data(&ir, &invalid_name).unwrap_err();
+        assert!(matches!(
+            error,
+            SoraError::LengthOutOfBounds { field, actual: 1, min: 2, max: 8, .. }
+                if field == "name"
+        ));
+
+        let invalid_tags = ConfigData {
+            tables: vec![TableData {
+                name: "Item".to_owned(),
+                rows: vec![RowData {
+                    values: BTreeMap::from([
+                        ("id".to_owned(), Value::Integer(1001)),
+                        ("name".to_owned(), Value::String("Sword".to_owned())),
+                        (
+                            "tags".to_owned(),
+                            Value::List(vec![
+                                Value::String("a".to_owned()),
+                                Value::String("b".to_owned()),
+                                Value::String("c".to_owned()),
+                            ]),
+                        ),
+                    ]),
+                }],
+            }],
+        };
+        let error = validate_config_data(&ir, &invalid_tags).unwrap_err();
+        assert!(matches!(
+            error,
+            SoraError::LengthOutOfBounds { field, actual: 3, min: 1, max: 2, .. }
+                if field == "tags"
+        ));
     }
 
     #[test]
@@ -1027,6 +1157,39 @@ required = true
 name = "by_type_name"
 fields = ["item_type", "name"]
 unique = true
+"#,
+        )
+        .unwrap();
+
+        normalize_schema(schema).unwrap()
+    }
+
+    fn length_ir() -> ConfigIr {
+        let schema: SchemaFile = toml::from_str(
+            r#"
+package = "game_config"
+
+[[tables]]
+name = "Item"
+mode = "map"
+key = "id"
+
+[[tables.fields]]
+name = "id"
+type = "i32"
+required = true
+
+[[tables.fields]]
+name = "name"
+type = "string"
+required = true
+length = [2, 8]
+
+[[tables.fields]]
+name = "tags"
+type = "list<string>"
+separator = ","
+length = [1, 2]
 "#,
         )
         .unwrap();
