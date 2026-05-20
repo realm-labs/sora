@@ -1,4 +1,5 @@
 mod args;
+mod build;
 mod commands;
 
 use anyhow::Result;

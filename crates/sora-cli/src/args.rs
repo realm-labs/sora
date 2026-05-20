@@ -5,6 +5,7 @@ use clap::{Args, Parser, Subcommand};
 #[derive(Debug, Parser)]
 #[command(name = "sora")]
 #[command(about = "Sora game configuration compiler")]
+#[command(version)]
 pub struct Cli {
     #[command(subcommand)]
     pub command: Command,
@@ -12,6 +13,7 @@ pub struct Cli {
 
 #[derive(Debug, Subcommand)]
 pub enum Command {
+    Build(BuildArgs),
     Check(CheckArgs),
     Gen {
         #[command(subcommand)]
@@ -48,6 +50,24 @@ pub struct GenArgs {
 
     #[arg(long)]
     pub out: PathBuf,
+}
+
+#[derive(Debug, Args)]
+pub struct BuildArgs {
+    #[arg(long)]
+    pub project: PathBuf,
+
+    #[arg(long, value_enum)]
+    pub data_format: Option<DataFormat>,
+
+    #[arg(long)]
+    pub data_root: Option<PathBuf>,
+
+    #[arg(long, value_enum)]
+    pub target: Vec<BuildTarget>,
+
+    #[arg(long)]
+    pub clean: bool,
 }
 
 #[derive(Debug, Args)]
@@ -91,6 +111,15 @@ pub enum DataFormat {
     Csv,
     Toml,
     Xlsx,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, clap::ValueEnum)]
+pub enum BuildTarget {
+    Rust,
+    Kotlin,
+    Csharp,
+    Java,
+    Go,
 }
 
 #[derive(Debug, Args)]

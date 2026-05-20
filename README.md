@@ -4,7 +4,7 @@ Sora is a Rust-first game configuration compiler that turns schemas and table da
 
 ## Status
 
-Sora is in its first milestone. It currently supports TOML schemas, TOML, CSV, and Excel `.xlsx` table data, normalized IR, recursive data validation, Rust/Kotlin model generation, generated Rust/Kotlin binary runtime readers, a pluggable exporter registry, a native sectioned binary exporter, a debug JSON exporter, and generated Excel `.xlsx` template projections.
+Sora is in an early but runnable milestone. It currently supports TOML schemas, TOML/CSV/Excel `.xlsx` table data, normalized IR, recursive data validation, defaults, tuple-style inline struct parsing, child table aggregation, polymorphic union types, secondary unique-index validation, schema locks, config diffs, generated Excel `.xlsx` template projections, a pluggable exporter registry, a native sectioned binary exporter, a debug JSON exporter, and generated Rust/Kotlin/C#/Java/Go code with binary runtime readers.
 
 ## Design Principles
 
@@ -16,37 +16,45 @@ Sora is in its first milestone. It currently supports TOML schemas, TOML, CSV, a
 
 ## Example Commands
 
+The preferred workflow is to declare build outputs in `project.toml` and run one command:
+
 ```bash
-cargo run -p sora-cli -- check \
+sora build --project examples/showcase/project.toml
+```
+
+For one-off or CI workflows, each stage is still available as a separate command:
+
+```bash
+sora check \
   --project examples/simple/project.toml
 
-cargo run -p sora-cli -- gen rust \
+sora gen rust \
   --project examples/simple/project.toml \
   --out generated/rust
 
-cargo run -p sora-cli -- gen kotlin \
+sora gen kotlin \
   --project examples/simple/project.toml \
   --out generated/kotlin
 
-cargo run -p sora-cli -- excel-template \
+sora excel-template \
   --project examples/simple/project.toml \
   --out generated/excel
 
-cargo run -p sora-cli -- export \
+sora export \
   --format binary \
   --data-format xlsx \
   --project examples/simple/project.toml \
   --data-root generated/excel \
   --out generated/config.sora
 
-cargo run -p sora-cli -- export \
+sora export \
   --format json-debug \
   --data-format xlsx \
   --project examples/simple/project.toml \
   --data-root generated/excel \
   --out generated/debug-json
 
-cargo run -p sora-cli -- export \
+sora export \
   --format json-debug \
   --data-format csv \
   --project examples/simple/project.toml \
@@ -64,11 +72,11 @@ cargo run -p sora-cli -- export \
 - `sora-schema`: format-neutral schema model.
 - `sora-ir`: normalized schema IR and type parsing.
 - `sora-data`: data IR and validation.
-- `sora-codegen`: Rust and Kotlin code generation.
+- `sora-codegen`: Rust, Kotlin, C#, Java, and Go code generation.
 - `sora-export`: exporter trait, registry, and built-in exporters.
 - `sora-excel`: Excel `.xlsx` template projection.
 - `sora-diagnostics`: shared typed errors.
-- `sora-templates`: built-in template location helpers.
+- `sora-templates`: built-in templates embedded into the CLI binary.
 
 ## Schema Format
 
@@ -79,7 +87,47 @@ package = "game_config"
 includes = ["schema/items.toml", "schema/skills.toml"]
 ```
 
-Included modules define enums, structs, tables, fields, keys, comments, source files, and future aggregation metadata. Field type strings are normalized into IR types such as `i32`, `string`, `enum<ItemType>`, `list<i32>`, `array<i32,3>`, `ref<Item.id>`, and `optional<string>`.
+The same root manifest can declare build outputs. Relative paths are resolved from the project file directory:
+
+```toml
+[build]
+data_format = "xlsx"
+data_root = "data"
+schema_lock = "generated/schema.lock"
+excel_templates = "generated/excel"
+
+[[build.codegen]]
+target = "rust"
+out = "rust/src/generated"
+
+[[build.codegen]]
+target = "kotlin"
+out = "kotlin/src/generated/kotlin"
+
+[[build.codegen]]
+target = "csharp"
+out = "csharp/src/generated/csharp"
+
+[[build.codegen]]
+target = "java"
+out = "java/src/generated/java"
+
+[[build.codegen]]
+target = "go"
+out = "go/internal/showcase"
+
+[[build.exports]]
+format = "binary"
+out = "generated/config.sora"
+
+[[build.exports]]
+format = "json-debug"
+out = "generated/debug-json"
+```
+
+`sora build --project project.toml --target rust --clean` rebuilds only the configured Rust codegen target, while schema lock, Excel templates, and exports still follow the project build config.
+
+Included modules define enums, structs, unions, tables, fields, keys, indexes, comments, source files, and aggregation metadata. Field type strings are normalized into IR types such as `i32`, `string`, `enum<ItemType>`, `struct<ResourceCost>`, `union<RewardAction>`, `list<i32>`, `array<i32,3>`, `ref<Item.id>`, and `optional<string>`.
 
 Table data sources are structured:
 
@@ -153,7 +201,7 @@ The binary bundle uses a language-neutral sectioned layout: a fixed header, a se
 
 ## Codegen Architecture
 
-Codegen uses MiniJinja templates, but type mapping is computed in Rust before rendering. Rust generation includes models plus a small `runtime.rs` reader for `.sora` binary bundles. Kotlin currently generates models only. Future targets may include TypeScript, Java, C#, Go, Lua, and Python.
+Codegen uses MiniJinja templates embedded into the CLI binary, but type mapping is computed in Rust before rendering. Rust, Kotlin, C#, Java, and Go generation include models plus small binary runtime readers for `.sora` bundles. Future targets may include TypeScript, Lua, and Python.
 
 ## Excel Template Projection
 
@@ -161,32 +209,16 @@ Sora generates `.xlsx` templates from schema IR. Header rows include the table n
 
 ## Roadmap
 
-Phase 2:
-
-- Stable binary reader API refinements.
-
-Phase 3:
-
-- Child table aggregation.
-- Nested object loading.
-- Custom parser system.
-- Reward, condition expression, and formula parsers.
-
-Phase 4:
-
-- Polymorphic union types.
-- Kotlin sealed class generation.
-- Secondary indexes.
-- Client/server field tags.
-- `schema.lock` generation.
-- Configuration diff.
-
-Phase 5:
-
+- Stable release packaging for the single `sora` binary.
+- CI that builds and runs every generated showcase target.
+- Aggregated diagnostics and CI-friendly reports.
+- Excel dropdowns, validation rules, and schema hash checks.
+- Generated secondary-index lookup APIs.
+- Client/server field tags and target-specific export filters.
+- Incremental builds for large projects.
+- Custom parser system for reward, condition, formula, and DSL fields.
 - Stable compact binary format.
 - Hot reload friendly bundles.
 - Compatibility checking.
 - External exporter plugin mechanism.
 - VSCode extension or LSP.
-- Excel comments and dropdown generation.
-- CI report output.

@@ -421,12 +421,14 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "clap",
+ "serde",
  "sora-codegen",
  "sora-core",
  "sora-export",
  "sora-input-csv",
  "sora-input-toml",
  "sora-input-xlsx",
+ "toml",
 ]
 
 [[package]]

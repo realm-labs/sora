@@ -1,5 +1,39 @@
 package = "com.sora.showcase"
 includes = ["schema/game.toml"]
 
+[build]
+data_format = "xlsx"
+data_root = "data"
+schema_lock = "generated/schema.lock"
+excel_templates = "generated/excel"
+
+[[build.codegen]]
+target = "rust"
+out = "rust/src/generated"
+
+[[build.codegen]]
+target = "kotlin"
+out = "kotlin/src/generated/kotlin"
+
+[[build.codegen]]
+target = "csharp"
+out = "csharp/src/generated/csharp"
+
+[[build.codegen]]
+target = "java"
+out = "java/src/generated/java"
+
+[[build.codegen]]
+target = "go"
+out = "go/internal/showcase"
+
+[[build.exports]]
+format = "binary"
+out = "generated/config.sora"
+
+[[build.exports]]
+format = "json-debug"
+out = "generated/debug-json"
+
 [codegen.rust]
 map_type = "fx_hash_map"

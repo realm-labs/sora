@@ -1,3 +1,5 @@
+use std::path::{Path, PathBuf};
+
 use anyhow::{Context, Result, bail};
 use sora_codegen::target::CodegenTarget;
 use sora_export::exporter::{ExportOutput, OutputKind};
@@ -12,6 +14,7 @@ use crate::args::{
 
 pub fn run(command: Command) -> Result<()> {
     match command {
+        Command::Build(args) => crate::build::run(args),
         Command::Check(args) => check(args),
         Command::Gen { target } => match target {
             GenCommand::Rust(args) => generate(args, CodegenTarget::Rust),
@@ -77,34 +80,13 @@ fn schema_lock(args: SchemaLockArgs) -> Result<()> {
 }
 
 fn export(args: ExportArgs) -> Result<()> {
-    let output = match sora_core::pipeline::export_output_kind(&args.format) {
-        Some(OutputKind::File) => ExportOutput::File(args.out.clone()),
-        Some(OutputKind::Directory) => ExportOutput::Directory(args.out.clone()),
-        None => {
-            bail!(
-                "unknown export format `{}`; supported formats: {}",
-                args.format,
-                sora_core::pipeline::supported_export_formats().join(", ")
-            );
-        }
-    };
-
-    match args.data_format {
-        DataFormat::Csv => {
-            let schema_input = TomlSchemaInput::new(&args.project);
-            let input = CsvProjectInput::new(schema_input, &args.data_root);
-            sora_core::pipeline::export_data(&input, &args.format, output)
-        }
-        DataFormat::Toml => {
-            let input = TomlProjectInput::new(&args.project, &args.data_root);
-            sora_core::pipeline::export_data(&input, &args.format, output)
-        }
-        DataFormat::Xlsx => {
-            let schema_input = TomlSchemaInput::new(&args.project);
-            let input = XlsxProjectInput::new(schema_input, &args.data_root);
-            sora_core::pipeline::export_data(&input, &args.format, output)
-        }
-    }
+    export_project_data(
+        &args.project,
+        &args.data_root,
+        args.data_format,
+        &args.format,
+        args.out,
+    )
     .with_context(|| {
         format!(
             "failed to export `{}` data from `{}`",
@@ -112,6 +94,44 @@ fn export(args: ExportArgs) -> Result<()> {
             args.data_root.display()
         )
     })
+}
+
+pub(crate) fn export_project_data(
+    project: &Path,
+    data_root: &Path,
+    data_format: DataFormat,
+    format: &str,
+    out: PathBuf,
+) -> Result<()> {
+    let output = match sora_core::pipeline::export_output_kind(format) {
+        Some(OutputKind::File) => ExportOutput::File(out.clone()),
+        Some(OutputKind::Directory) => ExportOutput::Directory(out.clone()),
+        None => {
+            bail!(
+                "unknown export format `{}`; supported formats: {}",
+                format,
+                sora_core::pipeline::supported_export_formats().join(", ")
+            );
+        }
+    };
+
+    match data_format {
+        DataFormat::Csv => {
+            let schema_input = TomlSchemaInput::new(project);
+            let input = CsvProjectInput::new(schema_input, data_root);
+            sora_core::pipeline::export_data(&input, format, output)
+        }
+        DataFormat::Toml => {
+            let input = TomlProjectInput::new(project, data_root);
+            sora_core::pipeline::export_data(&input, format, output)
+        }
+        DataFormat::Xlsx => {
+            let schema_input = TomlSchemaInput::new(project);
+            let input = XlsxProjectInput::new(schema_input, data_root);
+            sora_core::pipeline::export_data(&input, format, output)
+        }
+    }?;
+    Ok(())
 }
 
 fn diff(args: DiffArgs) -> Result<()> {
