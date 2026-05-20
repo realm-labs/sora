@@ -127,6 +127,13 @@ pub enum SoraError {
     #[error("duplicate key `{key}` in table `{table}`")]
     DuplicateKey { table: String, key: String },
 
+    #[error("duplicate unique index `{index}` key `{key}` in table `{table}`")]
+    DuplicateIndexKey {
+        table: String,
+        index: String,
+        key: String,
+    },
+
     #[error(
         "value `{value}` for field `{field}` in table `{table}` is outside range [{min}, {max}]"
     )]

@@ -91,6 +91,14 @@ pub fn validate_config_ir(ir: &ConfigIr) -> Result<()> {
                         field: field.clone(),
                     });
                 }
+                if index.unique
+                    && let Some(index_field) = table
+                        .fields
+                        .iter()
+                        .find(|candidate| candidate.name == *field)
+                {
+                    validate_index_field_type(table, &index.name, index_field, &ir.tables)?;
+                }
             }
         }
     }
@@ -249,6 +257,22 @@ fn validate_map_key_type(table: &TableIr, field: &FieldIr, tables: &[TableIr]) -
     Err(SoraError::InvalidSchema(format!(
         "map table `{}` key field `{}` has unsupported key type `{}`",
         table.name, field.name, field.ty
+    )))
+}
+
+fn validate_index_field_type(
+    table: &TableIr,
+    index_name: &str,
+    field: &FieldIr,
+    tables: &[TableIr],
+) -> Result<()> {
+    if is_valid_map_key_type(&field.ty, tables) {
+        return Ok(());
+    }
+
+    Err(SoraError::InvalidSchema(format!(
+        "unique index `{}` in table `{}` field `{}` has unsupported key type `{}`",
+        index_name, table.name, field.name, field.ty
     )))
 }
 
@@ -590,6 +614,40 @@ fields = ["missing"]
             validate_config_ir(&bad_index).unwrap_err(),
             SoraError::UnknownIndexField { table, index, field }
                 if table == "Item" && index == "bad" && field == "missing"
+        ));
+
+        let bad_unique_index_type = example_ir(
+            r#"
+[[structs]]
+name = "Tag"
+
+[[structs.fields]]
+name = "name"
+type = "string"
+
+[[tables]]
+name = "Item"
+mode = "map"
+key = "id"
+
+[[tables.fields]]
+name = "id"
+type = "i32"
+
+[[tables.fields]]
+name = "tag"
+type = "struct<Tag>"
+
+[[tables.indexes]]
+name = "by_tag"
+fields = ["tag"]
+unique = true
+"#,
+        );
+        assert!(matches!(
+            validate_config_ir(&bad_unique_index_type).unwrap_err(),
+            SoraError::InvalidSchema(message)
+                if message.contains("unique index `by_tag`") && message.contains("unsupported key type")
         ));
 
         let bad_ref = example_ir(

@@ -1,7 +1,7 @@
 use std::collections::{BTreeMap, BTreeSet};
 
 use sora_diagnostics::{Result, SoraError};
-use sora_ir::model::{ConfigIr, FieldIr, StructIr, TableIr, TableModeIr, TypeIr};
+use sora_ir::model::{ConfigIr, FieldIr, IndexIr, StructIr, TableIr, TableModeIr, TypeIr};
 
 use crate::model::{ConfigData, RowData, TableData, Value};
 
@@ -51,6 +51,15 @@ fn validate_table_data_with_config(
         .map(|field| field.name.as_str())
         .collect::<BTreeSet<_>>();
     let mut seen_keys = BTreeSet::new();
+    let mut unique_indexes = table
+        .indexes
+        .iter()
+        .filter(|index| index.unique)
+        .map(|index| UniqueIndexState {
+            index,
+            seen: BTreeSet::new(),
+        })
+        .collect::<Vec<_>>();
 
     for row in &data.rows {
         validate_row_fields(
@@ -62,6 +71,7 @@ fn validate_table_data_with_config(
             row,
         )?;
         validate_map_key(table, row, &mut seen_keys)?;
+        validate_unique_indexes(table, row, &mut unique_indexes)?;
     }
 
     Ok(())
@@ -112,6 +122,42 @@ fn validate_row_fields(
     }
 
     Ok(())
+}
+
+struct UniqueIndexState<'a> {
+    index: &'a IndexIr,
+    seen: BTreeSet<String>,
+}
+
+fn validate_unique_indexes(
+    table: &TableIr,
+    row: &RowData,
+    indexes: &mut [UniqueIndexState<'_>],
+) -> Result<()> {
+    for state in indexes {
+        let key = unique_index_key(state.index, row);
+        if !state.seen.insert(key.clone()) {
+            return Err(SoraError::DuplicateIndexKey {
+                table: table.name.clone(),
+                index: state.index.name.clone(),
+                key,
+            });
+        }
+    }
+
+    Ok(())
+}
+
+fn unique_index_key(index: &IndexIr, row: &RowData) -> String {
+    index
+        .fields
+        .iter()
+        .map(|field| {
+            let value = row.values.get(field).unwrap_or(&Value::Null);
+            format!("{field}={}", stable_key(value))
+        })
+        .collect::<Vec<_>>()
+        .join(",")
 }
 
 fn validate_map_key(
@@ -606,6 +652,40 @@ mod tests {
     }
 
     #[test]
+    fn rejects_duplicate_unique_index_keys() {
+        let ir = index_ir();
+        let data = ConfigData {
+            tables: vec![TableData {
+                name: "Item".to_owned(),
+                rows: vec![
+                    RowData {
+                        values: BTreeMap::from([
+                            ("id".to_owned(), Value::Integer(1001)),
+                            ("item_type".to_owned(), Value::String("Weapon".to_owned())),
+                            ("name".to_owned(), Value::String("Iron Sword".to_owned())),
+                        ]),
+                    },
+                    RowData {
+                        values: BTreeMap::from([
+                            ("id".to_owned(), Value::Integer(1002)),
+                            ("item_type".to_owned(), Value::String("Weapon".to_owned())),
+                            ("name".to_owned(), Value::String("Iron Sword".to_owned())),
+                        ]),
+                    },
+                ],
+            }],
+        };
+
+        let error = validate_config_data(&ir, &data).unwrap_err();
+
+        assert!(matches!(
+            error,
+            SoraError::DuplicateIndexKey { table, index, key }
+                if table == "Item" && index == "by_type_name" && key == "item_type=Weapon,name=Iron Sword"
+        ));
+    }
+
+    #[test]
     fn validates_ranges_and_struct_fields() {
         let ir = complex_ir();
         let data = ConfigData {
@@ -907,6 +987,46 @@ mode = "singleton"
 name = "id"
 type = "i32"
 required = true
+"#,
+        )
+        .unwrap();
+
+        normalize_schema(schema).unwrap()
+    }
+
+    fn index_ir() -> ConfigIr {
+        let schema: SchemaFile = toml::from_str(
+            r#"
+package = "game_config"
+
+[[enums]]
+name = "ItemType"
+values = ["Weapon", "Armor", "Material", "Consumable"]
+
+[[tables]]
+name = "Item"
+mode = "map"
+key = "id"
+
+[[tables.fields]]
+name = "id"
+type = "i32"
+required = true
+
+[[tables.fields]]
+name = "item_type"
+type = "enum<ItemType>"
+required = true
+
+[[tables.fields]]
+name = "name"
+type = "string"
+required = true
+
+[[tables.indexes]]
+name = "by_type_name"
+fields = ["item_type", "name"]
+unique = true
 "#,
         )
         .unwrap();
