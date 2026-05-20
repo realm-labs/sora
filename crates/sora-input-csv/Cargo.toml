@@ -1,0 +1,17 @@
+[package]
+name = "sora-input-csv"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+csv.workspace = true
+serde_json.workspace = true
+sora-data.workspace = true
+sora-diagnostics.workspace = true
+sora-input.workspace = true
+sora-ir.workspace = true
+sora-schema.workspace = true
+
+[dev-dependencies]
+toml.workspace = true

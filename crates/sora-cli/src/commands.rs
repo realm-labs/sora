@@ -1,6 +1,7 @@
 use anyhow::{Context, Result, bail};
 use sora_codegen::target::CodegenTarget;
 use sora_export::exporter::{ExportOutput, OutputKind};
+use sora_input_csv::input::CsvProjectInput;
 use sora_input_toml::input::{TomlProjectInput, TomlSchemaInput};
 use sora_input_xlsx::input::XlsxProjectInput;
 
@@ -61,6 +62,11 @@ fn export(args: ExportArgs) -> Result<()> {
     };
 
     match args.data_format {
+        DataFormat::Csv => {
+            let schema_input = TomlSchemaInput::new(&args.project);
+            let input = CsvProjectInput::new(schema_input, &args.data_root);
+            sora_core::pipeline::export_data(&input, &args.format, output)
+        }
         DataFormat::Toml => {
             let input = TomlProjectInput::new(&args.project, &args.data_root);
             sora_core::pipeline::export_data(&input, &args.format, output)

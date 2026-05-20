@@ -62,6 +62,7 @@ pub struct ExportArgs {
 
 #[derive(Debug, Clone, Copy, clap::ValueEnum)]
 pub enum DataFormat {
+    Csv,
     Toml,
     Xlsx,
 }

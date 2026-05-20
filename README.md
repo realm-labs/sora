@@ -4,7 +4,7 @@ Sora is a Rust-first game configuration compiler that turns schemas and table da
 
 ## Status
 
-Sora is in its first milestone. It currently supports TOML schemas, TOML and Excel `.xlsx` table data, normalized IR, recursive data validation, Rust/Kotlin model generation, generated Rust binary runtime readers, a pluggable exporter registry, a native sectioned binary exporter, a debug JSON exporter, and generated Excel `.xlsx` template projections.
+Sora is in its first milestone. It currently supports TOML schemas, TOML, CSV, and Excel `.xlsx` table data, normalized IR, recursive data validation, Rust/Kotlin model generation, generated Rust/Kotlin binary runtime readers, a pluggable exporter registry, a native sectioned binary exporter, a debug JSON exporter, and generated Excel `.xlsx` template projections.
 
 ## Design Principles
 
@@ -44,6 +44,13 @@ cargo run -p sora-cli -- export \
   --data-format xlsx \
   --project examples/simple/project.toml \
   --data-root generated/excel \
+  --out generated/debug-json
+
+cargo run -p sora-cli -- export \
+  --format json-debug \
+  --data-format csv \
+  --project examples/simple/project.toml \
+  --data-root generated/csv \
   --out generated/debug-json
 ```
 
@@ -87,7 +94,7 @@ Multiple tables may point at different sheets in the same workbook by reusing th
 
 ## Input Architecture
 
-Sora core consumes input through `SchemaInput` and `DataInput` traits. Concrete source formats live in separate adapter crates. TOML is implemented by `sora-input-toml`, not by `sora-core` or `sora-input`. Future adapters, such as RON, JSON, Excel, or Luban compatibility importers, should translate their source format into `SchemaFile` and `ConfigData` before entering the normal IR, validation, codegen, and exporter pipeline.
+Sora core consumes input through `SchemaInput` and `DataInput` traits. Concrete source formats live in separate adapter crates. TOML is implemented by `sora-input-toml`, CSV by `sora-input-csv`, and Excel by `sora-input-xlsx`, not by `sora-core` or `sora-input`. Future adapters, such as RON, JSON, or Luban compatibility importers, should translate their source format into `SchemaFile` and `ConfigData` before entering the normal IR, validation, codegen, and exporter pipeline.
 
 ## Data Format
 
@@ -100,7 +107,7 @@ file = "Item.xlsx"
 sheet = "Item"
 ```
 
-The CLI can still read TOML row data through `--data-format toml` for tests and simple automation. Validation checks required fields, unknown fields, primitive compatibility, enum values, ranges, struct fields, references, map keys, and singleton row counts.
+The CLI can still read TOML row data through `--data-format toml` for tests and simple automation, and CSV row data through `--data-format csv` when each file has a header row matching schema field names. Validation checks required fields, unknown fields, primitive compatibility, enum values, ranges, struct fields, references, map keys, and singleton row counts.
 
 ## Exporter Architecture
 
@@ -123,10 +130,7 @@ Sora generates `.xlsx` templates from schema IR. Header rows include the table n
 
 Phase 2:
 
-- Kotlin runtime loader.
 - Stable binary reader API refinements.
-- CSV data source.
-- Excel comments, dropdowns, and validation rules.
 
 Phase 3:
 
