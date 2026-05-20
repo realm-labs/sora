@@ -7,3 +7,4 @@ mod fs_util;
 pub mod json;
 pub mod protobuf;
 pub mod registry;
+pub mod typed_protobuf;

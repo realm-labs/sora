@@ -5,6 +5,7 @@ pub mod java;
 pub mod kotlin;
 pub mod lua;
 pub mod model;
+pub mod proto;
 mod render;
 pub mod rust;
 pub mod target;

@@ -42,6 +42,7 @@ pub enum GenCommand {
     Java(GenArgs),
     Go(GenArgs),
     Lua(GenArgs),
+    Proto(GenArgs),
 }
 
 #[derive(Debug, Args)]
@@ -122,6 +123,7 @@ pub enum BuildTarget {
     Java,
     Go,
     Lua,
+    Proto,
 }
 
 #[derive(Debug, Args)]

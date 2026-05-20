@@ -6,4 +6,5 @@ pub enum CodegenTarget {
     Java,
     Go,
     Lua,
+    Proto,
 }

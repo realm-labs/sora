@@ -23,6 +23,7 @@ pub fn run(command: Command) -> Result<()> {
             GenCommand::Java(args) => generate(args, CodegenTarget::Java),
             GenCommand::Go(args) => generate(args, CodegenTarget::Go),
             GenCommand::Lua(args) => generate(args, CodegenTarget::Lua),
+            GenCommand::Proto(args) => generate(args, CodegenTarget::Proto),
         },
         Command::Export(args) => export(args),
         Command::Diff(args) => diff(args),

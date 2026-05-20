@@ -3,6 +3,7 @@ use std::collections::BTreeMap;
 use crate::{
     binary::BinaryBundleExporter, cbor::CborBundleExporter, debug_json::DebugJsonExporter,
     exporter::DataExporter, json::JsonBundleExporter, protobuf::ProtobufBundleExporter,
+    typed_protobuf::TypedProtobufExporter,
 };
 
 #[derive(Default)]
@@ -22,6 +23,7 @@ impl ExporterRegistry {
         registry.register(DebugJsonExporter);
         registry.register(JsonBundleExporter);
         registry.register(ProtobufBundleExporter);
+        registry.register(TypedProtobufExporter);
         registry
     }
 
@@ -75,10 +77,21 @@ mod tests {
             registry.get("protobuf").unwrap().output_kind(),
             OutputKind::File
         );
+        assert_eq!(
+            registry.get("typed-protobuf").unwrap().output_kind(),
+            OutputKind::File
+        );
         assert!(registry.get("unknown").is_none());
         assert_eq!(
             registry.supported_formats(),
-            vec!["binary", "cbor", "json", "json-debug", "protobuf"]
+            vec![
+                "binary",
+                "cbor",
+                "json",
+                "json-debug",
+                "protobuf",
+                "typed-protobuf"
+            ]
         );
     }
 }

@@ -31,6 +31,10 @@ out = "go/internal/showcase"
 target = "lua"
 out = "lua/generated"
 
+[[build.codegen]]
+target = "proto"
+out = "generated/proto"
+
 [[build.exports]]
 format = "binary"
 out = "generated/config.sora"
@@ -42,6 +46,10 @@ out = "generated/config.json"
 [[build.exports]]
 format = "protobuf"
 out = "generated/config.pb"
+
+[[build.exports]]
+format = "typed-protobuf"
+out = "generated/config.typed.pb"
 
 [[build.exports]]
 format = "cbor"

@@ -143,10 +143,12 @@ mod tests {
         check_schema_with_lock(&input, &base.join("schema.lock")).unwrap();
         generate_code(&input, CodegenTarget::Rust, &base.join("rust")).unwrap();
         generate_code(&input, CodegenTarget::Kotlin, &base.join("kotlin")).unwrap();
+        generate_code(&input, CodegenTarget::Proto, &base.join("proto")).unwrap();
         generate_excel_template(&input, &base.join("excel")).unwrap();
 
         assert!(base.join("rust/item.rs").exists());
         assert!(base.join("kotlin/game_config/Item.kt").exists());
+        assert!(base.join("proto/sora_config.proto").exists());
         assert!(base.join("excel/Item.xlsx").exists());
         assert!(base.join("schema.lock").exists());
 
@@ -172,6 +174,12 @@ mod tests {
             ExportOutput::File(base.join("config.pb")),
         )
         .unwrap();
+        export_data(
+            &input,
+            "typed-protobuf",
+            ExportOutput::File(base.join("config.typed.pb")),
+        )
+        .unwrap();
         export_data(&input, "cbor", ExportOutput::File(base.join("config.cbor"))).unwrap();
         export_data(
             &input,
@@ -183,6 +191,7 @@ mod tests {
         assert!(base.join("config.sora").exists());
         assert!(base.join("config.json").exists());
         assert!(base.join("config.pb").exists());
+        assert!(base.join("config.typed.pb").exists());
         assert!(base.join("config.cbor").exists());
         assert!(base.join("debug-json/Item.json").exists());
 

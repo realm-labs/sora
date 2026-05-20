@@ -1,0 +1,367 @@
+syntax = "proto3";
+
+package com.sora.showcase;
+
+message SoraConfigData {
+  repeated Item item = 1;
+  repeated Skill skill = 2;
+  repeated Quest quest = 3;
+  repeated QuestReward quest_reward = 4;
+  GameSettings game_settings = 5;
+  repeated Localization localization = 6;
+  repeated LevelExp level_exp = 7;
+  repeated Character character = 8;
+  repeated CharacterSkill character_skill = 9;
+  repeated Buff buff = 10;
+  repeated DropGroup drop_group = 11;
+  repeated DropEntry drop_entry = 12;
+  repeated Monster monster = 13;
+  repeated Stage stage = 14;
+  repeated StageReward stage_reward = 15;
+  repeated Dungeon dungeon = 16;
+  repeated Shop shop = 17;
+  repeated ShopItem shop_item = 18;
+  repeated Recipe recipe = 19;
+  repeated GachaPool gacha_pool = 20;
+  repeated GachaItem gacha_item = 21;
+  repeated EquipmentSet equipment_set = 22;
+  repeated Achievement achievement = 23;
+  repeated VipLevel vip_level = 24;
+  repeated MailTemplate mail_template = 25;
+  repeated MailReward mail_reward = 26;
+  repeated Dialogue dialogue = 27;
+  repeated EventRule event_rule = 28;
+}
+
+enum ItemType {
+  ITEM_TYPE_WEAPON = 0;
+  ITEM_TYPE_ARMOR = 1;
+  ITEM_TYPE_CURRENCY = 2;
+  ITEM_TYPE_MATERIAL = 3;
+  ITEM_TYPE_CONSUMABLE = 4;
+}
+
+enum ResourceKind {
+  RESOURCE_KIND_ITEM = 0;
+  RESOURCE_KIND_GOLD = 1;
+  RESOURCE_KIND_DIAMOND = 2;
+}
+
+enum ElementType {
+  ELEMENT_TYPE_FIRE = 0;
+  ELEMENT_TYPE_ICE = 1;
+  ELEMENT_TYPE_LIGHTNING = 2;
+  ELEMENT_TYPE_PHYSICAL = 3;
+}
+
+enum QuestType {
+  QUEST_TYPE_MAIN = 0;
+  QUEST_TYPE_SIDE = 1;
+  QUEST_TYPE_DAILY = 2;
+}
+
+enum Rarity {
+  RARITY_COMMON = 0;
+  RARITY_UNCOMMON = 1;
+  RARITY_RARE = 2;
+  RARITY_EPIC = 3;
+  RARITY_LEGENDARY = 4;
+}
+
+enum StatType {
+  STAT_TYPE_HP = 0;
+  STAT_TYPE_ATTACK = 1;
+  STAT_TYPE_DEFENSE = 2;
+  STAT_TYPE_SPEED = 3;
+  STAT_TYPE_CRIT_RATE = 4;
+}
+
+enum MailType {
+  MAIL_TYPE_SYSTEM = 0;
+  MAIL_TYPE_EVENT = 1;
+  MAIL_TYPE_COMPENSATION = 2;
+}
+
+message ResourceCost {
+  ResourceKind kind = 1;
+  int32 id = 2;
+  int32 count = 3;
+}
+
+message Vec3 {
+  float x = 1;
+  float y = 2;
+  float z = 3;
+}
+
+message SkillEffect {
+  ElementType element = 1;
+  int32 power = 2;
+  float radius = 3;
+}
+
+message Reward {
+  int32 item_id = 1;
+  int32 count = 2;
+}
+
+message StatModifier {
+  StatType stat = 1;
+  float value = 2;
+  bool is_percent = 3;
+}
+
+message EventCondition {
+  oneof kind {
+    EventConditionLevelAtLeast level_at_least = 1;
+    EventConditionQuestCompleted quest_completed = 2;
+    EventConditionHasItem has_item = 3;
+  }
+}
+
+message EventConditionLevelAtLeast {
+  int32 level = 1;
+}
+
+message EventConditionQuestCompleted {
+  int32 quest_id = 1;
+}
+
+message EventConditionHasItem {
+  int32 item_id = 1;
+  int32 count = 2;
+}
+
+message RewardAction {
+  oneof kind {
+    RewardActionAddItem add_item = 1;
+    RewardActionAddBuff add_buff = 2;
+    RewardActionUnlockStage unlock_stage = 3;
+    RewardActionSendMail send_mail = 4;
+  }
+}
+
+message RewardActionAddItem {
+  int32 item_id = 1;
+  int32 count = 2;
+}
+
+message RewardActionAddBuff {
+  int32 buff_id = 1;
+  float duration = 2;
+}
+
+message RewardActionUnlockStage {
+  int32 stage_id = 1;
+}
+
+message RewardActionSendMail {
+  int32 mail_id = 1;
+}
+
+message Item {
+  int32 id = 1;
+  string name = 2;
+  ItemType item_type = 3;
+  int32 max_stack = 4;
+  ResourceCost price = 5;
+  repeated string tags = 6;
+}
+
+message Skill {
+  int32 id = 1;
+  string name = 2;
+  ElementType element = 3;
+  ResourceCost cost = 4;
+  SkillEffect effect = 5;
+  int32 required_level = 6;
+  optional int32 required_item = 7;
+  Vec3 cast_origin = 8;
+}
+
+message Quest {
+  int32 id = 1;
+  QuestType quest_type = 2;
+  string title = 3;
+  int32 required_item = 4;
+  repeated int32 unlock_skills = 5;
+  Vec3 start_pos = 6;
+  repeated Reward rewards = 7;
+}
+
+message QuestReward {
+  int32 quest_id = 1;
+  int32 seq = 2;
+  int32 item_id = 3;
+  int32 count = 4;
+}
+
+message GameSettings {
+  string version = 1;
+  int32 daily_reset_hour = 2;
+  int32 starting_gold = 3;
+  Vec3 spawn_pos = 4;
+  repeated int32 starter_items = 5;
+}
+
+message Localization {
+  string key = 1;
+  string zh_cn = 2;
+  string en_us = 3;
+  optional string note = 4;
+}
+
+message LevelExp {
+  int32 level = 1;
+  int64 exp = 2;
+  optional string unlock_feature = 3;
+}
+
+message Character {
+  int32 id = 1;
+  string name = 2;
+  Rarity rarity = 3;
+  int32 base_level = 4;
+  int32 base_skill = 5;
+  repeated int32 starter_items = 6;
+  Vec3 spawn_pos = 7;
+}
+
+message CharacterSkill {
+  int32 character_id = 1;
+  int32 skill_id = 2;
+  int32 unlock_level = 3;
+}
+
+message Buff {
+  int32 id = 1;
+  string name = 2;
+  float duration = 3;
+  repeated StatModifier modifiers = 4;
+}
+
+message DropGroup {
+  int32 id = 1;
+  string name = 2;
+}
+
+message DropEntry {
+  int32 group_id = 1;
+  int32 seq = 2;
+  int32 item_id = 3;
+  int32 count = 4;
+  float weight = 5;
+}
+
+message Monster {
+  int32 id = 1;
+  string name = 2;
+  int32 level = 3;
+  ElementType element = 4;
+  int32 drop_group = 5;
+  Vec3 spawn_pos = 6;
+}
+
+message Stage {
+  int32 id = 1;
+  string name = 2;
+  repeated int32 monster_ids = 3;
+  int32 recommended_power = 4;
+  repeated Reward first_clear_rewards = 5;
+}
+
+message StageReward {
+  int32 stage_id = 1;
+  int32 seq = 2;
+  int32 item_id = 3;
+  int32 count = 4;
+}
+
+message Dungeon {
+  int32 id = 1;
+  string name = 2;
+  repeated int32 stage_ids = 3;
+  ResourceCost entry_cost = 4;
+}
+
+message Shop {
+  int32 id = 1;
+  string name = 2;
+  ResourceKind currency = 3;
+}
+
+message ShopItem {
+  int32 shop_id = 1;
+  int32 seq = 2;
+  int32 item_id = 3;
+  ResourceCost price = 4;
+  optional int32 daily_limit = 5;
+}
+
+message Recipe {
+  int32 id = 1;
+  int32 result_item = 2;
+  repeated ResourceCost materials = 3;
+}
+
+message GachaPool {
+  int32 id = 1;
+  string name = 2;
+  ResourceCost cost = 3;
+}
+
+message GachaItem {
+  int32 pool_id = 1;
+  int32 item_id = 2;
+  Rarity rarity = 3;
+  float weight = 4;
+}
+
+message EquipmentSet {
+  int32 id = 1;
+  string name = 2;
+  repeated int32 item_ids = 3;
+  SkillEffect bonus_effect = 4;
+}
+
+message Achievement {
+  int32 id = 1;
+  string title_key = 2;
+  int64 target_count = 3;
+  ResourceCost reward = 4;
+}
+
+message VipLevel {
+  int32 level = 1;
+  ResourceCost cost = 2;
+  repeated string perks = 3;
+}
+
+message MailTemplate {
+  int32 id = 1;
+  MailType mail_type = 2;
+  string title_key = 3;
+  string body_key = 4;
+  repeated Reward rewards = 5;
+}
+
+message MailReward {
+  int32 mail_id = 1;
+  int32 seq = 2;
+  int32 item_id = 3;
+  int32 count = 4;
+}
+
+message Dialogue {
+  int32 id = 1;
+  string speaker_key = 2;
+  repeated string lines = 3;
+}
+
+message EventRule {
+  int32 id = 1;
+  string name = 2;
+  EventCondition condition = 3;
+  repeated RewardAction actions = 4;
+}
+

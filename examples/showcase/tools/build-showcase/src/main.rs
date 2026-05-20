@@ -23,6 +23,7 @@ fn main() -> Result<()> {
     let csharp_generated = root.join("csharp/src/generated/csharp");
     let java_generated = root.join("java/src/generated/java");
     let go_generated = root.join("go/internal/showcase");
+    let proto_generated = generated_root.join("proto");
 
     fs::create_dir_all(&data_root)
         .with_context(|| format!("failed to create `{}`", data_root.display()))?;
@@ -41,9 +42,11 @@ fn main() -> Result<()> {
     clean_dir(&csharp_generated)?;
     clean_dir(&java_generated)?;
     clean_dir(&go_generated)?;
+    clean_dir(&proto_generated)?;
     clean_dir(&generated_root.join("debug-json"))?;
     clean_file(&generated_root.join("config.json"))?;
     clean_file(&generated_root.join("config.pb"))?;
+    clean_file(&generated_root.join("config.typed.pb"))?;
     clean_file(&generated_root.join("config.cbor"))?;
 
     sora_core::pipeline::check_schema(&schema_input)?;
@@ -53,6 +56,7 @@ fn main() -> Result<()> {
     sora_core::pipeline::generate_code(&schema_input, CodegenTarget::CSharp, &csharp_generated)?;
     sora_core::pipeline::generate_code(&schema_input, CodegenTarget::Java, &java_generated)?;
     sora_core::pipeline::generate_code(&schema_input, CodegenTarget::Go, &go_generated)?;
+    sora_core::pipeline::generate_code(&schema_input, CodegenTarget::Proto, &proto_generated)?;
     sora_core::pipeline::export_data(
         &project_input,
         "binary",
@@ -67,6 +71,11 @@ fn main() -> Result<()> {
         &project_input,
         "protobuf",
         ExportOutput::File(generated_root.join("config.pb")),
+    )?;
+    sora_core::pipeline::export_data(
+        &project_input,
+        "typed-protobuf",
+        ExportOutput::File(generated_root.join("config.typed.pb")),
     )?;
     sora_core::pipeline::export_data(
         &project_input,

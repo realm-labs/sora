@@ -283,8 +283,9 @@ impl BuildTarget {
             "java" => Ok(Self::Java),
             "go" => Ok(Self::Go),
             "lua" => Ok(Self::Lua),
+            "proto" => Ok(Self::Proto),
             _ => Err(format!(
-                "unsupported codegen target `{value}`; expected rust, kotlin, csharp, java, go, or lua"
+                "unsupported codegen target `{value}`; expected rust, kotlin, csharp, java, go, lua, or proto"
             )),
         }
     }
@@ -297,6 +298,7 @@ impl BuildTarget {
             Self::Java => "java",
             Self::Go => "go",
             Self::Lua => "lua",
+            Self::Proto => "proto",
         }
     }
 }
@@ -310,6 +312,7 @@ impl From<BuildTarget> for CodegenTarget {
             BuildTarget::Java => Self::Java,
             BuildTarget::Go => Self::Go,
             BuildTarget::Lua => Self::Lua,
+            BuildTarget::Proto => Self::Proto,
         }
     }
 }
@@ -339,8 +342,10 @@ mod tests {
         assert!(base.join("generated/excel/Item.xlsx").exists());
         assert!(base.join("generated/rust/item.rs").exists());
         assert!(base.join("generated/lua/item.lua").exists());
+        assert!(base.join("generated/proto/sora_config.proto").exists());
         assert!(base.join("generated/config.json").exists());
         assert!(base.join("generated/config.pb").exists());
+        assert!(base.join("generated/config.typed.pb").exists());
         assert!(base.join("generated/config.cbor").exists());
         assert!(base.join("generated/debug-json/Item.json").exists());
 
@@ -406,6 +411,10 @@ out = "generated/kotlin"
 target = "lua"
 out = "generated/lua"
 
+[[build.codegen]]
+target = "proto"
+out = "generated/proto"
+
 [[build.exports]]
 format = "json"
 out = "generated/config.json"
@@ -413,6 +422,10 @@ out = "generated/config.json"
 [[build.exports]]
 format = "protobuf"
 out = "generated/config.pb"
+
+[[build.exports]]
+format = "typed-protobuf"
+out = "generated/config.typed.pb"
 
 [[build.exports]]
 format = "cbor"
