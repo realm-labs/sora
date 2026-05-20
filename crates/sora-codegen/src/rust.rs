@@ -32,6 +32,9 @@ impl CodeGenerator for RustCodeGenerator {
         }
 
         let rendered = render_template("rust", "mod.rs.j2", context! { model => &model })?;
-        write_file(&out_dir.join("mod.rs"), rendered)
+        write_file(&out_dir.join("mod.rs"), rendered)?;
+
+        let rendered = render_template("rust", "runtime.rs.j2", context! {})?;
+        write_file(&out_dir.join("runtime.rs"), rendered)
     }
 }

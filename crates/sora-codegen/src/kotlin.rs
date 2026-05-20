@@ -63,10 +63,16 @@ mod tests {
         KotlinCodeGenerator.generate(&ir, &kotlin_out).unwrap();
 
         let rust_item = std::fs::read_to_string(rust_out.join("item.rs")).unwrap();
+        let rust_runtime = std::fs::read_to_string(rust_out.join("runtime.rs")).unwrap();
+        let rust_mod = std::fs::read_to_string(rust_out.join("mod.rs")).unwrap();
         let kotlin_item = std::fs::read_to_string(kotlin_out.join("Item.kt")).unwrap();
 
         assert!(rust_item.contains("pub struct Item"));
         assert!(rust_item.contains("pub item_type: ItemType"));
+        assert!(rust_item.contains("impl super::runtime::SoraDecode for Item"));
+        assert!(rust_runtime.contains("pub struct SoraBundle"));
+        assert!(rust_mod.contains("pub struct SoraConfig"));
+        assert!(rust_mod.contains("from_bytes"));
         assert!(kotlin_item.contains("data class Item"));
         assert!(kotlin_item.contains("val itemType: ItemType"));
 

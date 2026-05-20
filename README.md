@@ -4,7 +4,7 @@ Sora is a Rust-first game configuration compiler that turns schemas and table da
 
 ## Status
 
-Sora is in its first milestone. It currently supports TOML schemas, TOML and Excel `.xlsx` table data, normalized IR, recursive data validation, Rust/Kotlin model generation, a pluggable exporter registry, a native sectioned binary exporter, a debug JSON exporter, and generated Excel `.xlsx` template projections.
+Sora is in its first milestone. It currently supports TOML schemas, TOML and Excel `.xlsx` table data, normalized IR, recursive data validation, Rust/Kotlin model generation, generated Rust binary runtime readers, a pluggable exporter registry, a native sectioned binary exporter, a debug JSON exporter, and generated Excel `.xlsx` template projections.
 
 ## Design Principles
 
@@ -113,7 +113,7 @@ The binary bundle uses a language-neutral sectioned layout: a fixed header, a se
 
 ## Codegen Architecture
 
-Codegen uses MiniJinja templates, but type mapping is computed in Rust before rendering. The first targets are Rust and Kotlin, with room for future TypeScript, Java, C#, Go, Lua, and Python generators.
+Codegen uses MiniJinja templates, but type mapping is computed in Rust before rendering. Rust generation includes models plus a small `runtime.rs` reader for `.sora` binary bundles. Kotlin currently generates models only. Future targets may include TypeScript, Java, C#, Go, Lua, and Python.
 
 ## Excel Template Projection
 
@@ -123,8 +123,8 @@ Sora generates `.xlsx` templates from schema IR. Header rows include the table n
 
 Phase 2:
 
-- Generated Rust runtime loader.
-- Stable binary reader API.
+- Kotlin runtime loader.
+- Stable binary reader API refinements.
 - CSV data source.
 - Excel comments, dropdowns, and validation rules.
 

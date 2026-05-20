@@ -1,7 +1,7 @@
 use heck::{ToLowerCamelCase, ToPascalCase, ToSnakeCase};
 use serde::Serialize;
 use sora_diagnostics::Result;
-use sora_ir::model::{ConfigIr, FieldIr, TableIr};
+use sora_ir::model::{ConfigIr, FieldIr, TableIr, TypeIr};
 
 use crate::types::{kotlin_type_name, rust_type_name};
 
@@ -10,6 +10,7 @@ pub struct CodegenModel {
     pub package: String,
     pub enums: Vec<CodegenEnum>,
     pub records: Vec<CodegenRecord>,
+    pub tables: Vec<CodegenTable>,
     pub modules: Vec<String>,
 }
 
@@ -25,7 +26,21 @@ pub struct CodegenRecord {
     pub pascal_name: String,
     pub snake_name: String,
     pub camel_name: String,
+    pub imports: Vec<CodegenImport>,
     pub fields: Vec<CodegenField>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct CodegenImport {
+    pub module: String,
+    pub name: String,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct CodegenTable {
+    pub name: String,
+    pub pascal_name: String,
+    pub snake_name: String,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -63,6 +78,16 @@ pub fn build_model(ir: &ConfigIr) -> Result<CodegenModel> {
         .chain(ir.tables.iter().map(|item| build_record(ir, &item.into())))
         .collect::<Result<Vec<_>>>()?;
 
+    let tables = ir
+        .tables
+        .iter()
+        .map(|item| CodegenTable {
+            name: item.name.clone(),
+            pascal_name: item.name.to_pascal_case(),
+            snake_name: item.name.to_snake_case(),
+        })
+        .collect::<Vec<_>>();
+
     let modules = enums
         .iter()
         .map(|item| item.name.to_snake_case())
@@ -73,6 +98,7 @@ pub fn build_model(ir: &ConfigIr) -> Result<CodegenModel> {
         package: ir.package.clone(),
         enums,
         records,
+        tables,
         modules,
     })
 }
@@ -98,8 +124,60 @@ fn build_record(ir: &ConfigIr, item: &TableLike<'_>) -> Result<CodegenRecord> {
         pascal_name: item.name.to_pascal_case(),
         snake_name: item.name.to_snake_case(),
         camel_name: item.name.to_lower_camel_case(),
+        imports: build_imports(ir, item),
         fields,
     })
+}
+
+fn build_imports(ir: &ConfigIr, item: &TableLike<'_>) -> Vec<CodegenImport> {
+    let mut imports = Vec::new();
+    for field in item.fields {
+        collect_type_imports(ir, item.name, &field.ty, &mut imports);
+    }
+    imports.sort_by(|a, b| a.module.cmp(&b.module).then(a.name.cmp(&b.name)));
+    imports.dedup_by(|a, b| a.module == b.module && a.name == b.name);
+    imports
+}
+
+fn collect_type_imports(
+    ir: &ConfigIr,
+    owner_name: &str,
+    ty: &TypeIr,
+    imports: &mut Vec<CodegenImport>,
+) {
+    match ty {
+        TypeIr::Enum(name) | TypeIr::Struct(name) => push_named_import(owner_name, name, imports),
+        TypeIr::List(element) | TypeIr::Optional(element) => {
+            collect_type_imports(ir, owner_name, element, imports);
+        }
+        TypeIr::Array { element, .. } => collect_type_imports(ir, owner_name, element, imports),
+        TypeIr::Ref { table, field } => {
+            if let Some(target_field) = ir
+                .tables
+                .iter()
+                .find(|candidate| candidate.name == *table)
+                .and_then(|table| {
+                    table
+                        .fields
+                        .iter()
+                        .find(|candidate| candidate.name == *field)
+                })
+            {
+                collect_type_imports(ir, owner_name, &target_field.ty, imports);
+            }
+        }
+        _ => {}
+    }
+}
+
+fn push_named_import(owner_name: &str, name: &str, imports: &mut Vec<CodegenImport>) {
+    if name == owner_name {
+        return;
+    }
+    imports.push(CodegenImport {
+        module: name.to_snake_case(),
+        name: name.to_pascal_case(),
+    });
 }
 
 struct TableLike<'a> {

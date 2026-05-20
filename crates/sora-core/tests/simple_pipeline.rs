@@ -52,6 +52,16 @@ fn simple_example_pipeline_generates_all_artifacts() {
             .contains("pub struct Item")
     );
     assert!(
+        fs::read_to_string(out_dir.join("rust/runtime.rs"))
+            .unwrap()
+            .contains("pub struct SoraBundle")
+    );
+    assert!(
+        fs::read_to_string(out_dir.join("rust/mod.rs"))
+            .unwrap()
+            .contains("pub struct SoraConfig")
+    );
+    assert!(
         fs::read_to_string(out_dir.join("kotlin/Item.kt"))
             .unwrap()
             .contains("data class Item")

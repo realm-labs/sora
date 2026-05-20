@@ -1,3 +1,7 @@
+{%- for import in record.imports %}
+use super::{{ import.module }}::{{ import.name }};
+{%- endfor %}
+
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct {{ record.pascal_name }} {
 {%- for field in record.fields %}
@@ -6,4 +10,14 @@ pub struct {{ record.pascal_name }} {
 {%- endif %}
     pub {{ field.rust_name }}: {{ field.rust_type }},
 {%- endfor %}
+}
+
+impl super::runtime::SoraDecode for {{ record.pascal_name }} {
+    fn decode(reader: &mut super::runtime::SoraReader<'_>) -> Result<Self, super::runtime::SoraReadError> {
+        Ok(Self {
+{%- for field in record.fields %}
+            {{ field.rust_name }}: <{{ field.rust_type }} as super::runtime::SoraDecode>::decode(reader)?,
+{%- endfor %}
+        })
+    }
 }
