@@ -1,10 +1,27 @@
 package {{ package }};
 
+{%- if runtime_format == "json" or runtime_format == "cbor" %}
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+{%- endif %}
+{%- if runtime_format == "cbor" %}
+import com.fasterxml.jackson.dataformat.cbor.CBORFactory;
+{%- endif %}
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
+{%- if runtime_format != "sora" %}
+import java.util.HashMap;
+{%- endif %}
 import java.util.HashSet;
+{%- if runtime_format != "sora" %}
+import java.util.LinkedHashMap;
+{%- endif %}
 import java.util.List;
+{%- if runtime_format != "sora" %}
+import java.util.Map;
+import java.util.function.Function;
+{%- endif %}
 import java.util.function.Supplier;
 
 final class SoraReadException extends RuntimeException {
@@ -316,3 +333,429 @@ final class SoraReader {
         return chunk;
     }
 }
+
+{%- if runtime_format != "sora" %}
+
+final class SoraValueBundle {
+    private static final int FORMAT_VERSION = 1;
+    private final Map<String, List<SoraValue>> tables;
+
+    private SoraValueBundle(Map<String, List<SoraValue>> tables) {
+        this.tables = tables;
+    }
+
+    <T> List<T> decodeTable(String name, Function<SoraValue, T> decode) {
+        var values = tables.get(name);
+        if (values == null) {
+            throw new SoraReadException("missing table `" + name + "`");
+        }
+        var rows = new ArrayList<T>(values.size());
+        for (var value : values) {
+            rows.add(decode.apply(value));
+        }
+        return rows;
+    }
+
+{%- if runtime_format == "json" %}
+    static SoraValueBundle parseJson(byte[] bytes) {
+        try {
+            var mapper = new ObjectMapper();
+            var root = mapper.readValue(bytes, new TypeReference<Map<String, Object>>() {});
+            return fromRoot("json", SoraValue.fromJava(root));
+        } catch (Exception error) {
+            throw new SoraReadException("failed to parse json bundle: " + error.getMessage());
+        }
+    }
+{%- endif %}
+
+{%- if runtime_format == "cbor" %}
+    static SoraValueBundle parseCbor(byte[] bytes) {
+        try {
+            var mapper = new ObjectMapper(new CBORFactory());
+            var root = mapper.readValue(bytes, new TypeReference<Map<String, Object>>() {});
+            return fromRoot("cbor", SoraValue.fromJava(root));
+        } catch (Exception error) {
+            throw new SoraReadException("failed to parse cbor bundle: " + error.getMessage());
+        }
+    }
+{%- endif %}
+
+{%- if runtime_format == "protobuf" %}
+    static SoraValueBundle parseProtobuf(byte[] bytes) {
+        var reader = new ProtoReader(bytes);
+        return fromRoot("protobuf", reader.readBundle());
+    }
+{%- endif %}
+
+    private static SoraValueBundle fromRoot(String expectedFormat, SoraValue rootValue) {
+        var root = rootValue.asObject();
+        var format = root.get("format").asString();
+        if (!format.equals(expectedFormat)) {
+            throw new SoraReadException("expected " + expectedFormat + " bundle, got " + format);
+        }
+        var version = root.get("format_version").asLong();
+        if (version != FORMAT_VERSION) {
+            throw new SoraReadException("unsupported " + expectedFormat + " bundle version " + version);
+        }
+        var data = root.get("data").asObject();
+        var tableValues = data.get("tables").asRawList();
+        var tables = new HashMap<String, List<SoraValue>>(tableValues.size());
+        for (var tableValue : tableValues) {
+            var table = tableValue.asObject();
+            tables.put(table.get("name").asString(), table.get("rows").asRawList());
+        }
+        return new SoraValueBundle(tables);
+    }
+}
+
+final class SoraValue {
+    private final Object value;
+
+    SoraValue(Object value) {
+        this.value = value;
+    }
+
+    boolean isNull() {
+        return value == null;
+    }
+
+    @SuppressWarnings("unchecked")
+    Map<String, SoraValue> asObject() {
+        if (value instanceof Map<?, ?> map) {
+            return (Map<String, SoraValue>)map;
+        }
+        throw new SoraReadException("expected object");
+    }
+
+    @SuppressWarnings("unchecked")
+    List<SoraValue> asRawList() {
+        if (value instanceof List<?> list) {
+            return (List<SoraValue>)list;
+        }
+        throw new SoraReadException("expected list");
+    }
+
+    <T> List<T> asList(Function<SoraValue, T> decode) {
+        var values = asRawList();
+        var decoded = new ArrayList<T>(values.size());
+        for (var value : values) {
+            decoded.add(decode.apply(value));
+        }
+        return decoded;
+    }
+
+    Boolean asBool() {
+        if (value instanceof Boolean typed) {
+            return typed;
+        }
+        throw new SoraReadException("expected bool");
+    }
+
+    Integer asInt() {
+        var value = asLong();
+        if (value < Integer.MIN_VALUE || value > Integer.MAX_VALUE) {
+            throw new SoraReadException("integer exceeds int");
+        }
+        return value.intValue();
+    }
+
+    Long asLong() {
+        if (value instanceof Integer typed) {
+            return typed.longValue();
+        }
+        if (value instanceof Long typed) {
+            return typed;
+        }
+        if (value instanceof Number typed) {
+            var doubleValue = typed.doubleValue();
+            if (Math.rint(doubleValue) == doubleValue && doubleValue >= Long.MIN_VALUE && doubleValue <= Long.MAX_VALUE) {
+                return (long)doubleValue;
+            }
+        }
+        throw new SoraReadException("expected integer");
+    }
+
+    Float asFloat() {
+        return asDouble().floatValue();
+    }
+
+    Double asDouble() {
+        if (value instanceof Number typed) {
+            return typed.doubleValue();
+        }
+        throw new SoraReadException("expected float");
+    }
+
+    String asString() {
+        if (value instanceof String typed) {
+            return typed;
+        }
+        throw new SoraReadException("expected string");
+    }
+
+    @SuppressWarnings("unchecked")
+    static SoraValue fromJava(Object value) {
+        if (value instanceof Map<?, ?> map) {
+            var object = new LinkedHashMap<String, SoraValue>(map.size());
+            for (var entry : map.entrySet()) {
+                object.put((String)entry.getKey(), fromJava(entry.getValue()));
+            }
+            return new SoraValue(object);
+        }
+        if (value instanceof List<?> list) {
+            var values = new ArrayList<SoraValue>(list.size());
+            for (var item : list) {
+                values.add(fromJava(item));
+            }
+            return new SoraValue(values);
+        }
+        return new SoraValue(value);
+    }
+}
+
+{%- endif %}
+
+{%- if runtime_format == "protobuf" %}
+
+final class ProtoReader {
+    private final byte[] bytes;
+    private int cursor;
+
+    ProtoReader(byte[] bytes) {
+        this.bytes = bytes;
+    }
+
+    SoraValue readBundle() {
+        var object = new LinkedHashMap<String, SoraValue>();
+        var data = new LinkedHashMap<String, SoraValue>();
+        var tables = new ArrayList<SoraValue>();
+        data.put("tables", new SoraValue(tables));
+        object.put("data", new SoraValue(data));
+        while (!isFinished()) {
+            var key = readKey();
+            switch (key.field) {
+                case 1:
+                    object.put("format_version", new SoraValue((long)readVarintField(key.wire)));
+                    break;
+                case 2:
+                    object.put("format", new SoraValue(readStringField(key.wire)));
+                    break;
+                case 5:
+                    tables.add(new ProtoReader(readBytesField(key.wire)).readTable());
+                    break;
+                default:
+                    skip(key.wire);
+                    break;
+            }
+        }
+        return new SoraValue(object);
+    }
+
+    private SoraValue readTable() {
+        var object = new LinkedHashMap<String, SoraValue>();
+        var rows = new ArrayList<SoraValue>();
+        object.put("rows", new SoraValue(rows));
+        while (!isFinished()) {
+            var key = readKey();
+            switch (key.field) {
+                case 1:
+                    object.put("name", new SoraValue(readStringField(key.wire)));
+                    break;
+                case 2:
+                    rows.add(new ProtoReader(readBytesField(key.wire)).readRow());
+                    break;
+                default:
+                    skip(key.wire);
+                    break;
+            }
+        }
+        return new SoraValue(object);
+    }
+
+    private SoraValue readRow() {
+        var object = new LinkedHashMap<String, SoraValue>();
+        while (!isFinished()) {
+            var key = readKey();
+            if (key.field == 1) {
+                var field = new ProtoReader(readBytesField(key.wire)).readField();
+                object.put(field.name, field.value);
+            } else {
+                skip(key.wire);
+            }
+        }
+        return new SoraValue(object);
+    }
+
+    private ProtoFieldValue readField() {
+        String name = null;
+        SoraValue value = null;
+        while (!isFinished()) {
+            var key = readKey();
+            switch (key.field) {
+                case 1:
+                    name = readStringField(key.wire);
+                    break;
+                case 2:
+                    value = new ProtoReader(readBytesField(key.wire)).readValue();
+                    break;
+                default:
+                    skip(key.wire);
+                    break;
+            }
+        }
+        if (name == null || value == null) {
+            throw new SoraReadException("protobuf field is missing name or value");
+        }
+        return new ProtoFieldValue(name, value);
+    }
+
+    private SoraValue readValue() {
+        SoraValue value = new SoraValue(null);
+        while (!isFinished()) {
+            var key = readKey();
+            switch (key.field) {
+                case 1:
+                    value = new SoraValue(readVarintField(key.wire) != 0);
+                    break;
+                case 2:
+                    value = new SoraValue((long)readVarintField(key.wire));
+                    break;
+                case 3:
+                    value = new SoraValue(Double.longBitsToDouble(SoraBundle.readI64At(readFixed64Field(key.wire), 0)));
+                    break;
+                case 4:
+                    value = new SoraValue(readStringField(key.wire));
+                    break;
+                case 5:
+                    value = new ProtoReader(readBytesField(key.wire)).readList();
+                    break;
+                case 6:
+                    value = new ProtoReader(readBytesField(key.wire)).readObject();
+                    break;
+                case 7:
+                    readVarintField(key.wire);
+                    value = new SoraValue(null);
+                    break;
+                default:
+                    skip(key.wire);
+                    break;
+            }
+        }
+        return value;
+    }
+
+    private SoraValue readList() {
+        var values = new ArrayList<SoraValue>();
+        while (!isFinished()) {
+            var key = readKey();
+            if (key.field == 1) {
+                values.add(new ProtoReader(readBytesField(key.wire)).readValue());
+            } else {
+                skip(key.wire);
+            }
+        }
+        return new SoraValue(values);
+    }
+
+    private SoraValue readObject() {
+        var object = new LinkedHashMap<String, SoraValue>();
+        while (!isFinished()) {
+            var key = readKey();
+            if (key.field == 1) {
+                var field = new ProtoReader(readBytesField(key.wire)).readField();
+                object.put(field.name, field.value);
+            } else {
+                skip(key.wire);
+            }
+        }
+        return new SoraValue(object);
+    }
+
+    private ProtoKey readKey() {
+        var key = readVarint();
+        return new ProtoKey((int)(key >> 3), (int)(key & 0x7));
+    }
+
+    private long readVarintField(int wire) {
+        if (wire != 0) {
+            throw new SoraReadException("expected protobuf varint wire type, got " + wire);
+        }
+        return readVarint();
+    }
+
+    private byte[] readFixed64Field(int wire) {
+        if (wire != 1) {
+            throw new SoraReadException("expected protobuf fixed64 wire type, got " + wire);
+        }
+        return take(8);
+    }
+
+    private byte[] readBytesField(int wire) {
+        if (wire != 2) {
+            throw new SoraReadException("expected protobuf length-delimited wire type, got " + wire);
+        }
+        var length = readVarint();
+        if (length > Integer.MAX_VALUE) {
+            throw new SoraReadException("protobuf length exceeds Integer.MAX_VALUE");
+        }
+        return take((int)length);
+    }
+
+    private String readStringField(int wire) {
+        return new String(readBytesField(wire), StandardCharsets.UTF_8);
+    }
+
+    private long readVarint() {
+        var value = 0L;
+        for (var shift = 0; shift < 64; shift += 7) {
+            var b = readByte();
+            value |= (long)(b & 0x7f) << shift;
+            if ((b & 0x80) == 0) {
+                return value;
+            }
+        }
+        throw new SoraReadException("protobuf varint overflow");
+    }
+
+    private void skip(int wire) {
+        switch (wire) {
+            case 0:
+                readVarint();
+                break;
+            case 1:
+                take(8);
+                break;
+            case 2:
+                readBytesField(wire);
+                break;
+            case 5:
+                take(4);
+                break;
+            default:
+                throw new SoraReadException("unsupported protobuf wire type " + wire);
+        }
+    }
+
+    private int readByte() {
+        return take(1)[0] & 0xff;
+    }
+
+    private byte[] take(int length) {
+        var end = SoraBundle.checkedAdd(cursor, length, "protobuf reader cursor overflow");
+        if (end > bytes.length) {
+            throw new SoraReadException("unexpected end of protobuf data");
+        }
+        var chunk = Arrays.copyOfRange(bytes, cursor, end);
+        cursor = end;
+        return chunk;
+    }
+
+    private boolean isFinished() {
+        return cursor == bytes.length;
+    }
+
+    private record ProtoKey(int field, int wire) {}
+    private record ProtoFieldValue(String name, SoraValue value) {}
+}
+
+{%- endif %}

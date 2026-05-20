@@ -22,4 +22,15 @@ public final class {{ record.pascal_name }} {
 {%- endfor %}
         );
     }
+
+{%- if runtime_format != "sora" %}
+    static {{ record.pascal_name }} decode(SoraValue value) {
+        var obj = value.asObject();
+        return new {{ record.pascal_name }}(
+{%- for field in record.fields %}
+            {{ field.value_decode | replace("__VALUE__", "obj.get(\"" ~ field.raw_name ~ "\")") }}{% if not loop.last %},{% endif %}
+{%- endfor %}
+        );
+    }
+{%- endif %}
 }

@@ -435,6 +435,38 @@ mod tests {
     }
 
     #[test]
+    fn java_supports_export_runtime_formats() {
+        for (runtime_format, parse_function) in [
+            (RuntimeFormatIr::Json, "parseJson"),
+            (RuntimeFormatIr::Cbor, "parseCbor"),
+            (RuntimeFormatIr::Protobuf, "parseProtobuf"),
+        ] {
+            let mut ir = example_ir();
+            ir.codegen.java.runtime_format = runtime_format;
+            let base = temp_dir();
+            let java_out = base.join("java");
+
+            JavaCodeGenerator.generate(&ir, &java_out).unwrap();
+
+            let package_out = java_out.join("game_config");
+            let runtime = std::fs::read_to_string(package_out.join("Runtime.java")).unwrap();
+            let config = std::fs::read_to_string(package_out.join("SoraConfig.java")).unwrap();
+            let item = std::fs::read_to_string(package_out.join("Item.java")).unwrap();
+            let action = std::fs::read_to_string(package_out.join("Action.java")).unwrap();
+
+            assert!(runtime.contains("final class SoraValueBundle"));
+            assert!(runtime.contains(parse_function));
+            assert!(config.contains(&format!("SoraValueBundle.{parse_function}(bytes)")));
+            assert!(item.contains("static Item decode(SoraValue value)"));
+            assert!(item.contains("obj.get(\"id\").asInt()"));
+            assert!(item.contains("ItemType.decode(obj.get(\"item_type\"))"));
+            assert!(action.contains("static Action decode(SoraValue value)"));
+
+            let _ = std::fs::remove_dir_all(base);
+        }
+    }
+
+    #[test]
     fn generates_csharp_java_and_go_files() {
         let mut ir = example_ir();
         ir.package = "com.sora.game_config".to_owned();

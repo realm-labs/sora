@@ -41,10 +41,9 @@ final class {{ table.pascal_name }}Table implements SoraTable {
 {%- endfor %}
     }
 
-    static {{ table.pascal_name }}Table decode(SoraBundle bundle) {
+    private static {{ table.pascal_name }}Table fromRows(List<{{ table.row_type }}> rows) {
 {%- if table.mode == "map" and table.key_field_name %}
 {%- if table.unique_indexes or table.non_unique_indexes %}
-        var rows = bundle.decodeTable("{{ table.name }}", {{ table.row_type }}::decode);
         return new {{ table.pascal_name }}Table(
             SoraConfig.decodeMapTable(rows, row -> row.{{ table.key_field_name }}){% if table.unique_indexes or table.non_unique_indexes %},{% endif %}
 {%- for index in table.unique_indexes %}
@@ -55,13 +54,12 @@ final class {{ table.pascal_name }}Table implements SoraTable {
 {%- endfor %}
         );
 {%- else %}
-        return new {{ table.pascal_name }}Table(SoraConfig.decodeMapTable(bundle.decodeTable("{{ table.name }}", {{ table.row_type }}::decode), row -> row.{{ table.key_field_name }}));
+        return new {{ table.pascal_name }}Table(SoraConfig.decodeMapTable(rows, row -> row.{{ table.key_field_name }}));
 {%- endif %}
 {%- elif table.mode == "singleton" %}
-        return new {{ table.pascal_name }}Table(SoraConfig.requireSingletonTable(bundle.decodeTable("{{ table.name }}", {{ table.row_type }}::decode), "{{ table.name }}"));
+        return new {{ table.pascal_name }}Table(SoraConfig.requireSingletonTable(rows, "{{ table.name }}"));
 {%- else %}
 {%- if table.unique_indexes or table.non_unique_indexes %}
-        var rows = bundle.decodeTable("{{ table.name }}", {{ table.row_type }}::decode);
         return new {{ table.pascal_name }}Table(
             rows{% if table.unique_indexes or table.non_unique_indexes %},{% endif %}
 {%- for index in table.unique_indexes %}
@@ -72,11 +70,21 @@ final class {{ table.pascal_name }}Table implements SoraTable {
 {%- endfor %}
         );
 {%- else %}
-        return new {{ table.pascal_name }}Table(bundle.decodeTable("{{ table.name }}", {{ table.row_type }}::decode));
+        return new {{ table.pascal_name }}Table(rows);
 {%- endif %}
 {%- endif %}
     }
 
+    static {{ table.pascal_name }}Table decode(SoraBundle bundle) {
+        return fromRows(bundle.decodeTable("{{ table.name }}", {{ table.row_type }}::decode));
+    }
+
+{%- if runtime_format != "sora" %}
+    static {{ table.pascal_name }}Table decode(SoraValueBundle bundle) {
+        return fromRows(bundle.decodeTable("{{ table.name }}", {{ table.row_type }}::decode));
+    }
+
+{%- endif %}
     public {{ table.container_type }} rows() {
         return rows;
     }
@@ -148,7 +156,15 @@ public final class SoraConfig {
     }
 
     public static SoraConfig fromBytes(byte[] bytes) {
+{%- if runtime_format == "sora" %}
         var bundle = SoraBundle.parse(bytes);
+{%- elif runtime_format == "json" %}
+        var bundle = SoraValueBundle.parseJson(bytes);
+{%- elif runtime_format == "cbor" %}
+        var bundle = SoraValueBundle.parseCbor(bytes);
+{%- elif runtime_format == "protobuf" %}
+        var bundle = SoraValueBundle.parseProtobuf(bytes);
+{%- endif %}
         var tables = new HashMap<String, SoraTable>({{ model.tables | length }});
 {%- for table in model.tables %}
         tables.put("{{ table.name }}", {{ table.pascal_name }}Table.decode(bundle));

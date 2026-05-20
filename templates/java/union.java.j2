@@ -33,4 +33,22 @@ public interface {{ union.pascal_name }} {
                 throw new SoraReadException("invalid union ordinal for {{ union.pascal_name }}");
         }
     }
+
+{%- if runtime_format != "sora" %}
+    static {{ union.pascal_name }} decode(SoraValue value) {
+        var obj = value.asObject();
+        switch (obj.get("{{ union.tag }}").asString()) {
+{%- for variant in union.variants %}
+            case "{{ variant.name }}":
+                return new {{ variant.name }}(
+{%- for field in variant.fields %}
+                    {{ field.value_decode | replace("__VALUE__", "obj.get(\"" ~ field.raw_name ~ "\")") }}{% if not loop.last %},{% endif %}
+{%- endfor %}
+                );
+{%- endfor %}
+            default:
+                throw new SoraReadException("invalid union tag for {{ union.pascal_name }}");
+        }
+    }
+{%- endif %}
 }

@@ -15,4 +15,17 @@ public enum {{ enum.name }} {
                 throw new SoraReadException("invalid enum ordinal for {{ enum.name }}");
         }
     }
+
+{%- if runtime_format != "sora" %}
+    static {{ enum.name }} decode(SoraValue value) {
+        switch (value.asString()) {
+{%- for value in enum.values %}
+            case "{{ value }}":
+                return {{ value }};
+{%- endfor %}
+            default:
+                throw new SoraReadException("invalid enum value for {{ enum.name }}");
+        }
+    }
+{%- endif %}
 }

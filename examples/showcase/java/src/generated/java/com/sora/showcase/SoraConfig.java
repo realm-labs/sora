@@ -31,8 +31,7 @@ final class ItemTable implements SoraTable {
         this.byItemType = byItemType;
     }
 
-    static ItemTable decode(SoraBundle bundle) {
-        var rows = bundle.decodeTable("Item", Item::decode);
+    private static ItemTable fromRows(List<Item> rows) {
         return new ItemTable(
             SoraConfig.decodeMapTable(rows, row -> row.id),
             SoraConfig.decodeUniqueIndex(rows, row -> row.name),
@@ -40,6 +39,9 @@ final class ItemTable implements SoraTable {
         );
     }
 
+    static ItemTable decode(SoraBundle bundle) {
+        return fromRows(bundle.decodeTable("Item", Item::decode));
+    }
     public java.util.Map<Integer, Item> rows() {
         return rows;
     }
@@ -85,10 +87,13 @@ final class SkillTable implements SoraTable {
         this.rows = rows;
     }
 
-    static SkillTable decode(SoraBundle bundle) {
-        return new SkillTable(SoraConfig.decodeMapTable(bundle.decodeTable("Skill", Skill::decode), row -> row.id));
+    private static SkillTable fromRows(List<Skill> rows) {
+        return new SkillTable(SoraConfig.decodeMapTable(rows, row -> row.id));
     }
 
+    static SkillTable decode(SoraBundle bundle) {
+        return fromRows(bundle.decodeTable("Skill", Skill::decode));
+    }
     public java.util.Map<Integer, Skill> rows() {
         return rows;
     }
@@ -128,10 +133,13 @@ final class QuestTable implements SoraTable {
         this.rows = rows;
     }
 
-    static QuestTable decode(SoraBundle bundle) {
-        return new QuestTable(SoraConfig.decodeMapTable(bundle.decodeTable("Quest", Quest::decode), row -> row.id));
+    private static QuestTable fromRows(List<Quest> rows) {
+        return new QuestTable(SoraConfig.decodeMapTable(rows, row -> row.id));
     }
 
+    static QuestTable decode(SoraBundle bundle) {
+        return fromRows(bundle.decodeTable("Quest", Quest::decode));
+    }
     public java.util.Map<Integer, Quest> rows() {
         return rows;
     }
@@ -171,10 +179,13 @@ final class QuestRewardTable implements SoraTable {
         this.rows = rows;
     }
 
-    static QuestRewardTable decode(SoraBundle bundle) {
-        return new QuestRewardTable(bundle.decodeTable("QuestReward", QuestReward::decode));
+    private static QuestRewardTable fromRows(List<QuestReward> rows) {
+        return new QuestRewardTable(rows);
     }
 
+    static QuestRewardTable decode(SoraBundle bundle) {
+        return fromRows(bundle.decodeTable("QuestReward", QuestReward::decode));
+    }
     public java.util.List<QuestReward> rows() {
         return rows;
     }
@@ -211,10 +222,13 @@ final class GameSettingsTable implements SoraTable {
         this.rows = rows;
     }
 
-    static GameSettingsTable decode(SoraBundle bundle) {
-        return new GameSettingsTable(SoraConfig.requireSingletonTable(bundle.decodeTable("GameSettings", GameSettings::decode), "GameSettings"));
+    private static GameSettingsTable fromRows(List<GameSettings> rows) {
+        return new GameSettingsTable(SoraConfig.requireSingletonTable(rows, "GameSettings"));
     }
 
+    static GameSettingsTable decode(SoraBundle bundle) {
+        return fromRows(bundle.decodeTable("GameSettings", GameSettings::decode));
+    }
     public GameSettings rows() {
         return rows;
     }
@@ -251,10 +265,13 @@ final class LocalizationTable implements SoraTable {
         this.rows = rows;
     }
 
-    static LocalizationTable decode(SoraBundle bundle) {
-        return new LocalizationTable(SoraConfig.decodeMapTable(bundle.decodeTable("Localization", Localization::decode), row -> row.key));
+    private static LocalizationTable fromRows(List<Localization> rows) {
+        return new LocalizationTable(SoraConfig.decodeMapTable(rows, row -> row.key));
     }
 
+    static LocalizationTable decode(SoraBundle bundle) {
+        return fromRows(bundle.decodeTable("Localization", Localization::decode));
+    }
     public java.util.Map<String, Localization> rows() {
         return rows;
     }
@@ -294,10 +311,13 @@ final class LevelExpTable implements SoraTable {
         this.rows = rows;
     }
 
-    static LevelExpTable decode(SoraBundle bundle) {
-        return new LevelExpTable(SoraConfig.decodeMapTable(bundle.decodeTable("LevelExp", LevelExp::decode), row -> row.level));
+    private static LevelExpTable fromRows(List<LevelExp> rows) {
+        return new LevelExpTable(SoraConfig.decodeMapTable(rows, row -> row.level));
     }
 
+    static LevelExpTable decode(SoraBundle bundle) {
+        return fromRows(bundle.decodeTable("LevelExp", LevelExp::decode));
+    }
     public java.util.Map<Integer, LevelExp> rows() {
         return rows;
     }
@@ -337,10 +357,13 @@ final class CharacterTable implements SoraTable {
         this.rows = rows;
     }
 
-    static CharacterTable decode(SoraBundle bundle) {
-        return new CharacterTable(SoraConfig.decodeMapTable(bundle.decodeTable("Character", Character::decode), row -> row.id));
+    private static CharacterTable fromRows(List<Character> rows) {
+        return new CharacterTable(SoraConfig.decodeMapTable(rows, row -> row.id));
     }
 
+    static CharacterTable decode(SoraBundle bundle) {
+        return fromRows(bundle.decodeTable("Character", Character::decode));
+    }
     public java.util.Map<Integer, Character> rows() {
         return rows;
     }
@@ -380,10 +403,13 @@ final class CharacterSkillTable implements SoraTable {
         this.rows = rows;
     }
 
-    static CharacterSkillTable decode(SoraBundle bundle) {
-        return new CharacterSkillTable(bundle.decodeTable("CharacterSkill", CharacterSkill::decode));
+    private static CharacterSkillTable fromRows(List<CharacterSkill> rows) {
+        return new CharacterSkillTable(rows);
     }
 
+    static CharacterSkillTable decode(SoraBundle bundle) {
+        return fromRows(bundle.decodeTable("CharacterSkill", CharacterSkill::decode));
+    }
     public java.util.List<CharacterSkill> rows() {
         return rows;
     }
@@ -420,10 +446,13 @@ final class BuffTable implements SoraTable {
         this.rows = rows;
     }
 
-    static BuffTable decode(SoraBundle bundle) {
-        return new BuffTable(SoraConfig.decodeMapTable(bundle.decodeTable("Buff", Buff::decode), row -> row.id));
+    private static BuffTable fromRows(List<Buff> rows) {
+        return new BuffTable(SoraConfig.decodeMapTable(rows, row -> row.id));
     }
 
+    static BuffTable decode(SoraBundle bundle) {
+        return fromRows(bundle.decodeTable("Buff", Buff::decode));
+    }
     public java.util.Map<Integer, Buff> rows() {
         return rows;
     }
@@ -463,10 +492,13 @@ final class DropGroupTable implements SoraTable {
         this.rows = rows;
     }
 
-    static DropGroupTable decode(SoraBundle bundle) {
-        return new DropGroupTable(SoraConfig.decodeMapTable(bundle.decodeTable("DropGroup", DropGroup::decode), row -> row.id));
+    private static DropGroupTable fromRows(List<DropGroup> rows) {
+        return new DropGroupTable(SoraConfig.decodeMapTable(rows, row -> row.id));
     }
 
+    static DropGroupTable decode(SoraBundle bundle) {
+        return fromRows(bundle.decodeTable("DropGroup", DropGroup::decode));
+    }
     public java.util.Map<Integer, DropGroup> rows() {
         return rows;
     }
@@ -506,10 +538,13 @@ final class DropEntryTable implements SoraTable {
         this.rows = rows;
     }
 
-    static DropEntryTable decode(SoraBundle bundle) {
-        return new DropEntryTable(bundle.decodeTable("DropEntry", DropEntry::decode));
+    private static DropEntryTable fromRows(List<DropEntry> rows) {
+        return new DropEntryTable(rows);
     }
 
+    static DropEntryTable decode(SoraBundle bundle) {
+        return fromRows(bundle.decodeTable("DropEntry", DropEntry::decode));
+    }
     public java.util.List<DropEntry> rows() {
         return rows;
     }
@@ -546,10 +581,13 @@ final class MonsterTable implements SoraTable {
         this.rows = rows;
     }
 
-    static MonsterTable decode(SoraBundle bundle) {
-        return new MonsterTable(SoraConfig.decodeMapTable(bundle.decodeTable("Monster", Monster::decode), row -> row.id));
+    private static MonsterTable fromRows(List<Monster> rows) {
+        return new MonsterTable(SoraConfig.decodeMapTable(rows, row -> row.id));
     }
 
+    static MonsterTable decode(SoraBundle bundle) {
+        return fromRows(bundle.decodeTable("Monster", Monster::decode));
+    }
     public java.util.Map<Integer, Monster> rows() {
         return rows;
     }
@@ -589,10 +627,13 @@ final class StageTable implements SoraTable {
         this.rows = rows;
     }
 
-    static StageTable decode(SoraBundle bundle) {
-        return new StageTable(SoraConfig.decodeMapTable(bundle.decodeTable("Stage", Stage::decode), row -> row.id));
+    private static StageTable fromRows(List<Stage> rows) {
+        return new StageTable(SoraConfig.decodeMapTable(rows, row -> row.id));
     }
 
+    static StageTable decode(SoraBundle bundle) {
+        return fromRows(bundle.decodeTable("Stage", Stage::decode));
+    }
     public java.util.Map<Integer, Stage> rows() {
         return rows;
     }
@@ -632,10 +673,13 @@ final class StageRewardTable implements SoraTable {
         this.rows = rows;
     }
 
-    static StageRewardTable decode(SoraBundle bundle) {
-        return new StageRewardTable(bundle.decodeTable("StageReward", StageReward::decode));
+    private static StageRewardTable fromRows(List<StageReward> rows) {
+        return new StageRewardTable(rows);
     }
 
+    static StageRewardTable decode(SoraBundle bundle) {
+        return fromRows(bundle.decodeTable("StageReward", StageReward::decode));
+    }
     public java.util.List<StageReward> rows() {
         return rows;
     }
@@ -672,10 +716,13 @@ final class DungeonTable implements SoraTable {
         this.rows = rows;
     }
 
-    static DungeonTable decode(SoraBundle bundle) {
-        return new DungeonTable(SoraConfig.decodeMapTable(bundle.decodeTable("Dungeon", Dungeon::decode), row -> row.id));
+    private static DungeonTable fromRows(List<Dungeon> rows) {
+        return new DungeonTable(SoraConfig.decodeMapTable(rows, row -> row.id));
     }
 
+    static DungeonTable decode(SoraBundle bundle) {
+        return fromRows(bundle.decodeTable("Dungeon", Dungeon::decode));
+    }
     public java.util.Map<Integer, Dungeon> rows() {
         return rows;
     }
@@ -715,10 +762,13 @@ final class ShopTable implements SoraTable {
         this.rows = rows;
     }
 
-    static ShopTable decode(SoraBundle bundle) {
-        return new ShopTable(SoraConfig.decodeMapTable(bundle.decodeTable("Shop", Shop::decode), row -> row.id));
+    private static ShopTable fromRows(List<Shop> rows) {
+        return new ShopTable(SoraConfig.decodeMapTable(rows, row -> row.id));
     }
 
+    static ShopTable decode(SoraBundle bundle) {
+        return fromRows(bundle.decodeTable("Shop", Shop::decode));
+    }
     public java.util.Map<Integer, Shop> rows() {
         return rows;
     }
@@ -758,10 +808,13 @@ final class ShopItemTable implements SoraTable {
         this.rows = rows;
     }
 
-    static ShopItemTable decode(SoraBundle bundle) {
-        return new ShopItemTable(bundle.decodeTable("ShopItem", ShopItem::decode));
+    private static ShopItemTable fromRows(List<ShopItem> rows) {
+        return new ShopItemTable(rows);
     }
 
+    static ShopItemTable decode(SoraBundle bundle) {
+        return fromRows(bundle.decodeTable("ShopItem", ShopItem::decode));
+    }
     public java.util.List<ShopItem> rows() {
         return rows;
     }
@@ -798,10 +851,13 @@ final class RecipeTable implements SoraTable {
         this.rows = rows;
     }
 
-    static RecipeTable decode(SoraBundle bundle) {
-        return new RecipeTable(SoraConfig.decodeMapTable(bundle.decodeTable("Recipe", Recipe::decode), row -> row.id));
+    private static RecipeTable fromRows(List<Recipe> rows) {
+        return new RecipeTable(SoraConfig.decodeMapTable(rows, row -> row.id));
     }
 
+    static RecipeTable decode(SoraBundle bundle) {
+        return fromRows(bundle.decodeTable("Recipe", Recipe::decode));
+    }
     public java.util.Map<Integer, Recipe> rows() {
         return rows;
     }
@@ -841,10 +897,13 @@ final class GachaPoolTable implements SoraTable {
         this.rows = rows;
     }
 
-    static GachaPoolTable decode(SoraBundle bundle) {
-        return new GachaPoolTable(SoraConfig.decodeMapTable(bundle.decodeTable("GachaPool", GachaPool::decode), row -> row.id));
+    private static GachaPoolTable fromRows(List<GachaPool> rows) {
+        return new GachaPoolTable(SoraConfig.decodeMapTable(rows, row -> row.id));
     }
 
+    static GachaPoolTable decode(SoraBundle bundle) {
+        return fromRows(bundle.decodeTable("GachaPool", GachaPool::decode));
+    }
     public java.util.Map<Integer, GachaPool> rows() {
         return rows;
     }
@@ -884,10 +943,13 @@ final class GachaItemTable implements SoraTable {
         this.rows = rows;
     }
 
-    static GachaItemTable decode(SoraBundle bundle) {
-        return new GachaItemTable(bundle.decodeTable("GachaItem", GachaItem::decode));
+    private static GachaItemTable fromRows(List<GachaItem> rows) {
+        return new GachaItemTable(rows);
     }
 
+    static GachaItemTable decode(SoraBundle bundle) {
+        return fromRows(bundle.decodeTable("GachaItem", GachaItem::decode));
+    }
     public java.util.List<GachaItem> rows() {
         return rows;
     }
@@ -924,10 +986,13 @@ final class EquipmentSetTable implements SoraTable {
         this.rows = rows;
     }
 
-    static EquipmentSetTable decode(SoraBundle bundle) {
-        return new EquipmentSetTable(SoraConfig.decodeMapTable(bundle.decodeTable("EquipmentSet", EquipmentSet::decode), row -> row.id));
+    private static EquipmentSetTable fromRows(List<EquipmentSet> rows) {
+        return new EquipmentSetTable(SoraConfig.decodeMapTable(rows, row -> row.id));
     }
 
+    static EquipmentSetTable decode(SoraBundle bundle) {
+        return fromRows(bundle.decodeTable("EquipmentSet", EquipmentSet::decode));
+    }
     public java.util.Map<Integer, EquipmentSet> rows() {
         return rows;
     }
@@ -967,10 +1032,13 @@ final class AchievementTable implements SoraTable {
         this.rows = rows;
     }
 
-    static AchievementTable decode(SoraBundle bundle) {
-        return new AchievementTable(SoraConfig.decodeMapTable(bundle.decodeTable("Achievement", Achievement::decode), row -> row.id));
+    private static AchievementTable fromRows(List<Achievement> rows) {
+        return new AchievementTable(SoraConfig.decodeMapTable(rows, row -> row.id));
     }
 
+    static AchievementTable decode(SoraBundle bundle) {
+        return fromRows(bundle.decodeTable("Achievement", Achievement::decode));
+    }
     public java.util.Map<Integer, Achievement> rows() {
         return rows;
     }
@@ -1010,10 +1078,13 @@ final class VipLevelTable implements SoraTable {
         this.rows = rows;
     }
 
-    static VipLevelTable decode(SoraBundle bundle) {
-        return new VipLevelTable(SoraConfig.decodeMapTable(bundle.decodeTable("VipLevel", VipLevel::decode), row -> row.level));
+    private static VipLevelTable fromRows(List<VipLevel> rows) {
+        return new VipLevelTable(SoraConfig.decodeMapTable(rows, row -> row.level));
     }
 
+    static VipLevelTable decode(SoraBundle bundle) {
+        return fromRows(bundle.decodeTable("VipLevel", VipLevel::decode));
+    }
     public java.util.Map<Integer, VipLevel> rows() {
         return rows;
     }
@@ -1053,10 +1124,13 @@ final class MailTemplateTable implements SoraTable {
         this.rows = rows;
     }
 
-    static MailTemplateTable decode(SoraBundle bundle) {
-        return new MailTemplateTable(SoraConfig.decodeMapTable(bundle.decodeTable("MailTemplate", MailTemplate::decode), row -> row.id));
+    private static MailTemplateTable fromRows(List<MailTemplate> rows) {
+        return new MailTemplateTable(SoraConfig.decodeMapTable(rows, row -> row.id));
     }
 
+    static MailTemplateTable decode(SoraBundle bundle) {
+        return fromRows(bundle.decodeTable("MailTemplate", MailTemplate::decode));
+    }
     public java.util.Map<Integer, MailTemplate> rows() {
         return rows;
     }
@@ -1096,10 +1170,13 @@ final class MailRewardTable implements SoraTable {
         this.rows = rows;
     }
 
-    static MailRewardTable decode(SoraBundle bundle) {
-        return new MailRewardTable(bundle.decodeTable("MailReward", MailReward::decode));
+    private static MailRewardTable fromRows(List<MailReward> rows) {
+        return new MailRewardTable(rows);
     }
 
+    static MailRewardTable decode(SoraBundle bundle) {
+        return fromRows(bundle.decodeTable("MailReward", MailReward::decode));
+    }
     public java.util.List<MailReward> rows() {
         return rows;
     }
@@ -1136,10 +1213,13 @@ final class DialogueTable implements SoraTable {
         this.rows = rows;
     }
 
-    static DialogueTable decode(SoraBundle bundle) {
-        return new DialogueTable(SoraConfig.decodeMapTable(bundle.decodeTable("Dialogue", Dialogue::decode), row -> row.id));
+    private static DialogueTable fromRows(List<Dialogue> rows) {
+        return new DialogueTable(SoraConfig.decodeMapTable(rows, row -> row.id));
     }
 
+    static DialogueTable decode(SoraBundle bundle) {
+        return fromRows(bundle.decodeTable("Dialogue", Dialogue::decode));
+    }
     public java.util.Map<Integer, Dialogue> rows() {
         return rows;
     }
@@ -1179,10 +1259,13 @@ final class EventRuleTable implements SoraTable {
         this.rows = rows;
     }
 
-    static EventRuleTable decode(SoraBundle bundle) {
-        return new EventRuleTable(SoraConfig.decodeMapTable(bundle.decodeTable("EventRule", EventRule::decode), row -> row.id));
+    private static EventRuleTable fromRows(List<EventRule> rows) {
+        return new EventRuleTable(SoraConfig.decodeMapTable(rows, row -> row.id));
     }
 
+    static EventRuleTable decode(SoraBundle bundle) {
+        return fromRows(bundle.decodeTable("EventRule", EventRule::decode));
+    }
     public java.util.Map<Integer, EventRule> rows() {
         return rows;
     }
