@@ -1,12 +1,15 @@
 use std::path::Path;
 
-use rust_xlsxwriter::{Color, Format, FormatAlign, FormatBorder, Workbook};
+use rust_xlsxwriter::{Color, DataValidation, Format, FormatAlign, FormatBorder, Workbook};
 use sora_diagnostics::{Result, SoraError};
-use sora_ir::model::TableIr;
+use sora_ir::model::{ConfigIr, TableIr, TypeIr};
 
 use crate::projection::table_template_rows;
 
-pub(crate) fn write_workbook(tables: &[&TableIr], path: &Path) -> Result<()> {
+const DATA_START_ROW: u32 = 10;
+const DATA_VALIDATION_ROWS: u32 = 1000;
+
+pub(crate) fn write_workbook(ir: &ConfigIr, tables: &[&TableIr], path: &Path) -> Result<()> {
     let mut workbook = Workbook::new();
     let formats = TemplateFormats::new();
 
@@ -45,14 +48,67 @@ pub(crate) fn write_workbook(tables: &[&TableIr], path: &Path) -> Result<()> {
         }
 
         apply_sheet_layout(table, worksheet, &formats, path)?;
+        apply_data_validations(ir, table, worksheet, path)?;
         worksheet
-            .set_freeze_panes(10, 1)
+            .set_freeze_panes(DATA_START_ROW, 1)
             .map_err(|source| excel_error(path, source))?;
     }
 
     workbook
         .save(path)
         .map_err(|source| excel_error(path, source))
+}
+
+fn apply_data_validations(
+    ir: &ConfigIr,
+    table: &TableIr,
+    worksheet: &mut rust_xlsxwriter::Worksheet,
+    path: &Path,
+) -> Result<()> {
+    for (index, field) in table.fields.iter().enumerate() {
+        let TypeIr::Enum(enum_name) = &field.ty else {
+            continue;
+        };
+        let Some(enum_values) = enum_values(ir, enum_name) else {
+            continue;
+        };
+        if enum_values.is_empty() {
+            continue;
+        }
+
+        let values = enum_values.iter().map(String::as_str).collect::<Vec<_>>();
+        let data_validation = DataValidation::new()
+            .allow_list_strings(&values)
+            .map_err(|source| excel_error(path, source))?
+            .set_input_title(format!("{} enum", enum_name))
+            .map_err(|source| excel_error(path, source))?
+            .set_input_message("Select a value from the dropdown.")
+            .map_err(|source| excel_error(path, source))?
+            .set_error_title("Invalid enum value")
+            .map_err(|source| excel_error(path, source))?
+            .set_error_message(format!("Value must be one of: {}", enum_values.join(", ")))
+            .map_err(|source| excel_error(path, source))?;
+
+        let column = (index + 1) as u16;
+        worksheet
+            .add_data_validation(
+                DATA_START_ROW,
+                column,
+                DATA_START_ROW + DATA_VALIDATION_ROWS - 1,
+                column,
+                &data_validation,
+            )
+            .map_err(|source| excel_error(path, source))?;
+    }
+
+    Ok(())
+}
+
+fn enum_values<'a>(ir: &'a ConfigIr, enum_name: &str) -> Option<&'a [String]> {
+    ir.enums
+        .iter()
+        .find(|candidate| candidate.name == enum_name)
+        .map(|item| item.values.as_slice())
 }
 
 struct TemplateFormats {

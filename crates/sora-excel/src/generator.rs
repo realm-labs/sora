@@ -27,7 +27,7 @@ impl ExcelTemplateGenerator {
 
         for (file_name, tables) in workbooks {
             let path = out_dir.join(file_name);
-            write_workbook(&tables, &path)?;
+            write_workbook(ir, &tables, &path)?;
         }
 
         Ok(())
