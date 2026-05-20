@@ -603,9 +603,6 @@ dependencies = [
 [[package]]
 name = "sora-templates"
 version = "0.1.0"
-dependencies = [
- "sora-diagnostics",
-]
 
 [[package]]
 name = "strsim"

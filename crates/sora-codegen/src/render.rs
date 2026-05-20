@@ -9,27 +9,29 @@ pub(crate) fn render_template(
     file_name: &str,
     ctx: impl Serialize,
 ) -> Result<String> {
-    let path = sora_templates::target_templates_dir(target).join(file_name);
-    let source = fs::read_to_string(&path).map_err(|source| SoraError::ReadFile {
-        path: path.clone(),
-        source,
+    let template_name = format!("{target}/{file_name}");
+    let source = sora_templates::template_source(target, file_name).ok_or_else(|| {
+        SoraError::RenderTemplate {
+            template: template_name.clone(),
+            message: "embedded template not found".to_owned(),
+        }
     })?;
     let mut env = Environment::new();
-    env.add_template(file_name, &source)
+    env.add_template(file_name, source)
         .map_err(|source| SoraError::RenderTemplate {
-            template: file_name.to_owned(),
+            template: template_name.clone(),
             message: source.to_string(),
         })?;
     let template = env
         .get_template(file_name)
         .map_err(|source| SoraError::RenderTemplate {
-            template: file_name.to_owned(),
+            template: template_name.clone(),
             message: source.to_string(),
         })?;
     template
         .render(ctx)
         .map_err(|source| SoraError::RenderTemplate {
-            template: file_name.to_owned(),
+            template: template_name,
             message: source.to_string(),
         })
 }
