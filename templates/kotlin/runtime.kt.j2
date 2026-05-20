@@ -1,0 +1,223 @@
+package {{ package }}
+
+class SoraReadException(message: String) : RuntimeException(message)
+
+private data class SoraSection(
+    val kind: Int,
+    val compression: Int,
+    val name: String,
+    val offset: Int,
+    val length: Int,
+)
+
+class SoraBundle private constructor(
+    private val bytes: ByteArray,
+    private val sections: List<SoraSection>,
+) {
+    fun <T> decodeTable(name: String, decode: (SoraReader) -> T): List<T> {
+        val section = sections.firstOrNull { it.kind == 2 && it.name == name }
+            ?: throw SoraReadException("missing Sora table section `$name`")
+        if (section.compression != 0) {
+            throw SoraReadException("unsupported compression ${section.compression} for table `$name`")
+        }
+        return decodeRows(bytes.copyOfRange(section.offset, section.offset + section.length), decode)
+    }
+
+    companion object {
+        fun parse(bytes: ByteArray): SoraBundle {
+            if (bytes.size < 24) {
+                throw SoraReadException("Sora bundle is shorter than header")
+            }
+            if (String(bytes.copyOfRange(0, 4), Charsets.US_ASCII) != "SORA") {
+                throw SoraReadException("invalid Sora bundle magic")
+            }
+            val version = readI32At(bytes, 4)
+            if (version != 1) {
+                throw SoraReadException("unsupported Sora bundle version $version")
+            }
+
+            val headerLength = readI32At(bytes, 8)
+            val directoryLength = readI32At(bytes, 12)
+            val sectionCount = readI32At(bytes, 16)
+            if (headerLength < 24 || headerLength > bytes.size) {
+                throw SoraReadException("invalid Sora bundle header length")
+            }
+            val directoryEnd = checkedAdd(headerLength, directoryLength, "Sora section directory length overflow")
+            if (directoryEnd > bytes.size) {
+                throw SoraReadException("Sora section directory exceeds bundle length")
+            }
+
+            var cursor = headerLength
+            val sections = ArrayList<SoraSection>(sectionCount)
+            repeat(sectionCount) {
+                if (cursor + 40 > directoryEnd) {
+                    throw SoraReadException("truncated Sora section directory entry")
+                }
+                val kind = readI32At(bytes, cursor)
+                val compression = readI32At(bytes, cursor + 4)
+                val nameLength = readI32At(bytes, cursor + 8)
+                val offset = checkedLongToInt(readI64At(bytes, cursor + 16), "Sora section offset exceeds Int.MAX_VALUE")
+                val length = checkedLongToInt(readI64At(bytes, cursor + 24), "Sora section length exceeds Int.MAX_VALUE")
+                val nameStart = cursor + 40
+                val nameEnd = checkedAdd(nameStart, nameLength, "Sora section name length overflow")
+                if (nameEnd > directoryEnd) {
+                    throw SoraReadException("Sora section name exceeds directory")
+                }
+                val payloadEnd = checkedAdd(offset, length, "Sora section payload length overflow")
+                if (payloadEnd > bytes.size) {
+                    throw SoraReadException("Sora section payload exceeds bundle length")
+                }
+                sections += SoraSection(
+                    kind = kind,
+                    compression = compression,
+                    name = String(bytes.copyOfRange(nameStart, nameEnd), Charsets.UTF_8),
+                    offset = offset,
+                    length = length,
+                )
+                cursor = nameEnd
+            }
+
+            return SoraBundle(bytes, sections)
+        }
+    }
+}
+
+class SoraReader(private val bytes: ByteArray) {
+    private var cursor: Int = 0
+
+    fun isFinished(): Boolean = cursor == bytes.size
+
+    fun readU8(): Int = take(1)[0].toInt() and 0xff
+
+    fun readBool(): Boolean =
+        when (val value = readU8()) {
+            0 -> false
+            1 -> true
+            else -> throw SoraReadException("invalid bool value $value")
+        }
+
+    fun readU32(): Int = readI32()
+
+    fun readI32(): Int = readI32At(take(4), 0)
+
+    fun readI64(): Long = readI64At(take(8), 0)
+
+    fun readF32(): Float = Float.fromBits(readI32())
+
+    fun readF64(): Double = Double.fromBits(readI64())
+
+    fun readString(): String {
+        val length = readU32()
+        return String(take(length), Charsets.UTF_8)
+    }
+
+    fun <T> readOptional(read: () -> T): T? =
+        when (val presence = readU8()) {
+            0 -> null
+            1 -> read()
+            else -> throw SoraReadException("invalid option presence $presence")
+        }
+
+    fun <T> readList(read: () -> T): List<T> {
+        val length = readU32()
+        val values = ArrayList<T>(length)
+        repeat(length) {
+            values += read()
+        }
+        return values
+    }
+
+    private fun take(length: Int): ByteArray {
+        val end = checkedAdd(cursor, length, "Sora reader cursor overflow")
+        if (end > bytes.size) {
+            throw SoraReadException("Sora reader reached end of row")
+        }
+        val chunk = bytes.copyOfRange(cursor, end)
+        cursor = end
+        return chunk
+    }
+}
+
+fun <T> requireSingletonTable(rows: List<T>, name: String): T {
+    if (rows.size != 1) {
+        throw SoraReadException("expected singleton table `$name` to contain exactly 1 row, got ${rows.size}")
+    }
+    return rows.single()
+}
+
+private fun <T> decodeRows(payload: ByteArray, decode: (SoraReader) -> T): List<T> {
+    if (payload.size < 12) {
+        throw SoraReadException("Sora table section is too short")
+    }
+    val rowCount = readI32At(payload, 0)
+    val offsetsLength = checkedAdd(rowCount, 1, "Sora row offset count overflow")
+    val rowDataStart = checkedAdd(4, checkedMultiply(offsetsLength, 8, "Sora row offsets overflow"), "Sora row data offset overflow")
+    if (rowDataStart > payload.size) {
+        throw SoraReadException("Sora row offset table exceeds payload length")
+    }
+
+    val rows = ArrayList<T>(rowCount)
+    repeat(rowCount) { index ->
+        val start = checkedLongToInt(readI64At(payload, 4 + index * 8), "Sora row start exceeds Int.MAX_VALUE")
+        val end = checkedLongToInt(readI64At(payload, 4 + (index + 1) * 8), "Sora row end exceeds Int.MAX_VALUE")
+        if (start > end) {
+            throw SoraReadException("Sora row offsets are not monotonic")
+        }
+        val absoluteStart = checkedAdd(rowDataStart, start, "Sora row start overflow")
+        val absoluteEnd = checkedAdd(rowDataStart, end, "Sora row end overflow")
+        if (absoluteEnd > payload.size) {
+            throw SoraReadException("Sora row exceeds payload length")
+        }
+        val reader = SoraReader(payload.copyOfRange(absoluteStart, absoluteEnd))
+        val row = decode(reader)
+        if (!reader.isFinished()) {
+            throw SoraReadException("Sora row has trailing bytes")
+        }
+        rows += row
+    }
+    return rows
+}
+
+private fun readI32At(bytes: ByteArray, offset: Int): Int {
+    if (offset + 4 > bytes.size) {
+        throw SoraReadException("unexpected end while reading i32")
+    }
+    return (bytes[offset].toInt() and 0xff) or
+        ((bytes[offset + 1].toInt() and 0xff) shl 8) or
+        ((bytes[offset + 2].toInt() and 0xff) shl 16) or
+        ((bytes[offset + 3].toInt() and 0xff) shl 24)
+}
+
+private fun readI64At(bytes: ByteArray, offset: Int): Long {
+    if (offset + 8 > bytes.size) {
+        throw SoraReadException("unexpected end while reading i64")
+    }
+    var value = 0L
+    for (i in 0 until 8) {
+        value = value or ((bytes[offset + i].toLong() and 0xffL) shl (i * 8))
+    }
+    return value
+}
+
+private fun checkedAdd(left: Int, right: Int, message: String): Int {
+    val value = left.toLong() + right.toLong()
+    if (value > Int.MAX_VALUE || value < Int.MIN_VALUE) {
+        throw SoraReadException(message)
+    }
+    return value.toInt()
+}
+
+private fun checkedMultiply(left: Int, right: Int, message: String): Int {
+    val value = left.toLong() * right.toLong()
+    if (value > Int.MAX_VALUE || value < Int.MIN_VALUE) {
+        throw SoraReadException(message)
+    }
+    return value.toInt()
+}
+
+private fun checkedLongToInt(value: Long, message: String): Int {
+    if (value > Int.MAX_VALUE || value < Int.MIN_VALUE) {
+        throw SoraReadException(message)
+    }
+    return value.toInt()
+}

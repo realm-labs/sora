@@ -38,6 +38,16 @@ impl CodeGenerator for KotlinCodeGenerator {
             )?;
         }
 
+        let rendered = render_template(
+            "kotlin",
+            "runtime.kt.j2",
+            context! { package => &model.package },
+        )?;
+        write_file(&out_dir.join("Runtime.kt"), rendered)?;
+
+        let rendered = render_template("kotlin", "config.kt.j2", context! { model => &model })?;
+        write_file(&out_dir.join("SoraConfig.kt"), rendered)?;
+
         let rendered = render_template("kotlin", "package.kt.j2", context! { model => &model })?;
         write_file(&out_dir.join("Package.kt"), rendered)
     }
@@ -66,6 +76,8 @@ mod tests {
         let rust_runtime = std::fs::read_to_string(rust_out.join("runtime.rs")).unwrap();
         let rust_mod = std::fs::read_to_string(rust_out.join("mod.rs")).unwrap();
         let kotlin_item = std::fs::read_to_string(kotlin_out.join("Item.kt")).unwrap();
+        let kotlin_runtime = std::fs::read_to_string(kotlin_out.join("Runtime.kt")).unwrap();
+        let kotlin_config = std::fs::read_to_string(kotlin_out.join("SoraConfig.kt")).unwrap();
 
         assert!(rust_item.contains("pub struct Item"));
         assert!(rust_item.contains("pub item_type: ItemType"));
@@ -78,6 +90,11 @@ mod tests {
         assert!(!rust_mod.contains("decode_singleton_table"));
         assert!(kotlin_item.contains("data class Item"));
         assert!(kotlin_item.contains("val itemType: ItemType"));
+        assert!(kotlin_item.contains("fun decode(reader: SoraReader): Item"));
+        assert!(kotlin_runtime.contains("class SoraBundle"));
+        assert!(kotlin_config.contains("data class SoraConfig"));
+        assert!(kotlin_config.contains("val item: Map<Int, Item>"));
+        assert!(kotlin_config.contains("fun fromBytes(bytes: ByteArray): SoraConfig"));
 
         let _ = std::fs::remove_dir_all(base);
     }

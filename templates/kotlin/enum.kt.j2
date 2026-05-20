@@ -2,6 +2,16 @@ package {{ package }}
 
 enum class {{ enum.name }} {
 {%- for value in enum.values %}
-    {{ value }},
+    {{ value }}{% if loop.last %};{% else %},{% endif %}
 {%- endfor %}
+
+    companion object {
+        fun decode(reader: SoraReader): {{ enum.name }} =
+            when (val ordinal = reader.readU32()) {
+{%- for value in enum.values %}
+                {{ loop.index0 }} -> {{ value }}
+{%- endfor %}
+                else -> throw SoraReadException("invalid enum ordinal $ordinal for {{ enum.name }}")
+            }
+    }
 }

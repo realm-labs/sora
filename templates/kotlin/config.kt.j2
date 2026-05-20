@@ -1,0 +1,24 @@
+package {{ model.package }}
+
+data class SoraConfig(
+{%- for table in model.tables %}
+    val {{ table.snake_name }}: {{ table.kotlin_container_type }},
+{%- endfor %}
+) {
+    companion object {
+        fun fromBytes(bytes: ByteArray): SoraConfig {
+            val bundle = SoraBundle.parse(bytes)
+            return SoraConfig(
+{%- for table in model.tables %}
+{%- if table.mode == "map" and table.key_kotlin_name %}
+                {{ table.snake_name }} = bundle.decodeTable("{{ table.name }}", {{ table.kotlin_row_type }}::decode).associateBy { it.{{ table.key_kotlin_name }} },
+{%- elif table.mode == "singleton" %}
+                {{ table.snake_name }} = requireSingletonTable(bundle.decodeTable("{{ table.name }}", {{ table.kotlin_row_type }}::decode), "{{ table.name }}"),
+{%- else %}
+                {{ table.snake_name }} = bundle.decodeTable("{{ table.name }}", {{ table.kotlin_row_type }}::decode),
+{%- endif %}
+{%- endfor %}
+            )
+        }
+    }
+}

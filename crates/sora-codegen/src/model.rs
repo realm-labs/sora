@@ -49,6 +49,9 @@ pub struct CodegenTable {
     pub key_rust_name: Option<String>,
     pub key_rust_type: Option<String>,
     pub key_is_copy: bool,
+    pub kotlin_container_type: String,
+    pub kotlin_row_type: String,
+    pub key_kotlin_name: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -58,6 +61,7 @@ pub struct CodegenField {
     pub rust_type: String,
     pub kotlin_name: String,
     pub kotlin_type: String,
+    pub kotlin_decode: String,
     pub comment: Option<String>,
 }
 
@@ -115,6 +119,7 @@ fn build_table(ir: &ConfigIr, table: &TableIr) -> Result<CodegenTable> {
     let pascal_name = table.name.to_pascal_case();
     let snake_name = table.name.to_snake_case();
     let rust_row_type = format!("{snake_name}::{pascal_name}");
+    let kotlin_row_type = pascal_name.clone();
     let key_field = table.key.as_ref().and_then(|key| {
         table
             .fields
@@ -123,7 +128,9 @@ fn build_table(ir: &ConfigIr, table: &TableIr) -> Result<CodegenTable> {
             .map(|field| {
                 (
                     field.name.to_snake_case(),
+                    field.name.to_lower_camel_case(),
                     rust_type_name(ir, &field.ty),
+                    kotlin_type_name(ir, &field.ty),
                     rust_key_type_is_copy(ir, &field.ty),
                 )
             })
@@ -131,12 +138,20 @@ fn build_table(ir: &ConfigIr, table: &TableIr) -> Result<CodegenTable> {
     let rust_container_type = match table.mode {
         TableModeIr::List => format!("Vec<{rust_row_type}>"),
         TableModeIr::Map => match &key_field {
-            Some((_, key_type, _)) => {
+            Some((_, _, key_type, _, _)) => {
                 format!("std::collections::HashMap<{key_type}, {rust_row_type}>")
             }
             None => format!("Vec<{rust_row_type}>"),
         },
         TableModeIr::Singleton => rust_row_type.clone(),
+    };
+    let kotlin_container_type = match table.mode {
+        TableModeIr::List => format!("List<{kotlin_row_type}>"),
+        TableModeIr::Map => match &key_field {
+            Some((_, _, _, key_type, _)) => format!("Map<{key_type}, {kotlin_row_type}>"),
+            None => format!("List<{kotlin_row_type}>"),
+        },
+        TableModeIr::Singleton => kotlin_row_type.clone(),
     };
 
     Ok(CodegenTable {
@@ -151,9 +166,14 @@ fn build_table(ir: &ConfigIr, table: &TableIr) -> Result<CodegenTable> {
         .to_owned(),
         rust_container_type,
         rust_row_type,
-        key_rust_name: key_field.as_ref().map(|(name, _, _)| name.clone()),
-        key_rust_type: key_field.as_ref().map(|(_, ty, _)| ty.clone()),
-        key_is_copy: key_field.is_some_and(|(_, _, is_copy)| is_copy),
+        key_rust_name: key_field.as_ref().map(|(name, _, _, _, _)| name.clone()),
+        key_rust_type: key_field.as_ref().map(|(_, _, ty, _, _)| ty.clone()),
+        key_is_copy: key_field
+            .as_ref()
+            .is_some_and(|(_, _, _, _, is_copy)| *is_copy),
+        kotlin_container_type,
+        kotlin_row_type,
+        key_kotlin_name: key_field.as_ref().map(|(_, name, _, _, _)| name.clone()),
     })
 }
 
@@ -189,6 +209,7 @@ fn build_record(ir: &ConfigIr, item: &TableLike<'_>) -> Result<CodegenRecord> {
                 rust_type: rust_type_name(ir, &field.ty),
                 kotlin_name: field.name.to_lower_camel_case(),
                 kotlin_type: kotlin_type_name(ir, &field.ty),
+                kotlin_decode: kotlin_decode_expr(ir, &field.ty),
                 comment: field.comment.clone(),
             })
         })
@@ -202,6 +223,39 @@ fn build_record(ir: &ConfigIr, item: &TableLike<'_>) -> Result<CodegenRecord> {
         imports: build_imports(ir, item),
         fields,
     })
+}
+
+fn kotlin_decode_expr(ir: &ConfigIr, ty: &TypeIr) -> String {
+    match ty {
+        TypeIr::Bool => "reader.readBool()".to_owned(),
+        TypeIr::I32 => "reader.readI32()".to_owned(),
+        TypeIr::I64 => "reader.readI64()".to_owned(),
+        TypeIr::F32 => "reader.readF32()".to_owned(),
+        TypeIr::F64 => "reader.readF64()".to_owned(),
+        TypeIr::String => "reader.readString()".to_owned(),
+        TypeIr::Enum(name) | TypeIr::Struct(name) => format!("{name}.decode(reader)"),
+        TypeIr::List(element) | TypeIr::Array { element, .. } => {
+            format!("reader.readList {{ {} }}", kotlin_decode_expr(ir, element))
+        }
+        TypeIr::Ref { table, field } => ir
+            .tables
+            .iter()
+            .find(|candidate| candidate.name == *table)
+            .and_then(|table| {
+                table
+                    .fields
+                    .iter()
+                    .find(|candidate| candidate.name == *field)
+            })
+            .map(|field| kotlin_decode_expr(ir, &field.ty))
+            .unwrap_or_else(|| "reader.readI32()".to_owned()),
+        TypeIr::Optional(element) => {
+            format!(
+                "reader.readOptional {{ {} }}",
+                kotlin_decode_expr(ir, element)
+            )
+        }
+    }
 }
 
 fn build_imports(ir: &ConfigIr, item: &TableLike<'_>) -> Vec<CodegenImport> {
