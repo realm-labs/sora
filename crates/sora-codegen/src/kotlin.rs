@@ -89,10 +89,22 @@ mod tests {
         assert!(rust_runtime.contains("pub struct SoraBundle"));
         assert!(rust_mod.contains("pub struct SoraConfig"));
         assert!(rust_mod.contains("from_bytes"));
-        assert!(rust_mod.contains("pub item: std::collections::HashMap<i32, item::Item>"));
+        assert!(rust_mod.contains(
+            "tables: std::collections::HashMap<&'static str, Box<dyn std::any::Any + Send + Sync>>"
+        ));
+        assert!(
+            rust_mod.contains("pub struct ItemTable(std::collections::HashMap<i32, item::Item>)")
+        );
+        assert!(rust_mod.contains("impl std::ops::Deref for ItemTable"));
+        assert!(
+            rust_mod.contains("tables.insert(\"Item\", Box::new(ItemTable::decode(&bundle)?));")
+        );
         assert!(rust_mod.contains("|row| row.id"));
-        assert!(rust_mod.contains("pub fn get_item(&self, key: i32) -> Option<&item::Item>"));
-        assert!(rust_mod.contains("pub fn iter_item(&self) -> impl Iterator<Item = &item::Item>"));
+        assert!(rust_mod.contains("fn table<T: 'static>(&self, name: &'static str) -> &T"));
+        assert!(rust_mod.contains("pub fn item(&self) -> &ItemTable"));
+        assert!(rust_mod.contains("pub fn get(&self, key: i32) -> Option<&item::Item>"));
+        assert!(!rust_mod.contains("pub fn get_item"));
+        assert!(!rust_mod.contains("pub fn iter_item"));
         assert!(!rust_mod.contains("decode_singleton_table"));
         assert!(kotlin_item.contains("data class Item"));
         assert!(kotlin_item.contains("val itemType: ItemType"));
@@ -116,9 +128,13 @@ mod tests {
         RustCodeGenerator.generate(&ir, &rust_out).unwrap();
 
         let rust_mod = std::fs::read_to_string(rust_out.join("mod.rs")).unwrap();
-        assert!(rust_mod.contains("pub item: std::collections::HashMap<i32, item::Item>"));
-        assert!(rust_mod.contains("pub settings: settings::Settings"));
-        assert!(rust_mod.contains("pub fn settings_row(&self) -> &settings::Settings"));
+        assert!(
+            rust_mod.contains("pub struct ItemTable(std::collections::HashMap<i32, item::Item>)")
+        );
+        assert!(rust_mod.contains("pub struct SettingsTable(settings::Settings)"));
+        assert!(rust_mod.contains("pub fn item(&self) -> &ItemTable"));
+        assert!(rust_mod.contains("pub fn settings(&self) -> &SettingsTable"));
+        assert!(!rust_mod.contains("pub fn settings_row"));
         assert!(rust_mod.contains("decode_singleton_table"));
 
         let _ = std::fs::remove_dir_all(base);

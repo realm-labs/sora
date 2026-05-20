@@ -199,7 +199,7 @@ mod tests {
     #[test]
     fn loads_sora_bundle() {
         let config = SoraConfig::from_bytes(include_bytes!("../config.sora")).unwrap();
-        let item = config.get_item(1002).unwrap();
+        let item = config.item().get(1002).unwrap();
 
         assert_eq!(item.name, "Magic Stone");
         assert_eq!(item.item_type, ItemType::Material);
@@ -208,8 +208,8 @@ mod tests {
         assert_eq!(item.rewards[0].reward_item_id, 3001);
         assert_eq!(item.rewards[0].count, 2);
         assert_eq!(item.rewards[1].reward_item_id, 3002);
-        assert_eq!(config.iter_item().count(), 2);
-        assert_eq!(config.item_reward_rows().len(), 2);
+        assert_eq!(config.item().values().count(), 2);
+        assert_eq!(config.item_reward().len(), 2);
     }
 }
 "#,

@@ -13,61 +13,176 @@ pub mod skill;
 pub mod skill_effect;
 pub mod vec3;
 
-#[derive(Debug, Clone)]
 pub struct SoraConfig {
-    pub item: std::collections::HashMap<i32, item::Item>,
-    pub skill: std::collections::HashMap<i32, skill::Skill>,
-    pub quest: std::collections::HashMap<i32, quest::Quest>,
-    pub quest_reward: Vec<quest_reward::QuestReward>,
-    pub game_settings: game_settings::GameSettings,
+    tables: std::collections::HashMap<&'static str, Box<dyn std::any::Any + Send + Sync>>,
+}
+
+impl std::fmt::Debug for SoraConfig {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut tables = self.tables.keys().copied().collect::<Vec<_>>();
+        tables.sort_unstable();
+        f.debug_struct("SoraConfig")
+            .field("tables", &tables)
+            .finish()
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct ItemTable(std::collections::HashMap<i32, item::Item>);
+
+impl ItemTable {
+    fn decode(bundle: &runtime::SoraBundle<'_>) -> Result<Self, runtime::SoraReadError> {
+        Ok(Self(decode_map_table(
+            bundle.decode_table::<item::Item>("Item")?,
+            |row| row.id,
+        )))
+    }
+    pub fn get(&self, key: i32) -> Option<&item::Item> {
+        self.0.get(&key)
+    }
+}
+
+impl std::ops::Deref for ItemTable {
+    type Target = std::collections::HashMap<i32, item::Item>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct SkillTable(std::collections::HashMap<i32, skill::Skill>);
+
+impl SkillTable {
+    fn decode(bundle: &runtime::SoraBundle<'_>) -> Result<Self, runtime::SoraReadError> {
+        Ok(Self(decode_map_table(
+            bundle.decode_table::<skill::Skill>("Skill")?,
+            |row| row.id,
+        )))
+    }
+    pub fn get(&self, key: i32) -> Option<&skill::Skill> {
+        self.0.get(&key)
+    }
+}
+
+impl std::ops::Deref for SkillTable {
+    type Target = std::collections::HashMap<i32, skill::Skill>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct QuestTable(std::collections::HashMap<i32, quest::Quest>);
+
+impl QuestTable {
+    fn decode(bundle: &runtime::SoraBundle<'_>) -> Result<Self, runtime::SoraReadError> {
+        Ok(Self(decode_map_table(
+            bundle.decode_table::<quest::Quest>("Quest")?,
+            |row| row.id,
+        )))
+    }
+    pub fn get(&self, key: i32) -> Option<&quest::Quest> {
+        self.0.get(&key)
+    }
+}
+
+impl std::ops::Deref for QuestTable {
+    type Target = std::collections::HashMap<i32, quest::Quest>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct QuestRewardTable(Vec<quest_reward::QuestReward>);
+
+impl QuestRewardTable {
+    fn decode(bundle: &runtime::SoraBundle<'_>) -> Result<Self, runtime::SoraReadError> {
+        Ok(Self(bundle.decode_table::<quest_reward::QuestReward>(
+            "QuestReward",
+        )?))
+    }
+}
+
+impl std::ops::Deref for QuestRewardTable {
+    type Target = Vec<quest_reward::QuestReward>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct GameSettingsTable(game_settings::GameSettings);
+
+impl GameSettingsTable {
+    fn decode(bundle: &runtime::SoraBundle<'_>) -> Result<Self, runtime::SoraReadError> {
+        Ok(Self(decode_singleton_table(
+            bundle.decode_table::<game_settings::GameSettings>("GameSettings")?,
+            "GameSettings",
+        )?))
+    }
+}
+
+impl std::ops::Deref for GameSettingsTable {
+    type Target = game_settings::GameSettings;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
 }
 
 impl SoraConfig {
     pub fn from_bytes(bytes: &[u8]) -> Result<Self, runtime::SoraReadError> {
         let bundle = runtime::SoraBundle::parse(bytes)?;
-        Ok(Self {
-            item: decode_map_table(bundle.decode_table::<item::Item>("Item")?, |row| row.id),
-            skill: decode_map_table(bundle.decode_table::<skill::Skill>("Skill")?, |row| row.id),
-            quest: decode_map_table(bundle.decode_table::<quest::Quest>("Quest")?, |row| row.id),
-            quest_reward: bundle.decode_table::<quest_reward::QuestReward>("QuestReward")?,
-            game_settings: decode_singleton_table(
-                bundle.decode_table::<game_settings::GameSettings>("GameSettings")?,
-                "GameSettings",
-            )?,
-        })
-    }
-    pub fn get_item(&self, key: i32) -> Option<&item::Item> {
-        self.item.get(&key)
-    }
-
-    pub fn iter_item(&self) -> impl Iterator<Item = &item::Item> {
-        self.item.values()
-    }
-    pub fn get_skill(&self, key: i32) -> Option<&skill::Skill> {
-        self.skill.get(&key)
+        let mut tables: std::collections::HashMap<
+            &'static str,
+            Box<dyn std::any::Any + Send + Sync>,
+        > = std::collections::HashMap::with_capacity(5);
+        tables.insert("Item", Box::new(ItemTable::decode(&bundle)?));
+        tables.insert("Skill", Box::new(SkillTable::decode(&bundle)?));
+        tables.insert("Quest", Box::new(QuestTable::decode(&bundle)?));
+        tables.insert("QuestReward", Box::new(QuestRewardTable::decode(&bundle)?));
+        tables.insert(
+            "GameSettings",
+            Box::new(GameSettingsTable::decode(&bundle)?),
+        );
+        Ok(Self { tables })
     }
 
-    pub fn iter_skill(&self) -> impl Iterator<Item = &skill::Skill> {
-        self.skill.values()
-    }
-    pub fn get_quest(&self, key: i32) -> Option<&quest::Quest> {
-        self.quest.get(&key)
-    }
-
-    pub fn iter_quest(&self) -> impl Iterator<Item = &quest::Quest> {
-        self.quest.values()
-    }
-
-    pub fn quest_reward_rows(&self) -> &[quest_reward::QuestReward] {
-        &self.quest_reward
+    fn table<T: 'static>(&self, name: &'static str) -> &T {
+        self.tables
+            .get(name)
+            .and_then(|table| table.as_ref().downcast_ref::<T>())
+            .unwrap_or_else(|| {
+                panic!(
+                    "generated SoraConfig is missing table `{}` or has an unexpected table type",
+                    name
+                )
+            })
     }
 
-    pub fn iter_quest_reward(&self) -> impl Iterator<Item = &quest_reward::QuestReward> {
-        self.quest_reward.iter()
+    pub fn item(&self) -> &ItemTable {
+        self.table("Item")
     }
 
-    pub fn game_settings_row(&self) -> &game_settings::GameSettings {
-        &self.game_settings
+    pub fn skill(&self) -> &SkillTable {
+        self.table("Skill")
+    }
+
+    pub fn quest(&self) -> &QuestTable {
+        self.table("Quest")
+    }
+
+    pub fn quest_reward(&self) -> &QuestRewardTable {
+        self.table("QuestReward")
+    }
+
+    pub fn game_settings(&self) -> &GameSettingsTable {
+        self.table("GameSettings")
     }
 }
 

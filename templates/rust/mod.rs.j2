@@ -3,63 +3,89 @@ pub mod runtime;
 pub mod {{ module }};
 {%- endfor %}
 
-#[derive(Debug, Clone)]
 pub struct SoraConfig {
-{%- for table in model.tables %}
-    pub {{ table.snake_name }}: {{ table.rust_container_type }},
-{%- endfor %}
+    tables: std::collections::HashMap<&'static str, Box<dyn std::any::Any + Send + Sync>>,
 }
+
+impl std::fmt::Debug for SoraConfig {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut tables = self.tables.keys().copied().collect::<Vec<_>>();
+        tables.sort_unstable();
+        f.debug_struct("SoraConfig").field("tables", &tables).finish()
+    }
+}
+
+{%- for table in model.tables %}
+
+#[derive(Debug, Clone)]
+pub struct {{ table.pascal_name }}Table({{ table.rust_container_type }});
+
+impl {{ table.pascal_name }}Table {
+    fn decode(bundle: &runtime::SoraBundle<'_>) -> Result<Self, runtime::SoraReadError> {
+{%- if table.mode == "map" and table.key_rust_name %}
+{%- if table.key_is_copy %}
+        Ok(Self(decode_map_table(bundle.decode_table::<{{ table.rust_row_type }}>("{{ table.name }}")?, |row| row.{{ table.key_rust_name }})))
+{%- else %}
+        Ok(Self(decode_map_table(bundle.decode_table::<{{ table.rust_row_type }}>("{{ table.name }}")?, |row| row.{{ table.key_rust_name }}.clone())))
+{%- endif %}
+{%- elif table.mode == "singleton" %}
+        Ok(Self(decode_singleton_table(bundle.decode_table::<{{ table.rust_row_type }}>("{{ table.name }}")?, "{{ table.name }}")?))
+{%- else %}
+        Ok(Self(bundle.decode_table::<{{ table.rust_row_type }}>("{{ table.name }}")?))
+{%- endif %}
+    }
+
+{%- if table.mode == "map" and table.key_rust_name %}
+
+{%- if table.key_is_copy %}
+    pub fn get(&self, key: {{ table.key_rust_type }}) -> Option<&{{ table.rust_row_type }}> {
+        self.0.get(&key)
+    }
+{%- else %}
+    pub fn get(&self, key: &{{ table.key_rust_type }}) -> Option<&{{ table.rust_row_type }}> {
+        self.0.get(key)
+    }
+{%- endif %}
+
+{%- endif %}
+}
+
+impl std::ops::Deref for {{ table.pascal_name }}Table {
+    type Target = {{ table.rust_container_type }};
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+{%- endfor %}
 
 impl SoraConfig {
     pub fn from_bytes(bytes: &[u8]) -> Result<Self, runtime::SoraReadError> {
         let bundle = runtime::SoraBundle::parse(bytes)?;
-        Ok(Self {
+        let mut tables: std::collections::HashMap<&'static str, Box<dyn std::any::Any + Send + Sync>> =
+            std::collections::HashMap::with_capacity({{ model.tables | length }});
 {%- for table in model.tables %}
-{%- if table.mode == "map" and table.key_rust_name %}
-{%- if table.key_is_copy %}
-            {{ table.snake_name }}: decode_map_table(bundle.decode_table::<{{ table.rust_row_type }}>("{{ table.name }}")?, |row| row.{{ table.key_rust_name }}),
-{%- else %}
-            {{ table.snake_name }}: decode_map_table(bundle.decode_table::<{{ table.rust_row_type }}>("{{ table.name }}")?, |row| row.{{ table.key_rust_name }}.clone()),
-{%- endif %}
-{%- elif table.mode == "singleton" %}
-            {{ table.snake_name }}: decode_singleton_table(bundle.decode_table::<{{ table.rust_row_type }}>("{{ table.name }}")?, "{{ table.name }}")?,
-{%- else %}
-            {{ table.snake_name }}: bundle.decode_table::<{{ table.rust_row_type }}>("{{ table.name }}")?,
-{%- endif %}
+        tables.insert("{{ table.name }}", Box::new({{ table.pascal_name }}Table::decode(&bundle)?));
 {%- endfor %}
-        })
+        Ok(Self { tables })
+    }
+
+    fn table<T: 'static>(&self, name: &'static str) -> &T {
+        self.tables
+            .get(name)
+            .and_then(|table| table.as_ref().downcast_ref::<T>())
+            .unwrap_or_else(|| {
+                panic!(
+                    "generated SoraConfig is missing table `{}` or has an unexpected table type",
+                    name
+                )
+            })
     }
 {%- for table in model.tables %}
-{%- if table.mode == "map" and table.key_rust_name %}
 
-{%- if table.key_is_copy %}
-    pub fn get_{{ table.snake_name }}(&self, key: {{ table.key_rust_type }}) -> Option<&{{ table.rust_row_type }}> {
-        self.{{ table.snake_name }}.get(&key)
+    pub fn {{ table.snake_name }}(&self) -> &{{ table.pascal_name }}Table {
+        self.table("{{ table.name }}")
     }
-{%- else %}
-    pub fn get_{{ table.snake_name }}(&self, key: &{{ table.key_rust_type }}) -> Option<&{{ table.rust_row_type }}> {
-        self.{{ table.snake_name }}.get(key)
-    }
-{%- endif %}
-
-    pub fn iter_{{ table.snake_name }}(&self) -> impl Iterator<Item = &{{ table.rust_row_type }}> {
-        self.{{ table.snake_name }}.values()
-    }
-{%- elif table.mode == "list" %}
-
-    pub fn {{ table.snake_name }}_rows(&self) -> &[{{ table.rust_row_type }}] {
-        &self.{{ table.snake_name }}
-    }
-
-    pub fn iter_{{ table.snake_name }}(&self) -> impl Iterator<Item = &{{ table.rust_row_type }}> {
-        self.{{ table.snake_name }}.iter()
-    }
-{%- elif table.mode == "singleton" %}
-
-    pub fn {{ table.snake_name }}_row(&self) -> &{{ table.rust_row_type }} {
-        &self.{{ table.snake_name }}
-    }
-{%- endif %}
 {%- endfor %}
 }
 
