@@ -1,15 +1,32 @@
+
+
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+#[serde(tag = "type")]
 pub enum RewardAction {
-    AddItem { item_id: i32, count: i32 },
-    AddBuff { buff_id: i32, duration: f32 },
-    UnlockStage { stage_id: i32 },
-    SendMail { mail_id: i32 },
+    AddItem {
+        #[serde(rename = "item_id")]
+        item_id: i32,
+        #[serde(rename = "count")]
+        count: i32,
+    },
+    AddBuff {
+        #[serde(rename = "buff_id")]
+        buff_id: i32,
+        #[serde(rename = "duration")]
+        duration: f32,
+    },
+    UnlockStage {
+        #[serde(rename = "stage_id")]
+        stage_id: i32,
+    },
+    SendMail {
+        #[serde(rename = "mail_id")]
+        mail_id: i32,
+    },
 }
 
 impl super::runtime::SoraDecode for RewardAction {
-    fn decode(
-        reader: &mut super::runtime::SoraReader<'_>,
-    ) -> Result<Self, super::runtime::SoraReadError> {
+    fn decode(reader: &mut super::runtime::SoraReader<'_>) -> Result<Self, super::runtime::SoraReadError> {
         match reader.read_u32()? {
             0 => Ok(Self::AddItem {
                 item_id: <i32 as super::runtime::SoraDecode>::decode(reader)?,
@@ -25,10 +42,7 @@ impl super::runtime::SoraDecode for RewardAction {
             3 => Ok(Self::SendMail {
                 mail_id: <i32 as super::runtime::SoraDecode>::decode(reader)?,
             }),
-            value => Err(super::runtime::SoraReadError::new(format!(
-                "invalid union ordinal {} for RewardAction",
-                value
-            ))),
+            value => Err(super::runtime::SoraReadError::new(format!("invalid union ordinal {} for RewardAction", value))),
         }
     }
 }

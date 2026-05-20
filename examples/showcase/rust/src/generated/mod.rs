@@ -1,48 +1,48 @@
 #![allow(dead_code)]
 
-pub mod achievement;
-pub mod buff;
-pub mod character;
-pub mod character_skill;
-pub mod dialogue;
-pub mod drop_entry;
-pub mod drop_group;
-pub mod dungeon;
-pub mod element_type;
-pub mod equipment_set;
-pub mod event_condition;
-pub mod event_rule;
-pub mod gacha_item;
-pub mod gacha_pool;
-pub mod game_settings;
-pub mod item;
+pub mod runtime;
 pub mod item_type;
-pub mod level_exp;
-pub mod localization;
-pub mod mail_reward;
-pub mod mail_template;
-pub mod mail_type;
-pub mod monster;
-pub mod quest;
-pub mod quest_reward;
+pub mod resource_kind;
+pub mod element_type;
 pub mod quest_type;
 pub mod rarity;
-pub mod recipe;
+pub mod stat_type;
+pub mod mail_type;
 pub mod resource_cost;
-pub mod resource_kind;
-pub mod reward;
-pub mod reward_action;
-pub mod runtime;
-pub mod shop;
-pub mod shop_item;
-pub mod skill;
+pub mod vec3;
 pub mod skill_effect;
+pub mod reward;
+pub mod stat_modifier;
+pub mod item;
+pub mod skill;
+pub mod quest;
+pub mod quest_reward;
+pub mod game_settings;
+pub mod localization;
+pub mod level_exp;
+pub mod character;
+pub mod character_skill;
+pub mod buff;
+pub mod drop_group;
+pub mod drop_entry;
+pub mod monster;
 pub mod stage;
 pub mod stage_reward;
-pub mod stat_modifier;
-pub mod stat_type;
-pub mod vec3;
+pub mod dungeon;
+pub mod shop;
+pub mod shop_item;
+pub mod recipe;
+pub mod gacha_pool;
+pub mod gacha_item;
+pub mod equipment_set;
+pub mod achievement;
 pub mod vip_level;
+pub mod mail_template;
+pub mod mail_reward;
+pub mod dialogue;
+pub mod event_rule;
+pub mod event_condition;
+pub mod reward_action;
 pub type SoraMap<K, V> = rustc_hash::FxHashMap<K, V>;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -68,9 +68,7 @@ impl std::fmt::Debug for SoraConfig {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let mut tables = self.tables.keys().copied().collect::<Vec<_>>();
         tables.sort_unstable();
-        f.debug_struct("SoraConfig")
-            .field("tables", &tables)
-            .finish()
+        f.debug_struct("SoraConfig").field("tables", &tables).finish()
     }
 }
 
@@ -83,9 +81,20 @@ pub struct ItemTable {
 
 impl ItemTable {
     fn decode(bundle: &runtime::SoraBundle<'_>) -> Result<Self, runtime::SoraReadError> {
-        let rows = bundle.decode_table::<item::Item>("Item")?;
-        let by_name = build_unique_map_index(rows.iter(), |row| row.name.clone(), |row| row.id);
-        let by_item_type = build_map_index(rows.iter(), |row| row.item_type, |row| row.id);
+        Self::from_rows(bundle.decode_table::<item::Item>("Item")?)
+    }
+
+    fn from_rows(rows: Vec<item::Item>) -> Result<Self, runtime::SoraReadError> {
+        let by_name = build_unique_map_index(
+            rows.iter(),
+            |row| row.name.clone(),
+            |row| row.id,
+        );
+        let by_item_type = build_map_index(
+            rows.iter(),
+            |row| row.item_type,
+            |row| row.id,
+        );
         let rows = decode_map_table(rows, |row| row.id);
         Ok(Self {
             rows,
@@ -99,15 +108,8 @@ impl ItemTable {
     pub fn get_by_name(&self, name: &str) -> Option<&item::Item> {
         self.by_name.get(name).and_then(|key| self.rows.get(key))
     }
-    pub fn find_by_item_type(
-        &self,
-        item_type: item_type::ItemType,
-    ) -> impl Iterator<Item = &item::Item> {
-        self.by_item_type
-            .get(&item_type)
-            .into_iter()
-            .flat_map(|keys| keys.iter())
-            .filter_map(|key| self.rows.get(key))
+    pub fn find_by_item_type(&self, item_type: item_type::ItemType) -> impl Iterator<Item = &item::Item> {
+        self.by_item_type.get(&item_type).into_iter().flat_map(|keys| keys.iter()).filter_map(|key| self.rows.get(key))
     }
 }
 
@@ -139,6 +141,7 @@ impl SoraTable for ItemTable {
     fn len(&self) -> usize {
         self.rows.len()
     }
+
 }
 
 #[derive(Debug, Clone)]
@@ -148,9 +151,11 @@ pub struct SkillTable {
 
 impl SkillTable {
     fn decode(bundle: &runtime::SoraBundle<'_>) -> Result<Self, runtime::SoraReadError> {
-        Ok(Self {
-            rows: decode_map_table(bundle.decode_table::<skill::Skill>("Skill")?, |row| row.id),
-        })
+        Self::from_rows(bundle.decode_table::<skill::Skill>("Skill")?)
+    }
+
+    fn from_rows(rows: Vec<skill::Skill>) -> Result<Self, runtime::SoraReadError> {
+        Ok(Self { rows: decode_map_table(rows, |row| row.id) })
     }
     pub fn get(&self, key: i32) -> Option<&skill::Skill> {
         self.rows.get(&key)
@@ -185,6 +190,7 @@ impl SoraTable for SkillTable {
     fn len(&self) -> usize {
         self.rows.len()
     }
+
 }
 
 #[derive(Debug, Clone)]
@@ -194,9 +200,11 @@ pub struct QuestTable {
 
 impl QuestTable {
     fn decode(bundle: &runtime::SoraBundle<'_>) -> Result<Self, runtime::SoraReadError> {
-        Ok(Self {
-            rows: decode_map_table(bundle.decode_table::<quest::Quest>("Quest")?, |row| row.id),
-        })
+        Self::from_rows(bundle.decode_table::<quest::Quest>("Quest")?)
+    }
+
+    fn from_rows(rows: Vec<quest::Quest>) -> Result<Self, runtime::SoraReadError> {
+        Ok(Self { rows: decode_map_table(rows, |row| row.id) })
     }
     pub fn get(&self, key: i32) -> Option<&quest::Quest> {
         self.rows.get(&key)
@@ -231,6 +239,7 @@ impl SoraTable for QuestTable {
     fn len(&self) -> usize {
         self.rows.len()
     }
+
 }
 
 #[derive(Debug, Clone)]
@@ -240,9 +249,11 @@ pub struct QuestRewardTable {
 
 impl QuestRewardTable {
     fn decode(bundle: &runtime::SoraBundle<'_>) -> Result<Self, runtime::SoraReadError> {
-        Ok(Self {
-            rows: bundle.decode_table::<quest_reward::QuestReward>("QuestReward")?,
-        })
+        Self::from_rows(bundle.decode_table::<quest_reward::QuestReward>("QuestReward")?)
+    }
+
+    fn from_rows(rows: Vec<quest_reward::QuestReward>) -> Result<Self, runtime::SoraReadError> {
+        Ok(Self { rows })
     }
 }
 
@@ -274,6 +285,7 @@ impl SoraTable for QuestRewardTable {
     fn len(&self) -> usize {
         self.rows.len()
     }
+
 }
 
 #[derive(Debug, Clone)]
@@ -283,12 +295,11 @@ pub struct GameSettingsTable {
 
 impl GameSettingsTable {
     fn decode(bundle: &runtime::SoraBundle<'_>) -> Result<Self, runtime::SoraReadError> {
-        Ok(Self {
-            rows: decode_singleton_table(
-                bundle.decode_table::<game_settings::GameSettings>("GameSettings")?,
-                "GameSettings",
-            )?,
-        })
+        Self::from_rows(bundle.decode_table::<game_settings::GameSettings>("GameSettings")?)
+    }
+
+    fn from_rows(rows: Vec<game_settings::GameSettings>) -> Result<Self, runtime::SoraReadError> {
+        Ok(Self { rows: decode_singleton_table(rows, "GameSettings")? })
     }
 }
 
@@ -320,6 +331,7 @@ impl SoraTable for GameSettingsTable {
     fn len(&self) -> usize {
         1
     }
+
 }
 
 #[derive(Debug, Clone)]
@@ -329,12 +341,11 @@ pub struct LocalizationTable {
 
 impl LocalizationTable {
     fn decode(bundle: &runtime::SoraBundle<'_>) -> Result<Self, runtime::SoraReadError> {
-        Ok(Self {
-            rows: decode_map_table(
-                bundle.decode_table::<localization::Localization>("Localization")?,
-                |row| row.key.clone(),
-            ),
-        })
+        Self::from_rows(bundle.decode_table::<localization::Localization>("Localization")?)
+    }
+
+    fn from_rows(rows: Vec<localization::Localization>) -> Result<Self, runtime::SoraReadError> {
+        Ok(Self { rows: decode_map_table(rows, |row| row.key.clone()) })
     }
     pub fn get(&self, key: &String) -> Option<&localization::Localization> {
         self.rows.get(key)
@@ -369,6 +380,7 @@ impl SoraTable for LocalizationTable {
     fn len(&self) -> usize {
         self.rows.len()
     }
+
 }
 
 #[derive(Debug, Clone)]
@@ -378,12 +390,11 @@ pub struct LevelExpTable {
 
 impl LevelExpTable {
     fn decode(bundle: &runtime::SoraBundle<'_>) -> Result<Self, runtime::SoraReadError> {
-        Ok(Self {
-            rows: decode_map_table(
-                bundle.decode_table::<level_exp::LevelExp>("LevelExp")?,
-                |row| row.level,
-            ),
-        })
+        Self::from_rows(bundle.decode_table::<level_exp::LevelExp>("LevelExp")?)
+    }
+
+    fn from_rows(rows: Vec<level_exp::LevelExp>) -> Result<Self, runtime::SoraReadError> {
+        Ok(Self { rows: decode_map_table(rows, |row| row.level) })
     }
     pub fn get(&self, key: i32) -> Option<&level_exp::LevelExp> {
         self.rows.get(&key)
@@ -418,6 +429,7 @@ impl SoraTable for LevelExpTable {
     fn len(&self) -> usize {
         self.rows.len()
     }
+
 }
 
 #[derive(Debug, Clone)]
@@ -427,12 +439,11 @@ pub struct CharacterTable {
 
 impl CharacterTable {
     fn decode(bundle: &runtime::SoraBundle<'_>) -> Result<Self, runtime::SoraReadError> {
-        Ok(Self {
-            rows: decode_map_table(
-                bundle.decode_table::<character::Character>("Character")?,
-                |row| row.id,
-            ),
-        })
+        Self::from_rows(bundle.decode_table::<character::Character>("Character")?)
+    }
+
+    fn from_rows(rows: Vec<character::Character>) -> Result<Self, runtime::SoraReadError> {
+        Ok(Self { rows: decode_map_table(rows, |row| row.id) })
     }
     pub fn get(&self, key: i32) -> Option<&character::Character> {
         self.rows.get(&key)
@@ -467,6 +478,7 @@ impl SoraTable for CharacterTable {
     fn len(&self) -> usize {
         self.rows.len()
     }
+
 }
 
 #[derive(Debug, Clone)]
@@ -476,9 +488,11 @@ pub struct CharacterSkillTable {
 
 impl CharacterSkillTable {
     fn decode(bundle: &runtime::SoraBundle<'_>) -> Result<Self, runtime::SoraReadError> {
-        Ok(Self {
-            rows: bundle.decode_table::<character_skill::CharacterSkill>("CharacterSkill")?,
-        })
+        Self::from_rows(bundle.decode_table::<character_skill::CharacterSkill>("CharacterSkill")?)
+    }
+
+    fn from_rows(rows: Vec<character_skill::CharacterSkill>) -> Result<Self, runtime::SoraReadError> {
+        Ok(Self { rows })
     }
 }
 
@@ -510,6 +524,7 @@ impl SoraTable for CharacterSkillTable {
     fn len(&self) -> usize {
         self.rows.len()
     }
+
 }
 
 #[derive(Debug, Clone)]
@@ -519,9 +534,11 @@ pub struct BuffTable {
 
 impl BuffTable {
     fn decode(bundle: &runtime::SoraBundle<'_>) -> Result<Self, runtime::SoraReadError> {
-        Ok(Self {
-            rows: decode_map_table(bundle.decode_table::<buff::Buff>("Buff")?, |row| row.id),
-        })
+        Self::from_rows(bundle.decode_table::<buff::Buff>("Buff")?)
+    }
+
+    fn from_rows(rows: Vec<buff::Buff>) -> Result<Self, runtime::SoraReadError> {
+        Ok(Self { rows: decode_map_table(rows, |row| row.id) })
     }
     pub fn get(&self, key: i32) -> Option<&buff::Buff> {
         self.rows.get(&key)
@@ -556,6 +573,7 @@ impl SoraTable for BuffTable {
     fn len(&self) -> usize {
         self.rows.len()
     }
+
 }
 
 #[derive(Debug, Clone)]
@@ -565,12 +583,11 @@ pub struct DropGroupTable {
 
 impl DropGroupTable {
     fn decode(bundle: &runtime::SoraBundle<'_>) -> Result<Self, runtime::SoraReadError> {
-        Ok(Self {
-            rows: decode_map_table(
-                bundle.decode_table::<drop_group::DropGroup>("DropGroup")?,
-                |row| row.id,
-            ),
-        })
+        Self::from_rows(bundle.decode_table::<drop_group::DropGroup>("DropGroup")?)
+    }
+
+    fn from_rows(rows: Vec<drop_group::DropGroup>) -> Result<Self, runtime::SoraReadError> {
+        Ok(Self { rows: decode_map_table(rows, |row| row.id) })
     }
     pub fn get(&self, key: i32) -> Option<&drop_group::DropGroup> {
         self.rows.get(&key)
@@ -605,6 +622,7 @@ impl SoraTable for DropGroupTable {
     fn len(&self) -> usize {
         self.rows.len()
     }
+
 }
 
 #[derive(Debug, Clone)]
@@ -614,9 +632,11 @@ pub struct DropEntryTable {
 
 impl DropEntryTable {
     fn decode(bundle: &runtime::SoraBundle<'_>) -> Result<Self, runtime::SoraReadError> {
-        Ok(Self {
-            rows: bundle.decode_table::<drop_entry::DropEntry>("DropEntry")?,
-        })
+        Self::from_rows(bundle.decode_table::<drop_entry::DropEntry>("DropEntry")?)
+    }
+
+    fn from_rows(rows: Vec<drop_entry::DropEntry>) -> Result<Self, runtime::SoraReadError> {
+        Ok(Self { rows })
     }
 }
 
@@ -648,6 +668,7 @@ impl SoraTable for DropEntryTable {
     fn len(&self) -> usize {
         self.rows.len()
     }
+
 }
 
 #[derive(Debug, Clone)]
@@ -657,11 +678,11 @@ pub struct MonsterTable {
 
 impl MonsterTable {
     fn decode(bundle: &runtime::SoraBundle<'_>) -> Result<Self, runtime::SoraReadError> {
-        Ok(Self {
-            rows: decode_map_table(bundle.decode_table::<monster::Monster>("Monster")?, |row| {
-                row.id
-            }),
-        })
+        Self::from_rows(bundle.decode_table::<monster::Monster>("Monster")?)
+    }
+
+    fn from_rows(rows: Vec<monster::Monster>) -> Result<Self, runtime::SoraReadError> {
+        Ok(Self { rows: decode_map_table(rows, |row| row.id) })
     }
     pub fn get(&self, key: i32) -> Option<&monster::Monster> {
         self.rows.get(&key)
@@ -696,6 +717,7 @@ impl SoraTable for MonsterTable {
     fn len(&self) -> usize {
         self.rows.len()
     }
+
 }
 
 #[derive(Debug, Clone)]
@@ -705,9 +727,11 @@ pub struct StageTable {
 
 impl StageTable {
     fn decode(bundle: &runtime::SoraBundle<'_>) -> Result<Self, runtime::SoraReadError> {
-        Ok(Self {
-            rows: decode_map_table(bundle.decode_table::<stage::Stage>("Stage")?, |row| row.id),
-        })
+        Self::from_rows(bundle.decode_table::<stage::Stage>("Stage")?)
+    }
+
+    fn from_rows(rows: Vec<stage::Stage>) -> Result<Self, runtime::SoraReadError> {
+        Ok(Self { rows: decode_map_table(rows, |row| row.id) })
     }
     pub fn get(&self, key: i32) -> Option<&stage::Stage> {
         self.rows.get(&key)
@@ -742,6 +766,7 @@ impl SoraTable for StageTable {
     fn len(&self) -> usize {
         self.rows.len()
     }
+
 }
 
 #[derive(Debug, Clone)]
@@ -751,9 +776,11 @@ pub struct StageRewardTable {
 
 impl StageRewardTable {
     fn decode(bundle: &runtime::SoraBundle<'_>) -> Result<Self, runtime::SoraReadError> {
-        Ok(Self {
-            rows: bundle.decode_table::<stage_reward::StageReward>("StageReward")?,
-        })
+        Self::from_rows(bundle.decode_table::<stage_reward::StageReward>("StageReward")?)
+    }
+
+    fn from_rows(rows: Vec<stage_reward::StageReward>) -> Result<Self, runtime::SoraReadError> {
+        Ok(Self { rows })
     }
 }
 
@@ -785,6 +812,7 @@ impl SoraTable for StageRewardTable {
     fn len(&self) -> usize {
         self.rows.len()
     }
+
 }
 
 #[derive(Debug, Clone)]
@@ -794,11 +822,11 @@ pub struct DungeonTable {
 
 impl DungeonTable {
     fn decode(bundle: &runtime::SoraBundle<'_>) -> Result<Self, runtime::SoraReadError> {
-        Ok(Self {
-            rows: decode_map_table(bundle.decode_table::<dungeon::Dungeon>("Dungeon")?, |row| {
-                row.id
-            }),
-        })
+        Self::from_rows(bundle.decode_table::<dungeon::Dungeon>("Dungeon")?)
+    }
+
+    fn from_rows(rows: Vec<dungeon::Dungeon>) -> Result<Self, runtime::SoraReadError> {
+        Ok(Self { rows: decode_map_table(rows, |row| row.id) })
     }
     pub fn get(&self, key: i32) -> Option<&dungeon::Dungeon> {
         self.rows.get(&key)
@@ -833,6 +861,7 @@ impl SoraTable for DungeonTable {
     fn len(&self) -> usize {
         self.rows.len()
     }
+
 }
 
 #[derive(Debug, Clone)]
@@ -842,9 +871,11 @@ pub struct ShopTable {
 
 impl ShopTable {
     fn decode(bundle: &runtime::SoraBundle<'_>) -> Result<Self, runtime::SoraReadError> {
-        Ok(Self {
-            rows: decode_map_table(bundle.decode_table::<shop::Shop>("Shop")?, |row| row.id),
-        })
+        Self::from_rows(bundle.decode_table::<shop::Shop>("Shop")?)
+    }
+
+    fn from_rows(rows: Vec<shop::Shop>) -> Result<Self, runtime::SoraReadError> {
+        Ok(Self { rows: decode_map_table(rows, |row| row.id) })
     }
     pub fn get(&self, key: i32) -> Option<&shop::Shop> {
         self.rows.get(&key)
@@ -879,6 +910,7 @@ impl SoraTable for ShopTable {
     fn len(&self) -> usize {
         self.rows.len()
     }
+
 }
 
 #[derive(Debug, Clone)]
@@ -888,9 +920,11 @@ pub struct ShopItemTable {
 
 impl ShopItemTable {
     fn decode(bundle: &runtime::SoraBundle<'_>) -> Result<Self, runtime::SoraReadError> {
-        Ok(Self {
-            rows: bundle.decode_table::<shop_item::ShopItem>("ShopItem")?,
-        })
+        Self::from_rows(bundle.decode_table::<shop_item::ShopItem>("ShopItem")?)
+    }
+
+    fn from_rows(rows: Vec<shop_item::ShopItem>) -> Result<Self, runtime::SoraReadError> {
+        Ok(Self { rows })
     }
 }
 
@@ -922,6 +956,7 @@ impl SoraTable for ShopItemTable {
     fn len(&self) -> usize {
         self.rows.len()
     }
+
 }
 
 #[derive(Debug, Clone)]
@@ -931,11 +966,11 @@ pub struct RecipeTable {
 
 impl RecipeTable {
     fn decode(bundle: &runtime::SoraBundle<'_>) -> Result<Self, runtime::SoraReadError> {
-        Ok(Self {
-            rows: decode_map_table(bundle.decode_table::<recipe::Recipe>("Recipe")?, |row| {
-                row.id
-            }),
-        })
+        Self::from_rows(bundle.decode_table::<recipe::Recipe>("Recipe")?)
+    }
+
+    fn from_rows(rows: Vec<recipe::Recipe>) -> Result<Self, runtime::SoraReadError> {
+        Ok(Self { rows: decode_map_table(rows, |row| row.id) })
     }
     pub fn get(&self, key: i32) -> Option<&recipe::Recipe> {
         self.rows.get(&key)
@@ -970,6 +1005,7 @@ impl SoraTable for RecipeTable {
     fn len(&self) -> usize {
         self.rows.len()
     }
+
 }
 
 #[derive(Debug, Clone)]
@@ -979,12 +1015,11 @@ pub struct GachaPoolTable {
 
 impl GachaPoolTable {
     fn decode(bundle: &runtime::SoraBundle<'_>) -> Result<Self, runtime::SoraReadError> {
-        Ok(Self {
-            rows: decode_map_table(
-                bundle.decode_table::<gacha_pool::GachaPool>("GachaPool")?,
-                |row| row.id,
-            ),
-        })
+        Self::from_rows(bundle.decode_table::<gacha_pool::GachaPool>("GachaPool")?)
+    }
+
+    fn from_rows(rows: Vec<gacha_pool::GachaPool>) -> Result<Self, runtime::SoraReadError> {
+        Ok(Self { rows: decode_map_table(rows, |row| row.id) })
     }
     pub fn get(&self, key: i32) -> Option<&gacha_pool::GachaPool> {
         self.rows.get(&key)
@@ -1019,6 +1054,7 @@ impl SoraTable for GachaPoolTable {
     fn len(&self) -> usize {
         self.rows.len()
     }
+
 }
 
 #[derive(Debug, Clone)]
@@ -1028,9 +1064,11 @@ pub struct GachaItemTable {
 
 impl GachaItemTable {
     fn decode(bundle: &runtime::SoraBundle<'_>) -> Result<Self, runtime::SoraReadError> {
-        Ok(Self {
-            rows: bundle.decode_table::<gacha_item::GachaItem>("GachaItem")?,
-        })
+        Self::from_rows(bundle.decode_table::<gacha_item::GachaItem>("GachaItem")?)
+    }
+
+    fn from_rows(rows: Vec<gacha_item::GachaItem>) -> Result<Self, runtime::SoraReadError> {
+        Ok(Self { rows })
     }
 }
 
@@ -1062,6 +1100,7 @@ impl SoraTable for GachaItemTable {
     fn len(&self) -> usize {
         self.rows.len()
     }
+
 }
 
 #[derive(Debug, Clone)]
@@ -1071,12 +1110,11 @@ pub struct EquipmentSetTable {
 
 impl EquipmentSetTable {
     fn decode(bundle: &runtime::SoraBundle<'_>) -> Result<Self, runtime::SoraReadError> {
-        Ok(Self {
-            rows: decode_map_table(
-                bundle.decode_table::<equipment_set::EquipmentSet>("EquipmentSet")?,
-                |row| row.id,
-            ),
-        })
+        Self::from_rows(bundle.decode_table::<equipment_set::EquipmentSet>("EquipmentSet")?)
+    }
+
+    fn from_rows(rows: Vec<equipment_set::EquipmentSet>) -> Result<Self, runtime::SoraReadError> {
+        Ok(Self { rows: decode_map_table(rows, |row| row.id) })
     }
     pub fn get(&self, key: i32) -> Option<&equipment_set::EquipmentSet> {
         self.rows.get(&key)
@@ -1111,6 +1149,7 @@ impl SoraTable for EquipmentSetTable {
     fn len(&self) -> usize {
         self.rows.len()
     }
+
 }
 
 #[derive(Debug, Clone)]
@@ -1120,12 +1159,11 @@ pub struct AchievementTable {
 
 impl AchievementTable {
     fn decode(bundle: &runtime::SoraBundle<'_>) -> Result<Self, runtime::SoraReadError> {
-        Ok(Self {
-            rows: decode_map_table(
-                bundle.decode_table::<achievement::Achievement>("Achievement")?,
-                |row| row.id,
-            ),
-        })
+        Self::from_rows(bundle.decode_table::<achievement::Achievement>("Achievement")?)
+    }
+
+    fn from_rows(rows: Vec<achievement::Achievement>) -> Result<Self, runtime::SoraReadError> {
+        Ok(Self { rows: decode_map_table(rows, |row| row.id) })
     }
     pub fn get(&self, key: i32) -> Option<&achievement::Achievement> {
         self.rows.get(&key)
@@ -1160,6 +1198,7 @@ impl SoraTable for AchievementTable {
     fn len(&self) -> usize {
         self.rows.len()
     }
+
 }
 
 #[derive(Debug, Clone)]
@@ -1169,12 +1208,11 @@ pub struct VipLevelTable {
 
 impl VipLevelTable {
     fn decode(bundle: &runtime::SoraBundle<'_>) -> Result<Self, runtime::SoraReadError> {
-        Ok(Self {
-            rows: decode_map_table(
-                bundle.decode_table::<vip_level::VipLevel>("VipLevel")?,
-                |row| row.level,
-            ),
-        })
+        Self::from_rows(bundle.decode_table::<vip_level::VipLevel>("VipLevel")?)
+    }
+
+    fn from_rows(rows: Vec<vip_level::VipLevel>) -> Result<Self, runtime::SoraReadError> {
+        Ok(Self { rows: decode_map_table(rows, |row| row.level) })
     }
     pub fn get(&self, key: i32) -> Option<&vip_level::VipLevel> {
         self.rows.get(&key)
@@ -1209,6 +1247,7 @@ impl SoraTable for VipLevelTable {
     fn len(&self) -> usize {
         self.rows.len()
     }
+
 }
 
 #[derive(Debug, Clone)]
@@ -1218,12 +1257,11 @@ pub struct MailTemplateTable {
 
 impl MailTemplateTable {
     fn decode(bundle: &runtime::SoraBundle<'_>) -> Result<Self, runtime::SoraReadError> {
-        Ok(Self {
-            rows: decode_map_table(
-                bundle.decode_table::<mail_template::MailTemplate>("MailTemplate")?,
-                |row| row.id,
-            ),
-        })
+        Self::from_rows(bundle.decode_table::<mail_template::MailTemplate>("MailTemplate")?)
+    }
+
+    fn from_rows(rows: Vec<mail_template::MailTemplate>) -> Result<Self, runtime::SoraReadError> {
+        Ok(Self { rows: decode_map_table(rows, |row| row.id) })
     }
     pub fn get(&self, key: i32) -> Option<&mail_template::MailTemplate> {
         self.rows.get(&key)
@@ -1258,6 +1296,7 @@ impl SoraTable for MailTemplateTable {
     fn len(&self) -> usize {
         self.rows.len()
     }
+
 }
 
 #[derive(Debug, Clone)]
@@ -1267,9 +1306,11 @@ pub struct MailRewardTable {
 
 impl MailRewardTable {
     fn decode(bundle: &runtime::SoraBundle<'_>) -> Result<Self, runtime::SoraReadError> {
-        Ok(Self {
-            rows: bundle.decode_table::<mail_reward::MailReward>("MailReward")?,
-        })
+        Self::from_rows(bundle.decode_table::<mail_reward::MailReward>("MailReward")?)
+    }
+
+    fn from_rows(rows: Vec<mail_reward::MailReward>) -> Result<Self, runtime::SoraReadError> {
+        Ok(Self { rows })
     }
 }
 
@@ -1301,6 +1342,7 @@ impl SoraTable for MailRewardTable {
     fn len(&self) -> usize {
         self.rows.len()
     }
+
 }
 
 #[derive(Debug, Clone)]
@@ -1310,12 +1352,11 @@ pub struct DialogueTable {
 
 impl DialogueTable {
     fn decode(bundle: &runtime::SoraBundle<'_>) -> Result<Self, runtime::SoraReadError> {
-        Ok(Self {
-            rows: decode_map_table(
-                bundle.decode_table::<dialogue::Dialogue>("Dialogue")?,
-                |row| row.id,
-            ),
-        })
+        Self::from_rows(bundle.decode_table::<dialogue::Dialogue>("Dialogue")?)
+    }
+
+    fn from_rows(rows: Vec<dialogue::Dialogue>) -> Result<Self, runtime::SoraReadError> {
+        Ok(Self { rows: decode_map_table(rows, |row| row.id) })
     }
     pub fn get(&self, key: i32) -> Option<&dialogue::Dialogue> {
         self.rows.get(&key)
@@ -1350,6 +1391,7 @@ impl SoraTable for DialogueTable {
     fn len(&self) -> usize {
         self.rows.len()
     }
+
 }
 
 #[derive(Debug, Clone)]
@@ -1359,12 +1401,11 @@ pub struct EventRuleTable {
 
 impl EventRuleTable {
     fn decode(bundle: &runtime::SoraBundle<'_>) -> Result<Self, runtime::SoraReadError> {
-        Ok(Self {
-            rows: decode_map_table(
-                bundle.decode_table::<event_rule::EventRule>("EventRule")?,
-                |row| row.id,
-            ),
-        })
+        Self::from_rows(bundle.decode_table::<event_rule::EventRule>("EventRule")?)
+    }
+
+    fn from_rows(rows: Vec<event_rule::EventRule>) -> Result<Self, runtime::SoraReadError> {
+        Ok(Self { rows: decode_map_table(rows, |row| row.id) })
     }
     pub fn get(&self, key: i32) -> Option<&event_rule::EventRule> {
         self.rows.get(&key)
@@ -1399,30 +1440,23 @@ impl SoraTable for EventRuleTable {
     fn len(&self) -> usize {
         self.rows.len()
     }
+
 }
 
 impl SoraConfig {
     pub fn from_bytes(bytes: &[u8]) -> Result<Self, runtime::SoraReadError> {
         let bundle = runtime::SoraBundle::parse(bytes)?;
-        let mut tables: SoraMap<&'static str, Box<dyn SoraTable>> = sora_map_with_capacity(28);
+        let mut tables: SoraMap<&'static str, Box<dyn SoraTable>> =
+            sora_map_with_capacity(28);
         tables.insert("Item", Box::new(ItemTable::decode(&bundle)?));
         tables.insert("Skill", Box::new(SkillTable::decode(&bundle)?));
         tables.insert("Quest", Box::new(QuestTable::decode(&bundle)?));
         tables.insert("QuestReward", Box::new(QuestRewardTable::decode(&bundle)?));
-        tables.insert(
-            "GameSettings",
-            Box::new(GameSettingsTable::decode(&bundle)?),
-        );
-        tables.insert(
-            "Localization",
-            Box::new(LocalizationTable::decode(&bundle)?),
-        );
+        tables.insert("GameSettings", Box::new(GameSettingsTable::decode(&bundle)?));
+        tables.insert("Localization", Box::new(LocalizationTable::decode(&bundle)?));
         tables.insert("LevelExp", Box::new(LevelExpTable::decode(&bundle)?));
         tables.insert("Character", Box::new(CharacterTable::decode(&bundle)?));
-        tables.insert(
-            "CharacterSkill",
-            Box::new(CharacterSkillTable::decode(&bundle)?),
-        );
+        tables.insert("CharacterSkill", Box::new(CharacterSkillTable::decode(&bundle)?));
         tables.insert("Buff", Box::new(BuffTable::decode(&bundle)?));
         tables.insert("DropGroup", Box::new(DropGroupTable::decode(&bundle)?));
         tables.insert("DropEntry", Box::new(DropEntryTable::decode(&bundle)?));
@@ -1435,16 +1469,10 @@ impl SoraConfig {
         tables.insert("Recipe", Box::new(RecipeTable::decode(&bundle)?));
         tables.insert("GachaPool", Box::new(GachaPoolTable::decode(&bundle)?));
         tables.insert("GachaItem", Box::new(GachaItemTable::decode(&bundle)?));
-        tables.insert(
-            "EquipmentSet",
-            Box::new(EquipmentSetTable::decode(&bundle)?),
-        );
+        tables.insert("EquipmentSet", Box::new(EquipmentSetTable::decode(&bundle)?));
         tables.insert("Achievement", Box::new(AchievementTable::decode(&bundle)?));
         tables.insert("VipLevel", Box::new(VipLevelTable::decode(&bundle)?));
-        tables.insert(
-            "MailTemplate",
-            Box::new(MailTemplateTable::decode(&bundle)?),
-        );
+        tables.insert("MailTemplate", Box::new(MailTemplateTable::decode(&bundle)?));
         tables.insert("MailReward", Box::new(MailRewardTable::decode(&bundle)?));
         tables.insert("Dialogue", Box::new(DialogueTable::decode(&bundle)?));
         tables.insert("EventRule", Box::new(EventRuleTable::decode(&bundle)?));

@@ -1,15 +1,19 @@
+
+
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct Localization {
+    #[serde(rename = "key")]
     pub key: String,
+    #[serde(rename = "zh_cn")]
     pub zh_cn: String,
+    #[serde(rename = "en_us")]
     pub en_us: String,
+    #[serde(rename = "note")]
     pub note: Option<String>,
 }
 
 impl super::runtime::SoraDecode for Localization {
-    fn decode(
-        reader: &mut super::runtime::SoraReader<'_>,
-    ) -> Result<Self, super::runtime::SoraReadError> {
+    fn decode(reader: &mut super::runtime::SoraReader<'_>) -> Result<Self, super::runtime::SoraReadError> {
         Ok(Self {
             key: <String as super::runtime::SoraDecode>::decode(reader)?,
             zh_cn: <String as super::runtime::SoraDecode>::decode(reader)?,

@@ -3,10 +3,12 @@ use super::{{ import.module }}::{{ import.name }};
 {%- endfor %}
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+#[serde(tag = "{{ union.tag }}")]
 pub enum {{ union.pascal_name }} {
 {%- for variant in union.variants %}
     {{ variant.name }} {
 {%- for field in variant.fields %}
+        #[serde(rename = "{{ field.raw_name }}")]
         {{ field.name }}: {{ field.type_name }},
 {%- endfor %}
     },

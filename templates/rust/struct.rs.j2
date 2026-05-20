@@ -8,6 +8,7 @@ pub struct {{ record.pascal_name }} {
 {%- if field.comment %}
     /// {{ field.comment }}
 {%- endif %}
+    #[serde(rename = "{{ field.raw_name }}")]
     pub {{ field.name }}: {{ field.type_name }},
 {%- endfor %}
 }

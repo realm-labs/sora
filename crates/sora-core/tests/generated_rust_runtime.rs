@@ -10,30 +10,61 @@ use sora_export::exporter::ExportOutput;
 use sora_input_toml::input::{TomlProjectInput, TomlSchemaInput};
 
 #[test]
-fn generated_rust_runtime_compiles_and_loads_binary_bundle() {
-    let base = temp_dir();
-    let project_path = write_project(&base);
-    let generated_dir = base.join("generated-crate");
-    let generated_src = generated_dir.join("src/generated");
+fn generated_rust_runtime_compiles_and_loads_config_bundles() {
+    for case in [
+        RuntimeCase {
+            runtime_format: "sora",
+            export_format: "binary",
+            file_name: "config.sora",
+        },
+        RuntimeCase {
+            runtime_format: "json",
+            export_format: "json",
+            file_name: "config.json",
+        },
+        RuntimeCase {
+            runtime_format: "cbor",
+            export_format: "cbor",
+            file_name: "config.cbor",
+        },
+        RuntimeCase {
+            runtime_format: "protobuf",
+            export_format: "protobuf",
+            file_name: "config.pb",
+        },
+    ] {
+        let base = temp_dir();
+        let project_path = write_project(&base, case.runtime_format);
+        let generated_dir = base.join("generated-crate");
+        let generated_src = generated_dir.join("src/generated");
 
-    let schema_input = TomlSchemaInput::new(&project_path);
-    sora_core::pipeline::generate_code(&schema_input, CodegenTarget::Rust, &generated_src).unwrap();
+        let schema_input = TomlSchemaInput::new(&project_path);
+        sora_core::pipeline::generate_code(&schema_input, CodegenTarget::Rust, &generated_src)
+            .unwrap();
 
-    let project_input = TomlProjectInput::new(&project_path, base.join("data"));
-    sora_core::pipeline::export_data(
-        &project_input,
-        "binary",
-        ExportOutput::File(generated_dir.join("config.sora")),
-    )
-    .unwrap();
+        let project_input = TomlProjectInput::new(&project_path, base.join("data"));
+        sora_core::pipeline::export_data(
+            &project_input,
+            case.export_format,
+            ExportOutput::File(generated_dir.join(case.file_name)),
+        )
+        .unwrap();
 
-    write_generated_crate(&generated_dir);
-    assert_generated_crate_tests_pass(&generated_dir);
+        write_generated_crate(&generated_dir, case.file_name);
+        assert_generated_crate_tests_pass(&generated_dir);
 
-    let _ = fs::remove_dir_all(base);
+        let _ = fs::remove_dir_all(base);
+    }
 }
 
-fn write_project(base: &Path) -> PathBuf {
+#[derive(Clone, Copy)]
+struct RuntimeCase {
+    runtime_format: &'static str,
+    export_format: &'static str,
+    file_name: &'static str,
+}
+
+fn write_project(base: &Path, runtime_format: &str) -> PathBuf {
     let schema_dir = base.join("schema");
     let data_dir = base.join("data");
     fs::create_dir_all(&schema_dir).unwrap();
@@ -45,7 +76,11 @@ fn write_project(base: &Path) -> PathBuf {
         r#"
 package = "game_config"
 includes = ["schema/items.toml"]
-"#,
+
+[codegen.rust]
+runtime_format = "__RUNTIME_FORMAT__"
+"#
+        .replace("__RUNTIME_FORMAT__", runtime_format),
     )
     .unwrap();
     fs::write(
@@ -173,7 +208,7 @@ count = 2
     project_path
 }
 
-fn write_generated_crate(crate_dir: &Path) {
+fn write_generated_crate(crate_dir: &Path, file_name: &str) {
     fs::write(
         crate_dir.join("Cargo.toml"),
         r#"
@@ -183,7 +218,10 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+prost = "0.14"
 serde = { version = "1", features = ["derive"] }
+serde_cbor = "0.11"
+serde_json = "1"
 "#,
     )
     .unwrap();
@@ -198,7 +236,7 @@ mod tests {
 
     #[test]
     fn loads_sora_bundle() {
-        let config = SoraConfig::from_bytes(include_bytes!("../config.sora")).unwrap();
+        let config = SoraConfig::from_bytes(include_bytes!("../__CONFIG_FILE__")).unwrap();
         let item = config.item().get(1002).unwrap();
 
         assert_eq!(item.name, "Magic Stone");
@@ -212,7 +250,8 @@ mod tests {
         assert_eq!(config.item_reward().len(), 2);
     }
 }
-"#,
+"#
+        .replace("__CONFIG_FILE__", file_name),
     )
     .unwrap();
 }

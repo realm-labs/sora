@@ -372,3 +372,270 @@ fn read_u64_at(bytes: &[u8], offset: usize) -> Result<u64, SoraReadError> {
     }
     Ok(u64::from_le_bytes(bytes[offset..offset + 8].try_into().unwrap()))
 }
+
+{%- if runtime_format == "json" or runtime_format == "cbor" or runtime_format == "protobuf" %}
+
+#[derive(Debug, serde::Deserialize)]
+struct SerdeBundle {
+    format: String,
+    format_version: u32,
+    data: SerdeData,
+}
+
+#[derive(Debug, serde::Deserialize)]
+struct SerdeData {
+    tables: Vec<SerdeTable>,
+}
+
+#[derive(Debug, serde::Deserialize)]
+struct SerdeTable {
+    name: String,
+    rows: Vec<serde_json::Value>,
+}
+
+impl SerdeBundle {
+    fn validate(&self, expected_format: &str) -> Result<(), SoraReadError> {
+        if self.format != expected_format {
+            return Err(SoraReadError::new(format!(
+                "expected {} bundle, got {}",
+                expected_format, self.format
+            )));
+        }
+        if self.format_version != SORA_BUNDLE_VERSION {
+            return Err(SoraReadError::new(format!(
+                "unsupported {} bundle version {}",
+                expected_format, self.format_version
+            )));
+        }
+        Ok(())
+    }
+
+    fn decode_table<T: serde::de::DeserializeOwned>(&self, name: &str) -> Result<Vec<T>, SoraReadError> {
+        let table = self
+            .data
+            .tables
+            .iter()
+            .find(|table| table.name == name)
+            .ok_or_else(|| SoraReadError::new(format!("missing table `{}`", name)))?;
+        serde_json::from_value(serde_json::Value::Array(table.rows.clone())).map_err(|error| {
+            SoraReadError::new(format!("failed to decode table `{}`: {}", name, error))
+        })
+    }
+}
+{%- endif %}
+
+{%- if runtime_format == "json" %}
+
+pub struct JsonBundle {
+    bundle: SerdeBundle,
+}
+
+impl JsonBundle {
+    pub fn parse(bytes: &[u8]) -> Result<Self, SoraReadError> {
+        let bundle: SerdeBundle = serde_json::from_slice(bytes)
+            .map_err(|error| SoraReadError::new(format!("failed to parse json bundle: {}", error)))?;
+        bundle.validate("json")?;
+        Ok(Self { bundle })
+    }
+
+    pub fn decode_table<T: serde::de::DeserializeOwned>(&self, name: &str) -> Result<Vec<T>, SoraReadError> {
+        self.bundle.decode_table(name)
+    }
+}
+{%- endif %}
+
+{%- if runtime_format == "cbor" %}
+
+pub struct CborBundle {
+    bundle: SerdeBundle,
+}
+
+impl CborBundle {
+    pub fn parse(bytes: &[u8]) -> Result<Self, SoraReadError> {
+        let bundle: SerdeBundle = serde_cbor::from_slice(bytes)
+            .map_err(|error| SoraReadError::new(format!("failed to parse cbor bundle: {}", error)))?;
+        bundle.validate("cbor")?;
+        Ok(Self { bundle })
+    }
+
+    pub fn decode_table<T: serde::de::DeserializeOwned>(&self, name: &str) -> Result<Vec<T>, SoraReadError> {
+        self.bundle.decode_table(name)
+    }
+}
+{%- endif %}
+
+{%- if runtime_format == "protobuf" %}
+
+use prost::Message as _;
+
+pub struct ProtobufBundle {
+    bundle: SerdeBundle,
+}
+
+impl ProtobufBundle {
+    pub fn parse(bytes: &[u8]) -> Result<Self, SoraReadError> {
+        let bundle = ProtoBundle::decode(bytes)
+            .map_err(|error| SoraReadError::new(format!("failed to parse protobuf bundle: {}", error)))?;
+        if bundle.format != "protobuf" {
+            return Err(SoraReadError::new(format!(
+                "expected protobuf bundle, got {}",
+                bundle.format
+            )));
+        }
+        if bundle.format_version != SORA_BUNDLE_VERSION {
+            return Err(SoraReadError::new(format!(
+                "unsupported protobuf bundle version {}",
+                bundle.format_version
+            )));
+        }
+        Ok(Self {
+            bundle: bundle.into_serde_bundle()?,
+        })
+    }
+
+    pub fn decode_table<T: serde::de::DeserializeOwned>(&self, name: &str) -> Result<Vec<T>, SoraReadError> {
+        self.bundle.decode_table(name)
+    }
+}
+
+#[derive(Clone, PartialEq, prost::Message)]
+struct ProtoBundle {
+    #[prost(uint32, tag = "1")]
+    format_version: u32,
+    #[prost(string, tag = "2")]
+    format: String,
+    #[prost(string, tag = "3")]
+    package: String,
+    #[prost(bytes = "vec", tag = "4")]
+    schema_json: Vec<u8>,
+    #[prost(message, repeated, tag = "5")]
+    tables: Vec<ProtoTable>,
+}
+
+#[derive(Clone, PartialEq, prost::Message)]
+struct ProtoTable {
+    #[prost(string, tag = "1")]
+    name: String,
+    #[prost(message, repeated, tag = "2")]
+    rows: Vec<ProtoRow>,
+}
+
+#[derive(Clone, PartialEq, prost::Message)]
+struct ProtoRow {
+    #[prost(message, repeated, tag = "1")]
+    fields: Vec<ProtoField>,
+}
+
+#[derive(Clone, PartialEq, prost::Message)]
+struct ProtoField {
+    #[prost(string, tag = "1")]
+    name: String,
+    #[prost(message, optional, tag = "2")]
+    value: Option<ProtoValue>,
+}
+
+#[derive(Clone, PartialEq, prost::Message)]
+struct ProtoValue {
+    #[prost(oneof = "proto_value::Kind", tags = "1, 2, 3, 4, 5, 6, 7")]
+    kind: Option<proto_value::Kind>,
+}
+
+mod proto_value {
+    #[derive(Clone, PartialEq, prost::Oneof)]
+    pub enum Kind {
+        #[prost(bool, tag = "1")]
+        Bool(bool),
+        #[prost(int64, tag = "2")]
+        Integer(i64),
+        #[prost(double, tag = "3")]
+        Float(f64),
+        #[prost(string, tag = "4")]
+        String(String),
+        #[prost(message, tag = "5")]
+        List(super::ProtoList),
+        #[prost(message, tag = "6")]
+        Object(super::ProtoObject),
+        #[prost(bool, tag = "7")]
+        Null(bool),
+    }
+}
+
+#[derive(Clone, PartialEq, prost::Message)]
+struct ProtoList {
+    #[prost(message, repeated, tag = "1")]
+    values: Vec<ProtoValue>,
+}
+
+#[derive(Clone, PartialEq, prost::Message)]
+struct ProtoObject {
+    #[prost(message, repeated, tag = "1")]
+    fields: Vec<ProtoField>,
+}
+
+impl ProtoBundle {
+    fn into_serde_bundle(self) -> Result<SerdeBundle, SoraReadError> {
+        Ok(SerdeBundle {
+            format: self.format,
+            format_version: self.format_version,
+            data: SerdeData {
+                tables: self
+                    .tables
+                    .into_iter()
+                    .map(|table| {
+                        Ok(SerdeTable {
+                            name: table.name,
+                            rows: table
+                                .rows
+                                .into_iter()
+                                .map(proto_row_to_json)
+                                .collect::<Result<Vec<_>, _>>()?,
+                        })
+                    })
+                    .collect::<Result<Vec<_>, _>>()?,
+            },
+        })
+    }
+}
+
+fn proto_row_to_json(row: ProtoRow) -> Result<serde_json::Value, SoraReadError> {
+    let mut fields = serde_json::Map::new();
+    for field in row.fields {
+        let value = field
+            .value
+            .ok_or_else(|| SoraReadError::new(format!("protobuf field `{}` is missing value", field.name)))?;
+        fields.insert(field.name, proto_value_to_json(value)?);
+    }
+    Ok(serde_json::Value::Object(fields))
+}
+
+fn proto_value_to_json(value: ProtoValue) -> Result<serde_json::Value, SoraReadError> {
+    let kind = value
+        .kind
+        .ok_or_else(|| SoraReadError::new("protobuf value is missing kind"))?;
+    match kind {
+        proto_value::Kind::Bool(value) => Ok(serde_json::Value::Bool(value)),
+        proto_value::Kind::Integer(value) => Ok(serde_json::Value::Number(value.into())),
+        proto_value::Kind::Float(value) => serde_json::Number::from_f64(value)
+            .map(serde_json::Value::Number)
+            .ok_or_else(|| SoraReadError::new("protobuf float value is not finite")),
+        proto_value::Kind::String(value) => Ok(serde_json::Value::String(value)),
+        proto_value::Kind::List(value) => value
+            .values
+            .into_iter()
+            .map(proto_value_to_json)
+            .collect::<Result<Vec<_>, _>>()
+            .map(serde_json::Value::Array),
+        proto_value::Kind::Object(value) => {
+            let mut fields = serde_json::Map::new();
+            for field in value.fields {
+                let value = field.value.ok_or_else(|| {
+                    SoraReadError::new(format!("protobuf object field `{}` is missing value", field.name))
+                })?;
+                fields.insert(field.name, proto_value_to_json(value)?);
+            }
+            Ok(serde_json::Value::Object(fields))
+        }
+        proto_value::Kind::Null(_) => Ok(serde_json::Value::Null),
+    }
+}
+{%- endif %}

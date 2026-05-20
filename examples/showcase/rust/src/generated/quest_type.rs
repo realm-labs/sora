@@ -6,17 +6,12 @@ pub enum QuestType {
 }
 
 impl super::runtime::SoraDecode for QuestType {
-    fn decode(
-        reader: &mut super::runtime::SoraReader<'_>,
-    ) -> Result<Self, super::runtime::SoraReadError> {
+    fn decode(reader: &mut super::runtime::SoraReader<'_>) -> Result<Self, super::runtime::SoraReadError> {
         match reader.read_u32()? {
             0 => Ok(Self::Main),
             1 => Ok(Self::Side),
             2 => Ok(Self::Daily),
-            value => Err(super::runtime::SoraReadError::new(format!(
-                "invalid enum ordinal {} for QuestType",
-                value
-            ))),
+            value => Err(super::runtime::SoraReadError::new(format!("invalid enum ordinal {} for QuestType", value))),
         }
     }
 }

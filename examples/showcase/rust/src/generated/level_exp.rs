@@ -1,14 +1,17 @@
+
+
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct LevelExp {
+    #[serde(rename = "level")]
     pub level: i32,
+    #[serde(rename = "exp")]
     pub exp: i64,
+    #[serde(rename = "unlock_feature")]
     pub unlock_feature: Option<String>,
 }
 
 impl super::runtime::SoraDecode for LevelExp {
-    fn decode(
-        reader: &mut super::runtime::SoraReader<'_>,
-    ) -> Result<Self, super::runtime::SoraReadError> {
+    fn decode(reader: &mut super::runtime::SoraReader<'_>) -> Result<Self, super::runtime::SoraReadError> {
         Ok(Self {
             level: <i32 as super::runtime::SoraDecode>::decode(reader)?,
             exp: <i64 as super::runtime::SoraDecode>::decode(reader)?,

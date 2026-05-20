@@ -6,7 +6,7 @@ use sora_diagnostics::Result;
 use sora_ir::model::{ConfigIr, TableModeIr, TypeIr};
 
 use crate::{
-    generator::{CodeGenerator, ensure_sora_runtime_format},
+    generator::{CodeGenerator, runtime_format_name},
     model::{LanguageBackend, TableNameParts, build_model},
     render::{ensure_dir, render_template, write_file},
     types::rust_type_name,
@@ -16,10 +16,10 @@ pub struct RustCodeGenerator;
 
 impl CodeGenerator for RustCodeGenerator {
     fn generate(&self, ir: &ConfigIr, out_dir: &Path) -> Result<()> {
-        ensure_sora_runtime_format("rust", ir.codegen.rust.runtime_format)?;
         ensure_dir(out_dir)?;
         let backend = RustBackend;
         let model = build_model(ir, &backend)?;
+        let runtime_format = runtime_format_name(ir.codegen.rust.runtime_format);
 
         for item in &model.enums {
             let rendered = render_template("rust", "enum.rs.j2", context! { enum => item })?;
@@ -46,11 +46,15 @@ impl CodeGenerator for RustCodeGenerator {
         let rendered = render_template(
             "rust",
             "mod.rs.j2",
-            context! { model => &model, rust_map_type => rust_map_type },
+            context! { model => &model, rust_map_type => rust_map_type, runtime_format => runtime_format },
         )?;
         write_file(&out_dir.join("mod.rs"), rendered)?;
 
-        let rendered = render_template("rust", "runtime.rs.j2", context! {})?;
+        let rendered = render_template(
+            "rust",
+            "runtime.rs.j2",
+            context! { runtime_format => runtime_format },
+        )?;
         write_file(&out_dir.join("runtime.rs"), rendered)
     }
 }

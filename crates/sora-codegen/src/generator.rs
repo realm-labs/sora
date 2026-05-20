@@ -26,7 +26,7 @@ pub(crate) fn ensure_sora_runtime_format(
     )))
 }
 
-fn runtime_format_name(runtime_format: RuntimeFormatIr) -> &'static str {
+pub(crate) fn runtime_format_name(runtime_format: RuntimeFormatIr) -> &'static str {
     match runtime_format {
         RuntimeFormatIr::Sora => "sora",
         RuntimeFormatIr::Json => "json",
