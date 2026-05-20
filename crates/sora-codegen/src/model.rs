@@ -1,7 +1,7 @@
 use heck::{ToLowerCamelCase, ToPascalCase, ToSnakeCase};
 use serde::Serialize;
 use sora_diagnostics::Result;
-use sora_ir::model::{ConfigIr, FieldIr, TableIr, TableModeIr, TypeIr};
+use sora_ir::model::{ConfigIr, FieldIr, IndexIr, TableIr, TableModeIr, TypeIr};
 
 #[derive(Debug, Clone, Serialize)]
 pub struct CodegenModel {
@@ -13,6 +13,7 @@ pub struct CodegenModel {
     pub modules: Vec<String>,
     pub has_map_tables: bool,
     pub has_singleton_tables: bool,
+    pub has_unique_indexes: bool,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -66,6 +67,18 @@ pub struct CodegenTable {
     pub key_field_name: Option<String>,
     pub key_type: Option<String>,
     pub key_is_copy: bool,
+    pub unique_indexes: Vec<CodegenUniqueIndex>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct CodegenUniqueIndex {
+    pub name: String,
+    pub method_name: String,
+    pub field_name: String,
+    pub param_name: String,
+    pub param_type: String,
+    pub key_type: String,
+    pub key_is_copy: bool,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -92,6 +105,10 @@ pub trait LanguageBackend {
 
     fn key_is_copy(&self, _ir: &ConfigIr, _ty: &TypeIr) -> bool {
         false
+    }
+
+    fn key_param_type(&self, ir: &ConfigIr, ty: &TypeIr) -> String {
+        self.type_name(ir, ty)
     }
 }
 
@@ -160,6 +177,7 @@ pub fn build_model(ir: &ConfigIr, backend: &impl LanguageBackend) -> Result<Code
             .iter()
             .any(|table| table.mode == "map" && table.key_field_name.is_some()),
         has_singleton_tables: tables.iter().any(|table| table.mode == "singleton"),
+        has_unique_indexes: tables.iter().any(|table| !table.unique_indexes.is_empty()),
         tables,
         modules,
     })
@@ -236,6 +254,11 @@ fn build_table(
         &row_type,
         key_field.as_ref().map(|(_, ty, _)| ty.as_str()),
     );
+    let unique_indexes = table
+        .indexes
+        .iter()
+        .filter_map(|index| build_unique_index(ir, backend, table, index))
+        .collect::<Vec<_>>();
 
     Ok(CodegenTable {
         name: table.name.clone(),
@@ -254,6 +277,32 @@ fn build_table(
         key_field_name: key_field.as_ref().map(|(name, _, _)| name.clone()),
         key_type: key_field.as_ref().map(|(_, ty, _)| ty.clone()),
         key_is_copy: key_field.as_ref().is_some_and(|(_, _, is_copy)| *is_copy),
+        unique_indexes,
+    })
+}
+
+fn build_unique_index(
+    ir: &ConfigIr,
+    backend: &impl LanguageBackend,
+    table: &TableIr,
+    index: &IndexIr,
+) -> Option<CodegenUniqueIndex> {
+    if !index.unique || index.fields.len() != 1 || table.mode == TableModeIr::Singleton {
+        return None;
+    }
+
+    let field = table
+        .fields
+        .iter()
+        .find(|field| field.name == index.fields[0])?;
+    Some(CodegenUniqueIndex {
+        name: index.name.to_snake_case(),
+        method_name: format!("get_{}", index.name.to_snake_case()),
+        field_name: backend.field_name(&field.name),
+        param_name: field.name.to_snake_case(),
+        param_type: backend.key_param_type(ir, &field.ty),
+        key_type: backend.type_name(ir, &field.ty),
+        key_is_copy: backend.key_is_copy(ir, &field.ty),
     })
 }
 

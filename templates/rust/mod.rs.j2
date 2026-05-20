@@ -41,20 +41,75 @@ impl std::fmt::Debug for SoraConfig {
 {%- for table in model.tables %}
 
 #[derive(Debug, Clone)]
-pub struct {{ table.pascal_name }}Table({{ table.container_type }});
+pub struct {{ table.pascal_name }}Table {
+    rows: {{ table.container_type }},
+{%- for index in table.unique_indexes %}
+{%- if table.mode == "map" %}
+    {{ index.name }}: SoraMap<{{ index.key_type }}, {{ table.key_type }}>,
+{%- else %}
+    {{ index.name }}: SoraMap<{{ index.key_type }}, usize>,
+{%- endif %}
+{%- endfor %}
+}
 
 impl {{ table.pascal_name }}Table {
     fn decode(bundle: &runtime::SoraBundle<'_>) -> Result<Self, runtime::SoraReadError> {
 {%- if table.mode == "map" and table.key_field_name %}
-{%- if table.key_is_copy %}
-        Ok(Self(decode_map_table(bundle.decode_table::<{{ table.row_type }}>("{{ table.name }}")?, |row| row.{{ table.key_field_name }})))
+{%- if table.unique_indexes %}
+        let rows = bundle.decode_table::<{{ table.row_type }}>("{{ table.name }}")?;
+{%- for index in table.unique_indexes %}
+        let {{ index.name }} = build_unique_map_index(
+            rows.iter(),
+{%- if index.key_is_copy %}
+            |row| row.{{ index.field_name }},
 {%- else %}
-        Ok(Self(decode_map_table(bundle.decode_table::<{{ table.row_type }}>("{{ table.name }}")?, |row| row.{{ table.key_field_name }}.clone())))
+            |row| row.{{ index.field_name }}.clone(),
+{%- endif %}
+{%- if table.key_is_copy %}
+            |row| row.{{ table.key_field_name }},
+{%- else %}
+            |row| row.{{ table.key_field_name }}.clone(),
+{%- endif %}
+        );
+{%- endfor %}
+        let rows = decode_map_table(rows, |row| {% if table.key_is_copy %}row.{{ table.key_field_name }}{% else %}row.{{ table.key_field_name }}.clone(){% endif %});
+        Ok(Self {
+            rows,
+{%- for index in table.unique_indexes %}
+            {{ index.name }},
+{%- endfor %}
+        })
+{%- else %}
+{%- if table.key_is_copy %}
+        Ok(Self { rows: decode_map_table(bundle.decode_table::<{{ table.row_type }}>("{{ table.name }}")?, |row| row.{{ table.key_field_name }}) })
+{%- else %}
+        Ok(Self { rows: decode_map_table(bundle.decode_table::<{{ table.row_type }}>("{{ table.name }}")?, |row| row.{{ table.key_field_name }}.clone()) })
+{%- endif %}
 {%- endif %}
 {%- elif table.mode == "singleton" %}
-        Ok(Self(decode_singleton_table(bundle.decode_table::<{{ table.row_type }}>("{{ table.name }}")?, "{{ table.name }}")?))
+        Ok(Self { rows: decode_singleton_table(bundle.decode_table::<{{ table.row_type }}>("{{ table.name }}")?, "{{ table.name }}")? })
 {%- else %}
-        Ok(Self(bundle.decode_table::<{{ table.row_type }}>("{{ table.name }}")?))
+{%- if table.unique_indexes %}
+        let rows = bundle.decode_table::<{{ table.row_type }}>("{{ table.name }}")?;
+{%- for index in table.unique_indexes %}
+        let {{ index.name }} = build_unique_list_index(
+            rows.iter(),
+{%- if index.key_is_copy %}
+            |row| row.{{ index.field_name }},
+{%- else %}
+            |row| row.{{ index.field_name }}.clone(),
+{%- endif %}
+        );
+{%- endfor %}
+        Ok(Self {
+            rows,
+{%- for index in table.unique_indexes %}
+            {{ index.name }},
+{%- endfor %}
+        })
+{%- else %}
+        Ok(Self { rows: bundle.decode_table::<{{ table.row_type }}>("{{ table.name }}")? })
+{%- endif %}
 {%- endif %}
     }
 
@@ -62,22 +117,44 @@ impl {{ table.pascal_name }}Table {
 
 {%- if table.key_is_copy %}
     pub fn get(&self, key: {{ table.key_type }}) -> Option<&{{ table.row_type }}> {
-        self.0.get(&key)
+        self.rows.get(&key)
     }
 {%- else %}
     pub fn get(&self, key: &{{ table.key_type }}) -> Option<&{{ table.row_type }}> {
-        self.0.get(key)
+        self.rows.get(key)
     }
 {%- endif %}
 
 {%- endif %}
+{%- for index in table.unique_indexes %}
+
+{%- if index.key_is_copy %}
+    pub fn {{ index.method_name }}(&self, {{ index.param_name }}: {{ index.key_type }}) -> Option<&{{ table.row_type }}> {
+{%- else %}
+    pub fn {{ index.method_name }}(&self, {{ index.param_name }}: &{{ index.param_type }}) -> Option<&{{ table.row_type }}> {
+{%- endif %}
+{%- if table.mode == "map" %}
+{%- if index.key_is_copy %}
+        self.{{ index.name }}.get(&{{ index.param_name }}).and_then(|key| self.rows.get(key))
+{%- else %}
+        self.{{ index.name }}.get({{ index.param_name }}).and_then(|key| self.rows.get(key))
+{%- endif %}
+{%- else %}
+{%- if index.key_is_copy %}
+        self.{{ index.name }}.get(&{{ index.param_name }}).and_then(|index| self.rows.get(*index))
+{%- else %}
+        self.{{ index.name }}.get({{ index.param_name }}).and_then(|index| self.rows.get(*index))
+{%- endif %}
+{%- endif %}
+    }
+{%- endfor %}
 }
 
 impl std::ops::Deref for {{ table.pascal_name }}Table {
     type Target = {{ table.container_type }};
 
     fn deref(&self) -> &Self::Target {
-        &self.0
+        &self.rows
     }
 }
 
@@ -112,7 +189,7 @@ impl SoraTable for {{ table.pascal_name }}Table {
 {%- if table.mode == "singleton" %}
         1
 {%- else %}
-        self.0.len()
+        self.rows.len()
 {%- endif %}
     }
 
@@ -174,6 +251,39 @@ where
     K: std::cmp::Eq + std::hash::Hash,
 {
     rows.into_iter().map(|row| (key(&row), row)).collect()
+}
+{%- endif %}
+
+{%- if model.has_unique_indexes %}
+
+fn build_unique_list_index<'a, K, V: 'a>(
+    rows: impl Iterator<Item = &'a V>,
+    key: impl Fn(&V) -> K,
+) -> SoraMap<K, usize>
+where
+    K: std::cmp::Eq + std::hash::Hash,
+{
+    let mut index = sora_map_with_capacity(rows.size_hint().0);
+    for (position, row) in rows.enumerate() {
+        index.insert(key(row), position);
+    }
+    index
+}
+
+fn build_unique_map_index<'a, K, P, V: 'a>(
+    rows: impl Iterator<Item = &'a V>,
+    key: impl Fn(&V) -> K,
+    primary_key: impl Fn(&V) -> P,
+) -> SoraMap<K, P>
+where
+    K: std::cmp::Eq + std::hash::Hash,
+    P: std::cmp::Eq + std::hash::Hash,
+{
+    let mut index = sora_map_with_capacity(rows.size_hint().0);
+    for row in rows {
+        index.insert(key(row), primary_key(row));
+    }
+    index
 }
 {%- endif %}
 

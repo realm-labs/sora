@@ -218,7 +218,9 @@ mod tests {
         assert!(rust_mod.contains("pub type SoraMap<K, V> = std::collections::HashMap<K, V>;"));
         assert!(rust_mod.contains("pub trait SoraTable: std::any::Any + Send + Sync"));
         assert!(rust_mod.contains("tables: SoraMap<&'static str, Box<dyn SoraTable>>"));
-        assert!(rust_mod.contains("pub struct ItemTable(SoraMap<i32, item::Item>)"));
+        assert!(rust_mod.contains("pub struct ItemTable"));
+        assert!(rust_mod.contains("rows: SoraMap<i32, item::Item>"));
+        assert!(rust_mod.contains("by_name: SoraMap<String, i32>"));
         assert!(rust_mod.contains("impl SoraTable for ItemTable"));
         assert!(rust_mod.contains("fn key(&self) -> Option<&'static str>"));
         assert!(rust_mod.contains("Some(\"id\")"));
@@ -228,6 +230,7 @@ mod tests {
             rust_mod.contains("tables.insert(\"Item\", Box::new(ItemTable::decode(&bundle)?));")
         );
         assert!(rust_mod.contains("|row| row.id"));
+        assert!(rust_mod.contains("|row| row.name.clone()"));
         assert!(
             rust_mod.contains("fn table<T: SoraTable + 'static>(&self, name: &'static str) -> &T")
         );
@@ -236,6 +239,7 @@ mod tests {
         assert!(rust_mod.contains("table.downcast_ref::<T>()"));
         assert!(rust_mod.contains("pub fn item(&self) -> &ItemTable"));
         assert!(rust_mod.contains("pub fn get(&self, key: i32) -> Option<&item::Item>"));
+        assert!(rust_mod.contains("pub fn get_by_name(&self, name: &str) -> Option<&item::Item>"));
         assert!(!rust_mod.contains("pub fn get_item"));
         assert!(!rust_mod.contains("pub fn iter_item"));
         assert!(!rust_mod.contains("decode_singleton_table"));
@@ -302,8 +306,10 @@ mod tests {
         RustCodeGenerator.generate(&ir, &rust_out).unwrap();
 
         let rust_mod = std::fs::read_to_string(rust_out.join("mod.rs")).unwrap();
-        assert!(rust_mod.contains("pub struct ItemTable(SoraMap<i32, item::Item>)"));
-        assert!(rust_mod.contains("pub struct SettingsTable(settings::Settings)"));
+        assert!(rust_mod.contains("pub struct ItemTable"));
+        assert!(rust_mod.contains("rows: SoraMap<i32, item::Item>"));
+        assert!(rust_mod.contains("pub struct SettingsTable"));
+        assert!(rust_mod.contains("rows: settings::Settings"));
         assert!(rust_mod.contains("pub fn item(&self) -> &ItemTable"));
         assert!(rust_mod.contains("pub fn settings(&self) -> &SettingsTable"));
         assert!(!rust_mod.contains("pub fn settings_row"));
@@ -323,7 +329,8 @@ mod tests {
 
         let rust_mod = std::fs::read_to_string(rust_out.join("mod.rs")).unwrap();
         assert!(rust_mod.contains("pub type SoraMap<K, V> = rustc_hash::FxHashMap<K, V>;"));
-        assert!(rust_mod.contains("pub struct ItemTable(SoraMap<i32, item::Item>)"));
+        assert!(rust_mod.contains("pub struct ItemTable"));
+        assert!(rust_mod.contains("rows: SoraMap<i32, item::Item>"));
         assert!(rust_mod.contains("tables: SoraMap<&'static str, Box<dyn SoraTable>>"));
 
         let _ = std::fs::remove_dir_all(base);
@@ -399,6 +406,12 @@ required = true
 comment = "Item id"
 
 [[tables.fields]]
+name = "name"
+type = "string"
+required = true
+comment = "Item name"
+
+[[tables.fields]]
 name = "item_type"
 type = "enum<ItemType>"
 required = true
@@ -409,6 +422,11 @@ name = "action"
 type = "union<Action>"
 required = true
 comment = "Action"
+
+[[tables.indexes]]
+name = "by_name"
+fields = ["name"]
+unique = true
 "#,
         )
         .unwrap();

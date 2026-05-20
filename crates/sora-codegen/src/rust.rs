@@ -93,6 +93,15 @@ impl LanguageBackend for RustBackend {
     fn key_is_copy(&self, ir: &ConfigIr, ty: &TypeIr) -> bool {
         rust_key_type_is_copy(ir, ty)
     }
+
+    fn key_param_type(&self, ir: &ConfigIr, ty: &TypeIr) -> String {
+        let type_name = rust_type_name(ir, ty);
+        if type_name == "String" {
+            "str".to_owned()
+        } else {
+            type_name
+        }
+    }
 }
 
 fn rust_key_type_is_copy(ir: &ConfigIr, ty: &TypeIr) -> bool {
