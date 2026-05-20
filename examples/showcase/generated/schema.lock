@@ -1,9 +1,9 @@
 {
   "version": 1,
-  "package": "game_config_showcase",
-  "fingerprint": "f118350ff704b40e",
+  "package": "com.sora.showcase",
+  "fingerprint": "249bb4e5f5deb62c",
   "schema": {
-    "package": "game_config_showcase",
+    "package": "com.sora.showcase",
     "enums": [
       {
         "name": "ItemType",

@@ -146,7 +146,7 @@ mod tests {
         generate_excel_template(&input, &base.join("excel")).unwrap();
 
         assert!(base.join("rust/item.rs").exists());
-        assert!(base.join("kotlin/Item.kt").exists());
+        assert!(base.join("kotlin/game_config/Item.kt").exists());
         assert!(base.join("excel/Item.xlsx").exists());
         assert!(base.join("schema.lock").exists());
 

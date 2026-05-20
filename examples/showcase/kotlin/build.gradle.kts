@@ -9,5 +9,5 @@ kotlin {
 }
 
 application {
-    mainClass.set("game_config_showcase.MainKt")
+    mainClass.set("com.sora.showcase.MainKt")
 }

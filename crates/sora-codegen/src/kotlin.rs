@@ -1,4 +1,4 @@
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 use minijinja::context;
 use sora_diagnostics::Result;
@@ -16,6 +16,7 @@ impl CodeGenerator for KotlinCodeGenerator {
     fn generate(&self, ir: &ConfigIr, out_dir: &Path) -> Result<()> {
         ensure_dir(out_dir)?;
         let model = build_model(ir)?;
+        let package_dir = kotlin_package_dir(out_dir, &model.package)?;
 
         for item in &model.enums {
             let rendered = render_template(
@@ -23,7 +24,7 @@ impl CodeGenerator for KotlinCodeGenerator {
                 "enum.kt.j2",
                 context! { package => &model.package, enum => item },
             )?;
-            write_file(&out_dir.join(format!("{}.kt", item.name)), rendered)?;
+            write_file(&package_dir.join(format!("{}.kt", item.name)), rendered)?;
         }
 
         for record in &model.records {
@@ -33,7 +34,7 @@ impl CodeGenerator for KotlinCodeGenerator {
                 context! { package => &model.package, record => record },
             )?;
             write_file(
-                &out_dir.join(format!("{}.kt", record.pascal_name)),
+                &package_dir.join(format!("{}.kt", record.pascal_name)),
                 rendered,
             )?;
         }
@@ -44,7 +45,10 @@ impl CodeGenerator for KotlinCodeGenerator {
                 "union.kt.j2",
                 context! { package => &model.package, union => union },
             )?;
-            write_file(&out_dir.join(format!("{}.kt", union.pascal_name)), rendered)?;
+            write_file(
+                &package_dir.join(format!("{}.kt", union.pascal_name)),
+                rendered,
+            )?;
         }
 
         let rendered = render_template(
@@ -52,14 +56,36 @@ impl CodeGenerator for KotlinCodeGenerator {
             "runtime.kt.j2",
             context! { package => &model.package },
         )?;
-        write_file(&out_dir.join("Runtime.kt"), rendered)?;
+        write_file(&package_dir.join("Runtime.kt"), rendered)?;
 
         let rendered = render_template("kotlin", "config.kt.j2", context! { model => &model })?;
-        write_file(&out_dir.join("SoraConfig.kt"), rendered)?;
+        write_file(&package_dir.join("SoraConfig.kt"), rendered)?;
 
         let rendered = render_template("kotlin", "package.kt.j2", context! { model => &model })?;
-        write_file(&out_dir.join("Package.kt"), rendered)
+        write_file(&package_dir.join("Package.kt"), rendered)
     }
+}
+
+fn kotlin_package_dir(out_dir: &Path, package: &str) -> Result<PathBuf> {
+    let mut path = out_dir.to_path_buf();
+    for segment in package.split('.') {
+        if !is_kotlin_package_segment(segment) {
+            return Err(sora_diagnostics::SoraError::InvalidSchema(format!(
+                "kotlin package `{package}` must use dot-separated identifier segments"
+            )));
+        }
+        path.push(segment);
+    }
+    Ok(path)
+}
+
+fn is_kotlin_package_segment(segment: &str) -> bool {
+    let mut chars = segment.chars();
+    let Some(first) = chars.next() else {
+        return false;
+    };
+    (first.is_ascii_alphabetic() || first == '_')
+        && chars.all(|value| value.is_ascii_alphanumeric() || value == '_')
 }
 
 #[cfg(test)]
@@ -81,6 +107,7 @@ mod tests {
         let base = temp_dir();
         let rust_out = base.join("rust");
         let kotlin_out = base.join("kotlin");
+        let kotlin_package_out = kotlin_out.join("game_config");
 
         RustCodeGenerator.generate(&ir, &rust_out).unwrap();
         KotlinCodeGenerator.generate(&ir, &kotlin_out).unwrap();
@@ -90,10 +117,12 @@ mod tests {
         let rust_action = std::fs::read_to_string(rust_out.join("action.rs")).unwrap();
         let rust_runtime = std::fs::read_to_string(rust_out.join("runtime.rs")).unwrap();
         let rust_mod = std::fs::read_to_string(rust_out.join("mod.rs")).unwrap();
-        let kotlin_item = std::fs::read_to_string(kotlin_out.join("Item.kt")).unwrap();
-        let kotlin_action = std::fs::read_to_string(kotlin_out.join("Action.kt")).unwrap();
-        let kotlin_runtime = std::fs::read_to_string(kotlin_out.join("Runtime.kt")).unwrap();
-        let kotlin_config = std::fs::read_to_string(kotlin_out.join("SoraConfig.kt")).unwrap();
+        let kotlin_item = std::fs::read_to_string(kotlin_package_out.join("Item.kt")).unwrap();
+        let kotlin_action = std::fs::read_to_string(kotlin_package_out.join("Action.kt")).unwrap();
+        let kotlin_runtime =
+            std::fs::read_to_string(kotlin_package_out.join("Runtime.kt")).unwrap();
+        let kotlin_config =
+            std::fs::read_to_string(kotlin_package_out.join("SoraConfig.kt")).unwrap();
 
         assert!(rust_item.contains("pub struct Item"));
         assert!(rust_item.contains("pub item_type: ItemType"));
@@ -133,6 +162,7 @@ mod tests {
         assert!(!rust_mod.contains("pub fn iter_item"));
         assert!(!rust_mod.contains("decode_singleton_table"));
         assert!(kotlin_item.contains("data class Item"));
+        assert!(kotlin_item.contains("package game_config"));
         assert!(kotlin_item.contains("val itemType: ItemType"));
         assert!(kotlin_item.contains("val action: Action"));
         assert!(kotlin_action.contains("sealed class Action"));
@@ -145,6 +175,42 @@ mod tests {
         assert!(kotlin_config.contains("fun getItem(key: Int): Item? = item[key]"));
         assert!(kotlin_config.contains("fun itemValues(): Collection<Item> = item.values"));
         assert!(kotlin_config.contains("fun fromBytes(bytes: ByteArray): SoraConfig"));
+
+        let _ = std::fs::remove_dir_all(base);
+    }
+
+    #[test]
+    fn kotlin_files_are_written_under_package_path() {
+        let mut ir = example_ir();
+        ir.package = "com.sora.game_config".to_owned();
+        let base = temp_dir();
+        let kotlin_out = base.join("kotlin");
+
+        KotlinCodeGenerator.generate(&ir, &kotlin_out).unwrap();
+
+        let item =
+            std::fs::read_to_string(kotlin_out.join("com/sora/game_config/Item.kt")).unwrap();
+        assert!(item.contains("package com.sora.game_config"));
+        assert!(!kotlin_out.join("Item.kt").exists());
+
+        let _ = std::fs::remove_dir_all(base);
+    }
+
+    #[test]
+    fn kotlin_package_path_rejects_invalid_segments() {
+        let mut ir = example_ir();
+        ir.package = "com.sora-game".to_owned();
+        let base = temp_dir();
+
+        let error = KotlinCodeGenerator
+            .generate(&ir, &base.join("kotlin"))
+            .unwrap_err();
+
+        assert!(
+            error
+                .to_string()
+                .contains("dot-separated identifier segments")
+        );
 
         let _ = std::fs::remove_dir_all(base);
     }

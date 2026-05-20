@@ -1,0 +1,20 @@
+package com.sora.showcase
+
+data class ShopItem(
+    val shopId: Int,
+    val seq: Int,
+    val itemId: Int,
+    val price: ResourceCost,
+    val dailyLimit: Int?,
+) {
+    companion object {
+        fun decode(reader: SoraReader): ShopItem =
+            ShopItem(
+                shopId = reader.readI32(),
+                seq = reader.readI32(),
+                itemId = reader.readI32(),
+                price = ResourceCost.decode(reader),
+                dailyLimit = reader.readOptional { reader.readI32() },
+            )
+    }
+}

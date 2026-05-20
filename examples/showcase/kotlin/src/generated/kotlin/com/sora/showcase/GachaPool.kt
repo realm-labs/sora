@@ -1,0 +1,16 @@
+package com.sora.showcase
+
+data class GachaPool(
+    val id: Int,
+    val name: String,
+    val cost: ResourceCost,
+) {
+    companion object {
+        fun decode(reader: SoraReader): GachaPool =
+            GachaPool(
+                id = reader.readI32(),
+                name = reader.readString(),
+                cost = ResourceCost.decode(reader),
+            )
+    }
+}

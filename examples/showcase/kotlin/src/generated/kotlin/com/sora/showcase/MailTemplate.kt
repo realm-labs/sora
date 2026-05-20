@@ -1,0 +1,20 @@
+package com.sora.showcase
+
+data class MailTemplate(
+    val id: Int,
+    val mailType: MailType,
+    val titleKey: String,
+    val bodyKey: String,
+    val rewards: List<Reward>,
+) {
+    companion object {
+        fun decode(reader: SoraReader): MailTemplate =
+            MailTemplate(
+                id = reader.readI32(),
+                mailType = MailType.decode(reader),
+                titleKey = reader.readString(),
+                bodyKey = reader.readString(),
+                rewards = reader.readList { Reward.decode(reader) },
+            )
+    }
+}

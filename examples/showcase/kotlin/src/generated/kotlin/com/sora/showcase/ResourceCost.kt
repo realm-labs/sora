@@ -1,0 +1,16 @@
+package com.sora.showcase
+
+data class ResourceCost(
+    val kind: ResourceKind,
+    val id: Int,
+    val count: Int,
+) {
+    companion object {
+        fun decode(reader: SoraReader): ResourceCost =
+            ResourceCost(
+                kind = ResourceKind.decode(reader),
+                id = reader.readI32(),
+                count = reader.readI32(),
+            )
+    }
+}

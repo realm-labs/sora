@@ -1,4 +1,4 @@
-package game_config_showcase
+package com.sora.showcase
 
 import java.nio.file.Paths
 

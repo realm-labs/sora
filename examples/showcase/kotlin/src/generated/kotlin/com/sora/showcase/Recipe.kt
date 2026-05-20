@@ -1,0 +1,16 @@
+package com.sora.showcase
+
+data class Recipe(
+    val id: Int,
+    val resultItem: Int,
+    val materials: List<ResourceCost>,
+) {
+    companion object {
+        fun decode(reader: SoraReader): Recipe =
+            Recipe(
+                id = reader.readI32(),
+                resultItem = reader.readI32(),
+                materials = reader.readList { ResourceCost.decode(reader) },
+            )
+    }
+}
