@@ -2,12 +2,16 @@ use std::path::{Path, PathBuf};
 
 use heck::ToLowerCamelCase;
 use minijinja::context;
+use serde::Serialize;
 use sora_diagnostics::{Result, SoraError};
 use sora_ir::model::{ConfigIr, TableModeIr, TypeIr};
 
 use crate::{
     generator::{CodeGenerator, runtime_format_name},
-    model::{LanguageBackend, TableNameParts, build_model},
+    model::{
+        BaseField, BaseIndex, BaseModel, BaseRecord, BaseTable, BaseUnion, BaseUnionVariant,
+        build_base_model,
+    },
     render::{ensure_dir, render_template, write_file},
     types::java_type_name,
 };
@@ -17,8 +21,7 @@ pub struct JavaCodeGenerator;
 impl CodeGenerator for JavaCodeGenerator {
     fn generate(&self, ir: &ConfigIr, out_dir: &Path) -> Result<()> {
         ensure_dir(out_dir)?;
-        let backend = JavaBackend;
-        let model = build_model(ir, &backend)?;
+        let model = JavaModel::from_base_model(ir, build_base_model(ir)?);
         let package_dir = java_package_dir(out_dir, &model.package)?;
         let runtime_format = runtime_format_name(ir.codegen.java.runtime_format);
 
@@ -71,44 +74,209 @@ impl CodeGenerator for JavaCodeGenerator {
     }
 }
 
-struct JavaBackend;
+#[derive(Debug, Clone, Serialize)]
+struct JavaModel {
+    package: String,
+    enums: Vec<JavaEnum>,
+    unions: Vec<JavaUnion>,
+    records: Vec<JavaRecord>,
+    tables: Vec<JavaTable>,
+    has_unique_indexes: bool,
+    has_non_unique_indexes: bool,
+}
 
-impl LanguageBackend for JavaBackend {
-    fn field_name(&self, raw_name: &str) -> String {
-        raw_name.to_lower_camel_case()
-    }
+#[derive(Debug, Clone, Serialize)]
+struct JavaEnum {
+    name: String,
+    values: Vec<String>,
+}
 
-    fn type_name(&self, ir: &ConfigIr, ty: &TypeIr) -> String {
-        java_type_name(ir, ty)
-    }
+#[derive(Debug, Clone, Serialize)]
+struct JavaUnion {
+    pascal_name: String,
+    tag: String,
+    variants: Vec<JavaUnionVariant>,
+}
 
-    fn decode_expr(&self, ir: &ConfigIr, ty: &TypeIr) -> String {
-        java_decode_expr(ir, ty)
-    }
+#[derive(Debug, Clone, Serialize)]
+struct JavaUnionVariant {
+    name: String,
+    fields: Vec<JavaField>,
+}
 
-    fn value_decode_expr(&self, ir: &ConfigIr, ty: &TypeIr) -> String {
-        java_value_decode_expr(ir, ty, "__VALUE__")
-    }
+#[derive(Debug, Clone, Serialize)]
+struct JavaRecord {
+    pascal_name: String,
+    fields: Vec<JavaField>,
+}
 
-    fn row_type(&self, table: &TableNameParts<'_>) -> String {
-        table.pascal_name.to_owned()
-    }
+#[derive(Debug, Clone, Serialize)]
+struct JavaTable {
+    name: String,
+    pascal_name: String,
+    camel_name: String,
+    mode: String,
+    container_type: String,
+    row_type: String,
+    key_name: Option<String>,
+    key_field_name: Option<String>,
+    key_type: Option<String>,
+    unique_indexes: Vec<JavaIndex>,
+    non_unique_indexes: Vec<JavaIndex>,
+}
 
-    fn container_type(
-        &self,
-        _table: &TableNameParts<'_>,
-        mode: TableModeIr,
-        row_type: &str,
-        key_type: Option<&str>,
-    ) -> String {
-        match mode {
-            TableModeIr::List => format!("java.util.List<{row_type}>"),
-            TableModeIr::Map => match key_type {
-                Some(key_type) => format!("java.util.Map<{key_type}, {row_type}>"),
-                None => format!("java.util.List<{row_type}>"),
-            },
-            TableModeIr::Singleton => row_type.to_owned(),
+#[derive(Debug, Clone, Serialize)]
+struct JavaIndex {
+    pascal_name: String,
+    camel_name: String,
+    field_name: String,
+    param_camel_name: String,
+    key_type: String,
+}
+
+#[derive(Debug, Clone, Serialize)]
+struct JavaField {
+    raw_name: String,
+    name: String,
+    type_name: String,
+    decode: String,
+    value_decode: String,
+}
+
+impl JavaModel {
+    fn from_base_model(ir: &ConfigIr, model: BaseModel) -> Self {
+        let tables = model
+            .tables
+            .into_iter()
+            .map(|table| java_table(ir, table))
+            .collect::<Vec<_>>();
+        Self {
+            package: model.package,
+            enums: model
+                .enums
+                .into_iter()
+                .map(|item| JavaEnum {
+                    name: item.pascal_name,
+                    values: item.values,
+                })
+                .collect(),
+            unions: model
+                .unions
+                .into_iter()
+                .map(|item| java_union(ir, item))
+                .collect(),
+            records: model
+                .records
+                .into_iter()
+                .map(|item| java_record(ir, item))
+                .collect(),
+            has_unique_indexes: tables.iter().any(|table| !table.unique_indexes.is_empty()),
+            has_non_unique_indexes: tables
+                .iter()
+                .any(|table| !table.non_unique_indexes.is_empty()),
+            tables,
         }
+    }
+}
+
+fn java_union(ir: &ConfigIr, union: BaseUnion) -> JavaUnion {
+    JavaUnion {
+        pascal_name: union.pascal_name,
+        tag: union.tag,
+        variants: union
+            .variants
+            .into_iter()
+            .map(|variant| java_variant(ir, variant))
+            .collect(),
+    }
+}
+
+fn java_variant(ir: &ConfigIr, variant: BaseUnionVariant) -> JavaUnionVariant {
+    JavaUnionVariant {
+        name: variant.pascal_name,
+        fields: variant
+            .fields
+            .into_iter()
+            .map(|field| java_field(ir, field))
+            .collect(),
+    }
+}
+
+fn java_record(ir: &ConfigIr, record: BaseRecord) -> JavaRecord {
+    JavaRecord {
+        pascal_name: record.pascal_name,
+        fields: record
+            .fields
+            .into_iter()
+            .map(|field| java_field(ir, field))
+            .collect(),
+    }
+}
+
+fn java_table(ir: &ConfigIr, table: BaseTable) -> JavaTable {
+    let row_type = table.pascal_name.clone();
+    let key_type = table
+        .key_field
+        .as_ref()
+        .map(|field| java_type_name(ir, &field.ty));
+    let container_type = java_container_type(table.mode, &row_type, key_type.as_deref());
+    let key_field_name = table
+        .key_field
+        .as_ref()
+        .map(|field| field.camel_name.clone());
+
+    JavaTable {
+        name: table.name,
+        pascal_name: table.pascal_name,
+        camel_name: table.camel_name,
+        mode: table.mode_name,
+        container_type,
+        row_type,
+        key_name: table.key_name,
+        key_field_name,
+        key_type,
+        unique_indexes: table
+            .unique_indexes
+            .into_iter()
+            .map(|index| java_index(ir, index))
+            .collect(),
+        non_unique_indexes: table
+            .non_unique_indexes
+            .into_iter()
+            .map(|index| java_index(ir, index))
+            .collect(),
+    }
+}
+
+fn java_index(ir: &ConfigIr, index: BaseIndex) -> JavaIndex {
+    JavaIndex {
+        pascal_name: index.pascal_name,
+        camel_name: index.name.to_lower_camel_case(),
+        field_name: index.field.camel_name.clone(),
+        param_camel_name: index.field.camel_name,
+        key_type: java_type_name(ir, &index.field.ty),
+    }
+}
+
+fn java_field(ir: &ConfigIr, field: BaseField) -> JavaField {
+    let value_decode = java_value_decode_expr(ir, &field.ty, "__VALUE__");
+    JavaField {
+        raw_name: field.raw_name,
+        name: field.camel_name,
+        type_name: java_type_name(ir, &field.ty),
+        decode: java_decode_expr(ir, &field.ty),
+        value_decode,
+    }
+}
+
+fn java_container_type(mode: TableModeIr, row_type: &str, key_type: Option<&str>) -> String {
+    match mode {
+        TableModeIr::List => format!("java.util.List<{row_type}>"),
+        TableModeIr::Map => match key_type {
+            Some(key_type) => format!("java.util.Map<{key_type}, {row_type}>"),
+            None => format!("java.util.List<{row_type}>"),
+        },
+        TableModeIr::Singleton => row_type.to_owned(),
     }
 }
 
