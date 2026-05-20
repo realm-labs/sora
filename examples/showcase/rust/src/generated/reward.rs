@@ -14,3 +14,12 @@ impl super::runtime::SoraDecode for Reward {
         })
     }
 }
+
+impl std::fmt::Display for Reward {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut builder = f.debug_struct("Reward");
+        builder.field("item_id", &self.item_id);
+        builder.field("count", &self.count);
+        builder.finish()
+    }
+}

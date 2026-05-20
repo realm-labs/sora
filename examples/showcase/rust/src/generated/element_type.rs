@@ -22,3 +22,14 @@ impl super::runtime::SoraDecode for ElementType {
         }
     }
 }
+
+impl std::fmt::Display for ElementType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Fire => f.write_str("Fire"),
+            Self::Ice => f.write_str("Ice"),
+            Self::Lightning => f.write_str("Lightning"),
+            Self::Physical => f.write_str("Physical"),
+        }
+    }
+}

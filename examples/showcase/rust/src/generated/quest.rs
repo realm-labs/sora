@@ -29,3 +29,17 @@ impl super::runtime::SoraDecode for Quest {
         })
     }
 }
+
+impl std::fmt::Display for Quest {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut builder = f.debug_struct("Quest");
+        builder.field("id", &self.id);
+        builder.field("quest_type", &self.quest_type);
+        builder.field("title", &self.title);
+        builder.field("required_item", &self.required_item);
+        builder.field("unlock_skills", &self.unlock_skills);
+        builder.field("start_pos", &self.start_pos);
+        builder.field("rewards", &self.rewards);
+        builder.finish()
+    }
+}

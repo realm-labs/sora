@@ -18,3 +18,13 @@ impl super::runtime::SoraDecode for ResourceCost {
         })
     }
 }
+
+impl std::fmt::Display for ResourceCost {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut builder = f.debug_struct("ResourceCost");
+        builder.field("kind", &self.kind);
+        builder.field("id", &self.id);
+        builder.field("count", &self.count);
+        builder.finish()
+    }
+}
