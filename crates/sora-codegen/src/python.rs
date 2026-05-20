@@ -2,12 +2,16 @@ use std::{collections::HashSet, path::Path};
 
 use heck::{ToPascalCase, ToShoutySnakeCase, ToSnakeCase};
 use minijinja::context;
+use serde::Serialize;
 use sora_diagnostics::{Result, SoraError};
 use sora_ir::model::{ConfigIr, TableModeIr, TypeIr};
 
 use crate::{
     generator::{CodeGenerator, ensure_sora_runtime_format},
-    model::{CodegenModel, LanguageBackend, TableNameParts, build_model},
+    model::{
+        CodegenField, CodegenImport, CodegenIndex, CodegenModel, CodegenRecord, CodegenTable,
+        CodegenUnion, CodegenUnionVariant, LanguageBackend, TableNameParts, build_model,
+    },
     render::{ensure_dir, render_template, write_file},
 };
 
@@ -19,7 +23,7 @@ impl CodeGenerator for PythonCodeGenerator {
         ensure_dir(out_dir)?;
 
         let backend = PythonBackend;
-        let model = build_model(ir, &backend)?;
+        let model = PythonModel::from_codegen_model(build_model(ir, &backend)?);
         validate_python_model(&model)?;
 
         for item in &model.enums {
@@ -49,7 +53,212 @@ impl CodeGenerator for PythonCodeGenerator {
     }
 }
 
-fn validate_python_model(model: &CodegenModel) -> Result<()> {
+#[derive(Debug, Clone, Serialize)]
+struct PythonModel {
+    package: String,
+    enums: Vec<PythonEnum>,
+    unions: Vec<PythonUnion>,
+    records: Vec<PythonRecord>,
+    tables: Vec<PythonTable>,
+    modules: Vec<String>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+struct PythonEnum {
+    name: String,
+    snake_name: String,
+    value_names: Vec<String>,
+    values: Vec<String>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+struct PythonUnion {
+    pascal_name: String,
+    snake_name: String,
+    tag: String,
+    variants: Vec<PythonUnionVariant>,
+    imports: Vec<PythonImport>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+struct PythonUnionVariant {
+    raw_name: String,
+    name: String,
+    fields: Vec<PythonField>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+struct PythonRecord {
+    pascal_name: String,
+    snake_name: String,
+    imports: Vec<PythonImport>,
+    fields: Vec<PythonField>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+struct PythonImport {
+    module: String,
+    name: String,
+}
+
+#[derive(Debug, Clone, Serialize)]
+struct PythonTable {
+    name: String,
+    pascal_name: String,
+    snake_name: String,
+    mode: String,
+    row_type: String,
+    key_name: Option<String>,
+    key_field_name: Option<String>,
+    key_type: Option<String>,
+    unique_indexes: Vec<PythonIndex>,
+    non_unique_indexes: Vec<PythonIndex>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+struct PythonIndex {
+    name: String,
+    field_name: String,
+    param_name: String,
+    param_type: String,
+    key_type: String,
+}
+
+#[derive(Debug, Clone, Serialize)]
+struct PythonField {
+    raw_name: String,
+    name: String,
+    type_name: String,
+    decode: String,
+    comment: Option<String>,
+}
+
+impl PythonModel {
+    fn from_codegen_model(model: CodegenModel) -> Self {
+        let enums = model
+            .enums
+            .into_iter()
+            .map(|item| PythonEnum {
+                name: python_type_identifier(&item.name),
+                snake_name: python_module_name(&item.snake_name),
+                value_names: item
+                    .values
+                    .iter()
+                    .map(|value| python_enum_value_name(value))
+                    .collect(),
+                values: item.values,
+            })
+            .collect::<Vec<_>>();
+
+        let records = model
+            .records
+            .into_iter()
+            .map(python_record)
+            .collect::<Vec<_>>();
+        let unions = model
+            .unions
+            .into_iter()
+            .map(python_union)
+            .collect::<Vec<_>>();
+        let tables = model
+            .tables
+            .into_iter()
+            .map(python_table)
+            .collect::<Vec<_>>();
+        let modules = enums
+            .iter()
+            .map(|item| item.snake_name.clone())
+            .chain(records.iter().map(|item| item.snake_name.clone()))
+            .chain(unions.iter().map(|item| item.snake_name.clone()))
+            .collect();
+
+        Self {
+            package: model.package,
+            enums,
+            unions,
+            records,
+            tables,
+            modules,
+        }
+    }
+}
+
+fn python_record(record: CodegenRecord) -> PythonRecord {
+    PythonRecord {
+        pascal_name: python_type_identifier(&record.pascal_name),
+        snake_name: python_module_name(&record.snake_name),
+        imports: record.imports.into_iter().map(python_import).collect(),
+        fields: record.fields.into_iter().map(python_field).collect(),
+    }
+}
+
+fn python_union(union: CodegenUnion) -> PythonUnion {
+    PythonUnion {
+        pascal_name: python_type_identifier(&union.pascal_name),
+        snake_name: python_module_name(&union.snake_name),
+        tag: python_field_identifier(&union.tag),
+        variants: union.variants.into_iter().map(python_variant).collect(),
+        imports: union.imports.into_iter().map(python_import).collect(),
+    }
+}
+
+fn python_variant(variant: CodegenUnionVariant) -> PythonUnionVariant {
+    PythonUnionVariant {
+        raw_name: variant.raw_name,
+        name: python_type_identifier(&variant.name),
+        fields: variant.fields.into_iter().map(python_field).collect(),
+    }
+}
+
+fn python_table(table: CodegenTable) -> PythonTable {
+    PythonTable {
+        name: table.name,
+        pascal_name: python_type_identifier(&table.pascal_name),
+        snake_name: python_module_name(&table.snake_name),
+        mode: table.mode,
+        row_type: python_type_identifier(&table.row_type),
+        key_name: table.key_name,
+        key_field_name: table
+            .key_field_name
+            .map(|name| python_field_identifier(&name)),
+        key_type: table.key_type,
+        unique_indexes: table.unique_indexes.into_iter().map(python_index).collect(),
+        non_unique_indexes: table
+            .non_unique_indexes
+            .into_iter()
+            .map(python_index)
+            .collect(),
+    }
+}
+
+fn python_index(index: CodegenIndex) -> PythonIndex {
+    PythonIndex {
+        name: python_field_identifier(&index.name),
+        field_name: python_field_identifier(&index.field_name),
+        param_name: python_field_identifier(&index.param_name),
+        param_type: index.param_type,
+        key_type: index.key_type,
+    }
+}
+
+fn python_field(field: CodegenField) -> PythonField {
+    PythonField {
+        raw_name: field.raw_name,
+        name: python_field_identifier(&field.name),
+        type_name: field.type_name,
+        decode: field.decode,
+        comment: field.comment,
+    }
+}
+
+fn python_import(import: CodegenImport) -> PythonImport {
+    PythonImport {
+        module: python_module_name(&import.module),
+        name: python_type_identifier(&import.name),
+    }
+}
+
+fn validate_python_model(model: &PythonModel) -> Result<()> {
     reject_duplicates(
         "Python module",
         model.modules.iter().map(String::as_str),
@@ -122,19 +331,7 @@ pub struct PythonBackend;
 
 impl LanguageBackend for PythonBackend {
     fn field_name(&self, raw_name: &str) -> String {
-        python_identifier(raw_name.to_snake_case())
-    }
-
-    fn type_identifier(&self, raw_name: &str) -> String {
-        python_identifier(raw_name.to_pascal_case())
-    }
-
-    fn module_name(&self, raw_name: &str) -> String {
-        python_identifier(raw_name.to_snake_case())
-    }
-
-    fn enum_value_name(&self, raw_name: &str) -> String {
-        python_identifier(raw_name.to_shouty_snake_case())
+        raw_name.to_snake_case()
     }
 
     fn type_name(&self, ir: &ConfigIr, ty: &TypeIr) -> String {
@@ -172,7 +369,7 @@ impl PythonBackend {
             TypeIr::F32 | TypeIr::F64 => "float".to_owned(),
             TypeIr::String => "str".to_owned(),
             TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => {
-                self.type_identifier(name)
+                python_type_identifier(name)
             }
             TypeIr::List(element) | TypeIr::Array { element, .. } => {
                 format!("list[{}]", self.python_type_name(ir, element))
@@ -196,7 +393,7 @@ impl PythonBackend {
             TypeIr::F64 => "reader.read_f64()".to_owned(),
             TypeIr::String => "reader.read_string()".to_owned(),
             TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => {
-                format!("{}.decode(reader)", self.type_identifier(name))
+                format!("{}.decode(reader)", python_type_identifier(name))
             }
             TypeIr::List(element) | TypeIr::Array { element, .. } => {
                 format!(
@@ -256,6 +453,22 @@ fn python_identifier(value: String) -> String {
         output.push('_');
     }
     output
+}
+
+fn python_type_identifier(raw_name: &str) -> String {
+    python_identifier(raw_name.to_pascal_case())
+}
+
+fn python_module_name(raw_name: &str) -> String {
+    python_identifier(raw_name.to_snake_case())
+}
+
+fn python_field_identifier(raw_name: &str) -> String {
+    python_identifier(raw_name.to_snake_case())
+}
+
+fn python_enum_value_name(raw_name: &str) -> String {
+    python_identifier(raw_name.to_shouty_snake_case())
 }
 
 fn is_python_keyword(value: &str) -> bool {
