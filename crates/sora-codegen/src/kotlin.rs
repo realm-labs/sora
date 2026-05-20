@@ -73,8 +73,27 @@ mod tests {
         assert!(rust_runtime.contains("pub struct SoraBundle"));
         assert!(rust_mod.contains("pub struct SoraConfig"));
         assert!(rust_mod.contains("from_bytes"));
+        assert!(rust_mod.contains("pub item: std::collections::HashMap<i32, item::Item>"));
+        assert!(rust_mod.contains("|row| row.id"));
+        assert!(!rust_mod.contains("decode_singleton_table"));
         assert!(kotlin_item.contains("data class Item"));
         assert!(kotlin_item.contains("val itemType: ItemType"));
+
+        let _ = std::fs::remove_dir_all(base);
+    }
+
+    #[test]
+    fn rust_config_api_respects_table_modes() {
+        let ir = table_mode_ir();
+        let base = temp_dir();
+        let rust_out = base.join("rust");
+
+        RustCodeGenerator.generate(&ir, &rust_out).unwrap();
+
+        let rust_mod = std::fs::read_to_string(rust_out.join("mod.rs")).unwrap();
+        assert!(rust_mod.contains("pub item: std::collections::HashMap<i32, item::Item>"));
+        assert!(rust_mod.contains("pub settings: settings::Settings"));
+        assert!(rust_mod.contains("decode_singleton_table"));
 
         let _ = std::fs::remove_dir_all(base);
     }
@@ -105,6 +124,36 @@ name = "item_type"
 type = "enum<ItemType>"
 required = true
 comment = "Item type"
+"#,
+        )
+        .unwrap();
+
+        normalize_schema(schema).unwrap()
+    }
+
+    fn table_mode_ir() -> ConfigIr {
+        let schema: SchemaFile = toml::from_str(
+            r#"
+package = "game_config"
+
+[[tables]]
+name = "Item"
+mode = "map"
+key = "id"
+
+[[tables.fields]]
+name = "id"
+type = "i32"
+required = true
+
+[[tables]]
+name = "Settings"
+mode = "singleton"
+
+[[tables.fields]]
+name = "version"
+type = "string"
+required = true
 "#,
         )
         .unwrap();

@@ -6,7 +6,7 @@ pub mod {{ module }};
 #[derive(Debug, Clone)]
 pub struct SoraConfig {
 {%- for table in model.tables %}
-    pub {{ table.snake_name }}: Vec<{{ table.snake_name }}::{{ table.pascal_name }}>,
+    pub {{ table.snake_name }}: {{ table.rust_container_type }},
 {%- endfor %}
 }
 
@@ -15,8 +15,43 @@ impl SoraConfig {
         let bundle = runtime::SoraBundle::parse(bytes)?;
         Ok(Self {
 {%- for table in model.tables %}
-            {{ table.snake_name }}: bundle.decode_table::<{{ table.snake_name }}::{{ table.pascal_name }}>("{{ table.name }}")?,
+{%- if table.mode == "map" and table.key_rust_name %}
+{%- if table.key_is_copy %}
+            {{ table.snake_name }}: decode_map_table(bundle.decode_table::<{{ table.rust_row_type }}>("{{ table.name }}")?, |row| row.{{ table.key_rust_name }}),
+{%- else %}
+            {{ table.snake_name }}: decode_map_table(bundle.decode_table::<{{ table.rust_row_type }}>("{{ table.name }}")?, |row| row.{{ table.key_rust_name }}.clone()),
+{%- endif %}
+{%- elif table.mode == "singleton" %}
+            {{ table.snake_name }}: decode_singleton_table(bundle.decode_table::<{{ table.rust_row_type }}>("{{ table.name }}")?, "{{ table.name }}")?,
+{%- else %}
+            {{ table.snake_name }}: bundle.decode_table::<{{ table.rust_row_type }}>("{{ table.name }}")?,
+{%- endif %}
 {%- endfor %}
         })
     }
 }
+
+{%- if model.has_map_tables %}
+
+fn decode_map_table<K, V>(rows: Vec<V>, key: impl Fn(&V) -> K) -> std::collections::HashMap<K, V>
+where
+    K: std::cmp::Eq + std::hash::Hash,
+{
+    rows.into_iter().map(|row| (key(&row), row)).collect()
+}
+{%- endif %}
+
+{%- if model.has_singleton_tables %}
+
+fn decode_singleton_table<T>(mut rows: Vec<T>, name: &str) -> Result<T, runtime::SoraReadError> {
+    if rows.len() != 1 {
+        return Err(runtime::SoraReadError::new(format!(
+            "expected singleton table `{}` to contain exactly 1 row, got {}",
+            name,
+            rows.len()
+        )));
+    }
+
+    Ok(rows.remove(0))
+}
+{%- endif %}

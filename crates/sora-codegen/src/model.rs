@@ -1,7 +1,7 @@
 use heck::{ToLowerCamelCase, ToPascalCase, ToSnakeCase};
 use serde::Serialize;
 use sora_diagnostics::Result;
-use sora_ir::model::{ConfigIr, FieldIr, TableIr, TypeIr};
+use sora_ir::model::{ConfigIr, FieldIr, TableIr, TableModeIr, TypeIr};
 
 use crate::types::{kotlin_type_name, rust_type_name};
 
@@ -12,6 +12,8 @@ pub struct CodegenModel {
     pub records: Vec<CodegenRecord>,
     pub tables: Vec<CodegenTable>,
     pub modules: Vec<String>,
+    pub has_map_tables: bool,
+    pub has_singleton_tables: bool,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -41,6 +43,12 @@ pub struct CodegenTable {
     pub name: String,
     pub pascal_name: String,
     pub snake_name: String,
+    pub mode: String,
+    pub rust_container_type: String,
+    pub rust_row_type: String,
+    pub key_rust_name: Option<String>,
+    pub key_rust_type: Option<String>,
+    pub key_is_copy: bool,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -81,12 +89,8 @@ pub fn build_model(ir: &ConfigIr) -> Result<CodegenModel> {
     let tables = ir
         .tables
         .iter()
-        .map(|item| CodegenTable {
-            name: item.name.clone(),
-            pascal_name: item.name.to_pascal_case(),
-            snake_name: item.name.to_snake_case(),
-        })
-        .collect::<Vec<_>>();
+        .map(|item| build_table(ir, item))
+        .collect::<Result<Vec<_>>>()?;
 
     let modules = enums
         .iter()
@@ -98,9 +102,80 @@ pub fn build_model(ir: &ConfigIr) -> Result<CodegenModel> {
         package: ir.package.clone(),
         enums,
         records,
+        has_map_tables: tables
+            .iter()
+            .any(|table| table.mode == "map" && table.key_rust_name.is_some()),
+        has_singleton_tables: tables.iter().any(|table| table.mode == "singleton"),
         tables,
         modules,
     })
+}
+
+fn build_table(ir: &ConfigIr, table: &TableIr) -> Result<CodegenTable> {
+    let pascal_name = table.name.to_pascal_case();
+    let snake_name = table.name.to_snake_case();
+    let rust_row_type = format!("{snake_name}::{pascal_name}");
+    let key_field = table.key.as_ref().and_then(|key| {
+        table
+            .fields
+            .iter()
+            .find(|field| field.name == *key)
+            .map(|field| {
+                (
+                    field.name.to_snake_case(),
+                    rust_type_name(ir, &field.ty),
+                    rust_key_type_is_copy(ir, &field.ty),
+                )
+            })
+    });
+    let rust_container_type = match table.mode {
+        TableModeIr::List => format!("Vec<{rust_row_type}>"),
+        TableModeIr::Map => match &key_field {
+            Some((_, key_type, _)) => {
+                format!("std::collections::HashMap<{key_type}, {rust_row_type}>")
+            }
+            None => format!("Vec<{rust_row_type}>"),
+        },
+        TableModeIr::Singleton => rust_row_type.clone(),
+    };
+
+    Ok(CodegenTable {
+        name: table.name.clone(),
+        pascal_name,
+        snake_name,
+        mode: match table.mode {
+            TableModeIr::List => "list",
+            TableModeIr::Map => "map",
+            TableModeIr::Singleton => "singleton",
+        }
+        .to_owned(),
+        rust_container_type,
+        rust_row_type,
+        key_rust_name: key_field.as_ref().map(|(name, _, _)| name.clone()),
+        key_rust_type: key_field.as_ref().map(|(_, ty, _)| ty.clone()),
+        key_is_copy: key_field.is_some_and(|(_, _, is_copy)| is_copy),
+    })
+}
+
+fn rust_key_type_is_copy(ir: &ConfigIr, ty: &TypeIr) -> bool {
+    match ty {
+        TypeIr::Bool | TypeIr::I32 | TypeIr::I64 | TypeIr::F32 | TypeIr::F64 | TypeIr::Enum(_) => {
+            true
+        }
+        TypeIr::Ref { table, field } => ir
+            .tables
+            .iter()
+            .find(|candidate| candidate.name == *table)
+            .and_then(|table| {
+                table
+                    .fields
+                    .iter()
+                    .find(|candidate| candidate.name == *field)
+            })
+            .is_some_and(|field| rust_key_type_is_copy(ir, &field.ty)),
+        TypeIr::Optional(element) => rust_key_type_is_copy(ir, element),
+        TypeIr::String | TypeIr::Struct(_) | TypeIr::List(_) | TypeIr::Array { .. } => false,
+    }
 }
 
 fn build_record(ir: &ConfigIr, item: &TableLike<'_>) -> Result<CodegenRecord> {

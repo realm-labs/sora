@@ -2,7 +2,7 @@ use std::collections::BTreeSet;
 
 use sora_diagnostics::{Result, SoraError};
 
-use crate::model::{AggregationIr, ConfigIr, FieldIr, TableIr, TypeIr};
+use crate::model::{AggregationIr, ConfigIr, FieldIr, TableIr, TableModeIr, TypeIr};
 
 pub fn validate_config_ir(ir: &ConfigIr) -> Result<()> {
     validate_unique_names("enum", ir.enums.iter().map(|item| item.name.as_str()))?;
@@ -52,13 +52,27 @@ pub fn validate_config_ir(ir: &ConfigIr) -> Result<()> {
             &ir.tables,
         )?;
 
-        if let Some(key) = &table.key {
-            if !field_names.contains(key.as_str()) {
-                return Err(SoraError::MissingTableKey {
-                    table: table.name.clone(),
-                    field: key.clone(),
-                });
-            }
+        if table.mode == TableModeIr::Map && table.key.is_none() {
+            return Err(SoraError::InvalidSchema(format!(
+                "map table `{}` must declare `key`",
+                table.name
+            )));
+        }
+
+        if let Some(key) = &table.key
+            && !field_names.contains(key.as_str())
+        {
+            return Err(SoraError::MissingTableKey {
+                table: table.name.clone(),
+                field: key.clone(),
+            });
+        }
+
+        if table.mode == TableModeIr::Map
+            && let Some(key) = &table.key
+            && let Some(key_field) = table.fields.iter().find(|field| field.name == *key)
+        {
+            validate_map_key_type(table, key_field, &ir.tables)?;
         }
 
         validate_unique_names("index", table.indexes.iter().map(|item| item.name.as_str()))?;
@@ -119,10 +133,12 @@ fn validate_fields<'a>(
             owner,
             &field.name,
             &field.ty,
-            enum_names,
-            struct_names,
-            table_names,
-            tables,
+            &TypeReferenceContext {
+                enum_names,
+                struct_names,
+                table_names,
+                tables,
+            },
         )?;
 
         if let Some(aggregation) = &field.aggregation {
@@ -133,18 +149,22 @@ fn validate_fields<'a>(
     Ok(field_names)
 }
 
+struct TypeReferenceContext<'a> {
+    enum_names: &'a BTreeSet<&'a str>,
+    struct_names: &'a BTreeSet<&'a str>,
+    table_names: &'a BTreeSet<&'a str>,
+    tables: &'a [TableIr],
+}
+
 fn validate_type_references(
     owner_kind: &'static str,
     owner: &str,
     field_name: &str,
     ty: &TypeIr,
-    enum_names: &BTreeSet<&str>,
-    struct_names: &BTreeSet<&str>,
-    table_names: &BTreeSet<&str>,
-    tables: &[TableIr],
+    context: &TypeReferenceContext<'_>,
 ) -> Result<()> {
     match ty {
-        TypeIr::Enum(name) if !enum_names.contains(name.as_str()) => {
+        TypeIr::Enum(name) if !context.enum_names.contains(name.as_str()) => {
             Err(SoraError::UnknownTypeReference {
                 kind: "enum",
                 name: name.clone(),
@@ -153,7 +173,7 @@ fn validate_type_references(
                 field: field_name.to_owned(),
             })
         }
-        TypeIr::Struct(name) if !struct_names.contains(name.as_str()) => {
+        TypeIr::Struct(name) if !context.struct_names.contains(name.as_str()) => {
             Err(SoraError::UnknownTypeReference {
                 kind: "struct",
                 name: name.clone(),
@@ -162,28 +182,14 @@ fn validate_type_references(
                 field: field_name.to_owned(),
             })
         }
-        TypeIr::List(element) | TypeIr::Optional(element) => validate_type_references(
-            owner_kind,
-            owner,
-            field_name,
-            element,
-            enum_names,
-            struct_names,
-            table_names,
-            tables,
-        ),
-        TypeIr::Array { element, .. } => validate_type_references(
-            owner_kind,
-            owner,
-            field_name,
-            element,
-            enum_names,
-            struct_names,
-            table_names,
-            tables,
-        ),
+        TypeIr::List(element) | TypeIr::Optional(element) => {
+            validate_type_references(owner_kind, owner, field_name, element, context)
+        }
+        TypeIr::Array { element, .. } => {
+            validate_type_references(owner_kind, owner, field_name, element, context)
+        }
         TypeIr::Ref { table, field } => {
-            if !table_names.contains(table.as_str()) {
+            if !context.table_names.contains(table.as_str()) {
                 return Err(SoraError::UnknownRefTable {
                     owner_kind,
                     owner: owner.to_owned(),
@@ -192,7 +198,8 @@ fn validate_type_references(
                 });
             }
 
-            let table_ir = tables
+            let table_ir = context
+                .tables
                 .iter()
                 .find(|candidate| candidate.name == *table)
                 .expect("table_names and tables should match");
@@ -213,6 +220,39 @@ fn validate_type_references(
             Ok(())
         }
         _ => Ok(()),
+    }
+}
+
+fn validate_map_key_type(table: &TableIr, field: &FieldIr, tables: &[TableIr]) -> Result<()> {
+    if is_valid_map_key_type(&field.ty, tables) {
+        return Ok(());
+    }
+
+    Err(SoraError::InvalidSchema(format!(
+        "map table `{}` key field `{}` has unsupported key type `{}`",
+        table.name, field.name, field.ty
+    )))
+}
+
+fn is_valid_map_key_type(ty: &TypeIr, tables: &[TableIr]) -> bool {
+    match ty {
+        TypeIr::Bool | TypeIr::I32 | TypeIr::I64 | TypeIr::String | TypeIr::Enum(_) => true,
+        TypeIr::Ref { table, field } => tables
+            .iter()
+            .find(|candidate| candidate.name == *table)
+            .and_then(|table| {
+                table
+                    .fields
+                    .iter()
+                    .find(|candidate| candidate.name == *field)
+            })
+            .is_some_and(|field| is_valid_map_key_type(&field.ty, tables)),
+        TypeIr::F32
+        | TypeIr::F64
+        | TypeIr::Struct(_)
+        | TypeIr::List(_)
+        | TypeIr::Array { .. }
+        | TypeIr::Optional(_) => false,
     }
 }
 
@@ -249,20 +289,19 @@ fn validate_aggregation(
         });
     }
 
-    if let Some(order_by) = &aggregation.order_by {
-        if !source_table
+    if let Some(order_by) = &aggregation.order_by
+        && !source_table
             .fields
             .iter()
             .any(|field| field.name == *order_by)
-        {
-            return Err(SoraError::UnknownRefField {
-                owner_kind,
-                owner: owner.to_owned(),
-                field: field_name.to_owned(),
-                table: aggregation.source_table.clone(),
-                ref_field: order_by.clone(),
-            });
-        }
+    {
+        return Err(SoraError::UnknownRefField {
+            owner_kind,
+            owner: owner.to_owned(),
+            field: field_name.to_owned(),
+            table: aggregation.source_table.clone(),
+            ref_field: order_by.clone(),
+        });
     }
 
     Ok(())
@@ -386,6 +425,39 @@ key = "id"
         assert!(matches!(
             validate_config_ir(&missing_key).unwrap_err(),
             SoraError::MissingTableKey { table, field } if table == "Item" && field == "id"
+        ));
+
+        let map_without_key = example_ir(
+            r#"
+[[tables]]
+name = "Item"
+mode = "map"
+
+[[tables.fields]]
+name = "id"
+type = "i32"
+"#,
+        );
+        assert!(matches!(
+            validate_config_ir(&map_without_key).unwrap_err(),
+            SoraError::InvalidSchema(message) if message.contains("must declare `key`")
+        ));
+
+        let invalid_map_key_type = example_ir(
+            r#"
+[[tables]]
+name = "Item"
+mode = "map"
+key = "weight"
+
+[[tables.fields]]
+name = "weight"
+type = "f32"
+"#,
+        );
+        assert!(matches!(
+            validate_config_ir(&invalid_map_key_type).unwrap_err(),
+            SoraError::InvalidSchema(message) if message.contains("unsupported key type")
         ));
 
         let bad_index = example_ir(
