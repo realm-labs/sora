@@ -1,0 +1,22 @@
+{%- for import in record.imports %}
+local {{ import.name }} = require("{{ options.require_prefix }}{{ import.module }}")
+{%- endfor %}
+
+---@class {{ record.pascal_name }}
+{%- for field in record.fields %}
+---@field {{ field.name }} {{ field.type_name }}
+{%- endfor %}
+
+local {{ record.pascal_name }} = {}
+
+---@param reader SoraReader
+---@return {{ record.pascal_name }}
+function {{ record.pascal_name }}.decode(reader)
+    return {
+{%- for field in record.fields %}
+        {{ field.name }} = {{ field.decode }},
+{%- endfor %}
+    }
+end
+
+return {{ record.pascal_name }}

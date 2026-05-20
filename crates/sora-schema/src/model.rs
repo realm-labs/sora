@@ -35,6 +35,8 @@ pub struct CodegenSchema {
     pub java: LanguageCodegenSchema,
     #[serde(default)]
     pub go: LanguageCodegenSchema,
+    #[serde(default)]
+    pub lua: LuaCodegenSchema,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
@@ -69,6 +71,27 @@ impl Default for LanguageCodegenSchema {
     }
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
+pub struct LuaCodegenSchema {
+    #[serde(default)]
+    pub runtime_format: RuntimeFormatSchema,
+
+    pub module: Option<String>,
+
+    #[serde(default)]
+    pub lua_version: LuaVersionSchema,
+}
+
+impl Default for LuaCodegenSchema {
+    fn default() -> Self {
+        Self {
+            runtime_format: RuntimeFormatSchema::Sora,
+            module: None,
+            lua_version: LuaVersionSchema::Lua54,
+        }
+    }
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, Default)]
 #[serde(rename_all = "snake_case")]
 pub enum RuntimeFormatSchema {
@@ -77,6 +100,21 @@ pub enum RuntimeFormatSchema {
     Json,
     Protobuf,
     Cbor,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, Default)]
+pub enum LuaVersionSchema {
+    #[serde(rename = "5.1")]
+    Lua51,
+    #[serde(rename = "5.2")]
+    Lua52,
+    #[serde(rename = "5.3")]
+    Lua53,
+    #[default]
+    #[serde(rename = "5.4")]
+    Lua54,
+    #[serde(rename = "luajit")]
+    LuaJit,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, Default)]
@@ -283,6 +321,11 @@ map_type = "fx_hash_map"
 
 [codegen.kotlin]
 runtime_format = "sora"
+
+[codegen.lua]
+runtime_format = "sora"
+module = "generated.lua"
+lua_version = "5.4"
 "#,
         )
         .expect("schema should parse");
@@ -296,5 +339,8 @@ runtime_format = "sora"
             schema.codegen.kotlin.runtime_format,
             RuntimeFormatSchema::Sora
         );
+        assert_eq!(schema.codegen.lua.runtime_format, RuntimeFormatSchema::Sora);
+        assert_eq!(schema.codegen.lua.module.as_deref(), Some("generated.lua"));
+        assert_eq!(schema.codegen.lua.lua_version, LuaVersionSchema::Lua54);
     }
 }

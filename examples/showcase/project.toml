@@ -27,6 +27,10 @@ out = "java/src/generated/java"
 target = "go"
 out = "go/internal/showcase"
 
+[[build.codegen]]
+target = "lua"
+out = "lua/generated"
+
 [[build.exports]]
 format = "binary"
 out = "generated/config.sora"
@@ -62,3 +66,8 @@ runtime_format = "sora"
 
 [codegen.go]
 runtime_format = "sora"
+
+[codegen.lua]
+runtime_format = "sora"
+module = "generated"
+lua_version = "5.4"

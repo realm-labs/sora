@@ -1,0 +1,25 @@
+
+local ResourceCost = require("generated.resource_cost")
+
+---@class ShopItem
+---@field shopId integer
+---@field seq integer
+---@field itemId integer
+---@field price ResourceCost
+---@field dailyLimit integer?
+
+local ShopItem = {}
+
+---@param reader SoraReader
+---@return ShopItem
+function ShopItem.decode(reader)
+    return {
+        shopId = reader:read_i32(),
+        seq = reader:read_i32(),
+        itemId = reader:read_i32(),
+        price = ResourceCost.decode(reader),
+        dailyLimit = reader:read_optional(function() return reader:read_i32() end),
+    }
+end
+
+return ShopItem

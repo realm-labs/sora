@@ -1,0 +1,22 @@
+
+
+---@class MailReward
+---@field mailId integer
+---@field seq integer
+---@field itemId integer
+---@field count integer
+
+local MailReward = {}
+
+---@param reader SoraReader
+---@return MailReward
+function MailReward.decode(reader)
+    return {
+        mailId = reader:read_i32(),
+        seq = reader:read_i32(),
+        itemId = reader:read_i32(),
+        count = reader:read_i32(),
+    }
+end
+
+return MailReward

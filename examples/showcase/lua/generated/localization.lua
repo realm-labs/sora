@@ -1,0 +1,22 @@
+
+
+---@class Localization
+---@field key string
+---@field zhCn string
+---@field enUs string
+---@field note string?
+
+local Localization = {}
+
+---@param reader SoraReader
+---@return Localization
+function Localization.decode(reader)
+    return {
+        key = reader:read_string(),
+        zhCn = reader:read_string(),
+        enUs = reader:read_string(),
+        note = reader:read_optional(function() return reader:read_string() end),
+    }
+end
+
+return Localization

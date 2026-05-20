@@ -17,6 +17,7 @@ pub(crate) fn render_template(
         }
     })?;
     let mut env = Environment::new();
+    env.set_keep_trailing_newline(true);
     env.add_template(file_name, source)
         .map_err(|source| SoraError::RenderTemplate {
             template: template_name.clone(),

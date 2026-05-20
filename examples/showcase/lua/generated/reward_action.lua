@@ -1,0 +1,57 @@
+
+---@class RewardActionAddItem
+---@field type '"AddItem"'
+---@field itemId integer
+---@field count integer
+---@class RewardActionAddBuff
+---@field type '"AddBuff"'
+---@field buffId integer
+---@field duration number
+---@class RewardActionUnlockStage
+---@field type '"UnlockStage"'
+---@field stageId integer
+---@class RewardActionSendMail
+---@field type '"SendMail"'
+---@field mailId integer
+---@alias RewardAction
+---| RewardActionAddItem
+---| RewardActionAddBuff
+---| RewardActionUnlockStage
+---| RewardActionSendMail
+
+local RewardAction = {}
+
+---@param reader SoraReader
+---@return RewardAction
+function RewardAction.decode(reader)
+    local ordinal = reader:read_u32()
+    if ordinal == 0 then
+        return {
+            type = "AddItem",
+            itemId = reader:read_i32(),
+            count = reader:read_i32(),
+        }
+    end
+    if ordinal == 1 then
+        return {
+            type = "AddBuff",
+            buffId = reader:read_i32(),
+            duration = reader:read_f32(),
+        }
+    end
+    if ordinal == 2 then
+        return {
+            type = "UnlockStage",
+            stageId = reader:read_i32(),
+        }
+    end
+    if ordinal == 3 then
+        return {
+            type = "SendMail",
+            mailId = reader:read_i32(),
+        }
+    end
+    error("invalid union ordinal " .. tostring(ordinal) .. " for RewardAction")
+end
+
+return RewardAction

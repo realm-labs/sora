@@ -1,0 +1,43 @@
+---@alias ItemType
+---| '"Weapon"'
+---| '"Armor"'
+---| '"Currency"'
+---| '"Material"'
+---| '"Consumable"'
+
+---@class ItemTypeValues
+---@field Weapon ItemType
+---@field Armor ItemType
+---@field Currency ItemType
+---@field Material ItemType
+---@field Consumable ItemType
+
+---@type ItemTypeValues
+local ItemType = {
+    Weapon = "Weapon",
+    Armor = "Armor",
+    Currency = "Currency",
+    Material = "Material",
+    Consumable = "Consumable",
+}
+
+local values = {
+    [0] = ItemType.Weapon,
+    [1] = ItemType.Armor,
+    [2] = ItemType.Currency,
+    [3] = ItemType.Material,
+    [4] = ItemType.Consumable,
+}
+
+---@param reader SoraReader
+---@return ItemType
+function ItemType.decode(reader)
+    local ordinal = reader:read_u32()
+    local value = values[ordinal]
+    if value == nil then
+        error("invalid enum ordinal " .. tostring(ordinal) .. " for ItemType")
+    end
+    return value
+end
+
+return ItemType

@@ -1,0 +1,31 @@
+
+local QuestType = require("generated.quest_type")
+local Reward = require("generated.reward")
+local Vec3 = require("generated.vec3")
+
+---@class Quest
+---@field id integer
+---@field questType QuestType
+---@field title string
+---@field requiredItem integer
+---@field unlockSkills integer[]
+---@field startPos Vec3
+---@field rewards Reward[]
+
+local Quest = {}
+
+---@param reader SoraReader
+---@return Quest
+function Quest.decode(reader)
+    return {
+        id = reader:read_i32(),
+        questType = QuestType.decode(reader),
+        title = reader:read_string(),
+        requiredItem = reader:read_i32(),
+        unlockSkills = reader:read_list(function() return reader:read_i32() end),
+        startPos = Vec3.decode(reader),
+        rewards = reader:read_list(function() return Reward.decode(reader) end),
+    }
+end
+
+return Quest

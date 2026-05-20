@@ -4,7 +4,7 @@ Sora is a Rust-first game configuration compiler that turns schemas and table da
 
 ## Status
 
-Sora is in an early but runnable milestone. It currently supports TOML schemas, TOML/CSV/Excel `.xlsx` table data, normalized IR, recursive data validation, defaults, tuple-style inline struct parsing, child table aggregation, polymorphic union types, secondary unique-index validation, schema locks, config diffs, generated Excel `.xlsx` template projections, a pluggable exporter registry, a native sectioned binary exporter, a debug JSON exporter, and generated Rust/Kotlin/C#/Java/Go code with binary runtime readers.
+Sora is in an early but runnable milestone. It currently supports TOML schemas, TOML/CSV/Excel `.xlsx` table data, normalized IR, recursive data validation, defaults, tuple-style inline struct parsing, child table aggregation, polymorphic union types, secondary unique-index validation, schema locks, config diffs, generated Excel `.xlsx` template projections, a pluggable exporter registry, a native sectioned binary exporter, a debug JSON exporter, and generated Rust/Kotlin/C#/Java/Go/Lua code with binary runtime readers.
 
 ## Design Principles
 
@@ -99,7 +99,7 @@ sora export \
 - `sora-schema`: format-neutral schema model.
 - `sora-ir`: normalized schema IR and type parsing.
 - `sora-data`: data IR and validation.
-- `sora-codegen`: Rust, Kotlin, C#, Java, and Go code generation.
+- `sora-codegen`: Rust, Kotlin, C#, Java, Go, and Lua code generation.
 - `sora-export`: exporter trait, registry, and built-in exporters.
 - `sora-excel`: Excel `.xlsx` template projection.
 - `sora-diagnostics`: shared typed errors.
@@ -142,6 +142,10 @@ out = "java/src/generated/java"
 [[build.codegen]]
 target = "go"
 out = "go/internal/showcase"
+
+[[build.codegen]]
+target = "lua"
+out = "lua/generated"
 
 [[build.exports]]
 format = "binary"
@@ -228,7 +232,7 @@ The binary bundle uses a language-neutral sectioned layout: a fixed header, a se
 
 ## Codegen Architecture
 
-Codegen uses MiniJinja templates embedded into the CLI binary, but type mapping is computed in Rust before rendering. Rust, Kotlin, C#, Java, and Go generation include models plus small binary runtime readers for `.sora` bundles. Future targets may include TypeScript, Lua, and Python.
+Codegen uses MiniJinja templates embedded into the CLI binary, but type mapping is computed in Rust before rendering. Rust, Kotlin, C#, Java, Go, and Lua generation include models plus small binary runtime readers for `.sora` bundles. Lua generation also emits EmmyLua annotations for editor type hints. Future targets may include TypeScript and Python.
 
 ## Excel Template Projection
 

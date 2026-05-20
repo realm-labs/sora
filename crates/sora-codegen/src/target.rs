@@ -5,4 +5,5 @@ pub enum CodegenTarget {
     CSharp,
     Java,
     Go,
+    Lua,
 }

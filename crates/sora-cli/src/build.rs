@@ -282,8 +282,9 @@ impl BuildTarget {
             "csharp" | "cs" => Ok(Self::Csharp),
             "java" => Ok(Self::Java),
             "go" => Ok(Self::Go),
+            "lua" => Ok(Self::Lua),
             _ => Err(format!(
-                "unsupported codegen target `{value}`; expected rust, kotlin, csharp, java, or go"
+                "unsupported codegen target `{value}`; expected rust, kotlin, csharp, java, go, or lua"
             )),
         }
     }
@@ -295,6 +296,7 @@ impl BuildTarget {
             Self::Csharp => "csharp",
             Self::Java => "java",
             Self::Go => "go",
+            Self::Lua => "lua",
         }
     }
 }
@@ -307,6 +309,7 @@ impl From<BuildTarget> for CodegenTarget {
             BuildTarget::Csharp => Self::CSharp,
             BuildTarget::Java => Self::Java,
             BuildTarget::Go => Self::Go,
+            BuildTarget::Lua => Self::Lua,
         }
     }
 }
@@ -335,6 +338,7 @@ mod tests {
         assert!(base.join("generated/schema.lock").exists());
         assert!(base.join("generated/excel/Item.xlsx").exists());
         assert!(base.join("generated/rust/item.rs").exists());
+        assert!(base.join("generated/lua/item.lua").exists());
         assert!(base.join("generated/config.json").exists());
         assert!(base.join("generated/config.pb").exists());
         assert!(base.join("generated/config.cbor").exists());
@@ -397,6 +401,10 @@ out = "generated/rust"
 [[build.codegen]]
 target = "kotlin"
 out = "generated/kotlin"
+
+[[build.codegen]]
+target = "lua"
+out = "generated/lua"
 
 [[build.exports]]
 format = "json"

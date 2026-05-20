@@ -1,0 +1,28 @@
+
+local ElementType = require("generated.element_type")
+local Vec3 = require("generated.vec3")
+
+---@class Monster
+---@field id integer
+---@field name string
+---@field level integer
+---@field element ElementType
+---@field dropGroup integer
+---@field spawnPos Vec3
+
+local Monster = {}
+
+---@param reader SoraReader
+---@return Monster
+function Monster.decode(reader)
+    return {
+        id = reader:read_i32(),
+        name = reader:read_string(),
+        level = reader:read_i32(),
+        element = ElementType.decode(reader),
+        dropGroup = reader:read_i32(),
+        spawnPos = Vec3.decode(reader),
+    }
+end
+
+return Monster

@@ -1,0 +1,21 @@
+
+local ResourceCost = require("generated.resource_cost")
+
+---@class Recipe
+---@field id integer
+---@field resultItem integer
+---@field materials ResourceCost[]
+
+local Recipe = {}
+
+---@param reader SoraReader
+---@return Recipe
+function Recipe.decode(reader)
+    return {
+        id = reader:read_i32(),
+        resultItem = reader:read_i32(),
+        materials = reader:read_list(function() return ResourceCost.decode(reader) end),
+    }
+end
+
+return Recipe

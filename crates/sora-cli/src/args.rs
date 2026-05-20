@@ -41,6 +41,7 @@ pub enum GenCommand {
     Csharp(GenArgs),
     Java(GenArgs),
     Go(GenArgs),
+    Lua(GenArgs),
 }
 
 #[derive(Debug, Args)]
@@ -120,6 +121,7 @@ pub enum BuildTarget {
     Csharp,
     Java,
     Go,
+    Lua,
 }
 
 #[derive(Debug, Args)]

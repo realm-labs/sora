@@ -113,6 +113,31 @@ const EMBEDDED_TEMPLATES: &[EmbeddedTemplate] = &[
         source: include_str!("../../../templates/kotlin/union.kt.j2"),
     },
     EmbeddedTemplate {
+        target: "lua",
+        file_name: "config.lua.j2",
+        source: include_str!("../../../templates/lua/config.lua.j2"),
+    },
+    EmbeddedTemplate {
+        target: "lua",
+        file_name: "enum.lua.j2",
+        source: include_str!("../../../templates/lua/enum.lua.j2"),
+    },
+    EmbeddedTemplate {
+        target: "lua",
+        file_name: "record.lua.j2",
+        source: include_str!("../../../templates/lua/record.lua.j2"),
+    },
+    EmbeddedTemplate {
+        target: "lua",
+        file_name: "runtime.lua.j2",
+        source: include_str!("../../../templates/lua/runtime.lua.j2"),
+    },
+    EmbeddedTemplate {
+        target: "lua",
+        file_name: "union.lua.j2",
+        source: include_str!("../../../templates/lua/union.lua.j2"),
+    },
+    EmbeddedTemplate {
         target: "rust",
         file_name: "enum.rs.j2",
         source: include_str!("../../../templates/rust/enum.rs.j2"),
@@ -168,7 +193,7 @@ mod tests {
 
     #[test]
     fn embeds_all_templates() {
-        assert_eq!(EMBEDDED_TEMPLATES.len(), 26);
+        assert_eq!(EMBEDDED_TEMPLATES.len(), 31);
         for template in EMBEDDED_TEMPLATES {
             let source = template_source(template.target, template.file_name)
                 .expect("embedded template should be registered");

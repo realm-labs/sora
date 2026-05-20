@@ -1,0 +1,21 @@
+
+local ResourceCost = require("generated.resource_cost")
+
+---@class GachaPool
+---@field id integer
+---@field name string
+---@field cost ResourceCost
+
+local GachaPool = {}
+
+---@param reader SoraReader
+---@return GachaPool
+function GachaPool.decode(reader)
+    return {
+        id = reader:read_i32(),
+        name = reader:read_string(),
+        cost = ResourceCost.decode(reader),
+    }
+end
+
+return GachaPool

@@ -1,0 +1,35 @@
+---@alias {{ enum.name }}
+{%- for value in enum.values %}
+---| '"{{ value }}"'
+{%- endfor %}
+
+---@class {{ enum.name }}Values
+{%- for value in enum.values %}
+---@field {{ value }} {{ enum.name }}
+{%- endfor %}
+
+---@type {{ enum.name }}Values
+local {{ enum.name }} = {
+{%- for value in enum.values %}
+    {{ value }} = "{{ value }}",
+{%- endfor %}
+}
+
+local values = {
+{%- for value in enum.values %}
+    [{{ loop.index0 }}] = {{ enum.name }}.{{ value }},
+{%- endfor %}
+}
+
+---@param reader SoraReader
+---@return {{ enum.name }}
+function {{ enum.name }}.decode(reader)
+    local ordinal = reader:read_u32()
+    local value = values[ordinal]
+    if value == nil then
+        error("invalid enum ordinal " .. tostring(ordinal) .. " for {{ enum.name }}")
+    end
+    return value
+end
+
+return {{ enum.name }}

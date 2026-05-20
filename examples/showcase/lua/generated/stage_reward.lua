@@ -1,0 +1,22 @@
+
+
+---@class StageReward
+---@field stageId integer
+---@field seq integer
+---@field itemId integer
+---@field count integer
+
+local StageReward = {}
+
+---@param reader SoraReader
+---@return StageReward
+function StageReward.decode(reader)
+    return {
+        stageId = reader:read_i32(),
+        seq = reader:read_i32(),
+        itemId = reader:read_i32(),
+        count = reader:read_i32(),
+    }
+end
+
+return StageReward

@@ -1,0 +1,20 @@
+
+
+---@class Vec3
+---@field x number
+---@field y number
+---@field z number
+
+local Vec3 = {}
+
+---@param reader SoraReader
+---@return Vec3
+function Vec3.decode(reader)
+    return {
+        x = reader:read_f32(),
+        y = reader:read_f32(),
+        z = reader:read_f32(),
+    }
+end
+
+return Vec3

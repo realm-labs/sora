@@ -1,0 +1,24 @@
+
+
+---@class DropEntry
+---@field groupId integer
+---@field seq integer
+---@field itemId integer
+---@field count integer
+---@field weight number
+
+local DropEntry = {}
+
+---@param reader SoraReader
+---@return DropEntry
+function DropEntry.decode(reader)
+    return {
+        groupId = reader:read_i32(),
+        seq = reader:read_i32(),
+        itemId = reader:read_i32(),
+        count = reader:read_i32(),
+        weight = reader:read_f32(),
+    }
+end
+
+return DropEntry

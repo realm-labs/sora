@@ -1,0 +1,43 @@
+---@alias StatType
+---| '"Hp"'
+---| '"Attack"'
+---| '"Defense"'
+---| '"Speed"'
+---| '"CritRate"'
+
+---@class StatTypeValues
+---@field Hp StatType
+---@field Attack StatType
+---@field Defense StatType
+---@field Speed StatType
+---@field CritRate StatType
+
+---@type StatTypeValues
+local StatType = {
+    Hp = "Hp",
+    Attack = "Attack",
+    Defense = "Defense",
+    Speed = "Speed",
+    CritRate = "CritRate",
+}
+
+local values = {
+    [0] = StatType.Hp,
+    [1] = StatType.Attack,
+    [2] = StatType.Defense,
+    [3] = StatType.Speed,
+    [4] = StatType.CritRate,
+}
+
+---@param reader SoraReader
+---@return StatType
+function StatType.decode(reader)
+    local ordinal = reader:read_u32()
+    local value = values[ordinal]
+    if value == nil then
+        error("invalid enum ordinal " .. tostring(ordinal) .. " for StatType")
+    end
+    return value
+end
+
+return StatType

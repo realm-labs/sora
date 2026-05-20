@@ -1,0 +1,20 @@
+
+
+---@class CharacterSkill
+---@field characterId integer
+---@field skillId integer
+---@field unlockLevel integer
+
+local CharacterSkill = {}
+
+---@param reader SoraReader
+---@return CharacterSkill
+function CharacterSkill.decode(reader)
+    return {
+        characterId = reader:read_i32(),
+        skillId = reader:read_i32(),
+        unlockLevel = reader:read_i32(),
+    }
+end
+
+return CharacterSkill

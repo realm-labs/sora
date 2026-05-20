@@ -1,0 +1,21 @@
+
+local ElementType = require("generated.element_type")
+
+---@class SkillEffect
+---@field element ElementType
+---@field power integer
+---@field radius number
+
+local SkillEffect = {}
+
+---@param reader SoraReader
+---@return SkillEffect
+function SkillEffect.decode(reader)
+    return {
+        element = ElementType.decode(reader),
+        power = reader:read_i32(),
+        radius = reader:read_f32(),
+    }
+end
+
+return SkillEffect

@@ -1,0 +1,380 @@
+local Runtime = {}
+
+local SORA_BUNDLE_VERSION = 1
+local SORA_HEADER_LENGTH = 24
+local SECTION_KIND_MANIFEST = 0
+local SECTION_KIND_SCHEMA = 1
+local SECTION_KIND_TABLE = 2
+local COMPRESSION_NONE = 0
+
+---@class SoraSection
+---@field kind integer
+---@field compression integer
+---@field name string
+---@field offset integer
+---@field length integer
+---@field uncompressedLength integer
+
+---@class SoraBundle
+---@field private bytes string
+---@field private sections SoraSection[]
+local SoraBundle = {}
+SoraBundle.__index = SoraBundle
+
+---@class SoraReader
+---@field private bytes string
+---@field private cursor integer
+local SoraReader = {}
+SoraReader.__index = SoraReader
+
+---@param bytes string
+---@return SoraBundle
+function Runtime.parse_bundle(bytes)
+    if #bytes < SORA_HEADER_LENGTH then
+        error("Sora bundle is shorter than header")
+    end
+    if bytes:sub(1, 4) ~= "SORA" then
+        error("invalid Sora bundle magic")
+    end
+
+    local version = read_u32_at(bytes, 4)
+    if version ~= SORA_BUNDLE_VERSION then
+        error("unsupported Sora bundle version " .. tostring(version))
+    end
+
+    local header_length = read_u32_at(bytes, 8)
+    local directory_length = read_u32_at(bytes, 12)
+    local section_count = read_u32_at(bytes, 16)
+    local flags = read_u32_at(bytes, 20)
+    if flags ~= 0 then
+        error("unsupported Sora bundle flags " .. tostring(flags))
+    end
+    if header_length ~= SORA_HEADER_LENGTH or header_length > #bytes then
+        error("invalid Sora bundle header length")
+    end
+
+    local directory_end = header_length + directory_length
+    if directory_end > #bytes then
+        error("Sora section directory exceeds bundle length")
+    end
+
+    local cursor = header_length
+    local sections = {}
+    local manifest_count = 0
+    local schema_count = 0
+    local table_names = {}
+    for _ = 1, section_count do
+        if cursor + 40 > directory_end then
+            error("truncated Sora section directory entry")
+        end
+
+        local kind = read_u32_at(bytes, cursor)
+        local compression = read_u32_at(bytes, cursor + 4)
+        local name_length = read_u32_at(bytes, cursor + 8)
+        local entry_flags = read_u32_at(bytes, cursor + 12)
+        local offset = read_u64_at(bytes, cursor + 16)
+        local length = read_u64_at(bytes, cursor + 24)
+        local uncompressed_length = read_u64_at(bytes, cursor + 32)
+        if entry_flags ~= 0 then
+            error("unsupported Sora section flags " .. tostring(entry_flags))
+        end
+
+        local name_start = cursor + 40
+        local name_end = name_start + name_length
+        if name_end > directory_end then
+            error("Sora section name exceeds directory")
+        end
+        if offset + length > #bytes then
+            error("Sora section payload exceeds bundle length")
+        end
+
+        local name = bytes:sub(name_start + 1, name_end)
+        if kind == SECTION_KIND_MANIFEST then
+            manifest_count = manifest_count + 1
+            if name ~= "$manifest" then
+                error("Sora manifest section must be named `$manifest`")
+            end
+        elseif kind == SECTION_KIND_SCHEMA then
+            schema_count = schema_count + 1
+            if name ~= "$schema" then
+                error("Sora schema section must be named `$schema`")
+            end
+        elseif kind == SECTION_KIND_TABLE then
+            if table_names[name] then
+                error("duplicate Sora table section `" .. name .. "`")
+            end
+            table_names[name] = true
+        else
+            error("unknown Sora section kind " .. tostring(kind))
+        end
+
+        if compression == COMPRESSION_NONE and uncompressed_length ~= length then
+            error("uncompressed Sora section length mismatch")
+        end
+
+        sections[#sections + 1] = {
+            kind = kind,
+            compression = compression,
+            name = name,
+            offset = offset,
+            length = length,
+            uncompressedLength = uncompressed_length,
+        }
+        cursor = name_end
+    end
+
+    if cursor ~= directory_end then
+        error("Sora section directory has trailing bytes")
+    end
+    if manifest_count ~= 1 then
+        error("expected exactly 1 Sora manifest section, got " .. tostring(manifest_count))
+    end
+    if schema_count ~= 1 then
+        error("expected exactly 1 Sora schema section, got " .. tostring(schema_count))
+    end
+
+    return setmetatable({ bytes = bytes, sections = sections }, SoraBundle)
+end
+
+---@generic T
+---@param name string
+---@param decode fun(reader: SoraReader): T
+---@return T[]
+function SoraBundle:decode_table(name, decode)
+    for _, section in ipairs(self.sections) do
+        if section.kind == SECTION_KIND_TABLE and section.name == name then
+            if section.compression ~= COMPRESSION_NONE then
+                error("unsupported compression " .. tostring(section.compression) .. " for table `" .. name .. "`")
+            end
+            if section.uncompressedLength ~= section.length then
+                error("table `" .. name .. "` has invalid uncompressed length")
+            end
+            local payload = self.bytes:sub(section.offset + 1, section.offset + section.length)
+            return decode_rows(payload, decode)
+        end
+    end
+    error("missing Sora table section `" .. name .. "`")
+end
+
+---@param bytes string
+---@return SoraReader
+function Runtime.new_reader(bytes)
+    return setmetatable({ bytes = bytes, cursor = 1 }, SoraReader)
+end
+
+---@return boolean
+function SoraReader:is_finished()
+    return self.cursor == #self.bytes + 1
+end
+
+---@return integer
+function SoraReader:read_u8()
+    local value = string.byte(self.bytes, self.cursor)
+    if value == nil then
+        error("Sora reader reached end of row")
+    end
+    self.cursor = self.cursor + 1
+    return value
+end
+
+---@return boolean
+function SoraReader:read_bool()
+    local value = self:read_u8()
+    if value == 0 then
+        return false
+    end
+    if value == 1 then
+        return true
+    end
+    error("invalid bool value " .. tostring(value))
+end
+
+---@return integer
+function SoraReader:read_u32()
+    local value, next_cursor = string.unpack("<I4", self.bytes, self.cursor)
+    self.cursor = next_cursor
+    return value
+end
+
+---@return integer
+function SoraReader:read_i32()
+    local value, next_cursor = string.unpack("<i4", self.bytes, self.cursor)
+    self.cursor = next_cursor
+    return value
+end
+
+---@return integer
+function SoraReader:read_i64()
+    local value, next_cursor = string.unpack("<i8", self.bytes, self.cursor)
+    self.cursor = next_cursor
+    return value
+end
+
+---@return number
+function SoraReader:read_f32()
+    local value, next_cursor = string.unpack("<f", self.bytes, self.cursor)
+    self.cursor = next_cursor
+    return value
+end
+
+---@return number
+function SoraReader:read_f64()
+    local value, next_cursor = string.unpack("<d", self.bytes, self.cursor)
+    self.cursor = next_cursor
+    return value
+end
+
+---@return string
+function SoraReader:read_string()
+    local length = self:read_u32()
+    return self:take(length)
+end
+
+---@generic T
+---@param read fun(): T
+---@return T?
+function SoraReader:read_optional(read)
+    local presence = self:read_u8()
+    if presence == 0 then
+        return nil
+    end
+    if presence == 1 then
+        return read()
+    end
+    error("invalid option presence " .. tostring(presence))
+end
+
+---@generic T
+---@param read fun(): T
+---@return T[]
+function SoraReader:read_list(read)
+    local length = self:read_u32()
+    local values = {}
+    for index = 1, length do
+        values[index] = read()
+    end
+    return values
+end
+
+---@param length integer
+---@return string
+function SoraReader:take(length)
+    local start = self.cursor
+    local ending = start + length - 1
+    if ending > #self.bytes then
+        error("Sora reader reached end of row")
+    end
+    self.cursor = ending + 1
+    return self.bytes:sub(start, ending)
+end
+
+---@generic T
+---@param rows T[]
+---@param name string
+---@return T
+function Runtime.require_singleton_table(rows, name)
+    if #rows ~= 1 then
+        error("expected singleton table `" .. name .. "` to contain exactly 1 row, got " .. tostring(#rows))
+    end
+    return rows[1]
+end
+
+---@generic K, V
+---@param rows V[]
+---@param key fun(row: V): K
+---@return table<K, V>
+function Runtime.decode_map_table(rows, key)
+    local values = {}
+    for _, row in ipairs(rows) do
+        values[key(row)] = row
+    end
+    return values
+end
+
+---@generic K, V
+---@param rows V[]
+---@param key fun(row: V): K
+---@return table<K, V>
+function Runtime.decode_unique_index(rows, key)
+    return Runtime.decode_map_table(rows, key)
+end
+
+---@generic K, V
+---@param rows V[]
+---@param key fun(row: V): K
+---@return table<K, V[]>
+function Runtime.decode_index(rows, key)
+    local values = {}
+    for _, row in ipairs(rows) do
+        local index_key = key(row)
+        local group = values[index_key]
+        if group == nil then
+            group = {}
+            values[index_key] = group
+        end
+        group[#group + 1] = row
+    end
+    return values
+end
+
+---@generic T
+---@param payload string
+---@param decode fun(reader: SoraReader): T
+---@return T[]
+function decode_rows(payload, decode)
+    if #payload < 12 then
+        error("Sora table section is too short")
+    end
+
+    local row_count = read_u32_at(payload, 0)
+    local row_data_start = 4 + (row_count + 1) * 8
+    if row_data_start > #payload then
+        error("Sora row offset table exceeds payload length")
+    end
+
+    local rows = {}
+    for index = 0, row_count - 1 do
+        local start = read_u64_at(payload, 4 + index * 8)
+        local ending = read_u64_at(payload, 4 + (index + 1) * 8)
+        if start > ending then
+            error("Sora row offsets are not monotonic")
+        end
+        local absolute_start = row_data_start + start
+        local absolute_end = row_data_start + ending
+        if absolute_end > #payload then
+            error("Sora row exceeds payload length")
+        end
+        local reader = Runtime.new_reader(payload:sub(absolute_start + 1, absolute_end))
+        local row = decode(reader)
+        if not reader:is_finished() then
+            error("Sora row has trailing bytes")
+        end
+        rows[#rows + 1] = row
+    end
+    return rows
+end
+
+---@param bytes string
+---@param offset integer
+---@return integer
+function read_u32_at(bytes, offset)
+    if offset + 4 > #bytes then
+        error("unexpected end while reading u32")
+    end
+    return string.unpack("<I4", bytes, offset + 1)
+end
+
+---@param bytes string
+---@param offset integer
+---@return integer
+function read_u64_at(bytes, offset)
+    if offset + 8 > #bytes then
+        error("unexpected end while reading u64")
+    end
+    return string.unpack("<I8", bytes, offset + 1)
+end
+
+Runtime.SoraBundle = SoraBundle
+Runtime.SoraReader = SoraReader
+
+return Runtime

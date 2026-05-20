@@ -1,0 +1,37 @@
+{%- for import in union.imports %}
+local {{ import.name }} = require("{{ options.require_prefix }}{{ import.module }}")
+{%- endfor %}
+
+{%- for variant in union.variants %}
+---@class {{ union.pascal_name }}{{ variant.name }}
+---@field {{ union.tag }} '"{{ variant.name }}"'
+{%- for field in variant.fields %}
+---@field {{ field.name }} {{ field.type_name }}
+{%- endfor %}
+
+{%- endfor %}
+---@alias {{ union.pascal_name }}
+{%- for variant in union.variants %}
+---| {{ union.pascal_name }}{{ variant.name }}
+{%- endfor %}
+
+local {{ union.pascal_name }} = {}
+
+---@param reader SoraReader
+---@return {{ union.pascal_name }}
+function {{ union.pascal_name }}.decode(reader)
+    local ordinal = reader:read_u32()
+{%- for variant in union.variants %}
+    if ordinal == {{ loop.index0 }} then
+        return {
+            {{ union.tag }} = "{{ variant.name }}",
+{%- for field in variant.fields %}
+            {{ field.name }} = {{ field.decode }},
+{%- endfor %}
+        }
+    end
+{%- endfor %}
+    error("invalid union ordinal " .. tostring(ordinal) .. " for {{ union.pascal_name }}")
+end
+
+return {{ union.pascal_name }}

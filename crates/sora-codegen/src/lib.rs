@@ -3,6 +3,7 @@ pub mod generator;
 pub mod go;
 pub mod java;
 pub mod kotlin;
+pub mod lua;
 pub mod model;
 mod render;
 pub mod rust;

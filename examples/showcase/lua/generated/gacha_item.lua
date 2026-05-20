@@ -1,0 +1,23 @@
+
+local Rarity = require("generated.rarity")
+
+---@class GachaItem
+---@field poolId integer
+---@field itemId integer
+---@field rarity Rarity
+---@field weight number
+
+local GachaItem = {}
+
+---@param reader SoraReader
+---@return GachaItem
+function GachaItem.decode(reader)
+    return {
+        poolId = reader:read_i32(),
+        itemId = reader:read_i32(),
+        rarity = Rarity.decode(reader),
+        weight = reader:read_f32(),
+    }
+end
+
+return GachaItem

@@ -1,0 +1,45 @@
+
+---@class EventConditionLevelAtLeast
+---@field type '"LevelAtLeast"'
+---@field level integer
+---@class EventConditionQuestCompleted
+---@field type '"QuestCompleted"'
+---@field questId integer
+---@class EventConditionHasItem
+---@field type '"HasItem"'
+---@field itemId integer
+---@field count integer
+---@alias EventCondition
+---| EventConditionLevelAtLeast
+---| EventConditionQuestCompleted
+---| EventConditionHasItem
+
+local EventCondition = {}
+
+---@param reader SoraReader
+---@return EventCondition
+function EventCondition.decode(reader)
+    local ordinal = reader:read_u32()
+    if ordinal == 0 then
+        return {
+            type = "LevelAtLeast",
+            level = reader:read_i32(),
+        }
+    end
+    if ordinal == 1 then
+        return {
+            type = "QuestCompleted",
+            questId = reader:read_i32(),
+        }
+    end
+    if ordinal == 2 then
+        return {
+            type = "HasItem",
+            itemId = reader:read_i32(),
+            count = reader:read_i32(),
+        }
+    end
+    error("invalid union ordinal " .. tostring(ordinal) .. " for EventCondition")
+end
+
+return EventCondition

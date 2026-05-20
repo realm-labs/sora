@@ -28,6 +28,7 @@ pub struct CodegenIr {
     pub csharp: LanguageCodegenIr,
     pub java: LanguageCodegenIr,
     pub go: LanguageCodegenIr,
+    pub lua: LuaCodegenIr,
 }
 
 impl CodegenIr {
@@ -64,6 +65,23 @@ impl Default for LanguageCodegenIr {
     }
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct LuaCodegenIr {
+    pub runtime_format: RuntimeFormatIr,
+    pub module: Option<String>,
+    pub lua_version: LuaVersionIr,
+}
+
+impl Default for LuaCodegenIr {
+    fn default() -> Self {
+        Self {
+            runtime_format: RuntimeFormatIr::Sora,
+            module: None,
+            lua_version: LuaVersionIr::Lua54,
+        }
+    }
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
 pub enum RuntimeFormatIr {
     #[default]
@@ -71,6 +89,16 @@ pub enum RuntimeFormatIr {
     Json,
     Protobuf,
     Cbor,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
+pub enum LuaVersionIr {
+    Lua51,
+    Lua52,
+    Lua53,
+    #[default]
+    Lua54,
+    LuaJit,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]

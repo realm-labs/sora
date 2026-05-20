@@ -14,6 +14,7 @@ and mixed map/list/singleton table modes.
 - C# .NET project: `csharp`
 - Java Gradle project: `java`
 - Go module: `go`
+- Lua generated modules with EmmyLua annotations: `lua/generated`
 - binary bundle: `generated/config.sora`
 - debug JSON: `generated/debug-json`
 - schema lock: `generated/schema.lock`
@@ -61,4 +62,10 @@ Run the Go smoke example:
 Push-Location examples/showcase/go
 go run ./cmd/showcase
 Pop-Location
+```
+
+Check generated Lua syntax with a local Lua 5.3+ runtime:
+
+```powershell
+Get-ChildItem examples/showcase/lua/generated -Filter *.lua | ForEach-Object { luac -p $_.FullName }
 ```

@@ -1,4 +1,3 @@
-
 use super::resource_cost::ResourceCost;
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
@@ -12,7 +11,9 @@ pub struct Recipe {
 }
 
 impl super::runtime::SoraDecode for Recipe {
-    fn decode(reader: &mut super::runtime::SoraReader<'_>) -> Result<Self, super::runtime::SoraReadError> {
+    fn decode(
+        reader: &mut super::runtime::SoraReader<'_>,
+    ) -> Result<Self, super::runtime::SoraReadError> {
         Ok(Self {
             id: <i32 as super::runtime::SoraDecode>::decode(reader)?,
             result_item: <i32 as super::runtime::SoraDecode>::decode(reader)?,

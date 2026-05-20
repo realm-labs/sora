@@ -1,0 +1,18 @@
+
+
+---@class Reward
+---@field itemId integer
+---@field count integer
+
+local Reward = {}
+
+---@param reader SoraReader
+---@return Reward
+function Reward.decode(reader)
+    return {
+        itemId = reader:read_i32(),
+        count = reader:read_i32(),
+    }
+end
+
+return Reward

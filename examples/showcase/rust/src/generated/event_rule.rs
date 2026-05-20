@@ -1,4 +1,3 @@
-
 use super::event_condition::EventCondition;
 use super::reward_action::RewardAction;
 
@@ -15,7 +14,9 @@ pub struct EventRule {
 }
 
 impl super::runtime::SoraDecode for EventRule {
-    fn decode(reader: &mut super::runtime::SoraReader<'_>) -> Result<Self, super::runtime::SoraReadError> {
+    fn decode(
+        reader: &mut super::runtime::SoraReader<'_>,
+    ) -> Result<Self, super::runtime::SoraReadError> {
         Ok(Self {
             id: <i32 as super::runtime::SoraDecode>::decode(reader)?,
             name: <String as super::runtime::SoraDecode>::decode(reader)?,

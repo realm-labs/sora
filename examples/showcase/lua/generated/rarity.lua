@@ -1,0 +1,43 @@
+---@alias Rarity
+---| '"Common"'
+---| '"Uncommon"'
+---| '"Rare"'
+---| '"Epic"'
+---| '"Legendary"'
+
+---@class RarityValues
+---@field Common Rarity
+---@field Uncommon Rarity
+---@field Rare Rarity
+---@field Epic Rarity
+---@field Legendary Rarity
+
+---@type RarityValues
+local Rarity = {
+    Common = "Common",
+    Uncommon = "Uncommon",
+    Rare = "Rare",
+    Epic = "Epic",
+    Legendary = "Legendary",
+}
+
+local values = {
+    [0] = Rarity.Common,
+    [1] = Rarity.Uncommon,
+    [2] = Rarity.Rare,
+    [3] = Rarity.Epic,
+    [4] = Rarity.Legendary,
+}
+
+---@param reader SoraReader
+---@return Rarity
+function Rarity.decode(reader)
+    local ordinal = reader:read_u32()
+    local value = values[ordinal]
+    if value == nil then
+        error("invalid enum ordinal " .. tostring(ordinal) .. " for Rarity")
+    end
+    return value
+end
+
+return Rarity

@@ -1,4 +1,3 @@
-
 use super::vec3::Vec3;
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
@@ -16,7 +15,9 @@ pub struct GameSettings {
 }
 
 impl super::runtime::SoraDecode for GameSettings {
-    fn decode(reader: &mut super::runtime::SoraReader<'_>) -> Result<Self, super::runtime::SoraReadError> {
+    fn decode(
+        reader: &mut super::runtime::SoraReader<'_>,
+    ) -> Result<Self, super::runtime::SoraReadError> {
         Ok(Self {
             version: <String as super::runtime::SoraDecode>::decode(reader)?,
             daily_reset_hour: <i32 as super::runtime::SoraDecode>::decode(reader)?,

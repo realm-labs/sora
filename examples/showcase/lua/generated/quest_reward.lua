@@ -1,0 +1,22 @@
+
+
+---@class QuestReward
+---@field questId integer
+---@field seq integer
+---@field itemId integer
+---@field count integer
+
+local QuestReward = {}
+
+---@param reader SoraReader
+---@return QuestReward
+function QuestReward.decode(reader)
+    return {
+        questId = reader:read_i32(),
+        seq = reader:read_i32(),
+        itemId = reader:read_i32(),
+        count = reader:read_i32(),
+    }
+end
+
+return QuestReward

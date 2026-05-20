@@ -1,15 +1,15 @@
 use sora_diagnostics::{Result, SoraError};
 use sora_schema::model::{
-    CodegenSchema, FieldSchema, IndexSchema, LanguageCodegenSchema, RuntimeFormatSchema,
-    RustMapTypeSchema, SchemaFile, TableModeSchema, TableSchema, TableSourceSchema, UnionSchema,
-    UnionVariantSchema,
+    CodegenSchema, FieldSchema, IndexSchema, LanguageCodegenSchema, LuaCodegenSchema,
+    LuaVersionSchema, RuntimeFormatSchema, RustMapTypeSchema, SchemaFile, TableModeSchema,
+    TableSchema, TableSourceSchema, UnionSchema, UnionVariantSchema,
 };
 
 use crate::{
     model::{
         AggregationIr, CodegenIr, ConfigIr, EnumIr, FieldIr, IndexIr, LanguageCodegenIr,
-        RuntimeFormatIr, RustCodegenIr, RustMapTypeIr, StructIr, TableIr, TableModeIr,
-        TableSourceIr, TypeIr, UnionIr, UnionVariantIr,
+        LuaCodegenIr, LuaVersionIr, RuntimeFormatIr, RustCodegenIr, RustMapTypeIr, StructIr,
+        TableIr, TableModeIr, TableSourceIr, TypeIr, UnionIr, UnionVariantIr,
     },
     parse::parse_type,
 };
@@ -71,6 +71,7 @@ impl From<CodegenSchema> for CodegenIr {
             csharp: LanguageCodegenIr::from(value.csharp),
             java: LanguageCodegenIr::from(value.java),
             go: LanguageCodegenIr::from(value.go),
+            lua: LuaCodegenIr::from(value.lua),
         }
     }
 }
@@ -83,6 +84,16 @@ impl From<LanguageCodegenSchema> for LanguageCodegenIr {
     }
 }
 
+impl From<LuaCodegenSchema> for LuaCodegenIr {
+    fn from(value: LuaCodegenSchema) -> Self {
+        Self {
+            runtime_format: RuntimeFormatIr::from(value.runtime_format),
+            module: value.module,
+            lua_version: LuaVersionIr::from(value.lua_version),
+        }
+    }
+}
+
 impl From<RuntimeFormatSchema> for RuntimeFormatIr {
     fn from(value: RuntimeFormatSchema) -> Self {
         match value {
@@ -90,6 +101,18 @@ impl From<RuntimeFormatSchema> for RuntimeFormatIr {
             RuntimeFormatSchema::Json => Self::Json,
             RuntimeFormatSchema::Protobuf => Self::Protobuf,
             RuntimeFormatSchema::Cbor => Self::Cbor,
+        }
+    }
+}
+
+impl From<LuaVersionSchema> for LuaVersionIr {
+    fn from(value: LuaVersionSchema) -> Self {
+        match value {
+            LuaVersionSchema::Lua51 => Self::Lua51,
+            LuaVersionSchema::Lua52 => Self::Lua52,
+            LuaVersionSchema::Lua53 => Self::Lua53,
+            LuaVersionSchema::Lua54 => Self::Lua54,
+            LuaVersionSchema::LuaJit => Self::LuaJit,
         }
     }
 }
@@ -362,7 +385,7 @@ fn validate_optional_non_empty(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::model::{RuntimeFormatIr, TableModeIr, TypeIr};
+    use crate::model::{LuaVersionIr, RuntimeFormatIr, TableModeIr, TypeIr};
 
     #[test]
     fn normalizes_schema() {
@@ -401,6 +424,8 @@ length = [1, 3]
         assert_eq!(ir.package, "game_config");
         assert_eq!(ir.codegen.rust.runtime_format, RuntimeFormatIr::Sora);
         assert_eq!(ir.codegen.kotlin.runtime_format, RuntimeFormatIr::Sora);
+        assert_eq!(ir.codegen.lua.runtime_format, RuntimeFormatIr::Sora);
+        assert_eq!(ir.codegen.lua.lua_version, LuaVersionIr::Lua54);
         assert_eq!(ir.enums[0].name, "ItemType");
         assert_eq!(ir.tables[0].mode, TableModeIr::Map);
         assert!(ir.tables[0].fields[0].required);

@@ -20,6 +20,10 @@ pub fn go_type_name(ir: &ConfigIr, ty: &TypeIr) -> String {
     go_type_name_inner(ir, ty)
 }
 
+pub fn lua_type_name(ir: &ConfigIr, ty: &TypeIr) -> String {
+    lua_type_name_inner(ir, ty)
+}
+
 fn rust_type_name_inner(ir: &ConfigIr, ty: &TypeIr) -> String {
     match ty {
         TypeIr::Bool => "bool".to_owned(),
@@ -103,6 +107,21 @@ fn go_type_name_inner(ir: &ConfigIr, ty: &TypeIr) -> String {
         }
         TypeIr::Ref { table, field } => ref_type(ir, table, field, go_type_name_inner, "int32"),
         TypeIr::Optional(element) => format!("*{}", go_type_name_inner(ir, element)),
+    }
+}
+
+fn lua_type_name_inner(ir: &ConfigIr, ty: &TypeIr) -> String {
+    match ty {
+        TypeIr::Bool => "boolean".to_owned(),
+        TypeIr::I32 | TypeIr::I64 => "integer".to_owned(),
+        TypeIr::F32 | TypeIr::F64 => "number".to_owned(),
+        TypeIr::String => "string".to_owned(),
+        TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => name.clone(),
+        TypeIr::List(element) | TypeIr::Array { element, .. } => {
+            format!("{}[]", lua_type_name_inner(ir, element))
+        }
+        TypeIr::Ref { table, field } => ref_type(ir, table, field, lua_type_name_inner, "integer"),
+        TypeIr::Optional(element) => format!("{}?", lua_type_name_inner(ir, element)),
     }
 }
 
@@ -251,6 +270,30 @@ mod tests {
 
         for (source, expected) in cases {
             assert_eq!(go_type_name(&ir, &parse_type(source).unwrap()), expected);
+        }
+    }
+
+    #[test]
+    fn maps_lua_types() {
+        let ir = example_ir();
+        let cases = [
+            ("bool", "boolean"),
+            ("i32", "integer"),
+            ("i64", "integer"),
+            ("f32", "number"),
+            ("f64", "number"),
+            ("string", "string"),
+            ("enum<ItemType>", "ItemType"),
+            ("struct<Reward>", "Reward"),
+            ("union<Action>", "Action"),
+            ("list<i32>", "integer[]"),
+            ("array<i32,3>", "integer[]"),
+            ("optional<string>", "string?"),
+            ("ref<Item.id>", "integer"),
+        ];
+
+        for (source, expected) in cases {
+            assert_eq!(lua_type_name(&ir, &parse_type(source).unwrap()), expected);
         }
     }
 
