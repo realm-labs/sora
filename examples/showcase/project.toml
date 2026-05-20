@@ -1,2 +1,5 @@
 package = "game_config_showcase"
 includes = ["schema/game.toml"]
+
+[codegen.rust]
+map_type = "fx_hash_map"

@@ -5,6 +5,9 @@ pub struct SchemaFile {
     pub package: String,
 
     #[serde(default)]
+    pub codegen: CodegenSchema,
+
+    #[serde(default)]
     pub includes: Vec<String>,
 
     #[serde(default)]
@@ -18,6 +21,34 @@ pub struct SchemaFile {
 
     #[serde(default)]
     pub tables: Vec<TableSchema>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Default)]
+pub struct CodegenSchema {
+    #[serde(default)]
+    pub rust: RustCodegenSchema,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
+pub struct RustCodegenSchema {
+    #[serde(default)]
+    pub map_type: RustMapTypeSchema,
+}
+
+impl Default for RustCodegenSchema {
+    fn default() -> Self {
+        Self {
+            map_type: RustMapTypeSchema::Std,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, Default)]
+#[serde(rename_all = "snake_case")]
+pub enum RustMapTypeSchema {
+    #[default]
+    Std,
+    FxHashMap,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
@@ -165,6 +196,7 @@ suffix = "]"
         .expect("schema should parse");
 
         assert_eq!(schema.package, "game_config");
+        assert_eq!(schema.codegen.rust.map_type, RustMapTypeSchema::Std);
         assert!(schema.includes.is_empty());
         assert_eq!(schema.enums[0].name, "ItemType");
         assert_eq!(schema.tables[0].mode, TableModeSchema::Map);
@@ -201,5 +233,20 @@ type = "string"
         assert!(schema.tables[0].indexes.is_empty());
         assert!(!schema.tables[0].fields[0].key);
         assert_eq!(schema.tables[0].fields[0].required, None);
+    }
+
+    #[test]
+    fn loads_codegen_options() {
+        let schema: SchemaFile = toml::from_str(
+            r#"
+package = "game_config"
+
+[codegen.rust]
+map_type = "fx_hash_map"
+"#,
+        )
+        .expect("schema should parse");
+
+        assert_eq!(schema.codegen.rust.map_type, RustMapTypeSchema::FxHashMap);
     }
 }

@@ -5,10 +5,51 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ConfigIr {
     pub package: String,
+    #[serde(default, skip_serializing_if = "CodegenIr::is_default")]
+    pub codegen: CodegenIr,
     pub enums: Vec<EnumIr>,
     pub structs: Vec<StructIr>,
     pub unions: Vec<UnionIr>,
     pub tables: Vec<TableIr>,
+}
+
+impl ConfigIr {
+    pub fn data_schema(&self) -> Self {
+        let mut schema = self.clone();
+        schema.codegen = CodegenIr::default();
+        schema
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
+pub struct CodegenIr {
+    pub rust: RustCodegenIr,
+}
+
+impl CodegenIr {
+    pub fn is_default(&self) -> bool {
+        self == &Self::default()
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct RustCodegenIr {
+    pub map_type: RustMapTypeIr,
+}
+
+impl Default for RustCodegenIr {
+    fn default() -> Self {
+        Self {
+            map_type: RustMapTypeIr::Std,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
+pub enum RustMapTypeIr {
+    #[default]
+    Std,
+    FxHashMap,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]

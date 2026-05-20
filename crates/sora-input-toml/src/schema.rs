@@ -6,7 +6,9 @@ use std::{
 
 use serde::Deserialize;
 use sora_diagnostics::{Result, SoraError};
-use sora_schema::model::{EnumSchema, SchemaFile, StructSchema, TableSchema, UnionSchema};
+use sora_schema::model::{
+    CodegenSchema, EnumSchema, SchemaFile, StructSchema, TableSchema, UnionSchema,
+};
 
 pub fn load_project_schema_file(path: &Path) -> Result<SchemaFile> {
     let mut visited = BTreeSet::new();
@@ -19,6 +21,7 @@ pub fn load_project_schema_file(path: &Path) -> Result<SchemaFile> {
     })?;
     let mut merged = SchemaFile {
         package,
+        codegen: root.codegen.unwrap_or_default(),
         includes: root.includes.clone(),
         enums: root.enums,
         structs: root.structs,
@@ -57,6 +60,12 @@ fn merge_includes(
                 include_path.display()
             )));
         }
+        if module.codegen.is_some() {
+            return Err(SoraError::InvalidSchema(format!(
+                "included schema module `{}` must not declare `codegen`",
+                include_path.display()
+            )));
+        }
 
         merged.enums.extend(module.enums);
         merged.structs.extend(module.structs);
@@ -83,6 +92,7 @@ fn load_schema_document(path: &Path) -> Result<TomlSchemaDocument> {
 #[derive(Debug, Deserialize)]
 struct TomlSchemaDocument {
     pub package: Option<String>,
+    pub codegen: Option<CodegenSchema>,
 
     #[serde(default)]
     pub includes: Vec<String>,
@@ -118,6 +128,9 @@ mod tests {
             r#"
 package = "game_config"
 includes = ["schema/items.toml"]
+
+[codegen.rust]
+map_type = "fx_hash_map"
 "#,
         )
         .unwrap();
@@ -139,6 +152,10 @@ key = "id"
         let schema = load_project_schema_file(&project_path).unwrap();
 
         assert_eq!(schema.package, "game_config");
+        assert_eq!(
+            schema.codegen.rust.map_type,
+            sora_schema::model::RustMapTypeSchema::FxHashMap
+        );
         assert_eq!(schema.includes, ["schema/items.toml"]);
         assert_eq!(schema.enums[0].name, "ItemType");
         assert_eq!(schema.tables[0].name, "Item");

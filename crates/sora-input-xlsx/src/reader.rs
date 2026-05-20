@@ -35,6 +35,7 @@ pub fn load_xlsx_table_data(table: &TableIr, path: &Path, sheet: &str) -> Result
     load_xlsx_table_data_from_range(
         &ConfigIr {
             package: String::new(),
+            codegen: Default::default(),
             enums: Vec::new(),
             structs: Vec::new(),
             unions: Vec::new(),

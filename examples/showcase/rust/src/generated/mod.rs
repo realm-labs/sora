@@ -43,9 +43,10 @@ pub mod stat_modifier;
 pub mod stat_type;
 pub mod vec3;
 pub mod vip_level;
+pub type SoraMap<K, V> = rustc_hash::FxHashMap<K, V>;
 
 pub struct SoraConfig {
-    tables: std::collections::HashMap<&'static str, Box<dyn std::any::Any + Send + Sync>>,
+    tables: SoraMap<&'static str, Box<dyn std::any::Any + Send + Sync>>,
 }
 
 impl std::fmt::Debug for SoraConfig {
@@ -59,7 +60,7 @@ impl std::fmt::Debug for SoraConfig {
 }
 
 #[derive(Debug, Clone)]
-pub struct ItemTable(std::collections::HashMap<i32, item::Item>);
+pub struct ItemTable(SoraMap<i32, item::Item>);
 
 impl ItemTable {
     fn decode(bundle: &runtime::SoraBundle<'_>) -> Result<Self, runtime::SoraReadError> {
@@ -74,7 +75,7 @@ impl ItemTable {
 }
 
 impl std::ops::Deref for ItemTable {
-    type Target = std::collections::HashMap<i32, item::Item>;
+    type Target = SoraMap<i32, item::Item>;
 
     fn deref(&self) -> &Self::Target {
         &self.0
@@ -82,7 +83,7 @@ impl std::ops::Deref for ItemTable {
 }
 
 #[derive(Debug, Clone)]
-pub struct SkillTable(std::collections::HashMap<i32, skill::Skill>);
+pub struct SkillTable(SoraMap<i32, skill::Skill>);
 
 impl SkillTable {
     fn decode(bundle: &runtime::SoraBundle<'_>) -> Result<Self, runtime::SoraReadError> {
@@ -97,7 +98,7 @@ impl SkillTable {
 }
 
 impl std::ops::Deref for SkillTable {
-    type Target = std::collections::HashMap<i32, skill::Skill>;
+    type Target = SoraMap<i32, skill::Skill>;
 
     fn deref(&self) -> &Self::Target {
         &self.0
@@ -105,7 +106,7 @@ impl std::ops::Deref for SkillTable {
 }
 
 #[derive(Debug, Clone)]
-pub struct QuestTable(std::collections::HashMap<i32, quest::Quest>);
+pub struct QuestTable(SoraMap<i32, quest::Quest>);
 
 impl QuestTable {
     fn decode(bundle: &runtime::SoraBundle<'_>) -> Result<Self, runtime::SoraReadError> {
@@ -120,7 +121,7 @@ impl QuestTable {
 }
 
 impl std::ops::Deref for QuestTable {
-    type Target = std::collections::HashMap<i32, quest::Quest>;
+    type Target = SoraMap<i32, quest::Quest>;
 
     fn deref(&self) -> &Self::Target {
         &self.0
@@ -167,7 +168,7 @@ impl std::ops::Deref for GameSettingsTable {
 }
 
 #[derive(Debug, Clone)]
-pub struct LocalizationTable(std::collections::HashMap<String, localization::Localization>);
+pub struct LocalizationTable(SoraMap<String, localization::Localization>);
 
 impl LocalizationTable {
     fn decode(bundle: &runtime::SoraBundle<'_>) -> Result<Self, runtime::SoraReadError> {
@@ -182,7 +183,7 @@ impl LocalizationTable {
 }
 
 impl std::ops::Deref for LocalizationTable {
-    type Target = std::collections::HashMap<String, localization::Localization>;
+    type Target = SoraMap<String, localization::Localization>;
 
     fn deref(&self) -> &Self::Target {
         &self.0
@@ -190,7 +191,7 @@ impl std::ops::Deref for LocalizationTable {
 }
 
 #[derive(Debug, Clone)]
-pub struct LevelExpTable(std::collections::HashMap<i32, level_exp::LevelExp>);
+pub struct LevelExpTable(SoraMap<i32, level_exp::LevelExp>);
 
 impl LevelExpTable {
     fn decode(bundle: &runtime::SoraBundle<'_>) -> Result<Self, runtime::SoraReadError> {
@@ -205,7 +206,7 @@ impl LevelExpTable {
 }
 
 impl std::ops::Deref for LevelExpTable {
-    type Target = std::collections::HashMap<i32, level_exp::LevelExp>;
+    type Target = SoraMap<i32, level_exp::LevelExp>;
 
     fn deref(&self) -> &Self::Target {
         &self.0
@@ -213,7 +214,7 @@ impl std::ops::Deref for LevelExpTable {
 }
 
 #[derive(Debug, Clone)]
-pub struct CharacterTable(std::collections::HashMap<i32, character::Character>);
+pub struct CharacterTable(SoraMap<i32, character::Character>);
 
 impl CharacterTable {
     fn decode(bundle: &runtime::SoraBundle<'_>) -> Result<Self, runtime::SoraReadError> {
@@ -228,7 +229,7 @@ impl CharacterTable {
 }
 
 impl std::ops::Deref for CharacterTable {
-    type Target = std::collections::HashMap<i32, character::Character>;
+    type Target = SoraMap<i32, character::Character>;
 
     fn deref(&self) -> &Self::Target {
         &self.0
@@ -255,7 +256,7 @@ impl std::ops::Deref for CharacterSkillTable {
 }
 
 #[derive(Debug, Clone)]
-pub struct BuffTable(std::collections::HashMap<i32, buff::Buff>);
+pub struct BuffTable(SoraMap<i32, buff::Buff>);
 
 impl BuffTable {
     fn decode(bundle: &runtime::SoraBundle<'_>) -> Result<Self, runtime::SoraReadError> {
@@ -270,7 +271,7 @@ impl BuffTable {
 }
 
 impl std::ops::Deref for BuffTable {
-    type Target = std::collections::HashMap<i32, buff::Buff>;
+    type Target = SoraMap<i32, buff::Buff>;
 
     fn deref(&self) -> &Self::Target {
         &self.0
@@ -278,7 +279,7 @@ impl std::ops::Deref for BuffTable {
 }
 
 #[derive(Debug, Clone)]
-pub struct DropGroupTable(std::collections::HashMap<i32, drop_group::DropGroup>);
+pub struct DropGroupTable(SoraMap<i32, drop_group::DropGroup>);
 
 impl DropGroupTable {
     fn decode(bundle: &runtime::SoraBundle<'_>) -> Result<Self, runtime::SoraReadError> {
@@ -293,7 +294,7 @@ impl DropGroupTable {
 }
 
 impl std::ops::Deref for DropGroupTable {
-    type Target = std::collections::HashMap<i32, drop_group::DropGroup>;
+    type Target = SoraMap<i32, drop_group::DropGroup>;
 
     fn deref(&self) -> &Self::Target {
         &self.0
@@ -320,7 +321,7 @@ impl std::ops::Deref for DropEntryTable {
 }
 
 #[derive(Debug, Clone)]
-pub struct MonsterTable(std::collections::HashMap<i32, monster::Monster>);
+pub struct MonsterTable(SoraMap<i32, monster::Monster>);
 
 impl MonsterTable {
     fn decode(bundle: &runtime::SoraBundle<'_>) -> Result<Self, runtime::SoraReadError> {
@@ -335,7 +336,7 @@ impl MonsterTable {
 }
 
 impl std::ops::Deref for MonsterTable {
-    type Target = std::collections::HashMap<i32, monster::Monster>;
+    type Target = SoraMap<i32, monster::Monster>;
 
     fn deref(&self) -> &Self::Target {
         &self.0
@@ -343,7 +344,7 @@ impl std::ops::Deref for MonsterTable {
 }
 
 #[derive(Debug, Clone)]
-pub struct StageTable(std::collections::HashMap<i32, stage::Stage>);
+pub struct StageTable(SoraMap<i32, stage::Stage>);
 
 impl StageTable {
     fn decode(bundle: &runtime::SoraBundle<'_>) -> Result<Self, runtime::SoraReadError> {
@@ -358,7 +359,7 @@ impl StageTable {
 }
 
 impl std::ops::Deref for StageTable {
-    type Target = std::collections::HashMap<i32, stage::Stage>;
+    type Target = SoraMap<i32, stage::Stage>;
 
     fn deref(&self) -> &Self::Target {
         &self.0
@@ -385,7 +386,7 @@ impl std::ops::Deref for StageRewardTable {
 }
 
 #[derive(Debug, Clone)]
-pub struct DungeonTable(std::collections::HashMap<i32, dungeon::Dungeon>);
+pub struct DungeonTable(SoraMap<i32, dungeon::Dungeon>);
 
 impl DungeonTable {
     fn decode(bundle: &runtime::SoraBundle<'_>) -> Result<Self, runtime::SoraReadError> {
@@ -400,7 +401,7 @@ impl DungeonTable {
 }
 
 impl std::ops::Deref for DungeonTable {
-    type Target = std::collections::HashMap<i32, dungeon::Dungeon>;
+    type Target = SoraMap<i32, dungeon::Dungeon>;
 
     fn deref(&self) -> &Self::Target {
         &self.0
@@ -408,7 +409,7 @@ impl std::ops::Deref for DungeonTable {
 }
 
 #[derive(Debug, Clone)]
-pub struct ShopTable(std::collections::HashMap<i32, shop::Shop>);
+pub struct ShopTable(SoraMap<i32, shop::Shop>);
 
 impl ShopTable {
     fn decode(bundle: &runtime::SoraBundle<'_>) -> Result<Self, runtime::SoraReadError> {
@@ -423,7 +424,7 @@ impl ShopTable {
 }
 
 impl std::ops::Deref for ShopTable {
-    type Target = std::collections::HashMap<i32, shop::Shop>;
+    type Target = SoraMap<i32, shop::Shop>;
 
     fn deref(&self) -> &Self::Target {
         &self.0
@@ -450,7 +451,7 @@ impl std::ops::Deref for ShopItemTable {
 }
 
 #[derive(Debug, Clone)]
-pub struct RecipeTable(std::collections::HashMap<i32, recipe::Recipe>);
+pub struct RecipeTable(SoraMap<i32, recipe::Recipe>);
 
 impl RecipeTable {
     fn decode(bundle: &runtime::SoraBundle<'_>) -> Result<Self, runtime::SoraReadError> {
@@ -465,7 +466,7 @@ impl RecipeTable {
 }
 
 impl std::ops::Deref for RecipeTable {
-    type Target = std::collections::HashMap<i32, recipe::Recipe>;
+    type Target = SoraMap<i32, recipe::Recipe>;
 
     fn deref(&self) -> &Self::Target {
         &self.0
@@ -473,7 +474,7 @@ impl std::ops::Deref for RecipeTable {
 }
 
 #[derive(Debug, Clone)]
-pub struct GachaPoolTable(std::collections::HashMap<i32, gacha_pool::GachaPool>);
+pub struct GachaPoolTable(SoraMap<i32, gacha_pool::GachaPool>);
 
 impl GachaPoolTable {
     fn decode(bundle: &runtime::SoraBundle<'_>) -> Result<Self, runtime::SoraReadError> {
@@ -488,7 +489,7 @@ impl GachaPoolTable {
 }
 
 impl std::ops::Deref for GachaPoolTable {
-    type Target = std::collections::HashMap<i32, gacha_pool::GachaPool>;
+    type Target = SoraMap<i32, gacha_pool::GachaPool>;
 
     fn deref(&self) -> &Self::Target {
         &self.0
@@ -515,7 +516,7 @@ impl std::ops::Deref for GachaItemTable {
 }
 
 #[derive(Debug, Clone)]
-pub struct EquipmentSetTable(std::collections::HashMap<i32, equipment_set::EquipmentSet>);
+pub struct EquipmentSetTable(SoraMap<i32, equipment_set::EquipmentSet>);
 
 impl EquipmentSetTable {
     fn decode(bundle: &runtime::SoraBundle<'_>) -> Result<Self, runtime::SoraReadError> {
@@ -530,7 +531,7 @@ impl EquipmentSetTable {
 }
 
 impl std::ops::Deref for EquipmentSetTable {
-    type Target = std::collections::HashMap<i32, equipment_set::EquipmentSet>;
+    type Target = SoraMap<i32, equipment_set::EquipmentSet>;
 
     fn deref(&self) -> &Self::Target {
         &self.0
@@ -538,7 +539,7 @@ impl std::ops::Deref for EquipmentSetTable {
 }
 
 #[derive(Debug, Clone)]
-pub struct AchievementTable(std::collections::HashMap<i32, achievement::Achievement>);
+pub struct AchievementTable(SoraMap<i32, achievement::Achievement>);
 
 impl AchievementTable {
     fn decode(bundle: &runtime::SoraBundle<'_>) -> Result<Self, runtime::SoraReadError> {
@@ -553,7 +554,7 @@ impl AchievementTable {
 }
 
 impl std::ops::Deref for AchievementTable {
-    type Target = std::collections::HashMap<i32, achievement::Achievement>;
+    type Target = SoraMap<i32, achievement::Achievement>;
 
     fn deref(&self) -> &Self::Target {
         &self.0
@@ -561,7 +562,7 @@ impl std::ops::Deref for AchievementTable {
 }
 
 #[derive(Debug, Clone)]
-pub struct VipLevelTable(std::collections::HashMap<i32, vip_level::VipLevel>);
+pub struct VipLevelTable(SoraMap<i32, vip_level::VipLevel>);
 
 impl VipLevelTable {
     fn decode(bundle: &runtime::SoraBundle<'_>) -> Result<Self, runtime::SoraReadError> {
@@ -576,7 +577,7 @@ impl VipLevelTable {
 }
 
 impl std::ops::Deref for VipLevelTable {
-    type Target = std::collections::HashMap<i32, vip_level::VipLevel>;
+    type Target = SoraMap<i32, vip_level::VipLevel>;
 
     fn deref(&self) -> &Self::Target {
         &self.0
@@ -584,7 +585,7 @@ impl std::ops::Deref for VipLevelTable {
 }
 
 #[derive(Debug, Clone)]
-pub struct MailTemplateTable(std::collections::HashMap<i32, mail_template::MailTemplate>);
+pub struct MailTemplateTable(SoraMap<i32, mail_template::MailTemplate>);
 
 impl MailTemplateTable {
     fn decode(bundle: &runtime::SoraBundle<'_>) -> Result<Self, runtime::SoraReadError> {
@@ -599,7 +600,7 @@ impl MailTemplateTable {
 }
 
 impl std::ops::Deref for MailTemplateTable {
-    type Target = std::collections::HashMap<i32, mail_template::MailTemplate>;
+    type Target = SoraMap<i32, mail_template::MailTemplate>;
 
     fn deref(&self) -> &Self::Target {
         &self.0
@@ -626,7 +627,7 @@ impl std::ops::Deref for MailRewardTable {
 }
 
 #[derive(Debug, Clone)]
-pub struct DialogueTable(std::collections::HashMap<i32, dialogue::Dialogue>);
+pub struct DialogueTable(SoraMap<i32, dialogue::Dialogue>);
 
 impl DialogueTable {
     fn decode(bundle: &runtime::SoraBundle<'_>) -> Result<Self, runtime::SoraReadError> {
@@ -641,7 +642,7 @@ impl DialogueTable {
 }
 
 impl std::ops::Deref for DialogueTable {
-    type Target = std::collections::HashMap<i32, dialogue::Dialogue>;
+    type Target = SoraMap<i32, dialogue::Dialogue>;
 
     fn deref(&self) -> &Self::Target {
         &self.0
@@ -649,7 +650,7 @@ impl std::ops::Deref for DialogueTable {
 }
 
 #[derive(Debug, Clone)]
-pub struct EventRuleTable(std::collections::HashMap<i32, event_rule::EventRule>);
+pub struct EventRuleTable(SoraMap<i32, event_rule::EventRule>);
 
 impl EventRuleTable {
     fn decode(bundle: &runtime::SoraBundle<'_>) -> Result<Self, runtime::SoraReadError> {
@@ -664,7 +665,7 @@ impl EventRuleTable {
 }
 
 impl std::ops::Deref for EventRuleTable {
-    type Target = std::collections::HashMap<i32, event_rule::EventRule>;
+    type Target = SoraMap<i32, event_rule::EventRule>;
 
     fn deref(&self) -> &Self::Target {
         &self.0
@@ -674,10 +675,8 @@ impl std::ops::Deref for EventRuleTable {
 impl SoraConfig {
     pub fn from_bytes(bytes: &[u8]) -> Result<Self, runtime::SoraReadError> {
         let bundle = runtime::SoraBundle::parse(bytes)?;
-        let mut tables: std::collections::HashMap<
-            &'static str,
-            Box<dyn std::any::Any + Send + Sync>,
-        > = std::collections::HashMap::with_capacity(28);
+        let mut tables: SoraMap<&'static str, Box<dyn std::any::Any + Send + Sync>> =
+            sora_map_with_capacity(28);
         tables.insert("Item", Box::new(ItemTable::decode(&bundle)?));
         tables.insert("Skill", Box::new(SkillTable::decode(&bundle)?));
         tables.insert("Quest", Box::new(QuestTable::decode(&bundle)?));
@@ -849,7 +848,14 @@ impl SoraConfig {
     }
 }
 
-fn decode_map_table<K, V>(rows: Vec<V>, key: impl Fn(&V) -> K) -> std::collections::HashMap<K, V>
+fn sora_map_with_capacity<K, V>(capacity: usize) -> SoraMap<K, V>
+where
+    K: std::cmp::Eq + std::hash::Hash,
+{
+    SoraMap::with_capacity_and_hasher(capacity, Default::default())
+}
+
+fn decode_map_table<K, V>(rows: Vec<V>, key: impl Fn(&V) -> K) -> SoraMap<K, V>
 where
     K: std::cmp::Eq + std::hash::Hash,
 {

@@ -16,11 +16,12 @@ pub struct SchemaLock {
 
 impl SchemaLock {
     pub fn from_ir(ir: &ConfigIr) -> Result<Self> {
+        let schema = ir.data_schema();
         Ok(Self {
             version: SCHEMA_LOCK_VERSION,
             package: ir.package.clone(),
-            fingerprint: schema_fingerprint(ir)?,
-            schema: ir.clone(),
+            fingerprint: schema_fingerprint(&schema)?,
+            schema,
         })
     }
 }

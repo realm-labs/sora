@@ -5,8 +5,14 @@ pub mod runtime;
 pub mod {{ module }};
 {%- endfor %}
 
+{%- if model.rust_map_type == "fx_hash_map" %}
+pub type SoraMap<K, V> = rustc_hash::FxHashMap<K, V>;
+{%- else %}
+pub type SoraMap<K, V> = std::collections::HashMap<K, V>;
+{%- endif %}
+
 pub struct SoraConfig {
-    tables: std::collections::HashMap<&'static str, Box<dyn std::any::Any + Send + Sync>>,
+    tables: SoraMap<&'static str, Box<dyn std::any::Any + Send + Sync>>,
 }
 
 impl std::fmt::Debug for SoraConfig {
@@ -64,8 +70,8 @@ impl std::ops::Deref for {{ table.pascal_name }}Table {
 impl SoraConfig {
     pub fn from_bytes(bytes: &[u8]) -> Result<Self, runtime::SoraReadError> {
         let bundle = runtime::SoraBundle::parse(bytes)?;
-        let mut tables: std::collections::HashMap<&'static str, Box<dyn std::any::Any + Send + Sync>> =
-            std::collections::HashMap::with_capacity({{ model.tables | length }});
+        let mut tables: SoraMap<&'static str, Box<dyn std::any::Any + Send + Sync>> =
+            sora_map_with_capacity({{ model.tables | length }});
 {%- for table in model.tables %}
         tables.insert("{{ table.name }}", Box::new({{ table.pascal_name }}Table::decode(&bundle)?));
 {%- endfor %}
@@ -91,9 +97,20 @@ impl SoraConfig {
 {%- endfor %}
 }
 
+fn sora_map_with_capacity<K, V>(capacity: usize) -> SoraMap<K, V>
+where
+    K: std::cmp::Eq + std::hash::Hash,
+{
+{%- if model.rust_map_type == "fx_hash_map" %}
+    SoraMap::with_capacity_and_hasher(capacity, Default::default())
+{%- else %}
+    SoraMap::with_capacity(capacity)
+{%- endif %}
+}
+
 {%- if model.has_map_tables %}
 
-fn decode_map_table<K, V>(rows: Vec<V>, key: impl Fn(&V) -> K) -> std::collections::HashMap<K, V>
+fn decode_map_table<K, V>(rows: Vec<V>, key: impl Fn(&V) -> K) -> SoraMap<K, V>
 where
     K: std::cmp::Eq + std::hash::Hash,
 {

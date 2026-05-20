@@ -1,7 +1,7 @@
 use heck::{ToLowerCamelCase, ToPascalCase, ToSnakeCase};
 use serde::Serialize;
 use sora_diagnostics::Result;
-use sora_ir::model::{ConfigIr, FieldIr, TableIr, TableModeIr, TypeIr};
+use sora_ir::model::{ConfigIr, FieldIr, RustMapTypeIr, TableIr, TableModeIr, TypeIr};
 
 use crate::types::{kotlin_type_name, rust_type_name};
 
@@ -15,6 +15,7 @@ pub struct CodegenModel {
     pub modules: Vec<String>,
     pub has_map_tables: bool,
     pub has_singleton_tables: bool,
+    pub rust_map_type: String,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -137,6 +138,11 @@ pub fn build_model(ir: &ConfigIr) -> Result<CodegenModel> {
             .iter()
             .any(|table| table.mode == "map" && table.key_rust_name.is_some()),
         has_singleton_tables: tables.iter().any(|table| table.mode == "singleton"),
+        rust_map_type: match ir.codegen.rust.map_type {
+            RustMapTypeIr::Std => "std",
+            RustMapTypeIr::FxHashMap => "fx_hash_map",
+        }
+        .to_owned(),
         tables,
         modules,
     })
@@ -209,9 +215,7 @@ fn build_table(ir: &ConfigIr, table: &TableIr) -> Result<CodegenTable> {
     let rust_container_type = match table.mode {
         TableModeIr::List => format!("Vec<{rust_row_type}>"),
         TableModeIr::Map => match &key_field {
-            Some((_, _, key_type, _, _)) => {
-                format!("std::collections::HashMap<{key_type}, {rust_row_type}>")
-            }
+            Some((_, _, key_type, _, _)) => format!("SoraMap<{key_type}, {rust_row_type}>"),
             None => format!("Vec<{rust_row_type}>"),
         },
         TableModeIr::Singleton => rust_row_type.clone(),

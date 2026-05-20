@@ -21,18 +21,20 @@ impl<'a> BinaryEncoder<'a> {
     }
 
     pub(crate) fn encode(&self) -> Result<Vec<u8>> {
+        let schema = self.ir.data_schema();
         let mut sections = Vec::new();
         sections.push(Section {
             kind: SECTION_KIND_MANIFEST,
             compression: COMPRESSION_NONE,
             name: "$manifest".to_owned(),
-            payload: serde_json::to_vec(&self.manifest()?).map_err(SoraError::SerializeData)?,
+            payload: serde_json::to_vec(&self.manifest(&schema)?)
+                .map_err(SoraError::SerializeData)?,
         });
         sections.push(Section {
             kind: SECTION_KIND_SCHEMA,
             compression: COMPRESSION_NONE,
             name: "$schema".to_owned(),
-            payload: serde_json::to_vec(self.ir).map_err(SoraError::SerializeData)?,
+            payload: serde_json::to_vec(&schema).map_err(SoraError::SerializeData)?,
         });
 
         for table in &self.ir.tables {
@@ -48,8 +50,8 @@ impl<'a> BinaryEncoder<'a> {
         encode_bundle(sections)
     }
 
-    fn manifest(&self) -> Result<BundleManifest> {
-        let schema_bytes = serde_json::to_vec(self.ir).map_err(SoraError::SerializeData)?;
+    fn manifest(&self, schema: &ConfigIr) -> Result<BundleManifest> {
+        let schema_bytes = serde_json::to_vec(schema).map_err(SoraError::SerializeData)?;
         let mut tables = Vec::new();
         for table in &self.ir.tables {
             let table_data = self.table_data(&table.name)?;

@@ -108,12 +108,12 @@ mod tests {
         assert!(rust_runtime.contains("pub struct SoraBundle"));
         assert!(rust_mod.contains("pub struct SoraConfig"));
         assert!(rust_mod.contains("from_bytes"));
-        assert!(rust_mod.contains(
-            "tables: std::collections::HashMap<&'static str, Box<dyn std::any::Any + Send + Sync>>"
-        ));
+        assert!(rust_mod.contains("pub type SoraMap<K, V> = std::collections::HashMap<K, V>;"));
         assert!(
-            rust_mod.contains("pub struct ItemTable(std::collections::HashMap<i32, item::Item>)")
+            rust_mod
+                .contains("tables: SoraMap<&'static str, Box<dyn std::any::Any + Send + Sync>>")
         );
+        assert!(rust_mod.contains("pub struct ItemTable(SoraMap<i32, item::Item>)"));
         assert!(rust_mod.contains("impl std::ops::Deref for ItemTable"));
         assert!(
             rust_mod.contains("tables.insert(\"Item\", Box::new(ItemTable::decode(&bundle)?));")
@@ -151,14 +151,32 @@ mod tests {
         RustCodeGenerator.generate(&ir, &rust_out).unwrap();
 
         let rust_mod = std::fs::read_to_string(rust_out.join("mod.rs")).unwrap();
-        assert!(
-            rust_mod.contains("pub struct ItemTable(std::collections::HashMap<i32, item::Item>)")
-        );
+        assert!(rust_mod.contains("pub struct ItemTable(SoraMap<i32, item::Item>)"));
         assert!(rust_mod.contains("pub struct SettingsTable(settings::Settings)"));
         assert!(rust_mod.contains("pub fn item(&self) -> &ItemTable"));
         assert!(rust_mod.contains("pub fn settings(&self) -> &SettingsTable"));
         assert!(!rust_mod.contains("pub fn settings_row"));
         assert!(rust_mod.contains("decode_singleton_table"));
+
+        let _ = std::fs::remove_dir_all(base);
+    }
+
+    #[test]
+    fn rust_config_api_can_use_fx_hash_map() {
+        let mut ir = example_ir();
+        ir.codegen.rust.map_type = sora_ir::model::RustMapTypeIr::FxHashMap;
+        let base = temp_dir();
+        let rust_out = base.join("rust");
+
+        RustCodeGenerator.generate(&ir, &rust_out).unwrap();
+
+        let rust_mod = std::fs::read_to_string(rust_out.join("mod.rs")).unwrap();
+        assert!(rust_mod.contains("pub type SoraMap<K, V> = rustc_hash::FxHashMap<K, V>;"));
+        assert!(rust_mod.contains("pub struct ItemTable(SoraMap<i32, item::Item>)"));
+        assert!(
+            rust_mod
+                .contains("tables: SoraMap<&'static str, Box<dyn std::any::Any + Send + Sync>>")
+        );
 
         let _ = std::fs::remove_dir_all(base);
     }

@@ -449,6 +449,7 @@ mod tests {
     fn field_note_text_includes_tuple_shape_without_comment() {
         let ir = ConfigIr {
             package: "game_config".to_owned(),
+            codegen: Default::default(),
             enums: vec![EnumIr {
                 name: "ResourceType".to_owned(),
                 values: vec!["Item".to_owned()],
@@ -530,6 +531,7 @@ mod tests {
     fn empty_ir() -> ConfigIr {
         ConfigIr {
             package: "game_config".to_owned(),
+            codegen: Default::default(),
             enums: Vec::new(),
             structs: Vec::new(),
             unions: Vec::new(),

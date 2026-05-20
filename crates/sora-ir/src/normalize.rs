@@ -1,13 +1,13 @@
 use sora_diagnostics::{Result, SoraError};
 use sora_schema::model::{
-    FieldSchema, IndexSchema, SchemaFile, TableModeSchema, TableSchema, TableSourceSchema,
-    UnionSchema, UnionVariantSchema,
+    CodegenSchema, FieldSchema, IndexSchema, RustMapTypeSchema, SchemaFile, TableModeSchema,
+    TableSchema, TableSourceSchema, UnionSchema, UnionVariantSchema,
 };
 
 use crate::{
     model::{
-        AggregationIr, ConfigIr, EnumIr, FieldIr, IndexIr, StructIr, TableIr, TableModeIr,
-        TableSourceIr, TypeIr, UnionIr, UnionVariantIr,
+        AggregationIr, CodegenIr, ConfigIr, EnumIr, FieldIr, IndexIr, RustCodegenIr, RustMapTypeIr,
+        StructIr, TableIr, TableModeIr, TableSourceIr, TypeIr, UnionIr, UnionVariantIr,
     },
     parse::parse_type,
 };
@@ -22,6 +22,7 @@ impl TryFrom<SchemaFile> for ConfigIr {
     fn try_from(schema: SchemaFile) -> Result<Self> {
         Ok(Self {
             package: schema.package,
+            codegen: CodegenIr::from(schema.codegen),
             enums: schema
                 .enums
                 .into_iter()
@@ -51,6 +52,19 @@ impl TryFrom<SchemaFile> for ConfigIr {
                 .map(TableIr::try_from)
                 .collect::<Result<Vec<_>>>()?,
         })
+    }
+}
+
+impl From<CodegenSchema> for CodegenIr {
+    fn from(value: CodegenSchema) -> Self {
+        Self {
+            rust: RustCodegenIr {
+                map_type: match value.rust.map_type {
+                    RustMapTypeSchema::Std => RustMapTypeIr::Std,
+                    RustMapTypeSchema::FxHashMap => RustMapTypeIr::FxHashMap,
+                },
+            },
+        }
     }
 }
 
