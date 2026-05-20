@@ -1,0 +1,25 @@
+package showcase
+
+type Recipe struct {
+	Id         int32
+	ResultItem int32
+	Materials  []ResourceCost
+}
+
+func decodeRecipe(reader *SoraReader) (Recipe, error) {
+	var value Recipe
+	var err error
+	value.Id, err = reader.ReadInt32()
+	if err != nil {
+		return value, err
+	}
+	value.ResultItem, err = reader.ReadInt32()
+	if err != nil {
+		return value, err
+	}
+	value.Materials, err = ReadList(reader, func(reader *SoraReader) (ResourceCost, error) { return decodeResourceCost(reader) })
+	if err != nil {
+		return value, err
+	}
+	return value, nil
+}

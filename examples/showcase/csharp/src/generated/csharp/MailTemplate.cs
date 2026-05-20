@@ -1,0 +1,25 @@
+#nullable enable
+
+using System.Collections.Generic;
+
+namespace com.sora.showcase;
+
+public sealed record MailTemplate(
+    int Id,
+    MailType MailType,
+    string TitleKey,
+    string BodyKey,
+    List<Reward> Rewards
+)
+{
+    internal static MailTemplate Decode(SoraReader reader)
+    {
+        return new MailTemplate(
+            reader.ReadInt32(),
+            MailTypeCodec.Decode(reader),
+            reader.ReadString(),
+            reader.ReadString(),
+            reader.ReadList(() => Reward.Decode(reader))
+        );
+    }
+}

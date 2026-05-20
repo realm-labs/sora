@@ -1,0 +1,24 @@
+#nullable enable
+
+namespace com.sora.showcase;
+
+public enum QuestType
+{
+    Main,
+    Side,
+    Daily,
+}
+
+internal static class QuestTypeCodec
+{
+    internal static QuestType Decode(SoraReader reader)
+    {
+        return reader.ReadUInt32() switch
+        {
+            0 => QuestType.Main,
+            1 => QuestType.Side,
+            2 => QuestType.Daily,
+            var value => throw new SoraReadException($"invalid enum ordinal {value} for QuestType"),
+        };
+    }
+}

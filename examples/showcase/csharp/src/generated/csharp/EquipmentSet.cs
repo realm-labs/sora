@@ -1,0 +1,23 @@
+#nullable enable
+
+using System.Collections.Generic;
+
+namespace com.sora.showcase;
+
+public sealed record EquipmentSet(
+    int Id,
+    string Name,
+    List<int> ItemIds,
+    SkillEffect BonusEffect
+)
+{
+    internal static EquipmentSet Decode(SoraReader reader)
+    {
+        return new EquipmentSet(
+            reader.ReadInt32(),
+            reader.ReadString(),
+            reader.ReadList(() => reader.ReadInt32()),
+            SkillEffect.Decode(reader)
+        );
+    }
+}

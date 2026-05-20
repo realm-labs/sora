@@ -1,0 +1,23 @@
+package com.sora.showcase;
+
+public enum ElementType {
+    Fire,
+    Ice,
+    Lightning,
+    Physical;
+
+    static ElementType decode(SoraReader reader) {
+        switch (reader.readU32()) {
+            case 0:
+                return Fire;
+            case 1:
+                return Ice;
+            case 2:
+                return Lightning;
+            case 3:
+                return Physical;
+            default:
+                throw new SoraReadException("invalid enum ordinal for ElementType");
+        }
+    }
+}

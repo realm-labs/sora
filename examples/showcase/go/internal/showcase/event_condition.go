@@ -1,0 +1,60 @@
+package showcase
+
+import "fmt"
+
+type EventCondition interface {
+	isEventCondition()
+}
+type EventConditionLevelAtLeast struct {
+	Level int32
+}
+
+func (EventConditionLevelAtLeast) isEventCondition() {}
+
+type EventConditionQuestCompleted struct {
+	QuestId int32
+}
+
+func (EventConditionQuestCompleted) isEventCondition() {}
+
+type EventConditionHasItem struct {
+	ItemId int32
+	Count  int32
+}
+
+func (EventConditionHasItem) isEventCondition() {}
+func decodeEventCondition(reader *SoraReader) (EventCondition, error) {
+	ordinal, err := reader.ReadUInt32()
+	if err != nil {
+		return nil, err
+	}
+	switch ordinal {
+	case 0:
+		var value EventConditionLevelAtLeast
+		value.Level, err = reader.ReadInt32()
+		if err != nil {
+			return nil, err
+		}
+		return value, nil
+	case 1:
+		var value EventConditionQuestCompleted
+		value.QuestId, err = reader.ReadInt32()
+		if err != nil {
+			return nil, err
+		}
+		return value, nil
+	case 2:
+		var value EventConditionHasItem
+		value.ItemId, err = reader.ReadInt32()
+		if err != nil {
+			return nil, err
+		}
+		value.Count, err = reader.ReadInt32()
+		if err != nil {
+			return nil, err
+		}
+		return value, nil
+	default:
+		return nil, fmt.Errorf("invalid union ordinal %d for EventCondition", ordinal)
+	}
+}

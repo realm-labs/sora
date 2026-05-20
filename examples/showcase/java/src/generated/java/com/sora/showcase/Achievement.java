@@ -1,0 +1,29 @@
+package com.sora.showcase;
+
+public final class Achievement {
+    public final Integer id;
+    public final String titleKey;
+    public final Long targetCount;
+    public final ResourceCost reward;
+
+    public Achievement(
+        Integer id,
+        String titleKey,
+        Long targetCount,
+        ResourceCost reward
+    ) {
+        this.id = id;
+        this.titleKey = titleKey;
+        this.targetCount = targetCount;
+        this.reward = reward;
+    }
+
+    static Achievement decode(SoraReader reader) {
+        return new Achievement(
+            reader.readI32(),
+            reader.readString(),
+            reader.readI64(),
+            ResourceCost.decode(reader)
+        );
+    }
+}

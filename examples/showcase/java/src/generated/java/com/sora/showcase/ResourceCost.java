@@ -1,0 +1,25 @@
+package com.sora.showcase;
+
+public final class ResourceCost {
+    public final ResourceKind kind;
+    public final Integer id;
+    public final Integer count;
+
+    public ResourceCost(
+        ResourceKind kind,
+        Integer id,
+        Integer count
+    ) {
+        this.kind = kind;
+        this.id = id;
+        this.count = count;
+    }
+
+    static ResourceCost decode(SoraReader reader) {
+        return new ResourceCost(
+            ResourceKind.decode(reader),
+            reader.readI32(),
+            reader.readI32()
+        );
+    }
+}

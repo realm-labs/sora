@@ -20,6 +20,9 @@ fn main() -> Result<()> {
     let generated_root = root.join("generated");
     let rust_generated = root.join("rust/src/generated");
     let kotlin_generated = root.join("kotlin/src/generated/kotlin");
+    let csharp_generated = root.join("csharp/src/generated/csharp");
+    let java_generated = root.join("java/src/generated/java");
+    let go_generated = root.join("go/internal/showcase");
 
     fs::create_dir_all(&data_root)
         .with_context(|| format!("failed to create `{}`", data_root.display()))?;
@@ -35,12 +38,18 @@ fn main() -> Result<()> {
 
     clean_dir(&rust_generated)?;
     clean_dir(&kotlin_generated)?;
+    clean_dir(&csharp_generated)?;
+    clean_dir(&java_generated)?;
+    clean_dir(&go_generated)?;
     clean_dir(&generated_root.join("debug-json"))?;
 
     sora_core::pipeline::check_schema(&schema_input)?;
     sora_core::pipeline::generate_schema_lock(&schema_input, &generated_root.join("schema.lock"))?;
     sora_core::pipeline::generate_code(&schema_input, CodegenTarget::Rust, &rust_generated)?;
     sora_core::pipeline::generate_code(&schema_input, CodegenTarget::Kotlin, &kotlin_generated)?;
+    sora_core::pipeline::generate_code(&schema_input, CodegenTarget::CSharp, &csharp_generated)?;
+    sora_core::pipeline::generate_code(&schema_input, CodegenTarget::Java, &java_generated)?;
+    sora_core::pipeline::generate_code(&schema_input, CodegenTarget::Go, &go_generated)?;
     sora_core::pipeline::export_data(
         &project_input,
         "binary",

@@ -1,0 +1,20 @@
+package com.sora.showcase;
+
+public enum QuestType {
+    Main,
+    Side,
+    Daily;
+
+    static QuestType decode(SoraReader reader) {
+        switch (reader.readU32()) {
+            case 0:
+                return Main;
+            case 1:
+                return Side;
+            case 2:
+                return Daily;
+            default:
+                throw new SoraReadException("invalid enum ordinal for QuestType");
+        }
+    }
+}

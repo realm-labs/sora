@@ -1,0 +1,26 @@
+package com.sora.showcase;
+
+public enum StatType {
+    Hp,
+    Attack,
+    Defense,
+    Speed,
+    CritRate;
+
+    static StatType decode(SoraReader reader) {
+        switch (reader.readU32()) {
+            case 0:
+                return Hp;
+            case 1:
+                return Attack;
+            case 2:
+                return Defense;
+            case 3:
+                return Speed;
+            case 4:
+                return CritRate;
+            default:
+                throw new SoraReadException("invalid enum ordinal for StatType");
+        }
+    }
+}

@@ -1,0 +1,26 @@
+package com.sora.showcase;
+
+public enum Rarity {
+    Common,
+    Uncommon,
+    Rare,
+    Epic,
+    Legendary;
+
+    static Rarity decode(SoraReader reader) {
+        switch (reader.readU32()) {
+            case 0:
+                return Common;
+            case 1:
+                return Uncommon;
+            case 2:
+                return Rare;
+            case 3:
+                return Epic;
+            case 4:
+                return Legendary;
+            default:
+                throw new SoraReadException("invalid enum ordinal for Rarity");
+        }
+    }
+}

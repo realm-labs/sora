@@ -11,6 +11,9 @@ and mixed map/list/singleton table modes.
 - Excel data: `data/Core.xlsx`, `data/Battle.xlsx`, `data/Economy.xlsx`, `data/Quest.xlsx`
 - Rust Cargo project: `rust`
 - Kotlin Gradle project: `kotlin`
+- C# .NET project: `csharp`
+- Java Gradle project: `java`
+- Go module: `go`
 - binary bundle: `generated/config.sora`
 - debug JSON: `generated/debug-json`
 - schema lock: `generated/schema.lock`
@@ -35,5 +38,27 @@ Run the Kotlin smoke example with the checked-in Gradle wrapper:
 ```powershell
 Push-Location examples/showcase/kotlin
 .\gradlew.bat run
+Pop-Location
+```
+
+Run the C# smoke example:
+
+```powershell
+dotnet run --project examples/showcase/csharp/SoraShowcase.csproj
+```
+
+Run the Java smoke example with the checked-in Gradle wrapper:
+
+```powershell
+Push-Location examples/showcase/java
+.\gradlew.bat run
+Pop-Location
+```
+
+Run the Go smoke example:
+
+```powershell
+Push-Location examples/showcase/go
+go run ./cmd/showcase
 Pop-Location
 ```

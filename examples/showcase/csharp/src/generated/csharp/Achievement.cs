@@ -1,0 +1,23 @@
+#nullable enable
+
+using System.Collections.Generic;
+
+namespace com.sora.showcase;
+
+public sealed record Achievement(
+    int Id,
+    string TitleKey,
+    long TargetCount,
+    ResourceCost Reward
+)
+{
+    internal static Achievement Decode(SoraReader reader)
+    {
+        return new Achievement(
+            reader.ReadInt32(),
+            reader.ReadString(),
+            reader.ReadInt64(),
+            ResourceCost.Decode(reader)
+        );
+    }
+}

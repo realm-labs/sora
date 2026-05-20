@@ -1,0 +1,29 @@
+package com.sora.showcase;
+
+public final class StageReward {
+    public final Integer stageId;
+    public final Integer seq;
+    public final Integer itemId;
+    public final Integer count;
+
+    public StageReward(
+        Integer stageId,
+        Integer seq,
+        Integer itemId,
+        Integer count
+    ) {
+        this.stageId = stageId;
+        this.seq = seq;
+        this.itemId = itemId;
+        this.count = count;
+    }
+
+    static StageReward decode(SoraReader reader) {
+        return new StageReward(
+            reader.readI32(),
+            reader.readI32(),
+            reader.readI32(),
+            reader.readI32()
+        );
+    }
+}

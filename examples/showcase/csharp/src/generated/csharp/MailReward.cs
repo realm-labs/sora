@@ -1,0 +1,23 @@
+#nullable enable
+
+using System.Collections.Generic;
+
+namespace com.sora.showcase;
+
+public sealed record MailReward(
+    int MailId,
+    int Seq,
+    int ItemId,
+    int Count
+)
+{
+    internal static MailReward Decode(SoraReader reader)
+    {
+        return new MailReward(
+            reader.ReadInt32(),
+            reader.ReadInt32(),
+            reader.ReadInt32(),
+            reader.ReadInt32()
+        );
+    }
+}

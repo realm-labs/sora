@@ -1,0 +1,33 @@
+package com.sora.showcase;
+
+public final class GameSettings {
+    public final String version;
+    public final Integer dailyResetHour;
+    public final Integer startingGold;
+    public final Vec3 spawnPos;
+    public final java.util.List<Integer> starterItems;
+
+    public GameSettings(
+        String version,
+        Integer dailyResetHour,
+        Integer startingGold,
+        Vec3 spawnPos,
+        java.util.List<Integer> starterItems
+    ) {
+        this.version = version;
+        this.dailyResetHour = dailyResetHour;
+        this.startingGold = startingGold;
+        this.spawnPos = spawnPos;
+        this.starterItems = starterItems;
+    }
+
+    static GameSettings decode(SoraReader reader) {
+        return new GameSettings(
+            reader.readString(),
+            reader.readI32(),
+            reader.readI32(),
+            Vec3.decode(reader),
+            reader.readList(() -> reader.readI32())
+        );
+    }
+}

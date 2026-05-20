@@ -1,0 +1,21 @@
+#nullable enable
+
+using System.Collections.Generic;
+
+namespace com.sora.showcase;
+
+public sealed record Dialogue(
+    int Id,
+    string SpeakerKey,
+    List<string> Lines
+)
+{
+    internal static Dialogue Decode(SoraReader reader)
+    {
+        return new Dialogue(
+            reader.ReadInt32(),
+            reader.ReadString(),
+            reader.ReadList(() => reader.ReadString())
+        );
+    }
+}

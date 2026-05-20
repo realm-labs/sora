@@ -1,0 +1,23 @@
+#nullable enable
+
+using System.Collections.Generic;
+
+namespace com.sora.showcase;
+
+public sealed record QuestReward(
+    int QuestId,
+    int Seq,
+    int ItemId,
+    int Count
+)
+{
+    internal static QuestReward Decode(SoraReader reader)
+    {
+        return new QuestReward(
+            reader.ReadInt32(),
+            reader.ReadInt32(),
+            reader.ReadInt32(),
+            reader.ReadInt32()
+        );
+    }
+}

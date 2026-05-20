@@ -1,0 +1,23 @@
+#nullable enable
+
+using System.Collections.Generic;
+
+namespace com.sora.showcase;
+
+public sealed record StageReward(
+    int StageId,
+    int Seq,
+    int ItemId,
+    int Count
+)
+{
+    internal static StageReward Decode(SoraReader reader)
+    {
+        return new StageReward(
+            reader.ReadInt32(),
+            reader.ReadInt32(),
+            reader.ReadInt32(),
+            reader.ReadInt32()
+        );
+    }
+}

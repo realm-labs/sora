@@ -1,0 +1,33 @@
+package com.sora.showcase;
+
+public final class DropEntry {
+    public final Integer groupId;
+    public final Integer seq;
+    public final Integer itemId;
+    public final Integer count;
+    public final Float weight;
+
+    public DropEntry(
+        Integer groupId,
+        Integer seq,
+        Integer itemId,
+        Integer count,
+        Float weight
+    ) {
+        this.groupId = groupId;
+        this.seq = seq;
+        this.itemId = itemId;
+        this.count = count;
+        this.weight = weight;
+    }
+
+    static DropEntry decode(SoraReader reader) {
+        return new DropEntry(
+            reader.readI32(),
+            reader.readI32(),
+            reader.readI32(),
+            reader.readI32(),
+            reader.readF32()
+        );
+    }
+}

@@ -1,0 +1,25 @@
+package com.sora.showcase;
+
+public final class GachaPool {
+    public final Integer id;
+    public final String name;
+    public final ResourceCost cost;
+
+    public GachaPool(
+        Integer id,
+        String name,
+        ResourceCost cost
+    ) {
+        this.id = id;
+        this.name = name;
+        this.cost = cost;
+    }
+
+    static GachaPool decode(SoraReader reader) {
+        return new GachaPool(
+            reader.readI32(),
+            reader.readString(),
+            ResourceCost.decode(reader)
+        );
+    }
+}

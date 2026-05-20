@@ -1,0 +1,19 @@
+#nullable enable
+
+using System.Collections.Generic;
+
+namespace com.sora.showcase;
+
+public sealed record Reward(
+    int ItemId,
+    int Count
+)
+{
+    internal static Reward Decode(SoraReader reader)
+    {
+        return new Reward(
+            reader.ReadInt32(),
+            reader.ReadInt32()
+        );
+    }
+}

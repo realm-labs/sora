@@ -1,0 +1,25 @@
+#nullable enable
+
+using System.Collections.Generic;
+
+namespace com.sora.showcase;
+
+public sealed record ShopItem(
+    int ShopId,
+    int Seq,
+    int ItemId,
+    ResourceCost Price,
+    int? DailyLimit
+)
+{
+    internal static ShopItem Decode(SoraReader reader)
+    {
+        return new ShopItem(
+            reader.ReadInt32(),
+            reader.ReadInt32(),
+            reader.ReadInt32(),
+            ResourceCost.Decode(reader),
+            reader.ReadOptional(() => reader.ReadInt32())
+        );
+    }
+}

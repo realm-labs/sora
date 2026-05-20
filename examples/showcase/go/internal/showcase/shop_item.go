@@ -1,0 +1,35 @@
+package showcase
+
+type ShopItem struct {
+	ShopId     int32
+	Seq        int32
+	ItemId     int32
+	Price      ResourceCost
+	DailyLimit *int32
+}
+
+func decodeShopItem(reader *SoraReader) (ShopItem, error) {
+	var value ShopItem
+	var err error
+	value.ShopId, err = reader.ReadInt32()
+	if err != nil {
+		return value, err
+	}
+	value.Seq, err = reader.ReadInt32()
+	if err != nil {
+		return value, err
+	}
+	value.ItemId, err = reader.ReadInt32()
+	if err != nil {
+		return value, err
+	}
+	value.Price, err = decodeResourceCost(reader)
+	if err != nil {
+		return value, err
+	}
+	value.DailyLimit, err = ReadOptional(reader, func(reader *SoraReader) (int32, error) { return reader.ReadInt32() })
+	if err != nil {
+		return value, err
+	}
+	return value, nil
+}

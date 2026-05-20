@@ -1,0 +1,53 @@
+package com.sora.showcase;
+
+public interface EventCondition {
+    final class LevelAtLeast implements EventCondition {
+        public final Integer level;
+
+        public LevelAtLeast(
+            Integer level
+        ) {
+            this.level = level;
+        }
+    }
+    final class QuestCompleted implements EventCondition {
+        public final Integer questId;
+
+        public QuestCompleted(
+            Integer questId
+        ) {
+            this.questId = questId;
+        }
+    }
+    final class HasItem implements EventCondition {
+        public final Integer itemId;
+        public final Integer count;
+
+        public HasItem(
+            Integer itemId,
+            Integer count
+        ) {
+            this.itemId = itemId;
+            this.count = count;
+        }
+    }
+    static EventCondition decode(SoraReader reader) {
+        switch (reader.readU32()) {
+            case 0:
+                return new LevelAtLeast(
+                    reader.readI32()
+                );
+            case 1:
+                return new QuestCompleted(
+                    reader.readI32()
+                );
+            case 2:
+                return new HasItem(
+                    reader.readI32(),
+                    reader.readI32()
+                );
+            default:
+                throw new SoraReadException("invalid union ordinal for EventCondition");
+        }
+    }
+}

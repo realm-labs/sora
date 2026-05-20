@@ -1,0 +1,27 @@
+#nullable enable
+
+using System.Collections.Generic;
+
+namespace com.sora.showcase;
+
+public sealed record Monster(
+    int Id,
+    string Name,
+    int Level,
+    ElementType Element,
+    int DropGroup,
+    Vec3 SpawnPos
+)
+{
+    internal static Monster Decode(SoraReader reader)
+    {
+        return new Monster(
+            reader.ReadInt32(),
+            reader.ReadString(),
+            reader.ReadInt32(),
+            ElementTypeCodec.Decode(reader),
+            reader.ReadInt32(),
+            Vec3.Decode(reader)
+        );
+    }
+}

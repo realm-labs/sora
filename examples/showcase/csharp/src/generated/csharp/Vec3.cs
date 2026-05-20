@@ -1,0 +1,21 @@
+#nullable enable
+
+using System.Collections.Generic;
+
+namespace com.sora.showcase;
+
+public sealed record Vec3(
+    float X,
+    float Y,
+    float Z
+)
+{
+    internal static Vec3 Decode(SoraReader reader)
+    {
+        return new Vec3(
+            reader.ReadFloat(),
+            reader.ReadFloat(),
+            reader.ReadFloat()
+        );
+    }
+}

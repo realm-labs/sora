@@ -1,0 +1,21 @@
+#nullable enable
+
+using System.Collections.Generic;
+
+namespace com.sora.showcase;
+
+public sealed record ResourceCost(
+    ResourceKind Kind,
+    int Id,
+    int Count
+)
+{
+    internal static ResourceCost Decode(SoraReader reader)
+    {
+        return new ResourceCost(
+            ResourceKindCodec.Decode(reader),
+            reader.ReadInt32(),
+            reader.ReadInt32()
+        );
+    }
+}
