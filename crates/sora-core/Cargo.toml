@@ -5,6 +5,8 @@ edition.workspace = true
 license.workspace = true
 
 [dependencies]
+serde.workspace = true
+serde_json.workspace = true
 sora-codegen.workspace = true
 sora-data.workspace = true
 sora-diagnostics.workspace = true

@@ -19,12 +19,16 @@ pub enum Command {
     },
     Export(ExportArgs),
     ExcelTemplate(ExcelTemplateArgs),
+    SchemaLock(SchemaLockArgs),
 }
 
 #[derive(Debug, Args)]
 pub struct CheckArgs {
     #[arg(long)]
     pub project: PathBuf,
+
+    #[arg(long)]
+    pub lock: Option<PathBuf>,
 }
 
 #[derive(Debug, Subcommand)]
@@ -69,6 +73,15 @@ pub enum DataFormat {
 
 #[derive(Debug, Args)]
 pub struct ExcelTemplateArgs {
+    #[arg(long)]
+    pub project: PathBuf,
+
+    #[arg(long)]
+    pub out: PathBuf,
+}
+
+#[derive(Debug, Args)]
+pub struct SchemaLockArgs {
     #[arg(long)]
     pub project: PathBuf,
 

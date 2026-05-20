@@ -7,6 +7,7 @@ use sora_input_xlsx::input::XlsxProjectInput;
 
 use crate::args::{
     CheckArgs, Command, DataFormat, ExcelTemplateArgs, ExportArgs, GenArgs, GenCommand,
+    SchemaLockArgs,
 };
 
 pub fn run(command: Command) -> Result<()> {
@@ -18,13 +19,25 @@ pub fn run(command: Command) -> Result<()> {
         },
         Command::Export(args) => export(args),
         Command::ExcelTemplate(args) => excel_template(args),
+        Command::SchemaLock(args) => schema_lock(args),
     }
 }
 
 fn check(args: CheckArgs) -> Result<()> {
     let input = TomlSchemaInput::new(&args.project);
-    sora_core::pipeline::check_schema(&input)
-        .with_context(|| format!("failed to check project `{}`", args.project.display()))
+    match &args.lock {
+        Some(lock) => {
+            sora_core::pipeline::check_schema_with_lock(&input, lock).with_context(|| {
+                format!(
+                    "failed to check project `{}` against lock `{}`",
+                    args.project.display(),
+                    lock.display()
+                )
+            })
+        }
+        None => sora_core::pipeline::check_schema(&input)
+            .with_context(|| format!("failed to check project `{}`", args.project.display())),
+    }
 }
 
 fn generate(args: GenArgs, target: CodegenTarget) -> Result<()> {
@@ -44,6 +57,17 @@ fn excel_template(args: ExcelTemplateArgs) -> Result<()> {
         format!(
             "failed to generate Excel templates from `{}`",
             args.project.display()
+        )
+    })
+}
+
+fn schema_lock(args: SchemaLockArgs) -> Result<()> {
+    let input = TomlSchemaInput::new(&args.project);
+    sora_core::pipeline::generate_schema_lock(&input, &args.out).with_context(|| {
+        format!(
+            "failed to generate schema lock from `{}` into `{}`",
+            args.project.display(),
+            args.out.display()
         )
     })
 }

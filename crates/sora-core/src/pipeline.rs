@@ -10,9 +10,22 @@ use sora_export::{
 use sora_input::traits::{ProjectInput, SchemaInput};
 use sora_ir::{model::ConfigIr, normalize::normalize_schema, validate::validate_config_ir};
 
+use crate::schema_lock::{read_schema_lock_file, verify_schema_lock, write_schema_lock_file};
+
 pub fn check_schema(input: &impl SchemaInput) -> Result<()> {
     let _ = load_ir(input)?;
     Ok(())
+}
+
+pub fn check_schema_with_lock(input: &impl SchemaInput, lock_path: &Path) -> Result<()> {
+    let ir = load_ir(input)?;
+    let lock = read_schema_lock_file(lock_path)?;
+    verify_schema_lock(&ir, &lock)
+}
+
+pub fn generate_schema_lock(input: &impl SchemaInput, path: &Path) -> Result<()> {
+    let ir = load_ir(input)?;
+    write_schema_lock_file(&ir, path)
 }
 
 pub fn generate_code(
@@ -89,6 +102,8 @@ mod tests {
         let input = TomlSchemaInput::new(&project_path);
 
         check_schema(&input).unwrap();
+        generate_schema_lock(&input, &base.join("schema.lock")).unwrap();
+        check_schema_with_lock(&input, &base.join("schema.lock")).unwrap();
         generate_code(&input, CodegenTarget::Rust, &base.join("rust")).unwrap();
         generate_code(&input, CodegenTarget::Kotlin, &base.join("kotlin")).unwrap();
         generate_excel_template(&input, &base.join("excel")).unwrap();
@@ -96,6 +111,7 @@ mod tests {
         assert!(base.join("rust/item.rs").exists());
         assert!(base.join("kotlin/Item.kt").exists());
         assert!(base.join("excel/Item.xlsx").exists());
+        assert!(base.join("schema.lock").exists());
 
         let _ = fs::remove_dir_all(base);
     }
