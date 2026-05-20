@@ -18,14 +18,3 @@ impl super::runtime::SoraDecode for QuestReward {
         })
     }
 }
-
-impl std::fmt::Display for QuestReward {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let mut builder = f.debug_struct("QuestReward");
-        builder.field("quest_id", &self.quest_id);
-        builder.field("seq", &self.seq);
-        builder.field("item_id", &self.item_id);
-        builder.field("count", &self.count);
-        builder.finish()
-    }
-}

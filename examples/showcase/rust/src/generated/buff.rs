@@ -20,14 +20,3 @@ impl super::runtime::SoraDecode for Buff {
         })
     }
 }
-
-impl std::fmt::Display for Buff {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let mut builder = f.debug_struct("Buff");
-        builder.field("id", &self.id);
-        builder.field("name", &self.name);
-        builder.field("duration", &self.duration);
-        builder.field("modifiers", &self.modifiers);
-        builder.finish()
-    }
-}

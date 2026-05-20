@@ -18,13 +18,3 @@ impl super::runtime::SoraDecode for SkillEffect {
         })
     }
 }
-
-impl std::fmt::Display for SkillEffect {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let mut builder = f.debug_struct("SkillEffect");
-        builder.field("element", &self.element);
-        builder.field("power", &self.power);
-        builder.field("radius", &self.radius);
-        builder.finish()
-    }
-}

@@ -20,14 +20,3 @@ impl super::runtime::SoraDecode for Dungeon {
         })
     }
 }
-
-impl std::fmt::Display for Dungeon {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let mut builder = f.debug_struct("Dungeon");
-        builder.field("id", &self.id);
-        builder.field("name", &self.name);
-        builder.field("stage_ids", &self.stage_ids);
-        builder.field("entry_cost", &self.entry_cost);
-        builder.finish()
-    }
-}

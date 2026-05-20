@@ -21,14 +21,3 @@ impl super::runtime::SoraDecode for EventRule {
         })
     }
 }
-
-impl std::fmt::Display for EventRule {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let mut builder = f.debug_struct("EventRule");
-        builder.field("id", &self.id);
-        builder.field("name", &self.name);
-        builder.field("condition", &self.condition);
-        builder.field("actions", &self.actions);
-        builder.finish()
-    }
-}

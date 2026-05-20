@@ -18,13 +18,3 @@ impl super::runtime::SoraDecode for VipLevel {
         })
     }
 }
-
-impl std::fmt::Display for VipLevel {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let mut builder = f.debug_struct("VipLevel");
-        builder.field("level", &self.level);
-        builder.field("cost", &self.cost);
-        builder.field("perks", &self.perks);
-        builder.finish()
-    }
-}

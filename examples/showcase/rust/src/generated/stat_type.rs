@@ -24,15 +24,3 @@ impl super::runtime::SoraDecode for StatType {
         }
     }
 }
-
-impl std::fmt::Display for StatType {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Self::Hp => f.write_str("Hp"),
-            Self::Attack => f.write_str("Attack"),
-            Self::Defense => f.write_str("Defense"),
-            Self::Speed => f.write_str("Speed"),
-            Self::CritRate => f.write_str("CritRate"),
-        }
-    }
-}

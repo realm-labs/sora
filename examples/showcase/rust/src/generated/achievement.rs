@@ -20,14 +20,3 @@ impl super::runtime::SoraDecode for Achievement {
         })
     }
 }
-
-impl std::fmt::Display for Achievement {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let mut builder = f.debug_struct("Achievement");
-        builder.field("id", &self.id);
-        builder.field("title_key", &self.title_key);
-        builder.field("target_count", &self.target_count);
-        builder.field("reward", &self.reward);
-        builder.finish()
-    }
-}

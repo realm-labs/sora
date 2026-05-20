@@ -18,13 +18,3 @@ impl super::runtime::SoraDecode for Shop {
         })
     }
 }
-
-impl std::fmt::Display for Shop {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let mut builder = f.debug_struct("Shop");
-        builder.field("id", &self.id);
-        builder.field("name", &self.name);
-        builder.field("currency", &self.currency);
-        builder.finish()
-    }
-}

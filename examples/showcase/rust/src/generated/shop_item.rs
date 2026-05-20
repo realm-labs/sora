@@ -22,15 +22,3 @@ impl super::runtime::SoraDecode for ShopItem {
         })
     }
 }
-
-impl std::fmt::Display for ShopItem {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let mut builder = f.debug_struct("ShopItem");
-        builder.field("shop_id", &self.shop_id);
-        builder.field("seq", &self.seq);
-        builder.field("item_id", &self.item_id);
-        builder.field("price", &self.price);
-        builder.field("daily_limit", &self.daily_limit);
-        builder.finish()
-    }
-}

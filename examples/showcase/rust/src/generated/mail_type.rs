@@ -20,13 +20,3 @@ impl super::runtime::SoraDecode for MailType {
         }
     }
 }
-
-impl std::fmt::Display for MailType {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Self::System => f.write_str("System"),
-            Self::Event => f.write_str("Event"),
-            Self::Compensation => f.write_str("Compensation"),
-        }
-    }
-}

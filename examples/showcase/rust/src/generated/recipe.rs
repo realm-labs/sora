@@ -18,13 +18,3 @@ impl super::runtime::SoraDecode for Recipe {
         })
     }
 }
-
-impl std::fmt::Display for Recipe {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let mut builder = f.debug_struct("Recipe");
-        builder.field("id", &self.id);
-        builder.field("result_item", &self.result_item);
-        builder.field("materials", &self.materials);
-        builder.finish()
-    }
-}

@@ -18,13 +18,3 @@ impl super::runtime::SoraDecode for StatModifier {
         })
     }
 }
-
-impl std::fmt::Display for StatModifier {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let mut builder = f.debug_struct("StatModifier");
-        builder.field("stat", &self.stat);
-        builder.field("value", &self.value);
-        builder.field("is_percent", &self.is_percent);
-        builder.finish()
-    }
-}

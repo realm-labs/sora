@@ -34,18 +34,3 @@ impl super::runtime::SoraDecode for Skill {
         })
     }
 }
-
-impl std::fmt::Display for Skill {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let mut builder = f.debug_struct("Skill");
-        builder.field("id", &self.id);
-        builder.field("name", &self.name);
-        builder.field("element", &self.element);
-        builder.field("cost", &self.cost);
-        builder.field("effect", &self.effect);
-        builder.field("required_level", &self.required_level);
-        builder.field("required_item", &self.required_item);
-        builder.field("cast_origin", &self.cast_origin);
-        builder.finish()
-    }
-}

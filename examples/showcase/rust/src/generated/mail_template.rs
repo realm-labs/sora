@@ -23,15 +23,3 @@ impl super::runtime::SoraDecode for MailTemplate {
         })
     }
 }
-
-impl std::fmt::Display for MailTemplate {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let mut builder = f.debug_struct("MailTemplate");
-        builder.field("id", &self.id);
-        builder.field("mail_type", &self.mail_type);
-        builder.field("title_key", &self.title_key);
-        builder.field("body_key", &self.body_key);
-        builder.field("rewards", &self.rewards);
-        builder.finish()
-    }
-}

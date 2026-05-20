@@ -18,14 +18,3 @@ impl super::runtime::SoraDecode for StageReward {
         })
     }
 }
-
-impl std::fmt::Display for StageReward {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let mut builder = f.debug_struct("StageReward");
-        builder.field("stage_id", &self.stage_id);
-        builder.field("seq", &self.seq);
-        builder.field("item_id", &self.item_id);
-        builder.field("count", &self.count);
-        builder.finish()
-    }
-}

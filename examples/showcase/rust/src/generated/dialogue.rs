@@ -16,13 +16,3 @@ impl super::runtime::SoraDecode for Dialogue {
         })
     }
 }
-
-impl std::fmt::Display for Dialogue {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let mut builder = f.debug_struct("Dialogue");
-        builder.field("id", &self.id);
-        builder.field("speaker_key", &self.speaker_key);
-        builder.field("lines", &self.lines);
-        builder.finish()
-    }
-}

@@ -24,15 +24,3 @@ impl super::runtime::SoraDecode for Rarity {
         }
     }
 }
-
-impl std::fmt::Display for Rarity {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Self::Common => f.write_str("Common"),
-            Self::Uncommon => f.write_str("Uncommon"),
-            Self::Rare => f.write_str("Rare"),
-            Self::Epic => f.write_str("Epic"),
-            Self::Legendary => f.write_str("Legendary"),
-        }
-    }
-}

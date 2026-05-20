@@ -18,14 +18,3 @@ impl super::runtime::SoraDecode for MailReward {
         })
     }
 }
-
-impl std::fmt::Display for MailReward {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let mut builder = f.debug_struct("MailReward");
-        builder.field("mail_id", &self.mail_id);
-        builder.field("seq", &self.seq);
-        builder.field("item_id", &self.item_id);
-        builder.field("count", &self.count);
-        builder.finish()
-    }
-}

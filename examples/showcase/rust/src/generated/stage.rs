@@ -22,15 +22,3 @@ impl super::runtime::SoraDecode for Stage {
         })
     }
 }
-
-impl std::fmt::Display for Stage {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let mut builder = f.debug_struct("Stage");
-        builder.field("id", &self.id);
-        builder.field("name", &self.name);
-        builder.field("monster_ids", &self.monster_ids);
-        builder.field("recommended_power", &self.recommended_power);
-        builder.field("first_clear_rewards", &self.first_clear_rewards);
-        builder.finish()
-    }
-}

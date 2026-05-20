@@ -20,14 +20,3 @@ impl super::runtime::SoraDecode for GachaItem {
         })
     }
 }
-
-impl std::fmt::Display for GachaItem {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let mut builder = f.debug_struct("GachaItem");
-        builder.field("pool_id", &self.pool_id);
-        builder.field("item_id", &self.item_id);
-        builder.field("rarity", &self.rarity);
-        builder.field("weight", &self.weight);
-        builder.finish()
-    }
-}

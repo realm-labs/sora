@@ -16,13 +16,3 @@ impl super::runtime::SoraDecode for CharacterSkill {
         })
     }
 }
-
-impl std::fmt::Display for CharacterSkill {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let mut builder = f.debug_struct("CharacterSkill");
-        builder.field("character_id", &self.character_id);
-        builder.field("skill_id", &self.skill_id);
-        builder.field("unlock_level", &self.unlock_level);
-        builder.finish()
-    }
-}

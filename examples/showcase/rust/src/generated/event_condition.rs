@@ -27,26 +27,3 @@ impl super::runtime::SoraDecode for EventCondition {
         }
     }
 }
-
-impl std::fmt::Display for EventCondition {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Self::LevelAtLeast { level } => {
-                let mut builder = f.debug_struct("EventCondition::LevelAtLeast");
-                builder.field("level", level);
-                builder.finish()
-            }
-            Self::QuestCompleted { quest_id } => {
-                let mut builder = f.debug_struct("EventCondition::QuestCompleted");
-                builder.field("quest_id", quest_id);
-                builder.finish()
-            }
-            Self::HasItem { item_id, count } => {
-                let mut builder = f.debug_struct("EventCondition::HasItem");
-                builder.field("item_id", item_id);
-                builder.field("count", count);
-                builder.finish()
-            }
-        }
-    }
-}

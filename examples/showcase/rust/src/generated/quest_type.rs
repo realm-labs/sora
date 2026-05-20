@@ -20,13 +20,3 @@ impl super::runtime::SoraDecode for QuestType {
         }
     }
 }
-
-impl std::fmt::Display for QuestType {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Self::Main => f.write_str("Main"),
-            Self::Side => f.write_str("Side"),
-            Self::Daily => f.write_str("Daily"),
-        }
-    }
-}

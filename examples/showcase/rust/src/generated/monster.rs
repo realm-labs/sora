@@ -25,16 +25,3 @@ impl super::runtime::SoraDecode for Monster {
         })
     }
 }
-
-impl std::fmt::Display for Monster {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let mut builder = f.debug_struct("Monster");
-        builder.field("id", &self.id);
-        builder.field("name", &self.name);
-        builder.field("level", &self.level);
-        builder.field("element", &self.element);
-        builder.field("drop_group", &self.drop_group);
-        builder.field("spawn_pos", &self.spawn_pos);
-        builder.finish()
-    }
-}

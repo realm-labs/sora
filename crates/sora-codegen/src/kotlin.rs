@@ -99,14 +99,12 @@ mod tests {
         assert!(rust_item.contains("pub item_type: ItemType"));
         assert!(rust_item.contains("pub action: Action"));
         assert!(rust_item.contains("impl super::runtime::SoraDecode for Item"));
-        assert!(rust_item.contains("impl std::fmt::Display for Item"));
-        assert!(rust_item.contains("builder.field(\"item_type\", &self.item_type);"));
-        assert!(rust_item_type.contains("impl std::fmt::Display for ItemType"));
-        assert!(rust_item_type.contains("Self::Weapon => f.write_str(\"Weapon\")"));
+        assert!(!rust_item.contains("impl std::fmt::Display for Item"));
+        assert!(!rust_item_type.contains("impl std::fmt::Display for ItemType"));
         assert!(rust_action.contains("pub enum Action"));
         assert!(rust_action.contains("AddItem {"));
         assert!(rust_action.contains("impl super::runtime::SoraDecode for Action"));
-        assert!(rust_action.contains("impl std::fmt::Display for Action"));
+        assert!(!rust_action.contains("impl std::fmt::Display for Action"));
         assert!(rust_runtime.contains("pub struct SoraBundle"));
         assert!(rust_mod.contains("pub struct SoraConfig"));
         assert!(rust_mod.contains("from_bytes"));

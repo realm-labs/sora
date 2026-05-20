@@ -20,15 +20,3 @@ impl super::runtime::SoraDecode for DropEntry {
         })
     }
 }
-
-impl std::fmt::Display for DropEntry {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let mut builder = f.debug_struct("DropEntry");
-        builder.field("group_id", &self.group_id);
-        builder.field("seq", &self.seq);
-        builder.field("item_id", &self.item_id);
-        builder.field("count", &self.count);
-        builder.field("weight", &self.weight);
-        builder.finish()
-    }
-}

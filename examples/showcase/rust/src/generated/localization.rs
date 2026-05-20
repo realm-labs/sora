@@ -18,14 +18,3 @@ impl super::runtime::SoraDecode for Localization {
         })
     }
 }
-
-impl std::fmt::Display for Localization {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let mut builder = f.debug_struct("Localization");
-        builder.field("key", &self.key);
-        builder.field("zh_cn", &self.zh_cn);
-        builder.field("en_us", &self.en_us);
-        builder.field("note", &self.note);
-        builder.finish()
-    }
-}

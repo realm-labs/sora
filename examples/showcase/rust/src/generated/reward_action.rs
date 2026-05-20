@@ -32,32 +32,3 @@ impl super::runtime::SoraDecode for RewardAction {
         }
     }
 }
-
-impl std::fmt::Display for RewardAction {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Self::AddItem { item_id, count } => {
-                let mut builder = f.debug_struct("RewardAction::AddItem");
-                builder.field("item_id", item_id);
-                builder.field("count", count);
-                builder.finish()
-            }
-            Self::AddBuff { buff_id, duration } => {
-                let mut builder = f.debug_struct("RewardAction::AddBuff");
-                builder.field("buff_id", buff_id);
-                builder.field("duration", duration);
-                builder.finish()
-            }
-            Self::UnlockStage { stage_id } => {
-                let mut builder = f.debug_struct("RewardAction::UnlockStage");
-                builder.field("stage_id", stage_id);
-                builder.finish()
-            }
-            Self::SendMail { mail_id } => {
-                let mut builder = f.debug_struct("RewardAction::SendMail");
-                builder.field("mail_id", mail_id);
-                builder.finish()
-            }
-        }
-    }
-}

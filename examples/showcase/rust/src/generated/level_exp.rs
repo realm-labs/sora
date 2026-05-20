@@ -16,13 +16,3 @@ impl super::runtime::SoraDecode for LevelExp {
         })
     }
 }
-
-impl std::fmt::Display for LevelExp {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let mut builder = f.debug_struct("LevelExp");
-        builder.field("level", &self.level);
-        builder.field("exp", &self.exp);
-        builder.field("unlock_feature", &self.unlock_feature);
-        builder.finish()
-    }
-}

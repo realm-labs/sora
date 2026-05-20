@@ -16,13 +16,3 @@ impl super::runtime::SoraDecode for Vec3 {
         })
     }
 }
-
-impl std::fmt::Display for Vec3 {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let mut builder = f.debug_struct("Vec3");
-        builder.field("x", &self.x);
-        builder.field("y", &self.y);
-        builder.field("z", &self.z);
-        builder.finish()
-    }
-}
