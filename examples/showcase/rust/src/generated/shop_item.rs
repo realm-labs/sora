@@ -1,3 +1,4 @@
+
 use super::resource_cost::ResourceCost;
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
@@ -15,9 +16,7 @@ pub struct ShopItem {
 }
 
 impl super::runtime::SoraDecode for ShopItem {
-    fn decode(
-        reader: &mut super::runtime::SoraReader<'_>,
-    ) -> Result<Self, super::runtime::SoraReadError> {
+    fn decode(reader: &mut super::runtime::SoraReader<'_>) -> Result<Self, super::runtime::SoraReadError> {
         Ok(Self {
             shop_id: <i32 as super::runtime::SoraDecode>::decode(reader)?,
             seq: <i32 as super::runtime::SoraDecode>::decode(reader)?,

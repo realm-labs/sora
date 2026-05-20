@@ -1,3 +1,5 @@
+
+
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 #[serde(tag = "type")]
 pub enum RewardAction {
@@ -24,9 +26,7 @@ pub enum RewardAction {
 }
 
 impl super::runtime::SoraDecode for RewardAction {
-    fn decode(
-        reader: &mut super::runtime::SoraReader<'_>,
-    ) -> Result<Self, super::runtime::SoraReadError> {
+    fn decode(reader: &mut super::runtime::SoraReader<'_>) -> Result<Self, super::runtime::SoraReadError> {
         match reader.read_u32()? {
             0 => Ok(Self::AddItem {
                 item_id: <i32 as super::runtime::SoraDecode>::decode(reader)?,
@@ -42,10 +42,7 @@ impl super::runtime::SoraDecode for RewardAction {
             3 => Ok(Self::SendMail {
                 mail_id: <i32 as super::runtime::SoraDecode>::decode(reader)?,
             }),
-            value => Err(super::runtime::SoraReadError::new(format!(
-                "invalid union ordinal {} for RewardAction",
-                value
-            ))),
+            value => Err(super::runtime::SoraReadError::new(format!("invalid union ordinal {} for RewardAction", value))),
         }
     }
 }

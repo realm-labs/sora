@@ -5,1477 +5,1449 @@ import "fmt"
 type SoraTableMode int
 
 const (
-	SoraTableModeList SoraTableMode = iota
-	SoraTableModeMap
-	SoraTableModeSingleton
+    SoraTableModeList SoraTableMode = iota
+    SoraTableModeMap
+    SoraTableModeSingleton
 )
 
 type SoraTable interface {
-	Name() string
-	Mode() SoraTableMode
-	Key() string
-	RowType() string
-	Len() int
+    Name() string
+    Mode() SoraTableMode
+    Key() string
+    RowType() string
+    Len() int
 }
 type ItemTable struct {
-	rows       map[int32]Item
-	byName     map[string]Item
-	byItemType map[ItemType][]Item
+    rows map[int32]Item
+    byName map[string]Item
+    byItemType map[ItemType][]Item
 }
 
 func buildItemTable(rows []Item) (*ItemTable, error) {
-	return &ItemTable{
-		rows:       DecodeMapTable(rows, func(row Item) int32 { return row.Id }),
-		byName:     DecodeUniqueIndex(rows, func(row Item) string { return row.Name }),
-		byItemType: DecodeIndex(rows, func(row Item) ItemType { return row.ItemType }),
-	}, nil
+    return &ItemTable{
+        rows: DecodeMapTable(rows, func(row Item) int32 { return row.Id }),
+        byName: DecodeUniqueIndex(rows, func(row Item) string { return row.Name }),
+        byItemType: DecodeIndex(rows, func(row Item) ItemType { return row.ItemType }),
+    }, nil
 }
 
 func decodeItemTable(bundle *SoraBundle) (*ItemTable, error) {
-	rows, err := DecodeTable(bundle, "Item", decodeItem)
-	if err != nil {
-		return nil, err
-	}
-	return buildItemTable(rows)
+    rows, err := DecodeTable(bundle, "Item", decodeItem)
+    if err != nil {
+        return nil, err
+    }
+    return buildItemTable(rows)
 }
 
 func (table *ItemTable) Rows() map[int32]Item {
-	return table.rows
+    return table.rows
 }
 func (table *ItemTable) Get(key int32) (Item, bool) {
-	value, ok := table.rows[key]
-	return value, ok
+    value, ok := table.rows[key]
+    return value, ok
 }
 func (table *ItemTable) GetByName(name string) (Item, bool) {
-	value, ok := table.byName[name]
-	return value, ok
+    value, ok := table.byName[name]
+    return value, ok
 }
 func (table *ItemTable) FindByItemType(itemType ItemType) []Item {
-	return table.byItemType[itemType]
+    return table.byItemType[itemType]
 }
 func (table *ItemTable) Name() string {
-	return "Item"
+    return "Item"
 }
 
 func (table *ItemTable) Mode() SoraTableMode {
-	return SoraTableModeMap
+    return SoraTableModeMap
 }
 
 func (table *ItemTable) Key() string {
-	return "id"
+    return "id"
 }
 
 func (table *ItemTable) RowType() string {
-	return "Item"
+    return "Item"
 }
 
 func (table *ItemTable) Len() int {
-	return len(table.rows)
+    return len(table.rows)
 }
-
 type SkillTable struct {
-	rows map[int32]Skill
+    rows map[int32]Skill
 }
 
 func buildSkillTable(rows []Skill) (*SkillTable, error) {
-	return &SkillTable{rows: DecodeMapTable(rows, func(row Skill) int32 { return row.Id })}, nil
+    return &SkillTable{rows: DecodeMapTable(rows, func(row Skill) int32 { return row.Id })}, nil
 }
 
 func decodeSkillTable(bundle *SoraBundle) (*SkillTable, error) {
-	rows, err := DecodeTable(bundle, "Skill", decodeSkill)
-	if err != nil {
-		return nil, err
-	}
-	return buildSkillTable(rows)
+    rows, err := DecodeTable(bundle, "Skill", decodeSkill)
+    if err != nil {
+        return nil, err
+    }
+    return buildSkillTable(rows)
 }
 
 func (table *SkillTable) Rows() map[int32]Skill {
-	return table.rows
+    return table.rows
 }
 func (table *SkillTable) Get(key int32) (Skill, bool) {
-	value, ok := table.rows[key]
-	return value, ok
+    value, ok := table.rows[key]
+    return value, ok
 }
 func (table *SkillTable) Name() string {
-	return "Skill"
+    return "Skill"
 }
 
 func (table *SkillTable) Mode() SoraTableMode {
-	return SoraTableModeMap
+    return SoraTableModeMap
 }
 
 func (table *SkillTable) Key() string {
-	return "id"
+    return "id"
 }
 
 func (table *SkillTable) RowType() string {
-	return "Skill"
+    return "Skill"
 }
 
 func (table *SkillTable) Len() int {
-	return len(table.rows)
+    return len(table.rows)
 }
-
 type QuestTable struct {
-	rows map[int32]Quest
+    rows map[int32]Quest
 }
 
 func buildQuestTable(rows []Quest) (*QuestTable, error) {
-	return &QuestTable{rows: DecodeMapTable(rows, func(row Quest) int32 { return row.Id })}, nil
+    return &QuestTable{rows: DecodeMapTable(rows, func(row Quest) int32 { return row.Id })}, nil
 }
 
 func decodeQuestTable(bundle *SoraBundle) (*QuestTable, error) {
-	rows, err := DecodeTable(bundle, "Quest", decodeQuest)
-	if err != nil {
-		return nil, err
-	}
-	return buildQuestTable(rows)
+    rows, err := DecodeTable(bundle, "Quest", decodeQuest)
+    if err != nil {
+        return nil, err
+    }
+    return buildQuestTable(rows)
 }
 
 func (table *QuestTable) Rows() map[int32]Quest {
-	return table.rows
+    return table.rows
 }
 func (table *QuestTable) Get(key int32) (Quest, bool) {
-	value, ok := table.rows[key]
-	return value, ok
+    value, ok := table.rows[key]
+    return value, ok
 }
 func (table *QuestTable) Name() string {
-	return "Quest"
+    return "Quest"
 }
 
 func (table *QuestTable) Mode() SoraTableMode {
-	return SoraTableModeMap
+    return SoraTableModeMap
 }
 
 func (table *QuestTable) Key() string {
-	return "id"
+    return "id"
 }
 
 func (table *QuestTable) RowType() string {
-	return "Quest"
+    return "Quest"
 }
 
 func (table *QuestTable) Len() int {
-	return len(table.rows)
+    return len(table.rows)
 }
-
 type QuestRewardTable struct {
-	rows []QuestReward
+    rows []QuestReward
 }
 
 func buildQuestRewardTable(rows []QuestReward) (*QuestRewardTable, error) {
-	return &QuestRewardTable{rows: rows}, nil
+    return &QuestRewardTable{rows: rows}, nil
 }
 
 func decodeQuestRewardTable(bundle *SoraBundle) (*QuestRewardTable, error) {
-	rows, err := DecodeTable(bundle, "QuestReward", decodeQuestReward)
-	if err != nil {
-		return nil, err
-	}
-	return buildQuestRewardTable(rows)
+    rows, err := DecodeTable(bundle, "QuestReward", decodeQuestReward)
+    if err != nil {
+        return nil, err
+    }
+    return buildQuestRewardTable(rows)
 }
 
 func (table *QuestRewardTable) Rows() []QuestReward {
-	return table.rows
+    return table.rows
 }
 func (table *QuestRewardTable) Name() string {
-	return "QuestReward"
+    return "QuestReward"
 }
 
 func (table *QuestRewardTable) Mode() SoraTableMode {
-	return SoraTableModeList
+    return SoraTableModeList
 }
 
 func (table *QuestRewardTable) Key() string {
-	return ""
+    return ""
 }
 
 func (table *QuestRewardTable) RowType() string {
-	return "QuestReward"
+    return "QuestReward"
 }
 
 func (table *QuestRewardTable) Len() int {
-	return len(table.rows)
+    return len(table.rows)
 }
-
 type GameSettingsTable struct {
-	rows GameSettings
+    rows GameSettings
 }
 
 func buildGameSettingsTable(rows []GameSettings) (*GameSettingsTable, error) {
-	row, err := RequireSingletonTable(rows, "GameSettings")
-	if err != nil {
-		return nil, err
-	}
-	return &GameSettingsTable{rows: row}, nil
+    row, err := RequireSingletonTable(rows, "GameSettings")
+    if err != nil {
+        return nil, err
+    }
+    return &GameSettingsTable{rows: row}, nil
 }
 
 func decodeGameSettingsTable(bundle *SoraBundle) (*GameSettingsTable, error) {
-	rows, err := DecodeTable(bundle, "GameSettings", decodeGameSettings)
-	if err != nil {
-		return nil, err
-	}
-	return buildGameSettingsTable(rows)
+    rows, err := DecodeTable(bundle, "GameSettings", decodeGameSettings)
+    if err != nil {
+        return nil, err
+    }
+    return buildGameSettingsTable(rows)
 }
 
 func (table *GameSettingsTable) Rows() GameSettings {
-	return table.rows
+    return table.rows
 }
 func (table *GameSettingsTable) Name() string {
-	return "GameSettings"
+    return "GameSettings"
 }
 
 func (table *GameSettingsTable) Mode() SoraTableMode {
-	return SoraTableModeSingleton
+    return SoraTableModeSingleton
 }
 
 func (table *GameSettingsTable) Key() string {
-	return ""
+    return ""
 }
 
 func (table *GameSettingsTable) RowType() string {
-	return "GameSettings"
+    return "GameSettings"
 }
 
 func (table *GameSettingsTable) Len() int {
-	return 1
+    return 1
 }
-
 type LocalizationTable struct {
-	rows map[string]Localization
+    rows map[string]Localization
 }
 
 func buildLocalizationTable(rows []Localization) (*LocalizationTable, error) {
-	return &LocalizationTable{rows: DecodeMapTable(rows, func(row Localization) string { return row.Key })}, nil
+    return &LocalizationTable{rows: DecodeMapTable(rows, func(row Localization) string { return row.Key })}, nil
 }
 
 func decodeLocalizationTable(bundle *SoraBundle) (*LocalizationTable, error) {
-	rows, err := DecodeTable(bundle, "Localization", decodeLocalization)
-	if err != nil {
-		return nil, err
-	}
-	return buildLocalizationTable(rows)
+    rows, err := DecodeTable(bundle, "Localization", decodeLocalization)
+    if err != nil {
+        return nil, err
+    }
+    return buildLocalizationTable(rows)
 }
 
 func (table *LocalizationTable) Rows() map[string]Localization {
-	return table.rows
+    return table.rows
 }
 func (table *LocalizationTable) Get(key string) (Localization, bool) {
-	value, ok := table.rows[key]
-	return value, ok
+    value, ok := table.rows[key]
+    return value, ok
 }
 func (table *LocalizationTable) Name() string {
-	return "Localization"
+    return "Localization"
 }
 
 func (table *LocalizationTable) Mode() SoraTableMode {
-	return SoraTableModeMap
+    return SoraTableModeMap
 }
 
 func (table *LocalizationTable) Key() string {
-	return "key"
+    return "key"
 }
 
 func (table *LocalizationTable) RowType() string {
-	return "Localization"
+    return "Localization"
 }
 
 func (table *LocalizationTable) Len() int {
-	return len(table.rows)
+    return len(table.rows)
 }
-
 type LevelExpTable struct {
-	rows map[int32]LevelExp
+    rows map[int32]LevelExp
 }
 
 func buildLevelExpTable(rows []LevelExp) (*LevelExpTable, error) {
-	return &LevelExpTable{rows: DecodeMapTable(rows, func(row LevelExp) int32 { return row.Level })}, nil
+    return &LevelExpTable{rows: DecodeMapTable(rows, func(row LevelExp) int32 { return row.Level })}, nil
 }
 
 func decodeLevelExpTable(bundle *SoraBundle) (*LevelExpTable, error) {
-	rows, err := DecodeTable(bundle, "LevelExp", decodeLevelExp)
-	if err != nil {
-		return nil, err
-	}
-	return buildLevelExpTable(rows)
+    rows, err := DecodeTable(bundle, "LevelExp", decodeLevelExp)
+    if err != nil {
+        return nil, err
+    }
+    return buildLevelExpTable(rows)
 }
 
 func (table *LevelExpTable) Rows() map[int32]LevelExp {
-	return table.rows
+    return table.rows
 }
 func (table *LevelExpTable) Get(key int32) (LevelExp, bool) {
-	value, ok := table.rows[key]
-	return value, ok
+    value, ok := table.rows[key]
+    return value, ok
 }
 func (table *LevelExpTable) Name() string {
-	return "LevelExp"
+    return "LevelExp"
 }
 
 func (table *LevelExpTable) Mode() SoraTableMode {
-	return SoraTableModeMap
+    return SoraTableModeMap
 }
 
 func (table *LevelExpTable) Key() string {
-	return "level"
+    return "level"
 }
 
 func (table *LevelExpTable) RowType() string {
-	return "LevelExp"
+    return "LevelExp"
 }
 
 func (table *LevelExpTable) Len() int {
-	return len(table.rows)
+    return len(table.rows)
 }
-
 type CharacterTable struct {
-	rows map[int32]Character
+    rows map[int32]Character
 }
 
 func buildCharacterTable(rows []Character) (*CharacterTable, error) {
-	return &CharacterTable{rows: DecodeMapTable(rows, func(row Character) int32 { return row.Id })}, nil
+    return &CharacterTable{rows: DecodeMapTable(rows, func(row Character) int32 { return row.Id })}, nil
 }
 
 func decodeCharacterTable(bundle *SoraBundle) (*CharacterTable, error) {
-	rows, err := DecodeTable(bundle, "Character", decodeCharacter)
-	if err != nil {
-		return nil, err
-	}
-	return buildCharacterTable(rows)
+    rows, err := DecodeTable(bundle, "Character", decodeCharacter)
+    if err != nil {
+        return nil, err
+    }
+    return buildCharacterTable(rows)
 }
 
 func (table *CharacterTable) Rows() map[int32]Character {
-	return table.rows
+    return table.rows
 }
 func (table *CharacterTable) Get(key int32) (Character, bool) {
-	value, ok := table.rows[key]
-	return value, ok
+    value, ok := table.rows[key]
+    return value, ok
 }
 func (table *CharacterTable) Name() string {
-	return "Character"
+    return "Character"
 }
 
 func (table *CharacterTable) Mode() SoraTableMode {
-	return SoraTableModeMap
+    return SoraTableModeMap
 }
 
 func (table *CharacterTable) Key() string {
-	return "id"
+    return "id"
 }
 
 func (table *CharacterTable) RowType() string {
-	return "Character"
+    return "Character"
 }
 
 func (table *CharacterTable) Len() int {
-	return len(table.rows)
+    return len(table.rows)
 }
-
 type CharacterSkillTable struct {
-	rows []CharacterSkill
+    rows []CharacterSkill
 }
 
 func buildCharacterSkillTable(rows []CharacterSkill) (*CharacterSkillTable, error) {
-	return &CharacterSkillTable{rows: rows}, nil
+    return &CharacterSkillTable{rows: rows}, nil
 }
 
 func decodeCharacterSkillTable(bundle *SoraBundle) (*CharacterSkillTable, error) {
-	rows, err := DecodeTable(bundle, "CharacterSkill", decodeCharacterSkill)
-	if err != nil {
-		return nil, err
-	}
-	return buildCharacterSkillTable(rows)
+    rows, err := DecodeTable(bundle, "CharacterSkill", decodeCharacterSkill)
+    if err != nil {
+        return nil, err
+    }
+    return buildCharacterSkillTable(rows)
 }
 
 func (table *CharacterSkillTable) Rows() []CharacterSkill {
-	return table.rows
+    return table.rows
 }
 func (table *CharacterSkillTable) Name() string {
-	return "CharacterSkill"
+    return "CharacterSkill"
 }
 
 func (table *CharacterSkillTable) Mode() SoraTableMode {
-	return SoraTableModeList
+    return SoraTableModeList
 }
 
 func (table *CharacterSkillTable) Key() string {
-	return ""
+    return ""
 }
 
 func (table *CharacterSkillTable) RowType() string {
-	return "CharacterSkill"
+    return "CharacterSkill"
 }
 
 func (table *CharacterSkillTable) Len() int {
-	return len(table.rows)
+    return len(table.rows)
 }
-
 type BuffTable struct {
-	rows map[int32]Buff
+    rows map[int32]Buff
 }
 
 func buildBuffTable(rows []Buff) (*BuffTable, error) {
-	return &BuffTable{rows: DecodeMapTable(rows, func(row Buff) int32 { return row.Id })}, nil
+    return &BuffTable{rows: DecodeMapTable(rows, func(row Buff) int32 { return row.Id })}, nil
 }
 
 func decodeBuffTable(bundle *SoraBundle) (*BuffTable, error) {
-	rows, err := DecodeTable(bundle, "Buff", decodeBuff)
-	if err != nil {
-		return nil, err
-	}
-	return buildBuffTable(rows)
+    rows, err := DecodeTable(bundle, "Buff", decodeBuff)
+    if err != nil {
+        return nil, err
+    }
+    return buildBuffTable(rows)
 }
 
 func (table *BuffTable) Rows() map[int32]Buff {
-	return table.rows
+    return table.rows
 }
 func (table *BuffTable) Get(key int32) (Buff, bool) {
-	value, ok := table.rows[key]
-	return value, ok
+    value, ok := table.rows[key]
+    return value, ok
 }
 func (table *BuffTable) Name() string {
-	return "Buff"
+    return "Buff"
 }
 
 func (table *BuffTable) Mode() SoraTableMode {
-	return SoraTableModeMap
+    return SoraTableModeMap
 }
 
 func (table *BuffTable) Key() string {
-	return "id"
+    return "id"
 }
 
 func (table *BuffTable) RowType() string {
-	return "Buff"
+    return "Buff"
 }
 
 func (table *BuffTable) Len() int {
-	return len(table.rows)
+    return len(table.rows)
 }
-
 type DropGroupTable struct {
-	rows map[int32]DropGroup
+    rows map[int32]DropGroup
 }
 
 func buildDropGroupTable(rows []DropGroup) (*DropGroupTable, error) {
-	return &DropGroupTable{rows: DecodeMapTable(rows, func(row DropGroup) int32 { return row.Id })}, nil
+    return &DropGroupTable{rows: DecodeMapTable(rows, func(row DropGroup) int32 { return row.Id })}, nil
 }
 
 func decodeDropGroupTable(bundle *SoraBundle) (*DropGroupTable, error) {
-	rows, err := DecodeTable(bundle, "DropGroup", decodeDropGroup)
-	if err != nil {
-		return nil, err
-	}
-	return buildDropGroupTable(rows)
+    rows, err := DecodeTable(bundle, "DropGroup", decodeDropGroup)
+    if err != nil {
+        return nil, err
+    }
+    return buildDropGroupTable(rows)
 }
 
 func (table *DropGroupTable) Rows() map[int32]DropGroup {
-	return table.rows
+    return table.rows
 }
 func (table *DropGroupTable) Get(key int32) (DropGroup, bool) {
-	value, ok := table.rows[key]
-	return value, ok
+    value, ok := table.rows[key]
+    return value, ok
 }
 func (table *DropGroupTable) Name() string {
-	return "DropGroup"
+    return "DropGroup"
 }
 
 func (table *DropGroupTable) Mode() SoraTableMode {
-	return SoraTableModeMap
+    return SoraTableModeMap
 }
 
 func (table *DropGroupTable) Key() string {
-	return "id"
+    return "id"
 }
 
 func (table *DropGroupTable) RowType() string {
-	return "DropGroup"
+    return "DropGroup"
 }
 
 func (table *DropGroupTable) Len() int {
-	return len(table.rows)
+    return len(table.rows)
 }
-
 type DropEntryTable struct {
-	rows []DropEntry
+    rows []DropEntry
 }
 
 func buildDropEntryTable(rows []DropEntry) (*DropEntryTable, error) {
-	return &DropEntryTable{rows: rows}, nil
+    return &DropEntryTable{rows: rows}, nil
 }
 
 func decodeDropEntryTable(bundle *SoraBundle) (*DropEntryTable, error) {
-	rows, err := DecodeTable(bundle, "DropEntry", decodeDropEntry)
-	if err != nil {
-		return nil, err
-	}
-	return buildDropEntryTable(rows)
+    rows, err := DecodeTable(bundle, "DropEntry", decodeDropEntry)
+    if err != nil {
+        return nil, err
+    }
+    return buildDropEntryTable(rows)
 }
 
 func (table *DropEntryTable) Rows() []DropEntry {
-	return table.rows
+    return table.rows
 }
 func (table *DropEntryTable) Name() string {
-	return "DropEntry"
+    return "DropEntry"
 }
 
 func (table *DropEntryTable) Mode() SoraTableMode {
-	return SoraTableModeList
+    return SoraTableModeList
 }
 
 func (table *DropEntryTable) Key() string {
-	return ""
+    return ""
 }
 
 func (table *DropEntryTable) RowType() string {
-	return "DropEntry"
+    return "DropEntry"
 }
 
 func (table *DropEntryTable) Len() int {
-	return len(table.rows)
+    return len(table.rows)
 }
-
 type MonsterTable struct {
-	rows map[int32]Monster
+    rows map[int32]Monster
 }
 
 func buildMonsterTable(rows []Monster) (*MonsterTable, error) {
-	return &MonsterTable{rows: DecodeMapTable(rows, func(row Monster) int32 { return row.Id })}, nil
+    return &MonsterTable{rows: DecodeMapTable(rows, func(row Monster) int32 { return row.Id })}, nil
 }
 
 func decodeMonsterTable(bundle *SoraBundle) (*MonsterTable, error) {
-	rows, err := DecodeTable(bundle, "Monster", decodeMonster)
-	if err != nil {
-		return nil, err
-	}
-	return buildMonsterTable(rows)
+    rows, err := DecodeTable(bundle, "Monster", decodeMonster)
+    if err != nil {
+        return nil, err
+    }
+    return buildMonsterTable(rows)
 }
 
 func (table *MonsterTable) Rows() map[int32]Monster {
-	return table.rows
+    return table.rows
 }
 func (table *MonsterTable) Get(key int32) (Monster, bool) {
-	value, ok := table.rows[key]
-	return value, ok
+    value, ok := table.rows[key]
+    return value, ok
 }
 func (table *MonsterTable) Name() string {
-	return "Monster"
+    return "Monster"
 }
 
 func (table *MonsterTable) Mode() SoraTableMode {
-	return SoraTableModeMap
+    return SoraTableModeMap
 }
 
 func (table *MonsterTable) Key() string {
-	return "id"
+    return "id"
 }
 
 func (table *MonsterTable) RowType() string {
-	return "Monster"
+    return "Monster"
 }
 
 func (table *MonsterTable) Len() int {
-	return len(table.rows)
+    return len(table.rows)
 }
-
 type StageTable struct {
-	rows map[int32]Stage
+    rows map[int32]Stage
 }
 
 func buildStageTable(rows []Stage) (*StageTable, error) {
-	return &StageTable{rows: DecodeMapTable(rows, func(row Stage) int32 { return row.Id })}, nil
+    return &StageTable{rows: DecodeMapTable(rows, func(row Stage) int32 { return row.Id })}, nil
 }
 
 func decodeStageTable(bundle *SoraBundle) (*StageTable, error) {
-	rows, err := DecodeTable(bundle, "Stage", decodeStage)
-	if err != nil {
-		return nil, err
-	}
-	return buildStageTable(rows)
+    rows, err := DecodeTable(bundle, "Stage", decodeStage)
+    if err != nil {
+        return nil, err
+    }
+    return buildStageTable(rows)
 }
 
 func (table *StageTable) Rows() map[int32]Stage {
-	return table.rows
+    return table.rows
 }
 func (table *StageTable) Get(key int32) (Stage, bool) {
-	value, ok := table.rows[key]
-	return value, ok
+    value, ok := table.rows[key]
+    return value, ok
 }
 func (table *StageTable) Name() string {
-	return "Stage"
+    return "Stage"
 }
 
 func (table *StageTable) Mode() SoraTableMode {
-	return SoraTableModeMap
+    return SoraTableModeMap
 }
 
 func (table *StageTable) Key() string {
-	return "id"
+    return "id"
 }
 
 func (table *StageTable) RowType() string {
-	return "Stage"
+    return "Stage"
 }
 
 func (table *StageTable) Len() int {
-	return len(table.rows)
+    return len(table.rows)
 }
-
 type StageRewardTable struct {
-	rows []StageReward
+    rows []StageReward
 }
 
 func buildStageRewardTable(rows []StageReward) (*StageRewardTable, error) {
-	return &StageRewardTable{rows: rows}, nil
+    return &StageRewardTable{rows: rows}, nil
 }
 
 func decodeStageRewardTable(bundle *SoraBundle) (*StageRewardTable, error) {
-	rows, err := DecodeTable(bundle, "StageReward", decodeStageReward)
-	if err != nil {
-		return nil, err
-	}
-	return buildStageRewardTable(rows)
+    rows, err := DecodeTable(bundle, "StageReward", decodeStageReward)
+    if err != nil {
+        return nil, err
+    }
+    return buildStageRewardTable(rows)
 }
 
 func (table *StageRewardTable) Rows() []StageReward {
-	return table.rows
+    return table.rows
 }
 func (table *StageRewardTable) Name() string {
-	return "StageReward"
+    return "StageReward"
 }
 
 func (table *StageRewardTable) Mode() SoraTableMode {
-	return SoraTableModeList
+    return SoraTableModeList
 }
 
 func (table *StageRewardTable) Key() string {
-	return ""
+    return ""
 }
 
 func (table *StageRewardTable) RowType() string {
-	return "StageReward"
+    return "StageReward"
 }
 
 func (table *StageRewardTable) Len() int {
-	return len(table.rows)
+    return len(table.rows)
 }
-
 type DungeonTable struct {
-	rows map[int32]Dungeon
+    rows map[int32]Dungeon
 }
 
 func buildDungeonTable(rows []Dungeon) (*DungeonTable, error) {
-	return &DungeonTable{rows: DecodeMapTable(rows, func(row Dungeon) int32 { return row.Id })}, nil
+    return &DungeonTable{rows: DecodeMapTable(rows, func(row Dungeon) int32 { return row.Id })}, nil
 }
 
 func decodeDungeonTable(bundle *SoraBundle) (*DungeonTable, error) {
-	rows, err := DecodeTable(bundle, "Dungeon", decodeDungeon)
-	if err != nil {
-		return nil, err
-	}
-	return buildDungeonTable(rows)
+    rows, err := DecodeTable(bundle, "Dungeon", decodeDungeon)
+    if err != nil {
+        return nil, err
+    }
+    return buildDungeonTable(rows)
 }
 
 func (table *DungeonTable) Rows() map[int32]Dungeon {
-	return table.rows
+    return table.rows
 }
 func (table *DungeonTable) Get(key int32) (Dungeon, bool) {
-	value, ok := table.rows[key]
-	return value, ok
+    value, ok := table.rows[key]
+    return value, ok
 }
 func (table *DungeonTable) Name() string {
-	return "Dungeon"
+    return "Dungeon"
 }
 
 func (table *DungeonTable) Mode() SoraTableMode {
-	return SoraTableModeMap
+    return SoraTableModeMap
 }
 
 func (table *DungeonTable) Key() string {
-	return "id"
+    return "id"
 }
 
 func (table *DungeonTable) RowType() string {
-	return "Dungeon"
+    return "Dungeon"
 }
 
 func (table *DungeonTable) Len() int {
-	return len(table.rows)
+    return len(table.rows)
 }
-
 type ShopTable struct {
-	rows map[int32]Shop
+    rows map[int32]Shop
 }
 
 func buildShopTable(rows []Shop) (*ShopTable, error) {
-	return &ShopTable{rows: DecodeMapTable(rows, func(row Shop) int32 { return row.Id })}, nil
+    return &ShopTable{rows: DecodeMapTable(rows, func(row Shop) int32 { return row.Id })}, nil
 }
 
 func decodeShopTable(bundle *SoraBundle) (*ShopTable, error) {
-	rows, err := DecodeTable(bundle, "Shop", decodeShop)
-	if err != nil {
-		return nil, err
-	}
-	return buildShopTable(rows)
+    rows, err := DecodeTable(bundle, "Shop", decodeShop)
+    if err != nil {
+        return nil, err
+    }
+    return buildShopTable(rows)
 }
 
 func (table *ShopTable) Rows() map[int32]Shop {
-	return table.rows
+    return table.rows
 }
 func (table *ShopTable) Get(key int32) (Shop, bool) {
-	value, ok := table.rows[key]
-	return value, ok
+    value, ok := table.rows[key]
+    return value, ok
 }
 func (table *ShopTable) Name() string {
-	return "Shop"
+    return "Shop"
 }
 
 func (table *ShopTable) Mode() SoraTableMode {
-	return SoraTableModeMap
+    return SoraTableModeMap
 }
 
 func (table *ShopTable) Key() string {
-	return "id"
+    return "id"
 }
 
 func (table *ShopTable) RowType() string {
-	return "Shop"
+    return "Shop"
 }
 
 func (table *ShopTable) Len() int {
-	return len(table.rows)
+    return len(table.rows)
 }
-
 type ShopItemTable struct {
-	rows []ShopItem
+    rows []ShopItem
 }
 
 func buildShopItemTable(rows []ShopItem) (*ShopItemTable, error) {
-	return &ShopItemTable{rows: rows}, nil
+    return &ShopItemTable{rows: rows}, nil
 }
 
 func decodeShopItemTable(bundle *SoraBundle) (*ShopItemTable, error) {
-	rows, err := DecodeTable(bundle, "ShopItem", decodeShopItem)
-	if err != nil {
-		return nil, err
-	}
-	return buildShopItemTable(rows)
+    rows, err := DecodeTable(bundle, "ShopItem", decodeShopItem)
+    if err != nil {
+        return nil, err
+    }
+    return buildShopItemTable(rows)
 }
 
 func (table *ShopItemTable) Rows() []ShopItem {
-	return table.rows
+    return table.rows
 }
 func (table *ShopItemTable) Name() string {
-	return "ShopItem"
+    return "ShopItem"
 }
 
 func (table *ShopItemTable) Mode() SoraTableMode {
-	return SoraTableModeList
+    return SoraTableModeList
 }
 
 func (table *ShopItemTable) Key() string {
-	return ""
+    return ""
 }
 
 func (table *ShopItemTable) RowType() string {
-	return "ShopItem"
+    return "ShopItem"
 }
 
 func (table *ShopItemTable) Len() int {
-	return len(table.rows)
+    return len(table.rows)
 }
-
 type RecipeTable struct {
-	rows map[int32]Recipe
+    rows map[int32]Recipe
 }
 
 func buildRecipeTable(rows []Recipe) (*RecipeTable, error) {
-	return &RecipeTable{rows: DecodeMapTable(rows, func(row Recipe) int32 { return row.Id })}, nil
+    return &RecipeTable{rows: DecodeMapTable(rows, func(row Recipe) int32 { return row.Id })}, nil
 }
 
 func decodeRecipeTable(bundle *SoraBundle) (*RecipeTable, error) {
-	rows, err := DecodeTable(bundle, "Recipe", decodeRecipe)
-	if err != nil {
-		return nil, err
-	}
-	return buildRecipeTable(rows)
+    rows, err := DecodeTable(bundle, "Recipe", decodeRecipe)
+    if err != nil {
+        return nil, err
+    }
+    return buildRecipeTable(rows)
 }
 
 func (table *RecipeTable) Rows() map[int32]Recipe {
-	return table.rows
+    return table.rows
 }
 func (table *RecipeTable) Get(key int32) (Recipe, bool) {
-	value, ok := table.rows[key]
-	return value, ok
+    value, ok := table.rows[key]
+    return value, ok
 }
 func (table *RecipeTable) Name() string {
-	return "Recipe"
+    return "Recipe"
 }
 
 func (table *RecipeTable) Mode() SoraTableMode {
-	return SoraTableModeMap
+    return SoraTableModeMap
 }
 
 func (table *RecipeTable) Key() string {
-	return "id"
+    return "id"
 }
 
 func (table *RecipeTable) RowType() string {
-	return "Recipe"
+    return "Recipe"
 }
 
 func (table *RecipeTable) Len() int {
-	return len(table.rows)
+    return len(table.rows)
 }
-
 type GachaPoolTable struct {
-	rows map[int32]GachaPool
+    rows map[int32]GachaPool
 }
 
 func buildGachaPoolTable(rows []GachaPool) (*GachaPoolTable, error) {
-	return &GachaPoolTable{rows: DecodeMapTable(rows, func(row GachaPool) int32 { return row.Id })}, nil
+    return &GachaPoolTable{rows: DecodeMapTable(rows, func(row GachaPool) int32 { return row.Id })}, nil
 }
 
 func decodeGachaPoolTable(bundle *SoraBundle) (*GachaPoolTable, error) {
-	rows, err := DecodeTable(bundle, "GachaPool", decodeGachaPool)
-	if err != nil {
-		return nil, err
-	}
-	return buildGachaPoolTable(rows)
+    rows, err := DecodeTable(bundle, "GachaPool", decodeGachaPool)
+    if err != nil {
+        return nil, err
+    }
+    return buildGachaPoolTable(rows)
 }
 
 func (table *GachaPoolTable) Rows() map[int32]GachaPool {
-	return table.rows
+    return table.rows
 }
 func (table *GachaPoolTable) Get(key int32) (GachaPool, bool) {
-	value, ok := table.rows[key]
-	return value, ok
+    value, ok := table.rows[key]
+    return value, ok
 }
 func (table *GachaPoolTable) Name() string {
-	return "GachaPool"
+    return "GachaPool"
 }
 
 func (table *GachaPoolTable) Mode() SoraTableMode {
-	return SoraTableModeMap
+    return SoraTableModeMap
 }
 
 func (table *GachaPoolTable) Key() string {
-	return "id"
+    return "id"
 }
 
 func (table *GachaPoolTable) RowType() string {
-	return "GachaPool"
+    return "GachaPool"
 }
 
 func (table *GachaPoolTable) Len() int {
-	return len(table.rows)
+    return len(table.rows)
 }
-
 type GachaItemTable struct {
-	rows []GachaItem
+    rows []GachaItem
 }
 
 func buildGachaItemTable(rows []GachaItem) (*GachaItemTable, error) {
-	return &GachaItemTable{rows: rows}, nil
+    return &GachaItemTable{rows: rows}, nil
 }
 
 func decodeGachaItemTable(bundle *SoraBundle) (*GachaItemTable, error) {
-	rows, err := DecodeTable(bundle, "GachaItem", decodeGachaItem)
-	if err != nil {
-		return nil, err
-	}
-	return buildGachaItemTable(rows)
+    rows, err := DecodeTable(bundle, "GachaItem", decodeGachaItem)
+    if err != nil {
+        return nil, err
+    }
+    return buildGachaItemTable(rows)
 }
 
 func (table *GachaItemTable) Rows() []GachaItem {
-	return table.rows
+    return table.rows
 }
 func (table *GachaItemTable) Name() string {
-	return "GachaItem"
+    return "GachaItem"
 }
 
 func (table *GachaItemTable) Mode() SoraTableMode {
-	return SoraTableModeList
+    return SoraTableModeList
 }
 
 func (table *GachaItemTable) Key() string {
-	return ""
+    return ""
 }
 
 func (table *GachaItemTable) RowType() string {
-	return "GachaItem"
+    return "GachaItem"
 }
 
 func (table *GachaItemTable) Len() int {
-	return len(table.rows)
+    return len(table.rows)
 }
-
 type EquipmentSetTable struct {
-	rows map[int32]EquipmentSet
+    rows map[int32]EquipmentSet
 }
 
 func buildEquipmentSetTable(rows []EquipmentSet) (*EquipmentSetTable, error) {
-	return &EquipmentSetTable{rows: DecodeMapTable(rows, func(row EquipmentSet) int32 { return row.Id })}, nil
+    return &EquipmentSetTable{rows: DecodeMapTable(rows, func(row EquipmentSet) int32 { return row.Id })}, nil
 }
 
 func decodeEquipmentSetTable(bundle *SoraBundle) (*EquipmentSetTable, error) {
-	rows, err := DecodeTable(bundle, "EquipmentSet", decodeEquipmentSet)
-	if err != nil {
-		return nil, err
-	}
-	return buildEquipmentSetTable(rows)
+    rows, err := DecodeTable(bundle, "EquipmentSet", decodeEquipmentSet)
+    if err != nil {
+        return nil, err
+    }
+    return buildEquipmentSetTable(rows)
 }
 
 func (table *EquipmentSetTable) Rows() map[int32]EquipmentSet {
-	return table.rows
+    return table.rows
 }
 func (table *EquipmentSetTable) Get(key int32) (EquipmentSet, bool) {
-	value, ok := table.rows[key]
-	return value, ok
+    value, ok := table.rows[key]
+    return value, ok
 }
 func (table *EquipmentSetTable) Name() string {
-	return "EquipmentSet"
+    return "EquipmentSet"
 }
 
 func (table *EquipmentSetTable) Mode() SoraTableMode {
-	return SoraTableModeMap
+    return SoraTableModeMap
 }
 
 func (table *EquipmentSetTable) Key() string {
-	return "id"
+    return "id"
 }
 
 func (table *EquipmentSetTable) RowType() string {
-	return "EquipmentSet"
+    return "EquipmentSet"
 }
 
 func (table *EquipmentSetTable) Len() int {
-	return len(table.rows)
+    return len(table.rows)
 }
-
 type AchievementTable struct {
-	rows map[int32]Achievement
+    rows map[int32]Achievement
 }
 
 func buildAchievementTable(rows []Achievement) (*AchievementTable, error) {
-	return &AchievementTable{rows: DecodeMapTable(rows, func(row Achievement) int32 { return row.Id })}, nil
+    return &AchievementTable{rows: DecodeMapTable(rows, func(row Achievement) int32 { return row.Id })}, nil
 }
 
 func decodeAchievementTable(bundle *SoraBundle) (*AchievementTable, error) {
-	rows, err := DecodeTable(bundle, "Achievement", decodeAchievement)
-	if err != nil {
-		return nil, err
-	}
-	return buildAchievementTable(rows)
+    rows, err := DecodeTable(bundle, "Achievement", decodeAchievement)
+    if err != nil {
+        return nil, err
+    }
+    return buildAchievementTable(rows)
 }
 
 func (table *AchievementTable) Rows() map[int32]Achievement {
-	return table.rows
+    return table.rows
 }
 func (table *AchievementTable) Get(key int32) (Achievement, bool) {
-	value, ok := table.rows[key]
-	return value, ok
+    value, ok := table.rows[key]
+    return value, ok
 }
 func (table *AchievementTable) Name() string {
-	return "Achievement"
+    return "Achievement"
 }
 
 func (table *AchievementTable) Mode() SoraTableMode {
-	return SoraTableModeMap
+    return SoraTableModeMap
 }
 
 func (table *AchievementTable) Key() string {
-	return "id"
+    return "id"
 }
 
 func (table *AchievementTable) RowType() string {
-	return "Achievement"
+    return "Achievement"
 }
 
 func (table *AchievementTable) Len() int {
-	return len(table.rows)
+    return len(table.rows)
 }
-
 type VipLevelTable struct {
-	rows map[int32]VipLevel
+    rows map[int32]VipLevel
 }
 
 func buildVipLevelTable(rows []VipLevel) (*VipLevelTable, error) {
-	return &VipLevelTable{rows: DecodeMapTable(rows, func(row VipLevel) int32 { return row.Level })}, nil
+    return &VipLevelTable{rows: DecodeMapTable(rows, func(row VipLevel) int32 { return row.Level })}, nil
 }
 
 func decodeVipLevelTable(bundle *SoraBundle) (*VipLevelTable, error) {
-	rows, err := DecodeTable(bundle, "VipLevel", decodeVipLevel)
-	if err != nil {
-		return nil, err
-	}
-	return buildVipLevelTable(rows)
+    rows, err := DecodeTable(bundle, "VipLevel", decodeVipLevel)
+    if err != nil {
+        return nil, err
+    }
+    return buildVipLevelTable(rows)
 }
 
 func (table *VipLevelTable) Rows() map[int32]VipLevel {
-	return table.rows
+    return table.rows
 }
 func (table *VipLevelTable) Get(key int32) (VipLevel, bool) {
-	value, ok := table.rows[key]
-	return value, ok
+    value, ok := table.rows[key]
+    return value, ok
 }
 func (table *VipLevelTable) Name() string {
-	return "VipLevel"
+    return "VipLevel"
 }
 
 func (table *VipLevelTable) Mode() SoraTableMode {
-	return SoraTableModeMap
+    return SoraTableModeMap
 }
 
 func (table *VipLevelTable) Key() string {
-	return "level"
+    return "level"
 }
 
 func (table *VipLevelTable) RowType() string {
-	return "VipLevel"
+    return "VipLevel"
 }
 
 func (table *VipLevelTable) Len() int {
-	return len(table.rows)
+    return len(table.rows)
 }
-
 type MailTemplateTable struct {
-	rows map[int32]MailTemplate
+    rows map[int32]MailTemplate
 }
 
 func buildMailTemplateTable(rows []MailTemplate) (*MailTemplateTable, error) {
-	return &MailTemplateTable{rows: DecodeMapTable(rows, func(row MailTemplate) int32 { return row.Id })}, nil
+    return &MailTemplateTable{rows: DecodeMapTable(rows, func(row MailTemplate) int32 { return row.Id })}, nil
 }
 
 func decodeMailTemplateTable(bundle *SoraBundle) (*MailTemplateTable, error) {
-	rows, err := DecodeTable(bundle, "MailTemplate", decodeMailTemplate)
-	if err != nil {
-		return nil, err
-	}
-	return buildMailTemplateTable(rows)
+    rows, err := DecodeTable(bundle, "MailTemplate", decodeMailTemplate)
+    if err != nil {
+        return nil, err
+    }
+    return buildMailTemplateTable(rows)
 }
 
 func (table *MailTemplateTable) Rows() map[int32]MailTemplate {
-	return table.rows
+    return table.rows
 }
 func (table *MailTemplateTable) Get(key int32) (MailTemplate, bool) {
-	value, ok := table.rows[key]
-	return value, ok
+    value, ok := table.rows[key]
+    return value, ok
 }
 func (table *MailTemplateTable) Name() string {
-	return "MailTemplate"
+    return "MailTemplate"
 }
 
 func (table *MailTemplateTable) Mode() SoraTableMode {
-	return SoraTableModeMap
+    return SoraTableModeMap
 }
 
 func (table *MailTemplateTable) Key() string {
-	return "id"
+    return "id"
 }
 
 func (table *MailTemplateTable) RowType() string {
-	return "MailTemplate"
+    return "MailTemplate"
 }
 
 func (table *MailTemplateTable) Len() int {
-	return len(table.rows)
+    return len(table.rows)
 }
-
 type MailRewardTable struct {
-	rows []MailReward
+    rows []MailReward
 }
 
 func buildMailRewardTable(rows []MailReward) (*MailRewardTable, error) {
-	return &MailRewardTable{rows: rows}, nil
+    return &MailRewardTable{rows: rows}, nil
 }
 
 func decodeMailRewardTable(bundle *SoraBundle) (*MailRewardTable, error) {
-	rows, err := DecodeTable(bundle, "MailReward", decodeMailReward)
-	if err != nil {
-		return nil, err
-	}
-	return buildMailRewardTable(rows)
+    rows, err := DecodeTable(bundle, "MailReward", decodeMailReward)
+    if err != nil {
+        return nil, err
+    }
+    return buildMailRewardTable(rows)
 }
 
 func (table *MailRewardTable) Rows() []MailReward {
-	return table.rows
+    return table.rows
 }
 func (table *MailRewardTable) Name() string {
-	return "MailReward"
+    return "MailReward"
 }
 
 func (table *MailRewardTable) Mode() SoraTableMode {
-	return SoraTableModeList
+    return SoraTableModeList
 }
 
 func (table *MailRewardTable) Key() string {
-	return ""
+    return ""
 }
 
 func (table *MailRewardTable) RowType() string {
-	return "MailReward"
+    return "MailReward"
 }
 
 func (table *MailRewardTable) Len() int {
-	return len(table.rows)
+    return len(table.rows)
 }
-
 type DialogueTable struct {
-	rows map[int32]Dialogue
+    rows map[int32]Dialogue
 }
 
 func buildDialogueTable(rows []Dialogue) (*DialogueTable, error) {
-	return &DialogueTable{rows: DecodeMapTable(rows, func(row Dialogue) int32 { return row.Id })}, nil
+    return &DialogueTable{rows: DecodeMapTable(rows, func(row Dialogue) int32 { return row.Id })}, nil
 }
 
 func decodeDialogueTable(bundle *SoraBundle) (*DialogueTable, error) {
-	rows, err := DecodeTable(bundle, "Dialogue", decodeDialogue)
-	if err != nil {
-		return nil, err
-	}
-	return buildDialogueTable(rows)
+    rows, err := DecodeTable(bundle, "Dialogue", decodeDialogue)
+    if err != nil {
+        return nil, err
+    }
+    return buildDialogueTable(rows)
 }
 
 func (table *DialogueTable) Rows() map[int32]Dialogue {
-	return table.rows
+    return table.rows
 }
 func (table *DialogueTable) Get(key int32) (Dialogue, bool) {
-	value, ok := table.rows[key]
-	return value, ok
+    value, ok := table.rows[key]
+    return value, ok
 }
 func (table *DialogueTable) Name() string {
-	return "Dialogue"
+    return "Dialogue"
 }
 
 func (table *DialogueTable) Mode() SoraTableMode {
-	return SoraTableModeMap
+    return SoraTableModeMap
 }
 
 func (table *DialogueTable) Key() string {
-	return "id"
+    return "id"
 }
 
 func (table *DialogueTable) RowType() string {
-	return "Dialogue"
+    return "Dialogue"
 }
 
 func (table *DialogueTable) Len() int {
-	return len(table.rows)
+    return len(table.rows)
 }
-
 type EventRuleTable struct {
-	rows map[int32]EventRule
+    rows map[int32]EventRule
 }
 
 func buildEventRuleTable(rows []EventRule) (*EventRuleTable, error) {
-	return &EventRuleTable{rows: DecodeMapTable(rows, func(row EventRule) int32 { return row.Id })}, nil
+    return &EventRuleTable{rows: DecodeMapTable(rows, func(row EventRule) int32 { return row.Id })}, nil
 }
 
 func decodeEventRuleTable(bundle *SoraBundle) (*EventRuleTable, error) {
-	rows, err := DecodeTable(bundle, "EventRule", decodeEventRule)
-	if err != nil {
-		return nil, err
-	}
-	return buildEventRuleTable(rows)
+    rows, err := DecodeTable(bundle, "EventRule", decodeEventRule)
+    if err != nil {
+        return nil, err
+    }
+    return buildEventRuleTable(rows)
 }
 
 func (table *EventRuleTable) Rows() map[int32]EventRule {
-	return table.rows
+    return table.rows
 }
 func (table *EventRuleTable) Get(key int32) (EventRule, bool) {
-	value, ok := table.rows[key]
-	return value, ok
+    value, ok := table.rows[key]
+    return value, ok
 }
 func (table *EventRuleTable) Name() string {
-	return "EventRule"
+    return "EventRule"
 }
 
 func (table *EventRuleTable) Mode() SoraTableMode {
-	return SoraTableModeMap
+    return SoraTableModeMap
 }
 
 func (table *EventRuleTable) Key() string {
-	return "id"
+    return "id"
 }
 
 func (table *EventRuleTable) RowType() string {
-	return "EventRule"
+    return "EventRule"
 }
 
 func (table *EventRuleTable) Len() int {
-	return len(table.rows)
+    return len(table.rows)
 }
-
 type SoraConfig struct {
-	tables map[string]SoraTable
+    tables map[string]SoraTable
 }
 
 func NewSoraConfigFromBytes(bytes []byte) (*SoraConfig, error) {
-	bundle, err := ParseSoraBundle(bytes)
-	if err != nil {
-		return nil, err
-	}
-	tables := make(map[string]SoraTable, 28)
-	itemTable, err := decodeItemTable(bundle)
-	if err != nil {
-		return nil, err
-	}
-	tables["Item"] = itemTable
-	skillTable, err := decodeSkillTable(bundle)
-	if err != nil {
-		return nil, err
-	}
-	tables["Skill"] = skillTable
-	questTable, err := decodeQuestTable(bundle)
-	if err != nil {
-		return nil, err
-	}
-	tables["Quest"] = questTable
-	questRewardTable, err := decodeQuestRewardTable(bundle)
-	if err != nil {
-		return nil, err
-	}
-	tables["QuestReward"] = questRewardTable
-	gameSettingsTable, err := decodeGameSettingsTable(bundle)
-	if err != nil {
-		return nil, err
-	}
-	tables["GameSettings"] = gameSettingsTable
-	localizationTable, err := decodeLocalizationTable(bundle)
-	if err != nil {
-		return nil, err
-	}
-	tables["Localization"] = localizationTable
-	levelExpTable, err := decodeLevelExpTable(bundle)
-	if err != nil {
-		return nil, err
-	}
-	tables["LevelExp"] = levelExpTable
-	characterTable, err := decodeCharacterTable(bundle)
-	if err != nil {
-		return nil, err
-	}
-	tables["Character"] = characterTable
-	characterSkillTable, err := decodeCharacterSkillTable(bundle)
-	if err != nil {
-		return nil, err
-	}
-	tables["CharacterSkill"] = characterSkillTable
-	buffTable, err := decodeBuffTable(bundle)
-	if err != nil {
-		return nil, err
-	}
-	tables["Buff"] = buffTable
-	dropGroupTable, err := decodeDropGroupTable(bundle)
-	if err != nil {
-		return nil, err
-	}
-	tables["DropGroup"] = dropGroupTable
-	dropEntryTable, err := decodeDropEntryTable(bundle)
-	if err != nil {
-		return nil, err
-	}
-	tables["DropEntry"] = dropEntryTable
-	monsterTable, err := decodeMonsterTable(bundle)
-	if err != nil {
-		return nil, err
-	}
-	tables["Monster"] = monsterTable
-	stageTable, err := decodeStageTable(bundle)
-	if err != nil {
-		return nil, err
-	}
-	tables["Stage"] = stageTable
-	stageRewardTable, err := decodeStageRewardTable(bundle)
-	if err != nil {
-		return nil, err
-	}
-	tables["StageReward"] = stageRewardTable
-	dungeonTable, err := decodeDungeonTable(bundle)
-	if err != nil {
-		return nil, err
-	}
-	tables["Dungeon"] = dungeonTable
-	shopTable, err := decodeShopTable(bundle)
-	if err != nil {
-		return nil, err
-	}
-	tables["Shop"] = shopTable
-	shopItemTable, err := decodeShopItemTable(bundle)
-	if err != nil {
-		return nil, err
-	}
-	tables["ShopItem"] = shopItemTable
-	recipeTable, err := decodeRecipeTable(bundle)
-	if err != nil {
-		return nil, err
-	}
-	tables["Recipe"] = recipeTable
-	gachaPoolTable, err := decodeGachaPoolTable(bundle)
-	if err != nil {
-		return nil, err
-	}
-	tables["GachaPool"] = gachaPoolTable
-	gachaItemTable, err := decodeGachaItemTable(bundle)
-	if err != nil {
-		return nil, err
-	}
-	tables["GachaItem"] = gachaItemTable
-	equipmentSetTable, err := decodeEquipmentSetTable(bundle)
-	if err != nil {
-		return nil, err
-	}
-	tables["EquipmentSet"] = equipmentSetTable
-	achievementTable, err := decodeAchievementTable(bundle)
-	if err != nil {
-		return nil, err
-	}
-	tables["Achievement"] = achievementTable
-	vipLevelTable, err := decodeVipLevelTable(bundle)
-	if err != nil {
-		return nil, err
-	}
-	tables["VipLevel"] = vipLevelTable
-	mailTemplateTable, err := decodeMailTemplateTable(bundle)
-	if err != nil {
-		return nil, err
-	}
-	tables["MailTemplate"] = mailTemplateTable
-	mailRewardTable, err := decodeMailRewardTable(bundle)
-	if err != nil {
-		return nil, err
-	}
-	tables["MailReward"] = mailRewardTable
-	dialogueTable, err := decodeDialogueTable(bundle)
-	if err != nil {
-		return nil, err
-	}
-	tables["Dialogue"] = dialogueTable
-	eventRuleTable, err := decodeEventRuleTable(bundle)
-	if err != nil {
-		return nil, err
-	}
-	tables["EventRule"] = eventRuleTable
-	return &SoraConfig{tables: tables}, nil
+    bundle, err := ParseSoraBundle(bytes)
+    if err != nil {
+        return nil, err
+    }
+    tables := make(map[string]SoraTable, 28)
+    itemTable, err := decodeItemTable(bundle)
+    if err != nil {
+        return nil, err
+    }
+    tables["Item"] = itemTable
+    skillTable, err := decodeSkillTable(bundle)
+    if err != nil {
+        return nil, err
+    }
+    tables["Skill"] = skillTable
+    questTable, err := decodeQuestTable(bundle)
+    if err != nil {
+        return nil, err
+    }
+    tables["Quest"] = questTable
+    questRewardTable, err := decodeQuestRewardTable(bundle)
+    if err != nil {
+        return nil, err
+    }
+    tables["QuestReward"] = questRewardTable
+    gameSettingsTable, err := decodeGameSettingsTable(bundle)
+    if err != nil {
+        return nil, err
+    }
+    tables["GameSettings"] = gameSettingsTable
+    localizationTable, err := decodeLocalizationTable(bundle)
+    if err != nil {
+        return nil, err
+    }
+    tables["Localization"] = localizationTable
+    levelExpTable, err := decodeLevelExpTable(bundle)
+    if err != nil {
+        return nil, err
+    }
+    tables["LevelExp"] = levelExpTable
+    characterTable, err := decodeCharacterTable(bundle)
+    if err != nil {
+        return nil, err
+    }
+    tables["Character"] = characterTable
+    characterSkillTable, err := decodeCharacterSkillTable(bundle)
+    if err != nil {
+        return nil, err
+    }
+    tables["CharacterSkill"] = characterSkillTable
+    buffTable, err := decodeBuffTable(bundle)
+    if err != nil {
+        return nil, err
+    }
+    tables["Buff"] = buffTable
+    dropGroupTable, err := decodeDropGroupTable(bundle)
+    if err != nil {
+        return nil, err
+    }
+    tables["DropGroup"] = dropGroupTable
+    dropEntryTable, err := decodeDropEntryTable(bundle)
+    if err != nil {
+        return nil, err
+    }
+    tables["DropEntry"] = dropEntryTable
+    monsterTable, err := decodeMonsterTable(bundle)
+    if err != nil {
+        return nil, err
+    }
+    tables["Monster"] = monsterTable
+    stageTable, err := decodeStageTable(bundle)
+    if err != nil {
+        return nil, err
+    }
+    tables["Stage"] = stageTable
+    stageRewardTable, err := decodeStageRewardTable(bundle)
+    if err != nil {
+        return nil, err
+    }
+    tables["StageReward"] = stageRewardTable
+    dungeonTable, err := decodeDungeonTable(bundle)
+    if err != nil {
+        return nil, err
+    }
+    tables["Dungeon"] = dungeonTable
+    shopTable, err := decodeShopTable(bundle)
+    if err != nil {
+        return nil, err
+    }
+    tables["Shop"] = shopTable
+    shopItemTable, err := decodeShopItemTable(bundle)
+    if err != nil {
+        return nil, err
+    }
+    tables["ShopItem"] = shopItemTable
+    recipeTable, err := decodeRecipeTable(bundle)
+    if err != nil {
+        return nil, err
+    }
+    tables["Recipe"] = recipeTable
+    gachaPoolTable, err := decodeGachaPoolTable(bundle)
+    if err != nil {
+        return nil, err
+    }
+    tables["GachaPool"] = gachaPoolTable
+    gachaItemTable, err := decodeGachaItemTable(bundle)
+    if err != nil {
+        return nil, err
+    }
+    tables["GachaItem"] = gachaItemTable
+    equipmentSetTable, err := decodeEquipmentSetTable(bundle)
+    if err != nil {
+        return nil, err
+    }
+    tables["EquipmentSet"] = equipmentSetTable
+    achievementTable, err := decodeAchievementTable(bundle)
+    if err != nil {
+        return nil, err
+    }
+    tables["Achievement"] = achievementTable
+    vipLevelTable, err := decodeVipLevelTable(bundle)
+    if err != nil {
+        return nil, err
+    }
+    tables["VipLevel"] = vipLevelTable
+    mailTemplateTable, err := decodeMailTemplateTable(bundle)
+    if err != nil {
+        return nil, err
+    }
+    tables["MailTemplate"] = mailTemplateTable
+    mailRewardTable, err := decodeMailRewardTable(bundle)
+    if err != nil {
+        return nil, err
+    }
+    tables["MailReward"] = mailRewardTable
+    dialogueTable, err := decodeDialogueTable(bundle)
+    if err != nil {
+        return nil, err
+    }
+    tables["Dialogue"] = dialogueTable
+    eventRuleTable, err := decodeEventRuleTable(bundle)
+    if err != nil {
+        return nil, err
+    }
+    tables["EventRule"] = eventRuleTable
+    return &SoraConfig{tables: tables}, nil
 }
 
 func (config *SoraConfig) Tables() []SoraTable {
-	tables := make([]SoraTable, 0, len(config.tables))
-	for _, table := range config.tables {
-		tables = append(tables, table)
-	}
-	return tables
+    tables := make([]SoraTable, 0, len(config.tables))
+    for _, table := range config.tables {
+        tables = append(tables, table)
+    }
+    return tables
 }
 func (config *SoraConfig) Item() *ItemTable {
-	return config.tables["Item"].(*ItemTable)
+    return config.tables["Item"].(*ItemTable)
 }
 func (config *SoraConfig) Skill() *SkillTable {
-	return config.tables["Skill"].(*SkillTable)
+    return config.tables["Skill"].(*SkillTable)
 }
 func (config *SoraConfig) Quest() *QuestTable {
-	return config.tables["Quest"].(*QuestTable)
+    return config.tables["Quest"].(*QuestTable)
 }
 func (config *SoraConfig) QuestReward() *QuestRewardTable {
-	return config.tables["QuestReward"].(*QuestRewardTable)
+    return config.tables["QuestReward"].(*QuestRewardTable)
 }
 func (config *SoraConfig) GameSettings() *GameSettingsTable {
-	return config.tables["GameSettings"].(*GameSettingsTable)
+    return config.tables["GameSettings"].(*GameSettingsTable)
 }
 func (config *SoraConfig) Localization() *LocalizationTable {
-	return config.tables["Localization"].(*LocalizationTable)
+    return config.tables["Localization"].(*LocalizationTable)
 }
 func (config *SoraConfig) LevelExp() *LevelExpTable {
-	return config.tables["LevelExp"].(*LevelExpTable)
+    return config.tables["LevelExp"].(*LevelExpTable)
 }
 func (config *SoraConfig) Character() *CharacterTable {
-	return config.tables["Character"].(*CharacterTable)
+    return config.tables["Character"].(*CharacterTable)
 }
 func (config *SoraConfig) CharacterSkill() *CharacterSkillTable {
-	return config.tables["CharacterSkill"].(*CharacterSkillTable)
+    return config.tables["CharacterSkill"].(*CharacterSkillTable)
 }
 func (config *SoraConfig) Buff() *BuffTable {
-	return config.tables["Buff"].(*BuffTable)
+    return config.tables["Buff"].(*BuffTable)
 }
 func (config *SoraConfig) DropGroup() *DropGroupTable {
-	return config.tables["DropGroup"].(*DropGroupTable)
+    return config.tables["DropGroup"].(*DropGroupTable)
 }
 func (config *SoraConfig) DropEntry() *DropEntryTable {
-	return config.tables["DropEntry"].(*DropEntryTable)
+    return config.tables["DropEntry"].(*DropEntryTable)
 }
 func (config *SoraConfig) Monster() *MonsterTable {
-	return config.tables["Monster"].(*MonsterTable)
+    return config.tables["Monster"].(*MonsterTable)
 }
 func (config *SoraConfig) Stage() *StageTable {
-	return config.tables["Stage"].(*StageTable)
+    return config.tables["Stage"].(*StageTable)
 }
 func (config *SoraConfig) StageReward() *StageRewardTable {
-	return config.tables["StageReward"].(*StageRewardTable)
+    return config.tables["StageReward"].(*StageRewardTable)
 }
 func (config *SoraConfig) Dungeon() *DungeonTable {
-	return config.tables["Dungeon"].(*DungeonTable)
+    return config.tables["Dungeon"].(*DungeonTable)
 }
 func (config *SoraConfig) Shop() *ShopTable {
-	return config.tables["Shop"].(*ShopTable)
+    return config.tables["Shop"].(*ShopTable)
 }
 func (config *SoraConfig) ShopItem() *ShopItemTable {
-	return config.tables["ShopItem"].(*ShopItemTable)
+    return config.tables["ShopItem"].(*ShopItemTable)
 }
 func (config *SoraConfig) Recipe() *RecipeTable {
-	return config.tables["Recipe"].(*RecipeTable)
+    return config.tables["Recipe"].(*RecipeTable)
 }
 func (config *SoraConfig) GachaPool() *GachaPoolTable {
-	return config.tables["GachaPool"].(*GachaPoolTable)
+    return config.tables["GachaPool"].(*GachaPoolTable)
 }
 func (config *SoraConfig) GachaItem() *GachaItemTable {
-	return config.tables["GachaItem"].(*GachaItemTable)
+    return config.tables["GachaItem"].(*GachaItemTable)
 }
 func (config *SoraConfig) EquipmentSet() *EquipmentSetTable {
-	return config.tables["EquipmentSet"].(*EquipmentSetTable)
+    return config.tables["EquipmentSet"].(*EquipmentSetTable)
 }
 func (config *SoraConfig) Achievement() *AchievementTable {
-	return config.tables["Achievement"].(*AchievementTable)
+    return config.tables["Achievement"].(*AchievementTable)
 }
 func (config *SoraConfig) VipLevel() *VipLevelTable {
-	return config.tables["VipLevel"].(*VipLevelTable)
+    return config.tables["VipLevel"].(*VipLevelTable)
 }
 func (config *SoraConfig) MailTemplate() *MailTemplateTable {
-	return config.tables["MailTemplate"].(*MailTemplateTable)
+    return config.tables["MailTemplate"].(*MailTemplateTable)
 }
 func (config *SoraConfig) MailReward() *MailRewardTable {
-	return config.tables["MailReward"].(*MailRewardTable)
+    return config.tables["MailReward"].(*MailRewardTable)
 }
 func (config *SoraConfig) Dialogue() *DialogueTable {
-	return config.tables["Dialogue"].(*DialogueTable)
+    return config.tables["Dialogue"].(*DialogueTable)
 }
 func (config *SoraConfig) EventRule() *EventRuleTable {
-	return config.tables["EventRule"].(*EventRuleTable)
+    return config.tables["EventRule"].(*EventRuleTable)
 }
 func DecodeMapTable[K comparable, V any](rows []V, key func(V) K) map[K]V {
-	values := make(map[K]V, len(rows))
-	for _, row := range rows {
-		values[key(row)] = row
-	}
-	return values
+    values := make(map[K]V, len(rows))
+    for _, row := range rows {
+        values[key(row)] = row
+    }
+    return values
 }
 func DecodeUniqueIndex[K comparable, V any](rows []V, key func(V) K) map[K]V {
-	values := make(map[K]V, len(rows))
-	for _, row := range rows {
-		values[key(row)] = row
-	}
-	return values
+    values := make(map[K]V, len(rows))
+    for _, row := range rows {
+        values[key(row)] = row
+    }
+    return values
 }
 func DecodeIndex[K comparable, V any](rows []V, key func(V) K) map[K][]V {
-	values := make(map[K][]V)
-	for _, row := range rows {
-		indexKey := key(row)
-		values[indexKey] = append(values[indexKey], row)
-	}
-	return values
+    values := make(map[K][]V)
+    for _, row := range rows {
+        indexKey := key(row)
+        values[indexKey] = append(values[indexKey], row)
+    }
+    return values
 }
 func RequireSingletonTable[T any](rows []T, name string) (T, error) {
-	var zero T
-	if len(rows) != 1 {
-		return zero, fmt.Errorf("expected singleton table `%s` to contain exactly 1 row, got %d", name, len(rows))
-	}
-	return rows[0], nil
+    var zero T
+    if len(rows) != 1 {
+        return zero, fmt.Errorf("expected singleton table `%s` to contain exactly 1 row, got %d", name, len(rows))
+    }
+    return rows[0], nil
 }

@@ -1,3 +1,4 @@
+
 use super::rarity::Rarity;
 use super::vec3::Vec3;
 
@@ -20,9 +21,7 @@ pub struct Character {
 }
 
 impl super::runtime::SoraDecode for Character {
-    fn decode(
-        reader: &mut super::runtime::SoraReader<'_>,
-    ) -> Result<Self, super::runtime::SoraReadError> {
+    fn decode(reader: &mut super::runtime::SoraReader<'_>) -> Result<Self, super::runtime::SoraReadError> {
         Ok(Self {
             id: <i32 as super::runtime::SoraDecode>::decode(reader)?,
             name: <String as super::runtime::SoraDecode>::decode(reader)?,

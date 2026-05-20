@@ -1,3 +1,5 @@
+
+
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct DropEntry {
     #[serde(rename = "group_id")]
@@ -13,9 +15,7 @@ pub struct DropEntry {
 }
 
 impl super::runtime::SoraDecode for DropEntry {
-    fn decode(
-        reader: &mut super::runtime::SoraReader<'_>,
-    ) -> Result<Self, super::runtime::SoraReadError> {
+    fn decode(reader: &mut super::runtime::SoraReader<'_>) -> Result<Self, super::runtime::SoraReadError> {
         Ok(Self {
             group_id: <i32 as super::runtime::SoraDecode>::decode(reader)?,
             seq: <i32 as super::runtime::SoraDecode>::decode(reader)?,

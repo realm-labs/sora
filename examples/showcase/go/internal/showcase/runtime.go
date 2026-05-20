@@ -1,373 +1,373 @@
 package showcase
 
 import (
-	"encoding/binary"
-	"errors"
-	"fmt"
-	"math"
+    "encoding/binary"
+    "errors"
+    "fmt"
+    "math"
 )
 
 const (
-	soraBundleVersion   = 1
-	soraHeaderLength    = 24
-	soraSectionManifest = 0
-	soraSectionSchema   = 1
-	soraSectionTable    = 2
-	soraCompressionNone = 0
+    soraBundleVersion     = 1
+    soraHeaderLength      = 24
+    soraSectionManifest   = 0
+    soraSectionSchema     = 1
+    soraSectionTable      = 2
+    soraCompressionNone   = 0
 )
 
 type soraSection struct {
-	kind               int32
-	compression        int32
-	name               string
-	offset             int
-	length             int
-	uncompressedLength int
+    kind               int32
+    compression        int32
+    name               string
+    offset             int
+    length             int
+    uncompressedLength int
 }
 
 type SoraBundle struct {
-	bytes    []byte
-	sections []soraSection
+    bytes    []byte
+    sections []soraSection
 }
 
 func ParseSoraBundle(bytes []byte) (*SoraBundle, error) {
-	if len(bytes) < soraHeaderLength {
-		return nil, fmt.Errorf("Sora bundle is shorter than header")
-	}
-	if string(bytes[:4]) != "SORA" {
-		return nil, fmt.Errorf("invalid Sora bundle magic")
-	}
-	version := readInt32At(bytes, 4)
-	if version != soraBundleVersion {
-		return nil, fmt.Errorf("unsupported Sora bundle version %d", version)
-	}
+    if len(bytes) < soraHeaderLength {
+        return nil, fmt.Errorf("Sora bundle is shorter than header")
+    }
+    if string(bytes[:4]) != "SORA" {
+        return nil, fmt.Errorf("invalid Sora bundle magic")
+    }
+    version := readInt32At(bytes, 4)
+    if version != soraBundleVersion {
+        return nil, fmt.Errorf("unsupported Sora bundle version %d", version)
+    }
 
-	headerLength := int(readInt32At(bytes, 8))
-	directoryLength := int(readInt32At(bytes, 12))
-	sectionCount := int(readInt32At(bytes, 16))
-	flags := readInt32At(bytes, 20)
-	if flags != 0 {
-		return nil, fmt.Errorf("unsupported Sora bundle flags %d", flags)
-	}
-	if headerLength != soraHeaderLength || headerLength > len(bytes) {
-		return nil, fmt.Errorf("invalid Sora bundle header length")
-	}
-	directoryEnd, err := checkedAdd(headerLength, directoryLength, "Sora section directory length overflow")
-	if err != nil {
-		return nil, err
-	}
-	if directoryEnd > len(bytes) {
-		return nil, fmt.Errorf("Sora section directory exceeds bundle length")
-	}
+    headerLength := int(readInt32At(bytes, 8))
+    directoryLength := int(readInt32At(bytes, 12))
+    sectionCount := int(readInt32At(bytes, 16))
+    flags := readInt32At(bytes, 20)
+    if flags != 0 {
+        return nil, fmt.Errorf("unsupported Sora bundle flags %d", flags)
+    }
+    if headerLength != soraHeaderLength || headerLength > len(bytes) {
+        return nil, fmt.Errorf("invalid Sora bundle header length")
+    }
+    directoryEnd, err := checkedAdd(headerLength, directoryLength, "Sora section directory length overflow")
+    if err != nil {
+        return nil, err
+    }
+    if directoryEnd > len(bytes) {
+        return nil, fmt.Errorf("Sora section directory exceeds bundle length")
+    }
 
-	cursor := headerLength
-	sections := make([]soraSection, 0, sectionCount)
-	manifestCount := 0
-	schemaCount := 0
-	tableNames := map[string]struct{}{}
-	for i := 0; i < sectionCount; i++ {
-		if cursor+40 > directoryEnd {
-			return nil, fmt.Errorf("truncated Sora section directory entry")
-		}
-		kind := readInt32At(bytes, cursor)
-		compression := readInt32At(bytes, cursor+4)
-		nameLength := int(readInt32At(bytes, cursor+8))
-		entryFlags := readInt32At(bytes, cursor+12)
-		offset, err := checkedInt64ToInt(readInt64At(bytes, cursor+16), "Sora section offset exceeds int")
-		if err != nil {
-			return nil, err
-		}
-		length, err := checkedInt64ToInt(readInt64At(bytes, cursor+24), "Sora section length exceeds int")
-		if err != nil {
-			return nil, err
-		}
-		uncompressedLength, err := checkedInt64ToInt(readInt64At(bytes, cursor+32), "Sora section uncompressed length exceeds int")
-		if err != nil {
-			return nil, err
-		}
-		if entryFlags != 0 {
-			return nil, fmt.Errorf("unsupported Sora section flags %d", entryFlags)
-		}
-		nameStart := cursor + 40
-		nameEnd, err := checkedAdd(nameStart, nameLength, "Sora section name length overflow")
-		if err != nil {
-			return nil, err
-		}
-		if nameEnd > directoryEnd {
-			return nil, fmt.Errorf("Sora section name exceeds directory")
-		}
-		payloadEnd, err := checkedAdd(offset, length, "Sora section payload length overflow")
-		if err != nil {
-			return nil, err
-		}
-		if payloadEnd > len(bytes) {
-			return nil, fmt.Errorf("Sora section payload exceeds bundle length")
-		}
-		name := string(bytes[nameStart:nameEnd])
-		switch kind {
-		case soraSectionManifest:
-			manifestCount++
-			if name != "$manifest" {
-				return nil, fmt.Errorf("Sora manifest section must be named `$manifest`")
-			}
-		case soraSectionSchema:
-			schemaCount++
-			if name != "$schema" {
-				return nil, fmt.Errorf("Sora schema section must be named `$schema`")
-			}
-		case soraSectionTable:
-			if _, exists := tableNames[name]; exists {
-				return nil, fmt.Errorf("duplicate Sora table section `%s`", name)
-			}
-			tableNames[name] = struct{}{}
-		default:
-			return nil, fmt.Errorf("unknown Sora section kind %d", kind)
-		}
-		if compression == soraCompressionNone && uncompressedLength != length {
-			return nil, fmt.Errorf("uncompressed Sora section length mismatch")
-		}
-		sections = append(sections, soraSection{
-			kind:               kind,
-			compression:        compression,
-			name:               name,
-			offset:             offset,
-			length:             length,
-			uncompressedLength: uncompressedLength,
-		})
-		cursor = nameEnd
-	}
-	if cursor != directoryEnd {
-		return nil, fmt.Errorf("Sora section directory has trailing bytes")
-	}
-	if manifestCount != 1 {
-		return nil, fmt.Errorf("expected exactly 1 Sora manifest section, got %d", manifestCount)
-	}
-	if schemaCount != 1 {
-		return nil, fmt.Errorf("expected exactly 1 Sora schema section, got %d", schemaCount)
-	}
-	return &SoraBundle{bytes: bytes, sections: sections}, nil
+    cursor := headerLength
+    sections := make([]soraSection, 0, sectionCount)
+    manifestCount := 0
+    schemaCount := 0
+    tableNames := map[string]struct{}{}
+    for i := 0; i < sectionCount; i++ {
+        if cursor + 40 > directoryEnd {
+            return nil, fmt.Errorf("truncated Sora section directory entry")
+        }
+        kind := readInt32At(bytes, cursor)
+        compression := readInt32At(bytes, cursor+4)
+        nameLength := int(readInt32At(bytes, cursor+8))
+        entryFlags := readInt32At(bytes, cursor+12)
+        offset, err := checkedInt64ToInt(readInt64At(bytes, cursor+16), "Sora section offset exceeds int")
+        if err != nil {
+            return nil, err
+        }
+        length, err := checkedInt64ToInt(readInt64At(bytes, cursor+24), "Sora section length exceeds int")
+        if err != nil {
+            return nil, err
+        }
+        uncompressedLength, err := checkedInt64ToInt(readInt64At(bytes, cursor+32), "Sora section uncompressed length exceeds int")
+        if err != nil {
+            return nil, err
+        }
+        if entryFlags != 0 {
+            return nil, fmt.Errorf("unsupported Sora section flags %d", entryFlags)
+        }
+        nameStart := cursor + 40
+        nameEnd, err := checkedAdd(nameStart, nameLength, "Sora section name length overflow")
+        if err != nil {
+            return nil, err
+        }
+        if nameEnd > directoryEnd {
+            return nil, fmt.Errorf("Sora section name exceeds directory")
+        }
+        payloadEnd, err := checkedAdd(offset, length, "Sora section payload length overflow")
+        if err != nil {
+            return nil, err
+        }
+        if payloadEnd > len(bytes) {
+            return nil, fmt.Errorf("Sora section payload exceeds bundle length")
+        }
+        name := string(bytes[nameStart:nameEnd])
+        switch kind {
+        case soraSectionManifest:
+            manifestCount++
+            if name != "$manifest" {
+                return nil, fmt.Errorf("Sora manifest section must be named `$manifest`")
+            }
+        case soraSectionSchema:
+            schemaCount++
+            if name != "$schema" {
+                return nil, fmt.Errorf("Sora schema section must be named `$schema`")
+            }
+        case soraSectionTable:
+            if _, exists := tableNames[name]; exists {
+                return nil, fmt.Errorf("duplicate Sora table section `%s`", name)
+            }
+            tableNames[name] = struct{}{}
+        default:
+            return nil, fmt.Errorf("unknown Sora section kind %d", kind)
+        }
+        if compression == soraCompressionNone && uncompressedLength != length {
+            return nil, fmt.Errorf("uncompressed Sora section length mismatch")
+        }
+        sections = append(sections, soraSection{
+            kind: kind,
+            compression: compression,
+            name: name,
+            offset: offset,
+            length: length,
+            uncompressedLength: uncompressedLength,
+        })
+        cursor = nameEnd
+    }
+    if cursor != directoryEnd {
+        return nil, fmt.Errorf("Sora section directory has trailing bytes")
+    }
+    if manifestCount != 1 {
+        return nil, fmt.Errorf("expected exactly 1 Sora manifest section, got %d", manifestCount)
+    }
+    if schemaCount != 1 {
+        return nil, fmt.Errorf("expected exactly 1 Sora schema section, got %d", schemaCount)
+    }
+    return &SoraBundle{bytes: bytes, sections: sections}, nil
 }
 
 func DecodeTable[T any](bundle *SoraBundle, name string, decode func(*SoraReader) (T, error)) ([]T, error) {
-	for _, section := range bundle.sections {
-		if section.kind == soraSectionTable && section.name == name {
-			if section.compression != soraCompressionNone {
-				return nil, fmt.Errorf("unsupported compression %d for table `%s`", section.compression, name)
-			}
-			if section.uncompressedLength != section.length {
-				return nil, fmt.Errorf("table `%s` has invalid uncompressed length", name)
-			}
-			return decodeRows(bundle.bytes[section.offset:section.offset+section.length], decode)
-		}
-	}
-	return nil, fmt.Errorf("missing Sora table section `%s`", name)
+    for _, section := range bundle.sections {
+        if section.kind == soraSectionTable && section.name == name {
+            if section.compression != soraCompressionNone {
+                return nil, fmt.Errorf("unsupported compression %d for table `%s`", section.compression, name)
+            }
+            if section.uncompressedLength != section.length {
+                return nil, fmt.Errorf("table `%s` has invalid uncompressed length", name)
+            }
+            return decodeRows(bundle.bytes[section.offset:section.offset+section.length], decode)
+        }
+    }
+    return nil, fmt.Errorf("missing Sora table section `%s`", name)
 }
 
 type SoraReader struct {
-	bytes  []byte
-	cursor int
+    bytes  []byte
+    cursor int
 }
 
 func (reader *SoraReader) IsFinished() bool {
-	return reader.cursor == len(reader.bytes)
+    return reader.cursor == len(reader.bytes)
 }
 
 func (reader *SoraReader) ReadUInt8() (byte, error) {
-	bytes, err := reader.take(1)
-	if err != nil {
-		return 0, err
-	}
-	return bytes[0], nil
+    bytes, err := reader.take(1)
+    if err != nil {
+        return 0, err
+    }
+    return bytes[0], nil
 }
 
 func (reader *SoraReader) ReadBool() (bool, error) {
-	value, err := reader.ReadUInt8()
-	if err != nil {
-		return false, err
-	}
-	switch value {
-	case 0:
-		return false, nil
-	case 1:
-		return true, nil
-	default:
-		return false, fmt.Errorf("invalid bool value %d", value)
-	}
+    value, err := reader.ReadUInt8()
+    if err != nil {
+        return false, err
+    }
+    switch value {
+    case 0:
+        return false, nil
+    case 1:
+        return true, nil
+    default:
+        return false, fmt.Errorf("invalid bool value %d", value)
+    }
 }
 
 func (reader *SoraReader) ReadUInt32() (int, error) {
-	value, err := reader.ReadInt32()
-	if err != nil {
-		return 0, err
-	}
-	return int(value), nil
+    value, err := reader.ReadInt32()
+    if err != nil {
+        return 0, err
+    }
+    return int(value), nil
 }
 
 func (reader *SoraReader) ReadInt32() (int32, error) {
-	bytes, err := reader.take(4)
-	if err != nil {
-		return 0, err
-	}
-	return readInt32At(bytes, 0), nil
+    bytes, err := reader.take(4)
+    if err != nil {
+        return 0, err
+    }
+    return readInt32At(bytes, 0), nil
 }
 
 func (reader *SoraReader) ReadInt64() (int64, error) {
-	bytes, err := reader.take(8)
-	if err != nil {
-		return 0, err
-	}
-	return readInt64At(bytes, 0), nil
+    bytes, err := reader.take(8)
+    if err != nil {
+        return 0, err
+    }
+    return readInt64At(bytes, 0), nil
 }
 
 func (reader *SoraReader) ReadFloat32() (float32, error) {
-	value, err := reader.ReadInt32()
-	if err != nil {
-		return 0, err
-	}
-	return math.Float32frombits(uint32(value)), nil
+    value, err := reader.ReadInt32()
+    if err != nil {
+        return 0, err
+    }
+    return math.Float32frombits(uint32(value)), nil
 }
 
 func (reader *SoraReader) ReadFloat64() (float64, error) {
-	value, err := reader.ReadInt64()
-	if err != nil {
-		return 0, err
-	}
-	return math.Float64frombits(uint64(value)), nil
+    value, err := reader.ReadInt64()
+    if err != nil {
+        return 0, err
+    }
+    return math.Float64frombits(uint64(value)), nil
 }
 
 func (reader *SoraReader) ReadString() (string, error) {
-	length, err := reader.ReadUInt32()
-	if err != nil {
-		return "", err
-	}
-	bytes, err := reader.take(length)
-	if err != nil {
-		return "", err
-	}
-	return string(bytes), nil
+    length, err := reader.ReadUInt32()
+    if err != nil {
+        return "", err
+    }
+    bytes, err := reader.take(length)
+    if err != nil {
+        return "", err
+    }
+    return string(bytes), nil
 }
 
 func ReadOptional[T any](reader *SoraReader, read func(*SoraReader) (T, error)) (*T, error) {
-	presence, err := reader.ReadUInt8()
-	if err != nil {
-		return nil, err
-	}
-	switch presence {
-	case 0:
-		return nil, nil
-	case 1:
-		value, err := read(reader)
-		if err != nil {
-			return nil, err
-		}
-		return &value, nil
-	default:
-		return nil, fmt.Errorf("invalid option presence %d", presence)
-	}
+    presence, err := reader.ReadUInt8()
+    if err != nil {
+        return nil, err
+    }
+    switch presence {
+    case 0:
+        return nil, nil
+    case 1:
+        value, err := read(reader)
+        if err != nil {
+            return nil, err
+        }
+        return &value, nil
+    default:
+        return nil, fmt.Errorf("invalid option presence %d", presence)
+    }
 }
 
 func ReadList[T any](reader *SoraReader, read func(*SoraReader) (T, error)) ([]T, error) {
-	length, err := reader.ReadUInt32()
-	if err != nil {
-		return nil, err
-	}
-	values := make([]T, 0, length)
-	for i := 0; i < length; i++ {
-		value, err := read(reader)
-		if err != nil {
-			return nil, err
-		}
-		values = append(values, value)
-	}
-	return values, nil
+    length, err := reader.ReadUInt32()
+    if err != nil {
+        return nil, err
+    }
+    values := make([]T, 0, length)
+    for i := 0; i < length; i++ {
+        value, err := read(reader)
+        if err != nil {
+            return nil, err
+        }
+        values = append(values, value)
+    }
+    return values, nil
 }
 
 func (reader *SoraReader) take(length int) ([]byte, error) {
-	end, err := checkedAdd(reader.cursor, length, "Sora reader cursor overflow")
-	if err != nil {
-		return nil, err
-	}
-	if end > len(reader.bytes) {
-		return nil, fmt.Errorf("Sora reader reached end of row")
-	}
-	bytes := reader.bytes[reader.cursor:end]
-	reader.cursor = end
-	return bytes, nil
+    end, err := checkedAdd(reader.cursor, length, "Sora reader cursor overflow")
+    if err != nil {
+        return nil, err
+    }
+    if end > len(reader.bytes) {
+        return nil, fmt.Errorf("Sora reader reached end of row")
+    }
+    bytes := reader.bytes[reader.cursor:end]
+    reader.cursor = end
+    return bytes, nil
 }
 
 func decodeRows[T any](payload []byte, decode func(*SoraReader) (T, error)) ([]T, error) {
-	if len(payload) < 12 {
-		return nil, fmt.Errorf("Sora table section is too short")
-	}
-	rowCount := int(readInt32At(payload, 0))
-	offsetsLength, err := checkedAdd(rowCount, 1, "Sora row offset count overflow")
-	if err != nil {
-		return nil, err
-	}
-	rowDataStart, err := checkedAdd(4, offsetsLength*8, "Sora row data offset overflow")
-	if err != nil {
-		return nil, err
-	}
-	if rowDataStart > len(payload) {
-		return nil, fmt.Errorf("Sora row offset table exceeds payload length")
-	}
+    if len(payload) < 12 {
+        return nil, fmt.Errorf("Sora table section is too short")
+    }
+    rowCount := int(readInt32At(payload, 0))
+    offsetsLength, err := checkedAdd(rowCount, 1, "Sora row offset count overflow")
+    if err != nil {
+        return nil, err
+    }
+    rowDataStart, err := checkedAdd(4, offsetsLength*8, "Sora row data offset overflow")
+    if err != nil {
+        return nil, err
+    }
+    if rowDataStart > len(payload) {
+        return nil, fmt.Errorf("Sora row offset table exceeds payload length")
+    }
 
-	rows := make([]T, 0, rowCount)
-	for index := 0; index < rowCount; index++ {
-		start, err := checkedInt64ToInt(readInt64At(payload, 4+index*8), "Sora row start exceeds int")
-		if err != nil {
-			return nil, err
-		}
-		end, err := checkedInt64ToInt(readInt64At(payload, 4+(index+1)*8), "Sora row end exceeds int")
-		if err != nil {
-			return nil, err
-		}
-		if start > end {
-			return nil, fmt.Errorf("Sora row offsets are not monotonic")
-		}
-		absoluteStart, err := checkedAdd(rowDataStart, start, "Sora row start overflow")
-		if err != nil {
-			return nil, err
-		}
-		absoluteEnd, err := checkedAdd(rowDataStart, end, "Sora row end overflow")
-		if err != nil {
-			return nil, err
-		}
-		if absoluteEnd > len(payload) {
-			return nil, fmt.Errorf("Sora row exceeds payload length")
-		}
-		reader := &SoraReader{bytes: payload[absoluteStart:absoluteEnd]}
-		row, err := decode(reader)
-		if err != nil {
-			return nil, err
-		}
-		if !reader.IsFinished() {
-			return nil, fmt.Errorf("Sora row has trailing bytes")
-		}
-		rows = append(rows, row)
-	}
-	return rows, nil
+    rows := make([]T, 0, rowCount)
+    for index := 0; index < rowCount; index++ {
+        start, err := checkedInt64ToInt(readInt64At(payload, 4+index*8), "Sora row start exceeds int")
+        if err != nil {
+            return nil, err
+        }
+        end, err := checkedInt64ToInt(readInt64At(payload, 4+(index+1)*8), "Sora row end exceeds int")
+        if err != nil {
+            return nil, err
+        }
+        if start > end {
+            return nil, fmt.Errorf("Sora row offsets are not monotonic")
+        }
+        absoluteStart, err := checkedAdd(rowDataStart, start, "Sora row start overflow")
+        if err != nil {
+            return nil, err
+        }
+        absoluteEnd, err := checkedAdd(rowDataStart, end, "Sora row end overflow")
+        if err != nil {
+            return nil, err
+        }
+        if absoluteEnd > len(payload) {
+            return nil, fmt.Errorf("Sora row exceeds payload length")
+        }
+        reader := &SoraReader{bytes: payload[absoluteStart:absoluteEnd]}
+        row, err := decode(reader)
+        if err != nil {
+            return nil, err
+        }
+        if !reader.IsFinished() {
+            return nil, fmt.Errorf("Sora row has trailing bytes")
+        }
+        rows = append(rows, row)
+    }
+    return rows, nil
 }
 
 func readInt32At(bytes []byte, offset int) int32 {
-	return int32(binary.LittleEndian.Uint32(bytes[offset : offset+4]))
+    return int32(binary.LittleEndian.Uint32(bytes[offset:offset+4]))
 }
 
 func readInt64At(bytes []byte, offset int) int64 {
-	return int64(binary.LittleEndian.Uint64(bytes[offset : offset+8]))
+    return int64(binary.LittleEndian.Uint64(bytes[offset:offset+8]))
 }
 
 func checkedAdd(left int, right int, message string) (int, error) {
-	value := int64(left) + int64(right)
-	if value > int64(^uint(0)>>1) || value < -int64(^uint(0)>>1)-1 {
-		return 0, errors.New(message)
-	}
-	return int(value), nil
+    value := int64(left) + int64(right)
+    if value > int64(^uint(0)>>1) || value < -int64(^uint(0)>>1)-1 {
+        return 0, errors.New(message)
+    }
+    return int(value), nil
 }
 
 func checkedInt64ToInt(value int64, message string) (int, error) {
-	if value > int64(^uint(0)>>1) || value < -int64(^uint(0)>>1)-1 {
-		return 0, errors.New(message)
-	}
-	return int(value), nil
+    if value > int64(^uint(0)>>1) || value < -int64(^uint(0)>>1)-1 {
+        return 0, errors.New(message)
+    }
+    return int(value), nil
 }
