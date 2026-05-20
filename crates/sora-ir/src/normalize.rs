@@ -1,15 +1,17 @@
 use sora_diagnostics::{Result, SoraError};
 use sora_schema::model::{
-    CodegenSchema, FieldSchema, IndexSchema, LanguageCodegenSchema, LuaCodegenSchema,
-    LuaEnumReprSchema, LuaVersionSchema, RuntimeFormatSchema, RustMapTypeSchema, SchemaFile,
-    TableModeSchema, TableSchema, TableSourceSchema, UnionSchema, UnionVariantSchema,
+    CodegenSchema, EnumReprSchema, FieldSchema, IndexSchema, JavaScriptCodegenSchema,
+    LanguageCodegenSchema, LuaCodegenSchema, LuaEnumReprSchema, LuaVersionSchema,
+    RuntimeFormatSchema, RustMapTypeSchema, SchemaFile, TableModeSchema, TableSchema,
+    TableSourceSchema, TypeScriptCodegenSchema, UnionSchema, UnionVariantSchema,
 };
 
 use crate::{
     model::{
-        AggregationIr, CodegenIr, ConfigIr, EnumIr, FieldIr, IndexIr, LanguageCodegenIr,
-        LuaCodegenIr, LuaEnumReprIr, LuaVersionIr, RuntimeFormatIr, RustCodegenIr, RustMapTypeIr,
-        StructIr, TableIr, TableModeIr, TableSourceIr, TypeIr, UnionIr, UnionVariantIr,
+        AggregationIr, CodegenIr, ConfigIr, EnumIr, EnumReprIr, FieldIr, IndexIr,
+        JavaScriptCodegenIr, LanguageCodegenIr, LuaCodegenIr, LuaEnumReprIr, LuaVersionIr,
+        RuntimeFormatIr, RustCodegenIr, RustMapTypeIr, StructIr, TableIr, TableModeIr,
+        TableSourceIr, TypeIr, TypeScriptCodegenIr, UnionIr, UnionVariantIr,
     },
     parse::parse_type,
 };
@@ -71,6 +73,8 @@ impl From<CodegenSchema> for CodegenIr {
             csharp: LanguageCodegenIr::from(value.csharp),
             java: LanguageCodegenIr::from(value.java),
             go: LanguageCodegenIr::from(value.go),
+            typescript: TypeScriptCodegenIr::from(value.typescript),
+            javascript: JavaScriptCodegenIr::from(value.javascript),
             lua: LuaCodegenIr::from(value.lua),
         }
     }
@@ -80,6 +84,25 @@ impl From<LanguageCodegenSchema> for LanguageCodegenIr {
     fn from(value: LanguageCodegenSchema) -> Self {
         Self {
             runtime_format: RuntimeFormatIr::from(value.runtime_format),
+        }
+    }
+}
+
+impl From<TypeScriptCodegenSchema> for TypeScriptCodegenIr {
+    fn from(value: TypeScriptCodegenSchema) -> Self {
+        Self {
+            runtime_format: RuntimeFormatIr::from(value.runtime_format),
+            enum_repr: EnumReprIr::from(value.enum_repr),
+        }
+    }
+}
+
+impl From<JavaScriptCodegenSchema> for JavaScriptCodegenIr {
+    fn from(value: JavaScriptCodegenSchema) -> Self {
+        Self {
+            runtime_format: RuntimeFormatIr::from(value.runtime_format),
+            enum_repr: EnumReprIr::from(value.enum_repr),
+            emit_dts: value.emit_dts,
         }
     }
 }
@@ -123,6 +146,15 @@ impl From<LuaEnumReprSchema> for LuaEnumReprIr {
         match value {
             LuaEnumReprSchema::Integer => Self::Integer,
             LuaEnumReprSchema::String => Self::String,
+        }
+    }
+}
+
+impl From<EnumReprSchema> for EnumReprIr {
+    fn from(value: EnumReprSchema) -> Self {
+        match value {
+            EnumReprSchema::Integer => Self::Integer,
+            EnumReprSchema::String => Self::String,
         }
     }
 }
@@ -395,7 +427,9 @@ fn validate_optional_non_empty(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::model::{LuaEnumReprIr, LuaVersionIr, RuntimeFormatIr, TableModeIr, TypeIr};
+    use crate::model::{
+        EnumReprIr, LuaEnumReprIr, LuaVersionIr, RuntimeFormatIr, TableModeIr, TypeIr,
+    };
 
     #[test]
     fn normalizes_schema() {
@@ -434,6 +468,11 @@ length = [1, 3]
         assert_eq!(ir.package, "game_config");
         assert_eq!(ir.codegen.rust.runtime_format, RuntimeFormatIr::Sora);
         assert_eq!(ir.codegen.kotlin.runtime_format, RuntimeFormatIr::Sora);
+        assert_eq!(ir.codegen.typescript.runtime_format, RuntimeFormatIr::Sora);
+        assert_eq!(ir.codegen.typescript.enum_repr, EnumReprIr::String);
+        assert_eq!(ir.codegen.javascript.runtime_format, RuntimeFormatIr::Sora);
+        assert_eq!(ir.codegen.javascript.enum_repr, EnumReprIr::String);
+        assert!(ir.codegen.javascript.emit_dts);
         assert_eq!(ir.codegen.lua.runtime_format, RuntimeFormatIr::Sora);
         assert_eq!(ir.codegen.lua.lua_version, LuaVersionIr::Lua54);
         assert_eq!(ir.codegen.lua.enum_repr, LuaEnumReprIr::String);

@@ -1,0 +1,21 @@
+import type { SoraReader } from "./sora_runtime.js";
+
+import type { ResourceCost } from "./resource_cost.js";
+import { decodeResourceCost } from "./resource_cost.js";
+
+
+export interface Achievement {
+    id: number;
+    titleKey: string;
+    targetCount: bigint;
+    reward: ResourceCost;
+}
+
+export function decodeAchievement(reader: SoraReader): Achievement {
+    return {
+        id: reader.readI32(),
+        titleKey: reader.readString(),
+        targetCount: reader.readI64(),
+        reward: decodeResourceCost(reader),
+    };
+}

@@ -1,0 +1,357 @@
+const SORA_BUNDLE_VERSION = 1;
+const SORA_HEADER_LENGTH = 24;
+const SECTION_KIND_MANIFEST = 0;
+const SECTION_KIND_SCHEMA = 1;
+const SECTION_KIND_TABLE = 2;
+const COMPRESSION_NONE = 0;
+const MAX_SAFE_INTEGER = BigInt(Number.MAX_SAFE_INTEGER);
+
+const textDecoder = new TextDecoder();
+
+export class SoraReadError extends Error {
+    constructor(message: string) {
+        super(message);
+        this.name = "SoraReadError";
+    }
+}
+
+interface SoraSection {
+    kind: number;
+    compression: number;
+    name: string;
+    offset: number;
+    length: number;
+    uncompressedLength: number;
+}
+
+export class SoraBundle {
+    private constructor(
+        private readonly bytes: Uint8Array,
+        private readonly sections: SoraSection[],
+    ) {}
+
+    static parse(input: Uint8Array | ArrayBuffer): SoraBundle {
+        const bytes = asBytes(input);
+        if (bytes.byteLength < SORA_HEADER_LENGTH) {
+            throw new SoraReadError("Sora bundle is shorter than header");
+        }
+        if (ascii(bytes.subarray(0, 4)) !== "SORA") {
+            throw new SoraReadError("invalid Sora bundle magic");
+        }
+
+        const version = readU32At(bytes, 4);
+        if (version !== SORA_BUNDLE_VERSION) {
+            throw new SoraReadError(`unsupported Sora bundle version ${version}`);
+        }
+
+        const headerLength = readU32At(bytes, 8);
+        const directoryLength = readU32At(bytes, 12);
+        const sectionCount = readU32At(bytes, 16);
+        const flags = readU32At(bytes, 20);
+        if (flags !== 0) {
+            throw new SoraReadError(`unsupported Sora bundle flags ${flags}`);
+        }
+        if (headerLength !== SORA_HEADER_LENGTH || headerLength > bytes.byteLength) {
+            throw new SoraReadError("invalid Sora bundle header length");
+        }
+
+        const directoryEnd = checkedAdd(headerLength, directoryLength, "Sora section directory length overflow");
+        if (directoryEnd > bytes.byteLength) {
+            throw new SoraReadError("Sora section directory exceeds bundle length");
+        }
+
+        let cursor = headerLength;
+        const sections: SoraSection[] = [];
+        let manifestCount = 0;
+        let schemaCount = 0;
+        const tableNames = new Set<string>();
+        for (let index = 0; index < sectionCount; index += 1) {
+            if (cursor + 40 > directoryEnd) {
+                throw new SoraReadError("truncated Sora section directory entry");
+            }
+
+            const kind = readU32At(bytes, cursor);
+            const compression = readU32At(bytes, cursor + 4);
+            const nameLength = readU32At(bytes, cursor + 8);
+            const entryFlags = readU32At(bytes, cursor + 12);
+            const offset = readU64At(bytes, cursor + 16);
+            const length = readU64At(bytes, cursor + 24);
+            const uncompressedLength = readU64At(bytes, cursor + 32);
+            if (entryFlags !== 0) {
+                throw new SoraReadError(`unsupported Sora section flags ${entryFlags}`);
+            }
+
+            const nameStart = cursor + 40;
+            const nameEnd = checkedAdd(nameStart, nameLength, "Sora section name length overflow");
+            if (nameEnd > directoryEnd) {
+                throw new SoraReadError("Sora section name exceeds directory");
+            }
+            if (checkedAdd(offset, length, "Sora section payload length overflow") > bytes.byteLength) {
+                throw new SoraReadError("Sora section payload exceeds bundle length");
+            }
+
+            const name = utf8(bytes.subarray(nameStart, nameEnd));
+            if (kind === SECTION_KIND_MANIFEST) {
+                manifestCount += 1;
+                if (name !== "$manifest") {
+                    throw new SoraReadError("Sora manifest section must be named `$manifest`");
+                }
+            } else if (kind === SECTION_KIND_SCHEMA) {
+                schemaCount += 1;
+                if (name !== "$schema") {
+                    throw new SoraReadError("Sora schema section must be named `$schema`");
+                }
+            } else if (kind === SECTION_KIND_TABLE) {
+                if (tableNames.has(name)) {
+                    throw new SoraReadError(`duplicate Sora table section \`${name}\``);
+                }
+                tableNames.add(name);
+            } else {
+                throw new SoraReadError(`unknown Sora section kind ${kind}`);
+            }
+
+            if (compression === COMPRESSION_NONE && uncompressedLength !== length) {
+                throw new SoraReadError("uncompressed Sora section length mismatch");
+            }
+            sections.push({ kind, compression, name, offset, length, uncompressedLength });
+            cursor = nameEnd;
+        }
+
+        if (cursor !== directoryEnd) {
+            throw new SoraReadError("Sora section directory has trailing bytes");
+        }
+        if (manifestCount !== 1) {
+            throw new SoraReadError(`expected exactly 1 Sora manifest section, got ${manifestCount}`);
+        }
+        if (schemaCount !== 1) {
+            throw new SoraReadError(`expected exactly 1 Sora schema section, got ${schemaCount}`);
+        }
+
+        return new SoraBundle(bytes, sections);
+    }
+
+    decodeTable<T>(name: string, decode: (reader: SoraReader) => T): T[] {
+        const section = this.sections.find((item) => item.kind === SECTION_KIND_TABLE && item.name === name);
+        if (section === undefined) {
+            throw new SoraReadError(`missing Sora table section \`${name}\``);
+        }
+        if (section.compression !== COMPRESSION_NONE) {
+            throw new SoraReadError(`unsupported compression ${section.compression} for table \`${name}\``);
+        }
+        if (section.uncompressedLength !== section.length) {
+            throw new SoraReadError(`table \`${name}\` has invalid uncompressed length`);
+        }
+        const payload = this.bytes.subarray(section.offset, section.offset + section.length);
+        return decodeRows(payload, decode);
+    }
+}
+
+export class SoraReader {
+    private cursor = 0;
+
+    constructor(private readonly bytes: Uint8Array) {}
+
+    isFinished(): boolean {
+        return this.cursor === this.bytes.byteLength;
+    }
+
+    readU8(): number {
+        const value = this.bytes[this.cursor];
+        if (value === undefined) {
+            throw new SoraReadError("Sora reader reached end of row");
+        }
+        this.cursor += 1;
+        return value;
+    }
+
+    readBool(): boolean {
+        const value = this.readU8();
+        if (value === 0) {
+            return false;
+        }
+        if (value === 1) {
+            return true;
+        }
+        throw new SoraReadError(`invalid bool value ${value}`);
+    }
+
+    readU32(): number {
+        const value = readU32At(this.bytes, this.cursor);
+        this.cursor += 4;
+        return value;
+    }
+
+    readI32(): number {
+        const value = readI32At(this.bytes, this.cursor);
+        this.cursor += 4;
+        return value;
+    }
+
+    readI64(): bigint {
+        const value = readI64At(this.bytes, this.cursor);
+        this.cursor += 8;
+        return value;
+    }
+
+    readF32(): number {
+        const value = viewAt(this.bytes, this.cursor, 4).getFloat32(0, true);
+        this.cursor += 4;
+        return value;
+    }
+
+    readF64(): number {
+        const value = viewAt(this.bytes, this.cursor, 8).getFloat64(0, true);
+        this.cursor += 8;
+        return value;
+    }
+
+    readString(): string {
+        return utf8(this.take(this.readU32()));
+    }
+
+    readOptional<T>(read: () => T): T | undefined {
+        const presence = this.readU8();
+        if (presence === 0) {
+            return undefined;
+        }
+        if (presence === 1) {
+            return read();
+        }
+        throw new SoraReadError(`invalid option presence ${presence}`);
+    }
+
+    readList<T>(read: () => T): T[] {
+        const length = this.readU32();
+        const values: T[] = [];
+        for (let index = 0; index < length; index += 1) {
+            values.push(read());
+        }
+        return values;
+    }
+
+    private take(length: number): Uint8Array {
+        const end = checkedAdd(this.cursor, length, "Sora row slice length overflow");
+        if (end > this.bytes.byteLength) {
+            throw new SoraReadError("Sora reader reached end of row");
+        }
+        const value = this.bytes.subarray(this.cursor, end);
+        this.cursor = end;
+        return value;
+    }
+}
+
+export function requireSingletonTable<T>(rows: T[], name: string): T {
+    if (rows.length !== 1) {
+        throw new SoraReadError(`expected singleton table \`${name}\` to contain exactly 1 row, got ${rows.length}`);
+    }
+    return rows[0] as T;
+}
+
+export function decodeMapTable<K, V>(rows: V[], key: (row: V) => K): Map<K, V> {
+    const values = new Map<K, V>();
+    for (const row of rows) {
+        values.set(key(row), row);
+    }
+    return values;
+}
+
+export function decodeUniqueIndex<K, V>(rows: V[], key: (row: V) => K): Map<K, V> {
+    return decodeMapTable(rows, key);
+}
+
+export function decodeIndex<K, V>(rows: V[], key: (row: V) => K): Map<K, V[]> {
+    const values = new Map<K, V[]>();
+    for (const row of rows) {
+        const indexKey = key(row);
+        const group = values.get(indexKey);
+        if (group === undefined) {
+            values.set(indexKey, [row]);
+        } else {
+            group.push(row);
+        }
+    }
+    return values;
+}
+
+function decodeRows<T>(payload: Uint8Array, decode: (reader: SoraReader) => T): T[] {
+    if (payload.byteLength < 12) {
+        throw new SoraReadError("Sora table section is too short");
+    }
+
+    const rowCount = readU32At(payload, 0);
+    const rowDataStart = 4 + (rowCount + 1) * 8;
+    if (rowDataStart > payload.byteLength) {
+        throw new SoraReadError("Sora row offset table exceeds payload length");
+    }
+
+    const rows: T[] = [];
+    for (let index = 0; index < rowCount; index += 1) {
+        const start = readU64At(payload, 4 + index * 8);
+        const end = readU64At(payload, 4 + (index + 1) * 8);
+        if (start > end) {
+            throw new SoraReadError("Sora row offsets are not monotonic");
+        }
+        const absoluteStart = rowDataStart + start;
+        const absoluteEnd = rowDataStart + end;
+        if (absoluteEnd > payload.byteLength) {
+            throw new SoraReadError("Sora row exceeds payload length");
+        }
+        const reader = new SoraReader(payload.subarray(absoluteStart, absoluteEnd));
+        const row = decode(reader);
+        if (!reader.isFinished()) {
+            throw new SoraReadError("Sora row has trailing bytes");
+        }
+        rows.push(row);
+    }
+    return rows;
+}
+
+function asBytes(input: Uint8Array | ArrayBuffer): Uint8Array {
+    return input instanceof Uint8Array ? input : new Uint8Array(input);
+}
+
+function ascii(bytes: Uint8Array): string {
+    return String.fromCharCode(...bytes);
+}
+
+function utf8(bytes: Uint8Array): string {
+    return textDecoder.decode(bytes);
+}
+
+function readU32At(bytes: Uint8Array, offset: number): number {
+    return viewAt(bytes, offset, 4).getUint32(0, true);
+}
+
+function readI32At(bytes: Uint8Array, offset: number): number {
+    return viewAt(bytes, offset, 4).getInt32(0, true);
+}
+
+function readU64At(bytes: Uint8Array, offset: number): number {
+    return checkedU64ToNumber(viewAt(bytes, offset, 8).getBigUint64(0, true), "u64 exceeds safe integer range");
+}
+
+function readI64At(bytes: Uint8Array, offset: number): bigint {
+    return viewAt(bytes, offset, 8).getBigInt64(0, true);
+}
+
+function viewAt(bytes: Uint8Array, offset: number, length: number): DataView {
+    if (offset < 0 || offset + length > bytes.byteLength) {
+        throw new SoraReadError("unexpected end while reading binary value");
+    }
+    return new DataView(bytes.buffer, bytes.byteOffset + offset, length);
+}
+
+function checkedU64ToNumber(value: bigint, message: string): number {
+    if (value > MAX_SAFE_INTEGER) {
+        throw new SoraReadError(message);
+    }
+    return Number(value);
+}
+
+function checkedAdd(left: number, right: number, message: string): number {
+    const value = left + right;
+    if (!Number.isSafeInteger(value)) {
+        throw new SoraReadError(message);
+    }
+    return value;
+}

@@ -1,0 +1,28 @@
+export declare class SoraReadError extends Error {
+    constructor(message: string);
+}
+
+export declare class SoraBundle {
+    static parse(input: Uint8Array | ArrayBuffer): SoraBundle;
+    decodeTable<T>(name: string, decode: (reader: SoraReader) => T): T[];
+}
+
+export declare class SoraReader {
+    constructor(bytes: Uint8Array);
+    isFinished(): boolean;
+    readU8(): number;
+    readBool(): boolean;
+    readU32(): number;
+    readI32(): number;
+    readI64(): bigint;
+    readF32(): number;
+    readF64(): number;
+    readString(): string;
+    readOptional<T>(read: () => T): T | undefined;
+    readList<T>(read: () => T): T[];
+}
+
+export declare function requireSingletonTable<T>(rows: T[], name: string): T;
+export declare function decodeMapTable<K, V>(rows: V[], key: (row: V) => K): Map<K, V>;
+export declare function decodeUniqueIndex<K, V>(rows: V[], key: (row: V) => K): Map<K, V>;
+export declare function decodeIndex<K, V>(rows: V[], key: (row: V) => K): Map<K, V[]>;

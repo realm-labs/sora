@@ -36,6 +36,10 @@ pub struct CodegenSchema {
     #[serde(default)]
     pub go: LanguageCodegenSchema,
     #[serde(default)]
+    pub typescript: TypeScriptCodegenSchema,
+    #[serde(default)]
+    pub javascript: JavaScriptCodegenSchema,
+    #[serde(default)]
     pub lua: LuaCodegenSchema,
 }
 
@@ -69,6 +73,50 @@ impl Default for LanguageCodegenSchema {
             runtime_format: RuntimeFormatSchema::Sora,
         }
     }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
+pub struct TypeScriptCodegenSchema {
+    #[serde(default)]
+    pub runtime_format: RuntimeFormatSchema,
+
+    #[serde(default)]
+    pub enum_repr: EnumReprSchema,
+}
+
+impl Default for TypeScriptCodegenSchema {
+    fn default() -> Self {
+        Self {
+            runtime_format: RuntimeFormatSchema::Sora,
+            enum_repr: EnumReprSchema::String,
+        }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
+pub struct JavaScriptCodegenSchema {
+    #[serde(default)]
+    pub runtime_format: RuntimeFormatSchema,
+
+    #[serde(default)]
+    pub enum_repr: EnumReprSchema,
+
+    #[serde(default = "default_emit_dts")]
+    pub emit_dts: bool,
+}
+
+impl Default for JavaScriptCodegenSchema {
+    fn default() -> Self {
+        Self {
+            runtime_format: RuntimeFormatSchema::Sora,
+            enum_repr: EnumReprSchema::String,
+            emit_dts: default_emit_dts(),
+        }
+    }
+}
+
+fn default_emit_dts() -> bool {
+    true
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
@@ -124,6 +172,14 @@ pub enum LuaVersionSchema {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, Default)]
 #[serde(rename_all = "snake_case")]
 pub enum LuaEnumReprSchema {
+    Integer,
+    #[default]
+    String,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, Default)]
+#[serde(rename_all = "snake_case")]
+pub enum EnumReprSchema {
     Integer,
     #[default]
     String,
@@ -334,6 +390,15 @@ map_type = "fx_hash_map"
 [codegen.kotlin]
 runtime_format = "sora"
 
+[codegen.typescript]
+runtime_format = "sora"
+enum_repr = "string"
+
+[codegen.javascript]
+runtime_format = "sora"
+enum_repr = "integer"
+emit_dts = false
+
 [codegen.lua]
 runtime_format = "sora"
 module = "generated.lua"
@@ -352,6 +417,17 @@ enum_repr = "string"
             schema.codegen.kotlin.runtime_format,
             RuntimeFormatSchema::Sora
         );
+        assert_eq!(
+            schema.codegen.typescript.runtime_format,
+            RuntimeFormatSchema::Sora
+        );
+        assert_eq!(schema.codegen.typescript.enum_repr, EnumReprSchema::String);
+        assert_eq!(
+            schema.codegen.javascript.runtime_format,
+            RuntimeFormatSchema::Sora
+        );
+        assert_eq!(schema.codegen.javascript.enum_repr, EnumReprSchema::Integer);
+        assert!(!schema.codegen.javascript.emit_dts);
         assert_eq!(schema.codegen.lua.runtime_format, RuntimeFormatSchema::Sora);
         assert_eq!(schema.codegen.lua.module.as_deref(), Some("generated.lua"));
         assert_eq!(schema.codegen.lua.lua_version, LuaVersionSchema::Lua54);

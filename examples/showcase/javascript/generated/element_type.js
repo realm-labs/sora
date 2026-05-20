@@ -1,0 +1,21 @@
+export const ElementType = {
+    Fire: "Fire",
+    Ice: "Ice",
+    Lightning: "Lightning",
+    Physical: "Physical",
+};
+const values = [
+    ElementType.Fire,
+    ElementType.Ice,
+    ElementType.Lightning,
+    ElementType.Physical,
+];
+
+export function decodeElementType(reader) {
+    const ordinal = reader.readU32();
+    const value = values[ordinal];
+    if (value === undefined) {
+        throw new Error(`invalid enum ordinal ${ordinal} for ElementType`);
+    }
+    return value;
+}

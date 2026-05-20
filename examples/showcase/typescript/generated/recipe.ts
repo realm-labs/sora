@@ -1,0 +1,19 @@
+import type { SoraReader } from "./sora_runtime.js";
+
+import type { ResourceCost } from "./resource_cost.js";
+import { decodeResourceCost } from "./resource_cost.js";
+
+
+export interface Recipe {
+    id: number;
+    resultItem: number;
+    materials: ResourceCost[];
+}
+
+export function decodeRecipe(reader: SoraReader): Recipe {
+    return {
+        id: reader.readI32(),
+        resultItem: reader.readI32(),
+        materials: reader.readList(() => decodeResourceCost(reader)),
+    };
+}

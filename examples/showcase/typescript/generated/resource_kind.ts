@@ -1,0 +1,26 @@
+import type { SoraReader } from "./sora_runtime.js";
+
+export type ResourceKind =
+    | "Item"
+    | "Gold"
+    | "Diamond";
+
+export const ResourceKind = {
+    Item: "Item",
+    Gold: "Gold",
+    Diamond: "Diamond",
+} as const;
+const values: ResourceKind[] = [
+    ResourceKind.Item,
+    ResourceKind.Gold,
+    ResourceKind.Diamond,
+];
+
+export function decodeResourceKind(reader: SoraReader): ResourceKind {
+    const ordinal = reader.readU32();
+    const value = values[ordinal];
+    if (value === undefined) {
+        throw new Error(`invalid enum ordinal ${ordinal} for ResourceKind`);
+    }
+    return value;
+}

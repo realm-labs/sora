@@ -5,8 +5,9 @@ use sora_ir::model::{ConfigIr, RuntimeFormatIr};
 
 use crate::{
     csharp::CSharpCodeGenerator, go::GoCodeGenerator, java::JavaCodeGenerator,
-    kotlin::KotlinCodeGenerator, lua::LuaCodeGenerator, proto::ProtoCodeGenerator,
-    rust::RustCodeGenerator, target::CodegenTarget,
+    javascript::JavaScriptCodeGenerator, kotlin::KotlinCodeGenerator, lua::LuaCodeGenerator,
+    proto::ProtoCodeGenerator, rust::RustCodeGenerator, target::CodegenTarget,
+    typescript::TypeScriptCodeGenerator,
 };
 
 pub trait CodeGenerator {
@@ -43,6 +44,8 @@ pub fn generator_for_target(target: CodegenTarget) -> Box<dyn CodeGenerator> {
         CodegenTarget::CSharp => Box::new(CSharpCodeGenerator),
         CodegenTarget::Java => Box::new(JavaCodeGenerator),
         CodegenTarget::Go => Box::new(GoCodeGenerator),
+        CodegenTarget::TypeScript => Box::new(TypeScriptCodeGenerator),
+        CodegenTarget::JavaScript => Box::new(JavaScriptCodeGenerator),
         CodegenTarget::Lua => Box::new(LuaCodeGenerator),
         CodegenTarget::Proto => Box::new(ProtoCodeGenerator),
     }

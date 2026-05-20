@@ -1,0 +1,26 @@
+import type { SoraReader } from "./sora_runtime.js";
+
+export type QuestType =
+    | "Main"
+    | "Side"
+    | "Daily";
+
+export const QuestType = {
+    Main: "Main",
+    Side: "Side",
+    Daily: "Daily",
+} as const;
+const values: QuestType[] = [
+    QuestType.Main,
+    QuestType.Side,
+    QuestType.Daily,
+];
+
+export function decodeQuestType(reader: SoraReader): QuestType {
+    const ordinal = reader.readU32();
+    const value = values[ordinal];
+    if (value === undefined) {
+        throw new Error(`invalid enum ordinal ${ordinal} for QuestType`);
+    }
+    return value;
+}

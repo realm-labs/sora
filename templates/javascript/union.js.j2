@@ -1,0 +1,18 @@
+{%- for import in union.imports %}
+import { decode{{ import.name }} } from "./{{ import.module }}{{ options.import_ext }}";
+{%- endfor %}
+
+export function decode{{ union.pascal_name }}(reader) {
+    const ordinal = reader.readU32();
+{%- for variant in union.variants %}
+    if (ordinal === {{ loop.index0 }}) {
+        return {
+            {{ union.tag }}: "{{ variant.name }}",
+{%- for field in variant.fields %}
+            {{ field.name }}: {{ field.decode }},
+{%- endfor %}
+        };
+    }
+{%- endfor %}
+    throw new Error(`invalid union ordinal ${ordinal} for {{ union.pascal_name }}`);
+}

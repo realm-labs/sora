@@ -1,0 +1,18 @@
+import type { SoraReader } from "./sora_runtime.js";
+
+export type ItemType =
+    | "Weapon"
+    | "Armor"
+    | "Currency"
+    | "Material"
+    | "Consumable";
+
+export declare const ItemType: {
+    readonly Weapon: "Weapon";
+    readonly Armor: "Armor";
+    readonly Currency: "Currency";
+    readonly Material: "Material";
+    readonly Consumable: "Consumable";
+};
+
+export declare function decodeItemType(reader: SoraReader): ItemType;

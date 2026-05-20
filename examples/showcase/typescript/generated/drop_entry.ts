@@ -1,0 +1,20 @@
+import type { SoraReader } from "./sora_runtime.js";
+
+
+export interface DropEntry {
+    groupId: number;
+    seq: number;
+    itemId: number;
+    count: number;
+    weight: number;
+}
+
+export function decodeDropEntry(reader: SoraReader): DropEntry {
+    return {
+        groupId: reader.readI32(),
+        seq: reader.readI32(),
+        itemId: reader.readI32(),
+        count: reader.readI32(),
+        weight: reader.readF32(),
+    };
+}

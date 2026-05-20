@@ -1,0 +1,16 @@
+import type { SoraReader } from "./sora_runtime.js";
+
+export type ElementType =
+    | "Fire"
+    | "Ice"
+    | "Lightning"
+    | "Physical";
+
+export declare const ElementType: {
+    readonly Fire: "Fire";
+    readonly Ice: "Ice";
+    readonly Lightning: "Lightning";
+    readonly Physical: "Physical";
+};
+
+export declare function decodeElementType(reader: SoraReader): ElementType;

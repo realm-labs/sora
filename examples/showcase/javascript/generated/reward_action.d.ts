@@ -1,0 +1,27 @@
+import type { SoraReader } from "./sora_runtime.js";
+
+export interface RewardActionAddItem {
+    type: "AddItem";
+    itemId: number;
+    count: number;
+}
+export interface RewardActionAddBuff {
+    type: "AddBuff";
+    buffId: number;
+    duration: number;
+}
+export interface RewardActionUnlockStage {
+    type: "UnlockStage";
+    stageId: number;
+}
+export interface RewardActionSendMail {
+    type: "SendMail";
+    mailId: number;
+}
+export type RewardAction =
+    | RewardActionAddItem
+    | RewardActionAddBuff
+    | RewardActionUnlockStage
+    | RewardActionSendMail;
+
+export declare function decodeRewardAction(reader: SoraReader): RewardAction;

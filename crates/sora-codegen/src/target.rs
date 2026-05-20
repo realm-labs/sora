@@ -5,6 +5,8 @@ pub enum CodegenTarget {
     CSharp,
     Java,
     Go,
+    TypeScript,
+    JavaScript,
     Lua,
     Proto,
 }

@@ -1,0 +1,11 @@
+import type { SoraReader } from "./sora_runtime.js";
+
+
+export interface MailReward {
+    mailId: number;
+    seq: number;
+    itemId: number;
+    count: number;
+}
+
+export declare function decodeMailReward(reader: SoraReader): MailReward;

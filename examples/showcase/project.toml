@@ -28,6 +28,14 @@ target = "go"
 out = "go/internal/showcase"
 
 [[build.codegen]]
+target = "typescript"
+out = "typescript/generated"
+
+[[build.codegen]]
+target = "javascript"
+out = "javascript/generated"
+
+[[build.codegen]]
 target = "lua"
 out = "lua/generated"
 
@@ -74,6 +82,15 @@ runtime_format = "sora"
 
 [codegen.go]
 runtime_format = "sora"
+
+[codegen.typescript]
+runtime_format = "sora"
+enum_repr = "string"
+
+[codegen.javascript]
+runtime_format = "sora"
+enum_repr = "string"
+emit_dts = true
 
 [codegen.lua]
 runtime_format = "sora"

@@ -1,0 +1,19 @@
+import type { SoraReader } from "./sora_runtime{{ options.import_ext }}";
+{% for import in record.imports %}
+import type { {{ import.name }} } from "./{{ import.module }}{{ options.import_ext }}";
+import { decode{{ import.name }} } from "./{{ import.module }}{{ options.import_ext }}";
+{% endfor %}
+
+export interface {{ record.pascal_name }} {
+{%- for field in record.fields %}
+    {{ field.name }}: {{ field.type_name }};
+{%- endfor %}
+}
+
+export function decode{{ record.pascal_name }}(reader: SoraReader): {{ record.pascal_name }} {
+    return {
+{%- for field in record.fields %}
+        {{ field.name }}: {{ field.decode }},
+{%- endfor %}
+    };
+}

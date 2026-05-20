@@ -1,0 +1,18 @@
+import type { SoraReader } from "./sora_runtime.js";
+
+export type StatType =
+    | "Hp"
+    | "Attack"
+    | "Defense"
+    | "Speed"
+    | "CritRate";
+
+export declare const StatType: {
+    readonly Hp: "Hp";
+    readonly Attack: "Attack";
+    readonly Defense: "Defense";
+    readonly Speed: "Speed";
+    readonly CritRate: "CritRate";
+};
+
+export declare function decodeStatType(reader: SoraReader): StatType;

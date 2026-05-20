@@ -1,0 +1,158 @@
+import {
+    SoraBundle,
+    decodeIndex,
+    decodeMapTable,
+    decodeUniqueIndex,
+    requireSingletonTable,
+} from "./sora_runtime{{ options.import_ext }}";
+{% for table in model.tables %}
+import type { {{ table.row_type }} } from "./{{ table.snake_name }}{{ options.import_ext }}";
+import { decode{{ table.row_type }} } from "./{{ table.snake_name }}{{ options.import_ext }}";
+{% endfor %}
+{% for enum in model.enums %}
+import type { {{ enum.name }} } from "./{{ enum.snake_name }}{{ options.import_ext }}";
+{% endfor %}
+
+export interface SoraConfigTable {
+    name(): string;
+    mode(): string;
+    key(): string | undefined;
+    len(): number;
+}
+
+{%- for table in model.tables %}
+export class {{ table.pascal_name }}Table implements SoraConfigTable {
+    private constructor(
+{%- if table.mode == "map" and table.key_type %}
+        private readonly _rows: Map<{{ table.key_type }}, {{ table.row_type }}>,
+{%- elif table.mode == "singleton" %}
+        private readonly _row: {{ table.row_type }},
+{%- else %}
+        private readonly _rows: {{ table.row_type }}[],
+{%- endif %}
+{%- for index in table.unique_indexes %}
+        private readonly _{{ index.name }}: Map<{{ index.key_type }}, {{ table.row_type }}>,
+{%- endfor %}
+{%- for index in table.non_unique_indexes %}
+        private readonly _{{ index.name }}: Map<{{ index.key_type }}, {{ table.row_type }}[]>,
+{%- endfor %}
+    ) {}
+
+    static decode(rows: {{ table.row_type }}[]): {{ table.pascal_name }}Table {
+{%- if table.mode == "map" and table.key_field_name %}
+        return new {{ table.pascal_name }}Table(
+            decodeMapTable(rows, (row) => row.{{ table.key_field_name }}),
+{%- for index in table.unique_indexes %}
+            decodeUniqueIndex(rows, (row) => row.{{ index.field_name }}),
+{%- endfor %}
+{%- for index in table.non_unique_indexes %}
+            decodeIndex(rows, (row) => row.{{ index.field_name }}),
+{%- endfor %}
+        );
+{%- elif table.mode == "singleton" %}
+        return new {{ table.pascal_name }}Table(
+            requireSingletonTable(rows, "{{ table.name }}"),
+        );
+{%- else %}
+        return new {{ table.pascal_name }}Table(
+            rows,
+{%- for index in table.unique_indexes %}
+            decodeUniqueIndex(rows, (row) => row.{{ index.field_name }}),
+{%- endfor %}
+{%- for index in table.non_unique_indexes %}
+            decodeIndex(rows, (row) => row.{{ index.field_name }}),
+{%- endfor %}
+        );
+{%- endif %}
+    }
+
+    name(): string {
+        return "{{ table.name }}";
+    }
+
+    mode(): string {
+        return "{{ table.mode }}";
+    }
+
+    key(): string | undefined {
+{%- if table.key_name %}
+        return "{{ table.key_name }}";
+{%- else %}
+        return undefined;
+{%- endif %}
+    }
+
+    len(): number {
+{%- if table.mode == "singleton" %}
+        return 1;
+{%- elif table.mode == "map" and table.key_field_name %}
+        return this._rows.size;
+{%- else %}
+        return this._rows.length;
+{%- endif %}
+    }
+
+{%- if table.mode == "map" and table.key_field_name %}
+    get(key: {{ table.key_type }}): {{ table.row_type }} | undefined {
+        return this._rows.get(key);
+    }
+
+    rows(): ReadonlyMap<{{ table.key_type }}, {{ table.row_type }}> {
+        return this._rows;
+    }
+{%- elif table.mode == "singleton" %}
+    row(): {{ table.row_type }} {
+        return this._row;
+    }
+{%- else %}
+    rows(): readonly {{ table.row_type }}[] {
+        return this._rows;
+    }
+{%- endif %}
+
+{%- for index in table.unique_indexes %}
+    get{{ index.pascal_name }}({{ index.param_camel_name }}: {{ index.param_type }}): {{ table.row_type }} | undefined {
+        return this._{{ index.name }}.get({{ index.param_camel_name }});
+    }
+
+{%- endfor %}
+{%- for index in table.non_unique_indexes %}
+    find{{ index.pascal_name }}({{ index.param_camel_name }}: {{ index.param_type }}): {{ table.row_type }}[] {
+        return this._{{ index.name }}.get({{ index.param_camel_name }}) ?? [];
+    }
+
+{%- endfor %}
+}
+
+{%- endfor %}
+export class SoraConfig {
+    private constructor(
+{%- for table in model.tables %}
+        private readonly _{{ table.camel_name }}: {{ table.pascal_name }}Table,
+{%- endfor %}
+    ) {}
+
+    static fromBytes(bytes: Uint8Array | ArrayBuffer): SoraConfig {
+        const bundle = SoraBundle.parse(bytes);
+        return new SoraConfig(
+{%- for table in model.tables %}
+            {{ table.pascal_name }}Table.decode(bundle.decodeTable("{{ table.name }}", decode{{ table.row_type }})),
+{%- endfor %}
+        );
+    }
+
+    tables(): SoraConfigTable[] {
+        return [
+{%- for table in model.tables %}
+            this._{{ table.camel_name }},
+{%- endfor %}
+        ];
+    }
+
+{%- for table in model.tables %}
+    {{ table.camel_name }}(): {{ table.pascal_name }}Table {
+        return this._{{ table.camel_name }};
+    }
+
+{%- endfor %}
+}

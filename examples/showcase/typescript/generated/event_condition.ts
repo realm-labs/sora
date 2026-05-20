@@ -1,0 +1,43 @@
+import type { SoraReader } from "./sora_runtime.js";
+
+export interface EventConditionLevelAtLeast {
+    type: "LevelAtLeast";
+    level: number;
+}
+export interface EventConditionQuestCompleted {
+    type: "QuestCompleted";
+    questId: number;
+}
+export interface EventConditionHasItem {
+    type: "HasItem";
+    itemId: number;
+    count: number;
+}
+export type EventCondition =
+    | EventConditionLevelAtLeast
+    | EventConditionQuestCompleted
+    | EventConditionHasItem;
+
+export function decodeEventCondition(reader: SoraReader): EventCondition {
+    const ordinal = reader.readU32();
+    if (ordinal === 0) {
+        return {
+            type: "LevelAtLeast",
+            level: reader.readI32(),
+        };
+    }
+    if (ordinal === 1) {
+        return {
+            type: "QuestCompleted",
+            questId: reader.readI32(),
+        };
+    }
+    if (ordinal === 2) {
+        return {
+            type: "HasItem",
+            itemId: reader.readI32(),
+            count: reader.readI32(),
+        };
+    }
+    throw new Error(`invalid union ordinal ${ordinal} for EventCondition`);
+}

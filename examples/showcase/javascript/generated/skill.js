@@ -1,0 +1,18 @@
+
+import { decodeElementType } from "./element_type.js";
+import { decodeResourceCost } from "./resource_cost.js";
+import { decodeSkillEffect } from "./skill_effect.js";
+import { decodeVec3 } from "./vec3.js";
+
+export function decodeSkill(reader) {
+    return {
+        id: reader.readI32(),
+        name: reader.readString(),
+        element: decodeElementType(reader),
+        cost: decodeResourceCost(reader),
+        effect: decodeSkillEffect(reader),
+        requiredLevel: reader.readI32(),
+        requiredItem: reader.readOptional(() => reader.readI32()),
+        castOrigin: decodeVec3(reader),
+    };
+}

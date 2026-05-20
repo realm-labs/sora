@@ -41,6 +41,8 @@ pub enum GenCommand {
     Csharp(GenArgs),
     Java(GenArgs),
     Go(GenArgs),
+    Typescript(GenArgs),
+    Javascript(GenArgs),
     Lua(GenArgs),
     Proto(GenArgs),
 }
@@ -122,6 +124,8 @@ pub enum BuildTarget {
     Csharp,
     Java,
     Go,
+    Typescript,
+    Javascript,
     Lua,
     Proto,
 }

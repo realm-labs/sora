@@ -1,0 +1,11 @@
+{%- for import in record.imports %}
+import { decode{{ import.name }} } from "./{{ import.module }}{{ options.import_ext }}";
+{%- endfor %}
+
+export function decode{{ record.pascal_name }}(reader) {
+    return {
+{%- for field in record.fields %}
+        {{ field.name }}: {{ field.decode }},
+{%- endfor %}
+    };
+}

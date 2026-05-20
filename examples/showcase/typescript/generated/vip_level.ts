@@ -1,0 +1,19 @@
+import type { SoraReader } from "./sora_runtime.js";
+
+import type { ResourceCost } from "./resource_cost.js";
+import { decodeResourceCost } from "./resource_cost.js";
+
+
+export interface VipLevel {
+    level: number;
+    cost: ResourceCost;
+    perks: string[];
+}
+
+export function decodeVipLevel(reader: SoraReader): VipLevel {
+    return {
+        level: reader.readI32(),
+        cost: decodeResourceCost(reader),
+        perks: reader.readList(() => reader.readString()),
+    };
+}

@@ -282,10 +282,12 @@ impl BuildTarget {
             "csharp" | "cs" => Ok(Self::Csharp),
             "java" => Ok(Self::Java),
             "go" => Ok(Self::Go),
+            "typescript" | "ts" => Ok(Self::Typescript),
+            "javascript" | "js" => Ok(Self::Javascript),
             "lua" => Ok(Self::Lua),
             "proto" => Ok(Self::Proto),
             _ => Err(format!(
-                "unsupported codegen target `{value}`; expected rust, kotlin, csharp, java, go, lua, or proto"
+                "unsupported codegen target `{value}`; expected rust, kotlin, csharp, java, go, typescript, javascript, lua, or proto"
             )),
         }
     }
@@ -297,6 +299,8 @@ impl BuildTarget {
             Self::Csharp => "csharp",
             Self::Java => "java",
             Self::Go => "go",
+            Self::Typescript => "typescript",
+            Self::Javascript => "javascript",
             Self::Lua => "lua",
             Self::Proto => "proto",
         }
@@ -311,6 +315,8 @@ impl From<BuildTarget> for CodegenTarget {
             BuildTarget::Csharp => Self::CSharp,
             BuildTarget::Java => Self::Java,
             BuildTarget::Go => Self::Go,
+            BuildTarget::Typescript => Self::TypeScript,
+            BuildTarget::Javascript => Self::JavaScript,
             BuildTarget::Lua => Self::Lua,
             BuildTarget::Proto => Self::Proto,
         }
@@ -342,6 +348,9 @@ mod tests {
         assert!(base.join("generated/excel/Item.xlsx").exists());
         assert!(base.join("generated/rust/item.rs").exists());
         assert!(base.join("generated/lua/item.lua").exists());
+        assert!(base.join("generated/typescript/item.ts").exists());
+        assert!(base.join("generated/javascript/item.js").exists());
+        assert!(base.join("generated/javascript/item.d.ts").exists());
         assert!(base.join("generated/proto/sora_config.proto").exists());
         assert!(base.join("generated/config.json").exists());
         assert!(base.join("generated/config.pb").exists());
@@ -410,6 +419,14 @@ out = "generated/kotlin"
 [[build.codegen]]
 target = "lua"
 out = "generated/lua"
+
+[[build.codegen]]
+target = "typescript"
+out = "generated/typescript"
+
+[[build.codegen]]
+target = "javascript"
+out = "generated/javascript"
 
 [[build.codegen]]
 target = "proto"

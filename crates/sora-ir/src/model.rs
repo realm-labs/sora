@@ -28,6 +28,8 @@ pub struct CodegenIr {
     pub csharp: LanguageCodegenIr,
     pub java: LanguageCodegenIr,
     pub go: LanguageCodegenIr,
+    pub typescript: TypeScriptCodegenIr,
+    pub javascript: JavaScriptCodegenIr,
     pub lua: LuaCodegenIr,
 }
 
@@ -61,6 +63,38 @@ impl Default for LanguageCodegenIr {
     fn default() -> Self {
         Self {
             runtime_format: RuntimeFormatIr::Sora,
+        }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct TypeScriptCodegenIr {
+    pub runtime_format: RuntimeFormatIr,
+    pub enum_repr: EnumReprIr,
+}
+
+impl Default for TypeScriptCodegenIr {
+    fn default() -> Self {
+        Self {
+            runtime_format: RuntimeFormatIr::Sora,
+            enum_repr: EnumReprIr::String,
+        }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct JavaScriptCodegenIr {
+    pub runtime_format: RuntimeFormatIr,
+    pub enum_repr: EnumReprIr,
+    pub emit_dts: bool,
+}
+
+impl Default for JavaScriptCodegenIr {
+    fn default() -> Self {
+        Self {
+            runtime_format: RuntimeFormatIr::Sora,
+            enum_repr: EnumReprIr::String,
+            emit_dts: true,
         }
     }
 }
@@ -105,6 +139,13 @@ pub enum LuaVersionIr {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
 pub enum LuaEnumReprIr {
+    Integer,
+    #[default]
+    String,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
+pub enum EnumReprIr {
     Integer,
     #[default]
     String,

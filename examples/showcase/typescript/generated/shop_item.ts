@@ -1,0 +1,23 @@
+import type { SoraReader } from "./sora_runtime.js";
+
+import type { ResourceCost } from "./resource_cost.js";
+import { decodeResourceCost } from "./resource_cost.js";
+
+
+export interface ShopItem {
+    shopId: number;
+    seq: number;
+    itemId: number;
+    price: ResourceCost;
+    dailyLimit: number | undefined;
+}
+
+export function decodeShopItem(reader: SoraReader): ShopItem {
+    return {
+        shopId: reader.readI32(),
+        seq: reader.readI32(),
+        itemId: reader.readI32(),
+        price: decodeResourceCost(reader),
+        dailyLimit: reader.readOptional(() => reader.readI32()),
+    };
+}

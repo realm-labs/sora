@@ -1,0 +1,5 @@
+export * from "./sora_runtime{{ options.import_ext }}";
+export * from "./sora_config{{ options.import_ext }}";
+{%- for module in model.modules %}
+export * from "./{{ module }}{{ options.import_ext }}";
+{%- endfor %}

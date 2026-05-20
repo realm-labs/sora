@@ -1,0 +1,20 @@
+import type { SoraReader } from "./sora_runtime.js";
+
+import type { QuestType } from "./quest_type.js";
+
+import type { Reward } from "./reward.js";
+
+import type { Vec3 } from "./vec3.js";
+
+
+export interface Quest {
+    id: number;
+    questType: QuestType;
+    title: string;
+    requiredItem: number;
+    unlockSkills: number[];
+    startPos: Vec3;
+    rewards: Reward[];
+}
+
+export declare function decodeQuest(reader: SoraReader): Quest;

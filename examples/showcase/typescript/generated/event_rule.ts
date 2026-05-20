@@ -1,0 +1,24 @@
+import type { SoraReader } from "./sora_runtime.js";
+
+import type { EventCondition } from "./event_condition.js";
+import { decodeEventCondition } from "./event_condition.js";
+
+import type { RewardAction } from "./reward_action.js";
+import { decodeRewardAction } from "./reward_action.js";
+
+
+export interface EventRule {
+    id: number;
+    name: string;
+    condition: EventCondition;
+    actions: RewardAction[];
+}
+
+export function decodeEventRule(reader: SoraReader): EventRule {
+    return {
+        id: reader.readI32(),
+        name: reader.readString(),
+        condition: decodeEventCondition(reader),
+        actions: reader.readList(() => decodeRewardAction(reader)),
+    };
+}

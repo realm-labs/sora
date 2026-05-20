@@ -1,7 +1,9 @@
 pub mod csharp;
+pub mod ecmascript;
 pub mod generator;
 pub mod go;
 pub mod java;
+pub mod javascript;
 pub mod kotlin;
 pub mod lua;
 pub mod model;
@@ -10,3 +12,4 @@ mod render;
 pub mod rust;
 pub mod target;
 pub mod types;
+pub mod typescript;

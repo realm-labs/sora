@@ -1,0 +1,19 @@
+export const ResourceKind = {
+    Item: "Item",
+    Gold: "Gold",
+    Diamond: "Diamond",
+};
+const values = [
+    ResourceKind.Item,
+    ResourceKind.Gold,
+    ResourceKind.Diamond,
+];
+
+export function decodeResourceKind(reader) {
+    const ordinal = reader.readU32();
+    const value = values[ordinal];
+    if (value === undefined) {
+        throw new Error(`invalid enum ordinal ${ordinal} for ResourceKind`);
+    }
+    return value;
+}

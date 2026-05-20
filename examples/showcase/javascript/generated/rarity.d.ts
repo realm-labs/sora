@@ -1,0 +1,18 @@
+import type { SoraReader } from "./sora_runtime.js";
+
+export type Rarity =
+    | "Common"
+    | "Uncommon"
+    | "Rare"
+    | "Epic"
+    | "Legendary";
+
+export declare const Rarity: {
+    readonly Common: "Common";
+    readonly Uncommon: "Uncommon";
+    readonly Rare: "Rare";
+    readonly Epic: "Epic";
+    readonly Legendary: "Legendary";
+};
+
+export declare function decodeRarity(reader: SoraReader): Rarity;

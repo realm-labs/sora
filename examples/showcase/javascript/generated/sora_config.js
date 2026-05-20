@@ -1,0 +1,1264 @@
+import {
+    SoraBundle,
+    decodeIndex,
+    decodeMapTable,
+    decodeUniqueIndex,
+    requireSingletonTable,
+} from "./sora_runtime.js";
+
+import { decodeItem } from "./item.js";
+
+import { decodeSkill } from "./skill.js";
+
+import { decodeQuest } from "./quest.js";
+
+import { decodeQuestReward } from "./quest_reward.js";
+
+import { decodeGameSettings } from "./game_settings.js";
+
+import { decodeLocalization } from "./localization.js";
+
+import { decodeLevelExp } from "./level_exp.js";
+
+import { decodeCharacter } from "./character.js";
+
+import { decodeCharacterSkill } from "./character_skill.js";
+
+import { decodeBuff } from "./buff.js";
+
+import { decodeDropGroup } from "./drop_group.js";
+
+import { decodeDropEntry } from "./drop_entry.js";
+
+import { decodeMonster } from "./monster.js";
+
+import { decodeStage } from "./stage.js";
+
+import { decodeStageReward } from "./stage_reward.js";
+
+import { decodeDungeon } from "./dungeon.js";
+
+import { decodeShop } from "./shop.js";
+
+import { decodeShopItem } from "./shop_item.js";
+
+import { decodeRecipe } from "./recipe.js";
+
+import { decodeGachaPool } from "./gacha_pool.js";
+
+import { decodeGachaItem } from "./gacha_item.js";
+
+import { decodeEquipmentSet } from "./equipment_set.js";
+
+import { decodeAchievement } from "./achievement.js";
+
+import { decodeVipLevel } from "./vip_level.js";
+
+import { decodeMailTemplate } from "./mail_template.js";
+
+import { decodeMailReward } from "./mail_reward.js";
+
+import { decodeDialogue } from "./dialogue.js";
+
+import { decodeEventRule } from "./event_rule.js";
+
+export class ItemTable {
+    constructor(
+        rows,
+        byName,
+        byItemType,
+    ) {
+        this._rows = rows;
+        this._by_name = byName;
+        this._by_item_type = byItemType;
+    }
+
+    static decode(rows) {
+        return new ItemTable(
+            decodeMapTable(rows, (row) => row.id),
+            decodeUniqueIndex(rows, (row) => row.name),
+            decodeIndex(rows, (row) => row.itemType),
+        );
+    }
+
+    name() {
+        return "Item";
+    }
+
+    mode() {
+        return "map";
+    }
+
+    key() {
+        return "id";
+    }
+
+    len() {
+        return this._rows.size;
+    }
+    get(key) {
+        return this._rows.get(key);
+    }
+
+    rows() {
+        return this._rows;
+    }
+    getByName(name) {
+        return this._by_name.get(name);
+    }
+    findByItemType(itemType) {
+        return this._by_item_type.get(itemType) ?? [];
+    }
+}
+export class SkillTable {
+    constructor(
+        rows,
+    ) {
+        this._rows = rows;
+    }
+
+    static decode(rows) {
+        return new SkillTable(
+            decodeMapTable(rows, (row) => row.id),
+        );
+    }
+
+    name() {
+        return "Skill";
+    }
+
+    mode() {
+        return "map";
+    }
+
+    key() {
+        return "id";
+    }
+
+    len() {
+        return this._rows.size;
+    }
+    get(key) {
+        return this._rows.get(key);
+    }
+
+    rows() {
+        return this._rows;
+    }
+}
+export class QuestTable {
+    constructor(
+        rows,
+    ) {
+        this._rows = rows;
+    }
+
+    static decode(rows) {
+        return new QuestTable(
+            decodeMapTable(rows, (row) => row.id),
+        );
+    }
+
+    name() {
+        return "Quest";
+    }
+
+    mode() {
+        return "map";
+    }
+
+    key() {
+        return "id";
+    }
+
+    len() {
+        return this._rows.size;
+    }
+    get(key) {
+        return this._rows.get(key);
+    }
+
+    rows() {
+        return this._rows;
+    }
+}
+export class QuestRewardTable {
+    constructor(
+        rows,
+    ) {
+        this._rows = rows;
+    }
+
+    static decode(rows) {
+        return new QuestRewardTable(
+            rows,
+        );
+    }
+
+    name() {
+        return "QuestReward";
+    }
+
+    mode() {
+        return "list";
+    }
+
+    key() {
+        return undefined;
+    }
+
+    len() {
+        return this._rows.length;
+    }
+    rows() {
+        return this._rows;
+    }
+}
+export class GameSettingsTable {
+    constructor(
+        row,
+    ) {
+        this._row = row;
+    }
+
+    static decode(rows) {
+        return new GameSettingsTable(
+            requireSingletonTable(rows, "GameSettings"),
+        );
+    }
+
+    name() {
+        return "GameSettings";
+    }
+
+    mode() {
+        return "singleton";
+    }
+
+    key() {
+        return undefined;
+    }
+
+    len() {
+        return 1;
+    }
+    row() {
+        return this._row;
+    }
+}
+export class LocalizationTable {
+    constructor(
+        rows,
+    ) {
+        this._rows = rows;
+    }
+
+    static decode(rows) {
+        return new LocalizationTable(
+            decodeMapTable(rows, (row) => row.key),
+        );
+    }
+
+    name() {
+        return "Localization";
+    }
+
+    mode() {
+        return "map";
+    }
+
+    key() {
+        return "key";
+    }
+
+    len() {
+        return this._rows.size;
+    }
+    get(key) {
+        return this._rows.get(key);
+    }
+
+    rows() {
+        return this._rows;
+    }
+}
+export class LevelExpTable {
+    constructor(
+        rows,
+    ) {
+        this._rows = rows;
+    }
+
+    static decode(rows) {
+        return new LevelExpTable(
+            decodeMapTable(rows, (row) => row.level),
+        );
+    }
+
+    name() {
+        return "LevelExp";
+    }
+
+    mode() {
+        return "map";
+    }
+
+    key() {
+        return "level";
+    }
+
+    len() {
+        return this._rows.size;
+    }
+    get(key) {
+        return this._rows.get(key);
+    }
+
+    rows() {
+        return this._rows;
+    }
+}
+export class CharacterTable {
+    constructor(
+        rows,
+    ) {
+        this._rows = rows;
+    }
+
+    static decode(rows) {
+        return new CharacterTable(
+            decodeMapTable(rows, (row) => row.id),
+        );
+    }
+
+    name() {
+        return "Character";
+    }
+
+    mode() {
+        return "map";
+    }
+
+    key() {
+        return "id";
+    }
+
+    len() {
+        return this._rows.size;
+    }
+    get(key) {
+        return this._rows.get(key);
+    }
+
+    rows() {
+        return this._rows;
+    }
+}
+export class CharacterSkillTable {
+    constructor(
+        rows,
+    ) {
+        this._rows = rows;
+    }
+
+    static decode(rows) {
+        return new CharacterSkillTable(
+            rows,
+        );
+    }
+
+    name() {
+        return "CharacterSkill";
+    }
+
+    mode() {
+        return "list";
+    }
+
+    key() {
+        return undefined;
+    }
+
+    len() {
+        return this._rows.length;
+    }
+    rows() {
+        return this._rows;
+    }
+}
+export class BuffTable {
+    constructor(
+        rows,
+    ) {
+        this._rows = rows;
+    }
+
+    static decode(rows) {
+        return new BuffTable(
+            decodeMapTable(rows, (row) => row.id),
+        );
+    }
+
+    name() {
+        return "Buff";
+    }
+
+    mode() {
+        return "map";
+    }
+
+    key() {
+        return "id";
+    }
+
+    len() {
+        return this._rows.size;
+    }
+    get(key) {
+        return this._rows.get(key);
+    }
+
+    rows() {
+        return this._rows;
+    }
+}
+export class DropGroupTable {
+    constructor(
+        rows,
+    ) {
+        this._rows = rows;
+    }
+
+    static decode(rows) {
+        return new DropGroupTable(
+            decodeMapTable(rows, (row) => row.id),
+        );
+    }
+
+    name() {
+        return "DropGroup";
+    }
+
+    mode() {
+        return "map";
+    }
+
+    key() {
+        return "id";
+    }
+
+    len() {
+        return this._rows.size;
+    }
+    get(key) {
+        return this._rows.get(key);
+    }
+
+    rows() {
+        return this._rows;
+    }
+}
+export class DropEntryTable {
+    constructor(
+        rows,
+    ) {
+        this._rows = rows;
+    }
+
+    static decode(rows) {
+        return new DropEntryTable(
+            rows,
+        );
+    }
+
+    name() {
+        return "DropEntry";
+    }
+
+    mode() {
+        return "list";
+    }
+
+    key() {
+        return undefined;
+    }
+
+    len() {
+        return this._rows.length;
+    }
+    rows() {
+        return this._rows;
+    }
+}
+export class MonsterTable {
+    constructor(
+        rows,
+    ) {
+        this._rows = rows;
+    }
+
+    static decode(rows) {
+        return new MonsterTable(
+            decodeMapTable(rows, (row) => row.id),
+        );
+    }
+
+    name() {
+        return "Monster";
+    }
+
+    mode() {
+        return "map";
+    }
+
+    key() {
+        return "id";
+    }
+
+    len() {
+        return this._rows.size;
+    }
+    get(key) {
+        return this._rows.get(key);
+    }
+
+    rows() {
+        return this._rows;
+    }
+}
+export class StageTable {
+    constructor(
+        rows,
+    ) {
+        this._rows = rows;
+    }
+
+    static decode(rows) {
+        return new StageTable(
+            decodeMapTable(rows, (row) => row.id),
+        );
+    }
+
+    name() {
+        return "Stage";
+    }
+
+    mode() {
+        return "map";
+    }
+
+    key() {
+        return "id";
+    }
+
+    len() {
+        return this._rows.size;
+    }
+    get(key) {
+        return this._rows.get(key);
+    }
+
+    rows() {
+        return this._rows;
+    }
+}
+export class StageRewardTable {
+    constructor(
+        rows,
+    ) {
+        this._rows = rows;
+    }
+
+    static decode(rows) {
+        return new StageRewardTable(
+            rows,
+        );
+    }
+
+    name() {
+        return "StageReward";
+    }
+
+    mode() {
+        return "list";
+    }
+
+    key() {
+        return undefined;
+    }
+
+    len() {
+        return this._rows.length;
+    }
+    rows() {
+        return this._rows;
+    }
+}
+export class DungeonTable {
+    constructor(
+        rows,
+    ) {
+        this._rows = rows;
+    }
+
+    static decode(rows) {
+        return new DungeonTable(
+            decodeMapTable(rows, (row) => row.id),
+        );
+    }
+
+    name() {
+        return "Dungeon";
+    }
+
+    mode() {
+        return "map";
+    }
+
+    key() {
+        return "id";
+    }
+
+    len() {
+        return this._rows.size;
+    }
+    get(key) {
+        return this._rows.get(key);
+    }
+
+    rows() {
+        return this._rows;
+    }
+}
+export class ShopTable {
+    constructor(
+        rows,
+    ) {
+        this._rows = rows;
+    }
+
+    static decode(rows) {
+        return new ShopTable(
+            decodeMapTable(rows, (row) => row.id),
+        );
+    }
+
+    name() {
+        return "Shop";
+    }
+
+    mode() {
+        return "map";
+    }
+
+    key() {
+        return "id";
+    }
+
+    len() {
+        return this._rows.size;
+    }
+    get(key) {
+        return this._rows.get(key);
+    }
+
+    rows() {
+        return this._rows;
+    }
+}
+export class ShopItemTable {
+    constructor(
+        rows,
+    ) {
+        this._rows = rows;
+    }
+
+    static decode(rows) {
+        return new ShopItemTable(
+            rows,
+        );
+    }
+
+    name() {
+        return "ShopItem";
+    }
+
+    mode() {
+        return "list";
+    }
+
+    key() {
+        return undefined;
+    }
+
+    len() {
+        return this._rows.length;
+    }
+    rows() {
+        return this._rows;
+    }
+}
+export class RecipeTable {
+    constructor(
+        rows,
+    ) {
+        this._rows = rows;
+    }
+
+    static decode(rows) {
+        return new RecipeTable(
+            decodeMapTable(rows, (row) => row.id),
+        );
+    }
+
+    name() {
+        return "Recipe";
+    }
+
+    mode() {
+        return "map";
+    }
+
+    key() {
+        return "id";
+    }
+
+    len() {
+        return this._rows.size;
+    }
+    get(key) {
+        return this._rows.get(key);
+    }
+
+    rows() {
+        return this._rows;
+    }
+}
+export class GachaPoolTable {
+    constructor(
+        rows,
+    ) {
+        this._rows = rows;
+    }
+
+    static decode(rows) {
+        return new GachaPoolTable(
+            decodeMapTable(rows, (row) => row.id),
+        );
+    }
+
+    name() {
+        return "GachaPool";
+    }
+
+    mode() {
+        return "map";
+    }
+
+    key() {
+        return "id";
+    }
+
+    len() {
+        return this._rows.size;
+    }
+    get(key) {
+        return this._rows.get(key);
+    }
+
+    rows() {
+        return this._rows;
+    }
+}
+export class GachaItemTable {
+    constructor(
+        rows,
+    ) {
+        this._rows = rows;
+    }
+
+    static decode(rows) {
+        return new GachaItemTable(
+            rows,
+        );
+    }
+
+    name() {
+        return "GachaItem";
+    }
+
+    mode() {
+        return "list";
+    }
+
+    key() {
+        return undefined;
+    }
+
+    len() {
+        return this._rows.length;
+    }
+    rows() {
+        return this._rows;
+    }
+}
+export class EquipmentSetTable {
+    constructor(
+        rows,
+    ) {
+        this._rows = rows;
+    }
+
+    static decode(rows) {
+        return new EquipmentSetTable(
+            decodeMapTable(rows, (row) => row.id),
+        );
+    }
+
+    name() {
+        return "EquipmentSet";
+    }
+
+    mode() {
+        return "map";
+    }
+
+    key() {
+        return "id";
+    }
+
+    len() {
+        return this._rows.size;
+    }
+    get(key) {
+        return this._rows.get(key);
+    }
+
+    rows() {
+        return this._rows;
+    }
+}
+export class AchievementTable {
+    constructor(
+        rows,
+    ) {
+        this._rows = rows;
+    }
+
+    static decode(rows) {
+        return new AchievementTable(
+            decodeMapTable(rows, (row) => row.id),
+        );
+    }
+
+    name() {
+        return "Achievement";
+    }
+
+    mode() {
+        return "map";
+    }
+
+    key() {
+        return "id";
+    }
+
+    len() {
+        return this._rows.size;
+    }
+    get(key) {
+        return this._rows.get(key);
+    }
+
+    rows() {
+        return this._rows;
+    }
+}
+export class VipLevelTable {
+    constructor(
+        rows,
+    ) {
+        this._rows = rows;
+    }
+
+    static decode(rows) {
+        return new VipLevelTable(
+            decodeMapTable(rows, (row) => row.level),
+        );
+    }
+
+    name() {
+        return "VipLevel";
+    }
+
+    mode() {
+        return "map";
+    }
+
+    key() {
+        return "level";
+    }
+
+    len() {
+        return this._rows.size;
+    }
+    get(key) {
+        return this._rows.get(key);
+    }
+
+    rows() {
+        return this._rows;
+    }
+}
+export class MailTemplateTable {
+    constructor(
+        rows,
+    ) {
+        this._rows = rows;
+    }
+
+    static decode(rows) {
+        return new MailTemplateTable(
+            decodeMapTable(rows, (row) => row.id),
+        );
+    }
+
+    name() {
+        return "MailTemplate";
+    }
+
+    mode() {
+        return "map";
+    }
+
+    key() {
+        return "id";
+    }
+
+    len() {
+        return this._rows.size;
+    }
+    get(key) {
+        return this._rows.get(key);
+    }
+
+    rows() {
+        return this._rows;
+    }
+}
+export class MailRewardTable {
+    constructor(
+        rows,
+    ) {
+        this._rows = rows;
+    }
+
+    static decode(rows) {
+        return new MailRewardTable(
+            rows,
+        );
+    }
+
+    name() {
+        return "MailReward";
+    }
+
+    mode() {
+        return "list";
+    }
+
+    key() {
+        return undefined;
+    }
+
+    len() {
+        return this._rows.length;
+    }
+    rows() {
+        return this._rows;
+    }
+}
+export class DialogueTable {
+    constructor(
+        rows,
+    ) {
+        this._rows = rows;
+    }
+
+    static decode(rows) {
+        return new DialogueTable(
+            decodeMapTable(rows, (row) => row.id),
+        );
+    }
+
+    name() {
+        return "Dialogue";
+    }
+
+    mode() {
+        return "map";
+    }
+
+    key() {
+        return "id";
+    }
+
+    len() {
+        return this._rows.size;
+    }
+    get(key) {
+        return this._rows.get(key);
+    }
+
+    rows() {
+        return this._rows;
+    }
+}
+export class EventRuleTable {
+    constructor(
+        rows,
+    ) {
+        this._rows = rows;
+    }
+
+    static decode(rows) {
+        return new EventRuleTable(
+            decodeMapTable(rows, (row) => row.id),
+        );
+    }
+
+    name() {
+        return "EventRule";
+    }
+
+    mode() {
+        return "map";
+    }
+
+    key() {
+        return "id";
+    }
+
+    len() {
+        return this._rows.size;
+    }
+    get(key) {
+        return this._rows.get(key);
+    }
+
+    rows() {
+        return this._rows;
+    }
+}
+export class SoraConfig {
+    constructor(
+        item,
+        skill,
+        quest,
+        questReward,
+        gameSettings,
+        localization,
+        levelExp,
+        character,
+        characterSkill,
+        buff,
+        dropGroup,
+        dropEntry,
+        monster,
+        stage,
+        stageReward,
+        dungeon,
+        shop,
+        shopItem,
+        recipe,
+        gachaPool,
+        gachaItem,
+        equipmentSet,
+        achievement,
+        vipLevel,
+        mailTemplate,
+        mailReward,
+        dialogue,
+        eventRule,
+    ) {
+        this._item = item;
+        this._skill = skill;
+        this._quest = quest;
+        this._questReward = questReward;
+        this._gameSettings = gameSettings;
+        this._localization = localization;
+        this._levelExp = levelExp;
+        this._character = character;
+        this._characterSkill = characterSkill;
+        this._buff = buff;
+        this._dropGroup = dropGroup;
+        this._dropEntry = dropEntry;
+        this._monster = monster;
+        this._stage = stage;
+        this._stageReward = stageReward;
+        this._dungeon = dungeon;
+        this._shop = shop;
+        this._shopItem = shopItem;
+        this._recipe = recipe;
+        this._gachaPool = gachaPool;
+        this._gachaItem = gachaItem;
+        this._equipmentSet = equipmentSet;
+        this._achievement = achievement;
+        this._vipLevel = vipLevel;
+        this._mailTemplate = mailTemplate;
+        this._mailReward = mailReward;
+        this._dialogue = dialogue;
+        this._eventRule = eventRule;
+    }
+
+    static fromBytes(bytes) {
+        const bundle = SoraBundle.parse(bytes);
+        return new SoraConfig(
+            ItemTable.decode(bundle.decodeTable("Item", decodeItem)),
+            SkillTable.decode(bundle.decodeTable("Skill", decodeSkill)),
+            QuestTable.decode(bundle.decodeTable("Quest", decodeQuest)),
+            QuestRewardTable.decode(bundle.decodeTable("QuestReward", decodeQuestReward)),
+            GameSettingsTable.decode(bundle.decodeTable("GameSettings", decodeGameSettings)),
+            LocalizationTable.decode(bundle.decodeTable("Localization", decodeLocalization)),
+            LevelExpTable.decode(bundle.decodeTable("LevelExp", decodeLevelExp)),
+            CharacterTable.decode(bundle.decodeTable("Character", decodeCharacter)),
+            CharacterSkillTable.decode(bundle.decodeTable("CharacterSkill", decodeCharacterSkill)),
+            BuffTable.decode(bundle.decodeTable("Buff", decodeBuff)),
+            DropGroupTable.decode(bundle.decodeTable("DropGroup", decodeDropGroup)),
+            DropEntryTable.decode(bundle.decodeTable("DropEntry", decodeDropEntry)),
+            MonsterTable.decode(bundle.decodeTable("Monster", decodeMonster)),
+            StageTable.decode(bundle.decodeTable("Stage", decodeStage)),
+            StageRewardTable.decode(bundle.decodeTable("StageReward", decodeStageReward)),
+            DungeonTable.decode(bundle.decodeTable("Dungeon", decodeDungeon)),
+            ShopTable.decode(bundle.decodeTable("Shop", decodeShop)),
+            ShopItemTable.decode(bundle.decodeTable("ShopItem", decodeShopItem)),
+            RecipeTable.decode(bundle.decodeTable("Recipe", decodeRecipe)),
+            GachaPoolTable.decode(bundle.decodeTable("GachaPool", decodeGachaPool)),
+            GachaItemTable.decode(bundle.decodeTable("GachaItem", decodeGachaItem)),
+            EquipmentSetTable.decode(bundle.decodeTable("EquipmentSet", decodeEquipmentSet)),
+            AchievementTable.decode(bundle.decodeTable("Achievement", decodeAchievement)),
+            VipLevelTable.decode(bundle.decodeTable("VipLevel", decodeVipLevel)),
+            MailTemplateTable.decode(bundle.decodeTable("MailTemplate", decodeMailTemplate)),
+            MailRewardTable.decode(bundle.decodeTable("MailReward", decodeMailReward)),
+            DialogueTable.decode(bundle.decodeTable("Dialogue", decodeDialogue)),
+            EventRuleTable.decode(bundle.decodeTable("EventRule", decodeEventRule)),
+        );
+    }
+
+    tables() {
+        return [
+            this._item,
+            this._skill,
+            this._quest,
+            this._questReward,
+            this._gameSettings,
+            this._localization,
+            this._levelExp,
+            this._character,
+            this._characterSkill,
+            this._buff,
+            this._dropGroup,
+            this._dropEntry,
+            this._monster,
+            this._stage,
+            this._stageReward,
+            this._dungeon,
+            this._shop,
+            this._shopItem,
+            this._recipe,
+            this._gachaPool,
+            this._gachaItem,
+            this._equipmentSet,
+            this._achievement,
+            this._vipLevel,
+            this._mailTemplate,
+            this._mailReward,
+            this._dialogue,
+            this._eventRule,
+        ];
+    }
+    item() {
+        return this._item;
+    }
+    skill() {
+        return this._skill;
+    }
+    quest() {
+        return this._quest;
+    }
+    questReward() {
+        return this._questReward;
+    }
+    gameSettings() {
+        return this._gameSettings;
+    }
+    localization() {
+        return this._localization;
+    }
+    levelExp() {
+        return this._levelExp;
+    }
+    character() {
+        return this._character;
+    }
+    characterSkill() {
+        return this._characterSkill;
+    }
+    buff() {
+        return this._buff;
+    }
+    dropGroup() {
+        return this._dropGroup;
+    }
+    dropEntry() {
+        return this._dropEntry;
+    }
+    monster() {
+        return this._monster;
+    }
+    stage() {
+        return this._stage;
+    }
+    stageReward() {
+        return this._stageReward;
+    }
+    dungeon() {
+        return this._dungeon;
+    }
+    shop() {
+        return this._shop;
+    }
+    shopItem() {
+        return this._shopItem;
+    }
+    recipe() {
+        return this._recipe;
+    }
+    gachaPool() {
+        return this._gachaPool;
+    }
+    gachaItem() {
+        return this._gachaItem;
+    }
+    equipmentSet() {
+        return this._equipmentSet;
+    }
+    achievement() {
+        return this._achievement;
+    }
+    vipLevel() {
+        return this._vipLevel;
+    }
+    mailTemplate() {
+        return this._mailTemplate;
+    }
+    mailReward() {
+        return this._mailReward;
+    }
+    dialogue() {
+        return this._dialogue;
+    }
+    eventRule() {
+        return this._eventRule;
+    }
+}

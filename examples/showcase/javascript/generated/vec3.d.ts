@@ -1,0 +1,10 @@
+import type { SoraReader } from "./sora_runtime.js";
+
+
+export interface Vec3 {
+    x: number;
+    y: number;
+    z: number;
+}
+
+export declare function decodeVec3(reader: SoraReader): Vec3;

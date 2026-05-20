@@ -1,0 +1,23 @@
+import type { SoraReader } from "./sora_runtime.js";
+
+import type { Reward } from "./reward.js";
+import { decodeReward } from "./reward.js";
+
+
+export interface Stage {
+    id: number;
+    name: string;
+    monsterIds: number[];
+    recommendedPower: number;
+    firstClearRewards: Reward[];
+}
+
+export function decodeStage(reader: SoraReader): Stage {
+    return {
+        id: reader.readI32(),
+        name: reader.readString(),
+        monsterIds: reader.readList(() => reader.readI32()),
+        recommendedPower: reader.readI32(),
+        firstClearRewards: reader.readList(() => decodeReward(reader)),
+    };
+}

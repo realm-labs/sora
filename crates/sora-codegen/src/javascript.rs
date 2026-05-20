@@ -1,0 +1,248 @@
+use std::path::Path;
+
+use heck::ToSnakeCase;
+use minijinja::context;
+use sora_diagnostics::Result;
+use sora_ir::model::ConfigIr;
+
+use crate::{
+    ecmascript::{EcmaScriptBackend, EcmaScriptOptionsView, EcmaScriptTarget},
+    generator::{CodeGenerator, ensure_sora_runtime_format},
+    model::build_model,
+    render::{ensure_dir, render_template, write_file},
+};
+
+pub struct JavaScriptCodeGenerator;
+
+impl CodeGenerator for JavaScriptCodeGenerator {
+    fn generate(&self, ir: &ConfigIr, out_dir: &Path) -> Result<()> {
+        ensure_sora_runtime_format("javascript", ir.codegen.javascript.runtime_format)?;
+        ensure_dir(out_dir)?;
+
+        let options = EcmaScriptOptionsView::new(
+            EcmaScriptTarget::JavaScript,
+            ir.codegen.javascript.enum_repr,
+            ir.codegen.javascript.emit_dts,
+        );
+        let backend = EcmaScriptBackend;
+        let model = build_model(ir, &backend)?;
+
+        for item in &model.enums {
+            let rendered = render_template(
+                "javascript",
+                "enum.js.j2",
+                context! { enum => item, options => &options },
+            )?;
+            write_file(
+                &out_dir.join(format!("{}.js", item.name.to_snake_case())),
+                rendered,
+            )?;
+            if options.emit_dts {
+                let rendered = render_template(
+                    "javascript",
+                    "enum.d.ts.j2",
+                    context! { enum => item, options => &options },
+                )?;
+                write_file(
+                    &out_dir.join(format!("{}.d.ts", item.name.to_snake_case())),
+                    rendered,
+                )?;
+            }
+        }
+
+        for record in &model.records {
+            let rendered = render_template(
+                "javascript",
+                "record.js.j2",
+                context! { record => record, options => &options },
+            )?;
+            write_file(&out_dir.join(format!("{}.js", record.snake_name)), rendered)?;
+            if options.emit_dts {
+                let rendered = render_template(
+                    "javascript",
+                    "record.d.ts.j2",
+                    context! { record => record, options => &options },
+                )?;
+                write_file(
+                    &out_dir.join(format!("{}.d.ts", record.snake_name)),
+                    rendered,
+                )?;
+            }
+        }
+
+        for union in &model.unions {
+            let rendered = render_template(
+                "javascript",
+                "union.js.j2",
+                context! { union => union, options => &options },
+            )?;
+            write_file(&out_dir.join(format!("{}.js", union.snake_name)), rendered)?;
+            if options.emit_dts {
+                let rendered = render_template(
+                    "javascript",
+                    "union.d.ts.j2",
+                    context! { union => union, options => &options },
+                )?;
+                write_file(
+                    &out_dir.join(format!("{}.d.ts", union.snake_name)),
+                    rendered,
+                )?;
+            }
+        }
+
+        let rendered = render_template("javascript", "runtime.js.j2", context! {})?;
+        write_file(&out_dir.join("sora_runtime.js"), rendered)?;
+        if options.emit_dts {
+            let rendered = render_template("javascript", "runtime.d.ts.j2", context! {})?;
+            write_file(&out_dir.join("sora_runtime.d.ts"), rendered)?;
+        }
+
+        let rendered = render_template(
+            "javascript",
+            "config.js.j2",
+            context! { model => &model, options => &options },
+        )?;
+        write_file(&out_dir.join("sora_config.js"), rendered)?;
+        if options.emit_dts {
+            let rendered = render_template(
+                "javascript",
+                "config.d.ts.j2",
+                context! { model => &model, options => &options },
+            )?;
+            write_file(&out_dir.join("sora_config.d.ts"), rendered)?;
+        }
+
+        let rendered = render_template(
+            "javascript",
+            "index.js.j2",
+            context! { model => &model, options => &options },
+        )?;
+        write_file(&out_dir.join("index.js"), rendered)?;
+        if options.emit_dts {
+            let rendered = render_template(
+                "javascript",
+                "index.d.ts.j2",
+                context! { model => &model, options => &options },
+            )?;
+            write_file(&out_dir.join("index.d.ts"), rendered)?;
+        }
+
+        let rendered = render_template("javascript", "package.json.j2", context! {})?;
+        write_file(&out_dir.join("package.json"), rendered)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use sora_ir::{model::EnumReprIr, normalize::normalize_schema};
+    use sora_schema::model::SchemaFile;
+    use std::{
+        path::PathBuf,
+        sync::atomic::{AtomicU64, Ordering},
+    };
+
+    static TEMP_COUNTER: AtomicU64 = AtomicU64::new(0);
+
+    #[test]
+    fn generates_javascript_files_with_declarations() {
+        let ir = example_ir();
+        let base = temp_dir();
+
+        JavaScriptCodeGenerator.generate(&ir, &base).unwrap();
+
+        let item = std::fs::read_to_string(base.join("item.js")).unwrap();
+        let item_dts = std::fs::read_to_string(base.join("item.d.ts")).unwrap();
+        let runtime = std::fs::read_to_string(base.join("sora_runtime.js")).unwrap();
+        let config = std::fs::read_to_string(base.join("sora_config.js")).unwrap();
+        let config_dts = std::fs::read_to_string(base.join("sora_config.d.ts")).unwrap();
+        let package = std::fs::read_to_string(base.join("package.json")).unwrap();
+
+        assert!(item.contains("export function decodeItem(reader)"));
+        assert!(item.contains("largeId: reader.readI64()"));
+        assert!(item.contains("import { decodeItemType } from \"./item_type.js\";"));
+        assert!(item_dts.contains("export interface Item"));
+        assert!(item_dts.contains("largeId: bigint;"));
+        assert!(runtime.contains("readI64()"));
+        assert!(config.contains("export class ItemTable"));
+        assert!(config.contains("getByName(name)"));
+        assert!(config.contains("findByItemType(itemType)"));
+        assert!(
+            config_dts.contains("static fromBytes(bytes: Uint8Array | ArrayBuffer): SoraConfig;")
+        );
+        assert!(package.contains("\"type\": \"module\""));
+
+        let _ = std::fs::remove_dir_all(base);
+    }
+
+    #[test]
+    fn javascript_can_skip_declarations_and_use_integer_enums() {
+        let mut ir = example_ir();
+        ir.codegen.javascript.emit_dts = false;
+        ir.codegen.javascript.enum_repr = EnumReprIr::Integer;
+        let base = temp_dir();
+
+        JavaScriptCodeGenerator.generate(&ir, &base).unwrap();
+
+        let item_type = std::fs::read_to_string(base.join("item_type.js")).unwrap();
+        assert!(item_type.contains("Weapon: 0"));
+        assert!(item_type.contains("return ordinal;"));
+        assert!(!base.join("item_type.d.ts").exists());
+
+        let _ = std::fs::remove_dir_all(base);
+    }
+
+    fn example_ir() -> ConfigIr {
+        let schema: SchemaFile = toml::from_str(
+            r#"
+package = "game_config"
+
+[[enums]]
+name = "ItemType"
+values = ["Weapon", "Armor"]
+
+[[tables]]
+name = "Item"
+mode = "map"
+key = "id"
+
+[[tables.fields]]
+name = "id"
+type = "i32"
+required = true
+
+[[tables.fields]]
+name = "name"
+type = "string"
+required = true
+
+[[tables.fields]]
+name = "item_type"
+type = "enum<ItemType>"
+required = true
+
+[[tables.fields]]
+name = "large_id"
+type = "i64"
+required = true
+
+[[tables.indexes]]
+name = "by_name"
+fields = ["name"]
+unique = true
+
+[[tables.indexes]]
+name = "by_item_type"
+fields = ["item_type"]
+"#,
+        )
+        .unwrap();
+
+        normalize_schema(schema).unwrap()
+    }
+
+    fn temp_dir() -> PathBuf {
+        let unique = TEMP_COUNTER.fetch_add(1, Ordering::Relaxed);
+        std::env::temp_dir().join(format!("sora-javascript-codegen-test-{unique}"))
+    }
+}

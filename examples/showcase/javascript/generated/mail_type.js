@@ -1,0 +1,19 @@
+export const MailType = {
+    System: "System",
+    Event: "Event",
+    Compensation: "Compensation",
+};
+const values = [
+    MailType.System,
+    MailType.Event,
+    MailType.Compensation,
+];
+
+export function decodeMailType(reader) {
+    const ordinal = reader.readU32();
+    const value = values[ordinal];
+    if (value === undefined) {
+        throw new Error(`invalid enum ordinal ${ordinal} for MailType`);
+    }
+    return value;
+}

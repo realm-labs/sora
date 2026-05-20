@@ -1,0 +1,11 @@
+
+import { decodeStatModifier } from "./stat_modifier.js";
+
+export function decodeBuff(reader) {
+    return {
+        id: reader.readI32(),
+        name: reader.readString(),
+        duration: reader.readF32(),
+        modifiers: reader.readList(() => decodeStatModifier(reader)),
+    };
+}

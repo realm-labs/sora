@@ -1,0 +1,16 @@
+import type { SoraReader } from "./sora_runtime.js";
+
+import type { MailType } from "./mail_type.js";
+
+import type { Reward } from "./reward.js";
+
+
+export interface MailTemplate {
+    id: number;
+    mailType: MailType;
+    titleKey: string;
+    bodyKey: string;
+    rewards: Reward[];
+}
+
+export declare function decodeMailTemplate(reader: SoraReader): MailTemplate;

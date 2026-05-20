@@ -113,6 +113,101 @@ const EMBEDDED_TEMPLATES: &[EmbeddedTemplate] = &[
         source: include_str!("../../../templates/kotlin/union.kt.j2"),
     },
     EmbeddedTemplate {
+        target: "typescript",
+        file_name: "config.ts.j2",
+        source: include_str!("../../../templates/typescript/config.ts.j2"),
+    },
+    EmbeddedTemplate {
+        target: "typescript",
+        file_name: "enum.ts.j2",
+        source: include_str!("../../../templates/typescript/enum.ts.j2"),
+    },
+    EmbeddedTemplate {
+        target: "typescript",
+        file_name: "index.ts.j2",
+        source: include_str!("../../../templates/typescript/index.ts.j2"),
+    },
+    EmbeddedTemplate {
+        target: "typescript",
+        file_name: "record.ts.j2",
+        source: include_str!("../../../templates/typescript/record.ts.j2"),
+    },
+    EmbeddedTemplate {
+        target: "typescript",
+        file_name: "runtime.ts.j2",
+        source: include_str!("../../../templates/typescript/runtime.ts.j2"),
+    },
+    EmbeddedTemplate {
+        target: "typescript",
+        file_name: "union.ts.j2",
+        source: include_str!("../../../templates/typescript/union.ts.j2"),
+    },
+    EmbeddedTemplate {
+        target: "javascript",
+        file_name: "config.d.ts.j2",
+        source: include_str!("../../../templates/javascript/config.d.ts.j2"),
+    },
+    EmbeddedTemplate {
+        target: "javascript",
+        file_name: "config.js.j2",
+        source: include_str!("../../../templates/javascript/config.js.j2"),
+    },
+    EmbeddedTemplate {
+        target: "javascript",
+        file_name: "enum.d.ts.j2",
+        source: include_str!("../../../templates/javascript/enum.d.ts.j2"),
+    },
+    EmbeddedTemplate {
+        target: "javascript",
+        file_name: "enum.js.j2",
+        source: include_str!("../../../templates/javascript/enum.js.j2"),
+    },
+    EmbeddedTemplate {
+        target: "javascript",
+        file_name: "index.d.ts.j2",
+        source: include_str!("../../../templates/javascript/index.d.ts.j2"),
+    },
+    EmbeddedTemplate {
+        target: "javascript",
+        file_name: "index.js.j2",
+        source: include_str!("../../../templates/javascript/index.js.j2"),
+    },
+    EmbeddedTemplate {
+        target: "javascript",
+        file_name: "package.json.j2",
+        source: include_str!("../../../templates/javascript/package.json.j2"),
+    },
+    EmbeddedTemplate {
+        target: "javascript",
+        file_name: "record.d.ts.j2",
+        source: include_str!("../../../templates/javascript/record.d.ts.j2"),
+    },
+    EmbeddedTemplate {
+        target: "javascript",
+        file_name: "record.js.j2",
+        source: include_str!("../../../templates/javascript/record.js.j2"),
+    },
+    EmbeddedTemplate {
+        target: "javascript",
+        file_name: "runtime.d.ts.j2",
+        source: include_str!("../../../templates/javascript/runtime.d.ts.j2"),
+    },
+    EmbeddedTemplate {
+        target: "javascript",
+        file_name: "runtime.js.j2",
+        source: include_str!("../../../templates/javascript/runtime.js.j2"),
+    },
+    EmbeddedTemplate {
+        target: "javascript",
+        file_name: "union.d.ts.j2",
+        source: include_str!("../../../templates/javascript/union.d.ts.j2"),
+    },
+    EmbeddedTemplate {
+        target: "javascript",
+        file_name: "union.js.j2",
+        source: include_str!("../../../templates/javascript/union.js.j2"),
+    },
+    EmbeddedTemplate {
         target: "lua",
         file_name: "config.lua.j2",
         source: include_str!("../../../templates/lua/config.lua.j2"),
@@ -193,7 +288,7 @@ mod tests {
 
     #[test]
     fn embeds_all_templates() {
-        assert_eq!(EMBEDDED_TEMPLATES.len(), 31);
+        assert_eq!(EMBEDDED_TEMPLATES.len(), 50);
         for template in EMBEDDED_TEMPLATES {
             let source = template_source(template.target, template.file_name)
                 .expect("embedded template should be registered");

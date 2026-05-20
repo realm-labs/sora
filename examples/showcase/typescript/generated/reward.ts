@@ -1,0 +1,14 @@
+import type { SoraReader } from "./sora_runtime.js";
+
+
+export interface Reward {
+    itemId: number;
+    count: number;
+}
+
+export function decodeReward(reader: SoraReader): Reward {
+    return {
+        itemId: reader.readI32(),
+        count: reader.readI32(),
+    };
+}

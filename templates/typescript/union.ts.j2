@@ -1,0 +1,36 @@
+import type { SoraReader } from "./sora_runtime{{ options.import_ext }}";
+{% for import in union.imports %}
+import type { {{ import.name }} } from "./{{ import.module }}{{ options.import_ext }}";
+import { decode{{ import.name }} } from "./{{ import.module }}{{ options.import_ext }}";
+{% endfor %}
+
+{%- for variant in union.variants %}
+export interface {{ union.pascal_name }}{{ variant.name }} {
+    {{ union.tag }}: "{{ variant.name }}";
+{%- for field in variant.fields %}
+    {{ field.name }}: {{ field.type_name }};
+{%- endfor %}
+}
+
+{%- endfor %}
+export type {{ union.pascal_name }} =
+{%- for variant in union.variants %}
+    | {{ union.pascal_name }}{{ variant.name }}
+{%- else %}
+    never
+{%- endfor %};
+
+export function decode{{ union.pascal_name }}(reader: SoraReader): {{ union.pascal_name }} {
+    const ordinal = reader.readU32();
+{%- for variant in union.variants %}
+    if (ordinal === {{ loop.index0 }}) {
+        return {
+            {{ union.tag }}: "{{ variant.name }}",
+{%- for field in variant.fields %}
+            {{ field.name }}: {{ field.decode }},
+{%- endfor %}
+        };
+    }
+{%- endfor %}
+    throw new Error(`invalid union ordinal ${ordinal} for {{ union.pascal_name }}`);
+}

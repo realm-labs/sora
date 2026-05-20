@@ -1,0 +1,19 @@
+import type { SoraReader } from "./sora_runtime.js";
+
+import type { ElementType } from "./element_type.js";
+import { decodeElementType } from "./element_type.js";
+
+
+export interface SkillEffect {
+    element: ElementType;
+    power: number;
+    radius: number;
+}
+
+export function decodeSkillEffect(reader: SoraReader): SkillEffect {
+    return {
+        element: decodeElementType(reader),
+        power: reader.readI32(),
+        radius: reader.readF32(),
+    };
+}

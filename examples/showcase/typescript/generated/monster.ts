@@ -1,0 +1,28 @@
+import type { SoraReader } from "./sora_runtime.js";
+
+import type { ElementType } from "./element_type.js";
+import { decodeElementType } from "./element_type.js";
+
+import type { Vec3 } from "./vec3.js";
+import { decodeVec3 } from "./vec3.js";
+
+
+export interface Monster {
+    id: number;
+    name: string;
+    level: number;
+    element: ElementType;
+    dropGroup: number;
+    spawnPos: Vec3;
+}
+
+export function decodeMonster(reader: SoraReader): Monster {
+    return {
+        id: reader.readI32(),
+        name: reader.readString(),
+        level: reader.readI32(),
+        element: decodeElementType(reader),
+        dropGroup: reader.readI32(),
+        spawnPos: decodeVec3(reader),
+    };
+}

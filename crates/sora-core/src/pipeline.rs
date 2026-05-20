@@ -143,11 +143,15 @@ mod tests {
         check_schema_with_lock(&input, &base.join("schema.lock")).unwrap();
         generate_code(&input, CodegenTarget::Rust, &base.join("rust")).unwrap();
         generate_code(&input, CodegenTarget::Kotlin, &base.join("kotlin")).unwrap();
+        generate_code(&input, CodegenTarget::TypeScript, &base.join("typescript")).unwrap();
+        generate_code(&input, CodegenTarget::JavaScript, &base.join("javascript")).unwrap();
         generate_code(&input, CodegenTarget::Proto, &base.join("proto")).unwrap();
         generate_excel_template(&input, &base.join("excel")).unwrap();
 
         assert!(base.join("rust/item.rs").exists());
         assert!(base.join("kotlin/game_config/Item.kt").exists());
+        assert!(base.join("typescript/item.ts").exists());
+        assert!(base.join("javascript/item.js").exists());
         assert!(base.join("proto/sora_config.proto").exists());
         assert!(base.join("excel/Item.xlsx").exists());
         assert!(base.join("schema.lock").exists());

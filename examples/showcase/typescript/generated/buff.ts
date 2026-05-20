@@ -1,0 +1,21 @@
+import type { SoraReader } from "./sora_runtime.js";
+
+import type { StatModifier } from "./stat_modifier.js";
+import { decodeStatModifier } from "./stat_modifier.js";
+
+
+export interface Buff {
+    id: number;
+    name: string;
+    duration: number;
+    modifiers: StatModifier[];
+}
+
+export function decodeBuff(reader: SoraReader): Buff {
+    return {
+        id: reader.readI32(),
+        name: reader.readString(),
+        duration: reader.readF32(),
+        modifiers: reader.readList(() => decodeStatModifier(reader)),
+    };
+}

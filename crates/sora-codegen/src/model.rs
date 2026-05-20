@@ -22,6 +22,7 @@ pub struct CodegenModel {
 #[derive(Debug, Clone, Serialize)]
 pub struct CodegenEnum {
     pub name: String,
+    pub snake_name: String,
     pub values: Vec<String>,
 }
 
@@ -144,6 +145,7 @@ pub fn build_model(ir: &ConfigIr, backend: &impl LanguageBackend) -> Result<Code
         .iter()
         .map(|item| CodegenEnum {
             name: item.name.clone(),
+            snake_name: item.name.to_snake_case(),
             values: item.values.clone(),
         })
         .collect::<Vec<_>>();

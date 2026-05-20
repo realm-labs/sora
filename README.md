@@ -63,6 +63,14 @@ sora gen kotlin \
   --project examples/simple/project.toml \
   --out generated/kotlin
 
+sora gen typescript \
+  --project examples/simple/project.toml \
+  --out generated/typescript
+
+sora gen javascript \
+  --project examples/simple/project.toml \
+  --out generated/javascript
+
 sora excel-template \
   --project examples/simple/project.toml \
   --out generated/excel
@@ -99,7 +107,7 @@ sora export \
 - `sora-schema`: format-neutral schema model.
 - `sora-ir`: normalized schema IR and type parsing.
 - `sora-data`: data IR and validation.
-- `sora-codegen`: Rust, Kotlin, C#, Java, Go, and Lua code generation.
+- `sora-codegen`: Rust, Kotlin, C#, Java, Go, TypeScript, JavaScript, and Lua code generation.
 - `sora-export`: exporter trait, registry, and built-in exporters.
 - `sora-excel`: Excel `.xlsx` template projection.
 - `sora-diagnostics`: shared typed errors.
@@ -142,6 +150,14 @@ out = "java/src/generated/java"
 [[build.codegen]]
 target = "go"
 out = "go/internal/showcase"
+
+[[build.codegen]]
+target = "typescript"
+out = "typescript/generated"
+
+[[build.codegen]]
+target = "javascript"
+out = "javascript/generated"
 
 [[build.codegen]]
 target = "lua"
@@ -232,7 +248,7 @@ The binary bundle uses a language-neutral sectioned layout: a fixed header, a se
 
 ## Codegen Architecture
 
-Codegen uses MiniJinja templates embedded into the CLI binary, but type mapping is computed in Rust before rendering. Rust, Kotlin, C#, Java, Go, and Lua generation include models plus small binary runtime readers for `.sora` bundles. Lua generation also emits EmmyLua annotations for editor type hints and supports `lua_version = "5.1"`, `"5.2"`, `"5.3"`, `"5.4"`, or `"luajit"`; Lua 5.3/5.4 use `string.unpack`, while older runtimes get a generated compatibility decoder. Lua also supports `enum_repr = "string" | "integer"`. Future targets may include TypeScript and Python.
+Codegen uses MiniJinja templates embedded into the CLI binary, but type mapping is computed in Rust before rendering. Rust, Kotlin, C#, Java, Go, TypeScript, JavaScript, and Lua generation include models plus small binary runtime readers for `.sora` bundles. TypeScript and JavaScript generation target modern ESM and map `i64` to `bigint`; JavaScript generation also emits `.d.ts` files by default. Lua generation emits EmmyLua annotations for editor type hints and supports `lua_version = "5.1"`, `"5.2"`, `"5.3"`, `"5.4"`, or `"luajit"`; Lua 5.3/5.4 use `string.unpack`, while older runtimes get a generated compatibility decoder. Lua, TypeScript, and JavaScript support `enum_repr = "string" | "integer"`. Future targets may include Python.
 
 ## Excel Template Projection
 

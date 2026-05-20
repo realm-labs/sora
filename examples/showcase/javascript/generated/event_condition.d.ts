@@ -1,0 +1,21 @@
+import type { SoraReader } from "./sora_runtime.js";
+
+export interface EventConditionLevelAtLeast {
+    type: "LevelAtLeast";
+    level: number;
+}
+export interface EventConditionQuestCompleted {
+    type: "QuestCompleted";
+    questId: number;
+}
+export interface EventConditionHasItem {
+    type: "HasItem";
+    itemId: number;
+    count: number;
+}
+export type EventCondition =
+    | EventConditionLevelAtLeast
+    | EventConditionQuestCompleted
+    | EventConditionHasItem;
+
+export declare function decodeEventCondition(reader: SoraReader): EventCondition;

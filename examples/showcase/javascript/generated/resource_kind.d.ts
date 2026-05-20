@@ -1,0 +1,14 @@
+import type { SoraReader } from "./sora_runtime.js";
+
+export type ResourceKind =
+    | "Item"
+    | "Gold"
+    | "Diamond";
+
+export declare const ResourceKind: {
+    readonly Item: "Item";
+    readonly Gold: "Gold";
+    readonly Diamond: "Diamond";
+};
+
+export declare function decodeResourceKind(reader: SoraReader): ResourceKind;

@@ -1,0 +1,28 @@
+import type { SoraReader } from "./sora_runtime{{ options.import_ext }}";
+
+export type {{ enum.name }} =
+{%- if options.enum_is_integer %}
+{%- for value in enum.values %}
+    | {{ loop.index0 }}
+{%- else %}
+    never
+{%- endfor %};
+{%- else %}
+{%- for value in enum.values %}
+    | "{{ value }}"
+{%- else %}
+    never
+{%- endfor %};
+{%- endif %}
+
+export declare const {{ enum.name }}: {
+{%- for value in enum.values %}
+{%- if options.enum_is_integer %}
+    readonly {{ value }}: {{ loop.index0 }};
+{%- else %}
+    readonly {{ value }}: "{{ value }}";
+{%- endif %}
+{%- endfor %}
+};
+
+export declare function decode{{ enum.name }}(reader: SoraReader): {{ enum.name }};
