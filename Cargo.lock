@@ -499,6 +499,7 @@ version = "0.1.0"
 dependencies = [
  "calamine",
  "rust_xlsxwriter",
+ "serde_json",
  "sora-data",
  "sora-diagnostics",
  "sora-excel",
