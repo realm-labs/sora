@@ -245,10 +245,6 @@ impl super::SoraTable for {{ table.pascal_name }}Table {
 {%- endif %}
     }
 
-    fn row_type(&self) -> &'static str {
-        "{{ table.row_path }}"
-    }
-
     fn len(&self) -> usize {
 {%- if table.mode == "singleton" %}
         1

@@ -20,7 +20,6 @@ public interface ISoraTable
     string Name { get; }
     SoraTableMode Mode { get; }
     string? Key { get; }
-    string RowType { get; }
     int Count { get; }
 }
 

@@ -112,10 +112,6 @@ func (table *AchievementTable) Key() string {
 	return "id"
 }
 
-func (table *AchievementTable) RowType() string {
-	return "Achievement"
-}
-
 func (table *AchievementTable) Len() int {
 	return len(table.rows)
 }

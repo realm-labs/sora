@@ -112,10 +112,6 @@ func (table *LocalizationTable) Key() string {
 	return "key"
 }
 
-func (table *LocalizationTable) RowType() string {
-	return "Localization"
-}
-
 func (table *LocalizationTable) Len() int {
 	return len(table.rows)
 }

@@ -113,6 +113,5 @@ public sealed class GachaPoolTable : ISoraTable, IReadOnlyDictionary<int, GachaP
     public string Name => TableName;
     public SoraTableMode Mode => SoraTableMode.Map;
     public string? Key => "id";
-    public string RowType => "GachaPool";
     public int Count => rows.Count;
 }

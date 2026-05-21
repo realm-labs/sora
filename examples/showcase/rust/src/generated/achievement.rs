@@ -77,10 +77,6 @@ impl super::SoraTable for AchievementTable {
         Some("id")
     }
 
-    fn row_type(&self) -> &'static str {
-        "achievement::Achievement"
-    }
-
     fn len(&self) -> usize {
         self.rows.len()
     }

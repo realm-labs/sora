@@ -29,7 +29,6 @@ final class DialogueTable private (
   override val name: String = DialogueTable.Name
   override val mode: SoraTableMode = SoraTableMode.Map
   override val key: Option[String] = Some("id")
-  override val rowType: String = "Dialogue"
   override def size: Int = rows.size
 }
 

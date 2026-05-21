@@ -102,11 +102,6 @@ final class StageTable extends java.util.AbstractMap<Integer, Stage> implements 
     }
 
     @Override
-    public String rowType() {
-        return "Stage";
-    }
-
-    @Override
     public int size() {
         return rows.size();
     }

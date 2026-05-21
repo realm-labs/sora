@@ -27,7 +27,6 @@ final class DropGroupTable private (
   override val name: String = DropGroupTable.Name
   override val mode: SoraTableMode = SoraTableMode.Map
   override val key: Option[String] = Some("id")
-  override val rowType: String = "DropGroup"
   override def size: Int = rows.size
 }
 

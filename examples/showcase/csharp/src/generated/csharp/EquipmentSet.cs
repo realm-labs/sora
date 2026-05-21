@@ -116,6 +116,5 @@ public sealed class EquipmentSetTable : ISoraTable, IReadOnlyDictionary<int, Equ
     public string Name => TableName;
     public SoraTableMode Mode => SoraTableMode.Map;
     public string? Key => "id";
-    public string RowType => "EquipmentSet";
     public int Count => rows.Count;
 }

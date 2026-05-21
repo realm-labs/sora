@@ -63,6 +63,5 @@ public sealed class GameSettingsTable : ISoraTable
     public string Name => TableName;
     public SoraTableMode Mode => SoraTableMode.Singleton;
     public string? Key => null;
-    public string RowType => "GameSettings";
     public int Count => 1;
 }

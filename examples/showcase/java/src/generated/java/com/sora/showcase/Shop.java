@@ -92,11 +92,6 @@ final class ShopTable extends java.util.AbstractMap<Integer, Shop> implements So
     }
 
     @Override
-    public String rowType() {
-        return "Shop";
-    }
-
-    @Override
     public int size() {
         return rows.size();
     }

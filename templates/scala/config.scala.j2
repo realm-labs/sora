@@ -14,7 +14,6 @@ trait SoraTable {
   def name: String
   def mode: SoraTableMode
   def key: Option[String]
-  def rowType: String
   def size: Int
 }
 

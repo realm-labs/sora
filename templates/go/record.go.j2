@@ -167,10 +167,6 @@ func (table *{{ table.pascal_name }}Table) Key() string {
 {%- endif %}
 }
 
-func (table *{{ table.pascal_name }}Table) RowType() string {
-    return "{{ table.row_type }}"
-}
-
 func (table *{{ table.pascal_name }}Table) Len() int {
 {%- if table.mode == "singleton" %}
     return 1

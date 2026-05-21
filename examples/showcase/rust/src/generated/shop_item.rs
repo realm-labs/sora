@@ -63,10 +63,6 @@ impl super::SoraTable for ShopItemTable {
         None
     }
 
-    fn row_type(&self) -> &'static str {
-        "shop_item::ShopItem"
-    }
-
     fn len(&self) -> usize {
         self.rows.len()
     }

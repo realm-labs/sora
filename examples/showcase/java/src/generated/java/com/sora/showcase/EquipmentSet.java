@@ -97,11 +97,6 @@ final class EquipmentSetTable extends java.util.AbstractMap<Integer, EquipmentSe
     }
 
     @Override
-    public String rowType() {
-        return "EquipmentSet";
-    }
-
-    @Override
     public int size() {
         return rows.size();
     }

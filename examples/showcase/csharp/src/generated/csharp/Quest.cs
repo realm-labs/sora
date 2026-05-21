@@ -126,6 +126,5 @@ public sealed class QuestTable : ISoraTable, IReadOnlyDictionary<int, Quest>
     public string Name => TableName;
     public SoraTableMode Mode => SoraTableMode.Map;
     public string? Key => "id";
-    public string RowType => "Quest";
     public int Count => rows.Count;
 }

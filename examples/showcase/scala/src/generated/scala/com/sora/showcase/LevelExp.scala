@@ -29,7 +29,6 @@ final class LevelExpTable private (
   override val name: String = LevelExpTable.Name
   override val mode: SoraTableMode = SoraTableMode.Map
   override val key: Option[String] = Some("level")
-  override val rowType: String = "LevelExp"
   override def size: Int = rows.size
 }
 

@@ -74,6 +74,5 @@ public sealed class ShopItemTable : ISoraTable, IReadOnlyList<ShopItem>
     public string Name => TableName;
     public SoraTableMode Mode => SoraTableMode.List;
     public string? Key => null;
-    public string RowType => "ShopItem";
     public int Count => rows.Count;
 }

@@ -180,11 +180,6 @@ final class {{ table.pascal_name }}Table {% if table.mode == "map" and table.key
     }
 
     @Override
-    public String rowType() {
-        return "{{ table.row_type }}";
-    }
-
-    @Override
     public int size() {
 {%- if table.mode == "singleton" %}
         return 1;

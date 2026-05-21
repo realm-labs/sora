@@ -107,11 +107,6 @@ final class MonsterTable extends java.util.AbstractMap<Integer, Monster> impleme
     }
 
     @Override
-    public String rowType() {
-        return "Monster";
-    }
-
-    @Override
     public int size() {
         return rows.size();
     }

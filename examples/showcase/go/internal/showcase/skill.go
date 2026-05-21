@@ -151,10 +151,6 @@ func (table *SkillTable) Key() string {
 	return "id"
 }
 
-func (table *SkillTable) RowType() string {
-	return "Skill"
-}
-
 func (table *SkillTable) Len() int {
 	return len(table.rows)
 }

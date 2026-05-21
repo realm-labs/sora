@@ -80,10 +80,6 @@ func (table *CharacterSkillTable) Key() string {
 	return ""
 }
 
-func (table *CharacterSkillTable) RowType() string {
-	return "CharacterSkill"
-}
-
 func (table *CharacterSkillTable) Len() int {
 	return len(table.rows)
 }

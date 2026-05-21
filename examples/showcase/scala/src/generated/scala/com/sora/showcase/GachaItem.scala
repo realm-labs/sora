@@ -26,7 +26,6 @@ final class GachaItemTable private (
   override val name: String = GachaItemTable.Name
   override val mode: SoraTableMode = SoraTableMode.List
   override val key: Option[String] = None
-  override val rowType: String = "GachaItem"
   override def size: Int = rows.size
 }
 

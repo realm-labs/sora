@@ -26,7 +26,6 @@ final class QuestRewardTable private (
   override val name: String = QuestRewardTable.Name
   override val mode: SoraTableMode = SoraTableMode.List
   override val key: Option[String] = None
-  override val rowType: String = "QuestReward"
   override def size: Int = rows.size
 }
 

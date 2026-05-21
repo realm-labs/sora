@@ -97,11 +97,6 @@ final class AchievementTable extends java.util.AbstractMap<Integer, Achievement>
     }
 
     @Override
-    public String rowType() {
-        return "Achievement";
-    }
-
-    @Override
     public int size() {
         return rows.size();
     }

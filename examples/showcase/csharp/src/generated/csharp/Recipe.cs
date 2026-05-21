@@ -113,6 +113,5 @@ public sealed class RecipeTable : ISoraTable, IReadOnlyDictionary<int, Recipe>
     public string Name => TableName;
     public SoraTableMode Mode => SoraTableMode.Map;
     public string? Key => "id";
-    public string RowType => "Recipe";
     public int Count => rows.Count;
 }

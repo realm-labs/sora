@@ -92,11 +92,6 @@ final class RecipeTable extends java.util.AbstractMap<Integer, Recipe> implement
     }
 
     @Override
-    public String rowType() {
-        return "Recipe";
-    }
-
-    @Override
     public int size() {
         return rows.size();
     }

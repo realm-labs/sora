@@ -31,7 +31,6 @@ final class EquipmentSetTable private (
   override val name: String = EquipmentSetTable.Name
   override val mode: SoraTableMode = SoraTableMode.Map
   override val key: Option[String] = Some("id")
-  override val rowType: String = "EquipmentSet"
   override def size: Int = rows.size
 }
 

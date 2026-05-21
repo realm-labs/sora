@@ -74,6 +74,5 @@ public sealed class DropEntryTable : ISoraTable, IReadOnlyList<DropEntry>
     public string Name => TableName;
     public SoraTableMode Mode => SoraTableMode.List;
     public string? Key => null;
-    public string RowType => "DropEntry";
     public int Count => rows.Count;
 }

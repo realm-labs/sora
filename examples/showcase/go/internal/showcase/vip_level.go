@@ -103,10 +103,6 @@ func (table *VipLevelTable) Key() string {
 	return "level"
 }
 
-func (table *VipLevelTable) RowType() string {
-	return "VipLevel"
-}
-
 func (table *VipLevelTable) Len() int {
 	return len(table.rows)
 }

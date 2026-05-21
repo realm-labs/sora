@@ -95,10 +95,6 @@ impl super::SoraTable for SkillTable {
         Some("id")
     }
 
-    fn row_type(&self) -> &'static str {
-        "skill::Skill"
-    }
-
     fn len(&self) -> usize {
         self.rows.len()
     }

@@ -82,11 +82,6 @@ final class QuestRewardTable extends java.util.AbstractList<QuestReward> impleme
     }
 
     @Override
-    public String rowType() {
-        return "QuestReward";
-    }
-
-    @Override
     public int size() {
         return rows.size();
     }

@@ -116,6 +116,5 @@ public sealed class DungeonTable : ISoraTable, IReadOnlyDictionary<int, Dungeon>
     public string Name => TableName;
     public SoraTableMode Mode => SoraTableMode.Map;
     public string? Key => "id";
-    public string RowType => "Dungeon";
     public int Count => rows.Count;
 }

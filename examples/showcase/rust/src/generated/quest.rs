@@ -89,10 +89,6 @@ impl super::SoraTable for QuestTable {
         Some("id")
     }
 
-    fn row_type(&self) -> &'static str {
-        "quest::Quest"
-    }
-
     fn len(&self) -> usize {
         self.rows.len()
     }

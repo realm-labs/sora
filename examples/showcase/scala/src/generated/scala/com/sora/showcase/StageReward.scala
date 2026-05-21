@@ -26,7 +26,6 @@ final class StageRewardTable private (
   override val name: String = StageRewardTable.Name
   override val mode: SoraTableMode = SoraTableMode.List
   override val key: Option[String] = None
-  override val rowType: String = "StageReward"
   override def size: Int = rows.size
 }
 

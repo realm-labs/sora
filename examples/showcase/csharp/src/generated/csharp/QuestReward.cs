@@ -71,6 +71,5 @@ public sealed class QuestRewardTable : ISoraTable, IReadOnlyList<QuestReward>
     public string Name => TableName;
     public SoraTableMode Mode => SoraTableMode.List;
     public string? Key => null;
-    public string RowType => "QuestReward";
     public int Count => rows.Count;
 }

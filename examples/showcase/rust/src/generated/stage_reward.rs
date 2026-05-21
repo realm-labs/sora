@@ -59,10 +59,6 @@ impl super::SoraTable for StageRewardTable {
         None
     }
 
-    fn row_type(&self) -> &'static str {
-        "stage_reward::StageReward"
-    }
-
     fn len(&self) -> usize {
         self.rows.len()
     }

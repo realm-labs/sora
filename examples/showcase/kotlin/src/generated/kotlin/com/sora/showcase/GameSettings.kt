@@ -39,7 +39,6 @@ class GameSettingsTable private constructor(
     override val name: String = NAME
     override val mode: SoraTableMode = SoraTableMode.Singleton
     override val key: String? = null
-    override val rowType: String = "GameSettings"
     override val size: Int = 1
 
     companion object {

@@ -80,10 +80,6 @@ impl super::SoraTable for StageTable {
         Some("id")
     }
 
-    fn row_type(&self) -> &'static str {
-        "stage::Stage"
-    }
-
     fn len(&self) -> usize {
         self.rows.len()
     }

@@ -112,10 +112,6 @@ func (table *DungeonTable) Key() string {
 	return "id"
 }
 
-func (table *DungeonTable) RowType() string {
-	return "Dungeon"
-}
-
 func (table *DungeonTable) Len() int {
 	return len(table.rows)
 }

@@ -82,11 +82,6 @@ final class StageRewardTable extends java.util.AbstractList<StageReward> impleme
     }
 
     @Override
-    public String rowType() {
-        return "StageReward";
-    }
-
-    @Override
     public int size() {
         return rows.size();
     }

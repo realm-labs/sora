@@ -128,11 +128,6 @@ final class ItemTable extends java.util.AbstractMap<Integer, Item> implements So
     }
 
     @Override
-    public String rowType() {
-        return "Item";
-    }
-
-    @Override
     public int size() {
         return rows.size();
     }

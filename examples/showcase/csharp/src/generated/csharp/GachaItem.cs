@@ -71,6 +71,5 @@ public sealed class GachaItemTable : ISoraTable, IReadOnlyList<GachaItem>
     public string Name => TableName;
     public SoraTableMode Mode => SoraTableMode.List;
     public string? Key => null;
-    public string RowType => "GachaItem";
     public int Count => rows.Count;
 }

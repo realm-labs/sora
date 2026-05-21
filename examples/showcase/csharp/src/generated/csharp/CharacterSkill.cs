@@ -68,6 +68,5 @@ public sealed class CharacterSkillTable : ISoraTable, IReadOnlyList<CharacterSki
     public string Name => TableName;
     public SoraTableMode Mode => SoraTableMode.List;
     public string? Key => null;
-    public string RowType => "CharacterSkill";
     public int Count => rows.Count;
 }

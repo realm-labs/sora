@@ -74,10 +74,6 @@ impl super::SoraTable for ShopTable {
         Some("id")
     }
 
-    fn row_type(&self) -> &'static str {
-        "shop::Shop"
-    }
-
     fn len(&self) -> usize {
         self.rows.len()
     }

@@ -87,11 +87,6 @@ final class DropEntryTable extends java.util.AbstractList<DropEntry> implements 
     }
 
     @Override
-    public String rowType() {
-        return "DropEntry";
-    }
-
-    @Override
     public int size() {
         return rows.size();
     }

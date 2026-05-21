@@ -29,7 +29,6 @@ final class ShopTable private (
   override val name: String = ShopTable.Name
   override val mode: SoraTableMode = SoraTableMode.Map
   override val key: Option[String] = Some("id")
-  override val rowType: String = "Shop"
   override def size: Int = rows.size
 }
 

@@ -87,11 +87,6 @@ final class ShopItemTable extends java.util.AbstractList<ShopItem> implements So
     }
 
     @Override
-    public String rowType() {
-        return "ShopItem";
-    }
-
-    @Override
     public int size() {
         return rows.size();
     }

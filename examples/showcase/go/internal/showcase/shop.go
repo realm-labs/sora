@@ -103,10 +103,6 @@ func (table *ShopTable) Key() string {
 	return "id"
 }
 
-func (table *ShopTable) RowType() string {
-	return "Shop"
-}
-
 func (table *ShopTable) Len() int {
 	return len(table.rows)
 }

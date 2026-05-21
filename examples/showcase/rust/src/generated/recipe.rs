@@ -74,10 +74,6 @@ impl super::SoraTable for RecipeTable {
         Some("id")
     }
 
-    fn row_type(&self) -> &'static str {
-        "recipe::Recipe"
-    }
-
     fn len(&self) -> usize {
         self.rows.len()
     }

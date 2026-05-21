@@ -103,10 +103,6 @@ func (table *GachaPoolTable) Key() string {
 	return "id"
 }
 
-func (table *GachaPoolTable) RowType() string {
-	return "GachaPool"
-}
-
 func (table *GachaPoolTable) Len() int {
 	return len(table.rows)
 }

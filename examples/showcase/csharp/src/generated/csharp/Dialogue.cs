@@ -113,6 +113,5 @@ public sealed class DialogueTable : ISoraTable, IReadOnlyDictionary<int, Dialogu
     public string Name => TableName;
     public SoraTableMode Mode => SoraTableMode.Map;
     public string? Key => "id";
-    public string RowType => "Dialogue";
     public int Count => rows.Count;
 }

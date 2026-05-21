@@ -42,7 +42,6 @@ final class SkillTable private (
   override val name: String = SkillTable.Name
   override val mode: SoraTableMode = SoraTableMode.Map
   override val key: Option[String] = Some("id")
-  override val rowType: String = "Skill"
   override def size: Int = rows.size
 }
 

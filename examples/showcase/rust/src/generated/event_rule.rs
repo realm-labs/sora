@@ -78,10 +78,6 @@ impl super::SoraTable for EventRuleTable {
         Some("id")
     }
 
-    fn row_type(&self) -> &'static str {
-        "event_rule::EventRule"
-    }
-
     fn len(&self) -> usize {
         self.rows.len()
     }

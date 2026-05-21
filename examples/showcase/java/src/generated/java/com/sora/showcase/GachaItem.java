@@ -82,11 +82,6 @@ final class GachaItemTable extends java.util.AbstractList<GachaItem> implements 
     }
 
     @Override
-    public String rowType() {
-        return "GachaItem";
-    }
-
-    @Override
     public int size() {
         return rows.size();
     }

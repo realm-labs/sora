@@ -31,7 +31,6 @@ final class AchievementTable private (
   override val name: String = AchievementTable.Name
   override val mode: SoraTableMode = SoraTableMode.Map
   override val key: Option[String] = Some("id")
-  override val rowType: String = "Achievement"
   override def size: Int = rows.size
 }
 

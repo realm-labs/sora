@@ -89,10 +89,6 @@ func (table *StageRewardTable) Key() string {
 	return ""
 }
 
-func (table *StageRewardTable) RowType() string {
-	return "StageReward"
-}
-
 func (table *StageRewardTable) Len() int {
 	return len(table.rows)
 }

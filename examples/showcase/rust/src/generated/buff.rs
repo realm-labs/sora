@@ -77,10 +77,6 @@ impl super::SoraTable for BuffTable {
         Some("id")
     }
 
-    fn row_type(&self) -> &'static str {
-        "buff::Buff"
-    }
-
     fn len(&self) -> usize {
         self.rows.len()
     }

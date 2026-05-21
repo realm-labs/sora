@@ -110,6 +110,5 @@ public sealed class DropGroupTable : ISoraTable, IReadOnlyDictionary<int, DropGr
     public string Name => TableName;
     public SoraTableMode Mode => SoraTableMode.Map;
     public string? Key => "id";
-    public string RowType => "DropGroup";
     public int Count => rows.Count;
 }

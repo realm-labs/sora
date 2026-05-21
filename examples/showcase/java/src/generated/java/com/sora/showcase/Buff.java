@@ -97,11 +97,6 @@ final class BuffTable extends java.util.AbstractMap<Integer, Buff> implements So
     }
 
     @Override
-    public String rowType() {
-        return "Buff";
-    }
-
-    @Override
     public int size() {
         return rows.size();
     }

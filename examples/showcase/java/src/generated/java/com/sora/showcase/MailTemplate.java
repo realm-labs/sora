@@ -102,11 +102,6 @@ final class MailTemplateTable extends java.util.AbstractMap<Integer, MailTemplat
     }
 
     @Override
-    public String rowType() {
-        return "MailTemplate";
-    }
-
-    @Override
     public int size() {
         return rows.size();
     }

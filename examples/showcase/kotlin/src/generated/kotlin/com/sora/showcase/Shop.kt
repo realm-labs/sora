@@ -34,7 +34,6 @@ class ShopTable private constructor(
     override val name: String = NAME
     override val mode: SoraTableMode = SoraTableMode.Map
     override val key: String? = "id"
-    override val rowType: String = "Shop"
     override val size: Int
         get() = rows.size
 

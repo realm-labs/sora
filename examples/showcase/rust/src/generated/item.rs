@@ -108,10 +108,6 @@ impl super::SoraTable for ItemTable {
         Some("id")
     }
 
-    fn row_type(&self) -> &'static str {
-        "item::Item"
-    }
-
     fn len(&self) -> usize {
         self.rows.len()
     }

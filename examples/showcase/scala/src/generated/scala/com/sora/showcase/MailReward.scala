@@ -26,7 +26,6 @@ final class MailRewardTable private (
   override val name: String = MailRewardTable.Name
   override val mode: SoraTableMode = SoraTableMode.List
   override val key: Option[String] = None
-  override val rowType: String = "MailReward"
   override def size: Int = rows.size
 }
 

@@ -98,10 +98,6 @@ func (table *ShopItemTable) Key() string {
 	return ""
 }
 
-func (table *ShopItemTable) RowType() string {
-	return "ShopItem"
-}
-
 func (table *ShopItemTable) Len() int {
 	return len(table.rows)
 }

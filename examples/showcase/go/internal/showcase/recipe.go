@@ -103,10 +103,6 @@ func (table *RecipeTable) Key() string {
 	return "id"
 }
 
-func (table *RecipeTable) RowType() string {
-	return "Recipe"
-}
-
 func (table *RecipeTable) Len() int {
 	return len(table.rows)
 }

@@ -130,10 +130,6 @@ func (table *MonsterTable) Key() string {
 	return "id"
 }
 
-func (table *MonsterTable) RowType() string {
-	return "Monster"
-}
-
 func (table *MonsterTable) Len() int {
 	return len(table.rows)
 }

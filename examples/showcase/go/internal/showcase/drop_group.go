@@ -94,10 +94,6 @@ func (table *DropGroupTable) Key() string {
 	return "id"
 }
 
-func (table *DropGroupTable) RowType() string {
-	return "DropGroup"
-}
-
 func (table *DropGroupTable) Len() int {
 	return len(table.rows)
 }

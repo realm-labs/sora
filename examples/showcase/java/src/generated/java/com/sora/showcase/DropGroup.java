@@ -87,11 +87,6 @@ final class DropGroupTable extends java.util.AbstractMap<Integer, DropGroup> imp
     }
 
     @Override
-    public String rowType() {
-        return "DropGroup";
-    }
-
-    @Override
     public int size() {
         return rows.size();
     }

@@ -121,10 +121,6 @@ func (table *MailTemplateTable) Key() string {
 	return "id"
 }
 
-func (table *MailTemplateTable) RowType() string {
-	return "MailTemplate"
-}
-
 func (table *MailTemplateTable) Len() int {
 	return len(table.rows)
 }

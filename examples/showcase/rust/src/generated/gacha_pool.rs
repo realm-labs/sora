@@ -74,10 +74,6 @@ impl super::SoraTable for GachaPoolTable {
         Some("id")
     }
 
-    fn row_type(&self) -> &'static str {
-        "gacha_pool::GachaPool"
-    }
-
     fn len(&self) -> usize {
         self.rows.len()
     }

@@ -29,7 +29,6 @@ final class VipLevelTable private (
   override val name: String = VipLevelTable.Name
   override val mode: SoraTableMode = SoraTableMode.Map
   override val key: Option[String] = Some("level")
-  override val rowType: String = "VipLevel"
   override def size: Int = rows.size
 }
 

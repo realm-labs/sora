@@ -31,7 +31,6 @@ final class EventRuleTable private (
   override val name: String = EventRuleTable.Name
   override val mode: SoraTableMode = SoraTableMode.Map
   override val key: Option[String] = Some("id")
-  override val rowType: String = "EventRule"
   override def size: Int = rows.size
 }
 

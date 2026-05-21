@@ -28,7 +28,6 @@ final class DropEntryTable private (
   override val name: String = DropEntryTable.Name
   override val mode: SoraTableMode = SoraTableMode.List
   override val key: Option[String] = None
-  override val rowType: String = "DropEntry"
   override def size: Int = rows.size
 }
 

@@ -83,10 +83,6 @@ impl super::SoraTable for MailTemplateTable {
         Some("id")
     }
 
-    fn row_type(&self) -> &'static str {
-        "mail_template::MailTemplate"
-    }
-
     fn len(&self) -> usize {
         self.rows.len()
     }

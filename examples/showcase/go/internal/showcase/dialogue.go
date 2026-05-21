@@ -103,10 +103,6 @@ func (table *DialogueTable) Key() string {
 	return "id"
 }
 
-func (table *DialogueTable) RowType() string {
-	return "Dialogue"
-}
-
 func (table *DialogueTable) Len() int {
 	return len(table.rows)
 }

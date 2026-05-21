@@ -119,6 +119,5 @@ public sealed class StageTable : ISoraTable, IReadOnlyDictionary<int, Stage>
     public string Name => TableName;
     public SoraTableMode Mode => SoraTableMode.Map;
     public string? Key => "id";
-    public string RowType => "Stage";
     public int Count => rows.Count;
 }

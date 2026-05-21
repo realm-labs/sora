@@ -38,7 +38,6 @@ final class QuestTable private (
   override val name: String = QuestTable.Name
   override val mode: SoraTableMode = SoraTableMode.Map
   override val key: Option[String] = Some("id")
-  override val rowType: String = "Quest"
   override def size: Int = rows.size
 }
 

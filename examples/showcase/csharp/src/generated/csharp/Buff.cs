@@ -116,6 +116,5 @@ public sealed class BuffTable : ISoraTable, IReadOnlyDictionary<int, Buff>
     public string Name => TableName;
     public SoraTableMode Mode => SoraTableMode.Map;
     public string? Key => "id";
-    public string RowType => "Buff";
     public int Count => rows.Count;
 }

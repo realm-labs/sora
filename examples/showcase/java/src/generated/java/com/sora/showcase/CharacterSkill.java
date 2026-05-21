@@ -77,11 +77,6 @@ final class CharacterSkillTable extends java.util.AbstractList<CharacterSkill> i
     }
 
     @Override
-    public String rowType() {
-        return "CharacterSkill";
-    }
-
-    @Override
     public int size() {
         return rows.size();
     }

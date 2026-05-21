@@ -150,10 +150,6 @@ func (table *ItemTable) Key() string {
 	return "id"
 }
 
-func (table *ItemTable) RowType() string {
-	return "Item"
-}
-
 func (table *ItemTable) Len() int {
 	return len(table.rows)
 }

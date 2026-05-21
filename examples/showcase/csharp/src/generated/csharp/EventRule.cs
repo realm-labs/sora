@@ -116,6 +116,5 @@ public sealed class EventRuleTable : ISoraTable, IReadOnlyDictionary<int, EventR
     public string Name => TableName;
     public SoraTableMode Mode => SoraTableMode.Map;
     public string? Key => "id";
-    public string RowType => "EventRule";
     public int Count => rows.Count;
 }

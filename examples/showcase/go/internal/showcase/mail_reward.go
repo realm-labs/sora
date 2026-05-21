@@ -89,10 +89,6 @@ func (table *MailRewardTable) Key() string {
 	return ""
 }
 
-func (table *MailRewardTable) RowType() string {
-	return "MailReward"
-}
-
 func (table *MailRewardTable) Len() int {
 	return len(table.rows)
 }

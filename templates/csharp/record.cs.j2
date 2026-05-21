@@ -208,7 +208,6 @@ public sealed class {{ table.pascal_name }}Table : ISoraTable{% if table.mode ==
 {%- else %}
     public string? Key => null;
 {%- endif %}
-    public string RowType => "{{ table.row_type }}";
 {%- if table.mode == "singleton" %}
     public int Count => 1;
 {%- else %}

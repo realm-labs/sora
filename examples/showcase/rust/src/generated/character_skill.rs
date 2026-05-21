@@ -58,10 +58,6 @@ impl super::SoraTable for CharacterSkillTable {
         None
     }
 
-    fn row_type(&self) -> &'static str {
-        "character_skill::CharacterSkill"
-    }
-
     fn len(&self) -> usize {
         self.rows.len()
     }

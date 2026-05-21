@@ -74,10 +74,6 @@ impl super::SoraTable for VipLevelTable {
         Some("level")
     }
 
-    fn row_type(&self) -> &'static str {
-        "vip_level::VipLevel"
-    }
-
     fn len(&self) -> usize {
         self.rows.len()
     }

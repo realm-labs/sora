@@ -84,10 +84,6 @@ impl super::SoraTable for MonsterTable {
         Some("id")
     }
 
-    fn row_type(&self) -> &'static str {
-        "monster::Monster"
-    }
-
     fn len(&self) -> usize {
         self.rows.len()
     }

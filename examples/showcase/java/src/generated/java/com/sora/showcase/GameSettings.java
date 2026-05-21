@@ -83,11 +83,6 @@ final class GameSettingsTable implements SoraTable {
     }
 
     @Override
-    public String rowType() {
-        return "GameSettings";
-    }
-
-    @Override
     public int size() {
         return 1;
     }

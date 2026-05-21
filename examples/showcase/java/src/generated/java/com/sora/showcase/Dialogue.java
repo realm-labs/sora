@@ -92,11 +92,6 @@ final class DialogueTable extends java.util.AbstractMap<Integer, Dialogue> imple
     }
 
     @Override
-    public String rowType() {
-        return "Dialogue";
-    }
-
-    @Override
     public int size() {
         return rows.size();
     }

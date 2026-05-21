@@ -122,6 +122,5 @@ public sealed class MonsterTable : ISoraTable, IReadOnlyDictionary<int, Monster>
     public string Name => TableName;
     public SoraTableMode Mode => SoraTableMode.Map;
     public string? Key => "id";
-    public string RowType => "Monster";
     public int Count => rows.Count;
 }

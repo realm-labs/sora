@@ -35,7 +35,6 @@ final class MonsterTable private (
   override val name: String = MonsterTable.Name
   override val mode: SoraTableMode = SoraTableMode.Map
   override val key: Option[String] = Some("id")
-  override val rowType: String = "Monster"
   override def size: Int = rows.size
 }
 

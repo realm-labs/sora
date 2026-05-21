@@ -29,7 +29,6 @@ final class GachaPoolTable private (
   override val name: String = GachaPoolTable.Name
   override val mode: SoraTableMode = SoraTableMode.Map
   override val key: Option[String] = Some("id")
-  override val rowType: String = "GachaPool"
   override def size: Int = rows.size
 }
 

@@ -18,7 +18,6 @@ interface SoraTable {
     String name();
     SoraTableMode mode();
     String key();
-    String rowType();
     int size();
 }
 

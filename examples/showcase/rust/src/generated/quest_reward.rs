@@ -59,10 +59,6 @@ impl super::SoraTable for QuestRewardTable {
         None
     }
 
-    fn row_type(&self) -> &'static str {
-        "quest_reward::QuestReward"
-    }
-
     fn len(&self) -> usize {
         self.rows.len()
     }

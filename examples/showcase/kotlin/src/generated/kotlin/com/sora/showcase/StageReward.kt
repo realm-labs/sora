@@ -38,7 +38,6 @@ class StageRewardTable private constructor(
     override val name: String = NAME
     override val mode: SoraTableMode = SoraTableMode.List
     override val key: String? = null
-    override val rowType: String = "StageReward"
     override val size: Int
         get() = rows.size
 

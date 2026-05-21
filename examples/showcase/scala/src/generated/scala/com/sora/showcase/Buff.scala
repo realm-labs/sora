@@ -31,7 +31,6 @@ final class BuffTable private (
   override val name: String = BuffTable.Name
   override val mode: SoraTableMode = SoraTableMode.Map
   override val key: Option[String] = Some("id")
-  override val rowType: String = "Buff"
   override def size: Int = rows.size
 }
 

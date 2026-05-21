@@ -24,7 +24,6 @@ final class CharacterSkillTable private (
   override val name: String = CharacterSkillTable.Name
   override val mode: SoraTableMode = SoraTableMode.List
   override val key: Option[String] = None
-  override val rowType: String = "CharacterSkill"
   override def size: Int = rows.size
 }
 

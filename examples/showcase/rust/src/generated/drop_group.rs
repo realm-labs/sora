@@ -70,10 +70,6 @@ impl super::SoraTable for DropGroupTable {
         Some("id")
     }
 
-    fn row_type(&self) -> &'static str {
-        "drop_group::DropGroup"
-    }
-
     fn len(&self) -> usize {
         self.rows.len()
     }

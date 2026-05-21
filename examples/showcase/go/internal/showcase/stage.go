@@ -121,10 +121,6 @@ func (table *StageTable) Key() string {
 	return "id"
 }
 
-func (table *StageTable) RowType() string {
-	return "Stage"
-}
-
 func (table *StageTable) Len() int {
 	return len(table.rows)
 }

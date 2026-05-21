@@ -98,10 +98,6 @@ func (table *DropEntryTable) Key() string {
 	return ""
 }
 
-func (table *DropEntryTable) RowType() string {
-	return "DropEntry"
-}
-
 func (table *DropEntryTable) Len() int {
 	return len(table.rows)
 }

@@ -31,7 +31,6 @@ final class LocalizationTable private (
   override val name: String = LocalizationTable.Name
   override val mode: SoraTableMode = SoraTableMode.Map
   override val key: Option[String] = Some("key")
-  override val rowType: String = "Localization"
   override def size: Int = rows.size
 }
 

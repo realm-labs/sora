@@ -29,7 +29,6 @@ final class RecipeTable private (
   override val name: String = RecipeTable.Name
   override val mode: SoraTableMode = SoraTableMode.Map
   override val key: Option[String] = Some("id")
-  override val rowType: String = "Recipe"
   override def size: Int = rows.size
 }
 

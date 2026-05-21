@@ -78,10 +78,6 @@ impl super::SoraTable for LocalizationTable {
         Some("key")
     }
 
-    fn row_type(&self) -> &'static str {
-        "localization::Localization"
-    }
-
     fn len(&self) -> usize {
         self.rows.len()
     }

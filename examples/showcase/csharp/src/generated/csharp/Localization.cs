@@ -116,6 +116,5 @@ public sealed class LocalizationTable : ISoraTable, IReadOnlyDictionary<string, 
     public string Name => TableName;
     public SoraTableMode Mode => SoraTableMode.Map;
     public string? Key => "key";
-    public string RowType => "Localization";
     public int Count => rows.Count;
 }

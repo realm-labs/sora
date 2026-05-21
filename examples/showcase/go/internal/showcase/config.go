@@ -16,7 +16,6 @@ type SoraTable interface {
 	Name() string
 	Mode() SoraTableMode
 	Key() string
-	RowType() string
 	Len() int
 }
 

@@ -89,10 +89,6 @@ func (table *GachaItemTable) Key() string {
 	return ""
 }
 
-func (table *GachaItemTable) RowType() string {
-	return "GachaItem"
-}
-
 func (table *GachaItemTable) Len() int {
 	return len(table.rows)
 }

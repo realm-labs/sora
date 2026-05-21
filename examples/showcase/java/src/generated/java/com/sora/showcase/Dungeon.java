@@ -97,11 +97,6 @@ final class DungeonTable extends java.util.AbstractMap<Integer, Dungeon> impleme
     }
 
     @Override
-    public String rowType() {
-        return "Dungeon";
-    }
-
-    @Override
     public int size() {
         return rows.size();
     }

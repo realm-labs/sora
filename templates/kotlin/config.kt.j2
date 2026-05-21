@@ -12,7 +12,6 @@ interface SoraTable {
     val name: String
     val mode: SoraTableMode
     val key: String?
-    val rowType: String
     val size: Int
 }
 

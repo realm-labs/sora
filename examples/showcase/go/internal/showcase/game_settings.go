@@ -102,10 +102,6 @@ func (table *GameSettingsTable) Key() string {
 	return ""
 }
 
-func (table *GameSettingsTable) RowType() string {
-	return "GameSettings"
-}
-
 func (table *GameSettingsTable) Len() int {
 	return 1
 }

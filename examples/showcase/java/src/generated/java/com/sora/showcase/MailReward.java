@@ -82,11 +82,6 @@ final class MailRewardTable extends java.util.AbstractList<MailReward> implement
     }
 
     @Override
-    public String rowType() {
-        return "MailReward";
-    }
-
-    @Override
     public int size() {
         return rows.size();
     }

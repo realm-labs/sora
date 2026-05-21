@@ -71,6 +71,5 @@ public sealed class StageRewardTable : ISoraTable, IReadOnlyList<StageReward>
     public string Name => TableName;
     public SoraTableMode Mode => SoraTableMode.List;
     public string? Key => null;
-    public string RowType => "StageReward";
     public int Count => rows.Count;
 }

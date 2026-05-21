@@ -112,11 +112,6 @@ final class CharacterTable extends java.util.AbstractMap<Integer, Character> imp
     }
 
     @Override
-    public String rowType() {
-        return "Character";
-    }
-
-    @Override
     public int size() {
         return rows.size();
     }

@@ -119,6 +119,5 @@ public sealed class MailTemplateTable : ISoraTable, IReadOnlyDictionary<int, Mai
     public string Name => TableName;
     public SoraTableMode Mode => SoraTableMode.Map;
     public string? Key => "id";
-    public string RowType => "MailTemplate";
     public int Count => rows.Count;
 }

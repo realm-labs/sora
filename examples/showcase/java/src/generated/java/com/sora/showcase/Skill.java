@@ -120,11 +120,6 @@ final class SkillTable extends java.util.AbstractMap<Integer, Skill> implements 
     }
 
     @Override
-    public String rowType() {
-        return "Skill";
-    }
-
-    @Override
     public int size() {
         return rows.size();
     }

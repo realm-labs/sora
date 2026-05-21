@@ -37,7 +37,6 @@ class LocalizationTable private constructor(
     override val name: String = NAME
     override val mode: SoraTableMode = SoraTableMode.Map
     override val key: String? = "key"
-    override val rowType: String = "Localization"
     override val size: Int
         get() = rows.size
 

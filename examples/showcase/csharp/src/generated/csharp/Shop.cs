@@ -113,6 +113,5 @@ public sealed class ShopTable : ISoraTable, IReadOnlyDictionary<int, Shop>
     public string Name => TableName;
     public SoraTableMode Mode => SoraTableMode.Map;
     public string? Key => "id";
-    public string RowType => "Shop";
     public int Count => rows.Count;
 }

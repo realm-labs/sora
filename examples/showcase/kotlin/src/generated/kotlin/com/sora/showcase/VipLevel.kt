@@ -34,7 +34,6 @@ class VipLevelTable private constructor(
     override val name: String = NAME
     override val mode: SoraTableMode = SoraTableMode.Map
     override val key: String? = "level"
-    override val rowType: String = "VipLevel"
     override val size: Int
         get() = rows.size
 

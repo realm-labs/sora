@@ -79,10 +79,6 @@ impl super::SoraTable for EquipmentSetTable {
         Some("id")
     }
 
-    fn row_type(&self) -> &'static str {
-        "equipment_set::EquipmentSet"
-    }
-
     fn len(&self) -> usize {
         self.rows.len()
     }

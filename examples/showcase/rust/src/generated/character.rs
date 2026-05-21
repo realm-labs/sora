@@ -87,10 +87,6 @@ impl super::SoraTable for CharacterTable {
         Some("id")
     }
 
-    fn row_type(&self) -> &'static str {
-        "character::Character"
-    }
-
     fn len(&self) -> usize {
         self.rows.len()
     }

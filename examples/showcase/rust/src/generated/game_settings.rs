@@ -67,10 +67,6 @@ impl super::SoraTable for GameSettingsTable {
         None
     }
 
-    fn row_type(&self) -> &'static str {
-        "game_settings::GameSettings"
-    }
-
     fn len(&self) -> usize {
         1
     }

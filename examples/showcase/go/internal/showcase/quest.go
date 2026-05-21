@@ -140,10 +140,6 @@ func (table *QuestTable) Key() string {
 	return "id"
 }
 
-func (table *QuestTable) RowType() string {
-	return "Quest"
-}
-
 func (table *QuestTable) Len() int {
 	return len(table.rows)
 }

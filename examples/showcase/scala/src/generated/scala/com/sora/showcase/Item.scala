@@ -47,7 +47,6 @@ final class ItemTable private (
   override val name: String = ItemTable.Name
   override val mode: SoraTableMode = SoraTableMode.Map
   override val key: Option[String] = Some("id")
-  override val rowType: String = "Item"
   override def size: Int = rows.size
 }
 

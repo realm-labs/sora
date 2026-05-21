@@ -73,10 +73,6 @@ impl super::SoraTable for DialogueTable {
         Some("id")
     }
 
-    fn row_type(&self) -> &'static str {
-        "dialogue::Dialogue"
-    }
-
     fn len(&self) -> usize {
         self.rows.len()
     }

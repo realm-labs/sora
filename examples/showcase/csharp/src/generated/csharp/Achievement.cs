@@ -116,6 +116,5 @@ public sealed class AchievementTable : ISoraTable, IReadOnlyDictionary<int, Achi
     public string Name => TableName;
     public SoraTableMode Mode => SoraTableMode.Map;
     public string? Key => "id";
-    public string RowType => "Achievement";
     public int Count => rows.Count;
 }

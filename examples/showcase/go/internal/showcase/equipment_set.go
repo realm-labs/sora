@@ -112,10 +112,6 @@ func (table *EquipmentSetTable) Key() string {
 	return "id"
 }
 
-func (table *EquipmentSetTable) RowType() string {
-	return "EquipmentSet"
-}
-
 func (table *EquipmentSetTable) Len() int {
 	return len(table.rows)
 }

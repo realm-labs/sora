@@ -77,10 +77,6 @@ impl super::SoraTable for DungeonTable {
         Some("id")
     }
 
-    fn row_type(&self) -> &'static str {
-        "dungeon::Dungeon"
-    }
-
     fn len(&self) -> usize {
         self.rows.len()
     }

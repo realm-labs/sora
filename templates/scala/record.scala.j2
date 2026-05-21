@@ -72,7 +72,6 @@ final class {{ table.pascal_name }}Table private (
 {%- else %}
   override val key: Option[String] = None
 {%- endif %}
-  override val rowType: String = "{{ table.row_type }}"
 {%- if table.mode == "singleton" %}
   override val size: Int = 1
 {%- else %}

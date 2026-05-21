@@ -92,11 +92,6 @@ final class LevelExpTable extends java.util.AbstractMap<Integer, LevelExp> imple
     }
 
     @Override
-    public String rowType() {
-        return "LevelExp";
-    }
-
-    @Override
     public int size() {
         return rows.size();
     }

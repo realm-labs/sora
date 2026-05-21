@@ -73,10 +73,6 @@ impl super::SoraTable for LevelExpTable {
         Some("level")
     }
 
-    fn row_type(&self) -> &'static str {
-        "level_exp::LevelExp"
-    }
-
     fn len(&self) -> usize {
         self.rows.len()
     }

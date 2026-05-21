@@ -125,6 +125,5 @@ public sealed class CharacterTable : ISoraTable, IReadOnlyDictionary<int, Charac
     public string Name => TableName;
     public SoraTableMode Mode => SoraTableMode.Map;
     public string? Key => "id";
-    public string RowType => "Character";
     public int Count => rows.Count;
 }

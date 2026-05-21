@@ -112,10 +112,6 @@ func (table *EventRuleTable) Key() string {
 	return "id"
 }
 
-func (table *EventRuleTable) RowType() string {
-	return "EventRule"
-}
-
 func (table *EventRuleTable) Len() int {
 	return len(table.rows)
 }

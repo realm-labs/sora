@@ -97,11 +97,6 @@ final class EventRuleTable extends java.util.AbstractMap<Integer, EventRule> imp
     }
 
     @Override
-    public String rowType() {
-        return "EventRule";
-    }
-
-    @Override
     public int size() {
         return rows.size();
     }

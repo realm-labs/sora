@@ -92,11 +92,6 @@ final class VipLevelTable extends java.util.AbstractMap<Integer, VipLevel> imple
     }
 
     @Override
-    public String rowType() {
-        return "VipLevel";
-    }
-
-    @Override
     public int size() {
         return rows.size();
     }

@@ -89,10 +89,6 @@ func (table *QuestRewardTable) Key() string {
 	return ""
 }
 
-func (table *QuestRewardTable) RowType() string {
-	return "QuestReward"
-}
-
 func (table *QuestRewardTable) Len() int {
 	return len(table.rows)
 }

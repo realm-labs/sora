@@ -103,10 +103,6 @@ func (table *LevelExpTable) Key() string {
 	return "level"
 }
 
-func (table *LevelExpTable) RowType() string {
-	return "LevelExp"
-}
-
 func (table *LevelExpTable) Len() int {
 	return len(table.rows)
 }

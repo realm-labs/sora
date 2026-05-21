@@ -113,11 +113,6 @@ final class QuestTable extends java.util.AbstractMap<Integer, Quest> implements 
     }
 
     @Override
-    public String rowType() {
-        return "Quest";
-    }
-
-    @Override
     public int size() {
         return rows.size();
     }

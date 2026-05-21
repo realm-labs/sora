@@ -28,7 +28,6 @@ final class GameSettingsTable private (
   override val name: String = GameSettingsTable.Name
   override val mode: SoraTableMode = SoraTableMode.Singleton
   override val key: Option[String] = None
-  override val rowType: String = "GameSettings"
   override val size: Int = 1
 }
 

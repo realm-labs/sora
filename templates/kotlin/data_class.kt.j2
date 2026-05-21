@@ -77,7 +77,6 @@ class {{ table.pascal_name }}Table private constructor(
 {%- else %}
     override val key: String? = null
 {%- endif %}
-    override val rowType: String = "{{ table.row_type }}"
 {%- if table.mode == "singleton" %}
     override val size: Int = 1
 {%- else %}

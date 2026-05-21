@@ -24,7 +24,6 @@ pub trait SoraTable: std::any::Any + Send + Sync {
     fn name(&self) -> &'static str;
     fn mode(&self) -> SoraTableMode;
     fn key(&self) -> Option<&'static str>;
-    fn row_type(&self) -> &'static str;
     fn len(&self) -> usize;
 }
 

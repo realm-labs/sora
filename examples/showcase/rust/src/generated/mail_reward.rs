@@ -59,10 +59,6 @@ impl super::SoraTable for MailRewardTable {
         None
     }
 
-    fn row_type(&self) -> &'static str {
-        "mail_reward::MailReward"
-    }
-
     fn len(&self) -> usize {
         self.rows.len()
     }

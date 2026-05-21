@@ -139,10 +139,6 @@ func (table *CharacterTable) Key() string {
 	return "id"
 }
 
-func (table *CharacterTable) RowType() string {
-	return "Character"
-}
-
 func (table *CharacterTable) Len() int {
 	return len(table.rows)
 }

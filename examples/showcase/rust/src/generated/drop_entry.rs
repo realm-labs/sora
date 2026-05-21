@@ -62,10 +62,6 @@ impl super::SoraTable for DropEntryTable {
         None
     }
 
-    fn row_type(&self) -> &'static str {
-        "drop_entry::DropEntry"
-    }
-
     fn len(&self) -> usize {
         self.rows.len()
     }

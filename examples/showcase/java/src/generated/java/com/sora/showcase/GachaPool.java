@@ -92,11 +92,6 @@ final class GachaPoolTable extends java.util.AbstractMap<Integer, GachaPool> imp
     }
 
     @Override
-    public String rowType() {
-        return "GachaPool";
-    }
-
-    @Override
     public int size() {
         return rows.size();
     }

@@ -145,6 +145,5 @@ public sealed class ItemTable : ISoraTable, IReadOnlyDictionary<int, Item>
     public string Name => TableName;
     public SoraTableMode Mode => SoraTableMode.Map;
     public string? Key => "id";
-    public string RowType => "Item";
     public int Count => rows.Count;
 }

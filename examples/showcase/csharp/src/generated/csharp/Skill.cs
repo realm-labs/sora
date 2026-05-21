@@ -131,6 +131,5 @@ public sealed class SkillTable : ISoraTable, IReadOnlyDictionary<int, Skill>
     public string Name => TableName;
     public SoraTableMode Mode => SoraTableMode.Map;
     public string? Key => "id";
-    public string RowType => "Skill";
     public int Count => rows.Count;
 }

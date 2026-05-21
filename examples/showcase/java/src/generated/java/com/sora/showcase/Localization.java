@@ -97,11 +97,6 @@ final class LocalizationTable extends java.util.AbstractMap<String, Localization
     }
 
     @Override
-    public String rowType() {
-        return "Localization";
-    }
-
-    @Override
     public int size() {
         return rows.size();
     }

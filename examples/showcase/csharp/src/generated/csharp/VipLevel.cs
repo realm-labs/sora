@@ -113,6 +113,5 @@ public sealed class VipLevelTable : ISoraTable, IReadOnlyDictionary<int, VipLeve
     public string Name => TableName;
     public SoraTableMode Mode => SoraTableMode.Map;
     public string? Key => "level";
-    public string RowType => "VipLevel";
     public int Count => rows.Count;
 }

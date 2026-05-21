@@ -113,6 +113,5 @@ public sealed class LevelExpTable : ISoraTable, IReadOnlyDictionary<int, LevelEx
     public string Name => TableName;
     public SoraTableMode Mode => SoraTableMode.Map;
     public string? Key => "level";
-    public string RowType => "LevelExp";
     public int Count => rows.Count;
 }

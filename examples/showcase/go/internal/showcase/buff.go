@@ -112,10 +112,6 @@ func (table *BuffTable) Key() string {
 	return "id"
 }
 
-func (table *BuffTable) RowType() string {
-	return "Buff"
-}
-
 func (table *BuffTable) Len() int {
 	return len(table.rows)
 }

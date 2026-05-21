@@ -60,10 +60,6 @@ impl super::SoraTable for GachaItemTable {
         None
     }
 
-    fn row_type(&self) -> &'static str {
-        "gacha_item::GachaItem"
-    }
-
     fn len(&self) -> usize {
         self.rows.len()
     }
