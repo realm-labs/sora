@@ -28,3 +28,54 @@ impl super::runtime::SoraDecode for GameSettings {
         })
     }
 }
+
+#[derive(Debug, Clone)]
+pub struct GameSettingsTable {
+    rows: GameSettings,
+}
+
+impl GameSettingsTable {
+    pub(super) fn decode(
+        bundle: &super::runtime::SoraBundle<'_>,
+    ) -> Result<Self, super::runtime::SoraReadError> {
+        Self::from_rows(bundle.decode_table::<GameSettings>("GameSettings")?)
+    }
+
+    pub(super) fn from_rows(
+        rows: Vec<GameSettings>,
+    ) -> Result<Self, super::runtime::SoraReadError> {
+        Ok(Self {
+            rows: super::decode_singleton_table(rows, "GameSettings")?,
+        })
+    }
+}
+
+impl std::ops::Deref for GameSettingsTable {
+    type Target = GameSettings;
+
+    fn deref(&self) -> &Self::Target {
+        &self.rows
+    }
+}
+
+impl super::SoraTable for GameSettingsTable {
+    fn name(&self) -> &'static str {
+        "GameSettings"
+    }
+
+    fn mode(&self) -> super::SoraTableMode {
+        super::SoraTableMode::Singleton
+    }
+
+    fn key(&self) -> Option<&'static str> {
+        None
+    }
+
+    fn row_type(&self) -> &'static str {
+        "game_settings::GameSettings"
+    }
+
+    fn len(&self) -> usize {
+        1
+    }
+}

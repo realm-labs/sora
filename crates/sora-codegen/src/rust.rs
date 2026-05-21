@@ -105,6 +105,7 @@ struct RustRecord {
     snake_name: String,
     imports: Vec<RustImport>,
     fields: Vec<RustField>,
+    table: Option<RustTable>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -121,6 +122,8 @@ struct RustTable {
     mode: String,
     container_type: String,
     row_type: String,
+    row_path: String,
+    table_path: String,
     key_name: Option<String>,
     key_field_name: Option<String>,
     key_type: Option<String>,
@@ -174,7 +177,13 @@ impl RustModel {
             records: model
                 .records
                 .into_iter()
-                .map(|item| rust_record(ir, item))
+                .map(|item| {
+                    let table = tables
+                        .iter()
+                        .find(|table| table.snake_name == item.snake_name)
+                        .cloned();
+                    rust_record(ir, item, table)
+                })
                 .collect(),
             has_map_tables: tables
                 .iter()
@@ -218,7 +227,7 @@ fn rust_variant(ir: &ConfigIr, variant: BaseUnionVariant) -> RustUnionVariant {
     }
 }
 
-fn rust_record(ir: &ConfigIr, record: BaseRecord) -> RustRecord {
+fn rust_record(ir: &ConfigIr, record: BaseRecord, table: Option<RustTable>) -> RustRecord {
     RustRecord {
         pascal_name: record.pascal_name,
         snake_name: record.snake_name,
@@ -228,15 +237,18 @@ fn rust_record(ir: &ConfigIr, record: BaseRecord) -> RustRecord {
             .into_iter()
             .map(|field| rust_field(ir, field))
             .collect(),
+        table,
     }
 }
 
 fn rust_table(ir: &ConfigIr, table: BaseTable) -> RustTable {
-    let row_type = format!("{}::{}", table.snake_name, table.pascal_name);
+    let row_type = table.pascal_name.clone();
+    let row_path = format!("{}::{}", table.snake_name, table.pascal_name);
+    let table_path = format!("{}::{}Table", table.snake_name, table.pascal_name);
     let key_type = table
         .key_field
         .as_ref()
-        .map(|field| rust_table_key_type(ir, &field.ty));
+        .map(|field| rust_local_table_key_type(ir, &field.ty));
     let container_type = rust_container_type(table.mode, &row_type, key_type.as_deref());
     let key_field_name = table
         .key_field
@@ -254,6 +266,8 @@ fn rust_table(ir: &ConfigIr, table: BaseTable) -> RustTable {
         mode: table.mode_name,
         container_type,
         row_type,
+        row_path,
+        table_path,
         key_name: table.key_name,
         key_field_name,
         key_type,
@@ -278,7 +292,7 @@ fn rust_index(ir: &ConfigIr, index: BaseIndex) -> RustIndex {
         field_name: index.field.snake_name.clone(),
         param_name: index.field.snake_name.clone(),
         param_type: rust_key_param_type(ir, &index.field.ty),
-        key_type: rust_table_key_type(ir, &index.field.ty),
+        key_type: rust_local_table_key_type(ir, &index.field.ty),
         key_is_copy: rust_key_type_is_copy(ir, &index.field.ty),
     }
 }
@@ -311,7 +325,7 @@ fn rust_container_type(mode: TableModeIr, row_type: &str, key_type: Option<&str>
 }
 
 fn rust_key_param_type(ir: &ConfigIr, ty: &TypeIr) -> String {
-    let type_name = rust_type_name(ir, ty);
+    let type_name = rust_local_table_key_type(ir, ty);
     if type_name == "String" {
         "str".to_owned()
     } else {
@@ -319,11 +333,8 @@ fn rust_key_param_type(ir: &ConfigIr, ty: &TypeIr) -> String {
     }
 }
 
-fn rust_table_key_type(ir: &ConfigIr, ty: &TypeIr) -> String {
+fn rust_local_table_key_type(ir: &ConfigIr, ty: &TypeIr) -> String {
     match ty {
-        TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => {
-            format!("{}::{}", name.to_snake_case(), rust_type_name(ir, ty))
-        }
         TypeIr::Ref { table, field } => ir
             .tables
             .iter()
@@ -334,7 +345,7 @@ fn rust_table_key_type(ir: &ConfigIr, ty: &TypeIr) -> String {
                     .iter()
                     .find(|candidate| candidate.name == *field)
             })
-            .map(|field| rust_table_key_type(ir, &field.ty))
+            .map(|field| rust_local_table_key_type(ir, &field.ty))
             .unwrap_or_else(|| rust_type_name(ir, ty)),
         _ => rust_type_name(ir, ty),
     }

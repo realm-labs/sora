@@ -3,6 +3,9 @@
 {%- for import in record.imports %}
 use super::{{ import.module }}::{{ import.name }};
 {%- endfor %}
+{%- if record.table and (record.table.mode == "map" or record.table.unique_indexes or record.table.non_unique_indexes) %}
+use super::SoraMap;
+{%- endif %}
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct {{ record.pascal_name }} {
@@ -24,3 +27,223 @@ impl super::runtime::SoraDecode for {{ record.pascal_name }} {
         })
     }
 }
+
+{%- if record.table %}
+{%- set table = record.table %}
+
+#[derive(Debug, Clone)]
+pub struct {{ table.pascal_name }}Table {
+    rows: {{ table.container_type }},
+{%- for index in table.unique_indexes %}
+{%- if table.mode == "map" %}
+    {{ index.name }}: SoraMap<{{ index.key_type }}, {{ table.key_type }}>,
+{%- else %}
+    {{ index.name }}: SoraMap<{{ index.key_type }}, usize>,
+{%- endif %}
+{%- endfor %}
+{%- for index in table.non_unique_indexes %}
+{%- if table.mode == "map" %}
+    {{ index.name }}: SoraMap<{{ index.key_type }}, Vec<{{ table.key_type }}>>,
+{%- else %}
+    {{ index.name }}: SoraMap<{{ index.key_type }}, Vec<usize>>,
+{%- endif %}
+{%- endfor %}
+}
+
+impl {{ table.pascal_name }}Table {
+    pub(super) fn decode(bundle: &super::runtime::SoraBundle<'_>) -> Result<Self, super::runtime::SoraReadError> {
+        Self::from_rows(bundle.decode_table::<{{ table.row_type }}>("{{ table.name }}")?)
+    }
+
+    pub(super) fn from_rows(rows: Vec<{{ table.row_type }}>) -> Result<Self, super::runtime::SoraReadError> {
+{%- if table.mode == "map" and table.key_field_name %}
+{%- if table.unique_indexes or table.non_unique_indexes %}
+{%- for index in table.unique_indexes %}
+        let {{ index.name }} = super::build_unique_map_index(
+            rows.iter(),
+{%- if index.key_is_copy %}
+            |row| row.{{ index.field_name }},
+{%- else %}
+            |row| row.{{ index.field_name }}.clone(),
+{%- endif %}
+{%- if table.key_is_copy %}
+            |row| row.{{ table.key_field_name }},
+{%- else %}
+            |row| row.{{ table.key_field_name }}.clone(),
+{%- endif %}
+        );
+{%- endfor %}
+{%- for index in table.non_unique_indexes %}
+        let {{ index.name }} = super::build_map_index(
+            rows.iter(),
+{%- if index.key_is_copy %}
+            |row| row.{{ index.field_name }},
+{%- else %}
+            |row| row.{{ index.field_name }}.clone(),
+{%- endif %}
+{%- if table.key_is_copy %}
+            |row| row.{{ table.key_field_name }},
+{%- else %}
+            |row| row.{{ table.key_field_name }}.clone(),
+{%- endif %}
+        );
+{%- endfor %}
+        let rows = super::decode_map_table(rows, |row| {% if table.key_is_copy %}row.{{ table.key_field_name }}{% else %}row.{{ table.key_field_name }}.clone(){% endif %});
+        Ok(Self {
+            rows,
+{%- for index in table.unique_indexes %}
+            {{ index.name }},
+{%- endfor %}
+{%- for index in table.non_unique_indexes %}
+            {{ index.name }},
+{%- endfor %}
+        })
+{%- else %}
+{%- if table.key_is_copy %}
+        Ok(Self { rows: super::decode_map_table(rows, |row| row.{{ table.key_field_name }}) })
+{%- else %}
+        Ok(Self { rows: super::decode_map_table(rows, |row| row.{{ table.key_field_name }}.clone()) })
+{%- endif %}
+{%- endif %}
+{%- elif table.mode == "singleton" %}
+        Ok(Self { rows: super::decode_singleton_table(rows, "{{ table.name }}")? })
+{%- else %}
+{%- if table.unique_indexes or table.non_unique_indexes %}
+{%- for index in table.unique_indexes %}
+        let {{ index.name }} = super::build_unique_list_index(
+            rows.iter(),
+{%- if index.key_is_copy %}
+            |row| row.{{ index.field_name }},
+{%- else %}
+            |row| row.{{ index.field_name }}.clone(),
+{%- endif %}
+        );
+{%- endfor %}
+{%- for index in table.non_unique_indexes %}
+        let {{ index.name }} = super::build_list_index(
+            rows.iter(),
+{%- if index.key_is_copy %}
+            |row| row.{{ index.field_name }},
+{%- else %}
+            |row| row.{{ index.field_name }}.clone(),
+{%- endif %}
+        );
+{%- endfor %}
+        Ok(Self {
+            rows,
+{%- for index in table.unique_indexes %}
+            {{ index.name }},
+{%- endfor %}
+{%- for index in table.non_unique_indexes %}
+            {{ index.name }},
+{%- endfor %}
+        })
+{%- else %}
+        Ok(Self { rows })
+{%- endif %}
+{%- endif %}
+    }
+
+{%- if table.mode == "map" and table.key_field_name %}
+
+{%- if table.key_is_copy %}
+    pub fn get(&self, key: {{ table.key_type }}) -> Option<&{{ table.row_type }}> {
+        self.rows.get(&key)
+    }
+{%- else %}
+    pub fn get(&self, key: &{{ table.key_type }}) -> Option<&{{ table.row_type }}> {
+        self.rows.get(key)
+    }
+{%- endif %}
+
+{%- endif %}
+{%- for index in table.unique_indexes %}
+
+{%- if index.key_is_copy %}
+    pub fn {{ index.method_name }}(&self, {{ index.param_name }}: {{ index.key_type }}) -> Option<&{{ table.row_type }}> {
+{%- else %}
+    pub fn {{ index.method_name }}(&self, {{ index.param_name }}: &{{ index.param_type }}) -> Option<&{{ table.row_type }}> {
+{%- endif %}
+{%- if table.mode == "map" %}
+{%- if index.key_is_copy %}
+        self.{{ index.name }}.get(&{{ index.param_name }}).and_then(|key| self.rows.get(key))
+{%- else %}
+        self.{{ index.name }}.get({{ index.param_name }}).and_then(|key| self.rows.get(key))
+{%- endif %}
+{%- else %}
+{%- if index.key_is_copy %}
+        self.{{ index.name }}.get(&{{ index.param_name }}).and_then(|index| self.rows.get(*index))
+{%- else %}
+        self.{{ index.name }}.get({{ index.param_name }}).and_then(|index| self.rows.get(*index))
+{%- endif %}
+{%- endif %}
+    }
+{%- endfor %}
+{%- for index in table.non_unique_indexes %}
+
+{%- if index.key_is_copy %}
+    pub fn find_{{ index.name }}(&self, {{ index.param_name }}: {{ index.key_type }}) -> impl Iterator<Item = &{{ table.row_type }}> {
+{%- else %}
+    pub fn find_{{ index.name }}(&self, {{ index.param_name }}: &{{ index.param_type }}) -> impl Iterator<Item = &{{ table.row_type }}> {
+{%- endif %}
+{%- if table.mode == "map" %}
+{%- if index.key_is_copy %}
+        self.{{ index.name }}.get(&{{ index.param_name }}).into_iter().flat_map(|keys| keys.iter()).filter_map(|key| self.rows.get(key))
+{%- else %}
+        self.{{ index.name }}.get({{ index.param_name }}).into_iter().flat_map(|keys| keys.iter()).filter_map(|key| self.rows.get(key))
+{%- endif %}
+{%- else %}
+{%- if index.key_is_copy %}
+        self.{{ index.name }}.get(&{{ index.param_name }}).into_iter().flat_map(|indexes| indexes.iter()).filter_map(|index| self.rows.get(*index))
+{%- else %}
+        self.{{ index.name }}.get({{ index.param_name }}).into_iter().flat_map(|indexes| indexes.iter()).filter_map(|index| self.rows.get(*index))
+{%- endif %}
+{%- endif %}
+    }
+{%- endfor %}
+}
+
+impl std::ops::Deref for {{ table.pascal_name }}Table {
+    type Target = {{ table.container_type }};
+
+    fn deref(&self) -> &Self::Target {
+        &self.rows
+    }
+}
+
+impl super::SoraTable for {{ table.pascal_name }}Table {
+    fn name(&self) -> &'static str {
+        "{{ table.name }}"
+    }
+
+    fn mode(&self) -> super::SoraTableMode {
+{%- if table.mode == "map" %}
+        super::SoraTableMode::Map
+{%- elif table.mode == "singleton" %}
+        super::SoraTableMode::Singleton
+{%- else %}
+        super::SoraTableMode::List
+{%- endif %}
+    }
+
+    fn key(&self) -> Option<&'static str> {
+{%- if table.key_name %}
+        Some("{{ table.key_name }}")
+{%- else %}
+        None
+{%- endif %}
+    }
+
+    fn row_type(&self) -> &'static str {
+        "{{ table.row_path }}"
+    }
+
+    fn len(&self) -> usize {
+{%- if table.mode == "singleton" %}
+        1
+{%- else %}
+        self.rows.len()
+{%- endif %}
+    }
+}
+{%- endif %}

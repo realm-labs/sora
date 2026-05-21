@@ -24,3 +24,50 @@ impl super::runtime::SoraDecode for StageReward {
         })
     }
 }
+
+#[derive(Debug, Clone)]
+pub struct StageRewardTable {
+    rows: Vec<StageReward>,
+}
+
+impl StageRewardTable {
+    pub(super) fn decode(
+        bundle: &super::runtime::SoraBundle<'_>,
+    ) -> Result<Self, super::runtime::SoraReadError> {
+        Self::from_rows(bundle.decode_table::<StageReward>("StageReward")?)
+    }
+
+    pub(super) fn from_rows(rows: Vec<StageReward>) -> Result<Self, super::runtime::SoraReadError> {
+        Ok(Self { rows })
+    }
+}
+
+impl std::ops::Deref for StageRewardTable {
+    type Target = Vec<StageReward>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.rows
+    }
+}
+
+impl super::SoraTable for StageRewardTable {
+    fn name(&self) -> &'static str {
+        "StageReward"
+    }
+
+    fn mode(&self) -> super::SoraTableMode {
+        super::SoraTableMode::List
+    }
+
+    fn key(&self) -> Option<&'static str> {
+        None
+    }
+
+    fn row_type(&self) -> &'static str {
+        "stage_reward::StageReward"
+    }
+
+    fn len(&self) -> usize {
+        self.rows.len()
+    }
+}

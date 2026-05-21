@@ -28,3 +28,50 @@ impl super::runtime::SoraDecode for ShopItem {
         })
     }
 }
+
+#[derive(Debug, Clone)]
+pub struct ShopItemTable {
+    rows: Vec<ShopItem>,
+}
+
+impl ShopItemTable {
+    pub(super) fn decode(
+        bundle: &super::runtime::SoraBundle<'_>,
+    ) -> Result<Self, super::runtime::SoraReadError> {
+        Self::from_rows(bundle.decode_table::<ShopItem>("ShopItem")?)
+    }
+
+    pub(super) fn from_rows(rows: Vec<ShopItem>) -> Result<Self, super::runtime::SoraReadError> {
+        Ok(Self { rows })
+    }
+}
+
+impl std::ops::Deref for ShopItemTable {
+    type Target = Vec<ShopItem>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.rows
+    }
+}
+
+impl super::SoraTable for ShopItemTable {
+    fn name(&self) -> &'static str {
+        "ShopItem"
+    }
+
+    fn mode(&self) -> super::SoraTableMode {
+        super::SoraTableMode::List
+    }
+
+    fn key(&self) -> Option<&'static str> {
+        None
+    }
+
+    fn row_type(&self) -> &'static str {
+        "shop_item::ShopItem"
+    }
+
+    fn len(&self) -> usize {
+        self.rows.len()
+    }
+}

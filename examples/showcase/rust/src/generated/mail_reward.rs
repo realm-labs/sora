@@ -24,3 +24,50 @@ impl super::runtime::SoraDecode for MailReward {
         })
     }
 }
+
+#[derive(Debug, Clone)]
+pub struct MailRewardTable {
+    rows: Vec<MailReward>,
+}
+
+impl MailRewardTable {
+    pub(super) fn decode(
+        bundle: &super::runtime::SoraBundle<'_>,
+    ) -> Result<Self, super::runtime::SoraReadError> {
+        Self::from_rows(bundle.decode_table::<MailReward>("MailReward")?)
+    }
+
+    pub(super) fn from_rows(rows: Vec<MailReward>) -> Result<Self, super::runtime::SoraReadError> {
+        Ok(Self { rows })
+    }
+}
+
+impl std::ops::Deref for MailRewardTable {
+    type Target = Vec<MailReward>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.rows
+    }
+}
+
+impl super::SoraTable for MailRewardTable {
+    fn name(&self) -> &'static str {
+        "MailReward"
+    }
+
+    fn mode(&self) -> super::SoraTableMode {
+        super::SoraTableMode::List
+    }
+
+    fn key(&self) -> Option<&'static str> {
+        None
+    }
+
+    fn row_type(&self) -> &'static str {
+        "mail_reward::MailReward"
+    }
+
+    fn len(&self) -> usize {
+        self.rows.len()
+    }
+}

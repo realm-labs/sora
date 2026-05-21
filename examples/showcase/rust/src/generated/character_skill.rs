@@ -21,3 +21,52 @@ impl super::runtime::SoraDecode for CharacterSkill {
         })
     }
 }
+
+#[derive(Debug, Clone)]
+pub struct CharacterSkillTable {
+    rows: Vec<CharacterSkill>,
+}
+
+impl CharacterSkillTable {
+    pub(super) fn decode(
+        bundle: &super::runtime::SoraBundle<'_>,
+    ) -> Result<Self, super::runtime::SoraReadError> {
+        Self::from_rows(bundle.decode_table::<CharacterSkill>("CharacterSkill")?)
+    }
+
+    pub(super) fn from_rows(
+        rows: Vec<CharacterSkill>,
+    ) -> Result<Self, super::runtime::SoraReadError> {
+        Ok(Self { rows })
+    }
+}
+
+impl std::ops::Deref for CharacterSkillTable {
+    type Target = Vec<CharacterSkill>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.rows
+    }
+}
+
+impl super::SoraTable for CharacterSkillTable {
+    fn name(&self) -> &'static str {
+        "CharacterSkill"
+    }
+
+    fn mode(&self) -> super::SoraTableMode {
+        super::SoraTableMode::List
+    }
+
+    fn key(&self) -> Option<&'static str> {
+        None
+    }
+
+    fn row_type(&self) -> &'static str {
+        "character_skill::CharacterSkill"
+    }
+
+    fn len(&self) -> usize {
+        self.rows.len()
+    }
+}

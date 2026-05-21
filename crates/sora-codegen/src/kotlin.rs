@@ -432,32 +432,33 @@ mod tests {
         assert!(rust_mod.contains("pub type SoraMap<K, V> = std::collections::HashMap<K, V>;"));
         assert!(rust_mod.contains("pub trait SoraTable: std::any::Any + Send + Sync"));
         assert!(rust_mod.contains("tables: SoraMap<&'static str, Box<dyn SoraTable>>"));
-        assert!(rust_mod.contains("pub struct ItemTable"));
-        assert!(rust_mod.contains("rows: SoraMap<i32, item::Item>"));
-        assert!(rust_mod.contains("by_name: SoraMap<String, i32>"));
-        assert!(rust_mod.contains("by_item_type: SoraMap<item_type::ItemType, Vec<i32>>"));
-        assert!(rust_mod.contains("impl SoraTable for ItemTable"));
-        assert!(rust_mod.contains("fn key(&self) -> Option<&'static str>"));
-        assert!(rust_mod.contains("Some(\"id\")"));
         assert!(rust_mod.contains("pub fn tables(&self) -> impl Iterator<Item = &dyn SoraTable>"));
-        assert!(rust_mod.contains("impl std::ops::Deref for ItemTable"));
         assert!(
-            rust_mod.contains("tables.insert(\"Item\", Box::new(ItemTable::decode(&bundle)?));")
+            rust_mod
+                .contains("tables.insert(\"Item\", Box::new(item::ItemTable::decode(&bundle)?));")
         );
-        assert!(rust_mod.contains("|row| row.id"));
-        assert!(rust_mod.contains("|row| row.name.clone()"));
-        assert!(rust_mod.contains("|row| row.item_type"));
+        assert!(rust_item.contains("pub struct ItemTable"));
+        assert!(rust_item.contains("rows: SoraMap<i32, Item>"));
+        assert!(rust_item.contains("by_name: SoraMap<String, i32>"));
+        assert!(rust_item.contains("by_item_type: SoraMap<ItemType, Vec<i32>>"));
+        assert!(rust_item.contains("impl super::SoraTable for ItemTable"));
+        assert!(rust_item.contains("fn key(&self) -> Option<&'static str>"));
+        assert!(rust_item.contains("Some(\"id\")"));
+        assert!(rust_item.contains("impl std::ops::Deref for ItemTable"));
+        assert!(rust_item.contains("|row| row.id"));
+        assert!(rust_item.contains("|row| row.name.clone()"));
+        assert!(rust_item.contains("|row| row.item_type"));
         assert!(
             rust_mod.contains("fn table<T: SoraTable + 'static>(&self, name: &'static str) -> &T")
         );
         assert!(!rust_mod.contains("as_any"));
         assert!(rust_mod.contains("let table: &dyn std::any::Any = table.as_ref();"));
         assert!(rust_mod.contains("table.downcast_ref::<T>()"));
-        assert!(rust_mod.contains("pub fn item(&self) -> &ItemTable"));
-        assert!(rust_mod.contains("pub fn get(&self, key: i32) -> Option<&item::Item>"));
-        assert!(rust_mod.contains("pub fn get_by_name(&self, name: &str) -> Option<&item::Item>"));
-        assert!(rust_mod.contains(
-                "pub fn find_by_item_type(&self, item_type: item_type::ItemType) -> impl Iterator<Item = &item::Item>"
+        assert!(rust_mod.contains("pub fn item(&self) -> &item::ItemTable"));
+        assert!(rust_item.contains("pub fn get(&self, key: i32) -> Option<&Item>"));
+        assert!(rust_item.contains("pub fn get_by_name(&self, name: &str) -> Option<&Item>"));
+        assert!(rust_item.contains(
+            "pub fn find_by_item_type(&self, item_type: ItemType) -> impl Iterator<Item = &Item>"
         ));
         assert!(!rust_mod.contains("pub fn get_item"));
         assert!(!rust_mod.contains("pub fn iter_item"));
@@ -537,12 +538,14 @@ mod tests {
         RustCodeGenerator.generate(&ir, &rust_out).unwrap();
 
         let rust_mod = std::fs::read_to_string(rust_out.join("mod.rs")).unwrap();
-        assert!(rust_mod.contains("pub struct ItemTable"));
-        assert!(rust_mod.contains("rows: SoraMap<i32, item::Item>"));
-        assert!(rust_mod.contains("pub struct SettingsTable"));
-        assert!(rust_mod.contains("rows: settings::Settings"));
-        assert!(rust_mod.contains("pub fn item(&self) -> &ItemTable"));
-        assert!(rust_mod.contains("pub fn settings(&self) -> &SettingsTable"));
+        let rust_item = std::fs::read_to_string(rust_out.join("item.rs")).unwrap();
+        let rust_settings = std::fs::read_to_string(rust_out.join("settings.rs")).unwrap();
+        assert!(rust_item.contains("pub struct ItemTable"));
+        assert!(rust_item.contains("rows: SoraMap<i32, Item>"));
+        assert!(rust_settings.contains("pub struct SettingsTable"));
+        assert!(rust_settings.contains("rows: Settings"));
+        assert!(rust_mod.contains("pub fn item(&self) -> &item::ItemTable"));
+        assert!(rust_mod.contains("pub fn settings(&self) -> &settings::SettingsTable"));
         assert!(!rust_mod.contains("pub fn settings_row"));
         assert!(rust_mod.contains("decode_singleton_table"));
 
@@ -559,9 +562,10 @@ mod tests {
         RustCodeGenerator.generate(&ir, &rust_out).unwrap();
 
         let rust_mod = std::fs::read_to_string(rust_out.join("mod.rs")).unwrap();
+        let rust_item = std::fs::read_to_string(rust_out.join("item.rs")).unwrap();
         assert!(rust_mod.contains("pub type SoraMap<K, V> = rustc_hash::FxHashMap<K, V>;"));
-        assert!(rust_mod.contains("pub struct ItemTable"));
-        assert!(rust_mod.contains("rows: SoraMap<i32, item::Item>"));
+        assert!(rust_item.contains("pub struct ItemTable"));
+        assert!(rust_item.contains("rows: SoraMap<i32, Item>"));
         assert!(rust_mod.contains("tables: SoraMap<&'static str, Box<dyn SoraTable>>"));
 
         let _ = std::fs::remove_dir_all(base);

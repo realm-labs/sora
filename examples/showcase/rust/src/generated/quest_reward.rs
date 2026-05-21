@@ -24,3 +24,50 @@ impl super::runtime::SoraDecode for QuestReward {
         })
     }
 }
+
+#[derive(Debug, Clone)]
+pub struct QuestRewardTable {
+    rows: Vec<QuestReward>,
+}
+
+impl QuestRewardTable {
+    pub(super) fn decode(
+        bundle: &super::runtime::SoraBundle<'_>,
+    ) -> Result<Self, super::runtime::SoraReadError> {
+        Self::from_rows(bundle.decode_table::<QuestReward>("QuestReward")?)
+    }
+
+    pub(super) fn from_rows(rows: Vec<QuestReward>) -> Result<Self, super::runtime::SoraReadError> {
+        Ok(Self { rows })
+    }
+}
+
+impl std::ops::Deref for QuestRewardTable {
+    type Target = Vec<QuestReward>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.rows
+    }
+}
+
+impl super::SoraTable for QuestRewardTable {
+    fn name(&self) -> &'static str {
+        "QuestReward"
+    }
+
+    fn mode(&self) -> super::SoraTableMode {
+        super::SoraTableMode::List
+    }
+
+    fn key(&self) -> Option<&'static str> {
+        None
+    }
+
+    fn row_type(&self) -> &'static str {
+        "quest_reward::QuestReward"
+    }
+
+    fn len(&self) -> usize {
+        self.rows.len()
+    }
+}
