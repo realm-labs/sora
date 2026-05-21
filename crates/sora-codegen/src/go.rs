@@ -1,13 +1,17 @@
 use std::path::Path;
 
-use heck::{ToPascalCase, ToSnakeCase};
+use heck::{ToLowerCamelCase, ToSnakeCase};
 use minijinja::context;
+use serde::Serialize;
 use sora_diagnostics::{Result, SoraError};
 use sora_ir::model::{ConfigIr, TableModeIr, TypeIr};
 
 use crate::{
     generator::{CodeGenerator, runtime_format_name},
-    model::{LanguageBackend, TableNameParts, build_model},
+    model::{
+        BaseField, BaseIndex, BaseModel, BaseRecord, BaseTable, BaseUnion, BaseUnionVariant,
+        build_base_model,
+    },
     render::{ensure_dir, render_template, write_file},
     types::go_type_name,
 };
@@ -17,8 +21,7 @@ pub struct GoCodeGenerator;
 impl CodeGenerator for GoCodeGenerator {
     fn generate(&self, ir: &ConfigIr, out_dir: &Path) -> Result<()> {
         ensure_dir(out_dir)?;
-        let backend = GoBackend;
-        let model = build_model(ir, &backend)?;
+        let model = GoModel::from_base_model(ir, build_base_model(ir)?);
         let package = go_package_name(&model.package)?;
         let runtime_format = runtime_format_name(ir.codegen.go.runtime_format);
 
@@ -28,10 +31,7 @@ impl CodeGenerator for GoCodeGenerator {
                 "enum.go.j2",
                 context! { package => &package, enum => item, runtime_format => runtime_format },
             )?;
-            write_file(
-                &out_dir.join(format!("{}.go", item.name.to_snake_case())),
-                rendered,
-            )?;
+            write_file(&out_dir.join(format!("{}.go", item.snake_name)), rendered)?;
         }
 
         for record in &model.records {
@@ -68,44 +68,215 @@ impl CodeGenerator for GoCodeGenerator {
     }
 }
 
-struct GoBackend;
+#[derive(Debug, Clone, Serialize)]
+struct GoModel {
+    package: String,
+    enums: Vec<GoEnum>,
+    unions: Vec<GoUnion>,
+    records: Vec<GoRecord>,
+    tables: Vec<GoTable>,
+    has_unique_indexes: bool,
+    has_non_unique_indexes: bool,
+}
 
-impl LanguageBackend for GoBackend {
-    fn field_name(&self, raw_name: &str) -> String {
-        raw_name.to_pascal_case()
-    }
+#[derive(Debug, Clone, Serialize)]
+struct GoEnum {
+    name: String,
+    snake_name: String,
+    values: Vec<String>,
+}
 
-    fn type_name(&self, ir: &ConfigIr, ty: &TypeIr) -> String {
-        go_type_name(ir, ty)
-    }
+#[derive(Debug, Clone, Serialize)]
+struct GoUnion {
+    pascal_name: String,
+    snake_name: String,
+    tag: String,
+    variants: Vec<GoUnionVariant>,
+}
 
-    fn decode_expr(&self, ir: &ConfigIr, ty: &TypeIr) -> String {
-        go_decode_expr(ir, ty)
-    }
+#[derive(Debug, Clone, Serialize)]
+struct GoUnionVariant {
+    name: String,
+    fields: Vec<GoField>,
+}
 
-    fn value_decode_expr(&self, ir: &ConfigIr, ty: &TypeIr) -> String {
-        go_value_decode_expr(ir, ty, "__VALUE__")
-    }
+#[derive(Debug, Clone, Serialize)]
+struct GoRecord {
+    pascal_name: String,
+    snake_name: String,
+    fields: Vec<GoField>,
+}
 
-    fn row_type(&self, table: &TableNameParts<'_>) -> String {
-        table.pascal_name.to_owned()
-    }
+#[derive(Debug, Clone, Serialize)]
+struct GoTable {
+    name: String,
+    pascal_name: String,
+    camel_name: String,
+    mode: String,
+    container_type: String,
+    row_type: String,
+    key_name: Option<String>,
+    key_field_name: Option<String>,
+    key_type: Option<String>,
+    unique_indexes: Vec<GoIndex>,
+    non_unique_indexes: Vec<GoIndex>,
+}
 
-    fn container_type(
-        &self,
-        _table: &TableNameParts<'_>,
-        mode: TableModeIr,
-        row_type: &str,
-        key_type: Option<&str>,
-    ) -> String {
-        match mode {
-            TableModeIr::List => format!("[]{row_type}"),
-            TableModeIr::Map => match key_type {
-                Some(key_type) => format!("map[{key_type}]{row_type}"),
-                None => format!("[]{row_type}"),
-            },
-            TableModeIr::Singleton => row_type.to_owned(),
+#[derive(Debug, Clone, Serialize)]
+struct GoIndex {
+    pascal_name: String,
+    camel_name: String,
+    field_name: String,
+    param_camel_name: String,
+    key_type: String,
+}
+
+#[derive(Debug, Clone, Serialize)]
+struct GoField {
+    raw_name: String,
+    name: String,
+    type_name: String,
+    decode: String,
+    value_decode: String,
+}
+
+impl GoModel {
+    fn from_base_model(ir: &ConfigIr, model: BaseModel) -> Self {
+        let tables = model
+            .tables
+            .into_iter()
+            .map(|table| go_table(ir, table))
+            .collect::<Vec<_>>();
+        Self {
+            package: model.package,
+            enums: model
+                .enums
+                .into_iter()
+                .map(|item| GoEnum {
+                    name: item.pascal_name,
+                    snake_name: item.snake_name,
+                    values: item.values,
+                })
+                .collect(),
+            unions: model
+                .unions
+                .into_iter()
+                .map(|item| go_union(ir, item))
+                .collect(),
+            records: model
+                .records
+                .into_iter()
+                .map(|item| go_record(ir, item))
+                .collect(),
+            has_unique_indexes: tables.iter().any(|table| !table.unique_indexes.is_empty()),
+            has_non_unique_indexes: tables
+                .iter()
+                .any(|table| !table.non_unique_indexes.is_empty()),
+            tables,
         }
+    }
+}
+
+fn go_union(ir: &ConfigIr, union: BaseUnion) -> GoUnion {
+    GoUnion {
+        pascal_name: union.pascal_name,
+        snake_name: union.snake_name,
+        tag: union.tag,
+        variants: union
+            .variants
+            .into_iter()
+            .map(|variant| go_variant(ir, variant))
+            .collect(),
+    }
+}
+
+fn go_variant(ir: &ConfigIr, variant: BaseUnionVariant) -> GoUnionVariant {
+    GoUnionVariant {
+        name: variant.pascal_name,
+        fields: variant
+            .fields
+            .into_iter()
+            .map(|field| go_field(ir, field))
+            .collect(),
+    }
+}
+
+fn go_record(ir: &ConfigIr, record: BaseRecord) -> GoRecord {
+    GoRecord {
+        pascal_name: record.pascal_name,
+        snake_name: record.snake_name,
+        fields: record
+            .fields
+            .into_iter()
+            .map(|field| go_field(ir, field))
+            .collect(),
+    }
+}
+
+fn go_table(ir: &ConfigIr, table: BaseTable) -> GoTable {
+    let row_type = table.pascal_name.clone();
+    let key_type = table
+        .key_field
+        .as_ref()
+        .map(|field| go_type_name(ir, &field.ty));
+    let container_type = go_container_type(table.mode, &row_type, key_type.as_deref());
+    let key_field_name = table
+        .key_field
+        .as_ref()
+        .map(|field| field.pascal_name.clone());
+
+    GoTable {
+        name: table.name,
+        pascal_name: table.pascal_name,
+        camel_name: table.camel_name,
+        mode: table.mode_name,
+        container_type,
+        row_type,
+        key_name: table.key_name,
+        key_field_name,
+        key_type,
+        unique_indexes: table
+            .unique_indexes
+            .into_iter()
+            .map(|index| go_index(ir, index))
+            .collect(),
+        non_unique_indexes: table
+            .non_unique_indexes
+            .into_iter()
+            .map(|index| go_index(ir, index))
+            .collect(),
+    }
+}
+
+fn go_index(ir: &ConfigIr, index: BaseIndex) -> GoIndex {
+    GoIndex {
+        pascal_name: index.pascal_name,
+        camel_name: index.name.to_lower_camel_case(),
+        field_name: index.field.pascal_name.clone(),
+        param_camel_name: index.field.camel_name,
+        key_type: go_type_name(ir, &index.field.ty),
+    }
+}
+
+fn go_field(ir: &ConfigIr, field: BaseField) -> GoField {
+    let value_decode = go_value_decode_expr(ir, &field.ty, "__VALUE__");
+    GoField {
+        raw_name: field.raw_name,
+        name: field.pascal_name,
+        type_name: go_type_name(ir, &field.ty),
+        decode: go_decode_expr(ir, &field.ty),
+        value_decode,
+    }
+}
+
+fn go_container_type(mode: TableModeIr, row_type: &str, key_type: Option<&str>) -> String {
+    match mode {
+        TableModeIr::List => format!("[]{row_type}"),
+        TableModeIr::Map => match key_type {
+            Some(key_type) => format!("map[{key_type}]{row_type}"),
+            None => format!("[]{row_type}"),
+        },
+        TableModeIr::Singleton => row_type.to_owned(),
     }
 }
 
