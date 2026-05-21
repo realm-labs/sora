@@ -32,6 +32,7 @@ impl EcmaScriptOptionsView {
 #[derive(Debug, Clone, Serialize)]
 pub struct EcmaScriptModel {
     pub package: String,
+    pub schema_fingerprint: String,
     pub enums: Vec<EcmaScriptEnum>,
     pub unions: Vec<EcmaScriptUnion>,
     pub records: Vec<EcmaScriptRecord>,
@@ -122,6 +123,7 @@ impl EcmaScriptModel {
             .collect::<Vec<_>>();
         Self {
             package: model.package,
+            schema_fingerprint: model.schema_fingerprint,
             enums: model
                 .enums
                 .into_iter()

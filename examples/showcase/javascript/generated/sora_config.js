@@ -58,6 +58,8 @@ import { DialogueTable, decodeDialogue, decodeDialogueValue } from "./dialogue.j
 import { EventRuleTable, decodeEventRule, decodeEventRuleValue } from "./event_rule.js";
 
 
+export const SORA_SCHEMA_FINGERPRINT = "8cc3361563a68f03";
+
 export class SoraConfig {
     constructor(
         item,
@@ -120,6 +122,11 @@ export class SoraConfig {
     }
 
     static fromSource(source) {
+        if (source.schemaFingerprint !== SORA_SCHEMA_FINGERPRINT) {
+            throw new Error(
+                `schema fingerprint mismatch: generated code expects ${SORA_SCHEMA_FINGERPRINT}, bundle contains ${source.schemaFingerprint}`,
+            );
+        }
         return new SoraConfig(
             ItemTable.decode(source.decodeTable(ItemTable.tableName, decodeItem, decodeItemValue)),
             SkillTable.decode(source.decodeTable(SkillTable.tableName, decodeSkill, decodeSkillValue)),

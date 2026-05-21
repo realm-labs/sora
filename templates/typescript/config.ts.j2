@@ -4,6 +4,8 @@ import type { SoraConfigTable, SoraTableSource } from "./sora_runtime{{ options.
 {% for table in model.tables %}
 import { {{ table.pascal_name }}Table, decode{{ table.row_type }}, decode{{ table.row_type }}Value } from "./{{ table.snake_name }}{{ options.import_ext }}";
 {% endfor %}
+export const SORA_SCHEMA_FINGERPRINT = "{{ model.schema_fingerprint }}";
+
 export class SoraConfig {
     private constructor(
 {%- for table in model.tables %}
@@ -12,6 +14,11 @@ export class SoraConfig {
     ) {}
 
     static fromSource(source: SoraTableSource): SoraConfig {
+        if (source.schemaFingerprint !== SORA_SCHEMA_FINGERPRINT) {
+            throw new Error(
+                `schema fingerprint mismatch: generated code expects ${SORA_SCHEMA_FINGERPRINT}, bundle contains ${source.schemaFingerprint}`,
+            );
+        }
         return new SoraConfig(
 {%- for table in model.tables %}
             {{ table.pascal_name }}Table.decode(source.decodeTable({{ table.pascal_name }}Table.tableName, decode{{ table.row_type }}, decode{{ table.row_type }}Value)),

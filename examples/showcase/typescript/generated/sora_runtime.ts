@@ -25,6 +25,7 @@ export interface SoraConfigTable {
 }
 
 export interface SoraTableSource {
+    readonly schemaFingerprint: string;
     decodeTable<T>(name: string, decodeBinary: (reader: SoraReader) => T, decodeValue: (value: SoraValue) => T): T[];
 }
 
@@ -41,6 +42,7 @@ export class SoraBundle {
     private constructor(
         private readonly bytes: Uint8Array,
         private readonly sections: SoraSection[],
+        readonly schemaFingerprint: string,
     ) {}
 
     static parse(input: Uint8Array | ArrayBuffer): SoraBundle {
@@ -140,7 +142,14 @@ export class SoraBundle {
             throw new SoraReadError(`expected exactly 1 Sora schema section, got ${schemaCount}`);
         }
 
-        return new SoraBundle(bytes, sections);
+        const manifest = sections.find((item) => item.kind === SECTION_KIND_MANIFEST);
+        if (manifest === undefined) {
+            throw new SoraReadError("missing Sora manifest section");
+        }
+        const manifestValue = JSON.parse(utf8(bytes.subarray(manifest.offset, manifest.offset + manifest.length))) as unknown;
+        const schemaFingerprint = objectStringField(manifestValue, "schema_fingerprint", "Sora manifest");
+
+        return new SoraBundle(bytes, sections, schemaFingerprint);
     }
 
     decodeTable<T>(name: string, decodeBinary: (reader: SoraReader) => T, _decodeValue: (value: SoraValue) => T): T[] {
@@ -254,7 +263,10 @@ export class SoraReader {
 }
 
 export class SoraValueBundle {
-    private constructor(private readonly tables: Map<string, SoraValue[]>) {}
+    private constructor(
+        private readonly tables: Map<string, SoraValue[]>,
+        readonly schemaFingerprint: string,
+    ) {}
 
     decodeTable<T>(name: string, _decodeBinary: (reader: SoraReader) => T, decodeValue: (value: SoraValue) => T): T[] {
         const rows = this.tables.get(name);
@@ -274,13 +286,14 @@ export class SoraValueBundle {
         if (version !== SORA_BUNDLE_VERSION) {
             throw new SoraReadError(`unsupported ${expectedFormat} bundle version ${version}`);
         }
+        const schemaFingerprint = root.get("schema_fingerprint").asString();
 
         const tables = new Map<string, SoraValue[]>();
         for (const tableValue of root.get("data").asObject().get("tables").asRawList()) {
             const table = tableValue.asObject();
             tables.set(table.get("name").asString(), table.get("rows").asRawList());
         }
-        return new SoraValueBundle(tables);
+        return new SoraValueBundle(tables, schemaFingerprint);
     }
 }
 
@@ -462,6 +475,17 @@ function ascii(bytes: Uint8Array): string {
 
 function utf8(bytes: Uint8Array): string {
     return textDecoder.decode(bytes);
+}
+
+function objectStringField(value: unknown, field: string, context: string): string {
+    if (typeof value !== "object" || value === null || Array.isArray(value)) {
+        throw new SoraReadError(`${context} is not an object`);
+    }
+    const item = (value as Record<string, unknown>)[field];
+    if (typeof item !== "string") {
+        throw new SoraReadError(`${context} is missing string field \`${field}\``);
+    }
+    return item;
 }
 
 function readU32At(bytes: Uint8Array, offset: number): number {

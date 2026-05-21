@@ -18,9 +18,10 @@ export class SoraReadError extends Error {
 }
 
 export class SoraBundle {
-    constructor(bytes, sections) {
+    constructor(bytes, sections, schemaFingerprint) {
         this.bytes = bytes;
         this.sections = sections;
+        this.schemaFingerprint = schemaFingerprint;
     }
 
     static parse(input) {
@@ -120,7 +121,14 @@ export class SoraBundle {
             throw new SoraReadError(`expected exactly 1 Sora schema section, got ${schemaCount}`);
         }
 
-        return new SoraBundle(bytes, sections);
+        const manifest = sections.find((item) => item.kind === SECTION_KIND_MANIFEST);
+        if (manifest === undefined) {
+            throw new SoraReadError("missing Sora manifest section");
+        }
+        const manifestValue = JSON.parse(utf8(bytes.subarray(manifest.offset, manifest.offset + manifest.length)));
+        const schemaFingerprint = objectStringField(manifestValue, "schema_fingerprint", "Sora manifest");
+
+        return new SoraBundle(bytes, sections, schemaFingerprint);
     }
 
     decodeTable(name, decodeBinary, _decodeValue) {
@@ -235,8 +243,9 @@ export class SoraReader {
 }
 
 export class SoraValueBundle {
-    constructor(tables) {
+    constructor(tables, schemaFingerprint) {
         this.tables = tables;
+        this.schemaFingerprint = schemaFingerprint;
     }
 
     decodeTable(name, _decodeBinary, decodeValue) {
@@ -257,13 +266,14 @@ export class SoraValueBundle {
         if (version !== SORA_BUNDLE_VERSION) {
             throw new SoraReadError(`unsupported ${expectedFormat} bundle version ${version}`);
         }
+        const schemaFingerprint = root.get("schema_fingerprint").asString();
 
         const tables = new Map();
         for (const tableValue of root.get("data").asObject().get("tables").asRawList()) {
             const table = tableValue.asObject();
             tables.set(table.get("name").asString(), table.get("rows").asRawList());
         }
-        return new SoraValueBundle(tables);
+        return new SoraValueBundle(tables, schemaFingerprint);
     }
 }
 
@@ -449,6 +459,17 @@ function ascii(bytes) {
 
 function utf8(bytes) {
     return textDecoder.decode(bytes);
+}
+
+function objectStringField(value, field, context) {
+    if (typeof value !== "object" || value === null || Array.isArray(value)) {
+        throw new SoraReadError(`${context} is not an object`);
+    }
+    const item = value[field];
+    if (typeof item !== "string") {
+        throw new SoraReadError(`${context} is missing string field \`${field}\``);
+    }
+    return item;
 }
 
 function readU32At(bytes, offset) {

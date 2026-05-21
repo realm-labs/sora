@@ -4,6 +4,8 @@ import type { SoraConfigTable, SoraTableSource } from "./sora_runtime{{ options.
 {% for table in model.tables %}
 import type { {{ table.pascal_name }}Table } from "./{{ table.snake_name }}{{ options.import_ext }}";
 {% endfor %}
+export declare const SORA_SCHEMA_FINGERPRINT: string;
+
 export declare class SoraConfig {
     static fromSource(source: SoraTableSource): SoraConfig;
     tables(): SoraConfigTable[];

@@ -12,10 +12,12 @@ export interface SoraConfigTable {
 }
 
 export interface SoraTableSource {
+    readonly schemaFingerprint: string;
     decodeTable<T>(name: string, decodeBinary: (reader: SoraReader) => T, decodeValue: (value: SoraValue) => T): T[];
 }
 
 export declare class SoraBundle {
+    readonly schemaFingerprint: string;
     static parse(input: Uint8Array | ArrayBuffer): SoraBundle;
     decodeTable<T>(name: string, decodeBinary: (reader: SoraReader) => T, decodeValue: (value: SoraValue) => T): T[];
 }
@@ -36,6 +38,7 @@ export declare class SoraReader {
 }
 
 export declare class SoraValueBundle {
+    readonly schemaFingerprint: string;
     decodeTable<T>(name: string, decodeBinary: (reader: SoraReader) => T, decodeValue: (value: SoraValue) => T): T[];
 }
 
