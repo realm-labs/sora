@@ -4,13 +4,13 @@ use heck::{ToPascalCase, ToShoutySnakeCase, ToSnakeCase};
 use minijinja::context;
 use serde::Serialize;
 use sora_diagnostics::{Result, SoraError};
-use sora_ir::model::{ConfigIr, TableModeIr, TypeIr};
+use sora_ir::model::{ConfigIr, TypeIr};
 
 use crate::{
     generator::{CodeGenerator, ensure_sora_runtime_format},
     model::{
-        CodegenField, CodegenImport, CodegenIndex, CodegenModel, CodegenRecord, CodegenTable,
-        CodegenUnion, CodegenUnionVariant, LanguageBackend, TableNameParts, build_model,
+        BaseField, BaseImport, BaseIndex, BaseModel, BaseRecord, BaseTable, BaseUnion,
+        BaseUnionVariant, build_base_model,
     },
     render::{ensure_dir, render_template, write_file},
 };
@@ -22,8 +22,7 @@ impl CodeGenerator for PythonCodeGenerator {
         ensure_sora_runtime_format("python", ir.codegen.python.runtime_format)?;
         ensure_dir(out_dir)?;
 
-        let backend = PythonBackend;
-        let model = PythonModel::from_codegen_model(build_model(ir, &backend)?);
+        let model = PythonModel::from_base_model(ir, build_base_model(ir)?);
         validate_python_model(&model)?;
 
         for item in &model.enums {
@@ -134,12 +133,12 @@ struct PythonField {
 }
 
 impl PythonModel {
-    fn from_codegen_model(model: CodegenModel) -> Self {
+    fn from_base_model(ir: &ConfigIr, model: BaseModel) -> Self {
         let enums = model
             .enums
             .into_iter()
             .map(|item| PythonEnum {
-                name: python_type_identifier(&item.name),
+                name: python_type_identifier(&item.pascal_name),
                 snake_name: python_module_name(&item.snake_name),
                 value_names: item
                     .values
@@ -153,17 +152,17 @@ impl PythonModel {
         let records = model
             .records
             .into_iter()
-            .map(python_record)
+            .map(|item| python_record(ir, item))
             .collect::<Vec<_>>();
         let unions = model
             .unions
             .into_iter()
-            .map(python_union)
+            .map(|item| python_union(ir, item))
             .collect::<Vec<_>>();
         let tables = model
             .tables
             .into_iter()
-            .map(python_table)
+            .map(|item| python_table(ir, item))
             .collect::<Vec<_>>();
         let modules = enums
             .iter()
@@ -183,75 +182,97 @@ impl PythonModel {
     }
 }
 
-fn python_record(record: CodegenRecord) -> PythonRecord {
+fn python_record(ir: &ConfigIr, record: BaseRecord) -> PythonRecord {
     PythonRecord {
         pascal_name: python_type_identifier(&record.pascal_name),
         snake_name: python_module_name(&record.snake_name),
         imports: record.imports.into_iter().map(python_import).collect(),
-        fields: record.fields.into_iter().map(python_field).collect(),
-    }
-}
-
-fn python_union(union: CodegenUnion) -> PythonUnion {
-    PythonUnion {
-        pascal_name: python_type_identifier(&union.pascal_name),
-        snake_name: python_module_name(&union.snake_name),
-        tag: python_field_identifier(&union.tag),
-        variants: union.variants.into_iter().map(python_variant).collect(),
-        imports: union.imports.into_iter().map(python_import).collect(),
-    }
-}
-
-fn python_variant(variant: CodegenUnionVariant) -> PythonUnionVariant {
-    PythonUnionVariant {
-        raw_name: variant.raw_name,
-        name: python_type_identifier(&variant.name),
-        fields: variant.fields.into_iter().map(python_field).collect(),
-    }
-}
-
-fn python_table(table: CodegenTable) -> PythonTable {
-    PythonTable {
-        name: table.name,
-        pascal_name: python_type_identifier(&table.pascal_name),
-        snake_name: python_module_name(&table.snake_name),
-        mode: table.mode,
-        row_type: python_type_identifier(&table.row_type),
-        key_name: table.key_name,
-        key_field_name: table
-            .key_field_name
-            .map(|name| python_field_identifier(&name)),
-        key_type: table.key_type,
-        unique_indexes: table.unique_indexes.into_iter().map(python_index).collect(),
-        non_unique_indexes: table
-            .non_unique_indexes
+        fields: record
+            .fields
             .into_iter()
-            .map(python_index)
+            .map(|field| python_field(ir, field))
             .collect(),
     }
 }
 
-fn python_index(index: CodegenIndex) -> PythonIndex {
-    PythonIndex {
-        name: python_field_identifier(&index.name),
-        field_name: python_field_identifier(&index.field_name),
-        param_name: python_field_identifier(&index.param_name),
-        param_type: index.param_type,
-        key_type: index.key_type,
+fn python_union(ir: &ConfigIr, union: BaseUnion) -> PythonUnion {
+    PythonUnion {
+        pascal_name: python_type_identifier(&union.pascal_name),
+        snake_name: python_module_name(&union.snake_name),
+        tag: python_field_identifier(&union.tag),
+        variants: union
+            .variants
+            .into_iter()
+            .map(|variant| python_variant(ir, variant))
+            .collect(),
+        imports: union.imports.into_iter().map(python_import).collect(),
     }
 }
 
-fn python_field(field: CodegenField) -> PythonField {
+fn python_variant(ir: &ConfigIr, variant: BaseUnionVariant) -> PythonUnionVariant {
+    PythonUnionVariant {
+        raw_name: variant.name,
+        name: python_type_identifier(&variant.pascal_name),
+        fields: variant
+            .fields
+            .into_iter()
+            .map(|field| python_field(ir, field))
+            .collect(),
+    }
+}
+
+fn python_table(ir: &ConfigIr, table: BaseTable) -> PythonTable {
+    let key_type = table
+        .key_field
+        .as_ref()
+        .map(|field| python_type_name(ir, &field.ty));
+    PythonTable {
+        name: table.name,
+        pascal_name: python_type_identifier(&table.pascal_name),
+        snake_name: python_module_name(&table.snake_name),
+        mode: table.mode_name,
+        row_type: python_type_identifier(&table.pascal_name),
+        key_name: table.key_name,
+        key_field_name: table
+            .key_field
+            .as_ref()
+            .map(|field| python_field_identifier(&field.snake_name)),
+        key_type,
+        unique_indexes: table
+            .unique_indexes
+            .into_iter()
+            .map(|index| python_index(ir, index))
+            .collect(),
+        non_unique_indexes: table
+            .non_unique_indexes
+            .into_iter()
+            .map(|index| python_index(ir, index))
+            .collect(),
+    }
+}
+
+fn python_index(ir: &ConfigIr, index: BaseIndex) -> PythonIndex {
+    let key_type = python_type_name(ir, &index.field.ty);
+    PythonIndex {
+        name: python_field_identifier(&index.snake_name),
+        field_name: python_field_identifier(&index.field.snake_name),
+        param_name: python_field_identifier(&index.field.snake_name),
+        param_type: key_type.clone(),
+        key_type,
+    }
+}
+
+fn python_field(ir: &ConfigIr, field: BaseField) -> PythonField {
     PythonField {
         raw_name: field.raw_name,
-        name: python_field_identifier(&field.name),
-        type_name: field.type_name,
-        decode: field.decode,
+        name: python_field_identifier(&field.snake_name),
+        type_name: python_type_name(ir, &field.ty),
+        decode: python_decode_expr(ir, &field.ty),
         comment: field.comment,
     }
 }
 
-fn python_import(import: CodegenImport) -> PythonImport {
+fn python_import(import: BaseImport) -> PythonImport {
     PythonImport {
         module: python_module_name(&import.module),
         name: python_type_identifier(&import.name),
@@ -327,110 +348,67 @@ fn reject_duplicates<'a>(
     Ok(())
 }
 
-pub struct PythonBackend;
-
-impl LanguageBackend for PythonBackend {
-    fn field_name(&self, raw_name: &str) -> String {
-        raw_name.to_snake_case()
-    }
-
-    fn type_name(&self, ir: &ConfigIr, ty: &TypeIr) -> String {
-        self.python_type_name(ir, ty)
-    }
-
-    fn decode_expr(&self, ir: &ConfigIr, ty: &TypeIr) -> String {
-        self.python_decode_expr(ir, ty)
-    }
-
-    fn row_type(&self, table: &TableNameParts<'_>) -> String {
-        table.pascal_name.to_owned()
-    }
-
-    fn container_type(
-        &self,
-        _table: &TableNameParts<'_>,
-        mode: TableModeIr,
-        row_type: &str,
-        key_type: Option<&str>,
-    ) -> String {
-        match mode {
-            TableModeIr::List => format!("list[{}]", row_type),
-            TableModeIr::Map => format!("dict[{}, {}]", key_type.unwrap_or("int"), row_type),
-            TableModeIr::Singleton => row_type.to_owned(),
+fn python_type_name(ir: &ConfigIr, ty: &TypeIr) -> String {
+    match ty {
+        TypeIr::Bool => "bool".to_owned(),
+        TypeIr::I32 | TypeIr::I64 => "int".to_owned(),
+        TypeIr::F32 | TypeIr::F64 => "float".to_owned(),
+        TypeIr::String => "str".to_owned(),
+        TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => {
+            python_type_identifier(name)
+        }
+        TypeIr::List(element) | TypeIr::Array { element, .. } => {
+            format!("list[{}]", python_type_name(ir, element))
+        }
+        TypeIr::Ref { table, field } => ref_target_type(ir, table, field)
+            .map(|ty| python_type_name(ir, ty))
+            .unwrap_or_else(|| "int".to_owned()),
+        TypeIr::Optional(element) => {
+            format!("{} | None", python_type_name(ir, element))
         }
     }
 }
 
-impl PythonBackend {
-    fn python_type_name(&self, ir: &ConfigIr, ty: &TypeIr) -> String {
-        match ty {
-            TypeIr::Bool => "bool".to_owned(),
-            TypeIr::I32 | TypeIr::I64 => "int".to_owned(),
-            TypeIr::F32 | TypeIr::F64 => "float".to_owned(),
-            TypeIr::String => "str".to_owned(),
-            TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => {
-                python_type_identifier(name)
-            }
-            TypeIr::List(element) | TypeIr::Array { element, .. } => {
-                format!("list[{}]", self.python_type_name(ir, element))
-            }
-            TypeIr::Ref { table, field } => self
-                .ref_target_type(ir, table, field)
-                .map(|ty| self.python_type_name(ir, ty))
-                .unwrap_or_else(|| "int".to_owned()),
-            TypeIr::Optional(element) => {
-                format!("{} | None", self.python_type_name(ir, element))
-            }
+fn python_decode_expr(ir: &ConfigIr, ty: &TypeIr) -> String {
+    match ty {
+        TypeIr::Bool => "reader.read_bool()".to_owned(),
+        TypeIr::I32 => "reader.read_i32()".to_owned(),
+        TypeIr::I64 => "reader.read_i64()".to_owned(),
+        TypeIr::F32 => "reader.read_f32()".to_owned(),
+        TypeIr::F64 => "reader.read_f64()".to_owned(),
+        TypeIr::String => "reader.read_string()".to_owned(),
+        TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => {
+            format!("{}.decode(reader)", python_type_identifier(name))
+        }
+        TypeIr::List(element) | TypeIr::Array { element, .. } => {
+            format!(
+                "reader.read_list(lambda: {})",
+                python_decode_expr(ir, element)
+            )
+        }
+        TypeIr::Ref { table, field } => ref_target_type(ir, table, field)
+            .map(|ty| python_decode_expr(ir, ty))
+            .unwrap_or_else(|| "reader.read_i32()".to_owned()),
+        TypeIr::Optional(element) => {
+            format!(
+                "reader.read_optional(lambda: {})",
+                python_decode_expr(ir, element)
+            )
         }
     }
+}
 
-    fn python_decode_expr(&self, ir: &ConfigIr, ty: &TypeIr) -> String {
-        match ty {
-            TypeIr::Bool => "reader.read_bool()".to_owned(),
-            TypeIr::I32 => "reader.read_i32()".to_owned(),
-            TypeIr::I64 => "reader.read_i64()".to_owned(),
-            TypeIr::F32 => "reader.read_f32()".to_owned(),
-            TypeIr::F64 => "reader.read_f64()".to_owned(),
-            TypeIr::String => "reader.read_string()".to_owned(),
-            TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => {
-                format!("{}.decode(reader)", python_type_identifier(name))
-            }
-            TypeIr::List(element) | TypeIr::Array { element, .. } => {
-                format!(
-                    "reader.read_list(lambda: {})",
-                    self.python_decode_expr(ir, element)
-                )
-            }
-            TypeIr::Ref { table, field } => self
-                .ref_target_type(ir, table, field)
-                .map(|ty| self.python_decode_expr(ir, ty))
-                .unwrap_or_else(|| "reader.read_i32()".to_owned()),
-            TypeIr::Optional(element) => {
-                format!(
-                    "reader.read_optional(lambda: {})",
-                    self.python_decode_expr(ir, element)
-                )
-            }
-        }
-    }
-
-    fn ref_target_type<'a>(
-        &self,
-        ir: &'a ConfigIr,
-        table: &str,
-        field: &str,
-    ) -> Option<&'a TypeIr> {
-        ir.tables
-            .iter()
-            .find(|candidate| candidate.name == table)
-            .and_then(|table| {
-                table
-                    .fields
-                    .iter()
-                    .find(|candidate| candidate.name == *field)
-            })
-            .map(|field| &field.ty)
-    }
+fn ref_target_type<'a>(ir: &'a ConfigIr, table: &str, field: &str) -> Option<&'a TypeIr> {
+    ir.tables
+        .iter()
+        .find(|candidate| candidate.name == table)
+        .and_then(|table| {
+            table
+                .fields
+                .iter()
+                .find(|candidate| candidate.name == *field)
+        })
+        .map(|field| &field.ty)
 }
 
 fn python_identifier(value: String) -> String {
