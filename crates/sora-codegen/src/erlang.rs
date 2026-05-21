@@ -8,7 +8,10 @@ use sora_ir::model::{ConfigIr, ErlangEnumReprIr, TableModeIr, TypeIr};
 
 use crate::{
     generator::{CodeGenerator, ensure_sora_runtime_format},
-    model::{LanguageBackend, TableNameParts, build_model},
+    model::{
+        BaseField, BaseIndex, BaseModel, BaseRecord, BaseTable, BaseUnion, BaseUnionVariant,
+        build_base_model,
+    },
     render::{ensure_dir, render_template, write_file},
 };
 
@@ -20,8 +23,7 @@ impl CodeGenerator for ErlangCodeGenerator {
         ensure_dir(out_dir)?;
 
         let options = ErlangOptionsView::new(ir.codegen.erlang.enum_repr);
-        let backend = ErlangBackend;
-        let model = build_model(ir, &backend)?;
+        let model = ErlangModel::from_base_model(ir, build_base_model(ir)?);
 
         for item in &model.enums {
             let rendered = render_template(
@@ -29,10 +31,7 @@ impl CodeGenerator for ErlangCodeGenerator {
                 "enum.erl.j2",
                 context! { enum => item, options => &options },
             )?;
-            write_file(
-                &out_dir.join(format!("{}.erl", item.name.to_snake_case())),
-                rendered,
-            )?;
+            write_file(&out_dir.join(format!("{}.erl", item.snake_name)), rendered)?;
         }
 
         for record in &model.records {
@@ -70,41 +69,209 @@ impl ErlangOptionsView {
     }
 }
 
-#[derive(Debug, Clone)]
-struct ErlangBackend;
+#[derive(Debug, Clone, Serialize)]
+struct ErlangModel {
+    package: String,
+    enums: Vec<ErlangEnum>,
+    unions: Vec<ErlangUnion>,
+    records: Vec<ErlangRecord>,
+    tables: Vec<ErlangTable>,
+}
 
-impl LanguageBackend for ErlangBackend {
-    fn field_name(&self, raw_name: &str) -> String {
-        raw_name.to_snake_case()
-    }
+#[derive(Debug, Clone, Serialize)]
+struct ErlangEnum {
+    name: String,
+    snake_name: String,
+    atom_values: Vec<String>,
+    values: Vec<String>,
+}
 
-    fn type_name(&self, ir: &ConfigIr, ty: &TypeIr) -> String {
-        erlang_type_name(ir, ty)
-    }
+#[derive(Debug, Clone, Serialize)]
+struct ErlangUnion {
+    snake_name: String,
+    tag: String,
+    variants: Vec<ErlangUnionVariant>,
+}
 
-    fn decode_expr(&self, ir: &ConfigIr, ty: &TypeIr) -> String {
-        erlang_decode_fun(ir, ty)
-    }
+#[derive(Debug, Clone, Serialize)]
+struct ErlangUnionVariant {
+    snake_name: String,
+    reader_var: String,
+    fields: Vec<ErlangField>,
+}
 
-    fn row_type(&self, table: &TableNameParts<'_>) -> String {
-        format!("{}:t()", table.snake_name)
-    }
+#[derive(Debug, Clone, Serialize)]
+struct ErlangRecord {
+    snake_name: String,
+    reader_var: String,
+    fields: Vec<ErlangField>,
+}
 
-    fn container_type(
-        &self,
-        _table: &TableNameParts<'_>,
-        mode: TableModeIr,
-        row_type: &str,
-        key_type: Option<&str>,
-    ) -> String {
-        match mode {
-            TableModeIr::List => format!("[{row_type}]"),
-            TableModeIr::Map => match key_type {
-                Some(key_type) => format!("#{{{key_type} => {row_type}}}"),
-                None => format!("[{row_type}]"),
-            },
-            TableModeIr::Singleton => row_type.to_owned(),
+#[derive(Debug, Clone, Serialize)]
+struct ErlangTable {
+    name: String,
+    pascal_name: String,
+    snake_name: String,
+    mode: String,
+    container_type: String,
+    row_type: String,
+    key_name: Option<String>,
+    key_field_name: Option<String>,
+    key_type: Option<String>,
+    unique_indexes: Vec<ErlangIndex>,
+    non_unique_indexes: Vec<ErlangIndex>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+struct ErlangIndex {
+    name: String,
+    pascal_name: String,
+    field_name: String,
+    param_type: String,
+    param_var_name: String,
+}
+
+#[derive(Debug, Clone, Serialize)]
+struct ErlangField {
+    name: String,
+    var_name: String,
+    type_name: String,
+    decode: String,
+}
+
+impl ErlangModel {
+    fn from_base_model(ir: &ConfigIr, model: BaseModel) -> Self {
+        Self {
+            package: model.package,
+            enums: model
+                .enums
+                .into_iter()
+                .map(|item| ErlangEnum {
+                    name: item.pascal_name,
+                    snake_name: item.snake_name,
+                    atom_values: item.atom_values,
+                    values: item.values,
+                })
+                .collect(),
+            unions: model
+                .unions
+                .into_iter()
+                .map(|item| erlang_union(ir, item))
+                .collect(),
+            records: model
+                .records
+                .into_iter()
+                .map(|item| erlang_record(ir, item))
+                .collect(),
+            tables: model
+                .tables
+                .into_iter()
+                .map(|item| erlang_table(ir, item))
+                .collect(),
         }
+    }
+}
+
+fn erlang_union(ir: &ConfigIr, union: BaseUnion) -> ErlangUnion {
+    ErlangUnion {
+        snake_name: union.snake_name,
+        tag: union.tag,
+        variants: union
+            .variants
+            .into_iter()
+            .map(|variant| erlang_variant(ir, variant))
+            .collect(),
+    }
+}
+
+fn erlang_variant(ir: &ConfigIr, variant: BaseUnionVariant) -> ErlangUnionVariant {
+    let fields = variant
+        .fields
+        .into_iter()
+        .map(|field| erlang_field(ir, field))
+        .collect::<Vec<_>>();
+    ErlangUnionVariant {
+        snake_name: variant.snake_name,
+        reader_var: format!("Reader{}", fields.len() + 1),
+        fields,
+    }
+}
+
+fn erlang_record(ir: &ConfigIr, record: BaseRecord) -> ErlangRecord {
+    let fields = record
+        .fields
+        .into_iter()
+        .map(|field| erlang_field(ir, field))
+        .collect::<Vec<_>>();
+    ErlangRecord {
+        snake_name: record.snake_name,
+        reader_var: format!("Reader{}", fields.len()),
+        fields,
+    }
+}
+
+fn erlang_table(ir: &ConfigIr, table: BaseTable) -> ErlangTable {
+    let row_type = format!("{}:t()", table.snake_name);
+    let key_type = table
+        .key_field
+        .as_ref()
+        .map(|field| erlang_type_name(ir, &field.ty));
+    let container_type = erlang_container_type(table.mode, &row_type, key_type.as_deref());
+    let key_field_name = table
+        .key_field
+        .as_ref()
+        .map(|field| field.snake_name.clone());
+
+    ErlangTable {
+        name: table.name,
+        pascal_name: table.pascal_name,
+        snake_name: table.snake_name,
+        mode: table.mode_name,
+        container_type,
+        row_type,
+        key_name: table.key_name,
+        key_field_name,
+        key_type,
+        unique_indexes: table
+            .unique_indexes
+            .into_iter()
+            .map(|index| erlang_index(ir, index))
+            .collect(),
+        non_unique_indexes: table
+            .non_unique_indexes
+            .into_iter()
+            .map(|index| erlang_index(ir, index))
+            .collect(),
+    }
+}
+
+fn erlang_index(ir: &ConfigIr, index: BaseIndex) -> ErlangIndex {
+    ErlangIndex {
+        name: index.snake_name,
+        pascal_name: index.pascal_name,
+        field_name: index.field.snake_name.clone(),
+        param_type: erlang_type_name(ir, &index.field.ty),
+        param_var_name: index.field.pascal_name,
+    }
+}
+
+fn erlang_field(ir: &ConfigIr, field: BaseField) -> ErlangField {
+    ErlangField {
+        name: field.snake_name,
+        var_name: field.pascal_name,
+        type_name: erlang_type_name(ir, &field.ty),
+        decode: erlang_decode_fun(ir, &field.ty),
+    }
+}
+
+fn erlang_container_type(mode: TableModeIr, row_type: &str, key_type: Option<&str>) -> String {
+    match mode {
+        TableModeIr::List => format!("[{row_type}]"),
+        TableModeIr::Map => match key_type {
+            Some(key_type) => format!("#{{{key_type} => {row_type}}}"),
+            None => format!("[{row_type}]"),
+        },
+        TableModeIr::Singleton => row_type.to_owned(),
     }
 }
 
