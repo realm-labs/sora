@@ -3,74 +3,103 @@
 package showcase
 
 type ShopItem struct {
-    ShopId int32
-    Seq int32
-    ItemId int32
-    Price ResourceCost
-    DailyLimit *int32
+	ShopId     int32
+	Seq        int32
+	ItemId     int32
+	Price      ResourceCost
+	DailyLimit *int32
 }
 
 func decodeShopItem(reader *SoraReader) (ShopItem, error) {
-    var value ShopItem
-    var err error
-    value.ShopId, err = reader.ReadInt32()
-    if err != nil {
-        return value, err
-    }
-    value.Seq, err = reader.ReadInt32()
-    if err != nil {
-        return value, err
-    }
-    value.ItemId, err = reader.ReadInt32()
-    if err != nil {
-        return value, err
-    }
-    value.Price, err = decodeResourceCost(reader)
-    if err != nil {
-        return value, err
-    }
-    value.DailyLimit, err = ReadOptional(reader, func(reader *SoraReader) (int32, error) { return reader.ReadInt32() })
-    if err != nil {
-        return value, err
-    }
-    return value, nil
+	var value ShopItem
+	var err error
+	value.ShopId, err = reader.ReadInt32()
+	if err != nil {
+		return value, err
+	}
+	value.Seq, err = reader.ReadInt32()
+	if err != nil {
+		return value, err
+	}
+	value.ItemId, err = reader.ReadInt32()
+	if err != nil {
+		return value, err
+	}
+	value.Price, err = decodeResourceCost(reader)
+	if err != nil {
+		return value, err
+	}
+	value.DailyLimit, err = ReadOptional(reader, func(reader *SoraReader) (int32, error) { return reader.ReadInt32() })
+	if err != nil {
+		return value, err
+	}
+	return value, nil
+}
+
+func decodeShopItemValue(input SoraValue) (ShopItem, error) {
+	var value ShopItem
+	obj, err := input.AsObject()
+	if err != nil {
+		return value, err
+	}
+	value.ShopId, err = obj.Get("shop_id").AsInt32()
+	if err != nil {
+		return value, err
+	}
+	value.Seq, err = obj.Get("seq").AsInt32()
+	if err != nil {
+		return value, err
+	}
+	value.ItemId, err = obj.Get("item_id").AsInt32()
+	if err != nil {
+		return value, err
+	}
+	value.Price, err = decodeResourceCostValue(obj.Get("price"))
+	if err != nil {
+		return value, err
+	}
+	value.DailyLimit, err = DecodeOptionalSoraValue(obj.Get("daily_limit"), func(item SoraValue) (int32, error) { return item.AsInt32() })
+	if err != nil {
+		return value, err
+	}
+	return value, nil
 }
 
 type ShopItemTable struct {
-    rows []ShopItem
+	rows []ShopItem
 }
 
 func buildShopItemTable(rows []ShopItem) (*ShopItemTable, error) {
-    return &ShopItemTable{rows: rows}, nil
+	return &ShopItemTable{rows: rows}, nil
 }
 
-func decodeShopItemTable(bundle *SoraBundle) (*ShopItemTable, error) {
-    rows, err := DecodeTable(bundle, "ShopItem", decodeShopItem)
-    if err != nil {
-        return nil, err
-    }
-    return buildShopItemTable(rows)
+func decodeShopItemTable(source SoraTableSource) (*ShopItemTable, error) {
+	rows, err := DecodeSourceTable(source, "ShopItem", decodeShopItem, decodeShopItemValue)
+	if err != nil {
+		return nil, err
+	}
+	return buildShopItemTable(rows)
 }
 
 func (table *ShopItemTable) Rows() []ShopItem {
-    return table.rows
+	return table.rows
 }
 func (table *ShopItemTable) Name() string {
-    return "ShopItem"
+	return "ShopItem"
 }
 
 func (table *ShopItemTable) Mode() SoraTableMode {
-    return SoraTableModeList
+	return SoraTableModeList
 }
 
 func (table *ShopItemTable) Key() string {
-    return ""
+	return ""
 }
 
 func (table *ShopItemTable) RowType() string {
-    return "ShopItem"
+	return "ShopItem"
 }
 
 func (table *ShopItemTable) Len() int {
-    return len(table.rows)
+	return len(table.rows)
 }

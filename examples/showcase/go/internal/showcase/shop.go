@@ -3,68 +3,89 @@
 package showcase
 
 type Shop struct {
-    Id int32
-    Name string
-    Currency ResourceKind
+	Id       int32
+	Name     string
+	Currency ResourceKind
 }
 
 func decodeShop(reader *SoraReader) (Shop, error) {
-    var value Shop
-    var err error
-    value.Id, err = reader.ReadInt32()
-    if err != nil {
-        return value, err
-    }
-    value.Name, err = reader.ReadString()
-    if err != nil {
-        return value, err
-    }
-    value.Currency, err = decodeResourceKind(reader)
-    if err != nil {
-        return value, err
-    }
-    return value, nil
+	var value Shop
+	var err error
+	value.Id, err = reader.ReadInt32()
+	if err != nil {
+		return value, err
+	}
+	value.Name, err = reader.ReadString()
+	if err != nil {
+		return value, err
+	}
+	value.Currency, err = decodeResourceKind(reader)
+	if err != nil {
+		return value, err
+	}
+	return value, nil
+}
+
+func decodeShopValue(input SoraValue) (Shop, error) {
+	var value Shop
+	obj, err := input.AsObject()
+	if err != nil {
+		return value, err
+	}
+	value.Id, err = obj.Get("id").AsInt32()
+	if err != nil {
+		return value, err
+	}
+	value.Name, err = obj.Get("name").AsString()
+	if err != nil {
+		return value, err
+	}
+	value.Currency, err = decodeResourceKindValue(obj.Get("currency"))
+	if err != nil {
+		return value, err
+	}
+	return value, nil
 }
 
 type ShopTable struct {
-    rows map[int32]Shop
+	rows map[int32]Shop
 }
 
 func buildShopTable(rows []Shop) (*ShopTable, error) {
-    return &ShopTable{rows: DecodeMapTable(rows, func(row Shop) int32 { return row.Id })}, nil
+	return &ShopTable{rows: DecodeMapTable(rows, func(row Shop) int32 { return row.Id })}, nil
 }
 
-func decodeShopTable(bundle *SoraBundle) (*ShopTable, error) {
-    rows, err := DecodeTable(bundle, "Shop", decodeShop)
-    if err != nil {
-        return nil, err
-    }
-    return buildShopTable(rows)
+func decodeShopTable(source SoraTableSource) (*ShopTable, error) {
+	rows, err := DecodeSourceTable(source, "Shop", decodeShop, decodeShopValue)
+	if err != nil {
+		return nil, err
+	}
+	return buildShopTable(rows)
 }
 
 func (table *ShopTable) Rows() map[int32]Shop {
-    return table.rows
+	return table.rows
 }
 func (table *ShopTable) Get(key int32) (Shop, bool) {
-    value, ok := table.rows[key]
-    return value, ok
+	value, ok := table.rows[key]
+	return value, ok
 }
 func (table *ShopTable) Name() string {
-    return "Shop"
+	return "Shop"
 }
 
 func (table *ShopTable) Mode() SoraTableMode {
-    return SoraTableModeMap
+	return SoraTableModeMap
 }
 
 func (table *ShopTable) Key() string {
-    return "id"
+	return "id"
 }
 
 func (table *ShopTable) RowType() string {
-    return "Shop"
+	return "Shop"
 }
 
 func (table *ShopTable) Len() int {
-    return len(table.rows)
+	return len(table.rows)
 }

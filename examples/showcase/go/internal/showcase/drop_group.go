@@ -3,63 +3,80 @@
 package showcase
 
 type DropGroup struct {
-    Id int32
-    Name string
+	Id   int32
+	Name string
 }
 
 func decodeDropGroup(reader *SoraReader) (DropGroup, error) {
-    var value DropGroup
-    var err error
-    value.Id, err = reader.ReadInt32()
-    if err != nil {
-        return value, err
-    }
-    value.Name, err = reader.ReadString()
-    if err != nil {
-        return value, err
-    }
-    return value, nil
+	var value DropGroup
+	var err error
+	value.Id, err = reader.ReadInt32()
+	if err != nil {
+		return value, err
+	}
+	value.Name, err = reader.ReadString()
+	if err != nil {
+		return value, err
+	}
+	return value, nil
+}
+
+func decodeDropGroupValue(input SoraValue) (DropGroup, error) {
+	var value DropGroup
+	obj, err := input.AsObject()
+	if err != nil {
+		return value, err
+	}
+	value.Id, err = obj.Get("id").AsInt32()
+	if err != nil {
+		return value, err
+	}
+	value.Name, err = obj.Get("name").AsString()
+	if err != nil {
+		return value, err
+	}
+	return value, nil
 }
 
 type DropGroupTable struct {
-    rows map[int32]DropGroup
+	rows map[int32]DropGroup
 }
 
 func buildDropGroupTable(rows []DropGroup) (*DropGroupTable, error) {
-    return &DropGroupTable{rows: DecodeMapTable(rows, func(row DropGroup) int32 { return row.Id })}, nil
+	return &DropGroupTable{rows: DecodeMapTable(rows, func(row DropGroup) int32 { return row.Id })}, nil
 }
 
-func decodeDropGroupTable(bundle *SoraBundle) (*DropGroupTable, error) {
-    rows, err := DecodeTable(bundle, "DropGroup", decodeDropGroup)
-    if err != nil {
-        return nil, err
-    }
-    return buildDropGroupTable(rows)
+func decodeDropGroupTable(source SoraTableSource) (*DropGroupTable, error) {
+	rows, err := DecodeSourceTable(source, "DropGroup", decodeDropGroup, decodeDropGroupValue)
+	if err != nil {
+		return nil, err
+	}
+	return buildDropGroupTable(rows)
 }
 
 func (table *DropGroupTable) Rows() map[int32]DropGroup {
-    return table.rows
+	return table.rows
 }
 func (table *DropGroupTable) Get(key int32) (DropGroup, bool) {
-    value, ok := table.rows[key]
-    return value, ok
+	value, ok := table.rows[key]
+	return value, ok
 }
 func (table *DropGroupTable) Name() string {
-    return "DropGroup"
+	return "DropGroup"
 }
 
 func (table *DropGroupTable) Mode() SoraTableMode {
-    return SoraTableModeMap
+	return SoraTableModeMap
 }
 
 func (table *DropGroupTable) Key() string {
-    return "id"
+	return "id"
 }
 
 func (table *DropGroupTable) RowType() string {
-    return "DropGroup"
+	return "DropGroup"
 }
 
 func (table *DropGroupTable) Len() int {
-    return len(table.rows)
+	return len(table.rows)
 }

@@ -23,7 +23,6 @@ func decode{{ record.pascal_name }}(reader *SoraReader) ({{ record.pascal_name }
     return value, nil
 }
 
-{%- if runtime_format != "sora" %}
 func decode{{ record.pascal_name }}Value(input SoraValue) ({{ record.pascal_name }}, error) {
     var value {{ record.pascal_name }}
     obj, err := input.AsObject()
@@ -38,7 +37,6 @@ func decode{{ record.pascal_name }}Value(input SoraValue) ({{ record.pascal_name
 {%- endfor %}
     return value, nil
 }
-{%- endif %}
 
 {%- if record.table %}
 {%- set table = record.table %}
@@ -91,23 +89,13 @@ func build{{ table.pascal_name }}Table(rows []{{ table.row_type }}) (*{{ table.p
 {%- endif %}
 }
 
-func decode{{ table.pascal_name }}Table(bundle *SoraBundle) (*{{ table.pascal_name }}Table, error) {
-    rows, err := DecodeTable(bundle, "{{ table.name }}", decode{{ table.row_type }})
+func decode{{ table.pascal_name }}Table(source SoraTableSource) (*{{ table.pascal_name }}Table, error) {
+    rows, err := DecodeSourceTable(source, "{{ table.name }}", decode{{ table.row_type }}, decode{{ table.row_type }}Value)
     if err != nil {
         return nil, err
     }
     return build{{ table.pascal_name }}Table(rows)
 }
-
-{%- if runtime_format != "sora" %}
-func decode{{ table.pascal_name }}TableFromValues(bundle *SoraValueBundle) (*{{ table.pascal_name }}Table, error) {
-    rows, err := DecodeValueTable(bundle, "{{ table.name }}", decode{{ table.row_type }}Value)
-    if err != nil {
-        return nil, err
-    }
-    return build{{ table.pascal_name }}Table(rows)
-}
-{%- endif %}
 
 func (table *{{ table.pascal_name }}Table) Rows() {{ table.container_type }} {
     return table.rows

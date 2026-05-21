@@ -3,68 +3,89 @@
 package showcase
 
 type Recipe struct {
-    Id int32
-    ResultItem int32
-    Materials []ResourceCost
+	Id         int32
+	ResultItem int32
+	Materials  []ResourceCost
 }
 
 func decodeRecipe(reader *SoraReader) (Recipe, error) {
-    var value Recipe
-    var err error
-    value.Id, err = reader.ReadInt32()
-    if err != nil {
-        return value, err
-    }
-    value.ResultItem, err = reader.ReadInt32()
-    if err != nil {
-        return value, err
-    }
-    value.Materials, err = ReadList(reader, func(reader *SoraReader) (ResourceCost, error) { return decodeResourceCost(reader) })
-    if err != nil {
-        return value, err
-    }
-    return value, nil
+	var value Recipe
+	var err error
+	value.Id, err = reader.ReadInt32()
+	if err != nil {
+		return value, err
+	}
+	value.ResultItem, err = reader.ReadInt32()
+	if err != nil {
+		return value, err
+	}
+	value.Materials, err = ReadList(reader, func(reader *SoraReader) (ResourceCost, error) { return decodeResourceCost(reader) })
+	if err != nil {
+		return value, err
+	}
+	return value, nil
+}
+
+func decodeRecipeValue(input SoraValue) (Recipe, error) {
+	var value Recipe
+	obj, err := input.AsObject()
+	if err != nil {
+		return value, err
+	}
+	value.Id, err = obj.Get("id").AsInt32()
+	if err != nil {
+		return value, err
+	}
+	value.ResultItem, err = obj.Get("result_item").AsInt32()
+	if err != nil {
+		return value, err
+	}
+	value.Materials, err = DecodeSoraValueList(obj.Get("materials"), func(item SoraValue) (ResourceCost, error) { return decodeResourceCostValue(item) })
+	if err != nil {
+		return value, err
+	}
+	return value, nil
 }
 
 type RecipeTable struct {
-    rows map[int32]Recipe
+	rows map[int32]Recipe
 }
 
 func buildRecipeTable(rows []Recipe) (*RecipeTable, error) {
-    return &RecipeTable{rows: DecodeMapTable(rows, func(row Recipe) int32 { return row.Id })}, nil
+	return &RecipeTable{rows: DecodeMapTable(rows, func(row Recipe) int32 { return row.Id })}, nil
 }
 
-func decodeRecipeTable(bundle *SoraBundle) (*RecipeTable, error) {
-    rows, err := DecodeTable(bundle, "Recipe", decodeRecipe)
-    if err != nil {
-        return nil, err
-    }
-    return buildRecipeTable(rows)
+func decodeRecipeTable(source SoraTableSource) (*RecipeTable, error) {
+	rows, err := DecodeSourceTable(source, "Recipe", decodeRecipe, decodeRecipeValue)
+	if err != nil {
+		return nil, err
+	}
+	return buildRecipeTable(rows)
 }
 
 func (table *RecipeTable) Rows() map[int32]Recipe {
-    return table.rows
+	return table.rows
 }
 func (table *RecipeTable) Get(key int32) (Recipe, bool) {
-    value, ok := table.rows[key]
-    return value, ok
+	value, ok := table.rows[key]
+	return value, ok
 }
 func (table *RecipeTable) Name() string {
-    return "Recipe"
+	return "Recipe"
 }
 
 func (table *RecipeTable) Mode() SoraTableMode {
-    return SoraTableModeMap
+	return SoraTableModeMap
 }
 
 func (table *RecipeTable) Key() string {
-    return "id"
+	return "id"
 }
 
 func (table *RecipeTable) RowType() string {
-    return "Recipe"
+	return "Recipe"
 }
 
 func (table *RecipeTable) Len() int {
-    return len(table.rows)
+	return len(table.rows)
 }

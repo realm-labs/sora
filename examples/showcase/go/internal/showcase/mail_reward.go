@@ -3,69 +3,94 @@
 package showcase
 
 type MailReward struct {
-    MailId int32
-    Seq int32
-    ItemId int32
-    Count int32
+	MailId int32
+	Seq    int32
+	ItemId int32
+	Count  int32
 }
 
 func decodeMailReward(reader *SoraReader) (MailReward, error) {
-    var value MailReward
-    var err error
-    value.MailId, err = reader.ReadInt32()
-    if err != nil {
-        return value, err
-    }
-    value.Seq, err = reader.ReadInt32()
-    if err != nil {
-        return value, err
-    }
-    value.ItemId, err = reader.ReadInt32()
-    if err != nil {
-        return value, err
-    }
-    value.Count, err = reader.ReadInt32()
-    if err != nil {
-        return value, err
-    }
-    return value, nil
+	var value MailReward
+	var err error
+	value.MailId, err = reader.ReadInt32()
+	if err != nil {
+		return value, err
+	}
+	value.Seq, err = reader.ReadInt32()
+	if err != nil {
+		return value, err
+	}
+	value.ItemId, err = reader.ReadInt32()
+	if err != nil {
+		return value, err
+	}
+	value.Count, err = reader.ReadInt32()
+	if err != nil {
+		return value, err
+	}
+	return value, nil
+}
+
+func decodeMailRewardValue(input SoraValue) (MailReward, error) {
+	var value MailReward
+	obj, err := input.AsObject()
+	if err != nil {
+		return value, err
+	}
+	value.MailId, err = obj.Get("mail_id").AsInt32()
+	if err != nil {
+		return value, err
+	}
+	value.Seq, err = obj.Get("seq").AsInt32()
+	if err != nil {
+		return value, err
+	}
+	value.ItemId, err = obj.Get("item_id").AsInt32()
+	if err != nil {
+		return value, err
+	}
+	value.Count, err = obj.Get("count").AsInt32()
+	if err != nil {
+		return value, err
+	}
+	return value, nil
 }
 
 type MailRewardTable struct {
-    rows []MailReward
+	rows []MailReward
 }
 
 func buildMailRewardTable(rows []MailReward) (*MailRewardTable, error) {
-    return &MailRewardTable{rows: rows}, nil
+	return &MailRewardTable{rows: rows}, nil
 }
 
-func decodeMailRewardTable(bundle *SoraBundle) (*MailRewardTable, error) {
-    rows, err := DecodeTable(bundle, "MailReward", decodeMailReward)
-    if err != nil {
-        return nil, err
-    }
-    return buildMailRewardTable(rows)
+func decodeMailRewardTable(source SoraTableSource) (*MailRewardTable, error) {
+	rows, err := DecodeSourceTable(source, "MailReward", decodeMailReward, decodeMailRewardValue)
+	if err != nil {
+		return nil, err
+	}
+	return buildMailRewardTable(rows)
 }
 
 func (table *MailRewardTable) Rows() []MailReward {
-    return table.rows
+	return table.rows
 }
 func (table *MailRewardTable) Name() string {
-    return "MailReward"
+	return "MailReward"
 }
 
 func (table *MailRewardTable) Mode() SoraTableMode {
-    return SoraTableModeList
+	return SoraTableModeList
 }
 
 func (table *MailRewardTable) Key() string {
-    return ""
+	return ""
 }
 
 func (table *MailRewardTable) RowType() string {
-    return "MailReward"
+	return "MailReward"
 }
 
 func (table *MailRewardTable) Len() int {
-    return len(table.rows)
+	return len(table.rows)
 }

@@ -7,27 +7,46 @@ import "fmt"
 type ElementType int32
 
 const (
-    ElementTypeFire ElementType = 0
-    ElementTypeIce ElementType = 1
-    ElementTypeLightning ElementType = 2
-    ElementTypePhysical ElementType = 3
+	ElementTypeFire      ElementType = 0
+	ElementTypeIce       ElementType = 1
+	ElementTypeLightning ElementType = 2
+	ElementTypePhysical  ElementType = 3
 )
 
 func decodeElementType(reader *SoraReader) (ElementType, error) {
-    ordinal, err := reader.ReadUInt32()
-    if err != nil {
-        return 0, err
-    }
-    switch ordinal {
-    case 0:
-        return ElementTypeFire, nil
-    case 1:
-        return ElementTypeIce, nil
-    case 2:
-        return ElementTypeLightning, nil
-    case 3:
-        return ElementTypePhysical, nil
-    default:
-        return 0, fmt.Errorf("invalid enum ordinal %d for ElementType", ordinal)
-    }
+	ordinal, err := reader.ReadUInt32()
+	if err != nil {
+		return 0, err
+	}
+	switch ordinal {
+	case 0:
+		return ElementTypeFire, nil
+	case 1:
+		return ElementTypeIce, nil
+	case 2:
+		return ElementTypeLightning, nil
+	case 3:
+		return ElementTypePhysical, nil
+	default:
+		return 0, fmt.Errorf("invalid enum ordinal %d for ElementType", ordinal)
+	}
+}
+
+func decodeElementTypeValue(value SoraValue) (ElementType, error) {
+	name, err := value.AsString()
+	if err != nil {
+		return 0, err
+	}
+	switch name {
+	case "Fire":
+		return ElementTypeFire, nil
+	case "Ice":
+		return ElementTypeIce, nil
+	case "Lightning":
+		return ElementTypeLightning, nil
+	case "Physical":
+		return ElementTypePhysical, nil
+	default:
+		return 0, fmt.Errorf("invalid enum value %s for ElementType", name)
+	}
 }

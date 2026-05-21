@@ -3,68 +3,89 @@
 package showcase
 
 type VipLevel struct {
-    Level int32
-    Cost ResourceCost
-    Perks []string
+	Level int32
+	Cost  ResourceCost
+	Perks []string
 }
 
 func decodeVipLevel(reader *SoraReader) (VipLevel, error) {
-    var value VipLevel
-    var err error
-    value.Level, err = reader.ReadInt32()
-    if err != nil {
-        return value, err
-    }
-    value.Cost, err = decodeResourceCost(reader)
-    if err != nil {
-        return value, err
-    }
-    value.Perks, err = ReadList(reader, func(reader *SoraReader) (string, error) { return reader.ReadString() })
-    if err != nil {
-        return value, err
-    }
-    return value, nil
+	var value VipLevel
+	var err error
+	value.Level, err = reader.ReadInt32()
+	if err != nil {
+		return value, err
+	}
+	value.Cost, err = decodeResourceCost(reader)
+	if err != nil {
+		return value, err
+	}
+	value.Perks, err = ReadList(reader, func(reader *SoraReader) (string, error) { return reader.ReadString() })
+	if err != nil {
+		return value, err
+	}
+	return value, nil
+}
+
+func decodeVipLevelValue(input SoraValue) (VipLevel, error) {
+	var value VipLevel
+	obj, err := input.AsObject()
+	if err != nil {
+		return value, err
+	}
+	value.Level, err = obj.Get("level").AsInt32()
+	if err != nil {
+		return value, err
+	}
+	value.Cost, err = decodeResourceCostValue(obj.Get("cost"))
+	if err != nil {
+		return value, err
+	}
+	value.Perks, err = DecodeSoraValueList(obj.Get("perks"), func(item SoraValue) (string, error) { return item.AsString() })
+	if err != nil {
+		return value, err
+	}
+	return value, nil
 }
 
 type VipLevelTable struct {
-    rows map[int32]VipLevel
+	rows map[int32]VipLevel
 }
 
 func buildVipLevelTable(rows []VipLevel) (*VipLevelTable, error) {
-    return &VipLevelTable{rows: DecodeMapTable(rows, func(row VipLevel) int32 { return row.Level })}, nil
+	return &VipLevelTable{rows: DecodeMapTable(rows, func(row VipLevel) int32 { return row.Level })}, nil
 }
 
-func decodeVipLevelTable(bundle *SoraBundle) (*VipLevelTable, error) {
-    rows, err := DecodeTable(bundle, "VipLevel", decodeVipLevel)
-    if err != nil {
-        return nil, err
-    }
-    return buildVipLevelTable(rows)
+func decodeVipLevelTable(source SoraTableSource) (*VipLevelTable, error) {
+	rows, err := DecodeSourceTable(source, "VipLevel", decodeVipLevel, decodeVipLevelValue)
+	if err != nil {
+		return nil, err
+	}
+	return buildVipLevelTable(rows)
 }
 
 func (table *VipLevelTable) Rows() map[int32]VipLevel {
-    return table.rows
+	return table.rows
 }
 func (table *VipLevelTable) Get(key int32) (VipLevel, bool) {
-    value, ok := table.rows[key]
-    return value, ok
+	value, ok := table.rows[key]
+	return value, ok
 }
 func (table *VipLevelTable) Name() string {
-    return "VipLevel"
+	return "VipLevel"
 }
 
 func (table *VipLevelTable) Mode() SoraTableMode {
-    return SoraTableModeMap
+	return SoraTableModeMap
 }
 
 func (table *VipLevelTable) Key() string {
-    return "level"
+	return "level"
 }
 
 func (table *VipLevelTable) RowType() string {
-    return "VipLevel"
+	return "VipLevel"
 }
 
 func (table *VipLevelTable) Len() int {
-    return len(table.rows)
+	return len(table.rows)
 }

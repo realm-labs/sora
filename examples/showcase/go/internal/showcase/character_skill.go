@@ -3,64 +3,85 @@
 package showcase
 
 type CharacterSkill struct {
-    CharacterId int32
-    SkillId int32
-    UnlockLevel int32
+	CharacterId int32
+	SkillId     int32
+	UnlockLevel int32
 }
 
 func decodeCharacterSkill(reader *SoraReader) (CharacterSkill, error) {
-    var value CharacterSkill
-    var err error
-    value.CharacterId, err = reader.ReadInt32()
-    if err != nil {
-        return value, err
-    }
-    value.SkillId, err = reader.ReadInt32()
-    if err != nil {
-        return value, err
-    }
-    value.UnlockLevel, err = reader.ReadInt32()
-    if err != nil {
-        return value, err
-    }
-    return value, nil
+	var value CharacterSkill
+	var err error
+	value.CharacterId, err = reader.ReadInt32()
+	if err != nil {
+		return value, err
+	}
+	value.SkillId, err = reader.ReadInt32()
+	if err != nil {
+		return value, err
+	}
+	value.UnlockLevel, err = reader.ReadInt32()
+	if err != nil {
+		return value, err
+	}
+	return value, nil
+}
+
+func decodeCharacterSkillValue(input SoraValue) (CharacterSkill, error) {
+	var value CharacterSkill
+	obj, err := input.AsObject()
+	if err != nil {
+		return value, err
+	}
+	value.CharacterId, err = obj.Get("character_id").AsInt32()
+	if err != nil {
+		return value, err
+	}
+	value.SkillId, err = obj.Get("skill_id").AsInt32()
+	if err != nil {
+		return value, err
+	}
+	value.UnlockLevel, err = obj.Get("unlock_level").AsInt32()
+	if err != nil {
+		return value, err
+	}
+	return value, nil
 }
 
 type CharacterSkillTable struct {
-    rows []CharacterSkill
+	rows []CharacterSkill
 }
 
 func buildCharacterSkillTable(rows []CharacterSkill) (*CharacterSkillTable, error) {
-    return &CharacterSkillTable{rows: rows}, nil
+	return &CharacterSkillTable{rows: rows}, nil
 }
 
-func decodeCharacterSkillTable(bundle *SoraBundle) (*CharacterSkillTable, error) {
-    rows, err := DecodeTable(bundle, "CharacterSkill", decodeCharacterSkill)
-    if err != nil {
-        return nil, err
-    }
-    return buildCharacterSkillTable(rows)
+func decodeCharacterSkillTable(source SoraTableSource) (*CharacterSkillTable, error) {
+	rows, err := DecodeSourceTable(source, "CharacterSkill", decodeCharacterSkill, decodeCharacterSkillValue)
+	if err != nil {
+		return nil, err
+	}
+	return buildCharacterSkillTable(rows)
 }
 
 func (table *CharacterSkillTable) Rows() []CharacterSkill {
-    return table.rows
+	return table.rows
 }
 func (table *CharacterSkillTable) Name() string {
-    return "CharacterSkill"
+	return "CharacterSkill"
 }
 
 func (table *CharacterSkillTable) Mode() SoraTableMode {
-    return SoraTableModeList
+	return SoraTableModeList
 }
 
 func (table *CharacterSkillTable) Key() string {
-    return ""
+	return ""
 }
 
 func (table *CharacterSkillTable) RowType() string {
-    return "CharacterSkill"
+	return "CharacterSkill"
 }
 
 func (table *CharacterSkillTable) Len() int {
-    return len(table.rows)
+	return len(table.rows)
 }

@@ -27,7 +27,6 @@ func decode{{ enum.name }}(reader *SoraReader) ({{ enum.name }}, error) {
     }
 }
 
-{%- if runtime_format != "sora" %}
 func decode{{ enum.name }}Value(value SoraValue) ({{ enum.name }}, error) {
     name, err := value.AsString()
     if err != nil {
@@ -42,4 +41,3 @@ func decode{{ enum.name }}Value(value SoraValue) ({{ enum.name }}, error) {
         return 0, fmt.Errorf("invalid enum value %s for {{ enum.name }}", name)
     }
 }
-{%- endif %}

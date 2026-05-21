@@ -3,73 +3,98 @@
 package showcase
 
 type Achievement struct {
-    Id int32
-    TitleKey string
-    TargetCount int64
-    Reward ResourceCost
+	Id          int32
+	TitleKey    string
+	TargetCount int64
+	Reward      ResourceCost
 }
 
 func decodeAchievement(reader *SoraReader) (Achievement, error) {
-    var value Achievement
-    var err error
-    value.Id, err = reader.ReadInt32()
-    if err != nil {
-        return value, err
-    }
-    value.TitleKey, err = reader.ReadString()
-    if err != nil {
-        return value, err
-    }
-    value.TargetCount, err = reader.ReadInt64()
-    if err != nil {
-        return value, err
-    }
-    value.Reward, err = decodeResourceCost(reader)
-    if err != nil {
-        return value, err
-    }
-    return value, nil
+	var value Achievement
+	var err error
+	value.Id, err = reader.ReadInt32()
+	if err != nil {
+		return value, err
+	}
+	value.TitleKey, err = reader.ReadString()
+	if err != nil {
+		return value, err
+	}
+	value.TargetCount, err = reader.ReadInt64()
+	if err != nil {
+		return value, err
+	}
+	value.Reward, err = decodeResourceCost(reader)
+	if err != nil {
+		return value, err
+	}
+	return value, nil
+}
+
+func decodeAchievementValue(input SoraValue) (Achievement, error) {
+	var value Achievement
+	obj, err := input.AsObject()
+	if err != nil {
+		return value, err
+	}
+	value.Id, err = obj.Get("id").AsInt32()
+	if err != nil {
+		return value, err
+	}
+	value.TitleKey, err = obj.Get("title_key").AsString()
+	if err != nil {
+		return value, err
+	}
+	value.TargetCount, err = obj.Get("target_count").AsInt64()
+	if err != nil {
+		return value, err
+	}
+	value.Reward, err = decodeResourceCostValue(obj.Get("reward"))
+	if err != nil {
+		return value, err
+	}
+	return value, nil
 }
 
 type AchievementTable struct {
-    rows map[int32]Achievement
+	rows map[int32]Achievement
 }
 
 func buildAchievementTable(rows []Achievement) (*AchievementTable, error) {
-    return &AchievementTable{rows: DecodeMapTable(rows, func(row Achievement) int32 { return row.Id })}, nil
+	return &AchievementTable{rows: DecodeMapTable(rows, func(row Achievement) int32 { return row.Id })}, nil
 }
 
-func decodeAchievementTable(bundle *SoraBundle) (*AchievementTable, error) {
-    rows, err := DecodeTable(bundle, "Achievement", decodeAchievement)
-    if err != nil {
-        return nil, err
-    }
-    return buildAchievementTable(rows)
+func decodeAchievementTable(source SoraTableSource) (*AchievementTable, error) {
+	rows, err := DecodeSourceTable(source, "Achievement", decodeAchievement, decodeAchievementValue)
+	if err != nil {
+		return nil, err
+	}
+	return buildAchievementTable(rows)
 }
 
 func (table *AchievementTable) Rows() map[int32]Achievement {
-    return table.rows
+	return table.rows
 }
 func (table *AchievementTable) Get(key int32) (Achievement, bool) {
-    value, ok := table.rows[key]
-    return value, ok
+	value, ok := table.rows[key]
+	return value, ok
 }
 func (table *AchievementTable) Name() string {
-    return "Achievement"
+	return "Achievement"
 }
 
 func (table *AchievementTable) Mode() SoraTableMode {
-    return SoraTableModeMap
+	return SoraTableModeMap
 }
 
 func (table *AchievementTable) Key() string {
-    return "id"
+	return "id"
 }
 
 func (table *AchievementTable) RowType() string {
-    return "Achievement"
+	return "Achievement"
 }
 
 func (table *AchievementTable) Len() int {
-    return len(table.rows)
+	return len(table.rows)
 }

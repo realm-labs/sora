@@ -3,73 +3,98 @@
 package showcase
 
 type Localization struct {
-    Key string
-    ZhCn string
-    EnUs string
-    Note *string
+	Key  string
+	ZhCn string
+	EnUs string
+	Note *string
 }
 
 func decodeLocalization(reader *SoraReader) (Localization, error) {
-    var value Localization
-    var err error
-    value.Key, err = reader.ReadString()
-    if err != nil {
-        return value, err
-    }
-    value.ZhCn, err = reader.ReadString()
-    if err != nil {
-        return value, err
-    }
-    value.EnUs, err = reader.ReadString()
-    if err != nil {
-        return value, err
-    }
-    value.Note, err = ReadOptional(reader, func(reader *SoraReader) (string, error) { return reader.ReadString() })
-    if err != nil {
-        return value, err
-    }
-    return value, nil
+	var value Localization
+	var err error
+	value.Key, err = reader.ReadString()
+	if err != nil {
+		return value, err
+	}
+	value.ZhCn, err = reader.ReadString()
+	if err != nil {
+		return value, err
+	}
+	value.EnUs, err = reader.ReadString()
+	if err != nil {
+		return value, err
+	}
+	value.Note, err = ReadOptional(reader, func(reader *SoraReader) (string, error) { return reader.ReadString() })
+	if err != nil {
+		return value, err
+	}
+	return value, nil
+}
+
+func decodeLocalizationValue(input SoraValue) (Localization, error) {
+	var value Localization
+	obj, err := input.AsObject()
+	if err != nil {
+		return value, err
+	}
+	value.Key, err = obj.Get("key").AsString()
+	if err != nil {
+		return value, err
+	}
+	value.ZhCn, err = obj.Get("zh_cn").AsString()
+	if err != nil {
+		return value, err
+	}
+	value.EnUs, err = obj.Get("en_us").AsString()
+	if err != nil {
+		return value, err
+	}
+	value.Note, err = DecodeOptionalSoraValue(obj.Get("note"), func(item SoraValue) (string, error) { return item.AsString() })
+	if err != nil {
+		return value, err
+	}
+	return value, nil
 }
 
 type LocalizationTable struct {
-    rows map[string]Localization
+	rows map[string]Localization
 }
 
 func buildLocalizationTable(rows []Localization) (*LocalizationTable, error) {
-    return &LocalizationTable{rows: DecodeMapTable(rows, func(row Localization) string { return row.Key })}, nil
+	return &LocalizationTable{rows: DecodeMapTable(rows, func(row Localization) string { return row.Key })}, nil
 }
 
-func decodeLocalizationTable(bundle *SoraBundle) (*LocalizationTable, error) {
-    rows, err := DecodeTable(bundle, "Localization", decodeLocalization)
-    if err != nil {
-        return nil, err
-    }
-    return buildLocalizationTable(rows)
+func decodeLocalizationTable(source SoraTableSource) (*LocalizationTable, error) {
+	rows, err := DecodeSourceTable(source, "Localization", decodeLocalization, decodeLocalizationValue)
+	if err != nil {
+		return nil, err
+	}
+	return buildLocalizationTable(rows)
 }
 
 func (table *LocalizationTable) Rows() map[string]Localization {
-    return table.rows
+	return table.rows
 }
 func (table *LocalizationTable) Get(key string) (Localization, bool) {
-    value, ok := table.rows[key]
-    return value, ok
+	value, ok := table.rows[key]
+	return value, ok
 }
 func (table *LocalizationTable) Name() string {
-    return "Localization"
+	return "Localization"
 }
 
 func (table *LocalizationTable) Mode() SoraTableMode {
-    return SoraTableModeMap
+	return SoraTableModeMap
 }
 
 func (table *LocalizationTable) Key() string {
-    return "key"
+	return "key"
 }
 
 func (table *LocalizationTable) RowType() string {
-    return "Localization"
+	return "Localization"
 }
 
 func (table *LocalizationTable) Len() int {
-    return len(table.rows)
+	return len(table.rows)
 }

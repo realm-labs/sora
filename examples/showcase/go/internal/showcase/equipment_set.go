@@ -3,73 +3,98 @@
 package showcase
 
 type EquipmentSet struct {
-    Id int32
-    Name string
-    ItemIds []int32
-    BonusEffect SkillEffect
+	Id          int32
+	Name        string
+	ItemIds     []int32
+	BonusEffect SkillEffect
 }
 
 func decodeEquipmentSet(reader *SoraReader) (EquipmentSet, error) {
-    var value EquipmentSet
-    var err error
-    value.Id, err = reader.ReadInt32()
-    if err != nil {
-        return value, err
-    }
-    value.Name, err = reader.ReadString()
-    if err != nil {
-        return value, err
-    }
-    value.ItemIds, err = ReadList(reader, func(reader *SoraReader) (int32, error) { return reader.ReadInt32() })
-    if err != nil {
-        return value, err
-    }
-    value.BonusEffect, err = decodeSkillEffect(reader)
-    if err != nil {
-        return value, err
-    }
-    return value, nil
+	var value EquipmentSet
+	var err error
+	value.Id, err = reader.ReadInt32()
+	if err != nil {
+		return value, err
+	}
+	value.Name, err = reader.ReadString()
+	if err != nil {
+		return value, err
+	}
+	value.ItemIds, err = ReadList(reader, func(reader *SoraReader) (int32, error) { return reader.ReadInt32() })
+	if err != nil {
+		return value, err
+	}
+	value.BonusEffect, err = decodeSkillEffect(reader)
+	if err != nil {
+		return value, err
+	}
+	return value, nil
+}
+
+func decodeEquipmentSetValue(input SoraValue) (EquipmentSet, error) {
+	var value EquipmentSet
+	obj, err := input.AsObject()
+	if err != nil {
+		return value, err
+	}
+	value.Id, err = obj.Get("id").AsInt32()
+	if err != nil {
+		return value, err
+	}
+	value.Name, err = obj.Get("name").AsString()
+	if err != nil {
+		return value, err
+	}
+	value.ItemIds, err = DecodeSoraValueList(obj.Get("item_ids"), func(item SoraValue) (int32, error) { return item.AsInt32() })
+	if err != nil {
+		return value, err
+	}
+	value.BonusEffect, err = decodeSkillEffectValue(obj.Get("bonus_effect"))
+	if err != nil {
+		return value, err
+	}
+	return value, nil
 }
 
 type EquipmentSetTable struct {
-    rows map[int32]EquipmentSet
+	rows map[int32]EquipmentSet
 }
 
 func buildEquipmentSetTable(rows []EquipmentSet) (*EquipmentSetTable, error) {
-    return &EquipmentSetTable{rows: DecodeMapTable(rows, func(row EquipmentSet) int32 { return row.Id })}, nil
+	return &EquipmentSetTable{rows: DecodeMapTable(rows, func(row EquipmentSet) int32 { return row.Id })}, nil
 }
 
-func decodeEquipmentSetTable(bundle *SoraBundle) (*EquipmentSetTable, error) {
-    rows, err := DecodeTable(bundle, "EquipmentSet", decodeEquipmentSet)
-    if err != nil {
-        return nil, err
-    }
-    return buildEquipmentSetTable(rows)
+func decodeEquipmentSetTable(source SoraTableSource) (*EquipmentSetTable, error) {
+	rows, err := DecodeSourceTable(source, "EquipmentSet", decodeEquipmentSet, decodeEquipmentSetValue)
+	if err != nil {
+		return nil, err
+	}
+	return buildEquipmentSetTable(rows)
 }
 
 func (table *EquipmentSetTable) Rows() map[int32]EquipmentSet {
-    return table.rows
+	return table.rows
 }
 func (table *EquipmentSetTable) Get(key int32) (EquipmentSet, bool) {
-    value, ok := table.rows[key]
-    return value, ok
+	value, ok := table.rows[key]
+	return value, ok
 }
 func (table *EquipmentSetTable) Name() string {
-    return "EquipmentSet"
+	return "EquipmentSet"
 }
 
 func (table *EquipmentSetTable) Mode() SoraTableMode {
-    return SoraTableModeMap
+	return SoraTableModeMap
 }
 
 func (table *EquipmentSetTable) Key() string {
-    return "id"
+	return "id"
 }
 
 func (table *EquipmentSetTable) RowType() string {
-    return "EquipmentSet"
+	return "EquipmentSet"
 }
 
 func (table *EquipmentSetTable) Len() int {
-    return len(table.rows)
+	return len(table.rows)
 }

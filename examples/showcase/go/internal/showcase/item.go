@@ -3,102 +3,135 @@
 package showcase
 
 type Item struct {
-    // Id: Item id
-    Id int32
-    // Name: Display name
-    Name string
-    // ItemType: Item category
-    ItemType ItemType
-    // MaxStack: Stack limit; blank cells use the default
-    MaxStack int32
-    // Price: Tuple: kind,id,count
-    Price ResourceCost
-    // Tags: JSON string array
-    Tags []string
+	// Id: Item id
+	Id int32
+	// Name: Display name
+	Name string
+	// ItemType: Item category
+	ItemType ItemType
+	// MaxStack: Stack limit; blank cells use the default
+	MaxStack int32
+	// Price: Tuple: kind,id,count
+	Price ResourceCost
+	// Tags: JSON string array
+	Tags []string
 }
 
 func decodeItem(reader *SoraReader) (Item, error) {
-    var value Item
-    var err error
-    value.Id, err = reader.ReadInt32()
-    if err != nil {
-        return value, err
-    }
-    value.Name, err = reader.ReadString()
-    if err != nil {
-        return value, err
-    }
-    value.ItemType, err = decodeItemType(reader)
-    if err != nil {
-        return value, err
-    }
-    value.MaxStack, err = reader.ReadInt32()
-    if err != nil {
-        return value, err
-    }
-    value.Price, err = decodeResourceCost(reader)
-    if err != nil {
-        return value, err
-    }
-    value.Tags, err = ReadList(reader, func(reader *SoraReader) (string, error) { return reader.ReadString() })
-    if err != nil {
-        return value, err
-    }
-    return value, nil
+	var value Item
+	var err error
+	value.Id, err = reader.ReadInt32()
+	if err != nil {
+		return value, err
+	}
+	value.Name, err = reader.ReadString()
+	if err != nil {
+		return value, err
+	}
+	value.ItemType, err = decodeItemType(reader)
+	if err != nil {
+		return value, err
+	}
+	value.MaxStack, err = reader.ReadInt32()
+	if err != nil {
+		return value, err
+	}
+	value.Price, err = decodeResourceCost(reader)
+	if err != nil {
+		return value, err
+	}
+	value.Tags, err = ReadList(reader, func(reader *SoraReader) (string, error) { return reader.ReadString() })
+	if err != nil {
+		return value, err
+	}
+	return value, nil
+}
+
+func decodeItemValue(input SoraValue) (Item, error) {
+	var value Item
+	obj, err := input.AsObject()
+	if err != nil {
+		return value, err
+	}
+	value.Id, err = obj.Get("id").AsInt32()
+	if err != nil {
+		return value, err
+	}
+	value.Name, err = obj.Get("name").AsString()
+	if err != nil {
+		return value, err
+	}
+	value.ItemType, err = decodeItemTypeValue(obj.Get("item_type"))
+	if err != nil {
+		return value, err
+	}
+	value.MaxStack, err = obj.Get("max_stack").AsInt32()
+	if err != nil {
+		return value, err
+	}
+	value.Price, err = decodeResourceCostValue(obj.Get("price"))
+	if err != nil {
+		return value, err
+	}
+	value.Tags, err = DecodeSoraValueList(obj.Get("tags"), func(item SoraValue) (string, error) { return item.AsString() })
+	if err != nil {
+		return value, err
+	}
+	return value, nil
 }
 
 type ItemTable struct {
-    rows map[int32]Item
-    byName map[string]Item
-    byItemType map[ItemType][]Item
+	rows       map[int32]Item
+	byName     map[string]Item
+	byItemType map[ItemType][]Item
 }
 
 func buildItemTable(rows []Item) (*ItemTable, error) {
-    return &ItemTable{
-        rows: DecodeMapTable(rows, func(row Item) int32 { return row.Id }),
-        byName: DecodeUniqueIndex(rows, func(row Item) string { return row.Name }),
-        byItemType: DecodeIndex(rows, func(row Item) ItemType { return row.ItemType }),
-    }, nil
+	return &ItemTable{
+		rows:       DecodeMapTable(rows, func(row Item) int32 { return row.Id }),
+		byName:     DecodeUniqueIndex(rows, func(row Item) string { return row.Name }),
+		byItemType: DecodeIndex(rows, func(row Item) ItemType { return row.ItemType }),
+	}, nil
 }
 
-func decodeItemTable(bundle *SoraBundle) (*ItemTable, error) {
-    rows, err := DecodeTable(bundle, "Item", decodeItem)
-    if err != nil {
-        return nil, err
-    }
-    return buildItemTable(rows)
+func decodeItemTable(source SoraTableSource) (*ItemTable, error) {
+	rows, err := DecodeSourceTable(source, "Item", decodeItem, decodeItemValue)
+	if err != nil {
+		return nil, err
+	}
+	return buildItemTable(rows)
 }
 
 func (table *ItemTable) Rows() map[int32]Item {
-    return table.rows
+	return table.rows
 }
 func (table *ItemTable) Get(key int32) (Item, bool) {
-    value, ok := table.rows[key]
-    return value, ok
+	value, ok := table.rows[key]
+	return value, ok
 }
 func (table *ItemTable) GetByName(name string) (Item, bool) {
-    value, ok := table.byName[name]
-    return value, ok
+	value, ok := table.byName[name]
+	return value, ok
 }
 func (table *ItemTable) FindByItemType(itemType ItemType) []Item {
-    return table.byItemType[itemType]
+	return table.byItemType[itemType]
 }
 func (table *ItemTable) Name() string {
-    return "Item"
+	return "Item"
 }
 
 func (table *ItemTable) Mode() SoraTableMode {
-    return SoraTableModeMap
+	return SoraTableModeMap
 }
 
 func (table *ItemTable) Key() string {
-    return "id"
+	return "id"
 }
 
 func (table *ItemTable) RowType() string {
-    return "Item"
+	return "Item"
 }
 
 func (table *ItemTable) Len() int {
-    return len(table.rows)
+	return len(table.rows)
 }

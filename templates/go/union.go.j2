@@ -43,7 +43,6 @@ func decode{{ union.pascal_name }}(reader *SoraReader) ({{ union.pascal_name }},
     }
 }
 
-{%- if runtime_format != "sora" %}
 func decode{{ union.pascal_name }}Value(input SoraValue) ({{ union.pascal_name }}, error) {
     obj, err := input.AsObject()
     if err != nil {
@@ -69,4 +68,3 @@ func decode{{ union.pascal_name }}Value(input SoraValue) ({{ union.pascal_name }
         return nil, fmt.Errorf("invalid union tag %s for {{ union.pascal_name }}", tag)
     }
 }
-{%- endif %}

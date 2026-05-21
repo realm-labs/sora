@@ -3,78 +3,107 @@
 package showcase
 
 type Stage struct {
-    Id int32
-    Name string
-    MonsterIds []int32
-    RecommendedPower int32
-    FirstClearRewards []Reward
+	Id                int32
+	Name              string
+	MonsterIds        []int32
+	RecommendedPower  int32
+	FirstClearRewards []Reward
 }
 
 func decodeStage(reader *SoraReader) (Stage, error) {
-    var value Stage
-    var err error
-    value.Id, err = reader.ReadInt32()
-    if err != nil {
-        return value, err
-    }
-    value.Name, err = reader.ReadString()
-    if err != nil {
-        return value, err
-    }
-    value.MonsterIds, err = ReadList(reader, func(reader *SoraReader) (int32, error) { return reader.ReadInt32() })
-    if err != nil {
-        return value, err
-    }
-    value.RecommendedPower, err = reader.ReadInt32()
-    if err != nil {
-        return value, err
-    }
-    value.FirstClearRewards, err = ReadList(reader, func(reader *SoraReader) (Reward, error) { return decodeReward(reader) })
-    if err != nil {
-        return value, err
-    }
-    return value, nil
+	var value Stage
+	var err error
+	value.Id, err = reader.ReadInt32()
+	if err != nil {
+		return value, err
+	}
+	value.Name, err = reader.ReadString()
+	if err != nil {
+		return value, err
+	}
+	value.MonsterIds, err = ReadList(reader, func(reader *SoraReader) (int32, error) { return reader.ReadInt32() })
+	if err != nil {
+		return value, err
+	}
+	value.RecommendedPower, err = reader.ReadInt32()
+	if err != nil {
+		return value, err
+	}
+	value.FirstClearRewards, err = ReadList(reader, func(reader *SoraReader) (Reward, error) { return decodeReward(reader) })
+	if err != nil {
+		return value, err
+	}
+	return value, nil
+}
+
+func decodeStageValue(input SoraValue) (Stage, error) {
+	var value Stage
+	obj, err := input.AsObject()
+	if err != nil {
+		return value, err
+	}
+	value.Id, err = obj.Get("id").AsInt32()
+	if err != nil {
+		return value, err
+	}
+	value.Name, err = obj.Get("name").AsString()
+	if err != nil {
+		return value, err
+	}
+	value.MonsterIds, err = DecodeSoraValueList(obj.Get("monster_ids"), func(item SoraValue) (int32, error) { return item.AsInt32() })
+	if err != nil {
+		return value, err
+	}
+	value.RecommendedPower, err = obj.Get("recommended_power").AsInt32()
+	if err != nil {
+		return value, err
+	}
+	value.FirstClearRewards, err = DecodeSoraValueList(obj.Get("first_clear_rewards"), func(item SoraValue) (Reward, error) { return decodeRewardValue(item) })
+	if err != nil {
+		return value, err
+	}
+	return value, nil
 }
 
 type StageTable struct {
-    rows map[int32]Stage
+	rows map[int32]Stage
 }
 
 func buildStageTable(rows []Stage) (*StageTable, error) {
-    return &StageTable{rows: DecodeMapTable(rows, func(row Stage) int32 { return row.Id })}, nil
+	return &StageTable{rows: DecodeMapTable(rows, func(row Stage) int32 { return row.Id })}, nil
 }
 
-func decodeStageTable(bundle *SoraBundle) (*StageTable, error) {
-    rows, err := DecodeTable(bundle, "Stage", decodeStage)
-    if err != nil {
-        return nil, err
-    }
-    return buildStageTable(rows)
+func decodeStageTable(source SoraTableSource) (*StageTable, error) {
+	rows, err := DecodeSourceTable(source, "Stage", decodeStage, decodeStageValue)
+	if err != nil {
+		return nil, err
+	}
+	return buildStageTable(rows)
 }
 
 func (table *StageTable) Rows() map[int32]Stage {
-    return table.rows
+	return table.rows
 }
 func (table *StageTable) Get(key int32) (Stage, bool) {
-    value, ok := table.rows[key]
-    return value, ok
+	value, ok := table.rows[key]
+	return value, ok
 }
 func (table *StageTable) Name() string {
-    return "Stage"
+	return "Stage"
 }
 
 func (table *StageTable) Mode() SoraTableMode {
-    return SoraTableModeMap
+	return SoraTableModeMap
 }
 
 func (table *StageTable) Key() string {
-    return "id"
+	return "id"
 }
 
 func (table *StageTable) RowType() string {
-    return "Stage"
+	return "Stage"
 }
 
 func (table *StageTable) Len() int {
-    return len(table.rows)
+	return len(table.rows)
 }

@@ -673,7 +673,9 @@ mod tests {
 
             assert!(runtime.contains("type SoraValueBundle struct"));
             assert!(runtime.contains(parse_function));
-            assert!(config.contains(&format!("{parse_function}(bytes)")));
+            assert!(!config.contains(&format!("{parse_function}(bytes)")));
+            assert!(runtime.contains("type SoraTableSource interface"));
+            assert!(config.contains("func NewSoraConfigFromSource(source SoraTableSource)"));
             assert!(item.contains("func decodeItemValue(input SoraValue) (Item, error)"));
             assert!(item.contains("obj.Get(\"id\").AsInt32()"));
             assert!(item.contains("decodeItemTypeValue(obj.Get(\"item_type\"))"));
@@ -785,6 +787,7 @@ mod tests {
         );
         assert!(go_config.contains("type SoraConfig struct"));
         assert!(!go_config.contains("type ItemTable struct"));
+        assert!(go_config.contains("func NewSoraConfigFromSource(source SoraTableSource)"));
         assert!(go_config.contains("func (config *SoraConfig) Item() *ItemTable"));
 
         let _ = std::fs::remove_dir_all(base);

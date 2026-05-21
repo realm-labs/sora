@@ -3,89 +3,126 @@
 package showcase
 
 type Quest struct {
-    Id int32
-    QuestType QuestType
-    Title string
-    RequiredItem int32
-    UnlockSkills []int32
-    StartPos Vec3
-    // Rewards: Materialized from QuestReward child rows
-    Rewards []Reward
+	Id           int32
+	QuestType    QuestType
+	Title        string
+	RequiredItem int32
+	UnlockSkills []int32
+	StartPos     Vec3
+	// Rewards: Materialized from QuestReward child rows
+	Rewards []Reward
 }
 
 func decodeQuest(reader *SoraReader) (Quest, error) {
-    var value Quest
-    var err error
-    value.Id, err = reader.ReadInt32()
-    if err != nil {
-        return value, err
-    }
-    value.QuestType, err = decodeQuestType(reader)
-    if err != nil {
-        return value, err
-    }
-    value.Title, err = reader.ReadString()
-    if err != nil {
-        return value, err
-    }
-    value.RequiredItem, err = reader.ReadInt32()
-    if err != nil {
-        return value, err
-    }
-    value.UnlockSkills, err = ReadList(reader, func(reader *SoraReader) (int32, error) { return reader.ReadInt32() })
-    if err != nil {
-        return value, err
-    }
-    value.StartPos, err = decodeVec3(reader)
-    if err != nil {
-        return value, err
-    }
-    value.Rewards, err = ReadList(reader, func(reader *SoraReader) (Reward, error) { return decodeReward(reader) })
-    if err != nil {
-        return value, err
-    }
-    return value, nil
+	var value Quest
+	var err error
+	value.Id, err = reader.ReadInt32()
+	if err != nil {
+		return value, err
+	}
+	value.QuestType, err = decodeQuestType(reader)
+	if err != nil {
+		return value, err
+	}
+	value.Title, err = reader.ReadString()
+	if err != nil {
+		return value, err
+	}
+	value.RequiredItem, err = reader.ReadInt32()
+	if err != nil {
+		return value, err
+	}
+	value.UnlockSkills, err = ReadList(reader, func(reader *SoraReader) (int32, error) { return reader.ReadInt32() })
+	if err != nil {
+		return value, err
+	}
+	value.StartPos, err = decodeVec3(reader)
+	if err != nil {
+		return value, err
+	}
+	value.Rewards, err = ReadList(reader, func(reader *SoraReader) (Reward, error) { return decodeReward(reader) })
+	if err != nil {
+		return value, err
+	}
+	return value, nil
+}
+
+func decodeQuestValue(input SoraValue) (Quest, error) {
+	var value Quest
+	obj, err := input.AsObject()
+	if err != nil {
+		return value, err
+	}
+	value.Id, err = obj.Get("id").AsInt32()
+	if err != nil {
+		return value, err
+	}
+	value.QuestType, err = decodeQuestTypeValue(obj.Get("quest_type"))
+	if err != nil {
+		return value, err
+	}
+	value.Title, err = obj.Get("title").AsString()
+	if err != nil {
+		return value, err
+	}
+	value.RequiredItem, err = obj.Get("required_item").AsInt32()
+	if err != nil {
+		return value, err
+	}
+	value.UnlockSkills, err = DecodeSoraValueList(obj.Get("unlock_skills"), func(item SoraValue) (int32, error) { return item.AsInt32() })
+	if err != nil {
+		return value, err
+	}
+	value.StartPos, err = decodeVec3Value(obj.Get("start_pos"))
+	if err != nil {
+		return value, err
+	}
+	value.Rewards, err = DecodeSoraValueList(obj.Get("rewards"), func(item SoraValue) (Reward, error) { return decodeRewardValue(item) })
+	if err != nil {
+		return value, err
+	}
+	return value, nil
 }
 
 type QuestTable struct {
-    rows map[int32]Quest
+	rows map[int32]Quest
 }
 
 func buildQuestTable(rows []Quest) (*QuestTable, error) {
-    return &QuestTable{rows: DecodeMapTable(rows, func(row Quest) int32 { return row.Id })}, nil
+	return &QuestTable{rows: DecodeMapTable(rows, func(row Quest) int32 { return row.Id })}, nil
 }
 
-func decodeQuestTable(bundle *SoraBundle) (*QuestTable, error) {
-    rows, err := DecodeTable(bundle, "Quest", decodeQuest)
-    if err != nil {
-        return nil, err
-    }
-    return buildQuestTable(rows)
+func decodeQuestTable(source SoraTableSource) (*QuestTable, error) {
+	rows, err := DecodeSourceTable(source, "Quest", decodeQuest, decodeQuestValue)
+	if err != nil {
+		return nil, err
+	}
+	return buildQuestTable(rows)
 }
 
 func (table *QuestTable) Rows() map[int32]Quest {
-    return table.rows
+	return table.rows
 }
 func (table *QuestTable) Get(key int32) (Quest, bool) {
-    value, ok := table.rows[key]
-    return value, ok
+	value, ok := table.rows[key]
+	return value, ok
 }
 func (table *QuestTable) Name() string {
-    return "Quest"
+	return "Quest"
 }
 
 func (table *QuestTable) Mode() SoraTableMode {
-    return SoraTableModeMap
+	return SoraTableModeMap
 }
 
 func (table *QuestTable) Key() string {
-    return "id"
+	return "id"
 }
 
 func (table *QuestTable) RowType() string {
-    return "Quest"
+	return "Quest"
 }
 
 func (table *QuestTable) Len() int {
-    return len(table.rows)
+	return len(table.rows)
 }

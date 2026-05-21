@@ -7,15 +7,11 @@ import (
     "bytes"
 {%- endif %}
     "encoding/binary"
-{%- if runtime_format != "sora" %}
     "encoding/json"
-{%- endif %}
     "errors"
     "fmt"
     "math"
-{%- if runtime_format != "sora" %}
     "strconv"
-{%- endif %}
 {%- if runtime_format == "sora-protobuf" %}
     "google.golang.org/protobuf/proto"
     "google.golang.org/protobuf/reflect/protodesc"
@@ -46,6 +42,10 @@ type soraSection struct {
 type SoraBundle struct {
     bytes    []byte
     sections []soraSection
+}
+
+type SoraTableSource interface {
+    DecodeTable(name string, decodeBinary func(*SoraReader) (any, error), decodeValue func(SoraValue) (any, error)) ([]any, error)
 }
 
 func ParseSoraBundle(bytes []byte) (*SoraBundle, error) {
@@ -179,6 +179,34 @@ func DecodeTable[T any](bundle *SoraBundle, name string, decode func(*SoraReader
         }
     }
     return nil, fmt.Errorf("missing Sora table section `%s`", name)
+}
+
+func (bundle *SoraBundle) DecodeTable(name string, decodeBinary func(*SoraReader) (any, error), _ func(SoraValue) (any, error)) ([]any, error) {
+    return DecodeTable(bundle, name, decodeBinary)
+}
+
+func DecodeSourceTable[T any](source SoraTableSource, name string, decodeBinary func(*SoraReader) (T, error), decodeValue func(SoraValue) (T, error)) ([]T, error) {
+    rows, err := source.DecodeTable(
+        name,
+        func(reader *SoraReader) (any, error) {
+            return decodeBinary(reader)
+        },
+        func(value SoraValue) (any, error) {
+            return decodeValue(value)
+        },
+    )
+    if err != nil {
+        return nil, err
+    }
+    typed := make([]T, 0, len(rows))
+    for _, row := range rows {
+        value, ok := row.(T)
+        if !ok {
+            return nil, fmt.Errorf("table `%s` decoded unexpected row type %T", name, row)
+        }
+        typed = append(typed, value)
+    }
+    return typed, nil
 }
 
 type SoraReader struct {
@@ -390,8 +418,6 @@ func checkedInt64ToInt(value int64, message string) (int, error) {
     return int(value), nil
 }
 
-{%- if runtime_format != "sora" %}
-
 type SoraValue struct {
     value any
 }
@@ -416,6 +442,10 @@ func DecodeValueTable[T any](bundle *SoraValueBundle, name string, decode func(S
         rows = append(rows, row)
     }
     return rows, nil
+}
+
+func (bundle *SoraValueBundle) DecodeTable(name string, _ func(*SoraReader) (any, error), decodeValue func(SoraValue) (any, error)) ([]any, error) {
+    return DecodeValueTable(bundle, name, decodeValue)
 }
 
 func (object SoraObject) Get(name string) SoraValue {
@@ -620,8 +650,6 @@ func soraValueFromJson(value any) SoraValue {
         return SoraValue{value: typed}
     }
 }
-
-{%- endif %}
 
 {%- if runtime_format == "json" %}
 

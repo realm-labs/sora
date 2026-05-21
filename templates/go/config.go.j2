@@ -24,26 +24,10 @@ type SoraConfig struct {
     tables map[string]SoraTable
 }
 
-func NewSoraConfigFromBytes(bytes []byte) (*SoraConfig, error) {
-{%- if runtime_format == "sora" %}
-    bundle, err := ParseSoraBundle(bytes)
-{%- elif runtime_format == "json" %}
-    bundle, err := ParseJsonBundle(bytes)
-{%- elif runtime_format == "cbor" %}
-    bundle, err := ParseCborBundle(bytes)
-{%- elif runtime_format == "sora-protobuf" %}
-    bundle, err := ParseProtobufBundle(bytes)
-{%- endif %}
-    if err != nil {
-        return nil, err
-    }
+func NewSoraConfigFromSource(source SoraTableSource) (*SoraConfig, error) {
     tables := make(map[string]SoraTable, {{ model.tables | length }})
 {%- for table in model.tables %}
-{%- if runtime_format == "sora" %}
-    {{ table.camel_name }}Table, err := decode{{ table.pascal_name }}Table(bundle)
-{%- else %}
-    {{ table.camel_name }}Table, err := decode{{ table.pascal_name }}TableFromValues(bundle)
-{%- endif %}
+    {{ table.camel_name }}Table, err := decode{{ table.pascal_name }}Table(source)
     if err != nil {
         return nil, err
     }

@@ -3,78 +3,107 @@
 package showcase
 
 type MailTemplate struct {
-    Id int32
-    MailType MailType
-    TitleKey string
-    BodyKey string
-    Rewards []Reward
+	Id       int32
+	MailType MailType
+	TitleKey string
+	BodyKey  string
+	Rewards  []Reward
 }
 
 func decodeMailTemplate(reader *SoraReader) (MailTemplate, error) {
-    var value MailTemplate
-    var err error
-    value.Id, err = reader.ReadInt32()
-    if err != nil {
-        return value, err
-    }
-    value.MailType, err = decodeMailType(reader)
-    if err != nil {
-        return value, err
-    }
-    value.TitleKey, err = reader.ReadString()
-    if err != nil {
-        return value, err
-    }
-    value.BodyKey, err = reader.ReadString()
-    if err != nil {
-        return value, err
-    }
-    value.Rewards, err = ReadList(reader, func(reader *SoraReader) (Reward, error) { return decodeReward(reader) })
-    if err != nil {
-        return value, err
-    }
-    return value, nil
+	var value MailTemplate
+	var err error
+	value.Id, err = reader.ReadInt32()
+	if err != nil {
+		return value, err
+	}
+	value.MailType, err = decodeMailType(reader)
+	if err != nil {
+		return value, err
+	}
+	value.TitleKey, err = reader.ReadString()
+	if err != nil {
+		return value, err
+	}
+	value.BodyKey, err = reader.ReadString()
+	if err != nil {
+		return value, err
+	}
+	value.Rewards, err = ReadList(reader, func(reader *SoraReader) (Reward, error) { return decodeReward(reader) })
+	if err != nil {
+		return value, err
+	}
+	return value, nil
+}
+
+func decodeMailTemplateValue(input SoraValue) (MailTemplate, error) {
+	var value MailTemplate
+	obj, err := input.AsObject()
+	if err != nil {
+		return value, err
+	}
+	value.Id, err = obj.Get("id").AsInt32()
+	if err != nil {
+		return value, err
+	}
+	value.MailType, err = decodeMailTypeValue(obj.Get("mail_type"))
+	if err != nil {
+		return value, err
+	}
+	value.TitleKey, err = obj.Get("title_key").AsString()
+	if err != nil {
+		return value, err
+	}
+	value.BodyKey, err = obj.Get("body_key").AsString()
+	if err != nil {
+		return value, err
+	}
+	value.Rewards, err = DecodeSoraValueList(obj.Get("rewards"), func(item SoraValue) (Reward, error) { return decodeRewardValue(item) })
+	if err != nil {
+		return value, err
+	}
+	return value, nil
 }
 
 type MailTemplateTable struct {
-    rows map[int32]MailTemplate
+	rows map[int32]MailTemplate
 }
 
 func buildMailTemplateTable(rows []MailTemplate) (*MailTemplateTable, error) {
-    return &MailTemplateTable{rows: DecodeMapTable(rows, func(row MailTemplate) int32 { return row.Id })}, nil
+	return &MailTemplateTable{rows: DecodeMapTable(rows, func(row MailTemplate) int32 { return row.Id })}, nil
 }
 
-func decodeMailTemplateTable(bundle *SoraBundle) (*MailTemplateTable, error) {
-    rows, err := DecodeTable(bundle, "MailTemplate", decodeMailTemplate)
-    if err != nil {
-        return nil, err
-    }
-    return buildMailTemplateTable(rows)
+func decodeMailTemplateTable(source SoraTableSource) (*MailTemplateTable, error) {
+	rows, err := DecodeSourceTable(source, "MailTemplate", decodeMailTemplate, decodeMailTemplateValue)
+	if err != nil {
+		return nil, err
+	}
+	return buildMailTemplateTable(rows)
 }
 
 func (table *MailTemplateTable) Rows() map[int32]MailTemplate {
-    return table.rows
+	return table.rows
 }
 func (table *MailTemplateTable) Get(key int32) (MailTemplate, bool) {
-    value, ok := table.rows[key]
-    return value, ok
+	value, ok := table.rows[key]
+	return value, ok
 }
 func (table *MailTemplateTable) Name() string {
-    return "MailTemplate"
+	return "MailTemplate"
 }
 
 func (table *MailTemplateTable) Mode() SoraTableMode {
-    return SoraTableModeMap
+	return SoraTableModeMap
 }
 
 func (table *MailTemplateTable) Key() string {
-    return "id"
+	return "id"
 }
 
 func (table *MailTemplateTable) RowType() string {
-    return "MailTemplate"
+	return "MailTemplate"
 }
 
 func (table *MailTemplateTable) Len() int {
-    return len(table.rows)
+	return len(table.rows)
 }

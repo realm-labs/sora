@@ -10,7 +10,9 @@ import (
 func main() {
 	bytes, err := os.ReadFile("../generated/config.sora")
 	must(err)
-	cfg, err := config.NewSoraConfigFromBytes(bytes)
+	bundle, err := config.ParseSoraBundle(bytes)
+	must(err)
+	cfg, err := config.NewSoraConfigFromSource(bundle)
 	must(err)
 
 	sword, ok := cfg.Item().Get(1001)
