@@ -19,6 +19,17 @@ typedef struct sora_showcase_gacha_item {
 
 sora_result sora_showcase_gacha_item_decode(sora_reader* reader, sora_showcase_gacha_item* out);
 void sora_showcase_gacha_item_free(sora_showcase_gacha_item* value);
+typedef struct sora_showcase_gacha_item_table sora_showcase_gacha_item_table;
+
+sora_result sora_showcase_gacha_item_table_load(
+    const sora_bundle* bundle,
+    sora_showcase_gacha_item_table** out
+);
+void sora_showcase_gacha_item_table_free(sora_showcase_gacha_item_table* table);
+const sora_showcase_gacha_item* sora_showcase_gacha_item_table_rows(
+    const sora_showcase_gacha_item_table* table,
+    size_t* out_len
+);
 
 #ifdef __cplusplus
 }

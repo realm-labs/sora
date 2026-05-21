@@ -62,238 +62,89 @@ sora_result sora_showcase_config_load_from_bytes(
     sora_showcase_config** out
 );
 void sora_showcase_config_free(sora_showcase_config* config);
-
-const sora_showcase_item* sora_showcase_config_item_rows(
-    const sora_showcase_config* config,
-    size_t* out_len
-);
-const sora_showcase_item* sora_showcase_config_get_item(
-    const sora_showcase_config* config,
-    int32_t key
-);
-const sora_showcase_item* sora_showcase_config_item_get_by_name(
-    const sora_showcase_config* config,
-    const sora_string* name
-);
-size_t sora_showcase_config_item_find_by_item_type(
-    const sora_showcase_config* config,
-    sora_showcase_item_type item_type,
-    const sora_showcase_item** out,
-    size_t capacity
-);
-
-const sora_showcase_skill* sora_showcase_config_skill_rows(
-    const sora_showcase_config* config,
-    size_t* out_len
-);
-const sora_showcase_skill* sora_showcase_config_get_skill(
-    const sora_showcase_config* config,
-    int32_t key
-);
-
-const sora_showcase_quest* sora_showcase_config_quest_rows(
-    const sora_showcase_config* config,
-    size_t* out_len
-);
-const sora_showcase_quest* sora_showcase_config_get_quest(
-    const sora_showcase_config* config,
-    int32_t key
-);
-
-const sora_showcase_quest_reward* sora_showcase_config_quest_reward_rows(
-    const sora_showcase_config* config,
-    size_t* out_len
-);
-
-const sora_showcase_game_settings* sora_showcase_config_game_settings_rows(
-    const sora_showcase_config* config,
-    size_t* out_len
-);
-const sora_showcase_game_settings* sora_showcase_config_game_settings_row(
+const sora_showcase_item_table* sora_showcase_config_item(
     const sora_showcase_config* config
 );
-
-const sora_showcase_localization* sora_showcase_config_localization_rows(
-    const sora_showcase_config* config,
-    size_t* out_len
+const sora_showcase_skill_table* sora_showcase_config_skill(
+    const sora_showcase_config* config
 );
-const sora_showcase_localization* sora_showcase_config_get_localization(
-    const sora_showcase_config* config,
-    const sora_string* key
+const sora_showcase_quest_table* sora_showcase_config_quest(
+    const sora_showcase_config* config
 );
-
-const sora_showcase_level_exp* sora_showcase_config_level_exp_rows(
-    const sora_showcase_config* config,
-    size_t* out_len
+const sora_showcase_quest_reward_table* sora_showcase_config_quest_reward(
+    const sora_showcase_config* config
 );
-const sora_showcase_level_exp* sora_showcase_config_get_level_exp(
-    const sora_showcase_config* config,
-    int32_t key
+const sora_showcase_game_settings_table* sora_showcase_config_game_settings(
+    const sora_showcase_config* config
 );
-
-const sora_showcase_character* sora_showcase_config_character_rows(
-    const sora_showcase_config* config,
-    size_t* out_len
+const sora_showcase_localization_table* sora_showcase_config_localization(
+    const sora_showcase_config* config
 );
-const sora_showcase_character* sora_showcase_config_get_character(
-    const sora_showcase_config* config,
-    int32_t key
+const sora_showcase_level_exp_table* sora_showcase_config_level_exp(
+    const sora_showcase_config* config
 );
-
-const sora_showcase_character_skill* sora_showcase_config_character_skill_rows(
-    const sora_showcase_config* config,
-    size_t* out_len
+const sora_showcase_character_table* sora_showcase_config_character(
+    const sora_showcase_config* config
 );
-
-const sora_showcase_buff* sora_showcase_config_buff_rows(
-    const sora_showcase_config* config,
-    size_t* out_len
+const sora_showcase_character_skill_table* sora_showcase_config_character_skill(
+    const sora_showcase_config* config
 );
-const sora_showcase_buff* sora_showcase_config_get_buff(
-    const sora_showcase_config* config,
-    int32_t key
+const sora_showcase_buff_table* sora_showcase_config_buff(
+    const sora_showcase_config* config
 );
-
-const sora_showcase_drop_group* sora_showcase_config_drop_group_rows(
-    const sora_showcase_config* config,
-    size_t* out_len
+const sora_showcase_drop_group_table* sora_showcase_config_drop_group(
+    const sora_showcase_config* config
 );
-const sora_showcase_drop_group* sora_showcase_config_get_drop_group(
-    const sora_showcase_config* config,
-    int32_t key
+const sora_showcase_drop_entry_table* sora_showcase_config_drop_entry(
+    const sora_showcase_config* config
 );
-
-const sora_showcase_drop_entry* sora_showcase_config_drop_entry_rows(
-    const sora_showcase_config* config,
-    size_t* out_len
+const sora_showcase_monster_table* sora_showcase_config_monster(
+    const sora_showcase_config* config
 );
-
-const sora_showcase_monster* sora_showcase_config_monster_rows(
-    const sora_showcase_config* config,
-    size_t* out_len
+const sora_showcase_stage_table* sora_showcase_config_stage(
+    const sora_showcase_config* config
 );
-const sora_showcase_monster* sora_showcase_config_get_monster(
-    const sora_showcase_config* config,
-    int32_t key
+const sora_showcase_stage_reward_table* sora_showcase_config_stage_reward(
+    const sora_showcase_config* config
 );
-
-const sora_showcase_stage* sora_showcase_config_stage_rows(
-    const sora_showcase_config* config,
-    size_t* out_len
+const sora_showcase_dungeon_table* sora_showcase_config_dungeon(
+    const sora_showcase_config* config
 );
-const sora_showcase_stage* sora_showcase_config_get_stage(
-    const sora_showcase_config* config,
-    int32_t key
+const sora_showcase_shop_table* sora_showcase_config_shop(
+    const sora_showcase_config* config
 );
-
-const sora_showcase_stage_reward* sora_showcase_config_stage_reward_rows(
-    const sora_showcase_config* config,
-    size_t* out_len
+const sora_showcase_shop_item_table* sora_showcase_config_shop_item(
+    const sora_showcase_config* config
 );
-
-const sora_showcase_dungeon* sora_showcase_config_dungeon_rows(
-    const sora_showcase_config* config,
-    size_t* out_len
+const sora_showcase_recipe_table* sora_showcase_config_recipe(
+    const sora_showcase_config* config
 );
-const sora_showcase_dungeon* sora_showcase_config_get_dungeon(
-    const sora_showcase_config* config,
-    int32_t key
+const sora_showcase_gacha_pool_table* sora_showcase_config_gacha_pool(
+    const sora_showcase_config* config
 );
-
-const sora_showcase_shop* sora_showcase_config_shop_rows(
-    const sora_showcase_config* config,
-    size_t* out_len
+const sora_showcase_gacha_item_table* sora_showcase_config_gacha_item(
+    const sora_showcase_config* config
 );
-const sora_showcase_shop* sora_showcase_config_get_shop(
-    const sora_showcase_config* config,
-    int32_t key
+const sora_showcase_equipment_set_table* sora_showcase_config_equipment_set(
+    const sora_showcase_config* config
 );
-
-const sora_showcase_shop_item* sora_showcase_config_shop_item_rows(
-    const sora_showcase_config* config,
-    size_t* out_len
+const sora_showcase_achievement_table* sora_showcase_config_achievement(
+    const sora_showcase_config* config
 );
-
-const sora_showcase_recipe* sora_showcase_config_recipe_rows(
-    const sora_showcase_config* config,
-    size_t* out_len
+const sora_showcase_vip_level_table* sora_showcase_config_vip_level(
+    const sora_showcase_config* config
 );
-const sora_showcase_recipe* sora_showcase_config_get_recipe(
-    const sora_showcase_config* config,
-    int32_t key
+const sora_showcase_mail_template_table* sora_showcase_config_mail_template(
+    const sora_showcase_config* config
 );
-
-const sora_showcase_gacha_pool* sora_showcase_config_gacha_pool_rows(
-    const sora_showcase_config* config,
-    size_t* out_len
+const sora_showcase_mail_reward_table* sora_showcase_config_mail_reward(
+    const sora_showcase_config* config
 );
-const sora_showcase_gacha_pool* sora_showcase_config_get_gacha_pool(
-    const sora_showcase_config* config,
-    int32_t key
+const sora_showcase_dialogue_table* sora_showcase_config_dialogue(
+    const sora_showcase_config* config
 );
-
-const sora_showcase_gacha_item* sora_showcase_config_gacha_item_rows(
-    const sora_showcase_config* config,
-    size_t* out_len
-);
-
-const sora_showcase_equipment_set* sora_showcase_config_equipment_set_rows(
-    const sora_showcase_config* config,
-    size_t* out_len
-);
-const sora_showcase_equipment_set* sora_showcase_config_get_equipment_set(
-    const sora_showcase_config* config,
-    int32_t key
-);
-
-const sora_showcase_achievement* sora_showcase_config_achievement_rows(
-    const sora_showcase_config* config,
-    size_t* out_len
-);
-const sora_showcase_achievement* sora_showcase_config_get_achievement(
-    const sora_showcase_config* config,
-    int32_t key
-);
-
-const sora_showcase_vip_level* sora_showcase_config_vip_level_rows(
-    const sora_showcase_config* config,
-    size_t* out_len
-);
-const sora_showcase_vip_level* sora_showcase_config_get_vip_level(
-    const sora_showcase_config* config,
-    int32_t key
-);
-
-const sora_showcase_mail_template* sora_showcase_config_mail_template_rows(
-    const sora_showcase_config* config,
-    size_t* out_len
-);
-const sora_showcase_mail_template* sora_showcase_config_get_mail_template(
-    const sora_showcase_config* config,
-    int32_t key
-);
-
-const sora_showcase_mail_reward* sora_showcase_config_mail_reward_rows(
-    const sora_showcase_config* config,
-    size_t* out_len
-);
-
-const sora_showcase_dialogue* sora_showcase_config_dialogue_rows(
-    const sora_showcase_config* config,
-    size_t* out_len
-);
-const sora_showcase_dialogue* sora_showcase_config_get_dialogue(
-    const sora_showcase_config* config,
-    int32_t key
-);
-
-const sora_showcase_event_rule* sora_showcase_config_event_rule_rows(
-    const sora_showcase_config* config,
-    size_t* out_len
-);
-const sora_showcase_event_rule* sora_showcase_config_get_event_rule(
-    const sora_showcase_config* config,
-    int32_t key
+const sora_showcase_event_rule_table* sora_showcase_config_event_rule(
+    const sora_showcase_config* config
 );
 
 #ifdef __cplusplus

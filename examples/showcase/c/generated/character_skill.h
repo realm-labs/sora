@@ -17,6 +17,17 @@ typedef struct sora_showcase_character_skill {
 
 sora_result sora_showcase_character_skill_decode(sora_reader* reader, sora_showcase_character_skill* out);
 void sora_showcase_character_skill_free(sora_showcase_character_skill* value);
+typedef struct sora_showcase_character_skill_table sora_showcase_character_skill_table;
+
+sora_result sora_showcase_character_skill_table_load(
+    const sora_bundle* bundle,
+    sora_showcase_character_skill_table** out
+);
+void sora_showcase_character_skill_table_free(sora_showcase_character_skill_table* table);
+const sora_showcase_character_skill* sora_showcase_character_skill_table_rows(
+    const sora_showcase_character_skill_table* table,
+    size_t* out_len
+);
 
 #ifdef __cplusplus
 }

@@ -2,6 +2,10 @@
 
 #include "{{ record.snake_name }}.h"
 
+{%- if record.table %}
+#include <stdlib.h>
+{%- endif %}
+
 sora_result {{ record.decode_fn }}(sora_reader* reader, {{ record.type_name }}* out) {
     *out = ({{ record.type_name }}){0};
 {%- for field in record.fields %}
@@ -27,3 +31,132 @@ void {{ record.free_fn }}({{ record.type_name }}* value) {
 {%- endfor %}
     *value = ({{ record.type_name }}){0};
 }
+
+{%- if record.table %}
+{%- set table = record.table %}
+
+struct {{ table.table_type }} {
+    {{ table.row_type }}* rows;
+    size_t len;
+};
+
+static void {{ table.table_type }}_free_rows({{ table.row_type }}* rows, size_t len) {
+    if (rows == NULL) {
+        return;
+    }
+    for (size_t index = 0; index < len; ++index) {
+        {{ record.free_fn }}(&rows[index]);
+    }
+    free(rows);
+}
+
+sora_result {{ table.table_load_fn }}(
+    const sora_bundle* bundle,
+    {{ table.table_type }}** out
+) {
+    {{ table.table_type }}* table = ({{ table.table_type }}*)calloc(1, sizeof({{ table.table_type }}));
+    if (table == NULL) {
+        return sora_error(SORA_ERROR_OUT_OF_MEMORY, "failed to allocate table {{ table.name }}");
+    }
+    sora_result result = sora_bundle_decode_table(
+        bundle,
+        "{{ table.name }}",
+        sizeof({{ table.row_type }}),
+        (sora_decode_row_fn){{ record.decode_fn }},
+        (sora_free_row_fn){{ record.free_fn }},
+        (void**)&table->rows,
+        &table->len
+    );
+    if (result.code != SORA_OK) {
+        {{ table.table_free_fn }}(table);
+        return result;
+    }
+{%- if table.mode == "singleton" %}
+    if (table->len != 1) {
+        {{ table.table_free_fn }}(table);
+        return sora_error(SORA_ERROR_DECODE, "singleton table {{ table.name }} must contain exactly one row");
+    }
+{%- endif %}
+    *out = table;
+    return sora_ok();
+}
+
+void {{ table.table_free_fn }}({{ table.table_type }}* table) {
+    if (table == NULL) {
+        return;
+    }
+    {{ table.table_type }}_free_rows(table->rows, table->len);
+    free(table);
+}
+
+const {{ table.row_type }}* {{ table.table_type }}_rows(
+    const {{ table.table_type }}* table,
+    size_t* out_len
+) {
+    if (out_len != NULL) {
+        *out_len = table->len;
+    }
+    return table->rows;
+}
+{%- if table.mode == "map" and table.key_field_name %}
+
+const {{ table.row_type }}* {{ table.table_type }}_get(
+    const {{ table.table_type }}* table,
+    {{ table.key_param_decl }}
+) {
+    for (size_t index = 0; index < table->len; ++index) {
+        const {{ table.row_type }}* row = &table->rows[index];
+        if ({{ table.key_match_expr }}) {
+            return row;
+        }
+    }
+    return NULL;
+}
+{%- elif table.mode == "singleton" %}
+
+const {{ table.row_type }}* {{ table.table_type }}_row(
+    const {{ table.table_type }}* table
+) {
+    if (table->len == 0) {
+        return NULL;
+    }
+    return &table->rows[0];
+}
+{%- endif %}
+{%- for index in table.unique_indexes %}
+
+const {{ table.row_type }}* {{ table.table_type }}_{{ index.method_name }}(
+    const {{ table.table_type }}* table,
+    {{ index.param_decl }}
+) {
+    for (size_t index = 0; index < table->len; ++index) {
+        const {{ table.row_type }}* row = &table->rows[index];
+        if ({{ index.match_expr }}) {
+            return row;
+        }
+    }
+    return NULL;
+}
+{%- endfor %}
+{%- for index in table.non_unique_indexes %}
+
+size_t {{ table.table_type }}_find_{{ index.name }}(
+    const {{ table.table_type }}* table,
+    {{ index.param_decl }},
+    const {{ table.row_type }}** out,
+    size_t capacity
+) {
+    size_t count = 0;
+    for (size_t index = 0; index < table->len; ++index) {
+        const {{ table.row_type }}* row = &table->rows[index];
+        if ({{ index.match_expr }}) {
+            if (out != NULL && count < capacity) {
+                out[count] = row;
+            }
+            ++count;
+        }
+    }
+    return count;
+}
+{%- endfor %}
+{%- endif %}

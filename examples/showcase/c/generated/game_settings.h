@@ -20,6 +20,20 @@ typedef struct sora_showcase_game_settings {
 
 sora_result sora_showcase_game_settings_decode(sora_reader* reader, sora_showcase_game_settings* out);
 void sora_showcase_game_settings_free(sora_showcase_game_settings* value);
+typedef struct sora_showcase_game_settings_table sora_showcase_game_settings_table;
+
+sora_result sora_showcase_game_settings_table_load(
+    const sora_bundle* bundle,
+    sora_showcase_game_settings_table** out
+);
+void sora_showcase_game_settings_table_free(sora_showcase_game_settings_table* table);
+const sora_showcase_game_settings* sora_showcase_game_settings_table_rows(
+    const sora_showcase_game_settings_table* table,
+    size_t* out_len
+);
+const sora_showcase_game_settings* sora_showcase_game_settings_table_row(
+    const sora_showcase_game_settings_table* table
+);
 
 #ifdef __cplusplus
 }

@@ -18,6 +18,21 @@ typedef struct sora_showcase_vip_level {
 
 sora_result sora_showcase_vip_level_decode(sora_reader* reader, sora_showcase_vip_level* out);
 void sora_showcase_vip_level_free(sora_showcase_vip_level* value);
+typedef struct sora_showcase_vip_level_table sora_showcase_vip_level_table;
+
+sora_result sora_showcase_vip_level_table_load(
+    const sora_bundle* bundle,
+    sora_showcase_vip_level_table** out
+);
+void sora_showcase_vip_level_table_free(sora_showcase_vip_level_table* table);
+const sora_showcase_vip_level* sora_showcase_vip_level_table_rows(
+    const sora_showcase_vip_level_table* table,
+    size_t* out_len
+);
+const sora_showcase_vip_level* sora_showcase_vip_level_table_get(
+    const sora_showcase_vip_level_table* table,
+    int32_t key
+);
 
 #ifdef __cplusplus
 }

@@ -16,6 +16,21 @@ typedef struct sora_showcase_drop_group {
 
 sora_result sora_showcase_drop_group_decode(sora_reader* reader, sora_showcase_drop_group* out);
 void sora_showcase_drop_group_free(sora_showcase_drop_group* value);
+typedef struct sora_showcase_drop_group_table sora_showcase_drop_group_table;
+
+sora_result sora_showcase_drop_group_table_load(
+    const sora_bundle* bundle,
+    sora_showcase_drop_group_table** out
+);
+void sora_showcase_drop_group_table_free(sora_showcase_drop_group_table* table);
+const sora_showcase_drop_group* sora_showcase_drop_group_table_rows(
+    const sora_showcase_drop_group_table* table,
+    size_t* out_len
+);
+const sora_showcase_drop_group* sora_showcase_drop_group_table_get(
+    const sora_showcase_drop_group_table* table,
+    int32_t key
+);
 
 #ifdef __cplusplus
 }

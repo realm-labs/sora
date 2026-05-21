@@ -166,6 +166,7 @@ struct CRecord {
     free_fn: String,
     imports: Vec<CImport>,
     fields: Vec<CField>,
+    table: Option<CTable>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -207,6 +208,9 @@ struct CField {
 struct CTable {
     name: String,
     snake_name: String,
+    table_type: String,
+    table_load_fn: String,
+    table_free_fn: String,
     row_type: String,
     mode: String,
     rows_field: String,
@@ -246,46 +250,57 @@ impl CModel {
         options: &COptionsView,
         helpers: &mut CHelperRegistry,
     ) -> Self {
+        let enums = model
+            .enums
+            .into_iter()
+            .map(|item| CEnum {
+                type_name: c_named_type(options, &item.snake_name),
+                decode_fn: c_decode_fn(options, &item.snake_name),
+                name: item.pascal_name,
+                snake_name: item.snake_name.clone(),
+                values: item
+                    .values
+                    .into_iter()
+                    .enumerate()
+                    .map(|(ordinal, value)| CEnumValue {
+                        name: format!(
+                            "{}_{}_{}",
+                            options.prefix_upper,
+                            item.snake_name.to_shouty_snake_case(),
+                            value.to_shouty_snake_case()
+                        ),
+                        ordinal,
+                    })
+                    .collect(),
+            })
+            .collect();
+        let tables = model
+            .tables
+            .into_iter()
+            .map(|item| c_table(ir, item, options, helpers))
+            .collect::<Vec<_>>();
+        let records = model
+            .records
+            .into_iter()
+            .map(|item| {
+                let table = tables
+                    .iter()
+                    .find(|table| table.snake_name == item.snake_name)
+                    .cloned();
+                c_record(ir, item, options, helpers, table)
+            })
+            .collect();
+        let unions = model
+            .unions
+            .into_iter()
+            .map(|item| c_union(ir, item, options, helpers))
+            .collect();
+
         Self {
-            enums: model
-                .enums
-                .into_iter()
-                .map(|item| CEnum {
-                    type_name: c_named_type(options, &item.snake_name),
-                    decode_fn: c_decode_fn(options, &item.snake_name),
-                    name: item.pascal_name,
-                    snake_name: item.snake_name.clone(),
-                    values: item
-                        .values
-                        .into_iter()
-                        .enumerate()
-                        .map(|(ordinal, value)| CEnumValue {
-                            name: format!(
-                                "{}_{}_{}",
-                                options.prefix_upper,
-                                item.snake_name.to_shouty_snake_case(),
-                                value.to_shouty_snake_case()
-                            ),
-                            ordinal,
-                        })
-                        .collect(),
-                })
-                .collect(),
-            unions: model
-                .unions
-                .into_iter()
-                .map(|item| c_union(ir, item, options, helpers))
-                .collect(),
-            records: model
-                .records
-                .into_iter()
-                .map(|item| c_record(ir, item, options, helpers))
-                .collect(),
-            tables: model
-                .tables
-                .into_iter()
-                .map(|item| c_table(ir, item, options, helpers))
-                .collect(),
+            enums,
+            unions,
+            records,
+            tables,
             modules: model.modules,
         }
     }
@@ -296,6 +311,7 @@ fn c_record(
     record: BaseRecord,
     options: &COptionsView,
     helpers: &mut CHelperRegistry,
+    table: Option<CTable>,
 ) -> CRecord {
     CRecord {
         pascal_name: record.pascal_name,
@@ -309,6 +325,7 @@ fn c_record(
             .into_iter()
             .map(|field| c_field(ir, field, options, helpers))
             .collect(),
+        table,
     }
 }
 
@@ -424,6 +441,9 @@ fn c_table(
 
     CTable {
         name: table.name,
+        table_type: format!("{}_{}_table", options.prefix, table.snake_name),
+        table_load_fn: format!("{}_{}_table_load", options.prefix, table.snake_name),
+        table_free_fn: format!("{}_{}_table_free", options.prefix, table.snake_name),
         row_type: c_named_type(options, &table.snake_name),
         mode: table.mode_name,
         rows_field: format!("{}_rows", table.snake_name),
@@ -876,7 +896,11 @@ mod tests {
         assert!(action.contains("union {"));
         assert!(config.contains("typedef struct game_config_config game_config_config;"));
         assert!(config.contains("game_config_config_load_from_bytes"));
-        assert!(config.contains("game_config_config_get_item"));
+        assert!(item.contains("typedef struct game_config_item_table game_config_item_table;"));
+        assert!(item.contains("game_config_item_table_load"));
+        assert!(item.contains("game_config_item_table_get"));
+        assert!(config.contains("game_config_config_item"));
+        assert!(!config.contains("game_config_config_get_item"));
         assert!(types.contains("typedef struct game_config_string_array"));
 
         let _ = std::fs::remove_dir_all(base);

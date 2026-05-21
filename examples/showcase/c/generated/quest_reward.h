@@ -18,6 +18,17 @@ typedef struct sora_showcase_quest_reward {
 
 sora_result sora_showcase_quest_reward_decode(sora_reader* reader, sora_showcase_quest_reward* out);
 void sora_showcase_quest_reward_free(sora_showcase_quest_reward* value);
+typedef struct sora_showcase_quest_reward_table sora_showcase_quest_reward_table;
+
+sora_result sora_showcase_quest_reward_table_load(
+    const sora_bundle* bundle,
+    sora_showcase_quest_reward_table** out
+);
+void sora_showcase_quest_reward_table_free(sora_showcase_quest_reward_table* table);
+const sora_showcase_quest_reward* sora_showcase_quest_reward_table_rows(
+    const sora_showcase_quest_reward_table* table,
+    size_t* out_len
+);
 
 #ifdef __cplusplus
 }

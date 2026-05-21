@@ -19,6 +19,21 @@ typedef struct sora_showcase_equipment_set {
 
 sora_result sora_showcase_equipment_set_decode(sora_reader* reader, sora_showcase_equipment_set* out);
 void sora_showcase_equipment_set_free(sora_showcase_equipment_set* value);
+typedef struct sora_showcase_equipment_set_table sora_showcase_equipment_set_table;
+
+sora_result sora_showcase_equipment_set_table_load(
+    const sora_bundle* bundle,
+    sora_showcase_equipment_set_table** out
+);
+void sora_showcase_equipment_set_table_free(sora_showcase_equipment_set_table* table);
+const sora_showcase_equipment_set* sora_showcase_equipment_set_table_rows(
+    const sora_showcase_equipment_set_table* table,
+    size_t* out_len
+);
+const sora_showcase_equipment_set* sora_showcase_equipment_set_table_get(
+    const sora_showcase_equipment_set_table* table,
+    int32_t key
+);
 
 #ifdef __cplusplus
 }

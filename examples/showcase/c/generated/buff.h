@@ -19,6 +19,21 @@ typedef struct sora_showcase_buff {
 
 sora_result sora_showcase_buff_decode(sora_reader* reader, sora_showcase_buff* out);
 void sora_showcase_buff_free(sora_showcase_buff* value);
+typedef struct sora_showcase_buff_table sora_showcase_buff_table;
+
+sora_result sora_showcase_buff_table_load(
+    const sora_bundle* bundle,
+    sora_showcase_buff_table** out
+);
+void sora_showcase_buff_table_free(sora_showcase_buff_table* table);
+const sora_showcase_buff* sora_showcase_buff_table_rows(
+    const sora_showcase_buff_table* table,
+    size_t* out_len
+);
+const sora_showcase_buff* sora_showcase_buff_table_get(
+    const sora_showcase_buff_table* table,
+    int32_t key
+);
 
 #ifdef __cplusplus
 }

@@ -28,6 +28,31 @@ typedef struct sora_showcase_item {
 
 sora_result sora_showcase_item_decode(sora_reader* reader, sora_showcase_item* out);
 void sora_showcase_item_free(sora_showcase_item* value);
+typedef struct sora_showcase_item_table sora_showcase_item_table;
+
+sora_result sora_showcase_item_table_load(
+    const sora_bundle* bundle,
+    sora_showcase_item_table** out
+);
+void sora_showcase_item_table_free(sora_showcase_item_table* table);
+const sora_showcase_item* sora_showcase_item_table_rows(
+    const sora_showcase_item_table* table,
+    size_t* out_len
+);
+const sora_showcase_item* sora_showcase_item_table_get(
+    const sora_showcase_item_table* table,
+    int32_t key
+);
+const sora_showcase_item* sora_showcase_item_table_get_by_name(
+    const sora_showcase_item_table* table,
+    const sora_string* name
+);
+size_t sora_showcase_item_table_find_by_item_type(
+    const sora_showcase_item_table* table,
+    sora_showcase_item_type item_type,
+    const sora_showcase_item** out,
+    size_t capacity
+);
 
 #ifdef __cplusplus
 }

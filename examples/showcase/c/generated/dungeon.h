@@ -19,6 +19,21 @@ typedef struct sora_showcase_dungeon {
 
 sora_result sora_showcase_dungeon_decode(sora_reader* reader, sora_showcase_dungeon* out);
 void sora_showcase_dungeon_free(sora_showcase_dungeon* value);
+typedef struct sora_showcase_dungeon_table sora_showcase_dungeon_table;
+
+sora_result sora_showcase_dungeon_table_load(
+    const sora_bundle* bundle,
+    sora_showcase_dungeon_table** out
+);
+void sora_showcase_dungeon_table_free(sora_showcase_dungeon_table* table);
+const sora_showcase_dungeon* sora_showcase_dungeon_table_rows(
+    const sora_showcase_dungeon_table* table,
+    size_t* out_len
+);
+const sora_showcase_dungeon* sora_showcase_dungeon_table_get(
+    const sora_showcase_dungeon_table* table,
+    int32_t key
+);
 
 #ifdef __cplusplus
 }

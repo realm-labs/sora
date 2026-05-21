@@ -18,6 +18,21 @@ typedef struct sora_showcase_recipe {
 
 sora_result sora_showcase_recipe_decode(sora_reader* reader, sora_showcase_recipe* out);
 void sora_showcase_recipe_free(sora_showcase_recipe* value);
+typedef struct sora_showcase_recipe_table sora_showcase_recipe_table;
+
+sora_result sora_showcase_recipe_table_load(
+    const sora_bundle* bundle,
+    sora_showcase_recipe_table** out
+);
+void sora_showcase_recipe_table_free(sora_showcase_recipe_table* table);
+const sora_showcase_recipe* sora_showcase_recipe_table_rows(
+    const sora_showcase_recipe_table* table,
+    size_t* out_len
+);
+const sora_showcase_recipe* sora_showcase_recipe_table_get(
+    const sora_showcase_recipe_table* table,
+    int32_t key
+);
 
 #ifdef __cplusplus
 }

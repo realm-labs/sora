@@ -18,6 +18,21 @@ typedef struct sora_showcase_localization {
 
 sora_result sora_showcase_localization_decode(sora_reader* reader, sora_showcase_localization* out);
 void sora_showcase_localization_free(sora_showcase_localization* value);
+typedef struct sora_showcase_localization_table sora_showcase_localization_table;
+
+sora_result sora_showcase_localization_table_load(
+    const sora_bundle* bundle,
+    sora_showcase_localization_table** out
+);
+void sora_showcase_localization_table_free(sora_showcase_localization_table* table);
+const sora_showcase_localization* sora_showcase_localization_table_rows(
+    const sora_showcase_localization_table* table,
+    size_t* out_len
+);
+const sora_showcase_localization* sora_showcase_localization_table_get(
+    const sora_showcase_localization_table* table,
+    const sora_string* key
+);
 
 #ifdef __cplusplus
 }

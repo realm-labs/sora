@@ -22,6 +22,21 @@ typedef struct sora_showcase_monster {
 
 sora_result sora_showcase_monster_decode(sora_reader* reader, sora_showcase_monster* out);
 void sora_showcase_monster_free(sora_showcase_monster* value);
+typedef struct sora_showcase_monster_table sora_showcase_monster_table;
+
+sora_result sora_showcase_monster_table_load(
+    const sora_bundle* bundle,
+    sora_showcase_monster_table** out
+);
+void sora_showcase_monster_table_free(sora_showcase_monster_table* table);
+const sora_showcase_monster* sora_showcase_monster_table_rows(
+    const sora_showcase_monster_table* table,
+    size_t* out_len
+);
+const sora_showcase_monster* sora_showcase_monster_table_get(
+    const sora_showcase_monster_table* table,
+    int32_t key
+);
 
 #ifdef __cplusplus
 }

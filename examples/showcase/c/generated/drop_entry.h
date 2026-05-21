@@ -19,6 +19,17 @@ typedef struct sora_showcase_drop_entry {
 
 sora_result sora_showcase_drop_entry_decode(sora_reader* reader, sora_showcase_drop_entry* out);
 void sora_showcase_drop_entry_free(sora_showcase_drop_entry* value);
+typedef struct sora_showcase_drop_entry_table sora_showcase_drop_entry_table;
+
+sora_result sora_showcase_drop_entry_table_load(
+    const sora_bundle* bundle,
+    sora_showcase_drop_entry_table** out
+);
+void sora_showcase_drop_entry_table_free(sora_showcase_drop_entry_table* table);
+const sora_showcase_drop_entry* sora_showcase_drop_entry_table_rows(
+    const sora_showcase_drop_entry_table* table,
+    size_t* out_len
+);
 
 #ifdef __cplusplus
 }
