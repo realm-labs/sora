@@ -40,6 +40,7 @@ fn build_command_generates_configured_outputs() {
     assert!(base.join("generated/godot/item.gd").exists());
     assert!(base.join("generated/godot/sora_config.gd").exists());
     assert!(base.join("generated/proto/sora_config.proto").exists());
+    assert!(base.join("generated/config.sora").exists());
     assert!(base.join("generated/config.json").exists());
     assert!(base.join("generated/config.sora.pb").exists());
     assert!(base.join("generated/config.pb").exists());
@@ -77,6 +78,76 @@ fn build_command_can_filter_codegen_targets() {
     assert!(!rust_stale.exists());
     assert!(kotlin_stale.exists());
     assert!(!base.join("generated/kotlin/game_config/Item.kt").exists());
+
+    let _ = fs::remove_dir_all(base);
+}
+
+#[test]
+fn build_command_rejects_missing_runtime_export() {
+    let base = temp_dir();
+    let project = write_project(&base);
+    let content = fs::read_to_string(&project).unwrap().replace(
+        r#"
+[[build.exports]]
+format = "binary"
+out = "generated/config.sora"
+"#,
+        "",
+    );
+    fs::write(&project, content).unwrap();
+
+    let error = run(
+        BuildArgs {
+            project: project.clone(),
+            default_source_format: None,
+            data_root: None,
+            scope: None,
+            target: vec![BuildTarget::Rust],
+            clean: false,
+        },
+        &ExecutionContext::default(),
+    )
+    .unwrap_err();
+
+    assert!(
+        error
+            .to_string()
+            .contains("rust codegen uses runtime_format `sora` and requires a `binary` export")
+    );
+
+    let _ = fs::remove_dir_all(base);
+}
+
+#[test]
+fn build_command_rejects_unsupported_runtime_format() {
+    let base = temp_dir();
+    let project = write_project(&base);
+    let content = fs::read_to_string(&project).unwrap().replace(
+        r#"[codegen.dart]
+runtime_format = "json""#,
+        r#"[codegen.dart]
+runtime_format = "sora""#,
+    );
+    fs::write(&project, content).unwrap();
+
+    let error = run(
+        BuildArgs {
+            project: project.clone(),
+            default_source_format: None,
+            data_root: None,
+            scope: None,
+            target: vec![BuildTarget::Dart],
+            clean: false,
+        },
+        &ExecutionContext::default(),
+    )
+    .unwrap_err();
+
+    assert!(
+        error
+            .to_string()
+            .contains("dart codegen runtime_format `sora` is not supported")
+    );
 
     let _ = fs::remove_dir_all(base);
 }
@@ -153,6 +224,10 @@ out = "generated/godot"
 [[build.codegen]]
 target = "proto-schema"
 out = "generated/proto"
+
+[[build.exports]]
+format = "binary"
+out = "generated/config.sora"
 
 [[build.exports]]
 format = "json"

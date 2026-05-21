@@ -22,6 +22,19 @@ use support::{
     filter_ir_and_data_by_scope, load_ir, load_ir_with_scope, load_validated_data, write_json_file,
 };
 
+pub fn load_schema_ir(input: &impl SchemaInput) -> Result<sora_ir::model::ConfigIr> {
+    load_ir(input)
+}
+
+pub fn load_project_data_with_context(
+    input: &impl ProjectInput,
+    execution: &ExecutionContext,
+) -> Result<(sora_ir::model::ConfigIr, sora_data::model::ConfigData)> {
+    let ir = load_ir(input)?;
+    let data = load_validated_data(input, &ir, execution)?;
+    Ok((ir, data))
+}
+
 pub fn check_schema(input: &impl SchemaInput) -> Result<()> {
     let _ = load_ir(input)?;
     Ok(())
@@ -104,10 +117,19 @@ pub fn export_data_with_scope_and_context(
     scope: Option<&str>,
     execution: &ExecutionContext,
 ) -> Result<()> {
-    let ir = load_ir(input)?;
-    let data = load_validated_data(input, &ir, execution)?;
-    let (ir, data) = filter_ir_and_data_by_scope(&ir, &data, scope)?;
+    let (ir, data) = load_project_data_with_context(input, execution)?;
+    export_loaded_data_with_scope_and_context(&ir, &data, format, output, scope, execution)
+}
 
+pub fn export_loaded_data_with_scope_and_context(
+    ir: &sora_ir::model::ConfigIr,
+    data: &sora_data::model::ConfigData,
+    format: &str,
+    output: ExportOutput,
+    scope: Option<&str>,
+    execution: &ExecutionContext,
+) -> Result<()> {
+    let (ir, data) = filter_ir_and_data_by_scope(ir, data, scope)?;
     let registry = ExporterRegistry::with_builtin_exporters();
     let exporter = registry
         .get(format)

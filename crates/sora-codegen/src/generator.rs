@@ -30,7 +30,54 @@ pub(crate) fn ensure_sora_runtime_format(
     )))
 }
 
-pub(crate) fn runtime_format_name(runtime_format: RuntimeFormatIr) -> &'static str {
+pub fn runtime_format_for_target(ir: &ConfigIr, target: CodegenTarget) -> Option<RuntimeFormatIr> {
+    Some(match target {
+        CodegenTarget::Rust => ir.codegen.rust.runtime_format,
+        CodegenTarget::Kotlin => ir.codegen.kotlin.runtime_format,
+        CodegenTarget::CSharp => ir.codegen.csharp.runtime_format,
+        CodegenTarget::Java => ir.codegen.java.runtime_format,
+        CodegenTarget::Scala => ir.codegen.scala.runtime_format,
+        CodegenTarget::Go => ir.codegen.go.runtime_format,
+        CodegenTarget::Dart => ir.codegen.dart.runtime_format,
+        CodegenTarget::Godot => ir.codegen.godot.runtime_format,
+        CodegenTarget::C => ir.codegen.c.runtime_format,
+        CodegenTarget::Cpp => ir.codegen.cpp.runtime_format,
+        CodegenTarget::TypeScript => ir.codegen.typescript.runtime_format,
+        CodegenTarget::JavaScript => ir.codegen.javascript.runtime_format,
+        CodegenTarget::Erlang => ir.codegen.erlang.runtime_format,
+        CodegenTarget::Lua => ir.codegen.lua.runtime_format,
+        CodegenTarget::Python => ir.codegen.python.runtime_format,
+        CodegenTarget::ProtoSchema => return None,
+    })
+}
+
+pub fn supported_runtime_formats(target: CodegenTarget) -> &'static [RuntimeFormatIr] {
+    use RuntimeFormatIr::{Cbor, Json, Sora, SoraProtobuf};
+
+    match target {
+        CodegenTarget::Rust
+        | CodegenTarget::Kotlin
+        | CodegenTarget::CSharp
+        | CodegenTarget::Java
+        | CodegenTarget::Go
+        | CodegenTarget::TypeScript
+        | CodegenTarget::JavaScript
+        | CodegenTarget::Python => &[Sora, Json, Cbor, SoraProtobuf],
+        CodegenTarget::Dart | CodegenTarget::Godot => &[Json],
+        CodegenTarget::Scala
+        | CodegenTarget::C
+        | CodegenTarget::Cpp
+        | CodegenTarget::Erlang
+        | CodegenTarget::Lua => &[Sora],
+        CodegenTarget::ProtoSchema => &[],
+    }
+}
+
+pub fn runtime_format_supported(target: CodegenTarget, runtime_format: RuntimeFormatIr) -> bool {
+    supported_runtime_formats(target).contains(&runtime_format)
+}
+
+pub fn runtime_format_name(runtime_format: RuntimeFormatIr) -> &'static str {
     match runtime_format {
         RuntimeFormatIr::Sora => "sora",
         RuntimeFormatIr::Json => "json",

@@ -4,14 +4,18 @@ use std::{
 };
 
 use anyhow::{Context, Result, bail};
-use sora_codegen::format::FormatMode;
+use sora_codegen::{
+    format::FormatMode,
+    generator::{
+        runtime_format_for_target, runtime_format_name, runtime_format_supported,
+        supported_runtime_formats,
+    },
+};
 use sora_execution::ExecutionContext;
 use sora_input_toml::input::TomlSchemaInput;
+use sora_ir::model::{ConfigIr, RuntimeFormatIr};
 
-use crate::{
-    args::{BuildArgs, BuildTarget},
-    commands::export_project_data,
-};
+use crate::args::{BuildArgs, BuildTarget};
 
 mod manifest;
 
@@ -49,8 +53,9 @@ pub fn run(args: BuildArgs, execution: &ExecutionContext) -> Result<()> {
         clean_build_outputs(project_dir, &build, &codegen)?;
     }
 
-    sora_core::pipeline::check_schema(&schema_input)
+    let ir = sora_core::pipeline::load_schema_ir(&schema_input)
         .with_context(|| format!("failed to check project `{}`", args.project.display()))?;
+    validate_codegen_runtime_exports(&ir, &codegen, &build.exports, scope)?;
 
     if let Some(path) = build.schema_lock.as_ref() {
         let path = resolve_project_path(project_dir, path);
@@ -96,25 +101,42 @@ pub fn run(args: BuildArgs, execution: &ExecutionContext) -> Result<()> {
         })?;
     }
 
-    for item in &build.exports {
-        let out = resolve_project_path(project_dir, &item.out);
-        let item_scope = item.scope.as_deref().or(scope);
-        export_project_data(
-            &args.project,
+    if !build.exports.is_empty() {
+        let project_input = crate::source::MixedProjectInput::new(
+            TomlSchemaInput::new(&args.project),
             &data_root,
-            default_source_format,
-            &item.format,
-            out,
-            item_scope,
-            execution,
-        )
-        .with_context(|| {
-            format!(
-                "failed to export `{}` data from `{}`",
-                item.format,
-                data_root.display()
+            default_source_format.map(crate::args::SourceFormatArg::as_str),
+        );
+        let (ir, data) =
+            sora_core::pipeline::load_project_data_with_context(&project_input, execution)
+                .with_context(|| {
+                    format!(
+                        "failed to load data from `{}` for project `{}`",
+                        data_root.display(),
+                        args.project.display()
+                    )
+                })?;
+
+        for item in &build.exports {
+            let out = resolve_project_path(project_dir, &item.out);
+            let item_scope = item.scope.as_deref().or(scope);
+            let output = export_output(&item.format, out)?;
+            sora_core::pipeline::export_loaded_data_with_scope_and_context(
+                &ir,
+                &data,
+                &item.format,
+                output,
+                item_scope,
+                execution,
             )
-        })?;
+            .with_context(|| {
+                format!(
+                    "failed to export `{}` data from `{}`",
+                    item.format,
+                    data_root.display()
+                )
+            })?;
+        }
     }
 
     Ok(())
@@ -131,6 +153,84 @@ fn validate_export_formats(exports: &[BuildExport]) -> Result<()> {
         }
     }
     Ok(())
+}
+
+fn validate_codegen_runtime_exports(
+    ir: &ConfigIr,
+    codegen: &[&BuildCodegen],
+    exports: &[BuildExport],
+    build_scope: Option<&str>,
+) -> Result<()> {
+    for item in codegen {
+        let target = item.target.into();
+        let Some(runtime_format) = runtime_format_for_target(ir, target) else {
+            continue;
+        };
+        if !runtime_format_supported(target, runtime_format) {
+            let supported = supported_runtime_formats(target)
+                .iter()
+                .map(|format| runtime_format_name(*format))
+                .collect::<Vec<_>>()
+                .join(", ");
+            bail!(
+                "{} codegen runtime_format `{}` is not supported; supported runtime_format: {}",
+                item.target.as_str(),
+                runtime_format_name(runtime_format),
+                supported
+            );
+        }
+
+        if exports.is_empty() {
+            continue;
+        }
+
+        let required_format = export_format_for_runtime(runtime_format);
+        let item_scope = item.scope.as_deref().or(build_scope);
+        let has_matching_export = exports.iter().any(|export| {
+            export.format == required_format
+                && export.scope.as_deref().or(build_scope) == item_scope
+        });
+        if !has_matching_export {
+            let scope_message = item_scope
+                .map(|scope| format!(" with scope `{scope}`"))
+                .unwrap_or_else(|| " without scope".to_owned());
+            bail!(
+                "{} codegen uses runtime_format `{}` and requires a `{}` export{}",
+                item.target.as_str(),
+                runtime_format_name(runtime_format),
+                required_format,
+                scope_message
+            );
+        }
+    }
+    Ok(())
+}
+
+fn export_format_for_runtime(runtime_format: RuntimeFormatIr) -> &'static str {
+    match runtime_format {
+        RuntimeFormatIr::Sora => "binary",
+        RuntimeFormatIr::Json => "json",
+        RuntimeFormatIr::SoraProtobuf => "sora-protobuf",
+        RuntimeFormatIr::Cbor => "cbor",
+    }
+}
+
+fn export_output(format: &str, out: PathBuf) -> Result<sora_export::exporter::ExportOutput> {
+    match sora_core::pipeline::export_output_kind(format) {
+        Some(sora_export::exporter::OutputKind::File) => {
+            Ok(sora_export::exporter::ExportOutput::File(out))
+        }
+        Some(sora_export::exporter::OutputKind::Directory) => {
+            Ok(sora_export::exporter::ExportOutput::Directory(out))
+        }
+        None => {
+            bail!(
+                "unknown export format `{}`; supported formats: {}",
+                format,
+                sora_core::pipeline::supported_export_formats().join(", ")
+            );
+        }
+    }
 }
 
 fn selected_codegen_targets<'a>(
