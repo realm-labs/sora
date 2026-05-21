@@ -35,3 +35,46 @@ func decodeStage(reader *SoraReader) (Stage, error) {
     }
     return value, nil
 }
+
+type StageTable struct {
+    rows map[int32]Stage
+}
+
+func buildStageTable(rows []Stage) (*StageTable, error) {
+    return &StageTable{rows: DecodeMapTable(rows, func(row Stage) int32 { return row.Id })}, nil
+}
+
+func decodeStageTable(bundle *SoraBundle) (*StageTable, error) {
+    rows, err := DecodeTable(bundle, "Stage", decodeStage)
+    if err != nil {
+        return nil, err
+    }
+    return buildStageTable(rows)
+}
+
+func (table *StageTable) Rows() map[int32]Stage {
+    return table.rows
+}
+func (table *StageTable) Get(key int32) (Stage, bool) {
+    value, ok := table.rows[key]
+    return value, ok
+}
+func (table *StageTable) Name() string {
+    return "Stage"
+}
+
+func (table *StageTable) Mode() SoraTableMode {
+    return SoraTableModeMap
+}
+
+func (table *StageTable) Key() string {
+    return "id"
+}
+
+func (table *StageTable) RowType() string {
+    return "Stage"
+}
+
+func (table *StageTable) Len() int {
+    return len(table.rows)
+}

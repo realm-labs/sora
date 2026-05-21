@@ -25,3 +25,46 @@ func decodeLevelExp(reader *SoraReader) (LevelExp, error) {
     }
     return value, nil
 }
+
+type LevelExpTable struct {
+    rows map[int32]LevelExp
+}
+
+func buildLevelExpTable(rows []LevelExp) (*LevelExpTable, error) {
+    return &LevelExpTable{rows: DecodeMapTable(rows, func(row LevelExp) int32 { return row.Level })}, nil
+}
+
+func decodeLevelExpTable(bundle *SoraBundle) (*LevelExpTable, error) {
+    rows, err := DecodeTable(bundle, "LevelExp", decodeLevelExp)
+    if err != nil {
+        return nil, err
+    }
+    return buildLevelExpTable(rows)
+}
+
+func (table *LevelExpTable) Rows() map[int32]LevelExp {
+    return table.rows
+}
+func (table *LevelExpTable) Get(key int32) (LevelExp, bool) {
+    value, ok := table.rows[key]
+    return value, ok
+}
+func (table *LevelExpTable) Name() string {
+    return "LevelExp"
+}
+
+func (table *LevelExpTable) Mode() SoraTableMode {
+    return SoraTableModeMap
+}
+
+func (table *LevelExpTable) Key() string {
+    return "level"
+}
+
+func (table *LevelExpTable) RowType() string {
+    return "LevelExp"
+}
+
+func (table *LevelExpTable) Len() int {
+    return len(table.rows)
+}

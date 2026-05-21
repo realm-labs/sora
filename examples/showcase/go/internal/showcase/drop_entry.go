@@ -35,3 +35,42 @@ func decodeDropEntry(reader *SoraReader) (DropEntry, error) {
     }
     return value, nil
 }
+
+type DropEntryTable struct {
+    rows []DropEntry
+}
+
+func buildDropEntryTable(rows []DropEntry) (*DropEntryTable, error) {
+    return &DropEntryTable{rows: rows}, nil
+}
+
+func decodeDropEntryTable(bundle *SoraBundle) (*DropEntryTable, error) {
+    rows, err := DecodeTable(bundle, "DropEntry", decodeDropEntry)
+    if err != nil {
+        return nil, err
+    }
+    return buildDropEntryTable(rows)
+}
+
+func (table *DropEntryTable) Rows() []DropEntry {
+    return table.rows
+}
+func (table *DropEntryTable) Name() string {
+    return "DropEntry"
+}
+
+func (table *DropEntryTable) Mode() SoraTableMode {
+    return SoraTableModeList
+}
+
+func (table *DropEntryTable) Key() string {
+    return ""
+}
+
+func (table *DropEntryTable) RowType() string {
+    return "DropEntry"
+}
+
+func (table *DropEntryTable) Len() int {
+    return len(table.rows)
+}

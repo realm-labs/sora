@@ -46,3 +46,46 @@ func decodeQuest(reader *SoraReader) (Quest, error) {
     }
     return value, nil
 }
+
+type QuestTable struct {
+    rows map[int32]Quest
+}
+
+func buildQuestTable(rows []Quest) (*QuestTable, error) {
+    return &QuestTable{rows: DecodeMapTable(rows, func(row Quest) int32 { return row.Id })}, nil
+}
+
+func decodeQuestTable(bundle *SoraBundle) (*QuestTable, error) {
+    rows, err := DecodeTable(bundle, "Quest", decodeQuest)
+    if err != nil {
+        return nil, err
+    }
+    return buildQuestTable(rows)
+}
+
+func (table *QuestTable) Rows() map[int32]Quest {
+    return table.rows
+}
+func (table *QuestTable) Get(key int32) (Quest, bool) {
+    value, ok := table.rows[key]
+    return value, ok
+}
+func (table *QuestTable) Name() string {
+    return "Quest"
+}
+
+func (table *QuestTable) Mode() SoraTableMode {
+    return SoraTableModeMap
+}
+
+func (table *QuestTable) Key() string {
+    return "id"
+}
+
+func (table *QuestTable) RowType() string {
+    return "Quest"
+}
+
+func (table *QuestTable) Len() int {
+    return len(table.rows)
+}

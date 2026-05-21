@@ -25,3 +25,46 @@ func decodeVipLevel(reader *SoraReader) (VipLevel, error) {
     }
     return value, nil
 }
+
+type VipLevelTable struct {
+    rows map[int32]VipLevel
+}
+
+func buildVipLevelTable(rows []VipLevel) (*VipLevelTable, error) {
+    return &VipLevelTable{rows: DecodeMapTable(rows, func(row VipLevel) int32 { return row.Level })}, nil
+}
+
+func decodeVipLevelTable(bundle *SoraBundle) (*VipLevelTable, error) {
+    rows, err := DecodeTable(bundle, "VipLevel", decodeVipLevel)
+    if err != nil {
+        return nil, err
+    }
+    return buildVipLevelTable(rows)
+}
+
+func (table *VipLevelTable) Rows() map[int32]VipLevel {
+    return table.rows
+}
+func (table *VipLevelTable) Get(key int32) (VipLevel, bool) {
+    value, ok := table.rows[key]
+    return value, ok
+}
+func (table *VipLevelTable) Name() string {
+    return "VipLevel"
+}
+
+func (table *VipLevelTable) Mode() SoraTableMode {
+    return SoraTableModeMap
+}
+
+func (table *VipLevelTable) Key() string {
+    return "level"
+}
+
+func (table *VipLevelTable) RowType() string {
+    return "VipLevel"
+}
+
+func (table *VipLevelTable) Len() int {
+    return len(table.rows)
+}

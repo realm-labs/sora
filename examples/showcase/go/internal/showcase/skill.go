@@ -53,3 +53,46 @@ func decodeSkill(reader *SoraReader) (Skill, error) {
     }
     return value, nil
 }
+
+type SkillTable struct {
+    rows map[int32]Skill
+}
+
+func buildSkillTable(rows []Skill) (*SkillTable, error) {
+    return &SkillTable{rows: DecodeMapTable(rows, func(row Skill) int32 { return row.Id })}, nil
+}
+
+func decodeSkillTable(bundle *SoraBundle) (*SkillTable, error) {
+    rows, err := DecodeTable(bundle, "Skill", decodeSkill)
+    if err != nil {
+        return nil, err
+    }
+    return buildSkillTable(rows)
+}
+
+func (table *SkillTable) Rows() map[int32]Skill {
+    return table.rows
+}
+func (table *SkillTable) Get(key int32) (Skill, bool) {
+    value, ok := table.rows[key]
+    return value, ok
+}
+func (table *SkillTable) Name() string {
+    return "Skill"
+}
+
+func (table *SkillTable) Mode() SoraTableMode {
+    return SoraTableModeMap
+}
+
+func (table *SkillTable) Key() string {
+    return "id"
+}
+
+func (table *SkillTable) RowType() string {
+    return "Skill"
+}
+
+func (table *SkillTable) Len() int {
+    return len(table.rows)
+}

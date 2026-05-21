@@ -45,3 +45,46 @@ func decodeCharacter(reader *SoraReader) (Character, error) {
     }
     return value, nil
 }
+
+type CharacterTable struct {
+    rows map[int32]Character
+}
+
+func buildCharacterTable(rows []Character) (*CharacterTable, error) {
+    return &CharacterTable{rows: DecodeMapTable(rows, func(row Character) int32 { return row.Id })}, nil
+}
+
+func decodeCharacterTable(bundle *SoraBundle) (*CharacterTable, error) {
+    rows, err := DecodeTable(bundle, "Character", decodeCharacter)
+    if err != nil {
+        return nil, err
+    }
+    return buildCharacterTable(rows)
+}
+
+func (table *CharacterTable) Rows() map[int32]Character {
+    return table.rows
+}
+func (table *CharacterTable) Get(key int32) (Character, bool) {
+    value, ok := table.rows[key]
+    return value, ok
+}
+func (table *CharacterTable) Name() string {
+    return "Character"
+}
+
+func (table *CharacterTable) Mode() SoraTableMode {
+    return SoraTableModeMap
+}
+
+func (table *CharacterTable) Key() string {
+    return "id"
+}
+
+func (table *CharacterTable) RowType() string {
+    return "Character"
+}
+
+func (table *CharacterTable) Len() int {
+    return len(table.rows)
+}

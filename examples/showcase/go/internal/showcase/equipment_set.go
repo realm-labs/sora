@@ -30,3 +30,46 @@ func decodeEquipmentSet(reader *SoraReader) (EquipmentSet, error) {
     }
     return value, nil
 }
+
+type EquipmentSetTable struct {
+    rows map[int32]EquipmentSet
+}
+
+func buildEquipmentSetTable(rows []EquipmentSet) (*EquipmentSetTable, error) {
+    return &EquipmentSetTable{rows: DecodeMapTable(rows, func(row EquipmentSet) int32 { return row.Id })}, nil
+}
+
+func decodeEquipmentSetTable(bundle *SoraBundle) (*EquipmentSetTable, error) {
+    rows, err := DecodeTable(bundle, "EquipmentSet", decodeEquipmentSet)
+    if err != nil {
+        return nil, err
+    }
+    return buildEquipmentSetTable(rows)
+}
+
+func (table *EquipmentSetTable) Rows() map[int32]EquipmentSet {
+    return table.rows
+}
+func (table *EquipmentSetTable) Get(key int32) (EquipmentSet, bool) {
+    value, ok := table.rows[key]
+    return value, ok
+}
+func (table *EquipmentSetTable) Name() string {
+    return "EquipmentSet"
+}
+
+func (table *EquipmentSetTable) Mode() SoraTableMode {
+    return SoraTableModeMap
+}
+
+func (table *EquipmentSetTable) Key() string {
+    return "id"
+}
+
+func (table *EquipmentSetTable) RowType() string {
+    return "EquipmentSet"
+}
+
+func (table *EquipmentSetTable) Len() int {
+    return len(table.rows)
+}

@@ -35,3 +35,46 @@ func decodeGameSettings(reader *SoraReader) (GameSettings, error) {
     }
     return value, nil
 }
+
+type GameSettingsTable struct {
+    rows GameSettings
+}
+
+func buildGameSettingsTable(rows []GameSettings) (*GameSettingsTable, error) {
+    row, err := RequireSingletonTable(rows, "GameSettings")
+    if err != nil {
+        return nil, err
+    }
+    return &GameSettingsTable{rows: row}, nil
+}
+
+func decodeGameSettingsTable(bundle *SoraBundle) (*GameSettingsTable, error) {
+    rows, err := DecodeTable(bundle, "GameSettings", decodeGameSettings)
+    if err != nil {
+        return nil, err
+    }
+    return buildGameSettingsTable(rows)
+}
+
+func (table *GameSettingsTable) Rows() GameSettings {
+    return table.rows
+}
+func (table *GameSettingsTable) Name() string {
+    return "GameSettings"
+}
+
+func (table *GameSettingsTable) Mode() SoraTableMode {
+    return SoraTableModeSingleton
+}
+
+func (table *GameSettingsTable) Key() string {
+    return ""
+}
+
+func (table *GameSettingsTable) RowType() string {
+    return "GameSettings"
+}
+
+func (table *GameSettingsTable) Len() int {
+    return 1
+}

@@ -30,3 +30,42 @@ func decodeQuestReward(reader *SoraReader) (QuestReward, error) {
     }
     return value, nil
 }
+
+type QuestRewardTable struct {
+    rows []QuestReward
+}
+
+func buildQuestRewardTable(rows []QuestReward) (*QuestRewardTable, error) {
+    return &QuestRewardTable{rows: rows}, nil
+}
+
+func decodeQuestRewardTable(bundle *SoraBundle) (*QuestRewardTable, error) {
+    rows, err := DecodeTable(bundle, "QuestReward", decodeQuestReward)
+    if err != nil {
+        return nil, err
+    }
+    return buildQuestRewardTable(rows)
+}
+
+func (table *QuestRewardTable) Rows() []QuestReward {
+    return table.rows
+}
+func (table *QuestRewardTable) Name() string {
+    return "QuestReward"
+}
+
+func (table *QuestRewardTable) Mode() SoraTableMode {
+    return SoraTableModeList
+}
+
+func (table *QuestRewardTable) Key() string {
+    return ""
+}
+
+func (table *QuestRewardTable) RowType() string {
+    return "QuestReward"
+}
+
+func (table *QuestRewardTable) Len() int {
+    return len(table.rows)
+}

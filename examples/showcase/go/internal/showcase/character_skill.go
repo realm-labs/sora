@@ -25,3 +25,42 @@ func decodeCharacterSkill(reader *SoraReader) (CharacterSkill, error) {
     }
     return value, nil
 }
+
+type CharacterSkillTable struct {
+    rows []CharacterSkill
+}
+
+func buildCharacterSkillTable(rows []CharacterSkill) (*CharacterSkillTable, error) {
+    return &CharacterSkillTable{rows: rows}, nil
+}
+
+func decodeCharacterSkillTable(bundle *SoraBundle) (*CharacterSkillTable, error) {
+    rows, err := DecodeTable(bundle, "CharacterSkill", decodeCharacterSkill)
+    if err != nil {
+        return nil, err
+    }
+    return buildCharacterSkillTable(rows)
+}
+
+func (table *CharacterSkillTable) Rows() []CharacterSkill {
+    return table.rows
+}
+func (table *CharacterSkillTable) Name() string {
+    return "CharacterSkill"
+}
+
+func (table *CharacterSkillTable) Mode() SoraTableMode {
+    return SoraTableModeList
+}
+
+func (table *CharacterSkillTable) Key() string {
+    return ""
+}
+
+func (table *CharacterSkillTable) RowType() string {
+    return "CharacterSkill"
+}
+
+func (table *CharacterSkillTable) Len() int {
+    return len(table.rows)
+}

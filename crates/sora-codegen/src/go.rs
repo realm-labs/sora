@@ -105,6 +105,7 @@ struct GoRecord {
     pascal_name: String,
     snake_name: String,
     fields: Vec<GoField>,
+    table: Option<GoTable>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -167,7 +168,13 @@ impl GoModel {
             records: model
                 .records
                 .into_iter()
-                .map(|item| go_record(ir, item))
+                .map(|item| {
+                    let table = tables
+                        .iter()
+                        .find(|table| table.row_type == item.pascal_name)
+                        .cloned();
+                    go_record(ir, item, table)
+                })
                 .collect(),
             has_unique_indexes: tables.iter().any(|table| !table.unique_indexes.is_empty()),
             has_non_unique_indexes: tables
@@ -202,7 +209,7 @@ fn go_variant(ir: &ConfigIr, variant: BaseUnionVariant) -> GoUnionVariant {
     }
 }
 
-fn go_record(ir: &ConfigIr, record: BaseRecord) -> GoRecord {
+fn go_record(ir: &ConfigIr, record: BaseRecord, table: Option<GoTable>) -> GoRecord {
     GoRecord {
         pascal_name: record.pascal_name,
         snake_name: record.snake_name,
@@ -211,6 +218,7 @@ fn go_record(ir: &ConfigIr, record: BaseRecord) -> GoRecord {
             .into_iter()
             .map(|field| go_field(ir, field))
             .collect(),
+        table,
     }
 }
 

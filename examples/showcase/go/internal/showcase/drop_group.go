@@ -20,3 +20,46 @@ func decodeDropGroup(reader *SoraReader) (DropGroup, error) {
     }
     return value, nil
 }
+
+type DropGroupTable struct {
+    rows map[int32]DropGroup
+}
+
+func buildDropGroupTable(rows []DropGroup) (*DropGroupTable, error) {
+    return &DropGroupTable{rows: DecodeMapTable(rows, func(row DropGroup) int32 { return row.Id })}, nil
+}
+
+func decodeDropGroupTable(bundle *SoraBundle) (*DropGroupTable, error) {
+    rows, err := DecodeTable(bundle, "DropGroup", decodeDropGroup)
+    if err != nil {
+        return nil, err
+    }
+    return buildDropGroupTable(rows)
+}
+
+func (table *DropGroupTable) Rows() map[int32]DropGroup {
+    return table.rows
+}
+func (table *DropGroupTable) Get(key int32) (DropGroup, bool) {
+    value, ok := table.rows[key]
+    return value, ok
+}
+func (table *DropGroupTable) Name() string {
+    return "DropGroup"
+}
+
+func (table *DropGroupTable) Mode() SoraTableMode {
+    return SoraTableModeMap
+}
+
+func (table *DropGroupTable) Key() string {
+    return "id"
+}
+
+func (table *DropGroupTable) RowType() string {
+    return "DropGroup"
+}
+
+func (table *DropGroupTable) Len() int {
+    return len(table.rows)
+}

@@ -25,3 +25,46 @@ func decodeShop(reader *SoraReader) (Shop, error) {
     }
     return value, nil
 }
+
+type ShopTable struct {
+    rows map[int32]Shop
+}
+
+func buildShopTable(rows []Shop) (*ShopTable, error) {
+    return &ShopTable{rows: DecodeMapTable(rows, func(row Shop) int32 { return row.Id })}, nil
+}
+
+func decodeShopTable(bundle *SoraBundle) (*ShopTable, error) {
+    rows, err := DecodeTable(bundle, "Shop", decodeShop)
+    if err != nil {
+        return nil, err
+    }
+    return buildShopTable(rows)
+}
+
+func (table *ShopTable) Rows() map[int32]Shop {
+    return table.rows
+}
+func (table *ShopTable) Get(key int32) (Shop, bool) {
+    value, ok := table.rows[key]
+    return value, ok
+}
+func (table *ShopTable) Name() string {
+    return "Shop"
+}
+
+func (table *ShopTable) Mode() SoraTableMode {
+    return SoraTableModeMap
+}
+
+func (table *ShopTable) Key() string {
+    return "id"
+}
+
+func (table *ShopTable) RowType() string {
+    return "Shop"
+}
+
+func (table *ShopTable) Len() int {
+    return len(table.rows)
+}

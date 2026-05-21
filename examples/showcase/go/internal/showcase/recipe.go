@@ -25,3 +25,46 @@ func decodeRecipe(reader *SoraReader) (Recipe, error) {
     }
     return value, nil
 }
+
+type RecipeTable struct {
+    rows map[int32]Recipe
+}
+
+func buildRecipeTable(rows []Recipe) (*RecipeTable, error) {
+    return &RecipeTable{rows: DecodeMapTable(rows, func(row Recipe) int32 { return row.Id })}, nil
+}
+
+func decodeRecipeTable(bundle *SoraBundle) (*RecipeTable, error) {
+    rows, err := DecodeTable(bundle, "Recipe", decodeRecipe)
+    if err != nil {
+        return nil, err
+    }
+    return buildRecipeTable(rows)
+}
+
+func (table *RecipeTable) Rows() map[int32]Recipe {
+    return table.rows
+}
+func (table *RecipeTable) Get(key int32) (Recipe, bool) {
+    value, ok := table.rows[key]
+    return value, ok
+}
+func (table *RecipeTable) Name() string {
+    return "Recipe"
+}
+
+func (table *RecipeTable) Mode() SoraTableMode {
+    return SoraTableModeMap
+}
+
+func (table *RecipeTable) Key() string {
+    return "id"
+}
+
+func (table *RecipeTable) RowType() string {
+    return "Recipe"
+}
+
+func (table *RecipeTable) Len() int {
+    return len(table.rows)
+}

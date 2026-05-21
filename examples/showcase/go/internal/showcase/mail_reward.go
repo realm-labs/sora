@@ -30,3 +30,42 @@ func decodeMailReward(reader *SoraReader) (MailReward, error) {
     }
     return value, nil
 }
+
+type MailRewardTable struct {
+    rows []MailReward
+}
+
+func buildMailRewardTable(rows []MailReward) (*MailRewardTable, error) {
+    return &MailRewardTable{rows: rows}, nil
+}
+
+func decodeMailRewardTable(bundle *SoraBundle) (*MailRewardTable, error) {
+    rows, err := DecodeTable(bundle, "MailReward", decodeMailReward)
+    if err != nil {
+        return nil, err
+    }
+    return buildMailRewardTable(rows)
+}
+
+func (table *MailRewardTable) Rows() []MailReward {
+    return table.rows
+}
+func (table *MailRewardTable) Name() string {
+    return "MailReward"
+}
+
+func (table *MailRewardTable) Mode() SoraTableMode {
+    return SoraTableModeList
+}
+
+func (table *MailRewardTable) Key() string {
+    return ""
+}
+
+func (table *MailRewardTable) RowType() string {
+    return "MailReward"
+}
+
+func (table *MailRewardTable) Len() int {
+    return len(table.rows)
+}

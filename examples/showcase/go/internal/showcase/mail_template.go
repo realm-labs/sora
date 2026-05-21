@@ -35,3 +35,46 @@ func decodeMailTemplate(reader *SoraReader) (MailTemplate, error) {
     }
     return value, nil
 }
+
+type MailTemplateTable struct {
+    rows map[int32]MailTemplate
+}
+
+func buildMailTemplateTable(rows []MailTemplate) (*MailTemplateTable, error) {
+    return &MailTemplateTable{rows: DecodeMapTable(rows, func(row MailTemplate) int32 { return row.Id })}, nil
+}
+
+func decodeMailTemplateTable(bundle *SoraBundle) (*MailTemplateTable, error) {
+    rows, err := DecodeTable(bundle, "MailTemplate", decodeMailTemplate)
+    if err != nil {
+        return nil, err
+    }
+    return buildMailTemplateTable(rows)
+}
+
+func (table *MailTemplateTable) Rows() map[int32]MailTemplate {
+    return table.rows
+}
+func (table *MailTemplateTable) Get(key int32) (MailTemplate, bool) {
+    value, ok := table.rows[key]
+    return value, ok
+}
+func (table *MailTemplateTable) Name() string {
+    return "MailTemplate"
+}
+
+func (table *MailTemplateTable) Mode() SoraTableMode {
+    return SoraTableModeMap
+}
+
+func (table *MailTemplateTable) Key() string {
+    return "id"
+}
+
+func (table *MailTemplateTable) RowType() string {
+    return "MailTemplate"
+}
+
+func (table *MailTemplateTable) Len() int {
+    return len(table.rows)
+}

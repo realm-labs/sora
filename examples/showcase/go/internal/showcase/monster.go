@@ -40,3 +40,46 @@ func decodeMonster(reader *SoraReader) (Monster, error) {
     }
     return value, nil
 }
+
+type MonsterTable struct {
+    rows map[int32]Monster
+}
+
+func buildMonsterTable(rows []Monster) (*MonsterTable, error) {
+    return &MonsterTable{rows: DecodeMapTable(rows, func(row Monster) int32 { return row.Id })}, nil
+}
+
+func decodeMonsterTable(bundle *SoraBundle) (*MonsterTable, error) {
+    rows, err := DecodeTable(bundle, "Monster", decodeMonster)
+    if err != nil {
+        return nil, err
+    }
+    return buildMonsterTable(rows)
+}
+
+func (table *MonsterTable) Rows() map[int32]Monster {
+    return table.rows
+}
+func (table *MonsterTable) Get(key int32) (Monster, bool) {
+    value, ok := table.rows[key]
+    return value, ok
+}
+func (table *MonsterTable) Name() string {
+    return "Monster"
+}
+
+func (table *MonsterTable) Mode() SoraTableMode {
+    return SoraTableModeMap
+}
+
+func (table *MonsterTable) Key() string {
+    return "id"
+}
+
+func (table *MonsterTable) RowType() string {
+    return "Monster"
+}
+
+func (table *MonsterTable) Len() int {
+    return len(table.rows)
+}

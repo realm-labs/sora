@@ -25,3 +25,46 @@ func decodeDialogue(reader *SoraReader) (Dialogue, error) {
     }
     return value, nil
 }
+
+type DialogueTable struct {
+    rows map[int32]Dialogue
+}
+
+func buildDialogueTable(rows []Dialogue) (*DialogueTable, error) {
+    return &DialogueTable{rows: DecodeMapTable(rows, func(row Dialogue) int32 { return row.Id })}, nil
+}
+
+func decodeDialogueTable(bundle *SoraBundle) (*DialogueTable, error) {
+    rows, err := DecodeTable(bundle, "Dialogue", decodeDialogue)
+    if err != nil {
+        return nil, err
+    }
+    return buildDialogueTable(rows)
+}
+
+func (table *DialogueTable) Rows() map[int32]Dialogue {
+    return table.rows
+}
+func (table *DialogueTable) Get(key int32) (Dialogue, bool) {
+    value, ok := table.rows[key]
+    return value, ok
+}
+func (table *DialogueTable) Name() string {
+    return "Dialogue"
+}
+
+func (table *DialogueTable) Mode() SoraTableMode {
+    return SoraTableModeMap
+}
+
+func (table *DialogueTable) Key() string {
+    return "id"
+}
+
+func (table *DialogueTable) RowType() string {
+    return "Dialogue"
+}
+
+func (table *DialogueTable) Len() int {
+    return len(table.rows)
+}

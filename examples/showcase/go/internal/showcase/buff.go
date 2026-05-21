@@ -30,3 +30,46 @@ func decodeBuff(reader *SoraReader) (Buff, error) {
     }
     return value, nil
 }
+
+type BuffTable struct {
+    rows map[int32]Buff
+}
+
+func buildBuffTable(rows []Buff) (*BuffTable, error) {
+    return &BuffTable{rows: DecodeMapTable(rows, func(row Buff) int32 { return row.Id })}, nil
+}
+
+func decodeBuffTable(bundle *SoraBundle) (*BuffTable, error) {
+    rows, err := DecodeTable(bundle, "Buff", decodeBuff)
+    if err != nil {
+        return nil, err
+    }
+    return buildBuffTable(rows)
+}
+
+func (table *BuffTable) Rows() map[int32]Buff {
+    return table.rows
+}
+func (table *BuffTable) Get(key int32) (Buff, bool) {
+    value, ok := table.rows[key]
+    return value, ok
+}
+func (table *BuffTable) Name() string {
+    return "Buff"
+}
+
+func (table *BuffTable) Mode() SoraTableMode {
+    return SoraTableModeMap
+}
+
+func (table *BuffTable) Key() string {
+    return "id"
+}
+
+func (table *BuffTable) RowType() string {
+    return "Buff"
+}
+
+func (table *BuffTable) Len() int {
+    return len(table.rows)
+}

@@ -46,3 +46,59 @@ func decodeItem(reader *SoraReader) (Item, error) {
     }
     return value, nil
 }
+
+type ItemTable struct {
+    rows map[int32]Item
+    byName map[string]Item
+    byItemType map[ItemType][]Item
+}
+
+func buildItemTable(rows []Item) (*ItemTable, error) {
+    return &ItemTable{
+        rows: DecodeMapTable(rows, func(row Item) int32 { return row.Id }),
+        byName: DecodeUniqueIndex(rows, func(row Item) string { return row.Name }),
+        byItemType: DecodeIndex(rows, func(row Item) ItemType { return row.ItemType }),
+    }, nil
+}
+
+func decodeItemTable(bundle *SoraBundle) (*ItemTable, error) {
+    rows, err := DecodeTable(bundle, "Item", decodeItem)
+    if err != nil {
+        return nil, err
+    }
+    return buildItemTable(rows)
+}
+
+func (table *ItemTable) Rows() map[int32]Item {
+    return table.rows
+}
+func (table *ItemTable) Get(key int32) (Item, bool) {
+    value, ok := table.rows[key]
+    return value, ok
+}
+func (table *ItemTable) GetByName(name string) (Item, bool) {
+    value, ok := table.byName[name]
+    return value, ok
+}
+func (table *ItemTable) FindByItemType(itemType ItemType) []Item {
+    return table.byItemType[itemType]
+}
+func (table *ItemTable) Name() string {
+    return "Item"
+}
+
+func (table *ItemTable) Mode() SoraTableMode {
+    return SoraTableModeMap
+}
+
+func (table *ItemTable) Key() string {
+    return "id"
+}
+
+func (table *ItemTable) RowType() string {
+    return "Item"
+}
+
+func (table *ItemTable) Len() int {
+    return len(table.rows)
+}

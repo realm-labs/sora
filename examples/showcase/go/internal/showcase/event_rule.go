@@ -30,3 +30,46 @@ func decodeEventRule(reader *SoraReader) (EventRule, error) {
     }
     return value, nil
 }
+
+type EventRuleTable struct {
+    rows map[int32]EventRule
+}
+
+func buildEventRuleTable(rows []EventRule) (*EventRuleTable, error) {
+    return &EventRuleTable{rows: DecodeMapTable(rows, func(row EventRule) int32 { return row.Id })}, nil
+}
+
+func decodeEventRuleTable(bundle *SoraBundle) (*EventRuleTable, error) {
+    rows, err := DecodeTable(bundle, "EventRule", decodeEventRule)
+    if err != nil {
+        return nil, err
+    }
+    return buildEventRuleTable(rows)
+}
+
+func (table *EventRuleTable) Rows() map[int32]EventRule {
+    return table.rows
+}
+func (table *EventRuleTable) Get(key int32) (EventRule, bool) {
+    value, ok := table.rows[key]
+    return value, ok
+}
+func (table *EventRuleTable) Name() string {
+    return "EventRule"
+}
+
+func (table *EventRuleTable) Mode() SoraTableMode {
+    return SoraTableModeMap
+}
+
+func (table *EventRuleTable) Key() string {
+    return "id"
+}
+
+func (table *EventRuleTable) RowType() string {
+    return "EventRule"
+}
+
+func (table *EventRuleTable) Len() int {
+    return len(table.rows)
+}

@@ -30,3 +30,42 @@ func decodeGachaItem(reader *SoraReader) (GachaItem, error) {
     }
     return value, nil
 }
+
+type GachaItemTable struct {
+    rows []GachaItem
+}
+
+func buildGachaItemTable(rows []GachaItem) (*GachaItemTable, error) {
+    return &GachaItemTable{rows: rows}, nil
+}
+
+func decodeGachaItemTable(bundle *SoraBundle) (*GachaItemTable, error) {
+    rows, err := DecodeTable(bundle, "GachaItem", decodeGachaItem)
+    if err != nil {
+        return nil, err
+    }
+    return buildGachaItemTable(rows)
+}
+
+func (table *GachaItemTable) Rows() []GachaItem {
+    return table.rows
+}
+func (table *GachaItemTable) Name() string {
+    return "GachaItem"
+}
+
+func (table *GachaItemTable) Mode() SoraTableMode {
+    return SoraTableModeList
+}
+
+func (table *GachaItemTable) Key() string {
+    return ""
+}
+
+func (table *GachaItemTable) RowType() string {
+    return "GachaItem"
+}
+
+func (table *GachaItemTable) Len() int {
+    return len(table.rows)
+}

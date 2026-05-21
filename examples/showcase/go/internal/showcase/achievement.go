@@ -30,3 +30,46 @@ func decodeAchievement(reader *SoraReader) (Achievement, error) {
     }
     return value, nil
 }
+
+type AchievementTable struct {
+    rows map[int32]Achievement
+}
+
+func buildAchievementTable(rows []Achievement) (*AchievementTable, error) {
+    return &AchievementTable{rows: DecodeMapTable(rows, func(row Achievement) int32 { return row.Id })}, nil
+}
+
+func decodeAchievementTable(bundle *SoraBundle) (*AchievementTable, error) {
+    rows, err := DecodeTable(bundle, "Achievement", decodeAchievement)
+    if err != nil {
+        return nil, err
+    }
+    return buildAchievementTable(rows)
+}
+
+func (table *AchievementTable) Rows() map[int32]Achievement {
+    return table.rows
+}
+func (table *AchievementTable) Get(key int32) (Achievement, bool) {
+    value, ok := table.rows[key]
+    return value, ok
+}
+func (table *AchievementTable) Name() string {
+    return "Achievement"
+}
+
+func (table *AchievementTable) Mode() SoraTableMode {
+    return SoraTableModeMap
+}
+
+func (table *AchievementTable) Key() string {
+    return "id"
+}
+
+func (table *AchievementTable) RowType() string {
+    return "Achievement"
+}
+
+func (table *AchievementTable) Len() int {
+    return len(table.rows)
+}

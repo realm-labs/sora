@@ -25,3 +25,46 @@ func decodeGachaPool(reader *SoraReader) (GachaPool, error) {
     }
     return value, nil
 }
+
+type GachaPoolTable struct {
+    rows map[int32]GachaPool
+}
+
+func buildGachaPoolTable(rows []GachaPool) (*GachaPoolTable, error) {
+    return &GachaPoolTable{rows: DecodeMapTable(rows, func(row GachaPool) int32 { return row.Id })}, nil
+}
+
+func decodeGachaPoolTable(bundle *SoraBundle) (*GachaPoolTable, error) {
+    rows, err := DecodeTable(bundle, "GachaPool", decodeGachaPool)
+    if err != nil {
+        return nil, err
+    }
+    return buildGachaPoolTable(rows)
+}
+
+func (table *GachaPoolTable) Rows() map[int32]GachaPool {
+    return table.rows
+}
+func (table *GachaPoolTable) Get(key int32) (GachaPool, bool) {
+    value, ok := table.rows[key]
+    return value, ok
+}
+func (table *GachaPoolTable) Name() string {
+    return "GachaPool"
+}
+
+func (table *GachaPoolTable) Mode() SoraTableMode {
+    return SoraTableModeMap
+}
+
+func (table *GachaPoolTable) Key() string {
+    return "id"
+}
+
+func (table *GachaPoolTable) RowType() string {
+    return "GachaPool"
+}
+
+func (table *GachaPoolTable) Len() int {
+    return len(table.rows)
+}

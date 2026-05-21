@@ -30,3 +30,46 @@ func decodeDungeon(reader *SoraReader) (Dungeon, error) {
     }
     return value, nil
 }
+
+type DungeonTable struct {
+    rows map[int32]Dungeon
+}
+
+func buildDungeonTable(rows []Dungeon) (*DungeonTable, error) {
+    return &DungeonTable{rows: DecodeMapTable(rows, func(row Dungeon) int32 { return row.Id })}, nil
+}
+
+func decodeDungeonTable(bundle *SoraBundle) (*DungeonTable, error) {
+    rows, err := DecodeTable(bundle, "Dungeon", decodeDungeon)
+    if err != nil {
+        return nil, err
+    }
+    return buildDungeonTable(rows)
+}
+
+func (table *DungeonTable) Rows() map[int32]Dungeon {
+    return table.rows
+}
+func (table *DungeonTable) Get(key int32) (Dungeon, bool) {
+    value, ok := table.rows[key]
+    return value, ok
+}
+func (table *DungeonTable) Name() string {
+    return "Dungeon"
+}
+
+func (table *DungeonTable) Mode() SoraTableMode {
+    return SoraTableModeMap
+}
+
+func (table *DungeonTable) Key() string {
+    return "id"
+}
+
+func (table *DungeonTable) RowType() string {
+    return "Dungeon"
+}
+
+func (table *DungeonTable) Len() int {
+    return len(table.rows)
+}

@@ -30,3 +30,42 @@ func decodeStageReward(reader *SoraReader) (StageReward, error) {
     }
     return value, nil
 }
+
+type StageRewardTable struct {
+    rows []StageReward
+}
+
+func buildStageRewardTable(rows []StageReward) (*StageRewardTable, error) {
+    return &StageRewardTable{rows: rows}, nil
+}
+
+func decodeStageRewardTable(bundle *SoraBundle) (*StageRewardTable, error) {
+    rows, err := DecodeTable(bundle, "StageReward", decodeStageReward)
+    if err != nil {
+        return nil, err
+    }
+    return buildStageRewardTable(rows)
+}
+
+func (table *StageRewardTable) Rows() []StageReward {
+    return table.rows
+}
+func (table *StageRewardTable) Name() string {
+    return "StageReward"
+}
+
+func (table *StageRewardTable) Mode() SoraTableMode {
+    return SoraTableModeList
+}
+
+func (table *StageRewardTable) Key() string {
+    return ""
+}
+
+func (table *StageRewardTable) RowType() string {
+    return "StageReward"
+}
+
+func (table *StageRewardTable) Len() int {
+    return len(table.rows)
+}

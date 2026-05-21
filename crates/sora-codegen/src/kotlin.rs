@@ -749,14 +749,17 @@ mod tests {
         assert!(go_item.contains("package game_config"));
         assert!(go_item.contains("type Item struct"));
         assert!(go_item.contains("// Id: Item id"));
-        assert!(go_config.contains("type SoraConfig struct"));
-        assert!(go_config.contains("map[int32]Item"));
-        assert!(go_config.contains("byName map[string]Item"));
-        assert!(go_config.contains("byItemType map[ItemType][]Item"));
-        assert!(go_config.contains("func (table *ItemTable) GetByName(name string) (Item, bool)"));
+        assert!(go_item.contains("type ItemTable struct"));
+        assert!(go_item.contains("map[int32]Item"));
+        assert!(go_item.contains("byName map[string]Item"));
+        assert!(go_item.contains("byItemType map[ItemType][]Item"));
+        assert!(go_item.contains("func (table *ItemTable) GetByName(name string) (Item, bool)"));
         assert!(
-            go_config.contains("func (table *ItemTable) FindByItemType(itemType ItemType) []Item")
+            go_item.contains("func (table *ItemTable) FindByItemType(itemType ItemType) []Item")
         );
+        assert!(go_config.contains("type SoraConfig struct"));
+        assert!(!go_config.contains("type ItemTable struct"));
+        assert!(go_config.contains("func (config *SoraConfig) Item() *ItemTable"));
 
         let _ = std::fs::remove_dir_all(base);
     }

@@ -30,3 +30,46 @@ func decodeLocalization(reader *SoraReader) (Localization, error) {
     }
     return value, nil
 }
+
+type LocalizationTable struct {
+    rows map[string]Localization
+}
+
+func buildLocalizationTable(rows []Localization) (*LocalizationTable, error) {
+    return &LocalizationTable{rows: DecodeMapTable(rows, func(row Localization) string { return row.Key })}, nil
+}
+
+func decodeLocalizationTable(bundle *SoraBundle) (*LocalizationTable, error) {
+    rows, err := DecodeTable(bundle, "Localization", decodeLocalization)
+    if err != nil {
+        return nil, err
+    }
+    return buildLocalizationTable(rows)
+}
+
+func (table *LocalizationTable) Rows() map[string]Localization {
+    return table.rows
+}
+func (table *LocalizationTable) Get(key string) (Localization, bool) {
+    value, ok := table.rows[key]
+    return value, ok
+}
+func (table *LocalizationTable) Name() string {
+    return "Localization"
+}
+
+func (table *LocalizationTable) Mode() SoraTableMode {
+    return SoraTableModeMap
+}
+
+func (table *LocalizationTable) Key() string {
+    return "key"
+}
+
+func (table *LocalizationTable) RowType() string {
+    return "Localization"
+}
+
+func (table *LocalizationTable) Len() int {
+    return len(table.rows)
+}
