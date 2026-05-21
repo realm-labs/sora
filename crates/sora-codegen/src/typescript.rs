@@ -105,7 +105,11 @@ mod tests {
         assert!(item.contains("largeId: bigint;"));
         assert!(item.contains("itemType: ItemType;"));
         assert!(item.contains("import type { ItemType } from \"./item_type.js\";"));
-        assert!(item.contains("import { decodeItemType, decodeItemTypeValue } from \"./item_type.js\";"));
+        assert!(
+            item.contains(
+                "import { decodeItemType, decodeItemTypeValue } from \"./item_type.js\";"
+            )
+        );
         assert!(item.contains("largeId: reader.readI64()"));
         assert!(item_type.contains("export type ItemType ="));
         assert!(item_type.contains("\"Weapon\""));
