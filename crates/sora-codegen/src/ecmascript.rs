@@ -1,8 +1,10 @@
 use heck::ToLowerCamelCase;
 use serde::Serialize;
-use sora_ir::model::{ConfigIr, EnumReprIr, TableModeIr, TypeIr};
+use sora_ir::model::{ConfigIr, EnumReprIr, TypeIr};
 
-use crate::model::{LanguageBackend, TableNameParts};
+use crate::model::{
+    BaseField, BaseImport, BaseIndex, BaseModel, BaseRecord, BaseTable, BaseUnion, BaseUnionVariant,
+};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum EcmaScriptTarget {
@@ -27,41 +29,217 @@ impl EcmaScriptOptionsView {
     }
 }
 
-#[derive(Debug, Clone)]
-pub struct EcmaScriptBackend;
+#[derive(Debug, Clone, Serialize)]
+pub struct EcmaScriptModel {
+    pub package: String,
+    pub enums: Vec<EcmaScriptEnum>,
+    pub unions: Vec<EcmaScriptUnion>,
+    pub records: Vec<EcmaScriptRecord>,
+    pub tables: Vec<EcmaScriptTable>,
+    pub modules: Vec<String>,
+}
 
-impl LanguageBackend for EcmaScriptBackend {
-    fn field_name(&self, raw_name: &str) -> String {
-        raw_name.to_lower_camel_case()
-    }
+#[derive(Debug, Clone, Serialize)]
+pub struct EcmaScriptEnum {
+    pub name: String,
+    pub snake_name: String,
+    pub values: Vec<String>,
+}
 
-    fn type_name(&self, ir: &ConfigIr, ty: &TypeIr) -> String {
-        ecmascript_type_name(ir, ty)
-    }
+#[derive(Debug, Clone, Serialize)]
+pub struct EcmaScriptUnion {
+    pub pascal_name: String,
+    pub snake_name: String,
+    pub tag: String,
+    pub variants: Vec<EcmaScriptUnionVariant>,
+    pub imports: Vec<EcmaScriptImport>,
+}
 
-    fn decode_expr(&self, ir: &ConfigIr, ty: &TypeIr) -> String {
-        ecmascript_decode_expr(ir, ty)
-    }
+#[derive(Debug, Clone, Serialize)]
+pub struct EcmaScriptUnionVariant {
+    pub name: String,
+    pub fields: Vec<EcmaScriptField>,
+}
 
-    fn row_type(&self, table: &TableNameParts<'_>) -> String {
-        table.pascal_name.to_owned()
-    }
+#[derive(Debug, Clone, Serialize)]
+pub struct EcmaScriptRecord {
+    pub pascal_name: String,
+    pub snake_name: String,
+    pub imports: Vec<EcmaScriptImport>,
+    pub fields: Vec<EcmaScriptField>,
+}
 
-    fn container_type(
-        &self,
-        _table: &TableNameParts<'_>,
-        mode: TableModeIr,
-        row_type: &str,
-        key_type: Option<&str>,
-    ) -> String {
-        match mode {
-            TableModeIr::List => format!("readonly {row_type}[]"),
-            TableModeIr::Map => match key_type {
-                Some(key_type) => format!("ReadonlyMap<{key_type}, {row_type}>"),
-                None => format!("readonly {row_type}[]"),
-            },
-            TableModeIr::Singleton => row_type.to_owned(),
+#[derive(Debug, Clone, Serialize)]
+pub struct EcmaScriptImport {
+    pub module: String,
+    pub name: String,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct EcmaScriptTable {
+    pub name: String,
+    pub pascal_name: String,
+    pub camel_name: String,
+    pub snake_name: String,
+    pub mode: String,
+    pub row_type: String,
+    pub key_name: Option<String>,
+    pub key_field_name: Option<String>,
+    pub key_type: Option<String>,
+    pub unique_indexes: Vec<EcmaScriptIndex>,
+    pub non_unique_indexes: Vec<EcmaScriptIndex>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct EcmaScriptIndex {
+    pub name: String,
+    pub pascal_name: String,
+    pub camel_name: String,
+    pub field_name: String,
+    pub param_camel_name: String,
+    pub param_type: String,
+    pub key_type: String,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct EcmaScriptField {
+    pub raw_name: String,
+    pub name: String,
+    pub type_name: String,
+    pub decode: String,
+}
+
+impl EcmaScriptModel {
+    pub fn from_base_model(ir: &ConfigIr, model: BaseModel) -> Self {
+        Self {
+            package: model.package,
+            enums: model
+                .enums
+                .into_iter()
+                .map(|item| EcmaScriptEnum {
+                    name: item.pascal_name,
+                    snake_name: item.snake_name,
+                    values: item.values,
+                })
+                .collect(),
+            unions: model
+                .unions
+                .into_iter()
+                .map(|item| ecmascript_union(ir, item))
+                .collect(),
+            records: model
+                .records
+                .into_iter()
+                .map(|item| ecmascript_record(ir, item))
+                .collect(),
+            tables: model
+                .tables
+                .into_iter()
+                .map(|item| ecmascript_table(ir, item))
+                .collect(),
+            modules: model.modules,
         }
+    }
+}
+
+fn ecmascript_union(ir: &ConfigIr, union: BaseUnion) -> EcmaScriptUnion {
+    EcmaScriptUnion {
+        pascal_name: union.pascal_name,
+        snake_name: union.snake_name,
+        tag: union.tag.to_lower_camel_case(),
+        variants: union
+            .variants
+            .into_iter()
+            .map(|variant| ecmascript_variant(ir, variant))
+            .collect(),
+        imports: union.imports.into_iter().map(ecmascript_import).collect(),
+    }
+}
+
+fn ecmascript_variant(ir: &ConfigIr, variant: BaseUnionVariant) -> EcmaScriptUnionVariant {
+    EcmaScriptUnionVariant {
+        name: variant.pascal_name,
+        fields: variant
+            .fields
+            .into_iter()
+            .map(|field| ecmascript_field(ir, field))
+            .collect(),
+    }
+}
+
+fn ecmascript_record(ir: &ConfigIr, record: BaseRecord) -> EcmaScriptRecord {
+    EcmaScriptRecord {
+        pascal_name: record.pascal_name,
+        snake_name: record.snake_name,
+        imports: record.imports.into_iter().map(ecmascript_import).collect(),
+        fields: record
+            .fields
+            .into_iter()
+            .map(|field| ecmascript_field(ir, field))
+            .collect(),
+    }
+}
+
+fn ecmascript_table(ir: &ConfigIr, table: BaseTable) -> EcmaScriptTable {
+    let row_type = table.pascal_name.clone();
+    let key_type = table
+        .key_field
+        .as_ref()
+        .map(|field| ecmascript_type_name(ir, &field.ty));
+    let key_field_name = table
+        .key_field
+        .as_ref()
+        .map(|field| field.camel_name.clone());
+
+    EcmaScriptTable {
+        name: table.name,
+        pascal_name: table.pascal_name,
+        camel_name: table.camel_name,
+        snake_name: table.snake_name,
+        mode: table.mode_name,
+        row_type,
+        key_name: table.key_name,
+        key_field_name,
+        key_type,
+        unique_indexes: table
+            .unique_indexes
+            .into_iter()
+            .map(|index| ecmascript_index(ir, index))
+            .collect(),
+        non_unique_indexes: table
+            .non_unique_indexes
+            .into_iter()
+            .map(|index| ecmascript_index(ir, index))
+            .collect(),
+    }
+}
+
+fn ecmascript_index(ir: &ConfigIr, index: BaseIndex) -> EcmaScriptIndex {
+    let key_type = ecmascript_type_name(ir, &index.field.ty);
+    EcmaScriptIndex {
+        name: index.snake_name,
+        pascal_name: index.pascal_name,
+        camel_name: index.camel_name,
+        field_name: index.field.camel_name.clone(),
+        param_camel_name: index.field.camel_name,
+        param_type: key_type.clone(),
+        key_type,
+    }
+}
+
+fn ecmascript_field(ir: &ConfigIr, field: BaseField) -> EcmaScriptField {
+    EcmaScriptField {
+        raw_name: field.raw_name,
+        name: field.camel_name,
+        type_name: ecmascript_type_name(ir, &field.ty),
+        decode: ecmascript_decode_expr(ir, &field.ty),
+    }
+}
+
+fn ecmascript_import(import: BaseImport) -> EcmaScriptImport {
+    EcmaScriptImport {
+        module: import.module,
+        name: import.name,
     }
 }
 

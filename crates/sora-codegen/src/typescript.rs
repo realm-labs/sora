@@ -1,14 +1,13 @@
 use std::path::Path;
 
-use heck::ToSnakeCase;
 use minijinja::context;
 use sora_diagnostics::Result;
 use sora_ir::model::ConfigIr;
 
 use crate::{
-    ecmascript::{EcmaScriptBackend, EcmaScriptOptionsView, EcmaScriptTarget},
+    ecmascript::{EcmaScriptModel, EcmaScriptOptionsView, EcmaScriptTarget},
     generator::{CodeGenerator, ensure_sora_runtime_format},
-    model::build_model,
+    model::build_base_model,
     render::{ensure_dir, render_template, write_file},
 };
 
@@ -24,8 +23,7 @@ impl CodeGenerator for TypeScriptCodeGenerator {
             ir.codegen.typescript.enum_repr,
             false,
         );
-        let backend = EcmaScriptBackend;
-        let model = build_model(ir, &backend)?;
+        let model = EcmaScriptModel::from_base_model(ir, build_base_model(ir)?);
 
         for item in &model.enums {
             let rendered = render_template(
@@ -33,10 +31,7 @@ impl CodeGenerator for TypeScriptCodeGenerator {
                 "enum.ts.j2",
                 context! { enum => item, options => &options },
             )?;
-            write_file(
-                &out_dir.join(format!("{}.ts", item.name.to_snake_case())),
-                rendered,
-            )?;
+            write_file(&out_dir.join(format!("{}.ts", item.snake_name)), rendered)?;
         }
 
         for record in &model.records {
