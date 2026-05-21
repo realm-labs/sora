@@ -57,6 +57,7 @@ pub struct EcmaScriptUnion {
 
 #[derive(Debug, Clone, Serialize)]
 pub struct EcmaScriptUnionVariant {
+    pub raw_name: String,
     pub name: String,
     pub fields: Vec<EcmaScriptField>,
 }
@@ -107,6 +108,7 @@ pub struct EcmaScriptField {
     pub name: String,
     pub type_name: String,
     pub decode: String,
+    pub value_decode: String,
     pub comment: Option<String>,
 }
 
@@ -159,6 +161,7 @@ fn ecmascript_union(ir: &ConfigIr, union: BaseUnion) -> EcmaScriptUnion {
 
 fn ecmascript_variant(ir: &ConfigIr, variant: BaseUnionVariant) -> EcmaScriptUnionVariant {
     EcmaScriptUnionVariant {
+        raw_name: variant.name,
         name: variant.pascal_name,
         fields: variant
             .fields
@@ -234,6 +237,7 @@ fn ecmascript_field(ir: &ConfigIr, field: BaseField) -> EcmaScriptField {
         name: field.camel_name,
         type_name: ecmascript_type_name(ir, &field.ty),
         decode: ecmascript_decode_expr(ir, &field.ty),
+        value_decode: ecmascript_value_decode_expr(ir, &field.ty, "__VALUE__"),
         comment: field.comment,
     }
 }
@@ -288,6 +292,30 @@ pub fn ecmascript_decode_expr(ir: &ConfigIr, ty: &TypeIr) -> String {
                 "reader.readOptional(() => {})",
                 ecmascript_decode_expr(ir, element)
             )
+        }
+    }
+}
+
+pub fn ecmascript_value_decode_expr(ir: &ConfigIr, ty: &TypeIr, value: &str) -> String {
+    match ty {
+        TypeIr::Bool => format!("{value}.asBool()"),
+        TypeIr::I32 => format!("{value}.asInt()"),
+        TypeIr::I64 => format!("{value}.asBigInt()"),
+        TypeIr::F32 | TypeIr::F64 => format!("{value}.asNumber()"),
+        TypeIr::String => format!("{value}.asString()"),
+        TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => {
+            format!("decode{name}Value({value})")
+        }
+        TypeIr::List(element) | TypeIr::Array { element, .. } => {
+            let item_decode = ecmascript_value_decode_expr(ir, element, "item");
+            format!("{value}.asList((item) => {item_decode})")
+        }
+        TypeIr::Ref { table, field } => ref_type(ir, table, field)
+            .map(|ty| ecmascript_value_decode_expr(ir, ty, value))
+            .unwrap_or_else(|| format!("{value}.asInt()")),
+        TypeIr::Optional(element) => {
+            let item_decode = ecmascript_value_decode_expr(ir, element, value);
+            format!("{value}.isNull() ? undefined : {item_decode}")
         }
     }
 }
