@@ -169,6 +169,7 @@ struct LuaField {
     name: String,
     type_name: String,
     decode: String,
+    comment: Option<String>,
 }
 
 impl LuaModel {
@@ -291,6 +292,7 @@ fn lua_field(ir: &ConfigIr, field: BaseField, options: &LuaOptionsView) -> LuaFi
         name: field.camel_name,
         type_name: lua_type_name(ir, &field.ty, options),
         decode: lua_decode_expr(ir, &field.ty, options),
+        comment: field.comment,
     }
 }
 

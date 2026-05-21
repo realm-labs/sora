@@ -141,6 +141,7 @@ struct JavaField {
     type_name: String,
     decode: String,
     value_decode: String,
+    comment: Option<String>,
 }
 
 impl JavaModel {
@@ -266,6 +267,7 @@ fn java_field(ir: &ConfigIr, field: BaseField) -> JavaField {
         type_name: java_type_name(ir, &field.ty),
         decode: java_decode_expr(ir, &field.ty),
         value_decode,
+        comment: field.comment,
     }
 }
 

@@ -136,6 +136,7 @@ struct CSharpField {
     type_name: String,
     decode: String,
     value_decode: String,
+    comment: Option<String>,
 }
 
 impl CSharpModel {
@@ -260,6 +261,7 @@ fn csharp_field(ir: &ConfigIr, field: BaseField) -> CSharpField {
         type_name: csharp_type_name(ir, &field.ty),
         decode: csharp_decode_expr(ir, &field.ty),
         value_decode,
+        comment: field.comment,
     }
 }
 

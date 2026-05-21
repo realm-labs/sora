@@ -138,6 +138,7 @@ struct GoField {
     type_name: String,
     decode: String,
     value_decode: String,
+    comment: Option<String>,
 }
 
 impl GoModel {
@@ -266,6 +267,7 @@ fn go_field(ir: &ConfigIr, field: BaseField) -> GoField {
         type_name: go_type_name(ir, &field.ty),
         decode: go_decode_expr(ir, &field.ty),
         value_decode,
+        comment: field.comment,
     }
 }
 

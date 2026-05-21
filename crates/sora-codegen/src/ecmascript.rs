@@ -107,6 +107,7 @@ pub struct EcmaScriptField {
     pub name: String,
     pub type_name: String,
     pub decode: String,
+    pub comment: Option<String>,
 }
 
 impl EcmaScriptModel {
@@ -233,6 +234,7 @@ fn ecmascript_field(ir: &ConfigIr, field: BaseField) -> EcmaScriptField {
         name: field.camel_name,
         type_name: ecmascript_type_name(ir, &field.ty),
         decode: ecmascript_decode_expr(ir, &field.ty),
+        comment: field.comment,
     }
 }
 
