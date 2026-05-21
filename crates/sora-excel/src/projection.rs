@@ -96,37 +96,14 @@ pub(crate) fn table_mode_name(mode: TableModeIr) -> &'static str {
 }
 
 pub(crate) fn field_type_hint(ir: &ConfigIr, field: &FieldIr) -> String {
-    match struct_type_name(&field.ty)
-        .and_then(|struct_name| struct_ir(ir, struct_name))
-        .filter(|_| {
-            field
-                .parser
-                .as_ref()
-                .is_some_and(|parser| parser.kind == "tuple")
-        }) {
-        Some(struct_ir) => format!(
-            "{}({})",
-            field.ty,
-            struct_ir
-                .fields
-                .iter()
-                .map(|field| format!("{}: {}", field.name, field.ty))
-                .collect::<Vec<_>>()
-                .join(", ")
-        ),
+    match tuple_shape(ir, field) {
+        Some(tuple_shape) => format!("{}({})", field.ty, tuple_shape),
         None => field.ty.to_string(),
     }
 }
 
 pub(crate) fn tuple_shape(ir: &ConfigIr, field: &FieldIr) -> Option<String> {
-    if !field
-        .parser
-        .as_ref()
-        .is_some_and(|parser| parser.kind == "tuple")
-    {
-        return None;
-    }
-    let struct_name = struct_type_name(&field.ty)?;
+    let struct_name = tuple_struct_type_name(field)?;
     let struct_ir = struct_ir(ir, struct_name)?;
     Some(
         struct_ir
@@ -138,6 +115,14 @@ pub(crate) fn tuple_shape(ir: &ConfigIr, field: &FieldIr) -> Option<String> {
     )
 }
 
+fn tuple_struct_type_name(field: &FieldIr) -> Option<&str> {
+    match field.parser.as_ref()?.kind.as_str() {
+        "tuple" => struct_type_name(&field.ty),
+        "tuple_list" => list_struct_type_name(&field.ty),
+        _ => None,
+    }
+}
+
 pub(crate) fn struct_ir<'a>(ir: &'a ConfigIr, name: &str) -> Option<&'a StructIr> {
     ir.structs.iter().find(|item| item.name == name)
 }
@@ -146,6 +131,15 @@ fn struct_type_name(ty: &TypeIr) -> Option<&str> {
     match ty {
         TypeIr::Struct(name) => Some(name),
         TypeIr::Optional(inner) => struct_type_name(inner),
+        _ => None,
+    }
+}
+
+fn list_struct_type_name(ty: &TypeIr) -> Option<&str> {
+    match ty {
+        TypeIr::List(element) => struct_type_name(element),
+        TypeIr::Array { element, .. } => struct_type_name(element),
+        TypeIr::Optional(inner) => list_struct_type_name(inner),
         _ => None,
     }
 }
@@ -232,6 +226,21 @@ mod tests {
         assert_eq!(rows[10], ["#rule", "required;parser=tuple"]);
     }
 
+    #[test]
+    fn expands_tuple_list_struct_type_hints() {
+        let ir = tuple_list_ir();
+        let rows = table_template_rows(&ir, &ir.tables[0]);
+
+        assert_eq!(
+            rows[8],
+            [
+                "#type",
+                "list<struct<ResourceCost>>(kind: enum<ResourceType>, id: i32, count: i32)"
+            ]
+        );
+        assert_eq!(rows[10], ["#rule", "required;parser=tuple_list"]);
+    }
+
     fn example_ir() -> ConfigIr {
         let schema: SchemaFile = toml::from_str(
             r#"
@@ -313,6 +322,45 @@ name = "cost"
 type = "struct<ResourceCost>"
 required = true
 parser = { kind = "tuple" }
+"#,
+        )
+        .unwrap();
+        normalize_schema(schema).unwrap()
+    }
+
+    fn tuple_list_ir() -> ConfigIr {
+        let schema: SchemaFile = toml::from_str(
+            r#"
+package = "game_config"
+
+[[enums]]
+name = "ResourceType"
+values = ["Item"]
+
+[[structs]]
+name = "ResourceCost"
+
+[[structs.fields]]
+name = "kind"
+type = "enum<ResourceType>"
+
+[[structs.fields]]
+name = "id"
+type = "i32"
+
+[[structs.fields]]
+name = "count"
+type = "i32"
+
+[[tables]]
+name = "Recipe"
+mode = "list"
+
+[[tables.fields]]
+name = "materials"
+type = "list<ResourceCost>"
+required = true
+parser = { kind = "tuple_list" }
 "#,
         )
         .unwrap();

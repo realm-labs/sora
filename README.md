@@ -235,7 +235,7 @@ sheet = "Item"
 
 The CLI can still read TOML row data through `--data-format toml` for tests and simple automation, and CSV row data through `--data-format csv` when each file has a header row matching schema field names. Validation checks required fields, unknown fields, primitive compatibility, enum values, ranges, struct fields, references, map keys, and singleton row counts.
 
-Inline object fields can use tuple parsing when JSON is too verbose for table editing. Define a struct, then set `parser = "tuple"` and a `separator` on a `struct<T>` field:
+Inline object fields can use tuple parsing when JSON is too verbose for table editing. Define a struct, then set `parser = { kind = "tuple" }` on a `struct<T>` field:
 
 ```toml
 [[structs]]
@@ -256,8 +256,7 @@ type = "i32"
 [[tables.fields]]
 name = "cost"
 type = "struct<ResourceCost>"
-parser = "tuple"
-separator = ","
+parser = { kind = "tuple" }
 ```
 
 The table cell is filled in struct field order:
@@ -266,7 +265,30 @@ The table cell is filled in struct field order:
 Item,2003,4
 ```
 
-Generated Excel templates expand tuple struct fields in the `#type` row, for example `struct<ResourceCost>(kind: enum<ResourceType>, id: i32, count: i32)`, and include the same shape in the cell note.
+Lists of small inline structs can use `tuple_list`. The default item separator is `|`, and each item still uses comma-separated struct fields:
+
+```toml
+[[tables.fields]]
+name = "materials"
+type = "list<ResourceCost>"
+parser = { kind = "tuple_list" }
+```
+
+```text
+Item,2003,4|Gold,0,1000
+```
+
+Use `item_separator` when `;` is preferred:
+
+```toml
+parser = { kind = "tuple_list", item_separator = ";" }
+```
+
+```text
+Item,2003,4;Gold,0,1000
+```
+
+Generated Excel templates expand tuple struct fields in the `#type` row, for example `struct<ResourceCost>(kind: enum<ResourceType>, id: i32, count: i32)` or `list<struct<ResourceCost>>(kind: enum<ResourceType>, id: i32, count: i32)`, and include the same shape in the cell note.
 
 ## Exporter Architecture
 

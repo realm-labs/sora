@@ -2817,7 +2817,7 @@
               4
             ],
             "parser": {
-              "kind": "json",
+              "kind": "tuple_list",
               "options": {}
             },
             "aggregation": null

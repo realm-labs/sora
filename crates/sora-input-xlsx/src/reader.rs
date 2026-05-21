@@ -217,6 +217,39 @@ mod tests {
     }
 
     #[test]
+    fn loads_tuple_list_xlsx_cell_values() {
+        let ir = tuple_list_ir();
+        let base = temp_dir();
+        let xlsx_path = base.join("Recipe.xlsx");
+        write_workbook_rows(
+            &ir,
+            &ir.tables[0],
+            &xlsx_path,
+            &[vec!["1001", "Item,2003,4|Gold,0,1000"]],
+        );
+
+        let data = load_xlsx_config_data(&ir, &base).unwrap();
+
+        assert_eq!(
+            data.tables[0].rows[0].values["materials"],
+            Value::List(vec![
+                Value::Object(BTreeMap::from([
+                    ("count".to_owned(), Value::Integer(4)),
+                    ("id".to_owned(), Value::Integer(2003)),
+                    ("kind".to_owned(), Value::String("Item".to_owned())),
+                ])),
+                Value::Object(BTreeMap::from([
+                    ("count".to_owned(), Value::Integer(1000)),
+                    ("id".to_owned(), Value::Integer(0)),
+                    ("kind".to_owned(), Value::String("Gold".to_owned())),
+                ])),
+            ])
+        );
+
+        let _ = std::fs::remove_dir_all(base);
+    }
+
+    #[test]
     fn loads_tuple_struct_cell_values() {
         let ir = tuple_ir();
         let base = temp_dir();
@@ -376,6 +409,58 @@ sheet = "Reward"
 name = "cost"
 type = "struct<ResourceCost>"
 parser = { kind = "tuple" }
+"#,
+        )
+        .unwrap();
+        let ir = normalize_schema(schema).unwrap();
+        validate_config_ir(&ir).unwrap();
+        ir
+    }
+
+    fn tuple_list_ir() -> ConfigIr {
+        let schema = toml::from_str(
+            r#"
+package = "game_config"
+
+[[enums]]
+name = "ResourceType"
+values = ["Item", "Gold"]
+
+[[structs]]
+name = "ResourceCost"
+
+[[structs.fields]]
+name = "kind"
+type = "enum<ResourceType>"
+
+[[structs.fields]]
+name = "id"
+type = "i32"
+
+[[structs.fields]]
+name = "count"
+type = "i32"
+
+[[tables]]
+name = "Recipe"
+mode = "map"
+key = "id"
+
+[tables.source]
+format = "xlsx"
+file = "Recipe.xlsx"
+sheet = "Recipe"
+
+[[tables.fields]]
+name = "id"
+type = "i32"
+key = true
+required = true
+
+[[tables.fields]]
+name = "materials"
+type = "list<ResourceCost>"
+parser = { kind = "tuple_list" }
 "#,
         )
         .unwrap();

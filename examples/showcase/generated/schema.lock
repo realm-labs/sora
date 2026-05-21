@@ -1,7 +1,7 @@
 {
   "version": 1,
   "package": "com.sora.showcase",
-  "fingerprint": "63fdb7806ef5a790",
+  "fingerprint": "8cc3361563a68f03",
   "schema": {
     "package": "com.sora.showcase",
     "enums": [
@@ -2835,7 +2835,7 @@
               4
             ],
             "parser": {
-              "kind": "json",
+              "kind": "tuple_list",
               "options": {}
             },
             "aggregation": null

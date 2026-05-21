@@ -863,7 +863,7 @@ required = true
 [[tables.fields]]
 name = "materials"
 type = "list<ResourceCost>"
-parser = { kind = "json" }
+parser = { kind = "tuple_list" }
 length = [1, 4]
 required = true
 

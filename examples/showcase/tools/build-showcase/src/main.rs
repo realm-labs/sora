@@ -508,7 +508,7 @@ fn showcase_rows(table: &str) -> Vec<Vec<String>> {
                     (11000 + index).to_string(),
                     item_id(index).to_string(),
                     format!(
-                        "[{{\"kind\":\"Item\",\"id\":{},\"count\":{} }},{{\"kind\":\"Gold\",\"id\":0,\"count\":{} }}]",
+                        "Item,{},{}|Gold,0,{}",
                         item_id(index + 1),
                         2 + index % 4,
                         100 + index * 10

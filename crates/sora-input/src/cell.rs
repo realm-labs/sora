@@ -162,6 +162,10 @@ fn separated_value(
     expected_len: Option<usize>,
     context: &CellContext<'_>,
 ) -> Result<Value> {
+    if parser_kind(context) == Some("tuple_list") {
+        return tuple_list_value(source, element, expected_len, context);
+    }
+
     let separator = parser_option(context, "separator").unwrap_or(",");
     let source = split_source(source);
     let items = source.split(separator).map(str::trim).collect::<Vec<_>>();
@@ -189,6 +193,50 @@ fn split_source(source: &str) -> &str {
         .strip_prefix('[')
         .and_then(|inner| inner.strip_suffix(']'))
         .unwrap_or(source)
+}
+
+fn tuple_list_value(
+    source: &str,
+    element: &TypeIr,
+    expected_len: Option<usize>,
+    context: &CellContext<'_>,
+) -> Result<Value> {
+    let struct_name = tuple_list_struct_name(element)
+        .ok_or_else(|| context.error("tuple_list parser requires list or array of struct"))?;
+    let item_separator = parser_option(context, "item_separator").unwrap_or("|");
+    let source = split_source(source);
+    let items = if source.trim().is_empty() {
+        Vec::new()
+    } else {
+        source
+            .split(item_separator)
+            .map(str::trim)
+            .collect::<Vec<_>>()
+    };
+    if let Some(expected_len) = expected_len
+        && items.len() != expected_len
+    {
+        return Err(context.error(format!(
+            "expected {} tuple list items, got {}",
+            expected_len,
+            items.len()
+        )));
+    }
+
+    Ok(Value::List(
+        items
+            .iter()
+            .map(|item| tuple_object_value(item, struct_name, context))
+            .collect::<Result<Vec<_>>>()?,
+    ))
+}
+
+fn tuple_list_struct_name(ty: &TypeIr) -> Option<&str> {
+    match ty {
+        TypeIr::Optional(inner) => tuple_list_struct_name(inner),
+        TypeIr::Struct(name) => Some(name),
+        _ => None,
+    }
 }
 
 fn tuple_object_value(source: &str, struct_name: &str, context: &CellContext<'_>) -> Result<Value> {

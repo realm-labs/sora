@@ -442,6 +442,15 @@ fn validate_parser_format(
             validate_tuple_target(field_name, ty)?;
             validate_parser_options(field_name, &parser.kind, &parser.options, &["separator"])
         }
+        "tuple_list" => {
+            validate_tuple_list_target(field_name, ty)?;
+            validate_parser_options(
+                field_name,
+                &parser.kind,
+                &parser.options,
+                &["separator", "item_separator"],
+            )
+        }
         "json" => {
             validate_parser_options(field_name, &parser.kind, &parser.options, &[])?;
             Ok(())
@@ -459,6 +468,24 @@ fn validate_tuple_target(field_name: &str, ty: &TypeIr) -> Result<()> {
         TypeIr::Optional(inner) => validate_tuple_target(field_name, inner),
         _ => Err(SoraError::InvalidSchema(format!(
             "field `{field_name}` declares parser `tuple` but type `{ty}` is not struct"
+        ))),
+    }
+}
+
+fn validate_tuple_list_target(field_name: &str, ty: &TypeIr) -> Result<()> {
+    match ty {
+        TypeIr::List(element) | TypeIr::Array { element, .. } => validate_tuple_target(
+            field_name,
+            element,
+        )
+        .map_err(|_| {
+            SoraError::InvalidSchema(format!(
+                "field `{field_name}` declares parser `tuple_list` but type `{ty}` is not list or array of struct"
+            ))
+        }),
+        TypeIr::Optional(inner) => validate_tuple_list_target(field_name, inner),
+        _ => Err(SoraError::InvalidSchema(format!(
+            "field `{field_name}` declares parser `tuple_list` but type `{ty}` is not list or array of struct"
         ))),
     }
 }
@@ -622,6 +649,46 @@ parser = { kind = "tuple" }
     }
 
     #[test]
+    fn normalizes_tuple_list_parser() {
+        let schema: SchemaFile = toml::from_str(
+            r#"
+package = "game_config"
+
+[[structs]]
+name = "ResourceCost"
+
+[[structs.fields]]
+name = "kind"
+type = "string"
+
+[[structs.fields]]
+name = "id"
+type = "i32"
+
+[[structs.fields]]
+name = "count"
+type = "i32"
+
+[[tables]]
+name = "Recipe"
+mode = "list"
+
+[[tables.fields]]
+name = "materials"
+type = "list<ResourceCost>"
+parser = { kind = "tuple_list", item_separator = ";", separator = "," }
+"#,
+        )
+        .unwrap();
+
+        let ir = normalize_schema(schema).unwrap();
+        let parser = ir.tables[0].fields[0].parser.as_ref().unwrap();
+        assert_eq!(parser.kind, "tuple_list");
+        assert_eq!(parser.options["item_separator"], ";");
+        assert_eq!(parser.options["separator"], ",");
+    }
+
+    #[test]
     fn default_collections_do_not_need_parser_metadata() {
         let schema: SchemaFile = toml::from_str(
             r#"
@@ -662,6 +729,26 @@ parser = { kind = "split", separator = "|" }
         assert!(matches!(
             normalize_schema(scalar_split).unwrap_err(),
             SoraError::InvalidSchema(message) if message.contains("is not list or array")
+        ));
+
+        let scalar_tuple_list: SchemaFile = toml::from_str(
+            r#"
+package = "game_config"
+
+[[tables]]
+name = "Recipe"
+mode = "list"
+
+[[tables.fields]]
+name = "materials"
+type = "list<string>"
+parser = { kind = "tuple_list" }
+"#,
+        )
+        .unwrap();
+        assert!(matches!(
+            normalize_schema(scalar_tuple_list).unwrap_err(),
+            SoraError::InvalidSchema(message) if message.contains("not list or array of struct")
         ));
 
         let unknown_parser: SchemaFile = toml::from_str(
