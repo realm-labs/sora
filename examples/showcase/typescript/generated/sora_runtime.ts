@@ -17,6 +17,13 @@ export class SoraReadError extends Error {
     }
 }
 
+export interface SoraConfigTable {
+    name(): string;
+    mode(): string;
+    key(): string | undefined;
+    len(): number;
+}
+
 interface SoraSection {
     kind: number;
     compression: number;

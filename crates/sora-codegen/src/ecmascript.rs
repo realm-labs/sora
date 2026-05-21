@@ -68,6 +68,7 @@ pub struct EcmaScriptRecord {
     pub snake_name: String,
     pub imports: Vec<EcmaScriptImport>,
     pub fields: Vec<EcmaScriptField>,
+    pub table: Option<EcmaScriptTable>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -114,6 +115,11 @@ pub struct EcmaScriptField {
 
 impl EcmaScriptModel {
     pub fn from_base_model(ir: &ConfigIr, model: BaseModel) -> Self {
+        let tables = model
+            .tables
+            .into_iter()
+            .map(|item| ecmascript_table(ir, item))
+            .collect::<Vec<_>>();
         Self {
             package: model.package,
             enums: model
@@ -133,13 +139,15 @@ impl EcmaScriptModel {
             records: model
                 .records
                 .into_iter()
-                .map(|item| ecmascript_record(ir, item))
+                .map(|item| {
+                    let table = tables
+                        .iter()
+                        .find(|table| table.row_type == item.pascal_name)
+                        .cloned();
+                    ecmascript_record(ir, item, table)
+                })
                 .collect(),
-            tables: model
-                .tables
-                .into_iter()
-                .map(|item| ecmascript_table(ir, item))
-                .collect(),
+            tables,
             modules: model.modules,
         }
     }
@@ -171,7 +179,11 @@ fn ecmascript_variant(ir: &ConfigIr, variant: BaseUnionVariant) -> EcmaScriptUni
     }
 }
 
-fn ecmascript_record(ir: &ConfigIr, record: BaseRecord) -> EcmaScriptRecord {
+fn ecmascript_record(
+    ir: &ConfigIr,
+    record: BaseRecord,
+    table: Option<EcmaScriptTable>,
+) -> EcmaScriptRecord {
     EcmaScriptRecord {
         pascal_name: record.pascal_name,
         snake_name: record.snake_name,
@@ -181,6 +193,7 @@ fn ecmascript_record(ir: &ConfigIr, record: BaseRecord) -> EcmaScriptRecord {
             .into_iter()
             .map(|field| ecmascript_field(ir, field))
             .collect(),
+        table,
     }
 }
 

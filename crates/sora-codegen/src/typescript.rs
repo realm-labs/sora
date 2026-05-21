@@ -112,11 +112,13 @@ mod tests {
         assert!(action.contains("export type Action ="));
         assert!(action.contains("type: \"AddItem\""));
         assert!(runtime.contains("readI64(): bigint"));
-        assert!(config.contains("export class ItemTable"));
-        assert!(config.contains("get(key: number): Item | undefined"));
-        assert!(config.contains("getByName(name: string): Item | undefined"));
-        assert!(config.contains("findByItemType(itemType: ItemType): Item[]"));
+        assert!(item.contains("export class ItemTable"));
+        assert!(item.contains("get(key: number): Item | undefined"));
+        assert!(item.contains("getByName(name: string): Item | undefined"));
+        assert!(item.contains("findByItemType(itemType: ItemType): Item[]"));
+        assert!(!config.contains("export class ItemTable"));
         assert!(config.contains("static fromBytes(bytes: Uint8Array | ArrayBuffer): SoraConfig"));
+        assert!(runtime.contains("export interface SoraConfigTable"));
         assert!(index.contains("export * from \"./sora_config.js\";"));
         assert!(index.ends_with('\n'));
 
