@@ -14,8 +14,9 @@ final class SoraReadException implements Exception {
 
 final class SoraValueBundle {
   final Map<String, List<SoraValue>> _tables;
+  final String schemaFingerprint;
 
-  const SoraValueBundle._(this._tables);
+  const SoraValueBundle._(this._tables, this.schemaFingerprint);
 
   List<T> decodeTable<T>(String name, T Function(SoraValue value) decode) {
     final rows = _tables[name];
@@ -36,13 +37,14 @@ final class SoraValueBundle {
     if (format != expectedFormat) {
       throw SoraReadException('expected `$expectedFormat` bundle, got `$format`');
     }
+    final schemaFingerprint = root.get('schema_fingerprint').asString();
     final tableValues = root.get('data').asObject().get('tables').asRawList();
     final tables = <String, List<SoraValue>>{};
     for (final tableValue in tableValues) {
       final table = tableValue.asObject();
       tables[table.get('name').asString()] = table.get('rows').asRawList();
     }
-    return SoraValueBundle._(tables);
+    return SoraValueBundle._(tables, schemaFingerprint);
   }
 }
 

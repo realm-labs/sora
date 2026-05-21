@@ -65,6 +65,7 @@ impl CodeGenerator for DartCodeGenerator {
 
 #[derive(Debug, Clone, Serialize)]
 struct DartModel {
+    schema_fingerprint: String,
     enums: Vec<DartEnum>,
     unions: Vec<DartUnion>,
     records: Vec<DartRecord>,
@@ -197,6 +198,7 @@ impl DartModel {
             .collect();
 
         Self {
+            schema_fingerprint: model.schema_fingerprint,
             enums,
             unions,
             records,

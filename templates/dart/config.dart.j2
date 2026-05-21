@@ -5,6 +5,8 @@ import 'runtime.dart';
 import '{{ module }}.dart';
 {%- endfor %}
 
+const soraSchemaFingerprint = '{{ model.schema_fingerprint }}';
+
 final class SoraConfig {
   final Map<Type, Object> _tables;
 
@@ -12,6 +14,11 @@ final class SoraConfig {
 
   static SoraConfig fromBytes(List<int> bytes) {
     final bundle = SoraValueBundle.parseJson(bytes);
+    if (bundle.schemaFingerprint != soraSchemaFingerprint) {
+      throw SoraReadException(
+        'schema fingerprint mismatch: generated code expects $soraSchemaFingerprint, bundle contains ${bundle.schemaFingerprint}',
+      );
+    }
     return SoraConfig._({
 {%- for table in model.tables %}
       {{ table.pascal_name }}Table: {{ table.pascal_name }}Table.decode(
