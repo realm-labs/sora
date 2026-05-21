@@ -39,3 +39,22 @@ export function decode{{ enum.name }}(reader) {
     return value;
 {%- endif %}
 }
+
+{%- if runtime_format != "sora" %}
+
+export function decode{{ enum.name }}Value(value) {
+{%- if options.enum_is_integer %}
+    const ordinal = value.asInt();
+    if (!values.has(ordinal)) {
+        throw new Error(`invalid enum ordinal ${ordinal} for {{ enum.name }}`);
+    }
+    return ordinal;
+{%- else %}
+    const name = value.asString();
+    if (!values.includes(name)) {
+        throw new Error(`invalid enum value ${name} for {{ enum.name }}`);
+    }
+    return name;
+{%- endif %}
+}
+{%- endif %}

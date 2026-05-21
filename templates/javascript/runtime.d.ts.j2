@@ -24,6 +24,37 @@ export declare class SoraReader {
     readList<T>(read: () => T): T[];
 }
 
+{%- if runtime_format != "sora" %}
+
+export declare class SoraValueBundle {
+    decodeTable<T>(name: string, decode: (value: SoraValue) => T): T[];
+{%- if runtime_format == "json" %}
+    static parseJson(input: Uint8Array | ArrayBuffer): SoraValueBundle;
+{%- elif runtime_format == "cbor" %}
+    static parseCbor(input: Uint8Array | ArrayBuffer): SoraValueBundle;
+{%- elif runtime_format == "protobuf" %}
+    static parseProtobuf(input: Uint8Array | ArrayBuffer): SoraValueBundle;
+{%- endif %}
+}
+
+export declare class SoraObject {
+    get(name: string): SoraValue;
+}
+
+export declare class SoraValue {
+    isNull(): boolean;
+    asObject(): SoraObject;
+    asRawList(): SoraValue[];
+    asList<T>(decode: (value: SoraValue) => T): T[];
+    asBool(): boolean;
+    asInt(): number;
+    asBigInt(): bigint;
+    asNumber(): number;
+    asString(): string;
+}
+
+{%- endif %}
+
 export declare function requireSingletonTable<T>(rows: T[], name: string): T;
 export declare function decodeMapTable<K, V>(rows: V[], key: (row: V) => K): Map<K, V>;
 export declare function decodeUniqueIndex<K, V>(rows: V[], key: (row: V) => K): Map<K, V>;
