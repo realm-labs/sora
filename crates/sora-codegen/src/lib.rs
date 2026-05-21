@@ -7,6 +7,7 @@ pub mod erlang;
 pub mod format;
 pub mod generator;
 pub mod go;
+pub mod godot;
 pub mod java;
 pub mod javascript;
 pub mod kotlin;

@@ -35,6 +35,11 @@ out = "dart/lib/src/generated"
 scope = "client"
 
 [[build.codegen]]
+target = "godot"
+out = "godot/addons/sora_config/generated"
+scope = "client"
+
+[[build.codegen]]
 target = "c"
 out = "c/generated"
 format = "auto"
@@ -85,6 +90,11 @@ scope = "client"
 
 [[build.exports]]
 format = "json"
+out = "godot/config/config.json"
+scope = "client"
+
+[[build.exports]]
+format = "json"
 out = "generated/server/config.json"
 scope = "server"
 
@@ -121,6 +131,9 @@ runtime_format = "sora"
 runtime_format = "sora"
 
 [codegen.dart]
+runtime_format = "json"
+
+[codegen.godot]
 runtime_format = "json"
 
 [codegen.c]

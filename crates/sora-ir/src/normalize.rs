@@ -80,6 +80,7 @@ impl From<CodegenSchema> for CodegenIr {
             java: LanguageCodegenIr::from(value.java),
             go: LanguageCodegenIr::from(value.go),
             dart: LanguageCodegenIr::from(value.dart),
+            godot: LanguageCodegenIr::from(value.godot),
             c: CCodegenIr {
                 runtime_format: RuntimeFormatIr::from(value.c.runtime_format),
                 c_standard: CStandardIr::from(value.c.c_standard),
@@ -569,6 +570,7 @@ length = [1, 3]
         assert_eq!(ir.codegen.rust.runtime_format, RuntimeFormatIr::Sora);
         assert_eq!(ir.codegen.kotlin.runtime_format, RuntimeFormatIr::Sora);
         assert_eq!(ir.codegen.dart.runtime_format, RuntimeFormatIr::Sora);
+        assert_eq!(ir.codegen.godot.runtime_format, RuntimeFormatIr::Sora);
         assert_eq!(ir.codegen.c.runtime_format, RuntimeFormatIr::Sora);
         assert_eq!(ir.codegen.c.c_standard, CStandardIr::C11);
         assert_eq!(ir.codegen.cpp.runtime_format, RuntimeFormatIr::Sora);

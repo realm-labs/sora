@@ -24,6 +24,7 @@ fn main() -> Result<()> {
     let java_generated = root.join("java/src/generated/java");
     let go_generated = root.join("go/internal/showcase");
     let dart_generated = root.join("dart/lib/src/generated");
+    let godot_generated = root.join("godot/addons/sora_config/generated");
     let c_generated = root.join("c/generated");
     let cpp_generated = root.join("cpp/generated");
     let python_generated = root.join("python/generated");
@@ -47,6 +48,7 @@ fn main() -> Result<()> {
     clean_dir(&java_generated)?;
     clean_dir(&go_generated)?;
     clean_dir(&dart_generated)?;
+    clean_dir(&godot_generated)?;
     clean_dir(&c_generated)?;
     clean_dir(&cpp_generated)?;
     clean_dir(&python_generated)?;
@@ -54,6 +56,7 @@ fn main() -> Result<()> {
     clean_dir(&generated_root.join("debug-json"))?;
     clean_dir(&generated_root.join("client"))?;
     clean_dir(&generated_root.join("server"))?;
+    clean_dir(&root.join("godot/config"))?;
     clean_file(&generated_root.join("config.json"))?;
     clean_file(&generated_root.join("config.sora.pb"))?;
     clean_file(&generated_root.join("config.pb"))?;
@@ -70,6 +73,13 @@ fn main() -> Result<()> {
         &schema_input,
         CodegenTarget::Dart,
         &dart_generated,
+        sora_codegen::format::FormatMode::Never,
+        Some("client"),
+    )?;
+    sora_core::pipeline::generate_code_with_scope_and_format(
+        &schema_input,
+        CodegenTarget::Godot,
+        &godot_generated,
         sora_codegen::format::FormatMode::Never,
         Some("client"),
     )?;
@@ -95,6 +105,12 @@ fn main() -> Result<()> {
         &project_input,
         "json",
         ExportOutput::File(generated_root.join("client/config.json")),
+        Some("client"),
+    )?;
+    sora_core::pipeline::export_data_with_scope(
+        &project_input,
+        "json",
+        ExportOutput::File(root.join("godot/config/config.json")),
         Some("client"),
     )?;
     sora_core::pipeline::export_data_with_scope(

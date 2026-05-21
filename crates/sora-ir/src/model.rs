@@ -29,6 +29,7 @@ pub struct CodegenIr {
     pub java: LanguageCodegenIr,
     pub go: LanguageCodegenIr,
     pub dart: LanguageCodegenIr,
+    pub godot: LanguageCodegenIr,
     pub c: CCodegenIr,
     pub cpp: CppCodegenIr,
     pub typescript: TypeScriptCodegenIr,

@@ -68,6 +68,31 @@ const EMBEDDED_TEMPLATES: &[EmbeddedTemplate] = &[
         source: include_str!("../../../templates/dart/union.dart.j2"),
     },
     EmbeddedTemplate {
+        target: "godot",
+        file_name: "config.gd.j2",
+        source: include_str!("../../../templates/godot/config.gd.j2"),
+    },
+    EmbeddedTemplate {
+        target: "godot",
+        file_name: "enum.gd.j2",
+        source: include_str!("../../../templates/godot/enum.gd.j2"),
+    },
+    EmbeddedTemplate {
+        target: "godot",
+        file_name: "record.gd.j2",
+        source: include_str!("../../../templates/godot/record.gd.j2"),
+    },
+    EmbeddedTemplate {
+        target: "godot",
+        file_name: "runtime.gd.j2",
+        source: include_str!("../../../templates/godot/runtime.gd.j2"),
+    },
+    EmbeddedTemplate {
+        target: "godot",
+        file_name: "union.gd.j2",
+        source: include_str!("../../../templates/godot/union.gd.j2"),
+    },
+    EmbeddedTemplate {
         target: "c",
         file_name: "config.c.j2",
         source: include_str!("../../../templates/c/config.c.j2"),
@@ -463,7 +488,7 @@ mod tests {
 
     #[test]
     fn embeds_all_templates() {
-        assert_eq!(EMBEDDED_TEMPLATES.len(), 85);
+        assert_eq!(EMBEDDED_TEMPLATES.len(), 90);
         for template in EMBEDDED_TEMPLATES {
             let source = template_source(template.target, template.file_name)
                 .expect("embedded template should be registered");

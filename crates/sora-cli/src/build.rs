@@ -319,6 +319,7 @@ impl BuildTarget {
             "java" => Ok(Self::Java),
             "go" => Ok(Self::Go),
             "dart" => Ok(Self::Dart),
+            "godot" | "gdscript" => Ok(Self::Godot),
             "c" => Ok(Self::C),
             "cpp" | "c++" => Ok(Self::Cpp),
             "typescript" | "ts" => Ok(Self::Typescript),
@@ -328,7 +329,7 @@ impl BuildTarget {
             "proto-schema" => Ok(Self::ProtoSchema),
             "python" | "py" => Ok(Self::Python),
             _ => Err(format!(
-                "unsupported codegen target `{value}`; expected rust, kotlin, csharp, java, go, dart, c, cpp, typescript, javascript, erlang, lua, proto-schema, or python"
+                "unsupported codegen target `{value}`; expected rust, kotlin, csharp, java, go, dart, godot, c, cpp, typescript, javascript, erlang, lua, proto-schema, or python"
             )),
         }
     }
@@ -341,6 +342,7 @@ impl BuildTarget {
             Self::Java => "java",
             Self::Go => "go",
             Self::Dart => "dart",
+            Self::Godot => "godot",
             Self::C => "c",
             Self::Cpp => "cpp",
             Self::Typescript => "typescript",
@@ -362,6 +364,7 @@ impl From<BuildTarget> for CodegenTarget {
             BuildTarget::Java => Self::Java,
             BuildTarget::Go => Self::Go,
             BuildTarget::Dart => Self::Dart,
+            BuildTarget::Godot => Self::Godot,
             BuildTarget::C => Self::C,
             BuildTarget::Cpp => Self::Cpp,
             BuildTarget::Typescript => Self::TypeScript,
@@ -412,6 +415,8 @@ mod tests {
         assert!(base.join("generated/python/sora_config.py").exists());
         assert!(base.join("generated/dart/item.dart").exists());
         assert!(base.join("generated/dart/sora_config.dart").exists());
+        assert!(base.join("generated/godot/item.gd").exists());
+        assert!(base.join("generated/godot/sora_config.gd").exists());
         assert!(base.join("generated/proto/sora_config.proto").exists());
         assert!(base.join("generated/config.json").exists());
         assert!(base.join("generated/config.sora.pb").exists());
@@ -513,6 +518,10 @@ target = "dart"
 out = "generated/dart"
 
 [[build.codegen]]
+target = "godot"
+out = "generated/godot"
+
+[[build.codegen]]
 target = "proto-schema"
 out = "generated/proto"
 
@@ -537,6 +546,9 @@ format = "json-debug"
 out = "generated/debug-json"
 
 [codegen.dart]
+runtime_format = "json"
+
+[codegen.godot]
 runtime_format = "json"
 "#,
         )

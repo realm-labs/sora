@@ -43,6 +43,8 @@ pub struct CodegenSchema {
     #[serde(default)]
     pub dart: LanguageCodegenSchema,
     #[serde(default)]
+    pub godot: LanguageCodegenSchema,
+    #[serde(default)]
     pub c: CCodegenSchema,
     #[serde(default)]
     pub cpp: CppCodegenSchema,
@@ -567,6 +569,9 @@ map_type = "fx_hash_map"
 [codegen.kotlin]
 runtime_format = "sora"
 
+[codegen.godot]
+runtime_format = "json"
+
 [codegen.c]
 runtime_format = "sora"
 c_standard = "c17"
@@ -607,6 +612,10 @@ enum_repr = "string"
         assert_eq!(
             schema.codegen.kotlin.runtime_format,
             RuntimeFormatSchema::Sora
+        );
+        assert_eq!(
+            schema.codegen.godot.runtime_format,
+            RuntimeFormatSchema::Json
         );
         assert_eq!(schema.codegen.c.runtime_format, RuntimeFormatSchema::Sora);
         assert_eq!(schema.codegen.c.c_standard, CStandardSchema::C17);

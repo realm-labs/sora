@@ -24,6 +24,10 @@ pub fn dart_type_name(ir: &ConfigIr, ty: &TypeIr) -> String {
     dart_type_name_inner(ir, ty)
 }
 
+pub fn godot_type_name(ir: &ConfigIr, ty: &TypeIr) -> String {
+    godot_type_name_inner(ir, ty)
+}
+
 pub fn python_type_name(ir: &ConfigIr, ty: &TypeIr) -> String {
     python_type_name_inner(ir, ty)
 }
@@ -126,6 +130,19 @@ fn dart_type_name_inner(ir: &ConfigIr, ty: &TypeIr) -> String {
         }
         TypeIr::Ref { table, field } => ref_type(ir, table, field, dart_type_name_inner, "int"),
         TypeIr::Optional(element) => format!("{}?", dart_type_name_inner(ir, element)),
+    }
+}
+
+fn godot_type_name_inner(ir: &ConfigIr, ty: &TypeIr) -> String {
+    match ty {
+        TypeIr::Bool => "bool".to_owned(),
+        TypeIr::I32 | TypeIr::I64 => "int".to_owned(),
+        TypeIr::F32 | TypeIr::F64 => "float".to_owned(),
+        TypeIr::String | TypeIr::Enum(_) => "String".to_owned(),
+        TypeIr::Struct(name) | TypeIr::Union(name) => name.clone(),
+        TypeIr::List(_) | TypeIr::Array { .. } => "Array".to_owned(),
+        TypeIr::Ref { table, field } => ref_type(ir, table, field, godot_type_name_inner, "int"),
+        TypeIr::Optional(_) => "Variant".to_owned(),
     }
 }
 
@@ -313,6 +330,30 @@ mod tests {
 
         for (source, expected) in cases {
             assert_eq!(dart_type_name(&ir, &parse_type(source).unwrap()), expected);
+        }
+    }
+
+    #[test]
+    fn maps_godot_types() {
+        let ir = example_ir();
+        let cases = [
+            ("bool", "bool"),
+            ("i32", "int"),
+            ("i64", "int"),
+            ("f32", "float"),
+            ("f64", "float"),
+            ("string", "String"),
+            ("enum<ItemType>", "String"),
+            ("struct<Reward>", "Reward"),
+            ("union<Action>", "Action"),
+            ("list<i32>", "Array"),
+            ("array<i32,3>", "Array"),
+            ("optional<string>", "Variant"),
+            ("ref<Item.id>", "int"),
+        ];
+
+        for (source, expected) in cases {
+            assert_eq!(godot_type_name(&ir, &parse_type(source).unwrap()), expected);
         }
     }
 

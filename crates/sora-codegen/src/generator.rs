@@ -5,10 +5,10 @@ use sora_ir::model::{ConfigIr, RuntimeFormatIr};
 
 use crate::{
     c::CCodeGenerator, cpp::CppCodeGenerator, csharp::CSharpCodeGenerator, dart::DartCodeGenerator,
-    erlang::ErlangCodeGenerator, go::GoCodeGenerator, java::JavaCodeGenerator,
-    javascript::JavaScriptCodeGenerator, kotlin::KotlinCodeGenerator, lua::LuaCodeGenerator,
-    proto::ProtoCodeGenerator, python::PythonCodeGenerator, rust::RustCodeGenerator,
-    target::CodegenTarget, typescript::TypeScriptCodeGenerator,
+    erlang::ErlangCodeGenerator, go::GoCodeGenerator, godot::GodotCodeGenerator,
+    java::JavaCodeGenerator, javascript::JavaScriptCodeGenerator, kotlin::KotlinCodeGenerator,
+    lua::LuaCodeGenerator, proto::ProtoCodeGenerator, python::PythonCodeGenerator,
+    rust::RustCodeGenerator, target::CodegenTarget, typescript::TypeScriptCodeGenerator,
 };
 
 pub trait CodeGenerator {
@@ -46,6 +46,7 @@ pub fn generator_for_target(target: CodegenTarget) -> Box<dyn CodeGenerator> {
         CodegenTarget::Java => Box::new(JavaCodeGenerator),
         CodegenTarget::Go => Box::new(GoCodeGenerator),
         CodegenTarget::Dart => Box::new(DartCodeGenerator),
+        CodegenTarget::Godot => Box::new(GodotCodeGenerator),
         CodegenTarget::C => Box::new(CCodeGenerator),
         CodegenTarget::Cpp => Box::new(CppCodeGenerator),
         CodegenTarget::TypeScript => Box::new(TypeScriptCodeGenerator),
