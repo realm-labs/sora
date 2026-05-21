@@ -1,0 +1,22 @@
+#ifndef SORA_SHOWCASE_QUEST_TYPE_H
+#define SORA_SHOWCASE_QUEST_TYPE_H
+
+#include "sora_runtime.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+typedef enum sora_showcase_quest_type {
+    SORA_SHOWCASE_QUEST_TYPE_MAIN = 0,
+    SORA_SHOWCASE_QUEST_TYPE_SIDE = 1,
+    SORA_SHOWCASE_QUEST_TYPE_DAILY = 2,
+} sora_showcase_quest_type;
+
+sora_result sora_showcase_quest_type_decode(sora_reader* reader, sora_showcase_quest_type* out);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif

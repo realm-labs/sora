@@ -1,0 +1,19 @@
+#include "resource_kind.h"
+
+sora_result sora_showcase_resource_kind_decode(sora_reader* reader, sora_showcase_resource_kind* out) {
+    uint32_t ordinal = 0;
+    SORA_TRY(sora_reader_read_u32(reader, &ordinal));
+    switch (ordinal) {
+    case 0:
+        *out = SORA_SHOWCASE_RESOURCE_KIND_ITEM;
+        return sora_ok();
+    case 1:
+        *out = SORA_SHOWCASE_RESOURCE_KIND_GOLD;
+        return sora_ok();
+    case 2:
+        *out = SORA_SHOWCASE_RESOURCE_KIND_DIAMOND;
+        return sora_ok();
+    default:
+        return sora_error(SORA_ERROR_DECODE, "invalid enum ordinal for ResourceKind");
+    }
+}

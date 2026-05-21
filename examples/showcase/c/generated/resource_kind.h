@@ -1,0 +1,22 @@
+#ifndef SORA_SHOWCASE_RESOURCE_KIND_H
+#define SORA_SHOWCASE_RESOURCE_KIND_H
+
+#include "sora_runtime.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+typedef enum sora_showcase_resource_kind {
+    SORA_SHOWCASE_RESOURCE_KIND_ITEM = 0,
+    SORA_SHOWCASE_RESOURCE_KIND_GOLD = 1,
+    SORA_SHOWCASE_RESOURCE_KIND_DIAMOND = 2,
+} sora_showcase_resource_kind;
+
+sora_result sora_showcase_resource_kind_decode(sora_reader* reader, sora_showcase_resource_kind* out);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif

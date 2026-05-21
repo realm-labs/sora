@@ -1,0 +1,61 @@
+#ifndef {{ options.prefix_upper }}_SORA_CONFIG_H
+#define {{ options.prefix_upper }}_SORA_CONFIG_H
+
+#include "sora_runtime.h"
+{%- for module in model.modules %}
+#include "{{ module }}.h"
+{%- endfor %}
+
+#include <stddef.h>
+#include <stdint.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+typedef struct {{ options.prefix }}_config {{ options.prefix }}_config;
+
+sora_result {{ options.prefix }}_config_load_from_bytes(
+    const uint8_t* bytes,
+    size_t len,
+    {{ options.prefix }}_config** out
+);
+void {{ options.prefix }}_config_free({{ options.prefix }}_config* config);
+
+{%- for table in model.tables %}
+
+const {{ table.row_type }}* {{ options.prefix }}_config_{{ table.snake_name }}_rows(
+    const {{ options.prefix }}_config* config,
+    size_t* out_len
+);
+{%- if table.mode == "map" and table.key_field_name %}
+const {{ table.row_type }}* {{ options.prefix }}_config_get_{{ table.snake_name }}(
+    const {{ options.prefix }}_config* config,
+    {{ table.key_param_decl }}
+);
+{%- elif table.mode == "singleton" %}
+const {{ table.row_type }}* {{ options.prefix }}_config_{{ table.snake_name }}_row(
+    const {{ options.prefix }}_config* config
+);
+{%- endif %}
+{%- for index in table.unique_indexes %}
+const {{ table.row_type }}* {{ options.prefix }}_config_{{ table.snake_name }}_{{ index.method_name }}(
+    const {{ options.prefix }}_config* config,
+    {{ index.param_decl }}
+);
+{%- endfor %}
+{%- for index in table.non_unique_indexes %}
+size_t {{ options.prefix }}_config_{{ table.snake_name }}_find_{{ index.name }}(
+    const {{ options.prefix }}_config* config,
+    {{ index.param_decl }},
+    const {{ table.row_type }}** out,
+    size_t capacity
+);
+{%- endfor %}
+{%- endfor %}
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif

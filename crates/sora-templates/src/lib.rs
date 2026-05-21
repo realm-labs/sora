@@ -33,6 +33,66 @@ const EMBEDDED_TEMPLATES: &[EmbeddedTemplate] = &[
         source: include_str!("../../../templates/csharp/union.cs.j2"),
     },
     EmbeddedTemplate {
+        target: "c",
+        file_name: "config.c.j2",
+        source: include_str!("../../../templates/c/config.c.j2"),
+    },
+    EmbeddedTemplate {
+        target: "c",
+        file_name: "config.h.j2",
+        source: include_str!("../../../templates/c/config.h.j2"),
+    },
+    EmbeddedTemplate {
+        target: "c",
+        file_name: "enum.c.j2",
+        source: include_str!("../../../templates/c/enum.c.j2"),
+    },
+    EmbeddedTemplate {
+        target: "c",
+        file_name: "enum.h.j2",
+        source: include_str!("../../../templates/c/enum.h.j2"),
+    },
+    EmbeddedTemplate {
+        target: "c",
+        file_name: "record.c.j2",
+        source: include_str!("../../../templates/c/record.c.j2"),
+    },
+    EmbeddedTemplate {
+        target: "c",
+        file_name: "record.h.j2",
+        source: include_str!("../../../templates/c/record.h.j2"),
+    },
+    EmbeddedTemplate {
+        target: "c",
+        file_name: "runtime.c.j2",
+        source: include_str!("../../../templates/c/runtime.c.j2"),
+    },
+    EmbeddedTemplate {
+        target: "c",
+        file_name: "runtime.h.j2",
+        source: include_str!("../../../templates/c/runtime.h.j2"),
+    },
+    EmbeddedTemplate {
+        target: "c",
+        file_name: "types.c.j2",
+        source: include_str!("../../../templates/c/types.c.j2"),
+    },
+    EmbeddedTemplate {
+        target: "c",
+        file_name: "types.h.j2",
+        source: include_str!("../../../templates/c/types.h.j2"),
+    },
+    EmbeddedTemplate {
+        target: "c",
+        file_name: "union.c.j2",
+        source: include_str!("../../../templates/c/union.c.j2"),
+    },
+    EmbeddedTemplate {
+        target: "c",
+        file_name: "union.h.j2",
+        source: include_str!("../../../templates/c/union.h.j2"),
+    },
+    EmbeddedTemplate {
         target: "cpp",
         file_name: "config.hpp.j2",
         source: include_str!("../../../templates/cpp/config.hpp.j2"),
@@ -368,7 +428,7 @@ mod tests {
 
     #[test]
     fn embeds_all_templates() {
-        assert_eq!(EMBEDDED_TEMPLATES.len(), 66);
+        assert_eq!(EMBEDDED_TEMPLATES.len(), 78);
         for template in EMBEDDED_TEMPLATES {
             let source = template_source(template.target, template.file_name)
                 .expect("embedded template should be registered");

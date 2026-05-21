@@ -1,0 +1,29 @@
+#ifndef {{ options.prefix_upper }}_{{ record.snake_name | upper }}_H
+#define {{ options.prefix_upper }}_{{ record.snake_name | upper }}_H
+
+#include "sora_types.h"
+{%- for import in record.imports %}
+#include "{{ import.module }}.h"
+{%- endfor %}
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+typedef struct {{ record.type_name }} {
+{%- for field in record.fields %}
+{%- if field.comment %}
+    /* {{ field.comment }} */
+{%- endif %}
+    {{ field.type_name }} {{ field.name }};
+{%- endfor %}
+} {{ record.type_name }};
+
+sora_result {{ record.decode_fn }}(sora_reader* reader, {{ record.type_name }}* out);
+void {{ record.free_fn }}({{ record.type_name }}* value);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif

@@ -1,0 +1,89 @@
+#ifndef SORA_SHOWCASE_SORA_RUNTIME_H
+#define SORA_SHOWCASE_SORA_RUNTIME_H
+
+#include <stdbool.h>
+#include <stddef.h>
+#include <stdint.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+typedef enum sora_error_code {
+    SORA_OK = 0,
+    SORA_ERROR_INVALID_BUNDLE,
+    SORA_ERROR_UNSUPPORTED_VERSION,
+    SORA_ERROR_OUT_OF_MEMORY,
+    SORA_ERROR_DECODE
+} sora_error_code;
+
+typedef struct sora_result {
+    sora_error_code code;
+    const char* message;
+} sora_result;
+
+static inline sora_result sora_ok(void) {
+    sora_result result = { SORA_OK, NULL };
+    return result;
+}
+
+static inline sora_result sora_error(sora_error_code code, const char* message) {
+    sora_result result = { code, message };
+    return result;
+}
+
+#define SORA_TRY(expr)              \
+    do {                            \
+        sora_result result = (expr); \
+        if (result.code != SORA_OK) { \
+            return result;          \
+        }                           \
+    } while (0)
+
+typedef struct sora_string {
+    char* data;
+    size_t len;
+} sora_string;
+
+typedef struct sora_reader {
+    const uint8_t* bytes;
+    size_t len;
+    size_t cursor;
+} sora_reader;
+
+typedef struct sora_bundle sora_bundle;
+
+typedef sora_result (*sora_decode_row_fn)(sora_reader* reader, void* out);
+typedef void (*sora_free_row_fn)(void* value);
+
+void sora_string_free(sora_string* value);
+bool sora_string_equal(const sora_string* left, const sora_string* right);
+
+void sora_reader_init(sora_reader* reader, const uint8_t* bytes, size_t len);
+bool sora_reader_is_finished(const sora_reader* reader);
+sora_result sora_reader_read_u8(sora_reader* reader, uint8_t* out);
+sora_result sora_reader_read_bool(sora_reader* reader, bool* out);
+sora_result sora_reader_read_u32(sora_reader* reader, uint32_t* out);
+sora_result sora_reader_read_i32(sora_reader* reader, int32_t* out);
+sora_result sora_reader_read_i64(sora_reader* reader, int64_t* out);
+sora_result sora_reader_read_f32(sora_reader* reader, float* out);
+sora_result sora_reader_read_f64(sora_reader* reader, double* out);
+sora_result sora_reader_read_string(sora_reader* reader, sora_string* out);
+
+sora_result sora_bundle_parse(const uint8_t* bytes, size_t len, sora_bundle** out);
+void sora_bundle_free(sora_bundle* bundle);
+sora_result sora_bundle_decode_table(
+    const sora_bundle* bundle,
+    const char* name,
+    size_t row_size,
+    sora_decode_row_fn decode,
+    sora_free_row_fn free_row,
+    void** out_rows,
+    size_t* out_len
+);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif

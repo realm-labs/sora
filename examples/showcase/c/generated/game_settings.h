@@ -1,0 +1,26 @@
+#ifndef SORA_SHOWCASE_GAME_SETTINGS_H
+#define SORA_SHOWCASE_GAME_SETTINGS_H
+
+#include "sora_types.h"
+#include "vec3.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+typedef struct sora_showcase_game_settings {
+    sora_string version;
+    int32_t daily_reset_hour;
+    int32_t starting_gold;
+    sora_showcase_vec3 spawn_pos;
+    sora_showcase_i32_array starter_items;
+} sora_showcase_game_settings;
+
+sora_result sora_showcase_game_settings_decode(sora_reader* reader, sora_showcase_game_settings* out);
+void sora_showcase_game_settings_free(sora_showcase_game_settings* value);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif

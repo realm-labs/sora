@@ -1,0 +1,34 @@
+#include "skill_effect.h"
+
+sora_result sora_showcase_skill_effect_decode(sora_reader* reader, sora_showcase_skill_effect* out) {
+    *out = (sora_showcase_skill_effect){0};
+    {
+        sora_result result = sora_showcase_element_type_decode(reader, &out->element);
+        if (result.code != SORA_OK) {
+            sora_showcase_skill_effect_free(out);
+            return result;
+        }
+    }
+    {
+        sora_result result = sora_reader_read_i32(reader, &out->power);
+        if (result.code != SORA_OK) {
+            sora_showcase_skill_effect_free(out);
+            return result;
+        }
+    }
+    {
+        sora_result result = sora_reader_read_f32(reader, &out->radius);
+        if (result.code != SORA_OK) {
+            sora_showcase_skill_effect_free(out);
+            return result;
+        }
+    }
+    return sora_ok();
+}
+
+void sora_showcase_skill_effect_free(sora_showcase_skill_effect* value) {
+    if (value == NULL) {
+        return;
+    }
+    *value = (sora_showcase_skill_effect){0};
+}

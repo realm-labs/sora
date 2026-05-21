@@ -1,0 +1,25 @@
+#ifndef SORA_SHOWCASE_EQUIPMENT_SET_H
+#define SORA_SHOWCASE_EQUIPMENT_SET_H
+
+#include "sora_types.h"
+#include "skill_effect.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+typedef struct sora_showcase_equipment_set {
+    int32_t id;
+    sora_string name;
+    sora_showcase_i32_array item_ids;
+    sora_showcase_skill_effect bonus_effect;
+} sora_showcase_equipment_set;
+
+sora_result sora_showcase_equipment_set_decode(sora_reader* reader, sora_showcase_equipment_set* out);
+void sora_showcase_equipment_set_free(sora_showcase_equipment_set* value);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif

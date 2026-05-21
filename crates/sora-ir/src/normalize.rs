@@ -1,19 +1,19 @@
 use sora_diagnostics::{Result, SoraError};
 use sora_schema::model::{
-    CodegenSchema, CppStandardSchema, EnumReprSchema, ErlangCodegenSchema, ErlangEnumReprSchema,
-    FieldSchema, IndexSchema, JavaScriptCodegenSchema, LanguageCodegenSchema, LuaCodegenSchema,
-    LuaEnumReprSchema, LuaVersionSchema, RuntimeFormatSchema, RustMapTypeSchema, SchemaFile,
-    TableModeSchema, TableSchema, TableSourceSchema, TypeScriptCodegenSchema, UnionSchema,
-    UnionVariantSchema,
+    CStandardSchema, CodegenSchema, CppStandardSchema, EnumReprSchema, ErlangCodegenSchema,
+    ErlangEnumReprSchema, FieldSchema, IndexSchema, JavaScriptCodegenSchema, LanguageCodegenSchema,
+    LuaCodegenSchema, LuaEnumReprSchema, LuaVersionSchema, RuntimeFormatSchema, RustMapTypeSchema,
+    SchemaFile, TableModeSchema, TableSchema, TableSourceSchema, TypeScriptCodegenSchema,
+    UnionSchema, UnionVariantSchema,
 };
 
 use crate::{
     model::{
-        AggregationIr, CodegenIr, ConfigIr, CppCodegenIr, CppStandardIr, EnumIr, EnumReprIr,
-        ErlangCodegenIr, ErlangEnumReprIr, FieldIr, IndexIr, JavaScriptCodegenIr,
-        LanguageCodegenIr, LuaCodegenIr, LuaEnumReprIr, LuaVersionIr, RuntimeFormatIr,
-        RustCodegenIr, RustMapTypeIr, StructIr, TableIr, TableModeIr, TableSourceIr, TypeIr,
-        TypeScriptCodegenIr, UnionIr, UnionVariantIr,
+        AggregationIr, CCodegenIr, CStandardIr, CodegenIr, ConfigIr, CppCodegenIr, CppStandardIr,
+        EnumIr, EnumReprIr, ErlangCodegenIr, ErlangEnumReprIr, FieldIr, IndexIr,
+        JavaScriptCodegenIr, LanguageCodegenIr, LuaCodegenIr, LuaEnumReprIr, LuaVersionIr,
+        RuntimeFormatIr, RustCodegenIr, RustMapTypeIr, StructIr, TableIr, TableModeIr,
+        TableSourceIr, TypeIr, TypeScriptCodegenIr, UnionIr, UnionVariantIr,
     },
     parse::parse_type,
 };
@@ -75,6 +75,11 @@ impl From<CodegenSchema> for CodegenIr {
             csharp: LanguageCodegenIr::from(value.csharp),
             java: LanguageCodegenIr::from(value.java),
             go: LanguageCodegenIr::from(value.go),
+            c: CCodegenIr {
+                runtime_format: RuntimeFormatIr::from(value.c.runtime_format),
+                c_standard: CStandardIr::from(value.c.c_standard),
+                prefix: value.c.prefix,
+            },
             cpp: CppCodegenIr {
                 runtime_format: RuntimeFormatIr::from(value.cpp.runtime_format),
                 cpp_standard: CppStandardIr::from(value.cpp.cpp_standard),
@@ -143,6 +148,17 @@ impl From<RuntimeFormatSchema> for RuntimeFormatIr {
             RuntimeFormatSchema::Json => Self::Json,
             RuntimeFormatSchema::Protobuf => Self::Protobuf,
             RuntimeFormatSchema::Cbor => Self::Cbor,
+        }
+    }
+}
+
+impl From<CStandardSchema> for CStandardIr {
+    fn from(value: CStandardSchema) -> Self {
+        match value {
+            CStandardSchema::C99 => Self::C99,
+            CStandardSchema::C11 => Self::C11,
+            CStandardSchema::C17 => Self::C17,
+            CStandardSchema::C23 => Self::C23,
         }
     }
 }
@@ -467,8 +483,8 @@ fn validate_optional_non_empty(
 mod tests {
     use super::*;
     use crate::model::{
-        CppStandardIr, EnumReprIr, ErlangEnumReprIr, LuaEnumReprIr, LuaVersionIr, RuntimeFormatIr,
-        TableModeIr, TypeIr,
+        CStandardIr, CppStandardIr, EnumReprIr, ErlangEnumReprIr, LuaEnumReprIr, LuaVersionIr,
+        RuntimeFormatIr, TableModeIr, TypeIr,
     };
 
     #[test]
@@ -508,6 +524,8 @@ length = [1, 3]
         assert_eq!(ir.package, "game_config");
         assert_eq!(ir.codegen.rust.runtime_format, RuntimeFormatIr::Sora);
         assert_eq!(ir.codegen.kotlin.runtime_format, RuntimeFormatIr::Sora);
+        assert_eq!(ir.codegen.c.runtime_format, RuntimeFormatIr::Sora);
+        assert_eq!(ir.codegen.c.c_standard, CStandardIr::C11);
         assert_eq!(ir.codegen.cpp.runtime_format, RuntimeFormatIr::Sora);
         assert_eq!(ir.codegen.cpp.cpp_standard, CppStandardIr::Cpp17);
         assert_eq!(ir.codegen.typescript.runtime_format, RuntimeFormatIr::Sora);

@@ -1,0 +1,25 @@
+#ifndef SORA_SHOWCASE_DUNGEON_H
+#define SORA_SHOWCASE_DUNGEON_H
+
+#include "sora_types.h"
+#include "resource_cost.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+typedef struct sora_showcase_dungeon {
+    int32_t id;
+    sora_string name;
+    sora_showcase_i32_array stage_ids;
+    sora_showcase_resource_cost entry_cost;
+} sora_showcase_dungeon;
+
+sora_result sora_showcase_dungeon_decode(sora_reader* reader, sora_showcase_dungeon* out);
+void sora_showcase_dungeon_free(sora_showcase_dungeon* value);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif

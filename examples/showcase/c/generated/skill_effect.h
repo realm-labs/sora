@@ -1,0 +1,24 @@
+#ifndef SORA_SHOWCASE_SKILL_EFFECT_H
+#define SORA_SHOWCASE_SKILL_EFFECT_H
+
+#include "sora_types.h"
+#include "element_type.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+typedef struct sora_showcase_skill_effect {
+    sora_showcase_element_type element;
+    int32_t power;
+    float radius;
+} sora_showcase_skill_effect;
+
+sora_result sora_showcase_skill_effect_decode(sora_reader* reader, sora_showcase_skill_effect* out);
+void sora_showcase_skill_effect_free(sora_showcase_skill_effect* value);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif

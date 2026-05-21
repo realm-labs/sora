@@ -1,0 +1,44 @@
+#include "event_rule.h"
+
+sora_result sora_showcase_event_rule_decode(sora_reader* reader, sora_showcase_event_rule* out) {
+    *out = (sora_showcase_event_rule){0};
+    {
+        sora_result result = sora_reader_read_i32(reader, &out->id);
+        if (result.code != SORA_OK) {
+            sora_showcase_event_rule_free(out);
+            return result;
+        }
+    }
+    {
+        sora_result result = sora_reader_read_string(reader, &out->name);
+        if (result.code != SORA_OK) {
+            sora_showcase_event_rule_free(out);
+            return result;
+        }
+    }
+    {
+        sora_result result = sora_showcase_event_condition_decode(reader, &out->condition);
+        if (result.code != SORA_OK) {
+            sora_showcase_event_rule_free(out);
+            return result;
+        }
+    }
+    {
+        sora_result result = sora_showcase_reward_action_array_decode(reader, &out->actions);
+        if (result.code != SORA_OK) {
+            sora_showcase_event_rule_free(out);
+            return result;
+        }
+    }
+    return sora_ok();
+}
+
+void sora_showcase_event_rule_free(sora_showcase_event_rule* value) {
+    if (value == NULL) {
+        return;
+    }
+    sora_string_free(&value->name);
+    sora_showcase_event_condition_free(&value->condition);
+    sora_showcase_reward_action_array_free(&value->actions);
+    *value = (sora_showcase_event_rule){0};
+}

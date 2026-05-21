@@ -1,0 +1,15 @@
+#include "{{ enum.snake_name }}.h"
+
+sora_result {{ enum.decode_fn }}(sora_reader* reader, {{ enum.type_name }}* out) {
+    uint32_t ordinal = 0;
+    SORA_TRY(sora_reader_read_u32(reader, &ordinal));
+    switch (ordinal) {
+{%- for value in enum.values %}
+    case {{ value.ordinal }}:
+        *out = {{ value.name }};
+        return sora_ok();
+{%- endfor %}
+    default:
+        return sora_error(SORA_ERROR_DECODE, "invalid enum ordinal for {{ enum.name }}");
+    }
+}

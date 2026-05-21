@@ -1,0 +1,23 @@
+#ifndef SORA_SHOWCASE_DIALOGUE_H
+#define SORA_SHOWCASE_DIALOGUE_H
+
+#include "sora_types.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+typedef struct sora_showcase_dialogue {
+    int32_t id;
+    sora_string speaker_key;
+    sora_showcase_string_array lines;
+} sora_showcase_dialogue;
+
+sora_result sora_showcase_dialogue_decode(sora_reader* reader, sora_showcase_dialogue* out);
+void sora_showcase_dialogue_free(sora_showcase_dialogue* value);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif

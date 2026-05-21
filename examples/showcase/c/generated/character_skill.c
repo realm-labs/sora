@@ -1,0 +1,34 @@
+#include "character_skill.h"
+
+sora_result sora_showcase_character_skill_decode(sora_reader* reader, sora_showcase_character_skill* out) {
+    *out = (sora_showcase_character_skill){0};
+    {
+        sora_result result = sora_reader_read_i32(reader, &out->character_id);
+        if (result.code != SORA_OK) {
+            sora_showcase_character_skill_free(out);
+            return result;
+        }
+    }
+    {
+        sora_result result = sora_reader_read_i32(reader, &out->skill_id);
+        if (result.code != SORA_OK) {
+            sora_showcase_character_skill_free(out);
+            return result;
+        }
+    }
+    {
+        sora_result result = sora_reader_read_i32(reader, &out->unlock_level);
+        if (result.code != SORA_OK) {
+            sora_showcase_character_skill_free(out);
+            return result;
+        }
+    }
+    return sora_ok();
+}
+
+void sora_showcase_character_skill_free(sora_showcase_character_skill* value) {
+    if (value == NULL) {
+        return;
+    }
+    *value = (sora_showcase_character_skill){0};
+}

@@ -1,0 +1,84 @@
+#include "reward_action.h"
+
+sora_result sora_showcase_reward_action_decode(sora_reader* reader, sora_showcase_reward_action* out) {
+    uint32_t ordinal = 0;
+    *out = (sora_showcase_reward_action){0};
+    SORA_TRY(sora_reader_read_u32(reader, &ordinal));
+    switch (ordinal) {
+    case 0:
+        out->tag = SORA_SHOWCASE_REWARD_ACTION_ADD_ITEM;
+        {
+            sora_result result = sora_reader_read_i32(reader, &out->value.add_item.item_id);
+            if (result.code != SORA_OK) {
+                sora_showcase_reward_action_free(out);
+                return result;
+            }
+        }
+        {
+            sora_result result = sora_reader_read_i32(reader, &out->value.add_item.count);
+            if (result.code != SORA_OK) {
+                sora_showcase_reward_action_free(out);
+                return result;
+            }
+        }
+        return sora_ok();
+    case 1:
+        out->tag = SORA_SHOWCASE_REWARD_ACTION_ADD_BUFF;
+        {
+            sora_result result = sora_reader_read_i32(reader, &out->value.add_buff.buff_id);
+            if (result.code != SORA_OK) {
+                sora_showcase_reward_action_free(out);
+                return result;
+            }
+        }
+        {
+            sora_result result = sora_reader_read_f32(reader, &out->value.add_buff.duration);
+            if (result.code != SORA_OK) {
+                sora_showcase_reward_action_free(out);
+                return result;
+            }
+        }
+        return sora_ok();
+    case 2:
+        out->tag = SORA_SHOWCASE_REWARD_ACTION_UNLOCK_STAGE;
+        {
+            sora_result result = sora_reader_read_i32(reader, &out->value.unlock_stage.stage_id);
+            if (result.code != SORA_OK) {
+                sora_showcase_reward_action_free(out);
+                return result;
+            }
+        }
+        return sora_ok();
+    case 3:
+        out->tag = SORA_SHOWCASE_REWARD_ACTION_SEND_MAIL;
+        {
+            sora_result result = sora_reader_read_i32(reader, &out->value.send_mail.mail_id);
+            if (result.code != SORA_OK) {
+                sora_showcase_reward_action_free(out);
+                return result;
+            }
+        }
+        return sora_ok();
+    default:
+        return sora_error(SORA_ERROR_DECODE, "invalid union ordinal for RewardAction");
+    }
+}
+
+void sora_showcase_reward_action_free(sora_showcase_reward_action* value) {
+    if (value == NULL) {
+        return;
+    }
+    switch (value->tag) {
+    case SORA_SHOWCASE_REWARD_ACTION_ADD_ITEM:
+        break;
+    case SORA_SHOWCASE_REWARD_ACTION_ADD_BUFF:
+        break;
+    case SORA_SHOWCASE_REWARD_ACTION_UNLOCK_STAGE:
+        break;
+    case SORA_SHOWCASE_REWARD_ACTION_SEND_MAIL:
+        break;
+    default:
+        break;
+    }
+    *value = (sora_showcase_reward_action){0};
+}

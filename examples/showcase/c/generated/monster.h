@@ -1,0 +1,28 @@
+#ifndef SORA_SHOWCASE_MONSTER_H
+#define SORA_SHOWCASE_MONSTER_H
+
+#include "sora_types.h"
+#include "element_type.h"
+#include "vec3.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+typedef struct sora_showcase_monster {
+    int32_t id;
+    sora_string name;
+    int32_t level;
+    sora_showcase_element_type element;
+    int32_t drop_group;
+    sora_showcase_vec3 spawn_pos;
+} sora_showcase_monster;
+
+sora_result sora_showcase_monster_decode(sora_reader* reader, sora_showcase_monster* out);
+void sora_showcase_monster_free(sora_showcase_monster* value);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif

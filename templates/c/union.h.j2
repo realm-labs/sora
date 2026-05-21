@@ -1,0 +1,39 @@
+#ifndef {{ options.prefix_upper }}_{{ union.snake_name | upper }}_H
+#define {{ options.prefix_upper }}_{{ union.snake_name | upper }}_H
+
+#include "sora_types.h"
+{%- for import in union.imports %}
+#include "{{ import.module }}.h"
+{%- endfor %}
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+typedef enum {{ union.tag_type_name }} {
+{%- for variant in union.variants %}
+    {{ variant.tag_name }} = {{ loop.index0 }},
+{%- endfor %}
+} {{ union.tag_type_name }};
+
+typedef struct {{ union.type_name }} {
+    {{ union.tag_type_name }} tag;
+    union {
+{%- for variant in union.variants %}
+        struct {
+{%- for field in variant.fields %}
+            {{ field.type_name }} {{ field.name }};
+{%- endfor %}
+        } {{ variant.field_name }};
+{%- endfor %}
+    } value;
+} {{ union.type_name }};
+
+sora_result {{ union.decode_fn }}(sora_reader* reader, {{ union.type_name }}* out);
+void {{ union.free_fn }}({{ union.type_name }}* value);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif

@@ -1,0 +1,23 @@
+#ifndef SORA_SHOWCASE_LEVEL_EXP_H
+#define SORA_SHOWCASE_LEVEL_EXP_H
+
+#include "sora_types.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+typedef struct sora_showcase_level_exp {
+    int32_t level;
+    int64_t exp;
+    sora_showcase_optional_string unlock_feature;
+} sora_showcase_level_exp;
+
+sora_result sora_showcase_level_exp_decode(sora_reader* reader, sora_showcase_level_exp* out);
+void sora_showcase_level_exp_free(sora_showcase_level_exp* value);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif

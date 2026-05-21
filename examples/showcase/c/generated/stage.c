@@ -1,0 +1,51 @@
+#include "stage.h"
+
+sora_result sora_showcase_stage_decode(sora_reader* reader, sora_showcase_stage* out) {
+    *out = (sora_showcase_stage){0};
+    {
+        sora_result result = sora_reader_read_i32(reader, &out->id);
+        if (result.code != SORA_OK) {
+            sora_showcase_stage_free(out);
+            return result;
+        }
+    }
+    {
+        sora_result result = sora_reader_read_string(reader, &out->name);
+        if (result.code != SORA_OK) {
+            sora_showcase_stage_free(out);
+            return result;
+        }
+    }
+    {
+        sora_result result = sora_showcase_i32_array_decode(reader, &out->monster_ids);
+        if (result.code != SORA_OK) {
+            sora_showcase_stage_free(out);
+            return result;
+        }
+    }
+    {
+        sora_result result = sora_reader_read_i32(reader, &out->recommended_power);
+        if (result.code != SORA_OK) {
+            sora_showcase_stage_free(out);
+            return result;
+        }
+    }
+    {
+        sora_result result = sora_showcase_reward_array_decode(reader, &out->first_clear_rewards);
+        if (result.code != SORA_OK) {
+            sora_showcase_stage_free(out);
+            return result;
+        }
+    }
+    return sora_ok();
+}
+
+void sora_showcase_stage_free(sora_showcase_stage* value) {
+    if (value == NULL) {
+        return;
+    }
+    sora_string_free(&value->name);
+    sora_showcase_i32_array_free(&value->monster_ids);
+    sora_showcase_reward_array_free(&value->first_clear_rewards);
+    *value = (sora_showcase_stage){0};
+}

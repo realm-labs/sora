@@ -1,0 +1,31 @@
+#ifndef SORA_SHOWCASE_QUEST_H
+#define SORA_SHOWCASE_QUEST_H
+
+#include "sora_types.h"
+#include "quest_type.h"
+#include "reward.h"
+#include "vec3.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+typedef struct sora_showcase_quest {
+    int32_t id;
+    sora_showcase_quest_type quest_type;
+    sora_string title;
+    int32_t required_item;
+    sora_showcase_i32_array unlock_skills;
+    sora_showcase_vec3 start_pos;
+    /* Materialized from QuestReward child rows */
+    sora_showcase_reward_array rewards;
+} sora_showcase_quest;
+
+sora_result sora_showcase_quest_decode(sora_reader* reader, sora_showcase_quest* out);
+void sora_showcase_quest_free(sora_showcase_quest* value);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif

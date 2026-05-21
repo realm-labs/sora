@@ -1,0 +1,24 @@
+#ifndef SORA_SHOWCASE_ITEM_TYPE_H
+#define SORA_SHOWCASE_ITEM_TYPE_H
+
+#include "sora_runtime.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+typedef enum sora_showcase_item_type {
+    SORA_SHOWCASE_ITEM_TYPE_WEAPON = 0,
+    SORA_SHOWCASE_ITEM_TYPE_ARMOR = 1,
+    SORA_SHOWCASE_ITEM_TYPE_CURRENCY = 2,
+    SORA_SHOWCASE_ITEM_TYPE_MATERIAL = 3,
+    SORA_SHOWCASE_ITEM_TYPE_CONSUMABLE = 4,
+} sora_showcase_item_type;
+
+sora_result sora_showcase_item_type_decode(sora_reader* reader, sora_showcase_item_type* out);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif

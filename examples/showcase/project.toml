@@ -30,6 +30,11 @@ out = "go/internal/showcase"
 format = "auto"
 
 [[build.codegen]]
+target = "c"
+out = "c/generated"
+format = "auto"
+
+[[build.codegen]]
 target = "cpp"
 out = "cpp/generated"
 format = "auto"
@@ -99,6 +104,11 @@ runtime_format = "sora"
 
 [codegen.go]
 runtime_format = "sora"
+
+[codegen.c]
+runtime_format = "sora"
+c_standard = "c11"
+prefix = "sora_showcase"
 
 [codegen.cpp]
 runtime_format = "sora"

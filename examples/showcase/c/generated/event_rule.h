@@ -1,0 +1,26 @@
+#ifndef SORA_SHOWCASE_EVENT_RULE_H
+#define SORA_SHOWCASE_EVENT_RULE_H
+
+#include "sora_types.h"
+#include "event_condition.h"
+#include "reward_action.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+typedef struct sora_showcase_event_rule {
+    int32_t id;
+    sora_string name;
+    sora_showcase_event_condition condition;
+    sora_showcase_reward_action_array actions;
+} sora_showcase_event_rule;
+
+sora_result sora_showcase_event_rule_decode(sora_reader* reader, sora_showcase_event_rule* out);
+void sora_showcase_event_rule_free(sora_showcase_event_rule* value);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif

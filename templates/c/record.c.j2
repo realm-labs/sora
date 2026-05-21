@@ -1,0 +1,27 @@
+#include "{{ record.snake_name }}.h"
+
+sora_result {{ record.decode_fn }}(sora_reader* reader, {{ record.type_name }}* out) {
+    *out = ({{ record.type_name }}){0};
+{%- for field in record.fields %}
+    {
+        sora_result result = {{ field.decode }};
+        if (result.code != SORA_OK) {
+            {{ record.free_fn }}(out);
+            return result;
+        }
+    }
+{%- endfor %}
+    return sora_ok();
+}
+
+void {{ record.free_fn }}({{ record.type_name }}* value) {
+    if (value == NULL) {
+        return;
+    }
+{%- for field in record.fields %}
+{%- if field.free %}
+    {{ field.free }}
+{%- endif %}
+{%- endfor %}
+    *value = ({{ record.type_name }}){0};
+}

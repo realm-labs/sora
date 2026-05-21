@@ -1,0 +1,22 @@
+#ifndef {{ options.prefix_upper }}_{{ enum.snake_name | upper }}_H
+#define {{ options.prefix_upper }}_{{ enum.snake_name | upper }}_H
+
+#include "sora_runtime.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+typedef enum {{ enum.type_name }} {
+{%- for value in enum.values %}
+    {{ value.name }} = {{ value.ordinal }},
+{%- endfor %}
+} {{ enum.type_name }};
+
+sora_result {{ enum.decode_fn }}(sora_reader* reader, {{ enum.type_name }}* out);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif

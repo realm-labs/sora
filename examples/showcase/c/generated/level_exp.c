@@ -1,0 +1,35 @@
+#include "level_exp.h"
+
+sora_result sora_showcase_level_exp_decode(sora_reader* reader, sora_showcase_level_exp* out) {
+    *out = (sora_showcase_level_exp){0};
+    {
+        sora_result result = sora_reader_read_i32(reader, &out->level);
+        if (result.code != SORA_OK) {
+            sora_showcase_level_exp_free(out);
+            return result;
+        }
+    }
+    {
+        sora_result result = sora_reader_read_i64(reader, &out->exp);
+        if (result.code != SORA_OK) {
+            sora_showcase_level_exp_free(out);
+            return result;
+        }
+    }
+    {
+        sora_result result = sora_showcase_optional_string_decode(reader, &out->unlock_feature);
+        if (result.code != SORA_OK) {
+            sora_showcase_level_exp_free(out);
+            return result;
+        }
+    }
+    return sora_ok();
+}
+
+void sora_showcase_level_exp_free(sora_showcase_level_exp* value) {
+    if (value == NULL) {
+        return;
+    }
+    sora_showcase_optional_string_free(&value->unlock_feature);
+    *value = (sora_showcase_level_exp){0};
+}

@@ -1,0 +1,23 @@
+#ifndef SORA_SHOWCASE_CHARACTER_SKILL_H
+#define SORA_SHOWCASE_CHARACTER_SKILL_H
+
+#include "sora_types.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+typedef struct sora_showcase_character_skill {
+    int32_t character_id;
+    int32_t skill_id;
+    int32_t unlock_level;
+} sora_showcase_character_skill;
+
+sora_result sora_showcase_character_skill_decode(sora_reader* reader, sora_showcase_character_skill* out);
+void sora_showcase_character_skill_free(sora_showcase_character_skill* value);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif

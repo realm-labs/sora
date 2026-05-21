@@ -1,0 +1,51 @@
+#include "mail_template.h"
+
+sora_result sora_showcase_mail_template_decode(sora_reader* reader, sora_showcase_mail_template* out) {
+    *out = (sora_showcase_mail_template){0};
+    {
+        sora_result result = sora_reader_read_i32(reader, &out->id);
+        if (result.code != SORA_OK) {
+            sora_showcase_mail_template_free(out);
+            return result;
+        }
+    }
+    {
+        sora_result result = sora_showcase_mail_type_decode(reader, &out->mail_type);
+        if (result.code != SORA_OK) {
+            sora_showcase_mail_template_free(out);
+            return result;
+        }
+    }
+    {
+        sora_result result = sora_reader_read_string(reader, &out->title_key);
+        if (result.code != SORA_OK) {
+            sora_showcase_mail_template_free(out);
+            return result;
+        }
+    }
+    {
+        sora_result result = sora_reader_read_string(reader, &out->body_key);
+        if (result.code != SORA_OK) {
+            sora_showcase_mail_template_free(out);
+            return result;
+        }
+    }
+    {
+        sora_result result = sora_showcase_reward_array_decode(reader, &out->rewards);
+        if (result.code != SORA_OK) {
+            sora_showcase_mail_template_free(out);
+            return result;
+        }
+    }
+    return sora_ok();
+}
+
+void sora_showcase_mail_template_free(sora_showcase_mail_template* value) {
+    if (value == NULL) {
+        return;
+    }
+    sora_string_free(&value->title_key);
+    sora_string_free(&value->body_key);
+    sora_showcase_reward_array_free(&value->rewards);
+    *value = (sora_showcase_mail_template){0};
+}

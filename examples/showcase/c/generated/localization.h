@@ -1,0 +1,24 @@
+#ifndef SORA_SHOWCASE_LOCALIZATION_H
+#define SORA_SHOWCASE_LOCALIZATION_H
+
+#include "sora_types.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+typedef struct sora_showcase_localization {
+    sora_string key;
+    sora_string zh_cn;
+    sora_string en_us;
+    sora_showcase_optional_string note;
+} sora_showcase_localization;
+
+sora_result sora_showcase_localization_decode(sora_reader* reader, sora_showcase_localization* out);
+void sora_showcase_localization_free(sora_showcase_localization* value);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif

@@ -1,0 +1,25 @@
+#ifndef SORA_SHOWCASE_BUFF_H
+#define SORA_SHOWCASE_BUFF_H
+
+#include "sora_types.h"
+#include "stat_modifier.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+typedef struct sora_showcase_buff {
+    int32_t id;
+    sora_string name;
+    float duration;
+    sora_showcase_stat_modifier_array modifiers;
+} sora_showcase_buff;
+
+sora_result sora_showcase_buff_decode(sora_reader* reader, sora_showcase_buff* out);
+void sora_showcase_buff_free(sora_showcase_buff* value);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif

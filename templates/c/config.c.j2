@@ -1,0 +1,153 @@
+#include "sora_config.h"
+
+#include <stdlib.h>
+
+struct {{ options.prefix }}_config {
+{%- for table in model.tables %}
+    {{ table.row_type }}* {{ table.rows_field }};
+    size_t {{ table.len_field }};
+{%- endfor %}
+};
+
+static void {{ options.prefix }}_free_rows(void* rows, size_t len, size_t row_size, sora_free_row_fn free_row) {
+    if (rows == NULL) {
+        return;
+    }
+    uint8_t* bytes = (uint8_t*)rows;
+    for (size_t index = 0; index < len; ++index) {
+        free_row(bytes + index * row_size);
+    }
+    free(rows);
+}
+
+sora_result {{ options.prefix }}_config_load_from_bytes(
+    const uint8_t* bytes,
+    size_t len,
+    {{ options.prefix }}_config** out
+) {
+    sora_bundle* bundle = NULL;
+    {{ options.prefix }}_config* config = NULL;
+    SORA_TRY(sora_bundle_parse(bytes, len, &bundle));
+    config = ({{ options.prefix }}_config*)calloc(1, sizeof({{ options.prefix }}_config));
+    if (config == NULL) {
+        sora_bundle_free(bundle);
+        return sora_error(SORA_ERROR_OUT_OF_MEMORY, "failed to allocate config");
+    }
+{%- for table in model.tables %}
+    {
+        sora_result result = sora_bundle_decode_table(
+            bundle,
+            "{{ table.name }}",
+            sizeof({{ table.row_type }}),
+            (sora_decode_row_fn){{ table.row_type }}_decode,
+            (sora_free_row_fn){{ table.row_type }}_free,
+            (void**)&config->{{ table.rows_field }},
+            &config->{{ table.len_field }}
+        );
+        if (result.code != SORA_OK) {
+            sora_bundle_free(bundle);
+            {{ options.prefix }}_config_free(config);
+            return result;
+        }
+    }
+{%- if table.mode == "singleton" %}
+    if (config->{{ table.len_field }} != 1) {
+        sora_bundle_free(bundle);
+        {{ options.prefix }}_config_free(config);
+        return sora_error(SORA_ERROR_DECODE, "singleton table {{ table.name }} must contain exactly one row");
+    }
+{%- endif %}
+{%- endfor %}
+    sora_bundle_free(bundle);
+    *out = config;
+    return sora_ok();
+}
+
+void {{ options.prefix }}_config_free({{ options.prefix }}_config* config) {
+    if (config == NULL) {
+        return;
+    }
+{%- for table in model.tables %}
+    {{ options.prefix }}_free_rows(
+        config->{{ table.rows_field }},
+        config->{{ table.len_field }},
+        sizeof({{ table.row_type }}),
+        (sora_free_row_fn){{ table.row_type }}_free
+    );
+{%- endfor %}
+    free(config);
+}
+
+{%- for table in model.tables %}
+
+const {{ table.row_type }}* {{ options.prefix }}_config_{{ table.snake_name }}_rows(
+    const {{ options.prefix }}_config* config,
+    size_t* out_len
+) {
+    if (out_len != NULL) {
+        *out_len = config->{{ table.len_field }};
+    }
+    return config->{{ table.rows_field }};
+}
+{%- if table.mode == "map" and table.key_field_name %}
+
+const {{ table.row_type }}* {{ options.prefix }}_config_get_{{ table.snake_name }}(
+    const {{ options.prefix }}_config* config,
+    {{ table.key_param_decl }}
+) {
+    for (size_t index = 0; index < config->{{ table.len_field }}; ++index) {
+        const {{ table.row_type }}* row = &config->{{ table.rows_field }}[index];
+        if ({{ table.key_match_expr }}) {
+            return row;
+        }
+    }
+    return NULL;
+}
+{%- elif table.mode == "singleton" %}
+
+const {{ table.row_type }}* {{ options.prefix }}_config_{{ table.snake_name }}_row(
+    const {{ options.prefix }}_config* config
+) {
+    if (config->{{ table.len_field }} == 0) {
+        return NULL;
+    }
+    return &config->{{ table.rows_field }}[0];
+}
+{%- endif %}
+{%- for index in table.unique_indexes %}
+
+const {{ table.row_type }}* {{ options.prefix }}_config_{{ table.snake_name }}_{{ index.method_name }}(
+    const {{ options.prefix }}_config* config,
+    {{ index.param_decl }}
+) {
+    for (size_t index = 0; index < config->{{ table.len_field }}; ++index) {
+        const {{ table.row_type }}* row = &config->{{ table.rows_field }}[index];
+        if ({{ index.match_expr }}) {
+            return row;
+        }
+    }
+    return NULL;
+}
+{%- endfor %}
+{%- for index in table.non_unique_indexes %}
+
+size_t {{ options.prefix }}_config_{{ table.snake_name }}_find_{{ index.name }}(
+    const {{ options.prefix }}_config* config,
+    {{ index.param_decl }},
+    const {{ table.row_type }}** out,
+    size_t capacity
+) {
+    size_t count = 0;
+    for (size_t index = 0; index < config->{{ table.len_field }}; ++index) {
+        const {{ table.row_type }}* row = &config->{{ table.rows_field }}[index];
+        if ({{ index.match_expr }}) {
+            if (out != NULL && count < capacity) {
+                out[count] = row;
+            }
+            ++count;
+        }
+    }
+    return count;
+}
+{%- endfor %}
+{%- endfor %}

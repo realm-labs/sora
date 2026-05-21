@@ -1,0 +1,45 @@
+#include "{{ union.snake_name }}.h"
+
+sora_result {{ union.decode_fn }}(sora_reader* reader, {{ union.type_name }}* out) {
+    uint32_t ordinal = 0;
+    *out = ({{ union.type_name }}){0};
+    SORA_TRY(sora_reader_read_u32(reader, &ordinal));
+    switch (ordinal) {
+{%- for variant in union.variants %}
+    case {{ loop.index0 }}:
+        out->tag = {{ variant.tag_name }};
+{%- for field in variant.fields %}
+        {
+            sora_result result = {{ field.decode }};
+            if (result.code != SORA_OK) {
+                {{ union.free_fn }}(out);
+                return result;
+            }
+        }
+{%- endfor %}
+        return sora_ok();
+{%- endfor %}
+    default:
+        return sora_error(SORA_ERROR_DECODE, "invalid union ordinal for {{ union.pascal_name }}");
+    }
+}
+
+void {{ union.free_fn }}({{ union.type_name }}* value) {
+    if (value == NULL) {
+        return;
+    }
+    switch (value->tag) {
+{%- for variant in union.variants %}
+    case {{ variant.tag_name }}:
+{%- for field in variant.fields %}
+{%- if field.free %}
+        {{ field.free }}
+{%- endif %}
+{%- endfor %}
+        break;
+{%- endfor %}
+    default:
+        break;
+    }
+    *value = ({{ union.type_name }}){0};
+}

@@ -1,0 +1,24 @@
+#ifndef SORA_SHOWCASE_RARITY_H
+#define SORA_SHOWCASE_RARITY_H
+
+#include "sora_runtime.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+typedef enum sora_showcase_rarity {
+    SORA_SHOWCASE_RARITY_COMMON = 0,
+    SORA_SHOWCASE_RARITY_UNCOMMON = 1,
+    SORA_SHOWCASE_RARITY_RARE = 2,
+    SORA_SHOWCASE_RARITY_EPIC = 3,
+    SORA_SHOWCASE_RARITY_LEGENDARY = 4,
+} sora_showcase_rarity;
+
+sora_result sora_showcase_rarity_decode(sora_reader* reader, sora_showcase_rarity* out);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif

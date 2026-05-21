@@ -36,6 +36,8 @@ pub struct CodegenSchema {
     #[serde(default)]
     pub go: LanguageCodegenSchema,
     #[serde(default)]
+    pub c: CCodegenSchema,
+    #[serde(default)]
     pub cpp: CppCodegenSchema,
     #[serde(default)]
     pub typescript: TypeScriptCodegenSchema,
@@ -63,6 +65,27 @@ impl Default for RustCodegenSchema {
         Self {
             runtime_format: RuntimeFormatSchema::Sora,
             map_type: RustMapTypeSchema::Std,
+        }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
+pub struct CCodegenSchema {
+    #[serde(default)]
+    pub runtime_format: RuntimeFormatSchema,
+
+    #[serde(default)]
+    pub c_standard: CStandardSchema,
+
+    pub prefix: Option<String>,
+}
+
+impl Default for CCodegenSchema {
+    fn default() -> Self {
+        Self {
+            runtime_format: RuntimeFormatSchema::Sora,
+            c_standard: CStandardSchema::C11,
+            prefix: None,
         }
     }
 }
@@ -197,6 +220,16 @@ pub enum RuntimeFormatSchema {
     Json,
     Protobuf,
     Cbor,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, Default)]
+#[serde(rename_all = "lowercase")]
+pub enum CStandardSchema {
+    C99,
+    #[default]
+    C11,
+    C17,
+    C23,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, Default)]
@@ -458,6 +491,11 @@ map_type = "fx_hash_map"
 [codegen.kotlin]
 runtime_format = "sora"
 
+[codegen.c]
+runtime_format = "sora"
+c_standard = "c17"
+prefix = "game_config"
+
 [codegen.cpp]
 runtime_format = "sora"
 cpp_standard = "c++20"
@@ -494,6 +532,9 @@ enum_repr = "string"
             schema.codegen.kotlin.runtime_format,
             RuntimeFormatSchema::Sora
         );
+        assert_eq!(schema.codegen.c.runtime_format, RuntimeFormatSchema::Sora);
+        assert_eq!(schema.codegen.c.c_standard, CStandardSchema::C17);
+        assert_eq!(schema.codegen.c.prefix.as_deref(), Some("game_config"));
         assert_eq!(schema.codegen.cpp.runtime_format, RuntimeFormatSchema::Sora);
         assert_eq!(schema.codegen.cpp.cpp_standard, CppStandardSchema::Cpp20);
         assert_eq!(

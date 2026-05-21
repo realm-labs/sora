@@ -1,0 +1,50 @@
+#include "shop_item.h"
+
+sora_result sora_showcase_shop_item_decode(sora_reader* reader, sora_showcase_shop_item* out) {
+    *out = (sora_showcase_shop_item){0};
+    {
+        sora_result result = sora_reader_read_i32(reader, &out->shop_id);
+        if (result.code != SORA_OK) {
+            sora_showcase_shop_item_free(out);
+            return result;
+        }
+    }
+    {
+        sora_result result = sora_reader_read_i32(reader, &out->seq);
+        if (result.code != SORA_OK) {
+            sora_showcase_shop_item_free(out);
+            return result;
+        }
+    }
+    {
+        sora_result result = sora_reader_read_i32(reader, &out->item_id);
+        if (result.code != SORA_OK) {
+            sora_showcase_shop_item_free(out);
+            return result;
+        }
+    }
+    {
+        sora_result result = sora_showcase_resource_cost_decode(reader, &out->price);
+        if (result.code != SORA_OK) {
+            sora_showcase_shop_item_free(out);
+            return result;
+        }
+    }
+    {
+        sora_result result = sora_showcase_optional_i32_decode(reader, &out->daily_limit);
+        if (result.code != SORA_OK) {
+            sora_showcase_shop_item_free(out);
+            return result;
+        }
+    }
+    return sora_ok();
+}
+
+void sora_showcase_shop_item_free(sora_showcase_shop_item* value) {
+    if (value == NULL) {
+        return;
+    }
+    sora_showcase_resource_cost_free(&value->price);
+    sora_showcase_optional_i32_free(&value->daily_limit);
+    *value = (sora_showcase_shop_item){0};
+}

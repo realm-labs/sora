@@ -1,0 +1,35 @@
+#ifndef {{ options.prefix_upper }}_SORA_TYPES_H
+#define {{ options.prefix_upper }}_SORA_TYPES_H
+
+#include "sora_runtime.h"
+{%- for enum in model.enums %}
+#include "{{ enum.snake_name }}.h"
+{%- endfor %}
+
+#include <stdbool.h>
+#include <stddef.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+{%- for record in model.records %}
+typedef struct {{ record.type_name }} {{ record.type_name }};
+{%- endfor %}
+{%- for union in model.unions %}
+typedef struct {{ union.type_name }} {{ union.type_name }};
+{%- endfor %}
+
+{%- for helper in helpers %}
+
+{{ helper.declaration }}
+
+sora_result {{ helper.decode_fn }}(sora_reader* reader, {{ helper.name }}* out);
+void {{ helper.free_fn }}({{ helper.name }}* value);
+{%- endfor %}
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif

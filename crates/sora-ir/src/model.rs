@@ -28,6 +28,7 @@ pub struct CodegenIr {
     pub csharp: LanguageCodegenIr,
     pub java: LanguageCodegenIr,
     pub go: LanguageCodegenIr,
+    pub c: CCodegenIr,
     pub cpp: CppCodegenIr,
     pub typescript: TypeScriptCodegenIr,
     pub javascript: JavaScriptCodegenIr,
@@ -53,6 +54,23 @@ impl Default for RustCodegenIr {
         Self {
             runtime_format: RuntimeFormatIr::Sora,
             map_type: RustMapTypeIr::Std,
+        }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct CCodegenIr {
+    pub runtime_format: RuntimeFormatIr,
+    pub c_standard: CStandardIr,
+    pub prefix: Option<String>,
+}
+
+impl Default for CCodegenIr {
+    fn default() -> Self {
+        Self {
+            runtime_format: RuntimeFormatIr::Sora,
+            c_standard: CStandardIr::C11,
+            prefix: None,
         }
     }
 }
@@ -160,6 +178,15 @@ pub enum RuntimeFormatIr {
     Json,
     Protobuf,
     Cbor,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
+pub enum CStandardIr {
+    C99,
+    #[default]
+    C11,
+    C17,
+    C23,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]

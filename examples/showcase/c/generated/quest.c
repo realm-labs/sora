@@ -1,0 +1,66 @@
+#include "quest.h"
+
+sora_result sora_showcase_quest_decode(sora_reader* reader, sora_showcase_quest* out) {
+    *out = (sora_showcase_quest){0};
+    {
+        sora_result result = sora_reader_read_i32(reader, &out->id);
+        if (result.code != SORA_OK) {
+            sora_showcase_quest_free(out);
+            return result;
+        }
+    }
+    {
+        sora_result result = sora_showcase_quest_type_decode(reader, &out->quest_type);
+        if (result.code != SORA_OK) {
+            sora_showcase_quest_free(out);
+            return result;
+        }
+    }
+    {
+        sora_result result = sora_reader_read_string(reader, &out->title);
+        if (result.code != SORA_OK) {
+            sora_showcase_quest_free(out);
+            return result;
+        }
+    }
+    {
+        sora_result result = sora_reader_read_i32(reader, &out->required_item);
+        if (result.code != SORA_OK) {
+            sora_showcase_quest_free(out);
+            return result;
+        }
+    }
+    {
+        sora_result result = sora_showcase_i32_array_decode(reader, &out->unlock_skills);
+        if (result.code != SORA_OK) {
+            sora_showcase_quest_free(out);
+            return result;
+        }
+    }
+    {
+        sora_result result = sora_showcase_vec3_decode(reader, &out->start_pos);
+        if (result.code != SORA_OK) {
+            sora_showcase_quest_free(out);
+            return result;
+        }
+    }
+    {
+        sora_result result = sora_showcase_reward_array_decode(reader, &out->rewards);
+        if (result.code != SORA_OK) {
+            sora_showcase_quest_free(out);
+            return result;
+        }
+    }
+    return sora_ok();
+}
+
+void sora_showcase_quest_free(sora_showcase_quest* value) {
+    if (value == NULL) {
+        return;
+    }
+    sora_string_free(&value->title);
+    sora_showcase_i32_array_free(&value->unlock_skills);
+    sora_showcase_vec3_free(&value->start_pos);
+    sora_showcase_reward_array_free(&value->rewards);
+    *value = (sora_showcase_quest){0};
+}

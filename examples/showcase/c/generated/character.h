@@ -1,0 +1,29 @@
+#ifndef SORA_SHOWCASE_CHARACTER_H
+#define SORA_SHOWCASE_CHARACTER_H
+
+#include "sora_types.h"
+#include "rarity.h"
+#include "vec3.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+typedef struct sora_showcase_character {
+    int32_t id;
+    sora_string name;
+    sora_showcase_rarity rarity;
+    int32_t base_level;
+    int32_t base_skill;
+    sora_showcase_i32_array starter_items;
+    sora_showcase_vec3 spawn_pos;
+} sora_showcase_character;
+
+sora_result sora_showcase_character_decode(sora_reader* reader, sora_showcase_character* out);
+void sora_showcase_character_free(sora_showcase_character* value);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif

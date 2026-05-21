@@ -4,11 +4,11 @@ use sora_diagnostics::{Result, SoraError};
 use sora_ir::model::{ConfigIr, RuntimeFormatIr};
 
 use crate::{
-    cpp::CppCodeGenerator, csharp::CSharpCodeGenerator, erlang::ErlangCodeGenerator,
-    go::GoCodeGenerator, java::JavaCodeGenerator, javascript::JavaScriptCodeGenerator,
-    kotlin::KotlinCodeGenerator, lua::LuaCodeGenerator, proto::ProtoCodeGenerator,
-    python::PythonCodeGenerator, rust::RustCodeGenerator, target::CodegenTarget,
-    typescript::TypeScriptCodeGenerator,
+    c::CCodeGenerator, cpp::CppCodeGenerator, csharp::CSharpCodeGenerator,
+    erlang::ErlangCodeGenerator, go::GoCodeGenerator, java::JavaCodeGenerator,
+    javascript::JavaScriptCodeGenerator, kotlin::KotlinCodeGenerator, lua::LuaCodeGenerator,
+    proto::ProtoCodeGenerator, python::PythonCodeGenerator, rust::RustCodeGenerator,
+    target::CodegenTarget, typescript::TypeScriptCodeGenerator,
 };
 
 pub trait CodeGenerator {
@@ -45,6 +45,7 @@ pub fn generator_for_target(target: CodegenTarget) -> Box<dyn CodeGenerator> {
         CodegenTarget::CSharp => Box::new(CSharpCodeGenerator),
         CodegenTarget::Java => Box::new(JavaCodeGenerator),
         CodegenTarget::Go => Box::new(GoCodeGenerator),
+        CodegenTarget::C => Box::new(CCodeGenerator),
         CodegenTarget::Cpp => Box::new(CppCodeGenerator),
         CodegenTarget::TypeScript => Box::new(TypeScriptCodeGenerator),
         CodegenTarget::JavaScript => Box::new(JavaScriptCodeGenerator),

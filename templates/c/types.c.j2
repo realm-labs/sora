@@ -1,0 +1,14 @@
+#include "sora_types.h"
+{%- for record in model.records %}
+#include "{{ record.snake_name }}.h"
+{%- endfor %}
+{%- for union in model.unions %}
+#include "{{ union.snake_name }}.h"
+{%- endfor %}
+
+#include <stdlib.h>
+
+{%- for helper in helpers %}
+
+{{ helper.implementation }}
+{%- endfor -%}

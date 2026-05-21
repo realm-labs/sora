@@ -1,0 +1,22 @@
+#ifndef SORA_SHOWCASE_DROP_GROUP_H
+#define SORA_SHOWCASE_DROP_GROUP_H
+
+#include "sora_types.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+typedef struct sora_showcase_drop_group {
+    int32_t id;
+    sora_string name;
+} sora_showcase_drop_group;
+
+sora_result sora_showcase_drop_group_decode(sora_reader* reader, sora_showcase_drop_group* out);
+void sora_showcase_drop_group_free(sora_showcase_drop_group* value);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif

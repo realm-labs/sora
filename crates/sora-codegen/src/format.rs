@@ -46,7 +46,7 @@ pub fn format_generated_code(
         };
     }
 
-    let files = collect_files(out_dir, formatter.extension)?;
+    let files = collect_files(out_dir, formatter.extensions)?;
     if files.is_empty() {
         return Ok(());
     }
@@ -71,7 +71,7 @@ struct Formatter {
     language: &'static str,
     command: &'static str,
     args: &'static [&'static str],
-    extension: &'static str,
+    extensions: &'static [&'static str],
 }
 
 impl Formatter {
@@ -81,31 +81,37 @@ impl Formatter {
                 language: "Rust",
                 command: "rustfmt",
                 args: &[],
-                extension: "rs",
+                extensions: &["rs"],
             }),
             CodegenTarget::Go => Some(Self {
                 language: "Go",
                 command: "gofmt",
                 args: &["-w"],
-                extension: "go",
+                extensions: &["go"],
             }),
             CodegenTarget::Erlang => Some(Self {
                 language: "Erlang",
                 command: "erlfmt",
                 args: &["-w"],
-                extension: "erl",
+                extensions: &["erl"],
             }),
             CodegenTarget::Python => Some(Self {
                 language: "Python",
                 command: "black",
                 args: &["--quiet"],
-                extension: "py",
+                extensions: &["py"],
+            }),
+            CodegenTarget::C => Some(Self {
+                language: "C",
+                command: "clang-format",
+                args: &["-i"],
+                extensions: &["h", "c"],
             }),
             CodegenTarget::Cpp => Some(Self {
                 language: "C++",
                 command: "clang-format",
                 args: &["-i"],
-                extension: "hpp",
+                extensions: &["hpp"],
             }),
             CodegenTarget::Kotlin
             | CodegenTarget::CSharp
@@ -118,19 +124,19 @@ impl Formatter {
     }
 }
 
-fn collect_files(root: &Path, extension: &str) -> Result<Vec<PathBuf>> {
+fn collect_files(root: &Path, extensions: &[&str]) -> Result<Vec<PathBuf>> {
     let mut files = Vec::new();
-    collect_files_inner(root, extension, &mut files)?;
+    collect_files_inner(root, extensions, &mut files)?;
     files.sort();
     Ok(files)
 }
 
-fn collect_files_inner(path: &Path, extension: &str, files: &mut Vec<PathBuf>) -> Result<()> {
+fn collect_files_inner(path: &Path, extensions: &[&str], files: &mut Vec<PathBuf>) -> Result<()> {
     if !path.exists() {
         return Ok(());
     }
     if path.is_file() {
-        if has_extension(path, extension) {
+        if has_any_extension(path, extensions) {
             files.push(path.to_path_buf());
         }
         return Ok(());
@@ -144,16 +150,16 @@ fn collect_files_inner(path: &Path, extension: &str, files: &mut Vec<PathBuf>) -
             path: path.to_path_buf(),
             source,
         })?;
-        collect_files_inner(&entry.path(), extension, files)?;
+        collect_files_inner(&entry.path(), extensions, files)?;
     }
 
     Ok(())
 }
 
-fn has_extension(path: &Path, extension: &str) -> bool {
+fn has_any_extension(path: &Path, extensions: &[&str]) -> bool {
     path.extension()
         .and_then(|value| value.to_str())
-        .is_some_and(|value| value == extension)
+        .is_some_and(|value| extensions.contains(&value))
 }
 
 fn command_exists(command: &str) -> bool {
@@ -197,6 +203,7 @@ impl CodegenTarget {
             CodegenTarget::CSharp => "C#",
             CodegenTarget::Java => "Java",
             CodegenTarget::Go => "Go",
+            CodegenTarget::C => "C",
             CodegenTarget::Cpp => "C++",
             CodegenTarget::TypeScript => "TypeScript",
             CodegenTarget::JavaScript => "JavaScript",

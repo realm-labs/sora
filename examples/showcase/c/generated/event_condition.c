@@ -1,0 +1,65 @@
+#include "event_condition.h"
+
+sora_result sora_showcase_event_condition_decode(sora_reader* reader, sora_showcase_event_condition* out) {
+    uint32_t ordinal = 0;
+    *out = (sora_showcase_event_condition){0};
+    SORA_TRY(sora_reader_read_u32(reader, &ordinal));
+    switch (ordinal) {
+    case 0:
+        out->tag = SORA_SHOWCASE_EVENT_CONDITION_LEVEL_AT_LEAST;
+        {
+            sora_result result = sora_reader_read_i32(reader, &out->value.level_at_least.level);
+            if (result.code != SORA_OK) {
+                sora_showcase_event_condition_free(out);
+                return result;
+            }
+        }
+        return sora_ok();
+    case 1:
+        out->tag = SORA_SHOWCASE_EVENT_CONDITION_QUEST_COMPLETED;
+        {
+            sora_result result = sora_reader_read_i32(reader, &out->value.quest_completed.quest_id);
+            if (result.code != SORA_OK) {
+                sora_showcase_event_condition_free(out);
+                return result;
+            }
+        }
+        return sora_ok();
+    case 2:
+        out->tag = SORA_SHOWCASE_EVENT_CONDITION_HAS_ITEM;
+        {
+            sora_result result = sora_reader_read_i32(reader, &out->value.has_item.item_id);
+            if (result.code != SORA_OK) {
+                sora_showcase_event_condition_free(out);
+                return result;
+            }
+        }
+        {
+            sora_result result = sora_reader_read_i32(reader, &out->value.has_item.count);
+            if (result.code != SORA_OK) {
+                sora_showcase_event_condition_free(out);
+                return result;
+            }
+        }
+        return sora_ok();
+    default:
+        return sora_error(SORA_ERROR_DECODE, "invalid union ordinal for EventCondition");
+    }
+}
+
+void sora_showcase_event_condition_free(sora_showcase_event_condition* value) {
+    if (value == NULL) {
+        return;
+    }
+    switch (value->tag) {
+    case SORA_SHOWCASE_EVENT_CONDITION_LEVEL_AT_LEAST:
+        break;
+    case SORA_SHOWCASE_EVENT_CONDITION_QUEST_COMPLETED:
+        break;
+    case SORA_SHOWCASE_EVENT_CONDITION_HAS_ITEM:
+        break;
+    default:
+        break;
+    }
+    *value = (sora_showcase_event_condition){0};
+}

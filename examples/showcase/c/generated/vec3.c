@@ -1,0 +1,34 @@
+#include "vec3.h"
+
+sora_result sora_showcase_vec3_decode(sora_reader* reader, sora_showcase_vec3* out) {
+    *out = (sora_showcase_vec3){0};
+    {
+        sora_result result = sora_reader_read_f32(reader, &out->x);
+        if (result.code != SORA_OK) {
+            sora_showcase_vec3_free(out);
+            return result;
+        }
+    }
+    {
+        sora_result result = sora_reader_read_f32(reader, &out->y);
+        if (result.code != SORA_OK) {
+            sora_showcase_vec3_free(out);
+            return result;
+        }
+    }
+    {
+        sora_result result = sora_reader_read_f32(reader, &out->z);
+        if (result.code != SORA_OK) {
+            sora_showcase_vec3_free(out);
+            return result;
+        }
+    }
+    return sora_ok();
+}
+
+void sora_showcase_vec3_free(sora_showcase_vec3* value) {
+    if (value == NULL) {
+        return;
+    }
+    *value = (sora_showcase_vec3){0};
+}
