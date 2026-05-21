@@ -19,3 +19,11 @@ export function decodeMailType(reader) {
     }
     return value;
 }
+
+export function decodeMailTypeValue(value) {
+    const name = value.asString();
+    if (!values.includes(name)) {
+        throw new Error(`invalid enum value ${name} for MailType`);
+    }
+    return name;
+}

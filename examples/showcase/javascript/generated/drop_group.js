@@ -13,6 +13,14 @@ export function decodeDropGroup(reader) {
     };
 }
 
+export function decodeDropGroupValue(value) {
+    const object = value.asObject();
+    return {
+        id: object.get("id").asInt(),
+        name: object.get("name").asString(),
+    };
+}
+
 export class DropGroupTable {
     constructor(
         rows,

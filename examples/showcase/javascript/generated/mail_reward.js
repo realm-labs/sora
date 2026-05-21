@@ -15,6 +15,16 @@ export function decodeMailReward(reader) {
     };
 }
 
+export function decodeMailRewardValue(value) {
+    const object = value.asObject();
+    return {
+        mailId: object.get("mail_id").asInt(),
+        seq: object.get("seq").asInt(),
+        itemId: object.get("item_id").asInt(),
+        count: object.get("count").asInt(),
+    };
+}
+
 export class MailRewardTable {
     constructor(
         rows,

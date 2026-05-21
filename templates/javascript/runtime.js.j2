@@ -129,7 +129,7 @@ export class SoraBundle {
         return new SoraBundle(bytes, sections);
     }
 
-    decodeTable(name, decode) {
+    decodeTable(name, decodeBinary, _decodeValue) {
         const section = this.sections.find((item) => item.kind === SECTION_KIND_TABLE && item.name === name);
         if (section === undefined) {
             throw new SoraReadError(`missing Sora table section \`${name}\``);
@@ -141,7 +141,7 @@ export class SoraBundle {
             throw new SoraReadError(`table \`${name}\` has invalid uncompressed length`);
         }
         const payload = this.bytes.subarray(section.offset, section.offset + section.length);
-        return decodeRows(payload, decode);
+        return decodeRows(payload, decodeBinary);
     }
 }
 
@@ -240,19 +240,17 @@ export class SoraReader {
     }
 }
 
-{%- if runtime_format != "sora" %}
-
 export class SoraValueBundle {
     constructor(tables) {
         this.tables = tables;
     }
 
-    decodeTable(name, decode) {
+    decodeTable(name, _decodeBinary, decodeValue) {
         const rows = this.tables.get(name);
         if (rows === undefined) {
             throw new SoraReadError(`missing table \`${name}\``);
         }
-        return rows.map(decode);
+        return rows.map(decodeValue);
     }
 
 {%- if runtime_format == "json" %}
@@ -400,8 +398,6 @@ function mapObjectEntries(entries) {
     }
     return fields;
 }
-
-{%- endif %}
 
 {%- if runtime_format == "sora-protobuf" %}
 

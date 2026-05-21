@@ -15,6 +15,16 @@ export function decodeStageReward(reader) {
     };
 }
 
+export function decodeStageRewardValue(value) {
+    const object = value.asObject();
+    return {
+        stageId: object.get("stage_id").asInt(),
+        seq: object.get("seq").asInt(),
+        itemId: object.get("item_id").asInt(),
+        count: object.get("count").asInt(),
+    };
+}
+
 export class StageRewardTable {
     constructor(
         rows,

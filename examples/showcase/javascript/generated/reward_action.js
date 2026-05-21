@@ -30,3 +30,35 @@ export function decodeRewardAction(reader) {
     }
     throw new Error(`invalid union ordinal ${ordinal} for RewardAction`);
 }
+
+export function decodeRewardActionValue(value) {
+    const object = value.asObject();
+    const tag = object.get("type").asString();
+    if (tag === "AddItem") {
+        return {
+            type: "AddItem",
+            itemId: object.get("item_id").asInt(),
+            count: object.get("count").asInt(),
+        };
+    }
+    if (tag === "AddBuff") {
+        return {
+            type: "AddBuff",
+            buffId: object.get("buff_id").asInt(),
+            duration: object.get("duration").asNumber(),
+        };
+    }
+    if (tag === "UnlockStage") {
+        return {
+            type: "UnlockStage",
+            stageId: object.get("stage_id").asInt(),
+        };
+    }
+    if (tag === "SendMail") {
+        return {
+            type: "SendMail",
+            mailId: object.get("mail_id").asInt(),
+        };
+    }
+    throw new Error(`invalid union tag ${tag} for RewardAction`);
+}

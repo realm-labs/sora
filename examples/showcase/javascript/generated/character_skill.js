@@ -14,6 +14,15 @@ export function decodeCharacterSkill(reader) {
     };
 }
 
+export function decodeCharacterSkillValue(value) {
+    const object = value.asObject();
+    return {
+        characterId: object.get("character_id").asInt(),
+        skillId: object.get("skill_id").asInt(),
+        unlockLevel: object.get("unlock_level").asInt(),
+    };
+}
+
 export class CharacterSkillTable {
     constructor(
         rows,

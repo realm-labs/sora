@@ -11,9 +11,13 @@ export interface SoraConfigTable {
     len(): number;
 }
 
+export interface SoraTableSource {
+    decodeTable<T>(name: string, decodeBinary: (reader: SoraReader) => T, decodeValue: (value: SoraValue) => T): T[];
+}
+
 export declare class SoraBundle {
     static parse(input: Uint8Array | ArrayBuffer): SoraBundle;
-    decodeTable<T>(name: string, decode: (reader: SoraReader) => T): T[];
+    decodeTable<T>(name: string, decodeBinary: (reader: SoraReader) => T, decodeValue: (value: SoraValue) => T): T[];
 }
 
 export declare class SoraReader {
@@ -29,6 +33,26 @@ export declare class SoraReader {
     readString(): string;
     readOptional<T>(read: () => T): T | undefined;
     readList<T>(read: () => T): T[];
+}
+
+export declare class SoraValueBundle {
+    decodeTable<T>(name: string, decodeBinary: (reader: SoraReader) => T, decodeValue: (value: SoraValue) => T): T[];
+}
+
+export declare class SoraObject {
+    get(name: string): SoraValue;
+}
+
+export declare class SoraValue {
+    isNull(): boolean;
+    asObject(): SoraObject;
+    asRawList(): SoraValue[];
+    asList<T>(decode: (value: SoraValue) => T): T[];
+    asBool(): boolean;
+    asInt(): number;
+    asBigInt(): bigint;
+    asNumber(): number;
+    asString(): string;
 }
 
 export declare function requireSingletonTable<T>(rows: T[], name: string): T;

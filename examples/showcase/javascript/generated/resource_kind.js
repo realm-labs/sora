@@ -19,3 +19,11 @@ export function decodeResourceKind(reader) {
     }
     return value;
 }
+
+export function decodeResourceKindValue(value) {
+    const name = value.asString();
+    if (!values.includes(name)) {
+        throw new Error(`invalid enum value ${name} for ResourceKind`);
+    }
+    return name;
+}

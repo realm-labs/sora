@@ -7,3 +7,12 @@ export function decodeVec3(reader) {
         z: reader.readF32(),
     };
 }
+
+export function decodeVec3Value(value) {
+    const object = value.asObject();
+    return {
+        x: object.get("x").asNumber(),
+        y: object.get("y").asNumber(),
+        z: object.get("z").asNumber(),
+    };
+}

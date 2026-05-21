@@ -15,6 +15,16 @@ export function decodeQuestReward(reader) {
     };
 }
 
+export function decodeQuestRewardValue(value) {
+    const object = value.asObject();
+    return {
+        questId: object.get("quest_id").asInt(),
+        seq: object.get("seq").asInt(),
+        itemId: object.get("item_id").asInt(),
+        count: object.get("count").asInt(),
+    };
+}
+
 export class QuestRewardTable {
     constructor(
         rows,

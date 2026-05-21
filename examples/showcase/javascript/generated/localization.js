@@ -15,6 +15,16 @@ export function decodeLocalization(reader) {
     };
 }
 
+export function decodeLocalizationValue(value) {
+    const object = value.asObject();
+    return {
+        key: object.get("key").asString(),
+        zhCn: object.get("zh_cn").asString(),
+        enUs: object.get("en_us").asString(),
+        note: object.get("note").isNull() ? undefined : object.get("note").asString(),
+    };
+}
+
 export class LocalizationTable {
     constructor(
         rows,

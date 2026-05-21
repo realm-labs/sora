@@ -14,6 +14,15 @@ export function decodeLevelExp(reader) {
     };
 }
 
+export function decodeLevelExpValue(value) {
+    const object = value.asObject();
+    return {
+        level: object.get("level").asInt(),
+        exp: object.get("exp").asBigInt(),
+        unlockFeature: object.get("unlock_feature").isNull() ? undefined : object.get("unlock_feature").asString(),
+    };
+}
+
 export class LevelExpTable {
     constructor(
         rows,

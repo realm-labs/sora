@@ -23,3 +23,11 @@ export function decodeStatType(reader) {
     }
     return value;
 }
+
+export function decodeStatTypeValue(value) {
+    const name = value.asString();
+    if (!values.includes(name)) {
+        throw new Error(`invalid enum value ${name} for StatType`);
+    }
+    return name;
+}

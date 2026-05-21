@@ -21,3 +21,11 @@ export function decodeElementType(reader) {
     }
     return value;
 }
+
+export function decodeElementTypeValue(value) {
+    const name = value.asString();
+    if (!values.includes(name)) {
+        throw new Error(`invalid enum value ${name} for ElementType`);
+    }
+    return name;
+}

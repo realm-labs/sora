@@ -19,3 +19,11 @@ export function decodeQuestType(reader) {
     }
     return value;
 }
+
+export function decodeQuestTypeValue(value) {
+    const name = value.asString();
+    if (!values.includes(name)) {
+        throw new Error(`invalid enum value ${name} for QuestType`);
+    }
+    return name;
+}

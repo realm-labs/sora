@@ -16,6 +16,17 @@ export function decodeDropEntry(reader) {
     };
 }
 
+export function decodeDropEntryValue(value) {
+    const object = value.asObject();
+    return {
+        groupId: object.get("group_id").asInt(),
+        seq: object.get("seq").asInt(),
+        itemId: object.get("item_id").asInt(),
+        count: object.get("count").asInt(),
+        weight: object.get("weight").asNumber(),
+    };
+}
+
 export class DropEntryTable {
     constructor(
         rows,

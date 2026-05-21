@@ -160,7 +160,7 @@ mod tests {
 
         assert!(item.contains("export function decodeItem(reader)"));
         assert!(item.contains("largeId: reader.readI64()"));
-        assert!(item.contains("import { decodeItemType } from \"./item_type.js\";"));
+        assert!(item.contains("import { decodeItemType, decodeItemTypeValue } from \"./item_type.js\";"));
         assert!(item_dts.contains("export interface Item"));
         assert!(item_dts.contains("largeId: bigint;"));
         assert!(runtime.contains("readI64()"));
@@ -170,9 +170,7 @@ mod tests {
         assert!(!config.contains("export class ItemTable"));
         assert!(item_dts.contains("export declare class ItemTable"));
         assert!(!config_dts.contains("export declare class ItemTable"));
-        assert!(
-            config_dts.contains("static fromBytes(bytes: Uint8Array | ArrayBuffer): SoraConfig;")
-        );
+        assert!(config_dts.contains("static fromSource(source: SoraTableSource): SoraConfig;"));
         assert!(config_dts.contains("import type { ItemTable } from \"./item.js\";"));
         assert!(package.contains("\"type\": \"module\""));
 
@@ -201,17 +199,17 @@ mod tests {
         for (format, parse_fn, decode_fn) in [
             (
                 sora_ir::model::RuntimeFormatIr::Json,
-                "SoraValueBundle.parseJson(bytes)",
+                "static parseJson",
                 "decodeItemValue",
             ),
             (
                 sora_ir::model::RuntimeFormatIr::Cbor,
-                "SoraValueBundle.parseCbor(bytes)",
+                "static parseCbor",
                 "decodeItemValue",
             ),
             (
                 sora_ir::model::RuntimeFormatIr::SoraProtobuf,
-                "SoraValueBundle.parseProtobuf(bytes)",
+                "static parseProtobuf",
                 "decodeItemValue",
             ),
         ] {
@@ -227,13 +225,16 @@ mod tests {
             let item = std::fs::read_to_string(base.join("item.js")).unwrap();
             let item_dts = std::fs::read_to_string(base.join("item.d.ts")).unwrap();
 
-            assert!(config.contains("SoraValueBundle"));
-            assert!(config.contains(parse_fn));
+            assert!(!config.contains("SoraValueBundle"));
+            assert!(!config.contains(parse_fn));
+            assert!(runtime.contains(parse_fn));
+            assert!(config.contains("fromSource(source)"));
             assert!(config.contains(decode_fn));
             assert!(item.contains("decodeItemValue"));
             assert!(item.contains("object.get(\"id\")"));
             assert!(item_dts.contains("decodeItemValue(value: SoraValue)"));
             assert!(runtime_dts.contains("export declare class SoraValueBundle"));
+            assert!(runtime_dts.contains("export interface SoraTableSource"));
             if format == sora_ir::model::RuntimeFormatIr::Cbor {
                 assert!(runtime.contains("from \"cbor-x\""));
             }

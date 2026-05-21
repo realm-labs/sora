@@ -23,3 +23,11 @@ export function decodeRarity(reader) {
     }
     return value;
 }
+
+export function decodeRarityValue(value) {
+    const name = value.asString();
+    if (!values.includes(name)) {
+        throw new Error(`invalid enum value ${name} for Rarity`);
+    }
+    return name;
+}

@@ -6,3 +6,11 @@ export function decodeReward(reader) {
         count: reader.readI32(),
     };
 }
+
+export function decodeRewardValue(value) {
+    const object = value.asObject();
+    return {
+        itemId: object.get("item_id").asInt(),
+        count: object.get("count").asInt(),
+    };
+}

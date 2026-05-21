@@ -14,6 +14,15 @@ export function decodeDialogue(reader) {
     };
 }
 
+export function decodeDialogueValue(value) {
+    const object = value.asObject();
+    return {
+        id: object.get("id").asInt(),
+        speakerKey: object.get("speaker_key").asString(),
+        lines: object.get("lines").asList((item) => item.asString()),
+    };
+}
+
 export class DialogueTable {
     constructor(
         rows,

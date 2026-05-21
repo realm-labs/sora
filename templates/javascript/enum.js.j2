@@ -40,8 +40,6 @@ export function decode{{ enum.name }}(reader) {
 {%- endif %}
 }
 
-{%- if runtime_format != "sora" %}
-
 export function decode{{ enum.name }}Value(value) {
 {%- if options.enum_is_integer %}
     const ordinal = value.asInt();
@@ -57,4 +55,3 @@ export function decode{{ enum.name }}Value(value) {
     return name;
 {%- endif %}
 }
-{%- endif %}

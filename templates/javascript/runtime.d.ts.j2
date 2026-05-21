@@ -11,9 +11,13 @@ export interface SoraConfigTable {
     len(): number;
 }
 
+export interface SoraTableSource {
+    decodeTable<T>(name: string, decodeBinary: (reader: SoraReader) => T, decodeValue: (value: SoraValue) => T): T[];
+}
+
 export declare class SoraBundle {
     static parse(input: Uint8Array | ArrayBuffer): SoraBundle;
-    decodeTable<T>(name: string, decode: (reader: SoraReader) => T): T[];
+    decodeTable<T>(name: string, decodeBinary: (reader: SoraReader) => T, decodeValue: (value: SoraValue) => T): T[];
 }
 
 export declare class SoraReader {
@@ -31,10 +35,8 @@ export declare class SoraReader {
     readList<T>(read: () => T): T[];
 }
 
-{%- if runtime_format != "sora" %}
-
 export declare class SoraValueBundle {
-    decodeTable<T>(name: string, decode: (value: SoraValue) => T): T[];
+    decodeTable<T>(name: string, decodeBinary: (reader: SoraReader) => T, decodeValue: (value: SoraValue) => T): T[];
 {%- if runtime_format == "json" %}
     static parseJson(input: Uint8Array | ArrayBuffer): SoraValueBundle;
 {%- elif runtime_format == "cbor" %}
@@ -59,8 +61,6 @@ export declare class SoraValue {
     asNumber(): number;
     asString(): string;
 }
-
-{%- endif %}
 
 export declare function requireSingletonTable<T>(rows: T[], name: string): T;
 export declare function decodeMapTable<K, V>(rows: V[], key: (row: V) => K): Map<K, V>;

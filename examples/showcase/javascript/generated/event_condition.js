@@ -23,3 +23,28 @@ export function decodeEventCondition(reader) {
     }
     throw new Error(`invalid union ordinal ${ordinal} for EventCondition`);
 }
+
+export function decodeEventConditionValue(value) {
+    const object = value.asObject();
+    const tag = object.get("type").asString();
+    if (tag === "LevelAtLeast") {
+        return {
+            type: "LevelAtLeast",
+            level: object.get("level").asInt(),
+        };
+    }
+    if (tag === "QuestCompleted") {
+        return {
+            type: "QuestCompleted",
+            questId: object.get("quest_id").asInt(),
+        };
+    }
+    if (tag === "HasItem") {
+        return {
+            type: "HasItem",
+            itemId: object.get("item_id").asInt(),
+            count: object.get("count").asInt(),
+        };
+    }
+    throw new Error(`invalid union tag ${tag} for EventCondition`);
+}
