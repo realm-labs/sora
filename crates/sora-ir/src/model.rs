@@ -241,18 +241,21 @@ pub enum RustMapTypeIr {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct EnumIr {
     pub name: String,
+    pub scope: ScopeIr,
     pub values: Vec<String>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct StructIr {
     pub name: String,
+    pub scope: ScopeIr,
     pub fields: Vec<FieldIr>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct UnionIr {
     pub name: String,
+    pub scope: ScopeIr,
     pub tag: String,
     pub variants: Vec<UnionVariantIr>,
 }
@@ -260,12 +263,14 @@ pub struct UnionIr {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct UnionVariantIr {
     pub name: String,
+    pub scope: ScopeIr,
     pub fields: Vec<FieldIr>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct TableIr {
     pub name: String,
+    pub scope: ScopeIr,
     pub mode: TableModeIr,
     pub key: Option<String>,
     pub source: Option<TableSourceIr>,
@@ -298,6 +303,7 @@ pub struct IndexIr {
 pub struct FieldIr {
     pub name: String,
     pub ty: TypeIr,
+    pub scope: ScopeIr,
     pub key: bool,
     pub comment: Option<String>,
     pub required: bool,
@@ -317,6 +323,31 @@ pub struct AggregationIr {
     pub parent_key: String,
     pub child_key: String,
     pub order_by: Option<String>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct ScopeIr {
+    pub values: Vec<String>,
+}
+
+impl Default for ScopeIr {
+    fn default() -> Self {
+        Self {
+            values: vec!["all".to_owned()],
+        }
+    }
+}
+
+impl ScopeIr {
+    pub fn includes(&self, target: &str) -> bool {
+        target == "all"
+            || self.values.iter().any(|value| value == "all")
+            || self.values.iter().any(|value| value == target)
+    }
+
+    pub fn display(&self) -> String {
+        self.values.join(",")
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]

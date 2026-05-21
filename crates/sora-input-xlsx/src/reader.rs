@@ -63,7 +63,7 @@ fn load_xlsx_table_data_from_range(
         .map(|field| field.name.as_str())
         .collect::<Vec<_>>();
 
-    for (row_index, row) in range.rows().enumerate().skip(10) {
+    for (row_index, row) in range.rows().enumerate().skip(12) {
         if row.iter().all(cell_is_empty) {
             continue;
         }
@@ -205,7 +205,7 @@ mod tests {
         let message = error.to_string();
 
         assert!(message.contains("Item.xlsx"));
-        assert!(message.contains("worksheet `Item` row 11, column 1, field `id`"));
+        assert!(message.contains("worksheet `Item` row 13, column 1, field `id`"));
         assert!(message.contains("expected integer"));
 
         let _ = std::fs::remove_dir_all(base);
@@ -402,7 +402,7 @@ separator = ","
         for (offset, row) in rows.iter().enumerate() {
             for (column, value) in row.iter().enumerate() {
                 worksheet
-                    .write_string((10 + offset) as u32, column as u16, *value)
+                    .write_string((12 + offset) as u32, column as u16, *value)
                     .unwrap();
             }
         }

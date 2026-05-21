@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:sora_showcase/sora_showcase.dart';
 
 void main() {
-  final bytes = File('../generated/config.json').readAsBytesSync();
+  final bytes = File('../generated/client/config.json').readAsBytesSync();
   final config = SoraConfig.fromBytes(bytes);
 
   final sword = config.item.get(1001);

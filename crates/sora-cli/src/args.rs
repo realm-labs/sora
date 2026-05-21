@@ -63,6 +63,9 @@ pub struct GenArgs {
 
     #[arg(long, value_enum, default_value_t = CodeFormatMode::Never)]
     pub format_code: CodeFormatMode,
+
+    #[arg(long)]
+    pub scope: Option<String>,
 }
 
 #[derive(Debug, Args)]
@@ -75,6 +78,9 @@ pub struct BuildArgs {
 
     #[arg(long)]
     pub data_root: Option<PathBuf>,
+
+    #[arg(long)]
+    pub scope: Option<String>,
 
     #[arg(long, value_enum)]
     pub target: Vec<BuildTarget>,
@@ -99,6 +105,9 @@ pub struct ExportArgs {
 
     #[arg(long)]
     pub out: PathBuf,
+
+    #[arg(long)]
+    pub scope: Option<String>,
 }
 
 #[derive(Debug, Args)]
@@ -117,6 +126,9 @@ pub struct DiffArgs {
 
     #[arg(long)]
     pub out: PathBuf,
+
+    #[arg(long)]
+    pub scope: Option<String>,
 }
 
 #[derive(Debug, Clone, Copy, clap::ValueEnum)]
@@ -169,6 +181,9 @@ pub struct ExcelTemplateArgs {
 
     #[arg(long)]
     pub out: PathBuf,
+
+    #[arg(long)]
+    pub scope: Option<String>,
 }
 
 #[derive(Debug, Args)]
@@ -178,4 +193,7 @@ pub struct SchemaLockArgs {
 
     #[arg(long)]
     pub out: PathBuf,
+
+    #[arg(long)]
+    pub scope: Option<String>,
 }

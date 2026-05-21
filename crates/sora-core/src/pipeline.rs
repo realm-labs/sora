@@ -12,7 +12,10 @@ use sora_export::{
     registry::ExporterRegistry,
 };
 use sora_input::traits::{ProjectInput, SchemaInput};
-use sora_ir::{model::ConfigIr, normalize::normalize_schema, validate::validate_config_ir};
+use sora_ir::{
+    model::ConfigIr, normalize::normalize_schema, scope::filter_config_ir_by_scope,
+    validate::validate_config_ir,
+};
 
 use crate::diff::{ConfigDiff, diff_config_data};
 use crate::schema_lock::{read_schema_lock_file, verify_schema_lock, write_schema_lock_file};
@@ -29,7 +32,15 @@ pub fn check_schema_with_lock(input: &impl SchemaInput, lock_path: &Path) -> Res
 }
 
 pub fn generate_schema_lock(input: &impl SchemaInput, path: &Path) -> Result<()> {
-    let ir = load_ir(input)?;
+    generate_schema_lock_with_scope(input, path, None)
+}
+
+pub fn generate_schema_lock_with_scope(
+    input: &impl SchemaInput,
+    path: &Path,
+    scope: Option<&str>,
+) -> Result<()> {
+    let ir = load_ir_with_scope(input, scope)?;
     write_schema_lock_file(&ir, path)
 }
 
@@ -47,14 +58,34 @@ pub fn generate_code_with_format(
     out_dir: &Path,
     format_mode: FormatMode,
 ) -> Result<()> {
-    let ir = load_ir(input)?;
+    generate_code_with_scope_and_format(input, target, out_dir, format_mode, None)
+}
+
+pub fn generate_code_with_scope_and_format(
+    input: &impl SchemaInput,
+    target: CodegenTarget,
+    out_dir: &Path,
+    format_mode: FormatMode,
+    scope: Option<&str>,
+) -> Result<()> {
+    let ir = load_ir_with_scope(input, scope)?;
     generator_for_target(target).generate(&ir, out_dir)?;
     format_generated_code(target, out_dir, format_mode)
 }
 
 pub fn export_data(input: &impl ProjectInput, format: &str, output: ExportOutput) -> Result<()> {
+    export_data_with_scope(input, format, output, None)
+}
+
+pub fn export_data_with_scope(
+    input: &impl ProjectInput,
+    format: &str,
+    output: ExportOutput,
+    scope: Option<&str>,
+) -> Result<()> {
     let ir = load_ir(input)?;
     let data = load_validated_data(input, &ir)?;
+    let (ir, data) = filter_ir_and_data_by_scope(&ir, &data, scope)?;
 
     let registry = ExporterRegistry::with_builtin_exporters();
     let exporter = registry
@@ -76,16 +107,42 @@ pub fn diff_data(
     right: &impl ProjectInput,
     output_path: &Path,
 ) -> Result<ConfigDiff> {
+    diff_data_with_scope(left, right, output_path, None)
+}
+
+pub fn diff_data_with_scope(
+    left: &impl ProjectInput,
+    right: &impl ProjectInput,
+    output_path: &Path,
+    scope: Option<&str>,
+) -> Result<ConfigDiff> {
     let ir = load_ir(left)?;
     let left_data = load_validated_data(left, &ir)?;
     let right_data = load_validated_data(right, &ir)?;
+    let (ir, left_data) = filter_ir_and_data_by_scope(&ir, &left_data, scope)?;
+    let right_data = match scope {
+        Some(_) => {
+            let scoped = sora_data::scope::filter_config_data_by_ir(&ir, &right_data);
+            sora_data::validate::validate_config_data(&ir, &scoped)?;
+            scoped
+        }
+        None => right_data,
+    };
     let diff = diff_config_data(&ir, &left_data, &right_data)?;
     write_json_file(output_path, &diff)?;
     Ok(diff)
 }
 
 pub fn generate_excel_template(input: &impl SchemaInput, out_dir: &Path) -> Result<()> {
-    let ir = load_ir(input)?;
+    generate_excel_template_with_scope(input, out_dir, None)
+}
+
+pub fn generate_excel_template_with_scope(
+    input: &impl SchemaInput,
+    out_dir: &Path,
+    scope: Option<&str>,
+) -> Result<()> {
+    let ir = load_ir_with_scope(input, scope)?;
     ExcelTemplateGenerator.generate(&ir, out_dir)
 }
 
@@ -103,6 +160,28 @@ fn load_ir(input: &impl SchemaInput) -> Result<ConfigIr> {
     let ir = normalize_schema(input.load_schema()?)?;
     validate_config_ir(&ir)?;
     Ok(ir)
+}
+
+fn load_ir_with_scope(input: &impl SchemaInput, scope: Option<&str>) -> Result<ConfigIr> {
+    let ir = load_ir(input)?;
+    match scope {
+        Some(scope) => filter_config_ir_by_scope(&ir, scope),
+        None => Ok(ir),
+    }
+}
+
+fn filter_ir_and_data_by_scope(
+    ir: &ConfigIr,
+    data: &sora_data::model::ConfigData,
+    scope: Option<&str>,
+) -> Result<(ConfigIr, sora_data::model::ConfigData)> {
+    let Some(scope) = scope else {
+        return Ok((ir.clone(), data.clone()));
+    };
+    let scoped_ir = filter_config_ir_by_scope(ir, scope)?;
+    let scoped_data = sora_data::scope::filter_config_data_by_ir(&scoped_ir, data);
+    sora_data::validate::validate_config_data(&scoped_ir, &scoped_data)?;
+    Ok((scoped_ir, scoped_data))
 }
 
 fn load_validated_data(
@@ -221,6 +300,33 @@ mod tests {
         assert!(base.join("config.typed.pb").exists());
         assert!(base.join("config.cbor").exists());
         assert!(base.join("debug-json/Item.json").exists());
+
+        let _ = fs::remove_dir_all(base);
+    }
+
+    #[test]
+    fn scoped_export_filters_schema_and_data() {
+        let base = temp_dir();
+        let input = LoadedInput::with_data(scoped_schema(), scoped_data());
+        let output = base.join("client.json");
+
+        export_data_with_scope(
+            &input,
+            "json",
+            ExportOutput::File(output.clone()),
+            Some("client"),
+        )
+        .unwrap();
+
+        let value: serde_json::Value = serde_json::from_slice(&fs::read(output).unwrap()).unwrap();
+        let fields = value["schema"]["tables"][0]["fields"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|field| field["name"].as_str().unwrap())
+            .collect::<Vec<_>>();
+        assert_eq!(fields, ["id", "name"]);
+        assert!(value["data"]["tables"][0]["rows"][0]["server_formula"].is_null());
 
         let _ = fs::remove_dir_all(base);
     }
@@ -400,6 +506,54 @@ comment = "Max stack count"
 "#,
         )
         .unwrap()
+    }
+
+    fn scoped_schema() -> SchemaFile {
+        toml::from_str(
+            r#"
+package = "game_config"
+
+[[tables]]
+name = "Item"
+mode = "map"
+key = "id"
+
+[[tables.fields]]
+name = "id"
+type = "i32"
+key = true
+
+[[tables.fields]]
+name = "name"
+type = "string"
+required = true
+
+[[tables.fields]]
+name = "server_formula"
+type = "string"
+required = true
+scope = "server"
+"#,
+        )
+        .unwrap()
+    }
+
+    fn scoped_data() -> ConfigData {
+        ConfigData {
+            tables: vec![TableData {
+                name: "Item".to_owned(),
+                rows: vec![RowData {
+                    values: BTreeMap::from([
+                        ("id".to_owned(), Value::Integer(1001)),
+                        ("name".to_owned(), Value::String("Iron Sword".to_owned())),
+                        (
+                            "server_formula".to_owned(),
+                            Value::String("internal".to_owned()),
+                        ),
+                    ]),
+                }],
+            }],
+        }
     }
 
     fn example_data() -> ConfigData {

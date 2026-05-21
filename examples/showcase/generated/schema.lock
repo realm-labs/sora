@@ -1,12 +1,17 @@
 {
   "version": 1,
   "package": "com.sora.showcase",
-  "fingerprint": "2add9c051d08ecd0",
+  "fingerprint": "f3795de45faa0099",
   "schema": {
     "package": "com.sora.showcase",
     "enums": [
       {
         "name": "ItemType",
+        "scope": {
+          "values": [
+            "all"
+          ]
+        },
         "values": [
           "Weapon",
           "Armor",
@@ -17,6 +22,11 @@
       },
       {
         "name": "ResourceKind",
+        "scope": {
+          "values": [
+            "all"
+          ]
+        },
         "values": [
           "Item",
           "Gold",
@@ -25,6 +35,11 @@
       },
       {
         "name": "ElementType",
+        "scope": {
+          "values": [
+            "all"
+          ]
+        },
         "values": [
           "Fire",
           "Ice",
@@ -34,6 +49,11 @@
       },
       {
         "name": "QuestType",
+        "scope": {
+          "values": [
+            "all"
+          ]
+        },
         "values": [
           "Main",
           "Side",
@@ -42,6 +62,11 @@
       },
       {
         "name": "Rarity",
+        "scope": {
+          "values": [
+            "all"
+          ]
+        },
         "values": [
           "Common",
           "Uncommon",
@@ -52,6 +77,11 @@
       },
       {
         "name": "StatType",
+        "scope": {
+          "values": [
+            "all"
+          ]
+        },
         "values": [
           "Hp",
           "Attack",
@@ -62,6 +92,11 @@
       },
       {
         "name": "MailType",
+        "scope": {
+          "values": [
+            "all"
+          ]
+        },
         "values": [
           "System",
           "Event",
@@ -72,11 +107,21 @@
     "structs": [
       {
         "name": "ResourceCost",
+        "scope": {
+          "values": [
+            "all"
+          ]
+        },
         "fields": [
           {
             "name": "kind",
             "ty": {
               "Enum": "ResourceKind"
+            },
+            "scope": {
+              "values": [
+                "all"
+              ]
             },
             "key": false,
             "comment": null,
@@ -93,6 +138,11 @@
           {
             "name": "id",
             "ty": "I32",
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
             "key": false,
             "comment": null,
             "required": true,
@@ -108,6 +158,11 @@
           {
             "name": "count",
             "ty": "I32",
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
             "key": false,
             "comment": null,
             "required": true,
@@ -127,10 +182,20 @@
       },
       {
         "name": "Vec3",
+        "scope": {
+          "values": [
+            "all"
+          ]
+        },
         "fields": [
           {
             "name": "x",
             "ty": "F32",
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
             "key": false,
             "comment": null,
             "required": true,
@@ -146,6 +211,11 @@
           {
             "name": "y",
             "ty": "F32",
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
             "key": false,
             "comment": null,
             "required": true,
@@ -161,6 +231,11 @@
           {
             "name": "z",
             "ty": "F32",
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
             "key": false,
             "comment": null,
             "required": true,
@@ -177,11 +252,21 @@
       },
       {
         "name": "SkillEffect",
+        "scope": {
+          "values": [
+            "all"
+          ]
+        },
         "fields": [
           {
             "name": "element",
             "ty": {
               "Enum": "ElementType"
+            },
+            "scope": {
+              "values": [
+                "all"
+              ]
             },
             "key": false,
             "comment": null,
@@ -198,6 +283,11 @@
           {
             "name": "power",
             "ty": "I32",
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
             "key": false,
             "comment": null,
             "required": true,
@@ -216,6 +306,11 @@
           {
             "name": "radius",
             "ty": "F32",
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
             "key": false,
             "comment": null,
             "required": false,
@@ -232,6 +327,11 @@
       },
       {
         "name": "Reward",
+        "scope": {
+          "values": [
+            "all"
+          ]
+        },
         "fields": [
           {
             "name": "item_id",
@@ -240,6 +340,11 @@
                 "table": "Item",
                 "field": "id"
               }
+            },
+            "scope": {
+              "values": [
+                "all"
+              ]
             },
             "key": false,
             "comment": null,
@@ -256,6 +361,11 @@
           {
             "name": "count",
             "ty": "I32",
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
             "key": false,
             "comment": null,
             "required": true,
@@ -275,11 +385,21 @@
       },
       {
         "name": "StatModifier",
+        "scope": {
+          "values": [
+            "all"
+          ]
+        },
         "fields": [
           {
             "name": "stat",
             "ty": {
               "Enum": "StatType"
+            },
+            "scope": {
+              "values": [
+                "all"
+              ]
             },
             "key": false,
             "comment": null,
@@ -296,6 +416,11 @@
           {
             "name": "value",
             "ty": "F32",
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
             "key": false,
             "comment": null,
             "required": true,
@@ -311,6 +436,11 @@
           {
             "name": "is_percent",
             "ty": "Bool",
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
             "key": false,
             "comment": null,
             "required": false,
@@ -329,10 +459,20 @@
     "unions": [
       {
         "name": "EventCondition",
+        "scope": {
+          "values": [
+            "all"
+          ]
+        },
         "tag": "type",
         "variants": [
           {
             "name": "LevelAtLeast",
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
             "fields": [
               {
                 "name": "level",
@@ -341,6 +481,11 @@
                     "table": "LevelExp",
                     "field": "level"
                   }
+                },
+                "scope": {
+                  "values": [
+                    "all"
+                  ]
                 },
                 "key": false,
                 "comment": null,
@@ -358,6 +503,11 @@
           },
           {
             "name": "QuestCompleted",
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
             "fields": [
               {
                 "name": "quest_id",
@@ -366,6 +516,11 @@
                     "table": "Quest",
                     "field": "id"
                   }
+                },
+                "scope": {
+                  "values": [
+                    "all"
+                  ]
                 },
                 "key": false,
                 "comment": null,
@@ -383,6 +538,11 @@
           },
           {
             "name": "HasItem",
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
             "fields": [
               {
                 "name": "item_id",
@@ -391,6 +551,11 @@
                     "table": "Item",
                     "field": "id"
                   }
+                },
+                "scope": {
+                  "values": [
+                    "all"
+                  ]
                 },
                 "key": false,
                 "comment": null,
@@ -407,6 +572,11 @@
               {
                 "name": "count",
                 "ty": "I32",
+                "scope": {
+                  "values": [
+                    "all"
+                  ]
+                },
                 "key": false,
                 "comment": null,
                 "required": true,
@@ -428,10 +598,20 @@
       },
       {
         "name": "RewardAction",
+        "scope": {
+          "values": [
+            "all"
+          ]
+        },
         "tag": "type",
         "variants": [
           {
             "name": "AddItem",
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
             "fields": [
               {
                 "name": "item_id",
@@ -440,6 +620,11 @@
                     "table": "Item",
                     "field": "id"
                   }
+                },
+                "scope": {
+                  "values": [
+                    "all"
+                  ]
                 },
                 "key": false,
                 "comment": null,
@@ -456,6 +641,11 @@
               {
                 "name": "count",
                 "ty": "I32",
+                "scope": {
+                  "values": [
+                    "all"
+                  ]
+                },
                 "key": false,
                 "comment": null,
                 "required": true,
@@ -475,6 +665,11 @@
           },
           {
             "name": "AddBuff",
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
             "fields": [
               {
                 "name": "buff_id",
@@ -483,6 +678,11 @@
                     "table": "Buff",
                     "field": "id"
                   }
+                },
+                "scope": {
+                  "values": [
+                    "all"
+                  ]
                 },
                 "key": false,
                 "comment": null,
@@ -499,6 +699,11 @@
               {
                 "name": "duration",
                 "ty": "F32",
+                "scope": {
+                  "values": [
+                    "all"
+                  ]
+                },
                 "key": false,
                 "comment": null,
                 "required": false,
@@ -515,6 +720,11 @@
           },
           {
             "name": "UnlockStage",
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
             "fields": [
               {
                 "name": "stage_id",
@@ -523,6 +733,11 @@
                     "table": "Stage",
                     "field": "id"
                   }
+                },
+                "scope": {
+                  "values": [
+                    "all"
+                  ]
                 },
                 "key": false,
                 "comment": null,
@@ -540,6 +755,11 @@
           },
           {
             "name": "SendMail",
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
             "fields": [
               {
                 "name": "mail_id",
@@ -548,6 +768,11 @@
                     "table": "MailTemplate",
                     "field": "id"
                   }
+                },
+                "scope": {
+                  "values": [
+                    "all"
+                  ]
                 },
                 "key": false,
                 "comment": null,
@@ -569,6 +794,11 @@
     "tables": [
       {
         "name": "Item",
+        "scope": {
+          "values": [
+            "all"
+          ]
+        },
         "mode": "Map",
         "key": "id",
         "source": {
@@ -580,6 +810,11 @@
           {
             "name": "id",
             "ty": "I32",
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
             "key": true,
             "comment": "Item id",
             "required": true,
@@ -595,6 +830,11 @@
           {
             "name": "name",
             "ty": "String",
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
             "key": false,
             "comment": "Display name",
             "required": true,
@@ -615,6 +855,11 @@
             "ty": {
               "Enum": "ItemType"
             },
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
             "key": false,
             "comment": "Item category",
             "required": true,
@@ -630,6 +875,11 @@
           {
             "name": "max_stack",
             "ty": "I32",
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
             "key": false,
             "comment": "Stack limit; blank cells use the default",
             "required": false,
@@ -650,6 +900,11 @@
             "ty": {
               "Struct": "ResourceCost"
             },
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
             "key": false,
             "comment": "Tuple: kind,id,count",
             "required": true,
@@ -666,6 +921,11 @@
             "name": "tags",
             "ty": {
               "List": "String"
+            },
+            "scope": {
+              "values": [
+                "all"
+              ]
             },
             "key": false,
             "comment": "JSON string array",
@@ -702,6 +962,11 @@
       },
       {
         "name": "Skill",
+        "scope": {
+          "values": [
+            "all"
+          ]
+        },
         "mode": "Map",
         "key": "id",
         "source": {
@@ -713,6 +978,11 @@
           {
             "name": "id",
             "ty": "I32",
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
             "key": true,
             "comment": null,
             "required": true,
@@ -728,6 +998,11 @@
           {
             "name": "name",
             "ty": "String",
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
             "key": false,
             "comment": null,
             "required": true,
@@ -748,6 +1023,11 @@
             "ty": {
               "Enum": "ElementType"
             },
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
             "key": false,
             "comment": null,
             "required": true,
@@ -764,6 +1044,11 @@
             "name": "cost",
             "ty": {
               "Struct": "ResourceCost"
+            },
+            "scope": {
+              "values": [
+                "all"
+              ]
             },
             "key": false,
             "comment": "Tuple cost, e.g. Gold,0,150",
@@ -782,6 +1067,11 @@
             "ty": {
               "Struct": "SkillEffect"
             },
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
             "key": false,
             "comment": "JSON object with element/power/radius",
             "required": true,
@@ -797,6 +1087,11 @@
           {
             "name": "required_level",
             "ty": "I32",
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
             "key": false,
             "comment": null,
             "required": false,
@@ -822,6 +1117,11 @@
                 }
               }
             },
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
             "key": false,
             "comment": "Optional item requirement",
             "required": false,
@@ -838,6 +1138,11 @@
             "name": "cast_origin",
             "ty": {
               "Struct": "Vec3"
+            },
+            "scope": {
+              "values": [
+                "all"
+              ]
             },
             "key": false,
             "comment": null,
@@ -856,6 +1161,11 @@
       },
       {
         "name": "Quest",
+        "scope": {
+          "values": [
+            "all"
+          ]
+        },
         "mode": "Map",
         "key": "id",
         "source": {
@@ -867,6 +1177,11 @@
           {
             "name": "id",
             "ty": "I32",
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
             "key": true,
             "comment": null,
             "required": true,
@@ -884,6 +1199,11 @@
             "ty": {
               "Enum": "QuestType"
             },
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
             "key": false,
             "comment": null,
             "required": true,
@@ -899,6 +1219,11 @@
           {
             "name": "title",
             "ty": "String",
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
             "key": false,
             "comment": null,
             "required": true,
@@ -922,6 +1247,11 @@
                 "field": "id"
               }
             },
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
             "key": false,
             "comment": null,
             "required": true,
@@ -944,6 +1274,11 @@
                 }
               }
             },
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
             "key": false,
             "comment": null,
             "required": true,
@@ -964,6 +1299,11 @@
             "ty": {
               "Struct": "Vec3"
             },
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
             "key": false,
             "comment": null,
             "required": true,
@@ -982,6 +1322,11 @@
               "List": {
                 "Struct": "Reward"
               }
+            },
+            "scope": {
+              "values": [
+                "all"
+              ]
             },
             "key": false,
             "comment": "Materialized from QuestReward child rows",
@@ -1005,6 +1350,11 @@
       },
       {
         "name": "QuestReward",
+        "scope": {
+          "values": [
+            "all"
+          ]
+        },
         "mode": "List",
         "key": null,
         "source": {
@@ -1021,6 +1371,11 @@
                 "field": "id"
               }
             },
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
             "key": false,
             "comment": null,
             "required": true,
@@ -1036,6 +1391,11 @@
           {
             "name": "seq",
             "ty": "I32",
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
             "key": false,
             "comment": null,
             "required": true,
@@ -1056,6 +1416,11 @@
                 "field": "id"
               }
             },
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
             "key": false,
             "comment": null,
             "required": true,
@@ -1071,6 +1436,11 @@
           {
             "name": "count",
             "ty": "I32",
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
             "key": false,
             "comment": null,
             "required": true,
@@ -1091,6 +1461,11 @@
       },
       {
         "name": "GameSettings",
+        "scope": {
+          "values": [
+            "all"
+          ]
+        },
         "mode": "Singleton",
         "key": null,
         "source": {
@@ -1102,6 +1477,11 @@
           {
             "name": "version",
             "ty": "String",
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
             "key": false,
             "comment": null,
             "required": true,
@@ -1117,6 +1497,11 @@
           {
             "name": "daily_reset_hour",
             "ty": "I32",
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
             "key": false,
             "comment": null,
             "required": true,
@@ -1135,6 +1520,11 @@
           {
             "name": "starting_gold",
             "ty": "I32",
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
             "key": false,
             "comment": null,
             "required": false,
@@ -1154,6 +1544,11 @@
             "name": "spawn_pos",
             "ty": {
               "Struct": "Vec3"
+            },
+            "scope": {
+              "values": [
+                "all"
+              ]
             },
             "key": false,
             "comment": null,
@@ -1176,6 +1571,11 @@
                   "field": "id"
                 }
               }
+            },
+            "scope": {
+              "values": [
+                "all"
+              ]
             },
             "key": false,
             "comment": null,
@@ -1197,6 +1597,11 @@
       },
       {
         "name": "Localization",
+        "scope": {
+          "values": [
+            "all"
+          ]
+        },
         "mode": "Map",
         "key": "key",
         "source": {
@@ -1208,6 +1613,11 @@
           {
             "name": "key",
             "ty": "String",
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
             "key": true,
             "comment": null,
             "required": true,
@@ -1226,6 +1636,11 @@
           {
             "name": "zh_cn",
             "ty": "String",
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
             "key": false,
             "comment": null,
             "required": true,
@@ -1241,6 +1656,11 @@
           {
             "name": "en_us",
             "ty": "String",
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
             "key": false,
             "comment": null,
             "required": true,
@@ -1257,6 +1677,11 @@
             "name": "note",
             "ty": {
               "Optional": "String"
+            },
+            "scope": {
+              "values": [
+                "all"
+              ]
             },
             "key": false,
             "comment": null,
@@ -1275,6 +1700,11 @@
       },
       {
         "name": "LevelExp",
+        "scope": {
+          "values": [
+            "all"
+          ]
+        },
         "mode": "Map",
         "key": "level",
         "source": {
@@ -1286,6 +1716,11 @@
           {
             "name": "level",
             "ty": "I32",
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
             "key": true,
             "comment": null,
             "required": true,
@@ -1304,6 +1739,11 @@
           {
             "name": "exp",
             "ty": "I64",
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
             "key": false,
             "comment": null,
             "required": true,
@@ -1324,6 +1764,11 @@
             "ty": {
               "Optional": "String"
             },
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
             "key": false,
             "comment": null,
             "required": false,
@@ -1341,6 +1786,11 @@
       },
       {
         "name": "Character",
+        "scope": {
+          "values": [
+            "all"
+          ]
+        },
         "mode": "Map",
         "key": "id",
         "source": {
@@ -1352,6 +1802,11 @@
           {
             "name": "id",
             "ty": "I32",
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
             "key": true,
             "comment": null,
             "required": true,
@@ -1367,6 +1822,11 @@
           {
             "name": "name",
             "ty": "String",
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
             "key": false,
             "comment": null,
             "required": true,
@@ -1386,6 +1846,11 @@
             "name": "rarity",
             "ty": {
               "Enum": "Rarity"
+            },
+            "scope": {
+              "values": [
+                "all"
+              ]
             },
             "key": false,
             "comment": null,
@@ -1407,6 +1872,11 @@
                 "field": "level"
               }
             },
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
             "key": false,
             "comment": null,
             "required": true,
@@ -1426,6 +1896,11 @@
                 "table": "Skill",
                 "field": "id"
               }
+            },
+            "scope": {
+              "values": [
+                "all"
+              ]
             },
             "key": false,
             "comment": null,
@@ -1449,6 +1924,11 @@
                 }
               }
             },
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
             "key": false,
             "comment": null,
             "required": true,
@@ -1469,6 +1949,11 @@
             "ty": {
               "Struct": "Vec3"
             },
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
             "key": false,
             "comment": null,
             "required": true,
@@ -1486,6 +1971,11 @@
       },
       {
         "name": "CharacterSkill",
+        "scope": {
+          "values": [
+            "all"
+          ]
+        },
         "mode": "List",
         "key": null,
         "source": {
@@ -1501,6 +1991,11 @@
                 "table": "Character",
                 "field": "id"
               }
+            },
+            "scope": {
+              "values": [
+                "all"
+              ]
             },
             "key": false,
             "comment": null,
@@ -1522,6 +2017,11 @@
                 "field": "id"
               }
             },
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
             "key": false,
             "comment": null,
             "required": true,
@@ -1542,6 +2042,11 @@
                 "field": "level"
               }
             },
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
             "key": false,
             "comment": null,
             "required": true,
@@ -1559,6 +2064,11 @@
       },
       {
         "name": "Buff",
+        "scope": {
+          "values": [
+            "all"
+          ]
+        },
         "mode": "Map",
         "key": "id",
         "source": {
@@ -1570,6 +2080,11 @@
           {
             "name": "id",
             "ty": "I32",
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
             "key": true,
             "comment": null,
             "required": true,
@@ -1585,6 +2100,11 @@
           {
             "name": "name",
             "ty": "String",
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
             "key": false,
             "comment": null,
             "required": true,
@@ -1600,6 +2120,11 @@
           {
             "name": "duration",
             "ty": "F32",
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
             "key": false,
             "comment": null,
             "required": true,
@@ -1618,6 +2143,11 @@
               "List": {
                 "Struct": "StatModifier"
               }
+            },
+            "scope": {
+              "values": [
+                "all"
+              ]
             },
             "key": false,
             "comment": null,
@@ -1639,6 +2169,11 @@
       },
       {
         "name": "DropGroup",
+        "scope": {
+          "values": [
+            "all"
+          ]
+        },
         "mode": "Map",
         "key": "id",
         "source": {
@@ -1650,6 +2185,11 @@
           {
             "name": "id",
             "ty": "I32",
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
             "key": true,
             "comment": null,
             "required": true,
@@ -1665,6 +2205,11 @@
           {
             "name": "name",
             "ty": "String",
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
             "key": false,
             "comment": null,
             "required": true,
@@ -1682,6 +2227,11 @@
       },
       {
         "name": "DropEntry",
+        "scope": {
+          "values": [
+            "all"
+          ]
+        },
         "mode": "List",
         "key": null,
         "source": {
@@ -1698,6 +2248,11 @@
                 "field": "id"
               }
             },
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
             "key": false,
             "comment": null,
             "required": true,
@@ -1713,6 +2268,11 @@
           {
             "name": "seq",
             "ty": "I32",
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
             "key": false,
             "comment": null,
             "required": true,
@@ -1733,6 +2293,11 @@
                 "field": "id"
               }
             },
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
             "key": false,
             "comment": null,
             "required": true,
@@ -1748,6 +2313,11 @@
           {
             "name": "count",
             "ty": "I32",
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
             "key": false,
             "comment": null,
             "required": true,
@@ -1766,6 +2336,11 @@
           {
             "name": "weight",
             "ty": "F32",
+            "scope": {
+              "values": [
+                "server"
+              ]
+            },
             "key": false,
             "comment": null,
             "required": true,
@@ -1783,6 +2358,11 @@
       },
       {
         "name": "Monster",
+        "scope": {
+          "values": [
+            "all"
+          ]
+        },
         "mode": "Map",
         "key": "id",
         "source": {
@@ -1794,6 +2374,11 @@
           {
             "name": "id",
             "ty": "I32",
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
             "key": true,
             "comment": null,
             "required": true,
@@ -1809,6 +2394,11 @@
           {
             "name": "name",
             "ty": "String",
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
             "key": false,
             "comment": null,
             "required": true,
@@ -1829,6 +2419,11 @@
                 "field": "level"
               }
             },
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
             "key": false,
             "comment": null,
             "required": true,
@@ -1845,6 +2440,11 @@
             "name": "element",
             "ty": {
               "Enum": "ElementType"
+            },
+            "scope": {
+              "values": [
+                "all"
+              ]
             },
             "key": false,
             "comment": null,
@@ -1866,6 +2466,11 @@
                 "field": "id"
               }
             },
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
             "key": false,
             "comment": null,
             "required": true,
@@ -1882,6 +2487,11 @@
             "name": "spawn_pos",
             "ty": {
               "Struct": "Vec3"
+            },
+            "scope": {
+              "values": [
+                "all"
+              ]
             },
             "key": false,
             "comment": null,
@@ -1900,6 +2510,11 @@
       },
       {
         "name": "Stage",
+        "scope": {
+          "values": [
+            "all"
+          ]
+        },
         "mode": "Map",
         "key": "id",
         "source": {
@@ -1911,6 +2526,11 @@
           {
             "name": "id",
             "ty": "I32",
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
             "key": true,
             "comment": null,
             "required": true,
@@ -1926,6 +2546,11 @@
           {
             "name": "name",
             "ty": "String",
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
             "key": false,
             "comment": null,
             "required": true,
@@ -1948,6 +2573,11 @@
                 }
               }
             },
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
             "key": false,
             "comment": null,
             "required": true,
@@ -1966,6 +2596,11 @@
           {
             "name": "recommended_power",
             "ty": "I32",
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
             "key": false,
             "comment": null,
             "required": true,
@@ -1984,6 +2619,11 @@
               "List": {
                 "Struct": "Reward"
               }
+            },
+            "scope": {
+              "values": [
+                "all"
+              ]
             },
             "key": false,
             "comment": null,
@@ -2007,6 +2647,11 @@
       },
       {
         "name": "StageReward",
+        "scope": {
+          "values": [
+            "all"
+          ]
+        },
         "mode": "List",
         "key": null,
         "source": {
@@ -2023,6 +2668,11 @@
                 "field": "id"
               }
             },
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
             "key": false,
             "comment": null,
             "required": true,
@@ -2038,6 +2688,11 @@
           {
             "name": "seq",
             "ty": "I32",
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
             "key": false,
             "comment": null,
             "required": true,
@@ -2058,6 +2713,11 @@
                 "field": "id"
               }
             },
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
             "key": false,
             "comment": null,
             "required": true,
@@ -2073,6 +2733,11 @@
           {
             "name": "count",
             "ty": "I32",
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
             "key": false,
             "comment": null,
             "required": true,
@@ -2090,6 +2755,11 @@
       },
       {
         "name": "Dungeon",
+        "scope": {
+          "values": [
+            "all"
+          ]
+        },
         "mode": "Map",
         "key": "id",
         "source": {
@@ -2101,6 +2771,11 @@
           {
             "name": "id",
             "ty": "I32",
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
             "key": true,
             "comment": null,
             "required": true,
@@ -2116,6 +2791,11 @@
           {
             "name": "name",
             "ty": "String",
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
             "key": false,
             "comment": null,
             "required": true,
@@ -2138,6 +2818,11 @@
                 }
               }
             },
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
             "key": false,
             "comment": null,
             "required": true,
@@ -2158,6 +2843,11 @@
             "ty": {
               "Struct": "ResourceCost"
             },
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
             "key": false,
             "comment": null,
             "required": true,
@@ -2175,6 +2865,11 @@
       },
       {
         "name": "Shop",
+        "scope": {
+          "values": [
+            "all"
+          ]
+        },
         "mode": "Map",
         "key": "id",
         "source": {
@@ -2186,6 +2881,11 @@
           {
             "name": "id",
             "ty": "I32",
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
             "key": true,
             "comment": null,
             "required": true,
@@ -2201,6 +2901,11 @@
           {
             "name": "name",
             "ty": "String",
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
             "key": false,
             "comment": null,
             "required": true,
@@ -2217,6 +2922,11 @@
             "name": "currency",
             "ty": {
               "Enum": "ResourceKind"
+            },
+            "scope": {
+              "values": [
+                "all"
+              ]
             },
             "key": false,
             "comment": null,
@@ -2235,6 +2945,11 @@
       },
       {
         "name": "ShopItem",
+        "scope": {
+          "values": [
+            "all"
+          ]
+        },
         "mode": "List",
         "key": null,
         "source": {
@@ -2251,6 +2966,11 @@
                 "field": "id"
               }
             },
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
             "key": false,
             "comment": null,
             "required": true,
@@ -2266,6 +2986,11 @@
           {
             "name": "seq",
             "ty": "I32",
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
             "key": false,
             "comment": null,
             "required": true,
@@ -2286,6 +3011,11 @@
                 "field": "id"
               }
             },
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
             "key": false,
             "comment": null,
             "required": true,
@@ -2302,6 +3032,11 @@
             "name": "price",
             "ty": {
               "Struct": "ResourceCost"
+            },
+            "scope": {
+              "values": [
+                "all"
+              ]
             },
             "key": false,
             "comment": null,
@@ -2320,6 +3055,11 @@
             "ty": {
               "Optional": "I32"
             },
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
             "key": false,
             "comment": null,
             "required": false,
@@ -2337,6 +3077,11 @@
       },
       {
         "name": "Recipe",
+        "scope": {
+          "values": [
+            "all"
+          ]
+        },
         "mode": "Map",
         "key": "id",
         "source": {
@@ -2348,6 +3093,11 @@
           {
             "name": "id",
             "ty": "I32",
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
             "key": true,
             "comment": null,
             "required": true,
@@ -2368,6 +3118,11 @@
                 "field": "id"
               }
             },
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
             "key": false,
             "comment": null,
             "required": true,
@@ -2386,6 +3141,11 @@
               "List": {
                 "Struct": "ResourceCost"
               }
+            },
+            "scope": {
+              "values": [
+                "all"
+              ]
             },
             "key": false,
             "comment": null,
@@ -2407,6 +3167,11 @@
       },
       {
         "name": "GachaPool",
+        "scope": {
+          "values": [
+            "all"
+          ]
+        },
         "mode": "Map",
         "key": "id",
         "source": {
@@ -2418,6 +3183,11 @@
           {
             "name": "id",
             "ty": "I32",
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
             "key": true,
             "comment": null,
             "required": true,
@@ -2433,6 +3203,11 @@
           {
             "name": "name",
             "ty": "String",
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
             "key": false,
             "comment": null,
             "required": true,
@@ -2449,6 +3224,11 @@
             "name": "cost",
             "ty": {
               "Struct": "ResourceCost"
+            },
+            "scope": {
+              "values": [
+                "all"
+              ]
             },
             "key": false,
             "comment": null,
@@ -2467,6 +3247,11 @@
       },
       {
         "name": "GachaItem",
+        "scope": {
+          "values": [
+            "all"
+          ]
+        },
         "mode": "List",
         "key": null,
         "source": {
@@ -2482,6 +3267,11 @@
                 "table": "GachaPool",
                 "field": "id"
               }
+            },
+            "scope": {
+              "values": [
+                "all"
+              ]
             },
             "key": false,
             "comment": null,
@@ -2503,6 +3293,11 @@
                 "field": "id"
               }
             },
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
             "key": false,
             "comment": null,
             "required": true,
@@ -2520,6 +3315,11 @@
             "ty": {
               "Enum": "Rarity"
             },
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
             "key": false,
             "comment": null,
             "required": true,
@@ -2535,6 +3335,11 @@
           {
             "name": "weight",
             "ty": "F32",
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
             "key": false,
             "comment": null,
             "required": true,
@@ -2552,6 +3357,11 @@
       },
       {
         "name": "EquipmentSet",
+        "scope": {
+          "values": [
+            "all"
+          ]
+        },
         "mode": "Map",
         "key": "id",
         "source": {
@@ -2563,6 +3373,11 @@
           {
             "name": "id",
             "ty": "I32",
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
             "key": true,
             "comment": null,
             "required": true,
@@ -2578,6 +3393,11 @@
           {
             "name": "name",
             "ty": "String",
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
             "key": false,
             "comment": null,
             "required": true,
@@ -2600,6 +3420,11 @@
                 }
               }
             },
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
             "key": false,
             "comment": null,
             "required": true,
@@ -2620,6 +3445,11 @@
             "ty": {
               "Struct": "SkillEffect"
             },
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
             "key": false,
             "comment": null,
             "required": true,
@@ -2637,6 +3467,11 @@
       },
       {
         "name": "Achievement",
+        "scope": {
+          "values": [
+            "all"
+          ]
+        },
         "mode": "Map",
         "key": "id",
         "source": {
@@ -2648,6 +3483,11 @@
           {
             "name": "id",
             "ty": "I32",
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
             "key": true,
             "comment": null,
             "required": true,
@@ -2663,6 +3503,11 @@
           {
             "name": "title_key",
             "ty": "String",
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
             "key": false,
             "comment": null,
             "required": true,
@@ -2678,6 +3523,11 @@
           {
             "name": "target_count",
             "ty": "I64",
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
             "key": false,
             "comment": null,
             "required": true,
@@ -2694,6 +3544,11 @@
             "name": "reward",
             "ty": {
               "Struct": "ResourceCost"
+            },
+            "scope": {
+              "values": [
+                "all"
+              ]
             },
             "key": false,
             "comment": null,
@@ -2712,6 +3567,11 @@
       },
       {
         "name": "VipLevel",
+        "scope": {
+          "values": [
+            "all"
+          ]
+        },
         "mode": "Map",
         "key": "level",
         "source": {
@@ -2723,6 +3583,11 @@
           {
             "name": "level",
             "ty": "I32",
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
             "key": true,
             "comment": null,
             "required": true,
@@ -2740,6 +3605,11 @@
             "ty": {
               "Struct": "ResourceCost"
             },
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
             "key": false,
             "comment": null,
             "required": true,
@@ -2756,6 +3626,11 @@
             "name": "perks",
             "ty": {
               "List": "String"
+            },
+            "scope": {
+              "values": [
+                "all"
+              ]
             },
             "key": false,
             "comment": null,
@@ -2777,6 +3652,11 @@
       },
       {
         "name": "MailTemplate",
+        "scope": {
+          "values": [
+            "all"
+          ]
+        },
         "mode": "Map",
         "key": "id",
         "source": {
@@ -2788,6 +3668,11 @@
           {
             "name": "id",
             "ty": "I32",
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
             "key": true,
             "comment": null,
             "required": true,
@@ -2805,6 +3690,11 @@
             "ty": {
               "Enum": "MailType"
             },
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
             "key": false,
             "comment": null,
             "required": true,
@@ -2820,6 +3710,11 @@
           {
             "name": "title_key",
             "ty": "String",
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
             "key": false,
             "comment": null,
             "required": true,
@@ -2835,6 +3730,11 @@
           {
             "name": "body_key",
             "ty": "String",
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
             "key": false,
             "comment": null,
             "required": true,
@@ -2853,6 +3753,11 @@
               "List": {
                 "Struct": "Reward"
               }
+            },
+            "scope": {
+              "values": [
+                "all"
+              ]
             },
             "key": false,
             "comment": null,
@@ -2876,6 +3781,11 @@
       },
       {
         "name": "MailReward",
+        "scope": {
+          "values": [
+            "all"
+          ]
+        },
         "mode": "List",
         "key": null,
         "source": {
@@ -2892,6 +3802,11 @@
                 "field": "id"
               }
             },
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
             "key": false,
             "comment": null,
             "required": true,
@@ -2907,6 +3822,11 @@
           {
             "name": "seq",
             "ty": "I32",
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
             "key": false,
             "comment": null,
             "required": true,
@@ -2927,6 +3847,11 @@
                 "field": "id"
               }
             },
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
             "key": false,
             "comment": null,
             "required": true,
@@ -2942,6 +3867,11 @@
           {
             "name": "count",
             "ty": "I32",
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
             "key": false,
             "comment": null,
             "required": true,
@@ -2959,6 +3889,11 @@
       },
       {
         "name": "Dialogue",
+        "scope": {
+          "values": [
+            "all"
+          ]
+        },
         "mode": "Map",
         "key": "id",
         "source": {
@@ -2970,6 +3905,11 @@
           {
             "name": "id",
             "ty": "I32",
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
             "key": true,
             "comment": null,
             "required": true,
@@ -2985,6 +3925,11 @@
           {
             "name": "speaker_key",
             "ty": "String",
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
             "key": false,
             "comment": null,
             "required": true,
@@ -3001,6 +3946,11 @@
             "name": "lines",
             "ty": {
               "List": "String"
+            },
+            "scope": {
+              "values": [
+                "all"
+              ]
             },
             "key": false,
             "comment": null,
@@ -3022,6 +3972,11 @@
       },
       {
         "name": "EventRule",
+        "scope": {
+          "values": [
+            "all"
+          ]
+        },
         "mode": "Map",
         "key": "id",
         "source": {
@@ -3033,6 +3988,11 @@
           {
             "name": "id",
             "ty": "I32",
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
             "key": true,
             "comment": null,
             "required": true,
@@ -3048,6 +4008,11 @@
           {
             "name": "name",
             "ty": "String",
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
             "key": false,
             "comment": null,
             "required": true,
@@ -3064,6 +4029,11 @@
             "name": "condition",
             "ty": {
               "Union": "EventCondition"
+            },
+            "scope": {
+              "values": [
+                "all"
+              ]
             },
             "key": false,
             "comment": null,
@@ -3083,6 +4053,11 @@
               "List": {
                 "Union": "RewardAction"
               }
+            },
+            "scope": {
+              "values": [
+                "all"
+              ]
             },
             "key": false,
             "comment": null,

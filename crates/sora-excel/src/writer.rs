@@ -8,7 +8,7 @@ use sora_ir::model::{ConfigIr, FieldIr, TableIr, TypeIr};
 
 use crate::projection::{table_template_rows, tuple_shape};
 
-const DATA_START_ROW: u32 = 10;
+const DATA_START_ROW: u32 = 12;
 const DATA_VALIDATION_ROWS: u32 = 1000;
 
 pub(crate) fn write_workbook(ir: &ConfigIr, tables: &[&TableIr], path: &Path) -> Result<()> {
@@ -101,7 +101,7 @@ fn apply_field_notes(
 
         let note = Note::new(note_text).set_author("Sora");
         worksheet
-            .insert_note(5, (index + 1) as u16, &note)
+            .insert_note(6, (index + 1) as u16, &note)
             .map_err(|source| excel_error(path, source))?;
     }
 
@@ -122,6 +122,7 @@ fn field_note_text(ir: &ConfigIr, field: &FieldIr) -> Option<String> {
     }
     lines.push(format!("Field: {}", field.name));
     lines.push(format!("Type: {}", field.ty));
+    lines.push(format!("Scope: {}", field.scope.display()));
     if let Some(tuple_shape) = tuple_shape {
         lines.push(format!("Tuple fields: {tuple_shape}"));
     }
@@ -317,14 +318,14 @@ impl TemplateFormats {
 
     fn for_cell(&self, row: usize, column: usize) -> &Format {
         match row {
-            0..=3 if column == 0 => &self.metadata_label,
-            0..=3 => &self.metadata_value,
-            4 => &self.spacer,
-            5 => &self.display_header,
-            6..=8 if column == 0 => &self.schema_label,
-            6..=8 => &self.schema_value,
-            9 if column == 0 => &self.schema_label,
-            9 => &self.description,
+            0..=4 if column == 0 => &self.metadata_label,
+            0..=4 => &self.metadata_value,
+            5 => &self.spacer,
+            6 => &self.display_header,
+            7..=10 if column == 0 => &self.schema_label,
+            7..=10 => &self.schema_value,
+            11 if column == 0 => &self.schema_label,
+            11 => &self.description,
             _ => &self.schema_value,
         }
     }
@@ -337,13 +338,13 @@ fn apply_sheet_layout(
     path: &Path,
 ) -> Result<()> {
     worksheet
-        .set_row_height(4, 6)
+        .set_row_height(5, 6)
         .map_err(|source| excel_error(path, source))?;
     worksheet
-        .set_row_height(5, 24)
+        .set_row_height(6, 24)
         .map_err(|source| excel_error(path, source))?;
     worksheet
-        .set_row_height(9, 42)
+        .set_row_height(11, 42)
         .map_err(|source| excel_error(path, source))?;
     worksheet
         .set_column_width(0, 12)
@@ -385,13 +386,14 @@ fn excel_error(path: &Path, source: impl std::fmt::Display) -> SoraError {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use sora_ir::model::{AggregationIr, ConfigIr, EnumIr, StructIr, TypeIr};
+    use sora_ir::model::{AggregationIr, ConfigIr, EnumIr, ScopeIr, StructIr, TypeIr};
 
     #[test]
     fn field_note_text_includes_comment_and_metadata() {
         let field = FieldIr {
             name: "rewards".to_owned(),
             ty: TypeIr::List(Box::new(TypeIr::Struct("Reward".to_owned()))),
+            scope: ScopeIr::default(),
             key: false,
             comment: Some("Reward rows".to_owned()),
             required: true,
@@ -416,6 +418,7 @@ mod tests {
         assert!(note_text.contains("Reward rows"));
         assert!(note_text.contains("Field: rewards"));
         assert!(note_text.contains("Type: list<struct<Reward>>"));
+        assert!(note_text.contains("Scope: all"));
         assert!(note_text.contains("Required: yes"));
         assert!(note_text.contains("Default: []"));
         assert!(note_text.contains("Range: 1..99"));
@@ -428,6 +431,7 @@ mod tests {
         let field = FieldIr {
             name: "name".to_owned(),
             ty: TypeIr::String,
+            scope: ScopeIr::default(),
             key: false,
             comment: Some("   ".to_owned()),
             required: false,
@@ -452,14 +456,17 @@ mod tests {
             codegen: Default::default(),
             enums: vec![EnumIr {
                 name: "ResourceType".to_owned(),
+                scope: ScopeIr::default(),
                 values: vec!["Item".to_owned()],
             }],
             structs: vec![StructIr {
                 name: "ResourceCost".to_owned(),
+                scope: ScopeIr::default(),
                 fields: vec![
                     FieldIr {
                         name: "kind".to_owned(),
                         ty: TypeIr::Enum("ResourceType".to_owned()),
+                        scope: ScopeIr::default(),
                         key: false,
                         comment: None,
                         required: true,
@@ -475,6 +482,7 @@ mod tests {
                     FieldIr {
                         name: "id".to_owned(),
                         ty: TypeIr::I32,
+                        scope: ScopeIr::default(),
                         key: false,
                         comment: None,
                         required: true,
@@ -490,6 +498,7 @@ mod tests {
                     FieldIr {
                         name: "count".to_owned(),
                         ty: TypeIr::I32,
+                        scope: ScopeIr::default(),
                         key: false,
                         comment: None,
                         required: true,
@@ -510,6 +519,7 @@ mod tests {
         let field = FieldIr {
             name: "cost".to_owned(),
             ty: TypeIr::Struct("ResourceCost".to_owned()),
+            scope: ScopeIr::default(),
             key: false,
             comment: None,
             required: true,

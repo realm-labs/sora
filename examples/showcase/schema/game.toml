@@ -672,6 +672,7 @@ range = [1, 9999]
 name = "weight"
 type = "f32"
 required = true
+scope = "server"
 
 [[tables]]
 name = "Monster"

@@ -52,6 +52,8 @@ fn main() -> Result<()> {
     clean_dir(&python_generated)?;
     clean_dir(&proto_generated)?;
     clean_dir(&generated_root.join("debug-json"))?;
+    clean_dir(&generated_root.join("client"))?;
+    clean_dir(&generated_root.join("server"))?;
     clean_file(&generated_root.join("config.json"))?;
     clean_file(&generated_root.join("config.pb"))?;
     clean_file(&generated_root.join("config.typed.pb"))?;
@@ -64,7 +66,13 @@ fn main() -> Result<()> {
     sora_core::pipeline::generate_code(&schema_input, CodegenTarget::CSharp, &csharp_generated)?;
     sora_core::pipeline::generate_code(&schema_input, CodegenTarget::Java, &java_generated)?;
     sora_core::pipeline::generate_code(&schema_input, CodegenTarget::Go, &go_generated)?;
-    sora_core::pipeline::generate_code(&schema_input, CodegenTarget::Dart, &dart_generated)?;
+    sora_core::pipeline::generate_code_with_scope_and_format(
+        &schema_input,
+        CodegenTarget::Dart,
+        &dart_generated,
+        sora_codegen::format::FormatMode::Never,
+        Some("client"),
+    )?;
     sora_core::pipeline::generate_code(&schema_input, CodegenTarget::C, &c_generated)?;
     sora_core::pipeline::generate_code(&schema_input, CodegenTarget::Cpp, &cpp_generated)?;
     sora_core::pipeline::generate_code(&schema_input, CodegenTarget::Python, &python_generated)?;
@@ -78,6 +86,18 @@ fn main() -> Result<()> {
         &project_input,
         "json",
         ExportOutput::File(generated_root.join("config.json")),
+    )?;
+    sora_core::pipeline::export_data_with_scope(
+        &project_input,
+        "json",
+        ExportOutput::File(generated_root.join("client/config.json")),
+        Some("client"),
+    )?;
+    sora_core::pipeline::export_data_with_scope(
+        &project_input,
+        "json",
+        ExportOutput::File(generated_root.join("server/config.json")),
+        Some("server"),
     )?;
     sora_core::pipeline::export_data(
         &project_input,
@@ -159,7 +179,7 @@ fn write_table_sheet(
 
     for (row_offset, row) in showcase_rows(&table.name).iter().enumerate() {
         for (column, value) in row.iter().enumerate() {
-            worksheet.write_string((10 + row_offset) as u32, column as u16, value)?;
+            worksheet.write_string((12 + row_offset) as u32, column as u16, value)?;
         }
     }
 

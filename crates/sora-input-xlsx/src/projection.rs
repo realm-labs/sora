@@ -16,12 +16,12 @@ pub(crate) fn verify_projection(
 ) -> Result<()> {
     expect_cell(path, sheet, range, 0, 0, "@table")?;
     expect_cell(path, sheet, range, 0, 1, &table.name)?;
-    expect_cell(path, sheet, range, 3, 0, "@schema")?;
-    expect_cell(path, sheet, range, 3, 1, &schema_hash(ir, table))?;
-    expect_cell(path, sheet, range, 6, 0, "#field")?;
+    expect_cell(path, sheet, range, 4, 0, "@schema")?;
+    expect_cell(path, sheet, range, 4, 1, &schema_hash(ir, table))?;
+    expect_cell(path, sheet, range, 7, 0, "#field")?;
 
     for (index, field) in table.fields.iter().enumerate() {
-        expect_cell(path, sheet, range, 6, index + 1, &field.name)?;
+        expect_cell(path, sheet, range, 7, index + 1, &field.name)?;
     }
 
     Ok(())

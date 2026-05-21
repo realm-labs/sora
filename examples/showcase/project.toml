@@ -32,6 +32,7 @@ format = "auto"
 [[build.codegen]]
 target = "dart"
 out = "dart/lib/src/generated"
+scope = "client"
 
 [[build.codegen]]
 target = "c"
@@ -76,6 +77,16 @@ out = "generated/config.sora"
 [[build.exports]]
 format = "json"
 out = "generated/config.json"
+
+[[build.exports]]
+format = "json"
+out = "generated/client/config.json"
+scope = "client"
+
+[[build.exports]]
+format = "json"
+out = "generated/server/config.json"
+scope = "server"
 
 [[build.exports]]
 format = "protobuf"

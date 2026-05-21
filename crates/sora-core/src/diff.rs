@@ -204,7 +204,7 @@ fn diff_row_fields(table: &TableIr, left: &RowData, right: &RowData) -> Vec<Fiel
 #[cfg(test)]
 mod tests {
     use super::*;
-    use sora_ir::model::{FieldIr, TableIr, TypeIr};
+    use sora_ir::model::{FieldIr, ScopeIr, TableIr, TypeIr};
 
     #[test]
     fn diffs_added_removed_and_changed_map_rows() {
@@ -216,6 +216,7 @@ mod tests {
             unions: Vec::new(),
             tables: vec![TableIr {
                 name: "Item".to_owned(),
+                scope: ScopeIr::default(),
                 mode: TableModeIr::Map,
                 key: Some("id".to_owned()),
                 source: None,
@@ -259,6 +260,7 @@ mod tests {
         FieldIr {
             name: name.to_owned(),
             ty,
+            scope: ScopeIr::default(),
             key: name == "id",
             comment: None,
             required: true,

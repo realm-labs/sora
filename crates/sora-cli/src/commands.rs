@@ -58,11 +58,12 @@ fn check(args: CheckArgs) -> Result<()> {
 
 fn generate(args: GenArgs, target: CodegenTarget) -> Result<()> {
     let input = TomlSchemaInput::new(&args.project);
-    sora_core::pipeline::generate_code_with_format(
+    sora_core::pipeline::generate_code_with_scope_and_format(
         &input,
         target,
         &args.out,
         args.format_code.into(),
+        args.scope.as_deref(),
     )
     .with_context(|| {
         format!(
@@ -75,7 +76,12 @@ fn generate(args: GenArgs, target: CodegenTarget) -> Result<()> {
 
 fn excel_template(args: ExcelTemplateArgs) -> Result<()> {
     let input = TomlSchemaInput::new(&args.project);
-    sora_core::pipeline::generate_excel_template(&input, &args.out).with_context(|| {
+    sora_core::pipeline::generate_excel_template_with_scope(
+        &input,
+        &args.out,
+        args.scope.as_deref(),
+    )
+    .with_context(|| {
         format!(
             "failed to generate Excel templates from `{}`",
             args.project.display()
@@ -85,13 +91,14 @@ fn excel_template(args: ExcelTemplateArgs) -> Result<()> {
 
 fn schema_lock(args: SchemaLockArgs) -> Result<()> {
     let input = TomlSchemaInput::new(&args.project);
-    sora_core::pipeline::generate_schema_lock(&input, &args.out).with_context(|| {
-        format!(
-            "failed to generate schema lock from `{}` into `{}`",
-            args.project.display(),
-            args.out.display()
-        )
-    })
+    sora_core::pipeline::generate_schema_lock_with_scope(&input, &args.out, args.scope.as_deref())
+        .with_context(|| {
+            format!(
+                "failed to generate schema lock from `{}` into `{}`",
+                args.project.display(),
+                args.out.display()
+            )
+        })
 }
 
 fn export(args: ExportArgs) -> Result<()> {
@@ -101,6 +108,7 @@ fn export(args: ExportArgs) -> Result<()> {
         args.data_format,
         &args.format,
         args.out,
+        args.scope.as_deref(),
     )
     .with_context(|| {
         format!(
@@ -117,6 +125,7 @@ pub(crate) fn export_project_data(
     data_format: DataFormat,
     format: &str,
     out: PathBuf,
+    scope: Option<&str>,
 ) -> Result<()> {
     let output = match sora_core::pipeline::export_output_kind(format) {
         Some(OutputKind::File) => ExportOutput::File(out.clone()),
@@ -134,16 +143,16 @@ pub(crate) fn export_project_data(
         DataFormat::Csv => {
             let schema_input = TomlSchemaInput::new(project);
             let input = CsvProjectInput::new(schema_input, data_root);
-            sora_core::pipeline::export_data(&input, format, output)
+            sora_core::pipeline::export_data_with_scope(&input, format, output, scope)
         }
         DataFormat::Toml => {
             let input = TomlProjectInput::new(project, data_root);
-            sora_core::pipeline::export_data(&input, format, output)
+            sora_core::pipeline::export_data_with_scope(&input, format, output, scope)
         }
         DataFormat::Xlsx => {
             let schema_input = TomlSchemaInput::new(project);
             let input = XlsxProjectInput::new(schema_input, data_root);
-            sora_core::pipeline::export_data(&input, format, output)
+            sora_core::pipeline::export_data_with_scope(&input, format, output, scope)
         }
     }?;
     Ok(())
@@ -156,19 +165,34 @@ fn diff(args: DiffArgs) -> Result<()> {
             let right_schema = TomlSchemaInput::new(&args.project);
             let left = CsvProjectInput::new(left_schema, &args.left_root);
             let right = CsvProjectInput::new(right_schema, &args.right_root);
-            sora_core::pipeline::diff_data(&left, &right, &args.out)
+            sora_core::pipeline::diff_data_with_scope(
+                &left,
+                &right,
+                &args.out,
+                args.scope.as_deref(),
+            )
         }
         DataFormat::Toml => {
             let left = TomlProjectInput::new(&args.project, &args.left_root);
             let right = TomlProjectInput::new(&args.project, &args.right_root);
-            sora_core::pipeline::diff_data(&left, &right, &args.out)
+            sora_core::pipeline::diff_data_with_scope(
+                &left,
+                &right,
+                &args.out,
+                args.scope.as_deref(),
+            )
         }
         DataFormat::Xlsx => {
             let left_schema = TomlSchemaInput::new(&args.project);
             let right_schema = TomlSchemaInput::new(&args.project);
             let left = XlsxProjectInput::new(left_schema, &args.left_root);
             let right = XlsxProjectInput::new(right_schema, &args.right_root);
-            sora_core::pipeline::diff_data(&left, &right, &args.out)
+            sora_core::pipeline::diff_data_with_scope(
+                &left,
+                &right,
+                &args.out,
+                args.scope.as_deref(),
+            )
         }
     }
     .with_context(|| {

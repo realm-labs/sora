@@ -5,14 +5,12 @@ final class DropEntry {
   final int seq;
   final int itemId;
   final int count;
-  final double weight;
 
   const DropEntry({
     required this.groupId,
     required this.seq,
     required this.itemId,
     required this.count,
-    required this.weight,
   });
 
   static DropEntry decode(SoraValue value) {
@@ -22,7 +20,6 @@ final class DropEntry {
       seq: obj.get("seq").asInt(),
       itemId: obj.get("item_id").asInt(),
       count: obj.get("count").asInt(),
-      weight: obj.get("weight").asDouble(),
     );
   }
 }

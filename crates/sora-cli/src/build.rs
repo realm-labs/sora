@@ -30,6 +30,7 @@ pub fn run(args: BuildArgs) -> Result<()> {
         .cloned()
         .unwrap_or_else(|| PathBuf::from("data"));
     let data_root = resolve_project_path(project_dir, &data_root);
+    let scope = args.scope.as_deref().or(build.scope.as_deref());
 
     let requested_targets = args.target;
     let codegen = selected_codegen_targets(&build.codegen, &requested_targets)?;
@@ -52,33 +53,37 @@ pub fn run(args: BuildArgs) -> Result<()> {
 
     if let Some(path) = build.schema_lock.as_ref() {
         let path = resolve_project_path(project_dir, path);
-        sora_core::pipeline::generate_schema_lock(&schema_input, &path).with_context(|| {
-            format!(
-                "failed to generate schema lock from `{}` into `{}`",
-                args.project.display(),
-                path.display()
-            )
-        })?;
+        sora_core::pipeline::generate_schema_lock_with_scope(&schema_input, &path, scope)
+            .with_context(|| {
+                format!(
+                    "failed to generate schema lock from `{}` into `{}`",
+                    args.project.display(),
+                    path.display()
+                )
+            })?;
     }
 
     if let Some(path) = build.excel_templates.as_ref() {
         let path = resolve_project_path(project_dir, path);
-        sora_core::pipeline::generate_excel_template(&schema_input, &path).with_context(|| {
-            format!(
-                "failed to generate Excel templates from `{}` into `{}`",
-                args.project.display(),
-                path.display()
-            )
-        })?;
+        sora_core::pipeline::generate_excel_template_with_scope(&schema_input, &path, scope)
+            .with_context(|| {
+                format!(
+                    "failed to generate Excel templates from `{}` into `{}`",
+                    args.project.display(),
+                    path.display()
+                )
+            })?;
     }
 
     for item in codegen {
         let out = resolve_project_path(project_dir, &item.out);
-        sora_core::pipeline::generate_code_with_format(
+        let item_scope = item.scope.as_deref().or(scope);
+        sora_core::pipeline::generate_code_with_scope_and_format(
             &schema_input,
             item.target.into(),
             &out,
             FormatMode::from(item.format),
+            item_scope,
         )
         .with_context(|| {
             format!(
@@ -92,14 +97,22 @@ pub fn run(args: BuildArgs) -> Result<()> {
 
     for item in &build.exports {
         let out = resolve_project_path(project_dir, &item.out);
-        export_project_data(&args.project, &data_root, data_format, &item.format, out)
-            .with_context(|| {
-                format!(
-                    "failed to export `{}` data from `{}`",
-                    item.format,
-                    data_root.display()
-                )
-            })?;
+        let item_scope = item.scope.as_deref().or(scope);
+        export_project_data(
+            &args.project,
+            &data_root,
+            data_format,
+            &item.format,
+            out,
+            item_scope,
+        )
+        .with_context(|| {
+            format!(
+                "failed to export `{}` data from `{}`",
+                item.format,
+                data_root.display()
+            )
+        })?;
     }
 
     Ok(())
@@ -220,6 +233,7 @@ impl BuildManifest {
 struct BuildConfig {
     data_format: Option<DataFormat>,
     data_root: Option<PathBuf>,
+    scope: Option<String>,
     schema_lock: Option<PathBuf>,
     excel_templates: Option<PathBuf>,
 
@@ -243,6 +257,7 @@ impl BuildConfig {
 struct BuildCodegen {
     target: BuildTarget,
     out: PathBuf,
+    scope: Option<String>,
     #[serde(default)]
     format: CodeFormatMode,
 }
@@ -251,6 +266,7 @@ struct BuildCodegen {
 struct BuildExport {
     format: String,
     out: PathBuf,
+    scope: Option<String>,
 }
 
 impl<'de> Deserialize<'de> for DataFormat {
@@ -377,6 +393,7 @@ mod tests {
             project: project.clone(),
             data_format: None,
             data_root: None,
+            scope: None,
             target: Vec::new(),
             clean: false,
         })
@@ -423,6 +440,7 @@ mod tests {
             project: project.clone(),
             data_format: None,
             data_root: None,
+            scope: None,
             target: vec![BuildTarget::Rust],
             clean: true,
         })

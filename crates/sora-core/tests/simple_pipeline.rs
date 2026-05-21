@@ -145,7 +145,7 @@ fn write_item_workbook(project: &Path, out_dir: &Path) {
     for (offset, row) in rows.iter().enumerate() {
         for (column, value) in row.iter().enumerate() {
             worksheet
-                .write_string((10 + offset) as u32, column as u16, *value)
+                .write_string((12 + offset) as u32, column as u16, *value)
                 .unwrap();
         }
     }

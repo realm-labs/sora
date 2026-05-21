@@ -8,6 +8,7 @@ pub fn table_template_rows(ir: &ConfigIr, table: &TableIr) -> Vec<Vec<String>> {
             "@key".to_owned(),
             table.key.as_deref().unwrap_or("").to_owned(),
         ],
+        vec!["@scope".to_owned(), table.scope.display()],
         vec!["@schema".to_owned(), schema_hash(ir, table)],
         Vec::new(),
         std::iter::once("#name".to_owned())
@@ -18,6 +19,9 @@ pub fn table_template_rows(ir: &ConfigIr, table: &TableIr) -> Vec<Vec<String>> {
             .collect(),
         std::iter::once("#type".to_owned())
             .chain(table.fields.iter().map(|field| field_type_hint(ir, field)))
+            .collect(),
+        std::iter::once("#scope".to_owned())
+            .chain(table.fields.iter().map(|field| field.scope.display()))
             .collect(),
         std::iter::once("#rule".to_owned())
             .chain(table.fields.iter().map(field_rule))
@@ -47,9 +51,11 @@ pub fn schema_hash(ir: &ConfigIr, table: &TableIr) -> String {
     update(&mut hash, &table.name);
     update(&mut hash, table_mode_name(table.mode));
     update(&mut hash, table.key.as_deref().unwrap_or(""));
+    update(&mut hash, &table.scope.display());
     for field in &table.fields {
         update(&mut hash, &field.name);
         update(&mut hash, &field.ty.to_string());
+        update(&mut hash, &field.scope.display());
         if let Some(parser) = &field.parser {
             update(&mut hash, parser);
         }
@@ -178,15 +184,17 @@ mod tests {
         assert_eq!(rows[0], ["@table", "Item"]);
         assert_eq!(rows[1], ["@mode", "map"]);
         assert_eq!(rows[2], ["@key", "id"]);
-        assert_eq!(rows[5], ["#name", "id", "name", "item_type", "max_stack"]);
-        assert_eq!(rows[6], ["#field", "id", "name", "item_type", "max_stack"]);
-        assert_eq!(rows[7], ["#type", "i32", "string", "enum<ItemType>", "i32"]);
+        assert_eq!(rows[3], ["@scope", "all"]);
+        assert_eq!(rows[6], ["#name", "id", "name", "item_type", "max_stack"]);
+        assert_eq!(rows[7], ["#field", "id", "name", "item_type", "max_stack"]);
+        assert_eq!(rows[8], ["#type", "i32", "string", "enum<ItemType>", "i32"]);
+        assert_eq!(rows[9], ["#scope", "all", "all", "all", "all"]);
         assert_eq!(
-            rows[8],
+            rows[10],
             ["#rule", "key", "required", "required", "required"]
         );
         assert_eq!(
-            rows[9],
+            rows[11],
             [
                 "#desc",
                 "Item id",
@@ -213,13 +221,13 @@ mod tests {
         let rows = table_template_rows(&ir, &ir.tables[0]);
 
         assert_eq!(
-            rows[7],
+            rows[8],
             [
                 "#type",
                 "struct<ResourceCost>(kind: enum<ResourceType>, id: i32, count: i32)"
             ]
         );
-        assert_eq!(rows[8], ["#rule", "required;separator=,;parser=tuple"]);
+        assert_eq!(rows[10], ["#rule", "required;separator=,;parser=tuple"]);
     }
 
     fn example_ir() -> ConfigIr {

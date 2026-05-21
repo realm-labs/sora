@@ -3,8 +3,8 @@ use sora_schema::model::{
     CStandardSchema, CodegenSchema, CppStandardSchema, EnumReprSchema, ErlangCodegenSchema,
     ErlangEnumReprSchema, FieldSchema, IndexSchema, JavaScriptCodegenSchema, LanguageCodegenSchema,
     LuaCodegenSchema, LuaEnumReprSchema, LuaVersionSchema, RuntimeFormatSchema, RustMapTypeSchema,
-    SchemaFile, TableModeSchema, TableSchema, TableSourceSchema, TypeScriptCodegenSchema,
-    UnionSchema, UnionVariantSchema,
+    SchemaFile, ScopeSchema, TableModeSchema, TableSchema, TableSourceSchema,
+    TypeScriptCodegenSchema, UnionSchema, UnionVariantSchema,
 };
 
 use crate::{
@@ -12,7 +12,7 @@ use crate::{
         AggregationIr, CCodegenIr, CStandardIr, CodegenIr, ConfigIr, CppCodegenIr, CppStandardIr,
         EnumIr, EnumReprIr, ErlangCodegenIr, ErlangEnumReprIr, FieldIr, IndexIr,
         JavaScriptCodegenIr, LanguageCodegenIr, LuaCodegenIr, LuaEnumReprIr, LuaVersionIr,
-        RuntimeFormatIr, RustCodegenIr, RustMapTypeIr, StructIr, TableIr, TableModeIr,
+        RuntimeFormatIr, RustCodegenIr, RustMapTypeIr, ScopeIr, StructIr, TableIr, TableModeIr,
         TableSourceIr, TypeIr, TypeScriptCodegenIr, UnionIr, UnionVariantIr,
     },
     parse::parse_type,
@@ -32,17 +32,21 @@ impl TryFrom<SchemaFile> for ConfigIr {
             enums: schema
                 .enums
                 .into_iter()
-                .map(|item| EnumIr {
-                    name: item.name,
-                    values: item.values,
+                .map(|item| {
+                    Ok(EnumIr {
+                        name: item.name,
+                        scope: ScopeIr::try_from(item.scope)?,
+                        values: item.values,
+                    })
                 })
-                .collect(),
+                .collect::<Result<Vec<_>>>()?,
             structs: schema
                 .structs
                 .into_iter()
                 .map(|item| {
                     Ok(StructIr {
                         name: item.name,
+                        scope: ScopeIr::try_from(item.scope)?,
                         fields: convert_fields(item.fields)?,
                     })
                 })
@@ -228,6 +232,7 @@ impl TryFrom<UnionSchema> for UnionIr {
 
         Ok(Self {
             name: union.name,
+            scope: ScopeIr::try_from(union.scope)?,
             tag: union.tag,
             variants: union
                 .variants
@@ -244,6 +249,7 @@ impl TryFrom<UnionVariantSchema> for UnionVariantIr {
     fn try_from(variant: UnionVariantSchema) -> Result<Self> {
         Ok(Self {
             name: variant.name,
+            scope: ScopeIr::try_from(variant.scope)?,
             fields: convert_fields(variant.fields)?,
         })
     }
@@ -255,6 +261,7 @@ impl TryFrom<TableSchema> for TableIr {
     fn try_from(table: TableSchema) -> Result<Self> {
         Ok(Self {
             name: table.name,
+            scope: ScopeIr::try_from(table.scope)?,
             mode: table.mode.into(),
             key: table.key,
             source: table.source.map(Into::into),
@@ -320,6 +327,7 @@ impl TryFrom<FieldSchema> for FieldIr {
         Ok(Self {
             name: field.name,
             ty,
+            scope: ScopeIr::try_from(field.scope)?,
             key: field.key,
             comment: field.comment,
             required: field.required.unwrap_or(false),
@@ -332,6 +340,41 @@ impl TryFrom<FieldSchema> for FieldIr {
             suffix: field.suffix,
             aggregation,
         })
+    }
+}
+
+impl TryFrom<ScopeSchema> for ScopeIr {
+    type Error = SoraError;
+
+    fn try_from(scope: ScopeSchema) -> Result<Self> {
+        if scope.values.is_empty() {
+            return Err(SoraError::InvalidSchema(
+                "scope must contain at least one value".to_owned(),
+            ));
+        }
+
+        let mut values = Vec::with_capacity(scope.values.len());
+        for value in scope.values {
+            let value = value.trim();
+            if value.is_empty() {
+                return Err(SoraError::InvalidSchema(
+                    "scope values must not be empty".to_owned(),
+                ));
+            }
+            if !value
+                .chars()
+                .all(|ch| ch.is_ascii_alphanumeric() || ch == '_' || ch == '-')
+            {
+                return Err(SoraError::InvalidSchema(format!(
+                    "scope `{value}` must contain only ASCII letters, digits, `_`, or `-`"
+                )));
+            }
+            if !values.iter().any(|item| item == value) {
+                values.push(value.to_owned());
+            }
+        }
+
+        Ok(Self { values })
     }
 }
 

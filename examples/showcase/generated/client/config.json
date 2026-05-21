@@ -2331,26 +2331,6 @@
             "prefix": null,
             "suffix": null,
             "aggregation": null
-          },
-          {
-            "name": "weight",
-            "ty": "F32",
-            "scope": {
-              "values": [
-                "server"
-              ]
-            },
-            "key": false,
-            "comment": null,
-            "required": true,
-            "default": null,
-            "range": null,
-            "length": null,
-            "parser": null,
-            "separator": null,
-            "prefix": null,
-            "suffix": null,
-            "aggregation": null
           }
         ],
         "indexes": []
@@ -9500,421 +9480,361 @@
             "count": 3,
             "group_id": 7001,
             "item_id": 1043,
-            "seq": 1,
-            "weight": 15.0
+            "seq": 1
           },
           {
             "count": 5,
             "group_id": 7001,
             "item_id": 1044,
-            "seq": 2,
-            "weight": 20.0
+            "seq": 2
           },
           {
             "count": 7,
             "group_id": 7001,
             "item_id": 1045,
-            "seq": 3,
-            "weight": 25.0
+            "seq": 3
           },
           {
             "count": 3,
             "group_id": 7002,
             "item_id": 1044,
-            "seq": 1,
-            "weight": 15.0
+            "seq": 1
           },
           {
             "count": 5,
             "group_id": 7002,
             "item_id": 1045,
-            "seq": 2,
-            "weight": 20.0
+            "seq": 2
           },
           {
             "count": 7,
             "group_id": 7002,
             "item_id": 1046,
-            "seq": 3,
-            "weight": 25.0
+            "seq": 3
           },
           {
             "count": 3,
             "group_id": 7003,
             "item_id": 1045,
-            "seq": 1,
-            "weight": 15.0
+            "seq": 1
           },
           {
             "count": 5,
             "group_id": 7003,
             "item_id": 1046,
-            "seq": 2,
-            "weight": 20.0
+            "seq": 2
           },
           {
             "count": 7,
             "group_id": 7003,
             "item_id": 1047,
-            "seq": 3,
-            "weight": 25.0
+            "seq": 3
           },
           {
             "count": 3,
             "group_id": 7004,
             "item_id": 1046,
-            "seq": 1,
-            "weight": 15.0
+            "seq": 1
           },
           {
             "count": 5,
             "group_id": 7004,
             "item_id": 1047,
-            "seq": 2,
-            "weight": 20.0
+            "seq": 2
           },
           {
             "count": 7,
             "group_id": 7004,
             "item_id": 1048,
-            "seq": 3,
-            "weight": 25.0
+            "seq": 3
           },
           {
             "count": 3,
             "group_id": 7005,
             "item_id": 1047,
-            "seq": 1,
-            "weight": 15.0
+            "seq": 1
           },
           {
             "count": 5,
             "group_id": 7005,
             "item_id": 1048,
-            "seq": 2,
-            "weight": 20.0
+            "seq": 2
           },
           {
             "count": 7,
             "group_id": 7005,
             "item_id": 1049,
-            "seq": 3,
-            "weight": 25.0
+            "seq": 3
           },
           {
             "count": 3,
             "group_id": 7006,
             "item_id": 1048,
-            "seq": 1,
-            "weight": 15.0
+            "seq": 1
           },
           {
             "count": 5,
             "group_id": 7006,
             "item_id": 1049,
-            "seq": 2,
-            "weight": 20.0
+            "seq": 2
           },
           {
             "count": 7,
             "group_id": 7006,
             "item_id": 1050,
-            "seq": 3,
-            "weight": 25.0
+            "seq": 3
           },
           {
             "count": 3,
             "group_id": 7007,
             "item_id": 1049,
-            "seq": 1,
-            "weight": 15.0
+            "seq": 1
           },
           {
             "count": 5,
             "group_id": 7007,
             "item_id": 1050,
-            "seq": 2,
-            "weight": 20.0
+            "seq": 2
           },
           {
             "count": 7,
             "group_id": 7007,
             "item_id": 1051,
-            "seq": 3,
-            "weight": 25.0
+            "seq": 3
           },
           {
             "count": 3,
             "group_id": 7008,
             "item_id": 1050,
-            "seq": 1,
-            "weight": 15.0
+            "seq": 1
           },
           {
             "count": 5,
             "group_id": 7008,
             "item_id": 1051,
-            "seq": 2,
-            "weight": 20.0
+            "seq": 2
           },
           {
             "count": 7,
             "group_id": 7008,
             "item_id": 1052,
-            "seq": 3,
-            "weight": 25.0
+            "seq": 3
           },
           {
             "count": 3,
             "group_id": 7009,
             "item_id": 1051,
-            "seq": 1,
-            "weight": 15.0
+            "seq": 1
           },
           {
             "count": 5,
             "group_id": 7009,
             "item_id": 1052,
-            "seq": 2,
-            "weight": 20.0
+            "seq": 2
           },
           {
             "count": 7,
             "group_id": 7009,
             "item_id": 1053,
-            "seq": 3,
-            "weight": 25.0
+            "seq": 3
           },
           {
             "count": 3,
             "group_id": 7010,
             "item_id": 1052,
-            "seq": 1,
-            "weight": 15.0
+            "seq": 1
           },
           {
             "count": 5,
             "group_id": 7010,
             "item_id": 1053,
-            "seq": 2,
-            "weight": 20.0
+            "seq": 2
           },
           {
             "count": 7,
             "group_id": 7010,
             "item_id": 1054,
-            "seq": 3,
-            "weight": 25.0
+            "seq": 3
           },
           {
             "count": 3,
             "group_id": 7011,
             "item_id": 1053,
-            "seq": 1,
-            "weight": 15.0
+            "seq": 1
           },
           {
             "count": 5,
             "group_id": 7011,
             "item_id": 1054,
-            "seq": 2,
-            "weight": 20.0
+            "seq": 2
           },
           {
             "count": 7,
             "group_id": 7011,
             "item_id": 1055,
-            "seq": 3,
-            "weight": 25.0
+            "seq": 3
           },
           {
             "count": 3,
             "group_id": 7012,
             "item_id": 1054,
-            "seq": 1,
-            "weight": 15.0
+            "seq": 1
           },
           {
             "count": 5,
             "group_id": 7012,
             "item_id": 1055,
-            "seq": 2,
-            "weight": 20.0
+            "seq": 2
           },
           {
             "count": 7,
             "group_id": 7012,
             "item_id": 1056,
-            "seq": 3,
-            "weight": 25.0
+            "seq": 3
           },
           {
             "count": 3,
             "group_id": 7013,
             "item_id": 1055,
-            "seq": 1,
-            "weight": 15.0
+            "seq": 1
           },
           {
             "count": 5,
             "group_id": 7013,
             "item_id": 1056,
-            "seq": 2,
-            "weight": 20.0
+            "seq": 2
           },
           {
             "count": 7,
             "group_id": 7013,
             "item_id": 1057,
-            "seq": 3,
-            "weight": 25.0
+            "seq": 3
           },
           {
             "count": 3,
             "group_id": 7014,
             "item_id": 1056,
-            "seq": 1,
-            "weight": 15.0
+            "seq": 1
           },
           {
             "count": 5,
             "group_id": 7014,
             "item_id": 1057,
-            "seq": 2,
-            "weight": 20.0
+            "seq": 2
           },
           {
             "count": 7,
             "group_id": 7014,
             "item_id": 1058,
-            "seq": 3,
-            "weight": 25.0
+            "seq": 3
           },
           {
             "count": 3,
             "group_id": 7015,
             "item_id": 1057,
-            "seq": 1,
-            "weight": 15.0
+            "seq": 1
           },
           {
             "count": 5,
             "group_id": 7015,
             "item_id": 1058,
-            "seq": 2,
-            "weight": 20.0
+            "seq": 2
           },
           {
             "count": 7,
             "group_id": 7015,
             "item_id": 1059,
-            "seq": 3,
-            "weight": 25.0
+            "seq": 3
           },
           {
             "count": 3,
             "group_id": 7016,
             "item_id": 1058,
-            "seq": 1,
-            "weight": 15.0
+            "seq": 1
           },
           {
             "count": 5,
             "group_id": 7016,
             "item_id": 1059,
-            "seq": 2,
-            "weight": 20.0
+            "seq": 2
           },
           {
             "count": 7,
             "group_id": 7016,
             "item_id": 1060,
-            "seq": 3,
-            "weight": 25.0
+            "seq": 3
           },
           {
             "count": 3,
             "group_id": 7017,
             "item_id": 1059,
-            "seq": 1,
-            "weight": 15.0
+            "seq": 1
           },
           {
             "count": 5,
             "group_id": 7017,
             "item_id": 1060,
-            "seq": 2,
-            "weight": 20.0
+            "seq": 2
           },
           {
             "count": 7,
             "group_id": 7017,
             "item_id": 1061,
-            "seq": 3,
-            "weight": 25.0
+            "seq": 3
           },
           {
             "count": 3,
             "group_id": 7018,
             "item_id": 1060,
-            "seq": 1,
-            "weight": 15.0
+            "seq": 1
           },
           {
             "count": 5,
             "group_id": 7018,
             "item_id": 1061,
-            "seq": 2,
-            "weight": 20.0
+            "seq": 2
           },
           {
             "count": 7,
             "group_id": 7018,
             "item_id": 1062,
-            "seq": 3,
-            "weight": 25.0
+            "seq": 3
           },
           {
             "count": 3,
             "group_id": 7019,
             "item_id": 1061,
-            "seq": 1,
-            "weight": 15.0
+            "seq": 1
           },
           {
             "count": 5,
             "group_id": 7019,
             "item_id": 1062,
-            "seq": 2,
-            "weight": 20.0
+            "seq": 2
           },
           {
             "count": 7,
             "group_id": 7019,
             "item_id": 1063,
-            "seq": 3,
-            "weight": 25.0
+            "seq": 3
           },
           {
             "count": 3,
             "group_id": 7020,
             "item_id": 1062,
-            "seq": 1,
-            "weight": 15.0
+            "seq": 1
           },
           {
             "count": 5,
             "group_id": 7020,
             "item_id": 1063,
-            "seq": 2,
-            "weight": 20.0
+            "seq": 2
           },
           {
             "count": 7,
             "group_id": 7020,
             "item_id": 1064,
-            "seq": 3,
-            "weight": 25.0
+            "seq": 3
           }
         ]
       },
