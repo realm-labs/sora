@@ -26,3 +26,33 @@ final class GachaItem {
     );
   }
 }
+
+final class GachaItemTable extends Iterable<GachaItem> implements SoraConfigTable {
+  final List<GachaItem> _rows;
+
+  const GachaItemTable(
+    this._rows,
+  );
+
+  static GachaItemTable decode(List<GachaItem> rows) {
+    return GachaItemTable(
+      rows,
+    );
+  }
+
+  @override
+  String get name => 'GachaItem';
+
+  @override
+  String get mode => 'list';
+
+  @override
+  String? get key => null;
+
+  @override
+  int get length => _rows.length;
+
+  @override
+  Iterator<GachaItem> get iterator => _rows.iterator;
+  List<GachaItem> get rows => _rows;
+}

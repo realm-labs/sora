@@ -26,3 +26,43 @@ final class Achievement {
     );
   }
 }
+
+final class AchievementTable extends Iterable<Achievement> implements SoraConfigTable {
+  final Map<int, Achievement> _rows;
+
+  const AchievementTable(
+    this._rows,
+  );
+
+  static AchievementTable decode(List<Achievement> rows) {
+    return AchievementTable(
+      decodeMapTable(rows, (row) => row.id),
+    );
+  }
+
+  @override
+  String get name => 'Achievement';
+
+  @override
+  String get mode => 'map';
+
+  @override
+  String? get key => 'id';
+
+  @override
+  int get length => _rows.length;
+
+  @override
+  Iterator<Achievement> get iterator => _rows.values.iterator;
+  Achievement? operator [](int key) => _rows[key];
+
+  Achievement get(int key) {
+    final row = _rows[key];
+    if (row == null) {
+      throw SoraReadException('missing row in table `Achievement` for key `$key`');
+    }
+    return row;
+  }
+
+  Map<int, Achievement> get rows => _rows;
+}

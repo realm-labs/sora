@@ -107,6 +107,7 @@ struct DartRecord {
     snake_name: String,
     imports: Vec<DartImport>,
     fields: Vec<DartField>,
+    table: Option<DartTable>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -167,11 +168,6 @@ impl DartModel {
             })
             .collect::<Vec<_>>();
 
-        let records = model
-            .records
-            .into_iter()
-            .map(|item| dart_record(ir, item))
-            .collect::<Vec<_>>();
         let unions = model
             .unions
             .into_iter()
@@ -181,6 +177,17 @@ impl DartModel {
             .tables
             .into_iter()
             .map(|item| dart_table(ir, item))
+            .collect::<Vec<_>>();
+        let records = model
+            .records
+            .into_iter()
+            .map(|item| {
+                let table = tables
+                    .iter()
+                    .find(|table| table.row_type == dart_type_identifier(&item.pascal_name))
+                    .cloned();
+                dart_record(ir, item, table)
+            })
             .collect::<Vec<_>>();
         let modules = enums
             .iter()
@@ -199,7 +206,7 @@ impl DartModel {
     }
 }
 
-fn dart_record(ir: &ConfigIr, record: BaseRecord) -> DartRecord {
+fn dart_record(ir: &ConfigIr, record: BaseRecord, table: Option<DartTable>) -> DartRecord {
     DartRecord {
         pascal_name: dart_type_identifier(&record.pascal_name),
         snake_name: dart_module_name(&record.snake_name),
@@ -209,6 +216,7 @@ fn dart_record(ir: &ConfigIr, record: BaseRecord) -> DartRecord {
             .into_iter()
             .map(|field| dart_field(ir, field))
             .collect(),
+        table,
     }
 }
 
@@ -537,8 +545,10 @@ type = "union<Action>"
         assert!(item.contains("itemType: ItemType.decode(obj.get(\"item_type\"))"));
         assert!(action.contains("sealed class Action"));
         assert!(action.contains("final class ActionAddItem extends Action"));
-        assert!(config.contains("final class ItemTable extends Iterable<Item>"));
+        assert!(item.contains("final class ItemTable extends Iterable<Item>"));
+        assert!(!config.contains("final class ItemTable extends Iterable<Item>"));
         assert!(runtime.contains("SoraValueBundle parseJson"));
+        assert!(runtime.contains("abstract interface class SoraConfigTable"));
 
         let _ = std::fs::remove_dir_all(base);
     }

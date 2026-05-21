@@ -36,3 +36,43 @@ final class Character {
     );
   }
 }
+
+final class CharacterTable extends Iterable<Character> implements SoraConfigTable {
+  final Map<int, Character> _rows;
+
+  const CharacterTable(
+    this._rows,
+  );
+
+  static CharacterTable decode(List<Character> rows) {
+    return CharacterTable(
+      decodeMapTable(rows, (row) => row.id),
+    );
+  }
+
+  @override
+  String get name => 'Character';
+
+  @override
+  String get mode => 'map';
+
+  @override
+  String? get key => 'id';
+
+  @override
+  int get length => _rows.length;
+
+  @override
+  Iterator<Character> get iterator => _rows.values.iterator;
+  Character? operator [](int key) => _rows[key];
+
+  Character get(int key) {
+    final row = _rows[key];
+    if (row == null) {
+      throw SoraReadException('missing row in table `Character` for key `$key`');
+    }
+    return row;
+  }
+
+  Map<int, Character> get rows => _rows;
+}

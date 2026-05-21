@@ -27,3 +27,43 @@ final class EventRule {
     );
   }
 }
+
+final class EventRuleTable extends Iterable<EventRule> implements SoraConfigTable {
+  final Map<int, EventRule> _rows;
+
+  const EventRuleTable(
+    this._rows,
+  );
+
+  static EventRuleTable decode(List<EventRule> rows) {
+    return EventRuleTable(
+      decodeMapTable(rows, (row) => row.id),
+    );
+  }
+
+  @override
+  String get name => 'EventRule';
+
+  @override
+  String get mode => 'map';
+
+  @override
+  String? get key => 'id';
+
+  @override
+  int get length => _rows.length;
+
+  @override
+  Iterator<EventRule> get iterator => _rows.values.iterator;
+  EventRule? operator [](int key) => _rows[key];
+
+  EventRule get(int key) {
+    final row = _rows[key];
+    if (row == null) {
+      throw SoraReadException('missing row in table `EventRule` for key `$key`');
+    }
+    return row;
+  }
+
+  Map<int, EventRule> get rows => _rows;
+}

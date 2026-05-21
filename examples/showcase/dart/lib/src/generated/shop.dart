@@ -23,3 +23,43 @@ final class Shop {
     );
   }
 }
+
+final class ShopTable extends Iterable<Shop> implements SoraConfigTable {
+  final Map<int, Shop> _rows;
+
+  const ShopTable(
+    this._rows,
+  );
+
+  static ShopTable decode(List<Shop> rows) {
+    return ShopTable(
+      decodeMapTable(rows, (row) => row.id),
+    );
+  }
+
+  @override
+  String get name => 'Shop';
+
+  @override
+  String get mode => 'map';
+
+  @override
+  String? get key => 'id';
+
+  @override
+  int get length => _rows.length;
+
+  @override
+  Iterator<Shop> get iterator => _rows.values.iterator;
+  Shop? operator [](int key) => _rows[key];
+
+  Shop get(int key) {
+    final row = _rows[key];
+    if (row == null) {
+      throw SoraReadException('missing row in table `Shop` for key `$key`');
+    }
+    return row;
+  }
+
+  Map<int, Shop> get rows => _rows;
+}

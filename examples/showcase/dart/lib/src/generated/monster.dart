@@ -33,3 +33,43 @@ final class Monster {
     );
   }
 }
+
+final class MonsterTable extends Iterable<Monster> implements SoraConfigTable {
+  final Map<int, Monster> _rows;
+
+  const MonsterTable(
+    this._rows,
+  );
+
+  static MonsterTable decode(List<Monster> rows) {
+    return MonsterTable(
+      decodeMapTable(rows, (row) => row.id),
+    );
+  }
+
+  @override
+  String get name => 'Monster';
+
+  @override
+  String get mode => 'map';
+
+  @override
+  String? get key => 'id';
+
+  @override
+  int get length => _rows.length;
+
+  @override
+  Iterator<Monster> get iterator => _rows.values.iterator;
+  Monster? operator [](int key) => _rows[key];
+
+  Monster get(int key) {
+    final row = _rows[key];
+    if (row == null) {
+      throw SoraReadException('missing row in table `Monster` for key `$key`');
+    }
+    return row;
+  }
+
+  Map<int, Monster> get rows => _rows;
+}

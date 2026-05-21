@@ -39,3 +39,53 @@ final class Item {
     );
   }
 }
+
+final class ItemTable extends Iterable<Item> implements SoraConfigTable {
+  final Map<int, Item> _rows;
+  final Map<String, Item> _name;
+  final Map<ItemType, List<Item>> _itemType;
+
+  const ItemTable(
+    this._rows,
+    this._name,
+    this._itemType,
+  );
+
+  static ItemTable decode(List<Item> rows) {
+    return ItemTable(
+      decodeMapTable(rows, (row) => row.id),
+      decodeUniqueIndex(rows, (row) => row.name),
+      decodeIndex(rows, (row) => row.itemType),
+    );
+  }
+
+  @override
+  String get name => 'Item';
+
+  @override
+  String get mode => 'map';
+
+  @override
+  String? get key => 'id';
+
+  @override
+  int get length => _rows.length;
+
+  @override
+  Iterator<Item> get iterator => _rows.values.iterator;
+  Item? operator [](int key) => _rows[key];
+
+  Item get(int key) {
+    final row = _rows[key];
+    if (row == null) {
+      throw SoraReadException('missing row in table `Item` for key `$key`');
+    }
+    return row;
+  }
+
+  Map<int, Item> get rows => _rows;
+  Item? getByName(String name) =>
+      _name[name];
+  List<Item> findByItemType(ItemType itemType) =>
+      _itemType[itemType] ?? const [];
+}

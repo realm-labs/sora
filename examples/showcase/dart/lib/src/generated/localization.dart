@@ -25,3 +25,43 @@ final class Localization {
     );
   }
 }
+
+final class LocalizationTable extends Iterable<Localization> implements SoraConfigTable {
+  final Map<String, Localization> _rows;
+
+  const LocalizationTable(
+    this._rows,
+  );
+
+  static LocalizationTable decode(List<Localization> rows) {
+    return LocalizationTable(
+      decodeMapTable(rows, (row) => row.key),
+    );
+  }
+
+  @override
+  String get name => 'Localization';
+
+  @override
+  String get mode => 'map';
+
+  @override
+  String? get key => 'key';
+
+  @override
+  int get length => _rows.length;
+
+  @override
+  Iterator<Localization> get iterator => _rows.values.iterator;
+  Localization? operator [](String key) => _rows[key];
+
+  Localization get(String key) {
+    final row = _rows[key];
+    if (row == null) {
+      throw SoraReadException('missing row in table `Localization` for key `$key`');
+    }
+    return row;
+  }
+
+  Map<String, Localization> get rows => _rows;
+}

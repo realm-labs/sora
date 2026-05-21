@@ -46,6 +46,13 @@ final class SoraValueBundle {
   }
 }
 
+abstract interface class SoraConfigTable {
+  String get name;
+  String get mode;
+  String? get key;
+  int get length;
+}
+
 final class SoraObject {
   final Map<String, SoraValue> _fields;
 

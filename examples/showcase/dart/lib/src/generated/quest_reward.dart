@@ -25,3 +25,33 @@ final class QuestReward {
     );
   }
 }
+
+final class QuestRewardTable extends Iterable<QuestReward> implements SoraConfigTable {
+  final List<QuestReward> _rows;
+
+  const QuestRewardTable(
+    this._rows,
+  );
+
+  static QuestRewardTable decode(List<QuestReward> rows) {
+    return QuestRewardTable(
+      rows,
+    );
+  }
+
+  @override
+  String get name => 'QuestReward';
+
+  @override
+  String get mode => 'list';
+
+  @override
+  String? get key => null;
+
+  @override
+  int get length => _rows.length;
+
+  @override
+  Iterator<QuestReward> get iterator => _rows.iterator;
+  List<QuestReward> get rows => _rows;
+}

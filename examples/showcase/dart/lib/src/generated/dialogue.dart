@@ -22,3 +22,43 @@ final class Dialogue {
     );
   }
 }
+
+final class DialogueTable extends Iterable<Dialogue> implements SoraConfigTable {
+  final Map<int, Dialogue> _rows;
+
+  const DialogueTable(
+    this._rows,
+  );
+
+  static DialogueTable decode(List<Dialogue> rows) {
+    return DialogueTable(
+      decodeMapTable(rows, (row) => row.id),
+    );
+  }
+
+  @override
+  String get name => 'Dialogue';
+
+  @override
+  String get mode => 'map';
+
+  @override
+  String? get key => 'id';
+
+  @override
+  int get length => _rows.length;
+
+  @override
+  Iterator<Dialogue> get iterator => _rows.values.iterator;
+  Dialogue? operator [](int key) => _rows[key];
+
+  Dialogue get(int key) {
+    final row = _rows[key];
+    if (row == null) {
+      throw SoraReadException('missing row in table `Dialogue` for key `$key`');
+    }
+    return row;
+  }
+
+  Map<int, Dialogue> get rows => _rows;
+}

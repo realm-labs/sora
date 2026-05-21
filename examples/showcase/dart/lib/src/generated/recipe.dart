@@ -23,3 +23,43 @@ final class Recipe {
     );
   }
 }
+
+final class RecipeTable extends Iterable<Recipe> implements SoraConfigTable {
+  final Map<int, Recipe> _rows;
+
+  const RecipeTable(
+    this._rows,
+  );
+
+  static RecipeTable decode(List<Recipe> rows) {
+    return RecipeTable(
+      decodeMapTable(rows, (row) => row.id),
+    );
+  }
+
+  @override
+  String get name => 'Recipe';
+
+  @override
+  String get mode => 'map';
+
+  @override
+  String? get key => 'id';
+
+  @override
+  int get length => _rows.length;
+
+  @override
+  Iterator<Recipe> get iterator => _rows.values.iterator;
+  Recipe? operator [](int key) => _rows[key];
+
+  Recipe get(int key) {
+    final row = _rows[key];
+    if (row == null) {
+      throw SoraReadException('missing row in table `Recipe` for key `$key`');
+    }
+    return row;
+  }
+
+  Map<int, Recipe> get rows => _rows;
+}

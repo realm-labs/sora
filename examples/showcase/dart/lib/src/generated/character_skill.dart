@@ -22,3 +22,33 @@ final class CharacterSkill {
     );
   }
 }
+
+final class CharacterSkillTable extends Iterable<CharacterSkill> implements SoraConfigTable {
+  final List<CharacterSkill> _rows;
+
+  const CharacterSkillTable(
+    this._rows,
+  );
+
+  static CharacterSkillTable decode(List<CharacterSkill> rows) {
+    return CharacterSkillTable(
+      rows,
+    );
+  }
+
+  @override
+  String get name => 'CharacterSkill';
+
+  @override
+  String get mode => 'list';
+
+  @override
+  String? get key => null;
+
+  @override
+  int get length => _rows.length;
+
+  @override
+  Iterator<CharacterSkill> get iterator => _rows.iterator;
+  List<CharacterSkill> get rows => _rows;
+}

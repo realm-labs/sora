@@ -25,3 +25,33 @@ final class MailReward {
     );
   }
 }
+
+final class MailRewardTable extends Iterable<MailReward> implements SoraConfigTable {
+  final List<MailReward> _rows;
+
+  const MailRewardTable(
+    this._rows,
+  );
+
+  static MailRewardTable decode(List<MailReward> rows) {
+    return MailRewardTable(
+      rows,
+    );
+  }
+
+  @override
+  String get name => 'MailReward';
+
+  @override
+  String get mode => 'list';
+
+  @override
+  String? get key => null;
+
+  @override
+  int get length => _rows.length;
+
+  @override
+  Iterator<MailReward> get iterator => _rows.iterator;
+  List<MailReward> get rows => _rows;
+}

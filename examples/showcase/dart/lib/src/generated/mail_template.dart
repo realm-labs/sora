@@ -30,3 +30,43 @@ final class MailTemplate {
     );
   }
 }
+
+final class MailTemplateTable extends Iterable<MailTemplate> implements SoraConfigTable {
+  final Map<int, MailTemplate> _rows;
+
+  const MailTemplateTable(
+    this._rows,
+  );
+
+  static MailTemplateTable decode(List<MailTemplate> rows) {
+    return MailTemplateTable(
+      decodeMapTable(rows, (row) => row.id),
+    );
+  }
+
+  @override
+  String get name => 'MailTemplate';
+
+  @override
+  String get mode => 'map';
+
+  @override
+  String? get key => 'id';
+
+  @override
+  int get length => _rows.length;
+
+  @override
+  Iterator<MailTemplate> get iterator => _rows.values.iterator;
+  MailTemplate? operator [](int key) => _rows[key];
+
+  MailTemplate get(int key) {
+    final row = _rows[key];
+    if (row == null) {
+      throw SoraReadException('missing row in table `MailTemplate` for key `$key`');
+    }
+    return row;
+  }
+
+  Map<int, MailTemplate> get rows => _rows;
+}

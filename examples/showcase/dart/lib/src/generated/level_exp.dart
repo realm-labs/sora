@@ -22,3 +22,43 @@ final class LevelExp {
     );
   }
 }
+
+final class LevelExpTable extends Iterable<LevelExp> implements SoraConfigTable {
+  final Map<int, LevelExp> _rows;
+
+  const LevelExpTable(
+    this._rows,
+  );
+
+  static LevelExpTable decode(List<LevelExp> rows) {
+    return LevelExpTable(
+      decodeMapTable(rows, (row) => row.level),
+    );
+  }
+
+  @override
+  String get name => 'LevelExp';
+
+  @override
+  String get mode => 'map';
+
+  @override
+  String? get key => 'level';
+
+  @override
+  int get length => _rows.length;
+
+  @override
+  Iterator<LevelExp> get iterator => _rows.values.iterator;
+  LevelExp? operator [](int key) => _rows[key];
+
+  LevelExp get(int key) {
+    final row = _rows[key];
+    if (row == null) {
+      throw SoraReadException('missing row in table `LevelExp` for key `$key`');
+    }
+    return row;
+  }
+
+  Map<int, LevelExp> get rows => _rows;
+}

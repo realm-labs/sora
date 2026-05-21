@@ -29,3 +29,43 @@ final class Stage {
     );
   }
 }
+
+final class StageTable extends Iterable<Stage> implements SoraConfigTable {
+  final Map<int, Stage> _rows;
+
+  const StageTable(
+    this._rows,
+  );
+
+  static StageTable decode(List<Stage> rows) {
+    return StageTable(
+      decodeMapTable(rows, (row) => row.id),
+    );
+  }
+
+  @override
+  String get name => 'Stage';
+
+  @override
+  String get mode => 'map';
+
+  @override
+  String? get key => 'id';
+
+  @override
+  int get length => _rows.length;
+
+  @override
+  Iterator<Stage> get iterator => _rows.values.iterator;
+  Stage? operator [](int key) => _rows[key];
+
+  Stage get(int key) {
+    final row = _rows[key];
+    if (row == null) {
+      throw SoraReadException('missing row in table `Stage` for key `$key`');
+    }
+    return row;
+  }
+
+  Map<int, Stage> get rows => _rows;
+}

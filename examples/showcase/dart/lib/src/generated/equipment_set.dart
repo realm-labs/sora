@@ -26,3 +26,43 @@ final class EquipmentSet {
     );
   }
 }
+
+final class EquipmentSetTable extends Iterable<EquipmentSet> implements SoraConfigTable {
+  final Map<int, EquipmentSet> _rows;
+
+  const EquipmentSetTable(
+    this._rows,
+  );
+
+  static EquipmentSetTable decode(List<EquipmentSet> rows) {
+    return EquipmentSetTable(
+      decodeMapTable(rows, (row) => row.id),
+    );
+  }
+
+  @override
+  String get name => 'EquipmentSet';
+
+  @override
+  String get mode => 'map';
+
+  @override
+  String? get key => 'id';
+
+  @override
+  int get length => _rows.length;
+
+  @override
+  Iterator<EquipmentSet> get iterator => _rows.values.iterator;
+  EquipmentSet? operator [](int key) => _rows[key];
+
+  EquipmentSet get(int key) {
+    final row = _rows[key];
+    if (row == null) {
+      throw SoraReadException('missing row in table `EquipmentSet` for key `$key`');
+    }
+    return row;
+  }
+
+  Map<int, EquipmentSet> get rows => _rows;
+}

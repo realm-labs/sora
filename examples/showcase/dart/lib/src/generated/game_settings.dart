@@ -29,3 +29,33 @@ final class GameSettings {
     );
   }
 }
+
+final class GameSettingsTable extends Iterable<GameSettings> implements SoraConfigTable {
+  final GameSettings _row;
+
+  const GameSettingsTable(
+    this._row,
+  );
+
+  static GameSettingsTable decode(List<GameSettings> rows) {
+    return GameSettingsTable(
+      requireSingletonTable(rows, 'GameSettings'),
+    );
+  }
+
+  @override
+  String get name => 'GameSettings';
+
+  @override
+  String get mode => 'singleton';
+
+  @override
+  String? get key => null;
+
+  @override
+  int get length => 1;
+
+  @override
+  Iterator<GameSettings> get iterator => <GameSettings>[_row].iterator;
+  GameSettings get row => _row;
+}

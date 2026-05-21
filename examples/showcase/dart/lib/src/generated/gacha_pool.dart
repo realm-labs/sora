@@ -23,3 +23,43 @@ final class GachaPool {
     );
   }
 }
+
+final class GachaPoolTable extends Iterable<GachaPool> implements SoraConfigTable {
+  final Map<int, GachaPool> _rows;
+
+  const GachaPoolTable(
+    this._rows,
+  );
+
+  static GachaPoolTable decode(List<GachaPool> rows) {
+    return GachaPoolTable(
+      decodeMapTable(rows, (row) => row.id),
+    );
+  }
+
+  @override
+  String get name => 'GachaPool';
+
+  @override
+  String get mode => 'map';
+
+  @override
+  String? get key => 'id';
+
+  @override
+  int get length => _rows.length;
+
+  @override
+  Iterator<GachaPool> get iterator => _rows.values.iterator;
+  GachaPool? operator [](int key) => _rows[key];
+
+  GachaPool get(int key) {
+    final row = _rows[key];
+    if (row == null) {
+      throw SoraReadException('missing row in table `GachaPool` for key `$key`');
+    }
+    return row;
+  }
+
+  Map<int, GachaPool> get rows => _rows;
+}

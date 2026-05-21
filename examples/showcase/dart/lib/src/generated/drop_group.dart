@@ -19,3 +19,43 @@ final class DropGroup {
     );
   }
 }
+
+final class DropGroupTable extends Iterable<DropGroup> implements SoraConfigTable {
+  final Map<int, DropGroup> _rows;
+
+  const DropGroupTable(
+    this._rows,
+  );
+
+  static DropGroupTable decode(List<DropGroup> rows) {
+    return DropGroupTable(
+      decodeMapTable(rows, (row) => row.id),
+    );
+  }
+
+  @override
+  String get name => 'DropGroup';
+
+  @override
+  String get mode => 'map';
+
+  @override
+  String? get key => 'id';
+
+  @override
+  int get length => _rows.length;
+
+  @override
+  Iterator<DropGroup> get iterator => _rows.values.iterator;
+  DropGroup? operator [](int key) => _rows[key];
+
+  DropGroup get(int key) {
+    final row = _rows[key];
+    if (row == null) {
+      throw SoraReadException('missing row in table `DropGroup` for key `$key`');
+    }
+    return row;
+  }
+
+  Map<int, DropGroup> get rows => _rows;
+}

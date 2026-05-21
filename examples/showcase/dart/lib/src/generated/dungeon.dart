@@ -26,3 +26,43 @@ final class Dungeon {
     );
   }
 }
+
+final class DungeonTable extends Iterable<Dungeon> implements SoraConfigTable {
+  final Map<int, Dungeon> _rows;
+
+  const DungeonTable(
+    this._rows,
+  );
+
+  static DungeonTable decode(List<Dungeon> rows) {
+    return DungeonTable(
+      decodeMapTable(rows, (row) => row.id),
+    );
+  }
+
+  @override
+  String get name => 'Dungeon';
+
+  @override
+  String get mode => 'map';
+
+  @override
+  String? get key => 'id';
+
+  @override
+  int get length => _rows.length;
+
+  @override
+  Iterator<Dungeon> get iterator => _rows.values.iterator;
+  Dungeon? operator [](int key) => _rows[key];
+
+  Dungeon get(int key) {
+    final row = _rows[key];
+    if (row == null) {
+      throw SoraReadException('missing row in table `Dungeon` for key `$key`');
+    }
+    return row;
+  }
+
+  Map<int, Dungeon> get rows => _rows;
+}

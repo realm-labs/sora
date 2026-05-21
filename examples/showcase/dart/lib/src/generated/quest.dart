@@ -38,3 +38,43 @@ final class Quest {
     );
   }
 }
+
+final class QuestTable extends Iterable<Quest> implements SoraConfigTable {
+  final Map<int, Quest> _rows;
+
+  const QuestTable(
+    this._rows,
+  );
+
+  static QuestTable decode(List<Quest> rows) {
+    return QuestTable(
+      decodeMapTable(rows, (row) => row.id),
+    );
+  }
+
+  @override
+  String get name => 'Quest';
+
+  @override
+  String get mode => 'map';
+
+  @override
+  String? get key => 'id';
+
+  @override
+  int get length => _rows.length;
+
+  @override
+  Iterator<Quest> get iterator => _rows.values.iterator;
+  Quest? operator [](int key) => _rows[key];
+
+  Quest get(int key) {
+    final row = _rows[key];
+    if (row == null) {
+      throw SoraReadException('missing row in table `Quest` for key `$key`');
+    }
+    return row;
+  }
+
+  Map<int, Quest> get rows => _rows;
+}

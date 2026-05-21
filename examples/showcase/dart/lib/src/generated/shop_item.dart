@@ -29,3 +29,33 @@ final class ShopItem {
     );
   }
 }
+
+final class ShopItemTable extends Iterable<ShopItem> implements SoraConfigTable {
+  final List<ShopItem> _rows;
+
+  const ShopItemTable(
+    this._rows,
+  );
+
+  static ShopItemTable decode(List<ShopItem> rows) {
+    return ShopItemTable(
+      rows,
+    );
+  }
+
+  @override
+  String get name => 'ShopItem';
+
+  @override
+  String get mode => 'list';
+
+  @override
+  String? get key => null;
+
+  @override
+  int get length => _rows.length;
+
+  @override
+  Iterator<ShopItem> get iterator => _rows.iterator;
+  List<ShopItem> get rows => _rows;
+}

@@ -25,3 +25,33 @@ final class DropEntry {
     );
   }
 }
+
+final class DropEntryTable extends Iterable<DropEntry> implements SoraConfigTable {
+  final List<DropEntry> _rows;
+
+  const DropEntryTable(
+    this._rows,
+  );
+
+  static DropEntryTable decode(List<DropEntry> rows) {
+    return DropEntryTable(
+      rows,
+    );
+  }
+
+  @override
+  String get name => 'DropEntry';
+
+  @override
+  String get mode => 'list';
+
+  @override
+  String? get key => null;
+
+  @override
+  int get length => _rows.length;
+
+  @override
+  Iterator<DropEntry> get iterator => _rows.iterator;
+  List<DropEntry> get rows => _rows;
+}

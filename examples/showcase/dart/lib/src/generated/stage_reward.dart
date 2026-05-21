@@ -25,3 +25,33 @@ final class StageReward {
     );
   }
 }
+
+final class StageRewardTable extends Iterable<StageReward> implements SoraConfigTable {
+  final List<StageReward> _rows;
+
+  const StageRewardTable(
+    this._rows,
+  );
+
+  static StageRewardTable decode(List<StageReward> rows) {
+    return StageRewardTable(
+      rows,
+    );
+  }
+
+  @override
+  String get name => 'StageReward';
+
+  @override
+  String get mode => 'list';
+
+  @override
+  String? get key => null;
+
+  @override
+  int get length => _rows.length;
+
+  @override
+  Iterator<StageReward> get iterator => _rows.iterator;
+  List<StageReward> get rows => _rows;
+}

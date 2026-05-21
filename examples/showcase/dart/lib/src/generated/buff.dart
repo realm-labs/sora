@@ -26,3 +26,43 @@ final class Buff {
     );
   }
 }
+
+final class BuffTable extends Iterable<Buff> implements SoraConfigTable {
+  final Map<int, Buff> _rows;
+
+  const BuffTable(
+    this._rows,
+  );
+
+  static BuffTable decode(List<Buff> rows) {
+    return BuffTable(
+      decodeMapTable(rows, (row) => row.id),
+    );
+  }
+
+  @override
+  String get name => 'Buff';
+
+  @override
+  String get mode => 'map';
+
+  @override
+  String? get key => 'id';
+
+  @override
+  int get length => _rows.length;
+
+  @override
+  Iterator<Buff> get iterator => _rows.values.iterator;
+  Buff? operator [](int key) => _rows[key];
+
+  Buff get(int key) {
+    final row = _rows[key];
+    if (row == null) {
+      throw SoraReadException('missing row in table `Buff` for key `$key`');
+    }
+    return row;
+  }
+
+  Map<int, Buff> get rows => _rows;
+}

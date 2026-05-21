@@ -23,3 +23,43 @@ final class VipLevel {
     );
   }
 }
+
+final class VipLevelTable extends Iterable<VipLevel> implements SoraConfigTable {
+  final Map<int, VipLevel> _rows;
+
+  const VipLevelTable(
+    this._rows,
+  );
+
+  static VipLevelTable decode(List<VipLevel> rows) {
+    return VipLevelTable(
+      decodeMapTable(rows, (row) => row.level),
+    );
+  }
+
+  @override
+  String get name => 'VipLevel';
+
+  @override
+  String get mode => 'map';
+
+  @override
+  String? get key => 'level';
+
+  @override
+  int get length => _rows.length;
+
+  @override
+  Iterator<VipLevel> get iterator => _rows.values.iterator;
+  VipLevel? operator [](int key) => _rows[key];
+
+  VipLevel get(int key) {
+    final row = _rows[key];
+    if (row == null) {
+      throw SoraReadException('missing row in table `VipLevel` for key `$key`');
+    }
+    return row;
+  }
+
+  Map<int, VipLevel> get rows => _rows;
+}

@@ -44,3 +44,43 @@ final class Skill {
     );
   }
 }
+
+final class SkillTable extends Iterable<Skill> implements SoraConfigTable {
+  final Map<int, Skill> _rows;
+
+  const SkillTable(
+    this._rows,
+  );
+
+  static SkillTable decode(List<Skill> rows) {
+    return SkillTable(
+      decodeMapTable(rows, (row) => row.id),
+    );
+  }
+
+  @override
+  String get name => 'Skill';
+
+  @override
+  String get mode => 'map';
+
+  @override
+  String? get key => 'id';
+
+  @override
+  int get length => _rows.length;
+
+  @override
+  Iterator<Skill> get iterator => _rows.values.iterator;
+  Skill? operator [](int key) => _rows[key];
+
+  Skill get(int key) {
+    final row = _rows[key];
+    if (row == null) {
+      throw SoraReadException('missing row in table `Skill` for key `$key`');
+    }
+    return row;
+  }
+
+  Map<int, Skill> get rows => _rows;
+}
