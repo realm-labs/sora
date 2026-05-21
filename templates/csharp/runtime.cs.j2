@@ -23,6 +23,8 @@ internal sealed record SoraSection(int Kind, int Compression, string Name, int O
 
 public interface ISoraTableSource
 {
+    string SchemaFingerprint { get; }
+
     List<T> DecodeTable<T>(string name, Func<SoraReader, T> decodeBinary, Func<SoraValue, T> decodeValue);
 }
 
@@ -38,11 +40,14 @@ public sealed class SoraBundle : ISoraTableSource
     private readonly byte[] bytes;
     private readonly List<SoraSection> sections;
 
-    private SoraBundle(byte[] bytes, List<SoraSection> sections)
+    private SoraBundle(byte[] bytes, List<SoraSection> sections, string schemaFingerprint)
     {
         this.bytes = bytes;
         this.sections = sections;
+        SchemaFingerprint = schemaFingerprint;
     }
+
+    public string SchemaFingerprint { get; }
 
     internal List<T> DecodeTable<T>(string name, Func<SoraReader, T> decode)
     {
@@ -180,7 +185,12 @@ public sealed class SoraBundle : ISoraTableSource
         {
             throw new SoraReadException($"expected exactly 1 Sora schema section, got {schemaCount}");
         }
-        return new SoraBundle(bytes, sections);
+        var manifest = sections.Find(value => value.Kind == SectionKindManifest)
+            ?? throw new SoraReadException("missing Sora manifest section");
+        var manifestBytes = new byte[manifest.Length];
+        Array.Copy(bytes, manifest.Offset, manifestBytes, 0, manifest.Length);
+        var schemaFingerprint = ReadJsonStringField(manifestBytes, "schema_fingerprint");
+        return new SoraBundle(bytes, sections, schemaFingerprint);
     }
 
     private static List<T> DecodeRows<T>(byte[] payload, Func<SoraReader, T> decode)
@@ -271,13 +281,23 @@ public sealed class SoraBundle : ISoraTableSource
         return (int)value;
     }
 
-    private static int CheckedLongToInt(long value, string message)
+    internal static int CheckedLongToInt(long value, string message)
     {
         if (value > int.MaxValue || value < int.MinValue)
         {
             throw new SoraReadException(message);
         }
         return (int)value;
+    }
+
+    private static string ReadJsonStringField(byte[] bytes, string field)
+    {
+        using var document = JsonDocument.Parse(bytes);
+        if (!document.RootElement.TryGetProperty(field, out var value) || value.ValueKind != JsonValueKind.String)
+        {
+            throw new SoraReadException($"Sora manifest is missing string field `{field}`");
+        }
+        return value.GetString() ?? "";
     }
 }
 
@@ -567,10 +587,13 @@ public sealed class SoraValueBundle : ISoraTableSource
     private const int BundleVersion = 1;
     private readonly Dictionary<string, List<SoraValue>> tables;
 
-    private SoraValueBundle(Dictionary<string, List<SoraValue>> tables)
+    private SoraValueBundle(Dictionary<string, List<SoraValue>> tables, string schemaFingerprint)
     {
         this.tables = tables;
+        SchemaFingerprint = schemaFingerprint;
     }
+
+    public string SchemaFingerprint { get; }
 
     internal List<T> DecodeTable<T>(string name, Func<SoraValue, T> decode)
     {
@@ -615,6 +638,7 @@ public sealed class SoraValueBundle : ISoraTableSource
     public static SoraValueBundle ParseProtobuf(byte[] bytes)
     {
         var bundle = Sora.Runtime.Bundle.Parser.ParseFrom(bytes);
+        var schemaFingerprint = ReadProtobufStringField(bytes, 6);
         if (bundle.Format != "sora-protobuf")
         {
             throw new SoraReadException($"expected protobuf bundle, got {bundle.Format}");
@@ -623,7 +647,7 @@ public sealed class SoraValueBundle : ISoraTableSource
         {
             throw new SoraReadException($"unsupported protobuf bundle version {bundle.FormatVersion}");
         }
-        return new SoraValueBundle(SoraProtobufBundle.DecodeTables(bundle));
+        return new SoraValueBundle(SoraProtobufBundle.DecodeTables(bundle), schemaFingerprint);
     }
 {%- endif %}
 
@@ -643,6 +667,7 @@ public sealed class SoraValueBundle : ISoraTableSource
 
     private static SoraValueBundle FromBundleObject(Dictionary<string, SoraValue> root)
     {
+        var schemaFingerprint = root["schema_fingerprint"].AsString();
         var data = root["data"].AsObject("data");
         var tables = new Dictionary<string, List<SoraValue>>();
         foreach (var table in data["tables"].AsList())
@@ -651,8 +676,83 @@ public sealed class SoraValueBundle : ISoraTableSource
             var name = tableObject["name"].AsString();
             tables[name] = tableObject["rows"].AsList();
         }
-        return new SoraValueBundle(tables);
+        return new SoraValueBundle(tables, schemaFingerprint);
     }
+
+{%- if runtime_format == "sora-protobuf" %}
+    private static string ReadProtobufStringField(byte[] bytes, int fieldNumber)
+    {
+        var cursor = 0;
+        while (cursor < bytes.Length)
+        {
+            var tag = ReadVarint(bytes, ref cursor);
+            var currentField = (int)(tag >> 3);
+            var wireType = (int)(tag & 0x7);
+            if (currentField == fieldNumber)
+            {
+                if (wireType != 2)
+                {
+                    throw new SoraReadException($"protobuf field {fieldNumber} is not length-delimited");
+                }
+                var length = SoraBundle.CheckedLongToInt((long)ReadVarint(bytes, ref cursor), "protobuf string length exceeds Int32.MaxValue");
+                if (cursor + length > bytes.Length)
+                {
+                    throw new SoraReadException("protobuf string field exceeds payload length");
+                }
+                return Encoding.UTF8.GetString(bytes, cursor, length);
+            }
+            SkipProtobufField(bytes, ref cursor, wireType);
+        }
+        throw new SoraReadException($"protobuf bundle is missing string field {fieldNumber}");
+    }
+
+    private static ulong ReadVarint(byte[] bytes, ref int cursor)
+    {
+        ulong value = 0;
+        var shift = 0;
+        while (shift < 64)
+        {
+            if (cursor >= bytes.Length)
+            {
+                throw new SoraReadException("unexpected end of protobuf varint");
+            }
+            var item = bytes[cursor++];
+            value |= (ulong)(item & 0x7f) << shift;
+            if ((item & 0x80) == 0)
+            {
+                return value;
+            }
+            shift += 7;
+        }
+        throw new SoraReadException("protobuf varint exceeds 64 bits");
+    }
+
+    private static void SkipProtobufField(byte[] bytes, ref int cursor, int wireType)
+    {
+        switch (wireType)
+        {
+            case 0:
+                ReadVarint(bytes, ref cursor);
+                return;
+            case 1:
+                cursor = SoraBundle.CheckedAdd(cursor, 8, "protobuf fixed64 field exceeds payload length");
+                break;
+            case 2:
+                var length = SoraBundle.CheckedLongToInt((long)ReadVarint(bytes, ref cursor), "protobuf field length exceeds Int32.MaxValue");
+                cursor = SoraBundle.CheckedAdd(cursor, length, "protobuf length-delimited field exceeds payload length");
+                break;
+            case 5:
+                cursor = SoraBundle.CheckedAdd(cursor, 4, "protobuf fixed32 field exceeds payload length");
+                break;
+            default:
+                throw new SoraReadException($"unsupported protobuf wire type {wireType}");
+        }
+        if (cursor > bytes.Length)
+        {
+            throw new SoraReadException("protobuf field exceeds payload length");
+        }
+    }
+{%- endif %}
 }
 
 {%- if runtime_format == "sora-protobuf" %}

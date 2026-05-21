@@ -25,6 +25,8 @@ public interface ISoraTable
 
 public sealed class SoraConfig
 {
+    public const string SchemaFingerprint = "{{ model.schema_fingerprint }}";
+
     private readonly Dictionary<string, ISoraTable> tables;
 
     private SoraConfig(Dictionary<string, ISoraTable> tables)
@@ -34,6 +36,12 @@ public sealed class SoraConfig
 
     public static SoraConfig FromSource(ISoraTableSource source)
     {
+        if (source.SchemaFingerprint != SchemaFingerprint)
+        {
+            throw new SoraReadException(
+                $"schema fingerprint mismatch: generated code expects {SchemaFingerprint}, bundle contains {source.SchemaFingerprint}"
+            );
+        }
         var tables = new Dictionary<string, ISoraTable>({{ model.tables | length }});
 {%- for table in model.tables %}
         tables[{{ table.pascal_name }}Table.TableName] = {{ table.pascal_name }}Table.Decode(source);

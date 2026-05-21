@@ -20,6 +20,8 @@ internal sealed record SoraSection(int Kind, int Compression, string Name, int O
 
 public interface ISoraTableSource
 {
+    string SchemaFingerprint { get; }
+
     List<T> DecodeTable<T>(string name, Func<SoraReader, T> decodeBinary, Func<SoraValue, T> decodeValue);
 }
 
@@ -35,11 +37,14 @@ public sealed class SoraBundle : ISoraTableSource
     private readonly byte[] bytes;
     private readonly List<SoraSection> sections;
 
-    private SoraBundle(byte[] bytes, List<SoraSection> sections)
+    private SoraBundle(byte[] bytes, List<SoraSection> sections, string schemaFingerprint)
     {
         this.bytes = bytes;
         this.sections = sections;
+        SchemaFingerprint = schemaFingerprint;
     }
+
+    public string SchemaFingerprint { get; }
 
     internal List<T> DecodeTable<T>(string name, Func<SoraReader, T> decode)
     {
@@ -177,7 +182,12 @@ public sealed class SoraBundle : ISoraTableSource
         {
             throw new SoraReadException($"expected exactly 1 Sora schema section, got {schemaCount}");
         }
-        return new SoraBundle(bytes, sections);
+        var manifest = sections.Find(value => value.Kind == SectionKindManifest)
+            ?? throw new SoraReadException("missing Sora manifest section");
+        var manifestBytes = new byte[manifest.Length];
+        Array.Copy(bytes, manifest.Offset, manifestBytes, 0, manifest.Length);
+        var schemaFingerprint = ReadJsonStringField(manifestBytes, "schema_fingerprint");
+        return new SoraBundle(bytes, sections, schemaFingerprint);
     }
 
     private static List<T> DecodeRows<T>(byte[] payload, Func<SoraReader, T> decode)
@@ -268,13 +278,23 @@ public sealed class SoraBundle : ISoraTableSource
         return (int)value;
     }
 
-    private static int CheckedLongToInt(long value, string message)
+    internal static int CheckedLongToInt(long value, string message)
     {
         if (value > int.MaxValue || value < int.MinValue)
         {
             throw new SoraReadException(message);
         }
         return (int)value;
+    }
+
+    private static string ReadJsonStringField(byte[] bytes, string field)
+    {
+        using var document = JsonDocument.Parse(bytes);
+        if (!document.RootElement.TryGetProperty(field, out var value) || value.ValueKind != JsonValueKind.String)
+        {
+            throw new SoraReadException($"Sora manifest is missing string field `{field}`");
+        }
+        return value.GetString() ?? "";
     }
 }
 

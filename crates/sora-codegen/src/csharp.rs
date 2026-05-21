@@ -78,6 +78,7 @@ impl CodeGenerator for CSharpCodeGenerator {
 #[derive(Debug, Clone, Serialize)]
 struct CSharpModel {
     package: String,
+    schema_fingerprint: String,
     enums: Vec<CSharpEnum>,
     unions: Vec<CSharpUnion>,
     records: Vec<CSharpRecord>,
@@ -154,6 +155,7 @@ impl CSharpModel {
             .collect::<Vec<_>>();
         Self {
             package: model.package,
+            schema_fingerprint: model.schema_fingerprint,
             enums: model
                 .enums
                 .into_iter()
