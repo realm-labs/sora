@@ -21,4 +21,14 @@ public sealed record Vec3(
             reader.ReadFloat()
         );
     }
+
+    internal static Vec3 Decode(SoraValue value)
+    {
+        var obj = value.AsObject("Vec3");
+        return new Vec3(
+            obj.Get("x").AsFloat(),
+            obj.Get("y").AsFloat(),
+            obj.Get("z").AsFloat()
+        );
+    }
 }

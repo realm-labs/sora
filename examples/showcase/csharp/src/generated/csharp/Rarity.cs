@@ -27,4 +27,17 @@ internal static class RarityCodec
             var value => throw new SoraReadException($"invalid enum ordinal {value} for Rarity"),
         };
     }
+
+    internal static Rarity Decode(SoraValue value)
+    {
+        return value.AsString() switch
+        {
+            "Common" => Rarity.Common,
+            "Uncommon" => Rarity.Uncommon,
+            "Rare" => Rarity.Rare,
+            "Epic" => Rarity.Epic,
+            "Legendary" => Rarity.Legendary,
+            var name => throw new SoraReadException($"invalid enum value `{name}` for Rarity"),
+        };
+    }
 }

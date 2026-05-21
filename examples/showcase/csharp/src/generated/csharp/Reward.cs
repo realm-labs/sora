@@ -19,4 +19,13 @@ public sealed record Reward(
             reader.ReadInt32()
         );
     }
+
+    internal static Reward Decode(SoraValue value)
+    {
+        var obj = value.AsObject("Reward");
+        return new Reward(
+            obj.Get("item_id").AsInt32(),
+            obj.Get("count").AsInt32()
+        );
+    }
 }

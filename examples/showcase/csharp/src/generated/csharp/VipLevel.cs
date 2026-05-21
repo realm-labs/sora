@@ -21,6 +21,16 @@ public sealed record VipLevel(
             reader.ReadList(() => reader.ReadString())
         );
     }
+
+    internal static VipLevel Decode(SoraValue value)
+    {
+        var obj = value.AsObject("VipLevel");
+        return new VipLevel(
+            obj.Get("level").AsInt32(),
+            ResourceCost.Decode(obj.Get("cost")),
+            obj.Get("perks").AsList(item => item.AsString())
+        );
+    }
 }
 
 public sealed class VipLevelTable : ISoraTable
@@ -32,9 +42,9 @@ public sealed class VipLevelTable : ISoraTable
         this.rows = rows;
     }
 
-    internal static VipLevelTable Decode(SoraBundle bundle)
+    internal static VipLevelTable Decode(ISoraTableSource source)
     {
-        return FromRows(bundle.DecodeTable<VipLevel>("VipLevel", VipLevel.Decode));
+        return FromRows(source.DecodeTable("VipLevel", global::com.sora.showcase.VipLevel.Decode, global::com.sora.showcase.VipLevel.Decode));
     }
 
     internal static VipLevelTable FromRows(List<VipLevel> rows)

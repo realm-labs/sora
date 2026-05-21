@@ -23,6 +23,17 @@ public sealed record QuestReward(
             reader.ReadInt32()
         );
     }
+
+    internal static QuestReward Decode(SoraValue value)
+    {
+        var obj = value.AsObject("QuestReward");
+        return new QuestReward(
+            obj.Get("quest_id").AsInt32(),
+            obj.Get("seq").AsInt32(),
+            obj.Get("item_id").AsInt32(),
+            obj.Get("count").AsInt32()
+        );
+    }
 }
 
 public sealed class QuestRewardTable : ISoraTable
@@ -34,9 +45,9 @@ public sealed class QuestRewardTable : ISoraTable
         this.rows = rows;
     }
 
-    internal static QuestRewardTable Decode(SoraBundle bundle)
+    internal static QuestRewardTable Decode(ISoraTableSource source)
     {
-        return FromRows(bundle.DecodeTable<QuestReward>("QuestReward", QuestReward.Decode));
+        return FromRows(source.DecodeTable("QuestReward", global::com.sora.showcase.QuestReward.Decode, global::com.sora.showcase.QuestReward.Decode));
     }
 
     internal static QuestRewardTable FromRows(List<QuestReward> rows)

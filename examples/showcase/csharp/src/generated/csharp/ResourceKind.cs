@@ -23,4 +23,15 @@ internal static class ResourceKindCodec
             var value => throw new SoraReadException($"invalid enum ordinal {value} for ResourceKind"),
         };
     }
+
+    internal static ResourceKind Decode(SoraValue value)
+    {
+        return value.AsString() switch
+        {
+            "Item" => ResourceKind.Item,
+            "Gold" => ResourceKind.Gold,
+            "Diamond" => ResourceKind.Diamond,
+            var name => throw new SoraReadException($"invalid enum value `{name}` for ResourceKind"),
+        };
+    }
 }

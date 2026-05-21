@@ -23,6 +23,17 @@ public sealed record EventRule(
             reader.ReadList(() => RewardAction.Decode(reader))
         );
     }
+
+    internal static EventRule Decode(SoraValue value)
+    {
+        var obj = value.AsObject("EventRule");
+        return new EventRule(
+            obj.Get("id").AsInt32(),
+            obj.Get("name").AsString(),
+            EventCondition.Decode(obj.Get("condition")),
+            obj.Get("actions").AsList(item => RewardAction.Decode(item))
+        );
+    }
 }
 
 public sealed class EventRuleTable : ISoraTable
@@ -34,9 +45,9 @@ public sealed class EventRuleTable : ISoraTable
         this.rows = rows;
     }
 
-    internal static EventRuleTable Decode(SoraBundle bundle)
+    internal static EventRuleTable Decode(ISoraTableSource source)
     {
-        return FromRows(bundle.DecodeTable<EventRule>("EventRule", EventRule.Decode));
+        return FromRows(source.DecodeTable("EventRule", global::com.sora.showcase.EventRule.Decode, global::com.sora.showcase.EventRule.Decode));
     }
 
     internal static EventRuleTable FromRows(List<EventRule> rows)

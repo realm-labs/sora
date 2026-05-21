@@ -21,4 +21,14 @@ public sealed record StatModifier(
             reader.ReadBool()
         );
     }
+
+    internal static StatModifier Decode(SoraValue value)
+    {
+        var obj = value.AsObject("StatModifier");
+        return new StatModifier(
+            StatTypeCodec.Decode(obj.Get("stat")),
+            obj.Get("value").AsFloat(),
+            obj.Get("is_percent").AsBool()
+        );
+    }
 }

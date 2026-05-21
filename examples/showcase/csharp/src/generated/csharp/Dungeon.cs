@@ -23,6 +23,17 @@ public sealed record Dungeon(
             ResourceCost.Decode(reader)
         );
     }
+
+    internal static Dungeon Decode(SoraValue value)
+    {
+        var obj = value.AsObject("Dungeon");
+        return new Dungeon(
+            obj.Get("id").AsInt32(),
+            obj.Get("name").AsString(),
+            obj.Get("stage_ids").AsList(item => item.AsInt32()),
+            ResourceCost.Decode(obj.Get("entry_cost"))
+        );
+    }
 }
 
 public sealed class DungeonTable : ISoraTable
@@ -34,9 +45,9 @@ public sealed class DungeonTable : ISoraTable
         this.rows = rows;
     }
 
-    internal static DungeonTable Decode(SoraBundle bundle)
+    internal static DungeonTable Decode(ISoraTableSource source)
     {
-        return FromRows(bundle.DecodeTable<Dungeon>("Dungeon", Dungeon.Decode));
+        return FromRows(source.DecodeTable("Dungeon", global::com.sora.showcase.Dungeon.Decode, global::com.sora.showcase.Dungeon.Decode));
     }
 
     internal static DungeonTable FromRows(List<Dungeon> rows)

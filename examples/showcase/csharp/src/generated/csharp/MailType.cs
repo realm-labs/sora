@@ -23,4 +23,15 @@ internal static class MailTypeCodec
             var value => throw new SoraReadException($"invalid enum ordinal {value} for MailType"),
         };
     }
+
+    internal static MailType Decode(SoraValue value)
+    {
+        return value.AsString() switch
+        {
+            "System" => MailType.System,
+            "Event" => MailType.Event,
+            "Compensation" => MailType.Compensation,
+            var name => throw new SoraReadException($"invalid enum value `{name}` for MailType"),
+        };
+    }
 }

@@ -9,7 +9,8 @@ internal static class Program
     private static void Main()
     {
         var bytes = File.ReadAllBytes(ConfigPath());
-        var config = SoraConfig.FromBytes(bytes);
+        var bundle = SoraBundle.Parse(bytes);
+        var config = SoraConfig.FromSource(bundle);
         var sword = config.Item.Get(1001) ?? throw new InvalidOperationException("item 1001");
         var swordByName = config.Item.GetByName("Iron Sword") ?? throw new InvalidOperationException("Iron Sword");
         var quest = config.Quest.Get(5001) ?? throw new InvalidOperationException("quest 5001");

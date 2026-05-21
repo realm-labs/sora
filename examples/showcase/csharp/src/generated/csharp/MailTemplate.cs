@@ -25,6 +25,18 @@ public sealed record MailTemplate(
             reader.ReadList(() => Reward.Decode(reader))
         );
     }
+
+    internal static MailTemplate Decode(SoraValue value)
+    {
+        var obj = value.AsObject("MailTemplate");
+        return new MailTemplate(
+            obj.Get("id").AsInt32(),
+            MailTypeCodec.Decode(obj.Get("mail_type")),
+            obj.Get("title_key").AsString(),
+            obj.Get("body_key").AsString(),
+            obj.Get("rewards").AsList(item => Reward.Decode(item))
+        );
+    }
 }
 
 public sealed class MailTemplateTable : ISoraTable
@@ -36,9 +48,9 @@ public sealed class MailTemplateTable : ISoraTable
         this.rows = rows;
     }
 
-    internal static MailTemplateTable Decode(SoraBundle bundle)
+    internal static MailTemplateTable Decode(ISoraTableSource source)
     {
-        return FromRows(bundle.DecodeTable<MailTemplate>("MailTemplate", MailTemplate.Decode));
+        return FromRows(source.DecodeTable("MailTemplate", global::com.sora.showcase.MailTemplate.Decode, global::com.sora.showcase.MailTemplate.Decode));
     }
 
     internal static MailTemplateTable FromRows(List<MailTemplate> rows)

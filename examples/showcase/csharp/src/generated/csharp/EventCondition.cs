@@ -35,4 +35,23 @@ public abstract record EventCondition
             var value => throw new SoraReadException($"invalid union ordinal {value} for EventCondition"),
         };
     }
+
+    internal static EventCondition Decode(SoraValue value)
+    {
+        var obj = value.AsObject("EventCondition");
+        return obj.Get("type").AsString() switch
+        {
+            "LevelAtLeast" => new LevelAtLeast(
+                obj.Get("level").AsInt32()
+            ),
+            "QuestCompleted" => new QuestCompleted(
+                obj.Get("quest_id").AsInt32()
+            ),
+            "HasItem" => new HasItem(
+                obj.Get("item_id").AsInt32(),
+                obj.Get("count").AsInt32()
+            ),
+            var tag => throw new SoraReadException($"invalid union tag `{tag}` for EventCondition"),
+        };
+    }
 }

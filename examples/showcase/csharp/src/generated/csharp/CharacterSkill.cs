@@ -21,6 +21,16 @@ public sealed record CharacterSkill(
             reader.ReadInt32()
         );
     }
+
+    internal static CharacterSkill Decode(SoraValue value)
+    {
+        var obj = value.AsObject("CharacterSkill");
+        return new CharacterSkill(
+            obj.Get("character_id").AsInt32(),
+            obj.Get("skill_id").AsInt32(),
+            obj.Get("unlock_level").AsInt32()
+        );
+    }
 }
 
 public sealed class CharacterSkillTable : ISoraTable
@@ -32,9 +42,9 @@ public sealed class CharacterSkillTable : ISoraTable
         this.rows = rows;
     }
 
-    internal static CharacterSkillTable Decode(SoraBundle bundle)
+    internal static CharacterSkillTable Decode(ISoraTableSource source)
     {
-        return FromRows(bundle.DecodeTable<CharacterSkill>("CharacterSkill", CharacterSkill.Decode));
+        return FromRows(source.DecodeTable("CharacterSkill", global::com.sora.showcase.CharacterSkill.Decode, global::com.sora.showcase.CharacterSkill.Decode));
     }
 
     internal static CharacterSkillTable FromRows(List<CharacterSkill> rows)

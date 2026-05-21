@@ -33,38 +33,37 @@ public sealed class SoraConfig
         this.tables = tables;
     }
 
-    public static SoraConfig FromBytes(byte[] bytes)
+    public static SoraConfig FromSource(ISoraTableSource source)
     {
-        var bundle = SoraBundle.Parse(bytes);
         var tables = new Dictionary<string, ISoraTable>(28);
-        tables["Item"] = ItemTable.Decode(bundle);
-        tables["Skill"] = SkillTable.Decode(bundle);
-        tables["Quest"] = QuestTable.Decode(bundle);
-        tables["QuestReward"] = QuestRewardTable.Decode(bundle);
-        tables["GameSettings"] = GameSettingsTable.Decode(bundle);
-        tables["Localization"] = LocalizationTable.Decode(bundle);
-        tables["LevelExp"] = LevelExpTable.Decode(bundle);
-        tables["Character"] = CharacterTable.Decode(bundle);
-        tables["CharacterSkill"] = CharacterSkillTable.Decode(bundle);
-        tables["Buff"] = BuffTable.Decode(bundle);
-        tables["DropGroup"] = DropGroupTable.Decode(bundle);
-        tables["DropEntry"] = DropEntryTable.Decode(bundle);
-        tables["Monster"] = MonsterTable.Decode(bundle);
-        tables["Stage"] = StageTable.Decode(bundle);
-        tables["StageReward"] = StageRewardTable.Decode(bundle);
-        tables["Dungeon"] = DungeonTable.Decode(bundle);
-        tables["Shop"] = ShopTable.Decode(bundle);
-        tables["ShopItem"] = ShopItemTable.Decode(bundle);
-        tables["Recipe"] = RecipeTable.Decode(bundle);
-        tables["GachaPool"] = GachaPoolTable.Decode(bundle);
-        tables["GachaItem"] = GachaItemTable.Decode(bundle);
-        tables["EquipmentSet"] = EquipmentSetTable.Decode(bundle);
-        tables["Achievement"] = AchievementTable.Decode(bundle);
-        tables["VipLevel"] = VipLevelTable.Decode(bundle);
-        tables["MailTemplate"] = MailTemplateTable.Decode(bundle);
-        tables["MailReward"] = MailRewardTable.Decode(bundle);
-        tables["Dialogue"] = DialogueTable.Decode(bundle);
-        tables["EventRule"] = EventRuleTable.Decode(bundle);
+        tables["Item"] = ItemTable.Decode(source);
+        tables["Skill"] = SkillTable.Decode(source);
+        tables["Quest"] = QuestTable.Decode(source);
+        tables["QuestReward"] = QuestRewardTable.Decode(source);
+        tables["GameSettings"] = GameSettingsTable.Decode(source);
+        tables["Localization"] = LocalizationTable.Decode(source);
+        tables["LevelExp"] = LevelExpTable.Decode(source);
+        tables["Character"] = CharacterTable.Decode(source);
+        tables["CharacterSkill"] = CharacterSkillTable.Decode(source);
+        tables["Buff"] = BuffTable.Decode(source);
+        tables["DropGroup"] = DropGroupTable.Decode(source);
+        tables["DropEntry"] = DropEntryTable.Decode(source);
+        tables["Monster"] = MonsterTable.Decode(source);
+        tables["Stage"] = StageTable.Decode(source);
+        tables["StageReward"] = StageRewardTable.Decode(source);
+        tables["Dungeon"] = DungeonTable.Decode(source);
+        tables["Shop"] = ShopTable.Decode(source);
+        tables["ShopItem"] = ShopItemTable.Decode(source);
+        tables["Recipe"] = RecipeTable.Decode(source);
+        tables["GachaPool"] = GachaPoolTable.Decode(source);
+        tables["GachaItem"] = GachaItemTable.Decode(source);
+        tables["EquipmentSet"] = EquipmentSetTable.Decode(source);
+        tables["Achievement"] = AchievementTable.Decode(source);
+        tables["VipLevel"] = VipLevelTable.Decode(source);
+        tables["MailTemplate"] = MailTemplateTable.Decode(source);
+        tables["MailReward"] = MailRewardTable.Decode(source);
+        tables["Dialogue"] = DialogueTable.Decode(source);
+        tables["EventRule"] = EventRuleTable.Decode(source);
         return new SoraConfig(tables);
     }
 

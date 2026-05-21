@@ -43,4 +43,27 @@ public abstract record RewardAction
             var value => throw new SoraReadException($"invalid union ordinal {value} for RewardAction"),
         };
     }
+
+    internal static RewardAction Decode(SoraValue value)
+    {
+        var obj = value.AsObject("RewardAction");
+        return obj.Get("type").AsString() switch
+        {
+            "AddItem" => new AddItem(
+                obj.Get("item_id").AsInt32(),
+                obj.Get("count").AsInt32()
+            ),
+            "AddBuff" => new AddBuff(
+                obj.Get("buff_id").AsInt32(),
+                obj.Get("duration").AsFloat()
+            ),
+            "UnlockStage" => new UnlockStage(
+                obj.Get("stage_id").AsInt32()
+            ),
+            "SendMail" => new SendMail(
+                obj.Get("mail_id").AsInt32()
+            ),
+            var tag => throw new SoraReadException($"invalid union tag `{tag}` for RewardAction"),
+        };
+    }
 }

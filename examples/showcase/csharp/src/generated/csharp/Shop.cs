@@ -21,6 +21,16 @@ public sealed record Shop(
             ResourceKindCodec.Decode(reader)
         );
     }
+
+    internal static Shop Decode(SoraValue value)
+    {
+        var obj = value.AsObject("Shop");
+        return new Shop(
+            obj.Get("id").AsInt32(),
+            obj.Get("name").AsString(),
+            ResourceKindCodec.Decode(obj.Get("currency"))
+        );
+    }
 }
 
 public sealed class ShopTable : ISoraTable
@@ -32,9 +42,9 @@ public sealed class ShopTable : ISoraTable
         this.rows = rows;
     }
 
-    internal static ShopTable Decode(SoraBundle bundle)
+    internal static ShopTable Decode(ISoraTableSource source)
     {
-        return FromRows(bundle.DecodeTable<Shop>("Shop", Shop.Decode));
+        return FromRows(source.DecodeTable("Shop", global::com.sora.showcase.Shop.Decode, global::com.sora.showcase.Shop.Decode));
     }
 
     internal static ShopTable FromRows(List<Shop> rows)

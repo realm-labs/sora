@@ -33,6 +33,19 @@ public sealed record Item(
             reader.ReadList(() => reader.ReadString())
         );
     }
+
+    internal static Item Decode(SoraValue value)
+    {
+        var obj = value.AsObject("Item");
+        return new Item(
+            obj.Get("id").AsInt32(),
+            obj.Get("name").AsString(),
+            ItemTypeCodec.Decode(obj.Get("item_type")),
+            obj.Get("max_stack").AsInt32(),
+            ResourceCost.Decode(obj.Get("price")),
+            obj.Get("tags").AsList(item => item.AsString())
+        );
+    }
 }
 
 public sealed class ItemTable : ISoraTable
@@ -48,9 +61,9 @@ public sealed class ItemTable : ISoraTable
         this.byItemType = byItemType;
     }
 
-    internal static ItemTable Decode(SoraBundle bundle)
+    internal static ItemTable Decode(ISoraTableSource source)
     {
-        return FromRows(bundle.DecodeTable<Item>("Item", Item.Decode));
+        return FromRows(source.DecodeTable("Item", global::com.sora.showcase.Item.Decode, global::com.sora.showcase.Item.Decode));
     }
 
     internal static ItemTable FromRows(List<Item> rows)

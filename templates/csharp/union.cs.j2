@@ -34,7 +34,6 @@ public abstract record {{ union.pascal_name }}
         };
     }
 
-{%- if runtime_format != "sora" %}
     internal static {{ union.pascal_name }} Decode(SoraValue value)
     {
         var obj = value.AsObject("{{ union.pascal_name }}");
@@ -50,5 +49,4 @@ public abstract record {{ union.pascal_name }}
             var tag => throw new SoraReadException($"invalid union tag `{tag}` for {{ union.pascal_name }}"),
         };
     }
-{%- endif %}
 }

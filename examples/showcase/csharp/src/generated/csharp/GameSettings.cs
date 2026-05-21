@@ -25,6 +25,18 @@ public sealed record GameSettings(
             reader.ReadList(() => reader.ReadInt32())
         );
     }
+
+    internal static GameSettings Decode(SoraValue value)
+    {
+        var obj = value.AsObject("GameSettings");
+        return new GameSettings(
+            obj.Get("version").AsString(),
+            obj.Get("daily_reset_hour").AsInt32(),
+            obj.Get("starting_gold").AsInt32(),
+            Vec3.Decode(obj.Get("spawn_pos")),
+            obj.Get("starter_items").AsList(item => item.AsInt32())
+        );
+    }
 }
 
 public sealed class GameSettingsTable : ISoraTable
@@ -36,9 +48,9 @@ public sealed class GameSettingsTable : ISoraTable
         this.rows = rows;
     }
 
-    internal static GameSettingsTable Decode(SoraBundle bundle)
+    internal static GameSettingsTable Decode(ISoraTableSource source)
     {
-        return FromRows(bundle.DecodeTable<GameSettings>("GameSettings", GameSettings.Decode));
+        return FromRows(source.DecodeTable("GameSettings", global::com.sora.showcase.GameSettings.Decode, global::com.sora.showcase.GameSettings.Decode));
     }
 
     internal static GameSettingsTable FromRows(List<GameSettings> rows)

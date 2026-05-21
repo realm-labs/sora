@@ -21,6 +21,16 @@ public sealed record LevelExp(
             reader.ReadOptional(() => reader.ReadString())
         );
     }
+
+    internal static LevelExp Decode(SoraValue value)
+    {
+        var obj = value.AsObject("LevelExp");
+        return new LevelExp(
+            obj.Get("level").AsInt32(),
+            obj.Get("exp").AsInt64(),
+            obj.Get("unlock_feature").IsNull ? default : obj.Get("unlock_feature").AsString()
+        );
+    }
 }
 
 public sealed class LevelExpTable : ISoraTable
@@ -32,9 +42,9 @@ public sealed class LevelExpTable : ISoraTable
         this.rows = rows;
     }
 
-    internal static LevelExpTable Decode(SoraBundle bundle)
+    internal static LevelExpTable Decode(ISoraTableSource source)
     {
-        return FromRows(bundle.DecodeTable<LevelExp>("LevelExp", LevelExp.Decode));
+        return FromRows(source.DecodeTable("LevelExp", global::com.sora.showcase.LevelExp.Decode, global::com.sora.showcase.LevelExp.Decode));
     }
 
     internal static LevelExpTable FromRows(List<LevelExp> rows)

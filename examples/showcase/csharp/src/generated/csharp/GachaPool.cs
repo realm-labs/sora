@@ -21,6 +21,16 @@ public sealed record GachaPool(
             ResourceCost.Decode(reader)
         );
     }
+
+    internal static GachaPool Decode(SoraValue value)
+    {
+        var obj = value.AsObject("GachaPool");
+        return new GachaPool(
+            obj.Get("id").AsInt32(),
+            obj.Get("name").AsString(),
+            ResourceCost.Decode(obj.Get("cost"))
+        );
+    }
 }
 
 public sealed class GachaPoolTable : ISoraTable
@@ -32,9 +42,9 @@ public sealed class GachaPoolTable : ISoraTable
         this.rows = rows;
     }
 
-    internal static GachaPoolTable Decode(SoraBundle bundle)
+    internal static GachaPoolTable Decode(ISoraTableSource source)
     {
-        return FromRows(bundle.DecodeTable<GachaPool>("GachaPool", GachaPool.Decode));
+        return FromRows(source.DecodeTable("GachaPool", global::com.sora.showcase.GachaPool.Decode, global::com.sora.showcase.GachaPool.Decode));
     }
 
     internal static GachaPoolTable FromRows(List<GachaPool> rows)

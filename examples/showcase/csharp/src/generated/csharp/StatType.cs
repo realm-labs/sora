@@ -27,4 +27,17 @@ internal static class StatTypeCodec
             var value => throw new SoraReadException($"invalid enum ordinal {value} for StatType"),
         };
     }
+
+    internal static StatType Decode(SoraValue value)
+    {
+        return value.AsString() switch
+        {
+            "Hp" => StatType.Hp,
+            "Attack" => StatType.Attack,
+            "Defense" => StatType.Defense,
+            "Speed" => StatType.Speed,
+            "CritRate" => StatType.CritRate,
+            var name => throw new SoraReadException($"invalid enum value `{name}` for StatType"),
+        };
+    }
 }

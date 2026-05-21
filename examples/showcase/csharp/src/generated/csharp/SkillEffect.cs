@@ -21,4 +21,14 @@ public sealed record SkillEffect(
             reader.ReadFloat()
         );
     }
+
+    internal static SkillEffect Decode(SoraValue value)
+    {
+        var obj = value.AsObject("SkillEffect");
+        return new SkillEffect(
+            ElementTypeCodec.Decode(obj.Get("element")),
+            obj.Get("power").AsInt32(),
+            obj.Get("radius").AsFloat()
+        );
+    }
 }

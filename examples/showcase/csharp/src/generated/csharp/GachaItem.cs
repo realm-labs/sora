@@ -23,6 +23,17 @@ public sealed record GachaItem(
             reader.ReadFloat()
         );
     }
+
+    internal static GachaItem Decode(SoraValue value)
+    {
+        var obj = value.AsObject("GachaItem");
+        return new GachaItem(
+            obj.Get("pool_id").AsInt32(),
+            obj.Get("item_id").AsInt32(),
+            RarityCodec.Decode(obj.Get("rarity")),
+            obj.Get("weight").AsFloat()
+        );
+    }
 }
 
 public sealed class GachaItemTable : ISoraTable
@@ -34,9 +45,9 @@ public sealed class GachaItemTable : ISoraTable
         this.rows = rows;
     }
 
-    internal static GachaItemTable Decode(SoraBundle bundle)
+    internal static GachaItemTable Decode(ISoraTableSource source)
     {
-        return FromRows(bundle.DecodeTable<GachaItem>("GachaItem", GachaItem.Decode));
+        return FromRows(source.DecodeTable("GachaItem", global::com.sora.showcase.GachaItem.Decode, global::com.sora.showcase.GachaItem.Decode));
     }
 
     internal static GachaItemTable FromRows(List<GachaItem> rows)

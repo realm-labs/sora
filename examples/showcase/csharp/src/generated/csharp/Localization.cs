@@ -23,6 +23,17 @@ public sealed record Localization(
             reader.ReadOptional(() => reader.ReadString())
         );
     }
+
+    internal static Localization Decode(SoraValue value)
+    {
+        var obj = value.AsObject("Localization");
+        return new Localization(
+            obj.Get("key").AsString(),
+            obj.Get("zh_cn").AsString(),
+            obj.Get("en_us").AsString(),
+            obj.Get("note").IsNull ? default : obj.Get("note").AsString()
+        );
+    }
 }
 
 public sealed class LocalizationTable : ISoraTable
@@ -34,9 +45,9 @@ public sealed class LocalizationTable : ISoraTable
         this.rows = rows;
     }
 
-    internal static LocalizationTable Decode(SoraBundle bundle)
+    internal static LocalizationTable Decode(ISoraTableSource source)
     {
-        return FromRows(bundle.DecodeTable<Localization>("Localization", Localization.Decode));
+        return FromRows(source.DecodeTable("Localization", global::com.sora.showcase.Localization.Decode, global::com.sora.showcase.Localization.Decode));
     }
 
     internal static LocalizationTable FromRows(List<Localization> rows)

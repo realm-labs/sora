@@ -27,4 +27,17 @@ internal static class ItemTypeCodec
             var value => throw new SoraReadException($"invalid enum ordinal {value} for ItemType"),
         };
     }
+
+    internal static ItemType Decode(SoraValue value)
+    {
+        return value.AsString() switch
+        {
+            "Weapon" => ItemType.Weapon,
+            "Armor" => ItemType.Armor,
+            "Currency" => ItemType.Currency,
+            "Material" => ItemType.Material,
+            "Consumable" => ItemType.Consumable,
+            var name => throw new SoraReadException($"invalid enum value `{name}` for ItemType"),
+        };
+    }
 }

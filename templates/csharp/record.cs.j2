@@ -25,7 +25,6 @@ public sealed record {{ record.pascal_name }}(
         );
     }
 
-{%- if runtime_format != "sora" %}
     internal static {{ record.pascal_name }} Decode(SoraValue value)
     {
         var obj = value.AsObject("{{ record.pascal_name }}");
@@ -35,7 +34,6 @@ public sealed record {{ record.pascal_name }}(
 {%- endfor %}
         );
     }
-{%- endif %}
 }
 
 {%- if record.table %}
@@ -62,9 +60,9 @@ public sealed class {{ table.pascal_name }}Table : ISoraTable
 {%- endfor %}
     }
 
-    internal static {{ table.pascal_name }}Table Decode(SoraBundle bundle)
+    internal static {{ table.pascal_name }}Table Decode(ISoraTableSource source)
     {
-        return FromRows(bundle.DecodeTable<{{ table.row_type }}>("{{ table.name }}", {{ table.row_type }}.Decode));
+        return FromRows(source.DecodeTable("{{ table.name }}", global::{{ namespace }}.{{ table.row_type }}.Decode, global::{{ namespace }}.{{ table.row_type }}.Decode));
     }
 
     internal static {{ table.pascal_name }}Table FromRows(List<{{ table.row_type }}> rows)

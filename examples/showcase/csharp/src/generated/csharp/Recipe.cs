@@ -21,6 +21,16 @@ public sealed record Recipe(
             reader.ReadList(() => ResourceCost.Decode(reader))
         );
     }
+
+    internal static Recipe Decode(SoraValue value)
+    {
+        var obj = value.AsObject("Recipe");
+        return new Recipe(
+            obj.Get("id").AsInt32(),
+            obj.Get("result_item").AsInt32(),
+            obj.Get("materials").AsList(item => ResourceCost.Decode(item))
+        );
+    }
 }
 
 public sealed class RecipeTable : ISoraTable
@@ -32,9 +42,9 @@ public sealed class RecipeTable : ISoraTable
         this.rows = rows;
     }
 
-    internal static RecipeTable Decode(SoraBundle bundle)
+    internal static RecipeTable Decode(ISoraTableSource source)
     {
-        return FromRows(bundle.DecodeTable<Recipe>("Recipe", Recipe.Decode));
+        return FromRows(source.DecodeTable("Recipe", global::com.sora.showcase.Recipe.Decode, global::com.sora.showcase.Recipe.Decode));
     }
 
     internal static RecipeTable FromRows(List<Recipe> rows)

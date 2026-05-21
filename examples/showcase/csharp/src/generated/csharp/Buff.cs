@@ -23,6 +23,17 @@ public sealed record Buff(
             reader.ReadList(() => StatModifier.Decode(reader))
         );
     }
+
+    internal static Buff Decode(SoraValue value)
+    {
+        var obj = value.AsObject("Buff");
+        return new Buff(
+            obj.Get("id").AsInt32(),
+            obj.Get("name").AsString(),
+            obj.Get("duration").AsFloat(),
+            obj.Get("modifiers").AsList(item => StatModifier.Decode(item))
+        );
+    }
 }
 
 public sealed class BuffTable : ISoraTable
@@ -34,9 +45,9 @@ public sealed class BuffTable : ISoraTable
         this.rows = rows;
     }
 
-    internal static BuffTable Decode(SoraBundle bundle)
+    internal static BuffTable Decode(ISoraTableSource source)
     {
-        return FromRows(bundle.DecodeTable<Buff>("Buff", Buff.Decode));
+        return FromRows(source.DecodeTable("Buff", global::com.sora.showcase.Buff.Decode, global::com.sora.showcase.Buff.Decode));
     }
 
     internal static BuffTable FromRows(List<Buff> rows)

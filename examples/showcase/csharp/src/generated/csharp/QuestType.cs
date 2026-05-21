@@ -23,4 +23,15 @@ internal static class QuestTypeCodec
             var value => throw new SoraReadException($"invalid enum ordinal {value} for QuestType"),
         };
     }
+
+    internal static QuestType Decode(SoraValue value)
+    {
+        return value.AsString() switch
+        {
+            "Main" => QuestType.Main,
+            "Side" => QuestType.Side,
+            "Daily" => QuestType.Daily,
+            var name => throw new SoraReadException($"invalid enum value `{name}` for QuestType"),
+        };
+    }
 }

@@ -34,6 +34,21 @@ public sealed record Skill(
             Vec3.Decode(reader)
         );
     }
+
+    internal static Skill Decode(SoraValue value)
+    {
+        var obj = value.AsObject("Skill");
+        return new Skill(
+            obj.Get("id").AsInt32(),
+            obj.Get("name").AsString(),
+            ElementTypeCodec.Decode(obj.Get("element")),
+            ResourceCost.Decode(obj.Get("cost")),
+            SkillEffect.Decode(obj.Get("effect")),
+            obj.Get("required_level").AsInt32(),
+            obj.Get("required_item").IsNull ? default : obj.Get("required_item").AsInt32(),
+            Vec3.Decode(obj.Get("cast_origin"))
+        );
+    }
 }
 
 public sealed class SkillTable : ISoraTable
@@ -45,9 +60,9 @@ public sealed class SkillTable : ISoraTable
         this.rows = rows;
     }
 
-    internal static SkillTable Decode(SoraBundle bundle)
+    internal static SkillTable Decode(ISoraTableSource source)
     {
-        return FromRows(bundle.DecodeTable<Skill>("Skill", Skill.Decode));
+        return FromRows(source.DecodeTable("Skill", global::com.sora.showcase.Skill.Decode, global::com.sora.showcase.Skill.Decode));
     }
 
     internal static SkillTable FromRows(List<Skill> rows)

@@ -25,6 +25,18 @@ public sealed record Stage(
             reader.ReadList(() => Reward.Decode(reader))
         );
     }
+
+    internal static Stage Decode(SoraValue value)
+    {
+        var obj = value.AsObject("Stage");
+        return new Stage(
+            obj.Get("id").AsInt32(),
+            obj.Get("name").AsString(),
+            obj.Get("monster_ids").AsList(item => item.AsInt32()),
+            obj.Get("recommended_power").AsInt32(),
+            obj.Get("first_clear_rewards").AsList(item => Reward.Decode(item))
+        );
+    }
 }
 
 public sealed class StageTable : ISoraTable
@@ -36,9 +48,9 @@ public sealed class StageTable : ISoraTable
         this.rows = rows;
     }
 
-    internal static StageTable Decode(SoraBundle bundle)
+    internal static StageTable Decode(ISoraTableSource source)
     {
-        return FromRows(bundle.DecodeTable<Stage>("Stage", Stage.Decode));
+        return FromRows(source.DecodeTable("Stage", global::com.sora.showcase.Stage.Decode, global::com.sora.showcase.Stage.Decode));
     }
 
     internal static StageTable FromRows(List<Stage> rows)

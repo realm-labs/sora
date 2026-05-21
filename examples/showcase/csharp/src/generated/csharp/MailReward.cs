@@ -23,6 +23,17 @@ public sealed record MailReward(
             reader.ReadInt32()
         );
     }
+
+    internal static MailReward Decode(SoraValue value)
+    {
+        var obj = value.AsObject("MailReward");
+        return new MailReward(
+            obj.Get("mail_id").AsInt32(),
+            obj.Get("seq").AsInt32(),
+            obj.Get("item_id").AsInt32(),
+            obj.Get("count").AsInt32()
+        );
+    }
 }
 
 public sealed class MailRewardTable : ISoraTable
@@ -34,9 +45,9 @@ public sealed class MailRewardTable : ISoraTable
         this.rows = rows;
     }
 
-    internal static MailRewardTable Decode(SoraBundle bundle)
+    internal static MailRewardTable Decode(ISoraTableSource source)
     {
-        return FromRows(bundle.DecodeTable<MailReward>("MailReward", MailReward.Decode));
+        return FromRows(source.DecodeTable("MailReward", global::com.sora.showcase.MailReward.Decode, global::com.sora.showcase.MailReward.Decode));
     }
 
     internal static MailRewardTable FromRows(List<MailReward> rows)

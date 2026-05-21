@@ -25,4 +25,16 @@ internal static class ElementTypeCodec
             var value => throw new SoraReadException($"invalid enum ordinal {value} for ElementType"),
         };
     }
+
+    internal static ElementType Decode(SoraValue value)
+    {
+        return value.AsString() switch
+        {
+            "Fire" => ElementType.Fire,
+            "Ice" => ElementType.Ice,
+            "Lightning" => ElementType.Lightning,
+            "Physical" => ElementType.Physical,
+            var name => throw new SoraReadException($"invalid enum value `{name}` for ElementType"),
+        };
+    }
 }

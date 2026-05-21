@@ -21,7 +21,12 @@ public sealed class SoraReadException : Exception
 
 internal sealed record SoraSection(int Kind, int Compression, string Name, int Offset, int Length, int UncompressedLength);
 
-internal sealed class SoraBundle
+public interface ISoraTableSource
+{
+    List<T> DecodeTable<T>(string name, Func<SoraReader, T> decodeBinary, Func<SoraValue, T> decodeValue);
+}
+
+public sealed class SoraBundle : ISoraTableSource
 {
     private const int BundleVersion = 1;
     private const int HeaderLength = 24;
@@ -56,7 +61,12 @@ internal sealed class SoraBundle
         return DecodeRows(payload, decode);
     }
 
-    internal static SoraBundle Parse(byte[] bytes)
+    public List<T> DecodeTable<T>(string name, Func<SoraReader, T> decodeBinary, Func<SoraValue, T> decodeValue)
+    {
+        return DecodeTable(name, decodeBinary);
+    }
+
+    public static SoraBundle Parse(byte[] bytes)
     {
         if (bytes.Length < HeaderLength)
         {
@@ -271,7 +281,7 @@ internal sealed class SoraBundle
     }
 }
 
-internal sealed class SoraReader
+public sealed class SoraReader
 {
     private readonly byte[] bytes;
     private int cursor;
@@ -364,97 +374,7 @@ internal sealed class SoraReader
     }
 }
 
-{%- if runtime_format == "json" or runtime_format == "cbor" or runtime_format == "sora-protobuf" %}
-
-internal sealed class SoraValueBundle
-{
-    private const int BundleVersion = 1;
-    private readonly Dictionary<string, List<SoraValue>> tables;
-
-    private SoraValueBundle(Dictionary<string, List<SoraValue>> tables)
-    {
-        this.tables = tables;
-    }
-
-    internal List<T> DecodeTable<T>(string name, Func<SoraValue, T> decode)
-    {
-        if (!tables.TryGetValue(name, out var rows))
-        {
-            throw new SoraReadException($"missing table `{name}`");
-        }
-        var values = new List<T>(rows.Count);
-        foreach (var row in rows)
-        {
-            values.Add(decode(row));
-        }
-        return values;
-    }
-
-{%- if runtime_format == "json" %}
-    internal static SoraValueBundle ParseJson(byte[] bytes)
-    {
-        using var document = JsonDocument.Parse(bytes);
-        var root = SoraValue.FromJson(document.RootElement).AsObject("bundle");
-        Validate(root, "json");
-        return FromBundleObject(root);
-    }
-{%- endif %}
-
-{%- if runtime_format == "cbor" %}
-    internal static SoraValueBundle ParseCbor(byte[] bytes)
-    {
-        var reader = new CborReader(bytes);
-        var root = SoraValue.FromCbor(reader).AsObject("bundle");
-        Validate(root, "cbor");
-        return FromBundleObject(root);
-    }
-{%- endif %}
-
-{%- if runtime_format == "sora-protobuf" %}
-    internal static SoraValueBundle ParseProtobuf(byte[] bytes)
-    {
-        var bundle = Sora.Runtime.Bundle.Parser.ParseFrom(bytes);
-        if (bundle.Format != "sora-protobuf")
-        {
-            throw new SoraReadException($"expected protobuf bundle, got {bundle.Format}");
-        }
-        if (bundle.FormatVersion != BundleVersion)
-        {
-            throw new SoraReadException($"unsupported protobuf bundle version {bundle.FormatVersion}");
-        }
-        return new SoraValueBundle(SoraProtobufBundle.DecodeTables(bundle));
-    }
-{%- endif %}
-
-    private static void Validate(Dictionary<string, SoraValue> root, string expectedFormat)
-    {
-        var format = root["format"].AsString();
-        if (format != expectedFormat)
-        {
-            throw new SoraReadException($"expected {expectedFormat} bundle, got {format}");
-        }
-        var version = root["format_version"].AsInt32();
-        if (version != BundleVersion)
-        {
-            throw new SoraReadException($"unsupported {expectedFormat} bundle version {version}");
-        }
-    }
-
-    private static SoraValueBundle FromBundleObject(Dictionary<string, SoraValue> root)
-    {
-        var data = root["data"].AsObject("data");
-        var tables = new Dictionary<string, List<SoraValue>>();
-        foreach (var table in data["tables"].AsList())
-        {
-            var tableObject = table.AsObject("table");
-            var name = tableObject["name"].AsString();
-            tables[name] = tableObject["rows"].AsList();
-        }
-        return new SoraValueBundle(tables);
-    }
-}
-
-internal sealed class SoraValue
+public sealed class SoraValue
 {
     private readonly object? value;
 
@@ -637,6 +557,101 @@ internal static class SoraValueObjectExtensions
     internal static SoraValue Get(this Dictionary<string, SoraValue> obj, string name)
     {
         return obj.TryGetValue(name, out var value) ? value : SoraValue.Null();
+    }
+}
+
+{%- if runtime_format == "json" or runtime_format == "cbor" or runtime_format == "sora-protobuf" %}
+
+public sealed class SoraValueBundle : ISoraTableSource
+{
+    private const int BundleVersion = 1;
+    private readonly Dictionary<string, List<SoraValue>> tables;
+
+    private SoraValueBundle(Dictionary<string, List<SoraValue>> tables)
+    {
+        this.tables = tables;
+    }
+
+    internal List<T> DecodeTable<T>(string name, Func<SoraValue, T> decode)
+    {
+        if (!tables.TryGetValue(name, out var rows))
+        {
+            throw new SoraReadException($"missing table `{name}`");
+        }
+        var values = new List<T>(rows.Count);
+        foreach (var row in rows)
+        {
+            values.Add(decode(row));
+        }
+        return values;
+    }
+
+    public List<T> DecodeTable<T>(string name, Func<SoraReader, T> decodeBinary, Func<SoraValue, T> decodeValue)
+    {
+        return DecodeTable(name, decodeValue);
+    }
+
+{%- if runtime_format == "json" %}
+    public static SoraValueBundle ParseJson(byte[] bytes)
+    {
+        using var document = JsonDocument.Parse(bytes);
+        var root = SoraValue.FromJson(document.RootElement).AsObject("bundle");
+        Validate(root, "json");
+        return FromBundleObject(root);
+    }
+{%- endif %}
+
+{%- if runtime_format == "cbor" %}
+    public static SoraValueBundle ParseCbor(byte[] bytes)
+    {
+        var reader = new CborReader(bytes);
+        var root = SoraValue.FromCbor(reader).AsObject("bundle");
+        Validate(root, "cbor");
+        return FromBundleObject(root);
+    }
+{%- endif %}
+
+{%- if runtime_format == "sora-protobuf" %}
+    public static SoraValueBundle ParseProtobuf(byte[] bytes)
+    {
+        var bundle = Sora.Runtime.Bundle.Parser.ParseFrom(bytes);
+        if (bundle.Format != "sora-protobuf")
+        {
+            throw new SoraReadException($"expected protobuf bundle, got {bundle.Format}");
+        }
+        if (bundle.FormatVersion != BundleVersion)
+        {
+            throw new SoraReadException($"unsupported protobuf bundle version {bundle.FormatVersion}");
+        }
+        return new SoraValueBundle(SoraProtobufBundle.DecodeTables(bundle));
+    }
+{%- endif %}
+
+    private static void Validate(Dictionary<string, SoraValue> root, string expectedFormat)
+    {
+        var format = root["format"].AsString();
+        if (format != expectedFormat)
+        {
+            throw new SoraReadException($"expected {expectedFormat} bundle, got {format}");
+        }
+        var version = root["format_version"].AsInt32();
+        if (version != BundleVersion)
+        {
+            throw new SoraReadException($"unsupported {expectedFormat} bundle version {version}");
+        }
+    }
+
+    private static SoraValueBundle FromBundleObject(Dictionary<string, SoraValue> root)
+    {
+        var data = root["data"].AsObject("data");
+        var tables = new Dictionary<string, List<SoraValue>>();
+        foreach (var table in data["tables"].AsList())
+        {
+            var tableObject = table.AsObject("table");
+            var name = tableObject["name"].AsString();
+            tables[name] = tableObject["rows"].AsList();
+        }
+        return new SoraValueBundle(tables);
     }
 }
 

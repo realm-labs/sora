@@ -23,6 +23,17 @@ public sealed record Achievement(
             ResourceCost.Decode(reader)
         );
     }
+
+    internal static Achievement Decode(SoraValue value)
+    {
+        var obj = value.AsObject("Achievement");
+        return new Achievement(
+            obj.Get("id").AsInt32(),
+            obj.Get("title_key").AsString(),
+            obj.Get("target_count").AsInt64(),
+            ResourceCost.Decode(obj.Get("reward"))
+        );
+    }
 }
 
 public sealed class AchievementTable : ISoraTable
@@ -34,9 +45,9 @@ public sealed class AchievementTable : ISoraTable
         this.rows = rows;
     }
 
-    internal static AchievementTable Decode(SoraBundle bundle)
+    internal static AchievementTable Decode(ISoraTableSource source)
     {
-        return FromRows(bundle.DecodeTable<Achievement>("Achievement", Achievement.Decode));
+        return FromRows(source.DecodeTable("Achievement", global::com.sora.showcase.Achievement.Decode, global::com.sora.showcase.Achievement.Decode));
     }
 
     internal static AchievementTable FromRows(List<Achievement> rows)

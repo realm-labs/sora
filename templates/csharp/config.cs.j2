@@ -33,24 +33,11 @@ public sealed class SoraConfig
         this.tables = tables;
     }
 
-    public static SoraConfig FromBytes(byte[] bytes)
+    public static SoraConfig FromSource(ISoraTableSource source)
     {
-{%- if runtime_format == "sora" %}
-        var bundle = SoraBundle.Parse(bytes);
-{%- elif runtime_format == "json" %}
-        var bundle = SoraValueBundle.ParseJson(bytes);
-{%- elif runtime_format == "cbor" %}
-        var bundle = SoraValueBundle.ParseCbor(bytes);
-{%- elif runtime_format == "sora-protobuf" %}
-        var bundle = SoraValueBundle.ParseProtobuf(bytes);
-{%- endif %}
         var tables = new Dictionary<string, ISoraTable>({{ model.tables | length }});
 {%- for table in model.tables %}
-{%- if runtime_format == "sora" %}
-        tables["{{ table.name }}"] = {{ table.pascal_name }}Table.Decode(bundle);
-{%- else %}
-        tables["{{ table.name }}"] = {{ table.pascal_name }}Table.FromRows(bundle.DecodeTable("{{ table.name }}", global::{{ model.package }}.{{ table.row_type }}.Decode));
-{%- endif %}
+        tables["{{ table.name }}"] = {{ table.pascal_name }}Table.Decode(source);
 {%- endfor %}
         return new SoraConfig(tables);
     }

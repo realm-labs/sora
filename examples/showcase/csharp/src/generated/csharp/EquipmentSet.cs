@@ -23,6 +23,17 @@ public sealed record EquipmentSet(
             SkillEffect.Decode(reader)
         );
     }
+
+    internal static EquipmentSet Decode(SoraValue value)
+    {
+        var obj = value.AsObject("EquipmentSet");
+        return new EquipmentSet(
+            obj.Get("id").AsInt32(),
+            obj.Get("name").AsString(),
+            obj.Get("item_ids").AsList(item => item.AsInt32()),
+            SkillEffect.Decode(obj.Get("bonus_effect"))
+        );
+    }
 }
 
 public sealed class EquipmentSetTable : ISoraTable
@@ -34,9 +45,9 @@ public sealed class EquipmentSetTable : ISoraTable
         this.rows = rows;
     }
 
-    internal static EquipmentSetTable Decode(SoraBundle bundle)
+    internal static EquipmentSetTable Decode(ISoraTableSource source)
     {
-        return FromRows(bundle.DecodeTable<EquipmentSet>("EquipmentSet", EquipmentSet.Decode));
+        return FromRows(source.DecodeTable("EquipmentSet", global::com.sora.showcase.EquipmentSet.Decode, global::com.sora.showcase.EquipmentSet.Decode));
     }
 
     internal static EquipmentSetTable FromRows(List<EquipmentSet> rows)

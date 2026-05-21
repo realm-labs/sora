@@ -605,9 +605,11 @@ mod tests {
             let item = std::fs::read_to_string(csharp_out.join("Item.cs")).unwrap();
             let action = std::fs::read_to_string(csharp_out.join("Action.cs")).unwrap();
 
-            assert!(runtime.contains("internal sealed class SoraValueBundle"));
+            assert!(runtime.contains("public interface ISoraTableSource"));
+            assert!(runtime.contains("public sealed class SoraValueBundle"));
             assert!(runtime.contains(parse_function));
-            assert!(config.contains(&format!("SoraValueBundle.{parse_function}(bytes)")));
+            assert!(!config.contains(&format!("SoraValueBundle.{parse_function}(bytes)")));
+            assert!(config.contains("FromSource(ISoraTableSource source)"));
             assert!(item.contains("internal static Item Decode(SoraValue value)"));
             assert!(item.contains("obj.Get(\"id\").AsInt32()"));
             assert!(item.contains("ItemTypeCodec.Decode(obj.Get(\"item_type\"))"));

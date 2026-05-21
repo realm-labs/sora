@@ -21,6 +21,16 @@ public sealed record Dialogue(
             reader.ReadList(() => reader.ReadString())
         );
     }
+
+    internal static Dialogue Decode(SoraValue value)
+    {
+        var obj = value.AsObject("Dialogue");
+        return new Dialogue(
+            obj.Get("id").AsInt32(),
+            obj.Get("speaker_key").AsString(),
+            obj.Get("lines").AsList(item => item.AsString())
+        );
+    }
 }
 
 public sealed class DialogueTable : ISoraTable
@@ -32,9 +42,9 @@ public sealed class DialogueTable : ISoraTable
         this.rows = rows;
     }
 
-    internal static DialogueTable Decode(SoraBundle bundle)
+    internal static DialogueTable Decode(ISoraTableSource source)
     {
-        return FromRows(bundle.DecodeTable<Dialogue>("Dialogue", Dialogue.Decode));
+        return FromRows(source.DecodeTable("Dialogue", global::com.sora.showcase.Dialogue.Decode, global::com.sora.showcase.Dialogue.Decode));
     }
 
     internal static DialogueTable FromRows(List<Dialogue> rows)

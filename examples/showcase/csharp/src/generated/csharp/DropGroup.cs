@@ -19,6 +19,15 @@ public sealed record DropGroup(
             reader.ReadString()
         );
     }
+
+    internal static DropGroup Decode(SoraValue value)
+    {
+        var obj = value.AsObject("DropGroup");
+        return new DropGroup(
+            obj.Get("id").AsInt32(),
+            obj.Get("name").AsString()
+        );
+    }
 }
 
 public sealed class DropGroupTable : ISoraTable
@@ -30,9 +39,9 @@ public sealed class DropGroupTable : ISoraTable
         this.rows = rows;
     }
 
-    internal static DropGroupTable Decode(SoraBundle bundle)
+    internal static DropGroupTable Decode(ISoraTableSource source)
     {
-        return FromRows(bundle.DecodeTable<DropGroup>("DropGroup", DropGroup.Decode));
+        return FromRows(source.DecodeTable("DropGroup", global::com.sora.showcase.DropGroup.Decode, global::com.sora.showcase.DropGroup.Decode));
     }
 
     internal static DropGroupTable FromRows(List<DropGroup> rows)

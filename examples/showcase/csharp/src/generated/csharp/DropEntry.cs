@@ -25,6 +25,18 @@ public sealed record DropEntry(
             reader.ReadFloat()
         );
     }
+
+    internal static DropEntry Decode(SoraValue value)
+    {
+        var obj = value.AsObject("DropEntry");
+        return new DropEntry(
+            obj.Get("group_id").AsInt32(),
+            obj.Get("seq").AsInt32(),
+            obj.Get("item_id").AsInt32(),
+            obj.Get("count").AsInt32(),
+            obj.Get("weight").AsFloat()
+        );
+    }
 }
 
 public sealed class DropEntryTable : ISoraTable
@@ -36,9 +48,9 @@ public sealed class DropEntryTable : ISoraTable
         this.rows = rows;
     }
 
-    internal static DropEntryTable Decode(SoraBundle bundle)
+    internal static DropEntryTable Decode(ISoraTableSource source)
     {
-        return FromRows(bundle.DecodeTable<DropEntry>("DropEntry", DropEntry.Decode));
+        return FromRows(source.DecodeTable("DropEntry", global::com.sora.showcase.DropEntry.Decode, global::com.sora.showcase.DropEntry.Decode));
     }
 
     internal static DropEntryTable FromRows(List<DropEntry> rows)

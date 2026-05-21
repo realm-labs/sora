@@ -18,7 +18,12 @@ public sealed class SoraReadException : Exception
 
 internal sealed record SoraSection(int Kind, int Compression, string Name, int Offset, int Length, int UncompressedLength);
 
-internal sealed class SoraBundle
+public interface ISoraTableSource
+{
+    List<T> DecodeTable<T>(string name, Func<SoraReader, T> decodeBinary, Func<SoraValue, T> decodeValue);
+}
+
+public sealed class SoraBundle : ISoraTableSource
 {
     private const int BundleVersion = 1;
     private const int HeaderLength = 24;
@@ -53,7 +58,12 @@ internal sealed class SoraBundle
         return DecodeRows(payload, decode);
     }
 
-    internal static SoraBundle Parse(byte[] bytes)
+    public List<T> DecodeTable<T>(string name, Func<SoraReader, T> decodeBinary, Func<SoraValue, T> decodeValue)
+    {
+        return DecodeTable(name, decodeBinary);
+    }
+
+    public static SoraBundle Parse(byte[] bytes)
     {
         if (bytes.Length < HeaderLength)
         {
@@ -268,7 +278,7 @@ internal sealed class SoraBundle
     }
 }
 
-internal sealed class SoraReader
+public sealed class SoraReader
 {
     private readonly byte[] bytes;
     private int cursor;
@@ -358,5 +368,142 @@ internal sealed class SoraReader
         Array.Copy(bytes, cursor, chunk, 0, length);
         cursor = end;
         return chunk;
+    }
+}
+
+public sealed class SoraValue
+{
+    private readonly object? value;
+
+    private SoraValue(object? value)
+    {
+        this.value = value;
+    }
+
+    internal bool IsNull => value is null;
+
+    internal static SoraValue Null() => new(null);
+    internal static SoraValue Of(bool value) => new(value);
+    internal static SoraValue Of(long value) => new(value);
+    internal static SoraValue Of(double value) => new(value);
+    internal static SoraValue Of(string value) => new(value);
+    internal static SoraValue Of(List<SoraValue> value) => new(value);
+    internal static SoraValue Of(Dictionary<string, SoraValue> value) => new(value);
+
+    internal Dictionary<string, SoraValue> AsObject(string typeName)
+    {
+        return value as Dictionary<string, SoraValue>
+            ?? throw new SoraReadException($"expected object for {typeName}");
+    }
+
+    internal SoraValue Get(string name)
+    {
+        var obj = AsObject("object");
+        return obj.TryGetValue(name, out var field) ? field : Null();
+    }
+
+    internal List<SoraValue> AsList()
+    {
+        return value as List<SoraValue>
+            ?? throw new SoraReadException("expected list");
+    }
+
+    internal List<T> AsList<T>(Func<SoraValue, T> decode)
+    {
+        var source = AsList();
+        var values = new List<T>(source.Count);
+        foreach (var item in source)
+        {
+            values.Add(decode(item));
+        }
+        return values;
+    }
+
+    internal bool AsBool()
+    {
+        return value is bool typed ? typed : throw new SoraReadException("expected bool");
+    }
+
+    internal int AsInt32()
+    {
+        var number = AsInt64();
+        if (number > int.MaxValue || number < int.MinValue)
+        {
+            throw new SoraReadException($"integer `{number}` is outside Int32 range");
+        }
+        return (int)number;
+    }
+
+    internal long AsInt64()
+    {
+        return value switch
+        {
+            long typed => typed,
+            double typed => checked((long)typed),
+            _ => throw new SoraReadException("expected integer"),
+        };
+    }
+
+    internal float AsFloat()
+    {
+        return (float)AsDouble();
+    }
+
+    internal double AsDouble()
+    {
+        return value switch
+        {
+            long typed => typed,
+            double typed => typed,
+            _ => throw new SoraReadException("expected number"),
+        };
+    }
+
+    internal string AsString()
+    {
+        return value as string ?? throw new SoraReadException("expected string");
+    }
+
+    internal static SoraValue FromJson(JsonElement element)
+    {
+        return element.ValueKind switch
+        {
+            JsonValueKind.Object => Of(ReadJsonObject(element)),
+            JsonValueKind.Array => Of(ReadJsonArray(element)),
+            JsonValueKind.String => Of(element.GetString() ?? string.Empty),
+            JsonValueKind.Number => element.TryGetInt64(out var integer) ? Of(integer) : Of(element.GetDouble()),
+            JsonValueKind.True => Of(true),
+            JsonValueKind.False => Of(false),
+            JsonValueKind.Null => Null(),
+            _ => throw new SoraReadException($"unsupported JSON value `{element.ValueKind}`"),
+        };
+    }
+
+    private static Dictionary<string, SoraValue> ReadJsonObject(JsonElement element)
+    {
+        var values = new Dictionary<string, SoraValue>();
+        foreach (var property in element.EnumerateObject())
+        {
+            values[property.Name] = FromJson(property.Value);
+        }
+        return values;
+    }
+
+    private static List<SoraValue> ReadJsonArray(JsonElement element)
+    {
+        var values = new List<SoraValue>();
+        foreach (var item in element.EnumerateArray())
+        {
+            values.Add(FromJson(item));
+        }
+        return values;
+    }
+}
+
+internal static class SoraValueObjectExtensions
+{
+    internal static SoraValue Get(this Dictionary<string, SoraValue> obj, string name)
+    {
+        return obj.TryGetValue(name, out var value) ? value : SoraValue.Null();
     }
 }

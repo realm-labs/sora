@@ -29,6 +29,20 @@ public sealed record Character(
             Vec3.Decode(reader)
         );
     }
+
+    internal static Character Decode(SoraValue value)
+    {
+        var obj = value.AsObject("Character");
+        return new Character(
+            obj.Get("id").AsInt32(),
+            obj.Get("name").AsString(),
+            RarityCodec.Decode(obj.Get("rarity")),
+            obj.Get("base_level").AsInt32(),
+            obj.Get("base_skill").AsInt32(),
+            obj.Get("starter_items").AsList(item => item.AsInt32()),
+            Vec3.Decode(obj.Get("spawn_pos"))
+        );
+    }
 }
 
 public sealed class CharacterTable : ISoraTable
@@ -40,9 +54,9 @@ public sealed class CharacterTable : ISoraTable
         this.rows = rows;
     }
 
-    internal static CharacterTable Decode(SoraBundle bundle)
+    internal static CharacterTable Decode(ISoraTableSource source)
     {
-        return FromRows(bundle.DecodeTable<Character>("Character", Character.Decode));
+        return FromRows(source.DecodeTable("Character", global::com.sora.showcase.Character.Decode, global::com.sora.showcase.Character.Decode));
     }
 
     internal static CharacterTable FromRows(List<Character> rows)

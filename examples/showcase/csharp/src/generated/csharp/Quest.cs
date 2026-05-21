@@ -30,6 +30,20 @@ public sealed record Quest(
             reader.ReadList(() => Reward.Decode(reader))
         );
     }
+
+    internal static Quest Decode(SoraValue value)
+    {
+        var obj = value.AsObject("Quest");
+        return new Quest(
+            obj.Get("id").AsInt32(),
+            QuestTypeCodec.Decode(obj.Get("quest_type")),
+            obj.Get("title").AsString(),
+            obj.Get("required_item").AsInt32(),
+            obj.Get("unlock_skills").AsList(item => item.AsInt32()),
+            Vec3.Decode(obj.Get("start_pos")),
+            obj.Get("rewards").AsList(item => Reward.Decode(item))
+        );
+    }
 }
 
 public sealed class QuestTable : ISoraTable
@@ -41,9 +55,9 @@ public sealed class QuestTable : ISoraTable
         this.rows = rows;
     }
 
-    internal static QuestTable Decode(SoraBundle bundle)
+    internal static QuestTable Decode(ISoraTableSource source)
     {
-        return FromRows(bundle.DecodeTable<Quest>("Quest", Quest.Decode));
+        return FromRows(source.DecodeTable("Quest", global::com.sora.showcase.Quest.Decode, global::com.sora.showcase.Quest.Decode));
     }
 
     internal static QuestTable FromRows(List<Quest> rows)

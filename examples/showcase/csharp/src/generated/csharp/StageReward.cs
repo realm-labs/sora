@@ -23,6 +23,17 @@ public sealed record StageReward(
             reader.ReadInt32()
         );
     }
+
+    internal static StageReward Decode(SoraValue value)
+    {
+        var obj = value.AsObject("StageReward");
+        return new StageReward(
+            obj.Get("stage_id").AsInt32(),
+            obj.Get("seq").AsInt32(),
+            obj.Get("item_id").AsInt32(),
+            obj.Get("count").AsInt32()
+        );
+    }
 }
 
 public sealed class StageRewardTable : ISoraTable
@@ -34,9 +45,9 @@ public sealed class StageRewardTable : ISoraTable
         this.rows = rows;
     }
 
-    internal static StageRewardTable Decode(SoraBundle bundle)
+    internal static StageRewardTable Decode(ISoraTableSource source)
     {
-        return FromRows(bundle.DecodeTable<StageReward>("StageReward", StageReward.Decode));
+        return FromRows(source.DecodeTable("StageReward", global::com.sora.showcase.StageReward.Decode, global::com.sora.showcase.StageReward.Decode));
     }
 
     internal static StageRewardTable FromRows(List<StageReward> rows)

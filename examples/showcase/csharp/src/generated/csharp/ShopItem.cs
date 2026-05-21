@@ -25,6 +25,18 @@ public sealed record ShopItem(
             reader.ReadOptional(() => reader.ReadInt32())
         );
     }
+
+    internal static ShopItem Decode(SoraValue value)
+    {
+        var obj = value.AsObject("ShopItem");
+        return new ShopItem(
+            obj.Get("shop_id").AsInt32(),
+            obj.Get("seq").AsInt32(),
+            obj.Get("item_id").AsInt32(),
+            ResourceCost.Decode(obj.Get("price")),
+            obj.Get("daily_limit").IsNull ? default : obj.Get("daily_limit").AsInt32()
+        );
+    }
 }
 
 public sealed class ShopItemTable : ISoraTable
@@ -36,9 +48,9 @@ public sealed class ShopItemTable : ISoraTable
         this.rows = rows;
     }
 
-    internal static ShopItemTable Decode(SoraBundle bundle)
+    internal static ShopItemTable Decode(ISoraTableSource source)
     {
-        return FromRows(bundle.DecodeTable<ShopItem>("ShopItem", ShopItem.Decode));
+        return FromRows(source.DecodeTable("ShopItem", global::com.sora.showcase.ShopItem.Decode, global::com.sora.showcase.ShopItem.Decode));
     }
 
     internal static ShopItemTable FromRows(List<ShopItem> rows)

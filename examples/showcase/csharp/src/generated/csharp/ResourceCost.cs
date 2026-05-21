@@ -21,4 +21,14 @@ public sealed record ResourceCost(
             reader.ReadInt32()
         );
     }
+
+    internal static ResourceCost Decode(SoraValue value)
+    {
+        var obj = value.AsObject("ResourceCost");
+        return new ResourceCost(
+            ResourceKindCodec.Decode(obj.Get("kind")),
+            obj.Get("id").AsInt32(),
+            obj.Get("count").AsInt32()
+        );
+    }
 }

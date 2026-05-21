@@ -27,6 +27,19 @@ public sealed record Monster(
             Vec3.Decode(reader)
         );
     }
+
+    internal static Monster Decode(SoraValue value)
+    {
+        var obj = value.AsObject("Monster");
+        return new Monster(
+            obj.Get("id").AsInt32(),
+            obj.Get("name").AsString(),
+            obj.Get("level").AsInt32(),
+            ElementTypeCodec.Decode(obj.Get("element")),
+            obj.Get("drop_group").AsInt32(),
+            Vec3.Decode(obj.Get("spawn_pos"))
+        );
+    }
 }
 
 public sealed class MonsterTable : ISoraTable
@@ -38,9 +51,9 @@ public sealed class MonsterTable : ISoraTable
         this.rows = rows;
     }
 
-    internal static MonsterTable Decode(SoraBundle bundle)
+    internal static MonsterTable Decode(ISoraTableSource source)
     {
-        return FromRows(bundle.DecodeTable<Monster>("Monster", Monster.Decode));
+        return FromRows(source.DecodeTable("Monster", global::com.sora.showcase.Monster.Decode, global::com.sora.showcase.Monster.Decode));
     }
 
     internal static MonsterTable FromRows(List<Monster> rows)
