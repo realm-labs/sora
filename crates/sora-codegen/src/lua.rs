@@ -1,14 +1,17 @@
 use std::path::Path;
 
-use heck::{ToLowerCamelCase, ToSnakeCase};
+use heck::ToSnakeCase;
 use minijinja::context;
 use serde::Serialize;
 use sora_diagnostics::Result;
-use sora_ir::model::{ConfigIr, LuaEnumReprIr, LuaVersionIr, TableModeIr, TypeIr};
+use sora_ir::model::{ConfigIr, LuaEnumReprIr, LuaVersionIr, TypeIr};
 
 use crate::{
     generator::{CodeGenerator, ensure_sora_runtime_format},
-    model::{LanguageBackend, TableNameParts, build_model},
+    model::{
+        BaseField, BaseImport, BaseIndex, BaseModel, BaseRecord, BaseTable, BaseUnion,
+        BaseUnionVariant, build_base_model,
+    },
     render::{ensure_dir, render_template, write_file},
 };
 
@@ -25,10 +28,7 @@ impl CodeGenerator for LuaCodeGenerator {
             ir.codegen.lua.lua_version,
             ir.codegen.lua.enum_repr,
         );
-        let backend = LuaBackend {
-            options: options.clone(),
-        };
-        let model = build_model(ir, &backend)?;
+        let model = LuaModel::from_base_model(ir, build_base_model(ir)?, &options);
 
         for item in &model.enums {
             let rendered = render_template(
@@ -98,106 +98,267 @@ impl LuaOptionsView {
     }
 }
 
-#[derive(Debug, Clone)]
-struct LuaBackend {
-    options: LuaOptionsView,
+#[derive(Debug, Clone, Serialize)]
+struct LuaModel {
+    package: String,
+    enums: Vec<LuaEnum>,
+    unions: Vec<LuaUnion>,
+    records: Vec<LuaRecord>,
+    tables: Vec<LuaTable>,
 }
 
-impl LanguageBackend for LuaBackend {
-    fn field_name(&self, raw_name: &str) -> String {
-        raw_name.to_lower_camel_case()
-    }
+#[derive(Debug, Clone, Serialize)]
+struct LuaEnum {
+    name: String,
+    values: Vec<String>,
+}
 
-    fn type_name(&self, ir: &ConfigIr, ty: &TypeIr) -> String {
-        self.lua_type_name(ir, ty)
-    }
+#[derive(Debug, Clone, Serialize)]
+struct LuaUnion {
+    pascal_name: String,
+    snake_name: String,
+    tag: String,
+    variants: Vec<LuaUnionVariant>,
+    imports: Vec<LuaImport>,
+}
 
-    fn decode_expr(&self, ir: &ConfigIr, ty: &TypeIr) -> String {
-        self.lua_decode_expr(ir, ty)
-    }
+#[derive(Debug, Clone, Serialize)]
+struct LuaUnionVariant {
+    name: String,
+    fields: Vec<LuaField>,
+}
 
-    fn row_type(&self, table: &TableNameParts<'_>) -> String {
-        table.pascal_name.to_owned()
-    }
+#[derive(Debug, Clone, Serialize)]
+struct LuaRecord {
+    pascal_name: String,
+    snake_name: String,
+    imports: Vec<LuaImport>,
+    fields: Vec<LuaField>,
+}
 
-    fn container_type(
-        &self,
-        table: &TableNameParts<'_>,
-        _mode: TableModeIr,
-        _row_type: &str,
-        _key_type: Option<&str>,
-    ) -> String {
-        format!("{}Table", table.pascal_name)
+#[derive(Debug, Clone, Serialize)]
+struct LuaImport {
+    module: String,
+    name: String,
+}
+
+#[derive(Debug, Clone, Serialize)]
+struct LuaTable {
+    name: String,
+    pascal_name: String,
+    snake_name: String,
+    mode: String,
+    row_type: String,
+    key_name: Option<String>,
+    key_field_name: Option<String>,
+    key_type: Option<String>,
+    unique_indexes: Vec<LuaIndex>,
+    non_unique_indexes: Vec<LuaIndex>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+struct LuaIndex {
+    name: String,
+    field_name: String,
+    param_camel_name: String,
+    key_type: String,
+}
+
+#[derive(Debug, Clone, Serialize)]
+struct LuaField {
+    name: String,
+    type_name: String,
+    decode: String,
+}
+
+impl LuaModel {
+    fn from_base_model(ir: &ConfigIr, model: BaseModel, options: &LuaOptionsView) -> Self {
+        Self {
+            package: model.package,
+            enums: model
+                .enums
+                .into_iter()
+                .map(|item| LuaEnum {
+                    name: item.pascal_name,
+                    values: item.values,
+                })
+                .collect(),
+            unions: model
+                .unions
+                .into_iter()
+                .map(|item| lua_union(ir, item, options))
+                .collect(),
+            records: model
+                .records
+                .into_iter()
+                .map(|item| lua_record(ir, item, options))
+                .collect(),
+            tables: model
+                .tables
+                .into_iter()
+                .map(|item| lua_table(ir, item, options))
+                .collect(),
+        }
     }
 }
 
-impl LuaBackend {
-    fn lua_type_name(&self, ir: &ConfigIr, ty: &TypeIr) -> String {
-        match ty {
-            TypeIr::Bool => "boolean".to_owned(),
-            TypeIr::I32 => "integer".to_owned(),
-            TypeIr::I64 => self.options.i64_type_name.to_owned(),
-            TypeIr::F32 | TypeIr::F64 => "number".to_owned(),
-            TypeIr::String => "string".to_owned(),
-            TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => name.clone(),
-            TypeIr::List(element) | TypeIr::Array { element, .. } => {
-                format!("{}[]", self.lua_type_name(ir, element))
-            }
-            TypeIr::Ref { table, field } => self
-                .ref_target_type(ir, table, field)
-                .map(|ty| self.lua_type_name(ir, ty))
-                .unwrap_or_else(|| "integer".to_owned()),
-            TypeIr::Optional(element) => format!("{}?", self.lua_type_name(ir, element)),
+fn lua_union(ir: &ConfigIr, union: BaseUnion, options: &LuaOptionsView) -> LuaUnion {
+    LuaUnion {
+        pascal_name: union.pascal_name,
+        snake_name: union.snake_name,
+        tag: union.tag,
+        variants: union
+            .variants
+            .into_iter()
+            .map(|variant| lua_variant(ir, variant, options))
+            .collect(),
+        imports: union.imports.into_iter().map(lua_import).collect(),
+    }
+}
+
+fn lua_variant(
+    ir: &ConfigIr,
+    variant: BaseUnionVariant,
+    options: &LuaOptionsView,
+) -> LuaUnionVariant {
+    LuaUnionVariant {
+        name: variant.pascal_name,
+        fields: variant
+            .fields
+            .into_iter()
+            .map(|field| lua_field(ir, field, options))
+            .collect(),
+    }
+}
+
+fn lua_record(ir: &ConfigIr, record: BaseRecord, options: &LuaOptionsView) -> LuaRecord {
+    LuaRecord {
+        pascal_name: record.pascal_name,
+        snake_name: record.snake_name,
+        imports: record.imports.into_iter().map(lua_import).collect(),
+        fields: record
+            .fields
+            .into_iter()
+            .map(|field| lua_field(ir, field, options))
+            .collect(),
+    }
+}
+
+fn lua_table(ir: &ConfigIr, table: BaseTable, options: &LuaOptionsView) -> LuaTable {
+    let row_type = table.pascal_name.clone();
+    let key_type = table
+        .key_field
+        .as_ref()
+        .map(|field| lua_type_name(ir, &field.ty, options));
+    let key_field_name = table
+        .key_field
+        .as_ref()
+        .map(|field| field.camel_name.clone());
+
+    LuaTable {
+        name: table.name,
+        pascal_name: table.pascal_name,
+        snake_name: table.snake_name,
+        mode: table.mode_name,
+        row_type,
+        key_name: table.key_name,
+        key_field_name,
+        key_type,
+        unique_indexes: table
+            .unique_indexes
+            .into_iter()
+            .map(|index| lua_index(ir, index, options))
+            .collect(),
+        non_unique_indexes: table
+            .non_unique_indexes
+            .into_iter()
+            .map(|index| lua_index(ir, index, options))
+            .collect(),
+    }
+}
+
+fn lua_index(ir: &ConfigIr, index: BaseIndex, options: &LuaOptionsView) -> LuaIndex {
+    LuaIndex {
+        name: index.snake_name,
+        field_name: index.field.camel_name.clone(),
+        param_camel_name: index.field.camel_name,
+        key_type: lua_type_name(ir, &index.field.ty, options),
+    }
+}
+
+fn lua_field(ir: &ConfigIr, field: BaseField, options: &LuaOptionsView) -> LuaField {
+    LuaField {
+        name: field.camel_name,
+        type_name: lua_type_name(ir, &field.ty, options),
+        decode: lua_decode_expr(ir, &field.ty, options),
+    }
+}
+
+fn lua_import(import: BaseImport) -> LuaImport {
+    LuaImport {
+        module: import.module,
+        name: import.name,
+    }
+}
+
+fn lua_type_name(ir: &ConfigIr, ty: &TypeIr, options: &LuaOptionsView) -> String {
+    match ty {
+        TypeIr::Bool => "boolean".to_owned(),
+        TypeIr::I32 => "integer".to_owned(),
+        TypeIr::I64 => options.i64_type_name.to_owned(),
+        TypeIr::F32 | TypeIr::F64 => "number".to_owned(),
+        TypeIr::String => "string".to_owned(),
+        TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => name.clone(),
+        TypeIr::List(element) | TypeIr::Array { element, .. } => {
+            format!("{}[]", lua_type_name(ir, element, options))
+        }
+        TypeIr::Ref { table, field } => ref_target_type(ir, table, field)
+            .map(|ty| lua_type_name(ir, ty, options))
+            .unwrap_or_else(|| "integer".to_owned()),
+        TypeIr::Optional(element) => format!("{}?", lua_type_name(ir, element, options)),
+    }
+}
+
+fn lua_decode_expr(ir: &ConfigIr, ty: &TypeIr, options: &LuaOptionsView) -> String {
+    match ty {
+        TypeIr::Bool => "reader:read_bool()".to_owned(),
+        TypeIr::I32 => "reader:read_i32()".to_owned(),
+        TypeIr::I64 => "reader:read_i64()".to_owned(),
+        TypeIr::F32 => "reader:read_f32()".to_owned(),
+        TypeIr::F64 => "reader:read_f64()".to_owned(),
+        TypeIr::String => "reader:read_string()".to_owned(),
+        TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => {
+            format!("{name}.decode(reader)")
+        }
+        TypeIr::List(element) | TypeIr::Array { element, .. } => {
+            format!(
+                "reader:read_list(function() return {} end)",
+                lua_decode_expr(ir, element, options)
+            )
+        }
+        TypeIr::Ref { table, field } => ref_target_type(ir, table, field)
+            .map(|ty| lua_decode_expr(ir, ty, options))
+            .unwrap_or_else(|| "reader:read_i32()".to_owned()),
+        TypeIr::Optional(element) => {
+            format!(
+                "reader:read_optional(function() return {} end)",
+                lua_decode_expr(ir, element, options)
+            )
         }
     }
+}
 
-    fn lua_decode_expr(&self, ir: &ConfigIr, ty: &TypeIr) -> String {
-        match ty {
-            TypeIr::Bool => "reader:read_bool()".to_owned(),
-            TypeIr::I32 => "reader:read_i32()".to_owned(),
-            TypeIr::I64 => "reader:read_i64()".to_owned(),
-            TypeIr::F32 => "reader:read_f32()".to_owned(),
-            TypeIr::F64 => "reader:read_f64()".to_owned(),
-            TypeIr::String => "reader:read_string()".to_owned(),
-            TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => {
-                format!("{name}.decode(reader)")
-            }
-            TypeIr::List(element) | TypeIr::Array { element, .. } => {
-                format!(
-                    "reader:read_list(function() return {} end)",
-                    self.lua_decode_expr(ir, element)
-                )
-            }
-            TypeIr::Ref { table, field } => self
-                .ref_target_type(ir, table, field)
-                .map(|ty| self.lua_decode_expr(ir, ty))
-                .unwrap_or_else(|| "reader:read_i32()".to_owned()),
-            TypeIr::Optional(element) => {
-                format!(
-                    "reader:read_optional(function() return {} end)",
-                    self.lua_decode_expr(ir, element)
-                )
-            }
-        }
-    }
-
-    fn ref_target_type<'a>(
-        &self,
-        ir: &'a ConfigIr,
-        table: &str,
-        field: &str,
-    ) -> Option<&'a TypeIr> {
-        ir.tables
-            .iter()
-            .find(|candidate| candidate.name == table)
-            .and_then(|table| {
-                table
-                    .fields
-                    .iter()
-                    .find(|candidate| candidate.name == *field)
-            })
-            .map(|field| &field.ty)
-    }
+fn ref_target_type<'a>(ir: &'a ConfigIr, table: &str, field: &str) -> Option<&'a TypeIr> {
+    ir.tables
+        .iter()
+        .find(|candidate| candidate.name == table)
+        .and_then(|table| {
+            table
+                .fields
+                .iter()
+                .find(|candidate| candidate.name == *field)
+        })
+        .map(|field| &field.ty)
 }
 
 fn ensure_supported_lua_version(version: LuaVersionIr) -> Result<()> {
