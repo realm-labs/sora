@@ -30,11 +30,13 @@ type soraSection struct {
 }
 
 type SoraBundle struct {
-	bytes    []byte
-	sections []soraSection
+	bytes             []byte
+	sections          []soraSection
+	schemaFingerprint string
 }
 
 type SoraTableSource interface {
+	SchemaFingerprint() (string, error)
 	DecodeTable(name string, decodeBinary func(*SoraReader) (any, error), decodeValue func(SoraValue) (any, error)) ([]any, error)
 }
 
@@ -153,7 +155,20 @@ func ParseSoraBundle(bytes []byte) (*SoraBundle, error) {
 	if schemaCount != 1 {
 		return nil, fmt.Errorf("expected exactly 1 Sora schema section, got %d", schemaCount)
 	}
-	return &SoraBundle{bytes: bytes, sections: sections}, nil
+	var schemaFingerprint string
+	for _, section := range sections {
+		if section.kind == soraSectionManifest {
+			schemaFingerprint, err = readJsonStringField(bytes[section.offset:section.offset+section.length], "schema_fingerprint")
+			if err != nil {
+				return nil, err
+			}
+			break
+		}
+	}
+	if schemaFingerprint == "" {
+		return nil, fmt.Errorf("missing Sora manifest section")
+	}
+	return &SoraBundle{bytes: bytes, sections: sections, schemaFingerprint: schemaFingerprint}, nil
 }
 
 func DecodeTable[T any](bundle *SoraBundle, name string, decode func(*SoraReader) (T, error)) ([]T, error) {
@@ -173,6 +188,10 @@ func DecodeTable[T any](bundle *SoraBundle, name string, decode func(*SoraReader
 
 func (bundle *SoraBundle) DecodeTable(name string, decodeBinary func(*SoraReader) (any, error), _ func(SoraValue) (any, error)) ([]any, error) {
 	return DecodeTable(bundle, name, decodeBinary)
+}
+
+func (bundle *SoraBundle) SchemaFingerprint() (string, error) {
+	return bundle.schemaFingerprint, nil
 }
 
 func DecodeSourceTable[T any](source SoraTableSource, name string, decodeBinary func(*SoraReader) (T, error), decodeValue func(SoraValue) (T, error)) ([]T, error) {
@@ -408,6 +427,18 @@ func checkedInt64ToInt(value int64, message string) (int, error) {
 	return int(value), nil
 }
 
+func readJsonStringField(bytes []byte, field string) (string, error) {
+	var values map[string]any
+	if err := json.Unmarshal(bytes, &values); err != nil {
+		return "", fmt.Errorf("failed to parse Sora manifest: %w", err)
+	}
+	value, ok := values[field].(string)
+	if !ok {
+		return "", fmt.Errorf("Sora manifest is missing string field `%s`", field)
+	}
+	return value, nil
+}
+
 type SoraValue struct {
 	value any
 }
@@ -415,7 +446,8 @@ type SoraValue struct {
 type SoraObject map[string]SoraValue
 
 type SoraValueBundle struct {
-	tables map[string][]SoraValue
+	tables            map[string][]SoraValue
+	schemaFingerprint string
 }
 
 func DecodeValueTable[T any](bundle *SoraValueBundle, name string, decode func(SoraValue) (T, error)) ([]T, error) {
@@ -436,6 +468,10 @@ func DecodeValueTable[T any](bundle *SoraValueBundle, name string, decode func(S
 
 func (bundle *SoraValueBundle) DecodeTable(name string, _ func(*SoraReader) (any, error), decodeValue func(SoraValue) (any, error)) ([]any, error) {
 	return DecodeValueTable(bundle, name, decodeValue)
+}
+
+func (bundle *SoraValueBundle) SchemaFingerprint() (string, error) {
+	return bundle.schemaFingerprint, nil
 }
 
 func (object SoraObject) Get(name string) SoraValue {
@@ -595,6 +631,10 @@ func newSoraValueBundle(expectedFormat string, root SoraValue) (*SoraValueBundle
 	if version != soraBundleVersion {
 		return nil, fmt.Errorf("unsupported %s bundle version %d", expectedFormat, version)
 	}
+	schemaFingerprint, err := object.Get("schema_fingerprint").AsString()
+	if err != nil {
+		return nil, err
+	}
 	data, err := object.Get("data").AsObject()
 	if err != nil {
 		return nil, err
@@ -619,7 +659,7 @@ func newSoraValueBundle(expectedFormat string, root SoraValue) (*SoraValueBundle
 		}
 		decoded[name] = rows
 	}
-	return &SoraValueBundle{tables: decoded}, nil
+	return &SoraValueBundle{tables: decoded, schemaFingerprint: schemaFingerprint}, nil
 }
 
 func soraValueFromJson(value any) SoraValue {

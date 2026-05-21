@@ -12,6 +12,8 @@ private const val SECTION_KIND_TABLE = 2
 private const val COMPRESSION_NONE = 0
 
 interface SoraTableSource {
+    val schemaFingerprint: String
+
     fun <T> decodeTable(
         name: String,
         decodeBinary: (SoraReader) -> T,
@@ -31,6 +33,7 @@ private data class SoraSection(
 class SoraBundle private constructor(
     private val bytes: ByteArray,
     private val sections: List<SoraSection>,
+    override val schemaFingerprint: String,
 ) : SoraTableSource {
     fun <T> decodeTable(name: String, decode: (SoraReader) -> T): List<T> {
         val section = sections.firstOrNull { it.kind == SECTION_KIND_TABLE && it.name == name }
@@ -150,7 +153,12 @@ class SoraBundle private constructor(
                 throw SoraReadException("expected exactly 1 Sora schema section, got $schemaCount")
             }
 
-            return SoraBundle(bytes, sections)
+            val manifest = sections.firstOrNull { it.kind == SECTION_KIND_MANIFEST }
+                ?: throw SoraReadException("missing Sora manifest section")
+            val manifestBytes = bytes.copyOfRange(manifest.offset, manifest.offset + manifest.length)
+            val schemaFingerprint = readJsonStringField(manifestBytes, "schema_fingerprint")
+
+            return SoraBundle(bytes, sections, schemaFingerprint)
         }
     }
 }
@@ -293,6 +301,29 @@ private fun checkedLongToInt(value: Long, message: String): Int {
         throw SoraReadException(message)
     }
     return value.toInt()
+}
+
+private fun readJsonStringField(bytes: ByteArray, field: String): String {
+    val text = String(bytes, Charsets.UTF_8)
+    val key = "\"$field\""
+    val fieldStart = text.indexOf(key)
+    if (fieldStart < 0) {
+        throw SoraReadException("Sora manifest is missing `$field`")
+    }
+    val afterKey = text.substring(fieldStart + key.length)
+    val colon = afterKey.indexOf(':')
+    if (colon < 0) {
+        throw SoraReadException("Sora manifest field `$field` is missing `:`")
+    }
+    val value = afterKey.substring(colon + 1).trimStart()
+    if (!value.startsWith("\"")) {
+        throw SoraReadException("Sora manifest field `$field` is not a string")
+    }
+    val end = value.indexOf('"', startIndex = 1)
+    if (end < 0) {
+        throw SoraReadException("Sora manifest field `$field` string is unterminated")
+    }
+    return value.substring(1, end)
 }
 
 class SoraObject(private val fields: Map<String, SoraValue>) {

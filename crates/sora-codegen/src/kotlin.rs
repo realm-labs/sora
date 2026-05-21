@@ -79,6 +79,7 @@ impl CodeGenerator for KotlinCodeGenerator {
 #[derive(Debug, Clone, Serialize)]
 struct KotlinModel {
     package: String,
+    schema_fingerprint: String,
     enums: Vec<KotlinEnum>,
     unions: Vec<KotlinUnion>,
     records: Vec<KotlinRecord>,
@@ -154,6 +155,7 @@ impl KotlinModel {
             .collect::<Vec<_>>();
         Self {
             package: model.package,
+            schema_fingerprint: model.schema_fingerprint,
             enums: model
                 .enums
                 .into_iter()

@@ -25,6 +25,8 @@ private const val SECTION_KIND_TABLE = 2
 private const val COMPRESSION_NONE = 0
 
 interface SoraTableSource {
+    val schemaFingerprint: String
+
     fun <T> decodeTable(
         name: String,
         decodeBinary: (SoraReader) -> T,
@@ -44,6 +46,7 @@ private data class SoraSection(
 class SoraBundle private constructor(
     private val bytes: ByteArray,
     private val sections: List<SoraSection>,
+    override val schemaFingerprint: String,
 ) : SoraTableSource {
     fun <T> decodeTable(name: String, decode: (SoraReader) -> T): List<T> {
         val section = sections.firstOrNull { it.kind == SECTION_KIND_TABLE && it.name == name }
@@ -163,7 +166,12 @@ class SoraBundle private constructor(
                 throw SoraReadException("expected exactly 1 Sora schema section, got $schemaCount")
             }
 
-            return SoraBundle(bytes, sections)
+            val manifest = sections.firstOrNull { it.kind == SECTION_KIND_MANIFEST }
+                ?: throw SoraReadException("missing Sora manifest section")
+            val manifestBytes = bytes.copyOfRange(manifest.offset, manifest.offset + manifest.length)
+            val schemaFingerprint = readJsonStringField(manifestBytes, "schema_fingerprint")
+
+            return SoraBundle(bytes, sections, schemaFingerprint)
         }
     }
 }
@@ -308,6 +316,29 @@ private fun checkedLongToInt(value: Long, message: String): Int {
     return value.toInt()
 }
 
+private fun readJsonStringField(bytes: ByteArray, field: String): String {
+    val text = String(bytes, Charsets.UTF_8)
+    val key = "\"$field\""
+    val fieldStart = text.indexOf(key)
+    if (fieldStart < 0) {
+        throw SoraReadException("Sora manifest is missing `$field`")
+    }
+    val afterKey = text.substring(fieldStart + key.length)
+    val colon = afterKey.indexOf(':')
+    if (colon < 0) {
+        throw SoraReadException("Sora manifest field `$field` is missing `:`")
+    }
+    val value = afterKey.substring(colon + 1).trimStart()
+    if (!value.startsWith("\"")) {
+        throw SoraReadException("Sora manifest field `$field` is not a string")
+    }
+    val end = value.indexOf('"', startIndex = 1)
+    if (end < 0) {
+        throw SoraReadException("Sora manifest field `$field` string is unterminated")
+    }
+    return value.substring(1, end)
+}
+
 class SoraObject(private val fields: Map<String, SoraValue>) {
     fun get(name: String): SoraValue = fields[name] ?: SoraValue(null)
 }
@@ -377,6 +408,7 @@ class SoraValue(private val value: Any?) {
 
 class SoraValueBundle private constructor(
     private val tables: Map<String, List<SoraValue>>,
+    override val schemaFingerprint: String,
 ) : SoraTableSource {
     fun <T> decodeTable(name: String, decode: (SoraValue) -> T): List<T> {
         val values = tables[name] ?: throw SoraReadException("missing table `$name`")
@@ -421,12 +453,13 @@ class SoraValueBundle private constructor(
             if (version != SORA_BUNDLE_VERSION.toLong()) {
                 throw SoraReadException("unsupported $expectedFormat bundle version $version")
             }
+            val schemaFingerprint = root.get("schema_fingerprint").asString()
             val data = root.get("data").asObject()
             val tables = data.get("tables").asRawList().associate { tableValue ->
                 val table = tableValue.asObject()
                 table.get("name").asString() to table.get("rows").asRawList()
             }
-            return SoraValueBundle(tables)
+            return SoraValueBundle(tables, schemaFingerprint)
         }
     }
 }
@@ -452,6 +485,7 @@ private object SoraProtobufBundle {
         val obj = linkedMapOf("data" to SoraValue(data))
         obj["format_version"] = SoraValue((message.getField(field(message, "format_version")) as Number).toLong())
         obj["format"] = SoraValue(message.getField(field(message, "format")) as String)
+        obj["schema_fingerprint"] = SoraValue(message.getField(field(message, "schema_fingerprint")) as String)
         for (table in repeated(message, "tables")) {
             tables += fromTable(table as DynamicMessage)
         }
@@ -541,7 +575,9 @@ private object SoraProtobufBundle {
                     .addField(field("format", 2, DescriptorProtos.FieldDescriptorProto.Type.TYPE_STRING))
                     .addField(field("package", 3, DescriptorProtos.FieldDescriptorProto.Type.TYPE_STRING))
                     .addField(field("schema_json", 4, DescriptorProtos.FieldDescriptorProto.Type.TYPE_BYTES))
-                    .addField(repeatedField("tables", 5, ".sora.runtime.Table")))
+                    .addField(repeatedField("tables", 5, ".sora.runtime.Table"))
+                    .addField(field("schema_fingerprint", 6, DescriptorProtos.FieldDescriptorProto.Type.TYPE_STRING))
+                    .addField(field("data_fingerprint", 7, DescriptorProtos.FieldDescriptorProto.Type.TYPE_STRING)))
                 .addMessageType(DescriptorProtos.DescriptorProto.newBuilder()
                     .setName("Table")
                     .addField(field("name", 1, DescriptorProtos.FieldDescriptorProto.Type.TYPE_STRING))

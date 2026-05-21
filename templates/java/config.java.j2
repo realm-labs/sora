@@ -22,6 +22,8 @@ interface SoraTable {
 }
 
 public final class SoraConfig {
+    public static final String SCHEMA_FINGERPRINT = "{{ model.schema_fingerprint }}";
+
     private final Map<String, SoraTable> tables;
 
     private SoraConfig(Map<String, SoraTable> tables) {
@@ -29,6 +31,12 @@ public final class SoraConfig {
     }
 
     public static SoraConfig fromSource(SoraTableSource source) {
+        if (!source.schemaFingerprint().equals(SCHEMA_FINGERPRINT)) {
+            throw new SoraReadException(
+                "schema fingerprint mismatch: generated code expects " + SCHEMA_FINGERPRINT
+                    + ", bundle contains " + source.schemaFingerprint()
+            );
+        }
         var tables = new HashMap<String, SoraTable>({{ model.tables | length }});
 {%- for table in model.tables %}
         tables.put({{ table.pascal_name }}Table.NAME, {{ table.pascal_name }}Table.decode(source));

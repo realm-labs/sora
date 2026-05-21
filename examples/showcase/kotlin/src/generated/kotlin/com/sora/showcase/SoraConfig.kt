@@ -2,6 +2,8 @@
 
 package com.sora.showcase
 
+const val SORA_SCHEMA_FINGERPRINT = "8cc3361563a68f03"
+
 enum class SoraTableMode {
     List,
     Map,
@@ -82,6 +84,11 @@ class SoraConfig private constructor(
         get() = table(EventRuleTable.NAME)
     companion object {
         fun fromSource(source: SoraTableSource): SoraConfig {
+            if (source.schemaFingerprint != SORA_SCHEMA_FINGERPRINT) {
+                throw SoraReadException(
+                    "schema fingerprint mismatch: generated code expects $SORA_SCHEMA_FINGERPRINT, bundle contains ${source.schemaFingerprint}"
+                )
+            }
             val tables = LinkedHashMap<String, SoraTable>(28)
             tables[ItemTable.NAME] = ItemTable.decode(source)
             tables[SkillTable.NAME] = SkillTable.decode(source)

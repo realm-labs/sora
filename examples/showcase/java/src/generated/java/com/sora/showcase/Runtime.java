@@ -37,6 +37,8 @@ final class SoraSection {
 }
 
 interface SoraTableSource {
+    String schemaFingerprint();
+
     <T> List<T> decodeTable(String name, SoraRowDecoder<T> decodeBinary, Function<SoraValue, T> decodeValue);
 }
 
@@ -50,10 +52,17 @@ final class SoraBundle implements SoraTableSource {
 
     private final byte[] bytes;
     private final List<SoraSection> sections;
+    private final String schemaFingerprint;
 
-    private SoraBundle(byte[] bytes, List<SoraSection> sections) {
+    private SoraBundle(byte[] bytes, List<SoraSection> sections, String schemaFingerprint) {
         this.bytes = bytes;
         this.sections = sections;
+        this.schemaFingerprint = schemaFingerprint;
+    }
+
+    @Override
+    public String schemaFingerprint() {
+        return schemaFingerprint;
     }
 
     <T> List<T> decodeTable(String name, SoraRowDecoder<T> decode) {
@@ -163,7 +172,15 @@ final class SoraBundle implements SoraTableSource {
         if (schemaCount != 1) {
             throw new SoraReadException("expected exactly 1 Sora schema section, got " + schemaCount);
         }
-        return new SoraBundle(bytes, sections);
+        var manifest = sections.stream()
+            .filter(value -> value.kind == SECTION_KIND_MANIFEST)
+            .findFirst()
+            .orElseThrow(() -> new SoraReadException("missing Sora manifest section"));
+        var schemaFingerprint = readJsonStringField(
+            Arrays.copyOfRange(bytes, manifest.offset, manifest.offset + manifest.length),
+            "schema_fingerprint"
+        );
+        return new SoraBundle(bytes, sections, schemaFingerprint);
     }
 
     private static <T> List<T> decodeRows(byte[] payload, SoraRowDecoder<T> decode) {
@@ -241,6 +258,29 @@ final class SoraBundle implements SoraTableSource {
             throw new SoraReadException(message);
         }
         return (int)value;
+    }
+
+    private static String readJsonStringField(byte[] bytes, String field) {
+        var text = new String(bytes, StandardCharsets.UTF_8);
+        var key = "\"" + field + "\"";
+        var fieldStart = text.indexOf(key);
+        if (fieldStart < 0) {
+            throw new SoraReadException("Sora manifest is missing `" + field + "`");
+        }
+        var afterKey = text.substring(fieldStart + key.length());
+        var colon = afterKey.indexOf(':');
+        if (colon < 0) {
+            throw new SoraReadException("Sora manifest field `" + field + "` is missing `:`");
+        }
+        var value = afterKey.substring(colon + 1).stripLeading();
+        if (!value.startsWith("\"")) {
+            throw new SoraReadException("Sora manifest field `" + field + "` is not a string");
+        }
+        var end = value.indexOf('"', 1);
+        if (end < 0) {
+            throw new SoraReadException("Sora manifest field `" + field + "` string is unterminated");
+        }
+        return value.substring(1, end);
     }
 }
 

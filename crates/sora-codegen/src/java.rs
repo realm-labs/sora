@@ -77,6 +77,7 @@ impl CodeGenerator for JavaCodeGenerator {
 #[derive(Debug, Clone, Serialize)]
 struct JavaModel {
     package: String,
+    schema_fingerprint: String,
     enums: Vec<JavaEnum>,
     unions: Vec<JavaUnion>,
     records: Vec<JavaRecord>,
@@ -154,6 +155,7 @@ impl JavaModel {
             .collect::<Vec<_>>();
         Self {
             package: model.package,
+            schema_fingerprint: model.schema_fingerprint,
             enums: model
                 .enums
                 .into_iter()

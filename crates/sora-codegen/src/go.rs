@@ -71,6 +71,7 @@ impl CodeGenerator for GoCodeGenerator {
 #[derive(Debug, Clone, Serialize)]
 struct GoModel {
     package: String,
+    schema_fingerprint: String,
     enums: Vec<GoEnum>,
     unions: Vec<GoUnion>,
     records: Vec<GoRecord>,
@@ -151,6 +152,7 @@ impl GoModel {
             .collect::<Vec<_>>();
         Self {
             package: model.package,
+            schema_fingerprint: model.schema_fingerprint,
             enums: model
                 .enums
                 .into_iter()

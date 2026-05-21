@@ -4,6 +4,8 @@ package {{ package }}
 
 import "fmt"
 
+const SoraSchemaFingerprint = "{{ model.schema_fingerprint }}"
+
 type SoraTableMode int
 
 const (
@@ -24,6 +26,13 @@ type SoraConfig struct {
 }
 
 func NewSoraConfigFromSource(source SoraTableSource) (*SoraConfig, error) {
+    schemaFingerprint, err := source.SchemaFingerprint()
+    if err != nil {
+        return nil, err
+    }
+    if schemaFingerprint != SoraSchemaFingerprint {
+        return nil, fmt.Errorf("schema fingerprint mismatch: generated code expects %s, bundle contains %s", SoraSchemaFingerprint, schemaFingerprint)
+    }
     tables := make(map[string]SoraTable, {{ model.tables | length }})
 {%- for table in model.tables %}
     {{ table.camel_name }}Table, err := decode{{ table.pascal_name }}Table(source)

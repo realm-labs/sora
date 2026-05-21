@@ -52,6 +52,8 @@ final class SoraSection {
 }
 
 interface SoraTableSource {
+    String schemaFingerprint();
+
     <T> List<T> decodeTable(String name, SoraRowDecoder<T> decodeBinary, Function<SoraValue, T> decodeValue);
 }
 
@@ -65,10 +67,17 @@ final class SoraBundle implements SoraTableSource {
 
     private final byte[] bytes;
     private final List<SoraSection> sections;
+    private final String schemaFingerprint;
 
-    private SoraBundle(byte[] bytes, List<SoraSection> sections) {
+    private SoraBundle(byte[] bytes, List<SoraSection> sections, String schemaFingerprint) {
         this.bytes = bytes;
         this.sections = sections;
+        this.schemaFingerprint = schemaFingerprint;
+    }
+
+    @Override
+    public String schemaFingerprint() {
+        return schemaFingerprint;
     }
 
     <T> List<T> decodeTable(String name, SoraRowDecoder<T> decode) {
@@ -178,7 +187,15 @@ final class SoraBundle implements SoraTableSource {
         if (schemaCount != 1) {
             throw new SoraReadException("expected exactly 1 Sora schema section, got " + schemaCount);
         }
-        return new SoraBundle(bytes, sections);
+        var manifest = sections.stream()
+            .filter(value -> value.kind == SECTION_KIND_MANIFEST)
+            .findFirst()
+            .orElseThrow(() -> new SoraReadException("missing Sora manifest section"));
+        var schemaFingerprint = readJsonStringField(
+            Arrays.copyOfRange(bytes, manifest.offset, manifest.offset + manifest.length),
+            "schema_fingerprint"
+        );
+        return new SoraBundle(bytes, sections, schemaFingerprint);
     }
 
     private static <T> List<T> decodeRows(byte[] payload, SoraRowDecoder<T> decode) {
@@ -256,6 +273,29 @@ final class SoraBundle implements SoraTableSource {
             throw new SoraReadException(message);
         }
         return (int)value;
+    }
+
+    private static String readJsonStringField(byte[] bytes, String field) {
+        var text = new String(bytes, StandardCharsets.UTF_8);
+        var key = "\"" + field + "\"";
+        var fieldStart = text.indexOf(key);
+        if (fieldStart < 0) {
+            throw new SoraReadException("Sora manifest is missing `" + field + "`");
+        }
+        var afterKey = text.substring(fieldStart + key.length());
+        var colon = afterKey.indexOf(':');
+        if (colon < 0) {
+            throw new SoraReadException("Sora manifest field `" + field + "` is missing `:`");
+        }
+        var value = afterKey.substring(colon + 1).stripLeading();
+        if (!value.startsWith("\"")) {
+            throw new SoraReadException("Sora manifest field `" + field + "` is not a string");
+        }
+        var end = value.indexOf('"', 1);
+        if (end < 0) {
+            throw new SoraReadException("Sora manifest field `" + field + "` string is unterminated");
+        }
+        return value.substring(1, end);
     }
 }
 
@@ -456,9 +496,16 @@ final class SoraValue {
 final class SoraValueBundle implements SoraTableSource {
     private static final int FORMAT_VERSION = 1;
     private final Map<String, List<SoraValue>> tables;
+    private final String schemaFingerprint;
 
-    private SoraValueBundle(Map<String, List<SoraValue>> tables) {
+    private SoraValueBundle(Map<String, List<SoraValue>> tables, String schemaFingerprint) {
         this.tables = tables;
+        this.schemaFingerprint = schemaFingerprint;
+    }
+
+    @Override
+    public String schemaFingerprint() {
+        return schemaFingerprint;
     }
 
     <T> List<T> decodeTable(String name, Function<SoraValue, T> decode) {
@@ -522,6 +569,7 @@ final class SoraValueBundle implements SoraTableSource {
         if (version != FORMAT_VERSION) {
             throw new SoraReadException("unsupported " + expectedFormat + " bundle version " + version);
         }
+        var schemaFingerprint = root.get("schema_fingerprint").asString();
         var data = root.get("data").asObject();
         var tableValues = data.get("tables").asRawList();
         var tables = new HashMap<String, List<SoraValue>>(tableValues.size());
@@ -529,7 +577,7 @@ final class SoraValueBundle implements SoraTableSource {
             var table = tableValue.asObject();
             tables.put(table.get("name").asString(), table.get("rows").asRawList());
         }
-        return new SoraValueBundle(tables);
+        return new SoraValueBundle(tables, schemaFingerprint);
     }
 }
 
@@ -554,6 +602,7 @@ final class SoraProtobufBundle {
         object.put("data", new SoraValue(data));
         object.put("format_version", new SoraValue(((Number)message.getField(field(message, "format_version"))).longValue()));
         object.put("format", new SoraValue((String)message.getField(field(message, "format"))));
+        object.put("schema_fingerprint", new SoraValue((String)message.getField(field(message, "schema_fingerprint"))));
         for (var table : repeated(message, "tables")) {
             tables.add(fromTable((DynamicMessage)table));
         }
@@ -646,7 +695,9 @@ final class SoraProtobufBundle {
                     .addField(field("format", 2, FieldDescriptorProto.Type.TYPE_STRING))
                     .addField(field("package", 3, FieldDescriptorProto.Type.TYPE_STRING))
                     .addField(field("schema_json", 4, FieldDescriptorProto.Type.TYPE_BYTES))
-                    .addField(repeatedField("tables", 5, ".sora.runtime.Table")))
+                    .addField(repeatedField("tables", 5, ".sora.runtime.Table"))
+                    .addField(field("schema_fingerprint", 6, FieldDescriptorProto.Type.TYPE_STRING))
+                    .addField(field("data_fingerprint", 7, FieldDescriptorProto.Type.TYPE_STRING)))
                 .addMessageType(DescriptorProto.newBuilder()
                     .setName("Table")
                     .addField(field("name", 1, FieldDescriptorProto.Type.TYPE_STRING))

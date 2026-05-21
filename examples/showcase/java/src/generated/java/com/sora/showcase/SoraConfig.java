@@ -22,6 +22,8 @@ interface SoraTable {
 }
 
 public final class SoraConfig {
+    public static final String SCHEMA_FINGERPRINT = "8cc3361563a68f03";
+
     private final Map<String, SoraTable> tables;
 
     private SoraConfig(Map<String, SoraTable> tables) {
@@ -29,6 +31,12 @@ public final class SoraConfig {
     }
 
     public static SoraConfig fromSource(SoraTableSource source) {
+        if (!source.schemaFingerprint().equals(SCHEMA_FINGERPRINT)) {
+            throw new SoraReadException(
+                "schema fingerprint mismatch: generated code expects " + SCHEMA_FINGERPRINT
+                    + ", bundle contains " + source.schemaFingerprint()
+            );
+        }
         var tables = new HashMap<String, SoraTable>(28);
         tables.put(ItemTable.NAME, ItemTable.decode(source));
         tables.put(SkillTable.NAME, SkillTable.decode(source));
