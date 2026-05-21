@@ -8,7 +8,8 @@ use crate::{
     erlang::ErlangCodeGenerator, go::GoCodeGenerator, godot::GodotCodeGenerator,
     java::JavaCodeGenerator, javascript::JavaScriptCodeGenerator, kotlin::KotlinCodeGenerator,
     lua::LuaCodeGenerator, proto::ProtoCodeGenerator, python::PythonCodeGenerator,
-    rust::RustCodeGenerator, target::CodegenTarget, typescript::TypeScriptCodeGenerator,
+    rust::RustCodeGenerator, scala::ScalaCodeGenerator, target::CodegenTarget,
+    typescript::TypeScriptCodeGenerator,
 };
 
 pub trait CodeGenerator {
@@ -44,6 +45,7 @@ pub fn generator_for_target(target: CodegenTarget) -> Box<dyn CodeGenerator> {
         CodegenTarget::Kotlin => Box::new(KotlinCodeGenerator),
         CodegenTarget::CSharp => Box::new(CSharpCodeGenerator),
         CodegenTarget::Java => Box::new(JavaCodeGenerator),
+        CodegenTarget::Scala => Box::new(ScalaCodeGenerator),
         CodegenTarget::Go => Box::new(GoCodeGenerator),
         CodegenTarget::Dart => Box::new(DartCodeGenerator),
         CodegenTarget::Godot => Box::new(GodotCodeGenerator),

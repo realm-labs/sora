@@ -22,6 +22,7 @@ fn main() -> Result<()> {
     let kotlin_generated = root.join("kotlin/src/generated/kotlin");
     let csharp_generated = root.join("csharp/src/generated/csharp");
     let java_generated = root.join("java/src/generated/java");
+    let scala_generated = root.join("scala/src/generated/scala");
     let go_generated = root.join("go/internal/showcase");
     let dart_generated = root.join("dart/lib/src/generated");
     let godot_generated = root.join("godot/addons/sora_config/generated");
@@ -46,6 +47,7 @@ fn main() -> Result<()> {
     clean_dir(&kotlin_generated)?;
     clean_dir(&csharp_generated)?;
     clean_dir(&java_generated)?;
+    clean_dir(&scala_generated)?;
     clean_dir(&go_generated)?;
     clean_dir(&dart_generated)?;
     clean_dir(&godot_generated)?;
@@ -68,6 +70,7 @@ fn main() -> Result<()> {
     sora_core::pipeline::generate_code(&schema_input, CodegenTarget::Kotlin, &kotlin_generated)?;
     sora_core::pipeline::generate_code(&schema_input, CodegenTarget::CSharp, &csharp_generated)?;
     sora_core::pipeline::generate_code(&schema_input, CodegenTarget::Java, &java_generated)?;
+    sora_core::pipeline::generate_code(&schema_input, CodegenTarget::Scala, &scala_generated)?;
     sora_core::pipeline::generate_code(&schema_input, CodegenTarget::Go, &go_generated)?;
     sora_core::pipeline::generate_code_with_scope_and_format(
         &schema_input,

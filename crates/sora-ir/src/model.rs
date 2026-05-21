@@ -27,6 +27,7 @@ pub struct CodegenIr {
     pub kotlin: LanguageCodegenIr,
     pub csharp: LanguageCodegenIr,
     pub java: LanguageCodegenIr,
+    pub scala: ScalaCodegenIr,
     pub go: LanguageCodegenIr,
     pub dart: LanguageCodegenIr,
     pub godot: LanguageCodegenIr,
@@ -103,6 +104,21 @@ impl Default for LanguageCodegenIr {
     fn default() -> Self {
         Self {
             runtime_format: RuntimeFormatIr::Sora,
+        }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct ScalaCodegenIr {
+    pub runtime_format: RuntimeFormatIr,
+    pub scala_version: ScalaVersionIr,
+}
+
+impl Default for ScalaCodegenIr {
+    fn default() -> Self {
+        Self {
+            runtime_format: RuntimeFormatIr::Sora,
+            scala_version: ScalaVersionIr::Scala3,
         }
     }
 }
@@ -199,6 +215,14 @@ pub enum CppStandardIr {
     Cpp17,
     Cpp20,
     Cpp23,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
+pub enum ScalaVersionIr {
+    Scala212,
+    Scala213,
+    #[default]
+    Scala3,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]

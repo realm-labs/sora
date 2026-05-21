@@ -4,6 +4,7 @@ pub enum CodegenTarget {
     Kotlin,
     CSharp,
     Java,
+    Scala,
     Go,
     Dart,
     Godot,

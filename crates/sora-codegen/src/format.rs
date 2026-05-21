@@ -113,6 +113,12 @@ impl Formatter {
                 args: &["-i"],
                 extensions: &["hpp"],
             }),
+            CodegenTarget::Scala => Some(Self {
+                language: "Scala",
+                command: "scalafmt",
+                args: &[],
+                extensions: &["scala"],
+            }),
             CodegenTarget::Kotlin
             | CodegenTarget::CSharp
             | CodegenTarget::Java
@@ -204,6 +210,7 @@ impl CodegenTarget {
             CodegenTarget::Kotlin => "Kotlin",
             CodegenTarget::CSharp => "C#",
             CodegenTarget::Java => "Java",
+            CodegenTarget::Scala => "Scala",
             CodegenTarget::Go => "Go",
             CodegenTarget::Dart => "Dart",
             CodegenTarget::Godot => "Godot",

@@ -17,6 +17,7 @@ pub mod proto;
 pub mod python;
 mod render;
 pub mod rust;
+pub mod scala;
 pub mod target;
 pub mod types;
 pub mod typescript;

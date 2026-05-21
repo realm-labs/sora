@@ -319,6 +319,7 @@ impl BuildTarget {
             "kotlin" => Ok(Self::Kotlin),
             "csharp" | "cs" => Ok(Self::Csharp),
             "java" => Ok(Self::Java),
+            "scala" => Ok(Self::Scala),
             "go" => Ok(Self::Go),
             "dart" => Ok(Self::Dart),
             "godot" | "gdscript" => Ok(Self::Godot),
@@ -331,7 +332,7 @@ impl BuildTarget {
             "proto-schema" => Ok(Self::ProtoSchema),
             "python" | "py" => Ok(Self::Python),
             _ => Err(format!(
-                "unsupported codegen target `{value}`; expected rust, kotlin, csharp, java, go, dart, godot, c, cpp, typescript, javascript, erlang, lua, proto-schema, or python"
+                "unsupported codegen target `{value}`; expected rust, kotlin, csharp, java, scala, go, dart, godot, c, cpp, typescript, javascript, erlang, lua, proto-schema, or python"
             )),
         }
     }
@@ -342,6 +343,7 @@ impl BuildTarget {
             Self::Kotlin => "kotlin",
             Self::Csharp => "csharp",
             Self::Java => "java",
+            Self::Scala => "scala",
             Self::Go => "go",
             Self::Dart => "dart",
             Self::Godot => "godot",
@@ -364,6 +366,7 @@ impl From<BuildTarget> for CodegenTarget {
             BuildTarget::Kotlin => Self::Kotlin,
             BuildTarget::Csharp => Self::CSharp,
             BuildTarget::Java => Self::Java,
+            BuildTarget::Scala => Self::Scala,
             BuildTarget::Go => Self::Go,
             BuildTarget::Dart => Self::Dart,
             BuildTarget::Godot => Self::Godot,
@@ -491,6 +494,10 @@ format = "auto"
 [[build.codegen]]
 target = "kotlin"
 out = "generated/kotlin"
+
+[[build.codegen]]
+target = "scala"
+out = "generated/scala"
 
 [[build.codegen]]
 target = "lua"

@@ -30,6 +30,7 @@ pub fn run(cli: Cli) -> Result<()> {
             GenCommand::Kotlin(args) => generate(args, CodegenTarget::Kotlin),
             GenCommand::Csharp(args) => generate(args, CodegenTarget::CSharp),
             GenCommand::Java(args) => generate(args, CodegenTarget::Java),
+            GenCommand::Scala(args) => generate(args, CodegenTarget::Scala),
             GenCommand::Go(args) => generate(args, CodegenTarget::Go),
             GenCommand::Dart(args) => generate(args, CodegenTarget::Dart),
             GenCommand::Godot(args) => generate(args, CodegenTarget::Godot),

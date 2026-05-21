@@ -16,6 +16,10 @@ pub fn java_type_name(ir: &ConfigIr, ty: &TypeIr) -> String {
     java_type_name_inner(ir, ty)
 }
 
+pub fn scala_type_name(ir: &ConfigIr, ty: &TypeIr) -> String {
+    scala_type_name_inner(ir, ty)
+}
+
 pub fn go_type_name(ir: &ConfigIr, ty: &TypeIr) -> String {
     go_type_name_inner(ir, ty)
 }
@@ -98,6 +102,23 @@ fn java_type_name_inner(ir: &ConfigIr, ty: &TypeIr) -> String {
         }
         TypeIr::Ref { table, field } => ref_type(ir, table, field, java_type_name_inner, "Integer"),
         TypeIr::Optional(element) => java_type_name_inner(ir, element),
+    }
+}
+
+fn scala_type_name_inner(ir: &ConfigIr, ty: &TypeIr) -> String {
+    match ty {
+        TypeIr::Bool => "Boolean".to_owned(),
+        TypeIr::I32 => "Int".to_owned(),
+        TypeIr::I64 => "Long".to_owned(),
+        TypeIr::F32 => "Float".to_owned(),
+        TypeIr::F64 => "Double".to_owned(),
+        TypeIr::String => "String".to_owned(),
+        TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => name.clone(),
+        TypeIr::List(element) | TypeIr::Array { element, .. } => {
+            format!("Vector[{}]", scala_type_name_inner(ir, element))
+        }
+        TypeIr::Ref { table, field } => ref_type(ir, table, field, scala_type_name_inner, "Int"),
+        TypeIr::Optional(element) => format!("Option[{}]", scala_type_name_inner(ir, element)),
     }
 }
 
@@ -282,6 +303,30 @@ mod tests {
 
         for (source, expected) in cases {
             assert_eq!(java_type_name(&ir, &parse_type(source).unwrap()), expected);
+        }
+    }
+
+    #[test]
+    fn maps_scala_types() {
+        let ir = example_ir();
+        let cases = [
+            ("bool", "Boolean"),
+            ("i32", "Int"),
+            ("i64", "Long"),
+            ("f32", "Float"),
+            ("f64", "Double"),
+            ("string", "String"),
+            ("enum<ItemType>", "ItemType"),
+            ("struct<Reward>", "Reward"),
+            ("union<Action>", "Action"),
+            ("list<i32>", "Vector[Int]"),
+            ("array<i32,3>", "Vector[Int]"),
+            ("optional<string>", "Option[String]"),
+            ("ref<Item.id>", "Int"),
+        ];
+
+        for (source, expected) in cases {
+            assert_eq!(scala_type_name(&ir, &parse_type(source).unwrap()), expected);
         }
     }
 

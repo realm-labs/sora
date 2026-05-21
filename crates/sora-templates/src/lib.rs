@@ -228,6 +228,31 @@ const EMBEDDED_TEMPLATES: &[EmbeddedTemplate] = &[
         source: include_str!("../../../templates/java/union.java.j2"),
     },
     EmbeddedTemplate {
+        target: "scala",
+        file_name: "config.scala.j2",
+        source: include_str!("../../../templates/scala/config.scala.j2"),
+    },
+    EmbeddedTemplate {
+        target: "scala",
+        file_name: "enum.scala.j2",
+        source: include_str!("../../../templates/scala/enum.scala.j2"),
+    },
+    EmbeddedTemplate {
+        target: "scala",
+        file_name: "record.scala.j2",
+        source: include_str!("../../../templates/scala/record.scala.j2"),
+    },
+    EmbeddedTemplate {
+        target: "scala",
+        file_name: "runtime.scala.j2",
+        source: include_str!("../../../templates/scala/runtime.scala.j2"),
+    },
+    EmbeddedTemplate {
+        target: "scala",
+        file_name: "union.scala.j2",
+        source: include_str!("../../../templates/scala/union.scala.j2"),
+    },
+    EmbeddedTemplate {
         target: "kotlin",
         file_name: "config.kt.j2",
         source: include_str!("../../../templates/kotlin/config.kt.j2"),
@@ -488,7 +513,7 @@ mod tests {
 
     #[test]
     fn embeds_all_templates() {
-        assert_eq!(EMBEDDED_TEMPLATES.len(), 90);
+        assert_eq!(EMBEDDED_TEMPLATES.len(), 95);
         for template in EMBEDDED_TEMPLATES {
             let source = template_source(template.target, template.file_name)
                 .expect("embedded template should be registered");

@@ -63,6 +63,10 @@ sora gen kotlin \
   --project examples/simple/project.toml \
   --out generated/kotlin
 
+sora gen scala \
+  --project examples/simple/project.toml \
+  --out generated/scala
+
 sora gen c \
   --project examples/simple/project.toml \
   --out generated/c
@@ -119,7 +123,7 @@ sora export \
 - `sora-schema`: format-neutral schema model.
 - `sora-ir`: normalized schema IR and type parsing.
 - `sora-data`: data IR and validation.
-- `sora-codegen`: Rust, Kotlin, C#, Java, Go, C, C++, TypeScript, JavaScript, Erlang, Lua, Python, and Proto code generation.
+- `sora-codegen`: Rust, Kotlin, C#, Java, Scala, Go, C, C++, TypeScript, JavaScript, Erlang, Lua, Python, and Proto code generation.
 - `sora-export`: exporter trait, registry, and built-in exporters.
 - `sora-excel`: Excel `.xlsx` template projection.
 - `sora-diagnostics`: shared typed errors.
@@ -159,6 +163,10 @@ out = "csharp/src/generated/csharp"
 [[build.codegen]]
 target = "java"
 out = "java/src/generated/java"
+
+[[build.codegen]]
+target = "scala"
+out = "scala/src/generated/scala"
 
 [[build.codegen]]
 target = "go"
@@ -203,7 +211,7 @@ out = "generated/debug-json"
 
 `sora build --project project.toml --target rust --clean` rebuilds only the configured Rust codegen target, while schema lock, Excel templates, and exports still follow the project build config.
 
-Codegen targets can opt into post-generation formatting with `format = "never"`, `format = "auto"`, or `format = "required"`. `auto` runs a supported formatter when the command exists in `PATH`; `required` fails the build if the formatter is missing or exits with an error. Built-in formatter hooks currently cover Rust (`rustfmt`), Go (`gofmt`), Erlang (`erlfmt`), Python (`black`), C (`clang-format`), and C++ (`clang-format`).
+Codegen targets can opt into post-generation formatting with `format = "never"`, `format = "auto"`, or `format = "required"`. `auto` runs a supported formatter when the command exists in `PATH`; `required` fails the build if the formatter is missing or exits with an error. Built-in formatter hooks currently cover Rust (`rustfmt`), Go (`gofmt`), Erlang (`erlfmt`), Python (`black`), C (`clang-format`), C++ (`clang-format`), and Scala (`scalafmt`).
 
 Included modules define enums, structs, unions, tables, fields, keys, indexes, comments, source files, and aggregation metadata. Field type strings are normalized into IR types such as `i32`, `string`, `enum<ItemType>`, `struct<ResourceCost>`, `union<RewardAction>`, `list<i32>`, `array<i32,3>`, `ref<Item.id>`, and `optional<string>`.
 
@@ -305,7 +313,7 @@ The binary bundle uses a language-neutral sectioned layout: a fixed header, a se
 
 ## Codegen Architecture
 
-Codegen uses MiniJinja templates embedded into the CLI binary, but type mapping is computed in Rust before rendering. Rust, Kotlin, C#, Java, Go, C, C++, TypeScript, JavaScript, Erlang, Lua, and Python generation include models plus small binary runtime readers for `.sora` bundles. C generation emits `.h/.c` files with explicit decode/free lifecycles and supports `c_standard = "c99" | "c11" | "c17" | "c23"` with `c11` as the default. C++ generation emits header-only C++ and supports `cpp_standard = "c++11" | "c++14" | "c++17" | "c++20" | "c++23"` with `c++17` as the default. TypeScript and JavaScript generation target modern ESM and map `i64` to `bigint`; JavaScript generation also emits `.d.ts` files by default. Erlang generation emits plain `.erl` modules, maps rows to maps, uses UTF-8 binaries for strings, and supports `enum_repr = "atom" | "integer"`. Lua generation emits EmmyLua annotations for editor type hints and supports `lua_version = "5.1"`, `"5.2"`, `"5.3"`, `"5.4"`, or `"luajit"`; Lua 5.3/5.4 use `string.unpack`, while older runtimes get a generated compatibility decoder. Lua, TypeScript, and JavaScript support `enum_repr = "string" | "integer"`.
+Codegen uses MiniJinja templates embedded into the CLI binary, but type mapping is computed in Rust before rendering. Rust, Kotlin, C#, Java, Scala, Go, C, C++, TypeScript, JavaScript, Erlang, Lua, and Python generation include models plus small binary runtime readers for `.sora` bundles. Scala generation supports `scala_version = "2.12" | "2.13" | "3"` with Scala 3 as the default; Scala 3 emits native `enum`, while Scala 2 emits `sealed trait` plus `case object` enums. C generation emits `.h/.c` files with explicit decode/free lifecycles and supports `c_standard = "c99" | "c11" | "c17" | "c23"` with `c11` as the default. C++ generation emits header-only C++ and supports `cpp_standard = "c++11" | "c++14" | "c++17" | "c++20" | "c++23"` with `c++17` as the default. TypeScript and JavaScript generation target modern ESM and map `i64` to `bigint`; JavaScript generation also emits `.d.ts` files by default. Erlang generation emits plain `.erl` modules, maps rows to maps, uses UTF-8 binaries for strings, and supports `enum_repr = "atom" | "integer"`. Lua generation emits EmmyLua annotations for editor type hints and supports `lua_version = "5.1"`, `"5.2"`, `"5.3"`, `"5.4"`, or `"luajit"`; Lua 5.3/5.4 use `string.unpack`, while older runtimes get a generated compatibility decoder. Lua, TypeScript, and JavaScript support `enum_repr = "string" | "integer"`.
 
 ## Excel Template Projection
 

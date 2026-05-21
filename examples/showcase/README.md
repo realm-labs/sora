@@ -13,6 +13,7 @@ and mixed map/list/singleton table modes.
 - Kotlin Gradle project: `kotlin`
 - C# .NET project: `csharp`
 - Java Gradle project: `java`
+- Scala sbt project: `scala`
 - Go module: `go`
 - Lua generated modules with EmmyLua annotations: `lua/generated` (configured for Lua 5.4)
 - binary bundle: `generated/config.sora`
@@ -21,6 +22,8 @@ and mixed map/list/singleton table modes.
 
 The Kotlin project uses Gradle Wrapper 9.5.1, Kotlin JVM plugin 2.3.20, and a
 JDK 21 toolchain.
+
+The Scala project uses sbt and Scala 3.3.3.
 
 Regenerate everything:
 
@@ -53,6 +56,14 @@ Run the Java smoke example with the checked-in Gradle wrapper:
 ```powershell
 Push-Location examples/showcase/java
 .\gradlew.bat run
+Pop-Location
+```
+
+Run the Scala smoke example:
+
+```powershell
+Push-Location examples/showcase/scala
+sbt run
 Pop-Location
 ```
 

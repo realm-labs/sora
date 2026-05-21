@@ -39,6 +39,8 @@ pub struct CodegenSchema {
     #[serde(default)]
     pub java: LanguageCodegenSchema,
     #[serde(default)]
+    pub scala: ScalaCodegenSchema,
+    #[serde(default)]
     pub go: LanguageCodegenSchema,
     #[serde(default)]
     pub dart: LanguageCodegenSchema,
@@ -130,6 +132,24 @@ impl Default for LanguageCodegenSchema {
     fn default() -> Self {
         Self {
             runtime_format: RuntimeFormatSchema::Sora,
+        }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
+pub struct ScalaCodegenSchema {
+    #[serde(default)]
+    pub runtime_format: RuntimeFormatSchema,
+
+    #[serde(default)]
+    pub scala_version: ScalaVersionSchema,
+}
+
+impl Default for ScalaCodegenSchema {
+    fn default() -> Self {
+        Self {
+            runtime_format: RuntimeFormatSchema::Sora,
+            scala_version: ScalaVersionSchema::Scala3,
         }
     }
 }
@@ -255,6 +275,17 @@ pub enum CppStandardSchema {
     Cpp20,
     #[serde(rename = "c++23")]
     Cpp23,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, Default)]
+pub enum ScalaVersionSchema {
+    #[serde(rename = "2.12")]
+    Scala212,
+    #[serde(rename = "2.13")]
+    Scala213,
+    #[default]
+    #[serde(rename = "3")]
+    Scala3,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, Default)]

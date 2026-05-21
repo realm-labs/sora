@@ -25,6 +25,10 @@ target = "java"
 out = "java/src/generated/java"
 
 [[build.codegen]]
+target = "scala"
+out = "scala/src/generated/scala"
+
+[[build.codegen]]
 target = "go"
 out = "go/internal/showcase"
 format = "auto"
@@ -126,6 +130,10 @@ runtime_format = "sora"
 
 [codegen.java]
 runtime_format = "sora"
+
+[codegen.scala]
+runtime_format = "sora"
+scala_version = "3"
 
 [codegen.go]
 runtime_format = "sora"

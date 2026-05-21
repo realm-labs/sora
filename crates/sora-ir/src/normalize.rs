@@ -3,8 +3,9 @@ use sora_schema::model::{
     CStandardSchema, CodegenSchema, CppStandardSchema, EnumReprSchema, ErlangCodegenSchema,
     ErlangEnumReprSchema, FieldSchema, IndexSchema, JavaScriptCodegenSchema, LanguageCodegenSchema,
     LuaCodegenSchema, LuaEnumReprSchema, LuaVersionSchema, ParserSchema, RuntimeFormatSchema,
-    RustMapTypeSchema, SchemaFile, ScopeSchema, TableModeSchema, TableSchema, TableSourceSchema,
-    TypeScriptCodegenSchema, UnionSchema, UnionVariantSchema,
+    RustMapTypeSchema, ScalaCodegenSchema, ScalaVersionSchema, SchemaFile, ScopeSchema,
+    TableModeSchema, TableSchema, TableSourceSchema, TypeScriptCodegenSchema, UnionSchema,
+    UnionVariantSchema,
 };
 
 use crate::{
@@ -12,8 +13,9 @@ use crate::{
         AggregationIr, CCodegenIr, CStandardIr, CodegenIr, ConfigIr, CppCodegenIr, CppStandardIr,
         EnumIr, EnumReprIr, ErlangCodegenIr, ErlangEnumReprIr, FieldIr, IndexIr,
         JavaScriptCodegenIr, LanguageCodegenIr, LuaCodegenIr, LuaEnumReprIr, LuaVersionIr,
-        ParserIr, RuntimeFormatIr, RustCodegenIr, RustMapTypeIr, ScopeIr, StructIr, TableIr,
-        TableModeIr, TableSourceIr, TypeIr, TypeScriptCodegenIr, UnionIr, UnionVariantIr,
+        ParserIr, RuntimeFormatIr, RustCodegenIr, RustMapTypeIr, ScalaCodegenIr, ScalaVersionIr,
+        ScopeIr, StructIr, TableIr, TableModeIr, TableSourceIr, TypeIr, TypeScriptCodegenIr,
+        UnionIr, UnionVariantIr,
     },
     parse::parse_type,
     parser::ParserRegistry,
@@ -86,6 +88,7 @@ impl From<CodegenSchema> for CodegenIr {
             kotlin: LanguageCodegenIr::from(value.kotlin),
             csharp: LanguageCodegenIr::from(value.csharp),
             java: LanguageCodegenIr::from(value.java),
+            scala: ScalaCodegenIr::from(value.scala),
             go: LanguageCodegenIr::from(value.go),
             dart: LanguageCodegenIr::from(value.dart),
             godot: LanguageCodegenIr::from(value.godot),
@@ -104,6 +107,15 @@ impl From<CodegenSchema> for CodegenIr {
             erlang: ErlangCodegenIr::from(value.erlang),
             lua: LuaCodegenIr::from(value.lua),
             python: LanguageCodegenIr::from(value.python),
+        }
+    }
+}
+
+impl From<ScalaCodegenSchema> for ScalaCodegenIr {
+    fn from(value: ScalaCodegenSchema) -> Self {
+        Self {
+            runtime_format: RuntimeFormatIr::from(value.runtime_format),
+            scala_version: ScalaVersionIr::from(value.scala_version),
         }
     }
 }
@@ -185,6 +197,16 @@ impl From<CppStandardSchema> for CppStandardIr {
             CppStandardSchema::Cpp17 => Self::Cpp17,
             CppStandardSchema::Cpp20 => Self::Cpp20,
             CppStandardSchema::Cpp23 => Self::Cpp23,
+        }
+    }
+}
+
+impl From<ScalaVersionSchema> for ScalaVersionIr {
+    fn from(value: ScalaVersionSchema) -> Self {
+        match value {
+            ScalaVersionSchema::Scala212 => Self::Scala212,
+            ScalaVersionSchema::Scala213 => Self::Scala213,
+            ScalaVersionSchema::Scala3 => Self::Scala3,
         }
     }
 }
