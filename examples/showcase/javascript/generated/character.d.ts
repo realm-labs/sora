@@ -28,4 +28,6 @@ export declare class CharacterTable implements SoraConfigTable {
     len(): number;
     get(key: number): Character | undefined;
     rows(): ReadonlyMap<number, Character>;
+    keys(): readonly number[];
+    orderedRows(): Character[];
 }

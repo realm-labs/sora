@@ -40,13 +40,15 @@ public final class GachaPool {
 
 final class GachaPoolTable implements SoraTable {
     private final java.util.Map<Integer, GachaPool> rows;
+    private final List<Integer> keys;
 
-    private GachaPoolTable(java.util.Map<Integer, GachaPool> rows) {
+    private GachaPoolTable(java.util.Map<Integer, GachaPool> rows, List<Integer> keys) {
         this.rows = rows;
+        this.keys = keys;
     }
 
     private static GachaPoolTable fromRows(List<GachaPool> rows) {
-        return new GachaPoolTable(SoraConfig.decodeMapTable(rows, row -> row.id));
+        return new GachaPoolTable(SoraConfig.decodeMapTable(rows, row -> row.id), rows.stream().map(row -> row.id).toList());
     }
 
     static GachaPoolTable decode(SoraTableSource source) {
@@ -58,6 +60,14 @@ final class GachaPoolTable implements SoraTable {
     }
     public GachaPool get(Integer key) {
         return rows.get(key);
+    }
+
+    public List<Integer> keys() {
+        return keys;
+    }
+
+    public List<GachaPool> orderedRows() {
+        return keys.stream().map(rows::get).toList();
     }
     @Override
     public String name() {

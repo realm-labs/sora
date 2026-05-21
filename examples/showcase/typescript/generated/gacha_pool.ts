@@ -38,11 +38,13 @@ export function decodeGachaPoolValue(value: SoraValue): GachaPool {
 export class GachaPoolTable implements SoraConfigTable {
     private constructor(
         private readonly _rows: Map<number, GachaPool>,
+        private readonly _keys: number[],
     ) {}
 
     static decode(rows: GachaPool[]): GachaPoolTable {
         return new GachaPoolTable(
             decodeMapTable(rows, (row) => row.id),
+            rows.map((row) => row.id),
         );
     }
 
@@ -67,5 +69,16 @@ export class GachaPoolTable implements SoraConfigTable {
 
     rows(): ReadonlyMap<number, GachaPool> {
         return this._rows;
+    }
+
+    keys(): readonly number[] {
+        return this._keys;
+    }
+
+    orderedRows(): GachaPool[] {
+        return this._keys.flatMap((key) => {
+            const row = this._rows.get(key);
+            return row === undefined ? [] : [row];
+        });
     }
 }

@@ -23,14 +23,20 @@ end
 
 ---@class EquipmentSetTable
 ---@field private _rows table<integer, EquipmentSet>
+---@field private _keys integer[]
 local EquipmentSetTable = {}
 EquipmentSetTable.__index = EquipmentSetTable
 
 ---@param rows EquipmentSet[]
 ---@return EquipmentSetTable
 function EquipmentSetTable.decode(rows)
+    local keys = {}
+    for index, row in ipairs(rows) do
+        keys[index] = row.id
+    end
     return setmetatable({
         _rows = Runtime.decode_map_table(rows, function(row) return row.id end),
+        _keys = keys,
     }, EquipmentSetTable)
 end
 
@@ -66,6 +72,23 @@ end
 ---@return table<integer, EquipmentSet>
 function EquipmentSetTable:rows()
     return self._rows
+end
+
+---@return integer[]
+function EquipmentSetTable:keys()
+    return self._keys
+end
+
+---@return EquipmentSet[]
+function EquipmentSetTable:ordered_rows()
+    local rows = {}
+    for _, key in ipairs(self._keys) do
+        local row = self._rows[key]
+        if row ~= nil then
+            rows[#rows + 1] = row
+        end
+    end
+    return rows
 end
 EquipmentSet.Table = EquipmentSetTable
 

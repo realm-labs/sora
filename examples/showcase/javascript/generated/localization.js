@@ -28,13 +28,16 @@ export function decodeLocalizationValue(value) {
 export class LocalizationTable {
     constructor(
         rows,
+        keys,
     ) {
         this._rows = rows;
+        this._keys = keys;
     }
 
     static decode(rows) {
         return new LocalizationTable(
             decodeMapTable(rows, (row) => row.key),
+            rows.map((row) => row.key),
         );
     }
 
@@ -59,5 +62,16 @@ export class LocalizationTable {
 
     rows() {
         return this._rows;
+    }
+
+    keys() {
+        return this._keys;
+    }
+
+    orderedRows() {
+        return this._keys.flatMap((key) => {
+            const row = this._rows.get(key);
+            return row === undefined ? [] : [row];
+        });
     }
 }

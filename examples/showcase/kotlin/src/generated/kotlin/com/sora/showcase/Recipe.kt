@@ -28,10 +28,13 @@ data class Recipe(
 
 class RecipeTable private constructor(
     val rows: Map<Int, Recipe>,
+    val keys: List<Int>,
 ) : SoraTable {
     operator fun get(key: Int): Recipe? = rows[key]
 
     fun values(): Collection<Recipe> = rows.values
+
+    fun orderedValues(): List<Recipe> = keys.mapNotNull { rows[it] }
     override val name: String = "Recipe"
     override val mode: SoraTableMode = SoraTableMode.Map
     override val key: String? = "id"
@@ -46,6 +49,7 @@ class RecipeTable private constructor(
         private fun fromRows(rows: List<Recipe>): RecipeTable =
             RecipeTable(
                 rows.associateBy { it.id },
+                rows.map { it.id },
             )
     }
 }

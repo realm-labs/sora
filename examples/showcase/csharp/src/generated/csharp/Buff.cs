@@ -39,10 +39,12 @@ public sealed record Buff(
 public sealed class BuffTable : ISoraTable
 {
     private readonly Dictionary<int, Buff> rows;
+    private readonly List<int> keys;
 
-    internal BuffTable(Dictionary<int, Buff> rows)
+    internal BuffTable(Dictionary<int, Buff> rows, List<int> keys)
     {
         this.rows = rows;
+        this.keys = keys;
     }
 
     internal static BuffTable Decode(ISoraTableSource source)
@@ -52,13 +54,31 @@ public sealed class BuffTable : ISoraTable
 
     internal static BuffTable FromRows(List<Buff> rows)
     {
-        return new BuffTable(SoraConfig.DecodeMapTable(rows, row => row.Id));
+        return new BuffTable(SoraConfig.DecodeMapTable(rows, row => row.Id), rows.ConvertAll(row => row.Id));
     }
 
     public Dictionary<int, Buff> Rows => rows;
     public Buff? Get(int key)
     {
         return rows.TryGetValue(key, out var row) ? row : default;
+    }
+
+    public IReadOnlyList<int> Keys => keys;
+
+    public IReadOnlyList<Buff> OrderedRows
+    {
+        get
+        {
+            var orderedRows = new List<Buff>(keys.Count);
+            foreach (var key in keys)
+            {
+                if (rows.TryGetValue(key, out var row))
+                {
+                    orderedRows.Add(row);
+                }
+            }
+            return orderedRows;
+        }
     }
     public string Name => "Buff";
     public SoraTableMode Mode => SoraTableMode.Map;

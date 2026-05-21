@@ -27,16 +27,27 @@ impl super::runtime::SoraDecode for Shop {
 #[derive(Debug, Clone)]
 pub struct ShopTable {
     rows: SoraMap<i32, Shop>,
+    keys: Vec<i32>,
 }
 
 impl ShopTable {
     pub(super) fn from_rows(rows: Vec<Shop>) -> Result<Self, super::runtime::SoraReadError> {
+        let keys = rows.iter().map(|row| row.id).collect::<Vec<_>>();
         Ok(Self {
             rows: super::decode_map_table(rows, |row| row.id),
+            keys,
         })
     }
     pub fn get(&self, key: i32) -> Option<&Shop> {
         self.rows.get(&key)
+    }
+
+    pub fn keys(&self) -> &[i32] {
+        &self.keys
+    }
+
+    pub fn ordered_rows(&self) -> impl Iterator<Item = &Shop> {
+        self.keys.iter().filter_map(|key| self.rows.get(key))
     }
 }
 

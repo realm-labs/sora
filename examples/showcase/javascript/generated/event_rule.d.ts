@@ -25,4 +25,6 @@ export declare class EventRuleTable implements SoraConfigTable {
     len(): number;
     get(key: number): EventRule | undefined;
     rows(): ReadonlyMap<number, EventRule>;
+    keys(): readonly number[];
+    orderedRows(): EventRule[];
 }

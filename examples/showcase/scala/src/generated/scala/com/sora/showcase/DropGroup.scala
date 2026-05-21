@@ -16,11 +16,14 @@ object DropGroup {
 }
 
 final class DropGroupTable private (
-  val rows: Map[Int, DropGroup]
+  val rows: Map[Int, DropGroup],
+  val keys: Vector[Int]
 ) extends SoraTable {
   def get(key: Int): Option[DropGroup] = rows.get(key)
 
   def values: Iterable[DropGroup] = rows.values
+
+  def orderedValues: Vector[DropGroup] = keys.flatMap(rows.get)
   override val name: String = "DropGroup"
   override val mode: SoraTableMode = SoraTableMode.Map
   override val key: Option[String] = Some("id")
@@ -34,6 +37,7 @@ object DropGroupTable {
 
   private def fromRows(rows: Vector[DropGroup]): DropGroupTable =
     new DropGroupTable(
-      rows.map(row => row.id -> row).toMap
+      rows.map(row => row.id -> row).toMap,
+      rows.map(row => row.id)
     )
 }

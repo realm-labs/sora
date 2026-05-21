@@ -29,14 +29,17 @@ final class EquipmentSet {
 
 final class EquipmentSetTable extends Iterable<EquipmentSet> implements SoraConfigTable {
   final Map<int, EquipmentSet> _rows;
+  final List<int> _keys;
 
   const EquipmentSetTable(
     this._rows,
+    this._keys,
   );
 
   static EquipmentSetTable decode(List<EquipmentSet> rows) {
     return EquipmentSetTable(
       decodeMapTable(rows, (row) => row.id),
+      rows.map((row) => row.id).toList(growable: false),
     );
   }
 
@@ -65,4 +68,11 @@ final class EquipmentSetTable extends Iterable<EquipmentSet> implements SoraConf
   }
 
   Map<int, EquipmentSet> get rows => _rows;
+
+  List<int> get keys => _keys;
+
+  List<EquipmentSet> get orderedRows => [
+        for (final key in _keys)
+          if (_rows[key] != null) _rows[key]!,
+      ];
 }

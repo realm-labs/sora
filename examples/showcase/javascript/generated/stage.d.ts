@@ -24,4 +24,6 @@ export declare class StageTable implements SoraConfigTable {
     len(): number;
     get(key: number): Stage | undefined;
     rows(): ReadonlyMap<number, Stage>;
+    keys(): readonly number[];
+    orderedRows(): Stage[];
 }

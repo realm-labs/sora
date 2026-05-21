@@ -2,7 +2,7 @@
 
 -module(recipe).
 -export([decode/1, decode_table/1, rows/1
-    , get/2
+    , get/2, keys/1, ordered_rows/1
 ]).
 -export_type([t/0, table/0]).
 
@@ -29,8 +29,10 @@ decode(Reader0) ->
 decode_table(Bundle) ->
     Rows = sora_runtime:decode_table(Bundle, <<"Recipe">>, fun ?MODULE:decode/1),
     Data = sora_runtime:decode_map_table(Rows, fun(Row) -> maps:get('id', Row) end),
+    Keys = [maps:get('id', Row) || Row <- Rows],
     #{
         data => Data
+        , keys => Keys
     }.
 -spec get(integer(), table()) -> t() | undefined.
 get(Key, Table) ->
@@ -39,3 +41,12 @@ get(Key, Table) ->
 -spec rows(table()) -> #{integer() => recipe:t()}.
 rows(Table) ->
     maps:get(data, Table).
+
+-spec keys(table()) -> [integer()].
+keys(Table) ->
+    maps:get(keys, Table).
+
+-spec ordered_rows(table()) -> [t()].
+ordered_rows(Table) ->
+    Data = maps:get(data, Table),
+    [maps:get(Key, Data) || Key <- keys(Table), maps:is_key(Key, Data)].

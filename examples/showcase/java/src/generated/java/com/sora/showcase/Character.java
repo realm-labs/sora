@@ -60,13 +60,15 @@ public final class Character {
 
 final class CharacterTable implements SoraTable {
     private final java.util.Map<Integer, Character> rows;
+    private final List<Integer> keys;
 
-    private CharacterTable(java.util.Map<Integer, Character> rows) {
+    private CharacterTable(java.util.Map<Integer, Character> rows, List<Integer> keys) {
         this.rows = rows;
+        this.keys = keys;
     }
 
     private static CharacterTable fromRows(List<Character> rows) {
-        return new CharacterTable(SoraConfig.decodeMapTable(rows, row -> row.id));
+        return new CharacterTable(SoraConfig.decodeMapTable(rows, row -> row.id), rows.stream().map(row -> row.id).toList());
     }
 
     static CharacterTable decode(SoraTableSource source) {
@@ -78,6 +80,14 @@ final class CharacterTable implements SoraTable {
     }
     public Character get(Integer key) {
         return rows.get(key);
+    }
+
+    public List<Integer> keys() {
+        return keys;
+    }
+
+    public List<Character> orderedRows() {
+        return keys.stream().map(rows::get).toList();
     }
     @Override
     public String name() {

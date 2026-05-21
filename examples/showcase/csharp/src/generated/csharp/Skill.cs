@@ -54,10 +54,12 @@ public sealed record Skill(
 public sealed class SkillTable : ISoraTable
 {
     private readonly Dictionary<int, Skill> rows;
+    private readonly List<int> keys;
 
-    internal SkillTable(Dictionary<int, Skill> rows)
+    internal SkillTable(Dictionary<int, Skill> rows, List<int> keys)
     {
         this.rows = rows;
+        this.keys = keys;
     }
 
     internal static SkillTable Decode(ISoraTableSource source)
@@ -67,13 +69,31 @@ public sealed class SkillTable : ISoraTable
 
     internal static SkillTable FromRows(List<Skill> rows)
     {
-        return new SkillTable(SoraConfig.DecodeMapTable(rows, row => row.Id));
+        return new SkillTable(SoraConfig.DecodeMapTable(rows, row => row.Id), rows.ConvertAll(row => row.Id));
     }
 
     public Dictionary<int, Skill> Rows => rows;
     public Skill? Get(int key)
     {
         return rows.TryGetValue(key, out var row) ? row : default;
+    }
+
+    public IReadOnlyList<int> Keys => keys;
+
+    public IReadOnlyList<Skill> OrderedRows
+    {
+        get
+        {
+            var orderedRows = new List<Skill>(keys.Count);
+            foreach (var key in keys)
+            {
+                if (rows.TryGetValue(key, out var row))
+                {
+                    orderedRows.Add(row);
+                }
+            }
+            return orderedRows;
+        }
     }
     public string Name => "Skill";
     public SoraTableMode Mode => SoraTableMode.Map;

@@ -26,14 +26,20 @@ end
 
 ---@class MailTemplateTable
 ---@field private _rows table<integer, MailTemplate>
+---@field private _keys integer[]
 local MailTemplateTable = {}
 MailTemplateTable.__index = MailTemplateTable
 
 ---@param rows MailTemplate[]
 ---@return MailTemplateTable
 function MailTemplateTable.decode(rows)
+    local keys = {}
+    for index, row in ipairs(rows) do
+        keys[index] = row.id
+    end
     return setmetatable({
         _rows = Runtime.decode_map_table(rows, function(row) return row.id end),
+        _keys = keys,
     }, MailTemplateTable)
 end
 
@@ -69,6 +75,23 @@ end
 ---@return table<integer, MailTemplate>
 function MailTemplateTable:rows()
     return self._rows
+end
+
+---@return integer[]
+function MailTemplateTable:keys()
+    return self._keys
+end
+
+---@return MailTemplate[]
+function MailTemplateTable:ordered_rows()
+    local rows = {}
+    for _, key in ipairs(self._keys) do
+        local row = self._rows[key]
+        if row ~= nil then
+            rows[#rows + 1] = row
+        end
+    end
+    return rows
 end
 MailTemplate.Table = MailTemplateTable
 

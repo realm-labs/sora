@@ -20,4 +20,6 @@ export declare class LevelExpTable implements SoraConfigTable {
     len(): number;
     get(key: number): LevelExp | undefined;
     rows(): ReadonlyMap<number, LevelExp>;
+    keys(): readonly number[];
+    orderedRows(): LevelExp[];
 }

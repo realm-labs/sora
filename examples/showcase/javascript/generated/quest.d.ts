@@ -31,4 +31,6 @@ export declare class QuestTable implements SoraConfigTable {
     len(): number;
     get(key: number): Quest | undefined;
     rows(): ReadonlyMap<number, Quest>;
+    keys(): readonly number[];
+    orderedRows(): Quest[];
 }

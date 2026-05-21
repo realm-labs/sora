@@ -61,11 +61,13 @@ public final class Item {
 
 final class ItemTable implements SoraTable {
     private final java.util.Map<Integer, Item> rows;
+    private final List<Integer> keys;
     private final Map<String, Item> byName;
     private final Map<ItemType, List<Item>> byItemType;
 
-    private ItemTable(java.util.Map<Integer, Item> rows, Map<String, Item> byName, Map<ItemType, List<Item>> byItemType) {
+    private ItemTable(java.util.Map<Integer, Item> rows, List<Integer> keys, Map<String, Item> byName, Map<ItemType, List<Item>> byItemType) {
         this.rows = rows;
+        this.keys = keys;
         this.byName = byName;
         this.byItemType = byItemType;
     }
@@ -73,6 +75,7 @@ final class ItemTable implements SoraTable {
     private static ItemTable fromRows(List<Item> rows) {
         return new ItemTable(
             SoraConfig.decodeMapTable(rows, row -> row.id),
+            rows.stream().map(row -> row.id).toList(),
             SoraConfig.decodeUniqueIndex(rows, row -> row.name),
             SoraConfig.decodeIndex(rows, row -> row.itemType)
         );
@@ -87,6 +90,14 @@ final class ItemTable implements SoraTable {
     }
     public Item get(Integer key) {
         return rows.get(key);
+    }
+
+    public List<Integer> keys() {
+        return keys;
+    }
+
+    public List<Item> orderedRows() {
+        return keys.stream().map(rows::get).toList();
     }
     public Item getByName(String name) {
         return byName.get(name);

@@ -29,14 +29,17 @@ final class Achievement {
 
 final class AchievementTable extends Iterable<Achievement> implements SoraConfigTable {
   final Map<int, Achievement> _rows;
+  final List<int> _keys;
 
   const AchievementTable(
     this._rows,
+    this._keys,
   );
 
   static AchievementTable decode(List<Achievement> rows) {
     return AchievementTable(
       decodeMapTable(rows, (row) => row.id),
+      rows.map((row) => row.id).toList(growable: false),
     );
   }
 
@@ -65,4 +68,11 @@ final class AchievementTable extends Iterable<Achievement> implements SoraConfig
   }
 
   Map<int, Achievement> get rows => _rows;
+
+  List<int> get keys => _keys;
+
+  List<Achievement> get orderedRows => [
+        for (final key in _keys)
+          if (_rows[key] != null) _rows[key]!,
+      ];
 }

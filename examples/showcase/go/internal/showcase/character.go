@@ -85,10 +85,15 @@ func decodeCharacterValue(input SoraValue) (Character, error) {
 
 type CharacterTable struct {
 	rows map[int32]Character
+	keys []int32
 }
 
 func buildCharacterTable(rows []Character) (*CharacterTable, error) {
-	return &CharacterTable{rows: DecodeMapTable(rows, func(row Character) int32 { return row.Id })}, nil
+	keys := make([]int32, 0, len(rows))
+	for _, row := range rows {
+		keys = append(keys, row.Id)
+	}
+	return &CharacterTable{rows: DecodeMapTable(rows, func(row Character) int32 { return row.Id }), keys: keys}, nil
 }
 
 func decodeCharacterTable(source SoraTableSource) (*CharacterTable, error) {
@@ -105,6 +110,20 @@ func (table *CharacterTable) Rows() map[int32]Character {
 func (table *CharacterTable) Get(key int32) (Character, bool) {
 	value, ok := table.rows[key]
 	return value, ok
+}
+
+func (table *CharacterTable) Keys() []int32 {
+	return table.keys
+}
+
+func (table *CharacterTable) OrderedRows() []Character {
+	rows := make([]Character, 0, len(table.keys))
+	for _, key := range table.keys {
+		if row, ok := table.rows[key]; ok {
+			rows = append(rows, row)
+		}
+	}
+	return rows
 }
 func (table *CharacterTable) Name() string {
 	return "Character"

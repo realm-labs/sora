@@ -33,6 +33,8 @@ export declare class ItemTable implements SoraConfigTable {
     len(): number;
     get(key: number): Item | undefined;
     rows(): ReadonlyMap<number, Item>;
+    keys(): readonly number[];
+    orderedRows(): Item[];
     getByName(name: string): Item | undefined;
     findByItemType(itemType: ItemType): Item[];
 }

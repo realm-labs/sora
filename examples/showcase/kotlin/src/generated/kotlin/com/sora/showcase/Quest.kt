@@ -41,10 +41,13 @@ data class Quest(
 
 class QuestTable private constructor(
     val rows: Map<Int, Quest>,
+    val keys: List<Int>,
 ) : SoraTable {
     operator fun get(key: Int): Quest? = rows[key]
 
     fun values(): Collection<Quest> = rows.values
+
+    fun orderedValues(): List<Quest> = keys.mapNotNull { rows[it] }
     override val name: String = "Quest"
     override val mode: SoraTableMode = SoraTableMode.Map
     override val key: String? = "id"
@@ -59,6 +62,7 @@ class QuestTable private constructor(
         private fun fromRows(rows: List<Quest>): QuestTable =
             QuestTable(
                 rows.associateBy { it.id },
+                rows.map { it.id },
             )
     }
 }

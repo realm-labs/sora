@@ -57,11 +57,13 @@ export function decodeQuestValue(value: SoraValue): Quest {
 export class QuestTable implements SoraConfigTable {
     private constructor(
         private readonly _rows: Map<number, Quest>,
+        private readonly _keys: number[],
     ) {}
 
     static decode(rows: Quest[]): QuestTable {
         return new QuestTable(
             decodeMapTable(rows, (row) => row.id),
+            rows.map((row) => row.id),
         );
     }
 
@@ -86,5 +88,16 @@ export class QuestTable implements SoraConfigTable {
 
     rows(): ReadonlyMap<number, Quest> {
         return this._rows;
+    }
+
+    keys(): readonly number[] {
+        return this._keys;
+    }
+
+    orderedRows(): Quest[] {
+        return this._keys.flatMap((key) => {
+            const row = this._rows.get(key);
+            return row === undefined ? [] : [row];
+        });
     }
 }

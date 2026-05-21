@@ -86,10 +86,15 @@ func decodeQuestValue(input SoraValue) (Quest, error) {
 
 type QuestTable struct {
 	rows map[int32]Quest
+	keys []int32
 }
 
 func buildQuestTable(rows []Quest) (*QuestTable, error) {
-	return &QuestTable{rows: DecodeMapTable(rows, func(row Quest) int32 { return row.Id })}, nil
+	keys := make([]int32, 0, len(rows))
+	for _, row := range rows {
+		keys = append(keys, row.Id)
+	}
+	return &QuestTable{rows: DecodeMapTable(rows, func(row Quest) int32 { return row.Id }), keys: keys}, nil
 }
 
 func decodeQuestTable(source SoraTableSource) (*QuestTable, error) {
@@ -106,6 +111,20 @@ func (table *QuestTable) Rows() map[int32]Quest {
 func (table *QuestTable) Get(key int32) (Quest, bool) {
 	value, ok := table.rows[key]
 	return value, ok
+}
+
+func (table *QuestTable) Keys() []int32 {
+	return table.keys
+}
+
+func (table *QuestTable) OrderedRows() []Quest {
+	rows := make([]Quest, 0, len(table.keys))
+	for _, key := range table.keys {
+		if row, ok := table.rows[key]; ok {
+			rows = append(rows, row)
+		}
+	}
+	return rows
 }
 func (table *QuestTable) Name() string {
 	return "Quest"

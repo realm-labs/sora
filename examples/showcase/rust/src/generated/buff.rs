@@ -30,16 +30,27 @@ impl super::runtime::SoraDecode for Buff {
 #[derive(Debug, Clone)]
 pub struct BuffTable {
     rows: SoraMap<i32, Buff>,
+    keys: Vec<i32>,
 }
 
 impl BuffTable {
     pub(super) fn from_rows(rows: Vec<Buff>) -> Result<Self, super::runtime::SoraReadError> {
+        let keys = rows.iter().map(|row| row.id).collect::<Vec<_>>();
         Ok(Self {
             rows: super::decode_map_table(rows, |row| row.id),
+            keys,
         })
     }
     pub fn get(&self, key: i32) -> Option<&Buff> {
         self.rows.get(&key)
+    }
+
+    pub fn keys(&self) -> &[i32] {
+        &self.keys
+    }
+
+    pub fn ordered_rows(&self) -> impl Iterator<Item = &Buff> {
+        self.keys.iter().filter_map(|key| self.rows.get(key))
     }
 }
 

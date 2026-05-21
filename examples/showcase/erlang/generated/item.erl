@@ -2,7 +2,7 @@
 
 -module(item).
 -export([decode/1, decode_table/1, rows/1
-    , get/2
+    , get/2, keys/1, ordered_rows/1
     , get_by_name/2
     , find_by_item_type/2
 ]).
@@ -40,10 +40,12 @@ decode(Reader0) ->
 decode_table(Bundle) ->
     Rows = sora_runtime:decode_table(Bundle, <<"Item">>, fun ?MODULE:decode/1),
     Data = sora_runtime:decode_map_table(Rows, fun(Row) -> maps:get('id', Row) end),
+    Keys = [maps:get('id', Row) || Row <- Rows],
     ByName = sora_runtime:decode_unique_index(Rows, fun(Row) -> maps:get('name', Row) end),
     ByItemType = sora_runtime:decode_index(Rows, fun(Row) -> maps:get('item_type', Row) end),
     #{
         data => Data
+        , keys => Keys
         , 'by_name' => ByName
         , 'by_item_type' => ByItemType
     }.
@@ -54,6 +56,15 @@ get(Key, Table) ->
 -spec rows(table()) -> #{integer() => item:t()}.
 rows(Table) ->
     maps:get(data, Table).
+
+-spec keys(table()) -> [integer()].
+keys(Table) ->
+    maps:get(keys, Table).
+
+-spec ordered_rows(table()) -> [t()].
+ordered_rows(Table) ->
+    Data = maps:get(data, Table),
+    [maps:get(Key, Data) || Key <- keys(Table), maps:is_key(Key, Data)].
 
 -spec get_by_name(binary(), table()) -> t() | undefined.
 get_by_name(Name, Table) ->

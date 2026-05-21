@@ -31,12 +31,15 @@ object Item {
 
 final class ItemTable private (
   val rows: Map[Int, Item],
+  val keys: Vector[Int],
   private val nameIndex: Map[String, Item],
   private val itemTypeIndex: Map[ItemType, Vector[Item]]
 ) extends SoraTable {
   def get(key: Int): Option[Item] = rows.get(key)
 
   def values: Iterable[Item] = rows.values
+
+  def orderedValues: Vector[Item] = keys.flatMap(rows.get)
   def getByName(name: String): Option[Item] =
     nameIndex.get(name)
   def findByItemType(itemType: ItemType): Vector[Item] =
@@ -55,6 +58,7 @@ object ItemTable {
   private def fromRows(rows: Vector[Item]): ItemTable =
     new ItemTable(
       rows.map(row => row.id -> row).toMap,
+      rows.map(row => row.id),
       rows.map(row => row.name -> row).toMap,
       rows.groupBy(row => row.itemType)
     )

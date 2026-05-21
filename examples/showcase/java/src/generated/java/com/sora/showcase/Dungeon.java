@@ -45,13 +45,15 @@ public final class Dungeon {
 
 final class DungeonTable implements SoraTable {
     private final java.util.Map<Integer, Dungeon> rows;
+    private final List<Integer> keys;
 
-    private DungeonTable(java.util.Map<Integer, Dungeon> rows) {
+    private DungeonTable(java.util.Map<Integer, Dungeon> rows, List<Integer> keys) {
         this.rows = rows;
+        this.keys = keys;
     }
 
     private static DungeonTable fromRows(List<Dungeon> rows) {
-        return new DungeonTable(SoraConfig.decodeMapTable(rows, row -> row.id));
+        return new DungeonTable(SoraConfig.decodeMapTable(rows, row -> row.id), rows.stream().map(row -> row.id).toList());
     }
 
     static DungeonTable decode(SoraTableSource source) {
@@ -63,6 +65,14 @@ final class DungeonTable implements SoraTable {
     }
     public Dungeon get(Integer key) {
         return rows.get(key);
+    }
+
+    public List<Integer> keys() {
+        return keys;
+    }
+
+    public List<Dungeon> orderedRows() {
+        return keys.stream().map(rows::get).toList();
     }
     @Override
     public String name() {

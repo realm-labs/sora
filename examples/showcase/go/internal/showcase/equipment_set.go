@@ -58,10 +58,15 @@ func decodeEquipmentSetValue(input SoraValue) (EquipmentSet, error) {
 
 type EquipmentSetTable struct {
 	rows map[int32]EquipmentSet
+	keys []int32
 }
 
 func buildEquipmentSetTable(rows []EquipmentSet) (*EquipmentSetTable, error) {
-	return &EquipmentSetTable{rows: DecodeMapTable(rows, func(row EquipmentSet) int32 { return row.Id })}, nil
+	keys := make([]int32, 0, len(rows))
+	for _, row := range rows {
+		keys = append(keys, row.Id)
+	}
+	return &EquipmentSetTable{rows: DecodeMapTable(rows, func(row EquipmentSet) int32 { return row.Id }), keys: keys}, nil
 }
 
 func decodeEquipmentSetTable(source SoraTableSource) (*EquipmentSetTable, error) {
@@ -78,6 +83,20 @@ func (table *EquipmentSetTable) Rows() map[int32]EquipmentSet {
 func (table *EquipmentSetTable) Get(key int32) (EquipmentSet, bool) {
 	value, ok := table.rows[key]
 	return value, ok
+}
+
+func (table *EquipmentSetTable) Keys() []int32 {
+	return table.keys
+}
+
+func (table *EquipmentSetTable) OrderedRows() []EquipmentSet {
+	rows := make([]EquipmentSet, 0, len(table.keys))
+	for _, key := range table.keys {
+		if row, ok := table.rows[key]; ok {
+			rows = append(rows, row)
+		}
+	}
+	return rows
 }
 func (table *EquipmentSetTable) Name() string {
 	return "EquipmentSet"

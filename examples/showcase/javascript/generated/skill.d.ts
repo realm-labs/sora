@@ -36,4 +36,6 @@ export declare class SkillTable implements SoraConfigTable {
     len(): number;
     get(key: number): Skill | undefined;
     rows(): ReadonlyMap<number, Skill>;
+    keys(): readonly number[];
+    orderedRows(): Skill[];
 }

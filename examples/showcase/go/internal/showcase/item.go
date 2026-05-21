@@ -82,13 +82,19 @@ func decodeItemValue(input SoraValue) (Item, error) {
 
 type ItemTable struct {
 	rows       map[int32]Item
+	keys       []int32
 	byName     map[string]Item
 	byItemType map[ItemType][]Item
 }
 
 func buildItemTable(rows []Item) (*ItemTable, error) {
+	keys := make([]int32, 0, len(rows))
+	for _, row := range rows {
+		keys = append(keys, row.Id)
+	}
 	return &ItemTable{
 		rows:       DecodeMapTable(rows, func(row Item) int32 { return row.Id }),
+		keys:       keys,
 		byName:     DecodeUniqueIndex(rows, func(row Item) string { return row.Name }),
 		byItemType: DecodeIndex(rows, func(row Item) ItemType { return row.ItemType }),
 	}, nil
@@ -108,6 +114,20 @@ func (table *ItemTable) Rows() map[int32]Item {
 func (table *ItemTable) Get(key int32) (Item, bool) {
 	value, ok := table.rows[key]
 	return value, ok
+}
+
+func (table *ItemTable) Keys() []int32 {
+	return table.keys
+}
+
+func (table *ItemTable) OrderedRows() []Item {
+	rows := make([]Item, 0, len(table.keys))
+	for _, key := range table.keys {
+		if row, ok := table.rows[key]; ok {
+			rows = append(rows, row)
+		}
+	}
+	return rows
 }
 func (table *ItemTable) GetByName(name string) (Item, bool) {
 	value, ok := table.byName[name]

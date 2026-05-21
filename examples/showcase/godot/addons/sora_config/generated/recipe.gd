@@ -22,6 +22,7 @@ static func decode(value: Variant) -> Recipe:
 class RecipeTable:
 	extends SoraRuntime.SoraConfigTable
 	var _rows: Dictionary = {}
+	var keys: Array = []
 
 	static func decode(rows: Array) -> RecipeTable:
 		var table := RecipeTable.new()
@@ -29,6 +30,7 @@ class RecipeTable:
 		table.mode = "map"
 		table.key = "id"
 		table._rows = SoraRuntime.decode_map_table(rows, func(row): return row.id)
+		table.keys = rows.map(func(row): return row.id)
 		return table
 
 	func length() -> int:
@@ -44,3 +46,10 @@ class RecipeTable:
 
 	func rows() -> Array:
 		return _rows.values()
+
+	func ordered_rows() -> Array:
+		var out: Array = []
+		for key_value in keys:
+			if _rows.has(key_value):
+				out.append(_rows[key_value])
+		return out

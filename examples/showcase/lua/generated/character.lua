@@ -30,14 +30,20 @@ end
 
 ---@class CharacterTable
 ---@field private _rows table<integer, Character>
+---@field private _keys integer[]
 local CharacterTable = {}
 CharacterTable.__index = CharacterTable
 
 ---@param rows Character[]
 ---@return CharacterTable
 function CharacterTable.decode(rows)
+    local keys = {}
+    for index, row in ipairs(rows) do
+        keys[index] = row.id
+    end
     return setmetatable({
         _rows = Runtime.decode_map_table(rows, function(row) return row.id end),
+        _keys = keys,
     }, CharacterTable)
 end
 
@@ -73,6 +79,23 @@ end
 ---@return table<integer, Character>
 function CharacterTable:rows()
     return self._rows
+end
+
+---@return integer[]
+function CharacterTable:keys()
+    return self._keys
+end
+
+---@return Character[]
+function CharacterTable:ordered_rows()
+    local rows = {}
+    for _, key in ipairs(self._keys) do
+        local row = self._rows[key]
+        if row ~= nil then
+            rows[#rows + 1] = row
+        end
+    end
+    return rows
 end
 Character.Table = CharacterTable
 

@@ -36,6 +36,7 @@ export class {{ table.pascal_name }}Table {
     constructor(
 {%- if table.mode == "map" and table.key_type %}
         rows,
+        keys,
 {%- elif table.mode == "singleton" %}
         row,
 {%- else %}
@@ -53,6 +54,9 @@ export class {{ table.pascal_name }}Table {
 {%- else %}
         this._rows = rows;
 {%- endif %}
+{%- if table.mode == "map" and table.key_field_name %}
+        this._keys = keys;
+{%- endif %}
 {%- for index in table.unique_indexes %}
         this._{{ index.name }} = {{ index.camel_name }};
 {%- endfor %}
@@ -65,6 +69,7 @@ export class {{ table.pascal_name }}Table {
 {%- if table.mode == "map" and table.key_field_name %}
         return new {{ table.pascal_name }}Table(
             decodeMapTable(rows, (row) => row.{{ table.key_field_name }}),
+            rows.map((row) => row.{{ table.key_field_name }}),
 {%- for index in table.unique_indexes %}
             decodeUniqueIndex(rows, (row) => row.{{ index.field_name }}),
 {%- endfor %}
@@ -122,6 +127,17 @@ export class {{ table.pascal_name }}Table {
 
     rows() {
         return this._rows;
+    }
+
+    keys() {
+        return this._keys;
+    }
+
+    orderedRows() {
+        return this._keys.flatMap((key) => {
+            const row = this._rows.get(key);
+            return row === undefined ? [] : [row];
+        });
     }
 {%- elif table.mode == "singleton" %}
     row() {

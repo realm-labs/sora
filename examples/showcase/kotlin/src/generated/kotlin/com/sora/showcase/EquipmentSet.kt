@@ -31,10 +31,13 @@ data class EquipmentSet(
 
 class EquipmentSetTable private constructor(
     val rows: Map<Int, EquipmentSet>,
+    val keys: List<Int>,
 ) : SoraTable {
     operator fun get(key: Int): EquipmentSet? = rows[key]
 
     fun values(): Collection<EquipmentSet> = rows.values
+
+    fun orderedValues(): List<EquipmentSet> = keys.mapNotNull { rows[it] }
     override val name: String = "EquipmentSet"
     override val mode: SoraTableMode = SoraTableMode.Map
     override val key: String? = "id"
@@ -49,6 +52,7 @@ class EquipmentSetTable private constructor(
         private fun fromRows(rows: List<EquipmentSet>): EquipmentSetTable =
             EquipmentSetTable(
                 rows.associateBy { it.id },
+                rows.map { it.id },
             )
     }
 }

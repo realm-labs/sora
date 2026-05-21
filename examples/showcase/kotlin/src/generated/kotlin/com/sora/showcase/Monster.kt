@@ -37,10 +37,13 @@ data class Monster(
 
 class MonsterTable private constructor(
     val rows: Map<Int, Monster>,
+    val keys: List<Int>,
 ) : SoraTable {
     operator fun get(key: Int): Monster? = rows[key]
 
     fun values(): Collection<Monster> = rows.values
+
+    fun orderedValues(): List<Monster> = keys.mapNotNull { rows[it] }
     override val name: String = "Monster"
     override val mode: SoraTableMode = SoraTableMode.Map
     override val key: String? = "id"
@@ -55,6 +58,7 @@ class MonsterTable private constructor(
         private fun fromRows(rows: List<Monster>): MonsterTable =
             MonsterTable(
                 rows.associateBy { it.id },
+                rows.map { it.id },
             )
     }
 }

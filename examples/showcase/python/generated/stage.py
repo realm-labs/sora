@@ -48,13 +48,16 @@ class StageTable(SoraConfigTable):
     def __init__(
         self,
         rows: dict[int, Stage],
+        keys: list[int],
     ) -> None:
         self._rows = rows
+        self._keys = keys
 
     @staticmethod
     def decode(rows: list[Stage]) -> StageTable:
         return StageTable(
             decode_map_table(rows, lambda row: row.id),
+            [row.id for row in rows],
         )
 
     def name(self) -> str:
@@ -75,3 +78,9 @@ class StageTable(SoraConfigTable):
 
     def rows(self) -> dict[int, Stage]:
         return self._rows
+
+    def keys(self) -> list[int]:
+        return self._keys
+
+    def ordered_rows(self) -> list[Stage]:
+        return [self._rows[key] for key in self._keys if key in self._rows]

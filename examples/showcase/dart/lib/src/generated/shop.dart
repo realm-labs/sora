@@ -26,14 +26,17 @@ final class Shop {
 
 final class ShopTable extends Iterable<Shop> implements SoraConfigTable {
   final Map<int, Shop> _rows;
+  final List<int> _keys;
 
   const ShopTable(
     this._rows,
+    this._keys,
   );
 
   static ShopTable decode(List<Shop> rows) {
     return ShopTable(
       decodeMapTable(rows, (row) => row.id),
+      rows.map((row) => row.id).toList(growable: false),
     );
   }
 
@@ -62,4 +65,11 @@ final class ShopTable extends Iterable<Shop> implements SoraConfigTable {
   }
 
   Map<int, Shop> get rows => _rows;
+
+  List<int> get keys => _keys;
+
+  List<Shop> get orderedRows => [
+        for (final key in _keys)
+          if (_rows[key] != null) _rows[key]!,
+      ];
 }

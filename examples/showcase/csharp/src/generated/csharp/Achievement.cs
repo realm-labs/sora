@@ -39,10 +39,12 @@ public sealed record Achievement(
 public sealed class AchievementTable : ISoraTable
 {
     private readonly Dictionary<int, Achievement> rows;
+    private readonly List<int> keys;
 
-    internal AchievementTable(Dictionary<int, Achievement> rows)
+    internal AchievementTable(Dictionary<int, Achievement> rows, List<int> keys)
     {
         this.rows = rows;
+        this.keys = keys;
     }
 
     internal static AchievementTable Decode(ISoraTableSource source)
@@ -52,13 +54,31 @@ public sealed class AchievementTable : ISoraTable
 
     internal static AchievementTable FromRows(List<Achievement> rows)
     {
-        return new AchievementTable(SoraConfig.DecodeMapTable(rows, row => row.Id));
+        return new AchievementTable(SoraConfig.DecodeMapTable(rows, row => row.Id), rows.ConvertAll(row => row.Id));
     }
 
     public Dictionary<int, Achievement> Rows => rows;
     public Achievement? Get(int key)
     {
         return rows.TryGetValue(key, out var row) ? row : default;
+    }
+
+    public IReadOnlyList<int> Keys => keys;
+
+    public IReadOnlyList<Achievement> OrderedRows
+    {
+        get
+        {
+            var orderedRows = new List<Achievement>(keys.Count);
+            foreach (var key in keys)
+            {
+                if (rows.TryGetValue(key, out var row))
+                {
+                    orderedRows.Add(row);
+                }
+            }
+            return orderedRows;
+        }
     }
     public string Name => "Achievement";
     public SoraTableMode Mode => SoraTableMode.Map;

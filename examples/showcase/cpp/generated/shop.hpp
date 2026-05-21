@@ -37,6 +37,7 @@ public:
         ShopTable table;
         for (std::size_t index = 0; index < rows.size(); ++index) {
             const Shop& row = rows[index];
+            table.keys_.push_back(row.id);
             table.rows_.emplace(row.id, row);
         }
         table.build_indexes();
@@ -61,10 +62,29 @@ public:
         return rows_;
     }
 
+    const std::vector<std::int32_t>& keys() const {
+        return keys_;
+    }
+
+    std::vector<const Shop*> ordered_rows() const {
+        std::vector<const Shop*> rows;
+        rows.reserve(keys_.size());
+        for (typename std::vector<std::int32_t>::const_iterator key = keys_.begin();
+             key != keys_.end();
+             ++key) {
+            typename std::unordered_map<std::int32_t, Shop>::const_iterator it = rows_.find(*key);
+            if (it != rows_.end()) {
+                rows.push_back(&it->second);
+            }
+        }
+        return rows;
+    }
+
 private:
     void build_indexes() {
     }
     std::unordered_map<std::int32_t, Shop> rows_;
+    std::vector<std::int32_t> keys_;
 };
 
 } // namespace sora::showcase

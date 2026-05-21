@@ -20,14 +20,20 @@ end
 
 ---@class LevelExpTable
 ---@field private _rows table<integer, LevelExp>
+---@field private _keys integer[]
 local LevelExpTable = {}
 LevelExpTable.__index = LevelExpTable
 
 ---@param rows LevelExp[]
 ---@return LevelExpTable
 function LevelExpTable.decode(rows)
+    local keys = {}
+    for index, row in ipairs(rows) do
+        keys[index] = row.level
+    end
     return setmetatable({
         _rows = Runtime.decode_map_table(rows, function(row) return row.level end),
+        _keys = keys,
     }, LevelExpTable)
 end
 
@@ -63,6 +69,23 @@ end
 ---@return table<integer, LevelExp>
 function LevelExpTable:rows()
     return self._rows
+end
+
+---@return integer[]
+function LevelExpTable:keys()
+    return self._keys
+end
+
+---@return LevelExp[]
+function LevelExpTable:ordered_rows()
+    local rows = {}
+    for _, key in ipairs(self._keys) do
+        local row = self._rows[key]
+        if row ~= nil then
+            rows[#rows + 1] = row
+        end
+    end
+    return rows
 end
 LevelExp.Table = LevelExpTable
 

@@ -51,12 +51,14 @@ public sealed record Item(
 public sealed class ItemTable : ISoraTable
 {
     private readonly Dictionary<int, Item> rows;
+    private readonly List<int> keys;
     private readonly Dictionary<string, Item> byName;
     private readonly Dictionary<ItemType, List<Item>> byItemType;
 
-    internal ItemTable(Dictionary<int, Item> rows, Dictionary<string, Item> byName, Dictionary<ItemType, List<Item>> byItemType)
+    internal ItemTable(Dictionary<int, Item> rows, List<int> keys, Dictionary<string, Item> byName, Dictionary<ItemType, List<Item>> byItemType)
     {
         this.rows = rows;
+        this.keys = keys;
         this.byName = byName;
         this.byItemType = byItemType;
     }
@@ -70,6 +72,7 @@ public sealed class ItemTable : ISoraTable
     {
         return new ItemTable(
             SoraConfig.DecodeMapTable(rows, row => row.Id),
+            rows.ConvertAll(row => row.Id),
             SoraConfig.DecodeUniqueIndex(rows, row => row.Name),
             SoraConfig.DecodeIndex(rows, row => row.ItemType)
         );
@@ -79,6 +82,24 @@ public sealed class ItemTable : ISoraTable
     public Item? Get(int key)
     {
         return rows.TryGetValue(key, out var row) ? row : default;
+    }
+
+    public IReadOnlyList<int> Keys => keys;
+
+    public IReadOnlyList<Item> OrderedRows
+    {
+        get
+        {
+            var orderedRows = new List<Item>(keys.Count);
+            foreach (var key in keys)
+            {
+                if (rows.TryGetValue(key, out var row))
+                {
+                    orderedRows.Add(row);
+                }
+            }
+            return orderedRows;
+        }
     }
     public Item? GetByName(string name)
     {

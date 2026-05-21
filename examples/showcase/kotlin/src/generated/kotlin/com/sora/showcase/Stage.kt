@@ -34,10 +34,13 @@ data class Stage(
 
 class StageTable private constructor(
     val rows: Map<Int, Stage>,
+    val keys: List<Int>,
 ) : SoraTable {
     operator fun get(key: Int): Stage? = rows[key]
 
     fun values(): Collection<Stage> = rows.values
+
+    fun orderedValues(): List<Stage> = keys.mapNotNull { rows[it] }
     override val name: String = "Stage"
     override val mode: SoraTableMode = SoraTableMode.Map
     override val key: String? = "id"
@@ -52,6 +55,7 @@ class StageTable private constructor(
         private fun fromRows(rows: List<Stage>): StageTable =
             StageTable(
                 rows.associateBy { it.id },
+                rows.map { it.id },
             )
     }
 }

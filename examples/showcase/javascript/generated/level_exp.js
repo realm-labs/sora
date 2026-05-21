@@ -26,13 +26,16 @@ export function decodeLevelExpValue(value) {
 export class LevelExpTable {
     constructor(
         rows,
+        keys,
     ) {
         this._rows = rows;
+        this._keys = keys;
     }
 
     static decode(rows) {
         return new LevelExpTable(
             decodeMapTable(rows, (row) => row.level),
+            rows.map((row) => row.level),
         );
     }
 
@@ -57,5 +60,16 @@ export class LevelExpTable {
 
     rows() {
         return this._rows;
+    }
+
+    keys() {
+        return this._keys;
+    }
+
+    orderedRows() {
+        return this._keys.flatMap((key) => {
+            const row = this._rows.get(key);
+            return row === undefined ? [] : [row];
+        });
     }
 }

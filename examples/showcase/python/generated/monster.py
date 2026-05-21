@@ -53,13 +53,16 @@ class MonsterTable(SoraConfigTable):
     def __init__(
         self,
         rows: dict[int, Monster],
+        keys: list[int],
     ) -> None:
         self._rows = rows
+        self._keys = keys
 
     @staticmethod
     def decode(rows: list[Monster]) -> MonsterTable:
         return MonsterTable(
             decode_map_table(rows, lambda row: row.id),
+            [row.id for row in rows],
         )
 
     def name(self) -> str:
@@ -80,3 +83,9 @@ class MonsterTable(SoraConfigTable):
 
     def rows(self) -> dict[int, Monster]:
         return self._rows
+
+    def keys(self) -> list[int]:
+        return self._keys
+
+    def ordered_rows(self) -> list[Monster]:
+        return [self._rows[key] for key in self._keys if key in self._rows]

@@ -38,11 +38,13 @@ export function decodeShopValue(value: SoraValue): Shop {
 export class ShopTable implements SoraConfigTable {
     private constructor(
         private readonly _rows: Map<number, Shop>,
+        private readonly _keys: number[],
     ) {}
 
     static decode(rows: Shop[]): ShopTable {
         return new ShopTable(
             decodeMapTable(rows, (row) => row.id),
+            rows.map((row) => row.id),
         );
     }
 
@@ -67,5 +69,16 @@ export class ShopTable implements SoraConfigTable {
 
     rows(): ReadonlyMap<number, Shop> {
         return this._rows;
+    }
+
+    keys(): readonly number[] {
+        return this._keys;
+    }
+
+    orderedRows(): Shop[] {
+        return this._keys.flatMap((key) => {
+            const row = this._rows.get(key);
+            return row === undefined ? [] : [row];
+        });
     }
 }

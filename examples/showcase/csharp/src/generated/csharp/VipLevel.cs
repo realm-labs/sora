@@ -36,10 +36,12 @@ public sealed record VipLevel(
 public sealed class VipLevelTable : ISoraTable
 {
     private readonly Dictionary<int, VipLevel> rows;
+    private readonly List<int> keys;
 
-    internal VipLevelTable(Dictionary<int, VipLevel> rows)
+    internal VipLevelTable(Dictionary<int, VipLevel> rows, List<int> keys)
     {
         this.rows = rows;
+        this.keys = keys;
     }
 
     internal static VipLevelTable Decode(ISoraTableSource source)
@@ -49,13 +51,31 @@ public sealed class VipLevelTable : ISoraTable
 
     internal static VipLevelTable FromRows(List<VipLevel> rows)
     {
-        return new VipLevelTable(SoraConfig.DecodeMapTable(rows, row => row.Level));
+        return new VipLevelTable(SoraConfig.DecodeMapTable(rows, row => row.Level), rows.ConvertAll(row => row.Level));
     }
 
     public Dictionary<int, VipLevel> Rows => rows;
     public VipLevel? Get(int key)
     {
         return rows.TryGetValue(key, out var row) ? row : default;
+    }
+
+    public IReadOnlyList<int> Keys => keys;
+
+    public IReadOnlyList<VipLevel> OrderedRows
+    {
+        get
+        {
+            var orderedRows = new List<VipLevel>(keys.Count);
+            foreach (var key in keys)
+            {
+                if (rows.TryGetValue(key, out var row))
+                {
+                    orderedRows.Add(row);
+                }
+            }
+            return orderedRows;
+        }
     }
     public string Name => "VipLevel";
     public SoraTableMode Mode => SoraTableMode.Map;

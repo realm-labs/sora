@@ -6,7 +6,7 @@
 -export([decode/1, decode_table/1, rows/1
 {%- set table = record.table %}
 {%- if table.mode == "map" and table.key_field_name %}
-    , get/2
+    , get/2, keys/1, ordered_rows/1
 {%- elif table.mode == "singleton" %}
     , row/1
 {%- endif %}
@@ -52,6 +52,7 @@ decode_table(Bundle) ->
     Rows = sora_runtime:decode_table(Bundle, <<"{{ table.name }}">>, fun ?MODULE:decode/1),
 {%- if table.mode == "map" and table.key_field_name %}
     Data = sora_runtime:decode_map_table(Rows, fun(Row) -> maps:get('{{ table.key_field_name }}', Row) end),
+    Keys = [maps:get('{{ table.key_field_name }}', Row) || Row <- Rows],
 {%- elif table.mode == "singleton" %}
     Data = sora_runtime:require_singleton_table(Rows, <<"{{ table.name }}">>),
 {%- else %}
@@ -65,6 +66,9 @@ decode_table(Bundle) ->
 {%- endfor %}
     {{ "#{" }}
         data => Data
+{%- if table.mode == "map" and table.key_field_name %}
+        , keys => Keys
+{%- endif %}
 {%- for index in table.unique_indexes %}
         , '{{ index.name }}' => {{ index.pascal_name }}
 {%- endfor %}
@@ -81,6 +85,15 @@ get(Key, Table) ->
 -spec rows(table()) -> {{ table.container_type }}.
 rows(Table) ->
     maps:get(data, Table).
+
+-spec keys(table()) -> [{{ table.key_type }}].
+keys(Table) ->
+    maps:get(keys, Table).
+
+-spec ordered_rows(table()) -> [t()].
+ordered_rows(Table) ->
+    Data = maps:get(data, Table),
+    [maps:get(Key, Data) || Key <- keys(Table), maps:is_key(Key, Data)].
 {%- elif table.mode == "singleton" %}
 -spec row(table()) -> t().
 row(Table) ->

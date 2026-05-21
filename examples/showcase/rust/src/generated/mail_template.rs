@@ -34,18 +34,29 @@ impl super::runtime::SoraDecode for MailTemplate {
 #[derive(Debug, Clone)]
 pub struct MailTemplateTable {
     rows: SoraMap<i32, MailTemplate>,
+    keys: Vec<i32>,
 }
 
 impl MailTemplateTable {
     pub(super) fn from_rows(
         rows: Vec<MailTemplate>,
     ) -> Result<Self, super::runtime::SoraReadError> {
+        let keys = rows.iter().map(|row| row.id).collect::<Vec<_>>();
         Ok(Self {
             rows: super::decode_map_table(rows, |row| row.id),
+            keys,
         })
     }
     pub fn get(&self, key: i32) -> Option<&MailTemplate> {
         self.rows.get(&key)
+    }
+
+    pub fn keys(&self) -> &[i32] {
+        &self.keys
+    }
+
+    pub fn ordered_rows(&self) -> impl Iterator<Item = &MailTemplate> {
+        self.keys.iter().filter_map(|key| self.rows.get(key))
     }
 }
 

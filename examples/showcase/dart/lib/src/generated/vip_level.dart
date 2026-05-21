@@ -26,14 +26,17 @@ final class VipLevel {
 
 final class VipLevelTable extends Iterable<VipLevel> implements SoraConfigTable {
   final Map<int, VipLevel> _rows;
+  final List<int> _keys;
 
   const VipLevelTable(
     this._rows,
+    this._keys,
   );
 
   static VipLevelTable decode(List<VipLevel> rows) {
     return VipLevelTable(
       decodeMapTable(rows, (row) => row.level),
+      rows.map((row) => row.level).toList(growable: false),
     );
   }
 
@@ -62,4 +65,11 @@ final class VipLevelTable extends Iterable<VipLevel> implements SoraConfigTable 
   }
 
   Map<int, VipLevel> get rows => _rows;
+
+  List<int> get keys => _keys;
+
+  List<VipLevel> get orderedRows => [
+        for (final key in _keys)
+          if (_rows[key] != null) _rows[key]!,
+      ];
 }

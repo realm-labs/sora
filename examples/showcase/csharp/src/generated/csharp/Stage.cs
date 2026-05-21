@@ -42,10 +42,12 @@ public sealed record Stage(
 public sealed class StageTable : ISoraTable
 {
     private readonly Dictionary<int, Stage> rows;
+    private readonly List<int> keys;
 
-    internal StageTable(Dictionary<int, Stage> rows)
+    internal StageTable(Dictionary<int, Stage> rows, List<int> keys)
     {
         this.rows = rows;
+        this.keys = keys;
     }
 
     internal static StageTable Decode(ISoraTableSource source)
@@ -55,13 +57,31 @@ public sealed class StageTable : ISoraTable
 
     internal static StageTable FromRows(List<Stage> rows)
     {
-        return new StageTable(SoraConfig.DecodeMapTable(rows, row => row.Id));
+        return new StageTable(SoraConfig.DecodeMapTable(rows, row => row.Id), rows.ConvertAll(row => row.Id));
     }
 
     public Dictionary<int, Stage> Rows => rows;
     public Stage? Get(int key)
     {
         return rows.TryGetValue(key, out var row) ? row : default;
+    }
+
+    public IReadOnlyList<int> Keys => keys;
+
+    public IReadOnlyList<Stage> OrderedRows
+    {
+        get
+        {
+            var orderedRows = new List<Stage>(keys.Count);
+            foreach (var key in keys)
+            {
+                if (rows.TryGetValue(key, out var row))
+                {
+                    orderedRows.Add(row);
+                }
+            }
+            return orderedRows;
+        }
     }
     public string Name => "Stage";
     public SoraTableMode Mode => SoraTableMode.Map;

@@ -35,11 +35,13 @@ export function decodeDialogueValue(value: SoraValue): Dialogue {
 export class DialogueTable implements SoraConfigTable {
     private constructor(
         private readonly _rows: Map<number, Dialogue>,
+        private readonly _keys: number[],
     ) {}
 
     static decode(rows: Dialogue[]): DialogueTable {
         return new DialogueTable(
             decodeMapTable(rows, (row) => row.id),
+            rows.map((row) => row.id),
         );
     }
 
@@ -64,5 +66,16 @@ export class DialogueTable implements SoraConfigTable {
 
     rows(): ReadonlyMap<number, Dialogue> {
         return this._rows;
+    }
+
+    keys(): readonly number[] {
+        return this._keys;
+    }
+
+    orderedRows(): Dialogue[] {
+        return this._keys.flatMap((key) => {
+            const row = this._rows.get(key);
+            return row === undefined ? [] : [row];
+        });
     }
 }

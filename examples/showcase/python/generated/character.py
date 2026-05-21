@@ -56,13 +56,16 @@ class CharacterTable(SoraConfigTable):
     def __init__(
         self,
         rows: dict[int, Character],
+        keys: list[int],
     ) -> None:
         self._rows = rows
+        self._keys = keys
 
     @staticmethod
     def decode(rows: list[Character]) -> CharacterTable:
         return CharacterTable(
             decode_map_table(rows, lambda row: row.id),
+            [row.id for row in rows],
         )
 
     def name(self) -> str:
@@ -83,3 +86,9 @@ class CharacterTable(SoraConfigTable):
 
     def rows(self) -> dict[int, Character]:
         return self._rows
+
+    def keys(self) -> list[int]:
+        return self._keys
+
+    def ordered_rows(self) -> list[Character]:
+        return [self._rows[key] for key in self._keys if key in self._rows]

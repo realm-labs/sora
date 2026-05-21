@@ -31,10 +31,13 @@ data class EventRule(
 
 class EventRuleTable private constructor(
     val rows: Map<Int, EventRule>,
+    val keys: List<Int>,
 ) : SoraTable {
     operator fun get(key: Int): EventRule? = rows[key]
 
     fun values(): Collection<EventRule> = rows.values
+
+    fun orderedValues(): List<EventRule> = keys.mapNotNull { rows[it] }
     override val name: String = "EventRule"
     override val mode: SoraTableMode = SoraTableMode.Map
     override val key: String? = "id"
@@ -49,6 +52,7 @@ class EventRuleTable private constructor(
         private fun fromRows(rows: List<EventRule>): EventRuleTable =
             EventRuleTable(
                 rows.associateBy { it.id },
+                rows.map { it.id },
             )
     }
 }

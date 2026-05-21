@@ -30,6 +30,7 @@ end
 ---@class {{ table.pascal_name }}Table
 {%- if table.mode == "map" and table.key_type %}
 ---@field private _rows table<{{ table.key_type }}, {{ table.row_type }}>
+---@field private _keys {{ table.key_type }}[]
 {%- elif table.mode == "singleton" %}
 ---@field private _row {{ table.row_type }}
 {%- else %}
@@ -48,8 +49,13 @@ local {{ table.pascal_name }}Table = {}
 ---@return {{ table.pascal_name }}Table
 function {{ table.pascal_name }}Table.decode(rows)
 {%- if table.mode == "map" and table.key_field_name %}
+    local keys = {}
+    for index, row in ipairs(rows) do
+        keys[index] = row.{{ table.key_field_name }}
+    end
     return setmetatable({
         _rows = Runtime.decode_map_table(rows, function(row) return row.{{ table.key_field_name }} end),
+        _keys = keys,
 {%- for index in table.unique_indexes %}
         _{{ index.name }} = Runtime.decode_unique_index(rows, function(row) return row.{{ index.field_name }} end),
 {%- endfor %}
@@ -116,6 +122,23 @@ end
 ---@return table<{{ table.key_type }}, {{ table.row_type }}>
 function {{ table.pascal_name }}Table:rows()
     return self._rows
+end
+
+---@return {{ table.key_type }}[]
+function {{ table.pascal_name }}Table:keys()
+    return self._keys
+end
+
+---@return {{ table.row_type }}[]
+function {{ table.pascal_name }}Table:ordered_rows()
+    local rows = {}
+    for _, key in ipairs(self._keys) do
+        local row = self._rows[key]
+        if row ~= nil then
+            rows[#rows + 1] = row
+        end
+    end
+    return rows
 end
 {%- elif table.mode == "singleton" %}
 ---@return {{ table.row_type }}

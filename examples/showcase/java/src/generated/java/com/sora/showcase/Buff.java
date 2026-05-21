@@ -45,13 +45,15 @@ public final class Buff {
 
 final class BuffTable implements SoraTable {
     private final java.util.Map<Integer, Buff> rows;
+    private final List<Integer> keys;
 
-    private BuffTable(java.util.Map<Integer, Buff> rows) {
+    private BuffTable(java.util.Map<Integer, Buff> rows, List<Integer> keys) {
         this.rows = rows;
+        this.keys = keys;
     }
 
     private static BuffTable fromRows(List<Buff> rows) {
-        return new BuffTable(SoraConfig.decodeMapTable(rows, row -> row.id));
+        return new BuffTable(SoraConfig.decodeMapTable(rows, row -> row.id), rows.stream().map(row -> row.id).toList());
     }
 
     static BuffTable decode(SoraTableSource source) {
@@ -63,6 +65,14 @@ final class BuffTable implements SoraTable {
     }
     public Buff get(Integer key) {
         return rows.get(key);
+    }
+
+    public List<Integer> keys() {
+        return keys;
+    }
+
+    public List<Buff> orderedRows() {
+        return keys.stream().map(rows::get).toList();
     }
     @Override
     public String name() {

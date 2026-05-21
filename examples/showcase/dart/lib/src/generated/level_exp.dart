@@ -25,14 +25,17 @@ final class LevelExp {
 
 final class LevelExpTable extends Iterable<LevelExp> implements SoraConfigTable {
   final Map<int, LevelExp> _rows;
+  final List<int> _keys;
 
   const LevelExpTable(
     this._rows,
+    this._keys,
   );
 
   static LevelExpTable decode(List<LevelExp> rows) {
     return LevelExpTable(
       decodeMapTable(rows, (row) => row.level),
+      rows.map((row) => row.level).toList(growable: false),
     );
   }
 
@@ -61,4 +64,11 @@ final class LevelExpTable extends Iterable<LevelExp> implements SoraConfigTable 
   }
 
   Map<int, LevelExp> get rows => _rows;
+
+  List<int> get keys => _keys;
+
+  List<LevelExp> get orderedRows => [
+        for (final key in _keys)
+          if (_rows[key] != null) _rows[key]!,
+      ];
 }

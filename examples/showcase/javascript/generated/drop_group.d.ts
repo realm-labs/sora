@@ -19,4 +19,6 @@ export declare class DropGroupTable implements SoraConfigTable {
     len(): number;
     get(key: number): DropGroup | undefined;
     rows(): ReadonlyMap<number, DropGroup>;
+    keys(): readonly number[];
+    orderedRows(): DropGroup[];
 }

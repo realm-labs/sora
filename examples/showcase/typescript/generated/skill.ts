@@ -65,11 +65,13 @@ export function decodeSkillValue(value: SoraValue): Skill {
 export class SkillTable implements SoraConfigTable {
     private constructor(
         private readonly _rows: Map<number, Skill>,
+        private readonly _keys: number[],
     ) {}
 
     static decode(rows: Skill[]): SkillTable {
         return new SkillTable(
             decodeMapTable(rows, (row) => row.id),
+            rows.map((row) => row.id),
         );
     }
 
@@ -94,5 +96,16 @@ export class SkillTable implements SoraConfigTable {
 
     rows(): ReadonlyMap<number, Skill> {
         return this._rows;
+    }
+
+    keys(): readonly number[] {
+        return this._keys;
+    }
+
+    orderedRows(): Skill[] {
+        return this._keys.flatMap((key) => {
+            const row = this._rows.get(key);
+            return row === undefined ? [] : [row];
+        });
     }
 }

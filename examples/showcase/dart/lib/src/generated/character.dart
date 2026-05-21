@@ -39,14 +39,17 @@ final class Character {
 
 final class CharacterTable extends Iterable<Character> implements SoraConfigTable {
   final Map<int, Character> _rows;
+  final List<int> _keys;
 
   const CharacterTable(
     this._rows,
+    this._keys,
   );
 
   static CharacterTable decode(List<Character> rows) {
     return CharacterTable(
       decodeMapTable(rows, (row) => row.id),
+      rows.map((row) => row.id).toList(growable: false),
     );
   }
 
@@ -75,4 +78,11 @@ final class CharacterTable extends Iterable<Character> implements SoraConfigTabl
   }
 
   Map<int, Character> get rows => _rows;
+
+  List<int> get keys => _keys;
+
+  List<Character> get orderedRows => [
+        for (final key in _keys)
+          if (_rows[key] != null) _rows[key]!,
+      ];
 }

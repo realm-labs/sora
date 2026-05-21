@@ -31,14 +31,20 @@ end
 
 ---@class QuestTable
 ---@field private _rows table<integer, Quest>
+---@field private _keys integer[]
 local QuestTable = {}
 QuestTable.__index = QuestTable
 
 ---@param rows Quest[]
 ---@return QuestTable
 function QuestTable.decode(rows)
+    local keys = {}
+    for index, row in ipairs(rows) do
+        keys[index] = row.id
+    end
     return setmetatable({
         _rows = Runtime.decode_map_table(rows, function(row) return row.id end),
+        _keys = keys,
     }, QuestTable)
 end
 
@@ -74,6 +80,23 @@ end
 ---@return table<integer, Quest>
 function QuestTable:rows()
     return self._rows
+end
+
+---@return integer[]
+function QuestTable:keys()
+    return self._keys
+end
+
+---@return Quest[]
+function QuestTable:ordered_rows()
+    local rows = {}
+    for _, key in ipairs(self._keys) do
+        local row = self._rows[key]
+        if row ~= nil then
+            rows[#rows + 1] = row
+        end
+    end
+    return rows
 end
 Quest.Table = QuestTable
 

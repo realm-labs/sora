@@ -31,10 +31,13 @@ data class Localization(
 
 class LocalizationTable private constructor(
     val rows: Map<String, Localization>,
+    val keys: List<String>,
 ) : SoraTable {
     operator fun get(key: String): Localization? = rows[key]
 
     fun values(): Collection<Localization> = rows.values
+
+    fun orderedValues(): List<Localization> = keys.mapNotNull { rows[it] }
     override val name: String = "Localization"
     override val mode: SoraTableMode = SoraTableMode.Map
     override val key: String? = "key"
@@ -49,6 +52,7 @@ class LocalizationTable private constructor(
         private fun fromRows(rows: List<Localization>): LocalizationTable =
             LocalizationTable(
                 rows.associateBy { it.key },
+                rows.map { it.key },
             )
     }
 }

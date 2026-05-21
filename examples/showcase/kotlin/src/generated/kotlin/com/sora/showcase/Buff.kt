@@ -31,10 +31,13 @@ data class Buff(
 
 class BuffTable private constructor(
     val rows: Map<Int, Buff>,
+    val keys: List<Int>,
 ) : SoraTable {
     operator fun get(key: Int): Buff? = rows[key]
 
     fun values(): Collection<Buff> = rows.values
+
+    fun orderedValues(): List<Buff> = keys.mapNotNull { rows[it] }
     override val name: String = "Buff"
     override val mode: SoraTableMode = SoraTableMode.Map
     override val key: String? = "id"
@@ -49,6 +52,7 @@ class BuffTable private constructor(
         private fun fromRows(rows: List<Buff>): BuffTable =
             BuffTable(
                 rows.associateBy { it.id },
+                rows.map { it.id },
             )
     }
 }

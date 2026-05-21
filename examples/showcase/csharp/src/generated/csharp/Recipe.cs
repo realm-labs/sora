@@ -36,10 +36,12 @@ public sealed record Recipe(
 public sealed class RecipeTable : ISoraTable
 {
     private readonly Dictionary<int, Recipe> rows;
+    private readonly List<int> keys;
 
-    internal RecipeTable(Dictionary<int, Recipe> rows)
+    internal RecipeTable(Dictionary<int, Recipe> rows, List<int> keys)
     {
         this.rows = rows;
+        this.keys = keys;
     }
 
     internal static RecipeTable Decode(ISoraTableSource source)
@@ -49,13 +51,31 @@ public sealed class RecipeTable : ISoraTable
 
     internal static RecipeTable FromRows(List<Recipe> rows)
     {
-        return new RecipeTable(SoraConfig.DecodeMapTable(rows, row => row.Id));
+        return new RecipeTable(SoraConfig.DecodeMapTable(rows, row => row.Id), rows.ConvertAll(row => row.Id));
     }
 
     public Dictionary<int, Recipe> Rows => rows;
     public Recipe? Get(int key)
     {
         return rows.TryGetValue(key, out var row) ? row : default;
+    }
+
+    public IReadOnlyList<int> Keys => keys;
+
+    public IReadOnlyList<Recipe> OrderedRows
+    {
+        get
+        {
+            var orderedRows = new List<Recipe>(keys.Count);
+            foreach (var key in keys)
+            {
+                if (rows.TryGetValue(key, out var row))
+                {
+                    orderedRows.Add(row);
+                }
+            }
+            return orderedRows;
+        }
     }
     public string Name => "Recipe";
     public SoraTableMode Mode => SoraTableMode.Map;

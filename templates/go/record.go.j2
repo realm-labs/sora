@@ -43,6 +43,9 @@ func decode{{ record.pascal_name }}Value(input SoraValue) ({{ record.pascal_name
 
 type {{ table.pascal_name }}Table struct {
     rows {{ table.container_type }}
+{%- if table.mode == "map" and table.key_field_name %}
+    keys []{{ table.key_type }}
+{%- endif %}
 {%- for index in table.unique_indexes %}
     {{ index.camel_name }} map[{{ index.key_type }}]{{ table.row_type }}
 {%- endfor %}
@@ -53,9 +56,14 @@ type {{ table.pascal_name }}Table struct {
 
 func build{{ table.pascal_name }}Table(rows []{{ table.row_type }}) (*{{ table.pascal_name }}Table, error) {
 {%- if table.mode == "map" and table.key_field_name %}
+    keys := make([]{{ table.key_type }}, 0, len(rows))
+    for _, row := range rows {
+        keys = append(keys, row.{{ table.key_field_name }})
+    }
 {%- if table.unique_indexes or table.non_unique_indexes %}
     return &{{ table.pascal_name }}Table{
         rows: DecodeMapTable(rows, func(row {{ table.row_type }}) {{ table.key_type }} { return row.{{ table.key_field_name }} }),
+        keys: keys,
 {%- for index in table.unique_indexes %}
         {{ index.camel_name }}: DecodeUniqueIndex(rows, func(row {{ table.row_type }}) {{ index.key_type }} { return row.{{ index.field_name }} }),
 {%- endfor %}
@@ -64,7 +72,7 @@ func build{{ table.pascal_name }}Table(rows []{{ table.row_type }}) (*{{ table.p
 {%- endfor %}
     }, nil
 {%- else %}
-    return &{{ table.pascal_name }}Table{rows: DecodeMapTable(rows, func(row {{ table.row_type }}) {{ table.key_type }} { return row.{{ table.key_field_name }} })}, nil
+    return &{{ table.pascal_name }}Table{rows: DecodeMapTable(rows, func(row {{ table.row_type }}) {{ table.key_type }} { return row.{{ table.key_field_name }} }), keys: keys}, nil
 {%- endif %}
 {%- elif table.mode == "singleton" %}
     row, err := RequireSingletonTable(rows, "{{ table.name }}")
@@ -105,6 +113,20 @@ func (table *{{ table.pascal_name }}Table) Rows() {{ table.container_type }} {
 func (table *{{ table.pascal_name }}Table) Get(key {{ table.key_type }}) ({{ table.row_type }}, bool) {
     value, ok := table.rows[key]
     return value, ok
+}
+
+func (table *{{ table.pascal_name }}Table) Keys() []{{ table.key_type }} {
+    return table.keys
+}
+
+func (table *{{ table.pascal_name }}Table) OrderedRows() []{{ table.row_type }} {
+    rows := make([]{{ table.row_type }}, 0, len(table.keys))
+    for _, key := range table.keys {
+        if row, ok := table.rows[key]; ok {
+            rows = append(rows, row)
+        }
+    }
+    return rows
 }
 
 {%- endif %}

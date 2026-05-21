@@ -41,11 +41,13 @@ export function decodeBuffValue(value: SoraValue): Buff {
 export class BuffTable implements SoraConfigTable {
     private constructor(
         private readonly _rows: Map<number, Buff>,
+        private readonly _keys: number[],
     ) {}
 
     static decode(rows: Buff[]): BuffTable {
         return new BuffTable(
             decodeMapTable(rows, (row) => row.id),
+            rows.map((row) => row.id),
         );
     }
 
@@ -70,5 +72,16 @@ export class BuffTable implements SoraConfigTable {
 
     rows(): ReadonlyMap<number, Buff> {
         return this._rows;
+    }
+
+    keys(): readonly number[] {
+        return this._keys;
+    }
+
+    orderedRows(): Buff[] {
+        return this._keys.flatMap((key) => {
+            const row = this._rows.get(key);
+            return row === undefined ? [] : [row];
+        });
     }
 }

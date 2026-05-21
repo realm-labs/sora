@@ -27,4 +27,6 @@ export declare class MonsterTable implements SoraConfigTable {
     len(): number;
     get(key: number): Monster | undefined;
     rows(): ReadonlyMap<number, Monster>;
+    keys(): readonly number[];
+    orderedRows(): Monster[];
 }

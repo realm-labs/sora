@@ -60,6 +60,7 @@ fn generates_rust_and_kotlin_files() {
     assert!(rust_mod.contains("source.decode_table::<item::Item>(\"Item\")?"));
     assert!(rust_item.contains("pub struct ItemTable"));
     assert!(rust_item.contains("rows: SoraMap<i32, Item>"));
+    assert!(rust_item.contains("keys: Vec<i32>"));
     assert!(rust_item.contains("by_name: SoraMap<String, i32>"));
     assert!(rust_item.contains("by_item_type: SoraMap<ItemType, Vec<i32>>"));
     assert!(rust_item.contains("impl super::SoraTable for ItemTable"));
@@ -75,6 +76,8 @@ fn generates_rust_and_kotlin_files() {
     assert!(rust_mod.contains("table.downcast_ref::<T>()"));
     assert!(rust_mod.contains("pub fn item(&self) -> &item::ItemTable"));
     assert!(rust_item.contains("pub fn get(&self, key: i32) -> Option<&Item>"));
+    assert!(rust_item.contains("pub fn keys(&self) -> &[i32]"));
+    assert!(rust_item.contains("pub fn ordered_rows(&self) -> impl Iterator<Item = &Item>"));
     assert!(rust_item.contains("pub fn get_by_name(&self, name: &str) -> Option<&Item>"));
     assert!(rust_item.contains(
         "pub fn find_by_item_type(&self, item_type: ItemType) -> impl Iterator<Item = &Item>"
@@ -105,9 +108,11 @@ fn generates_rust_and_kotlin_files() {
     assert!(kotlin_config.contains("tables[\"Item\"] = ItemTable.decode(source)"));
     assert!(kotlin_item.contains("class ItemTable private constructor"));
     assert!(kotlin_item.contains("val rows: Map<Int, Item>"));
+    assert!(kotlin_item.contains("val keys: List<Int>"));
     assert!(kotlin_item.contains("private val nameIndex: Map<String, Item>"));
     assert!(kotlin_item.contains("private val itemTypeIndex: Map<ItemType, List<Item>>"));
     assert!(kotlin_item.contains("operator fun get(key: Int): Item? = rows[key]"));
+    assert!(kotlin_item.contains("fun orderedValues(): List<Item> = keys.mapNotNull { rows[it] }"));
     assert!(kotlin_item.contains("fun getByName(name: String): Item? = nameIndex[name]"));
     assert!(kotlin_item.contains(
         "fun findByItemType(itemType: ItemType): List<Item> = itemTypeIndex[itemType].orEmpty()"
@@ -355,9 +360,11 @@ fn generates_csharp_java_and_go_files() {
     assert!(csharp_item.contains("// Item id"));
     assert!(csharp_item.contains("public sealed class ItemTable"));
     assert!(csharp_item.contains("Dictionary<int, Item>"));
+    assert!(csharp_item.contains("private readonly List<int> keys"));
     assert!(csharp_item.contains("private readonly Dictionary<string, Item> byName"));
     assert!(csharp_item.contains("private readonly Dictionary<ItemType, List<Item>> byItemType"));
     assert!(csharp_item.contains("public Item? GetByName(string name)"));
+    assert!(csharp_item.contains("public IReadOnlyList<int> Keys => keys"));
     assert!(csharp_item.contains("public IReadOnlyList<Item> FindByItemType(ItemType itemType)"));
     assert!(csharp_config.contains("public sealed class SoraConfig"));
     assert!(!csharp_config.contains("public sealed class ItemTable"));
@@ -368,9 +375,11 @@ fn generates_csharp_java_and_go_files() {
     assert!(java_item.contains("/** Item id */"));
     assert!(java_item.contains("final class ItemTable implements SoraTable"));
     assert!(java_item.contains("java.util.Map<Integer, Item>"));
+    assert!(java_item.contains("private final List<Integer> keys"));
     assert!(java_item.contains("private final Map<String, Item> byName"));
     assert!(java_item.contains("private final Map<ItemType, List<Item>> byItemType"));
     assert!(java_item.contains("public Item getByName(String name)"));
+    assert!(java_item.contains("public List<Integer> keys()"));
     assert!(java_item.contains("public List<Item> findByItemType(ItemType itemType)"));
     assert!(java_config.contains("public final class SoraConfig"));
     assert!(!java_config.contains("final class ItemTable implements SoraTable"));
@@ -381,9 +390,11 @@ fn generates_csharp_java_and_go_files() {
     assert!(go_item.contains("// Id: Item id"));
     assert!(go_item.contains("type ItemTable struct"));
     assert!(go_item.contains("map[int32]Item"));
+    assert!(go_item.contains("keys []int32"));
     assert!(go_item.contains("byName map[string]Item"));
     assert!(go_item.contains("byItemType map[ItemType][]Item"));
     assert!(go_item.contains("func (table *ItemTable) GetByName(name string) (Item, bool)"));
+    assert!(go_item.contains("func (table *ItemTable) Keys() []int32"));
     assert!(go_item.contains("func (table *ItemTable) FindByItemType(itemType ItemType) []Item"));
     assert!(go_config.contains("type SoraConfig struct"));
     assert!(!go_config.contains("type ItemTable struct"));

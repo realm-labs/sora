@@ -49,10 +49,15 @@ func decodeDialogueValue(input SoraValue) (Dialogue, error) {
 
 type DialogueTable struct {
 	rows map[int32]Dialogue
+	keys []int32
 }
 
 func buildDialogueTable(rows []Dialogue) (*DialogueTable, error) {
-	return &DialogueTable{rows: DecodeMapTable(rows, func(row Dialogue) int32 { return row.Id })}, nil
+	keys := make([]int32, 0, len(rows))
+	for _, row := range rows {
+		keys = append(keys, row.Id)
+	}
+	return &DialogueTable{rows: DecodeMapTable(rows, func(row Dialogue) int32 { return row.Id }), keys: keys}, nil
 }
 
 func decodeDialogueTable(source SoraTableSource) (*DialogueTable, error) {
@@ -69,6 +74,20 @@ func (table *DialogueTable) Rows() map[int32]Dialogue {
 func (table *DialogueTable) Get(key int32) (Dialogue, bool) {
 	value, ok := table.rows[key]
 	return value, ok
+}
+
+func (table *DialogueTable) Keys() []int32 {
+	return table.keys
+}
+
+func (table *DialogueTable) OrderedRows() []Dialogue {
+	rows := make([]Dialogue, 0, len(table.keys))
+	for _, key := range table.keys {
+		if row, ok := table.rows[key]; ok {
+			rows = append(rows, row)
+		}
+	}
+	return rows
 }
 func (table *DialogueTable) Name() string {
 	return "Dialogue"

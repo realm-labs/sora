@@ -36,10 +36,12 @@ public sealed record LevelExp(
 public sealed class LevelExpTable : ISoraTable
 {
     private readonly Dictionary<int, LevelExp> rows;
+    private readonly List<int> keys;
 
-    internal LevelExpTable(Dictionary<int, LevelExp> rows)
+    internal LevelExpTable(Dictionary<int, LevelExp> rows, List<int> keys)
     {
         this.rows = rows;
+        this.keys = keys;
     }
 
     internal static LevelExpTable Decode(ISoraTableSource source)
@@ -49,13 +51,31 @@ public sealed class LevelExpTable : ISoraTable
 
     internal static LevelExpTable FromRows(List<LevelExp> rows)
     {
-        return new LevelExpTable(SoraConfig.DecodeMapTable(rows, row => row.Level));
+        return new LevelExpTable(SoraConfig.DecodeMapTable(rows, row => row.Level), rows.ConvertAll(row => row.Level));
     }
 
     public Dictionary<int, LevelExp> Rows => rows;
     public LevelExp? Get(int key)
     {
         return rows.TryGetValue(key, out var row) ? row : default;
+    }
+
+    public IReadOnlyList<int> Keys => keys;
+
+    public IReadOnlyList<LevelExp> OrderedRows
+    {
+        get
+        {
+            var orderedRows = new List<LevelExp>(keys.Count);
+            foreach (var key in keys)
+            {
+                if (rows.TryGetValue(key, out var row))
+                {
+                    orderedRows.Add(row);
+                }
+            }
+            return orderedRows;
+        }
     }
     public string Name => "LevelExp";
     public SoraTableMode Mode => SoraTableMode.Map;

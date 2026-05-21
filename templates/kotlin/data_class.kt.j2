@@ -34,6 +34,9 @@ data class {{ record.pascal_name }}(
 
 class {{ table.pascal_name }}Table private constructor(
     val rows: {{ table.container_type }},
+{%- if table.mode == "map" and table.key_field_name %}
+    val keys: List<{{ table.key_type }}>,
+{%- endif %}
 {%- for index in table.unique_indexes %}
     private val {{ index.param_camel_name }}Index: Map<{{ index.key_type }}, {{ table.row_type }}>,
 {%- endfor %}
@@ -45,6 +48,8 @@ class {{ table.pascal_name }}Table private constructor(
     operator fun get(key: {{ table.key_type }}): {{ table.row_type }}? = rows[key]
 
     fun values(): Collection<{{ table.row_type }}> = rows.values
+
+    fun orderedValues(): List<{{ table.row_type }}> = keys.mapNotNull { rows[it] }
 
 {%- elif table.mode == "list" %}
     fun values(): List<{{ table.row_type }}> = rows
@@ -90,6 +95,7 @@ class {{ table.pascal_name }}Table private constructor(
 {%- if table.mode == "map" and table.key_field_name %}
             {{ table.pascal_name }}Table(
                 rows.associateBy { it.{{ table.key_field_name }} },
+                rows.map { it.{{ table.key_field_name }} },
 {%- for index in table.unique_indexes %}
                 rows.associateBy { it.{{ index.field_name }} },
 {%- endfor %}

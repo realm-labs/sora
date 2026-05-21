@@ -39,10 +39,12 @@ public sealed record Localization(
 public sealed class LocalizationTable : ISoraTable
 {
     private readonly Dictionary<string, Localization> rows;
+    private readonly List<string> keys;
 
-    internal LocalizationTable(Dictionary<string, Localization> rows)
+    internal LocalizationTable(Dictionary<string, Localization> rows, List<string> keys)
     {
         this.rows = rows;
+        this.keys = keys;
     }
 
     internal static LocalizationTable Decode(ISoraTableSource source)
@@ -52,13 +54,31 @@ public sealed class LocalizationTable : ISoraTable
 
     internal static LocalizationTable FromRows(List<Localization> rows)
     {
-        return new LocalizationTable(SoraConfig.DecodeMapTable(rows, row => row.Key));
+        return new LocalizationTable(SoraConfig.DecodeMapTable(rows, row => row.Key), rows.ConvertAll(row => row.Key));
     }
 
     public Dictionary<string, Localization> Rows => rows;
     public Localization? Get(string key)
     {
         return rows.TryGetValue(key, out var row) ? row : default;
+    }
+
+    public IReadOnlyList<string> Keys => keys;
+
+    public IReadOnlyList<Localization> OrderedRows
+    {
+        get
+        {
+            var orderedRows = new List<Localization>(keys.Count);
+            foreach (var key in keys)
+            {
+                if (rows.TryGetValue(key, out var row))
+                {
+                    orderedRows.Add(row);
+                }
+            }
+            return orderedRows;
+        }
     }
     public string Name => "Localization";
     public SoraTableMode Mode => SoraTableMode.Map;

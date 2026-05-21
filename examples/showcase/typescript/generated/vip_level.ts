@@ -38,11 +38,13 @@ export function decodeVipLevelValue(value: SoraValue): VipLevel {
 export class VipLevelTable implements SoraConfigTable {
     private constructor(
         private readonly _rows: Map<number, VipLevel>,
+        private readonly _keys: number[],
     ) {}
 
     static decode(rows: VipLevel[]): VipLevelTable {
         return new VipLevelTable(
             decodeMapTable(rows, (row) => row.level),
+            rows.map((row) => row.level),
         );
     }
 
@@ -67,5 +69,16 @@ export class VipLevelTable implements SoraConfigTable {
 
     rows(): ReadonlyMap<number, VipLevel> {
         return this._rows;
+    }
+
+    keys(): readonly number[] {
+        return this._keys;
+    }
+
+    orderedRows(): VipLevel[] {
+        return this._keys.flatMap((key) => {
+            const row = this._rows.get(key);
+            return row === undefined ? [] : [row];
+        });
     }
 }

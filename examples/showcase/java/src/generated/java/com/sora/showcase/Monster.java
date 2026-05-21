@@ -55,13 +55,15 @@ public final class Monster {
 
 final class MonsterTable implements SoraTable {
     private final java.util.Map<Integer, Monster> rows;
+    private final List<Integer> keys;
 
-    private MonsterTable(java.util.Map<Integer, Monster> rows) {
+    private MonsterTable(java.util.Map<Integer, Monster> rows, List<Integer> keys) {
         this.rows = rows;
+        this.keys = keys;
     }
 
     private static MonsterTable fromRows(List<Monster> rows) {
-        return new MonsterTable(SoraConfig.decodeMapTable(rows, row -> row.id));
+        return new MonsterTable(SoraConfig.decodeMapTable(rows, row -> row.id), rows.stream().map(row -> row.id).toList());
     }
 
     static MonsterTable decode(SoraTableSource source) {
@@ -73,6 +75,14 @@ final class MonsterTable implements SoraTable {
     }
     public Monster get(Integer key) {
         return rows.get(key);
+    }
+
+    public List<Integer> keys() {
+        return keys;
+    }
+
+    public List<Monster> orderedRows() {
+        return keys.stream().map(rows::get).toList();
     }
     @Override
     public String name() {

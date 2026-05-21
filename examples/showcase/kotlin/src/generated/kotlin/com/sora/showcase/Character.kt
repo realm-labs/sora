@@ -40,10 +40,13 @@ data class Character(
 
 class CharacterTable private constructor(
     val rows: Map<Int, Character>,
+    val keys: List<Int>,
 ) : SoraTable {
     operator fun get(key: Int): Character? = rows[key]
 
     fun values(): Collection<Character> = rows.values
+
+    fun orderedValues(): List<Character> = keys.mapNotNull { rows[it] }
     override val name: String = "Character"
     override val mode: SoraTableMode = SoraTableMode.Map
     override val key: String? = "id"
@@ -58,6 +61,7 @@ class CharacterTable private constructor(
         private fun fromRows(rows: List<Character>): CharacterTable =
             CharacterTable(
                 rows.associateBy { it.id },
+                rows.map { it.id },
             )
     }
 }

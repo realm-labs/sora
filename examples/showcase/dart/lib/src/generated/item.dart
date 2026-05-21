@@ -42,11 +42,13 @@ final class Item {
 
 final class ItemTable extends Iterable<Item> implements SoraConfigTable {
   final Map<int, Item> _rows;
+  final List<int> _keys;
   final Map<String, Item> _name;
   final Map<ItemType, List<Item>> _itemType;
 
   const ItemTable(
     this._rows,
+    this._keys,
     this._name,
     this._itemType,
   );
@@ -54,6 +56,7 @@ final class ItemTable extends Iterable<Item> implements SoraConfigTable {
   static ItemTable decode(List<Item> rows) {
     return ItemTable(
       decodeMapTable(rows, (row) => row.id),
+      rows.map((row) => row.id).toList(growable: false),
       decodeUniqueIndex(rows, (row) => row.name),
       decodeIndex(rows, (row) => row.itemType),
     );
@@ -84,6 +87,13 @@ final class ItemTable extends Iterable<Item> implements SoraConfigTable {
   }
 
   Map<int, Item> get rows => _rows;
+
+  List<int> get keys => _keys;
+
+  List<Item> get orderedRows => [
+        for (final key in _keys)
+          if (_rows[key] != null) _rows[key]!,
+      ];
   Item? getByName(String name) =>
       _name[name];
   List<Item> findByItemType(ItemType itemType) =>

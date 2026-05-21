@@ -49,10 +49,15 @@ func decodeRecipeValue(input SoraValue) (Recipe, error) {
 
 type RecipeTable struct {
 	rows map[int32]Recipe
+	keys []int32
 }
 
 func buildRecipeTable(rows []Recipe) (*RecipeTable, error) {
-	return &RecipeTable{rows: DecodeMapTable(rows, func(row Recipe) int32 { return row.Id })}, nil
+	keys := make([]int32, 0, len(rows))
+	for _, row := range rows {
+		keys = append(keys, row.Id)
+	}
+	return &RecipeTable{rows: DecodeMapTable(rows, func(row Recipe) int32 { return row.Id }), keys: keys}, nil
 }
 
 func decodeRecipeTable(source SoraTableSource) (*RecipeTable, error) {
@@ -69,6 +74,20 @@ func (table *RecipeTable) Rows() map[int32]Recipe {
 func (table *RecipeTable) Get(key int32) (Recipe, bool) {
 	value, ok := table.rows[key]
 	return value, ok
+}
+
+func (table *RecipeTable) Keys() []int32 {
+	return table.keys
+}
+
+func (table *RecipeTable) OrderedRows() []Recipe {
+	rows := make([]Recipe, 0, len(table.keys))
+	for _, key := range table.keys {
+		if row, ok := table.rows[key]; ok {
+			rows = append(rows, row)
+		}
+	}
+	return rows
 }
 func (table *RecipeTable) Name() string {
 	return "Recipe"

@@ -36,10 +36,12 @@ public sealed record Dialogue(
 public sealed class DialogueTable : ISoraTable
 {
     private readonly Dictionary<int, Dialogue> rows;
+    private readonly List<int> keys;
 
-    internal DialogueTable(Dictionary<int, Dialogue> rows)
+    internal DialogueTable(Dictionary<int, Dialogue> rows, List<int> keys)
     {
         this.rows = rows;
+        this.keys = keys;
     }
 
     internal static DialogueTable Decode(ISoraTableSource source)
@@ -49,13 +51,31 @@ public sealed class DialogueTable : ISoraTable
 
     internal static DialogueTable FromRows(List<Dialogue> rows)
     {
-        return new DialogueTable(SoraConfig.DecodeMapTable(rows, row => row.Id));
+        return new DialogueTable(SoraConfig.DecodeMapTable(rows, row => row.Id), rows.ConvertAll(row => row.Id));
     }
 
     public Dictionary<int, Dialogue> Rows => rows;
     public Dialogue? Get(int key)
     {
         return rows.TryGetValue(key, out var row) ? row : default;
+    }
+
+    public IReadOnlyList<int> Keys => keys;
+
+    public IReadOnlyList<Dialogue> OrderedRows
+    {
+        get
+        {
+            var orderedRows = new List<Dialogue>(keys.Count);
+            foreach (var key in keys)
+            {
+                if (rows.TryGetValue(key, out var row))
+                {
+                    orderedRows.Add(row);
+                }
+            }
+            return orderedRows;
+        }
     }
     public string Name => "Dialogue";
     public SoraTableMode Mode => SoraTableMode.Map;

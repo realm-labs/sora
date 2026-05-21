@@ -20,11 +20,14 @@ object EquipmentSet {
 }
 
 final class EquipmentSetTable private (
-  val rows: Map[Int, EquipmentSet]
+  val rows: Map[Int, EquipmentSet],
+  val keys: Vector[Int]
 ) extends SoraTable {
   def get(key: Int): Option[EquipmentSet] = rows.get(key)
 
   def values: Iterable[EquipmentSet] = rows.values
+
+  def orderedValues: Vector[EquipmentSet] = keys.flatMap(rows.get)
   override val name: String = "EquipmentSet"
   override val mode: SoraTableMode = SoraTableMode.Map
   override val key: Option[String] = Some("id")
@@ -38,6 +41,7 @@ object EquipmentSetTable {
 
   private def fromRows(rows: Vector[EquipmentSet]): EquipmentSetTable =
     new EquipmentSetTable(
-      rows.map(row => row.id -> row).toMap
+      rows.map(row => row.id -> row).toMap,
+      rows.map(row => row.id)
     )
 }

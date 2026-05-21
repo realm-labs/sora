@@ -29,13 +29,16 @@ export function decodeEquipmentSetValue(value) {
 export class EquipmentSetTable {
     constructor(
         rows,
+        keys,
     ) {
         this._rows = rows;
+        this._keys = keys;
     }
 
     static decode(rows) {
         return new EquipmentSetTable(
             decodeMapTable(rows, (row) => row.id),
+            rows.map((row) => row.id),
         );
     }
 
@@ -60,5 +63,16 @@ export class EquipmentSetTable {
 
     rows() {
         return this._rows;
+    }
+
+    keys() {
+        return this._keys;
+    }
+
+    orderedRows() {
+        return this._keys.flatMap((key) => {
+            const row = this._rows.get(key);
+            return row === undefined ? [] : [row];
+        });
     }
 }

@@ -34,6 +34,7 @@ static func decode(value: Variant) -> Item:
 class ItemTable:
 	extends SoraRuntime.SoraConfigTable
 	var _rows: Dictionary = {}
+	var keys: Array = []
 	var _name: Dictionary = {}
 	var _item_type: Dictionary = {}
 
@@ -43,6 +44,7 @@ class ItemTable:
 		table.mode = "map"
 		table.key = "id"
 		table._rows = SoraRuntime.decode_map_table(rows, func(row): return row.id)
+		table.keys = rows.map(func(row): return row.id)
 		table._name = SoraRuntime.decode_unique_index(rows, func(row): return row.name)
 		table._item_type = SoraRuntime.decode_index(rows, func(row): return row.item_type)
 		return table
@@ -60,6 +62,13 @@ class ItemTable:
 
 	func rows() -> Array:
 		return _rows.values()
+
+	func ordered_rows() -> Array:
+		var out: Array = []
+		for key_value in keys:
+			if _rows.has(key_value):
+				out.append(_rows[key_value])
+		return out
 
 	func get_by_name(name: Variant) -> Item:
 		return _name.get(name)

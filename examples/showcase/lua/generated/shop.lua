@@ -21,14 +21,20 @@ end
 
 ---@class ShopTable
 ---@field private _rows table<integer, Shop>
+---@field private _keys integer[]
 local ShopTable = {}
 ShopTable.__index = ShopTable
 
 ---@param rows Shop[]
 ---@return ShopTable
 function ShopTable.decode(rows)
+    local keys = {}
+    for index, row in ipairs(rows) do
+        keys[index] = row.id
+    end
     return setmetatable({
         _rows = Runtime.decode_map_table(rows, function(row) return row.id end),
+        _keys = keys,
     }, ShopTable)
 end
 
@@ -64,6 +70,23 @@ end
 ---@return table<integer, Shop>
 function ShopTable:rows()
     return self._rows
+end
+
+---@return integer[]
+function ShopTable:keys()
+    return self._keys
+end
+
+---@return Shop[]
+function ShopTable:ordered_rows()
+    local rows = {}
+    for _, key in ipairs(self._keys) do
+        local row = self._rows[key]
+        if row ~= nil then
+            rows[#rows + 1] = row
+        end
+    end
+    return rows
 end
 Shop.Table = ShopTable
 

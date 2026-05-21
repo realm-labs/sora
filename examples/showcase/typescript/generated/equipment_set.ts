@@ -41,11 +41,13 @@ export function decodeEquipmentSetValue(value: SoraValue): EquipmentSet {
 export class EquipmentSetTable implements SoraConfigTable {
     private constructor(
         private readonly _rows: Map<number, EquipmentSet>,
+        private readonly _keys: number[],
     ) {}
 
     static decode(rows: EquipmentSet[]): EquipmentSetTable {
         return new EquipmentSetTable(
             decodeMapTable(rows, (row) => row.id),
+            rows.map((row) => row.id),
         );
     }
 
@@ -70,5 +72,16 @@ export class EquipmentSetTable implements SoraConfigTable {
 
     rows(): ReadonlyMap<number, EquipmentSet> {
         return this._rows;
+    }
+
+    keys(): readonly number[] {
+        return this._keys;
+    }
+
+    orderedRows(): EquipmentSet[] {
+        return this._keys.flatMap((key) => {
+            const row = this._rows.get(key);
+            return row === undefined ? [] : [row];
+        });
     }
 }

@@ -41,11 +41,13 @@ export function decodeAchievementValue(value: SoraValue): Achievement {
 export class AchievementTable implements SoraConfigTable {
     private constructor(
         private readonly _rows: Map<number, Achievement>,
+        private readonly _keys: number[],
     ) {}
 
     static decode(rows: Achievement[]): AchievementTable {
         return new AchievementTable(
             decodeMapTable(rows, (row) => row.id),
+            rows.map((row) => row.id),
         );
     }
 
@@ -70,5 +72,16 @@ export class AchievementTable implements SoraConfigTable {
 
     rows(): ReadonlyMap<number, Achievement> {
         return this._rows;
+    }
+
+    keys(): readonly number[] {
+        return this._keys;
+    }
+
+    orderedRows(): Achievement[] {
+        return this._keys.flatMap((key) => {
+            const row = this._rows.get(key);
+            return row === undefined ? [] : [row];
+        });
     }
 }

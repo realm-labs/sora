@@ -22,11 +22,14 @@ object MailTemplate {
 }
 
 final class MailTemplateTable private (
-  val rows: Map[Int, MailTemplate]
+  val rows: Map[Int, MailTemplate],
+  val keys: Vector[Int]
 ) extends SoraTable {
   def get(key: Int): Option[MailTemplate] = rows.get(key)
 
   def values: Iterable[MailTemplate] = rows.values
+
+  def orderedValues: Vector[MailTemplate] = keys.flatMap(rows.get)
   override val name: String = "MailTemplate"
   override val mode: SoraTableMode = SoraTableMode.Map
   override val key: Option[String] = Some("id")
@@ -40,6 +43,7 @@ object MailTemplateTable {
 
   private def fromRows(rows: Vector[MailTemplate]): MailTemplateTable =
     new MailTemplateTable(
-      rows.map(row => row.id -> row).toMap
+      rows.map(row => row.id -> row).toMap,
+      rows.map(row => row.id)
     )
 }

@@ -29,6 +29,8 @@ export declare class {{ table.pascal_name }}Table implements SoraConfigTable {
 {%- if table.mode == "map" and table.key_field_name %}
     get(key: {{ table.key_type }}): {{ table.row_type }} | undefined;
     rows(): ReadonlyMap<{{ table.key_type }}, {{ table.row_type }}>;
+    keys(): readonly {{ table.key_type }}[];
+    orderedRows(): {{ table.row_type }}[];
 {%- elif table.mode == "singleton" %}
     row(): {{ table.row_type }};
 {%- else %}

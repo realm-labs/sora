@@ -18,11 +18,14 @@ object GachaPool {
 }
 
 final class GachaPoolTable private (
-  val rows: Map[Int, GachaPool]
+  val rows: Map[Int, GachaPool],
+  val keys: Vector[Int]
 ) extends SoraTable {
   def get(key: Int): Option[GachaPool] = rows.get(key)
 
   def values: Iterable[GachaPool] = rows.values
+
+  def orderedValues: Vector[GachaPool] = keys.flatMap(rows.get)
   override val name: String = "GachaPool"
   override val mode: SoraTableMode = SoraTableMode.Map
   override val key: Option[String] = Some("id")
@@ -36,6 +39,7 @@ object GachaPoolTable {
 
   private def fromRows(rows: Vector[GachaPool]): GachaPoolTable =
     new GachaPoolTable(
-      rows.map(row => row.id -> row).toMap
+      rows.map(row => row.id -> row).toMap,
+      rows.map(row => row.id)
     )
 }

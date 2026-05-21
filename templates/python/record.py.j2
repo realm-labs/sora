@@ -80,6 +80,7 @@ class {{ table.pascal_name }}Table(SoraConfigTable):
         self,
 {%- if table.mode == "map" and table.key_type %}
         rows: dict[{{ table.key_type }}, {{ table.row_type }}],
+        keys: list[{{ table.key_type }}],
 {%- elif table.mode == "singleton" %}
         row: {{ table.row_type }},
 {%- else %}
@@ -94,6 +95,7 @@ class {{ table.pascal_name }}Table(SoraConfigTable):
     ) -> None:
 {%- if table.mode == "map" and table.key_type %}
         self._rows = rows
+        self._keys = keys
 {%- elif table.mode == "singleton" %}
         self._row = row
 {%- else %}
@@ -111,6 +113,7 @@ class {{ table.pascal_name }}Table(SoraConfigTable):
 {%- if table.mode == "map" and table.key_field_name %}
         return {{ table.pascal_name }}Table(
             decode_map_table(rows, lambda row: row.{{ table.key_field_name }}),
+            [row.{{ table.key_field_name }} for row in rows],
 {%- for index in table.unique_indexes %}
             decode_unique_index(rows, lambda row: row.{{ index.field_name }}),
 {%- endfor %}
@@ -160,6 +163,12 @@ class {{ table.pascal_name }}Table(SoraConfigTable):
 
     def rows(self) -> dict[{{ table.key_type }}, {{ table.row_type }}]:
         return self._rows
+
+    def keys(self) -> list[{{ table.key_type }}]:
+        return self._keys
+
+    def ordered_rows(self) -> list[{{ table.row_type }}]:
+        return [self._rows[key] for key in self._keys if key in self._rows]
 {%- elif table.mode == "singleton" %}
     def row(self) -> {{ table.row_type }}:
         return self._row

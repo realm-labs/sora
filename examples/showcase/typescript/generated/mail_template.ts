@@ -47,11 +47,13 @@ export function decodeMailTemplateValue(value: SoraValue): MailTemplate {
 export class MailTemplateTable implements SoraConfigTable {
     private constructor(
         private readonly _rows: Map<number, MailTemplate>,
+        private readonly _keys: number[],
     ) {}
 
     static decode(rows: MailTemplate[]): MailTemplateTable {
         return new MailTemplateTable(
             decodeMapTable(rows, (row) => row.id),
+            rows.map((row) => row.id),
         );
     }
 
@@ -76,5 +78,16 @@ export class MailTemplateTable implements SoraConfigTable {
 
     rows(): ReadonlyMap<number, MailTemplate> {
         return this._rows;
+    }
+
+    keys(): readonly number[] {
+        return this._keys;
+    }
+
+    orderedRows(): MailTemplate[] {
+        return this._keys.flatMap((key) => {
+            const row = this._rows.get(key);
+            return row === undefined ? [] : [row];
+        });
     }
 }

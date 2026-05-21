@@ -20,14 +20,20 @@ end
 
 ---@class DialogueTable
 ---@field private _rows table<integer, Dialogue>
+---@field private _keys integer[]
 local DialogueTable = {}
 DialogueTable.__index = DialogueTable
 
 ---@param rows Dialogue[]
 ---@return DialogueTable
 function DialogueTable.decode(rows)
+    local keys = {}
+    for index, row in ipairs(rows) do
+        keys[index] = row.id
+    end
     return setmetatable({
         _rows = Runtime.decode_map_table(rows, function(row) return row.id end),
+        _keys = keys,
     }, DialogueTable)
 end
 
@@ -63,6 +69,23 @@ end
 ---@return table<integer, Dialogue>
 function DialogueTable:rows()
     return self._rows
+end
+
+---@return integer[]
+function DialogueTable:keys()
+    return self._keys
+end
+
+---@return Dialogue[]
+function DialogueTable:ordered_rows()
+    local rows = {}
+    for _, key in ipairs(self._keys) do
+        local row = self._rows[key]
+        if row ~= nil then
+            rows[#rows + 1] = row
+        end
+    end
+    return rows
 end
 Dialogue.Table = DialogueTable
 

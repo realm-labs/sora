@@ -34,10 +34,12 @@ export function decodeItemValue(value) {
 export class ItemTable {
     constructor(
         rows,
+        keys,
         byName,
         byItemType,
     ) {
         this._rows = rows;
+        this._keys = keys;
         this._by_name = byName;
         this._by_item_type = byItemType;
     }
@@ -45,6 +47,7 @@ export class ItemTable {
     static decode(rows) {
         return new ItemTable(
             decodeMapTable(rows, (row) => row.id),
+            rows.map((row) => row.id),
             decodeUniqueIndex(rows, (row) => row.name),
             decodeIndex(rows, (row) => row.itemType),
         );
@@ -71,6 +74,17 @@ export class ItemTable {
 
     rows() {
         return this._rows;
+    }
+
+    keys() {
+        return this._keys;
+    }
+
+    orderedRows() {
+        return this._keys.flatMap((key) => {
+            const row = this._rows.get(key);
+            return row === undefined ? [] : [row];
+        });
     }
     getByName(name) {
         return this._by_name.get(name);

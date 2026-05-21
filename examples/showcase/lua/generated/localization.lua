@@ -22,14 +22,20 @@ end
 
 ---@class LocalizationTable
 ---@field private _rows table<string, Localization>
+---@field private _keys string[]
 local LocalizationTable = {}
 LocalizationTable.__index = LocalizationTable
 
 ---@param rows Localization[]
 ---@return LocalizationTable
 function LocalizationTable.decode(rows)
+    local keys = {}
+    for index, row in ipairs(rows) do
+        keys[index] = row.key
+    end
     return setmetatable({
         _rows = Runtime.decode_map_table(rows, function(row) return row.key end),
+        _keys = keys,
     }, LocalizationTable)
 end
 
@@ -65,6 +71,23 @@ end
 ---@return table<string, Localization>
 function LocalizationTable:rows()
     return self._rows
+end
+
+---@return string[]
+function LocalizationTable:keys()
+    return self._keys
+end
+
+---@return Localization[]
+function LocalizationTable:ordered_rows()
+    local rows = {}
+    for _, key in ipairs(self._keys) do
+        local row = self._rows[key]
+        if row ~= nil then
+            rows[#rows + 1] = row
+        end
+    end
+    return rows
 end
 Localization.Table = LocalizationTable
 

@@ -18,11 +18,14 @@ object Recipe {
 }
 
 final class RecipeTable private (
-  val rows: Map[Int, Recipe]
+  val rows: Map[Int, Recipe],
+  val keys: Vector[Int]
 ) extends SoraTable {
   def get(key: Int): Option[Recipe] = rows.get(key)
 
   def values: Iterable[Recipe] = rows.values
+
+  def orderedValues: Vector[Recipe] = keys.flatMap(rows.get)
   override val name: String = "Recipe"
   override val mode: SoraTableMode = SoraTableMode.Map
   override val key: Option[String] = Some("id")
@@ -36,6 +39,7 @@ object RecipeTable {
 
   private def fromRows(rows: Vector[Recipe]): RecipeTable =
     new RecipeTable(
-      rows.map(row => row.id -> row).toMap
+      rows.map(row => row.id -> row).toMap,
+      rows.map(row => row.id)
     )
 }

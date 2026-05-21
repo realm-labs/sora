@@ -53,11 +53,13 @@ export function decodeCharacterValue(value: SoraValue): Character {
 export class CharacterTable implements SoraConfigTable {
     private constructor(
         private readonly _rows: Map<number, Character>,
+        private readonly _keys: number[],
     ) {}
 
     static decode(rows: Character[]): CharacterTable {
         return new CharacterTable(
             decodeMapTable(rows, (row) => row.id),
+            rows.map((row) => row.id),
         );
     }
 
@@ -82,5 +84,16 @@ export class CharacterTable implements SoraConfigTable {
 
     rows(): ReadonlyMap<number, Character> {
         return this._rows;
+    }
+
+    keys(): readonly number[] {
+        return this._keys;
+    }
+
+    orderedRows(): Character[] {
+        return this._keys.flatMap((key) => {
+            const row = this._rows.get(key);
+            return row === undefined ? [] : [row];
+        });
     }
 }

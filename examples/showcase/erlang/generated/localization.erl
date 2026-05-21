@@ -2,7 +2,7 @@
 
 -module(localization).
 -export([decode/1, decode_table/1, rows/1
-    , get/2
+    , get/2, keys/1, ordered_rows/1
 ]).
 -export_type([t/0, table/0]).
 
@@ -32,8 +32,10 @@ decode(Reader0) ->
 decode_table(Bundle) ->
     Rows = sora_runtime:decode_table(Bundle, <<"Localization">>, fun ?MODULE:decode/1),
     Data = sora_runtime:decode_map_table(Rows, fun(Row) -> maps:get('key', Row) end),
+    Keys = [maps:get('key', Row) || Row <- Rows],
     #{
         data => Data
+        , keys => Keys
     }.
 -spec get(binary(), table()) -> t() | undefined.
 get(Key, Table) ->
@@ -42,3 +44,12 @@ get(Key, Table) ->
 -spec rows(table()) -> #{binary() => localization:t()}.
 rows(Table) ->
     maps:get(data, Table).
+
+-spec keys(table()) -> [binary()].
+keys(Table) ->
+    maps:get(keys, Table).
+
+-spec ordered_rows(table()) -> [t()].
+ordered_rows(Table) ->
+    Data = maps:get(data, Table),
+    [maps:get(Key, Data) || Key <- keys(Table), maps:is_key(Key, Data)].

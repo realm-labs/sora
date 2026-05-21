@@ -42,13 +42,16 @@ class VipLevelTable(SoraConfigTable):
     def __init__(
         self,
         rows: dict[int, VipLevel],
+        keys: list[int],
     ) -> None:
         self._rows = rows
+        self._keys = keys
 
     @staticmethod
     def decode(rows: list[VipLevel]) -> VipLevelTable:
         return VipLevelTable(
             decode_map_table(rows, lambda row: row.level),
+            [row.level for row in rows],
         )
 
     def name(self) -> str:
@@ -69,3 +72,9 @@ class VipLevelTable(SoraConfigTable):
 
     def rows(self) -> dict[int, VipLevel]:
         return self._rows
+
+    def keys(self) -> list[int]:
+        return self._keys
+
+    def ordered_rows(self) -> list[VipLevel]:
+        return [self._rows[key] for key in self._keys if key in self._rows]

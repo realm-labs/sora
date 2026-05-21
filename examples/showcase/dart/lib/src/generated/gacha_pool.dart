@@ -26,14 +26,17 @@ final class GachaPool {
 
 final class GachaPoolTable extends Iterable<GachaPool> implements SoraConfigTable {
   final Map<int, GachaPool> _rows;
+  final List<int> _keys;
 
   const GachaPoolTable(
     this._rows,
+    this._keys,
   );
 
   static GachaPoolTable decode(List<GachaPool> rows) {
     return GachaPoolTable(
       decodeMapTable(rows, (row) => row.id),
+      rows.map((row) => row.id).toList(growable: false),
     );
   }
 
@@ -62,4 +65,11 @@ final class GachaPoolTable extends Iterable<GachaPool> implements SoraConfigTabl
   }
 
   Map<int, GachaPool> get rows => _rows;
+
+  List<int> get keys => _keys;
+
+  List<GachaPool> get orderedRows => [
+        for (final key in _keys)
+          if (_rows[key] != null) _rows[key]!,
+      ];
 }

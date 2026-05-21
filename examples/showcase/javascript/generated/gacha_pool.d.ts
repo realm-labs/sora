@@ -22,4 +22,6 @@ export declare class GachaPoolTable implements SoraConfigTable {
     len(): number;
     get(key: number): GachaPool | undefined;
     rows(): ReadonlyMap<number, GachaPool>;
+    keys(): readonly number[];
+    orderedRows(): GachaPool[];
 }

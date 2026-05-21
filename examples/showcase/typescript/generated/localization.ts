@@ -38,11 +38,13 @@ export function decodeLocalizationValue(value: SoraValue): Localization {
 export class LocalizationTable implements SoraConfigTable {
     private constructor(
         private readonly _rows: Map<string, Localization>,
+        private readonly _keys: string[],
     ) {}
 
     static decode(rows: Localization[]): LocalizationTable {
         return new LocalizationTable(
             decodeMapTable(rows, (row) => row.key),
+            rows.map((row) => row.key),
         );
     }
 
@@ -67,5 +69,16 @@ export class LocalizationTable implements SoraConfigTable {
 
     rows(): ReadonlyMap<string, Localization> {
         return this._rows;
+    }
+
+    keys(): readonly string[] {
+        return this._keys;
+    }
+
+    orderedRows(): Localization[] {
+        return this._keys.flatMap((key) => {
+            const row = this._rows.get(key);
+            return row === undefined ? [] : [row];
+        });
     }
 }

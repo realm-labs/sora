@@ -47,6 +47,7 @@ export class {{ table.pascal_name }}Table implements SoraConfigTable {
     private constructor(
 {%- if table.mode == "map" and table.key_type %}
         private readonly _rows: Map<{{ table.key_type }}, {{ table.row_type }}>,
+        private readonly _keys: {{ table.key_type }}[],
 {%- elif table.mode == "singleton" %}
         private readonly _row: {{ table.row_type }},
 {%- else %}
@@ -64,6 +65,7 @@ export class {{ table.pascal_name }}Table implements SoraConfigTable {
 {%- if table.mode == "map" and table.key_field_name %}
         return new {{ table.pascal_name }}Table(
             decodeMapTable(rows, (row) => row.{{ table.key_field_name }}),
+            rows.map((row) => row.{{ table.key_field_name }}),
 {%- for index in table.unique_indexes %}
             decodeUniqueIndex(rows, (row) => row.{{ index.field_name }}),
 {%- endfor %}
@@ -121,6 +123,17 @@ export class {{ table.pascal_name }}Table implements SoraConfigTable {
 
     rows(): ReadonlyMap<{{ table.key_type }}, {{ table.row_type }}> {
         return this._rows;
+    }
+
+    keys(): readonly {{ table.key_type }}[] {
+        return this._keys;
+    }
+
+    orderedRows(): {{ table.row_type }}[] {
+        return this._keys.flatMap((key) => {
+            const row = this._rows.get(key);
+            return row === undefined ? [] : [row];
+        });
     }
 {%- elif table.mode == "singleton" %}
     row(): {{ table.row_type }} {

@@ -22,4 +22,6 @@ export declare class VipLevelTable implements SoraConfigTable {
     len(): number;
     get(key: number): VipLevel | undefined;
     rows(): ReadonlyMap<number, VipLevel>;
+    keys(): readonly number[];
+    orderedRows(): VipLevel[];
 }

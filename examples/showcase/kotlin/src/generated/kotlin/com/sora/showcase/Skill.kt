@@ -46,10 +46,13 @@ data class Skill(
 
 class SkillTable private constructor(
     val rows: Map<Int, Skill>,
+    val keys: List<Int>,
 ) : SoraTable {
     operator fun get(key: Int): Skill? = rows[key]
 
     fun values(): Collection<Skill> = rows.values
+
+    fun orderedValues(): List<Skill> = keys.mapNotNull { rows[it] }
     override val name: String = "Skill"
     override val mode: SoraTableMode = SoraTableMode.Map
     override val key: String? = "id"
@@ -64,6 +67,7 @@ class SkillTable private constructor(
         private fun fromRows(rows: List<Skill>): SkillTable =
             SkillTable(
                 rows.associateBy { it.id },
+                rows.map { it.id },
             )
     }
 }

@@ -23,4 +23,6 @@ export declare class AchievementTable implements SoraConfigTable {
     len(): number;
     get(key: number): Achievement | undefined;
     rows(): ReadonlyMap<number, Achievement>;
+    keys(): readonly number[];
+    orderedRows(): Achievement[];
 }

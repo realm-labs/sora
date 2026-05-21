@@ -56,6 +56,7 @@ export function decodeItemValue(value: SoraValue): Item {
 export class ItemTable implements SoraConfigTable {
     private constructor(
         private readonly _rows: Map<number, Item>,
+        private readonly _keys: number[],
         private readonly _by_name: Map<string, Item>,
         private readonly _by_item_type: Map<ItemType, Item[]>,
     ) {}
@@ -63,6 +64,7 @@ export class ItemTable implements SoraConfigTable {
     static decode(rows: Item[]): ItemTable {
         return new ItemTable(
             decodeMapTable(rows, (row) => row.id),
+            rows.map((row) => row.id),
             decodeUniqueIndex(rows, (row) => row.name),
             decodeIndex(rows, (row) => row.itemType),
         );
@@ -89,6 +91,17 @@ export class ItemTable implements SoraConfigTable {
 
     rows(): ReadonlyMap<number, Item> {
         return this._rows;
+    }
+
+    keys(): readonly number[] {
+        return this._keys;
+    }
+
+    orderedRows(): Item[] {
+        return this._keys.flatMap((key) => {
+            const row = this._rows.get(key);
+            return row === undefined ? [] : [row];
+        });
     }
     getByName(name: string): Item | undefined {
         return this._by_name.get(name);

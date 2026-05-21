@@ -50,6 +50,7 @@ public:
         ItemTable table;
         for (std::size_t index = 0; index < rows.size(); ++index) {
             const Item& row = rows[index];
+            table.keys_.push_back(row.id);
             table.rows_.emplace(row.id, row);
         }
         table.build_indexes();
@@ -72,6 +73,24 @@ public:
 
     const std::unordered_map<std::int32_t, Item>& rows() const {
         return rows_;
+    }
+
+    const std::vector<std::int32_t>& keys() const {
+        return keys_;
+    }
+
+    std::vector<const Item*> ordered_rows() const {
+        std::vector<const Item*> rows;
+        rows.reserve(keys_.size());
+        for (typename std::vector<std::int32_t>::const_iterator key = keys_.begin();
+             key != keys_.end();
+             ++key) {
+            typename std::unordered_map<std::int32_t, Item>::const_iterator it = rows_.find(*key);
+            if (it != rows_.end()) {
+                rows.push_back(&it->second);
+            }
+        }
+        return rows;
     }
 
     const Item* get_by_name(const std::string& name) const {
@@ -103,6 +122,7 @@ private:
         }
     }
     std::unordered_map<std::int32_t, Item> rows_;
+    std::vector<std::int32_t> keys_;
     std::unordered_map<std::string, const Item*> by_name_;
     std::unordered_map<ItemType, std::vector<const Item*> > by_item_type_;
 };

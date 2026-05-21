@@ -36,14 +36,17 @@ final class Monster {
 
 final class MonsterTable extends Iterable<Monster> implements SoraConfigTable {
   final Map<int, Monster> _rows;
+  final List<int> _keys;
 
   const MonsterTable(
     this._rows,
+    this._keys,
   );
 
   static MonsterTable decode(List<Monster> rows) {
     return MonsterTable(
       decodeMapTable(rows, (row) => row.id),
+      rows.map((row) => row.id).toList(growable: false),
     );
   }
 
@@ -72,4 +75,11 @@ final class MonsterTable extends Iterable<Monster> implements SoraConfigTable {
   }
 
   Map<int, Monster> get rows => _rows;
+
+  List<int> get keys => _keys;
+
+  List<Monster> get orderedRows => [
+        for (final key in _keys)
+          if (_rows[key] != null) _rows[key]!,
+      ];
 }

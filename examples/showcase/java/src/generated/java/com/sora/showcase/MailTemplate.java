@@ -50,13 +50,15 @@ public final class MailTemplate {
 
 final class MailTemplateTable implements SoraTable {
     private final java.util.Map<Integer, MailTemplate> rows;
+    private final List<Integer> keys;
 
-    private MailTemplateTable(java.util.Map<Integer, MailTemplate> rows) {
+    private MailTemplateTable(java.util.Map<Integer, MailTemplate> rows, List<Integer> keys) {
         this.rows = rows;
+        this.keys = keys;
     }
 
     private static MailTemplateTable fromRows(List<MailTemplate> rows) {
-        return new MailTemplateTable(SoraConfig.decodeMapTable(rows, row -> row.id));
+        return new MailTemplateTable(SoraConfig.decodeMapTable(rows, row -> row.id), rows.stream().map(row -> row.id).toList());
     }
 
     static MailTemplateTable decode(SoraTableSource source) {
@@ -68,6 +70,14 @@ final class MailTemplateTable implements SoraTable {
     }
     public MailTemplate get(Integer key) {
         return rows.get(key);
+    }
+
+    public List<Integer> keys() {
+        return keys;
+    }
+
+    public List<MailTemplate> orderedRows() {
+        return keys.stream().map(rows::get).toList();
     }
     @Override
     public String name() {

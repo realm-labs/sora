@@ -23,4 +23,6 @@ export declare class BuffTable implements SoraConfigTable {
     len(): number;
     get(key: number): Buff | undefined;
     rows(): ReadonlyMap<number, Buff>;
+    keys(): readonly number[];
+    orderedRows(): Buff[];
 }

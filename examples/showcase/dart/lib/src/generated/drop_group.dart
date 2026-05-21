@@ -22,14 +22,17 @@ final class DropGroup {
 
 final class DropGroupTable extends Iterable<DropGroup> implements SoraConfigTable {
   final Map<int, DropGroup> _rows;
+  final List<int> _keys;
 
   const DropGroupTable(
     this._rows,
+    this._keys,
   );
 
   static DropGroupTable decode(List<DropGroup> rows) {
     return DropGroupTable(
       decodeMapTable(rows, (row) => row.id),
+      rows.map((row) => row.id).toList(growable: false),
     );
   }
 
@@ -58,4 +61,11 @@ final class DropGroupTable extends Iterable<DropGroup> implements SoraConfigTabl
   }
 
   Map<int, DropGroup> get rows => _rows;
+
+  List<int> get keys => _keys;
+
+  List<DropGroup> get orderedRows => [
+        for (final key in _keys)
+          if (_rows[key] != null) _rows[key]!,
+      ];
 }

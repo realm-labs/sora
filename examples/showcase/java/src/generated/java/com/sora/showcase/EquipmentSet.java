@@ -45,13 +45,15 @@ public final class EquipmentSet {
 
 final class EquipmentSetTable implements SoraTable {
     private final java.util.Map<Integer, EquipmentSet> rows;
+    private final List<Integer> keys;
 
-    private EquipmentSetTable(java.util.Map<Integer, EquipmentSet> rows) {
+    private EquipmentSetTable(java.util.Map<Integer, EquipmentSet> rows, List<Integer> keys) {
         this.rows = rows;
+        this.keys = keys;
     }
 
     private static EquipmentSetTable fromRows(List<EquipmentSet> rows) {
-        return new EquipmentSetTable(SoraConfig.decodeMapTable(rows, row -> row.id));
+        return new EquipmentSetTable(SoraConfig.decodeMapTable(rows, row -> row.id), rows.stream().map(row -> row.id).toList());
     }
 
     static EquipmentSetTable decode(SoraTableSource source) {
@@ -63,6 +65,14 @@ final class EquipmentSetTable implements SoraTable {
     }
     public EquipmentSet get(Integer key) {
         return rows.get(key);
+    }
+
+    public List<Integer> keys() {
+        return keys;
+    }
+
+    public List<EquipmentSet> orderedRows() {
+        return keys.stream().map(rows::get).toList();
     }
     @Override
     public String name() {

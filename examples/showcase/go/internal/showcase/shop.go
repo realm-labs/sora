@@ -49,10 +49,15 @@ func decodeShopValue(input SoraValue) (Shop, error) {
 
 type ShopTable struct {
 	rows map[int32]Shop
+	keys []int32
 }
 
 func buildShopTable(rows []Shop) (*ShopTable, error) {
-	return &ShopTable{rows: DecodeMapTable(rows, func(row Shop) int32 { return row.Id })}, nil
+	keys := make([]int32, 0, len(rows))
+	for _, row := range rows {
+		keys = append(keys, row.Id)
+	}
+	return &ShopTable{rows: DecodeMapTable(rows, func(row Shop) int32 { return row.Id }), keys: keys}, nil
 }
 
 func decodeShopTable(source SoraTableSource) (*ShopTable, error) {
@@ -69,6 +74,20 @@ func (table *ShopTable) Rows() map[int32]Shop {
 func (table *ShopTable) Get(key int32) (Shop, bool) {
 	value, ok := table.rows[key]
 	return value, ok
+}
+
+func (table *ShopTable) Keys() []int32 {
+	return table.keys
+}
+
+func (table *ShopTable) OrderedRows() []Shop {
+	rows := make([]Shop, 0, len(table.keys))
+	for _, key := range table.keys {
+		if row, ok := table.rows[key]; ok {
+			rows = append(rows, row)
+		}
+	}
+	return rows
 }
 func (table *ShopTable) Name() string {
 	return "Shop"

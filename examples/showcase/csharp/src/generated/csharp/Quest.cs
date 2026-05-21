@@ -49,10 +49,12 @@ public sealed record Quest(
 public sealed class QuestTable : ISoraTable
 {
     private readonly Dictionary<int, Quest> rows;
+    private readonly List<int> keys;
 
-    internal QuestTable(Dictionary<int, Quest> rows)
+    internal QuestTable(Dictionary<int, Quest> rows, List<int> keys)
     {
         this.rows = rows;
+        this.keys = keys;
     }
 
     internal static QuestTable Decode(ISoraTableSource source)
@@ -62,13 +64,31 @@ public sealed class QuestTable : ISoraTable
 
     internal static QuestTable FromRows(List<Quest> rows)
     {
-        return new QuestTable(SoraConfig.DecodeMapTable(rows, row => row.Id));
+        return new QuestTable(SoraConfig.DecodeMapTable(rows, row => row.Id), rows.ConvertAll(row => row.Id));
     }
 
     public Dictionary<int, Quest> Rows => rows;
     public Quest? Get(int key)
     {
         return rows.TryGetValue(key, out var row) ? row : default;
+    }
+
+    public IReadOnlyList<int> Keys => keys;
+
+    public IReadOnlyList<Quest> OrderedRows
+    {
+        get
+        {
+            var orderedRows = new List<Quest>(keys.Count);
+            foreach (var key in keys)
+            {
+                if (rows.TryGetValue(key, out var row))
+                {
+                    orderedRows.Add(row);
+                }
+            }
+            return orderedRows;
+        }
     }
     public string Name => "Quest";
     public SoraTableMode Mode => SoraTableMode.Map;

@@ -22,4 +22,6 @@ export declare class RecipeTable implements SoraConfigTable {
     len(): number;
     get(key: number): Recipe | undefined;
     rows(): ReadonlyMap<number, Recipe>;
+    keys(): readonly number[];
+    orderedRows(): Recipe[];
 }

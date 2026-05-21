@@ -33,14 +33,17 @@ final class MailTemplate {
 
 final class MailTemplateTable extends Iterable<MailTemplate> implements SoraConfigTable {
   final Map<int, MailTemplate> _rows;
+  final List<int> _keys;
 
   const MailTemplateTable(
     this._rows,
+    this._keys,
   );
 
   static MailTemplateTable decode(List<MailTemplate> rows) {
     return MailTemplateTable(
       decodeMapTable(rows, (row) => row.id),
+      rows.map((row) => row.id).toList(growable: false),
     );
   }
 
@@ -69,4 +72,11 @@ final class MailTemplateTable extends Iterable<MailTemplate> implements SoraConf
   }
 
   Map<int, MailTemplate> get rows => _rows;
+
+  List<int> get keys => _keys;
+
+  List<MailTemplate> get orderedRows => [
+        for (final key in _keys)
+          if (_rows[key] != null) _rows[key]!,
+      ];
 }

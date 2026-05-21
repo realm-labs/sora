@@ -38,6 +38,7 @@ public:
         LocalizationTable table;
         for (std::size_t index = 0; index < rows.size(); ++index) {
             const Localization& row = rows[index];
+            table.keys_.push_back(row.key);
             table.rows_.emplace(row.key, row);
         }
         table.build_indexes();
@@ -62,10 +63,29 @@ public:
         return rows_;
     }
 
+    const std::vector<std::string>& keys() const {
+        return keys_;
+    }
+
+    std::vector<const Localization*> ordered_rows() const {
+        std::vector<const Localization*> rows;
+        rows.reserve(keys_.size());
+        for (typename std::vector<std::string>::const_iterator key = keys_.begin();
+             key != keys_.end();
+             ++key) {
+            typename std::unordered_map<std::string, Localization>::const_iterator it = rows_.find(*key);
+            if (it != rows_.end()) {
+                rows.push_back(&it->second);
+            }
+        }
+        return rows;
+    }
+
 private:
     void build_indexes() {
     }
     std::unordered_map<std::string, Localization> rows_;
+    std::vector<std::string> keys_;
 };
 
 } // namespace sora::showcase

@@ -35,6 +35,7 @@ final class {{ record.pascal_name }} {
 final class {{ table.pascal_name }}Table extends Iterable<{{ table.row_type }}> implements SoraConfigTable {
 {%- if table.mode == "map" and table.key_type %}
   final Map<{{ table.key_type }}, {{ table.row_type }}> _rows;
+  final List<{{ table.key_type }}> _keys;
 {%- elif table.mode == "singleton" %}
   final {{ table.row_type }} _row;
 {%- else %}
@@ -53,6 +54,9 @@ final class {{ table.pascal_name }}Table extends Iterable<{{ table.row_type }}> 
 {%- else %}
     this._rows,
 {%- endif %}
+{%- if table.mode == "map" and table.key_field_name %}
+    this._keys,
+{%- endif %}
 {%- for index in table.unique_indexes %}
     this._{{ index.field_name }},
 {%- endfor %}
@@ -65,6 +69,7 @@ final class {{ table.pascal_name }}Table extends Iterable<{{ table.row_type }}> 
 {%- if table.mode == "map" and table.key_field_name %}
     return {{ table.pascal_name }}Table(
       decodeMapTable(rows, (row) => row.{{ table.key_field_name }}),
+      rows.map((row) => row.{{ table.key_field_name }}).toList(growable: false),
 {%- for index in table.unique_indexes %}
       decodeUniqueIndex(rows, (row) => row.{{ index.field_name }}),
 {%- endfor %}
@@ -116,6 +121,13 @@ final class {{ table.pascal_name }}Table extends Iterable<{{ table.row_type }}> 
   }
 
   Map<{{ table.key_type }}, {{ table.row_type }}> get rows => _rows;
+
+  List<{{ table.key_type }}> get keys => _keys;
+
+  List<{{ table.row_type }}> get orderedRows => [
+        for (final key in _keys)
+          if (_rows[key] != null) _rows[key]!,
+      ];
 {%- elif table.mode == "singleton" %}
   {{ table.row_type }} get row => _row;
 {%- else %}

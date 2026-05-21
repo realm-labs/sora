@@ -31,11 +31,14 @@ object Skill {
 }
 
 final class SkillTable private (
-  val rows: Map[Int, Skill]
+  val rows: Map[Int, Skill],
+  val keys: Vector[Int]
 ) extends SoraTable {
   def get(key: Int): Option[Skill] = rows.get(key)
 
   def values: Iterable[Skill] = rows.values
+
+  def orderedValues: Vector[Skill] = keys.flatMap(rows.get)
   override val name: String = "Skill"
   override val mode: SoraTableMode = SoraTableMode.Map
   override val key: Option[String] = Some("id")
@@ -49,6 +52,7 @@ object SkillTable {
 
   private def fromRows(rows: Vector[Skill]): SkillTable =
     new SkillTable(
-      rows.map(row => row.id -> row).toMap
+      rows.map(row => row.id -> row).toMap,
+      rows.map(row => row.id)
     )
 }

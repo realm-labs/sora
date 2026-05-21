@@ -43,24 +43,35 @@ impl super::runtime::SoraDecode for Item {
 #[derive(Debug, Clone)]
 pub struct ItemTable {
     rows: SoraMap<i32, Item>,
+    keys: Vec<i32>,
     by_name: SoraMap<String, i32>,
     by_item_type: SoraMap<ItemType, Vec<i32>>,
 }
 
 impl ItemTable {
     pub(super) fn from_rows(rows: Vec<Item>) -> Result<Self, super::runtime::SoraReadError> {
+        let keys = rows.iter().map(|row| row.id).collect::<Vec<_>>();
         let by_name =
             super::build_unique_map_index(rows.iter(), |row| row.name.clone(), |row| row.id);
         let by_item_type = super::build_map_index(rows.iter(), |row| row.item_type, |row| row.id);
         let rows = super::decode_map_table(rows, |row| row.id);
         Ok(Self {
             rows,
+            keys,
             by_name,
             by_item_type,
         })
     }
     pub fn get(&self, key: i32) -> Option<&Item> {
         self.rows.get(&key)
+    }
+
+    pub fn keys(&self) -> &[i32] {
+        &self.keys
+    }
+
+    pub fn ordered_rows(&self) -> impl Iterator<Item = &Item> {
+        self.keys.iter().filter_map(|key| self.rows.get(key))
     }
     pub fn get_by_name(&self, name: &str) -> Option<&Item> {
         self.by_name.get(name).and_then(|key| self.rows.get(key))

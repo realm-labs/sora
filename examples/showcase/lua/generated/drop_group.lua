@@ -18,14 +18,20 @@ end
 
 ---@class DropGroupTable
 ---@field private _rows table<integer, DropGroup>
+---@field private _keys integer[]
 local DropGroupTable = {}
 DropGroupTable.__index = DropGroupTable
 
 ---@param rows DropGroup[]
 ---@return DropGroupTable
 function DropGroupTable.decode(rows)
+    local keys = {}
+    for index, row in ipairs(rows) do
+        keys[index] = row.id
+    end
     return setmetatable({
         _rows = Runtime.decode_map_table(rows, function(row) return row.id end),
+        _keys = keys,
     }, DropGroupTable)
 end
 
@@ -61,6 +67,23 @@ end
 ---@return table<integer, DropGroup>
 function DropGroupTable:rows()
     return self._rows
+end
+
+---@return integer[]
+function DropGroupTable:keys()
+    return self._keys
+end
+
+---@return DropGroup[]
+function DropGroupTable:ordered_rows()
+    local rows = {}
+    for _, key in ipairs(self._keys) do
+        local row = self._rows[key]
+        if row ~= nil then
+            rows[#rows + 1] = row
+        end
+    end
+    return rows
 end
 DropGroup.Table = DropGroupTable
 

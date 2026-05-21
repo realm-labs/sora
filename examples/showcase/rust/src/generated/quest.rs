@@ -42,16 +42,27 @@ impl super::runtime::SoraDecode for Quest {
 #[derive(Debug, Clone)]
 pub struct QuestTable {
     rows: SoraMap<i32, Quest>,
+    keys: Vec<i32>,
 }
 
 impl QuestTable {
     pub(super) fn from_rows(rows: Vec<Quest>) -> Result<Self, super::runtime::SoraReadError> {
+        let keys = rows.iter().map(|row| row.id).collect::<Vec<_>>();
         Ok(Self {
             rows: super::decode_map_table(rows, |row| row.id),
+            keys,
         })
     }
     pub fn get(&self, key: i32) -> Option<&Quest> {
         self.rows.get(&key)
+    }
+
+    pub fn keys(&self) -> &[i32] {
+        &self.keys
+    }
+
+    pub fn ordered_rows(&self) -> impl Iterator<Item = &Quest> {
+        self.keys.iter().filter_map(|key| self.rows.get(key))
     }
 }
 

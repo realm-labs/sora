@@ -34,6 +34,9 @@ impl super::runtime::SoraDecode for {{ record.pascal_name }} {
 #[derive(Debug, Clone)]
 pub struct {{ table.pascal_name }}Table {
     rows: {{ table.container_type }},
+{%- if table.mode == "map" and table.key_field_name %}
+    keys: Vec<{{ table.key_type }}>,
+{%- endif %}
 {%- for index in table.unique_indexes %}
 {%- if table.mode == "map" %}
     {{ index.name }}: SoraMap<{{ index.key_type }}, {{ table.key_type }}>,
@@ -53,6 +56,7 @@ pub struct {{ table.pascal_name }}Table {
 impl {{ table.pascal_name }}Table {
     pub(super) fn from_rows(rows: Vec<{{ table.row_type }}>) -> Result<Self, super::runtime::SoraReadError> {
 {%- if table.mode == "map" and table.key_field_name %}
+        let keys = rows.iter().map(|row| {% if table.key_is_copy %}row.{{ table.key_field_name }}{% else %}row.{{ table.key_field_name }}.clone(){% endif %}).collect::<Vec<_>>();
 {%- if table.unique_indexes or table.non_unique_indexes %}
 {%- for index in table.unique_indexes %}
         let {{ index.name }} = super::build_unique_map_index(
@@ -87,6 +91,7 @@ impl {{ table.pascal_name }}Table {
         let rows = super::decode_map_table(rows, |row| {% if table.key_is_copy %}row.{{ table.key_field_name }}{% else %}row.{{ table.key_field_name }}.clone(){% endif %});
         Ok(Self {
             rows,
+            keys,
 {%- for index in table.unique_indexes %}
             {{ index.name }},
 {%- endfor %}
@@ -96,9 +101,9 @@ impl {{ table.pascal_name }}Table {
         })
 {%- else %}
 {%- if table.key_is_copy %}
-        Ok(Self { rows: super::decode_map_table(rows, |row| row.{{ table.key_field_name }}) })
+        Ok(Self { rows: super::decode_map_table(rows, |row| row.{{ table.key_field_name }}), keys })
 {%- else %}
-        Ok(Self { rows: super::decode_map_table(rows, |row| row.{{ table.key_field_name }}.clone()) })
+        Ok(Self { rows: super::decode_map_table(rows, |row| row.{{ table.key_field_name }}.clone()), keys })
 {%- endif %}
 {%- endif %}
 {%- elif table.mode == "singleton" %}
@@ -151,6 +156,14 @@ impl {{ table.pascal_name }}Table {
         self.rows.get(key)
     }
 {%- endif %}
+
+    pub fn keys(&self) -> &[{{ table.key_type }}] {
+        &self.keys
+    }
+
+    pub fn ordered_rows(&self) -> impl Iterator<Item = &{{ table.row_type }}> {
+        self.keys.iter().filter_map(|key| self.rows.get(key))
+    }
 
 {%- endif %}
 {%- for index in table.unique_indexes %}

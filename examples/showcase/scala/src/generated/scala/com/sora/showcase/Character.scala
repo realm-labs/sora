@@ -26,11 +26,14 @@ object Character {
 }
 
 final class CharacterTable private (
-  val rows: Map[Int, Character]
+  val rows: Map[Int, Character],
+  val keys: Vector[Int]
 ) extends SoraTable {
   def get(key: Int): Option[Character] = rows.get(key)
 
   def values: Iterable[Character] = rows.values
+
+  def orderedValues: Vector[Character] = keys.flatMap(rows.get)
   override val name: String = "Character"
   override val mode: SoraTableMode = SoraTableMode.Map
   override val key: Option[String] = Some("id")
@@ -44,6 +47,7 @@ object CharacterTable {
 
   private def fromRows(rows: Vector[Character]): CharacterTable =
     new CharacterTable(
-      rows.map(row => row.id -> row).toMap
+      rows.map(row => row.id -> row).toMap,
+      rows.map(row => row.id)
     )
 }

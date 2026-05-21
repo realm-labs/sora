@@ -42,6 +42,9 @@ public sealed record {{ record.pascal_name }}(
 public sealed class {{ table.pascal_name }}Table : ISoraTable
 {
     private readonly {{ table.container_type }} rows;
+{%- if table.mode == "map" and table.key_field_name %}
+    private readonly List<{{ table.key_type }}> keys;
+{%- endif %}
 {%- for index in table.unique_indexes %}
     private readonly Dictionary<{{ index.key_type }}, {{ table.row_type }}> {{ index.camel_name }};
 {%- endfor %}
@@ -49,9 +52,12 @@ public sealed class {{ table.pascal_name }}Table : ISoraTable
     private readonly Dictionary<{{ index.key_type }}, List<{{ table.row_type }}>> {{ index.camel_name }};
 {%- endfor %}
 
-    internal {{ table.pascal_name }}Table({{ table.container_type }} rows{%- for index in table.unique_indexes %}, Dictionary<{{ index.key_type }}, {{ table.row_type }}> {{ index.camel_name }}{%- endfor %}{%- for index in table.non_unique_indexes %}, Dictionary<{{ index.key_type }}, List<{{ table.row_type }}>> {{ index.camel_name }}{%- endfor %})
+    internal {{ table.pascal_name }}Table({{ table.container_type }} rows{%- if table.mode == "map" and table.key_field_name %}, List<{{ table.key_type }}> keys{%- endif %}{%- for index in table.unique_indexes %}, Dictionary<{{ index.key_type }}, {{ table.row_type }}> {{ index.camel_name }}{%- endfor %}{%- for index in table.non_unique_indexes %}, Dictionary<{{ index.key_type }}, List<{{ table.row_type }}>> {{ index.camel_name }}{%- endfor %})
     {
         this.rows = rows;
+{%- if table.mode == "map" and table.key_field_name %}
+        this.keys = keys;
+{%- endif %}
 {%- for index in table.unique_indexes %}
         this.{{ index.camel_name }} = {{ index.camel_name }};
 {%- endfor %}
@@ -70,7 +76,8 @@ public sealed class {{ table.pascal_name }}Table : ISoraTable
 {%- if table.mode == "map" and table.key_field_name %}
 {%- if table.unique_indexes or table.non_unique_indexes %}
         return new {{ table.pascal_name }}Table(
-            SoraConfig.DecodeMapTable(rows, row => row.{{ table.key_field_name }}){% if table.unique_indexes or table.non_unique_indexes %},{% endif %}
+            SoraConfig.DecodeMapTable(rows, row => row.{{ table.key_field_name }}),
+            rows.ConvertAll(row => row.{{ table.key_field_name }}){% if table.unique_indexes or table.non_unique_indexes %},{% endif %}
 {%- for index in table.unique_indexes %}
             SoraConfig.DecodeUniqueIndex(rows, row => row.{{ index.field_name }}){% if not loop.last or table.non_unique_indexes %},{% endif %}
 {%- endfor %}
@@ -79,7 +86,7 @@ public sealed class {{ table.pascal_name }}Table : ISoraTable
 {%- endfor %}
         );
 {%- else %}
-        return new {{ table.pascal_name }}Table(SoraConfig.DecodeMapTable(rows, row => row.{{ table.key_field_name }}));
+        return new {{ table.pascal_name }}Table(SoraConfig.DecodeMapTable(rows, row => row.{{ table.key_field_name }}), rows.ConvertAll(row => row.{{ table.key_field_name }}));
 {%- endif %}
 {%- elif table.mode == "singleton" %}
         return new {{ table.pascal_name }}Table(SoraConfig.RequireSingletonTable(rows, "{{ table.name }}"));
@@ -106,6 +113,24 @@ public sealed class {{ table.pascal_name }}Table : ISoraTable
     public {{ table.row_type }}? Get({{ table.key_type }} key)
     {
         return rows.TryGetValue(key, out var row) ? row : default;
+    }
+
+    public IReadOnlyList<{{ table.key_type }}> Keys => keys;
+
+    public IReadOnlyList<{{ table.row_type }}> OrderedRows
+    {
+        get
+        {
+            var orderedRows = new List<{{ table.row_type }}>(keys.Count);
+            foreach (var key in keys)
+            {
+                if (rows.TryGetValue(key, out var row))
+                {
+                    orderedRows.Add(row);
+                }
+            }
+            return orderedRows;
+        }
     }
 
 {%- endif %}

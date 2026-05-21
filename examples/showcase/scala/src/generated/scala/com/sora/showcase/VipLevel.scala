@@ -18,11 +18,14 @@ object VipLevel {
 }
 
 final class VipLevelTable private (
-  val rows: Map[Int, VipLevel]
+  val rows: Map[Int, VipLevel],
+  val keys: Vector[Int]
 ) extends SoraTable {
   def get(key: Int): Option[VipLevel] = rows.get(key)
 
   def values: Iterable[VipLevel] = rows.values
+
+  def orderedValues: Vector[VipLevel] = keys.flatMap(rows.get)
   override val name: String = "VipLevel"
   override val mode: SoraTableMode = SoraTableMode.Map
   override val key: Option[String] = Some("level")
@@ -36,6 +39,7 @@ object VipLevelTable {
 
   private def fromRows(rows: Vector[VipLevel]): VipLevelTable =
     new VipLevelTable(
-      rows.map(row => row.level -> row).toMap
+      rows.map(row => row.level -> row).toMap,
+      rows.map(row => row.level)
     )
 }

@@ -22,4 +22,6 @@ export declare class ShopTable implements SoraConfigTable {
     len(): number;
     get(key: number): Shop | undefined;
     rows(): ReadonlyMap<number, Shop>;
+    keys(): readonly number[];
+    orderedRows(): Shop[];
 }

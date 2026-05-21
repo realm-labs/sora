@@ -31,10 +31,13 @@ data class Achievement(
 
 class AchievementTable private constructor(
     val rows: Map<Int, Achievement>,
+    val keys: List<Int>,
 ) : SoraTable {
     operator fun get(key: Int): Achievement? = rows[key]
 
     fun values(): Collection<Achievement> = rows.values
+
+    fun orderedValues(): List<Achievement> = keys.mapNotNull { rows[it] }
     override val name: String = "Achievement"
     override val mode: SoraTableMode = SoraTableMode.Map
     override val key: String? = "id"
@@ -49,6 +52,7 @@ class AchievementTable private constructor(
         private fun fromRows(rows: List<Achievement>): AchievementTable =
             AchievementTable(
                 rows.associateBy { it.id },
+                rows.map { it.id },
             )
     }
 }

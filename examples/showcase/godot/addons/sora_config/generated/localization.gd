@@ -24,6 +24,7 @@ static func decode(value: Variant) -> Localization:
 class LocalizationTable:
 	extends SoraRuntime.SoraConfigTable
 	var _rows: Dictionary = {}
+	var keys: Array = []
 
 	static func decode(rows: Array) -> LocalizationTable:
 		var table := LocalizationTable.new()
@@ -31,6 +32,7 @@ class LocalizationTable:
 		table.mode = "map"
 		table.key = "key"
 		table._rows = SoraRuntime.decode_map_table(rows, func(row): return row.key)
+		table.keys = rows.map(func(row): return row.key)
 		return table
 
 	func length() -> int:
@@ -46,3 +48,10 @@ class LocalizationTable:
 
 	func rows() -> Array:
 		return _rows.values()
+
+	func ordered_rows() -> Array:
+		var out: Array = []
+		for key_value in keys:
+			if _rows.has(key_value):
+				out.append(_rows[key_value])
+		return out

@@ -42,10 +42,12 @@ public sealed record MailTemplate(
 public sealed class MailTemplateTable : ISoraTable
 {
     private readonly Dictionary<int, MailTemplate> rows;
+    private readonly List<int> keys;
 
-    internal MailTemplateTable(Dictionary<int, MailTemplate> rows)
+    internal MailTemplateTable(Dictionary<int, MailTemplate> rows, List<int> keys)
     {
         this.rows = rows;
+        this.keys = keys;
     }
 
     internal static MailTemplateTable Decode(ISoraTableSource source)
@@ -55,13 +57,31 @@ public sealed class MailTemplateTable : ISoraTable
 
     internal static MailTemplateTable FromRows(List<MailTemplate> rows)
     {
-        return new MailTemplateTable(SoraConfig.DecodeMapTable(rows, row => row.Id));
+        return new MailTemplateTable(SoraConfig.DecodeMapTable(rows, row => row.Id), rows.ConvertAll(row => row.Id));
     }
 
     public Dictionary<int, MailTemplate> Rows => rows;
     public MailTemplate? Get(int key)
     {
         return rows.TryGetValue(key, out var row) ? row : default;
+    }
+
+    public IReadOnlyList<int> Keys => keys;
+
+    public IReadOnlyList<MailTemplate> OrderedRows
+    {
+        get
+        {
+            var orderedRows = new List<MailTemplate>(keys.Count);
+            foreach (var key in keys)
+            {
+                if (rows.TryGetValue(key, out var row))
+                {
+                    orderedRows.Add(row);
+                }
+            }
+            return orderedRows;
+        }
     }
     public string Name => "MailTemplate";
     public SoraTableMode Mode => SoraTableMode.Map;

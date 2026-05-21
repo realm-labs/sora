@@ -40,10 +40,15 @@ func decodeDropGroupValue(input SoraValue) (DropGroup, error) {
 
 type DropGroupTable struct {
 	rows map[int32]DropGroup
+	keys []int32
 }
 
 func buildDropGroupTable(rows []DropGroup) (*DropGroupTable, error) {
-	return &DropGroupTable{rows: DecodeMapTable(rows, func(row DropGroup) int32 { return row.Id })}, nil
+	keys := make([]int32, 0, len(rows))
+	for _, row := range rows {
+		keys = append(keys, row.Id)
+	}
+	return &DropGroupTable{rows: DecodeMapTable(rows, func(row DropGroup) int32 { return row.Id }), keys: keys}, nil
 }
 
 func decodeDropGroupTable(source SoraTableSource) (*DropGroupTable, error) {
@@ -60,6 +65,20 @@ func (table *DropGroupTable) Rows() map[int32]DropGroup {
 func (table *DropGroupTable) Get(key int32) (DropGroup, bool) {
 	value, ok := table.rows[key]
 	return value, ok
+}
+
+func (table *DropGroupTable) Keys() []int32 {
+	return table.keys
+}
+
+func (table *DropGroupTable) OrderedRows() []DropGroup {
+	rows := make([]DropGroup, 0, len(table.keys))
+	for _, key := range table.keys {
+		if row, ok := table.rows[key]; ok {
+			rows = append(rows, row)
+		}
+	}
+	return rows
 }
 func (table *DropGroupTable) Name() string {
 	return "DropGroup"

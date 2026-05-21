@@ -58,10 +58,15 @@ func decodeDungeonValue(input SoraValue) (Dungeon, error) {
 
 type DungeonTable struct {
 	rows map[int32]Dungeon
+	keys []int32
 }
 
 func buildDungeonTable(rows []Dungeon) (*DungeonTable, error) {
-	return &DungeonTable{rows: DecodeMapTable(rows, func(row Dungeon) int32 { return row.Id })}, nil
+	keys := make([]int32, 0, len(rows))
+	for _, row := range rows {
+		keys = append(keys, row.Id)
+	}
+	return &DungeonTable{rows: DecodeMapTable(rows, func(row Dungeon) int32 { return row.Id }), keys: keys}, nil
 }
 
 func decodeDungeonTable(source SoraTableSource) (*DungeonTable, error) {
@@ -78,6 +83,20 @@ func (table *DungeonTable) Rows() map[int32]Dungeon {
 func (table *DungeonTable) Get(key int32) (Dungeon, bool) {
 	value, ok := table.rows[key]
 	return value, ok
+}
+
+func (table *DungeonTable) Keys() []int32 {
+	return table.keys
+}
+
+func (table *DungeonTable) OrderedRows() []Dungeon {
+	rows := make([]Dungeon, 0, len(table.keys))
+	for _, key := range table.keys {
+		if row, ok := table.rows[key]; ok {
+			rows = append(rows, row)
+		}
+	}
+	return rows
 }
 func (table *DungeonTable) Name() string {
 	return "Dungeon"

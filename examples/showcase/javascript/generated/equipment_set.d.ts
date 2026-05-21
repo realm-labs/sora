@@ -23,4 +23,6 @@ export declare class EquipmentSetTable implements SoraConfigTable {
     len(): number;
     get(key: number): EquipmentSet | undefined;
     rows(): ReadonlyMap<number, EquipmentSet>;
+    keys(): readonly number[];
+    orderedRows(): EquipmentSet[];
 }

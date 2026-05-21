@@ -48,10 +48,12 @@ public sealed record Character(
 public sealed class CharacterTable : ISoraTable
 {
     private readonly Dictionary<int, Character> rows;
+    private readonly List<int> keys;
 
-    internal CharacterTable(Dictionary<int, Character> rows)
+    internal CharacterTable(Dictionary<int, Character> rows, List<int> keys)
     {
         this.rows = rows;
+        this.keys = keys;
     }
 
     internal static CharacterTable Decode(ISoraTableSource source)
@@ -61,13 +63,31 @@ public sealed class CharacterTable : ISoraTable
 
     internal static CharacterTable FromRows(List<Character> rows)
     {
-        return new CharacterTable(SoraConfig.DecodeMapTable(rows, row => row.Id));
+        return new CharacterTable(SoraConfig.DecodeMapTable(rows, row => row.Id), rows.ConvertAll(row => row.Id));
     }
 
     public Dictionary<int, Character> Rows => rows;
     public Character? Get(int key)
     {
         return rows.TryGetValue(key, out var row) ? row : default;
+    }
+
+    public IReadOnlyList<int> Keys => keys;
+
+    public IReadOnlyList<Character> OrderedRows
+    {
+        get
+        {
+            var orderedRows = new List<Character>(keys.Count);
+            foreach (var key in keys)
+            {
+                if (rows.TryGetValue(key, out var row))
+                {
+                    orderedRows.Add(row);
+                }
+            }
+            return orderedRows;
+        }
     }
     public string Name => "Character";
     public SoraTableMode Mode => SoraTableMode.Map;

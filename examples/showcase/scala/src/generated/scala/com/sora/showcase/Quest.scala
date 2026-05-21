@@ -27,11 +27,14 @@ object Quest {
 }
 
 final class QuestTable private (
-  val rows: Map[Int, Quest]
+  val rows: Map[Int, Quest],
+  val keys: Vector[Int]
 ) extends SoraTable {
   def get(key: Int): Option[Quest] = rows.get(key)
 
   def values: Iterable[Quest] = rows.values
+
+  def orderedValues: Vector[Quest] = keys.flatMap(rows.get)
   override val name: String = "Quest"
   override val mode: SoraTableMode = SoraTableMode.Map
   override val key: Option[String] = Some("id")
@@ -45,6 +48,7 @@ object QuestTable {
 
   private def fromRows(rows: Vector[Quest]): QuestTable =
     new QuestTable(
-      rows.map(row => row.id -> row).toMap
+      rows.map(row => row.id -> row).toMap,
+      rows.map(row => row.id)
     )
 }

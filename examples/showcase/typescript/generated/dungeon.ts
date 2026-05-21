@@ -41,11 +41,13 @@ export function decodeDungeonValue(value: SoraValue): Dungeon {
 export class DungeonTable implements SoraConfigTable {
     private constructor(
         private readonly _rows: Map<number, Dungeon>,
+        private readonly _keys: number[],
     ) {}
 
     static decode(rows: Dungeon[]): DungeonTable {
         return new DungeonTable(
             decodeMapTable(rows, (row) => row.id),
+            rows.map((row) => row.id),
         );
     }
 
@@ -70,5 +72,16 @@ export class DungeonTable implements SoraConfigTable {
 
     rows(): ReadonlyMap<number, Dungeon> {
         return this._rows;
+    }
+
+    keys(): readonly number[] {
+        return this._keys;
+    }
+
+    orderedRows(): Dungeon[] {
+        return this._keys.flatMap((key) => {
+            const row = this._rows.get(key);
+            return row === undefined ? [] : [row];
+        });
     }
 }

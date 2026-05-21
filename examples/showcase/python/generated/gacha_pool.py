@@ -42,13 +42,16 @@ class GachaPoolTable(SoraConfigTable):
     def __init__(
         self,
         rows: dict[int, GachaPool],
+        keys: list[int],
     ) -> None:
         self._rows = rows
+        self._keys = keys
 
     @staticmethod
     def decode(rows: list[GachaPool]) -> GachaPoolTable:
         return GachaPoolTable(
             decode_map_table(rows, lambda row: row.id),
+            [row.id for row in rows],
         )
 
     def name(self) -> str:
@@ -69,3 +72,9 @@ class GachaPoolTable(SoraConfigTable):
 
     def rows(self) -> dict[int, GachaPool]:
         return self._rows
+
+    def keys(self) -> list[int]:
+        return self._keys
+
+    def ordered_rows(self) -> list[GachaPool]:
+        return [self._rows[key] for key in self._keys if key in self._rows]

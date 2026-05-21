@@ -35,11 +35,13 @@ export function decodeLevelExpValue(value: SoraValue): LevelExp {
 export class LevelExpTable implements SoraConfigTable {
     private constructor(
         private readonly _rows: Map<number, LevelExp>,
+        private readonly _keys: number[],
     ) {}
 
     static decode(rows: LevelExp[]): LevelExpTable {
         return new LevelExpTable(
             decodeMapTable(rows, (row) => row.level),
+            rows.map((row) => row.level),
         );
     }
 
@@ -64,5 +66,16 @@ export class LevelExpTable implements SoraConfigTable {
 
     rows(): ReadonlyMap<number, LevelExp> {
         return this._rows;
+    }
+
+    keys(): readonly number[] {
+        return this._keys;
+    }
+
+    orderedRows(): LevelExp[] {
+        return this._keys.flatMap((key) => {
+            const row = this._rows.get(key);
+            return row === undefined ? [] : [row];
+        });
     }
 }

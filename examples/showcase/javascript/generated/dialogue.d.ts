@@ -20,4 +20,6 @@ export declare class DialogueTable implements SoraConfigTable {
     len(): number;
     get(key: number): Dialogue | undefined;
     rows(): ReadonlyMap<number, Dialogue>;
+    keys(): readonly number[];
+    orderedRows(): Dialogue[];
 }

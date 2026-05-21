@@ -59,10 +59,12 @@ class ItemTable(SoraConfigTable):
     def __init__(
         self,
         rows: dict[int, Item],
+        keys: list[int],
         by_name: dict[str, Item],
         by_item_type: dict[ItemType, list[Item]],
     ) -> None:
         self._rows = rows
+        self._keys = keys
         self._by_name = by_name
         self._by_item_type = by_item_type
 
@@ -70,6 +72,7 @@ class ItemTable(SoraConfigTable):
     def decode(rows: list[Item]) -> ItemTable:
         return ItemTable(
             decode_map_table(rows, lambda row: row.id),
+            [row.id for row in rows],
             decode_unique_index(rows, lambda row: row.name),
             decode_index(rows, lambda row: row.item_type),
         )
@@ -92,6 +95,12 @@ class ItemTable(SoraConfigTable):
 
     def rows(self) -> dict[int, Item]:
         return self._rows
+
+    def keys(self) -> list[int]:
+        return self._keys
+
+    def ordered_rows(self) -> list[Item]:
+        return [self._rows[key] for key in self._keys if key in self._rows]
     def get_by_name(
         self,
         name: str,

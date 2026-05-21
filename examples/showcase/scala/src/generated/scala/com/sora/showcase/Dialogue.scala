@@ -18,11 +18,14 @@ object Dialogue {
 }
 
 final class DialogueTable private (
-  val rows: Map[Int, Dialogue]
+  val rows: Map[Int, Dialogue],
+  val keys: Vector[Int]
 ) extends SoraTable {
   def get(key: Int): Option[Dialogue] = rows.get(key)
 
   def values: Iterable[Dialogue] = rows.values
+
+  def orderedValues: Vector[Dialogue] = keys.flatMap(rows.get)
   override val name: String = "Dialogue"
   override val mode: SoraTableMode = SoraTableMode.Map
   override val key: Option[String] = Some("id")
@@ -36,6 +39,7 @@ object DialogueTable {
 
   private def fromRows(rows: Vector[Dialogue]): DialogueTable =
     new DialogueTable(
-      rows.map(row => row.id -> row).toMap
+      rows.map(row => row.id -> row).toMap,
+      rows.map(row => row.id)
     )
 }

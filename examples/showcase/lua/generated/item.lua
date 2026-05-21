@@ -28,6 +28,7 @@ end
 
 ---@class ItemTable
 ---@field private _rows table<integer, Item>
+---@field private _keys integer[]
 ---@field private _by_name table<string, Item>
 ---@field private _by_item_type table<ItemType, Item[]>
 local ItemTable = {}
@@ -36,8 +37,13 @@ ItemTable.__index = ItemTable
 ---@param rows Item[]
 ---@return ItemTable
 function ItemTable.decode(rows)
+    local keys = {}
+    for index, row in ipairs(rows) do
+        keys[index] = row.id
+    end
     return setmetatable({
         _rows = Runtime.decode_map_table(rows, function(row) return row.id end),
+        _keys = keys,
         _by_name = Runtime.decode_unique_index(rows, function(row) return row.name end),
         _by_item_type = Runtime.decode_index(rows, function(row) return row.itemType end),
     }, ItemTable)
@@ -75,6 +81,23 @@ end
 ---@return table<integer, Item>
 function ItemTable:rows()
     return self._rows
+end
+
+---@return integer[]
+function ItemTable:keys()
+    return self._keys
+end
+
+---@return Item[]
+function ItemTable:ordered_rows()
+    local rows = {}
+    for _, key in ipairs(self._keys) do
+        local row = self._rows[key]
+        if row ~= nil then
+            rows[#rows + 1] = row
+        end
+    end
+    return rows
 end
 ---@param name string
 ---@return Item?

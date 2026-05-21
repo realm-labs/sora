@@ -21,14 +21,20 @@ end
 
 ---@class VipLevelTable
 ---@field private _rows table<integer, VipLevel>
+---@field private _keys integer[]
 local VipLevelTable = {}
 VipLevelTable.__index = VipLevelTable
 
 ---@param rows VipLevel[]
 ---@return VipLevelTable
 function VipLevelTable.decode(rows)
+    local keys = {}
+    for index, row in ipairs(rows) do
+        keys[index] = row.level
+    end
     return setmetatable({
         _rows = Runtime.decode_map_table(rows, function(row) return row.level end),
+        _keys = keys,
     }, VipLevelTable)
 end
 
@@ -64,6 +70,23 @@ end
 ---@return table<integer, VipLevel>
 function VipLevelTable:rows()
     return self._rows
+end
+
+---@return integer[]
+function VipLevelTable:keys()
+    return self._keys
+end
+
+---@return VipLevel[]
+function VipLevelTable:ordered_rows()
+    local rows = {}
+    for _, key in ipairs(self._keys) do
+        local row = self._rows[key]
+        if row ~= nil then
+            rows[#rows + 1] = row
+        end
+    end
+    return rows
 end
 VipLevel.Table = VipLevelTable
 

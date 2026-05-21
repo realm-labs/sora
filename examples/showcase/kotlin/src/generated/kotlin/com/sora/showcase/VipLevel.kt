@@ -28,10 +28,13 @@ data class VipLevel(
 
 class VipLevelTable private constructor(
     val rows: Map<Int, VipLevel>,
+    val keys: List<Int>,
 ) : SoraTable {
     operator fun get(key: Int): VipLevel? = rows[key]
 
     fun values(): Collection<VipLevel> = rows.values
+
+    fun orderedValues(): List<VipLevel> = keys.mapNotNull { rows[it] }
     override val name: String = "VipLevel"
     override val mode: SoraTableMode = SoraTableMode.Map
     override val key: String? = "level"
@@ -46,6 +49,7 @@ class VipLevelTable private constructor(
         private fun fromRows(rows: List<VipLevel>): VipLevelTable =
             VipLevelTable(
                 rows.associateBy { it.level },
+                rows.map { it.level },
             )
     }
 }

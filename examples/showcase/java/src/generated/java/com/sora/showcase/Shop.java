@@ -40,13 +40,15 @@ public final class Shop {
 
 final class ShopTable implements SoraTable {
     private final java.util.Map<Integer, Shop> rows;
+    private final List<Integer> keys;
 
-    private ShopTable(java.util.Map<Integer, Shop> rows) {
+    private ShopTable(java.util.Map<Integer, Shop> rows, List<Integer> keys) {
         this.rows = rows;
+        this.keys = keys;
     }
 
     private static ShopTable fromRows(List<Shop> rows) {
-        return new ShopTable(SoraConfig.decodeMapTable(rows, row -> row.id));
+        return new ShopTable(SoraConfig.decodeMapTable(rows, row -> row.id), rows.stream().map(row -> row.id).toList());
     }
 
     static ShopTable decode(SoraTableSource source) {
@@ -58,6 +60,14 @@ final class ShopTable implements SoraTable {
     }
     public Shop get(Integer key) {
         return rows.get(key);
+    }
+
+    public List<Integer> keys() {
+        return keys;
+    }
+
+    public List<Shop> orderedRows() {
+        return keys.stream().map(rows::get).toList();
     }
     @Override
     public String name() {

@@ -21,14 +21,20 @@ end
 
 ---@class RecipeTable
 ---@field private _rows table<integer, Recipe>
+---@field private _keys integer[]
 local RecipeTable = {}
 RecipeTable.__index = RecipeTable
 
 ---@param rows Recipe[]
 ---@return RecipeTable
 function RecipeTable.decode(rows)
+    local keys = {}
+    for index, row in ipairs(rows) do
+        keys[index] = row.id
+    end
     return setmetatable({
         _rows = Runtime.decode_map_table(rows, function(row) return row.id end),
+        _keys = keys,
     }, RecipeTable)
 end
 
@@ -64,6 +70,23 @@ end
 ---@return table<integer, Recipe>
 function RecipeTable:rows()
     return self._rows
+end
+
+---@return integer[]
+function RecipeTable:keys()
+    return self._keys
+end
+
+---@return Recipe[]
+function RecipeTable:ordered_rows()
+    local rows = {}
+    for _, key in ipairs(self._keys) do
+        local row = self._rows[key]
+        if row ~= nil then
+            rows[#rows + 1] = row
+        end
+    end
+    return rows
 end
 Recipe.Table = RecipeTable
 

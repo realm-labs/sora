@@ -44,11 +44,13 @@ export function decodeStageValue(value: SoraValue): Stage {
 export class StageTable implements SoraConfigTable {
     private constructor(
         private readonly _rows: Map<number, Stage>,
+        private readonly _keys: number[],
     ) {}
 
     static decode(rows: Stage[]): StageTable {
         return new StageTable(
             decodeMapTable(rows, (row) => row.id),
+            rows.map((row) => row.id),
         );
     }
 
@@ -73,5 +75,16 @@ export class StageTable implements SoraConfigTable {
 
     rows(): ReadonlyMap<number, Stage> {
         return this._rows;
+    }
+
+    keys(): readonly number[] {
+        return this._keys;
+    }
+
+    orderedRows(): Stage[] {
+        return this._keys.flatMap((key) => {
+            const row = this._rows.get(key);
+            return row === undefined ? [] : [row];
+        });
     }
 }

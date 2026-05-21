@@ -35,13 +35,15 @@ public final class DropGroup {
 
 final class DropGroupTable implements SoraTable {
     private final java.util.Map<Integer, DropGroup> rows;
+    private final List<Integer> keys;
 
-    private DropGroupTable(java.util.Map<Integer, DropGroup> rows) {
+    private DropGroupTable(java.util.Map<Integer, DropGroup> rows, List<Integer> keys) {
         this.rows = rows;
+        this.keys = keys;
     }
 
     private static DropGroupTable fromRows(List<DropGroup> rows) {
-        return new DropGroupTable(SoraConfig.decodeMapTable(rows, row -> row.id));
+        return new DropGroupTable(SoraConfig.decodeMapTable(rows, row -> row.id), rows.stream().map(row -> row.id).toList());
     }
 
     static DropGroupTable decode(SoraTableSource source) {
@@ -53,6 +55,14 @@ final class DropGroupTable implements SoraTable {
     }
     public DropGroup get(Integer key) {
         return rows.get(key);
+    }
+
+    public List<Integer> keys() {
+        return keys;
+    }
+
+    public List<DropGroup> orderedRows() {
+        return keys.stream().map(rows::get).toList();
     }
     @Override
     public String name() {

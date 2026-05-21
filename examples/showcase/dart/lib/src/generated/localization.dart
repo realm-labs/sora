@@ -28,14 +28,17 @@ final class Localization {
 
 final class LocalizationTable extends Iterable<Localization> implements SoraConfigTable {
   final Map<String, Localization> _rows;
+  final List<String> _keys;
 
   const LocalizationTable(
     this._rows,
+    this._keys,
   );
 
   static LocalizationTable decode(List<Localization> rows) {
     return LocalizationTable(
       decodeMapTable(rows, (row) => row.key),
+      rows.map((row) => row.key).toList(growable: false),
     );
   }
 
@@ -64,4 +67,11 @@ final class LocalizationTable extends Iterable<Localization> implements SoraConf
   }
 
   Map<String, Localization> get rows => _rows;
+
+  List<String> get keys => _keys;
+
+  List<Localization> get orderedRows => [
+        for (final key in _keys)
+          if (_rows[key] != null) _rows[key]!,
+      ];
 }

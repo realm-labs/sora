@@ -38,11 +38,13 @@ export function decodeRecipeValue(value: SoraValue): Recipe {
 export class RecipeTable implements SoraConfigTable {
     private constructor(
         private readonly _rows: Map<number, Recipe>,
+        private readonly _keys: number[],
     ) {}
 
     static decode(rows: Recipe[]): RecipeTable {
         return new RecipeTable(
             decodeMapTable(rows, (row) => row.id),
+            rows.map((row) => row.id),
         );
     }
 
@@ -67,5 +69,16 @@ export class RecipeTable implements SoraConfigTable {
 
     rows(): ReadonlyMap<number, Recipe> {
         return this._rows;
+    }
+
+    keys(): readonly number[] {
+        return this._keys;
+    }
+
+    orderedRows(): Recipe[] {
+        return this._keys.flatMap((key) => {
+            const row = this._rows.get(key);
+            return row === undefined ? [] : [row];
+        });
     }
 }

@@ -28,10 +28,13 @@ data class GachaPool(
 
 class GachaPoolTable private constructor(
     val rows: Map<Int, GachaPool>,
+    val keys: List<Int>,
 ) : SoraTable {
     operator fun get(key: Int): GachaPool? = rows[key]
 
     fun values(): Collection<GachaPool> = rows.values
+
+    fun orderedValues(): List<GachaPool> = keys.mapNotNull { rows[it] }
     override val name: String = "GachaPool"
     override val mode: SoraTableMode = SoraTableMode.Map
     override val key: String? = "id"
@@ -46,6 +49,7 @@ class GachaPoolTable private constructor(
         private fun fromRows(rows: List<GachaPool>): GachaPoolTable =
             GachaPoolTable(
                 rows.associateBy { it.id },
+                rows.map { it.id },
             )
     }
 }

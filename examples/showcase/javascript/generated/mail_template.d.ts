@@ -26,4 +26,6 @@ export declare class MailTemplateTable implements SoraConfigTable {
     len(): number;
     get(key: number): MailTemplate | undefined;
     rows(): ReadonlyMap<number, MailTemplate>;
+    keys(): readonly number[];
+    orderedRows(): MailTemplate[];
 }

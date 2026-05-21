@@ -48,6 +48,7 @@ public:
 {%- if table.mode == "map" and table.key_field_name %}
         for (std::size_t index = 0; index < rows.size(); ++index) {
             const {{ table.row_type }}& row = rows[index];
+            table.keys_.push_back(row.{{ table.key_field_name }});
             table.rows_.emplace(row.{{ table.key_field_name }}, row);
         }
 {%- elif table.mode == "singleton" %}
@@ -88,6 +89,24 @@ public:
 
     const {{ table.container_type }}& rows() const {
         return rows_;
+    }
+
+    const std::vector<{{ table.key_type }}>& keys() const {
+        return keys_;
+    }
+
+    std::vector<const {{ table.row_type }}*> ordered_rows() const {
+        std::vector<const {{ table.row_type }}*> rows;
+        rows.reserve(keys_.size());
+        for (typename std::vector<{{ table.key_type }}>::const_iterator key = keys_.begin();
+             key != keys_.end();
+             ++key) {
+            typename {{ table.container_type }}::const_iterator it = rows_.find(*key);
+            if (it != rows_.end()) {
+                rows.push_back(&it->second);
+            }
+        }
+        return rows;
     }
 {%- elif table.mode == "singleton" %}
     const {{ table.row_type }}& row() const {
@@ -150,6 +169,9 @@ private:
     {{ table.row_type }} row_;
 {%- else %}
     {{ table.container_type }} rows_;
+{%- endif %}
+{%- if table.mode == "map" and table.key_field_name %}
+    std::vector<{{ table.key_type }}> keys_;
 {%- endif %}
 {%- for index in table.unique_indexes %}
     std::unordered_map<{{ index.key_type }}, const {{ table.row_type }}*> {{ index.name }}_;

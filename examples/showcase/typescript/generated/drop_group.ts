@@ -32,11 +32,13 @@ export function decodeDropGroupValue(value: SoraValue): DropGroup {
 export class DropGroupTable implements SoraConfigTable {
     private constructor(
         private readonly _rows: Map<number, DropGroup>,
+        private readonly _keys: number[],
     ) {}
 
     static decode(rows: DropGroup[]): DropGroupTable {
         return new DropGroupTable(
             decodeMapTable(rows, (row) => row.id),
+            rows.map((row) => row.id),
         );
     }
 
@@ -61,5 +63,16 @@ export class DropGroupTable implements SoraConfigTable {
 
     rows(): ReadonlyMap<number, DropGroup> {
         return this._rows;
+    }
+
+    keys(): readonly number[] {
+        return this._keys;
+    }
+
+    orderedRows(): DropGroup[] {
+        return this._keys.flatMap((key) => {
+            const row = this._rows.get(key);
+            return row === undefined ? [] : [row];
+        });
     }
 }

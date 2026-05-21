@@ -45,10 +45,12 @@ public sealed record Monster(
 public sealed class MonsterTable : ISoraTable
 {
     private readonly Dictionary<int, Monster> rows;
+    private readonly List<int> keys;
 
-    internal MonsterTable(Dictionary<int, Monster> rows)
+    internal MonsterTable(Dictionary<int, Monster> rows, List<int> keys)
     {
         this.rows = rows;
+        this.keys = keys;
     }
 
     internal static MonsterTable Decode(ISoraTableSource source)
@@ -58,13 +60,31 @@ public sealed class MonsterTable : ISoraTable
 
     internal static MonsterTable FromRows(List<Monster> rows)
     {
-        return new MonsterTable(SoraConfig.DecodeMapTable(rows, row => row.Id));
+        return new MonsterTable(SoraConfig.DecodeMapTable(rows, row => row.Id), rows.ConvertAll(row => row.Id));
     }
 
     public Dictionary<int, Monster> Rows => rows;
     public Monster? Get(int key)
     {
         return rows.TryGetValue(key, out var row) ? row : default;
+    }
+
+    public IReadOnlyList<int> Keys => keys;
+
+    public IReadOnlyList<Monster> OrderedRows
+    {
+        get
+        {
+            var orderedRows = new List<Monster>(keys.Count);
+            foreach (var key in keys)
+            {
+                if (rows.TryGetValue(key, out var row))
+                {
+                    orderedRows.Add(row);
+                }
+            }
+            return orderedRows;
+        }
     }
     public string Name => "Monster";
     public SoraTableMode Mode => SoraTableMode.Map;

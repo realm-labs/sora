@@ -61,13 +61,15 @@ public final class Quest {
 
 final class QuestTable implements SoraTable {
     private final java.util.Map<Integer, Quest> rows;
+    private final List<Integer> keys;
 
-    private QuestTable(java.util.Map<Integer, Quest> rows) {
+    private QuestTable(java.util.Map<Integer, Quest> rows, List<Integer> keys) {
         this.rows = rows;
+        this.keys = keys;
     }
 
     private static QuestTable fromRows(List<Quest> rows) {
-        return new QuestTable(SoraConfig.decodeMapTable(rows, row -> row.id));
+        return new QuestTable(SoraConfig.decodeMapTable(rows, row -> row.id), rows.stream().map(row -> row.id).toList());
     }
 
     static QuestTable decode(SoraTableSource source) {
@@ -79,6 +81,14 @@ final class QuestTable implements SoraTable {
     }
     public Quest get(Integer key) {
         return rows.get(key);
+    }
+
+    public List<Integer> keys() {
+        return keys;
+    }
+
+    public List<Quest> orderedRows() {
+        return keys.stream().map(rows::get).toList();
     }
     @Override
     public String name() {

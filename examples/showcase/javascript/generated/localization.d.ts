@@ -21,4 +21,6 @@ export declare class LocalizationTable implements SoraConfigTable {
     len(): number;
     get(key: string): Localization | undefined;
     rows(): ReadonlyMap<string, Localization>;
+    keys(): readonly string[];
+    orderedRows(): Localization[];
 }

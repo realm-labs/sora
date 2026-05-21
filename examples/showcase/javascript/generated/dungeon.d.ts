@@ -23,4 +23,6 @@ export declare class DungeonTable implements SoraConfigTable {
     len(): number;
     get(key: number): Dungeon | undefined;
     rows(): ReadonlyMap<number, Dungeon>;
+    keys(): readonly number[];
+    orderedRows(): Dungeon[];
 }

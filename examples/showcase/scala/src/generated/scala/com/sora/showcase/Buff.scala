@@ -20,11 +20,14 @@ object Buff {
 }
 
 final class BuffTable private (
-  val rows: Map[Int, Buff]
+  val rows: Map[Int, Buff],
+  val keys: Vector[Int]
 ) extends SoraTable {
   def get(key: Int): Option[Buff] = rows.get(key)
 
   def values: Iterable[Buff] = rows.values
+
+  def orderedValues: Vector[Buff] = keys.flatMap(rows.get)
   override val name: String = "Buff"
   override val mode: SoraTableMode = SoraTableMode.Map
   override val key: Option[String] = Some("id")
@@ -38,6 +41,7 @@ object BuffTable {
 
   private def fromRows(rows: Vector[Buff]): BuffTable =
     new BuffTable(
-      rows.map(row => row.id -> row).toMap
+      rows.map(row => row.id -> row).toMap,
+      rows.map(row => row.id)
     )
 }
