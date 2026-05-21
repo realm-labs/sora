@@ -18,3 +18,29 @@ static func decode(value: Variant) -> Shop:
 	out.name = str(SoraRuntime.read_field(data, "name", ""))
 	out.currency = ResourceKind.decode(SoraRuntime.read_field(data, "currency", ""))
 	return out
+
+class ShopTable:
+	extends SoraRuntime.SoraConfigTable
+	var _rows: Dictionary = {}
+
+	static func decode(rows: Array) -> ShopTable:
+		var table := ShopTable.new()
+		table.name = "Shop"
+		table.mode = "map"
+		table.key = "id"
+		table._rows = SoraRuntime.decode_map_table(rows, func(row): return row.id)
+		return table
+
+	func length() -> int:
+		return _rows.size()
+	func get_row(key_value: Variant) -> Shop:
+		var value = _rows.get(key_value)
+		if value == null:
+			SoraRuntime.report_error("missing row in table `Shop` for key `%s`" % str(key_value))
+		return value
+
+	func try_get(key_value: Variant) -> Shop:
+		return _rows.get(key_value)
+
+	func rows() -> Array:
+		return _rows.values()

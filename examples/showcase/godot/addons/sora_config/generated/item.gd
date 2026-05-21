@@ -30,3 +30,39 @@ static func decode(value: Variant) -> Item:
 	out.price = ResourceCost.decode(SoraRuntime.read_field(data, "price", null))
 	out.tags = SoraRuntime.decode_array(SoraRuntime.read_field(data, "tags", []), func(item): return str(item))
 	return out
+
+class ItemTable:
+	extends SoraRuntime.SoraConfigTable
+	var _rows: Dictionary = {}
+	var _name: Dictionary = {}
+	var _item_type: Dictionary = {}
+
+	static func decode(rows: Array) -> ItemTable:
+		var table := ItemTable.new()
+		table.name = "Item"
+		table.mode = "map"
+		table.key = "id"
+		table._rows = SoraRuntime.decode_map_table(rows, func(row): return row.id)
+		table._name = SoraRuntime.decode_unique_index(rows, func(row): return row.name)
+		table._item_type = SoraRuntime.decode_index(rows, func(row): return row.item_type)
+		return table
+
+	func length() -> int:
+		return _rows.size()
+	func get_row(key_value: Variant) -> Item:
+		var value = _rows.get(key_value)
+		if value == null:
+			SoraRuntime.report_error("missing row in table `Item` for key `%s`" % str(key_value))
+		return value
+
+	func try_get(key_value: Variant) -> Item:
+		return _rows.get(key_value)
+
+	func rows() -> Array:
+		return _rows.values()
+
+	func get_by_name(name: Variant) -> Item:
+		return _name.get(name)
+
+	func find_by_item_type(item_type: Variant) -> Array:
+		return _item_type.get(item_type, [])

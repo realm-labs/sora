@@ -24,3 +24,29 @@ static func decode(value: Variant) -> Monster:
 	out.drop_group = int(SoraRuntime.read_field(data, "drop_group", 0))
 	out.spawn_pos = Vec3.decode(SoraRuntime.read_field(data, "spawn_pos", null))
 	return out
+
+class MonsterTable:
+	extends SoraRuntime.SoraConfigTable
+	var _rows: Dictionary = {}
+
+	static func decode(rows: Array) -> MonsterTable:
+		var table := MonsterTable.new()
+		table.name = "Monster"
+		table.mode = "map"
+		table.key = "id"
+		table._rows = SoraRuntime.decode_map_table(rows, func(row): return row.id)
+		return table
+
+	func length() -> int:
+		return _rows.size()
+	func get_row(key_value: Variant) -> Monster:
+		var value = _rows.get(key_value)
+		if value == null:
+			SoraRuntime.report_error("missing row in table `Monster` for key `%s`" % str(key_value))
+		return value
+
+	func try_get(key_value: Variant) -> Monster:
+		return _rows.get(key_value)
+
+	func rows() -> Array:
+		return _rows.values()

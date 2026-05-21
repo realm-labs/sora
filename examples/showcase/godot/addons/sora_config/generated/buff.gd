@@ -20,3 +20,29 @@ static func decode(value: Variant) -> Buff:
 	out.duration = float(SoraRuntime.read_field(data, "duration", 0.0))
 	out.modifiers = SoraRuntime.decode_array(SoraRuntime.read_field(data, "modifiers", []), func(item): return StatModifier.decode(item))
 	return out
+
+class BuffTable:
+	extends SoraRuntime.SoraConfigTable
+	var _rows: Dictionary = {}
+
+	static func decode(rows: Array) -> BuffTable:
+		var table := BuffTable.new()
+		table.name = "Buff"
+		table.mode = "map"
+		table.key = "id"
+		table._rows = SoraRuntime.decode_map_table(rows, func(row): return row.id)
+		return table
+
+	func length() -> int:
+		return _rows.size()
+	func get_row(key_value: Variant) -> Buff:
+		var value = _rows.get(key_value)
+		if value == null:
+			SoraRuntime.report_error("missing row in table `Buff` for key `%s`" % str(key_value))
+		return value
+
+	func try_get(key_value: Variant) -> Buff:
+		return _rows.get(key_value)
+
+	func rows() -> Array:
+		return _rows.values()

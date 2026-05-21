@@ -16,3 +16,29 @@ static func decode(value: Variant) -> DropGroup:
 	out.id = int(SoraRuntime.read_field(data, "id", 0))
 	out.name = str(SoraRuntime.read_field(data, "name", ""))
 	return out
+
+class DropGroupTable:
+	extends SoraRuntime.SoraConfigTable
+	var _rows: Dictionary = {}
+
+	static func decode(rows: Array) -> DropGroupTable:
+		var table := DropGroupTable.new()
+		table.name = "DropGroup"
+		table.mode = "map"
+		table.key = "id"
+		table._rows = SoraRuntime.decode_map_table(rows, func(row): return row.id)
+		return table
+
+	func length() -> int:
+		return _rows.size()
+	func get_row(key_value: Variant) -> DropGroup:
+		var value = _rows.get(key_value)
+		if value == null:
+			SoraRuntime.report_error("missing row in table `DropGroup` for key `%s`" % str(key_value))
+		return value
+
+	func try_get(key_value: Variant) -> DropGroup:
+		return _rows.get(key_value)
+
+	func rows() -> Array:
+		return _rows.values()

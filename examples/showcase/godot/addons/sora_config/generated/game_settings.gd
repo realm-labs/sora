@@ -22,3 +22,18 @@ static func decode(value: Variant) -> GameSettings:
 	out.spawn_pos = Vec3.decode(SoraRuntime.read_field(data, "spawn_pos", null))
 	out.starter_items = SoraRuntime.decode_array(SoraRuntime.read_field(data, "starter_items", []), func(item): return int(item))
 	return out
+
+class GameSettingsTable:
+	extends SoraRuntime.SoraConfigTable
+	var row: GameSettings = null
+
+	static func decode(rows: Array) -> GameSettingsTable:
+		var table := GameSettingsTable.new()
+		table.name = "GameSettings"
+		table.mode = "singleton"
+		table.key = null
+		table.row = SoraRuntime.require_singleton_table(rows, "GameSettings")
+		return table
+
+	func length() -> int:
+		return 1 if row != null else 0

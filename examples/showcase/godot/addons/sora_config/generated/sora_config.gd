@@ -3,636 +3,6 @@
 class_name SoraConfig
 extends RefCounted
 
-class SoraConfigTable:
-	var name: String = ""
-	var mode: String = ""
-	var key: Variant = null
-
-	func length() -> int:
-		return 0
-class ItemTable:
-	extends SoraConfigTable
-	var _rows: Dictionary = {}
-	var _name: Dictionary = {}
-	var _item_type: Dictionary = {}
-
-	static func decode(rows: Array) -> ItemTable:
-		var table := ItemTable.new()
-		table.name = "Item"
-		table.mode = "map"
-		table.key = "id"
-		table._rows = SoraRuntime.decode_map_table(rows, func(row): return row.id)
-		table._name = SoraRuntime.decode_unique_index(rows, func(row): return row.name)
-		table._item_type = SoraRuntime.decode_index(rows, func(row): return row.item_type)
-		return table
-
-	func length() -> int:
-		return _rows.size()
-	func get_row(key_value: Variant) -> Item:
-		var value = _rows.get(key_value)
-		if value == null:
-			SoraRuntime.report_error("missing row in table `Item` for key `%s`" % str(key_value))
-		return value
-
-	func try_get(key_value: Variant) -> Item:
-		return _rows.get(key_value)
-
-	func rows() -> Array:
-		return _rows.values()
-
-	func get_by_name(name: Variant) -> Item:
-		return _name.get(name)
-
-	func find_by_item_type(item_type: Variant) -> Array:
-		return _item_type.get(item_type, [])
-class SkillTable:
-	extends SoraConfigTable
-	var _rows: Dictionary = {}
-
-	static func decode(rows: Array) -> SkillTable:
-		var table := SkillTable.new()
-		table.name = "Skill"
-		table.mode = "map"
-		table.key = "id"
-		table._rows = SoraRuntime.decode_map_table(rows, func(row): return row.id)
-		return table
-
-	func length() -> int:
-		return _rows.size()
-	func get_row(key_value: Variant) -> Skill:
-		var value = _rows.get(key_value)
-		if value == null:
-			SoraRuntime.report_error("missing row in table `Skill` for key `%s`" % str(key_value))
-		return value
-
-	func try_get(key_value: Variant) -> Skill:
-		return _rows.get(key_value)
-
-	func rows() -> Array:
-		return _rows.values()
-class QuestTable:
-	extends SoraConfigTable
-	var _rows: Dictionary = {}
-
-	static func decode(rows: Array) -> QuestTable:
-		var table := QuestTable.new()
-		table.name = "Quest"
-		table.mode = "map"
-		table.key = "id"
-		table._rows = SoraRuntime.decode_map_table(rows, func(row): return row.id)
-		return table
-
-	func length() -> int:
-		return _rows.size()
-	func get_row(key_value: Variant) -> Quest:
-		var value = _rows.get(key_value)
-		if value == null:
-			SoraRuntime.report_error("missing row in table `Quest` for key `%s`" % str(key_value))
-		return value
-
-	func try_get(key_value: Variant) -> Quest:
-		return _rows.get(key_value)
-
-	func rows() -> Array:
-		return _rows.values()
-class QuestRewardTable:
-	extends SoraConfigTable
-	var rows: Array = []
-
-	static func decode(rows: Array) -> QuestRewardTable:
-		var table := QuestRewardTable.new()
-		table.name = "QuestReward"
-		table.mode = "list"
-		table.key = null
-		table.rows = rows
-		return table
-
-	func length() -> int:
-		return rows.size()
-class GameSettingsTable:
-	extends SoraConfigTable
-	var row: GameSettings = null
-
-	static func decode(rows: Array) -> GameSettingsTable:
-		var table := GameSettingsTable.new()
-		table.name = "GameSettings"
-		table.mode = "singleton"
-		table.key = null
-		table.row = SoraRuntime.require_singleton_table(rows, "GameSettings")
-		return table
-
-	func length() -> int:
-		return 1 if row != null else 0
-class LocalizationTable:
-	extends SoraConfigTable
-	var _rows: Dictionary = {}
-
-	static func decode(rows: Array) -> LocalizationTable:
-		var table := LocalizationTable.new()
-		table.name = "Localization"
-		table.mode = "map"
-		table.key = "key"
-		table._rows = SoraRuntime.decode_map_table(rows, func(row): return row.key)
-		return table
-
-	func length() -> int:
-		return _rows.size()
-	func get_row(key_value: Variant) -> Localization:
-		var value = _rows.get(key_value)
-		if value == null:
-			SoraRuntime.report_error("missing row in table `Localization` for key `%s`" % str(key_value))
-		return value
-
-	func try_get(key_value: Variant) -> Localization:
-		return _rows.get(key_value)
-
-	func rows() -> Array:
-		return _rows.values()
-class LevelExpTable:
-	extends SoraConfigTable
-	var _rows: Dictionary = {}
-
-	static func decode(rows: Array) -> LevelExpTable:
-		var table := LevelExpTable.new()
-		table.name = "LevelExp"
-		table.mode = "map"
-		table.key = "level"
-		table._rows = SoraRuntime.decode_map_table(rows, func(row): return row.level)
-		return table
-
-	func length() -> int:
-		return _rows.size()
-	func get_row(key_value: Variant) -> LevelExp:
-		var value = _rows.get(key_value)
-		if value == null:
-			SoraRuntime.report_error("missing row in table `LevelExp` for key `%s`" % str(key_value))
-		return value
-
-	func try_get(key_value: Variant) -> LevelExp:
-		return _rows.get(key_value)
-
-	func rows() -> Array:
-		return _rows.values()
-class CharacterTable:
-	extends SoraConfigTable
-	var _rows: Dictionary = {}
-
-	static func decode(rows: Array) -> CharacterTable:
-		var table := CharacterTable.new()
-		table.name = "Character"
-		table.mode = "map"
-		table.key = "id"
-		table._rows = SoraRuntime.decode_map_table(rows, func(row): return row.id)
-		return table
-
-	func length() -> int:
-		return _rows.size()
-	func get_row(key_value: Variant) -> Character:
-		var value = _rows.get(key_value)
-		if value == null:
-			SoraRuntime.report_error("missing row in table `Character` for key `%s`" % str(key_value))
-		return value
-
-	func try_get(key_value: Variant) -> Character:
-		return _rows.get(key_value)
-
-	func rows() -> Array:
-		return _rows.values()
-class CharacterSkillTable:
-	extends SoraConfigTable
-	var rows: Array = []
-
-	static func decode(rows: Array) -> CharacterSkillTable:
-		var table := CharacterSkillTable.new()
-		table.name = "CharacterSkill"
-		table.mode = "list"
-		table.key = null
-		table.rows = rows
-		return table
-
-	func length() -> int:
-		return rows.size()
-class BuffTable:
-	extends SoraConfigTable
-	var _rows: Dictionary = {}
-
-	static func decode(rows: Array) -> BuffTable:
-		var table := BuffTable.new()
-		table.name = "Buff"
-		table.mode = "map"
-		table.key = "id"
-		table._rows = SoraRuntime.decode_map_table(rows, func(row): return row.id)
-		return table
-
-	func length() -> int:
-		return _rows.size()
-	func get_row(key_value: Variant) -> Buff:
-		var value = _rows.get(key_value)
-		if value == null:
-			SoraRuntime.report_error("missing row in table `Buff` for key `%s`" % str(key_value))
-		return value
-
-	func try_get(key_value: Variant) -> Buff:
-		return _rows.get(key_value)
-
-	func rows() -> Array:
-		return _rows.values()
-class DropGroupTable:
-	extends SoraConfigTable
-	var _rows: Dictionary = {}
-
-	static func decode(rows: Array) -> DropGroupTable:
-		var table := DropGroupTable.new()
-		table.name = "DropGroup"
-		table.mode = "map"
-		table.key = "id"
-		table._rows = SoraRuntime.decode_map_table(rows, func(row): return row.id)
-		return table
-
-	func length() -> int:
-		return _rows.size()
-	func get_row(key_value: Variant) -> DropGroup:
-		var value = _rows.get(key_value)
-		if value == null:
-			SoraRuntime.report_error("missing row in table `DropGroup` for key `%s`" % str(key_value))
-		return value
-
-	func try_get(key_value: Variant) -> DropGroup:
-		return _rows.get(key_value)
-
-	func rows() -> Array:
-		return _rows.values()
-class DropEntryTable:
-	extends SoraConfigTable
-	var rows: Array = []
-
-	static func decode(rows: Array) -> DropEntryTable:
-		var table := DropEntryTable.new()
-		table.name = "DropEntry"
-		table.mode = "list"
-		table.key = null
-		table.rows = rows
-		return table
-
-	func length() -> int:
-		return rows.size()
-class MonsterTable:
-	extends SoraConfigTable
-	var _rows: Dictionary = {}
-
-	static func decode(rows: Array) -> MonsterTable:
-		var table := MonsterTable.new()
-		table.name = "Monster"
-		table.mode = "map"
-		table.key = "id"
-		table._rows = SoraRuntime.decode_map_table(rows, func(row): return row.id)
-		return table
-
-	func length() -> int:
-		return _rows.size()
-	func get_row(key_value: Variant) -> Monster:
-		var value = _rows.get(key_value)
-		if value == null:
-			SoraRuntime.report_error("missing row in table `Monster` for key `%s`" % str(key_value))
-		return value
-
-	func try_get(key_value: Variant) -> Monster:
-		return _rows.get(key_value)
-
-	func rows() -> Array:
-		return _rows.values()
-class StageTable:
-	extends SoraConfigTable
-	var _rows: Dictionary = {}
-
-	static func decode(rows: Array) -> StageTable:
-		var table := StageTable.new()
-		table.name = "Stage"
-		table.mode = "map"
-		table.key = "id"
-		table._rows = SoraRuntime.decode_map_table(rows, func(row): return row.id)
-		return table
-
-	func length() -> int:
-		return _rows.size()
-	func get_row(key_value: Variant) -> Stage:
-		var value = _rows.get(key_value)
-		if value == null:
-			SoraRuntime.report_error("missing row in table `Stage` for key `%s`" % str(key_value))
-		return value
-
-	func try_get(key_value: Variant) -> Stage:
-		return _rows.get(key_value)
-
-	func rows() -> Array:
-		return _rows.values()
-class StageRewardTable:
-	extends SoraConfigTable
-	var rows: Array = []
-
-	static func decode(rows: Array) -> StageRewardTable:
-		var table := StageRewardTable.new()
-		table.name = "StageReward"
-		table.mode = "list"
-		table.key = null
-		table.rows = rows
-		return table
-
-	func length() -> int:
-		return rows.size()
-class DungeonTable:
-	extends SoraConfigTable
-	var _rows: Dictionary = {}
-
-	static func decode(rows: Array) -> DungeonTable:
-		var table := DungeonTable.new()
-		table.name = "Dungeon"
-		table.mode = "map"
-		table.key = "id"
-		table._rows = SoraRuntime.decode_map_table(rows, func(row): return row.id)
-		return table
-
-	func length() -> int:
-		return _rows.size()
-	func get_row(key_value: Variant) -> Dungeon:
-		var value = _rows.get(key_value)
-		if value == null:
-			SoraRuntime.report_error("missing row in table `Dungeon` for key `%s`" % str(key_value))
-		return value
-
-	func try_get(key_value: Variant) -> Dungeon:
-		return _rows.get(key_value)
-
-	func rows() -> Array:
-		return _rows.values()
-class ShopTable:
-	extends SoraConfigTable
-	var _rows: Dictionary = {}
-
-	static func decode(rows: Array) -> ShopTable:
-		var table := ShopTable.new()
-		table.name = "Shop"
-		table.mode = "map"
-		table.key = "id"
-		table._rows = SoraRuntime.decode_map_table(rows, func(row): return row.id)
-		return table
-
-	func length() -> int:
-		return _rows.size()
-	func get_row(key_value: Variant) -> Shop:
-		var value = _rows.get(key_value)
-		if value == null:
-			SoraRuntime.report_error("missing row in table `Shop` for key `%s`" % str(key_value))
-		return value
-
-	func try_get(key_value: Variant) -> Shop:
-		return _rows.get(key_value)
-
-	func rows() -> Array:
-		return _rows.values()
-class ShopItemTable:
-	extends SoraConfigTable
-	var rows: Array = []
-
-	static func decode(rows: Array) -> ShopItemTable:
-		var table := ShopItemTable.new()
-		table.name = "ShopItem"
-		table.mode = "list"
-		table.key = null
-		table.rows = rows
-		return table
-
-	func length() -> int:
-		return rows.size()
-class RecipeTable:
-	extends SoraConfigTable
-	var _rows: Dictionary = {}
-
-	static func decode(rows: Array) -> RecipeTable:
-		var table := RecipeTable.new()
-		table.name = "Recipe"
-		table.mode = "map"
-		table.key = "id"
-		table._rows = SoraRuntime.decode_map_table(rows, func(row): return row.id)
-		return table
-
-	func length() -> int:
-		return _rows.size()
-	func get_row(key_value: Variant) -> Recipe:
-		var value = _rows.get(key_value)
-		if value == null:
-			SoraRuntime.report_error("missing row in table `Recipe` for key `%s`" % str(key_value))
-		return value
-
-	func try_get(key_value: Variant) -> Recipe:
-		return _rows.get(key_value)
-
-	func rows() -> Array:
-		return _rows.values()
-class GachaPoolTable:
-	extends SoraConfigTable
-	var _rows: Dictionary = {}
-
-	static func decode(rows: Array) -> GachaPoolTable:
-		var table := GachaPoolTable.new()
-		table.name = "GachaPool"
-		table.mode = "map"
-		table.key = "id"
-		table._rows = SoraRuntime.decode_map_table(rows, func(row): return row.id)
-		return table
-
-	func length() -> int:
-		return _rows.size()
-	func get_row(key_value: Variant) -> GachaPool:
-		var value = _rows.get(key_value)
-		if value == null:
-			SoraRuntime.report_error("missing row in table `GachaPool` for key `%s`" % str(key_value))
-		return value
-
-	func try_get(key_value: Variant) -> GachaPool:
-		return _rows.get(key_value)
-
-	func rows() -> Array:
-		return _rows.values()
-class GachaItemTable:
-	extends SoraConfigTable
-	var rows: Array = []
-
-	static func decode(rows: Array) -> GachaItemTable:
-		var table := GachaItemTable.new()
-		table.name = "GachaItem"
-		table.mode = "list"
-		table.key = null
-		table.rows = rows
-		return table
-
-	func length() -> int:
-		return rows.size()
-class EquipmentSetTable:
-	extends SoraConfigTable
-	var _rows: Dictionary = {}
-
-	static func decode(rows: Array) -> EquipmentSetTable:
-		var table := EquipmentSetTable.new()
-		table.name = "EquipmentSet"
-		table.mode = "map"
-		table.key = "id"
-		table._rows = SoraRuntime.decode_map_table(rows, func(row): return row.id)
-		return table
-
-	func length() -> int:
-		return _rows.size()
-	func get_row(key_value: Variant) -> EquipmentSet:
-		var value = _rows.get(key_value)
-		if value == null:
-			SoraRuntime.report_error("missing row in table `EquipmentSet` for key `%s`" % str(key_value))
-		return value
-
-	func try_get(key_value: Variant) -> EquipmentSet:
-		return _rows.get(key_value)
-
-	func rows() -> Array:
-		return _rows.values()
-class AchievementTable:
-	extends SoraConfigTable
-	var _rows: Dictionary = {}
-
-	static func decode(rows: Array) -> AchievementTable:
-		var table := AchievementTable.new()
-		table.name = "Achievement"
-		table.mode = "map"
-		table.key = "id"
-		table._rows = SoraRuntime.decode_map_table(rows, func(row): return row.id)
-		return table
-
-	func length() -> int:
-		return _rows.size()
-	func get_row(key_value: Variant) -> Achievement:
-		var value = _rows.get(key_value)
-		if value == null:
-			SoraRuntime.report_error("missing row in table `Achievement` for key `%s`" % str(key_value))
-		return value
-
-	func try_get(key_value: Variant) -> Achievement:
-		return _rows.get(key_value)
-
-	func rows() -> Array:
-		return _rows.values()
-class VipLevelTable:
-	extends SoraConfigTable
-	var _rows: Dictionary = {}
-
-	static func decode(rows: Array) -> VipLevelTable:
-		var table := VipLevelTable.new()
-		table.name = "VipLevel"
-		table.mode = "map"
-		table.key = "level"
-		table._rows = SoraRuntime.decode_map_table(rows, func(row): return row.level)
-		return table
-
-	func length() -> int:
-		return _rows.size()
-	func get_row(key_value: Variant) -> VipLevel:
-		var value = _rows.get(key_value)
-		if value == null:
-			SoraRuntime.report_error("missing row in table `VipLevel` for key `%s`" % str(key_value))
-		return value
-
-	func try_get(key_value: Variant) -> VipLevel:
-		return _rows.get(key_value)
-
-	func rows() -> Array:
-		return _rows.values()
-class MailTemplateTable:
-	extends SoraConfigTable
-	var _rows: Dictionary = {}
-
-	static func decode(rows: Array) -> MailTemplateTable:
-		var table := MailTemplateTable.new()
-		table.name = "MailTemplate"
-		table.mode = "map"
-		table.key = "id"
-		table._rows = SoraRuntime.decode_map_table(rows, func(row): return row.id)
-		return table
-
-	func length() -> int:
-		return _rows.size()
-	func get_row(key_value: Variant) -> MailTemplate:
-		var value = _rows.get(key_value)
-		if value == null:
-			SoraRuntime.report_error("missing row in table `MailTemplate` for key `%s`" % str(key_value))
-		return value
-
-	func try_get(key_value: Variant) -> MailTemplate:
-		return _rows.get(key_value)
-
-	func rows() -> Array:
-		return _rows.values()
-class MailRewardTable:
-	extends SoraConfigTable
-	var rows: Array = []
-
-	static func decode(rows: Array) -> MailRewardTable:
-		var table := MailRewardTable.new()
-		table.name = "MailReward"
-		table.mode = "list"
-		table.key = null
-		table.rows = rows
-		return table
-
-	func length() -> int:
-		return rows.size()
-class DialogueTable:
-	extends SoraConfigTable
-	var _rows: Dictionary = {}
-
-	static func decode(rows: Array) -> DialogueTable:
-		var table := DialogueTable.new()
-		table.name = "Dialogue"
-		table.mode = "map"
-		table.key = "id"
-		table._rows = SoraRuntime.decode_map_table(rows, func(row): return row.id)
-		return table
-
-	func length() -> int:
-		return _rows.size()
-	func get_row(key_value: Variant) -> Dialogue:
-		var value = _rows.get(key_value)
-		if value == null:
-			SoraRuntime.report_error("missing row in table `Dialogue` for key `%s`" % str(key_value))
-		return value
-
-	func try_get(key_value: Variant) -> Dialogue:
-		return _rows.get(key_value)
-
-	func rows() -> Array:
-		return _rows.values()
-class EventRuleTable:
-	extends SoraConfigTable
-	var _rows: Dictionary = {}
-
-	static func decode(rows: Array) -> EventRuleTable:
-		var table := EventRuleTable.new()
-		table.name = "EventRule"
-		table.mode = "map"
-		table.key = "id"
-		table._rows = SoraRuntime.decode_map_table(rows, func(row): return row.id)
-		return table
-
-	func length() -> int:
-		return _rows.size()
-	func get_row(key_value: Variant) -> EventRule:
-		var value = _rows.get(key_value)
-		if value == null:
-			SoraRuntime.report_error("missing row in table `EventRule` for key `%s`" % str(key_value))
-		return value
-
-	func try_get(key_value: Variant) -> EventRule:
-		return _rows.get(key_value)
-
-	func rows() -> Array:
-		return _rows.values()
-
 var _tables: Dictionary = {}
 
 static func load_json_file(path: String) -> SoraConfig:
@@ -644,88 +14,88 @@ static func load_json_text(text: String) -> SoraConfig:
 static func from_json_root(root: Dictionary) -> SoraConfig:
 	var bundle := SoraRuntime.decode_bundle(root, "json")
 	var config := SoraConfig.new()
-	config._tables["Item"] = ItemTable.decode(
+	config._tables["Item"] = Item.ItemTable.decode(
 		SoraRuntime.decode_table(bundle, "Item", Item.decode)
 	)
-	config._tables["Skill"] = SkillTable.decode(
+	config._tables["Skill"] = Skill.SkillTable.decode(
 		SoraRuntime.decode_table(bundle, "Skill", Skill.decode)
 	)
-	config._tables["Quest"] = QuestTable.decode(
+	config._tables["Quest"] = Quest.QuestTable.decode(
 		SoraRuntime.decode_table(bundle, "Quest", Quest.decode)
 	)
-	config._tables["QuestReward"] = QuestRewardTable.decode(
+	config._tables["QuestReward"] = QuestReward.QuestRewardTable.decode(
 		SoraRuntime.decode_table(bundle, "QuestReward", QuestReward.decode)
 	)
-	config._tables["GameSettings"] = GameSettingsTable.decode(
+	config._tables["GameSettings"] = GameSettings.GameSettingsTable.decode(
 		SoraRuntime.decode_table(bundle, "GameSettings", GameSettings.decode)
 	)
-	config._tables["Localization"] = LocalizationTable.decode(
+	config._tables["Localization"] = Localization.LocalizationTable.decode(
 		SoraRuntime.decode_table(bundle, "Localization", Localization.decode)
 	)
-	config._tables["LevelExp"] = LevelExpTable.decode(
+	config._tables["LevelExp"] = LevelExp.LevelExpTable.decode(
 		SoraRuntime.decode_table(bundle, "LevelExp", LevelExp.decode)
 	)
-	config._tables["Character"] = CharacterTable.decode(
+	config._tables["Character"] = Character.CharacterTable.decode(
 		SoraRuntime.decode_table(bundle, "Character", Character.decode)
 	)
-	config._tables["CharacterSkill"] = CharacterSkillTable.decode(
+	config._tables["CharacterSkill"] = CharacterSkill.CharacterSkillTable.decode(
 		SoraRuntime.decode_table(bundle, "CharacterSkill", CharacterSkill.decode)
 	)
-	config._tables["Buff"] = BuffTable.decode(
+	config._tables["Buff"] = Buff.BuffTable.decode(
 		SoraRuntime.decode_table(bundle, "Buff", Buff.decode)
 	)
-	config._tables["DropGroup"] = DropGroupTable.decode(
+	config._tables["DropGroup"] = DropGroup.DropGroupTable.decode(
 		SoraRuntime.decode_table(bundle, "DropGroup", DropGroup.decode)
 	)
-	config._tables["DropEntry"] = DropEntryTable.decode(
+	config._tables["DropEntry"] = DropEntry.DropEntryTable.decode(
 		SoraRuntime.decode_table(bundle, "DropEntry", DropEntry.decode)
 	)
-	config._tables["Monster"] = MonsterTable.decode(
+	config._tables["Monster"] = Monster.MonsterTable.decode(
 		SoraRuntime.decode_table(bundle, "Monster", Monster.decode)
 	)
-	config._tables["Stage"] = StageTable.decode(
+	config._tables["Stage"] = Stage.StageTable.decode(
 		SoraRuntime.decode_table(bundle, "Stage", Stage.decode)
 	)
-	config._tables["StageReward"] = StageRewardTable.decode(
+	config._tables["StageReward"] = StageReward.StageRewardTable.decode(
 		SoraRuntime.decode_table(bundle, "StageReward", StageReward.decode)
 	)
-	config._tables["Dungeon"] = DungeonTable.decode(
+	config._tables["Dungeon"] = Dungeon.DungeonTable.decode(
 		SoraRuntime.decode_table(bundle, "Dungeon", Dungeon.decode)
 	)
-	config._tables["Shop"] = ShopTable.decode(
+	config._tables["Shop"] = Shop.ShopTable.decode(
 		SoraRuntime.decode_table(bundle, "Shop", Shop.decode)
 	)
-	config._tables["ShopItem"] = ShopItemTable.decode(
+	config._tables["ShopItem"] = ShopItem.ShopItemTable.decode(
 		SoraRuntime.decode_table(bundle, "ShopItem", ShopItem.decode)
 	)
-	config._tables["Recipe"] = RecipeTable.decode(
+	config._tables["Recipe"] = Recipe.RecipeTable.decode(
 		SoraRuntime.decode_table(bundle, "Recipe", Recipe.decode)
 	)
-	config._tables["GachaPool"] = GachaPoolTable.decode(
+	config._tables["GachaPool"] = GachaPool.GachaPoolTable.decode(
 		SoraRuntime.decode_table(bundle, "GachaPool", GachaPool.decode)
 	)
-	config._tables["GachaItem"] = GachaItemTable.decode(
+	config._tables["GachaItem"] = GachaItem.GachaItemTable.decode(
 		SoraRuntime.decode_table(bundle, "GachaItem", GachaItem.decode)
 	)
-	config._tables["EquipmentSet"] = EquipmentSetTable.decode(
+	config._tables["EquipmentSet"] = EquipmentSet.EquipmentSetTable.decode(
 		SoraRuntime.decode_table(bundle, "EquipmentSet", EquipmentSet.decode)
 	)
-	config._tables["Achievement"] = AchievementTable.decode(
+	config._tables["Achievement"] = Achievement.AchievementTable.decode(
 		SoraRuntime.decode_table(bundle, "Achievement", Achievement.decode)
 	)
-	config._tables["VipLevel"] = VipLevelTable.decode(
+	config._tables["VipLevel"] = VipLevel.VipLevelTable.decode(
 		SoraRuntime.decode_table(bundle, "VipLevel", VipLevel.decode)
 	)
-	config._tables["MailTemplate"] = MailTemplateTable.decode(
+	config._tables["MailTemplate"] = MailTemplate.MailTemplateTable.decode(
 		SoraRuntime.decode_table(bundle, "MailTemplate", MailTemplate.decode)
 	)
-	config._tables["MailReward"] = MailRewardTable.decode(
+	config._tables["MailReward"] = MailReward.MailRewardTable.decode(
 		SoraRuntime.decode_table(bundle, "MailReward", MailReward.decode)
 	)
-	config._tables["Dialogue"] = DialogueTable.decode(
+	config._tables["Dialogue"] = Dialogue.DialogueTable.decode(
 		SoraRuntime.decode_table(bundle, "Dialogue", Dialogue.decode)
 	)
-	config._tables["EventRule"] = EventRuleTable.decode(
+	config._tables["EventRule"] = EventRule.EventRuleTable.decode(
 		SoraRuntime.decode_table(bundle, "EventRule", EventRule.decode)
 	)
 	return config
@@ -733,61 +103,61 @@ static func from_json_root(root: Dictionary) -> SoraConfig:
 func tables() -> Array:
 	return _tables.values()
 
-func table(name: String) -> SoraConfigTable:
+func table(name: String) -> SoraRuntime.SoraConfigTable:
 	return _tables.get(name)
-func item() -> ItemTable:
+func item() -> Item.ItemTable:
 	return _tables["Item"]
-func skill() -> SkillTable:
+func skill() -> Skill.SkillTable:
 	return _tables["Skill"]
-func quest() -> QuestTable:
+func quest() -> Quest.QuestTable:
 	return _tables["Quest"]
-func quest_reward() -> QuestRewardTable:
+func quest_reward() -> QuestReward.QuestRewardTable:
 	return _tables["QuestReward"]
-func game_settings() -> GameSettingsTable:
+func game_settings() -> GameSettings.GameSettingsTable:
 	return _tables["GameSettings"]
-func localization() -> LocalizationTable:
+func localization() -> Localization.LocalizationTable:
 	return _tables["Localization"]
-func level_exp() -> LevelExpTable:
+func level_exp() -> LevelExp.LevelExpTable:
 	return _tables["LevelExp"]
-func character() -> CharacterTable:
+func character() -> Character.CharacterTable:
 	return _tables["Character"]
-func character_skill() -> CharacterSkillTable:
+func character_skill() -> CharacterSkill.CharacterSkillTable:
 	return _tables["CharacterSkill"]
-func buff() -> BuffTable:
+func buff() -> Buff.BuffTable:
 	return _tables["Buff"]
-func drop_group() -> DropGroupTable:
+func drop_group() -> DropGroup.DropGroupTable:
 	return _tables["DropGroup"]
-func drop_entry() -> DropEntryTable:
+func drop_entry() -> DropEntry.DropEntryTable:
 	return _tables["DropEntry"]
-func monster() -> MonsterTable:
+func monster() -> Monster.MonsterTable:
 	return _tables["Monster"]
-func stage() -> StageTable:
+func stage() -> Stage.StageTable:
 	return _tables["Stage"]
-func stage_reward() -> StageRewardTable:
+func stage_reward() -> StageReward.StageRewardTable:
 	return _tables["StageReward"]
-func dungeon() -> DungeonTable:
+func dungeon() -> Dungeon.DungeonTable:
 	return _tables["Dungeon"]
-func shop() -> ShopTable:
+func shop() -> Shop.ShopTable:
 	return _tables["Shop"]
-func shop_item() -> ShopItemTable:
+func shop_item() -> ShopItem.ShopItemTable:
 	return _tables["ShopItem"]
-func recipe() -> RecipeTable:
+func recipe() -> Recipe.RecipeTable:
 	return _tables["Recipe"]
-func gacha_pool() -> GachaPoolTable:
+func gacha_pool() -> GachaPool.GachaPoolTable:
 	return _tables["GachaPool"]
-func gacha_item() -> GachaItemTable:
+func gacha_item() -> GachaItem.GachaItemTable:
 	return _tables["GachaItem"]
-func equipment_set() -> EquipmentSetTable:
+func equipment_set() -> EquipmentSet.EquipmentSetTable:
 	return _tables["EquipmentSet"]
-func achievement() -> AchievementTable:
+func achievement() -> Achievement.AchievementTable:
 	return _tables["Achievement"]
-func vip_level() -> VipLevelTable:
+func vip_level() -> VipLevel.VipLevelTable:
 	return _tables["VipLevel"]
-func mail_template() -> MailTemplateTable:
+func mail_template() -> MailTemplate.MailTemplateTable:
 	return _tables["MailTemplate"]
-func mail_reward() -> MailRewardTable:
+func mail_reward() -> MailReward.MailRewardTable:
 	return _tables["MailReward"]
-func dialogue() -> DialogueTable:
+func dialogue() -> Dialogue.DialogueTable:
 	return _tables["Dialogue"]
-func event_rule() -> EventRuleTable:
+func event_rule() -> EventRule.EventRuleTable:
 	return _tables["EventRule"]

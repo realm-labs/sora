@@ -18,3 +18,29 @@ static func decode(value: Variant) -> Dialogue:
 	out.speaker_key = str(SoraRuntime.read_field(data, "speaker_key", ""))
 	out.lines = SoraRuntime.decode_array(SoraRuntime.read_field(data, "lines", []), func(item): return str(item))
 	return out
+
+class DialogueTable:
+	extends SoraRuntime.SoraConfigTable
+	var _rows: Dictionary = {}
+
+	static func decode(rows: Array) -> DialogueTable:
+		var table := DialogueTable.new()
+		table.name = "Dialogue"
+		table.mode = "map"
+		table.key = "id"
+		table._rows = SoraRuntime.decode_map_table(rows, func(row): return row.id)
+		return table
+
+	func length() -> int:
+		return _rows.size()
+	func get_row(key_value: Variant) -> Dialogue:
+		var value = _rows.get(key_value)
+		if value == null:
+			SoraRuntime.report_error("missing row in table `Dialogue` for key `%s`" % str(key_value))
+		return value
+
+	func try_get(key_value: Variant) -> Dialogue:
+		return _rows.get(key_value)
+
+	func rows() -> Array:
+		return _rows.values()

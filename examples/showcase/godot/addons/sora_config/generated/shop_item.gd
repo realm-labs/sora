@@ -22,3 +22,18 @@ static func decode(value: Variant) -> ShopItem:
 	out.price = ResourceCost.decode(SoraRuntime.read_field(data, "price", null))
 	out.daily_limit = null if SoraRuntime.read_field(data, "daily_limit", null).is_null() else int(SoraRuntime.read_field(data, "daily_limit", null))
 	return out
+
+class ShopItemTable:
+	extends SoraRuntime.SoraConfigTable
+	var rows: Array = []
+
+	static func decode(rows: Array) -> ShopItemTable:
+		var table := ShopItemTable.new()
+		table.name = "ShopItem"
+		table.mode = "list"
+		table.key = null
+		table.rows = rows
+		return table
+
+	func length() -> int:
+		return rows.size()

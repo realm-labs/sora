@@ -18,3 +18,29 @@ static func decode(value: Variant) -> VipLevel:
 	out.cost = ResourceCost.decode(SoraRuntime.read_field(data, "cost", null))
 	out.perks = SoraRuntime.decode_array(SoraRuntime.read_field(data, "perks", []), func(item): return str(item))
 	return out
+
+class VipLevelTable:
+	extends SoraRuntime.SoraConfigTable
+	var _rows: Dictionary = {}
+
+	static func decode(rows: Array) -> VipLevelTable:
+		var table := VipLevelTable.new()
+		table.name = "VipLevel"
+		table.mode = "map"
+		table.key = "level"
+		table._rows = SoraRuntime.decode_map_table(rows, func(row): return row.level)
+		return table
+
+	func length() -> int:
+		return _rows.size()
+	func get_row(key_value: Variant) -> VipLevel:
+		var value = _rows.get(key_value)
+		if value == null:
+			SoraRuntime.report_error("missing row in table `VipLevel` for key `%s`" % str(key_value))
+		return value
+
+	func try_get(key_value: Variant) -> VipLevel:
+		return _rows.get(key_value)
+
+	func rows() -> Array:
+		return _rows.values()

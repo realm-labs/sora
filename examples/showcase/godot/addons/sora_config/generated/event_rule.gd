@@ -20,3 +20,29 @@ static func decode(value: Variant) -> EventRule:
 	out.condition = EventCondition.decode(SoraRuntime.read_field(data, "condition", null))
 	out.actions = SoraRuntime.decode_array(SoraRuntime.read_field(data, "actions", []), func(item): return RewardAction.decode(item))
 	return out
+
+class EventRuleTable:
+	extends SoraRuntime.SoraConfigTable
+	var _rows: Dictionary = {}
+
+	static func decode(rows: Array) -> EventRuleTable:
+		var table := EventRuleTable.new()
+		table.name = "EventRule"
+		table.mode = "map"
+		table.key = "id"
+		table._rows = SoraRuntime.decode_map_table(rows, func(row): return row.id)
+		return table
+
+	func length() -> int:
+		return _rows.size()
+	func get_row(key_value: Variant) -> EventRule:
+		var value = _rows.get(key_value)
+		if value == null:
+			SoraRuntime.report_error("missing row in table `EventRule` for key `%s`" % str(key_value))
+		return value
+
+	func try_get(key_value: Variant) -> EventRule:
+		return _rows.get(key_value)
+
+	func rows() -> Array:
+		return _rows.values()

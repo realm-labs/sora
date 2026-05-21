@@ -18,3 +18,29 @@ static func decode(value: Variant) -> GachaPool:
 	out.name = str(SoraRuntime.read_field(data, "name", ""))
 	out.cost = ResourceCost.decode(SoraRuntime.read_field(data, "cost", null))
 	return out
+
+class GachaPoolTable:
+	extends SoraRuntime.SoraConfigTable
+	var _rows: Dictionary = {}
+
+	static func decode(rows: Array) -> GachaPoolTable:
+		var table := GachaPoolTable.new()
+		table.name = "GachaPool"
+		table.mode = "map"
+		table.key = "id"
+		table._rows = SoraRuntime.decode_map_table(rows, func(row): return row.id)
+		return table
+
+	func length() -> int:
+		return _rows.size()
+	func get_row(key_value: Variant) -> GachaPool:
+		var value = _rows.get(key_value)
+		if value == null:
+			SoraRuntime.report_error("missing row in table `GachaPool` for key `%s`" % str(key_value))
+		return value
+
+	func try_get(key_value: Variant) -> GachaPool:
+		return _rows.get(key_value)
+
+	func rows() -> Array:
+		return _rows.values()

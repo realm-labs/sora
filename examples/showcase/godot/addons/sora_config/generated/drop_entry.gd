@@ -20,3 +20,18 @@ static func decode(value: Variant) -> DropEntry:
 	out.item_id = int(SoraRuntime.read_field(data, "item_id", 0))
 	out.count = int(SoraRuntime.read_field(data, "count", 0))
 	return out
+
+class DropEntryTable:
+	extends SoraRuntime.SoraConfigTable
+	var rows: Array = []
+
+	static func decode(rows: Array) -> DropEntryTable:
+		var table := DropEntryTable.new()
+		table.name = "DropEntry"
+		table.mode = "list"
+		table.key = null
+		table.rows = rows
+		return table
+
+	func length() -> int:
+		return rows.size()

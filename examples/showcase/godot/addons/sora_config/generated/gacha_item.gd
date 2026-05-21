@@ -20,3 +20,18 @@ static func decode(value: Variant) -> GachaItem:
 	out.rarity = Rarity.decode(SoraRuntime.read_field(data, "rarity", ""))
 	out.weight = float(SoraRuntime.read_field(data, "weight", 0.0))
 	return out
+
+class GachaItemTable:
+	extends SoraRuntime.SoraConfigTable
+	var rows: Array = []
+
+	static func decode(rows: Array) -> GachaItemTable:
+		var table := GachaItemTable.new()
+		table.name = "GachaItem"
+		table.mode = "list"
+		table.key = null
+		table.rows = rows
+		return table
+
+	func length() -> int:
+		return rows.size()

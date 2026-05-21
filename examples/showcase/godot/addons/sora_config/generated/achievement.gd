@@ -20,3 +20,29 @@ static func decode(value: Variant) -> Achievement:
 	out.target_count = int(SoraRuntime.read_field(data, "target_count", 0))
 	out.reward = ResourceCost.decode(SoraRuntime.read_field(data, "reward", null))
 	return out
+
+class AchievementTable:
+	extends SoraRuntime.SoraConfigTable
+	var _rows: Dictionary = {}
+
+	static func decode(rows: Array) -> AchievementTable:
+		var table := AchievementTable.new()
+		table.name = "Achievement"
+		table.mode = "map"
+		table.key = "id"
+		table._rows = SoraRuntime.decode_map_table(rows, func(row): return row.id)
+		return table
+
+	func length() -> int:
+		return _rows.size()
+	func get_row(key_value: Variant) -> Achievement:
+		var value = _rows.get(key_value)
+		if value == null:
+			SoraRuntime.report_error("missing row in table `Achievement` for key `%s`" % str(key_value))
+		return value
+
+	func try_get(key_value: Variant) -> Achievement:
+		return _rows.get(key_value)
+
+	func rows() -> Array:
+		return _rows.values()

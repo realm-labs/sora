@@ -3,87 +3,6 @@
 class_name SoraConfig
 extends RefCounted
 
-class SoraConfigTable:
-	var name: String = ""
-	var mode: String = ""
-	var key: Variant = null
-
-	func length() -> int:
-		return 0
-
-{%- for table in model.tables %}
-class {{ table.class_name }}:
-	extends SoraConfigTable
-
-{%- if table.mode == "map" and table.key_field_name %}
-	var _rows: Dictionary = {}
-{%- elif table.mode == "singleton" %}
-	var row: {{ table.row_type }} = null
-{%- else %}
-	var rows: Array = []
-{%- endif %}
-{%- for index in table.unique_indexes %}
-	var _{{ index.field_name }}: Dictionary = {}
-{%- endfor %}
-{%- for index in table.non_unique_indexes %}
-	var _{{ index.field_name }}: Dictionary = {}
-{%- endfor %}
-
-	static func decode(rows: Array) -> {{ table.class_name }}:
-		var table := {{ table.class_name }}.new()
-		table.name = "{{ table.name }}"
-		table.mode = "{{ table.mode }}"
-		table.key = {% if table.key_name %}"{{ table.key_name }}"{% else %}null{% endif %}
-{%- if table.mode == "map" and table.key_field_name %}
-		table._rows = SoraRuntime.decode_map_table(rows, func(row): return row.{{ table.key_field_name }})
-{%- elif table.mode == "singleton" %}
-		table.row = SoraRuntime.require_singleton_table(rows, "{{ table.name }}")
-{%- else %}
-		table.rows = rows
-{%- endif %}
-{%- for index in table.unique_indexes %}
-		table._{{ index.field_name }} = SoraRuntime.decode_unique_index(rows, func(row): return row.{{ index.field_name }})
-{%- endfor %}
-{%- for index in table.non_unique_indexes %}
-		table._{{ index.field_name }} = SoraRuntime.decode_index(rows, func(row): return row.{{ index.field_name }})
-{%- endfor %}
-		return table
-
-	func length() -> int:
-{%- if table.mode == "singleton" %}
-		return 1 if row != null else 0
-{%- elif table.mode == "map" and table.key_field_name %}
-		return _rows.size()
-{%- else %}
-		return rows.size()
-{%- endif %}
-
-{%- if table.mode == "map" and table.key_field_name %}
-	func get_row(key_value: Variant) -> {{ table.row_type }}:
-		var value = _rows.get(key_value)
-		if value == null:
-			SoraRuntime.report_error("missing row in table `{{ table.name }}` for key `%s`" % str(key_value))
-		return value
-
-	func try_get(key_value: Variant) -> {{ table.row_type }}:
-		return _rows.get(key_value)
-
-	func rows() -> Array:
-		return _rows.values()
-{%- endif %}
-{%- for index in table.unique_indexes %}
-
-	func get_{{ index.method_name }}({{ index.param_name }}: Variant) -> {{ table.row_type }}:
-		return _{{ index.field_name }}.get({{ index.param_name }})
-{%- endfor %}
-{%- for index in table.non_unique_indexes %}
-
-	func find_{{ index.method_name }}({{ index.param_name }}: Variant) -> Array:
-		return _{{ index.field_name }}.get({{ index.param_name }}, [])
-{%- endfor %}
-
-{%- endfor %}
-
 var _tables: Dictionary = {}
 
 static func load_json_file(path: String) -> SoraConfig:
@@ -96,7 +15,7 @@ static func from_json_root(root: Dictionary) -> SoraConfig:
 	var bundle := SoraRuntime.decode_bundle(root, "json")
 	var config := SoraConfig.new()
 {%- for table in model.tables %}
-	config._tables["{{ table.name }}"] = {{ table.class_name }}.decode(
+	config._tables["{{ table.name }}"] = {{ table.row_type }}.{{ table.class_name }}.decode(
 		SoraRuntime.decode_table(bundle, "{{ table.name }}", {{ table.row_type }}.decode)
 	)
 {%- endfor %}
@@ -105,11 +24,11 @@ static func from_json_root(root: Dictionary) -> SoraConfig:
 func tables() -> Array:
 	return _tables.values()
 
-func table(name: String) -> SoraConfigTable:
+func table(name: String) -> SoraRuntime.SoraConfigTable:
 	return _tables.get(name)
 
 {%- for table in model.tables %}
-func {{ table.field_name }}() -> {{ table.class_name }}:
+func {{ table.field_name }}() -> {{ table.row_type }}.{{ table.class_name }}:
 	return _tables["{{ table.name }}"]
 
 {%- endfor %}

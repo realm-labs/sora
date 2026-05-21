@@ -31,3 +31,29 @@ static func decode(value: Variant) -> Skill:
 	out.required_item = null if SoraRuntime.read_field(data, "required_item", null).is_null() else int(SoraRuntime.read_field(data, "required_item", null))
 	out.cast_origin = Vec3.decode(SoraRuntime.read_field(data, "cast_origin", null))
 	return out
+
+class SkillTable:
+	extends SoraRuntime.SoraConfigTable
+	var _rows: Dictionary = {}
+
+	static func decode(rows: Array) -> SkillTable:
+		var table := SkillTable.new()
+		table.name = "Skill"
+		table.mode = "map"
+		table.key = "id"
+		table._rows = SoraRuntime.decode_map_table(rows, func(row): return row.id)
+		return table
+
+	func length() -> int:
+		return _rows.size()
+	func get_row(key_value: Variant) -> Skill:
+		var value = _rows.get(key_value)
+		if value == null:
+			SoraRuntime.report_error("missing row in table `Skill` for key `%s`" % str(key_value))
+		return value
+
+	func try_get(key_value: Variant) -> Skill:
+		return _rows.get(key_value)
+
+	func rows() -> Array:
+		return _rows.values()

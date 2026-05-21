@@ -20,3 +20,18 @@ static func decode(value: Variant) -> QuestReward:
 	out.item_id = int(SoraRuntime.read_field(data, "item_id", 0))
 	out.count = int(SoraRuntime.read_field(data, "count", 0))
 	return out
+
+class QuestRewardTable:
+	extends SoraRuntime.SoraConfigTable
+	var rows: Array = []
+
+	static func decode(rows: Array) -> QuestRewardTable:
+		var table := QuestRewardTable.new()
+		table.name = "QuestReward"
+		table.mode = "list"
+		table.key = null
+		table.rows = rows
+		return table
+
+	func length() -> int:
+		return rows.size()

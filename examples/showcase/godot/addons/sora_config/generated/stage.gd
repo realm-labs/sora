@@ -22,3 +22,29 @@ static func decode(value: Variant) -> Stage:
 	out.recommended_power = int(SoraRuntime.read_field(data, "recommended_power", 0))
 	out.first_clear_rewards = SoraRuntime.decode_array(SoraRuntime.read_field(data, "first_clear_rewards", []), func(item): return Reward.decode(item))
 	return out
+
+class StageTable:
+	extends SoraRuntime.SoraConfigTable
+	var _rows: Dictionary = {}
+
+	static func decode(rows: Array) -> StageTable:
+		var table := StageTable.new()
+		table.name = "Stage"
+		table.mode = "map"
+		table.key = "id"
+		table._rows = SoraRuntime.decode_map_table(rows, func(row): return row.id)
+		return table
+
+	func length() -> int:
+		return _rows.size()
+	func get_row(key_value: Variant) -> Stage:
+		var value = _rows.get(key_value)
+		if value == null:
+			SoraRuntime.report_error("missing row in table `Stage` for key `%s`" % str(key_value))
+		return value
+
+	func try_get(key_value: Variant) -> Stage:
+		return _rows.get(key_value)
+
+	func rows() -> Array:
+		return _rows.values()

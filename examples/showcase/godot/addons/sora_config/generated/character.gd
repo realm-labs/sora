@@ -26,3 +26,29 @@ static func decode(value: Variant) -> Character:
 	out.starter_items = SoraRuntime.decode_array(SoraRuntime.read_field(data, "starter_items", []), func(item): return int(item))
 	out.spawn_pos = Vec3.decode(SoraRuntime.read_field(data, "spawn_pos", null))
 	return out
+
+class CharacterTable:
+	extends SoraRuntime.SoraConfigTable
+	var _rows: Dictionary = {}
+
+	static func decode(rows: Array) -> CharacterTable:
+		var table := CharacterTable.new()
+		table.name = "Character"
+		table.mode = "map"
+		table.key = "id"
+		table._rows = SoraRuntime.decode_map_table(rows, func(row): return row.id)
+		return table
+
+	func length() -> int:
+		return _rows.size()
+	func get_row(key_value: Variant) -> Character:
+		var value = _rows.get(key_value)
+		if value == null:
+			SoraRuntime.report_error("missing row in table `Character` for key `%s`" % str(key_value))
+		return value
+
+	func try_get(key_value: Variant) -> Character:
+		return _rows.get(key_value)
+
+	func rows() -> Array:
+		return _rows.values()

@@ -18,3 +18,29 @@ static func decode(value: Variant) -> Recipe:
 	out.result_item = int(SoraRuntime.read_field(data, "result_item", 0))
 	out.materials = SoraRuntime.decode_array(SoraRuntime.read_field(data, "materials", []), func(item): return ResourceCost.decode(item))
 	return out
+
+class RecipeTable:
+	extends SoraRuntime.SoraConfigTable
+	var _rows: Dictionary = {}
+
+	static func decode(rows: Array) -> RecipeTable:
+		var table := RecipeTable.new()
+		table.name = "Recipe"
+		table.mode = "map"
+		table.key = "id"
+		table._rows = SoraRuntime.decode_map_table(rows, func(row): return row.id)
+		return table
+
+	func length() -> int:
+		return _rows.size()
+	func get_row(key_value: Variant) -> Recipe:
+		var value = _rows.get(key_value)
+		if value == null:
+			SoraRuntime.report_error("missing row in table `Recipe` for key `%s`" % str(key_value))
+		return value
+
+	func try_get(key_value: Variant) -> Recipe:
+		return _rows.get(key_value)
+
+	func rows() -> Array:
+		return _rows.values()

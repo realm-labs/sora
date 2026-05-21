@@ -79,6 +79,7 @@ struct GodotRecord {
     class_name: String,
     file_name: String,
     fields: Vec<GodotField>,
+    table: Option<GodotTable>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -129,43 +130,55 @@ struct GodotIndex {
 
 impl GodotModel {
     fn from_base_model(ir: &ConfigIr, model: BaseModel) -> Self {
+        let enums = model
+            .enums
+            .into_iter()
+            .map(|item| GodotEnum {
+                class_name: godot_type_identifier(&item.pascal_name),
+                file_name: godot_file_name(&item.snake_name),
+                values: item
+                    .values
+                    .into_iter()
+                    .map(|value| GodotEnumValue {
+                        const_name: godot_const_identifier(&value),
+                        raw_name: value,
+                    })
+                    .collect(),
+            })
+            .collect();
+        let tables = model
+            .tables
+            .into_iter()
+            .map(|item| godot_table(item))
+            .collect::<Vec<_>>();
+        let records = model
+            .records
+            .into_iter()
+            .map(|item| {
+                let class_name = godot_type_identifier(&item.pascal_name);
+                let table = tables
+                    .iter()
+                    .find(|table| table.row_type == class_name)
+                    .cloned();
+                godot_record(ir, item, table)
+            })
+            .collect();
+        let unions = model
+            .unions
+            .into_iter()
+            .map(|item| godot_union(ir, item))
+            .collect();
+
         Self {
-            enums: model
-                .enums
-                .into_iter()
-                .map(|item| GodotEnum {
-                    class_name: godot_type_identifier(&item.pascal_name),
-                    file_name: godot_file_name(&item.snake_name),
-                    values: item
-                        .values
-                        .into_iter()
-                        .map(|value| GodotEnumValue {
-                            const_name: godot_const_identifier(&value),
-                            raw_name: value,
-                        })
-                        .collect(),
-                })
-                .collect(),
-            records: model
-                .records
-                .into_iter()
-                .map(|item| godot_record(ir, item))
-                .collect(),
-            unions: model
-                .unions
-                .into_iter()
-                .map(|item| godot_union(ir, item))
-                .collect(),
-            tables: model
-                .tables
-                .into_iter()
-                .map(|item| godot_table(item))
-                .collect(),
+            enums,
+            records,
+            unions,
+            tables,
         }
     }
 }
 
-fn godot_record(ir: &ConfigIr, record: BaseRecord) -> GodotRecord {
+fn godot_record(ir: &ConfigIr, record: BaseRecord, table: Option<GodotTable>) -> GodotRecord {
     GodotRecord {
         class_name: godot_type_identifier(&record.pascal_name),
         file_name: godot_file_name(&record.snake_name),
@@ -174,6 +187,7 @@ fn godot_record(ir: &ConfigIr, record: BaseRecord) -> GodotRecord {
             .into_iter()
             .map(|field| godot_field(ir, field))
             .collect(),
+        table,
     }
 }
 
@@ -473,9 +487,11 @@ fields = ["item_type"]
         assert!(out.join("item.gd").exists());
         assert!(out.join("item_type.gd").exists());
         assert!(out.join("reward_action.gd").exists());
+        let item = std::fs::read_to_string(out.join("item.gd")).unwrap();
         let config = std::fs::read_to_string(out.join("sora_config.gd")).unwrap();
-        assert!(config.contains("class ItemTable"));
-        assert!(config.contains("func find_by_item_type"));
+        assert!(item.contains("class ItemTable"));
+        assert!(item.contains("func find_by_item_type"));
+        assert!(!config.contains("class ItemTable"));
 
         let _ = std::fs::remove_dir_all(out);
     }

@@ -18,3 +18,29 @@ static func decode(value: Variant) -> LevelExp:
 	out.exp = int(SoraRuntime.read_field(data, "exp", 0))
 	out.unlock_feature = null if SoraRuntime.read_field(data, "unlock_feature", null).is_null() else str(SoraRuntime.read_field(data, "unlock_feature", null))
 	return out
+
+class LevelExpTable:
+	extends SoraRuntime.SoraConfigTable
+	var _rows: Dictionary = {}
+
+	static func decode(rows: Array) -> LevelExpTable:
+		var table := LevelExpTable.new()
+		table.name = "LevelExp"
+		table.mode = "map"
+		table.key = "level"
+		table._rows = SoraRuntime.decode_map_table(rows, func(row): return row.level)
+		return table
+
+	func length() -> int:
+		return _rows.size()
+	func get_row(key_value: Variant) -> LevelExp:
+		var value = _rows.get(key_value)
+		if value == null:
+			SoraRuntime.report_error("missing row in table `LevelExp` for key `%s`" % str(key_value))
+		return value
+
+	func try_get(key_value: Variant) -> LevelExp:
+		return _rows.get(key_value)
+
+	func rows() -> Array:
+		return _rows.values()

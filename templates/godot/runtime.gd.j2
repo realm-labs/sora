@@ -3,6 +3,14 @@
 class_name SoraRuntime
 extends RefCounted
 
+class SoraConfigTable:
+	var name: String = ""
+	var mode: String = ""
+	var key: Variant = null
+
+	func length() -> int:
+		return 0
+
 static func report_error(message: String) -> void:
 	push_error("Sora: " + message)
 

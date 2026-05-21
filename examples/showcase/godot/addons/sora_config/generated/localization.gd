@@ -20,3 +20,29 @@ static func decode(value: Variant) -> Localization:
 	out.en_us = str(SoraRuntime.read_field(data, "en_us", ""))
 	out.note = null if SoraRuntime.read_field(data, "note", null).is_null() else str(SoraRuntime.read_field(data, "note", null))
 	return out
+
+class LocalizationTable:
+	extends SoraRuntime.SoraConfigTable
+	var _rows: Dictionary = {}
+
+	static func decode(rows: Array) -> LocalizationTable:
+		var table := LocalizationTable.new()
+		table.name = "Localization"
+		table.mode = "map"
+		table.key = "key"
+		table._rows = SoraRuntime.decode_map_table(rows, func(row): return row.key)
+		return table
+
+	func length() -> int:
+		return _rows.size()
+	func get_row(key_value: Variant) -> Localization:
+		var value = _rows.get(key_value)
+		if value == null:
+			SoraRuntime.report_error("missing row in table `Localization` for key `%s`" % str(key_value))
+		return value
+
+	func try_get(key_value: Variant) -> Localization:
+		return _rows.get(key_value)
+
+	func rows() -> Array:
+		return _rows.values()

@@ -20,3 +20,18 @@ static func decode(value: Variant) -> MailReward:
 	out.item_id = int(SoraRuntime.read_field(data, "item_id", 0))
 	out.count = int(SoraRuntime.read_field(data, "count", 0))
 	return out
+
+class MailRewardTable:
+	extends SoraRuntime.SoraConfigTable
+	var rows: Array = []
+
+	static func decode(rows: Array) -> MailRewardTable:
+		var table := MailRewardTable.new()
+		table.name = "MailReward"
+		table.mode = "list"
+		table.key = null
+		table.rows = rows
+		return table
+
+	func length() -> int:
+		return rows.size()

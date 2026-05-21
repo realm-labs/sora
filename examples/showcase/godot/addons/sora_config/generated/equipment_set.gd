@@ -20,3 +20,29 @@ static func decode(value: Variant) -> EquipmentSet:
 	out.item_ids = SoraRuntime.decode_array(SoraRuntime.read_field(data, "item_ids", []), func(item): return int(item))
 	out.bonus_effect = SkillEffect.decode(SoraRuntime.read_field(data, "bonus_effect", null))
 	return out
+
+class EquipmentSetTable:
+	extends SoraRuntime.SoraConfigTable
+	var _rows: Dictionary = {}
+
+	static func decode(rows: Array) -> EquipmentSetTable:
+		var table := EquipmentSetTable.new()
+		table.name = "EquipmentSet"
+		table.mode = "map"
+		table.key = "id"
+		table._rows = SoraRuntime.decode_map_table(rows, func(row): return row.id)
+		return table
+
+	func length() -> int:
+		return _rows.size()
+	func get_row(key_value: Variant) -> EquipmentSet:
+		var value = _rows.get(key_value)
+		if value == null:
+			SoraRuntime.report_error("missing row in table `EquipmentSet` for key `%s`" % str(key_value))
+		return value
+
+	func try_get(key_value: Variant) -> EquipmentSet:
+		return _rows.get(key_value)
+
+	func rows() -> Array:
+		return _rows.values()

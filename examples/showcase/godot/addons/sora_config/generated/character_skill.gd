@@ -18,3 +18,18 @@ static func decode(value: Variant) -> CharacterSkill:
 	out.skill_id = int(SoraRuntime.read_field(data, "skill_id", 0))
 	out.unlock_level = int(SoraRuntime.read_field(data, "unlock_level", 0))
 	return out
+
+class CharacterSkillTable:
+	extends SoraRuntime.SoraConfigTable
+	var rows: Array = []
+
+	static func decode(rows: Array) -> CharacterSkillTable:
+		var table := CharacterSkillTable.new()
+		table.name = "CharacterSkill"
+		table.mode = "list"
+		table.key = null
+		table.rows = rows
+		return table
+
+	func length() -> int:
+		return rows.size()
