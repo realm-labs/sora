@@ -2,6 +2,7 @@
 
 #nullable enable
 
+using System;
 using System.Collections.Generic;
 
 namespace com.sora.showcase;
@@ -24,4 +25,31 @@ public sealed record ShopItem(
             reader.ReadOptional(() => reader.ReadInt32())
         );
     }
+}
+
+public sealed class ShopItemTable : ISoraTable
+{
+    private readonly List<ShopItem> rows;
+
+    internal ShopItemTable(List<ShopItem> rows)
+    {
+        this.rows = rows;
+    }
+
+    internal static ShopItemTable Decode(SoraBundle bundle)
+    {
+        return FromRows(bundle.DecodeTable<ShopItem>("ShopItem", ShopItem.Decode));
+    }
+
+    internal static ShopItemTable FromRows(List<ShopItem> rows)
+    {
+        return new ShopItemTable(rows);
+    }
+
+    public List<ShopItem> Rows => rows;
+    public string Name => "ShopItem";
+    public SoraTableMode Mode => SoraTableMode.List;
+    public string? Key => null;
+    public string RowType => "ShopItem";
+    public int Count => rows.Count;
 }

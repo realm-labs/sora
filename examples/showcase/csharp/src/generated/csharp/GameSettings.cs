@@ -2,6 +2,7 @@
 
 #nullable enable
 
+using System;
 using System.Collections.Generic;
 
 namespace com.sora.showcase;
@@ -24,4 +25,31 @@ public sealed record GameSettings(
             reader.ReadList(() => reader.ReadInt32())
         );
     }
+}
+
+public sealed class GameSettingsTable : ISoraTable
+{
+    private readonly GameSettings rows;
+
+    internal GameSettingsTable(GameSettings rows)
+    {
+        this.rows = rows;
+    }
+
+    internal static GameSettingsTable Decode(SoraBundle bundle)
+    {
+        return FromRows(bundle.DecodeTable<GameSettings>("GameSettings", GameSettings.Decode));
+    }
+
+    internal static GameSettingsTable FromRows(List<GameSettings> rows)
+    {
+        return new GameSettingsTable(SoraConfig.RequireSingletonTable(rows, "GameSettings"));
+    }
+
+    public GameSettings Rows => rows;
+    public string Name => "GameSettings";
+    public SoraTableMode Mode => SoraTableMode.Singleton;
+    public string? Key => null;
+    public string RowType => "GameSettings";
+    public int Count => 1;
 }

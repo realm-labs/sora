@@ -2,6 +2,7 @@
 
 #nullable enable
 
+using System;
 using System.Collections.Generic;
 
 namespace com.sora.showcase;
@@ -28,4 +29,35 @@ public sealed record Character(
             Vec3.Decode(reader)
         );
     }
+}
+
+public sealed class CharacterTable : ISoraTable
+{
+    private readonly Dictionary<int, Character> rows;
+
+    internal CharacterTable(Dictionary<int, Character> rows)
+    {
+        this.rows = rows;
+    }
+
+    internal static CharacterTable Decode(SoraBundle bundle)
+    {
+        return FromRows(bundle.DecodeTable<Character>("Character", Character.Decode));
+    }
+
+    internal static CharacterTable FromRows(List<Character> rows)
+    {
+        return new CharacterTable(SoraConfig.DecodeMapTable(rows, row => row.Id));
+    }
+
+    public Dictionary<int, Character> Rows => rows;
+    public Character? Get(int key)
+    {
+        return rows.TryGetValue(key, out var row) ? row : default;
+    }
+    public string Name => "Character";
+    public SoraTableMode Mode => SoraTableMode.Map;
+    public string? Key => "id";
+    public string RowType => "Character";
+    public int Count => rows.Count;
 }

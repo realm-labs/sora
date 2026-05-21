@@ -2,6 +2,7 @@
 
 #nullable enable
 
+using System;
 using System.Collections.Generic;
 
 namespace com.sora.showcase;
@@ -20,4 +21,35 @@ public sealed record GachaPool(
             ResourceCost.Decode(reader)
         );
     }
+}
+
+public sealed class GachaPoolTable : ISoraTable
+{
+    private readonly Dictionary<int, GachaPool> rows;
+
+    internal GachaPoolTable(Dictionary<int, GachaPool> rows)
+    {
+        this.rows = rows;
+    }
+
+    internal static GachaPoolTable Decode(SoraBundle bundle)
+    {
+        return FromRows(bundle.DecodeTable<GachaPool>("GachaPool", GachaPool.Decode));
+    }
+
+    internal static GachaPoolTable FromRows(List<GachaPool> rows)
+    {
+        return new GachaPoolTable(SoraConfig.DecodeMapTable(rows, row => row.Id));
+    }
+
+    public Dictionary<int, GachaPool> Rows => rows;
+    public GachaPool? Get(int key)
+    {
+        return rows.TryGetValue(key, out var row) ? row : default;
+    }
+    public string Name => "GachaPool";
+    public SoraTableMode Mode => SoraTableMode.Map;
+    public string? Key => "id";
+    public string RowType => "GachaPool";
+    public int Count => rows.Count;
 }

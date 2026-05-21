@@ -2,6 +2,7 @@
 
 #nullable enable
 
+using System;
 using System.Collections.Generic;
 
 namespace com.sora.showcase;
@@ -24,4 +25,31 @@ public sealed record DropEntry(
             reader.ReadFloat()
         );
     }
+}
+
+public sealed class DropEntryTable : ISoraTable
+{
+    private readonly List<DropEntry> rows;
+
+    internal DropEntryTable(List<DropEntry> rows)
+    {
+        this.rows = rows;
+    }
+
+    internal static DropEntryTable Decode(SoraBundle bundle)
+    {
+        return FromRows(bundle.DecodeTable<DropEntry>("DropEntry", DropEntry.Decode));
+    }
+
+    internal static DropEntryTable FromRows(List<DropEntry> rows)
+    {
+        return new DropEntryTable(rows);
+    }
+
+    public List<DropEntry> Rows => rows;
+    public string Name => "DropEntry";
+    public SoraTableMode Mode => SoraTableMode.List;
+    public string? Key => null;
+    public string RowType => "DropEntry";
+    public int Count => rows.Count;
 }

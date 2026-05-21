@@ -109,6 +109,7 @@ struct CSharpUnionVariant {
 struct CSharpRecord {
     pascal_name: String,
     fields: Vec<CSharpField>,
+    table: Option<CSharpTable>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -169,7 +170,13 @@ impl CSharpModel {
             records: model
                 .records
                 .into_iter()
-                .map(|item| csharp_record(ir, item))
+                .map(|item| {
+                    let table = tables
+                        .iter()
+                        .find(|table| table.row_type == item.pascal_name)
+                        .cloned();
+                    csharp_record(ir, item, table)
+                })
                 .collect(),
             has_unique_indexes: tables.iter().any(|table| !table.unique_indexes.is_empty()),
             has_non_unique_indexes: tables
@@ -203,7 +210,7 @@ fn csharp_variant(ir: &ConfigIr, variant: BaseUnionVariant) -> CSharpUnionVarian
     }
 }
 
-fn csharp_record(ir: &ConfigIr, record: BaseRecord) -> CSharpRecord {
+fn csharp_record(ir: &ConfigIr, record: BaseRecord, table: Option<CSharpTable>) -> CSharpRecord {
     CSharpRecord {
         pascal_name: record.pascal_name,
         fields: record
@@ -211,6 +218,7 @@ fn csharp_record(ir: &ConfigIr, record: BaseRecord) -> CSharpRecord {
             .into_iter()
             .map(|field| csharp_field(ir, field))
             .collect(),
+        table,
     }
 }
 

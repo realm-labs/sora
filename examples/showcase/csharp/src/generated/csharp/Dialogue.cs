@@ -2,6 +2,7 @@
 
 #nullable enable
 
+using System;
 using System.Collections.Generic;
 
 namespace com.sora.showcase;
@@ -20,4 +21,35 @@ public sealed record Dialogue(
             reader.ReadList(() => reader.ReadString())
         );
     }
+}
+
+public sealed class DialogueTable : ISoraTable
+{
+    private readonly Dictionary<int, Dialogue> rows;
+
+    internal DialogueTable(Dictionary<int, Dialogue> rows)
+    {
+        this.rows = rows;
+    }
+
+    internal static DialogueTable Decode(SoraBundle bundle)
+    {
+        return FromRows(bundle.DecodeTable<Dialogue>("Dialogue", Dialogue.Decode));
+    }
+
+    internal static DialogueTable FromRows(List<Dialogue> rows)
+    {
+        return new DialogueTable(SoraConfig.DecodeMapTable(rows, row => row.Id));
+    }
+
+    public Dictionary<int, Dialogue> Rows => rows;
+    public Dialogue? Get(int key)
+    {
+        return rows.TryGetValue(key, out var row) ? row : default;
+    }
+    public string Name => "Dialogue";
+    public SoraTableMode Mode => SoraTableMode.Map;
+    public string? Key => "id";
+    public string RowType => "Dialogue";
+    public int Count => rows.Count;
 }

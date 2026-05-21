@@ -2,6 +2,7 @@
 
 #nullable enable
 
+using System;
 using System.Collections.Generic;
 
 namespace com.sora.showcase;
@@ -24,4 +25,35 @@ public sealed record MailTemplate(
             reader.ReadList(() => Reward.Decode(reader))
         );
     }
+}
+
+public sealed class MailTemplateTable : ISoraTable
+{
+    private readonly Dictionary<int, MailTemplate> rows;
+
+    internal MailTemplateTable(Dictionary<int, MailTemplate> rows)
+    {
+        this.rows = rows;
+    }
+
+    internal static MailTemplateTable Decode(SoraBundle bundle)
+    {
+        return FromRows(bundle.DecodeTable<MailTemplate>("MailTemplate", MailTemplate.Decode));
+    }
+
+    internal static MailTemplateTable FromRows(List<MailTemplate> rows)
+    {
+        return new MailTemplateTable(SoraConfig.DecodeMapTable(rows, row => row.Id));
+    }
+
+    public Dictionary<int, MailTemplate> Rows => rows;
+    public MailTemplate? Get(int key)
+    {
+        return rows.TryGetValue(key, out var row) ? row : default;
+    }
+    public string Name => "MailTemplate";
+    public SoraTableMode Mode => SoraTableMode.Map;
+    public string? Key => "id";
+    public string RowType => "MailTemplate";
+    public int Count => rows.Count;
 }

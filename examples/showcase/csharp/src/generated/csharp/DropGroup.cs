@@ -2,6 +2,7 @@
 
 #nullable enable
 
+using System;
 using System.Collections.Generic;
 
 namespace com.sora.showcase;
@@ -18,4 +19,35 @@ public sealed record DropGroup(
             reader.ReadString()
         );
     }
+}
+
+public sealed class DropGroupTable : ISoraTable
+{
+    private readonly Dictionary<int, DropGroup> rows;
+
+    internal DropGroupTable(Dictionary<int, DropGroup> rows)
+    {
+        this.rows = rows;
+    }
+
+    internal static DropGroupTable Decode(SoraBundle bundle)
+    {
+        return FromRows(bundle.DecodeTable<DropGroup>("DropGroup", DropGroup.Decode));
+    }
+
+    internal static DropGroupTable FromRows(List<DropGroup> rows)
+    {
+        return new DropGroupTable(SoraConfig.DecodeMapTable(rows, row => row.Id));
+    }
+
+    public Dictionary<int, DropGroup> Rows => rows;
+    public DropGroup? Get(int key)
+    {
+        return rows.TryGetValue(key, out var row) ? row : default;
+    }
+    public string Name => "DropGroup";
+    public SoraTableMode Mode => SoraTableMode.Map;
+    public string? Key => "id";
+    public string RowType => "DropGroup";
+    public int Count => rows.Count;
 }

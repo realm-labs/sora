@@ -2,6 +2,7 @@
 
 #nullable enable
 
+using System;
 using System.Collections.Generic;
 
 namespace com.sora.showcase;
@@ -20,4 +21,35 @@ public sealed record Recipe(
             reader.ReadList(() => ResourceCost.Decode(reader))
         );
     }
+}
+
+public sealed class RecipeTable : ISoraTable
+{
+    private readonly Dictionary<int, Recipe> rows;
+
+    internal RecipeTable(Dictionary<int, Recipe> rows)
+    {
+        this.rows = rows;
+    }
+
+    internal static RecipeTable Decode(SoraBundle bundle)
+    {
+        return FromRows(bundle.DecodeTable<Recipe>("Recipe", Recipe.Decode));
+    }
+
+    internal static RecipeTable FromRows(List<Recipe> rows)
+    {
+        return new RecipeTable(SoraConfig.DecodeMapTable(rows, row => row.Id));
+    }
+
+    public Dictionary<int, Recipe> Rows => rows;
+    public Recipe? Get(int key)
+    {
+        return rows.TryGetValue(key, out var row) ? row : default;
+    }
+    public string Name => "Recipe";
+    public SoraTableMode Mode => SoraTableMode.Map;
+    public string? Key => "id";
+    public string RowType => "Recipe";
+    public int Count => rows.Count;
 }

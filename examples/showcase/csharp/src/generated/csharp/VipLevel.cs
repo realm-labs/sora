@@ -2,6 +2,7 @@
 
 #nullable enable
 
+using System;
 using System.Collections.Generic;
 
 namespace com.sora.showcase;
@@ -20,4 +21,35 @@ public sealed record VipLevel(
             reader.ReadList(() => reader.ReadString())
         );
     }
+}
+
+public sealed class VipLevelTable : ISoraTable
+{
+    private readonly Dictionary<int, VipLevel> rows;
+
+    internal VipLevelTable(Dictionary<int, VipLevel> rows)
+    {
+        this.rows = rows;
+    }
+
+    internal static VipLevelTable Decode(SoraBundle bundle)
+    {
+        return FromRows(bundle.DecodeTable<VipLevel>("VipLevel", VipLevel.Decode));
+    }
+
+    internal static VipLevelTable FromRows(List<VipLevel> rows)
+    {
+        return new VipLevelTable(SoraConfig.DecodeMapTable(rows, row => row.Level));
+    }
+
+    public Dictionary<int, VipLevel> Rows => rows;
+    public VipLevel? Get(int key)
+    {
+        return rows.TryGetValue(key, out var row) ? row : default;
+    }
+    public string Name => "VipLevel";
+    public SoraTableMode Mode => SoraTableMode.Map;
+    public string? Key => "level";
+    public string RowType => "VipLevel";
+    public int Count => rows.Count;
 }

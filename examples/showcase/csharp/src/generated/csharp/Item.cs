@@ -2,6 +2,7 @@
 
 #nullable enable
 
+using System;
 using System.Collections.Generic;
 
 namespace com.sora.showcase;
@@ -32,4 +33,51 @@ public sealed record Item(
             reader.ReadList(() => reader.ReadString())
         );
     }
+}
+
+public sealed class ItemTable : ISoraTable
+{
+    private readonly Dictionary<int, Item> rows;
+    private readonly Dictionary<string, Item> byName;
+    private readonly Dictionary<ItemType, List<Item>> byItemType;
+
+    internal ItemTable(Dictionary<int, Item> rows, Dictionary<string, Item> byName, Dictionary<ItemType, List<Item>> byItemType)
+    {
+        this.rows = rows;
+        this.byName = byName;
+        this.byItemType = byItemType;
+    }
+
+    internal static ItemTable Decode(SoraBundle bundle)
+    {
+        return FromRows(bundle.DecodeTable<Item>("Item", Item.Decode));
+    }
+
+    internal static ItemTable FromRows(List<Item> rows)
+    {
+        return new ItemTable(
+            SoraConfig.DecodeMapTable(rows, row => row.Id),
+            SoraConfig.DecodeUniqueIndex(rows, row => row.Name),
+            SoraConfig.DecodeIndex(rows, row => row.ItemType)
+        );
+    }
+
+    public Dictionary<int, Item> Rows => rows;
+    public Item? Get(int key)
+    {
+        return rows.TryGetValue(key, out var row) ? row : default;
+    }
+    public Item? GetByName(string name)
+    {
+        return byName.TryGetValue(name, out var row) ? row : default;
+    }
+    public IReadOnlyList<Item> FindByItemType(ItemType itemType)
+    {
+        return byItemType.TryGetValue(itemType, out var rows) ? rows : Array.Empty<Item>();
+    }
+    public string Name => "Item";
+    public SoraTableMode Mode => SoraTableMode.Map;
+    public string? Key => "id";
+    public string RowType => "Item";
+    public int Count => rows.Count;
 }

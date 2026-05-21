@@ -2,6 +2,7 @@
 
 #nullable enable
 
+using System;
 using System.Collections.Generic;
 
 namespace com.sora.showcase;
@@ -22,4 +23,31 @@ public sealed record StageReward(
             reader.ReadInt32()
         );
     }
+}
+
+public sealed class StageRewardTable : ISoraTable
+{
+    private readonly List<StageReward> rows;
+
+    internal StageRewardTable(List<StageReward> rows)
+    {
+        this.rows = rows;
+    }
+
+    internal static StageRewardTable Decode(SoraBundle bundle)
+    {
+        return FromRows(bundle.DecodeTable<StageReward>("StageReward", StageReward.Decode));
+    }
+
+    internal static StageRewardTable FromRows(List<StageReward> rows)
+    {
+        return new StageRewardTable(rows);
+    }
+
+    public List<StageReward> Rows => rows;
+    public string Name => "StageReward";
+    public SoraTableMode Mode => SoraTableMode.List;
+    public string? Key => null;
+    public string RowType => "StageReward";
+    public int Count => rows.Count;
 }

@@ -2,6 +2,7 @@
 
 #nullable enable
 
+using System;
 using System.Collections.Generic;
 
 namespace com.sora.showcase;
@@ -22,4 +23,35 @@ public sealed record Achievement(
             ResourceCost.Decode(reader)
         );
     }
+}
+
+public sealed class AchievementTable : ISoraTable
+{
+    private readonly Dictionary<int, Achievement> rows;
+
+    internal AchievementTable(Dictionary<int, Achievement> rows)
+    {
+        this.rows = rows;
+    }
+
+    internal static AchievementTable Decode(SoraBundle bundle)
+    {
+        return FromRows(bundle.DecodeTable<Achievement>("Achievement", Achievement.Decode));
+    }
+
+    internal static AchievementTable FromRows(List<Achievement> rows)
+    {
+        return new AchievementTable(SoraConfig.DecodeMapTable(rows, row => row.Id));
+    }
+
+    public Dictionary<int, Achievement> Rows => rows;
+    public Achievement? Get(int key)
+    {
+        return rows.TryGetValue(key, out var row) ? row : default;
+    }
+    public string Name => "Achievement";
+    public SoraTableMode Mode => SoraTableMode.Map;
+    public string? Key => "id";
+    public string RowType => "Achievement";
+    public int Count => rows.Count;
 }

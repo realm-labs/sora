@@ -2,6 +2,7 @@
 
 #nullable enable
 
+using System;
 using System.Collections.Generic;
 
 namespace com.sora.showcase;
@@ -22,4 +23,35 @@ public sealed record EquipmentSet(
             SkillEffect.Decode(reader)
         );
     }
+}
+
+public sealed class EquipmentSetTable : ISoraTable
+{
+    private readonly Dictionary<int, EquipmentSet> rows;
+
+    internal EquipmentSetTable(Dictionary<int, EquipmentSet> rows)
+    {
+        this.rows = rows;
+    }
+
+    internal static EquipmentSetTable Decode(SoraBundle bundle)
+    {
+        return FromRows(bundle.DecodeTable<EquipmentSet>("EquipmentSet", EquipmentSet.Decode));
+    }
+
+    internal static EquipmentSetTable FromRows(List<EquipmentSet> rows)
+    {
+        return new EquipmentSetTable(SoraConfig.DecodeMapTable(rows, row => row.Id));
+    }
+
+    public Dictionary<int, EquipmentSet> Rows => rows;
+    public EquipmentSet? Get(int key)
+    {
+        return rows.TryGetValue(key, out var row) ? row : default;
+    }
+    public string Name => "EquipmentSet";
+    public SoraTableMode Mode => SoraTableMode.Map;
+    public string? Key => "id";
+    public string RowType => "EquipmentSet";
+    public int Count => rows.Count;
 }

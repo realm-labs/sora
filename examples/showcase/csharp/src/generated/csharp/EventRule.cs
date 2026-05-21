@@ -2,6 +2,7 @@
 
 #nullable enable
 
+using System;
 using System.Collections.Generic;
 
 namespace com.sora.showcase;
@@ -22,4 +23,35 @@ public sealed record EventRule(
             reader.ReadList(() => RewardAction.Decode(reader))
         );
     }
+}
+
+public sealed class EventRuleTable : ISoraTable
+{
+    private readonly Dictionary<int, EventRule> rows;
+
+    internal EventRuleTable(Dictionary<int, EventRule> rows)
+    {
+        this.rows = rows;
+    }
+
+    internal static EventRuleTable Decode(SoraBundle bundle)
+    {
+        return FromRows(bundle.DecodeTable<EventRule>("EventRule", EventRule.Decode));
+    }
+
+    internal static EventRuleTable FromRows(List<EventRule> rows)
+    {
+        return new EventRuleTable(SoraConfig.DecodeMapTable(rows, row => row.Id));
+    }
+
+    public Dictionary<int, EventRule> Rows => rows;
+    public EventRule? Get(int key)
+    {
+        return rows.TryGetValue(key, out var row) ? row : default;
+    }
+    public string Name => "EventRule";
+    public SoraTableMode Mode => SoraTableMode.Map;
+    public string? Key => "id";
+    public string RowType => "EventRule";
+    public int Count => rows.Count;
 }

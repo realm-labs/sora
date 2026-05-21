@@ -2,6 +2,7 @@
 
 #nullable enable
 
+using System;
 using System.Collections.Generic;
 
 namespace com.sora.showcase;
@@ -26,4 +27,35 @@ public sealed record Monster(
             Vec3.Decode(reader)
         );
     }
+}
+
+public sealed class MonsterTable : ISoraTable
+{
+    private readonly Dictionary<int, Monster> rows;
+
+    internal MonsterTable(Dictionary<int, Monster> rows)
+    {
+        this.rows = rows;
+    }
+
+    internal static MonsterTable Decode(SoraBundle bundle)
+    {
+        return FromRows(bundle.DecodeTable<Monster>("Monster", Monster.Decode));
+    }
+
+    internal static MonsterTable FromRows(List<Monster> rows)
+    {
+        return new MonsterTable(SoraConfig.DecodeMapTable(rows, row => row.Id));
+    }
+
+    public Dictionary<int, Monster> Rows => rows;
+    public Monster? Get(int key)
+    {
+        return rows.TryGetValue(key, out var row) ? row : default;
+    }
+    public string Name => "Monster";
+    public SoraTableMode Mode => SoraTableMode.Map;
+    public string? Key => "id";
+    public string RowType => "Monster";
+    public int Count => rows.Count;
 }

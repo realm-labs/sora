@@ -2,6 +2,7 @@
 
 #nullable enable
 
+using System;
 using System.Collections.Generic;
 
 namespace com.sora.showcase;
@@ -20,4 +21,31 @@ public sealed record CharacterSkill(
             reader.ReadInt32()
         );
     }
+}
+
+public sealed class CharacterSkillTable : ISoraTable
+{
+    private readonly List<CharacterSkill> rows;
+
+    internal CharacterSkillTable(List<CharacterSkill> rows)
+    {
+        this.rows = rows;
+    }
+
+    internal static CharacterSkillTable Decode(SoraBundle bundle)
+    {
+        return FromRows(bundle.DecodeTable<CharacterSkill>("CharacterSkill", CharacterSkill.Decode));
+    }
+
+    internal static CharacterSkillTable FromRows(List<CharacterSkill> rows)
+    {
+        return new CharacterSkillTable(rows);
+    }
+
+    public List<CharacterSkill> Rows => rows;
+    public string Name => "CharacterSkill";
+    public SoraTableMode Mode => SoraTableMode.List;
+    public string? Key => null;
+    public string RowType => "CharacterSkill";
+    public int Count => rows.Count;
 }

@@ -2,6 +2,7 @@
 
 #nullable enable
 
+using System;
 using System.Collections.Generic;
 
 namespace com.sora.showcase;
@@ -22,4 +23,31 @@ public sealed record GachaItem(
             reader.ReadFloat()
         );
     }
+}
+
+public sealed class GachaItemTable : ISoraTable
+{
+    private readonly List<GachaItem> rows;
+
+    internal GachaItemTable(List<GachaItem> rows)
+    {
+        this.rows = rows;
+    }
+
+    internal static GachaItemTable Decode(SoraBundle bundle)
+    {
+        return FromRows(bundle.DecodeTable<GachaItem>("GachaItem", GachaItem.Decode));
+    }
+
+    internal static GachaItemTable FromRows(List<GachaItem> rows)
+    {
+        return new GachaItemTable(rows);
+    }
+
+    public List<GachaItem> Rows => rows;
+    public string Name => "GachaItem";
+    public SoraTableMode Mode => SoraTableMode.List;
+    public string? Key => null;
+    public string RowType => "GachaItem";
+    public int Count => rows.Count;
 }

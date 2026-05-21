@@ -2,6 +2,7 @@
 
 #nullable enable
 
+using System;
 using System.Collections.Generic;
 
 namespace com.sora.showcase;
@@ -33,4 +34,35 @@ public sealed record Skill(
             Vec3.Decode(reader)
         );
     }
+}
+
+public sealed class SkillTable : ISoraTable
+{
+    private readonly Dictionary<int, Skill> rows;
+
+    internal SkillTable(Dictionary<int, Skill> rows)
+    {
+        this.rows = rows;
+    }
+
+    internal static SkillTable Decode(SoraBundle bundle)
+    {
+        return FromRows(bundle.DecodeTable<Skill>("Skill", Skill.Decode));
+    }
+
+    internal static SkillTable FromRows(List<Skill> rows)
+    {
+        return new SkillTable(SoraConfig.DecodeMapTable(rows, row => row.Id));
+    }
+
+    public Dictionary<int, Skill> Rows => rows;
+    public Skill? Get(int key)
+    {
+        return rows.TryGetValue(key, out var row) ? row : default;
+    }
+    public string Name => "Skill";
+    public SoraTableMode Mode => SoraTableMode.Map;
+    public string? Key => "id";
+    public string RowType => "Skill";
+    public int Count => rows.Count;
 }

@@ -2,6 +2,7 @@
 
 #nullable enable
 
+using System;
 using System.Collections.Generic;
 
 namespace com.sora.showcase;
@@ -29,4 +30,35 @@ public sealed record Quest(
             reader.ReadList(() => Reward.Decode(reader))
         );
     }
+}
+
+public sealed class QuestTable : ISoraTable
+{
+    private readonly Dictionary<int, Quest> rows;
+
+    internal QuestTable(Dictionary<int, Quest> rows)
+    {
+        this.rows = rows;
+    }
+
+    internal static QuestTable Decode(SoraBundle bundle)
+    {
+        return FromRows(bundle.DecodeTable<Quest>("Quest", Quest.Decode));
+    }
+
+    internal static QuestTable FromRows(List<Quest> rows)
+    {
+        return new QuestTable(SoraConfig.DecodeMapTable(rows, row => row.Id));
+    }
+
+    public Dictionary<int, Quest> Rows => rows;
+    public Quest? Get(int key)
+    {
+        return rows.TryGetValue(key, out var row) ? row : default;
+    }
+    public string Name => "Quest";
+    public SoraTableMode Mode => SoraTableMode.Map;
+    public string? Key => "id";
+    public string RowType => "Quest";
+    public int Count => rows.Count;
 }

@@ -2,6 +2,7 @@
 
 #nullable enable
 
+using System;
 using System.Collections.Generic;
 
 namespace com.sora.showcase;
@@ -20,4 +21,35 @@ public sealed record LevelExp(
             reader.ReadOptional(() => reader.ReadString())
         );
     }
+}
+
+public sealed class LevelExpTable : ISoraTable
+{
+    private readonly Dictionary<int, LevelExp> rows;
+
+    internal LevelExpTable(Dictionary<int, LevelExp> rows)
+    {
+        this.rows = rows;
+    }
+
+    internal static LevelExpTable Decode(SoraBundle bundle)
+    {
+        return FromRows(bundle.DecodeTable<LevelExp>("LevelExp", LevelExp.Decode));
+    }
+
+    internal static LevelExpTable FromRows(List<LevelExp> rows)
+    {
+        return new LevelExpTable(SoraConfig.DecodeMapTable(rows, row => row.Level));
+    }
+
+    public Dictionary<int, LevelExp> Rows => rows;
+    public LevelExp? Get(int key)
+    {
+        return rows.TryGetValue(key, out var row) ? row : default;
+    }
+    public string Name => "LevelExp";
+    public SoraTableMode Mode => SoraTableMode.Map;
+    public string? Key => "level";
+    public string RowType => "LevelExp";
+    public int Count => rows.Count;
 }

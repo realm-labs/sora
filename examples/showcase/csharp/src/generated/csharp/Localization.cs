@@ -2,6 +2,7 @@
 
 #nullable enable
 
+using System;
 using System.Collections.Generic;
 
 namespace com.sora.showcase;
@@ -22,4 +23,35 @@ public sealed record Localization(
             reader.ReadOptional(() => reader.ReadString())
         );
     }
+}
+
+public sealed class LocalizationTable : ISoraTable
+{
+    private readonly Dictionary<string, Localization> rows;
+
+    internal LocalizationTable(Dictionary<string, Localization> rows)
+    {
+        this.rows = rows;
+    }
+
+    internal static LocalizationTable Decode(SoraBundle bundle)
+    {
+        return FromRows(bundle.DecodeTable<Localization>("Localization", Localization.Decode));
+    }
+
+    internal static LocalizationTable FromRows(List<Localization> rows)
+    {
+        return new LocalizationTable(SoraConfig.DecodeMapTable(rows, row => row.Key));
+    }
+
+    public Dictionary<string, Localization> Rows => rows;
+    public Localization? Get(string key)
+    {
+        return rows.TryGetValue(key, out var row) ? row : default;
+    }
+    public string Name => "Localization";
+    public SoraTableMode Mode => SoraTableMode.Map;
+    public string? Key => "key";
+    public string RowType => "Localization";
+    public int Count => rows.Count;
 }

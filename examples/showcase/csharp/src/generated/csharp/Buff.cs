@@ -2,6 +2,7 @@
 
 #nullable enable
 
+using System;
 using System.Collections.Generic;
 
 namespace com.sora.showcase;
@@ -22,4 +23,35 @@ public sealed record Buff(
             reader.ReadList(() => StatModifier.Decode(reader))
         );
     }
+}
+
+public sealed class BuffTable : ISoraTable
+{
+    private readonly Dictionary<int, Buff> rows;
+
+    internal BuffTable(Dictionary<int, Buff> rows)
+    {
+        this.rows = rows;
+    }
+
+    internal static BuffTable Decode(SoraBundle bundle)
+    {
+        return FromRows(bundle.DecodeTable<Buff>("Buff", Buff.Decode));
+    }
+
+    internal static BuffTable FromRows(List<Buff> rows)
+    {
+        return new BuffTable(SoraConfig.DecodeMapTable(rows, row => row.Id));
+    }
+
+    public Dictionary<int, Buff> Rows => rows;
+    public Buff? Get(int key)
+    {
+        return rows.TryGetValue(key, out var row) ? row : default;
+    }
+    public string Name => "Buff";
+    public SoraTableMode Mode => SoraTableMode.Map;
+    public string? Key => "id";
+    public string RowType => "Buff";
+    public int Count => rows.Count;
 }

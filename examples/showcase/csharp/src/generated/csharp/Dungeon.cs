@@ -2,6 +2,7 @@
 
 #nullable enable
 
+using System;
 using System.Collections.Generic;
 
 namespace com.sora.showcase;
@@ -22,4 +23,35 @@ public sealed record Dungeon(
             ResourceCost.Decode(reader)
         );
     }
+}
+
+public sealed class DungeonTable : ISoraTable
+{
+    private readonly Dictionary<int, Dungeon> rows;
+
+    internal DungeonTable(Dictionary<int, Dungeon> rows)
+    {
+        this.rows = rows;
+    }
+
+    internal static DungeonTable Decode(SoraBundle bundle)
+    {
+        return FromRows(bundle.DecodeTable<Dungeon>("Dungeon", Dungeon.Decode));
+    }
+
+    internal static DungeonTable FromRows(List<Dungeon> rows)
+    {
+        return new DungeonTable(SoraConfig.DecodeMapTable(rows, row => row.Id));
+    }
+
+    public Dictionary<int, Dungeon> Rows => rows;
+    public Dungeon? Get(int key)
+    {
+        return rows.TryGetValue(key, out var row) ? row : default;
+    }
+    public string Name => "Dungeon";
+    public SoraTableMode Mode => SoraTableMode.Map;
+    public string? Key => "id";
+    public string RowType => "Dungeon";
+    public int Count => rows.Count;
 }

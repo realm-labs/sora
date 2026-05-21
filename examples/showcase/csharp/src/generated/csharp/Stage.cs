@@ -2,6 +2,7 @@
 
 #nullable enable
 
+using System;
 using System.Collections.Generic;
 
 namespace com.sora.showcase;
@@ -24,4 +25,35 @@ public sealed record Stage(
             reader.ReadList(() => Reward.Decode(reader))
         );
     }
+}
+
+public sealed class StageTable : ISoraTable
+{
+    private readonly Dictionary<int, Stage> rows;
+
+    internal StageTable(Dictionary<int, Stage> rows)
+    {
+        this.rows = rows;
+    }
+
+    internal static StageTable Decode(SoraBundle bundle)
+    {
+        return FromRows(bundle.DecodeTable<Stage>("Stage", Stage.Decode));
+    }
+
+    internal static StageTable FromRows(List<Stage> rows)
+    {
+        return new StageTable(SoraConfig.DecodeMapTable(rows, row => row.Id));
+    }
+
+    public Dictionary<int, Stage> Rows => rows;
+    public Stage? Get(int key)
+    {
+        return rows.TryGetValue(key, out var row) ? row : default;
+    }
+    public string Name => "Stage";
+    public SoraTableMode Mode => SoraTableMode.Map;
+    public string? Key => "id";
+    public string RowType => "Stage";
+    public int Count => rows.Count;
 }
