@@ -70,6 +70,11 @@ struct RustModel {
     records: Vec<RustRecord>,
     tables: Vec<RustTable>,
     modules: Vec<String>,
+    has_map_tables: bool,
+    has_singleton_tables: bool,
+    has_unique_indexes: bool,
+    has_non_unique_list_indexes: bool,
+    has_non_unique_map_indexes: bool,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -145,6 +150,11 @@ struct RustField {
 
 impl RustModel {
     fn from_base_model(ir: &ConfigIr, model: BaseModel) -> Self {
+        let tables = model
+            .tables
+            .into_iter()
+            .map(|item| rust_table(ir, item))
+            .collect::<Vec<_>>();
         Self {
             package: model.package,
             enums: model
@@ -166,11 +176,18 @@ impl RustModel {
                 .into_iter()
                 .map(|item| rust_record(ir, item))
                 .collect(),
-            tables: model
-                .tables
-                .into_iter()
-                .map(|item| rust_table(ir, item))
-                .collect(),
+            has_map_tables: tables
+                .iter()
+                .any(|table| table.mode == "map" && table.key_field_name.is_some()),
+            has_singleton_tables: tables.iter().any(|table| table.mode == "singleton"),
+            has_unique_indexes: tables.iter().any(|table| !table.unique_indexes.is_empty()),
+            has_non_unique_list_indexes: tables
+                .iter()
+                .any(|table| table.mode == "list" && !table.non_unique_indexes.is_empty()),
+            has_non_unique_map_indexes: tables
+                .iter()
+                .any(|table| table.mode == "map" && !table.non_unique_indexes.is_empty()),
+            tables,
             modules: model.modules,
         }
     }
