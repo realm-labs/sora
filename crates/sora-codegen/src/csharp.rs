@@ -4,7 +4,7 @@ use heck::ToLowerCamelCase;
 use minijinja::context;
 use serde::Serialize;
 use sora_diagnostics::Result;
-use sora_ir::model::{ConfigIr, TableModeIr, TypeIr};
+use sora_ir::model::{ConfigIr, RuntimeFormatIr, TableModeIr, TypeIr};
 
 use crate::{
     generator::{CodeGenerator, runtime_format_name},
@@ -60,6 +60,11 @@ impl CodeGenerator for CSharpCodeGenerator {
             context! { namespace => &model.package, runtime_format => runtime_format },
         )?;
         write_file(&out_dir.join("Runtime.cs"), rendered)?;
+
+        if ir.codegen.csharp.runtime_format == RuntimeFormatIr::Protobuf {
+            let rendered = render_template("csharp", "protobuf_bundle.cs.j2", context! {})?;
+            write_file(&out_dir.join("SoraRuntimeBundle.cs"), rendered)?;
+        }
 
         let rendered = render_template(
             "csharp",

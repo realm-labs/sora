@@ -3,7 +3,6 @@
 #nullable enable
 
 using System;
-using System.Buffers.Binary;
 using System.Collections.Generic;
 using System.Text;
 using System.Text.Json;
@@ -414,7 +413,7 @@ internal sealed class SoraValueBundle
 {%- if runtime_format == "protobuf" %}
     internal static SoraValueBundle ParseProtobuf(byte[] bytes)
     {
-        var bundle = ProtoBundle.Parse(bytes);
+        var bundle = Sora.Runtime.Bundle.Parser.ParseFrom(bytes);
         if (bundle.Format != "protobuf")
         {
             throw new SoraReadException($"expected protobuf bundle, got {bundle.Format}");
@@ -423,7 +422,7 @@ internal sealed class SoraValueBundle
         {
             throw new SoraReadException($"unsupported protobuf bundle version {bundle.FormatVersion}");
         }
-        return new SoraValueBundle(bundle.Tables);
+        return new SoraValueBundle(SoraProtobufBundle.DecodeTables(bundle));
     }
 {%- endif %}
 
@@ -643,275 +642,66 @@ internal static class SoraValueObjectExtensions
 
 {%- if runtime_format == "protobuf" %}
 
-internal sealed class ProtoBundle
+internal static class SoraProtobufBundle
 {
-    internal int FormatVersion { get; private set; }
-    internal string Format { get; private set; } = string.Empty;
-    internal Dictionary<string, List<SoraValue>> Tables { get; } = new();
-
-    internal static ProtoBundle Parse(byte[] bytes)
+    internal static Dictionary<string, List<SoraValue>> DecodeTables(Sora.Runtime.Bundle bundle)
     {
-        var reader = new ProtoReader(bytes);
-        var bundle = new ProtoBundle();
-        while (reader.TryReadField(out var field, out var wireType))
+        var tables = new Dictionary<string, List<SoraValue>>();
+        foreach (var table in bundle.Tables)
         {
-            switch (field)
+            var rows = new List<SoraValue>(table.Rows.Count);
+            foreach (var row in table.Rows)
             {
-                case 1:
-                    bundle.FormatVersion = (int)reader.ReadVarint(wireType);
-                    break;
-                case 2:
-                    bundle.Format = reader.ReadString(wireType);
-                    break;
-                case 5:
-                    var table = ParseTable(reader.ReadBytes(wireType));
-                    bundle.Tables[table.Name] = table.Rows;
-                    break;
-                default:
-                    reader.Skip(wireType);
-                    break;
+                rows.Add(DecodeRow(row));
             }
+            tables[table.Name] = rows;
         }
-        return bundle;
+        return tables;
     }
 
-    private static ProtoTable ParseTable(byte[] bytes)
+    private static SoraValue DecodeRow(Sora.Runtime.Row row)
     {
-        var reader = new ProtoReader(bytes);
-        var table = new ProtoTable();
-        while (reader.TryReadField(out var field, out var wireType))
-        {
-            switch (field)
-            {
-                case 1:
-                    table.Name = reader.ReadString(wireType);
-                    break;
-                case 2:
-                    table.Rows.Add(ParseRow(reader.ReadBytes(wireType)));
-                    break;
-                default:
-                    reader.Skip(wireType);
-                    break;
-            }
-        }
-        return table;
-    }
-
-    private static SoraValue ParseRow(byte[] bytes)
-    {
-        var reader = new ProtoReader(bytes);
         var fields = new Dictionary<string, SoraValue>();
-        while (reader.TryReadField(out var field, out var wireType))
+        foreach (var field in row.Fields)
         {
-            if (field == 1)
-            {
-                var protoField = ParseField(reader.ReadBytes(wireType));
-                fields[protoField.Name] = protoField.Value;
-            }
-            else
-            {
-                reader.Skip(wireType);
-            }
+            fields[field.Name] = DecodeValue(field.Value);
         }
         return SoraValue.Of(fields);
     }
 
-    private static ProtoField ParseField(byte[] bytes)
+    private static SoraValue DecodeValue(Sora.Runtime.Value value)
     {
-        var reader = new ProtoReader(bytes);
-        var field = new ProtoField();
-        while (reader.TryReadField(out var number, out var wireType))
+        return value.KindCase switch
         {
-            switch (number)
-            {
-                case 1:
-                    field.Name = reader.ReadString(wireType);
-                    break;
-                case 2:
-                    field.Value = ParseValue(reader.ReadBytes(wireType));
-                    break;
-                default:
-                    reader.Skip(wireType);
-                    break;
-            }
-        }
-        return field;
+            Sora.Runtime.Value.KindOneofCase.BoolValue => SoraValue.Of(value.BoolValue),
+            Sora.Runtime.Value.KindOneofCase.IntegerValue => SoraValue.Of(value.IntegerValue),
+            Sora.Runtime.Value.KindOneofCase.FloatValue => SoraValue.Of(value.FloatValue),
+            Sora.Runtime.Value.KindOneofCase.StringValue => SoraValue.Of(value.StringValue),
+            Sora.Runtime.Value.KindOneofCase.ListValue => DecodeList(value.ListValue),
+            Sora.Runtime.Value.KindOneofCase.ObjectValue => DecodeObject(value.ObjectValue),
+            Sora.Runtime.Value.KindOneofCase.NullValue => SoraValue.Null(),
+            _ => throw new SoraReadException("protobuf value is missing kind"),
+        };
     }
 
-    private static SoraValue ParseValue(byte[] bytes)
+    private static SoraValue DecodeList(Sora.Runtime.ListValue list)
     {
-        var reader = new ProtoReader(bytes);
-        while (reader.TryReadField(out var field, out var wireType))
+        var values = new List<SoraValue>(list.Values.Count);
+        foreach (var value in list.Values)
         {
-            return field switch
-            {
-                1 => SoraValue.Of(reader.ReadVarint(wireType) != 0),
-                2 => SoraValue.Of((long)reader.ReadVarint(wireType)),
-                3 => SoraValue.Of(reader.ReadDouble(wireType)),
-                4 => SoraValue.Of(reader.ReadString(wireType)),
-                5 => ParseList(reader.ReadBytes(wireType)),
-                6 => ParseObject(reader.ReadBytes(wireType)),
-                7 => SoraValue.Null(),
-                _ => throw new SoraReadException($"unknown protobuf value field `{field}`"),
-            };
-        }
-        throw new SoraReadException("protobuf value is missing kind");
-    }
-
-    private static SoraValue ParseList(byte[] bytes)
-    {
-        var reader = new ProtoReader(bytes);
-        var values = new List<SoraValue>();
-        while (reader.TryReadField(out var field, out var wireType))
-        {
-            if (field == 1)
-            {
-                values.Add(ParseValue(reader.ReadBytes(wireType)));
-            }
-            else
-            {
-                reader.Skip(wireType);
-            }
+            values.Add(DecodeValue(value));
         }
         return SoraValue.Of(values);
     }
 
-    private static SoraValue ParseObject(byte[] bytes)
+    private static SoraValue DecodeObject(Sora.Runtime.ObjectValue obj)
     {
-        var reader = new ProtoReader(bytes);
         var fields = new Dictionary<string, SoraValue>();
-        while (reader.TryReadField(out var field, out var wireType))
+        foreach (var field in obj.Fields)
         {
-            if (field == 1)
-            {
-                var protoField = ParseField(reader.ReadBytes(wireType));
-                fields[protoField.Name] = protoField.Value;
-            }
-            else
-            {
-                reader.Skip(wireType);
-            }
+            fields[field.Name] = DecodeValue(field.Value);
         }
         return SoraValue.Of(fields);
-    }
-
-    private sealed class ProtoTable
-    {
-        internal string Name { get; set; } = string.Empty;
-        internal List<SoraValue> Rows { get; } = new();
-    }
-
-    private sealed class ProtoField
-    {
-        internal string Name { get; set; } = string.Empty;
-        internal SoraValue Value { get; set; } = SoraValue.Null();
-    }
-}
-
-internal ref struct ProtoReader
-{
-    private readonly ReadOnlySpan<byte> bytes;
-    private int cursor;
-
-    internal ProtoReader(byte[] bytes)
-    {
-        this.bytes = bytes;
-        cursor = 0;
-    }
-
-    internal bool TryReadField(out int field, out int wireType)
-    {
-        if (cursor >= bytes.Length)
-        {
-            field = 0;
-            wireType = 0;
-            return false;
-        }
-        var tag = ReadRawVarint();
-        field = (int)(tag >> 3);
-        wireType = (int)(tag & 0x7);
-        return true;
-    }
-
-    internal ulong ReadVarint(int wireType)
-    {
-        ExpectWire(wireType, 0);
-        return ReadRawVarint();
-    }
-
-    internal double ReadDouble(int wireType)
-    {
-        ExpectWire(wireType, 1);
-        var value = BinaryPrimitives.ReadUInt64LittleEndian(Take(8));
-        return BitConverter.UInt64BitsToDouble(value);
-    }
-
-    internal string ReadString(int wireType)
-    {
-        return Encoding.UTF8.GetString(ReadBytes(wireType));
-    }
-
-    internal byte[] ReadBytes(int wireType)
-    {
-        ExpectWire(wireType, 2);
-        var length = checked((int)ReadRawVarint());
-        return Take(length).ToArray();
-    }
-
-    internal void Skip(int wireType)
-    {
-        switch (wireType)
-        {
-            case 0:
-                _ = ReadRawVarint();
-                break;
-            case 1:
-                _ = Take(8);
-                break;
-            case 2:
-                _ = Take(checked((int)ReadRawVarint()));
-                break;
-            case 5:
-                _ = Take(4);
-                break;
-            default:
-                throw new SoraReadException($"unsupported protobuf wire type `{wireType}`");
-        }
-    }
-
-    private ulong ReadRawVarint()
-    {
-        ulong value = 0;
-        for (var shift = 0; shift < 64; shift += 7)
-        {
-            var b = Take(1)[0];
-            value |= ((ulong)b & 0x7FUL) << shift;
-            if ((b & 0x80) == 0)
-            {
-                return value;
-            }
-        }
-        throw new SoraReadException("protobuf varint is too long");
-    }
-
-    private ReadOnlySpan<byte> Take(int length)
-    {
-        var end = cursor + length;
-        if (end > bytes.Length)
-        {
-            throw new SoraReadException("protobuf payload ended unexpectedly");
-        }
-        var chunk = bytes[cursor..end];
-        cursor = end;
-        return chunk;
-    }
-
-    private static void ExpectWire(int actual, int expected)
-    {
-        if (actual != expected)
-        {
-            throw new SoraReadException($"expected protobuf wire type `{expected}`, got `{actual}`");
-        }
     }
 }
 {%- endif %}

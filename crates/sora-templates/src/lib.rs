@@ -29,6 +29,11 @@ const EMBEDDED_TEMPLATES: &[EmbeddedTemplate] = &[
     },
     EmbeddedTemplate {
         target: "csharp",
+        file_name: "protobuf_bundle.cs.j2",
+        source: include_str!("../../../templates/csharp/protobuf_bundle.cs.j2"),
+    },
+    EmbeddedTemplate {
+        target: "csharp",
         file_name: "union.cs.j2",
         source: include_str!("../../../templates/csharp/union.cs.j2"),
     },
