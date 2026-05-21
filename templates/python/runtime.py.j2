@@ -2,9 +2,16 @@
 
 from __future__ import annotations
 
+{%- if runtime_format == "json" %}
+import json
+{%- elif runtime_format == "cbor" %}
+import cbor2
+{%- elif runtime_format == "protobuf" %}
+from google.protobuf import descriptor_pb2, descriptor_pool, message_factory
+{%- endif %}
 import struct
 from dataclasses import dataclass
-from typing import Callable, TypeVar
+from typing import Any, Callable, TypeVar
 
 SORA_BUNDLE_VERSION = 1
 SORA_HEADER_LENGTH = 24
@@ -239,6 +246,367 @@ class SoraReader:
         for _ in range(length):
             values.append(read_fn())
         return values
+
+
+{%- if runtime_format != "sora" %}
+
+class SoraValueBundle:
+    def __init__(self, tables: dict[str, list[SoraValue]]) -> None:
+        self._tables = tables
+
+    def decode_table(self, name: str, decode_fn: Callable[[SoraValue], T]) -> list[T]:
+        rows = self._tables.get(name)
+        if rows is None:
+            raise SoraReadError(f"missing table `{name}`")
+        return [decode_fn(row) for row in rows]
+
+{%- if runtime_format == "json" %}
+    @staticmethod
+    def parse_json(input_data: bytes | bytearray) -> SoraValueBundle:
+        root = json.loads(bytes(input_data).decode("utf-8"))
+        return SoraValueBundle._from_root("json", SoraValue.from_python(root))
+{%- endif %}
+
+{%- if runtime_format == "cbor" %}
+    @staticmethod
+    def parse_cbor(input_data: bytes | bytearray) -> SoraValueBundle:
+        root = cbor2.loads(bytes(input_data))
+        return SoraValueBundle._from_root("cbor", SoraValue.from_python(root))
+{%- endif %}
+
+{%- if runtime_format == "protobuf" %}
+    @staticmethod
+    def parse_protobuf(input_data: bytes | bytearray) -> SoraValueBundle:
+        return SoraValueBundle._from_root(
+            "protobuf",
+            SoraProtobufBundle.decode(bytes(input_data)),
+        )
+{%- endif %}
+
+    @staticmethod
+    def _from_root(expected_format: str, root_value: SoraValue) -> SoraValueBundle:
+        root = root_value.as_object()
+        actual_format = root.get("format").as_string()
+        if actual_format != expected_format:
+            raise SoraReadError(f"expected {expected_format} bundle, got {actual_format}")
+        version = root.get("format_version").as_int()
+        if version != SORA_BUNDLE_VERSION:
+            raise SoraReadError(
+                f"unsupported {expected_format} bundle version {version}"
+            )
+        tables = {}
+        for table_value in root.get("data").as_object().get("tables").as_raw_list():
+            table = table_value.as_object()
+            tables[table.get("name").as_string()] = table.get("rows").as_raw_list()
+        return SoraValueBundle(tables)
+
+
+class SoraObject:
+    def __init__(self, fields: dict[str, SoraValue]) -> None:
+        self._fields = fields
+
+    def get(self, name: str) -> SoraValue:
+        return self._fields.get(name, SoraValue(None))
+
+
+class SoraValue:
+    def __init__(self, value: Any) -> None:
+        self._value = value
+
+    def is_null(self) -> bool:
+        return self._value is None
+
+    def as_object(self) -> SoraObject:
+        if isinstance(self._value, SoraObject):
+            return self._value
+        raise SoraReadError("expected object")
+
+    def as_raw_list(self) -> list[SoraValue]:
+        if isinstance(self._value, list):
+            return self._value
+        raise SoraReadError("expected list")
+
+    def as_list(self, decode_fn: Callable[[SoraValue], T]) -> list[T]:
+        return [decode_fn(item) for item in self.as_raw_list()]
+
+    def as_bool(self) -> bool:
+        if isinstance(self._value, bool):
+            return self._value
+        raise SoraReadError("expected bool")
+
+    def as_int(self) -> int:
+        if isinstance(self._value, bool):
+            raise SoraReadError("expected integer")
+        if isinstance(self._value, int):
+            return self._value
+        if isinstance(self._value, float) and self._value.is_integer():
+            return int(self._value)
+        raise SoraReadError("expected integer")
+
+    def as_float(self) -> float:
+        if isinstance(self._value, bool):
+            raise SoraReadError("expected number")
+        if isinstance(self._value, (int, float)):
+            return float(self._value)
+        raise SoraReadError("expected number")
+
+    def as_string(self) -> str:
+        if isinstance(self._value, str):
+            return self._value
+        raise SoraReadError("expected string")
+
+    @staticmethod
+    def from_python(value: Any) -> SoraValue:
+        if isinstance(value, dict):
+            return SoraValue(
+                SoraObject(
+                    {
+                        str(key): SoraValue.from_python(item)
+                        for key, item in value.items()
+                    }
+                )
+            )
+        if isinstance(value, list):
+            return SoraValue([SoraValue.from_python(item) for item in value])
+        return SoraValue(value)
+
+{%- endif %}
+
+
+{%- if runtime_format == "protobuf" %}
+
+class SoraProtobufBundle:
+    @staticmethod
+    def decode(input_data: bytes) -> SoraValue:
+        bundle_type = message_factory.GetMessageClass(
+            SoraProtobufBundle._pool().FindMessageTypeByName("sora.runtime.Bundle")
+        )
+        bundle = bundle_type()
+        bundle.ParseFromString(input_data)
+        return SoraProtobufBundle._from_bundle(bundle)
+
+    @staticmethod
+    def _from_bundle(bundle: Any) -> SoraValue:
+        return SoraValue(
+            SoraObject(
+                {
+                    "format_version": SoraValue(bundle.format_version),
+                    "format": SoraValue(bundle.format),
+                    "data": SoraValue(
+                        SoraObject(
+                            {
+                                "tables": SoraValue(
+                                    [
+                                        SoraProtobufBundle._from_table(table)
+                                        for table in bundle.tables
+                                    ]
+                                )
+                            }
+                        )
+                    ),
+                }
+            )
+        )
+
+    @staticmethod
+    def _from_table(table: Any) -> SoraValue:
+        return SoraValue(
+            SoraObject(
+                {
+                    "name": SoraValue(table.name),
+                    "rows": SoraValue(
+                        [SoraProtobufBundle._from_row(row) for row in table.rows]
+                    ),
+                }
+            )
+        )
+
+    @staticmethod
+    def _from_row(row: Any) -> SoraValue:
+        return SoraValue(
+            SoraObject(
+                {
+                    field.name: SoraProtobufBundle._from_value(field.value)
+                    for field in row.fields
+                }
+            )
+        )
+
+    @staticmethod
+    def _from_value(value: Any) -> SoraValue:
+        kind = value.WhichOneof("kind")
+        if kind == "bool_value":
+            return SoraValue(value.bool_value)
+        if kind == "integer_value":
+            return SoraValue(value.integer_value)
+        if kind == "float_value":
+            return SoraValue(value.float_value)
+        if kind == "string_value":
+            return SoraValue(value.string_value)
+        if kind == "list_value":
+            return SoraValue(
+                [
+                    SoraProtobufBundle._from_value(item)
+                    for item in value.list_value.values
+                ]
+            )
+        if kind == "object_value":
+            return SoraValue(
+                SoraObject(
+                    {
+                        field.name: SoraProtobufBundle._from_value(field.value)
+                        for field in value.object_value.fields
+                    }
+                )
+            )
+        if kind == "null_value":
+            return SoraValue(None)
+        raise SoraReadError("protobuf value is missing kind")
+
+    @staticmethod
+    def _pool() -> descriptor_pool.DescriptorPool:
+        file = descriptor_pb2.FileDescriptorProto(
+            name="sora_runtime_bundle.proto",
+            package="sora.runtime",
+            syntax="proto3",
+        )
+        file.message_type.extend(
+            [
+                SoraProtobufBundle._message(
+                    "Bundle",
+                    SoraProtobufBundle._field("format_version", 1, "TYPE_UINT32"),
+                    SoraProtobufBundle._field("format", 2, "TYPE_STRING"),
+                    SoraProtobufBundle._field("package", 3, "TYPE_STRING"),
+                    SoraProtobufBundle._field("schema_json", 4, "TYPE_BYTES"),
+                    SoraProtobufBundle._field(
+                        "tables",
+                        5,
+                        "TYPE_MESSAGE",
+                        ".sora.runtime.Table",
+                        repeated=True,
+                    ),
+                ),
+                SoraProtobufBundle._message(
+                    "Table",
+                    SoraProtobufBundle._field("name", 1, "TYPE_STRING"),
+                    SoraProtobufBundle._field(
+                        "rows",
+                        2,
+                        "TYPE_MESSAGE",
+                        ".sora.runtime.Row",
+                        repeated=True,
+                    ),
+                ),
+                SoraProtobufBundle._message(
+                    "Row",
+                    SoraProtobufBundle._field(
+                        "fields",
+                        1,
+                        "TYPE_MESSAGE",
+                        ".sora.runtime.Field",
+                        repeated=True,
+                    ),
+                ),
+                SoraProtobufBundle._message(
+                    "Field",
+                    SoraProtobufBundle._field("name", 1, "TYPE_STRING"),
+                    SoraProtobufBundle._field(
+                        "value",
+                        2,
+                        "TYPE_MESSAGE",
+                        ".sora.runtime.Value",
+                    ),
+                ),
+                SoraProtobufBundle._value_message(),
+                SoraProtobufBundle._message(
+                    "ListValue",
+                    SoraProtobufBundle._field(
+                        "values",
+                        1,
+                        "TYPE_MESSAGE",
+                        ".sora.runtime.Value",
+                        repeated=True,
+                    ),
+                ),
+                SoraProtobufBundle._message(
+                    "ObjectValue",
+                    SoraProtobufBundle._field(
+                        "fields",
+                        1,
+                        "TYPE_MESSAGE",
+                        ".sora.runtime.Field",
+                        repeated=True,
+                    ),
+                ),
+            ]
+        )
+        pool = descriptor_pool.DescriptorPool()
+        pool.Add(file)
+        return pool
+
+    @staticmethod
+    def _message(
+        name: str,
+        *fields: descriptor_pb2.FieldDescriptorProto,
+    ) -> descriptor_pb2.DescriptorProto:
+        message = descriptor_pb2.DescriptorProto(name=name)
+        message.field.extend(fields)
+        return message
+
+    @staticmethod
+    def _value_message() -> descriptor_pb2.DescriptorProto:
+        message = SoraProtobufBundle._message(
+            "Value",
+            SoraProtobufBundle._field("bool_value", 1, "TYPE_BOOL", oneof_index=0),
+            SoraProtobufBundle._field("integer_value", 2, "TYPE_INT64", oneof_index=0),
+            SoraProtobufBundle._field("float_value", 3, "TYPE_DOUBLE", oneof_index=0),
+            SoraProtobufBundle._field("string_value", 4, "TYPE_STRING", oneof_index=0),
+            SoraProtobufBundle._field(
+                "list_value",
+                5,
+                "TYPE_MESSAGE",
+                ".sora.runtime.ListValue",
+                oneof_index=0,
+            ),
+            SoraProtobufBundle._field(
+                "object_value",
+                6,
+                "TYPE_MESSAGE",
+                ".sora.runtime.ObjectValue",
+                oneof_index=0,
+            ),
+            SoraProtobufBundle._field("null_value", 7, "TYPE_BOOL", oneof_index=0),
+        )
+        message.oneof_decl.add(name="kind")
+        return message
+
+    @staticmethod
+    def _field(
+        name: str,
+        number: int,
+        field_type: str,
+        type_name: str = "",
+        *,
+        repeated: bool = False,
+        oneof_index: int | None = None,
+    ) -> descriptor_pb2.FieldDescriptorProto:
+        field = descriptor_pb2.FieldDescriptorProto(
+            name=name,
+            number=number,
+            label=(
+                descriptor_pb2.FieldDescriptorProto.LABEL_REPEATED
+                if repeated
+                else descriptor_pb2.FieldDescriptorProto.LABEL_OPTIONAL
+            ),
+            type=getattr(descriptor_pb2.FieldDescriptorProto, field_type),
+        )
+        if type_name:
+            field.type_name = type_name
+        if oneof_index is not None:
+            field.oneof_index = oneof_index
+        return field
+
+{%- endif %}
 
 
 def require_singleton_table(rows: list[T], name: str) -> T:

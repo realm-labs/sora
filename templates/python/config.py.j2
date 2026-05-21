@@ -3,7 +3,15 @@
 from __future__ import annotations
 
 from .sora_runtime import (
+{%- if runtime_format == "sora" %}
     SoraBundle,
+{%- elif runtime_format == "json" %}
+    SoraValueBundle,
+{%- elif runtime_format == "cbor" %}
+    SoraValueBundle,
+{%- elif runtime_format == "protobuf" %}
+    SoraValueBundle,
+{%- endif %}
     decode_index,
     decode_map_table,
     decode_unique_index,
@@ -163,11 +171,23 @@ class SoraConfig:
 
     @staticmethod
     def from_bytes(bytes_data: bytes) -> SoraConfig:
+{%- if runtime_format == "sora" %}
         bundle = SoraBundle.parse(bytes_data)
+{%- elif runtime_format == "json" %}
+        bundle = SoraValueBundle.parse_json(bytes_data)
+{%- elif runtime_format == "cbor" %}
+        bundle = SoraValueBundle.parse_cbor(bytes_data)
+{%- elif runtime_format == "protobuf" %}
+        bundle = SoraValueBundle.parse_protobuf(bytes_data)
+{%- endif %}
         return SoraConfig(
 {%- for table in model.tables %}
             {{ table.pascal_name }}Table.decode(
+{%- if runtime_format == "sora" %}
                 bundle.decode_table("{{ table.name }}", {{ table.row_type }}.decode)
+{%- else %}
+                bundle.decode_table("{{ table.name }}", {{ table.row_type }}.decode_value)
+{%- endif %}
             ),
 {%- endfor %}
         )

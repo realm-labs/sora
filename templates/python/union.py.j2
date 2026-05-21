@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, ClassVar
 
-from .sora_runtime import SoraReadError, SoraReader
+from .sora_runtime import SoraReadError, SoraReader{% if runtime_format != "sora" %}, SoraValue{% endif %}
 
 
 if TYPE_CHECKING:
@@ -25,6 +25,19 @@ class {{ union.pascal_name }}:
             return {{ union.pascal_name }}{{ variant.name }}.decode_payload(reader)
 {%- endfor %}
         raise SoraReadError(f"invalid union ordinal {ordinal} for {{ union.pascal_name }}")
+
+{%- if runtime_format != "sora" %}
+
+    @staticmethod
+    def decode_value(value: SoraValue) -> {{ union.pascal_name }}:
+        obj = value.as_object()
+        tag = obj.get("{{ union.tag }}").as_string()
+{%- for variant in union.variants %}
+        if tag == "{{ variant.raw_name }}":
+            return {{ union.pascal_name }}{{ variant.name }}.decode_value_payload(value)
+{%- endfor %}
+        raise SoraReadError(f"invalid union tag {tag!r} for {{ union.pascal_name }}")
+{%- endif %}
 
 {% for variant in union.variants %}
 
@@ -56,4 +69,22 @@ class {{ union.pascal_name }}{{ variant.name }}({{ union.pascal_name }}):
             {{ field.name }}={{ field.name }},
 {%- endfor %}
         )
+
+{%- if runtime_format != "sora" %}
+
+    @staticmethod
+    def decode_value_payload(value: SoraValue) -> {{ union.pascal_name }}{{ variant.name }}:
+{%- if union.imports %}
+{%- for import in union.imports %}
+        from .{{ import.module }} import {{ import.name }}
+{%- endfor %}
+
+{%- endif %}
+        obj = value.as_object()
+        return {{ union.pascal_name }}{{ variant.name }}(
+{%- for field in variant.fields %}
+            {{ field.name }}={{ field.value_decode | replace("__VALUE__", "obj.get(\"" ~ field.raw_name ~ "\")") }},
+{%- endfor %}
+        )
+{%- endif %}
 {% endfor %}

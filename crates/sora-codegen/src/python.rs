@@ -7,7 +7,7 @@ use sora_diagnostics::{Result, SoraError};
 use sora_ir::model::{ConfigIr, TypeIr};
 
 use crate::{
-    generator::{CodeGenerator, ensure_sora_runtime_format},
+    generator::{CodeGenerator, runtime_format_name},
     model::{
         BaseField, BaseImport, BaseIndex, BaseModel, BaseRecord, BaseTable, BaseUnion,
         BaseUnionVariant, build_base_model,
@@ -19,32 +19,51 @@ pub struct PythonCodeGenerator;
 
 impl CodeGenerator for PythonCodeGenerator {
     fn generate(&self, ir: &ConfigIr, out_dir: &Path) -> Result<()> {
-        ensure_sora_runtime_format("python", ir.codegen.python.runtime_format)?;
         ensure_dir(out_dir)?;
 
         let model = PythonModel::from_base_model(ir, build_base_model(ir)?);
+        let runtime_format = runtime_format_name(ir.codegen.python.runtime_format);
         validate_python_model(&model)?;
 
         for item in &model.enums {
-            let rendered = render_template("python", "enum.py.j2", context! { enum => item })?;
+            let rendered = render_template(
+                "python",
+                "enum.py.j2",
+                context! { enum => item, runtime_format => runtime_format },
+            )?;
             write_file(&out_dir.join(format!("{}.py", item.snake_name)), rendered)?;
         }
 
         for record in &model.records {
-            let rendered =
-                render_template("python", "record.py.j2", context! { record => record })?;
+            let rendered = render_template(
+                "python",
+                "record.py.j2",
+                context! { record => record, runtime_format => runtime_format },
+            )?;
             write_file(&out_dir.join(format!("{}.py", record.snake_name)), rendered)?;
         }
 
         for union in &model.unions {
-            let rendered = render_template("python", "union.py.j2", context! { union => union })?;
+            let rendered = render_template(
+                "python",
+                "union.py.j2",
+                context! { union => union, runtime_format => runtime_format },
+            )?;
             write_file(&out_dir.join(format!("{}.py", union.snake_name)), rendered)?;
         }
 
-        let rendered = render_template("python", "runtime.py.j2", context! {})?;
+        let rendered = render_template(
+            "python",
+            "runtime.py.j2",
+            context! { runtime_format => runtime_format },
+        )?;
         write_file(&out_dir.join("sora_runtime.py"), rendered)?;
 
-        let rendered = render_template("python", "config.py.j2", context! { model => &model })?;
+        let rendered = render_template(
+            "python",
+            "config.py.j2",
+            context! { model => &model, runtime_format => runtime_format },
+        )?;
         write_file(&out_dir.join("sora_config.py"), rendered)?;
 
         let rendered = render_template("python", "__init__.py.j2", context! { model => &model })?;
@@ -129,6 +148,7 @@ struct PythonField {
     name: String,
     type_name: String,
     decode: String,
+    value_decode: String,
     comment: Option<String>,
 }
 
@@ -268,6 +288,7 @@ fn python_field(ir: &ConfigIr, field: BaseField) -> PythonField {
         name: python_field_identifier(&field.snake_name),
         type_name: python_type_name(ir, &field.ty),
         decode: python_decode_expr(ir, &field.ty),
+        value_decode: python_value_decode_expr(ir, &field.ty, "__VALUE__"),
         comment: field.comment,
     }
 }
@@ -394,6 +415,29 @@ fn python_decode_expr(ir: &ConfigIr, ty: &TypeIr) -> String {
                 "reader.read_optional(lambda: {})",
                 python_decode_expr(ir, element)
             )
+        }
+    }
+}
+
+fn python_value_decode_expr(ir: &ConfigIr, ty: &TypeIr, value: &str) -> String {
+    match ty {
+        TypeIr::Bool => format!("{value}.as_bool()"),
+        TypeIr::I32 | TypeIr::I64 => format!("{value}.as_int()"),
+        TypeIr::F32 | TypeIr::F64 => format!("{value}.as_float()"),
+        TypeIr::String => format!("{value}.as_string()"),
+        TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => {
+            format!("{}.decode_value({value})", python_type_identifier(name))
+        }
+        TypeIr::List(element) | TypeIr::Array { element, .. } => {
+            let item_decode = python_value_decode_expr(ir, element, "item");
+            format!("{value}.as_list(lambda item: {item_decode})")
+        }
+        TypeIr::Ref { table, field } => ref_target_type(ir, table, field)
+            .map(|ty| python_value_decode_expr(ir, ty, value))
+            .unwrap_or_else(|| format!("{value}.as_int()")),
+        TypeIr::Optional(element) => {
+            let item_decode = python_value_decode_expr(ir, element, value);
+            format!("None if {value}.is_null() else {item_decode}")
         }
     }
 }
@@ -538,6 +582,37 @@ mod tests {
         assert!(init.contains("from .sora_config import SoraConfig"));
 
         let _ = std::fs::remove_dir_all(base);
+    }
+
+    #[test]
+    fn python_supports_export_runtime_formats() {
+        for (runtime_format, parse_function) in [
+            (sora_ir::model::RuntimeFormatIr::Json, "parse_json"),
+            (sora_ir::model::RuntimeFormatIr::Cbor, "parse_cbor"),
+            (sora_ir::model::RuntimeFormatIr::Protobuf, "parse_protobuf"),
+        ] {
+            let mut ir = example_ir();
+            ir.codegen.python.runtime_format = runtime_format;
+            let base = temp_dir();
+
+            PythonCodeGenerator.generate(&ir, &base).unwrap();
+
+            let item = std::fs::read_to_string(base.join("item.py")).unwrap();
+            let item_type = std::fs::read_to_string(base.join("item_type.py")).unwrap();
+            let action = std::fs::read_to_string(base.join("action.py")).unwrap();
+            let runtime = std::fs::read_to_string(base.join("sora_runtime.py")).unwrap();
+            let config = std::fs::read_to_string(base.join("sora_config.py")).unwrap();
+
+            assert!(runtime.contains("class SoraValueBundle"));
+            assert!(runtime.contains(parse_function));
+            assert!(config.contains(&format!("SoraValueBundle.{parse_function}(bytes_data)")));
+            assert!(item.contains("def decode_value(value: SoraValue) -> Item:"));
+            assert!(item.contains("obj.get(\"id\").as_int()"));
+            assert!(item_type.contains("def decode_value(value: SoraValue) -> ItemType:"));
+            assert!(action.contains("def decode_value(value: SoraValue) -> Action:"));
+
+            let _ = std::fs::remove_dir_all(base);
+        }
     }
 
     fn example_ir() -> ConfigIr {

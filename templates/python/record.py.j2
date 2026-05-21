@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
-from .sora_runtime import SoraReader
+from .sora_runtime import SoraReader{% if runtime_format != "sora" %}, SoraValue{% endif %}
 
 
 if TYPE_CHECKING:
@@ -43,3 +43,21 @@ class {{ record.pascal_name }}:
             {{ field.name }}={{ field.name }},
 {%- endfor %}
         )
+
+{%- if runtime_format != "sora" %}
+
+    @staticmethod
+    def decode_value(value: SoraValue) -> {{ record.pascal_name }}:
+{%- if record.imports %}
+{%- for import in record.imports %}
+        from .{{ import.module }} import {{ import.name }}
+{%- endfor %}
+
+{%- endif %}
+        obj = value.as_object()
+        return {{ record.pascal_name }}(
+{%- for field in record.fields %}
+            {{ field.name }}={{ field.value_decode | replace("__VALUE__", "obj.get(\"" ~ field.raw_name ~ "\")") }},
+{%- endfor %}
+        )
+{%- endif %}

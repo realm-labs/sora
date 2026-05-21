@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from enum import Enum
 
-from .sora_runtime import SoraReadError, SoraReader
+from .sora_runtime import SoraReadError, SoraReader{% if runtime_format != "sora" %}, SoraValue{% endif %}
 
 
 class {{ enum.name }}(Enum):
@@ -22,3 +22,15 @@ class {{ enum.name }}(Enum):
             return {{ enum.name }}.{{ enum.value_names[loop.index0] }}
 {%- endfor %}
         raise SoraReadError(f"invalid enum ordinal {ordinal} for {{ enum.name }}")
+
+{%- if runtime_format != "sora" %}
+
+    @staticmethod
+    def decode_value(value: SoraValue) -> {{ enum.name }}:
+        name = value.as_string()
+{%- for value in enum.values %}
+        if name == "{{ value }}":
+            return {{ enum.name }}.{{ enum.value_names[loop.index0] }}
+{%- endfor %}
+        raise SoraReadError(f"invalid enum value {name!r} for {{ enum.name }}")
+{%- endif %}
