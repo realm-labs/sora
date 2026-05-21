@@ -9,6 +9,11 @@ import com.fasterxml.jackson.databind.ObjectMapper
 {%- if runtime_format == "cbor" %}
 import com.fasterxml.jackson.dataformat.cbor.CBORFactory
 {%- endif %}
+{%- if runtime_format == "protobuf" %}
+import com.google.protobuf.DescriptorProtos
+import com.google.protobuf.Descriptors
+import com.google.protobuf.DynamicMessage
+{%- endif %}
 
 class SoraReadException(message: String) : RuntimeException(message)
 
@@ -318,7 +323,7 @@ class SoraValueBundle private constructor(
 
 {%- if runtime_format == "protobuf" %}
         fun parseProtobuf(bytes: ByteArray): SoraValueBundle =
-            fromRoot("protobuf", ProtoReader(bytes).readBundle())
+            fromRoot("protobuf", SoraProtobufBundle.decode(bytes))
 {%- endif %}
 
         private fun fromRoot(expectedFormat: String, rootValue: SoraValue): SoraValueBundle {
@@ -410,193 +415,153 @@ class SoraValue(private val value: Any?) {
 
 {%- if runtime_format == "protobuf" %}
 
-private class ProtoReader(private val bytes: ByteArray) {
-    private var cursor: Int = 0
+private object SoraProtobufBundle {
+    private val bundleDescriptor: Descriptors.Descriptor =
+        buildFileDescriptor().findMessageTypeByName("Bundle")
 
-    fun readBundle(): SoraValue {
+    fun decode(bytes: ByteArray): SoraValue =
+        try {
+            fromBundle(DynamicMessage.parseFrom(bundleDescriptor, bytes))
+        } catch (error: Exception) {
+            throw SoraReadException("failed to parse protobuf bundle: ${error.message}")
+        }
+
+    private fun fromBundle(message: DynamicMessage): SoraValue {
         val tables = ArrayList<SoraValue>()
         val data = SoraObject(linkedMapOf("tables" to SoraValue(tables)))
         val obj = linkedMapOf("data" to SoraValue(data))
-        while (!isFinished()) {
-            val key = readKey()
-            when (key.field) {
-                1 -> obj["format_version"] = SoraValue(readVarintField(key.wire))
-                2 -> obj["format"] = SoraValue(readStringField(key.wire))
-                5 -> tables += ProtoReader(readBytesField(key.wire)).readTable()
-                else -> skip(key.wire)
-            }
+        obj["format_version"] = SoraValue((message.getField(field(message, "format_version")) as Number).toLong())
+        obj["format"] = SoraValue(message.getField(field(message, "format")) as String)
+        for (table in repeated(message, "tables")) {
+            tables += fromTable(table as DynamicMessage)
         }
         return SoraValue(SoraObject(obj))
     }
 
-    private fun readTable(): SoraValue {
+    private fun fromTable(message: DynamicMessage): SoraValue {
         val rows = ArrayList<SoraValue>()
         val obj = linkedMapOf("rows" to SoraValue(rows))
-        while (!isFinished()) {
-            val key = readKey()
-            when (key.field) {
-                1 -> obj["name"] = SoraValue(readStringField(key.wire))
-                2 -> rows += ProtoReader(readBytesField(key.wire)).readRow()
-                else -> skip(key.wire)
-            }
+        obj["name"] = SoraValue(message.getField(field(message, "name")) as String)
+        for (row in repeated(message, "rows")) {
+            rows += fromRow(row as DynamicMessage)
         }
         return SoraValue(SoraObject(obj))
     }
 
-    private fun readRow(): SoraValue {
+    private fun fromRow(message: DynamicMessage): SoraValue {
         val obj = LinkedHashMap<String, SoraValue>()
-        while (!isFinished()) {
-            val key = readKey()
-            if (key.field == 1) {
-                val field = ProtoReader(readBytesField(key.wire)).readField()
-                obj[field.name] = field.value
-            } else {
-                skip(key.wire)
-            }
+        for (item in repeated(message, "fields")) {
+            val field = item as DynamicMessage
+            obj[field.getField(field(field, "name")) as String] =
+                fromValue(field.getField(field(field, "value")) as DynamicMessage)
         }
         return SoraValue(SoraObject(obj))
     }
 
-    private fun readField(): ProtoFieldValue {
-        var name: String? = null
-        var value: SoraValue? = null
-        while (!isFinished()) {
-            val key = readKey()
-            when (key.field) {
-                1 -> name = readStringField(key.wire)
-                2 -> value = ProtoReader(readBytesField(key.wire)).readValue()
-                else -> skip(key.wire)
-            }
+    private fun fromValue(message: DynamicMessage): SoraValue {
+        val kind = message.getOneofFieldDescriptor(message.descriptorForType.oneofs[0])
+            ?: throw SoraReadException("protobuf value is missing kind")
+        val value = message.getField(kind)
+        return when (kind.name) {
+            "bool_value" -> SoraValue(value)
+            "integer_value" -> SoraValue(value)
+            "float_value" -> SoraValue(value)
+            "string_value" -> SoraValue(value)
+            "list_value" -> fromList(value as DynamicMessage)
+            "object_value" -> fromObject(value as DynamicMessage)
+            "null_value" -> SoraValue(null)
+            else -> throw SoraReadException("unknown protobuf value kind `${kind.name}`")
         }
-        return ProtoFieldValue(
-            name ?: throw SoraReadException("protobuf field is missing name"),
-            value ?: throw SoraReadException("protobuf field is missing value"),
-        )
     }
 
-    private fun readValue(): SoraValue {
-        var value = SoraValue(null)
-        while (!isFinished()) {
-            val key = readKey()
-            value = when (key.field) {
-                1 -> SoraValue(readVarintField(key.wire) != 0L)
-                2 -> SoraValue(readVarintField(key.wire))
-                3 -> SoraValue(Double.fromBits(readI64At(readFixed64Field(key.wire), 0)))
-                4 -> SoraValue(readStringField(key.wire))
-                5 -> ProtoReader(readBytesField(key.wire)).readList()
-                6 -> ProtoReader(readBytesField(key.wire)).readObject()
-                7 -> {
-                    readVarintField(key.wire)
-                    SoraValue(null)
-                }
-                else -> {
-                    skip(key.wire)
-                    value
-                }
-            }
-        }
-        return value
-    }
-
-    private fun readList(): SoraValue {
+    private fun fromList(message: DynamicMessage): SoraValue {
         val values = ArrayList<SoraValue>()
-        while (!isFinished()) {
-            val key = readKey()
-            if (key.field == 1) {
-                values += ProtoReader(readBytesField(key.wire)).readValue()
-            } else {
-                skip(key.wire)
-            }
+        for (value in repeated(message, "values")) {
+            values += fromValue(value as DynamicMessage)
         }
         return SoraValue(values)
     }
 
-    private fun readObject(): SoraValue {
+    private fun fromObject(message: DynamicMessage): SoraValue {
         val obj = LinkedHashMap<String, SoraValue>()
-        while (!isFinished()) {
-            val key = readKey()
-            if (key.field == 1) {
-                val field = ProtoReader(readBytesField(key.wire)).readField()
-                obj[field.name] = field.value
-            } else {
-                skip(key.wire)
-            }
+        for (item in repeated(message, "fields")) {
+            val field = item as DynamicMessage
+            obj[field.getField(field(field, "name")) as String] =
+                fromValue(field.getField(field(field, "value")) as DynamicMessage)
         }
         return SoraValue(SoraObject(obj))
     }
 
-    private fun readKey(): ProtoKey {
-        val key = readVarint()
-        return ProtoKey((key shr 3).toInt(), (key and 0x7).toInt())
+    @Suppress("UNCHECKED_CAST")
+    private fun repeated(message: DynamicMessage, name: String): List<Any> =
+        message.getField(field(message, name)) as List<Any>
+
+    private fun field(message: DynamicMessage, name: String): Descriptors.FieldDescriptor =
+        message.descriptorForType.findFieldByName(name)
+
+    private fun buildFileDescriptor(): Descriptors.FileDescriptor {
+        try {
+            val value = DescriptorProtos.DescriptorProto.newBuilder()
+                .setName("Value")
+                .addOneofDecl(DescriptorProtos.OneofDescriptorProto.newBuilder().setName("kind"))
+                .addField(field("bool_value", 1, DescriptorProtos.FieldDescriptorProto.Type.TYPE_BOOL).setOneofIndex(0))
+                .addField(field("integer_value", 2, DescriptorProtos.FieldDescriptorProto.Type.TYPE_INT64).setOneofIndex(0))
+                .addField(field("float_value", 3, DescriptorProtos.FieldDescriptorProto.Type.TYPE_DOUBLE).setOneofIndex(0))
+                .addField(field("string_value", 4, DescriptorProtos.FieldDescriptorProto.Type.TYPE_STRING).setOneofIndex(0))
+                .addField(field("list_value", 5, DescriptorProtos.FieldDescriptorProto.Type.TYPE_MESSAGE).setTypeName(".sora.runtime.ListValue").setOneofIndex(0))
+                .addField(field("object_value", 6, DescriptorProtos.FieldDescriptorProto.Type.TYPE_MESSAGE).setTypeName(".sora.runtime.ObjectValue").setOneofIndex(0))
+                .addField(field("null_value", 7, DescriptorProtos.FieldDescriptorProto.Type.TYPE_BOOL).setOneofIndex(0))
+            val file = DescriptorProtos.FileDescriptorProto.newBuilder()
+                .setName("sora_runtime_bundle.proto")
+                .setPackage("sora.runtime")
+                .setSyntax("proto3")
+                .addMessageType(DescriptorProtos.DescriptorProto.newBuilder()
+                    .setName("Bundle")
+                    .addField(field("format_version", 1, DescriptorProtos.FieldDescriptorProto.Type.TYPE_UINT32))
+                    .addField(field("format", 2, DescriptorProtos.FieldDescriptorProto.Type.TYPE_STRING))
+                    .addField(field("package", 3, DescriptorProtos.FieldDescriptorProto.Type.TYPE_STRING))
+                    .addField(field("schema_json", 4, DescriptorProtos.FieldDescriptorProto.Type.TYPE_BYTES))
+                    .addField(repeatedField("tables", 5, ".sora.runtime.Table")))
+                .addMessageType(DescriptorProtos.DescriptorProto.newBuilder()
+                    .setName("Table")
+                    .addField(field("name", 1, DescriptorProtos.FieldDescriptorProto.Type.TYPE_STRING))
+                    .addField(repeatedField("rows", 2, ".sora.runtime.Row")))
+                .addMessageType(DescriptorProtos.DescriptorProto.newBuilder()
+                    .setName("Row")
+                    .addField(repeatedField("fields", 1, ".sora.runtime.Field")))
+                .addMessageType(DescriptorProtos.DescriptorProto.newBuilder()
+                    .setName("Field")
+                    .addField(field("name", 1, DescriptorProtos.FieldDescriptorProto.Type.TYPE_STRING))
+                    .addField(field("value", 2, DescriptorProtos.FieldDescriptorProto.Type.TYPE_MESSAGE).setTypeName(".sora.runtime.Value")))
+                .addMessageType(value)
+                .addMessageType(DescriptorProtos.DescriptorProto.newBuilder()
+                    .setName("ListValue")
+                    .addField(repeatedField("values", 1, ".sora.runtime.Value")))
+                .addMessageType(DescriptorProtos.DescriptorProto.newBuilder()
+                    .setName("ObjectValue")
+                    .addField(repeatedField("fields", 1, ".sora.runtime.Field")))
+                .build()
+            return Descriptors.FileDescriptor.buildFrom(file, emptyArray())
+        } catch (error: Descriptors.DescriptorValidationException) {
+            throw SoraReadException("failed to build protobuf descriptor: ${error.message}")
+        }
     }
 
-    private fun readVarintField(wire: Int): Long {
-        if (wire != 0) {
-            throw SoraReadException("expected protobuf varint wire type, got $wire")
-        }
-        return readVarint()
-    }
+    private fun field(
+        name: String,
+        number: Int,
+        type: DescriptorProtos.FieldDescriptorProto.Type,
+    ): DescriptorProtos.FieldDescriptorProto.Builder =
+        DescriptorProtos.FieldDescriptorProto.newBuilder()
+            .setName(name)
+            .setNumber(number)
+            .setLabel(DescriptorProtos.FieldDescriptorProto.Label.LABEL_OPTIONAL)
+            .setType(type)
 
-    private fun readFixed64Field(wire: Int): ByteArray {
-        if (wire != 1) {
-            throw SoraReadException("expected protobuf fixed64 wire type, got $wire")
-        }
-        return take(8)
-    }
-
-    private fun readBytesField(wire: Int): ByteArray {
-        if (wire != 2) {
-            throw SoraReadException("expected protobuf length-delimited wire type, got $wire")
-        }
-        val length = readVarint()
-        if (length > Int.MAX_VALUE) {
-            throw SoraReadException("protobuf length exceeds Int.MAX_VALUE")
-        }
-        return take(length.toInt())
-    }
-
-    private fun readStringField(wire: Int): String = String(readBytesField(wire), Charsets.UTF_8)
-
-    private fun readVarint(): Long {
-        var value = 0L
-        var shift = 0
-        while (shift < 64) {
-            val byte = readByte()
-            value = value or ((byte and 0x7f).toLong() shl shift)
-            if (byte and 0x80 == 0) {
-                return value
-            }
-            shift += 7
-        }
-        throw SoraReadException("protobuf varint overflow")
-    }
-
-    private fun skip(wire: Int) {
-        when (wire) {
-            0 -> readVarint()
-            1 -> take(8)
-            2 -> readBytesField(wire)
-            5 -> take(4)
-            else -> throw SoraReadException("unsupported protobuf wire type $wire")
-        }
-    }
-
-    private fun readByte(): Int = take(1)[0].toInt() and 0xff
-
-    private fun take(length: Int): ByteArray {
-        val end = checkedAdd(cursor, length, "protobuf reader cursor overflow")
-        if (end > bytes.size) {
-            throw SoraReadException("unexpected end of protobuf data")
-        }
-        val chunk = bytes.copyOfRange(cursor, end)
-        cursor = end
-        return chunk
-    }
-
-    private fun isFinished(): Boolean = cursor == bytes.size
-
-    private data class ProtoKey(val field: Int, val wire: Int)
-    private data class ProtoFieldValue(val name: String, val value: SoraValue)
+    private fun repeatedField(name: String, number: Int, typeName: String): DescriptorProtos.FieldDescriptorProto.Builder =
+        field(name, number, DescriptorProtos.FieldDescriptorProto.Type.TYPE_MESSAGE)
+            .setLabel(DescriptorProtos.FieldDescriptorProto.Label.LABEL_REPEATED)
+            .setTypeName(typeName)
 }
 
 {%- endif %}

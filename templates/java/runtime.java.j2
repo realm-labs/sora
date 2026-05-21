@@ -9,6 +9,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 {%- if runtime_format == "cbor" %}
 import com.fasterxml.jackson.dataformat.cbor.CBORFactory;
 {%- endif %}
+{%- if runtime_format == "protobuf" %}
+import com.google.protobuf.DescriptorProtos.DescriptorProto;
+import com.google.protobuf.DescriptorProtos.FieldDescriptorProto;
+import com.google.protobuf.DescriptorProtos.FileDescriptorProto;
+import com.google.protobuf.Descriptors;
+import com.google.protobuf.DynamicMessage;
+{%- endif %}
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -384,8 +391,11 @@ final class SoraValueBundle {
 
 {%- if runtime_format == "protobuf" %}
     static SoraValueBundle parseProtobuf(byte[] bytes) {
-        var reader = new ProtoReader(bytes);
-        return fromRoot("protobuf", reader.readBundle());
+        try {
+            return fromRoot("protobuf", SoraProtobufBundle.decode(bytes));
+        } catch (Exception error) {
+            throw new SoraReadException("failed to parse protobuf bundle: " + error.getMessage());
+        }
     }
 {%- endif %}
 
@@ -519,245 +529,154 @@ final class SoraValue {
 
 {%- if runtime_format == "protobuf" %}
 
-final class ProtoReader {
-    private final byte[] bytes;
-    private int cursor;
+final class SoraProtobufBundle {
+    private static final Descriptors.Descriptor BUNDLE_DESCRIPTOR = buildFileDescriptor().findMessageTypeByName("Bundle");
 
-    ProtoReader(byte[] bytes) {
-        this.bytes = bytes;
+    private SoraProtobufBundle() {}
+
+    static SoraValue decode(byte[] bytes) throws Exception {
+        return fromBundle(DynamicMessage.parseFrom(BUNDLE_DESCRIPTOR, bytes));
     }
 
-    SoraValue readBundle() {
+    private static SoraValue fromBundle(DynamicMessage message) {
         var object = new LinkedHashMap<String, SoraValue>();
         var data = new LinkedHashMap<String, SoraValue>();
         var tables = new ArrayList<SoraValue>();
         data.put("tables", new SoraValue(tables));
         object.put("data", new SoraValue(data));
-        while (!isFinished()) {
-            var key = readKey();
-            switch (key.field) {
-                case 1:
-                    object.put("format_version", new SoraValue((long)readVarintField(key.wire)));
-                    break;
-                case 2:
-                    object.put("format", new SoraValue(readStringField(key.wire)));
-                    break;
-                case 5:
-                    tables.add(new ProtoReader(readBytesField(key.wire)).readTable());
-                    break;
-                default:
-                    skip(key.wire);
-                    break;
-            }
+        object.put("format_version", new SoraValue(((Number)message.getField(field(message, "format_version"))).longValue()));
+        object.put("format", new SoraValue((String)message.getField(field(message, "format"))));
+        for (var table : repeated(message, "tables")) {
+            tables.add(fromTable((DynamicMessage)table));
         }
         return new SoraValue(object);
     }
 
-    private SoraValue readTable() {
+    private static SoraValue fromTable(DynamicMessage message) {
         var object = new LinkedHashMap<String, SoraValue>();
         var rows = new ArrayList<SoraValue>();
         object.put("rows", new SoraValue(rows));
-        while (!isFinished()) {
-            var key = readKey();
-            switch (key.field) {
-                case 1:
-                    object.put("name", new SoraValue(readStringField(key.wire)));
-                    break;
-                case 2:
-                    rows.add(new ProtoReader(readBytesField(key.wire)).readRow());
-                    break;
-                default:
-                    skip(key.wire);
-                    break;
-            }
+        object.put("name", new SoraValue((String)message.getField(field(message, "name"))));
+        for (var row : repeated(message, "rows")) {
+            rows.add(fromRow((DynamicMessage)row));
         }
         return new SoraValue(object);
     }
 
-    private SoraValue readRow() {
+    private static SoraValue fromRow(DynamicMessage message) {
         var object = new LinkedHashMap<String, SoraValue>();
-        while (!isFinished()) {
-            var key = readKey();
-            if (key.field == 1) {
-                var field = new ProtoReader(readBytesField(key.wire)).readField();
-                object.put(field.name, field.value);
-            } else {
-                skip(key.wire);
-            }
+        for (var item : repeated(message, "fields")) {
+            var field = (DynamicMessage)item;
+            object.put((String)field.getField(field(field, "name")), fromValue((DynamicMessage)field.getField(field(field, "value"))));
         }
         return new SoraValue(object);
     }
 
-    private ProtoFieldValue readField() {
-        String name = null;
-        SoraValue value = null;
-        while (!isFinished()) {
-            var key = readKey();
-            switch (key.field) {
-                case 1:
-                    name = readStringField(key.wire);
-                    break;
-                case 2:
-                    value = new ProtoReader(readBytesField(key.wire)).readValue();
-                    break;
-                default:
-                    skip(key.wire);
-                    break;
-            }
+    private static SoraValue fromValue(DynamicMessage message) {
+        var kind = message.getOneofFieldDescriptor(message.getDescriptorForType().getOneofs().get(0));
+        if (kind == null) {
+            throw new SoraReadException("protobuf value is missing kind");
         }
-        if (name == null || value == null) {
-            throw new SoraReadException("protobuf field is missing name or value");
-        }
-        return new ProtoFieldValue(name, value);
+        var value = message.getField(kind);
+        return switch (kind.getName()) {
+            case "bool_value" -> new SoraValue(value);
+            case "integer_value" -> new SoraValue(value);
+            case "float_value" -> new SoraValue(value);
+            case "string_value" -> new SoraValue(value);
+            case "list_value" -> fromList((DynamicMessage)value);
+            case "object_value" -> fromObject((DynamicMessage)value);
+            case "null_value" -> new SoraValue(null);
+            default -> throw new SoraReadException("unknown protobuf value kind `" + kind.getName() + "`");
+        };
     }
 
-    private SoraValue readValue() {
-        SoraValue value = new SoraValue(null);
-        while (!isFinished()) {
-            var key = readKey();
-            switch (key.field) {
-                case 1:
-                    value = new SoraValue(readVarintField(key.wire) != 0);
-                    break;
-                case 2:
-                    value = new SoraValue((long)readVarintField(key.wire));
-                    break;
-                case 3:
-                    value = new SoraValue(Double.longBitsToDouble(SoraBundle.readI64At(readFixed64Field(key.wire), 0)));
-                    break;
-                case 4:
-                    value = new SoraValue(readStringField(key.wire));
-                    break;
-                case 5:
-                    value = new ProtoReader(readBytesField(key.wire)).readList();
-                    break;
-                case 6:
-                    value = new ProtoReader(readBytesField(key.wire)).readObject();
-                    break;
-                case 7:
-                    readVarintField(key.wire);
-                    value = new SoraValue(null);
-                    break;
-                default:
-                    skip(key.wire);
-                    break;
-            }
-        }
-        return value;
-    }
-
-    private SoraValue readList() {
+    private static SoraValue fromList(DynamicMessage message) {
         var values = new ArrayList<SoraValue>();
-        while (!isFinished()) {
-            var key = readKey();
-            if (key.field == 1) {
-                values.add(new ProtoReader(readBytesField(key.wire)).readValue());
-            } else {
-                skip(key.wire);
-            }
+        for (var value : repeated(message, "values")) {
+            values.add(fromValue((DynamicMessage)value));
         }
         return new SoraValue(values);
     }
 
-    private SoraValue readObject() {
+    private static SoraValue fromObject(DynamicMessage message) {
         var object = new LinkedHashMap<String, SoraValue>();
-        while (!isFinished()) {
-            var key = readKey();
-            if (key.field == 1) {
-                var field = new ProtoReader(readBytesField(key.wire)).readField();
-                object.put(field.name, field.value);
-            } else {
-                skip(key.wire);
-            }
+        for (var item : repeated(message, "fields")) {
+            var field = (DynamicMessage)item;
+            object.put((String)field.getField(field(field, "name")), fromValue((DynamicMessage)field.getField(field(field, "value"))));
         }
         return new SoraValue(object);
     }
 
-    private ProtoKey readKey() {
-        var key = readVarint();
-        return new ProtoKey((int)(key >> 3), (int)(key & 0x7));
+    @SuppressWarnings("unchecked")
+    private static List<Object> repeated(DynamicMessage message, String name) {
+        return (List<Object>)message.getField(field(message, name));
     }
 
-    private long readVarintField(int wire) {
-        if (wire != 0) {
-            throw new SoraReadException("expected protobuf varint wire type, got " + wire);
-        }
-        return readVarint();
+    private static Descriptors.FieldDescriptor field(DynamicMessage message, String name) {
+        return message.getDescriptorForType().findFieldByName(name);
     }
 
-    private byte[] readFixed64Field(int wire) {
-        if (wire != 1) {
-            throw new SoraReadException("expected protobuf fixed64 wire type, got " + wire);
-        }
-        return take(8);
-    }
-
-    private byte[] readBytesField(int wire) {
-        if (wire != 2) {
-            throw new SoraReadException("expected protobuf length-delimited wire type, got " + wire);
-        }
-        var length = readVarint();
-        if (length > Integer.MAX_VALUE) {
-            throw new SoraReadException("protobuf length exceeds Integer.MAX_VALUE");
-        }
-        return take((int)length);
-    }
-
-    private String readStringField(int wire) {
-        return new String(readBytesField(wire), StandardCharsets.UTF_8);
-    }
-
-    private long readVarint() {
-        var value = 0L;
-        for (var shift = 0; shift < 64; shift += 7) {
-            var b = readByte();
-            value |= (long)(b & 0x7f) << shift;
-            if ((b & 0x80) == 0) {
-                return value;
-            }
-        }
-        throw new SoraReadException("protobuf varint overflow");
-    }
-
-    private void skip(int wire) {
-        switch (wire) {
-            case 0:
-                readVarint();
-                break;
-            case 1:
-                take(8);
-                break;
-            case 2:
-                readBytesField(wire);
-                break;
-            case 5:
-                take(4);
-                break;
-            default:
-                throw new SoraReadException("unsupported protobuf wire type " + wire);
+    private static Descriptors.FileDescriptor buildFileDescriptor() {
+        try {
+            var value = DescriptorProto.newBuilder()
+                .setName("Value")
+                .addOneofDecl(com.google.protobuf.DescriptorProtos.OneofDescriptorProto.newBuilder().setName("kind"))
+                .addField(field("bool_value", 1, FieldDescriptorProto.Type.TYPE_BOOL).setOneofIndex(0))
+                .addField(field("integer_value", 2, FieldDescriptorProto.Type.TYPE_INT64).setOneofIndex(0))
+                .addField(field("float_value", 3, FieldDescriptorProto.Type.TYPE_DOUBLE).setOneofIndex(0))
+                .addField(field("string_value", 4, FieldDescriptorProto.Type.TYPE_STRING).setOneofIndex(0))
+                .addField(field("list_value", 5, FieldDescriptorProto.Type.TYPE_MESSAGE).setTypeName(".sora.runtime.ListValue").setOneofIndex(0))
+                .addField(field("object_value", 6, FieldDescriptorProto.Type.TYPE_MESSAGE).setTypeName(".sora.runtime.ObjectValue").setOneofIndex(0))
+                .addField(field("null_value", 7, FieldDescriptorProto.Type.TYPE_BOOL).setOneofIndex(0));
+            var file = FileDescriptorProto.newBuilder()
+                .setName("sora_runtime_bundle.proto")
+                .setPackage("sora.runtime")
+                .setSyntax("proto3")
+                .addMessageType(DescriptorProto.newBuilder()
+                    .setName("Bundle")
+                    .addField(field("format_version", 1, FieldDescriptorProto.Type.TYPE_UINT32))
+                    .addField(field("format", 2, FieldDescriptorProto.Type.TYPE_STRING))
+                    .addField(field("package", 3, FieldDescriptorProto.Type.TYPE_STRING))
+                    .addField(field("schema_json", 4, FieldDescriptorProto.Type.TYPE_BYTES))
+                    .addField(repeatedField("tables", 5, ".sora.runtime.Table")))
+                .addMessageType(DescriptorProto.newBuilder()
+                    .setName("Table")
+                    .addField(field("name", 1, FieldDescriptorProto.Type.TYPE_STRING))
+                    .addField(repeatedField("rows", 2, ".sora.runtime.Row")))
+                .addMessageType(DescriptorProto.newBuilder()
+                    .setName("Row")
+                    .addField(repeatedField("fields", 1, ".sora.runtime.Field")))
+                .addMessageType(DescriptorProto.newBuilder()
+                    .setName("Field")
+                    .addField(field("name", 1, FieldDescriptorProto.Type.TYPE_STRING))
+                    .addField(field("value", 2, FieldDescriptorProto.Type.TYPE_MESSAGE).setTypeName(".sora.runtime.Value")))
+                .addMessageType(value)
+                .addMessageType(DescriptorProto.newBuilder()
+                    .setName("ListValue")
+                    .addField(repeatedField("values", 1, ".sora.runtime.Value")))
+                .addMessageType(DescriptorProto.newBuilder()
+                    .setName("ObjectValue")
+                    .addField(repeatedField("fields", 1, ".sora.runtime.Field")))
+                .build();
+            return Descriptors.FileDescriptor.buildFrom(file, new Descriptors.FileDescriptor[0]);
+        } catch (Descriptors.DescriptorValidationException error) {
+            throw new SoraReadException("failed to build protobuf descriptor: " + error.getMessage());
         }
     }
 
-    private int readByte() {
-        return take(1)[0] & 0xff;
+    private static FieldDescriptorProto.Builder field(String name, int number, FieldDescriptorProto.Type type) {
+        return FieldDescriptorProto.newBuilder()
+            .setName(name)
+            .setNumber(number)
+            .setLabel(FieldDescriptorProto.Label.LABEL_OPTIONAL)
+            .setType(type);
     }
 
-    private byte[] take(int length) {
-        var end = SoraBundle.checkedAdd(cursor, length, "protobuf reader cursor overflow");
-        if (end > bytes.length) {
-            throw new SoraReadException("unexpected end of protobuf data");
-        }
-        var chunk = Arrays.copyOfRange(bytes, cursor, end);
-        cursor = end;
-        return chunk;
+    private static FieldDescriptorProto.Builder repeatedField(String name, int number, String typeName) {
+        return field(name, number, FieldDescriptorProto.Type.TYPE_MESSAGE)
+            .setLabel(FieldDescriptorProto.Label.LABEL_REPEATED)
+            .setTypeName(typeName);
     }
-
-    private boolean isFinished() {
-        return cursor == bytes.length;
-    }
-
-    private record ProtoKey(int field, int wire) {}
-    private record ProtoFieldValue(String name, SoraValue value) {}
 }
 
 {%- endif %}

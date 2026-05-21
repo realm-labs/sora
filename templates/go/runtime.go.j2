@@ -16,6 +16,13 @@ import (
 {%- if runtime_format != "sora" %}
     "strconv"
 {%- endif %}
+{%- if runtime_format == "protobuf" %}
+    "google.golang.org/protobuf/proto"
+    "google.golang.org/protobuf/reflect/protodesc"
+    "google.golang.org/protobuf/reflect/protoreflect"
+    "google.golang.org/protobuf/types/descriptorpb"
+    "google.golang.org/protobuf/types/dynamicpb"
+{%- endif %}
 )
 
 const (
@@ -838,117 +845,60 @@ func (reader *cborReader) take(length int) ([]byte, error) {
 {%- if runtime_format == "protobuf" %}
 
 func ParseProtobufBundle(bytes []byte) (*SoraValueBundle, error) {
-    reader := protoReader{bytes: bytes}
-    bundle, err := reader.readBundle()
+    descriptor, err := soraBundleDescriptor()
+    if err != nil {
+        return nil, err
+    }
+    message := dynamicpb.NewMessage(descriptor)
+    if err := proto.Unmarshal(bytes, message); err != nil {
+        return nil, fmt.Errorf("failed to parse protobuf bundle: %w", err)
+    }
+    bundle, err := soraValueFromProtoBundle(message)
     if err != nil {
         return nil, err
     }
     return newSoraValueBundle("protobuf", bundle)
 }
 
-type protoReader struct {
-    bytes  []byte
-    cursor int
-}
-
-func (reader *protoReader) readBundle() (SoraValue, error) {
+func soraValueFromProtoBundle(message *dynamicpb.Message) (SoraValue, error) {
     object := SoraObject{"data": SoraValue{value: SoraObject{"tables": SoraValue{value: []SoraValue{}}}}}
     tables := []SoraValue{}
-    for !reader.isFinished() {
-        field, wire, err := reader.readKey()
+    object["format_version"] = SoraValue{value: int64(message.Get(protoField(message, "format_version")).Uint())}
+    object["format"] = SoraValue{value: message.Get(protoField(message, "format")).String()}
+    tableValues := message.Get(protoField(message, "tables")).List()
+    for index := 0; index < tableValues.Len(); index++ {
+        table, err := soraValueFromProtoTable(dynamicMessage(tableValues.Get(index)))
         if err != nil {
             return SoraValue{}, err
         }
-        switch field {
-        case 1:
-            value, err := reader.readVarintField(wire)
-            if err != nil {
-                return SoraValue{}, err
-            }
-            object["format_version"] = SoraValue{value: int64(value)}
-        case 2:
-            value, err := reader.readStringField(wire)
-            if err != nil {
-                return SoraValue{}, err
-            }
-            object["format"] = SoraValue{value: value}
-        case 5:
-            bytes, err := reader.readBytesField(wire)
-            if err != nil {
-                return SoraValue{}, err
-            }
-            tableReader := protoReader{bytes: bytes}
-            table, err := tableReader.readTable()
-            if err != nil {
-                return SoraValue{}, err
-            }
-            tables = append(tables, table)
-        default:
-            if err := reader.skip(wire); err != nil {
-                return SoraValue{}, err
-            }
-        }
+        tables = append(tables, table)
     }
     data := object["data"].value.(SoraObject)
     data["tables"] = SoraValue{value: tables}
     return SoraValue{value: object}, nil
 }
 
-func (reader *protoReader) readTable() (SoraValue, error) {
+func soraValueFromProtoTable(message *dynamicpb.Message) (SoraValue, error) {
     object := SoraObject{"rows": SoraValue{value: []SoraValue{}}}
     rows := []SoraValue{}
-    for !reader.isFinished() {
-        field, wire, err := reader.readKey()
+    object["name"] = SoraValue{value: message.Get(protoField(message, "name")).String()}
+    rowValues := message.Get(protoField(message, "rows")).List()
+    for index := 0; index < rowValues.Len(); index++ {
+        row, err := soraValueFromProtoRow(dynamicMessage(rowValues.Get(index)))
         if err != nil {
             return SoraValue{}, err
         }
-        switch field {
-        case 1:
-            value, err := reader.readStringField(wire)
-            if err != nil {
-                return SoraValue{}, err
-            }
-            object["name"] = SoraValue{value: value}
-        case 2:
-            bytes, err := reader.readBytesField(wire)
-            if err != nil {
-                return SoraValue{}, err
-            }
-            rowReader := protoReader{bytes: bytes}
-            row, err := rowReader.readRow()
-            if err != nil {
-                return SoraValue{}, err
-            }
-            rows = append(rows, row)
-        default:
-            if err := reader.skip(wire); err != nil {
-                return SoraValue{}, err
-            }
-        }
+        rows = append(rows, row)
     }
     object["rows"] = SoraValue{value: rows}
     return SoraValue{value: object}, nil
 }
 
-func (reader *protoReader) readRow() (SoraValue, error) {
+func soraValueFromProtoRow(message *dynamicpb.Message) (SoraValue, error) {
     object := SoraObject{}
-    for !reader.isFinished() {
-        field, wire, err := reader.readKey()
-        if err != nil {
-            return SoraValue{}, err
-        }
-        if field != 1 {
-            if err := reader.skip(wire); err != nil {
-                return SoraValue{}, err
-            }
-            continue
-        }
-        bytes, err := reader.readBytesField(wire)
-        if err != nil {
-            return SoraValue{}, err
-        }
-        fieldReader := protoReader{bytes: bytes}
-        name, value, err := fieldReader.readField()
+    fieldValues := message.Get(protoField(message, "fields")).List()
+    for index := 0; index < fieldValues.Len(); index++ {
+        name, value, err := soraValueFromProtoField(dynamicMessage(fieldValues.Get(index)))
         if err != nil {
             return SoraValue{}, err
         }
@@ -957,127 +907,49 @@ func (reader *protoReader) readRow() (SoraValue, error) {
     return SoraValue{value: object}, nil
 }
 
-func (reader *protoReader) readField() (string, SoraValue, error) {
-    var name string
-    var value SoraValue
-    for !reader.isFinished() {
-        field, wire, err := reader.readKey()
-        if err != nil {
-            return "", SoraValue{}, err
-        }
-        switch field {
-        case 1:
-            name, err = reader.readStringField(wire)
-            if err != nil {
-                return "", SoraValue{}, err
-            }
-        case 2:
-            bytes, err := reader.readBytesField(wire)
-            if err != nil {
-                return "", SoraValue{}, err
-            }
-            valueReader := protoReader{bytes: bytes}
-            value, err = valueReader.readValue()
-            if err != nil {
-                return "", SoraValue{}, err
-            }
-        default:
-            if err := reader.skip(wire); err != nil {
-                return "", SoraValue{}, err
-            }
-        }
-    }
+func soraValueFromProtoField(message *dynamicpb.Message) (string, SoraValue, error) {
+    name := message.Get(protoField(message, "name")).String()
     if name == "" {
         return "", SoraValue{}, fmt.Errorf("protobuf field is missing name")
+    }
+    value, err := soraValueFromProtoValue(dynamicMessage(message.Get(protoField(message, "value"))))
+    if err != nil {
+        return "", SoraValue{}, err
     }
     return name, value, nil
 }
 
-func (reader *protoReader) readValue() (SoraValue, error) {
-    var value SoraValue
-    for !reader.isFinished() {
-        field, wire, err := reader.readKey()
-        if err != nil {
-            return SoraValue{}, err
-        }
-        switch field {
-        case 1:
-            raw, err := reader.readVarintField(wire)
-            if err != nil {
-                return SoraValue{}, err
-            }
-            value = SoraValue{value: raw != 0}
-        case 2:
-            raw, err := reader.readVarintField(wire)
-            if err != nil {
-                return SoraValue{}, err
-            }
-            value = SoraValue{value: int64(raw)}
-        case 3:
-            bytes, err := reader.readFixed64Field(wire)
-            if err != nil {
-                return SoraValue{}, err
-            }
-            value = SoraValue{value: math.Float64frombits(binary.LittleEndian.Uint64(bytes))}
-        case 4:
-            text, err := reader.readStringField(wire)
-            if err != nil {
-                return SoraValue{}, err
-            }
-            value = SoraValue{value: text}
-        case 5:
-            bytes, err := reader.readBytesField(wire)
-            if err != nil {
-                return SoraValue{}, err
-            }
-            listReader := protoReader{bytes: bytes}
-            value, err = listReader.readList()
-            if err != nil {
-                return SoraValue{}, err
-            }
-        case 6:
-            bytes, err := reader.readBytesField(wire)
-            if err != nil {
-                return SoraValue{}, err
-            }
-            objectReader := protoReader{bytes: bytes}
-            value, err = objectReader.readObject()
-            if err != nil {
-                return SoraValue{}, err
-            }
-        case 7:
-            if _, err := reader.readVarintField(wire); err != nil {
-                return SoraValue{}, err
-            }
-            value = SoraValue{}
-        default:
-            if err := reader.skip(wire); err != nil {
-                return SoraValue{}, err
-            }
-        }
+func soraValueFromProtoValue(message *dynamicpb.Message) (SoraValue, error) {
+    kind := message.WhichOneof(message.Descriptor().Oneofs().ByName("kind"))
+    if kind == nil {
+        return SoraValue{}, fmt.Errorf("protobuf value is missing kind")
     }
-    return value, nil
+    value := message.Get(kind)
+    switch kind.Name() {
+    case "bool_value":
+        return SoraValue{value: value.Bool()}, nil
+    case "integer_value":
+        return SoraValue{value: value.Int()}, nil
+    case "float_value":
+        return SoraValue{value: value.Float()}, nil
+    case "string_value":
+        return SoraValue{value: value.String()}, nil
+    case "list_value":
+        return soraValueFromProtoList(dynamicMessage(value))
+    case "object_value":
+        return soraValueFromProtoObject(dynamicMessage(value))
+    case "null_value":
+        return SoraValue{}, nil
+    default:
+        return SoraValue{}, fmt.Errorf("unknown protobuf value kind %s", kind.Name())
+    }
 }
 
-func (reader *protoReader) readList() (SoraValue, error) {
+func soraValueFromProtoList(message *dynamicpb.Message) (SoraValue, error) {
     values := []SoraValue{}
-    for !reader.isFinished() {
-        field, wire, err := reader.readKey()
-        if err != nil {
-            return SoraValue{}, err
-        }
-        if field != 1 {
-            if err := reader.skip(wire); err != nil {
-                return SoraValue{}, err
-            }
-            continue
-        }
-        bytes, err := reader.readBytesField(wire)
-        if err != nil {
-            return SoraValue{}, err
-        }
-        valueReader := protoReader{bytes: bytes}
-        value, err := valueReader.readValue()
+    list := message.Get(protoField(message, "values")).List()
+    for index := 0; index < list.Len(); index++ {
+        value, err := soraValueFromProtoValue(dynamicMessage(list.Get(index)))
         if err != nil {
             return SoraValue{}, err
         }
@@ -1086,25 +958,11 @@ func (reader *protoReader) readList() (SoraValue, error) {
     return SoraValue{value: values}, nil
 }
 
-func (reader *protoReader) readObject() (SoraValue, error) {
+func soraValueFromProtoObject(message *dynamicpb.Message) (SoraValue, error) {
     object := SoraObject{}
-    for !reader.isFinished() {
-        field, wire, err := reader.readKey()
-        if err != nil {
-            return SoraValue{}, err
-        }
-        if field != 1 {
-            if err := reader.skip(wire); err != nil {
-                return SoraValue{}, err
-            }
-            continue
-        }
-        bytes, err := reader.readBytesField(wire)
-        if err != nil {
-            return SoraValue{}, err
-        }
-        fieldReader := protoReader{bytes: bytes}
-        name, value, err := fieldReader.readField()
+    fields := message.Get(protoField(message, "fields")).List()
+    for index := 0; index < fields.Len(); index++ {
+        name, value, err := soraValueFromProtoField(dynamicMessage(fields.Get(index)))
         if err != nil {
             return SoraValue{}, err
         }
@@ -1113,104 +971,103 @@ func (reader *protoReader) readObject() (SoraValue, error) {
     return SoraValue{value: object}, nil
 }
 
-func (reader *protoReader) readKey() (int, int, error) {
-    key, err := reader.readVarint()
-    if err != nil {
-        return 0, 0, err
-    }
-    return int(key >> 3), int(key & 0x7), nil
+func dynamicMessage(value protoreflect.Value) *dynamicpb.Message {
+    return value.Message().Interface().(*dynamicpb.Message)
 }
 
-func (reader *protoReader) readVarintField(wire int) (uint64, error) {
-    if wire != 0 {
-        return 0, fmt.Errorf("expected protobuf varint wire type, got %d", wire)
-    }
-    return reader.readVarint()
+func protoField(message *dynamicpb.Message, name protoreflect.Name) protoreflect.FieldDescriptor {
+    return message.Descriptor().Fields().ByName(name)
 }
 
-func (reader *protoReader) readFixed64Field(wire int) ([]byte, error) {
-    if wire != 1 {
-        return nil, fmt.Errorf("expected protobuf fixed64 wire type, got %d", wire)
-    }
-    return reader.take(8)
-}
-
-func (reader *protoReader) readBytesField(wire int) ([]byte, error) {
-    if wire != 2 {
-        return nil, fmt.Errorf("expected protobuf length-delimited wire type, got %d", wire)
-    }
-    length, err := reader.readVarint()
+func soraBundleDescriptor() (protoreflect.MessageDescriptor, error) {
+    file, err := protodesc.NewFile(&descriptorpb.FileDescriptorProto{
+        Name:    proto.String("sora_runtime_bundle.proto"),
+        Package: proto.String("sora.runtime"),
+        Syntax:  proto.String("proto3"),
+        MessageType: []*descriptorpb.DescriptorProto{
+            messageDescriptor("Bundle",
+                fieldDescriptor("format_version", 1, descriptorpb.FieldDescriptorProto_TYPE_UINT32),
+                fieldDescriptor("format", 2, descriptorpb.FieldDescriptorProto_TYPE_STRING),
+                fieldDescriptor("package", 3, descriptorpb.FieldDescriptorProto_TYPE_STRING),
+                fieldDescriptor("schema_json", 4, descriptorpb.FieldDescriptorProto_TYPE_BYTES),
+                repeatedMessageField("tables", 5, ".sora.runtime.Table"),
+            ),
+            messageDescriptor("Table",
+                fieldDescriptor("name", 1, descriptorpb.FieldDescriptorProto_TYPE_STRING),
+                repeatedMessageField("rows", 2, ".sora.runtime.Row"),
+            ),
+            messageDescriptor("Row",
+                repeatedMessageField("fields", 1, ".sora.runtime.Field"),
+            ),
+            messageDescriptor("Field",
+                fieldDescriptor("name", 1, descriptorpb.FieldDescriptorProto_TYPE_STRING),
+                messageField("value", 2, ".sora.runtime.Value"),
+            ),
+            messageDescriptor("Value",
+                oneofFieldDescriptor("bool_value", 1, descriptorpb.FieldDescriptorProto_TYPE_BOOL, 0),
+                oneofFieldDescriptor("integer_value", 2, descriptorpb.FieldDescriptorProto_TYPE_INT64, 0),
+                oneofFieldDescriptor("float_value", 3, descriptorpb.FieldDescriptorProto_TYPE_DOUBLE, 0),
+                oneofFieldDescriptor("string_value", 4, descriptorpb.FieldDescriptorProto_TYPE_STRING, 0),
+                oneofMessageField("list_value", 5, ".sora.runtime.ListValue", 0),
+                oneofMessageField("object_value", 6, ".sora.runtime.ObjectValue", 0),
+                oneofFieldDescriptor("null_value", 7, descriptorpb.FieldDescriptorProto_TYPE_BOOL, 0),
+            ),
+            messageDescriptor("ListValue",
+                repeatedMessageField("values", 1, ".sora.runtime.Value"),
+            ),
+            messageDescriptor("ObjectValue",
+                repeatedMessageField("fields", 1, ".sora.runtime.Field"),
+            ),
+        },
+    }, nil)
     if err != nil {
         return nil, err
     }
-    if length > uint64(^uint(0)>>1) {
-        return nil, fmt.Errorf("protobuf length exceeds int")
-    }
-    return reader.take(int(length))
+    return file.Messages().ByName("Bundle"), nil
 }
 
-func (reader *protoReader) readStringField(wire int) (string, error) {
-    bytes, err := reader.readBytesField(wire)
-    if err != nil {
-        return "", err
+func messageDescriptor(name string, fields ...*descriptorpb.FieldDescriptorProto) *descriptorpb.DescriptorProto {
+    descriptor := &descriptorpb.DescriptorProto{
+        Name:  proto.String(name),
+        Field: fields,
     }
-    return string(bytes), nil
+    if name == "Value" {
+        descriptor.OneofDecl = append(descriptor.OneofDecl, &descriptorpb.OneofDescriptorProto{Name: proto.String("kind")})
+    }
+    return descriptor
 }
 
-func (reader *protoReader) readVarint() (uint64, error) {
-    var value uint64
-    for shift := 0; shift < 64; shift += 7 {
-        b, err := reader.readByte()
-        if err != nil {
-            return 0, err
-        }
-        value |= uint64(b&0x7f) << shift
-        if b&0x80 == 0 {
-            return value, nil
-        }
-    }
-    return 0, fmt.Errorf("protobuf varint overflow")
-}
-
-func (reader *protoReader) skip(wire int) error {
-    switch wire {
-    case 0:
-        _, err := reader.readVarint()
-        return err
-    case 1:
-        _, err := reader.take(8)
-        return err
-    case 2:
-        _, err := reader.readBytesField(wire)
-        return err
-    case 5:
-        _, err := reader.take(4)
-        return err
-    default:
-        return fmt.Errorf("unsupported protobuf wire type %d", wire)
+func fieldDescriptor(name string, number int32, fieldType descriptorpb.FieldDescriptorProto_Type) *descriptorpb.FieldDescriptorProto {
+    return &descriptorpb.FieldDescriptorProto{
+        Name:   proto.String(name),
+        Number: proto.Int32(number),
+        Label:  descriptorpb.FieldDescriptorProto_LABEL_OPTIONAL.Enum(),
+        Type:   fieldType.Enum(),
     }
 }
 
-func (reader *protoReader) readByte() (byte, error) {
-    bytes, err := reader.take(1)
-    if err != nil {
-        return 0, err
-    }
-    return bytes[0], nil
+func messageField(name string, number int32, typeName string) *descriptorpb.FieldDescriptorProto {
+    field := fieldDescriptor(name, number, descriptorpb.FieldDescriptorProto_TYPE_MESSAGE)
+    field.TypeName = proto.String(typeName)
+    return field
 }
 
-func (reader *protoReader) take(length int) ([]byte, error) {
-    end := reader.cursor + length
-    if end < reader.cursor || end > len(reader.bytes) {
-        return nil, fmt.Errorf("unexpected end of protobuf data")
-    }
-    bytes := reader.bytes[reader.cursor:end]
-    reader.cursor = end
-    return bytes, nil
+func repeatedMessageField(name string, number int32, typeName string) *descriptorpb.FieldDescriptorProto {
+    field := messageField(name, number, typeName)
+    field.Label = descriptorpb.FieldDescriptorProto_LABEL_REPEATED.Enum()
+    return field
 }
 
-func (reader *protoReader) isFinished() bool {
-    return reader.cursor == len(reader.bytes)
+func oneofFieldDescriptor(name string, number int32, fieldType descriptorpb.FieldDescriptorProto_Type, oneofIndex int32) *descriptorpb.FieldDescriptorProto {
+    field := fieldDescriptor(name, number, fieldType)
+    field.OneofIndex = proto.Int32(oneofIndex)
+    return field
+}
+
+func oneofMessageField(name string, number int32, typeName string, oneofIndex int32) *descriptorpb.FieldDescriptorProto {
+    field := oneofFieldDescriptor(name, number, descriptorpb.FieldDescriptorProto_TYPE_MESSAGE, oneofIndex)
+    field.TypeName = proto.String(typeName)
+    return field
 }
 
 {%- endif %}
