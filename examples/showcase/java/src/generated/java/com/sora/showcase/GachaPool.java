@@ -38,7 +38,7 @@ public final class GachaPool {
     }
 }
 
-final class GachaPoolTable implements SoraTable {
+final class GachaPoolTable extends java.util.AbstractMap<Integer, GachaPool> implements SoraTable {
     private final List<Integer> keys;
     private final java.util.Map<Integer, GachaPool> rows;
 
@@ -58,7 +58,8 @@ final class GachaPoolTable implements SoraTable {
     public java.util.Map<Integer, GachaPool> rows() {
         return rows;
     }
-    public GachaPool get(Integer key) {
+    @Override
+    public GachaPool get(Object key) {
         return rows.get(key);
     }
 
@@ -68,6 +69,11 @@ final class GachaPoolTable implements SoraTable {
 
     public List<GachaPool> orderedRows() {
         return keys.stream().map(rows::get).toList();
+    }
+
+    @Override
+    public java.util.Set<Map.Entry<Integer, GachaPool>> entrySet() {
+        return rows.entrySet();
     }
     @Override
     public String name() {

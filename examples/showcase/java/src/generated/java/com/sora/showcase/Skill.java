@@ -66,7 +66,7 @@ public final class Skill {
     }
 }
 
-final class SkillTable implements SoraTable {
+final class SkillTable extends java.util.AbstractMap<Integer, Skill> implements SoraTable {
     private final List<Integer> keys;
     private final java.util.Map<Integer, Skill> rows;
 
@@ -86,7 +86,8 @@ final class SkillTable implements SoraTable {
     public java.util.Map<Integer, Skill> rows() {
         return rows;
     }
-    public Skill get(Integer key) {
+    @Override
+    public Skill get(Object key) {
         return rows.get(key);
     }
 
@@ -96,6 +97,11 @@ final class SkillTable implements SoraTable {
 
     public List<Skill> orderedRows() {
         return keys.stream().map(rows::get).toList();
+    }
+
+    @Override
+    public java.util.Set<Map.Entry<Integer, Skill>> entrySet() {
+        return rows.entrySet();
     }
     @Override
     public String name() {

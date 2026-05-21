@@ -30,14 +30,10 @@ data class Buff(
 }
 
 class BuffTable private constructor(
-    val keys: List<Int>,
+    val orderedKeys: List<Int>,
     val rows: Map<Int, Buff>,
-) : SoraTable {
-    operator fun get(key: Int): Buff? = rows[key]
-
-    fun values(): Collection<Buff> = rows.values
-
-    fun orderedValues(): List<Buff> = keys.mapNotNull { rows[it] }
+) : SoraTable, Map<Int, Buff> by rows {
+    fun orderedValues(): List<Buff> = orderedKeys.mapNotNull { rows[it] }
     override val name: String = "Buff"
     override val mode: SoraTableMode = SoraTableMode.Map
     override val key: String? = "id"

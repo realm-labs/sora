@@ -30,7 +30,7 @@ public sealed record DropGroup(
     }
 }
 
-public sealed class DropGroupTable : ISoraTable
+public sealed class DropGroupTable : ISoraTable, IReadOnlyDictionary<int, DropGroup>
 {
     private readonly List<int> keys;
     private readonly Dictionary<int, DropGroup> rows;
@@ -52,12 +52,44 @@ public sealed class DropGroupTable : ISoraTable
     }
 
     public Dictionary<int, DropGroup> Rows => rows;
+    public DropGroup this[int key] => rows[key];
+
     public DropGroup? Get(int key)
     {
         return rows.TryGetValue(key, out var row) ? row : default;
     }
 
-    public IReadOnlyList<int> Keys => keys;
+    public IReadOnlyList<int> OrderedKeys => keys;
+
+    public IEnumerable<int> Keys => keys;
+
+    public IEnumerable<DropGroup> Values => rows.Values;
+
+    public bool ContainsKey(int key)
+    {
+        return rows.ContainsKey(key);
+    }
+
+    public bool TryGetValue(int key, out DropGroup value)
+    {
+        if (rows.TryGetValue(key, out var row))
+        {
+            value = row;
+            return true;
+        }
+        value = default!;
+        return false;
+    }
+
+    public IEnumerator<KeyValuePair<int, DropGroup>> GetEnumerator()
+    {
+        return rows.GetEnumerator();
+    }
+
+    System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
+    {
+        return GetEnumerator();
+    }
 
     public IReadOnlyList<DropGroup> OrderedRows
     {

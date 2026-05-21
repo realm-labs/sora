@@ -31,7 +31,7 @@ data class MailReward(
 
 class MailRewardTable private constructor(
     val rows: List<MailReward>,
-) : SoraTable {
+) : SoraTable, List<MailReward> by rows {
     fun values(): List<MailReward> = rows
     override val name: String = "MailReward"
     override val mode: SoraTableMode = SoraTableMode.List

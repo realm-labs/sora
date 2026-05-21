@@ -34,7 +34,7 @@ data class DropEntry(
 
 class DropEntryTable private constructor(
     val rows: List<DropEntry>,
-) : SoraTable {
+) : SoraTable, List<DropEntry> by rows {
     fun values(): List<DropEntry> = rows
     override val name: String = "DropEntry"
     override val mode: SoraTableMode = SoraTableMode.List

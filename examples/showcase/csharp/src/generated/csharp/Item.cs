@@ -48,7 +48,7 @@ public sealed record Item(
     }
 }
 
-public sealed class ItemTable : ISoraTable
+public sealed class ItemTable : ISoraTable, IReadOnlyDictionary<int, Item>
 {
     private readonly List<int> keys;
     private readonly Dictionary<int, Item> rows;
@@ -79,12 +79,44 @@ public sealed class ItemTable : ISoraTable
     }
 
     public Dictionary<int, Item> Rows => rows;
+    public Item this[int key] => rows[key];
+
     public Item? Get(int key)
     {
         return rows.TryGetValue(key, out var row) ? row : default;
     }
 
-    public IReadOnlyList<int> Keys => keys;
+    public IReadOnlyList<int> OrderedKeys => keys;
+
+    public IEnumerable<int> Keys => keys;
+
+    public IEnumerable<Item> Values => rows.Values;
+
+    public bool ContainsKey(int key)
+    {
+        return rows.ContainsKey(key);
+    }
+
+    public bool TryGetValue(int key, out Item value)
+    {
+        if (rows.TryGetValue(key, out var row))
+        {
+            value = row;
+            return true;
+        }
+        value = default!;
+        return false;
+    }
+
+    public IEnumerator<KeyValuePair<int, Item>> GetEnumerator()
+    {
+        return rows.GetEnumerator();
+    }
+
+    System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
+    {
+        return GetEnumerator();
+    }
 
     public IReadOnlyList<Item> OrderedRows
     {

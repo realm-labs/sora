@@ -36,7 +36,7 @@ public sealed record MailReward(
     }
 }
 
-public sealed class MailRewardTable : ISoraTable
+public sealed class MailRewardTable : ISoraTable, IReadOnlyList<MailReward>
 {
     private readonly List<MailReward> rows;
 
@@ -56,6 +56,17 @@ public sealed class MailRewardTable : ISoraTable
     }
 
     public List<MailReward> Rows => rows;
+    public MailReward this[int index] => rows[index];
+
+    public IEnumerator<MailReward> GetEnumerator()
+    {
+        return rows.GetEnumerator();
+    }
+
+    System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
+    {
+        return GetEnumerator();
+    }
     public string Name => "MailReward";
     public SoraTableMode Mode => SoraTableMode.List;
     public string? Key => null;

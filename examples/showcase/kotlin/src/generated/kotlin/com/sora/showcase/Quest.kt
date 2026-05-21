@@ -40,14 +40,10 @@ data class Quest(
 }
 
 class QuestTable private constructor(
-    val keys: List<Int>,
+    val orderedKeys: List<Int>,
     val rows: Map<Int, Quest>,
-) : SoraTable {
-    operator fun get(key: Int): Quest? = rows[key]
-
-    fun values(): Collection<Quest> = rows.values
-
-    fun orderedValues(): List<Quest> = keys.mapNotNull { rows[it] }
+) : SoraTable, Map<Int, Quest> by rows {
+    fun orderedValues(): List<Quest> = orderedKeys.mapNotNull { rows[it] }
     override val name: String = "Quest"
     override val mode: SoraTableMode = SoraTableMode.Map
     override val key: String? = "id"

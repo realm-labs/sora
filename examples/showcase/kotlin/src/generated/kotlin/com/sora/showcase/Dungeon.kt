@@ -30,14 +30,10 @@ data class Dungeon(
 }
 
 class DungeonTable private constructor(
-    val keys: List<Int>,
+    val orderedKeys: List<Int>,
     val rows: Map<Int, Dungeon>,
-) : SoraTable {
-    operator fun get(key: Int): Dungeon? = rows[key]
-
-    fun values(): Collection<Dungeon> = rows.values
-
-    fun orderedValues(): List<Dungeon> = keys.mapNotNull { rows[it] }
+) : SoraTable, Map<Int, Dungeon> by rows {
+    fun orderedValues(): List<Dungeon> = orderedKeys.mapNotNull { rows[it] }
     override val name: String = "Dungeon"
     override val mode: SoraTableMode = SoraTableMode.Map
     override val key: String? = "id"

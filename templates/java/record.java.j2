@@ -46,7 +46,7 @@ public final class {{ record.pascal_name }} {
 {%- if record.table %}
 {%- set table = record.table %}
 
-final class {{ table.pascal_name }}Table implements SoraTable {
+final class {{ table.pascal_name }}Table {% if table.mode == "map" and table.key_field_name %}extends java.util.AbstractMap<{{ table.key_type }}, {{ table.row_type }}> implements SoraTable{% elif table.mode == "list" %}extends java.util.AbstractList<{{ table.row_type }}> implements SoraTable{% else %}implements SoraTable{% endif %} {
 {%- if table.mode == "map" and table.key_field_name %}
     private final List<{{ table.key_type }}> keys;
 {%- endif %}
@@ -115,7 +115,8 @@ final class {{ table.pascal_name }}Table implements SoraTable {
     }
 
 {%- if table.mode == "map" and table.key_field_name %}
-    public {{ table.row_type }} get({{ table.key_type }} key) {
+    @Override
+    public {{ table.row_type }} get(Object key) {
         return rows.get(key);
     }
 
@@ -125,6 +126,17 @@ final class {{ table.pascal_name }}Table implements SoraTable {
 
     public List<{{ table.row_type }}> orderedRows() {
         return keys.stream().map(rows::get).toList();
+    }
+
+    @Override
+    public java.util.Set<Map.Entry<{{ table.key_type }}, {{ table.row_type }}>> entrySet() {
+        return rows.entrySet();
+    }
+
+{%- elif table.mode == "list" %}
+    @Override
+    public {{ table.row_type }} get(int index) {
+        return rows.get(index);
     }
 
 {%- endif %}

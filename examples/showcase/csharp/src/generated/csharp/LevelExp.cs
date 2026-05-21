@@ -33,7 +33,7 @@ public sealed record LevelExp(
     }
 }
 
-public sealed class LevelExpTable : ISoraTable
+public sealed class LevelExpTable : ISoraTable, IReadOnlyDictionary<int, LevelExp>
 {
     private readonly List<int> keys;
     private readonly Dictionary<int, LevelExp> rows;
@@ -55,12 +55,44 @@ public sealed class LevelExpTable : ISoraTable
     }
 
     public Dictionary<int, LevelExp> Rows => rows;
+    public LevelExp this[int key] => rows[key];
+
     public LevelExp? Get(int key)
     {
         return rows.TryGetValue(key, out var row) ? row : default;
     }
 
-    public IReadOnlyList<int> Keys => keys;
+    public IReadOnlyList<int> OrderedKeys => keys;
+
+    public IEnumerable<int> Keys => keys;
+
+    public IEnumerable<LevelExp> Values => rows.Values;
+
+    public bool ContainsKey(int key)
+    {
+        return rows.ContainsKey(key);
+    }
+
+    public bool TryGetValue(int key, out LevelExp value)
+    {
+        if (rows.TryGetValue(key, out var row))
+        {
+            value = row;
+            return true;
+        }
+        value = default!;
+        return false;
+    }
+
+    public IEnumerator<KeyValuePair<int, LevelExp>> GetEnumerator()
+    {
+        return rows.GetEnumerator();
+    }
+
+    System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
+    {
+        return GetEnumerator();
+    }
 
     public IReadOnlyList<LevelExp> OrderedRows
     {

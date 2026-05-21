@@ -39,14 +39,10 @@ data class Character(
 }
 
 class CharacterTable private constructor(
-    val keys: List<Int>,
+    val orderedKeys: List<Int>,
     val rows: Map<Int, Character>,
-) : SoraTable {
-    operator fun get(key: Int): Character? = rows[key]
-
-    fun values(): Collection<Character> = rows.values
-
-    fun orderedValues(): List<Character> = keys.mapNotNull { rows[it] }
+) : SoraTable, Map<Int, Character> by rows {
+    fun orderedValues(): List<Character> = orderedKeys.mapNotNull { rows[it] }
     override val name: String = "Character"
     override val mode: SoraTableMode = SoraTableMode.Map
     override val key: String? = "id"

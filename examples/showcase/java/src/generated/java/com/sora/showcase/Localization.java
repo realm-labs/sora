@@ -43,7 +43,7 @@ public final class Localization {
     }
 }
 
-final class LocalizationTable implements SoraTable {
+final class LocalizationTable extends java.util.AbstractMap<String, Localization> implements SoraTable {
     private final List<String> keys;
     private final java.util.Map<String, Localization> rows;
 
@@ -63,7 +63,8 @@ final class LocalizationTable implements SoraTable {
     public java.util.Map<String, Localization> rows() {
         return rows;
     }
-    public Localization get(String key) {
+    @Override
+    public Localization get(Object key) {
         return rows.get(key);
     }
 
@@ -73,6 +74,11 @@ final class LocalizationTable implements SoraTable {
 
     public List<Localization> orderedRows() {
         return keys.stream().map(rows::get).toList();
+    }
+
+    @Override
+    public java.util.Set<Map.Entry<String, Localization>> entrySet() {
+        return rows.entrySet();
     }
     @Override
     public String name() {

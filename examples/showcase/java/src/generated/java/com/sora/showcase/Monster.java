@@ -53,7 +53,7 @@ public final class Monster {
     }
 }
 
-final class MonsterTable implements SoraTable {
+final class MonsterTable extends java.util.AbstractMap<Integer, Monster> implements SoraTable {
     private final List<Integer> keys;
     private final java.util.Map<Integer, Monster> rows;
 
@@ -73,7 +73,8 @@ final class MonsterTable implements SoraTable {
     public java.util.Map<Integer, Monster> rows() {
         return rows;
     }
-    public Monster get(Integer key) {
+    @Override
+    public Monster get(Object key) {
         return rows.get(key);
     }
 
@@ -83,6 +84,11 @@ final class MonsterTable implements SoraTable {
 
     public List<Monster> orderedRows() {
         return keys.stream().map(rows::get).toList();
+    }
+
+    @Override
+    public java.util.Set<Map.Entry<Integer, Monster>> entrySet() {
+        return rows.entrySet();
     }
     @Override
     public String name() {

@@ -36,7 +36,7 @@ public sealed record EventRule(
     }
 }
 
-public sealed class EventRuleTable : ISoraTable
+public sealed class EventRuleTable : ISoraTable, IReadOnlyDictionary<int, EventRule>
 {
     private readonly List<int> keys;
     private readonly Dictionary<int, EventRule> rows;
@@ -58,12 +58,44 @@ public sealed class EventRuleTable : ISoraTable
     }
 
     public Dictionary<int, EventRule> Rows => rows;
+    public EventRule this[int key] => rows[key];
+
     public EventRule? Get(int key)
     {
         return rows.TryGetValue(key, out var row) ? row : default;
     }
 
-    public IReadOnlyList<int> Keys => keys;
+    public IReadOnlyList<int> OrderedKeys => keys;
+
+    public IEnumerable<int> Keys => keys;
+
+    public IEnumerable<EventRule> Values => rows.Values;
+
+    public bool ContainsKey(int key)
+    {
+        return rows.ContainsKey(key);
+    }
+
+    public bool TryGetValue(int key, out EventRule value)
+    {
+        if (rows.TryGetValue(key, out var row))
+        {
+            value = row;
+            return true;
+        }
+        value = default!;
+        return false;
+    }
+
+    public IEnumerator<KeyValuePair<int, EventRule>> GetEnumerator()
+    {
+        return rows.GetEnumerator();
+    }
+
+    System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
+    {
+        return GetEnumerator();
+    }
 
     public IReadOnlyList<EventRule> OrderedRows
     {

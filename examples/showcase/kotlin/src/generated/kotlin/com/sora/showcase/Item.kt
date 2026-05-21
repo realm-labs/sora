@@ -42,16 +42,12 @@ data class Item(
 }
 
 class ItemTable private constructor(
-    val keys: List<Int>,
+    val orderedKeys: List<Int>,
     val rows: Map<Int, Item>,
     private val nameIndex: Map<String, Item>,
     private val itemTypeIndex: Map<ItemType, List<Item>>,
-) : SoraTable {
-    operator fun get(key: Int): Item? = rows[key]
-
-    fun values(): Collection<Item> = rows.values
-
-    fun orderedValues(): List<Item> = keys.mapNotNull { rows[it] }
+) : SoraTable, Map<Int, Item> by rows {
+    fun orderedValues(): List<Item> = orderedKeys.mapNotNull { rows[it] }
     fun getByName(name: String): Item? = nameIndex[name]
     fun findByItemType(itemType: ItemType): List<Item> = itemTypeIndex[itemType].orEmpty()
     override val name: String = "Item"

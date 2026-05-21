@@ -27,14 +27,10 @@ data class VipLevel(
 }
 
 class VipLevelTable private constructor(
-    val keys: List<Int>,
+    val orderedKeys: List<Int>,
     val rows: Map<Int, VipLevel>,
-) : SoraTable {
-    operator fun get(key: Int): VipLevel? = rows[key]
-
-    fun values(): Collection<VipLevel> = rows.values
-
-    fun orderedValues(): List<VipLevel> = keys.mapNotNull { rows[it] }
+) : SoraTable, Map<Int, VipLevel> by rows {
+    fun orderedValues(): List<VipLevel> = orderedKeys.mapNotNull { rows[it] }
     override val name: String = "VipLevel"
     override val mode: SoraTableMode = SoraTableMode.Map
     override val key: String? = "level"

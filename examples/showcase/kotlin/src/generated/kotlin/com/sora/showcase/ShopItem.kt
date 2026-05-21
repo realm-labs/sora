@@ -34,7 +34,7 @@ data class ShopItem(
 
 class ShopItemTable private constructor(
     val rows: List<ShopItem>,
-) : SoraTable {
+) : SoraTable, List<ShopItem> by rows {
     fun values(): List<ShopItem> = rows
     override val name: String = "ShopItem"
     override val mode: SoraTableMode = SoraTableMode.List

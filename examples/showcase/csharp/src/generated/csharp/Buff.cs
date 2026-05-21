@@ -36,7 +36,7 @@ public sealed record Buff(
     }
 }
 
-public sealed class BuffTable : ISoraTable
+public sealed class BuffTable : ISoraTable, IReadOnlyDictionary<int, Buff>
 {
     private readonly List<int> keys;
     private readonly Dictionary<int, Buff> rows;
@@ -58,12 +58,44 @@ public sealed class BuffTable : ISoraTable
     }
 
     public Dictionary<int, Buff> Rows => rows;
+    public Buff this[int key] => rows[key];
+
     public Buff? Get(int key)
     {
         return rows.TryGetValue(key, out var row) ? row : default;
     }
 
-    public IReadOnlyList<int> Keys => keys;
+    public IReadOnlyList<int> OrderedKeys => keys;
+
+    public IEnumerable<int> Keys => keys;
+
+    public IEnumerable<Buff> Values => rows.Values;
+
+    public bool ContainsKey(int key)
+    {
+        return rows.ContainsKey(key);
+    }
+
+    public bool TryGetValue(int key, out Buff value)
+    {
+        if (rows.TryGetValue(key, out var row))
+        {
+            value = row;
+            return true;
+        }
+        value = default!;
+        return false;
+    }
+
+    public IEnumerator<KeyValuePair<int, Buff>> GetEnumerator()
+    {
+        return rows.GetEnumerator();
+    }
+
+    System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
+    {
+        return GetEnumerator();
+    }
 
     public IReadOnlyList<Buff> OrderedRows
     {

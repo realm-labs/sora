@@ -31,7 +31,7 @@ data class GachaItem(
 
 class GachaItemTable private constructor(
     val rows: List<GachaItem>,
-) : SoraTable {
+) : SoraTable, List<GachaItem> by rows {
     fun values(): List<GachaItem> = rows
     override val name: String = "GachaItem"
     override val mode: SoraTableMode = SoraTableMode.List

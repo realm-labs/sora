@@ -27,14 +27,10 @@ data class Dialogue(
 }
 
 class DialogueTable private constructor(
-    val keys: List<Int>,
+    val orderedKeys: List<Int>,
     val rows: Map<Int, Dialogue>,
-) : SoraTable {
-    operator fun get(key: Int): Dialogue? = rows[key]
-
-    fun values(): Collection<Dialogue> = rows.values
-
-    fun orderedValues(): List<Dialogue> = keys.mapNotNull { rows[it] }
+) : SoraTable, Map<Int, Dialogue> by rows {
+    fun orderedValues(): List<Dialogue> = orderedKeys.mapNotNull { rows[it] }
     override val name: String = "Dialogue"
     override val mode: SoraTableMode = SoraTableMode.Map
     override val key: String? = "id"

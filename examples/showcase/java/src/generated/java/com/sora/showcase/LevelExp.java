@@ -38,7 +38,7 @@ public final class LevelExp {
     }
 }
 
-final class LevelExpTable implements SoraTable {
+final class LevelExpTable extends java.util.AbstractMap<Integer, LevelExp> implements SoraTable {
     private final List<Integer> keys;
     private final java.util.Map<Integer, LevelExp> rows;
 
@@ -58,7 +58,8 @@ final class LevelExpTable implements SoraTable {
     public java.util.Map<Integer, LevelExp> rows() {
         return rows;
     }
-    public LevelExp get(Integer key) {
+    @Override
+    public LevelExp get(Object key) {
         return rows.get(key);
     }
 
@@ -68,6 +69,11 @@ final class LevelExpTable implements SoraTable {
 
     public List<LevelExp> orderedRows() {
         return keys.stream().map(rows::get).toList();
+    }
+
+    @Override
+    public java.util.Set<Map.Entry<Integer, LevelExp>> entrySet() {
+        return rows.entrySet();
     }
     @Override
     public String name() {

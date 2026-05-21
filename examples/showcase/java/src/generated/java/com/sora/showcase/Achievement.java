@@ -43,7 +43,7 @@ public final class Achievement {
     }
 }
 
-final class AchievementTable implements SoraTable {
+final class AchievementTable extends java.util.AbstractMap<Integer, Achievement> implements SoraTable {
     private final List<Integer> keys;
     private final java.util.Map<Integer, Achievement> rows;
 
@@ -63,7 +63,8 @@ final class AchievementTable implements SoraTable {
     public java.util.Map<Integer, Achievement> rows() {
         return rows;
     }
-    public Achievement get(Integer key) {
+    @Override
+    public Achievement get(Object key) {
         return rows.get(key);
     }
 
@@ -73,6 +74,11 @@ final class AchievementTable implements SoraTable {
 
     public List<Achievement> orderedRows() {
         return keys.stream().map(rows::get).toList();
+    }
+
+    @Override
+    public java.util.Set<Map.Entry<Integer, Achievement>> entrySet() {
+        return rows.entrySet();
     }
     @Override
     public String name() {

@@ -27,14 +27,10 @@ data class Recipe(
 }
 
 class RecipeTable private constructor(
-    val keys: List<Int>,
+    val orderedKeys: List<Int>,
     val rows: Map<Int, Recipe>,
-) : SoraTable {
-    operator fun get(key: Int): Recipe? = rows[key]
-
-    fun values(): Collection<Recipe> = rows.values
-
-    fun orderedValues(): List<Recipe> = keys.mapNotNull { rows[it] }
+) : SoraTable, Map<Int, Recipe> by rows {
+    fun orderedValues(): List<Recipe> = orderedKeys.mapNotNull { rows[it] }
     override val name: String = "Recipe"
     override val mode: SoraTableMode = SoraTableMode.Map
     override val key: String? = "id"

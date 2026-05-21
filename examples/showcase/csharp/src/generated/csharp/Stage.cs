@@ -39,7 +39,7 @@ public sealed record Stage(
     }
 }
 
-public sealed class StageTable : ISoraTable
+public sealed class StageTable : ISoraTable, IReadOnlyDictionary<int, Stage>
 {
     private readonly List<int> keys;
     private readonly Dictionary<int, Stage> rows;
@@ -61,12 +61,44 @@ public sealed class StageTable : ISoraTable
     }
 
     public Dictionary<int, Stage> Rows => rows;
+    public Stage this[int key] => rows[key];
+
     public Stage? Get(int key)
     {
         return rows.TryGetValue(key, out var row) ? row : default;
     }
 
-    public IReadOnlyList<int> Keys => keys;
+    public IReadOnlyList<int> OrderedKeys => keys;
+
+    public IEnumerable<int> Keys => keys;
+
+    public IEnumerable<Stage> Values => rows.Values;
+
+    public bool ContainsKey(int key)
+    {
+        return rows.ContainsKey(key);
+    }
+
+    public bool TryGetValue(int key, out Stage value)
+    {
+        if (rows.TryGetValue(key, out var row))
+        {
+            value = row;
+            return true;
+        }
+        value = default!;
+        return false;
+    }
+
+    public IEnumerator<KeyValuePair<int, Stage>> GetEnumerator()
+    {
+        return rows.GetEnumerator();
+    }
+
+    System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
+    {
+        return GetEnumerator();
+    }
 
     public IReadOnlyList<Stage> OrderedRows
     {

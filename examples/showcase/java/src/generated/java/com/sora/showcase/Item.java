@@ -59,7 +59,7 @@ public final class Item {
     }
 }
 
-final class ItemTable implements SoraTable {
+final class ItemTable extends java.util.AbstractMap<Integer, Item> implements SoraTable {
     private final List<Integer> keys;
     private final java.util.Map<Integer, Item> rows;
     private final Map<String, Item> byName;
@@ -88,7 +88,8 @@ final class ItemTable implements SoraTable {
     public java.util.Map<Integer, Item> rows() {
         return rows;
     }
-    public Item get(Integer key) {
+    @Override
+    public Item get(Object key) {
         return rows.get(key);
     }
 
@@ -98,6 +99,11 @@ final class ItemTable implements SoraTable {
 
     public List<Item> orderedRows() {
         return keys.stream().map(rows::get).toList();
+    }
+
+    @Override
+    public java.util.Set<Map.Entry<Integer, Item>> entrySet() {
+        return rows.entrySet();
     }
     public Item getByName(String name) {
         return byName.get(name);

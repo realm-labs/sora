@@ -39,7 +39,7 @@ public sealed record DropEntry(
     }
 }
 
-public sealed class DropEntryTable : ISoraTable
+public sealed class DropEntryTable : ISoraTable, IReadOnlyList<DropEntry>
 {
     private readonly List<DropEntry> rows;
 
@@ -59,6 +59,17 @@ public sealed class DropEntryTable : ISoraTable
     }
 
     public List<DropEntry> Rows => rows;
+    public DropEntry this[int index] => rows[index];
+
+    public IEnumerator<DropEntry> GetEnumerator()
+    {
+        return rows.GetEnumerator();
+    }
+
+    System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
+    {
+        return GetEnumerator();
+    }
     public string Name => "DropEntry";
     public SoraTableMode Mode => SoraTableMode.List;
     public string? Key => null;

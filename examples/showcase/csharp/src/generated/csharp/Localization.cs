@@ -36,7 +36,7 @@ public sealed record Localization(
     }
 }
 
-public sealed class LocalizationTable : ISoraTable
+public sealed class LocalizationTable : ISoraTable, IReadOnlyDictionary<string, Localization>
 {
     private readonly List<string> keys;
     private readonly Dictionary<string, Localization> rows;
@@ -58,12 +58,44 @@ public sealed class LocalizationTable : ISoraTable
     }
 
     public Dictionary<string, Localization> Rows => rows;
+    public Localization this[string key] => rows[key];
+
     public Localization? Get(string key)
     {
         return rows.TryGetValue(key, out var row) ? row : default;
     }
 
-    public IReadOnlyList<string> Keys => keys;
+    public IReadOnlyList<string> OrderedKeys => keys;
+
+    public IEnumerable<string> Keys => keys;
+
+    public IEnumerable<Localization> Values => rows.Values;
+
+    public bool ContainsKey(string key)
+    {
+        return rows.ContainsKey(key);
+    }
+
+    public bool TryGetValue(string key, out Localization value)
+    {
+        if (rows.TryGetValue(key, out var row))
+        {
+            value = row;
+            return true;
+        }
+        value = default!;
+        return false;
+    }
+
+    public IEnumerator<KeyValuePair<string, Localization>> GetEnumerator()
+    {
+        return rows.GetEnumerator();
+    }
+
+    System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
+    {
+        return GetEnumerator();
+    }
 
     public IReadOnlyList<Localization> OrderedRows
     {

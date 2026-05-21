@@ -27,14 +27,10 @@ data class GachaPool(
 }
 
 class GachaPoolTable private constructor(
-    val keys: List<Int>,
+    val orderedKeys: List<Int>,
     val rows: Map<Int, GachaPool>,
-) : SoraTable {
-    operator fun get(key: Int): GachaPool? = rows[key]
-
-    fun values(): Collection<GachaPool> = rows.values
-
-    fun orderedValues(): List<GachaPool> = keys.mapNotNull { rows[it] }
+) : SoraTable, Map<Int, GachaPool> by rows {
+    fun orderedValues(): List<GachaPool> = orderedKeys.mapNotNull { rows[it] }
     override val name: String = "GachaPool"
     override val mode: SoraTableMode = SoraTableMode.Map
     override val key: String? = "id"

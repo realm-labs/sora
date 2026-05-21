@@ -43,7 +43,7 @@ public final class EquipmentSet {
     }
 }
 
-final class EquipmentSetTable implements SoraTable {
+final class EquipmentSetTable extends java.util.AbstractMap<Integer, EquipmentSet> implements SoraTable {
     private final List<Integer> keys;
     private final java.util.Map<Integer, EquipmentSet> rows;
 
@@ -63,7 +63,8 @@ final class EquipmentSetTable implements SoraTable {
     public java.util.Map<Integer, EquipmentSet> rows() {
         return rows;
     }
-    public EquipmentSet get(Integer key) {
+    @Override
+    public EquipmentSet get(Object key) {
         return rows.get(key);
     }
 
@@ -73,6 +74,11 @@ final class EquipmentSetTable implements SoraTable {
 
     public List<EquipmentSet> orderedRows() {
         return keys.stream().map(rows::get).toList();
+    }
+
+    @Override
+    public java.util.Set<Map.Entry<Integer, EquipmentSet>> entrySet() {
+        return rows.entrySet();
     }
     @Override
     public String name() {

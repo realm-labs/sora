@@ -33,7 +33,7 @@ public sealed record CharacterSkill(
     }
 }
 
-public sealed class CharacterSkillTable : ISoraTable
+public sealed class CharacterSkillTable : ISoraTable, IReadOnlyList<CharacterSkill>
 {
     private readonly List<CharacterSkill> rows;
 
@@ -53,6 +53,17 @@ public sealed class CharacterSkillTable : ISoraTable
     }
 
     public List<CharacterSkill> Rows => rows;
+    public CharacterSkill this[int index] => rows[index];
+
+    public IEnumerator<CharacterSkill> GetEnumerator()
+    {
+        return rows.GetEnumerator();
+    }
+
+    System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
+    {
+        return GetEnumerator();
+    }
     public string Name => "CharacterSkill";
     public SoraTableMode Mode => SoraTableMode.List;
     public string? Key => null;

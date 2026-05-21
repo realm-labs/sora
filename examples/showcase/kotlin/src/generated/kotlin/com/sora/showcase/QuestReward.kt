@@ -31,7 +31,7 @@ data class QuestReward(
 
 class QuestRewardTable private constructor(
     val rows: List<QuestReward>,
-) : SoraTable {
+) : SoraTable, List<QuestReward> by rows {
     fun values(): List<QuestReward> = rows
     override val name: String = "QuestReward"
     override val mode: SoraTableMode = SoraTableMode.List

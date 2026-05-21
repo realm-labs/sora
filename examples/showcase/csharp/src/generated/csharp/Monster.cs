@@ -42,7 +42,7 @@ public sealed record Monster(
     }
 }
 
-public sealed class MonsterTable : ISoraTable
+public sealed class MonsterTable : ISoraTable, IReadOnlyDictionary<int, Monster>
 {
     private readonly List<int> keys;
     private readonly Dictionary<int, Monster> rows;
@@ -64,12 +64,44 @@ public sealed class MonsterTable : ISoraTable
     }
 
     public Dictionary<int, Monster> Rows => rows;
+    public Monster this[int key] => rows[key];
+
     public Monster? Get(int key)
     {
         return rows.TryGetValue(key, out var row) ? row : default;
     }
 
-    public IReadOnlyList<int> Keys => keys;
+    public IReadOnlyList<int> OrderedKeys => keys;
+
+    public IEnumerable<int> Keys => keys;
+
+    public IEnumerable<Monster> Values => rows.Values;
+
+    public bool ContainsKey(int key)
+    {
+        return rows.ContainsKey(key);
+    }
+
+    public bool TryGetValue(int key, out Monster value)
+    {
+        if (rows.TryGetValue(key, out var row))
+        {
+            value = row;
+            return true;
+        }
+        value = default!;
+        return false;
+    }
+
+    public IEnumerator<KeyValuePair<int, Monster>> GetEnumerator()
+    {
+        return rows.GetEnumerator();
+    }
+
+    System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
+    {
+        return GetEnumerator();
+    }
 
     public IReadOnlyList<Monster> OrderedRows
     {

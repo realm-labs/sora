@@ -38,7 +38,7 @@ public final class Dialogue {
     }
 }
 
-final class DialogueTable implements SoraTable {
+final class DialogueTable extends java.util.AbstractMap<Integer, Dialogue> implements SoraTable {
     private final List<Integer> keys;
     private final java.util.Map<Integer, Dialogue> rows;
 
@@ -58,7 +58,8 @@ final class DialogueTable implements SoraTable {
     public java.util.Map<Integer, Dialogue> rows() {
         return rows;
     }
-    public Dialogue get(Integer key) {
+    @Override
+    public Dialogue get(Object key) {
         return rows.get(key);
     }
 
@@ -68,6 +69,11 @@ final class DialogueTable implements SoraTable {
 
     public List<Dialogue> orderedRows() {
         return keys.stream().map(rows::get).toList();
+    }
+
+    @Override
+    public java.util.Set<Map.Entry<Integer, Dialogue>> entrySet() {
+        return rows.entrySet();
     }
     @Override
     public String name() {

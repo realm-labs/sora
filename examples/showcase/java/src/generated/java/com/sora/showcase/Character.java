@@ -58,7 +58,7 @@ public final class Character {
     }
 }
 
-final class CharacterTable implements SoraTable {
+final class CharacterTable extends java.util.AbstractMap<Integer, Character> implements SoraTable {
     private final List<Integer> keys;
     private final java.util.Map<Integer, Character> rows;
 
@@ -78,7 +78,8 @@ final class CharacterTable implements SoraTable {
     public java.util.Map<Integer, Character> rows() {
         return rows;
     }
-    public Character get(Integer key) {
+    @Override
+    public Character get(Object key) {
         return rows.get(key);
     }
 
@@ -88,6 +89,11 @@ final class CharacterTable implements SoraTable {
 
     public List<Character> orderedRows() {
         return keys.stream().map(rows::get).toList();
+    }
+
+    @Override
+    public java.util.Set<Map.Entry<Integer, Character>> entrySet() {
+        return rows.entrySet();
     }
     @Override
     public String name() {

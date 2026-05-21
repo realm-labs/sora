@@ -30,14 +30,10 @@ data class EquipmentSet(
 }
 
 class EquipmentSetTable private constructor(
-    val keys: List<Int>,
+    val orderedKeys: List<Int>,
     val rows: Map<Int, EquipmentSet>,
-) : SoraTable {
-    operator fun get(key: Int): EquipmentSet? = rows[key]
-
-    fun values(): Collection<EquipmentSet> = rows.values
-
-    fun orderedValues(): List<EquipmentSet> = keys.mapNotNull { rows[it] }
+) : SoraTable, Map<Int, EquipmentSet> by rows {
+    fun orderedValues(): List<EquipmentSet> = orderedKeys.mapNotNull { rows[it] }
     override val name: String = "EquipmentSet"
     override val mode: SoraTableMode = SoraTableMode.Map
     override val key: String? = "id"

@@ -33,7 +33,7 @@ public sealed record Dialogue(
     }
 }
 
-public sealed class DialogueTable : ISoraTable
+public sealed class DialogueTable : ISoraTable, IReadOnlyDictionary<int, Dialogue>
 {
     private readonly List<int> keys;
     private readonly Dictionary<int, Dialogue> rows;
@@ -55,12 +55,44 @@ public sealed class DialogueTable : ISoraTable
     }
 
     public Dictionary<int, Dialogue> Rows => rows;
+    public Dialogue this[int key] => rows[key];
+
     public Dialogue? Get(int key)
     {
         return rows.TryGetValue(key, out var row) ? row : default;
     }
 
-    public IReadOnlyList<int> Keys => keys;
+    public IReadOnlyList<int> OrderedKeys => keys;
+
+    public IEnumerable<int> Keys => keys;
+
+    public IEnumerable<Dialogue> Values => rows.Values;
+
+    public bool ContainsKey(int key)
+    {
+        return rows.ContainsKey(key);
+    }
+
+    public bool TryGetValue(int key, out Dialogue value)
+    {
+        if (rows.TryGetValue(key, out var row))
+        {
+            value = row;
+            return true;
+        }
+        value = default!;
+        return false;
+    }
+
+    public IEnumerator<KeyValuePair<int, Dialogue>> GetEnumerator()
+    {
+        return rows.GetEnumerator();
+    }
+
+    System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
+    {
+        return GetEnumerator();
+    }
 
     public IReadOnlyList<Dialogue> OrderedRows
     {

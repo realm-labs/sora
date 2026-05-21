@@ -48,7 +48,7 @@ public final class DropEntry {
     }
 }
 
-final class DropEntryTable implements SoraTable {
+final class DropEntryTable extends java.util.AbstractList<DropEntry> implements SoraTable {
     private final java.util.List<DropEntry> rows;
 
     private DropEntryTable(java.util.List<DropEntry> rows) {
@@ -65,6 +65,10 @@ final class DropEntryTable implements SoraTable {
 
     public java.util.List<DropEntry> rows() {
         return rows;
+    }
+    @Override
+    public DropEntry get(int index) {
+        return rows.get(index);
     }
     @Override
     public String name() {

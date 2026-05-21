@@ -36,7 +36,7 @@ public sealed record EquipmentSet(
     }
 }
 
-public sealed class EquipmentSetTable : ISoraTable
+public sealed class EquipmentSetTable : ISoraTable, IReadOnlyDictionary<int, EquipmentSet>
 {
     private readonly List<int> keys;
     private readonly Dictionary<int, EquipmentSet> rows;
@@ -58,12 +58,44 @@ public sealed class EquipmentSetTable : ISoraTable
     }
 
     public Dictionary<int, EquipmentSet> Rows => rows;
+    public EquipmentSet this[int key] => rows[key];
+
     public EquipmentSet? Get(int key)
     {
         return rows.TryGetValue(key, out var row) ? row : default;
     }
 
-    public IReadOnlyList<int> Keys => keys;
+    public IReadOnlyList<int> OrderedKeys => keys;
+
+    public IEnumerable<int> Keys => keys;
+
+    public IEnumerable<EquipmentSet> Values => rows.Values;
+
+    public bool ContainsKey(int key)
+    {
+        return rows.ContainsKey(key);
+    }
+
+    public bool TryGetValue(int key, out EquipmentSet value)
+    {
+        if (rows.TryGetValue(key, out var row))
+        {
+            value = row;
+            return true;
+        }
+        value = default!;
+        return false;
+    }
+
+    public IEnumerator<KeyValuePair<int, EquipmentSet>> GetEnumerator()
+    {
+        return rows.GetEnumerator();
+    }
+
+    System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
+    {
+        return GetEnumerator();
+    }
 
     public IReadOnlyList<EquipmentSet> OrderedRows
     {

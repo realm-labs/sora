@@ -24,14 +24,10 @@ data class DropGroup(
 }
 
 class DropGroupTable private constructor(
-    val keys: List<Int>,
+    val orderedKeys: List<Int>,
     val rows: Map<Int, DropGroup>,
-) : SoraTable {
-    operator fun get(key: Int): DropGroup? = rows[key]
-
-    fun values(): Collection<DropGroup> = rows.values
-
-    fun orderedValues(): List<DropGroup> = keys.mapNotNull { rows[it] }
+) : SoraTable, Map<Int, DropGroup> by rows {
+    fun orderedValues(): List<DropGroup> = orderedKeys.mapNotNull { rows[it] }
     override val name: String = "DropGroup"
     override val mode: SoraTableMode = SoraTableMode.Map
     override val key: String? = "id"

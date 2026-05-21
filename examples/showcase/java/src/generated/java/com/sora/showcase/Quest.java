@@ -59,7 +59,7 @@ public final class Quest {
     }
 }
 
-final class QuestTable implements SoraTable {
+final class QuestTable extends java.util.AbstractMap<Integer, Quest> implements SoraTable {
     private final List<Integer> keys;
     private final java.util.Map<Integer, Quest> rows;
 
@@ -79,7 +79,8 @@ final class QuestTable implements SoraTable {
     public java.util.Map<Integer, Quest> rows() {
         return rows;
     }
-    public Quest get(Integer key) {
+    @Override
+    public Quest get(Object key) {
         return rows.get(key);
     }
 
@@ -89,6 +90,11 @@ final class QuestTable implements SoraTable {
 
     public List<Quest> orderedRows() {
         return keys.stream().map(rows::get).toList();
+    }
+
+    @Override
+    public java.util.Set<Map.Entry<Integer, Quest>> entrySet() {
+        return rows.entrySet();
     }
     @Override
     public String name() {

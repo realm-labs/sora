@@ -46,7 +46,7 @@ public sealed record Quest(
     }
 }
 
-public sealed class QuestTable : ISoraTable
+public sealed class QuestTable : ISoraTable, IReadOnlyDictionary<int, Quest>
 {
     private readonly List<int> keys;
     private readonly Dictionary<int, Quest> rows;
@@ -68,12 +68,44 @@ public sealed class QuestTable : ISoraTable
     }
 
     public Dictionary<int, Quest> Rows => rows;
+    public Quest this[int key] => rows[key];
+
     public Quest? Get(int key)
     {
         return rows.TryGetValue(key, out var row) ? row : default;
     }
 
-    public IReadOnlyList<int> Keys => keys;
+    public IReadOnlyList<int> OrderedKeys => keys;
+
+    public IEnumerable<int> Keys => keys;
+
+    public IEnumerable<Quest> Values => rows.Values;
+
+    public bool ContainsKey(int key)
+    {
+        return rows.ContainsKey(key);
+    }
+
+    public bool TryGetValue(int key, out Quest value)
+    {
+        if (rows.TryGetValue(key, out var row))
+        {
+            value = row;
+            return true;
+        }
+        value = default!;
+        return false;
+    }
+
+    public IEnumerator<KeyValuePair<int, Quest>> GetEnumerator()
+    {
+        return rows.GetEnumerator();
+    }
+
+    System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
+    {
+        return GetEnumerator();
+    }
 
     public IReadOnlyList<Quest> OrderedRows
     {

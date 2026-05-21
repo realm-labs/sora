@@ -43,7 +43,7 @@ public final class GachaItem {
     }
 }
 
-final class GachaItemTable implements SoraTable {
+final class GachaItemTable extends java.util.AbstractList<GachaItem> implements SoraTable {
     private final java.util.List<GachaItem> rows;
 
     private GachaItemTable(java.util.List<GachaItem> rows) {
@@ -60,6 +60,10 @@ final class GachaItemTable implements SoraTable {
 
     public java.util.List<GachaItem> rows() {
         return rows;
+    }
+    @Override
+    public GachaItem get(int index) {
+        return rows.get(index);
     }
     @Override
     public String name() {

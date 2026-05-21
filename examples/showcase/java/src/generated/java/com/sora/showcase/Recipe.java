@@ -38,7 +38,7 @@ public final class Recipe {
     }
 }
 
-final class RecipeTable implements SoraTable {
+final class RecipeTable extends java.util.AbstractMap<Integer, Recipe> implements SoraTable {
     private final List<Integer> keys;
     private final java.util.Map<Integer, Recipe> rows;
 
@@ -58,7 +58,8 @@ final class RecipeTable implements SoraTable {
     public java.util.Map<Integer, Recipe> rows() {
         return rows;
     }
-    public Recipe get(Integer key) {
+    @Override
+    public Recipe get(Object key) {
         return rows.get(key);
     }
 
@@ -68,6 +69,11 @@ final class RecipeTable implements SoraTable {
 
     public List<Recipe> orderedRows() {
         return keys.stream().map(rows::get).toList();
+    }
+
+    @Override
+    public java.util.Set<Map.Entry<Integer, Recipe>> entrySet() {
+        return rows.entrySet();
     }
     @Override
     public String name() {

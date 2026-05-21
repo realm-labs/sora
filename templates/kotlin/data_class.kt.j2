@@ -34,7 +34,7 @@ data class {{ record.pascal_name }}(
 
 class {{ table.pascal_name }}Table private constructor(
 {%- if table.mode == "map" and table.key_field_name %}
-    val keys: List<{{ table.key_type }}>,
+    val orderedKeys: List<{{ table.key_type }}>,
 {%- endif %}
     val rows: {{ table.container_type }},
 {%- for index in table.unique_indexes %}
@@ -43,13 +43,9 @@ class {{ table.pascal_name }}Table private constructor(
 {%- for index in table.non_unique_indexes %}
     private val {{ index.param_camel_name }}Index: Map<{{ index.key_type }}, List<{{ table.row_type }}>>,
 {%- endfor %}
-) : SoraTable {
+) : SoraTable{% if table.mode == "map" and table.key_field_name %}, Map<{{ table.key_type }}, {{ table.row_type }}> by rows{% elif table.mode == "list" %}, List<{{ table.row_type }}> by rows{% endif %} {
 {%- if table.mode == "map" and table.key_field_name %}
-    operator fun get(key: {{ table.key_type }}): {{ table.row_type }}? = rows[key]
-
-    fun values(): Collection<{{ table.row_type }}> = rows.values
-
-    fun orderedValues(): List<{{ table.row_type }}> = keys.mapNotNull { rows[it] }
+    fun orderedValues(): List<{{ table.row_type }}> = orderedKeys.mapNotNull { rows[it] }
 
 {%- elif table.mode == "list" %}
     fun values(): List<{{ table.row_type }}> = rows

@@ -48,7 +48,7 @@ public final class Stage {
     }
 }
 
-final class StageTable implements SoraTable {
+final class StageTable extends java.util.AbstractMap<Integer, Stage> implements SoraTable {
     private final List<Integer> keys;
     private final java.util.Map<Integer, Stage> rows;
 
@@ -68,7 +68,8 @@ final class StageTable implements SoraTable {
     public java.util.Map<Integer, Stage> rows() {
         return rows;
     }
-    public Stage get(Integer key) {
+    @Override
+    public Stage get(Object key) {
         return rows.get(key);
     }
 
@@ -78,6 +79,11 @@ final class StageTable implements SoraTable {
 
     public List<Stage> orderedRows() {
         return keys.stream().map(rows::get).toList();
+    }
+
+    @Override
+    public java.util.Set<Map.Entry<Integer, Stage>> entrySet() {
+        return rows.entrySet();
     }
     @Override
     public String name() {

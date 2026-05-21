@@ -43,7 +43,7 @@ public final class QuestReward {
     }
 }
 
-final class QuestRewardTable implements SoraTable {
+final class QuestRewardTable extends java.util.AbstractList<QuestReward> implements SoraTable {
     private final java.util.List<QuestReward> rows;
 
     private QuestRewardTable(java.util.List<QuestReward> rows) {
@@ -60,6 +60,10 @@ final class QuestRewardTable implements SoraTable {
 
     public java.util.List<QuestReward> rows() {
         return rows;
+    }
+    @Override
+    public QuestReward get(int index) {
+        return rows.get(index);
     }
     @Override
     public String name() {

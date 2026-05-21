@@ -36,7 +36,7 @@ public sealed record StageReward(
     }
 }
 
-public sealed class StageRewardTable : ISoraTable
+public sealed class StageRewardTable : ISoraTable, IReadOnlyList<StageReward>
 {
     private readonly List<StageReward> rows;
 
@@ -56,6 +56,17 @@ public sealed class StageRewardTable : ISoraTable
     }
 
     public List<StageReward> Rows => rows;
+    public StageReward this[int index] => rows[index];
+
+    public IEnumerator<StageReward> GetEnumerator()
+    {
+        return rows.GetEnumerator();
+    }
+
+    System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
+    {
+        return GetEnumerator();
+    }
     public string Name => "StageReward";
     public SoraTableMode Mode => SoraTableMode.List;
     public string? Key => null;

@@ -43,7 +43,7 @@ public final class Dungeon {
     }
 }
 
-final class DungeonTable implements SoraTable {
+final class DungeonTable extends java.util.AbstractMap<Integer, Dungeon> implements SoraTable {
     private final List<Integer> keys;
     private final java.util.Map<Integer, Dungeon> rows;
 
@@ -63,7 +63,8 @@ final class DungeonTable implements SoraTable {
     public java.util.Map<Integer, Dungeon> rows() {
         return rows;
     }
-    public Dungeon get(Integer key) {
+    @Override
+    public Dungeon get(Object key) {
         return rows.get(key);
     }
 
@@ -73,6 +74,11 @@ final class DungeonTable implements SoraTable {
 
     public List<Dungeon> orderedRows() {
         return keys.stream().map(rows::get).toList();
+    }
+
+    @Override
+    public java.util.Set<Map.Entry<Integer, Dungeon>> entrySet() {
+        return rows.entrySet();
     }
     @Override
     public String name() {

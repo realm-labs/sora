@@ -27,14 +27,10 @@ data class LevelExp(
 }
 
 class LevelExpTable private constructor(
-    val keys: List<Int>,
+    val orderedKeys: List<Int>,
     val rows: Map<Int, LevelExp>,
-) : SoraTable {
-    operator fun get(key: Int): LevelExp? = rows[key]
-
-    fun values(): Collection<LevelExp> = rows.values
-
-    fun orderedValues(): List<LevelExp> = keys.mapNotNull { rows[it] }
+) : SoraTable, Map<Int, LevelExp> by rows {
+    fun orderedValues(): List<LevelExp> = orderedKeys.mapNotNull { rows[it] }
     override val name: String = "LevelExp"
     override val mode: SoraTableMode = SoraTableMode.Map
     override val key: String? = "level"

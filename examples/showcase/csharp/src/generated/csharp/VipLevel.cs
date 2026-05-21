@@ -33,7 +33,7 @@ public sealed record VipLevel(
     }
 }
 
-public sealed class VipLevelTable : ISoraTable
+public sealed class VipLevelTable : ISoraTable, IReadOnlyDictionary<int, VipLevel>
 {
     private readonly List<int> keys;
     private readonly Dictionary<int, VipLevel> rows;
@@ -55,12 +55,44 @@ public sealed class VipLevelTable : ISoraTable
     }
 
     public Dictionary<int, VipLevel> Rows => rows;
+    public VipLevel this[int key] => rows[key];
+
     public VipLevel? Get(int key)
     {
         return rows.TryGetValue(key, out var row) ? row : default;
     }
 
-    public IReadOnlyList<int> Keys => keys;
+    public IReadOnlyList<int> OrderedKeys => keys;
+
+    public IEnumerable<int> Keys => keys;
+
+    public IEnumerable<VipLevel> Values => rows.Values;
+
+    public bool ContainsKey(int key)
+    {
+        return rows.ContainsKey(key);
+    }
+
+    public bool TryGetValue(int key, out VipLevel value)
+    {
+        if (rows.TryGetValue(key, out var row))
+        {
+            value = row;
+            return true;
+        }
+        value = default!;
+        return false;
+    }
+
+    public IEnumerator<KeyValuePair<int, VipLevel>> GetEnumerator()
+    {
+        return rows.GetEnumerator();
+    }
+
+    System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
+    {
+        return GetEnumerator();
+    }
 
     public IReadOnlyList<VipLevel> OrderedRows
     {

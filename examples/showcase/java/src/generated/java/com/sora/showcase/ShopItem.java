@@ -48,7 +48,7 @@ public final class ShopItem {
     }
 }
 
-final class ShopItemTable implements SoraTable {
+final class ShopItemTable extends java.util.AbstractList<ShopItem> implements SoraTable {
     private final java.util.List<ShopItem> rows;
 
     private ShopItemTable(java.util.List<ShopItem> rows) {
@@ -65,6 +65,10 @@ final class ShopItemTable implements SoraTable {
 
     public java.util.List<ShopItem> rows() {
         return rows;
+    }
+    @Override
+    public ShopItem get(int index) {
+        return rows.get(index);
     }
     @Override
     public String name() {

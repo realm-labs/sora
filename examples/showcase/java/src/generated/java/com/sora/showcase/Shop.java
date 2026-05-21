@@ -38,7 +38,7 @@ public final class Shop {
     }
 }
 
-final class ShopTable implements SoraTable {
+final class ShopTable extends java.util.AbstractMap<Integer, Shop> implements SoraTable {
     private final List<Integer> keys;
     private final java.util.Map<Integer, Shop> rows;
 
@@ -58,7 +58,8 @@ final class ShopTable implements SoraTable {
     public java.util.Map<Integer, Shop> rows() {
         return rows;
     }
-    public Shop get(Integer key) {
+    @Override
+    public Shop get(Object key) {
         return rows.get(key);
     }
 
@@ -68,6 +69,11 @@ final class ShopTable implements SoraTable {
 
     public List<Shop> orderedRows() {
         return keys.stream().map(rows::get).toList();
+    }
+
+    @Override
+    public java.util.Set<Map.Entry<Integer, Shop>> entrySet() {
+        return rows.entrySet();
     }
     @Override
     public String name() {

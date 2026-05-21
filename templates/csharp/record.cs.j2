@@ -39,7 +39,7 @@ public sealed record {{ record.pascal_name }}(
 {%- if record.table %}
 {%- set table = record.table %}
 
-public sealed class {{ table.pascal_name }}Table : ISoraTable
+public sealed class {{ table.pascal_name }}Table : ISoraTable{% if table.mode == "map" and table.key_field_name %}, IReadOnlyDictionary<{{ table.key_type }}, {{ table.row_type }}>{% elif table.mode == "list" %}, IReadOnlyList<{{ table.row_type }}>{% endif %}
 {
 {%- if table.mode == "map" and table.key_field_name %}
     private readonly List<{{ table.key_type }}> keys;
@@ -110,12 +110,44 @@ public sealed class {{ table.pascal_name }}Table : ISoraTable
     public {{ table.container_type }} Rows => rows;
 
 {%- if table.mode == "map" and table.key_field_name %}
+    public {{ table.row_type }} this[{{ table.key_type }} key] => rows[key];
+
     public {{ table.row_type }}? Get({{ table.key_type }} key)
     {
         return rows.TryGetValue(key, out var row) ? row : default;
     }
 
-    public IReadOnlyList<{{ table.key_type }}> Keys => keys;
+    public IReadOnlyList<{{ table.key_type }}> OrderedKeys => keys;
+
+    public IEnumerable<{{ table.key_type }}> Keys => keys;
+
+    public IEnumerable<{{ table.row_type }}> Values => rows.Values;
+
+    public bool ContainsKey({{ table.key_type }} key)
+    {
+        return rows.ContainsKey(key);
+    }
+
+    public bool TryGetValue({{ table.key_type }} key, out {{ table.row_type }} value)
+    {
+        if (rows.TryGetValue(key, out var row))
+        {
+            value = row;
+            return true;
+        }
+        value = default!;
+        return false;
+    }
+
+    public IEnumerator<KeyValuePair<{{ table.key_type }}, {{ table.row_type }}>> GetEnumerator()
+    {
+        return rows.GetEnumerator();
+    }
+
+    System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
+    {
+        return GetEnumerator();
+    }
 
     public IReadOnlyList<{{ table.row_type }}> OrderedRows
     {
@@ -131,6 +163,19 @@ public sealed class {{ table.pascal_name }}Table : ISoraTable
             }
             return orderedRows;
         }
+    }
+
+{%- elif table.mode == "list" %}
+    public {{ table.row_type }} this[int index] => rows[index];
+
+    public IEnumerator<{{ table.row_type }}> GetEnumerator()
+    {
+        return rows.GetEnumerator();
+    }
+
+    System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
+    {
+        return GetEnumerator();
     }
 
 {%- endif %}

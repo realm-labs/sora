@@ -36,7 +36,7 @@ public sealed record GachaItem(
     }
 }
 
-public sealed class GachaItemTable : ISoraTable
+public sealed class GachaItemTable : ISoraTable, IReadOnlyList<GachaItem>
 {
     private readonly List<GachaItem> rows;
 
@@ -56,6 +56,17 @@ public sealed class GachaItemTable : ISoraTable
     }
 
     public List<GachaItem> Rows => rows;
+    public GachaItem this[int index] => rows[index];
+
+    public IEnumerator<GachaItem> GetEnumerator()
+    {
+        return rows.GetEnumerator();
+    }
+
+    System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
+    {
+        return GetEnumerator();
+    }
     public string Name => "GachaItem";
     public SoraTableMode Mode => SoraTableMode.List;
     public string? Key => null;

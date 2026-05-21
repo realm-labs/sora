@@ -31,7 +31,7 @@ data class StageReward(
 
 class StageRewardTable private constructor(
     val rows: List<StageReward>,
-) : SoraTable {
+) : SoraTable, List<StageReward> by rows {
     fun values(): List<StageReward> = rows
     override val name: String = "StageReward"
     override val mode: SoraTableMode = SoraTableMode.List

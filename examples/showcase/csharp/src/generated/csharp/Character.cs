@@ -45,7 +45,7 @@ public sealed record Character(
     }
 }
 
-public sealed class CharacterTable : ISoraTable
+public sealed class CharacterTable : ISoraTable, IReadOnlyDictionary<int, Character>
 {
     private readonly List<int> keys;
     private readonly Dictionary<int, Character> rows;
@@ -67,12 +67,44 @@ public sealed class CharacterTable : ISoraTable
     }
 
     public Dictionary<int, Character> Rows => rows;
+    public Character this[int key] => rows[key];
+
     public Character? Get(int key)
     {
         return rows.TryGetValue(key, out var row) ? row : default;
     }
 
-    public IReadOnlyList<int> Keys => keys;
+    public IReadOnlyList<int> OrderedKeys => keys;
+
+    public IEnumerable<int> Keys => keys;
+
+    public IEnumerable<Character> Values => rows.Values;
+
+    public bool ContainsKey(int key)
+    {
+        return rows.ContainsKey(key);
+    }
+
+    public bool TryGetValue(int key, out Character value)
+    {
+        if (rows.TryGetValue(key, out var row))
+        {
+            value = row;
+            return true;
+        }
+        value = default!;
+        return false;
+    }
+
+    public IEnumerator<KeyValuePair<int, Character>> GetEnumerator()
+    {
+        return rows.GetEnumerator();
+    }
+
+    System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
+    {
+        return GetEnumerator();
+    }
 
     public IReadOnlyList<Character> OrderedRows
     {

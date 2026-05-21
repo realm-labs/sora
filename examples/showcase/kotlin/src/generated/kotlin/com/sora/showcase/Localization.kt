@@ -30,14 +30,10 @@ data class Localization(
 }
 
 class LocalizationTable private constructor(
-    val keys: List<String>,
+    val orderedKeys: List<String>,
     val rows: Map<String, Localization>,
-) : SoraTable {
-    operator fun get(key: String): Localization? = rows[key]
-
-    fun values(): Collection<Localization> = rows.values
-
-    fun orderedValues(): List<Localization> = keys.mapNotNull { rows[it] }
+) : SoraTable, Map<String, Localization> by rows {
+    fun orderedValues(): List<Localization> = orderedKeys.mapNotNull { rows[it] }
     override val name: String = "Localization"
     override val mode: SoraTableMode = SoraTableMode.Map
     override val key: String? = "key"

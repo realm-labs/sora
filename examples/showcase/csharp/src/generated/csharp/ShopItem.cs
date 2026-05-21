@@ -39,7 +39,7 @@ public sealed record ShopItem(
     }
 }
 
-public sealed class ShopItemTable : ISoraTable
+public sealed class ShopItemTable : ISoraTable, IReadOnlyList<ShopItem>
 {
     private readonly List<ShopItem> rows;
 
@@ -59,6 +59,17 @@ public sealed class ShopItemTable : ISoraTable
     }
 
     public List<ShopItem> Rows => rows;
+    public ShopItem this[int index] => rows[index];
+
+    public IEnumerator<ShopItem> GetEnumerator()
+    {
+        return rows.GetEnumerator();
+    }
+
+    System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
+    {
+        return GetEnumerator();
+    }
     public string Name => "ShopItem";
     public SoraTableMode Mode => SoraTableMode.List;
     public string? Key => null;

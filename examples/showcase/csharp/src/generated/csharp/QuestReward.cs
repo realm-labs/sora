@@ -36,7 +36,7 @@ public sealed record QuestReward(
     }
 }
 
-public sealed class QuestRewardTable : ISoraTable
+public sealed class QuestRewardTable : ISoraTable, IReadOnlyList<QuestReward>
 {
     private readonly List<QuestReward> rows;
 
@@ -56,6 +56,17 @@ public sealed class QuestRewardTable : ISoraTable
     }
 
     public List<QuestReward> Rows => rows;
+    public QuestReward this[int index] => rows[index];
+
+    public IEnumerator<QuestReward> GetEnumerator()
+    {
+        return rows.GetEnumerator();
+    }
+
+    System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
+    {
+        return GetEnumerator();
+    }
     public string Name => "QuestReward";
     public SoraTableMode Mode => SoraTableMode.List;
     public string? Key => null;
