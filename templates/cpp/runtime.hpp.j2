@@ -255,6 +255,7 @@ public:
         sections.reserve(section_count);
         std::size_t manifest_count = 0;
         std::size_t schema_count = 0;
+        std::string manifest_payload;
         for (std::size_t index = 0; index < section_count; ++index) {
             if (cursor > directory_end || directory_end - cursor < 40) {
                 throw SoraReadException("truncated Sora section directory entry");
@@ -287,6 +288,10 @@ public:
                 if (section.name != "$manifest") {
                     throw SoraReadException("Sora manifest section must be named `$manifest`");
                 }
+                manifest_payload = std::string(
+                    reinterpret_cast<const char*>(&bytes[section.offset]),
+                    section.length
+                );
             } else if (section.kind == kSectionKindSchema) {
                 ++schema_count;
                 if (section.name != "$schema") {
@@ -308,8 +313,14 @@ public:
         if (manifest_count != 1 || schema_count != 1) {
             throw SoraReadException("Sora bundle must contain one manifest and one schema section");
         }
-        return SoraBundle(bytes, sections);
+        std::string schema_fingerprint = json_string_field(manifest_payload, "schema_fingerprint");
+        if (schema_fingerprint.empty()) {
+            throw SoraReadException("Sora manifest is missing string field `schema_fingerprint`");
+        }
+        return SoraBundle(bytes, sections, schema_fingerprint);
     }
+
+    const std::string& schema_fingerprint() const { return schema_fingerprint_; }
 
     template <typename T>
     std::vector<T> decode_table(const std::string& name) const {
@@ -338,8 +349,11 @@ private:
         std::size_t uncompressed_length;
     };
 
-    SoraBundle(const std::vector<std::uint8_t>& bytes, const std::vector<Section>& sections)
-        : bytes_(bytes), sections_(sections) {}
+    SoraBundle(
+        const std::vector<std::uint8_t>& bytes,
+        const std::vector<Section>& sections,
+        const std::string& schema_fingerprint
+    ) : bytes_(bytes), sections_(sections), schema_fingerprint_(schema_fingerprint) {}
 
     template <typename T>
     static std::vector<T> decode_rows(const std::uint8_t* payload, std::size_t length) {
@@ -402,6 +416,38 @@ private:
         return value;
     }
 
+    static std::string json_string_field(const std::string& json, const std::string& field) {
+        std::string key = "\"" + field + "\"";
+        std::size_t key_pos = json.find(key);
+        if (key_pos == std::string::npos) {
+            return std::string();
+        }
+        std::size_t cursor = key_pos + key.size();
+        while (cursor < json.size() && is_json_space(json[cursor])) {
+            ++cursor;
+        }
+        if (cursor >= json.size() || json[cursor] != ':') {
+            return std::string();
+        }
+        ++cursor;
+        while (cursor < json.size() && is_json_space(json[cursor])) {
+            ++cursor;
+        }
+        if (cursor >= json.size() || json[cursor] != '"') {
+            return std::string();
+        }
+        std::size_t value_start = cursor + 1;
+        std::size_t value_end = json.find('"', value_start);
+        if (value_end == std::string::npos) {
+            return std::string();
+        }
+        return json.substr(value_start, value_end - value_start);
+    }
+
+    static bool is_json_space(char value) {
+        return value == ' ' || value == '\n' || value == '\r' || value == '\t';
+    }
+
     static const std::uint32_t kBundleVersion = 1;
     static const std::size_t kHeaderLength = 24;
     static const std::uint32_t kSectionKindManifest = 0;
@@ -411,6 +457,7 @@ private:
 
     std::vector<std::uint8_t> bytes_;
     std::vector<Section> sections_;
+    std::string schema_fingerprint_;
 };
 
 {{ options.namespace_close }}

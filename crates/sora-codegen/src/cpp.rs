@@ -109,6 +109,7 @@ impl CppOptionsView {
 
 #[derive(Debug, Clone, Serialize)]
 struct CppModel {
+    schema_fingerprint: String,
     enums: Vec<CppEnum>,
     unions: Vec<CppUnion>,
     records: Vec<CppRecord>,
@@ -220,6 +221,7 @@ impl CppModel {
             .collect();
 
         Self {
+            schema_fingerprint: model.schema_fingerprint,
             enums,
             unions,
             records,

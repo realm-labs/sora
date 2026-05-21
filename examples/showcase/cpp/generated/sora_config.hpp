@@ -56,8 +56,13 @@ namespace sora::showcase {
 
 class SoraConfig {
 public:
+    static const char* schema_fingerprint() { return "8cc3361563a68f03"; }
+
     static SoraConfig from_bytes(const std::vector<std::uint8_t>& bytes) {
         SoraBundle bundle = SoraBundle::parse(bytes);
+        if (bundle.schema_fingerprint() != schema_fingerprint()) {
+            throw SoraReadException("schema fingerprint mismatch");
+        }
         SoraConfig config;
         config.tables_.emplace(
             ItemTable::NAME,
