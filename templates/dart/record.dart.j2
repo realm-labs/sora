@@ -1,0 +1,25 @@
+import 'runtime.dart';
+{%- for import in record.imports %}
+import '{{ import.module }}.dart';
+{%- endfor %}
+
+final class {{ record.pascal_name }} {
+{%- for field in record.fields %}
+  final {{ field.type_name }} {{ field.name }};
+{%- endfor %}
+
+  const {{ record.pascal_name }}({
+{%- for field in record.fields %}
+    required this.{{ field.name }},
+{%- endfor %}
+  });
+
+  static {{ record.pascal_name }} decode(SoraValue value) {
+    final obj = value.asObject();
+    return {{ record.pascal_name }}(
+{%- for field in record.fields %}
+      {{ field.name }}: {{ field.value_decode | replace("__VALUE__", "obj.get(\"" ~ field.raw_name ~ "\")") }},
+{%- endfor %}
+    );
+  }
+}

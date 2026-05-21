@@ -30,6 +30,10 @@ out = "go/internal/showcase"
 format = "auto"
 
 [[build.codegen]]
+target = "dart"
+out = "dart/lib/src/generated"
+
+[[build.codegen]]
 target = "c"
 out = "c/generated"
 format = "auto"
@@ -104,6 +108,9 @@ runtime_format = "sora"
 
 [codegen.go]
 runtime_format = "sora"
+
+[codegen.dart]
+runtime_format = "json"
 
 [codegen.c]
 runtime_format = "sora"

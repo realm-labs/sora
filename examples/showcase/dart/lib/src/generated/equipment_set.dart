@@ -1,0 +1,26 @@
+import 'runtime.dart';
+import 'skill_effect.dart';
+
+final class EquipmentSet {
+  final int id;
+  final String name;
+  final List<int> itemIds;
+  final SkillEffect bonusEffect;
+
+  const EquipmentSet({
+    required this.id,
+    required this.name,
+    required this.itemIds,
+    required this.bonusEffect,
+  });
+
+  static EquipmentSet decode(SoraValue value) {
+    final obj = value.asObject();
+    return EquipmentSet(
+      id: obj.get("id").asInt(),
+      name: obj.get("name").asString(),
+      itemIds: obj.get("item_ids").asList((item) => item.asInt()),
+      bonusEffect: SkillEffect.decode(obj.get("bonus_effect")),
+    );
+  }
+}

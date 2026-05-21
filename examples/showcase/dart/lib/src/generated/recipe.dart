@@ -1,0 +1,23 @@
+import 'runtime.dart';
+import 'resource_cost.dart';
+
+final class Recipe {
+  final int id;
+  final int resultItem;
+  final List<ResourceCost> materials;
+
+  const Recipe({
+    required this.id,
+    required this.resultItem,
+    required this.materials,
+  });
+
+  static Recipe decode(SoraValue value) {
+    final obj = value.asObject();
+    return Recipe(
+      id: obj.get("id").asInt(),
+      resultItem: obj.get("result_item").asInt(),
+      materials: obj.get("materials").asList((item) => ResourceCost.decode(item)),
+    );
+  }
+}

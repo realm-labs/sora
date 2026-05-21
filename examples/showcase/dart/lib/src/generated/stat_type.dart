@@ -1,0 +1,26 @@
+import 'runtime.dart';
+
+enum StatType {
+  hp,
+  attack,
+  defense,
+  speed,
+  critRate;
+
+  static StatType decode(SoraValue value) {
+    switch (value.asString()) {
+      case 'Hp':
+        return StatType.hp;
+      case 'Attack':
+        return StatType.attack;
+      case 'Defense':
+        return StatType.defense;
+      case 'Speed':
+        return StatType.speed;
+      case 'CritRate':
+        return StatType.critRate;
+      default:
+        throw SoraReadException('invalid enum value `${value.asString()}` for StatType');
+    }
+  }
+}

@@ -1,0 +1,22 @@
+import 'runtime.dart';
+
+final class LevelExp {
+  final int level;
+  final int exp;
+  final String? unlockFeature;
+
+  const LevelExp({
+    required this.level,
+    required this.exp,
+    required this.unlockFeature,
+  });
+
+  static LevelExp decode(SoraValue value) {
+    final obj = value.asObject();
+    return LevelExp(
+      level: obj.get("level").asInt(),
+      exp: obj.get("exp").asInt(),
+      unlockFeature: obj.get("unlock_feature").isNull ? null : obj.get("unlock_feature").asString(),
+    );
+  }
+}

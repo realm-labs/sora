@@ -1,0 +1,20 @@
+import 'runtime.dart';
+
+enum QuestType {
+  main,
+  side,
+  daily;
+
+  static QuestType decode(SoraValue value) {
+    switch (value.asString()) {
+      case 'Main':
+        return QuestType.main;
+      case 'Side':
+        return QuestType.side;
+      case 'Daily':
+        return QuestType.daily;
+      default:
+        throw SoraReadException('invalid enum value `${value.asString()}` for QuestType');
+    }
+  }
+}

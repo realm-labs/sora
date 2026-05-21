@@ -4,7 +4,7 @@ use sora_diagnostics::{Result, SoraError};
 use sora_ir::model::{ConfigIr, RuntimeFormatIr};
 
 use crate::{
-    c::CCodeGenerator, cpp::CppCodeGenerator, csharp::CSharpCodeGenerator,
+    c::CCodeGenerator, cpp::CppCodeGenerator, csharp::CSharpCodeGenerator, dart::DartCodeGenerator,
     erlang::ErlangCodeGenerator, go::GoCodeGenerator, java::JavaCodeGenerator,
     javascript::JavaScriptCodeGenerator, kotlin::KotlinCodeGenerator, lua::LuaCodeGenerator,
     proto::ProtoCodeGenerator, python::PythonCodeGenerator, rust::RustCodeGenerator,
@@ -45,6 +45,7 @@ pub fn generator_for_target(target: CodegenTarget) -> Box<dyn CodeGenerator> {
         CodegenTarget::CSharp => Box::new(CSharpCodeGenerator),
         CodegenTarget::Java => Box::new(JavaCodeGenerator),
         CodegenTarget::Go => Box::new(GoCodeGenerator),
+        CodegenTarget::Dart => Box::new(DartCodeGenerator),
         CodegenTarget::C => Box::new(CCodeGenerator),
         CodegenTarget::Cpp => Box::new(CppCodeGenerator),
         CodegenTarget::TypeScript => Box::new(TypeScriptCodeGenerator),

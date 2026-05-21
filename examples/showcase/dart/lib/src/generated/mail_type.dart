@@ -1,0 +1,20 @@
+import 'runtime.dart';
+
+enum MailType {
+  system,
+  event,
+  compensation;
+
+  static MailType decode(SoraValue value) {
+    switch (value.asString()) {
+      case 'System':
+        return MailType.system;
+      case 'Event':
+        return MailType.event;
+      case 'Compensation':
+        return MailType.compensation;
+      default:
+        throw SoraReadException('invalid enum value `${value.asString()}` for MailType');
+    }
+  }
+}

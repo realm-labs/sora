@@ -33,6 +33,36 @@ const EMBEDDED_TEMPLATES: &[EmbeddedTemplate] = &[
         source: include_str!("../../../templates/csharp/union.cs.j2"),
     },
     EmbeddedTemplate {
+        target: "dart",
+        file_name: "config.dart.j2",
+        source: include_str!("../../../templates/dart/config.dart.j2"),
+    },
+    EmbeddedTemplate {
+        target: "dart",
+        file_name: "enum.dart.j2",
+        source: include_str!("../../../templates/dart/enum.dart.j2"),
+    },
+    EmbeddedTemplate {
+        target: "dart",
+        file_name: "library.dart.j2",
+        source: include_str!("../../../templates/dart/library.dart.j2"),
+    },
+    EmbeddedTemplate {
+        target: "dart",
+        file_name: "record.dart.j2",
+        source: include_str!("../../../templates/dart/record.dart.j2"),
+    },
+    EmbeddedTemplate {
+        target: "dart",
+        file_name: "runtime.dart.j2",
+        source: include_str!("../../../templates/dart/runtime.dart.j2"),
+    },
+    EmbeddedTemplate {
+        target: "dart",
+        file_name: "union.dart.j2",
+        source: include_str!("../../../templates/dart/union.dart.j2"),
+    },
+    EmbeddedTemplate {
         target: "c",
         file_name: "config.c.j2",
         source: include_str!("../../../templates/c/config.c.j2"),
@@ -428,7 +458,7 @@ mod tests {
 
     #[test]
     fn embeds_all_templates() {
-        assert_eq!(EMBEDDED_TEMPLATES.len(), 78);
+        assert_eq!(EMBEDDED_TEMPLATES.len(), 84);
         for template in EMBEDDED_TEMPLATES {
             let source = template_source(template.target, template.file_name)
                 .expect("embedded template should be registered");

@@ -23,6 +23,7 @@ fn main() -> Result<()> {
     let csharp_generated = root.join("csharp/src/generated/csharp");
     let java_generated = root.join("java/src/generated/java");
     let go_generated = root.join("go/internal/showcase");
+    let dart_generated = root.join("dart/lib/src/generated");
     let c_generated = root.join("c/generated");
     let cpp_generated = root.join("cpp/generated");
     let python_generated = root.join("python/generated");
@@ -45,6 +46,7 @@ fn main() -> Result<()> {
     clean_dir(&csharp_generated)?;
     clean_dir(&java_generated)?;
     clean_dir(&go_generated)?;
+    clean_dir(&dart_generated)?;
     clean_dir(&c_generated)?;
     clean_dir(&cpp_generated)?;
     clean_dir(&python_generated)?;
@@ -62,6 +64,7 @@ fn main() -> Result<()> {
     sora_core::pipeline::generate_code(&schema_input, CodegenTarget::CSharp, &csharp_generated)?;
     sora_core::pipeline::generate_code(&schema_input, CodegenTarget::Java, &java_generated)?;
     sora_core::pipeline::generate_code(&schema_input, CodegenTarget::Go, &go_generated)?;
+    sora_core::pipeline::generate_code(&schema_input, CodegenTarget::Dart, &dart_generated)?;
     sora_core::pipeline::generate_code(&schema_input, CodegenTarget::C, &c_generated)?;
     sora_core::pipeline::generate_code(&schema_input, CodegenTarget::Cpp, &cpp_generated)?;
     sora_core::pipeline::generate_code(&schema_input, CodegenTarget::Python, &python_generated)?;

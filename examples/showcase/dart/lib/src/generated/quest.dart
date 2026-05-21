@@ -1,0 +1,37 @@
+import 'runtime.dart';
+import 'quest_type.dart';
+import 'reward.dart';
+import 'vec3.dart';
+
+final class Quest {
+  final int id;
+  final QuestType questType;
+  final String title;
+  final int requiredItem;
+  final List<int> unlockSkills;
+  final Vec3 startPos;
+  final List<Reward> rewards;
+
+  const Quest({
+    required this.id,
+    required this.questType,
+    required this.title,
+    required this.requiredItem,
+    required this.unlockSkills,
+    required this.startPos,
+    required this.rewards,
+  });
+
+  static Quest decode(SoraValue value) {
+    final obj = value.asObject();
+    return Quest(
+      id: obj.get("id").asInt(),
+      questType: QuestType.decode(obj.get("quest_type")),
+      title: obj.get("title").asString(),
+      requiredItem: obj.get("required_item").asInt(),
+      unlockSkills: obj.get("unlock_skills").asList((item) => item.asInt()),
+      startPos: Vec3.decode(obj.get("start_pos")),
+      rewards: obj.get("rewards").asList((item) => Reward.decode(item)),
+    );
+  }
+}

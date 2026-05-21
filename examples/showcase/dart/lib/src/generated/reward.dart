@@ -1,0 +1,19 @@
+import 'runtime.dart';
+
+final class Reward {
+  final int itemId;
+  final int count;
+
+  const Reward({
+    required this.itemId,
+    required this.count,
+  });
+
+  static Reward decode(SoraValue value) {
+    final obj = value.asObject();
+    return Reward(
+      itemId: obj.get("item_id").asInt(),
+      count: obj.get("count").asInt(),
+    );
+  }
+}

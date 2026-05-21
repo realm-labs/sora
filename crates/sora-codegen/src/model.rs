@@ -132,11 +132,7 @@ pub fn build_base_model(ir: &ConfigIr) -> Result<BaseModel> {
         .map(|item| build_base_union(ir, item))
         .collect::<Result<Vec<_>>>()?;
 
-    let tables = ir
-        .tables
-        .iter()
-        .map(|table| build_base_table(table))
-        .collect::<Vec<_>>();
+    let tables = ir.tables.iter().map(build_base_table).collect::<Vec<_>>();
 
     let modules = enums
         .iter()

@@ -280,12 +280,6 @@ impl<'de> Deserialize<'de> for BuildTarget {
     }
 }
 
-impl Default for CodeFormatMode {
-    fn default() -> Self {
-        Self::Never
-    }
-}
-
 impl<'de> Deserialize<'de> for CodeFormatMode {
     fn deserialize<D>(deserializer: D) -> std::result::Result<Self, D::Error>
     where
@@ -311,6 +305,7 @@ impl BuildTarget {
             "csharp" | "cs" => Ok(Self::Csharp),
             "java" => Ok(Self::Java),
             "go" => Ok(Self::Go),
+            "dart" => Ok(Self::Dart),
             "c" => Ok(Self::C),
             "cpp" | "c++" => Ok(Self::Cpp),
             "typescript" | "ts" => Ok(Self::Typescript),
@@ -320,7 +315,7 @@ impl BuildTarget {
             "proto" => Ok(Self::Proto),
             "python" | "py" => Ok(Self::Python),
             _ => Err(format!(
-                "unsupported codegen target `{value}`; expected rust, kotlin, csharp, java, go, c, cpp, typescript, javascript, erlang, lua, proto, or python"
+                "unsupported codegen target `{value}`; expected rust, kotlin, csharp, java, go, dart, c, cpp, typescript, javascript, erlang, lua, proto, or python"
             )),
         }
     }
@@ -332,6 +327,7 @@ impl BuildTarget {
             Self::Csharp => "csharp",
             Self::Java => "java",
             Self::Go => "go",
+            Self::Dart => "dart",
             Self::C => "c",
             Self::Cpp => "cpp",
             Self::Typescript => "typescript",
@@ -352,6 +348,7 @@ impl From<BuildTarget> for CodegenTarget {
             BuildTarget::Csharp => Self::CSharp,
             BuildTarget::Java => Self::Java,
             BuildTarget::Go => Self::Go,
+            BuildTarget::Dart => Self::Dart,
             BuildTarget::C => Self::C,
             BuildTarget::Cpp => Self::Cpp,
             BuildTarget::Typescript => Self::TypeScript,
@@ -399,6 +396,8 @@ mod tests {
         assert!(base.join("generated/erlang/item.erl").exists());
         assert!(base.join("generated/python/item.py").exists());
         assert!(base.join("generated/python/sora_config.py").exists());
+        assert!(base.join("generated/dart/item.dart").exists());
+        assert!(base.join("generated/dart/sora_config.dart").exists());
         assert!(base.join("generated/proto/sora_config.proto").exists());
         assert!(base.join("generated/config.json").exists());
         assert!(base.join("generated/config.pb").exists());
@@ -495,6 +494,10 @@ out = "generated/python"
 format = "auto"
 
 [[build.codegen]]
+target = "dart"
+out = "generated/dart"
+
+[[build.codegen]]
 target = "proto"
 out = "generated/proto"
 
@@ -517,6 +520,9 @@ out = "generated/config.cbor"
 [[build.exports]]
 format = "json-debug"
 out = "generated/debug-json"
+
+[codegen.dart]
+runtime_format = "json"
 "#,
         )
         .unwrap();

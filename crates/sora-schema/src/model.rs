@@ -36,6 +36,8 @@ pub struct CodegenSchema {
     #[serde(default)]
     pub go: LanguageCodegenSchema,
     #[serde(default)]
+    pub dart: LanguageCodegenSchema,
+    #[serde(default)]
     pub c: CCodegenSchema,
     #[serde(default)]
     pub cpp: CppCodegenSchema,

@@ -1,0 +1,25 @@
+import 'runtime.dart';
+
+final class Localization {
+  final String key;
+  final String zhCn;
+  final String enUs;
+  final String? note;
+
+  const Localization({
+    required this.key,
+    required this.zhCn,
+    required this.enUs,
+    required this.note,
+  });
+
+  static Localization decode(SoraValue value) {
+    final obj = value.asObject();
+    return Localization(
+      key: obj.get("key").asString(),
+      zhCn: obj.get("zh_cn").asString(),
+      enUs: obj.get("en_us").asString(),
+      note: obj.get("note").isNull ? null : obj.get("note").asString(),
+    );
+  }
+}

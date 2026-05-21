@@ -1,0 +1,26 @@
+import 'runtime.dart';
+import 'resource_cost.dart';
+
+final class Dungeon {
+  final int id;
+  final String name;
+  final List<int> stageIds;
+  final ResourceCost entryCost;
+
+  const Dungeon({
+    required this.id,
+    required this.name,
+    required this.stageIds,
+    required this.entryCost,
+  });
+
+  static Dungeon decode(SoraValue value) {
+    final obj = value.asObject();
+    return Dungeon(
+      id: obj.get("id").asInt(),
+      name: obj.get("name").asString(),
+      stageIds: obj.get("stage_ids").asList((item) => item.asInt()),
+      entryCost: ResourceCost.decode(obj.get("entry_cost")),
+    );
+  }
+}

@@ -1,0 +1,26 @@
+import 'runtime.dart';
+import 'rarity.dart';
+
+final class GachaItem {
+  final int poolId;
+  final int itemId;
+  final Rarity rarity;
+  final double weight;
+
+  const GachaItem({
+    required this.poolId,
+    required this.itemId,
+    required this.rarity,
+    required this.weight,
+  });
+
+  static GachaItem decode(SoraValue value) {
+    final obj = value.asObject();
+    return GachaItem(
+      poolId: obj.get("pool_id").asInt(),
+      itemId: obj.get("item_id").asInt(),
+      rarity: Rarity.decode(obj.get("rarity")),
+      weight: obj.get("weight").asDouble(),
+    );
+  }
+}

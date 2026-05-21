@@ -1,0 +1,29 @@
+import 'runtime.dart';
+import 'vec3.dart';
+
+final class GameSettings {
+  final String version;
+  final int dailyResetHour;
+  final int startingGold;
+  final Vec3 spawnPos;
+  final List<int> starterItems;
+
+  const GameSettings({
+    required this.version,
+    required this.dailyResetHour,
+    required this.startingGold,
+    required this.spawnPos,
+    required this.starterItems,
+  });
+
+  static GameSettings decode(SoraValue value) {
+    final obj = value.asObject();
+    return GameSettings(
+      version: obj.get("version").asString(),
+      dailyResetHour: obj.get("daily_reset_hour").asInt(),
+      startingGold: obj.get("starting_gold").asInt(),
+      spawnPos: Vec3.decode(obj.get("spawn_pos")),
+      starterItems: obj.get("starter_items").asList((item) => item.asInt()),
+    );
+  }
+}

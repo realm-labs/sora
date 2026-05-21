@@ -1,0 +1,23 @@
+import 'runtime.dart';
+import 'resource_kind.dart';
+
+final class Shop {
+  final int id;
+  final String name;
+  final ResourceKind currency;
+
+  const Shop({
+    required this.id,
+    required this.name,
+    required this.currency,
+  });
+
+  static Shop decode(SoraValue value) {
+    final obj = value.asObject();
+    return Shop(
+      id: obj.get("id").asInt(),
+      name: obj.get("name").asString(),
+      currency: ResourceKind.decode(obj.get("currency")),
+    );
+  }
+}

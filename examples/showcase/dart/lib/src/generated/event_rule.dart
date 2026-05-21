@@ -1,0 +1,27 @@
+import 'runtime.dart';
+import 'event_condition.dart';
+import 'reward_action.dart';
+
+final class EventRule {
+  final int id;
+  final String name;
+  final EventCondition condition;
+  final List<RewardAction> actions;
+
+  const EventRule({
+    required this.id,
+    required this.name,
+    required this.condition,
+    required this.actions,
+  });
+
+  static EventRule decode(SoraValue value) {
+    final obj = value.asObject();
+    return EventRule(
+      id: obj.get("id").asInt(),
+      name: obj.get("name").asString(),
+      condition: EventCondition.decode(obj.get("condition")),
+      actions: obj.get("actions").asList((item) => RewardAction.decode(item)),
+    );
+  }
+}

@@ -1,0 +1,23 @@
+import 'runtime.dart';
+import 'resource_kind.dart';
+
+final class ResourceCost {
+  final ResourceKind kind;
+  final int id;
+  final int count;
+
+  const ResourceCost({
+    required this.kind,
+    required this.id,
+    required this.count,
+  });
+
+  static ResourceCost decode(SoraValue value) {
+    final obj = value.asObject();
+    return ResourceCost(
+      kind: ResourceKind.decode(obj.get("kind")),
+      id: obj.get("id").asInt(),
+      count: obj.get("count").asInt(),
+    );
+  }
+}

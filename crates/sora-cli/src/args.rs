@@ -42,6 +42,7 @@ pub enum GenCommand {
     Csharp(GenArgs),
     Java(GenArgs),
     Go(GenArgs),
+    Dart(GenArgs),
     C(GenArgs),
     Cpp(GenArgs),
     Typescript(GenArgs),
@@ -132,6 +133,7 @@ pub enum BuildTarget {
     Csharp,
     Java,
     Go,
+    Dart,
     C,
     Cpp,
     Typescript,
@@ -142,8 +144,9 @@ pub enum BuildTarget {
     Python,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, clap::ValueEnum)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, clap::ValueEnum)]
 pub enum CodeFormatMode {
+    #[default]
     Never,
     Auto,
     Required,

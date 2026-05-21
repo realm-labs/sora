@@ -116,6 +116,7 @@ impl Formatter {
             CodegenTarget::Kotlin
             | CodegenTarget::CSharp
             | CodegenTarget::Java
+            | CodegenTarget::Dart
             | CodegenTarget::TypeScript
             | CodegenTarget::JavaScript
             | CodegenTarget::Lua
@@ -203,6 +204,7 @@ impl CodegenTarget {
             CodegenTarget::CSharp => "C#",
             CodegenTarget::Java => "Java",
             CodegenTarget::Go => "Go",
+            CodegenTarget::Dart => "Dart",
             CodegenTarget::C => "C",
             CodegenTarget::Cpp => "C++",
             CodegenTarget::TypeScript => "TypeScript",

@@ -1,0 +1,36 @@
+import 'runtime.dart';
+import 'rarity.dart';
+import 'vec3.dart';
+
+final class Character {
+  final int id;
+  final String name;
+  final Rarity rarity;
+  final int baseLevel;
+  final int baseSkill;
+  final List<int> starterItems;
+  final Vec3 spawnPos;
+
+  const Character({
+    required this.id,
+    required this.name,
+    required this.rarity,
+    required this.baseLevel,
+    required this.baseSkill,
+    required this.starterItems,
+    required this.spawnPos,
+  });
+
+  static Character decode(SoraValue value) {
+    final obj = value.asObject();
+    return Character(
+      id: obj.get("id").asInt(),
+      name: obj.get("name").asString(),
+      rarity: Rarity.decode(obj.get("rarity")),
+      baseLevel: obj.get("base_level").asInt(),
+      baseSkill: obj.get("base_skill").asInt(),
+      starterItems: obj.get("starter_items").asList((item) => item.asInt()),
+      spawnPos: Vec3.decode(obj.get("spawn_pos")),
+    );
+  }
+}

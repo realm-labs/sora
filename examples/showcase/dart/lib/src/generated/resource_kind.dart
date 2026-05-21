@@ -1,0 +1,20 @@
+import 'runtime.dart';
+
+enum ResourceKind {
+  item,
+  gold,
+  diamond;
+
+  static ResourceKind decode(SoraValue value) {
+    switch (value.asString()) {
+      case 'Item':
+        return ResourceKind.item;
+      case 'Gold':
+        return ResourceKind.gold;
+      case 'Diamond':
+        return ResourceKind.diamond;
+      default:
+        throw SoraReadException('invalid enum value `${value.asString()}` for ResourceKind');
+    }
+  }
+}

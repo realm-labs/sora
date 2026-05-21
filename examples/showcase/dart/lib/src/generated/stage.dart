@@ -1,0 +1,29 @@
+import 'runtime.dart';
+import 'reward.dart';
+
+final class Stage {
+  final int id;
+  final String name;
+  final List<int> monsterIds;
+  final int recommendedPower;
+  final List<Reward> firstClearRewards;
+
+  const Stage({
+    required this.id,
+    required this.name,
+    required this.monsterIds,
+    required this.recommendedPower,
+    required this.firstClearRewards,
+  });
+
+  static Stage decode(SoraValue value) {
+    final obj = value.asObject();
+    return Stage(
+      id: obj.get("id").asInt(),
+      name: obj.get("name").asString(),
+      monsterIds: obj.get("monster_ids").asList((item) => item.asInt()),
+      recommendedPower: obj.get("recommended_power").asInt(),
+      firstClearRewards: obj.get("first_clear_rewards").asList((item) => Reward.decode(item)),
+    );
+  }
+}

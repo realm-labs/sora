@@ -1,0 +1,40 @@
+import 'runtime.dart';
+{%- for import in union.imports %}
+import '{{ import.module }}.dart';
+{%- endfor %}
+
+sealed class {{ union.pascal_name }} {
+  const {{ union.pascal_name }}();
+
+  static {{ union.pascal_name }} decode(SoraValue value) {
+    final obj = value.asObject();
+    final tag = obj.get('{{ union.tag }}').asString();
+    switch (tag) {
+{%- for variant in union.variants %}
+      case '{{ variant.raw_name }}':
+        return {{ variant.class_name }}(
+{%- for field in variant.fields %}
+          {{ field.name }}: {{ field.value_decode | replace("__VALUE__", "obj.get(\"" ~ field.raw_name ~ "\")") }},
+{%- endfor %}
+        );
+{%- endfor %}
+      default:
+        throw SoraReadException('invalid union tag `$tag` for {{ union.pascal_name }}');
+    }
+  }
+}
+
+{%- for variant in union.variants %}
+
+final class {{ variant.class_name }} extends {{ union.pascal_name }} {
+{%- for field in variant.fields %}
+  final {{ field.type_name }} {{ field.name }};
+{%- endfor %}
+
+  const {{ variant.class_name }}({
+{%- for field in variant.fields %}
+    required this.{{ field.name }},
+{%- endfor %}
+  });
+}
+{%- endfor %}

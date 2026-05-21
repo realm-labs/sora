@@ -1,0 +1,23 @@
+import 'runtime.dart';
+import 'element_type.dart';
+
+final class SkillEffect {
+  final ElementType element;
+  final int power;
+  final double radius;
+
+  const SkillEffect({
+    required this.element,
+    required this.power,
+    required this.radius,
+  });
+
+  static SkillEffect decode(SoraValue value) {
+    final obj = value.asObject();
+    return SkillEffect(
+      element: ElementType.decode(obj.get("element")),
+      power: obj.get("power").asInt(),
+      radius: obj.get("radius").asDouble(),
+    );
+  }
+}

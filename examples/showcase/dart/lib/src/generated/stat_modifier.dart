@@ -1,0 +1,23 @@
+import 'runtime.dart';
+import 'stat_type.dart';
+
+final class StatModifier {
+  final StatType stat;
+  final double value;
+  final bool isPercent;
+
+  const StatModifier({
+    required this.stat,
+    required this.value,
+    required this.isPercent,
+  });
+
+  static StatModifier decode(SoraValue value) {
+    final obj = value.asObject();
+    return StatModifier(
+      stat: StatType.decode(obj.get("stat")),
+      value: obj.get("value").asDouble(),
+      isPercent: obj.get("is_percent").asBool(),
+    );
+  }
+}

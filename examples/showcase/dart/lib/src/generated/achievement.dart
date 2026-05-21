@@ -1,0 +1,26 @@
+import 'runtime.dart';
+import 'resource_cost.dart';
+
+final class Achievement {
+  final int id;
+  final String titleKey;
+  final int targetCount;
+  final ResourceCost reward;
+
+  const Achievement({
+    required this.id,
+    required this.titleKey,
+    required this.targetCount,
+    required this.reward,
+  });
+
+  static Achievement decode(SoraValue value) {
+    final obj = value.asObject();
+    return Achievement(
+      id: obj.get("id").asInt(),
+      titleKey: obj.get("title_key").asString(),
+      targetCount: obj.get("target_count").asInt(),
+      reward: ResourceCost.decode(obj.get("reward")),
+    );
+  }
+}

@@ -1,0 +1,68 @@
+import 'runtime.dart';
+
+sealed class RewardAction {
+  const RewardAction();
+
+  static RewardAction decode(SoraValue value) {
+    final obj = value.asObject();
+    final tag = obj.get('type').asString();
+    switch (tag) {
+      case 'AddItem':
+        return RewardActionAddItem(
+          itemId: obj.get("item_id").asInt(),
+          count: obj.get("count").asInt(),
+        );
+      case 'AddBuff':
+        return RewardActionAddBuff(
+          buffId: obj.get("buff_id").asInt(),
+          duration: obj.get("duration").asDouble(),
+        );
+      case 'UnlockStage':
+        return RewardActionUnlockStage(
+          stageId: obj.get("stage_id").asInt(),
+        );
+      case 'SendMail':
+        return RewardActionSendMail(
+          mailId: obj.get("mail_id").asInt(),
+        );
+      default:
+        throw SoraReadException('invalid union tag `$tag` for RewardAction');
+    }
+  }
+}
+
+final class RewardActionAddItem extends RewardAction {
+  final int itemId;
+  final int count;
+
+  const RewardActionAddItem({
+    required this.itemId,
+    required this.count,
+  });
+}
+
+final class RewardActionAddBuff extends RewardAction {
+  final int buffId;
+  final double duration;
+
+  const RewardActionAddBuff({
+    required this.buffId,
+    required this.duration,
+  });
+}
+
+final class RewardActionUnlockStage extends RewardAction {
+  final int stageId;
+
+  const RewardActionUnlockStage({
+    required this.stageId,
+  });
+}
+
+final class RewardActionSendMail extends RewardAction {
+  final int mailId;
+
+  const RewardActionSendMail({
+    required this.mailId,
+  });
+}

@@ -1,0 +1,161 @@
+import 'dart:convert';
+import 'dart:typed_data';
+
+final class SoraReadException implements Exception {
+  final String message;
+
+  const SoraReadException(this.message);
+
+  @override
+  String toString() => 'SoraReadException: $message';
+}
+
+final class SoraValueBundle {
+  final Map<String, List<SoraValue>> _tables;
+
+  const SoraValueBundle._(this._tables);
+
+  List<T> decodeTable<T>(String name, T Function(SoraValue value) decode) {
+    final rows = _tables[name];
+    if (rows == null) {
+      throw SoraReadException('missing Sora table `$name`');
+    }
+    return rows.map(decode).toList(growable: false);
+  }
+
+  static SoraValueBundle parseJson(List<int> bytes) {
+    final value = jsonDecode(utf8.decode(Uint8List.fromList(bytes)));
+    return _fromRoot('json', SoraValue.fromJson(value));
+  }
+
+  static SoraValueBundle _fromRoot(String expectedFormat, SoraValue rootValue) {
+    final root = rootValue.asObject();
+    final format = root.get('format').asString();
+    if (format != expectedFormat) {
+      throw SoraReadException('expected `$expectedFormat` bundle, got `$format`');
+    }
+    final tableValues = root.get('data').asObject().get('tables').asRawList();
+    final tables = <String, List<SoraValue>>{};
+    for (final tableValue in tableValues) {
+      final table = tableValue.asObject();
+      tables[table.get('name').asString()] = table.get('rows').asRawList();
+    }
+    return SoraValueBundle._(tables);
+  }
+}
+
+final class SoraObject {
+  final Map<String, SoraValue> _fields;
+
+  const SoraObject(this._fields);
+
+  SoraValue get(String name) => _fields[name] ?? const SoraValue(null);
+}
+
+final class SoraValue {
+  final Object? _value;
+
+  const SoraValue(this._value);
+
+  bool get isNull => _value == null;
+
+  SoraObject asObject() {
+    final value = _value;
+    if (value is SoraObject) {
+      return value;
+    }
+    throw const SoraReadException('expected object');
+  }
+
+  List<SoraValue> asRawList() {
+    final value = _value;
+    if (value is List<SoraValue>) {
+      return value;
+    }
+    throw const SoraReadException('expected list');
+  }
+
+  List<T> asList<T>(T Function(SoraValue value) decode) =>
+      asRawList().map(decode).toList(growable: false);
+
+  bool asBool() {
+    final value = _value;
+    if (value is bool) {
+      return value;
+    }
+    throw const SoraReadException('expected bool');
+  }
+
+  int asInt() {
+    final value = _value;
+    if (value is int) {
+      return value;
+    }
+    if (value is double && value == value.truncateToDouble()) {
+      return value.toInt();
+    }
+    throw const SoraReadException('expected int');
+  }
+
+  double asDouble() {
+    final value = _value;
+    if (value is num) {
+      return value.toDouble();
+    }
+    throw const SoraReadException('expected double');
+  }
+
+  String asString() {
+    final value = _value;
+    if (value is String) {
+      return value;
+    }
+    throw const SoraReadException('expected string');
+  }
+
+  static SoraValue fromJson(Object? value) {
+    if (value is Map) {
+      return SoraValue(SoraObject({
+        for (final entry in value.entries)
+          entry.key.toString(): SoraValue.fromJson(entry.value),
+      }));
+    }
+    if (value is List) {
+      return SoraValue(value.map(SoraValue.fromJson).toList(growable: false));
+    }
+    return SoraValue(value);
+  }
+}
+
+Map<K, V> decodeMapTable<K, V>(Iterable<V> rows, K Function(V row) key) {
+  final map = <K, V>{};
+  for (final row in rows) {
+    map[key(row)] = row;
+  }
+  return map;
+}
+
+Map<K, V> decodeUniqueIndex<K, V>(Iterable<V> rows, K Function(V row) key) {
+  final map = <K, V>{};
+  for (final row in rows) {
+    map[key(row)] = row;
+  }
+  return map;
+}
+
+Map<K, List<V>> decodeIndex<K, V>(Iterable<V> rows, K Function(V row) key) {
+  final map = <K, List<V>>{};
+  for (final row in rows) {
+    (map[key(row)] ??= <V>[]).add(row);
+  }
+  return map;
+}
+
+T requireSingletonTable<T>(List<T> rows, String name) {
+  if (rows.length != 1) {
+    throw SoraReadException(
+      'expected singleton table `$name` to contain exactly 1 row, got ${rows.length}',
+    );
+  }
+  return rows.single;
+}

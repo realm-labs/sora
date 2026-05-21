@@ -319,7 +319,7 @@ fn lua_type_name(ir: &ConfigIr, ty: &TypeIr, options: &LuaOptionsView) -> String
     }
 }
 
-fn lua_decode_expr(ir: &ConfigIr, ty: &TypeIr, options: &LuaOptionsView) -> String {
+fn lua_decode_expr(ir: &ConfigIr, ty: &TypeIr, _options: &LuaOptionsView) -> String {
     match ty {
         TypeIr::Bool => "reader:read_bool()".to_owned(),
         TypeIr::I32 => "reader:read_i32()".to_owned(),
@@ -333,16 +333,16 @@ fn lua_decode_expr(ir: &ConfigIr, ty: &TypeIr, options: &LuaOptionsView) -> Stri
         TypeIr::List(element) | TypeIr::Array { element, .. } => {
             format!(
                 "reader:read_list(function() return {} end)",
-                lua_decode_expr(ir, element, options)
+                lua_decode_expr(ir, element, _options)
             )
         }
         TypeIr::Ref { table, field } => ref_target_type(ir, table, field)
-            .map(|ty| lua_decode_expr(ir, ty, options))
+            .map(|ty| lua_decode_expr(ir, ty, _options))
             .unwrap_or_else(|| "reader:read_i32()".to_owned()),
         TypeIr::Optional(element) => {
             format!(
                 "reader:read_optional(function() return {} end)",
-                lua_decode_expr(ir, element, options)
+                lua_decode_expr(ir, element, _options)
             )
         }
     }

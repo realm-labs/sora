@@ -1,0 +1,22 @@
+import 'runtime.dart';
+
+final class Dialogue {
+  final int id;
+  final String speakerKey;
+  final List<String> lines;
+
+  const Dialogue({
+    required this.id,
+    required this.speakerKey,
+    required this.lines,
+  });
+
+  static Dialogue decode(SoraValue value) {
+    final obj = value.asObject();
+    return Dialogue(
+      id: obj.get("id").asInt(),
+      speakerKey: obj.get("speaker_key").asString(),
+      lines: obj.get("lines").asList((item) => item.asString()),
+    );
+  }
+}
