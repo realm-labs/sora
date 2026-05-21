@@ -3,11 +3,13 @@
 package {{ package }}
 
 import java.nio.charset.StandardCharsets
+import java.util.regex.Pattern
 import scala.collection.mutable.ArrayBuffer
 
 final class SoraReadException(message: String) extends RuntimeException(message)
 
 trait SoraTableSource {
+  def schemaFingerprint: String
   def decodeTable[T](name: String, decode: SoraReader => T): Vector[T]
 }
 
@@ -22,7 +24,8 @@ final case class SoraSection(
 
 final class SoraBundle private (
   private val bytes: Array[Byte],
-  private val sections: Vector[SoraSection]
+  private val sections: Vector[SoraSection],
+  override val schemaFingerprint: String
 ) extends SoraTableSource {
   override def decodeTable[T](name: String, decode: SoraReader => T): Vector[T] = {
     val section = sections
@@ -149,7 +152,14 @@ object SoraBundle {
       throw new SoraReadException(s"expected exactly 1 Sora schema section, got $schemaCount")
     }
 
-    new SoraBundle(bytes, sections.toVector)
+    val manifest = sections
+      .find(value => value.kind == SectionKindManifest)
+      .getOrElse(throw new SoraReadException("missing Sora manifest section"))
+    val manifestPayload = new String(bytes.slice(manifest.offset, manifest.offset + manifest.length), StandardCharsets.UTF_8)
+    val schemaFingerprint = SoraRuntime.jsonStringField(manifestPayload, "schema_fingerprint")
+      .getOrElse(throw new SoraReadException("Sora manifest is missing string field `schema_fingerprint`"))
+
+    new SoraBundle(bytes, sections.toVector, schemaFingerprint)
   }
 }
 
@@ -295,5 +305,10 @@ object SoraRuntime {
       throw new SoraReadException(message)
     }
     value.toInt
+  }
+
+  def jsonStringField(json: String, field: String): Option[String] = {
+    val pattern = ("\"" + Pattern.quote(field) + "\"\\s*:\\s*\"([^\"]*)\"").r
+    pattern.findFirstMatchIn(json).map(_.group(1))
   }
 }

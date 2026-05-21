@@ -86,7 +86,14 @@ final class SoraConfig private (
 }
 
 object SoraConfig {
+  val SchemaFingerprint = "8cc3361563a68f03"
+
   def fromSource(source: SoraTableSource): SoraConfig = {
+    if (source.schemaFingerprint != SchemaFingerprint) {
+      throw new SoraReadException(
+        s"schema fingerprint mismatch: generated code expects $SchemaFingerprint, bundle contains ${source.schemaFingerprint}"
+      )
+    }
     val tables = Map[String, SoraTable](
       ItemTable.Name -> ItemTable.decode(source),
       SkillTable.Name -> SkillTable.decode(source),

@@ -73,6 +73,7 @@ impl CodeGenerator for ScalaCodeGenerator {
 #[derive(Debug, Clone, Serialize)]
 struct ScalaModel {
     package: String,
+    schema_fingerprint: String,
     enums: Vec<ScalaEnum>,
     unions: Vec<ScalaUnion>,
     records: Vec<ScalaRecord>,
@@ -149,6 +150,7 @@ impl ScalaModel {
 
         Self {
             package: model.package,
+            schema_fingerprint: model.schema_fingerprint,
             enums: model
                 .enums
                 .into_iter()

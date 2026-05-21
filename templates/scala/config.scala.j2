@@ -36,7 +36,14 @@ final class SoraConfig private (
 }
 
 object SoraConfig {
+  val SchemaFingerprint = "{{ model.schema_fingerprint }}"
+
   def fromSource(source: SoraTableSource): SoraConfig = {
+    if (source.schemaFingerprint != SchemaFingerprint) {
+      throw new SoraReadException(
+        s"schema fingerprint mismatch: generated code expects $SchemaFingerprint, bundle contains ${source.schemaFingerprint}"
+      )
+    }
     val tables = Map[String, SoraTable](
 {%- for table in model.tables %}
       {{ table.pascal_name }}Table.Name -> {{ table.pascal_name }}Table.decode(source){% if not loop.last %},{% endif %}
