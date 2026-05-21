@@ -43,6 +43,19 @@ public final class Character {
             Vec3.decode(reader)
         );
     }
+
+    static Character decode(SoraValue value) {
+        var obj = value.asObject();
+        return new Character(
+            obj.get("id").asInt(),
+            obj.get("name").asString(),
+            Rarity.decode(obj.get("rarity")),
+            obj.get("base_level").asInt(),
+            obj.get("base_skill").asInt(),
+            obj.get("starter_items").asList(item -> item.asInt()),
+            Vec3.decode(obj.get("spawn_pos"))
+        );
+    }
 }
 
 final class CharacterTable implements SoraTable {
@@ -56,9 +69,10 @@ final class CharacterTable implements SoraTable {
         return new CharacterTable(SoraConfig.decodeMapTable(rows, row -> row.id));
     }
 
-    static CharacterTable decode(SoraBundle bundle) {
-        return fromRows(bundle.decodeTable("Character", Character::decode));
+    static CharacterTable decode(SoraTableSource source) {
+        return fromRows(source.decodeTable("Character", Character::decode, Character::decode));
     }
+
     public java.util.Map<Integer, Character> rows() {
         return rows;
     }

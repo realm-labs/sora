@@ -35,6 +35,17 @@ public final class ShopItem {
             reader.readOptional(() -> reader.readI32())
         );
     }
+
+    static ShopItem decode(SoraValue value) {
+        var obj = value.asObject();
+        return new ShopItem(
+            obj.get("shop_id").asInt(),
+            obj.get("seq").asInt(),
+            obj.get("item_id").asInt(),
+            ResourceCost.decode(obj.get("price")),
+            obj.get("daily_limit").isNull() ? null : obj.get("daily_limit").asInt()
+        );
+    }
 }
 
 final class ShopItemTable implements SoraTable {
@@ -48,9 +59,10 @@ final class ShopItemTable implements SoraTable {
         return new ShopItemTable(rows);
     }
 
-    static ShopItemTable decode(SoraBundle bundle) {
-        return fromRows(bundle.decodeTable("ShopItem", ShopItem::decode));
+    static ShopItemTable decode(SoraTableSource source) {
+        return fromRows(source.decodeTable("ShopItem", ShopItem::decode, ShopItem::decode));
     }
+
     public java.util.List<ShopItem> rows() {
         return rows;
     }

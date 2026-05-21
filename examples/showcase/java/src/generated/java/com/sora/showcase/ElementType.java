@@ -22,4 +22,19 @@ public enum ElementType {
                 throw new SoraReadException("invalid enum ordinal for ElementType");
         }
     }
+
+    static ElementType decode(SoraValue value) {
+        switch (value.asString()) {
+            case "Fire":
+                return Fire;
+            case "Ice":
+                return Ice;
+            case "Lightning":
+                return Lightning;
+            case "Physical":
+                return Physical;
+            default:
+                throw new SoraReadException("invalid enum value for ElementType");
+        }
+    }
 }

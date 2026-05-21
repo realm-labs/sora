@@ -19,4 +19,17 @@ public enum ResourceKind {
                 throw new SoraReadException("invalid enum ordinal for ResourceKind");
         }
     }
+
+    static ResourceKind decode(SoraValue value) {
+        switch (value.asString()) {
+            case "Item":
+                return Item;
+            case "Gold":
+                return Gold;
+            case "Diamond":
+                return Diamond;
+            default:
+                throw new SoraReadException("invalid enum value for ResourceKind");
+        }
+    }
 }

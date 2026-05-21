@@ -25,4 +25,21 @@ public enum ItemType {
                 throw new SoraReadException("invalid enum ordinal for ItemType");
         }
     }
+
+    static ItemType decode(SoraValue value) {
+        switch (value.asString()) {
+            case "Weapon":
+                return Weapon;
+            case "Armor":
+                return Armor;
+            case "Currency":
+                return Currency;
+            case "Material":
+                return Material;
+            case "Consumable":
+                return Consumable;
+            default:
+                throw new SoraReadException("invalid enum value for ItemType");
+        }
+    }
 }

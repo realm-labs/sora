@@ -52,4 +52,25 @@ public interface EventCondition {
                 throw new SoraReadException("invalid union ordinal for EventCondition");
         }
     }
+
+    static EventCondition decode(SoraValue value) {
+        var obj = value.asObject();
+        switch (obj.get("type").asString()) {
+            case "LevelAtLeast":
+                return new LevelAtLeast(
+                    obj.get("level").asInt()
+                );
+            case "QuestCompleted":
+                return new QuestCompleted(
+                    obj.get("quest_id").asInt()
+                );
+            case "HasItem":
+                return new HasItem(
+                    obj.get("item_id").asInt(),
+                    obj.get("count").asInt()
+                );
+            default:
+                throw new SoraReadException("invalid union tag for EventCondition");
+        }
+    }
 }

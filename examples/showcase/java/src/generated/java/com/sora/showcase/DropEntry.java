@@ -35,6 +35,17 @@ public final class DropEntry {
             reader.readF32()
         );
     }
+
+    static DropEntry decode(SoraValue value) {
+        var obj = value.asObject();
+        return new DropEntry(
+            obj.get("group_id").asInt(),
+            obj.get("seq").asInt(),
+            obj.get("item_id").asInt(),
+            obj.get("count").asInt(),
+            obj.get("weight").asFloat()
+        );
+    }
 }
 
 final class DropEntryTable implements SoraTable {
@@ -48,9 +59,10 @@ final class DropEntryTable implements SoraTable {
         return new DropEntryTable(rows);
     }
 
-    static DropEntryTable decode(SoraBundle bundle) {
-        return fromRows(bundle.decodeTable("DropEntry", DropEntry::decode));
+    static DropEntryTable decode(SoraTableSource source) {
+        return fromRows(source.decodeTable("DropEntry", DropEntry::decode, DropEntry::decode));
     }
+
     public java.util.List<DropEntry> rows() {
         return rows;
     }

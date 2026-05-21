@@ -39,6 +39,18 @@ public final class Monster {
             Vec3.decode(reader)
         );
     }
+
+    static Monster decode(SoraValue value) {
+        var obj = value.asObject();
+        return new Monster(
+            obj.get("id").asInt(),
+            obj.get("name").asString(),
+            obj.get("level").asInt(),
+            ElementType.decode(obj.get("element")),
+            obj.get("drop_group").asInt(),
+            Vec3.decode(obj.get("spawn_pos"))
+        );
+    }
 }
 
 final class MonsterTable implements SoraTable {
@@ -52,9 +64,10 @@ final class MonsterTable implements SoraTable {
         return new MonsterTable(SoraConfig.decodeMapTable(rows, row -> row.id));
     }
 
-    static MonsterTable decode(SoraBundle bundle) {
-        return fromRows(bundle.decodeTable("Monster", Monster::decode));
+    static MonsterTable decode(SoraTableSource source) {
+        return fromRows(source.decodeTable("Monster", Monster::decode, Monster::decode));
     }
+
     public java.util.Map<Integer, Monster> rows() {
         return rows;
     }

@@ -27,6 +27,15 @@ public final class Recipe {
             reader.readList(() -> ResourceCost.decode(reader))
         );
     }
+
+    static Recipe decode(SoraValue value) {
+        var obj = value.asObject();
+        return new Recipe(
+            obj.get("id").asInt(),
+            obj.get("result_item").asInt(),
+            obj.get("materials").asList(item -> ResourceCost.decode(item))
+        );
+    }
 }
 
 final class RecipeTable implements SoraTable {
@@ -40,9 +49,10 @@ final class RecipeTable implements SoraTable {
         return new RecipeTable(SoraConfig.decodeMapTable(rows, row -> row.id));
     }
 
-    static RecipeTable decode(SoraBundle bundle) {
-        return fromRows(bundle.decodeTable("Recipe", Recipe::decode));
+    static RecipeTable decode(SoraTableSource source) {
+        return fromRows(source.decodeTable("Recipe", Recipe::decode, Recipe::decode));
     }
+
     public java.util.Map<Integer, Recipe> rows() {
         return rows;
     }

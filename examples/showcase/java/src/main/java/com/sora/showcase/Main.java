@@ -6,7 +6,8 @@ import java.nio.file.Paths;
 public final class Main {
     public static void main(String[] args) throws Exception {
         var bytes = Files.readAllBytes(Paths.get("..", "generated", "config.sora"));
-        var config = SoraConfig.fromBytes(bytes);
+        var bundle = SoraBundle.parse(bytes);
+        var config = SoraConfig.fromSource(bundle);
         var sword = config.item().get(1001);
         var swordByName = config.item().getByName("Iron Sword");
         var quest = config.quest().get(5001);

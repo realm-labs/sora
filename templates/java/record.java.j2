@@ -33,7 +33,6 @@ public final class {{ record.pascal_name }} {
         );
     }
 
-{%- if runtime_format != "sora" %}
     static {{ record.pascal_name }} decode(SoraValue value) {
         var obj = value.asObject();
         return new {{ record.pascal_name }}(
@@ -42,7 +41,6 @@ public final class {{ record.pascal_name }} {
 {%- endfor %}
         );
     }
-{%- endif %}
 }
 
 {%- if record.table %}
@@ -101,16 +99,10 @@ final class {{ table.pascal_name }}Table implements SoraTable {
 {%- endif %}
     }
 
-    static {{ table.pascal_name }}Table decode(SoraBundle bundle) {
-        return fromRows(bundle.decodeTable("{{ table.name }}", {{ table.row_type }}::decode));
+    static {{ table.pascal_name }}Table decode(SoraTableSource source) {
+        return fromRows(source.decodeTable("{{ table.name }}", {{ table.row_type }}::decode, {{ table.row_type }}::decode));
     }
 
-{%- if runtime_format != "sora" %}
-    static {{ table.pascal_name }}Table decode(SoraValueBundle bundle) {
-        return fromRows(bundle.decodeTable("{{ table.name }}", {{ table.row_type }}::decode));
-    }
-
-{%- endif %}
     public {{ table.container_type }} rows() {
         return rows;
     }

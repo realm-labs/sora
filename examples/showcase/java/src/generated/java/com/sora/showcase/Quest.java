@@ -44,6 +44,19 @@ public final class Quest {
             reader.readList(() -> Reward.decode(reader))
         );
     }
+
+    static Quest decode(SoraValue value) {
+        var obj = value.asObject();
+        return new Quest(
+            obj.get("id").asInt(),
+            QuestType.decode(obj.get("quest_type")),
+            obj.get("title").asString(),
+            obj.get("required_item").asInt(),
+            obj.get("unlock_skills").asList(item -> item.asInt()),
+            Vec3.decode(obj.get("start_pos")),
+            obj.get("rewards").asList(item -> Reward.decode(item))
+        );
+    }
 }
 
 final class QuestTable implements SoraTable {
@@ -57,9 +70,10 @@ final class QuestTable implements SoraTable {
         return new QuestTable(SoraConfig.decodeMapTable(rows, row -> row.id));
     }
 
-    static QuestTable decode(SoraBundle bundle) {
-        return fromRows(bundle.decodeTable("Quest", Quest::decode));
+    static QuestTable decode(SoraTableSource source) {
+        return fromRows(source.decodeTable("Quest", Quest::decode, Quest::decode));
     }
+
     public java.util.Map<Integer, Quest> rows() {
         return rows;
     }

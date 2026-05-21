@@ -31,6 +31,16 @@ public final class MailReward {
             reader.readI32()
         );
     }
+
+    static MailReward decode(SoraValue value) {
+        var obj = value.asObject();
+        return new MailReward(
+            obj.get("mail_id").asInt(),
+            obj.get("seq").asInt(),
+            obj.get("item_id").asInt(),
+            obj.get("count").asInt()
+        );
+    }
 }
 
 final class MailRewardTable implements SoraTable {
@@ -44,9 +54,10 @@ final class MailRewardTable implements SoraTable {
         return new MailRewardTable(rows);
     }
 
-    static MailRewardTable decode(SoraBundle bundle) {
-        return fromRows(bundle.decodeTable("MailReward", MailReward::decode));
+    static MailRewardTable decode(SoraTableSource source) {
+        return fromRows(source.decodeTable("MailReward", MailReward::decode, MailReward::decode));
     }
+
     public java.util.List<MailReward> rows() {
         return rows;
     }

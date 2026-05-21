@@ -31,6 +31,16 @@ public final class GachaItem {
             reader.readF32()
         );
     }
+
+    static GachaItem decode(SoraValue value) {
+        var obj = value.asObject();
+        return new GachaItem(
+            obj.get("pool_id").asInt(),
+            obj.get("item_id").asInt(),
+            Rarity.decode(obj.get("rarity")),
+            obj.get("weight").asFloat()
+        );
+    }
 }
 
 final class GachaItemTable implements SoraTable {
@@ -44,9 +54,10 @@ final class GachaItemTable implements SoraTable {
         return new GachaItemTable(rows);
     }
 
-    static GachaItemTable decode(SoraBundle bundle) {
-        return fromRows(bundle.decodeTable("GachaItem", GachaItem::decode));
+    static GachaItemTable decode(SoraTableSource source) {
+        return fromRows(source.decodeTable("GachaItem", GachaItem::decode, GachaItem::decode));
     }
+
     public java.util.List<GachaItem> rows() {
         return rows;
     }

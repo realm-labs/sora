@@ -19,18 +19,12 @@ import com.google.protobuf.DynamicMessage;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
-{%- if runtime_format != "sora" %}
 import java.util.HashMap;
-{%- endif %}
 import java.util.HashSet;
-{%- if runtime_format != "sora" %}
 import java.util.LinkedHashMap;
-{%- endif %}
 import java.util.List;
-{%- if runtime_format != "sora" %}
 import java.util.Map;
 import java.util.function.Function;
-{%- endif %}
 import java.util.function.Supplier;
 
 final class SoraReadException extends RuntimeException {
@@ -57,7 +51,11 @@ final class SoraSection {
     }
 }
 
-final class SoraBundle {
+interface SoraTableSource {
+    <T> List<T> decodeTable(String name, SoraRowDecoder<T> decodeBinary, Function<SoraValue, T> decodeValue);
+}
+
+final class SoraBundle implements SoraTableSource {
     private static final int BUNDLE_VERSION = 1;
     private static final int HEADER_LENGTH = 24;
     private static final int SECTION_KIND_MANIFEST = 0;
@@ -85,6 +83,11 @@ final class SoraBundle {
             throw new SoraReadException("table `" + name + "` has invalid uncompressed length");
         }
         return decodeRows(Arrays.copyOfRange(bytes, section.offset, section.offset + section.length), decode);
+    }
+
+    @Override
+    public <T> List<T> decodeTable(String name, SoraRowDecoder<T> decodeBinary, Function<SoraValue, T> decodeValue) {
+        return decodeTable(name, decodeBinary);
     }
 
     static SoraBundle parse(byte[] bytes) {
@@ -343,83 +346,6 @@ final class SoraReader {
     }
 }
 
-{%- if runtime_format != "sora" %}
-
-final class SoraValueBundle {
-    private static final int FORMAT_VERSION = 1;
-    private final Map<String, List<SoraValue>> tables;
-
-    private SoraValueBundle(Map<String, List<SoraValue>> tables) {
-        this.tables = tables;
-    }
-
-    <T> List<T> decodeTable(String name, Function<SoraValue, T> decode) {
-        var values = tables.get(name);
-        if (values == null) {
-            throw new SoraReadException("missing table `" + name + "`");
-        }
-        var rows = new ArrayList<T>(values.size());
-        for (var value : values) {
-            rows.add(decode.apply(value));
-        }
-        return rows;
-    }
-
-{%- if runtime_format == "json" %}
-    static SoraValueBundle parseJson(byte[] bytes) {
-        try {
-            var mapper = new ObjectMapper();
-            var root = mapper.readValue(bytes, new TypeReference<Map<String, Object>>() {});
-            return fromRoot("json", SoraValue.fromJava(root));
-        } catch (Exception error) {
-            throw new SoraReadException("failed to parse json bundle: " + error.getMessage());
-        }
-    }
-{%- endif %}
-
-{%- if runtime_format == "cbor" %}
-    static SoraValueBundle parseCbor(byte[] bytes) {
-        try {
-            var mapper = new ObjectMapper(new CBORFactory());
-            var root = mapper.readValue(bytes, new TypeReference<Map<String, Object>>() {});
-            return fromRoot("cbor", SoraValue.fromJava(root));
-        } catch (Exception error) {
-            throw new SoraReadException("failed to parse cbor bundle: " + error.getMessage());
-        }
-    }
-{%- endif %}
-
-{%- if runtime_format == "sora-protobuf" %}
-    static SoraValueBundle parseProtobuf(byte[] bytes) {
-        try {
-            return fromRoot("sora-protobuf", SoraProtobufBundle.decode(bytes));
-        } catch (Exception error) {
-            throw new SoraReadException("failed to parse protobuf bundle: " + error.getMessage());
-        }
-    }
-{%- endif %}
-
-    private static SoraValueBundle fromRoot(String expectedFormat, SoraValue rootValue) {
-        var root = rootValue.asObject();
-        var format = root.get("format").asString();
-        if (!format.equals(expectedFormat)) {
-            throw new SoraReadException("expected " + expectedFormat + " bundle, got " + format);
-        }
-        var version = root.get("format_version").asLong();
-        if (version != FORMAT_VERSION) {
-            throw new SoraReadException("unsupported " + expectedFormat + " bundle version " + version);
-        }
-        var data = root.get("data").asObject();
-        var tableValues = data.get("tables").asRawList();
-        var tables = new HashMap<String, List<SoraValue>>(tableValues.size());
-        for (var tableValue : tableValues) {
-            var table = tableValue.asObject();
-            tables.put(table.get("name").asString(), table.get("rows").asRawList());
-        }
-        return new SoraValueBundle(tables);
-    }
-}
-
 final class SoraValue {
     private final Object value;
 
@@ -522,6 +448,88 @@ final class SoraValue {
             return new SoraValue(values);
         }
         return new SoraValue(value);
+    }
+}
+
+{%- if runtime_format != "sora" %}
+
+final class SoraValueBundle implements SoraTableSource {
+    private static final int FORMAT_VERSION = 1;
+    private final Map<String, List<SoraValue>> tables;
+
+    private SoraValueBundle(Map<String, List<SoraValue>> tables) {
+        this.tables = tables;
+    }
+
+    <T> List<T> decodeTable(String name, Function<SoraValue, T> decode) {
+        var values = tables.get(name);
+        if (values == null) {
+            throw new SoraReadException("missing table `" + name + "`");
+        }
+        var rows = new ArrayList<T>(values.size());
+        for (var value : values) {
+            rows.add(decode.apply(value));
+        }
+        return rows;
+    }
+
+    @Override
+    public <T> List<T> decodeTable(String name, SoraRowDecoder<T> decodeBinary, Function<SoraValue, T> decodeValue) {
+        return decodeTable(name, decodeValue);
+    }
+
+{%- if runtime_format == "json" %}
+    static SoraValueBundle parseJson(byte[] bytes) {
+        try {
+            var mapper = new ObjectMapper();
+            var root = mapper.readValue(bytes, new TypeReference<Map<String, Object>>() {});
+            return fromRoot("json", SoraValue.fromJava(root));
+        } catch (Exception error) {
+            throw new SoraReadException("failed to parse json bundle: " + error.getMessage());
+        }
+    }
+{%- endif %}
+
+{%- if runtime_format == "cbor" %}
+    static SoraValueBundle parseCbor(byte[] bytes) {
+        try {
+            var mapper = new ObjectMapper(new CBORFactory());
+            var root = mapper.readValue(bytes, new TypeReference<Map<String, Object>>() {});
+            return fromRoot("cbor", SoraValue.fromJava(root));
+        } catch (Exception error) {
+            throw new SoraReadException("failed to parse cbor bundle: " + error.getMessage());
+        }
+    }
+{%- endif %}
+
+{%- if runtime_format == "sora-protobuf" %}
+    static SoraValueBundle parseProtobuf(byte[] bytes) {
+        try {
+            return fromRoot("sora-protobuf", SoraProtobufBundle.decode(bytes));
+        } catch (Exception error) {
+            throw new SoraReadException("failed to parse protobuf bundle: " + error.getMessage());
+        }
+    }
+{%- endif %}
+
+    private static SoraValueBundle fromRoot(String expectedFormat, SoraValue rootValue) {
+        var root = rootValue.asObject();
+        var format = root.get("format").asString();
+        if (!format.equals(expectedFormat)) {
+            throw new SoraReadException("expected " + expectedFormat + " bundle, got " + format);
+        }
+        var version = root.get("format_version").asLong();
+        if (version != FORMAT_VERSION) {
+            throw new SoraReadException("unsupported " + expectedFormat + " bundle version " + version);
+        }
+        var data = root.get("data").asObject();
+        var tableValues = data.get("tables").asRawList();
+        var tables = new HashMap<String, List<SoraValue>>(tableValues.size());
+        for (var tableValue : tableValues) {
+            var table = tableValue.asObject();
+            tables.put(table.get("name").asString(), table.get("rows").asRawList());
+        }
+        return new SoraValueBundle(tables);
     }
 }
 

@@ -19,4 +19,17 @@ public enum QuestType {
                 throw new SoraReadException("invalid enum ordinal for QuestType");
         }
     }
+
+    static QuestType decode(SoraValue value) {
+        switch (value.asString()) {
+            case "Main":
+                return Main;
+            case "Side":
+                return Side;
+            case "Daily":
+                return Daily;
+            default:
+                throw new SoraReadException("invalid enum value for QuestType");
+        }
+    }
 }

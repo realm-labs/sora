@@ -35,6 +35,17 @@ public final class Stage {
             reader.readList(() -> Reward.decode(reader))
         );
     }
+
+    static Stage decode(SoraValue value) {
+        var obj = value.asObject();
+        return new Stage(
+            obj.get("id").asInt(),
+            obj.get("name").asString(),
+            obj.get("monster_ids").asList(item -> item.asInt()),
+            obj.get("recommended_power").asInt(),
+            obj.get("first_clear_rewards").asList(item -> Reward.decode(item))
+        );
+    }
 }
 
 final class StageTable implements SoraTable {
@@ -48,9 +59,10 @@ final class StageTable implements SoraTable {
         return new StageTable(SoraConfig.decodeMapTable(rows, row -> row.id));
     }
 
-    static StageTable decode(SoraBundle bundle) {
-        return fromRows(bundle.decodeTable("Stage", Stage::decode));
+    static StageTable decode(SoraTableSource source) {
+        return fromRows(source.decodeTable("Stage", Stage::decode, Stage::decode));
     }
+
     public java.util.Map<Integer, Stage> rows() {
         return rows;
     }

@@ -31,6 +31,16 @@ public final class Buff {
             reader.readList(() -> StatModifier.decode(reader))
         );
     }
+
+    static Buff decode(SoraValue value) {
+        var obj = value.asObject();
+        return new Buff(
+            obj.get("id").asInt(),
+            obj.get("name").asString(),
+            obj.get("duration").asFloat(),
+            obj.get("modifiers").asList(item -> StatModifier.decode(item))
+        );
+    }
 }
 
 final class BuffTable implements SoraTable {
@@ -44,9 +54,10 @@ final class BuffTable implements SoraTable {
         return new BuffTable(SoraConfig.decodeMapTable(rows, row -> row.id));
     }
 
-    static BuffTable decode(SoraBundle bundle) {
-        return fromRows(bundle.decodeTable("Buff", Buff::decode));
+    static BuffTable decode(SoraTableSource source) {
+        return fromRows(source.decodeTable("Buff", Buff::decode, Buff::decode));
     }
+
     public java.util.Map<Integer, Buff> rows() {
         return rows;
     }

@@ -31,6 +31,16 @@ public final class StageReward {
             reader.readI32()
         );
     }
+
+    static StageReward decode(SoraValue value) {
+        var obj = value.asObject();
+        return new StageReward(
+            obj.get("stage_id").asInt(),
+            obj.get("seq").asInt(),
+            obj.get("item_id").asInt(),
+            obj.get("count").asInt()
+        );
+    }
 }
 
 final class StageRewardTable implements SoraTable {
@@ -44,9 +54,10 @@ final class StageRewardTable implements SoraTable {
         return new StageRewardTable(rows);
     }
 
-    static StageRewardTable decode(SoraBundle bundle) {
-        return fromRows(bundle.decodeTable("StageReward", StageReward::decode));
+    static StageRewardTable decode(SoraTableSource source) {
+        return fromRows(source.decodeTable("StageReward", StageReward::decode, StageReward::decode));
     }
+
     public java.util.List<StageReward> rows() {
         return rows;
     }

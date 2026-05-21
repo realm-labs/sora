@@ -29,37 +29,36 @@ public final class SoraConfig {
         this.tables = tables;
     }
 
-    public static SoraConfig fromBytes(byte[] bytes) {
-        var bundle = SoraBundle.parse(bytes);
+    public static SoraConfig fromSource(SoraTableSource source) {
         var tables = new HashMap<String, SoraTable>(28);
-        tables.put("Item", ItemTable.decode(bundle));
-        tables.put("Skill", SkillTable.decode(bundle));
-        tables.put("Quest", QuestTable.decode(bundle));
-        tables.put("QuestReward", QuestRewardTable.decode(bundle));
-        tables.put("GameSettings", GameSettingsTable.decode(bundle));
-        tables.put("Localization", LocalizationTable.decode(bundle));
-        tables.put("LevelExp", LevelExpTable.decode(bundle));
-        tables.put("Character", CharacterTable.decode(bundle));
-        tables.put("CharacterSkill", CharacterSkillTable.decode(bundle));
-        tables.put("Buff", BuffTable.decode(bundle));
-        tables.put("DropGroup", DropGroupTable.decode(bundle));
-        tables.put("DropEntry", DropEntryTable.decode(bundle));
-        tables.put("Monster", MonsterTable.decode(bundle));
-        tables.put("Stage", StageTable.decode(bundle));
-        tables.put("StageReward", StageRewardTable.decode(bundle));
-        tables.put("Dungeon", DungeonTable.decode(bundle));
-        tables.put("Shop", ShopTable.decode(bundle));
-        tables.put("ShopItem", ShopItemTable.decode(bundle));
-        tables.put("Recipe", RecipeTable.decode(bundle));
-        tables.put("GachaPool", GachaPoolTable.decode(bundle));
-        tables.put("GachaItem", GachaItemTable.decode(bundle));
-        tables.put("EquipmentSet", EquipmentSetTable.decode(bundle));
-        tables.put("Achievement", AchievementTable.decode(bundle));
-        tables.put("VipLevel", VipLevelTable.decode(bundle));
-        tables.put("MailTemplate", MailTemplateTable.decode(bundle));
-        tables.put("MailReward", MailRewardTable.decode(bundle));
-        tables.put("Dialogue", DialogueTable.decode(bundle));
-        tables.put("EventRule", EventRuleTable.decode(bundle));
+        tables.put("Item", ItemTable.decode(source));
+        tables.put("Skill", SkillTable.decode(source));
+        tables.put("Quest", QuestTable.decode(source));
+        tables.put("QuestReward", QuestRewardTable.decode(source));
+        tables.put("GameSettings", GameSettingsTable.decode(source));
+        tables.put("Localization", LocalizationTable.decode(source));
+        tables.put("LevelExp", LevelExpTable.decode(source));
+        tables.put("Character", CharacterTable.decode(source));
+        tables.put("CharacterSkill", CharacterSkillTable.decode(source));
+        tables.put("Buff", BuffTable.decode(source));
+        tables.put("DropGroup", DropGroupTable.decode(source));
+        tables.put("DropEntry", DropEntryTable.decode(source));
+        tables.put("Monster", MonsterTable.decode(source));
+        tables.put("Stage", StageTable.decode(source));
+        tables.put("StageReward", StageRewardTable.decode(source));
+        tables.put("Dungeon", DungeonTable.decode(source));
+        tables.put("Shop", ShopTable.decode(source));
+        tables.put("ShopItem", ShopItemTable.decode(source));
+        tables.put("Recipe", RecipeTable.decode(source));
+        tables.put("GachaPool", GachaPoolTable.decode(source));
+        tables.put("GachaItem", GachaItemTable.decode(source));
+        tables.put("EquipmentSet", EquipmentSetTable.decode(source));
+        tables.put("Achievement", AchievementTable.decode(source));
+        tables.put("VipLevel", VipLevelTable.decode(source));
+        tables.put("MailTemplate", MailTemplateTable.decode(source));
+        tables.put("MailReward", MailRewardTable.decode(source));
+        tables.put("Dialogue", DialogueTable.decode(source));
+        tables.put("EventRule", EventRuleTable.decode(source));
         return new SoraConfig(tables);
     }
 

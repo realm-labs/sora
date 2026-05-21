@@ -23,6 +23,14 @@ public final class DropGroup {
             reader.readString()
         );
     }
+
+    static DropGroup decode(SoraValue value) {
+        var obj = value.asObject();
+        return new DropGroup(
+            obj.get("id").asInt(),
+            obj.get("name").asString()
+        );
+    }
 }
 
 final class DropGroupTable implements SoraTable {
@@ -36,9 +44,10 @@ final class DropGroupTable implements SoraTable {
         return new DropGroupTable(SoraConfig.decodeMapTable(rows, row -> row.id));
     }
 
-    static DropGroupTable decode(SoraBundle bundle) {
-        return fromRows(bundle.decodeTable("DropGroup", DropGroup::decode));
+    static DropGroupTable decode(SoraTableSource source) {
+        return fromRows(source.decodeTable("DropGroup", DropGroup::decode, DropGroup::decode));
     }
+
     public java.util.Map<Integer, DropGroup> rows() {
         return rows;
     }

@@ -20,4 +20,12 @@ public final class Reward {
             reader.readI32()
         );
     }
+
+    static Reward decode(SoraValue value) {
+        var obj = value.asObject();
+        return new Reward(
+            obj.get("item_id").asInt(),
+            obj.get("count").asInt()
+        );
+    }
 }

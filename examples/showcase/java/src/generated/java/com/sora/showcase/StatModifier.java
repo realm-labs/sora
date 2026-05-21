@@ -24,4 +24,13 @@ public final class StatModifier {
             reader.readBool()
         );
     }
+
+    static StatModifier decode(SoraValue value) {
+        var obj = value.asObject();
+        return new StatModifier(
+            StatType.decode(obj.get("stat")),
+            obj.get("value").asFloat(),
+            obj.get("is_percent").asBool()
+        );
+    }
 }

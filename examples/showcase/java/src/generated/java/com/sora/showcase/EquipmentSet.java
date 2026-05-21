@@ -31,6 +31,16 @@ public final class EquipmentSet {
             SkillEffect.decode(reader)
         );
     }
+
+    static EquipmentSet decode(SoraValue value) {
+        var obj = value.asObject();
+        return new EquipmentSet(
+            obj.get("id").asInt(),
+            obj.get("name").asString(),
+            obj.get("item_ids").asList(item -> item.asInt()),
+            SkillEffect.decode(obj.get("bonus_effect"))
+        );
+    }
 }
 
 final class EquipmentSetTable implements SoraTable {
@@ -44,9 +54,10 @@ final class EquipmentSetTable implements SoraTable {
         return new EquipmentSetTable(SoraConfig.decodeMapTable(rows, row -> row.id));
     }
 
-    static EquipmentSetTable decode(SoraBundle bundle) {
-        return fromRows(bundle.decodeTable("EquipmentSet", EquipmentSet::decode));
+    static EquipmentSetTable decode(SoraTableSource source) {
+        return fromRows(source.decodeTable("EquipmentSet", EquipmentSet::decode, EquipmentSet::decode));
     }
+
     public java.util.Map<Integer, EquipmentSet> rows() {
         return rows;
     }

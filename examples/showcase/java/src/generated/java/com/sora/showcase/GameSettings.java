@@ -35,6 +35,17 @@ public final class GameSettings {
             reader.readList(() -> reader.readI32())
         );
     }
+
+    static GameSettings decode(SoraValue value) {
+        var obj = value.asObject();
+        return new GameSettings(
+            obj.get("version").asString(),
+            obj.get("daily_reset_hour").asInt(),
+            obj.get("starting_gold").asInt(),
+            Vec3.decode(obj.get("spawn_pos")),
+            obj.get("starter_items").asList(item -> item.asInt())
+        );
+    }
 }
 
 final class GameSettingsTable implements SoraTable {
@@ -48,9 +59,10 @@ final class GameSettingsTable implements SoraTable {
         return new GameSettingsTable(SoraConfig.requireSingletonTable(rows, "GameSettings"));
     }
 
-    static GameSettingsTable decode(SoraBundle bundle) {
-        return fromRows(bundle.decodeTable("GameSettings", GameSettings::decode));
+    static GameSettingsTable decode(SoraTableSource source) {
+        return fromRows(source.decodeTable("GameSettings", GameSettings::decode, GameSettings::decode));
     }
+
     public GameSettings rows() {
         return rows;
     }

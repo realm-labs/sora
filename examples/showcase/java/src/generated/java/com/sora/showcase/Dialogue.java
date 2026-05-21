@@ -27,6 +27,15 @@ public final class Dialogue {
             reader.readList(() -> reader.readString())
         );
     }
+
+    static Dialogue decode(SoraValue value) {
+        var obj = value.asObject();
+        return new Dialogue(
+            obj.get("id").asInt(),
+            obj.get("speaker_key").asString(),
+            obj.get("lines").asList(item -> item.asString())
+        );
+    }
 }
 
 final class DialogueTable implements SoraTable {
@@ -40,9 +49,10 @@ final class DialogueTable implements SoraTable {
         return new DialogueTable(SoraConfig.decodeMapTable(rows, row -> row.id));
     }
 
-    static DialogueTable decode(SoraBundle bundle) {
-        return fromRows(bundle.decodeTable("Dialogue", Dialogue::decode));
+    static DialogueTable decode(SoraTableSource source) {
+        return fromRows(source.decodeTable("Dialogue", Dialogue::decode, Dialogue::decode));
     }
+
     public java.util.Map<Integer, Dialogue> rows() {
         return rows;
     }

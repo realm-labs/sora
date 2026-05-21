@@ -31,6 +31,16 @@ public final class Dungeon {
             ResourceCost.decode(reader)
         );
     }
+
+    static Dungeon decode(SoraValue value) {
+        var obj = value.asObject();
+        return new Dungeon(
+            obj.get("id").asInt(),
+            obj.get("name").asString(),
+            obj.get("stage_ids").asList(item -> item.asInt()),
+            ResourceCost.decode(obj.get("entry_cost"))
+        );
+    }
 }
 
 final class DungeonTable implements SoraTable {
@@ -44,9 +54,10 @@ final class DungeonTable implements SoraTable {
         return new DungeonTable(SoraConfig.decodeMapTable(rows, row -> row.id));
     }
 
-    static DungeonTable decode(SoraBundle bundle) {
-        return fromRows(bundle.decodeTable("Dungeon", Dungeon::decode));
+    static DungeonTable decode(SoraTableSource source) {
+        return fromRows(source.decodeTable("Dungeon", Dungeon::decode, Dungeon::decode));
     }
+
     public java.util.Map<Integer, Dungeon> rows() {
         return rows;
     }

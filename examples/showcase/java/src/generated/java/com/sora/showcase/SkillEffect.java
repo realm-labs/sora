@@ -24,4 +24,13 @@ public final class SkillEffect {
             reader.readF32()
         );
     }
+
+    static SkillEffect decode(SoraValue value) {
+        var obj = value.asObject();
+        return new SkillEffect(
+            ElementType.decode(obj.get("element")),
+            obj.get("power").asInt(),
+            obj.get("radius").asFloat()
+        );
+    }
 }

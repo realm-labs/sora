@@ -27,6 +27,15 @@ public final class CharacterSkill {
             reader.readI32()
         );
     }
+
+    static CharacterSkill decode(SoraValue value) {
+        var obj = value.asObject();
+        return new CharacterSkill(
+            obj.get("character_id").asInt(),
+            obj.get("skill_id").asInt(),
+            obj.get("unlock_level").asInt()
+        );
+    }
 }
 
 final class CharacterSkillTable implements SoraTable {
@@ -40,9 +49,10 @@ final class CharacterSkillTable implements SoraTable {
         return new CharacterSkillTable(rows);
     }
 
-    static CharacterSkillTable decode(SoraBundle bundle) {
-        return fromRows(bundle.decodeTable("CharacterSkill", CharacterSkill::decode));
+    static CharacterSkillTable decode(SoraTableSource source) {
+        return fromRows(source.decodeTable("CharacterSkill", CharacterSkill::decode, CharacterSkill::decode));
     }
+
     public java.util.List<CharacterSkill> rows() {
         return rows;
     }

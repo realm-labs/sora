@@ -31,6 +31,16 @@ public final class Localization {
             reader.readOptional(() -> reader.readString())
         );
     }
+
+    static Localization decode(SoraValue value) {
+        var obj = value.asObject();
+        return new Localization(
+            obj.get("key").asString(),
+            obj.get("zh_cn").asString(),
+            obj.get("en_us").asString(),
+            obj.get("note").isNull() ? null : obj.get("note").asString()
+        );
+    }
 }
 
 final class LocalizationTable implements SoraTable {
@@ -44,9 +54,10 @@ final class LocalizationTable implements SoraTable {
         return new LocalizationTable(SoraConfig.decodeMapTable(rows, row -> row.key));
     }
 
-    static LocalizationTable decode(SoraBundle bundle) {
-        return fromRows(bundle.decodeTable("Localization", Localization::decode));
+    static LocalizationTable decode(SoraTableSource source) {
+        return fromRows(source.decodeTable("Localization", Localization::decode, Localization::decode));
     }
+
     public java.util.Map<String, Localization> rows() {
         return rows;
     }

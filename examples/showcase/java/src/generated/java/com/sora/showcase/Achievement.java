@@ -31,6 +31,16 @@ public final class Achievement {
             ResourceCost.decode(reader)
         );
     }
+
+    static Achievement decode(SoraValue value) {
+        var obj = value.asObject();
+        return new Achievement(
+            obj.get("id").asInt(),
+            obj.get("title_key").asString(),
+            obj.get("target_count").asLong(),
+            ResourceCost.decode(obj.get("reward"))
+        );
+    }
 }
 
 final class AchievementTable implements SoraTable {
@@ -44,9 +54,10 @@ final class AchievementTable implements SoraTable {
         return new AchievementTable(SoraConfig.decodeMapTable(rows, row -> row.id));
     }
 
-    static AchievementTable decode(SoraBundle bundle) {
-        return fromRows(bundle.decodeTable("Achievement", Achievement::decode));
+    static AchievementTable decode(SoraTableSource source) {
+        return fromRows(source.decodeTable("Achievement", Achievement::decode, Achievement::decode));
     }
+
     public java.util.Map<Integer, Achievement> rows() {
         return rows;
     }

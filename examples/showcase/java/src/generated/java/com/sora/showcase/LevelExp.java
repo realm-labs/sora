@@ -27,6 +27,15 @@ public final class LevelExp {
             reader.readOptional(() -> reader.readString())
         );
     }
+
+    static LevelExp decode(SoraValue value) {
+        var obj = value.asObject();
+        return new LevelExp(
+            obj.get("level").asInt(),
+            obj.get("exp").asLong(),
+            obj.get("unlock_feature").isNull() ? null : obj.get("unlock_feature").asString()
+        );
+    }
 }
 
 final class LevelExpTable implements SoraTable {
@@ -40,9 +49,10 @@ final class LevelExpTable implements SoraTable {
         return new LevelExpTable(SoraConfig.decodeMapTable(rows, row -> row.level));
     }
 
-    static LevelExpTable decode(SoraBundle bundle) {
-        return fromRows(bundle.decodeTable("LevelExp", LevelExp::decode));
+    static LevelExpTable decode(SoraTableSource source) {
+        return fromRows(source.decodeTable("LevelExp", LevelExp::decode, LevelExp::decode));
     }
+
     public java.util.Map<Integer, LevelExp> rows() {
         return rows;
     }

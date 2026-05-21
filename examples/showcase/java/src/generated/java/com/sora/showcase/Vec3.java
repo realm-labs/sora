@@ -24,4 +24,13 @@ public final class Vec3 {
             reader.readF32()
         );
     }
+
+    static Vec3 decode(SoraValue value) {
+        var obj = value.asObject();
+        return new Vec3(
+            obj.get("x").asFloat(),
+            obj.get("y").asFloat(),
+            obj.get("z").asFloat()
+        );
+    }
 }

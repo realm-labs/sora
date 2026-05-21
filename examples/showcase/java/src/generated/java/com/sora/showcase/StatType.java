@@ -25,4 +25,21 @@ public enum StatType {
                 throw new SoraReadException("invalid enum ordinal for StatType");
         }
     }
+
+    static StatType decode(SoraValue value) {
+        switch (value.asString()) {
+            case "Hp":
+                return Hp;
+            case "Attack":
+                return Attack;
+            case "Defense":
+                return Defense;
+            case "Speed":
+                return Speed;
+            case "CritRate":
+                return CritRate;
+            default:
+                throw new SoraReadException("invalid enum value for StatType");
+        }
+    }
 }

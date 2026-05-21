@@ -50,6 +50,20 @@ public final class Skill {
             Vec3.decode(reader)
         );
     }
+
+    static Skill decode(SoraValue value) {
+        var obj = value.asObject();
+        return new Skill(
+            obj.get("id").asInt(),
+            obj.get("name").asString(),
+            ElementType.decode(obj.get("element")),
+            ResourceCost.decode(obj.get("cost")),
+            SkillEffect.decode(obj.get("effect")),
+            obj.get("required_level").asInt(),
+            obj.get("required_item").isNull() ? null : obj.get("required_item").asInt(),
+            Vec3.decode(obj.get("cast_origin"))
+        );
+    }
 }
 
 final class SkillTable implements SoraTable {
@@ -63,9 +77,10 @@ final class SkillTable implements SoraTable {
         return new SkillTable(SoraConfig.decodeMapTable(rows, row -> row.id));
     }
 
-    static SkillTable decode(SoraBundle bundle) {
-        return fromRows(bundle.decodeTable("Skill", Skill::decode));
+    static SkillTable decode(SoraTableSource source) {
+        return fromRows(source.decodeTable("Skill", Skill::decode, Skill::decode));
     }
+
     public java.util.Map<Integer, Skill> rows() {
         return rows;
     }

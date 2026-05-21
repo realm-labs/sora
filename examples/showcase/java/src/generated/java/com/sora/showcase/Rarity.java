@@ -25,4 +25,21 @@ public enum Rarity {
                 throw new SoraReadException("invalid enum ordinal for Rarity");
         }
     }
+
+    static Rarity decode(SoraValue value) {
+        switch (value.asString()) {
+            case "Common":
+                return Common;
+            case "Uncommon":
+                return Uncommon;
+            case "Rare":
+                return Rare;
+            case "Epic":
+                return Epic;
+            case "Legendary":
+                return Legendary;
+            default:
+                throw new SoraReadException("invalid enum value for Rarity");
+        }
+    }
 }

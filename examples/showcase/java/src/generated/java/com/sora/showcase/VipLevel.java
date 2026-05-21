@@ -27,6 +27,15 @@ public final class VipLevel {
             reader.readList(() -> reader.readString())
         );
     }
+
+    static VipLevel decode(SoraValue value) {
+        var obj = value.asObject();
+        return new VipLevel(
+            obj.get("level").asInt(),
+            ResourceCost.decode(obj.get("cost")),
+            obj.get("perks").asList(item -> item.asString())
+        );
+    }
 }
 
 final class VipLevelTable implements SoraTable {
@@ -40,9 +49,10 @@ final class VipLevelTable implements SoraTable {
         return new VipLevelTable(SoraConfig.decodeMapTable(rows, row -> row.level));
     }
 
-    static VipLevelTable decode(SoraBundle bundle) {
-        return fromRows(bundle.decodeTable("VipLevel", VipLevel::decode));
+    static VipLevelTable decode(SoraTableSource source) {
+        return fromRows(source.decodeTable("VipLevel", VipLevel::decode, VipLevel::decode));
     }
+
     public java.util.Map<Integer, VipLevel> rows() {
         return rows;
     }

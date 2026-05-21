@@ -39,7 +39,6 @@ public interface {{ union.pascal_name }} {
         }
     }
 
-{%- if runtime_format != "sora" %}
     static {{ union.pascal_name }} decode(SoraValue value) {
         var obj = value.asObject();
         switch (obj.get("{{ union.tag }}").asString()) {
@@ -55,5 +54,4 @@ public interface {{ union.pascal_name }} {
                 throw new SoraReadException("invalid union tag for {{ union.pascal_name }}");
         }
     }
-{%- endif %}
 }

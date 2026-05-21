@@ -31,6 +31,16 @@ public final class QuestReward {
             reader.readI32()
         );
     }
+
+    static QuestReward decode(SoraValue value) {
+        var obj = value.asObject();
+        return new QuestReward(
+            obj.get("quest_id").asInt(),
+            obj.get("seq").asInt(),
+            obj.get("item_id").asInt(),
+            obj.get("count").asInt()
+        );
+    }
 }
 
 final class QuestRewardTable implements SoraTable {
@@ -44,9 +54,10 @@ final class QuestRewardTable implements SoraTable {
         return new QuestRewardTable(rows);
     }
 
-    static QuestRewardTable decode(SoraBundle bundle) {
-        return fromRows(bundle.decodeTable("QuestReward", QuestReward::decode));
+    static QuestRewardTable decode(SoraTableSource source) {
+        return fromRows(source.decodeTable("QuestReward", QuestReward::decode, QuestReward::decode));
     }
+
     public java.util.List<QuestReward> rows() {
         return rows;
     }

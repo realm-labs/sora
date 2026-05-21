@@ -27,6 +27,15 @@ public final class GachaPool {
             ResourceCost.decode(reader)
         );
     }
+
+    static GachaPool decode(SoraValue value) {
+        var obj = value.asObject();
+        return new GachaPool(
+            obj.get("id").asInt(),
+            obj.get("name").asString(),
+            ResourceCost.decode(obj.get("cost"))
+        );
+    }
 }
 
 final class GachaPoolTable implements SoraTable {
@@ -40,9 +49,10 @@ final class GachaPoolTable implements SoraTable {
         return new GachaPoolTable(SoraConfig.decodeMapTable(rows, row -> row.id));
     }
 
-    static GachaPoolTable decode(SoraBundle bundle) {
-        return fromRows(bundle.decodeTable("GachaPool", GachaPool::decode));
+    static GachaPoolTable decode(SoraTableSource source) {
+        return fromRows(source.decodeTable("GachaPool", GachaPool::decode, GachaPool::decode));
     }
+
     public java.util.Map<Integer, GachaPool> rows() {
         return rows;
     }

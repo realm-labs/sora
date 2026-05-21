@@ -4,8 +4,12 @@ package com.sora.showcase;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 final class SoraReadException extends RuntimeException {
@@ -32,7 +36,11 @@ final class SoraSection {
     }
 }
 
-final class SoraBundle {
+interface SoraTableSource {
+    <T> List<T> decodeTable(String name, SoraRowDecoder<T> decodeBinary, Function<SoraValue, T> decodeValue);
+}
+
+final class SoraBundle implements SoraTableSource {
     private static final int BUNDLE_VERSION = 1;
     private static final int HEADER_LENGTH = 24;
     private static final int SECTION_KIND_MANIFEST = 0;
@@ -60,6 +68,11 @@ final class SoraBundle {
             throw new SoraReadException("table `" + name + "` has invalid uncompressed length");
         }
         return decodeRows(Arrays.copyOfRange(bytes, section.offset, section.offset + section.length), decode);
+    }
+
+    @Override
+    public <T> List<T> decodeTable(String name, SoraRowDecoder<T> decodeBinary, Function<SoraValue, T> decodeValue) {
+        return decodeTable(name, decodeBinary);
     }
 
     static SoraBundle parse(byte[] bytes) {
@@ -315,5 +328,110 @@ final class SoraReader {
         var chunk = Arrays.copyOfRange(bytes, cursor, end);
         cursor = end;
         return chunk;
+    }
+}
+
+final class SoraValue {
+    private final Object value;
+
+    SoraValue(Object value) {
+        this.value = value;
+    }
+
+    boolean isNull() {
+        return value == null;
+    }
+
+    @SuppressWarnings("unchecked")
+    Map<String, SoraValue> asObject() {
+        if (value instanceof Map<?, ?> map) {
+            return (Map<String, SoraValue>)map;
+        }
+        throw new SoraReadException("expected object");
+    }
+
+    @SuppressWarnings("unchecked")
+    List<SoraValue> asRawList() {
+        if (value instanceof List<?> list) {
+            return (List<SoraValue>)list;
+        }
+        throw new SoraReadException("expected list");
+    }
+
+    <T> List<T> asList(Function<SoraValue, T> decode) {
+        var values = asRawList();
+        var decoded = new ArrayList<T>(values.size());
+        for (var value : values) {
+            decoded.add(decode.apply(value));
+        }
+        return decoded;
+    }
+
+    Boolean asBool() {
+        if (value instanceof Boolean typed) {
+            return typed;
+        }
+        throw new SoraReadException("expected bool");
+    }
+
+    Integer asInt() {
+        var value = asLong();
+        if (value < Integer.MIN_VALUE || value > Integer.MAX_VALUE) {
+            throw new SoraReadException("integer exceeds int");
+        }
+        return value.intValue();
+    }
+
+    Long asLong() {
+        if (value instanceof Integer typed) {
+            return typed.longValue();
+        }
+        if (value instanceof Long typed) {
+            return typed;
+        }
+        if (value instanceof Number typed) {
+            var doubleValue = typed.doubleValue();
+            if (Math.rint(doubleValue) == doubleValue && doubleValue >= Long.MIN_VALUE && doubleValue <= Long.MAX_VALUE) {
+                return (long)doubleValue;
+            }
+        }
+        throw new SoraReadException("expected integer");
+    }
+
+    Float asFloat() {
+        return asDouble().floatValue();
+    }
+
+    Double asDouble() {
+        if (value instanceof Number typed) {
+            return typed.doubleValue();
+        }
+        throw new SoraReadException("expected float");
+    }
+
+    String asString() {
+        if (value instanceof String typed) {
+            return typed;
+        }
+        throw new SoraReadException("expected string");
+    }
+
+    @SuppressWarnings("unchecked")
+    static SoraValue fromJava(Object value) {
+        if (value instanceof Map<?, ?> map) {
+            var object = new LinkedHashMap<String, SoraValue>(map.size());
+            for (var entry : map.entrySet()) {
+                object.put((String)entry.getKey(), fromJava(entry.getValue()));
+            }
+            return new SoraValue(object);
+        }
+        if (value instanceof List<?> list) {
+            var values = new ArrayList<SoraValue>(list.size());
+            for (var item : list) {
+                values.add(fromJava(item));
+            }
+            return new SoraValue(values);
+        }
+        return new SoraValue(value);
     }
 }

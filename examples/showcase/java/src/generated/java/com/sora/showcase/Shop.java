@@ -27,6 +27,15 @@ public final class Shop {
             ResourceKind.decode(reader)
         );
     }
+
+    static Shop decode(SoraValue value) {
+        var obj = value.asObject();
+        return new Shop(
+            obj.get("id").asInt(),
+            obj.get("name").asString(),
+            ResourceKind.decode(obj.get("currency"))
+        );
+    }
 }
 
 final class ShopTable implements SoraTable {
@@ -40,9 +49,10 @@ final class ShopTable implements SoraTable {
         return new ShopTable(SoraConfig.decodeMapTable(rows, row -> row.id));
     }
 
-    static ShopTable decode(SoraBundle bundle) {
-        return fromRows(bundle.decodeTable("Shop", Shop::decode));
+    static ShopTable decode(SoraTableSource source) {
+        return fromRows(source.decodeTable("Shop", Shop::decode, Shop::decode));
     }
+
     public java.util.Map<Integer, Shop> rows() {
         return rows;
     }

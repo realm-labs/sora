@@ -19,4 +19,17 @@ public enum MailType {
                 throw new SoraReadException("invalid enum ordinal for MailType");
         }
     }
+
+    static MailType decode(SoraValue value) {
+        switch (value.asString()) {
+            case "System":
+                return System;
+            case "Event":
+                return Event;
+            case "Compensation":
+                return Compensation;
+            default:
+                throw new SoraReadException("invalid enum value for MailType");
+        }
+    }
 }

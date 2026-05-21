@@ -703,7 +703,9 @@ mod tests {
 
             assert!(runtime.contains("final class SoraValueBundle"));
             assert!(runtime.contains(parse_function));
-            assert!(config.contains(&format!("SoraValueBundle.{parse_function}(bytes)")));
+            assert!(!config.contains(&format!("SoraValueBundle.{parse_function}(bytes)")));
+            assert!(runtime.contains("interface SoraTableSource"));
+            assert!(config.contains("fromSource(SoraTableSource source)"));
             assert!(item.contains("static Item decode(SoraValue value)"));
             assert!(item.contains("obj.get(\"id\").asInt()"));
             assert!(item.contains("ItemType.decode(obj.get(\"item_type\"))"));

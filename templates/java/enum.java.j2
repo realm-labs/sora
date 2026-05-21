@@ -18,7 +18,6 @@ public enum {{ enum.name }} {
         }
     }
 
-{%- if runtime_format != "sora" %}
     static {{ enum.name }} decode(SoraValue value) {
         switch (value.asString()) {
 {%- for value in enum.values %}
@@ -29,5 +28,4 @@ public enum {{ enum.name }} {
                 throw new SoraReadException("invalid enum value for {{ enum.name }}");
         }
     }
-{%- endif %}
 }

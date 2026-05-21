@@ -29,19 +29,10 @@ public final class SoraConfig {
         this.tables = tables;
     }
 
-    public static SoraConfig fromBytes(byte[] bytes) {
-{%- if runtime_format == "sora" %}
-        var bundle = SoraBundle.parse(bytes);
-{%- elif runtime_format == "json" %}
-        var bundle = SoraValueBundle.parseJson(bytes);
-{%- elif runtime_format == "cbor" %}
-        var bundle = SoraValueBundle.parseCbor(bytes);
-{%- elif runtime_format == "sora-protobuf" %}
-        var bundle = SoraValueBundle.parseProtobuf(bytes);
-{%- endif %}
+    public static SoraConfig fromSource(SoraTableSource source) {
         var tables = new HashMap<String, SoraTable>({{ model.tables | length }});
 {%- for table in model.tables %}
-        tables.put("{{ table.name }}", {{ table.pascal_name }}Table.decode(bundle));
+        tables.put("{{ table.name }}", {{ table.pascal_name }}Table.decode(source));
 {%- endfor %}
         return new SoraConfig(tables);
     }

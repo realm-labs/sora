@@ -35,6 +35,17 @@ public final class MailTemplate {
             reader.readList(() -> Reward.decode(reader))
         );
     }
+
+    static MailTemplate decode(SoraValue value) {
+        var obj = value.asObject();
+        return new MailTemplate(
+            obj.get("id").asInt(),
+            MailType.decode(obj.get("mail_type")),
+            obj.get("title_key").asString(),
+            obj.get("body_key").asString(),
+            obj.get("rewards").asList(item -> Reward.decode(item))
+        );
+    }
 }
 
 final class MailTemplateTable implements SoraTable {
@@ -48,9 +59,10 @@ final class MailTemplateTable implements SoraTable {
         return new MailTemplateTable(SoraConfig.decodeMapTable(rows, row -> row.id));
     }
 
-    static MailTemplateTable decode(SoraBundle bundle) {
-        return fromRows(bundle.decodeTable("MailTemplate", MailTemplate::decode));
+    static MailTemplateTable decode(SoraTableSource source) {
+        return fromRows(source.decodeTable("MailTemplate", MailTemplate::decode, MailTemplate::decode));
     }
+
     public java.util.Map<Integer, MailTemplate> rows() {
         return rows;
     }

@@ -31,6 +31,16 @@ public final class EventRule {
             reader.readList(() -> RewardAction.decode(reader))
         );
     }
+
+    static EventRule decode(SoraValue value) {
+        var obj = value.asObject();
+        return new EventRule(
+            obj.get("id").asInt(),
+            obj.get("name").asString(),
+            EventCondition.decode(obj.get("condition")),
+            obj.get("actions").asList(item -> RewardAction.decode(item))
+        );
+    }
 }
 
 final class EventRuleTable implements SoraTable {
@@ -44,9 +54,10 @@ final class EventRuleTable implements SoraTable {
         return new EventRuleTable(SoraConfig.decodeMapTable(rows, row -> row.id));
     }
 
-    static EventRuleTable decode(SoraBundle bundle) {
-        return fromRows(bundle.decodeTable("EventRule", EventRule::decode));
+    static EventRuleTable decode(SoraTableSource source) {
+        return fromRows(source.decodeTable("EventRule", EventRule::decode, EventRule::decode));
     }
+
     public java.util.Map<Integer, EventRule> rows() {
         return rows;
     }

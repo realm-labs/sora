@@ -69,4 +69,30 @@ public interface RewardAction {
                 throw new SoraReadException("invalid union ordinal for RewardAction");
         }
     }
+
+    static RewardAction decode(SoraValue value) {
+        var obj = value.asObject();
+        switch (obj.get("type").asString()) {
+            case "AddItem":
+                return new AddItem(
+                    obj.get("item_id").asInt(),
+                    obj.get("count").asInt()
+                );
+            case "AddBuff":
+                return new AddBuff(
+                    obj.get("buff_id").asInt(),
+                    obj.get("duration").asFloat()
+                );
+            case "UnlockStage":
+                return new UnlockStage(
+                    obj.get("stage_id").asInt()
+                );
+            case "SendMail":
+                return new SendMail(
+                    obj.get("mail_id").asInt()
+                );
+            default:
+                throw new SoraReadException("invalid union tag for RewardAction");
+        }
+    }
 }

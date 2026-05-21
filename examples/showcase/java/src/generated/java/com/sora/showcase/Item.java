@@ -45,6 +45,18 @@ public final class Item {
             reader.readList(() -> reader.readString())
         );
     }
+
+    static Item decode(SoraValue value) {
+        var obj = value.asObject();
+        return new Item(
+            obj.get("id").asInt(),
+            obj.get("name").asString(),
+            ItemType.decode(obj.get("item_type")),
+            obj.get("max_stack").asInt(),
+            ResourceCost.decode(obj.get("price")),
+            obj.get("tags").asList(item -> item.asString())
+        );
+    }
 }
 
 final class ItemTable implements SoraTable {
@@ -66,9 +78,10 @@ final class ItemTable implements SoraTable {
         );
     }
 
-    static ItemTable decode(SoraBundle bundle) {
-        return fromRows(bundle.decodeTable("Item", Item::decode));
+    static ItemTable decode(SoraTableSource source) {
+        return fromRows(source.decodeTable("Item", Item::decode, Item::decode));
     }
+
     public java.util.Map<Integer, Item> rows() {
         return rows;
     }

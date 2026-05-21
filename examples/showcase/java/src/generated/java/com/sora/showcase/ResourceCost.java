@@ -24,4 +24,13 @@ public final class ResourceCost {
             reader.readI32()
         );
     }
+
+    static ResourceCost decode(SoraValue value) {
+        var obj = value.asObject();
+        return new ResourceCost(
+            ResourceKind.decode(obj.get("kind")),
+            obj.get("id").asInt(),
+            obj.get("count").asInt()
+        );
+    }
 }
