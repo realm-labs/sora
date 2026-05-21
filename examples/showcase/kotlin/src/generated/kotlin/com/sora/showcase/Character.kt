@@ -39,8 +39,8 @@ data class Character(
 }
 
 class CharacterTable private constructor(
-    val rows: Map<Int, Character>,
     val keys: List<Int>,
+    val rows: Map<Int, Character>,
 ) : SoraTable {
     operator fun get(key: Int): Character? = rows[key]
 
@@ -60,8 +60,8 @@ class CharacterTable private constructor(
 
         private fun fromRows(rows: List<Character>): CharacterTable =
             CharacterTable(
-                rows.associateBy { it.id },
                 rows.map { it.id },
+                rows.associateBy { it.id },
             )
     }
 }

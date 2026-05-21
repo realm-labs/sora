@@ -33,8 +33,8 @@ function Skill.decode(reader)
 end
 
 ---@class SkillTable
----@field private _rows table<integer, Skill>
 ---@field private _keys integer[]
+---@field private _rows table<integer, Skill>
 local SkillTable = {}
 SkillTable.__index = SkillTable
 
@@ -46,8 +46,8 @@ function SkillTable.decode(rows)
         keys[index] = row.id
     end
     return setmetatable({
-        _rows = Runtime.decode_map_table(rows, function(row) return row.id end),
         _keys = keys,
+        _rows = Runtime.decode_map_table(rows, function(row) return row.id end),
     }, SkillTable)
 end
 

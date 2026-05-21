@@ -50,15 +50,15 @@ public sealed record Item(
 
 public sealed class ItemTable : ISoraTable
 {
-    private readonly Dictionary<int, Item> rows;
     private readonly List<int> keys;
+    private readonly Dictionary<int, Item> rows;
     private readonly Dictionary<string, Item> byName;
     private readonly Dictionary<ItemType, List<Item>> byItemType;
 
-    internal ItemTable(Dictionary<int, Item> rows, List<int> keys, Dictionary<string, Item> byName, Dictionary<ItemType, List<Item>> byItemType)
+    internal ItemTable(List<int> keys, Dictionary<int, Item> rows, Dictionary<string, Item> byName, Dictionary<ItemType, List<Item>> byItemType)
     {
-        this.rows = rows;
         this.keys = keys;
+        this.rows = rows;
         this.byName = byName;
         this.byItemType = byItemType;
     }
@@ -71,8 +71,8 @@ public sealed class ItemTable : ISoraTable
     internal static ItemTable FromRows(List<Item> rows)
     {
         return new ItemTable(
-            SoraConfig.DecodeMapTable(rows, row => row.Id),
             rows.ConvertAll(row => row.Id),
+            SoraConfig.DecodeMapTable(rows, row => row.Id),
             SoraConfig.DecodeUniqueIndex(rows, row => row.Name),
             SoraConfig.DecodeIndex(rows, row => row.ItemType)
         );

@@ -20,8 +20,8 @@ function Shop.decode(reader)
 end
 
 ---@class ShopTable
----@field private _rows table<integer, Shop>
 ---@field private _keys integer[]
+---@field private _rows table<integer, Shop>
 local ShopTable = {}
 ShopTable.__index = ShopTable
 
@@ -33,8 +33,8 @@ function ShopTable.decode(rows)
         keys[index] = row.id
     end
     return setmetatable({
-        _rows = Runtime.decode_map_table(rows, function(row) return row.id end),
         _keys = keys,
+        _rows = Runtime.decode_map_table(rows, function(row) return row.id end),
     }, ShopTable)
 end
 

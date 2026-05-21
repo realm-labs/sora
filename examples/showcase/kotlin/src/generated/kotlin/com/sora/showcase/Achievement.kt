@@ -30,8 +30,8 @@ data class Achievement(
 }
 
 class AchievementTable private constructor(
-    val rows: Map<Int, Achievement>,
     val keys: List<Int>,
+    val rows: Map<Int, Achievement>,
 ) : SoraTable {
     operator fun get(key: Int): Achievement? = rows[key]
 
@@ -51,8 +51,8 @@ class AchievementTable private constructor(
 
         private fun fromRows(rows: List<Achievement>): AchievementTable =
             AchievementTable(
-                rows.associateBy { it.id },
                 rows.map { it.id },
+                rows.associateBy { it.id },
             )
     }
 }

@@ -20,8 +20,8 @@ function GachaPool.decode(reader)
 end
 
 ---@class GachaPoolTable
----@field private _rows table<integer, GachaPool>
 ---@field private _keys integer[]
+---@field private _rows table<integer, GachaPool>
 local GachaPoolTable = {}
 GachaPoolTable.__index = GachaPoolTable
 
@@ -33,8 +33,8 @@ function GachaPoolTable.decode(rows)
         keys[index] = row.id
     end
     return setmetatable({
-        _rows = Runtime.decode_map_table(rows, function(row) return row.id end),
         _keys = keys,
+        _rows = Runtime.decode_map_table(rows, function(row) return row.id end),
     }, GachaPoolTable)
 end
 

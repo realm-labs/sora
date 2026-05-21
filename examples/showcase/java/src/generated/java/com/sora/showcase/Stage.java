@@ -49,16 +49,16 @@ public final class Stage {
 }
 
 final class StageTable implements SoraTable {
-    private final java.util.Map<Integer, Stage> rows;
     private final List<Integer> keys;
+    private final java.util.Map<Integer, Stage> rows;
 
-    private StageTable(java.util.Map<Integer, Stage> rows, List<Integer> keys) {
-        this.rows = rows;
+    private StageTable(List<Integer> keys, java.util.Map<Integer, Stage> rows) {
         this.keys = keys;
+        this.rows = rows;
     }
 
     private static StageTable fromRows(List<Stage> rows) {
-        return new StageTable(SoraConfig.decodeMapTable(rows, row -> row.id), rows.stream().map(row -> row.id).toList());
+        return new StageTable(rows.stream().map(row -> row.id).toList(), SoraConfig.decodeMapTable(rows, row -> row.id));
     }
 
     static StageTable decode(SoraTableSource source) {

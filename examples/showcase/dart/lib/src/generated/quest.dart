@@ -40,18 +40,18 @@ final class Quest {
 }
 
 final class QuestTable extends Iterable<Quest> implements SoraConfigTable {
-  final Map<int, Quest> _rows;
   final List<int> _keys;
+  final Map<int, Quest> _rows;
 
   const QuestTable(
-    this._rows,
     this._keys,
+    this._rows,
   );
 
   static QuestTable decode(List<Quest> rows) {
     return QuestTable(
-      decodeMapTable(rows, (row) => row.id),
       rows.map((row) => row.id).toList(growable: false),
+      decodeMapTable(rows, (row) => row.id),
     );
   }
 

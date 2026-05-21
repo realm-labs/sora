@@ -40,14 +40,14 @@ export function decodeBuffValue(value: SoraValue): Buff {
 
 export class BuffTable implements SoraConfigTable {
     private constructor(
-        private readonly _rows: Map<number, Buff>,
         private readonly _keys: number[],
+        private readonly _rows: Map<number, Buff>,
     ) {}
 
     static decode(rows: Buff[]): BuffTable {
         return new BuffTable(
-            decodeMapTable(rows, (row) => row.id),
             rows.map((row) => row.id),
+            decodeMapTable(rows, (row) => row.id),
         );
     }
 

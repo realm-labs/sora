@@ -28,18 +28,18 @@ final class Buff {
 }
 
 final class BuffTable extends Iterable<Buff> implements SoraConfigTable {
-  final Map<int, Buff> _rows;
   final List<int> _keys;
+  final Map<int, Buff> _rows;
 
   const BuffTable(
-    this._rows,
     this._keys,
+    this._rows,
   );
 
   static BuffTable decode(List<Buff> rows) {
     return BuffTable(
-      decodeMapTable(rows, (row) => row.id),
       rows.map((row) => row.id).toList(growable: false),
+      decodeMapTable(rows, (row) => row.id),
     );
   }
 

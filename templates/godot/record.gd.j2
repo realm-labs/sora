@@ -30,8 +30,8 @@ class {{ table.class_name }}:
 	extends SoraRuntime.SoraConfigTable
 
 {%- if table.mode == "map" and table.key_field_name %}
-	var _rows: Dictionary = {}
 	var keys: Array = []
+	var _rows: Dictionary = {}
 {%- elif table.mode == "singleton" %}
 	var row: {{ table.row_type }} = null
 {%- else %}
@@ -50,8 +50,8 @@ class {{ table.class_name }}:
 		table.mode = "{{ table.mode }}"
 		table.key = {% if table.key_name %}"{{ table.key_name }}"{% else %}null{% endif %}
 {%- if table.mode == "map" and table.key_field_name %}
-		table._rows = SoraRuntime.decode_map_table(rows, func(row): return row.{{ table.key_field_name }})
 		table.keys = rows.map(func(row): return row.{{ table.key_field_name }})
+		table._rows = SoraRuntime.decode_map_table(rows, func(row): return row.{{ table.key_field_name }})
 {%- elif table.mode == "singleton" %}
 		table.row = SoraRuntime.require_singleton_table(rows, "{{ table.name }}")
 {%- else %}

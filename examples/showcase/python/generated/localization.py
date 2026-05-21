@@ -43,17 +43,17 @@ class Localization:
 class LocalizationTable(SoraConfigTable):
     def __init__(
         self,
-        rows: dict[str, Localization],
         keys: list[str],
+        rows: dict[str, Localization],
     ) -> None:
-        self._rows = rows
         self._keys = keys
+        self._rows = rows
 
     @staticmethod
     def decode(rows: list[Localization]) -> LocalizationTable:
         return LocalizationTable(
-            decode_map_table(rows, lambda row: row.key),
             [row.key for row in rows],
+            decode_map_table(rows, lambda row: row.key),
         )
 
     def name(self) -> str:

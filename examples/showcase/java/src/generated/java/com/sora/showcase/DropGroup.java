@@ -34,16 +34,16 @@ public final class DropGroup {
 }
 
 final class DropGroupTable implements SoraTable {
-    private final java.util.Map<Integer, DropGroup> rows;
     private final List<Integer> keys;
+    private final java.util.Map<Integer, DropGroup> rows;
 
-    private DropGroupTable(java.util.Map<Integer, DropGroup> rows, List<Integer> keys) {
-        this.rows = rows;
+    private DropGroupTable(List<Integer> keys, java.util.Map<Integer, DropGroup> rows) {
         this.keys = keys;
+        this.rows = rows;
     }
 
     private static DropGroupTable fromRows(List<DropGroup> rows) {
-        return new DropGroupTable(SoraConfig.decodeMapTable(rows, row -> row.id), rows.stream().map(row -> row.id).toList());
+        return new DropGroupTable(rows.stream().map(row -> row.id).toList(), SoraConfig.decodeMapTable(rows, row -> row.id));
     }
 
     static DropGroupTable decode(SoraTableSource source) {

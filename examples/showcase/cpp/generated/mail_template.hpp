@@ -55,6 +55,10 @@ public:
     std::size_t size() const override {
         return rows_.size();
     }
+    const std::vector<std::int32_t>& keys() const {
+        return keys_;
+    }
+
     const MailTemplate* get(const std::int32_t& key) const {
         typename std::unordered_map<std::int32_t, MailTemplate>::const_iterator it = rows_.find(key);
         if (it == rows_.end()) {
@@ -65,10 +69,6 @@ public:
 
     const std::unordered_map<std::int32_t, MailTemplate>& rows() const {
         return rows_;
-    }
-
-    const std::vector<std::int32_t>& keys() const {
-        return keys_;
     }
 
     std::vector<const MailTemplate*> ordered_rows() const {
@@ -88,8 +88,8 @@ public:
 private:
     void build_indexes() {
     }
-    std::unordered_map<std::int32_t, MailTemplate> rows_;
     std::vector<std::int32_t> keys_;
+    std::unordered_map<std::int32_t, MailTemplate> rows_;
 };
 
 } // namespace sora::showcase

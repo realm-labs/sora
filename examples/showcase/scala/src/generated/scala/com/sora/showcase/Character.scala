@@ -26,8 +26,8 @@ object Character {
 }
 
 final class CharacterTable private (
-  val rows: Map[Int, Character],
-  val keys: Vector[Int]
+  val keys: Vector[Int],
+  val rows: Map[Int, Character]
 ) extends SoraTable {
   def get(key: Int): Option[Character] = rows.get(key)
 
@@ -47,7 +47,7 @@ object CharacterTable {
 
   private def fromRows(rows: Vector[Character]): CharacterTable =
     new CharacterTable(
-      rows.map(row => row.id -> row).toMap,
-      rows.map(row => row.id)
+      rows.map(row => row.id),
+      rows.map(row => row.id -> row).toMap
     )
 }

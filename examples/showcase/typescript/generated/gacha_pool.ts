@@ -37,14 +37,14 @@ export function decodeGachaPoolValue(value: SoraValue): GachaPool {
 
 export class GachaPoolTable implements SoraConfigTable {
     private constructor(
-        private readonly _rows: Map<number, GachaPool>,
         private readonly _keys: number[],
+        private readonly _rows: Map<number, GachaPool>,
     ) {}
 
     static decode(rows: GachaPool[]): GachaPoolTable {
         return new GachaPoolTable(
-            decodeMapTable(rows, (row) => row.id),
             rows.map((row) => row.id),
+            decodeMapTable(rows, (row) => row.id),
         );
     }
 

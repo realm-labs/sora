@@ -20,8 +20,8 @@ function VipLevel.decode(reader)
 end
 
 ---@class VipLevelTable
----@field private _rows table<integer, VipLevel>
 ---@field private _keys integer[]
+---@field private _rows table<integer, VipLevel>
 local VipLevelTable = {}
 VipLevelTable.__index = VipLevelTable
 
@@ -33,8 +33,8 @@ function VipLevelTable.decode(rows)
         keys[index] = row.level
     end
     return setmetatable({
-        _rows = Runtime.decode_map_table(rows, function(row) return row.level end),
         _keys = keys,
+        _rows = Runtime.decode_map_table(rows, function(row) return row.level end),
     }, VipLevelTable)
 end
 

@@ -48,8 +48,8 @@ func decodeShopValue(input SoraValue) (Shop, error) {
 }
 
 type ShopTable struct {
-	rows map[int32]Shop
 	keys []int32
+	rows map[int32]Shop
 }
 
 func buildShopTable(rows []Shop) (*ShopTable, error) {
@@ -57,7 +57,7 @@ func buildShopTable(rows []Shop) (*ShopTable, error) {
 	for _, row := range rows {
 		keys = append(keys, row.Id)
 	}
-	return &ShopTable{rows: DecodeMapTable(rows, func(row Shop) int32 { return row.Id }), keys: keys}, nil
+	return &ShopTable{keys: keys, rows: DecodeMapTable(rows, func(row Shop) int32 { return row.Id })}, nil
 }
 
 func decodeShopTable(source SoraTableSource) (*ShopTable, error) {

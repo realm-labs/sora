@@ -33,8 +33,8 @@ static func decode(value: Variant) -> Item:
 
 class ItemTable:
 	extends SoraRuntime.SoraConfigTable
-	var _rows: Dictionary = {}
 	var keys: Array = []
+	var _rows: Dictionary = {}
 	var _name: Dictionary = {}
 	var _item_type: Dictionary = {}
 
@@ -43,8 +43,8 @@ class ItemTable:
 		table.name = "Item"
 		table.mode = "map"
 		table.key = "id"
-		table._rows = SoraRuntime.decode_map_table(rows, func(row): return row.id)
 		table.keys = rows.map(func(row): return row.id)
+		table._rows = SoraRuntime.decode_map_table(rows, func(row): return row.id)
 		table._name = SoraRuntime.decode_unique_index(rows, func(row): return row.name)
 		table._item_type = SoraRuntime.decode_index(rows, func(row): return row.item_type)
 		return table

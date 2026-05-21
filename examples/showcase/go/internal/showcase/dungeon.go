@@ -57,8 +57,8 @@ func decodeDungeonValue(input SoraValue) (Dungeon, error) {
 }
 
 type DungeonTable struct {
-	rows map[int32]Dungeon
 	keys []int32
+	rows map[int32]Dungeon
 }
 
 func buildDungeonTable(rows []Dungeon) (*DungeonTable, error) {
@@ -66,7 +66,7 @@ func buildDungeonTable(rows []Dungeon) (*DungeonTable, error) {
 	for _, row := range rows {
 		keys = append(keys, row.Id)
 	}
-	return &DungeonTable{rows: DecodeMapTable(rows, func(row Dungeon) int32 { return row.Id }), keys: keys}, nil
+	return &DungeonTable{keys: keys, rows: DecodeMapTable(rows, func(row Dungeon) int32 { return row.Id })}, nil
 }
 
 func decodeDungeonTable(source SoraTableSource) (*DungeonTable, error) {

@@ -35,8 +35,8 @@ export function decodeCharacterValue(value) {
 
 export class CharacterTable {
     constructor(
-        rows,
         keys,
+        rows,
     ) {
         this._rows = rows;
         this._keys = keys;
@@ -44,8 +44,8 @@ export class CharacterTable {
 
     static decode(rows) {
         return new CharacterTable(
-            decodeMapTable(rows, (row) => row.id),
             rows.map((row) => row.id),
+            decodeMapTable(rows, (row) => row.id),
         );
     }
 

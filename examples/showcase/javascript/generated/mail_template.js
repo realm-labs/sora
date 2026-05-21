@@ -31,8 +31,8 @@ export function decodeMailTemplateValue(value) {
 
 export class MailTemplateTable {
     constructor(
-        rows,
         keys,
+        rows,
     ) {
         this._rows = rows;
         this._keys = keys;
@@ -40,8 +40,8 @@ export class MailTemplateTable {
 
     static decode(rows) {
         return new MailTemplateTable(
-            decodeMapTable(rows, (row) => row.id),
             rows.map((row) => row.id),
+            decodeMapTable(rows, (row) => row.id),
         );
     }
 

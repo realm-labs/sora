@@ -20,8 +20,8 @@ function Recipe.decode(reader)
 end
 
 ---@class RecipeTable
----@field private _rows table<integer, Recipe>
 ---@field private _keys integer[]
+---@field private _rows table<integer, Recipe>
 local RecipeTable = {}
 RecipeTable.__index = RecipeTable
 
@@ -33,8 +33,8 @@ function RecipeTable.decode(rows)
         keys[index] = row.id
     end
     return setmetatable({
-        _rows = Runtime.decode_map_table(rows, function(row) return row.id end),
         _keys = keys,
+        _rows = Runtime.decode_map_table(rows, function(row) return row.id end),
     }, RecipeTable)
 end
 

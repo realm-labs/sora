@@ -30,8 +30,8 @@ data class Dungeon(
 }
 
 class DungeonTable private constructor(
-    val rows: Map<Int, Dungeon>,
     val keys: List<Int>,
+    val rows: Map<Int, Dungeon>,
 ) : SoraTable {
     operator fun get(key: Int): Dungeon? = rows[key]
 
@@ -51,8 +51,8 @@ class DungeonTable private constructor(
 
         private fun fromRows(rows: List<Dungeon>): DungeonTable =
             DungeonTable(
-                rows.associateBy { it.id },
                 rows.map { it.id },
+                rows.associateBy { it.id },
             )
     }
 }

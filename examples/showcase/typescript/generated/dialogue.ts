@@ -34,14 +34,14 @@ export function decodeDialogueValue(value: SoraValue): Dialogue {
 
 export class DialogueTable implements SoraConfigTable {
     private constructor(
-        private readonly _rows: Map<number, Dialogue>,
         private readonly _keys: number[],
+        private readonly _rows: Map<number, Dialogue>,
     ) {}
 
     static decode(rows: Dialogue[]): DialogueTable {
         return new DialogueTable(
-            decodeMapTable(rows, (row) => row.id),
             rows.map((row) => row.id),
+            decodeMapTable(rows, (row) => row.id),
         );
     }
 

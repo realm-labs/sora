@@ -35,13 +35,13 @@ public sealed record VipLevel(
 
 public sealed class VipLevelTable : ISoraTable
 {
-    private readonly Dictionary<int, VipLevel> rows;
     private readonly List<int> keys;
+    private readonly Dictionary<int, VipLevel> rows;
 
-    internal VipLevelTable(Dictionary<int, VipLevel> rows, List<int> keys)
+    internal VipLevelTable(List<int> keys, Dictionary<int, VipLevel> rows)
     {
-        this.rows = rows;
         this.keys = keys;
+        this.rows = rows;
     }
 
     internal static VipLevelTable Decode(ISoraTableSource source)
@@ -51,7 +51,7 @@ public sealed class VipLevelTable : ISoraTable
 
     internal static VipLevelTable FromRows(List<VipLevel> rows)
     {
-        return new VipLevelTable(SoraConfig.DecodeMapTable(rows, row => row.Level), rows.ConvertAll(row => row.Level));
+        return new VipLevelTable(rows.ConvertAll(row => row.Level), SoraConfig.DecodeMapTable(rows, row => row.Level));
     }
 
     public Dictionary<int, VipLevel> Rows => rows;

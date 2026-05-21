@@ -20,8 +20,8 @@ object Localization {
 }
 
 final class LocalizationTable private (
-  val rows: Map[String, Localization],
-  val keys: Vector[String]
+  val keys: Vector[String],
+  val rows: Map[String, Localization]
 ) extends SoraTable {
   def get(key: String): Option[Localization] = rows.get(key)
 
@@ -41,7 +41,7 @@ object LocalizationTable {
 
   private def fromRows(rows: Vector[Localization]): LocalizationTable =
     new LocalizationTable(
-      rows.map(row => row.key -> row).toMap,
-      rows.map(row => row.key)
+      rows.map(row => row.key),
+      rows.map(row => row.key -> row).toMap
     )
 }

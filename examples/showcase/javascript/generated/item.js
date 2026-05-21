@@ -33,8 +33,8 @@ export function decodeItemValue(value) {
 
 export class ItemTable {
     constructor(
-        rows,
         keys,
+        rows,
         byName,
         byItemType,
     ) {
@@ -46,8 +46,8 @@ export class ItemTable {
 
     static decode(rows) {
         return new ItemTable(
-            decodeMapTable(rows, (row) => row.id),
             rows.map((row) => row.id),
+            decodeMapTable(rows, (row) => row.id),
             decodeUniqueIndex(rows, (row) => row.name),
             decodeIndex(rows, (row) => row.itemType),
         );

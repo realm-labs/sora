@@ -44,16 +44,16 @@ public final class EventRule {
 }
 
 final class EventRuleTable implements SoraTable {
-    private final java.util.Map<Integer, EventRule> rows;
     private final List<Integer> keys;
+    private final java.util.Map<Integer, EventRule> rows;
 
-    private EventRuleTable(java.util.Map<Integer, EventRule> rows, List<Integer> keys) {
-        this.rows = rows;
+    private EventRuleTable(List<Integer> keys, java.util.Map<Integer, EventRule> rows) {
         this.keys = keys;
+        this.rows = rows;
     }
 
     private static EventRuleTable fromRows(List<EventRule> rows) {
-        return new EventRuleTable(SoraConfig.decodeMapTable(rows, row -> row.id), rows.stream().map(row -> row.id).toList());
+        return new EventRuleTable(rows.stream().map(row -> row.id).toList(), SoraConfig.decodeMapTable(rows, row -> row.id));
     }
 
     static EventRuleTable decode(SoraTableSource source) {

@@ -67,16 +67,16 @@ public final class Skill {
 }
 
 final class SkillTable implements SoraTable {
-    private final java.util.Map<Integer, Skill> rows;
     private final List<Integer> keys;
+    private final java.util.Map<Integer, Skill> rows;
 
-    private SkillTable(java.util.Map<Integer, Skill> rows, List<Integer> keys) {
-        this.rows = rows;
+    private SkillTable(List<Integer> keys, java.util.Map<Integer, Skill> rows) {
         this.keys = keys;
+        this.rows = rows;
     }
 
     private static SkillTable fromRows(List<Skill> rows) {
-        return new SkillTable(SoraConfig.decodeMapTable(rows, row -> row.id), rows.stream().map(row -> row.id).toList());
+        return new SkillTable(rows.stream().map(row -> row.id).toList(), SoraConfig.decodeMapTable(rows, row -> row.id));
     }
 
     static SkillTable decode(SoraTableSource source) {

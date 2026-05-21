@@ -19,8 +19,8 @@ function LevelExp.decode(reader)
 end
 
 ---@class LevelExpTable
----@field private _rows table<integer, LevelExp>
 ---@field private _keys integer[]
+---@field private _rows table<integer, LevelExp>
 local LevelExpTable = {}
 LevelExpTable.__index = LevelExpTable
 
@@ -32,8 +32,8 @@ function LevelExpTable.decode(rows)
         keys[index] = row.level
     end
     return setmetatable({
-        _rows = Runtime.decode_map_table(rows, function(row) return row.level end),
         _keys = keys,
+        _rows = Runtime.decode_map_table(rows, function(row) return row.level end),
     }, LevelExpTable)
 end
 

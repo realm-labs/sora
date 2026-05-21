@@ -57,8 +57,8 @@ func decodeEventRuleValue(input SoraValue) (EventRule, error) {
 }
 
 type EventRuleTable struct {
-	rows map[int32]EventRule
 	keys []int32
+	rows map[int32]EventRule
 }
 
 func buildEventRuleTable(rows []EventRule) (*EventRuleTable, error) {
@@ -66,7 +66,7 @@ func buildEventRuleTable(rows []EventRule) (*EventRuleTable, error) {
 	for _, row := range rows {
 		keys = append(keys, row.Id)
 	}
-	return &EventRuleTable{rows: DecodeMapTable(rows, func(row EventRule) int32 { return row.Id }), keys: keys}, nil
+	return &EventRuleTable{keys: keys, rows: DecodeMapTable(rows, func(row EventRule) int32 { return row.Id })}, nil
 }
 
 func decodeEventRuleTable(source SoraTableSource) (*EventRuleTable, error) {

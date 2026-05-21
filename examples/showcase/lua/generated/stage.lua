@@ -24,8 +24,8 @@ function Stage.decode(reader)
 end
 
 ---@class StageTable
----@field private _rows table<integer, Stage>
 ---@field private _keys integer[]
+---@field private _rows table<integer, Stage>
 local StageTable = {}
 StageTable.__index = StageTable
 
@@ -37,8 +37,8 @@ function StageTable.decode(rows)
         keys[index] = row.id
     end
     return setmetatable({
-        _rows = Runtime.decode_map_table(rows, function(row) return row.id end),
         _keys = keys,
+        _rows = Runtime.decode_map_table(rows, function(row) return row.id end),
     }, StageTable)
 end
 

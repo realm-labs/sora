@@ -38,13 +38,13 @@ public sealed record Localization(
 
 public sealed class LocalizationTable : ISoraTable
 {
-    private readonly Dictionary<string, Localization> rows;
     private readonly List<string> keys;
+    private readonly Dictionary<string, Localization> rows;
 
-    internal LocalizationTable(Dictionary<string, Localization> rows, List<string> keys)
+    internal LocalizationTable(List<string> keys, Dictionary<string, Localization> rows)
     {
-        this.rows = rows;
         this.keys = keys;
+        this.rows = rows;
     }
 
     internal static LocalizationTable Decode(ISoraTableSource source)
@@ -54,7 +54,7 @@ public sealed class LocalizationTable : ISoraTable
 
     internal static LocalizationTable FromRows(List<Localization> rows)
     {
-        return new LocalizationTable(SoraConfig.DecodeMapTable(rows, row => row.Key), rows.ConvertAll(row => row.Key));
+        return new LocalizationTable(rows.ConvertAll(row => row.Key), SoraConfig.DecodeMapTable(rows, row => row.Key));
     }
 
     public Dictionary<string, Localization> Rows => rows;

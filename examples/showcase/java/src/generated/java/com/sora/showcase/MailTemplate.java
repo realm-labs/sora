@@ -49,16 +49,16 @@ public final class MailTemplate {
 }
 
 final class MailTemplateTable implements SoraTable {
-    private final java.util.Map<Integer, MailTemplate> rows;
     private final List<Integer> keys;
+    private final java.util.Map<Integer, MailTemplate> rows;
 
-    private MailTemplateTable(java.util.Map<Integer, MailTemplate> rows, List<Integer> keys) {
-        this.rows = rows;
+    private MailTemplateTable(List<Integer> keys, java.util.Map<Integer, MailTemplate> rows) {
         this.keys = keys;
+        this.rows = rows;
     }
 
     private static MailTemplateTable fromRows(List<MailTemplate> rows) {
-        return new MailTemplateTable(SoraConfig.decodeMapTable(rows, row -> row.id), rows.stream().map(row -> row.id).toList());
+        return new MailTemplateTable(rows.stream().map(row -> row.id).toList(), SoraConfig.decodeMapTable(rows, row -> row.id));
     }
 
     static MailTemplateTable decode(SoraTableSource source) {

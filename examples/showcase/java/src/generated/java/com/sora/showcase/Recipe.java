@@ -39,16 +39,16 @@ public final class Recipe {
 }
 
 final class RecipeTable implements SoraTable {
-    private final java.util.Map<Integer, Recipe> rows;
     private final List<Integer> keys;
+    private final java.util.Map<Integer, Recipe> rows;
 
-    private RecipeTable(java.util.Map<Integer, Recipe> rows, List<Integer> keys) {
-        this.rows = rows;
+    private RecipeTable(List<Integer> keys, java.util.Map<Integer, Recipe> rows) {
         this.keys = keys;
+        this.rows = rows;
     }
 
     private static RecipeTable fromRows(List<Recipe> rows) {
-        return new RecipeTable(SoraConfig.decodeMapTable(rows, row -> row.id), rows.stream().map(row -> row.id).toList());
+        return new RecipeTable(rows.stream().map(row -> row.id).toList(), SoraConfig.decodeMapTable(rows, row -> row.id));
     }
 
     static RecipeTable decode(SoraTableSource source) {

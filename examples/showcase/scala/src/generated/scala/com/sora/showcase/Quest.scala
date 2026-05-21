@@ -27,8 +27,8 @@ object Quest {
 }
 
 final class QuestTable private (
-  val rows: Map[Int, Quest],
-  val keys: Vector[Int]
+  val keys: Vector[Int],
+  val rows: Map[Int, Quest]
 ) extends SoraTable {
   def get(key: Int): Option[Quest] = rows.get(key)
 
@@ -48,7 +48,7 @@ object QuestTable {
 
   private def fromRows(rows: Vector[Quest]): QuestTable =
     new QuestTable(
-      rows.map(row => row.id -> row).toMap,
-      rows.map(row => row.id)
+      rows.map(row => row.id),
+      rows.map(row => row.id -> row).toMap
     )
 }

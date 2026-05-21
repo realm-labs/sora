@@ -45,8 +45,8 @@ data class Skill(
 }
 
 class SkillTable private constructor(
-    val rows: Map<Int, Skill>,
     val keys: List<Int>,
+    val rows: Map<Int, Skill>,
 ) : SoraTable {
     operator fun get(key: Int): Skill? = rows[key]
 
@@ -66,8 +66,8 @@ class SkillTable private constructor(
 
         private fun fromRows(rows: List<Skill>): SkillTable =
             SkillTable(
-                rows.associateBy { it.id },
                 rows.map { it.id },
+                rows.associateBy { it.id },
             )
     }
 }

@@ -30,16 +30,16 @@ static func decode(value: Variant) -> Quest:
 
 class QuestTable:
 	extends SoraRuntime.SoraConfigTable
-	var _rows: Dictionary = {}
 	var keys: Array = []
+	var _rows: Dictionary = {}
 
 	static func decode(rows: Array) -> QuestTable:
 		var table := QuestTable.new()
 		table.name = "Quest"
 		table.mode = "map"
 		table.key = "id"
-		table._rows = SoraRuntime.decode_map_table(rows, func(row): return row.id)
 		table.keys = rows.map(func(row): return row.id)
+		table._rows = SoraRuntime.decode_map_table(rows, func(row): return row.id)
 		return table
 
 	func length() -> int:

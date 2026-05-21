@@ -24,8 +24,8 @@ object Monster {
 }
 
 final class MonsterTable private (
-  val rows: Map[Int, Monster],
-  val keys: Vector[Int]
+  val keys: Vector[Int],
+  val rows: Map[Int, Monster]
 ) extends SoraTable {
   def get(key: Int): Option[Monster] = rows.get(key)
 
@@ -45,7 +45,7 @@ object MonsterTable {
 
   private def fromRows(rows: Vector[Monster]): MonsterTable =
     new MonsterTable(
-      rows.map(row => row.id -> row).toMap,
-      rows.map(row => row.id)
+      rows.map(row => row.id),
+      rows.map(row => row.id -> row).toMap
     )
 }

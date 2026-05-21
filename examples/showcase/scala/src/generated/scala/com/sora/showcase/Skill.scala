@@ -31,8 +31,8 @@ object Skill {
 }
 
 final class SkillTable private (
-  val rows: Map[Int, Skill],
-  val keys: Vector[Int]
+  val keys: Vector[Int],
+  val rows: Map[Int, Skill]
 ) extends SoraTable {
   def get(key: Int): Option[Skill] = rows.get(key)
 
@@ -52,7 +52,7 @@ object SkillTable {
 
   private def fromRows(rows: Vector[Skill]): SkillTable =
     new SkillTable(
-      rows.map(row => row.id -> row).toMap,
-      rows.map(row => row.id)
+      rows.map(row => row.id),
+      rows.map(row => row.id -> row).toMap
     )
 }

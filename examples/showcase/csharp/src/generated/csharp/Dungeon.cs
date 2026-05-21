@@ -38,13 +38,13 @@ public sealed record Dungeon(
 
 public sealed class DungeonTable : ISoraTable
 {
-    private readonly Dictionary<int, Dungeon> rows;
     private readonly List<int> keys;
+    private readonly Dictionary<int, Dungeon> rows;
 
-    internal DungeonTable(Dictionary<int, Dungeon> rows, List<int> keys)
+    internal DungeonTable(List<int> keys, Dictionary<int, Dungeon> rows)
     {
-        this.rows = rows;
         this.keys = keys;
+        this.rows = rows;
     }
 
     internal static DungeonTable Decode(ISoraTableSource source)
@@ -54,7 +54,7 @@ public sealed class DungeonTable : ISoraTable
 
     internal static DungeonTable FromRows(List<Dungeon> rows)
     {
-        return new DungeonTable(SoraConfig.DecodeMapTable(rows, row => row.Id), rows.ConvertAll(row => row.Id));
+        return new DungeonTable(rows.ConvertAll(row => row.Id), SoraConfig.DecodeMapTable(rows, row => row.Id));
     }
 
     public Dictionary<int, Dungeon> Rows => rows;

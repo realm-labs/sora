@@ -44,16 +44,16 @@ public final class Buff {
 }
 
 final class BuffTable implements SoraTable {
-    private final java.util.Map<Integer, Buff> rows;
     private final List<Integer> keys;
+    private final java.util.Map<Integer, Buff> rows;
 
-    private BuffTable(java.util.Map<Integer, Buff> rows, List<Integer> keys) {
-        this.rows = rows;
+    private BuffTable(List<Integer> keys, java.util.Map<Integer, Buff> rows) {
         this.keys = keys;
+        this.rows = rows;
     }
 
     private static BuffTable fromRows(List<Buff> rows) {
-        return new BuffTable(SoraConfig.decodeMapTable(rows, row -> row.id), rows.stream().map(row -> row.id).toList());
+        return new BuffTable(rows.stream().map(row -> row.id).toList(), SoraConfig.decodeMapTable(rows, row -> row.id));
     }
 
     static BuffTable decode(SoraTableSource source) {

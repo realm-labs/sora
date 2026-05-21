@@ -28,8 +28,8 @@ impl super::runtime::SoraDecode for Localization {
 
 #[derive(Debug, Clone)]
 pub struct LocalizationTable {
-    rows: SoraMap<String, Localization>,
     keys: Vec<String>,
+    rows: SoraMap<String, Localization>,
 }
 
 impl LocalizationTable {
@@ -38,8 +38,8 @@ impl LocalizationTable {
     ) -> Result<Self, super::runtime::SoraReadError> {
         let keys = rows.iter().map(|row| row.key.clone()).collect::<Vec<_>>();
         Ok(Self {
-            rows: super::decode_map_table(rows, |row| row.key.clone()),
             keys,
+            rows: super::decode_map_table(rows, |row| row.key.clone()),
         })
     }
     pub fn get(&self, key: &String) -> Option<&Localization> {

@@ -30,8 +30,8 @@ data class EquipmentSet(
 }
 
 class EquipmentSetTable private constructor(
-    val rows: Map<Int, EquipmentSet>,
     val keys: List<Int>,
+    val rows: Map<Int, EquipmentSet>,
 ) : SoraTable {
     operator fun get(key: Int): EquipmentSet? = rows[key]
 
@@ -51,8 +51,8 @@ class EquipmentSetTable private constructor(
 
         private fun fromRows(rows: List<EquipmentSet>): EquipmentSetTable =
             EquipmentSetTable(
-                rows.associateBy { it.id },
                 rows.map { it.id },
+                rows.associateBy { it.id },
             )
     }
 }

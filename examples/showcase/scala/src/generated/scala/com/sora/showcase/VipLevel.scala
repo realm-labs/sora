@@ -18,8 +18,8 @@ object VipLevel {
 }
 
 final class VipLevelTable private (
-  val rows: Map[Int, VipLevel],
-  val keys: Vector[Int]
+  val keys: Vector[Int],
+  val rows: Map[Int, VipLevel]
 ) extends SoraTable {
   def get(key: Int): Option[VipLevel] = rows.get(key)
 
@@ -39,7 +39,7 @@ object VipLevelTable {
 
   private def fromRows(rows: Vector[VipLevel]): VipLevelTable =
     new VipLevelTable(
-      rows.map(row => row.level -> row).toMap,
-      rows.map(row => row.level)
+      rows.map(row => row.level),
+      rows.map(row => row.level -> row).toMap
     )
 }

@@ -25,16 +25,16 @@ static func decode(value: Variant) -> MailTemplate:
 
 class MailTemplateTable:
 	extends SoraRuntime.SoraConfigTable
-	var _rows: Dictionary = {}
 	var keys: Array = []
+	var _rows: Dictionary = {}
 
 	static func decode(rows: Array) -> MailTemplateTable:
 		var table := MailTemplateTable.new()
 		table.name = "MailTemplate"
 		table.mode = "map"
 		table.key = "id"
-		table._rows = SoraRuntime.decode_map_table(rows, func(row): return row.id)
 		table.keys = rows.map(func(row): return row.id)
+		table._rows = SoraRuntime.decode_map_table(rows, func(row): return row.id)
 		return table
 
 	func length() -> int:

@@ -44,16 +44,16 @@ public final class Dungeon {
 }
 
 final class DungeonTable implements SoraTable {
-    private final java.util.Map<Integer, Dungeon> rows;
     private final List<Integer> keys;
+    private final java.util.Map<Integer, Dungeon> rows;
 
-    private DungeonTable(java.util.Map<Integer, Dungeon> rows, List<Integer> keys) {
-        this.rows = rows;
+    private DungeonTable(List<Integer> keys, java.util.Map<Integer, Dungeon> rows) {
         this.keys = keys;
+        this.rows = rows;
     }
 
     private static DungeonTable fromRows(List<Dungeon> rows) {
-        return new DungeonTable(SoraConfig.decodeMapTable(rows, row -> row.id), rows.stream().map(row -> row.id).toList());
+        return new DungeonTable(rows.stream().map(row -> row.id).toList(), SoraConfig.decodeMapTable(rows, row -> row.id));
     }
 
     static DungeonTable decode(SoraTableSource source) {

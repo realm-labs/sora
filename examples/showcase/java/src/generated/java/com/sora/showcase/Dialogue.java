@@ -39,16 +39,16 @@ public final class Dialogue {
 }
 
 final class DialogueTable implements SoraTable {
-    private final java.util.Map<Integer, Dialogue> rows;
     private final List<Integer> keys;
+    private final java.util.Map<Integer, Dialogue> rows;
 
-    private DialogueTable(java.util.Map<Integer, Dialogue> rows, List<Integer> keys) {
-        this.rows = rows;
+    private DialogueTable(List<Integer> keys, java.util.Map<Integer, Dialogue> rows) {
         this.keys = keys;
+        this.rows = rows;
     }
 
     private static DialogueTable fromRows(List<Dialogue> rows) {
-        return new DialogueTable(SoraConfig.decodeMapTable(rows, row -> row.id), rows.stream().map(row -> row.id).toList());
+        return new DialogueTable(rows.stream().map(row -> row.id).toList(), SoraConfig.decodeMapTable(rows, row -> row.id));
     }
 
     static DialogueTable decode(SoraTableSource source) {

@@ -23,16 +23,16 @@ static func decode(value: Variant) -> Dungeon:
 
 class DungeonTable:
 	extends SoraRuntime.SoraConfigTable
-	var _rows: Dictionary = {}
 	var keys: Array = []
+	var _rows: Dictionary = {}
 
 	static func decode(rows: Array) -> DungeonTable:
 		var table := DungeonTable.new()
 		table.name = "Dungeon"
 		table.mode = "map"
 		table.key = "id"
-		table._rows = SoraRuntime.decode_map_table(rows, func(row): return row.id)
 		table.keys = rows.map(func(row): return row.id)
+		table._rows = SoraRuntime.decode_map_table(rows, func(row): return row.id)
 		return table
 
 	func length() -> int:

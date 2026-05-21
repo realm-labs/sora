@@ -37,14 +37,14 @@ export function decodeRecipeValue(value: SoraValue): Recipe {
 
 export class RecipeTable implements SoraConfigTable {
     private constructor(
-        private readonly _rows: Map<number, Recipe>,
         private readonly _keys: number[],
+        private readonly _rows: Map<number, Recipe>,
     ) {}
 
     static decode(rows: Recipe[]): RecipeTable {
         return new RecipeTable(
-            decodeMapTable(rows, (row) => row.id),
             rows.map((row) => row.id),
+            decodeMapTable(rows, (row) => row.id),
         );
     }
 

@@ -28,18 +28,18 @@ final class EquipmentSet {
 }
 
 final class EquipmentSetTable extends Iterable<EquipmentSet> implements SoraConfigTable {
-  final Map<int, EquipmentSet> _rows;
   final List<int> _keys;
+  final Map<int, EquipmentSet> _rows;
 
   const EquipmentSetTable(
-    this._rows,
     this._keys,
+    this._rows,
   );
 
   static EquipmentSetTable decode(List<EquipmentSet> rows) {
     return EquipmentSetTable(
-      decodeMapTable(rows, (row) => row.id),
       rows.map((row) => row.id).toList(growable: false),
+      decodeMapTable(rows, (row) => row.id),
     );
   }
 

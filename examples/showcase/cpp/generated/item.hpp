@@ -63,6 +63,10 @@ public:
     std::size_t size() const override {
         return rows_.size();
     }
+    const std::vector<std::int32_t>& keys() const {
+        return keys_;
+    }
+
     const Item* get(const std::int32_t& key) const {
         typename std::unordered_map<std::int32_t, Item>::const_iterator it = rows_.find(key);
         if (it == rows_.end()) {
@@ -73,10 +77,6 @@ public:
 
     const std::unordered_map<std::int32_t, Item>& rows() const {
         return rows_;
-    }
-
-    const std::vector<std::int32_t>& keys() const {
-        return keys_;
     }
 
     std::vector<const Item*> ordered_rows() const {
@@ -121,8 +121,8 @@ private:
             by_item_type_[row.item_type].push_back(&row);
         }
     }
-    std::unordered_map<std::int32_t, Item> rows_;
     std::vector<std::int32_t> keys_;
+    std::unordered_map<std::int32_t, Item> rows_;
     std::unordered_map<std::string, const Item*> by_name_;
     std::unordered_map<ItemType, std::vector<const Item*> > by_item_type_;
 };

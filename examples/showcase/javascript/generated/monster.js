@@ -33,8 +33,8 @@ export function decodeMonsterValue(value) {
 
 export class MonsterTable {
     constructor(
-        rows,
         keys,
+        rows,
     ) {
         this._rows = rows;
         this._keys = keys;
@@ -42,8 +42,8 @@ export class MonsterTable {
 
     static decode(rows) {
         return new MonsterTable(
-            decodeMapTable(rows, (row) => row.id),
             rows.map((row) => row.id),
+            decodeMapTable(rows, (row) => row.id),
         );
     }
 

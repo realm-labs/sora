@@ -29,16 +29,16 @@ static func decode(value: Variant) -> Character:
 
 class CharacterTable:
 	extends SoraRuntime.SoraConfigTable
-	var _rows: Dictionary = {}
 	var keys: Array = []
+	var _rows: Dictionary = {}
 
 	static func decode(rows: Array) -> CharacterTable:
 		var table := CharacterTable.new()
 		table.name = "Character"
 		table.mode = "map"
 		table.key = "id"
-		table._rows = SoraRuntime.decode_map_table(rows, func(row): return row.id)
 		table.keys = rows.map(func(row): return row.id)
+		table._rows = SoraRuntime.decode_map_table(rows, func(row): return row.id)
 		return table
 
 	func length() -> int:

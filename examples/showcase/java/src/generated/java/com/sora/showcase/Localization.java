@@ -44,16 +44,16 @@ public final class Localization {
 }
 
 final class LocalizationTable implements SoraTable {
-    private final java.util.Map<String, Localization> rows;
     private final List<String> keys;
+    private final java.util.Map<String, Localization> rows;
 
-    private LocalizationTable(java.util.Map<String, Localization> rows, List<String> keys) {
-        this.rows = rows;
+    private LocalizationTable(List<String> keys, java.util.Map<String, Localization> rows) {
         this.keys = keys;
+        this.rows = rows;
     }
 
     private static LocalizationTable fromRows(List<Localization> rows) {
-        return new LocalizationTable(SoraConfig.decodeMapTable(rows, row -> row.key), rows.stream().map(row -> row.key).toList());
+        return new LocalizationTable(rows.stream().map(row -> row.key).toList(), SoraConfig.decodeMapTable(rows, row -> row.key));
     }
 
     static LocalizationTable decode(SoraTableSource source) {

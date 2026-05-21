@@ -23,8 +23,8 @@ function EventRule.decode(reader)
 end
 
 ---@class EventRuleTable
----@field private _rows table<integer, EventRule>
 ---@field private _keys integer[]
+---@field private _rows table<integer, EventRule>
 local EventRuleTable = {}
 EventRuleTable.__index = EventRuleTable
 
@@ -36,8 +36,8 @@ function EventRuleTable.decode(rows)
         keys[index] = row.id
     end
     return setmetatable({
-        _rows = Runtime.decode_map_table(rows, function(row) return row.id end),
         _keys = keys,
+        _rows = Runtime.decode_map_table(rows, function(row) return row.id end),
     }, EventRuleTable)
 end
 

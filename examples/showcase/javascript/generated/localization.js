@@ -27,8 +27,8 @@ export function decodeLocalizationValue(value) {
 
 export class LocalizationTable {
     constructor(
-        rows,
         keys,
+        rows,
     ) {
         this._rows = rows;
         this._keys = keys;
@@ -36,8 +36,8 @@ export class LocalizationTable {
 
     static decode(rows) {
         return new LocalizationTable(
-            decodeMapTable(rows, (row) => row.key),
             rows.map((row) => row.key),
+            decodeMapTable(rows, (row) => row.key),
         );
     }
 

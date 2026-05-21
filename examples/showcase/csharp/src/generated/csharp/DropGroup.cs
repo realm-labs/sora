@@ -32,13 +32,13 @@ public sealed record DropGroup(
 
 public sealed class DropGroupTable : ISoraTable
 {
-    private readonly Dictionary<int, DropGroup> rows;
     private readonly List<int> keys;
+    private readonly Dictionary<int, DropGroup> rows;
 
-    internal DropGroupTable(Dictionary<int, DropGroup> rows, List<int> keys)
+    internal DropGroupTable(List<int> keys, Dictionary<int, DropGroup> rows)
     {
-        this.rows = rows;
         this.keys = keys;
+        this.rows = rows;
     }
 
     internal static DropGroupTable Decode(ISoraTableSource source)
@@ -48,7 +48,7 @@ public sealed class DropGroupTable : ISoraTable
 
     internal static DropGroupTable FromRows(List<DropGroup> rows)
     {
-        return new DropGroupTable(SoraConfig.DecodeMapTable(rows, row => row.Id), rows.ConvertAll(row => row.Id));
+        return new DropGroupTable(rows.ConvertAll(row => row.Id), SoraConfig.DecodeMapTable(rows, row => row.Id));
     }
 
     public Dictionary<int, DropGroup> Rows => rows;

@@ -28,8 +28,8 @@ export function decodeDungeonValue(value) {
 
 export class DungeonTable {
     constructor(
-        rows,
         keys,
+        rows,
     ) {
         this._rows = rows;
         this._keys = keys;
@@ -37,8 +37,8 @@ export class DungeonTable {
 
     static decode(rows) {
         return new DungeonTable(
-            decodeMapTable(rows, (row) => row.id),
             rows.map((row) => row.id),
+            decodeMapTable(rows, (row) => row.id),
         );
     }
 

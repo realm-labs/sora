@@ -42,8 +42,8 @@ data class Item(
 }
 
 class ItemTable private constructor(
-    val rows: Map<Int, Item>,
     val keys: List<Int>,
+    val rows: Map<Int, Item>,
     private val nameIndex: Map<String, Item>,
     private val itemTypeIndex: Map<ItemType, List<Item>>,
 ) : SoraTable {
@@ -67,8 +67,8 @@ class ItemTable private constructor(
 
         private fun fromRows(rows: List<Item>): ItemTable =
             ItemTable(
-                rows.associateBy { it.id },
                 rows.map { it.id },
+                rows.associateBy { it.id },
                 rows.associateBy { it.name },
                 rows.groupBy { it.itemType },
             )

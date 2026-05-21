@@ -57,8 +57,8 @@ func decodeAchievementValue(input SoraValue) (Achievement, error) {
 }
 
 type AchievementTable struct {
-	rows map[int32]Achievement
 	keys []int32
+	rows map[int32]Achievement
 }
 
 func buildAchievementTable(rows []Achievement) (*AchievementTable, error) {
@@ -66,7 +66,7 @@ func buildAchievementTable(rows []Achievement) (*AchievementTable, error) {
 	for _, row := range rows {
 		keys = append(keys, row.Id)
 	}
-	return &AchievementTable{rows: DecodeMapTable(rows, func(row Achievement) int32 { return row.Id }), keys: keys}, nil
+	return &AchievementTable{keys: keys, rows: DecodeMapTable(rows, func(row Achievement) int32 { return row.Id })}, nil
 }
 
 func decodeAchievementTable(source SoraTableSource) (*AchievementTable, error) {

@@ -44,16 +44,16 @@ public final class EquipmentSet {
 }
 
 final class EquipmentSetTable implements SoraTable {
-    private final java.util.Map<Integer, EquipmentSet> rows;
     private final List<Integer> keys;
+    private final java.util.Map<Integer, EquipmentSet> rows;
 
-    private EquipmentSetTable(java.util.Map<Integer, EquipmentSet> rows, List<Integer> keys) {
-        this.rows = rows;
+    private EquipmentSetTable(List<Integer> keys, java.util.Map<Integer, EquipmentSet> rows) {
         this.keys = keys;
+        this.rows = rows;
     }
 
     private static EquipmentSetTable fromRows(List<EquipmentSet> rows) {
-        return new EquipmentSetTable(SoraConfig.decodeMapTable(rows, row -> row.id), rows.stream().map(row -> row.id).toList());
+        return new EquipmentSetTable(rows.stream().map(row -> row.id).toList(), SoraConfig.decodeMapTable(rows, row -> row.id));
     }
 
     static EquipmentSetTable decode(SoraTableSource source) {

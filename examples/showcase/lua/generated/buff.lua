@@ -22,8 +22,8 @@ function Buff.decode(reader)
 end
 
 ---@class BuffTable
----@field private _rows table<integer, Buff>
 ---@field private _keys integer[]
+---@field private _rows table<integer, Buff>
 local BuffTable = {}
 BuffTable.__index = BuffTable
 
@@ -35,8 +35,8 @@ function BuffTable.decode(rows)
         keys[index] = row.id
     end
     return setmetatable({
-        _rows = Runtime.decode_map_table(rows, function(row) return row.id end),
         _keys = keys,
+        _rows = Runtime.decode_map_table(rows, function(row) return row.id end),
     }, BuffTable)
 end
 

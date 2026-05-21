@@ -42,10 +42,10 @@ func decode{{ record.pascal_name }}Value(input SoraValue) ({{ record.pascal_name
 {%- set table = record.table %}
 
 type {{ table.pascal_name }}Table struct {
-    rows {{ table.container_type }}
 {%- if table.mode == "map" and table.key_field_name %}
     keys []{{ table.key_type }}
 {%- endif %}
+    rows {{ table.container_type }}
 {%- for index in table.unique_indexes %}
     {{ index.camel_name }} map[{{ index.key_type }}]{{ table.row_type }}
 {%- endfor %}
@@ -62,8 +62,8 @@ func build{{ table.pascal_name }}Table(rows []{{ table.row_type }}) (*{{ table.p
     }
 {%- if table.unique_indexes or table.non_unique_indexes %}
     return &{{ table.pascal_name }}Table{
-        rows: DecodeMapTable(rows, func(row {{ table.row_type }}) {{ table.key_type }} { return row.{{ table.key_field_name }} }),
         keys: keys,
+        rows: DecodeMapTable(rows, func(row {{ table.row_type }}) {{ table.key_type }} { return row.{{ table.key_field_name }} }),
 {%- for index in table.unique_indexes %}
         {{ index.camel_name }}: DecodeUniqueIndex(rows, func(row {{ table.row_type }}) {{ index.key_type }} { return row.{{ index.field_name }} }),
 {%- endfor %}
@@ -72,7 +72,7 @@ func build{{ table.pascal_name }}Table(rows []{{ table.row_type }}) (*{{ table.p
 {%- endfor %}
     }, nil
 {%- else %}
-    return &{{ table.pascal_name }}Table{rows: DecodeMapTable(rows, func(row {{ table.row_type }}) {{ table.key_type }} { return row.{{ table.key_field_name }} }), keys: keys}, nil
+    return &{{ table.pascal_name }}Table{keys: keys, rows: DecodeMapTable(rows, func(row {{ table.row_type }}) {{ table.key_type }} { return row.{{ table.key_field_name }} })}, nil
 {%- endif %}
 {%- elif table.mode == "singleton" %}
     row, err := RequireSingletonTable(rows, "{{ table.name }}")

@@ -44,13 +44,13 @@ public sealed record Monster(
 
 public sealed class MonsterTable : ISoraTable
 {
-    private readonly Dictionary<int, Monster> rows;
     private readonly List<int> keys;
+    private readonly Dictionary<int, Monster> rows;
 
-    internal MonsterTable(Dictionary<int, Monster> rows, List<int> keys)
+    internal MonsterTable(List<int> keys, Dictionary<int, Monster> rows)
     {
-        this.rows = rows;
         this.keys = keys;
+        this.rows = rows;
     }
 
     internal static MonsterTable Decode(ISoraTableSource source)
@@ -60,7 +60,7 @@ public sealed class MonsterTable : ISoraTable
 
     internal static MonsterTable FromRows(List<Monster> rows)
     {
-        return new MonsterTable(SoraConfig.DecodeMapTable(rows, row => row.Id), rows.ConvertAll(row => row.Id));
+        return new MonsterTable(rows.ConvertAll(row => row.Id), SoraConfig.DecodeMapTable(rows, row => row.Id));
     }
 
     public Dictionary<int, Monster> Rows => rows;

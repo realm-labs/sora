@@ -36,8 +36,8 @@ data class Monster(
 }
 
 class MonsterTable private constructor(
-    val rows: Map<Int, Monster>,
     val keys: List<Int>,
+    val rows: Map<Int, Monster>,
 ) : SoraTable {
     operator fun get(key: Int): Monster? = rows[key]
 
@@ -57,8 +57,8 @@ class MonsterTable private constructor(
 
         private fun fromRows(rows: List<Monster>): MonsterTable =
             MonsterTable(
-                rows.associateBy { it.id },
                 rows.map { it.id },
+                rows.associateBy { it.id },
             )
     }
 }

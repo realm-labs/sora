@@ -22,8 +22,8 @@ object MailTemplate {
 }
 
 final class MailTemplateTable private (
-  val rows: Map[Int, MailTemplate],
-  val keys: Vector[Int]
+  val keys: Vector[Int],
+  val rows: Map[Int, MailTemplate]
 ) extends SoraTable {
   def get(key: Int): Option[MailTemplate] = rows.get(key)
 
@@ -43,7 +43,7 @@ object MailTemplateTable {
 
   private def fromRows(rows: Vector[MailTemplate]): MailTemplateTable =
     new MailTemplateTable(
-      rows.map(row => row.id -> row).toMap,
-      rows.map(row => row.id)
+      rows.map(row => row.id),
+      rows.map(row => row.id -> row).toMap
     )
 }

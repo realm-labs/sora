@@ -25,16 +25,16 @@ impl super::runtime::SoraDecode for Dialogue {
 
 #[derive(Debug, Clone)]
 pub struct DialogueTable {
-    rows: SoraMap<i32, Dialogue>,
     keys: Vec<i32>,
+    rows: SoraMap<i32, Dialogue>,
 }
 
 impl DialogueTable {
     pub(super) fn from_rows(rows: Vec<Dialogue>) -> Result<Self, super::runtime::SoraReadError> {
         let keys = rows.iter().map(|row| row.id).collect::<Vec<_>>();
         Ok(Self {
-            rows: super::decode_map_table(rows, |row| row.id),
             keys,
+            rows: super::decode_map_table(rows, |row| row.id),
         })
     }
     pub fn get(&self, key: i32) -> Option<&Dialogue> {

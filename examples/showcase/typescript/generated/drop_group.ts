@@ -31,14 +31,14 @@ export function decodeDropGroupValue(value: SoraValue): DropGroup {
 
 export class DropGroupTable implements SoraConfigTable {
     private constructor(
-        private readonly _rows: Map<number, DropGroup>,
         private readonly _keys: number[],
+        private readonly _rows: Map<number, DropGroup>,
     ) {}
 
     static decode(rows: DropGroup[]): DropGroupTable {
         return new DropGroupTable(
-            decodeMapTable(rows, (row) => row.id),
             rows.map((row) => row.id),
+            decodeMapTable(rows, (row) => row.id),
         );
     }
 

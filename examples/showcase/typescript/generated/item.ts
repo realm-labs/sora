@@ -55,16 +55,16 @@ export function decodeItemValue(value: SoraValue): Item {
 
 export class ItemTable implements SoraConfigTable {
     private constructor(
-        private readonly _rows: Map<number, Item>,
         private readonly _keys: number[],
+        private readonly _rows: Map<number, Item>,
         private readonly _by_name: Map<string, Item>,
         private readonly _by_item_type: Map<ItemType, Item[]>,
     ) {}
 
     static decode(rows: Item[]): ItemTable {
         return new ItemTable(
-            decodeMapTable(rows, (row) => row.id),
             rows.map((row) => row.id),
+            decodeMapTable(rows, (row) => row.id),
             decodeUniqueIndex(rows, (row) => row.name),
             decodeIndex(rows, (row) => row.itemType),
         );

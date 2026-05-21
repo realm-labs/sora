@@ -32,18 +32,18 @@ final class MailTemplate {
 }
 
 final class MailTemplateTable extends Iterable<MailTemplate> implements SoraConfigTable {
-  final Map<int, MailTemplate> _rows;
   final List<int> _keys;
+  final Map<int, MailTemplate> _rows;
 
   const MailTemplateTable(
-    this._rows,
     this._keys,
+    this._rows,
   );
 
   static MailTemplateTable decode(List<MailTemplate> rows) {
     return MailTemplateTable(
-      decodeMapTable(rows, (row) => row.id),
       rows.map((row) => row.id).toList(growable: false),
+      decodeMapTable(rows, (row) => row.id),
     );
   }
 

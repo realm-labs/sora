@@ -26,16 +26,16 @@ impl super::runtime::SoraDecode for GachaPool {
 
 #[derive(Debug, Clone)]
 pub struct GachaPoolTable {
-    rows: SoraMap<i32, GachaPool>,
     keys: Vec<i32>,
+    rows: SoraMap<i32, GachaPool>,
 }
 
 impl GachaPoolTable {
     pub(super) fn from_rows(rows: Vec<GachaPool>) -> Result<Self, super::runtime::SoraReadError> {
         let keys = rows.iter().map(|row| row.id).collect::<Vec<_>>();
         Ok(Self {
-            rows: super::decode_map_table(rows, |row| row.id),
             keys,
+            rows: super::decode_map_table(rows, |row| row.id),
         })
     }
     pub fn get(&self, key: i32) -> Option<&GachaPool> {

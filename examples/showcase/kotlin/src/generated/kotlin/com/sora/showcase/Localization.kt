@@ -30,8 +30,8 @@ data class Localization(
 }
 
 class LocalizationTable private constructor(
-    val rows: Map<String, Localization>,
     val keys: List<String>,
+    val rows: Map<String, Localization>,
 ) : SoraTable {
     operator fun get(key: String): Localization? = rows[key]
 
@@ -51,8 +51,8 @@ class LocalizationTable private constructor(
 
         private fun fromRows(rows: List<Localization>): LocalizationTable =
             LocalizationTable(
-                rows.associateBy { it.key },
                 rows.map { it.key },
+                rows.associateBy { it.key },
             )
     }
 }

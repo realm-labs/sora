@@ -35,13 +35,13 @@ public sealed record Dialogue(
 
 public sealed class DialogueTable : ISoraTable
 {
-    private readonly Dictionary<int, Dialogue> rows;
     private readonly List<int> keys;
+    private readonly Dictionary<int, Dialogue> rows;
 
-    internal DialogueTable(Dictionary<int, Dialogue> rows, List<int> keys)
+    internal DialogueTable(List<int> keys, Dictionary<int, Dialogue> rows)
     {
-        this.rows = rows;
         this.keys = keys;
+        this.rows = rows;
     }
 
     internal static DialogueTable Decode(ISoraTableSource source)
@@ -51,7 +51,7 @@ public sealed class DialogueTable : ISoraTable
 
     internal static DialogueTable FromRows(List<Dialogue> rows)
     {
-        return new DialogueTable(SoraConfig.DecodeMapTable(rows, row => row.Id), rows.ConvertAll(row => row.Id));
+        return new DialogueTable(rows.ConvertAll(row => row.Id), SoraConfig.DecodeMapTable(rows, row => row.Id));
     }
 
     public Dictionary<int, Dialogue> Rows => rows;

@@ -27,8 +27,8 @@ data class VipLevel(
 }
 
 class VipLevelTable private constructor(
-    val rows: Map<Int, VipLevel>,
     val keys: List<Int>,
+    val rows: Map<Int, VipLevel>,
 ) : SoraTable {
     operator fun get(key: Int): VipLevel? = rows[key]
 
@@ -48,8 +48,8 @@ class VipLevelTable private constructor(
 
         private fun fromRows(rows: List<VipLevel>): VipLevelTable =
             VipLevelTable(
-                rows.associateBy { it.level },
                 rows.map { it.level },
+                rows.associateBy { it.level },
             )
     }
 }

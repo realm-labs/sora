@@ -33,8 +33,8 @@ data class MailTemplate(
 }
 
 class MailTemplateTable private constructor(
-    val rows: Map<Int, MailTemplate>,
     val keys: List<Int>,
+    val rows: Map<Int, MailTemplate>,
 ) : SoraTable {
     operator fun get(key: Int): MailTemplate? = rows[key]
 
@@ -54,8 +54,8 @@ class MailTemplateTable private constructor(
 
         private fun fromRows(rows: List<MailTemplate>): MailTemplateTable =
             MailTemplateTable(
-                rows.associateBy { it.id },
                 rows.map { it.id },
+                rows.associateBy { it.id },
             )
     }
 }

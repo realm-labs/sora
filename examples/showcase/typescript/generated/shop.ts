@@ -37,14 +37,14 @@ export function decodeShopValue(value: SoraValue): Shop {
 
 export class ShopTable implements SoraConfigTable {
     private constructor(
-        private readonly _rows: Map<number, Shop>,
         private readonly _keys: number[],
+        private readonly _rows: Map<number, Shop>,
     ) {}
 
     static decode(rows: Shop[]): ShopTable {
         return new ShopTable(
-            decodeMapTable(rows, (row) => row.id),
             rows.map((row) => row.id),
+            decodeMapTable(rows, (row) => row.id),
         );
     }
 

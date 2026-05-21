@@ -40,14 +40,14 @@ export function decodeDungeonValue(value: SoraValue): Dungeon {
 
 export class DungeonTable implements SoraConfigTable {
     private constructor(
-        private readonly _rows: Map<number, Dungeon>,
         private readonly _keys: number[],
+        private readonly _rows: Map<number, Dungeon>,
     ) {}
 
     static decode(rows: Dungeon[]): DungeonTable {
         return new DungeonTable(
-            decodeMapTable(rows, (row) => row.id),
             rows.map((row) => row.id),
+            decodeMapTable(rows, (row) => row.id),
         );
     }
 

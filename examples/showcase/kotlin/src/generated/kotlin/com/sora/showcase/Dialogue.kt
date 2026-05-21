@@ -27,8 +27,8 @@ data class Dialogue(
 }
 
 class DialogueTable private constructor(
-    val rows: Map<Int, Dialogue>,
     val keys: List<Int>,
+    val rows: Map<Int, Dialogue>,
 ) : SoraTable {
     operator fun get(key: Int): Dialogue? = rows[key]
 
@@ -48,8 +48,8 @@ class DialogueTable private constructor(
 
         private fun fromRows(rows: List<Dialogue>): DialogueTable =
             DialogueTable(
-                rows.associateBy { it.id },
                 rows.map { it.id },
+                rows.associateBy { it.id },
             )
     }
 }

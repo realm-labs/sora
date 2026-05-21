@@ -28,8 +28,8 @@ export function decodeBuffValue(value) {
 
 export class BuffTable {
     constructor(
-        rows,
         keys,
+        rows,
     ) {
         this._rows = rows;
         this._keys = keys;
@@ -37,8 +37,8 @@ export class BuffTable {
 
     static decode(rows) {
         return new BuffTable(
-            decodeMapTable(rows, (row) => row.id),
             rows.map((row) => row.id),
+            decodeMapTable(rows, (row) => row.id),
         );
     }
 

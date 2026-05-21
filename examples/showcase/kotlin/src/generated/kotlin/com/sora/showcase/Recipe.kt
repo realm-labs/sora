@@ -27,8 +27,8 @@ data class Recipe(
 }
 
 class RecipeTable private constructor(
-    val rows: Map<Int, Recipe>,
     val keys: List<Int>,
+    val rows: Map<Int, Recipe>,
 ) : SoraTable {
     operator fun get(key: Int): Recipe? = rows[key]
 
@@ -48,8 +48,8 @@ class RecipeTable private constructor(
 
         private fun fromRows(rows: List<Recipe>): RecipeTable =
             RecipeTable(
-                rows.associateBy { it.id },
                 rows.map { it.id },
+                rows.associateBy { it.id },
             )
     }
 }

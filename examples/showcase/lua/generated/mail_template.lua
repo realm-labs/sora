@@ -25,8 +25,8 @@ function MailTemplate.decode(reader)
 end
 
 ---@class MailTemplateTable
----@field private _rows table<integer, MailTemplate>
 ---@field private _keys integer[]
+---@field private _rows table<integer, MailTemplate>
 local MailTemplateTable = {}
 MailTemplateTable.__index = MailTemplateTable
 
@@ -38,8 +38,8 @@ function MailTemplateTable.decode(rows)
         keys[index] = row.id
     end
     return setmetatable({
-        _rows = Runtime.decode_map_table(rows, function(row) return row.id end),
         _keys = keys,
+        _rows = Runtime.decode_map_table(rows, function(row) return row.id end),
     }, MailTemplateTable)
 end
 

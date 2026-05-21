@@ -25,8 +25,8 @@ export function decodeLevelExpValue(value) {
 
 export class LevelExpTable {
     constructor(
-        rows,
         keys,
+        rows,
     ) {
         this._rows = rows;
         this._keys = keys;
@@ -34,8 +34,8 @@ export class LevelExpTable {
 
     static decode(rows) {
         return new LevelExpTable(
-            decodeMapTable(rows, (row) => row.level),
             rows.map((row) => row.level),
+            decodeMapTable(rows, (row) => row.level),
         );
     }
 

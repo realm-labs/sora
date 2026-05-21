@@ -64,14 +64,14 @@ export function decodeSkillValue(value: SoraValue): Skill {
 
 export class SkillTable implements SoraConfigTable {
     private constructor(
-        private readonly _rows: Map<number, Skill>,
         private readonly _keys: number[],
+        private readonly _rows: Map<number, Skill>,
     ) {}
 
     static decode(rows: Skill[]): SkillTable {
         return new SkillTable(
-            decodeMapTable(rows, (row) => row.id),
             rows.map((row) => row.id),
+            decodeMapTable(rows, (row) => row.id),
         );
     }
 

@@ -39,16 +39,16 @@ public final class LevelExp {
 }
 
 final class LevelExpTable implements SoraTable {
-    private final java.util.Map<Integer, LevelExp> rows;
     private final List<Integer> keys;
+    private final java.util.Map<Integer, LevelExp> rows;
 
-    private LevelExpTable(java.util.Map<Integer, LevelExp> rows, List<Integer> keys) {
-        this.rows = rows;
+    private LevelExpTable(List<Integer> keys, java.util.Map<Integer, LevelExp> rows) {
         this.keys = keys;
+        this.rows = rows;
     }
 
     private static LevelExpTable fromRows(List<LevelExp> rows) {
-        return new LevelExpTable(SoraConfig.decodeMapTable(rows, row -> row.level), rows.stream().map(row -> row.level).toList());
+        return new LevelExpTable(rows.stream().map(row -> row.level).toList(), SoraConfig.decodeMapTable(rows, row -> row.level));
     }
 
     static LevelExpTable decode(SoraTableSource source) {

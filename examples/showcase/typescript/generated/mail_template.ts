@@ -46,14 +46,14 @@ export function decodeMailTemplateValue(value: SoraValue): MailTemplate {
 
 export class MailTemplateTable implements SoraConfigTable {
     private constructor(
-        private readonly _rows: Map<number, MailTemplate>,
         private readonly _keys: number[],
+        private readonly _rows: Map<number, MailTemplate>,
     ) {}
 
     static decode(rows: MailTemplate[]): MailTemplateTable {
         return new MailTemplateTable(
-            decodeMapTable(rows, (row) => row.id),
             rows.map((row) => row.id),
+            decodeMapTable(rows, (row) => row.id),
         );
     }
 

@@ -23,16 +23,16 @@ static func decode(value: Variant) -> Buff:
 
 class BuffTable:
 	extends SoraRuntime.SoraConfigTable
-	var _rows: Dictionary = {}
 	var keys: Array = []
+	var _rows: Dictionary = {}
 
 	static func decode(rows: Array) -> BuffTable:
 		var table := BuffTable.new()
 		table.name = "Buff"
 		table.mode = "map"
 		table.key = "id"
-		table._rows = SoraRuntime.decode_map_table(rows, func(row): return row.id)
 		table.keys = rows.map(func(row): return row.id)
+		table._rows = SoraRuntime.decode_map_table(rows, func(row): return row.id)
 		return table
 
 	func length() -> int:

@@ -22,8 +22,8 @@ function EquipmentSet.decode(reader)
 end
 
 ---@class EquipmentSetTable
----@field private _rows table<integer, EquipmentSet>
 ---@field private _keys integer[]
+---@field private _rows table<integer, EquipmentSet>
 local EquipmentSetTable = {}
 EquipmentSetTable.__index = EquipmentSetTable
 
@@ -35,8 +35,8 @@ function EquipmentSetTable.decode(rows)
         keys[index] = row.id
     end
     return setmetatable({
-        _rows = Runtime.decode_map_table(rows, function(row) return row.id end),
         _keys = keys,
+        _rows = Runtime.decode_map_table(rows, function(row) return row.id end),
     }, EquipmentSetTable)
 end
 

@@ -40,14 +40,14 @@ export function decodeEquipmentSetValue(value: SoraValue): EquipmentSet {
 
 export class EquipmentSetTable implements SoraConfigTable {
     private constructor(
-        private readonly _rows: Map<number, EquipmentSet>,
         private readonly _keys: number[],
+        private readonly _rows: Map<number, EquipmentSet>,
     ) {}
 
     static decode(rows: EquipmentSet[]): EquipmentSetTable {
         return new EquipmentSetTable(
-            decodeMapTable(rows, (row) => row.id),
             rows.map((row) => row.id),
+            decodeMapTable(rows, (row) => row.id),
         );
     }
 

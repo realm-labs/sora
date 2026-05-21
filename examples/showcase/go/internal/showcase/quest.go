@@ -85,8 +85,8 @@ func decodeQuestValue(input SoraValue) (Quest, error) {
 }
 
 type QuestTable struct {
-	rows map[int32]Quest
 	keys []int32
+	rows map[int32]Quest
 }
 
 func buildQuestTable(rows []Quest) (*QuestTable, error) {
@@ -94,7 +94,7 @@ func buildQuestTable(rows []Quest) (*QuestTable, error) {
 	for _, row := range rows {
 		keys = append(keys, row.Id)
 	}
-	return &QuestTable{rows: DecodeMapTable(rows, func(row Quest) int32 { return row.Id }), keys: keys}, nil
+	return &QuestTable{keys: keys, rows: DecodeMapTable(rows, func(row Quest) int32 { return row.Id })}, nil
 }
 
 func decodeQuestTable(source SoraTableSource) (*QuestTable, error) {

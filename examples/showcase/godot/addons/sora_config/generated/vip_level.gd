@@ -21,16 +21,16 @@ static func decode(value: Variant) -> VipLevel:
 
 class VipLevelTable:
 	extends SoraRuntime.SoraConfigTable
-	var _rows: Dictionary = {}
 	var keys: Array = []
+	var _rows: Dictionary = {}
 
 	static func decode(rows: Array) -> VipLevelTable:
 		var table := VipLevelTable.new()
 		table.name = "VipLevel"
 		table.mode = "map"
 		table.key = "level"
-		table._rows = SoraRuntime.decode_map_table(rows, func(row): return row.level)
 		table.keys = rows.map(func(row): return row.level)
+		table._rows = SoraRuntime.decode_map_table(rows, func(row): return row.level)
 		return table
 
 	func length() -> int:

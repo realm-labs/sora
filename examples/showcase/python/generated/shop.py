@@ -41,17 +41,17 @@ class Shop:
 class ShopTable(SoraConfigTable):
     def __init__(
         self,
-        rows: dict[int, Shop],
         keys: list[int],
+        rows: dict[int, Shop],
     ) -> None:
-        self._rows = rows
         self._keys = keys
+        self._rows = rows
 
     @staticmethod
     def decode(rows: list[Shop]) -> ShopTable:
         return ShopTable(
-            decode_map_table(rows, lambda row: row.id),
             [row.id for row in rows],
+            decode_map_table(rows, lambda row: row.id),
         )
 
     def name(self) -> str:

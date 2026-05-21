@@ -38,13 +38,13 @@ public sealed record EventRule(
 
 public sealed class EventRuleTable : ISoraTable
 {
-    private readonly Dictionary<int, EventRule> rows;
     private readonly List<int> keys;
+    private readonly Dictionary<int, EventRule> rows;
 
-    internal EventRuleTable(Dictionary<int, EventRule> rows, List<int> keys)
+    internal EventRuleTable(List<int> keys, Dictionary<int, EventRule> rows)
     {
-        this.rows = rows;
         this.keys = keys;
+        this.rows = rows;
     }
 
     internal static EventRuleTable Decode(ISoraTableSource source)
@@ -54,7 +54,7 @@ public sealed class EventRuleTable : ISoraTable
 
     internal static EventRuleTable FromRows(List<EventRule> rows)
     {
-        return new EventRuleTable(SoraConfig.DecodeMapTable(rows, row => row.Id), rows.ConvertAll(row => row.Id));
+        return new EventRuleTable(rows.ConvertAll(row => row.Id), SoraConfig.DecodeMapTable(rows, row => row.Id));
     }
 
     public Dictionary<int, EventRule> Rows => rows;

@@ -59,16 +59,16 @@ public final class Character {
 }
 
 final class CharacterTable implements SoraTable {
-    private final java.util.Map<Integer, Character> rows;
     private final List<Integer> keys;
+    private final java.util.Map<Integer, Character> rows;
 
-    private CharacterTable(java.util.Map<Integer, Character> rows, List<Integer> keys) {
-        this.rows = rows;
+    private CharacterTable(List<Integer> keys, java.util.Map<Integer, Character> rows) {
         this.keys = keys;
+        this.rows = rows;
     }
 
     private static CharacterTable fromRows(List<Character> rows) {
-        return new CharacterTable(SoraConfig.decodeMapTable(rows, row -> row.id), rows.stream().map(row -> row.id).toList());
+        return new CharacterTable(rows.stream().map(row -> row.id).toList(), SoraConfig.decodeMapTable(rows, row -> row.id));
     }
 
     static CharacterTable decode(SoraTableSource source) {

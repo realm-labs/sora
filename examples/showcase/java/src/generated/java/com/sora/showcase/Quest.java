@@ -60,16 +60,16 @@ public final class Quest {
 }
 
 final class QuestTable implements SoraTable {
-    private final java.util.Map<Integer, Quest> rows;
     private final List<Integer> keys;
+    private final java.util.Map<Integer, Quest> rows;
 
-    private QuestTable(java.util.Map<Integer, Quest> rows, List<Integer> keys) {
-        this.rows = rows;
+    private QuestTable(List<Integer> keys, java.util.Map<Integer, Quest> rows) {
         this.keys = keys;
+        this.rows = rows;
     }
 
     private static QuestTable fromRows(List<Quest> rows) {
-        return new QuestTable(SoraConfig.decodeMapTable(rows, row -> row.id), rows.stream().map(row -> row.id).toList());
+        return new QuestTable(rows.stream().map(row -> row.id).toList(), SoraConfig.decodeMapTable(rows, row -> row.id));
     }
 
     static QuestTable decode(SoraTableSource source) {

@@ -23,16 +23,16 @@ static func decode(value: Variant) -> Localization:
 
 class LocalizationTable:
 	extends SoraRuntime.SoraConfigTable
-	var _rows: Dictionary = {}
 	var keys: Array = []
+	var _rows: Dictionary = {}
 
 	static func decode(rows: Array) -> LocalizationTable:
 		var table := LocalizationTable.new()
 		table.name = "Localization"
 		table.mode = "map"
 		table.key = "key"
-		table._rows = SoraRuntime.decode_map_table(rows, func(row): return row.key)
 		table.keys = rows.map(func(row): return row.key)
+		table._rows = SoraRuntime.decode_map_table(rows, func(row): return row.key)
 		return table
 
 	func length() -> int:

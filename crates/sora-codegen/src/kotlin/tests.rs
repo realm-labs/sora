@@ -61,6 +61,7 @@ fn generates_rust_and_kotlin_files() {
     assert!(rust_item.contains("pub struct ItemTable"));
     assert!(rust_item.contains("rows: SoraMap<i32, Item>"));
     assert!(rust_item.contains("keys: Vec<i32>"));
+    assert_contains_before(&rust_item, "keys: Vec<i32>", "rows: SoraMap<i32, Item>");
     assert!(rust_item.contains("by_name: SoraMap<String, i32>"));
     assert!(rust_item.contains("by_item_type: SoraMap<ItemType, Vec<i32>>"));
     assert!(rust_item.contains("impl super::SoraTable for ItemTable"));
@@ -109,6 +110,11 @@ fn generates_rust_and_kotlin_files() {
     assert!(kotlin_item.contains("class ItemTable private constructor"));
     assert!(kotlin_item.contains("val rows: Map<Int, Item>"));
     assert!(kotlin_item.contains("val keys: List<Int>"));
+    assert_contains_before(
+        &kotlin_item,
+        "val keys: List<Int>",
+        "val rows: Map<Int, Item>",
+    );
     assert!(kotlin_item.contains("private val nameIndex: Map<String, Item>"));
     assert!(kotlin_item.contains("private val itemTypeIndex: Map<ItemType, List<Item>>"));
     assert!(kotlin_item.contains("operator fun get(key: Int): Item? = rows[key]"));
@@ -361,6 +367,11 @@ fn generates_csharp_java_and_go_files() {
     assert!(csharp_item.contains("public sealed class ItemTable"));
     assert!(csharp_item.contains("Dictionary<int, Item>"));
     assert!(csharp_item.contains("private readonly List<int> keys"));
+    assert_contains_before(
+        &csharp_item,
+        "private readonly List<int> keys",
+        "private readonly Dictionary<int, Item> rows",
+    );
     assert!(csharp_item.contains("private readonly Dictionary<string, Item> byName"));
     assert!(csharp_item.contains("private readonly Dictionary<ItemType, List<Item>> byItemType"));
     assert!(csharp_item.contains("public Item? GetByName(string name)"));
@@ -376,6 +387,11 @@ fn generates_csharp_java_and_go_files() {
     assert!(java_item.contains("final class ItemTable implements SoraTable"));
     assert!(java_item.contains("java.util.Map<Integer, Item>"));
     assert!(java_item.contains("private final List<Integer> keys"));
+    assert_contains_before(
+        &java_item,
+        "private final List<Integer> keys",
+        "private final java.util.Map<Integer, Item> rows",
+    );
     assert!(java_item.contains("private final Map<String, Item> byName"));
     assert!(java_item.contains("private final Map<ItemType, List<Item>> byItemType"));
     assert!(java_item.contains("public Item getByName(String name)"));
@@ -391,6 +407,7 @@ fn generates_csharp_java_and_go_files() {
     assert!(go_item.contains("type ItemTable struct"));
     assert!(go_item.contains("map[int32]Item"));
     assert!(go_item.contains("keys []int32"));
+    assert_contains_before(&go_item, "keys []int32", "rows map[int32]Item");
     assert!(go_item.contains("byName map[string]Item"));
     assert!(go_item.contains("byItemType map[ItemType][]Item"));
     assert!(go_item.contains("func (table *ItemTable) GetByName(name string) (Item, bool)"));
@@ -501,4 +518,17 @@ required = true
 fn temp_dir() -> PathBuf {
     let unique = TEMP_COUNTER.fetch_add(1, Ordering::Relaxed);
     std::env::temp_dir().join(format!("sora-codegen-test-{unique}"))
+}
+
+fn assert_contains_before(haystack: &str, first: &str, second: &str) {
+    let first_index = haystack
+        .find(first)
+        .unwrap_or_else(|| panic!("expected output to contain `{first}`"));
+    let second_index = haystack
+        .find(second)
+        .unwrap_or_else(|| panic!("expected output to contain `{second}`"));
+    assert!(
+        first_index < second_index,
+        "expected `{first}` to appear before `{second}`"
+    );
 }

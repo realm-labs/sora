@@ -65,10 +65,10 @@ decode_table(Bundle) ->
     {{ index.pascal_name }} = sora_runtime:decode_index(Rows, fun(Row) -> maps:get('{{ index.field_name }}', Row) end),
 {%- endfor %}
     {{ "#{" }}
-        data => Data
 {%- if table.mode == "map" and table.key_field_name %}
-        , keys => Keys
+        keys => Keys,
 {%- endif %}
+        data => Data
 {%- for index in table.unique_indexes %}
         , '{{ index.name }}' => {{ index.pascal_name }}
 {%- endfor %}

@@ -57,8 +57,8 @@ func decodeEquipmentSetValue(input SoraValue) (EquipmentSet, error) {
 }
 
 type EquipmentSetTable struct {
-	rows map[int32]EquipmentSet
 	keys []int32
+	rows map[int32]EquipmentSet
 }
 
 func buildEquipmentSetTable(rows []EquipmentSet) (*EquipmentSetTable, error) {
@@ -66,7 +66,7 @@ func buildEquipmentSetTable(rows []EquipmentSet) (*EquipmentSetTable, error) {
 	for _, row := range rows {
 		keys = append(keys, row.Id)
 	}
-	return &EquipmentSetTable{rows: DecodeMapTable(rows, func(row EquipmentSet) int32 { return row.Id }), keys: keys}, nil
+	return &EquipmentSetTable{keys: keys, rows: DecodeMapTable(rows, func(row EquipmentSet) int32 { return row.Id })}, nil
 }
 
 func decodeEquipmentSetTable(source SoraTableSource) (*EquipmentSetTable, error) {

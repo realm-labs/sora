@@ -46,18 +46,18 @@ final class Skill {
 }
 
 final class SkillTable extends Iterable<Skill> implements SoraConfigTable {
-  final Map<int, Skill> _rows;
   final List<int> _keys;
+  final Map<int, Skill> _rows;
 
   const SkillTable(
-    this._rows,
     this._keys,
+    this._rows,
   );
 
   static SkillTable decode(List<Skill> rows) {
     return SkillTable(
-      decodeMapTable(rows, (row) => row.id),
       rows.map((row) => row.id).toList(growable: false),
+      decodeMapTable(rows, (row) => row.id),
     );
   }
 

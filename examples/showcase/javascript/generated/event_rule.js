@@ -29,8 +29,8 @@ export function decodeEventRuleValue(value) {
 
 export class EventRuleTable {
     constructor(
-        rows,
         keys,
+        rows,
     ) {
         this._rows = rows;
         this._keys = keys;
@@ -38,8 +38,8 @@ export class EventRuleTable {
 
     static decode(rows) {
         return new EventRuleTable(
-            decodeMapTable(rows, (row) => row.id),
             rows.map((row) => row.id),
+            decodeMapTable(rows, (row) => row.id),
         );
     }
 

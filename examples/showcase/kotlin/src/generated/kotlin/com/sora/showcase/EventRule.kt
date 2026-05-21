@@ -30,8 +30,8 @@ data class EventRule(
 }
 
 class EventRuleTable private constructor(
-    val rows: Map<Int, EventRule>,
     val keys: List<Int>,
+    val rows: Map<Int, EventRule>,
 ) : SoraTable {
     operator fun get(key: Int): EventRule? = rows[key]
 
@@ -51,8 +51,8 @@ class EventRuleTable private constructor(
 
         private fun fromRows(rows: List<EventRule>): EventRuleTable =
             EventRuleTable(
-                rows.associateBy { it.id },
                 rows.map { it.id },
+                rows.associateBy { it.id },
             )
     }
 }

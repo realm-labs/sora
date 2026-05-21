@@ -17,8 +17,8 @@ function DropGroup.decode(reader)
 end
 
 ---@class DropGroupTable
----@field private _rows table<integer, DropGroup>
 ---@field private _keys integer[]
+---@field private _rows table<integer, DropGroup>
 local DropGroupTable = {}
 DropGroupTable.__index = DropGroupTable
 
@@ -30,8 +30,8 @@ function DropGroupTable.decode(rows)
         keys[index] = row.id
     end
     return setmetatable({
-        _rows = Runtime.decode_map_table(rows, function(row) return row.id end),
         _keys = keys,
+        _rows = Runtime.decode_map_table(rows, function(row) return row.id end),
     }, DropGroupTable)
 end
 

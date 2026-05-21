@@ -31,18 +31,18 @@ final class Stage {
 }
 
 final class StageTable extends Iterable<Stage> implements SoraConfigTable {
-  final Map<int, Stage> _rows;
   final List<int> _keys;
+  final Map<int, Stage> _rows;
 
   const StageTable(
-    this._rows,
     this._keys,
+    this._rows,
   );
 
   static StageTable decode(List<Stage> rows) {
     return StageTable(
-      decodeMapTable(rows, (row) => row.id),
       rows.map((row) => row.id).toList(growable: false),
+      decodeMapTable(rows, (row) => row.id),
     );
   }
 

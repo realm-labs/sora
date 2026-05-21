@@ -44,17 +44,17 @@ class Achievement:
 class AchievementTable(SoraConfigTable):
     def __init__(
         self,
-        rows: dict[int, Achievement],
         keys: list[int],
+        rows: dict[int, Achievement],
     ) -> None:
-        self._rows = rows
         self._keys = keys
+        self._rows = rows
 
     @staticmethod
     def decode(rows: list[Achievement]) -> AchievementTable:
         return AchievementTable(
-            decode_map_table(rows, lambda row: row.id),
             [row.id for row in rows],
+            decode_map_table(rows, lambda row: row.id),
         )
 
     def name(self) -> str:

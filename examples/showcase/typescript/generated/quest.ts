@@ -56,14 +56,14 @@ export function decodeQuestValue(value: SoraValue): Quest {
 
 export class QuestTable implements SoraConfigTable {
     private constructor(
-        private readonly _rows: Map<number, Quest>,
         private readonly _keys: number[],
+        private readonly _rows: Map<number, Quest>,
     ) {}
 
     static decode(rows: Quest[]): QuestTable {
         return new QuestTable(
-            decodeMapTable(rows, (row) => row.id),
             rows.map((row) => row.id),
+            decodeMapTable(rows, (row) => row.id),
         );
     }
 

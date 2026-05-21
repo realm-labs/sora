@@ -28,8 +28,8 @@ export function decodeEquipmentSetValue(value) {
 
 export class EquipmentSetTable {
     constructor(
-        rows,
         keys,
+        rows,
     ) {
         this._rows = rows;
         this._keys = keys;
@@ -37,8 +37,8 @@ export class EquipmentSetTable {
 
     static decode(rows) {
         return new EquipmentSetTable(
-            decodeMapTable(rows, (row) => row.id),
             rows.map((row) => row.id),
+            decodeMapTable(rows, (row) => row.id),
         );
     }
 

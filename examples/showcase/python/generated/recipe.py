@@ -41,17 +41,17 @@ class Recipe:
 class RecipeTable(SoraConfigTable):
     def __init__(
         self,
-        rows: dict[int, Recipe],
         keys: list[int],
+        rows: dict[int, Recipe],
     ) -> None:
-        self._rows = rows
         self._keys = keys
+        self._rows = rows
 
     @staticmethod
     def decode(rows: list[Recipe]) -> RecipeTable:
         return RecipeTable(
-            decode_map_table(rows, lambda row: row.id),
             [row.id for row in rows],
+            decode_map_table(rows, lambda row: row.id),
         )
 
     def name(self) -> str:

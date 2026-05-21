@@ -29,16 +29,16 @@ impl super::runtime::SoraDecode for Achievement {
 
 #[derive(Debug, Clone)]
 pub struct AchievementTable {
-    rows: SoraMap<i32, Achievement>,
     keys: Vec<i32>,
+    rows: SoraMap<i32, Achievement>,
 }
 
 impl AchievementTable {
     pub(super) fn from_rows(rows: Vec<Achievement>) -> Result<Self, super::runtime::SoraReadError> {
         let keys = rows.iter().map(|row| row.id).collect::<Vec<_>>();
         Ok(Self {
-            rows: super::decode_map_table(rows, |row| row.id),
             keys,
+            rows: super::decode_map_table(rows, |row| row.id),
         })
     }
     pub fn get(&self, key: i32) -> Option<&Achievement> {

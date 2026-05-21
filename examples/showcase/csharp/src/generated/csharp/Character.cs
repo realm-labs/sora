@@ -47,13 +47,13 @@ public sealed record Character(
 
 public sealed class CharacterTable : ISoraTable
 {
-    private readonly Dictionary<int, Character> rows;
     private readonly List<int> keys;
+    private readonly Dictionary<int, Character> rows;
 
-    internal CharacterTable(Dictionary<int, Character> rows, List<int> keys)
+    internal CharacterTable(List<int> keys, Dictionary<int, Character> rows)
     {
-        this.rows = rows;
         this.keys = keys;
+        this.rows = rows;
     }
 
     internal static CharacterTable Decode(ISoraTableSource source)
@@ -63,7 +63,7 @@ public sealed class CharacterTable : ISoraTable
 
     internal static CharacterTable FromRows(List<Character> rows)
     {
-        return new CharacterTable(SoraConfig.DecodeMapTable(rows, row => row.Id), rows.ConvertAll(row => row.Id));
+        return new CharacterTable(rows.ConvertAll(row => row.Id), SoraConfig.DecodeMapTable(rows, row => row.Id));
     }
 
     public Dictionary<int, Character> Rows => rows;

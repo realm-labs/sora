@@ -29,8 +29,8 @@ end
 
 ---@class {{ table.pascal_name }}Table
 {%- if table.mode == "map" and table.key_type %}
----@field private _rows table<{{ table.key_type }}, {{ table.row_type }}>
 ---@field private _keys {{ table.key_type }}[]
+---@field private _rows table<{{ table.key_type }}, {{ table.row_type }}>
 {%- elif table.mode == "singleton" %}
 ---@field private _row {{ table.row_type }}
 {%- else %}
@@ -54,8 +54,8 @@ function {{ table.pascal_name }}Table.decode(rows)
         keys[index] = row.{{ table.key_field_name }}
     end
     return setmetatable({
-        _rows = Runtime.decode_map_table(rows, function(row) return row.{{ table.key_field_name }} end),
         _keys = keys,
+        _rows = Runtime.decode_map_table(rows, function(row) return row.{{ table.key_field_name }} end),
 {%- for index in table.unique_indexes %}
         _{{ index.name }} = Runtime.decode_unique_index(rows, function(row) return row.{{ index.field_name }} end),
 {%- endfor %}

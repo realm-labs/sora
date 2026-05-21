@@ -39,8 +39,8 @@ func decodeDropGroupValue(input SoraValue) (DropGroup, error) {
 }
 
 type DropGroupTable struct {
-	rows map[int32]DropGroup
 	keys []int32
+	rows map[int32]DropGroup
 }
 
 func buildDropGroupTable(rows []DropGroup) (*DropGroupTable, error) {
@@ -48,7 +48,7 @@ func buildDropGroupTable(rows []DropGroup) (*DropGroupTable, error) {
 	for _, row := range rows {
 		keys = append(keys, row.Id)
 	}
-	return &DropGroupTable{rows: DecodeMapTable(rows, func(row DropGroup) int32 { return row.Id }), keys: keys}, nil
+	return &DropGroupTable{keys: keys, rows: DecodeMapTable(rows, func(row DropGroup) int32 { return row.Id })}, nil
 }
 
 func decodeDropGroupTable(source SoraTableSource) (*DropGroupTable, error) {

@@ -75,8 +75,8 @@ func decodeMonsterValue(input SoraValue) (Monster, error) {
 }
 
 type MonsterTable struct {
-	rows map[int32]Monster
 	keys []int32
+	rows map[int32]Monster
 }
 
 func buildMonsterTable(rows []Monster) (*MonsterTable, error) {
@@ -84,7 +84,7 @@ func buildMonsterTable(rows []Monster) (*MonsterTable, error) {
 	for _, row := range rows {
 		keys = append(keys, row.Id)
 	}
-	return &MonsterTable{rows: DecodeMapTable(rows, func(row Monster) int32 { return row.Id }), keys: keys}, nil
+	return &MonsterTable{keys: keys, rows: DecodeMapTable(rows, func(row Monster) int32 { return row.Id })}, nil
 }
 
 func decodeMonsterTable(source SoraTableSource) (*MonsterTable, error) {

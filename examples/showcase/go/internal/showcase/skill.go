@@ -96,8 +96,8 @@ func decodeSkillValue(input SoraValue) (Skill, error) {
 }
 
 type SkillTable struct {
-	rows map[int32]Skill
 	keys []int32
+	rows map[int32]Skill
 }
 
 func buildSkillTable(rows []Skill) (*SkillTable, error) {
@@ -105,7 +105,7 @@ func buildSkillTable(rows []Skill) (*SkillTable, error) {
 	for _, row := range rows {
 		keys = append(keys, row.Id)
 	}
-	return &SkillTable{rows: DecodeMapTable(rows, func(row Skill) int32 { return row.Id }), keys: keys}, nil
+	return &SkillTable{keys: keys, rows: DecodeMapTable(rows, func(row Skill) int32 { return row.Id })}, nil
 }
 
 func decodeSkillTable(source SoraTableSource) (*SkillTable, error) {

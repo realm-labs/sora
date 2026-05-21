@@ -38,13 +38,13 @@ public sealed record EquipmentSet(
 
 public sealed class EquipmentSetTable : ISoraTable
 {
-    private readonly Dictionary<int, EquipmentSet> rows;
     private readonly List<int> keys;
+    private readonly Dictionary<int, EquipmentSet> rows;
 
-    internal EquipmentSetTable(Dictionary<int, EquipmentSet> rows, List<int> keys)
+    internal EquipmentSetTable(List<int> keys, Dictionary<int, EquipmentSet> rows)
     {
-        this.rows = rows;
         this.keys = keys;
+        this.rows = rows;
     }
 
     internal static EquipmentSetTable Decode(ISoraTableSource source)
@@ -54,7 +54,7 @@ public sealed class EquipmentSetTable : ISoraTable
 
     internal static EquipmentSetTable FromRows(List<EquipmentSet> rows)
     {
-        return new EquipmentSetTable(SoraConfig.DecodeMapTable(rows, row => row.Id), rows.ConvertAll(row => row.Id));
+        return new EquipmentSetTable(rows.ConvertAll(row => row.Id), SoraConfig.DecodeMapTable(rows, row => row.Id));
     }
 
     public Dictionary<int, EquipmentSet> Rows => rows;

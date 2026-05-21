@@ -24,10 +24,10 @@ object {{ record.pascal_name }} {
 {%- set table = record.table %}
 
 final class {{ table.pascal_name }}Table private (
-  val rows: {{ table.container_type }}
-{%- if table.mode == "map" and table.key_field_name %},
-  val keys: Vector[{{ table.key_type }}]
+{%- if table.mode == "map" and table.key_field_name %}
+  val keys: Vector[{{ table.key_type }}],
 {%- endif %}
+  val rows: {{ table.container_type }}
 {%- for index in table.unique_indexes %},
   private val {{ index.param_camel_name }}Index: Map[{{ index.key_type }}, {{ table.row_type }}]
 {%- endfor %}
@@ -87,8 +87,8 @@ object {{ table.pascal_name }}Table {
   private def fromRows(rows: Vector[{{ table.row_type }}]): {{ table.pascal_name }}Table =
 {%- if table.mode == "map" and table.key_field_name %}
     new {{ table.pascal_name }}Table(
-      rows.map(row => row.{{ table.key_field_name }} -> row).toMap,
-      rows.map(row => row.{{ table.key_field_name }})
+      rows.map(row => row.{{ table.key_field_name }}),
+      rows.map(row => row.{{ table.key_field_name }} -> row).toMap
 {%- for index in table.unique_indexes %},
       rows.map(row => row.{{ index.field_name }} -> row).toMap
 {%- endfor %}

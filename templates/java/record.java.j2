@@ -47,10 +47,10 @@ public final class {{ record.pascal_name }} {
 {%- set table = record.table %}
 
 final class {{ table.pascal_name }}Table implements SoraTable {
-    private final {{ table.container_type }} rows;
 {%- if table.mode == "map" and table.key_field_name %}
     private final List<{{ table.key_type }}> keys;
 {%- endif %}
+    private final {{ table.container_type }} rows;
 {%- for index in table.unique_indexes %}
     private final Map<{{ index.key_type }}, {{ table.row_type }}> {{ index.camel_name }};
 {%- endfor %}
@@ -58,11 +58,11 @@ final class {{ table.pascal_name }}Table implements SoraTable {
     private final Map<{{ index.key_type }}, List<{{ table.row_type }}>> {{ index.camel_name }};
 {%- endfor %}
 
-    private {{ table.pascal_name }}Table({{ table.container_type }} rows{%- if table.mode == "map" and table.key_field_name %}, List<{{ table.key_type }}> keys{%- endif %}{%- for index in table.unique_indexes %}, Map<{{ index.key_type }}, {{ table.row_type }}> {{ index.camel_name }}{%- endfor %}{%- for index in table.non_unique_indexes %}, Map<{{ index.key_type }}, List<{{ table.row_type }}>> {{ index.camel_name }}{%- endfor %}) {
-        this.rows = rows;
+    private {{ table.pascal_name }}Table({%- if table.mode == "map" and table.key_field_name %}List<{{ table.key_type }}> keys, {% endif %}{{ table.container_type }} rows{%- for index in table.unique_indexes %}, Map<{{ index.key_type }}, {{ table.row_type }}> {{ index.camel_name }}{%- endfor %}{%- for index in table.non_unique_indexes %}, Map<{{ index.key_type }}, List<{{ table.row_type }}>> {{ index.camel_name }}{%- endfor %}) {
 {%- if table.mode == "map" and table.key_field_name %}
         this.keys = keys;
 {%- endif %}
+        this.rows = rows;
 {%- for index in table.unique_indexes %}
         this.{{ index.camel_name }} = {{ index.camel_name }};
 {%- endfor %}
@@ -75,8 +75,8 @@ final class {{ table.pascal_name }}Table implements SoraTable {
 {%- if table.mode == "map" and table.key_field_name %}
 {%- if table.unique_indexes or table.non_unique_indexes %}
         return new {{ table.pascal_name }}Table(
-            SoraConfig.decodeMapTable(rows, row -> row.{{ table.key_field_name }}),
-            rows.stream().map(row -> row.{{ table.key_field_name }}).toList(){% if table.unique_indexes or table.non_unique_indexes %},{% endif %}
+            rows.stream().map(row -> row.{{ table.key_field_name }}).toList(),
+            SoraConfig.decodeMapTable(rows, row -> row.{{ table.key_field_name }}){% if table.unique_indexes or table.non_unique_indexes %},{% endif %}
 {%- for index in table.unique_indexes %}
             SoraConfig.decodeUniqueIndex(rows, row -> row.{{ index.field_name }}){% if not loop.last or table.non_unique_indexes %},{% endif %}
 {%- endfor %}
@@ -85,7 +85,7 @@ final class {{ table.pascal_name }}Table implements SoraTable {
 {%- endfor %}
         );
 {%- else %}
-        return new {{ table.pascal_name }}Table(SoraConfig.decodeMapTable(rows, row -> row.{{ table.key_field_name }}), rows.stream().map(row -> row.{{ table.key_field_name }}).toList());
+        return new {{ table.pascal_name }}Table(rows.stream().map(row -> row.{{ table.key_field_name }}).toList(), SoraConfig.decodeMapTable(rows, row -> row.{{ table.key_field_name }}));
 {%- endif %}
 {%- elif table.mode == "singleton" %}
         return new {{ table.pascal_name }}Table(SoraConfig.requireSingletonTable(rows, "{{ table.name }}"));

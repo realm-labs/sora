@@ -28,18 +28,18 @@ final class Dungeon {
 }
 
 final class DungeonTable extends Iterable<Dungeon> implements SoraConfigTable {
-  final Map<int, Dungeon> _rows;
   final List<int> _keys;
+  final Map<int, Dungeon> _rows;
 
   const DungeonTable(
-    this._rows,
     this._keys,
+    this._rows,
   );
 
   static DungeonTable decode(List<Dungeon> rows) {
     return DungeonTable(
-      decodeMapTable(rows, (row) => row.id),
       rows.map((row) => row.id).toList(growable: false),
+      decodeMapTable(rows, (row) => row.id),
     );
   }
 

@@ -18,8 +18,8 @@ object Shop {
 }
 
 final class ShopTable private (
-  val rows: Map[Int, Shop],
-  val keys: Vector[Int]
+  val keys: Vector[Int],
+  val rows: Map[Int, Shop]
 ) extends SoraTable {
   def get(key: Int): Option[Shop] = rows.get(key)
 
@@ -39,7 +39,7 @@ object ShopTable {
 
   private def fromRows(rows: Vector[Shop]): ShopTable =
     new ShopTable(
-      rows.map(row => row.id -> row).toMap,
-      rows.map(row => row.id)
+      rows.map(row => row.id),
+      rows.map(row => row.id -> row).toMap
     )
 }

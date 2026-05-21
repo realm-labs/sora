@@ -41,22 +41,22 @@ final class Item {
 }
 
 final class ItemTable extends Iterable<Item> implements SoraConfigTable {
-  final Map<int, Item> _rows;
   final List<int> _keys;
+  final Map<int, Item> _rows;
   final Map<String, Item> _name;
   final Map<ItemType, List<Item>> _itemType;
 
   const ItemTable(
-    this._rows,
     this._keys,
+    this._rows,
     this._name,
     this._itemType,
   );
 
   static ItemTable decode(List<Item> rows) {
     return ItemTable(
-      decodeMapTable(rows, (row) => row.id),
       rows.map((row) => row.id).toList(growable: false),
+      decodeMapTable(rows, (row) => row.id),
       decodeUniqueIndex(rows, (row) => row.name),
       decodeIndex(rows, (row) => row.itemType),
     );

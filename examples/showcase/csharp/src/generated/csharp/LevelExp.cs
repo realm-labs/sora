@@ -35,13 +35,13 @@ public sealed record LevelExp(
 
 public sealed class LevelExpTable : ISoraTable
 {
-    private readonly Dictionary<int, LevelExp> rows;
     private readonly List<int> keys;
+    private readonly Dictionary<int, LevelExp> rows;
 
-    internal LevelExpTable(Dictionary<int, LevelExp> rows, List<int> keys)
+    internal LevelExpTable(List<int> keys, Dictionary<int, LevelExp> rows)
     {
-        this.rows = rows;
         this.keys = keys;
+        this.rows = rows;
     }
 
     internal static LevelExpTable Decode(ISoraTableSource source)
@@ -51,7 +51,7 @@ public sealed class LevelExpTable : ISoraTable
 
     internal static LevelExpTable FromRows(List<LevelExp> rows)
     {
-        return new LevelExpTable(SoraConfig.DecodeMapTable(rows, row => row.Level), rows.ConvertAll(row => row.Level));
+        return new LevelExpTable(rows.ConvertAll(row => row.Level), SoraConfig.DecodeMapTable(rows, row => row.Level));
     }
 
     public Dictionary<int, LevelExp> Rows => rows;

@@ -58,17 +58,17 @@ class Quest:
 class QuestTable(SoraConfigTable):
     def __init__(
         self,
-        rows: dict[int, Quest],
         keys: list[int],
+        rows: dict[int, Quest],
     ) -> None:
-        self._rows = rows
         self._keys = keys
+        self._rows = rows
 
     @staticmethod
     def decode(rows: list[Quest]) -> QuestTable:
         return QuestTable(
-            decode_map_table(rows, lambda row: row.id),
             [row.id for row in rows],
+            decode_map_table(rows, lambda row: row.id),
         )
 
     def name(self) -> str:

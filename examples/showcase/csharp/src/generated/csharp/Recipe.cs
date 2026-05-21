@@ -35,13 +35,13 @@ public sealed record Recipe(
 
 public sealed class RecipeTable : ISoraTable
 {
-    private readonly Dictionary<int, Recipe> rows;
     private readonly List<int> keys;
+    private readonly Dictionary<int, Recipe> rows;
 
-    internal RecipeTable(Dictionary<int, Recipe> rows, List<int> keys)
+    internal RecipeTable(List<int> keys, Dictionary<int, Recipe> rows)
     {
-        this.rows = rows;
         this.keys = keys;
+        this.rows = rows;
     }
 
     internal static RecipeTable Decode(ISoraTableSource source)
@@ -51,7 +51,7 @@ public sealed class RecipeTable : ISoraTable
 
     internal static RecipeTable FromRows(List<Recipe> rows)
     {
-        return new RecipeTable(SoraConfig.DecodeMapTable(rows, row => row.Id), rows.ConvertAll(row => row.Id));
+        return new RecipeTable(rows.ConvertAll(row => row.Id), SoraConfig.DecodeMapTable(rows, row => row.Id));
     }
 
     public Dictionary<int, Recipe> Rows => rows;

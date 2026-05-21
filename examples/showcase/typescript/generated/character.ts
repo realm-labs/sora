@@ -52,14 +52,14 @@ export function decodeCharacterValue(value: SoraValue): Character {
 
 export class CharacterTable implements SoraConfigTable {
     private constructor(
-        private readonly _rows: Map<number, Character>,
         private readonly _keys: number[],
+        private readonly _rows: Map<number, Character>,
     ) {}
 
     static decode(rows: Character[]): CharacterTable {
         return new CharacterTable(
-            decodeMapTable(rows, (row) => row.id),
             rows.map((row) => row.id),
+            decodeMapTable(rows, (row) => row.id),
         );
     }
 

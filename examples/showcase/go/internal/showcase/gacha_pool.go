@@ -48,8 +48,8 @@ func decodeGachaPoolValue(input SoraValue) (GachaPool, error) {
 }
 
 type GachaPoolTable struct {
-	rows map[int32]GachaPool
 	keys []int32
+	rows map[int32]GachaPool
 }
 
 func buildGachaPoolTable(rows []GachaPool) (*GachaPoolTable, error) {
@@ -57,7 +57,7 @@ func buildGachaPoolTable(rows []GachaPool) (*GachaPoolTable, error) {
 	for _, row := range rows {
 		keys = append(keys, row.Id)
 	}
-	return &GachaPoolTable{rows: DecodeMapTable(rows, func(row GachaPool) int32 { return row.Id }), keys: keys}, nil
+	return &GachaPoolTable{keys: keys, rows: DecodeMapTable(rows, func(row GachaPool) int32 { return row.Id })}, nil
 }
 
 func decodeGachaPoolTable(source SoraTableSource) (*GachaPoolTable, error) {

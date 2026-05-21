@@ -39,16 +39,16 @@ public final class GachaPool {
 }
 
 final class GachaPoolTable implements SoraTable {
-    private final java.util.Map<Integer, GachaPool> rows;
     private final List<Integer> keys;
+    private final java.util.Map<Integer, GachaPool> rows;
 
-    private GachaPoolTable(java.util.Map<Integer, GachaPool> rows, List<Integer> keys) {
-        this.rows = rows;
+    private GachaPoolTable(List<Integer> keys, java.util.Map<Integer, GachaPool> rows) {
         this.keys = keys;
+        this.rows = rows;
     }
 
     private static GachaPoolTable fromRows(List<GachaPool> rows) {
-        return new GachaPoolTable(SoraConfig.decodeMapTable(rows, row -> row.id), rows.stream().map(row -> row.id).toList());
+        return new GachaPoolTable(rows.stream().map(row -> row.id).toList(), SoraConfig.decodeMapTable(rows, row -> row.id));
     }
 
     static GachaPoolTable decode(SoraTableSource source) {

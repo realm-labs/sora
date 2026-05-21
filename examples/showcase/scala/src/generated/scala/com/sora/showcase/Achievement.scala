@@ -20,8 +20,8 @@ object Achievement {
 }
 
 final class AchievementTable private (
-  val rows: Map[Int, Achievement],
-  val keys: Vector[Int]
+  val keys: Vector[Int],
+  val rows: Map[Int, Achievement]
 ) extends SoraTable {
   def get(key: Int): Option[Achievement] = rows.get(key)
 
@@ -41,7 +41,7 @@ object AchievementTable {
 
   private def fromRows(rows: Vector[Achievement]): AchievementTable =
     new AchievementTable(
-      rows.map(row => row.id -> row).toMap,
-      rows.map(row => row.id)
+      rows.map(row => row.id),
+      rows.map(row => row.id -> row).toMap
     )
 }

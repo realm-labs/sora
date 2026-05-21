@@ -24,8 +24,8 @@ data class DropGroup(
 }
 
 class DropGroupTable private constructor(
-    val rows: Map<Int, DropGroup>,
     val keys: List<Int>,
+    val rows: Map<Int, DropGroup>,
 ) : SoraTable {
     operator fun get(key: Int): DropGroup? = rows[key]
 
@@ -45,8 +45,8 @@ class DropGroupTable private constructor(
 
         private fun fromRows(rows: List<DropGroup>): DropGroupTable =
             DropGroupTable(
-                rows.associateBy { it.id },
                 rows.map { it.id },
+                rows.associateBy { it.id },
             )
     }
 }

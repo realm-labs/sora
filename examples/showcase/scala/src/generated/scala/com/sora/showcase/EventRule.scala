@@ -20,8 +20,8 @@ object EventRule {
 }
 
 final class EventRuleTable private (
-  val rows: Map[Int, EventRule],
-  val keys: Vector[Int]
+  val keys: Vector[Int],
+  val rows: Map[Int, EventRule]
 ) extends SoraTable {
   def get(key: Int): Option[EventRule] = rows.get(key)
 
@@ -41,7 +41,7 @@ object EventRuleTable {
 
   private def fromRows(rows: Vector[EventRule]): EventRuleTable =
     new EventRuleTable(
-      rows.map(row => row.id -> row).toMap,
-      rows.map(row => row.id)
+      rows.map(row => row.id),
+      rows.map(row => row.id -> row).toMap
     )
 }

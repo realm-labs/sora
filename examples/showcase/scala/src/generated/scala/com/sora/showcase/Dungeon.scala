@@ -20,8 +20,8 @@ object Dungeon {
 }
 
 final class DungeonTable private (
-  val rows: Map[Int, Dungeon],
-  val keys: Vector[Int]
+  val keys: Vector[Int],
+  val rows: Map[Int, Dungeon]
 ) extends SoraTable {
   def get(key: Int): Option[Dungeon] = rows.get(key)
 
@@ -41,7 +41,7 @@ object DungeonTable {
 
   private def fromRows(rows: Vector[Dungeon]): DungeonTable =
     new DungeonTable(
-      rows.map(row => row.id -> row).toMap,
-      rows.map(row => row.id)
+      rows.map(row => row.id),
+      rows.map(row => row.id -> row).toMap
     )
 }

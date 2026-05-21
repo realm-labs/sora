@@ -42,8 +42,8 @@ impl super::runtime::SoraDecode for Item {
 
 #[derive(Debug, Clone)]
 pub struct ItemTable {
-    rows: SoraMap<i32, Item>,
     keys: Vec<i32>,
+    rows: SoraMap<i32, Item>,
     by_name: SoraMap<String, i32>,
     by_item_type: SoraMap<ItemType, Vec<i32>>,
 }
@@ -56,8 +56,8 @@ impl ItemTable {
         let by_item_type = super::build_map_index(rows.iter(), |row| row.item_type, |row| row.id);
         let rows = super::decode_map_table(rows, |row| row.id);
         Ok(Self {
-            rows,
             keys,
+            rows,
             by_name,
             by_item_type,
         })

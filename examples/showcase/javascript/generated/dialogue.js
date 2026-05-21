@@ -25,8 +25,8 @@ export function decodeDialogueValue(value) {
 
 export class DialogueTable {
     constructor(
-        rows,
         keys,
+        rows,
     ) {
         this._rows = rows;
         this._keys = keys;
@@ -34,8 +34,8 @@ export class DialogueTable {
 
     static decode(rows) {
         return new DialogueTable(
-            decodeMapTable(rows, (row) => row.id),
             rows.map((row) => row.id),
+            decodeMapTable(rows, (row) => row.id),
         );
     }
 

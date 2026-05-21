@@ -44,16 +44,16 @@ public final class Achievement {
 }
 
 final class AchievementTable implements SoraTable {
-    private final java.util.Map<Integer, Achievement> rows;
     private final List<Integer> keys;
+    private final java.util.Map<Integer, Achievement> rows;
 
-    private AchievementTable(java.util.Map<Integer, Achievement> rows, List<Integer> keys) {
-        this.rows = rows;
+    private AchievementTable(List<Integer> keys, java.util.Map<Integer, Achievement> rows) {
         this.keys = keys;
+        this.rows = rows;
     }
 
     private static AchievementTable fromRows(List<Achievement> rows) {
-        return new AchievementTable(SoraConfig.decodeMapTable(rows, row -> row.id), rows.stream().map(row -> row.id).toList());
+        return new AchievementTable(rows.stream().map(row -> row.id).toList(), SoraConfig.decodeMapTable(rows, row -> row.id));
     }
 
     static AchievementTable decode(SoraTableSource source) {

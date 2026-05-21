@@ -39,16 +39,16 @@ public final class Shop {
 }
 
 final class ShopTable implements SoraTable {
-    private final java.util.Map<Integer, Shop> rows;
     private final List<Integer> keys;
+    private final java.util.Map<Integer, Shop> rows;
 
-    private ShopTable(java.util.Map<Integer, Shop> rows, List<Integer> keys) {
-        this.rows = rows;
+    private ShopTable(List<Integer> keys, java.util.Map<Integer, Shop> rows) {
         this.keys = keys;
+        this.rows = rows;
     }
 
     private static ShopTable fromRows(List<Shop> rows) {
-        return new ShopTable(SoraConfig.decodeMapTable(rows, row -> row.id), rows.stream().map(row -> row.id).toList());
+        return new ShopTable(rows.stream().map(row -> row.id).toList(), SoraConfig.decodeMapTable(rows, row -> row.id));
     }
 
     static ShopTable decode(SoraTableSource source) {

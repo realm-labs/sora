@@ -43,14 +43,14 @@ export function decodeEventRuleValue(value: SoraValue): EventRule {
 
 export class EventRuleTable implements SoraConfigTable {
     private constructor(
-        private readonly _rows: Map<number, EventRule>,
         private readonly _keys: number[],
+        private readonly _rows: Map<number, EventRule>,
     ) {}
 
     static decode(rows: EventRule[]): EventRuleTable {
         return new EventRuleTable(
-            decodeMapTable(rows, (row) => row.id),
             rows.map((row) => row.id),
+            decodeMapTable(rows, (row) => row.id),
         );
     }
 

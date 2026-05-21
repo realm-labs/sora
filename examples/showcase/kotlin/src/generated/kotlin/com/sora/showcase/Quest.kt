@@ -40,8 +40,8 @@ data class Quest(
 }
 
 class QuestTable private constructor(
-    val rows: Map<Int, Quest>,
     val keys: List<Int>,
+    val rows: Map<Int, Quest>,
 ) : SoraTable {
     operator fun get(key: Int): Quest? = rows[key]
 
@@ -61,8 +61,8 @@ class QuestTable private constructor(
 
         private fun fromRows(rows: List<Quest>): QuestTable =
             QuestTable(
-                rows.associateBy { it.id },
                 rows.map { it.id },
+                rows.associateBy { it.id },
             )
     }
 }

@@ -30,8 +30,8 @@ function Quest.decode(reader)
 end
 
 ---@class QuestTable
----@field private _rows table<integer, Quest>
 ---@field private _keys integer[]
+---@field private _rows table<integer, Quest>
 local QuestTable = {}
 QuestTable.__index = QuestTable
 
@@ -43,8 +43,8 @@ function QuestTable.decode(rows)
         keys[index] = row.id
     end
     return setmetatable({
-        _rows = Runtime.decode_map_table(rows, function(row) return row.id end),
         _keys = keys,
+        _rows = Runtime.decode_map_table(rows, function(row) return row.id end),
     }, QuestTable)
 end
 

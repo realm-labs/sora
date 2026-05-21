@@ -57,8 +57,8 @@ func decodeBuffValue(input SoraValue) (Buff, error) {
 }
 
 type BuffTable struct {
-	rows map[int32]Buff
 	keys []int32
+	rows map[int32]Buff
 }
 
 func buildBuffTable(rows []Buff) (*BuffTable, error) {
@@ -66,7 +66,7 @@ func buildBuffTable(rows []Buff) (*BuffTable, error) {
 	for _, row := range rows {
 		keys = append(keys, row.Id)
 	}
-	return &BuffTable{rows: DecodeMapTable(rows, func(row Buff) int32 { return row.Id }), keys: keys}, nil
+	return &BuffTable{keys: keys, rows: DecodeMapTable(rows, func(row Buff) int32 { return row.Id })}, nil
 }
 
 func decodeBuffTable(source SoraTableSource) (*BuffTable, error) {

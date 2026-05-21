@@ -40,17 +40,17 @@ class Dialogue:
 class DialogueTable(SoraConfigTable):
     def __init__(
         self,
-        rows: dict[int, Dialogue],
         keys: list[int],
+        rows: dict[int, Dialogue],
     ) -> None:
-        self._rows = rows
         self._keys = keys
+        self._rows = rows
 
     @staticmethod
     def decode(rows: list[Dialogue]) -> DialogueTable:
         return DialogueTable(
-            decode_map_table(rows, lambda row: row.id),
             [row.id for row in rows],
+            decode_map_table(rows, lambda row: row.id),
         )
 
     def name(self) -> str:

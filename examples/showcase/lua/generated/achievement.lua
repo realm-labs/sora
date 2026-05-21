@@ -22,8 +22,8 @@ function Achievement.decode(reader)
 end
 
 ---@class AchievementTable
----@field private _rows table<integer, Achievement>
 ---@field private _keys integer[]
+---@field private _rows table<integer, Achievement>
 local AchievementTable = {}
 AchievementTable.__index = AchievementTable
 
@@ -35,8 +35,8 @@ function AchievementTable.decode(rows)
         keys[index] = row.id
     end
     return setmetatable({
-        _rows = Runtime.decode_map_table(rows, function(row) return row.id end),
         _keys = keys,
+        _rows = Runtime.decode_map_table(rows, function(row) return row.id end),
     }, AchievementTable)
 end
 

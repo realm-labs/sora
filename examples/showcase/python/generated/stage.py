@@ -47,17 +47,17 @@ class Stage:
 class StageTable(SoraConfigTable):
     def __init__(
         self,
-        rows: dict[int, Stage],
         keys: list[int],
+        rows: dict[int, Stage],
     ) -> None:
-        self._rows = rows
         self._keys = keys
+        self._rows = rows
 
     @staticmethod
     def decode(rows: list[Stage]) -> StageTable:
         return StageTable(
-            decode_map_table(rows, lambda row: row.id),
             [row.id for row in rows],
+            decode_map_table(rows, lambda row: row.id),
         )
 
     def name(self) -> str:

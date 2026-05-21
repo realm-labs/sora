@@ -35,13 +35,13 @@ public sealed record GachaPool(
 
 public sealed class GachaPoolTable : ISoraTable
 {
-    private readonly Dictionary<int, GachaPool> rows;
     private readonly List<int> keys;
+    private readonly Dictionary<int, GachaPool> rows;
 
-    internal GachaPoolTable(Dictionary<int, GachaPool> rows, List<int> keys)
+    internal GachaPoolTable(List<int> keys, Dictionary<int, GachaPool> rows)
     {
-        this.rows = rows;
         this.keys = keys;
+        this.rows = rows;
     }
 
     internal static GachaPoolTable Decode(ISoraTableSource source)
@@ -51,7 +51,7 @@ public sealed class GachaPoolTable : ISoraTable
 
     internal static GachaPoolTable FromRows(List<GachaPool> rows)
     {
-        return new GachaPoolTable(SoraConfig.DecodeMapTable(rows, row => row.Id), rows.ConvertAll(row => row.Id));
+        return new GachaPoolTable(rows.ConvertAll(row => row.Id), SoraConfig.DecodeMapTable(rows, row => row.Id));
     }
 
     public Dictionary<int, GachaPool> Rows => rows;

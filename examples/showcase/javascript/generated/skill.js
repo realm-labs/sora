@@ -39,8 +39,8 @@ export function decodeSkillValue(value) {
 
 export class SkillTable {
     constructor(
-        rows,
         keys,
+        rows,
     ) {
         this._rows = rows;
         this._keys = keys;
@@ -48,8 +48,8 @@ export class SkillTable {
 
     static decode(rows) {
         return new SkillTable(
-            decodeMapTable(rows, (row) => row.id),
             rows.map((row) => row.id),
+            decodeMapTable(rows, (row) => row.id),
         );
     }
 

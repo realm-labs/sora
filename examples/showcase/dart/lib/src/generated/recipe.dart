@@ -25,18 +25,18 @@ final class Recipe {
 }
 
 final class RecipeTable extends Iterable<Recipe> implements SoraConfigTable {
-  final Map<int, Recipe> _rows;
   final List<int> _keys;
+  final Map<int, Recipe> _rows;
 
   const RecipeTable(
-    this._rows,
     this._keys,
+    this._rows,
   );
 
   static RecipeTable decode(List<Recipe> rows) {
     return RecipeTable(
-      decodeMapTable(rows, (row) => row.id),
       rows.map((row) => row.id).toList(growable: false),
+      decodeMapTable(rows, (row) => row.id),
     );
   }
 

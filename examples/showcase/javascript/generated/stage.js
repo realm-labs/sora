@@ -30,8 +30,8 @@ export function decodeStageValue(value) {
 
 export class StageTable {
     constructor(
-        rows,
         keys,
+        rows,
     ) {
         this._rows = rows;
         this._keys = keys;
@@ -39,8 +39,8 @@ export class StageTable {
 
     static decode(rows) {
         return new StageTable(
-            decodeMapTable(rows, (row) => row.id),
             rows.map((row) => row.id),
+            decodeMapTable(rows, (row) => row.id),
         );
     }
 

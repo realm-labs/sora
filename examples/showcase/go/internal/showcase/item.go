@@ -81,8 +81,8 @@ func decodeItemValue(input SoraValue) (Item, error) {
 }
 
 type ItemTable struct {
-	rows       map[int32]Item
 	keys       []int32
+	rows       map[int32]Item
 	byName     map[string]Item
 	byItemType map[ItemType][]Item
 }
@@ -93,8 +93,8 @@ func buildItemTable(rows []Item) (*ItemTable, error) {
 		keys = append(keys, row.Id)
 	}
 	return &ItemTable{
-		rows:       DecodeMapTable(rows, func(row Item) int32 { return row.Id }),
 		keys:       keys,
+		rows:       DecodeMapTable(rows, func(row Item) int32 { return row.Id }),
 		byName:     DecodeUniqueIndex(rows, func(row Item) string { return row.Name }),
 		byItemType: DecodeIndex(rows, func(row Item) ItemType { return row.ItemType }),
 	}, nil

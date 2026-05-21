@@ -30,8 +30,8 @@ data class Buff(
 }
 
 class BuffTable private constructor(
-    val rows: Map<Int, Buff>,
     val keys: List<Int>,
+    val rows: Map<Int, Buff>,
 ) : SoraTable {
     operator fun get(key: Int): Buff? = rows[key]
 
@@ -51,8 +51,8 @@ class BuffTable private constructor(
 
         private fun fromRows(rows: List<Buff>): BuffTable =
             BuffTable(
-                rows.associateBy { it.id },
                 rows.map { it.id },
+                rows.associateBy { it.id },
             )
     }
 }

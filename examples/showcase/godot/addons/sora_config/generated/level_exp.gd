@@ -21,16 +21,16 @@ static func decode(value: Variant) -> LevelExp:
 
 class LevelExpTable:
 	extends SoraRuntime.SoraConfigTable
-	var _rows: Dictionary = {}
 	var keys: Array = []
+	var _rows: Dictionary = {}
 
 	static func decode(rows: Array) -> LevelExpTable:
 		var table := LevelExpTable.new()
 		table.name = "LevelExp"
 		table.mode = "map"
 		table.key = "level"
-		table._rows = SoraRuntime.decode_map_table(rows, func(row): return row.level)
 		table.keys = rows.map(func(row): return row.level)
+		table._rows = SoraRuntime.decode_map_table(rows, func(row): return row.level)
 		return table
 
 	func length() -> int:

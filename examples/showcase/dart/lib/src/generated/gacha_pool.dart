@@ -25,18 +25,18 @@ final class GachaPool {
 }
 
 final class GachaPoolTable extends Iterable<GachaPool> implements SoraConfigTable {
-  final Map<int, GachaPool> _rows;
   final List<int> _keys;
+  final Map<int, GachaPool> _rows;
 
   const GachaPoolTable(
-    this._rows,
     this._keys,
+    this._rows,
   );
 
   static GachaPoolTable decode(List<GachaPool> rows) {
     return GachaPoolTable(
-      decodeMapTable(rows, (row) => row.id),
       rows.map((row) => row.id).toList(growable: false),
+      decodeMapTable(rows, (row) => row.id),
     );
   }
 

@@ -22,8 +22,8 @@ function Dungeon.decode(reader)
 end
 
 ---@class DungeonTable
----@field private _rows table<integer, Dungeon>
 ---@field private _keys integer[]
+---@field private _rows table<integer, Dungeon>
 local DungeonTable = {}
 DungeonTable.__index = DungeonTable
 
@@ -35,8 +35,8 @@ function DungeonTable.decode(rows)
         keys[index] = row.id
     end
     return setmetatable({
-        _rows = Runtime.decode_map_table(rows, function(row) return row.id end),
         _keys = keys,
+        _rows = Runtime.decode_map_table(rows, function(row) return row.id end),
     }, DungeonTable)
 end
 

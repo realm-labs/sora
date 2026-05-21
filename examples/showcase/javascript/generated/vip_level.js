@@ -26,8 +26,8 @@ export function decodeVipLevelValue(value) {
 
 export class VipLevelTable {
     constructor(
-        rows,
         keys,
+        rows,
     ) {
         this._rows = rows;
         this._keys = keys;
@@ -35,8 +35,8 @@ export class VipLevelTable {
 
     static decode(rows) {
         return new VipLevelTable(
-            decodeMapTable(rows, (row) => row.level),
             rows.map((row) => row.level),
+            decodeMapTable(rows, (row) => row.level),
         );
     }
 

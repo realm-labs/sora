@@ -27,8 +27,8 @@ data class GachaPool(
 }
 
 class GachaPoolTable private constructor(
-    val rows: Map<Int, GachaPool>,
     val keys: List<Int>,
+    val rows: Map<Int, GachaPool>,
 ) : SoraTable {
     operator fun get(key: Int): GachaPool? = rows[key]
 
@@ -48,8 +48,8 @@ class GachaPoolTable private constructor(
 
         private fun fromRows(rows: List<GachaPool>): GachaPoolTable =
             GachaPoolTable(
-                rows.associateBy { it.id },
                 rows.map { it.id },
+                rows.associateBy { it.id },
             )
     }
 }

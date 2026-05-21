@@ -51,6 +51,10 @@ public:
     std::size_t size() const override {
         return rows_.size();
     }
+    const std::vector<std::string>& keys() const {
+        return keys_;
+    }
+
     const Localization* get(const std::string& key) const {
         typename std::unordered_map<std::string, Localization>::const_iterator it = rows_.find(key);
         if (it == rows_.end()) {
@@ -61,10 +65,6 @@ public:
 
     const std::unordered_map<std::string, Localization>& rows() const {
         return rows_;
-    }
-
-    const std::vector<std::string>& keys() const {
-        return keys_;
     }
 
     std::vector<const Localization*> ordered_rows() const {
@@ -84,8 +84,8 @@ public:
 private:
     void build_indexes() {
     }
-    std::unordered_map<std::string, Localization> rows_;
     std::vector<std::string> keys_;
+    std::unordered_map<std::string, Localization> rows_;
 };
 
 } // namespace sora::showcase

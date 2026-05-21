@@ -34,8 +34,8 @@ decode_table(Bundle) ->
     Data = sora_runtime:decode_map_table(Rows, fun(Row) -> maps:get('key', Row) end),
     Keys = [maps:get('key', Row) || Row <- Rows],
     #{
+        keys => Keys,
         data => Data
-        , keys => Keys
     }.
 -spec get(binary(), table()) -> t() | undefined.
 get(Key, Table) ->

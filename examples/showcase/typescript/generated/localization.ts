@@ -37,14 +37,14 @@ export function decodeLocalizationValue(value: SoraValue): Localization {
 
 export class LocalizationTable implements SoraConfigTable {
     private constructor(
-        private readonly _rows: Map<string, Localization>,
         private readonly _keys: string[],
+        private readonly _rows: Map<string, Localization>,
     ) {}
 
     static decode(rows: Localization[]): LocalizationTable {
         return new LocalizationTable(
-            decodeMapTable(rows, (row) => row.key),
             rows.map((row) => row.key),
+            decodeMapTable(rows, (row) => row.key),
         );
     }
 

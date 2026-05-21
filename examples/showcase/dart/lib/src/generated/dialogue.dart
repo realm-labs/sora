@@ -24,18 +24,18 @@ final class Dialogue {
 }
 
 final class DialogueTable extends Iterable<Dialogue> implements SoraConfigTable {
-  final Map<int, Dialogue> _rows;
   final List<int> _keys;
+  final Map<int, Dialogue> _rows;
 
   const DialogueTable(
-    this._rows,
     this._keys,
+    this._rows,
   );
 
   static DialogueTable decode(List<Dialogue> rows) {
     return DialogueTable(
-      decodeMapTable(rows, (row) => row.id),
       rows.map((row) => row.id).toList(growable: false),
+      decodeMapTable(rows, (row) => row.id),
     );
   }
 

@@ -27,8 +27,8 @@ data class LevelExp(
 }
 
 class LevelExpTable private constructor(
-    val rows: Map<Int, LevelExp>,
     val keys: List<Int>,
+    val rows: Map<Int, LevelExp>,
 ) : SoraTable {
     operator fun get(key: Int): LevelExp? = rows[key]
 
@@ -48,8 +48,8 @@ class LevelExpTable private constructor(
 
         private fun fromRows(rows: List<LevelExp>): LevelExpTable =
             LevelExpTable(
-                rows.associateBy { it.level },
                 rows.map { it.level },
+                rows.associateBy { it.level },
             )
     }
 }

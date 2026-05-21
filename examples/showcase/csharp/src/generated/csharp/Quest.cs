@@ -48,13 +48,13 @@ public sealed record Quest(
 
 public sealed class QuestTable : ISoraTable
 {
-    private readonly Dictionary<int, Quest> rows;
     private readonly List<int> keys;
+    private readonly Dictionary<int, Quest> rows;
 
-    internal QuestTable(Dictionary<int, Quest> rows, List<int> keys)
+    internal QuestTable(List<int> keys, Dictionary<int, Quest> rows)
     {
-        this.rows = rows;
         this.keys = keys;
+        this.rows = rows;
     }
 
     internal static QuestTable Decode(ISoraTableSource source)
@@ -64,7 +64,7 @@ public sealed class QuestTable : ISoraTable
 
     internal static QuestTable FromRows(List<Quest> rows)
     {
-        return new QuestTable(SoraConfig.DecodeMapTable(rows, row => row.Id), rows.ConvertAll(row => row.Id));
+        return new QuestTable(rows.ConvertAll(row => row.Id), SoraConfig.DecodeMapTable(rows, row => row.Id));
     }
 
     public Dictionary<int, Quest> Rows => rows;

@@ -40,17 +40,17 @@ class LevelExp:
 class LevelExpTable(SoraConfigTable):
     def __init__(
         self,
-        rows: dict[int, LevelExp],
         keys: list[int],
+        rows: dict[int, LevelExp],
     ) -> None:
-        self._rows = rows
         self._keys = keys
+        self._rows = rows
 
     @staticmethod
     def decode(rows: list[LevelExp]) -> LevelExpTable:
         return LevelExpTable(
-            decode_map_table(rows, lambda row: row.level),
             [row.level for row in rows],
+            decode_map_table(rows, lambda row: row.level),
         )
 
     def name(self) -> str:

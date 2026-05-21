@@ -26,16 +26,16 @@ impl super::runtime::SoraDecode for VipLevel {
 
 #[derive(Debug, Clone)]
 pub struct VipLevelTable {
-    rows: SoraMap<i32, VipLevel>,
     keys: Vec<i32>,
+    rows: SoraMap<i32, VipLevel>,
 }
 
 impl VipLevelTable {
     pub(super) fn from_rows(rows: Vec<VipLevel>) -> Result<Self, super::runtime::SoraReadError> {
         let keys = rows.iter().map(|row| row.level).collect::<Vec<_>>();
         Ok(Self {
-            rows: super::decode_map_table(rows, |row| row.level),
             keys,
+            rows: super::decode_map_table(rows, |row| row.level),
         })
     }
     pub fn get(&self, key: i32) -> Option<&VipLevel> {

@@ -36,16 +36,16 @@ impl super::runtime::SoraDecode for Monster {
 
 #[derive(Debug, Clone)]
 pub struct MonsterTable {
-    rows: SoraMap<i32, Monster>,
     keys: Vec<i32>,
+    rows: SoraMap<i32, Monster>,
 }
 
 impl MonsterTable {
     pub(super) fn from_rows(rows: Vec<Monster>) -> Result<Self, super::runtime::SoraReadError> {
         let keys = rows.iter().map(|row| row.id).collect::<Vec<_>>();
         Ok(Self {
-            rows: super::decode_map_table(rows, |row| row.id),
             keys,
+            rows: super::decode_map_table(rows, |row| row.id),
         })
     }
     pub fn get(&self, key: i32) -> Option<&Monster> {

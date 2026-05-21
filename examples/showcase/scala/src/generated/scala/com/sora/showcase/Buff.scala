@@ -20,8 +20,8 @@ object Buff {
 }
 
 final class BuffTable private (
-  val rows: Map[Int, Buff],
-  val keys: Vector[Int]
+  val keys: Vector[Int],
+  val rows: Map[Int, Buff]
 ) extends SoraTable {
   def get(key: Int): Option[Buff] = rows.get(key)
 
@@ -41,7 +41,7 @@ object BuffTable {
 
   private def fromRows(rows: Vector[Buff]): BuffTable =
     new BuffTable(
-      rows.map(row => row.id -> row).toMap,
-      rows.map(row => row.id)
+      rows.map(row => row.id),
+      rows.map(row => row.id -> row).toMap
     )
 }

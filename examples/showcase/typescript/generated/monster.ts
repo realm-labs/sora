@@ -49,14 +49,14 @@ export function decodeMonsterValue(value: SoraValue): Monster {
 
 export class MonsterTable implements SoraConfigTable {
     private constructor(
-        private readonly _rows: Map<number, Monster>,
         private readonly _keys: number[],
+        private readonly _rows: Map<number, Monster>,
     ) {}
 
     static decode(rows: Monster[]): MonsterTable {
         return new MonsterTable(
-            decodeMapTable(rows, (row) => row.id),
             rows.map((row) => row.id),
+            decodeMapTable(rows, (row) => row.id),
         );
     }
 

@@ -54,16 +54,16 @@ public final class Monster {
 }
 
 final class MonsterTable implements SoraTable {
-    private final java.util.Map<Integer, Monster> rows;
     private final List<Integer> keys;
+    private final java.util.Map<Integer, Monster> rows;
 
-    private MonsterTable(java.util.Map<Integer, Monster> rows, List<Integer> keys) {
-        this.rows = rows;
+    private MonsterTable(List<Integer> keys, java.util.Map<Integer, Monster> rows) {
         this.keys = keys;
+        this.rows = rows;
     }
 
     private static MonsterTable fromRows(List<Monster> rows) {
-        return new MonsterTable(SoraConfig.decodeMapTable(rows, row -> row.id), rows.stream().map(row -> row.id).toList());
+        return new MonsterTable(rows.stream().map(row -> row.id).toList(), SoraConfig.decodeMapTable(rows, row -> row.id));
     }
 
     static MonsterTable decode(SoraTableSource source) {

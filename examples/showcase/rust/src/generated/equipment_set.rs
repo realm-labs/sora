@@ -29,8 +29,8 @@ impl super::runtime::SoraDecode for EquipmentSet {
 
 #[derive(Debug, Clone)]
 pub struct EquipmentSetTable {
-    rows: SoraMap<i32, EquipmentSet>,
     keys: Vec<i32>,
+    rows: SoraMap<i32, EquipmentSet>,
 }
 
 impl EquipmentSetTable {
@@ -39,8 +39,8 @@ impl EquipmentSetTable {
     ) -> Result<Self, super::runtime::SoraReadError> {
         let keys = rows.iter().map(|row| row.id).collect::<Vec<_>>();
         Ok(Self {
-            rows: super::decode_map_table(rows, |row| row.id),
             keys,
+            rows: super::decode_map_table(rows, |row| row.id),
         })
     }
     pub fn get(&self, key: i32) -> Option<&EquipmentSet> {

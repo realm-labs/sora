@@ -29,8 +29,8 @@ function Character.decode(reader)
 end
 
 ---@class CharacterTable
----@field private _rows table<integer, Character>
 ---@field private _keys integer[]
+---@field private _rows table<integer, Character>
 local CharacterTable = {}
 CharacterTable.__index = CharacterTable
 
@@ -42,8 +42,8 @@ function CharacterTable.decode(rows)
         keys[index] = row.id
     end
     return setmetatable({
-        _rows = Runtime.decode_map_table(rows, function(row) return row.id end),
         _keys = keys,
+        _rows = Runtime.decode_map_table(rows, function(row) return row.id end),
     }, CharacterTable)
 end
 

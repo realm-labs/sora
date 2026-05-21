@@ -49,6 +49,10 @@ public:
     std::size_t size() const override {
         return rows_.size();
     }
+    const std::vector<std::int32_t>& keys() const {
+        return keys_;
+    }
+
     const LevelExp* get(const std::int32_t& key) const {
         typename std::unordered_map<std::int32_t, LevelExp>::const_iterator it = rows_.find(key);
         if (it == rows_.end()) {
@@ -59,10 +63,6 @@ public:
 
     const std::unordered_map<std::int32_t, LevelExp>& rows() const {
         return rows_;
-    }
-
-    const std::vector<std::int32_t>& keys() const {
-        return keys_;
     }
 
     std::vector<const LevelExp*> ordered_rows() const {
@@ -82,8 +82,8 @@ public:
 private:
     void build_indexes() {
     }
-    std::unordered_map<std::int32_t, LevelExp> rows_;
     std::vector<std::int32_t> keys_;
+    std::unordered_map<std::int32_t, LevelExp> rows_;
 };
 
 } // namespace sora::showcase

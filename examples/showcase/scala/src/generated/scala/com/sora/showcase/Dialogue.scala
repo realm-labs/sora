@@ -18,8 +18,8 @@ object Dialogue {
 }
 
 final class DialogueTable private (
-  val rows: Map[Int, Dialogue],
-  val keys: Vector[Int]
+  val keys: Vector[Int],
+  val rows: Map[Int, Dialogue]
 ) extends SoraTable {
   def get(key: Int): Option[Dialogue] = rows.get(key)
 
@@ -39,7 +39,7 @@ object DialogueTable {
 
   private def fromRows(rows: Vector[Dialogue]): DialogueTable =
     new DialogueTable(
-      rows.map(row => row.id -> row).toMap,
-      rows.map(row => row.id)
+      rows.map(row => row.id),
+      rows.map(row => row.id -> row).toMap
     )
 }

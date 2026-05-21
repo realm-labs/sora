@@ -37,14 +37,14 @@ export function decodeVipLevelValue(value: SoraValue): VipLevel {
 
 export class VipLevelTable implements SoraConfigTable {
     private constructor(
-        private readonly _rows: Map<number, VipLevel>,
         private readonly _keys: number[],
+        private readonly _rows: Map<number, VipLevel>,
     ) {}
 
     static decode(rows: VipLevel[]): VipLevelTable {
         return new VipLevelTable(
-            decodeMapTable(rows, (row) => row.level),
             rows.map((row) => row.level),
+            decodeMapTable(rows, (row) => row.level),
         );
     }
 

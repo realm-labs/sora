@@ -25,16 +25,16 @@ impl super::runtime::SoraDecode for LevelExp {
 
 #[derive(Debug, Clone)]
 pub struct LevelExpTable {
-    rows: SoraMap<i32, LevelExp>,
     keys: Vec<i32>,
+    rows: SoraMap<i32, LevelExp>,
 }
 
 impl LevelExpTable {
     pub(super) fn from_rows(rows: Vec<LevelExp>) -> Result<Self, super::runtime::SoraReadError> {
         let keys = rows.iter().map(|row| row.level).collect::<Vec<_>>();
         Ok(Self {
-            rows: super::decode_map_table(rows, |row| row.level),
             keys,
+            rows: super::decode_map_table(rows, |row| row.level),
         })
     }
     pub fn get(&self, key: i32) -> Option<&LevelExp> {

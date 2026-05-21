@@ -21,8 +21,8 @@ function Localization.decode(reader)
 end
 
 ---@class LocalizationTable
----@field private _rows table<string, Localization>
 ---@field private _keys string[]
+---@field private _rows table<string, Localization>
 local LocalizationTable = {}
 LocalizationTable.__index = LocalizationTable
 
@@ -34,8 +34,8 @@ function LocalizationTable.decode(rows)
         keys[index] = row.key
     end
     return setmetatable({
-        _rows = Runtime.decode_map_table(rows, function(row) return row.key end),
         _keys = keys,
+        _rows = Runtime.decode_map_table(rows, function(row) return row.key end),
     }, LocalizationTable)
 end
 

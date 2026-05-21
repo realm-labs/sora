@@ -22,8 +22,8 @@ object Stage {
 }
 
 final class StageTable private (
-  val rows: Map[Int, Stage],
-  val keys: Vector[Int]
+  val keys: Vector[Int],
+  val rows: Map[Int, Stage]
 ) extends SoraTable {
   def get(key: Int): Option[Stage] = rows.get(key)
 
@@ -43,7 +43,7 @@ object StageTable {
 
   private def fromRows(rows: Vector[Stage]): StageTable =
     new StageTable(
-      rows.map(row => row.id -> row).toMap,
-      rows.map(row => row.id)
+      rows.map(row => row.id),
+      rows.map(row => row.id -> row).toMap
     )
 }

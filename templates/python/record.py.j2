@@ -79,8 +79,8 @@ class {{ table.pascal_name }}Table(SoraConfigTable):
     def __init__(
         self,
 {%- if table.mode == "map" and table.key_type %}
-        rows: dict[{{ table.key_type }}, {{ table.row_type }}],
         keys: list[{{ table.key_type }}],
+        rows: dict[{{ table.key_type }}, {{ table.row_type }}],
 {%- elif table.mode == "singleton" %}
         row: {{ table.row_type }},
 {%- else %}
@@ -94,8 +94,8 @@ class {{ table.pascal_name }}Table(SoraConfigTable):
 {%- endfor %}
     ) -> None:
 {%- if table.mode == "map" and table.key_type %}
-        self._rows = rows
         self._keys = keys
+        self._rows = rows
 {%- elif table.mode == "singleton" %}
         self._row = row
 {%- else %}
@@ -112,8 +112,8 @@ class {{ table.pascal_name }}Table(SoraConfigTable):
     def decode(rows: list[{{ table.row_type }}]) -> {{ table.pascal_name }}Table:
 {%- if table.mode == "map" and table.key_field_name %}
         return {{ table.pascal_name }}Table(
-            decode_map_table(rows, lambda row: row.{{ table.key_field_name }}),
             [row.{{ table.key_field_name }} for row in rows],
+            decode_map_table(rows, lambda row: row.{{ table.key_field_name }}),
 {%- for index in table.unique_indexes %}
             decode_unique_index(rows, lambda row: row.{{ index.field_name }}),
 {%- endfor %}

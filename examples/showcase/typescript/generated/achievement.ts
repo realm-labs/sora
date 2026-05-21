@@ -40,14 +40,14 @@ export function decodeAchievementValue(value: SoraValue): Achievement {
 
 export class AchievementTable implements SoraConfigTable {
     private constructor(
-        private readonly _rows: Map<number, Achievement>,
         private readonly _keys: number[],
+        private readonly _rows: Map<number, Achievement>,
     ) {}
 
     static decode(rows: Achievement[]): AchievementTable {
         return new AchievementTable(
-            decodeMapTable(rows, (row) => row.id),
             rows.map((row) => row.id),
+            decodeMapTable(rows, (row) => row.id),
         );
     }
 

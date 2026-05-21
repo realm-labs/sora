@@ -28,8 +28,8 @@ export function decodeAchievementValue(value) {
 
 export class AchievementTable {
     constructor(
-        rows,
         keys,
+        rows,
     ) {
         this._rows = rows;
         this._keys = keys;
@@ -37,8 +37,8 @@ export class AchievementTable {
 
     static decode(rows) {
         return new AchievementTable(
-            decodeMapTable(rows, (row) => row.id),
             rows.map((row) => row.id),
+            decodeMapTable(rows, (row) => row.id),
         );
     }
 

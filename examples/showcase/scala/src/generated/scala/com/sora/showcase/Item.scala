@@ -30,8 +30,8 @@ object Item {
 }
 
 final class ItemTable private (
-  val rows: Map[Int, Item],
   val keys: Vector[Int],
+  val rows: Map[Int, Item],
   private val nameIndex: Map[String, Item],
   private val itemTypeIndex: Map[ItemType, Vector[Item]]
 ) extends SoraTable {
@@ -57,8 +57,8 @@ object ItemTable {
 
   private def fromRows(rows: Vector[Item]): ItemTable =
     new ItemTable(
-      rows.map(row => row.id -> row).toMap,
       rows.map(row => row.id),
+      rows.map(row => row.id -> row).toMap,
       rows.map(row => row.name -> row).toMap,
       rows.groupBy(row => row.itemType)
     )

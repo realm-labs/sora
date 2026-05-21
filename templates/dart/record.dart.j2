@@ -34,8 +34,8 @@ final class {{ record.pascal_name }} {
 
 final class {{ table.pascal_name }}Table extends Iterable<{{ table.row_type }}> implements SoraConfigTable {
 {%- if table.mode == "map" and table.key_type %}
-  final Map<{{ table.key_type }}, {{ table.row_type }}> _rows;
   final List<{{ table.key_type }}> _keys;
+  final Map<{{ table.key_type }}, {{ table.row_type }}> _rows;
 {%- elif table.mode == "singleton" %}
   final {{ table.row_type }} _row;
 {%- else %}
@@ -52,10 +52,12 @@ final class {{ table.pascal_name }}Table extends Iterable<{{ table.row_type }}> 
 {%- if table.mode == "singleton" %}
     this._row,
 {%- else %}
-    this._rows,
 {%- endif %}
 {%- if table.mode == "map" and table.key_field_name %}
     this._keys,
+    this._rows,
+{%- elif table.mode != "singleton" %}
+    this._rows,
 {%- endif %}
 {%- for index in table.unique_indexes %}
     this._{{ index.field_name }},
@@ -68,8 +70,8 @@ final class {{ table.pascal_name }}Table extends Iterable<{{ table.row_type }}> 
   static {{ table.pascal_name }}Table decode(List<{{ table.row_type }}> rows) {
 {%- if table.mode == "map" and table.key_field_name %}
     return {{ table.pascal_name }}Table(
-      decodeMapTable(rows, (row) => row.{{ table.key_field_name }}),
       rows.map((row) => row.{{ table.key_field_name }}).toList(growable: false),
+      decodeMapTable(rows, (row) => row.{{ table.key_field_name }}),
 {%- for index in table.unique_indexes %}
       decodeUniqueIndex(rows, (row) => row.{{ index.field_name }}),
 {%- endfor %}

@@ -48,8 +48,8 @@ func decodeVipLevelValue(input SoraValue) (VipLevel, error) {
 }
 
 type VipLevelTable struct {
-	rows map[int32]VipLevel
 	keys []int32
+	rows map[int32]VipLevel
 }
 
 func buildVipLevelTable(rows []VipLevel) (*VipLevelTable, error) {
@@ -57,7 +57,7 @@ func buildVipLevelTable(rows []VipLevel) (*VipLevelTable, error) {
 	for _, row := range rows {
 		keys = append(keys, row.Level)
 	}
-	return &VipLevelTable{rows: DecodeMapTable(rows, func(row VipLevel) int32 { return row.Level }), keys: keys}, nil
+	return &VipLevelTable{keys: keys, rows: DecodeMapTable(rows, func(row VipLevel) int32 { return row.Level })}, nil
 }
 
 func decodeVipLevelTable(source SoraTableSource) (*VipLevelTable, error) {

@@ -35,8 +35,8 @@ export function decode{{ record.pascal_name }}Value(value) {
 export class {{ table.pascal_name }}Table {
     constructor(
 {%- if table.mode == "map" and table.key_type %}
-        rows,
         keys,
+        rows,
 {%- elif table.mode == "singleton" %}
         row,
 {%- else %}
@@ -68,8 +68,8 @@ export class {{ table.pascal_name }}Table {
     static decode(rows) {
 {%- if table.mode == "map" and table.key_field_name %}
         return new {{ table.pascal_name }}Table(
-            decodeMapTable(rows, (row) => row.{{ table.key_field_name }}),
             rows.map((row) => row.{{ table.key_field_name }}),
+            decodeMapTable(rows, (row) => row.{{ table.key_field_name }}),
 {%- for index in table.unique_indexes %}
             decodeUniqueIndex(rows, (row) => row.{{ index.field_name }}),
 {%- endfor %}

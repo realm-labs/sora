@@ -18,8 +18,8 @@ object LevelExp {
 }
 
 final class LevelExpTable private (
-  val rows: Map[Int, LevelExp],
-  val keys: Vector[Int]
+  val keys: Vector[Int],
+  val rows: Map[Int, LevelExp]
 ) extends SoraTable {
   def get(key: Int): Option[LevelExp] = rows.get(key)
 
@@ -39,7 +39,7 @@ object LevelExpTable {
 
   private def fromRows(rows: Vector[LevelExp]): LevelExpTable =
     new LevelExpTable(
-      rows.map(row => row.level -> row).toMap,
-      rows.map(row => row.level)
+      rows.map(row => row.level),
+      rows.map(row => row.level -> row).toMap
     )
 }

@@ -29,18 +29,18 @@ final class EventRule {
 }
 
 final class EventRuleTable extends Iterable<EventRule> implements SoraConfigTable {
-  final Map<int, EventRule> _rows;
   final List<int> _keys;
+  final Map<int, EventRule> _rows;
 
   const EventRuleTable(
-    this._rows,
     this._keys,
+    this._rows,
   );
 
   static EventRuleTable decode(List<EventRule> rows) {
     return EventRuleTable(
-      decodeMapTable(rows, (row) => row.id),
       rows.map((row) => row.id).toList(growable: false),
+      decodeMapTable(rows, (row) => row.id),
     );
   }
 

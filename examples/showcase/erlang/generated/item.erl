@@ -44,8 +44,8 @@ decode_table(Bundle) ->
     ByName = sora_runtime:decode_unique_index(Rows, fun(Row) -> maps:get('name', Row) end),
     ByItemType = sora_runtime:decode_index(Rows, fun(Row) -> maps:get('item_type', Row) end),
     #{
+        keys => Keys,
         data => Data
-        , keys => Keys
         , 'by_name' => ByName
         , 'by_item_type' => ByItemType
     }.

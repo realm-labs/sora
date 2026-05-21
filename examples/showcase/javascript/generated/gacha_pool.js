@@ -26,8 +26,8 @@ export function decodeGachaPoolValue(value) {
 
 export class GachaPoolTable {
     constructor(
-        rows,
         keys,
+        rows,
     ) {
         this._rows = rows;
         this._keys = keys;
@@ -35,8 +35,8 @@ export class GachaPoolTable {
 
     static decode(rows) {
         return new GachaPoolTable(
-            decodeMapTable(rows, (row) => row.id),
             rows.map((row) => row.id),
+            decodeMapTable(rows, (row) => row.id),
         );
     }
 

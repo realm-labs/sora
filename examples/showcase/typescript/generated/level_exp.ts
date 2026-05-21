@@ -34,14 +34,14 @@ export function decodeLevelExpValue(value: SoraValue): LevelExp {
 
 export class LevelExpTable implements SoraConfigTable {
     private constructor(
-        private readonly _rows: Map<number, LevelExp>,
         private readonly _keys: number[],
+        private readonly _rows: Map<number, LevelExp>,
     ) {}
 
     static decode(rows: LevelExp[]): LevelExpTable {
         return new LevelExpTable(
-            decodeMapTable(rows, (row) => row.level),
             rows.map((row) => row.level),
+            decodeMapTable(rows, (row) => row.level),
         );
     }
 

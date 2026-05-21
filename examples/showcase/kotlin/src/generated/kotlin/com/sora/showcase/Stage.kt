@@ -33,8 +33,8 @@ data class Stage(
 }
 
 class StageTable private constructor(
-    val rows: Map<Int, Stage>,
     val keys: List<Int>,
+    val rows: Map<Int, Stage>,
 ) : SoraTable {
     operator fun get(key: Int): Stage? = rows[key]
 
@@ -54,8 +54,8 @@ class StageTable private constructor(
 
         private fun fromRows(rows: List<Stage>): StageTable =
             StageTable(
-                rows.associateBy { it.id },
                 rows.map { it.id },
+                rows.associateBy { it.id },
             )
     }
 }

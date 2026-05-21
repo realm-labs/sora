@@ -27,8 +27,8 @@ function Item.decode(reader)
 end
 
 ---@class ItemTable
----@field private _rows table<integer, Item>
 ---@field private _keys integer[]
+---@field private _rows table<integer, Item>
 ---@field private _by_name table<string, Item>
 ---@field private _by_item_type table<ItemType, Item[]>
 local ItemTable = {}
@@ -42,8 +42,8 @@ function ItemTable.decode(rows)
         keys[index] = row.id
     end
     return setmetatable({
-        _rows = Runtime.decode_map_table(rows, function(row) return row.id end),
         _keys = keys,
+        _rows = Runtime.decode_map_table(rows, function(row) return row.id end),
         _by_name = Runtime.decode_unique_index(rows, function(row) return row.name end),
         _by_item_type = Runtime.decode_index(rows, function(row) return row.itemType end),
     }, ItemTable)

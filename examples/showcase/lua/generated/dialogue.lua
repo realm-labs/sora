@@ -19,8 +19,8 @@ function Dialogue.decode(reader)
 end
 
 ---@class DialogueTable
----@field private _rows table<integer, Dialogue>
 ---@field private _keys integer[]
+---@field private _rows table<integer, Dialogue>
 local DialogueTable = {}
 DialogueTable.__index = DialogueTable
 
@@ -32,8 +32,8 @@ function DialogueTable.decode(rows)
         keys[index] = row.id
     end
     return setmetatable({
-        _rows = Runtime.decode_map_table(rows, function(row) return row.id end),
         _keys = keys,
+        _rows = Runtime.decode_map_table(rows, function(row) return row.id end),
     }, DialogueTable)
 end
 

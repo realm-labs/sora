@@ -44,17 +44,17 @@ class Dungeon:
 class DungeonTable(SoraConfigTable):
     def __init__(
         self,
-        rows: dict[int, Dungeon],
         keys: list[int],
+        rows: dict[int, Dungeon],
     ) -> None:
-        self._rows = rows
         self._keys = keys
+        self._rows = rows
 
     @staticmethod
     def decode(rows: list[Dungeon]) -> DungeonTable:
         return DungeonTable(
-            decode_map_table(rows, lambda row: row.id),
             [row.id for row in rows],
+            decode_map_table(rows, lambda row: row.id),
         )
 
     def name(self) -> str:

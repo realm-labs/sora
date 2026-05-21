@@ -60,22 +60,22 @@ public final class Item {
 }
 
 final class ItemTable implements SoraTable {
-    private final java.util.Map<Integer, Item> rows;
     private final List<Integer> keys;
+    private final java.util.Map<Integer, Item> rows;
     private final Map<String, Item> byName;
     private final Map<ItemType, List<Item>> byItemType;
 
-    private ItemTable(java.util.Map<Integer, Item> rows, List<Integer> keys, Map<String, Item> byName, Map<ItemType, List<Item>> byItemType) {
-        this.rows = rows;
+    private ItemTable(List<Integer> keys, java.util.Map<Integer, Item> rows, Map<String, Item> byName, Map<ItemType, List<Item>> byItemType) {
         this.keys = keys;
+        this.rows = rows;
         this.byName = byName;
         this.byItemType = byItemType;
     }
 
     private static ItemTable fromRows(List<Item> rows) {
         return new ItemTable(
-            SoraConfig.decodeMapTable(rows, row -> row.id),
             rows.stream().map(row -> row.id).toList(),
+            SoraConfig.decodeMapTable(rows, row -> row.id),
             SoraConfig.decodeUniqueIndex(rows, row -> row.name),
             SoraConfig.decodeIndex(rows, row -> row.itemType)
         );
