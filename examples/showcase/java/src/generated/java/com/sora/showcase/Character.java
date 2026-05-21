@@ -2,6 +2,9 @@
 
 package com.sora.showcase;
 
+import java.util.List;
+import java.util.Map;
+
 public final class Character {
     public final Integer id;
     public final String name;
@@ -39,5 +42,51 @@ public final class Character {
             reader.readList(() -> reader.readI32()),
             Vec3.decode(reader)
         );
+    }
+}
+
+final class CharacterTable implements SoraTable {
+    private final java.util.Map<Integer, Character> rows;
+
+    private CharacterTable(java.util.Map<Integer, Character> rows) {
+        this.rows = rows;
+    }
+
+    private static CharacterTable fromRows(List<Character> rows) {
+        return new CharacterTable(SoraConfig.decodeMapTable(rows, row -> row.id));
+    }
+
+    static CharacterTable decode(SoraBundle bundle) {
+        return fromRows(bundle.decodeTable("Character", Character::decode));
+    }
+    public java.util.Map<Integer, Character> rows() {
+        return rows;
+    }
+    public Character get(Integer key) {
+        return rows.get(key);
+    }
+    @Override
+    public String name() {
+        return "Character";
+    }
+
+    @Override
+    public SoraTableMode mode() {
+        return SoraTableMode.MAP;
+    }
+
+    @Override
+    public String key() {
+        return "id";
+    }
+
+    @Override
+    public String rowType() {
+        return "Character";
+    }
+
+    @Override
+    public int size() {
+        return rows.size();
     }
 }

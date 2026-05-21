@@ -2,6 +2,9 @@
 
 package com.sora.showcase;
 
+import java.util.List;
+import java.util.Map;
+
 public final class Shop {
     public final Integer id;
     public final String name;
@@ -23,5 +26,51 @@ public final class Shop {
             reader.readString(),
             ResourceKind.decode(reader)
         );
+    }
+}
+
+final class ShopTable implements SoraTable {
+    private final java.util.Map<Integer, Shop> rows;
+
+    private ShopTable(java.util.Map<Integer, Shop> rows) {
+        this.rows = rows;
+    }
+
+    private static ShopTable fromRows(List<Shop> rows) {
+        return new ShopTable(SoraConfig.decodeMapTable(rows, row -> row.id));
+    }
+
+    static ShopTable decode(SoraBundle bundle) {
+        return fromRows(bundle.decodeTable("Shop", Shop::decode));
+    }
+    public java.util.Map<Integer, Shop> rows() {
+        return rows;
+    }
+    public Shop get(Integer key) {
+        return rows.get(key);
+    }
+    @Override
+    public String name() {
+        return "Shop";
+    }
+
+    @Override
+    public SoraTableMode mode() {
+        return SoraTableMode.MAP;
+    }
+
+    @Override
+    public String key() {
+        return "id";
+    }
+
+    @Override
+    public String rowType() {
+        return "Shop";
+    }
+
+    @Override
+    public int size() {
+        return rows.size();
     }
 }

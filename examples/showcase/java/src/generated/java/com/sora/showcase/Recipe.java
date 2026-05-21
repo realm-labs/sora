@@ -2,6 +2,9 @@
 
 package com.sora.showcase;
 
+import java.util.List;
+import java.util.Map;
+
 public final class Recipe {
     public final Integer id;
     public final Integer resultItem;
@@ -23,5 +26,51 @@ public final class Recipe {
             reader.readI32(),
             reader.readList(() -> ResourceCost.decode(reader))
         );
+    }
+}
+
+final class RecipeTable implements SoraTable {
+    private final java.util.Map<Integer, Recipe> rows;
+
+    private RecipeTable(java.util.Map<Integer, Recipe> rows) {
+        this.rows = rows;
+    }
+
+    private static RecipeTable fromRows(List<Recipe> rows) {
+        return new RecipeTable(SoraConfig.decodeMapTable(rows, row -> row.id));
+    }
+
+    static RecipeTable decode(SoraBundle bundle) {
+        return fromRows(bundle.decodeTable("Recipe", Recipe::decode));
+    }
+    public java.util.Map<Integer, Recipe> rows() {
+        return rows;
+    }
+    public Recipe get(Integer key) {
+        return rows.get(key);
+    }
+    @Override
+    public String name() {
+        return "Recipe";
+    }
+
+    @Override
+    public SoraTableMode mode() {
+        return SoraTableMode.MAP;
+    }
+
+    @Override
+    public String key() {
+        return "id";
+    }
+
+    @Override
+    public String rowType() {
+        return "Recipe";
+    }
+
+    @Override
+    public int size() {
+        return rows.size();
     }
 }

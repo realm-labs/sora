@@ -2,6 +2,9 @@
 
 package com.sora.showcase;
 
+import java.util.List;
+import java.util.Map;
+
 public final class QuestReward {
     public final Integer questId;
     public final Integer seq;
@@ -27,5 +30,48 @@ public final class QuestReward {
             reader.readI32(),
             reader.readI32()
         );
+    }
+}
+
+final class QuestRewardTable implements SoraTable {
+    private final java.util.List<QuestReward> rows;
+
+    private QuestRewardTable(java.util.List<QuestReward> rows) {
+        this.rows = rows;
+    }
+
+    private static QuestRewardTable fromRows(List<QuestReward> rows) {
+        return new QuestRewardTable(rows);
+    }
+
+    static QuestRewardTable decode(SoraBundle bundle) {
+        return fromRows(bundle.decodeTable("QuestReward", QuestReward::decode));
+    }
+    public java.util.List<QuestReward> rows() {
+        return rows;
+    }
+    @Override
+    public String name() {
+        return "QuestReward";
+    }
+
+    @Override
+    public SoraTableMode mode() {
+        return SoraTableMode.LIST;
+    }
+
+    @Override
+    public String key() {
+        return null;
+    }
+
+    @Override
+    public String rowType() {
+        return "QuestReward";
+    }
+
+    @Override
+    public int size() {
+        return rows.size();
     }
 }

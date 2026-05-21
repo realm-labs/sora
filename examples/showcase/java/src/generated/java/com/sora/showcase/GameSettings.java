@@ -2,6 +2,9 @@
 
 package com.sora.showcase;
 
+import java.util.List;
+import java.util.Map;
+
 public final class GameSettings {
     public final String version;
     public final Integer dailyResetHour;
@@ -31,5 +34,48 @@ public final class GameSettings {
             Vec3.decode(reader),
             reader.readList(() -> reader.readI32())
         );
+    }
+}
+
+final class GameSettingsTable implements SoraTable {
+    private final GameSettings rows;
+
+    private GameSettingsTable(GameSettings rows) {
+        this.rows = rows;
+    }
+
+    private static GameSettingsTable fromRows(List<GameSettings> rows) {
+        return new GameSettingsTable(SoraConfig.requireSingletonTable(rows, "GameSettings"));
+    }
+
+    static GameSettingsTable decode(SoraBundle bundle) {
+        return fromRows(bundle.decodeTable("GameSettings", GameSettings::decode));
+    }
+    public GameSettings rows() {
+        return rows;
+    }
+    @Override
+    public String name() {
+        return "GameSettings";
+    }
+
+    @Override
+    public SoraTableMode mode() {
+        return SoraTableMode.SINGLETON;
+    }
+
+    @Override
+    public String key() {
+        return null;
+    }
+
+    @Override
+    public String rowType() {
+        return "GameSettings";
+    }
+
+    @Override
+    public int size() {
+        return 1;
     }
 }

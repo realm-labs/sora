@@ -2,6 +2,9 @@
 
 package com.sora.showcase;
 
+import java.util.List;
+import java.util.Map;
+
 public final class Dungeon {
     public final Integer id;
     public final String name;
@@ -27,5 +30,51 @@ public final class Dungeon {
             reader.readList(() -> reader.readI32()),
             ResourceCost.decode(reader)
         );
+    }
+}
+
+final class DungeonTable implements SoraTable {
+    private final java.util.Map<Integer, Dungeon> rows;
+
+    private DungeonTable(java.util.Map<Integer, Dungeon> rows) {
+        this.rows = rows;
+    }
+
+    private static DungeonTable fromRows(List<Dungeon> rows) {
+        return new DungeonTable(SoraConfig.decodeMapTable(rows, row -> row.id));
+    }
+
+    static DungeonTable decode(SoraBundle bundle) {
+        return fromRows(bundle.decodeTable("Dungeon", Dungeon::decode));
+    }
+    public java.util.Map<Integer, Dungeon> rows() {
+        return rows;
+    }
+    public Dungeon get(Integer key) {
+        return rows.get(key);
+    }
+    @Override
+    public String name() {
+        return "Dungeon";
+    }
+
+    @Override
+    public SoraTableMode mode() {
+        return SoraTableMode.MAP;
+    }
+
+    @Override
+    public String key() {
+        return "id";
+    }
+
+    @Override
+    public String rowType() {
+        return "Dungeon";
+    }
+
+    @Override
+    public int size() {
+        return rows.size();
     }
 }

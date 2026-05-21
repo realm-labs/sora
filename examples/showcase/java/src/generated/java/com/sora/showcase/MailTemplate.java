@@ -2,6 +2,9 @@
 
 package com.sora.showcase;
 
+import java.util.List;
+import java.util.Map;
+
 public final class MailTemplate {
     public final Integer id;
     public final MailType mailType;
@@ -31,5 +34,51 @@ public final class MailTemplate {
             reader.readString(),
             reader.readList(() -> Reward.decode(reader))
         );
+    }
+}
+
+final class MailTemplateTable implements SoraTable {
+    private final java.util.Map<Integer, MailTemplate> rows;
+
+    private MailTemplateTable(java.util.Map<Integer, MailTemplate> rows) {
+        this.rows = rows;
+    }
+
+    private static MailTemplateTable fromRows(List<MailTemplate> rows) {
+        return new MailTemplateTable(SoraConfig.decodeMapTable(rows, row -> row.id));
+    }
+
+    static MailTemplateTable decode(SoraBundle bundle) {
+        return fromRows(bundle.decodeTable("MailTemplate", MailTemplate::decode));
+    }
+    public java.util.Map<Integer, MailTemplate> rows() {
+        return rows;
+    }
+    public MailTemplate get(Integer key) {
+        return rows.get(key);
+    }
+    @Override
+    public String name() {
+        return "MailTemplate";
+    }
+
+    @Override
+    public SoraTableMode mode() {
+        return SoraTableMode.MAP;
+    }
+
+    @Override
+    public String key() {
+        return "id";
+    }
+
+    @Override
+    public String rowType() {
+        return "MailTemplate";
+    }
+
+    @Override
+    public int size() {
+        return rows.size();
     }
 }

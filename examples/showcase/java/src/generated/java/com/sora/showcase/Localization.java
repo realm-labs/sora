@@ -2,6 +2,9 @@
 
 package com.sora.showcase;
 
+import java.util.List;
+import java.util.Map;
+
 public final class Localization {
     public final String key;
     public final String zhCn;
@@ -27,5 +30,51 @@ public final class Localization {
             reader.readString(),
             reader.readOptional(() -> reader.readString())
         );
+    }
+}
+
+final class LocalizationTable implements SoraTable {
+    private final java.util.Map<String, Localization> rows;
+
+    private LocalizationTable(java.util.Map<String, Localization> rows) {
+        this.rows = rows;
+    }
+
+    private static LocalizationTable fromRows(List<Localization> rows) {
+        return new LocalizationTable(SoraConfig.decodeMapTable(rows, row -> row.key));
+    }
+
+    static LocalizationTable decode(SoraBundle bundle) {
+        return fromRows(bundle.decodeTable("Localization", Localization::decode));
+    }
+    public java.util.Map<String, Localization> rows() {
+        return rows;
+    }
+    public Localization get(String key) {
+        return rows.get(key);
+    }
+    @Override
+    public String name() {
+        return "Localization";
+    }
+
+    @Override
+    public SoraTableMode mode() {
+        return SoraTableMode.MAP;
+    }
+
+    @Override
+    public String key() {
+        return "key";
+    }
+
+    @Override
+    public String rowType() {
+        return "Localization";
+    }
+
+    @Override
+    public int size() {
+        return rows.size();
     }
 }

@@ -2,6 +2,9 @@
 
 package com.sora.showcase;
 
+import java.util.List;
+import java.util.Map;
+
 public final class ShopItem {
     public final Integer shopId;
     public final Integer seq;
@@ -31,5 +34,48 @@ public final class ShopItem {
             ResourceCost.decode(reader),
             reader.readOptional(() -> reader.readI32())
         );
+    }
+}
+
+final class ShopItemTable implements SoraTable {
+    private final java.util.List<ShopItem> rows;
+
+    private ShopItemTable(java.util.List<ShopItem> rows) {
+        this.rows = rows;
+    }
+
+    private static ShopItemTable fromRows(List<ShopItem> rows) {
+        return new ShopItemTable(rows);
+    }
+
+    static ShopItemTable decode(SoraBundle bundle) {
+        return fromRows(bundle.decodeTable("ShopItem", ShopItem::decode));
+    }
+    public java.util.List<ShopItem> rows() {
+        return rows;
+    }
+    @Override
+    public String name() {
+        return "ShopItem";
+    }
+
+    @Override
+    public SoraTableMode mode() {
+        return SoraTableMode.LIST;
+    }
+
+    @Override
+    public String key() {
+        return null;
+    }
+
+    @Override
+    public String rowType() {
+        return "ShopItem";
+    }
+
+    @Override
+    public int size() {
+        return rows.size();
     }
 }

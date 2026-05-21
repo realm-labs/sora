@@ -2,6 +2,9 @@
 
 package com.sora.showcase;
 
+import java.util.List;
+import java.util.Map;
+
 public final class Quest {
     public final Integer id;
     public final QuestType questType;
@@ -40,5 +43,51 @@ public final class Quest {
             Vec3.decode(reader),
             reader.readList(() -> Reward.decode(reader))
         );
+    }
+}
+
+final class QuestTable implements SoraTable {
+    private final java.util.Map<Integer, Quest> rows;
+
+    private QuestTable(java.util.Map<Integer, Quest> rows) {
+        this.rows = rows;
+    }
+
+    private static QuestTable fromRows(List<Quest> rows) {
+        return new QuestTable(SoraConfig.decodeMapTable(rows, row -> row.id));
+    }
+
+    static QuestTable decode(SoraBundle bundle) {
+        return fromRows(bundle.decodeTable("Quest", Quest::decode));
+    }
+    public java.util.Map<Integer, Quest> rows() {
+        return rows;
+    }
+    public Quest get(Integer key) {
+        return rows.get(key);
+    }
+    @Override
+    public String name() {
+        return "Quest";
+    }
+
+    @Override
+    public SoraTableMode mode() {
+        return SoraTableMode.MAP;
+    }
+
+    @Override
+    public String key() {
+        return "id";
+    }
+
+    @Override
+    public String rowType() {
+        return "Quest";
+    }
+
+    @Override
+    public int size() {
+        return rows.size();
     }
 }

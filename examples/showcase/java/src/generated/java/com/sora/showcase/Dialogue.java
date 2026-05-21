@@ -2,6 +2,9 @@
 
 package com.sora.showcase;
 
+import java.util.List;
+import java.util.Map;
+
 public final class Dialogue {
     public final Integer id;
     public final String speakerKey;
@@ -23,5 +26,51 @@ public final class Dialogue {
             reader.readString(),
             reader.readList(() -> reader.readString())
         );
+    }
+}
+
+final class DialogueTable implements SoraTable {
+    private final java.util.Map<Integer, Dialogue> rows;
+
+    private DialogueTable(java.util.Map<Integer, Dialogue> rows) {
+        this.rows = rows;
+    }
+
+    private static DialogueTable fromRows(List<Dialogue> rows) {
+        return new DialogueTable(SoraConfig.decodeMapTable(rows, row -> row.id));
+    }
+
+    static DialogueTable decode(SoraBundle bundle) {
+        return fromRows(bundle.decodeTable("Dialogue", Dialogue::decode));
+    }
+    public java.util.Map<Integer, Dialogue> rows() {
+        return rows;
+    }
+    public Dialogue get(Integer key) {
+        return rows.get(key);
+    }
+    @Override
+    public String name() {
+        return "Dialogue";
+    }
+
+    @Override
+    public SoraTableMode mode() {
+        return SoraTableMode.MAP;
+    }
+
+    @Override
+    public String key() {
+        return "id";
+    }
+
+    @Override
+    public String rowType() {
+        return "Dialogue";
+    }
+
+    @Override
+    public int size() {
+        return rows.size();
     }
 }

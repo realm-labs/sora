@@ -2,6 +2,9 @@
 
 package com.sora.showcase;
 
+import java.util.List;
+import java.util.Map;
+
 public final class StageReward {
     public final Integer stageId;
     public final Integer seq;
@@ -27,5 +30,48 @@ public final class StageReward {
             reader.readI32(),
             reader.readI32()
         );
+    }
+}
+
+final class StageRewardTable implements SoraTable {
+    private final java.util.List<StageReward> rows;
+
+    private StageRewardTable(java.util.List<StageReward> rows) {
+        this.rows = rows;
+    }
+
+    private static StageRewardTable fromRows(List<StageReward> rows) {
+        return new StageRewardTable(rows);
+    }
+
+    static StageRewardTable decode(SoraBundle bundle) {
+        return fromRows(bundle.decodeTable("StageReward", StageReward::decode));
+    }
+    public java.util.List<StageReward> rows() {
+        return rows;
+    }
+    @Override
+    public String name() {
+        return "StageReward";
+    }
+
+    @Override
+    public SoraTableMode mode() {
+        return SoraTableMode.LIST;
+    }
+
+    @Override
+    public String key() {
+        return null;
+    }
+
+    @Override
+    public String rowType() {
+        return "StageReward";
+    }
+
+    @Override
+    public int size() {
+        return rows.size();
     }
 }

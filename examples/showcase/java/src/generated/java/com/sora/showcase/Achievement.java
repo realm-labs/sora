@@ -2,6 +2,9 @@
 
 package com.sora.showcase;
 
+import java.util.List;
+import java.util.Map;
+
 public final class Achievement {
     public final Integer id;
     public final String titleKey;
@@ -27,5 +30,51 @@ public final class Achievement {
             reader.readI64(),
             ResourceCost.decode(reader)
         );
+    }
+}
+
+final class AchievementTable implements SoraTable {
+    private final java.util.Map<Integer, Achievement> rows;
+
+    private AchievementTable(java.util.Map<Integer, Achievement> rows) {
+        this.rows = rows;
+    }
+
+    private static AchievementTable fromRows(List<Achievement> rows) {
+        return new AchievementTable(SoraConfig.decodeMapTable(rows, row -> row.id));
+    }
+
+    static AchievementTable decode(SoraBundle bundle) {
+        return fromRows(bundle.decodeTable("Achievement", Achievement::decode));
+    }
+    public java.util.Map<Integer, Achievement> rows() {
+        return rows;
+    }
+    public Achievement get(Integer key) {
+        return rows.get(key);
+    }
+    @Override
+    public String name() {
+        return "Achievement";
+    }
+
+    @Override
+    public SoraTableMode mode() {
+        return SoraTableMode.MAP;
+    }
+
+    @Override
+    public String key() {
+        return "id";
+    }
+
+    @Override
+    public String rowType() {
+        return "Achievement";
+    }
+
+    @Override
+    public int size() {
+        return rows.size();
     }
 }

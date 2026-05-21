@@ -2,6 +2,9 @@
 
 package com.sora.showcase;
 
+import java.util.List;
+import java.util.Map;
+
 public final class EquipmentSet {
     public final Integer id;
     public final String name;
@@ -27,5 +30,51 @@ public final class EquipmentSet {
             reader.readList(() -> reader.readI32()),
             SkillEffect.decode(reader)
         );
+    }
+}
+
+final class EquipmentSetTable implements SoraTable {
+    private final java.util.Map<Integer, EquipmentSet> rows;
+
+    private EquipmentSetTable(java.util.Map<Integer, EquipmentSet> rows) {
+        this.rows = rows;
+    }
+
+    private static EquipmentSetTable fromRows(List<EquipmentSet> rows) {
+        return new EquipmentSetTable(SoraConfig.decodeMapTable(rows, row -> row.id));
+    }
+
+    static EquipmentSetTable decode(SoraBundle bundle) {
+        return fromRows(bundle.decodeTable("EquipmentSet", EquipmentSet::decode));
+    }
+    public java.util.Map<Integer, EquipmentSet> rows() {
+        return rows;
+    }
+    public EquipmentSet get(Integer key) {
+        return rows.get(key);
+    }
+    @Override
+    public String name() {
+        return "EquipmentSet";
+    }
+
+    @Override
+    public SoraTableMode mode() {
+        return SoraTableMode.MAP;
+    }
+
+    @Override
+    public String key() {
+        return "id";
+    }
+
+    @Override
+    public String rowType() {
+        return "EquipmentSet";
+    }
+
+    @Override
+    public int size() {
+        return rows.size();
     }
 }

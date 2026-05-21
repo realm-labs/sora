@@ -2,6 +2,9 @@
 
 package com.sora.showcase;
 
+import java.util.List;
+import java.util.Map;
+
 public final class Monster {
     public final Integer id;
     public final String name;
@@ -35,5 +38,51 @@ public final class Monster {
             reader.readI32(),
             Vec3.decode(reader)
         );
+    }
+}
+
+final class MonsterTable implements SoraTable {
+    private final java.util.Map<Integer, Monster> rows;
+
+    private MonsterTable(java.util.Map<Integer, Monster> rows) {
+        this.rows = rows;
+    }
+
+    private static MonsterTable fromRows(List<Monster> rows) {
+        return new MonsterTable(SoraConfig.decodeMapTable(rows, row -> row.id));
+    }
+
+    static MonsterTable decode(SoraBundle bundle) {
+        return fromRows(bundle.decodeTable("Monster", Monster::decode));
+    }
+    public java.util.Map<Integer, Monster> rows() {
+        return rows;
+    }
+    public Monster get(Integer key) {
+        return rows.get(key);
+    }
+    @Override
+    public String name() {
+        return "Monster";
+    }
+
+    @Override
+    public SoraTableMode mode() {
+        return SoraTableMode.MAP;
+    }
+
+    @Override
+    public String key() {
+        return "id";
+    }
+
+    @Override
+    public String rowType() {
+        return "Monster";
+    }
+
+    @Override
+    public int size() {
+        return rows.size();
     }
 }

@@ -2,6 +2,9 @@
 
 package com.sora.showcase;
 
+import java.util.List;
+import java.util.Map;
+
 public final class GachaItem {
     public final Integer poolId;
     public final Integer itemId;
@@ -27,5 +30,48 @@ public final class GachaItem {
             Rarity.decode(reader),
             reader.readF32()
         );
+    }
+}
+
+final class GachaItemTable implements SoraTable {
+    private final java.util.List<GachaItem> rows;
+
+    private GachaItemTable(java.util.List<GachaItem> rows) {
+        this.rows = rows;
+    }
+
+    private static GachaItemTable fromRows(List<GachaItem> rows) {
+        return new GachaItemTable(rows);
+    }
+
+    static GachaItemTable decode(SoraBundle bundle) {
+        return fromRows(bundle.decodeTable("GachaItem", GachaItem::decode));
+    }
+    public java.util.List<GachaItem> rows() {
+        return rows;
+    }
+    @Override
+    public String name() {
+        return "GachaItem";
+    }
+
+    @Override
+    public SoraTableMode mode() {
+        return SoraTableMode.LIST;
+    }
+
+    @Override
+    public String key() {
+        return null;
+    }
+
+    @Override
+    public String rowType() {
+        return "GachaItem";
+    }
+
+    @Override
+    public int size() {
+        return rows.size();
     }
 }

@@ -2,6 +2,9 @@
 
 package com.sora.showcase;
 
+import java.util.List;
+import java.util.Map;
+
 public final class Skill {
     public final Integer id;
     public final String name;
@@ -46,5 +49,51 @@ public final class Skill {
             reader.readOptional(() -> reader.readI32()),
             Vec3.decode(reader)
         );
+    }
+}
+
+final class SkillTable implements SoraTable {
+    private final java.util.Map<Integer, Skill> rows;
+
+    private SkillTable(java.util.Map<Integer, Skill> rows) {
+        this.rows = rows;
+    }
+
+    private static SkillTable fromRows(List<Skill> rows) {
+        return new SkillTable(SoraConfig.decodeMapTable(rows, row -> row.id));
+    }
+
+    static SkillTable decode(SoraBundle bundle) {
+        return fromRows(bundle.decodeTable("Skill", Skill::decode));
+    }
+    public java.util.Map<Integer, Skill> rows() {
+        return rows;
+    }
+    public Skill get(Integer key) {
+        return rows.get(key);
+    }
+    @Override
+    public String name() {
+        return "Skill";
+    }
+
+    @Override
+    public SoraTableMode mode() {
+        return SoraTableMode.MAP;
+    }
+
+    @Override
+    public String key() {
+        return "id";
+    }
+
+    @Override
+    public String rowType() {
+        return "Skill";
+    }
+
+    @Override
+    public int size() {
+        return rows.size();
     }
 }

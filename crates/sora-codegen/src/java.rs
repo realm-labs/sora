@@ -108,6 +108,7 @@ struct JavaUnionVariant {
 struct JavaRecord {
     pascal_name: String,
     fields: Vec<JavaField>,
+    table: Option<JavaTable>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -169,7 +170,13 @@ impl JavaModel {
             records: model
                 .records
                 .into_iter()
-                .map(|item| java_record(ir, item))
+                .map(|item| {
+                    let table = tables
+                        .iter()
+                        .find(|table| table.row_type == item.pascal_name)
+                        .cloned();
+                    java_record(ir, item, table)
+                })
                 .collect(),
             has_unique_indexes: tables.iter().any(|table| !table.unique_indexes.is_empty()),
             has_non_unique_indexes: tables
@@ -203,7 +210,7 @@ fn java_variant(ir: &ConfigIr, variant: BaseUnionVariant) -> JavaUnionVariant {
     }
 }
 
-fn java_record(ir: &ConfigIr, record: BaseRecord) -> JavaRecord {
+fn java_record(ir: &ConfigIr, record: BaseRecord, table: Option<JavaTable>) -> JavaRecord {
     JavaRecord {
         pascal_name: record.pascal_name,
         fields: record
@@ -211,6 +218,7 @@ fn java_record(ir: &ConfigIr, record: BaseRecord) -> JavaRecord {
             .into_iter()
             .map(|field| java_field(ir, field))
             .collect(),
+        table,
     }
 }
 

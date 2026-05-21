@@ -2,6 +2,9 @@
 
 package com.sora.showcase;
 
+import java.util.List;
+import java.util.Map;
+
 public final class CharacterSkill {
     public final Integer characterId;
     public final Integer skillId;
@@ -23,5 +26,48 @@ public final class CharacterSkill {
             reader.readI32(),
             reader.readI32()
         );
+    }
+}
+
+final class CharacterSkillTable implements SoraTable {
+    private final java.util.List<CharacterSkill> rows;
+
+    private CharacterSkillTable(java.util.List<CharacterSkill> rows) {
+        this.rows = rows;
+    }
+
+    private static CharacterSkillTable fromRows(List<CharacterSkill> rows) {
+        return new CharacterSkillTable(rows);
+    }
+
+    static CharacterSkillTable decode(SoraBundle bundle) {
+        return fromRows(bundle.decodeTable("CharacterSkill", CharacterSkill::decode));
+    }
+    public java.util.List<CharacterSkill> rows() {
+        return rows;
+    }
+    @Override
+    public String name() {
+        return "CharacterSkill";
+    }
+
+    @Override
+    public SoraTableMode mode() {
+        return SoraTableMode.LIST;
+    }
+
+    @Override
+    public String key() {
+        return null;
+    }
+
+    @Override
+    public String rowType() {
+        return "CharacterSkill";
+    }
+
+    @Override
+    public int size() {
+        return rows.size();
     }
 }

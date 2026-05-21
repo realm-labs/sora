@@ -2,6 +2,9 @@
 
 package com.sora.showcase;
 
+import java.util.List;
+import java.util.Map;
+
 public final class Item {
     /** Item id */
     public final Integer id;
@@ -41,5 +44,65 @@ public final class Item {
             ResourceCost.decode(reader),
             reader.readList(() -> reader.readString())
         );
+    }
+}
+
+final class ItemTable implements SoraTable {
+    private final java.util.Map<Integer, Item> rows;
+    private final Map<String, Item> byName;
+    private final Map<ItemType, List<Item>> byItemType;
+
+    private ItemTable(java.util.Map<Integer, Item> rows, Map<String, Item> byName, Map<ItemType, List<Item>> byItemType) {
+        this.rows = rows;
+        this.byName = byName;
+        this.byItemType = byItemType;
+    }
+
+    private static ItemTable fromRows(List<Item> rows) {
+        return new ItemTable(
+            SoraConfig.decodeMapTable(rows, row -> row.id),
+            SoraConfig.decodeUniqueIndex(rows, row -> row.name),
+            SoraConfig.decodeIndex(rows, row -> row.itemType)
+        );
+    }
+
+    static ItemTable decode(SoraBundle bundle) {
+        return fromRows(bundle.decodeTable("Item", Item::decode));
+    }
+    public java.util.Map<Integer, Item> rows() {
+        return rows;
+    }
+    public Item get(Integer key) {
+        return rows.get(key);
+    }
+    public Item getByName(String name) {
+        return byName.get(name);
+    }
+    public List<Item> findByItemType(ItemType itemType) {
+        return byItemType.getOrDefault(itemType, List.of());
+    }
+    @Override
+    public String name() {
+        return "Item";
+    }
+
+    @Override
+    public SoraTableMode mode() {
+        return SoraTableMode.MAP;
+    }
+
+    @Override
+    public String key() {
+        return "id";
+    }
+
+    @Override
+    public String rowType() {
+        return "Item";
+    }
+
+    @Override
+    public int size() {
+        return rows.size();
     }
 }

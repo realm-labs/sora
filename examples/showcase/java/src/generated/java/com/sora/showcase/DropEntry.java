@@ -2,6 +2,9 @@
 
 package com.sora.showcase;
 
+import java.util.List;
+import java.util.Map;
+
 public final class DropEntry {
     public final Integer groupId;
     public final Integer seq;
@@ -31,5 +34,48 @@ public final class DropEntry {
             reader.readI32(),
             reader.readF32()
         );
+    }
+}
+
+final class DropEntryTable implements SoraTable {
+    private final java.util.List<DropEntry> rows;
+
+    private DropEntryTable(java.util.List<DropEntry> rows) {
+        this.rows = rows;
+    }
+
+    private static DropEntryTable fromRows(List<DropEntry> rows) {
+        return new DropEntryTable(rows);
+    }
+
+    static DropEntryTable decode(SoraBundle bundle) {
+        return fromRows(bundle.decodeTable("DropEntry", DropEntry::decode));
+    }
+    public java.util.List<DropEntry> rows() {
+        return rows;
+    }
+    @Override
+    public String name() {
+        return "DropEntry";
+    }
+
+    @Override
+    public SoraTableMode mode() {
+        return SoraTableMode.LIST;
+    }
+
+    @Override
+    public String key() {
+        return null;
+    }
+
+    @Override
+    public String rowType() {
+        return "DropEntry";
+    }
+
+    @Override
+    public int size() {
+        return rows.size();
     }
 }

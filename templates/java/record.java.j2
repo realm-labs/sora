@@ -2,6 +2,11 @@
 
 package {{ package }};
 
+{% if record.table -%}
+import java.util.List;
+import java.util.Map;
+
+{% endif -%}
 public final class {{ record.pascal_name }} {
 {%- for field in record.fields %}
 {%- if field.comment %}
@@ -39,3 +44,132 @@ public final class {{ record.pascal_name }} {
     }
 {%- endif %}
 }
+
+{%- if record.table %}
+{%- set table = record.table %}
+
+final class {{ table.pascal_name }}Table implements SoraTable {
+    private final {{ table.container_type }} rows;
+{%- for index in table.unique_indexes %}
+    private final Map<{{ index.key_type }}, {{ table.row_type }}> {{ index.camel_name }};
+{%- endfor %}
+{%- for index in table.non_unique_indexes %}
+    private final Map<{{ index.key_type }}, List<{{ table.row_type }}>> {{ index.camel_name }};
+{%- endfor %}
+
+    private {{ table.pascal_name }}Table({{ table.container_type }} rows{%- for index in table.unique_indexes %}, Map<{{ index.key_type }}, {{ table.row_type }}> {{ index.camel_name }}{%- endfor %}{%- for index in table.non_unique_indexes %}, Map<{{ index.key_type }}, List<{{ table.row_type }}>> {{ index.camel_name }}{%- endfor %}) {
+        this.rows = rows;
+{%- for index in table.unique_indexes %}
+        this.{{ index.camel_name }} = {{ index.camel_name }};
+{%- endfor %}
+{%- for index in table.non_unique_indexes %}
+        this.{{ index.camel_name }} = {{ index.camel_name }};
+{%- endfor %}
+    }
+
+    private static {{ table.pascal_name }}Table fromRows(List<{{ table.row_type }}> rows) {
+{%- if table.mode == "map" and table.key_field_name %}
+{%- if table.unique_indexes or table.non_unique_indexes %}
+        return new {{ table.pascal_name }}Table(
+            SoraConfig.decodeMapTable(rows, row -> row.{{ table.key_field_name }}){% if table.unique_indexes or table.non_unique_indexes %},{% endif %}
+{%- for index in table.unique_indexes %}
+            SoraConfig.decodeUniqueIndex(rows, row -> row.{{ index.field_name }}){% if not loop.last or table.non_unique_indexes %},{% endif %}
+{%- endfor %}
+{%- for index in table.non_unique_indexes %}
+            SoraConfig.decodeIndex(rows, row -> row.{{ index.field_name }}){% if not loop.last %},{% endif %}
+{%- endfor %}
+        );
+{%- else %}
+        return new {{ table.pascal_name }}Table(SoraConfig.decodeMapTable(rows, row -> row.{{ table.key_field_name }}));
+{%- endif %}
+{%- elif table.mode == "singleton" %}
+        return new {{ table.pascal_name }}Table(SoraConfig.requireSingletonTable(rows, "{{ table.name }}"));
+{%- else %}
+{%- if table.unique_indexes or table.non_unique_indexes %}
+        return new {{ table.pascal_name }}Table(
+            rows{% if table.unique_indexes or table.non_unique_indexes %},{% endif %}
+{%- for index in table.unique_indexes %}
+            SoraConfig.decodeUniqueIndex(rows, row -> row.{{ index.field_name }}){% if not loop.last or table.non_unique_indexes %},{% endif %}
+{%- endfor %}
+{%- for index in table.non_unique_indexes %}
+            SoraConfig.decodeIndex(rows, row -> row.{{ index.field_name }}){% if not loop.last %},{% endif %}
+{%- endfor %}
+        );
+{%- else %}
+        return new {{ table.pascal_name }}Table(rows);
+{%- endif %}
+{%- endif %}
+    }
+
+    static {{ table.pascal_name }}Table decode(SoraBundle bundle) {
+        return fromRows(bundle.decodeTable("{{ table.name }}", {{ table.row_type }}::decode));
+    }
+
+{%- if runtime_format != "sora" %}
+    static {{ table.pascal_name }}Table decode(SoraValueBundle bundle) {
+        return fromRows(bundle.decodeTable("{{ table.name }}", {{ table.row_type }}::decode));
+    }
+
+{%- endif %}
+    public {{ table.container_type }} rows() {
+        return rows;
+    }
+
+{%- if table.mode == "map" and table.key_field_name %}
+    public {{ table.row_type }} get({{ table.key_type }} key) {
+        return rows.get(key);
+    }
+
+{%- endif %}
+{%- for index in table.unique_indexes %}
+    public {{ table.row_type }} get{{ index.pascal_name }}({{ index.key_type }} {{ index.param_camel_name }}) {
+        return {{ index.camel_name }}.get({{ index.param_camel_name }});
+    }
+
+{%- endfor %}
+{%- for index in table.non_unique_indexes %}
+    public List<{{ table.row_type }}> find{{ index.pascal_name }}({{ index.key_type }} {{ index.param_camel_name }}) {
+        return {{ index.camel_name }}.getOrDefault({{ index.param_camel_name }}, List.of());
+    }
+
+{%- endfor %}
+    @Override
+    public String name() {
+        return "{{ table.name }}";
+    }
+
+    @Override
+    public SoraTableMode mode() {
+{%- if table.mode == "map" %}
+        return SoraTableMode.MAP;
+{%- elif table.mode == "singleton" %}
+        return SoraTableMode.SINGLETON;
+{%- else %}
+        return SoraTableMode.LIST;
+{%- endif %}
+    }
+
+    @Override
+    public String key() {
+{%- if table.key_name %}
+        return "{{ table.key_name }}";
+{%- else %}
+        return null;
+{%- endif %}
+    }
+
+    @Override
+    public String rowType() {
+        return "{{ table.row_type }}";
+    }
+
+    @Override
+    public int size() {
+{%- if table.mode == "singleton" %}
+        return 1;
+{%- else %}
+        return rows.size();
+{%- endif %}
+    }
+}
+{%- endif %}

@@ -2,6 +2,9 @@
 
 package com.sora.showcase;
 
+import java.util.List;
+import java.util.Map;
+
 public final class LevelExp {
     public final Integer level;
     public final Long exp;
@@ -23,5 +26,51 @@ public final class LevelExp {
             reader.readI64(),
             reader.readOptional(() -> reader.readString())
         );
+    }
+}
+
+final class LevelExpTable implements SoraTable {
+    private final java.util.Map<Integer, LevelExp> rows;
+
+    private LevelExpTable(java.util.Map<Integer, LevelExp> rows) {
+        this.rows = rows;
+    }
+
+    private static LevelExpTable fromRows(List<LevelExp> rows) {
+        return new LevelExpTable(SoraConfig.decodeMapTable(rows, row -> row.level));
+    }
+
+    static LevelExpTable decode(SoraBundle bundle) {
+        return fromRows(bundle.decodeTable("LevelExp", LevelExp::decode));
+    }
+    public java.util.Map<Integer, LevelExp> rows() {
+        return rows;
+    }
+    public LevelExp get(Integer key) {
+        return rows.get(key);
+    }
+    @Override
+    public String name() {
+        return "LevelExp";
+    }
+
+    @Override
+    public SoraTableMode mode() {
+        return SoraTableMode.MAP;
+    }
+
+    @Override
+    public String key() {
+        return "level";
+    }
+
+    @Override
+    public String rowType() {
+        return "LevelExp";
+    }
+
+    @Override
+    public int size() {
+        return rows.size();
     }
 }

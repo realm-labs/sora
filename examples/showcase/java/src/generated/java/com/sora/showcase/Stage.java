@@ -2,6 +2,9 @@
 
 package com.sora.showcase;
 
+import java.util.List;
+import java.util.Map;
+
 public final class Stage {
     public final Integer id;
     public final String name;
@@ -31,5 +34,51 @@ public final class Stage {
             reader.readI32(),
             reader.readList(() -> Reward.decode(reader))
         );
+    }
+}
+
+final class StageTable implements SoraTable {
+    private final java.util.Map<Integer, Stage> rows;
+
+    private StageTable(java.util.Map<Integer, Stage> rows) {
+        this.rows = rows;
+    }
+
+    private static StageTable fromRows(List<Stage> rows) {
+        return new StageTable(SoraConfig.decodeMapTable(rows, row -> row.id));
+    }
+
+    static StageTable decode(SoraBundle bundle) {
+        return fromRows(bundle.decodeTable("Stage", Stage::decode));
+    }
+    public java.util.Map<Integer, Stage> rows() {
+        return rows;
+    }
+    public Stage get(Integer key) {
+        return rows.get(key);
+    }
+    @Override
+    public String name() {
+        return "Stage";
+    }
+
+    @Override
+    public SoraTableMode mode() {
+        return SoraTableMode.MAP;
+    }
+
+    @Override
+    public String key() {
+        return "id";
+    }
+
+    @Override
+    public String rowType() {
+        return "Stage";
+    }
+
+    @Override
+    public int size() {
+        return rows.size();
     }
 }

@@ -2,6 +2,9 @@
 
 package com.sora.showcase;
 
+import java.util.List;
+import java.util.Map;
+
 public final class EventRule {
     public final Integer id;
     public final String name;
@@ -27,5 +30,51 @@ public final class EventRule {
             EventCondition.decode(reader),
             reader.readList(() -> RewardAction.decode(reader))
         );
+    }
+}
+
+final class EventRuleTable implements SoraTable {
+    private final java.util.Map<Integer, EventRule> rows;
+
+    private EventRuleTable(java.util.Map<Integer, EventRule> rows) {
+        this.rows = rows;
+    }
+
+    private static EventRuleTable fromRows(List<EventRule> rows) {
+        return new EventRuleTable(SoraConfig.decodeMapTable(rows, row -> row.id));
+    }
+
+    static EventRuleTable decode(SoraBundle bundle) {
+        return fromRows(bundle.decodeTable("EventRule", EventRule::decode));
+    }
+    public java.util.Map<Integer, EventRule> rows() {
+        return rows;
+    }
+    public EventRule get(Integer key) {
+        return rows.get(key);
+    }
+    @Override
+    public String name() {
+        return "EventRule";
+    }
+
+    @Override
+    public SoraTableMode mode() {
+        return SoraTableMode.MAP;
+    }
+
+    @Override
+    public String key() {
+        return "id";
+    }
+
+    @Override
+    public String rowType() {
+        return "EventRule";
+    }
+
+    @Override
+    public int size() {
+        return rows.size();
     }
 }

@@ -2,6 +2,9 @@
 
 package com.sora.showcase;
 
+import java.util.List;
+import java.util.Map;
+
 public final class Buff {
     public final Integer id;
     public final String name;
@@ -27,5 +30,51 @@ public final class Buff {
             reader.readF32(),
             reader.readList(() -> StatModifier.decode(reader))
         );
+    }
+}
+
+final class BuffTable implements SoraTable {
+    private final java.util.Map<Integer, Buff> rows;
+
+    private BuffTable(java.util.Map<Integer, Buff> rows) {
+        this.rows = rows;
+    }
+
+    private static BuffTable fromRows(List<Buff> rows) {
+        return new BuffTable(SoraConfig.decodeMapTable(rows, row -> row.id));
+    }
+
+    static BuffTable decode(SoraBundle bundle) {
+        return fromRows(bundle.decodeTable("Buff", Buff::decode));
+    }
+    public java.util.Map<Integer, Buff> rows() {
+        return rows;
+    }
+    public Buff get(Integer key) {
+        return rows.get(key);
+    }
+    @Override
+    public String name() {
+        return "Buff";
+    }
+
+    @Override
+    public SoraTableMode mode() {
+        return SoraTableMode.MAP;
+    }
+
+    @Override
+    public String key() {
+        return "id";
+    }
+
+    @Override
+    public String rowType() {
+        return "Buff";
+    }
+
+    @Override
+    public int size() {
+        return rows.size();
     }
 }

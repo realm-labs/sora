@@ -2,6 +2,9 @@
 
 package com.sora.showcase;
 
+import java.util.List;
+import java.util.Map;
+
 public final class DropGroup {
     public final Integer id;
     public final String name;
@@ -19,5 +22,51 @@ public final class DropGroup {
             reader.readI32(),
             reader.readString()
         );
+    }
+}
+
+final class DropGroupTable implements SoraTable {
+    private final java.util.Map<Integer, DropGroup> rows;
+
+    private DropGroupTable(java.util.Map<Integer, DropGroup> rows) {
+        this.rows = rows;
+    }
+
+    private static DropGroupTable fromRows(List<DropGroup> rows) {
+        return new DropGroupTable(SoraConfig.decodeMapTable(rows, row -> row.id));
+    }
+
+    static DropGroupTable decode(SoraBundle bundle) {
+        return fromRows(bundle.decodeTable("DropGroup", DropGroup::decode));
+    }
+    public java.util.Map<Integer, DropGroup> rows() {
+        return rows;
+    }
+    public DropGroup get(Integer key) {
+        return rows.get(key);
+    }
+    @Override
+    public String name() {
+        return "DropGroup";
+    }
+
+    @Override
+    public SoraTableMode mode() {
+        return SoraTableMode.MAP;
+    }
+
+    @Override
+    public String key() {
+        return "id";
+    }
+
+    @Override
+    public String rowType() {
+        return "DropGroup";
+    }
+
+    @Override
+    public int size() {
+        return rows.size();
     }
 }

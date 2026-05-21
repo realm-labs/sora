@@ -2,6 +2,9 @@
 
 package com.sora.showcase;
 
+import java.util.List;
+import java.util.Map;
+
 public final class VipLevel {
     public final Integer level;
     public final ResourceCost cost;
@@ -23,5 +26,51 @@ public final class VipLevel {
             ResourceCost.decode(reader),
             reader.readList(() -> reader.readString())
         );
+    }
+}
+
+final class VipLevelTable implements SoraTable {
+    private final java.util.Map<Integer, VipLevel> rows;
+
+    private VipLevelTable(java.util.Map<Integer, VipLevel> rows) {
+        this.rows = rows;
+    }
+
+    private static VipLevelTable fromRows(List<VipLevel> rows) {
+        return new VipLevelTable(SoraConfig.decodeMapTable(rows, row -> row.level));
+    }
+
+    static VipLevelTable decode(SoraBundle bundle) {
+        return fromRows(bundle.decodeTable("VipLevel", VipLevel::decode));
+    }
+    public java.util.Map<Integer, VipLevel> rows() {
+        return rows;
+    }
+    public VipLevel get(Integer key) {
+        return rows.get(key);
+    }
+    @Override
+    public String name() {
+        return "VipLevel";
+    }
+
+    @Override
+    public SoraTableMode mode() {
+        return SoraTableMode.MAP;
+    }
+
+    @Override
+    public String key() {
+        return "level";
+    }
+
+    @Override
+    public String rowType() {
+        return "VipLevel";
+    }
+
+    @Override
+    public int size() {
+        return rows.size();
     }
 }

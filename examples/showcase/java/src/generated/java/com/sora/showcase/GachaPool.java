@@ -2,6 +2,9 @@
 
 package com.sora.showcase;
 
+import java.util.List;
+import java.util.Map;
+
 public final class GachaPool {
     public final Integer id;
     public final String name;
@@ -23,5 +26,51 @@ public final class GachaPool {
             reader.readString(),
             ResourceCost.decode(reader)
         );
+    }
+}
+
+final class GachaPoolTable implements SoraTable {
+    private final java.util.Map<Integer, GachaPool> rows;
+
+    private GachaPoolTable(java.util.Map<Integer, GachaPool> rows) {
+        this.rows = rows;
+    }
+
+    private static GachaPoolTable fromRows(List<GachaPool> rows) {
+        return new GachaPoolTable(SoraConfig.decodeMapTable(rows, row -> row.id));
+    }
+
+    static GachaPoolTable decode(SoraBundle bundle) {
+        return fromRows(bundle.decodeTable("GachaPool", GachaPool::decode));
+    }
+    public java.util.Map<Integer, GachaPool> rows() {
+        return rows;
+    }
+    public GachaPool get(Integer key) {
+        return rows.get(key);
+    }
+    @Override
+    public String name() {
+        return "GachaPool";
+    }
+
+    @Override
+    public SoraTableMode mode() {
+        return SoraTableMode.MAP;
+    }
+
+    @Override
+    public String key() {
+        return "id";
+    }
+
+    @Override
+    public String rowType() {
+        return "GachaPool";
+    }
+
+    @Override
+    public int size() {
+        return rows.size();
     }
 }

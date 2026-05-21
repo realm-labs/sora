@@ -2,6 +2,9 @@
 
 package com.sora.showcase;
 
+import java.util.List;
+import java.util.Map;
+
 public final class MailReward {
     public final Integer mailId;
     public final Integer seq;
@@ -27,5 +30,48 @@ public final class MailReward {
             reader.readI32(),
             reader.readI32()
         );
+    }
+}
+
+final class MailRewardTable implements SoraTable {
+    private final java.util.List<MailReward> rows;
+
+    private MailRewardTable(java.util.List<MailReward> rows) {
+        this.rows = rows;
+    }
+
+    private static MailRewardTable fromRows(List<MailReward> rows) {
+        return new MailRewardTable(rows);
+    }
+
+    static MailRewardTable decode(SoraBundle bundle) {
+        return fromRows(bundle.decodeTable("MailReward", MailReward::decode));
+    }
+    public java.util.List<MailReward> rows() {
+        return rows;
+    }
+    @Override
+    public String name() {
+        return "MailReward";
+    }
+
+    @Override
+    public SoraTableMode mode() {
+        return SoraTableMode.LIST;
+    }
+
+    @Override
+    public String key() {
+        return null;
+    }
+
+    @Override
+    public String rowType() {
+        return "MailReward";
+    }
+
+    @Override
+    public int size() {
+        return rows.size();
     }
 }
