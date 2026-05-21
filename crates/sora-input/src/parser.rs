@@ -68,7 +68,7 @@ impl ParserRegistry {
             return cell_parser.parse(cell, ty, context, self);
         }
 
-        default_cell_value(cell, ty, context, self)
+        default_cell_value(cell, ty, context)
     }
 }
 
@@ -95,9 +95,9 @@ impl CellParser for SplitParser {
         cell: &CellValue<'_>,
         ty: &TypeIr,
         context: &CellContext<'_>,
-        registry: &ParserRegistry,
+        _registry: &ParserRegistry,
     ) -> Result<Value> {
-        parse_collection_with_separator(&cell.display_text(), ty, context, registry)
+        parse_collection_with_separator(&cell.display_text(), ty, context)
     }
 }
 
@@ -169,18 +169,17 @@ fn default_cell_value(
     cell: &CellValue<'_>,
     ty: &TypeIr,
     context: &CellContext<'_>,
-    registry: &ParserRegistry,
 ) -> Result<Value> {
     Ok(match ty {
         TypeIr::Optional(_) if cell.is_empty() => Value::Null,
-        TypeIr::Optional(inner) => default_cell_value(cell, inner, context, registry)?,
+        TypeIr::Optional(inner) => default_cell_value(cell, inner, context)?,
         TypeIr::Bool => bool_cell(cell, context)?,
         TypeIr::I32 | TypeIr::I64 | TypeIr::Ref { .. } => integer_cell(cell, context)?,
         TypeIr::F32 | TypeIr::F64 => float_cell(cell, context)?,
         TypeIr::String | TypeIr::Enum(_) => Value::String(cell.display_text()),
         TypeIr::Struct(_) | TypeIr::Union(_) => json_object_value(&cell.display_text(), context)?,
         TypeIr::List(_) | TypeIr::Array { .. } => {
-            parse_collection_with_separator(&cell.display_text(), ty, context, registry)?
+            parse_collection_with_separator(&cell.display_text(), ty, context)?
         }
     })
 }
@@ -237,16 +236,11 @@ fn parse_collection_with_separator(
     source: &str,
     ty: &TypeIr,
     context: &CellContext<'_>,
-    registry: &ParserRegistry,
 ) -> Result<Value> {
     match ty {
-        TypeIr::Optional(inner) => {
-            parse_collection_with_separator(source, inner, context, registry)
-        }
-        TypeIr::List(element) => separated_value(source, element, None, context, registry),
-        TypeIr::Array { element, len } => {
-            separated_value(source, element, Some(*len), context, registry)
-        }
+        TypeIr::Optional(inner) => parse_collection_with_separator(source, inner, context),
+        TypeIr::List(element) => separated_value(source, element, None, context),
+        TypeIr::Array { element, len } => separated_value(source, element, Some(*len), context),
         _ => Err(context.error("split parser requires list or array type")),
     }
 }
@@ -256,7 +250,6 @@ fn separated_value(
     element: &TypeIr,
     expected_len: Option<usize>,
     context: &CellContext<'_>,
-    registry: &ParserRegistry,
 ) -> Result<Value> {
     let separator = parser_option(context, "separator").unwrap_or(",");
     let source = split_source(source);
@@ -274,7 +267,7 @@ fn separated_value(
     Ok(Value::List(
         items
             .iter()
-            .map(|item| separated_item_to_value(item, element, context, registry))
+            .map(|item| separated_item_to_value(item, element, context))
             .collect::<Result<Vec<_>>>()?,
     ))
 }
@@ -449,11 +442,10 @@ fn separated_item_to_value(
     item: &str,
     expected_type: &TypeIr,
     context: &CellContext<'_>,
-    registry: &ParserRegistry,
 ) -> Result<Value> {
     match expected_type {
         TypeIr::Optional(_) if item.is_empty() => Ok(Value::Null),
-        TypeIr::Optional(inner) => separated_item_to_value(item, inner, context, registry),
+        TypeIr::Optional(inner) => separated_item_to_value(item, inner, context),
         TypeIr::Bool => match item {
             value if value.eq_ignore_ascii_case("true") => Ok(Value::Bool(true)),
             value if value.eq_ignore_ascii_case("false") => Ok(Value::Bool(false)),

@@ -149,7 +149,7 @@ impl GodotModel {
         let tables = model
             .tables
             .into_iter()
-            .map(|item| godot_table(item))
+            .map(godot_table)
             .collect::<Vec<_>>();
         let records = model
             .records
