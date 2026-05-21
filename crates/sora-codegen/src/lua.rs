@@ -101,6 +101,7 @@ impl LuaOptionsView {
 #[derive(Debug, Clone, Serialize)]
 struct LuaModel {
     package: String,
+    schema_fingerprint: String,
     enums: Vec<LuaEnum>,
     unions: Vec<LuaUnion>,
     records: Vec<LuaRecord>,
@@ -207,6 +208,7 @@ impl LuaModel {
 
         Self {
             package: model.package,
+            schema_fingerprint: model.schema_fingerprint,
             enums,
             unions,
             records,

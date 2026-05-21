@@ -5,6 +5,8 @@ local Runtime = require("{{ options.require_prefix }}sora_runtime")
 local {{ table.row_type }} = require("{{ options.require_prefix }}{{ table.snake_name }}")
 {%- endfor %}
 
+local SORA_SCHEMA_FINGERPRINT = "{{ model.schema_fingerprint }}"
+
 ---@class SoraConfig
 {%- for table in model.tables %}
 ---@field private _{{ table.snake_name }} {{ table.pascal_name }}Table
@@ -16,6 +18,14 @@ SoraConfig.__index = SoraConfig
 ---@return SoraConfig
 function SoraConfig.from_bytes(bytes)
     local bundle = Runtime.parse_bundle(bytes)
+    if bundle:schema_fingerprint() ~= SORA_SCHEMA_FINGERPRINT then
+        error(
+            "schema fingerprint mismatch: generated code expects "
+                .. SORA_SCHEMA_FINGERPRINT
+                .. ", bundle contains "
+                .. bundle:schema_fingerprint()
+        )
+    end
     return setmetatable({
 {%- for table in model.tables %}
         _{{ table.snake_name }} = {{ table.row_type }}.Table.decode(bundle:decode_table({{ table.row_type }}.Table.NAME, {{ table.row_type }}.decode)),

@@ -30,6 +30,8 @@ local MailReward = require("generated.mail_reward")
 local Dialogue = require("generated.dialogue")
 local EventRule = require("generated.event_rule")
 
+local SORA_SCHEMA_FINGERPRINT = "8cc3361563a68f03"
+
 ---@class SoraConfig
 ---@field private _item ItemTable
 ---@field private _skill SkillTable
@@ -66,6 +68,14 @@ SoraConfig.__index = SoraConfig
 ---@return SoraConfig
 function SoraConfig.from_bytes(bytes)
     local bundle = Runtime.parse_bundle(bytes)
+    if bundle:schema_fingerprint() ~= SORA_SCHEMA_FINGERPRINT then
+        error(
+            "schema fingerprint mismatch: generated code expects "
+                .. SORA_SCHEMA_FINGERPRINT
+                .. ", bundle contains "
+                .. bundle:schema_fingerprint()
+        )
+    end
     return setmetatable({
         _item = Item.Table.decode(bundle:decode_table(Item.Table.NAME, Item.decode)),
         _skill = Skill.Table.decode(bundle:decode_table(Skill.Table.NAME, Skill.decode)),

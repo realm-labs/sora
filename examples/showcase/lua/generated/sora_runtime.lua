@@ -20,6 +20,7 @@ local COMPRESSION_NONE = 0
 ---@class SoraBundle
 ---@field private bytes string
 ---@field private sections SoraSection[]
+---@field private schemaFingerprint string
 local SoraBundle = {}
 SoraBundle.__index = SoraBundle
 
@@ -135,7 +136,24 @@ function Runtime.parse_bundle(bytes)
         error("expected exactly 1 Sora schema section, got " .. tostring(schema_count))
     end
 
-    return setmetatable({ bytes = bytes, sections = sections }, SoraBundle)
+    local schema_fingerprint = nil
+    for _, section in ipairs(sections) do
+        if section.kind == SECTION_KIND_MANIFEST then
+            local payload = bytes:sub(section.offset + 1, section.offset + section.length)
+            schema_fingerprint = json_string_field(payload, "schema_fingerprint")
+            break
+        end
+    end
+    if schema_fingerprint == nil then
+        error("Sora manifest is missing string field `schema_fingerprint`")
+    end
+
+    return setmetatable({ bytes = bytes, sections = sections, schemaFingerprint = schema_fingerprint }, SoraBundle)
+end
+
+---@return string
+function SoraBundle:schema_fingerprint()
+    return self.schemaFingerprint
 end
 
 ---@generic T
@@ -374,6 +392,15 @@ function read_u64_at(bytes, offset)
         error("unexpected end while reading u64")
     end
     return string.unpack("<I8", bytes, offset + 1)
+end
+
+---@param json string
+---@param field string
+---@return string?
+function json_string_field(json, field)
+    local escaped_field = field:gsub("([^%w])", "%%%1")
+    local value = json:match('"' .. escaped_field .. '"%s*:%s*"([^"]*)"')
+    return value
 end
 
 Runtime.SoraBundle = SoraBundle
