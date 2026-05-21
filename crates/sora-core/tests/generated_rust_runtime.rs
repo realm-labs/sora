@@ -239,7 +239,11 @@ pub mod generated;
 
 #[cfg(test)]
 mod tests {
-    use super::generated::{item_type::ItemType, runtime::__BUNDLE_TYPE__, SoraConfig};
+    use super::generated::{
+        item_type::ItemType,
+        runtime::{__BUNDLE_TYPE__, SoraDecode, SoraReadError, SoraTableSource},
+        SoraConfig,
+    };
 
     #[test]
     fn loads_sora_bundle() {
@@ -256,6 +260,28 @@ mod tests {
         assert_eq!(item.rewards[1].reward_item_id, 3002);
         assert_eq!(config.item().values().count(), 2);
         assert_eq!(config.item_reward().len(), 2);
+    }
+
+    #[test]
+    fn rejects_schema_fingerprint_mismatch() {
+        let error = SoraConfig::from_source(&BadSource).unwrap_err();
+
+        assert!(error.to_string().contains("schema fingerprint mismatch"));
+    }
+
+    struct BadSource;
+
+    impl SoraTableSource for BadSource {
+        fn schema_fingerprint(&self) -> Result<&str, SoraReadError> {
+            Ok("bad-schema")
+        }
+
+        fn decode_table<T>(&self, _name: &str) -> Result<Vec<T>, SoraReadError>
+        where
+            T: SoraDecode + serde::de::DeserializeOwned,
+        {
+            panic!("schema mismatch should be reported before decoding tables")
+        }
     }
 }
 "#

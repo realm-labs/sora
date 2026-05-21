@@ -3,7 +3,7 @@ use std::collections::BTreeMap;
 use serde::Serialize;
 use sora_data::model::{ConfigData, RowData, TableData, Value};
 use sora_diagnostics::{Result, SoraError};
-use sora_ir::model::ConfigIr;
+use sora_ir::{fingerprint, model::ConfigIr};
 
 pub(crate) const FORMAT_VERSION: u32 = 1;
 
@@ -35,9 +35,7 @@ impl<'a> DataBundleView<'a> {
 }
 
 pub(crate) fn schema_fingerprint(ir: &ConfigIr) -> Result<String> {
-    let schema = ir.data_schema();
-    let bytes = serde_json::to_vec(&schema).map_err(SoraError::SerializeData)?;
-    Ok(fingerprint_hex(&bytes))
+    fingerprint::schema_fingerprint(ir)
 }
 
 pub(crate) fn data_fingerprint(data: &ConfigData) -> Result<String> {
@@ -47,13 +45,7 @@ pub(crate) fn data_fingerprint(data: &ConfigData) -> Result<String> {
 }
 
 pub(crate) fn fingerprint_hex(bytes: &[u8]) -> String {
-    let mut hash = 0xcbf29ce484222325_u64;
-    for byte in bytes {
-        hash ^= u64::from(*byte);
-        hash = hash.wrapping_mul(0x100000001b3);
-    }
-
-    format!("{hash:016x}")
+    fingerprint::fingerprint_hex(bytes)
 }
 
 pub(crate) struct NaturalConfigDataView<'a>(&'a ConfigData);

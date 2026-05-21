@@ -65,6 +65,7 @@ impl CodeGenerator for RustCodeGenerator {
 #[derive(Debug, Clone, Serialize)]
 struct RustModel {
     package: String,
+    schema_fingerprint: String,
     enums: Vec<RustEnum>,
     unions: Vec<RustUnion>,
     records: Vec<RustRecord>,
@@ -160,6 +161,7 @@ impl RustModel {
             .collect::<Vec<_>>();
         Self {
             package: model.package,
+            schema_fingerprint: model.schema_fingerprint,
             enums: model
                 .enums
                 .into_iter()

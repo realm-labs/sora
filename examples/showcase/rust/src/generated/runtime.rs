@@ -33,6 +33,8 @@ pub trait SoraDecode: Sized {
 }
 
 pub trait SoraTableSource {
+    fn schema_fingerprint(&self) -> Result<&str, SoraReadError>;
+
     fn decode_table<T>(&self, name: &str) -> Result<Vec<T>, SoraReadError>
     where
         T: SoraDecode + serde::de::DeserializeOwned;
@@ -41,6 +43,7 @@ pub trait SoraTableSource {
 pub struct SoraBundle<'a> {
     bytes: &'a [u8],
     sections: Vec<Section>,
+    schema_fingerprint: String,
 }
 
 #[derive(Debug, Clone)]
@@ -197,7 +200,18 @@ impl<'a> SoraBundle<'a> {
             )));
         }
 
-        Ok(Self { bytes, sections })
+        let manifest = sections
+            .iter()
+            .find(|section| section.kind == SECTION_KIND_MANIFEST)
+            .ok_or_else(|| SoraReadError::new("missing Sora manifest section"))?;
+        let manifest_payload = &bytes[manifest.offset..manifest.offset + manifest.len];
+        let schema_fingerprint = read_json_string_field(manifest_payload, "schema_fingerprint")?;
+
+        Ok(Self {
+            bytes,
+            sections,
+            schema_fingerprint,
+        })
     }
 
     pub fn decode_table<T: SoraDecode>(&self, name: &str) -> Result<Vec<T>, SoraReadError> {
@@ -224,6 +238,10 @@ impl<'a> SoraBundle<'a> {
 }
 
 impl SoraTableSource for SoraBundle<'_> {
+    fn schema_fingerprint(&self) -> Result<&str, SoraReadError> {
+        Ok(&self.schema_fingerprint)
+    }
+
     fn decode_table<T>(&self, name: &str) -> Result<Vec<T>, SoraReadError>
     where
         T: SoraDecode + serde::de::DeserializeOwned,
@@ -439,4 +457,28 @@ fn read_u64_at(bytes: &[u8], offset: usize) -> Result<u64, SoraReadError> {
     Ok(u64::from_le_bytes(
         bytes[offset..offset + 8].try_into().unwrap(),
     ))
+}
+
+fn read_json_string_field(bytes: &[u8], field: &str) -> Result<String, SoraReadError> {
+    let text = std::str::from_utf8(bytes)
+        .map_err(|error| SoraReadError::new(format!("invalid Sora manifest utf-8: {}", error)))?;
+    let key = format!("\"{}\"", field);
+    let field_start = text
+        .find(&key)
+        .ok_or_else(|| SoraReadError::new(format!("Sora manifest is missing `{}`", field)))?;
+    let after_key = &text[field_start + key.len()..];
+    let colon = after_key.find(':').ok_or_else(|| {
+        SoraReadError::new(format!("Sora manifest field `{}` is missing `:`", field))
+    })?;
+    let value = after_key[colon + 1..].trim_start();
+    let value = value.strip_prefix('"').ok_or_else(|| {
+        SoraReadError::new(format!("Sora manifest field `{}` is not a string", field))
+    })?;
+    let end = value.find('"').ok_or_else(|| {
+        SoraReadError::new(format!(
+            "Sora manifest field `{}` string is unterminated",
+            field
+        ))
+    })?;
+    Ok(value[..end].to_owned())
 }

@@ -47,6 +47,8 @@ pub mod vec3;
 pub mod vip_level;
 pub type SoraMap<K, V> = rustc_hash::FxHashMap<K, V>;
 
+pub const SCHEMA_FINGERPRINT: &str = "8cc3361563a68f03";
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum SoraTableMode {
     List,
@@ -79,6 +81,13 @@ impl SoraConfig {
     pub fn from_source(
         source: &impl runtime::SoraTableSource,
     ) -> Result<Self, runtime::SoraReadError> {
+        let schema_fingerprint = source.schema_fingerprint()?;
+        if schema_fingerprint != SCHEMA_FINGERPRINT {
+            return Err(runtime::SoraReadError::new(format!(
+                "schema fingerprint mismatch: generated code expects {}, bundle contains {}",
+                SCHEMA_FINGERPRINT, schema_fingerprint
+            )));
+        }
         let mut tables: SoraMap<&'static str, Box<dyn SoraTable>> = sora_map_with_capacity(28);
         tables.insert(
             item::ItemTable::NAME,

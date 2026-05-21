@@ -6,6 +6,7 @@ use sora_ir::model::{ConfigIr, FieldIr, IndexIr, TableIr, TableModeIr, TypeIr};
 #[derive(Debug, Clone, Serialize)]
 pub struct BaseModel {
     pub package: String,
+    pub schema_fingerprint: String,
     pub enums: Vec<BaseEnum>,
     pub unions: Vec<BaseUnion>,
     pub records: Vec<BaseRecord>,
@@ -143,6 +144,7 @@ pub fn build_base_model(ir: &ConfigIr) -> Result<BaseModel> {
 
     Ok(BaseModel {
         package: ir.package.clone(),
+        schema_fingerprint: sora_ir::fingerprint::schema_fingerprint(ir)?,
         enums,
         unions,
         records,
