@@ -3,6 +3,9 @@
 #include "sora_config.h"
 
 #include <stdlib.h>
+#include <string.h>
+
+static const char* SORA_SCHEMA_FINGERPRINT = "8cc3361563a68f03";
 
 struct sora_showcase_config {
     sora_showcase_item_table* item;
@@ -43,6 +46,11 @@ sora_result sora_showcase_config_load_from_bytes(
     sora_bundle* bundle = NULL;
     sora_showcase_config* config = NULL;
     SORA_TRY(sora_bundle_parse(bytes, len, &bundle));
+    const char* schema_fingerprint = sora_bundle_schema_fingerprint(bundle);
+    if (schema_fingerprint == NULL || strcmp(schema_fingerprint, SORA_SCHEMA_FINGERPRINT) != 0) {
+        sora_bundle_free(bundle);
+        return sora_error(SORA_ERROR_INVALID_BUNDLE, "schema fingerprint mismatch");
+    }
     config = (sora_showcase_config*)calloc(1, sizeof(sora_showcase_config));
     if (config == NULL) {
         sora_bundle_free(bundle);

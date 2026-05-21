@@ -135,6 +135,7 @@ impl COptionsView {
 
 #[derive(Debug, Clone, Serialize)]
 struct CModel {
+    schema_fingerprint: String,
     enums: Vec<CEnum>,
     unions: Vec<CUnion>,
     records: Vec<CRecord>,
@@ -297,6 +298,7 @@ impl CModel {
             .collect();
 
         Self {
+            schema_fingerprint: model.schema_fingerprint,
             enums,
             unions,
             records,

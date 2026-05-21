@@ -19,6 +19,7 @@ struct sora_bundle {
     size_t len;
     struct sora_section* sections;
     size_t section_count;
+    char* schema_fingerprint;
 };
 
 static const uint32_t SORA_BUNDLE_VERSION = 1;
@@ -59,6 +60,47 @@ static char* sora_copy_name(const uint8_t* bytes, size_t len) {
     memcpy(value, bytes, len);
     value[len] = '\0';
     return value;
+}
+
+static char* sora_copy_json_string_field(const uint8_t* bytes, size_t len, const char* field) {
+    size_t field_len = strlen(field);
+    for (size_t index = 0; index < len; ++index) {
+        if (bytes[index] != '"') {
+            continue;
+        }
+        size_t key_start = index + 1;
+        if (field_len > len - key_start || memcmp(bytes + key_start, field, field_len) != 0) {
+            continue;
+        }
+        size_t key_end = key_start + field_len;
+        if (key_end >= len || bytes[key_end] != '"') {
+            continue;
+        }
+        size_t cursor = key_end + 1;
+        while (cursor < len && (bytes[cursor] == ' ' || bytes[cursor] == '\n' || bytes[cursor] == '\r' || bytes[cursor] == '\t')) {
+            ++cursor;
+        }
+        if (cursor >= len || bytes[cursor] != ':') {
+            continue;
+        }
+        ++cursor;
+        while (cursor < len && (bytes[cursor] == ' ' || bytes[cursor] == '\n' || bytes[cursor] == '\r' || bytes[cursor] == '\t')) {
+            ++cursor;
+        }
+        if (cursor >= len || bytes[cursor] != '"') {
+            continue;
+        }
+        size_t value_start = cursor + 1;
+        size_t value_end = value_start;
+        while (value_end < len && bytes[value_end] != '"') {
+            ++value_end;
+        }
+        if (value_end >= len) {
+            return NULL;
+        }
+        return sora_copy_name(bytes + value_start, value_end - value_start);
+    }
+    return NULL;
 }
 
 void sora_string_free(sora_string* value) {
@@ -296,6 +338,21 @@ sora_result sora_bundle_parse(const uint8_t* bytes, size_t len, sora_bundle** ou
         sora_bundle_free(bundle);
         return sora_error(SORA_ERROR_INVALID_BUNDLE, "invalid Sora section directory");
     }
+    for (size_t index = 0; index < bundle->section_count; ++index) {
+        const struct sora_section* section = &bundle->sections[index];
+        if (section->kind == SORA_SECTION_KIND_MANIFEST) {
+            bundle->schema_fingerprint = sora_copy_json_string_field(
+                bundle->bytes + section->offset,
+                section->len,
+                "schema_fingerprint"
+            );
+            break;
+        }
+    }
+    if (bundle->schema_fingerprint == NULL) {
+        sora_bundle_free(bundle);
+        return sora_error(SORA_ERROR_INVALID_BUNDLE, "Sora manifest is missing string field `schema_fingerprint`");
+    }
 
     *out = bundle;
     return sora_ok();
@@ -312,7 +369,15 @@ void sora_bundle_free(sora_bundle* bundle) {
     }
     free(bundle->sections);
     free(bundle->bytes);
+    free(bundle->schema_fingerprint);
     free(bundle);
+}
+
+const char* sora_bundle_schema_fingerprint(const sora_bundle* bundle) {
+    if (bundle == NULL) {
+        return NULL;
+    }
+    return bundle->schema_fingerprint;
 }
 
 sora_result sora_bundle_decode_table(

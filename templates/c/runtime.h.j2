@@ -74,6 +74,7 @@ sora_result sora_reader_read_string(sora_reader* reader, sora_string* out);
 
 sora_result sora_bundle_parse(const uint8_t* bytes, size_t len, sora_bundle** out);
 void sora_bundle_free(sora_bundle* bundle);
+const char* sora_bundle_schema_fingerprint(const sora_bundle* bundle);
 sora_result sora_bundle_decode_table(
     const sora_bundle* bundle,
     const char* name,
