@@ -26,12 +26,6 @@ pub struct DropGroupTable {
 }
 
 impl DropGroupTable {
-    pub(super) fn decode(
-        bundle: &super::runtime::SoraBundle<'_>,
-    ) -> Result<Self, super::runtime::SoraReadError> {
-        Self::from_rows(bundle.decode_table::<DropGroup>("DropGroup")?)
-    }
-
     pub(super) fn from_rows(rows: Vec<DropGroup>) -> Result<Self, super::runtime::SoraReadError> {
         Ok(Self {
             rows: super::decode_map_table(rows, |row| row.id),

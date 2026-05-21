@@ -50,7 +50,7 @@ fn generated_rust_runtime_compiles_and_loads_config_bundles() {
         )
         .unwrap();
 
-        write_generated_crate(&generated_dir, case.file_name);
+        write_generated_crate(&generated_dir, case.runtime_format, case.file_name);
         assert_generated_crate_tests_pass(&generated_dir);
 
         let _ = fs::remove_dir_all(base);
@@ -208,7 +208,14 @@ count = 2
     project_path
 }
 
-fn write_generated_crate(crate_dir: &Path, file_name: &str) {
+fn write_generated_crate(crate_dir: &Path, runtime_format: &str, file_name: &str) {
+    let bundle_type = match runtime_format {
+        "sora" => "SoraBundle",
+        "json" => "JsonBundle",
+        "cbor" => "CborBundle",
+        "sora-protobuf" => "ProtobufBundle",
+        other => panic!("unsupported Rust runtime format `{other}`"),
+    };
     fs::write(
         crate_dir.join("Cargo.toml"),
         r#"
@@ -232,11 +239,12 @@ pub mod generated;
 
 #[cfg(test)]
 mod tests {
-    use super::generated::{item_type::ItemType, SoraConfig};
+    use super::generated::{item_type::ItemType, runtime::__BUNDLE_TYPE__, SoraConfig};
 
     #[test]
     fn loads_sora_bundle() {
-        let config = SoraConfig::from_bytes(include_bytes!("../__CONFIG_FILE__")).unwrap();
+        let bundle = __BUNDLE_TYPE__::parse(include_bytes!("../__CONFIG_FILE__")).unwrap();
+        let config = SoraConfig::from_source(&bundle).unwrap();
         let item = config.item().get(1002).unwrap();
 
         assert_eq!(item.name, "Magic Stone");
@@ -251,6 +259,7 @@ mod tests {
     }
 }
 "#
+        .replace("__BUNDLE_TYPE__", bundle_type)
         .replace("__CONFIG_FILE__", file_name),
     )
     .unwrap();

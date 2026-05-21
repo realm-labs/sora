@@ -436,16 +436,15 @@ mod tests {
         assert!(rust_action.contains("impl super::runtime::SoraDecode for Action"));
         assert!(!rust_action.contains("impl std::fmt::Display for Action"));
         assert!(rust_runtime.contains("pub struct SoraBundle"));
+        assert!(rust_runtime.contains("pub trait SoraTableSource"));
         assert!(rust_mod.contains("pub struct SoraConfig"));
-        assert!(rust_mod.contains("from_bytes"));
+        assert!(rust_mod.contains("from_source"));
+        assert!(!rust_mod.contains("from_bytes"));
         assert!(rust_mod.contains("pub type SoraMap<K, V> = std::collections::HashMap<K, V>;"));
         assert!(rust_mod.contains("pub trait SoraTable: std::any::Any + Send + Sync"));
         assert!(rust_mod.contains("tables: SoraMap<&'static str, Box<dyn SoraTable>>"));
         assert!(rust_mod.contains("pub fn tables(&self) -> impl Iterator<Item = &dyn SoraTable>"));
-        assert!(
-            rust_mod
-                .contains("tables.insert(\"Item\", Box::new(item::ItemTable::decode(&bundle)?));")
-        );
+        assert!(rust_mod.contains("source.decode_table::<item::Item>(\"Item\")?"));
         assert!(rust_item.contains("pub struct ItemTable"));
         assert!(rust_item.contains("rows: SoraMap<i32, Item>"));
         assert!(rust_item.contains("by_name: SoraMap<String, i32>"));

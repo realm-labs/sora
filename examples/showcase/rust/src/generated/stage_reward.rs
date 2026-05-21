@@ -31,12 +31,6 @@ pub struct StageRewardTable {
 }
 
 impl StageRewardTable {
-    pub(super) fn decode(
-        bundle: &super::runtime::SoraBundle<'_>,
-    ) -> Result<Self, super::runtime::SoraReadError> {
-        Self::from_rows(bundle.decode_table::<StageReward>("StageReward")?)
-    }
-
     pub(super) fn from_rows(rows: Vec<StageReward>) -> Result<Self, super::runtime::SoraReadError> {
         Ok(Self { rows })
     }

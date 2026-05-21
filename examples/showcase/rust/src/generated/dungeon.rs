@@ -33,12 +33,6 @@ pub struct DungeonTable {
 }
 
 impl DungeonTable {
-    pub(super) fn decode(
-        bundle: &super::runtime::SoraBundle<'_>,
-    ) -> Result<Self, super::runtime::SoraReadError> {
-        Self::from_rows(bundle.decode_table::<Dungeon>("Dungeon")?)
-    }
-
     pub(super) fn from_rows(rows: Vec<Dungeon>) -> Result<Self, super::runtime::SoraReadError> {
         Ok(Self {
             rows: super::decode_map_table(rows, |row| row.id),

@@ -48,12 +48,6 @@ pub struct ItemTable {
 }
 
 impl ItemTable {
-    pub(super) fn decode(
-        bundle: &super::runtime::SoraBundle<'_>,
-    ) -> Result<Self, super::runtime::SoraReadError> {
-        Self::from_rows(bundle.decode_table::<Item>("Item")?)
-    }
-
     pub(super) fn from_rows(rows: Vec<Item>) -> Result<Self, super::runtime::SoraReadError> {
         let by_name =
             super::build_unique_map_index(rows.iter(), |row| row.name.clone(), |row| row.id);

@@ -28,12 +28,6 @@ pub struct CharacterSkillTable {
 }
 
 impl CharacterSkillTable {
-    pub(super) fn decode(
-        bundle: &super::runtime::SoraBundle<'_>,
-    ) -> Result<Self, super::runtime::SoraReadError> {
-        Self::from_rows(bundle.decode_table::<CharacterSkill>("CharacterSkill")?)
-    }
-
     pub(super) fn from_rows(
         rows: Vec<CharacterSkill>,
     ) -> Result<Self, super::runtime::SoraReadError> {

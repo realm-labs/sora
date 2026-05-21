@@ -32,6 +32,12 @@ pub trait SoraDecode: Sized {
     fn decode(reader: &mut SoraReader<'_>) -> Result<Self, SoraReadError>;
 }
 
+pub trait SoraTableSource {
+    fn decode_table<T>(&self, name: &str) -> Result<Vec<T>, SoraReadError>
+    where
+        T: SoraDecode + serde::de::DeserializeOwned;
+}
+
 pub struct SoraBundle<'a> {
     bytes: &'a [u8],
     sections: Vec<Section>,
@@ -214,6 +220,15 @@ impl<'a> SoraBundle<'a> {
         }
         let payload = &self.bytes[section.offset..section.offset + section.len];
         decode_rows(payload)
+    }
+}
+
+impl SoraTableSource for SoraBundle<'_> {
+    fn decode_table<T>(&self, name: &str) -> Result<Vec<T>, SoraReadError>
+    where
+        T: SoraDecode + serde::de::DeserializeOwned,
+    {
+        SoraBundle::decode_table(self, name)
     }
 }
 

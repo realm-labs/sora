@@ -45,12 +45,6 @@ pub struct QuestTable {
 }
 
 impl QuestTable {
-    pub(super) fn decode(
-        bundle: &super::runtime::SoraBundle<'_>,
-    ) -> Result<Self, super::runtime::SoraReadError> {
-        Self::from_rows(bundle.decode_table::<Quest>("Quest")?)
-    }
-
     pub(super) fn from_rows(rows: Vec<Quest>) -> Result<Self, super::runtime::SoraReadError> {
         Ok(Self {
             rows: super::decode_map_table(rows, |row| row.id),

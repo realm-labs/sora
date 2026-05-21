@@ -6,8 +6,10 @@ use generated::{
 };
 
 fn main() {
-    let config =
-        SoraConfig::from_bytes(include_bytes!("../../generated/config.sora")).expect("bundle");
+    let bundle =
+        generated::runtime::SoraBundle::parse(include_bytes!("../../generated/config.sora"))
+            .expect("bundle");
+    let config = SoraConfig::from_source(&bundle).expect("config");
     let sword = config.item().get(1001).expect("item 1001");
     let sword_by_name = config.item().get_by_name("Iron Sword").expect("Iron Sword");
     let flame_slash = config.skill().get(101).expect("skill 101");

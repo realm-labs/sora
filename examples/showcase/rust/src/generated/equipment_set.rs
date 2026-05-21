@@ -33,12 +33,6 @@ pub struct EquipmentSetTable {
 }
 
 impl EquipmentSetTable {
-    pub(super) fn decode(
-        bundle: &super::runtime::SoraBundle<'_>,
-    ) -> Result<Self, super::runtime::SoraReadError> {
-        Self::from_rows(bundle.decode_table::<EquipmentSet>("EquipmentSet")?)
-    }
-
     pub(super) fn from_rows(
         rows: Vec<EquipmentSet>,
     ) -> Result<Self, super::runtime::SoraReadError> {

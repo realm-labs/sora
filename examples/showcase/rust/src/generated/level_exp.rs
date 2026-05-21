@@ -29,12 +29,6 @@ pub struct LevelExpTable {
 }
 
 impl LevelExpTable {
-    pub(super) fn decode(
-        bundle: &super::runtime::SoraBundle<'_>,
-    ) -> Result<Self, super::runtime::SoraReadError> {
-        Self::from_rows(bundle.decode_table::<LevelExp>("LevelExp")?)
-    }
-
     pub(super) fn from_rows(rows: Vec<LevelExp>) -> Result<Self, super::runtime::SoraReadError> {
         Ok(Self {
             rows: super::decode_map_table(rows, |row| row.level),

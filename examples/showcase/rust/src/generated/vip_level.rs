@@ -30,12 +30,6 @@ pub struct VipLevelTable {
 }
 
 impl VipLevelTable {
-    pub(super) fn decode(
-        bundle: &super::runtime::SoraBundle<'_>,
-    ) -> Result<Self, super::runtime::SoraReadError> {
-        Self::from_rows(bundle.decode_table::<VipLevel>("VipLevel")?)
-    }
-
     pub(super) fn from_rows(rows: Vec<VipLevel>) -> Result<Self, super::runtime::SoraReadError> {
         Ok(Self {
             rows: super::decode_map_table(rows, |row| row.level),

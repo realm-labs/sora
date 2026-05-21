@@ -35,12 +35,6 @@ pub struct GameSettingsTable {
 }
 
 impl GameSettingsTable {
-    pub(super) fn decode(
-        bundle: &super::runtime::SoraBundle<'_>,
-    ) -> Result<Self, super::runtime::SoraReadError> {
-        Self::from_rows(bundle.decode_table::<GameSettings>("GameSettings")?)
-    }
-
     pub(super) fn from_rows(
         rows: Vec<GameSettings>,
     ) -> Result<Self, super::runtime::SoraReadError> {

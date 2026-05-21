@@ -77,93 +77,177 @@ impl std::fmt::Debug for SoraConfig {
 }
 
 impl SoraConfig {
-    pub fn from_bytes(bytes: &[u8]) -> Result<Self, runtime::SoraReadError> {
-        let bundle = runtime::SoraBundle::parse(bytes)?;
+    pub fn from_source(
+        source: &impl runtime::SoraTableSource,
+    ) -> Result<Self, runtime::SoraReadError> {
         let mut tables: SoraMap<&'static str, Box<dyn SoraTable>> = sora_map_with_capacity(28);
-        tables.insert("Item", Box::new(item::ItemTable::decode(&bundle)?));
-        tables.insert("Skill", Box::new(skill::SkillTable::decode(&bundle)?));
-        tables.insert("Quest", Box::new(quest::QuestTable::decode(&bundle)?));
+        tables.insert(
+            "Item",
+            Box::new(item::ItemTable::from_rows(
+                source.decode_table::<item::Item>("Item")?,
+            )?),
+        );
+        tables.insert(
+            "Skill",
+            Box::new(skill::SkillTable::from_rows(
+                source.decode_table::<skill::Skill>("Skill")?,
+            )?),
+        );
+        tables.insert(
+            "Quest",
+            Box::new(quest::QuestTable::from_rows(
+                source.decode_table::<quest::Quest>("Quest")?,
+            )?),
+        );
         tables.insert(
             "QuestReward",
-            Box::new(quest_reward::QuestRewardTable::decode(&bundle)?),
+            Box::new(quest_reward::QuestRewardTable::from_rows(
+                source.decode_table::<quest_reward::QuestReward>("QuestReward")?,
+            )?),
         );
         tables.insert(
             "GameSettings",
-            Box::new(game_settings::GameSettingsTable::decode(&bundle)?),
+            Box::new(game_settings::GameSettingsTable::from_rows(
+                source.decode_table::<game_settings::GameSettings>("GameSettings")?,
+            )?),
         );
         tables.insert(
             "Localization",
-            Box::new(localization::LocalizationTable::decode(&bundle)?),
+            Box::new(localization::LocalizationTable::from_rows(
+                source.decode_table::<localization::Localization>("Localization")?,
+            )?),
         );
         tables.insert(
             "LevelExp",
-            Box::new(level_exp::LevelExpTable::decode(&bundle)?),
+            Box::new(level_exp::LevelExpTable::from_rows(
+                source.decode_table::<level_exp::LevelExp>("LevelExp")?,
+            )?),
         );
         tables.insert(
             "Character",
-            Box::new(character::CharacterTable::decode(&bundle)?),
+            Box::new(character::CharacterTable::from_rows(
+                source.decode_table::<character::Character>("Character")?,
+            )?),
         );
         tables.insert(
             "CharacterSkill",
-            Box::new(character_skill::CharacterSkillTable::decode(&bundle)?),
+            Box::new(character_skill::CharacterSkillTable::from_rows(
+                source.decode_table::<character_skill::CharacterSkill>("CharacterSkill")?,
+            )?),
         );
-        tables.insert("Buff", Box::new(buff::BuffTable::decode(&bundle)?));
+        tables.insert(
+            "Buff",
+            Box::new(buff::BuffTable::from_rows(
+                source.decode_table::<buff::Buff>("Buff")?,
+            )?),
+        );
         tables.insert(
             "DropGroup",
-            Box::new(drop_group::DropGroupTable::decode(&bundle)?),
+            Box::new(drop_group::DropGroupTable::from_rows(
+                source.decode_table::<drop_group::DropGroup>("DropGroup")?,
+            )?),
         );
         tables.insert(
             "DropEntry",
-            Box::new(drop_entry::DropEntryTable::decode(&bundle)?),
+            Box::new(drop_entry::DropEntryTable::from_rows(
+                source.decode_table::<drop_entry::DropEntry>("DropEntry")?,
+            )?),
         );
-        tables.insert("Monster", Box::new(monster::MonsterTable::decode(&bundle)?));
-        tables.insert("Stage", Box::new(stage::StageTable::decode(&bundle)?));
+        tables.insert(
+            "Monster",
+            Box::new(monster::MonsterTable::from_rows(
+                source.decode_table::<monster::Monster>("Monster")?,
+            )?),
+        );
+        tables.insert(
+            "Stage",
+            Box::new(stage::StageTable::from_rows(
+                source.decode_table::<stage::Stage>("Stage")?,
+            )?),
+        );
         tables.insert(
             "StageReward",
-            Box::new(stage_reward::StageRewardTable::decode(&bundle)?),
+            Box::new(stage_reward::StageRewardTable::from_rows(
+                source.decode_table::<stage_reward::StageReward>("StageReward")?,
+            )?),
         );
-        tables.insert("Dungeon", Box::new(dungeon::DungeonTable::decode(&bundle)?));
-        tables.insert("Shop", Box::new(shop::ShopTable::decode(&bundle)?));
+        tables.insert(
+            "Dungeon",
+            Box::new(dungeon::DungeonTable::from_rows(
+                source.decode_table::<dungeon::Dungeon>("Dungeon")?,
+            )?),
+        );
+        tables.insert(
+            "Shop",
+            Box::new(shop::ShopTable::from_rows(
+                source.decode_table::<shop::Shop>("Shop")?,
+            )?),
+        );
         tables.insert(
             "ShopItem",
-            Box::new(shop_item::ShopItemTable::decode(&bundle)?),
+            Box::new(shop_item::ShopItemTable::from_rows(
+                source.decode_table::<shop_item::ShopItem>("ShopItem")?,
+            )?),
         );
-        tables.insert("Recipe", Box::new(recipe::RecipeTable::decode(&bundle)?));
+        tables.insert(
+            "Recipe",
+            Box::new(recipe::RecipeTable::from_rows(
+                source.decode_table::<recipe::Recipe>("Recipe")?,
+            )?),
+        );
         tables.insert(
             "GachaPool",
-            Box::new(gacha_pool::GachaPoolTable::decode(&bundle)?),
+            Box::new(gacha_pool::GachaPoolTable::from_rows(
+                source.decode_table::<gacha_pool::GachaPool>("GachaPool")?,
+            )?),
         );
         tables.insert(
             "GachaItem",
-            Box::new(gacha_item::GachaItemTable::decode(&bundle)?),
+            Box::new(gacha_item::GachaItemTable::from_rows(
+                source.decode_table::<gacha_item::GachaItem>("GachaItem")?,
+            )?),
         );
         tables.insert(
             "EquipmentSet",
-            Box::new(equipment_set::EquipmentSetTable::decode(&bundle)?),
+            Box::new(equipment_set::EquipmentSetTable::from_rows(
+                source.decode_table::<equipment_set::EquipmentSet>("EquipmentSet")?,
+            )?),
         );
         tables.insert(
             "Achievement",
-            Box::new(achievement::AchievementTable::decode(&bundle)?),
+            Box::new(achievement::AchievementTable::from_rows(
+                source.decode_table::<achievement::Achievement>("Achievement")?,
+            )?),
         );
         tables.insert(
             "VipLevel",
-            Box::new(vip_level::VipLevelTable::decode(&bundle)?),
+            Box::new(vip_level::VipLevelTable::from_rows(
+                source.decode_table::<vip_level::VipLevel>("VipLevel")?,
+            )?),
         );
         tables.insert(
             "MailTemplate",
-            Box::new(mail_template::MailTemplateTable::decode(&bundle)?),
+            Box::new(mail_template::MailTemplateTable::from_rows(
+                source.decode_table::<mail_template::MailTemplate>("MailTemplate")?,
+            )?),
         );
         tables.insert(
             "MailReward",
-            Box::new(mail_reward::MailRewardTable::decode(&bundle)?),
+            Box::new(mail_reward::MailRewardTable::from_rows(
+                source.decode_table::<mail_reward::MailReward>("MailReward")?,
+            )?),
         );
         tables.insert(
             "Dialogue",
-            Box::new(dialogue::DialogueTable::decode(&bundle)?),
+            Box::new(dialogue::DialogueTable::from_rows(
+                source.decode_table::<dialogue::Dialogue>("Dialogue")?,
+            )?),
         );
         tables.insert(
             "EventRule",
-            Box::new(event_rule::EventRuleTable::decode(&bundle)?),
+            Box::new(event_rule::EventRuleTable::from_rows(
+                source.decode_table::<event_rule::EventRule>("EventRule")?,
+            )?),
         );
         Ok(Self { tables })
     }

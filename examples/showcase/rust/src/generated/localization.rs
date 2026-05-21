@@ -32,12 +32,6 @@ pub struct LocalizationTable {
 }
 
 impl LocalizationTable {
-    pub(super) fn decode(
-        bundle: &super::runtime::SoraBundle<'_>,
-    ) -> Result<Self, super::runtime::SoraReadError> {
-        Self::from_rows(bundle.decode_table::<Localization>("Localization")?)
-    }
-
     pub(super) fn from_rows(
         rows: Vec<Localization>,
     ) -> Result<Self, super::runtime::SoraReadError> {

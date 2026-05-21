@@ -41,24 +41,11 @@ impl std::fmt::Debug for SoraConfig {
 }
 
 impl SoraConfig {
-    pub fn from_bytes(bytes: &[u8]) -> Result<Self, runtime::SoraReadError> {
-{%- if runtime_format == "sora" %}
-        let bundle = runtime::SoraBundle::parse(bytes)?;
-{%- elif runtime_format == "json" %}
-        let bundle = runtime::JsonBundle::parse(bytes)?;
-{%- elif runtime_format == "cbor" %}
-        let bundle = runtime::CborBundle::parse(bytes)?;
-{%- elif runtime_format == "sora-protobuf" %}
-        let bundle = runtime::ProtobufBundle::parse(bytes)?;
-{%- endif %}
+    pub fn from_source(source: &impl runtime::SoraTableSource) -> Result<Self, runtime::SoraReadError> {
         let mut tables: SoraMap<&'static str, Box<dyn SoraTable>> =
             sora_map_with_capacity({{ model.tables | length }});
 {%- for table in model.tables %}
-{%- if runtime_format == "sora" %}
-        tables.insert("{{ table.name }}", Box::new({{ table.table_path }}::decode(&bundle)?));
-{%- else %}
-        tables.insert("{{ table.name }}", Box::new({{ table.table_path }}::from_rows(bundle.decode_table::<{{ table.row_path }}>("{{ table.name }}")?)?));
-{%- endif %}
+        tables.insert("{{ table.name }}", Box::new({{ table.table_path }}::from_rows(source.decode_table::<{{ table.row_path }}>("{{ table.name }}")?)?));
 {%- endfor %}
         Ok(Self { tables })
     }

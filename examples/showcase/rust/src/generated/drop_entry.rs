@@ -34,12 +34,6 @@ pub struct DropEntryTable {
 }
 
 impl DropEntryTable {
-    pub(super) fn decode(
-        bundle: &super::runtime::SoraBundle<'_>,
-    ) -> Result<Self, super::runtime::SoraReadError> {
-        Self::from_rows(bundle.decode_table::<DropEntry>("DropEntry")?)
-    }
-
     pub(super) fn from_rows(rows: Vec<DropEntry>) -> Result<Self, super::runtime::SoraReadError> {
         Ok(Self { rows })
     }

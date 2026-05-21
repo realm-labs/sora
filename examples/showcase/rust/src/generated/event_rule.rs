@@ -34,12 +34,6 @@ pub struct EventRuleTable {
 }
 
 impl EventRuleTable {
-    pub(super) fn decode(
-        bundle: &super::runtime::SoraBundle<'_>,
-    ) -> Result<Self, super::runtime::SoraReadError> {
-        Self::from_rows(bundle.decode_table::<EventRule>("EventRule")?)
-    }
-
     pub(super) fn from_rows(rows: Vec<EventRule>) -> Result<Self, super::runtime::SoraReadError> {
         Ok(Self {
             rows: super::decode_map_table(rows, |row| row.id),

@@ -51,10 +51,6 @@ pub struct {{ table.pascal_name }}Table {
 }
 
 impl {{ table.pascal_name }}Table {
-    pub(super) fn decode(bundle: &super::runtime::SoraBundle<'_>) -> Result<Self, super::runtime::SoraReadError> {
-        Self::from_rows(bundle.decode_table::<{{ table.row_type }}>("{{ table.name }}")?)
-    }
-
     pub(super) fn from_rows(rows: Vec<{{ table.row_type }}>) -> Result<Self, super::runtime::SoraReadError> {
 {%- if table.mode == "map" and table.key_field_name %}
 {%- if table.unique_indexes or table.non_unique_indexes %}

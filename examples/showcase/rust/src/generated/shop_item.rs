@@ -35,12 +35,6 @@ pub struct ShopItemTable {
 }
 
 impl ShopItemTable {
-    pub(super) fn decode(
-        bundle: &super::runtime::SoraBundle<'_>,
-    ) -> Result<Self, super::runtime::SoraReadError> {
-        Self::from_rows(bundle.decode_table::<ShopItem>("ShopItem")?)
-    }
-
     pub(super) fn from_rows(rows: Vec<ShopItem>) -> Result<Self, super::runtime::SoraReadError> {
         Ok(Self { rows })
     }

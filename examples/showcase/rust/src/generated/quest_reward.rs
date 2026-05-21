@@ -31,12 +31,6 @@ pub struct QuestRewardTable {
 }
 
 impl QuestRewardTable {
-    pub(super) fn decode(
-        bundle: &super::runtime::SoraBundle<'_>,
-    ) -> Result<Self, super::runtime::SoraReadError> {
-        Self::from_rows(bundle.decode_table::<QuestReward>("QuestReward")?)
-    }
-
     pub(super) fn from_rows(rows: Vec<QuestReward>) -> Result<Self, super::runtime::SoraReadError> {
         Ok(Self { rows })
     }
