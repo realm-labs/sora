@@ -55,6 +55,7 @@ impl CodeGenerator for GodotCodeGenerator {
 
 #[derive(Debug, Clone, Serialize)]
 struct GodotModel {
+    schema_fingerprint: String,
     enums: Vec<GodotEnum>,
     records: Vec<GodotRecord>,
     unions: Vec<GodotUnion>,
@@ -170,6 +171,7 @@ impl GodotModel {
             .collect();
 
         Self {
+            schema_fingerprint: model.schema_fingerprint,
             enums,
             records,
             unions,

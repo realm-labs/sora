@@ -3,6 +3,8 @@
 class_name SoraConfig
 extends RefCounted
 
+const SORA_SCHEMA_FINGERPRINT := "13951ec1e1c00d84"
+
 var _tables: Dictionary = {}
 
 static func load_json_file(path: String) -> SoraConfig:
@@ -12,6 +14,14 @@ static func load_json_text(text: String) -> SoraConfig:
 	return from_json_root(SoraRuntime.parse_json_text(text))
 
 static func from_json_root(root: Dictionary) -> SoraConfig:
+	var schema_fingerprint := SoraRuntime.schema_fingerprint(root)
+	if schema_fingerprint != SORA_SCHEMA_FINGERPRINT:
+		var message := (
+			"schema fingerprint mismatch: generated code expects %s, bundle contains %s"
+			% [SORA_SCHEMA_FINGERPRINT, schema_fingerprint]
+		)
+		SoraRuntime.report_error(message)
+		return SoraConfig.new()
 	var bundle := SoraRuntime.decode_bundle(root, "json")
 	var config := SoraConfig.new()
 	config._tables[Item.ItemTable.TABLE_NAME] = Item.ItemTable.decode(

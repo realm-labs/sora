@@ -49,6 +49,13 @@ static func decode_bundle(root: Dictionary, expected_format: String) -> Dictiona
 		tables[str(table.get("name", ""))] = table.get("rows", [])
 	return tables
 
+static func schema_fingerprint(root: Dictionary) -> String:
+	var value = root.get("schema_fingerprint", "")
+	if typeof(value) != TYPE_STRING:
+		report_error("expected bundle schema_fingerprint string")
+		return ""
+	return value
+
 static func decode_table(bundle: Dictionary, name: String, decode: Callable) -> Array:
 	if not bundle.has(name):
 		report_error("missing Sora table `%s`" % name)
