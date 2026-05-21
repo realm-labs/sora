@@ -47,6 +47,8 @@
 #include "reward_action.hpp"
 
 #include <cstdint>
+#include <memory>
+#include <string>
 #include <unordered_map>
 #include <vector>
 
@@ -57,455 +59,216 @@ public:
     static SoraConfig from_bytes(const std::vector<std::uint8_t>& bytes) {
         SoraBundle bundle = SoraBundle::parse(bytes);
         SoraConfig config;
-        std::vector<Item> item_rows =
-            bundle.decode_table<Item>("Item");
-        for (std::size_t index = 0; index < item_rows.size(); ++index) {
-            const Item& row = item_rows[index];
-            config.item_.emplace(row.id, row);
-        }
-        std::vector<Skill> skill_rows =
-            bundle.decode_table<Skill>("Skill");
-        for (std::size_t index = 0; index < skill_rows.size(); ++index) {
-            const Skill& row = skill_rows[index];
-            config.skill_.emplace(row.id, row);
-        }
-        std::vector<Quest> quest_rows =
-            bundle.decode_table<Quest>("Quest");
-        for (std::size_t index = 0; index < quest_rows.size(); ++index) {
-            const Quest& row = quest_rows[index];
-            config.quest_.emplace(row.id, row);
-        }
-        std::vector<QuestReward> quest_reward_rows =
-            bundle.decode_table<QuestReward>("QuestReward");
-        config.quest_reward_ = quest_reward_rows;
-        std::vector<GameSettings> game_settings_rows =
-            bundle.decode_table<GameSettings>("GameSettings");
-        if (game_settings_rows.size() != 1) {
-            throw SoraReadException("expected singleton table GameSettings to contain exactly one row");
-        }
-        config.game_settings_ = game_settings_rows[0];
-        std::vector<Localization> localization_rows =
-            bundle.decode_table<Localization>("Localization");
-        for (std::size_t index = 0; index < localization_rows.size(); ++index) {
-            const Localization& row = localization_rows[index];
-            config.localization_.emplace(row.key, row);
-        }
-        std::vector<LevelExp> level_exp_rows =
-            bundle.decode_table<LevelExp>("LevelExp");
-        for (std::size_t index = 0; index < level_exp_rows.size(); ++index) {
-            const LevelExp& row = level_exp_rows[index];
-            config.level_exp_.emplace(row.level, row);
-        }
-        std::vector<Character> character_rows =
-            bundle.decode_table<Character>("Character");
-        for (std::size_t index = 0; index < character_rows.size(); ++index) {
-            const Character& row = character_rows[index];
-            config.character_.emplace(row.id, row);
-        }
-        std::vector<CharacterSkill> character_skill_rows =
-            bundle.decode_table<CharacterSkill>("CharacterSkill");
-        config.character_skill_ = character_skill_rows;
-        std::vector<Buff> buff_rows =
-            bundle.decode_table<Buff>("Buff");
-        for (std::size_t index = 0; index < buff_rows.size(); ++index) {
-            const Buff& row = buff_rows[index];
-            config.buff_.emplace(row.id, row);
-        }
-        std::vector<DropGroup> drop_group_rows =
-            bundle.decode_table<DropGroup>("DropGroup");
-        for (std::size_t index = 0; index < drop_group_rows.size(); ++index) {
-            const DropGroup& row = drop_group_rows[index];
-            config.drop_group_.emplace(row.id, row);
-        }
-        std::vector<DropEntry> drop_entry_rows =
-            bundle.decode_table<DropEntry>("DropEntry");
-        config.drop_entry_ = drop_entry_rows;
-        std::vector<Monster> monster_rows =
-            bundle.decode_table<Monster>("Monster");
-        for (std::size_t index = 0; index < monster_rows.size(); ++index) {
-            const Monster& row = monster_rows[index];
-            config.monster_.emplace(row.id, row);
-        }
-        std::vector<Stage> stage_rows =
-            bundle.decode_table<Stage>("Stage");
-        for (std::size_t index = 0; index < stage_rows.size(); ++index) {
-            const Stage& row = stage_rows[index];
-            config.stage_.emplace(row.id, row);
-        }
-        std::vector<StageReward> stage_reward_rows =
-            bundle.decode_table<StageReward>("StageReward");
-        config.stage_reward_ = stage_reward_rows;
-        std::vector<Dungeon> dungeon_rows =
-            bundle.decode_table<Dungeon>("Dungeon");
-        for (std::size_t index = 0; index < dungeon_rows.size(); ++index) {
-            const Dungeon& row = dungeon_rows[index];
-            config.dungeon_.emplace(row.id, row);
-        }
-        std::vector<Shop> shop_rows =
-            bundle.decode_table<Shop>("Shop");
-        for (std::size_t index = 0; index < shop_rows.size(); ++index) {
-            const Shop& row = shop_rows[index];
-            config.shop_.emplace(row.id, row);
-        }
-        std::vector<ShopItem> shop_item_rows =
-            bundle.decode_table<ShopItem>("ShopItem");
-        config.shop_item_ = shop_item_rows;
-        std::vector<Recipe> recipe_rows =
-            bundle.decode_table<Recipe>("Recipe");
-        for (std::size_t index = 0; index < recipe_rows.size(); ++index) {
-            const Recipe& row = recipe_rows[index];
-            config.recipe_.emplace(row.id, row);
-        }
-        std::vector<GachaPool> gacha_pool_rows =
-            bundle.decode_table<GachaPool>("GachaPool");
-        for (std::size_t index = 0; index < gacha_pool_rows.size(); ++index) {
-            const GachaPool& row = gacha_pool_rows[index];
-            config.gacha_pool_.emplace(row.id, row);
-        }
-        std::vector<GachaItem> gacha_item_rows =
-            bundle.decode_table<GachaItem>("GachaItem");
-        config.gacha_item_ = gacha_item_rows;
-        std::vector<EquipmentSet> equipment_set_rows =
-            bundle.decode_table<EquipmentSet>("EquipmentSet");
-        for (std::size_t index = 0; index < equipment_set_rows.size(); ++index) {
-            const EquipmentSet& row = equipment_set_rows[index];
-            config.equipment_set_.emplace(row.id, row);
-        }
-        std::vector<Achievement> achievement_rows =
-            bundle.decode_table<Achievement>("Achievement");
-        for (std::size_t index = 0; index < achievement_rows.size(); ++index) {
-            const Achievement& row = achievement_rows[index];
-            config.achievement_.emplace(row.id, row);
-        }
-        std::vector<VipLevel> vip_level_rows =
-            bundle.decode_table<VipLevel>("VipLevel");
-        for (std::size_t index = 0; index < vip_level_rows.size(); ++index) {
-            const VipLevel& row = vip_level_rows[index];
-            config.vip_level_.emplace(row.level, row);
-        }
-        std::vector<MailTemplate> mail_template_rows =
-            bundle.decode_table<MailTemplate>("MailTemplate");
-        for (std::size_t index = 0; index < mail_template_rows.size(); ++index) {
-            const MailTemplate& row = mail_template_rows[index];
-            config.mail_template_.emplace(row.id, row);
-        }
-        std::vector<MailReward> mail_reward_rows =
-            bundle.decode_table<MailReward>("MailReward");
-        config.mail_reward_ = mail_reward_rows;
-        std::vector<Dialogue> dialogue_rows =
-            bundle.decode_table<Dialogue>("Dialogue");
-        for (std::size_t index = 0; index < dialogue_rows.size(); ++index) {
-            const Dialogue& row = dialogue_rows[index];
-            config.dialogue_.emplace(row.id, row);
-        }
-        std::vector<EventRule> event_rule_rows =
-            bundle.decode_table<EventRule>("EventRule");
-        for (std::size_t index = 0; index < event_rule_rows.size(); ++index) {
-            const EventRule& row = event_rule_rows[index];
-            config.event_rule_.emplace(row.id, row);
-        }
-        for (typename std::unordered_map<std::int32_t, Item>::const_iterator it = config.item_.begin();
-             it != config.item_.end();
-             ++it) {
-            const Item& row = it->second;
-            config.item_by_name_[row.name] = &row;
-            config.item_by_item_type_[row.item_type].push_back(&row);
-        }
+        config.tables_.emplace(
+            "Item",
+            std::unique_ptr<SoraTable>(new ItemTable(ItemTable::decode(bundle)))
+        );
+        config.tables_.emplace(
+            "Skill",
+            std::unique_ptr<SoraTable>(new SkillTable(SkillTable::decode(bundle)))
+        );
+        config.tables_.emplace(
+            "Quest",
+            std::unique_ptr<SoraTable>(new QuestTable(QuestTable::decode(bundle)))
+        );
+        config.tables_.emplace(
+            "QuestReward",
+            std::unique_ptr<SoraTable>(new QuestRewardTable(QuestRewardTable::decode(bundle)))
+        );
+        config.tables_.emplace(
+            "GameSettings",
+            std::unique_ptr<SoraTable>(new GameSettingsTable(GameSettingsTable::decode(bundle)))
+        );
+        config.tables_.emplace(
+            "Localization",
+            std::unique_ptr<SoraTable>(new LocalizationTable(LocalizationTable::decode(bundle)))
+        );
+        config.tables_.emplace(
+            "LevelExp",
+            std::unique_ptr<SoraTable>(new LevelExpTable(LevelExpTable::decode(bundle)))
+        );
+        config.tables_.emplace(
+            "Character",
+            std::unique_ptr<SoraTable>(new CharacterTable(CharacterTable::decode(bundle)))
+        );
+        config.tables_.emplace(
+            "CharacterSkill",
+            std::unique_ptr<SoraTable>(new CharacterSkillTable(CharacterSkillTable::decode(bundle)))
+        );
+        config.tables_.emplace(
+            "Buff",
+            std::unique_ptr<SoraTable>(new BuffTable(BuffTable::decode(bundle)))
+        );
+        config.tables_.emplace(
+            "DropGroup",
+            std::unique_ptr<SoraTable>(new DropGroupTable(DropGroupTable::decode(bundle)))
+        );
+        config.tables_.emplace(
+            "DropEntry",
+            std::unique_ptr<SoraTable>(new DropEntryTable(DropEntryTable::decode(bundle)))
+        );
+        config.tables_.emplace(
+            "Monster",
+            std::unique_ptr<SoraTable>(new MonsterTable(MonsterTable::decode(bundle)))
+        );
+        config.tables_.emplace(
+            "Stage",
+            std::unique_ptr<SoraTable>(new StageTable(StageTable::decode(bundle)))
+        );
+        config.tables_.emplace(
+            "StageReward",
+            std::unique_ptr<SoraTable>(new StageRewardTable(StageRewardTable::decode(bundle)))
+        );
+        config.tables_.emplace(
+            "Dungeon",
+            std::unique_ptr<SoraTable>(new DungeonTable(DungeonTable::decode(bundle)))
+        );
+        config.tables_.emplace(
+            "Shop",
+            std::unique_ptr<SoraTable>(new ShopTable(ShopTable::decode(bundle)))
+        );
+        config.tables_.emplace(
+            "ShopItem",
+            std::unique_ptr<SoraTable>(new ShopItemTable(ShopItemTable::decode(bundle)))
+        );
+        config.tables_.emplace(
+            "Recipe",
+            std::unique_ptr<SoraTable>(new RecipeTable(RecipeTable::decode(bundle)))
+        );
+        config.tables_.emplace(
+            "GachaPool",
+            std::unique_ptr<SoraTable>(new GachaPoolTable(GachaPoolTable::decode(bundle)))
+        );
+        config.tables_.emplace(
+            "GachaItem",
+            std::unique_ptr<SoraTable>(new GachaItemTable(GachaItemTable::decode(bundle)))
+        );
+        config.tables_.emplace(
+            "EquipmentSet",
+            std::unique_ptr<SoraTable>(new EquipmentSetTable(EquipmentSetTable::decode(bundle)))
+        );
+        config.tables_.emplace(
+            "Achievement",
+            std::unique_ptr<SoraTable>(new AchievementTable(AchievementTable::decode(bundle)))
+        );
+        config.tables_.emplace(
+            "VipLevel",
+            std::unique_ptr<SoraTable>(new VipLevelTable(VipLevelTable::decode(bundle)))
+        );
+        config.tables_.emplace(
+            "MailTemplate",
+            std::unique_ptr<SoraTable>(new MailTemplateTable(MailTemplateTable::decode(bundle)))
+        );
+        config.tables_.emplace(
+            "MailReward",
+            std::unique_ptr<SoraTable>(new MailRewardTable(MailRewardTable::decode(bundle)))
+        );
+        config.tables_.emplace(
+            "Dialogue",
+            std::unique_ptr<SoraTable>(new DialogueTable(DialogueTable::decode(bundle)))
+        );
+        config.tables_.emplace(
+            "EventRule",
+            std::unique_ptr<SoraTable>(new EventRuleTable(EventRuleTable::decode(bundle)))
+        );
         return config;
     }
-    const Item* get_item(const std::int32_t& key) const {
-        typename std::unordered_map<std::int32_t, Item>::const_iterator it = item_.find(key);
-        if (it == item_.end()) {
-            return nullptr;
-        }
-        return &it->second;
+    const ItemTable& item() const {
+        return table_as<ItemTable>("Item");
     }
-
-    const std::unordered_map<std::int32_t, Item>& item_rows() const {
-        return item_;
+    const SkillTable& skill() const {
+        return table_as<SkillTable>("Skill");
     }
-
-    const Item* get_by_name(const std::string& name) const {
-        typename std::unordered_map<std::string, const Item*>::const_iterator it =
-            item_by_name_.find(name);
-        if (it == item_by_name_.end()) {
-            return nullptr;
-        }
-        return it->second;
+    const QuestTable& quest() const {
+        return table_as<QuestTable>("Quest");
     }
-
-    std::vector<const Item*> find_by_item_type(const ItemType& item_type) const {
-        typename std::unordered_map<ItemType, std::vector<const Item*> >::const_iterator it =
-            item_by_item_type_.find(item_type);
-        if (it == item_by_item_type_.end()) {
-            return std::vector<const Item*>();
-        }
-        return it->second;
+    const QuestRewardTable& quest_reward() const {
+        return table_as<QuestRewardTable>("QuestReward");
     }
-    const Skill* get_skill(const std::int32_t& key) const {
-        typename std::unordered_map<std::int32_t, Skill>::const_iterator it = skill_.find(key);
-        if (it == skill_.end()) {
-            return nullptr;
-        }
-        return &it->second;
+    const GameSettingsTable& game_settings() const {
+        return table_as<GameSettingsTable>("GameSettings");
     }
-
-    const std::unordered_map<std::int32_t, Skill>& skill_rows() const {
-        return skill_;
+    const LocalizationTable& localization() const {
+        return table_as<LocalizationTable>("Localization");
     }
-    const Quest* get_quest(const std::int32_t& key) const {
-        typename std::unordered_map<std::int32_t, Quest>::const_iterator it = quest_.find(key);
-        if (it == quest_.end()) {
-            return nullptr;
-        }
-        return &it->second;
+    const LevelExpTable& level_exp() const {
+        return table_as<LevelExpTable>("LevelExp");
     }
-
-    const std::unordered_map<std::int32_t, Quest>& quest_rows() const {
-        return quest_;
+    const CharacterTable& character() const {
+        return table_as<CharacterTable>("Character");
     }
-    const std::vector<QuestReward>& quest_reward_rows() const {
-        return quest_reward_;
+    const CharacterSkillTable& character_skill() const {
+        return table_as<CharacterSkillTable>("CharacterSkill");
     }
-    const GameSettings& game_settings_row() const {
-        return game_settings_;
+    const BuffTable& buff() const {
+        return table_as<BuffTable>("Buff");
     }
-    const Localization* get_localization(const std::string& key) const {
-        typename std::unordered_map<std::string, Localization>::const_iterator it = localization_.find(key);
-        if (it == localization_.end()) {
-            return nullptr;
-        }
-        return &it->second;
+    const DropGroupTable& drop_group() const {
+        return table_as<DropGroupTable>("DropGroup");
     }
-
-    const std::unordered_map<std::string, Localization>& localization_rows() const {
-        return localization_;
+    const DropEntryTable& drop_entry() const {
+        return table_as<DropEntryTable>("DropEntry");
     }
-    const LevelExp* get_level_exp(const std::int32_t& key) const {
-        typename std::unordered_map<std::int32_t, LevelExp>::const_iterator it = level_exp_.find(key);
-        if (it == level_exp_.end()) {
-            return nullptr;
-        }
-        return &it->second;
+    const MonsterTable& monster() const {
+        return table_as<MonsterTable>("Monster");
     }
-
-    const std::unordered_map<std::int32_t, LevelExp>& level_exp_rows() const {
-        return level_exp_;
+    const StageTable& stage() const {
+        return table_as<StageTable>("Stage");
     }
-    const Character* get_character(const std::int32_t& key) const {
-        typename std::unordered_map<std::int32_t, Character>::const_iterator it = character_.find(key);
-        if (it == character_.end()) {
-            return nullptr;
-        }
-        return &it->second;
+    const StageRewardTable& stage_reward() const {
+        return table_as<StageRewardTable>("StageReward");
     }
-
-    const std::unordered_map<std::int32_t, Character>& character_rows() const {
-        return character_;
+    const DungeonTable& dungeon() const {
+        return table_as<DungeonTable>("Dungeon");
     }
-    const std::vector<CharacterSkill>& character_skill_rows() const {
-        return character_skill_;
+    const ShopTable& shop() const {
+        return table_as<ShopTable>("Shop");
     }
-    const Buff* get_buff(const std::int32_t& key) const {
-        typename std::unordered_map<std::int32_t, Buff>::const_iterator it = buff_.find(key);
-        if (it == buff_.end()) {
-            return nullptr;
-        }
-        return &it->second;
+    const ShopItemTable& shop_item() const {
+        return table_as<ShopItemTable>("ShopItem");
     }
-
-    const std::unordered_map<std::int32_t, Buff>& buff_rows() const {
-        return buff_;
+    const RecipeTable& recipe() const {
+        return table_as<RecipeTable>("Recipe");
     }
-    const DropGroup* get_drop_group(const std::int32_t& key) const {
-        typename std::unordered_map<std::int32_t, DropGroup>::const_iterator it = drop_group_.find(key);
-        if (it == drop_group_.end()) {
-            return nullptr;
-        }
-        return &it->second;
+    const GachaPoolTable& gacha_pool() const {
+        return table_as<GachaPoolTable>("GachaPool");
     }
-
-    const std::unordered_map<std::int32_t, DropGroup>& drop_group_rows() const {
-        return drop_group_;
+    const GachaItemTable& gacha_item() const {
+        return table_as<GachaItemTable>("GachaItem");
     }
-    const std::vector<DropEntry>& drop_entry_rows() const {
-        return drop_entry_;
+    const EquipmentSetTable& equipment_set() const {
+        return table_as<EquipmentSetTable>("EquipmentSet");
     }
-    const Monster* get_monster(const std::int32_t& key) const {
-        typename std::unordered_map<std::int32_t, Monster>::const_iterator it = monster_.find(key);
-        if (it == monster_.end()) {
-            return nullptr;
-        }
-        return &it->second;
+    const AchievementTable& achievement() const {
+        return table_as<AchievementTable>("Achievement");
     }
-
-    const std::unordered_map<std::int32_t, Monster>& monster_rows() const {
-        return monster_;
+    const VipLevelTable& vip_level() const {
+        return table_as<VipLevelTable>("VipLevel");
     }
-    const Stage* get_stage(const std::int32_t& key) const {
-        typename std::unordered_map<std::int32_t, Stage>::const_iterator it = stage_.find(key);
-        if (it == stage_.end()) {
-            return nullptr;
-        }
-        return &it->second;
+    const MailTemplateTable& mail_template() const {
+        return table_as<MailTemplateTable>("MailTemplate");
     }
-
-    const std::unordered_map<std::int32_t, Stage>& stage_rows() const {
-        return stage_;
+    const MailRewardTable& mail_reward() const {
+        return table_as<MailRewardTable>("MailReward");
     }
-    const std::vector<StageReward>& stage_reward_rows() const {
-        return stage_reward_;
+    const DialogueTable& dialogue() const {
+        return table_as<DialogueTable>("Dialogue");
     }
-    const Dungeon* get_dungeon(const std::int32_t& key) const {
-        typename std::unordered_map<std::int32_t, Dungeon>::const_iterator it = dungeon_.find(key);
-        if (it == dungeon_.end()) {
-            return nullptr;
-        }
-        return &it->second;
-    }
-
-    const std::unordered_map<std::int32_t, Dungeon>& dungeon_rows() const {
-        return dungeon_;
-    }
-    const Shop* get_shop(const std::int32_t& key) const {
-        typename std::unordered_map<std::int32_t, Shop>::const_iterator it = shop_.find(key);
-        if (it == shop_.end()) {
-            return nullptr;
-        }
-        return &it->second;
-    }
-
-    const std::unordered_map<std::int32_t, Shop>& shop_rows() const {
-        return shop_;
-    }
-    const std::vector<ShopItem>& shop_item_rows() const {
-        return shop_item_;
-    }
-    const Recipe* get_recipe(const std::int32_t& key) const {
-        typename std::unordered_map<std::int32_t, Recipe>::const_iterator it = recipe_.find(key);
-        if (it == recipe_.end()) {
-            return nullptr;
-        }
-        return &it->second;
-    }
-
-    const std::unordered_map<std::int32_t, Recipe>& recipe_rows() const {
-        return recipe_;
-    }
-    const GachaPool* get_gacha_pool(const std::int32_t& key) const {
-        typename std::unordered_map<std::int32_t, GachaPool>::const_iterator it = gacha_pool_.find(key);
-        if (it == gacha_pool_.end()) {
-            return nullptr;
-        }
-        return &it->second;
-    }
-
-    const std::unordered_map<std::int32_t, GachaPool>& gacha_pool_rows() const {
-        return gacha_pool_;
-    }
-    const std::vector<GachaItem>& gacha_item_rows() const {
-        return gacha_item_;
-    }
-    const EquipmentSet* get_equipment_set(const std::int32_t& key) const {
-        typename std::unordered_map<std::int32_t, EquipmentSet>::const_iterator it = equipment_set_.find(key);
-        if (it == equipment_set_.end()) {
-            return nullptr;
-        }
-        return &it->second;
-    }
-
-    const std::unordered_map<std::int32_t, EquipmentSet>& equipment_set_rows() const {
-        return equipment_set_;
-    }
-    const Achievement* get_achievement(const std::int32_t& key) const {
-        typename std::unordered_map<std::int32_t, Achievement>::const_iterator it = achievement_.find(key);
-        if (it == achievement_.end()) {
-            return nullptr;
-        }
-        return &it->second;
-    }
-
-    const std::unordered_map<std::int32_t, Achievement>& achievement_rows() const {
-        return achievement_;
-    }
-    const VipLevel* get_vip_level(const std::int32_t& key) const {
-        typename std::unordered_map<std::int32_t, VipLevel>::const_iterator it = vip_level_.find(key);
-        if (it == vip_level_.end()) {
-            return nullptr;
-        }
-        return &it->second;
-    }
-
-    const std::unordered_map<std::int32_t, VipLevel>& vip_level_rows() const {
-        return vip_level_;
-    }
-    const MailTemplate* get_mail_template(const std::int32_t& key) const {
-        typename std::unordered_map<std::int32_t, MailTemplate>::const_iterator it = mail_template_.find(key);
-        if (it == mail_template_.end()) {
-            return nullptr;
-        }
-        return &it->second;
-    }
-
-    const std::unordered_map<std::int32_t, MailTemplate>& mail_template_rows() const {
-        return mail_template_;
-    }
-    const std::vector<MailReward>& mail_reward_rows() const {
-        return mail_reward_;
-    }
-    const Dialogue* get_dialogue(const std::int32_t& key) const {
-        typename std::unordered_map<std::int32_t, Dialogue>::const_iterator it = dialogue_.find(key);
-        if (it == dialogue_.end()) {
-            return nullptr;
-        }
-        return &it->second;
-    }
-
-    const std::unordered_map<std::int32_t, Dialogue>& dialogue_rows() const {
-        return dialogue_;
-    }
-    const EventRule* get_event_rule(const std::int32_t& key) const {
-        typename std::unordered_map<std::int32_t, EventRule>::const_iterator it = event_rule_.find(key);
-        if (it == event_rule_.end()) {
-            return nullptr;
-        }
-        return &it->second;
-    }
-
-    const std::unordered_map<std::int32_t, EventRule>& event_rule_rows() const {
-        return event_rule_;
+    const EventRuleTable& event_rule() const {
+        return table_as<EventRuleTable>("EventRule");
     }
 private:
-    std::unordered_map<std::int32_t, Item> item_;
-    std::unordered_map<std::string, const Item*> item_by_name_;
-    std::unordered_map<ItemType, std::vector<const Item*> > item_by_item_type_;
-    std::unordered_map<std::int32_t, Skill> skill_;
-    std::unordered_map<std::int32_t, Quest> quest_;
-    std::vector<QuestReward> quest_reward_;
-    GameSettings game_settings_;
-    std::unordered_map<std::string, Localization> localization_;
-    std::unordered_map<std::int32_t, LevelExp> level_exp_;
-    std::unordered_map<std::int32_t, Character> character_;
-    std::vector<CharacterSkill> character_skill_;
-    std::unordered_map<std::int32_t, Buff> buff_;
-    std::unordered_map<std::int32_t, DropGroup> drop_group_;
-    std::vector<DropEntry> drop_entry_;
-    std::unordered_map<std::int32_t, Monster> monster_;
-    std::unordered_map<std::int32_t, Stage> stage_;
-    std::vector<StageReward> stage_reward_;
-    std::unordered_map<std::int32_t, Dungeon> dungeon_;
-    std::unordered_map<std::int32_t, Shop> shop_;
-    std::vector<ShopItem> shop_item_;
-    std::unordered_map<std::int32_t, Recipe> recipe_;
-    std::unordered_map<std::int32_t, GachaPool> gacha_pool_;
-    std::vector<GachaItem> gacha_item_;
-    std::unordered_map<std::int32_t, EquipmentSet> equipment_set_;
-    std::unordered_map<std::int32_t, Achievement> achievement_;
-    std::unordered_map<std::int32_t, VipLevel> vip_level_;
-    std::unordered_map<std::int32_t, MailTemplate> mail_template_;
-    std::vector<MailReward> mail_reward_;
-    std::unordered_map<std::int32_t, Dialogue> dialogue_;
-    std::unordered_map<std::int32_t, EventRule> event_rule_;
+    template <typename T>
+    const T& table_as(const std::string& name) const {
+        typename std::unordered_map<std::string, std::unique_ptr<SoraTable> >::const_iterator it =
+            tables_.find(name);
+        if (it == tables_.end()) {
+            throw SoraReadException("missing Sora table `" + name + "`");
+        }
+        return static_cast<const T&>(*it->second);
+    }
+
+    std::unordered_map<std::string, std::unique_ptr<SoraTable> > tables_;
 };
 
 } // namespace sora::showcase

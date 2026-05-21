@@ -5,6 +5,9 @@
 #include "sora_runtime.hpp"
 #include "resource_cost.hpp"
 
+#include <unordered_map>
+#include <vector>
+
 namespace sora::showcase {
 
 struct VipLevel {
@@ -19,6 +22,49 @@ struct VipLevel {
             reader.read_vector<std::string>(),
         };
     }
+};
+
+class VipLevelTable final : public SoraTable {
+public:
+    VipLevelTable() {}
+    VipLevelTable(const VipLevelTable&) = delete;
+    VipLevelTable& operator=(const VipLevelTable&) = delete;
+    VipLevelTable(VipLevelTable&&) = default;
+    VipLevelTable& operator=(VipLevelTable&&) = default;
+
+    static VipLevelTable decode(const SoraBundle& bundle) {
+        std::vector<VipLevel> rows = bundle.decode_table<VipLevel>("VipLevel");
+        VipLevelTable table;
+        for (std::size_t index = 0; index < rows.size(); ++index) {
+            const VipLevel& row = rows[index];
+            table.rows_.emplace(row.level, row);
+        }
+        table.build_indexes();
+        return table;
+    }
+
+    const char* name() const override { return "VipLevel"; }
+    const char* mode() const override { return "map"; }
+    const char* key() const override { return "level"; }
+    std::size_t size() const override {
+        return rows_.size();
+    }
+    const VipLevel* get(const std::int32_t& key) const {
+        typename std::unordered_map<std::int32_t, VipLevel>::const_iterator it = rows_.find(key);
+        if (it == rows_.end()) {
+            return nullptr;
+        }
+        return &it->second;
+    }
+
+    const std::unordered_map<std::int32_t, VipLevel>& rows() const {
+        return rows_;
+    }
+
+private:
+    void build_indexes() {
+    }
+    std::unordered_map<std::int32_t, VipLevel> rows_;
 };
 
 } // namespace sora::showcase

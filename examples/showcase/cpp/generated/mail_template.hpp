@@ -6,6 +6,9 @@
 #include "mail_type.hpp"
 #include "reward.hpp"
 
+#include <unordered_map>
+#include <vector>
+
 namespace sora::showcase {
 
 struct MailTemplate {
@@ -24,6 +27,49 @@ struct MailTemplate {
             reader.read_vector<Reward>(),
         };
     }
+};
+
+class MailTemplateTable final : public SoraTable {
+public:
+    MailTemplateTable() {}
+    MailTemplateTable(const MailTemplateTable&) = delete;
+    MailTemplateTable& operator=(const MailTemplateTable&) = delete;
+    MailTemplateTable(MailTemplateTable&&) = default;
+    MailTemplateTable& operator=(MailTemplateTable&&) = default;
+
+    static MailTemplateTable decode(const SoraBundle& bundle) {
+        std::vector<MailTemplate> rows = bundle.decode_table<MailTemplate>("MailTemplate");
+        MailTemplateTable table;
+        for (std::size_t index = 0; index < rows.size(); ++index) {
+            const MailTemplate& row = rows[index];
+            table.rows_.emplace(row.id, row);
+        }
+        table.build_indexes();
+        return table;
+    }
+
+    const char* name() const override { return "MailTemplate"; }
+    const char* mode() const override { return "map"; }
+    const char* key() const override { return "id"; }
+    std::size_t size() const override {
+        return rows_.size();
+    }
+    const MailTemplate* get(const std::int32_t& key) const {
+        typename std::unordered_map<std::int32_t, MailTemplate>::const_iterator it = rows_.find(key);
+        if (it == rows_.end()) {
+            return nullptr;
+        }
+        return &it->second;
+    }
+
+    const std::unordered_map<std::int32_t, MailTemplate>& rows() const {
+        return rows_;
+    }
+
+private:
+    void build_indexes() {
+    }
+    std::unordered_map<std::int32_t, MailTemplate> rows_;
 };
 
 } // namespace sora::showcase

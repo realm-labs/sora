@@ -5,6 +5,9 @@
 #include "sora_runtime.hpp"
 #include "stat_modifier.hpp"
 
+#include <unordered_map>
+#include <vector>
+
 namespace sora::showcase {
 
 struct Buff {
@@ -21,6 +24,49 @@ struct Buff {
             reader.read_vector<StatModifier>(),
         };
     }
+};
+
+class BuffTable final : public SoraTable {
+public:
+    BuffTable() {}
+    BuffTable(const BuffTable&) = delete;
+    BuffTable& operator=(const BuffTable&) = delete;
+    BuffTable(BuffTable&&) = default;
+    BuffTable& operator=(BuffTable&&) = default;
+
+    static BuffTable decode(const SoraBundle& bundle) {
+        std::vector<Buff> rows = bundle.decode_table<Buff>("Buff");
+        BuffTable table;
+        for (std::size_t index = 0; index < rows.size(); ++index) {
+            const Buff& row = rows[index];
+            table.rows_.emplace(row.id, row);
+        }
+        table.build_indexes();
+        return table;
+    }
+
+    const char* name() const override { return "Buff"; }
+    const char* mode() const override { return "map"; }
+    const char* key() const override { return "id"; }
+    std::size_t size() const override {
+        return rows_.size();
+    }
+    const Buff* get(const std::int32_t& key) const {
+        typename std::unordered_map<std::int32_t, Buff>::const_iterator it = rows_.find(key);
+        if (it == rows_.end()) {
+            return nullptr;
+        }
+        return &it->second;
+    }
+
+    const std::unordered_map<std::int32_t, Buff>& rows() const {
+        return rows_;
+    }
+
+private:
+    void build_indexes() {
+    }
+    std::unordered_map<std::int32_t, Buff> rows_;
 };
 
 } // namespace sora::showcase

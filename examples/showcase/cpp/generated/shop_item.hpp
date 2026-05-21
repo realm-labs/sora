@@ -5,6 +5,9 @@
 #include "sora_runtime.hpp"
 #include "resource_cost.hpp"
 
+#include <unordered_map>
+#include <vector>
+
 namespace sora::showcase {
 
 struct ShopItem {
@@ -23,6 +26,38 @@ struct ShopItem {
             reader.read_optional<std::int32_t>(),
         };
     }
+};
+
+class ShopItemTable final : public SoraTable {
+public:
+    ShopItemTable() {}
+    ShopItemTable(const ShopItemTable&) = delete;
+    ShopItemTable& operator=(const ShopItemTable&) = delete;
+    ShopItemTable(ShopItemTable&&) = default;
+    ShopItemTable& operator=(ShopItemTable&&) = default;
+
+    static ShopItemTable decode(const SoraBundle& bundle) {
+        std::vector<ShopItem> rows = bundle.decode_table<ShopItem>("ShopItem");
+        ShopItemTable table;
+        table.rows_ = rows;
+        table.build_indexes();
+        return table;
+    }
+
+    const char* name() const override { return "ShopItem"; }
+    const char* mode() const override { return "list"; }
+    const char* key() const override { return nullptr; }
+    std::size_t size() const override {
+        return rows_.size();
+    }
+    const std::vector<ShopItem>& rows() const {
+        return rows_;
+    }
+
+private:
+    void build_indexes() {
+    }
+    std::vector<ShopItem> rows_;
 };
 
 } // namespace sora::showcase

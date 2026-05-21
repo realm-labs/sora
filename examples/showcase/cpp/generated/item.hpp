@@ -6,6 +6,9 @@
 #include "item_type.hpp"
 #include "resource_cost.hpp"
 
+#include <unordered_map>
+#include <vector>
+
 namespace sora::showcase {
 
 struct Item {
@@ -32,6 +35,76 @@ struct Item {
             reader.read_vector<std::string>(),
         };
     }
+};
+
+class ItemTable final : public SoraTable {
+public:
+    ItemTable() {}
+    ItemTable(const ItemTable&) = delete;
+    ItemTable& operator=(const ItemTable&) = delete;
+    ItemTable(ItemTable&&) = default;
+    ItemTable& operator=(ItemTable&&) = default;
+
+    static ItemTable decode(const SoraBundle& bundle) {
+        std::vector<Item> rows = bundle.decode_table<Item>("Item");
+        ItemTable table;
+        for (std::size_t index = 0; index < rows.size(); ++index) {
+            const Item& row = rows[index];
+            table.rows_.emplace(row.id, row);
+        }
+        table.build_indexes();
+        return table;
+    }
+
+    const char* name() const override { return "Item"; }
+    const char* mode() const override { return "map"; }
+    const char* key() const override { return "id"; }
+    std::size_t size() const override {
+        return rows_.size();
+    }
+    const Item* get(const std::int32_t& key) const {
+        typename std::unordered_map<std::int32_t, Item>::const_iterator it = rows_.find(key);
+        if (it == rows_.end()) {
+            return nullptr;
+        }
+        return &it->second;
+    }
+
+    const std::unordered_map<std::int32_t, Item>& rows() const {
+        return rows_;
+    }
+
+    const Item* get_by_name(const std::string& name) const {
+        typename std::unordered_map<std::string, const Item*>::const_iterator it =
+            by_name_.find(name);
+        if (it == by_name_.end()) {
+            return nullptr;
+        }
+        return it->second;
+    }
+
+    std::vector<const Item*> find_by_item_type(const ItemType& item_type) const {
+        typename std::unordered_map<ItemType, std::vector<const Item*> >::const_iterator it =
+            by_item_type_.find(item_type);
+        if (it == by_item_type_.end()) {
+            return std::vector<const Item*>();
+        }
+        return it->second;
+    }
+
+private:
+    void build_indexes() {
+        for (typename std::unordered_map<std::int32_t, Item>::const_iterator it = rows_.begin();
+             it != rows_.end();
+             ++it) {
+            const Item& row = it->second;
+            by_name_[row.name] = &row;
+            by_item_type_[row.item_type].push_back(&row);
+        }
+    }
+    std::unordered_map<std::int32_t, Item> rows_;
+    std::unordered_map<std::string, const Item*> by_name_;
+    std::unordered_map<ItemType, std::vector<const Item*> > by_item_type_;
 };
 
 } // namespace sora::showcase

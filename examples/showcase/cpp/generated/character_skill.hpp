@@ -4,6 +4,9 @@
 
 #include "sora_runtime.hpp"
 
+#include <unordered_map>
+#include <vector>
+
 namespace sora::showcase {
 
 struct CharacterSkill {
@@ -18,6 +21,38 @@ struct CharacterSkill {
             reader.read_i32(),
         };
     }
+};
+
+class CharacterSkillTable final : public SoraTable {
+public:
+    CharacterSkillTable() {}
+    CharacterSkillTable(const CharacterSkillTable&) = delete;
+    CharacterSkillTable& operator=(const CharacterSkillTable&) = delete;
+    CharacterSkillTable(CharacterSkillTable&&) = default;
+    CharacterSkillTable& operator=(CharacterSkillTable&&) = default;
+
+    static CharacterSkillTable decode(const SoraBundle& bundle) {
+        std::vector<CharacterSkill> rows = bundle.decode_table<CharacterSkill>("CharacterSkill");
+        CharacterSkillTable table;
+        table.rows_ = rows;
+        table.build_indexes();
+        return table;
+    }
+
+    const char* name() const override { return "CharacterSkill"; }
+    const char* mode() const override { return "list"; }
+    const char* key() const override { return nullptr; }
+    std::size_t size() const override {
+        return rows_.size();
+    }
+    const std::vector<CharacterSkill>& rows() const {
+        return rows_;
+    }
+
+private:
+    void build_indexes() {
+    }
+    std::vector<CharacterSkill> rows_;
 };
 
 } // namespace sora::showcase

@@ -4,6 +4,9 @@
 
 #include "sora_runtime.hpp"
 
+#include <unordered_map>
+#include <vector>
+
 namespace sora::showcase {
 
 struct MailReward {
@@ -20,6 +23,38 @@ struct MailReward {
             reader.read_i32(),
         };
     }
+};
+
+class MailRewardTable final : public SoraTable {
+public:
+    MailRewardTable() {}
+    MailRewardTable(const MailRewardTable&) = delete;
+    MailRewardTable& operator=(const MailRewardTable&) = delete;
+    MailRewardTable(MailRewardTable&&) = default;
+    MailRewardTable& operator=(MailRewardTable&&) = default;
+
+    static MailRewardTable decode(const SoraBundle& bundle) {
+        std::vector<MailReward> rows = bundle.decode_table<MailReward>("MailReward");
+        MailRewardTable table;
+        table.rows_ = rows;
+        table.build_indexes();
+        return table;
+    }
+
+    const char* name() const override { return "MailReward"; }
+    const char* mode() const override { return "list"; }
+    const char* key() const override { return nullptr; }
+    std::size_t size() const override {
+        return rows_.size();
+    }
+    const std::vector<MailReward>& rows() const {
+        return rows_;
+    }
+
+private:
+    void build_indexes() {
+    }
+    std::vector<MailReward> rows_;
 };
 
 } // namespace sora::showcase

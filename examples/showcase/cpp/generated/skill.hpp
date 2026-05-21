@@ -8,6 +8,9 @@
 #include "skill_effect.hpp"
 #include "vec3.hpp"
 
+#include <unordered_map>
+#include <vector>
+
 namespace sora::showcase {
 
 struct Skill {
@@ -35,6 +38,49 @@ struct Skill {
             Vec3::decode(reader),
         };
     }
+};
+
+class SkillTable final : public SoraTable {
+public:
+    SkillTable() {}
+    SkillTable(const SkillTable&) = delete;
+    SkillTable& operator=(const SkillTable&) = delete;
+    SkillTable(SkillTable&&) = default;
+    SkillTable& operator=(SkillTable&&) = default;
+
+    static SkillTable decode(const SoraBundle& bundle) {
+        std::vector<Skill> rows = bundle.decode_table<Skill>("Skill");
+        SkillTable table;
+        for (std::size_t index = 0; index < rows.size(); ++index) {
+            const Skill& row = rows[index];
+            table.rows_.emplace(row.id, row);
+        }
+        table.build_indexes();
+        return table;
+    }
+
+    const char* name() const override { return "Skill"; }
+    const char* mode() const override { return "map"; }
+    const char* key() const override { return "id"; }
+    std::size_t size() const override {
+        return rows_.size();
+    }
+    const Skill* get(const std::int32_t& key) const {
+        typename std::unordered_map<std::int32_t, Skill>::const_iterator it = rows_.find(key);
+        if (it == rows_.end()) {
+            return nullptr;
+        }
+        return &it->second;
+    }
+
+    const std::unordered_map<std::int32_t, Skill>& rows() const {
+        return rows_;
+    }
+
+private:
+    void build_indexes() {
+    }
+    std::unordered_map<std::int32_t, Skill> rows_;
 };
 
 } // namespace sora::showcase

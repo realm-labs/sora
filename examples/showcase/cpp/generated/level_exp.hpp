@@ -4,6 +4,9 @@
 
 #include "sora_runtime.hpp"
 
+#include <unordered_map>
+#include <vector>
+
 namespace sora::showcase {
 
 struct LevelExp {
@@ -18,6 +21,49 @@ struct LevelExp {
             reader.read_optional<std::string>(),
         };
     }
+};
+
+class LevelExpTable final : public SoraTable {
+public:
+    LevelExpTable() {}
+    LevelExpTable(const LevelExpTable&) = delete;
+    LevelExpTable& operator=(const LevelExpTable&) = delete;
+    LevelExpTable(LevelExpTable&&) = default;
+    LevelExpTable& operator=(LevelExpTable&&) = default;
+
+    static LevelExpTable decode(const SoraBundle& bundle) {
+        std::vector<LevelExp> rows = bundle.decode_table<LevelExp>("LevelExp");
+        LevelExpTable table;
+        for (std::size_t index = 0; index < rows.size(); ++index) {
+            const LevelExp& row = rows[index];
+            table.rows_.emplace(row.level, row);
+        }
+        table.build_indexes();
+        return table;
+    }
+
+    const char* name() const override { return "LevelExp"; }
+    const char* mode() const override { return "map"; }
+    const char* key() const override { return "level"; }
+    std::size_t size() const override {
+        return rows_.size();
+    }
+    const LevelExp* get(const std::int32_t& key) const {
+        typename std::unordered_map<std::int32_t, LevelExp>::const_iterator it = rows_.find(key);
+        if (it == rows_.end()) {
+            return nullptr;
+        }
+        return &it->second;
+    }
+
+    const std::unordered_map<std::int32_t, LevelExp>& rows() const {
+        return rows_;
+    }
+
+private:
+    void build_indexes() {
+    }
+    std::unordered_map<std::int32_t, LevelExp> rows_;
 };
 
 } // namespace sora::showcase

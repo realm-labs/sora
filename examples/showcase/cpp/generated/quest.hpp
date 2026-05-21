@@ -7,6 +7,9 @@
 #include "reward.hpp"
 #include "vec3.hpp"
 
+#include <unordered_map>
+#include <vector>
+
 namespace sora::showcase {
 
 struct Quest {
@@ -30,6 +33,49 @@ struct Quest {
             reader.read_vector<Reward>(),
         };
     }
+};
+
+class QuestTable final : public SoraTable {
+public:
+    QuestTable() {}
+    QuestTable(const QuestTable&) = delete;
+    QuestTable& operator=(const QuestTable&) = delete;
+    QuestTable(QuestTable&&) = default;
+    QuestTable& operator=(QuestTable&&) = default;
+
+    static QuestTable decode(const SoraBundle& bundle) {
+        std::vector<Quest> rows = bundle.decode_table<Quest>("Quest");
+        QuestTable table;
+        for (std::size_t index = 0; index < rows.size(); ++index) {
+            const Quest& row = rows[index];
+            table.rows_.emplace(row.id, row);
+        }
+        table.build_indexes();
+        return table;
+    }
+
+    const char* name() const override { return "Quest"; }
+    const char* mode() const override { return "map"; }
+    const char* key() const override { return "id"; }
+    std::size_t size() const override {
+        return rows_.size();
+    }
+    const Quest* get(const std::int32_t& key) const {
+        typename std::unordered_map<std::int32_t, Quest>::const_iterator it = rows_.find(key);
+        if (it == rows_.end()) {
+            return nullptr;
+        }
+        return &it->second;
+    }
+
+    const std::unordered_map<std::int32_t, Quest>& rows() const {
+        return rows_;
+    }
+
+private:
+    void build_indexes() {
+    }
+    std::unordered_map<std::int32_t, Quest> rows_;
 };
 
 } // namespace sora::showcase

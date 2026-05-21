@@ -4,6 +4,9 @@
 
 #include "sora_runtime.hpp"
 
+#include <unordered_map>
+#include <vector>
+
 namespace sora::showcase {
 
 struct Localization {
@@ -20,6 +23,49 @@ struct Localization {
             reader.read_optional<std::string>(),
         };
     }
+};
+
+class LocalizationTable final : public SoraTable {
+public:
+    LocalizationTable() {}
+    LocalizationTable(const LocalizationTable&) = delete;
+    LocalizationTable& operator=(const LocalizationTable&) = delete;
+    LocalizationTable(LocalizationTable&&) = default;
+    LocalizationTable& operator=(LocalizationTable&&) = default;
+
+    static LocalizationTable decode(const SoraBundle& bundle) {
+        std::vector<Localization> rows = bundle.decode_table<Localization>("Localization");
+        LocalizationTable table;
+        for (std::size_t index = 0; index < rows.size(); ++index) {
+            const Localization& row = rows[index];
+            table.rows_.emplace(row.key, row);
+        }
+        table.build_indexes();
+        return table;
+    }
+
+    const char* name() const override { return "Localization"; }
+    const char* mode() const override { return "map"; }
+    const char* key() const override { return "key"; }
+    std::size_t size() const override {
+        return rows_.size();
+    }
+    const Localization* get(const std::string& key) const {
+        typename std::unordered_map<std::string, Localization>::const_iterator it = rows_.find(key);
+        if (it == rows_.end()) {
+            return nullptr;
+        }
+        return &it->second;
+    }
+
+    const std::unordered_map<std::string, Localization>& rows() const {
+        return rows_;
+    }
+
+private:
+    void build_indexes() {
+    }
+    std::unordered_map<std::string, Localization> rows_;
 };
 
 } // namespace sora::showcase

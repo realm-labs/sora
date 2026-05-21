@@ -4,6 +4,9 @@
 
 #include "sora_runtime.hpp"
 
+#include <unordered_map>
+#include <vector>
+
 namespace sora::showcase {
 
 struct QuestReward {
@@ -20,6 +23,38 @@ struct QuestReward {
             reader.read_i32(),
         };
     }
+};
+
+class QuestRewardTable final : public SoraTable {
+public:
+    QuestRewardTable() {}
+    QuestRewardTable(const QuestRewardTable&) = delete;
+    QuestRewardTable& operator=(const QuestRewardTable&) = delete;
+    QuestRewardTable(QuestRewardTable&&) = default;
+    QuestRewardTable& operator=(QuestRewardTable&&) = default;
+
+    static QuestRewardTable decode(const SoraBundle& bundle) {
+        std::vector<QuestReward> rows = bundle.decode_table<QuestReward>("QuestReward");
+        QuestRewardTable table;
+        table.rows_ = rows;
+        table.build_indexes();
+        return table;
+    }
+
+    const char* name() const override { return "QuestReward"; }
+    const char* mode() const override { return "list"; }
+    const char* key() const override { return nullptr; }
+    std::size_t size() const override {
+        return rows_.size();
+    }
+    const std::vector<QuestReward>& rows() const {
+        return rows_;
+    }
+
+private:
+    void build_indexes() {
+    }
+    std::vector<QuestReward> rows_;
 };
 
 } // namespace sora::showcase

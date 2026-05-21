@@ -5,6 +5,9 @@
 #include "sora_runtime.hpp"
 #include "vec3.hpp"
 
+#include <unordered_map>
+#include <vector>
+
 namespace sora::showcase {
 
 struct GameSettings {
@@ -23,6 +26,41 @@ struct GameSettings {
             reader.read_vector<std::int32_t>(),
         };
     }
+};
+
+class GameSettingsTable final : public SoraTable {
+public:
+    GameSettingsTable() {}
+    GameSettingsTable(const GameSettingsTable&) = delete;
+    GameSettingsTable& operator=(const GameSettingsTable&) = delete;
+    GameSettingsTable(GameSettingsTable&&) = default;
+    GameSettingsTable& operator=(GameSettingsTable&&) = default;
+
+    static GameSettingsTable decode(const SoraBundle& bundle) {
+        std::vector<GameSettings> rows = bundle.decode_table<GameSettings>("GameSettings");
+        GameSettingsTable table;
+        if (rows.size() != 1) {
+            throw SoraReadException("expected singleton table GameSettings to contain exactly one row");
+        }
+        table.row_ = rows[0];
+        table.build_indexes();
+        return table;
+    }
+
+    const char* name() const override { return "GameSettings"; }
+    const char* mode() const override { return "singleton"; }
+    const char* key() const override { return nullptr; }
+    std::size_t size() const override {
+        return 1;
+    }
+    const GameSettings& row() const {
+        return row_;
+    }
+
+private:
+    void build_indexes() {
+    }
+    GameSettings row_;
 };
 
 } // namespace sora::showcase

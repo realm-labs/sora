@@ -5,6 +5,9 @@
 #include "sora_runtime.hpp"
 #include "rarity.hpp"
 
+#include <unordered_map>
+#include <vector>
+
 namespace sora::showcase {
 
 struct GachaItem {
@@ -21,6 +24,38 @@ struct GachaItem {
             reader.read_f32(),
         };
     }
+};
+
+class GachaItemTable final : public SoraTable {
+public:
+    GachaItemTable() {}
+    GachaItemTable(const GachaItemTable&) = delete;
+    GachaItemTable& operator=(const GachaItemTable&) = delete;
+    GachaItemTable(GachaItemTable&&) = default;
+    GachaItemTable& operator=(GachaItemTable&&) = default;
+
+    static GachaItemTable decode(const SoraBundle& bundle) {
+        std::vector<GachaItem> rows = bundle.decode_table<GachaItem>("GachaItem");
+        GachaItemTable table;
+        table.rows_ = rows;
+        table.build_indexes();
+        return table;
+    }
+
+    const char* name() const override { return "GachaItem"; }
+    const char* mode() const override { return "list"; }
+    const char* key() const override { return nullptr; }
+    std::size_t size() const override {
+        return rows_.size();
+    }
+    const std::vector<GachaItem>& rows() const {
+        return rows_;
+    }
+
+private:
+    void build_indexes() {
+    }
+    std::vector<GachaItem> rows_;
 };
 
 } // namespace sora::showcase

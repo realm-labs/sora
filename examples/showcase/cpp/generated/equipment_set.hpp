@@ -5,6 +5,9 @@
 #include "sora_runtime.hpp"
 #include "skill_effect.hpp"
 
+#include <unordered_map>
+#include <vector>
+
 namespace sora::showcase {
 
 struct EquipmentSet {
@@ -21,6 +24,49 @@ struct EquipmentSet {
             SkillEffect::decode(reader),
         };
     }
+};
+
+class EquipmentSetTable final : public SoraTable {
+public:
+    EquipmentSetTable() {}
+    EquipmentSetTable(const EquipmentSetTable&) = delete;
+    EquipmentSetTable& operator=(const EquipmentSetTable&) = delete;
+    EquipmentSetTable(EquipmentSetTable&&) = default;
+    EquipmentSetTable& operator=(EquipmentSetTable&&) = default;
+
+    static EquipmentSetTable decode(const SoraBundle& bundle) {
+        std::vector<EquipmentSet> rows = bundle.decode_table<EquipmentSet>("EquipmentSet");
+        EquipmentSetTable table;
+        for (std::size_t index = 0; index < rows.size(); ++index) {
+            const EquipmentSet& row = rows[index];
+            table.rows_.emplace(row.id, row);
+        }
+        table.build_indexes();
+        return table;
+    }
+
+    const char* name() const override { return "EquipmentSet"; }
+    const char* mode() const override { return "map"; }
+    const char* key() const override { return "id"; }
+    std::size_t size() const override {
+        return rows_.size();
+    }
+    const EquipmentSet* get(const std::int32_t& key) const {
+        typename std::unordered_map<std::int32_t, EquipmentSet>::const_iterator it = rows_.find(key);
+        if (it == rows_.end()) {
+            return nullptr;
+        }
+        return &it->second;
+    }
+
+    const std::unordered_map<std::int32_t, EquipmentSet>& rows() const {
+        return rows_;
+    }
+
+private:
+    void build_indexes() {
+    }
+    std::unordered_map<std::int32_t, EquipmentSet> rows_;
 };
 
 } // namespace sora::showcase

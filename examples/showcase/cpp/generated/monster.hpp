@@ -6,6 +6,9 @@
 #include "element_type.hpp"
 #include "vec3.hpp"
 
+#include <unordered_map>
+#include <vector>
+
 namespace sora::showcase {
 
 struct Monster {
@@ -26,6 +29,49 @@ struct Monster {
             Vec3::decode(reader),
         };
     }
+};
+
+class MonsterTable final : public SoraTable {
+public:
+    MonsterTable() {}
+    MonsterTable(const MonsterTable&) = delete;
+    MonsterTable& operator=(const MonsterTable&) = delete;
+    MonsterTable(MonsterTable&&) = default;
+    MonsterTable& operator=(MonsterTable&&) = default;
+
+    static MonsterTable decode(const SoraBundle& bundle) {
+        std::vector<Monster> rows = bundle.decode_table<Monster>("Monster");
+        MonsterTable table;
+        for (std::size_t index = 0; index < rows.size(); ++index) {
+            const Monster& row = rows[index];
+            table.rows_.emplace(row.id, row);
+        }
+        table.build_indexes();
+        return table;
+    }
+
+    const char* name() const override { return "Monster"; }
+    const char* mode() const override { return "map"; }
+    const char* key() const override { return "id"; }
+    std::size_t size() const override {
+        return rows_.size();
+    }
+    const Monster* get(const std::int32_t& key) const {
+        typename std::unordered_map<std::int32_t, Monster>::const_iterator it = rows_.find(key);
+        if (it == rows_.end()) {
+            return nullptr;
+        }
+        return &it->second;
+    }
+
+    const std::unordered_map<std::int32_t, Monster>& rows() const {
+        return rows_;
+    }
+
+private:
+    void build_indexes() {
+    }
+    std::unordered_map<std::int32_t, Monster> rows_;
 };
 
 } // namespace sora::showcase

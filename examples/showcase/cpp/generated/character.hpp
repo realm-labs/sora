@@ -6,6 +6,9 @@
 #include "rarity.hpp"
 #include "vec3.hpp"
 
+#include <unordered_map>
+#include <vector>
+
 namespace sora::showcase {
 
 struct Character {
@@ -28,6 +31,49 @@ struct Character {
             Vec3::decode(reader),
         };
     }
+};
+
+class CharacterTable final : public SoraTable {
+public:
+    CharacterTable() {}
+    CharacterTable(const CharacterTable&) = delete;
+    CharacterTable& operator=(const CharacterTable&) = delete;
+    CharacterTable(CharacterTable&&) = default;
+    CharacterTable& operator=(CharacterTable&&) = default;
+
+    static CharacterTable decode(const SoraBundle& bundle) {
+        std::vector<Character> rows = bundle.decode_table<Character>("Character");
+        CharacterTable table;
+        for (std::size_t index = 0; index < rows.size(); ++index) {
+            const Character& row = rows[index];
+            table.rows_.emplace(row.id, row);
+        }
+        table.build_indexes();
+        return table;
+    }
+
+    const char* name() const override { return "Character"; }
+    const char* mode() const override { return "map"; }
+    const char* key() const override { return "id"; }
+    std::size_t size() const override {
+        return rows_.size();
+    }
+    const Character* get(const std::int32_t& key) const {
+        typename std::unordered_map<std::int32_t, Character>::const_iterator it = rows_.find(key);
+        if (it == rows_.end()) {
+            return nullptr;
+        }
+        return &it->second;
+    }
+
+    const std::unordered_map<std::int32_t, Character>& rows() const {
+        return rows_;
+    }
+
+private:
+    void build_indexes() {
+    }
+    std::unordered_map<std::int32_t, Character> rows_;
 };
 
 } // namespace sora::showcase

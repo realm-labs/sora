@@ -4,6 +4,9 @@
 
 #include "sora_runtime.hpp"
 
+#include <unordered_map>
+#include <vector>
+
 namespace sora::showcase {
 
 struct StageReward {
@@ -20,6 +23,38 @@ struct StageReward {
             reader.read_i32(),
         };
     }
+};
+
+class StageRewardTable final : public SoraTable {
+public:
+    StageRewardTable() {}
+    StageRewardTable(const StageRewardTable&) = delete;
+    StageRewardTable& operator=(const StageRewardTable&) = delete;
+    StageRewardTable(StageRewardTable&&) = default;
+    StageRewardTable& operator=(StageRewardTable&&) = default;
+
+    static StageRewardTable decode(const SoraBundle& bundle) {
+        std::vector<StageReward> rows = bundle.decode_table<StageReward>("StageReward");
+        StageRewardTable table;
+        table.rows_ = rows;
+        table.build_indexes();
+        return table;
+    }
+
+    const char* name() const override { return "StageReward"; }
+    const char* mode() const override { return "list"; }
+    const char* key() const override { return nullptr; }
+    std::size_t size() const override {
+        return rows_.size();
+    }
+    const std::vector<StageReward>& rows() const {
+        return rows_;
+    }
+
+private:
+    void build_indexes() {
+    }
+    std::vector<StageReward> rows_;
 };
 
 } // namespace sora::showcase

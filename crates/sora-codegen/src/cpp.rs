@@ -145,6 +145,7 @@ struct CppRecord {
     snake_name: String,
     imports: Vec<CppImport>,
     fields: Vec<CppField>,
+    table: Option<CppTable>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -187,31 +188,42 @@ struct CppField {
 
 impl CppModel {
     fn from_base_model(ir: &ConfigIr, model: BaseModel, options: &CppOptionsView) -> Self {
+        let enums = model
+            .enums
+            .into_iter()
+            .map(|item| CppEnum {
+                name: item.pascal_name,
+                snake_name: item.snake_name,
+                values: item.values,
+            })
+            .collect();
+        let tables = model
+            .tables
+            .into_iter()
+            .map(|item| cpp_table(ir, item, options))
+            .collect::<Vec<_>>();
+        let records = model
+            .records
+            .into_iter()
+            .map(|item| {
+                let table = tables
+                    .iter()
+                    .find(|table| table.row_type == item.pascal_name)
+                    .cloned();
+                cpp_record(ir, item, options, table)
+            })
+            .collect();
+        let unions = model
+            .unions
+            .into_iter()
+            .map(|item| cpp_union(ir, item, options))
+            .collect();
+
         Self {
-            enums: model
-                .enums
-                .into_iter()
-                .map(|item| CppEnum {
-                    name: item.pascal_name,
-                    snake_name: item.snake_name,
-                    values: item.values,
-                })
-                .collect(),
-            unions: model
-                .unions
-                .into_iter()
-                .map(|item| cpp_union(ir, item, options))
-                .collect(),
-            records: model
-                .records
-                .into_iter()
-                .map(|item| cpp_record(ir, item, options))
-                .collect(),
-            tables: model
-                .tables
-                .into_iter()
-                .map(|item| cpp_table(ir, item, options))
-                .collect(),
+            enums,
+            unions,
+            records,
+            tables,
             modules: model.modules,
         }
     }
@@ -247,7 +259,12 @@ fn cpp_variant(
     }
 }
 
-fn cpp_record(ir: &ConfigIr, record: BaseRecord, options: &CppOptionsView) -> CppRecord {
+fn cpp_record(
+    ir: &ConfigIr,
+    record: BaseRecord,
+    options: &CppOptionsView,
+    table: Option<CppTable>,
+) -> CppRecord {
     CppRecord {
         pascal_name: record.pascal_name,
         snake_name: record.snake_name,
@@ -257,6 +274,7 @@ fn cpp_record(ir: &ConfigIr, record: BaseRecord, options: &CppOptionsView) -> Cp
             .into_iter()
             .map(|field| cpp_field(ir, field, options))
             .collect(),
+        table,
     }
 }
 
@@ -501,9 +519,13 @@ mod tests {
         assert!(action.contains("std::variant<"));
         assert!(action.contains("AddItem"));
         assert!(config.contains("class SoraConfig"));
-        assert!(config.contains("std::unordered_map<std::int32_t, Item> item_;"));
-        assert!(config.contains("const Item* get_item(const std::int32_t& key) const"));
+        assert!(item.contains("class ItemTable final : public SoraTable"));
+        assert!(item.contains("std::unordered_map<std::int32_t, Item> rows_;"));
+        assert!(item.contains("const Item* get(const std::int32_t& key) const"));
+        assert!(config.contains("const ItemTable& item() const"));
+        assert!(!config.contains("std::unordered_map<std::int32_t, Item> item_;"));
         assert!(runtime.contains("template <typename T>"));
+        assert!(runtime.contains("class SoraTable"));
         assert!(runtime.contains("std::optional<T> read_optional()"));
 
         let _ = std::fs::remove_dir_all(base);

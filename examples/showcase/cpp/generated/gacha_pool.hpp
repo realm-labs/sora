@@ -5,6 +5,9 @@
 #include "sora_runtime.hpp"
 #include "resource_cost.hpp"
 
+#include <unordered_map>
+#include <vector>
+
 namespace sora::showcase {
 
 struct GachaPool {
@@ -19,6 +22,49 @@ struct GachaPool {
             ResourceCost::decode(reader),
         };
     }
+};
+
+class GachaPoolTable final : public SoraTable {
+public:
+    GachaPoolTable() {}
+    GachaPoolTable(const GachaPoolTable&) = delete;
+    GachaPoolTable& operator=(const GachaPoolTable&) = delete;
+    GachaPoolTable(GachaPoolTable&&) = default;
+    GachaPoolTable& operator=(GachaPoolTable&&) = default;
+
+    static GachaPoolTable decode(const SoraBundle& bundle) {
+        std::vector<GachaPool> rows = bundle.decode_table<GachaPool>("GachaPool");
+        GachaPoolTable table;
+        for (std::size_t index = 0; index < rows.size(); ++index) {
+            const GachaPool& row = rows[index];
+            table.rows_.emplace(row.id, row);
+        }
+        table.build_indexes();
+        return table;
+    }
+
+    const char* name() const override { return "GachaPool"; }
+    const char* mode() const override { return "map"; }
+    const char* key() const override { return "id"; }
+    std::size_t size() const override {
+        return rows_.size();
+    }
+    const GachaPool* get(const std::int32_t& key) const {
+        typename std::unordered_map<std::int32_t, GachaPool>::const_iterator it = rows_.find(key);
+        if (it == rows_.end()) {
+            return nullptr;
+        }
+        return &it->second;
+    }
+
+    const std::unordered_map<std::int32_t, GachaPool>& rows() const {
+        return rows_;
+    }
+
+private:
+    void build_indexes() {
+    }
+    std::unordered_map<std::int32_t, GachaPool> rows_;
 };
 
 } // namespace sora::showcase

@@ -5,6 +5,9 @@
 #include "sora_runtime.hpp"
 #include "resource_cost.hpp"
 
+#include <unordered_map>
+#include <vector>
+
 namespace sora::showcase {
 
 struct Achievement {
@@ -21,6 +24,49 @@ struct Achievement {
             ResourceCost::decode(reader),
         };
     }
+};
+
+class AchievementTable final : public SoraTable {
+public:
+    AchievementTable() {}
+    AchievementTable(const AchievementTable&) = delete;
+    AchievementTable& operator=(const AchievementTable&) = delete;
+    AchievementTable(AchievementTable&&) = default;
+    AchievementTable& operator=(AchievementTable&&) = default;
+
+    static AchievementTable decode(const SoraBundle& bundle) {
+        std::vector<Achievement> rows = bundle.decode_table<Achievement>("Achievement");
+        AchievementTable table;
+        for (std::size_t index = 0; index < rows.size(); ++index) {
+            const Achievement& row = rows[index];
+            table.rows_.emplace(row.id, row);
+        }
+        table.build_indexes();
+        return table;
+    }
+
+    const char* name() const override { return "Achievement"; }
+    const char* mode() const override { return "map"; }
+    const char* key() const override { return "id"; }
+    std::size_t size() const override {
+        return rows_.size();
+    }
+    const Achievement* get(const std::int32_t& key) const {
+        typename std::unordered_map<std::int32_t, Achievement>::const_iterator it = rows_.find(key);
+        if (it == rows_.end()) {
+            return nullptr;
+        }
+        return &it->second;
+    }
+
+    const std::unordered_map<std::int32_t, Achievement>& rows() const {
+        return rows_;
+    }
+
+private:
+    void build_indexes() {
+    }
+    std::unordered_map<std::int32_t, Achievement> rows_;
 };
 
 } // namespace sora::showcase
