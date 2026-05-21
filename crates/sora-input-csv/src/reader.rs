@@ -4,12 +4,21 @@ use csv::StringRecord;
 use sora_data::model::{ConfigData, RowData, TableData};
 use sora_diagnostics::{Result, SoraError};
 use sora_input::{
-    cell::{CellContext, CellLocation, CellValue, cell_to_value},
+    cell::{CellContext, CellLocation, CellValue, cell_to_value_with_parsers},
+    parser::{ParserRegistry, builtin_registry},
     source::{SourceFormat, resolve_table_source_format},
 };
 use sora_ir::model::{ConfigIr, TableIr, TypeIr};
 
 pub fn load_csv_config_data(ir: &ConfigIr, data_root: &Path) -> Result<ConfigData> {
+    load_csv_config_data_with_parsers(ir, data_root, builtin_registry())
+}
+
+pub fn load_csv_config_data_with_parsers(
+    ir: &ConfigIr,
+    data_root: &Path,
+    parser_registry: &ParserRegistry,
+) -> Result<ConfigData> {
     let mut tables = Vec::new();
 
     for table in &ir.tables {
@@ -27,10 +36,11 @@ pub fn load_csv_config_data(ir: &ConfigIr, data_root: &Path) -> Result<ConfigDat
                 format.as_str()
             )));
         }
-        tables.push(load_csv_table_data(
+        tables.push(load_csv_table_data_with_parsers(
             ir,
             table,
             &data_root.join(&source.file),
+            parser_registry,
         )?);
     }
 
@@ -38,6 +48,15 @@ pub fn load_csv_config_data(ir: &ConfigIr, data_root: &Path) -> Result<ConfigDat
 }
 
 pub fn load_csv_table_data(ir: &ConfigIr, table: &TableIr, path: &Path) -> Result<TableData> {
+    load_csv_table_data_with_parsers(ir, table, path, builtin_registry())
+}
+
+pub fn load_csv_table_data_with_parsers(
+    ir: &ConfigIr,
+    table: &TableIr,
+    path: &Path,
+    parser_registry: &ParserRegistry,
+) -> Result<TableData> {
     let mut reader = csv::Reader::from_path(path).map_err(|source| csv_error(path, source))?;
     let headers = reader
         .headers()
@@ -75,7 +94,12 @@ pub fn load_csv_table_data(ir: &ConfigIr, table: &TableIr, path: &Path) -> Resul
             };
             values.insert(
                 field.name.clone(),
-                cell_to_value(&CellValue::Text(cell.trim().into()), &field.ty, &context)?,
+                cell_to_value_with_parsers(
+                    &CellValue::Text(cell.trim().into()),
+                    &field.ty,
+                    &context,
+                    parser_registry,
+                )?,
             );
         }
         rows.push(RowData { values });

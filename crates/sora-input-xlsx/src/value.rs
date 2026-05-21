@@ -3,11 +3,19 @@ use std::borrow::Cow;
 use calamine::Data;
 use sora_data::model::Value;
 use sora_diagnostics::Result;
-use sora_input::cell::{CellContext, CellValue, cell_to_value as parse_cell_value};
+use sora_input::{
+    cell::{CellContext, CellValue, cell_to_value_with_parsers},
+    parser::ParserRegistry,
+};
 use sora_ir::model::TypeIr;
 
-pub(crate) fn cell_to_value(cell: &Data, ty: &TypeIr, context: &CellContext<'_>) -> Result<Value> {
-    parse_cell_value(&xlsx_cell_value(cell), ty, context)
+pub(crate) fn cell_to_value_with_registry(
+    cell: &Data,
+    ty: &TypeIr,
+    context: &CellContext<'_>,
+    parser_registry: &ParserRegistry,
+) -> Result<Value> {
+    cell_to_value_with_parsers(&xlsx_cell_value(cell), ty, context, parser_registry)
 }
 
 pub(crate) fn cell_is_empty(cell: &Data) -> bool {

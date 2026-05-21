@@ -222,6 +222,8 @@ Multiple tables may point at different sheets in the same workbook by reusing th
 
 Sora core consumes input through `SchemaInput` and `DataInput` traits. Concrete source formats live in separate adapter crates. TOML is implemented by `sora-input-toml`, CSV by `sora-input-csv`, and Excel by `sora-input-xlsx`, not by `sora-core` or `sora-input`. Future adapters, such as RON, JSON, or Luban compatibility importers, should translate their source format into `SchemaFile` and `ConfigData` before entering the normal IR, validation, codegen, and exporter pipeline.
 
+Cell parser behavior is registry-driven. `sora-ir::parser::ParserRegistry` validates parser metadata during schema normalization, and `sora-input::parser::ParserRegistry` executes cell parsing at input time. The default registries include `split`, `tuple`, `tuple_list`, and `json`; library users can register additional Rust parser implementations and call the `_with_parsers` APIs when they need project-specific DSLs.
+
 ## Data Format
 
 The primary data source is generated Excel `.xlsx`. Each table declares its workbook and sheet in schema:

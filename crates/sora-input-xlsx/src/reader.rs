@@ -3,25 +3,45 @@ use std::{collections::BTreeMap, path::Path};
 use calamine::{Data, Reader, open_workbook_auto};
 use sora_data::model::{ConfigData, RowData, TableData};
 use sora_diagnostics::{Result, SoraError};
-use sora_input::cell::{CellContext, CellLocation};
+use sora_input::{
+    cell::{CellContext, CellLocation},
+    parser::{ParserRegistry, builtin_registry},
+};
 use sora_ir::model::{ConfigIr, TableIr, TypeIr};
 
 use crate::{
     projection::verify_projection,
-    value::{cell_is_empty, cell_to_value},
+    value::{cell_is_empty, cell_to_value_with_registry},
     workbook::{group_xlsx_tables, load_grouped_ranges},
 };
 
 pub fn load_xlsx_config_data(ir: &ConfigIr, data_root: &Path) -> Result<ConfigData> {
+    load_xlsx_config_data_with_parsers(ir, data_root, builtin_registry())
+}
+
+pub fn load_xlsx_config_data_with_parsers(
+    ir: &ConfigIr,
+    data_root: &Path,
+    parser_registry: &ParserRegistry,
+) -> Result<ConfigData> {
     let grouped_tables = group_xlsx_tables(ir, data_root)?;
     let tables = load_grouped_ranges(&grouped_tables, |table, path, sheet, range| {
-        load_xlsx_table_data_from_range(ir, table, path, sheet, range)
+        load_xlsx_table_data_from_range(ir, table, path, sheet, range, parser_registry)
     })?;
     Ok(ConfigData { tables })
 }
 
 pub fn load_xlsx_table_data(table: &TableIr, path: &Path, sheet: &str) -> Result<TableData> {
-    load_xlsx_table_data_with_ir(
+    load_xlsx_table_data_with_parsers(table, path, sheet, builtin_registry())
+}
+
+pub fn load_xlsx_table_data_with_parsers(
+    table: &TableIr,
+    path: &Path,
+    sheet: &str,
+    parser_registry: &ParserRegistry,
+) -> Result<TableData> {
+    load_xlsx_table_data_with_ir_and_parsers(
         &ConfigIr {
             package: String::new(),
             codegen: Default::default(),
@@ -33,6 +53,7 @@ pub fn load_xlsx_table_data(table: &TableIr, path: &Path, sheet: &str) -> Result
         table,
         path,
         sheet,
+        parser_registry,
     )
 }
 
@@ -41,6 +62,16 @@ pub fn load_xlsx_table_data_with_ir(
     table: &TableIr,
     path: &Path,
     sheet: &str,
+) -> Result<TableData> {
+    load_xlsx_table_data_with_ir_and_parsers(ir, table, path, sheet, builtin_registry())
+}
+
+pub fn load_xlsx_table_data_with_ir_and_parsers(
+    ir: &ConfigIr,
+    table: &TableIr,
+    path: &Path,
+    sheet: &str,
+    parser_registry: &ParserRegistry,
 ) -> Result<TableData> {
     let mut workbook = open_workbook_auto(path).map_err(|source| SoraError::ParseData {
         path: path.to_path_buf(),
@@ -53,7 +84,7 @@ pub fn load_xlsx_table_data_with_ir(
             message: source.to_string(),
         })?;
 
-    load_xlsx_table_data_from_range(ir, table, path, sheet, range)
+    load_xlsx_table_data_from_range(ir, table, path, sheet, range, parser_registry)
 }
 
 fn load_xlsx_table_data_from_range(
@@ -62,6 +93,7 @@ fn load_xlsx_table_data_from_range(
     path: &Path,
     sheet: &str,
     range: calamine::Range<Data>,
+    parser_registry: &ParserRegistry,
 ) -> Result<TableData> {
     verify_projection(ir, table, path, sheet, &range)?;
     let mut rows = Vec::new();
@@ -95,7 +127,7 @@ fn load_xlsx_table_data_from_range(
             };
             values.insert(
                 field_names[column].to_owned(),
-                cell_to_value(cell, &field.ty, &context)?,
+                cell_to_value_with_registry(cell, &field.ty, &context, parser_registry)?,
             );
         }
         rows.push(RowData { values });
