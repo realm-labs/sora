@@ -9,7 +9,7 @@ use sora_codegen::{format::FormatMode, target::CodegenTarget};
 use sora_input_toml::input::TomlSchemaInput;
 
 use crate::{
-    args::{BuildArgs, BuildTarget, CodeFormatMode, DataFormat},
+    args::{BuildArgs, BuildTarget, CodeFormatMode, SourceFormatArg},
     commands::export_project_data,
 };
 
@@ -19,10 +19,7 @@ pub fn run(args: BuildArgs) -> Result<()> {
     let project_dir = args.project.parent().unwrap_or_else(|| Path::new("."));
     let schema_input = TomlSchemaInput::new(&args.project);
 
-    let data_format = args
-        .data_format
-        .or(build.data_format)
-        .unwrap_or(DataFormat::Xlsx);
+    let default_source_format = args.default_source_format.or(build.default_source_format);
     let data_root = args
         .data_root
         .as_ref()
@@ -101,7 +98,7 @@ pub fn run(args: BuildArgs) -> Result<()> {
         export_project_data(
             &args.project,
             &data_root,
-            data_format,
+            default_source_format,
             &item.format,
             out,
             item_scope,
@@ -231,7 +228,7 @@ impl BuildManifest {
 
 #[derive(Debug, Default, Deserialize)]
 struct BuildConfig {
-    data_format: Option<DataFormat>,
+    default_source_format: Option<SourceFormatArg>,
     data_root: Option<PathBuf>,
     scope: Option<String>,
     schema_lock: Option<PathBuf>,
@@ -269,7 +266,7 @@ struct BuildExport {
     scope: Option<String>,
 }
 
-impl<'de> Deserialize<'de> for DataFormat {
+impl<'de> Deserialize<'de> for SourceFormatArg {
     fn deserialize<D>(deserializer: D) -> std::result::Result<Self, D::Error>
     where
         D: serde::Deserializer<'de>,
@@ -280,7 +277,7 @@ impl<'de> Deserialize<'de> for DataFormat {
             "toml" => Ok(Self::Toml),
             "xlsx" => Ok(Self::Xlsx),
             _ => Err(serde::de::Error::custom(format!(
-                "unsupported data format `{value}`; expected csv, toml, or xlsx"
+                "unsupported source format `{value}`; expected csv, toml, or xlsx"
             ))),
         }
     }
@@ -391,7 +388,7 @@ mod tests {
 
         run(BuildArgs {
             project: project.clone(),
-            data_format: None,
+            default_source_format: None,
             data_root: None,
             scope: None,
             target: Vec::new(),
@@ -438,7 +435,7 @@ mod tests {
 
         run(BuildArgs {
             project: project.clone(),
-            data_format: None,
+            default_source_format: None,
             data_root: None,
             scope: None,
             target: vec![BuildTarget::Rust],
@@ -468,7 +465,7 @@ package = "game_config"
 includes = ["schema/items.toml"]
 
 [build]
-data_format = "toml"
+default_source_format = "toml"
 data_root = "data"
 schema_lock = "generated/schema.lock"
 excel_templates = "generated/excel"
@@ -558,7 +555,6 @@ mode = "map"
 key = "id"
 
 [tables.source]
-format = "toml"
 file = "items.toml"
 
 [[tables.fields]]

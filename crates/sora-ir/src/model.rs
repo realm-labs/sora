@@ -280,8 +280,10 @@ pub struct TableIr {
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct TableSourceIr {
-    pub format: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub format: Option<String>,
     pub file: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub sheet: Option<String>,
 }
 

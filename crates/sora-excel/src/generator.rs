@@ -1,6 +1,7 @@
 use std::{collections::BTreeMap, fs, path::Path};
 
 use sora_diagnostics::{Result, SoraError};
+use sora_input::source::{SourceFormat, resolve_table_source_format};
 use sora_ir::model::{ConfigIr, TableIr};
 
 use crate::writer::write_workbook;
@@ -19,7 +20,12 @@ impl ExcelTemplateGenerator {
             let file_name = table
                 .source
                 .as_ref()
-                .filter(|source| source.format == "xlsx")
+                .filter(|_| {
+                    matches!(
+                        resolve_table_source_format(table, Some("xlsx")),
+                        Ok(SourceFormat::Xlsx)
+                    )
+                })
                 .map(|source| source.file.clone())
                 .unwrap_or_else(|| format!("{}.xlsx", table.name));
             workbooks.entry(file_name).or_default().push(table);

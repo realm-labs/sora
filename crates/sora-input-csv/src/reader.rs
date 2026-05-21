@@ -3,7 +3,10 @@ use std::{collections::BTreeMap, path::Path};
 use csv::StringRecord;
 use sora_data::model::{ConfigData, RowData, TableData};
 use sora_diagnostics::{Result, SoraError};
-use sora_input::cell::{CellContext, CellLocation, CellValue, cell_to_value};
+use sora_input::{
+    cell::{CellContext, CellLocation, CellValue, cell_to_value},
+    source::{SourceFormat, resolve_table_source_format},
+};
 use sora_ir::model::{ConfigIr, TableIr, TypeIr};
 
 pub fn load_csv_config_data(ir: &ConfigIr, data_root: &Path) -> Result<ConfigData> {
@@ -16,10 +19,12 @@ pub fn load_csv_config_data(ir: &ConfigIr, data_root: &Path) -> Result<ConfigDat
             .ok_or_else(|| SoraError::MissingTableSource {
                 table: table.name.clone(),
             })?;
-        if source.format != "csv" {
+        let format = resolve_table_source_format(table, Some("csv"))?;
+        if format != SourceFormat::Csv {
             return Err(SoraError::InvalidSchema(format!(
                 "table `{}` source format `{}` cannot be loaded by CSV input adapter",
-                table.name, source.format
+                table.name,
+                format.as_str()
             )));
         }
         tables.push(load_csv_table_data(

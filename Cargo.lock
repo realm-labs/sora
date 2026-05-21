@@ -484,10 +484,15 @@ dependencies = [
  "serde",
  "sora-codegen",
  "sora-core",
+ "sora-data",
+ "sora-diagnostics",
  "sora-export",
+ "sora-input",
  "sora-input-csv",
  "sora-input-toml",
  "sora-input-xlsx",
+ "sora-ir",
+ "sora-schema",
  "toml",
 ]
 
@@ -550,6 +555,7 @@ version = "0.1.0"
 dependencies = [
  "rust_xlsxwriter",
  "sora-diagnostics",
+ "sora-input",
  "sora-ir",
  "sora-schema",
  "toml",

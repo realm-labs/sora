@@ -201,7 +201,6 @@ mode = "map"
 key = "id"
 
 [tables.source]
-format = "xlsx"
 file = "Core.xlsx"
 sheet = "Item"
 
@@ -265,7 +264,6 @@ mode = "map"
 key = "id"
 
 [tables.source]
-format = "xlsx"
 file = "Battle.xlsx"
 sheet = "Skill"
 
@@ -324,7 +322,6 @@ mode = "map"
 key = "id"
 
 [tables.source]
-format = "xlsx"
 file = "Quest.xlsx"
 sheet = "Quest"
 
@@ -380,7 +377,6 @@ name = "QuestReward"
 mode = "list"
 
 [tables.source]
-format = "xlsx"
 file = "Quest.xlsx"
 sheet = "QuestReward"
 
@@ -410,7 +406,6 @@ name = "GameSettings"
 mode = "singleton"
 
 [tables.source]
-format = "xlsx"
 file = "Core.xlsx"
 sheet = "GameSettings"
 
@@ -453,7 +448,6 @@ mode = "map"
 key = "key"
 
 [tables.source]
-format = "xlsx"
 file = "Core.xlsx"
 sheet = "Localization"
 
@@ -484,7 +478,6 @@ mode = "map"
 key = "level"
 
 [tables.source]
-format = "xlsx"
 file = "Core.xlsx"
 sheet = "LevelExp"
 
@@ -511,7 +504,6 @@ mode = "map"
 key = "id"
 
 [tables.source]
-format = "xlsx"
 file = "Battle.xlsx"
 sheet = "Character"
 
@@ -563,7 +555,6 @@ name = "CharacterSkill"
 mode = "list"
 
 [tables.source]
-format = "xlsx"
 file = "Battle.xlsx"
 sheet = "CharacterSkill"
 
@@ -588,7 +579,6 @@ mode = "map"
 key = "id"
 
 [tables.source]
-format = "xlsx"
 file = "Battle.xlsx"
 sheet = "Buff"
 
@@ -623,7 +613,6 @@ mode = "map"
 key = "id"
 
 [tables.source]
-format = "xlsx"
 file = "Battle.xlsx"
 sheet = "DropGroup"
 
@@ -643,7 +632,6 @@ name = "DropEntry"
 mode = "list"
 
 [tables.source]
-format = "xlsx"
 file = "Battle.xlsx"
 sheet = "DropEntry"
 
@@ -680,7 +668,6 @@ mode = "map"
 key = "id"
 
 [tables.source]
-format = "xlsx"
 file = "Battle.xlsx"
 sheet = "Monster"
 
@@ -723,7 +710,6 @@ mode = "map"
 key = "id"
 
 [tables.source]
-format = "xlsx"
 file = "Battle.xlsx"
 sheet = "Stage"
 
@@ -765,7 +751,6 @@ name = "StageReward"
 mode = "list"
 
 [tables.source]
-format = "xlsx"
 file = "Battle.xlsx"
 sheet = "StageReward"
 
@@ -795,7 +780,6 @@ mode = "map"
 key = "id"
 
 [tables.source]
-format = "xlsx"
 file = "Battle.xlsx"
 sheet = "Dungeon"
 
@@ -832,7 +816,6 @@ mode = "map"
 key = "id"
 
 [tables.source]
-format = "xlsx"
 file = "Economy.xlsx"
 sheet = "Shop"
 
@@ -857,7 +840,6 @@ name = "ShopItem"
 mode = "list"
 
 [tables.source]
-format = "xlsx"
 file = "Economy.xlsx"
 sheet = "ShopItem"
 
@@ -893,7 +875,6 @@ mode = "map"
 key = "id"
 
 [tables.source]
-format = "xlsx"
 file = "Economy.xlsx"
 sheet = "Recipe"
 
@@ -923,7 +904,6 @@ mode = "map"
 key = "id"
 
 [tables.source]
-format = "xlsx"
 file = "Economy.xlsx"
 sheet = "GachaPool"
 
@@ -950,7 +930,6 @@ name = "GachaItem"
 mode = "list"
 
 [tables.source]
-format = "xlsx"
 file = "Economy.xlsx"
 sheet = "GachaItem"
 
@@ -980,7 +959,6 @@ mode = "map"
 key = "id"
 
 [tables.source]
-format = "xlsx"
 file = "Economy.xlsx"
 sheet = "EquipmentSet"
 
@@ -1015,7 +993,6 @@ mode = "map"
 key = "id"
 
 [tables.source]
-format = "xlsx"
 file = "Economy.xlsx"
 sheet = "Achievement"
 
@@ -1048,7 +1025,6 @@ mode = "map"
 key = "level"
 
 [tables.source]
-format = "xlsx"
 file = "Economy.xlsx"
 sheet = "VipLevel"
 
@@ -1080,7 +1056,6 @@ mode = "map"
 key = "id"
 
 [tables.source]
-format = "xlsx"
 file = "Quest.xlsx"
 sheet = "MailTemplate"
 
@@ -1118,7 +1093,6 @@ name = "MailReward"
 mode = "list"
 
 [tables.source]
-format = "xlsx"
 file = "Quest.xlsx"
 sheet = "MailReward"
 
@@ -1148,7 +1122,6 @@ mode = "map"
 key = "id"
 
 [tables.source]
-format = "xlsx"
 file = "Quest.xlsx"
 sheet = "Dialogue"
 
@@ -1178,7 +1151,6 @@ mode = "map"
 key = "id"
 
 [tables.source]
-format = "xlsx"
 file = "Quest.xlsx"
 sheet = "EventRule"
 

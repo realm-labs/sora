@@ -371,7 +371,7 @@ pub struct TableSchema {
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 pub struct TableSourceSchema {
-    pub format: String,
+    pub format: Option<String>,
     pub file: String,
     pub sheet: Option<String>,
 }
@@ -495,7 +495,6 @@ mode = "map"
 key = "id"
 
 [tables.source]
-format = "toml"
 file = "items.toml"
 
 [[tables.fields]]
@@ -520,7 +519,7 @@ suffix = "]"
         assert!(schema.includes.is_empty());
         assert_eq!(schema.enums[0].name, "ItemType");
         assert_eq!(schema.tables[0].mode, TableModeSchema::Map);
-        assert_eq!(schema.tables[0].source.as_ref().unwrap().format, "toml");
+        assert_eq!(schema.tables[0].source.as_ref().unwrap().format, None);
         assert_eq!(schema.tables[0].fields[0].name, "id");
         assert!(schema.tables[0].fields[0].key);
         assert_eq!(schema.tables[0].fields[0].required, Some(true));

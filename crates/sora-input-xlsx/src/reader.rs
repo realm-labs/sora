@@ -21,18 +21,7 @@ pub fn load_xlsx_config_data(ir: &ConfigIr, data_root: &Path) -> Result<ConfigDa
 }
 
 pub fn load_xlsx_table_data(table: &TableIr, path: &Path, sheet: &str) -> Result<TableData> {
-    let mut workbook = open_workbook_auto(path).map_err(|source| SoraError::ParseData {
-        path: path.to_path_buf(),
-        message: source.to_string(),
-    })?;
-    let range = workbook
-        .worksheet_range(sheet)
-        .map_err(|source| SoraError::ParseData {
-            path: path.to_path_buf(),
-            message: source.to_string(),
-        })?;
-
-    load_xlsx_table_data_from_range(
+    load_xlsx_table_data_with_ir(
         &ConfigIr {
             package: String::new(),
             codegen: Default::default(),
@@ -44,8 +33,27 @@ pub fn load_xlsx_table_data(table: &TableIr, path: &Path, sheet: &str) -> Result
         table,
         path,
         sheet,
-        range,
     )
+}
+
+pub fn load_xlsx_table_data_with_ir(
+    ir: &ConfigIr,
+    table: &TableIr,
+    path: &Path,
+    sheet: &str,
+) -> Result<TableData> {
+    let mut workbook = open_workbook_auto(path).map_err(|source| SoraError::ParseData {
+        path: path.to_path_buf(),
+        message: source.to_string(),
+    })?;
+    let range = workbook
+        .worksheet_range(sheet)
+        .map_err(|source| SoraError::ParseData {
+            path: path.to_path_buf(),
+            message: source.to_string(),
+        })?;
+
+    load_xlsx_table_data_from_range(ir, table, path, sheet, range)
 }
 
 fn load_xlsx_table_data_from_range(

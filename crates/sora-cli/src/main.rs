@@ -1,6 +1,7 @@
 mod args;
 mod build;
 mod commands;
+mod source;
 
 use anyhow::Result;
 use clap::Parser;

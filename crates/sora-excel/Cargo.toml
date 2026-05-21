@@ -7,6 +7,7 @@ license.workspace = true
 [dependencies]
 rust_xlsxwriter.workspace = true
 sora-diagnostics.workspace = true
+sora-input.workspace = true
 sora-ir.workspace = true
 
 [dev-dependencies]

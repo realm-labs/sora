@@ -801,7 +801,6 @@
         "mode": "Map",
         "key": "id",
         "source": {
-          "format": "xlsx",
           "file": "Core.xlsx",
           "sheet": "Item"
         },
@@ -969,7 +968,6 @@
         "mode": "Map",
         "key": "id",
         "source": {
-          "format": "xlsx",
           "file": "Battle.xlsx",
           "sheet": "Skill"
         },
@@ -1168,7 +1166,6 @@
         "mode": "Map",
         "key": "id",
         "source": {
-          "format": "xlsx",
           "file": "Quest.xlsx",
           "sheet": "Quest"
         },
@@ -1357,7 +1354,6 @@
         "mode": "List",
         "key": null,
         "source": {
-          "format": "xlsx",
           "file": "Quest.xlsx",
           "sheet": "QuestReward"
         },
@@ -1468,7 +1464,6 @@
         "mode": "Singleton",
         "key": null,
         "source": {
-          "format": "xlsx",
           "file": "Core.xlsx",
           "sheet": "GameSettings"
         },
@@ -1604,7 +1599,6 @@
         "mode": "Map",
         "key": "key",
         "source": {
-          "format": "xlsx",
           "file": "Core.xlsx",
           "sheet": "Localization"
         },
@@ -1707,7 +1701,6 @@
         "mode": "Map",
         "key": "level",
         "source": {
-          "format": "xlsx",
           "file": "Core.xlsx",
           "sheet": "LevelExp"
         },
@@ -1793,7 +1786,6 @@
         "mode": "Map",
         "key": "id",
         "source": {
-          "format": "xlsx",
           "file": "Battle.xlsx",
           "sheet": "Character"
         },
@@ -1978,7 +1970,6 @@
         "mode": "List",
         "key": null,
         "source": {
-          "format": "xlsx",
           "file": "Battle.xlsx",
           "sheet": "CharacterSkill"
         },
@@ -2071,7 +2062,6 @@
         "mode": "Map",
         "key": "id",
         "source": {
-          "format": "xlsx",
           "file": "Battle.xlsx",
           "sheet": "Buff"
         },
@@ -2176,7 +2166,6 @@
         "mode": "Map",
         "key": "id",
         "source": {
-          "format": "xlsx",
           "file": "Battle.xlsx",
           "sheet": "DropGroup"
         },
@@ -2234,7 +2223,6 @@
         "mode": "List",
         "key": null,
         "source": {
-          "format": "xlsx",
           "file": "Battle.xlsx",
           "sheet": "DropEntry"
         },
@@ -2365,7 +2353,6 @@
         "mode": "Map",
         "key": "id",
         "source": {
-          "format": "xlsx",
           "file": "Battle.xlsx",
           "sheet": "Monster"
         },
@@ -2517,7 +2504,6 @@
         "mode": "Map",
         "key": "id",
         "source": {
-          "format": "xlsx",
           "file": "Battle.xlsx",
           "sheet": "Stage"
         },
@@ -2654,7 +2640,6 @@
         "mode": "List",
         "key": null,
         "source": {
-          "format": "xlsx",
           "file": "Battle.xlsx",
           "sheet": "StageReward"
         },
@@ -2762,7 +2747,6 @@
         "mode": "Map",
         "key": "id",
         "source": {
-          "format": "xlsx",
           "file": "Battle.xlsx",
           "sheet": "Dungeon"
         },
@@ -2872,7 +2856,6 @@
         "mode": "Map",
         "key": "id",
         "source": {
-          "format": "xlsx",
           "file": "Economy.xlsx",
           "sheet": "Shop"
         },
@@ -2952,7 +2935,6 @@
         "mode": "List",
         "key": null,
         "source": {
-          "format": "xlsx",
           "file": "Economy.xlsx",
           "sheet": "ShopItem"
         },
@@ -3084,7 +3066,6 @@
         "mode": "Map",
         "key": "id",
         "source": {
-          "format": "xlsx",
           "file": "Economy.xlsx",
           "sheet": "Recipe"
         },
@@ -3174,7 +3155,6 @@
         "mode": "Map",
         "key": "id",
         "source": {
-          "format": "xlsx",
           "file": "Economy.xlsx",
           "sheet": "GachaPool"
         },
@@ -3254,7 +3234,6 @@
         "mode": "List",
         "key": null,
         "source": {
-          "format": "xlsx",
           "file": "Economy.xlsx",
           "sheet": "GachaItem"
         },
@@ -3364,7 +3343,6 @@
         "mode": "Map",
         "key": "id",
         "source": {
-          "format": "xlsx",
           "file": "Economy.xlsx",
           "sheet": "EquipmentSet"
         },
@@ -3474,7 +3452,6 @@
         "mode": "Map",
         "key": "id",
         "source": {
-          "format": "xlsx",
           "file": "Economy.xlsx",
           "sheet": "Achievement"
         },
@@ -3574,7 +3551,6 @@
         "mode": "Map",
         "key": "level",
         "source": {
-          "format": "xlsx",
           "file": "Economy.xlsx",
           "sheet": "VipLevel"
         },
@@ -3659,7 +3635,6 @@
         "mode": "Map",
         "key": "id",
         "source": {
-          "format": "xlsx",
           "file": "Quest.xlsx",
           "sheet": "MailTemplate"
         },
@@ -3788,7 +3763,6 @@
         "mode": "List",
         "key": null,
         "source": {
-          "format": "xlsx",
           "file": "Quest.xlsx",
           "sheet": "MailReward"
         },
@@ -3896,7 +3870,6 @@
         "mode": "Map",
         "key": "id",
         "source": {
-          "format": "xlsx",
           "file": "Quest.xlsx",
           "sheet": "Dialogue"
         },
@@ -3979,7 +3952,6 @@
         "mode": "Map",
         "key": "id",
         "source": {
-          "format": "xlsx",
           "file": "Quest.xlsx",
           "sheet": "EventRule"
         },

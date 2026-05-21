@@ -5,6 +5,7 @@ use std::{
 
 use calamine::{Reader, open_workbook_auto};
 use sora_diagnostics::{Result, SoraError};
+use sora_input::source::{SourceFormat, resolve_table_source_format};
 use sora_ir::model::{ConfigIr, TableIr};
 
 pub(crate) struct TableSheet<'a> {
@@ -27,10 +28,12 @@ pub(crate) fn group_xlsx_tables<'a>(
             .ok_or_else(|| SoraError::MissingTableSource {
                 table: table.name.clone(),
             })?;
-        if source.format != "xlsx" {
+        let format = resolve_table_source_format(table, Some("xlsx"))?;
+        if format != SourceFormat::Xlsx {
             return Err(SoraError::InvalidSchema(format!(
                 "table `{}` source format `{}` cannot be loaded by XLSX input adapter",
-                table.name, source.format
+                table.name,
+                format.as_str()
             )));
         }
 

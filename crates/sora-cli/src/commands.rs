@@ -3,14 +3,13 @@ use std::path::{Path, PathBuf};
 use anyhow::{Context, Result, bail};
 use sora_codegen::target::CodegenTarget;
 use sora_export::exporter::{ExportOutput, OutputKind};
-use sora_input_csv::input::CsvProjectInput;
-use sora_input_toml::input::{TomlProjectInput, TomlSchemaInput};
-use sora_input_xlsx::input::XlsxProjectInput;
+use sora_input_toml::input::TomlSchemaInput;
 
 use crate::args::{
-    CheckArgs, Command, DataFormat, DiffArgs, ExcelTemplateArgs, ExportArgs, GenArgs, GenCommand,
-    SchemaLockArgs,
+    CheckArgs, Command, DiffArgs, ExcelTemplateArgs, ExportArgs, GenArgs, GenCommand,
+    SchemaLockArgs, SourceFormatArg,
 };
+use crate::source::MixedProjectInput;
 
 pub fn run(command: Command) -> Result<()> {
     match command {
@@ -105,7 +104,7 @@ fn export(args: ExportArgs) -> Result<()> {
     export_project_data(
         &args.project,
         &args.data_root,
-        args.data_format,
+        args.default_source_format,
         &args.format,
         args.out,
         args.scope.as_deref(),
@@ -122,7 +121,7 @@ fn export(args: ExportArgs) -> Result<()> {
 pub(crate) fn export_project_data(
     project: &Path,
     data_root: &Path,
-    data_format: DataFormat,
+    default_source_format: Option<SourceFormatArg>,
     format: &str,
     out: PathBuf,
     scope: Option<&str>,
@@ -139,70 +138,31 @@ pub(crate) fn export_project_data(
         }
     };
 
-    match data_format {
-        DataFormat::Csv => {
-            let schema_input = TomlSchemaInput::new(project);
-            let input = CsvProjectInput::new(schema_input, data_root);
-            sora_core::pipeline::export_data_with_scope(&input, format, output, scope)
-        }
-        DataFormat::Toml => {
-            let input = TomlProjectInput::new(project, data_root);
-            sora_core::pipeline::export_data_with_scope(&input, format, output, scope)
-        }
-        DataFormat::Xlsx => {
-            let schema_input = TomlSchemaInput::new(project);
-            let input = XlsxProjectInput::new(schema_input, data_root);
-            sora_core::pipeline::export_data_with_scope(&input, format, output, scope)
-        }
-    }?;
+    let schema_input = TomlSchemaInput::new(project);
+    let input = MixedProjectInput::new(
+        schema_input,
+        data_root,
+        default_source_format.map(SourceFormatArg::as_str),
+    );
+    sora_core::pipeline::export_data_with_scope(&input, format, output, scope)?;
     Ok(())
 }
 
 fn diff(args: DiffArgs) -> Result<()> {
-    match args.data_format {
-        DataFormat::Csv => {
-            let left_schema = TomlSchemaInput::new(&args.project);
-            let right_schema = TomlSchemaInput::new(&args.project);
-            let left = CsvProjectInput::new(left_schema, &args.left_root);
-            let right = CsvProjectInput::new(right_schema, &args.right_root);
-            sora_core::pipeline::diff_data_with_scope(
-                &left,
-                &right,
-                &args.out,
-                args.scope.as_deref(),
+    let default_source_format = args.default_source_format.map(SourceFormatArg::as_str);
+    let left_schema = TomlSchemaInput::new(&args.project);
+    let right_schema = TomlSchemaInput::new(&args.project);
+    let left = MixedProjectInput::new(left_schema, &args.left_root, default_source_format);
+    let right = MixedProjectInput::new(right_schema, &args.right_root, default_source_format);
+    sora_core::pipeline::diff_data_with_scope(&left, &right, &args.out, args.scope.as_deref())
+        .with_context(|| {
+            format!(
+                "failed to diff `{}` against `{}` into `{}`",
+                args.left_root.display(),
+                args.right_root.display(),
+                args.out.display()
             )
-        }
-        DataFormat::Toml => {
-            let left = TomlProjectInput::new(&args.project, &args.left_root);
-            let right = TomlProjectInput::new(&args.project, &args.right_root);
-            sora_core::pipeline::diff_data_with_scope(
-                &left,
-                &right,
-                &args.out,
-                args.scope.as_deref(),
-            )
-        }
-        DataFormat::Xlsx => {
-            let left_schema = TomlSchemaInput::new(&args.project);
-            let right_schema = TomlSchemaInput::new(&args.project);
-            let left = XlsxProjectInput::new(left_schema, &args.left_root);
-            let right = XlsxProjectInput::new(right_schema, &args.right_root);
-            sora_core::pipeline::diff_data_with_scope(
-                &left,
-                &right,
-                &args.out,
-                args.scope.as_deref(),
-            )
-        }
-    }
-    .with_context(|| {
-        format!(
-            "failed to diff `{}` against `{}` into `{}`",
-            args.left_root.display(),
-            args.right_root.display(),
-            args.out.display()
-        )
-    })?;
+        })?;
 
     Ok(())
 }

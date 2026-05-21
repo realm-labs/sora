@@ -3,6 +3,7 @@ use std::{collections::BTreeMap, fs, path::Path};
 use serde::Deserialize;
 use sora_data::model::{ConfigData, RowData, TableData, Value};
 use sora_diagnostics::{Result, SoraError};
+use sora_input::source::{SourceFormat, resolve_table_source_format};
 use sora_ir::model::ConfigIr;
 
 pub fn load_config_data(ir: &ConfigIr, data_root: &Path) -> Result<ConfigData> {
@@ -15,10 +16,12 @@ pub fn load_config_data(ir: &ConfigIr, data_root: &Path) -> Result<ConfigData> {
             .ok_or_else(|| SoraError::MissingTableSource {
                 table: table.name.clone(),
             })?;
-        if source.format != "toml" {
+        let format = resolve_table_source_format(table, Some("toml"))?;
+        if format != SourceFormat::Toml {
             return Err(SoraError::InvalidSchema(format!(
                 "table `{}` source format `{}` cannot be loaded by TOML input adapter",
-                table.name, source.format
+                table.name,
+                format.as_str()
             )));
         }
         tables.push(load_table_data_file(

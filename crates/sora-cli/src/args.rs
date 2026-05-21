@@ -75,7 +75,7 @@ pub struct BuildArgs {
     pub project: PathBuf,
 
     #[arg(long, value_enum)]
-    pub data_format: Option<DataFormat>,
+    pub default_source_format: Option<SourceFormatArg>,
 
     #[arg(long)]
     pub data_root: Option<PathBuf>,
@@ -95,8 +95,8 @@ pub struct ExportArgs {
     #[arg(long)]
     pub format: String,
 
-    #[arg(long, value_enum, default_value_t = DataFormat::Xlsx)]
-    pub data_format: DataFormat,
+    #[arg(long, value_enum)]
+    pub default_source_format: Option<SourceFormatArg>,
 
     #[arg(long)]
     pub project: PathBuf,
@@ -113,8 +113,8 @@ pub struct ExportArgs {
 
 #[derive(Debug, Args)]
 pub struct DiffArgs {
-    #[arg(long, value_enum, default_value_t = DataFormat::Xlsx)]
-    pub data_format: DataFormat,
+    #[arg(long, value_enum)]
+    pub default_source_format: Option<SourceFormatArg>,
 
     #[arg(long)]
     pub project: PathBuf,
@@ -133,10 +133,20 @@ pub struct DiffArgs {
 }
 
 #[derive(Debug, Clone, Copy, clap::ValueEnum)]
-pub enum DataFormat {
+pub enum SourceFormatArg {
     Csv,
     Toml,
     Xlsx,
+}
+
+impl SourceFormatArg {
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Self::Csv => "csv",
+            Self::Toml => "toml",
+            Self::Xlsx => "xlsx",
+        }
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, clap::ValueEnum)]
