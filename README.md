@@ -224,6 +224,8 @@ Sora core consumes input through `SchemaInput` and `DataInput` traits. Concrete 
 
 Cell parser behavior is registry-driven. `sora-ir::parser::ParserRegistry` validates parser metadata during schema normalization, and `sora-input::parser::ParserRegistry` executes cell parsing at input time. The default registries include `split`, `tuple`, `tuple_list`, and `json`; library users can register additional Rust parser implementations and call the `_with_parsers` APIs when they need project-specific DSLs.
 
+Build execution is routed through `sora-execution::ExecutionContext`. The default context enables parallel work through Rayon, while library callers can construct a serial context or a fixed-size thread pool and pass it through the `_with_context` pipeline/input/export APIs.
+
 ## Data Format
 
 The primary data source is generated Excel `.xlsx`. Each table declares its workbook and sheet in schema:

@@ -6,6 +6,7 @@ use std::{
 use anyhow::{Context, Result, bail};
 use serde::Deserialize;
 use sora_codegen::{format::FormatMode, target::CodegenTarget};
+use sora_execution::ExecutionContext;
 use sora_input_toml::input::TomlSchemaInput;
 
 use crate::{
@@ -13,7 +14,7 @@ use crate::{
     commands::export_project_data,
 };
 
-pub fn run(args: BuildArgs) -> Result<()> {
+pub fn run(args: BuildArgs, execution: &ExecutionContext) -> Result<()> {
     let manifest = BuildManifest::load(&args.project)?;
     let build = manifest.build;
     let project_dir = args.project.parent().unwrap_or_else(|| Path::new("."));
@@ -102,6 +103,7 @@ pub fn run(args: BuildArgs) -> Result<()> {
             &item.format,
             out,
             item_scope,
+            execution,
         )
         .with_context(|| {
             format!(
@@ -389,14 +391,17 @@ mod tests {
         let base = temp_dir();
         let project = write_project(&base);
 
-        run(BuildArgs {
-            project: project.clone(),
-            default_source_format: None,
-            data_root: None,
-            scope: None,
-            target: Vec::new(),
-            clean: false,
-        })
+        run(
+            BuildArgs {
+                project: project.clone(),
+                default_source_format: None,
+                data_root: None,
+                scope: None,
+                target: Vec::new(),
+                clean: false,
+            },
+            &ExecutionContext::default(),
+        )
         .unwrap();
 
         assert!(base.join("generated/schema.lock").exists());
@@ -438,14 +443,17 @@ mod tests {
         fs::write(&rust_stale, "stale").unwrap();
         fs::write(&kotlin_stale, "stale").unwrap();
 
-        run(BuildArgs {
-            project: project.clone(),
-            default_source_format: None,
-            data_root: None,
-            scope: None,
-            target: vec![BuildTarget::Rust],
-            clean: true,
-        })
+        run(
+            BuildArgs {
+                project: project.clone(),
+                default_source_format: None,
+                data_root: None,
+                scope: None,
+                target: vec![BuildTarget::Rust],
+                clean: true,
+            },
+            &ExecutionContext::default(),
+        )
         .unwrap();
 
         assert!(base.join("generated/rust/item.rs").exists());

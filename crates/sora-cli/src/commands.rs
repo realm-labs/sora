@@ -2,18 +2,28 @@ use std::path::{Path, PathBuf};
 
 use anyhow::{Context, Result, bail};
 use sora_codegen::target::CodegenTarget;
+use sora_execution::{ExecutionContext, ExecutionOptions};
 use sora_export::exporter::{ExportOutput, OutputKind};
 use sora_input_toml::input::TomlSchemaInput;
 
 use crate::args::{
-    CheckArgs, Command, DiffArgs, ExcelTemplateArgs, ExportArgs, GenArgs, GenCommand,
+    CheckArgs, Cli, Command, DiffArgs, ExcelTemplateArgs, ExportArgs, GenArgs, GenCommand,
     SchemaLockArgs, SourceFormatArg,
 };
 use crate::source::MixedProjectInput;
 
-pub fn run(command: Command) -> Result<()> {
-    match command {
-        Command::Build(args) => crate::build::run(args),
+pub fn run(cli: Cli) -> Result<()> {
+    if cli.jobs == Some(0) {
+        bail!("--jobs must be greater than 0");
+    }
+
+    let execution = ExecutionContext::new(ExecutionOptions {
+        parallel: !cli.serial,
+        jobs: cli.jobs,
+    })?;
+
+    match cli.command {
+        Command::Build(args) => crate::build::run(args, &execution),
         Command::Check(args) => check(args),
         Command::Gen { target } => match target {
             GenCommand::Rust(args) => generate(args, CodegenTarget::Rust),
@@ -32,8 +42,8 @@ pub fn run(command: Command) -> Result<()> {
             GenCommand::ProtoSchema(args) => generate(args, CodegenTarget::ProtoSchema),
             GenCommand::Python(args) => generate(args, CodegenTarget::Python),
         },
-        Command::Export(args) => export(args),
-        Command::Diff(args) => diff(args),
+        Command::Export(args) => export(args, &execution),
+        Command::Diff(args) => diff(args, &execution),
         Command::ExcelTemplate(args) => excel_template(args),
         Command::SchemaLock(args) => schema_lock(args),
     }
@@ -101,7 +111,7 @@ fn schema_lock(args: SchemaLockArgs) -> Result<()> {
         })
 }
 
-fn export(args: ExportArgs) -> Result<()> {
+fn export(args: ExportArgs, execution: &ExecutionContext) -> Result<()> {
     export_project_data(
         &args.project,
         &args.data_root,
@@ -109,6 +119,7 @@ fn export(args: ExportArgs) -> Result<()> {
         &args.format,
         args.out,
         args.scope.as_deref(),
+        execution,
     )
     .with_context(|| {
         format!(
@@ -126,6 +137,7 @@ pub(crate) fn export_project_data(
     format: &str,
     out: PathBuf,
     scope: Option<&str>,
+    execution: &ExecutionContext,
 ) -> Result<()> {
     let output = match sora_core::pipeline::export_output_kind(format) {
         Some(OutputKind::File) => ExportOutput::File(out.clone()),
@@ -145,25 +157,33 @@ pub(crate) fn export_project_data(
         data_root,
         default_source_format.map(SourceFormatArg::as_str),
     );
-    sora_core::pipeline::export_data_with_scope(&input, format, output, scope)?;
+    sora_core::pipeline::export_data_with_scope_and_context(
+        &input, format, output, scope, execution,
+    )?;
     Ok(())
 }
 
-fn diff(args: DiffArgs) -> Result<()> {
+fn diff(args: DiffArgs, execution: &ExecutionContext) -> Result<()> {
     let default_source_format = args.default_source_format.map(SourceFormatArg::as_str);
     let left_schema = TomlSchemaInput::new(&args.project);
     let right_schema = TomlSchemaInput::new(&args.project);
     let left = MixedProjectInput::new(left_schema, &args.left_root, default_source_format);
     let right = MixedProjectInput::new(right_schema, &args.right_root, default_source_format);
-    sora_core::pipeline::diff_data_with_scope(&left, &right, &args.out, args.scope.as_deref())
-        .with_context(|| {
-            format!(
-                "failed to diff `{}` against `{}` into `{}`",
-                args.left_root.display(),
-                args.right_root.display(),
-                args.out.display()
-            )
-        })?;
+    sora_core::pipeline::diff_data_with_scope_and_context(
+        &left,
+        &right,
+        &args.out,
+        args.scope.as_deref(),
+        execution,
+    )
+    .with_context(|| {
+        format!(
+            "failed to diff `{}` against `{}` into `{}`",
+            args.left_root.display(),
+            args.right_root.display(),
+            args.out.display()
+        )
+    })?;
 
     Ok(())
 }

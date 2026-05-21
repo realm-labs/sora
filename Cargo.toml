@@ -13,6 +13,7 @@ members = [
     "crates/sora-export",
     "crates/sora-excel",
     "crates/sora-diagnostics",
+    "crates/sora-execution",
     "crates/sora-templates",
     "examples/showcase/tools/build-showcase",
     "examples/showcase/rust",
@@ -45,6 +46,7 @@ sora-data = { path = "crates/sora-data" }
 sora-diagnostics = { path = "crates/sora-diagnostics" }
 sora-excel = { path = "crates/sora-excel" }
 sora-export = { path = "crates/sora-export" }
+sora-execution = { path = "crates/sora-execution" }
 sora-input = { path = "crates/sora-input" }
 sora-input-csv = { path = "crates/sora-input-csv" }
 sora-input-toml = { path = "crates/sora-input-toml" }

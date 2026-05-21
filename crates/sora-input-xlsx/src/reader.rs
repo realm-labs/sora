@@ -3,6 +3,7 @@ use std::{collections::BTreeMap, path::Path};
 use calamine::{Data, Reader, open_workbook_auto};
 use sora_data::model::{ConfigData, RowData, TableData};
 use sora_diagnostics::{Result, SoraError};
+use sora_execution::ExecutionContext;
 use sora_input::{
     cell::{CellContext, CellLocation},
     parser::{ParserRegistry, builtin_registry},
@@ -16,7 +17,20 @@ use crate::{
 };
 
 pub fn load_xlsx_config_data(ir: &ConfigIr, data_root: &Path) -> Result<ConfigData> {
-    load_xlsx_config_data_with_parsers(ir, data_root, builtin_registry())
+    load_xlsx_config_data_with_context_and_parsers(
+        ir,
+        data_root,
+        &ExecutionContext::default(),
+        builtin_registry(),
+    )
+}
+
+pub fn load_xlsx_config_data_with_context(
+    ir: &ConfigIr,
+    data_root: &Path,
+    execution: &ExecutionContext,
+) -> Result<ConfigData> {
+    load_xlsx_config_data_with_context_and_parsers(ir, data_root, execution, builtin_registry())
 }
 
 pub fn load_xlsx_config_data_with_parsers(
@@ -24,8 +38,22 @@ pub fn load_xlsx_config_data_with_parsers(
     data_root: &Path,
     parser_registry: &ParserRegistry,
 ) -> Result<ConfigData> {
+    load_xlsx_config_data_with_context_and_parsers(
+        ir,
+        data_root,
+        &ExecutionContext::default(),
+        parser_registry,
+    )
+}
+
+pub fn load_xlsx_config_data_with_context_and_parsers(
+    ir: &ConfigIr,
+    data_root: &Path,
+    execution: &ExecutionContext,
+    parser_registry: &ParserRegistry,
+) -> Result<ConfigData> {
     let grouped_tables = group_xlsx_tables(ir, data_root)?;
-    let tables = load_grouped_ranges(&grouped_tables, |table, path, sheet, range| {
+    let tables = load_grouped_ranges(&grouped_tables, execution, |table, path, sheet, range| {
         load_xlsx_table_data_from_range(ir, table, path, sheet, range, parser_registry)
     })?;
     Ok(ConfigData { tables })
@@ -62,6 +90,16 @@ pub fn load_xlsx_table_data_with_ir(
     table: &TableIr,
     path: &Path,
     sheet: &str,
+) -> Result<TableData> {
+    load_xlsx_table_data_with_ir_and_parsers(ir, table, path, sheet, builtin_registry())
+}
+
+pub fn load_xlsx_table_data_with_ir_and_context(
+    ir: &ConfigIr,
+    table: &TableIr,
+    path: &Path,
+    sheet: &str,
+    _execution: &ExecutionContext,
 ) -> Result<TableData> {
     load_xlsx_table_data_with_ir_and_parsers(ir, table, path, sheet, builtin_registry())
 }

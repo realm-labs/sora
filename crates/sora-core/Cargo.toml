@@ -12,6 +12,7 @@ sora-data.workspace = true
 sora-diagnostics.workspace = true
 sora-excel.workspace = true
 sora-export.workspace = true
+sora-execution.workspace = true
 sora-input.workspace = true
 sora-ir.workspace = true
 sora-schema.workspace = true

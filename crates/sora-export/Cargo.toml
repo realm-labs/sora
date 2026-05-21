@@ -6,12 +6,12 @@ license.workspace = true
 
 [dependencies]
 prost.workspace = true
-rayon.workspace = true
 serde.workspace = true
 serde_cbor.workspace = true
 serde_json.workspace = true
 sora-data.workspace = true
 sora-diagnostics.workspace = true
+sora-execution.workspace = true
 sora-ir.workspace = true
 
 [dev-dependencies]

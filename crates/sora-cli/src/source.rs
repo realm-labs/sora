@@ -5,13 +5,14 @@ use std::{
 
 use sora_data::model::{ConfigData, TableData};
 use sora_diagnostics::{Result, SoraError};
+use sora_execution::ExecutionContext;
 use sora_input::{
     source::{SourceFormat, resolve_table_source_format},
     traits::{DataInput, SchemaInput},
 };
 use sora_input_csv::reader::load_csv_table_data;
 use sora_input_toml::data::load_table_data_file;
-use sora_input_xlsx::reader::load_xlsx_table_data_with_ir;
+use sora_input_xlsx::reader::load_xlsx_table_data_with_ir_and_context;
 use sora_ir::model::{ConfigIr, TableIr};
 use sora_schema::model::SchemaFile;
 
@@ -46,12 +47,39 @@ impl<S: SchemaInput> DataInput for MixedProjectInput<S> {
     fn load_data(&self, ir: &ConfigIr) -> Result<ConfigData> {
         load_mixed_config_data(ir, &self.data_root, self.default_source_format.as_deref())
     }
+
+    fn load_data_with_context(
+        &self,
+        ir: &ConfigIr,
+        execution: &ExecutionContext,
+    ) -> Result<ConfigData> {
+        load_mixed_config_data_with_context(
+            ir,
+            &self.data_root,
+            self.default_source_format.as_deref(),
+            execution,
+        )
+    }
 }
 
 pub fn load_mixed_config_data(
     ir: &ConfigIr,
     data_root: &Path,
     default_source_format: Option<&str>,
+) -> Result<ConfigData> {
+    load_mixed_config_data_with_context(
+        ir,
+        data_root,
+        default_source_format,
+        &ExecutionContext::default(),
+    )
+}
+
+pub fn load_mixed_config_data_with_context(
+    ir: &ConfigIr,
+    data_root: &Path,
+    default_source_format: Option<&str>,
+    execution: &ExecutionContext,
 ) -> Result<ConfigData> {
     let mut tables = Vec::with_capacity(ir.tables.len());
     for table in &ir.tables {
@@ -60,6 +88,7 @@ pub fn load_mixed_config_data(
             table,
             data_root,
             default_source_format,
+            execution,
         )?);
     }
     Ok(ConfigData { tables })
@@ -70,6 +99,7 @@ fn load_mixed_table_data(
     table: &TableIr,
     data_root: &Path,
     default_source_format: Option<&str>,
+    execution: &ExecutionContext,
 ) -> Result<TableData> {
     let source = table
         .source
@@ -84,7 +114,7 @@ fn load_mixed_table_data(
         SourceFormat::Toml => load_table_data_file(&table.name, &path),
         SourceFormat::Xlsx => {
             let sheet = source.sheet.as_deref().unwrap_or(&table.name);
-            load_xlsx_table_data_with_ir(ir, table, &path, sheet)
+            load_xlsx_table_data_with_ir_and_context(ir, table, &path, sheet, execution)
         }
     }
 }

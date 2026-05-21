@@ -4,8 +4,8 @@ use std::{
 };
 
 use calamine::{Reader, open_workbook_auto};
-use rayon::prelude::*;
 use sora_diagnostics::{Result, SoraError};
+use sora_execution::ExecutionContext;
 use sora_input::source::{SourceFormat, resolve_table_source_format};
 use sora_ir::model::{ConfigIr, TableIr};
 
@@ -51,6 +51,7 @@ pub(crate) fn group_xlsx_tables<'a>(
 
 pub(crate) fn load_grouped_ranges<T>(
     grouped_tables: &[TableSheet<'_>],
+    execution: &ExecutionContext,
     load_table: impl Fn(&TableIr, &Path, &str, calamine::Range<calamine::Data>) -> Result<T> + Sync,
 ) -> Result<Vec<T>>
 where
@@ -65,35 +66,31 @@ where
     }
 
     let grouped_files = by_file.into_iter().collect::<Vec<_>>();
-    let table_groups = grouped_files
-        .into_par_iter()
-        .map(|(path, table_sheets)| {
-            let mut workbook =
-                open_workbook_auto(&path).map_err(|source| SoraError::ParseData {
+    let table_groups = execution.map(grouped_files, |(path, table_sheets)| {
+        let mut workbook = open_workbook_auto(&path).map_err(|source| SoraError::ParseData {
+            path: path.clone(),
+            message: source.to_string(),
+        })?;
+
+        let mut tables = Vec::with_capacity(table_sheets.len());
+        for table_sheet in table_sheets {
+            let range = workbook
+                .worksheet_range(&table_sheet.sheet)
+                .map_err(|source| SoraError::ParseData {
                     path: path.clone(),
-                    message: source.to_string(),
+                    message: format!(
+                        "failed to read worksheet `{}`: {}",
+                        table_sheet.sheet, source
+                    ),
                 })?;
+            tables.push((
+                table_sheet.index,
+                load_table(table_sheet.table, &path, &table_sheet.sheet, range)?,
+            ));
+        }
 
-            let mut tables = Vec::with_capacity(table_sheets.len());
-            for table_sheet in table_sheets {
-                let range = workbook
-                    .worksheet_range(&table_sheet.sheet)
-                    .map_err(|source| SoraError::ParseData {
-                        path: path.clone(),
-                        message: format!(
-                            "failed to read worksheet `{}`: {}",
-                            table_sheet.sheet, source
-                        ),
-                    })?;
-                tables.push((
-                    table_sheet.index,
-                    load_table(table_sheet.table, &path, &table_sheet.sheet, range)?,
-                ));
-            }
-
-            Ok(tables)
-        })
-        .collect::<Result<Vec<_>>>()?;
+        Ok(tables)
+    })?;
 
     let mut tables = table_groups.into_iter().flatten().collect::<Vec<_>>();
     tables.sort_by_key(|(index, _)| *index);

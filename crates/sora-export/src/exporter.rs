@@ -2,6 +2,7 @@ use std::path::PathBuf;
 
 use sora_data::model::ConfigData;
 use sora_diagnostics::Result;
+use sora_execution::ExecutionContext;
 use sora_ir::model::ConfigIr;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -19,6 +20,7 @@ pub enum OutputKind {
 pub struct ExportRequest<'a> {
     pub ir: &'a ConfigIr,
     pub data: &'a ConfigData,
+    pub execution: &'a ExecutionContext,
     pub output: ExportOutput,
 }
 

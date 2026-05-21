@@ -7,6 +7,7 @@ use sora_codegen::{
 };
 use sora_diagnostics::{Result, SoraError};
 use sora_excel::generator::ExcelTemplateGenerator;
+use sora_execution::ExecutionContext;
 use sora_export::{
     exporter::{ExportOutput, ExportRequest, OutputKind},
     registry::ExporterRegistry,
@@ -74,7 +75,7 @@ pub fn generate_code_with_scope_and_format(
 }
 
 pub fn export_data(input: &impl ProjectInput, format: &str, output: ExportOutput) -> Result<()> {
-    export_data_with_scope(input, format, output, None)
+    export_data_with_scope_and_context(input, format, output, None, &ExecutionContext::default())
 }
 
 pub fn export_data_with_scope(
@@ -83,8 +84,27 @@ pub fn export_data_with_scope(
     output: ExportOutput,
     scope: Option<&str>,
 ) -> Result<()> {
+    export_data_with_scope_and_context(input, format, output, scope, &ExecutionContext::default())
+}
+
+pub fn export_data_with_context(
+    input: &impl ProjectInput,
+    format: &str,
+    output: ExportOutput,
+    execution: &ExecutionContext,
+) -> Result<()> {
+    export_data_with_scope_and_context(input, format, output, None, execution)
+}
+
+pub fn export_data_with_scope_and_context(
+    input: &impl ProjectInput,
+    format: &str,
+    output: ExportOutput,
+    scope: Option<&str>,
+    execution: &ExecutionContext,
+) -> Result<()> {
     let ir = load_ir(input)?;
-    let data = load_validated_data(input, &ir)?;
+    let data = load_validated_data(input, &ir, execution)?;
     let (ir, data) = filter_ir_and_data_by_scope(&ir, &data, scope)?;
 
     let registry = ExporterRegistry::with_builtin_exporters();
@@ -98,6 +118,7 @@ pub fn export_data_with_scope(
     exporter.export(ExportRequest {
         ir: &ir,
         data: &data,
+        execution,
         output,
     })
 }
@@ -110,15 +131,40 @@ pub fn diff_data(
     diff_data_with_scope(left, right, output_path, None)
 }
 
+pub fn diff_data_with_context(
+    left: &impl ProjectInput,
+    right: &impl ProjectInput,
+    output_path: &Path,
+    execution: &ExecutionContext,
+) -> Result<ConfigDiff> {
+    diff_data_with_scope_and_context(left, right, output_path, None, execution)
+}
+
 pub fn diff_data_with_scope(
     left: &impl ProjectInput,
     right: &impl ProjectInput,
     output_path: &Path,
     scope: Option<&str>,
 ) -> Result<ConfigDiff> {
+    diff_data_with_scope_and_context(
+        left,
+        right,
+        output_path,
+        scope,
+        &ExecutionContext::default(),
+    )
+}
+
+pub fn diff_data_with_scope_and_context(
+    left: &impl ProjectInput,
+    right: &impl ProjectInput,
+    output_path: &Path,
+    scope: Option<&str>,
+    execution: &ExecutionContext,
+) -> Result<ConfigDiff> {
     let ir = load_ir(left)?;
-    let left_data = load_validated_data(left, &ir)?;
-    let right_data = load_validated_data(right, &ir)?;
+    let left_data = load_validated_data(left, &ir, execution)?;
+    let right_data = load_validated_data(right, &ir, execution)?;
     let (ir, left_data) = filter_ir_and_data_by_scope(&ir, &left_data, scope)?;
     let right_data = match scope {
         Some(_) => {
@@ -187,8 +233,9 @@ fn filter_ir_and_data_by_scope(
 fn load_validated_data(
     input: &impl ProjectInput,
     ir: &ConfigIr,
+    execution: &ExecutionContext,
 ) -> Result<sora_data::model::ConfigData> {
-    let data = input.load_data(ir)?;
+    let data = input.load_data_with_context(ir, execution)?;
     let data = sora_input::defaults::materialize_defaults(ir, &data)?;
     let data = sora_data::aggregate::materialize_aggregations(ir, &data)?;
     sora_data::validate::validate_config_data(ir, &data)?;

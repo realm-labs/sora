@@ -531,6 +531,7 @@ dependencies = [
  "sora-core",
  "sora-data",
  "sora-diagnostics",
+ "sora-execution",
  "sora-export",
  "sora-input",
  "sora-input-csv",
@@ -566,6 +567,7 @@ dependencies = [
  "sora-data",
  "sora-diagnostics",
  "sora-excel",
+ "sora-execution",
  "sora-export",
  "sora-input",
  "sora-input-toml",
@@ -607,16 +609,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "sora-execution"
+version = "0.1.0"
+dependencies = [
+ "rayon",
+]
+
+[[package]]
 name = "sora-export"
 version = "0.1.0"
 dependencies = [
  "prost",
- "rayon",
  "serde",
  "serde_cbor",
  "serde_json",
  "sora-data",
  "sora-diagnostics",
+ "sora-execution",
  "sora-ir",
  "sora-schema",
  "toml",
@@ -629,6 +638,7 @@ dependencies = [
  "serde_json",
  "sora-data",
  "sora-diagnostics",
+ "sora-execution",
  "sora-ir",
  "sora-schema",
  "toml",
@@ -665,11 +675,11 @@ name = "sora-input-xlsx"
 version = "0.1.0"
 dependencies = [
  "calamine",
- "rayon",
  "rust_xlsxwriter",
  "sora-data",
  "sora-diagnostics",
  "sora-excel",
+ "sora-execution",
  "sora-input",
  "sora-ir",
  "sora-schema",

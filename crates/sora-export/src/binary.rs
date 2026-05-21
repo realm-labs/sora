@@ -32,7 +32,7 @@ impl DataExporter for BinaryBundleExporter {
             create_dir_all(parent)?;
         }
 
-        let bundle = BinaryEncoder::new(request.ir, request.data).encode()?;
+        let bundle = BinaryEncoder::new(request.ir, request.data).encode(request.execution)?;
 
         write_file(path, bundle)
     }
@@ -62,6 +62,7 @@ mod tests {
             .export(ExportRequest {
                 ir: &ir,
                 data: &data,
+                execution: &sora_execution::ExecutionContext::default(),
                 output: ExportOutput::File(path.clone()),
             })
             .unwrap();

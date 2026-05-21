@@ -8,6 +8,12 @@ use sora_codegen::format::FormatMode;
 #[command(about = "Sora game configuration compiler")]
 #[command(version)]
 pub struct Cli {
+    #[arg(long, global = true)]
+    pub jobs: Option<usize>,
+
+    #[arg(long, global = true)]
+    pub serial: bool,
+
     #[command(subcommand)]
     pub command: Command,
 }

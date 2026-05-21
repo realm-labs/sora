@@ -59,6 +59,7 @@ mod tests {
             .export(ExportRequest {
                 ir: &ir,
                 data: &data,
+                execution: &sora_execution::ExecutionContext::default(),
                 output: ExportOutput::File(path.clone()),
             })
             .unwrap();

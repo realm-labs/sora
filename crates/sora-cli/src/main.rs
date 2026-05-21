@@ -10,5 +10,5 @@ use crate::args::Cli;
 
 fn main() -> Result<()> {
     let cli = Cli::parse();
-    commands::run(cli.command)
+    commands::run(cli)
 }
