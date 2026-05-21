@@ -51,6 +51,8 @@ export function decodeCharacterValue(value: SoraValue): Character {
 }
 
 export class CharacterTable implements SoraConfigTable {
+    static readonly tableName = "Character";
+
     private constructor(
         private readonly _keys: number[],
         private readonly _rows: Map<number, Character>,
@@ -64,7 +66,7 @@ export class CharacterTable implements SoraConfigTable {
     }
 
     name(): string {
-        return "Character";
+        return CharacterTable.tableName;
     }
 
     mode(): string {

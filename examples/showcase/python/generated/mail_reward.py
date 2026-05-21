@@ -41,6 +41,8 @@ class MailReward:
 
 
 class MailRewardTable(SoraConfigTable):
+    NAME = "MailReward"
+
     def __init__(
         self,
         rows: list[MailReward],
@@ -54,7 +56,7 @@ class MailRewardTable(SoraConfigTable):
         )
 
     def name(self) -> str:
-        return "MailReward"
+        return self.NAME
 
     def mode(self) -> str:
         return "list"

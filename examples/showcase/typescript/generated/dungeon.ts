@@ -39,6 +39,8 @@ export function decodeDungeonValue(value: SoraValue): Dungeon {
 }
 
 export class DungeonTable implements SoraConfigTable {
+    static readonly tableName = "Dungeon";
+
     private constructor(
         private readonly _keys: number[],
         private readonly _rows: Map<number, Dungeon>,
@@ -52,7 +54,7 @@ export class DungeonTable implements SoraConfigTable {
     }
 
     name(): string {
-        return "Dungeon";
+        return DungeonTable.tableName;
     }
 
     mode(): string {

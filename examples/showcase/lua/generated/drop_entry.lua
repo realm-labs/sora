@@ -26,6 +26,7 @@ end
 ---@field private _rows DropEntry[]
 local DropEntryTable = {}
 DropEntryTable.__index = DropEntryTable
+DropEntryTable.NAME = "DropEntry"
 
 ---@param rows DropEntry[]
 ---@return DropEntryTable
@@ -37,7 +38,7 @@ end
 
 ---@return string
 function DropEntryTable:name()
-    return "DropEntry"
+    return DropEntryTable.NAME
 end
 
 ---@return string

@@ -27,6 +27,7 @@ final class StageReward {
 }
 
 final class StageRewardTable extends Iterable<StageReward> implements SoraConfigTable {
+  static const tableName = 'StageReward';
   final List<StageReward> _rows;
 
   const StageRewardTable(
@@ -40,7 +41,7 @@ final class StageRewardTable extends Iterable<StageReward> implements SoraConfig
   }
 
   @override
-  String get name => 'StageReward';
+  String get name => tableName;
 
   @override
   String get mode => 'list';

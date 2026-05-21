@@ -63,6 +63,8 @@ class Skill:
 
 
 class SkillTable(SoraConfigTable):
+    NAME = "Skill"
+
     def __init__(
         self,
         keys: list[int],
@@ -79,7 +81,7 @@ class SkillTable(SoraConfigTable):
         )
 
     def name(self) -> str:
-        return "Skill"
+        return self.NAME
 
     def mode(self) -> str:
         return "map"

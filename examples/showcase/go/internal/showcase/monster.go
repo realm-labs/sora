@@ -74,6 +74,8 @@ func decodeMonsterValue(input SoraValue) (Monster, error) {
 	return value, nil
 }
 
+const monsterTableName = "Monster"
+
 type MonsterTable struct {
 	keys []int32
 	rows map[int32]Monster
@@ -88,7 +90,7 @@ func buildMonsterTable(rows []Monster) (*MonsterTable, error) {
 }
 
 func decodeMonsterTable(source SoraTableSource) (*MonsterTable, error) {
-	rows, err := DecodeSourceTable(source, "Monster", decodeMonster, decodeMonsterValue)
+	rows, err := DecodeSourceTable(source, monsterTableName, decodeMonster, decodeMonsterValue)
 	if err != nil {
 		return nil, err
 	}
@@ -117,7 +119,7 @@ func (table *MonsterTable) OrderedRows() []Monster {
 	return rows
 }
 func (table *MonsterTable) Name() string {
-	return "Monster"
+	return monsterTableName
 }
 
 func (table *MonsterTable) Mode() SoraTableMode {

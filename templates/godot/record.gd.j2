@@ -29,6 +29,8 @@ static func decode(value: Variant) -> {{ record.class_name }}:
 class {{ table.class_name }}:
 	extends SoraRuntime.SoraConfigTable
 
+	const TABLE_NAME := "{{ table.name }}"
+
 {%- if table.mode == "map" and table.key_field_name %}
 	var keys: Array = []
 	var _rows: Dictionary = {}
@@ -46,14 +48,14 @@ class {{ table.class_name }}:
 
 	static func decode(rows: Array) -> {{ table.class_name }}:
 		var table := {{ table.class_name }}.new()
-		table.name = "{{ table.name }}"
+		table.name = TABLE_NAME
 		table.mode = "{{ table.mode }}"
 		table.key = {% if table.key_name %}"{{ table.key_name }}"{% else %}null{% endif %}
 {%- if table.mode == "map" and table.key_field_name %}
 		table.keys = rows.map(func(row): return row.{{ table.key_field_name }})
 		table._rows = SoraRuntime.decode_map_table(rows, func(row): return row.{{ table.key_field_name }})
 {%- elif table.mode == "singleton" %}
-		table.row = SoraRuntime.require_singleton_table(rows, "{{ table.name }}")
+		table.row = SoraRuntime.require_singleton_table(rows, TABLE_NAME)
 {%- else %}
 		table.rows = rows
 {%- endif %}
@@ -78,7 +80,7 @@ class {{ table.class_name }}:
 	func get_row(key_value: Variant) -> {{ table.row_type }}:
 		var value = _rows.get(key_value)
 		if value == null:
-			SoraRuntime.report_error("missing row in table `{{ table.name }}` for key `%s`" % str(key_value))
+			SoraRuntime.report_error("missing row in table `%s` for key `%s`" % [TABLE_NAME, str(key_value)])
 		return value
 
 	func try_get(key_value: Variant) -> {{ table.row_type }}:

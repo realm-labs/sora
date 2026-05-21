@@ -49,6 +49,7 @@ public final class DropEntry {
 }
 
 final class DropEntryTable extends java.util.AbstractList<DropEntry> implements SoraTable {
+    static final String NAME = "DropEntry";
     private final java.util.List<DropEntry> rows;
 
     private DropEntryTable(java.util.List<DropEntry> rows) {
@@ -60,7 +61,7 @@ final class DropEntryTable extends java.util.AbstractList<DropEntry> implements 
     }
 
     static DropEntryTable decode(SoraTableSource source) {
-        return fromRows(source.decodeTable("DropEntry", DropEntry::decode, DropEntry::decode));
+        return fromRows(source.decodeTable(NAME, DropEntry::decode, DropEntry::decode));
     }
 
     public java.util.List<DropEntry> rows() {
@@ -72,7 +73,7 @@ final class DropEntryTable extends java.util.AbstractList<DropEntry> implements 
     }
     @Override
     public String name() {
-        return "DropEntry";
+        return NAME;
     }
 
     @Override

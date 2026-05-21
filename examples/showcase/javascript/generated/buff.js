@@ -27,6 +27,8 @@ export function decodeBuffValue(value) {
 }
 
 export class BuffTable {
+    static tableName = "Buff";
+
     constructor(
         keys,
         rows,
@@ -43,7 +45,7 @@ export class BuffTable {
     }
 
     name() {
-        return "Buff";
+        return BuffTable.tableName;
     }
 
     mode() {

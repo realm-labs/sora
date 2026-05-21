@@ -35,6 +35,7 @@ public sealed record Shop(
 
 public sealed class ShopTable : ISoraTable, IReadOnlyDictionary<int, Shop>
 {
+    public const string TableName = "Shop";
     private readonly List<int> keys;
     private readonly Dictionary<int, Shop> rows;
 
@@ -46,7 +47,7 @@ public sealed class ShopTable : ISoraTable, IReadOnlyDictionary<int, Shop>
 
     internal static ShopTable Decode(ISoraTableSource source)
     {
-        return FromRows(source.DecodeTable("Shop", global::com.sora.showcase.Shop.Decode, global::com.sora.showcase.Shop.Decode));
+        return FromRows(source.DecodeTable(TableName, global::com.sora.showcase.Shop.Decode, global::com.sora.showcase.Shop.Decode));
     }
 
     internal static ShopTable FromRows(List<Shop> rows)
@@ -109,7 +110,7 @@ public sealed class ShopTable : ISoraTable, IReadOnlyDictionary<int, Shop>
             return orderedRows;
         }
     }
-    public string Name => "Shop";
+    public string Name => TableName;
     public SoraTableMode Mode => SoraTableMode.Map;
     public string? Key => "id";
     public string RowType => "Shop";

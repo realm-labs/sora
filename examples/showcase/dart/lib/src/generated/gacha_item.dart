@@ -28,6 +28,7 @@ final class GachaItem {
 }
 
 final class GachaItemTable extends Iterable<GachaItem> implements SoraConfigTable {
+  static const tableName = 'GachaItem';
   final List<GachaItem> _rows;
 
   const GachaItemTable(
@@ -41,7 +42,7 @@ final class GachaItemTable extends Iterable<GachaItem> implements SoraConfigTabl
   }
 
   @override
-  String get name => 'GachaItem';
+  String get name => tableName;
 
   @override
   String get mode => 'list';

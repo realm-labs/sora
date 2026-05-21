@@ -42,6 +42,8 @@ export function decodeEventRuleValue(value: SoraValue): EventRule {
 }
 
 export class EventRuleTable implements SoraConfigTable {
+    static readonly tableName = "EventRule";
+
     private constructor(
         private readonly _keys: number[],
         private readonly _rows: Map<number, EventRule>,
@@ -55,7 +57,7 @@ export class EventRuleTable implements SoraConfigTable {
     }
 
     name(): string {
-        return "EventRule";
+        return EventRuleTable.tableName;
     }
 
     mode(): string {

@@ -31,6 +31,8 @@ pub struct QuestRewardTable {
 }
 
 impl QuestRewardTable {
+    pub const NAME: &'static str = "QuestReward";
+
     pub(super) fn from_rows(rows: Vec<QuestReward>) -> Result<Self, super::runtime::SoraReadError> {
         Ok(Self { rows })
     }
@@ -46,7 +48,7 @@ impl std::ops::Deref for QuestRewardTable {
 
 impl super::SoraTable for QuestRewardTable {
     fn name(&self) -> &'static str {
-        "QuestReward"
+        Self::NAME
     }
 
     fn mode(&self) -> super::SoraTableMode {

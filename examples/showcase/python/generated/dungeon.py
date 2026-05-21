@@ -42,6 +42,8 @@ class Dungeon:
 
 
 class DungeonTable(SoraConfigTable):
+    NAME = "Dungeon"
+
     def __init__(
         self,
         keys: list[int],
@@ -58,7 +60,7 @@ class DungeonTable(SoraConfigTable):
         )
 
     def name(self) -> str:
-        return "Dungeon"
+        return self.NAME
 
     def mode(self) -> str:
         return "map"

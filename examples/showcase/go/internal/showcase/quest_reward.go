@@ -56,6 +56,8 @@ func decodeQuestRewardValue(input SoraValue) (QuestReward, error) {
 	return value, nil
 }
 
+const questRewardTableName = "QuestReward"
+
 type QuestRewardTable struct {
 	rows []QuestReward
 }
@@ -65,7 +67,7 @@ func buildQuestRewardTable(rows []QuestReward) (*QuestRewardTable, error) {
 }
 
 func decodeQuestRewardTable(source SoraTableSource) (*QuestRewardTable, error) {
-	rows, err := DecodeSourceTable(source, "QuestReward", decodeQuestReward, decodeQuestRewardValue)
+	rows, err := DecodeSourceTable(source, questRewardTableName, decodeQuestReward, decodeQuestRewardValue)
 	if err != nil {
 		return nil, err
 	}
@@ -76,7 +78,7 @@ func (table *QuestRewardTable) Rows() []QuestReward {
 	return table.rows
 }
 func (table *QuestRewardTable) Name() string {
-	return "QuestReward"
+	return questRewardTableName
 }
 
 func (table *QuestRewardTable) Mode() SoraTableMode {

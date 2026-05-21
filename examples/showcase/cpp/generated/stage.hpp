@@ -6,6 +6,7 @@
 #include "reward.hpp"
 
 #include <unordered_map>
+#include <string>
 #include <vector>
 
 namespace sora::showcase {
@@ -30,6 +31,8 @@ struct Stage {
 
 class StageTable final : public SoraTable {
 public:
+    static constexpr const char* NAME = "Stage";
+
     StageTable() {}
     StageTable(const StageTable&) = delete;
     StageTable& operator=(const StageTable&) = delete;
@@ -37,7 +40,7 @@ public:
     StageTable& operator=(StageTable&&) = default;
 
     static StageTable decode(const SoraBundle& bundle) {
-        std::vector<Stage> rows = bundle.decode_table<Stage>("Stage");
+        std::vector<Stage> rows = bundle.decode_table<Stage>(NAME);
         StageTable table;
         for (std::size_t index = 0; index < rows.size(); ++index) {
             const Stage& row = rows[index];
@@ -48,7 +51,7 @@ public:
         return table;
     }
 
-    const char* name() const override { return "Stage"; }
+    const char* name() const override { return NAME; }
     const char* mode() const override { return "map"; }
     const char* key() const override { return "id"; }
     std::size_t size() const override {

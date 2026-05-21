@@ -39,6 +39,8 @@ export function decodeAchievementValue(value: SoraValue): Achievement {
 }
 
 export class AchievementTable implements SoraConfigTable {
+    static readonly tableName = "Achievement";
+
     private constructor(
         private readonly _keys: number[],
         private readonly _rows: Map<number, Achievement>,
@@ -52,7 +54,7 @@ export class AchievementTable implements SoraConfigTable {
     }
 
     name(): string {
-        return "Achievement";
+        return AchievementTable.tableName;
     }
 
     mode(): string {

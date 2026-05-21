@@ -33,6 +33,7 @@ end
 ---@field private _rows table<integer, Character>
 local CharacterTable = {}
 CharacterTable.__index = CharacterTable
+CharacterTable.NAME = "Character"
 
 ---@param rows Character[]
 ---@return CharacterTable
@@ -49,7 +50,7 @@ end
 
 ---@return string
 function CharacterTable:name()
-    return "Character"
+    return CharacterTable.NAME
 end
 
 ---@return string

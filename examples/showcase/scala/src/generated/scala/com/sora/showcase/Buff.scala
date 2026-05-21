@@ -28,7 +28,7 @@ final class BuffTable private (
   def values: Iterable[Buff] = rows.values
 
   def orderedValues: Vector[Buff] = keys.flatMap(rows.get)
-  override val name: String = "Buff"
+  override val name: String = BuffTable.Name
   override val mode: SoraTableMode = SoraTableMode.Map
   override val key: Option[String] = Some("id")
   override val rowType: String = "Buff"
@@ -36,8 +36,10 @@ final class BuffTable private (
 }
 
 object BuffTable {
+  val Name: String = "Buff"
+
   def decode(source: SoraTableSource): BuffTable =
-    fromRows(source.decodeTable("Buff", Buff.decode))
+    fromRows(source.decodeTable(Name, Buff.decode))
 
   private def fromRows(rows: Vector[Buff]): BuffTable =
     new BuffTable(

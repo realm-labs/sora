@@ -44,6 +44,7 @@ public final class Localization {
 }
 
 final class LocalizationTable extends java.util.AbstractMap<String, Localization> implements SoraTable {
+    static final String NAME = "Localization";
     private final List<String> keys;
     private final java.util.Map<String, Localization> rows;
 
@@ -57,7 +58,7 @@ final class LocalizationTable extends java.util.AbstractMap<String, Localization
     }
 
     static LocalizationTable decode(SoraTableSource source) {
-        return fromRows(source.decodeTable("Localization", Localization::decode, Localization::decode));
+        return fromRows(source.decodeTable(NAME, Localization::decode, Localization::decode));
     }
 
     public java.util.Map<String, Localization> rows() {
@@ -82,7 +83,7 @@ final class LocalizationTable extends java.util.AbstractMap<String, Localization
     }
     @Override
     public String name() {
-        return "Localization";
+        return NAME;
     }
 
     @Override

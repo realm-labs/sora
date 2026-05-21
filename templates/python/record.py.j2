@@ -76,6 +76,8 @@ class {{ record.pascal_name }}:
 
 
 class {{ table.pascal_name }}Table(SoraConfigTable):
+    NAME = "{{ table.name }}"
+
     def __init__(
         self,
 {%- if table.mode == "map" and table.key_type %}
@@ -123,7 +125,7 @@ class {{ table.pascal_name }}Table(SoraConfigTable):
         )
 {%- elif table.mode == "singleton" %}
         return {{ table.pascal_name }}Table(
-            require_singleton_table(rows, "{{ table.name }}"),
+            require_singleton_table(rows, {{ table.pascal_name }}Table.NAME),
         )
 {%- else %}
         return {{ table.pascal_name }}Table(
@@ -138,7 +140,7 @@ class {{ table.pascal_name }}Table(SoraConfigTable):
 {%- endif %}
 
     def name(self) -> str:
-        return "{{ table.name }}"
+        return self.NAME
 
     def mode(self) -> str:
         return "{{ table.mode }}"

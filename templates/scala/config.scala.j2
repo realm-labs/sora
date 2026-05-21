@@ -31,7 +31,7 @@ final class SoraConfig private (
 
 {%- for table in model.tables %}
   def {{ table.camel_name }}: {{ table.pascal_name }}Table =
-    table("{{ table.name }}")
+    table({{ table.pascal_name }}Table.Name)
 
 {%- endfor %}
 }
@@ -40,7 +40,7 @@ object SoraConfig {
   def fromSource(source: SoraTableSource): SoraConfig = {
     val tables = Map[String, SoraTable](
 {%- for table in model.tables %}
-      "{{ table.name }}" -> {{ table.pascal_name }}Table.decode(source){% if not loop.last %},{% endif %}
+      {{ table.pascal_name }}Table.Name -> {{ table.pascal_name }}Table.decode(source){% if not loop.last %},{% endif %}
 {%- endfor %}
     )
     new SoraConfig(tables)

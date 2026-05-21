@@ -31,34 +31,34 @@ public final class SoraConfig {
 
     public static SoraConfig fromSource(SoraTableSource source) {
         var tables = new HashMap<String, SoraTable>(28);
-        tables.put("Item", ItemTable.decode(source));
-        tables.put("Skill", SkillTable.decode(source));
-        tables.put("Quest", QuestTable.decode(source));
-        tables.put("QuestReward", QuestRewardTable.decode(source));
-        tables.put("GameSettings", GameSettingsTable.decode(source));
-        tables.put("Localization", LocalizationTable.decode(source));
-        tables.put("LevelExp", LevelExpTable.decode(source));
-        tables.put("Character", CharacterTable.decode(source));
-        tables.put("CharacterSkill", CharacterSkillTable.decode(source));
-        tables.put("Buff", BuffTable.decode(source));
-        tables.put("DropGroup", DropGroupTable.decode(source));
-        tables.put("DropEntry", DropEntryTable.decode(source));
-        tables.put("Monster", MonsterTable.decode(source));
-        tables.put("Stage", StageTable.decode(source));
-        tables.put("StageReward", StageRewardTable.decode(source));
-        tables.put("Dungeon", DungeonTable.decode(source));
-        tables.put("Shop", ShopTable.decode(source));
-        tables.put("ShopItem", ShopItemTable.decode(source));
-        tables.put("Recipe", RecipeTable.decode(source));
-        tables.put("GachaPool", GachaPoolTable.decode(source));
-        tables.put("GachaItem", GachaItemTable.decode(source));
-        tables.put("EquipmentSet", EquipmentSetTable.decode(source));
-        tables.put("Achievement", AchievementTable.decode(source));
-        tables.put("VipLevel", VipLevelTable.decode(source));
-        tables.put("MailTemplate", MailTemplateTable.decode(source));
-        tables.put("MailReward", MailRewardTable.decode(source));
-        tables.put("Dialogue", DialogueTable.decode(source));
-        tables.put("EventRule", EventRuleTable.decode(source));
+        tables.put(ItemTable.NAME, ItemTable.decode(source));
+        tables.put(SkillTable.NAME, SkillTable.decode(source));
+        tables.put(QuestTable.NAME, QuestTable.decode(source));
+        tables.put(QuestRewardTable.NAME, QuestRewardTable.decode(source));
+        tables.put(GameSettingsTable.NAME, GameSettingsTable.decode(source));
+        tables.put(LocalizationTable.NAME, LocalizationTable.decode(source));
+        tables.put(LevelExpTable.NAME, LevelExpTable.decode(source));
+        tables.put(CharacterTable.NAME, CharacterTable.decode(source));
+        tables.put(CharacterSkillTable.NAME, CharacterSkillTable.decode(source));
+        tables.put(BuffTable.NAME, BuffTable.decode(source));
+        tables.put(DropGroupTable.NAME, DropGroupTable.decode(source));
+        tables.put(DropEntryTable.NAME, DropEntryTable.decode(source));
+        tables.put(MonsterTable.NAME, MonsterTable.decode(source));
+        tables.put(StageTable.NAME, StageTable.decode(source));
+        tables.put(StageRewardTable.NAME, StageRewardTable.decode(source));
+        tables.put(DungeonTable.NAME, DungeonTable.decode(source));
+        tables.put(ShopTable.NAME, ShopTable.decode(source));
+        tables.put(ShopItemTable.NAME, ShopItemTable.decode(source));
+        tables.put(RecipeTable.NAME, RecipeTable.decode(source));
+        tables.put(GachaPoolTable.NAME, GachaPoolTable.decode(source));
+        tables.put(GachaItemTable.NAME, GachaItemTable.decode(source));
+        tables.put(EquipmentSetTable.NAME, EquipmentSetTable.decode(source));
+        tables.put(AchievementTable.NAME, AchievementTable.decode(source));
+        tables.put(VipLevelTable.NAME, VipLevelTable.decode(source));
+        tables.put(MailTemplateTable.NAME, MailTemplateTable.decode(source));
+        tables.put(MailRewardTable.NAME, MailRewardTable.decode(source));
+        tables.put(DialogueTable.NAME, DialogueTable.decode(source));
+        tables.put(EventRuleTable.NAME, EventRuleTable.decode(source));
         return new SoraConfig(tables);
     }
 
@@ -74,88 +74,88 @@ public final class SoraConfig {
         throw new SoraReadException("generated SoraConfig is missing table `" + name + "` or has an unexpected table type");
     }
     public ItemTable item() {
-        return table("Item", ItemTable.class);
+        return table(ItemTable.NAME, ItemTable.class);
     }
     public SkillTable skill() {
-        return table("Skill", SkillTable.class);
+        return table(SkillTable.NAME, SkillTable.class);
     }
     public QuestTable quest() {
-        return table("Quest", QuestTable.class);
+        return table(QuestTable.NAME, QuestTable.class);
     }
     public QuestRewardTable questReward() {
-        return table("QuestReward", QuestRewardTable.class);
+        return table(QuestRewardTable.NAME, QuestRewardTable.class);
     }
     public GameSettingsTable gameSettings() {
-        return table("GameSettings", GameSettingsTable.class);
+        return table(GameSettingsTable.NAME, GameSettingsTable.class);
     }
     public LocalizationTable localization() {
-        return table("Localization", LocalizationTable.class);
+        return table(LocalizationTable.NAME, LocalizationTable.class);
     }
     public LevelExpTable levelExp() {
-        return table("LevelExp", LevelExpTable.class);
+        return table(LevelExpTable.NAME, LevelExpTable.class);
     }
     public CharacterTable character() {
-        return table("Character", CharacterTable.class);
+        return table(CharacterTable.NAME, CharacterTable.class);
     }
     public CharacterSkillTable characterSkill() {
-        return table("CharacterSkill", CharacterSkillTable.class);
+        return table(CharacterSkillTable.NAME, CharacterSkillTable.class);
     }
     public BuffTable buff() {
-        return table("Buff", BuffTable.class);
+        return table(BuffTable.NAME, BuffTable.class);
     }
     public DropGroupTable dropGroup() {
-        return table("DropGroup", DropGroupTable.class);
+        return table(DropGroupTable.NAME, DropGroupTable.class);
     }
     public DropEntryTable dropEntry() {
-        return table("DropEntry", DropEntryTable.class);
+        return table(DropEntryTable.NAME, DropEntryTable.class);
     }
     public MonsterTable monster() {
-        return table("Monster", MonsterTable.class);
+        return table(MonsterTable.NAME, MonsterTable.class);
     }
     public StageTable stage() {
-        return table("Stage", StageTable.class);
+        return table(StageTable.NAME, StageTable.class);
     }
     public StageRewardTable stageReward() {
-        return table("StageReward", StageRewardTable.class);
+        return table(StageRewardTable.NAME, StageRewardTable.class);
     }
     public DungeonTable dungeon() {
-        return table("Dungeon", DungeonTable.class);
+        return table(DungeonTable.NAME, DungeonTable.class);
     }
     public ShopTable shop() {
-        return table("Shop", ShopTable.class);
+        return table(ShopTable.NAME, ShopTable.class);
     }
     public ShopItemTable shopItem() {
-        return table("ShopItem", ShopItemTable.class);
+        return table(ShopItemTable.NAME, ShopItemTable.class);
     }
     public RecipeTable recipe() {
-        return table("Recipe", RecipeTable.class);
+        return table(RecipeTable.NAME, RecipeTable.class);
     }
     public GachaPoolTable gachaPool() {
-        return table("GachaPool", GachaPoolTable.class);
+        return table(GachaPoolTable.NAME, GachaPoolTable.class);
     }
     public GachaItemTable gachaItem() {
-        return table("GachaItem", GachaItemTable.class);
+        return table(GachaItemTable.NAME, GachaItemTable.class);
     }
     public EquipmentSetTable equipmentSet() {
-        return table("EquipmentSet", EquipmentSetTable.class);
+        return table(EquipmentSetTable.NAME, EquipmentSetTable.class);
     }
     public AchievementTable achievement() {
-        return table("Achievement", AchievementTable.class);
+        return table(AchievementTable.NAME, AchievementTable.class);
     }
     public VipLevelTable vipLevel() {
-        return table("VipLevel", VipLevelTable.class);
+        return table(VipLevelTable.NAME, VipLevelTable.class);
     }
     public MailTemplateTable mailTemplate() {
-        return table("MailTemplate", MailTemplateTable.class);
+        return table(MailTemplateTable.NAME, MailTemplateTable.class);
     }
     public MailRewardTable mailReward() {
-        return table("MailReward", MailRewardTable.class);
+        return table(MailRewardTable.NAME, MailRewardTable.class);
     }
     public DialogueTable dialogue() {
-        return table("Dialogue", DialogueTable.class);
+        return table(DialogueTable.NAME, DialogueTable.class);
     }
     public EventRuleTable eventRule() {
-        return table("EventRule", EventRuleTable.class);
+        return table(EventRuleTable.NAME, EventRuleTable.class);
     }
     static <K, V> Map<K, V> decodeMapTable(List<V> rows, Function<V, K> key) {
         var map = new HashMap<K, V>(rows.size());

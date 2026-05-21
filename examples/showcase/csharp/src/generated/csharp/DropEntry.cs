@@ -41,6 +41,7 @@ public sealed record DropEntry(
 
 public sealed class DropEntryTable : ISoraTable, IReadOnlyList<DropEntry>
 {
+    public const string TableName = "DropEntry";
     private readonly List<DropEntry> rows;
 
     internal DropEntryTable(List<DropEntry> rows)
@@ -50,7 +51,7 @@ public sealed class DropEntryTable : ISoraTable, IReadOnlyList<DropEntry>
 
     internal static DropEntryTable Decode(ISoraTableSource source)
     {
-        return FromRows(source.DecodeTable("DropEntry", global::com.sora.showcase.DropEntry.Decode, global::com.sora.showcase.DropEntry.Decode));
+        return FromRows(source.DecodeTable(TableName, global::com.sora.showcase.DropEntry.Decode, global::com.sora.showcase.DropEntry.Decode));
     }
 
     internal static DropEntryTable FromRows(List<DropEntry> rows)
@@ -70,7 +71,7 @@ public sealed class DropEntryTable : ISoraTable, IReadOnlyList<DropEntry>
     {
         return GetEnumerator();
     }
-    public string Name => "DropEntry";
+    public string Name => TableName;
     public SoraTableMode Mode => SoraTableMode.List;
     public string? Key => null;
     public string RowType => "DropEntry";

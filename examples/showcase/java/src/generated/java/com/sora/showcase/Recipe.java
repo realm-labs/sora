@@ -39,6 +39,7 @@ public final class Recipe {
 }
 
 final class RecipeTable extends java.util.AbstractMap<Integer, Recipe> implements SoraTable {
+    static final String NAME = "Recipe";
     private final List<Integer> keys;
     private final java.util.Map<Integer, Recipe> rows;
 
@@ -52,7 +53,7 @@ final class RecipeTable extends java.util.AbstractMap<Integer, Recipe> implement
     }
 
     static RecipeTable decode(SoraTableSource source) {
-        return fromRows(source.decodeTable("Recipe", Recipe::decode, Recipe::decode));
+        return fromRows(source.decodeTable(NAME, Recipe::decode, Recipe::decode));
     }
 
     public java.util.Map<Integer, Recipe> rows() {
@@ -77,7 +78,7 @@ final class RecipeTable extends java.util.AbstractMap<Integer, Recipe> implement
     }
     @Override
     public String name() {
-        return "Recipe";
+        return NAME;
     }
 
     @Override

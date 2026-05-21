@@ -44,6 +44,7 @@ end
 {%- endfor %}
 local {{ table.pascal_name }}Table = {}
 {{ table.pascal_name }}Table.__index = {{ table.pascal_name }}Table
+{{ table.pascal_name }}Table.NAME = "{{ table.name }}"
 
 ---@param rows {{ table.row_type }}[]
 ---@return {{ table.pascal_name }}Table
@@ -65,7 +66,7 @@ function {{ table.pascal_name }}Table.decode(rows)
     }, {{ table.pascal_name }}Table)
 {%- elif table.mode == "singleton" %}
     return setmetatable({
-        _row = Runtime.require_singleton_table(rows, "{{ table.name }}"),
+        _row = Runtime.require_singleton_table(rows, {{ table.pascal_name }}Table.NAME),
     }, {{ table.pascal_name }}Table)
 {%- else %}
     return setmetatable({
@@ -82,7 +83,7 @@ end
 
 ---@return string
 function {{ table.pascal_name }}Table:name()
-    return "{{ table.name }}"
+    return {{ table.pascal_name }}Table.NAME
 end
 
 ---@return string

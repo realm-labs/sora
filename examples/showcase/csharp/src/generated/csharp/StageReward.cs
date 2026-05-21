@@ -38,6 +38,7 @@ public sealed record StageReward(
 
 public sealed class StageRewardTable : ISoraTable, IReadOnlyList<StageReward>
 {
+    public const string TableName = "StageReward";
     private readonly List<StageReward> rows;
 
     internal StageRewardTable(List<StageReward> rows)
@@ -47,7 +48,7 @@ public sealed class StageRewardTable : ISoraTable, IReadOnlyList<StageReward>
 
     internal static StageRewardTable Decode(ISoraTableSource source)
     {
-        return FromRows(source.DecodeTable("StageReward", global::com.sora.showcase.StageReward.Decode, global::com.sora.showcase.StageReward.Decode));
+        return FromRows(source.DecodeTable(TableName, global::com.sora.showcase.StageReward.Decode, global::com.sora.showcase.StageReward.Decode));
     }
 
     internal static StageRewardTable FromRows(List<StageReward> rows)
@@ -67,7 +68,7 @@ public sealed class StageRewardTable : ISoraTable, IReadOnlyList<StageReward>
     {
         return GetEnumerator();
     }
-    public string Name => "StageReward";
+    public string Name => TableName;
     public SoraTableMode Mode => SoraTableMode.List;
     public string? Key => null;
     public string RowType => "StageReward";

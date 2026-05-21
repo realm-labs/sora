@@ -24,6 +24,8 @@ export function decodeDialogueValue(value) {
 }
 
 export class DialogueTable {
+    static tableName = "Dialogue";
+
     constructor(
         keys,
         rows,
@@ -40,7 +42,7 @@ export class DialogueTable {
     }
 
     name() {
-        return "Dialogue";
+        return DialogueTable.tableName;
     }
 
     mode() {

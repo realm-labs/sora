@@ -34,6 +34,8 @@ pub struct BuffTable {
 }
 
 impl BuffTable {
+    pub const NAME: &'static str = "Buff";
+
     pub(super) fn from_rows(rows: Vec<Buff>) -> Result<Self, super::runtime::SoraReadError> {
         let keys = rows.iter().map(|row| row.id).collect::<Vec<_>>();
         Ok(Self {
@@ -64,7 +66,7 @@ impl std::ops::Deref for BuffTable {
 
 impl super::SoraTable for BuffTable {
     fn name(&self) -> &'static str {
-        "Buff"
+        Self::NAME
     }
 
     fn mode(&self) -> super::SoraTableMode {

@@ -5,6 +5,7 @@
 #include "sora_runtime.hpp"
 
 #include <unordered_map>
+#include <string>
 #include <vector>
 
 namespace sora::showcase {
@@ -27,6 +28,8 @@ struct MailReward {
 
 class MailRewardTable final : public SoraTable {
 public:
+    static constexpr const char* NAME = "MailReward";
+
     MailRewardTable() {}
     MailRewardTable(const MailRewardTable&) = delete;
     MailRewardTable& operator=(const MailRewardTable&) = delete;
@@ -34,14 +37,14 @@ public:
     MailRewardTable& operator=(MailRewardTable&&) = default;
 
     static MailRewardTable decode(const SoraBundle& bundle) {
-        std::vector<MailReward> rows = bundle.decode_table<MailReward>("MailReward");
+        std::vector<MailReward> rows = bundle.decode_table<MailReward>(NAME);
         MailRewardTable table;
         table.rows_ = rows;
         table.build_indexes();
         return table;
     }
 
-    const char* name() const override { return "MailReward"; }
+    const char* name() const override { return NAME; }
     const char* mode() const override { return "list"; }
     const char* key() const override { return nullptr; }
     std::size_t size() const override {

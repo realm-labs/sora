@@ -5,6 +5,7 @@
 #include "sora_runtime.hpp"
 
 #include <unordered_map>
+#include <string>
 #include <vector>
 
 namespace sora::showcase {
@@ -25,6 +26,8 @@ struct LevelExp {
 
 class LevelExpTable final : public SoraTable {
 public:
+    static constexpr const char* NAME = "LevelExp";
+
     LevelExpTable() {}
     LevelExpTable(const LevelExpTable&) = delete;
     LevelExpTable& operator=(const LevelExpTable&) = delete;
@@ -32,7 +35,7 @@ public:
     LevelExpTable& operator=(LevelExpTable&&) = default;
 
     static LevelExpTable decode(const SoraBundle& bundle) {
-        std::vector<LevelExp> rows = bundle.decode_table<LevelExp>("LevelExp");
+        std::vector<LevelExp> rows = bundle.decode_table<LevelExp>(NAME);
         LevelExpTable table;
         for (std::size_t index = 0; index < rows.size(); ++index) {
             const LevelExp& row = rows[index];
@@ -43,7 +46,7 @@ public:
         return table;
     }
 
-    const char* name() const override { return "LevelExp"; }
+    const char* name() const override { return NAME; }
     const char* mode() const override { return "map"; }
     const char* key() const override { return "level"; }
     std::size_t size() const override {

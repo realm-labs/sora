@@ -47,6 +47,8 @@ func decodeRecipeValue(input SoraValue) (Recipe, error) {
 	return value, nil
 }
 
+const recipeTableName = "Recipe"
+
 type RecipeTable struct {
 	keys []int32
 	rows map[int32]Recipe
@@ -61,7 +63,7 @@ func buildRecipeTable(rows []Recipe) (*RecipeTable, error) {
 }
 
 func decodeRecipeTable(source SoraTableSource) (*RecipeTable, error) {
-	rows, err := DecodeSourceTable(source, "Recipe", decodeRecipe, decodeRecipeValue)
+	rows, err := DecodeSourceTable(source, recipeTableName, decodeRecipe, decodeRecipeValue)
 	if err != nil {
 		return nil, err
 	}
@@ -90,7 +92,7 @@ func (table *RecipeTable) OrderedRows() []Recipe {
 	return rows
 }
 func (table *RecipeTable) Name() string {
-	return "Recipe"
+	return recipeTableName
 }
 
 func (table *RecipeTable) Mode() SoraTableMode {

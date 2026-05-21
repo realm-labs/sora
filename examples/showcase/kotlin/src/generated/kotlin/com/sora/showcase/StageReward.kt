@@ -35,7 +35,7 @@ class StageRewardTable private constructor(
     override fun get(index: Int): StageReward = rows[index]
 
     fun values(): List<StageReward> = rows
-    override val name: String = "StageReward"
+    override val name: String = NAME
     override val mode: SoraTableMode = SoraTableMode.List
     override val key: String? = null
     override val rowType: String = "StageReward"
@@ -44,11 +44,13 @@ class StageRewardTable private constructor(
 
     companion object {
         fun decode(source: SoraTableSource): StageRewardTable =
-            fromRows(source.decodeTable("StageReward", StageReward::decode, StageReward::decode))
+            fromRows(source.decodeTable(NAME, StageReward::decode, StageReward::decode))
 
         private fun fromRows(rows: List<StageReward>): StageRewardTable =
             StageRewardTable(
                 rows,
             )
+
+        const val NAME: String = "StageReward"
     }
 }

@@ -23,7 +23,7 @@ final class QuestRewardTable private (
   val rows: Vector[QuestReward]
 ) extends SoraTable {
   def values: Vector[QuestReward] = rows
-  override val name: String = "QuestReward"
+  override val name: String = QuestRewardTable.Name
   override val mode: SoraTableMode = SoraTableMode.List
   override val key: Option[String] = None
   override val rowType: String = "QuestReward"
@@ -31,8 +31,10 @@ final class QuestRewardTable private (
 }
 
 object QuestRewardTable {
+  val Name: String = "QuestReward"
+
   def decode(source: SoraTableSource): QuestRewardTable =
-    fromRows(source.decodeTable("QuestReward", QuestReward.decode))
+    fromRows(source.decodeTable(Name, QuestReward.decode))
 
   private def fromRows(rows: Vector[QuestReward]): QuestRewardTable =
     new QuestRewardTable(

@@ -34,7 +34,7 @@ class BuffTable private constructor(
     val rows: Map<Int, Buff>,
 ) : SoraTable, Map<Int, Buff> by rows {
     fun orderedValues(): List<Buff> = orderedKeys.mapNotNull { rows[it] }
-    override val name: String = "Buff"
+    override val name: String = NAME
     override val mode: SoraTableMode = SoraTableMode.Map
     override val key: String? = "id"
     override val rowType: String = "Buff"
@@ -43,12 +43,14 @@ class BuffTable private constructor(
 
     companion object {
         fun decode(source: SoraTableSource): BuffTable =
-            fromRows(source.decodeTable("Buff", Buff::decode, Buff::decode))
+            fromRows(source.decodeTable(NAME, Buff::decode, Buff::decode))
 
         private fun fromRows(rows: List<Buff>): BuffTable =
             BuffTable(
                 rows.map { it.id },
                 rows.associateBy { it.id },
             )
+
+        const val NAME: String = "Buff"
     }
 }

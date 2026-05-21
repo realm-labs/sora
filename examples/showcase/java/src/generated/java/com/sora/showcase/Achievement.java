@@ -44,6 +44,7 @@ public final class Achievement {
 }
 
 final class AchievementTable extends java.util.AbstractMap<Integer, Achievement> implements SoraTable {
+    static final String NAME = "Achievement";
     private final List<Integer> keys;
     private final java.util.Map<Integer, Achievement> rows;
 
@@ -57,7 +58,7 @@ final class AchievementTable extends java.util.AbstractMap<Integer, Achievement>
     }
 
     static AchievementTable decode(SoraTableSource source) {
-        return fromRows(source.decodeTable("Achievement", Achievement::decode, Achievement::decode));
+        return fromRows(source.decodeTable(NAME, Achievement::decode, Achievement::decode));
     }
 
     public java.util.Map<Integer, Achievement> rows() {
@@ -82,7 +83,7 @@ final class AchievementTable extends java.util.AbstractMap<Integer, Achievement>
     }
     @Override
     public String name() {
-        return "Achievement";
+        return NAME;
     }
 
     @Override

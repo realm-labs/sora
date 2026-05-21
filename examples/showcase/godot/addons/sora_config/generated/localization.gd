@@ -23,12 +23,14 @@ static func decode(value: Variant) -> Localization:
 
 class LocalizationTable:
 	extends SoraRuntime.SoraConfigTable
+
+	const TABLE_NAME := "Localization"
 	var keys: Array = []
 	var _rows: Dictionary = {}
 
 	static func decode(rows: Array) -> LocalizationTable:
 		var table := LocalizationTable.new()
-		table.name = "Localization"
+		table.name = TABLE_NAME
 		table.mode = "map"
 		table.key = "key"
 		table.keys = rows.map(func(row): return row.key)
@@ -40,7 +42,7 @@ class LocalizationTable:
 	func get_row(key_value: Variant) -> Localization:
 		var value = _rows.get(key_value)
 		if value == null:
-			SoraRuntime.report_error("missing row in table `Localization` for key `%s`" % str(key_value))
+			SoraRuntime.report_error("missing row in table `%s` for key `%s`" % [TABLE_NAME, str(key_value)])
 		return value
 
 	func try_get(key_value: Variant) -> Localization:

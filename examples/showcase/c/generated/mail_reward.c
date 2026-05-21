@@ -43,6 +43,8 @@ void sora_showcase_mail_reward_free(sora_showcase_mail_reward* value) {
     *value = (sora_showcase_mail_reward){0};
 }
 
+static const char* sora_showcase_mail_reward_table_name = "MailReward";
+
 struct sora_showcase_mail_reward_table {
     sora_showcase_mail_reward* rows;
     size_t len;
@@ -64,11 +66,11 @@ sora_result sora_showcase_mail_reward_table_load(
 ) {
     sora_showcase_mail_reward_table* table = (sora_showcase_mail_reward_table*)calloc(1, sizeof(sora_showcase_mail_reward_table));
     if (table == NULL) {
-        return sora_error(SORA_ERROR_OUT_OF_MEMORY, "failed to allocate table MailReward");
+        return sora_error(SORA_ERROR_OUT_OF_MEMORY, "failed to allocate table");
     }
     sora_result result = sora_bundle_decode_table(
         bundle,
-        "MailReward",
+        sora_showcase_mail_reward_table_name,
         sizeof(sora_showcase_mail_reward),
         (sora_decode_row_fn)sora_showcase_mail_reward_decode,
         (sora_free_row_fn)sora_showcase_mail_reward_free,

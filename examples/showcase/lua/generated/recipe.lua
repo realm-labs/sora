@@ -24,6 +24,7 @@ end
 ---@field private _rows table<integer, Recipe>
 local RecipeTable = {}
 RecipeTable.__index = RecipeTable
+RecipeTable.NAME = "Recipe"
 
 ---@param rows Recipe[]
 ---@return RecipeTable
@@ -40,7 +41,7 @@ end
 
 ---@return string
 function RecipeTable:name()
-    return "Recipe"
+    return RecipeTable.NAME
 end
 
 ---@return string

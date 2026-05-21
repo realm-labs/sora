@@ -6,6 +6,7 @@
 #include "resource_cost.hpp"
 
 #include <unordered_map>
+#include <string>
 #include <vector>
 
 namespace sora::showcase {
@@ -28,6 +29,8 @@ struct Dungeon {
 
 class DungeonTable final : public SoraTable {
 public:
+    static constexpr const char* NAME = "Dungeon";
+
     DungeonTable() {}
     DungeonTable(const DungeonTable&) = delete;
     DungeonTable& operator=(const DungeonTable&) = delete;
@@ -35,7 +38,7 @@ public:
     DungeonTable& operator=(DungeonTable&&) = default;
 
     static DungeonTable decode(const SoraBundle& bundle) {
-        std::vector<Dungeon> rows = bundle.decode_table<Dungeon>("Dungeon");
+        std::vector<Dungeon> rows = bundle.decode_table<Dungeon>(NAME);
         DungeonTable table;
         for (std::size_t index = 0; index < rows.size(); ++index) {
             const Dungeon& row = rows[index];
@@ -46,7 +49,7 @@ public:
         return table;
     }
 
-    const char* name() const override { return "Dungeon"; }
+    const char* name() const override { return NAME; }
     const char* mode() const override { return "map"; }
     const char* key() const override { return "id"; }
     std::size_t size() const override {

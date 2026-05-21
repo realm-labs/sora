@@ -41,6 +41,8 @@ class QuestReward:
 
 
 class QuestRewardTable(SoraConfigTable):
+    NAME = "QuestReward"
+
     def __init__(
         self,
         rows: list[QuestReward],
@@ -54,7 +56,7 @@ class QuestRewardTable(SoraConfigTable):
         )
 
     def name(self) -> str:
-        return "QuestReward"
+        return self.NAME
 
     def mode(self) -> str:
         return "list"

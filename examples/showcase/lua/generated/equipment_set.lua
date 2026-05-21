@@ -26,6 +26,7 @@ end
 ---@field private _rows table<integer, EquipmentSet>
 local EquipmentSetTable = {}
 EquipmentSetTable.__index = EquipmentSetTable
+EquipmentSetTable.NAME = "EquipmentSet"
 
 ---@param rows EquipmentSet[]
 ---@return EquipmentSetTable
@@ -42,7 +43,7 @@ end
 
 ---@return string
 function EquipmentSetTable:name()
-    return "EquipmentSet"
+    return EquipmentSetTable.NAME
 end
 
 ---@return string

@@ -46,6 +46,8 @@ void sora_showcase_dungeon_free(sora_showcase_dungeon* value) {
     *value = (sora_showcase_dungeon){0};
 }
 
+static const char* sora_showcase_dungeon_table_name = "Dungeon";
+
 struct sora_showcase_dungeon_table {
     sora_showcase_dungeon* rows;
     size_t len;
@@ -67,11 +69,11 @@ sora_result sora_showcase_dungeon_table_load(
 ) {
     sora_showcase_dungeon_table* table = (sora_showcase_dungeon_table*)calloc(1, sizeof(sora_showcase_dungeon_table));
     if (table == NULL) {
-        return sora_error(SORA_ERROR_OUT_OF_MEMORY, "failed to allocate table Dungeon");
+        return sora_error(SORA_ERROR_OUT_OF_MEMORY, "failed to allocate table");
     }
     sora_result result = sora_bundle_decode_table(
         bundle,
-        "Dungeon",
+        sora_showcase_dungeon_table_name,
         sizeof(sora_showcase_dungeon),
         (sora_decode_row_fn)sora_showcase_dungeon_decode,
         (sora_free_row_fn)sora_showcase_dungeon_free,

@@ -23,7 +23,7 @@ final class MailRewardTable private (
   val rows: Vector[MailReward]
 ) extends SoraTable {
   def values: Vector[MailReward] = rows
-  override val name: String = "MailReward"
+  override val name: String = MailRewardTable.Name
   override val mode: SoraTableMode = SoraTableMode.List
   override val key: Option[String] = None
   override val rowType: String = "MailReward"
@@ -31,8 +31,10 @@ final class MailRewardTable private (
 }
 
 object MailRewardTable {
+  val Name: String = "MailReward"
+
   def decode(source: SoraTableSource): MailRewardTable =
-    fromRows(source.decodeTable("MailReward", MailReward.decode))
+    fromRows(source.decodeTable(Name, MailReward.decode))
 
   private def fromRows(rows: Vector[MailReward]): MailRewardTable =
     new MailRewardTable(

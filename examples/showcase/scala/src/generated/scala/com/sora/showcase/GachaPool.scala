@@ -26,7 +26,7 @@ final class GachaPoolTable private (
   def values: Iterable[GachaPool] = rows.values
 
   def orderedValues: Vector[GachaPool] = keys.flatMap(rows.get)
-  override val name: String = "GachaPool"
+  override val name: String = GachaPoolTable.Name
   override val mode: SoraTableMode = SoraTableMode.Map
   override val key: Option[String] = Some("id")
   override val rowType: String = "GachaPool"
@@ -34,8 +34,10 @@ final class GachaPoolTable private (
 }
 
 object GachaPoolTable {
+  val Name: String = "GachaPool"
+
   def decode(source: SoraTableSource): GachaPoolTable =
-    fromRows(source.decodeTable("GachaPool", GachaPool.decode))
+    fromRows(source.decodeTable(Name, GachaPool.decode))
 
   private def fromRows(rows: Vector[GachaPool]): GachaPoolTable =
     new GachaPoolTable(

@@ -25,6 +25,8 @@ export function decodeGachaPoolValue(value) {
 }
 
 export class GachaPoolTable {
+    static tableName = "GachaPool";
+
     constructor(
         keys,
         rows,
@@ -41,7 +43,7 @@ export class GachaPoolTable {
     }
 
     name() {
-        return "GachaPool";
+        return GachaPoolTable.tableName;
     }
 
     mode() {

@@ -82,171 +82,188 @@ impl SoraConfig {
     ) -> Result<Self, runtime::SoraReadError> {
         let mut tables: SoraMap<&'static str, Box<dyn SoraTable>> = sora_map_with_capacity(28);
         tables.insert(
-            "Item",
+            item::ItemTable::NAME,
             Box::new(item::ItemTable::from_rows(
-                source.decode_table::<item::Item>("Item")?,
+                source.decode_table::<item::Item>(item::ItemTable::NAME)?,
             )?),
         );
         tables.insert(
-            "Skill",
+            skill::SkillTable::NAME,
             Box::new(skill::SkillTable::from_rows(
-                source.decode_table::<skill::Skill>("Skill")?,
+                source.decode_table::<skill::Skill>(skill::SkillTable::NAME)?,
             )?),
         );
         tables.insert(
-            "Quest",
+            quest::QuestTable::NAME,
             Box::new(quest::QuestTable::from_rows(
-                source.decode_table::<quest::Quest>("Quest")?,
+                source.decode_table::<quest::Quest>(quest::QuestTable::NAME)?,
             )?),
         );
         tables.insert(
-            "QuestReward",
+            quest_reward::QuestRewardTable::NAME,
             Box::new(quest_reward::QuestRewardTable::from_rows(
-                source.decode_table::<quest_reward::QuestReward>("QuestReward")?,
+                source.decode_table::<quest_reward::QuestReward>(
+                    quest_reward::QuestRewardTable::NAME,
+                )?,
             )?),
         );
         tables.insert(
-            "GameSettings",
+            game_settings::GameSettingsTable::NAME,
             Box::new(game_settings::GameSettingsTable::from_rows(
-                source.decode_table::<game_settings::GameSettings>("GameSettings")?,
+                source.decode_table::<game_settings::GameSettings>(
+                    game_settings::GameSettingsTable::NAME,
+                )?,
             )?),
         );
         tables.insert(
-            "Localization",
+            localization::LocalizationTable::NAME,
             Box::new(localization::LocalizationTable::from_rows(
-                source.decode_table::<localization::Localization>("Localization")?,
+                source.decode_table::<localization::Localization>(
+                    localization::LocalizationTable::NAME,
+                )?,
             )?),
         );
         tables.insert(
-            "LevelExp",
+            level_exp::LevelExpTable::NAME,
             Box::new(level_exp::LevelExpTable::from_rows(
-                source.decode_table::<level_exp::LevelExp>("LevelExp")?,
+                source.decode_table::<level_exp::LevelExp>(level_exp::LevelExpTable::NAME)?,
             )?),
         );
         tables.insert(
-            "Character",
+            character::CharacterTable::NAME,
             Box::new(character::CharacterTable::from_rows(
-                source.decode_table::<character::Character>("Character")?,
+                source.decode_table::<character::Character>(character::CharacterTable::NAME)?,
             )?),
         );
         tables.insert(
-            "CharacterSkill",
+            character_skill::CharacterSkillTable::NAME,
             Box::new(character_skill::CharacterSkillTable::from_rows(
-                source.decode_table::<character_skill::CharacterSkill>("CharacterSkill")?,
+                source.decode_table::<character_skill::CharacterSkill>(
+                    character_skill::CharacterSkillTable::NAME,
+                )?,
             )?),
         );
         tables.insert(
-            "Buff",
+            buff::BuffTable::NAME,
             Box::new(buff::BuffTable::from_rows(
-                source.decode_table::<buff::Buff>("Buff")?,
+                source.decode_table::<buff::Buff>(buff::BuffTable::NAME)?,
             )?),
         );
         tables.insert(
-            "DropGroup",
+            drop_group::DropGroupTable::NAME,
             Box::new(drop_group::DropGroupTable::from_rows(
-                source.decode_table::<drop_group::DropGroup>("DropGroup")?,
+                source.decode_table::<drop_group::DropGroup>(drop_group::DropGroupTable::NAME)?,
             )?),
         );
         tables.insert(
-            "DropEntry",
+            drop_entry::DropEntryTable::NAME,
             Box::new(drop_entry::DropEntryTable::from_rows(
-                source.decode_table::<drop_entry::DropEntry>("DropEntry")?,
+                source.decode_table::<drop_entry::DropEntry>(drop_entry::DropEntryTable::NAME)?,
             )?),
         );
         tables.insert(
-            "Monster",
+            monster::MonsterTable::NAME,
             Box::new(monster::MonsterTable::from_rows(
-                source.decode_table::<monster::Monster>("Monster")?,
+                source.decode_table::<monster::Monster>(monster::MonsterTable::NAME)?,
             )?),
         );
         tables.insert(
-            "Stage",
+            stage::StageTable::NAME,
             Box::new(stage::StageTable::from_rows(
-                source.decode_table::<stage::Stage>("Stage")?,
+                source.decode_table::<stage::Stage>(stage::StageTable::NAME)?,
             )?),
         );
         tables.insert(
-            "StageReward",
+            stage_reward::StageRewardTable::NAME,
             Box::new(stage_reward::StageRewardTable::from_rows(
-                source.decode_table::<stage_reward::StageReward>("StageReward")?,
+                source.decode_table::<stage_reward::StageReward>(
+                    stage_reward::StageRewardTable::NAME,
+                )?,
             )?),
         );
         tables.insert(
-            "Dungeon",
+            dungeon::DungeonTable::NAME,
             Box::new(dungeon::DungeonTable::from_rows(
-                source.decode_table::<dungeon::Dungeon>("Dungeon")?,
+                source.decode_table::<dungeon::Dungeon>(dungeon::DungeonTable::NAME)?,
             )?),
         );
         tables.insert(
-            "Shop",
+            shop::ShopTable::NAME,
             Box::new(shop::ShopTable::from_rows(
-                source.decode_table::<shop::Shop>("Shop")?,
+                source.decode_table::<shop::Shop>(shop::ShopTable::NAME)?,
             )?),
         );
         tables.insert(
-            "ShopItem",
+            shop_item::ShopItemTable::NAME,
             Box::new(shop_item::ShopItemTable::from_rows(
-                source.decode_table::<shop_item::ShopItem>("ShopItem")?,
+                source.decode_table::<shop_item::ShopItem>(shop_item::ShopItemTable::NAME)?,
             )?),
         );
         tables.insert(
-            "Recipe",
+            recipe::RecipeTable::NAME,
             Box::new(recipe::RecipeTable::from_rows(
-                source.decode_table::<recipe::Recipe>("Recipe")?,
+                source.decode_table::<recipe::Recipe>(recipe::RecipeTable::NAME)?,
             )?),
         );
         tables.insert(
-            "GachaPool",
+            gacha_pool::GachaPoolTable::NAME,
             Box::new(gacha_pool::GachaPoolTable::from_rows(
-                source.decode_table::<gacha_pool::GachaPool>("GachaPool")?,
+                source.decode_table::<gacha_pool::GachaPool>(gacha_pool::GachaPoolTable::NAME)?,
             )?),
         );
         tables.insert(
-            "GachaItem",
+            gacha_item::GachaItemTable::NAME,
             Box::new(gacha_item::GachaItemTable::from_rows(
-                source.decode_table::<gacha_item::GachaItem>("GachaItem")?,
+                source.decode_table::<gacha_item::GachaItem>(gacha_item::GachaItemTable::NAME)?,
             )?),
         );
         tables.insert(
-            "EquipmentSet",
+            equipment_set::EquipmentSetTable::NAME,
             Box::new(equipment_set::EquipmentSetTable::from_rows(
-                source.decode_table::<equipment_set::EquipmentSet>("EquipmentSet")?,
+                source.decode_table::<equipment_set::EquipmentSet>(
+                    equipment_set::EquipmentSetTable::NAME,
+                )?,
             )?),
         );
         tables.insert(
-            "Achievement",
+            achievement::AchievementTable::NAME,
             Box::new(achievement::AchievementTable::from_rows(
-                source.decode_table::<achievement::Achievement>("Achievement")?,
+                source.decode_table::<achievement::Achievement>(
+                    achievement::AchievementTable::NAME,
+                )?,
             )?),
         );
         tables.insert(
-            "VipLevel",
+            vip_level::VipLevelTable::NAME,
             Box::new(vip_level::VipLevelTable::from_rows(
-                source.decode_table::<vip_level::VipLevel>("VipLevel")?,
+                source.decode_table::<vip_level::VipLevel>(vip_level::VipLevelTable::NAME)?,
             )?),
         );
         tables.insert(
-            "MailTemplate",
+            mail_template::MailTemplateTable::NAME,
             Box::new(mail_template::MailTemplateTable::from_rows(
-                source.decode_table::<mail_template::MailTemplate>("MailTemplate")?,
+                source.decode_table::<mail_template::MailTemplate>(
+                    mail_template::MailTemplateTable::NAME,
+                )?,
             )?),
         );
         tables.insert(
-            "MailReward",
+            mail_reward::MailRewardTable::NAME,
             Box::new(mail_reward::MailRewardTable::from_rows(
-                source.decode_table::<mail_reward::MailReward>("MailReward")?,
+                source
+                    .decode_table::<mail_reward::MailReward>(mail_reward::MailRewardTable::NAME)?,
             )?),
         );
         tables.insert(
-            "Dialogue",
+            dialogue::DialogueTable::NAME,
             Box::new(dialogue::DialogueTable::from_rows(
-                source.decode_table::<dialogue::Dialogue>("Dialogue")?,
+                source.decode_table::<dialogue::Dialogue>(dialogue::DialogueTable::NAME)?,
             )?),
         );
         tables.insert(
-            "EventRule",
+            event_rule::EventRuleTable::NAME,
             Box::new(event_rule::EventRuleTable::from_rows(
-                source.decode_table::<event_rule::EventRule>("EventRule")?,
+                source.decode_table::<event_rule::EventRule>(event_rule::EventRuleTable::NAME)?,
             )?),
         );
         Ok(Self { tables })
@@ -272,115 +289,115 @@ impl SoraConfig {
     }
 
     pub fn item(&self) -> &item::ItemTable {
-        self.table("Item")
+        self.table(item::ItemTable::NAME)
     }
 
     pub fn skill(&self) -> &skill::SkillTable {
-        self.table("Skill")
+        self.table(skill::SkillTable::NAME)
     }
 
     pub fn quest(&self) -> &quest::QuestTable {
-        self.table("Quest")
+        self.table(quest::QuestTable::NAME)
     }
 
     pub fn quest_reward(&self) -> &quest_reward::QuestRewardTable {
-        self.table("QuestReward")
+        self.table(quest_reward::QuestRewardTable::NAME)
     }
 
     pub fn game_settings(&self) -> &game_settings::GameSettingsTable {
-        self.table("GameSettings")
+        self.table(game_settings::GameSettingsTable::NAME)
     }
 
     pub fn localization(&self) -> &localization::LocalizationTable {
-        self.table("Localization")
+        self.table(localization::LocalizationTable::NAME)
     }
 
     pub fn level_exp(&self) -> &level_exp::LevelExpTable {
-        self.table("LevelExp")
+        self.table(level_exp::LevelExpTable::NAME)
     }
 
     pub fn character(&self) -> &character::CharacterTable {
-        self.table("Character")
+        self.table(character::CharacterTable::NAME)
     }
 
     pub fn character_skill(&self) -> &character_skill::CharacterSkillTable {
-        self.table("CharacterSkill")
+        self.table(character_skill::CharacterSkillTable::NAME)
     }
 
     pub fn buff(&self) -> &buff::BuffTable {
-        self.table("Buff")
+        self.table(buff::BuffTable::NAME)
     }
 
     pub fn drop_group(&self) -> &drop_group::DropGroupTable {
-        self.table("DropGroup")
+        self.table(drop_group::DropGroupTable::NAME)
     }
 
     pub fn drop_entry(&self) -> &drop_entry::DropEntryTable {
-        self.table("DropEntry")
+        self.table(drop_entry::DropEntryTable::NAME)
     }
 
     pub fn monster(&self) -> &monster::MonsterTable {
-        self.table("Monster")
+        self.table(monster::MonsterTable::NAME)
     }
 
     pub fn stage(&self) -> &stage::StageTable {
-        self.table("Stage")
+        self.table(stage::StageTable::NAME)
     }
 
     pub fn stage_reward(&self) -> &stage_reward::StageRewardTable {
-        self.table("StageReward")
+        self.table(stage_reward::StageRewardTable::NAME)
     }
 
     pub fn dungeon(&self) -> &dungeon::DungeonTable {
-        self.table("Dungeon")
+        self.table(dungeon::DungeonTable::NAME)
     }
 
     pub fn shop(&self) -> &shop::ShopTable {
-        self.table("Shop")
+        self.table(shop::ShopTable::NAME)
     }
 
     pub fn shop_item(&self) -> &shop_item::ShopItemTable {
-        self.table("ShopItem")
+        self.table(shop_item::ShopItemTable::NAME)
     }
 
     pub fn recipe(&self) -> &recipe::RecipeTable {
-        self.table("Recipe")
+        self.table(recipe::RecipeTable::NAME)
     }
 
     pub fn gacha_pool(&self) -> &gacha_pool::GachaPoolTable {
-        self.table("GachaPool")
+        self.table(gacha_pool::GachaPoolTable::NAME)
     }
 
     pub fn gacha_item(&self) -> &gacha_item::GachaItemTable {
-        self.table("GachaItem")
+        self.table(gacha_item::GachaItemTable::NAME)
     }
 
     pub fn equipment_set(&self) -> &equipment_set::EquipmentSetTable {
-        self.table("EquipmentSet")
+        self.table(equipment_set::EquipmentSetTable::NAME)
     }
 
     pub fn achievement(&self) -> &achievement::AchievementTable {
-        self.table("Achievement")
+        self.table(achievement::AchievementTable::NAME)
     }
 
     pub fn vip_level(&self) -> &vip_level::VipLevelTable {
-        self.table("VipLevel")
+        self.table(vip_level::VipLevelTable::NAME)
     }
 
     pub fn mail_template(&self) -> &mail_template::MailTemplateTable {
-        self.table("MailTemplate")
+        self.table(mail_template::MailTemplateTable::NAME)
     }
 
     pub fn mail_reward(&self) -> &mail_reward::MailRewardTable {
-        self.table("MailReward")
+        self.table(mail_reward::MailRewardTable::NAME)
     }
 
     pub fn dialogue(&self) -> &dialogue::DialogueTable {
-        self.table("Dialogue")
+        self.table(dialogue::DialogueTable::NAME)
     }
 
     pub fn event_rule(&self) -> &event_rule::EventRuleTable {
-        self.table("EventRule")
+        self.table(event_rule::EventRuleTable::NAME)
     }
 }
 

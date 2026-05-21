@@ -44,7 +44,7 @@ class QuestTable private constructor(
     val rows: Map<Int, Quest>,
 ) : SoraTable, Map<Int, Quest> by rows {
     fun orderedValues(): List<Quest> = orderedKeys.mapNotNull { rows[it] }
-    override val name: String = "Quest"
+    override val name: String = NAME
     override val mode: SoraTableMode = SoraTableMode.Map
     override val key: String? = "id"
     override val rowType: String = "Quest"
@@ -53,12 +53,14 @@ class QuestTable private constructor(
 
     companion object {
         fun decode(source: SoraTableSource): QuestTable =
-            fromRows(source.decodeTable("Quest", Quest::decode, Quest::decode))
+            fromRows(source.decodeTable(NAME, Quest::decode, Quest::decode))
 
         private fun fromRows(rows: List<Quest>): QuestTable =
             QuestTable(
                 rows.map { it.id },
                 rows.associateBy { it.id },
             )
+
+        const val NAME: String = "Quest"
     }
 }

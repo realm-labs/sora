@@ -37,6 +37,8 @@ void sora_showcase_recipe_free(sora_showcase_recipe* value) {
     *value = (sora_showcase_recipe){0};
 }
 
+static const char* sora_showcase_recipe_table_name = "Recipe";
+
 struct sora_showcase_recipe_table {
     sora_showcase_recipe* rows;
     size_t len;
@@ -58,11 +60,11 @@ sora_result sora_showcase_recipe_table_load(
 ) {
     sora_showcase_recipe_table* table = (sora_showcase_recipe_table*)calloc(1, sizeof(sora_showcase_recipe_table));
     if (table == NULL) {
-        return sora_error(SORA_ERROR_OUT_OF_MEMORY, "failed to allocate table Recipe");
+        return sora_error(SORA_ERROR_OUT_OF_MEMORY, "failed to allocate table");
     }
     sora_result result = sora_bundle_decode_table(
         bundle,
-        "Recipe",
+        sora_showcase_recipe_table_name,
         sizeof(sora_showcase_recipe),
         (sora_decode_row_fn)sora_showcase_recipe_decode,
         (sora_free_row_fn)sora_showcase_recipe_free,

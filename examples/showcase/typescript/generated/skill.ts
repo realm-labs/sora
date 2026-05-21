@@ -63,6 +63,8 @@ export function decodeSkillValue(value: SoraValue): Skill {
 }
 
 export class SkillTable implements SoraConfigTable {
+    static readonly tableName = "Skill";
+
     private constructor(
         private readonly _keys: number[],
         private readonly _rows: Map<number, Skill>,
@@ -76,7 +78,7 @@ export class SkillTable implements SoraConfigTable {
     }
 
     name(): string {
-        return "Skill";
+        return SkillTable.tableName;
     }
 
     mode(): string {

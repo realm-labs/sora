@@ -32,6 +32,8 @@ export function decodeMonsterValue(value) {
 }
 
 export class MonsterTable {
+    static tableName = "Monster";
+
     constructor(
         keys,
         rows,
@@ -48,7 +50,7 @@ export class MonsterTable {
     }
 
     name() {
-        return "Monster";
+        return MonsterTable.tableName;
     }
 
     mode() {

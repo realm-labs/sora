@@ -27,6 +27,8 @@ pub struct DropGroupTable {
 }
 
 impl DropGroupTable {
+    pub const NAME: &'static str = "DropGroup";
+
     pub(super) fn from_rows(rows: Vec<DropGroup>) -> Result<Self, super::runtime::SoraReadError> {
         let keys = rows.iter().map(|row| row.id).collect::<Vec<_>>();
         Ok(Self {
@@ -57,7 +59,7 @@ impl std::ops::Deref for DropGroupTable {
 
 impl super::SoraTable for DropGroupTable {
     fn name(&self) -> &'static str {
-        "DropGroup"
+        Self::NAME
     }
 
     fn mode(&self) -> super::SoraTableMode {

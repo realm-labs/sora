@@ -35,6 +35,8 @@ class DropGroup:
 
 
 class DropGroupTable(SoraConfigTable):
+    NAME = "DropGroup"
+
     def __init__(
         self,
         keys: list[int],
@@ -51,7 +53,7 @@ class DropGroupTable(SoraConfigTable):
         )
 
     def name(self) -> str:
-        return "DropGroup"
+        return self.NAME
 
     def mode(self) -> str:
         return "map"

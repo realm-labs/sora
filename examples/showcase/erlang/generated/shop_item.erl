@@ -14,6 +14,7 @@
 }.
 
 -type table() :: map().
+-define(TABLE_NAME, <<"ShopItem">>).
 
 -spec decode(sora_runtime:reader()) -> {t(), sora_runtime:reader()}.
 decode(Reader0) ->
@@ -32,7 +33,7 @@ decode(Reader0) ->
 
 -spec decode_table(map()) -> table().
 decode_table(Bundle) ->
-    Rows = sora_runtime:decode_table(Bundle, <<"ShopItem">>, fun ?MODULE:decode/1),
+    Rows = sora_runtime:decode_table(Bundle, ?TABLE_NAME, fun ?MODULE:decode/1),
     Data = Rows,
     #{
         data => Data

@@ -28,6 +28,7 @@ end
 ---@field private _rows table<integer, Stage>
 local StageTable = {}
 StageTable.__index = StageTable
+StageTable.NAME = "Stage"
 
 ---@param rows Stage[]
 ---@return StageTable
@@ -44,7 +45,7 @@ end
 
 ---@return string
 function StageTable:name()
-    return "Stage"
+    return StageTable.NAME
 end
 
 ---@return string

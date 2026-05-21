@@ -21,7 +21,7 @@ final class CharacterSkillTable private (
   val rows: Vector[CharacterSkill]
 ) extends SoraTable {
   def values: Vector[CharacterSkill] = rows
-  override val name: String = "CharacterSkill"
+  override val name: String = CharacterSkillTable.Name
   override val mode: SoraTableMode = SoraTableMode.List
   override val key: Option[String] = None
   override val rowType: String = "CharacterSkill"
@@ -29,8 +29,10 @@ final class CharacterSkillTable private (
 }
 
 object CharacterSkillTable {
+  val Name: String = "CharacterSkill"
+
   def decode(source: SoraTableSource): CharacterSkillTable =
-    fromRows(source.decodeTable("CharacterSkill", CharacterSkill.decode))
+    fromRows(source.decodeTable(Name, CharacterSkill.decode))
 
   private def fromRows(rows: Vector[CharacterSkill]): CharacterSkillTable =
     new CharacterSkillTable(

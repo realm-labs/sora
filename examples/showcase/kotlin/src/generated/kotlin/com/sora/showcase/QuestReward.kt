@@ -35,7 +35,7 @@ class QuestRewardTable private constructor(
     override fun get(index: Int): QuestReward = rows[index]
 
     fun values(): List<QuestReward> = rows
-    override val name: String = "QuestReward"
+    override val name: String = NAME
     override val mode: SoraTableMode = SoraTableMode.List
     override val key: String? = null
     override val rowType: String = "QuestReward"
@@ -44,11 +44,13 @@ class QuestRewardTable private constructor(
 
     companion object {
         fun decode(source: SoraTableSource): QuestRewardTable =
-            fromRows(source.decodeTable("QuestReward", QuestReward::decode, QuestReward::decode))
+            fromRows(source.decodeTable(NAME, QuestReward::decode, QuestReward::decode))
 
         private fun fromRows(rows: List<QuestReward>): QuestRewardTable =
             QuestRewardTable(
                 rows,
             )
+
+        const val NAME: String = "QuestReward"
     }
 }

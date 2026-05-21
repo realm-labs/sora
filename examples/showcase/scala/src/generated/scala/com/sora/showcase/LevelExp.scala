@@ -26,7 +26,7 @@ final class LevelExpTable private (
   def values: Iterable[LevelExp] = rows.values
 
   def orderedValues: Vector[LevelExp] = keys.flatMap(rows.get)
-  override val name: String = "LevelExp"
+  override val name: String = LevelExpTable.Name
   override val mode: SoraTableMode = SoraTableMode.Map
   override val key: Option[String] = Some("level")
   override val rowType: String = "LevelExp"
@@ -34,8 +34,10 @@ final class LevelExpTable private (
 }
 
 object LevelExpTable {
+  val Name: String = "LevelExp"
+
   def decode(source: SoraTableSource): LevelExpTable =
-    fromRows(source.decodeTable("LevelExp", LevelExp.decode))
+    fromRows(source.decodeTable(Name, LevelExp.decode))
 
   private def fromRows(rows: Vector[LevelExp]): LevelExpTable =
     new LevelExpTable(

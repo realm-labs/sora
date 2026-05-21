@@ -32,7 +32,7 @@ class CharacterSkillTable private constructor(
     override fun get(index: Int): CharacterSkill = rows[index]
 
     fun values(): List<CharacterSkill> = rows
-    override val name: String = "CharacterSkill"
+    override val name: String = NAME
     override val mode: SoraTableMode = SoraTableMode.List
     override val key: String? = null
     override val rowType: String = "CharacterSkill"
@@ -41,11 +41,13 @@ class CharacterSkillTable private constructor(
 
     companion object {
         fun decode(source: SoraTableSource): CharacterSkillTable =
-            fromRows(source.decodeTable("CharacterSkill", CharacterSkill::decode, CharacterSkill::decode))
+            fromRows(source.decodeTable(NAME, CharacterSkill::decode, CharacterSkill::decode))
 
         private fun fromRows(rows: List<CharacterSkill>): CharacterSkillTable =
             CharacterSkillTable(
                 rows,
             )
+
+        const val NAME: String = "CharacterSkill"
     }
 }

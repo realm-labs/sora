@@ -60,6 +60,7 @@ public final class Item {
 }
 
 final class ItemTable extends java.util.AbstractMap<Integer, Item> implements SoraTable {
+    static final String NAME = "Item";
     private final List<Integer> keys;
     private final java.util.Map<Integer, Item> rows;
     private final Map<String, Item> byName;
@@ -82,7 +83,7 @@ final class ItemTable extends java.util.AbstractMap<Integer, Item> implements So
     }
 
     static ItemTable decode(SoraTableSource source) {
-        return fromRows(source.decodeTable("Item", Item::decode, Item::decode));
+        return fromRows(source.decodeTable(NAME, Item::decode, Item::decode));
     }
 
     public java.util.Map<Integer, Item> rows() {
@@ -113,7 +114,7 @@ final class ItemTable extends java.util.AbstractMap<Integer, Item> implements So
     }
     @Override
     public String name() {
-        return "Item";
+        return NAME;
     }
 
     @Override

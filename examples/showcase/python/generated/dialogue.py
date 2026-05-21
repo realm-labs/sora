@@ -38,6 +38,8 @@ class Dialogue:
 
 
 class DialogueTable(SoraConfigTable):
+    NAME = "Dialogue"
+
     def __init__(
         self,
         keys: list[int],
@@ -54,7 +56,7 @@ class DialogueTable(SoraConfigTable):
         )
 
     def name(self) -> str:
-        return "Dialogue"
+        return self.NAME
 
     def mode(self) -> str:
         return "map"

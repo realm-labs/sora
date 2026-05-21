@@ -42,18 +42,20 @@ export function decodeGameSettingsValue(value: SoraValue): GameSettings {
 }
 
 export class GameSettingsTable implements SoraConfigTable {
+    static readonly tableName = "GameSettings";
+
     private constructor(
         private readonly _row: GameSettings,
     ) {}
 
     static decode(rows: GameSettings[]): GameSettingsTable {
         return new GameSettingsTable(
-            requireSingletonTable(rows, "GameSettings"),
+            requireSingletonTable(rows, GameSettingsTable.tableName),
         );
     }
 
     name(): string {
-        return "GameSettings";
+        return GameSettingsTable.tableName;
     }
 
     mode(): string {

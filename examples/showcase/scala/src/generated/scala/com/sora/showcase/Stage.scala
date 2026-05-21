@@ -30,7 +30,7 @@ final class StageTable private (
   def values: Iterable[Stage] = rows.values
 
   def orderedValues: Vector[Stage] = keys.flatMap(rows.get)
-  override val name: String = "Stage"
+  override val name: String = StageTable.Name
   override val mode: SoraTableMode = SoraTableMode.Map
   override val key: Option[String] = Some("id")
   override val rowType: String = "Stage"
@@ -38,8 +38,10 @@ final class StageTable private (
 }
 
 object StageTable {
+  val Name: String = "Stage"
+
   def decode(source: SoraTableSource): StageTable =
-    fromRows(source.decodeTable("Stage", Stage.decode))
+    fromRows(source.decodeTable(Name, Stage.decode))
 
   private def fromRows(rows: Vector[Stage]): StageTable =
     new StageTable(

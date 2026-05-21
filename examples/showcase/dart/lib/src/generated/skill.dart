@@ -46,6 +46,7 @@ final class Skill {
 }
 
 final class SkillTable extends Iterable<Skill> implements SoraConfigTable {
+  static const tableName = 'Skill';
   final List<int> _keys;
   final Map<int, Skill> _rows;
 
@@ -62,7 +63,7 @@ final class SkillTable extends Iterable<Skill> implements SoraConfigTable {
   }
 
   @override
-  String get name => 'Skill';
+  String get name => tableName;
 
   @override
   String get mode => 'map';
@@ -80,7 +81,7 @@ final class SkillTable extends Iterable<Skill> implements SoraConfigTable {
   Skill get(int key) {
     final row = _rows[key];
     if (row == null) {
-      throw SoraReadException('missing row in table `Skill` for key `$key`');
+      throw SoraReadException('missing row in table `$tableName` for key `$key`');
     }
     return row;
   }

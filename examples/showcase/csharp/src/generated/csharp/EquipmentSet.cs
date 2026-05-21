@@ -38,6 +38,7 @@ public sealed record EquipmentSet(
 
 public sealed class EquipmentSetTable : ISoraTable, IReadOnlyDictionary<int, EquipmentSet>
 {
+    public const string TableName = "EquipmentSet";
     private readonly List<int> keys;
     private readonly Dictionary<int, EquipmentSet> rows;
 
@@ -49,7 +50,7 @@ public sealed class EquipmentSetTable : ISoraTable, IReadOnlyDictionary<int, Equ
 
     internal static EquipmentSetTable Decode(ISoraTableSource source)
     {
-        return FromRows(source.DecodeTable("EquipmentSet", global::com.sora.showcase.EquipmentSet.Decode, global::com.sora.showcase.EquipmentSet.Decode));
+        return FromRows(source.DecodeTable(TableName, global::com.sora.showcase.EquipmentSet.Decode, global::com.sora.showcase.EquipmentSet.Decode));
     }
 
     internal static EquipmentSetTable FromRows(List<EquipmentSet> rows)
@@ -112,7 +113,7 @@ public sealed class EquipmentSetTable : ISoraTable, IReadOnlyDictionary<int, Equ
             return orderedRows;
         }
     }
-    public string Name => "EquipmentSet";
+    public string Name => TableName;
     public SoraTableMode Mode => SoraTableMode.Map;
     public string? Key => "id";
     public string RowType => "EquipmentSet";

@@ -22,7 +22,7 @@ public:
         SoraConfig config;
 {%- for table in model.tables %}
         config.tables_.emplace(
-            "{{ table.name }}",
+            {{ table.pascal_name }}Table::NAME,
             std::unique_ptr<SoraTable>(new {{ table.pascal_name }}Table({{ table.pascal_name }}Table::decode(bundle)))
         );
 {%- endfor %}
@@ -31,7 +31,7 @@ public:
 
 {%- for table in model.tables %}
     const {{ table.pascal_name }}Table& {{ table.snake_name }}() const {
-        return table_as<{{ table.pascal_name }}Table>("{{ table.name }}");
+        return table_as<{{ table.pascal_name }}Table>({{ table.pascal_name }}Table::NAME);
     }
 
 {%- endfor %}

@@ -28,6 +28,8 @@ pub struct CharacterSkillTable {
 }
 
 impl CharacterSkillTable {
+    pub const NAME: &'static str = "CharacterSkill";
+
     pub(super) fn from_rows(
         rows: Vec<CharacterSkill>,
     ) -> Result<Self, super::runtime::SoraReadError> {
@@ -45,7 +47,7 @@ impl std::ops::Deref for CharacterSkillTable {
 
 impl super::SoraTable for CharacterSkillTable {
     fn name(&self) -> &'static str {
-        "CharacterSkill"
+        Self::NAME
     }
 
     fn mode(&self) -> super::SoraTableMode {

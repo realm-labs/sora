@@ -35,6 +35,8 @@ void {{ record.free_fn }}({{ record.type_name }}* value) {
 {%- if record.table %}
 {%- set table = record.table %}
 
+static const char* {{ table.table_type }}_name = "{{ table.name }}";
+
 struct {{ table.table_type }} {
     {{ table.row_type }}* rows;
     size_t len;
@@ -56,11 +58,11 @@ sora_result {{ table.table_load_fn }}(
 ) {
     {{ table.table_type }}* table = ({{ table.table_type }}*)calloc(1, sizeof({{ table.table_type }}));
     if (table == NULL) {
-        return sora_error(SORA_ERROR_OUT_OF_MEMORY, "failed to allocate table {{ table.name }}");
+        return sora_error(SORA_ERROR_OUT_OF_MEMORY, "failed to allocate table");
     }
     sora_result result = sora_bundle_decode_table(
         bundle,
-        "{{ table.name }}",
+        {{ table.table_type }}_name,
         sizeof({{ table.row_type }}),
         (sora_decode_row_fn){{ record.decode_fn }},
         (sora_free_row_fn){{ record.free_fn }},
@@ -74,7 +76,7 @@ sora_result {{ table.table_load_fn }}(
 {%- if table.mode == "singleton" %}
     if (table->len != 1) {
         {{ table.table_free_fn }}(table);
-        return sora_error(SORA_ERROR_DECODE, "singleton table {{ table.name }} must contain exactly one row");
+        return sora_error(SORA_ERROR_DECODE, "singleton table must contain exactly one row");
     }
 {%- endif %}
     *out = table;

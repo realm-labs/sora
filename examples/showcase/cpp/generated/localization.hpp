@@ -5,6 +5,7 @@
 #include "sora_runtime.hpp"
 
 #include <unordered_map>
+#include <string>
 #include <vector>
 
 namespace sora::showcase {
@@ -27,6 +28,8 @@ struct Localization {
 
 class LocalizationTable final : public SoraTable {
 public:
+    static constexpr const char* NAME = "Localization";
+
     LocalizationTable() {}
     LocalizationTable(const LocalizationTable&) = delete;
     LocalizationTable& operator=(const LocalizationTable&) = delete;
@@ -34,7 +37,7 @@ public:
     LocalizationTable& operator=(LocalizationTable&&) = default;
 
     static LocalizationTable decode(const SoraBundle& bundle) {
-        std::vector<Localization> rows = bundle.decode_table<Localization>("Localization");
+        std::vector<Localization> rows = bundle.decode_table<Localization>(NAME);
         LocalizationTable table;
         for (std::size_t index = 0; index < rows.size(); ++index) {
             const Localization& row = rows[index];
@@ -45,7 +48,7 @@ public:
         return table;
     }
 
-    const char* name() const override { return "Localization"; }
+    const char* name() const override { return NAME; }
     const char* mode() const override { return "map"; }
     const char* key() const override { return "key"; }
     std::size_t size() const override {

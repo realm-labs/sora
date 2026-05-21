@@ -26,7 +26,7 @@ final class RecipeTable private (
   def values: Iterable[Recipe] = rows.values
 
   def orderedValues: Vector[Recipe] = keys.flatMap(rows.get)
-  override val name: String = "Recipe"
+  override val name: String = RecipeTable.Name
   override val mode: SoraTableMode = SoraTableMode.Map
   override val key: Option[String] = Some("id")
   override val rowType: String = "Recipe"
@@ -34,8 +34,10 @@ final class RecipeTable private (
 }
 
 object RecipeTable {
+  val Name: String = "Recipe"
+
   def decode(source: SoraTableSource): RecipeTable =
-    fromRows(source.decodeTable("Recipe", Recipe.decode))
+    fromRows(source.decodeTable(Name, Recipe.decode))
 
   private def fromRows(rows: Vector[Recipe]): RecipeTable =
     new RecipeTable(

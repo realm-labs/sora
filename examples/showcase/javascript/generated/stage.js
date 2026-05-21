@@ -29,6 +29,8 @@ export function decodeStageValue(value) {
 }
 
 export class StageTable {
+    static tableName = "Stage";
+
     constructor(
         keys,
         rows,
@@ -45,7 +47,7 @@ export class StageTable {
     }
 
     name() {
-        return "Stage";
+        return StageTable.tableName;
     }
 
     mode() {

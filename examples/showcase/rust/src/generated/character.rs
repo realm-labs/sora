@@ -44,6 +44,8 @@ pub struct CharacterTable {
 }
 
 impl CharacterTable {
+    pub const NAME: &'static str = "Character";
+
     pub(super) fn from_rows(rows: Vec<Character>) -> Result<Self, super::runtime::SoraReadError> {
         let keys = rows.iter().map(|row| row.id).collect::<Vec<_>>();
         Ok(Self {
@@ -74,7 +76,7 @@ impl std::ops::Deref for CharacterTable {
 
 impl super::SoraTable for CharacterTable {
     fn name(&self) -> &'static str {
-        "Character"
+        Self::NAME
     }
 
     fn mode(&self) -> super::SoraTableMode {

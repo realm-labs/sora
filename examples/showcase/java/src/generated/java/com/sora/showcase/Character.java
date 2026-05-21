@@ -59,6 +59,7 @@ public final class Character {
 }
 
 final class CharacterTable extends java.util.AbstractMap<Integer, Character> implements SoraTable {
+    static final String NAME = "Character";
     private final List<Integer> keys;
     private final java.util.Map<Integer, Character> rows;
 
@@ -72,7 +73,7 @@ final class CharacterTable extends java.util.AbstractMap<Integer, Character> imp
     }
 
     static CharacterTable decode(SoraTableSource source) {
-        return fromRows(source.decodeTable("Character", Character::decode, Character::decode));
+        return fromRows(source.decodeTable(NAME, Character::decode, Character::decode));
     }
 
     public java.util.Map<Integer, Character> rows() {
@@ -97,7 +98,7 @@ final class CharacterTable extends java.util.AbstractMap<Integer, Character> imp
     }
     @Override
     public String name() {
-        return "Character";
+        return NAME;
     }
 
     @Override

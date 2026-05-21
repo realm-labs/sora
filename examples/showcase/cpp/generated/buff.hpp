@@ -6,6 +6,7 @@
 #include "stat_modifier.hpp"
 
 #include <unordered_map>
+#include <string>
 #include <vector>
 
 namespace sora::showcase {
@@ -28,6 +29,8 @@ struct Buff {
 
 class BuffTable final : public SoraTable {
 public:
+    static constexpr const char* NAME = "Buff";
+
     BuffTable() {}
     BuffTable(const BuffTable&) = delete;
     BuffTable& operator=(const BuffTable&) = delete;
@@ -35,7 +38,7 @@ public:
     BuffTable& operator=(BuffTable&&) = default;
 
     static BuffTable decode(const SoraBundle& bundle) {
-        std::vector<Buff> rows = bundle.decode_table<Buff>("Buff");
+        std::vector<Buff> rows = bundle.decode_table<Buff>(NAME);
         BuffTable table;
         for (std::size_t index = 0; index < rows.size(); ++index) {
             const Buff& row = rows[index];
@@ -46,7 +49,7 @@ public:
         return table;
     }
 
-    const char* name() const override { return "Buff"; }
+    const char* name() const override { return NAME; }
     const char* mode() const override { return "map"; }
     const char* key() const override { return "id"; }
     std::size_t size() const override {

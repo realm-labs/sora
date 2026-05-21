@@ -44,6 +44,7 @@ public final class EquipmentSet {
 }
 
 final class EquipmentSetTable extends java.util.AbstractMap<Integer, EquipmentSet> implements SoraTable {
+    static final String NAME = "EquipmentSet";
     private final List<Integer> keys;
     private final java.util.Map<Integer, EquipmentSet> rows;
 
@@ -57,7 +58,7 @@ final class EquipmentSetTable extends java.util.AbstractMap<Integer, EquipmentSe
     }
 
     static EquipmentSetTable decode(SoraTableSource source) {
-        return fromRows(source.decodeTable("EquipmentSet", EquipmentSet::decode, EquipmentSet::decode));
+        return fromRows(source.decodeTable(NAME, EquipmentSet::decode, EquipmentSet::decode));
     }
 
     public java.util.Map<Integer, EquipmentSet> rows() {
@@ -82,7 +83,7 @@ final class EquipmentSetTable extends java.util.AbstractMap<Integer, EquipmentSe
     }
     @Override
     public String name() {
-        return "EquipmentSet";
+        return NAME;
     }
 
     @Override

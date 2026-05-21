@@ -34,6 +34,7 @@ end
 ---@field private _rows table<integer, Quest>
 local QuestTable = {}
 QuestTable.__index = QuestTable
+QuestTable.NAME = "Quest"
 
 ---@param rows Quest[]
 ---@return QuestTable
@@ -50,7 +51,7 @@ end
 
 ---@return string
 function QuestTable:name()
-    return "Quest"
+    return QuestTable.NAME
 end
 
 ---@return string

@@ -35,6 +35,8 @@ pub struct ShopItemTable {
 }
 
 impl ShopItemTable {
+    pub const NAME: &'static str = "ShopItem";
+
     pub(super) fn from_rows(rows: Vec<ShopItem>) -> Result<Self, super::runtime::SoraReadError> {
         Ok(Self { rows })
     }
@@ -50,7 +52,7 @@ impl std::ops::Deref for ShopItemTable {
 
 impl super::SoraTable for ShopItemTable {
     fn name(&self) -> &'static str {
-        "ShopItem"
+        Self::NAME
     }
 
     fn mode(&self) -> super::SoraTableMode {

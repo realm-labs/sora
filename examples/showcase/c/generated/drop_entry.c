@@ -50,6 +50,8 @@ void sora_showcase_drop_entry_free(sora_showcase_drop_entry* value) {
     *value = (sora_showcase_drop_entry){0};
 }
 
+static const char* sora_showcase_drop_entry_table_name = "DropEntry";
+
 struct sora_showcase_drop_entry_table {
     sora_showcase_drop_entry* rows;
     size_t len;
@@ -71,11 +73,11 @@ sora_result sora_showcase_drop_entry_table_load(
 ) {
     sora_showcase_drop_entry_table* table = (sora_showcase_drop_entry_table*)calloc(1, sizeof(sora_showcase_drop_entry_table));
     if (table == NULL) {
-        return sora_error(SORA_ERROR_OUT_OF_MEMORY, "failed to allocate table DropEntry");
+        return sora_error(SORA_ERROR_OUT_OF_MEMORY, "failed to allocate table");
     }
     sora_result result = sora_bundle_decode_table(
         bundle,
-        "DropEntry",
+        sora_showcase_drop_entry_table_name,
         sizeof(sora_showcase_drop_entry),
         (sora_decode_row_fn)sora_showcase_drop_entry_decode,
         (sora_free_row_fn)sora_showcase_drop_entry_free,

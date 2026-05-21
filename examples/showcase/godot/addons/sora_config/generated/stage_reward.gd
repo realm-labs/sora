@@ -23,11 +23,13 @@ static func decode(value: Variant) -> StageReward:
 
 class StageRewardTable:
 	extends SoraRuntime.SoraConfigTable
+
+	const TABLE_NAME := "StageReward"
 	var rows: Array = []
 
 	static func decode(rows: Array) -> StageRewardTable:
 		var table := StageRewardTable.new()
-		table.name = "StageReward"
+		table.name = TABLE_NAME
 		table.mode = "list"
 		table.key = null
 		table.rows = rows

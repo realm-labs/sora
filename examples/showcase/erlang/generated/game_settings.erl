@@ -15,6 +15,7 @@
 }.
 
 -type table() :: map().
+-define(TABLE_NAME, <<"GameSettings">>).
 
 -spec decode(sora_runtime:reader()) -> {t(), sora_runtime:reader()}.
 decode(Reader0) ->
@@ -33,8 +34,8 @@ decode(Reader0) ->
 
 -spec decode_table(map()) -> table().
 decode_table(Bundle) ->
-    Rows = sora_runtime:decode_table(Bundle, <<"GameSettings">>, fun ?MODULE:decode/1),
-    Data = sora_runtime:require_singleton_table(Rows, <<"GameSettings">>),
+    Rows = sora_runtime:decode_table(Bundle, ?TABLE_NAME, fun ?MODULE:decode/1),
+    Data = sora_runtime:require_singleton_table(Rows, ?TABLE_NAME),
     #{
         data => Data
     }.

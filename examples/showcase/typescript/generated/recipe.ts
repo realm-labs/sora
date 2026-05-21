@@ -36,6 +36,8 @@ export function decodeRecipeValue(value: SoraValue): Recipe {
 }
 
 export class RecipeTable implements SoraConfigTable {
+    static readonly tableName = "Recipe";
+
     private constructor(
         private readonly _keys: number[],
         private readonly _rows: Map<number, Recipe>,
@@ -49,7 +51,7 @@ export class RecipeTable implements SoraConfigTable {
     }
 
     name(): string {
-        return "Recipe";
+        return RecipeTable.tableName;
     }
 
     mode(): string {

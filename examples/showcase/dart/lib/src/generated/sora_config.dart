@@ -53,88 +53,88 @@ final class SoraConfig {
     final bundle = SoraValueBundle.parseJson(bytes);
     return SoraConfig._({
       ItemTable: ItemTable.decode(
-        bundle.decodeTable('Item', Item.decode),
+        bundle.decodeTable(ItemTable.tableName, Item.decode),
       ),
       SkillTable: SkillTable.decode(
-        bundle.decodeTable('Skill', Skill.decode),
+        bundle.decodeTable(SkillTable.tableName, Skill.decode),
       ),
       QuestTable: QuestTable.decode(
-        bundle.decodeTable('Quest', Quest.decode),
+        bundle.decodeTable(QuestTable.tableName, Quest.decode),
       ),
       QuestRewardTable: QuestRewardTable.decode(
-        bundle.decodeTable('QuestReward', QuestReward.decode),
+        bundle.decodeTable(QuestRewardTable.tableName, QuestReward.decode),
       ),
       GameSettingsTable: GameSettingsTable.decode(
-        bundle.decodeTable('GameSettings', GameSettings.decode),
+        bundle.decodeTable(GameSettingsTable.tableName, GameSettings.decode),
       ),
       LocalizationTable: LocalizationTable.decode(
-        bundle.decodeTable('Localization', Localization.decode),
+        bundle.decodeTable(LocalizationTable.tableName, Localization.decode),
       ),
       LevelExpTable: LevelExpTable.decode(
-        bundle.decodeTable('LevelExp', LevelExp.decode),
+        bundle.decodeTable(LevelExpTable.tableName, LevelExp.decode),
       ),
       CharacterTable: CharacterTable.decode(
-        bundle.decodeTable('Character', Character.decode),
+        bundle.decodeTable(CharacterTable.tableName, Character.decode),
       ),
       CharacterSkillTable: CharacterSkillTable.decode(
-        bundle.decodeTable('CharacterSkill', CharacterSkill.decode),
+        bundle.decodeTable(CharacterSkillTable.tableName, CharacterSkill.decode),
       ),
       BuffTable: BuffTable.decode(
-        bundle.decodeTable('Buff', Buff.decode),
+        bundle.decodeTable(BuffTable.tableName, Buff.decode),
       ),
       DropGroupTable: DropGroupTable.decode(
-        bundle.decodeTable('DropGroup', DropGroup.decode),
+        bundle.decodeTable(DropGroupTable.tableName, DropGroup.decode),
       ),
       DropEntryTable: DropEntryTable.decode(
-        bundle.decodeTable('DropEntry', DropEntry.decode),
+        bundle.decodeTable(DropEntryTable.tableName, DropEntry.decode),
       ),
       MonsterTable: MonsterTable.decode(
-        bundle.decodeTable('Monster', Monster.decode),
+        bundle.decodeTable(MonsterTable.tableName, Monster.decode),
       ),
       StageTable: StageTable.decode(
-        bundle.decodeTable('Stage', Stage.decode),
+        bundle.decodeTable(StageTable.tableName, Stage.decode),
       ),
       StageRewardTable: StageRewardTable.decode(
-        bundle.decodeTable('StageReward', StageReward.decode),
+        bundle.decodeTable(StageRewardTable.tableName, StageReward.decode),
       ),
       DungeonTable: DungeonTable.decode(
-        bundle.decodeTable('Dungeon', Dungeon.decode),
+        bundle.decodeTable(DungeonTable.tableName, Dungeon.decode),
       ),
       ShopTable: ShopTable.decode(
-        bundle.decodeTable('Shop', Shop.decode),
+        bundle.decodeTable(ShopTable.tableName, Shop.decode),
       ),
       ShopItemTable: ShopItemTable.decode(
-        bundle.decodeTable('ShopItem', ShopItem.decode),
+        bundle.decodeTable(ShopItemTable.tableName, ShopItem.decode),
       ),
       RecipeTable: RecipeTable.decode(
-        bundle.decodeTable('Recipe', Recipe.decode),
+        bundle.decodeTable(RecipeTable.tableName, Recipe.decode),
       ),
       GachaPoolTable: GachaPoolTable.decode(
-        bundle.decodeTable('GachaPool', GachaPool.decode),
+        bundle.decodeTable(GachaPoolTable.tableName, GachaPool.decode),
       ),
       GachaItemTable: GachaItemTable.decode(
-        bundle.decodeTable('GachaItem', GachaItem.decode),
+        bundle.decodeTable(GachaItemTable.tableName, GachaItem.decode),
       ),
       EquipmentSetTable: EquipmentSetTable.decode(
-        bundle.decodeTable('EquipmentSet', EquipmentSet.decode),
+        bundle.decodeTable(EquipmentSetTable.tableName, EquipmentSet.decode),
       ),
       AchievementTable: AchievementTable.decode(
-        bundle.decodeTable('Achievement', Achievement.decode),
+        bundle.decodeTable(AchievementTable.tableName, Achievement.decode),
       ),
       VipLevelTable: VipLevelTable.decode(
-        bundle.decodeTable('VipLevel', VipLevel.decode),
+        bundle.decodeTable(VipLevelTable.tableName, VipLevel.decode),
       ),
       MailTemplateTable: MailTemplateTable.decode(
-        bundle.decodeTable('MailTemplate', MailTemplate.decode),
+        bundle.decodeTable(MailTemplateTable.tableName, MailTemplate.decode),
       ),
       MailRewardTable: MailRewardTable.decode(
-        bundle.decodeTable('MailReward', MailReward.decode),
+        bundle.decodeTable(MailRewardTable.tableName, MailReward.decode),
       ),
       DialogueTable: DialogueTable.decode(
-        bundle.decodeTable('Dialogue', Dialogue.decode),
+        bundle.decodeTable(DialogueTable.tableName, Dialogue.decode),
       ),
       EventRuleTable: EventRuleTable.decode(
-        bundle.decodeTable('EventRule', EventRule.decode),
+        bundle.decodeTable(EventRuleTable.tableName, EventRule.decode),
       ),
     });
   }

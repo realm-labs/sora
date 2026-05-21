@@ -39,6 +39,7 @@ public final class CharacterSkill {
 }
 
 final class CharacterSkillTable extends java.util.AbstractList<CharacterSkill> implements SoraTable {
+    static final String NAME = "CharacterSkill";
     private final java.util.List<CharacterSkill> rows;
 
     private CharacterSkillTable(java.util.List<CharacterSkill> rows) {
@@ -50,7 +51,7 @@ final class CharacterSkillTable extends java.util.AbstractList<CharacterSkill> i
     }
 
     static CharacterSkillTable decode(SoraTableSource source) {
-        return fromRows(source.decodeTable("CharacterSkill", CharacterSkill::decode, CharacterSkill::decode));
+        return fromRows(source.decodeTable(NAME, CharacterSkill::decode, CharacterSkill::decode));
     }
 
     public java.util.List<CharacterSkill> rows() {
@@ -62,7 +63,7 @@ final class CharacterSkillTable extends java.util.AbstractList<CharacterSkill> i
     }
     @Override
     public String name() {
-        return "CharacterSkill";
+        return NAME;
     }
 
     @Override

@@ -25,7 +25,7 @@ final class GameSettingsTable private (
   val rows: GameSettings
 ) extends SoraTable {
   def value: GameSettings = rows
-  override val name: String = "GameSettings"
+  override val name: String = GameSettingsTable.Name
   override val mode: SoraTableMode = SoraTableMode.Singleton
   override val key: Option[String] = None
   override val rowType: String = "GameSettings"
@@ -33,11 +33,13 @@ final class GameSettingsTable private (
 }
 
 object GameSettingsTable {
+  val Name: String = "GameSettings"
+
   def decode(source: SoraTableSource): GameSettingsTable =
-    fromRows(source.decodeTable("GameSettings", GameSettings.decode))
+    fromRows(source.decodeTable(Name, GameSettings.decode))
 
   private def fromRows(rows: Vector[GameSettings]): GameSettingsTable =
     new GameSettingsTable(
-      SoraRuntime.requireSingletonTable(rows, "GameSettings")
+      SoraRuntime.requireSingletonTable(rows, Name)
     )
 }

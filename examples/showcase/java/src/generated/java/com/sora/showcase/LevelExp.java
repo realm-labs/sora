@@ -39,6 +39,7 @@ public final class LevelExp {
 }
 
 final class LevelExpTable extends java.util.AbstractMap<Integer, LevelExp> implements SoraTable {
+    static final String NAME = "LevelExp";
     private final List<Integer> keys;
     private final java.util.Map<Integer, LevelExp> rows;
 
@@ -52,7 +53,7 @@ final class LevelExpTable extends java.util.AbstractMap<Integer, LevelExp> imple
     }
 
     static LevelExpTable decode(SoraTableSource source) {
-        return fromRows(source.decodeTable("LevelExp", LevelExp::decode, LevelExp::decode));
+        return fromRows(source.decodeTable(NAME, LevelExp::decode, LevelExp::decode));
     }
 
     public java.util.Map<Integer, LevelExp> rows() {
@@ -77,7 +78,7 @@ final class LevelExpTable extends java.util.AbstractMap<Integer, LevelExp> imple
     }
     @Override
     public String name() {
-        return "LevelExp";
+        return NAME;
     }
 
     @Override

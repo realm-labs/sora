@@ -44,6 +44,7 @@ public sealed record Monster(
 
 public sealed class MonsterTable : ISoraTable, IReadOnlyDictionary<int, Monster>
 {
+    public const string TableName = "Monster";
     private readonly List<int> keys;
     private readonly Dictionary<int, Monster> rows;
 
@@ -55,7 +56,7 @@ public sealed class MonsterTable : ISoraTable, IReadOnlyDictionary<int, Monster>
 
     internal static MonsterTable Decode(ISoraTableSource source)
     {
-        return FromRows(source.DecodeTable("Monster", global::com.sora.showcase.Monster.Decode, global::com.sora.showcase.Monster.Decode));
+        return FromRows(source.DecodeTable(TableName, global::com.sora.showcase.Monster.Decode, global::com.sora.showcase.Monster.Decode));
     }
 
     internal static MonsterTable FromRows(List<Monster> rows)
@@ -118,7 +119,7 @@ public sealed class MonsterTable : ISoraTable, IReadOnlyDictionary<int, Monster>
             return orderedRows;
         }
     }
-    public string Name => "Monster";
+    public string Name => TableName;
     public SoraTableMode Mode => SoraTableMode.Map;
     public string? Key => "id";
     public string RowType => "Monster";

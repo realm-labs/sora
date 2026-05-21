@@ -47,6 +47,8 @@ func decodeVipLevelValue(input SoraValue) (VipLevel, error) {
 	return value, nil
 }
 
+const vipLevelTableName = "VipLevel"
+
 type VipLevelTable struct {
 	keys []int32
 	rows map[int32]VipLevel
@@ -61,7 +63,7 @@ func buildVipLevelTable(rows []VipLevel) (*VipLevelTable, error) {
 }
 
 func decodeVipLevelTable(source SoraTableSource) (*VipLevelTable, error) {
-	rows, err := DecodeSourceTable(source, "VipLevel", decodeVipLevel, decodeVipLevelValue)
+	rows, err := DecodeSourceTable(source, vipLevelTableName, decodeVipLevel, decodeVipLevelValue)
 	if err != nil {
 		return nil, err
 	}
@@ -90,7 +92,7 @@ func (table *VipLevelTable) OrderedRows() []VipLevel {
 	return rows
 }
 func (table *VipLevelTable) Name() string {
-	return "VipLevel"
+	return vipLevelTableName
 }
 
 func (table *VipLevelTable) Mode() SoraTableMode {

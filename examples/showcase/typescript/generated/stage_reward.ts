@@ -36,6 +36,8 @@ export function decodeStageRewardValue(value: SoraValue): StageReward {
 }
 
 export class StageRewardTable implements SoraConfigTable {
+    static readonly tableName = "StageReward";
+
     private constructor(
         private readonly _rows: StageReward[],
     ) {}
@@ -47,7 +49,7 @@ export class StageRewardTable implements SoraConfigTable {
     }
 
     name(): string {
-        return "StageReward";
+        return StageRewardTable.tableName;
     }
 
     mode(): string {

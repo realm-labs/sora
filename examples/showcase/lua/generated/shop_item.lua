@@ -27,6 +27,7 @@ end
 ---@field private _rows ShopItem[]
 local ShopItemTable = {}
 ShopItemTable.__index = ShopItemTable
+ShopItemTable.NAME = "ShopItem"
 
 ---@param rows ShopItem[]
 ---@return ShopItemTable
@@ -38,7 +39,7 @@ end
 
 ---@return string
 function ShopItemTable:name()
-    return "ShopItem"
+    return ShopItemTable.NAME
 end
 
 ---@return string

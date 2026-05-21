@@ -32,6 +32,8 @@ export function decodeItemValue(value) {
 }
 
 export class ItemTable {
+    static tableName = "Item";
+
     constructor(
         keys,
         rows,
@@ -54,7 +56,7 @@ export class ItemTable {
     }
 
     name() {
-        return "Item";
+        return ItemTable.tableName;
     }
 
     mode() {

@@ -38,7 +38,7 @@ class DropEntryTable private constructor(
     override fun get(index: Int): DropEntry = rows[index]
 
     fun values(): List<DropEntry> = rows
-    override val name: String = "DropEntry"
+    override val name: String = NAME
     override val mode: SoraTableMode = SoraTableMode.List
     override val key: String? = null
     override val rowType: String = "DropEntry"
@@ -47,11 +47,13 @@ class DropEntryTable private constructor(
 
     companion object {
         fun decode(source: SoraTableSource): DropEntryTable =
-            fromRows(source.decodeTable("DropEntry", DropEntry::decode, DropEntry::decode))
+            fromRows(source.decodeTable(NAME, DropEntry::decode, DropEntry::decode))
 
         private fun fromRows(rows: List<DropEntry>): DropEntryTable =
             DropEntryTable(
                 rows,
             )
+
+        const val NAME: String = "DropEntry"
     }
 }

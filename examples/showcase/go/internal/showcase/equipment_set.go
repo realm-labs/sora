@@ -56,6 +56,8 @@ func decodeEquipmentSetValue(input SoraValue) (EquipmentSet, error) {
 	return value, nil
 }
 
+const equipmentSetTableName = "EquipmentSet"
+
 type EquipmentSetTable struct {
 	keys []int32
 	rows map[int32]EquipmentSet
@@ -70,7 +72,7 @@ func buildEquipmentSetTable(rows []EquipmentSet) (*EquipmentSetTable, error) {
 }
 
 func decodeEquipmentSetTable(source SoraTableSource) (*EquipmentSetTable, error) {
-	rows, err := DecodeSourceTable(source, "EquipmentSet", decodeEquipmentSet, decodeEquipmentSetValue)
+	rows, err := DecodeSourceTable(source, equipmentSetTableName, decodeEquipmentSet, decodeEquipmentSetValue)
 	if err != nil {
 		return nil, err
 	}
@@ -99,7 +101,7 @@ func (table *EquipmentSetTable) OrderedRows() []EquipmentSet {
 	return rows
 }
 func (table *EquipmentSetTable) Name() string {
-	return "EquipmentSet"
+	return equipmentSetTableName
 }
 
 func (table *EquipmentSetTable) Mode() SoraTableMode {

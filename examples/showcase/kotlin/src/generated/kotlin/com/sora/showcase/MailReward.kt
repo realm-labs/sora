@@ -35,7 +35,7 @@ class MailRewardTable private constructor(
     override fun get(index: Int): MailReward = rows[index]
 
     fun values(): List<MailReward> = rows
-    override val name: String = "MailReward"
+    override val name: String = NAME
     override val mode: SoraTableMode = SoraTableMode.List
     override val key: String? = null
     override val rowType: String = "MailReward"
@@ -44,11 +44,13 @@ class MailRewardTable private constructor(
 
     companion object {
         fun decode(source: SoraTableSource): MailRewardTable =
-            fromRows(source.decodeTable("MailReward", MailReward::decode, MailReward::decode))
+            fromRows(source.decodeTable(NAME, MailReward::decode, MailReward::decode))
 
         private fun fromRows(rows: List<MailReward>): MailRewardTable =
             MailRewardTable(
                 rows,
             )
+
+        const val NAME: String = "MailReward"
     }
 }

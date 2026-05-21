@@ -27,6 +27,8 @@ export function decodeAchievementValue(value) {
 }
 
 export class AchievementTable {
+    static tableName = "Achievement";
+
     constructor(
         keys,
         rows,
@@ -43,7 +45,7 @@ export class AchievementTable {
     }
 
     name() {
-        return "Achievement";
+        return AchievementTable.tableName;
     }
 
     mode() {

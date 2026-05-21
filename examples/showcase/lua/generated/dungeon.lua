@@ -26,6 +26,7 @@ end
 ---@field private _rows table<integer, Dungeon>
 local DungeonTable = {}
 DungeonTable.__index = DungeonTable
+DungeonTable.NAME = "Dungeon"
 
 ---@param rows Dungeon[]
 ---@return DungeonTable
@@ -42,7 +43,7 @@ end
 
 ---@return string
 function DungeonTable:name()
-    return "Dungeon"
+    return DungeonTable.NAME
 end
 
 ---@return string

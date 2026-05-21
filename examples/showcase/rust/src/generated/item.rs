@@ -49,6 +49,8 @@ pub struct ItemTable {
 }
 
 impl ItemTable {
+    pub const NAME: &'static str = "Item";
+
     pub(super) fn from_rows(rows: Vec<Item>) -> Result<Self, super::runtime::SoraReadError> {
         let keys = rows.iter().map(|row| row.id).collect::<Vec<_>>();
         let by_name =
@@ -95,7 +97,7 @@ impl std::ops::Deref for ItemTable {
 
 impl super::SoraTable for ItemTable {
     fn name(&self) -> &'static str {
-        "Item"
+        Self::NAME
     }
 
     fn mode(&self) -> super::SoraTableMode {

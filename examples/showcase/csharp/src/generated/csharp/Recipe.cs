@@ -35,6 +35,7 @@ public sealed record Recipe(
 
 public sealed class RecipeTable : ISoraTable, IReadOnlyDictionary<int, Recipe>
 {
+    public const string TableName = "Recipe";
     private readonly List<int> keys;
     private readonly Dictionary<int, Recipe> rows;
 
@@ -46,7 +47,7 @@ public sealed class RecipeTable : ISoraTable, IReadOnlyDictionary<int, Recipe>
 
     internal static RecipeTable Decode(ISoraTableSource source)
     {
-        return FromRows(source.DecodeTable("Recipe", global::com.sora.showcase.Recipe.Decode, global::com.sora.showcase.Recipe.Decode));
+        return FromRows(source.DecodeTable(TableName, global::com.sora.showcase.Recipe.Decode, global::com.sora.showcase.Recipe.Decode));
     }
 
     internal static RecipeTable FromRows(List<Recipe> rows)
@@ -109,7 +110,7 @@ public sealed class RecipeTable : ISoraTable, IReadOnlyDictionary<int, Recipe>
             return orderedRows;
         }
     }
-    public string Name => "Recipe";
+    public string Name => TableName;
     public SoraTableMode Mode => SoraTableMode.Map;
     public string? Key => "id";
     public string RowType => "Recipe";

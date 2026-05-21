@@ -23,12 +23,14 @@ static func decode(value: Variant) -> Buff:
 
 class BuffTable:
 	extends SoraRuntime.SoraConfigTable
+
+	const TABLE_NAME := "Buff"
 	var keys: Array = []
 	var _rows: Dictionary = {}
 
 	static func decode(rows: Array) -> BuffTable:
 		var table := BuffTable.new()
-		table.name = "Buff"
+		table.name = TABLE_NAME
 		table.mode = "map"
 		table.key = "id"
 		table.keys = rows.map(func(row): return row.id)
@@ -40,7 +42,7 @@ class BuffTable:
 	func get_row(key_value: Variant) -> Buff:
 		var value = _rows.get(key_value)
 		if value == null:
-			SoraRuntime.report_error("missing row in table `Buff` for key `%s`" % str(key_value))
+			SoraRuntime.report_error("missing row in table `%s` for key `%s`" % [TABLE_NAME, str(key_value)])
 		return value
 
 	func try_get(key_value: Variant) -> Buff:

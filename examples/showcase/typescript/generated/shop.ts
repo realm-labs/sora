@@ -36,6 +36,8 @@ export function decodeShopValue(value: SoraValue): Shop {
 }
 
 export class ShopTable implements SoraConfigTable {
+    static readonly tableName = "Shop";
+
     private constructor(
         private readonly _keys: number[],
         private readonly _rows: Map<number, Shop>,
@@ -49,7 +51,7 @@ export class ShopTable implements SoraConfigTable {
     }
 
     name(): string {
-        return "Shop";
+        return ShopTable.tableName;
     }
 
     mode(): string {

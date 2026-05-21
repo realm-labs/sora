@@ -39,6 +39,7 @@ public final class GachaPool {
 }
 
 final class GachaPoolTable extends java.util.AbstractMap<Integer, GachaPool> implements SoraTable {
+    static final String NAME = "GachaPool";
     private final List<Integer> keys;
     private final java.util.Map<Integer, GachaPool> rows;
 
@@ -52,7 +53,7 @@ final class GachaPoolTable extends java.util.AbstractMap<Integer, GachaPool> imp
     }
 
     static GachaPoolTable decode(SoraTableSource source) {
-        return fromRows(source.decodeTable("GachaPool", GachaPool::decode, GachaPool::decode));
+        return fromRows(source.decodeTable(NAME, GachaPool::decode, GachaPool::decode));
     }
 
     public java.util.Map<Integer, GachaPool> rows() {
@@ -77,7 +78,7 @@ final class GachaPoolTable extends java.util.AbstractMap<Integer, GachaPool> imp
     }
     @Override
     public String name() {
-        return "GachaPool";
+        return NAME;
     }
 
     @Override

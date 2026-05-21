@@ -43,7 +43,7 @@ class CharacterTable private constructor(
     val rows: Map<Int, Character>,
 ) : SoraTable, Map<Int, Character> by rows {
     fun orderedValues(): List<Character> = orderedKeys.mapNotNull { rows[it] }
-    override val name: String = "Character"
+    override val name: String = NAME
     override val mode: SoraTableMode = SoraTableMode.Map
     override val key: String? = "id"
     override val rowType: String = "Character"
@@ -52,12 +52,14 @@ class CharacterTable private constructor(
 
     companion object {
         fun decode(source: SoraTableSource): CharacterTable =
-            fromRows(source.decodeTable("Character", Character::decode, Character::decode))
+            fromRows(source.decodeTable(NAME, Character::decode, Character::decode))
 
         private fun fromRows(rows: List<Character>): CharacterTable =
             CharacterTable(
                 rows.map { it.id },
                 rows.associateBy { it.id },
             )
+
+        const val NAME: String = "Character"
     }
 }

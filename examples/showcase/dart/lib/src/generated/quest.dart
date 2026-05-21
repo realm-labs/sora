@@ -40,6 +40,7 @@ final class Quest {
 }
 
 final class QuestTable extends Iterable<Quest> implements SoraConfigTable {
+  static const tableName = 'Quest';
   final List<int> _keys;
   final Map<int, Quest> _rows;
 
@@ -56,7 +57,7 @@ final class QuestTable extends Iterable<Quest> implements SoraConfigTable {
   }
 
   @override
-  String get name => 'Quest';
+  String get name => tableName;
 
   @override
   String get mode => 'map';
@@ -74,7 +75,7 @@ final class QuestTable extends Iterable<Quest> implements SoraConfigTable {
   Quest get(int key) {
     final row = _rows[key];
     if (row == null) {
-      throw SoraReadException('missing row in table `Quest` for key `$key`');
+      throw SoraReadException('missing row in table `$tableName` for key `$key`');
     }
     return row;
   }

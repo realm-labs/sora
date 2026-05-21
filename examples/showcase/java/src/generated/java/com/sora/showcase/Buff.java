@@ -44,6 +44,7 @@ public final class Buff {
 }
 
 final class BuffTable extends java.util.AbstractMap<Integer, Buff> implements SoraTable {
+    static final String NAME = "Buff";
     private final List<Integer> keys;
     private final java.util.Map<Integer, Buff> rows;
 
@@ -57,7 +58,7 @@ final class BuffTable extends java.util.AbstractMap<Integer, Buff> implements So
     }
 
     static BuffTable decode(SoraTableSource source) {
-        return fromRows(source.decodeTable("Buff", Buff::decode, Buff::decode));
+        return fromRows(source.decodeTable(NAME, Buff::decode, Buff::decode));
     }
 
     public java.util.Map<Integer, Buff> rows() {
@@ -82,7 +83,7 @@ final class BuffTable extends java.util.AbstractMap<Integer, Buff> implements So
     }
     @Override
     public String name() {
-        return "Buff";
+        return NAME;
     }
 
     @Override

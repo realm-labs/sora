@@ -38,6 +38,8 @@ class CharacterSkill:
 
 
 class CharacterSkillTable(SoraConfigTable):
+    NAME = "CharacterSkill"
+
     def __init__(
         self,
         rows: list[CharacterSkill],
@@ -51,7 +53,7 @@ class CharacterSkillTable(SoraConfigTable):
         )
 
     def name(self) -> str:
-        return "CharacterSkill"
+        return self.NAME
 
     def mode(self) -> str:
         return "list"

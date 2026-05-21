@@ -31,6 +31,7 @@ end
 ---@field private _rows table<integer, Monster>
 local MonsterTable = {}
 MonsterTable.__index = MonsterTable
+MonsterTable.NAME = "Monster"
 
 ---@param rows Monster[]
 ---@return MonsterTable
@@ -47,7 +48,7 @@ end
 
 ---@return string
 function MonsterTable:name()
-    return "Monster"
+    return MonsterTable.NAME
 end
 
 ---@return string

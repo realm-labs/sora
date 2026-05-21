@@ -31,7 +31,7 @@ class ShopTable private constructor(
     val rows: Map<Int, Shop>,
 ) : SoraTable, Map<Int, Shop> by rows {
     fun orderedValues(): List<Shop> = orderedKeys.mapNotNull { rows[it] }
-    override val name: String = "Shop"
+    override val name: String = NAME
     override val mode: SoraTableMode = SoraTableMode.Map
     override val key: String? = "id"
     override val rowType: String = "Shop"
@@ -40,12 +40,14 @@ class ShopTable private constructor(
 
     companion object {
         fun decode(source: SoraTableSource): ShopTable =
-            fromRows(source.decodeTable("Shop", Shop::decode, Shop::decode))
+            fromRows(source.decodeTable(NAME, Shop::decode, Shop::decode))
 
         private fun fromRows(rows: List<Shop>): ShopTable =
             ShopTable(
                 rows.map { it.id },
                 rows.associateBy { it.id },
             )
+
+        const val NAME: String = "Shop"
     }
 }

@@ -56,6 +56,8 @@ func decodeMailRewardValue(input SoraValue) (MailReward, error) {
 	return value, nil
 }
 
+const mailRewardTableName = "MailReward"
+
 type MailRewardTable struct {
 	rows []MailReward
 }
@@ -65,7 +67,7 @@ func buildMailRewardTable(rows []MailReward) (*MailRewardTable, error) {
 }
 
 func decodeMailRewardTable(source SoraTableSource) (*MailRewardTable, error) {
-	rows, err := DecodeSourceTable(source, "MailReward", decodeMailReward, decodeMailRewardValue)
+	rows, err := DecodeSourceTable(source, mailRewardTableName, decodeMailReward, decodeMailRewardValue)
 	if err != nil {
 		return nil, err
 	}
@@ -76,7 +78,7 @@ func (table *MailRewardTable) Rows() []MailReward {
 	return table.rows
 }
 func (table *MailRewardTable) Name() string {
-	return "MailReward"
+	return mailRewardTableName
 }
 
 func (table *MailRewardTable) Mode() SoraTableMode {

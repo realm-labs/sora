@@ -48,9 +48,9 @@ class SoraConfig:
 {%- for table in model.tables %}
             {{ table.pascal_name }}Table.decode(
 {%- if runtime_format == "sora" %}
-                bundle.decode_table("{{ table.name }}", {{ table.row_type }}.decode)
+                bundle.decode_table({{ table.pascal_name }}Table.NAME, {{ table.row_type }}.decode)
 {%- else %}
-                bundle.decode_table("{{ table.name }}", {{ table.row_type }}.decode_value)
+                bundle.decode_table({{ table.pascal_name }}Table.NAME, {{ table.row_type }}.decode_value)
 {%- endif %}
             ),
 {%- endfor %}

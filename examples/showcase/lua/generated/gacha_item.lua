@@ -25,6 +25,7 @@ end
 ---@field private _rows GachaItem[]
 local GachaItemTable = {}
 GachaItemTable.__index = GachaItemTable
+GachaItemTable.NAME = "GachaItem"
 
 ---@param rows GachaItem[]
 ---@return GachaItemTable
@@ -36,7 +37,7 @@ end
 
 ---@return string
 function GachaItemTable:name()
-    return "GachaItem"
+    return GachaItemTable.NAME
 end
 
 ---@return string

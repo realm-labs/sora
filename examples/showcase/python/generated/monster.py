@@ -50,6 +50,8 @@ class Monster:
 
 
 class MonsterTable(SoraConfigTable):
+    NAME = "Monster"
+
     def __init__(
         self,
         keys: list[int],
@@ -66,7 +68,7 @@ class MonsterTable(SoraConfigTable):
         )
 
     def name(self) -> str:
-        return "Monster"
+        return self.NAME
 
     def mode(self) -> str:
         return "map"

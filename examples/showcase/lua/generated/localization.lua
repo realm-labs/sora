@@ -25,6 +25,7 @@ end
 ---@field private _rows table<string, Localization>
 local LocalizationTable = {}
 LocalizationTable.__index = LocalizationTable
+LocalizationTable.NAME = "Localization"
 
 ---@param rows Localization[]
 ---@return LocalizationTable
@@ -41,7 +42,7 @@ end
 
 ---@return string
 function LocalizationTable:name()
-    return "Localization"
+    return LocalizationTable.NAME
 end
 
 ---@return string

@@ -83,6 +83,8 @@ func decodeCharacterValue(input SoraValue) (Character, error) {
 	return value, nil
 }
 
+const characterTableName = "Character"
+
 type CharacterTable struct {
 	keys []int32
 	rows map[int32]Character
@@ -97,7 +99,7 @@ func buildCharacterTable(rows []Character) (*CharacterTable, error) {
 }
 
 func decodeCharacterTable(source SoraTableSource) (*CharacterTable, error) {
-	rows, err := DecodeSourceTable(source, "Character", decodeCharacter, decodeCharacterValue)
+	rows, err := DecodeSourceTable(source, characterTableName, decodeCharacter, decodeCharacterValue)
 	if err != nil {
 		return nil, err
 	}
@@ -126,7 +128,7 @@ func (table *CharacterTable) OrderedRows() []Character {
 	return rows
 }
 func (table *CharacterTable) Name() string {
-	return "Character"
+	return characterTableName
 }
 
 func (table *CharacterTable) Mode() SoraTableMode {

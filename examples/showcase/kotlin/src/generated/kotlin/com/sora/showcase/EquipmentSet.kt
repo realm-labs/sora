@@ -34,7 +34,7 @@ class EquipmentSetTable private constructor(
     val rows: Map<Int, EquipmentSet>,
 ) : SoraTable, Map<Int, EquipmentSet> by rows {
     fun orderedValues(): List<EquipmentSet> = orderedKeys.mapNotNull { rows[it] }
-    override val name: String = "EquipmentSet"
+    override val name: String = NAME
     override val mode: SoraTableMode = SoraTableMode.Map
     override val key: String? = "id"
     override val rowType: String = "EquipmentSet"
@@ -43,12 +43,14 @@ class EquipmentSetTable private constructor(
 
     companion object {
         fun decode(source: SoraTableSource): EquipmentSetTable =
-            fromRows(source.decodeTable("EquipmentSet", EquipmentSet::decode, EquipmentSet::decode))
+            fromRows(source.decodeTable(NAME, EquipmentSet::decode, EquipmentSet::decode))
 
         private fun fromRows(rows: List<EquipmentSet>): EquipmentSetTable =
             EquipmentSetTable(
                 rows.map { it.id },
                 rows.associateBy { it.id },
             )
+
+        const val NAME: String = "EquipmentSet"
     }
 }

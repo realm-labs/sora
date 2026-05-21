@@ -31,7 +31,7 @@ class DialogueTable private constructor(
     val rows: Map<Int, Dialogue>,
 ) : SoraTable, Map<Int, Dialogue> by rows {
     fun orderedValues(): List<Dialogue> = orderedKeys.mapNotNull { rows[it] }
-    override val name: String = "Dialogue"
+    override val name: String = NAME
     override val mode: SoraTableMode = SoraTableMode.Map
     override val key: String? = "id"
     override val rowType: String = "Dialogue"
@@ -40,12 +40,14 @@ class DialogueTable private constructor(
 
     companion object {
         fun decode(source: SoraTableSource): DialogueTable =
-            fromRows(source.decodeTable("Dialogue", Dialogue::decode, Dialogue::decode))
+            fromRows(source.decodeTable(NAME, Dialogue::decode, Dialogue::decode))
 
         private fun fromRows(rows: List<Dialogue>): DialogueTable =
             DialogueTable(
                 rows.map { it.id },
                 rows.associateBy { it.id },
             )
+
+        const val NAME: String = "Dialogue"
     }
 }

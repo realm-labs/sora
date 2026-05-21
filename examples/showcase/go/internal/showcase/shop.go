@@ -47,6 +47,8 @@ func decodeShopValue(input SoraValue) (Shop, error) {
 	return value, nil
 }
 
+const shopTableName = "Shop"
+
 type ShopTable struct {
 	keys []int32
 	rows map[int32]Shop
@@ -61,7 +63,7 @@ func buildShopTable(rows []Shop) (*ShopTable, error) {
 }
 
 func decodeShopTable(source SoraTableSource) (*ShopTable, error) {
-	rows, err := DecodeSourceTable(source, "Shop", decodeShop, decodeShopValue)
+	rows, err := DecodeSourceTable(source, shopTableName, decodeShop, decodeShopValue)
 	if err != nil {
 		return nil, err
 	}
@@ -90,7 +92,7 @@ func (table *ShopTable) OrderedRows() []Shop {
 	return rows
 }
 func (table *ShopTable) Name() string {
-	return "Shop"
+	return shopTableName
 }
 
 func (table *ShopTable) Mode() SoraTableMode {

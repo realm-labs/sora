@@ -39,6 +39,8 @@ export function decodeBuffValue(value: SoraValue): Buff {
 }
 
 export class BuffTable implements SoraConfigTable {
+    static readonly tableName = "Buff";
+
     private constructor(
         private readonly _keys: number[],
         private readonly _rows: Map<number, Buff>,
@@ -52,7 +54,7 @@ export class BuffTable implements SoraConfigTable {
     }
 
     name(): string {
-        return "Buff";
+        return BuffTable.tableName;
     }
 
     mode(): string {

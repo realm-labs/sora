@@ -23,11 +23,13 @@ static func decode(value: Variant) -> QuestReward:
 
 class QuestRewardTable:
 	extends SoraRuntime.SoraConfigTable
+
+	const TABLE_NAME := "QuestReward"
 	var rows: Array = []
 
 	static func decode(rows: Array) -> QuestRewardTable:
 		var table := QuestRewardTable.new()
-		table.name = "QuestReward"
+		table.name = TABLE_NAME
 		table.mode = "list"
 		table.key = null
 		table.rows = rows

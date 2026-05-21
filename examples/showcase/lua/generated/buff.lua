@@ -26,6 +26,7 @@ end
 ---@field private _rows table<integer, Buff>
 local BuffTable = {}
 BuffTable.__index = BuffTable
+BuffTable.NAME = "Buff"
 
 ---@param rows Buff[]
 ---@return BuffTable
@@ -42,7 +43,7 @@ end
 
 ---@return string
 function BuffTable:name()
-    return "Buff"
+    return BuffTable.NAME
 end
 
 ---@return string

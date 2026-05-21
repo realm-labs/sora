@@ -47,6 +47,7 @@ public sealed record Character(
 
 public sealed class CharacterTable : ISoraTable, IReadOnlyDictionary<int, Character>
 {
+    public const string TableName = "Character";
     private readonly List<int> keys;
     private readonly Dictionary<int, Character> rows;
 
@@ -58,7 +59,7 @@ public sealed class CharacterTable : ISoraTable, IReadOnlyDictionary<int, Charac
 
     internal static CharacterTable Decode(ISoraTableSource source)
     {
-        return FromRows(source.DecodeTable("Character", global::com.sora.showcase.Character.Decode, global::com.sora.showcase.Character.Decode));
+        return FromRows(source.DecodeTable(TableName, global::com.sora.showcase.Character.Decode, global::com.sora.showcase.Character.Decode));
     }
 
     internal static CharacterTable FromRows(List<Character> rows)
@@ -121,7 +122,7 @@ public sealed class CharacterTable : ISoraTable, IReadOnlyDictionary<int, Charac
             return orderedRows;
         }
     }
-    public string Name => "Character";
+    public string Name => TableName;
     public SoraTableMode Mode => SoraTableMode.Map;
     public string? Key => "id";
     public string RowType => "Character";

@@ -27,6 +27,8 @@ export function decodeEquipmentSetValue(value) {
 }
 
 export class EquipmentSetTable {
+    static tableName = "EquipmentSet";
+
     constructor(
         keys,
         rows,
@@ -43,7 +45,7 @@ export class EquipmentSetTable {
     }
 
     name() {
-        return "EquipmentSet";
+        return EquipmentSetTable.tableName;
     }
 
     mode() {

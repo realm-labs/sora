@@ -31,6 +31,8 @@ pub struct RecipeTable {
 }
 
 impl RecipeTable {
+    pub const NAME: &'static str = "Recipe";
+
     pub(super) fn from_rows(rows: Vec<Recipe>) -> Result<Self, super::runtime::SoraReadError> {
         let keys = rows.iter().map(|row| row.id).collect::<Vec<_>>();
         Ok(Self {
@@ -61,7 +63,7 @@ impl std::ops::Deref for RecipeTable {
 
 impl super::SoraTable for RecipeTable {
     fn name(&self) -> &'static str {
-        "Recipe"
+        Self::NAME
     }
 
     fn mode(&self) -> super::SoraTableMode {

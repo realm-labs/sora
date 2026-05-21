@@ -35,6 +35,8 @@ export function decodeQuestValue(value) {
 }
 
 export class QuestTable {
+    static tableName = "Quest";
+
     constructor(
         keys,
         rows,
@@ -51,7 +53,7 @@ export class QuestTable {
     }
 
     name() {
-        return "Quest";
+        return QuestTable.tableName;
     }
 
     mode() {

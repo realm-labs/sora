@@ -33,6 +33,8 @@ pub struct LocalizationTable {
 }
 
 impl LocalizationTable {
+    pub const NAME: &'static str = "Localization";
+
     pub(super) fn from_rows(
         rows: Vec<Localization>,
     ) -> Result<Self, super::runtime::SoraReadError> {
@@ -65,7 +67,7 @@ impl std::ops::Deref for LocalizationTable {
 
 impl super::SoraTable for LocalizationTable {
     fn name(&self) -> &'static str {
-        "Localization"
+        Self::NAME
     }
 
     fn mode(&self) -> super::SoraTableMode {

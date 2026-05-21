@@ -95,6 +95,8 @@ func decodeSkillValue(input SoraValue) (Skill, error) {
 	return value, nil
 }
 
+const skillTableName = "Skill"
+
 type SkillTable struct {
 	keys []int32
 	rows map[int32]Skill
@@ -109,7 +111,7 @@ func buildSkillTable(rows []Skill) (*SkillTable, error) {
 }
 
 func decodeSkillTable(source SoraTableSource) (*SkillTable, error) {
-	rows, err := DecodeSourceTable(source, "Skill", decodeSkill, decodeSkillValue)
+	rows, err := DecodeSourceTable(source, skillTableName, decodeSkill, decodeSkillValue)
 	if err != nil {
 		return nil, err
 	}
@@ -138,7 +140,7 @@ func (table *SkillTable) OrderedRows() []Skill {
 	return rows
 }
 func (table *SkillTable) Name() string {
-	return "Skill"
+	return skillTableName
 }
 
 func (table *SkillTable) Mode() SoraTableMode {

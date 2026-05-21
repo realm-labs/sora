@@ -34,7 +34,7 @@ class DungeonTable private constructor(
     val rows: Map<Int, Dungeon>,
 ) : SoraTable, Map<Int, Dungeon> by rows {
     fun orderedValues(): List<Dungeon> = orderedKeys.mapNotNull { rows[it] }
-    override val name: String = "Dungeon"
+    override val name: String = NAME
     override val mode: SoraTableMode = SoraTableMode.Map
     override val key: String? = "id"
     override val rowType: String = "Dungeon"
@@ -43,12 +43,14 @@ class DungeonTable private constructor(
 
     companion object {
         fun decode(source: SoraTableSource): DungeonTable =
-            fromRows(source.decodeTable("Dungeon", Dungeon::decode, Dungeon::decode))
+            fromRows(source.decodeTable(NAME, Dungeon::decode, Dungeon::decode))
 
         private fun fromRows(rows: List<Dungeon>): DungeonTable =
             DungeonTable(
                 rows.map { it.id },
                 rows.associateBy { it.id },
             )
+
+        const val NAME: String = "Dungeon"
     }
 }

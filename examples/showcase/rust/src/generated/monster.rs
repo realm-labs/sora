@@ -41,6 +41,8 @@ pub struct MonsterTable {
 }
 
 impl MonsterTable {
+    pub const NAME: &'static str = "Monster";
+
     pub(super) fn from_rows(rows: Vec<Monster>) -> Result<Self, super::runtime::SoraReadError> {
         let keys = rows.iter().map(|row| row.id).collect::<Vec<_>>();
         Ok(Self {
@@ -71,7 +73,7 @@ impl std::ops::Deref for MonsterTable {
 
 impl super::SoraTable for MonsterTable {
     fn name(&self) -> &'static str {
-        "Monster"
+        Self::NAME
     }
 
     fn mode(&self) -> super::SoraTableMode {

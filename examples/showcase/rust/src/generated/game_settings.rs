@@ -35,11 +35,13 @@ pub struct GameSettingsTable {
 }
 
 impl GameSettingsTable {
+    pub const NAME: &'static str = "GameSettings";
+
     pub(super) fn from_rows(
         rows: Vec<GameSettings>,
     ) -> Result<Self, super::runtime::SoraReadError> {
         Ok(Self {
-            rows: super::decode_singleton_table(rows, "GameSettings")?,
+            rows: super::decode_singleton_table(rows, Self::NAME)?,
         })
     }
 }
@@ -54,7 +56,7 @@ impl std::ops::Deref for GameSettingsTable {
 
 impl super::SoraTable for GameSettingsTable {
     fn name(&self) -> &'static str {
-        "GameSettings"
+        Self::NAME
     }
 
     fn mode(&self) -> super::SoraTableMode {

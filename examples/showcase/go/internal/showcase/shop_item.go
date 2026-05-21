@@ -65,6 +65,8 @@ func decodeShopItemValue(input SoraValue) (ShopItem, error) {
 	return value, nil
 }
 
+const shopItemTableName = "ShopItem"
+
 type ShopItemTable struct {
 	rows []ShopItem
 }
@@ -74,7 +76,7 @@ func buildShopItemTable(rows []ShopItem) (*ShopItemTable, error) {
 }
 
 func decodeShopItemTable(source SoraTableSource) (*ShopItemTable, error) {
-	rows, err := DecodeSourceTable(source, "ShopItem", decodeShopItem, decodeShopItemValue)
+	rows, err := DecodeSourceTable(source, shopItemTableName, decodeShopItem, decodeShopItemValue)
 	if err != nil {
 		return nil, err
 	}
@@ -85,7 +87,7 @@ func (table *ShopItemTable) Rows() []ShopItem {
 	return table.rows
 }
 func (table *ShopItemTable) Name() string {
-	return "ShopItem"
+	return shopItemTableName
 }
 
 func (table *ShopItemTable) Mode() SoraTableMode {

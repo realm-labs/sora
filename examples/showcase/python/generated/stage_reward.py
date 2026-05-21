@@ -41,6 +41,8 @@ class StageReward:
 
 
 class StageRewardTable(SoraConfigTable):
+    NAME = "StageReward"
+
     def __init__(
         self,
         rows: list[StageReward],
@@ -54,7 +56,7 @@ class StageRewardTable(SoraConfigTable):
         )
 
     def name(self) -> str:
-        return "StageReward"
+        return self.NAME
 
     def mode(self) -> str:
         return "list"

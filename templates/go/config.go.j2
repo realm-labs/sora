@@ -31,7 +31,7 @@ func NewSoraConfigFromSource(source SoraTableSource) (*SoraConfig, error) {
     if err != nil {
         return nil, err
     }
-    tables["{{ table.name }}"] = {{ table.camel_name }}Table
+    tables[{{ table.camel_name }}TableName] = {{ table.camel_name }}Table
 {%- endfor %}
     return &SoraConfig{tables: tables}, nil
 }
@@ -46,7 +46,7 @@ func (config *SoraConfig) Tables() []SoraTable {
 
 {%- for table in model.tables %}
 func (config *SoraConfig) {{ table.pascal_name }}() *{{ table.pascal_name }}Table {
-    return config.tables["{{ table.name }}"].(*{{ table.pascal_name }}Table)
+    return config.tables[{{ table.camel_name }}TableName].(*{{ table.pascal_name }}Table)
 }
 
 {%- endfor %}

@@ -34,6 +34,8 @@ pub struct EquipmentSetTable {
 }
 
 impl EquipmentSetTable {
+    pub const NAME: &'static str = "EquipmentSet";
+
     pub(super) fn from_rows(
         rows: Vec<EquipmentSet>,
     ) -> Result<Self, super::runtime::SoraReadError> {
@@ -66,7 +68,7 @@ impl std::ops::Deref for EquipmentSetTable {
 
 impl super::SoraTable for EquipmentSetTable {
     fn name(&self) -> &'static str {
-        "EquipmentSet"
+        Self::NAME
     }
 
     fn mode(&self) -> super::SoraTableMode {

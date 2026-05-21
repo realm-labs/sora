@@ -28,6 +28,8 @@ export function decodeEventRuleValue(value) {
 }
 
 export class EventRuleTable {
+    static tableName = "EventRule";
+
     constructor(
         keys,
         rows,
@@ -44,7 +46,7 @@ export class EventRuleTable {
     }
 
     name() {
-        return "EventRule";
+        return EventRuleTable.tableName;
     }
 
     mode() {

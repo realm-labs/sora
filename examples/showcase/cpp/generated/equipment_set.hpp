@@ -6,6 +6,7 @@
 #include "skill_effect.hpp"
 
 #include <unordered_map>
+#include <string>
 #include <vector>
 
 namespace sora::showcase {
@@ -28,6 +29,8 @@ struct EquipmentSet {
 
 class EquipmentSetTable final : public SoraTable {
 public:
+    static constexpr const char* NAME = "EquipmentSet";
+
     EquipmentSetTable() {}
     EquipmentSetTable(const EquipmentSetTable&) = delete;
     EquipmentSetTable& operator=(const EquipmentSetTable&) = delete;
@@ -35,7 +38,7 @@ public:
     EquipmentSetTable& operator=(EquipmentSetTable&&) = default;
 
     static EquipmentSetTable decode(const SoraBundle& bundle) {
-        std::vector<EquipmentSet> rows = bundle.decode_table<EquipmentSet>("EquipmentSet");
+        std::vector<EquipmentSet> rows = bundle.decode_table<EquipmentSet>(NAME);
         EquipmentSetTable table;
         for (std::size_t index = 0; index < rows.size(); ++index) {
             const EquipmentSet& row = rows[index];
@@ -46,7 +49,7 @@ public:
         return table;
     }
 
-    const char* name() const override { return "EquipmentSet"; }
+    const char* name() const override { return NAME; }
     const char* mode() const override { return "map"; }
     const char* key() const override { return "id"; }
     std::size_t size() const override {

@@ -33,6 +33,7 @@ end
 ---@field private _by_item_type table<ItemType, Item[]>
 local ItemTable = {}
 ItemTable.__index = ItemTable
+ItemTable.NAME = "Item"
 
 ---@param rows Item[]
 ---@return ItemTable
@@ -51,7 +52,7 @@ end
 
 ---@return string
 function ItemTable:name()
-    return "Item"
+    return ItemTable.NAME
 end
 
 ---@return string

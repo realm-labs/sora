@@ -22,6 +22,8 @@ export function decodeDropGroupValue(value) {
 }
 
 export class DropGroupTable {
+    static tableName = "DropGroup";
+
     constructor(
         keys,
         rows,
@@ -38,7 +40,7 @@ export class DropGroupTable {
     }
 
     name() {
-        return "DropGroup";
+        return DropGroupTable.tableName;
     }
 
     mode() {

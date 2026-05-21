@@ -25,11 +25,13 @@ static func decode(value: Variant) -> ShopItem:
 
 class ShopItemTable:
 	extends SoraRuntime.SoraConfigTable
+
+	const TABLE_NAME := "ShopItem"
 	var rows: Array = []
 
 	static func decode(rows: Array) -> ShopItemTable:
 		var table := ShopItemTable.new()
-		table.name = "ShopItem"
+		table.name = TABLE_NAME
 		table.mode = "list"
 		table.key = null
 		table.rows = rows

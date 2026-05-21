@@ -26,6 +26,8 @@ export function decodeLocalizationValue(value) {
 }
 
 export class LocalizationTable {
+    static tableName = "Localization";
+
     constructor(
         keys,
         rows,
@@ -42,7 +44,7 @@ export class LocalizationTable {
     }
 
     name() {
-        return "Localization";
+        return LocalizationTable.tableName;
     }
 
     mode() {

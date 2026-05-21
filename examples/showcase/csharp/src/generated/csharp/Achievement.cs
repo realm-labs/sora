@@ -38,6 +38,7 @@ public sealed record Achievement(
 
 public sealed class AchievementTable : ISoraTable, IReadOnlyDictionary<int, Achievement>
 {
+    public const string TableName = "Achievement";
     private readonly List<int> keys;
     private readonly Dictionary<int, Achievement> rows;
 
@@ -49,7 +50,7 @@ public sealed class AchievementTable : ISoraTable, IReadOnlyDictionary<int, Achi
 
     internal static AchievementTable Decode(ISoraTableSource source)
     {
-        return FromRows(source.DecodeTable("Achievement", global::com.sora.showcase.Achievement.Decode, global::com.sora.showcase.Achievement.Decode));
+        return FromRows(source.DecodeTable(TableName, global::com.sora.showcase.Achievement.Decode, global::com.sora.showcase.Achievement.Decode));
     }
 
     internal static AchievementTable FromRows(List<Achievement> rows)
@@ -112,7 +113,7 @@ public sealed class AchievementTable : ISoraTable, IReadOnlyDictionary<int, Achi
             return orderedRows;
         }
     }
-    public string Name => "Achievement";
+    public string Name => TableName;
     public SoraTableMode Mode => SoraTableMode.Map;
     public string? Key => "id";
     public string RowType => "Achievement";

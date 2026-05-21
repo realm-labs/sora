@@ -34,7 +34,7 @@ final class CharacterTable private (
   def values: Iterable[Character] = rows.values
 
   def orderedValues: Vector[Character] = keys.flatMap(rows.get)
-  override val name: String = "Character"
+  override val name: String = CharacterTable.Name
   override val mode: SoraTableMode = SoraTableMode.Map
   override val key: Option[String] = Some("id")
   override val rowType: String = "Character"
@@ -42,8 +42,10 @@ final class CharacterTable private (
 }
 
 object CharacterTable {
+  val Name: String = "Character"
+
   def decode(source: SoraTableSource): CharacterTable =
-    fromRows(source.decodeTable("Character", Character.decode))
+    fromRows(source.decodeTable(Name, Character.decode))
 
   private def fromRows(rows: Vector[Character]): CharacterTable =
     new CharacterTable(

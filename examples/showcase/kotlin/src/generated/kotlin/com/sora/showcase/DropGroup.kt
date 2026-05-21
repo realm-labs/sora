@@ -28,7 +28,7 @@ class DropGroupTable private constructor(
     val rows: Map<Int, DropGroup>,
 ) : SoraTable, Map<Int, DropGroup> by rows {
     fun orderedValues(): List<DropGroup> = orderedKeys.mapNotNull { rows[it] }
-    override val name: String = "DropGroup"
+    override val name: String = NAME
     override val mode: SoraTableMode = SoraTableMode.Map
     override val key: String? = "id"
     override val rowType: String = "DropGroup"
@@ -37,12 +37,14 @@ class DropGroupTable private constructor(
 
     companion object {
         fun decode(source: SoraTableSource): DropGroupTable =
-            fromRows(source.decodeTable("DropGroup", DropGroup::decode, DropGroup::decode))
+            fromRows(source.decodeTable(NAME, DropGroup::decode, DropGroup::decode))
 
         private fun fromRows(rows: List<DropGroup>): DropGroupTable =
             DropGroupTable(
                 rows.map { it.id },
                 rows.associateBy { it.id },
             )
+
+        const val NAME: String = "DropGroup"
     }
 }

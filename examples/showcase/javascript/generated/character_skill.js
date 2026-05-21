@@ -24,6 +24,8 @@ export function decodeCharacterSkillValue(value) {
 }
 
 export class CharacterSkillTable {
+    static tableName = "CharacterSkill";
+
     constructor(
         rows,
     ) {
@@ -37,7 +39,7 @@ export class CharacterSkillTable {
     }
 
     name() {
-        return "CharacterSkill";
+        return CharacterSkillTable.tableName;
     }
 
     mode() {

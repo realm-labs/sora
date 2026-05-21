@@ -47,6 +47,8 @@ void sora_showcase_localization_free(sora_showcase_localization* value) {
     *value = (sora_showcase_localization){0};
 }
 
+static const char* sora_showcase_localization_table_name = "Localization";
+
 struct sora_showcase_localization_table {
     sora_showcase_localization* rows;
     size_t len;
@@ -68,11 +70,11 @@ sora_result sora_showcase_localization_table_load(
 ) {
     sora_showcase_localization_table* table = (sora_showcase_localization_table*)calloc(1, sizeof(sora_showcase_localization_table));
     if (table == NULL) {
-        return sora_error(SORA_ERROR_OUT_OF_MEMORY, "failed to allocate table Localization");
+        return sora_error(SORA_ERROR_OUT_OF_MEMORY, "failed to allocate table");
     }
     sora_result result = sora_bundle_decode_table(
         bundle,
-        "Localization",
+        sora_showcase_localization_table_name,
         sizeof(sora_showcase_localization),
         (sora_decode_row_fn)sora_showcase_localization_decode,
         (sora_free_row_fn)sora_showcase_localization_free,

@@ -39,6 +39,8 @@ class VipLevel:
 
 
 class VipLevelTable(SoraConfigTable):
+    NAME = "VipLevel"
+
     def __init__(
         self,
         keys: list[int],
@@ -55,7 +57,7 @@ class VipLevelTable(SoraConfigTable):
         )
 
     def name(self) -> str:
-        return "VipLevel"
+        return self.NAME
 
     def mode(self) -> str:
         return "map"

@@ -27,6 +27,7 @@ final class MailReward {
 }
 
 final class MailRewardTable extends Iterable<MailReward> implements SoraConfigTable {
+  static const tableName = 'MailReward';
   final List<MailReward> _rows;
 
   const MailRewardTable(
@@ -40,7 +41,7 @@ final class MailRewardTable extends Iterable<MailReward> implements SoraConfigTa
   }
 
   @override
-  String get name => 'MailReward';
+  String get name => tableName;
 
   @override
   String get mode => 'list';

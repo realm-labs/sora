@@ -35,7 +35,7 @@ class GachaItemTable private constructor(
     override fun get(index: Int): GachaItem = rows[index]
 
     fun values(): List<GachaItem> = rows
-    override val name: String = "GachaItem"
+    override val name: String = NAME
     override val mode: SoraTableMode = SoraTableMode.List
     override val key: String? = null
     override val rowType: String = "GachaItem"
@@ -44,11 +44,13 @@ class GachaItemTable private constructor(
 
     companion object {
         fun decode(source: SoraTableSource): GachaItemTable =
-            fromRows(source.decodeTable("GachaItem", GachaItem::decode, GachaItem::decode))
+            fromRows(source.decodeTable(NAME, GachaItem::decode, GachaItem::decode))
 
         private fun fromRows(rows: List<GachaItem>): GachaItemTable =
             GachaItemTable(
                 rows,
             )
+
+        const val NAME: String = "GachaItem"
     }
 }

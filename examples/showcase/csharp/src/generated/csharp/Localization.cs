@@ -38,6 +38,7 @@ public sealed record Localization(
 
 public sealed class LocalizationTable : ISoraTable, IReadOnlyDictionary<string, Localization>
 {
+    public const string TableName = "Localization";
     private readonly List<string> keys;
     private readonly Dictionary<string, Localization> rows;
 
@@ -49,7 +50,7 @@ public sealed class LocalizationTable : ISoraTable, IReadOnlyDictionary<string, 
 
     internal static LocalizationTable Decode(ISoraTableSource source)
     {
-        return FromRows(source.DecodeTable("Localization", global::com.sora.showcase.Localization.Decode, global::com.sora.showcase.Localization.Decode));
+        return FromRows(source.DecodeTable(TableName, global::com.sora.showcase.Localization.Decode, global::com.sora.showcase.Localization.Decode));
     }
 
     internal static LocalizationTable FromRows(List<Localization> rows)
@@ -112,7 +113,7 @@ public sealed class LocalizationTable : ISoraTable, IReadOnlyDictionary<string, 
             return orderedRows;
         }
     }
-    public string Name => "Localization";
+    public string Name => TableName;
     public SoraTableMode Mode => SoraTableMode.Map;
     public string? Key => "key";
     public string RowType => "Localization";

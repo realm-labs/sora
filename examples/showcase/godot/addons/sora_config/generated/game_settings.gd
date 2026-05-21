@@ -25,14 +25,16 @@ static func decode(value: Variant) -> GameSettings:
 
 class GameSettingsTable:
 	extends SoraRuntime.SoraConfigTable
+
+	const TABLE_NAME := "GameSettings"
 	var row: GameSettings = null
 
 	static func decode(rows: Array) -> GameSettingsTable:
 		var table := GameSettingsTable.new()
-		table.name = "GameSettings"
+		table.name = TABLE_NAME
 		table.mode = "singleton"
 		table.key = null
-		table.row = SoraRuntime.require_singleton_table(rows, "GameSettings")
+		table.row = SoraRuntime.require_singleton_table(rows, TABLE_NAME)
 		return table
 
 	func length() -> int:

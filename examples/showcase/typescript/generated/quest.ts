@@ -55,6 +55,8 @@ export function decodeQuestValue(value: SoraValue): Quest {
 }
 
 export class QuestTable implements SoraConfigTable {
+    static readonly tableName = "Quest";
+
     private constructor(
         private readonly _keys: number[],
         private readonly _rows: Map<number, Quest>,
@@ -68,7 +70,7 @@ export class QuestTable implements SoraConfigTable {
     }
 
     name(): string {
-        return "Quest";
+        return QuestTable.tableName;
     }
 
     mode(): string {

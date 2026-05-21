@@ -27,6 +27,8 @@ export function decodeGachaItemValue(value) {
 }
 
 export class GachaItemTable {
+    static tableName = "GachaItem";
+
     constructor(
         rows,
     ) {
@@ -40,7 +42,7 @@ export class GachaItemTable {
     }
 
     name() {
-        return "GachaItem";
+        return GachaItemTable.tableName;
     }
 
     mode() {

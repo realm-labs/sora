@@ -54,6 +54,7 @@ public final class Monster {
 }
 
 final class MonsterTable extends java.util.AbstractMap<Integer, Monster> implements SoraTable {
+    static final String NAME = "Monster";
     private final List<Integer> keys;
     private final java.util.Map<Integer, Monster> rows;
 
@@ -67,7 +68,7 @@ final class MonsterTable extends java.util.AbstractMap<Integer, Monster> impleme
     }
 
     static MonsterTable decode(SoraTableSource source) {
-        return fromRows(source.decodeTable("Monster", Monster::decode, Monster::decode));
+        return fromRows(source.decodeTable(NAME, Monster::decode, Monster::decode));
     }
 
     public java.util.Map<Integer, Monster> rows() {
@@ -92,7 +93,7 @@ final class MonsterTable extends java.util.AbstractMap<Integer, Monster> impleme
     }
     @Override
     public String name() {
-        return "Monster";
+        return NAME;
     }
 
     @Override

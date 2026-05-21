@@ -39,6 +39,8 @@ class GachaPool:
 
 
 class GachaPoolTable(SoraConfigTable):
+    NAME = "GachaPool"
+
     def __init__(
         self,
         keys: list[int],
@@ -55,7 +57,7 @@ class GachaPoolTable(SoraConfigTable):
         )
 
     def name(self) -> str:
-        return "GachaPool"
+        return self.NAME
 
     def mode(self) -> str:
         return "map"

@@ -39,6 +39,8 @@ class Recipe:
 
 
 class RecipeTable(SoraConfigTable):
+    NAME = "Recipe"
+
     def __init__(
         self,
         keys: list[int],
@@ -55,7 +57,7 @@ class RecipeTable(SoraConfigTable):
         )
 
     def name(self) -> str:
-        return "Recipe"
+        return self.NAME
 
     def mode(self) -> str:
         return "map"

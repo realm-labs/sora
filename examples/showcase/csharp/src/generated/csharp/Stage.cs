@@ -41,6 +41,7 @@ public sealed record Stage(
 
 public sealed class StageTable : ISoraTable, IReadOnlyDictionary<int, Stage>
 {
+    public const string TableName = "Stage";
     private readonly List<int> keys;
     private readonly Dictionary<int, Stage> rows;
 
@@ -52,7 +53,7 @@ public sealed class StageTable : ISoraTable, IReadOnlyDictionary<int, Stage>
 
     internal static StageTable Decode(ISoraTableSource source)
     {
-        return FromRows(source.DecodeTable("Stage", global::com.sora.showcase.Stage.Decode, global::com.sora.showcase.Stage.Decode));
+        return FromRows(source.DecodeTable(TableName, global::com.sora.showcase.Stage.Decode, global::com.sora.showcase.Stage.Decode));
     }
 
     internal static StageTable FromRows(List<Stage> rows)
@@ -115,7 +116,7 @@ public sealed class StageTable : ISoraTable, IReadOnlyDictionary<int, Stage>
             return orderedRows;
         }
     }
-    public string Name => "Stage";
+    public string Name => TableName;
     public SoraTableMode Mode => SoraTableMode.Map;
     public string? Key => "id";
     public string RowType => "Stage";

@@ -39,6 +39,7 @@ public final class Shop {
 }
 
 final class ShopTable extends java.util.AbstractMap<Integer, Shop> implements SoraTable {
+    static final String NAME = "Shop";
     private final List<Integer> keys;
     private final java.util.Map<Integer, Shop> rows;
 
@@ -52,7 +53,7 @@ final class ShopTable extends java.util.AbstractMap<Integer, Shop> implements So
     }
 
     static ShopTable decode(SoraTableSource source) {
-        return fromRows(source.decodeTable("Shop", Shop::decode, Shop::decode));
+        return fromRows(source.decodeTable(NAME, Shop::decode, Shop::decode));
     }
 
     public java.util.Map<Integer, Shop> rows() {
@@ -77,7 +78,7 @@ final class ShopTable extends java.util.AbstractMap<Integer, Shop> implements So
     }
     @Override
     public String name() {
-        return "Shop";
+        return NAME;
     }
 
     @Override

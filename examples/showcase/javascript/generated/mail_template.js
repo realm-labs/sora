@@ -30,6 +30,8 @@ export function decodeMailTemplateValue(value) {
 }
 
 export class MailTemplateTable {
+    static tableName = "MailTemplate";
+
     constructor(
         keys,
         rows,
@@ -46,7 +48,7 @@ export class MailTemplateTable {
     }
 
     name() {
-        return "MailTemplate";
+        return MailTemplateTable.tableName;
     }
 
     mode() {

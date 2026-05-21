@@ -23,6 +23,7 @@ end
 ---@field private _rows table<integer, Dialogue>
 local DialogueTable = {}
 DialogueTable.__index = DialogueTable
+DialogueTable.NAME = "Dialogue"
 
 ---@param rows Dialogue[]
 ---@return DialogueTable
@@ -39,7 +40,7 @@ end
 
 ---@return string
 function DialogueTable:name()
-    return "Dialogue"
+    return DialogueTable.NAME
 end
 
 ---@return string

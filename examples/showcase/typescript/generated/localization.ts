@@ -36,6 +36,8 @@ export function decodeLocalizationValue(value: SoraValue): Localization {
 }
 
 export class LocalizationTable implements SoraConfigTable {
+    static readonly tableName = "Localization";
+
     private constructor(
         private readonly _keys: string[],
         private readonly _rows: Map<string, Localization>,
@@ -49,7 +51,7 @@ export class LocalizationTable implements SoraConfigTable {
     }
 
     name(): string {
-        return "Localization";
+        return LocalizationTable.tableName;
     }
 
     mode(): string {

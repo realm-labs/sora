@@ -27,6 +27,7 @@ end
 ---@field private _rows table<integer, EventRule>
 local EventRuleTable = {}
 EventRuleTable.__index = EventRuleTable
+EventRuleTable.NAME = "EventRule"
 
 ---@param rows EventRule[]
 ---@return EventRuleTable
@@ -43,7 +44,7 @@ end
 
 ---@return string
 function EventRuleTable:name()
-    return "EventRule"
+    return EventRuleTable.NAME
 end
 
 ---@return string

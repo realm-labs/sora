@@ -24,6 +24,8 @@ export function decodeLevelExpValue(value) {
 }
 
 export class LevelExpTable {
+    static tableName = "LevelExp";
+
     constructor(
         keys,
         rows,
@@ -40,7 +42,7 @@ export class LevelExpTable {
     }
 
     name() {
-        return "LevelExp";
+        return LevelExpTable.tableName;
     }
 
     mode() {

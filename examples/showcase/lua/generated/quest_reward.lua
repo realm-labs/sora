@@ -24,6 +24,7 @@ end
 ---@field private _rows QuestReward[]
 local QuestRewardTable = {}
 QuestRewardTable.__index = QuestRewardTable
+QuestRewardTable.NAME = "QuestReward"
 
 ---@param rows QuestReward[]
 ---@return QuestRewardTable
@@ -35,7 +36,7 @@ end
 
 ---@return string
 function QuestRewardTable:name()
-    return "QuestReward"
+    return QuestRewardTable.NAME
 end
 
 ---@return string

@@ -28,6 +28,7 @@ final class EquipmentSet {
 }
 
 final class EquipmentSetTable extends Iterable<EquipmentSet> implements SoraConfigTable {
+  static const tableName = 'EquipmentSet';
   final List<int> _keys;
   final Map<int, EquipmentSet> _rows;
 
@@ -44,7 +45,7 @@ final class EquipmentSetTable extends Iterable<EquipmentSet> implements SoraConf
   }
 
   @override
-  String get name => 'EquipmentSet';
+  String get name => tableName;
 
   @override
   String get mode => 'map';
@@ -62,7 +63,7 @@ final class EquipmentSetTable extends Iterable<EquipmentSet> implements SoraConf
   EquipmentSet get(int key) {
     final row = _rows[key];
     if (row == null) {
-      throw SoraReadException('missing row in table `EquipmentSet` for key `$key`');
+      throw SoraReadException('missing row in table `$tableName` for key `$key`');
     }
     return row;
   }

@@ -41,6 +41,7 @@ public sealed record GameSettings(
 
 public sealed class GameSettingsTable : ISoraTable
 {
+    public const string TableName = "GameSettings";
     private readonly GameSettings rows;
 
     internal GameSettingsTable(GameSettings rows)
@@ -50,16 +51,16 @@ public sealed class GameSettingsTable : ISoraTable
 
     internal static GameSettingsTable Decode(ISoraTableSource source)
     {
-        return FromRows(source.DecodeTable("GameSettings", global::com.sora.showcase.GameSettings.Decode, global::com.sora.showcase.GameSettings.Decode));
+        return FromRows(source.DecodeTable(TableName, global::com.sora.showcase.GameSettings.Decode, global::com.sora.showcase.GameSettings.Decode));
     }
 
     internal static GameSettingsTable FromRows(List<GameSettings> rows)
     {
-        return new GameSettingsTable(SoraConfig.RequireSingletonTable(rows, "GameSettings"));
+        return new GameSettingsTable(SoraConfig.RequireSingletonTable(rows, TableName));
     }
 
     public GameSettings Rows => rows;
-    public string Name => "GameSettings";
+    public string Name => TableName;
     public SoraTableMode Mode => SoraTableMode.Singleton;
     public string? Key => null;
     public string RowType => "GameSettings";

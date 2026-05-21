@@ -60,6 +60,7 @@ public final class Quest {
 }
 
 final class QuestTable extends java.util.AbstractMap<Integer, Quest> implements SoraTable {
+    static final String NAME = "Quest";
     private final List<Integer> keys;
     private final java.util.Map<Integer, Quest> rows;
 
@@ -73,7 +74,7 @@ final class QuestTable extends java.util.AbstractMap<Integer, Quest> implements 
     }
 
     static QuestTable decode(SoraTableSource source) {
-        return fromRows(source.decodeTable("Quest", Quest::decode, Quest::decode));
+        return fromRows(source.decodeTable(NAME, Quest::decode, Quest::decode));
     }
 
     public java.util.Map<Integer, Quest> rows() {
@@ -98,7 +99,7 @@ final class QuestTable extends java.util.AbstractMap<Integer, Quest> implements 
     }
     @Override
     public String name() {
-        return "Quest";
+        return NAME;
     }
 
     @Override

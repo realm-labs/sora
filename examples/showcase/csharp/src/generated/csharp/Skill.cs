@@ -53,6 +53,7 @@ public sealed record Skill(
 
 public sealed class SkillTable : ISoraTable, IReadOnlyDictionary<int, Skill>
 {
+    public const string TableName = "Skill";
     private readonly List<int> keys;
     private readonly Dictionary<int, Skill> rows;
 
@@ -64,7 +65,7 @@ public sealed class SkillTable : ISoraTable, IReadOnlyDictionary<int, Skill>
 
     internal static SkillTable Decode(ISoraTableSource source)
     {
-        return FromRows(source.DecodeTable("Skill", global::com.sora.showcase.Skill.Decode, global::com.sora.showcase.Skill.Decode));
+        return FromRows(source.DecodeTable(TableName, global::com.sora.showcase.Skill.Decode, global::com.sora.showcase.Skill.Decode));
     }
 
     internal static SkillTable FromRows(List<Skill> rows)
@@ -127,7 +128,7 @@ public sealed class SkillTable : ISoraTable, IReadOnlyDictionary<int, Skill>
             return orderedRows;
         }
     }
-    public string Name => "Skill";
+    public string Name => TableName;
     public SoraTableMode Mode => SoraTableMode.Map;
     public string? Key => "id";
     public string RowType => "Skill";

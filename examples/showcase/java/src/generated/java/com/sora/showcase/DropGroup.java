@@ -34,6 +34,7 @@ public final class DropGroup {
 }
 
 final class DropGroupTable extends java.util.AbstractMap<Integer, DropGroup> implements SoraTable {
+    static final String NAME = "DropGroup";
     private final List<Integer> keys;
     private final java.util.Map<Integer, DropGroup> rows;
 
@@ -47,7 +48,7 @@ final class DropGroupTable extends java.util.AbstractMap<Integer, DropGroup> imp
     }
 
     static DropGroupTable decode(SoraTableSource source) {
-        return fromRows(source.decodeTable("DropGroup", DropGroup::decode, DropGroup::decode));
+        return fromRows(source.decodeTable(NAME, DropGroup::decode, DropGroup::decode));
     }
 
     public java.util.Map<Integer, DropGroup> rows() {
@@ -72,7 +73,7 @@ final class DropGroupTable extends java.util.AbstractMap<Integer, DropGroup> imp
     }
     @Override
     public String name() {
-        return "DropGroup";
+        return NAME;
     }
 
     @Override

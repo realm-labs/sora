@@ -34,6 +34,8 @@ pub struct AchievementTable {
 }
 
 impl AchievementTable {
+    pub const NAME: &'static str = "Achievement";
+
     pub(super) fn from_rows(rows: Vec<Achievement>) -> Result<Self, super::runtime::SoraReadError> {
         let keys = rows.iter().map(|row| row.id).collect::<Vec<_>>();
         Ok(Self {
@@ -64,7 +66,7 @@ impl std::ops::Deref for AchievementTable {
 
 impl super::SoraTable for AchievementTable {
     fn name(&self) -> &'static str {
-        "Achievement"
+        Self::NAME
     }
 
     fn mode(&self) -> super::SoraTableMode {

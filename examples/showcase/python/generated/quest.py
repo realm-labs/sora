@@ -56,6 +56,8 @@ class Quest:
 
 
 class QuestTable(SoraConfigTable):
+    NAME = "Quest"
+
     def __init__(
         self,
         keys: list[int],
@@ -72,7 +74,7 @@ class QuestTable(SoraConfigTable):
         )
 
     def name(self) -> str:
-        return "Quest"
+        return self.NAME
 
     def mode(self) -> str:
         return "map"

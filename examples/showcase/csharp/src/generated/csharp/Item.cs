@@ -50,6 +50,7 @@ public sealed record Item(
 
 public sealed class ItemTable : ISoraTable, IReadOnlyDictionary<int, Item>
 {
+    public const string TableName = "Item";
     private readonly List<int> keys;
     private readonly Dictionary<int, Item> rows;
     private readonly Dictionary<string, Item> byName;
@@ -65,7 +66,7 @@ public sealed class ItemTable : ISoraTable, IReadOnlyDictionary<int, Item>
 
     internal static ItemTable Decode(ISoraTableSource source)
     {
-        return FromRows(source.DecodeTable("Item", global::com.sora.showcase.Item.Decode, global::com.sora.showcase.Item.Decode));
+        return FromRows(source.DecodeTable(TableName, global::com.sora.showcase.Item.Decode, global::com.sora.showcase.Item.Decode));
     }
 
     internal static ItemTable FromRows(List<Item> rows)
@@ -141,7 +142,7 @@ public sealed class ItemTable : ISoraTable, IReadOnlyDictionary<int, Item>
     {
         return byItemType.TryGetValue(itemType, out var rows) ? rows : Array.Empty<Item>();
     }
-    public string Name => "Item";
+    public string Name => TableName;
     public SoraTableMode Mode => SoraTableMode.Map;
     public string? Key => "id";
     public string RowType => "Item";

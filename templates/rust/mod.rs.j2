@@ -45,7 +45,7 @@ impl SoraConfig {
         let mut tables: SoraMap<&'static str, Box<dyn SoraTable>> =
             sora_map_with_capacity({{ model.tables | length }});
 {%- for table in model.tables %}
-        tables.insert("{{ table.name }}", Box::new({{ table.table_path }}::from_rows(source.decode_table::<{{ table.row_path }}>("{{ table.name }}")?)?));
+        tables.insert({{ table.table_path }}::NAME, Box::new({{ table.table_path }}::from_rows(source.decode_table::<{{ table.row_path }}>({{ table.table_path }}::NAME)?)?));
 {%- endfor %}
         Ok(Self { tables })
     }
@@ -71,7 +71,7 @@ impl SoraConfig {
 {%- for table in model.tables %}
 
     pub fn {{ table.snake_name }}(&self) -> &{{ table.table_path }} {
-        self.table("{{ table.name }}")
+        self.table({{ table.table_path }}::NAME)
     }
 {%- endfor %}
 }

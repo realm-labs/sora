@@ -38,6 +38,7 @@ public sealed record GachaItem(
 
 public sealed class GachaItemTable : ISoraTable, IReadOnlyList<GachaItem>
 {
+    public const string TableName = "GachaItem";
     private readonly List<GachaItem> rows;
 
     internal GachaItemTable(List<GachaItem> rows)
@@ -47,7 +48,7 @@ public sealed class GachaItemTable : ISoraTable, IReadOnlyList<GachaItem>
 
     internal static GachaItemTable Decode(ISoraTableSource source)
     {
-        return FromRows(source.DecodeTable("GachaItem", global::com.sora.showcase.GachaItem.Decode, global::com.sora.showcase.GachaItem.Decode));
+        return FromRows(source.DecodeTable(TableName, global::com.sora.showcase.GachaItem.Decode, global::com.sora.showcase.GachaItem.Decode));
     }
 
     internal static GachaItemTable FromRows(List<GachaItem> rows)
@@ -67,7 +68,7 @@ public sealed class GachaItemTable : ISoraTable, IReadOnlyList<GachaItem>
     {
         return GetEnumerator();
     }
-    public string Name => "GachaItem";
+    public string Name => TableName;
     public SoraTableMode Mode => SoraTableMode.List;
     public string? Key => null;
     public string RowType => "GachaItem";

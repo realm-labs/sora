@@ -53,6 +53,8 @@ void sora_showcase_stage_free(sora_showcase_stage* value) {
     *value = (sora_showcase_stage){0};
 }
 
+static const char* sora_showcase_stage_table_name = "Stage";
+
 struct sora_showcase_stage_table {
     sora_showcase_stage* rows;
     size_t len;
@@ -74,11 +76,11 @@ sora_result sora_showcase_stage_table_load(
 ) {
     sora_showcase_stage_table* table = (sora_showcase_stage_table*)calloc(1, sizeof(sora_showcase_stage_table));
     if (table == NULL) {
-        return sora_error(SORA_ERROR_OUT_OF_MEMORY, "failed to allocate table Stage");
+        return sora_error(SORA_ERROR_OUT_OF_MEMORY, "failed to allocate table");
     }
     sora_result result = sora_bundle_decode_table(
         bundle,
-        "Stage",
+        sora_showcase_stage_table_name,
         sizeof(sora_showcase_stage),
         (sora_decode_row_fn)sora_showcase_stage_decode,
         (sora_free_row_fn)sora_showcase_stage_free,

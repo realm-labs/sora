@@ -23,11 +23,13 @@ static func decode(value: Variant) -> GachaItem:
 
 class GachaItemTable:
 	extends SoraRuntime.SoraConfigTable
+
+	const TABLE_NAME := "GachaItem"
 	var rows: Array = []
 
 	static func decode(rows: Array) -> GachaItemTable:
 		var table := GachaItemTable.new()
-		table.name = "GachaItem"
+		table.name = TABLE_NAME
 		table.mode = "list"
 		table.key = null
 		table.rows = rows

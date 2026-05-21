@@ -39,6 +39,8 @@ export function decodeEquipmentSetValue(value: SoraValue): EquipmentSet {
 }
 
 export class EquipmentSetTable implements SoraConfigTable {
+    static readonly tableName = "EquipmentSet";
+
     private constructor(
         private readonly _keys: number[],
         private readonly _rows: Map<number, EquipmentSet>,
@@ -52,7 +54,7 @@ export class EquipmentSetTable implements SoraConfigTable {
     }
 
     name(): string {
-        return "EquipmentSet";
+        return EquipmentSetTable.tableName;
     }
 
     mode(): string {

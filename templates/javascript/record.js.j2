@@ -33,6 +33,8 @@ export function decode{{ record.pascal_name }}Value(value) {
 {%- set table = record.table %}
 
 export class {{ table.pascal_name }}Table {
+    static tableName = "{{ table.name }}";
+
     constructor(
 {%- if table.mode == "map" and table.key_type %}
         keys,
@@ -79,7 +81,7 @@ export class {{ table.pascal_name }}Table {
         );
 {%- elif table.mode == "singleton" %}
         return new {{ table.pascal_name }}Table(
-            requireSingletonTable(rows, "{{ table.name }}"),
+            requireSingletonTable(rows, {{ table.pascal_name }}Table.tableName),
         );
 {%- else %}
         return new {{ table.pascal_name }}Table(
@@ -95,7 +97,7 @@ export class {{ table.pascal_name }}Table {
     }
 
     name() {
-        return "{{ table.name }}";
+        return {{ table.pascal_name }}Table.tableName;
     }
 
     mode() {

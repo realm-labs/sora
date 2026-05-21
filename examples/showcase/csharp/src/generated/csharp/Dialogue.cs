@@ -35,6 +35,7 @@ public sealed record Dialogue(
 
 public sealed class DialogueTable : ISoraTable, IReadOnlyDictionary<int, Dialogue>
 {
+    public const string TableName = "Dialogue";
     private readonly List<int> keys;
     private readonly Dictionary<int, Dialogue> rows;
 
@@ -46,7 +47,7 @@ public sealed class DialogueTable : ISoraTable, IReadOnlyDictionary<int, Dialogu
 
     internal static DialogueTable Decode(ISoraTableSource source)
     {
-        return FromRows(source.DecodeTable("Dialogue", global::com.sora.showcase.Dialogue.Decode, global::com.sora.showcase.Dialogue.Decode));
+        return FromRows(source.DecodeTable(TableName, global::com.sora.showcase.Dialogue.Decode, global::com.sora.showcase.Dialogue.Decode));
     }
 
     internal static DialogueTable FromRows(List<Dialogue> rows)
@@ -109,7 +110,7 @@ public sealed class DialogueTable : ISoraTable, IReadOnlyDictionary<int, Dialogu
             return orderedRows;
         }
     }
-    public string Name => "Dialogue";
+    public string Name => TableName;
     public SoraTableMode Mode => SoraTableMode.Map;
     public string? Key => "id";
     public string RowType => "Dialogue";

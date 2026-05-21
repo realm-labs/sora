@@ -44,6 +44,8 @@ export function decode{{ record.pascal_name }}Value(value: SoraValue): {{ record
 {%- set table = record.table %}
 
 export class {{ table.pascal_name }}Table implements SoraConfigTable {
+    static readonly tableName = "{{ table.name }}";
+
     private constructor(
 {%- if table.mode == "map" and table.key_type %}
         private readonly _keys: {{ table.key_type }}[],
@@ -75,7 +77,7 @@ export class {{ table.pascal_name }}Table implements SoraConfigTable {
         );
 {%- elif table.mode == "singleton" %}
         return new {{ table.pascal_name }}Table(
-            requireSingletonTable(rows, "{{ table.name }}"),
+            requireSingletonTable(rows, {{ table.pascal_name }}Table.tableName),
         );
 {%- else %}
         return new {{ table.pascal_name }}Table(
@@ -91,7 +93,7 @@ export class {{ table.pascal_name }}Table implements SoraConfigTable {
     }
 
     name(): string {
-        return "{{ table.name }}";
+        return {{ table.pascal_name }}Table.tableName;
     }
 
     mode(): string {

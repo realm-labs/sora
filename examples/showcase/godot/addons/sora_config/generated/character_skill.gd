@@ -21,11 +21,13 @@ static func decode(value: Variant) -> CharacterSkill:
 
 class CharacterSkillTable:
 	extends SoraRuntime.SoraConfigTable
+
+	const TABLE_NAME := "CharacterSkill"
 	var rows: Array = []
 
 	static func decode(rows: Array) -> CharacterSkillTable:
 		var table := CharacterSkillTable.new()
-		table.name = "CharacterSkill"
+		table.name = TABLE_NAME
 		table.mode = "list"
 		table.key = null
 		table.rows = rows

@@ -42,6 +42,8 @@ class GachaItem:
 
 
 class GachaItemTable(SoraConfigTable):
+    NAME = "GachaItem"
+
     def __init__(
         self,
         rows: list[GachaItem],
@@ -55,7 +57,7 @@ class GachaItemTable(SoraConfigTable):
         )
 
     def name(self) -> str:
-        return "GachaItem"
+        return self.NAME
 
     def mode(self) -> str:
         return "list"

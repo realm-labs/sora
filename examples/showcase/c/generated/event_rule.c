@@ -46,6 +46,8 @@ void sora_showcase_event_rule_free(sora_showcase_event_rule* value) {
     *value = (sora_showcase_event_rule){0};
 }
 
+static const char* sora_showcase_event_rule_table_name = "EventRule";
+
 struct sora_showcase_event_rule_table {
     sora_showcase_event_rule* rows;
     size_t len;
@@ -67,11 +69,11 @@ sora_result sora_showcase_event_rule_table_load(
 ) {
     sora_showcase_event_rule_table* table = (sora_showcase_event_rule_table*)calloc(1, sizeof(sora_showcase_event_rule_table));
     if (table == NULL) {
-        return sora_error(SORA_ERROR_OUT_OF_MEMORY, "failed to allocate table EventRule");
+        return sora_error(SORA_ERROR_OUT_OF_MEMORY, "failed to allocate table");
     }
     sora_result result = sora_bundle_decode_table(
         bundle,
-        "EventRule",
+        sora_showcase_event_rule_table_name,
         sizeof(sora_showcase_event_rule),
         (sora_decode_row_fn)sora_showcase_event_rule_decode,
         (sora_free_row_fn)sora_showcase_event_rule_free,

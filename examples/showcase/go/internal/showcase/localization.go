@@ -56,6 +56,8 @@ func decodeLocalizationValue(input SoraValue) (Localization, error) {
 	return value, nil
 }
 
+const localizationTableName = "Localization"
+
 type LocalizationTable struct {
 	keys []string
 	rows map[string]Localization
@@ -70,7 +72,7 @@ func buildLocalizationTable(rows []Localization) (*LocalizationTable, error) {
 }
 
 func decodeLocalizationTable(source SoraTableSource) (*LocalizationTable, error) {
-	rows, err := DecodeSourceTable(source, "Localization", decodeLocalization, decodeLocalizationValue)
+	rows, err := DecodeSourceTable(source, localizationTableName, decodeLocalization, decodeLocalizationValue)
 	if err != nil {
 		return nil, err
 	}
@@ -99,7 +101,7 @@ func (table *LocalizationTable) OrderedRows() []Localization {
 	return rows
 }
 func (table *LocalizationTable) Name() string {
-	return "Localization"
+	return localizationTableName
 }
 
 func (table *LocalizationTable) Mode() SoraTableMode {

@@ -23,11 +23,13 @@ static func decode(value: Variant) -> MailReward:
 
 class MailRewardTable:
 	extends SoraRuntime.SoraConfigTable
+
+	const TABLE_NAME := "MailReward"
 	var rows: Array = []
 
 	static func decode(rows: Array) -> MailRewardTable:
 		var table := MailRewardTable.new()
-		table.name = "MailReward"
+		table.name = TABLE_NAME
 		table.mode = "list"
 		table.key = null
 		table.rows = rows

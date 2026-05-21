@@ -27,6 +27,8 @@ export function decodeDungeonValue(value) {
 }
 
 export class DungeonTable {
+    static tableName = "Dungeon";
+
     constructor(
         keys,
         rows,
@@ -43,7 +45,7 @@ export class DungeonTable {
     }
 
     name() {
-        return "Dungeon";
+        return DungeonTable.tableName;
     }
 
     mode() {

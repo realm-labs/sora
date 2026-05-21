@@ -7,6 +7,7 @@
 #include "vec3.hpp"
 
 #include <unordered_map>
+#include <string>
 #include <vector>
 
 namespace sora::showcase {
@@ -33,6 +34,8 @@ struct Monster {
 
 class MonsterTable final : public SoraTable {
 public:
+    static constexpr const char* NAME = "Monster";
+
     MonsterTable() {}
     MonsterTable(const MonsterTable&) = delete;
     MonsterTable& operator=(const MonsterTable&) = delete;
@@ -40,7 +43,7 @@ public:
     MonsterTable& operator=(MonsterTable&&) = default;
 
     static MonsterTable decode(const SoraBundle& bundle) {
-        std::vector<Monster> rows = bundle.decode_table<Monster>("Monster");
+        std::vector<Monster> rows = bundle.decode_table<Monster>(NAME);
         MonsterTable table;
         for (std::size_t index = 0; index < rows.size(); ++index) {
             const Monster& row = rows[index];
@@ -51,7 +54,7 @@ public:
         return table;
     }
 
-    const char* name() const override { return "Monster"; }
+    const char* name() const override { return NAME; }
     const char* mode() const override { return "map"; }
     const char* key() const override { return "id"; }
     std::size_t size() const override {

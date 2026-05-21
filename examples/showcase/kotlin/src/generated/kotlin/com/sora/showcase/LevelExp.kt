@@ -31,7 +31,7 @@ class LevelExpTable private constructor(
     val rows: Map<Int, LevelExp>,
 ) : SoraTable, Map<Int, LevelExp> by rows {
     fun orderedValues(): List<LevelExp> = orderedKeys.mapNotNull { rows[it] }
-    override val name: String = "LevelExp"
+    override val name: String = NAME
     override val mode: SoraTableMode = SoraTableMode.Map
     override val key: String? = "level"
     override val rowType: String = "LevelExp"
@@ -40,12 +40,14 @@ class LevelExpTable private constructor(
 
     companion object {
         fun decode(source: SoraTableSource): LevelExpTable =
-            fromRows(source.decodeTable("LevelExp", LevelExp::decode, LevelExp::decode))
+            fromRows(source.decodeTable(NAME, LevelExp::decode, LevelExp::decode))
 
         private fun fromRows(rows: List<LevelExp>): LevelExpTable =
             LevelExpTable(
                 rows.map { it.level },
                 rows.associateBy { it.level },
             )
+
+        const val NAME: String = "LevelExp"
     }
 }

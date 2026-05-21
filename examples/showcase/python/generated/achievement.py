@@ -42,6 +42,8 @@ class Achievement:
 
 
 class AchievementTable(SoraConfigTable):
+    NAME = "Achievement"
+
     def __init__(
         self,
         keys: list[int],
@@ -58,7 +60,7 @@ class AchievementTable(SoraConfigTable):
         )
 
     def name(self) -> str:
-        return "Achievement"
+        return self.NAME
 
     def mode(self) -> str:
         return "map"

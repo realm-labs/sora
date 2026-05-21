@@ -37,7 +37,7 @@ class StageTable private constructor(
     val rows: Map<Int, Stage>,
 ) : SoraTable, Map<Int, Stage> by rows {
     fun orderedValues(): List<Stage> = orderedKeys.mapNotNull { rows[it] }
-    override val name: String = "Stage"
+    override val name: String = NAME
     override val mode: SoraTableMode = SoraTableMode.Map
     override val key: String? = "id"
     override val rowType: String = "Stage"
@@ -46,12 +46,14 @@ class StageTable private constructor(
 
     companion object {
         fun decode(source: SoraTableSource): StageTable =
-            fromRows(source.decodeTable("Stage", Stage::decode, Stage::decode))
+            fromRows(source.decodeTable(NAME, Stage::decode, Stage::decode))
 
         private fun fromRows(rows: List<Stage>): StageTable =
             StageTable(
                 rows.map { it.id },
                 rows.associateBy { it.id },
             )
+
+        const val NAME: String = "Stage"
     }
 }

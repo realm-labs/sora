@@ -15,7 +15,7 @@ final class SoraConfig {
     return SoraConfig._({
 {%- for table in model.tables %}
       {{ table.pascal_name }}Table: {{ table.pascal_name }}Table.decode(
-        bundle.decodeTable('{{ table.name }}', {{ table.row_type }}.decode),
+        bundle.decodeTable({{ table.pascal_name }}Table.tableName, {{ table.row_type }}.decode),
       ),
 {%- endfor %}
     });

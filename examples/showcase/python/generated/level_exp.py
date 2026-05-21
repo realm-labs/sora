@@ -38,6 +38,8 @@ class LevelExp:
 
 
 class LevelExpTable(SoraConfigTable):
+    NAME = "LevelExp"
+
     def __init__(
         self,
         keys: list[int],
@@ -54,7 +56,7 @@ class LevelExpTable(SoraConfigTable):
         )
 
     def name(self) -> str:
-        return "LevelExp"
+        return self.NAME
 
     def mode(self) -> str:
         return "map"

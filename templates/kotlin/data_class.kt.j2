@@ -64,7 +64,7 @@ class {{ table.pascal_name }}Table private constructor(
     fun find{{ index.pascal_name }}({{ index.param_camel_name }}: {{ index.key_type }}): List<{{ table.row_type }}> = {{ index.param_camel_name }}Index[{{ index.param_camel_name }}].orEmpty()
 
 {%- endfor %}
-    override val name: String = "{{ table.name }}"
+    override val name: String = NAME
 {%- if table.mode == "map" %}
     override val mode: SoraTableMode = SoraTableMode.Map
 {%- elif table.mode == "singleton" %}
@@ -87,7 +87,7 @@ class {{ table.pascal_name }}Table private constructor(
 
     companion object {
         fun decode(source: SoraTableSource): {{ table.pascal_name }}Table =
-            fromRows(source.decodeTable("{{ table.name }}", {{ table.row_type }}::decode, {{ table.row_type }}::decode))
+            fromRows(source.decodeTable(NAME, {{ table.row_type }}::decode, {{ table.row_type }}::decode))
 
         private fun fromRows(rows: List<{{ table.row_type }}>): {{ table.pascal_name }}Table =
 {%- if table.mode == "map" and table.key_field_name %}
@@ -103,7 +103,7 @@ class {{ table.pascal_name }}Table private constructor(
             )
 {%- elif table.mode == "singleton" %}
             {{ table.pascal_name }}Table(
-                requireSingletonTable(rows, "{{ table.name }}"),
+                requireSingletonTable(rows, NAME),
 {%- for index in table.unique_indexes %}
                 rows.associateBy { it.{{ index.field_name }} },
 {%- endfor %}
@@ -122,6 +122,8 @@ class {{ table.pascal_name }}Table private constructor(
 {%- endfor %}
             )
 {%- endif %}
+
+        const val NAME: String = "{{ table.name }}"
     }
 }
 {%- endif %}

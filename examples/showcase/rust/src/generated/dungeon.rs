@@ -34,6 +34,8 @@ pub struct DungeonTable {
 }
 
 impl DungeonTable {
+    pub const NAME: &'static str = "Dungeon";
+
     pub(super) fn from_rows(rows: Vec<Dungeon>) -> Result<Self, super::runtime::SoraReadError> {
         let keys = rows.iter().map(|row| row.id).collect::<Vec<_>>();
         Ok(Self {
@@ -64,7 +66,7 @@ impl std::ops::Deref for DungeonTable {
 
 impl super::SoraTable for DungeonTable {
     fn name(&self) -> &'static str {
-        "Dungeon"
+        Self::NAME
     }
 
     fn mode(&self) -> super::SoraTableMode {

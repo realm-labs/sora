@@ -56,6 +56,8 @@ func decodeStageRewardValue(input SoraValue) (StageReward, error) {
 	return value, nil
 }
 
+const stageRewardTableName = "StageReward"
+
 type StageRewardTable struct {
 	rows []StageReward
 }
@@ -65,7 +67,7 @@ func buildStageRewardTable(rows []StageReward) (*StageRewardTable, error) {
 }
 
 func decodeStageRewardTable(source SoraTableSource) (*StageRewardTable, error) {
-	rows, err := DecodeSourceTable(source, "StageReward", decodeStageReward, decodeStageRewardValue)
+	rows, err := DecodeSourceTable(source, stageRewardTableName, decodeStageReward, decodeStageRewardValue)
 	if err != nil {
 		return nil, err
 	}
@@ -76,7 +78,7 @@ func (table *StageRewardTable) Rows() []StageReward {
 	return table.rows
 }
 func (table *StageRewardTable) Name() string {
-	return "StageReward"
+	return stageRewardTableName
 }
 
 func (table *StageRewardTable) Mode() SoraTableMode {

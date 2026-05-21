@@ -36,6 +36,8 @@ export function decodeGachaPoolValue(value: SoraValue): GachaPool {
 }
 
 export class GachaPoolTable implements SoraConfigTable {
+    static readonly tableName = "GachaPool";
+
     private constructor(
         private readonly _keys: number[],
         private readonly _rows: Map<number, GachaPool>,
@@ -49,7 +51,7 @@ export class GachaPoolTable implements SoraConfigTable {
     }
 
     name(): string {
-        return "GachaPool";
+        return GachaPoolTable.tableName;
     }
 
     mode(): string {

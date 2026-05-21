@@ -56,6 +56,8 @@ class Item:
 
 
 class ItemTable(SoraConfigTable):
+    NAME = "Item"
+
     def __init__(
         self,
         keys: list[int],
@@ -78,7 +80,7 @@ class ItemTable(SoraConfigTable):
         )
 
     def name(self) -> str:
-        return "Item"
+        return self.NAME
 
     def mode(self) -> str:
         return "map"

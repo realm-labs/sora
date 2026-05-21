@@ -47,6 +47,8 @@ func decodeLevelExpValue(input SoraValue) (LevelExp, error) {
 	return value, nil
 }
 
+const levelExpTableName = "LevelExp"
+
 type LevelExpTable struct {
 	keys []int32
 	rows map[int32]LevelExp
@@ -61,7 +63,7 @@ func buildLevelExpTable(rows []LevelExp) (*LevelExpTable, error) {
 }
 
 func decodeLevelExpTable(source SoraTableSource) (*LevelExpTable, error) {
-	rows, err := DecodeSourceTable(source, "LevelExp", decodeLevelExp, decodeLevelExpValue)
+	rows, err := DecodeSourceTable(source, levelExpTableName, decodeLevelExp, decodeLevelExpValue)
 	if err != nil {
 		return nil, err
 	}
@@ -90,7 +92,7 @@ func (table *LevelExpTable) OrderedRows() []LevelExp {
 	return rows
 }
 func (table *LevelExpTable) Name() string {
-	return "LevelExp"
+	return levelExpTableName
 }
 
 func (table *LevelExpTable) Mode() SoraTableMode {

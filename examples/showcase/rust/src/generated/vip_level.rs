@@ -31,6 +31,8 @@ pub struct VipLevelTable {
 }
 
 impl VipLevelTable {
+    pub const NAME: &'static str = "VipLevel";
+
     pub(super) fn from_rows(rows: Vec<VipLevel>) -> Result<Self, super::runtime::SoraReadError> {
         let keys = rows.iter().map(|row| row.level).collect::<Vec<_>>();
         Ok(Self {
@@ -61,7 +63,7 @@ impl std::ops::Deref for VipLevelTable {
 
 impl super::SoraTable for VipLevelTable {
     fn name(&self) -> &'static str {
-        "VipLevel"
+        Self::NAME
     }
 
     fn mode(&self) -> super::SoraTableMode {

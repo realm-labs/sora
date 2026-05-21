@@ -47,6 +47,8 @@ func decodeCharacterSkillValue(input SoraValue) (CharacterSkill, error) {
 	return value, nil
 }
 
+const characterSkillTableName = "CharacterSkill"
+
 type CharacterSkillTable struct {
 	rows []CharacterSkill
 }
@@ -56,7 +58,7 @@ func buildCharacterSkillTable(rows []CharacterSkill) (*CharacterSkillTable, erro
 }
 
 func decodeCharacterSkillTable(source SoraTableSource) (*CharacterSkillTable, error) {
-	rows, err := DecodeSourceTable(source, "CharacterSkill", decodeCharacterSkill, decodeCharacterSkillValue)
+	rows, err := DecodeSourceTable(source, characterSkillTableName, decodeCharacterSkill, decodeCharacterSkillValue)
 	if err != nil {
 		return nil, err
 	}
@@ -67,7 +69,7 @@ func (table *CharacterSkillTable) Rows() []CharacterSkill {
 	return table.rows
 }
 func (table *CharacterSkillTable) Name() string {
-	return "CharacterSkill"
+	return characterSkillTableName
 }
 
 func (table *CharacterSkillTable) Mode() SoraTableMode {

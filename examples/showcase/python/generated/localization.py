@@ -41,6 +41,8 @@ class Localization:
 
 
 class LocalizationTable(SoraConfigTable):
+    NAME = "Localization"
+
     def __init__(
         self,
         keys: list[str],
@@ -57,7 +59,7 @@ class LocalizationTable(SoraConfigTable):
         )
 
     def name(self) -> str:
-        return "Localization"
+        return self.NAME
 
     def mode(self) -> str:
         return "map"

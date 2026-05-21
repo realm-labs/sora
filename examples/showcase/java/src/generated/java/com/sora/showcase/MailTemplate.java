@@ -49,6 +49,7 @@ public final class MailTemplate {
 }
 
 final class MailTemplateTable extends java.util.AbstractMap<Integer, MailTemplate> implements SoraTable {
+    static final String NAME = "MailTemplate";
     private final List<Integer> keys;
     private final java.util.Map<Integer, MailTemplate> rows;
 
@@ -62,7 +63,7 @@ final class MailTemplateTable extends java.util.AbstractMap<Integer, MailTemplat
     }
 
     static MailTemplateTable decode(SoraTableSource source) {
-        return fromRows(source.decodeTable("MailTemplate", MailTemplate::decode, MailTemplate::decode));
+        return fromRows(source.decodeTable(NAME, MailTemplate::decode, MailTemplate::decode));
     }
 
     public java.util.Map<Integer, MailTemplate> rows() {
@@ -87,7 +88,7 @@ final class MailTemplateTable extends java.util.AbstractMap<Integer, MailTemplat
     }
     @Override
     public String name() {
-        return "MailTemplate";
+        return NAME;
     }
 
     @Override

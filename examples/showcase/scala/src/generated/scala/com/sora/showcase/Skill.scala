@@ -39,7 +39,7 @@ final class SkillTable private (
   def values: Iterable[Skill] = rows.values
 
   def orderedValues: Vector[Skill] = keys.flatMap(rows.get)
-  override val name: String = "Skill"
+  override val name: String = SkillTable.Name
   override val mode: SoraTableMode = SoraTableMode.Map
   override val key: Option[String] = Some("id")
   override val rowType: String = "Skill"
@@ -47,8 +47,10 @@ final class SkillTable private (
 }
 
 object SkillTable {
+  val Name: String = "Skill"
+
   def decode(source: SoraTableSource): SkillTable =
-    fromRows(source.decodeTable("Skill", Skill.decode))
+    fromRows(source.decodeTable(Name, Skill.decode))
 
   private def fromRows(rows: Vector[Skill]): SkillTable =
     new SkillTable(

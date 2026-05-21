@@ -14,7 +14,7 @@ export class SoraConfig {
     static fromSource(source: SoraTableSource): SoraConfig {
         return new SoraConfig(
 {%- for table in model.tables %}
-            {{ table.pascal_name }}Table.decode(source.decodeTable("{{ table.name }}", decode{{ table.row_type }}, decode{{ table.row_type }}Value)),
+            {{ table.pascal_name }}Table.decode(source.decodeTable({{ table.pascal_name }}Table.tableName, decode{{ table.row_type }}, decode{{ table.row_type }}Value)),
 {%- endfor %}
         );
     }

@@ -31,6 +31,7 @@ final class GameSettings {
 }
 
 final class GameSettingsTable extends Iterable<GameSettings> implements SoraConfigTable {
+  static const tableName = 'GameSettings';
   final GameSettings _row;
 
   const GameSettingsTable(
@@ -39,12 +40,12 @@ final class GameSettingsTable extends Iterable<GameSettings> implements SoraConf
 
   static GameSettingsTable decode(List<GameSettings> rows) {
     return GameSettingsTable(
-      requireSingletonTable(rows, 'GameSettings'),
+      requireSingletonTable(rows, tableName),
     );
   }
 
   @override
-  String get name => 'GameSettings';
+  String get name => tableName;
 
   @override
   String get mode => 'singleton';

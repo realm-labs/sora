@@ -33,6 +33,8 @@ export function decodeCharacterSkillValue(value: SoraValue): CharacterSkill {
 }
 
 export class CharacterSkillTable implements SoraConfigTable {
+    static readonly tableName = "CharacterSkill";
+
     private constructor(
         private readonly _rows: CharacterSkill[],
     ) {}
@@ -44,7 +46,7 @@ export class CharacterSkillTable implements SoraConfigTable {
     }
 
     name(): string {
-        return "CharacterSkill";
+        return CharacterSkillTable.tableName;
     }
 
     mode(): string {

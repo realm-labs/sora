@@ -65,6 +65,8 @@ func decodeDropEntryValue(input SoraValue) (DropEntry, error) {
 	return value, nil
 }
 
+const dropEntryTableName = "DropEntry"
+
 type DropEntryTable struct {
 	rows []DropEntry
 }
@@ -74,7 +76,7 @@ func buildDropEntryTable(rows []DropEntry) (*DropEntryTable, error) {
 }
 
 func decodeDropEntryTable(source SoraTableSource) (*DropEntryTable, error) {
-	rows, err := DecodeSourceTable(source, "DropEntry", decodeDropEntry, decodeDropEntryValue)
+	rows, err := DecodeSourceTable(source, dropEntryTableName, decodeDropEntry, decodeDropEntryValue)
 	if err != nil {
 		return nil, err
 	}
@@ -85,7 +87,7 @@ func (table *DropEntryTable) Rows() []DropEntry {
 	return table.rows
 }
 func (table *DropEntryTable) Name() string {
-	return "DropEntry"
+	return dropEntryTableName
 }
 
 func (table *DropEntryTable) Mode() SoraTableMode {

@@ -44,6 +44,7 @@ public final class Dungeon {
 }
 
 final class DungeonTable extends java.util.AbstractMap<Integer, Dungeon> implements SoraTable {
+    static final String NAME = "Dungeon";
     private final List<Integer> keys;
     private final java.util.Map<Integer, Dungeon> rows;
 
@@ -57,7 +58,7 @@ final class DungeonTable extends java.util.AbstractMap<Integer, Dungeon> impleme
     }
 
     static DungeonTable decode(SoraTableSource source) {
-        return fromRows(source.decodeTable("Dungeon", Dungeon::decode, Dungeon::decode));
+        return fromRows(source.decodeTable(NAME, Dungeon::decode, Dungeon::decode));
     }
 
     public java.util.Map<Integer, Dungeon> rows() {
@@ -82,7 +83,7 @@ final class DungeonTable extends java.util.AbstractMap<Integer, Dungeon> impleme
     }
     @Override
     public String name() {
-        return "Dungeon";
+        return NAME;
     }
 
     @Override

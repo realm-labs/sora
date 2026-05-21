@@ -56,6 +56,8 @@ func decodeBuffValue(input SoraValue) (Buff, error) {
 	return value, nil
 }
 
+const buffTableName = "Buff"
+
 type BuffTable struct {
 	keys []int32
 	rows map[int32]Buff
@@ -70,7 +72,7 @@ func buildBuffTable(rows []Buff) (*BuffTable, error) {
 }
 
 func decodeBuffTable(source SoraTableSource) (*BuffTable, error) {
-	rows, err := DecodeSourceTable(source, "Buff", decodeBuff, decodeBuffValue)
+	rows, err := DecodeSourceTable(source, buffTableName, decodeBuff, decodeBuffValue)
 	if err != nil {
 		return nil, err
 	}
@@ -99,7 +101,7 @@ func (table *BuffTable) OrderedRows() []Buff {
 	return rows
 }
 func (table *BuffTable) Name() string {
-	return "Buff"
+	return buffTableName
 }
 
 func (table *BuffTable) Mode() SoraTableMode {

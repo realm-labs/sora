@@ -49,6 +49,7 @@ public final class Stage {
 }
 
 final class StageTable extends java.util.AbstractMap<Integer, Stage> implements SoraTable {
+    static final String NAME = "Stage";
     private final List<Integer> keys;
     private final java.util.Map<Integer, Stage> rows;
 
@@ -62,7 +63,7 @@ final class StageTable extends java.util.AbstractMap<Integer, Stage> implements 
     }
 
     static StageTable decode(SoraTableSource source) {
-        return fromRows(source.decodeTable("Stage", Stage::decode, Stage::decode));
+        return fromRows(source.decodeTable(NAME, Stage::decode, Stage::decode));
     }
 
     public java.util.Map<Integer, Stage> rows() {
@@ -87,7 +88,7 @@ final class StageTable extends java.util.AbstractMap<Integer, Stage> implements 
     }
     @Override
     public String name() {
-        return "Stage";
+        return NAME;
     }
 
     @Override

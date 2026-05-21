@@ -47,6 +47,8 @@ public final class {{ record.pascal_name }} {
 {%- set table = record.table %}
 
 final class {{ table.pascal_name }}Table {% if table.mode == "map" and table.key_field_name %}extends java.util.AbstractMap<{{ table.key_type }}, {{ table.row_type }}> implements SoraTable{% elif table.mode == "list" %}extends java.util.AbstractList<{{ table.row_type }}> implements SoraTable{% else %}implements SoraTable{% endif %} {
+    static final String NAME = "{{ table.name }}";
+
 {%- if table.mode == "map" and table.key_field_name %}
     private final List<{{ table.key_type }}> keys;
 {%- endif %}
@@ -88,7 +90,7 @@ final class {{ table.pascal_name }}Table {% if table.mode == "map" and table.key
         return new {{ table.pascal_name }}Table(rows.stream().map(row -> row.{{ table.key_field_name }}).toList(), SoraConfig.decodeMapTable(rows, row -> row.{{ table.key_field_name }}));
 {%- endif %}
 {%- elif table.mode == "singleton" %}
-        return new {{ table.pascal_name }}Table(SoraConfig.requireSingletonTable(rows, "{{ table.name }}"));
+        return new {{ table.pascal_name }}Table(SoraConfig.requireSingletonTable(rows, NAME));
 {%- else %}
 {%- if table.unique_indexes or table.non_unique_indexes %}
         return new {{ table.pascal_name }}Table(
@@ -107,7 +109,7 @@ final class {{ table.pascal_name }}Table {% if table.mode == "map" and table.key
     }
 
     static {{ table.pascal_name }}Table decode(SoraTableSource source) {
-        return fromRows(source.decodeTable("{{ table.name }}", {{ table.row_type }}::decode, {{ table.row_type }}::decode));
+        return fromRows(source.decodeTable(NAME, {{ table.row_type }}::decode, {{ table.row_type }}::decode));
     }
 
     public {{ table.container_type }} rows() {
@@ -154,7 +156,7 @@ final class {{ table.pascal_name }}Table {% if table.mode == "map" and table.key
 {%- endfor %}
     @Override
     public String name() {
-        return "{{ table.name }}";
+        return NAME;
     }
 
     @Override

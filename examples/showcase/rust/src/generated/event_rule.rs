@@ -35,6 +35,8 @@ pub struct EventRuleTable {
 }
 
 impl EventRuleTable {
+    pub const NAME: &'static str = "EventRule";
+
     pub(super) fn from_rows(rows: Vec<EventRule>) -> Result<Self, super::runtime::SoraReadError> {
         let keys = rows.iter().map(|row| row.id).collect::<Vec<_>>();
         Ok(Self {
@@ -65,7 +67,7 @@ impl std::ops::Deref for EventRuleTable {
 
 impl super::SoraTable for EventRuleTable {
     fn name(&self) -> &'static str {
-        "EventRule"
+        Self::NAME
     }
 
     fn mode(&self) -> super::SoraTableMode {

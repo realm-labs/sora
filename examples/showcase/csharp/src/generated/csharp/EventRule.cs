@@ -38,6 +38,7 @@ public sealed record EventRule(
 
 public sealed class EventRuleTable : ISoraTable, IReadOnlyDictionary<int, EventRule>
 {
+    public const string TableName = "EventRule";
     private readonly List<int> keys;
     private readonly Dictionary<int, EventRule> rows;
 
@@ -49,7 +50,7 @@ public sealed class EventRuleTable : ISoraTable, IReadOnlyDictionary<int, EventR
 
     internal static EventRuleTable Decode(ISoraTableSource source)
     {
-        return FromRows(source.DecodeTable("EventRule", global::com.sora.showcase.EventRule.Decode, global::com.sora.showcase.EventRule.Decode));
+        return FromRows(source.DecodeTable(TableName, global::com.sora.showcase.EventRule.Decode, global::com.sora.showcase.EventRule.Decode));
     }
 
     internal static EventRuleTable FromRows(List<EventRule> rows)
@@ -112,7 +113,7 @@ public sealed class EventRuleTable : ISoraTable, IReadOnlyDictionary<int, EventR
             return orderedRows;
         }
     }
-    public string Name => "EventRule";
+    public string Name => TableName;
     public SoraTableMode Mode => SoraTableMode.Map;
     public string? Key => "id";
     public string RowType => "EventRule";

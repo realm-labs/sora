@@ -24,6 +24,7 @@ end
 ---@field private _rows table<integer, GachaPool>
 local GachaPoolTable = {}
 GachaPoolTable.__index = GachaPoolTable
+GachaPoolTable.NAME = "GachaPool"
 
 ---@param rows GachaPool[]
 ---@return GachaPoolTable
@@ -40,7 +41,7 @@ end
 
 ---@return string
 function GachaPoolTable:name()
-    return "GachaPool"
+    return GachaPoolTable.NAME
 end
 
 ---@return string

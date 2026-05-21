@@ -21,6 +21,7 @@ end
 ---@field private _rows table<integer, DropGroup>
 local DropGroupTable = {}
 DropGroupTable.__index = DropGroupTable
+DropGroupTable.NAME = "DropGroup"
 
 ---@param rows DropGroup[]
 ---@return DropGroupTable
@@ -37,7 +38,7 @@ end
 
 ---@return string
 function DropGroupTable:name()
-    return "DropGroup"
+    return DropGroupTable.NAME
 end
 
 ---@return string

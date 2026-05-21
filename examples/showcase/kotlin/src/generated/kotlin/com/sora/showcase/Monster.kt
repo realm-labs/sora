@@ -40,7 +40,7 @@ class MonsterTable private constructor(
     val rows: Map<Int, Monster>,
 ) : SoraTable, Map<Int, Monster> by rows {
     fun orderedValues(): List<Monster> = orderedKeys.mapNotNull { rows[it] }
-    override val name: String = "Monster"
+    override val name: String = NAME
     override val mode: SoraTableMode = SoraTableMode.Map
     override val key: String? = "id"
     override val rowType: String = "Monster"
@@ -49,12 +49,14 @@ class MonsterTable private constructor(
 
     companion object {
         fun decode(source: SoraTableSource): MonsterTable =
-            fromRows(source.decodeTable("Monster", Monster::decode, Monster::decode))
+            fromRows(source.decodeTable(NAME, Monster::decode, Monster::decode))
 
         private fun fromRows(rows: List<Monster>): MonsterTable =
             MonsterTable(
                 rows.map { it.id },
                 rows.associateBy { it.id },
             )
+
+        const val NAME: String = "Monster"
     }
 }

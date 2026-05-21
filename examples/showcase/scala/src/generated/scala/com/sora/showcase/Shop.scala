@@ -26,7 +26,7 @@ final class ShopTable private (
   def values: Iterable[Shop] = rows.values
 
   def orderedValues: Vector[Shop] = keys.flatMap(rows.get)
-  override val name: String = "Shop"
+  override val name: String = ShopTable.Name
   override val mode: SoraTableMode = SoraTableMode.Map
   override val key: Option[String] = Some("id")
   override val rowType: String = "Shop"
@@ -34,8 +34,10 @@ final class ShopTable private (
 }
 
 object ShopTable {
+  val Name: String = "Shop"
+
   def decode(source: SoraTableSource): ShopTable =
-    fromRows(source.decodeTable("Shop", Shop.decode))
+    fromRows(source.decodeTable(Name, Shop.decode))
 
   private def fromRows(rows: Vector[Shop]): ShopTable =
     new ShopTable(

@@ -27,18 +27,19 @@ end
 ---@field private _row GameSettings
 local GameSettingsTable = {}
 GameSettingsTable.__index = GameSettingsTable
+GameSettingsTable.NAME = "GameSettings"
 
 ---@param rows GameSettings[]
 ---@return GameSettingsTable
 function GameSettingsTable.decode(rows)
     return setmetatable({
-        _row = Runtime.require_singleton_table(rows, "GameSettings"),
+        _row = Runtime.require_singleton_table(rows, GameSettingsTable.NAME),
     }, GameSettingsTable)
 end
 
 ---@return string
 function GameSettingsTable:name()
-    return "GameSettings"
+    return GameSettingsTable.NAME
 end
 
 ---@return string

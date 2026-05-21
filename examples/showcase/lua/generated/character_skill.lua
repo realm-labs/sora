@@ -22,6 +22,7 @@ end
 ---@field private _rows CharacterSkill[]
 local CharacterSkillTable = {}
 CharacterSkillTable.__index = CharacterSkillTable
+CharacterSkillTable.NAME = "CharacterSkill"
 
 ---@param rows CharacterSkill[]
 ---@return CharacterSkillTable
@@ -33,7 +34,7 @@ end
 
 ---@return string
 function CharacterSkillTable:name()
-    return "CharacterSkill"
+    return CharacterSkillTable.NAME
 end
 
 ---@return string

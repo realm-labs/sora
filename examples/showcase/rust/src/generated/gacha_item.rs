@@ -32,6 +32,8 @@ pub struct GachaItemTable {
 }
 
 impl GachaItemTable {
+    pub const NAME: &'static str = "GachaItem";
+
     pub(super) fn from_rows(rows: Vec<GachaItem>) -> Result<Self, super::runtime::SoraReadError> {
         Ok(Self { rows })
     }
@@ -47,7 +49,7 @@ impl std::ops::Deref for GachaItemTable {
 
 impl super::SoraTable for GachaItemTable {
     fn name(&self) -> &'static str {
-        "GachaItem"
+        Self::NAME
     }
 
     fn mode(&self) -> super::SoraTableMode {

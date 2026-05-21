@@ -44,6 +44,7 @@ public final class QuestReward {
 }
 
 final class QuestRewardTable extends java.util.AbstractList<QuestReward> implements SoraTable {
+    static final String NAME = "QuestReward";
     private final java.util.List<QuestReward> rows;
 
     private QuestRewardTable(java.util.List<QuestReward> rows) {
@@ -55,7 +56,7 @@ final class QuestRewardTable extends java.util.AbstractList<QuestReward> impleme
     }
 
     static QuestRewardTable decode(SoraTableSource source) {
-        return fromRows(source.decodeTable("QuestReward", QuestReward::decode, QuestReward::decode));
+        return fromRows(source.decodeTable(NAME, QuestReward::decode, QuestReward::decode));
     }
 
     public java.util.List<QuestReward> rows() {
@@ -67,7 +68,7 @@ final class QuestRewardTable extends java.util.AbstractList<QuestReward> impleme
     }
     @Override
     public String name() {
-        return "QuestReward";
+        return NAME;
     }
 
     @Override

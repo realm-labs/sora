@@ -65,6 +65,8 @@ func decodeMailTemplateValue(input SoraValue) (MailTemplate, error) {
 	return value, nil
 }
 
+const mailTemplateTableName = "MailTemplate"
+
 type MailTemplateTable struct {
 	keys []int32
 	rows map[int32]MailTemplate
@@ -79,7 +81,7 @@ func buildMailTemplateTable(rows []MailTemplate) (*MailTemplateTable, error) {
 }
 
 func decodeMailTemplateTable(source SoraTableSource) (*MailTemplateTable, error) {
-	rows, err := DecodeSourceTable(source, "MailTemplate", decodeMailTemplate, decodeMailTemplateValue)
+	rows, err := DecodeSourceTable(source, mailTemplateTableName, decodeMailTemplate, decodeMailTemplateValue)
 	if err != nil {
 		return nil, err
 	}
@@ -108,7 +110,7 @@ func (table *MailTemplateTable) OrderedRows() []MailTemplate {
 	return rows
 }
 func (table *MailTemplateTable) Name() string {
-	return "MailTemplate"
+	return mailTemplateTableName
 }
 
 func (table *MailTemplateTable) Mode() SoraTableMode {

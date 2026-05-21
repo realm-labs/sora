@@ -29,94 +29,94 @@ final class SoraConfig private (
       case None => throw new SoraReadException(s"generated SoraConfig is missing table `$name`")
     }
   def item: ItemTable =
-    table("Item")
+    table(ItemTable.Name)
   def skill: SkillTable =
-    table("Skill")
+    table(SkillTable.Name)
   def quest: QuestTable =
-    table("Quest")
+    table(QuestTable.Name)
   def questReward: QuestRewardTable =
-    table("QuestReward")
+    table(QuestRewardTable.Name)
   def gameSettings: GameSettingsTable =
-    table("GameSettings")
+    table(GameSettingsTable.Name)
   def localization: LocalizationTable =
-    table("Localization")
+    table(LocalizationTable.Name)
   def levelExp: LevelExpTable =
-    table("LevelExp")
+    table(LevelExpTable.Name)
   def character: CharacterTable =
-    table("Character")
+    table(CharacterTable.Name)
   def characterSkill: CharacterSkillTable =
-    table("CharacterSkill")
+    table(CharacterSkillTable.Name)
   def buff: BuffTable =
-    table("Buff")
+    table(BuffTable.Name)
   def dropGroup: DropGroupTable =
-    table("DropGroup")
+    table(DropGroupTable.Name)
   def dropEntry: DropEntryTable =
-    table("DropEntry")
+    table(DropEntryTable.Name)
   def monster: MonsterTable =
-    table("Monster")
+    table(MonsterTable.Name)
   def stage: StageTable =
-    table("Stage")
+    table(StageTable.Name)
   def stageReward: StageRewardTable =
-    table("StageReward")
+    table(StageRewardTable.Name)
   def dungeon: DungeonTable =
-    table("Dungeon")
+    table(DungeonTable.Name)
   def shop: ShopTable =
-    table("Shop")
+    table(ShopTable.Name)
   def shopItem: ShopItemTable =
-    table("ShopItem")
+    table(ShopItemTable.Name)
   def recipe: RecipeTable =
-    table("Recipe")
+    table(RecipeTable.Name)
   def gachaPool: GachaPoolTable =
-    table("GachaPool")
+    table(GachaPoolTable.Name)
   def gachaItem: GachaItemTable =
-    table("GachaItem")
+    table(GachaItemTable.Name)
   def equipmentSet: EquipmentSetTable =
-    table("EquipmentSet")
+    table(EquipmentSetTable.Name)
   def achievement: AchievementTable =
-    table("Achievement")
+    table(AchievementTable.Name)
   def vipLevel: VipLevelTable =
-    table("VipLevel")
+    table(VipLevelTable.Name)
   def mailTemplate: MailTemplateTable =
-    table("MailTemplate")
+    table(MailTemplateTable.Name)
   def mailReward: MailRewardTable =
-    table("MailReward")
+    table(MailRewardTable.Name)
   def dialogue: DialogueTable =
-    table("Dialogue")
+    table(DialogueTable.Name)
   def eventRule: EventRuleTable =
-    table("EventRule")
+    table(EventRuleTable.Name)
 }
 
 object SoraConfig {
   def fromSource(source: SoraTableSource): SoraConfig = {
     val tables = Map[String, SoraTable](
-      "Item" -> ItemTable.decode(source),
-      "Skill" -> SkillTable.decode(source),
-      "Quest" -> QuestTable.decode(source),
-      "QuestReward" -> QuestRewardTable.decode(source),
-      "GameSettings" -> GameSettingsTable.decode(source),
-      "Localization" -> LocalizationTable.decode(source),
-      "LevelExp" -> LevelExpTable.decode(source),
-      "Character" -> CharacterTable.decode(source),
-      "CharacterSkill" -> CharacterSkillTable.decode(source),
-      "Buff" -> BuffTable.decode(source),
-      "DropGroup" -> DropGroupTable.decode(source),
-      "DropEntry" -> DropEntryTable.decode(source),
-      "Monster" -> MonsterTable.decode(source),
-      "Stage" -> StageTable.decode(source),
-      "StageReward" -> StageRewardTable.decode(source),
-      "Dungeon" -> DungeonTable.decode(source),
-      "Shop" -> ShopTable.decode(source),
-      "ShopItem" -> ShopItemTable.decode(source),
-      "Recipe" -> RecipeTable.decode(source),
-      "GachaPool" -> GachaPoolTable.decode(source),
-      "GachaItem" -> GachaItemTable.decode(source),
-      "EquipmentSet" -> EquipmentSetTable.decode(source),
-      "Achievement" -> AchievementTable.decode(source),
-      "VipLevel" -> VipLevelTable.decode(source),
-      "MailTemplate" -> MailTemplateTable.decode(source),
-      "MailReward" -> MailRewardTable.decode(source),
-      "Dialogue" -> DialogueTable.decode(source),
-      "EventRule" -> EventRuleTable.decode(source)
+      ItemTable.Name -> ItemTable.decode(source),
+      SkillTable.Name -> SkillTable.decode(source),
+      QuestTable.Name -> QuestTable.decode(source),
+      QuestRewardTable.Name -> QuestRewardTable.decode(source),
+      GameSettingsTable.Name -> GameSettingsTable.decode(source),
+      LocalizationTable.Name -> LocalizationTable.decode(source),
+      LevelExpTable.Name -> LevelExpTable.decode(source),
+      CharacterTable.Name -> CharacterTable.decode(source),
+      CharacterSkillTable.Name -> CharacterSkillTable.decode(source),
+      BuffTable.Name -> BuffTable.decode(source),
+      DropGroupTable.Name -> DropGroupTable.decode(source),
+      DropEntryTable.Name -> DropEntryTable.decode(source),
+      MonsterTable.Name -> MonsterTable.decode(source),
+      StageTable.Name -> StageTable.decode(source),
+      StageRewardTable.Name -> StageRewardTable.decode(source),
+      DungeonTable.Name -> DungeonTable.decode(source),
+      ShopTable.Name -> ShopTable.decode(source),
+      ShopItemTable.Name -> ShopItemTable.decode(source),
+      RecipeTable.Name -> RecipeTable.decode(source),
+      GachaPoolTable.Name -> GachaPoolTable.decode(source),
+      GachaItemTable.Name -> GachaItemTable.decode(source),
+      EquipmentSetTable.Name -> EquipmentSetTable.decode(source),
+      AchievementTable.Name -> AchievementTable.decode(source),
+      VipLevelTable.Name -> VipLevelTable.decode(source),
+      MailTemplateTable.Name -> MailTemplateTable.decode(source),
+      MailRewardTable.Name -> MailRewardTable.decode(source),
+      DialogueTable.Name -> DialogueTable.decode(source),
+      EventRuleTable.Name -> EventRuleTable.decode(source)
     )
     new SoraConfig(tables)
   }

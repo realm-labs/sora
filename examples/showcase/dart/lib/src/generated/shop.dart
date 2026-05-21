@@ -25,6 +25,7 @@ final class Shop {
 }
 
 final class ShopTable extends Iterable<Shop> implements SoraConfigTable {
+  static const tableName = 'Shop';
   final List<int> _keys;
   final Map<int, Shop> _rows;
 
@@ -41,7 +42,7 @@ final class ShopTable extends Iterable<Shop> implements SoraConfigTable {
   }
 
   @override
-  String get name => 'Shop';
+  String get name => tableName;
 
   @override
   String get mode => 'map';
@@ -59,7 +60,7 @@ final class ShopTable extends Iterable<Shop> implements SoraConfigTable {
   Shop get(int key) {
     final row = _rows[key];
     if (row == null) {
-      throw SoraReadException('missing row in table `Shop` for key `$key`');
+      throw SoraReadException('missing row in table `$tableName` for key `$key`');
     }
     return row;
   }

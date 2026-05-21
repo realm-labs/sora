@@ -25,6 +25,8 @@ export function decodeShopValue(value) {
 }
 
 export class ShopTable {
+    static tableName = "Shop";
+
     constructor(
         keys,
         rows,
@@ -41,7 +43,7 @@ export class ShopTable {
     }
 
     name() {
-        return "Shop";
+        return ShopTable.tableName;
     }
 
     mode() {

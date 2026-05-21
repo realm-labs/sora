@@ -33,6 +33,8 @@ export function decodeDialogueValue(value: SoraValue): Dialogue {
 }
 
 export class DialogueTable implements SoraConfigTable {
+    static readonly tableName = "Dialogue";
+
     private constructor(
         private readonly _keys: number[],
         private readonly _rows: Map<number, Dialogue>,
@@ -46,7 +48,7 @@ export class DialogueTable implements SoraConfigTable {
     }
 
     name(): string {
-        return "Dialogue";
+        return DialogueTable.tableName;
     }
 
     mode(): string {

@@ -44,6 +44,8 @@ class EventRule:
 
 
 class EventRuleTable(SoraConfigTable):
+    NAME = "EventRule"
+
     def __init__(
         self,
         keys: list[int],
@@ -60,7 +62,7 @@ class EventRuleTable(SoraConfigTable):
         )
 
     def name(self) -> str:
-        return "EventRule"
+        return self.NAME
 
     def mode(self) -> str:
         return "map"

@@ -26,6 +26,8 @@ export function decodeMailRewardValue(value) {
 }
 
 export class MailRewardTable {
+    static tableName = "MailReward";
+
     constructor(
         rows,
     ) {
@@ -39,7 +41,7 @@ export class MailRewardTable {
     }
 
     name() {
-        return "MailReward";
+        return MailRewardTable.tableName;
     }
 
     mode() {

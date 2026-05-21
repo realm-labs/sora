@@ -35,6 +35,7 @@ public sealed record GachaPool(
 
 public sealed class GachaPoolTable : ISoraTable, IReadOnlyDictionary<int, GachaPool>
 {
+    public const string TableName = "GachaPool";
     private readonly List<int> keys;
     private readonly Dictionary<int, GachaPool> rows;
 
@@ -46,7 +47,7 @@ public sealed class GachaPoolTable : ISoraTable, IReadOnlyDictionary<int, GachaP
 
     internal static GachaPoolTable Decode(ISoraTableSource source)
     {
-        return FromRows(source.DecodeTable("GachaPool", global::com.sora.showcase.GachaPool.Decode, global::com.sora.showcase.GachaPool.Decode));
+        return FromRows(source.DecodeTable(TableName, global::com.sora.showcase.GachaPool.Decode, global::com.sora.showcase.GachaPool.Decode));
     }
 
     internal static GachaPoolTable FromRows(List<GachaPool> rows)
@@ -109,7 +110,7 @@ public sealed class GachaPoolTable : ISoraTable, IReadOnlyDictionary<int, GachaP
             return orderedRows;
         }
     }
-    public string Name => "GachaPool";
+    public string Name => TableName;
     public SoraTableMode Mode => SoraTableMode.Map;
     public string? Key => "id";
     public string RowType => "GachaPool";

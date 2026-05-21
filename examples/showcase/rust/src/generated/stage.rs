@@ -37,6 +37,8 @@ pub struct StageTable {
 }
 
 impl StageTable {
+    pub const NAME: &'static str = "Stage";
+
     pub(super) fn from_rows(rows: Vec<Stage>) -> Result<Self, super::runtime::SoraReadError> {
         let keys = rows.iter().map(|row| row.id).collect::<Vec<_>>();
         Ok(Self {
@@ -67,7 +69,7 @@ impl std::ops::Deref for StageTable {
 
 impl super::SoraTable for StageTable {
     fn name(&self) -> &'static str {
-        "Stage"
+        Self::NAME
     }
 
     fn mode(&self) -> super::SoraTableMode {

@@ -27,6 +27,7 @@ final class DropEntry {
 }
 
 final class DropEntryTable extends Iterable<DropEntry> implements SoraConfigTable {
+  static const tableName = 'DropEntry';
   final List<DropEntry> _rows;
 
   const DropEntryTable(
@@ -40,7 +41,7 @@ final class DropEntryTable extends Iterable<DropEntry> implements SoraConfigTabl
   }
 
   @override
-  String get name => 'DropEntry';
+  String get name => tableName;
 
   @override
   String get mode => 'list';

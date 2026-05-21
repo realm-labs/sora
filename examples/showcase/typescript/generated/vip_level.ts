@@ -36,6 +36,8 @@ export function decodeVipLevelValue(value: SoraValue): VipLevel {
 }
 
 export class VipLevelTable implements SoraConfigTable {
+    static readonly tableName = "VipLevel";
+
     private constructor(
         private readonly _keys: number[],
         private readonly _rows: Map<number, VipLevel>,
@@ -49,7 +51,7 @@ export class VipLevelTable implements SoraConfigTable {
     }
 
     name(): string {
-        return "VipLevel";
+        return VipLevelTable.tableName;
     }
 
     mode(): string {

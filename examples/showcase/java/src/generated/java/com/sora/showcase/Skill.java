@@ -67,6 +67,7 @@ public final class Skill {
 }
 
 final class SkillTable extends java.util.AbstractMap<Integer, Skill> implements SoraTable {
+    static final String NAME = "Skill";
     private final List<Integer> keys;
     private final java.util.Map<Integer, Skill> rows;
 
@@ -80,7 +81,7 @@ final class SkillTable extends java.util.AbstractMap<Integer, Skill> implements 
     }
 
     static SkillTable decode(SoraTableSource source) {
-        return fromRows(source.decodeTable("Skill", Skill::decode, Skill::decode));
+        return fromRows(source.decodeTable(NAME, Skill::decode, Skill::decode));
     }
 
     public java.util.Map<Integer, Skill> rows() {
@@ -105,7 +106,7 @@ final class SkillTable extends java.util.AbstractMap<Integer, Skill> implements 
     }
     @Override
     public String name() {
-        return "Skill";
+        return NAME;
     }
 
     @Override

@@ -30,142 +30,142 @@ func NewSoraConfigFromSource(source SoraTableSource) (*SoraConfig, error) {
 	if err != nil {
 		return nil, err
 	}
-	tables["Item"] = itemTable
+	tables[itemTableName] = itemTable
 	skillTable, err := decodeSkillTable(source)
 	if err != nil {
 		return nil, err
 	}
-	tables["Skill"] = skillTable
+	tables[skillTableName] = skillTable
 	questTable, err := decodeQuestTable(source)
 	if err != nil {
 		return nil, err
 	}
-	tables["Quest"] = questTable
+	tables[questTableName] = questTable
 	questRewardTable, err := decodeQuestRewardTable(source)
 	if err != nil {
 		return nil, err
 	}
-	tables["QuestReward"] = questRewardTable
+	tables[questRewardTableName] = questRewardTable
 	gameSettingsTable, err := decodeGameSettingsTable(source)
 	if err != nil {
 		return nil, err
 	}
-	tables["GameSettings"] = gameSettingsTable
+	tables[gameSettingsTableName] = gameSettingsTable
 	localizationTable, err := decodeLocalizationTable(source)
 	if err != nil {
 		return nil, err
 	}
-	tables["Localization"] = localizationTable
+	tables[localizationTableName] = localizationTable
 	levelExpTable, err := decodeLevelExpTable(source)
 	if err != nil {
 		return nil, err
 	}
-	tables["LevelExp"] = levelExpTable
+	tables[levelExpTableName] = levelExpTable
 	characterTable, err := decodeCharacterTable(source)
 	if err != nil {
 		return nil, err
 	}
-	tables["Character"] = characterTable
+	tables[characterTableName] = characterTable
 	characterSkillTable, err := decodeCharacterSkillTable(source)
 	if err != nil {
 		return nil, err
 	}
-	tables["CharacterSkill"] = characterSkillTable
+	tables[characterSkillTableName] = characterSkillTable
 	buffTable, err := decodeBuffTable(source)
 	if err != nil {
 		return nil, err
 	}
-	tables["Buff"] = buffTable
+	tables[buffTableName] = buffTable
 	dropGroupTable, err := decodeDropGroupTable(source)
 	if err != nil {
 		return nil, err
 	}
-	tables["DropGroup"] = dropGroupTable
+	tables[dropGroupTableName] = dropGroupTable
 	dropEntryTable, err := decodeDropEntryTable(source)
 	if err != nil {
 		return nil, err
 	}
-	tables["DropEntry"] = dropEntryTable
+	tables[dropEntryTableName] = dropEntryTable
 	monsterTable, err := decodeMonsterTable(source)
 	if err != nil {
 		return nil, err
 	}
-	tables["Monster"] = monsterTable
+	tables[monsterTableName] = monsterTable
 	stageTable, err := decodeStageTable(source)
 	if err != nil {
 		return nil, err
 	}
-	tables["Stage"] = stageTable
+	tables[stageTableName] = stageTable
 	stageRewardTable, err := decodeStageRewardTable(source)
 	if err != nil {
 		return nil, err
 	}
-	tables["StageReward"] = stageRewardTable
+	tables[stageRewardTableName] = stageRewardTable
 	dungeonTable, err := decodeDungeonTable(source)
 	if err != nil {
 		return nil, err
 	}
-	tables["Dungeon"] = dungeonTable
+	tables[dungeonTableName] = dungeonTable
 	shopTable, err := decodeShopTable(source)
 	if err != nil {
 		return nil, err
 	}
-	tables["Shop"] = shopTable
+	tables[shopTableName] = shopTable
 	shopItemTable, err := decodeShopItemTable(source)
 	if err != nil {
 		return nil, err
 	}
-	tables["ShopItem"] = shopItemTable
+	tables[shopItemTableName] = shopItemTable
 	recipeTable, err := decodeRecipeTable(source)
 	if err != nil {
 		return nil, err
 	}
-	tables["Recipe"] = recipeTable
+	tables[recipeTableName] = recipeTable
 	gachaPoolTable, err := decodeGachaPoolTable(source)
 	if err != nil {
 		return nil, err
 	}
-	tables["GachaPool"] = gachaPoolTable
+	tables[gachaPoolTableName] = gachaPoolTable
 	gachaItemTable, err := decodeGachaItemTable(source)
 	if err != nil {
 		return nil, err
 	}
-	tables["GachaItem"] = gachaItemTable
+	tables[gachaItemTableName] = gachaItemTable
 	equipmentSetTable, err := decodeEquipmentSetTable(source)
 	if err != nil {
 		return nil, err
 	}
-	tables["EquipmentSet"] = equipmentSetTable
+	tables[equipmentSetTableName] = equipmentSetTable
 	achievementTable, err := decodeAchievementTable(source)
 	if err != nil {
 		return nil, err
 	}
-	tables["Achievement"] = achievementTable
+	tables[achievementTableName] = achievementTable
 	vipLevelTable, err := decodeVipLevelTable(source)
 	if err != nil {
 		return nil, err
 	}
-	tables["VipLevel"] = vipLevelTable
+	tables[vipLevelTableName] = vipLevelTable
 	mailTemplateTable, err := decodeMailTemplateTable(source)
 	if err != nil {
 		return nil, err
 	}
-	tables["MailTemplate"] = mailTemplateTable
+	tables[mailTemplateTableName] = mailTemplateTable
 	mailRewardTable, err := decodeMailRewardTable(source)
 	if err != nil {
 		return nil, err
 	}
-	tables["MailReward"] = mailRewardTable
+	tables[mailRewardTableName] = mailRewardTable
 	dialogueTable, err := decodeDialogueTable(source)
 	if err != nil {
 		return nil, err
 	}
-	tables["Dialogue"] = dialogueTable
+	tables[dialogueTableName] = dialogueTable
 	eventRuleTable, err := decodeEventRuleTable(source)
 	if err != nil {
 		return nil, err
 	}
-	tables["EventRule"] = eventRuleTable
+	tables[eventRuleTableName] = eventRuleTable
 	return &SoraConfig{tables: tables}, nil
 }
 
@@ -177,88 +177,88 @@ func (config *SoraConfig) Tables() []SoraTable {
 	return tables
 }
 func (config *SoraConfig) Item() *ItemTable {
-	return config.tables["Item"].(*ItemTable)
+	return config.tables[itemTableName].(*ItemTable)
 }
 func (config *SoraConfig) Skill() *SkillTable {
-	return config.tables["Skill"].(*SkillTable)
+	return config.tables[skillTableName].(*SkillTable)
 }
 func (config *SoraConfig) Quest() *QuestTable {
-	return config.tables["Quest"].(*QuestTable)
+	return config.tables[questTableName].(*QuestTable)
 }
 func (config *SoraConfig) QuestReward() *QuestRewardTable {
-	return config.tables["QuestReward"].(*QuestRewardTable)
+	return config.tables[questRewardTableName].(*QuestRewardTable)
 }
 func (config *SoraConfig) GameSettings() *GameSettingsTable {
-	return config.tables["GameSettings"].(*GameSettingsTable)
+	return config.tables[gameSettingsTableName].(*GameSettingsTable)
 }
 func (config *SoraConfig) Localization() *LocalizationTable {
-	return config.tables["Localization"].(*LocalizationTable)
+	return config.tables[localizationTableName].(*LocalizationTable)
 }
 func (config *SoraConfig) LevelExp() *LevelExpTable {
-	return config.tables["LevelExp"].(*LevelExpTable)
+	return config.tables[levelExpTableName].(*LevelExpTable)
 }
 func (config *SoraConfig) Character() *CharacterTable {
-	return config.tables["Character"].(*CharacterTable)
+	return config.tables[characterTableName].(*CharacterTable)
 }
 func (config *SoraConfig) CharacterSkill() *CharacterSkillTable {
-	return config.tables["CharacterSkill"].(*CharacterSkillTable)
+	return config.tables[characterSkillTableName].(*CharacterSkillTable)
 }
 func (config *SoraConfig) Buff() *BuffTable {
-	return config.tables["Buff"].(*BuffTable)
+	return config.tables[buffTableName].(*BuffTable)
 }
 func (config *SoraConfig) DropGroup() *DropGroupTable {
-	return config.tables["DropGroup"].(*DropGroupTable)
+	return config.tables[dropGroupTableName].(*DropGroupTable)
 }
 func (config *SoraConfig) DropEntry() *DropEntryTable {
-	return config.tables["DropEntry"].(*DropEntryTable)
+	return config.tables[dropEntryTableName].(*DropEntryTable)
 }
 func (config *SoraConfig) Monster() *MonsterTable {
-	return config.tables["Monster"].(*MonsterTable)
+	return config.tables[monsterTableName].(*MonsterTable)
 }
 func (config *SoraConfig) Stage() *StageTable {
-	return config.tables["Stage"].(*StageTable)
+	return config.tables[stageTableName].(*StageTable)
 }
 func (config *SoraConfig) StageReward() *StageRewardTable {
-	return config.tables["StageReward"].(*StageRewardTable)
+	return config.tables[stageRewardTableName].(*StageRewardTable)
 }
 func (config *SoraConfig) Dungeon() *DungeonTable {
-	return config.tables["Dungeon"].(*DungeonTable)
+	return config.tables[dungeonTableName].(*DungeonTable)
 }
 func (config *SoraConfig) Shop() *ShopTable {
-	return config.tables["Shop"].(*ShopTable)
+	return config.tables[shopTableName].(*ShopTable)
 }
 func (config *SoraConfig) ShopItem() *ShopItemTable {
-	return config.tables["ShopItem"].(*ShopItemTable)
+	return config.tables[shopItemTableName].(*ShopItemTable)
 }
 func (config *SoraConfig) Recipe() *RecipeTable {
-	return config.tables["Recipe"].(*RecipeTable)
+	return config.tables[recipeTableName].(*RecipeTable)
 }
 func (config *SoraConfig) GachaPool() *GachaPoolTable {
-	return config.tables["GachaPool"].(*GachaPoolTable)
+	return config.tables[gachaPoolTableName].(*GachaPoolTable)
 }
 func (config *SoraConfig) GachaItem() *GachaItemTable {
-	return config.tables["GachaItem"].(*GachaItemTable)
+	return config.tables[gachaItemTableName].(*GachaItemTable)
 }
 func (config *SoraConfig) EquipmentSet() *EquipmentSetTable {
-	return config.tables["EquipmentSet"].(*EquipmentSetTable)
+	return config.tables[equipmentSetTableName].(*EquipmentSetTable)
 }
 func (config *SoraConfig) Achievement() *AchievementTable {
-	return config.tables["Achievement"].(*AchievementTable)
+	return config.tables[achievementTableName].(*AchievementTable)
 }
 func (config *SoraConfig) VipLevel() *VipLevelTable {
-	return config.tables["VipLevel"].(*VipLevelTable)
+	return config.tables[vipLevelTableName].(*VipLevelTable)
 }
 func (config *SoraConfig) MailTemplate() *MailTemplateTable {
-	return config.tables["MailTemplate"].(*MailTemplateTable)
+	return config.tables[mailTemplateTableName].(*MailTemplateTable)
 }
 func (config *SoraConfig) MailReward() *MailRewardTable {
-	return config.tables["MailReward"].(*MailRewardTable)
+	return config.tables[mailRewardTableName].(*MailRewardTable)
 }
 func (config *SoraConfig) Dialogue() *DialogueTable {
-	return config.tables["Dialogue"].(*DialogueTable)
+	return config.tables[dialogueTableName].(*DialogueTable)
 }
 func (config *SoraConfig) EventRule() *EventRuleTable {
-	return config.tables["EventRule"].(*EventRuleTable)
+	return config.tables[eventRuleTableName].(*EventRuleTable)
 }
 func DecodeMapTable[K comparable, V any](rows []V, key func(V) K) map[K]V {
 	values := make(map[K]V, len(rows))

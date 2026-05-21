@@ -9,6 +9,7 @@
 {%- if record.table %}
 
 #include <unordered_map>
+#include <string>
 #include <vector>
 {%- endif %}
 
@@ -36,6 +37,8 @@ struct {{ record.pascal_name }} {
 
 class {{ table.pascal_name }}Table final : public SoraTable {
 public:
+    static constexpr const char* NAME = "{{ table.name }}";
+
     {{ table.pascal_name }}Table() {}
     {{ table.pascal_name }}Table(const {{ table.pascal_name }}Table&) = delete;
     {{ table.pascal_name }}Table& operator=(const {{ table.pascal_name }}Table&) = delete;
@@ -43,7 +46,7 @@ public:
     {{ table.pascal_name }}Table& operator=({{ table.pascal_name }}Table&&) = default;
 
     static {{ table.pascal_name }}Table decode(const SoraBundle& bundle) {
-        std::vector<{{ table.row_type }}> rows = bundle.decode_table<{{ table.row_type }}>("{{ table.name }}");
+        std::vector<{{ table.row_type }}> rows = bundle.decode_table<{{ table.row_type }}>(NAME);
         {{ table.pascal_name }}Table table;
 {%- if table.mode == "map" and table.key_field_name %}
         for (std::size_t index = 0; index < rows.size(); ++index) {
@@ -53,7 +56,7 @@ public:
         }
 {%- elif table.mode == "singleton" %}
         if (rows.size() != 1) {
-            throw SoraReadException("expected singleton table {{ table.name }} to contain exactly one row");
+            throw SoraReadException(std::string("expected singleton table ") + NAME + " to contain exactly one row");
         }
         table.row_ = rows[0];
 {%- else %}
@@ -63,7 +66,7 @@ public:
         return table;
     }
 
-    const char* name() const override { return "{{ table.name }}"; }
+    const char* name() const override { return NAME; }
     const char* mode() const override { return "{{ table.mode }}"; }
 {%- if table.key_name %}
     const char* key() const override { return "{{ table.key_name }}"; }

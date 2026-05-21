@@ -44,6 +44,7 @@ public final class EventRule {
 }
 
 final class EventRuleTable extends java.util.AbstractMap<Integer, EventRule> implements SoraTable {
+    static final String NAME = "EventRule";
     private final List<Integer> keys;
     private final java.util.Map<Integer, EventRule> rows;
 
@@ -57,7 +58,7 @@ final class EventRuleTable extends java.util.AbstractMap<Integer, EventRule> imp
     }
 
     static EventRuleTable decode(SoraTableSource source) {
-        return fromRows(source.decodeTable("EventRule", EventRule::decode, EventRule::decode));
+        return fromRows(source.decodeTable(NAME, EventRule::decode, EventRule::decode));
     }
 
     public java.util.Map<Integer, EventRule> rows() {
@@ -82,7 +83,7 @@ final class EventRuleTable extends java.util.AbstractMap<Integer, EventRule> imp
     }
     @Override
     public String name() {
-        return "EventRule";
+        return NAME;
     }
 
     @Override

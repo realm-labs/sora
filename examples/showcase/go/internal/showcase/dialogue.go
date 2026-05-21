@@ -47,6 +47,8 @@ func decodeDialogueValue(input SoraValue) (Dialogue, error) {
 	return value, nil
 }
 
+const dialogueTableName = "Dialogue"
+
 type DialogueTable struct {
 	keys []int32
 	rows map[int32]Dialogue
@@ -61,7 +63,7 @@ func buildDialogueTable(rows []Dialogue) (*DialogueTable, error) {
 }
 
 func decodeDialogueTable(source SoraTableSource) (*DialogueTable, error) {
-	rows, err := DecodeSourceTable(source, "Dialogue", decodeDialogue, decodeDialogueValue)
+	rows, err := DecodeSourceTable(source, dialogueTableName, decodeDialogue, decodeDialogueValue)
 	if err != nil {
 		return nil, err
 	}
@@ -90,7 +92,7 @@ func (table *DialogueTable) OrderedRows() []Dialogue {
 	return rows
 }
 func (table *DialogueTable) Name() string {
-	return "Dialogue"
+	return dialogueTableName
 }
 
 func (table *DialogueTable) Mode() SoraTableMode {

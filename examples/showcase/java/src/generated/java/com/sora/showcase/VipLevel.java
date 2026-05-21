@@ -39,6 +39,7 @@ public final class VipLevel {
 }
 
 final class VipLevelTable extends java.util.AbstractMap<Integer, VipLevel> implements SoraTable {
+    static final String NAME = "VipLevel";
     private final List<Integer> keys;
     private final java.util.Map<Integer, VipLevel> rows;
 
@@ -52,7 +53,7 @@ final class VipLevelTable extends java.util.AbstractMap<Integer, VipLevel> imple
     }
 
     static VipLevelTable decode(SoraTableSource source) {
-        return fromRows(source.decodeTable("VipLevel", VipLevel::decode, VipLevel::decode));
+        return fromRows(source.decodeTable(NAME, VipLevel::decode, VipLevel::decode));
     }
 
     public java.util.Map<Integer, VipLevel> rows() {
@@ -77,7 +78,7 @@ final class VipLevelTable extends java.util.AbstractMap<Integer, VipLevel> imple
     }
     @Override
     public String name() {
-        return "VipLevel";
+        return NAME;
     }
 
     @Override

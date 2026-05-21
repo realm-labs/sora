@@ -56,6 +56,8 @@ func decodeGachaItemValue(input SoraValue) (GachaItem, error) {
 	return value, nil
 }
 
+const gachaItemTableName = "GachaItem"
+
 type GachaItemTable struct {
 	rows []GachaItem
 }
@@ -65,7 +67,7 @@ func buildGachaItemTable(rows []GachaItem) (*GachaItemTable, error) {
 }
 
 func decodeGachaItemTable(source SoraTableSource) (*GachaItemTable, error) {
-	rows, err := DecodeSourceTable(source, "GachaItem", decodeGachaItem, decodeGachaItemValue)
+	rows, err := DecodeSourceTable(source, gachaItemTableName, decodeGachaItem, decodeGachaItemValue)
 	if err != nil {
 		return nil, err
 	}
@@ -76,7 +78,7 @@ func (table *GachaItemTable) Rows() []GachaItem {
 	return table.rows
 }
 func (table *GachaItemTable) Name() string {
-	return "GachaItem"
+	return gachaItemTableName
 }
 
 func (table *GachaItemTable) Mode() SoraTableMode {

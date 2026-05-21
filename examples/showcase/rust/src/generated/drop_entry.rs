@@ -34,6 +34,8 @@ pub struct DropEntryTable {
 }
 
 impl DropEntryTable {
+    pub const NAME: &'static str = "DropEntry";
+
     pub(super) fn from_rows(rows: Vec<DropEntry>) -> Result<Self, super::runtime::SoraReadError> {
         Ok(Self { rows })
     }
@@ -49,7 +51,7 @@ impl std::ops::Deref for DropEntryTable {
 
 impl super::SoraTable for DropEntryTable {
     fn name(&self) -> &'static str {
-        "DropEntry"
+        Self::NAME
     }
 
     fn mode(&self) -> super::SoraTableMode {

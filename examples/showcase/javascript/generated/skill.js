@@ -38,6 +38,8 @@ export function decodeSkillValue(value) {
 }
 
 export class SkillTable {
+    static tableName = "Skill";
+
     constructor(
         keys,
         rows,
@@ -54,7 +56,7 @@ export class SkillTable {
     }
 
     name() {
-        return "Skill";
+        return SkillTable.tableName;
     }
 
     mode() {

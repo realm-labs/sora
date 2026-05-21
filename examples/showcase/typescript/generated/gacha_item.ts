@@ -39,6 +39,8 @@ export function decodeGachaItemValue(value: SoraValue): GachaItem {
 }
 
 export class GachaItemTable implements SoraConfigTable {
+    static readonly tableName = "GachaItem";
+
     private constructor(
         private readonly _rows: GachaItem[],
     ) {}
@@ -50,7 +52,7 @@ export class GachaItemTable implements SoraConfigTable {
     }
 
     name(): string {
-        return "GachaItem";
+        return GachaItemTable.tableName;
     }
 
     mode(): string {

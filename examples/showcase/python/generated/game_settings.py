@@ -45,6 +45,8 @@ class GameSettings:
 
 
 class GameSettingsTable(SoraConfigTable):
+    NAME = "GameSettings"
+
     def __init__(
         self,
         row: GameSettings,
@@ -54,11 +56,11 @@ class GameSettingsTable(SoraConfigTable):
     @staticmethod
     def decode(rows: list[GameSettings]) -> GameSettingsTable:
         return GameSettingsTable(
-            require_singleton_table(rows, "GameSettings"),
+            require_singleton_table(rows, GameSettingsTable.NAME),
         )
 
     def name(self) -> str:
-        return "GameSettings"
+        return self.NAME
 
     def mode(self) -> str:
         return "singleton"

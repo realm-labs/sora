@@ -7,6 +7,7 @@
 #include "reward_action.hpp"
 
 #include <unordered_map>
+#include <string>
 #include <vector>
 
 namespace sora::showcase {
@@ -29,6 +30,8 @@ struct EventRule {
 
 class EventRuleTable final : public SoraTable {
 public:
+    static constexpr const char* NAME = "EventRule";
+
     EventRuleTable() {}
     EventRuleTable(const EventRuleTable&) = delete;
     EventRuleTable& operator=(const EventRuleTable&) = delete;
@@ -36,7 +39,7 @@ public:
     EventRuleTable& operator=(EventRuleTable&&) = default;
 
     static EventRuleTable decode(const SoraBundle& bundle) {
-        std::vector<EventRule> rows = bundle.decode_table<EventRule>("EventRule");
+        std::vector<EventRule> rows = bundle.decode_table<EventRule>(NAME);
         EventRuleTable table;
         for (std::size_t index = 0; index < rows.size(); ++index) {
             const EventRule& row = rows[index];
@@ -47,7 +50,7 @@ public:
         return table;
     }
 
-    const char* name() const override { return "EventRule"; }
+    const char* name() const override { return NAME; }
     const char* mode() const override { return "map"; }
     const char* key() const override { return "id"; }
     std::size_t size() const override {

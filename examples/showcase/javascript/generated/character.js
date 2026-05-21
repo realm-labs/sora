@@ -34,6 +34,8 @@ export function decodeCharacterValue(value) {
 }
 
 export class CharacterTable {
+    static tableName = "Character";
+
     constructor(
         keys,
         rows,
@@ -50,7 +52,7 @@ export class CharacterTable {
     }
 
     name() {
-        return "Character";
+        return CharacterTable.tableName;
     }
 
     mode() {

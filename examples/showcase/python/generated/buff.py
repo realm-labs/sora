@@ -42,6 +42,8 @@ class Buff:
 
 
 class BuffTable(SoraConfigTable):
+    NAME = "Buff"
+
     def __init__(
         self,
         keys: list[int],
@@ -58,7 +60,7 @@ class BuffTable(SoraConfigTable):
         )
 
     def name(self) -> str:
-        return "Buff"
+        return self.NAME
 
     def mode(self) -> str:
         return "map"

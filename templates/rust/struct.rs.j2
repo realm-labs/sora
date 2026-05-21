@@ -54,6 +54,8 @@ pub struct {{ table.pascal_name }}Table {
 }
 
 impl {{ table.pascal_name }}Table {
+    pub const NAME: &'static str = "{{ table.name }}";
+
     pub(super) fn from_rows(rows: Vec<{{ table.row_type }}>) -> Result<Self, super::runtime::SoraReadError> {
 {%- if table.mode == "map" and table.key_field_name %}
         let keys = rows.iter().map(|row| {% if table.key_is_copy %}row.{{ table.key_field_name }}{% else %}row.{{ table.key_field_name }}.clone(){% endif %}).collect::<Vec<_>>();
@@ -107,7 +109,7 @@ impl {{ table.pascal_name }}Table {
 {%- endif %}
 {%- endif %}
 {%- elif table.mode == "singleton" %}
-        Ok(Self { rows: super::decode_singleton_table(rows, "{{ table.name }}")? })
+        Ok(Self { rows: super::decode_singleton_table(rows, Self::NAME)? })
 {%- else %}
 {%- if table.unique_indexes or table.non_unique_indexes %}
 {%- for index in table.unique_indexes %}
@@ -222,7 +224,7 @@ impl std::ops::Deref for {{ table.pascal_name }}Table {
 
 impl super::SoraTable for {{ table.pascal_name }}Table {
     fn name(&self) -> &'static str {
-        "{{ table.name }}"
+        Self::NAME
     }
 
     fn mode(&self) -> super::SoraTableMode {

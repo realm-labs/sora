@@ -5,6 +5,7 @@
 #include "sora_runtime.hpp"
 
 #include <unordered_map>
+#include <string>
 #include <vector>
 
 namespace sora::showcase {
@@ -25,6 +26,8 @@ struct Dialogue {
 
 class DialogueTable final : public SoraTable {
 public:
+    static constexpr const char* NAME = "Dialogue";
+
     DialogueTable() {}
     DialogueTable(const DialogueTable&) = delete;
     DialogueTable& operator=(const DialogueTable&) = delete;
@@ -32,7 +35,7 @@ public:
     DialogueTable& operator=(DialogueTable&&) = default;
 
     static DialogueTable decode(const SoraBundle& bundle) {
-        std::vector<Dialogue> rows = bundle.decode_table<Dialogue>("Dialogue");
+        std::vector<Dialogue> rows = bundle.decode_table<Dialogue>(NAME);
         DialogueTable table;
         for (std::size_t index = 0; index < rows.size(); ++index) {
             const Dialogue& row = rows[index];
@@ -43,7 +46,7 @@ public:
         return table;
     }
 
-    const char* name() const override { return "Dialogue"; }
+    const char* name() const override { return NAME; }
     const char* mode() const override { return "map"; }
     const char* key() const override { return "id"; }
     std::size_t size() const override {

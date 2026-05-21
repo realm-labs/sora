@@ -56,6 +56,8 @@ func decodeAchievementValue(input SoraValue) (Achievement, error) {
 	return value, nil
 }
 
+const achievementTableName = "Achievement"
+
 type AchievementTable struct {
 	keys []int32
 	rows map[int32]Achievement
@@ -70,7 +72,7 @@ func buildAchievementTable(rows []Achievement) (*AchievementTable, error) {
 }
 
 func decodeAchievementTable(source SoraTableSource) (*AchievementTable, error) {
-	rows, err := DecodeSourceTable(source, "Achievement", decodeAchievement, decodeAchievementValue)
+	rows, err := DecodeSourceTable(source, achievementTableName, decodeAchievement, decodeAchievementValue)
 	if err != nil {
 		return nil, err
 	}
@@ -99,7 +101,7 @@ func (table *AchievementTable) OrderedRows() []Achievement {
 	return rows
 }
 func (table *AchievementTable) Name() string {
-	return "Achievement"
+	return achievementTableName
 }
 
 func (table *AchievementTable) Mode() SoraTableMode {

@@ -24,6 +24,7 @@ end
 ---@field private _rows MailReward[]
 local MailRewardTable = {}
 MailRewardTable.__index = MailRewardTable
+MailRewardTable.NAME = "MailReward"
 
 ---@param rows MailReward[]
 ---@return MailRewardTable
@@ -35,7 +36,7 @@ end
 
 ---@return string
 function MailRewardTable:name()
-    return "MailReward"
+    return MailRewardTable.NAME
 end
 
 ---@return string

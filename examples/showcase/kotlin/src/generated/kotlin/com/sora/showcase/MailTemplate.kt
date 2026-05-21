@@ -37,7 +37,7 @@ class MailTemplateTable private constructor(
     val rows: Map<Int, MailTemplate>,
 ) : SoraTable, Map<Int, MailTemplate> by rows {
     fun orderedValues(): List<MailTemplate> = orderedKeys.mapNotNull { rows[it] }
-    override val name: String = "MailTemplate"
+    override val name: String = NAME
     override val mode: SoraTableMode = SoraTableMode.Map
     override val key: String? = "id"
     override val rowType: String = "MailTemplate"
@@ -46,12 +46,14 @@ class MailTemplateTable private constructor(
 
     companion object {
         fun decode(source: SoraTableSource): MailTemplateTable =
-            fromRows(source.decodeTable("MailTemplate", MailTemplate::decode, MailTemplate::decode))
+            fromRows(source.decodeTable(NAME, MailTemplate::decode, MailTemplate::decode))
 
         private fun fromRows(rows: List<MailTemplate>): MailTemplateTable =
             MailTemplateTable(
                 rows.map { it.id },
                 rows.associateBy { it.id },
             )
+
+        const val NAME: String = "MailTemplate"
     }
 }

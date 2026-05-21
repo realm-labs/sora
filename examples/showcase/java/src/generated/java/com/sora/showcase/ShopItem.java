@@ -49,6 +49,7 @@ public final class ShopItem {
 }
 
 final class ShopItemTable extends java.util.AbstractList<ShopItem> implements SoraTable {
+    static final String NAME = "ShopItem";
     private final java.util.List<ShopItem> rows;
 
     private ShopItemTable(java.util.List<ShopItem> rows) {
@@ -60,7 +61,7 @@ final class ShopItemTable extends java.util.AbstractList<ShopItem> implements So
     }
 
     static ShopItemTable decode(SoraTableSource source) {
-        return fromRows(source.decodeTable("ShopItem", ShopItem::decode, ShopItem::decode));
+        return fromRows(source.decodeTable(NAME, ShopItem::decode, ShopItem::decode));
     }
 
     public java.util.List<ShopItem> rows() {
@@ -72,7 +73,7 @@ final class ShopItemTable extends java.util.AbstractList<ShopItem> implements So
     }
     @Override
     public String name() {
-        return "ShopItem";
+        return NAME;
     }
 
     @Override

@@ -38,7 +38,7 @@ class ShopItemTable private constructor(
     override fun get(index: Int): ShopItem = rows[index]
 
     fun values(): List<ShopItem> = rows
-    override val name: String = "ShopItem"
+    override val name: String = NAME
     override val mode: SoraTableMode = SoraTableMode.List
     override val key: String? = null
     override val rowType: String = "ShopItem"
@@ -47,11 +47,13 @@ class ShopItemTable private constructor(
 
     companion object {
         fun decode(source: SoraTableSource): ShopItemTable =
-            fromRows(source.decodeTable("ShopItem", ShopItem::decode, ShopItem::decode))
+            fromRows(source.decodeTable(NAME, ShopItem::decode, ShopItem::decode))
 
         private fun fromRows(rows: List<ShopItem>): ShopItemTable =
             ShopItemTable(
                 rows,
             )
+
+        const val NAME: String = "ShopItem"
     }
 }

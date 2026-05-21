@@ -37,7 +37,7 @@ public sealed class SoraConfig
     {
         var tables = new Dictionary<string, ISoraTable>({{ model.tables | length }});
 {%- for table in model.tables %}
-        tables["{{ table.name }}"] = {{ table.pascal_name }}Table.Decode(source);
+        tables[{{ table.pascal_name }}Table.TableName] = {{ table.pascal_name }}Table.Decode(source);
 {%- endfor %}
         return new SoraConfig(tables);
     }
@@ -54,7 +54,7 @@ public sealed class SoraConfig
     }
 
 {%- for table in model.tables %}
-    public {{ table.pascal_name }}Table {{ table.pascal_name }} => Table<{{ table.pascal_name }}Table>("{{ table.name }}");
+    public {{ table.pascal_name }}Table {{ table.pascal_name }} => Table<{{ table.pascal_name }}Table>({{ table.pascal_name }}Table.TableName);
 
 {%- endfor %}
     internal static Dictionary<TKey, TValue> DecodeMapTable<TKey, TValue>(List<TValue> rows, Func<TValue, TKey> key)

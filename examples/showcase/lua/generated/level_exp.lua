@@ -23,6 +23,7 @@ end
 ---@field private _rows table<integer, LevelExp>
 local LevelExpTable = {}
 LevelExpTable.__index = LevelExpTable
+LevelExpTable.NAME = "LevelExp"
 
 ---@param rows LevelExp[]
 ---@return LevelExpTable
@@ -39,7 +40,7 @@ end
 
 ---@return string
 function LevelExpTable:name()
-    return "LevelExp"
+    return LevelExpTable.NAME
 end
 
 ---@return string

@@ -41,6 +41,7 @@ public sealed record ShopItem(
 
 public sealed class ShopItemTable : ISoraTable, IReadOnlyList<ShopItem>
 {
+    public const string TableName = "ShopItem";
     private readonly List<ShopItem> rows;
 
     internal ShopItemTable(List<ShopItem> rows)
@@ -50,7 +51,7 @@ public sealed class ShopItemTable : ISoraTable, IReadOnlyList<ShopItem>
 
     internal static ShopItemTable Decode(ISoraTableSource source)
     {
-        return FromRows(source.DecodeTable("ShopItem", global::com.sora.showcase.ShopItem.Decode, global::com.sora.showcase.ShopItem.Decode));
+        return FromRows(source.DecodeTable(TableName, global::com.sora.showcase.ShopItem.Decode, global::com.sora.showcase.ShopItem.Decode));
     }
 
     internal static ShopItemTable FromRows(List<ShopItem> rows)
@@ -70,7 +71,7 @@ public sealed class ShopItemTable : ISoraTable, IReadOnlyList<ShopItem>
     {
         return GetEnumerator();
     }
-    public string Name => "ShopItem";
+    public string Name => TableName;
     public SoraTableMode Mode => SoraTableMode.List;
     public string? Key => null;
     public string RowType => "ShopItem";

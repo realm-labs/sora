@@ -53,6 +53,8 @@ class Character:
 
 
 class CharacterTable(SoraConfigTable):
+    NAME = "Character"
+
     def __init__(
         self,
         keys: list[int],
@@ -69,7 +71,7 @@ class CharacterTable(SoraConfigTable):
         )
 
     def name(self) -> str:
-        return "Character"
+        return self.NAME
 
     def mode(self) -> str:
         return "map"

@@ -33,6 +33,8 @@ export function decodeLevelExpValue(value: SoraValue): LevelExp {
 }
 
 export class LevelExpTable implements SoraConfigTable {
+    static readonly tableName = "LevelExp";
+
     private constructor(
         private readonly _keys: number[],
         private readonly _rows: Map<number, LevelExp>,
@@ -46,7 +48,7 @@ export class LevelExpTable implements SoraConfigTable {
     }
 
     name(): string {
-        return "LevelExp";
+        return LevelExpTable.tableName;
     }
 
     mode(): string {

@@ -39,6 +39,7 @@ public final class Dialogue {
 }
 
 final class DialogueTable extends java.util.AbstractMap<Integer, Dialogue> implements SoraTable {
+    static final String NAME = "Dialogue";
     private final List<Integer> keys;
     private final java.util.Map<Integer, Dialogue> rows;
 
@@ -52,7 +53,7 @@ final class DialogueTable extends java.util.AbstractMap<Integer, Dialogue> imple
     }
 
     static DialogueTable decode(SoraTableSource source) {
-        return fromRows(source.decodeTable("Dialogue", Dialogue::decode, Dialogue::decode));
+        return fromRows(source.decodeTable(NAME, Dialogue::decode, Dialogue::decode));
     }
 
     public java.util.Map<Integer, Dialogue> rows() {
@@ -77,7 +78,7 @@ final class DialogueTable extends java.util.AbstractMap<Integer, Dialogue> imple
     }
     @Override
     public String name() {
-        return "Dialogue";
+        return NAME;
     }
 
     @Override

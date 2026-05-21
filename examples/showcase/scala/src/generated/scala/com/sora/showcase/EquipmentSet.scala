@@ -28,7 +28,7 @@ final class EquipmentSetTable private (
   def values: Iterable[EquipmentSet] = rows.values
 
   def orderedValues: Vector[EquipmentSet] = keys.flatMap(rows.get)
-  override val name: String = "EquipmentSet"
+  override val name: String = EquipmentSetTable.Name
   override val mode: SoraTableMode = SoraTableMode.Map
   override val key: Option[String] = Some("id")
   override val rowType: String = "EquipmentSet"
@@ -36,8 +36,10 @@ final class EquipmentSetTable private (
 }
 
 object EquipmentSetTable {
+  val Name: String = "EquipmentSet"
+
   def decode(source: SoraTableSource): EquipmentSetTable =
-    fromRows(source.decodeTable("EquipmentSet", EquipmentSet.decode))
+    fromRows(source.decodeTable(Name, EquipmentSet.decode))
 
   private def fromRows(rows: Vector[EquipmentSet]): EquipmentSetTable =
     new EquipmentSetTable(

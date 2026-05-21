@@ -6,6 +6,7 @@
 #include "rarity.hpp"
 
 #include <unordered_map>
+#include <string>
 #include <vector>
 
 namespace sora::showcase {
@@ -28,6 +29,8 @@ struct GachaItem {
 
 class GachaItemTable final : public SoraTable {
 public:
+    static constexpr const char* NAME = "GachaItem";
+
     GachaItemTable() {}
     GachaItemTable(const GachaItemTable&) = delete;
     GachaItemTable& operator=(const GachaItemTable&) = delete;
@@ -35,14 +38,14 @@ public:
     GachaItemTable& operator=(GachaItemTable&&) = default;
 
     static GachaItemTable decode(const SoraBundle& bundle) {
-        std::vector<GachaItem> rows = bundle.decode_table<GachaItem>("GachaItem");
+        std::vector<GachaItem> rows = bundle.decode_table<GachaItem>(NAME);
         GachaItemTable table;
         table.rows_ = rows;
         table.build_indexes();
         return table;
     }
 
-    const char* name() const override { return "GachaItem"; }
+    const char* name() const override { return NAME; }
     const char* mode() const override { return "list"; }
     const char* key() const override { return nullptr; }
     std::size_t size() const override {

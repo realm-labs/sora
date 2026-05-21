@@ -38,6 +38,7 @@ final class Character {
 }
 
 final class CharacterTable extends Iterable<Character> implements SoraConfigTable {
+  static const tableName = 'Character';
   final List<int> _keys;
   final Map<int, Character> _rows;
 
@@ -54,7 +55,7 @@ final class CharacterTable extends Iterable<Character> implements SoraConfigTabl
   }
 
   @override
-  String get name => 'Character';
+  String get name => tableName;
 
   @override
   String get mode => 'map';
@@ -72,7 +73,7 @@ final class CharacterTable extends Iterable<Character> implements SoraConfigTabl
   Character get(int key) {
     final row = _rows[key];
     if (row == null) {
-      throw SoraReadException('missing row in table `Character` for key `$key`');
+      throw SoraReadException('missing row in table `$tableName` for key `$key`');
     }
     return row;
   }

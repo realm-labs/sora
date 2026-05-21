@@ -56,6 +56,8 @@ func decodeDungeonValue(input SoraValue) (Dungeon, error) {
 	return value, nil
 }
 
+const dungeonTableName = "Dungeon"
+
 type DungeonTable struct {
 	keys []int32
 	rows map[int32]Dungeon
@@ -70,7 +72,7 @@ func buildDungeonTable(rows []Dungeon) (*DungeonTable, error) {
 }
 
 func decodeDungeonTable(source SoraTableSource) (*DungeonTable, error) {
-	rows, err := DecodeSourceTable(source, "Dungeon", decodeDungeon, decodeDungeonValue)
+	rows, err := DecodeSourceTable(source, dungeonTableName, decodeDungeon, decodeDungeonValue)
 	if err != nil {
 		return nil, err
 	}
@@ -99,7 +101,7 @@ func (table *DungeonTable) OrderedRows() []Dungeon {
 	return rows
 }
 func (table *DungeonTable) Name() string {
-	return "Dungeon"
+	return dungeonTableName
 }
 
 func (table *DungeonTable) Mode() SoraTableMode {

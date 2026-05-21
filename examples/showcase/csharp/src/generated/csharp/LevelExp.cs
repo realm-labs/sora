@@ -35,6 +35,7 @@ public sealed record LevelExp(
 
 public sealed class LevelExpTable : ISoraTable, IReadOnlyDictionary<int, LevelExp>
 {
+    public const string TableName = "LevelExp";
     private readonly List<int> keys;
     private readonly Dictionary<int, LevelExp> rows;
 
@@ -46,7 +47,7 @@ public sealed class LevelExpTable : ISoraTable, IReadOnlyDictionary<int, LevelEx
 
     internal static LevelExpTable Decode(ISoraTableSource source)
     {
-        return FromRows(source.DecodeTable("LevelExp", global::com.sora.showcase.LevelExp.Decode, global::com.sora.showcase.LevelExp.Decode));
+        return FromRows(source.DecodeTable(TableName, global::com.sora.showcase.LevelExp.Decode, global::com.sora.showcase.LevelExp.Decode));
     }
 
     internal static LevelExpTable FromRows(List<LevelExp> rows)
@@ -109,7 +110,7 @@ public sealed class LevelExpTable : ISoraTable, IReadOnlyDictionary<int, LevelEx
             return orderedRows;
         }
     }
-    public string Name => "LevelExp";
+    public string Name => TableName;
     public SoraTableMode Mode => SoraTableMode.Map;
     public string? Key => "level";
     public string RowType => "LevelExp";

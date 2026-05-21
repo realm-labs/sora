@@ -5,6 +5,7 @@
 #include "sora_runtime.hpp"
 
 #include <unordered_map>
+#include <string>
 #include <vector>
 
 namespace sora::showcase {
@@ -25,6 +26,8 @@ struct CharacterSkill {
 
 class CharacterSkillTable final : public SoraTable {
 public:
+    static constexpr const char* NAME = "CharacterSkill";
+
     CharacterSkillTable() {}
     CharacterSkillTable(const CharacterSkillTable&) = delete;
     CharacterSkillTable& operator=(const CharacterSkillTable&) = delete;
@@ -32,14 +35,14 @@ public:
     CharacterSkillTable& operator=(CharacterSkillTable&&) = default;
 
     static CharacterSkillTable decode(const SoraBundle& bundle) {
-        std::vector<CharacterSkill> rows = bundle.decode_table<CharacterSkill>("CharacterSkill");
+        std::vector<CharacterSkill> rows = bundle.decode_table<CharacterSkill>(NAME);
         CharacterSkillTable table;
         table.rows_ = rows;
         table.build_indexes();
         return table;
     }
 
-    const char* name() const override { return "CharacterSkill"; }
+    const char* name() const override { return NAME; }
     const char* mode() const override { return "list"; }
     const char* key() const override { return nullptr; }
     std::size_t size() const override {

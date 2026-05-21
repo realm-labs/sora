@@ -44,6 +44,7 @@ public final class GachaItem {
 }
 
 final class GachaItemTable extends java.util.AbstractList<GachaItem> implements SoraTable {
+    static final String NAME = "GachaItem";
     private final java.util.List<GachaItem> rows;
 
     private GachaItemTable(java.util.List<GachaItem> rows) {
@@ -55,7 +56,7 @@ final class GachaItemTable extends java.util.AbstractList<GachaItem> implements 
     }
 
     static GachaItemTable decode(SoraTableSource source) {
-        return fromRows(source.decodeTable("GachaItem", GachaItem::decode, GachaItem::decode));
+        return fromRows(source.decodeTable(NAME, GachaItem::decode, GachaItem::decode));
     }
 
     public java.util.List<GachaItem> rows() {
@@ -67,7 +68,7 @@ final class GachaItemTable extends java.util.AbstractList<GachaItem> implements 
     }
     @Override
     public String name() {
-        return "GachaItem";
+        return NAME;
     }
 
     @Override

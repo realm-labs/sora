@@ -59,7 +59,7 @@ final class {{ table.pascal_name }}Table private (
     {{ index.param_camel_name }}Index.getOrElse({{ index.param_camel_name }}, Vector.empty)
 
 {%- endfor %}
-  override val name: String = "{{ table.name }}"
+  override val name: String = {{ table.pascal_name }}Table.Name
 {%- if table.mode == "map" %}
   override val mode: SoraTableMode = SoraTableMode.Map
 {%- elif table.mode == "singleton" %}
@@ -81,8 +81,10 @@ final class {{ table.pascal_name }}Table private (
 }
 
 object {{ table.pascal_name }}Table {
+  val Name: String = "{{ table.name }}"
+
   def decode(source: SoraTableSource): {{ table.pascal_name }}Table =
-    fromRows(source.decodeTable("{{ table.name }}", {{ table.row_type }}.decode))
+    fromRows(source.decodeTable(Name, {{ table.row_type }}.decode))
 
   private def fromRows(rows: Vector[{{ table.row_type }}]): {{ table.pascal_name }}Table =
 {%- if table.mode == "map" and table.key_field_name %}
@@ -98,7 +100,7 @@ object {{ table.pascal_name }}Table {
     )
 {%- elif table.mode == "singleton" %}
     new {{ table.pascal_name }}Table(
-      SoraRuntime.requireSingletonTable(rows, "{{ table.name }}")
+      SoraRuntime.requireSingletonTable(rows, Name)
 {%- for index in table.unique_indexes %},
       rows.map(row => row.{{ index.field_name }} -> row).toMap
 {%- endfor %}

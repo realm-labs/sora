@@ -48,6 +48,8 @@ export function decodeMonsterValue(value: SoraValue): Monster {
 }
 
 export class MonsterTable implements SoraConfigTable {
+    static readonly tableName = "Monster";
+
     private constructor(
         private readonly _keys: number[],
         private readonly _rows: Map<number, Monster>,
@@ -61,7 +63,7 @@ export class MonsterTable implements SoraConfigTable {
     }
 
     name(): string {
-        return "Monster";
+        return MonsterTable.tableName;
     }
 
     mode(): string {

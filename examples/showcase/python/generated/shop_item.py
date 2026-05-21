@@ -45,6 +45,8 @@ class ShopItem:
 
 
 class ShopItemTable(SoraConfigTable):
+    NAME = "ShopItem"
+
     def __init__(
         self,
         rows: list[ShopItem],
@@ -58,7 +60,7 @@ class ShopItemTable(SoraConfigTable):
         )
 
     def name(self) -> str:
-        return "ShopItem"
+        return self.NAME
 
     def mode(self) -> str:
         return "list"

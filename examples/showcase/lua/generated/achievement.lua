@@ -26,6 +26,7 @@ end
 ---@field private _rows table<integer, Achievement>
 local AchievementTable = {}
 AchievementTable.__index = AchievementTable
+AchievementTable.NAME = "Achievement"
 
 ---@param rows Achievement[]
 ---@return AchievementTable
@@ -42,7 +43,7 @@ end
 
 ---@return string
 function AchievementTable:name()
-    return "Achievement"
+    return AchievementTable.NAME
 end
 
 ---@return string

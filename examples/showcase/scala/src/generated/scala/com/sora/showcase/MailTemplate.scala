@@ -30,7 +30,7 @@ final class MailTemplateTable private (
   def values: Iterable[MailTemplate] = rows.values
 
   def orderedValues: Vector[MailTemplate] = keys.flatMap(rows.get)
-  override val name: String = "MailTemplate"
+  override val name: String = MailTemplateTable.Name
   override val mode: SoraTableMode = SoraTableMode.Map
   override val key: Option[String] = Some("id")
   override val rowType: String = "MailTemplate"
@@ -38,8 +38,10 @@ final class MailTemplateTable private (
 }
 
 object MailTemplateTable {
+  val Name: String = "MailTemplate"
+
   def decode(source: SoraTableSource): MailTemplateTable =
-    fromRows(source.decodeTable("MailTemplate", MailTemplate.decode))
+    fromRows(source.decodeTable(Name, MailTemplate.decode))
 
   private def fromRows(rows: Vector[MailTemplate]): MailTemplateTable =
     new MailTemplateTable(

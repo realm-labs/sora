@@ -45,6 +45,8 @@ export function decodeMailTemplateValue(value: SoraValue): MailTemplate {
 }
 
 export class MailTemplateTable implements SoraConfigTable {
+    static readonly tableName = "MailTemplate";
+
     private constructor(
         private readonly _keys: number[],
         private readonly _rows: Map<number, MailTemplate>,
@@ -58,7 +60,7 @@ export class MailTemplateTable implements SoraConfigTable {
     }
 
     name(): string {
-        return "MailTemplate";
+        return MailTemplateTable.tableName;
     }
 
     mode(): string {

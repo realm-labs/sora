@@ -26,7 +26,7 @@ final class DialogueTable private (
   def values: Iterable[Dialogue] = rows.values
 
   def orderedValues: Vector[Dialogue] = keys.flatMap(rows.get)
-  override val name: String = "Dialogue"
+  override val name: String = DialogueTable.Name
   override val mode: SoraTableMode = SoraTableMode.Map
   override val key: Option[String] = Some("id")
   override val rowType: String = "Dialogue"
@@ -34,8 +34,10 @@ final class DialogueTable private (
 }
 
 object DialogueTable {
+  val Name: String = "Dialogue"
+
   def decode(source: SoraTableSource): DialogueTable =
-    fromRows(source.decodeTable("Dialogue", Dialogue.decode))
+    fromRows(source.decodeTable(Name, Dialogue.decode))
 
   private def fromRows(rows: Vector[Dialogue]): DialogueTable =
     new DialogueTable(

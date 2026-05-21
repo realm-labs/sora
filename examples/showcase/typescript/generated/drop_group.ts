@@ -30,6 +30,8 @@ export function decodeDropGroupValue(value: SoraValue): DropGroup {
 }
 
 export class DropGroupTable implements SoraConfigTable {
+    static readonly tableName = "DropGroup";
+
     private constructor(
         private readonly _keys: number[],
         private readonly _rows: Map<number, DropGroup>,
@@ -43,7 +45,7 @@ export class DropGroupTable implements SoraConfigTable {
     }
 
     name(): string {
-        return "DropGroup";
+        return DropGroupTable.tableName;
     }
 
     mode(): string {

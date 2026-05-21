@@ -41,6 +41,7 @@ public sealed record MailTemplate(
 
 public sealed class MailTemplateTable : ISoraTable, IReadOnlyDictionary<int, MailTemplate>
 {
+    public const string TableName = "MailTemplate";
     private readonly List<int> keys;
     private readonly Dictionary<int, MailTemplate> rows;
 
@@ -52,7 +53,7 @@ public sealed class MailTemplateTable : ISoraTable, IReadOnlyDictionary<int, Mai
 
     internal static MailTemplateTable Decode(ISoraTableSource source)
     {
-        return FromRows(source.DecodeTable("MailTemplate", global::com.sora.showcase.MailTemplate.Decode, global::com.sora.showcase.MailTemplate.Decode));
+        return FromRows(source.DecodeTable(TableName, global::com.sora.showcase.MailTemplate.Decode, global::com.sora.showcase.MailTemplate.Decode));
     }
 
     internal static MailTemplateTable FromRows(List<MailTemplate> rows)
@@ -115,7 +116,7 @@ public sealed class MailTemplateTable : ISoraTable, IReadOnlyDictionary<int, Mai
             return orderedRows;
         }
     }
-    public string Name => "MailTemplate";
+    public string Name => TableName;
     public SoraTableMode Mode => SoraTableMode.Map;
     public string? Key => "id";
     public string RowType => "MailTemplate";

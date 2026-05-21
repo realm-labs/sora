@@ -15,8 +15,8 @@ static func from_json_root(root: Dictionary) -> SoraConfig:
 	var bundle := SoraRuntime.decode_bundle(root, "json")
 	var config := SoraConfig.new()
 {%- for table in model.tables %}
-	config._tables["{{ table.name }}"] = {{ table.row_type }}.{{ table.class_name }}.decode(
-		SoraRuntime.decode_table(bundle, "{{ table.name }}", {{ table.row_type }}.decode)
+	config._tables[{{ table.row_type }}.{{ table.class_name }}.TABLE_NAME] = {{ table.row_type }}.{{ table.class_name }}.decode(
+		SoraRuntime.decode_table(bundle, {{ table.row_type }}.{{ table.class_name }}.TABLE_NAME, {{ table.row_type }}.decode)
 	)
 {%- endfor %}
 	return config
@@ -29,6 +29,6 @@ func table(name: String) -> SoraRuntime.SoraConfigTable:
 
 {%- for table in model.tables %}
 func {{ table.field_name }}() -> {{ table.row_type }}.{{ table.class_name }}:
-	return _tables["{{ table.name }}"]
+	return _tables[{{ table.row_type }}.{{ table.class_name }}.TABLE_NAME]
 
 {%- endfor %}

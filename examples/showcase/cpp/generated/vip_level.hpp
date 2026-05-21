@@ -6,6 +6,7 @@
 #include "resource_cost.hpp"
 
 #include <unordered_map>
+#include <string>
 #include <vector>
 
 namespace sora::showcase {
@@ -26,6 +27,8 @@ struct VipLevel {
 
 class VipLevelTable final : public SoraTable {
 public:
+    static constexpr const char* NAME = "VipLevel";
+
     VipLevelTable() {}
     VipLevelTable(const VipLevelTable&) = delete;
     VipLevelTable& operator=(const VipLevelTable&) = delete;
@@ -33,7 +36,7 @@ public:
     VipLevelTable& operator=(VipLevelTable&&) = default;
 
     static VipLevelTable decode(const SoraBundle& bundle) {
-        std::vector<VipLevel> rows = bundle.decode_table<VipLevel>("VipLevel");
+        std::vector<VipLevel> rows = bundle.decode_table<VipLevel>(NAME);
         VipLevelTable table;
         for (std::size_t index = 0; index < rows.size(); ++index) {
             const VipLevel& row = rows[index];
@@ -44,7 +47,7 @@ public:
         return table;
     }
 
-    const char* name() const override { return "VipLevel"; }
+    const char* name() const override { return NAME; }
     const char* mode() const override { return "map"; }
     const char* key() const override { return "level"; }
     std::size_t size() const override {

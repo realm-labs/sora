@@ -43,6 +43,8 @@ void sora_showcase_gacha_item_free(sora_showcase_gacha_item* value) {
     *value = (sora_showcase_gacha_item){0};
 }
 
+static const char* sora_showcase_gacha_item_table_name = "GachaItem";
+
 struct sora_showcase_gacha_item_table {
     sora_showcase_gacha_item* rows;
     size_t len;
@@ -64,11 +66,11 @@ sora_result sora_showcase_gacha_item_table_load(
 ) {
     sora_showcase_gacha_item_table* table = (sora_showcase_gacha_item_table*)calloc(1, sizeof(sora_showcase_gacha_item_table));
     if (table == NULL) {
-        return sora_error(SORA_ERROR_OUT_OF_MEMORY, "failed to allocate table GachaItem");
+        return sora_error(SORA_ERROR_OUT_OF_MEMORY, "failed to allocate table");
     }
     sora_result result = sora_bundle_decode_table(
         bundle,
-        "GachaItem",
+        sora_showcase_gacha_item_table_name,
         sizeof(sora_showcase_gacha_item),
         (sora_decode_row_fn)sora_showcase_gacha_item_decode,
         (sora_free_row_fn)sora_showcase_gacha_item_free,

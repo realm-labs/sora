@@ -38,6 +38,8 @@ func decodeDropGroupValue(input SoraValue) (DropGroup, error) {
 	return value, nil
 }
 
+const dropGroupTableName = "DropGroup"
+
 type DropGroupTable struct {
 	keys []int32
 	rows map[int32]DropGroup
@@ -52,7 +54,7 @@ func buildDropGroupTable(rows []DropGroup) (*DropGroupTable, error) {
 }
 
 func decodeDropGroupTable(source SoraTableSource) (*DropGroupTable, error) {
-	rows, err := DecodeSourceTable(source, "DropGroup", decodeDropGroup, decodeDropGroupValue)
+	rows, err := DecodeSourceTable(source, dropGroupTableName, decodeDropGroup, decodeDropGroupValue)
 	if err != nil {
 		return nil, err
 	}
@@ -81,7 +83,7 @@ func (table *DropGroupTable) OrderedRows() []DropGroup {
 	return rows
 }
 func (table *DropGroupTable) Name() string {
-	return "DropGroup"
+	return dropGroupTableName
 }
 
 func (table *DropGroupTable) Mode() SoraTableMode {

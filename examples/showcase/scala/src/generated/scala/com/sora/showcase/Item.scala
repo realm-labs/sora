@@ -44,7 +44,7 @@ final class ItemTable private (
     nameIndex.get(name)
   def findByItemType(itemType: ItemType): Vector[Item] =
     itemTypeIndex.getOrElse(itemType, Vector.empty)
-  override val name: String = "Item"
+  override val name: String = ItemTable.Name
   override val mode: SoraTableMode = SoraTableMode.Map
   override val key: Option[String] = Some("id")
   override val rowType: String = "Item"
@@ -52,8 +52,10 @@ final class ItemTable private (
 }
 
 object ItemTable {
+  val Name: String = "Item"
+
   def decode(source: SoraTableSource): ItemTable =
-    fromRows(source.decodeTable("Item", Item.decode))
+    fromRows(source.decodeTable(Name, Item.decode))
 
   private def fromRows(rows: Vector[Item]): ItemTable =
     new ItemTable(

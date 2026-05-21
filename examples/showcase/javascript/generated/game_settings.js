@@ -29,6 +29,8 @@ export function decodeGameSettingsValue(value) {
 }
 
 export class GameSettingsTable {
+    static tableName = "GameSettings";
+
     constructor(
         row,
     ) {
@@ -37,12 +39,12 @@ export class GameSettingsTable {
 
     static decode(rows) {
         return new GameSettingsTable(
-            requireSingletonTable(rows, "GameSettings"),
+            requireSingletonTable(rows, GameSettingsTable.tableName),
         );
     }
 
     name() {
-        return "GameSettings";
+        return GameSettingsTable.tableName;
     }
 
     mode() {

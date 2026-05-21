@@ -24,6 +24,7 @@ end
 ---@field private _rows table<integer, VipLevel>
 local VipLevelTable = {}
 VipLevelTable.__index = VipLevelTable
+VipLevelTable.NAME = "VipLevel"
 
 ---@param rows VipLevel[]
 ---@return VipLevelTable
@@ -40,7 +41,7 @@ end
 
 ---@return string
 function VipLevelTable:name()
-    return "VipLevel"
+    return VipLevelTable.NAME
 end
 
 ---@return string

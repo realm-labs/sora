@@ -84,6 +84,8 @@ func decodeQuestValue(input SoraValue) (Quest, error) {
 	return value, nil
 }
 
+const questTableName = "Quest"
+
 type QuestTable struct {
 	keys []int32
 	rows map[int32]Quest
@@ -98,7 +100,7 @@ func buildQuestTable(rows []Quest) (*QuestTable, error) {
 }
 
 func decodeQuestTable(source SoraTableSource) (*QuestTable, error) {
-	rows, err := DecodeSourceTable(source, "Quest", decodeQuest, decodeQuestValue)
+	rows, err := DecodeSourceTable(source, questTableName, decodeQuest, decodeQuestValue)
 	if err != nil {
 		return nil, err
 	}
@@ -127,7 +129,7 @@ func (table *QuestTable) OrderedRows() []Quest {
 	return rows
 }
 func (table *QuestTable) Name() string {
-	return "Quest"
+	return questTableName
 }
 
 func (table *QuestTable) Mode() SoraTableMode {

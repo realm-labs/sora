@@ -44,6 +44,7 @@ public final class MailReward {
 }
 
 final class MailRewardTable extends java.util.AbstractList<MailReward> implements SoraTable {
+    static final String NAME = "MailReward";
     private final java.util.List<MailReward> rows;
 
     private MailRewardTable(java.util.List<MailReward> rows) {
@@ -55,7 +56,7 @@ final class MailRewardTable extends java.util.AbstractList<MailReward> implement
     }
 
     static MailRewardTable decode(SoraTableSource source) {
-        return fromRows(source.decodeTable("MailReward", MailReward::decode, MailReward::decode));
+        return fromRows(source.decodeTable(NAME, MailReward::decode, MailReward::decode));
     }
 
     public java.util.List<MailReward> rows() {
@@ -67,7 +68,7 @@ final class MailRewardTable extends java.util.AbstractList<MailReward> implement
     }
     @Override
     public String name() {
-        return "MailReward";
+        return NAME;
     }
 
     @Override

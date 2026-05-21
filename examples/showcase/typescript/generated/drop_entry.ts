@@ -39,6 +39,8 @@ export function decodeDropEntryValue(value: SoraValue): DropEntry {
 }
 
 export class DropEntryTable implements SoraConfigTable {
+    static readonly tableName = "DropEntry";
+
     private constructor(
         private readonly _rows: DropEntry[],
     ) {}
@@ -50,7 +52,7 @@ export class DropEntryTable implements SoraConfigTable {
     }
 
     name(): string {
-        return "DropEntry";
+        return DropEntryTable.tableName;
     }
 
     mode(): string {

@@ -37,6 +37,7 @@ end
 ---@field private _rows table<integer, Skill>
 local SkillTable = {}
 SkillTable.__index = SkillTable
+SkillTable.NAME = "Skill"
 
 ---@param rows Skill[]
 ---@return SkillTable
@@ -53,7 +54,7 @@ end
 
 ---@return string
 function SkillTable:name()
-    return "Skill"
+    return SkillTable.NAME
 end
 
 ---@return string

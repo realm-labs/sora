@@ -31,6 +31,8 @@ pub struct StageRewardTable {
 }
 
 impl StageRewardTable {
+    pub const NAME: &'static str = "StageReward";
+
     pub(super) fn from_rows(rows: Vec<StageReward>) -> Result<Self, super::runtime::SoraReadError> {
         Ok(Self { rows })
     }
@@ -46,7 +48,7 @@ impl std::ops::Deref for StageRewardTable {
 
 impl super::SoraTable for StageRewardTable {
     fn name(&self) -> &'static str {
-        "StageReward"
+        Self::NAME
     }
 
     fn mode(&self) -> super::SoraTableMode {

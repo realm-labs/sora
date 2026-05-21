@@ -24,6 +24,7 @@ end
 ---@field private _rows StageReward[]
 local StageRewardTable = {}
 StageRewardTable.__index = StageRewardTable
+StageRewardTable.NAME = "StageReward"
 
 ---@param rows StageReward[]
 ---@return StageRewardTable
@@ -35,7 +36,7 @@ end
 
 ---@return string
 function StageRewardTable:name()
-    return "StageReward"
+    return StageRewardTable.NAME
 end
 
 ---@return string

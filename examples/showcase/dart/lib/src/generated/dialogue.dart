@@ -24,6 +24,7 @@ final class Dialogue {
 }
 
 final class DialogueTable extends Iterable<Dialogue> implements SoraConfigTable {
+  static const tableName = 'Dialogue';
   final List<int> _keys;
   final Map<int, Dialogue> _rows;
 
@@ -40,7 +41,7 @@ final class DialogueTable extends Iterable<Dialogue> implements SoraConfigTable 
   }
 
   @override
-  String get name => 'Dialogue';
+  String get name => tableName;
 
   @override
   String get mode => 'map';
@@ -58,7 +59,7 @@ final class DialogueTable extends Iterable<Dialogue> implements SoraConfigTable 
   Dialogue get(int key) {
     final row = _rows[key];
     if (row == null) {
-      throw SoraReadException('missing row in table `Dialogue` for key `$key`');
+      throw SoraReadException('missing row in table `$tableName` for key `$key`');
     }
     return row;
   }

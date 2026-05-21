@@ -25,6 +25,8 @@ export function decodeRecipeValue(value) {
 }
 
 export class RecipeTable {
+    static tableName = "Recipe";
+
     constructor(
         keys,
         rows,
@@ -41,7 +43,7 @@ export class RecipeTable {
     }
 
     name() {
-        return "Recipe";
+        return RecipeTable.tableName;
     }
 
     mode() {

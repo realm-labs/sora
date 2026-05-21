@@ -29,12 +29,14 @@ static func decode(value: Variant) -> Character:
 
 class CharacterTable:
 	extends SoraRuntime.SoraConfigTable
+
+	const TABLE_NAME := "Character"
 	var keys: Array = []
 	var _rows: Dictionary = {}
 
 	static func decode(rows: Array) -> CharacterTable:
 		var table := CharacterTable.new()
-		table.name = "Character"
+		table.name = TABLE_NAME
 		table.mode = "map"
 		table.key = "id"
 		table.keys = rows.map(func(row): return row.id)
@@ -46,7 +48,7 @@ class CharacterTable:
 	func get_row(key_value: Variant) -> Character:
 		var value = _rows.get(key_value)
 		if value == null:
-			SoraRuntime.report_error("missing row in table `Character` for key `%s`" % str(key_value))
+			SoraRuntime.report_error("missing row in table `%s` for key `%s`" % [TABLE_NAME, str(key_value)])
 		return value
 
 	func try_get(key_value: Variant) -> Character:

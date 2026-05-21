@@ -28,6 +28,8 @@ export function decodeDropEntryValue(value) {
 }
 
 export class DropEntryTable {
+    static tableName = "DropEntry";
+
     constructor(
         rows,
     ) {
@@ -41,7 +43,7 @@ export class DropEntryTable {
     }
 
     name() {
-        return "DropEntry";
+        return DropEntryTable.tableName;
     }
 
     mode() {

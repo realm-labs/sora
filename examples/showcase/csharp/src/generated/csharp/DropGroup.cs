@@ -32,6 +32,7 @@ public sealed record DropGroup(
 
 public sealed class DropGroupTable : ISoraTable, IReadOnlyDictionary<int, DropGroup>
 {
+    public const string TableName = "DropGroup";
     private readonly List<int> keys;
     private readonly Dictionary<int, DropGroup> rows;
 
@@ -43,7 +44,7 @@ public sealed class DropGroupTable : ISoraTable, IReadOnlyDictionary<int, DropGr
 
     internal static DropGroupTable Decode(ISoraTableSource source)
     {
-        return FromRows(source.DecodeTable("DropGroup", global::com.sora.showcase.DropGroup.Decode, global::com.sora.showcase.DropGroup.Decode));
+        return FromRows(source.DecodeTable(TableName, global::com.sora.showcase.DropGroup.Decode, global::com.sora.showcase.DropGroup.Decode));
     }
 
     internal static DropGroupTable FromRows(List<DropGroup> rows)
@@ -106,7 +107,7 @@ public sealed class DropGroupTable : ISoraTable, IReadOnlyDictionary<int, DropGr
             return orderedRows;
         }
     }
-    public string Name => "DropGroup";
+    public string Name => TableName;
     public SoraTableMode Mode => SoraTableMode.Map;
     public string? Key => "id";
     public string RowType => "DropGroup";

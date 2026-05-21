@@ -33,6 +33,8 @@ final class {{ record.pascal_name }} {
 {%- set table = record.table %}
 
 final class {{ table.pascal_name }}Table extends Iterable<{{ table.row_type }}> implements SoraConfigTable {
+  static const tableName = '{{ table.name }}';
+
 {%- if table.mode == "map" and table.key_type %}
   final List<{{ table.key_type }}> _keys;
   final Map<{{ table.key_type }}, {{ table.row_type }}> _rows;
@@ -81,7 +83,7 @@ final class {{ table.pascal_name }}Table extends Iterable<{{ table.row_type }}> 
     );
 {%- elif table.mode == "singleton" %}
     return {{ table.pascal_name }}Table(
-      requireSingletonTable(rows, '{{ table.name }}'),
+      requireSingletonTable(rows, tableName),
     );
 {%- else %}
     return {{ table.pascal_name }}Table(
@@ -97,7 +99,7 @@ final class {{ table.pascal_name }}Table extends Iterable<{{ table.row_type }}> 
   }
 
   @override
-  String get name => '{{ table.name }}';
+  String get name => tableName;
 
   @override
   String get mode => '{{ table.mode }}';
@@ -117,7 +119,7 @@ final class {{ table.pascal_name }}Table extends Iterable<{{ table.row_type }}> 
   {{ table.row_type }} get({{ table.key_type }} key) {
     final row = _rows[key];
     if (row == null) {
-      throw SoraReadException('missing row in table `{{ table.name }}` for key `$key`');
+      throw SoraReadException('missing row in table `$tableName` for key `$key`');
     }
     return row;
   }

@@ -28,6 +28,7 @@ final class Achievement {
 }
 
 final class AchievementTable extends Iterable<Achievement> implements SoraConfigTable {
+  static const tableName = 'Achievement';
   final List<int> _keys;
   final Map<int, Achievement> _rows;
 
@@ -44,7 +45,7 @@ final class AchievementTable extends Iterable<Achievement> implements SoraConfig
   }
 
   @override
-  String get name => 'Achievement';
+  String get name => tableName;
 
   @override
   String get mode => 'map';
@@ -62,7 +63,7 @@ final class AchievementTable extends Iterable<Achievement> implements SoraConfig
   Achievement get(int key) {
     final row = _rows[key];
     if (row == null) {
-      throw SoraReadException('missing row in table `Achievement` for key `$key`');
+      throw SoraReadException('missing row in table `$tableName` for key `$key`');
     }
     return row;
   }

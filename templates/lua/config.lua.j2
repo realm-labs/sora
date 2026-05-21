@@ -18,7 +18,7 @@ function SoraConfig.from_bytes(bytes)
     local bundle = Runtime.parse_bundle(bytes)
     return setmetatable({
 {%- for table in model.tables %}
-        _{{ table.snake_name }} = {{ table.row_type }}.Table.decode(bundle:decode_table("{{ table.name }}", {{ table.row_type }}.decode)),
+        _{{ table.snake_name }} = {{ table.row_type }}.Table.decode(bundle:decode_table({{ table.row_type }}.Table.NAME, {{ table.row_type }}.decode)),
 {%- endfor %}
     }, SoraConfig)
 end

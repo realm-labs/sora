@@ -28,7 +28,7 @@ final class DungeonTable private (
   def values: Iterable[Dungeon] = rows.values
 
   def orderedValues: Vector[Dungeon] = keys.flatMap(rows.get)
-  override val name: String = "Dungeon"
+  override val name: String = DungeonTable.Name
   override val mode: SoraTableMode = SoraTableMode.Map
   override val key: Option[String] = Some("id")
   override val rowType: String = "Dungeon"
@@ -36,8 +36,10 @@ final class DungeonTable private (
 }
 
 object DungeonTable {
+  val Name: String = "Dungeon"
+
   def decode(source: SoraTableSource): DungeonTable =
-    fromRows(source.decodeTable("Dungeon", Dungeon.decode))
+    fromRows(source.decodeTable(Name, Dungeon.decode))
 
   private def fromRows(rows: Vector[Dungeon]): DungeonTable =
     new DungeonTable(

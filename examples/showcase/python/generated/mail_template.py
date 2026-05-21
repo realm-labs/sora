@@ -47,6 +47,8 @@ class MailTemplate:
 
 
 class MailTemplateTable(SoraConfigTable):
+    NAME = "MailTemplate"
+
     def __init__(
         self,
         keys: list[int],
@@ -63,7 +65,7 @@ class MailTemplateTable(SoraConfigTable):
         )
 
     def name(self) -> str:
-        return "MailTemplate"
+        return self.NAME
 
     def mode(self) -> str:
         return "map"

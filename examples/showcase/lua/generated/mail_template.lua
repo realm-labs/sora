@@ -29,6 +29,7 @@ end
 ---@field private _rows table<integer, MailTemplate>
 local MailTemplateTable = {}
 MailTemplateTable.__index = MailTemplateTable
+MailTemplateTable.NAME = "MailTemplate"
 
 ---@param rows MailTemplate[]
 ---@return MailTemplateTable
@@ -45,7 +46,7 @@ end
 
 ---@return string
 function MailTemplateTable:name()
-    return "MailTemplate"
+    return MailTemplateTable.NAME
 end
 
 ---@return string

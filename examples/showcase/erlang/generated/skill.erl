@@ -18,6 +18,7 @@
 }.
 
 -type table() :: map().
+-define(TABLE_NAME, <<"Skill">>).
 
 -spec decode(sora_runtime:reader()) -> {t(), sora_runtime:reader()}.
 decode(Reader0) ->
@@ -42,7 +43,7 @@ decode(Reader0) ->
 
 -spec decode_table(map()) -> table().
 decode_table(Bundle) ->
-    Rows = sora_runtime:decode_table(Bundle, <<"Skill">>, fun ?MODULE:decode/1),
+    Rows = sora_runtime:decode_table(Bundle, ?TABLE_NAME, fun ?MODULE:decode/1),
     Data = sora_runtime:decode_map_table(Rows, fun(Row) -> maps:get('id', Row) end),
     Keys = [maps:get('id', Row) || Row <- Rows],
     #{

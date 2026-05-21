@@ -38,6 +38,7 @@ public sealed record Buff(
 
 public sealed class BuffTable : ISoraTable, IReadOnlyDictionary<int, Buff>
 {
+    public const string TableName = "Buff";
     private readonly List<int> keys;
     private readonly Dictionary<int, Buff> rows;
 
@@ -49,7 +50,7 @@ public sealed class BuffTable : ISoraTable, IReadOnlyDictionary<int, Buff>
 
     internal static BuffTable Decode(ISoraTableSource source)
     {
-        return FromRows(source.DecodeTable("Buff", global::com.sora.showcase.Buff.Decode, global::com.sora.showcase.Buff.Decode));
+        return FromRows(source.DecodeTable(TableName, global::com.sora.showcase.Buff.Decode, global::com.sora.showcase.Buff.Decode));
     }
 
     internal static BuffTable FromRows(List<Buff> rows)
@@ -112,7 +113,7 @@ public sealed class BuffTable : ISoraTable, IReadOnlyDictionary<int, Buff>
             return orderedRows;
         }
     }
-    public string Name => "Buff";
+    public string Name => TableName;
     public SoraTableMode Mode => SoraTableMode.Map;
     public string? Key => "id";
     public string RowType => "Buff";

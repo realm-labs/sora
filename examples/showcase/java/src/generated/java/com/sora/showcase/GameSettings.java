@@ -49,6 +49,7 @@ public final class GameSettings {
 }
 
 final class GameSettingsTable implements SoraTable {
+    static final String NAME = "GameSettings";
     private final GameSettings rows;
 
     private GameSettingsTable(GameSettings rows) {
@@ -56,11 +57,11 @@ final class GameSettingsTable implements SoraTable {
     }
 
     private static GameSettingsTable fromRows(List<GameSettings> rows) {
-        return new GameSettingsTable(SoraConfig.requireSingletonTable(rows, "GameSettings"));
+        return new GameSettingsTable(SoraConfig.requireSingletonTable(rows, NAME));
     }
 
     static GameSettingsTable decode(SoraTableSource source) {
-        return fromRows(source.decodeTable("GameSettings", GameSettings::decode, GameSettings::decode));
+        return fromRows(source.decodeTable(NAME, GameSettings::decode, GameSettings::decode));
     }
 
     public GameSettings rows() {
@@ -68,7 +69,7 @@ final class GameSettingsTable implements SoraTable {
     }
     @Override
     public String name() {
-        return "GameSettings";
+        return NAME;
     }
 
     @Override

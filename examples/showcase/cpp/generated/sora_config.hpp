@@ -60,202 +60,202 @@ public:
         SoraBundle bundle = SoraBundle::parse(bytes);
         SoraConfig config;
         config.tables_.emplace(
-            "Item",
+            ItemTable::NAME,
             std::unique_ptr<SoraTable>(new ItemTable(ItemTable::decode(bundle)))
         );
         config.tables_.emplace(
-            "Skill",
+            SkillTable::NAME,
             std::unique_ptr<SoraTable>(new SkillTable(SkillTable::decode(bundle)))
         );
         config.tables_.emplace(
-            "Quest",
+            QuestTable::NAME,
             std::unique_ptr<SoraTable>(new QuestTable(QuestTable::decode(bundle)))
         );
         config.tables_.emplace(
-            "QuestReward",
+            QuestRewardTable::NAME,
             std::unique_ptr<SoraTable>(new QuestRewardTable(QuestRewardTable::decode(bundle)))
         );
         config.tables_.emplace(
-            "GameSettings",
+            GameSettingsTable::NAME,
             std::unique_ptr<SoraTable>(new GameSettingsTable(GameSettingsTable::decode(bundle)))
         );
         config.tables_.emplace(
-            "Localization",
+            LocalizationTable::NAME,
             std::unique_ptr<SoraTable>(new LocalizationTable(LocalizationTable::decode(bundle)))
         );
         config.tables_.emplace(
-            "LevelExp",
+            LevelExpTable::NAME,
             std::unique_ptr<SoraTable>(new LevelExpTable(LevelExpTable::decode(bundle)))
         );
         config.tables_.emplace(
-            "Character",
+            CharacterTable::NAME,
             std::unique_ptr<SoraTable>(new CharacterTable(CharacterTable::decode(bundle)))
         );
         config.tables_.emplace(
-            "CharacterSkill",
+            CharacterSkillTable::NAME,
             std::unique_ptr<SoraTable>(new CharacterSkillTable(CharacterSkillTable::decode(bundle)))
         );
         config.tables_.emplace(
-            "Buff",
+            BuffTable::NAME,
             std::unique_ptr<SoraTable>(new BuffTable(BuffTable::decode(bundle)))
         );
         config.tables_.emplace(
-            "DropGroup",
+            DropGroupTable::NAME,
             std::unique_ptr<SoraTable>(new DropGroupTable(DropGroupTable::decode(bundle)))
         );
         config.tables_.emplace(
-            "DropEntry",
+            DropEntryTable::NAME,
             std::unique_ptr<SoraTable>(new DropEntryTable(DropEntryTable::decode(bundle)))
         );
         config.tables_.emplace(
-            "Monster",
+            MonsterTable::NAME,
             std::unique_ptr<SoraTable>(new MonsterTable(MonsterTable::decode(bundle)))
         );
         config.tables_.emplace(
-            "Stage",
+            StageTable::NAME,
             std::unique_ptr<SoraTable>(new StageTable(StageTable::decode(bundle)))
         );
         config.tables_.emplace(
-            "StageReward",
+            StageRewardTable::NAME,
             std::unique_ptr<SoraTable>(new StageRewardTable(StageRewardTable::decode(bundle)))
         );
         config.tables_.emplace(
-            "Dungeon",
+            DungeonTable::NAME,
             std::unique_ptr<SoraTable>(new DungeonTable(DungeonTable::decode(bundle)))
         );
         config.tables_.emplace(
-            "Shop",
+            ShopTable::NAME,
             std::unique_ptr<SoraTable>(new ShopTable(ShopTable::decode(bundle)))
         );
         config.tables_.emplace(
-            "ShopItem",
+            ShopItemTable::NAME,
             std::unique_ptr<SoraTable>(new ShopItemTable(ShopItemTable::decode(bundle)))
         );
         config.tables_.emplace(
-            "Recipe",
+            RecipeTable::NAME,
             std::unique_ptr<SoraTable>(new RecipeTable(RecipeTable::decode(bundle)))
         );
         config.tables_.emplace(
-            "GachaPool",
+            GachaPoolTable::NAME,
             std::unique_ptr<SoraTable>(new GachaPoolTable(GachaPoolTable::decode(bundle)))
         );
         config.tables_.emplace(
-            "GachaItem",
+            GachaItemTable::NAME,
             std::unique_ptr<SoraTable>(new GachaItemTable(GachaItemTable::decode(bundle)))
         );
         config.tables_.emplace(
-            "EquipmentSet",
+            EquipmentSetTable::NAME,
             std::unique_ptr<SoraTable>(new EquipmentSetTable(EquipmentSetTable::decode(bundle)))
         );
         config.tables_.emplace(
-            "Achievement",
+            AchievementTable::NAME,
             std::unique_ptr<SoraTable>(new AchievementTable(AchievementTable::decode(bundle)))
         );
         config.tables_.emplace(
-            "VipLevel",
+            VipLevelTable::NAME,
             std::unique_ptr<SoraTable>(new VipLevelTable(VipLevelTable::decode(bundle)))
         );
         config.tables_.emplace(
-            "MailTemplate",
+            MailTemplateTable::NAME,
             std::unique_ptr<SoraTable>(new MailTemplateTable(MailTemplateTable::decode(bundle)))
         );
         config.tables_.emplace(
-            "MailReward",
+            MailRewardTable::NAME,
             std::unique_ptr<SoraTable>(new MailRewardTable(MailRewardTable::decode(bundle)))
         );
         config.tables_.emplace(
-            "Dialogue",
+            DialogueTable::NAME,
             std::unique_ptr<SoraTable>(new DialogueTable(DialogueTable::decode(bundle)))
         );
         config.tables_.emplace(
-            "EventRule",
+            EventRuleTable::NAME,
             std::unique_ptr<SoraTable>(new EventRuleTable(EventRuleTable::decode(bundle)))
         );
         return config;
     }
     const ItemTable& item() const {
-        return table_as<ItemTable>("Item");
+        return table_as<ItemTable>(ItemTable::NAME);
     }
     const SkillTable& skill() const {
-        return table_as<SkillTable>("Skill");
+        return table_as<SkillTable>(SkillTable::NAME);
     }
     const QuestTable& quest() const {
-        return table_as<QuestTable>("Quest");
+        return table_as<QuestTable>(QuestTable::NAME);
     }
     const QuestRewardTable& quest_reward() const {
-        return table_as<QuestRewardTable>("QuestReward");
+        return table_as<QuestRewardTable>(QuestRewardTable::NAME);
     }
     const GameSettingsTable& game_settings() const {
-        return table_as<GameSettingsTable>("GameSettings");
+        return table_as<GameSettingsTable>(GameSettingsTable::NAME);
     }
     const LocalizationTable& localization() const {
-        return table_as<LocalizationTable>("Localization");
+        return table_as<LocalizationTable>(LocalizationTable::NAME);
     }
     const LevelExpTable& level_exp() const {
-        return table_as<LevelExpTable>("LevelExp");
+        return table_as<LevelExpTable>(LevelExpTable::NAME);
     }
     const CharacterTable& character() const {
-        return table_as<CharacterTable>("Character");
+        return table_as<CharacterTable>(CharacterTable::NAME);
     }
     const CharacterSkillTable& character_skill() const {
-        return table_as<CharacterSkillTable>("CharacterSkill");
+        return table_as<CharacterSkillTable>(CharacterSkillTable::NAME);
     }
     const BuffTable& buff() const {
-        return table_as<BuffTable>("Buff");
+        return table_as<BuffTable>(BuffTable::NAME);
     }
     const DropGroupTable& drop_group() const {
-        return table_as<DropGroupTable>("DropGroup");
+        return table_as<DropGroupTable>(DropGroupTable::NAME);
     }
     const DropEntryTable& drop_entry() const {
-        return table_as<DropEntryTable>("DropEntry");
+        return table_as<DropEntryTable>(DropEntryTable::NAME);
     }
     const MonsterTable& monster() const {
-        return table_as<MonsterTable>("Monster");
+        return table_as<MonsterTable>(MonsterTable::NAME);
     }
     const StageTable& stage() const {
-        return table_as<StageTable>("Stage");
+        return table_as<StageTable>(StageTable::NAME);
     }
     const StageRewardTable& stage_reward() const {
-        return table_as<StageRewardTable>("StageReward");
+        return table_as<StageRewardTable>(StageRewardTable::NAME);
     }
     const DungeonTable& dungeon() const {
-        return table_as<DungeonTable>("Dungeon");
+        return table_as<DungeonTable>(DungeonTable::NAME);
     }
     const ShopTable& shop() const {
-        return table_as<ShopTable>("Shop");
+        return table_as<ShopTable>(ShopTable::NAME);
     }
     const ShopItemTable& shop_item() const {
-        return table_as<ShopItemTable>("ShopItem");
+        return table_as<ShopItemTable>(ShopItemTable::NAME);
     }
     const RecipeTable& recipe() const {
-        return table_as<RecipeTable>("Recipe");
+        return table_as<RecipeTable>(RecipeTable::NAME);
     }
     const GachaPoolTable& gacha_pool() const {
-        return table_as<GachaPoolTable>("GachaPool");
+        return table_as<GachaPoolTable>(GachaPoolTable::NAME);
     }
     const GachaItemTable& gacha_item() const {
-        return table_as<GachaItemTable>("GachaItem");
+        return table_as<GachaItemTable>(GachaItemTable::NAME);
     }
     const EquipmentSetTable& equipment_set() const {
-        return table_as<EquipmentSetTable>("EquipmentSet");
+        return table_as<EquipmentSetTable>(EquipmentSetTable::NAME);
     }
     const AchievementTable& achievement() const {
-        return table_as<AchievementTable>("Achievement");
+        return table_as<AchievementTable>(AchievementTable::NAME);
     }
     const VipLevelTable& vip_level() const {
-        return table_as<VipLevelTable>("VipLevel");
+        return table_as<VipLevelTable>(VipLevelTable::NAME);
     }
     const MailTemplateTable& mail_template() const {
-        return table_as<MailTemplateTable>("MailTemplate");
+        return table_as<MailTemplateTable>(MailTemplateTable::NAME);
     }
     const MailRewardTable& mail_reward() const {
-        return table_as<MailRewardTable>("MailReward");
+        return table_as<MailRewardTable>(MailRewardTable::NAME);
     }
     const DialogueTable& dialogue() const {
-        return table_as<DialogueTable>("Dialogue");
+        return table_as<DialogueTable>(DialogueTable::NAME);
     }
     const EventRuleTable& event_rule() const {
-        return table_as<EventRuleTable>("EventRule");
+        return table_as<EventRuleTable>(EventRuleTable::NAME);
     }
 private:
     template <typename T>

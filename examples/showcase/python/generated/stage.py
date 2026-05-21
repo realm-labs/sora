@@ -45,6 +45,8 @@ class Stage:
 
 
 class StageTable(SoraConfigTable):
+    NAME = "Stage"
+
     def __init__(
         self,
         keys: list[int],
@@ -61,7 +63,7 @@ class StageTable(SoraConfigTable):
         )
 
     def name(self) -> str:
-        return "Stage"
+        return self.NAME
 
     def mode(self) -> str:
         return "map"

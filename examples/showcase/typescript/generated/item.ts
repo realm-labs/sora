@@ -54,6 +54,8 @@ export function decodeItemValue(value: SoraValue): Item {
 }
 
 export class ItemTable implements SoraConfigTable {
+    static readonly tableName = "Item";
+
     private constructor(
         private readonly _keys: number[],
         private readonly _rows: Map<number, Item>,
@@ -71,7 +73,7 @@ export class ItemTable implements SoraConfigTable {
     }
 
     name(): string {
-        return "Item";
+        return ItemTable.tableName;
     }
 
     mode(): string {

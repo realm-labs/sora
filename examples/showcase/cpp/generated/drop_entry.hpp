@@ -5,6 +5,7 @@
 #include "sora_runtime.hpp"
 
 #include <unordered_map>
+#include <string>
 #include <vector>
 
 namespace sora::showcase {
@@ -29,6 +30,8 @@ struct DropEntry {
 
 class DropEntryTable final : public SoraTable {
 public:
+    static constexpr const char* NAME = "DropEntry";
+
     DropEntryTable() {}
     DropEntryTable(const DropEntryTable&) = delete;
     DropEntryTable& operator=(const DropEntryTable&) = delete;
@@ -36,14 +39,14 @@ public:
     DropEntryTable& operator=(DropEntryTable&&) = default;
 
     static DropEntryTable decode(const SoraBundle& bundle) {
-        std::vector<DropEntry> rows = bundle.decode_table<DropEntry>("DropEntry");
+        std::vector<DropEntry> rows = bundle.decode_table<DropEntry>(NAME);
         DropEntryTable table;
         table.rows_ = rows;
         table.build_indexes();
         return table;
     }
 
-    const char* name() const override { return "DropEntry"; }
+    const char* name() const override { return NAME; }
     const char* mode() const override { return "list"; }
     const char* key() const override { return nullptr; }
     std::size_t size() const override {

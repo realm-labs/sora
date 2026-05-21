@@ -29,6 +29,7 @@ final class EventRule {
 }
 
 final class EventRuleTable extends Iterable<EventRule> implements SoraConfigTable {
+  static const tableName = 'EventRule';
   final List<int> _keys;
   final Map<int, EventRule> _rows;
 
@@ -45,7 +46,7 @@ final class EventRuleTable extends Iterable<EventRule> implements SoraConfigTabl
   }
 
   @override
-  String get name => 'EventRule';
+  String get name => tableName;
 
   @override
   String get mode => 'map';
@@ -63,7 +64,7 @@ final class EventRuleTable extends Iterable<EventRule> implements SoraConfigTabl
   EventRule get(int key) {
     final row = _rows[key];
     if (row == null) {
-      throw SoraReadException('missing row in table `EventRule` for key `$key`');
+      throw SoraReadException('missing row in table `$tableName` for key `$key`');
     }
     return row;
   }

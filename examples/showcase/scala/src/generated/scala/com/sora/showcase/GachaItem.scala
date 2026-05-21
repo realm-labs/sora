@@ -23,7 +23,7 @@ final class GachaItemTable private (
   val rows: Vector[GachaItem]
 ) extends SoraTable {
   def values: Vector[GachaItem] = rows
-  override val name: String = "GachaItem"
+  override val name: String = GachaItemTable.Name
   override val mode: SoraTableMode = SoraTableMode.List
   override val key: Option[String] = None
   override val rowType: String = "GachaItem"
@@ -31,8 +31,10 @@ final class GachaItemTable private (
 }
 
 object GachaItemTable {
+  val Name: String = "GachaItem"
+
   def decode(source: SoraTableSource): GachaItemTable =
-    fromRows(source.decodeTable("GachaItem", GachaItem.decode))
+    fromRows(source.decodeTable(Name, GachaItem.decode))
 
   private def fromRows(rows: Vector[GachaItem]): GachaItemTable =
     new GachaItemTable(

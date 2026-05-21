@@ -38,6 +38,8 @@ void sora_showcase_vip_level_free(sora_showcase_vip_level* value) {
     *value = (sora_showcase_vip_level){0};
 }
 
+static const char* sora_showcase_vip_level_table_name = "VipLevel";
+
 struct sora_showcase_vip_level_table {
     sora_showcase_vip_level* rows;
     size_t len;
@@ -59,11 +61,11 @@ sora_result sora_showcase_vip_level_table_load(
 ) {
     sora_showcase_vip_level_table* table = (sora_showcase_vip_level_table*)calloc(1, sizeof(sora_showcase_vip_level_table));
     if (table == NULL) {
-        return sora_error(SORA_ERROR_OUT_OF_MEMORY, "failed to allocate table VipLevel");
+        return sora_error(SORA_ERROR_OUT_OF_MEMORY, "failed to allocate table");
     }
     sora_result result = sora_bundle_decode_table(
         bundle,
-        "VipLevel",
+        sora_showcase_vip_level_table_name,
         sizeof(sora_showcase_vip_level),
         (sora_decode_row_fn)sora_showcase_vip_level_decode,
         (sora_free_row_fn)sora_showcase_vip_level_free,

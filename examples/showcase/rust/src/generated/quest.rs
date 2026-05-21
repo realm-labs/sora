@@ -46,6 +46,8 @@ pub struct QuestTable {
 }
 
 impl QuestTable {
+    pub const NAME: &'static str = "Quest";
+
     pub(super) fn from_rows(rows: Vec<Quest>) -> Result<Self, super::runtime::SoraReadError> {
         let keys = rows.iter().map(|row| row.id).collect::<Vec<_>>();
         Ok(Self {
@@ -76,7 +78,7 @@ impl std::ops::Deref for QuestTable {
 
 impl super::SoraTable for QuestTable {
     fn name(&self) -> &'static str {
-        "Quest"
+        Self::NAME
     }
 
     fn mode(&self) -> super::SoraTableMode {

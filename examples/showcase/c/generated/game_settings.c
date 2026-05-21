@@ -53,6 +53,8 @@ void sora_showcase_game_settings_free(sora_showcase_game_settings* value) {
     *value = (sora_showcase_game_settings){0};
 }
 
+static const char* sora_showcase_game_settings_table_name = "GameSettings";
+
 struct sora_showcase_game_settings_table {
     sora_showcase_game_settings* rows;
     size_t len;
@@ -74,11 +76,11 @@ sora_result sora_showcase_game_settings_table_load(
 ) {
     sora_showcase_game_settings_table* table = (sora_showcase_game_settings_table*)calloc(1, sizeof(sora_showcase_game_settings_table));
     if (table == NULL) {
-        return sora_error(SORA_ERROR_OUT_OF_MEMORY, "failed to allocate table GameSettings");
+        return sora_error(SORA_ERROR_OUT_OF_MEMORY, "failed to allocate table");
     }
     sora_result result = sora_bundle_decode_table(
         bundle,
-        "GameSettings",
+        sora_showcase_game_settings_table_name,
         sizeof(sora_showcase_game_settings),
         (sora_decode_row_fn)sora_showcase_game_settings_decode,
         (sora_free_row_fn)sora_showcase_game_settings_free,
@@ -91,7 +93,7 @@ sora_result sora_showcase_game_settings_table_load(
     }
     if (table->len != 1) {
         sora_showcase_game_settings_table_free(table);
-        return sora_error(SORA_ERROR_DECODE, "singleton table GameSettings must contain exactly one row");
+        return sora_error(SORA_ERROR_DECODE, "singleton table must contain exactly one row");
     }
     *out = table;
     return sora_ok();

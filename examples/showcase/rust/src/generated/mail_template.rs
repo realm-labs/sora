@@ -38,6 +38,8 @@ pub struct MailTemplateTable {
 }
 
 impl MailTemplateTable {
+    pub const NAME: &'static str = "MailTemplate";
+
     pub(super) fn from_rows(
         rows: Vec<MailTemplate>,
     ) -> Result<Self, super::runtime::SoraReadError> {
@@ -70,7 +72,7 @@ impl std::ops::Deref for MailTemplateTable {
 
 impl super::SoraTable for MailTemplateTable {
     fn name(&self) -> &'static str {
-        "MailTemplate"
+        Self::NAME
     }
 
     fn mode(&self) -> super::SoraTableMode {

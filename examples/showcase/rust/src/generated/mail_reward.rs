@@ -31,6 +31,8 @@ pub struct MailRewardTable {
 }
 
 impl MailRewardTable {
+    pub const NAME: &'static str = "MailReward";
+
     pub(super) fn from_rows(rows: Vec<MailReward>) -> Result<Self, super::runtime::SoraReadError> {
         Ok(Self { rows })
     }
@@ -46,7 +48,7 @@ impl std::ops::Deref for MailRewardTable {
 
 impl super::SoraTable for MailRewardTable {
     fn name(&self) -> &'static str {
-        "MailReward"
+        Self::NAME
     }
 
     fn mode(&self) -> super::SoraTableMode {

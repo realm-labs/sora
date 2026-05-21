@@ -36,6 +36,8 @@ export function decodeMailRewardValue(value: SoraValue): MailReward {
 }
 
 export class MailRewardTable implements SoraConfigTable {
+    static readonly tableName = "MailReward";
+
     private constructor(
         private readonly _rows: MailReward[],
     ) {}
@@ -47,7 +49,7 @@ export class MailRewardTable implements SoraConfigTable {
     }
 
     name(): string {
-        return "MailReward";
+        return MailRewardTable.tableName;
     }
 
     mode(): string {

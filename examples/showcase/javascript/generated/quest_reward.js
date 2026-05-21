@@ -26,6 +26,8 @@ export function decodeQuestRewardValue(value) {
 }
 
 export class QuestRewardTable {
+    static tableName = "QuestReward";
+
     constructor(
         rows,
     ) {
@@ -39,7 +41,7 @@ export class QuestRewardTable {
     }
 
     name() {
-        return "QuestReward";
+        return QuestRewardTable.tableName;
     }
 
     mode() {

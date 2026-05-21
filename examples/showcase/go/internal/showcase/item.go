@@ -80,6 +80,8 @@ func decodeItemValue(input SoraValue) (Item, error) {
 	return value, nil
 }
 
+const itemTableName = "Item"
+
 type ItemTable struct {
 	keys       []int32
 	rows       map[int32]Item
@@ -101,7 +103,7 @@ func buildItemTable(rows []Item) (*ItemTable, error) {
 }
 
 func decodeItemTable(source SoraTableSource) (*ItemTable, error) {
-	rows, err := DecodeSourceTable(source, "Item", decodeItem, decodeItemValue)
+	rows, err := DecodeSourceTable(source, itemTableName, decodeItem, decodeItemValue)
 	if err != nil {
 		return nil, err
 	}
@@ -137,7 +139,7 @@ func (table *ItemTable) FindByItemType(itemType ItemType) []Item {
 	return table.byItemType[itemType]
 }
 func (table *ItemTable) Name() string {
-	return "Item"
+	return itemTableName
 }
 
 func (table *ItemTable) Mode() SoraTableMode {

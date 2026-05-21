@@ -44,6 +44,8 @@ class DropEntry:
 
 
 class DropEntryTable(SoraConfigTable):
+    NAME = "DropEntry"
+
     def __init__(
         self,
         rows: list[DropEntry],
@@ -57,7 +59,7 @@ class DropEntryTable(SoraConfigTable):
         )
 
     def name(self) -> str:
-        return "DropEntry"
+        return self.NAME
 
     def mode(self) -> str:
         return "list"

@@ -25,6 +25,8 @@ export function decodeVipLevelValue(value) {
 }
 
 export class VipLevelTable {
+    static tableName = "VipLevel";
+
     constructor(
         keys,
         rows,
@@ -41,7 +43,7 @@ export class VipLevelTable {
     }
 
     name() {
-        return "VipLevel";
+        return VipLevelTable.tableName;
     }
 
     mode() {

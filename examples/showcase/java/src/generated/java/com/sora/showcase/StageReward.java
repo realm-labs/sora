@@ -44,6 +44,7 @@ public final class StageReward {
 }
 
 final class StageRewardTable extends java.util.AbstractList<StageReward> implements SoraTable {
+    static final String NAME = "StageReward";
     private final java.util.List<StageReward> rows;
 
     private StageRewardTable(java.util.List<StageReward> rows) {
@@ -55,7 +56,7 @@ final class StageRewardTable extends java.util.AbstractList<StageReward> impleme
     }
 
     static StageRewardTable decode(SoraTableSource source) {
-        return fromRows(source.decodeTable("StageReward", StageReward::decode, StageReward::decode));
+        return fromRows(source.decodeTable(NAME, StageReward::decode, StageReward::decode));
     }
 
     public java.util.List<StageReward> rows() {
@@ -67,7 +68,7 @@ final class StageRewardTable extends java.util.AbstractList<StageReward> impleme
     }
     @Override
     public String name() {
-        return "StageReward";
+        return NAME;
     }
 
     @Override

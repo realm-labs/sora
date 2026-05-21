@@ -23,11 +23,13 @@ static func decode(value: Variant) -> DropEntry:
 
 class DropEntryTable:
 	extends SoraRuntime.SoraConfigTable
+
+	const TABLE_NAME := "DropEntry"
 	var rows: Array = []
 
 	static func decode(rows: Array) -> DropEntryTable:
 		var table := DropEntryTable.new()
-		table.name = "DropEntry"
+		table.name = TABLE_NAME
 		table.mode = "list"
 		table.key = null
 		table.rows = rows
