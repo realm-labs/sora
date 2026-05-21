@@ -1,6 +1,8 @@
 {
   "format": "json",
   "format_version": 1,
+  "schema_fingerprint": "8cc3361563a68f03",
+  "data_fingerprint": "8cb5cd02d092ff62",
   "schema": {
     "package": "com.sora.showcase",
     "enums": [

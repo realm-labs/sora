@@ -27,7 +27,7 @@ impl DataExporter for JsonBundleExporter {
 
         create_parent_dir(&path)?;
         let content =
-            serde_json::to_vec_pretty(&DataBundleView::new("json", request.ir, request.data))
+            serde_json::to_vec_pretty(&DataBundleView::new("json", request.ir, request.data)?)
                 .map_err(SoraError::SerializeData)?;
         write_file(path, content)
     }
@@ -65,6 +65,8 @@ mod tests {
         let value: serde_json::Value = serde_json::from_slice(&fs::read(&path).unwrap()).unwrap();
         assert_eq!(value["format"], "json");
         assert_eq!(value["format_version"], 1);
+        assert!(value["schema_fingerprint"].as_str().unwrap().len() > 8);
+        assert!(value["data_fingerprint"].as_str().unwrap().len() > 8);
         assert_eq!(value["schema"]["package"], "game_config");
         assert_eq!(value["data"]["tables"][0]["name"], "Item");
 

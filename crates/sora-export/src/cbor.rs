@@ -26,11 +26,11 @@ impl DataExporter for CborBundleExporter {
         };
 
         create_parent_dir(&path)?;
-        let content = serde_cbor::to_vec(&DataBundleView::new("cbor", request.ir, request.data))
+        let content = serde_cbor::to_vec(&DataBundleView::new("cbor", request.ir, request.data)?)
             .map_err(|error| SoraError::SerializeDataFormat {
-                format: self.format_name(),
-                message: error.to_string(),
-            })?;
+            format: self.format_name(),
+            message: error.to_string(),
+        })?;
         write_file(path, content)
     }
 }
@@ -71,6 +71,14 @@ mod tests {
         assert!(fields.iter().any(|(key, value)| {
             matches!(key, serde_cbor::Value::Text(key) if key == "format")
                 && matches!(value, serde_cbor::Value::Text(value) if value == "cbor")
+        }));
+        assert!(fields.iter().any(|(key, value)| {
+            matches!(key, serde_cbor::Value::Text(key) if key == "schema_fingerprint")
+                && matches!(value, serde_cbor::Value::Text(value) if value.len() > 8)
+        }));
+        assert!(fields.iter().any(|(key, value)| {
+            matches!(key, serde_cbor::Value::Text(key) if key == "data_fingerprint")
+                && matches!(value, serde_cbor::Value::Text(value) if value.len() > 8)
         }));
 
         let _ = fs::remove_dir_all(path.parent().unwrap());

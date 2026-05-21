@@ -88,6 +88,7 @@ mod tests {
         assert_eq!(manifest["tables"][0]["name"], "Item");
         assert_eq!(manifest["tables"][0]["rows"], 1);
         assert!(manifest["schema_fingerprint"].as_str().unwrap().len() > 8);
+        assert!(manifest["data_fingerprint"].as_str().unwrap().len() > 8);
 
         assert_eq!(sections[1].kind, 1);
         assert_eq!(sections[1].compression, 0);

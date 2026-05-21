@@ -4,7 +4,7 @@ use sora_diagnostics::{Result, SoraError};
 use sora_ir::model::ConfigIr;
 
 use crate::{
-    bundle::FORMAT_VERSION,
+    bundle::{FORMAT_VERSION, data_fingerprint, schema_fingerprint},
     exporter::{DataExporter, ExportOutput, ExportRequest, OutputKind},
     fs_util::{create_parent_dir, write_file},
 };
@@ -46,6 +46,10 @@ struct ProtoBundle {
     schema_json: Vec<u8>,
     #[prost(message, repeated, tag = "5")]
     tables: Vec<ProtoTable>,
+    #[prost(string, tag = "6")]
+    schema_fingerprint: String,
+    #[prost(string, tag = "7")]
+    data_fingerprint: String,
 }
 
 #[derive(Clone, PartialEq, Message)]
@@ -117,6 +121,8 @@ impl ProtoBundle {
             format: "sora-protobuf".to_owned(),
             package: schema.package.clone(),
             schema_json,
+            schema_fingerprint: schema_fingerprint(ir)?,
+            data_fingerprint: data_fingerprint(data)?,
             tables: data
                 .tables
                 .iter()
@@ -201,6 +207,8 @@ mod tests {
         assert_eq!(bundle.format_version, 1);
         assert_eq!(bundle.format, "sora-protobuf");
         assert_eq!(bundle.package, "game_config");
+        assert!(bundle.schema_fingerprint.len() > 8);
+        assert!(bundle.data_fingerprint.len() > 8);
         assert_eq!(bundle.tables[0].name, "Item");
         assert_eq!(bundle.tables[0].rows[0].fields[0].name, "id");
 
