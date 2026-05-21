@@ -2,14 +2,36 @@
 
 -module({{ record.snake_name }}).
 
+{%- if record.table %}
+-export([decode/1, decode_table/1, rows/1
+{%- set table = record.table %}
+{%- if table.mode == "map" and table.key_field_name %}
+    , get/2
+{%- elif table.mode == "singleton" %}
+    , row/1
+{%- endif %}
+{%- for index in table.unique_indexes %}
+    , get_{{ index.name }}/2
+{%- endfor %}
+{%- for index in table.non_unique_indexes %}
+    , find_{{ index.name }}/2
+{%- endfor %}
+]).
+-export_type([t/0, table/0]).
+{%- else %}
 -export([decode/1]).
 -export_type([t/0]).
+{%- endif %}
 
 -type t() :: {{ "#{" }}
 {%- for field in record.fields %}
     '{{ field.name }}' := {{ field.type_name }}{% if not loop.last %},{% endif %}
 {%- endfor %}
 }.
+{%- if record.table %}
+
+-type table() :: map().
+{%- endif %}
 
 -spec decode(sora_runtime:reader()) -> {t(), sora_runtime:reader()}.
 decode(Reader0) ->
@@ -21,3 +43,67 @@ decode(Reader0) ->
         '{{ field.name }}' => {{ field.var_name }}{% if not loop.last %},{% endif %}
 {%- endfor %}
     }, {{ record.reader_var }}}.
+
+{%- if record.table %}
+{%- set table = record.table %}
+
+-spec decode_table(map()) -> table().
+decode_table(Bundle) ->
+    Rows = sora_runtime:decode_table(Bundle, <<"{{ table.name }}">>, fun ?MODULE:decode/1),
+{%- if table.mode == "map" and table.key_field_name %}
+    Data = sora_runtime:decode_map_table(Rows, fun(Row) -> maps:get('{{ table.key_field_name }}', Row) end),
+{%- elif table.mode == "singleton" %}
+    Data = sora_runtime:require_singleton_table(Rows, <<"{{ table.name }}">>),
+{%- else %}
+    Data = Rows,
+{%- endif %}
+{%- for index in table.unique_indexes %}
+    {{ index.pascal_name }} = sora_runtime:decode_unique_index(Rows, fun(Row) -> maps:get('{{ index.field_name }}', Row) end),
+{%- endfor %}
+{%- for index in table.non_unique_indexes %}
+    {{ index.pascal_name }} = sora_runtime:decode_index(Rows, fun(Row) -> maps:get('{{ index.field_name }}', Row) end),
+{%- endfor %}
+    {{ "#{" }}
+        data => Data
+{%- for index in table.unique_indexes %}
+        , '{{ index.name }}' => {{ index.pascal_name }}
+{%- endfor %}
+{%- for index in table.non_unique_indexes %}
+        , '{{ index.name }}' => {{ index.pascal_name }}
+{%- endfor %}
+    }.
+
+{%- if table.mode == "map" and table.key_field_name %}
+-spec get({{ table.key_type }}, table()) -> t() | undefined.
+get(Key, Table) ->
+    maps:get(Key, maps:get(data, Table), undefined).
+
+-spec rows(table()) -> {{ table.container_type }}.
+rows(Table) ->
+    maps:get(data, Table).
+{%- elif table.mode == "singleton" %}
+-spec row(table()) -> t().
+row(Table) ->
+    maps:get(data, Table).
+
+-spec rows(table()) -> [t()].
+rows(Table) ->
+    [row(Table)].
+{%- else %}
+-spec rows(table()) -> {{ table.container_type }}.
+rows(Table) ->
+    maps:get(data, Table).
+{%- endif %}
+{%- for index in table.unique_indexes %}
+
+-spec get_{{ index.name }}({{ index.param_type }}, table()) -> t() | undefined.
+get_{{ index.name }}({{ index.param_var_name }}, Table) ->
+    maps:get({{ index.param_var_name }}, maps:get('{{ index.name }}', Table), undefined).
+{%- endfor %}
+{%- for index in table.non_unique_indexes %}
+
+-spec find_{{ index.name }}({{ index.param_type }}, table()) -> [t()].
+find_{{ index.name }}({{ index.param_var_name }}, Table) ->
+    maps:get({{ index.param_var_name }}, maps:get('{{ index.name }}', Table), []).
+{%- endfor %}
+{%- endif %}

@@ -105,6 +105,7 @@ struct ErlangRecord {
     snake_name: String,
     reader_var: String,
     fields: Vec<ErlangField>,
+    table: Option<ErlangTable>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -141,33 +142,44 @@ struct ErlangField {
 
 impl ErlangModel {
     fn from_base_model(ir: &ConfigIr, model: BaseModel) -> Self {
+        let enums = model
+            .enums
+            .into_iter()
+            .map(|item| ErlangEnum {
+                name: item.pascal_name,
+                snake_name: item.snake_name,
+                atom_values: item.atom_values,
+                values: item.values,
+            })
+            .collect();
+        let tables = model
+            .tables
+            .into_iter()
+            .map(|item| erlang_table(ir, item))
+            .collect::<Vec<_>>();
+        let records = model
+            .records
+            .into_iter()
+            .map(|item| {
+                let table = tables
+                    .iter()
+                    .find(|table| table.snake_name == item.snake_name)
+                    .cloned();
+                erlang_record(ir, item, table)
+            })
+            .collect();
+        let unions = model
+            .unions
+            .into_iter()
+            .map(|item| erlang_union(ir, item))
+            .collect();
+
         Self {
             package: model.package,
-            enums: model
-                .enums
-                .into_iter()
-                .map(|item| ErlangEnum {
-                    name: item.pascal_name,
-                    snake_name: item.snake_name,
-                    atom_values: item.atom_values,
-                    values: item.values,
-                })
-                .collect(),
-            unions: model
-                .unions
-                .into_iter()
-                .map(|item| erlang_union(ir, item))
-                .collect(),
-            records: model
-                .records
-                .into_iter()
-                .map(|item| erlang_record(ir, item))
-                .collect(),
-            tables: model
-                .tables
-                .into_iter()
-                .map(|item| erlang_table(ir, item))
-                .collect(),
+            enums,
+            unions,
+            records,
+            tables,
         }
     }
 }
@@ -197,7 +209,7 @@ fn erlang_variant(ir: &ConfigIr, variant: BaseUnionVariant) -> ErlangUnionVarian
     }
 }
 
-fn erlang_record(ir: &ConfigIr, record: BaseRecord) -> ErlangRecord {
+fn erlang_record(ir: &ConfigIr, record: BaseRecord, table: Option<ErlangTable>) -> ErlangRecord {
     let fields = record
         .fields
         .into_iter()
@@ -207,6 +219,7 @@ fn erlang_record(ir: &ConfigIr, record: BaseRecord) -> ErlangRecord {
         snake_name: record.snake_name,
         reader_var: format!("Reader{}", fields.len()),
         fields,
+        table,
     }
 }
 
@@ -366,9 +379,12 @@ mod tests {
         assert!(item_type.contains("0 -> {'weapon', Reader1};"));
         assert!(action.contains("'type' := 'add_item'"));
         assert!(runtime.contains("read_i64(<<Value:64/little-signed-integer, Rest/binary>>)"));
-        assert!(config.contains("item_get(Key, Config) ->"));
-        assert!(config.contains("item_get_by_name(Name, Config) ->"));
-        assert!(config.contains("item_find_by_item_type(ItemType, Config) ->"));
+        assert!(item.contains("-export([decode/1, decode_table/1"));
+        assert!(item.contains("get(Key, Table) ->"));
+        assert!(item.contains("get_by_name(Name, Table) ->"));
+        assert!(item.contains("find_by_item_type(ItemType, Table) ->"));
+        assert!(config.contains("Item = item:decode_table(Bundle),"));
+        assert!(!config.contains("item_get(Key, Config) ->"));
         assert!(config.ends_with('\n'));
 
         let _ = std::fs::remove_dir_all(base);
