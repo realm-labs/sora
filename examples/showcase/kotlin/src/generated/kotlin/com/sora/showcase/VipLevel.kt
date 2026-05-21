@@ -14,6 +14,15 @@ data class VipLevel(
                 cost = ResourceCost.decode(reader),
                 perks = reader.readList { reader.readString() },
             )
+
+        fun decode(value: SoraValue): VipLevel {
+            val obj = value.asObject()
+            return VipLevel(
+                level = obj.get("level").asInt(),
+                cost = ResourceCost.decode(obj.get("cost")),
+                perks = obj.get("perks").asList { item -> item.asString() },
+            )
+        }
     }
 }
 
@@ -31,8 +40,9 @@ class VipLevelTable private constructor(
         get() = rows.size
 
     companion object {
-        fun decode(bundle: SoraBundle): VipLevelTable =
-            fromRows(bundle.decodeTable("VipLevel", VipLevel::decode))
+        fun decode(source: SoraTableSource): VipLevelTable =
+            fromRows(source.decodeTable("VipLevel", VipLevel::decode, VipLevel::decode))
+
         private fun fromRows(rows: List<VipLevel>): VipLevelTable =
             VipLevelTable(
                 rows.associateBy { it.level },

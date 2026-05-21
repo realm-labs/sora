@@ -18,7 +18,6 @@ data class {{ record.pascal_name }}(
 {%- endfor %}
             )
 
-{%- if runtime_format != "sora" %}
         fun decode(value: SoraValue): {{ record.pascal_name }} {
             val obj = value.asObject()
             return {{ record.pascal_name }}(
@@ -27,7 +26,6 @@ data class {{ record.pascal_name }}(
 {%- endfor %}
             )
         }
-{%- endif %}
     }
 }
 
@@ -85,14 +83,9 @@ class {{ table.pascal_name }}Table private constructor(
 {%- endif %}
 
     companion object {
-        fun decode(bundle: SoraBundle): {{ table.pascal_name }}Table =
-            fromRows(bundle.decodeTable("{{ table.name }}", {{ table.row_type }}::decode))
+        fun decode(source: SoraTableSource): {{ table.pascal_name }}Table =
+            fromRows(source.decodeTable("{{ table.name }}", {{ table.row_type }}::decode, {{ table.row_type }}::decode))
 
-{%- if runtime_format != "sora" %}
-        fun decode(bundle: SoraValueBundle): {{ table.pascal_name }}Table =
-            fromRows(bundle.decodeTable("{{ table.name }}", {{ table.row_type }}::decode))
-
-{%- endif %}
         private fun fromRows(rows: List<{{ table.row_type }}>): {{ table.pascal_name }}Table =
 {%- if table.mode == "map" and table.key_field_name %}
             {{ table.pascal_name }}Table(

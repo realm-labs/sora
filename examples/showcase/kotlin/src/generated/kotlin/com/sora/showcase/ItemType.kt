@@ -19,5 +19,15 @@ enum class ItemType {
                 4 -> Consumable
                 else -> throw SoraReadException("invalid enum ordinal $ordinal for ItemType")
             }
+
+        fun decode(value: SoraValue): ItemType =
+            when (val name = value.asString()) {
+                "Weapon" -> Weapon
+                "Armor" -> Armor
+                "Currency" -> Currency
+                "Material" -> Material
+                "Consumable" -> Consumable
+                else -> throw SoraReadException("invalid enum value $name for ItemType")
+            }
     }
 }

@@ -16,6 +16,16 @@ data class Localization(
                 enUs = reader.readString(),
                 note = reader.readOptional { reader.readString() },
             )
+
+        fun decode(value: SoraValue): Localization {
+            val obj = value.asObject()
+            return Localization(
+                key = obj.get("key").asString(),
+                zhCn = obj.get("zh_cn").asString(),
+                enUs = obj.get("en_us").asString(),
+                note = if (obj.get("note").isNull()) null else obj.get("note").asString(),
+            )
+        }
     }
 }
 
@@ -33,8 +43,9 @@ class LocalizationTable private constructor(
         get() = rows.size
 
     companion object {
-        fun decode(bundle: SoraBundle): LocalizationTable =
-            fromRows(bundle.decodeTable("Localization", Localization::decode))
+        fun decode(source: SoraTableSource): LocalizationTable =
+            fromRows(source.decodeTable("Localization", Localization::decode, Localization::decode))
+
         private fun fromRows(rows: List<Localization>): LocalizationTable =
             LocalizationTable(
                 rows.associateBy { it.key },

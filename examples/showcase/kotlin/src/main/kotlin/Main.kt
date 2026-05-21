@@ -4,7 +4,8 @@ import java.nio.file.Paths
 
 fun main() {
     val bytes = Paths.get("..", "generated", "config.sora").toFile().readBytes()
-    val config = SoraConfig.fromBytes(bytes)
+    val bundle = SoraBundle.parse(bytes)
+    val config = SoraConfig.fromSource(bundle)
     val sword = config.item[1001] ?: error("item 1001")
     val swordByName = config.item.getByName("Iron Sword") ?: error("Iron Sword")
     val quest = config.quest[5001] ?: error("quest 5001")

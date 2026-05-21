@@ -19,5 +19,15 @@ enum class StatType {
                 4 -> CritRate
                 else -> throw SoraReadException("invalid enum ordinal $ordinal for StatType")
             }
+
+        fun decode(value: SoraValue): StatType =
+            when (val name = value.asString()) {
+                "Hp" -> Hp
+                "Attack" -> Attack
+                "Defense" -> Defense
+                "Speed" -> Speed
+                "CritRate" -> CritRate
+                else -> throw SoraReadException("invalid enum value $name for StatType")
+            }
     }
 }

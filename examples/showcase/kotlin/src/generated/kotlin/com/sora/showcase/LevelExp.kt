@@ -14,6 +14,15 @@ data class LevelExp(
                 exp = reader.readI64(),
                 unlockFeature = reader.readOptional { reader.readString() },
             )
+
+        fun decode(value: SoraValue): LevelExp {
+            val obj = value.asObject()
+            return LevelExp(
+                level = obj.get("level").asInt(),
+                exp = obj.get("exp").asLong(),
+                unlockFeature = if (obj.get("unlock_feature").isNull()) null else obj.get("unlock_feature").asString(),
+            )
+        }
     }
 }
 
@@ -31,8 +40,9 @@ class LevelExpTable private constructor(
         get() = rows.size
 
     companion object {
-        fun decode(bundle: SoraBundle): LevelExpTable =
-            fromRows(bundle.decodeTable("LevelExp", LevelExp::decode))
+        fun decode(source: SoraTableSource): LevelExpTable =
+            fromRows(source.decodeTable("LevelExp", LevelExp::decode, LevelExp::decode))
+
         private fun fromRows(rows: List<LevelExp>): LevelExpTable =
             LevelExpTable(
                 rows.associateBy { it.level },

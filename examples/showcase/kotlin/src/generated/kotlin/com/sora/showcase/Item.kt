@@ -26,6 +26,18 @@ data class Item(
                 price = ResourceCost.decode(reader),
                 tags = reader.readList { reader.readString() },
             )
+
+        fun decode(value: SoraValue): Item {
+            val obj = value.asObject()
+            return Item(
+                id = obj.get("id").asInt(),
+                name = obj.get("name").asString(),
+                itemType = ItemType.decode(obj.get("item_type")),
+                maxStack = obj.get("max_stack").asInt(),
+                price = ResourceCost.decode(obj.get("price")),
+                tags = obj.get("tags").asList { item -> item.asString() },
+            )
+        }
     }
 }
 
@@ -47,8 +59,9 @@ class ItemTable private constructor(
         get() = rows.size
 
     companion object {
-        fun decode(bundle: SoraBundle): ItemTable =
-            fromRows(bundle.decodeTable("Item", Item::decode))
+        fun decode(source: SoraTableSource): ItemTable =
+            fromRows(source.decodeTable("Item", Item::decode, Item::decode))
+
         private fun fromRows(rows: List<Item>): ItemTable =
             ItemTable(
                 rows.associateBy { it.id },

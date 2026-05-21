@@ -15,5 +15,13 @@ enum class QuestType {
                 2 -> Daily
                 else -> throw SoraReadException("invalid enum ordinal $ordinal for QuestType")
             }
+
+        fun decode(value: SoraValue): QuestType =
+            when (val name = value.asString()) {
+                "Main" -> Main
+                "Side" -> Side
+                "Daily" -> Daily
+                else -> throw SoraReadException("invalid enum value $name for QuestType")
+            }
     }
 }

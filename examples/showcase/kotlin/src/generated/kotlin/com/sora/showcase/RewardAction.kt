@@ -37,5 +37,26 @@ sealed class RewardAction {
                 )
                 else -> throw SoraReadException("invalid union ordinal $ordinal for RewardAction")
             }
+
+        fun decode(value: SoraValue): RewardAction {
+            val obj = value.asObject()
+            return when (val tag = obj.get("type").asString()) {
+                "AddItem" -> AddItem(
+                    itemId = obj.get("item_id").asInt(),
+                    count = obj.get("count").asInt(),
+                )
+                "AddBuff" -> AddBuff(
+                    buffId = obj.get("buff_id").asInt(),
+                    duration = obj.get("duration").asFloat(),
+                )
+                "UnlockStage" -> UnlockStage(
+                    stageId = obj.get("stage_id").asInt(),
+                )
+                "SendMail" -> SendMail(
+                    mailId = obj.get("mail_id").asInt(),
+                )
+                else -> throw SoraReadException("invalid union tag $tag for RewardAction")
+            }
+        }
     }
 }

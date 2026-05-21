@@ -11,6 +11,14 @@ private const val SECTION_KIND_SCHEMA = 1
 private const val SECTION_KIND_TABLE = 2
 private const val COMPRESSION_NONE = 0
 
+interface SoraTableSource {
+    fun <T> decodeTable(
+        name: String,
+        decodeBinary: (SoraReader) -> T,
+        decodeValue: (SoraValue) -> T,
+    ): List<T>
+}
+
 private data class SoraSection(
     val kind: Int,
     val compression: Int,
@@ -23,7 +31,7 @@ private data class SoraSection(
 class SoraBundle private constructor(
     private val bytes: ByteArray,
     private val sections: List<SoraSection>,
-) {
+) : SoraTableSource {
     fun <T> decodeTable(name: String, decode: (SoraReader) -> T): List<T> {
         val section = sections.firstOrNull { it.kind == SECTION_KIND_TABLE && it.name == name }
             ?: throw SoraReadException("missing Sora table section `$name`")
@@ -35,6 +43,12 @@ class SoraBundle private constructor(
         }
         return decodeRows(bytes.copyOfRange(section.offset, section.offset + section.length), decode)
     }
+
+    override fun <T> decodeTable(
+        name: String,
+        decodeBinary: (SoraReader) -> T,
+        decodeValue: (SoraValue) -> T,
+    ): List<T> = decodeTable(name, decodeBinary)
 
     companion object {
         fun parse(bytes: ByteArray): SoraBundle {
@@ -279,4 +293,69 @@ private fun checkedLongToInt(value: Long, message: String): Int {
         throw SoraReadException(message)
     }
     return value.toInt()
+}
+
+class SoraObject(private val fields: Map<String, SoraValue>) {
+    fun get(name: String): SoraValue = fields[name] ?: SoraValue(null)
+}
+
+class SoraValue(private val value: Any?) {
+    fun isNull(): Boolean = value == null
+
+    fun asObject(): SoraObject =
+        value as? SoraObject ?: throw SoraReadException("expected object")
+
+    fun asRawList(): List<SoraValue> =
+        @Suppress("UNCHECKED_CAST")
+        (value as? List<SoraValue> ?: throw SoraReadException("expected list"))
+
+    fun <T> asList(decode: (SoraValue) -> T): List<T> = asRawList().map(decode)
+
+    fun asBool(): Boolean =
+        value as? Boolean ?: throw SoraReadException("expected bool")
+
+    fun asInt(): Int {
+        val value = asLong()
+        if (value < Int.MIN_VALUE || value > Int.MAX_VALUE) {
+            throw SoraReadException("integer exceeds Int")
+        }
+        return value.toInt()
+    }
+
+    fun asLong(): Long =
+        when (value) {
+            is Int -> value.toLong()
+            is Long -> value
+            is Number -> {
+                val doubleValue = value.toDouble()
+                if (java.lang.Math.rint(doubleValue) != doubleValue || doubleValue < Long.MIN_VALUE.toDouble() || doubleValue > Long.MAX_VALUE.toDouble()) {
+                    throw SoraReadException("expected integer")
+                }
+                doubleValue.toLong()
+            }
+            else -> throw SoraReadException("expected integer")
+        }
+
+    fun asFloat(): Float = asDouble().toFloat()
+
+    fun asDouble(): Double =
+        (value as? Number)?.toDouble() ?: throw SoraReadException("expected float")
+
+    fun asString(): String =
+        value as? String ?: throw SoraReadException("expected string")
+
+    companion object {
+        fun fromJava(value: Any?): SoraValue =
+            when (value) {
+                is Map<*, *> -> {
+                    val fields = LinkedHashMap<String, SoraValue>(value.size)
+                    for ((key, item) in value) {
+                        fields[key as String] = fromJava(item)
+                    }
+                    SoraValue(SoraObject(fields))
+                }
+                is List<*> -> SoraValue(value.map { fromJava(it) })
+                else -> SoraValue(value)
+            }
+    }
 }

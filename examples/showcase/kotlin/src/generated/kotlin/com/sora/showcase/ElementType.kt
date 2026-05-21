@@ -17,5 +17,14 @@ enum class ElementType {
                 3 -> Physical
                 else -> throw SoraReadException("invalid enum ordinal $ordinal for ElementType")
             }
+
+        fun decode(value: SoraValue): ElementType =
+            when (val name = value.asString()) {
+                "Fire" -> Fire
+                "Ice" -> Ice
+                "Lightning" -> Lightning
+                "Physical" -> Physical
+                else -> throw SoraReadException("invalid enum value $name for ElementType")
+            }
     }
 }

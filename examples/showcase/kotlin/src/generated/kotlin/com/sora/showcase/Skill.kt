@@ -27,6 +27,20 @@ data class Skill(
                 requiredItem = reader.readOptional { reader.readI32() },
                 castOrigin = Vec3.decode(reader),
             )
+
+        fun decode(value: SoraValue): Skill {
+            val obj = value.asObject()
+            return Skill(
+                id = obj.get("id").asInt(),
+                name = obj.get("name").asString(),
+                element = ElementType.decode(obj.get("element")),
+                cost = ResourceCost.decode(obj.get("cost")),
+                effect = SkillEffect.decode(obj.get("effect")),
+                requiredLevel = obj.get("required_level").asInt(),
+                requiredItem = if (obj.get("required_item").isNull()) null else obj.get("required_item").asInt(),
+                castOrigin = Vec3.decode(obj.get("cast_origin")),
+            )
+        }
     }
 }
 
@@ -44,8 +58,9 @@ class SkillTable private constructor(
         get() = rows.size
 
     companion object {
-        fun decode(bundle: SoraBundle): SkillTable =
-            fromRows(bundle.decodeTable("Skill", Skill::decode))
+        fun decode(source: SoraTableSource): SkillTable =
+            fromRows(source.decodeTable("Skill", Skill::decode, Skill::decode))
+
         private fun fromRows(rows: List<Skill>): SkillTable =
             SkillTable(
                 rows.associateBy { it.id },

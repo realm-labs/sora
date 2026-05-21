@@ -16,6 +16,16 @@ data class Buff(
                 duration = reader.readF32(),
                 modifiers = reader.readList { StatModifier.decode(reader) },
             )
+
+        fun decode(value: SoraValue): Buff {
+            val obj = value.asObject()
+            return Buff(
+                id = obj.get("id").asInt(),
+                name = obj.get("name").asString(),
+                duration = obj.get("duration").asFloat(),
+                modifiers = obj.get("modifiers").asList { item -> StatModifier.decode(item) },
+            )
+        }
     }
 }
 
@@ -33,8 +43,9 @@ class BuffTable private constructor(
         get() = rows.size
 
     companion object {
-        fun decode(bundle: SoraBundle): BuffTable =
-            fromRows(bundle.decodeTable("Buff", Buff::decode))
+        fun decode(source: SoraTableSource): BuffTable =
+            fromRows(source.decodeTable("Buff", Buff::decode, Buff::decode))
+
         private fun fromRows(rows: List<Buff>): BuffTable =
             BuffTable(
                 rows.associateBy { it.id },

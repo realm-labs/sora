@@ -15,5 +15,13 @@ enum class MailType {
                 2 -> Compensation
                 else -> throw SoraReadException("invalid enum ordinal $ordinal for MailType")
             }
+
+        fun decode(value: SoraValue): MailType =
+            when (val name = value.asString()) {
+                "System" -> System
+                "Event" -> Event
+                "Compensation" -> Compensation
+                else -> throw SoraReadException("invalid enum value $name for MailType")
+            }
     }
 }

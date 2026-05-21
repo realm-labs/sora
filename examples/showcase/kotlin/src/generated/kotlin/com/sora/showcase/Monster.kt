@@ -20,6 +20,18 @@ data class Monster(
                 dropGroup = reader.readI32(),
                 spawnPos = Vec3.decode(reader),
             )
+
+        fun decode(value: SoraValue): Monster {
+            val obj = value.asObject()
+            return Monster(
+                id = obj.get("id").asInt(),
+                name = obj.get("name").asString(),
+                level = obj.get("level").asInt(),
+                element = ElementType.decode(obj.get("element")),
+                dropGroup = obj.get("drop_group").asInt(),
+                spawnPos = Vec3.decode(obj.get("spawn_pos")),
+            )
+        }
     }
 }
 
@@ -37,8 +49,9 @@ class MonsterTable private constructor(
         get() = rows.size
 
     companion object {
-        fun decode(bundle: SoraBundle): MonsterTable =
-            fromRows(bundle.decodeTable("Monster", Monster::decode))
+        fun decode(source: SoraTableSource): MonsterTable =
+            fromRows(source.decodeTable("Monster", Monster::decode, Monster::decode))
+
         private fun fromRows(rows: List<Monster>): MonsterTable =
             MonsterTable(
                 rows.associateBy { it.id },

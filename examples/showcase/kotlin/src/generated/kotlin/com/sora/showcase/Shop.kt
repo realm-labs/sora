@@ -14,6 +14,15 @@ data class Shop(
                 name = reader.readString(),
                 currency = ResourceKind.decode(reader),
             )
+
+        fun decode(value: SoraValue): Shop {
+            val obj = value.asObject()
+            return Shop(
+                id = obj.get("id").asInt(),
+                name = obj.get("name").asString(),
+                currency = ResourceKind.decode(obj.get("currency")),
+            )
+        }
     }
 }
 
@@ -31,8 +40,9 @@ class ShopTable private constructor(
         get() = rows.size
 
     companion object {
-        fun decode(bundle: SoraBundle): ShopTable =
-            fromRows(bundle.decodeTable("Shop", Shop::decode))
+        fun decode(source: SoraTableSource): ShopTable =
+            fromRows(source.decodeTable("Shop", Shop::decode, Shop::decode))
+
         private fun fromRows(rows: List<Shop>): ShopTable =
             ShopTable(
                 rows.associateBy { it.id },

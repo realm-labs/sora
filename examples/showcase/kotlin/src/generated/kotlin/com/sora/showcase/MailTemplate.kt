@@ -18,6 +18,17 @@ data class MailTemplate(
                 bodyKey = reader.readString(),
                 rewards = reader.readList { Reward.decode(reader) },
             )
+
+        fun decode(value: SoraValue): MailTemplate {
+            val obj = value.asObject()
+            return MailTemplate(
+                id = obj.get("id").asInt(),
+                mailType = MailType.decode(obj.get("mail_type")),
+                titleKey = obj.get("title_key").asString(),
+                bodyKey = obj.get("body_key").asString(),
+                rewards = obj.get("rewards").asList { item -> Reward.decode(item) },
+            )
+        }
     }
 }
 
@@ -35,8 +46,9 @@ class MailTemplateTable private constructor(
         get() = rows.size
 
     companion object {
-        fun decode(bundle: SoraBundle): MailTemplateTable =
-            fromRows(bundle.decodeTable("MailTemplate", MailTemplate::decode))
+        fun decode(source: SoraTableSource): MailTemplateTable =
+            fromRows(source.decodeTable("MailTemplate", MailTemplate::decode, MailTemplate::decode))
+
         private fun fromRows(rows: List<MailTemplate>): MailTemplateTable =
             MailTemplateTable(
                 rows.associateBy { it.id },

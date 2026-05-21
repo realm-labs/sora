@@ -14,5 +14,14 @@ data class ResourceCost(
                 id = reader.readI32(),
                 count = reader.readI32(),
             )
+
+        fun decode(value: SoraValue): ResourceCost {
+            val obj = value.asObject()
+            return ResourceCost(
+                kind = ResourceKind.decode(obj.get("kind")),
+                id = obj.get("id").asInt(),
+                count = obj.get("count").asInt(),
+            )
+        }
     }
 }

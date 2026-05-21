@@ -15,5 +15,13 @@ enum class ResourceKind {
                 2 -> Diamond
                 else -> throw SoraReadException("invalid enum ordinal $ordinal for ResourceKind")
             }
+
+        fun decode(value: SoraValue): ResourceKind =
+            when (val name = value.asString()) {
+                "Item" -> Item
+                "Gold" -> Gold
+                "Diamond" -> Diamond
+                else -> throw SoraReadException("invalid enum value $name for ResourceKind")
+            }
     }
 }

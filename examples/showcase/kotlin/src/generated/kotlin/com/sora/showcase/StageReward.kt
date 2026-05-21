@@ -16,6 +16,16 @@ data class StageReward(
                 itemId = reader.readI32(),
                 count = reader.readI32(),
             )
+
+        fun decode(value: SoraValue): StageReward {
+            val obj = value.asObject()
+            return StageReward(
+                stageId = obj.get("stage_id").asInt(),
+                seq = obj.get("seq").asInt(),
+                itemId = obj.get("item_id").asInt(),
+                count = obj.get("count").asInt(),
+            )
+        }
     }
 }
 
@@ -31,8 +41,9 @@ class StageRewardTable private constructor(
         get() = rows.size
 
     companion object {
-        fun decode(bundle: SoraBundle): StageRewardTable =
-            fromRows(bundle.decodeTable("StageReward", StageReward::decode))
+        fun decode(source: SoraTableSource): StageRewardTable =
+            fromRows(source.decodeTable("StageReward", StageReward::decode, StageReward::decode))
+
         private fun fromRows(rows: List<StageReward>): StageRewardTable =
             StageRewardTable(
                 rows,

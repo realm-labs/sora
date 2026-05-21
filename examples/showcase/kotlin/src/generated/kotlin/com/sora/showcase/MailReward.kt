@@ -16,6 +16,16 @@ data class MailReward(
                 itemId = reader.readI32(),
                 count = reader.readI32(),
             )
+
+        fun decode(value: SoraValue): MailReward {
+            val obj = value.asObject()
+            return MailReward(
+                mailId = obj.get("mail_id").asInt(),
+                seq = obj.get("seq").asInt(),
+                itemId = obj.get("item_id").asInt(),
+                count = obj.get("count").asInt(),
+            )
+        }
     }
 }
 
@@ -31,8 +41,9 @@ class MailRewardTable private constructor(
         get() = rows.size
 
     companion object {
-        fun decode(bundle: SoraBundle): MailRewardTable =
-            fromRows(bundle.decodeTable("MailReward", MailReward::decode))
+        fun decode(source: SoraTableSource): MailRewardTable =
+            fromRows(source.decodeTable("MailReward", MailReward::decode, MailReward::decode))
+
         private fun fromRows(rows: List<MailReward>): MailRewardTable =
             MailRewardTable(
                 rows,

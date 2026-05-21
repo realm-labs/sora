@@ -16,6 +16,16 @@ data class EventRule(
                 condition = EventCondition.decode(reader),
                 actions = reader.readList { RewardAction.decode(reader) },
             )
+
+        fun decode(value: SoraValue): EventRule {
+            val obj = value.asObject()
+            return EventRule(
+                id = obj.get("id").asInt(),
+                name = obj.get("name").asString(),
+                condition = EventCondition.decode(obj.get("condition")),
+                actions = obj.get("actions").asList { item -> RewardAction.decode(item) },
+            )
+        }
     }
 }
 
@@ -33,8 +43,9 @@ class EventRuleTable private constructor(
         get() = rows.size
 
     companion object {
-        fun decode(bundle: SoraBundle): EventRuleTable =
-            fromRows(bundle.decodeTable("EventRule", EventRule::decode))
+        fun decode(source: SoraTableSource): EventRuleTable =
+            fromRows(source.decodeTable("EventRule", EventRule::decode, EventRule::decode))
+
         private fun fromRows(rows: List<EventRule>): EventRuleTable =
             EventRuleTable(
                 rows.associateBy { it.id },

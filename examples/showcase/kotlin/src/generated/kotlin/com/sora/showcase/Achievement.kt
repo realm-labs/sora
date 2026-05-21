@@ -16,6 +16,16 @@ data class Achievement(
                 targetCount = reader.readI64(),
                 reward = ResourceCost.decode(reader),
             )
+
+        fun decode(value: SoraValue): Achievement {
+            val obj = value.asObject()
+            return Achievement(
+                id = obj.get("id").asInt(),
+                titleKey = obj.get("title_key").asString(),
+                targetCount = obj.get("target_count").asLong(),
+                reward = ResourceCost.decode(obj.get("reward")),
+            )
+        }
     }
 }
 
@@ -33,8 +43,9 @@ class AchievementTable private constructor(
         get() = rows.size
 
     companion object {
-        fun decode(bundle: SoraBundle): AchievementTable =
-            fromRows(bundle.decodeTable("Achievement", Achievement::decode))
+        fun decode(source: SoraTableSource): AchievementTable =
+            fromRows(source.decodeTable("Achievement", Achievement::decode, Achievement::decode))
+
         private fun fromRows(rows: List<Achievement>): AchievementTable =
             AchievementTable(
                 rows.associateBy { it.id },

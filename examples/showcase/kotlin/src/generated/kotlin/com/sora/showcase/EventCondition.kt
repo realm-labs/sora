@@ -29,5 +29,22 @@ sealed class EventCondition {
                 )
                 else -> throw SoraReadException("invalid union ordinal $ordinal for EventCondition")
             }
+
+        fun decode(value: SoraValue): EventCondition {
+            val obj = value.asObject()
+            return when (val tag = obj.get("type").asString()) {
+                "LevelAtLeast" -> LevelAtLeast(
+                    level = obj.get("level").asInt(),
+                )
+                "QuestCompleted" -> QuestCompleted(
+                    questId = obj.get("quest_id").asInt(),
+                )
+                "HasItem" -> HasItem(
+                    itemId = obj.get("item_id").asInt(),
+                    count = obj.get("count").asInt(),
+                )
+                else -> throw SoraReadException("invalid union tag $tag for EventCondition")
+            }
+        }
     }
 }

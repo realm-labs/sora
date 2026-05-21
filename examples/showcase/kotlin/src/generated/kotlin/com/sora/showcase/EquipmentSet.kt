@@ -16,6 +16,16 @@ data class EquipmentSet(
                 itemIds = reader.readList { reader.readI32() },
                 bonusEffect = SkillEffect.decode(reader),
             )
+
+        fun decode(value: SoraValue): EquipmentSet {
+            val obj = value.asObject()
+            return EquipmentSet(
+                id = obj.get("id").asInt(),
+                name = obj.get("name").asString(),
+                itemIds = obj.get("item_ids").asList { item -> item.asInt() },
+                bonusEffect = SkillEffect.decode(obj.get("bonus_effect")),
+            )
+        }
     }
 }
 
@@ -33,8 +43,9 @@ class EquipmentSetTable private constructor(
         get() = rows.size
 
     companion object {
-        fun decode(bundle: SoraBundle): EquipmentSetTable =
-            fromRows(bundle.decodeTable("EquipmentSet", EquipmentSet::decode))
+        fun decode(source: SoraTableSource): EquipmentSetTable =
+            fromRows(source.decodeTable("EquipmentSet", EquipmentSet::decode, EquipmentSet::decode))
+
         private fun fromRows(rows: List<EquipmentSet>): EquipmentSetTable =
             EquipmentSetTable(
                 rows.associateBy { it.id },

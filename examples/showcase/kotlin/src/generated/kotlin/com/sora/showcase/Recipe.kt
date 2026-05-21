@@ -14,6 +14,15 @@ data class Recipe(
                 resultItem = reader.readI32(),
                 materials = reader.readList { ResourceCost.decode(reader) },
             )
+
+        fun decode(value: SoraValue): Recipe {
+            val obj = value.asObject()
+            return Recipe(
+                id = obj.get("id").asInt(),
+                resultItem = obj.get("result_item").asInt(),
+                materials = obj.get("materials").asList { item -> ResourceCost.decode(item) },
+            )
+        }
     }
 }
 
@@ -31,8 +40,9 @@ class RecipeTable private constructor(
         get() = rows.size
 
     companion object {
-        fun decode(bundle: SoraBundle): RecipeTable =
-            fromRows(bundle.decodeTable("Recipe", Recipe::decode))
+        fun decode(source: SoraTableSource): RecipeTable =
+            fromRows(source.decodeTable("Recipe", Recipe::decode, Recipe::decode))
+
         private fun fromRows(rows: List<Recipe>): RecipeTable =
             RecipeTable(
                 rows.associateBy { it.id },

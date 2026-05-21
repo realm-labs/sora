@@ -18,6 +18,17 @@ data class ShopItem(
                 price = ResourceCost.decode(reader),
                 dailyLimit = reader.readOptional { reader.readI32() },
             )
+
+        fun decode(value: SoraValue): ShopItem {
+            val obj = value.asObject()
+            return ShopItem(
+                shopId = obj.get("shop_id").asInt(),
+                seq = obj.get("seq").asInt(),
+                itemId = obj.get("item_id").asInt(),
+                price = ResourceCost.decode(obj.get("price")),
+                dailyLimit = if (obj.get("daily_limit").isNull()) null else obj.get("daily_limit").asInt(),
+            )
+        }
     }
 }
 
@@ -33,8 +44,9 @@ class ShopItemTable private constructor(
         get() = rows.size
 
     companion object {
-        fun decode(bundle: SoraBundle): ShopItemTable =
-            fromRows(bundle.decodeTable("ShopItem", ShopItem::decode))
+        fun decode(source: SoraTableSource): ShopItemTable =
+            fromRows(source.decodeTable("ShopItem", ShopItem::decode, ShopItem::decode))
+
         private fun fromRows(rows: List<ShopItem>): ShopItemTable =
             ShopItemTable(
                 rows,

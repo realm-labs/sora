@@ -14,6 +14,15 @@ data class GachaPool(
                 name = reader.readString(),
                 cost = ResourceCost.decode(reader),
             )
+
+        fun decode(value: SoraValue): GachaPool {
+            val obj = value.asObject()
+            return GachaPool(
+                id = obj.get("id").asInt(),
+                name = obj.get("name").asString(),
+                cost = ResourceCost.decode(obj.get("cost")),
+            )
+        }
     }
 }
 
@@ -31,8 +40,9 @@ class GachaPoolTable private constructor(
         get() = rows.size
 
     companion object {
-        fun decode(bundle: SoraBundle): GachaPoolTable =
-            fromRows(bundle.decodeTable("GachaPool", GachaPool::decode))
+        fun decode(source: SoraTableSource): GachaPoolTable =
+            fromRows(source.decodeTable("GachaPool", GachaPool::decode, GachaPool::decode))
+
         private fun fromRows(rows: List<GachaPool>): GachaPoolTable =
             GachaPoolTable(
                 rows.associateBy { it.id },

@@ -16,6 +16,16 @@ data class QuestReward(
                 itemId = reader.readI32(),
                 count = reader.readI32(),
             )
+
+        fun decode(value: SoraValue): QuestReward {
+            val obj = value.asObject()
+            return QuestReward(
+                questId = obj.get("quest_id").asInt(),
+                seq = obj.get("seq").asInt(),
+                itemId = obj.get("item_id").asInt(),
+                count = obj.get("count").asInt(),
+            )
+        }
     }
 }
 
@@ -31,8 +41,9 @@ class QuestRewardTable private constructor(
         get() = rows.size
 
     companion object {
-        fun decode(bundle: SoraBundle): QuestRewardTable =
-            fromRows(bundle.decodeTable("QuestReward", QuestReward::decode))
+        fun decode(source: SoraTableSource): QuestRewardTable =
+            fromRows(source.decodeTable("QuestReward", QuestReward::decode, QuestReward::decode))
+
         private fun fromRows(rows: List<QuestReward>): QuestRewardTable =
             QuestRewardTable(
                 rows,

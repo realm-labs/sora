@@ -18,6 +18,17 @@ data class Stage(
                 recommendedPower = reader.readI32(),
                 firstClearRewards = reader.readList { Reward.decode(reader) },
             )
+
+        fun decode(value: SoraValue): Stage {
+            val obj = value.asObject()
+            return Stage(
+                id = obj.get("id").asInt(),
+                name = obj.get("name").asString(),
+                monsterIds = obj.get("monster_ids").asList { item -> item.asInt() },
+                recommendedPower = obj.get("recommended_power").asInt(),
+                firstClearRewards = obj.get("first_clear_rewards").asList { item -> Reward.decode(item) },
+            )
+        }
     }
 }
 
@@ -35,8 +46,9 @@ class StageTable private constructor(
         get() = rows.size
 
     companion object {
-        fun decode(bundle: SoraBundle): StageTable =
-            fromRows(bundle.decodeTable("Stage", Stage::decode))
+        fun decode(source: SoraTableSource): StageTable =
+            fromRows(source.decodeTable("Stage", Stage::decode, Stage::decode))
+
         private fun fromRows(rows: List<Stage>): StageTable =
             StageTable(
                 rows.associateBy { it.id },

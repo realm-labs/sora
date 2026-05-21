@@ -12,6 +12,14 @@ data class DropGroup(
                 id = reader.readI32(),
                 name = reader.readString(),
             )
+
+        fun decode(value: SoraValue): DropGroup {
+            val obj = value.asObject()
+            return DropGroup(
+                id = obj.get("id").asInt(),
+                name = obj.get("name").asString(),
+            )
+        }
     }
 }
 
@@ -29,8 +37,9 @@ class DropGroupTable private constructor(
         get() = rows.size
 
     companion object {
-        fun decode(bundle: SoraBundle): DropGroupTable =
-            fromRows(bundle.decodeTable("DropGroup", DropGroup::decode))
+        fun decode(source: SoraTableSource): DropGroupTable =
+            fromRows(source.decodeTable("DropGroup", DropGroup::decode, DropGroup::decode))
+
         private fun fromRows(rows: List<DropGroup>): DropGroupTable =
             DropGroupTable(
                 rows.associateBy { it.id },

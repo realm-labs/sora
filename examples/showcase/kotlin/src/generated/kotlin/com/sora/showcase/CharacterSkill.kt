@@ -14,6 +14,15 @@ data class CharacterSkill(
                 skillId = reader.readI32(),
                 unlockLevel = reader.readI32(),
             )
+
+        fun decode(value: SoraValue): CharacterSkill {
+            val obj = value.asObject()
+            return CharacterSkill(
+                characterId = obj.get("character_id").asInt(),
+                skillId = obj.get("skill_id").asInt(),
+                unlockLevel = obj.get("unlock_level").asInt(),
+            )
+        }
     }
 }
 
@@ -29,8 +38,9 @@ class CharacterSkillTable private constructor(
         get() = rows.size
 
     companion object {
-        fun decode(bundle: SoraBundle): CharacterSkillTable =
-            fromRows(bundle.decodeTable("CharacterSkill", CharacterSkill::decode))
+        fun decode(source: SoraTableSource): CharacterSkillTable =
+            fromRows(source.decodeTable("CharacterSkill", CharacterSkill::decode, CharacterSkill::decode))
+
         private fun fromRows(rows: List<CharacterSkill>): CharacterSkillTable =
             CharacterSkillTable(
                 rows,

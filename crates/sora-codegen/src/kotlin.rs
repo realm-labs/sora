@@ -483,14 +483,17 @@ mod tests {
         assert!(kotlin_action.contains("data class AddItem"));
         assert!(kotlin_action.contains("fun decode(reader: SoraReader): Action"));
         assert!(kotlin_item.contains("fun decode(reader: SoraReader): Item"));
+        assert!(kotlin_item.contains("fun decode(value: SoraValue): Item"));
         assert!(kotlin_runtime.contains("class SoraBundle"));
+        assert!(kotlin_runtime.contains("interface SoraTableSource"));
         assert!(kotlin_config.contains("interface SoraTable"));
         assert!(kotlin_config.contains("class SoraConfig private constructor"));
         assert!(kotlin_config.contains("private val tableMap: Map<String, SoraTable>"));
         assert!(kotlin_config.contains("val item: ItemTable"));
         assert!(kotlin_config.contains("get() = table(\"Item\")"));
-        assert!(kotlin_config.contains("fun fromBytes(bytes: ByteArray): SoraConfig"));
-        assert!(kotlin_config.contains("tables[\"Item\"] = ItemTable.decode(bundle)"));
+        assert!(kotlin_config.contains("fun fromSource(source: SoraTableSource): SoraConfig"));
+        assert!(!kotlin_config.contains("fromBytes"));
+        assert!(kotlin_config.contains("tables[\"Item\"] = ItemTable.decode(source)"));
         assert!(kotlin_item.contains("class ItemTable private constructor"));
         assert!(kotlin_item.contains("val rows: Map<Int, Item>"));
         assert!(kotlin_item.contains("private val nameIndex: Map<String, Item>"));
@@ -636,7 +639,8 @@ mod tests {
 
             assert!(runtime.contains("class SoraValueBundle"));
             assert!(runtime.contains(parse_function));
-            assert!(config.contains(&format!("SoraValueBundle.{parse_function}(bytes)")));
+            assert!(!config.contains(&format!("SoraValueBundle.{parse_function}(bytes)")));
+            assert!(config.contains("fun fromSource(source: SoraTableSource): SoraConfig"));
             assert!(item.contains("fun decode(value: SoraValue): Item"));
             assert!(item.contains("obj.get(\"id\").asInt()"));
             assert!(item.contains("ItemType.decode(obj.get(\"item_type\"))"));

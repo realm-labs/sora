@@ -32,19 +32,10 @@ class SoraConfig private constructor(
 
 {%- endfor %}
     companion object {
-        fun fromBytes(bytes: ByteArray): SoraConfig {
-{%- if runtime_format == "sora" %}
-            val bundle = SoraBundle.parse(bytes)
-{%- elif runtime_format == "json" %}
-            val bundle = SoraValueBundle.parseJson(bytes)
-{%- elif runtime_format == "cbor" %}
-            val bundle = SoraValueBundle.parseCbor(bytes)
-{%- elif runtime_format == "sora-protobuf" %}
-            val bundle = SoraValueBundle.parseProtobuf(bytes)
-{%- endif %}
+        fun fromSource(source: SoraTableSource): SoraConfig {
             val tables = LinkedHashMap<String, SoraTable>({{ model.tables | length }})
 {%- for table in model.tables %}
-            tables["{{ table.name }}"] = {{ table.pascal_name }}Table.decode(bundle)
+            tables["{{ table.name }}"] = {{ table.pascal_name }}Table.decode(source)
 {%- endfor %}
             return SoraConfig(tables)
         }

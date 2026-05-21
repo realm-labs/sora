@@ -18,6 +18,17 @@ data class DropEntry(
                 count = reader.readI32(),
                 weight = reader.readF32(),
             )
+
+        fun decode(value: SoraValue): DropEntry {
+            val obj = value.asObject()
+            return DropEntry(
+                groupId = obj.get("group_id").asInt(),
+                seq = obj.get("seq").asInt(),
+                itemId = obj.get("item_id").asInt(),
+                count = obj.get("count").asInt(),
+                weight = obj.get("weight").asFloat(),
+            )
+        }
     }
 }
 
@@ -33,8 +44,9 @@ class DropEntryTable private constructor(
         get() = rows.size
 
     companion object {
-        fun decode(bundle: SoraBundle): DropEntryTable =
-            fromRows(bundle.decodeTable("DropEntry", DropEntry::decode))
+        fun decode(source: SoraTableSource): DropEntryTable =
+            fromRows(source.decodeTable("DropEntry", DropEntry::decode, DropEntry::decode))
+
         private fun fromRows(rows: List<DropEntry>): DropEntryTable =
             DropEntryTable(
                 rows,

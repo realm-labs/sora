@@ -14,6 +14,15 @@ data class Dialogue(
                 speakerKey = reader.readString(),
                 lines = reader.readList { reader.readString() },
             )
+
+        fun decode(value: SoraValue): Dialogue {
+            val obj = value.asObject()
+            return Dialogue(
+                id = obj.get("id").asInt(),
+                speakerKey = obj.get("speaker_key").asString(),
+                lines = obj.get("lines").asList { item -> item.asString() },
+            )
+        }
     }
 }
 
@@ -31,8 +40,9 @@ class DialogueTable private constructor(
         get() = rows.size
 
     companion object {
-        fun decode(bundle: SoraBundle): DialogueTable =
-            fromRows(bundle.decodeTable("Dialogue", Dialogue::decode))
+        fun decode(source: SoraTableSource): DialogueTable =
+            fromRows(source.decodeTable("Dialogue", Dialogue::decode, Dialogue::decode))
+
         private fun fromRows(rows: List<Dialogue>): DialogueTable =
             DialogueTable(
                 rows.associateBy { it.id },

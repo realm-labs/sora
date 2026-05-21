@@ -23,6 +23,19 @@ data class Quest(
                 startPos = Vec3.decode(reader),
                 rewards = reader.readList { Reward.decode(reader) },
             )
+
+        fun decode(value: SoraValue): Quest {
+            val obj = value.asObject()
+            return Quest(
+                id = obj.get("id").asInt(),
+                questType = QuestType.decode(obj.get("quest_type")),
+                title = obj.get("title").asString(),
+                requiredItem = obj.get("required_item").asInt(),
+                unlockSkills = obj.get("unlock_skills").asList { item -> item.asInt() },
+                startPos = Vec3.decode(obj.get("start_pos")),
+                rewards = obj.get("rewards").asList { item -> Reward.decode(item) },
+            )
+        }
     }
 }
 
@@ -40,8 +53,9 @@ class QuestTable private constructor(
         get() = rows.size
 
     companion object {
-        fun decode(bundle: SoraBundle): QuestTable =
-            fromRows(bundle.decodeTable("Quest", Quest::decode))
+        fun decode(source: SoraTableSource): QuestTable =
+            fromRows(source.decodeTable("Quest", Quest::decode, Quest::decode))
+
         private fun fromRows(rows: List<Quest>): QuestTable =
             QuestTable(
                 rows.associateBy { it.id },

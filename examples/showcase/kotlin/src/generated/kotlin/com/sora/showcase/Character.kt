@@ -22,6 +22,19 @@ data class Character(
                 starterItems = reader.readList { reader.readI32() },
                 spawnPos = Vec3.decode(reader),
             )
+
+        fun decode(value: SoraValue): Character {
+            val obj = value.asObject()
+            return Character(
+                id = obj.get("id").asInt(),
+                name = obj.get("name").asString(),
+                rarity = Rarity.decode(obj.get("rarity")),
+                baseLevel = obj.get("base_level").asInt(),
+                baseSkill = obj.get("base_skill").asInt(),
+                starterItems = obj.get("starter_items").asList { item -> item.asInt() },
+                spawnPos = Vec3.decode(obj.get("spawn_pos")),
+            )
+        }
     }
 }
 
@@ -39,8 +52,9 @@ class CharacterTable private constructor(
         get() = rows.size
 
     companion object {
-        fun decode(bundle: SoraBundle): CharacterTable =
-            fromRows(bundle.decodeTable("Character", Character::decode))
+        fun decode(source: SoraTableSource): CharacterTable =
+            fromRows(source.decodeTable("Character", Character::decode, Character::decode))
+
         private fun fromRows(rows: List<Character>): CharacterTable =
             CharacterTable(
                 rows.associateBy { it.id },

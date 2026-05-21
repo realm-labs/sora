@@ -14,5 +14,14 @@ data class Vec3(
                 y = reader.readF32(),
                 z = reader.readF32(),
             )
+
+        fun decode(value: SoraValue): Vec3 {
+            val obj = value.asObject()
+            return Vec3(
+                x = obj.get("x").asFloat(),
+                y = obj.get("y").asFloat(),
+                z = obj.get("z").asFloat(),
+            )
+        }
     }
 }

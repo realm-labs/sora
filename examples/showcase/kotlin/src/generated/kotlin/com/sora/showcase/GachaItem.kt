@@ -16,6 +16,16 @@ data class GachaItem(
                 rarity = Rarity.decode(reader),
                 weight = reader.readF32(),
             )
+
+        fun decode(value: SoraValue): GachaItem {
+            val obj = value.asObject()
+            return GachaItem(
+                poolId = obj.get("pool_id").asInt(),
+                itemId = obj.get("item_id").asInt(),
+                rarity = Rarity.decode(obj.get("rarity")),
+                weight = obj.get("weight").asFloat(),
+            )
+        }
     }
 }
 
@@ -31,8 +41,9 @@ class GachaItemTable private constructor(
         get() = rows.size
 
     companion object {
-        fun decode(bundle: SoraBundle): GachaItemTable =
-            fromRows(bundle.decodeTable("GachaItem", GachaItem::decode))
+        fun decode(source: SoraTableSource): GachaItemTable =
+            fromRows(source.decodeTable("GachaItem", GachaItem::decode, GachaItem::decode))
+
         private fun fromRows(rows: List<GachaItem>): GachaItemTable =
             GachaItemTable(
                 rows,

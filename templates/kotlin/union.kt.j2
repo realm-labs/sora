@@ -27,7 +27,6 @@ sealed class {{ union.pascal_name }} {
                 else -> throw SoraReadException("invalid union ordinal $ordinal for {{ union.pascal_name }}")
             }
 
-{%- if runtime_format != "sora" %}
         fun decode(value: SoraValue): {{ union.pascal_name }} {
             val obj = value.asObject()
             return when (val tag = obj.get("{{ union.tag }}").asString()) {
@@ -41,6 +40,5 @@ sealed class {{ union.pascal_name }} {
                 else -> throw SoraReadException("invalid union tag $tag for {{ union.pascal_name }}")
             }
         }
-{%- endif %}
     }
 }

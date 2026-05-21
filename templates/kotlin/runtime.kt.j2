@@ -24,6 +24,14 @@ private const val SECTION_KIND_SCHEMA = 1
 private const val SECTION_KIND_TABLE = 2
 private const val COMPRESSION_NONE = 0
 
+interface SoraTableSource {
+    fun <T> decodeTable(
+        name: String,
+        decodeBinary: (SoraReader) -> T,
+        decodeValue: (SoraValue) -> T,
+    ): List<T>
+}
+
 private data class SoraSection(
     val kind: Int,
     val compression: Int,
@@ -36,7 +44,7 @@ private data class SoraSection(
 class SoraBundle private constructor(
     private val bytes: ByteArray,
     private val sections: List<SoraSection>,
-) {
+) : SoraTableSource {
     fun <T> decodeTable(name: String, decode: (SoraReader) -> T): List<T> {
         val section = sections.firstOrNull { it.kind == SECTION_KIND_TABLE && it.name == name }
             ?: throw SoraReadException("missing Sora table section `$name`")
@@ -48,6 +56,12 @@ class SoraBundle private constructor(
         }
         return decodeRows(bytes.copyOfRange(section.offset, section.offset + section.length), decode)
     }
+
+    override fun <T> decodeTable(
+        name: String,
+        decodeBinary: (SoraReader) -> T,
+        decodeValue: (SoraValue) -> T,
+    ): List<T> = decodeTable(name, decodeBinary)
 
     companion object {
         fun parse(bytes: ByteArray): SoraBundle {
@@ -294,58 +308,6 @@ private fun checkedLongToInt(value: Long, message: String): Int {
     return value.toInt()
 }
 
-{%- if runtime_format != "sora" %}
-
-class SoraValueBundle private constructor(
-    private val tables: Map<String, List<SoraValue>>,
-) {
-    fun <T> decodeTable(name: String, decode: (SoraValue) -> T): List<T> {
-        val values = tables[name] ?: throw SoraReadException("missing table `$name`")
-        return values.map(decode)
-    }
-
-    companion object {
-{%- if runtime_format == "json" %}
-        fun parseJson(bytes: ByteArray): SoraValueBundle {
-            val mapper = ObjectMapper()
-            val root = mapper.readValue(bytes, object : TypeReference<Map<String, Any?>>() {})
-            return fromRoot("json", SoraValue.fromJava(root))
-        }
-{%- endif %}
-
-{%- if runtime_format == "cbor" %}
-        fun parseCbor(bytes: ByteArray): SoraValueBundle {
-            val mapper = ObjectMapper(CBORFactory())
-            val root = mapper.readValue(bytes, object : TypeReference<Map<String, Any?>>() {})
-            return fromRoot("cbor", SoraValue.fromJava(root))
-        }
-{%- endif %}
-
-{%- if runtime_format == "sora-protobuf" %}
-        fun parseProtobuf(bytes: ByteArray): SoraValueBundle =
-            fromRoot("sora-protobuf", SoraProtobufBundle.decode(bytes))
-{%- endif %}
-
-        private fun fromRoot(expectedFormat: String, rootValue: SoraValue): SoraValueBundle {
-            val root = rootValue.asObject()
-            val format = root.get("format").asString()
-            if (format != expectedFormat) {
-                throw SoraReadException("expected $expectedFormat bundle, got $format")
-            }
-            val version = root.get("format_version").asLong()
-            if (version != SORA_BUNDLE_VERSION.toLong()) {
-                throw SoraReadException("unsupported $expectedFormat bundle version $version")
-            }
-            val data = root.get("data").asObject()
-            val tables = data.get("tables").asRawList().associate { tableValue ->
-                val table = tableValue.asObject()
-                table.get("name").asString() to table.get("rows").asRawList()
-            }
-            return SoraValueBundle(tables)
-        }
-    }
-}
-
 class SoraObject(private val fields: Map<String, SoraValue>) {
     fun get(name: String): SoraValue = fields[name] ?: SoraValue(null)
 }
@@ -408,6 +370,64 @@ class SoraValue(private val value: Any?) {
                 is List<*> -> SoraValue(value.map { fromJava(it) })
                 else -> SoraValue(value)
             }
+    }
+}
+
+{%- if runtime_format != "sora" %}
+
+class SoraValueBundle private constructor(
+    private val tables: Map<String, List<SoraValue>>,
+) : SoraTableSource {
+    fun <T> decodeTable(name: String, decode: (SoraValue) -> T): List<T> {
+        val values = tables[name] ?: throw SoraReadException("missing table `$name`")
+        return values.map(decode)
+    }
+
+    override fun <T> decodeTable(
+        name: String,
+        decodeBinary: (SoraReader) -> T,
+        decodeValue: (SoraValue) -> T,
+    ): List<T> = decodeTable(name, decodeValue)
+
+    companion object {
+{%- if runtime_format == "json" %}
+        fun parseJson(bytes: ByteArray): SoraValueBundle {
+            val mapper = ObjectMapper()
+            val root = mapper.readValue(bytes, object : TypeReference<Map<String, Any?>>() {})
+            return fromRoot("json", SoraValue.fromJava(root))
+        }
+{%- endif %}
+
+{%- if runtime_format == "cbor" %}
+        fun parseCbor(bytes: ByteArray): SoraValueBundle {
+            val mapper = ObjectMapper(CBORFactory())
+            val root = mapper.readValue(bytes, object : TypeReference<Map<String, Any?>>() {})
+            return fromRoot("cbor", SoraValue.fromJava(root))
+        }
+{%- endif %}
+
+{%- if runtime_format == "sora-protobuf" %}
+        fun parseProtobuf(bytes: ByteArray): SoraValueBundle =
+            fromRoot("sora-protobuf", SoraProtobufBundle.decode(bytes))
+{%- endif %}
+
+        private fun fromRoot(expectedFormat: String, rootValue: SoraValue): SoraValueBundle {
+            val root = rootValue.asObject()
+            val format = root.get("format").asString()
+            if (format != expectedFormat) {
+                throw SoraReadException("expected $expectedFormat bundle, got $format")
+            }
+            val version = root.get("format_version").asLong()
+            if (version != SORA_BUNDLE_VERSION.toLong()) {
+                throw SoraReadException("unsupported $expectedFormat bundle version $version")
+            }
+            val data = root.get("data").asObject()
+            val tables = data.get("tables").asRawList().associate { tableValue ->
+                val table = tableValue.asObject()
+                table.get("name").asString() to table.get("rows").asRawList()
+            }
+            return SoraValueBundle(tables)
+        }
     }
 }
 

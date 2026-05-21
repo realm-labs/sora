@@ -16,6 +16,16 @@ data class Dungeon(
                 stageIds = reader.readList { reader.readI32() },
                 entryCost = ResourceCost.decode(reader),
             )
+
+        fun decode(value: SoraValue): Dungeon {
+            val obj = value.asObject()
+            return Dungeon(
+                id = obj.get("id").asInt(),
+                name = obj.get("name").asString(),
+                stageIds = obj.get("stage_ids").asList { item -> item.asInt() },
+                entryCost = ResourceCost.decode(obj.get("entry_cost")),
+            )
+        }
     }
 }
 
@@ -33,8 +43,9 @@ class DungeonTable private constructor(
         get() = rows.size
 
     companion object {
-        fun decode(bundle: SoraBundle): DungeonTable =
-            fromRows(bundle.decodeTable("Dungeon", Dungeon::decode))
+        fun decode(source: SoraTableSource): DungeonTable =
+            fromRows(source.decodeTable("Dungeon", Dungeon::decode, Dungeon::decode))
+
         private fun fromRows(rows: List<Dungeon>): DungeonTable =
             DungeonTable(
                 rows.associateBy { it.id },

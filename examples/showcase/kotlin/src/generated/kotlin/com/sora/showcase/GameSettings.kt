@@ -18,6 +18,17 @@ data class GameSettings(
                 spawnPos = Vec3.decode(reader),
                 starterItems = reader.readList { reader.readI32() },
             )
+
+        fun decode(value: SoraValue): GameSettings {
+            val obj = value.asObject()
+            return GameSettings(
+                version = obj.get("version").asString(),
+                dailyResetHour = obj.get("daily_reset_hour").asInt(),
+                startingGold = obj.get("starting_gold").asInt(),
+                spawnPos = Vec3.decode(obj.get("spawn_pos")),
+                starterItems = obj.get("starter_items").asList { item -> item.asInt() },
+            )
+        }
     }
 }
 
@@ -32,8 +43,9 @@ class GameSettingsTable private constructor(
     override val size: Int = 1
 
     companion object {
-        fun decode(bundle: SoraBundle): GameSettingsTable =
-            fromRows(bundle.decodeTable("GameSettings", GameSettings::decode))
+        fun decode(source: SoraTableSource): GameSettingsTable =
+            fromRows(source.decodeTable("GameSettings", GameSettings::decode, GameSettings::decode))
+
         private fun fromRows(rows: List<GameSettings>): GameSettingsTable =
             GameSettingsTable(
                 requireSingletonTable(rows, "GameSettings"),

@@ -14,5 +14,14 @@ data class SkillEffect(
                 power = reader.readI32(),
                 radius = reader.readF32(),
             )
+
+        fun decode(value: SoraValue): SkillEffect {
+            val obj = value.asObject()
+            return SkillEffect(
+                element = ElementType.decode(obj.get("element")),
+                power = obj.get("power").asInt(),
+                radius = obj.get("radius").asFloat(),
+            )
+        }
     }
 }

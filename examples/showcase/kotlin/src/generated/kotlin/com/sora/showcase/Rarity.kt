@@ -19,5 +19,15 @@ enum class Rarity {
                 4 -> Legendary
                 else -> throw SoraReadException("invalid enum ordinal $ordinal for Rarity")
             }
+
+        fun decode(value: SoraValue): Rarity =
+            when (val name = value.asString()) {
+                "Common" -> Common
+                "Uncommon" -> Uncommon
+                "Rare" -> Rare
+                "Epic" -> Epic
+                "Legendary" -> Legendary
+                else -> throw SoraReadException("invalid enum value $name for Rarity")
+            }
     }
 }
