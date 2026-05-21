@@ -202,7 +202,6 @@ required = true
 [[tables.fields]]
 name = "tags"
 type = "list<string>"
-separator = ","
 
 [[tables.fields]]
 name = "action"

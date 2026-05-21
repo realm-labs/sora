@@ -268,9 +268,6 @@ mod tests {
             range: None,
             length: None,
             parser: None,
-            separator: None,
-            prefix: None,
-            suffix: None,
             aggregation: None,
         }
     }

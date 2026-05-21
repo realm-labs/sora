@@ -71,10 +71,7 @@ pub fn load_csv_table_data(ir: &ConfigIr, table: &TableIr, path: &Path) -> Resul
                     column: column + 1,
                 },
                 field: &field.name,
-                parser: field.parser.as_deref(),
-                separator: field.separator.as_deref(),
-                prefix: field.prefix.as_deref(),
-                suffix: field.suffix.as_deref(),
+                parser: field.parser.as_ref(),
             };
             values.insert(
                 field.name.clone(),
@@ -317,7 +314,6 @@ required = true
 [[tables.fields]]
 name = "tags"
 type = "list<string>"
-separator = ","
 "#,
         )
         .unwrap();
@@ -361,8 +357,7 @@ file = "Reward.csv"
 [[tables.fields]]
 name = "cost"
 type = "struct<ResourceCost>"
-parser = "tuple"
-separator = ","
+parser = { kind = "tuple" }
 "#,
         )
         .unwrap();

@@ -109,10 +109,7 @@ fn default_to_value(ir: &ConfigIr, field: &FieldIr, source: &str) -> Result<Valu
         ir,
         location: CellLocation::Default,
         field: &field.name,
-        parser: field.parser.as_deref(),
-        separator: field.separator.as_deref(),
-        prefix: field.prefix.as_deref(),
-        suffix: field.suffix.as_deref(),
+        parser: field.parser.as_ref(),
     };
     cell_to_value(
         &CellValue::Text(Cow::Owned(source.to_owned())),
@@ -201,7 +198,6 @@ default = "1001"
 [[tables.fields]]
 name = "tags"
 type = "list<string>"
-separator = ","
 default = "new"
 
 [[tables.fields]]

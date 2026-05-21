@@ -1190,7 +1190,6 @@ name = "rolls"
 type = "array<i32,2>"
 required = true
 range = [1, 6]
-separator = ","
 
 [[tables]]
 name = "Settings"
@@ -1271,7 +1270,6 @@ length = [2, 8]
 [[tables.fields]]
 name = "tags"
 type = "list<string>"
-separator = ","
 length = [1, 2]
 "#,
         )

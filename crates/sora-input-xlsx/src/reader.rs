@@ -91,10 +91,7 @@ fn load_xlsx_table_data_from_range(
                     column: column + 1,
                 },
                 field: &field.name,
-                parser: field.parser.as_deref(),
-                separator: field.separator.as_deref(),
-                prefix: field.prefix.as_deref(),
-                suffix: field.suffix.as_deref(),
+                parser: field.parser.as_ref(),
             };
             values.insert(
                 field_names[column].to_owned(),
@@ -165,8 +162,8 @@ mod tests {
             &[vec![
                 "1001",
                 "",
-                "[\"sharp\",\"rare\"]",
-                "[1,2]",
+                "sharp,rare",
+                "1,2",
                 "{\"item_id\":1001,\"count\":2}",
             ]],
         );
@@ -326,16 +323,10 @@ type = "optional<string>"
 [[tables.fields]]
 name = "tags"
 type = "list<string>"
-separator = ","
-prefix = "["
-suffix = "]"
 
 [[tables.fields]]
 name = "coords"
 type = "array<i32,2>"
-separator = ","
-prefix = "["
-suffix = "]"
 
 [[tables.fields]]
 name = "reward"
@@ -384,8 +375,7 @@ sheet = "Reward"
 [[tables.fields]]
 name = "cost"
 type = "struct<ResourceCost>"
-parser = "tuple"
-separator = ","
+parser = { kind = "tuple" }
 "#,
         )
         .unwrap();

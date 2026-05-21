@@ -598,7 +598,7 @@ type = "union<Action>"
 [[tables.fields]]
 name = "tags"
 type = "list<string>"
-separator = "|"
+parser = { kind = "split", separator = "|" }
 
 [[tables.fields]]
 name = "maybe_count"

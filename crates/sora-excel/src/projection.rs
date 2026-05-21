@@ -57,7 +57,11 @@ pub fn schema_hash(ir: &ConfigIr, table: &TableIr) -> String {
         update(&mut hash, &field.ty.to_string());
         update(&mut hash, &field.scope.display());
         if let Some(parser) = &field.parser {
-            update(&mut hash, parser);
+            update(&mut hash, &parser.kind);
+            for (key, value) in &parser.options {
+                update(&mut hash, key);
+                update(&mut hash, value);
+            }
         }
         if let Some(tuple_shape) = tuple_shape(ir, field) {
             update(&mut hash, &tuple_shape);
@@ -69,9 +73,6 @@ pub fn schema_hash(ir: &ConfigIr, table: &TableIr) -> String {
                 .map(|[min, max]| format!("{min}..{max}"))
                 .unwrap_or_default(),
         );
-        update(&mut hash, field.separator.as_deref().unwrap_or(""));
-        update(&mut hash, field.prefix.as_deref().unwrap_or(""));
-        update(&mut hash, field.suffix.as_deref().unwrap_or(""));
         update(
             &mut hash,
             if field.required {
@@ -97,8 +98,12 @@ pub(crate) fn table_mode_name(mode: TableModeIr) -> &'static str {
 pub(crate) fn field_type_hint(ir: &ConfigIr, field: &FieldIr) -> String {
     match struct_type_name(&field.ty)
         .and_then(|struct_name| struct_ir(ir, struct_name))
-        .filter(|_| field.parser.as_deref() == Some("tuple"))
-    {
+        .filter(|_| {
+            field
+                .parser
+                .as_ref()
+                .is_some_and(|parser| parser.kind == "tuple")
+        }) {
         Some(struct_ir) => format!(
             "{}({})",
             field.ty,
@@ -114,7 +119,11 @@ pub(crate) fn field_type_hint(ir: &ConfigIr, field: &FieldIr) -> String {
 }
 
 pub(crate) fn tuple_shape(ir: &ConfigIr, field: &FieldIr) -> Option<String> {
-    if field.parser.as_deref() != Some("tuple") {
+    if !field
+        .parser
+        .as_ref()
+        .is_some_and(|parser| parser.kind == "tuple")
+    {
         return None;
     }
     let struct_name = struct_type_name(&field.ty)?;
@@ -151,22 +160,15 @@ fn field_rule(field: &FieldIr) -> String {
         parts.push("optional".to_owned());
     }
 
-    if let Some(separator) = &field.separator {
-        parts.push(format!("separator={separator}"));
-    }
     if let Some(parser) = &field.parser {
-        parts.push(format!("parser={parser}"));
+        parts.push(format!("parser={}", parser.kind));
+        for (key, value) in &parser.options {
+            parts.push(format!("{key}={value}"));
+        }
     }
     if let Some([min, max]) = field.range {
         parts.push(format!("range={min}..{max}"));
     }
-    if let Some(prefix) = &field.prefix {
-        parts.push(format!("prefix={prefix}"));
-    }
-    if let Some(suffix) = &field.suffix {
-        parts.push(format!("suffix={suffix}"));
-    }
-
     parts.join(";")
 }
 
@@ -227,7 +229,7 @@ mod tests {
                 "struct<ResourceCost>(kind: enum<ResourceType>, id: i32, count: i32)"
             ]
         );
-        assert_eq!(rows[10], ["#rule", "required;separator=,;parser=tuple"]);
+        assert_eq!(rows[10], ["#rule", "required;parser=tuple"]);
     }
 
     fn example_ir() -> ConfigIr {
@@ -310,8 +312,7 @@ mode = "list"
 name = "cost"
 type = "struct<ResourceCost>"
 required = true
-parser = "tuple"
-separator = ","
+parser = { kind = "tuple" }
 "#,
         )
         .unwrap();

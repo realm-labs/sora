@@ -385,6 +385,8 @@ fn excel_error(path: &Path, source: impl std::fmt::Display) -> SoraError {
 
 #[cfg(test)]
 mod tests {
+    use std::collections::BTreeMap;
+
     use super::*;
     use sora_ir::model::{AggregationIr, ConfigIr, EnumIr, ScopeIr, StructIr, TypeIr};
 
@@ -401,9 +403,6 @@ mod tests {
             range: Some([1, 99]),
             length: Some([1, 3]),
             parser: None,
-            separator: None,
-            prefix: None,
-            suffix: None,
             aggregation: Some(AggregationIr {
                 source_table: "Reward".to_owned(),
                 parent_key: "id".to_owned(),
@@ -439,9 +438,6 @@ mod tests {
             range: None,
             length: None,
             parser: None,
-            separator: None,
-            prefix: None,
-            suffix: None,
             aggregation: None,
         };
 
@@ -474,9 +470,6 @@ mod tests {
                         range: None,
                         length: None,
                         parser: None,
-                        separator: None,
-                        prefix: None,
-                        suffix: None,
                         aggregation: None,
                     },
                     FieldIr {
@@ -490,9 +483,6 @@ mod tests {
                         range: None,
                         length: None,
                         parser: None,
-                        separator: None,
-                        prefix: None,
-                        suffix: None,
                         aggregation: None,
                     },
                     FieldIr {
@@ -506,9 +496,6 @@ mod tests {
                         range: None,
                         length: None,
                         parser: None,
-                        separator: None,
-                        prefix: None,
-                        suffix: None,
                         aggregation: None,
                     },
                 ],
@@ -526,10 +513,10 @@ mod tests {
             default: None,
             range: None,
             length: None,
-            parser: Some("tuple".to_owned()),
-            separator: Some(",".to_owned()),
-            prefix: None,
-            suffix: None,
+            parser: Some(sora_ir::model::ParserIr {
+                kind: "tuple".to_owned(),
+                options: BTreeMap::new(),
+            }),
             aggregation: None,
         };
 

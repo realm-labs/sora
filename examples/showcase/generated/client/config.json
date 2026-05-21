@@ -129,9 +129,6 @@
             "range": null,
             "length": null,
             "parser": null,
-            "separator": null,
-            "prefix": null,
-            "suffix": null,
             "aggregation": null
           },
           {
@@ -149,9 +146,6 @@
             "range": null,
             "length": null,
             "parser": null,
-            "separator": null,
-            "prefix": null,
-            "suffix": null,
             "aggregation": null
           },
           {
@@ -172,9 +166,6 @@
             ],
             "length": null,
             "parser": null,
-            "separator": null,
-            "prefix": null,
-            "suffix": null,
             "aggregation": null
           }
         ]
@@ -202,9 +193,6 @@
             "range": null,
             "length": null,
             "parser": null,
-            "separator": null,
-            "prefix": null,
-            "suffix": null,
             "aggregation": null
           },
           {
@@ -222,9 +210,6 @@
             "range": null,
             "length": null,
             "parser": null,
-            "separator": null,
-            "prefix": null,
-            "suffix": null,
             "aggregation": null
           },
           {
@@ -242,9 +227,6 @@
             "range": null,
             "length": null,
             "parser": null,
-            "separator": null,
-            "prefix": null,
-            "suffix": null,
             "aggregation": null
           }
         ]
@@ -274,9 +256,6 @@
             "range": null,
             "length": null,
             "parser": null,
-            "separator": null,
-            "prefix": null,
-            "suffix": null,
             "aggregation": null
           },
           {
@@ -297,9 +276,6 @@
             ],
             "length": null,
             "parser": null,
-            "separator": null,
-            "prefix": null,
-            "suffix": null,
             "aggregation": null
           },
           {
@@ -317,9 +293,6 @@
             "range": null,
             "length": null,
             "parser": null,
-            "separator": null,
-            "prefix": null,
-            "suffix": null,
             "aggregation": null
           }
         ]
@@ -352,9 +325,6 @@
             "range": null,
             "length": null,
             "parser": null,
-            "separator": null,
-            "prefix": null,
-            "suffix": null,
             "aggregation": null
           },
           {
@@ -375,9 +345,6 @@
             ],
             "length": null,
             "parser": null,
-            "separator": null,
-            "prefix": null,
-            "suffix": null,
             "aggregation": null
           }
         ]
@@ -407,9 +374,6 @@
             "range": null,
             "length": null,
             "parser": null,
-            "separator": null,
-            "prefix": null,
-            "suffix": null,
             "aggregation": null
           },
           {
@@ -427,9 +391,6 @@
             "range": null,
             "length": null,
             "parser": null,
-            "separator": null,
-            "prefix": null,
-            "suffix": null,
             "aggregation": null
           },
           {
@@ -447,9 +408,6 @@
             "range": null,
             "length": null,
             "parser": null,
-            "separator": null,
-            "prefix": null,
-            "suffix": null,
             "aggregation": null
           }
         ]
@@ -493,9 +451,6 @@
                 "range": null,
                 "length": null,
                 "parser": null,
-                "separator": null,
-                "prefix": null,
-                "suffix": null,
                 "aggregation": null
               }
             ]
@@ -528,9 +483,6 @@
                 "range": null,
                 "length": null,
                 "parser": null,
-                "separator": null,
-                "prefix": null,
-                "suffix": null,
                 "aggregation": null
               }
             ]
@@ -563,9 +515,6 @@
                 "range": null,
                 "length": null,
                 "parser": null,
-                "separator": null,
-                "prefix": null,
-                "suffix": null,
                 "aggregation": null
               },
               {
@@ -586,9 +535,6 @@
                 ],
                 "length": null,
                 "parser": null,
-                "separator": null,
-                "prefix": null,
-                "suffix": null,
                 "aggregation": null
               }
             ]
@@ -632,9 +578,6 @@
                 "range": null,
                 "length": null,
                 "parser": null,
-                "separator": null,
-                "prefix": null,
-                "suffix": null,
                 "aggregation": null
               },
               {
@@ -655,9 +598,6 @@
                 ],
                 "length": null,
                 "parser": null,
-                "separator": null,
-                "prefix": null,
-                "suffix": null,
                 "aggregation": null
               }
             ]
@@ -690,9 +630,6 @@
                 "range": null,
                 "length": null,
                 "parser": null,
-                "separator": null,
-                "prefix": null,
-                "suffix": null,
                 "aggregation": null
               },
               {
@@ -710,9 +647,6 @@
                 "range": null,
                 "length": null,
                 "parser": null,
-                "separator": null,
-                "prefix": null,
-                "suffix": null,
                 "aggregation": null
               }
             ]
@@ -745,9 +679,6 @@
                 "range": null,
                 "length": null,
                 "parser": null,
-                "separator": null,
-                "prefix": null,
-                "suffix": null,
                 "aggregation": null
               }
             ]
@@ -780,9 +711,6 @@
                 "range": null,
                 "length": null,
                 "parser": null,
-                "separator": null,
-                "prefix": null,
-                "suffix": null,
                 "aggregation": null
               }
             ]
@@ -820,9 +748,6 @@
             "range": null,
             "length": null,
             "parser": null,
-            "separator": null,
-            "prefix": null,
-            "suffix": null,
             "aggregation": null
           },
           {
@@ -843,9 +768,6 @@
               32
             ],
             "parser": null,
-            "separator": null,
-            "prefix": null,
-            "suffix": null,
             "aggregation": null
           },
           {
@@ -865,9 +787,6 @@
             "range": null,
             "length": null,
             "parser": null,
-            "separator": null,
-            "prefix": null,
-            "suffix": null,
             "aggregation": null
           },
           {
@@ -888,9 +807,6 @@
             ],
             "length": null,
             "parser": null,
-            "separator": null,
-            "prefix": null,
-            "suffix": null,
             "aggregation": null
           },
           {
@@ -909,10 +825,10 @@
             "default": null,
             "range": null,
             "length": null,
-            "parser": "tuple",
-            "separator": ",",
-            "prefix": null,
-            "suffix": null,
+            "parser": {
+              "kind": "tuple",
+              "options": {}
+            },
             "aggregation": null
           },
           {
@@ -935,9 +851,6 @@
               5
             ],
             "parser": null,
-            "separator": ",",
-            "prefix": "[",
-            "suffix": "]",
             "aggregation": null
           }
         ],
@@ -987,9 +900,6 @@
             "range": null,
             "length": null,
             "parser": null,
-            "separator": null,
-            "prefix": null,
-            "suffix": null,
             "aggregation": null
           },
           {
@@ -1010,9 +920,6 @@
               32
             ],
             "parser": null,
-            "separator": null,
-            "prefix": null,
-            "suffix": null,
             "aggregation": null
           },
           {
@@ -1032,9 +939,6 @@
             "range": null,
             "length": null,
             "parser": null,
-            "separator": null,
-            "prefix": null,
-            "suffix": null,
             "aggregation": null
           },
           {
@@ -1053,10 +957,10 @@
             "default": null,
             "range": null,
             "length": null,
-            "parser": "tuple",
-            "separator": ",",
-            "prefix": null,
-            "suffix": null,
+            "parser": {
+              "kind": "tuple",
+              "options": {}
+            },
             "aggregation": null
           },
           {
@@ -1076,9 +980,6 @@
             "range": null,
             "length": null,
             "parser": null,
-            "separator": null,
-            "prefix": null,
-            "suffix": null,
             "aggregation": null
           },
           {
@@ -1099,9 +1000,6 @@
             ],
             "length": null,
             "parser": null,
-            "separator": null,
-            "prefix": null,
-            "suffix": null,
             "aggregation": null
           },
           {
@@ -1126,9 +1024,6 @@
             "range": null,
             "length": null,
             "parser": null,
-            "separator": null,
-            "prefix": null,
-            "suffix": null,
             "aggregation": null
           },
           {
@@ -1147,10 +1042,10 @@
             "default": null,
             "range": null,
             "length": null,
-            "parser": "tuple",
-            "separator": ",",
-            "prefix": null,
-            "suffix": null,
+            "parser": {
+              "kind": "tuple",
+              "options": {}
+            },
             "aggregation": null
           }
         ],
@@ -1185,9 +1080,6 @@
             "range": null,
             "length": null,
             "parser": null,
-            "separator": null,
-            "prefix": null,
-            "suffix": null,
             "aggregation": null
           },
           {
@@ -1207,9 +1099,6 @@
             "range": null,
             "length": null,
             "parser": null,
-            "separator": null,
-            "prefix": null,
-            "suffix": null,
             "aggregation": null
           },
           {
@@ -1230,9 +1119,6 @@
               64
             ],
             "parser": null,
-            "separator": null,
-            "prefix": null,
-            "suffix": null,
             "aggregation": null
           },
           {
@@ -1255,9 +1141,6 @@
             "range": null,
             "length": null,
             "parser": null,
-            "separator": null,
-            "prefix": null,
-            "suffix": null,
             "aggregation": null
           },
           {
@@ -1285,9 +1168,6 @@
               3
             ],
             "parser": null,
-            "separator": ",",
-            "prefix": "[",
-            "suffix": "]",
             "aggregation": null
           },
           {
@@ -1306,10 +1186,10 @@
             "default": null,
             "range": null,
             "length": null,
-            "parser": "tuple",
-            "separator": ",",
-            "prefix": null,
-            "suffix": null,
+            "parser": {
+              "kind": "tuple",
+              "options": {}
+            },
             "aggregation": null
           },
           {
@@ -1331,9 +1211,6 @@
             "range": null,
             "length": null,
             "parser": null,
-            "separator": null,
-            "prefix": null,
-            "suffix": null,
             "aggregation": {
               "source_table": "QuestReward",
               "parent_key": "id",
@@ -1378,9 +1255,6 @@
             "range": null,
             "length": null,
             "parser": null,
-            "separator": null,
-            "prefix": null,
-            "suffix": null,
             "aggregation": null
           },
           {
@@ -1398,9 +1272,6 @@
             "range": null,
             "length": null,
             "parser": null,
-            "separator": null,
-            "prefix": null,
-            "suffix": null,
             "aggregation": null
           },
           {
@@ -1423,9 +1294,6 @@
             "range": null,
             "length": null,
             "parser": null,
-            "separator": null,
-            "prefix": null,
-            "suffix": null,
             "aggregation": null
           },
           {
@@ -1446,9 +1314,6 @@
             ],
             "length": null,
             "parser": null,
-            "separator": null,
-            "prefix": null,
-            "suffix": null,
             "aggregation": null
           }
         ],
@@ -1483,9 +1348,6 @@
             "range": null,
             "length": null,
             "parser": null,
-            "separator": null,
-            "prefix": null,
-            "suffix": null,
             "aggregation": null
           },
           {
@@ -1506,9 +1368,6 @@
             ],
             "length": null,
             "parser": null,
-            "separator": null,
-            "prefix": null,
-            "suffix": null,
             "aggregation": null
           },
           {
@@ -1529,9 +1388,6 @@
             ],
             "length": null,
             "parser": null,
-            "separator": null,
-            "prefix": null,
-            "suffix": null,
             "aggregation": null
           },
           {
@@ -1550,10 +1406,10 @@
             "default": null,
             "range": null,
             "length": null,
-            "parser": "tuple",
-            "separator": ",",
-            "prefix": null,
-            "suffix": null,
+            "parser": {
+              "kind": "tuple",
+              "options": {}
+            },
             "aggregation": null
           },
           {
@@ -1581,9 +1437,6 @@
               4
             ],
             "parser": null,
-            "separator": ",",
-            "prefix": "[",
-            "suffix": "]",
             "aggregation": null
           }
         ],
@@ -1621,9 +1474,6 @@
               64
             ],
             "parser": null,
-            "separator": null,
-            "prefix": null,
-            "suffix": null,
             "aggregation": null
           },
           {
@@ -1641,9 +1491,6 @@
             "range": null,
             "length": null,
             "parser": null,
-            "separator": null,
-            "prefix": null,
-            "suffix": null,
             "aggregation": null
           },
           {
@@ -1661,9 +1508,6 @@
             "range": null,
             "length": null,
             "parser": null,
-            "separator": null,
-            "prefix": null,
-            "suffix": null,
             "aggregation": null
           },
           {
@@ -1683,9 +1527,6 @@
             "range": null,
             "length": null,
             "parser": null,
-            "separator": null,
-            "prefix": null,
-            "suffix": null,
             "aggregation": null
           }
         ],
@@ -1723,9 +1564,6 @@
             ],
             "length": null,
             "parser": null,
-            "separator": null,
-            "prefix": null,
-            "suffix": null,
             "aggregation": null
           },
           {
@@ -1746,9 +1584,6 @@
             ],
             "length": null,
             "parser": null,
-            "separator": null,
-            "prefix": null,
-            "suffix": null,
             "aggregation": null
           },
           {
@@ -1768,9 +1603,6 @@
             "range": null,
             "length": null,
             "parser": null,
-            "separator": null,
-            "prefix": null,
-            "suffix": null,
             "aggregation": null
           }
         ],
@@ -1805,9 +1637,6 @@
             "range": null,
             "length": null,
             "parser": null,
-            "separator": null,
-            "prefix": null,
-            "suffix": null,
             "aggregation": null
           },
           {
@@ -1828,9 +1657,6 @@
               32
             ],
             "parser": null,
-            "separator": null,
-            "prefix": null,
-            "suffix": null,
             "aggregation": null
           },
           {
@@ -1850,9 +1676,6 @@
             "range": null,
             "length": null,
             "parser": null,
-            "separator": null,
-            "prefix": null,
-            "suffix": null,
             "aggregation": null
           },
           {
@@ -1875,9 +1698,6 @@
             "range": null,
             "length": null,
             "parser": null,
-            "separator": null,
-            "prefix": null,
-            "suffix": null,
             "aggregation": null
           },
           {
@@ -1900,9 +1720,6 @@
             "range": null,
             "length": null,
             "parser": null,
-            "separator": null,
-            "prefix": null,
-            "suffix": null,
             "aggregation": null
           },
           {
@@ -1930,9 +1747,6 @@
               4
             ],
             "parser": null,
-            "separator": ",",
-            "prefix": "[",
-            "suffix": "]",
             "aggregation": null
           },
           {
@@ -1951,10 +1765,10 @@
             "default": null,
             "range": null,
             "length": null,
-            "parser": "tuple",
-            "separator": ",",
-            "prefix": null,
-            "suffix": null,
+            "parser": {
+              "kind": "tuple",
+              "options": {}
+            },
             "aggregation": null
           }
         ],
@@ -1994,9 +1808,6 @@
             "range": null,
             "length": null,
             "parser": null,
-            "separator": null,
-            "prefix": null,
-            "suffix": null,
             "aggregation": null
           },
           {
@@ -2019,9 +1830,6 @@
             "range": null,
             "length": null,
             "parser": null,
-            "separator": null,
-            "prefix": null,
-            "suffix": null,
             "aggregation": null
           },
           {
@@ -2044,9 +1852,6 @@
             "range": null,
             "length": null,
             "parser": null,
-            "separator": null,
-            "prefix": null,
-            "suffix": null,
             "aggregation": null
           }
         ],
@@ -2081,9 +1886,6 @@
             "range": null,
             "length": null,
             "parser": null,
-            "separator": null,
-            "prefix": null,
-            "suffix": null,
             "aggregation": null
           },
           {
@@ -2101,9 +1903,6 @@
             "range": null,
             "length": null,
             "parser": null,
-            "separator": null,
-            "prefix": null,
-            "suffix": null,
             "aggregation": null
           },
           {
@@ -2121,9 +1920,6 @@
             "range": null,
             "length": null,
             "parser": null,
-            "separator": null,
-            "prefix": null,
-            "suffix": null,
             "aggregation": null
           },
           {
@@ -2147,10 +1943,10 @@
               1,
               3
             ],
-            "parser": null,
-            "separator": ",",
-            "prefix": "[",
-            "suffix": "]",
+            "parser": {
+              "kind": "json",
+              "options": {}
+            },
             "aggregation": null
           }
         ],
@@ -2185,9 +1981,6 @@
             "range": null,
             "length": null,
             "parser": null,
-            "separator": null,
-            "prefix": null,
-            "suffix": null,
             "aggregation": null
           },
           {
@@ -2205,9 +1998,6 @@
             "range": null,
             "length": null,
             "parser": null,
-            "separator": null,
-            "prefix": null,
-            "suffix": null,
             "aggregation": null
           }
         ],
@@ -2247,9 +2037,6 @@
             "range": null,
             "length": null,
             "parser": null,
-            "separator": null,
-            "prefix": null,
-            "suffix": null,
             "aggregation": null
           },
           {
@@ -2267,9 +2054,6 @@
             "range": null,
             "length": null,
             "parser": null,
-            "separator": null,
-            "prefix": null,
-            "suffix": null,
             "aggregation": null
           },
           {
@@ -2292,9 +2076,6 @@
             "range": null,
             "length": null,
             "parser": null,
-            "separator": null,
-            "prefix": null,
-            "suffix": null,
             "aggregation": null
           },
           {
@@ -2315,9 +2096,6 @@
             ],
             "length": null,
             "parser": null,
-            "separator": null,
-            "prefix": null,
-            "suffix": null,
             "aggregation": null
           }
         ],
@@ -2352,9 +2130,6 @@
             "range": null,
             "length": null,
             "parser": null,
-            "separator": null,
-            "prefix": null,
-            "suffix": null,
             "aggregation": null
           },
           {
@@ -2372,9 +2147,6 @@
             "range": null,
             "length": null,
             "parser": null,
-            "separator": null,
-            "prefix": null,
-            "suffix": null,
             "aggregation": null
           },
           {
@@ -2397,9 +2169,6 @@
             "range": null,
             "length": null,
             "parser": null,
-            "separator": null,
-            "prefix": null,
-            "suffix": null,
             "aggregation": null
           },
           {
@@ -2419,9 +2188,6 @@
             "range": null,
             "length": null,
             "parser": null,
-            "separator": null,
-            "prefix": null,
-            "suffix": null,
             "aggregation": null
           },
           {
@@ -2444,9 +2210,6 @@
             "range": null,
             "length": null,
             "parser": null,
-            "separator": null,
-            "prefix": null,
-            "suffix": null,
             "aggregation": null
           },
           {
@@ -2465,10 +2228,10 @@
             "default": null,
             "range": null,
             "length": null,
-            "parser": "tuple",
-            "separator": ",",
-            "prefix": null,
-            "suffix": null,
+            "parser": {
+              "kind": "tuple",
+              "options": {}
+            },
             "aggregation": null
           }
         ],
@@ -2503,9 +2266,6 @@
             "range": null,
             "length": null,
             "parser": null,
-            "separator": null,
-            "prefix": null,
-            "suffix": null,
             "aggregation": null
           },
           {
@@ -2523,9 +2283,6 @@
             "range": null,
             "length": null,
             "parser": null,
-            "separator": null,
-            "prefix": null,
-            "suffix": null,
             "aggregation": null
           },
           {
@@ -2553,9 +2310,6 @@
               5
             ],
             "parser": null,
-            "separator": ",",
-            "prefix": "[",
-            "suffix": "]",
             "aggregation": null
           },
           {
@@ -2573,9 +2327,6 @@
             "range": null,
             "length": null,
             "parser": null,
-            "separator": null,
-            "prefix": null,
-            "suffix": null,
             "aggregation": null
           },
           {
@@ -2597,9 +2348,6 @@
             "range": null,
             "length": null,
             "parser": null,
-            "separator": null,
-            "prefix": null,
-            "suffix": null,
             "aggregation": {
               "source_table": "StageReward",
               "parent_key": "id",
@@ -2644,9 +2392,6 @@
             "range": null,
             "length": null,
             "parser": null,
-            "separator": null,
-            "prefix": null,
-            "suffix": null,
             "aggregation": null
           },
           {
@@ -2664,9 +2409,6 @@
             "range": null,
             "length": null,
             "parser": null,
-            "separator": null,
-            "prefix": null,
-            "suffix": null,
             "aggregation": null
           },
           {
@@ -2689,9 +2431,6 @@
             "range": null,
             "length": null,
             "parser": null,
-            "separator": null,
-            "prefix": null,
-            "suffix": null,
             "aggregation": null
           },
           {
@@ -2709,9 +2448,6 @@
             "range": null,
             "length": null,
             "parser": null,
-            "separator": null,
-            "prefix": null,
-            "suffix": null,
             "aggregation": null
           }
         ],
@@ -2746,9 +2482,6 @@
             "range": null,
             "length": null,
             "parser": null,
-            "separator": null,
-            "prefix": null,
-            "suffix": null,
             "aggregation": null
           },
           {
@@ -2766,9 +2499,6 @@
             "range": null,
             "length": null,
             "parser": null,
-            "separator": null,
-            "prefix": null,
-            "suffix": null,
             "aggregation": null
           },
           {
@@ -2796,9 +2526,6 @@
               6
             ],
             "parser": null,
-            "separator": ",",
-            "prefix": "[",
-            "suffix": "]",
             "aggregation": null
           },
           {
@@ -2817,10 +2544,10 @@
             "default": null,
             "range": null,
             "length": null,
-            "parser": "tuple",
-            "separator": ",",
-            "prefix": null,
-            "suffix": null,
+            "parser": {
+              "kind": "tuple",
+              "options": {}
+            },
             "aggregation": null
           }
         ],
@@ -2855,9 +2582,6 @@
             "range": null,
             "length": null,
             "parser": null,
-            "separator": null,
-            "prefix": null,
-            "suffix": null,
             "aggregation": null
           },
           {
@@ -2875,9 +2599,6 @@
             "range": null,
             "length": null,
             "parser": null,
-            "separator": null,
-            "prefix": null,
-            "suffix": null,
             "aggregation": null
           },
           {
@@ -2897,9 +2618,6 @@
             "range": null,
             "length": null,
             "parser": null,
-            "separator": null,
-            "prefix": null,
-            "suffix": null,
             "aggregation": null
           }
         ],
@@ -2939,9 +2657,6 @@
             "range": null,
             "length": null,
             "parser": null,
-            "separator": null,
-            "prefix": null,
-            "suffix": null,
             "aggregation": null
           },
           {
@@ -2959,9 +2674,6 @@
             "range": null,
             "length": null,
             "parser": null,
-            "separator": null,
-            "prefix": null,
-            "suffix": null,
             "aggregation": null
           },
           {
@@ -2984,9 +2696,6 @@
             "range": null,
             "length": null,
             "parser": null,
-            "separator": null,
-            "prefix": null,
-            "suffix": null,
             "aggregation": null
           },
           {
@@ -3005,10 +2714,10 @@
             "default": null,
             "range": null,
             "length": null,
-            "parser": "tuple",
-            "separator": ",",
-            "prefix": null,
-            "suffix": null,
+            "parser": {
+              "kind": "tuple",
+              "options": {}
+            },
             "aggregation": null
           },
           {
@@ -3028,9 +2737,6 @@
             "range": null,
             "length": null,
             "parser": null,
-            "separator": null,
-            "prefix": null,
-            "suffix": null,
             "aggregation": null
           }
         ],
@@ -3065,9 +2771,6 @@
             "range": null,
             "length": null,
             "parser": null,
-            "separator": null,
-            "prefix": null,
-            "suffix": null,
             "aggregation": null
           },
           {
@@ -3090,9 +2793,6 @@
             "range": null,
             "length": null,
             "parser": null,
-            "separator": null,
-            "prefix": null,
-            "suffix": null,
             "aggregation": null
           },
           {
@@ -3116,10 +2816,10 @@
               1,
               4
             ],
-            "parser": null,
-            "separator": ",",
-            "prefix": "[",
-            "suffix": "]",
+            "parser": {
+              "kind": "json",
+              "options": {}
+            },
             "aggregation": null
           }
         ],
@@ -3154,9 +2854,6 @@
             "range": null,
             "length": null,
             "parser": null,
-            "separator": null,
-            "prefix": null,
-            "suffix": null,
             "aggregation": null
           },
           {
@@ -3174,9 +2871,6 @@
             "range": null,
             "length": null,
             "parser": null,
-            "separator": null,
-            "prefix": null,
-            "suffix": null,
             "aggregation": null
           },
           {
@@ -3195,10 +2889,10 @@
             "default": null,
             "range": null,
             "length": null,
-            "parser": "tuple",
-            "separator": ",",
-            "prefix": null,
-            "suffix": null,
+            "parser": {
+              "kind": "tuple",
+              "options": {}
+            },
             "aggregation": null
           }
         ],
@@ -3238,9 +2932,6 @@
             "range": null,
             "length": null,
             "parser": null,
-            "separator": null,
-            "prefix": null,
-            "suffix": null,
             "aggregation": null
           },
           {
@@ -3263,9 +2954,6 @@
             "range": null,
             "length": null,
             "parser": null,
-            "separator": null,
-            "prefix": null,
-            "suffix": null,
             "aggregation": null
           },
           {
@@ -3285,9 +2973,6 @@
             "range": null,
             "length": null,
             "parser": null,
-            "separator": null,
-            "prefix": null,
-            "suffix": null,
             "aggregation": null
           },
           {
@@ -3305,9 +2990,6 @@
             "range": null,
             "length": null,
             "parser": null,
-            "separator": null,
-            "prefix": null,
-            "suffix": null,
             "aggregation": null
           }
         ],
@@ -3342,9 +3024,6 @@
             "range": null,
             "length": null,
             "parser": null,
-            "separator": null,
-            "prefix": null,
-            "suffix": null,
             "aggregation": null
           },
           {
@@ -3362,9 +3041,6 @@
             "range": null,
             "length": null,
             "parser": null,
-            "separator": null,
-            "prefix": null,
-            "suffix": null,
             "aggregation": null
           },
           {
@@ -3392,9 +3068,6 @@
               4
             ],
             "parser": null,
-            "separator": ",",
-            "prefix": "[",
-            "suffix": "]",
             "aggregation": null
           },
           {
@@ -3414,9 +3087,6 @@
             "range": null,
             "length": null,
             "parser": null,
-            "separator": null,
-            "prefix": null,
-            "suffix": null,
             "aggregation": null
           }
         ],
@@ -3451,9 +3121,6 @@
             "range": null,
             "length": null,
             "parser": null,
-            "separator": null,
-            "prefix": null,
-            "suffix": null,
             "aggregation": null
           },
           {
@@ -3471,9 +3138,6 @@
             "range": null,
             "length": null,
             "parser": null,
-            "separator": null,
-            "prefix": null,
-            "suffix": null,
             "aggregation": null
           },
           {
@@ -3491,9 +3155,6 @@
             "range": null,
             "length": null,
             "parser": null,
-            "separator": null,
-            "prefix": null,
-            "suffix": null,
             "aggregation": null
           },
           {
@@ -3512,10 +3173,10 @@
             "default": null,
             "range": null,
             "length": null,
-            "parser": "tuple",
-            "separator": ",",
-            "prefix": null,
-            "suffix": null,
+            "parser": {
+              "kind": "tuple",
+              "options": {}
+            },
             "aggregation": null
           }
         ],
@@ -3550,9 +3211,6 @@
             "range": null,
             "length": null,
             "parser": null,
-            "separator": null,
-            "prefix": null,
-            "suffix": null,
             "aggregation": null
           },
           {
@@ -3571,10 +3229,10 @@
             "default": null,
             "range": null,
             "length": null,
-            "parser": "tuple",
-            "separator": ",",
-            "prefix": null,
-            "suffix": null,
+            "parser": {
+              "kind": "tuple",
+              "options": {}
+            },
             "aggregation": null
           },
           {
@@ -3597,9 +3255,6 @@
               5
             ],
             "parser": null,
-            "separator": ",",
-            "prefix": "[",
-            "suffix": "]",
             "aggregation": null
           }
         ],
@@ -3634,9 +3289,6 @@
             "range": null,
             "length": null,
             "parser": null,
-            "separator": null,
-            "prefix": null,
-            "suffix": null,
             "aggregation": null
           },
           {
@@ -3656,9 +3308,6 @@
             "range": null,
             "length": null,
             "parser": null,
-            "separator": null,
-            "prefix": null,
-            "suffix": null,
             "aggregation": null
           },
           {
@@ -3676,9 +3325,6 @@
             "range": null,
             "length": null,
             "parser": null,
-            "separator": null,
-            "prefix": null,
-            "suffix": null,
             "aggregation": null
           },
           {
@@ -3696,9 +3342,6 @@
             "range": null,
             "length": null,
             "parser": null,
-            "separator": null,
-            "prefix": null,
-            "suffix": null,
             "aggregation": null
           },
           {
@@ -3720,9 +3363,6 @@
             "range": null,
             "length": null,
             "parser": null,
-            "separator": null,
-            "prefix": null,
-            "suffix": null,
             "aggregation": {
               "source_table": "MailReward",
               "parent_key": "id",
@@ -3767,9 +3407,6 @@
             "range": null,
             "length": null,
             "parser": null,
-            "separator": null,
-            "prefix": null,
-            "suffix": null,
             "aggregation": null
           },
           {
@@ -3787,9 +3424,6 @@
             "range": null,
             "length": null,
             "parser": null,
-            "separator": null,
-            "prefix": null,
-            "suffix": null,
             "aggregation": null
           },
           {
@@ -3812,9 +3446,6 @@
             "range": null,
             "length": null,
             "parser": null,
-            "separator": null,
-            "prefix": null,
-            "suffix": null,
             "aggregation": null
           },
           {
@@ -3832,9 +3463,6 @@
             "range": null,
             "length": null,
             "parser": null,
-            "separator": null,
-            "prefix": null,
-            "suffix": null,
             "aggregation": null
           }
         ],
@@ -3869,9 +3497,6 @@
             "range": null,
             "length": null,
             "parser": null,
-            "separator": null,
-            "prefix": null,
-            "suffix": null,
             "aggregation": null
           },
           {
@@ -3889,9 +3514,6 @@
             "range": null,
             "length": null,
             "parser": null,
-            "separator": null,
-            "prefix": null,
-            "suffix": null,
             "aggregation": null
           },
           {
@@ -3914,9 +3536,6 @@
               5
             ],
             "parser": null,
-            "separator": ",",
-            "prefix": "[",
-            "suffix": "]",
             "aggregation": null
           }
         ],
@@ -3951,9 +3570,6 @@
             "range": null,
             "length": null,
             "parser": null,
-            "separator": null,
-            "prefix": null,
-            "suffix": null,
             "aggregation": null
           },
           {
@@ -3971,9 +3587,6 @@
             "range": null,
             "length": null,
             "parser": null,
-            "separator": null,
-            "prefix": null,
-            "suffix": null,
             "aggregation": null
           },
           {
@@ -3993,9 +3606,6 @@
             "range": null,
             "length": null,
             "parser": null,
-            "separator": null,
-            "prefix": null,
-            "suffix": null,
             "aggregation": null
           },
           {
@@ -4019,10 +3629,10 @@
               1,
               4
             ],
-            "parser": null,
-            "separator": ",",
-            "prefix": "[",
-            "suffix": "]",
+            "parser": {
+              "kind": "json",
+              "options": {}
+            },
             "aggregation": null
           }
         ],

@@ -1,4 +1,4 @@
-use std::fmt;
+use std::{collections::BTreeMap, fmt};
 
 use serde::{
     Deserialize, Deserializer,
@@ -415,14 +415,19 @@ pub struct FieldSchema {
     pub default: Option<String>,
     pub range: Option<[i64; 2]>,
     pub length: Option<[usize; 2]>,
-    pub parser: Option<String>,
-    pub separator: Option<String>,
-    pub prefix: Option<String>,
-    pub suffix: Option<String>,
+    pub parser: Option<ParserSchema>,
     pub source_table: Option<String>,
     pub parent_key: Option<String>,
     pub child_key: Option<String>,
     pub order_by: Option<String>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
+pub struct ParserSchema {
+    pub kind: String,
+
+    #[serde(flatten)]
+    pub options: BTreeMap<String, String>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -509,9 +514,7 @@ comment = "Item id"
 [[tables.fields]]
 name = "tags"
 type = "list<string>"
-separator = "|"
-prefix = "["
-suffix = "]"
+parser = { kind = "split", separator = "|" }
 "#,
         )
         .expect("schema should parse");
@@ -525,9 +528,9 @@ suffix = "]"
         assert_eq!(schema.tables[0].fields[0].name, "id");
         assert!(schema.tables[0].fields[0].key);
         assert_eq!(schema.tables[0].fields[0].required, Some(true));
-        assert_eq!(schema.tables[0].fields[1].separator.as_deref(), Some("|"));
-        assert_eq!(schema.tables[0].fields[1].prefix.as_deref(), Some("["));
-        assert_eq!(schema.tables[0].fields[1].suffix.as_deref(), Some("]"));
+        let parser = schema.tables[0].fields[1].parser.as_ref().unwrap();
+        assert_eq!(parser.kind, "split");
+        assert_eq!(parser.options["separator"], "|");
     }
 
     #[test]

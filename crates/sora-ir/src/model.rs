@@ -1,4 +1,4 @@
-use std::fmt;
+use std::{collections::BTreeMap, fmt};
 
 use serde::{Deserialize, Serialize};
 
@@ -313,11 +313,14 @@ pub struct FieldIr {
     pub default: Option<String>,
     pub range: Option<[i64; 2]>,
     pub length: Option<[usize; 2]>,
-    pub parser: Option<String>,
-    pub separator: Option<String>,
-    pub prefix: Option<String>,
-    pub suffix: Option<String>,
+    pub parser: Option<ParserIr>,
     pub aggregation: Option<AggregationIr>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct ParserIr {
+    pub kind: String,
+    pub options: BTreeMap<String, String>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]

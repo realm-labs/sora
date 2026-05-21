@@ -2,8 +2,8 @@ use sora_diagnostics::{Result, SoraError};
 use sora_schema::model::{
     CStandardSchema, CodegenSchema, CppStandardSchema, EnumReprSchema, ErlangCodegenSchema,
     ErlangEnumReprSchema, FieldSchema, IndexSchema, JavaScriptCodegenSchema, LanguageCodegenSchema,
-    LuaCodegenSchema, LuaEnumReprSchema, LuaVersionSchema, RuntimeFormatSchema, RustMapTypeSchema,
-    SchemaFile, ScopeSchema, TableModeSchema, TableSchema, TableSourceSchema,
+    LuaCodegenSchema, LuaEnumReprSchema, LuaVersionSchema, ParserSchema, RuntimeFormatSchema,
+    RustMapTypeSchema, SchemaFile, ScopeSchema, TableModeSchema, TableSchema, TableSourceSchema,
     TypeScriptCodegenSchema, UnionSchema, UnionVariantSchema,
 };
 
@@ -12,8 +12,8 @@ use crate::{
         AggregationIr, CCodegenIr, CStandardIr, CodegenIr, ConfigIr, CppCodegenIr, CppStandardIr,
         EnumIr, EnumReprIr, ErlangCodegenIr, ErlangEnumReprIr, FieldIr, IndexIr,
         JavaScriptCodegenIr, LanguageCodegenIr, LuaCodegenIr, LuaEnumReprIr, LuaVersionIr,
-        RuntimeFormatIr, RustCodegenIr, RustMapTypeIr, ScopeIr, StructIr, TableIr, TableModeIr,
-        TableSourceIr, TypeIr, TypeScriptCodegenIr, UnionIr, UnionVariantIr,
+        ParserIr, RuntimeFormatIr, RustCodegenIr, RustMapTypeIr, ScopeIr, StructIr, TableIr,
+        TableModeIr, TableSourceIr, TypeIr, TypeScriptCodegenIr, UnionIr, UnionVariantIr,
     },
     parse::parse_type,
 };
@@ -301,28 +301,9 @@ impl TryFrom<FieldSchema> for FieldIr {
             )));
         }
         if aggregation.is_none() {
-            validate_parser_format(
-                &field.name,
-                &ty,
-                field.parser.as_deref(),
-                field.separator.as_deref(),
-                field.prefix.as_deref(),
-                field.suffix.as_deref(),
-            )?;
-            if field.parser.is_none() {
-                validate_collection_format(
-                    &field.name,
-                    &ty,
-                    field.separator.as_deref(),
-                    field.prefix.as_deref(),
-                    field.suffix.as_deref(),
-                )?;
-            }
+            validate_parser_format(&field.name, &ty, field.parser.as_ref())?;
         } else {
-            validate_optional_non_empty(&field.name, "parser", field.parser.as_deref())?;
-            validate_optional_non_empty(&field.name, "separator", field.separator.as_deref())?;
-            validate_optional_non_empty(&field.name, "prefix", field.prefix.as_deref())?;
-            validate_optional_non_empty(&field.name, "suffix", field.suffix.as_deref())?;
+            validate_parser_format(&field.name, &ty, field.parser.as_ref())?;
         }
 
         Ok(Self {
@@ -335,12 +316,18 @@ impl TryFrom<FieldSchema> for FieldIr {
             default: field.default,
             range: field.range,
             length: field.length,
-            parser: field.parser,
-            separator: field.separator,
-            prefix: field.prefix,
-            suffix: field.suffix,
+            parser: field.parser.map(ParserIr::from),
             aggregation,
         })
+    }
+}
+
+impl From<ParserSchema> for ParserIr {
+    fn from(parser: ParserSchema) -> Self {
+        Self {
+            kind: parser.kind,
+            options: parser.options,
+        }
     }
 }
 
@@ -439,24 +426,29 @@ fn validate_length_constraint(
 fn validate_parser_format(
     field_name: &str,
     ty: &TypeIr,
-    parser: Option<&str>,
-    separator: Option<&str>,
-    prefix: Option<&str>,
-    suffix: Option<&str>,
+    parser: Option<&ParserSchema>,
 ) -> Result<()> {
     let Some(parser) = parser else {
         return Ok(());
     };
+    validate_required_non_empty(field_name, ty, "parser.kind", Some(&parser.kind))?;
 
-    match parser {
+    match parser.kind.as_str() {
+        "split" => {
+            validate_collection_target(field_name, ty)?;
+            validate_parser_options(field_name, &parser.kind, &parser.options, &["separator"])
+        }
         "tuple" => {
             validate_tuple_target(field_name, ty)?;
-            validate_required_non_empty(field_name, ty, "separator", separator)?;
-            validate_optional_non_empty(field_name, "prefix", prefix)?;
-            validate_optional_non_empty(field_name, "suffix", suffix)
+            validate_parser_options(field_name, &parser.kind, &parser.options, &["separator"])
+        }
+        "json" => {
+            validate_parser_options(field_name, &parser.kind, &parser.options, &[])?;
+            Ok(())
         }
         _ => Err(SoraError::InvalidSchema(format!(
-            "field `{field_name}` declares unsupported parser `{parser}`"
+            "field `{field_name}` declares unsupported parser `{}`",
+            parser.kind
         ))),
     }
 }
@@ -471,30 +463,35 @@ fn validate_tuple_target(field_name: &str, ty: &TypeIr) -> Result<()> {
     }
 }
 
-fn validate_collection_format(
-    field_name: &str,
-    ty: &TypeIr,
-    separator: Option<&str>,
-    prefix: Option<&str>,
-    suffix: Option<&str>,
-) -> Result<()> {
+fn validate_collection_target(field_name: &str, ty: &TypeIr) -> Result<()> {
     match ty {
-        TypeIr::List(_) | TypeIr::Array { .. } => {
-            validate_required_non_empty(field_name, ty, "separator", separator)?;
-            validate_optional_non_empty(field_name, "prefix", prefix)?;
-            validate_optional_non_empty(field_name, "suffix", suffix)?;
-            Ok(())
-        }
-        TypeIr::Optional(inner) => {
-            validate_collection_format(field_name, inner, separator, prefix, suffix)
-        }
-        _ if separator.is_some() || prefix.is_some() || suffix.is_some() => {
-            Err(SoraError::InvalidSchema(format!(
-                "field `{field_name}` declares collection format metadata but type `{ty}` is not list or array"
-            )))
-        }
-        _ => Ok(()),
+        TypeIr::List(_) | TypeIr::Array { .. } => Ok(()),
+        TypeIr::Optional(inner) => validate_collection_target(field_name, inner),
+        _ => Err(SoraError::InvalidSchema(format!(
+            "field `{field_name}` declares parser `split` but type `{ty}` is not list or array"
+        ))),
     }
+}
+
+fn validate_parser_options(
+    field_name: &str,
+    parser: &str,
+    options: &std::collections::BTreeMap<String, String>,
+    allowed: &[&str],
+) -> Result<()> {
+    for (key, value) in options {
+        if !allowed.contains(&key.as_str()) {
+            return Err(SoraError::InvalidSchema(format!(
+                "field `{field_name}` parser `{parser}` declares unsupported option `{key}`"
+            )));
+        }
+        if value.is_empty() {
+            return Err(SoraError::InvalidSchema(format!(
+                "field `{field_name}` parser `{parser}` declares empty option `{key}`"
+            )));
+        }
+    }
+    Ok(())
 }
 
 fn validate_required_non_empty(
@@ -508,19 +505,6 @@ fn validate_required_non_empty(
         _ => Err(SoraError::InvalidSchema(format!(
             "field `{field_name}` with type `{ty}` must declare non-empty `{key}`"
         ))),
-    }
-}
-
-fn validate_optional_non_empty(
-    field_name: &str,
-    key: &'static str,
-    value: Option<&str>,
-) -> Result<()> {
-    match value {
-        Some("") => Err(SoraError::InvalidSchema(format!(
-            "field `{field_name}` declares empty `{key}`"
-        ))),
-        _ => Ok(()),
     }
 }
 
@@ -556,10 +540,8 @@ required = true
 [[tables.fields]]
 name = "tags"
 type = "list<string>"
-separator = "|"
-prefix = "["
-suffix = "]"
-default = "[\"starter\"]"
+parser = { kind = "split", separator = "|" }
+default = "starter"
 length = [1, 3]
 "#,
         )
@@ -589,13 +571,10 @@ length = [1, 3]
         assert_eq!(ir.tables[0].mode, TableModeIr::Map);
         assert!(ir.tables[0].fields[0].required);
         assert_eq!(ir.tables[0].fields[0].ty, TypeIr::I32);
-        assert_eq!(ir.tables[0].fields[1].separator.as_deref(), Some("|"));
-        assert_eq!(ir.tables[0].fields[1].prefix.as_deref(), Some("["));
-        assert_eq!(ir.tables[0].fields[1].suffix.as_deref(), Some("]"));
-        assert_eq!(
-            ir.tables[0].fields[1].default.as_deref(),
-            Some("[\"starter\"]")
-        );
+        let parser = ir.tables[0].fields[1].parser.as_ref().unwrap();
+        assert_eq!(parser.kind, "split");
+        assert_eq!(parser.options["separator"], "|");
+        assert_eq!(ir.tables[0].fields[1].default.as_deref(), Some("starter"));
         assert_eq!(ir.tables[0].fields[1].length, Some([1, 3]));
     }
 
@@ -627,20 +606,24 @@ mode = "list"
 [[tables.fields]]
 name = "pos"
 type = "struct<Vec3>"
-parser = "tuple"
-separator = ","
+parser = { kind = "tuple" }
 "#,
         )
         .unwrap();
 
         let ir = normalize_schema(schema).unwrap();
-        assert_eq!(ir.tables[0].fields[0].parser.as_deref(), Some("tuple"));
-        assert_eq!(ir.tables[0].fields[0].separator.as_deref(), Some(","));
+        assert_eq!(
+            ir.tables[0].fields[0]
+                .parser
+                .as_ref()
+                .map(|parser| parser.kind.as_str()),
+            Some("tuple")
+        );
     }
 
     #[test]
-    fn validates_collection_separator_metadata() {
-        let missing_separator: SchemaFile = toml::from_str(
+    fn default_collections_do_not_need_parser_metadata() {
+        let schema: SchemaFile = toml::from_str(
             r#"
 package = "game_config"
 
@@ -654,12 +637,14 @@ type = "list<string>"
 "#,
         )
         .unwrap();
-        assert!(matches!(
-            normalize_schema(missing_separator).unwrap_err(),
-            SoraError::InvalidSchema(message) if message.contains("must declare non-empty `separator`")
-        ));
 
-        let invalid_separator: SchemaFile = toml::from_str(
+        let ir = normalize_schema(schema).unwrap();
+        assert_eq!(ir.tables[0].fields[0].parser, None);
+    }
+
+    #[test]
+    fn rejects_invalid_parser_metadata() {
+        let scalar_split: SchemaFile = toml::from_str(
             r#"
 package = "game_config"
 
@@ -670,16 +655,16 @@ mode = "list"
 [[tables.fields]]
 name = "name"
 type = "string"
-separator = "|"
+parser = { kind = "split", separator = "|" }
 "#,
         )
         .unwrap();
         assert!(matches!(
-            normalize_schema(invalid_separator).unwrap_err(),
-            SoraError::InvalidSchema(message) if message.contains("collection format metadata")
+            normalize_schema(scalar_split).unwrap_err(),
+            SoraError::InvalidSchema(message) if message.contains("is not list or array")
         ));
 
-        let scalar_prefix: SchemaFile = toml::from_str(
+        let unknown_parser: SchemaFile = toml::from_str(
             r#"
 package = "game_config"
 
@@ -690,13 +675,13 @@ mode = "list"
 [[tables.fields]]
 name = "name"
 type = "string"
-prefix = "["
+parser = { kind = "lua" }
 "#,
         )
         .unwrap();
         assert!(matches!(
-            normalize_schema(scalar_prefix).unwrap_err(),
-            SoraError::InvalidSchema(message) if message.contains("collection format metadata")
+            normalize_schema(unknown_parser).unwrap_err(),
+            SoraError::InvalidSchema(message) if message.contains("unsupported parser")
         ));
     }
 
@@ -745,29 +730,6 @@ length = [4, 1]
 
     #[test]
     fn rejects_invalid_tuple_parser_metadata() {
-        let missing_separator: SchemaFile = toml::from_str(
-            r#"
-package = "game_config"
-
-[[structs]]
-name = "Vec2"
-
-[[tables]]
-name = "Spawn"
-mode = "list"
-
-[[tables.fields]]
-name = "pos"
-type = "struct<Vec2>"
-parser = "tuple"
-"#,
-        )
-        .unwrap();
-        assert!(matches!(
-            normalize_schema(missing_separator).unwrap_err(),
-            SoraError::InvalidSchema(message) if message.contains("must declare non-empty `separator`")
-        ));
-
         let scalar_parser: SchemaFile = toml::from_str(
             r#"
 package = "game_config"
@@ -779,8 +741,7 @@ mode = "list"
 [[tables.fields]]
 name = "pos"
 type = "string"
-parser = "tuple"
-separator = ","
+parser = { kind = "tuple" }
 "#,
         )
         .unwrap();
@@ -828,7 +789,7 @@ mode = "list"
 
         let ir = normalize_schema(schema).unwrap();
         assert!(ir.tables[0].fields[1].aggregation.is_some());
-        assert_eq!(ir.tables[0].fields[1].separator, None);
+        assert_eq!(ir.tables[0].fields[1].parser, None);
     }
 
     #[test]
