@@ -164,12 +164,16 @@ mod tests {
         assert!(item_dts.contains("export interface Item"));
         assert!(item_dts.contains("largeId: bigint;"));
         assert!(runtime.contains("readI64()"));
-        assert!(config.contains("export class ItemTable"));
-        assert!(config.contains("getByName(name)"));
-        assert!(config.contains("findByItemType(itemType)"));
+        assert!(item.contains("export class ItemTable"));
+        assert!(item.contains("getByName(name)"));
+        assert!(item.contains("findByItemType(itemType)"));
+        assert!(!config.contains("export class ItemTable"));
+        assert!(item_dts.contains("export declare class ItemTable"));
+        assert!(!config_dts.contains("export declare class ItemTable"));
         assert!(
             config_dts.contains("static fromBytes(bytes: Uint8Array | ArrayBuffer): SoraConfig;")
         );
+        assert!(config_dts.contains("import type { ItemTable } from \"./item.js\";"));
         assert!(package.contains("\"type\": \"module\""));
 
         let _ = std::fs::remove_dir_all(base);

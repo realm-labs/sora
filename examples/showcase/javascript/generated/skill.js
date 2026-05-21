@@ -3,6 +3,12 @@ import { decodeElementType } from "./element_type.js";
 import { decodeResourceCost } from "./resource_cost.js";
 import { decodeSkillEffect } from "./skill_effect.js";
 import { decodeVec3 } from "./vec3.js";
+import {
+    decodeIndex,
+    decodeMapTable,
+    decodeUniqueIndex,
+    requireSingletonTable,
+} from "./sora_runtime.js";
 
 export function decodeSkill(reader) {
     return {
@@ -15,4 +21,41 @@ export function decodeSkill(reader) {
         requiredItem: reader.readOptional(() => reader.readI32()),
         castOrigin: decodeVec3(reader),
     };
+}
+
+export class SkillTable {
+    constructor(
+        rows,
+    ) {
+        this._rows = rows;
+    }
+
+    static decode(rows) {
+        return new SkillTable(
+            decodeMapTable(rows, (row) => row.id),
+        );
+    }
+
+    name() {
+        return "Skill";
+    }
+
+    mode() {
+        return "map";
+    }
+
+    key() {
+        return "id";
+    }
+
+    len() {
+        return this._rows.size;
+    }
+    get(key) {
+        return this._rows.get(key);
+    }
+
+    rows() {
+        return this._rows;
+    }
 }

@@ -3,6 +3,14 @@
 {%- for import in record.imports %}
 import { decode{{ import.name }}{% if runtime_format != "sora" %}, decode{{ import.name }}Value{% endif %} } from "./{{ import.module }}{{ options.import_ext }}";
 {%- endfor %}
+{%- if record.table %}
+import {
+    decodeIndex,
+    decodeMapTable,
+    decodeUniqueIndex,
+    requireSingletonTable,
+} from "./sora_runtime{{ options.import_ext }}";
+{%- endif %}
 
 export function decode{{ record.pascal_name }}(reader) {
     return {
@@ -21,5 +29,124 @@ export function decode{{ record.pascal_name }}Value(value) {
         {{ field.name }}: {{ field.value_decode | replace("__VALUE__", "object.get(\"" ~ field.raw_name ~ "\")") }},
 {%- endfor %}
     };
+}
+{%- endif %}
+
+{%- if record.table %}
+{%- set table = record.table %}
+
+export class {{ table.pascal_name }}Table {
+    constructor(
+{%- if table.mode == "map" and table.key_type %}
+        rows,
+{%- elif table.mode == "singleton" %}
+        row,
+{%- else %}
+        rows,
+{%- endif %}
+{%- for index in table.unique_indexes %}
+        {{ index.camel_name }},
+{%- endfor %}
+{%- for index in table.non_unique_indexes %}
+        {{ index.camel_name }},
+{%- endfor %}
+    ) {
+{%- if table.mode == "singleton" %}
+        this._row = row;
+{%- else %}
+        this._rows = rows;
+{%- endif %}
+{%- for index in table.unique_indexes %}
+        this._{{ index.name }} = {{ index.camel_name }};
+{%- endfor %}
+{%- for index in table.non_unique_indexes %}
+        this._{{ index.name }} = {{ index.camel_name }};
+{%- endfor %}
+    }
+
+    static decode(rows) {
+{%- if table.mode == "map" and table.key_field_name %}
+        return new {{ table.pascal_name }}Table(
+            decodeMapTable(rows, (row) => row.{{ table.key_field_name }}),
+{%- for index in table.unique_indexes %}
+            decodeUniqueIndex(rows, (row) => row.{{ index.field_name }}),
+{%- endfor %}
+{%- for index in table.non_unique_indexes %}
+            decodeIndex(rows, (row) => row.{{ index.field_name }}),
+{%- endfor %}
+        );
+{%- elif table.mode == "singleton" %}
+        return new {{ table.pascal_name }}Table(
+            requireSingletonTable(rows, "{{ table.name }}"),
+        );
+{%- else %}
+        return new {{ table.pascal_name }}Table(
+            rows,
+{%- for index in table.unique_indexes %}
+            decodeUniqueIndex(rows, (row) => row.{{ index.field_name }}),
+{%- endfor %}
+{%- for index in table.non_unique_indexes %}
+            decodeIndex(rows, (row) => row.{{ index.field_name }}),
+{%- endfor %}
+        );
+{%- endif %}
+    }
+
+    name() {
+        return "{{ table.name }}";
+    }
+
+    mode() {
+        return "{{ table.mode }}";
+    }
+
+    key() {
+{%- if table.key_name %}
+        return "{{ table.key_name }}";
+{%- else %}
+        return undefined;
+{%- endif %}
+    }
+
+    len() {
+{%- if table.mode == "singleton" %}
+        return 1;
+{%- elif table.mode == "map" and table.key_field_name %}
+        return this._rows.size;
+{%- else %}
+        return this._rows.length;
+{%- endif %}
+    }
+
+{%- if table.mode == "map" and table.key_field_name %}
+    get(key) {
+        return this._rows.get(key);
+    }
+
+    rows() {
+        return this._rows;
+    }
+{%- elif table.mode == "singleton" %}
+    row() {
+        return this._row;
+    }
+{%- else %}
+    rows() {
+        return this._rows;
+    }
+{%- endif %}
+
+{%- for index in table.unique_indexes %}
+    get{{ index.pascal_name }}({{ index.param_camel_name }}) {
+        return this._{{ index.name }}.get({{ index.param_camel_name }});
+    }
+
+{%- endfor %}
+{%- for index in table.non_unique_indexes %}
+    find{{ index.pascal_name }}({{ index.param_camel_name }}) {
+        return this._{{ index.name }}.get({{ index.param_camel_name }}) ?? [];
+    }
+
+{%- endfor %}
 }
 {%- endif %}

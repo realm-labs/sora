@@ -4,6 +4,13 @@ export declare class SoraReadError extends Error {
     constructor(message: string);
 }
 
+export interface SoraConfigTable {
+    name(): string;
+    mode(): string;
+    key(): string | undefined;
+    len(): number;
+}
+
 export declare class SoraBundle {
     static parse(input: Uint8Array | ArrayBuffer): SoraBundle;
     decodeTable<T>(name: string, decode: (reader: SoraReader) => T): T[];

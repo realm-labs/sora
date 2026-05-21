@@ -2,6 +2,12 @@
 import { decodeQuestType } from "./quest_type.js";
 import { decodeReward } from "./reward.js";
 import { decodeVec3 } from "./vec3.js";
+import {
+    decodeIndex,
+    decodeMapTable,
+    decodeUniqueIndex,
+    requireSingletonTable,
+} from "./sora_runtime.js";
 
 export function decodeQuest(reader) {
     return {
@@ -13,4 +19,41 @@ export function decodeQuest(reader) {
         startPos: decodeVec3(reader),
         rewards: reader.readList(() => decodeReward(reader)),
     };
+}
+
+export class QuestTable {
+    constructor(
+        rows,
+    ) {
+        this._rows = rows;
+    }
+
+    static decode(rows) {
+        return new QuestTable(
+            decodeMapTable(rows, (row) => row.id),
+        );
+    }
+
+    name() {
+        return "Quest";
+    }
+
+    mode() {
+        return "map";
+    }
+
+    key() {
+        return "id";
+    }
+
+    len() {
+        return this._rows.size;
+    }
+    get(key) {
+        return this._rows.get(key);
+    }
+
+    rows() {
+        return this._rows;
+    }
 }
