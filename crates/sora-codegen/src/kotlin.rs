@@ -572,7 +572,7 @@ mod tests {
         for (runtime_format, parse_function) in [
             (RuntimeFormatIr::Json, "ParseJson"),
             (RuntimeFormatIr::Cbor, "ParseCbor"),
-            (RuntimeFormatIr::Protobuf, "ParseProtobuf"),
+            (RuntimeFormatIr::SoraProtobuf, "ParseProtobuf"),
         ] {
             let mut ir = example_ir();
             ir.codegen.csharp.runtime_format = runtime_format;
@@ -603,7 +603,7 @@ mod tests {
         for (runtime_format, parse_function) in [
             (RuntimeFormatIr::Json, "parseJson"),
             (RuntimeFormatIr::Cbor, "parseCbor"),
-            (RuntimeFormatIr::Protobuf, "parseProtobuf"),
+            (RuntimeFormatIr::SoraProtobuf, "parseProtobuf"),
         ] {
             let mut ir = example_ir();
             ir.codegen.kotlin.runtime_format = runtime_format;
@@ -635,7 +635,7 @@ mod tests {
         for (runtime_format, parse_function) in [
             (RuntimeFormatIr::Json, "ParseJsonBundle"),
             (RuntimeFormatIr::Cbor, "ParseCborBundle"),
-            (RuntimeFormatIr::Protobuf, "ParseProtobufBundle"),
+            (RuntimeFormatIr::SoraProtobuf, "ParseProtobufBundle"),
         ] {
             let mut ir = example_ir();
             ir.codegen.go.runtime_format = runtime_format;
@@ -666,7 +666,7 @@ mod tests {
         for (runtime_format, parse_function) in [
             (RuntimeFormatIr::Json, "parseJson"),
             (RuntimeFormatIr::Cbor, "parseCbor"),
-            (RuntimeFormatIr::Protobuf, "parseProtobuf"),
+            (RuntimeFormatIr::SoraProtobuf, "parseProtobuf"),
         ] {
             let mut ir = example_ir();
             ir.codegen.java.runtime_format = runtime_format;

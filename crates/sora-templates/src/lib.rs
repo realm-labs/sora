@@ -463,7 +463,7 @@ mod tests {
 
     #[test]
     fn embeds_all_templates() {
-        assert_eq!(EMBEDDED_TEMPLATES.len(), 84);
+        assert_eq!(EMBEDDED_TEMPLATES.len(), 85);
         for template in EMBEDDED_TEMPLATES {
             let source = template_source(template.target, template.file_name)
                 .expect("embedded template should be registered");

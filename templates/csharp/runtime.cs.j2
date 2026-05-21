@@ -364,7 +364,7 @@ internal sealed class SoraReader
     }
 }
 
-{%- if runtime_format == "json" or runtime_format == "cbor" or runtime_format == "protobuf" %}
+{%- if runtime_format == "json" or runtime_format == "cbor" or runtime_format == "sora-protobuf" %}
 
 internal sealed class SoraValueBundle
 {
@@ -410,11 +410,11 @@ internal sealed class SoraValueBundle
     }
 {%- endif %}
 
-{%- if runtime_format == "protobuf" %}
+{%- if runtime_format == "sora-protobuf" %}
     internal static SoraValueBundle ParseProtobuf(byte[] bytes)
     {
         var bundle = Sora.Runtime.Bundle.Parser.ParseFrom(bytes);
-        if (bundle.Format != "protobuf")
+        if (bundle.Format != "sora-protobuf")
         {
             throw new SoraReadException($"expected protobuf bundle, got {bundle.Format}");
         }
@@ -640,7 +640,7 @@ internal static class SoraValueObjectExtensions
     }
 }
 
-{%- if runtime_format == "protobuf" %}
+{%- if runtime_format == "sora-protobuf" %}
 
 internal static class SoraProtobufBundle
 {

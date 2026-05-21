@@ -33,7 +33,7 @@ pub(crate) fn runtime_format_name(runtime_format: RuntimeFormatIr) -> &'static s
     match runtime_format {
         RuntimeFormatIr::Sora => "sora",
         RuntimeFormatIr::Json => "json",
-        RuntimeFormatIr::Protobuf => "protobuf",
+        RuntimeFormatIr::SoraProtobuf => "sora-protobuf",
         RuntimeFormatIr::Cbor => "cbor",
     }
 }
@@ -52,7 +52,7 @@ pub fn generator_for_target(target: CodegenTarget) -> Box<dyn CodeGenerator> {
         CodegenTarget::JavaScript => Box::new(JavaScriptCodeGenerator),
         CodegenTarget::Erlang => Box::new(ErlangCodeGenerator),
         CodegenTarget::Lua => Box::new(LuaCodeGenerator),
-        CodegenTarget::Proto => Box::new(ProtoCodeGenerator),
+        CodegenTarget::ProtoSchema => Box::new(ProtoCodeGenerator),
         CodegenTarget::Python => Box::new(PythonCodeGenerator),
     }
 }

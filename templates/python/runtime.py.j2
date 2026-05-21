@@ -6,7 +6,7 @@ from __future__ import annotations
 import json
 {%- elif runtime_format == "cbor" %}
 import cbor2
-{%- elif runtime_format == "protobuf" %}
+{%- elif runtime_format == "sora-protobuf" %}
 from google.protobuf import descriptor_pb2, descriptor_pool, message_factory
 {%- endif %}
 import struct
@@ -274,11 +274,11 @@ class SoraValueBundle:
         return SoraValueBundle._from_root("cbor", SoraValue.from_python(root))
 {%- endif %}
 
-{%- if runtime_format == "protobuf" %}
+{%- if runtime_format == "sora-protobuf" %}
     @staticmethod
     def parse_protobuf(input_data: bytes | bytearray) -> SoraValueBundle:
         return SoraValueBundle._from_root(
-            "protobuf",
+            "sora-protobuf",
             SoraProtobufBundle.decode(bytes(input_data)),
         )
 {%- endif %}
@@ -373,7 +373,7 @@ class SoraValue:
 {%- endif %}
 
 
-{%- if runtime_format == "protobuf" %}
+{%- if runtime_format == "sora-protobuf" %}
 
 class SoraProtobufBundle:
     @staticmethod

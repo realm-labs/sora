@@ -32,8 +32,12 @@ fn simple_example_pipeline_generates_all_artifacts() {
         &out_dir.join("kotlin"),
     )
     .unwrap();
-    sora_core::pipeline::generate_code(&schema_input, CodegenTarget::Proto, &out_dir.join("proto"))
-        .unwrap();
+    sora_core::pipeline::generate_code(
+        &schema_input,
+        CodegenTarget::ProtoSchema,
+        &out_dir.join("proto"),
+    )
+    .unwrap();
     sora_core::pipeline::export_data(
         &project_input,
         "binary",
@@ -48,14 +52,14 @@ fn simple_example_pipeline_generates_all_artifacts() {
     .unwrap();
     sora_core::pipeline::export_data(
         &project_input,
-        "protobuf",
-        ExportOutput::File(out_dir.join("config.pb")),
+        "sora-protobuf",
+        ExportOutput::File(out_dir.join("config.sora.pb")),
     )
     .unwrap();
     sora_core::pipeline::export_data(
         &project_input,
-        "typed-protobuf",
-        ExportOutput::File(out_dir.join("config.typed.pb")),
+        "proto",
+        ExportOutput::File(out_dir.join("config.pb")),
     )
     .unwrap();
     sora_core::pipeline::export_data(
@@ -101,12 +105,8 @@ fn simple_example_pipeline_generates_all_artifacts() {
             .unwrap()
             .contains("\"format\": \"json\"")
     );
+    assert!(!fs::read(out_dir.join("config.sora.pb")).unwrap().is_empty());
     assert!(!fs::read(out_dir.join("config.pb")).unwrap().is_empty());
-    assert!(
-        !fs::read(out_dir.join("config.typed.pb"))
-            .unwrap()
-            .is_empty()
-    );
     assert!(!fs::read(out_dir.join("config.cbor")).unwrap().is_empty());
     assert!(
         fs::read_to_string(out_dir.join("debug-json/Item.json"))

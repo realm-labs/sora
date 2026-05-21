@@ -589,7 +589,10 @@ mod tests {
         for (runtime_format, parse_function) in [
             (sora_ir::model::RuntimeFormatIr::Json, "parse_json"),
             (sora_ir::model::RuntimeFormatIr::Cbor, "parse_cbor"),
-            (sora_ir::model::RuntimeFormatIr::Protobuf, "parse_protobuf"),
+            (
+                sora_ir::model::RuntimeFormatIr::SoraProtobuf,
+                "parse_protobuf",
+            ),
         ] {
             let mut ir = example_ir();
             ir.codegen.python.runtime_format = runtime_format;

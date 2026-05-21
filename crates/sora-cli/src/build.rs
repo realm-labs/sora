@@ -328,10 +328,10 @@ impl BuildTarget {
             "javascript" | "js" => Ok(Self::Javascript),
             "erlang" | "erl" => Ok(Self::Erlang),
             "lua" => Ok(Self::Lua),
-            "proto" => Ok(Self::Proto),
+            "proto-schema" => Ok(Self::ProtoSchema),
             "python" | "py" => Ok(Self::Python),
             _ => Err(format!(
-                "unsupported codegen target `{value}`; expected rust, kotlin, csharp, java, go, dart, c, cpp, typescript, javascript, erlang, lua, proto, or python"
+                "unsupported codegen target `{value}`; expected rust, kotlin, csharp, java, go, dart, c, cpp, typescript, javascript, erlang, lua, proto-schema, or python"
             )),
         }
     }
@@ -350,7 +350,7 @@ impl BuildTarget {
             Self::Javascript => "javascript",
             Self::Erlang => "erlang",
             Self::Lua => "lua",
-            Self::Proto => "proto",
+            Self::ProtoSchema => "proto-schema",
             Self::Python => "python",
         }
     }
@@ -371,7 +371,7 @@ impl From<BuildTarget> for CodegenTarget {
             BuildTarget::Javascript => Self::JavaScript,
             BuildTarget::Erlang => Self::Erlang,
             BuildTarget::Lua => Self::Lua,
-            BuildTarget::Proto => Self::Proto,
+            BuildTarget::ProtoSchema => Self::ProtoSchema,
             BuildTarget::Python => Self::Python,
         }
     }
@@ -417,8 +417,8 @@ mod tests {
         assert!(base.join("generated/dart/sora_config.dart").exists());
         assert!(base.join("generated/proto/sora_config.proto").exists());
         assert!(base.join("generated/config.json").exists());
+        assert!(base.join("generated/config.sora.pb").exists());
         assert!(base.join("generated/config.pb").exists());
-        assert!(base.join("generated/config.typed.pb").exists());
         assert!(base.join("generated/config.cbor").exists());
         assert!(base.join("generated/debug-json/Item.json").exists());
 
@@ -516,7 +516,7 @@ target = "dart"
 out = "generated/dart"
 
 [[build.codegen]]
-target = "proto"
+target = "proto-schema"
 out = "generated/proto"
 
 [[build.exports]]
@@ -524,12 +524,12 @@ format = "json"
 out = "generated/config.json"
 
 [[build.exports]]
-format = "protobuf"
-out = "generated/config.pb"
+format = "sora-protobuf"
+out = "generated/config.sora.pb"
 
 [[build.exports]]
-format = "typed-protobuf"
-out = "generated/config.typed.pb"
+format = "proto"
+out = "generated/config.pb"
 
 [[build.exports]]
 format = "cbor"

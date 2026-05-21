@@ -16,7 +16,7 @@ import (
 {%- if runtime_format != "sora" %}
     "strconv"
 {%- endif %}
-{%- if runtime_format == "protobuf" %}
+{%- if runtime_format == "sora-protobuf" %}
     "google.golang.org/protobuf/proto"
     "google.golang.org/protobuf/reflect/protodesc"
     "google.golang.org/protobuf/reflect/protoreflect"
@@ -842,7 +842,7 @@ func (reader *cborReader) take(length int) ([]byte, error) {
 
 {%- endif %}
 
-{%- if runtime_format == "protobuf" %}
+{%- if runtime_format == "sora-protobuf" %}
 
 func ParseProtobufBundle(bytes []byte) (*SoraValueBundle, error) {
     descriptor, err := soraBundleDescriptor()
@@ -857,7 +857,7 @@ func ParseProtobufBundle(bytes []byte) (*SoraValueBundle, error) {
     if err != nil {
         return nil, err
     }
-    return newSoraValueBundle("protobuf", bundle)
+    return newSoraValueBundle("sora-protobuf", bundle)
 }
 
 func soraValueFromProtoBundle(message *dynamicpb.Message) (SoraValue, error) {

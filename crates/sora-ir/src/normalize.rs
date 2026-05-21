@@ -151,7 +151,7 @@ impl From<RuntimeFormatSchema> for RuntimeFormatIr {
         match value {
             RuntimeFormatSchema::Sora => Self::Sora,
             RuntimeFormatSchema::Json => Self::Json,
-            RuntimeFormatSchema::Protobuf => Self::Protobuf,
+            RuntimeFormatSchema::SoraProtobuf => Self::SoraProtobuf,
             RuntimeFormatSchema::Cbor => Self::Cbor,
         }
     }

@@ -32,7 +32,7 @@ export declare class SoraValueBundle {
     static parseJson(input: Uint8Array | ArrayBuffer): SoraValueBundle;
 {%- elif runtime_format == "cbor" %}
     static parseCbor(input: Uint8Array | ArrayBuffer): SoraValueBundle;
-{%- elif runtime_format == "protobuf" %}
+{%- elif runtime_format == "sora-protobuf" %}
     static parseProtobuf(input: Uint8Array | ArrayBuffer): SoraValueBundle;
 {%- endif %}
 }

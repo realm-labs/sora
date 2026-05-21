@@ -55,8 +55,8 @@ fn main() -> Result<()> {
     clean_dir(&generated_root.join("client"))?;
     clean_dir(&generated_root.join("server"))?;
     clean_file(&generated_root.join("config.json"))?;
+    clean_file(&generated_root.join("config.sora.pb"))?;
     clean_file(&generated_root.join("config.pb"))?;
-    clean_file(&generated_root.join("config.typed.pb"))?;
     clean_file(&generated_root.join("config.cbor"))?;
 
     sora_core::pipeline::check_schema(&schema_input)?;
@@ -76,7 +76,11 @@ fn main() -> Result<()> {
     sora_core::pipeline::generate_code(&schema_input, CodegenTarget::C, &c_generated)?;
     sora_core::pipeline::generate_code(&schema_input, CodegenTarget::Cpp, &cpp_generated)?;
     sora_core::pipeline::generate_code(&schema_input, CodegenTarget::Python, &python_generated)?;
-    sora_core::pipeline::generate_code(&schema_input, CodegenTarget::Proto, &proto_generated)?;
+    sora_core::pipeline::generate_code(
+        &schema_input,
+        CodegenTarget::ProtoSchema,
+        &proto_generated,
+    )?;
     sora_core::pipeline::export_data(
         &project_input,
         "binary",
@@ -101,13 +105,13 @@ fn main() -> Result<()> {
     )?;
     sora_core::pipeline::export_data(
         &project_input,
-        "protobuf",
-        ExportOutput::File(generated_root.join("config.pb")),
+        "sora-protobuf",
+        ExportOutput::File(generated_root.join("config.sora.pb")),
     )?;
     sora_core::pipeline::export_data(
         &project_input,
-        "typed-protobuf",
-        ExportOutput::File(generated_root.join("config.typed.pb")),
+        "proto",
+        ExportOutput::File(generated_root.join("config.pb")),
     )?;
     sora_core::pipeline::export_data(
         &project_input,

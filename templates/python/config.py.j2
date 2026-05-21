@@ -9,7 +9,7 @@ from .sora_runtime import (
     SoraValueBundle,
 {%- elif runtime_format == "cbor" %}
     SoraValueBundle,
-{%- elif runtime_format == "protobuf" %}
+{%- elif runtime_format == "sora-protobuf" %}
     SoraValueBundle,
 {%- endif %}
     decode_index,
@@ -177,7 +177,7 @@ class SoraConfig:
         bundle = SoraValueBundle.parse_json(bytes_data)
 {%- elif runtime_format == "cbor" %}
         bundle = SoraValueBundle.parse_cbor(bytes_data)
-{%- elif runtime_format == "protobuf" %}
+{%- elif runtime_format == "sora-protobuf" %}
         bundle = SoraValueBundle.parse_protobuf(bytes_data)
 {%- endif %}
         return SoraConfig(

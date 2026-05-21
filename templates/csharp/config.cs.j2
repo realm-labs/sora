@@ -149,7 +149,7 @@ public sealed class SoraConfig
         var bundle = SoraValueBundle.ParseJson(bytes);
 {%- elif runtime_format == "cbor" %}
         var bundle = SoraValueBundle.ParseCbor(bytes);
-{%- elif runtime_format == "protobuf" %}
+{%- elif runtime_format == "sora-protobuf" %}
         var bundle = SoraValueBundle.ParseProtobuf(bytes);
 {%- endif %}
         var tables = new Dictionary<string, ISoraTable>({{ model.tables | length }});

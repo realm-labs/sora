@@ -13,7 +13,7 @@ pub struct ProtobufBundleExporter;
 
 impl DataExporter for ProtobufBundleExporter {
     fn format_name(&self) -> &'static str {
-        "protobuf"
+        "sora-protobuf"
     }
 
     fn output_kind(&self) -> OutputKind {
@@ -114,7 +114,7 @@ impl ProtoBundle {
         let schema_json = serde_json::to_vec(&schema).map_err(SoraError::SerializeData)?;
         Ok(Self {
             format_version: FORMAT_VERSION,
-            format: "protobuf".to_owned(),
+            format: "sora-protobuf".to_owned(),
             package: schema.package.clone(),
             schema_json,
             tables: data
@@ -186,7 +186,7 @@ mod tests {
     fn protobuf_exporter_writes_bundle_file() {
         let ir = example_ir();
         let data = example_data();
-        let path = temp_dir().join("config.pb");
+        let path = temp_dir().join("config.sora.pb");
 
         ProtobufBundleExporter
             .export(ExportRequest {
@@ -198,7 +198,7 @@ mod tests {
 
         let bundle = ProtoBundle::decode(fs::read(&path).unwrap().as_slice()).unwrap();
         assert_eq!(bundle.format_version, 1);
-        assert_eq!(bundle.format, "protobuf");
+        assert_eq!(bundle.format, "sora-protobuf");
         assert_eq!(bundle.package, "game_config");
         assert_eq!(bundle.tables[0].name, "Item");
         assert_eq!(bundle.tables[0].rows[0].fields[0].name, "id");

@@ -9,7 +9,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 {%- if runtime_format == "cbor" %}
 import com.fasterxml.jackson.dataformat.cbor.CBORFactory;
 {%- endif %}
-{%- if runtime_format == "protobuf" %}
+{%- if runtime_format == "sora-protobuf" %}
 import com.google.protobuf.DescriptorProtos.DescriptorProto;
 import com.google.protobuf.DescriptorProtos.FieldDescriptorProto;
 import com.google.protobuf.DescriptorProtos.FileDescriptorProto;
@@ -389,10 +389,10 @@ final class SoraValueBundle {
     }
 {%- endif %}
 
-{%- if runtime_format == "protobuf" %}
+{%- if runtime_format == "sora-protobuf" %}
     static SoraValueBundle parseProtobuf(byte[] bytes) {
         try {
-            return fromRoot("protobuf", SoraProtobufBundle.decode(bytes));
+            return fromRoot("sora-protobuf", SoraProtobufBundle.decode(bytes));
         } catch (Exception error) {
             throw new SoraReadException("failed to parse protobuf bundle: " + error.getMessage());
         }
@@ -527,7 +527,7 @@ final class SoraValue {
 
 {%- endif %}
 
-{%- if runtime_format == "protobuf" %}
+{%- if runtime_format == "sora-protobuf" %}
 
 final class SoraProtobufBundle {
     private static final Descriptors.Descriptor BUNDLE_DESCRIPTOR = buildFileDescriptor().findMessageTypeByName("Bundle");

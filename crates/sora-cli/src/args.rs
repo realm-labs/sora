@@ -49,7 +49,8 @@ pub enum GenCommand {
     Javascript(GenArgs),
     Erlang(GenArgs),
     Lua(GenArgs),
-    Proto(GenArgs),
+    #[command(name = "proto-schema")]
+    ProtoSchema(GenArgs),
     Python(GenArgs),
 }
 
@@ -152,7 +153,7 @@ pub enum BuildTarget {
     Javascript,
     Erlang,
     Lua,
-    Proto,
+    ProtoSchema,
     Python,
 }
 

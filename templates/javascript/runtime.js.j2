@@ -2,7 +2,7 @@
 
 {%- if runtime_format == "cbor" %}
 import { decode as decodeCbor } from "cbor-x";
-{%- elif runtime_format == "protobuf" %}
+{%- elif runtime_format == "sora-protobuf" %}
 import protobuf from "protobufjs";
 {%- endif %}
 
@@ -269,9 +269,9 @@ export class SoraValueBundle {
     }
 {%- endif %}
 
-{%- if runtime_format == "protobuf" %}
+{%- if runtime_format == "sora-protobuf" %}
     static parseProtobuf(input) {
-        return SoraValueBundle.fromRoot("protobuf", SoraProtobufBundle.decode(asBytes(input)));
+        return SoraValueBundle.fromRoot("sora-protobuf", SoraProtobufBundle.decode(asBytes(input)));
     }
 {%- endif %}
 
@@ -403,7 +403,7 @@ function mapObjectEntries(entries) {
 
 {%- endif %}
 
-{%- if runtime_format == "protobuf" %}
+{%- if runtime_format == "sora-protobuf" %}
 
 class SoraProtobufBundle {
     static decode(input) {

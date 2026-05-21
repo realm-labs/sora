@@ -375,7 +375,7 @@ fn read_u64_at(bytes: &[u8], offset: usize) -> Result<u64, SoraReadError> {
     Ok(u64::from_le_bytes(bytes[offset..offset + 8].try_into().unwrap()))
 }
 
-{%- if runtime_format == "json" or runtime_format == "cbor" or runtime_format == "protobuf" %}
+{%- if runtime_format == "json" or runtime_format == "cbor" or runtime_format == "sora-protobuf" %}
 
 #[derive(Debug, serde::Deserialize)]
 struct SerdeBundle {
@@ -466,7 +466,7 @@ impl CborBundle {
 }
 {%- endif %}
 
-{%- if runtime_format == "protobuf" %}
+{%- if runtime_format == "sora-protobuf" %}
 
 use prost::Message as _;
 
@@ -478,7 +478,7 @@ impl ProtobufBundle {
     pub fn parse(bytes: &[u8]) -> Result<Self, SoraReadError> {
         let bundle = ProtoBundle::decode(bytes)
             .map_err(|error| SoraReadError::new(format!("failed to parse protobuf bundle: {}", error)))?;
-        if bundle.format != "protobuf" {
+        if bundle.format != "sora-protobuf" {
             return Err(SoraReadError::new(format!(
                 "expected protobuf bundle, got {}",
                 bundle.format

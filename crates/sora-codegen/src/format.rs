@@ -120,7 +120,7 @@ impl Formatter {
             | CodegenTarget::TypeScript
             | CodegenTarget::JavaScript
             | CodegenTarget::Lua
-            | CodegenTarget::Proto => None,
+            | CodegenTarget::ProtoSchema => None,
         }
     }
 }
@@ -211,7 +211,7 @@ impl CodegenTarget {
             CodegenTarget::JavaScript => "JavaScript",
             CodegenTarget::Erlang => "Erlang",
             CodegenTarget::Lua => "Lua",
-            CodegenTarget::Proto => "Proto",
+            CodegenTarget::ProtoSchema => "Proto schema",
             CodegenTarget::Python => "Python",
         }
     }
@@ -230,8 +230,8 @@ mod tests {
     #[test]
     fn required_rejects_unsupported_target() {
         let base = env::temp_dir().join("sora-codegen-format-unsupported");
-        let error =
-            format_generated_code(CodegenTarget::Proto, &base, FormatMode::Required).unwrap_err();
+        let error = format_generated_code(CodegenTarget::ProtoSchema, &base, FormatMode::Required)
+            .unwrap_err();
         assert!(error.to_string().contains("no formatter is configured"));
     }
 }

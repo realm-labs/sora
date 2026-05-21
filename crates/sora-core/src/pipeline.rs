@@ -242,7 +242,7 @@ mod tests {
         generate_code(&input, CodegenTarget::Cpp, &base.join("cpp")).unwrap();
         generate_code(&input, CodegenTarget::Erlang, &base.join("erlang")).unwrap();
         generate_code(&input, CodegenTarget::Python, &base.join("python")).unwrap();
-        generate_code(&input, CodegenTarget::Proto, &base.join("proto")).unwrap();
+        generate_code(&input, CodegenTarget::ProtoSchema, &base.join("proto")).unwrap();
         generate_excel_template(&input, &base.join("excel")).unwrap();
 
         assert!(base.join("rust/item.rs").exists());
@@ -276,16 +276,11 @@ mod tests {
         export_data(&input, "json", ExportOutput::File(base.join("config.json"))).unwrap();
         export_data(
             &input,
-            "protobuf",
-            ExportOutput::File(base.join("config.pb")),
+            "sora-protobuf",
+            ExportOutput::File(base.join("config.sora.pb")),
         )
         .unwrap();
-        export_data(
-            &input,
-            "typed-protobuf",
-            ExportOutput::File(base.join("config.typed.pb")),
-        )
-        .unwrap();
+        export_data(&input, "proto", ExportOutput::File(base.join("config.pb"))).unwrap();
         export_data(&input, "cbor", ExportOutput::File(base.join("config.cbor"))).unwrap();
         export_data(
             &input,
@@ -296,8 +291,8 @@ mod tests {
 
         assert!(base.join("config.sora").exists());
         assert!(base.join("config.json").exists());
+        assert!(base.join("config.sora.pb").exists());
         assert!(base.join("config.pb").exists());
-        assert!(base.join("config.typed.pb").exists());
         assert!(base.join("config.cbor").exists());
         assert!(base.join("debug-json/Item.json").exists());
 

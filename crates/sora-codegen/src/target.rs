@@ -12,6 +12,6 @@ pub enum CodegenTarget {
     JavaScript,
     Erlang,
     Lua,
-    Proto,
+    ProtoSchema,
     Python,
 }

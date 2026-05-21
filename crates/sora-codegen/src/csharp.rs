@@ -61,7 +61,7 @@ impl CodeGenerator for CSharpCodeGenerator {
         )?;
         write_file(&out_dir.join("Runtime.cs"), rendered)?;
 
-        if ir.codegen.csharp.runtime_format == RuntimeFormatIr::Protobuf {
+        if ir.codegen.csharp.runtime_format == RuntimeFormatIr::SoraProtobuf {
             let rendered = render_template("csharp", "protobuf_bundle.cs.j2", context! {})?;
             write_file(&out_dir.join("SoraRuntimeBundle.cs"), rendered)?;
         }

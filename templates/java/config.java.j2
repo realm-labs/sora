@@ -164,7 +164,7 @@ public final class SoraConfig {
         var bundle = SoraValueBundle.parseJson(bytes);
 {%- elif runtime_format == "cbor" %}
         var bundle = SoraValueBundle.parseCbor(bytes);
-{%- elif runtime_format == "protobuf" %}
+{%- elif runtime_format == "sora-protobuf" %}
         var bundle = SoraValueBundle.parseProtobuf(bytes);
 {%- endif %}
         var tables = new HashMap<String, SoraTable>({{ model.tables | length }});

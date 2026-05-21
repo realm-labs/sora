@@ -29,7 +29,7 @@ pub fn run(command: Command) -> Result<()> {
             GenCommand::Javascript(args) => generate(args, CodegenTarget::JavaScript),
             GenCommand::Erlang(args) => generate(args, CodegenTarget::Erlang),
             GenCommand::Lua(args) => generate(args, CodegenTarget::Lua),
-            GenCommand::Proto(args) => generate(args, CodegenTarget::Proto),
+            GenCommand::ProtoSchema(args) => generate(args, CodegenTarget::ProtoSchema),
             GenCommand::Python(args) => generate(args, CodegenTarget::Python),
         },
         Command::Export(args) => export(args),

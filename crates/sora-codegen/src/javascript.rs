@@ -206,7 +206,7 @@ mod tests {
                 "decodeItemValue",
             ),
             (
-                sora_ir::model::RuntimeFormatIr::Protobuf,
+                sora_ir::model::RuntimeFormatIr::SoraProtobuf,
                 "SoraValueBundle.parseProtobuf(bytes)",
                 "decodeItemValue",
             ),
@@ -233,7 +233,7 @@ mod tests {
             if format == sora_ir::model::RuntimeFormatIr::Cbor {
                 assert!(runtime.contains("from \"cbor-x\""));
             }
-            if format == sora_ir::model::RuntimeFormatIr::Protobuf {
+            if format == sora_ir::model::RuntimeFormatIr::SoraProtobuf {
                 assert!(runtime.contains("from \"protobufjs\""));
                 assert!(runtime.contains("new protobuf.Type(\"Bundle\")"));
             }

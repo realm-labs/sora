@@ -177,7 +177,7 @@ pub enum RuntimeFormatIr {
     #[default]
     Sora,
     Json,
-    Protobuf,
+    SoraProtobuf,
     Cbor,
 }
 

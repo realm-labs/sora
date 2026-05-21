@@ -268,7 +268,7 @@ impl SoraConfig {
         let bundle = runtime::JsonBundle::parse(bytes)?;
 {%- elif runtime_format == "cbor" %}
         let bundle = runtime::CborBundle::parse(bytes)?;
-{%- elif runtime_format == "protobuf" %}
+{%- elif runtime_format == "sora-protobuf" %}
         let bundle = runtime::ProtobufBundle::parse(bytes)?;
 {%- endif %}
         let mut tables: SoraMap<&'static str, Box<dyn SoraTable>> =

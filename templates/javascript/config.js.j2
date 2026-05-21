@@ -150,7 +150,7 @@ export class SoraConfig {
         const bundle = SoraValueBundle.parseJson(bytes);
 {%- elif runtime_format == "cbor" %}
         const bundle = SoraValueBundle.parseCbor(bytes);
-{%- elif runtime_format == "protobuf" %}
+{%- elif runtime_format == "sora-protobuf" %}
         const bundle = SoraValueBundle.parseProtobuf(bytes);
 {%- endif %}
         return new SoraConfig(

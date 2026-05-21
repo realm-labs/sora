@@ -28,9 +28,9 @@ fn generated_rust_runtime_compiles_and_loads_config_bundles() {
             file_name: "config.cbor",
         },
         RuntimeCase {
-            runtime_format: "protobuf",
-            export_format: "protobuf",
-            file_name: "config.pb",
+            runtime_format: "sora-protobuf",
+            export_format: "sora-protobuf",
+            file_name: "config.sora.pb",
         },
     ] {
         let base = temp_dir();

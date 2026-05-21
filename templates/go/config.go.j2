@@ -157,7 +157,7 @@ func NewSoraConfigFromBytes(bytes []byte) (*SoraConfig, error) {
     bundle, err := ParseJsonBundle(bytes)
 {%- elif runtime_format == "cbor" %}
     bundle, err := ParseCborBundle(bytes)
-{%- elif runtime_format == "protobuf" %}
+{%- elif runtime_format == "sora-protobuf" %}
     bundle, err := ParseProtobufBundle(bytes)
 {%- endif %}
     if err != nil {

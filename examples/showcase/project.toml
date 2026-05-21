@@ -67,7 +67,7 @@ out = "python/generated"
 format = "auto"
 
 [[build.codegen]]
-target = "proto"
+target = "proto-schema"
 out = "generated/proto"
 
 [[build.exports]]
@@ -89,12 +89,12 @@ out = "generated/server/config.json"
 scope = "server"
 
 [[build.exports]]
-format = "protobuf"
-out = "generated/config.pb"
+format = "sora-protobuf"
+out = "generated/config.sora.pb"
 
 [[build.exports]]
-format = "typed-protobuf"
-out = "generated/config.typed.pb"
+format = "proto"
+out = "generated/config.pb"
 
 [[build.exports]]
 format = "cbor"

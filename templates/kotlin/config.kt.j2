@@ -41,7 +41,7 @@ data class SoraConfig(
             val bundle = SoraValueBundle.parseJson(bytes)
 {%- elif runtime_format == "cbor" %}
             val bundle = SoraValueBundle.parseCbor(bytes)
-{%- elif runtime_format == "protobuf" %}
+{%- elif runtime_format == "sora-protobuf" %}
             val bundle = SoraValueBundle.parseProtobuf(bytes)
 {%- endif %}
 {%- for table in model.tables %}

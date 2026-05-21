@@ -13,7 +13,7 @@ pub struct TypedProtobufExporter;
 
 impl DataExporter for TypedProtobufExporter {
     fn format_name(&self) -> &'static str {
-        "typed-protobuf"
+        "proto"
     }
 
     fn output_kind(&self) -> OutputKind {

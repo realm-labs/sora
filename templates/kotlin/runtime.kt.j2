@@ -9,7 +9,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 {%- if runtime_format == "cbor" %}
 import com.fasterxml.jackson.dataformat.cbor.CBORFactory
 {%- endif %}
-{%- if runtime_format == "protobuf" %}
+{%- if runtime_format == "sora-protobuf" %}
 import com.google.protobuf.DescriptorProtos
 import com.google.protobuf.Descriptors
 import com.google.protobuf.DynamicMessage
@@ -321,9 +321,9 @@ class SoraValueBundle private constructor(
         }
 {%- endif %}
 
-{%- if runtime_format == "protobuf" %}
+{%- if runtime_format == "sora-protobuf" %}
         fun parseProtobuf(bytes: ByteArray): SoraValueBundle =
-            fromRoot("protobuf", SoraProtobufBundle.decode(bytes))
+            fromRoot("sora-protobuf", SoraProtobufBundle.decode(bytes))
 {%- endif %}
 
         private fun fromRoot(expectedFormat: String, rootValue: SoraValue): SoraValueBundle {
@@ -413,7 +413,7 @@ class SoraValue(private val value: Any?) {
 
 {%- endif %}
 
-{%- if runtime_format == "protobuf" %}
+{%- if runtime_format == "sora-protobuf" %}
 
 private object SoraProtobufBundle {
     private val bundleDescriptor: Descriptors.Descriptor =

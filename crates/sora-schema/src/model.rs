@@ -225,7 +225,8 @@ pub enum RuntimeFormatSchema {
     #[default]
     Sora,
     Json,
-    Protobuf,
+    #[serde(rename = "sora-protobuf")]
+    SoraProtobuf,
     Cbor,
 }
 

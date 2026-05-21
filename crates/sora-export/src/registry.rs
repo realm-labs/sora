@@ -74,11 +74,11 @@ mod tests {
             OutputKind::File
         );
         assert_eq!(
-            registry.get("protobuf").unwrap().output_kind(),
+            registry.get("sora-protobuf").unwrap().output_kind(),
             OutputKind::File
         );
         assert_eq!(
-            registry.get("typed-protobuf").unwrap().output_kind(),
+            registry.get("proto").unwrap().output_kind(),
             OutputKind::File
         );
         assert!(registry.get("unknown").is_none());
@@ -89,8 +89,8 @@ mod tests {
                 "cbor",
                 "json",
                 "json-debug",
-                "protobuf",
-                "typed-protobuf"
+                "proto",
+                "sora-protobuf"
             ]
         );
     }
