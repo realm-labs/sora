@@ -30,6 +30,10 @@ export interface SoraConfigTable {
     len(): number;
 }
 
+export interface SoraTableSource {
+    decodeTable<T>(name: string, decodeBinary: (reader: SoraReader) => T, decodeValue: (value: SoraValue) => T): T[];
+}
+
 interface SoraSection {
     kind: number;
     compression: number;
@@ -145,7 +149,7 @@ export class SoraBundle {
         return new SoraBundle(bytes, sections);
     }
 
-    decodeTable<T>(name: string, decode: (reader: SoraReader) => T): T[] {
+    decodeTable<T>(name: string, decodeBinary: (reader: SoraReader) => T, _decodeValue: (value: SoraValue) => T): T[] {
         const section = this.sections.find((item) => item.kind === SECTION_KIND_TABLE && item.name === name);
         if (section === undefined) {
             throw new SoraReadError(`missing Sora table section \`${name}\``);
@@ -157,7 +161,7 @@ export class SoraBundle {
             throw new SoraReadError(`table \`${name}\` has invalid uncompressed length`);
         }
         const payload = this.bytes.subarray(section.offset, section.offset + section.length);
-        return decodeRows(payload, decode);
+        return decodeRows(payload, decodeBinary);
     }
 }
 
@@ -255,17 +259,15 @@ export class SoraReader {
     }
 }
 
-{%- if runtime_format != "sora" %}
-
 export class SoraValueBundle {
     private constructor(private readonly tables: Map<string, SoraValue[]>) {}
 
-    decodeTable<T>(name: string, decode: (value: SoraValue) => T): T[] {
+    decodeTable<T>(name: string, _decodeBinary: (reader: SoraReader) => T, decodeValue: (value: SoraValue) => T): T[] {
         const rows = this.tables.get(name);
         if (rows === undefined) {
             throw new SoraReadError(`missing table \`${name}\``);
         }
-        return rows.map(decode);
+        return rows.map(decodeValue);
     }
 
 {%- if runtime_format == "json" %}
@@ -409,8 +411,6 @@ function mapObjectEntries(entries: Iterable<[unknown, unknown]>): Map<string, So
     }
     return fields;
 }
-
-{%- endif %}
 
 {%- if runtime_format == "sora-protobuf" %}
 

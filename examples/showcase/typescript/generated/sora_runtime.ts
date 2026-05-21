@@ -24,6 +24,10 @@ export interface SoraConfigTable {
     len(): number;
 }
 
+export interface SoraTableSource {
+    decodeTable<T>(name: string, decodeBinary: (reader: SoraReader) => T, decodeValue: (value: SoraValue) => T): T[];
+}
+
 interface SoraSection {
     kind: number;
     compression: number;
@@ -139,7 +143,7 @@ export class SoraBundle {
         return new SoraBundle(bytes, sections);
     }
 
-    decodeTable<T>(name: string, decode: (reader: SoraReader) => T): T[] {
+    decodeTable<T>(name: string, decodeBinary: (reader: SoraReader) => T, _decodeValue: (value: SoraValue) => T): T[] {
         const section = this.sections.find((item) => item.kind === SECTION_KIND_TABLE && item.name === name);
         if (section === undefined) {
             throw new SoraReadError(`missing Sora table section \`${name}\``);
@@ -151,7 +155,7 @@ export class SoraBundle {
             throw new SoraReadError(`table \`${name}\` has invalid uncompressed length`);
         }
         const payload = this.bytes.subarray(section.offset, section.offset + section.length);
-        return decodeRows(payload, decode);
+        return decodeRows(payload, decodeBinary);
     }
 }
 
@@ -247,6 +251,139 @@ export class SoraReader {
         this.cursor = end;
         return value;
     }
+}
+
+export class SoraValueBundle {
+    private constructor(private readonly tables: Map<string, SoraValue[]>) {}
+
+    decodeTable<T>(name: string, _decodeBinary: (reader: SoraReader) => T, decodeValue: (value: SoraValue) => T): T[] {
+        const rows = this.tables.get(name);
+        if (rows === undefined) {
+            throw new SoraReadError(`missing table \`${name}\``);
+        }
+        return rows.map(decodeValue);
+    }
+
+    private static fromRoot(expectedFormat: string, rootValue: SoraValue): SoraValueBundle {
+        const root = rootValue.asObject();
+        const actualFormat = root.get("format").asString();
+        if (actualFormat !== expectedFormat) {
+            throw new SoraReadError(`expected ${expectedFormat} bundle, got ${actualFormat}`);
+        }
+        const version = root.get("format_version").asInt();
+        if (version !== SORA_BUNDLE_VERSION) {
+            throw new SoraReadError(`unsupported ${expectedFormat} bundle version ${version}`);
+        }
+
+        const tables = new Map<string, SoraValue[]>();
+        for (const tableValue of root.get("data").asObject().get("tables").asRawList()) {
+            const table = tableValue.asObject();
+            tables.set(table.get("name").asString(), table.get("rows").asRawList());
+        }
+        return new SoraValueBundle(tables);
+    }
+}
+
+export class SoraObject {
+    constructor(private readonly fields: Map<string, SoraValue>) {}
+
+    get(name: string): SoraValue {
+        return this.fields.get(name) ?? new SoraValue(null);
+    }
+}
+
+export class SoraValue {
+    constructor(private readonly value: unknown) {}
+
+    isNull(): boolean {
+        return this.value === null || this.value === undefined;
+    }
+
+    asObject(): SoraObject {
+        if (this.value instanceof SoraObject) {
+            return this.value;
+        }
+        throw new SoraReadError("expected object");
+    }
+
+    asRawList(): SoraValue[] {
+        if (Array.isArray(this.value)) {
+            return this.value as SoraValue[];
+        }
+        throw new SoraReadError("expected list");
+    }
+
+    asList<T>(decode: (value: SoraValue) => T): T[] {
+        return this.asRawList().map(decode);
+    }
+
+    asBool(): boolean {
+        if (typeof this.value === "boolean") {
+            return this.value;
+        }
+        throw new SoraReadError("expected bool");
+    }
+
+    asInt(): number {
+        if (typeof this.value === "number" && Number.isInteger(this.value)) {
+            return this.value;
+        }
+        if (typeof this.value === "bigint") {
+            return checkedU64ToNumber(this.value, "integer exceeds safe number range");
+        }
+        throw new SoraReadError("expected integer");
+    }
+
+    asBigInt(): bigint {
+        if (typeof this.value === "bigint") {
+            return this.value;
+        }
+        if (typeof this.value === "number" && Number.isInteger(this.value)) {
+            return BigInt(this.value);
+        }
+        if (typeof this.value === "string" && /^-?\d+$/.test(this.value)) {
+            return BigInt(this.value);
+        }
+        throw new SoraReadError("expected integer");
+    }
+
+    asNumber(): number {
+        if (typeof this.value === "number") {
+            return this.value;
+        }
+        if (typeof this.value === "bigint") {
+            return Number(this.value);
+        }
+        throw new SoraReadError("expected number");
+    }
+
+    asString(): string {
+        if (typeof this.value === "string") {
+            return this.value;
+        }
+        throw new SoraReadError("expected string");
+    }
+
+    static fromUnknown(value: unknown): SoraValue {
+        if (value instanceof Map) {
+            return new SoraValue(new SoraObject(mapObjectEntries(value.entries())));
+        }
+        if (Array.isArray(value)) {
+            return new SoraValue(value.map((item) => SoraValue.fromUnknown(item)));
+        }
+        if (value !== null && typeof value === "object") {
+            return new SoraValue(new SoraObject(mapObjectEntries(Object.entries(value))));
+        }
+        return new SoraValue(value);
+    }
+}
+
+function mapObjectEntries(entries: Iterable<[unknown, unknown]>): Map<string, SoraValue> {
+    const fields = new Map<string, SoraValue>();
+    for (const [key, value] of entries) {
+        fields.set(String(key), SoraValue.fromUnknown(value));
+    }
+    return fields;
 }
 
 export function requireSingletonTable<T>(rows: T[], name: string): T {

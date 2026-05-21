@@ -105,7 +105,7 @@ mod tests {
         assert!(item.contains("largeId: bigint;"));
         assert!(item.contains("itemType: ItemType;"));
         assert!(item.contains("import type { ItemType } from \"./item_type.js\";"));
-        assert!(item.contains("import { decodeItemType } from \"./item_type.js\";"));
+        assert!(item.contains("import { decodeItemType, decodeItemTypeValue } from \"./item_type.js\";"));
         assert!(item.contains("largeId: reader.readI64()"));
         assert!(item_type.contains("export type ItemType ="));
         assert!(item_type.contains("\"Weapon\""));
@@ -117,8 +117,9 @@ mod tests {
         assert!(item.contains("getByName(name: string): Item | undefined"));
         assert!(item.contains("findByItemType(itemType: ItemType): Item[]"));
         assert!(!config.contains("export class ItemTable"));
-        assert!(config.contains("static fromBytes(bytes: Uint8Array | ArrayBuffer): SoraConfig"));
+        assert!(config.contains("static fromSource(source: SoraTableSource): SoraConfig"));
         assert!(runtime.contains("export interface SoraConfigTable"));
+        assert!(runtime.contains("export interface SoraTableSource"));
         assert!(index.contains("export * from \"./sora_config.js\";"));
         assert!(index.ends_with('\n'));
 
@@ -148,17 +149,17 @@ mod tests {
         for (format, parse_fn, decode_fn) in [
             (
                 sora_ir::model::RuntimeFormatIr::Json,
-                "SoraValueBundle.parseJson(bytes)",
+                "static parseJson",
                 "decodeItemValue",
             ),
             (
                 sora_ir::model::RuntimeFormatIr::Cbor,
-                "SoraValueBundle.parseCbor(bytes)",
+                "static parseCbor",
                 "decodeItemValue",
             ),
             (
                 sora_ir::model::RuntimeFormatIr::SoraProtobuf,
-                "SoraValueBundle.parseProtobuf(bytes)",
+                "static parseProtobuf",
                 "decodeItemValue",
             ),
         ] {
@@ -173,8 +174,10 @@ mod tests {
             let item = std::fs::read_to_string(base.join("item.ts")).unwrap();
             let item_type = std::fs::read_to_string(base.join("item_type.ts")).unwrap();
 
-            assert!(config.contains("SoraValueBundle"));
-            assert!(config.contains(parse_fn));
+            assert!(!config.contains("SoraValueBundle"));
+            assert!(!config.contains(parse_fn));
+            assert!(runtime.contains(parse_fn));
+            assert!(config.contains("fromSource(source: SoraTableSource)"));
             assert!(config.contains(decode_fn));
             assert!(item.contains("decodeItemValue"));
             assert!(item.contains("object.get(\"id\")"));
