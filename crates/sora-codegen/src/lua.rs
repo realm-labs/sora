@@ -134,6 +134,7 @@ struct LuaRecord {
     snake_name: String,
     imports: Vec<LuaImport>,
     fields: Vec<LuaField>,
+    table: Option<LuaTable>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -174,31 +175,42 @@ struct LuaField {
 
 impl LuaModel {
     fn from_base_model(ir: &ConfigIr, model: BaseModel, options: &LuaOptionsView) -> Self {
+        let enums = model
+            .enums
+            .into_iter()
+            .map(|item| LuaEnum {
+                name: item.pascal_name,
+                values: item.values,
+            })
+            .collect();
+        let tables = model
+            .tables
+            .into_iter()
+            .map(|item| lua_table(ir, item, options))
+            .collect::<Vec<_>>();
+        let records = model
+            .records
+            .into_iter()
+            .map(|item| {
+                let table = tables
+                    .iter()
+                    .find(|table| table.row_type == item.pascal_name)
+                    .cloned();
+                lua_record(ir, item, options, table)
+            })
+            .collect();
+        let unions = model
+            .unions
+            .into_iter()
+            .map(|item| lua_union(ir, item, options))
+            .collect();
+
         Self {
             package: model.package,
-            enums: model
-                .enums
-                .into_iter()
-                .map(|item| LuaEnum {
-                    name: item.pascal_name,
-                    values: item.values,
-                })
-                .collect(),
-            unions: model
-                .unions
-                .into_iter()
-                .map(|item| lua_union(ir, item, options))
-                .collect(),
-            records: model
-                .records
-                .into_iter()
-                .map(|item| lua_record(ir, item, options))
-                .collect(),
-            tables: model
-                .tables
-                .into_iter()
-                .map(|item| lua_table(ir, item, options))
-                .collect(),
+            enums,
+            unions,
+            records,
+            tables,
         }
     }
 }
@@ -232,7 +244,12 @@ fn lua_variant(
     }
 }
 
-fn lua_record(ir: &ConfigIr, record: BaseRecord, options: &LuaOptionsView) -> LuaRecord {
+fn lua_record(
+    ir: &ConfigIr,
+    record: BaseRecord,
+    options: &LuaOptionsView,
+    table: Option<LuaTable>,
+) -> LuaRecord {
     LuaRecord {
         pascal_name: record.pascal_name,
         snake_name: record.snake_name,
@@ -242,6 +259,7 @@ fn lua_record(ir: &ConfigIr, record: BaseRecord, options: &LuaOptionsView) -> Lu
             .into_iter()
             .map(|field| lua_field(ir, field, options))
             .collect(),
+        table,
     }
 }
 
@@ -426,10 +444,11 @@ mod tests {
         assert!(runtime.contains("function Runtime.parse_bundle(bytes)"));
         assert!(runtime.contains("string.unpack(\"<I4\""));
         assert!(config.contains("local Runtime = require(\"generated.lua.sora_runtime\")"));
-        assert!(config.contains("---@class ItemTable"));
-        assert!(config.contains("function ItemTable:get(key)"));
-        assert!(config.contains("function ItemTable:get_by_name(name)"));
-        assert!(config.contains("function ItemTable:find_by_item_type(itemType)"));
+        assert!(item.contains("---@class ItemTable"));
+        assert!(item.contains("function ItemTable:get(key)"));
+        assert!(item.contains("function ItemTable:get_by_name(name)"));
+        assert!(item.contains("function ItemTable:find_by_item_type(itemType)"));
+        assert!(!config.contains("---@class ItemTable"));
         assert!(config.contains("function SoraConfig.from_bytes(bytes)"));
         assert!(config.contains("function SoraConfig:item()"));
         assert!(config.ends_with('\n'));
