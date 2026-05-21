@@ -6,6 +6,13 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 from .sora_runtime import SoraReader
+from .sora_runtime import (
+    SoraConfigTable,
+    decode_index,
+    decode_map_table,
+    decode_unique_index,
+    require_singleton_table,
+)
 
 
 if TYPE_CHECKING:
@@ -32,3 +39,33 @@ class GachaItem:
             rarity=rarity,
             weight=weight,
         )
+
+
+class GachaItemTable(SoraConfigTable):
+    def __init__(
+        self,
+        rows: list[GachaItem],
+    ) -> None:
+        self._rows = rows
+
+    @staticmethod
+    def decode(rows: list[GachaItem]) -> GachaItemTable:
+        return GachaItemTable(
+            rows,
+        )
+
+    def name(self) -> str:
+        return "GachaItem"
+
+    def mode(self) -> str:
+        return "list"
+
+    def key(self) -> str | None:
+        return None
+
+    def len(self) -> int:
+        return len(self._rows)
+
+
+    def rows(self) -> list[GachaItem]:
+        return self._rows

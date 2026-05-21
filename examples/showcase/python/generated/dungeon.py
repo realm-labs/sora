@@ -6,6 +6,13 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 from .sora_runtime import SoraReader
+from .sora_runtime import (
+    SoraConfigTable,
+    decode_index,
+    decode_map_table,
+    decode_unique_index,
+    require_singleton_table,
+)
 
 
 if TYPE_CHECKING:
@@ -32,3 +39,36 @@ class Dungeon:
             stage_ids=stage_ids,
             entry_cost=entry_cost,
         )
+
+
+class DungeonTable(SoraConfigTable):
+    def __init__(
+        self,
+        rows: dict[int, Dungeon],
+    ) -> None:
+        self._rows = rows
+
+    @staticmethod
+    def decode(rows: list[Dungeon]) -> DungeonTable:
+        return DungeonTable(
+            decode_map_table(rows, lambda row: row.id),
+        )
+
+    def name(self) -> str:
+        return "Dungeon"
+
+    def mode(self) -> str:
+        return "map"
+
+    def key(self) -> str | None:
+        return "id"
+
+    def len(self) -> int:
+        return len(self._rows)
+
+
+    def get(self, key: int) -> Dungeon | None:
+        return self._rows.get(key)
+
+    def rows(self) -> dict[int, Dungeon]:
+        return self._rows

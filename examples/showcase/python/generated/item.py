@@ -6,6 +6,13 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 from .sora_runtime import SoraReader
+from .sora_runtime import (
+    SoraConfigTable,
+    decode_index,
+    decode_map_table,
+    decode_unique_index,
+    require_singleton_table,
+)
 
 
 if TYPE_CHECKING:
@@ -46,3 +53,52 @@ class Item:
             price=price,
             tags=tags,
         )
+
+
+class ItemTable(SoraConfigTable):
+    def __init__(
+        self,
+        rows: dict[int, Item],
+        by_name: dict[str, Item],
+        by_item_type: dict[ItemType, list[Item]],
+    ) -> None:
+        self._rows = rows
+        self._by_name = by_name
+        self._by_item_type = by_item_type
+
+    @staticmethod
+    def decode(rows: list[Item]) -> ItemTable:
+        return ItemTable(
+            decode_map_table(rows, lambda row: row.id),
+            decode_unique_index(rows, lambda row: row.name),
+            decode_index(rows, lambda row: row.item_type),
+        )
+
+    def name(self) -> str:
+        return "Item"
+
+    def mode(self) -> str:
+        return "map"
+
+    def key(self) -> str | None:
+        return "id"
+
+    def len(self) -> int:
+        return len(self._rows)
+
+
+    def get(self, key: int) -> Item | None:
+        return self._rows.get(key)
+
+    def rows(self) -> dict[int, Item]:
+        return self._rows
+    def get_by_name(
+        self,
+        name: str,
+    ) -> Item | None:
+        return self._by_name.get(name)
+    def find_by_item_type(
+        self,
+        item_type: ItemType,
+    ) -> list[Item]:
+        return self._by_item_type.get(item_type, [])

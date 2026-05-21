@@ -6,6 +6,13 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 from .sora_runtime import SoraReader
+from .sora_runtime import (
+    SoraConfigTable,
+    decode_index,
+    decode_map_table,
+    decode_unique_index,
+    require_singleton_table,
+)
 
 
 if TYPE_CHECKING:
@@ -28,3 +35,36 @@ class LevelExp:
             exp=exp,
             unlock_feature=unlock_feature,
         )
+
+
+class LevelExpTable(SoraConfigTable):
+    def __init__(
+        self,
+        rows: dict[int, LevelExp],
+    ) -> None:
+        self._rows = rows
+
+    @staticmethod
+    def decode(rows: list[LevelExp]) -> LevelExpTable:
+        return LevelExpTable(
+            decode_map_table(rows, lambda row: row.level),
+        )
+
+    def name(self) -> str:
+        return "LevelExp"
+
+    def mode(self) -> str:
+        return "map"
+
+    def key(self) -> str | None:
+        return "level"
+
+    def len(self) -> int:
+        return len(self._rows)
+
+
+    def get(self, key: int) -> LevelExp | None:
+        return self._rows.get(key)
+
+    def rows(self) -> dict[int, LevelExp]:
+        return self._rows

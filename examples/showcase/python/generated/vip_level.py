@@ -6,6 +6,13 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 from .sora_runtime import SoraReader
+from .sora_runtime import (
+    SoraConfigTable,
+    decode_index,
+    decode_map_table,
+    decode_unique_index,
+    require_singleton_table,
+)
 
 
 if TYPE_CHECKING:
@@ -29,3 +36,36 @@ class VipLevel:
             cost=cost,
             perks=perks,
         )
+
+
+class VipLevelTable(SoraConfigTable):
+    def __init__(
+        self,
+        rows: dict[int, VipLevel],
+    ) -> None:
+        self._rows = rows
+
+    @staticmethod
+    def decode(rows: list[VipLevel]) -> VipLevelTable:
+        return VipLevelTable(
+            decode_map_table(rows, lambda row: row.level),
+        )
+
+    def name(self) -> str:
+        return "VipLevel"
+
+    def mode(self) -> str:
+        return "map"
+
+    def key(self) -> str | None:
+        return "level"
+
+    def len(self) -> int:
+        return len(self._rows)
+
+
+    def get(self, key: int) -> VipLevel | None:
+        return self._rows.get(key)
+
+    def rows(self) -> dict[int, VipLevel]:
+        return self._rows

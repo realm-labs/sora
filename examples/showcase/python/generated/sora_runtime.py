@@ -21,6 +21,23 @@ class SoraReadError(Exception):
     pass
 
 
+class SoraConfigTable:
+    def name(self) -> str:
+        raise NotImplementedError()
+
+    def mode(self) -> str:
+        raise NotImplementedError()
+
+    def key(self) -> str | None:
+        raise NotImplementedError()
+
+    def len(self) -> int:
+        raise NotImplementedError()
+
+    def __len__(self) -> int:
+        return self.len()
+
+
 @dataclass(frozen=True, slots=True)
 class SoraSection:
     kind: int

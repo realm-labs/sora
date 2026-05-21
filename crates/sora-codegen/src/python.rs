@@ -111,6 +111,7 @@ struct PythonRecord {
     snake_name: String,
     imports: Vec<PythonImport>,
     fields: Vec<PythonField>,
+    table: Option<PythonTable>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -169,20 +170,27 @@ impl PythonModel {
             })
             .collect::<Vec<_>>();
 
+        let tables = model
+            .tables
+            .into_iter()
+            .map(|item| python_table(ir, item))
+            .collect::<Vec<_>>();
         let records = model
             .records
             .into_iter()
-            .map(|item| python_record(ir, item))
+            .map(|item| {
+                let row_type = python_type_identifier(&item.pascal_name);
+                let table = tables
+                    .iter()
+                    .find(|table| table.row_type == row_type)
+                    .cloned();
+                python_record(ir, item, table)
+            })
             .collect::<Vec<_>>();
         let unions = model
             .unions
             .into_iter()
             .map(|item| python_union(ir, item))
-            .collect::<Vec<_>>();
-        let tables = model
-            .tables
-            .into_iter()
-            .map(|item| python_table(ir, item))
             .collect::<Vec<_>>();
         let modules = enums
             .iter()
@@ -202,7 +210,7 @@ impl PythonModel {
     }
 }
 
-fn python_record(ir: &ConfigIr, record: BaseRecord) -> PythonRecord {
+fn python_record(ir: &ConfigIr, record: BaseRecord, table: Option<PythonTable>) -> PythonRecord {
     PythonRecord {
         pascal_name: python_type_identifier(&record.pascal_name),
         snake_name: python_module_name(&record.snake_name),
@@ -212,6 +220,7 @@ fn python_record(ir: &ConfigIr, record: BaseRecord) -> PythonRecord {
             .into_iter()
             .map(|field| python_field(ir, field))
             .collect(),
+        table,
     }
 }
 
@@ -571,12 +580,14 @@ mod tests {
         assert!(action.contains("class ActionAddItem(Action):"));
         assert!(!action.contains("Action.decode = staticmethod"));
         assert!(runtime.contains("class SoraReader:"));
+        assert!(runtime.contains("class SoraConfigTable:"));
         assert!(runtime.contains("def read_i64(self) -> int:"));
         assert!(runtime.contains("duplicate map key"));
-        assert!(config.contains("class ItemTable"));
-        assert!(config.contains("def get(self, key: int) -> Item | None:"));
-        assert!(config.contains(") -> Item | None:"));
-        assert!(config.contains(") -> list[Item]:"));
+        assert!(item.contains("class ItemTable"));
+        assert!(!config.contains("class ItemTable"));
+        assert!(item.contains("def get(self, key: int) -> Item | None:"));
+        assert!(item.contains(") -> Item | None:"));
+        assert!(item.contains(") -> list[Item]:"));
         assert!(config.contains("class SoraConfig:"));
         assert!(config.contains("def from_bytes(bytes_data: bytes) -> SoraConfig:"));
         assert!(init.contains("from .sora_config import SoraConfig"));

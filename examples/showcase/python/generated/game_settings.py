@@ -6,6 +6,13 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 from .sora_runtime import SoraReader
+from .sora_runtime import (
+    SoraConfigTable,
+    decode_index,
+    decode_map_table,
+    decode_unique_index,
+    require_singleton_table,
+)
 
 
 if TYPE_CHECKING:
@@ -35,3 +42,33 @@ class GameSettings:
             spawn_pos=spawn_pos,
             starter_items=starter_items,
         )
+
+
+class GameSettingsTable(SoraConfigTable):
+    def __init__(
+        self,
+        row: GameSettings,
+    ) -> None:
+        self._row = row
+
+    @staticmethod
+    def decode(rows: list[GameSettings]) -> GameSettingsTable:
+        return GameSettingsTable(
+            require_singleton_table(rows, "GameSettings"),
+        )
+
+    def name(self) -> str:
+        return "GameSettings"
+
+    def mode(self) -> str:
+        return "singleton"
+
+    def key(self) -> str | None:
+        return None
+
+    def len(self) -> int:
+        return 1
+
+
+    def row(self) -> GameSettings:
+        return self._row

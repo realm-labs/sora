@@ -6,6 +6,13 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 from .sora_runtime import SoraReader
+from .sora_runtime import (
+    SoraConfigTable,
+    decode_index,
+    decode_map_table,
+    decode_unique_index,
+    require_singleton_table,
+)
 
 
 if TYPE_CHECKING:
@@ -32,3 +39,36 @@ class Achievement:
             target_count=target_count,
             reward=reward,
         )
+
+
+class AchievementTable(SoraConfigTable):
+    def __init__(
+        self,
+        rows: dict[int, Achievement],
+    ) -> None:
+        self._rows = rows
+
+    @staticmethod
+    def decode(rows: list[Achievement]) -> AchievementTable:
+        return AchievementTable(
+            decode_map_table(rows, lambda row: row.id),
+        )
+
+    def name(self) -> str:
+        return "Achievement"
+
+    def mode(self) -> str:
+        return "map"
+
+    def key(self) -> str | None:
+        return "id"
+
+    def len(self) -> int:
+        return len(self._rows)
+
+
+    def get(self, key: int) -> Achievement | None:
+        return self._rows.get(key)
+
+    def rows(self) -> dict[int, Achievement]:
+        return self._rows

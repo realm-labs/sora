@@ -6,6 +6,13 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 from .sora_runtime import SoraReader
+from .sora_runtime import (
+    SoraConfigTable,
+    decode_index,
+    decode_map_table,
+    decode_unique_index,
+    require_singleton_table,
+)
 
 
 if TYPE_CHECKING:
@@ -31,3 +38,36 @@ class Localization:
             en_us=en_us,
             note=note,
         )
+
+
+class LocalizationTable(SoraConfigTable):
+    def __init__(
+        self,
+        rows: dict[str, Localization],
+    ) -> None:
+        self._rows = rows
+
+    @staticmethod
+    def decode(rows: list[Localization]) -> LocalizationTable:
+        return LocalizationTable(
+            decode_map_table(rows, lambda row: row.key),
+        )
+
+    def name(self) -> str:
+        return "Localization"
+
+    def mode(self) -> str:
+        return "map"
+
+    def key(self) -> str | None:
+        return "key"
+
+    def len(self) -> int:
+        return len(self._rows)
+
+
+    def get(self, key: str) -> Localization | None:
+        return self._rows.get(key)
+
+    def rows(self) -> dict[str, Localization]:
+        return self._rows

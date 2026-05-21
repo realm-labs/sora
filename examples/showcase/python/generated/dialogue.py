@@ -6,6 +6,13 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 from .sora_runtime import SoraReader
+from .sora_runtime import (
+    SoraConfigTable,
+    decode_index,
+    decode_map_table,
+    decode_unique_index,
+    require_singleton_table,
+)
 
 
 if TYPE_CHECKING:
@@ -28,3 +35,36 @@ class Dialogue:
             speaker_key=speaker_key,
             lines=lines,
         )
+
+
+class DialogueTable(SoraConfigTable):
+    def __init__(
+        self,
+        rows: dict[int, Dialogue],
+    ) -> None:
+        self._rows = rows
+
+    @staticmethod
+    def decode(rows: list[Dialogue]) -> DialogueTable:
+        return DialogueTable(
+            decode_map_table(rows, lambda row: row.id),
+        )
+
+    def name(self) -> str:
+        return "Dialogue"
+
+    def mode(self) -> str:
+        return "map"
+
+    def key(self) -> str | None:
+        return "id"
+
+    def len(self) -> int:
+        return len(self._rows)
+
+
+    def get(self, key: int) -> Dialogue | None:
+        return self._rows.get(key)
+
+    def rows(self) -> dict[int, Dialogue]:
+        return self._rows

@@ -6,6 +6,13 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 from .sora_runtime import SoraReader
+from .sora_runtime import (
+    SoraConfigTable,
+    decode_index,
+    decode_map_table,
+    decode_unique_index,
+    require_singleton_table,
+)
 
 
 if TYPE_CHECKING:
@@ -31,3 +38,33 @@ class MailReward:
             item_id=item_id,
             count=count,
         )
+
+
+class MailRewardTable(SoraConfigTable):
+    def __init__(
+        self,
+        rows: list[MailReward],
+    ) -> None:
+        self._rows = rows
+
+    @staticmethod
+    def decode(rows: list[MailReward]) -> MailRewardTable:
+        return MailRewardTable(
+            rows,
+        )
+
+    def name(self) -> str:
+        return "MailReward"
+
+    def mode(self) -> str:
+        return "list"
+
+    def key(self) -> str | None:
+        return None
+
+    def len(self) -> int:
+        return len(self._rows)
+
+
+    def rows(self) -> list[MailReward]:
+        return self._rows

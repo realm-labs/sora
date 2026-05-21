@@ -6,6 +6,13 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 from .sora_runtime import SoraReader
+from .sora_runtime import (
+    SoraConfigTable,
+    decode_index,
+    decode_map_table,
+    decode_unique_index,
+    require_singleton_table,
+)
 
 
 if TYPE_CHECKING:
@@ -34,3 +41,36 @@ class EventRule:
             condition=condition,
             actions=actions,
         )
+
+
+class EventRuleTable(SoraConfigTable):
+    def __init__(
+        self,
+        rows: dict[int, EventRule],
+    ) -> None:
+        self._rows = rows
+
+    @staticmethod
+    def decode(rows: list[EventRule]) -> EventRuleTable:
+        return EventRuleTable(
+            decode_map_table(rows, lambda row: row.id),
+        )
+
+    def name(self) -> str:
+        return "EventRule"
+
+    def mode(self) -> str:
+        return "map"
+
+    def key(self) -> str | None:
+        return "id"
+
+    def len(self) -> int:
+        return len(self._rows)
+
+
+    def get(self, key: int) -> EventRule | None:
+        return self._rows.get(key)
+
+    def rows(self) -> dict[int, EventRule]:
+        return self._rows
