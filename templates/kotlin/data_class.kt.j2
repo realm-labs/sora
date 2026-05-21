@@ -43,11 +43,13 @@ class {{ table.pascal_name }}Table private constructor(
 {%- for index in table.non_unique_indexes %}
     private val {{ index.param_camel_name }}Index: Map<{{ index.key_type }}, List<{{ table.row_type }}>>,
 {%- endfor %}
-) : SoraTable{% if table.mode == "map" and table.key_field_name %}, Map<{{ table.key_type }}, {{ table.row_type }}> by rows{% elif table.mode == "list" %}, List<{{ table.row_type }}> by rows{% endif %} {
+) : {% if table.mode == "list" %}AbstractList<{{ table.row_type }}>(), SoraTable{% else %}SoraTable{% if table.mode == "map" and table.key_field_name %}, Map<{{ table.key_type }}, {{ table.row_type }}> by rows{% endif %}{% endif %} {
 {%- if table.mode == "map" and table.key_field_name %}
     fun orderedValues(): List<{{ table.row_type }}> = orderedKeys.mapNotNull { rows[it] }
 
 {%- elif table.mode == "list" %}
+    override fun get(index: Int): {{ table.row_type }} = rows[index]
+
     fun values(): List<{{ table.row_type }}> = rows
 
 {%- elif table.mode == "singleton" %}

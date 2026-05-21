@@ -28,7 +28,9 @@ data class CharacterSkill(
 
 class CharacterSkillTable private constructor(
     val rows: List<CharacterSkill>,
-) : SoraTable, List<CharacterSkill> by rows {
+) : AbstractList<CharacterSkill>(), SoraTable {
+    override fun get(index: Int): CharacterSkill = rows[index]
+
     fun values(): List<CharacterSkill> = rows
     override val name: String = "CharacterSkill"
     override val mode: SoraTableMode = SoraTableMode.List

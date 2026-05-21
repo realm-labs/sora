@@ -189,6 +189,24 @@ fn rust_config_api_respects_table_modes() {
 }
 
 #[test]
+fn kotlin_list_tables_extend_abstract_list() {
+    let ir = table_mode_ir();
+    let base = temp_dir();
+    let kotlin_out = base.join("kotlin");
+
+    KotlinCodeGenerator.generate(&ir, &kotlin_out).unwrap();
+
+    let package_out = kotlin_out.join("game_config");
+    let reward = std::fs::read_to_string(package_out.join("Reward.kt")).unwrap();
+    assert!(reward.contains("class RewardTable private constructor"));
+    assert!(reward.contains(") : AbstractList<Reward>(), SoraTable"));
+    assert!(reward.contains("override fun get(index: Int): Reward = rows[index]"));
+    assert!(!reward.contains("List<Reward> by rows"));
+
+    let _ = std::fs::remove_dir_all(base);
+}
+
+#[test]
 fn rust_config_api_can_use_fx_hash_map() {
     let mut ir = example_ir();
     ir.codegen.rust.map_type = sora_ir::model::RustMapTypeIr::FxHashMap;
@@ -517,6 +535,15 @@ mode = "singleton"
 [[tables.fields]]
 name = "version"
 type = "string"
+required = true
+
+[[tables]]
+name = "Reward"
+mode = "list"
+
+[[tables.fields]]
+name = "id"
+type = "i32"
 required = true
 "#,
     )
