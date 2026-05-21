@@ -20,3 +20,24 @@ data class DropEntry(
             )
     }
 }
+
+class DropEntryTable private constructor(
+    val rows: List<DropEntry>,
+) : SoraTable {
+    fun values(): List<DropEntry> = rows
+    override val name: String = "DropEntry"
+    override val mode: SoraTableMode = SoraTableMode.List
+    override val key: String? = null
+    override val rowType: String = "DropEntry"
+    override val size: Int
+        get() = rows.size
+
+    companion object {
+        fun decode(bundle: SoraBundle): DropEntryTable =
+            fromRows(bundle.decodeTable("DropEntry", DropEntry::decode))
+        private fun fromRows(rows: List<DropEntry>): DropEntryTable =
+            DropEntryTable(
+                rows,
+            )
+    }
+}

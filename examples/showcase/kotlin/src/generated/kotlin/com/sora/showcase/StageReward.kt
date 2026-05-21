@@ -18,3 +18,24 @@ data class StageReward(
             )
     }
 }
+
+class StageRewardTable private constructor(
+    val rows: List<StageReward>,
+) : SoraTable {
+    fun values(): List<StageReward> = rows
+    override val name: String = "StageReward"
+    override val mode: SoraTableMode = SoraTableMode.List
+    override val key: String? = null
+    override val rowType: String = "StageReward"
+    override val size: Int
+        get() = rows.size
+
+    companion object {
+        fun decode(bundle: SoraBundle): StageRewardTable =
+            fromRows(bundle.decodeTable("StageReward", StageReward::decode))
+        private fun fromRows(rows: List<StageReward>): StageRewardTable =
+            StageRewardTable(
+                rows,
+            )
+    }
+}

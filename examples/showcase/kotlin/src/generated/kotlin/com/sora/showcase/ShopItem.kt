@@ -20,3 +20,24 @@ data class ShopItem(
             )
     }
 }
+
+class ShopItemTable private constructor(
+    val rows: List<ShopItem>,
+) : SoraTable {
+    fun values(): List<ShopItem> = rows
+    override val name: String = "ShopItem"
+    override val mode: SoraTableMode = SoraTableMode.List
+    override val key: String? = null
+    override val rowType: String = "ShopItem"
+    override val size: Int
+        get() = rows.size
+
+    companion object {
+        fun decode(bundle: SoraBundle): ShopItemTable =
+            fromRows(bundle.decodeTable("ShopItem", ShopItem::decode))
+        private fun fromRows(rows: List<ShopItem>): ShopItemTable =
+            ShopItemTable(
+                rows,
+            )
+    }
+}

@@ -18,3 +18,26 @@ data class Buff(
             )
     }
 }
+
+class BuffTable private constructor(
+    val rows: Map<Int, Buff>,
+) : SoraTable {
+    operator fun get(key: Int): Buff? = rows[key]
+
+    fun values(): Collection<Buff> = rows.values
+    override val name: String = "Buff"
+    override val mode: SoraTableMode = SoraTableMode.Map
+    override val key: String? = "id"
+    override val rowType: String = "Buff"
+    override val size: Int
+        get() = rows.size
+
+    companion object {
+        fun decode(bundle: SoraBundle): BuffTable =
+            fromRows(bundle.decodeTable("Buff", Buff::decode))
+        private fun fromRows(rows: List<Buff>): BuffTable =
+            BuffTable(
+                rows.associateBy { it.id },
+            )
+    }
+}

@@ -20,3 +20,26 @@ data class MailTemplate(
             )
     }
 }
+
+class MailTemplateTable private constructor(
+    val rows: Map<Int, MailTemplate>,
+) : SoraTable {
+    operator fun get(key: Int): MailTemplate? = rows[key]
+
+    fun values(): Collection<MailTemplate> = rows.values
+    override val name: String = "MailTemplate"
+    override val mode: SoraTableMode = SoraTableMode.Map
+    override val key: String? = "id"
+    override val rowType: String = "MailTemplate"
+    override val size: Int
+        get() = rows.size
+
+    companion object {
+        fun decode(bundle: SoraBundle): MailTemplateTable =
+            fromRows(bundle.decodeTable("MailTemplate", MailTemplate::decode))
+        private fun fromRows(rows: List<MailTemplate>): MailTemplateTable =
+            MailTemplateTable(
+                rows.associateBy { it.id },
+            )
+    }
+}

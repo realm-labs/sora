@@ -16,3 +16,26 @@ data class Dialogue(
             )
     }
 }
+
+class DialogueTable private constructor(
+    val rows: Map<Int, Dialogue>,
+) : SoraTable {
+    operator fun get(key: Int): Dialogue? = rows[key]
+
+    fun values(): Collection<Dialogue> = rows.values
+    override val name: String = "Dialogue"
+    override val mode: SoraTableMode = SoraTableMode.Map
+    override val key: String? = "id"
+    override val rowType: String = "Dialogue"
+    override val size: Int
+        get() = rows.size
+
+    companion object {
+        fun decode(bundle: SoraBundle): DialogueTable =
+            fromRows(bundle.decodeTable("Dialogue", Dialogue::decode))
+        private fun fromRows(rows: List<Dialogue>): DialogueTable =
+            DialogueTable(
+                rows.associateBy { it.id },
+            )
+    }
+}

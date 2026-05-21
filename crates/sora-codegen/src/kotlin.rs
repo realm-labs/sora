@@ -108,6 +108,7 @@ struct KotlinUnionVariant {
 struct KotlinRecord {
     pascal_name: String,
     fields: Vec<KotlinField>,
+    table: Option<KotlinTable>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -146,6 +147,11 @@ struct KotlinField {
 
 impl KotlinModel {
     fn from_base_model(ir: &ConfigIr, model: BaseModel) -> Self {
+        let tables = model
+            .tables
+            .into_iter()
+            .map(|item| kotlin_table(ir, item))
+            .collect::<Vec<_>>();
         Self {
             package: model.package,
             enums: model
@@ -164,13 +170,15 @@ impl KotlinModel {
             records: model
                 .records
                 .into_iter()
-                .map(|item| kotlin_record(ir, item))
+                .map(|item| {
+                    let table = tables
+                        .iter()
+                        .find(|table| table.row_type == item.pascal_name)
+                        .cloned();
+                    kotlin_record(ir, item, table)
+                })
                 .collect(),
-            tables: model
-                .tables
-                .into_iter()
-                .map(|item| kotlin_table(ir, item))
-                .collect(),
+            tables,
         }
     }
 }
@@ -198,7 +206,7 @@ fn kotlin_variant(ir: &ConfigIr, variant: BaseUnionVariant) -> KotlinUnionVarian
     }
 }
 
-fn kotlin_record(ir: &ConfigIr, record: BaseRecord) -> KotlinRecord {
+fn kotlin_record(ir: &ConfigIr, record: BaseRecord, table: Option<KotlinTable>) -> KotlinRecord {
     KotlinRecord {
         pascal_name: record.pascal_name,
         fields: record
@@ -206,6 +214,7 @@ fn kotlin_record(ir: &ConfigIr, record: BaseRecord) -> KotlinRecord {
             .into_iter()
             .map(|field| kotlin_field(ir, field))
             .collect(),
+        table,
     }
 }
 
@@ -476,19 +485,23 @@ mod tests {
         assert!(kotlin_action.contains("fun decode(reader: SoraReader): Action"));
         assert!(kotlin_item.contains("fun decode(reader: SoraReader): Item"));
         assert!(kotlin_runtime.contains("class SoraBundle"));
-        assert!(kotlin_config.contains("data class SoraConfig"));
-        assert!(kotlin_config.contains("val item: Map<Int, Item>"));
-        assert!(kotlin_config.contains("private val itemByName: Map<String, Item>"));
-        assert!(kotlin_config.contains("private val itemByItemType: Map<ItemType, List<Item>>"));
-        assert!(kotlin_config.contains("fun getItem(key: Int): Item? = item[key]"));
-        assert!(
-            kotlin_config.contains("fun getItemByName(name: String): Item? = itemByName[name]")
-        );
-        assert!(kotlin_config.contains(
-            "fun findItemByItemType(itemType: ItemType): List<Item> = itemByItemType[itemType].orEmpty()"
-        ));
-        assert!(kotlin_config.contains("fun itemValues(): Collection<Item> = item.values"));
+        assert!(kotlin_config.contains("interface SoraTable"));
+        assert!(kotlin_config.contains("class SoraConfig private constructor"));
+        assert!(kotlin_config.contains("private val tableMap: Map<String, SoraTable>"));
+        assert!(kotlin_config.contains("val item: ItemTable"));
+        assert!(kotlin_config.contains("get() = table(\"Item\")"));
         assert!(kotlin_config.contains("fun fromBytes(bytes: ByteArray): SoraConfig"));
+        assert!(kotlin_config.contains("tables[\"Item\"] = ItemTable.decode(bundle)"));
+        assert!(kotlin_item.contains("class ItemTable private constructor"));
+        assert!(kotlin_item.contains("val rows: Map<Int, Item>"));
+        assert!(kotlin_item.contains("private val nameIndex: Map<String, Item>"));
+        assert!(kotlin_item.contains("private val itemTypeIndex: Map<ItemType, List<Item>>"));
+        assert!(kotlin_item.contains("operator fun get(key: Int): Item? = rows[key]"));
+        assert!(kotlin_item.contains("fun getByName(name: String): Item? = nameIndex[name]"));
+        assert!(kotlin_item.contains(
+            "fun findByItemType(itemType: ItemType): List<Item> = itemTypeIndex[itemType].orEmpty()"
+        ));
+        assert!(kotlin_item.contains("fun values(): Collection<Item> = rows.values"));
 
         let _ = std::fs::remove_dir_all(base);
     }

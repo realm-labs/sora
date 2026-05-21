@@ -24,3 +24,26 @@ data class Character(
             )
     }
 }
+
+class CharacterTable private constructor(
+    val rows: Map<Int, Character>,
+) : SoraTable {
+    operator fun get(key: Int): Character? = rows[key]
+
+    fun values(): Collection<Character> = rows.values
+    override val name: String = "Character"
+    override val mode: SoraTableMode = SoraTableMode.Map
+    override val key: String? = "id"
+    override val rowType: String = "Character"
+    override val size: Int
+        get() = rows.size
+
+    companion object {
+        fun decode(bundle: SoraBundle): CharacterTable =
+            fromRows(bundle.decodeTable("Character", Character::decode))
+        private fun fromRows(rows: List<Character>): CharacterTable =
+            CharacterTable(
+                rows.associateBy { it.id },
+            )
+    }
+}

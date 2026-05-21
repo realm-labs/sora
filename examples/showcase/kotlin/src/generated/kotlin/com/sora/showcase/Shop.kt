@@ -16,3 +16,26 @@ data class Shop(
             )
     }
 }
+
+class ShopTable private constructor(
+    val rows: Map<Int, Shop>,
+) : SoraTable {
+    operator fun get(key: Int): Shop? = rows[key]
+
+    fun values(): Collection<Shop> = rows.values
+    override val name: String = "Shop"
+    override val mode: SoraTableMode = SoraTableMode.Map
+    override val key: String? = "id"
+    override val rowType: String = "Shop"
+    override val size: Int
+        get() = rows.size
+
+    companion object {
+        fun decode(bundle: SoraBundle): ShopTable =
+            fromRows(bundle.decodeTable("Shop", Shop::decode))
+        private fun fromRows(rows: List<Shop>): ShopTable =
+            ShopTable(
+                rows.associateBy { it.id },
+            )
+    }
+}

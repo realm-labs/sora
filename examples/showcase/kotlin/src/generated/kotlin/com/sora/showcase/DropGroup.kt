@@ -14,3 +14,26 @@ data class DropGroup(
             )
     }
 }
+
+class DropGroupTable private constructor(
+    val rows: Map<Int, DropGroup>,
+) : SoraTable {
+    operator fun get(key: Int): DropGroup? = rows[key]
+
+    fun values(): Collection<DropGroup> = rows.values
+    override val name: String = "DropGroup"
+    override val mode: SoraTableMode = SoraTableMode.Map
+    override val key: String? = "id"
+    override val rowType: String = "DropGroup"
+    override val size: Int
+        get() = rows.size
+
+    companion object {
+        fun decode(bundle: SoraBundle): DropGroupTable =
+            fromRows(bundle.decodeTable("DropGroup", DropGroup::decode))
+        private fun fromRows(rows: List<DropGroup>): DropGroupTable =
+            DropGroupTable(
+                rows.associateBy { it.id },
+            )
+    }
+}

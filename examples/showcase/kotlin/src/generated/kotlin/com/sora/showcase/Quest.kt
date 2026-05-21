@@ -25,3 +25,26 @@ data class Quest(
             )
     }
 }
+
+class QuestTable private constructor(
+    val rows: Map<Int, Quest>,
+) : SoraTable {
+    operator fun get(key: Int): Quest? = rows[key]
+
+    fun values(): Collection<Quest> = rows.values
+    override val name: String = "Quest"
+    override val mode: SoraTableMode = SoraTableMode.Map
+    override val key: String? = "id"
+    override val rowType: String = "Quest"
+    override val size: Int
+        get() = rows.size
+
+    companion object {
+        fun decode(bundle: SoraBundle): QuestTable =
+            fromRows(bundle.decodeTable("Quest", Quest::decode))
+        private fun fromRows(rows: List<Quest>): QuestTable =
+            QuestTable(
+                rows.associateBy { it.id },
+            )
+    }
+}

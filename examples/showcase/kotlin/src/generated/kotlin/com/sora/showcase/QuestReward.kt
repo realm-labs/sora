@@ -18,3 +18,24 @@ data class QuestReward(
             )
     }
 }
+
+class QuestRewardTable private constructor(
+    val rows: List<QuestReward>,
+) : SoraTable {
+    fun values(): List<QuestReward> = rows
+    override val name: String = "QuestReward"
+    override val mode: SoraTableMode = SoraTableMode.List
+    override val key: String? = null
+    override val rowType: String = "QuestReward"
+    override val size: Int
+        get() = rows.size
+
+    companion object {
+        fun decode(bundle: SoraBundle): QuestRewardTable =
+            fromRows(bundle.decodeTable("QuestReward", QuestReward::decode))
+        private fun fromRows(rows: List<QuestReward>): QuestRewardTable =
+            QuestRewardTable(
+                rows,
+            )
+    }
+}

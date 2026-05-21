@@ -20,3 +20,23 @@ data class GameSettings(
             )
     }
 }
+
+class GameSettingsTable private constructor(
+    val rows: GameSettings,
+) : SoraTable {
+    fun value(): GameSettings = rows
+    override val name: String = "GameSettings"
+    override val mode: SoraTableMode = SoraTableMode.Singleton
+    override val key: String? = null
+    override val rowType: String = "GameSettings"
+    override val size: Int = 1
+
+    companion object {
+        fun decode(bundle: SoraBundle): GameSettingsTable =
+            fromRows(bundle.decodeTable("GameSettings", GameSettings::decode))
+        private fun fromRows(rows: List<GameSettings>): GameSettingsTable =
+            GameSettingsTable(
+                requireSingletonTable(rows, "GameSettings"),
+            )
+    }
+}

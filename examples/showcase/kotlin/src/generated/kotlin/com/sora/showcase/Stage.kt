@@ -20,3 +20,26 @@ data class Stage(
             )
     }
 }
+
+class StageTable private constructor(
+    val rows: Map<Int, Stage>,
+) : SoraTable {
+    operator fun get(key: Int): Stage? = rows[key]
+
+    fun values(): Collection<Stage> = rows.values
+    override val name: String = "Stage"
+    override val mode: SoraTableMode = SoraTableMode.Map
+    override val key: String? = "id"
+    override val rowType: String = "Stage"
+    override val size: Int
+        get() = rows.size
+
+    companion object {
+        fun decode(bundle: SoraBundle): StageTable =
+            fromRows(bundle.decodeTable("Stage", Stage::decode))
+        private fun fromRows(rows: List<Stage>): StageTable =
+            StageTable(
+                rows.associateBy { it.id },
+            )
+    }
+}

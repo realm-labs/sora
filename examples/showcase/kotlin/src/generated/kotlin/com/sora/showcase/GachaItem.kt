@@ -18,3 +18,24 @@ data class GachaItem(
             )
     }
 }
+
+class GachaItemTable private constructor(
+    val rows: List<GachaItem>,
+) : SoraTable {
+    fun values(): List<GachaItem> = rows
+    override val name: String = "GachaItem"
+    override val mode: SoraTableMode = SoraTableMode.List
+    override val key: String? = null
+    override val rowType: String = "GachaItem"
+    override val size: Int
+        get() = rows.size
+
+    companion object {
+        fun decode(bundle: SoraBundle): GachaItemTable =
+            fromRows(bundle.decodeTable("GachaItem", GachaItem::decode))
+        private fun fromRows(rows: List<GachaItem>): GachaItemTable =
+            GachaItemTable(
+                rows,
+            )
+    }
+}

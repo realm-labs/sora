@@ -16,3 +16,26 @@ data class VipLevel(
             )
     }
 }
+
+class VipLevelTable private constructor(
+    val rows: Map<Int, VipLevel>,
+) : SoraTable {
+    operator fun get(key: Int): VipLevel? = rows[key]
+
+    fun values(): Collection<VipLevel> = rows.values
+    override val name: String = "VipLevel"
+    override val mode: SoraTableMode = SoraTableMode.Map
+    override val key: String? = "level"
+    override val rowType: String = "VipLevel"
+    override val size: Int
+        get() = rows.size
+
+    companion object {
+        fun decode(bundle: SoraBundle): VipLevelTable =
+            fromRows(bundle.decodeTable("VipLevel", VipLevel::decode))
+        private fun fromRows(rows: List<VipLevel>): VipLevelTable =
+            VipLevelTable(
+                rows.associateBy { it.level },
+            )
+    }
+}

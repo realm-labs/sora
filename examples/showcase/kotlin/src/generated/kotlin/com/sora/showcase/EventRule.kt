@@ -18,3 +18,26 @@ data class EventRule(
             )
     }
 }
+
+class EventRuleTable private constructor(
+    val rows: Map<Int, EventRule>,
+) : SoraTable {
+    operator fun get(key: Int): EventRule? = rows[key]
+
+    fun values(): Collection<EventRule> = rows.values
+    override val name: String = "EventRule"
+    override val mode: SoraTableMode = SoraTableMode.Map
+    override val key: String? = "id"
+    override val rowType: String = "EventRule"
+    override val size: Int
+        get() = rows.size
+
+    companion object {
+        fun decode(bundle: SoraBundle): EventRuleTable =
+            fromRows(bundle.decodeTable("EventRule", EventRule::decode))
+        private fun fromRows(rows: List<EventRule>): EventRuleTable =
+            EventRuleTable(
+                rows.associateBy { it.id },
+            )
+    }
+}

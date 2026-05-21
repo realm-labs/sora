@@ -18,3 +18,26 @@ data class Dungeon(
             )
     }
 }
+
+class DungeonTable private constructor(
+    val rows: Map<Int, Dungeon>,
+) : SoraTable {
+    operator fun get(key: Int): Dungeon? = rows[key]
+
+    fun values(): Collection<Dungeon> = rows.values
+    override val name: String = "Dungeon"
+    override val mode: SoraTableMode = SoraTableMode.Map
+    override val key: String? = "id"
+    override val rowType: String = "Dungeon"
+    override val size: Int
+        get() = rows.size
+
+    companion object {
+        fun decode(bundle: SoraBundle): DungeonTable =
+            fromRows(bundle.decodeTable("Dungeon", Dungeon::decode))
+        private fun fromRows(rows: List<Dungeon>): DungeonTable =
+            DungeonTable(
+                rows.associateBy { it.id },
+            )
+    }
+}

@@ -18,3 +18,26 @@ data class Achievement(
             )
     }
 }
+
+class AchievementTable private constructor(
+    val rows: Map<Int, Achievement>,
+) : SoraTable {
+    operator fun get(key: Int): Achievement? = rows[key]
+
+    fun values(): Collection<Achievement> = rows.values
+    override val name: String = "Achievement"
+    override val mode: SoraTableMode = SoraTableMode.Map
+    override val key: String? = "id"
+    override val rowType: String = "Achievement"
+    override val size: Int
+        get() = rows.size
+
+    companion object {
+        fun decode(bundle: SoraBundle): AchievementTable =
+            fromRows(bundle.decodeTable("Achievement", Achievement::decode))
+        private fun fromRows(rows: List<Achievement>): AchievementTable =
+            AchievementTable(
+                rows.associateBy { it.id },
+            )
+    }
+}

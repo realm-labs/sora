@@ -18,3 +18,24 @@ data class MailReward(
             )
     }
 }
+
+class MailRewardTable private constructor(
+    val rows: List<MailReward>,
+) : SoraTable {
+    fun values(): List<MailReward> = rows
+    override val name: String = "MailReward"
+    override val mode: SoraTableMode = SoraTableMode.List
+    override val key: String? = null
+    override val rowType: String = "MailReward"
+    override val size: Int
+        get() = rows.size
+
+    companion object {
+        fun decode(bundle: SoraBundle): MailRewardTable =
+            fromRows(bundle.decodeTable("MailReward", MailReward::decode))
+        private fun fromRows(rows: List<MailReward>): MailRewardTable =
+            MailRewardTable(
+                rows,
+            )
+    }
+}

@@ -2,147 +2,118 @@
 
 package com.sora.showcase
 
-data class SoraConfig(
-    val item: Map<Int, Item>,
-    private val itemByName: Map<String, Item>,
-    private val itemByItemType: Map<ItemType, List<Item>>,
-    val skill: Map<Int, Skill>,
-    val quest: Map<Int, Quest>,
-    val quest_reward: List<QuestReward>,
-    val game_settings: GameSettings,
-    val localization: Map<String, Localization>,
-    val level_exp: Map<Int, LevelExp>,
-    val character: Map<Int, Character>,
-    val character_skill: List<CharacterSkill>,
-    val buff: Map<Int, Buff>,
-    val drop_group: Map<Int, DropGroup>,
-    val drop_entry: List<DropEntry>,
-    val monster: Map<Int, Monster>,
-    val stage: Map<Int, Stage>,
-    val stage_reward: List<StageReward>,
-    val dungeon: Map<Int, Dungeon>,
-    val shop: Map<Int, Shop>,
-    val shop_item: List<ShopItem>,
-    val recipe: Map<Int, Recipe>,
-    val gacha_pool: Map<Int, GachaPool>,
-    val gacha_item: List<GachaItem>,
-    val equipment_set: Map<Int, EquipmentSet>,
-    val achievement: Map<Int, Achievement>,
-    val vip_level: Map<Int, VipLevel>,
-    val mail_template: Map<Int, MailTemplate>,
-    val mail_reward: List<MailReward>,
-    val dialogue: Map<Int, Dialogue>,
-    val event_rule: Map<Int, EventRule>,
+enum class SoraTableMode {
+    List,
+    Map,
+    Singleton,
+}
+
+interface SoraTable {
+    val name: String
+    val mode: SoraTableMode
+    val key: String?
+    val rowType: String
+    val size: Int
+}
+
+class SoraConfig private constructor(
+    private val tableMap: Map<String, SoraTable>,
 ) {
-    fun getItem(key: Int): Item? = item[key]
+    val tables: Collection<SoraTable>
+        get() = tableMap.values
 
-    fun itemValues(): Collection<Item> = item.values
-
-    fun getItemByName(name: String): Item? = itemByName[name]
-
-    fun findItemByItemType(itemType: ItemType): List<Item> = itemByItemType[itemType].orEmpty()
-    fun getSkill(key: Int): Skill? = skill[key]
-
-    fun skillValues(): Collection<Skill> = skill.values
-    fun getQuest(key: Int): Quest? = quest[key]
-
-    fun questValues(): Collection<Quest> = quest.values
-    fun questRewardRows(): List<QuestReward> = quest_reward
-    fun gameSettingsRow(): GameSettings = game_settings
-    fun getLocalization(key: String): Localization? = localization[key]
-
-    fun localizationValues(): Collection<Localization> = localization.values
-    fun getLevelExp(key: Int): LevelExp? = level_exp[key]
-
-    fun levelExpValues(): Collection<LevelExp> = level_exp.values
-    fun getCharacter(key: Int): Character? = character[key]
-
-    fun characterValues(): Collection<Character> = character.values
-    fun characterSkillRows(): List<CharacterSkill> = character_skill
-    fun getBuff(key: Int): Buff? = buff[key]
-
-    fun buffValues(): Collection<Buff> = buff.values
-    fun getDropGroup(key: Int): DropGroup? = drop_group[key]
-
-    fun dropGroupValues(): Collection<DropGroup> = drop_group.values
-    fun dropEntryRows(): List<DropEntry> = drop_entry
-    fun getMonster(key: Int): Monster? = monster[key]
-
-    fun monsterValues(): Collection<Monster> = monster.values
-    fun getStage(key: Int): Stage? = stage[key]
-
-    fun stageValues(): Collection<Stage> = stage.values
-    fun stageRewardRows(): List<StageReward> = stage_reward
-    fun getDungeon(key: Int): Dungeon? = dungeon[key]
-
-    fun dungeonValues(): Collection<Dungeon> = dungeon.values
-    fun getShop(key: Int): Shop? = shop[key]
-
-    fun shopValues(): Collection<Shop> = shop.values
-    fun shopItemRows(): List<ShopItem> = shop_item
-    fun getRecipe(key: Int): Recipe? = recipe[key]
-
-    fun recipeValues(): Collection<Recipe> = recipe.values
-    fun getGachaPool(key: Int): GachaPool? = gacha_pool[key]
-
-    fun gachaPoolValues(): Collection<GachaPool> = gacha_pool.values
-    fun gachaItemRows(): List<GachaItem> = gacha_item
-    fun getEquipmentSet(key: Int): EquipmentSet? = equipment_set[key]
-
-    fun equipmentSetValues(): Collection<EquipmentSet> = equipment_set.values
-    fun getAchievement(key: Int): Achievement? = achievement[key]
-
-    fun achievementValues(): Collection<Achievement> = achievement.values
-    fun getVipLevel(key: Int): VipLevel? = vip_level[key]
-
-    fun vipLevelValues(): Collection<VipLevel> = vip_level.values
-    fun getMailTemplate(key: Int): MailTemplate? = mail_template[key]
-
-    fun mailTemplateValues(): Collection<MailTemplate> = mail_template.values
-    fun mailRewardRows(): List<MailReward> = mail_reward
-    fun getDialogue(key: Int): Dialogue? = dialogue[key]
-
-    fun dialogueValues(): Collection<Dialogue> = dialogue.values
-    fun getEventRule(key: Int): EventRule? = event_rule[key]
-
-    fun eventRuleValues(): Collection<EventRule> = event_rule.values
-
+    private inline fun <reified T : SoraTable> table(name: String): T =
+        tableMap[name] as? T
+            ?: throw SoraReadException("generated SoraConfig is missing table `$name` or has an unexpected table type")
+    val item: ItemTable
+        get() = table("Item")
+    val skill: SkillTable
+        get() = table("Skill")
+    val quest: QuestTable
+        get() = table("Quest")
+    val questReward: QuestRewardTable
+        get() = table("QuestReward")
+    val gameSettings: GameSettingsTable
+        get() = table("GameSettings")
+    val localization: LocalizationTable
+        get() = table("Localization")
+    val levelExp: LevelExpTable
+        get() = table("LevelExp")
+    val character: CharacterTable
+        get() = table("Character")
+    val characterSkill: CharacterSkillTable
+        get() = table("CharacterSkill")
+    val buff: BuffTable
+        get() = table("Buff")
+    val dropGroup: DropGroupTable
+        get() = table("DropGroup")
+    val dropEntry: DropEntryTable
+        get() = table("DropEntry")
+    val monster: MonsterTable
+        get() = table("Monster")
+    val stage: StageTable
+        get() = table("Stage")
+    val stageReward: StageRewardTable
+        get() = table("StageReward")
+    val dungeon: DungeonTable
+        get() = table("Dungeon")
+    val shop: ShopTable
+        get() = table("Shop")
+    val shopItem: ShopItemTable
+        get() = table("ShopItem")
+    val recipe: RecipeTable
+        get() = table("Recipe")
+    val gachaPool: GachaPoolTable
+        get() = table("GachaPool")
+    val gachaItem: GachaItemTable
+        get() = table("GachaItem")
+    val equipmentSet: EquipmentSetTable
+        get() = table("EquipmentSet")
+    val achievement: AchievementTable
+        get() = table("Achievement")
+    val vipLevel: VipLevelTable
+        get() = table("VipLevel")
+    val mailTemplate: MailTemplateTable
+        get() = table("MailTemplate")
+    val mailReward: MailRewardTable
+        get() = table("MailReward")
+    val dialogue: DialogueTable
+        get() = table("Dialogue")
+    val eventRule: EventRuleTable
+        get() = table("EventRule")
     companion object {
         fun fromBytes(bytes: ByteArray): SoraConfig {
             val bundle = SoraBundle.parse(bytes)
-            val itemRows = bundle.decodeTable("Item", Item::decode)
-            return SoraConfig(
-                item = itemRows.associateBy { it.id },
-                itemByName = itemRows.associateBy { it.name },
-                itemByItemType = itemRows.groupBy { it.itemType },
-                skill = bundle.decodeTable("Skill", Skill::decode).associateBy { it.id },
-                quest = bundle.decodeTable("Quest", Quest::decode).associateBy { it.id },
-                quest_reward = bundle.decodeTable("QuestReward", QuestReward::decode),
-                game_settings = requireSingletonTable(bundle.decodeTable("GameSettings", GameSettings::decode), "GameSettings"),
-                localization = bundle.decodeTable("Localization", Localization::decode).associateBy { it.key },
-                level_exp = bundle.decodeTable("LevelExp", LevelExp::decode).associateBy { it.level },
-                character = bundle.decodeTable("Character", Character::decode).associateBy { it.id },
-                character_skill = bundle.decodeTable("CharacterSkill", CharacterSkill::decode),
-                buff = bundle.decodeTable("Buff", Buff::decode).associateBy { it.id },
-                drop_group = bundle.decodeTable("DropGroup", DropGroup::decode).associateBy { it.id },
-                drop_entry = bundle.decodeTable("DropEntry", DropEntry::decode),
-                monster = bundle.decodeTable("Monster", Monster::decode).associateBy { it.id },
-                stage = bundle.decodeTable("Stage", Stage::decode).associateBy { it.id },
-                stage_reward = bundle.decodeTable("StageReward", StageReward::decode),
-                dungeon = bundle.decodeTable("Dungeon", Dungeon::decode).associateBy { it.id },
-                shop = bundle.decodeTable("Shop", Shop::decode).associateBy { it.id },
-                shop_item = bundle.decodeTable("ShopItem", ShopItem::decode),
-                recipe = bundle.decodeTable("Recipe", Recipe::decode).associateBy { it.id },
-                gacha_pool = bundle.decodeTable("GachaPool", GachaPool::decode).associateBy { it.id },
-                gacha_item = bundle.decodeTable("GachaItem", GachaItem::decode),
-                equipment_set = bundle.decodeTable("EquipmentSet", EquipmentSet::decode).associateBy { it.id },
-                achievement = bundle.decodeTable("Achievement", Achievement::decode).associateBy { it.id },
-                vip_level = bundle.decodeTable("VipLevel", VipLevel::decode).associateBy { it.level },
-                mail_template = bundle.decodeTable("MailTemplate", MailTemplate::decode).associateBy { it.id },
-                mail_reward = bundle.decodeTable("MailReward", MailReward::decode),
-                dialogue = bundle.decodeTable("Dialogue", Dialogue::decode).associateBy { it.id },
-                event_rule = bundle.decodeTable("EventRule", EventRule::decode).associateBy { it.id },
-            )
+            val tables = LinkedHashMap<String, SoraTable>(28)
+            tables["Item"] = ItemTable.decode(bundle)
+            tables["Skill"] = SkillTable.decode(bundle)
+            tables["Quest"] = QuestTable.decode(bundle)
+            tables["QuestReward"] = QuestRewardTable.decode(bundle)
+            tables["GameSettings"] = GameSettingsTable.decode(bundle)
+            tables["Localization"] = LocalizationTable.decode(bundle)
+            tables["LevelExp"] = LevelExpTable.decode(bundle)
+            tables["Character"] = CharacterTable.decode(bundle)
+            tables["CharacterSkill"] = CharacterSkillTable.decode(bundle)
+            tables["Buff"] = BuffTable.decode(bundle)
+            tables["DropGroup"] = DropGroupTable.decode(bundle)
+            tables["DropEntry"] = DropEntryTable.decode(bundle)
+            tables["Monster"] = MonsterTable.decode(bundle)
+            tables["Stage"] = StageTable.decode(bundle)
+            tables["StageReward"] = StageRewardTable.decode(bundle)
+            tables["Dungeon"] = DungeonTable.decode(bundle)
+            tables["Shop"] = ShopTable.decode(bundle)
+            tables["ShopItem"] = ShopItemTable.decode(bundle)
+            tables["Recipe"] = RecipeTable.decode(bundle)
+            tables["GachaPool"] = GachaPoolTable.decode(bundle)
+            tables["GachaItem"] = GachaItemTable.decode(bundle)
+            tables["EquipmentSet"] = EquipmentSetTable.decode(bundle)
+            tables["Achievement"] = AchievementTable.decode(bundle)
+            tables["VipLevel"] = VipLevelTable.decode(bundle)
+            tables["MailTemplate"] = MailTemplateTable.decode(bundle)
+            tables["MailReward"] = MailRewardTable.decode(bundle)
+            tables["Dialogue"] = DialogueTable.decode(bundle)
+            tables["EventRule"] = EventRuleTable.decode(bundle)
+            return SoraConfig(tables)
         }
     }
 }

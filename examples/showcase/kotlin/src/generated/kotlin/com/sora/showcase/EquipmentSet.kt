@@ -18,3 +18,26 @@ data class EquipmentSet(
             )
     }
 }
+
+class EquipmentSetTable private constructor(
+    val rows: Map<Int, EquipmentSet>,
+) : SoraTable {
+    operator fun get(key: Int): EquipmentSet? = rows[key]
+
+    fun values(): Collection<EquipmentSet> = rows.values
+    override val name: String = "EquipmentSet"
+    override val mode: SoraTableMode = SoraTableMode.Map
+    override val key: String? = "id"
+    override val rowType: String = "EquipmentSet"
+    override val size: Int
+        get() = rows.size
+
+    companion object {
+        fun decode(bundle: SoraBundle): EquipmentSetTable =
+            fromRows(bundle.decodeTable("EquipmentSet", EquipmentSet::decode))
+        private fun fromRows(rows: List<EquipmentSet>): EquipmentSetTable =
+            EquipmentSetTable(
+                rows.associateBy { it.id },
+            )
+    }
+}

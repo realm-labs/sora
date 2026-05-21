@@ -22,3 +22,26 @@ data class Monster(
             )
     }
 }
+
+class MonsterTable private constructor(
+    val rows: Map<Int, Monster>,
+) : SoraTable {
+    operator fun get(key: Int): Monster? = rows[key]
+
+    fun values(): Collection<Monster> = rows.values
+    override val name: String = "Monster"
+    override val mode: SoraTableMode = SoraTableMode.Map
+    override val key: String? = "id"
+    override val rowType: String = "Monster"
+    override val size: Int
+        get() = rows.size
+
+    companion object {
+        fun decode(bundle: SoraBundle): MonsterTable =
+            fromRows(bundle.decodeTable("Monster", Monster::decode))
+        private fun fromRows(rows: List<Monster>): MonsterTable =
+            MonsterTable(
+                rows.associateBy { it.id },
+            )
+    }
+}

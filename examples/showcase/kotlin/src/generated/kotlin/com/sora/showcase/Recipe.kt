@@ -16,3 +16,26 @@ data class Recipe(
             )
     }
 }
+
+class RecipeTable private constructor(
+    val rows: Map<Int, Recipe>,
+) : SoraTable {
+    operator fun get(key: Int): Recipe? = rows[key]
+
+    fun values(): Collection<Recipe> = rows.values
+    override val name: String = "Recipe"
+    override val mode: SoraTableMode = SoraTableMode.Map
+    override val key: String? = "id"
+    override val rowType: String = "Recipe"
+    override val size: Int
+        get() = rows.size
+
+    companion object {
+        fun decode(bundle: SoraBundle): RecipeTable =
+            fromRows(bundle.decodeTable("Recipe", Recipe::decode))
+        private fun fromRows(rows: List<Recipe>): RecipeTable =
+            RecipeTable(
+                rows.associateBy { it.id },
+            )
+    }
+}

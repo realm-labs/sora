@@ -28,3 +28,32 @@ data class Item(
             )
     }
 }
+
+class ItemTable private constructor(
+    val rows: Map<Int, Item>,
+    private val nameIndex: Map<String, Item>,
+    private val itemTypeIndex: Map<ItemType, List<Item>>,
+) : SoraTable {
+    operator fun get(key: Int): Item? = rows[key]
+
+    fun values(): Collection<Item> = rows.values
+    fun getByName(name: String): Item? = nameIndex[name]
+    fun findByItemType(itemType: ItemType): List<Item> = itemTypeIndex[itemType].orEmpty()
+    override val name: String = "Item"
+    override val mode: SoraTableMode = SoraTableMode.Map
+    override val key: String? = "id"
+    override val rowType: String = "Item"
+    override val size: Int
+        get() = rows.size
+
+    companion object {
+        fun decode(bundle: SoraBundle): ItemTable =
+            fromRows(bundle.decodeTable("Item", Item::decode))
+        private fun fromRows(rows: List<Item>): ItemTable =
+            ItemTable(
+                rows.associateBy { it.id },
+                rows.associateBy { it.name },
+                rows.groupBy { it.itemType },
+            )
+    }
+}

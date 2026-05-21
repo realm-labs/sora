@@ -18,3 +18,26 @@ data class Localization(
             )
     }
 }
+
+class LocalizationTable private constructor(
+    val rows: Map<String, Localization>,
+) : SoraTable {
+    operator fun get(key: String): Localization? = rows[key]
+
+    fun values(): Collection<Localization> = rows.values
+    override val name: String = "Localization"
+    override val mode: SoraTableMode = SoraTableMode.Map
+    override val key: String? = "key"
+    override val rowType: String = "Localization"
+    override val size: Int
+        get() = rows.size
+
+    companion object {
+        fun decode(bundle: SoraBundle): LocalizationTable =
+            fromRows(bundle.decodeTable("Localization", Localization::decode))
+        private fun fromRows(rows: List<Localization>): LocalizationTable =
+            LocalizationTable(
+                rows.associateBy { it.key },
+            )
+    }
+}

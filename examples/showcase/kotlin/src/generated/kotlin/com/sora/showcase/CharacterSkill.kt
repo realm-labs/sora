@@ -16,3 +16,24 @@ data class CharacterSkill(
             )
     }
 }
+
+class CharacterSkillTable private constructor(
+    val rows: List<CharacterSkill>,
+) : SoraTable {
+    fun values(): List<CharacterSkill> = rows
+    override val name: String = "CharacterSkill"
+    override val mode: SoraTableMode = SoraTableMode.List
+    override val key: String? = null
+    override val rowType: String = "CharacterSkill"
+    override val size: Int
+        get() = rows.size
+
+    companion object {
+        fun decode(bundle: SoraBundle): CharacterSkillTable =
+            fromRows(bundle.decodeTable("CharacterSkill", CharacterSkill::decode))
+        private fun fromRows(rows: List<CharacterSkill>): CharacterSkillTable =
+            CharacterSkillTable(
+                rows,
+            )
+    }
+}

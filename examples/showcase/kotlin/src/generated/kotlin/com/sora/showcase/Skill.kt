@@ -29,3 +29,26 @@ data class Skill(
             )
     }
 }
+
+class SkillTable private constructor(
+    val rows: Map<Int, Skill>,
+) : SoraTable {
+    operator fun get(key: Int): Skill? = rows[key]
+
+    fun values(): Collection<Skill> = rows.values
+    override val name: String = "Skill"
+    override val mode: SoraTableMode = SoraTableMode.Map
+    override val key: String? = "id"
+    override val rowType: String = "Skill"
+    override val size: Int
+        get() = rows.size
+
+    companion object {
+        fun decode(bundle: SoraBundle): SkillTable =
+            fromRows(bundle.decodeTable("Skill", Skill::decode))
+        private fun fromRows(rows: List<Skill>): SkillTable =
+            SkillTable(
+                rows.associateBy { it.id },
+            )
+    }
+}

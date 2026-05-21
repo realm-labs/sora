@@ -16,3 +16,26 @@ data class LevelExp(
             )
     }
 }
+
+class LevelExpTable private constructor(
+    val rows: Map<Int, LevelExp>,
+) : SoraTable {
+    operator fun get(key: Int): LevelExp? = rows[key]
+
+    fun values(): Collection<LevelExp> = rows.values
+    override val name: String = "LevelExp"
+    override val mode: SoraTableMode = SoraTableMode.Map
+    override val key: String? = "level"
+    override val rowType: String = "LevelExp"
+    override val size: Int
+        get() = rows.size
+
+    companion object {
+        fun decode(bundle: SoraBundle): LevelExpTable =
+            fromRows(bundle.decodeTable("LevelExp", LevelExp::decode))
+        private fun fromRows(rows: List<LevelExp>): LevelExpTable =
+            LevelExpTable(
+                rows.associateBy { it.level },
+            )
+    }
+}

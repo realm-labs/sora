@@ -16,3 +16,26 @@ data class GachaPool(
             )
     }
 }
+
+class GachaPoolTable private constructor(
+    val rows: Map<Int, GachaPool>,
+) : SoraTable {
+    operator fun get(key: Int): GachaPool? = rows[key]
+
+    fun values(): Collection<GachaPool> = rows.values
+    override val name: String = "GachaPool"
+    override val mode: SoraTableMode = SoraTableMode.Map
+    override val key: String? = "id"
+    override val rowType: String = "GachaPool"
+    override val size: Int
+        get() = rows.size
+
+    companion object {
+        fun decode(bundle: SoraBundle): GachaPoolTable =
+            fromRows(bundle.decodeTable("GachaPool", GachaPool::decode))
+        private fun fromRows(rows: List<GachaPool>): GachaPoolTable =
+            GachaPoolTable(
+                rows.associateBy { it.id },
+            )
+    }
+}
