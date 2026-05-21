@@ -1,3 +1,4 @@
+use rayon::prelude::*;
 use sora_data::model::{ConfigData, TableData, Value};
 use sora_diagnostics::{Result, SoraError};
 use sora_ir::model::{ConfigIr, FieldIr, StructIr, TableIr, TypeIr, UnionIr};
@@ -37,15 +38,21 @@ impl<'a> BinaryEncoder<'a> {
             payload: serde_json::to_vec(&schema).map_err(SoraError::SerializeData)?,
         });
 
-        for table in &self.ir.tables {
-            let table_data = self.table_data(&table.name)?;
-            sections.push(Section {
-                kind: SECTION_KIND_TABLE,
-                compression: COMPRESSION_NONE,
-                name: table.name.clone(),
-                payload: self.encode_table(table, table_data)?,
-            });
-        }
+        let mut table_sections = self
+            .ir
+            .tables
+            .par_iter()
+            .map(|table| {
+                let table_data = self.table_data(&table.name)?;
+                Ok(Section {
+                    kind: SECTION_KIND_TABLE,
+                    compression: COMPRESSION_NONE,
+                    name: table.name.clone(),
+                    payload: self.encode_table(table, table_data)?,
+                })
+            })
+            .collect::<Result<Vec<_>>>()?;
+        sections.append(&mut table_sections);
 
         encode_bundle(sections)
     }
