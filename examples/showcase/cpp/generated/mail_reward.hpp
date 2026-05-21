@@ -1,0 +1,23 @@
+#pragma once
+
+#include "sora_runtime.hpp"
+
+namespace sora::showcase {
+
+struct MailReward {
+    std::int32_t mail_id;
+    std::int32_t seq;
+    std::int32_t item_id;
+    std::int32_t count;
+
+    static MailReward decode(SoraReader& reader) {
+        return MailReward{
+            reader.read_i32(),
+            reader.read_i32(),
+            reader.read_i32(),
+            reader.read_i32(),
+        };
+    }
+};
+
+} // namespace sora::showcase

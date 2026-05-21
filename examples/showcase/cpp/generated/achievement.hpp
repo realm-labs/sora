@@ -1,0 +1,24 @@
+#pragma once
+
+#include "sora_runtime.hpp"
+#include "resource_cost.hpp"
+
+namespace sora::showcase {
+
+struct Achievement {
+    std::int32_t id;
+    std::string title_key;
+    std::int64_t target_count;
+    ResourceCost reward;
+
+    static Achievement decode(SoraReader& reader) {
+        return Achievement{
+            reader.read_i32(),
+            reader.read_string(),
+            reader.read_i64(),
+            ResourceCost::decode(reader),
+        };
+    }
+};
+
+} // namespace sora::showcase

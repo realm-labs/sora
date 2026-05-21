@@ -1,0 +1,53 @@
+#pragma once
+
+#include "sora_runtime.hpp"
+
+#include <cstdint>
+#include <functional>
+
+namespace sora::showcase {
+
+enum class StatType : std::int32_t {
+    Hp = 0,
+    Attack = 1,
+    Defense = 2,
+    Speed = 3,
+    CritRate = 4,
+};
+
+inline StatType decode_stat_type_ordinal(std::uint32_t value) {
+    switch (value) {
+    case 0:
+        return StatType::Hp;
+    case 1:
+        return StatType::Attack;
+    case 2:
+        return StatType::Defense;
+    case 3:
+        return StatType::Speed;
+    case 4:
+        return StatType::CritRate;
+    default:
+        throw SoraReadException("invalid enum ordinal for StatType");
+    }
+}
+
+} // namespace sora::showcase
+
+namespace std {
+template <>
+struct hash<sora::showcase::StatType> {
+    std::size_t operator()(const sora::showcase::StatType& value) const {
+        return std::hash<std::int32_t>()(static_cast<std::int32_t>(value));
+    }
+};
+} // namespace std
+
+namespace sora::showcase {
+
+template <>
+inline StatType decode_value<StatType>(SoraReader& reader) {
+    return decode_stat_type_ordinal(reader.read_u32());
+}
+
+} // namespace sora::showcase

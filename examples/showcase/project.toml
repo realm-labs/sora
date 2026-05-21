@@ -30,6 +30,11 @@ out = "go/internal/showcase"
 format = "auto"
 
 [[build.codegen]]
+target = "cpp"
+out = "cpp/generated"
+format = "auto"
+
+[[build.codegen]]
 target = "typescript"
 out = "typescript/generated"
 
@@ -94,6 +99,11 @@ runtime_format = "sora"
 
 [codegen.go]
 runtime_format = "sora"
+
+[codegen.cpp]
+runtime_format = "sora"
+cpp_standard = "c++17"
+namespace = "sora::showcase"
 
 [codegen.typescript]
 runtime_format = "sora"

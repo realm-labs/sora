@@ -1,0 +1,47 @@
+#pragma once
+
+#include "sora_runtime.hpp"
+
+#include <cstdint>
+#include <functional>
+
+namespace sora::showcase {
+
+enum class QuestType : std::int32_t {
+    Main = 0,
+    Side = 1,
+    Daily = 2,
+};
+
+inline QuestType decode_quest_type_ordinal(std::uint32_t value) {
+    switch (value) {
+    case 0:
+        return QuestType::Main;
+    case 1:
+        return QuestType::Side;
+    case 2:
+        return QuestType::Daily;
+    default:
+        throw SoraReadException("invalid enum ordinal for QuestType");
+    }
+}
+
+} // namespace sora::showcase
+
+namespace std {
+template <>
+struct hash<sora::showcase::QuestType> {
+    std::size_t operator()(const sora::showcase::QuestType& value) const {
+        return std::hash<std::int32_t>()(static_cast<std::int32_t>(value));
+    }
+};
+} // namespace std
+
+namespace sora::showcase {
+
+template <>
+inline QuestType decode_value<QuestType>(SoraReader& reader) {
+    return decode_quest_type_ordinal(reader.read_u32());
+}
+
+} // namespace sora::showcase

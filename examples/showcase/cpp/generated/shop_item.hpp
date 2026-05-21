@@ -1,0 +1,26 @@
+#pragma once
+
+#include "sora_runtime.hpp"
+#include "resource_cost.hpp"
+
+namespace sora::showcase {
+
+struct ShopItem {
+    std::int32_t shop_id;
+    std::int32_t seq;
+    std::int32_t item_id;
+    ResourceCost price;
+    std::optional<std::int32_t> daily_limit;
+
+    static ShopItem decode(SoraReader& reader) {
+        return ShopItem{
+            reader.read_i32(),
+            reader.read_i32(),
+            reader.read_i32(),
+            ResourceCost::decode(reader),
+            reader.read_optional<std::int32_t>(),
+        };
+    }
+};
+
+} // namespace sora::showcase

@@ -36,6 +36,8 @@ pub struct CodegenSchema {
     #[serde(default)]
     pub go: LanguageCodegenSchema,
     #[serde(default)]
+    pub cpp: CppCodegenSchema,
+    #[serde(default)]
     pub typescript: TypeScriptCodegenSchema,
     #[serde(default)]
     pub javascript: JavaScriptCodegenSchema,
@@ -61,6 +63,27 @@ impl Default for RustCodegenSchema {
         Self {
             runtime_format: RuntimeFormatSchema::Sora,
             map_type: RustMapTypeSchema::Std,
+        }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
+pub struct CppCodegenSchema {
+    #[serde(default)]
+    pub runtime_format: RuntimeFormatSchema,
+
+    #[serde(default)]
+    pub cpp_standard: CppStandardSchema,
+
+    pub namespace: Option<String>,
+}
+
+impl Default for CppCodegenSchema {
+    fn default() -> Self {
+        Self {
+            runtime_format: RuntimeFormatSchema::Sora,
+            cpp_standard: CppStandardSchema::Cpp17,
+            namespace: None,
         }
     }
 }
@@ -174,6 +197,21 @@ pub enum RuntimeFormatSchema {
     Json,
     Protobuf,
     Cbor,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, Default)]
+pub enum CppStandardSchema {
+    #[serde(rename = "c++11")]
+    Cpp11,
+    #[serde(rename = "c++14")]
+    Cpp14,
+    #[default]
+    #[serde(rename = "c++17")]
+    Cpp17,
+    #[serde(rename = "c++20")]
+    Cpp20,
+    #[serde(rename = "c++23")]
+    Cpp23,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, Default)]
@@ -420,6 +458,11 @@ map_type = "fx_hash_map"
 [codegen.kotlin]
 runtime_format = "sora"
 
+[codegen.cpp]
+runtime_format = "sora"
+cpp_standard = "c++20"
+namespace = "sora::game_config"
+
 [codegen.typescript]
 runtime_format = "sora"
 enum_repr = "string"
@@ -450,6 +493,12 @@ enum_repr = "string"
         assert_eq!(
             schema.codegen.kotlin.runtime_format,
             RuntimeFormatSchema::Sora
+        );
+        assert_eq!(schema.codegen.cpp.runtime_format, RuntimeFormatSchema::Sora);
+        assert_eq!(schema.codegen.cpp.cpp_standard, CppStandardSchema::Cpp20);
+        assert_eq!(
+            schema.codegen.cpp.namespace.as_deref(),
+            Some("sora::game_config")
         );
         assert_eq!(
             schema.codegen.typescript.runtime_format,

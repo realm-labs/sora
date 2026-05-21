@@ -1,0 +1,22 @@
+#pragma once
+
+#include "sora_runtime.hpp"
+#include "resource_cost.hpp"
+
+namespace sora::showcase {
+
+struct Recipe {
+    std::int32_t id;
+    std::int32_t result_item;
+    std::vector<ResourceCost> materials;
+
+    static Recipe decode(SoraReader& reader) {
+        return Recipe{
+            reader.read_i32(),
+            reader.read_i32(),
+            reader.read_vector<ResourceCost>(),
+        };
+    }
+};
+
+} // namespace sora::showcase

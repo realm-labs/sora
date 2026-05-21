@@ -1,0 +1,27 @@
+#pragma once
+
+#include "sora_runtime.hpp"
+#include "mail_type.hpp"
+#include "reward.hpp"
+
+namespace sora::showcase {
+
+struct MailTemplate {
+    std::int32_t id;
+    MailType mail_type;
+    std::string title_key;
+    std::string body_key;
+    std::vector<Reward> rewards;
+
+    static MailTemplate decode(SoraReader& reader) {
+        return MailTemplate{
+            reader.read_i32(),
+            decode_value<MailType>(reader),
+            reader.read_string(),
+            reader.read_string(),
+            reader.read_vector<Reward>(),
+        };
+    }
+};
+
+} // namespace sora::showcase

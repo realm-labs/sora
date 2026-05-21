@@ -1,0 +1,22 @@
+#pragma once
+
+#include "sora_runtime.hpp"
+#include "resource_cost.hpp"
+
+namespace sora::showcase {
+
+struct VipLevel {
+    std::int32_t level;
+    ResourceCost cost;
+    std::vector<std::string> perks;
+
+    static VipLevel decode(SoraReader& reader) {
+        return VipLevel{
+            reader.read_i32(),
+            ResourceCost::decode(reader),
+            reader.read_vector<std::string>(),
+        };
+    }
+};
+
+} // namespace sora::showcase

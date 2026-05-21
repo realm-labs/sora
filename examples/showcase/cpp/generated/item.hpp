@@ -1,0 +1,35 @@
+#pragma once
+
+#include "sora_runtime.hpp"
+#include "item_type.hpp"
+#include "resource_cost.hpp"
+
+namespace sora::showcase {
+
+struct Item {
+    // Item id
+    std::int32_t id;
+    // Display name
+    std::string name;
+    // Item category
+    ItemType item_type;
+    // Stack limit; blank cells use the default
+    std::int32_t max_stack;
+    // Tuple: kind,id,count
+    ResourceCost price;
+    // JSON string array
+    std::vector<std::string> tags;
+
+    static Item decode(SoraReader& reader) {
+        return Item{
+            reader.read_i32(),
+            reader.read_string(),
+            decode_value<ItemType>(reader),
+            reader.read_i32(),
+            ResourceCost::decode(reader),
+            reader.read_vector<std::string>(),
+        };
+    }
+};
+
+} // namespace sora::showcase

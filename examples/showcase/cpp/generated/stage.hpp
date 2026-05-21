@@ -1,0 +1,26 @@
+#pragma once
+
+#include "sora_runtime.hpp"
+#include "reward.hpp"
+
+namespace sora::showcase {
+
+struct Stage {
+    std::int32_t id;
+    std::string name;
+    std::vector<std::int32_t> monster_ids;
+    std::int32_t recommended_power;
+    std::vector<Reward> first_clear_rewards;
+
+    static Stage decode(SoraReader& reader) {
+        return Stage{
+            reader.read_i32(),
+            reader.read_string(),
+            reader.read_vector<std::int32_t>(),
+            reader.read_i32(),
+            reader.read_vector<Reward>(),
+        };
+    }
+};
+
+} // namespace sora::showcase

@@ -1,0 +1,22 @@
+#pragma once
+
+#include "sora_runtime.hpp"
+#include "element_type.hpp"
+
+namespace sora::showcase {
+
+struct SkillEffect {
+    ElementType element;
+    std::int32_t power;
+    float radius;
+
+    static SkillEffect decode(SoraReader& reader) {
+        return SkillEffect{
+            decode_value<ElementType>(reader),
+            reader.read_i32(),
+            reader.read_f32(),
+        };
+    }
+};
+
+} // namespace sora::showcase

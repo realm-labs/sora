@@ -1,0 +1,29 @@
+#pragma once
+
+#include "sora_runtime.hpp"
+#include "element_type.hpp"
+#include "vec3.hpp"
+
+namespace sora::showcase {
+
+struct Monster {
+    std::int32_t id;
+    std::string name;
+    std::int32_t level;
+    ElementType element;
+    std::int32_t drop_group;
+    Vec3 spawn_pos;
+
+    static Monster decode(SoraReader& reader) {
+        return Monster{
+            reader.read_i32(),
+            reader.read_string(),
+            reader.read_i32(),
+            decode_value<ElementType>(reader),
+            reader.read_i32(),
+            Vec3::decode(reader),
+        };
+    }
+};
+
+} // namespace sora::showcase

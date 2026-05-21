@@ -1,0 +1,53 @@
+#pragma once
+
+#include "sora_runtime.hpp"
+
+#include <cstdint>
+#include <functional>
+
+namespace sora::showcase {
+
+enum class ItemType : std::int32_t {
+    Weapon = 0,
+    Armor = 1,
+    Currency = 2,
+    Material = 3,
+    Consumable = 4,
+};
+
+inline ItemType decode_item_type_ordinal(std::uint32_t value) {
+    switch (value) {
+    case 0:
+        return ItemType::Weapon;
+    case 1:
+        return ItemType::Armor;
+    case 2:
+        return ItemType::Currency;
+    case 3:
+        return ItemType::Material;
+    case 4:
+        return ItemType::Consumable;
+    default:
+        throw SoraReadException("invalid enum ordinal for ItemType");
+    }
+}
+
+} // namespace sora::showcase
+
+namespace std {
+template <>
+struct hash<sora::showcase::ItemType> {
+    std::size_t operator()(const sora::showcase::ItemType& value) const {
+        return std::hash<std::int32_t>()(static_cast<std::int32_t>(value));
+    }
+};
+} // namespace std
+
+namespace sora::showcase {
+
+template <>
+inline ItemType decode_value<ItemType>(SoraReader& reader) {
+    return decode_item_type_ordinal(reader.read_u32());
+}
+
+} // namespace sora::showcase

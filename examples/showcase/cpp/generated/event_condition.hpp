@@ -1,0 +1,45 @@
+#pragma once
+
+#include "sora_runtime.hpp"
+#include <variant>
+
+namespace sora::showcase {
+struct EventCondition {
+    struct LevelAtLeast {
+        std::int32_t level;
+    };
+    struct QuestCompleted {
+        std::int32_t quest_id;
+    };
+    struct HasItem {
+        std::int32_t item_id;
+        std::int32_t count;
+    };
+    std::variant<
+        LevelAtLeast,
+        QuestCompleted,
+        HasItem
+    > value;
+
+    static EventCondition decode(SoraReader& reader) {
+        switch (reader.read_u32()) {
+        case 0:
+            return EventCondition{ LevelAtLeast{
+                reader.read_i32(),
+            } };
+        case 1:
+            return EventCondition{ QuestCompleted{
+                reader.read_i32(),
+            } };
+        case 2:
+            return EventCondition{ HasItem{
+                reader.read_i32(),
+                reader.read_i32(),
+            } };
+        default:
+            throw SoraReadException("invalid union ordinal for EventCondition");
+        }
+    }
+};
+
+} // namespace sora::showcase

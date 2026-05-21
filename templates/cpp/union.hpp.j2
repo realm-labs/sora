@@ -1,0 +1,117 @@
+#pragma once
+
+#include "sora_runtime.hpp"
+{%- for import in union.imports %}
+#include "{{ import.module }}.hpp"
+{%- endfor %}
+
+{%- if options.has_std_variant %}
+#include <variant>
+{%- else %}
+#include <memory>
+{%- endif %}
+
+{{ options.namespace_open }}
+
+{%- if options.has_std_variant %}
+struct {{ union.pascal_name }} {
+{%- for variant in union.variants %}
+    struct {{ variant.name }} {
+{%- for field in variant.fields %}
+        {{ field.type_name }} {{ field.name }};
+{%- endfor %}
+    };
+
+{%- endfor %}
+    std::variant<
+{%- for variant in union.variants %}
+        {{ variant.name }}{{ "," if not loop.last }}
+{%- endfor %}
+    > value;
+
+    static {{ union.pascal_name }} decode(SoraReader& reader) {
+        switch (reader.read_u32()) {
+{%- for variant in union.variants %}
+        case {{ loop.index0 }}:
+            return {{ union.pascal_name }}{ {{ variant.name }}{
+{%- for field in variant.fields %}
+                {{ field.decode }},
+{%- endfor %}
+            } };
+{%- endfor %}
+        default:
+            throw SoraReadException("invalid union ordinal for {{ union.pascal_name }}");
+        }
+    }
+};
+{%- else %}
+class {{ union.pascal_name }} {
+public:
+{%- for variant in union.variants %}
+    struct {{ variant.name }} {
+{%- for field in variant.fields %}
+        {{ field.type_name }} {{ field.name }};
+{%- endfor %}
+    };
+
+{%- endfor %}
+    enum class Tag {
+{%- for variant in union.variants %}
+        {{ variant.name }},
+{%- endfor %}
+    };
+
+    {{ union.pascal_name }}()
+        : tag_(Tag::{{ union.variants[0].name }}),
+          value_(new TypedHolder<{{ union.variants[0].name }}>({{ union.variants[0].name }}{})) {}
+
+    Tag tag() const { return tag_; }
+
+{%- for variant in union.variants %}
+    static {{ union.pascal_name }} {{ variant.method_name }}({{ variant.name }} value) {
+        {{ union.pascal_name }} result;
+        result.tag_ = Tag::{{ variant.name }};
+        result.value_.reset(new TypedHolder<{{ variant.name }}>(value));
+        return result;
+    }
+
+    const {{ variant.name }}& {{ variant.method_name }}() const {
+        if (tag_ != Tag::{{ variant.name }}) {
+            throw SoraReadException("union variant mismatch for {{ union.pascal_name }}");
+        }
+        return static_cast<const TypedHolder<{{ variant.name }}>*>(value_.get())->value;
+    }
+
+{%- endfor %}
+    static {{ union.pascal_name }} decode(SoraReader& reader) {
+        switch (reader.read_u32()) {
+{%- for variant in union.variants %}
+        case {{ loop.index0 }}:
+            return {{ variant.method_name }}({{ variant.name }}{
+{%- for field in variant.fields %}
+                {{ field.decode }},
+{%- endfor %}
+            });
+{%- endfor %}
+        default:
+            throw SoraReadException("invalid union ordinal for {{ union.pascal_name }}");
+        }
+    }
+
+private:
+    struct Holder {
+        virtual ~Holder() {}
+    };
+
+    template <typename T>
+    struct TypedHolder : Holder {
+        explicit TypedHolder(const T& value) : value(value) {}
+        T value;
+    };
+
+    Tag tag_;
+    std::shared_ptr<Holder> value_;
+};
+{%- endif %}
+
+{{ options.namespace_close }}

@@ -1,0 +1,27 @@
+#pragma once
+
+#include "sora_runtime.hpp"
+{%- for import in record.imports %}
+#include "{{ import.module }}.hpp"
+{%- endfor %}
+
+{{ options.namespace_open }}
+
+struct {{ record.pascal_name }} {
+{%- for field in record.fields %}
+{%- if field.comment %}
+    // {{ field.comment }}
+{%- endif %}
+    {{ field.type_name }} {{ field.name }};
+{%- endfor %}
+
+    static {{ record.pascal_name }} decode(SoraReader& reader) {
+        return {{ record.pascal_name }}{
+{%- for field in record.fields %}
+            {{ field.decode }},
+{%- endfor %}
+        };
+    }
+};
+
+{{ options.namespace_close }}

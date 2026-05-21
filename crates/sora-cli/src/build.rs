@@ -311,6 +311,7 @@ impl BuildTarget {
             "csharp" | "cs" => Ok(Self::Csharp),
             "java" => Ok(Self::Java),
             "go" => Ok(Self::Go),
+            "cpp" | "c++" => Ok(Self::Cpp),
             "typescript" | "ts" => Ok(Self::Typescript),
             "javascript" | "js" => Ok(Self::Javascript),
             "erlang" | "erl" => Ok(Self::Erlang),
@@ -318,7 +319,7 @@ impl BuildTarget {
             "proto" => Ok(Self::Proto),
             "python" | "py" => Ok(Self::Python),
             _ => Err(format!(
-                "unsupported codegen target `{value}`; expected rust, kotlin, csharp, java, go, typescript, javascript, erlang, lua, proto, or python"
+                "unsupported codegen target `{value}`; expected rust, kotlin, csharp, java, go, cpp, typescript, javascript, erlang, lua, proto, or python"
             )),
         }
     }
@@ -330,6 +331,7 @@ impl BuildTarget {
             Self::Csharp => "csharp",
             Self::Java => "java",
             Self::Go => "go",
+            Self::Cpp => "cpp",
             Self::Typescript => "typescript",
             Self::Javascript => "javascript",
             Self::Erlang => "erlang",
@@ -348,6 +350,7 @@ impl From<BuildTarget> for CodegenTarget {
             BuildTarget::Csharp => Self::CSharp,
             BuildTarget::Java => Self::Java,
             BuildTarget::Go => Self::Go,
+            BuildTarget::Cpp => Self::Cpp,
             BuildTarget::Typescript => Self::TypeScript,
             BuildTarget::Javascript => Self::JavaScript,
             BuildTarget::Erlang => Self::Erlang,
@@ -383,6 +386,8 @@ mod tests {
         assert!(base.join("generated/excel/Item.xlsx").exists());
         assert!(base.join("generated/rust/item.rs").exists());
         assert!(base.join("generated/lua/item.lua").exists());
+        assert!(base.join("generated/cpp/item.hpp").exists());
+        assert!(base.join("generated/cpp/sora_config.hpp").exists());
         assert!(base.join("generated/typescript/item.ts").exists());
         assert!(base.join("generated/javascript/item.js").exists());
         assert!(base.join("generated/javascript/item.d.ts").exists());
@@ -458,6 +463,10 @@ out = "generated/kotlin"
 [[build.codegen]]
 target = "lua"
 out = "generated/lua"
+
+[[build.codegen]]
+target = "cpp"
+out = "generated/cpp"
 
 [[build.codegen]]
 target = "typescript"

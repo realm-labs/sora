@@ -1,0 +1,26 @@
+#pragma once
+
+#include "sora_runtime.hpp"
+#include "vec3.hpp"
+
+namespace sora::showcase {
+
+struct GameSettings {
+    std::string version;
+    std::int32_t daily_reset_hour;
+    std::int32_t starting_gold;
+    Vec3 spawn_pos;
+    std::vector<std::int32_t> starter_items;
+
+    static GameSettings decode(SoraReader& reader) {
+        return GameSettings{
+            reader.read_string(),
+            reader.read_i32(),
+            reader.read_i32(),
+            Vec3::decode(reader),
+            reader.read_vector<std::int32_t>(),
+        };
+    }
+};
+
+} // namespace sora::showcase

@@ -159,6 +159,7 @@ mod tests {
         generate_code(&input, CodegenTarget::Kotlin, &base.join("kotlin")).unwrap();
         generate_code(&input, CodegenTarget::TypeScript, &base.join("typescript")).unwrap();
         generate_code(&input, CodegenTarget::JavaScript, &base.join("javascript")).unwrap();
+        generate_code(&input, CodegenTarget::Cpp, &base.join("cpp")).unwrap();
         generate_code(&input, CodegenTarget::Erlang, &base.join("erlang")).unwrap();
         generate_code(&input, CodegenTarget::Python, &base.join("python")).unwrap();
         generate_code(&input, CodegenTarget::Proto, &base.join("proto")).unwrap();
@@ -168,6 +169,7 @@ mod tests {
         assert!(base.join("kotlin/game_config/Item.kt").exists());
         assert!(base.join("typescript/item.ts").exists());
         assert!(base.join("javascript/item.js").exists());
+        assert!(base.join("cpp/item.hpp").exists());
         assert!(base.join("erlang/item.erl").exists());
         assert!(base.join("python/item.py").exists());
         assert!(base.join("python/sora_config.py").exists());

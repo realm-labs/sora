@@ -1,0 +1,364 @@
+#pragma once
+
+#include <array>
+#include <cstddef>
+#include <cstdint>
+#include <cstring>
+#include <memory>
+#include <optional>
+#include <stdexcept>
+#include <string>
+#include <vector>
+
+namespace sora::showcase {
+
+class SoraReadException : public std::runtime_error {
+public:
+    explicit SoraReadException(const std::string& message) : std::runtime_error(message) {}
+};
+
+class SoraReader;
+
+template <typename T>
+inline T decode_value(SoraReader& reader) {
+    return T::decode(reader);
+}
+
+class SoraReader {
+public:
+    SoraReader(const std::uint8_t* bytes, std::size_t size) : bytes_(bytes), size_(size), cursor_(0) {}
+
+    bool is_finished() const { return cursor_ == size_; }
+
+    std::uint8_t read_u8() {
+        const std::uint8_t* bytes = take(1);
+        return bytes[0];
+    }
+
+    bool read_bool() {
+        std::uint8_t value = read_u8();
+        if (value == 0) {
+            return false;
+        }
+        if (value == 1) {
+            return true;
+        }
+        throw SoraReadException("invalid bool value");
+    }
+
+    std::uint32_t read_u32() {
+        const std::uint8_t* bytes = take(4);
+        return static_cast<std::uint32_t>(bytes[0]) |
+            (static_cast<std::uint32_t>(bytes[1]) << 8) |
+            (static_cast<std::uint32_t>(bytes[2]) << 16) |
+            (static_cast<std::uint32_t>(bytes[3]) << 24);
+    }
+
+    std::int32_t read_i32() { return static_cast<std::int32_t>(read_u32()); }
+
+    std::int64_t read_i64() {
+        std::uint64_t value = read_u64();
+        return static_cast<std::int64_t>(value);
+    }
+
+    float read_f32() {
+        std::uint32_t bits = read_u32();
+        float value;
+        std::memcpy(&value, &bits, sizeof(value));
+        return value;
+    }
+
+    double read_f64() {
+        std::uint64_t bits = read_u64();
+        double value;
+        std::memcpy(&value, &bits, sizeof(value));
+        return value;
+    }
+
+    std::string read_string() {
+        std::uint32_t length = read_u32();
+        const std::uint8_t* bytes = take(length);
+        return std::string(reinterpret_cast<const char*>(bytes), length);
+    }
+
+    template <typename T>
+    std::vector<T> read_vector() {
+        std::uint32_t length = read_u32();
+        std::vector<T> values;
+        values.reserve(length);
+        for (std::uint32_t index = 0; index < length; ++index) {
+            values.push_back(decode_value<T>(*this));
+        }
+        return values;
+    }
+
+    template <typename T, std::size_t N>
+    std::array<T, N> read_array() {
+        std::uint32_t length = read_u32();
+        if (length != N) {
+            throw SoraReadException("array length does not match schema");
+        }
+        std::array<T, N> values;
+        for (std::size_t index = 0; index < N; ++index) {
+            values[index] = decode_value<T>(*this);
+        }
+        return values;
+    }
+
+    template <typename T>
+    std::optional<T> read_optional() {
+        std::uint8_t presence = read_u8();
+        if (presence == 0) {
+            return std::nullopt;
+        }
+        if (presence == 1) {
+            return std::optional<T>(decode_value<T>(*this));
+        }
+        throw SoraReadException("invalid optional presence");
+    }
+
+private:
+    std::uint64_t read_u64() {
+        const std::uint8_t* bytes = take(8);
+        std::uint64_t value = 0;
+        for (std::size_t index = 0; index < 8; ++index) {
+            value |= static_cast<std::uint64_t>(bytes[index]) << (index * 8);
+        }
+        return value;
+    }
+
+    const std::uint8_t* take(std::size_t length) {
+        if (length > size_ || cursor_ > size_ - length) {
+            throw SoraReadException("Sora reader reached end of row");
+        }
+        const std::uint8_t* bytes = bytes_ + cursor_;
+        cursor_ += length;
+        return bytes;
+    }
+
+    const std::uint8_t* bytes_;
+    std::size_t size_;
+    std::size_t cursor_;
+};
+
+template <>
+inline bool decode_value<bool>(SoraReader& reader) {
+    return reader.read_bool();
+}
+
+template <>
+inline std::int32_t decode_value<std::int32_t>(SoraReader& reader) {
+    return reader.read_i32();
+}
+
+template <>
+inline std::int64_t decode_value<std::int64_t>(SoraReader& reader) {
+    return reader.read_i64();
+}
+
+template <>
+inline float decode_value<float>(SoraReader& reader) {
+    return reader.read_f32();
+}
+
+template <>
+inline double decode_value<double>(SoraReader& reader) {
+    return reader.read_f64();
+}
+
+template <>
+inline std::string decode_value<std::string>(SoraReader& reader) {
+    return reader.read_string();
+}
+
+class SoraBundle {
+public:
+    static SoraBundle parse(const std::vector<std::uint8_t>& bytes) {
+        if (bytes.size() < kHeaderLength) {
+            throw SoraReadException("Sora bundle is shorter than header");
+        }
+        if (bytes[0] != 'S' || bytes[1] != 'O' || bytes[2] != 'R' || bytes[3] != 'A') {
+            throw SoraReadException("invalid Sora bundle magic");
+        }
+        if (read_u32_at(bytes, 4) != kBundleVersion) {
+            throw SoraReadException("unsupported Sora bundle version");
+        }
+        std::size_t header_length = static_cast<std::size_t>(read_u32_at(bytes, 8));
+        std::size_t directory_length = static_cast<std::size_t>(read_u32_at(bytes, 12));
+        std::size_t section_count = static_cast<std::size_t>(read_u32_at(bytes, 16));
+        std::uint32_t flags = read_u32_at(bytes, 20);
+        if (flags != 0) {
+            throw SoraReadException("unsupported Sora bundle flags");
+        }
+        if (header_length != kHeaderLength || header_length > bytes.size()) {
+            throw SoraReadException("invalid Sora bundle header length");
+        }
+        if (directory_length > bytes.size() || header_length > bytes.size() - directory_length) {
+            throw SoraReadException("Sora section directory exceeds bundle length");
+        }
+
+        std::size_t directory_end = header_length + directory_length;
+        std::size_t cursor = header_length;
+        std::vector<Section> sections;
+        sections.reserve(section_count);
+        std::size_t manifest_count = 0;
+        std::size_t schema_count = 0;
+        for (std::size_t index = 0; index < section_count; ++index) {
+            if (cursor > directory_end || directory_end - cursor < 40) {
+                throw SoraReadException("truncated Sora section directory entry");
+            }
+            Section section;
+            section.kind = read_u32_at(bytes, cursor);
+            section.compression = read_u32_at(bytes, cursor + 4);
+            std::size_t name_length = static_cast<std::size_t>(read_u32_at(bytes, cursor + 8));
+            std::uint32_t entry_flags = read_u32_at(bytes, cursor + 12);
+            section.offset = static_cast<std::size_t>(read_u64_at(bytes, cursor + 16));
+            section.length = static_cast<std::size_t>(read_u64_at(bytes, cursor + 24));
+            section.uncompressed_length = static_cast<std::size_t>(read_u64_at(bytes, cursor + 32));
+            if (entry_flags != 0) {
+                throw SoraReadException("unsupported Sora section flags");
+            }
+            std::size_t name_start = cursor + 40;
+            if (name_length > directory_end || name_start > directory_end - name_length) {
+                throw SoraReadException("Sora section name exceeds directory");
+            }
+            std::size_t name_end = name_start + name_length;
+            if (section.length > bytes.size() || section.offset > bytes.size() - section.length) {
+                throw SoraReadException("Sora section payload exceeds bundle length");
+            }
+            section.name = std::string(
+                reinterpret_cast<const char*>(&bytes[name_start]),
+                name_length
+            );
+            if (section.kind == kSectionKindManifest) {
+                ++manifest_count;
+                if (section.name != "$manifest") {
+                    throw SoraReadException("Sora manifest section must be named `$manifest`");
+                }
+            } else if (section.kind == kSectionKindSchema) {
+                ++schema_count;
+                if (section.name != "$schema") {
+                    throw SoraReadException("Sora schema section must be named `$schema`");
+                }
+            } else if (section.kind != kSectionKindTable) {
+                throw SoraReadException("unknown Sora section kind");
+            }
+            if (section.compression == kCompressionNone &&
+                section.uncompressed_length != section.length) {
+                throw SoraReadException("uncompressed Sora section length mismatch");
+            }
+            sections.push_back(section);
+            cursor = name_end;
+        }
+        if (cursor != directory_end) {
+            throw SoraReadException("Sora section directory has trailing bytes");
+        }
+        if (manifest_count != 1 || schema_count != 1) {
+            throw SoraReadException("Sora bundle must contain one manifest and one schema section");
+        }
+        return SoraBundle(bytes, sections);
+    }
+
+    template <typename T>
+    std::vector<T> decode_table(const std::string& name) const {
+        for (std::size_t index = 0; index < sections_.size(); ++index) {
+            const Section& section = sections_[index];
+            if (section.kind == kSectionKindTable && section.name == name) {
+                if (section.compression != kCompressionNone) {
+                    throw SoraReadException("unsupported table compression");
+                }
+                if (section.uncompressed_length != section.length) {
+                    throw SoraReadException("table has invalid uncompressed length");
+                }
+                return decode_rows<T>(&bytes_[section.offset], section.length);
+            }
+        }
+        throw SoraReadException("missing Sora table section");
+    }
+
+private:
+    struct Section {
+        std::uint32_t kind;
+        std::uint32_t compression;
+        std::string name;
+        std::size_t offset;
+        std::size_t length;
+        std::size_t uncompressed_length;
+    };
+
+    SoraBundle(const std::vector<std::uint8_t>& bytes, const std::vector<Section>& sections)
+        : bytes_(bytes), sections_(sections) {}
+
+    template <typename T>
+    static std::vector<T> decode_rows(const std::uint8_t* payload, std::size_t length) {
+        if (length < 12) {
+            throw SoraReadException("Sora table section is too short");
+        }
+        std::uint32_t row_count = read_u32_at(payload, length, 0);
+        std::size_t offsets_length = static_cast<std::size_t>(row_count) + 1;
+        if (offsets_length > (length - 4) / 8) {
+            throw SoraReadException("Sora row offset table exceeds payload length");
+        }
+        std::size_t row_data_start = 4 + offsets_length * 8;
+        std::vector<T> rows;
+        rows.reserve(row_count);
+        for (std::uint32_t index = 0; index < row_count; ++index) {
+            std::size_t start = static_cast<std::size_t>(read_u64_at(payload, length, 4 + index * 8));
+            std::size_t end = static_cast<std::size_t>(read_u64_at(payload, length, 4 + (index + 1) * 8));
+            if (start > end) {
+                throw SoraReadException("Sora row offsets are not monotonic");
+            }
+            if (end > length - row_data_start) {
+                throw SoraReadException("Sora row exceeds payload length");
+            }
+            SoraReader reader(payload + row_data_start + start, end - start);
+            T row = T::decode(reader);
+            if (!reader.is_finished()) {
+                throw SoraReadException("Sora row has trailing bytes");
+            }
+            rows.push_back(row);
+        }
+        return rows;
+    }
+
+    static std::uint32_t read_u32_at(const std::vector<std::uint8_t>& bytes, std::size_t offset) {
+        return read_u32_at(bytes.data(), bytes.size(), offset);
+    }
+
+    static std::uint64_t read_u64_at(const std::vector<std::uint8_t>& bytes, std::size_t offset) {
+        return read_u64_at(bytes.data(), bytes.size(), offset);
+    }
+
+    static std::uint32_t read_u32_at(const std::uint8_t* bytes, std::size_t length, std::size_t offset) {
+        if (offset > length || length - offset < 4) {
+            throw SoraReadException("unexpected end while reading u32");
+        }
+        return static_cast<std::uint32_t>(bytes[offset]) |
+            (static_cast<std::uint32_t>(bytes[offset + 1]) << 8) |
+            (static_cast<std::uint32_t>(bytes[offset + 2]) << 16) |
+            (static_cast<std::uint32_t>(bytes[offset + 3]) << 24);
+    }
+
+    static std::uint64_t read_u64_at(const std::uint8_t* bytes, std::size_t length, std::size_t offset) {
+        if (offset > length || length - offset < 8) {
+            throw SoraReadException("unexpected end while reading u64");
+        }
+        std::uint64_t value = 0;
+        for (std::size_t index = 0; index < 8; ++index) {
+            value |= static_cast<std::uint64_t>(bytes[offset + index]) << (index * 8);
+        }
+        return value;
+    }
+
+    static const std::uint32_t kBundleVersion = 1;
+    static const std::size_t kHeaderLength = 24;
+    static const std::uint32_t kSectionKindManifest = 0;
+    static const std::uint32_t kSectionKindSchema = 1;
+    static const std::uint32_t kSectionKindTable = 2;
+    static const std::uint32_t kCompressionNone = 0;
+
+    std::vector<std::uint8_t> bytes_;
+    std::vector<Section> sections_;
+};
+
+} // namespace sora::showcase

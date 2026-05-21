@@ -101,6 +101,12 @@ impl Formatter {
                 args: &["--quiet"],
                 extension: "py",
             }),
+            CodegenTarget::Cpp => Some(Self {
+                language: "C++",
+                command: "clang-format",
+                args: &["-i"],
+                extension: "hpp",
+            }),
             CodegenTarget::Kotlin
             | CodegenTarget::CSharp
             | CodegenTarget::Java
@@ -191,6 +197,7 @@ impl CodegenTarget {
             CodegenTarget::CSharp => "C#",
             CodegenTarget::Java => "Java",
             CodegenTarget::Go => "Go",
+            CodegenTarget::Cpp => "C++",
             CodegenTarget::TypeScript => "TypeScript",
             CodegenTarget::JavaScript => "JavaScript",
             CodegenTarget::Erlang => "Erlang",

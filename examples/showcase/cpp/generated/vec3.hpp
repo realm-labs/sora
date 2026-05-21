@@ -1,0 +1,21 @@
+#pragma once
+
+#include "sora_runtime.hpp"
+
+namespace sora::showcase {
+
+struct Vec3 {
+    float x;
+    float y;
+    float z;
+
+    static Vec3 decode(SoraReader& reader) {
+        return Vec3{
+            reader.read_f32(),
+            reader.read_f32(),
+            reader.read_f32(),
+        };
+    }
+};
+
+} // namespace sora::showcase

@@ -1,0 +1,47 @@
+#pragma once
+
+#include "sora_runtime.hpp"
+
+#include <cstdint>
+#include <functional>
+
+namespace sora::showcase {
+
+enum class ResourceKind : std::int32_t {
+    Item = 0,
+    Gold = 1,
+    Diamond = 2,
+};
+
+inline ResourceKind decode_resource_kind_ordinal(std::uint32_t value) {
+    switch (value) {
+    case 0:
+        return ResourceKind::Item;
+    case 1:
+        return ResourceKind::Gold;
+    case 2:
+        return ResourceKind::Diamond;
+    default:
+        throw SoraReadException("invalid enum ordinal for ResourceKind");
+    }
+}
+
+} // namespace sora::showcase
+
+namespace std {
+template <>
+struct hash<sora::showcase::ResourceKind> {
+    std::size_t operator()(const sora::showcase::ResourceKind& value) const {
+        return std::hash<std::int32_t>()(static_cast<std::int32_t>(value));
+    }
+};
+} // namespace std
+
+namespace sora::showcase {
+
+template <>
+inline ResourceKind decode_value<ResourceKind>(SoraReader& reader) {
+    return decode_resource_kind_ordinal(reader.read_u32());
+}
+
+} // namespace sora::showcase

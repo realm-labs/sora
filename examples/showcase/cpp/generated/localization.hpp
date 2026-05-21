@@ -1,0 +1,23 @@
+#pragma once
+
+#include "sora_runtime.hpp"
+
+namespace sora::showcase {
+
+struct Localization {
+    std::string key;
+    std::string zh_cn;
+    std::string en_us;
+    std::optional<std::string> note;
+
+    static Localization decode(SoraReader& reader) {
+        return Localization{
+            reader.read_string(),
+            reader.read_string(),
+            reader.read_string(),
+            reader.read_optional<std::string>(),
+        };
+    }
+};
+
+} // namespace sora::showcase

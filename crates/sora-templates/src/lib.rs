@@ -33,6 +33,31 @@ const EMBEDDED_TEMPLATES: &[EmbeddedTemplate] = &[
         source: include_str!("../../../templates/csharp/union.cs.j2"),
     },
     EmbeddedTemplate {
+        target: "cpp",
+        file_name: "config.hpp.j2",
+        source: include_str!("../../../templates/cpp/config.hpp.j2"),
+    },
+    EmbeddedTemplate {
+        target: "cpp",
+        file_name: "enum.hpp.j2",
+        source: include_str!("../../../templates/cpp/enum.hpp.j2"),
+    },
+    EmbeddedTemplate {
+        target: "cpp",
+        file_name: "record.hpp.j2",
+        source: include_str!("../../../templates/cpp/record.hpp.j2"),
+    },
+    EmbeddedTemplate {
+        target: "cpp",
+        file_name: "runtime.hpp.j2",
+        source: include_str!("../../../templates/cpp/runtime.hpp.j2"),
+    },
+    EmbeddedTemplate {
+        target: "cpp",
+        file_name: "union.hpp.j2",
+        source: include_str!("../../../templates/cpp/union.hpp.j2"),
+    },
+    EmbeddedTemplate {
         target: "go",
         file_name: "config.go.j2",
         source: include_str!("../../../templates/go/config.go.j2"),
@@ -343,7 +368,7 @@ mod tests {
 
     #[test]
     fn embeds_all_templates() {
-        assert_eq!(EMBEDDED_TEMPLATES.len(), 61);
+        assert_eq!(EMBEDDED_TEMPLATES.len(), 66);
         for template in EMBEDDED_TEMPLATES {
             let source = template_source(template.target, template.file_name)
                 .expect("embedded template should be registered");

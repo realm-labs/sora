@@ -1,0 +1,55 @@
+#pragma once
+
+#include "sora_runtime.hpp"
+#include <variant>
+
+namespace sora::showcase {
+struct RewardAction {
+    struct AddItem {
+        std::int32_t item_id;
+        std::int32_t count;
+    };
+    struct AddBuff {
+        std::int32_t buff_id;
+        float duration;
+    };
+    struct UnlockStage {
+        std::int32_t stage_id;
+    };
+    struct SendMail {
+        std::int32_t mail_id;
+    };
+    std::variant<
+        AddItem,
+        AddBuff,
+        UnlockStage,
+        SendMail
+    > value;
+
+    static RewardAction decode(SoraReader& reader) {
+        switch (reader.read_u32()) {
+        case 0:
+            return RewardAction{ AddItem{
+                reader.read_i32(),
+                reader.read_i32(),
+            } };
+        case 1:
+            return RewardAction{ AddBuff{
+                reader.read_i32(),
+                reader.read_f32(),
+            } };
+        case 2:
+            return RewardAction{ UnlockStage{
+                reader.read_i32(),
+            } };
+        case 3:
+            return RewardAction{ SendMail{
+                reader.read_i32(),
+            } };
+        default:
+            throw SoraReadException("invalid union ordinal for RewardAction");
+        }
+    }
+};
+
+} // namespace sora::showcase

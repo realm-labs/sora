@@ -1,0 +1,22 @@
+#pragma once
+
+#include "sora_runtime.hpp"
+#include "resource_cost.hpp"
+
+namespace sora::showcase {
+
+struct GachaPool {
+    std::int32_t id;
+    std::string name;
+    ResourceCost cost;
+
+    static GachaPool decode(SoraReader& reader) {
+        return GachaPool{
+            reader.read_i32(),
+            reader.read_string(),
+            ResourceCost::decode(reader),
+        };
+    }
+};
+
+} // namespace sora::showcase

@@ -1,0 +1,23 @@
+#pragma once
+
+#include "sora_runtime.hpp"
+
+namespace sora::showcase {
+
+struct StageReward {
+    std::int32_t stage_id;
+    std::int32_t seq;
+    std::int32_t item_id;
+    std::int32_t count;
+
+    static StageReward decode(SoraReader& reader) {
+        return StageReward{
+            reader.read_i32(),
+            reader.read_i32(),
+            reader.read_i32(),
+            reader.read_i32(),
+        };
+    }
+};
+
+} // namespace sora::showcase

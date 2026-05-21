@@ -1,7 +1,7 @@
 use sora_diagnostics::{Result, SoraError};
 use sora_schema::model::{
-    CodegenSchema, EnumReprSchema, ErlangCodegenSchema, ErlangEnumReprSchema, FieldSchema,
-    IndexSchema, JavaScriptCodegenSchema, LanguageCodegenSchema, LuaCodegenSchema,
+    CodegenSchema, CppStandardSchema, EnumReprSchema, ErlangCodegenSchema, ErlangEnumReprSchema,
+    FieldSchema, IndexSchema, JavaScriptCodegenSchema, LanguageCodegenSchema, LuaCodegenSchema,
     LuaEnumReprSchema, LuaVersionSchema, RuntimeFormatSchema, RustMapTypeSchema, SchemaFile,
     TableModeSchema, TableSchema, TableSourceSchema, TypeScriptCodegenSchema, UnionSchema,
     UnionVariantSchema,
@@ -9,10 +9,11 @@ use sora_schema::model::{
 
 use crate::{
     model::{
-        AggregationIr, CodegenIr, ConfigIr, EnumIr, EnumReprIr, ErlangCodegenIr, ErlangEnumReprIr,
-        FieldIr, IndexIr, JavaScriptCodegenIr, LanguageCodegenIr, LuaCodegenIr, LuaEnumReprIr,
-        LuaVersionIr, RuntimeFormatIr, RustCodegenIr, RustMapTypeIr, StructIr, TableIr,
-        TableModeIr, TableSourceIr, TypeIr, TypeScriptCodegenIr, UnionIr, UnionVariantIr,
+        AggregationIr, CodegenIr, ConfigIr, CppCodegenIr, CppStandardIr, EnumIr, EnumReprIr,
+        ErlangCodegenIr, ErlangEnumReprIr, FieldIr, IndexIr, JavaScriptCodegenIr,
+        LanguageCodegenIr, LuaCodegenIr, LuaEnumReprIr, LuaVersionIr, RuntimeFormatIr,
+        RustCodegenIr, RustMapTypeIr, StructIr, TableIr, TableModeIr, TableSourceIr, TypeIr,
+        TypeScriptCodegenIr, UnionIr, UnionVariantIr,
     },
     parse::parse_type,
 };
@@ -74,6 +75,11 @@ impl From<CodegenSchema> for CodegenIr {
             csharp: LanguageCodegenIr::from(value.csharp),
             java: LanguageCodegenIr::from(value.java),
             go: LanguageCodegenIr::from(value.go),
+            cpp: CppCodegenIr {
+                runtime_format: RuntimeFormatIr::from(value.cpp.runtime_format),
+                cpp_standard: CppStandardIr::from(value.cpp.cpp_standard),
+                namespace: value.cpp.namespace,
+            },
             typescript: TypeScriptCodegenIr::from(value.typescript),
             javascript: JavaScriptCodegenIr::from(value.javascript),
             erlang: ErlangCodegenIr::from(value.erlang),
@@ -137,6 +143,18 @@ impl From<RuntimeFormatSchema> for RuntimeFormatIr {
             RuntimeFormatSchema::Json => Self::Json,
             RuntimeFormatSchema::Protobuf => Self::Protobuf,
             RuntimeFormatSchema::Cbor => Self::Cbor,
+        }
+    }
+}
+
+impl From<CppStandardSchema> for CppStandardIr {
+    fn from(value: CppStandardSchema) -> Self {
+        match value {
+            CppStandardSchema::Cpp11 => Self::Cpp11,
+            CppStandardSchema::Cpp14 => Self::Cpp14,
+            CppStandardSchema::Cpp17 => Self::Cpp17,
+            CppStandardSchema::Cpp20 => Self::Cpp20,
+            CppStandardSchema::Cpp23 => Self::Cpp23,
         }
     }
 }
@@ -449,8 +467,8 @@ fn validate_optional_non_empty(
 mod tests {
     use super::*;
     use crate::model::{
-        EnumReprIr, ErlangEnumReprIr, LuaEnumReprIr, LuaVersionIr, RuntimeFormatIr, TableModeIr,
-        TypeIr,
+        CppStandardIr, EnumReprIr, ErlangEnumReprIr, LuaEnumReprIr, LuaVersionIr, RuntimeFormatIr,
+        TableModeIr, TypeIr,
     };
 
     #[test]
@@ -490,6 +508,8 @@ length = [1, 3]
         assert_eq!(ir.package, "game_config");
         assert_eq!(ir.codegen.rust.runtime_format, RuntimeFormatIr::Sora);
         assert_eq!(ir.codegen.kotlin.runtime_format, RuntimeFormatIr::Sora);
+        assert_eq!(ir.codegen.cpp.runtime_format, RuntimeFormatIr::Sora);
+        assert_eq!(ir.codegen.cpp.cpp_standard, CppStandardIr::Cpp17);
         assert_eq!(ir.codegen.typescript.runtime_format, RuntimeFormatIr::Sora);
         assert_eq!(ir.codegen.typescript.enum_repr, EnumReprIr::String);
         assert_eq!(ir.codegen.javascript.runtime_format, RuntimeFormatIr::Sora);

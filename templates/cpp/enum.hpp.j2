@@ -1,0 +1,45 @@
+#pragma once
+
+#include "sora_runtime.hpp"
+
+#include <cstdint>
+#include <functional>
+
+{{ options.namespace_open }}
+
+enum class {{ enum.name }} : std::int32_t {
+{%- for value in enum.values %}
+    {{ value }} = {{ loop.index0 }},
+{%- endfor %}
+};
+
+inline {{ enum.name }} decode_{{ enum.snake_name }}_ordinal(std::uint32_t value) {
+    switch (value) {
+{%- for value in enum.values %}
+    case {{ loop.index0 }}:
+        return {{ enum.name }}::{{ value }};
+{%- endfor %}
+    default:
+        throw SoraReadException("invalid enum ordinal for {{ enum.name }}");
+    }
+}
+
+{{ options.namespace_close }}
+
+namespace std {
+template <>
+struct hash<{{ options.namespace_name }}::{{ enum.name }}> {
+    std::size_t operator()(const {{ options.namespace_name }}::{{ enum.name }}& value) const {
+        return std::hash<std::int32_t>()(static_cast<std::int32_t>(value));
+    }
+};
+} // namespace std
+
+{{ options.namespace_open }}
+
+template <>
+inline {{ enum.name }} decode_value<{{ enum.name }}>(SoraReader& reader) {
+    return decode_{{ enum.snake_name }}_ordinal(reader.read_u32());
+}
+
+{{ options.namespace_close }}

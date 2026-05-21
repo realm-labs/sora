@@ -1,0 +1,24 @@
+#pragma once
+
+#include "sora_runtime.hpp"
+#include "rarity.hpp"
+
+namespace sora::showcase {
+
+struct GachaItem {
+    std::int32_t pool_id;
+    std::int32_t item_id;
+    Rarity rarity;
+    float weight;
+
+    static GachaItem decode(SoraReader& reader) {
+        return GachaItem{
+            reader.read_i32(),
+            reader.read_i32(),
+            decode_value<Rarity>(reader),
+            reader.read_f32(),
+        };
+    }
+};
+
+} // namespace sora::showcase

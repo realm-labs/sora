@@ -22,6 +22,7 @@ pub fn run(command: Command) -> Result<()> {
             GenCommand::Csharp(args) => generate(args, CodegenTarget::CSharp),
             GenCommand::Java(args) => generate(args, CodegenTarget::Java),
             GenCommand::Go(args) => generate(args, CodegenTarget::Go),
+            GenCommand::Cpp(args) => generate(args, CodegenTarget::Cpp),
             GenCommand::Typescript(args) => generate(args, CodegenTarget::TypeScript),
             GenCommand::Javascript(args) => generate(args, CodegenTarget::JavaScript),
             GenCommand::Erlang(args) => generate(args, CodegenTarget::Erlang),

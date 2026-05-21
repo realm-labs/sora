@@ -1,0 +1,31 @@
+#pragma once
+
+#include "sora_runtime.hpp"
+#include "rarity.hpp"
+#include "vec3.hpp"
+
+namespace sora::showcase {
+
+struct Character {
+    std::int32_t id;
+    std::string name;
+    Rarity rarity;
+    std::int32_t base_level;
+    std::int32_t base_skill;
+    std::vector<std::int32_t> starter_items;
+    Vec3 spawn_pos;
+
+    static Character decode(SoraReader& reader) {
+        return Character{
+            reader.read_i32(),
+            reader.read_string(),
+            decode_value<Rarity>(reader),
+            reader.read_i32(),
+            reader.read_i32(),
+            reader.read_vector<std::int32_t>(),
+            Vec3::decode(reader),
+        };
+    }
+};
+
+} // namespace sora::showcase

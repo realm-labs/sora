@@ -1,0 +1,120 @@
+#pragma once
+
+#include "sora_runtime.hpp"
+{%- for module in model.modules %}
+#include "{{ module }}.hpp"
+{%- endfor %}
+
+#include <cstdint>
+#include <unordered_map>
+#include <vector>
+
+{{ options.namespace_open }}
+
+class SoraConfig {
+public:
+    static SoraConfig from_bytes(const std::vector<std::uint8_t>& bytes) {
+        SoraBundle bundle = SoraBundle::parse(bytes);
+        SoraConfig config;
+{%- for table in model.tables %}
+        std::vector<{{ table.row_type }}> {{ table.snake_name }}_rows =
+            bundle.decode_table<{{ table.row_type }}>("{{ table.name }}");
+{%- if table.mode == "map" and table.key_field_name %}
+        for (std::size_t index = 0; index < {{ table.snake_name }}_rows.size(); ++index) {
+            const {{ table.row_type }}& row = {{ table.snake_name }}_rows[index];
+            config.{{ table.snake_name }}_.emplace(row.{{ table.key_field_name }}, row);
+        }
+{%- elif table.mode == "singleton" %}
+        if ({{ table.snake_name }}_rows.size() != 1) {
+            throw SoraReadException("expected singleton table {{ table.name }} to contain exactly one row");
+        }
+        config.{{ table.snake_name }}_ = {{ table.snake_name }}_rows[0];
+{%- else %}
+        config.{{ table.snake_name }}_ = {{ table.snake_name }}_rows;
+{%- endif %}
+{%- endfor %}
+{%- for table in model.tables %}
+{%- if table.unique_indexes or table.non_unique_indexes %}
+{%- if table.mode == "map" %}
+        for (typename {{ table.container_type }}::const_iterator it = config.{{ table.snake_name }}_.begin();
+             it != config.{{ table.snake_name }}_.end();
+             ++it) {
+            const {{ table.row_type }}& row = it->second;
+{%- elif table.mode == "list" %}
+        for (std::size_t index = 0; index < config.{{ table.snake_name }}_.size(); ++index) {
+            const {{ table.row_type }}& row = config.{{ table.snake_name }}_[index];
+{%- else %}
+        {
+            const {{ table.row_type }}& row = config.{{ table.snake_name }}_;
+{%- endif %}
+{%- for index in table.unique_indexes %}
+            config.{{ table.snake_name }}_{{ index.name }}_[row.{{ index.field_name }}] = &row;
+{%- endfor %}
+{%- for index in table.non_unique_indexes %}
+            config.{{ table.snake_name }}_{{ index.name }}_[row.{{ index.field_name }}].push_back(&row);
+{%- endfor %}
+        }
+{%- endif %}
+{%- endfor %}
+        return config;
+    }
+
+{%- for table in model.tables %}
+{%- if table.mode == "map" and table.key_field_name %}
+    const {{ table.row_type }}* get_{{ table.snake_name }}(const {{ table.key_type }}& key) const {
+        typename {{ table.container_type }}::const_iterator it = {{ table.snake_name }}_.find(key);
+        if (it == {{ table.snake_name }}_.end()) {
+            return nullptr;
+        }
+        return &it->second;
+    }
+
+    const {{ table.container_type }}& {{ table.snake_name }}_rows() const {
+        return {{ table.snake_name }}_;
+    }
+{%- elif table.mode == "singleton" %}
+    const {{ table.row_type }}& {{ table.snake_name }}_row() const {
+        return {{ table.snake_name }}_;
+    }
+{%- else %}
+    const {{ table.container_type }}& {{ table.snake_name }}_rows() const {
+        return {{ table.snake_name }}_;
+    }
+{%- endif %}
+{%- for index in table.unique_indexes %}
+
+    const {{ table.row_type }}* {{ index.method_name }}(const {{ index.key_type }}& {{ index.param_name }}) const {
+        typename std::unordered_map<{{ index.key_type }}, const {{ table.row_type }}*>::const_iterator it =
+            {{ table.snake_name }}_{{ index.name }}_.find({{ index.param_name }});
+        if (it == {{ table.snake_name }}_{{ index.name }}_.end()) {
+            return nullptr;
+        }
+        return it->second;
+    }
+{%- endfor %}
+{%- for index in table.non_unique_indexes %}
+
+    std::vector<const {{ table.row_type }}*> find_{{ index.name }}(const {{ index.key_type }}& {{ index.param_name }}) const {
+        typename std::unordered_map<{{ index.key_type }}, std::vector<const {{ table.row_type }}*> >::const_iterator it =
+            {{ table.snake_name }}_{{ index.name }}_.find({{ index.param_name }});
+        if (it == {{ table.snake_name }}_{{ index.name }}_.end()) {
+            return std::vector<const {{ table.row_type }}*>();
+        }
+        return it->second;
+    }
+{%- endfor %}
+
+{%- endfor %}
+private:
+{%- for table in model.tables %}
+    {{ table.container_type }} {{ table.snake_name }}_;
+{%- for index in table.unique_indexes %}
+    std::unordered_map<{{ index.key_type }}, const {{ table.row_type }}*> {{ table.snake_name }}_{{ index.name }}_;
+{%- endfor %}
+{%- for index in table.non_unique_indexes %}
+    std::unordered_map<{{ index.key_type }}, std::vector<const {{ table.row_type }}*> > {{ table.snake_name }}_{{ index.name }}_;
+{%- endfor %}
+{%- endfor %}
+};
+
+{{ options.namespace_close }}

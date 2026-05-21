@@ -1,0 +1,21 @@
+#pragma once
+
+#include "sora_runtime.hpp"
+
+namespace sora::showcase {
+
+struct CharacterSkill {
+    std::int32_t character_id;
+    std::int32_t skill_id;
+    std::int32_t unlock_level;
+
+    static CharacterSkill decode(SoraReader& reader) {
+        return CharacterSkill{
+            reader.read_i32(),
+            reader.read_i32(),
+            reader.read_i32(),
+        };
+    }
+};
+
+} // namespace sora::showcase

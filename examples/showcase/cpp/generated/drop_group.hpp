@@ -1,0 +1,19 @@
+#pragma once
+
+#include "sora_runtime.hpp"
+
+namespace sora::showcase {
+
+struct DropGroup {
+    std::int32_t id;
+    std::string name;
+
+    static DropGroup decode(SoraReader& reader) {
+        return DropGroup{
+            reader.read_i32(),
+            reader.read_string(),
+        };
+    }
+};
+
+} // namespace sora::showcase
