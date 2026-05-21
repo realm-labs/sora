@@ -5,6 +5,7 @@ from __future__ import annotations
 from .sora_runtime import (
     SoraBundle,
     SoraConfigTable,
+    SoraReadError,
 )
 from .item import ItemTable, Item
 from .skill import SkillTable, Skill
@@ -41,6 +42,9 @@ from .quest_type import QuestType
 from .rarity import Rarity
 from .stat_type import StatType
 from .mail_type import MailType
+
+
+SCHEMA_FINGERPRINT = "8cc3361563a68f03"
 
 
 class SoraConfig:
@@ -107,6 +111,11 @@ class SoraConfig:
     @staticmethod
     def from_bytes(bytes_data: bytes) -> SoraConfig:
         bundle = SoraBundle.parse(bytes_data)
+        if bundle.schema_fingerprint != SCHEMA_FINGERPRINT:
+            raise SoraReadError(
+                f"schema fingerprint mismatch: generated code expects {SCHEMA_FINGERPRINT}, "
+                f"bundle contains {bundle.schema_fingerprint}"
+            )
         return SoraConfig(
             ItemTable.decode(
                 bundle.decode_table(ItemTable.NAME, Item.decode)

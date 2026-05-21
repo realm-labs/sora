@@ -74,6 +74,7 @@ impl CodeGenerator for PythonCodeGenerator {
 #[derive(Debug, Clone, Serialize)]
 struct PythonModel {
     package: String,
+    schema_fingerprint: String,
     enums: Vec<PythonEnum>,
     unions: Vec<PythonUnion>,
     records: Vec<PythonRecord>,
@@ -201,6 +202,7 @@ impl PythonModel {
 
         Self {
             package: model.package,
+            schema_fingerprint: model.schema_fingerprint,
             enums,
             unions,
             records,

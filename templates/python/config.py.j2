@@ -13,6 +13,7 @@ from .sora_runtime import (
     SoraValueBundle,
 {%- endif %}
     SoraConfigTable,
+    SoraReadError,
 )
 {%- for table in model.tables %}
 from .{{ table.snake_name }} import {{ table.pascal_name }}Table, {{ table.row_type }}
@@ -20,6 +21,9 @@ from .{{ table.snake_name }} import {{ table.pascal_name }}Table, {{ table.row_t
 {%- for enum in model.enums %}
 from .{{ enum.snake_name }} import {{ enum.name }}
 {%- endfor %}
+
+
+SCHEMA_FINGERPRINT = "{{ model.schema_fingerprint }}"
 
 
 class SoraConfig:
@@ -44,6 +48,11 @@ class SoraConfig:
 {%- elif runtime_format == "sora-protobuf" %}
         bundle = SoraValueBundle.parse_protobuf(bytes_data)
 {%- endif %}
+        if bundle.schema_fingerprint != SCHEMA_FINGERPRINT:
+            raise SoraReadError(
+                f"schema fingerprint mismatch: generated code expects {SCHEMA_FINGERPRINT}, "
+                f"bundle contains {bundle.schema_fingerprint}"
+            )
         return SoraConfig(
 {%- for table in model.tables %}
             {{ table.pascal_name }}Table.decode(

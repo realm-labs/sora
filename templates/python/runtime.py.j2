@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-{%- if runtime_format == "json" %}
 import json
+{%- if runtime_format == "json" %}
 {%- elif runtime_format == "cbor" %}
 import cbor2
 {%- elif runtime_format == "sora-protobuf" %}
@@ -57,9 +57,15 @@ class SoraSection:
 
 
 class SoraBundle:
-    def __init__(self, bytes_data: bytes, sections: list[SoraSection]) -> None:
+    def __init__(
+        self,
+        bytes_data: bytes,
+        sections: list[SoraSection],
+        schema_fingerprint: str,
+    ) -> None:
         self._bytes = bytes_data
         self._sections = sections
+        self.schema_fingerprint = schema_fingerprint
 
     @staticmethod
     def parse(input_data: bytes | bytearray) -> SoraBundle:
@@ -159,7 +165,20 @@ class SoraBundle:
                 f"expected exactly 1 Sora schema section, got {schema_count}"
             )
 
-        return SoraBundle(data, sections)
+        manifest = next(
+            (section for section in sections if section.kind == SECTION_KIND_MANIFEST),
+            None,
+        )
+        if manifest is None:
+            raise SoraReadError("missing Sora manifest section")
+        manifest_data = json.loads(
+            data[manifest.offset : manifest.offset + manifest.length].decode("utf-8")
+        )
+        schema_fingerprint = manifest_data.get("schema_fingerprint")
+        if not isinstance(schema_fingerprint, str):
+            raise SoraReadError("Sora manifest is missing string field `schema_fingerprint`")
+
+        return SoraBundle(data, sections, schema_fingerprint)
 
     def decode_table(self, name: str, decode_fn: Callable[[SoraReader], T]) -> list[T]:
         section = next(
@@ -268,8 +287,9 @@ class SoraReader:
 {%- if runtime_format != "sora" %}
 
 class SoraValueBundle:
-    def __init__(self, tables: dict[str, list[SoraValue]]) -> None:
+    def __init__(self, tables: dict[str, list[SoraValue]], schema_fingerprint: str) -> None:
         self._tables = tables
+        self.schema_fingerprint = schema_fingerprint
 
     def decode_table(self, name: str, decode_fn: Callable[[SoraValue], T]) -> list[T]:
         rows = self._tables.get(name)
@@ -311,11 +331,12 @@ class SoraValueBundle:
             raise SoraReadError(
                 f"unsupported {expected_format} bundle version {version}"
             )
+        schema_fingerprint = root.get("schema_fingerprint").as_string()
         tables = {}
         for table_value in root.get("data").as_object().get("tables").as_raw_list():
             table = table_value.as_object()
             tables[table.get("name").as_string()] = table.get("rows").as_raw_list()
-        return SoraValueBundle(tables)
+        return SoraValueBundle(tables, schema_fingerprint)
 
 
 class SoraObject:
@@ -409,6 +430,7 @@ class SoraProtobufBundle:
                 {
                     "format_version": SoraValue(bundle.format_version),
                     "format": SoraValue(bundle.format),
+                    "schema_fingerprint": SoraValue(bundle.schema_fingerprint),
                     "data": SoraValue(
                         SoraObject(
                             {
@@ -502,6 +524,8 @@ class SoraProtobufBundle:
                         ".sora.runtime.Table",
                         repeated=True,
                     ),
+                    SoraProtobufBundle._field("schema_fingerprint", 6, "TYPE_STRING"),
+                    SoraProtobufBundle._field("data_fingerprint", 7, "TYPE_STRING"),
                 ),
                 SoraProtobufBundle._message(
                     "Table",
