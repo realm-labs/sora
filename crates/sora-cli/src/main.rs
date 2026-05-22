@@ -1,14 +1,17 @@
 mod args;
 mod build;
 mod commands;
+mod report;
 mod source;
 
-use anyhow::Result;
 use clap::Parser;
 
 use crate::args::Cli;
 
-fn main() -> Result<()> {
+fn main() {
     let cli = Cli::parse();
-    commands::run(cli)
+    if let Err(error) = commands::run(cli) {
+        eprintln!("{}", report::ErrorReport::new(&error));
+        std::process::exit(1);
+    }
 }

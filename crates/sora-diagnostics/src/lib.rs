@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 #[derive(Debug, thiserror::Error)]
 pub enum SoraError {
@@ -196,3 +196,78 @@ pub enum SoraError {
 }
 
 pub type Result<T> = std::result::Result<T, SoraError>;
+
+impl SoraError {
+    pub fn code(&self) -> &'static str {
+        match self {
+            Self::ReadFile { .. } => "SORA0001",
+            Self::WriteFile { .. } => "SORA0002",
+            Self::CreateDir { .. } => "SORA0003",
+            Self::ParseSchema { .. } => "SORA0004",
+            Self::ParseData { .. } => "SORA0005",
+            Self::SerializeData(_) => "SORA0006",
+            Self::SerializeDataFormat { .. } => "SORA0007",
+            Self::UnknownType(_) => "SORA0008",
+            Self::InvalidType(_) => "SORA0009",
+            Self::InvalidSchema(_) => "SORA0010",
+            Self::DuplicateSchemaName { .. } => "SORA0011",
+            Self::DuplicateFieldName { .. } => "SORA0012",
+            Self::UnknownTypeReference { .. } => "SORA0013",
+            Self::MissingTableKey { .. } => "SORA0014",
+            Self::UnknownIndexField { .. } => "SORA0015",
+            Self::UnknownRefTable { .. } => "SORA0016",
+            Self::UnknownRefField { .. } => "SORA0017",
+            Self::RenderTemplate { .. } => "SORA0018",
+            Self::FormatCode { .. } => "SORA0019",
+            Self::ExcelTemplate { .. } => "SORA0020",
+            Self::UnknownExportFormat { .. } => "SORA0021",
+            Self::InvalidExportOutput { .. } => "SORA0022",
+            Self::MissingRequiredField { .. } => "SORA0023",
+            Self::UnknownField { .. } => "SORA0024",
+            Self::TypeMismatch { .. } => "SORA0025",
+            Self::InvalidEnumValue { .. } => "SORA0026",
+            Self::DuplicateKey { .. } => "SORA0027",
+            Self::DuplicateIndexKey { .. } => "SORA0028",
+            Self::RangeOutOfBounds { .. } => "SORA0029",
+            Self::LengthOutOfBounds { .. } => "SORA0030",
+            Self::MissingReference { .. } => "SORA0031",
+            Self::InvalidTableRowCount { .. } => "SORA0032",
+            Self::MissingTableSource { .. } => "SORA0033",
+            Self::MissingInputData => "SORA0034",
+        }
+    }
+
+    pub fn path(&self) -> Option<&Path> {
+        match self {
+            Self::ReadFile { path, .. }
+            | Self::WriteFile { path, .. }
+            | Self::CreateDir { path, .. }
+            | Self::ParseSchema { path, .. }
+            | Self::ParseData { path, .. }
+            | Self::ExcelTemplate { path, .. } => Some(path),
+            _ => None,
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn exposes_stable_error_code() {
+        let error = SoraError::MissingInputData;
+
+        assert_eq!(error.code(), "SORA0034");
+    }
+
+    #[test]
+    fn exposes_file_path_for_file_errors() {
+        let error = SoraError::ParseData {
+            path: PathBuf::from("data/items.csv"),
+            message: "bad row".to_owned(),
+        };
+
+        assert_eq!(error.path(), Some(Path::new("data/items.csv")));
+    }
+}
