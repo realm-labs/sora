@@ -25,6 +25,12 @@ impl fmt::Display for ErrorReport<'_> {
                 if let Some(path) = error.path() {
                     writeln!(f, "  --> {}", path.display())?;
                 }
+                if let Some(errors) = error.errors() {
+                    writeln!(f, "validation errors:")?;
+                    for (index, error) in errors.iter().enumerate() {
+                        writeln!(f, "  {}. [{}] {}", index + 1, error.code(), error)?;
+                    }
+                }
             }
             None => {
                 writeln!(f, "error: {}", self.error)?;
@@ -78,5 +84,26 @@ mod tests {
             ErrorReport::new(&error).to_string(),
             "error: bad argument\n"
         );
+    }
+
+    #[test]
+    fn prints_aggregated_validation_errors() {
+        let error = SoraError::validation_errors(vec![
+            SoraError::MissingRequiredField {
+                table: "Item".to_owned(),
+                field: "name".to_owned(),
+            },
+            SoraError::DuplicateKey {
+                table: "Item".to_owned(),
+                key: "1001".to_owned(),
+            },
+        ]);
+        let error = anyhow::Error::new(error).context("failed to validate data");
+
+        let report = ErrorReport::new(&error).to_string();
+
+        assert!(report.contains("error[SORA0035]: failed to validate data"));
+        assert!(report.contains("1. [SORA0023] missing required field `name`"));
+        assert!(report.contains("2. [SORA0027] duplicate key `1001`"));
     }
 }

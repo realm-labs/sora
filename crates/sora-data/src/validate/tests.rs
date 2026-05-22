@@ -68,6 +68,48 @@ fn rejects_invalid_data() {
 }
 
 #[test]
+fn aggregates_multiple_validation_errors() {
+    let ir = example_ir();
+    let data = ConfigData {
+        tables: vec![TableData {
+            name: "Item".to_owned(),
+            rows: vec![
+                RowData {
+                    values: BTreeMap::from([
+                        ("id".to_owned(), Value::Integer(1001)),
+                        ("item_type".to_owned(), Value::String("Invalid".to_owned())),
+                        ("max_stack".to_owned(), Value::Integer(1)),
+                    ]),
+                },
+                RowData {
+                    values: BTreeMap::from([
+                        ("id".to_owned(), Value::Integer(1002)),
+                        ("name".to_owned(), Value::String("Magic Stone".to_owned())),
+                        ("item_type".to_owned(), Value::String("Material".to_owned())),
+                        ("max_stack".to_owned(), Value::String("many".to_owned())),
+                    ]),
+                },
+            ],
+        }],
+    };
+
+    let error = validate_config_data_all(&ir, &data).unwrap_err();
+
+    let SoraError::ValidationErrors { errors, .. } = error else {
+        panic!("expected aggregated validation errors");
+    };
+    assert_eq!(errors.len(), 2);
+    assert!(matches!(
+        &errors[0],
+        SoraError::MissingRequiredField { field, .. } if field == "name"
+    ));
+    assert!(matches!(
+        &errors[1],
+        SoraError::TypeMismatch { field, .. } if field == "max_stack"
+    ));
+}
+
+#[test]
 fn rejects_duplicate_and_missing_map_keys() {
     let ir = example_ir();
     let duplicate_data = ConfigData {

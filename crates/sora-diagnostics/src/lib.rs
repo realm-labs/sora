@@ -193,11 +193,24 @@ pub enum SoraError {
 
     #[error("input source does not provide data")]
     MissingInputData,
+
+    #[error("{count} validation errors")]
+    ValidationErrors {
+        count: usize,
+        errors: Vec<SoraError>,
+    },
 }
 
 pub type Result<T> = std::result::Result<T, SoraError>;
 
 impl SoraError {
+    pub fn validation_errors(errors: Vec<SoraError>) -> Self {
+        Self::ValidationErrors {
+            count: errors.len(),
+            errors,
+        }
+    }
+
     pub fn code(&self) -> &'static str {
         match self {
             Self::ReadFile { .. } => "SORA0001",
@@ -234,6 +247,7 @@ impl SoraError {
             Self::InvalidTableRowCount { .. } => "SORA0032",
             Self::MissingTableSource { .. } => "SORA0033",
             Self::MissingInputData => "SORA0034",
+            Self::ValidationErrors { .. } => "SORA0035",
         }
     }
 
@@ -245,6 +259,13 @@ impl SoraError {
             | Self::ParseSchema { path, .. }
             | Self::ParseData { path, .. }
             | Self::ExcelTemplate { path, .. } => Some(path),
+            _ => None,
+        }
+    }
+
+    pub fn errors(&self) -> Option<&[SoraError]> {
+        match self {
+            Self::ValidationErrors { errors, .. } => Some(errors),
             _ => None,
         }
     }

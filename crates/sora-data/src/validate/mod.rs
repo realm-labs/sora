@@ -10,17 +10,29 @@ mod value;
 use value::{stable_key, table_mode_name, validate_field_value};
 
 pub fn validate_config_data(ir: &ConfigIr, data: &ConfigData) -> Result<()> {
+    let errors = collect_config_data_errors(ir, data);
+    finish_validation(errors)
+}
+
+pub fn validate_config_data_all(ir: &ConfigIr, data: &ConfigData) -> Result<()> {
+    validate_config_data(ir, data)
+}
+
+fn collect_config_data_errors(ir: &ConfigIr, data: &ConfigData) -> Vec<SoraError> {
     let tables_by_name = data
         .tables
         .iter()
         .map(|table| (table.name.as_str(), table))
         .collect::<BTreeMap<_, _>>();
 
+    let mut errors = Vec::new();
     for table in &ir.tables {
         match tables_by_name.get(table.name.as_str()) {
-            Some(table_data) => validate_table_data_with_config(ir, data, table, table_data)?,
+            Some(table_data) => {
+                errors.extend(collect_table_data_errors(ir, data, table, table_data));
+            }
             None if table.mode == TableModeIr::Singleton => {
-                return Err(SoraError::InvalidTableRowCount {
+                errors.push(SoraError::InvalidTableRowCount {
                     table: table.name.clone(),
                     mode: table_mode_name(table.mode),
                     expected: "exactly 1",
@@ -31,7 +43,7 @@ pub fn validate_config_data(ir: &ConfigIr, data: &ConfigData) -> Result<()> {
         }
     }
 
-    Ok(())
+    errors
 }
 
 pub fn validate_table_data(ir: &ConfigIr, table: &TableIr, data: &TableData) -> Result<()> {
@@ -47,7 +59,19 @@ fn validate_table_data_with_config(
     table: &TableIr,
     data: &TableData,
 ) -> Result<()> {
-    validate_table_row_count(table, data)?;
+    finish_validation(collect_table_data_errors(ir, config_data, table, data))
+}
+
+fn collect_table_data_errors(
+    ir: &ConfigIr,
+    config_data: &ConfigData,
+    table: &TableIr,
+    data: &TableData,
+) -> Vec<SoraError> {
+    let mut errors = Vec::new();
+    if let Err(error) = validate_table_row_count(table, data) {
+        errors.push(error);
+    }
 
     let field_names = table
         .fields
@@ -66,19 +90,36 @@ fn validate_table_data_with_config(
         .collect::<Vec<_>>();
 
     for row in &data.rows {
-        validate_row_fields(
+        let row_result = validate_row_fields(
             ir,
             config_data,
             &table.name,
             &table.fields,
             &field_names,
             row,
-        )?;
-        validate_map_key(table, row, &mut seen_keys)?;
-        validate_unique_indexes(table, row, &mut unique_indexes)?;
+        );
+        if let Err(error) = row_result {
+            errors.push(error);
+            continue;
+        }
+        if let Err(error) = validate_map_key(table, row, &mut seen_keys) {
+            errors.push(error);
+            continue;
+        }
+        if let Err(error) = validate_unique_indexes(table, row, &mut unique_indexes) {
+            errors.push(error);
+        }
     }
 
-    Ok(())
+    errors
+}
+
+fn finish_validation(errors: Vec<SoraError>) -> Result<()> {
+    match errors.len() {
+        0 => Ok(()),
+        1 => Err(errors.into_iter().next().expect("one validation error")),
+        _ => Err(SoraError::validation_errors(errors)),
+    }
 }
 
 fn validate_table_row_count(table: &TableIr, data: &TableData) -> Result<()> {
