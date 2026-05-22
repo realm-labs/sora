@@ -1,9 +1,12 @@
-use std::{collections::BTreeMap, path::Path};
+use std::{
+    collections::{BTreeMap, HashMap},
+    path::Path,
+};
 
 use calamine::{Data, Reader, open_workbook_auto};
 use sora_data::model::{ConfigData, RowData, TableData};
 use sora_diagnostics::{Result, SoraError};
-use sora_excel::projection::{DATA_START_ROW, FIELD_START_COLUMN};
+use sora_excel::projection::{DATA_START_ROW, FIELD_ROW, FIELD_START_COLUMN};
 use sora_execution::ExecutionContext;
 use sora_input::{
     cell::{CellContext, CellLocation},
@@ -136,20 +139,16 @@ fn load_xlsx_table_data_from_range(
 ) -> Result<TableData> {
     verify_projection(ir, table, path, sheet, &range)?;
     let mut rows = Vec::new();
-    let field_names = table
-        .fields
-        .iter()
-        .map(|field| field.name.as_str())
-        .collect::<Vec<_>>();
+    let field_columns = field_columns(table, path, sheet, &range)?;
 
     for (row_index, row) in range.rows().enumerate().skip(DATA_START_ROW as usize) {
-        if row.iter().all(cell_is_empty) {
+        if row_is_empty(row, &field_columns) {
             continue;
         }
 
         let mut values = BTreeMap::new();
         for (column, field) in table.fields.iter().enumerate() {
-            let field_column = FIELD_START_COLUMN as usize + column;
+            let field_column = field_columns[column];
             let cell = row.get(field_column).unwrap_or(&Data::Empty);
             if cell_is_empty(cell) && !matches!(field.ty, TypeIr::Optional(_)) {
                 continue;
@@ -166,7 +165,7 @@ fn load_xlsx_table_data_from_range(
                 parser: field.parser.as_ref(),
             };
             values.insert(
-                field_names[column].to_owned(),
+                field.name.clone(),
                 cell_to_value_with_registry(cell, &field.ty, &context, parser_registry)?,
             );
         }
@@ -179,10 +178,77 @@ fn load_xlsx_table_data_from_range(
     })
 }
 
+fn field_columns(
+    table: &TableIr,
+    path: &Path,
+    sheet: &str,
+    range: &calamine::Range<Data>,
+) -> Result<Vec<usize>> {
+    let schema_field_indexes = table
+        .fields
+        .iter()
+        .enumerate()
+        .map(|(index, field)| (field.name.as_str(), index))
+        .collect::<HashMap<_, _>>();
+    let mut columns = vec![None; table.fields.len()];
+    let Some(field_row) = range.rows().nth(FIELD_ROW as usize) else {
+        return Err(SoraError::InvalidSchema(format!(
+            "worksheet `{}` in `{}` is missing #field row {}",
+            sheet,
+            path.display(),
+            FIELD_ROW + 1
+        )));
+    };
+
+    for (column, cell) in field_row
+        .iter()
+        .enumerate()
+        .skip(FIELD_START_COLUMN as usize)
+    {
+        let field_name = crate::value::cell_to_string(cell);
+        let field_name = field_name.trim();
+        if field_name.is_empty() {
+            continue;
+        }
+        let Some(&field_index) = schema_field_indexes.get(field_name) else {
+            continue;
+        };
+        if columns[field_index].replace(column).is_some() {
+            return Err(SoraError::InvalidSchema(format!(
+                "worksheet `{}` in `{}` declares duplicate field `{}` in #field row",
+                sheet,
+                path.display(),
+                field_name
+            )));
+        }
+    }
+
+    columns
+        .into_iter()
+        .enumerate()
+        .map(|(index, column)| {
+            column.ok_or_else(|| {
+                SoraError::InvalidSchema(format!(
+                    "worksheet `{}` in `{}` is missing field `{}` in #field row",
+                    sheet,
+                    path.display(),
+                    table.fields[index].name
+                ))
+            })
+        })
+        .collect()
+}
+
+fn row_is_empty(row: &[Data], field_columns: &[usize]) -> bool {
+    field_columns
+        .iter()
+        .all(|&column| row.get(column).is_none_or(cell_is_empty))
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
-    use rust_xlsxwriter::Workbook;
+    use rust_xlsxwriter::{Format, Workbook};
     use sora_data::model::Value;
     use sora_excel::projection::table_template_rows;
     use sora_ir::{normalize::normalize_schema, validate::validate_config_ir};
@@ -217,6 +283,39 @@ mod tests {
         assert_eq!(
             data.tables[0].rows[1].values["name"],
             Value::String("Magic Stone".to_owned())
+        );
+
+        let _ = std::fs::remove_dir_all(base);
+    }
+
+    #[test]
+    fn loads_xlsx_rows_by_field_names_and_ignores_unmapped_cells() {
+        let ir = example_ir();
+        let base = temp_dir();
+        let xlsx_path = base.join("Item.xlsx");
+        write_workbook_rows_with_field_columns(
+            &ir,
+            &ir.tables[0],
+            &xlsx_path,
+            &["name", "", "notes", "id", "max_stack", "item_type"],
+            &[
+                vec!["", "", "draft only", "", "", ""],
+                vec!["Iron Sword", "", "designer note", "1001", "1", "Weapon"],
+                vec!["Magic Stone", "", "", "1002", "999", "Material"],
+            ],
+        );
+
+        let data = load_xlsx_config_data(&ir, &base).unwrap();
+
+        assert_eq!(data.tables[0].rows.len(), 2);
+        assert_eq!(data.tables[0].rows[0].values["id"], Value::Integer(1001));
+        assert_eq!(
+            data.tables[0].rows[0].values["name"],
+            Value::String("Iron Sword".to_owned())
+        );
+        assert_eq!(
+            data.tables[0].rows[1].values["item_type"],
+            Value::String("Material".to_owned())
         );
 
         let _ = std::fs::remove_dir_all(base);
@@ -542,6 +641,21 @@ parser = { kind = "tuple_list" }
     }
 
     fn write_workbook_rows(ir: &ConfigIr, table: &TableIr, path: &Path, rows: &[Vec<&str>]) {
+        let field_names = table
+            .fields
+            .iter()
+            .map(|field| field.name.as_str())
+            .collect::<Vec<_>>();
+        write_workbook_rows_with_field_columns(ir, table, path, &field_names, rows);
+    }
+
+    fn write_workbook_rows_with_field_columns(
+        ir: &ConfigIr,
+        table: &TableIr,
+        path: &Path,
+        field_columns: &[&str],
+        rows: &[Vec<&str>],
+    ) {
         let mut workbook = Workbook::new();
         let worksheet = workbook.add_worksheet();
         worksheet.set_name(&table.name).unwrap();
@@ -550,6 +664,19 @@ parser = { kind = "tuple_list" }
             for (column_index, value) in row.iter().enumerate() {
                 worksheet
                     .write_string(row_index as u32, column_index as u16, value)
+                    .unwrap();
+            }
+        }
+
+        for (column, field_name) in field_columns.iter().enumerate() {
+            let column = FIELD_START_COLUMN + column as u16;
+            if field_name.is_empty() {
+                worksheet
+                    .write_blank(FIELD_ROW, column, &Format::new())
+                    .unwrap();
+            } else {
+                worksheet
+                    .write_string(FIELD_ROW, column, *field_name)
                     .unwrap();
             }
         }

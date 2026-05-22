@@ -26,10 +26,6 @@ pub(crate) fn verify_projection(
     expect_cell(path, sheet, range, metadata_row, 9, &schema_hash(ir, table))?;
     expect_cell(path, sheet, range, field_row, 0, "#field")?;
 
-    for (index, field) in table.fields.iter().enumerate() {
-        expect_cell(path, sheet, range, field_row, index + 1, &field.name)?;
-    }
-
     Ok(())
 }
 
