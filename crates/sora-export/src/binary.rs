@@ -72,7 +72,7 @@ mod tests {
         assert_eq!(u32::from_le_bytes(bytes[4..8].try_into().unwrap()), 1);
         assert_eq!(u32::from_le_bytes(bytes[8..12].try_into().unwrap()), 24);
         assert!(u32::from_le_bytes(bytes[12..16].try_into().unwrap()) > 0);
-        assert_eq!(u32::from_le_bytes(bytes[16..20].try_into().unwrap()), 3);
+        assert_eq!(u32::from_le_bytes(bytes[16..20].try_into().unwrap()), 4);
 
         let sections = read_sections(&bytes);
         assert_eq!(sections[0].kind, 0);
@@ -94,19 +94,28 @@ mod tests {
         assert_eq!(sections[1].compression, 0);
         assert_eq!(sections[1].name, "$schema");
         assert_eq!(sections[1].len, sections[1].uncompressed_len);
-        assert_eq!(sections[2].kind, 2);
+        assert_eq!(sections[2].kind, 3);
         assert_eq!(sections[2].compression, 0);
-        assert_eq!(sections[2].name, "Item");
+        assert_eq!(sections[2].name, "$strings");
         assert_eq!(sections[2].len, sections[2].uncompressed_len);
+        let strings_payload = &bytes[sections[2].offset..sections[2].offset + sections[2].len];
+        assert_eq!(read_u32(strings_payload, 0), 1);
+        assert_eq!(read_u32(strings_payload, 4), 10);
+        assert_eq!(&strings_payload[8..18], b"Iron Sword");
+        assert_eq!(sections[3].kind, 2);
+        assert_eq!(sections[3].compression, 0);
+        assert_eq!(sections[3].name, "Item");
+        assert_eq!(sections[3].len, sections[3].uncompressed_len);
 
-        let table_payload = &bytes[sections[2].offset..sections[2].offset + sections[2].len];
+        let table_payload = &bytes[sections[3].offset..sections[3].offset + sections[3].len];
         assert_eq!(read_u32(table_payload, 0), 1);
         assert_eq!(read_u64(table_payload, 4), 0);
-        assert_eq!(read_u64(table_payload, 12), 4);
+        assert_eq!(read_u64(table_payload, 12), 8);
         assert_eq!(
             i32::from_le_bytes(table_payload[20..24].try_into().unwrap()),
             1001
         );
+        assert_eq!(read_u32(table_payload, 24), 0);
 
         let _ = fs::remove_dir_all(path.parent().unwrap());
     }
@@ -124,6 +133,11 @@ key = "id"
 [[tables.fields]]
 name = "id"
 type = "i32"
+required = true
+
+[[tables.fields]]
+name = "name"
+type = "string"
 required = true
 "#,
         )

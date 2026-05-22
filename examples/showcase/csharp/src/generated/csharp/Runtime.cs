@@ -32,15 +32,18 @@ public sealed class SoraBundle : ISoraTableSource
     private const int SectionKindManifest = 0;
     private const int SectionKindSchema = 1;
     private const int SectionKindTable = 2;
+    private const int SectionKindStrings = 3;
     private const int CompressionNone = 0;
 
     private readonly byte[] bytes;
     private readonly List<SoraSection> sections;
+    private readonly List<string> strings;
 
-    private SoraBundle(byte[] bytes, List<SoraSection> sections, string schemaFingerprint)
+    private SoraBundle(byte[] bytes, List<SoraSection> sections, string schemaFingerprint, List<string> strings)
     {
         this.bytes = bytes;
         this.sections = sections;
+        this.strings = strings;
         SchemaFingerprint = schemaFingerprint;
     }
 
@@ -60,7 +63,7 @@ public sealed class SoraBundle : ISoraTableSource
         }
         var payload = new byte[section.Length];
         Array.Copy(bytes, section.Offset, payload, 0, section.Length);
-        return DecodeRows(payload, decode);
+        return DecodeRows(payload, strings, decode);
     }
 
     public List<T> DecodeTable<T>(string name, Func<SoraReader, T> decodeBinary, Func<SoraValue, T> decodeValue)
@@ -106,6 +109,7 @@ public sealed class SoraBundle : ISoraTableSource
         var sections = new List<SoraSection>(sectionCount);
         var manifestCount = 0;
         var schemaCount = 0;
+        var stringsCount = 0;
         var tableNames = new HashSet<string>();
         for (var i = 0; i < sectionCount; i++)
         {
@@ -159,6 +163,14 @@ public sealed class SoraBundle : ISoraTableSource
                     throw new SoraReadException($"duplicate Sora table section `{name}`");
                 }
             }
+            else if (kind == SectionKindStrings)
+            {
+                stringsCount++;
+                if (name != "$strings")
+                {
+                    throw new SoraReadException("Sora string table section must be named `$strings`");
+                }
+            }
             else
             {
                 throw new SoraReadException($"unknown Sora section kind {kind}");
@@ -182,15 +194,28 @@ public sealed class SoraBundle : ISoraTableSource
         {
             throw new SoraReadException($"expected exactly 1 Sora schema section, got {schemaCount}");
         }
+        if (stringsCount != 1)
+        {
+            throw new SoraReadException($"expected exactly 1 Sora string table section, got {stringsCount}");
+        }
         var manifest = sections.Find(value => value.Kind == SectionKindManifest)
             ?? throw new SoraReadException("missing Sora manifest section");
         var manifestBytes = new byte[manifest.Length];
         Array.Copy(bytes, manifest.Offset, manifestBytes, 0, manifest.Length);
         var schemaFingerprint = ReadJsonStringField(manifestBytes, "schema_fingerprint");
-        return new SoraBundle(bytes, sections, schemaFingerprint);
+        var stringsSection = sections.Find(value => value.Kind == SectionKindStrings)
+            ?? throw new SoraReadException("missing Sora string table section");
+        if (stringsSection.Compression != CompressionNone || stringsSection.UncompressedLength != stringsSection.Length)
+        {
+            throw new SoraReadException("Sora string table section has invalid compression or length");
+        }
+        var stringsBytes = new byte[stringsSection.Length];
+        Array.Copy(bytes, stringsSection.Offset, stringsBytes, 0, stringsSection.Length);
+        var strings = DecodeStringTable(stringsBytes);
+        return new SoraBundle(bytes, sections, schemaFingerprint, strings);
     }
 
-    private static List<T> DecodeRows<T>(byte[] payload, Func<SoraReader, T> decode)
+    private static List<T> DecodeRows<T>(byte[] payload, List<string> strings, Func<SoraReader, T> decode)
     {
         if (payload.Length < 12)
         {
@@ -221,7 +246,7 @@ public sealed class SoraBundle : ISoraTableSource
             }
             var rowBytes = new byte[absoluteEnd - absoluteStart];
             Array.Copy(payload, absoluteStart, rowBytes, 0, rowBytes.Length);
-            var reader = new SoraReader(rowBytes);
+            var reader = new SoraReader(rowBytes, strings);
             var row = decode(reader);
             if (!reader.IsFinished)
             {
@@ -230,6 +255,34 @@ public sealed class SoraBundle : ISoraTableSource
             rows.Add(row);
         }
         return rows;
+    }
+
+    private static List<string> DecodeStringTable(byte[] payload)
+    {
+        if (payload.Length < 4)
+        {
+            throw new SoraReadException("Sora string table section is too short");
+        }
+        var count = ReadInt32At(payload, 0);
+        var cursor = 4;
+        var values = new List<string>(count);
+        for (var i = 0; i < count; i++)
+        {
+            var length = ReadInt32At(payload, cursor);
+            cursor = CheckedAdd(cursor, 4, "Sora string table cursor overflow");
+            var end = CheckedAdd(cursor, length, "Sora string length overflow");
+            if (end > payload.Length)
+            {
+                throw new SoraReadException("Sora string exceeds string table section");
+            }
+            values.Add(Encoding.UTF8.GetString(payload, cursor, length));
+            cursor = end;
+        }
+        if (cursor != payload.Length)
+        {
+            throw new SoraReadException("Sora string table section has trailing bytes");
+        }
+        return values;
     }
 
     internal static int ReadInt32At(byte[] bytes, int offset)
@@ -301,11 +354,13 @@ public sealed class SoraBundle : ISoraTableSource
 public sealed class SoraReader
 {
     private readonly byte[] bytes;
+    private readonly List<string> strings;
     private int cursor;
 
-    internal SoraReader(byte[] bytes)
+    internal SoraReader(byte[] bytes, List<string> strings)
     {
         this.bytes = bytes;
+        this.strings = strings;
     }
 
     internal bool IsFinished => cursor == bytes.Length;
@@ -352,8 +407,12 @@ public sealed class SoraReader
 
     internal string ReadString()
     {
-        var length = ReadUInt32();
-        return Encoding.UTF8.GetString(Take(length));
+        var id = ReadUInt32();
+        if (id < 0 || id >= strings.Count)
+        {
+            throw new SoraReadException($"invalid string id {id}");
+        }
+        return strings[id];
     }
 
     internal T? ReadOptional<T>(Func<T> read)

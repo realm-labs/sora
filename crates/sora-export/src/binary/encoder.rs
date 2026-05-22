@@ -1,3 +1,5 @@
+use std::collections::BTreeMap;
+
 use sora_data::model::{ConfigData, TableData, Value};
 use sora_diagnostics::{Result, SoraError};
 use sora_execution::ExecutionContext;
@@ -11,6 +13,7 @@ const HEADER_LEN: u32 = 24;
 const SECTION_KIND_MANIFEST: u32 = 0;
 const SECTION_KIND_SCHEMA: u32 = 1;
 const SECTION_KIND_TABLE: u32 = 2;
+const SECTION_KIND_STRINGS: u32 = 3;
 const COMPRESSION_NONE: u32 = 0;
 
 pub(crate) struct BinaryEncoder<'a> {
@@ -25,6 +28,7 @@ impl<'a> BinaryEncoder<'a> {
 
     pub(crate) fn encode(&self, execution: &ExecutionContext) -> Result<Vec<u8>> {
         let schema = self.ir.data_schema();
+        let strings = self.string_table()?;
         let mut sections = Vec::new();
         sections.push(Section {
             kind: SECTION_KIND_MANIFEST,
@@ -38,6 +42,12 @@ impl<'a> BinaryEncoder<'a> {
             name: "$schema".to_owned(),
             payload: serde_json::to_vec(&schema).map_err(SoraError::SerializeData)?,
         });
+        sections.push(Section {
+            kind: SECTION_KIND_STRINGS,
+            compression: COMPRESSION_NONE,
+            name: "$strings".to_owned(),
+            payload: strings.encode()?,
+        });
 
         let tables = self.ir.tables.iter().collect::<Vec<_>>();
         let mut table_sections = execution.map(tables, |table| {
@@ -46,7 +56,7 @@ impl<'a> BinaryEncoder<'a> {
                 kind: SECTION_KIND_TABLE,
                 compression: COMPRESSION_NONE,
                 name: table.name.clone(),
-                payload: self.encode_table(table, table_data)?,
+                payload: self.encode_table(table, table_data, &strings)?,
             })
         })?;
         sections.append(&mut table_sections);
@@ -81,14 +91,125 @@ impl<'a> BinaryEncoder<'a> {
             .ok_or_else(|| SoraError::InvalidSchema(format!("missing table data `{table_name}`")))
     }
 
-    fn encode_table(&self, table: &TableIr, data: &TableData) -> Result<Vec<u8>> {
+    fn string_table(&self) -> Result<StringTable> {
+        let mut strings = StringTable::default();
+        for table in &self.ir.tables {
+            let table_data = self.table_data(&table.name)?;
+            for row in &table_data.rows {
+                for field in &table.fields {
+                    let null = Value::Null;
+                    let value = row.values.get(&field.name).unwrap_or(&null);
+                    self.collect_strings(&field.ty, value, &mut strings)?;
+                }
+            }
+        }
+        Ok(strings)
+    }
+
+    fn collect_strings(&self, ty: &TypeIr, value: &Value, strings: &mut StringTable) -> Result<()> {
+        match ty {
+            TypeIr::Optional(inner) => {
+                if !matches!(value, Value::Null) {
+                    self.collect_strings(inner, value, strings)?;
+                }
+            }
+            TypeIr::String => {
+                let Value::String(value) = value else {
+                    return Err(type_error(ty, value));
+                };
+                strings.intern(value)?;
+            }
+            TypeIr::Struct(struct_name) => {
+                let Value::Object(values) = value else {
+                    return Err(type_error(ty, value));
+                };
+                let struct_ir = self.struct_ir(struct_name)?;
+                for field in &struct_ir.fields {
+                    let null = Value::Null;
+                    let value = values.get(&field.name).unwrap_or(&null);
+                    self.collect_strings(&field.ty, value, strings)?;
+                }
+            }
+            TypeIr::Union(union_name) => {
+                let Value::Object(values) = value else {
+                    return Err(type_error(ty, value));
+                };
+                let union_ir = self.union_ir(union_name)?;
+                let Some(Value::String(variant_name)) = values.get(&union_ir.tag) else {
+                    return Err(binary_error(format!(
+                        "union `{union_name}` value is missing string tag `{}`",
+                        union_ir.tag
+                    )));
+                };
+                let Some(variant) = union_ir
+                    .variants
+                    .iter()
+                    .find(|candidate| candidate.name == *variant_name)
+                else {
+                    return Err(binary_error(format!(
+                        "unknown union variant `{union_name}.{variant_name}`"
+                    )));
+                };
+                for field in &variant.fields {
+                    let null = Value::Null;
+                    let value = values.get(&field.name).unwrap_or(&null);
+                    self.collect_strings(&field.ty, value, strings)?;
+                }
+            }
+            TypeIr::List(element) | TypeIr::Set(element) | TypeIr::Array { element, .. } => {
+                let Value::List(values) = value else {
+                    return Err(type_error(ty, value));
+                };
+                for value in values {
+                    self.collect_strings(element, value, strings)?;
+                }
+            }
+            TypeIr::Map {
+                key,
+                value: element,
+            } => {
+                let Value::List(values) = value else {
+                    return Err(type_error(ty, value));
+                };
+                for entry in values {
+                    let Value::List(pair) = entry else {
+                        return Err(type_error(ty, entry));
+                    };
+                    let [entry_key, entry_value] = pair.as_slice() else {
+                        return Err(type_error(ty, entry));
+                    };
+                    self.collect_strings(key, entry_key, strings)?;
+                    self.collect_strings(element, entry_value, strings)?;
+                }
+            }
+            TypeIr::Ref { table, field } => {
+                let target_ty = self.ref_target_type(table, field)?;
+                self.collect_strings(target_ty, value, strings)?;
+            }
+            TypeIr::Bool
+            | TypeIr::I32
+            | TypeIr::I64
+            | TypeIr::F32
+            | TypeIr::F64
+            | TypeIr::Enum(_) => {}
+        }
+
+        Ok(())
+    }
+
+    fn encode_table(
+        &self,
+        table: &TableIr,
+        data: &TableData,
+        strings: &StringTable,
+    ) -> Result<Vec<u8>> {
         let mut rows = Vec::new();
         for row in &data.rows {
             let mut row_bytes = Vec::new();
             for field in &table.fields {
                 let null = Value::Null;
                 let value = row.values.get(&field.name).unwrap_or(&null);
-                self.encode_value(&field.ty, value, &mut row_bytes)?;
+                self.encode_value(&field.ty, value, &mut row_bytes, strings)?;
             }
             rows.push(row_bytes);
         }
@@ -116,14 +237,20 @@ impl<'a> BinaryEncoder<'a> {
         Ok(payload)
     }
 
-    fn encode_value(&self, ty: &TypeIr, value: &Value, out: &mut Vec<u8>) -> Result<()> {
+    fn encode_value(
+        &self,
+        ty: &TypeIr,
+        value: &Value,
+        out: &mut Vec<u8>,
+        strings: &StringTable,
+    ) -> Result<()> {
         match ty {
             TypeIr::Optional(inner) => {
                 if matches!(value, Value::Null) {
                     write_u8(out, 0);
                 } else {
                     write_u8(out, 1);
-                    self.encode_value(inner, value, out)?;
+                    self.encode_value(inner, value, out, strings)?;
                 }
             }
             TypeIr::Bool => {
@@ -161,7 +288,7 @@ impl<'a> BinaryEncoder<'a> {
                 let Value::String(value) = value else {
                     return Err(type_error(ty, value));
                 };
-                write_string(out, value)?;
+                write_u32(out, strings.id(value)?);
             }
             TypeIr::Enum(enum_name) => {
                 let Value::String(value) = value else {
@@ -178,7 +305,7 @@ impl<'a> BinaryEncoder<'a> {
                 for field in &struct_ir.fields {
                     let null = Value::Null;
                     let value = values.get(&field.name).unwrap_or(&null);
-                    self.encode_value(&field.ty, value, out)?;
+                    self.encode_value(&field.ty, value, out, strings)?;
                 }
             }
             TypeIr::Union(union_name) => {
@@ -206,7 +333,7 @@ impl<'a> BinaryEncoder<'a> {
                 for field in &variant.fields {
                     let null = Value::Null;
                     let value = values.get(&field.name).unwrap_or(&null);
-                    self.encode_value(&field.ty, value, out)?;
+                    self.encode_value(&field.ty, value, out, strings)?;
                 }
             }
             TypeIr::List(element) | TypeIr::Set(element) => {
@@ -215,7 +342,7 @@ impl<'a> BinaryEncoder<'a> {
                 };
                 write_u32(out, checked_u32(values.len(), "list length")?);
                 for value in values {
-                    self.encode_value(element, value, out)?;
+                    self.encode_value(element, value, out, strings)?;
                 }
             }
             TypeIr::Map {
@@ -233,8 +360,8 @@ impl<'a> BinaryEncoder<'a> {
                     let [entry_key, entry_value] = pair.as_slice() else {
                         return Err(type_error(ty, entry));
                     };
-                    self.encode_value(key, entry_key, out)?;
-                    self.encode_value(element, entry_value, out)?;
+                    self.encode_value(key, entry_key, out, strings)?;
+                    self.encode_value(element, entry_value, out, strings)?;
                 }
             }
             TypeIr::Array { element, len } => {
@@ -246,12 +373,12 @@ impl<'a> BinaryEncoder<'a> {
                 }
                 write_u32(out, checked_u32(values.len(), "array length")?);
                 for value in values {
-                    self.encode_value(element, value, out)?;
+                    self.encode_value(element, value, out, strings)?;
                 }
             }
             TypeIr::Ref { table, field } => {
                 let target_ty = self.ref_target_type(table, field)?;
-                self.encode_value(target_ty, value, out)?;
+                self.encode_value(target_ty, value, out, strings)?;
             }
         }
 
@@ -311,6 +438,43 @@ impl<'a> BinaryEncoder<'a> {
             .and_then(|table| table.fields.iter().find(|field| field.name == field_name))
             .map(|field: &FieldIr| &field.ty)
             .ok_or_else(|| binary_error(format!("unknown ref target `{table_name}.{field_name}`")))
+    }
+}
+
+#[derive(Default)]
+struct StringTable {
+    values: BTreeMap<String, u32>,
+}
+
+impl StringTable {
+    fn intern(&mut self, value: &str) -> Result<u32> {
+        if let Some(id) = self.values.get(value) {
+            return Ok(*id);
+        }
+        let id = checked_u32(self.values.len(), "string table size")?;
+        self.values.insert(value.to_owned(), id);
+        Ok(id)
+    }
+
+    fn id(&self, value: &str) -> Result<u32> {
+        self.values
+            .get(value)
+            .copied()
+            .ok_or_else(|| binary_error(format!("missing string table entry `{value}`")))
+    }
+
+    fn encode(&self) -> Result<Vec<u8>> {
+        let mut by_id = vec![String::new(); self.values.len()];
+        for (value, id) in &self.values {
+            by_id[*id as usize] = value.clone();
+        }
+
+        let mut out = Vec::new();
+        write_u32(&mut out, checked_u32(by_id.len(), "string table size")?);
+        for value in by_id {
+            write_string(&mut out, &value)?;
+        }
+        Ok(out)
     }
 }
 

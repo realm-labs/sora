@@ -38,7 +38,8 @@ inline T decode_value(SoraReader& reader) {
 
 class SoraReader {
 public:
-    SoraReader(const std::uint8_t* bytes, std::size_t size) : bytes_(bytes), size_(size), cursor_(0) {}
+    SoraReader(const std::uint8_t* bytes, std::size_t size, const std::vector<std::string>* strings)
+        : bytes_(bytes), size_(size), strings_(strings), cursor_(0) {}
 
     bool is_finished() const { return cursor_ == size_; }
 
@@ -88,9 +89,11 @@ public:
     }
 
     std::string read_string() {
-        std::uint32_t length = read_u32();
-        const std::uint8_t* bytes = take(length);
-        return std::string(reinterpret_cast<const char*>(bytes), length);
+        std::uint32_t id = read_u32();
+        if (strings_ == nullptr || id >= strings_->size()) {
+            throw SoraReadException("string id is out of range");
+        }
+        return (*strings_)[id];
     }
 
     template <typename T>
@@ -162,6 +165,7 @@ private:
 
     const std::uint8_t* bytes_;
     std::size_t size_;
+    const std::vector<std::string>* strings_;
     std::size_t cursor_;
 };
 
@@ -227,7 +231,9 @@ public:
         sections.reserve(section_count);
         std::size_t manifest_count = 0;
         std::size_t schema_count = 0;
+        std::size_t strings_count = 0;
         std::string manifest_payload;
+        std::vector<std::string> strings;
         for (std::size_t index = 0; index < section_count; ++index) {
             if (cursor > directory_end || directory_end - cursor < 40) {
                 throw SoraReadException("truncated Sora section directory entry");
@@ -269,6 +275,16 @@ public:
                 if (section.name != "$schema") {
                     throw SoraReadException("Sora schema section must be named `$schema`");
                 }
+            } else if (section.kind == kSectionKindStrings) {
+                ++strings_count;
+                if (section.name != "$strings") {
+                    throw SoraReadException("Sora strings section must be named `$strings`");
+                }
+                if (section.compression != kCompressionNone ||
+                    section.uncompressed_length != section.length) {
+                    throw SoraReadException("invalid Sora strings section");
+                }
+                strings = decode_string_table(&bytes[section.offset], section.length);
             } else if (section.kind != kSectionKindTable) {
                 throw SoraReadException("unknown Sora section kind");
             }
@@ -282,14 +298,14 @@ public:
         if (cursor != directory_end) {
             throw SoraReadException("Sora section directory has trailing bytes");
         }
-        if (manifest_count != 1 || schema_count != 1) {
-            throw SoraReadException("Sora bundle must contain one manifest and one schema section");
+        if (manifest_count != 1 || schema_count != 1 || strings_count != 1) {
+            throw SoraReadException("Sora bundle must contain one manifest, one schema, and one strings section");
         }
         std::string schema_fingerprint = json_string_field(manifest_payload, "schema_fingerprint");
         if (schema_fingerprint.empty()) {
             throw SoraReadException("Sora manifest is missing string field `schema_fingerprint`");
         }
-        return SoraBundle(bytes, sections, schema_fingerprint);
+        return SoraBundle(bytes, sections, schema_fingerprint, strings);
     }
 
     const std::string& schema_fingerprint() const { return schema_fingerprint_; }
@@ -305,7 +321,7 @@ public:
                 if (section.uncompressed_length != section.length) {
                     throw SoraReadException("table has invalid uncompressed length");
                 }
-                return decode_rows<T>(&bytes_[section.offset], section.length);
+                return decode_rows<T>(&bytes_[section.offset], section.length, &strings_);
             }
         }
         throw SoraReadException("missing Sora table section");
@@ -324,11 +340,16 @@ private:
     SoraBundle(
         const std::vector<std::uint8_t>& bytes,
         const std::vector<Section>& sections,
-        const std::string& schema_fingerprint
-    ) : bytes_(bytes), sections_(sections), schema_fingerprint_(schema_fingerprint) {}
+        const std::string& schema_fingerprint,
+        const std::vector<std::string>& strings
+    ) : bytes_(bytes), sections_(sections), schema_fingerprint_(schema_fingerprint), strings_(strings) {}
 
     template <typename T>
-    static std::vector<T> decode_rows(const std::uint8_t* payload, std::size_t length) {
+    static std::vector<T> decode_rows(
+        const std::uint8_t* payload,
+        std::size_t length,
+        const std::vector<std::string>* strings
+    ) {
         if (length < 12) {
             throw SoraReadException("Sora table section is too short");
         }
@@ -349,7 +370,7 @@ private:
             if (end > length - row_data_start) {
                 throw SoraReadException("Sora row exceeds payload length");
             }
-            SoraReader reader(payload + row_data_start + start, end - start);
+            SoraReader reader(payload + row_data_start + start, end - start, strings);
             T row = T::decode(reader);
             if (!reader.is_finished()) {
                 throw SoraReadException("Sora row has trailing bytes");
@@ -357,6 +378,29 @@ private:
             rows.push_back(row);
         }
         return rows;
+    }
+
+    static std::vector<std::string> decode_string_table(const std::uint8_t* payload, std::size_t length) {
+        if (length < 4) {
+            throw SoraReadException("Sora strings section is too short");
+        }
+        std::uint32_t count = read_u32_at(payload, length, 0);
+        std::vector<std::string> strings;
+        strings.reserve(count);
+        std::size_t cursor = 4;
+        for (std::uint32_t index = 0; index < count; ++index) {
+            std::uint32_t string_length = read_u32_at(payload, length, cursor);
+            cursor += 4;
+            if (string_length > length || cursor > length - string_length) {
+                throw SoraReadException("Sora string exceeds strings section length");
+            }
+            strings.push_back(std::string(reinterpret_cast<const char*>(payload + cursor), string_length));
+            cursor += string_length;
+        }
+        if (cursor != length) {
+            throw SoraReadException("Sora strings section has trailing bytes");
+        }
+        return strings;
     }
 
     static std::uint32_t read_u32_at(const std::vector<std::uint8_t>& bytes, std::size_t offset) {
@@ -425,11 +469,13 @@ private:
     static const std::uint32_t kSectionKindManifest = 0;
     static const std::uint32_t kSectionKindSchema = 1;
     static const std::uint32_t kSectionKindTable = 2;
+    static const std::uint32_t kSectionKindStrings = 3;
     static const std::uint32_t kCompressionNone = 0;
 
     std::vector<std::uint8_t> bytes_;
     std::vector<Section> sections_;
     std::string schema_fingerprint_;
+    std::vector<std::string> strings_;
 };
 
 } // namespace sora::showcase

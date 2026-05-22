@@ -9,6 +9,7 @@ private const val SORA_HEADER_LENGTH = 24
 private const val SECTION_KIND_MANIFEST = 0
 private const val SECTION_KIND_SCHEMA = 1
 private const val SECTION_KIND_TABLE = 2
+private const val SECTION_KIND_STRINGS = 3
 private const val COMPRESSION_NONE = 0
 
 interface SoraTableSource {
@@ -34,6 +35,7 @@ class SoraBundle private constructor(
     private val bytes: ByteArray,
     private val sections: List<SoraSection>,
     override val schemaFingerprint: String,
+    private val strings: List<String>,
 ) : SoraTableSource {
     fun <T> decodeTable(name: String, decode: (SoraReader) -> T): List<T> {
         val section = sections.firstOrNull { it.kind == SECTION_KIND_TABLE && it.name == name }
@@ -44,7 +46,7 @@ class SoraBundle private constructor(
         if (section.uncompressedLength != section.length) {
             throw SoraReadException("table `$name` has invalid uncompressed length")
         }
-        return decodeRows(bytes.copyOfRange(section.offset, section.offset + section.length), decode)
+        return decodeRows(bytes.copyOfRange(section.offset, section.offset + section.length), strings, decode)
     }
 
     override fun <T> decodeTable(
@@ -85,6 +87,7 @@ class SoraBundle private constructor(
             val sections = ArrayList<SoraSection>(sectionCount)
             var manifestCount = 0
             var schemaCount = 0
+            var stringsCount = 0
             val tableNames = HashSet<String>()
             repeat(sectionCount) {
                 if (cursor + 40 > directoryEnd) {
@@ -128,6 +131,12 @@ class SoraBundle private constructor(
                             throw SoraReadException("duplicate Sora table section `$name`")
                         }
                     }
+                    SECTION_KIND_STRINGS -> {
+                        stringsCount += 1
+                        if (name != "\$strings") {
+                            throw SoraReadException("Sora string table section must be named `\$strings`")
+                        }
+                    }
                     else -> throw SoraReadException("unknown Sora section kind $kind")
                 }
                 if (compression == COMPRESSION_NONE && uncompressedLength != length) {
@@ -152,18 +161,28 @@ class SoraBundle private constructor(
             if (schemaCount != 1) {
                 throw SoraReadException("expected exactly 1 Sora schema section, got $schemaCount")
             }
+            if (stringsCount != 1) {
+                throw SoraReadException("expected exactly 1 Sora string table section, got $stringsCount")
+            }
 
             val manifest = sections.firstOrNull { it.kind == SECTION_KIND_MANIFEST }
                 ?: throw SoraReadException("missing Sora manifest section")
             val manifestBytes = bytes.copyOfRange(manifest.offset, manifest.offset + manifest.length)
             val schemaFingerprint = readJsonStringField(manifestBytes, "schema_fingerprint")
+            val stringsSection = sections.firstOrNull { it.kind == SECTION_KIND_STRINGS }
+                ?: throw SoraReadException("missing Sora string table section")
+            if (stringsSection.compression != COMPRESSION_NONE || stringsSection.uncompressedLength != stringsSection.length) {
+                throw SoraReadException("Sora string table section has invalid compression or length")
+            }
+            val stringsPayload = bytes.copyOfRange(stringsSection.offset, stringsSection.offset + stringsSection.length)
+            val strings = decodeStringTable(stringsPayload)
 
-            return SoraBundle(bytes, sections, schemaFingerprint)
+            return SoraBundle(bytes, sections, schemaFingerprint, strings)
         }
     }
 }
 
-class SoraReader(private val bytes: ByteArray) {
+class SoraReader(private val bytes: ByteArray, private val strings: List<String>) {
     private var cursor: Int = 0
 
     fun isFinished(): Boolean = cursor == bytes.size
@@ -188,8 +207,8 @@ class SoraReader(private val bytes: ByteArray) {
     fun readF64(): Double = Double.fromBits(readI64())
 
     fun readString(): String {
-        val length = readU32()
-        return String(take(length), Charsets.UTF_8)
+        val id = readU32()
+        return strings.getOrNull(id) ?: throw SoraReadException("invalid string id $id")
     }
 
     fun <T> readOptional(read: () -> T): T? =
@@ -235,7 +254,7 @@ fun <T> requireSingletonTable(rows: List<T>, name: String): T {
     return rows.single()
 }
 
-private fun <T> decodeRows(payload: ByteArray, decode: (SoraReader) -> T): List<T> {
+private fun <T> decodeRows(payload: ByteArray, strings: List<String>, decode: (SoraReader) -> T): List<T> {
     if (payload.size < 12) {
         throw SoraReadException("Sora table section is too short")
     }
@@ -258,7 +277,7 @@ private fun <T> decodeRows(payload: ByteArray, decode: (SoraReader) -> T): List<
         if (absoluteEnd > payload.size) {
             throw SoraReadException("Sora row exceeds payload length")
         }
-        val reader = SoraReader(payload.copyOfRange(absoluteStart, absoluteEnd))
+        val reader = SoraReader(payload.copyOfRange(absoluteStart, absoluteEnd), strings)
         val row = decode(reader)
         if (!reader.isFinished()) {
             throw SoraReadException("Sora row has trailing bytes")
@@ -266,6 +285,29 @@ private fun <T> decodeRows(payload: ByteArray, decode: (SoraReader) -> T): List<
         rows += row
     }
     return rows
+}
+
+private fun decodeStringTable(payload: ByteArray): List<String> {
+    if (payload.size < 4) {
+        throw SoraReadException("Sora string table section is too short")
+    }
+    val count = readI32At(payload, 0)
+    var cursor = 4
+    val strings = ArrayList<String>(count)
+    repeat(count) {
+        val length = readI32At(payload, cursor)
+        cursor = checkedAdd(cursor, 4, "Sora string table cursor overflow")
+        val end = checkedAdd(cursor, length, "Sora string length overflow")
+        if (end > payload.size) {
+            throw SoraReadException("Sora string exceeds string table section")
+        }
+        strings += String(payload.copyOfRange(cursor, end), Charsets.UTF_8)
+        cursor = end
+    }
+    if (cursor != payload.size) {
+        throw SoraReadException("Sora string table section has trailing bytes")
+    }
+    return strings
 }
 
 private fun readI32At(bytes: ByteArray, offset: Int): Int {

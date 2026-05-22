@@ -5,6 +5,7 @@ const SORA_HEADER_LEN: usize = 24;
 const SECTION_KIND_MANIFEST: u32 = 0;
 const SECTION_KIND_SCHEMA: u32 = 1;
 const SECTION_KIND_TABLE: u32 = 2;
+const SECTION_KIND_STRINGS: u32 = 3;
 const COMPRESSION_NONE: u32 = 0;
 
 #[derive(Debug, Clone)]
@@ -44,6 +45,7 @@ pub struct SoraBundle<'a> {
     bytes: &'a [u8],
     sections: Vec<Section>,
     schema_fingerprint: String,
+    strings: Vec<String>,
 }
 
 #[derive(Debug, Clone)]
@@ -97,6 +99,7 @@ impl<'a> SoraBundle<'a> {
         let mut sections = Vec::with_capacity(section_count);
         let mut manifest_count = 0usize;
         let mut schema_count = 0usize;
+        let mut strings_count = 0usize;
         let mut table_names = std::collections::HashSet::new();
         for _ in 0..section_count {
             if cursor + 40 > directory_end {
@@ -160,6 +163,14 @@ impl<'a> SoraBundle<'a> {
                         )));
                     }
                 }
+                SECTION_KIND_STRINGS => {
+                    strings_count += 1;
+                    if name != "$strings" {
+                        return Err(SoraReadError::new(
+                            "Sora string table section must be named `$strings`",
+                        ));
+                    }
+                }
                 _ => {
                     return Err(SoraReadError::new(format!(
                         "unknown Sora section kind {}",
@@ -199,6 +210,12 @@ impl<'a> SoraBundle<'a> {
                 schema_count
             )));
         }
+        if strings_count != 1 {
+            return Err(SoraReadError::new(format!(
+                "expected exactly 1 Sora string table section, got {}",
+                strings_count
+            )));
+        }
 
         let manifest = sections
             .iter()
@@ -206,11 +223,26 @@ impl<'a> SoraBundle<'a> {
             .ok_or_else(|| SoraReadError::new("missing Sora manifest section"))?;
         let manifest_payload = &bytes[manifest.offset..manifest.offset + manifest.len];
         let schema_fingerprint = read_json_string_field(manifest_payload, "schema_fingerprint")?;
+        let strings_section = sections
+            .iter()
+            .find(|section| section.kind == SECTION_KIND_STRINGS)
+            .ok_or_else(|| SoraReadError::new("missing Sora string table section"))?;
+        if strings_section.compression != COMPRESSION_NONE
+            || strings_section.uncompressed_len != strings_section.len
+        {
+            return Err(SoraReadError::new(
+                "Sora string table section has invalid compression or length",
+            ));
+        }
+        let strings_payload =
+            &bytes[strings_section.offset..strings_section.offset + strings_section.len];
+        let strings = decode_string_table(strings_payload)?;
 
         Ok(Self {
             bytes,
             sections,
             schema_fingerprint,
+            strings,
         })
     }
 
@@ -233,7 +265,7 @@ impl<'a> SoraBundle<'a> {
             )));
         }
         let payload = &self.bytes[section.offset..section.offset + section.len];
-        decode_rows(payload)
+        decode_rows(payload, &self.strings)
     }
 }
 
@@ -250,7 +282,7 @@ impl SoraTableSource for SoraBundle<'_> {
     }
 }
 
-fn decode_rows<T: SoraDecode>(payload: &[u8]) -> Result<Vec<T>, SoraReadError> {
+fn decode_rows<T: SoraDecode>(payload: &[u8], strings: &[String]) -> Result<Vec<T>, SoraReadError> {
     if payload.len() < 12 {
         return Err(SoraReadError::new("Sora table section is too short"));
     }
@@ -287,7 +319,7 @@ fn decode_rows<T: SoraDecode>(payload: &[u8]) -> Result<Vec<T>, SoraReadError> {
         if absolute_end > payload.len() {
             return Err(SoraReadError::new("Sora row exceeds payload length"));
         }
-        let mut reader = SoraReader::new(&payload[absolute_start..absolute_end]);
+        let mut reader = SoraReader::new(&payload[absolute_start..absolute_end], strings);
         let row = T::decode(&mut reader)?;
         if !reader.is_finished() {
             return Err(SoraReadError::new("Sora row has trailing bytes"));
@@ -300,12 +332,17 @@ fn decode_rows<T: SoraDecode>(payload: &[u8]) -> Result<Vec<T>, SoraReadError> {
 
 pub struct SoraReader<'a> {
     bytes: &'a [u8],
+    strings: &'a [String],
     cursor: usize,
 }
 
 impl<'a> SoraReader<'a> {
-    pub fn new(bytes: &'a [u8]) -> Self {
-        Self { bytes, cursor: 0 }
+    pub fn new(bytes: &'a [u8], strings: &'a [String]) -> Self {
+        Self {
+            bytes,
+            strings,
+            cursor: 0,
+        }
     }
 
     pub fn is_finished(&self) -> bool {
@@ -351,11 +388,11 @@ impl<'a> SoraReader<'a> {
     }
 
     pub fn read_string(&mut self) -> Result<String, SoraReadError> {
-        let len = self.read_u32()? as usize;
-        let bytes = self.take(len)?;
-        std::str::from_utf8(bytes)
-            .map(|value| value.to_owned())
-            .map_err(|error| SoraReadError::new(format!("invalid UTF-8 string: {}", error)))
+        let id = self.read_u32()? as usize;
+        self.strings
+            .get(id)
+            .cloned()
+            .ok_or_else(|| SoraReadError::new(format!("invalid string id {}", id)))
     }
 
     fn take(&mut self, len: usize) -> Result<&'a [u8], SoraReadError> {
@@ -370,6 +407,40 @@ impl<'a> SoraReader<'a> {
         self.cursor = end;
         Ok(bytes)
     }
+}
+
+fn decode_string_table(payload: &[u8]) -> Result<Vec<String>, SoraReadError> {
+    if payload.len() < 4 {
+        return Err(SoraReadError::new("Sora string table section is too short"));
+    }
+    let count = read_u32_at(payload, 0)? as usize;
+    let mut cursor = 4usize;
+    let mut strings = Vec::with_capacity(count);
+    for _ in 0..count {
+        let len = read_u32_at(payload, cursor)? as usize;
+        cursor = cursor
+            .checked_add(4)
+            .ok_or_else(|| SoraReadError::new("Sora string table cursor overflow"))?;
+        let end = cursor
+            .checked_add(len)
+            .ok_or_else(|| SoraReadError::new("Sora string length overflow"))?;
+        if end > payload.len() {
+            return Err(SoraReadError::new(
+                "Sora string exceeds string table section",
+            ));
+        }
+        let value = std::str::from_utf8(&payload[cursor..end])
+            .map_err(|error| SoraReadError::new(format!("invalid UTF-8 string: {}", error)))?
+            .to_owned();
+        strings.push(value);
+        cursor = end;
+    }
+    if cursor != payload.len() {
+        return Err(SoraReadError::new(
+            "Sora string table section has trailing bytes",
+        ));
+    }
+    Ok(strings)
 }
 
 impl SoraDecode for bool {

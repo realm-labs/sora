@@ -23,7 +23,7 @@ export declare class SoraBundle {
 }
 
 export declare class SoraReader {
-    constructor(bytes: Uint8Array);
+    constructor(bytes: Uint8Array, strings: readonly string[]);
     isFinished(): boolean;
     readU8(): number;
     readBool(): boolean;

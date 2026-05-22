@@ -29,9 +29,10 @@
 -define(SECTION_KIND_MANIFEST, 0).
 -define(SECTION_KIND_SCHEMA, 1).
 -define(SECTION_KIND_TABLE, 2).
+-define(SECTION_KIND_STRINGS, 3).
 -define(COMPRESSION_NONE, 0).
 
--type reader() :: binary().
+-type reader() :: {binary(), [binary()]}.
 -type section() :: #{
     kind := integer(),
     compression := integer(),
@@ -43,7 +44,8 @@
 -type bundle() :: #{
     bytes := binary(),
     sections := [section()],
-    schema_fingerprint := binary()
+    schema_fingerprint := binary(),
+    strings := [binary()]
 }.
 
 -spec parse_bundle(binary()) -> bundle().
@@ -85,7 +87,8 @@ parse_bundle(Bytes) when byte_size(Bytes) >= ?SORA_HEADER_LENGTH ->
         _ -> error({invalid_sora_schema_section_count, SchemaCount})
     end,
     SchemaFingerprint = read_schema_fingerprint(Bytes, Sections),
-    #{bytes => Bytes, sections => Sections, schema_fingerprint => SchemaFingerprint};
+    Strings = read_string_table(Bytes, Sections),
+    #{bytes => Bytes, sections => Sections, schema_fingerprint => SchemaFingerprint, strings => Strings};
 parse_bundle(_Bytes) ->
     error(sora_bundle_shorter_than_header).
 
@@ -110,7 +113,7 @@ decode_table(Bundle, Name, Decode) ->
             end,
             Bytes = maps:get(bytes, Bundle),
             Payload = binary:part(Bytes, maps:get(offset, Section), Length),
-            decode_rows(Payload, Decode);
+            decode_rows(Payload, maps:get(strings, Bundle), Decode);
         [] ->
             error({missing_sora_table_section, Name})
     end.
@@ -151,30 +154,32 @@ read_bool(Reader0) ->
     end.
 
 -spec read_u32(reader()) -> {integer(), reader()}.
-read_u32(<<Value:32/little-unsigned-integer, Rest/binary>>) ->
-    {Value, Rest}.
+read_u32({<<Value:32/little-unsigned-integer, Rest/binary>>, Strings}) ->
+    {Value, {Rest, Strings}}.
 
 -spec read_i32(reader()) -> {integer(), reader()}.
-read_i32(<<Value:32/little-signed-integer, Rest/binary>>) ->
-    {Value, Rest}.
+read_i32({<<Value:32/little-signed-integer, Rest/binary>>, Strings}) ->
+    {Value, {Rest, Strings}}.
 
 -spec read_i64(reader()) -> {integer(), reader()}.
-read_i64(<<Value:64/little-signed-integer, Rest/binary>>) ->
-    {Value, Rest}.
+read_i64({<<Value:64/little-signed-integer, Rest/binary>>, Strings}) ->
+    {Value, {Rest, Strings}}.
 
 -spec read_f32(reader()) -> {float(), reader()}.
-read_f32(<<Value:32/little-float, Rest/binary>>) ->
-    {Value, Rest}.
+read_f32({<<Value:32/little-float, Rest/binary>>, Strings}) ->
+    {Value, {Rest, Strings}}.
 
 -spec read_f64(reader()) -> {float(), reader()}.
-read_f64(<<Value:64/little-float, Rest/binary>>) ->
-    {Value, Rest}.
+read_f64({<<Value:64/little-float, Rest/binary>>, Strings}) ->
+    {Value, {Rest, Strings}}.
 
 -spec read_string(reader()) -> {binary(), reader()}.
 read_string(Reader0) ->
-    {Length, Reader1} = read_u32(Reader0),
-    <<Value:Length/binary, Rest/binary>> = Reader1,
-    {Value, Rest}.
+    {Id, {Rest, Strings}} = read_u32(Reader0),
+    case Id < length(Strings) of
+        true -> {lists:nth(Id + 1, Strings), {Rest, Strings}};
+        false -> error({sora_string_id_out_of_range, Id})
+    end.
 
 -spec read_optional(fun((reader()) -> {T, reader()}), reader()) -> {T | undefined, reader()}.
 read_optional(Decode, Reader0) ->
@@ -264,6 +269,10 @@ validate_section_name(?SECTION_KIND_SCHEMA, <<"$schema">>, ManifestCount, Schema
     {ManifestCount, SchemaCount + 1, TableNames};
 validate_section_name(?SECTION_KIND_SCHEMA, _Name, _ManifestCount, _SchemaCount, _TableNames) ->
     error(invalid_sora_schema_section_name);
+validate_section_name(?SECTION_KIND_STRINGS, <<"$strings">>, ManifestCount, SchemaCount, TableNames) ->
+    {ManifestCount, SchemaCount, TableNames};
+validate_section_name(?SECTION_KIND_STRINGS, _Name, _ManifestCount, _SchemaCount, _TableNames) ->
+    error(invalid_sora_strings_section_name);
 validate_section_name(?SECTION_KIND_TABLE, Name, ManifestCount, SchemaCount, TableNames) ->
     case maps:is_key(Name, TableNames) of
         true -> error({duplicate_sora_table_section, Name});
@@ -283,6 +292,27 @@ read_schema_fingerprint(Bytes, Sections) ->
             end;
         [] ->
             error(missing_sora_manifest_section)
+    end.
+
+-spec read_string_table(binary(), [section()]) -> [binary()].
+read_string_table(Bytes, Sections) ->
+    case [Section || Section <- Sections, maps:get(kind, Section) =:= ?SECTION_KIND_STRINGS] of
+        [Section] ->
+            case maps:get(compression, Section) of
+                ?COMPRESSION_NONE -> ok;
+                Compression -> error({unsupported_sora_strings_compression, Compression})
+            end,
+            Length = maps:get(length, Section),
+            case maps:get(uncompressed_length, Section) of
+                Length -> ok;
+                _ -> error(invalid_sora_strings_uncompressed_length)
+            end,
+            Payload = binary:part(Bytes, maps:get(offset, Section), Length),
+            decode_string_table(Payload);
+        [] ->
+            error(missing_sora_strings_section);
+        _ ->
+            error(duplicate_sora_strings_section)
     end.
 
 -spec json_string_field(binary(), binary()) -> binary() | undefined.
@@ -334,22 +364,22 @@ byte_at(Json, Cursor) when Cursor >= 0, Cursor < byte_size(Json) ->
 byte_at(_Json, _Cursor) ->
     undefined.
 
--spec decode_rows(binary(), fun((reader()) -> {T, reader()})) -> [T].
-decode_rows(Payload, Decode) when byte_size(Payload) >= 12 ->
+-spec decode_rows(binary(), [binary()], fun((reader()) -> {T, reader()})) -> [T].
+decode_rows(Payload, Strings, Decode) when byte_size(Payload) >= 12 ->
     RowCount = read_u32_at(Payload, 0),
     RowDataStart = 4 + (RowCount + 1) * 8,
     case RowDataStart =< byte_size(Payload) of
         true -> ok;
         false -> error(sora_row_offset_table_exceeds_payload_length)
     end,
-    decode_row_loop(0, RowCount, RowDataStart, Payload, Decode, []);
-decode_rows(_Payload, _Decode) ->
+    decode_row_loop(0, RowCount, RowDataStart, Payload, Strings, Decode, []);
+decode_rows(_Payload, _Strings, _Decode) ->
     error(sora_table_section_too_short).
 
--spec decode_row_loop(integer(), integer(), integer(), binary(), fun((reader()) -> {T, reader()}), [T]) -> [T].
-decode_row_loop(RowCount, RowCount, _RowDataStart, _Payload, _Decode, Rows) ->
+-spec decode_row_loop(integer(), integer(), integer(), binary(), [binary()], fun((reader()) -> {T, reader()}), [T]) -> [T].
+decode_row_loop(RowCount, RowCount, _RowDataStart, _Payload, _Strings, _Decode, Rows) ->
     lists:reverse(Rows);
-decode_row_loop(Index, RowCount, RowDataStart, Payload, Decode, Rows) ->
+decode_row_loop(Index, RowCount, RowDataStart, Payload, Strings, Decode, Rows) ->
     Start = read_u64_at(Payload, 4 + Index * 8),
     Ending = read_u64_at(Payload, 4 + (Index + 1) * 8),
     case Start =< Ending of
@@ -363,12 +393,36 @@ decode_row_loop(Index, RowCount, RowDataStart, Payload, Decode, Rows) ->
         false -> error(sora_row_exceeds_payload_length)
     end,
     RowBinary = binary:part(Payload, AbsoluteStart, AbsoluteEnd - AbsoluteStart),
-    {Row, Rest} = Decode(RowBinary),
+    {Row, Rest} = Decode({RowBinary, Strings}),
     case Rest of
-        <<>> -> ok;
+        {<<>>, _Strings} -> ok;
         _ -> error(sora_row_has_trailing_bytes)
     end,
-    decode_row_loop(Index + 1, RowCount, RowDataStart, Payload, Decode, [Row | Rows]).
+    decode_row_loop(Index + 1, RowCount, RowDataStart, Payload, Strings, Decode, [Row | Rows]).
+
+-spec decode_string_table(binary()) -> [binary()].
+decode_string_table(Payload) when byte_size(Payload) >= 4 ->
+    Count = read_u32_at(Payload, 0),
+    {Strings, Cursor} = decode_string_table_items(Count, Payload, 4, []),
+    case Cursor of
+        Size when Size =:= byte_size(Payload) -> Strings;
+        _ -> error(sora_strings_section_has_trailing_bytes)
+    end;
+decode_string_table(_Payload) ->
+    error(sora_strings_section_too_short).
+
+-spec decode_string_table_items(integer(), binary(), integer(), [binary()]) -> {[binary()], integer()}.
+decode_string_table_items(0, _Payload, Cursor, Values) ->
+    {lists:reverse(Values), Cursor};
+decode_string_table_items(Count, Payload, Cursor0, Values) ->
+    Length = read_u32_at(Payload, Cursor0),
+    Cursor1 = Cursor0 + 4,
+    case Cursor1 + Length =< byte_size(Payload) of
+        true -> ok;
+        false -> error(sora_string_exceeds_strings_section_length)
+    end,
+    Value = binary:part(Payload, Cursor1, Length),
+    decode_string_table_items(Count - 1, Payload, Cursor1 + Length, [Value | Values]).
 
 -spec read_list_items(integer(), fun((reader()) -> {T, reader()}), reader(), [T]) -> {[T], reader()}.
 read_list_items(0, _Decode, Reader, Values) ->
@@ -387,8 +441,8 @@ read_map_items(Length, DecodeKey, DecodeValue, Reader0, Values) ->
     read_map_items(Length - 1, DecodeKey, DecodeValue, Reader2, Values#{Key => Value}).
 
 -spec read_u8(reader()) -> {integer(), reader()}.
-read_u8(<<Value:8/unsigned-integer, Rest/binary>>) ->
-    {Value, Rest}.
+read_u8({<<Value:8/unsigned-integer, Rest/binary>>, Strings}) ->
+    {Value, {Rest, Strings}}.
 
 -spec read_u32_at(binary(), integer()) -> integer().
 read_u32_at(Bytes, Offset) when Offset >= 0, Offset + 4 =< byte_size(Bytes) ->

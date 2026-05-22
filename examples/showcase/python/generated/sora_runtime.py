@@ -12,6 +12,7 @@ SORA_HEADER_LENGTH = 24
 SECTION_KIND_MANIFEST = 0
 SECTION_KIND_SCHEMA = 1
 SECTION_KIND_TABLE = 2
+SECTION_KIND_STRINGS = 3
 COMPRESSION_NONE = 0
 
 T = TypeVar("T")
@@ -56,10 +57,12 @@ class SoraBundle:
         bytes_data: bytes,
         sections: list[SoraSection],
         schema_fingerprint: str,
+        strings: list[str],
     ) -> None:
         self._bytes = bytes_data
         self._sections = sections
         self.schema_fingerprint = schema_fingerprint
+        self._strings = strings
 
     @staticmethod
     def parse(input_data: bytes | bytearray) -> SoraBundle:
@@ -92,6 +95,7 @@ class SoraBundle:
         sections: list[SoraSection] = []
         manifest_count = 0
         schema_count = 0
+        strings_count = 0
         table_names: set[str] = set()
 
         for _ in range(section_count):
@@ -130,6 +134,10 @@ class SoraBundle:
                 if name in table_names:
                     raise SoraReadError(f"duplicate Sora table section `{name}`")
                 table_names.add(name)
+            elif kind == SECTION_KIND_STRINGS:
+                strings_count += 1
+                if name != "$strings":
+                    raise SoraReadError("Sora string table section must be named `$strings`")
             else:
                 raise SoraReadError(f"unknown Sora section kind {kind}")
 
@@ -158,6 +166,10 @@ class SoraBundle:
             raise SoraReadError(
                 f"expected exactly 1 Sora schema section, got {schema_count}"
             )
+        if strings_count != 1:
+            raise SoraReadError(
+                f"expected exactly 1 Sora string table section, got {strings_count}"
+            )
 
         manifest = next(
             (section for section in sections if section.kind == SECTION_KIND_MANIFEST),
@@ -171,8 +183,22 @@ class SoraBundle:
         schema_fingerprint = manifest_data.get("schema_fingerprint")
         if not isinstance(schema_fingerprint, str):
             raise SoraReadError("Sora manifest is missing string field `schema_fingerprint`")
+        strings_section = next(
+            (section for section in sections if section.kind == SECTION_KIND_STRINGS),
+            None,
+        )
+        if strings_section is None:
+            raise SoraReadError("missing Sora string table section")
+        if (
+            strings_section.compression != COMPRESSION_NONE
+            or strings_section.uncompressed_length != strings_section.length
+        ):
+            raise SoraReadError("Sora string table section has invalid compression or length")
+        strings = decode_string_table(
+            data[strings_section.offset : strings_section.offset + strings_section.length]
+        )
 
-        return SoraBundle(data, sections, schema_fingerprint)
+        return SoraBundle(data, sections, schema_fingerprint, strings)
 
     def decode_table(self, name: str, decode_fn: Callable[[SoraReader], T]) -> list[T]:
         section = next(
@@ -193,12 +219,13 @@ class SoraBundle:
             raise SoraReadError(f"table `{name}` has invalid uncompressed length")
 
         payload = self._bytes[section.offset : section.offset + section.length]
-        return decode_rows(payload, decode_fn)
+        return decode_rows(payload, self._strings, decode_fn)
 
 
 class SoraReader:
-    def __init__(self, data: bytes) -> None:
+    def __init__(self, data: bytes, strings: list[str]) -> None:
         self._data = data
+        self._strings = strings
         self._cursor = 0
 
     def is_finished(self) -> bool:
@@ -255,12 +282,11 @@ class SoraReader:
         return value
 
     def read_string(self) -> str:
-        length = self.read_u32()
-        if self._cursor + length > len(self._data):
-            raise SoraReadError("Sora reader reached end of row")
-        value = self._data[self._cursor : self._cursor + length].decode("utf-8")
-        self._cursor += length
-        return value
+        string_id = self.read_u32()
+        try:
+            return self._strings[string_id]
+        except IndexError as error:
+            raise SoraReadError(f"invalid string id {string_id}") from error
 
     def read_optional(self, read_fn: Callable[[], T]) -> T | None:
         presence = self.read_u8()
@@ -325,7 +351,28 @@ def decode_index(rows: list[V], key_fn: Callable[[V], K]) -> dict[K, list[V]]:
     return values
 
 
-def decode_rows(payload: bytes, decode_fn: Callable[[SoraReader], T]) -> list[T]:
+def decode_string_table(payload: bytes) -> list[str]:
+    if len(payload) < 4:
+        raise SoraReadError("Sora string table section is too short")
+    count = struct.unpack_from("<I", payload, 0)[0]
+    cursor = 4
+    values = []
+    for _ in range(count):
+        if cursor + 4 > len(payload):
+            raise SoraReadError("Sora string table is truncated")
+        length = struct.unpack_from("<I", payload, cursor)[0]
+        cursor += 4
+        end = cursor + length
+        if end > len(payload):
+            raise SoraReadError("Sora string exceeds string table section")
+        values.append(payload[cursor:end].decode("utf-8"))
+        cursor = end
+    if cursor != len(payload):
+        raise SoraReadError("Sora string table section has trailing bytes")
+    return values
+
+
+def decode_rows(payload: bytes, strings: list[str], decode_fn: Callable[[SoraReader], T]) -> list[T]:
     if len(payload) < 12:
         raise SoraReadError("Sora table section is too short")
 
@@ -345,7 +392,7 @@ def decode_rows(payload: bytes, decode_fn: Callable[[SoraReader], T]) -> list[T]
         if absolute_end > len(payload):
             raise SoraReadError("Sora row exceeds payload length")
 
-        reader = SoraReader(payload[absolute_start:absolute_end])
+        reader = SoraReader(payload[absolute_start:absolute_end], strings)
         row = decode_fn(reader)
         if not reader.is_finished():
             raise SoraReadError("Sora row has trailing bytes")

@@ -5,6 +5,7 @@ const SORA_HEADER_LENGTH = 24;
 const SECTION_KIND_MANIFEST = 0;
 const SECTION_KIND_SCHEMA = 1;
 const SECTION_KIND_TABLE = 2;
+const SECTION_KIND_STRINGS = 3;
 const COMPRESSION_NONE = 0;
 const MAX_SAFE_INTEGER = BigInt(Number.MAX_SAFE_INTEGER);
 
@@ -43,6 +44,7 @@ export class SoraBundle {
         private readonly bytes: Uint8Array,
         private readonly sections: SoraSection[],
         readonly schemaFingerprint: string,
+        private readonly strings: string[],
     ) {}
 
     static parse(input: Uint8Array | ArrayBuffer): SoraBundle {
@@ -79,6 +81,7 @@ export class SoraBundle {
         const sections: SoraSection[] = [];
         let manifestCount = 0;
         let schemaCount = 0;
+        let stringsCount = 0;
         const tableNames = new Set<string>();
         for (let index = 0; index < sectionCount; index += 1) {
             if (cursor + 40 > directoryEnd) {
@@ -116,6 +119,11 @@ export class SoraBundle {
                 if (name !== "$schema") {
                     throw new SoraReadError("Sora schema section must be named `$schema`");
                 }
+            } else if (kind === SECTION_KIND_STRINGS) {
+                stringsCount += 1;
+                if (name !== "$strings") {
+                    throw new SoraReadError("Sora strings section must be named `$strings`");
+                }
             } else if (kind === SECTION_KIND_TABLE) {
                 if (tableNames.has(name)) {
                     throw new SoraReadError(`duplicate Sora table section \`${name}\``);
@@ -141,6 +149,9 @@ export class SoraBundle {
         if (schemaCount !== 1) {
             throw new SoraReadError(`expected exactly 1 Sora schema section, got ${schemaCount}`);
         }
+        if (stringsCount !== 1) {
+            throw new SoraReadError(`expected exactly 1 Sora strings section, got ${stringsCount}`);
+        }
 
         const manifest = sections.find((item) => item.kind === SECTION_KIND_MANIFEST);
         if (manifest === undefined) {
@@ -149,7 +160,19 @@ export class SoraBundle {
         const manifestValue = JSON.parse(utf8(bytes.subarray(manifest.offset, manifest.offset + manifest.length))) as unknown;
         const schemaFingerprint = objectStringField(manifestValue, "schema_fingerprint", "Sora manifest");
 
-        return new SoraBundle(bytes, sections, schemaFingerprint);
+        const stringsSection = sections.find((item) => item.kind === SECTION_KIND_STRINGS);
+        if (stringsSection === undefined) {
+            throw new SoraReadError("missing Sora strings section");
+        }
+        if (stringsSection.compression !== COMPRESSION_NONE) {
+            throw new SoraReadError(`unsupported compression ${stringsSection.compression} for strings`);
+        }
+        if (stringsSection.uncompressedLength !== stringsSection.length) {
+            throw new SoraReadError("Sora strings section has invalid uncompressed length");
+        }
+        const strings = decodeStringTable(bytes.subarray(stringsSection.offset, stringsSection.offset + stringsSection.length));
+
+        return new SoraBundle(bytes, sections, schemaFingerprint, strings);
     }
 
     decodeTable<T>(name: string, decodeBinary: (reader: SoraReader) => T, _decodeValue: (value: SoraValue) => T): T[] {
@@ -164,14 +187,14 @@ export class SoraBundle {
             throw new SoraReadError(`table \`${name}\` has invalid uncompressed length`);
         }
         const payload = this.bytes.subarray(section.offset, section.offset + section.length);
-        return decodeRows(payload, decodeBinary);
+        return decodeRows(payload, this.strings, decodeBinary);
     }
 }
 
 export class SoraReader {
     private cursor = 0;
 
-    constructor(private readonly bytes: Uint8Array) {}
+    constructor(private readonly bytes: Uint8Array, private readonly strings: readonly string[]) {}
 
     isFinished(): boolean {
         return this.cursor === this.bytes.byteLength;
@@ -228,7 +251,12 @@ export class SoraReader {
     }
 
     readString(): string {
-        return utf8(this.take(this.readU32()));
+        const id = this.readU32();
+        const value = this.strings[id];
+        if (value === undefined) {
+            throw new SoraReadError(`string id ${id} is out of range`);
+        }
+        return value;
     }
 
     readOptional<T>(read: () => T): T | undefined {
@@ -453,7 +481,7 @@ export function decodeIndex<K, V>(rows: V[], key: (row: V) => K): Map<K, V[]> {
     return values;
 }
 
-function decodeRows<T>(payload: Uint8Array, decode: (reader: SoraReader) => T): T[] {
+function decodeRows<T>(payload: Uint8Array, strings: readonly string[], decode: (reader: SoraReader) => T): T[] {
     if (payload.byteLength < 12) {
         throw new SoraReadError("Sora table section is too short");
     }
@@ -476,7 +504,7 @@ function decodeRows<T>(payload: Uint8Array, decode: (reader: SoraReader) => T): 
         if (absoluteEnd > payload.byteLength) {
             throw new SoraReadError("Sora row exceeds payload length");
         }
-        const reader = new SoraReader(payload.subarray(absoluteStart, absoluteEnd));
+        const reader = new SoraReader(payload.subarray(absoluteStart, absoluteEnd), strings);
         const row = decode(reader);
         if (!reader.isFinished()) {
             throw new SoraReadError("Sora row has trailing bytes");
@@ -484,6 +512,29 @@ function decodeRows<T>(payload: Uint8Array, decode: (reader: SoraReader) => T): 
         rows.push(row);
     }
     return rows;
+}
+
+function decodeStringTable(payload: Uint8Array): string[] {
+    if (payload.byteLength < 4) {
+        throw new SoraReadError("Sora strings section is too short");
+    }
+    const count = readU32At(payload, 0);
+    const strings: string[] = [];
+    let cursor = 4;
+    for (let index = 0; index < count; index += 1) {
+        const length = readU32At(payload, cursor);
+        cursor += 4;
+        const end = checkedAdd(cursor, length, "Sora string length overflow");
+        if (end > payload.byteLength) {
+            throw new SoraReadError("Sora string exceeds strings section length");
+        }
+        strings.push(utf8(payload.subarray(cursor, end)));
+        cursor = end;
+    }
+    if (cursor !== payload.byteLength) {
+        throw new SoraReadError("Sora strings section has trailing bytes");
+    }
+    return strings;
 }
 
 function asBytes(input: Uint8Array | ArrayBuffer): Uint8Array {

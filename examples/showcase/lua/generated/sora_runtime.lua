@@ -7,6 +7,7 @@ local SORA_HEADER_LENGTH = 24
 local SECTION_KIND_MANIFEST = 0
 local SECTION_KIND_SCHEMA = 1
 local SECTION_KIND_TABLE = 2
+local SECTION_KIND_STRINGS = 3
 local COMPRESSION_NONE = 0
 
 ---@class SoraSection
@@ -21,11 +22,13 @@ local COMPRESSION_NONE = 0
 ---@field private bytes string
 ---@field private sections SoraSection[]
 ---@field private schemaFingerprint string
+---@field private strings string[]
 local SoraBundle = {}
 SoraBundle.__index = SoraBundle
 
 ---@class SoraReader
 ---@field private bytes string
+---@field private strings string[]
 ---@field private cursor integer
 local SoraReader = {}
 SoraReader.__index = SoraReader
@@ -65,6 +68,7 @@ function Runtime.parse_bundle(bytes)
     local sections = {}
     local manifest_count = 0
     local schema_count = 0
+    local strings_count = 0
     local table_names = {}
     for _ = 1, section_count do
         if cursor + 40 > directory_end then
@@ -102,6 +106,11 @@ function Runtime.parse_bundle(bytes)
             if name ~= "$schema" then
                 error("Sora schema section must be named `$schema`")
             end
+        elseif kind == SECTION_KIND_STRINGS then
+            strings_count = strings_count + 1
+            if name ~= "$strings" then
+                error("Sora strings section must be named `$strings`")
+            end
         elseif kind == SECTION_KIND_TABLE then
             if table_names[name] then
                 error("duplicate Sora table section `" .. name .. "`")
@@ -135,20 +144,35 @@ function Runtime.parse_bundle(bytes)
     if schema_count ~= 1 then
         error("expected exactly 1 Sora schema section, got " .. tostring(schema_count))
     end
+    if strings_count ~= 1 then
+        error("expected exactly 1 Sora strings section, got " .. tostring(strings_count))
+    end
 
     local schema_fingerprint = nil
+    local strings = nil
     for _, section in ipairs(sections) do
         if section.kind == SECTION_KIND_MANIFEST then
             local payload = bytes:sub(section.offset + 1, section.offset + section.length)
             schema_fingerprint = json_string_field(payload, "schema_fingerprint")
-            break
+        elseif section.kind == SECTION_KIND_STRINGS then
+            if section.compression ~= COMPRESSION_NONE then
+                error("unsupported compression " .. tostring(section.compression) .. " for strings")
+            end
+            if section.uncompressedLength ~= section.length then
+                error("Sora strings section has invalid uncompressed length")
+            end
+            local payload = bytes:sub(section.offset + 1, section.offset + section.length)
+            strings = decode_string_table(payload)
         end
     end
     if schema_fingerprint == nil then
         error("Sora manifest is missing string field `schema_fingerprint`")
     end
+    if strings == nil then
+        error("missing Sora strings section")
+    end
 
-    return setmetatable({ bytes = bytes, sections = sections, schemaFingerprint = schema_fingerprint }, SoraBundle)
+    return setmetatable({ bytes = bytes, sections = sections, schemaFingerprint = schema_fingerprint, strings = strings }, SoraBundle)
 end
 
 ---@return string
@@ -170,16 +194,17 @@ function SoraBundle:decode_table(name, decode)
                 error("table `" .. name .. "` has invalid uncompressed length")
             end
             local payload = self.bytes:sub(section.offset + 1, section.offset + section.length)
-            return decode_rows(payload, decode)
+            return decode_rows(payload, self.strings, decode)
         end
     end
     error("missing Sora table section `" .. name .. "`")
 end
 
 ---@param bytes string
+---@param strings string[]?
 ---@return SoraReader
-function Runtime.new_reader(bytes)
-    return setmetatable({ bytes = bytes, cursor = 1 }, SoraReader)
+function Runtime.new_reader(bytes, strings)
+    return setmetatable({ bytes = bytes, strings = strings or {}, cursor = 1 }, SoraReader)
 end
 
 ---@return boolean
@@ -246,8 +271,12 @@ end
 
 ---@return string
 function SoraReader:read_string()
-    local length = self:read_u32()
-    return self:take(length)
+    local id = self:read_u32()
+    local value = self.strings[id + 1]
+    if value == nil then
+        error("string id " .. tostring(id) .. " is out of range")
+    end
+    return value
 end
 
 ---@generic T
@@ -352,9 +381,10 @@ end
 
 ---@generic T
 ---@param payload string
+---@param strings string[]
 ---@param decode fun(reader: SoraReader): T
 ---@return T[]
-function decode_rows(payload, decode)
+function decode_rows(payload, strings, decode)
     if #payload < 12 then
         error("Sora table section is too short")
     end
@@ -377,7 +407,7 @@ function decode_rows(payload, decode)
         if absolute_end > #payload then
             error("Sora row exceeds payload length")
         end
-        local reader = Runtime.new_reader(payload:sub(absolute_start + 1, absolute_end))
+        local reader = Runtime.new_reader(payload:sub(absolute_start + 1, absolute_end), strings)
         local row = decode(reader)
         if not reader:is_finished() then
             error("Sora row has trailing bytes")
@@ -385,6 +415,31 @@ function decode_rows(payload, decode)
         rows[#rows + 1] = row
     end
     return rows
+end
+
+---@param payload string
+---@return string[]
+function decode_string_table(payload)
+    if #payload < 4 then
+        error("Sora strings section is too short")
+    end
+    local count = read_u32_at(payload, 0)
+    local strings = {}
+    local cursor = 4
+    for index = 1, count do
+        local length = read_u32_at(payload, cursor)
+        cursor = cursor + 4
+        local ending = cursor + length
+        if ending > #payload then
+            error("Sora string exceeds strings section length")
+        end
+        strings[index] = payload:sub(cursor + 1, ending)
+        cursor = ending
+    end
+    if cursor ~= #payload then
+        error("Sora strings section has trailing bytes")
+    end
+    return strings
 end
 
 ---@param bytes string

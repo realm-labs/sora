@@ -48,16 +48,19 @@ final class SoraBundle implements SoraTableSource {
     private static final int SECTION_KIND_MANIFEST = 0;
     private static final int SECTION_KIND_SCHEMA = 1;
     private static final int SECTION_KIND_TABLE = 2;
+    private static final int SECTION_KIND_STRINGS = 3;
     private static final int COMPRESSION_NONE = 0;
 
     private final byte[] bytes;
     private final List<SoraSection> sections;
     private final String schemaFingerprint;
+    private final List<String> strings;
 
-    private SoraBundle(byte[] bytes, List<SoraSection> sections, String schemaFingerprint) {
+    private SoraBundle(byte[] bytes, List<SoraSection> sections, String schemaFingerprint, List<String> strings) {
         this.bytes = bytes;
         this.sections = sections;
         this.schemaFingerprint = schemaFingerprint;
+        this.strings = strings;
     }
 
     @Override
@@ -76,7 +79,7 @@ final class SoraBundle implements SoraTableSource {
         if (section.uncompressedLength != section.length) {
             throw new SoraReadException("table `" + name + "` has invalid uncompressed length");
         }
-        return decodeRows(Arrays.copyOfRange(bytes, section.offset, section.offset + section.length), decode);
+        return decodeRows(Arrays.copyOfRange(bytes, section.offset, section.offset + section.length), strings, decode);
     }
 
     @Override
@@ -115,6 +118,7 @@ final class SoraBundle implements SoraTableSource {
         var sections = new ArrayList<SoraSection>(sectionCount);
         var manifestCount = 0;
         var schemaCount = 0;
+        var stringsCount = 0;
         var tableNames = new HashSet<String>();
         for (var i = 0; i < sectionCount; i++) {
             if (cursor + 40 > directoryEnd) {
@@ -154,6 +158,11 @@ final class SoraBundle implements SoraTableSource {
                 if (!tableNames.add(name)) {
                     throw new SoraReadException("duplicate Sora table section `" + name + "`");
                 }
+            } else if (kind == SECTION_KIND_STRINGS) {
+                stringsCount++;
+                if (!name.equals("$strings")) {
+                    throw new SoraReadException("Sora string table section must be named `$strings`");
+                }
             } else {
                 throw new SoraReadException("unknown Sora section kind " + kind);
             }
@@ -172,6 +181,9 @@ final class SoraBundle implements SoraTableSource {
         if (schemaCount != 1) {
             throw new SoraReadException("expected exactly 1 Sora schema section, got " + schemaCount);
         }
+        if (stringsCount != 1) {
+            throw new SoraReadException("expected exactly 1 Sora string table section, got " + stringsCount);
+        }
         var manifest = sections.stream()
             .filter(value -> value.kind == SECTION_KIND_MANIFEST)
             .findFirst()
@@ -180,10 +192,18 @@ final class SoraBundle implements SoraTableSource {
             Arrays.copyOfRange(bytes, manifest.offset, manifest.offset + manifest.length),
             "schema_fingerprint"
         );
-        return new SoraBundle(bytes, sections, schemaFingerprint);
+        var stringsSection = sections.stream()
+            .filter(value -> value.kind == SECTION_KIND_STRINGS)
+            .findFirst()
+            .orElseThrow(() -> new SoraReadException("missing Sora string table section"));
+        if (stringsSection.compression != COMPRESSION_NONE || stringsSection.uncompressedLength != stringsSection.length) {
+            throw new SoraReadException("Sora string table section has invalid compression or length");
+        }
+        var strings = decodeStringTable(Arrays.copyOfRange(bytes, stringsSection.offset, stringsSection.offset + stringsSection.length));
+        return new SoraBundle(bytes, sections, schemaFingerprint, strings);
     }
 
-    private static <T> List<T> decodeRows(byte[] payload, SoraRowDecoder<T> decode) {
+    private static <T> List<T> decodeRows(byte[] payload, List<String> strings, SoraRowDecoder<T> decode) {
         if (payload.length < 12) {
             throw new SoraReadException("Sora table section is too short");
         }
@@ -206,7 +226,7 @@ final class SoraBundle implements SoraTableSource {
             if (absoluteEnd > payload.length) {
                 throw new SoraReadException("Sora row exceeds payload length");
             }
-            var reader = new SoraReader(Arrays.copyOfRange(payload, absoluteStart, absoluteEnd));
+            var reader = new SoraReader(Arrays.copyOfRange(payload, absoluteStart, absoluteEnd), strings);
             var row = decode.decode(reader);
             if (!reader.isFinished()) {
                 throw new SoraReadException("Sora row has trailing bytes");
@@ -214,6 +234,29 @@ final class SoraBundle implements SoraTableSource {
             rows.add(row);
         }
         return rows;
+    }
+
+    private static List<String> decodeStringTable(byte[] payload) {
+        if (payload.length < 4) {
+            throw new SoraReadException("Sora string table section is too short");
+        }
+        var count = readI32At(payload, 0);
+        var cursor = 4;
+        var values = new ArrayList<String>(count);
+        for (var i = 0; i < count; i++) {
+            var length = readI32At(payload, cursor);
+            cursor = checkedAdd(cursor, 4, "Sora string table cursor overflow");
+            var end = checkedAdd(cursor, length, "Sora string length overflow");
+            if (end > payload.length) {
+                throw new SoraReadException("Sora string exceeds string table section");
+            }
+            values.add(new String(payload, cursor, length, StandardCharsets.UTF_8));
+            cursor = end;
+        }
+        if (cursor != payload.length) {
+            throw new SoraReadException("Sora string table section has trailing bytes");
+        }
+        return values;
     }
 
     static int readI32At(byte[] bytes, int offset) {
@@ -290,10 +333,12 @@ interface SoraRowDecoder<T> {
 
 final class SoraReader {
     private final byte[] bytes;
+    private final List<String> strings;
     private int cursor;
 
-    SoraReader(byte[] bytes) {
+    SoraReader(byte[] bytes, List<String> strings) {
         this.bytes = bytes;
+        this.strings = strings;
     }
 
     boolean isFinished() {
@@ -336,8 +381,11 @@ final class SoraReader {
     }
 
     String readString() {
-        var length = readU32();
-        return new String(take(length), StandardCharsets.UTF_8);
+        var id = readU32();
+        if (id < 0 || id >= strings.size()) {
+            throw new SoraReadException("invalid string id " + id);
+        }
+        return strings.get(id);
     }
 
     <T> T readOptional(Supplier<T> read) {

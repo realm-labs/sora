@@ -17,6 +17,7 @@ const (
 	soraSectionManifest = 0
 	soraSectionSchema   = 1
 	soraSectionTable    = 2
+	soraSectionStrings  = 3
 	soraCompressionNone = 0
 )
 
@@ -33,6 +34,7 @@ type SoraBundle struct {
 	bytes             []byte
 	sections          []soraSection
 	schemaFingerprint string
+	strings           []string
 }
 
 type SoraTableSource interface {
@@ -74,6 +76,7 @@ func ParseSoraBundle(bytes []byte) (*SoraBundle, error) {
 	sections := make([]soraSection, 0, sectionCount)
 	manifestCount := 0
 	schemaCount := 0
+	stringsCount := 0
 	tableNames := map[string]struct{}{}
 	for i := 0; i < sectionCount; i++ {
 		if cursor+40 > directoryEnd {
@@ -130,6 +133,11 @@ func ParseSoraBundle(bytes []byte) (*SoraBundle, error) {
 				return nil, fmt.Errorf("duplicate Sora table section `%s`", name)
 			}
 			tableNames[name] = struct{}{}
+		case soraSectionStrings:
+			stringsCount++
+			if name != "$strings" {
+				return nil, fmt.Errorf("Sora string table section must be named `$strings`")
+			}
 		default:
 			return nil, fmt.Errorf("unknown Sora section kind %d", kind)
 		}
@@ -155,20 +163,35 @@ func ParseSoraBundle(bytes []byte) (*SoraBundle, error) {
 	if schemaCount != 1 {
 		return nil, fmt.Errorf("expected exactly 1 Sora schema section, got %d", schemaCount)
 	}
+	if stringsCount != 1 {
+		return nil, fmt.Errorf("expected exactly 1 Sora string table section, got %d", stringsCount)
+	}
 	var schemaFingerprint string
+	var strings []string
 	for _, section := range sections {
 		if section.kind == soraSectionManifest {
 			schemaFingerprint, err = readJsonStringField(bytes[section.offset:section.offset+section.length], "schema_fingerprint")
 			if err != nil {
 				return nil, err
 			}
-			break
+		}
+		if section.kind == soraSectionStrings {
+			if section.compression != soraCompressionNone || section.uncompressedLength != section.length {
+				return nil, fmt.Errorf("Sora string table section has invalid compression or length")
+			}
+			strings, err = decodeStringTable(bytes[section.offset : section.offset+section.length])
+			if err != nil {
+				return nil, err
+			}
 		}
 	}
 	if schemaFingerprint == "" {
 		return nil, fmt.Errorf("missing Sora manifest section")
 	}
-	return &SoraBundle{bytes: bytes, sections: sections, schemaFingerprint: schemaFingerprint}, nil
+	if strings == nil {
+		return nil, fmt.Errorf("missing Sora string table section")
+	}
+	return &SoraBundle{bytes: bytes, sections: sections, schemaFingerprint: schemaFingerprint, strings: strings}, nil
 }
 
 func DecodeTable[T any](bundle *SoraBundle, name string, decode func(*SoraReader) (T, error)) ([]T, error) {
@@ -180,7 +203,7 @@ func DecodeTable[T any](bundle *SoraBundle, name string, decode func(*SoraReader
 			if section.uncompressedLength != section.length {
 				return nil, fmt.Errorf("table `%s` has invalid uncompressed length", name)
 			}
-			return decodeRows(bundle.bytes[section.offset:section.offset+section.length], decode)
+			return decodeRows(bundle.bytes[section.offset:section.offset+section.length], bundle.strings, decode)
 		}
 	}
 	return nil, fmt.Errorf("missing Sora table section `%s`", name)
@@ -219,8 +242,9 @@ func DecodeSourceTable[T any](source SoraTableSource, name string, decodeBinary 
 }
 
 type SoraReader struct {
-	bytes  []byte
-	cursor int
+	bytes   []byte
+	strings []string
+	cursor  int
 }
 
 func (reader *SoraReader) IsFinished() bool {
@@ -291,15 +315,14 @@ func (reader *SoraReader) ReadFloat64() (float64, error) {
 }
 
 func (reader *SoraReader) ReadString() (string, error) {
-	length, err := reader.ReadUInt32()
+	id, err := reader.ReadUInt32()
 	if err != nil {
 		return "", err
 	}
-	bytes, err := reader.take(length)
-	if err != nil {
-		return "", err
+	if id < 0 || id >= len(reader.strings) {
+		return "", fmt.Errorf("invalid string id %d", id)
 	}
-	return string(bytes), nil
+	return reader.strings[id], nil
 }
 
 func ReadOptional[T any](reader *SoraReader, read func(*SoraReader) (T, error)) (*T, error) {
@@ -370,7 +393,7 @@ func (reader *SoraReader) take(length int) ([]byte, error) {
 	return bytes, nil
 }
 
-func decodeRows[T any](payload []byte, decode func(*SoraReader) (T, error)) ([]T, error) {
+func decodeRows[T any](payload []byte, strings []string, decode func(*SoraReader) (T, error)) ([]T, error) {
 	if len(payload) < 12 {
 		return nil, fmt.Errorf("Sora table section is too short")
 	}
@@ -411,7 +434,7 @@ func decodeRows[T any](payload []byte, decode func(*SoraReader) (T, error)) ([]T
 		if absoluteEnd > len(payload) {
 			return nil, fmt.Errorf("Sora row exceeds payload length")
 		}
-		reader := &SoraReader{bytes: payload[absoluteStart:absoluteEnd]}
+		reader := &SoraReader{bytes: payload[absoluteStart:absoluteEnd], strings: strings}
 		row, err := decode(reader)
 		if err != nil {
 			return nil, err
@@ -422,6 +445,35 @@ func decodeRows[T any](payload []byte, decode func(*SoraReader) (T, error)) ([]T
 		rows = append(rows, row)
 	}
 	return rows, nil
+}
+
+func decodeStringTable(payload []byte) ([]string, error) {
+	if len(payload) < 4 {
+		return nil, fmt.Errorf("Sora string table section is too short")
+	}
+	count := int(readInt32At(payload, 0))
+	cursor := 4
+	values := make([]string, 0, count)
+	for i := 0; i < count; i++ {
+		if cursor+4 > len(payload) {
+			return nil, fmt.Errorf("Sora string table is truncated")
+		}
+		length := int(readInt32At(payload, cursor))
+		cursor += 4
+		end, err := checkedAdd(cursor, length, "Sora string length overflow")
+		if err != nil {
+			return nil, err
+		}
+		if end > len(payload) {
+			return nil, fmt.Errorf("Sora string exceeds string table section")
+		}
+		values = append(values, string(payload[cursor:end]))
+		cursor = end
+	}
+	if cursor != len(payload) {
+		return nil, fmt.Errorf("Sora string table section has trailing bytes")
+	}
+	return values, nil
 }
 
 func readInt32At(bytes []byte, offset int) int32 {

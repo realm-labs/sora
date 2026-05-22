@@ -50,6 +50,8 @@ typedef struct sora_string {
 typedef struct sora_reader {
     const uint8_t* bytes;
     size_t len;
+    const sora_string* strings;
+    size_t string_count;
     size_t cursor;
 } sora_reader;
 
@@ -61,7 +63,13 @@ typedef void (*sora_free_row_fn)(void* value);
 void sora_string_free(sora_string* value);
 bool sora_string_equal(const sora_string* left, const sora_string* right);
 
-void sora_reader_init(sora_reader* reader, const uint8_t* bytes, size_t len);
+void sora_reader_init(
+    sora_reader* reader,
+    const uint8_t* bytes,
+    size_t len,
+    const sora_string* strings,
+    size_t string_count
+);
 bool sora_reader_is_finished(const sora_reader* reader);
 sora_result sora_reader_read_u8(sora_reader* reader, uint8_t* out);
 sora_result sora_reader_read_bool(sora_reader* reader, bool* out);
