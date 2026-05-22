@@ -377,6 +377,18 @@ public sealed class SoraReader
         return values;
     }
 
+    internal Dictionary<K, V> ReadMap<K, V>(Func<K> readKey, Func<V> readValue)
+        where K : notnull
+    {
+        var length = ReadUInt32();
+        var values = new Dictionary<K, V>(length);
+        for (var i = 0; i < length; i++)
+        {
+            values[readKey()] = readValue();
+        }
+        return values;
+    }
+
     private byte[] Take(int length)
     {
         var end = SoraBundle.CheckedAdd(cursor, length, "Sora reader cursor overflow");
@@ -435,6 +447,23 @@ public sealed class SoraValue
         foreach (var item in source)
         {
             values.Add(decode(item));
+        }
+        return values;
+    }
+
+    internal Dictionary<K, V> AsMap<K, V>(Func<SoraValue, K> decodeKey, Func<SoraValue, V> decodeValue)
+        where K : notnull
+    {
+        var source = AsList();
+        var values = new Dictionary<K, V>(source.Count);
+        foreach (var item in source)
+        {
+            var pair = item.AsList();
+            if (pair.Count != 2)
+            {
+                throw new SoraReadException("expected map entry pair");
+            }
+            values[decodeKey(pair[0])] = decodeValue(pair[1]);
         }
         return values;
     }

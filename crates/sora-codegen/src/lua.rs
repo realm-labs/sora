@@ -331,9 +331,14 @@ fn lua_type_name(ir: &ConfigIr, ty: &TypeIr, options: &LuaOptionsView) -> String
         TypeIr::F32 | TypeIr::F64 => "number".to_owned(),
         TypeIr::String => "string".to_owned(),
         TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => name.clone(),
-        TypeIr::List(element) | TypeIr::Array { element, .. } => {
+        TypeIr::List(element) | TypeIr::Set(element) | TypeIr::Array { element, .. } => {
             format!("{}[]", lua_type_name(ir, element, options))
         }
+        TypeIr::Map { key, value } => format!(
+            "{{[{}]: {}}}",
+            lua_type_name(ir, key, options),
+            lua_type_name(ir, value, options)
+        ),
         TypeIr::Ref { table, field } => ref_target_type(ir, table, field)
             .map(|ty| lua_type_name(ir, ty, options))
             .unwrap_or_else(|| "integer".to_owned()),
@@ -352,12 +357,17 @@ fn lua_decode_expr(ir: &ConfigIr, ty: &TypeIr, _options: &LuaOptionsView) -> Str
         TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => {
             format!("{name}.decode(reader)")
         }
-        TypeIr::List(element) | TypeIr::Array { element, .. } => {
+        TypeIr::List(element) | TypeIr::Set(element) | TypeIr::Array { element, .. } => {
             format!(
                 "reader:read_list(function() return {} end)",
                 lua_decode_expr(ir, element, _options)
             )
         }
+        TypeIr::Map { key, value } => format!(
+            "reader:read_map(function() return {} end, function() return {} end)",
+            lua_decode_expr(ir, key, _options),
+            lua_decode_expr(ir, value, _options)
+        ),
         TypeIr::Ref { table, field } => ref_target_type(ir, table, field)
             .map(|ty| lua_decode_expr(ir, ty, _options))
             .unwrap_or_else(|| "reader:read_i32()".to_owned()),

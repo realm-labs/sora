@@ -39,6 +39,7 @@ impl ParserRegistry {
         registry.register(SplitParser);
         registry.register(TupleParser);
         registry.register(TupleListParser);
+        registry.register(MapParser);
         registry.register(JsonParser);
         registry
     }
@@ -138,12 +139,32 @@ impl CellParser for TupleListParser {
         let source = cell.display_text();
         match ty {
             TypeIr::Optional(inner) => self.parse(cell, inner, context, registry),
-            TypeIr::List(element) => tuple_list_value(&source, element, None, context, registry),
+            TypeIr::List(element) | TypeIr::Set(element) => {
+                tuple_list_value(&source, element, None, context, registry)
+            }
             TypeIr::Array { element, len } => {
                 tuple_list_value(&source, element, Some(*len), context, registry)
             }
             _ => Err(context.error("tuple_list parser requires list or array type")),
         }
+    }
+}
+
+struct MapParser;
+
+impl CellParser for MapParser {
+    fn kind(&self) -> &'static str {
+        "map"
+    }
+
+    fn parse(
+        &self,
+        cell: &CellValue<'_>,
+        ty: &TypeIr,
+        context: &CellContext<'_>,
+        _registry: &ParserRegistry,
+    ) -> Result<Value> {
+        map_value(&cell.display_text(), ty, context)
     }
 }
 
@@ -178,9 +199,10 @@ fn default_cell_value(
         TypeIr::F32 | TypeIr::F64 => float_cell(cell, context)?,
         TypeIr::String | TypeIr::Enum(_) => Value::String(cell.display_text()),
         TypeIr::Struct(_) | TypeIr::Union(_) => json_object_value(&cell.display_text(), context)?,
-        TypeIr::List(_) | TypeIr::Array { .. } => {
+        TypeIr::List(_) | TypeIr::Set(_) | TypeIr::Array { .. } => {
             parse_collection_with_separator(&cell.display_text(), ty, context)?
         }
+        TypeIr::Map { .. } => json_cell_value(&cell.display_text(), ty, context)?,
     })
 }
 
@@ -239,7 +261,9 @@ fn parse_collection_with_separator(
 ) -> Result<Value> {
     match ty {
         TypeIr::Optional(inner) => parse_collection_with_separator(source, inner, context),
-        TypeIr::List(element) => separated_value(source, element, None, context),
+        TypeIr::List(element) | TypeIr::Set(element) => {
+            separated_value(source, element, None, context)
+        }
         TypeIr::Array { element, len } => separated_value(source, element, Some(*len), context),
         _ => Err(context.error("split parser requires list or array type")),
     }
@@ -315,6 +339,65 @@ fn tuple_list_value(
             .map(|item| tuple_object_value(item, struct_name, context, registry))
             .collect::<Result<Vec<_>>>()?,
     ))
+}
+
+fn map_value(source: &str, ty: &TypeIr, context: &CellContext<'_>) -> Result<Value> {
+    match ty {
+        TypeIr::Optional(inner) => map_value(source, inner, context),
+        TypeIr::Map {
+            key,
+            value: element,
+        } => separated_map_value(source, key, element, context),
+        _ => Err(context.error("map parser requires map type")),
+    }
+}
+
+fn separated_map_value(
+    source: &str,
+    key_ty: &TypeIr,
+    value_ty: &TypeIr,
+    context: &CellContext<'_>,
+) -> Result<Value> {
+    let separator = parser_option(context, "separator").unwrap_or(",");
+    let item_separator = parser_option(context, "item_separator").unwrap_or("|");
+    let source = split_source(source);
+    let items = if source.trim().is_empty() {
+        Vec::new()
+    } else {
+        source
+            .split(item_separator)
+            .map(str::trim)
+            .collect::<Vec<_>>()
+    };
+
+    Ok(Value::List(
+        items
+            .iter()
+            .enumerate()
+            .map(|(index, item)| {
+                separated_map_pair(item, key_ty, value_ty, index, separator, context)
+            })
+            .collect::<Result<Vec<_>>>()?,
+    ))
+}
+
+fn separated_map_pair(
+    item: &str,
+    key_ty: &TypeIr,
+    value_ty: &TypeIr,
+    index: usize,
+    separator: &str,
+    context: &CellContext<'_>,
+) -> Result<Value> {
+    let Some((key, value)) = item.split_once(separator) else {
+        return Err(context.error(format!(
+            "expected map item at index {index} to contain separator `{separator}`"
+        )));
+    };
+    Ok(Value::List(vec![
+        source_to_default_value(key, key_ty, context)?,
+        source_to_default_value(value, value_ty, context)?,
+    ]))
 }
 
 fn struct_type_name(ty: &TypeIr) -> Option<&str> {
@@ -406,7 +489,7 @@ fn json_to_cell_value(
             .map(|value| Value::String(value.to_owned()))
             .ok_or_else(|| context.error("expected JSON string"))?,
         TypeIr::Struct(_) | TypeIr::Union(_) => json_to_untyped_value(value, context)?,
-        TypeIr::List(element) => {
+        TypeIr::List(element) | TypeIr::Set(element) => {
             let JsonValue::Array(items) = value else {
                 return Err(context.error("expected JSON array"));
             };
@@ -414,6 +497,21 @@ fn json_to_cell_value(
                 items
                     .iter()
                     .map(|item| json_to_cell_value(item, element, context))
+                    .collect::<Result<Vec<_>>>()?,
+            )
+        }
+        TypeIr::Map {
+            key,
+            value: element,
+        } => {
+            let JsonValue::Array(items) = value else {
+                return Err(context.error("expected JSON array"));
+            };
+            Value::List(
+                items
+                    .iter()
+                    .enumerate()
+                    .map(|(index, item)| json_to_map_pair(item, key, element, index, context))
                     .collect::<Result<Vec<_>>>()?,
             )
         }
@@ -476,10 +574,33 @@ fn separated_item_to_value(
                     .collect::<Result<BTreeMap<_, _>>>()?,
             ))
         }
-        TypeIr::List(_) | TypeIr::Array { .. } => Err(context.error(format!(
-            "nested list or array item `{item}` cannot be parsed with a single separator"
-        ))),
+        TypeIr::List(_) | TypeIr::Set(_) | TypeIr::Map { .. } | TypeIr::Array { .. } => {
+            Err(context.error(format!(
+                "nested collection item `{item}` cannot be parsed with a single separator"
+            )))
+        }
     }
+}
+
+fn json_to_map_pair(
+    item: &JsonValue,
+    key_ty: &TypeIr,
+    value_ty: &TypeIr,
+    index: usize,
+    context: &CellContext<'_>,
+) -> Result<Value> {
+    let JsonValue::Array(pair) = item else {
+        return Err(context.error(format!("expected JSON map pair array at index {index}")));
+    };
+    let [key, value] = pair.as_slice() else {
+        return Err(context.error(format!(
+            "expected JSON map pair at index {index} to contain exactly two elements"
+        )));
+    };
+    Ok(Value::List(vec![
+        json_to_cell_value(key, key_ty, context)?,
+        json_to_cell_value(value, value_ty, context)?,
+    ]))
 }
 
 fn string_item_to_value(item: &str, context: &CellContext<'_>) -> Result<Value> {
@@ -519,6 +640,11 @@ fn source_to_value(
 ) -> Result<Value> {
     let cell = CellValue::Text(Cow::Owned(source.trim().to_owned()));
     registry.parse_cell(&cell, ty, context)
+}
+
+fn source_to_default_value(source: &str, ty: &TypeIr, context: &CellContext<'_>) -> Result<Value> {
+    let cell = CellValue::Text(Cow::Owned(source.trim().to_owned()));
+    default_cell_value(&cell, ty, context)
 }
 
 fn json_to_untyped_value(value: &JsonValue, context: &CellContext<'_>) -> Result<Value> {
@@ -578,6 +704,89 @@ mod tests {
         ) -> Result<Value> {
             Ok(Value::String(cell.display_text().to_uppercase()))
         }
+    }
+
+    #[test]
+    fn parses_map_cells_as_pairs() {
+        let registry = ParserRegistry::builtin();
+        let ir = ConfigIr {
+            package: "test".to_owned(),
+            codegen: Default::default(),
+            enums: Vec::new(),
+            structs: Vec::new(),
+            unions: Vec::new(),
+            tables: Vec::new(),
+        };
+        let parser = ParserIr {
+            kind: "map".to_owned(),
+            options: BTreeMap::new(),
+        };
+        let context = CellContext {
+            path: Path::new("<test>"),
+            ir: &ir,
+            location: CellLocation::Default,
+            field: "attributes",
+            parser: Some(&parser),
+        };
+
+        let value = registry
+            .parse_cell(
+                &CellValue::Text("tier,1|power,10".into()),
+                &parse_type("map<string,i32>").unwrap(),
+                &context,
+            )
+            .unwrap();
+
+        assert_eq!(
+            value,
+            Value::List(vec![
+                Value::List(vec![Value::String("tier".to_owned()), Value::Integer(1)]),
+                Value::List(vec![Value::String("power".to_owned()), Value::Integer(10)]),
+            ])
+        );
+    }
+
+    #[test]
+    fn parses_map_cells_with_custom_separators() {
+        let registry = ParserRegistry::builtin();
+        let ir = ConfigIr {
+            package: "test".to_owned(),
+            codegen: Default::default(),
+            enums: Vec::new(),
+            structs: Vec::new(),
+            unions: Vec::new(),
+            tables: Vec::new(),
+        };
+        let parser = ParserIr {
+            kind: "map".to_owned(),
+            options: BTreeMap::from([
+                ("item_separator".to_owned(), ";".to_owned()),
+                ("separator".to_owned(), ":".to_owned()),
+            ]),
+        };
+        let context = CellContext {
+            path: Path::new("<test>"),
+            ir: &ir,
+            location: CellLocation::Default,
+            field: "attributes",
+            parser: Some(&parser),
+        };
+
+        let value = registry
+            .parse_cell(
+                &CellValue::Text("tier:1;power:10".into()),
+                &parse_type("map<string,i32>").unwrap(),
+                &context,
+            )
+            .unwrap();
+
+        assert_eq!(
+            value,
+            Value::List(vec![
+                Value::List(vec![Value::String("tier".to_owned()), Value::Integer(1)]),
+                Value::List(vec![Value::String("power".to_owned()), Value::Integer(10)]),
+            ])
+        );
     }
 
     #[test]

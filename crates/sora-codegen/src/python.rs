@@ -389,8 +389,15 @@ fn python_type_name(ir: &ConfigIr, ty: &TypeIr) -> String {
         TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => {
             python_type_identifier(name)
         }
-        TypeIr::List(element) | TypeIr::Array { element, .. } => {
+        TypeIr::List(element) | TypeIr::Set(element) | TypeIr::Array { element, .. } => {
             format!("list[{}]", python_type_name(ir, element))
+        }
+        TypeIr::Map { key, value } => {
+            format!(
+                "dict[{}, {}]",
+                python_type_name(ir, key),
+                python_type_name(ir, value)
+            )
         }
         TypeIr::Ref { table, field } => ref_target_type(ir, table, field)
             .map(|ty| python_type_name(ir, ty))
@@ -412,12 +419,17 @@ fn python_decode_expr(ir: &ConfigIr, ty: &TypeIr) -> String {
         TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => {
             format!("{}.decode(reader)", python_type_identifier(name))
         }
-        TypeIr::List(element) | TypeIr::Array { element, .. } => {
+        TypeIr::List(element) | TypeIr::Set(element) | TypeIr::Array { element, .. } => {
             format!(
                 "reader.read_list(lambda: {})",
                 python_decode_expr(ir, element)
             )
         }
+        TypeIr::Map { key, value } => format!(
+            "reader.read_map(lambda: {}, lambda: {})",
+            python_decode_expr(ir, key),
+            python_decode_expr(ir, value)
+        ),
         TypeIr::Ref { table, field } => ref_target_type(ir, table, field)
             .map(|ty| python_decode_expr(ir, ty))
             .unwrap_or_else(|| "reader.read_i32()".to_owned()),
@@ -439,9 +451,17 @@ fn python_value_decode_expr(ir: &ConfigIr, ty: &TypeIr, value: &str) -> String {
         TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => {
             format!("{}.decode_value({value})", python_type_identifier(name))
         }
-        TypeIr::List(element) | TypeIr::Array { element, .. } => {
+        TypeIr::List(element) | TypeIr::Set(element) | TypeIr::Array { element, .. } => {
             let item_decode = python_value_decode_expr(ir, element, "item");
             format!("{value}.as_list(lambda item: {item_decode})")
+        }
+        TypeIr::Map {
+            key,
+            value: element,
+        } => {
+            let key_decode = python_value_decode_expr(ir, key, "item");
+            let value_decode = python_value_decode_expr(ir, element, "item");
+            format!("{value}.as_map(lambda item: {key_decode}, lambda item: {value_decode})")
         }
         TypeIr::Ref { table, field } => ref_target_type(ir, table, field)
             .map(|ty| python_value_decode_expr(ir, ty, value))

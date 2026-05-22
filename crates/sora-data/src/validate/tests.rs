@@ -14,7 +14,7 @@ fn validates_simple_table_data() {
                 values: BTreeMap::from([
                     ("id".to_owned(), Value::Integer(1001)),
                     ("name".to_owned(), Value::String("Iron Sword".to_owned())),
-                    ("item_type".to_owned(), Value::String("Weapon".to_owned())),
+                    ("item_type".to_owned(), Value::String("weapon".to_owned())),
                     ("max_stack".to_owned(), Value::Integer(1)),
                 ]),
             }],
@@ -420,6 +420,10 @@ package = "game_config"
 [[enums]]
 name = "ItemType"
 values = ["Weapon", "Armor", "Material", "Consumable"]
+
+[[enums.aliases]]
+name = "Weapon"
+alias = "weapon"
 
 [[tables]]
 name = "Item"

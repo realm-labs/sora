@@ -13,8 +13,10 @@ type Item struct {
 	MaxStack int32
 	// Price: Tuple: kind,id,count
 	Price ResourceCost
-	// Tags: JSON string array
+	// Tags: JSON string set
 	Tags []string
+	// Attributes: Map pairs: key,value|key,value
+	Attributes map[string]int32
 }
 
 func decodeItem(reader *SoraReader) (Item, error) {
@@ -41,6 +43,10 @@ func decodeItem(reader *SoraReader) (Item, error) {
 		return value, err
 	}
 	value.Tags, err = ReadList(reader, func(reader *SoraReader) (string, error) { return reader.ReadString() })
+	if err != nil {
+		return value, err
+	}
+	value.Attributes, err = ReadMap(reader, func(reader *SoraReader) (string, error) { return reader.ReadString() }, func(reader *SoraReader) (int32, error) { return reader.ReadInt32() })
 	if err != nil {
 		return value, err
 	}
@@ -74,6 +80,10 @@ func decodeItemValue(input SoraValue) (Item, error) {
 		return value, err
 	}
 	value.Tags, err = DecodeSoraValueList(obj.Get("tags"), func(item SoraValue) (string, error) { return item.AsString() })
+	if err != nil {
+		return value, err
+	}
+	value.Attributes, err = DecodeSoraValueMap(obj.Get("attributes"), func(item SoraValue) (string, error) { return item.AsString() }, func(item SoraValue) (int32, error) { return item.AsInt32() })
 	if err != nil {
 		return value, err
 	}

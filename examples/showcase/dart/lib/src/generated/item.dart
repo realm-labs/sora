@@ -15,8 +15,10 @@ final class Item {
   final int maxStack;
   /// Tuple: kind,id,count
   final ResourceCost price;
-  /// JSON string array
+  /// JSON string set
   final List<String> tags;
+  /// Map pairs: key,value|key,value
+  final Map<String, int> attributes;
 
   const Item({
     required this.id,
@@ -25,6 +27,7 @@ final class Item {
     required this.maxStack,
     required this.price,
     required this.tags,
+    required this.attributes,
   });
 
   static Item decode(SoraValue value) {
@@ -36,6 +39,7 @@ final class Item {
       maxStack: obj.get("max_stack").asInt(),
       price: ResourceCost.decode(obj.get("price")),
       tags: obj.get("tags").asList((item) => item.asString()),
+      attributes: obj.get("attributes").asMap((item) => item.asString(), (item) => item.asInt()),
     );
   }
 }

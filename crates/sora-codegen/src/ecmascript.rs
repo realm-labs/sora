@@ -272,9 +272,14 @@ pub fn ecmascript_type_name(ir: &ConfigIr, ty: &TypeIr) -> String {
         TypeIr::F32 | TypeIr::F64 => "number".to_owned(),
         TypeIr::String => "string".to_owned(),
         TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => name.clone(),
-        TypeIr::List(element) | TypeIr::Array { element, .. } => {
+        TypeIr::List(element) | TypeIr::Set(element) | TypeIr::Array { element, .. } => {
             format!("{}[]", array_element_type(ir, element))
         }
+        TypeIr::Map { key, value } => format!(
+            "Map<{}, {}>",
+            ecmascript_type_name(ir, key),
+            ecmascript_type_name(ir, value)
+        ),
         TypeIr::Ref { table, field } => ref_type(ir, table, field)
             .map(|ty| ecmascript_type_name(ir, ty))
             .unwrap_or_else(|| "number".to_owned()),
@@ -293,12 +298,17 @@ pub fn ecmascript_decode_expr(ir: &ConfigIr, ty: &TypeIr) -> String {
         TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => {
             format!("decode{name}(reader)")
         }
-        TypeIr::List(element) | TypeIr::Array { element, .. } => {
+        TypeIr::List(element) | TypeIr::Set(element) | TypeIr::Array { element, .. } => {
             format!(
                 "reader.readList(() => {})",
                 ecmascript_decode_expr(ir, element)
             )
         }
+        TypeIr::Map { key, value } => format!(
+            "reader.readMap(() => {}, () => {})",
+            ecmascript_decode_expr(ir, key),
+            ecmascript_decode_expr(ir, value)
+        ),
         TypeIr::Ref { table, field } => ref_type(ir, table, field)
             .map(|ty| ecmascript_decode_expr(ir, ty))
             .unwrap_or_else(|| "reader.readI32()".to_owned()),
@@ -321,9 +331,17 @@ pub fn ecmascript_value_decode_expr(ir: &ConfigIr, ty: &TypeIr, value: &str) -> 
         TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => {
             format!("decode{name}Value({value})")
         }
-        TypeIr::List(element) | TypeIr::Array { element, .. } => {
+        TypeIr::List(element) | TypeIr::Set(element) | TypeIr::Array { element, .. } => {
             let item_decode = ecmascript_value_decode_expr(ir, element, "item");
             format!("{value}.asList((item) => {item_decode})")
+        }
+        TypeIr::Map {
+            key,
+            value: element,
+        } => {
+            let key_decode = ecmascript_value_decode_expr(ir, key, "item");
+            let value_decode = ecmascript_value_decode_expr(ir, element, "item");
+            format!("{value}.asMap((item) => {key_decode}, (item) => {value_decode})")
         }
         TypeIr::Ref { table, field } => ref_type(ir, table, field)
             .map(|ty| ecmascript_value_decode_expr(ir, ty, value))

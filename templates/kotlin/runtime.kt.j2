@@ -221,6 +221,15 @@ class SoraReader(private val bytes: ByteArray) {
         return values
     }
 
+    fun <K, V> readMap(readKey: () -> K, readValue: () -> V): Map<K, V> {
+        val length = readU32()
+        val values = LinkedHashMap<K, V>(length)
+        repeat(length) {
+            values[readKey()] = readValue()
+        }
+        return values
+    }
+
     private fun take(length: Int): ByteArray {
         val end = checkedAdd(cursor, length, "Sora reader cursor overflow")
         if (end > bytes.size) {
@@ -354,6 +363,18 @@ class SoraValue(private val value: Any?) {
         (value as? List<SoraValue> ?: throw SoraReadException("expected list"))
 
     fun <T> asList(decode: (SoraValue) -> T): List<T> = asRawList().map(decode)
+
+    fun <K, V> asMap(decodeKey: (SoraValue) -> K, decodeValue: (SoraValue) -> V): Map<K, V> {
+        val values = LinkedHashMap<K, V>()
+        for (item in asRawList()) {
+            val pair = item.asRawList()
+            if (pair.size != 2) {
+                throw SoraReadException("expected map entry pair")
+            }
+            values[decodeKey(pair[0])] = decodeValue(pair[1])
+        }
+        return values
+    }
 
     fun asBool(): Boolean =
         value as? Boolean ?: throw SoraReadException("expected bool")

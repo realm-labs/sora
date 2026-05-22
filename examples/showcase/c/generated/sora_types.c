@@ -365,3 +365,47 @@ void sora_showcase_string_array_free(sora_showcase_string_array* value) {
     value->data = NULL;
     value->len = 0;
 }
+
+
+sora_result sora_showcase_string_i32_map_decode(sora_reader* reader, sora_showcase_string_i32_map* out) {
+    uint32_t length = 0;
+    SORA_TRY(sora_reader_read_u32(reader, &length));
+    out->data = NULL;
+    out->len = length;
+    if (length == 0) {
+        return sora_ok();
+    }
+    out->data = (sora_showcase_string_i32_map_entry*)calloc(length, sizeof(sora_showcase_string_i32_map_entry));
+    if (out->data == NULL) {
+        return sora_error(SORA_ERROR_OUT_OF_MEMORY, "failed to allocate map");
+    }
+    for (size_t index = 0; index < length; ++index) {
+        sora_result result = sora_reader_read_string(reader, &out->data[index].key);
+        if (result.code == SORA_OK) {
+            result = sora_reader_read_i32(reader, &out->data[index].value);
+        }
+        if (result.code != SORA_OK) {
+            sora_string_free(&out->data[index].key);
+            for (size_t cleanup = 0; cleanup < index; ++cleanup) {
+                sora_string_free(&out->data[cleanup].key);
+            }
+            free(out->data);
+            out->data = NULL;
+            out->len = 0;
+            return result;
+        }
+    }
+    return sora_ok();
+}
+
+void sora_showcase_string_i32_map_free(sora_showcase_string_i32_map* value) {
+    if (value == NULL || value->data == NULL) {
+        return;
+    }
+    for (size_t index = 0; index < value->len; ++index) {
+        sora_string_free(&value->data[index].key);
+    }
+    free(value->data);
+    value->data = NULL;
+    value->len = 0;
+}

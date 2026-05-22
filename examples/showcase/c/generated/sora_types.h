@@ -118,6 +118,19 @@ typedef struct sora_showcase_string_array {
 sora_result sora_showcase_string_array_decode(sora_reader* reader, sora_showcase_string_array* out);
 void sora_showcase_string_array_free(sora_showcase_string_array* value);
 
+typedef struct sora_showcase_string_i32_map_entry {
+    sora_string key;
+    int32_t value;
+} sora_showcase_string_i32_map_entry;
+
+typedef struct sora_showcase_string_i32_map {
+    sora_showcase_string_i32_map_entry* data;
+    size_t len;
+} sora_showcase_string_i32_map;
+
+sora_result sora_showcase_string_i32_map_decode(sora_reader* reader, sora_showcase_string_i32_map* out);
+void sora_showcase_string_i32_map_free(sora_showcase_string_i32_map* value);
+
 #ifdef __cplusplus
 }
 #endif

@@ -432,6 +432,32 @@ impl<T: SoraDecode> SoraDecode for Vec<T> {
     }
 }
 
+impl<T: SoraDecode + Eq + std::hash::Hash> SoraDecode for std::collections::HashSet<T> {
+    fn decode(reader: &mut SoraReader<'_>) -> Result<Self, SoraReadError> {
+        let len = reader.read_u32()? as usize;
+        let mut values = std::collections::HashSet::with_capacity(len);
+        for _ in 0..len {
+            values.insert(T::decode(reader)?);
+        }
+        Ok(values)
+    }
+}
+
+impl<K, V> SoraDecode for std::collections::HashMap<K, V>
+where
+    K: SoraDecode + Eq + std::hash::Hash,
+    V: SoraDecode,
+{
+    fn decode(reader: &mut SoraReader<'_>) -> Result<Self, SoraReadError> {
+        let len = reader.read_u32()? as usize;
+        let mut values = std::collections::HashMap::with_capacity(len);
+        for _ in 0..len {
+            values.insert(K::decode(reader)?, V::decode(reader)?);
+        }
+        Ok(values)
+    }
+}
+
 impl<T: SoraDecode, const N: usize> SoraDecode for [T; N] {
     fn decode(reader: &mut SoraReader<'_>) -> Result<Self, SoraReadError> {
         let values = Vec::<T>::decode(reader)?;

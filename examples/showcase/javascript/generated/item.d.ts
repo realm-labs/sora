@@ -18,8 +18,10 @@ export interface Item {
     maxStack: number;
     /** Tuple: kind,id,count */
     price: ResourceCost;
-    /** JSON string array */
+    /** JSON string set */
     tags: string[];
+    /** Map pairs: key,value|key,value */
+    attributes: Map<string, number>;
 }
 
 export declare function decodeItem(reader: SoraReader): Item;

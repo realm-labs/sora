@@ -301,8 +301,15 @@ fn csharp_decode_expr(ir: &ConfigIr, ty: &TypeIr) -> String {
         TypeIr::String => "reader.ReadString()".to_owned(),
         TypeIr::Enum(name) => format!("{name}Codec.Decode(reader)"),
         TypeIr::Struct(name) | TypeIr::Union(name) => format!("{name}.Decode(reader)"),
-        TypeIr::List(element) | TypeIr::Array { element, .. } => {
+        TypeIr::List(element) | TypeIr::Set(element) | TypeIr::Array { element, .. } => {
             format!("reader.ReadList(() => {})", csharp_decode_expr(ir, element))
+        }
+        TypeIr::Map { key, value } => {
+            format!(
+                "reader.ReadMap(() => {}, () => {})",
+                csharp_decode_expr(ir, key),
+                csharp_decode_expr(ir, value)
+            )
         }
         TypeIr::Ref { table, field } => ir
             .tables
@@ -335,9 +342,19 @@ fn csharp_value_decode_expr(ir: &ConfigIr, ty: &TypeIr, value: &str) -> String {
         TypeIr::String => format!("{value}.AsString()"),
         TypeIr::Enum(name) => format!("{name}Codec.Decode({value})"),
         TypeIr::Struct(name) | TypeIr::Union(name) => format!("{name}.Decode({value})"),
-        TypeIr::List(element) | TypeIr::Array { element, .. } => {
+        TypeIr::List(element) | TypeIr::Set(element) | TypeIr::Array { element, .. } => {
             format!(
                 "{value}.AsList(item => {})",
+                csharp_value_decode_expr(ir, element, "item")
+            )
+        }
+        TypeIr::Map {
+            key,
+            value: element,
+        } => {
+            format!(
+                "{value}.AsMap(item => {}, item => {})",
+                csharp_value_decode_expr(ir, key, "item"),
                 csharp_value_decode_expr(ir, element, "item")
             )
         }

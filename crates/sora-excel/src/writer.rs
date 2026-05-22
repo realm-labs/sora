@@ -454,6 +454,7 @@ mod tests {
                 name: "ResourceType".to_owned(),
                 scope: ScopeIr::default(),
                 values: vec!["Item".to_owned()],
+                aliases: Vec::new(),
             }],
             structs: vec![StructIr {
                 name: "ResourceCost".to_owned(),

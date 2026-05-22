@@ -52,7 +52,7 @@ fn filter_value(ir: &ConfigIr, ty: &TypeIr, value: &Value) -> Option<Value> {
             let union_ir = ir.unions.iter().find(|item| item.name == *name)?;
             filter_union(ir, union_ir, value)
         }
-        TypeIr::List(element) | TypeIr::Array { element, .. } => {
+        TypeIr::List(element) | TypeIr::Set(element) | TypeIr::Array { element, .. } => {
             let Value::List(values) = value else {
                 return Some(value.clone());
             };
@@ -60,6 +60,20 @@ fn filter_value(ir: &ConfigIr, ty: &TypeIr, value: &Value) -> Option<Value> {
                 values
                     .iter()
                     .map(|value| filter_value(ir, element, value).unwrap_or_else(|| value.clone()))
+                    .collect(),
+            ))
+        }
+        TypeIr::Map {
+            key,
+            value: element,
+        } => {
+            let Value::List(values) = value else {
+                return Some(value.clone());
+            };
+            Some(Value::List(
+                values
+                    .iter()
+                    .map(|entry| filter_map_entry(ir, key, element, entry))
                     .collect(),
             ))
         }
@@ -79,6 +93,20 @@ fn filter_value(ir: &ConfigIr, ty: &TypeIr, value: &Value) -> Option<Value> {
         | TypeIr::Enum(_)
         | TypeIr::Ref { .. } => Some(value.clone()),
     }
+}
+
+fn filter_map_entry(ir: &ConfigIr, key_ty: &TypeIr, value_ty: &TypeIr, entry: &Value) -> Value {
+    let Value::List(items) = entry else {
+        return entry.clone();
+    };
+    if items.len() != 2 {
+        return entry.clone();
+    }
+
+    Value::List(vec![
+        filter_value(ir, key_ty, &items[0]).unwrap_or_else(|| items[0].clone()),
+        filter_value(ir, value_ty, &items[1]).unwrap_or_else(|| items[1].clone()),
+    ])
 }
 
 fn filter_union(ir: &ConfigIr, union_ir: &UnionIr, value: &Value) -> Option<Value> {

@@ -208,6 +208,15 @@ final class SoraReader(private val bytes: Array[Byte]) {
     values.toVector
   }
 
+  def readMap[K, V](readKey: => K, readValue: => V): Map[K, V] = {
+    val length = readU32()
+    var values = Map.empty[K, V]
+    for (_ <- 0 until length) {
+      values = values.updated(readKey, readValue)
+    }
+    values
+  }
+
   private def take(length: Int): Array[Byte] = {
     val end = SoraRuntime.checkedAdd(cursor, length, "Sora reader cursor overflow")
     if (end > bytes.length) {

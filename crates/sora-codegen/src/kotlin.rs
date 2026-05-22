@@ -299,9 +299,14 @@ fn kotlin_decode_expr(ir: &ConfigIr, ty: &TypeIr) -> String {
         TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => {
             format!("{name}.decode(reader)")
         }
-        TypeIr::List(element) | TypeIr::Array { element, .. } => {
+        TypeIr::List(element) | TypeIr::Set(element) | TypeIr::Array { element, .. } => {
             format!("reader.readList {{ {} }}", kotlin_decode_expr(ir, element))
         }
+        TypeIr::Map { key, value } => format!(
+            "reader.readMap({{ {} }}, {{ {} }})",
+            kotlin_decode_expr(ir, key),
+            kotlin_decode_expr(ir, value)
+        ),
         TypeIr::Ref { table, field } => ir
             .tables
             .iter()
@@ -334,12 +339,20 @@ fn kotlin_value_decode_expr(ir: &ConfigIr, ty: &TypeIr, value: &str) -> String {
         TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => {
             format!("{name}.decode({value})")
         }
-        TypeIr::List(element) | TypeIr::Array { element, .. } => {
+        TypeIr::List(element) | TypeIr::Set(element) | TypeIr::Array { element, .. } => {
             format!(
                 "{value}.asList {{ item -> {} }}",
                 kotlin_value_decode_expr(ir, element, "item")
             )
         }
+        TypeIr::Map {
+            key,
+            value: element,
+        } => format!(
+            "{value}.asMap({{ item -> {} }}, {{ item -> {} }})",
+            kotlin_value_decode_expr(ir, key, "item"),
+            kotlin_value_decode_expr(ir, element, "item")
+        ),
         TypeIr::Ref { table, field } => ir
             .tables
             .iter()

@@ -360,6 +360,15 @@ final class SoraReader {
         return values;
     }
 
+    <K, V> Map<K, V> readMap(Supplier<K> readKey, Supplier<V> readValue) {
+        var length = readU32();
+        var values = new LinkedHashMap<K, V>(length);
+        for (var i = 0; i < length; i++) {
+            values.put(readKey.get(), readValue.get());
+        }
+        return values;
+    }
+
     private byte[] take(int length) {
         var end = SoraBundle.checkedAdd(cursor, length, "Sora reader cursor overflow");
         if (end > bytes.length) {
@@ -403,6 +412,19 @@ final class SoraValue {
         var decoded = new ArrayList<T>(values.size());
         for (var value : values) {
             decoded.add(decode.apply(value));
+        }
+        return decoded;
+    }
+
+    <K, V> Map<K, V> asMap(Function<SoraValue, K> decodeKey, Function<SoraValue, V> decodeValue) {
+        var values = asRawList();
+        var decoded = new LinkedHashMap<K, V>(values.size());
+        for (var value : values) {
+            var pair = value.asRawList();
+            if (pair.size() != 2) {
+                throw new SoraReadException("expected map entry pair");
+            }
+            decoded.put(decodeKey.apply(pair.get(0)), decodeValue.apply(pair.get(1)));
         }
         return decoded;
     }

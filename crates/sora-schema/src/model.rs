@@ -344,6 +344,16 @@ pub struct EnumSchema {
 
     #[serde(default)]
     pub values: Vec<String>,
+
+    #[serde(default)]
+    pub aliases: Vec<EnumAliasSchema>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
+pub struct EnumAliasSchema {
+    pub name: String,
+
+    pub alias: String,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]

@@ -23,8 +23,10 @@ struct Item {
     std::int32_t max_stack;
     // Tuple: kind,id,count
     ResourceCost price;
-    // JSON string array
+    // JSON string set
     std::vector<std::string> tags;
+    // Map pairs: key,value|key,value
+    std::unordered_map<std::string, std::int32_t> attributes;
 
     static Item decode(SoraReader& reader) {
         return Item{
@@ -34,6 +36,7 @@ struct Item {
             reader.read_i32(),
             ResourceCost::decode(reader),
             reader.read_vector<std::string>(),
+            reader.read_map<std::string, std::int32_t>(),
         };
     }
 };

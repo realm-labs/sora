@@ -104,7 +104,7 @@ fn render_message(ir: &ConfigIr, name: &str, fields: &[FieldIr]) -> String {
 
 fn proto_label(ir: &ConfigIr, ty: &TypeIr) -> &'static str {
     match ty {
-        TypeIr::List(_) | TypeIr::Array { .. } => "repeated ",
+        TypeIr::List(_) | TypeIr::Set(_) | TypeIr::Map { .. } | TypeIr::Array { .. } => "repeated ",
         TypeIr::Optional(element) if supports_proto_optional(ir, element) => "optional ",
         _ => "",
     }
@@ -133,9 +133,11 @@ fn proto_type(ir: &ConfigIr, ty: &TypeIr) -> String {
         TypeIr::F64 => "double".to_owned(),
         TypeIr::String => "string".to_owned(),
         TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => name.clone(),
-        TypeIr::List(element) | TypeIr::Array { element, .. } | TypeIr::Optional(element) => {
-            proto_type(ir, element)
-        }
+        TypeIr::List(element)
+        | TypeIr::Set(element)
+        | TypeIr::Array { element, .. }
+        | TypeIr::Optional(element) => proto_type(ir, element),
+        TypeIr::Map { value, .. } => proto_type(ir, value),
         TypeIr::Ref { table, field } => proto_type(ir, ref_type(ir, table, field)),
     }
 }

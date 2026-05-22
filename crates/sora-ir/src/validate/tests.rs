@@ -102,6 +102,35 @@ type = "enum<Missing>"
 }
 
 #[test]
+fn rejects_invalid_enum_aliases() {
+    let unknown_target = example_ir(
+        r#"
+[[enums.aliases]]
+name = "Missing"
+alias = "weapon"
+"#,
+    );
+    assert!(matches!(
+        validate_config_ir(&unknown_target).unwrap_err(),
+        SoraError::InvalidSchema(message)
+            if message.contains("targets unknown value")
+    ));
+
+    let value_conflict = example_ir(
+        r#"
+[[enums.aliases]]
+name = "Weapon"
+alias = "Armor"
+"#,
+    );
+    assert!(matches!(
+        validate_config_ir(&value_conflict).unwrap_err(),
+        SoraError::InvalidSchema(message)
+            if message.contains("conflicts with an enum value")
+    ));
+}
+
+#[test]
 fn rejects_invalid_table_key_index_and_ref() {
     let missing_key = example_ir(
         r#"

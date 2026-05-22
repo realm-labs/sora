@@ -318,12 +318,20 @@ fn dart_value_decode_expr(ir: &ConfigIr, ty: &TypeIr, value: &str) -> String {
         TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => {
             format!("{}.decode({value})", dart_type_identifier(name))
         }
-        TypeIr::List(element) | TypeIr::Array { element, .. } => {
+        TypeIr::List(element) | TypeIr::Set(element) | TypeIr::Array { element, .. } => {
             format!(
                 "{value}.asList((item) => {})",
                 dart_value_decode_expr(ir, element, "item")
             )
         }
+        TypeIr::Map {
+            key,
+            value: element,
+        } => format!(
+            "{value}.asMap((item) => {}, (item) => {})",
+            dart_value_decode_expr(ir, key, "item"),
+            dart_value_decode_expr(ir, element, "item")
+        ),
         TypeIr::Ref { table, field } => ir
             .tables
             .iter()

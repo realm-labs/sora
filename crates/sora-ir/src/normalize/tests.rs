@@ -14,6 +14,10 @@ package = "game_config"
 name = "ItemType"
 values = ["Weapon"]
 
+[[enums.aliases]]
+name = "Weapon"
+alias = "weapon"
+
 [[tables]]
 name = "Item"
 mode = "map"
@@ -56,6 +60,8 @@ length = [1, 3]
     assert_eq!(ir.codegen.lua.lua_version, LuaVersionIr::Lua54);
     assert_eq!(ir.codegen.lua.enum_repr, LuaEnumReprIr::String);
     assert_eq!(ir.enums[0].name, "ItemType");
+    assert_eq!(ir.enums[0].aliases[0].name, "Weapon");
+    assert_eq!(ir.enums[0].aliases[0].alias, "weapon");
     assert_eq!(ir.tables[0].mode, TableModeIr::Map);
     assert!(ir.tables[0].fields[0].required);
     assert_eq!(ir.tables[0].fields[0].ty, TypeIr::I32);
@@ -150,6 +156,31 @@ parser = { kind = "tuple_list", item_separator = ";", separator = "," }
 }
 
 #[test]
+fn normalizes_map_parser() {
+    let schema: SchemaFile = toml::from_str(
+        r#"
+package = "game_config"
+
+[[tables]]
+name = "Item"
+mode = "list"
+
+[[tables.fields]]
+name = "attributes"
+type = "map<string,i32>"
+parser = { kind = "map", item_separator = ";", separator = ":" }
+"#,
+    )
+    .unwrap();
+
+    let ir = normalize_schema(schema).unwrap();
+    let parser = ir.tables[0].fields[0].parser.as_ref().unwrap();
+    assert_eq!(parser.kind, "map");
+    assert_eq!(parser.options["item_separator"], ";");
+    assert_eq!(parser.options["separator"], ":");
+}
+
+#[test]
 fn default_collections_do_not_need_parser_metadata() {
     let schema: SchemaFile = toml::from_str(
         r#"
@@ -210,6 +241,46 @@ parser = { kind = "tuple_list" }
     assert!(matches!(
         normalize_schema(scalar_tuple_list).unwrap_err(),
         SoraError::InvalidSchema(message) if message.contains("not list or array of struct")
+    ));
+
+    let scalar_map: SchemaFile = toml::from_str(
+        r#"
+package = "game_config"
+
+[[tables]]
+name = "Item"
+mode = "list"
+
+[[tables.fields]]
+name = "name"
+type = "string"
+parser = { kind = "map" }
+"#,
+    )
+    .unwrap();
+    assert!(matches!(
+        normalize_schema(scalar_map).unwrap_err(),
+        SoraError::InvalidSchema(message) if message.contains("is not map")
+    ));
+
+    let split_map: SchemaFile = toml::from_str(
+        r#"
+package = "game_config"
+
+[[tables]]
+name = "Item"
+mode = "list"
+
+[[tables.fields]]
+name = "attributes"
+type = "map<string,i32>"
+parser = { kind = "split" }
+"#,
+    )
+    .unwrap();
+    assert!(matches!(
+        normalize_schema(split_map).unwrap_err(),
+        SoraError::InvalidSchema(message) if message.contains("is not list or array")
     ));
 
     let unknown_parser: SchemaFile = toml::from_str(

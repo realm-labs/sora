@@ -361,9 +361,14 @@ fn cpp_type_name(ir: &ConfigIr, ty: &TypeIr, options: &CppOptionsView) -> String
         TypeIr::F64 => "double".to_owned(),
         TypeIr::String => "std::string".to_owned(),
         TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => name.clone(),
-        TypeIr::List(element) => {
+        TypeIr::List(element) | TypeIr::Set(element) => {
             format!("std::vector<{}>", cpp_type_name(ir, element, options))
         }
+        TypeIr::Map { key, value } => format!(
+            "std::unordered_map<{}, {}>",
+            cpp_type_name(ir, key, options),
+            cpp_type_name(ir, value, options)
+        ),
         TypeIr::Array { element, len } => {
             format!("std::array<{}, {len}>", cpp_type_name(ir, element, options))
         }
@@ -400,12 +405,17 @@ fn cpp_decode_expr(ir: &ConfigIr, ty: &TypeIr, options: &CppOptionsView) -> Stri
         TypeIr::String => "reader.read_string()".to_owned(),
         TypeIr::Enum(name) => format!("decode_value<{name}>(reader)"),
         TypeIr::Struct(name) | TypeIr::Union(name) => format!("{name}::decode(reader)"),
-        TypeIr::List(element) => {
+        TypeIr::List(element) | TypeIr::Set(element) => {
             format!(
                 "reader.read_vector<{}>()",
                 cpp_type_name(ir, element, options)
             )
         }
+        TypeIr::Map { key, value } => format!(
+            "reader.read_map<{}, {}>()",
+            cpp_type_name(ir, key, options),
+            cpp_type_name(ir, value, options)
+        ),
         TypeIr::Array { element, len } => {
             format!(
                 "reader.read_array<{}, {len}>()",

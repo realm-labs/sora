@@ -82,6 +82,22 @@ fn validate_typed_value(
         TypeIr::List(element) => {
             validate_list(ir, config_data, table, path, element, constraints, value)
         }
+        TypeIr::Set(element) => {
+            validate_list(ir, config_data, table, path, element, constraints, value)
+        }
+        TypeIr::Map {
+            key,
+            value: element,
+        } => validate_map(
+            ir,
+            config_data,
+            table,
+            path,
+            key,
+            element,
+            constraints,
+            value,
+        ),
         TypeIr::Array { element, len } => validate_array(
             ir,
             config_data,
@@ -118,7 +134,10 @@ fn validate_enum(
         .enums
         .iter()
         .find(|candidate| candidate.name == enum_name)
-        .is_some_and(|candidate| candidate.values.contains(item));
+        .is_some_and(|candidate| {
+            candidate.values.contains(item)
+                || candidate.aliases.iter().any(|entry| entry.alias == *item)
+        });
     if is_valid {
         Ok(())
     } else {
@@ -303,6 +322,65 @@ fn validate_list(
         )?;
     }
 
+    Ok(())
+}
+
+fn validate_map(
+    ir: &ConfigIr,
+    config_data: &ConfigData,
+    table: &str,
+    path: &str,
+    key_ty: &TypeIr,
+    value_ty: &TypeIr,
+    constraints: ValueConstraints,
+    value: &Value,
+) -> Result<()> {
+    let Value::List(items) = value else {
+        return type_mismatch(
+            table,
+            path,
+            &TypeIr::Map {
+                key: Box::new(key_ty.clone()),
+                value: Box::new(value_ty.clone()),
+            },
+            value,
+        );
+    };
+    validate_length(table, path, items.len(), constraints.length)?;
+    for (index, item) in items.iter().enumerate() {
+        let Value::List(pair) = item else {
+            return type_mismatch(table, &format!("{path}[{index}]"), value_ty, item);
+        };
+        if pair.len() != 2 {
+            return Err(SoraError::InvalidSchema(format!(
+                "map value `{path}[{index}]` must contain exactly two elements"
+            )));
+        }
+        validate_typed_value(
+            ir,
+            config_data,
+            table,
+            &format!("{path}[{index}].key"),
+            key_ty,
+            ValueConstraints {
+                range: None,
+                length: None,
+            },
+            &pair[0],
+        )?;
+        validate_typed_value(
+            ir,
+            config_data,
+            table,
+            &format!("{path}[{index}].value"),
+            value_ty,
+            ValueConstraints {
+                range: None,
+                length: None,
+            },
+            &pair[1],
+        )?;
+    }
     Ok(())
 }
 

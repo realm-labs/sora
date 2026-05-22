@@ -46,6 +46,17 @@ fn rust_type_name_inner(ir: &ConfigIr, ty: &TypeIr) -> String {
         TypeIr::String => "String".to_owned(),
         TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => name.clone(),
         TypeIr::List(element) => format!("Vec<{}>", rust_type_name_inner(ir, element)),
+        TypeIr::Set(element) => {
+            format!(
+                "std::collections::HashSet<{}>",
+                rust_type_name_inner(ir, element)
+            )
+        }
+        TypeIr::Map { key, value } => format!(
+            "std::collections::HashMap<{}, {}>",
+            rust_type_name_inner(ir, key),
+            rust_type_name_inner(ir, value)
+        ),
         TypeIr::Array { element, len } => {
             format!("[{}; {len}]", rust_type_name_inner(ir, element))
         }
@@ -63,9 +74,14 @@ fn kotlin_type_name_inner(ir: &ConfigIr, ty: &TypeIr) -> String {
         TypeIr::F64 => "Double".to_owned(),
         TypeIr::String => "String".to_owned(),
         TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => name.clone(),
-        TypeIr::List(element) | TypeIr::Array { element, .. } => {
+        TypeIr::List(element) | TypeIr::Set(element) | TypeIr::Array { element, .. } => {
             format!("List<{}>", kotlin_type_name_inner(ir, element))
         }
+        TypeIr::Map { key, value } => format!(
+            "Map<{}, {}>",
+            kotlin_type_name_inner(ir, key),
+            kotlin_type_name_inner(ir, value)
+        ),
         TypeIr::Ref { table, field } => ref_type(ir, table, field, kotlin_type_name_inner, "Int"),
         TypeIr::Optional(element) => format!("{}?", kotlin_type_name_inner(ir, element)),
     }
@@ -80,9 +96,14 @@ fn csharp_type_name_inner(ir: &ConfigIr, ty: &TypeIr) -> String {
         TypeIr::F64 => "double".to_owned(),
         TypeIr::String => "string".to_owned(),
         TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => name.clone(),
-        TypeIr::List(element) | TypeIr::Array { element, .. } => {
+        TypeIr::List(element) | TypeIr::Set(element) | TypeIr::Array { element, .. } => {
             format!("List<{}>", csharp_type_name_inner(ir, element))
         }
+        TypeIr::Map { key, value } => format!(
+            "Dictionary<{}, {}>",
+            csharp_type_name_inner(ir, key),
+            csharp_type_name_inner(ir, value)
+        ),
         TypeIr::Ref { table, field } => ref_type(ir, table, field, csharp_type_name_inner, "int"),
         TypeIr::Optional(element) => format!("{}?", csharp_type_name_inner(ir, element)),
     }
@@ -97,9 +118,14 @@ fn java_type_name_inner(ir: &ConfigIr, ty: &TypeIr) -> String {
         TypeIr::F64 => "Double".to_owned(),
         TypeIr::String => "String".to_owned(),
         TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => name.clone(),
-        TypeIr::List(element) | TypeIr::Array { element, .. } => {
+        TypeIr::List(element) | TypeIr::Set(element) | TypeIr::Array { element, .. } => {
             format!("java.util.List<{}>", java_type_name_inner(ir, element))
         }
+        TypeIr::Map { key, value } => format!(
+            "java.util.Map<{}, {}>",
+            java_type_name_inner(ir, key),
+            java_type_name_inner(ir, value)
+        ),
         TypeIr::Ref { table, field } => ref_type(ir, table, field, java_type_name_inner, "Integer"),
         TypeIr::Optional(element) => java_type_name_inner(ir, element),
     }
@@ -114,9 +140,14 @@ fn scala_type_name_inner(ir: &ConfigIr, ty: &TypeIr) -> String {
         TypeIr::F64 => "Double".to_owned(),
         TypeIr::String => "String".to_owned(),
         TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => name.clone(),
-        TypeIr::List(element) | TypeIr::Array { element, .. } => {
+        TypeIr::List(element) | TypeIr::Set(element) | TypeIr::Array { element, .. } => {
             format!("Vector[{}]", scala_type_name_inner(ir, element))
         }
+        TypeIr::Map { key, value } => format!(
+            "Map[{}, {}]",
+            scala_type_name_inner(ir, key),
+            scala_type_name_inner(ir, value)
+        ),
         TypeIr::Ref { table, field } => ref_type(ir, table, field, scala_type_name_inner, "Int"),
         TypeIr::Optional(element) => format!("Option[{}]", scala_type_name_inner(ir, element)),
     }
@@ -131,9 +162,14 @@ fn go_type_name_inner(ir: &ConfigIr, ty: &TypeIr) -> String {
         TypeIr::F64 => "float64".to_owned(),
         TypeIr::String => "string".to_owned(),
         TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => name.clone(),
-        TypeIr::List(element) | TypeIr::Array { element, .. } => {
+        TypeIr::List(element) | TypeIr::Set(element) | TypeIr::Array { element, .. } => {
             format!("[]{}", go_type_name_inner(ir, element))
         }
+        TypeIr::Map { key, value } => format!(
+            "map[{}]{}",
+            go_type_name_inner(ir, key),
+            go_type_name_inner(ir, value)
+        ),
         TypeIr::Ref { table, field } => ref_type(ir, table, field, go_type_name_inner, "int32"),
         TypeIr::Optional(element) => format!("*{}", go_type_name_inner(ir, element)),
     }
@@ -146,9 +182,14 @@ fn dart_type_name_inner(ir: &ConfigIr, ty: &TypeIr) -> String {
         TypeIr::F32 | TypeIr::F64 => "double".to_owned(),
         TypeIr::String => "String".to_owned(),
         TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => name.clone(),
-        TypeIr::List(element) | TypeIr::Array { element, .. } => {
+        TypeIr::List(element) | TypeIr::Set(element) | TypeIr::Array { element, .. } => {
             format!("List<{}>", dart_type_name_inner(ir, element))
         }
+        TypeIr::Map { key, value } => format!(
+            "Map<{}, {}>",
+            dart_type_name_inner(ir, key),
+            dart_type_name_inner(ir, value)
+        ),
         TypeIr::Ref { table, field } => ref_type(ir, table, field, dart_type_name_inner, "int"),
         TypeIr::Optional(element) => format!("{}?", dart_type_name_inner(ir, element)),
     }
@@ -161,7 +202,9 @@ fn godot_type_name_inner(ir: &ConfigIr, ty: &TypeIr) -> String {
         TypeIr::F32 | TypeIr::F64 => "float".to_owned(),
         TypeIr::String | TypeIr::Enum(_) => "String".to_owned(),
         TypeIr::Struct(name) | TypeIr::Union(name) => name.clone(),
-        TypeIr::List(_) | TypeIr::Array { .. } => "Array".to_owned(),
+        TypeIr::List(_) | TypeIr::Set(_) | TypeIr::Map { .. } | TypeIr::Array { .. } => {
+            "Array".to_owned()
+        }
         TypeIr::Ref { table, field } => ref_type(ir, table, field, godot_type_name_inner, "int"),
         TypeIr::Optional(_) => "Variant".to_owned(),
     }
@@ -174,9 +217,14 @@ fn python_type_name_inner(ir: &ConfigIr, ty: &TypeIr) -> String {
         TypeIr::F32 | TypeIr::F64 => "float".to_owned(),
         TypeIr::String => "str".to_owned(),
         TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => name.clone(),
-        TypeIr::List(element) | TypeIr::Array { element, .. } => {
+        TypeIr::List(element) | TypeIr::Set(element) | TypeIr::Array { element, .. } => {
             format!("list[{}]", python_type_name_inner(ir, element))
         }
+        TypeIr::Map { key, value } => format!(
+            "dict[{}, {}]",
+            python_type_name_inner(ir, key),
+            python_type_name_inner(ir, value)
+        ),
         TypeIr::Ref { table, field } => ref_type(ir, table, field, python_type_name_inner, "int"),
         TypeIr::Optional(element) => format!("{} | None", python_type_name_inner(ir, element)),
     }
@@ -217,6 +265,8 @@ mod tests {
             ("struct<Reward>", "Reward"),
             ("union<Action>", "Action"),
             ("list<i32>", "Vec<i32>"),
+            ("set<string>", "std::collections::HashSet<String>"),
+            ("map<string,i32>", "std::collections::HashMap<String, i32>"),
             ("array<i32,3>", "[i32; 3]"),
             ("optional<string>", "Option<String>"),
             ("ref<Item.id>", "i32"),
@@ -241,6 +291,8 @@ mod tests {
             ("struct<Reward>", "Reward"),
             ("union<Action>", "Action"),
             ("list<i32>", "List<Int>"),
+            ("set<string>", "List<String>"),
+            ("map<string,i32>", "Map<String, Int>"),
             ("array<i32,3>", "List<Int>"),
             ("optional<string>", "String?"),
             ("ref<Item.id>", "Int"),
@@ -268,6 +320,8 @@ mod tests {
             ("struct<Reward>", "Reward"),
             ("union<Action>", "Action"),
             ("list<i32>", "List<int>"),
+            ("set<string>", "List<string>"),
+            ("map<string,i32>", "Dictionary<string, int>"),
             ("array<i32,3>", "List<int>"),
             ("optional<string>", "string?"),
             ("optional<i32>", "int?"),
@@ -296,6 +350,8 @@ mod tests {
             ("struct<Reward>", "Reward"),
             ("union<Action>", "Action"),
             ("list<i32>", "java.util.List<Integer>"),
+            ("set<string>", "java.util.List<String>"),
+            ("map<string,i32>", "java.util.Map<String, Integer>"),
             ("array<i32,3>", "java.util.List<Integer>"),
             ("optional<string>", "String"),
             ("ref<Item.id>", "Integer"),
@@ -320,6 +376,8 @@ mod tests {
             ("struct<Reward>", "Reward"),
             ("union<Action>", "Action"),
             ("list<i32>", "Vector[Int]"),
+            ("set<string>", "Vector[String]"),
+            ("map<string,i32>", "Map[String, Int]"),
             ("array<i32,3>", "Vector[Int]"),
             ("optional<string>", "Option[String]"),
             ("ref<Item.id>", "Int"),
@@ -344,6 +402,8 @@ mod tests {
             ("struct<Reward>", "Reward"),
             ("union<Action>", "Action"),
             ("list<i32>", "[]int32"),
+            ("set<string>", "[]string"),
+            ("map<string,i32>", "map[string]int32"),
             ("array<i32,3>", "[]int32"),
             ("optional<string>", "*string"),
             ("ref<Item.id>", "int32"),
@@ -368,6 +428,8 @@ mod tests {
             ("struct<Reward>", "Reward"),
             ("union<Action>", "Action"),
             ("list<i32>", "List<int>"),
+            ("set<string>", "List<String>"),
+            ("map<string,i32>", "Map<String, int>"),
             ("array<i32,3>", "List<int>"),
             ("optional<string>", "String?"),
             ("ref<Item.id>", "int"),
@@ -392,6 +454,8 @@ mod tests {
             ("struct<Reward>", "Reward"),
             ("union<Action>", "Action"),
             ("list<i32>", "Array"),
+            ("set<string>", "Array"),
+            ("map<string,i32>", "Array"),
             ("array<i32,3>", "Array"),
             ("optional<string>", "Variant"),
             ("ref<Item.id>", "int"),
@@ -416,6 +480,8 @@ mod tests {
             ("struct<Reward>", "Reward"),
             ("union<Action>", "Action"),
             ("list<i32>", "list[int]"),
+            ("set<string>", "list[str]"),
+            ("map<string,i32>", "dict[str, int]"),
             ("array<i32,3>", "list[int]"),
             ("optional<string>", "str | None"),
             ("ref<Item.id>", "int"),

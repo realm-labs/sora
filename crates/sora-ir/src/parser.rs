@@ -27,6 +27,7 @@ impl ParserRegistry {
         registry.register(SplitParserValidator);
         registry.register(TupleParserValidator);
         registry.register(TupleListParserValidator);
+        registry.register(MapParserValidator);
         registry.register(JsonParserValidator);
         registry
     }
@@ -106,6 +107,24 @@ impl ParserValidator for TupleListParserValidator {
     }
 }
 
+struct MapParserValidator;
+
+impl ParserValidator for MapParserValidator {
+    fn kind(&self) -> &'static str {
+        "map"
+    }
+
+    fn validate(&self, field_name: &str, ty: &TypeIr, parser: &ParserSchema) -> Result<()> {
+        validate_map_target(field_name, ty)?;
+        validate_parser_options(
+            field_name,
+            &parser.kind,
+            &parser.options,
+            &["separator", "item_separator"],
+        )
+    }
+}
+
 struct JsonParserValidator;
 
 impl ParserValidator for JsonParserValidator {
@@ -143,7 +162,7 @@ fn validate_tuple_target(field_name: &str, ty: &TypeIr) -> Result<()> {
 
 fn validate_tuple_list_target(field_name: &str, ty: &TypeIr) -> Result<()> {
     match ty {
-        TypeIr::List(element) | TypeIr::Array { element, .. } => validate_tuple_target(
+        TypeIr::List(element) | TypeIr::Set(element) | TypeIr::Array { element, .. } => validate_tuple_target(
             field_name,
             element,
         )
@@ -161,10 +180,20 @@ fn validate_tuple_list_target(field_name: &str, ty: &TypeIr) -> Result<()> {
 
 fn validate_collection_target(field_name: &str, ty: &TypeIr) -> Result<()> {
     match ty {
-        TypeIr::List(_) | TypeIr::Array { .. } => Ok(()),
+        TypeIr::List(_) | TypeIr::Set(_) | TypeIr::Array { .. } => Ok(()),
         TypeIr::Optional(inner) => validate_collection_target(field_name, inner),
         _ => Err(SoraError::InvalidSchema(format!(
             "field `{field_name}` declares parser `split` but type `{ty}` is not list or array"
+        ))),
+    }
+}
+
+fn validate_map_target(field_name: &str, ty: &TypeIr) -> Result<()> {
+    match ty {
+        TypeIr::Map { .. } => Ok(()),
+        TypeIr::Optional(inner) => validate_map_target(field_name, inner),
+        _ => Err(SoraError::InvalidSchema(format!(
+            "field `{field_name}` declares parser `map` but type `{ty}` is not map"
         ))),
     }
 }

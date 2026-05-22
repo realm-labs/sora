@@ -10,6 +10,7 @@
 #include <optional>
 #include <stdexcept>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 namespace sora::showcase {
@@ -99,6 +100,18 @@ public:
         values.reserve(length);
         for (std::uint32_t index = 0; index < length; ++index) {
             values.push_back(decode_value<T>(*this));
+        }
+        return values;
+    }
+
+    template <typename K, typename V>
+    std::unordered_map<K, V> read_map() {
+        std::uint32_t length = read_u32();
+        std::unordered_map<K, V> values;
+        values.reserve(length);
+        for (std::uint32_t index = 0; index < length; ++index) {
+            K key = decode_value<K>(*this);
+            values[key] = decode_value<V>(*this);
         }
         return values;
     }

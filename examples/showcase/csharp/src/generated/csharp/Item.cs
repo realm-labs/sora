@@ -18,8 +18,10 @@ public sealed record Item(
     int MaxStack,
     // Tuple: kind,id,count
     ResourceCost Price,
-    // JSON string array
-    List<string> Tags
+    // JSON string set
+    List<string> Tags,
+    // Map pairs: key,value|key,value
+    Dictionary<string, int> Attributes
 )
 {
     internal static Item Decode(SoraReader reader)
@@ -30,7 +32,8 @@ public sealed record Item(
             ItemTypeCodec.Decode(reader),
             reader.ReadInt32(),
             ResourceCost.Decode(reader),
-            reader.ReadList(() => reader.ReadString())
+            reader.ReadList(() => reader.ReadString()),
+            reader.ReadMap(() => reader.ReadString(), () => reader.ReadInt32())
         );
     }
 
@@ -43,7 +46,8 @@ public sealed record Item(
             ItemTypeCodec.Decode(obj.Get("item_type")),
             obj.Get("max_stack").AsInt32(),
             ResourceCost.Decode(obj.Get("price")),
-            obj.Get("tags").AsList(item => item.AsString())
+            obj.Get("tags").AsList(item => item.AsString()),
+            obj.Get("attributes").AsMap(item => item.AsString(), item => item.AsInt32())
         );
     }
 }

@@ -14,7 +14,8 @@
     'item_type' := item_type:t(),
     'max_stack' := integer(),
     'price' := resource_cost:t(),
-    'tags' := [binary()]
+    'tags' := [binary()],
+    'attributes' := #{binary() => integer()}
 }.
 
 -type table() :: map().
@@ -28,14 +29,16 @@ decode(Reader0) ->
     {MaxStack, Reader4} = (fun sora_runtime:read_i32/1)(Reader3),
     {Price, Reader5} = (fun resource_cost:decode/1)(Reader4),
     {Tags, Reader6} = (fun(Reader) -> sora_runtime:read_list(fun sora_runtime:read_string/1, Reader) end)(Reader5),
+    {Attributes, Reader7} = (fun(Reader) -> sora_runtime:read_map(fun sora_runtime:read_string/1, fun sora_runtime:read_i32/1, Reader) end)(Reader6),
     {#{
         'id' => Id,
         'name' => Name,
         'item_type' => ItemType,
         'max_stack' => MaxStack,
         'price' => Price,
-        'tags' => Tags
-    }, Reader6}.
+        'tags' => Tags,
+        'attributes' => Attributes
+    }, Reader7}.
 
 -spec decode_table(map()) -> table().
 decode_table(Bundle) ->

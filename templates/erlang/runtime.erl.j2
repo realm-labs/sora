@@ -18,7 +18,8 @@
     read_f64/1,
     read_string/1,
     read_optional/2,
-    read_list/2
+    read_list/2,
+    read_map/3
 ]).
 
 -export_type([reader/0]).
@@ -188,6 +189,12 @@ read_optional(Decode, Reader0) ->
 read_list(Decode, Reader0) ->
     {Length, Reader1} = read_u32(Reader0),
     read_list_items(Length, Decode, Reader1, []).
+
+-spec read_map(fun((reader()) -> {K, reader()}), fun((reader()) -> {V, reader()}), reader()) ->
+    {map(), reader()}.
+read_map(DecodeKey, DecodeValue, Reader0) ->
+    {Length, Reader1} = read_u32(Reader0),
+    read_map_items(Length, DecodeKey, DecodeValue, Reader1, {{ "#{" }}}).
 
 -spec read_sections(binary(), integer(), integer(), integer(), [section()], integer(), integer(), map()) ->
     {[section()], integer(), integer()}.
@@ -369,6 +376,15 @@ read_list_items(0, _Decode, Reader, Values) ->
 read_list_items(Length, Decode, Reader0, Values) ->
     {Value, Reader1} = Decode(Reader0),
     read_list_items(Length - 1, Decode, Reader1, [Value | Values]).
+
+-spec read_map_items(integer(), fun((reader()) -> {K, reader()}), fun((reader()) -> {V, reader()}), reader(), map()) ->
+    {map(), reader()}.
+read_map_items(0, _DecodeKey, _DecodeValue, Reader, Values) ->
+    {Values, Reader};
+read_map_items(Length, DecodeKey, DecodeValue, Reader0, Values) ->
+    {Key, Reader1} = DecodeKey(Reader0),
+    {Value, Reader2} = DecodeValue(Reader1),
+    read_map_items(Length - 1, DecodeKey, DecodeValue, Reader2, Values{{ "#{" }}Key => Value}).
 
 -spec read_u8(reader()) -> {integer(), reader()}.
 read_u8(<<Value:8/unsigned-integer, Rest/binary>>) ->

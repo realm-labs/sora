@@ -604,6 +604,101 @@ void {free_fn}({name}* value) {{
         name
     }
 
+    fn ensure_map(
+        &mut self,
+        ir: &ConfigIr,
+        key: &TypeIr,
+        value: &TypeIr,
+        options: &COptionsView,
+    ) -> String {
+        let key_type = c_type_name(ir, key, options, self);
+        let value_type = c_type_name(ir, value, options, self);
+        let key_suffix = c_type_suffix(ir, key);
+        let value_suffix = c_type_suffix(ir, value);
+        let name = format!("{}_{}_{}_map", self.prefix, key_suffix, value_suffix);
+        if self.helpers.contains_key(&name) {
+            return name;
+        }
+        let entry_name = format!("{name}_entry");
+        let decode_fn = format!("{name}_decode");
+        let free_fn = format!("{name}_free");
+        let key_decode = c_decode_into(ir, key, "&out->data[index].key", options, self);
+        let value_decode = c_decode_into(ir, value, "&out->data[index].value", options, self);
+        let key_free_out =
+            c_free_into(ir, key, "&out->data[index].key", options, self).unwrap_or_default();
+        let value_free_out =
+            c_free_into(ir, value, "&out->data[index].value", options, self).unwrap_or_default();
+        let key_free_cleanup =
+            c_free_into(ir, key, "&out->data[cleanup].key", options, self).unwrap_or_default();
+        let value_free_cleanup =
+            c_free_into(ir, value, "&out->data[cleanup].value", options, self).unwrap_or_default();
+        let key_free_value =
+            c_free_into(ir, key, "&value->data[index].key", options, self).unwrap_or_default();
+        let value_free_value =
+            c_free_into(ir, value, "&value->data[index].value", options, self).unwrap_or_default();
+        let implementation = format!(
+            r#"sora_result {decode_fn}(sora_reader* reader, {name}* out) {{
+    uint32_t length = 0;
+    SORA_TRY(sora_reader_read_u32(reader, &length));
+    out->data = NULL;
+    out->len = length;
+    if (length == 0) {{
+        return sora_ok();
+    }}
+    out->data = ({entry_name}*)calloc(length, sizeof({entry_name}));
+    if (out->data == NULL) {{
+        return sora_error(SORA_ERROR_OUT_OF_MEMORY, "failed to allocate map");
+    }}
+    for (size_t index = 0; index < length; ++index) {{
+        sora_result result = {key_decode};
+        if (result.code == SORA_OK) {{
+            result = {value_decode};
+        }}
+        if (result.code != SORA_OK) {{
+{key_free_out_block}{value_free_out_block}            for (size_t cleanup = 0; cleanup < index; ++cleanup) {{
+{key_free_cleanup_block}{value_free_cleanup_block}            }}
+            free(out->data);
+            out->data = NULL;
+            out->len = 0;
+            return result;
+        }}
+    }}
+    return sora_ok();
+}}
+
+void {free_fn}({name}* value) {{
+    if (value == NULL || value->data == NULL) {{
+        return;
+    }}
+    for (size_t index = 0; index < value->len; ++index) {{
+{key_free_value_block}{value_free_value_block}    }}
+    free(value->data);
+    value->data = NULL;
+    value->len = 0;
+}}
+"#,
+            key_free_out_block = indent_optional_statement(&key_free_out, 12),
+            value_free_out_block = indent_optional_statement(&value_free_out, 12),
+            key_free_cleanup_block = indent_optional_statement(&key_free_cleanup, 16),
+            value_free_cleanup_block = indent_optional_statement(&value_free_cleanup, 16),
+            key_free_value_block = indent_optional_statement(&key_free_value, 8),
+            value_free_value_block = indent_optional_statement(&value_free_value, 8),
+        );
+        self.helpers.insert(
+            name.clone(),
+            CTypeHelper {
+                declaration: format!(
+                    "typedef struct {entry_name} {{\n    {key_type} key;\n    {value_type} value;\n}} {entry_name};\n\ntypedef struct {name} {{\n    {entry_name}* data;\n    size_t len;\n}} {name};"
+                ),
+                name: name.clone(),
+                decode_fn,
+                free_fn,
+                implementation,
+            },
+        );
+        name
+    }
+
     fn ensure_optional(&mut self, ir: &ConfigIr, ty: &TypeIr, options: &COptionsView) -> String {
         let value_type = c_type_name(ir, ty, options, self);
         let suffix = c_type_suffix(ir, ty);
@@ -698,7 +793,10 @@ fn c_type_name(
         TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => {
             c_named_type(options, &name.to_snake_case())
         }
-        TypeIr::List(element) => helpers.ensure_collection(ir, element, None, options),
+        TypeIr::List(element) | TypeIr::Set(element) => {
+            helpers.ensure_collection(ir, element, None, options)
+        }
+        TypeIr::Map { key, value } => helpers.ensure_map(ir, key, value, options),
         TypeIr::Array { element, len } => {
             helpers.ensure_collection(ir, element, Some(*len), options)
         }
@@ -718,7 +816,16 @@ fn c_type_suffix(ir: &ConfigIr, ty: &TypeIr) -> String {
         TypeIr::F64 => "f64".to_owned(),
         TypeIr::String => "string".to_owned(),
         TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => name.to_snake_case(),
-        TypeIr::List(element) => format!("{}_array", c_type_suffix(ir, element)),
+        TypeIr::List(element) | TypeIr::Set(element) => {
+            format!("{}_array", c_type_suffix(ir, element))
+        }
+        TypeIr::Map { key, value } => {
+            format!(
+                "{}_{}_map",
+                c_type_suffix(ir, key),
+                c_type_suffix(ir, value)
+            )
+        }
         TypeIr::Array { element, len } => format!("{}_array_{len}", c_type_suffix(ir, element)),
         TypeIr::Ref { table, field } => ref_field_type(ir, table, field)
             .map(|field| c_type_suffix(ir, &field.ty))
@@ -747,7 +854,11 @@ fn c_decode_into(
                 c_decode_fn(options, &name.to_snake_case())
             )
         }
-        TypeIr::List(_) | TypeIr::Array { .. } | TypeIr::Optional(_) => {
+        TypeIr::List(_)
+        | TypeIr::Set(_)
+        | TypeIr::Map { .. }
+        | TypeIr::Array { .. }
+        | TypeIr::Optional(_) => {
             let helper = c_type_name(ir, ty, options, helpers);
             format!("{helper}_decode(reader, {target})")
         }
@@ -770,7 +881,11 @@ fn c_free_into(
             "{}({target});",
             c_free_fn(options, &name.to_snake_case())
         )),
-        TypeIr::List(_) | TypeIr::Array { .. } | TypeIr::Optional(_) => {
+        TypeIr::List(_)
+        | TypeIr::Set(_)
+        | TypeIr::Map { .. }
+        | TypeIr::Array { .. }
+        | TypeIr::Optional(_) => {
             let helper = c_type_name(ir, ty, options, helpers);
             Some(format!("{helper}_free({target});"))
         }
@@ -799,7 +914,12 @@ fn c_param_decl(
 
 fn c_type_is_pointer_param(ir: &ConfigIr, ty: &TypeIr) -> bool {
     match ty {
-        TypeIr::String | TypeIr::List(_) | TypeIr::Array { .. } | TypeIr::Optional(_) => true,
+        TypeIr::String
+        | TypeIr::List(_)
+        | TypeIr::Set(_)
+        | TypeIr::Map { .. }
+        | TypeIr::Array { .. }
+        | TypeIr::Optional(_) => true,
         TypeIr::Struct(_) | TypeIr::Union(_) => true,
         TypeIr::Ref { table, field } => ref_field_type(ir, table, field)
             .is_some_and(|field| c_type_is_pointer_param(ir, &field.ty)),
@@ -816,6 +936,8 @@ fn c_key_match_expr(ir: &ConfigIr, ty: &TypeIr, row_value: &str, param_name: &st
             .map(|field| c_key_match_expr(ir, &field.ty, row_value, param_name))
             .unwrap_or_else(|| format!("{row_value} == {param_name}")),
         TypeIr::List(_)
+        | TypeIr::Set(_)
+        | TypeIr::Map { .. }
         | TypeIr::Array { .. }
         | TypeIr::Optional(_)
         | TypeIr::Struct(_)
@@ -894,6 +1016,7 @@ mod tests {
         assert!(item.contains("typedef struct game_config_item"));
         assert!(item.contains("game_config_item_type item_type;"));
         assert!(item.contains("game_config_action action;"));
+        assert!(item.contains("game_config_string_i32_map weights;"));
         assert!(action.contains("typedef enum game_config_action_tag"));
         assert!(action.contains("union {"));
         assert!(config.contains("typedef struct game_config_config game_config_config;"));
@@ -904,6 +1027,9 @@ mod tests {
         assert!(config.contains("game_config_config_item"));
         assert!(!config.contains("game_config_config_get_item"));
         assert!(types.contains("typedef struct game_config_string_array"));
+        assert!(types.contains("typedef struct game_config_string_i32_map_entry"));
+        assert!(types.contains("sora_string key;"));
+        assert!(types.contains("int32_t value;"));
 
         let _ = std::fs::remove_dir_all(base);
     }
@@ -957,6 +1083,10 @@ type = "union<Action>"
 name = "tags"
 type = "list<string>"
 parser = { kind = "split", separator = "|" }
+
+[[tables.fields]]
+name = "weights"
+type = "map<string,i32>"
 
 [[tables.fields]]
 name = "maybe_count"

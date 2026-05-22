@@ -47,6 +47,13 @@ sora_result sora_showcase_item_decode(sora_reader* reader, sora_showcase_item* o
             return result;
         }
     }
+    {
+        sora_result result = sora_showcase_string_i32_map_decode(reader, &out->attributes);
+        if (result.code != SORA_OK) {
+            sora_showcase_item_free(out);
+            return result;
+        }
+    }
     return sora_ok();
 }
 
@@ -57,6 +64,7 @@ void sora_showcase_item_free(sora_showcase_item* value) {
     sora_string_free(&value->name);
     sora_showcase_resource_cost_free(&value->price);
     sora_showcase_string_array_free(&value->tags);
+    sora_showcase_string_i32_map_free(&value->attributes);
     *value = (sora_showcase_item){0};
 }
 

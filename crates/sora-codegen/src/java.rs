@@ -303,9 +303,14 @@ fn java_decode_expr(ir: &ConfigIr, ty: &TypeIr) -> String {
         TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => {
             format!("{name}.decode(reader)")
         }
-        TypeIr::List(element) | TypeIr::Array { element, .. } => {
+        TypeIr::List(element) | TypeIr::Set(element) | TypeIr::Array { element, .. } => {
             format!("reader.readList(() -> {})", java_decode_expr(ir, element))
         }
+        TypeIr::Map { key, value } => format!(
+            "reader.readMap(() -> {}, () -> {})",
+            java_decode_expr(ir, key),
+            java_decode_expr(ir, value)
+        ),
         TypeIr::Ref { table, field } => ir
             .tables
             .iter()
@@ -338,12 +343,20 @@ fn java_value_decode_expr(ir: &ConfigIr, ty: &TypeIr, value: &str) -> String {
         TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => {
             format!("{name}.decode({value})")
         }
-        TypeIr::List(element) | TypeIr::Array { element, .. } => {
+        TypeIr::List(element) | TypeIr::Set(element) | TypeIr::Array { element, .. } => {
             format!(
                 "{value}.asList(item -> {})",
                 java_value_decode_expr(ir, element, "item")
             )
         }
+        TypeIr::Map {
+            key,
+            value: element,
+        } => format!(
+            "{value}.asMap(item -> {}, item -> {})",
+            java_value_decode_expr(ir, key, "item"),
+            java_value_decode_expr(ir, element, "item")
+        ),
         TypeIr::Ref { table, field } => ir
             .tables
             .iter()

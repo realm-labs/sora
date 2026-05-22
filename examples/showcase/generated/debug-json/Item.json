@@ -4,6 +4,30 @@
     "rows": [
       {
         "values": {
+          "attributes": {
+            "List": [
+              {
+                "List": [
+                  {
+                    "String": "tier"
+                  },
+                  {
+                    "Integer": 1
+                  }
+                ]
+              },
+              {
+                "List": [
+                  {
+                    "String": "power"
+                  },
+                  {
+                    "Integer": 10
+                  }
+                ]
+              }
+            ]
+          },
           "id": {
             "Integer": 1001
           },
@@ -43,6 +67,30 @@
       },
       {
         "values": {
+          "attributes": {
+            "List": [
+              {
+                "List": [
+                  {
+                    "String": "tier"
+                  },
+                  {
+                    "Integer": 2
+                  }
+                ]
+              },
+              {
+                "List": [
+                  {
+                    "String": "power"
+                  },
+                  {
+                    "Integer": 11
+                  }
+                ]
+              }
+            ]
+          },
           "id": {
             "Integer": 1002
           },
@@ -82,6 +130,30 @@
       },
       {
         "values": {
+          "attributes": {
+            "List": [
+              {
+                "List": [
+                  {
+                    "String": "tier"
+                  },
+                  {
+                    "Integer": 3
+                  }
+                ]
+              },
+              {
+                "List": [
+                  {
+                    "String": "power"
+                  },
+                  {
+                    "Integer": 12
+                  }
+                ]
+              }
+            ]
+          },
           "id": {
             "Integer": 2001
           },
@@ -121,6 +193,30 @@
       },
       {
         "values": {
+          "attributes": {
+            "List": [
+              {
+                "List": [
+                  {
+                    "String": "tier"
+                  },
+                  {
+                    "Integer": 4
+                  }
+                ]
+              },
+              {
+                "List": [
+                  {
+                    "String": "power"
+                  },
+                  {
+                    "Integer": 13
+                  }
+                ]
+              }
+            ]
+          },
           "id": {
             "Integer": 3001
           },
@@ -160,6 +256,30 @@
       },
       {
         "values": {
+          "attributes": {
+            "List": [
+              {
+                "List": [
+                  {
+                    "String": "tier"
+                  },
+                  {
+                    "Integer": 5
+                  }
+                ]
+              },
+              {
+                "List": [
+                  {
+                    "String": "power"
+                  },
+                  {
+                    "Integer": 14
+                  }
+                ]
+              }
+            ]
+          },
           "id": {
             "Integer": 1003
           },
@@ -199,6 +319,30 @@
       },
       {
         "values": {
+          "attributes": {
+            "List": [
+              {
+                "List": [
+                  {
+                    "String": "tier"
+                  },
+                  {
+                    "Integer": 1
+                  }
+                ]
+              },
+              {
+                "List": [
+                  {
+                    "String": "power"
+                  },
+                  {
+                    "Integer": 15
+                  }
+                ]
+              }
+            ]
+          },
           "id": {
             "Integer": 1004
           },
@@ -238,6 +382,30 @@
       },
       {
         "values": {
+          "attributes": {
+            "List": [
+              {
+                "List": [
+                  {
+                    "String": "tier"
+                  },
+                  {
+                    "Integer": 2
+                  }
+                ]
+              },
+              {
+                "List": [
+                  {
+                    "String": "power"
+                  },
+                  {
+                    "Integer": 16
+                  }
+                ]
+              }
+            ]
+          },
           "id": {
             "Integer": 1005
           },
@@ -277,6 +445,30 @@
       },
       {
         "values": {
+          "attributes": {
+            "List": [
+              {
+                "List": [
+                  {
+                    "String": "tier"
+                  },
+                  {
+                    "Integer": 3
+                  }
+                ]
+              },
+              {
+                "List": [
+                  {
+                    "String": "power"
+                  },
+                  {
+                    "Integer": 17
+                  }
+                ]
+              }
+            ]
+          },
           "id": {
             "Integer": 1006
           },
@@ -316,6 +508,30 @@
       },
       {
         "values": {
+          "attributes": {
+            "List": [
+              {
+                "List": [
+                  {
+                    "String": "tier"
+                  },
+                  {
+                    "Integer": 4
+                  }
+                ]
+              },
+              {
+                "List": [
+                  {
+                    "String": "power"
+                  },
+                  {
+                    "Integer": 18
+                  }
+                ]
+              }
+            ]
+          },
           "id": {
             "Integer": 1007
           },
@@ -355,6 +571,30 @@
       },
       {
         "values": {
+          "attributes": {
+            "List": [
+              {
+                "List": [
+                  {
+                    "String": "tier"
+                  },
+                  {
+                    "Integer": 5
+                  }
+                ]
+              },
+              {
+                "List": [
+                  {
+                    "String": "power"
+                  },
+                  {
+                    "Integer": 19
+                  }
+                ]
+              }
+            ]
+          },
           "id": {
             "Integer": 1008
           },
@@ -394,6 +634,30 @@
       },
       {
         "values": {
+          "attributes": {
+            "List": [
+              {
+                "List": [
+                  {
+                    "String": "tier"
+                  },
+                  {
+                    "Integer": 1
+                  }
+                ]
+              },
+              {
+                "List": [
+                  {
+                    "String": "power"
+                  },
+                  {
+                    "Integer": 20
+                  }
+                ]
+              }
+            ]
+          },
           "id": {
             "Integer": 1009
           },
@@ -433,6 +697,30 @@
       },
       {
         "values": {
+          "attributes": {
+            "List": [
+              {
+                "List": [
+                  {
+                    "String": "tier"
+                  },
+                  {
+                    "Integer": 2
+                  }
+                ]
+              },
+              {
+                "List": [
+                  {
+                    "String": "power"
+                  },
+                  {
+                    "Integer": 21
+                  }
+                ]
+              }
+            ]
+          },
           "id": {
             "Integer": 1010
           },
@@ -472,6 +760,30 @@
       },
       {
         "values": {
+          "attributes": {
+            "List": [
+              {
+                "List": [
+                  {
+                    "String": "tier"
+                  },
+                  {
+                    "Integer": 3
+                  }
+                ]
+              },
+              {
+                "List": [
+                  {
+                    "String": "power"
+                  },
+                  {
+                    "Integer": 22
+                  }
+                ]
+              }
+            ]
+          },
           "id": {
             "Integer": 1011
           },
@@ -511,6 +823,30 @@
       },
       {
         "values": {
+          "attributes": {
+            "List": [
+              {
+                "List": [
+                  {
+                    "String": "tier"
+                  },
+                  {
+                    "Integer": 4
+                  }
+                ]
+              },
+              {
+                "List": [
+                  {
+                    "String": "power"
+                  },
+                  {
+                    "Integer": 23
+                  }
+                ]
+              }
+            ]
+          },
           "id": {
             "Integer": 1012
           },
@@ -550,6 +886,30 @@
       },
       {
         "values": {
+          "attributes": {
+            "List": [
+              {
+                "List": [
+                  {
+                    "String": "tier"
+                  },
+                  {
+                    "Integer": 5
+                  }
+                ]
+              },
+              {
+                "List": [
+                  {
+                    "String": "power"
+                  },
+                  {
+                    "Integer": 24
+                  }
+                ]
+              }
+            ]
+          },
           "id": {
             "Integer": 1013
           },
@@ -589,6 +949,30 @@
       },
       {
         "values": {
+          "attributes": {
+            "List": [
+              {
+                "List": [
+                  {
+                    "String": "tier"
+                  },
+                  {
+                    "Integer": 1
+                  }
+                ]
+              },
+              {
+                "List": [
+                  {
+                    "String": "power"
+                  },
+                  {
+                    "Integer": 25
+                  }
+                ]
+              }
+            ]
+          },
           "id": {
             "Integer": 1014
           },
@@ -628,6 +1012,30 @@
       },
       {
         "values": {
+          "attributes": {
+            "List": [
+              {
+                "List": [
+                  {
+                    "String": "tier"
+                  },
+                  {
+                    "Integer": 2
+                  }
+                ]
+              },
+              {
+                "List": [
+                  {
+                    "String": "power"
+                  },
+                  {
+                    "Integer": 26
+                  }
+                ]
+              }
+            ]
+          },
           "id": {
             "Integer": 1015
           },
@@ -667,6 +1075,30 @@
       },
       {
         "values": {
+          "attributes": {
+            "List": [
+              {
+                "List": [
+                  {
+                    "String": "tier"
+                  },
+                  {
+                    "Integer": 3
+                  }
+                ]
+              },
+              {
+                "List": [
+                  {
+                    "String": "power"
+                  },
+                  {
+                    "Integer": 27
+                  }
+                ]
+              }
+            ]
+          },
           "id": {
             "Integer": 1016
           },
@@ -706,6 +1138,30 @@
       },
       {
         "values": {
+          "attributes": {
+            "List": [
+              {
+                "List": [
+                  {
+                    "String": "tier"
+                  },
+                  {
+                    "Integer": 4
+                  }
+                ]
+              },
+              {
+                "List": [
+                  {
+                    "String": "power"
+                  },
+                  {
+                    "Integer": 28
+                  }
+                ]
+              }
+            ]
+          },
           "id": {
             "Integer": 1017
           },
@@ -745,6 +1201,30 @@
       },
       {
         "values": {
+          "attributes": {
+            "List": [
+              {
+                "List": [
+                  {
+                    "String": "tier"
+                  },
+                  {
+                    "Integer": 5
+                  }
+                ]
+              },
+              {
+                "List": [
+                  {
+                    "String": "power"
+                  },
+                  {
+                    "Integer": 29
+                  }
+                ]
+              }
+            ]
+          },
           "id": {
             "Integer": 1018
           },
@@ -784,6 +1264,30 @@
       },
       {
         "values": {
+          "attributes": {
+            "List": [
+              {
+                "List": [
+                  {
+                    "String": "tier"
+                  },
+                  {
+                    "Integer": 1
+                  }
+                ]
+              },
+              {
+                "List": [
+                  {
+                    "String": "power"
+                  },
+                  {
+                    "Integer": 30
+                  }
+                ]
+              }
+            ]
+          },
           "id": {
             "Integer": 1019
           },
@@ -823,6 +1327,30 @@
       },
       {
         "values": {
+          "attributes": {
+            "List": [
+              {
+                "List": [
+                  {
+                    "String": "tier"
+                  },
+                  {
+                    "Integer": 2
+                  }
+                ]
+              },
+              {
+                "List": [
+                  {
+                    "String": "power"
+                  },
+                  {
+                    "Integer": 31
+                  }
+                ]
+              }
+            ]
+          },
           "id": {
             "Integer": 1020
           },
@@ -862,6 +1390,30 @@
       },
       {
         "values": {
+          "attributes": {
+            "List": [
+              {
+                "List": [
+                  {
+                    "String": "tier"
+                  },
+                  {
+                    "Integer": 3
+                  }
+                ]
+              },
+              {
+                "List": [
+                  {
+                    "String": "power"
+                  },
+                  {
+                    "Integer": 32
+                  }
+                ]
+              }
+            ]
+          },
           "id": {
             "Integer": 1021
           },
@@ -901,6 +1453,30 @@
       },
       {
         "values": {
+          "attributes": {
+            "List": [
+              {
+                "List": [
+                  {
+                    "String": "tier"
+                  },
+                  {
+                    "Integer": 4
+                  }
+                ]
+              },
+              {
+                "List": [
+                  {
+                    "String": "power"
+                  },
+                  {
+                    "Integer": 33
+                  }
+                ]
+              }
+            ]
+          },
           "id": {
             "Integer": 1022
           },
@@ -940,6 +1516,30 @@
       },
       {
         "values": {
+          "attributes": {
+            "List": [
+              {
+                "List": [
+                  {
+                    "String": "tier"
+                  },
+                  {
+                    "Integer": 5
+                  }
+                ]
+              },
+              {
+                "List": [
+                  {
+                    "String": "power"
+                  },
+                  {
+                    "Integer": 34
+                  }
+                ]
+              }
+            ]
+          },
           "id": {
             "Integer": 1023
           },
@@ -979,6 +1579,30 @@
       },
       {
         "values": {
+          "attributes": {
+            "List": [
+              {
+                "List": [
+                  {
+                    "String": "tier"
+                  },
+                  {
+                    "Integer": 1
+                  }
+                ]
+              },
+              {
+                "List": [
+                  {
+                    "String": "power"
+                  },
+                  {
+                    "Integer": 35
+                  }
+                ]
+              }
+            ]
+          },
           "id": {
             "Integer": 1024
           },
@@ -1018,6 +1642,30 @@
       },
       {
         "values": {
+          "attributes": {
+            "List": [
+              {
+                "List": [
+                  {
+                    "String": "tier"
+                  },
+                  {
+                    "Integer": 2
+                  }
+                ]
+              },
+              {
+                "List": [
+                  {
+                    "String": "power"
+                  },
+                  {
+                    "Integer": 36
+                  }
+                ]
+              }
+            ]
+          },
           "id": {
             "Integer": 1025
           },
@@ -1057,6 +1705,30 @@
       },
       {
         "values": {
+          "attributes": {
+            "List": [
+              {
+                "List": [
+                  {
+                    "String": "tier"
+                  },
+                  {
+                    "Integer": 3
+                  }
+                ]
+              },
+              {
+                "List": [
+                  {
+                    "String": "power"
+                  },
+                  {
+                    "Integer": 37
+                  }
+                ]
+              }
+            ]
+          },
           "id": {
             "Integer": 1026
           },
@@ -1096,6 +1768,30 @@
       },
       {
         "values": {
+          "attributes": {
+            "List": [
+              {
+                "List": [
+                  {
+                    "String": "tier"
+                  },
+                  {
+                    "Integer": 4
+                  }
+                ]
+              },
+              {
+                "List": [
+                  {
+                    "String": "power"
+                  },
+                  {
+                    "Integer": 38
+                  }
+                ]
+              }
+            ]
+          },
           "id": {
             "Integer": 1027
           },
@@ -1135,6 +1831,30 @@
       },
       {
         "values": {
+          "attributes": {
+            "List": [
+              {
+                "List": [
+                  {
+                    "String": "tier"
+                  },
+                  {
+                    "Integer": 5
+                  }
+                ]
+              },
+              {
+                "List": [
+                  {
+                    "String": "power"
+                  },
+                  {
+                    "Integer": 39
+                  }
+                ]
+              }
+            ]
+          },
           "id": {
             "Integer": 1028
           },
@@ -1174,6 +1894,30 @@
       },
       {
         "values": {
+          "attributes": {
+            "List": [
+              {
+                "List": [
+                  {
+                    "String": "tier"
+                  },
+                  {
+                    "Integer": 1
+                  }
+                ]
+              },
+              {
+                "List": [
+                  {
+                    "String": "power"
+                  },
+                  {
+                    "Integer": 40
+                  }
+                ]
+              }
+            ]
+          },
           "id": {
             "Integer": 1029
           },
@@ -1213,6 +1957,30 @@
       },
       {
         "values": {
+          "attributes": {
+            "List": [
+              {
+                "List": [
+                  {
+                    "String": "tier"
+                  },
+                  {
+                    "Integer": 2
+                  }
+                ]
+              },
+              {
+                "List": [
+                  {
+                    "String": "power"
+                  },
+                  {
+                    "Integer": 41
+                  }
+                ]
+              }
+            ]
+          },
           "id": {
             "Integer": 1030
           },
@@ -1252,6 +2020,30 @@
       },
       {
         "values": {
+          "attributes": {
+            "List": [
+              {
+                "List": [
+                  {
+                    "String": "tier"
+                  },
+                  {
+                    "Integer": 3
+                  }
+                ]
+              },
+              {
+                "List": [
+                  {
+                    "String": "power"
+                  },
+                  {
+                    "Integer": 42
+                  }
+                ]
+              }
+            ]
+          },
           "id": {
             "Integer": 1031
           },
@@ -1291,6 +2083,30 @@
       },
       {
         "values": {
+          "attributes": {
+            "List": [
+              {
+                "List": [
+                  {
+                    "String": "tier"
+                  },
+                  {
+                    "Integer": 4
+                  }
+                ]
+              },
+              {
+                "List": [
+                  {
+                    "String": "power"
+                  },
+                  {
+                    "Integer": 43
+                  }
+                ]
+              }
+            ]
+          },
           "id": {
             "Integer": 1032
           },
@@ -1330,6 +2146,30 @@
       },
       {
         "values": {
+          "attributes": {
+            "List": [
+              {
+                "List": [
+                  {
+                    "String": "tier"
+                  },
+                  {
+                    "Integer": 5
+                  }
+                ]
+              },
+              {
+                "List": [
+                  {
+                    "String": "power"
+                  },
+                  {
+                    "Integer": 44
+                  }
+                ]
+              }
+            ]
+          },
           "id": {
             "Integer": 1033
           },
@@ -1369,6 +2209,30 @@
       },
       {
         "values": {
+          "attributes": {
+            "List": [
+              {
+                "List": [
+                  {
+                    "String": "tier"
+                  },
+                  {
+                    "Integer": 1
+                  }
+                ]
+              },
+              {
+                "List": [
+                  {
+                    "String": "power"
+                  },
+                  {
+                    "Integer": 45
+                  }
+                ]
+              }
+            ]
+          },
           "id": {
             "Integer": 1034
           },
@@ -1408,6 +2272,30 @@
       },
       {
         "values": {
+          "attributes": {
+            "List": [
+              {
+                "List": [
+                  {
+                    "String": "tier"
+                  },
+                  {
+                    "Integer": 2
+                  }
+                ]
+              },
+              {
+                "List": [
+                  {
+                    "String": "power"
+                  },
+                  {
+                    "Integer": 46
+                  }
+                ]
+              }
+            ]
+          },
           "id": {
             "Integer": 1035
           },
@@ -1447,6 +2335,30 @@
       },
       {
         "values": {
+          "attributes": {
+            "List": [
+              {
+                "List": [
+                  {
+                    "String": "tier"
+                  },
+                  {
+                    "Integer": 3
+                  }
+                ]
+              },
+              {
+                "List": [
+                  {
+                    "String": "power"
+                  },
+                  {
+                    "Integer": 47
+                  }
+                ]
+              }
+            ]
+          },
           "id": {
             "Integer": 1036
           },
@@ -1486,6 +2398,30 @@
       },
       {
         "values": {
+          "attributes": {
+            "List": [
+              {
+                "List": [
+                  {
+                    "String": "tier"
+                  },
+                  {
+                    "Integer": 4
+                  }
+                ]
+              },
+              {
+                "List": [
+                  {
+                    "String": "power"
+                  },
+                  {
+                    "Integer": 48
+                  }
+                ]
+              }
+            ]
+          },
           "id": {
             "Integer": 1037
           },
@@ -1525,6 +2461,30 @@
       },
       {
         "values": {
+          "attributes": {
+            "List": [
+              {
+                "List": [
+                  {
+                    "String": "tier"
+                  },
+                  {
+                    "Integer": 5
+                  }
+                ]
+              },
+              {
+                "List": [
+                  {
+                    "String": "power"
+                  },
+                  {
+                    "Integer": 49
+                  }
+                ]
+              }
+            ]
+          },
           "id": {
             "Integer": 1038
           },
@@ -1564,6 +2524,30 @@
       },
       {
         "values": {
+          "attributes": {
+            "List": [
+              {
+                "List": [
+                  {
+                    "String": "tier"
+                  },
+                  {
+                    "Integer": 1
+                  }
+                ]
+              },
+              {
+                "List": [
+                  {
+                    "String": "power"
+                  },
+                  {
+                    "Integer": 50
+                  }
+                ]
+              }
+            ]
+          },
           "id": {
             "Integer": 1039
           },
@@ -1603,6 +2587,30 @@
       },
       {
         "values": {
+          "attributes": {
+            "List": [
+              {
+                "List": [
+                  {
+                    "String": "tier"
+                  },
+                  {
+                    "Integer": 2
+                  }
+                ]
+              },
+              {
+                "List": [
+                  {
+                    "String": "power"
+                  },
+                  {
+                    "Integer": 51
+                  }
+                ]
+              }
+            ]
+          },
           "id": {
             "Integer": 1040
           },
@@ -1642,6 +2650,30 @@
       },
       {
         "values": {
+          "attributes": {
+            "List": [
+              {
+                "List": [
+                  {
+                    "String": "tier"
+                  },
+                  {
+                    "Integer": 3
+                  }
+                ]
+              },
+              {
+                "List": [
+                  {
+                    "String": "power"
+                  },
+                  {
+                    "Integer": 52
+                  }
+                ]
+              }
+            ]
+          },
           "id": {
             "Integer": 1041
           },
@@ -1681,6 +2713,30 @@
       },
       {
         "values": {
+          "attributes": {
+            "List": [
+              {
+                "List": [
+                  {
+                    "String": "tier"
+                  },
+                  {
+                    "Integer": 4
+                  }
+                ]
+              },
+              {
+                "List": [
+                  {
+                    "String": "power"
+                  },
+                  {
+                    "Integer": 53
+                  }
+                ]
+              }
+            ]
+          },
           "id": {
             "Integer": 1042
           },
@@ -1720,6 +2776,30 @@
       },
       {
         "values": {
+          "attributes": {
+            "List": [
+              {
+                "List": [
+                  {
+                    "String": "tier"
+                  },
+                  {
+                    "Integer": 5
+                  }
+                ]
+              },
+              {
+                "List": [
+                  {
+                    "String": "power"
+                  },
+                  {
+                    "Integer": 54
+                  }
+                ]
+              }
+            ]
+          },
           "id": {
             "Integer": 1043
           },
@@ -1759,6 +2839,30 @@
       },
       {
         "values": {
+          "attributes": {
+            "List": [
+              {
+                "List": [
+                  {
+                    "String": "tier"
+                  },
+                  {
+                    "Integer": 1
+                  }
+                ]
+              },
+              {
+                "List": [
+                  {
+                    "String": "power"
+                  },
+                  {
+                    "Integer": 55
+                  }
+                ]
+              }
+            ]
+          },
           "id": {
             "Integer": 1044
           },
@@ -1798,6 +2902,30 @@
       },
       {
         "values": {
+          "attributes": {
+            "List": [
+              {
+                "List": [
+                  {
+                    "String": "tier"
+                  },
+                  {
+                    "Integer": 2
+                  }
+                ]
+              },
+              {
+                "List": [
+                  {
+                    "String": "power"
+                  },
+                  {
+                    "Integer": 56
+                  }
+                ]
+              }
+            ]
+          },
           "id": {
             "Integer": 1045
           },
@@ -1837,6 +2965,30 @@
       },
       {
         "values": {
+          "attributes": {
+            "List": [
+              {
+                "List": [
+                  {
+                    "String": "tier"
+                  },
+                  {
+                    "Integer": 3
+                  }
+                ]
+              },
+              {
+                "List": [
+                  {
+                    "String": "power"
+                  },
+                  {
+                    "Integer": 57
+                  }
+                ]
+              }
+            ]
+          },
           "id": {
             "Integer": 1046
           },
@@ -1876,6 +3028,30 @@
       },
       {
         "values": {
+          "attributes": {
+            "List": [
+              {
+                "List": [
+                  {
+                    "String": "tier"
+                  },
+                  {
+                    "Integer": 4
+                  }
+                ]
+              },
+              {
+                "List": [
+                  {
+                    "String": "power"
+                  },
+                  {
+                    "Integer": 58
+                  }
+                ]
+              }
+            ]
+          },
           "id": {
             "Integer": 1047
           },
@@ -1915,6 +3091,30 @@
       },
       {
         "values": {
+          "attributes": {
+            "List": [
+              {
+                "List": [
+                  {
+                    "String": "tier"
+                  },
+                  {
+                    "Integer": 5
+                  }
+                ]
+              },
+              {
+                "List": [
+                  {
+                    "String": "power"
+                  },
+                  {
+                    "Integer": 59
+                  }
+                ]
+              }
+            ]
+          },
           "id": {
             "Integer": 1048
           },
@@ -1954,6 +3154,30 @@
       },
       {
         "values": {
+          "attributes": {
+            "List": [
+              {
+                "List": [
+                  {
+                    "String": "tier"
+                  },
+                  {
+                    "Integer": 1
+                  }
+                ]
+              },
+              {
+                "List": [
+                  {
+                    "String": "power"
+                  },
+                  {
+                    "Integer": 60
+                  }
+                ]
+              }
+            ]
+          },
           "id": {
             "Integer": 1049
           },
@@ -1993,6 +3217,30 @@
       },
       {
         "values": {
+          "attributes": {
+            "List": [
+              {
+                "List": [
+                  {
+                    "String": "tier"
+                  },
+                  {
+                    "Integer": 2
+                  }
+                ]
+              },
+              {
+                "List": [
+                  {
+                    "String": "power"
+                  },
+                  {
+                    "Integer": 61
+                  }
+                ]
+              }
+            ]
+          },
           "id": {
             "Integer": 1050
           },
@@ -2032,6 +3280,30 @@
       },
       {
         "values": {
+          "attributes": {
+            "List": [
+              {
+                "List": [
+                  {
+                    "String": "tier"
+                  },
+                  {
+                    "Integer": 3
+                  }
+                ]
+              },
+              {
+                "List": [
+                  {
+                    "String": "power"
+                  },
+                  {
+                    "Integer": 62
+                  }
+                ]
+              }
+            ]
+          },
           "id": {
             "Integer": 1051
           },
@@ -2071,6 +3343,30 @@
       },
       {
         "values": {
+          "attributes": {
+            "List": [
+              {
+                "List": [
+                  {
+                    "String": "tier"
+                  },
+                  {
+                    "Integer": 4
+                  }
+                ]
+              },
+              {
+                "List": [
+                  {
+                    "String": "power"
+                  },
+                  {
+                    "Integer": 63
+                  }
+                ]
+              }
+            ]
+          },
           "id": {
             "Integer": 1052
           },
@@ -2110,6 +3406,30 @@
       },
       {
         "values": {
+          "attributes": {
+            "List": [
+              {
+                "List": [
+                  {
+                    "String": "tier"
+                  },
+                  {
+                    "Integer": 5
+                  }
+                ]
+              },
+              {
+                "List": [
+                  {
+                    "String": "power"
+                  },
+                  {
+                    "Integer": 64
+                  }
+                ]
+              }
+            ]
+          },
           "id": {
             "Integer": 1053
           },
@@ -2149,6 +3469,30 @@
       },
       {
         "values": {
+          "attributes": {
+            "List": [
+              {
+                "List": [
+                  {
+                    "String": "tier"
+                  },
+                  {
+                    "Integer": 1
+                  }
+                ]
+              },
+              {
+                "List": [
+                  {
+                    "String": "power"
+                  },
+                  {
+                    "Integer": 65
+                  }
+                ]
+              }
+            ]
+          },
           "id": {
             "Integer": 1054
           },
@@ -2188,6 +3532,30 @@
       },
       {
         "values": {
+          "attributes": {
+            "List": [
+              {
+                "List": [
+                  {
+                    "String": "tier"
+                  },
+                  {
+                    "Integer": 2
+                  }
+                ]
+              },
+              {
+                "List": [
+                  {
+                    "String": "power"
+                  },
+                  {
+                    "Integer": 66
+                  }
+                ]
+              }
+            ]
+          },
           "id": {
             "Integer": 1055
           },
@@ -2227,6 +3595,30 @@
       },
       {
         "values": {
+          "attributes": {
+            "List": [
+              {
+                "List": [
+                  {
+                    "String": "tier"
+                  },
+                  {
+                    "Integer": 3
+                  }
+                ]
+              },
+              {
+                "List": [
+                  {
+                    "String": "power"
+                  },
+                  {
+                    "Integer": 67
+                  }
+                ]
+              }
+            ]
+          },
           "id": {
             "Integer": 1056
           },
@@ -2266,6 +3658,30 @@
       },
       {
         "values": {
+          "attributes": {
+            "List": [
+              {
+                "List": [
+                  {
+                    "String": "tier"
+                  },
+                  {
+                    "Integer": 4
+                  }
+                ]
+              },
+              {
+                "List": [
+                  {
+                    "String": "power"
+                  },
+                  {
+                    "Integer": 68
+                  }
+                ]
+              }
+            ]
+          },
           "id": {
             "Integer": 1057
           },
@@ -2305,6 +3721,30 @@
       },
       {
         "values": {
+          "attributes": {
+            "List": [
+              {
+                "List": [
+                  {
+                    "String": "tier"
+                  },
+                  {
+                    "Integer": 5
+                  }
+                ]
+              },
+              {
+                "List": [
+                  {
+                    "String": "power"
+                  },
+                  {
+                    "Integer": 69
+                  }
+                ]
+              }
+            ]
+          },
           "id": {
             "Integer": 1058
           },
@@ -2344,6 +3784,30 @@
       },
       {
         "values": {
+          "attributes": {
+            "List": [
+              {
+                "List": [
+                  {
+                    "String": "tier"
+                  },
+                  {
+                    "Integer": 1
+                  }
+                ]
+              },
+              {
+                "List": [
+                  {
+                    "String": "power"
+                  },
+                  {
+                    "Integer": 70
+                  }
+                ]
+              }
+            ]
+          },
           "id": {
             "Integer": 1059
           },
@@ -2383,6 +3847,30 @@
       },
       {
         "values": {
+          "attributes": {
+            "List": [
+              {
+                "List": [
+                  {
+                    "String": "tier"
+                  },
+                  {
+                    "Integer": 2
+                  }
+                ]
+              },
+              {
+                "List": [
+                  {
+                    "String": "power"
+                  },
+                  {
+                    "Integer": 71
+                  }
+                ]
+              }
+            ]
+          },
           "id": {
             "Integer": 1060
           },
@@ -2422,6 +3910,30 @@
       },
       {
         "values": {
+          "attributes": {
+            "List": [
+              {
+                "List": [
+                  {
+                    "String": "tier"
+                  },
+                  {
+                    "Integer": 3
+                  }
+                ]
+              },
+              {
+                "List": [
+                  {
+                    "String": "power"
+                  },
+                  {
+                    "Integer": 72
+                  }
+                ]
+              }
+            ]
+          },
           "id": {
             "Integer": 1061
           },
@@ -2461,6 +3973,30 @@
       },
       {
         "values": {
+          "attributes": {
+            "List": [
+              {
+                "List": [
+                  {
+                    "String": "tier"
+                  },
+                  {
+                    "Integer": 4
+                  }
+                ]
+              },
+              {
+                "List": [
+                  {
+                    "String": "power"
+                  },
+                  {
+                    "Integer": 73
+                  }
+                ]
+              }
+            ]
+          },
           "id": {
             "Integer": 1062
           },
@@ -2500,6 +4036,30 @@
       },
       {
         "values": {
+          "attributes": {
+            "List": [
+              {
+                "List": [
+                  {
+                    "String": "tier"
+                  },
+                  {
+                    "Integer": 5
+                  }
+                ]
+              },
+              {
+                "List": [
+                  {
+                    "String": "power"
+                  },
+                  {
+                    "Integer": 74
+                  }
+                ]
+              }
+            ]
+          },
           "id": {
             "Integer": 1063
           },
@@ -2539,6 +4099,30 @@
       },
       {
         "values": {
+          "attributes": {
+            "List": [
+              {
+                "List": [
+                  {
+                    "String": "tier"
+                  },
+                  {
+                    "Integer": 1
+                  }
+                ]
+              },
+              {
+                "List": [
+                  {
+                    "String": "power"
+                  },
+                  {
+                    "Integer": 75
+                  }
+                ]
+              }
+            ]
+          },
           "id": {
             "Integer": 1064
           },
@@ -2578,6 +4162,30 @@
       },
       {
         "values": {
+          "attributes": {
+            "List": [
+              {
+                "List": [
+                  {
+                    "String": "tier"
+                  },
+                  {
+                    "Integer": 2
+                  }
+                ]
+              },
+              {
+                "List": [
+                  {
+                    "String": "power"
+                  },
+                  {
+                    "Integer": 76
+                  }
+                ]
+              }
+            ]
+          },
           "id": {
             "Integer": 1065
           },
@@ -2617,6 +4225,30 @@
       },
       {
         "values": {
+          "attributes": {
+            "List": [
+              {
+                "List": [
+                  {
+                    "String": "tier"
+                  },
+                  {
+                    "Integer": 3
+                  }
+                ]
+              },
+              {
+                "List": [
+                  {
+                    "String": "power"
+                  },
+                  {
+                    "Integer": 77
+                  }
+                ]
+              }
+            ]
+          },
           "id": {
             "Integer": 1066
           },
@@ -2656,6 +4288,30 @@
       },
       {
         "values": {
+          "attributes": {
+            "List": [
+              {
+                "List": [
+                  {
+                    "String": "tier"
+                  },
+                  {
+                    "Integer": 4
+                  }
+                ]
+              },
+              {
+                "List": [
+                  {
+                    "String": "power"
+                  },
+                  {
+                    "Integer": 78
+                  }
+                ]
+              }
+            ]
+          },
           "id": {
             "Integer": 1067
           },
@@ -2695,6 +4351,30 @@
       },
       {
         "values": {
+          "attributes": {
+            "List": [
+              {
+                "List": [
+                  {
+                    "String": "tier"
+                  },
+                  {
+                    "Integer": 5
+                  }
+                ]
+              },
+              {
+                "List": [
+                  {
+                    "String": "power"
+                  },
+                  {
+                    "Integer": 79
+                  }
+                ]
+              }
+            ]
+          },
           "id": {
             "Integer": 1068
           },
@@ -2734,6 +4414,30 @@
       },
       {
         "values": {
+          "attributes": {
+            "List": [
+              {
+                "List": [
+                  {
+                    "String": "tier"
+                  },
+                  {
+                    "Integer": 1
+                  }
+                ]
+              },
+              {
+                "List": [
+                  {
+                    "String": "power"
+                  },
+                  {
+                    "Integer": 80
+                  }
+                ]
+              }
+            ]
+          },
           "id": {
             "Integer": 1069
           },
@@ -2773,6 +4477,30 @@
       },
       {
         "values": {
+          "attributes": {
+            "List": [
+              {
+                "List": [
+                  {
+                    "String": "tier"
+                  },
+                  {
+                    "Integer": 2
+                  }
+                ]
+              },
+              {
+                "List": [
+                  {
+                    "String": "power"
+                  },
+                  {
+                    "Integer": 81
+                  }
+                ]
+              }
+            ]
+          },
           "id": {
             "Integer": 1070
           },
@@ -2812,6 +4540,30 @@
       },
       {
         "values": {
+          "attributes": {
+            "List": [
+              {
+                "List": [
+                  {
+                    "String": "tier"
+                  },
+                  {
+                    "Integer": 3
+                  }
+                ]
+              },
+              {
+                "List": [
+                  {
+                    "String": "power"
+                  },
+                  {
+                    "Integer": 82
+                  }
+                ]
+              }
+            ]
+          },
           "id": {
             "Integer": 1071
           },
@@ -2851,6 +4603,30 @@
       },
       {
         "values": {
+          "attributes": {
+            "List": [
+              {
+                "List": [
+                  {
+                    "String": "tier"
+                  },
+                  {
+                    "Integer": 4
+                  }
+                ]
+              },
+              {
+                "List": [
+                  {
+                    "String": "power"
+                  },
+                  {
+                    "Integer": 83
+                  }
+                ]
+              }
+            ]
+          },
           "id": {
             "Integer": 1072
           },
@@ -2890,6 +4666,30 @@
       },
       {
         "values": {
+          "attributes": {
+            "List": [
+              {
+                "List": [
+                  {
+                    "String": "tier"
+                  },
+                  {
+                    "Integer": 5
+                  }
+                ]
+              },
+              {
+                "List": [
+                  {
+                    "String": "power"
+                  },
+                  {
+                    "Integer": 84
+                  }
+                ]
+              }
+            ]
+          },
           "id": {
             "Integer": 1073
           },
@@ -2929,6 +4729,30 @@
       },
       {
         "values": {
+          "attributes": {
+            "List": [
+              {
+                "List": [
+                  {
+                    "String": "tier"
+                  },
+                  {
+                    "Integer": 1
+                  }
+                ]
+              },
+              {
+                "List": [
+                  {
+                    "String": "power"
+                  },
+                  {
+                    "Integer": 85
+                  }
+                ]
+              }
+            ]
+          },
           "id": {
             "Integer": 1074
           },
@@ -2968,6 +4792,30 @@
       },
       {
         "values": {
+          "attributes": {
+            "List": [
+              {
+                "List": [
+                  {
+                    "String": "tier"
+                  },
+                  {
+                    "Integer": 2
+                  }
+                ]
+              },
+              {
+                "List": [
+                  {
+                    "String": "power"
+                  },
+                  {
+                    "Integer": 86
+                  }
+                ]
+              }
+            ]
+          },
           "id": {
             "Integer": 1075
           },
@@ -3007,6 +4855,30 @@
       },
       {
         "values": {
+          "attributes": {
+            "List": [
+              {
+                "List": [
+                  {
+                    "String": "tier"
+                  },
+                  {
+                    "Integer": 3
+                  }
+                ]
+              },
+              {
+                "List": [
+                  {
+                    "String": "power"
+                  },
+                  {
+                    "Integer": 87
+                  }
+                ]
+              }
+            ]
+          },
           "id": {
             "Integer": 1076
           },
@@ -3046,6 +4918,30 @@
       },
       {
         "values": {
+          "attributes": {
+            "List": [
+              {
+                "List": [
+                  {
+                    "String": "tier"
+                  },
+                  {
+                    "Integer": 4
+                  }
+                ]
+              },
+              {
+                "List": [
+                  {
+                    "String": "power"
+                  },
+                  {
+                    "Integer": 88
+                  }
+                ]
+              }
+            ]
+          },
           "id": {
             "Integer": 1077
           },
@@ -3085,6 +4981,30 @@
       },
       {
         "values": {
+          "attributes": {
+            "List": [
+              {
+                "List": [
+                  {
+                    "String": "tier"
+                  },
+                  {
+                    "Integer": 5
+                  }
+                ]
+              },
+              {
+                "List": [
+                  {
+                    "String": "power"
+                  },
+                  {
+                    "Integer": 89
+                  }
+                ]
+              }
+            ]
+          },
           "id": {
             "Integer": 1078
           },
@@ -3124,6 +5044,30 @@
       },
       {
         "values": {
+          "attributes": {
+            "List": [
+              {
+                "List": [
+                  {
+                    "String": "tier"
+                  },
+                  {
+                    "Integer": 1
+                  }
+                ]
+              },
+              {
+                "List": [
+                  {
+                    "String": "power"
+                  },
+                  {
+                    "Integer": 90
+                  }
+                ]
+              }
+            ]
+          },
           "id": {
             "Integer": 1079
           },
@@ -3163,6 +5107,30 @@
       },
       {
         "values": {
+          "attributes": {
+            "List": [
+              {
+                "List": [
+                  {
+                    "String": "tier"
+                  },
+                  {
+                    "Integer": 2
+                  }
+                ]
+              },
+              {
+                "List": [
+                  {
+                    "String": "power"
+                  },
+                  {
+                    "Integer": 91
+                  }
+                ]
+              }
+            ]
+          },
           "id": {
             "Integer": 1080
           },
@@ -3202,6 +5170,30 @@
       },
       {
         "values": {
+          "attributes": {
+            "List": [
+              {
+                "List": [
+                  {
+                    "String": "tier"
+                  },
+                  {
+                    "Integer": 3
+                  }
+                ]
+              },
+              {
+                "List": [
+                  {
+                    "String": "power"
+                  },
+                  {
+                    "Integer": 92
+                  }
+                ]
+              }
+            ]
+          },
           "id": {
             "Integer": 1081
           },
@@ -3241,6 +5233,30 @@
       },
       {
         "values": {
+          "attributes": {
+            "List": [
+              {
+                "List": [
+                  {
+                    "String": "tier"
+                  },
+                  {
+                    "Integer": 4
+                  }
+                ]
+              },
+              {
+                "List": [
+                  {
+                    "String": "power"
+                  },
+                  {
+                    "Integer": 93
+                  }
+                ]
+              }
+            ]
+          },
           "id": {
             "Integer": 1082
           },
@@ -3280,6 +5296,30 @@
       },
       {
         "values": {
+          "attributes": {
+            "List": [
+              {
+                "List": [
+                  {
+                    "String": "tier"
+                  },
+                  {
+                    "Integer": 5
+                  }
+                ]
+              },
+              {
+                "List": [
+                  {
+                    "String": "power"
+                  },
+                  {
+                    "Integer": 94
+                  }
+                ]
+              }
+            ]
+          },
           "id": {
             "Integer": 1083
           },
@@ -3319,6 +5359,30 @@
       },
       {
         "values": {
+          "attributes": {
+            "List": [
+              {
+                "List": [
+                  {
+                    "String": "tier"
+                  },
+                  {
+                    "Integer": 1
+                  }
+                ]
+              },
+              {
+                "List": [
+                  {
+                    "String": "power"
+                  },
+                  {
+                    "Integer": 95
+                  }
+                ]
+              }
+            ]
+          },
           "id": {
             "Integer": 1084
           },
@@ -3358,6 +5422,30 @@
       },
       {
         "values": {
+          "attributes": {
+            "List": [
+              {
+                "List": [
+                  {
+                    "String": "tier"
+                  },
+                  {
+                    "Integer": 2
+                  }
+                ]
+              },
+              {
+                "List": [
+                  {
+                    "String": "power"
+                  },
+                  {
+                    "Integer": 96
+                  }
+                ]
+              }
+            ]
+          },
           "id": {
             "Integer": 1085
           },
@@ -3397,6 +5485,30 @@
       },
       {
         "values": {
+          "attributes": {
+            "List": [
+              {
+                "List": [
+                  {
+                    "String": "tier"
+                  },
+                  {
+                    "Integer": 3
+                  }
+                ]
+              },
+              {
+                "List": [
+                  {
+                    "String": "power"
+                  },
+                  {
+                    "Integer": 97
+                  }
+                ]
+              }
+            ]
+          },
           "id": {
             "Integer": 1086
           },
@@ -3436,6 +5548,30 @@
       },
       {
         "values": {
+          "attributes": {
+            "List": [
+              {
+                "List": [
+                  {
+                    "String": "tier"
+                  },
+                  {
+                    "Integer": 4
+                  }
+                ]
+              },
+              {
+                "List": [
+                  {
+                    "String": "power"
+                  },
+                  {
+                    "Integer": 98
+                  }
+                ]
+              }
+            ]
+          },
           "id": {
             "Integer": 1087
           },
@@ -3475,6 +5611,30 @@
       },
       {
         "values": {
+          "attributes": {
+            "List": [
+              {
+                "List": [
+                  {
+                    "String": "tier"
+                  },
+                  {
+                    "Integer": 5
+                  }
+                ]
+              },
+              {
+                "List": [
+                  {
+                    "String": "power"
+                  },
+                  {
+                    "Integer": 99
+                  }
+                ]
+              }
+            ]
+          },
           "id": {
             "Integer": 1088
           },
@@ -3514,6 +5674,30 @@
       },
       {
         "values": {
+          "attributes": {
+            "List": [
+              {
+                "List": [
+                  {
+                    "String": "tier"
+                  },
+                  {
+                    "Integer": 1
+                  }
+                ]
+              },
+              {
+                "List": [
+                  {
+                    "String": "power"
+                  },
+                  {
+                    "Integer": 100
+                  }
+                ]
+              }
+            ]
+          },
           "id": {
             "Integer": 1089
           },
@@ -3553,6 +5737,30 @@
       },
       {
         "values": {
+          "attributes": {
+            "List": [
+              {
+                "List": [
+                  {
+                    "String": "tier"
+                  },
+                  {
+                    "Integer": 2
+                  }
+                ]
+              },
+              {
+                "List": [
+                  {
+                    "String": "power"
+                  },
+                  {
+                    "Integer": 101
+                  }
+                ]
+              }
+            ]
+          },
           "id": {
             "Integer": 1090
           },
@@ -3592,6 +5800,30 @@
       },
       {
         "values": {
+          "attributes": {
+            "List": [
+              {
+                "List": [
+                  {
+                    "String": "tier"
+                  },
+                  {
+                    "Integer": 3
+                  }
+                ]
+              },
+              {
+                "List": [
+                  {
+                    "String": "power"
+                  },
+                  {
+                    "Integer": 102
+                  }
+                ]
+              }
+            ]
+          },
           "id": {
             "Integer": 1091
           },
@@ -3631,6 +5863,30 @@
       },
       {
         "values": {
+          "attributes": {
+            "List": [
+              {
+                "List": [
+                  {
+                    "String": "tier"
+                  },
+                  {
+                    "Integer": 4
+                  }
+                ]
+              },
+              {
+                "List": [
+                  {
+                    "String": "power"
+                  },
+                  {
+                    "Integer": 103
+                  }
+                ]
+              }
+            ]
+          },
           "id": {
             "Integer": 1092
           },
@@ -3670,6 +5926,30 @@
       },
       {
         "values": {
+          "attributes": {
+            "List": [
+              {
+                "List": [
+                  {
+                    "String": "tier"
+                  },
+                  {
+                    "Integer": 5
+                  }
+                ]
+              },
+              {
+                "List": [
+                  {
+                    "String": "power"
+                  },
+                  {
+                    "Integer": 104
+                  }
+                ]
+              }
+            ]
+          },
           "id": {
             "Integer": 1093
           },
@@ -3709,6 +5989,30 @@
       },
       {
         "values": {
+          "attributes": {
+            "List": [
+              {
+                "List": [
+                  {
+                    "String": "tier"
+                  },
+                  {
+                    "Integer": 1
+                  }
+                ]
+              },
+              {
+                "List": [
+                  {
+                    "String": "power"
+                  },
+                  {
+                    "Integer": 105
+                  }
+                ]
+              }
+            ]
+          },
           "id": {
             "Integer": 1094
           },
@@ -3748,6 +6052,30 @@
       },
       {
         "values": {
+          "attributes": {
+            "List": [
+              {
+                "List": [
+                  {
+                    "String": "tier"
+                  },
+                  {
+                    "Integer": 2
+                  }
+                ]
+              },
+              {
+                "List": [
+                  {
+                    "String": "power"
+                  },
+                  {
+                    "Integer": 106
+                  }
+                ]
+              }
+            ]
+          },
           "id": {
             "Integer": 1095
           },
@@ -3787,6 +6115,30 @@
       },
       {
         "values": {
+          "attributes": {
+            "List": [
+              {
+                "List": [
+                  {
+                    "String": "tier"
+                  },
+                  {
+                    "Integer": 3
+                  }
+                ]
+              },
+              {
+                "List": [
+                  {
+                    "String": "power"
+                  },
+                  {
+                    "Integer": 107
+                  }
+                ]
+              }
+            ]
+          },
           "id": {
             "Integer": 1096
           },
@@ -3826,6 +6178,30 @@
       },
       {
         "values": {
+          "attributes": {
+            "List": [
+              {
+                "List": [
+                  {
+                    "String": "tier"
+                  },
+                  {
+                    "Integer": 4
+                  }
+                ]
+              },
+              {
+                "List": [
+                  {
+                    "String": "power"
+                  },
+                  {
+                    "Integer": 108
+                  }
+                ]
+              }
+            ]
+          },
           "id": {
             "Integer": 1097
           },
@@ -3865,6 +6241,30 @@
       },
       {
         "values": {
+          "attributes": {
+            "List": [
+              {
+                "List": [
+                  {
+                    "String": "tier"
+                  },
+                  {
+                    "Integer": 5
+                  }
+                ]
+              },
+              {
+                "List": [
+                  {
+                    "String": "power"
+                  },
+                  {
+                    "Integer": 109
+                  }
+                ]
+              }
+            ]
+          },
           "id": {
             "Integer": 1098
           },
@@ -3904,6 +6304,30 @@
       },
       {
         "values": {
+          "attributes": {
+            "List": [
+              {
+                "List": [
+                  {
+                    "String": "tier"
+                  },
+                  {
+                    "Integer": 1
+                  }
+                ]
+              },
+              {
+                "List": [
+                  {
+                    "String": "power"
+                  },
+                  {
+                    "Integer": 110
+                  }
+                ]
+              }
+            ]
+          },
           "id": {
             "Integer": 1099
           },
@@ -3943,6 +6367,30 @@
       },
       {
         "values": {
+          "attributes": {
+            "List": [
+              {
+                "List": [
+                  {
+                    "String": "tier"
+                  },
+                  {
+                    "Integer": 2
+                  }
+                ]
+              },
+              {
+                "List": [
+                  {
+                    "String": "power"
+                  },
+                  {
+                    "Integer": 111
+                  }
+                ]
+              }
+            ]
+          },
           "id": {
             "Integer": 1100
           },
@@ -3982,6 +6430,30 @@
       },
       {
         "values": {
+          "attributes": {
+            "List": [
+              {
+                "List": [
+                  {
+                    "String": "tier"
+                  },
+                  {
+                    "Integer": 3
+                  }
+                ]
+              },
+              {
+                "List": [
+                  {
+                    "String": "power"
+                  },
+                  {
+                    "Integer": 112
+                  }
+                ]
+              }
+            ]
+          },
           "id": {
             "Integer": 1101
           },
@@ -4021,6 +6493,30 @@
       },
       {
         "values": {
+          "attributes": {
+            "List": [
+              {
+                "List": [
+                  {
+                    "String": "tier"
+                  },
+                  {
+                    "Integer": 4
+                  }
+                ]
+              },
+              {
+                "List": [
+                  {
+                    "String": "power"
+                  },
+                  {
+                    "Integer": 113
+                  }
+                ]
+              }
+            ]
+          },
           "id": {
             "Integer": 1102
           },
@@ -4060,6 +6556,30 @@
       },
       {
         "values": {
+          "attributes": {
+            "List": [
+              {
+                "List": [
+                  {
+                    "String": "tier"
+                  },
+                  {
+                    "Integer": 5
+                  }
+                ]
+              },
+              {
+                "List": [
+                  {
+                    "String": "power"
+                  },
+                  {
+                    "Integer": 114
+                  }
+                ]
+              }
+            ]
+          },
           "id": {
             "Integer": 1103
           },
@@ -4099,6 +6619,30 @@
       },
       {
         "values": {
+          "attributes": {
+            "List": [
+              {
+                "List": [
+                  {
+                    "String": "tier"
+                  },
+                  {
+                    "Integer": 1
+                  }
+                ]
+              },
+              {
+                "List": [
+                  {
+                    "String": "power"
+                  },
+                  {
+                    "Integer": 115
+                  }
+                ]
+              }
+            ]
+          },
           "id": {
             "Integer": 1104
           },
@@ -4138,6 +6682,30 @@
       },
       {
         "values": {
+          "attributes": {
+            "List": [
+              {
+                "List": [
+                  {
+                    "String": "tier"
+                  },
+                  {
+                    "Integer": 2
+                  }
+                ]
+              },
+              {
+                "List": [
+                  {
+                    "String": "power"
+                  },
+                  {
+                    "Integer": 116
+                  }
+                ]
+              }
+            ]
+          },
           "id": {
             "Integer": 1105
           },
@@ -4177,6 +6745,30 @@
       },
       {
         "values": {
+          "attributes": {
+            "List": [
+              {
+                "List": [
+                  {
+                    "String": "tier"
+                  },
+                  {
+                    "Integer": 3
+                  }
+                ]
+              },
+              {
+                "List": [
+                  {
+                    "String": "power"
+                  },
+                  {
+                    "Integer": 117
+                  }
+                ]
+              }
+            ]
+          },
           "id": {
             "Integer": 1106
           },
@@ -4216,6 +6808,30 @@
       },
       {
         "values": {
+          "attributes": {
+            "List": [
+              {
+                "List": [
+                  {
+                    "String": "tier"
+                  },
+                  {
+                    "Integer": 4
+                  }
+                ]
+              },
+              {
+                "List": [
+                  {
+                    "String": "power"
+                  },
+                  {
+                    "Integer": 118
+                  }
+                ]
+              }
+            ]
+          },
           "id": {
             "Integer": 1107
           },
@@ -4255,6 +6871,30 @@
       },
       {
         "values": {
+          "attributes": {
+            "List": [
+              {
+                "List": [
+                  {
+                    "String": "tier"
+                  },
+                  {
+                    "Integer": 5
+                  }
+                ]
+              },
+              {
+                "List": [
+                  {
+                    "String": "power"
+                  },
+                  {
+                    "Integer": 119
+                  }
+                ]
+              }
+            ]
+          },
           "id": {
             "Integer": 1108
           },
@@ -4294,6 +6934,30 @@
       },
       {
         "values": {
+          "attributes": {
+            "List": [
+              {
+                "List": [
+                  {
+                    "String": "tier"
+                  },
+                  {
+                    "Integer": 1
+                  }
+                ]
+              },
+              {
+                "List": [
+                  {
+                    "String": "power"
+                  },
+                  {
+                    "Integer": 120
+                  }
+                ]
+              }
+            ]
+          },
           "id": {
             "Integer": 1109
           },
@@ -4333,6 +6997,30 @@
       },
       {
         "values": {
+          "attributes": {
+            "List": [
+              {
+                "List": [
+                  {
+                    "String": "tier"
+                  },
+                  {
+                    "Integer": 2
+                  }
+                ]
+              },
+              {
+                "List": [
+                  {
+                    "String": "power"
+                  },
+                  {
+                    "Integer": 121
+                  }
+                ]
+              }
+            ]
+          },
           "id": {
             "Integer": 1110
           },
@@ -4372,6 +7060,30 @@
       },
       {
         "values": {
+          "attributes": {
+            "List": [
+              {
+                "List": [
+                  {
+                    "String": "tier"
+                  },
+                  {
+                    "Integer": 3
+                  }
+                ]
+              },
+              {
+                "List": [
+                  {
+                    "String": "power"
+                  },
+                  {
+                    "Integer": 122
+                  }
+                ]
+              }
+            ]
+          },
           "id": {
             "Integer": 1111
           },
@@ -4411,6 +7123,30 @@
       },
       {
         "values": {
+          "attributes": {
+            "List": [
+              {
+                "List": [
+                  {
+                    "String": "tier"
+                  },
+                  {
+                    "Integer": 4
+                  }
+                ]
+              },
+              {
+                "List": [
+                  {
+                    "String": "power"
+                  },
+                  {
+                    "Integer": 123
+                  }
+                ]
+              }
+            ]
+          },
           "id": {
             "Integer": 1112
           },
@@ -4450,6 +7186,30 @@
       },
       {
         "values": {
+          "attributes": {
+            "List": [
+              {
+                "List": [
+                  {
+                    "String": "tier"
+                  },
+                  {
+                    "Integer": 5
+                  }
+                ]
+              },
+              {
+                "List": [
+                  {
+                    "String": "power"
+                  },
+                  {
+                    "Integer": 124
+                  }
+                ]
+              }
+            ]
+          },
           "id": {
             "Integer": 1113
           },
@@ -4489,6 +7249,30 @@
       },
       {
         "values": {
+          "attributes": {
+            "List": [
+              {
+                "List": [
+                  {
+                    "String": "tier"
+                  },
+                  {
+                    "Integer": 1
+                  }
+                ]
+              },
+              {
+                "List": [
+                  {
+                    "String": "power"
+                  },
+                  {
+                    "Integer": 125
+                  }
+                ]
+              }
+            ]
+          },
           "id": {
             "Integer": 1114
           },
@@ -4528,6 +7312,30 @@
       },
       {
         "values": {
+          "attributes": {
+            "List": [
+              {
+                "List": [
+                  {
+                    "String": "tier"
+                  },
+                  {
+                    "Integer": 2
+                  }
+                ]
+              },
+              {
+                "List": [
+                  {
+                    "String": "power"
+                  },
+                  {
+                    "Integer": 126
+                  }
+                ]
+              }
+            ]
+          },
           "id": {
             "Integer": 1115
           },
@@ -4567,6 +7375,30 @@
       },
       {
         "values": {
+          "attributes": {
+            "List": [
+              {
+                "List": [
+                  {
+                    "String": "tier"
+                  },
+                  {
+                    "Integer": 3
+                  }
+                ]
+              },
+              {
+                "List": [
+                  {
+                    "String": "power"
+                  },
+                  {
+                    "Integer": 127
+                  }
+                ]
+              }
+            ]
+          },
           "id": {
             "Integer": 1116
           },
@@ -4606,6 +7438,30 @@
       },
       {
         "values": {
+          "attributes": {
+            "List": [
+              {
+                "List": [
+                  {
+                    "String": "tier"
+                  },
+                  {
+                    "Integer": 4
+                  }
+                ]
+              },
+              {
+                "List": [
+                  {
+                    "String": "power"
+                  },
+                  {
+                    "Integer": 128
+                  }
+                ]
+              }
+            ]
+          },
           "id": {
             "Integer": 1117
           },
@@ -4645,6 +7501,30 @@
       },
       {
         "values": {
+          "attributes": {
+            "List": [
+              {
+                "List": [
+                  {
+                    "String": "tier"
+                  },
+                  {
+                    "Integer": 5
+                  }
+                ]
+              },
+              {
+                "List": [
+                  {
+                    "String": "power"
+                  },
+                  {
+                    "Integer": 129
+                  }
+                ]
+              }
+            ]
+          },
           "id": {
             "Integer": 1118
           },
@@ -4684,6 +7564,30 @@
       },
       {
         "values": {
+          "attributes": {
+            "List": [
+              {
+                "List": [
+                  {
+                    "String": "tier"
+                  },
+                  {
+                    "Integer": 1
+                  }
+                ]
+              },
+              {
+                "List": [
+                  {
+                    "String": "power"
+                  },
+                  {
+                    "Integer": 130
+                  }
+                ]
+              }
+            ]
+          },
           "id": {
             "Integer": 1119
           },
@@ -4723,6 +7627,30 @@
       },
       {
         "values": {
+          "attributes": {
+            "List": [
+              {
+                "List": [
+                  {
+                    "String": "tier"
+                  },
+                  {
+                    "Integer": 2
+                  }
+                ]
+              },
+              {
+                "List": [
+                  {
+                    "String": "power"
+                  },
+                  {
+                    "Integer": 131
+                  }
+                ]
+              }
+            ]
+          },
           "id": {
             "Integer": 1120
           },
