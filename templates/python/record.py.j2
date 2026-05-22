@@ -9,6 +9,9 @@ from .sora_runtime import SoraReader{% if runtime_format != "sora" %}, SoraValue
 {%- if record.table %}
 from .sora_runtime import (
     SoraConfigTable,
+    SoraIndexInfo,
+    SoraKeyInfo,
+    SoraTableInfo,
     decode_index,
     decode_map_table,
     decode_unique_index,
@@ -77,6 +80,30 @@ class {{ record.pascal_name }}:
 
 class {{ table.pascal_name }}Table(SoraConfigTable):
     NAME = "{{ table.name }}"
+    INFO = SoraTableInfo(
+        name=NAME,
+        row_type="{{ table.row_type }}",
+{%- if table.mode == "map" %}
+        shape="keyed",
+{%- elif table.mode == "singleton" %}
+        shape="singleton",
+{%- else %}
+        shape="list",
+{%- endif %}
+{%- if table.key_name %}
+        primary_key=SoraKeyInfo("{{ table.key_name }}", "{{ table.key_type }}"),
+{%- else %}
+        primary_key=None,
+{%- endif %}
+        indexes=(
+{%- for index in table.unique_indexes %}
+            SoraIndexInfo("{{ index.name }}", True, ("{{ index.field_name }}",)),
+{%- endfor %}
+{%- for index in table.non_unique_indexes %}
+            SoraIndexInfo("{{ index.name }}", False, ("{{ index.field_name }}",)),
+{%- endfor %}
+        ),
+    )
 
     def __init__(
         self,
@@ -139,18 +166,8 @@ class {{ table.pascal_name }}Table(SoraConfigTable):
         )
 {%- endif %}
 
-    def name(self) -> str:
-        return self.NAME
-
-    def mode(self) -> str:
-        return "{{ table.mode }}"
-
-    def key(self) -> str | None:
-{%- if table.key_name %}
-        return "{{ table.key_name }}"
-{%- else %}
-        return None
-{%- endif %}
+    def info(self) -> SoraTableInfo:
+        return self.INFO
 
     def len(self) -> int:
 {%- if table.mode == "singleton" %}

@@ -46,21 +46,32 @@ data class Item(
 }
 
 class ItemTable private constructor(
-    val orderedKeys: List<Int>,
+    override val orderedKeys: List<Int>,
     val rows: Map<Int, Item>,
     private val nameIndex: Map<String, Item>,
     private val itemTypeIndex: Map<ItemType, List<Item>>,
-) : SoraTable, Map<Int, Item> by rows {
-    fun orderedValues(): List<Item> = orderedKeys.mapNotNull { rows[it] }
+) : SoraKeyedTable<Int, Item>, Map<Int, Item> by rows {
+    override fun orderedValues(): List<Item> = orderedKeys.mapNotNull { rows[it] }
     fun getByName(name: String): Item? = nameIndex[name]
     fun findByItemType(itemType: ItemType): List<Item> = itemTypeIndex[itemType].orEmpty()
-    override val name: String = NAME
-    override val mode: SoraTableMode = SoraTableMode.Map
-    override val key: String? = "id"
+    override val info: SoraTableInfo
+        get() = INFO
     override val size: Int
         get() = rows.size
 
     companion object {
+        const val NAME: String = "Item"
+        val INFO: SoraTableInfo = SoraTableInfo(
+            name = NAME,
+            rowType = "Item",
+            shape = SoraTableShape.Keyed,
+            primaryKey = SoraKeyInfo("id", "Int"),
+            indexes = listOf(
+                SoraIndexInfo("name", true, listOf("name")),
+                SoraIndexInfo("itemType", false, listOf("itemType")),
+            ),
+        )
+
         fun decode(source: SoraTableSource): ItemTable =
             fromRows(source.decodeTable(NAME, Item::decode, Item::decode))
 
@@ -71,7 +82,5 @@ class ItemTable private constructor(
                 rows.associateBy { it.name },
                 rows.groupBy { it.itemType },
             )
-
-        const val NAME: String = "Item"
     }
 }

@@ -36,6 +36,14 @@ export function decodeQuestValue(value) {
 
 export class QuestTable {
     static tableName = "Quest";
+    static tableInfo = {
+        name: QuestTable.tableName,
+        rowType: "Quest",
+        shape: "keyed",
+        primaryKey: { name: "id", type: "number" },
+        indexes: [
+        ],
+    };
 
     constructor(
         keys,
@@ -52,16 +60,8 @@ export class QuestTable {
         );
     }
 
-    name() {
-        return QuestTable.tableName;
-    }
-
-    mode() {
-        return "map";
-    }
-
-    key() {
-        return "id";
+    info() {
+        return QuestTable.tableInfo;
     }
 
     len() {

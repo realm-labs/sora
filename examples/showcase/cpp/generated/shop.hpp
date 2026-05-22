@@ -28,6 +28,15 @@ struct Shop {
 class ShopTable final : public SoraTable {
 public:
     static constexpr const char* NAME = "Shop";
+    static const SoraTableInfo& table_info() {
+        static const SoraTableInfo info = {
+            NAME,
+            "Shop",
+            "keyed",
+            "id"
+        };
+        return info;
+    }
 
     ShopTable() {}
     ShopTable(const ShopTable&) = delete;
@@ -47,9 +56,7 @@ public:
         return table;
     }
 
-    const char* name() const override { return NAME; }
-    const char* mode() const override { return "map"; }
-    const char* key() const override { return "id"; }
+    const SoraTableInfo& info() const override { return table_info(); }
     std::size_t size() const override {
         return rows_.size();
     }

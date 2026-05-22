@@ -25,6 +25,14 @@ end
 local ShopTable = {}
 ShopTable.__index = ShopTable
 ShopTable.NAME = "Shop"
+ShopTable.INFO = {
+    name = ShopTable.NAME,
+    row_type = "Shop",
+    shape = "keyed",
+    primary_key = { name = "id", type = "integer" },
+    indexes = {
+    },
+}
 
 ---@param rows Shop[]
 ---@return ShopTable
@@ -39,19 +47,9 @@ function ShopTable.decode(rows)
     }, ShopTable)
 end
 
----@return string
-function ShopTable:name()
-    return ShopTable.NAME
-end
-
----@return string
-function ShopTable:mode()
-    return "map"
-end
-
----@return string?
-function ShopTable:key()
-    return "id"
+---@return table
+function ShopTable:info()
+    return ShopTable.INFO
 end
 
 ---@return integer

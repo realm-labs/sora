@@ -33,6 +33,13 @@ pub struct GachaItemTable {
 
 impl GachaItemTable {
     pub const NAME: &'static str = "GachaItem";
+    pub const INFO: super::SoraTableInfo = super::SoraTableInfo {
+        name: Self::NAME,
+        row_type: "GachaItem",
+        shape: super::SoraTableShape::List,
+        primary_key: None,
+        indexes: &[],
+    };
 
     pub(super) fn from_rows(rows: Vec<GachaItem>) -> Result<Self, super::runtime::SoraReadError> {
         Ok(Self { rows })
@@ -40,27 +47,27 @@ impl GachaItemTable {
 }
 
 impl std::ops::Deref for GachaItemTable {
-    type Target = Vec<GachaItem>;
+    type Target = [GachaItem];
 
     fn deref(&self) -> &Self::Target {
         &self.rows
     }
 }
 
-impl super::SoraTable for GachaItemTable {
-    fn name(&self) -> &'static str {
-        Self::NAME
-    }
-
-    fn mode(&self) -> super::SoraTableMode {
-        super::SoraTableMode::List
-    }
-
-    fn key(&self) -> Option<&'static str> {
-        None
+impl super::ErasedSoraTable for GachaItemTable {
+    fn info(&self) -> &'static super::SoraTableInfo {
+        &Self::INFO
     }
 
     fn len(&self) -> usize {
         self.rows.len()
+    }
+}
+
+impl super::SoraListTable for GachaItemTable {
+    type Row = GachaItem;
+
+    fn as_slice(&self) -> &[Self::Row] {
+        &self.rows
     }
 }

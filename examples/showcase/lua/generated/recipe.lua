@@ -25,6 +25,14 @@ end
 local RecipeTable = {}
 RecipeTable.__index = RecipeTable
 RecipeTable.NAME = "Recipe"
+RecipeTable.INFO = {
+    name = RecipeTable.NAME,
+    row_type = "Recipe",
+    shape = "keyed",
+    primary_key = { name = "id", type = "integer" },
+    indexes = {
+    },
+}
 
 ---@param rows Recipe[]
 ---@return RecipeTable
@@ -39,19 +47,9 @@ function RecipeTable.decode(rows)
     }, RecipeTable)
 end
 
----@return string
-function RecipeTable:name()
-    return RecipeTable.NAME
-end
-
----@return string
-function RecipeTable:mode()
-    return "map"
-end
-
----@return string?
-function RecipeTable:key()
-    return "id"
+---@return table
+function RecipeTable:info()
+    return RecipeTable.INFO
 end
 
 ---@return integer

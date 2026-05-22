@@ -39,9 +39,18 @@ public sealed record DropEntry(
     }
 }
 
-public sealed class DropEntryTable : ISoraTable, IReadOnlyList<DropEntry>
+public sealed class DropEntryTable : ISoraListTable<DropEntry>
 {
     public const string TableName = "DropEntry";
+    public static readonly SoraTableInfo TableInfo = new(
+        TableName,
+        "DropEntry",
+        SoraTableShape.List,
+        null,
+        new SoraIndexInfo[]
+        {
+        }
+    );
     private readonly List<DropEntry> rows;
 
     internal DropEntryTable(List<DropEntry> rows)
@@ -71,8 +80,6 @@ public sealed class DropEntryTable : ISoraTable, IReadOnlyList<DropEntry>
     {
         return GetEnumerator();
     }
-    public string Name => TableName;
-    public SoraTableMode Mode => SoraTableMode.List;
-    public string? Key => null;
+    public SoraTableInfo Info => TableInfo;
     public int Count => rows.Count;
 }

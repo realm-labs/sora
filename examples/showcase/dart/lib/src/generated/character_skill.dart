@@ -23,8 +23,16 @@ final class CharacterSkill {
   }
 }
 
-final class CharacterSkillTable extends Iterable<CharacterSkill> implements SoraConfigTable {
+final class CharacterSkillTable extends Iterable<CharacterSkill> implements SoraListTable<CharacterSkill> {
   static const tableName = 'CharacterSkill';
+  static const tableInfo = SoraTableInfo(
+    name: tableName,
+    rowType: 'CharacterSkill',
+    shape: SoraTableShape.list,
+    primaryKey: null,
+    indexes: [
+    ],
+  );
   final List<CharacterSkill> _rows;
 
   const CharacterSkillTable(
@@ -38,13 +46,7 @@ final class CharacterSkillTable extends Iterable<CharacterSkill> implements Sora
   }
 
   @override
-  String get name => tableName;
-
-  @override
-  String get mode => 'list';
-
-  @override
-  String? get key => null;
+  SoraTableInfo get info => tableInfo;
 
   @override
   int get length => _rows.length;

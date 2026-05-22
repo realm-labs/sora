@@ -34,18 +34,22 @@ data class {{ record.pascal_name }}(
 
 class {{ table.pascal_name }}Table private constructor(
 {%- if table.mode == "map" and table.key_field_name %}
-    val orderedKeys: List<{{ table.key_type }}>,
+    override val orderedKeys: List<{{ table.key_type }}>,
 {%- endif %}
+{%- if table.mode == "list" %}
+    override val rows: {{ table.container_type }},
+{%- else %}
     val rows: {{ table.container_type }},
+{%- endif %}
 {%- for index in table.unique_indexes %}
     private val {{ index.param_camel_name }}Index: Map<{{ index.key_type }}, {{ table.row_type }}>,
 {%- endfor %}
 {%- for index in table.non_unique_indexes %}
     private val {{ index.param_camel_name }}Index: Map<{{ index.key_type }}, List<{{ table.row_type }}>>,
 {%- endfor %}
-) : {% if table.mode == "list" %}AbstractList<{{ table.row_type }}>(), SoraTable{% else %}SoraTable{% if table.mode == "map" and table.key_field_name %}, Map<{{ table.key_type }}, {{ table.row_type }}> by rows{% endif %}{% endif %} {
+) : {% if table.mode == "list" %}AbstractList<{{ table.row_type }}>(), SoraListTable<{{ table.row_type }}>{% elif table.mode == "map" and table.key_field_name %}SoraKeyedTable<{{ table.key_type }}, {{ table.row_type }}>, Map<{{ table.key_type }}, {{ table.row_type }}> by rows{% elif table.mode == "singleton" %}SoraSingleTable<{{ table.row_type }}>{% else %}SoraListTable<{{ table.row_type }}>{% endif %} {
 {%- if table.mode == "map" and table.key_field_name %}
-    fun orderedValues(): List<{{ table.row_type }}> = orderedKeys.mapNotNull { rows[it] }
+    override fun orderedValues(): List<{{ table.row_type }}> = orderedKeys.mapNotNull { rows[it] }
 
 {%- elif table.mode == "list" %}
     override fun get(index: Int): {{ table.row_type }} = rows[index]
@@ -53,7 +57,8 @@ class {{ table.pascal_name }}Table private constructor(
     fun values(): List<{{ table.row_type }}> = rows
 
 {%- elif table.mode == "singleton" %}
-    fun value(): {{ table.row_type }} = rows
+    override val row: {{ table.row_type }}
+        get() = rows
 
 {%- endif %}
 {%- for index in table.unique_indexes %}
@@ -64,19 +69,8 @@ class {{ table.pascal_name }}Table private constructor(
     fun find{{ index.pascal_name }}({{ index.param_camel_name }}: {{ index.key_type }}): List<{{ table.row_type }}> = {{ index.param_camel_name }}Index[{{ index.param_camel_name }}].orEmpty()
 
 {%- endfor %}
-    override val name: String = NAME
-{%- if table.mode == "map" %}
-    override val mode: SoraTableMode = SoraTableMode.Map
-{%- elif table.mode == "singleton" %}
-    override val mode: SoraTableMode = SoraTableMode.Singleton
-{%- else %}
-    override val mode: SoraTableMode = SoraTableMode.List
-{%- endif %}
-{%- if table.key_name %}
-    override val key: String? = "{{ table.key_name }}"
-{%- else %}
-    override val key: String? = null
-{%- endif %}
+    override val info: SoraTableInfo
+        get() = INFO
 {%- if table.mode == "singleton" %}
     override val size: Int = 1
 {%- else %}
@@ -85,6 +79,32 @@ class {{ table.pascal_name }}Table private constructor(
 {%- endif %}
 
     companion object {
+        const val NAME: String = "{{ table.name }}"
+        val INFO: SoraTableInfo = SoraTableInfo(
+            name = NAME,
+            rowType = "{{ table.row_type }}",
+{%- if table.mode == "map" %}
+            shape = SoraTableShape.Keyed,
+{%- elif table.mode == "singleton" %}
+            shape = SoraTableShape.Singleton,
+{%- else %}
+            shape = SoraTableShape.List,
+{%- endif %}
+{%- if table.key_name %}
+            primaryKey = SoraKeyInfo("{{ table.key_name }}", "{{ table.key_type }}"),
+{%- else %}
+            primaryKey = null,
+{%- endif %}
+            indexes = listOf(
+{%- for index in table.unique_indexes %}
+                SoraIndexInfo("{{ index.param_camel_name }}", true, listOf("{{ index.field_name }}")),
+{%- endfor %}
+{%- for index in table.non_unique_indexes %}
+                SoraIndexInfo("{{ index.param_camel_name }}", false, listOf("{{ index.field_name }}")),
+{%- endfor %}
+            ),
+        )
+
         fun decode(source: SoraTableSource): {{ table.pascal_name }}Table =
             fromRows(source.decodeTable(NAME, {{ table.row_type }}::decode, {{ table.row_type }}::decode))
 
@@ -121,8 +141,6 @@ class {{ table.pascal_name }}Table private constructor(
 {%- endfor %}
             )
 {%- endif %}
-
-        const val NAME: String = "{{ table.name }}"
     }
 }
 {%- endif %}

@@ -34,6 +34,16 @@ pub struct LocalizationTable {
 
 impl LocalizationTable {
     pub const NAME: &'static str = "Localization";
+    pub const INFO: super::SoraTableInfo = super::SoraTableInfo {
+        name: Self::NAME,
+        row_type: "Localization",
+        shape: super::SoraTableShape::Keyed,
+        primary_key: Some(super::SoraKeyInfo {
+            name: "key",
+            ty: "std::sync::Arc<str>",
+        }),
+        indexes: &[],
+    };
 
     pub(super) fn from_rows(
         rows: Vec<Localization>,
@@ -44,6 +54,7 @@ impl LocalizationTable {
             rows: super::decode_map_table(rows, |row| row.key.clone()),
         })
     }
+
     pub fn get(&self, key: &str) -> Option<&Localization> {
         self.rows.get(key)
     }
@@ -65,20 +76,25 @@ impl std::ops::Deref for LocalizationTable {
     }
 }
 
-impl super::SoraTable for LocalizationTable {
-    fn name(&self) -> &'static str {
-        Self::NAME
-    }
-
-    fn mode(&self) -> super::SoraTableMode {
-        super::SoraTableMode::Map
-    }
-
-    fn key(&self) -> Option<&'static str> {
-        Some("key")
+impl super::ErasedSoraTable for LocalizationTable {
+    fn info(&self) -> &'static super::SoraTableInfo {
+        &Self::INFO
     }
 
     fn len(&self) -> usize {
         self.rows.len()
+    }
+}
+
+impl super::SoraKeyedTable for LocalizationTable {
+    type Key = std::sync::Arc<str>;
+    type Row = Localization;
+
+    fn get(&self, key: &Self::Key) -> Option<&Self::Row> {
+        self.rows.get(key)
+    }
+
+    fn keys(&self) -> &[Self::Key] {
+        &self.keys
     }
 }

@@ -27,6 +27,13 @@ export function decodeQuestRewardValue(value) {
 
 export class QuestRewardTable {
     static tableName = "QuestReward";
+    static tableInfo = {
+        name: QuestRewardTable.tableName,
+        rowType: "QuestReward",
+        shape: "list",
+        indexes: [
+        ],
+    };
 
     constructor(
         rows,
@@ -40,16 +47,8 @@ export class QuestRewardTable {
         );
     }
 
-    name() {
-        return QuestRewardTable.tableName;
-    }
-
-    mode() {
-        return "list";
-    }
-
-    key() {
-        return undefined;
+    info() {
+        return QuestRewardTable.tableInfo;
     }
 
     len() {

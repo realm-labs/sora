@@ -33,18 +33,27 @@ data class DropEntry(
 }
 
 class DropEntryTable private constructor(
-    val rows: List<DropEntry>,
-) : AbstractList<DropEntry>(), SoraTable {
+    override val rows: List<DropEntry>,
+) : AbstractList<DropEntry>(), SoraListTable<DropEntry> {
     override fun get(index: Int): DropEntry = rows[index]
 
     fun values(): List<DropEntry> = rows
-    override val name: String = NAME
-    override val mode: SoraTableMode = SoraTableMode.List
-    override val key: String? = null
+    override val info: SoraTableInfo
+        get() = INFO
     override val size: Int
         get() = rows.size
 
     companion object {
+        const val NAME: String = "DropEntry"
+        val INFO: SoraTableInfo = SoraTableInfo(
+            name = NAME,
+            rowType = "DropEntry",
+            shape = SoraTableShape.List,
+            primaryKey = null,
+            indexes = listOf(
+            ),
+        )
+
         fun decode(source: SoraTableSource): DropEntryTable =
             fromRows(source.decodeTable(NAME, DropEntry::decode, DropEntry::decode))
 
@@ -52,7 +61,5 @@ class DropEntryTable private constructor(
             DropEntryTable(
                 rows,
             )
-
-        const val NAME: String = "DropEntry"
     }
 }

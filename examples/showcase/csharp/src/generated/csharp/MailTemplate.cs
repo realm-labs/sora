@@ -39,9 +39,18 @@ public sealed record MailTemplate(
     }
 }
 
-public sealed class MailTemplateTable : ISoraTable, IReadOnlyDictionary<int, MailTemplate>
+public sealed class MailTemplateTable : ISoraKeyedTable<int, MailTemplate>
 {
     public const string TableName = "MailTemplate";
+    public static readonly SoraTableInfo TableInfo = new(
+        TableName,
+        "MailTemplate",
+        SoraTableShape.Keyed,
+        new SoraKeyInfo("id", "int"),
+        new SoraIndexInfo[]
+        {
+        }
+    );
     private readonly List<int> keys;
     private readonly Dictionary<int, MailTemplate> rows;
 
@@ -116,8 +125,6 @@ public sealed class MailTemplateTable : ISoraTable, IReadOnlyDictionary<int, Mai
             return orderedRows;
         }
     }
-    public string Name => TableName;
-    public SoraTableMode Mode => SoraTableMode.Map;
-    public string? Key => "id";
+    public SoraTableInfo Info => TableInfo;
     public int Count => rows.Count;
 }

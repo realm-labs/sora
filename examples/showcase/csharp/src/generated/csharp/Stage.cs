@@ -39,9 +39,18 @@ public sealed record Stage(
     }
 }
 
-public sealed class StageTable : ISoraTable, IReadOnlyDictionary<int, Stage>
+public sealed class StageTable : ISoraKeyedTable<int, Stage>
 {
     public const string TableName = "Stage";
+    public static readonly SoraTableInfo TableInfo = new(
+        TableName,
+        "Stage",
+        SoraTableShape.Keyed,
+        new SoraKeyInfo("id", "int"),
+        new SoraIndexInfo[]
+        {
+        }
+    );
     private readonly List<int> keys;
     private readonly Dictionary<int, Stage> rows;
 
@@ -116,8 +125,6 @@ public sealed class StageTable : ISoraTable, IReadOnlyDictionary<int, Stage>
             return orderedRows;
         }
     }
-    public string Name => TableName;
-    public SoraTableMode Mode => SoraTableMode.Map;
-    public string? Key => "id";
+    public SoraTableInfo Info => TableInfo;
     public int Count => rows.Count;
 }

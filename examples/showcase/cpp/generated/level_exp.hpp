@@ -27,6 +27,15 @@ struct LevelExp {
 class LevelExpTable final : public SoraTable {
 public:
     static constexpr const char* NAME = "LevelExp";
+    static const SoraTableInfo& table_info() {
+        static const SoraTableInfo info = {
+            NAME,
+            "LevelExp",
+            "keyed",
+            "level"
+        };
+        return info;
+    }
 
     LevelExpTable() {}
     LevelExpTable(const LevelExpTable&) = delete;
@@ -46,9 +55,7 @@ public:
         return table;
     }
 
-    const char* name() const override { return NAME; }
-    const char* mode() const override { return "map"; }
-    const char* key() const override { return "level"; }
+    const SoraTableInfo& info() const override { return table_info(); }
     std::size_t size() const override {
         return rows_.size();
     }

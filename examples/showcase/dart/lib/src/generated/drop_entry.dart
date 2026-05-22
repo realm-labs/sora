@@ -26,8 +26,16 @@ final class DropEntry {
   }
 }
 
-final class DropEntryTable extends Iterable<DropEntry> implements SoraConfigTable {
+final class DropEntryTable extends Iterable<DropEntry> implements SoraListTable<DropEntry> {
   static const tableName = 'DropEntry';
+  static const tableInfo = SoraTableInfo(
+    name: tableName,
+    rowType: 'DropEntry',
+    shape: SoraTableShape.list,
+    primaryKey: null,
+    indexes: [
+    ],
+  );
   final List<DropEntry> _rows;
 
   const DropEntryTable(
@@ -41,13 +49,7 @@ final class DropEntryTable extends Iterable<DropEntry> implements SoraConfigTabl
   }
 
   @override
-  String get name => tableName;
-
-  @override
-  String get mode => 'list';
-
-  @override
-  String? get key => null;
+  SoraTableInfo get info => tableInfo;
 
   @override
   int get length => _rows.length;

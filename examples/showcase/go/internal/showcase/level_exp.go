@@ -49,6 +49,14 @@ func decodeLevelExpValue(input SoraValue) (LevelExp, error) {
 
 const levelExpTableName = "LevelExp"
 
+var levelExpTableInfo = SoraTableInfo{
+	Name:       levelExpTableName,
+	RowType:    "LevelExp",
+	Shape:      SoraTableShapeKeyed,
+	PrimaryKey: &SoraKeyInfo{Name: "level", Type: "int32"},
+	Indexes:    []SoraIndexInfo{},
+}
+
 type LevelExpTable struct {
 	keys []int32
 	rows map[int32]LevelExp
@@ -91,16 +99,8 @@ func (table *LevelExpTable) OrderedRows() []LevelExp {
 	}
 	return rows
 }
-func (table *LevelExpTable) Name() string {
-	return levelExpTableName
-}
-
-func (table *LevelExpTable) Mode() SoraTableMode {
-	return SoraTableModeMap
-}
-
-func (table *LevelExpTable) Key() string {
-	return "level"
+func (table *LevelExpTable) Info() SoraTableInfo {
+	return levelExpTableInfo
 }
 
 func (table *LevelExpTable) Len() int {

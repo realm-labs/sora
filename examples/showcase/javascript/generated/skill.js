@@ -39,6 +39,14 @@ export function decodeSkillValue(value) {
 
 export class SkillTable {
     static tableName = "Skill";
+    static tableInfo = {
+        name: SkillTable.tableName,
+        rowType: "Skill",
+        shape: "keyed",
+        primaryKey: { name: "id", type: "number" },
+        indexes: [
+        ],
+    };
 
     constructor(
         keys,
@@ -55,16 +63,8 @@ export class SkillTable {
         );
     }
 
-    name() {
-        return SkillTable.tableName;
-    }
-
-    mode() {
-        return "map";
-    }
-
-    key() {
-        return "id";
+    info() {
+        return SkillTable.tableInfo;
     }
 
     len() {

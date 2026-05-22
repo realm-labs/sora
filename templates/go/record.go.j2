@@ -43,6 +43,29 @@ func decode{{ record.pascal_name }}Value(input SoraValue) ({{ record.pascal_name
 
 const {{ table.camel_name }}TableName = "{{ table.name }}"
 
+var {{ table.camel_name }}TableInfo = SoraTableInfo{
+    Name: {{ table.camel_name }}TableName,
+    RowType: "{{ table.row_type }}",
+{%- if table.mode == "map" %}
+    Shape: SoraTableShapeKeyed,
+{%- elif table.mode == "singleton" %}
+    Shape: SoraTableShapeSingleton,
+{%- else %}
+    Shape: SoraTableShapeList,
+{%- endif %}
+{%- if table.key_name %}
+    PrimaryKey: &SoraKeyInfo{Name: "{{ table.key_name }}", Type: "{{ table.key_type }}"},
+{%- endif %}
+    Indexes: []SoraIndexInfo{
+{%- for index in table.unique_indexes %}
+        {Name: "{{ index.camel_name }}", Unique: true, Fields: []string{"{{ index.field_name }}"}},
+{%- endfor %}
+{%- for index in table.non_unique_indexes %}
+        {Name: "{{ index.camel_name }}", Unique: false, Fields: []string{"{{ index.field_name }}"}},
+{%- endfor %}
+    },
+}
+
 type {{ table.pascal_name }}Table struct {
 {%- if table.mode == "map" and table.key_field_name %}
     keys []{{ table.key_type }}
@@ -110,6 +133,12 @@ func decode{{ table.pascal_name }}Table(source SoraTableSource) (*{{ table.pasca
 func (table *{{ table.pascal_name }}Table) Rows() {{ table.container_type }} {
     return table.rows
 }
+{%- if table.mode == "singleton" %}
+func (table *{{ table.pascal_name }}Table) Row() {{ table.row_type }} {
+    return table.rows
+}
+
+{%- endif %}
 
 {%- if table.mode == "map" and table.key_field_name %}
 func (table *{{ table.pascal_name }}Table) Get(key {{ table.key_type }}) ({{ table.row_type }}, bool) {
@@ -145,26 +174,8 @@ func (table *{{ table.pascal_name }}Table) Find{{ index.pascal_name }}({{ index.
 }
 
 {%- endfor %}
-func (table *{{ table.pascal_name }}Table) Name() string {
-    return {{ table.camel_name }}TableName
-}
-
-func (table *{{ table.pascal_name }}Table) Mode() SoraTableMode {
-{%- if table.mode == "map" %}
-    return SoraTableModeMap
-{%- elif table.mode == "singleton" %}
-    return SoraTableModeSingleton
-{%- else %}
-    return SoraTableModeList
-{%- endif %}
-}
-
-func (table *{{ table.pascal_name }}Table) Key() string {
-{%- if table.key_name %}
-    return "{{ table.key_name }}"
-{%- else %}
-    return ""
-{%- endif %}
+func (table *{{ table.pascal_name }}Table) Info() SoraTableInfo {
+    return {{ table.camel_name }}TableInfo
 }
 
 func (table *{{ table.pascal_name }}Table) Len() int {

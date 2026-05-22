@@ -26,6 +26,14 @@ end
 local LocalizationTable = {}
 LocalizationTable.__index = LocalizationTable
 LocalizationTable.NAME = "Localization"
+LocalizationTable.INFO = {
+    name = LocalizationTable.NAME,
+    row_type = "Localization",
+    shape = "keyed",
+    primary_key = { name = "key", type = "string" },
+    indexes = {
+    },
+}
 
 ---@param rows Localization[]
 ---@return LocalizationTable
@@ -40,19 +48,9 @@ function LocalizationTable.decode(rows)
     }, LocalizationTable)
 end
 
----@return string
-function LocalizationTable:name()
-    return LocalizationTable.NAME
-end
-
----@return string
-function LocalizationTable:mode()
-    return "map"
-end
-
----@return string?
-function LocalizationTable:key()
-    return "key"
+---@return table
+function LocalizationTable:info()
+    return LocalizationTable.INFO
 end
 
 ---@return integer

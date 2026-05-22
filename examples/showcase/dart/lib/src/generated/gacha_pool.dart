@@ -24,8 +24,16 @@ final class GachaPool {
   }
 }
 
-final class GachaPoolTable extends Iterable<GachaPool> implements SoraConfigTable {
+final class GachaPoolTable extends Iterable<GachaPool> implements SoraKeyedTable<int, GachaPool> {
   static const tableName = 'GachaPool';
+  static const tableInfo = SoraTableInfo(
+    name: tableName,
+    rowType: 'GachaPool',
+    shape: SoraTableShape.keyed,
+    primaryKey: SoraKeyInfo('id', 'int'),
+    indexes: [
+    ],
+  );
   final List<int> _keys;
   final Map<int, GachaPool> _rows;
 
@@ -42,13 +50,7 @@ final class GachaPoolTable extends Iterable<GachaPool> implements SoraConfigTabl
   }
 
   @override
-  String get name => tableName;
-
-  @override
-  String get mode => 'map';
-
-  @override
-  String? get key => 'id';
+  SoraTableInfo get info => tableInfo;
 
   @override
   int get length => _rows.length;
@@ -57,13 +59,7 @@ final class GachaPoolTable extends Iterable<GachaPool> implements SoraConfigTabl
   Iterator<GachaPool> get iterator => _rows.values.iterator;
   GachaPool? operator [](int key) => _rows[key];
 
-  GachaPool get(int key) {
-    final row = _rows[key];
-    if (row == null) {
-      throw SoraReadException('missing row in table `$tableName` for key `$key`');
-    }
-    return row;
-  }
+  GachaPool? get(int key) => _rows[key];
 
   Map<int, GachaPool> get rows => _rows;
 

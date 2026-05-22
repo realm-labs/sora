@@ -49,6 +49,14 @@ func decodeVipLevelValue(input SoraValue) (VipLevel, error) {
 
 const vipLevelTableName = "VipLevel"
 
+var vipLevelTableInfo = SoraTableInfo{
+	Name:       vipLevelTableName,
+	RowType:    "VipLevel",
+	Shape:      SoraTableShapeKeyed,
+	PrimaryKey: &SoraKeyInfo{Name: "level", Type: "int32"},
+	Indexes:    []SoraIndexInfo{},
+}
+
 type VipLevelTable struct {
 	keys []int32
 	rows map[int32]VipLevel
@@ -91,16 +99,8 @@ func (table *VipLevelTable) OrderedRows() []VipLevel {
 	}
 	return rows
 }
-func (table *VipLevelTable) Name() string {
-	return vipLevelTableName
-}
-
-func (table *VipLevelTable) Mode() SoraTableMode {
-	return SoraTableModeMap
-}
-
-func (table *VipLevelTable) Key() string {
-	return "level"
+func (table *VipLevelTable) Info() SoraTableInfo {
+	return vipLevelTableInfo
 }
 
 func (table *VipLevelTable) Len() int {

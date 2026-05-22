@@ -46,8 +46,32 @@ public final class {{ record.pascal_name }} {
 {%- if record.table %}
 {%- set table = record.table %}
 
-final class {{ table.pascal_name }}Table {% if table.mode == "map" and table.key_field_name %}extends java.util.AbstractMap<{{ table.key_type }}, {{ table.row_type }}> implements SoraTable{% elif table.mode == "list" %}extends java.util.AbstractList<{{ table.row_type }}> implements SoraTable{% else %}implements SoraTable{% endif %} {
+final class {{ table.pascal_name }}Table {% if table.mode == "map" and table.key_field_name %}extends java.util.AbstractMap<{{ table.key_type }}, {{ table.row_type }}> implements SoraKeyedTable<{{ table.key_type }}, {{ table.row_type }}>{% elif table.mode == "list" %}extends java.util.AbstractList<{{ table.row_type }}> implements SoraListTable<{{ table.row_type }}>{% else %}implements SoraSingleTable<{{ table.row_type }}>{% endif %} {
     static final String NAME = "{{ table.name }}";
+    static final SoraTableInfo INFO = new SoraTableInfo(
+        NAME,
+        "{{ table.row_type }}",
+{%- if table.mode == "map" %}
+        SoraTableShape.KEYED,
+{%- elif table.mode == "singleton" %}
+        SoraTableShape.SINGLETON,
+{%- else %}
+        SoraTableShape.LIST,
+{%- endif %}
+{%- if table.key_name %}
+        new SoraKeyInfo("{{ table.key_name }}", "{{ table.key_type }}"),
+{%- else %}
+        null,
+{%- endif %}
+        List.of(
+{%- for index in table.unique_indexes %}
+            new SoraIndexInfo("{{ index.camel_name }}", true, List.of("{{ index.field_name }}")){% if not loop.last or table.non_unique_indexes %},{% endif %}
+{%- endfor %}
+{%- for index in table.non_unique_indexes %}
+            new SoraIndexInfo("{{ index.camel_name }}", false, List.of("{{ index.field_name }}")){% if not loop.last %},{% endif %}
+{%- endfor %}
+        )
+    );
 
 {%- if table.mode == "map" and table.key_field_name %}
     private final List<{{ table.key_type }}> keys;
@@ -122,7 +146,7 @@ final class {{ table.pascal_name }}Table {% if table.mode == "map" and table.key
         return rows.get(key);
     }
 
-    public List<{{ table.key_type }}> keys() {
+    public List<{{ table.key_type }}> orderedKeys() {
         return keys;
     }
 
@@ -142,6 +166,13 @@ final class {{ table.pascal_name }}Table {% if table.mode == "map" and table.key
     }
 
 {%- endif %}
+{%- if table.mode == "singleton" %}
+    @Override
+    public {{ table.row_type }} row() {
+        return rows;
+    }
+
+{%- endif %}
 {%- for index in table.unique_indexes %}
     public {{ table.row_type }} get{{ index.pascal_name }}({{ index.key_type }} {{ index.param_camel_name }}) {
         return {{ index.camel_name }}.get({{ index.param_camel_name }});
@@ -155,28 +186,8 @@ final class {{ table.pascal_name }}Table {% if table.mode == "map" and table.key
 
 {%- endfor %}
     @Override
-    public String name() {
-        return NAME;
-    }
-
-    @Override
-    public SoraTableMode mode() {
-{%- if table.mode == "map" %}
-        return SoraTableMode.MAP;
-{%- elif table.mode == "singleton" %}
-        return SoraTableMode.SINGLETON;
-{%- else %}
-        return SoraTableMode.LIST;
-{%- endif %}
-    }
-
-    @Override
-    public String key() {
-{%- if table.key_name %}
-        return "{{ table.key_name }}";
-{%- else %}
-        return null;
-{%- endif %}
+    public SoraTableInfo info() {
+        return INFO;
     }
 
     @Override

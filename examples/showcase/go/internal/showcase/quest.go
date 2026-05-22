@@ -86,6 +86,14 @@ func decodeQuestValue(input SoraValue) (Quest, error) {
 
 const questTableName = "Quest"
 
+var questTableInfo = SoraTableInfo{
+	Name:       questTableName,
+	RowType:    "Quest",
+	Shape:      SoraTableShapeKeyed,
+	PrimaryKey: &SoraKeyInfo{Name: "id", Type: "int32"},
+	Indexes:    []SoraIndexInfo{},
+}
+
 type QuestTable struct {
 	keys []int32
 	rows map[int32]Quest
@@ -128,16 +136,8 @@ func (table *QuestTable) OrderedRows() []Quest {
 	}
 	return rows
 }
-func (table *QuestTable) Name() string {
-	return questTableName
-}
-
-func (table *QuestTable) Mode() SoraTableMode {
-	return SoraTableModeMap
-}
-
-func (table *QuestTable) Key() string {
-	return "id"
+func (table *QuestTable) Info() SoraTableInfo {
+	return questTableInfo
 }
 
 func (table *QuestTable) Len() int {

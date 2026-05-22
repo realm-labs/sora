@@ -25,6 +25,14 @@ end
 local MailRewardTable = {}
 MailRewardTable.__index = MailRewardTable
 MailRewardTable.NAME = "MailReward"
+MailRewardTable.INFO = {
+    name = MailRewardTable.NAME,
+    row_type = "MailReward",
+    shape = "list",
+    primary_key = nil,
+    indexes = {
+    },
+}
 
 ---@param rows MailReward[]
 ---@return MailRewardTable
@@ -34,19 +42,9 @@ function MailRewardTable.decode(rows)
     }, MailRewardTable)
 end
 
----@return string
-function MailRewardTable:name()
-    return MailRewardTable.NAME
-end
-
----@return string
-function MailRewardTable:mode()
-    return "list"
-end
-
----@return string?
-function MailRewardTable:key()
-    return nil
+---@return table
+function MailRewardTable:info()
+    return MailRewardTable.INFO
 end
 
 ---@return integer

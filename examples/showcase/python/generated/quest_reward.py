@@ -8,6 +8,9 @@ from typing import TYPE_CHECKING
 from .sora_runtime import SoraReader
 from .sora_runtime import (
     SoraConfigTable,
+    SoraIndexInfo,
+    SoraKeyInfo,
+    SoraTableInfo,
     decode_index,
     decode_map_table,
     decode_unique_index,
@@ -42,6 +45,14 @@ class QuestReward:
 
 class QuestRewardTable(SoraConfigTable):
     NAME = "QuestReward"
+    INFO = SoraTableInfo(
+        name=NAME,
+        row_type="QuestReward",
+        shape="list",
+        primary_key=None,
+        indexes=(
+        ),
+    )
 
     def __init__(
         self,
@@ -55,14 +66,8 @@ class QuestRewardTable(SoraConfigTable):
             rows,
         )
 
-    def name(self) -> str:
-        return self.NAME
-
-    def mode(self) -> str:
-        return "list"
-
-    def key(self) -> str | None:
-        return None
+    def info(self) -> SoraTableInfo:
+        return self.INFO
 
     def len(self) -> int:
         return len(self._rows)

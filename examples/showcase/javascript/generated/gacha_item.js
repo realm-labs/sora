@@ -28,6 +28,13 @@ export function decodeGachaItemValue(value) {
 
 export class GachaItemTable {
     static tableName = "GachaItem";
+    static tableInfo = {
+        name: GachaItemTable.tableName,
+        rowType: "GachaItem",
+        shape: "list",
+        indexes: [
+        ],
+    };
 
     constructor(
         rows,
@@ -41,16 +48,8 @@ export class GachaItemTable {
         );
     }
 
-    name() {
-        return GachaItemTable.tableName;
-    }
-
-    mode() {
-        return "list";
-    }
-
-    key() {
-        return undefined;
+    info() {
+        return GachaItemTable.tableInfo;
     }
 
     len() {

@@ -36,6 +36,16 @@ pub struct EventRuleTable {
 
 impl EventRuleTable {
     pub const NAME: &'static str = "EventRule";
+    pub const INFO: super::SoraTableInfo = super::SoraTableInfo {
+        name: Self::NAME,
+        row_type: "EventRule",
+        shape: super::SoraTableShape::Keyed,
+        primary_key: Some(super::SoraKeyInfo {
+            name: "id",
+            ty: "i32",
+        }),
+        indexes: &[],
+    };
 
     pub(super) fn from_rows(rows: Vec<EventRule>) -> Result<Self, super::runtime::SoraReadError> {
         let keys = rows.iter().map(|row| row.id).collect::<Vec<_>>();
@@ -44,8 +54,9 @@ impl EventRuleTable {
             rows: super::decode_map_table(rows, |row| row.id),
         })
     }
-    pub fn get(&self, key: i32) -> Option<&EventRule> {
-        self.rows.get(&key)
+
+    pub fn get(&self, key: &i32) -> Option<&EventRule> {
+        self.rows.get(key)
     }
 
     pub fn keys(&self) -> &[i32] {
@@ -65,20 +76,25 @@ impl std::ops::Deref for EventRuleTable {
     }
 }
 
-impl super::SoraTable for EventRuleTable {
-    fn name(&self) -> &'static str {
-        Self::NAME
-    }
-
-    fn mode(&self) -> super::SoraTableMode {
-        super::SoraTableMode::Map
-    }
-
-    fn key(&self) -> Option<&'static str> {
-        Some("id")
+impl super::ErasedSoraTable for EventRuleTable {
+    fn info(&self) -> &'static super::SoraTableInfo {
+        &Self::INFO
     }
 
     fn len(&self) -> usize {
         self.rows.len()
+    }
+}
+
+impl super::SoraKeyedTable for EventRuleTable {
+    type Key = i32;
+    type Row = EventRule;
+
+    fn get(&self, key: &Self::Key) -> Option<&Self::Row> {
+        self.rows.get(key)
+    }
+
+    fn keys(&self) -> &[Self::Key] {
+        &self.keys
     }
 }

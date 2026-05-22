@@ -48,8 +48,16 @@ public final class DropEntry {
     }
 }
 
-final class DropEntryTable extends java.util.AbstractList<DropEntry> implements SoraTable {
+final class DropEntryTable extends java.util.AbstractList<DropEntry> implements SoraListTable<DropEntry> {
     static final String NAME = "DropEntry";
+    static final SoraTableInfo INFO = new SoraTableInfo(
+        NAME,
+        "DropEntry",
+        SoraTableShape.LIST,
+        null,
+        List.of(
+        )
+    );
     private final java.util.List<DropEntry> rows;
 
     private DropEntryTable(java.util.List<DropEntry> rows) {
@@ -72,18 +80,8 @@ final class DropEntryTable extends java.util.AbstractList<DropEntry> implements 
         return rows.get(index);
     }
     @Override
-    public String name() {
-        return NAME;
-    }
-
-    @Override
-    public SoraTableMode mode() {
-        return SoraTableMode.LIST;
-    }
-
-    @Override
-    public String key() {
-        return null;
+    public SoraTableInfo info() {
+        return INFO;
     }
 
     @Override

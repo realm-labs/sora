@@ -58,6 +58,14 @@ func decodeDungeonValue(input SoraValue) (Dungeon, error) {
 
 const dungeonTableName = "Dungeon"
 
+var dungeonTableInfo = SoraTableInfo{
+	Name:       dungeonTableName,
+	RowType:    "Dungeon",
+	Shape:      SoraTableShapeKeyed,
+	PrimaryKey: &SoraKeyInfo{Name: "id", Type: "int32"},
+	Indexes:    []SoraIndexInfo{},
+}
+
 type DungeonTable struct {
 	keys []int32
 	rows map[int32]Dungeon
@@ -100,16 +108,8 @@ func (table *DungeonTable) OrderedRows() []Dungeon {
 	}
 	return rows
 }
-func (table *DungeonTable) Name() string {
-	return dungeonTableName
-}
-
-func (table *DungeonTable) Mode() SoraTableMode {
-	return SoraTableModeMap
-}
-
-func (table *DungeonTable) Key() string {
-	return "id"
+func (table *DungeonTable) Info() SoraTableInfo {
+	return dungeonTableInfo
 }
 
 func (table *DungeonTable) Len() int {

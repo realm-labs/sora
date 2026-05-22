@@ -32,6 +32,15 @@ struct GameSettings {
 class GameSettingsTable final : public SoraTable {
 public:
     static constexpr const char* NAME = "GameSettings";
+    static const SoraTableInfo& table_info() {
+        static const SoraTableInfo info = {
+            NAME,
+            "GameSettings",
+            "singleton",
+            nullptr
+        };
+        return info;
+    }
 
     GameSettingsTable() {}
     GameSettingsTable(const GameSettingsTable&) = delete;
@@ -50,9 +59,7 @@ public:
         return table;
     }
 
-    const char* name() const override { return NAME; }
-    const char* mode() const override { return "singleton"; }
-    const char* key() const override { return nullptr; }
+    const SoraTableInfo& info() const override { return table_info(); }
     std::size_t size() const override {
         return 1;
     }

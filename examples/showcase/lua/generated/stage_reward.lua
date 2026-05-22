@@ -25,6 +25,14 @@ end
 local StageRewardTable = {}
 StageRewardTable.__index = StageRewardTable
 StageRewardTable.NAME = "StageReward"
+StageRewardTable.INFO = {
+    name = StageRewardTable.NAME,
+    row_type = "StageReward",
+    shape = "list",
+    primary_key = nil,
+    indexes = {
+    },
+}
 
 ---@param rows StageReward[]
 ---@return StageRewardTable
@@ -34,19 +42,9 @@ function StageRewardTable.decode(rows)
     }, StageRewardTable)
 end
 
----@return string
-function StageRewardTable:name()
-    return StageRewardTable.NAME
-end
-
----@return string
-function StageRewardTable:mode()
-    return "list"
-end
-
----@return string?
-function StageRewardTable:key()
-    return nil
+---@return table
+function StageRewardTable:info()
+    return StageRewardTable.INFO
 end
 
 ---@return integer

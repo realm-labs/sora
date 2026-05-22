@@ -24,14 +24,20 @@ final class DropGroupTable private (
   def values: Iterable[DropGroup] = rows.values
 
   def orderedValues: Vector[DropGroup] = keys.flatMap(rows.get)
-  override val name: String = DropGroupTable.Name
-  override val mode: SoraTableMode = SoraTableMode.Map
-  override val key: Option[String] = Some("id")
+  override val info: SoraTableInfo = DropGroupTable.Info
   override def size: Int = rows.size
 }
 
 object DropGroupTable {
   val Name: String = "DropGroup"
+  val Info: SoraTableInfo = SoraTableInfo(
+    name = Name,
+    rowType = "DropGroup",
+    shape = SoraTableShape.Keyed,
+    primaryKey = Some(SoraKeyInfo("id", "Int")),
+    indexes = Vector(
+    )
+  )
 
   def decode(source: SoraTableSource): DropGroupTable =
     fromRows(source.decodeTable(Name, DropGroup.decode))

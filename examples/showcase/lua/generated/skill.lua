@@ -38,6 +38,14 @@ end
 local SkillTable = {}
 SkillTable.__index = SkillTable
 SkillTable.NAME = "Skill"
+SkillTable.INFO = {
+    name = SkillTable.NAME,
+    row_type = "Skill",
+    shape = "keyed",
+    primary_key = { name = "id", type = "integer" },
+    indexes = {
+    },
+}
 
 ---@param rows Skill[]
 ---@return SkillTable
@@ -52,19 +60,9 @@ function SkillTable.decode(rows)
     }, SkillTable)
 end
 
----@return string
-function SkillTable:name()
-    return SkillTable.NAME
-end
-
----@return string
-function SkillTable:mode()
-    return "map"
-end
-
----@return string?
-function SkillTable:key()
-    return "id"
+---@return table
+function SkillTable:info()
+    return SkillTable.INFO
 end
 
 ---@return integer

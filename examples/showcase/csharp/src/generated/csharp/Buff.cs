@@ -36,9 +36,18 @@ public sealed record Buff(
     }
 }
 
-public sealed class BuffTable : ISoraTable, IReadOnlyDictionary<int, Buff>
+public sealed class BuffTable : ISoraKeyedTable<int, Buff>
 {
     public const string TableName = "Buff";
+    public static readonly SoraTableInfo TableInfo = new(
+        TableName,
+        "Buff",
+        SoraTableShape.Keyed,
+        new SoraKeyInfo("id", "int"),
+        new SoraIndexInfo[]
+        {
+        }
+    );
     private readonly List<int> keys;
     private readonly Dictionary<int, Buff> rows;
 
@@ -113,8 +122,6 @@ public sealed class BuffTable : ISoraTable, IReadOnlyDictionary<int, Buff>
             return orderedRows;
         }
     }
-    public string Name => TableName;
-    public SoraTableMode Mode => SoraTableMode.Map;
-    public string? Key => "id";
+    public SoraTableInfo Info => TableInfo;
     public int Count => rows.Count;
 }

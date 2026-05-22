@@ -60,9 +60,12 @@ fn generates_rust_and_kotlin_files() {
     assert!(rust_mod.contains("from_source"));
     assert!(!rust_mod.contains("from_bytes"));
     assert!(rust_mod.contains("pub type SoraMap<K, V> = std::collections::HashMap<K, V>;"));
-    assert!(rust_mod.contains("pub trait SoraTable: std::any::Any + Send + Sync"));
-    assert!(rust_mod.contains("tables: SoraMap<&'static str, Box<dyn SoraTable>>"));
-    assert!(rust_mod.contains("pub fn tables(&self) -> impl Iterator<Item = &dyn SoraTable>"));
+    assert!(rust_mod.contains("pub trait ErasedSoraTable: std::any::Any + Send + Sync"));
+    assert!(rust_mod.contains("pub trait SoraKeyedTable: ErasedSoraTable"));
+    assert!(rust_mod.contains("tables: SoraMap<&'static str, Box<dyn ErasedSoraTable>>"));
+    assert!(
+        rust_mod.contains("pub fn tables(&self) -> impl Iterator<Item = &dyn ErasedSoraTable>")
+    );
     assert!(rust_item.contains("pub const NAME: &'static str = \"Item\";"));
     assert!(rust_mod.contains("source.decode_table::<item::Item>(item::ItemTable::NAME)?"));
     assert!(rust_item.contains("pub struct ItemTable"));
@@ -71,19 +74,24 @@ fn generates_rust_and_kotlin_files() {
     assert_contains_before(&rust_item, "keys: Vec<i32>", "rows: SoraMap<i32, Item>");
     assert!(rust_item.contains("by_name: SoraMap<String, i32>"));
     assert!(rust_item.contains("by_item_type: SoraMap<ItemType, Vec<i32>>"));
-    assert!(rust_item.contains("impl super::SoraTable for ItemTable"));
-    assert!(rust_item.contains("fn key(&self) -> Option<&'static str>"));
-    assert!(rust_item.contains("Some(\"id\")"));
+    assert!(rust_item.contains("pub const INFO: super::SoraTableInfo"));
+    assert!(rust_item.contains("shape: super::SoraTableShape::Keyed"));
+    assert!(rust_item.contains("primary_key: Some(super::SoraKeyInfo"));
+    assert!(rust_item.contains("impl super::ErasedSoraTable for ItemTable"));
+    assert!(rust_item.contains("impl super::SoraKeyedTable for ItemTable"));
     assert!(rust_item.contains("impl std::ops::Deref for ItemTable"));
     assert!(rust_item.contains("|row| row.id"));
     assert!(rust_item.contains("|row| row.name.clone()"));
     assert!(rust_item.contains("|row| row.item_type"));
-    assert!(rust_mod.contains("fn table<T: SoraTable + 'static>(&self, name: &'static str) -> &T"));
+    assert!(
+        rust_mod
+            .contains("fn table<T: ErasedSoraTable + 'static>(&self, name: &'static str) -> &T")
+    );
     assert!(!rust_mod.contains("as_any"));
     assert!(rust_mod.contains("let table: &dyn std::any::Any = table.as_ref();"));
     assert!(rust_mod.contains("table.downcast_ref::<T>()"));
     assert!(rust_mod.contains("pub fn item(&self) -> &item::ItemTable"));
-    assert!(rust_item.contains("pub fn get(&self, key: i32) -> Option<&Item>"));
+    assert!(rust_item.contains("pub fn get(&self, key: &i32) -> Option<&Item>"));
     assert!(rust_item.contains("pub fn keys(&self) -> &[i32]"));
     assert!(rust_item.contains("pub fn ordered_rows(&self) -> impl Iterator<Item = &Item>"));
     assert!(rust_item.contains("pub fn get_by_name(&self, name: &str) -> Option<&Item>"));
@@ -112,9 +120,10 @@ fn generates_rust_and_kotlin_files() {
     assert!(kotlin_item.contains("fun decode(value: SoraValue): Item"));
     assert!(kotlin_runtime.contains("class SoraBundle"));
     assert!(kotlin_runtime.contains("interface SoraTableSource"));
-    assert!(kotlin_config.contains("interface SoraTable"));
+    assert!(kotlin_config.contains("interface SoraTable<out R : Any>"));
+    assert!(kotlin_config.contains("interface SoraKeyedTable<K : Any, R : Any>"));
     assert!(kotlin_config.contains("class SoraConfig private constructor"));
-    assert!(kotlin_config.contains("private val tableMap: Map<String, SoraTable>"));
+    assert!(kotlin_config.contains("private val tableMap: Map<String, SoraTable<*>>"));
     assert!(kotlin_config.contains("val item: ItemTable"));
     assert!(kotlin_config.contains("get() = table(ItemTable.NAME)"));
     assert!(kotlin_config.contains("fun fromSource(source: SoraTableSource): SoraConfig"));
@@ -124,7 +133,7 @@ fn generates_rust_and_kotlin_files() {
     assert!(kotlin_item.contains("const val NAME: String = \"Item\""));
     assert!(kotlin_item.contains("val rows: Map<Int, Item>"));
     assert!(kotlin_item.contains("val orderedKeys: List<Int>"));
-    assert!(kotlin_item.contains(") : SoraTable, Map<Int, Item> by rows"));
+    assert!(kotlin_item.contains(") : SoraKeyedTable<Int, Item>, Map<Int, Item> by rows"));
     assert_contains_before(
         &kotlin_item,
         "val orderedKeys: List<Int>",
@@ -213,7 +222,7 @@ fn kotlin_list_tables_extend_abstract_list() {
     let package_out = kotlin_out.join("game_config");
     let reward = std::fs::read_to_string(package_out.join("Reward.kt")).unwrap();
     assert!(reward.contains("class RewardTable private constructor"));
-    assert!(reward.contains(") : AbstractList<Reward>(), SoraTable"));
+    assert!(reward.contains(") : AbstractList<Reward>(), SoraListTable<Reward>"));
     assert!(reward.contains("override fun get(index: Int): Reward = rows[index]"));
     assert!(!reward.contains("List<Reward> by rows"));
 
@@ -234,7 +243,7 @@ fn rust_config_api_can_use_fx_hash_map() {
     assert!(rust_mod.contains("pub type SoraMap<K, V> = rustc_hash::FxHashMap<K, V>;"));
     assert!(rust_item.contains("pub struct ItemTable"));
     assert!(rust_item.contains("rows: SoraMap<i32, Item>"));
-    assert!(rust_mod.contains("tables: SoraMap<&'static str, Box<dyn SoraTable>>"));
+    assert!(rust_mod.contains("tables: SoraMap<&'static str, Box<dyn ErasedSoraTable>>"));
 
     let _ = std::fs::remove_dir_all(base);
 }
@@ -408,10 +417,7 @@ fn generates_csharp_java_and_go_files() {
             "obj.Get(\"weights\").AsMap(item => item.AsString(), item => item.AsInt32())"
         )
     );
-    assert!(
-        csharp_item
-            .contains("public sealed class ItemTable : ISoraTable, IReadOnlyDictionary<int, Item>")
-    );
+    assert!(csharp_item.contains("public sealed class ItemTable : ISoraKeyedTable<int, Item>"));
     assert!(csharp_item.contains("Dictionary<int, Item>"));
     assert!(csharp_item.contains("private readonly List<int> keys"));
     assert_contains_before(
@@ -427,6 +433,7 @@ fn generates_csharp_java_and_go_files() {
     assert!(csharp_item.contains("public IEnumerator<KeyValuePair<int, Item>> GetEnumerator()"));
     assert!(csharp_item.contains("public IReadOnlyList<Item> FindByItemType(ItemType itemType)"));
     assert!(csharp_item.contains("public const string TableName = \"Item\";"));
+    assert!(csharp_item.contains("public static readonly SoraTableInfo TableInfo"));
     assert!(csharp_config.contains("public sealed class SoraConfig"));
     assert!(!csharp_config.contains("public sealed class ItemTable"));
     assert!(
@@ -446,9 +453,10 @@ fn generates_csharp_java_and_go_files() {
             .contains("obj.get(\"weights\").asMap(item -> item.asString(), item -> item.asInt())")
     );
     assert!(java_item.contains(
-        "final class ItemTable extends java.util.AbstractMap<Integer, Item> implements SoraTable"
+        "final class ItemTable extends java.util.AbstractMap<Integer, Item> implements SoraKeyedTable<Integer, Item>"
     ));
     assert!(java_item.contains("static final String NAME = \"Item\";"));
+    assert!(java_item.contains("static final SoraTableInfo INFO"));
     assert!(java_item.contains("java.util.Map<Integer, Item>"));
     assert!(java_item.contains("private final List<Integer> keys"));
     assert_contains_before(
@@ -459,7 +467,7 @@ fn generates_csharp_java_and_go_files() {
     assert!(java_item.contains("private final Map<String, Item> byName"));
     assert!(java_item.contains("private final Map<ItemType, List<Item>> byItemType"));
     assert!(java_item.contains("public Item getByName(String name)"));
-    assert!(java_item.contains("public List<Integer> keys()"));
+    assert!(java_item.contains("public List<Integer> orderedKeys()"));
     assert!(java_item.contains("public java.util.Set<Map.Entry<Integer, Item>> entrySet()"));
     assert!(java_item.contains("public List<Item> findByItemType(ItemType itemType)"));
     assert!(java_config.contains("public final class SoraConfig"));
@@ -476,6 +484,7 @@ fn generates_csharp_java_and_go_files() {
     assert!(go_item.contains("DecodeSoraValueMap(obj.Get(\"weights\"), func(item SoraValue) (string, error) { return item.AsString() }, func(item SoraValue) (int32, error) { return item.AsInt32() })"));
     assert!(go_item.contains("type ItemTable struct"));
     assert!(go_item.contains("const itemTableName = \"Item\""));
+    assert!(go_item.contains("var itemTableInfo = SoraTableInfo"));
     assert!(go_item.contains("map[int32]Item"));
     assert!(go_item.contains("keys []int32"));
     assert_contains_before(&go_item, "keys []int32", "rows map[int32]Item");

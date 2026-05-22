@@ -25,6 +25,14 @@ end
 local QuestRewardTable = {}
 QuestRewardTable.__index = QuestRewardTable
 QuestRewardTable.NAME = "QuestReward"
+QuestRewardTable.INFO = {
+    name = QuestRewardTable.NAME,
+    row_type = "QuestReward",
+    shape = "list",
+    primary_key = nil,
+    indexes = {
+    },
+}
 
 ---@param rows QuestReward[]
 ---@return QuestRewardTable
@@ -34,19 +42,9 @@ function QuestRewardTable.decode(rows)
     }, QuestRewardTable)
 end
 
----@return string
-function QuestRewardTable:name()
-    return QuestRewardTable.NAME
-end
-
----@return string
-function QuestRewardTable:mode()
-    return "list"
-end
-
----@return string?
-function QuestRewardTable:key()
-    return nil
+---@return table
+function QuestRewardTable:info()
+    return QuestRewardTable.INFO
 end
 
 ---@return integer

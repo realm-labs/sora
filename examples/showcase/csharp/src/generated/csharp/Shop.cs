@@ -33,9 +33,18 @@ public sealed record Shop(
     }
 }
 
-public sealed class ShopTable : ISoraTable, IReadOnlyDictionary<int, Shop>
+public sealed class ShopTable : ISoraKeyedTable<int, Shop>
 {
     public const string TableName = "Shop";
+    public static readonly SoraTableInfo TableInfo = new(
+        TableName,
+        "Shop",
+        SoraTableShape.Keyed,
+        new SoraKeyInfo("id", "int"),
+        new SoraIndexInfo[]
+        {
+        }
+    );
     private readonly List<int> keys;
     private readonly Dictionary<int, Shop> rows;
 
@@ -110,8 +119,6 @@ public sealed class ShopTable : ISoraTable, IReadOnlyDictionary<int, Shop>
             return orderedRows;
         }
     }
-    public string Name => TableName;
-    public SoraTableMode Mode => SoraTableMode.Map;
-    public string? Key => "id";
+    public SoraTableInfo Info => TableInfo;
     public int Count => rows.Count;
 }

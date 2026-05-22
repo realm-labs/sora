@@ -2,18 +2,26 @@
 
 package {{ model.package }}
 
-sealed trait SoraTableMode
+sealed trait SoraTableShape
 
-object SoraTableMode {
-  case object List extends SoraTableMode
-  case object Map extends SoraTableMode
-  case object Singleton extends SoraTableMode
+object SoraTableShape {
+  case object List extends SoraTableShape
+  case object Keyed extends SoraTableShape
+  case object Singleton extends SoraTableShape
 }
 
+final case class SoraKeyInfo(name: String, tpe: String)
+final case class SoraIndexInfo(name: String, unique: Boolean, fields: Vector[String])
+final case class SoraTableInfo(
+  name: String,
+  rowType: String,
+  shape: SoraTableShape,
+  primaryKey: Option[SoraKeyInfo],
+  indexes: Vector[SoraIndexInfo]
+)
+
 trait SoraTable {
-  def name: String
-  def mode: SoraTableMode
-  def key: Option[String]
+  def info: SoraTableInfo
   def size: Int
 }
 

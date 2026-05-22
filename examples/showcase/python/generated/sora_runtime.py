@@ -26,13 +26,7 @@ class SoraReadError(Exception):
 
 
 class SoraConfigTable:
-    def name(self) -> str:
-        raise NotImplementedError()
-
-    def mode(self) -> str:
-        raise NotImplementedError()
-
-    def key(self) -> str | None:
+    def info(self) -> SoraTableInfo:
         raise NotImplementedError()
 
     def len(self) -> int:
@@ -40,6 +34,28 @@ class SoraConfigTable:
 
     def __len__(self) -> int:
         return self.len()
+
+
+@dataclass(frozen=True, slots=True)
+class SoraKeyInfo:
+    name: str
+    type: str
+
+
+@dataclass(frozen=True, slots=True)
+class SoraIndexInfo:
+    name: str
+    unique: bool
+    fields: tuple[str, ...]
+
+
+@dataclass(frozen=True, slots=True)
+class SoraTableInfo:
+    name: str
+    row_type: str
+    shape: str
+    primary_key: SoraKeyInfo | None
+    indexes: tuple[SoraIndexInfo, ...]
 
 
 @dataclass(frozen=True, slots=True)

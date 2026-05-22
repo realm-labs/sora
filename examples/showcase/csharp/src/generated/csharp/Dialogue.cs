@@ -33,9 +33,18 @@ public sealed record Dialogue(
     }
 }
 
-public sealed class DialogueTable : ISoraTable, IReadOnlyDictionary<int, Dialogue>
+public sealed class DialogueTable : ISoraKeyedTable<int, Dialogue>
 {
     public const string TableName = "Dialogue";
+    public static readonly SoraTableInfo TableInfo = new(
+        TableName,
+        "Dialogue",
+        SoraTableShape.Keyed,
+        new SoraKeyInfo("id", "int"),
+        new SoraIndexInfo[]
+        {
+        }
+    );
     private readonly List<int> keys;
     private readonly Dictionary<int, Dialogue> rows;
 
@@ -110,8 +119,6 @@ public sealed class DialogueTable : ISoraTable, IReadOnlyDictionary<int, Dialogu
             return orderedRows;
         }
     }
-    public string Name => TableName;
-    public SoraTableMode Mode => SoraTableMode.Map;
-    public string? Key => "id";
+    public SoraTableInfo Info => TableInfo;
     public int Count => rows.Count;
 }

@@ -26,6 +26,14 @@ end
 local GachaItemTable = {}
 GachaItemTable.__index = GachaItemTable
 GachaItemTable.NAME = "GachaItem"
+GachaItemTable.INFO = {
+    name = GachaItemTable.NAME,
+    row_type = "GachaItem",
+    shape = "list",
+    primary_key = nil,
+    indexes = {
+    },
+}
 
 ---@param rows GachaItem[]
 ---@return GachaItemTable
@@ -35,19 +43,9 @@ function GachaItemTable.decode(rows)
     }, GachaItemTable)
 end
 
----@return string
-function GachaItemTable:name()
-    return GachaItemTable.NAME
-end
-
----@return string
-function GachaItemTable:mode()
-    return "list"
-end
-
----@return string?
-function GachaItemTable:key()
-    return nil
+---@return table
+function GachaItemTable:info()
+    return GachaItemTable.INFO
 end
 
 ---@return integer

@@ -33,9 +33,18 @@ public sealed record VipLevel(
     }
 }
 
-public sealed class VipLevelTable : ISoraTable, IReadOnlyDictionary<int, VipLevel>
+public sealed class VipLevelTable : ISoraKeyedTable<int, VipLevel>
 {
     public const string TableName = "VipLevel";
+    public static readonly SoraTableInfo TableInfo = new(
+        TableName,
+        "VipLevel",
+        SoraTableShape.Keyed,
+        new SoraKeyInfo("level", "int"),
+        new SoraIndexInfo[]
+        {
+        }
+    );
     private readonly List<int> keys;
     private readonly Dictionary<int, VipLevel> rows;
 
@@ -110,8 +119,6 @@ public sealed class VipLevelTable : ISoraTable, IReadOnlyDictionary<int, VipLeve
             return orderedRows;
         }
     }
-    public string Name => TableName;
-    public SoraTableMode Mode => SoraTableMode.Map;
-    public string? Key => "level";
+    public SoraTableInfo Info => TableInfo;
     public int Count => rows.Count;
 }

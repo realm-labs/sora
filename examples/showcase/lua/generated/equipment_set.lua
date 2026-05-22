@@ -27,6 +27,14 @@ end
 local EquipmentSetTable = {}
 EquipmentSetTable.__index = EquipmentSetTable
 EquipmentSetTable.NAME = "EquipmentSet"
+EquipmentSetTable.INFO = {
+    name = EquipmentSetTable.NAME,
+    row_type = "EquipmentSet",
+    shape = "keyed",
+    primary_key = { name = "id", type = "integer" },
+    indexes = {
+    },
+}
 
 ---@param rows EquipmentSet[]
 ---@return EquipmentSetTable
@@ -41,19 +49,9 @@ function EquipmentSetTable.decode(rows)
     }, EquipmentSetTable)
 end
 
----@return string
-function EquipmentSetTable:name()
-    return EquipmentSetTable.NAME
-end
-
----@return string
-function EquipmentSetTable:mode()
-    return "map"
-end
-
----@return string?
-function EquipmentSetTable:key()
-    return "id"
+---@return table
+function EquipmentSetTable:info()
+    return EquipmentSetTable.INFO
 end
 
 ---@return integer

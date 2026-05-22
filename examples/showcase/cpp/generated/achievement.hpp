@@ -30,6 +30,15 @@ struct Achievement {
 class AchievementTable final : public SoraTable {
 public:
     static constexpr const char* NAME = "Achievement";
+    static const SoraTableInfo& table_info() {
+        static const SoraTableInfo info = {
+            NAME,
+            "Achievement",
+            "keyed",
+            "id"
+        };
+        return info;
+    }
 
     AchievementTable() {}
     AchievementTable(const AchievementTable&) = delete;
@@ -49,9 +58,7 @@ public:
         return table;
     }
 
-    const char* name() const override { return NAME; }
-    const char* mode() const override { return "map"; }
-    const char* key() const override { return "id"; }
+    const SoraTableInfo& info() const override { return table_info(); }
     std::size_t size() const override {
         return rows_.size();
     }

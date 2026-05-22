@@ -30,18 +30,27 @@ data class QuestReward(
 }
 
 class QuestRewardTable private constructor(
-    val rows: List<QuestReward>,
-) : AbstractList<QuestReward>(), SoraTable {
+    override val rows: List<QuestReward>,
+) : AbstractList<QuestReward>(), SoraListTable<QuestReward> {
     override fun get(index: Int): QuestReward = rows[index]
 
     fun values(): List<QuestReward> = rows
-    override val name: String = NAME
-    override val mode: SoraTableMode = SoraTableMode.List
-    override val key: String? = null
+    override val info: SoraTableInfo
+        get() = INFO
     override val size: Int
         get() = rows.size
 
     companion object {
+        const val NAME: String = "QuestReward"
+        val INFO: SoraTableInfo = SoraTableInfo(
+            name = NAME,
+            rowType = "QuestReward",
+            shape = SoraTableShape.List,
+            primaryKey = null,
+            indexes = listOf(
+            ),
+        )
+
         fun decode(source: SoraTableSource): QuestRewardTable =
             fromRows(source.decodeTable(NAME, QuestReward::decode, QuestReward::decode))
 
@@ -49,7 +58,5 @@ class QuestRewardTable private constructor(
             QuestRewardTable(
                 rows,
             )
-
-        const val NAME: String = "QuestReward"
     }
 }

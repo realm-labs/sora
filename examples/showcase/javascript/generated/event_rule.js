@@ -29,6 +29,14 @@ export function decodeEventRuleValue(value) {
 
 export class EventRuleTable {
     static tableName = "EventRule";
+    static tableInfo = {
+        name: EventRuleTable.tableName,
+        rowType: "EventRule",
+        shape: "keyed",
+        primaryKey: { name: "id", type: "number" },
+        indexes: [
+        ],
+    };
 
     constructor(
         keys,
@@ -45,16 +53,8 @@ export class EventRuleTable {
         );
     }
 
-    name() {
-        return EventRuleTable.tableName;
-    }
-
-    mode() {
-        return "map";
-    }
-
-    key() {
-        return "id";
+    info() {
+        return EventRuleTable.tableInfo;
     }
 
     len() {

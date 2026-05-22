@@ -39,14 +39,20 @@ final class SkillTable private (
   def values: Iterable[Skill] = rows.values
 
   def orderedValues: Vector[Skill] = keys.flatMap(rows.get)
-  override val name: String = SkillTable.Name
-  override val mode: SoraTableMode = SoraTableMode.Map
-  override val key: Option[String] = Some("id")
+  override val info: SoraTableInfo = SkillTable.Info
   override def size: Int = rows.size
 }
 
 object SkillTable {
   val Name: String = "Skill"
+  val Info: SoraTableInfo = SoraTableInfo(
+    name = Name,
+    rowType = "Skill",
+    shape = SoraTableShape.Keyed,
+    primaryKey = Some(SoraKeyInfo("id", "Int")),
+    indexes = Vector(
+    )
+  )
 
   def decode(source: SoraTableSource): SkillTable =
     fromRows(source.decodeTable(Name, Skill.decode))

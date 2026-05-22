@@ -26,6 +26,14 @@ export function decodeGachaPoolValue(value) {
 
 export class GachaPoolTable {
     static tableName = "GachaPool";
+    static tableInfo = {
+        name: GachaPoolTable.tableName,
+        rowType: "GachaPool",
+        shape: "keyed",
+        primaryKey: { name: "id", type: "number" },
+        indexes: [
+        ],
+    };
 
     constructor(
         keys,
@@ -42,16 +50,8 @@ export class GachaPoolTable {
         );
     }
 
-    name() {
-        return GachaPoolTable.tableName;
-    }
-
-    mode() {
-        return "map";
-    }
-
-    key() {
-        return "id";
+    info() {
+        return GachaPoolTable.tableInfo;
     }
 
     len() {

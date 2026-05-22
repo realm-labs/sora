@@ -28,14 +28,20 @@ final class LocalizationTable private (
   def values: Iterable[Localization] = rows.values
 
   def orderedValues: Vector[Localization] = keys.flatMap(rows.get)
-  override val name: String = LocalizationTable.Name
-  override val mode: SoraTableMode = SoraTableMode.Map
-  override val key: Option[String] = Some("key")
+  override val info: SoraTableInfo = LocalizationTable.Info
   override def size: Int = rows.size
 }
 
 object LocalizationTable {
   val Name: String = "Localization"
+  val Info: SoraTableInfo = SoraTableInfo(
+    name = Name,
+    rowType = "Localization",
+    shape = SoraTableShape.Keyed,
+    primaryKey = Some(SoraKeyInfo("key", "String")),
+    indexes = Vector(
+    )
+  )
 
   def decode(source: SoraTableSource): LocalizationTable =
     fromRows(source.decodeTable(Name, Localization.decode))

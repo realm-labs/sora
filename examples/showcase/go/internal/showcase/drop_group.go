@@ -40,6 +40,14 @@ func decodeDropGroupValue(input SoraValue) (DropGroup, error) {
 
 const dropGroupTableName = "DropGroup"
 
+var dropGroupTableInfo = SoraTableInfo{
+	Name:       dropGroupTableName,
+	RowType:    "DropGroup",
+	Shape:      SoraTableShapeKeyed,
+	PrimaryKey: &SoraKeyInfo{Name: "id", Type: "int32"},
+	Indexes:    []SoraIndexInfo{},
+}
+
 type DropGroupTable struct {
 	keys []int32
 	rows map[int32]DropGroup
@@ -82,16 +90,8 @@ func (table *DropGroupTable) OrderedRows() []DropGroup {
 	}
 	return rows
 }
-func (table *DropGroupTable) Name() string {
-	return dropGroupTableName
-}
-
-func (table *DropGroupTable) Mode() SoraTableMode {
-	return SoraTableModeMap
-}
-
-func (table *DropGroupTable) Key() string {
-	return "id"
+func (table *DropGroupTable) Info() SoraTableInfo {
+	return dropGroupTableInfo
 }
 
 func (table *DropGroupTable) Len() int {

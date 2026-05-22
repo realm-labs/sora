@@ -38,8 +38,16 @@ public final class Dialogue {
     }
 }
 
-final class DialogueTable extends java.util.AbstractMap<Integer, Dialogue> implements SoraTable {
+final class DialogueTable extends java.util.AbstractMap<Integer, Dialogue> implements SoraKeyedTable<Integer, Dialogue> {
     static final String NAME = "Dialogue";
+    static final SoraTableInfo INFO = new SoraTableInfo(
+        NAME,
+        "Dialogue",
+        SoraTableShape.KEYED,
+        new SoraKeyInfo("id", "Integer"),
+        List.of(
+        )
+    );
     private final List<Integer> keys;
     private final java.util.Map<Integer, Dialogue> rows;
 
@@ -64,7 +72,7 @@ final class DialogueTable extends java.util.AbstractMap<Integer, Dialogue> imple
         return rows.get(key);
     }
 
-    public List<Integer> keys() {
+    public List<Integer> orderedKeys() {
         return keys;
     }
 
@@ -77,18 +85,8 @@ final class DialogueTable extends java.util.AbstractMap<Integer, Dialogue> imple
         return rows.entrySet();
     }
     @Override
-    public String name() {
-        return NAME;
-    }
-
-    @Override
-    public SoraTableMode mode() {
-        return SoraTableMode.MAP;
-    }
-
-    @Override
-    public String key() {
-        return "id";
+    public SoraTableInfo info() {
+        return INFO;
     }
 
     @Override

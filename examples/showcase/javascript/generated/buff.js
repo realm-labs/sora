@@ -28,6 +28,14 @@ export function decodeBuffValue(value) {
 
 export class BuffTable {
     static tableName = "Buff";
+    static tableInfo = {
+        name: BuffTable.tableName,
+        rowType: "Buff",
+        shape: "keyed",
+        primaryKey: { name: "id", type: "number" },
+        indexes: [
+        ],
+    };
 
     constructor(
         keys,
@@ -44,16 +52,8 @@ export class BuffTable {
         );
     }
 
-    name() {
-        return BuffTable.tableName;
-    }
-
-    mode() {
-        return "map";
-    }
-
-    key() {
-        return "id";
+    info() {
+        return BuffTable.tableInfo;
     }
 
     len() {

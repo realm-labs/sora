@@ -6,19 +6,53 @@ import "fmt"
 
 const SoraSchemaFingerprint = "{{ model.schema_fingerprint }}"
 
-type SoraTableMode int
+type SoraTableShape int
 
 const (
-    SoraTableModeList SoraTableMode = iota
-    SoraTableModeMap
-    SoraTableModeSingleton
+    SoraTableShapeList SoraTableShape = iota
+    SoraTableShapeKeyed
+    SoraTableShapeSingleton
 )
 
+type SoraKeyInfo struct {
+    Name string
+    Type string
+}
+
+type SoraIndexInfo struct {
+    Name   string
+    Unique bool
+    Fields []string
+}
+
+type SoraTableInfo struct {
+    Name       string
+    RowType    string
+    Shape      SoraTableShape
+    PrimaryKey *SoraKeyInfo
+    Indexes    []SoraIndexInfo
+}
+
 type SoraTable interface {
-    Name() string
-    Mode() SoraTableMode
-    Key() string
+    Info() SoraTableInfo
     Len() int
+}
+
+type SoraKeyedTable[K comparable, R any] interface {
+    SoraTable
+    Get(K) (R, bool)
+    Keys() []K
+    OrderedRows() []R
+}
+
+type SoraListTable[R any] interface {
+    SoraTable
+    Rows() []R
+}
+
+type SoraSingleTable[R any] interface {
+    SoraTable
+    Row() R
 }
 
 type SoraConfig struct {

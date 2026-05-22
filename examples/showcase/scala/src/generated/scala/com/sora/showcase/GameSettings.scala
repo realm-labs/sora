@@ -25,14 +25,20 @@ final class GameSettingsTable private (
   val rows: GameSettings
 ) extends SoraTable {
   def value: GameSettings = rows
-  override val name: String = GameSettingsTable.Name
-  override val mode: SoraTableMode = SoraTableMode.Singleton
-  override val key: Option[String] = None
+  override val info: SoraTableInfo = GameSettingsTable.Info
   override val size: Int = 1
 }
 
 object GameSettingsTable {
   val Name: String = "GameSettings"
+  val Info: SoraTableInfo = SoraTableInfo(
+    name = Name,
+    rowType = "GameSettings",
+    shape = SoraTableShape.Singleton,
+    primaryKey = None,
+    indexes = Vector(
+    )
+  )
 
   def decode(source: SoraTableSource): GameSettingsTable =
     fromRows(source.decodeTable(Name, GameSettings.decode))

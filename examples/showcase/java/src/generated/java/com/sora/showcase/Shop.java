@@ -38,8 +38,16 @@ public final class Shop {
     }
 }
 
-final class ShopTable extends java.util.AbstractMap<Integer, Shop> implements SoraTable {
+final class ShopTable extends java.util.AbstractMap<Integer, Shop> implements SoraKeyedTable<Integer, Shop> {
     static final String NAME = "Shop";
+    static final SoraTableInfo INFO = new SoraTableInfo(
+        NAME,
+        "Shop",
+        SoraTableShape.KEYED,
+        new SoraKeyInfo("id", "Integer"),
+        List.of(
+        )
+    );
     private final List<Integer> keys;
     private final java.util.Map<Integer, Shop> rows;
 
@@ -64,7 +72,7 @@ final class ShopTable extends java.util.AbstractMap<Integer, Shop> implements So
         return rows.get(key);
     }
 
-    public List<Integer> keys() {
+    public List<Integer> orderedKeys() {
         return keys;
     }
 
@@ -77,18 +85,8 @@ final class ShopTable extends java.util.AbstractMap<Integer, Shop> implements So
         return rows.entrySet();
     }
     @Override
-    public String name() {
-        return NAME;
-    }
-
-    @Override
-    public SoraTableMode mode() {
-        return SoraTableMode.MAP;
-    }
-
-    @Override
-    public String key() {
-        return "id";
+    public SoraTableInfo info() {
+        return INFO;
     }
 
     @Override

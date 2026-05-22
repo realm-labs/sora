@@ -25,14 +25,20 @@ final class DropEntryTable private (
   val rows: Vector[DropEntry]
 ) extends SoraTable {
   def values: Vector[DropEntry] = rows
-  override val name: String = DropEntryTable.Name
-  override val mode: SoraTableMode = SoraTableMode.List
-  override val key: Option[String] = None
+  override val info: SoraTableInfo = DropEntryTable.Info
   override def size: Int = rows.size
 }
 
 object DropEntryTable {
   val Name: String = "DropEntry"
+  val Info: SoraTableInfo = SoraTableInfo(
+    name = Name,
+    rowType = "DropEntry",
+    shape = SoraTableShape.List,
+    primaryKey = None,
+    indexes = Vector(
+    )
+  )
 
   def decode(source: SoraTableSource): DropEntryTable =
     fromRows(source.decodeTable(Name, DropEntry.decode))

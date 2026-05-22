@@ -27,6 +27,13 @@ export function decodeMailRewardValue(value) {
 
 export class MailRewardTable {
     static tableName = "MailReward";
+    static tableInfo = {
+        name: MailRewardTable.tableName,
+        rowType: "MailReward",
+        shape: "list",
+        indexes: [
+        ],
+    };
 
     constructor(
         rows,
@@ -40,16 +47,8 @@ export class MailRewardTable {
         );
     }
 
-    name() {
-        return MailRewardTable.tableName;
-    }
-
-    mode() {
-        return "list";
-    }
-
-    key() {
-        return undefined;
+    info() {
+        return MailRewardTable.tableInfo;
     }
 
     len() {

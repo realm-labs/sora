@@ -48,8 +48,16 @@ public final class MailTemplate {
     }
 }
 
-final class MailTemplateTable extends java.util.AbstractMap<Integer, MailTemplate> implements SoraTable {
+final class MailTemplateTable extends java.util.AbstractMap<Integer, MailTemplate> implements SoraKeyedTable<Integer, MailTemplate> {
     static final String NAME = "MailTemplate";
+    static final SoraTableInfo INFO = new SoraTableInfo(
+        NAME,
+        "MailTemplate",
+        SoraTableShape.KEYED,
+        new SoraKeyInfo("id", "Integer"),
+        List.of(
+        )
+    );
     private final List<Integer> keys;
     private final java.util.Map<Integer, MailTemplate> rows;
 
@@ -74,7 +82,7 @@ final class MailTemplateTable extends java.util.AbstractMap<Integer, MailTemplat
         return rows.get(key);
     }
 
-    public List<Integer> keys() {
+    public List<Integer> orderedKeys() {
         return keys;
     }
 
@@ -87,18 +95,8 @@ final class MailTemplateTable extends java.util.AbstractMap<Integer, MailTemplat
         return rows.entrySet();
     }
     @Override
-    public String name() {
-        return NAME;
-    }
-
-    @Override
-    public SoraTableMode mode() {
-        return SoraTableMode.MAP;
-    }
-
-    @Override
-    public String key() {
-        return "id";
+    public SoraTableInfo info() {
+        return INFO;
     }
 
     @Override

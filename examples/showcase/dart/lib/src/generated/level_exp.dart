@@ -23,8 +23,16 @@ final class LevelExp {
   }
 }
 
-final class LevelExpTable extends Iterable<LevelExp> implements SoraConfigTable {
+final class LevelExpTable extends Iterable<LevelExp> implements SoraKeyedTable<int, LevelExp> {
   static const tableName = 'LevelExp';
+  static const tableInfo = SoraTableInfo(
+    name: tableName,
+    rowType: 'LevelExp',
+    shape: SoraTableShape.keyed,
+    primaryKey: SoraKeyInfo('level', 'int'),
+    indexes: [
+    ],
+  );
   final List<int> _keys;
   final Map<int, LevelExp> _rows;
 
@@ -41,13 +49,7 @@ final class LevelExpTable extends Iterable<LevelExp> implements SoraConfigTable 
   }
 
   @override
-  String get name => tableName;
-
-  @override
-  String get mode => 'map';
-
-  @override
-  String? get key => 'level';
+  SoraTableInfo get info => tableInfo;
 
   @override
   int get length => _rows.length;
@@ -56,13 +58,7 @@ final class LevelExpTable extends Iterable<LevelExp> implements SoraConfigTable 
   Iterator<LevelExp> get iterator => _rows.values.iterator;
   LevelExp? operator [](int key) => _rows[key];
 
-  LevelExp get(int key) {
-    final row = _rows[key];
-    if (row == null) {
-      throw SoraReadException('missing row in table `$tableName` for key `$key`');
-    }
-    return row;
-  }
+  LevelExp? get(int key) => _rows[key];
 
   Map<int, LevelExp> get rows => _rows;
 

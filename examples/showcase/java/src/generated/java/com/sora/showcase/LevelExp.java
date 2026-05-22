@@ -38,8 +38,16 @@ public final class LevelExp {
     }
 }
 
-final class LevelExpTable extends java.util.AbstractMap<Integer, LevelExp> implements SoraTable {
+final class LevelExpTable extends java.util.AbstractMap<Integer, LevelExp> implements SoraKeyedTable<Integer, LevelExp> {
     static final String NAME = "LevelExp";
+    static final SoraTableInfo INFO = new SoraTableInfo(
+        NAME,
+        "LevelExp",
+        SoraTableShape.KEYED,
+        new SoraKeyInfo("level", "Integer"),
+        List.of(
+        )
+    );
     private final List<Integer> keys;
     private final java.util.Map<Integer, LevelExp> rows;
 
@@ -64,7 +72,7 @@ final class LevelExpTable extends java.util.AbstractMap<Integer, LevelExp> imple
         return rows.get(key);
     }
 
-    public List<Integer> keys() {
+    public List<Integer> orderedKeys() {
         return keys;
     }
 
@@ -77,18 +85,8 @@ final class LevelExpTable extends java.util.AbstractMap<Integer, LevelExp> imple
         return rows.entrySet();
     }
     @Override
-    public String name() {
-        return NAME;
-    }
-
-    @Override
-    public SoraTableMode mode() {
-        return SoraTableMode.MAP;
-    }
-
-    @Override
-    public String key() {
-        return "level";
+    public SoraTableInfo info() {
+        return INFO;
     }
 
     @Override

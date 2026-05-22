@@ -27,6 +27,14 @@ export function decodeLocalizationValue(value) {
 
 export class LocalizationTable {
     static tableName = "Localization";
+    static tableInfo = {
+        name: LocalizationTable.tableName,
+        rowType: "Localization",
+        shape: "keyed",
+        primaryKey: { name: "key", type: "string" },
+        indexes: [
+        ],
+    };
 
     constructor(
         keys,
@@ -43,16 +51,8 @@ export class LocalizationTable {
         );
     }
 
-    name() {
-        return LocalizationTable.tableName;
-    }
-
-    mode() {
-        return "map";
-    }
-
-    key() {
-        return "key";
+    info() {
+        return LocalizationTable.tableInfo;
     }
 
     len() {

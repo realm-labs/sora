@@ -8,6 +8,9 @@ from typing import TYPE_CHECKING
 from .sora_runtime import SoraReader
 from .sora_runtime import (
     SoraConfigTable,
+    SoraIndexInfo,
+    SoraKeyInfo,
+    SoraTableInfo,
     decode_index,
     decode_map_table,
     decode_unique_index,
@@ -46,6 +49,14 @@ class GameSettings:
 
 class GameSettingsTable(SoraConfigTable):
     NAME = "GameSettings"
+    INFO = SoraTableInfo(
+        name=NAME,
+        row_type="GameSettings",
+        shape="singleton",
+        primary_key=None,
+        indexes=(
+        ),
+    )
 
     def __init__(
         self,
@@ -59,14 +70,8 @@ class GameSettingsTable(SoraConfigTable):
             require_singleton_table(rows, GameSettingsTable.NAME),
         )
 
-    def name(self) -> str:
-        return self.NAME
-
-    def mode(self) -> str:
-        return "singleton"
-
-    def key(self) -> str | None:
-        return None
+    def info(self) -> SoraTableInfo:
+        return self.INFO
 
     def len(self) -> int:
         return 1

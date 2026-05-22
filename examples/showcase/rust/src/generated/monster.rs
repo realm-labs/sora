@@ -42,6 +42,16 @@ pub struct MonsterTable {
 
 impl MonsterTable {
     pub const NAME: &'static str = "Monster";
+    pub const INFO: super::SoraTableInfo = super::SoraTableInfo {
+        name: Self::NAME,
+        row_type: "Monster",
+        shape: super::SoraTableShape::Keyed,
+        primary_key: Some(super::SoraKeyInfo {
+            name: "id",
+            ty: "i32",
+        }),
+        indexes: &[],
+    };
 
     pub(super) fn from_rows(rows: Vec<Monster>) -> Result<Self, super::runtime::SoraReadError> {
         let keys = rows.iter().map(|row| row.id).collect::<Vec<_>>();
@@ -50,8 +60,9 @@ impl MonsterTable {
             rows: super::decode_map_table(rows, |row| row.id),
         })
     }
-    pub fn get(&self, key: i32) -> Option<&Monster> {
-        self.rows.get(&key)
+
+    pub fn get(&self, key: &i32) -> Option<&Monster> {
+        self.rows.get(key)
     }
 
     pub fn keys(&self) -> &[i32] {
@@ -71,20 +82,25 @@ impl std::ops::Deref for MonsterTable {
     }
 }
 
-impl super::SoraTable for MonsterTable {
-    fn name(&self) -> &'static str {
-        Self::NAME
-    }
-
-    fn mode(&self) -> super::SoraTableMode {
-        super::SoraTableMode::Map
-    }
-
-    fn key(&self) -> Option<&'static str> {
-        Some("id")
+impl super::ErasedSoraTable for MonsterTable {
+    fn info(&self) -> &'static super::SoraTableInfo {
+        &Self::INFO
     }
 
     fn len(&self) -> usize {
         self.rows.len()
+    }
+}
+
+impl super::SoraKeyedTable for MonsterTable {
+    type Key = i32;
+    type Row = Monster;
+
+    fn get(&self, key: &Self::Key) -> Option<&Self::Row> {
+        self.rows.get(key)
+    }
+
+    fn keys(&self) -> &[Self::Key] {
+        &self.keys
     }
 }

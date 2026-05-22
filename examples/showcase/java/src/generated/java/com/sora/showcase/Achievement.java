@@ -43,8 +43,16 @@ public final class Achievement {
     }
 }
 
-final class AchievementTable extends java.util.AbstractMap<Integer, Achievement> implements SoraTable {
+final class AchievementTable extends java.util.AbstractMap<Integer, Achievement> implements SoraKeyedTable<Integer, Achievement> {
     static final String NAME = "Achievement";
+    static final SoraTableInfo INFO = new SoraTableInfo(
+        NAME,
+        "Achievement",
+        SoraTableShape.KEYED,
+        new SoraKeyInfo("id", "Integer"),
+        List.of(
+        )
+    );
     private final List<Integer> keys;
     private final java.util.Map<Integer, Achievement> rows;
 
@@ -69,7 +77,7 @@ final class AchievementTable extends java.util.AbstractMap<Integer, Achievement>
         return rows.get(key);
     }
 
-    public List<Integer> keys() {
+    public List<Integer> orderedKeys() {
         return keys;
     }
 
@@ -82,18 +90,8 @@ final class AchievementTable extends java.util.AbstractMap<Integer, Achievement>
         return rows.entrySet();
     }
     @Override
-    public String name() {
-        return NAME;
-    }
-
-    @Override
-    public SoraTableMode mode() {
-        return SoraTableMode.MAP;
-    }
-
-    @Override
-    public String key() {
-        return "id";
+    public SoraTableInfo info() {
+        return INFO;
     }
 
     @Override

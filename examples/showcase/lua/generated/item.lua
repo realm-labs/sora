@@ -36,6 +36,16 @@ end
 local ItemTable = {}
 ItemTable.__index = ItemTable
 ItemTable.NAME = "Item"
+ItemTable.INFO = {
+    name = ItemTable.NAME,
+    row_type = "Item",
+    shape = "keyed",
+    primary_key = { name = "id", type = "integer" },
+    indexes = {
+        { name = "by_name", unique = true, fields = { "name" } },
+        { name = "by_item_type", unique = false, fields = { "itemType" } },
+    },
+}
 
 ---@param rows Item[]
 ---@return ItemTable
@@ -52,19 +62,9 @@ function ItemTable.decode(rows)
     }, ItemTable)
 end
 
----@return string
-function ItemTable:name()
-    return ItemTable.NAME
-end
-
----@return string
-function ItemTable:mode()
-    return "map"
-end
-
----@return string?
-function ItemTable:key()
-    return "id"
+---@return table
+function ItemTable:info()
+    return ItemTable.INFO
 end
 
 ---@return integer

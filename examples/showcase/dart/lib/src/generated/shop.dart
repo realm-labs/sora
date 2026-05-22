@@ -24,8 +24,16 @@ final class Shop {
   }
 }
 
-final class ShopTable extends Iterable<Shop> implements SoraConfigTable {
+final class ShopTable extends Iterable<Shop> implements SoraKeyedTable<int, Shop> {
   static const tableName = 'Shop';
+  static const tableInfo = SoraTableInfo(
+    name: tableName,
+    rowType: 'Shop',
+    shape: SoraTableShape.keyed,
+    primaryKey: SoraKeyInfo('id', 'int'),
+    indexes: [
+    ],
+  );
   final List<int> _keys;
   final Map<int, Shop> _rows;
 
@@ -42,13 +50,7 @@ final class ShopTable extends Iterable<Shop> implements SoraConfigTable {
   }
 
   @override
-  String get name => tableName;
-
-  @override
-  String get mode => 'map';
-
-  @override
-  String? get key => 'id';
+  SoraTableInfo get info => tableInfo;
 
   @override
   int get length => _rows.length;
@@ -57,13 +59,7 @@ final class ShopTable extends Iterable<Shop> implements SoraConfigTable {
   Iterator<Shop> get iterator => _rows.values.iterator;
   Shop? operator [](int key) => _rows[key];
 
-  Shop get(int key) {
-    final row = _rows[key];
-    if (row == null) {
-      throw SoraReadException('missing row in table `$tableName` for key `$key`');
-    }
-    return row;
-  }
+  Shop? get(int key) => _rows[key];
 
   Map<int, Shop> get rows => _rows;
 

@@ -24,6 +24,14 @@ end
 local DialogueTable = {}
 DialogueTable.__index = DialogueTable
 DialogueTable.NAME = "Dialogue"
+DialogueTable.INFO = {
+    name = DialogueTable.NAME,
+    row_type = "Dialogue",
+    shape = "keyed",
+    primary_key = { name = "id", type = "integer" },
+    indexes = {
+    },
+}
 
 ---@param rows Dialogue[]
 ---@return DialogueTable
@@ -38,19 +46,9 @@ function DialogueTable.decode(rows)
     }, DialogueTable)
 end
 
----@return string
-function DialogueTable:name()
-    return DialogueTable.NAME
-end
-
----@return string
-function DialogueTable:mode()
-    return "map"
-end
-
----@return string?
-function DialogueTable:key()
-    return "id"
+---@return table
+function DialogueTable:info()
+    return DialogueTable.INFO
 end
 
 ---@return integer

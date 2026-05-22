@@ -49,6 +49,13 @@ func decodeCharacterSkillValue(input SoraValue) (CharacterSkill, error) {
 
 const characterSkillTableName = "CharacterSkill"
 
+var characterSkillTableInfo = SoraTableInfo{
+	Name:    characterSkillTableName,
+	RowType: "CharacterSkill",
+	Shape:   SoraTableShapeList,
+	Indexes: []SoraIndexInfo{},
+}
+
 type CharacterSkillTable struct {
 	rows []CharacterSkill
 }
@@ -68,16 +75,8 @@ func decodeCharacterSkillTable(source SoraTableSource) (*CharacterSkillTable, er
 func (table *CharacterSkillTable) Rows() []CharacterSkill {
 	return table.rows
 }
-func (table *CharacterSkillTable) Name() string {
-	return characterSkillTableName
-}
-
-func (table *CharacterSkillTable) Mode() SoraTableMode {
-	return SoraTableModeList
-}
-
-func (table *CharacterSkillTable) Key() string {
-	return ""
+func (table *CharacterSkillTable) Info() SoraTableInfo {
+	return characterSkillTableInfo
 }
 
 func (table *CharacterSkillTable) Len() int {

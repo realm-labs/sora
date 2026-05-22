@@ -43,8 +43,16 @@ public final class EventRule {
     }
 }
 
-final class EventRuleTable extends java.util.AbstractMap<Integer, EventRule> implements SoraTable {
+final class EventRuleTable extends java.util.AbstractMap<Integer, EventRule> implements SoraKeyedTable<Integer, EventRule> {
     static final String NAME = "EventRule";
+    static final SoraTableInfo INFO = new SoraTableInfo(
+        NAME,
+        "EventRule",
+        SoraTableShape.KEYED,
+        new SoraKeyInfo("id", "Integer"),
+        List.of(
+        )
+    );
     private final List<Integer> keys;
     private final java.util.Map<Integer, EventRule> rows;
 
@@ -69,7 +77,7 @@ final class EventRuleTable extends java.util.AbstractMap<Integer, EventRule> imp
         return rows.get(key);
     }
 
-    public List<Integer> keys() {
+    public List<Integer> orderedKeys() {
         return keys;
     }
 
@@ -82,18 +90,8 @@ final class EventRuleTable extends java.util.AbstractMap<Integer, EventRule> imp
         return rows.entrySet();
     }
     @Override
-    public String name() {
-        return NAME;
-    }
-
-    @Override
-    public SoraTableMode mode() {
-        return SoraTableMode.MAP;
-    }
-
-    @Override
-    public String key() {
-        return "id";
+    public SoraTableInfo info() {
+        return INFO;
     }
 
     @Override

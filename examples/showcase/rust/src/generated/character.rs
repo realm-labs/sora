@@ -45,6 +45,16 @@ pub struct CharacterTable {
 
 impl CharacterTable {
     pub const NAME: &'static str = "Character";
+    pub const INFO: super::SoraTableInfo = super::SoraTableInfo {
+        name: Self::NAME,
+        row_type: "Character",
+        shape: super::SoraTableShape::Keyed,
+        primary_key: Some(super::SoraKeyInfo {
+            name: "id",
+            ty: "i32",
+        }),
+        indexes: &[],
+    };
 
     pub(super) fn from_rows(rows: Vec<Character>) -> Result<Self, super::runtime::SoraReadError> {
         let keys = rows.iter().map(|row| row.id).collect::<Vec<_>>();
@@ -53,8 +63,9 @@ impl CharacterTable {
             rows: super::decode_map_table(rows, |row| row.id),
         })
     }
-    pub fn get(&self, key: i32) -> Option<&Character> {
-        self.rows.get(&key)
+
+    pub fn get(&self, key: &i32) -> Option<&Character> {
+        self.rows.get(key)
     }
 
     pub fn keys(&self) -> &[i32] {
@@ -74,20 +85,25 @@ impl std::ops::Deref for CharacterTable {
     }
 }
 
-impl super::SoraTable for CharacterTable {
-    fn name(&self) -> &'static str {
-        Self::NAME
-    }
-
-    fn mode(&self) -> super::SoraTableMode {
-        super::SoraTableMode::Map
-    }
-
-    fn key(&self) -> Option<&'static str> {
-        Some("id")
+impl super::ErasedSoraTable for CharacterTable {
+    fn info(&self) -> &'static super::SoraTableInfo {
+        &Self::INFO
     }
 
     fn len(&self) -> usize {
         self.rows.len()
+    }
+}
+
+impl super::SoraKeyedTable for CharacterTable {
+    type Key = i32;
+    type Row = Character;
+
+    fn get(&self, key: &Self::Key) -> Option<&Self::Row> {
+        self.rows.get(key)
+    }
+
+    fn keys(&self) -> &[Self::Key] {
+        &self.keys
     }
 }

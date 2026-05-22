@@ -8,6 +8,9 @@ from typing import TYPE_CHECKING
 from .sora_runtime import SoraReader
 from .sora_runtime import (
     SoraConfigTable,
+    SoraIndexInfo,
+    SoraKeyInfo,
+    SoraTableInfo,
     decode_index,
     decode_map_table,
     decode_unique_index,
@@ -61,6 +64,16 @@ class Item:
 
 class ItemTable(SoraConfigTable):
     NAME = "Item"
+    INFO = SoraTableInfo(
+        name=NAME,
+        row_type="Item",
+        shape="keyed",
+        primary_key=SoraKeyInfo("id", "int"),
+        indexes=(
+            SoraIndexInfo("by_name", True, ("name",)),
+            SoraIndexInfo("by_item_type", False, ("item_type",)),
+        ),
+    )
 
     def __init__(
         self,
@@ -83,14 +96,8 @@ class ItemTable(SoraConfigTable):
             decode_index(rows, lambda row: row.item_type),
         )
 
-    def name(self) -> str:
-        return self.NAME
-
-    def mode(self) -> str:
-        return "map"
-
-    def key(self) -> str | None:
-        return "id"
+    def info(self) -> SoraTableInfo:
+        return self.INFO
 
     def len(self) -> int:
         return len(self._rows)

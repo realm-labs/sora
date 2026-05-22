@@ -33,18 +33,27 @@ data class ShopItem(
 }
 
 class ShopItemTable private constructor(
-    val rows: List<ShopItem>,
-) : AbstractList<ShopItem>(), SoraTable {
+    override val rows: List<ShopItem>,
+) : AbstractList<ShopItem>(), SoraListTable<ShopItem> {
     override fun get(index: Int): ShopItem = rows[index]
 
     fun values(): List<ShopItem> = rows
-    override val name: String = NAME
-    override val mode: SoraTableMode = SoraTableMode.List
-    override val key: String? = null
+    override val info: SoraTableInfo
+        get() = INFO
     override val size: Int
         get() = rows.size
 
     companion object {
+        const val NAME: String = "ShopItem"
+        val INFO: SoraTableInfo = SoraTableInfo(
+            name = NAME,
+            rowType = "ShopItem",
+            shape = SoraTableShape.List,
+            primaryKey = null,
+            indexes = listOf(
+            ),
+        )
+
         fun decode(source: SoraTableSource): ShopItemTable =
             fromRows(source.decodeTable(NAME, ShopItem::decode, ShopItem::decode))
 
@@ -52,7 +61,5 @@ class ShopItemTable private constructor(
             ShopItemTable(
                 rows,
             )
-
-        const val NAME: String = "ShopItem"
     }
 }

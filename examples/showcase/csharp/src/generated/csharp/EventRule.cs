@@ -36,9 +36,18 @@ public sealed record EventRule(
     }
 }
 
-public sealed class EventRuleTable : ISoraTable, IReadOnlyDictionary<int, EventRule>
+public sealed class EventRuleTable : ISoraKeyedTable<int, EventRule>
 {
     public const string TableName = "EventRule";
+    public static readonly SoraTableInfo TableInfo = new(
+        TableName,
+        "EventRule",
+        SoraTableShape.Keyed,
+        new SoraKeyInfo("id", "int"),
+        new SoraIndexInfo[]
+        {
+        }
+    );
     private readonly List<int> keys;
     private readonly Dictionary<int, EventRule> rows;
 
@@ -113,8 +122,6 @@ public sealed class EventRuleTable : ISoraTable, IReadOnlyDictionary<int, EventR
             return orderedRows;
         }
     }
-    public string Name => TableName;
-    public SoraTableMode Mode => SoraTableMode.Map;
-    public string? Key => "id";
+    public SoraTableInfo Info => TableInfo;
     public int Count => rows.Count;
 }

@@ -35,6 +35,14 @@ export function decodeCharacterValue(value) {
 
 export class CharacterTable {
     static tableName = "Character";
+    static tableInfo = {
+        name: CharacterTable.tableName,
+        rowType: "Character",
+        shape: "keyed",
+        primaryKey: { name: "id", type: "number" },
+        indexes: [
+        ],
+    };
 
     constructor(
         keys,
@@ -51,16 +59,8 @@ export class CharacterTable {
         );
     }
 
-    name() {
-        return CharacterTable.tableName;
-    }
-
-    mode() {
-        return "map";
-    }
-
-    key() {
-        return "id";
+    info() {
+        return CharacterTable.tableInfo;
     }
 
     len() {

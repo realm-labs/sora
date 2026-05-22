@@ -36,9 +36,18 @@ public sealed record GachaItem(
     }
 }
 
-public sealed class GachaItemTable : ISoraTable, IReadOnlyList<GachaItem>
+public sealed class GachaItemTable : ISoraListTable<GachaItem>
 {
     public const string TableName = "GachaItem";
+    public static readonly SoraTableInfo TableInfo = new(
+        TableName,
+        "GachaItem",
+        SoraTableShape.List,
+        null,
+        new SoraIndexInfo[]
+        {
+        }
+    );
     private readonly List<GachaItem> rows;
 
     internal GachaItemTable(List<GachaItem> rows)
@@ -68,8 +77,6 @@ public sealed class GachaItemTable : ISoraTable, IReadOnlyList<GachaItem>
     {
         return GetEnumerator();
     }
-    public string Name => TableName;
-    public SoraTableMode Mode => SoraTableMode.List;
-    public string? Key => null;
+    public SoraTableInfo Info => TableInfo;
     public int Count => rows.Count;
 }

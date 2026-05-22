@@ -30,18 +30,27 @@ data class GachaItem(
 }
 
 class GachaItemTable private constructor(
-    val rows: List<GachaItem>,
-) : AbstractList<GachaItem>(), SoraTable {
+    override val rows: List<GachaItem>,
+) : AbstractList<GachaItem>(), SoraListTable<GachaItem> {
     override fun get(index: Int): GachaItem = rows[index]
 
     fun values(): List<GachaItem> = rows
-    override val name: String = NAME
-    override val mode: SoraTableMode = SoraTableMode.List
-    override val key: String? = null
+    override val info: SoraTableInfo
+        get() = INFO
     override val size: Int
         get() = rows.size
 
     companion object {
+        const val NAME: String = "GachaItem"
+        val INFO: SoraTableInfo = SoraTableInfo(
+            name = NAME,
+            rowType = "GachaItem",
+            shape = SoraTableShape.List,
+            primaryKey = null,
+            indexes = listOf(
+            ),
+        )
+
         fun decode(source: SoraTableSource): GachaItemTable =
             fromRows(source.decodeTable(NAME, GachaItem::decode, GachaItem::decode))
 
@@ -49,7 +58,5 @@ class GachaItemTable private constructor(
             GachaItemTable(
                 rows,
             )
-
-        const val NAME: String = "GachaItem"
     }
 }

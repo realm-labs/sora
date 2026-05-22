@@ -22,12 +22,17 @@ public:
 
 class SoraReader;
 
+struct SoraTableInfo {
+    const char* name;
+    const char* row_type;
+    const char* shape;
+    const char* primary_key;
+};
+
 class SoraTable {
 public:
     virtual ~SoraTable() {}
-    virtual const char* name() const = 0;
-    virtual const char* mode() const = 0;
-    virtual const char* key() const = 0;
+    virtual const SoraTableInfo& info() const = 0;
     virtual std::size_t size() const = 0;
 };
 

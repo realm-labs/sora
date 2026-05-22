@@ -28,6 +28,14 @@ export function decodeAchievementValue(value) {
 
 export class AchievementTable {
     static tableName = "Achievement";
+    static tableInfo = {
+        name: AchievementTable.tableName,
+        rowType: "Achievement",
+        shape: "keyed",
+        primaryKey: { name: "id", type: "number" },
+        indexes: [
+        ],
+    };
 
     constructor(
         keys,
@@ -44,16 +52,8 @@ export class AchievementTable {
         );
     }
 
-    name() {
-        return AchievementTable.tableName;
-    }
-
-    mode() {
-        return "map";
-    }
-
-    key() {
-        return "id";
+    info() {
+        return AchievementTable.tableInfo;
     }
 
     len() {

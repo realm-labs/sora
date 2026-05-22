@@ -47,6 +47,16 @@ pub struct QuestTable {
 
 impl QuestTable {
     pub const NAME: &'static str = "Quest";
+    pub const INFO: super::SoraTableInfo = super::SoraTableInfo {
+        name: Self::NAME,
+        row_type: "Quest",
+        shape: super::SoraTableShape::Keyed,
+        primary_key: Some(super::SoraKeyInfo {
+            name: "id",
+            ty: "i32",
+        }),
+        indexes: &[],
+    };
 
     pub(super) fn from_rows(rows: Vec<Quest>) -> Result<Self, super::runtime::SoraReadError> {
         let keys = rows.iter().map(|row| row.id).collect::<Vec<_>>();
@@ -55,8 +65,9 @@ impl QuestTable {
             rows: super::decode_map_table(rows, |row| row.id),
         })
     }
-    pub fn get(&self, key: i32) -> Option<&Quest> {
-        self.rows.get(&key)
+
+    pub fn get(&self, key: &i32) -> Option<&Quest> {
+        self.rows.get(key)
     }
 
     pub fn keys(&self) -> &[i32] {
@@ -76,20 +87,25 @@ impl std::ops::Deref for QuestTable {
     }
 }
 
-impl super::SoraTable for QuestTable {
-    fn name(&self) -> &'static str {
-        Self::NAME
-    }
-
-    fn mode(&self) -> super::SoraTableMode {
-        super::SoraTableMode::Map
-    }
-
-    fn key(&self) -> Option<&'static str> {
-        Some("id")
+impl super::ErasedSoraTable for QuestTable {
+    fn info(&self) -> &'static super::SoraTableInfo {
+        &Self::INFO
     }
 
     fn len(&self) -> usize {
         self.rows.len()
+    }
+}
+
+impl super::SoraKeyedTable for QuestTable {
+    type Key = i32;
+    type Row = Quest;
+
+    fn get(&self, key: &Self::Key) -> Option<&Self::Row> {
+        self.rows.get(key)
+    }
+
+    fn keys(&self) -> &[Self::Key] {
+        &self.keys
     }
 }

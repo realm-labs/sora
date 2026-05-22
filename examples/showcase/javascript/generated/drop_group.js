@@ -23,6 +23,14 @@ export function decodeDropGroupValue(value) {
 
 export class DropGroupTable {
     static tableName = "DropGroup";
+    static tableInfo = {
+        name: DropGroupTable.tableName,
+        rowType: "DropGroup",
+        shape: "keyed",
+        primaryKey: { name: "id", type: "number" },
+        indexes: [
+        ],
+    };
 
     constructor(
         keys,
@@ -39,16 +47,8 @@ export class DropGroupTable {
         );
     }
 
-    name() {
-        return DropGroupTable.tableName;
-    }
-
-    mode() {
-        return "map";
-    }
-
-    key() {
-        return "id";
+    info() {
+        return DropGroupTable.tableInfo;
     }
 
     len() {

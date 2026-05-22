@@ -48,8 +48,16 @@ public final class GameSettings {
     }
 }
 
-final class GameSettingsTable implements SoraTable {
+final class GameSettingsTable implements SoraSingleTable<GameSettings> {
     static final String NAME = "GameSettings";
+    static final SoraTableInfo INFO = new SoraTableInfo(
+        NAME,
+        "GameSettings",
+        SoraTableShape.SINGLETON,
+        null,
+        List.of(
+        )
+    );
     private final GameSettings rows;
 
     private GameSettingsTable(GameSettings rows) {
@@ -68,18 +76,12 @@ final class GameSettingsTable implements SoraTable {
         return rows;
     }
     @Override
-    public String name() {
-        return NAME;
+    public GameSettings row() {
+        return rows;
     }
-
     @Override
-    public SoraTableMode mode() {
-        return SoraTableMode.SINGLETON;
-    }
-
-    @Override
-    public String key() {
-        return null;
+    public SoraTableInfo info() {
+        return INFO;
     }
 
     @Override

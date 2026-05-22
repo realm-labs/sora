@@ -48,8 +48,16 @@ public final class Stage {
     }
 }
 
-final class StageTable extends java.util.AbstractMap<Integer, Stage> implements SoraTable {
+final class StageTable extends java.util.AbstractMap<Integer, Stage> implements SoraKeyedTable<Integer, Stage> {
     static final String NAME = "Stage";
+    static final SoraTableInfo INFO = new SoraTableInfo(
+        NAME,
+        "Stage",
+        SoraTableShape.KEYED,
+        new SoraKeyInfo("id", "Integer"),
+        List.of(
+        )
+    );
     private final List<Integer> keys;
     private final java.util.Map<Integer, Stage> rows;
 
@@ -74,7 +82,7 @@ final class StageTable extends java.util.AbstractMap<Integer, Stage> implements 
         return rows.get(key);
     }
 
-    public List<Integer> keys() {
+    public List<Integer> orderedKeys() {
         return keys;
     }
 
@@ -87,18 +95,8 @@ final class StageTable extends java.util.AbstractMap<Integer, Stage> implements 
         return rows.entrySet();
     }
     @Override
-    public String name() {
-        return NAME;
-    }
-
-    @Override
-    public SoraTableMode mode() {
-        return SoraTableMode.MAP;
-    }
-
-    @Override
-    public String key() {
-        return "id";
+    public SoraTableInfo info() {
+        return INFO;
     }
 
     @Override

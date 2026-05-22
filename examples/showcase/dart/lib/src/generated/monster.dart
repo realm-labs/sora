@@ -34,8 +34,16 @@ final class Monster {
   }
 }
 
-final class MonsterTable extends Iterable<Monster> implements SoraConfigTable {
+final class MonsterTable extends Iterable<Monster> implements SoraKeyedTable<int, Monster> {
   static const tableName = 'Monster';
+  static const tableInfo = SoraTableInfo(
+    name: tableName,
+    rowType: 'Monster',
+    shape: SoraTableShape.keyed,
+    primaryKey: SoraKeyInfo('id', 'int'),
+    indexes: [
+    ],
+  );
   final List<int> _keys;
   final Map<int, Monster> _rows;
 
@@ -52,13 +60,7 @@ final class MonsterTable extends Iterable<Monster> implements SoraConfigTable {
   }
 
   @override
-  String get name => tableName;
-
-  @override
-  String get mode => 'map';
-
-  @override
-  String? get key => 'id';
+  SoraTableInfo get info => tableInfo;
 
   @override
   int get length => _rows.length;
@@ -67,13 +69,7 @@ final class MonsterTable extends Iterable<Monster> implements SoraConfigTable {
   Iterator<Monster> get iterator => _rows.values.iterator;
   Monster? operator [](int key) => _rows[key];
 
-  Monster get(int key) {
-    final row = _rows[key];
-    if (row == null) {
-      throw SoraReadException('missing row in table `$tableName` for key `$key`');
-    }
-    return row;
-  }
+  Monster? get(int key) => _rows[key];
 
   Map<int, Monster> get rows => _rows;
 

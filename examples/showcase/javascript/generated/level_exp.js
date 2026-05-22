@@ -25,6 +25,14 @@ export function decodeLevelExpValue(value) {
 
 export class LevelExpTable {
     static tableName = "LevelExp";
+    static tableInfo = {
+        name: LevelExpTable.tableName,
+        rowType: "LevelExp",
+        shape: "keyed",
+        primaryKey: { name: "level", type: "number" },
+        indexes: [
+        ],
+    };
 
     constructor(
         keys,
@@ -41,16 +49,8 @@ export class LevelExpTable {
         );
     }
 
-    name() {
-        return LevelExpTable.tableName;
-    }
-
-    mode() {
-        return "map";
-    }
-
-    key() {
-        return "level";
+    info() {
+        return LevelExpTable.tableInfo;
     }
 
     len() {

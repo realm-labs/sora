@@ -48,11 +48,60 @@ final class SoraValueBundle {
   }
 }
 
+enum SoraTableShape {
+  list,
+  keyed,
+  singleton,
+}
+
+final class SoraKeyInfo {
+  final String name;
+  final String type;
+
+  const SoraKeyInfo(this.name, this.type);
+}
+
+final class SoraIndexInfo {
+  final String name;
+  final bool unique;
+  final List<String> fields;
+
+  const SoraIndexInfo(this.name, this.unique, this.fields);
+}
+
+final class SoraTableInfo {
+  final String name;
+  final String rowType;
+  final SoraTableShape shape;
+  final SoraKeyInfo? primaryKey;
+  final List<SoraIndexInfo> indexes;
+
+  const SoraTableInfo({
+    required this.name,
+    required this.rowType,
+    required this.shape,
+    required this.primaryKey,
+    required this.indexes,
+  });
+}
+
 abstract interface class SoraConfigTable {
-  String get name;
-  String get mode;
-  String? get key;
+  SoraTableInfo get info;
   int get length;
+}
+
+abstract interface class SoraKeyedTable<K, R> implements SoraConfigTable {
+  R? get(K key);
+  List<K> get keys;
+  List<R> get orderedRows;
+}
+
+abstract interface class SoraListTable<R> implements SoraConfigTable {
+  List<R> get rows;
+}
+
+abstract interface class SoraSingleTable<R> implements SoraConfigTable {
+  R get row;
 }
 
 final class SoraObject {

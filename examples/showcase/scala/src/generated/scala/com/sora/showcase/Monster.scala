@@ -32,14 +32,20 @@ final class MonsterTable private (
   def values: Iterable[Monster] = rows.values
 
   def orderedValues: Vector[Monster] = keys.flatMap(rows.get)
-  override val name: String = MonsterTable.Name
-  override val mode: SoraTableMode = SoraTableMode.Map
-  override val key: Option[String] = Some("id")
+  override val info: SoraTableInfo = MonsterTable.Info
   override def size: Int = rows.size
 }
 
 object MonsterTable {
   val Name: String = "Monster"
+  val Info: SoraTableInfo = SoraTableInfo(
+    name = Name,
+    rowType = "Monster",
+    shape = SoraTableShape.Keyed,
+    primaryKey = Some(SoraKeyInfo("id", "Int")),
+    indexes = Vector(
+    )
+  )
 
   def decode(source: SoraTableSource): MonsterTable =
     fromRows(source.decodeTable(Name, Monster.decode))

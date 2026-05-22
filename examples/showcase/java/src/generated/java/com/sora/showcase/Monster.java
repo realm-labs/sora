@@ -53,8 +53,16 @@ public final class Monster {
     }
 }
 
-final class MonsterTable extends java.util.AbstractMap<Integer, Monster> implements SoraTable {
+final class MonsterTable extends java.util.AbstractMap<Integer, Monster> implements SoraKeyedTable<Integer, Monster> {
     static final String NAME = "Monster";
+    static final SoraTableInfo INFO = new SoraTableInfo(
+        NAME,
+        "Monster",
+        SoraTableShape.KEYED,
+        new SoraKeyInfo("id", "Integer"),
+        List.of(
+        )
+    );
     private final List<Integer> keys;
     private final java.util.Map<Integer, Monster> rows;
 
@@ -79,7 +87,7 @@ final class MonsterTable extends java.util.AbstractMap<Integer, Monster> impleme
         return rows.get(key);
     }
 
-    public List<Integer> keys() {
+    public List<Integer> orderedKeys() {
         return keys;
     }
 
@@ -92,18 +100,8 @@ final class MonsterTable extends java.util.AbstractMap<Integer, Monster> impleme
         return rows.entrySet();
     }
     @Override
-    public String name() {
-        return NAME;
-    }
-
-    @Override
-    public SoraTableMode mode() {
-        return SoraTableMode.MAP;
-    }
-
-    @Override
-    public String key() {
-        return "id";
+    public SoraTableInfo info() {
+        return INFO;
     }
 
     @Override

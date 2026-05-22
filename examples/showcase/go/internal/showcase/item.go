@@ -92,6 +92,17 @@ func decodeItemValue(input SoraValue) (Item, error) {
 
 const itemTableName = "Item"
 
+var itemTableInfo = SoraTableInfo{
+	Name:       itemTableName,
+	RowType:    "Item",
+	Shape:      SoraTableShapeKeyed,
+	PrimaryKey: &SoraKeyInfo{Name: "id", Type: "int32"},
+	Indexes: []SoraIndexInfo{
+		{Name: "byName", Unique: true, Fields: []string{"Name"}},
+		{Name: "byItemType", Unique: false, Fields: []string{"ItemType"}},
+	},
+}
+
 type ItemTable struct {
 	keys       []int32
 	rows       map[int32]Item
@@ -148,16 +159,8 @@ func (table *ItemTable) GetByName(name string) (Item, bool) {
 func (table *ItemTable) FindByItemType(itemType ItemType) []Item {
 	return table.byItemType[itemType]
 }
-func (table *ItemTable) Name() string {
-	return itemTableName
-}
-
-func (table *ItemTable) Mode() SoraTableMode {
-	return SoraTableModeMap
-}
-
-func (table *ItemTable) Key() string {
-	return "id"
+func (table *ItemTable) Info() SoraTableInfo {
+	return itemTableInfo
 }
 
 func (table *ItemTable) Len() int {

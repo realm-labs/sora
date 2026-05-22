@@ -35,14 +35,20 @@ final class QuestTable private (
   def values: Iterable[Quest] = rows.values
 
   def orderedValues: Vector[Quest] = keys.flatMap(rows.get)
-  override val name: String = QuestTable.Name
-  override val mode: SoraTableMode = SoraTableMode.Map
-  override val key: Option[String] = Some("id")
+  override val info: SoraTableInfo = QuestTable.Info
   override def size: Int = rows.size
 }
 
 object QuestTable {
   val Name: String = "Quest"
+  val Info: SoraTableInfo = SoraTableInfo(
+    name = Name,
+    rowType = "Quest",
+    shape = SoraTableShape.Keyed,
+    primaryKey = Some(SoraKeyInfo("id", "Int")),
+    indexes = Vector(
+    )
+  )
 
   def decode(source: SoraTableSource): QuestTable =
     fromRows(source.decodeTable(Name, Quest.decode))

@@ -31,6 +31,14 @@ export function decodeMailTemplateValue(value) {
 
 export class MailTemplateTable {
     static tableName = "MailTemplate";
+    static tableInfo = {
+        name: MailTemplateTable.tableName,
+        rowType: "MailTemplate",
+        shape: "keyed",
+        primaryKey: { name: "id", type: "number" },
+        indexes: [
+        ],
+    };
 
     constructor(
         keys,
@@ -47,16 +55,8 @@ export class MailTemplateTable {
         );
     }
 
-    name() {
-        return MailTemplateTable.tableName;
-    }
-
-    mode() {
-        return "map";
-    }
-
-    key() {
-        return "id";
+    info() {
+        return MailTemplateTable.tableInfo;
     }
 
     len() {

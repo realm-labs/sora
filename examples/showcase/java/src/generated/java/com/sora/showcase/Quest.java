@@ -59,8 +59,16 @@ public final class Quest {
     }
 }
 
-final class QuestTable extends java.util.AbstractMap<Integer, Quest> implements SoraTable {
+final class QuestTable extends java.util.AbstractMap<Integer, Quest> implements SoraKeyedTable<Integer, Quest> {
     static final String NAME = "Quest";
+    static final SoraTableInfo INFO = new SoraTableInfo(
+        NAME,
+        "Quest",
+        SoraTableShape.KEYED,
+        new SoraKeyInfo("id", "Integer"),
+        List.of(
+        )
+    );
     private final List<Integer> keys;
     private final java.util.Map<Integer, Quest> rows;
 
@@ -85,7 +93,7 @@ final class QuestTable extends java.util.AbstractMap<Integer, Quest> implements 
         return rows.get(key);
     }
 
-    public List<Integer> keys() {
+    public List<Integer> orderedKeys() {
         return keys;
     }
 
@@ -98,18 +106,8 @@ final class QuestTable extends java.util.AbstractMap<Integer, Quest> implements 
         return rows.entrySet();
     }
     @Override
-    public String name() {
-        return NAME;
-    }
-
-    @Override
-    public SoraTableMode mode() {
-        return SoraTableMode.MAP;
-    }
-
-    @Override
-    public String key() {
-        return "id";
+    public SoraTableInfo info() {
+        return INFO;
     }
 
     @Override

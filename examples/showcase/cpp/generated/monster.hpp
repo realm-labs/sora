@@ -35,6 +35,15 @@ struct Monster {
 class MonsterTable final : public SoraTable {
 public:
     static constexpr const char* NAME = "Monster";
+    static const SoraTableInfo& table_info() {
+        static const SoraTableInfo info = {
+            NAME,
+            "Monster",
+            "keyed",
+            "id"
+        };
+        return info;
+    }
 
     MonsterTable() {}
     MonsterTable(const MonsterTable&) = delete;
@@ -54,9 +63,7 @@ public:
         return table;
     }
 
-    const char* name() const override { return NAME; }
-    const char* mode() const override { return "map"; }
-    const char* key() const override { return "id"; }
+    const SoraTableInfo& info() const override { return table_info(); }
     std::size_t size() const override {
         return rows_.size();
     }

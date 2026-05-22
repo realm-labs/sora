@@ -27,8 +27,16 @@ final class Dungeon {
   }
 }
 
-final class DungeonTable extends Iterable<Dungeon> implements SoraConfigTable {
+final class DungeonTable extends Iterable<Dungeon> implements SoraKeyedTable<int, Dungeon> {
   static const tableName = 'Dungeon';
+  static const tableInfo = SoraTableInfo(
+    name: tableName,
+    rowType: 'Dungeon',
+    shape: SoraTableShape.keyed,
+    primaryKey: SoraKeyInfo('id', 'int'),
+    indexes: [
+    ],
+  );
   final List<int> _keys;
   final Map<int, Dungeon> _rows;
 
@@ -45,13 +53,7 @@ final class DungeonTable extends Iterable<Dungeon> implements SoraConfigTable {
   }
 
   @override
-  String get name => tableName;
-
-  @override
-  String get mode => 'map';
-
-  @override
-  String? get key => 'id';
+  SoraTableInfo get info => tableInfo;
 
   @override
   int get length => _rows.length;
@@ -60,13 +62,7 @@ final class DungeonTable extends Iterable<Dungeon> implements SoraConfigTable {
   Iterator<Dungeon> get iterator => _rows.values.iterator;
   Dungeon? operator [](int key) => _rows[key];
 
-  Dungeon get(int key) {
-    final row = _rows[key];
-    if (row == null) {
-      throw SoraReadException('missing row in table `$tableName` for key `$key`');
-    }
-    return row;
-  }
+  Dungeon? get(int key) => _rows[key];
 
   Map<int, Dungeon> get rows => _rows;
 

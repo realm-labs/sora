@@ -44,8 +44,18 @@ final class Item {
   }
 }
 
-final class ItemTable extends Iterable<Item> implements SoraConfigTable {
+final class ItemTable extends Iterable<Item> implements SoraKeyedTable<int, Item> {
   static const tableName = 'Item';
+  static const tableInfo = SoraTableInfo(
+    name: tableName,
+    rowType: 'Item',
+    shape: SoraTableShape.keyed,
+    primaryKey: SoraKeyInfo('id', 'int'),
+    indexes: [
+      SoraIndexInfo('name', true, ['name']),
+      SoraIndexInfo('itemType', false, ['itemType']),
+    ],
+  );
   final List<int> _keys;
   final Map<int, Item> _rows;
   final Map<String, Item> _name;
@@ -68,13 +78,7 @@ final class ItemTable extends Iterable<Item> implements SoraConfigTable {
   }
 
   @override
-  String get name => tableName;
-
-  @override
-  String get mode => 'map';
-
-  @override
-  String? get key => 'id';
+  SoraTableInfo get info => tableInfo;
 
   @override
   int get length => _rows.length;
@@ -83,13 +87,7 @@ final class ItemTable extends Iterable<Item> implements SoraConfigTable {
   Iterator<Item> get iterator => _rows.values.iterator;
   Item? operator [](int key) => _rows[key];
 
-  Item get(int key) {
-    final row = _rows[key];
-    if (row == null) {
-      throw SoraReadException('missing row in table `$tableName` for key `$key`');
-    }
-    return row;
-  }
+  Item? get(int key) => _rows[key];
 
   Map<int, Item> get rows => _rows;
 

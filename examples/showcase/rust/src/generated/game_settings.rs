@@ -36,6 +36,13 @@ pub struct GameSettingsTable {
 
 impl GameSettingsTable {
     pub const NAME: &'static str = "GameSettings";
+    pub const INFO: super::SoraTableInfo = super::SoraTableInfo {
+        name: Self::NAME,
+        row_type: "GameSettings",
+        shape: super::SoraTableShape::Singleton,
+        primary_key: None,
+        indexes: &[],
+    };
 
     pub(super) fn from_rows(
         rows: Vec<GameSettings>,
@@ -54,20 +61,20 @@ impl std::ops::Deref for GameSettingsTable {
     }
 }
 
-impl super::SoraTable for GameSettingsTable {
-    fn name(&self) -> &'static str {
-        Self::NAME
-    }
-
-    fn mode(&self) -> super::SoraTableMode {
-        super::SoraTableMode::Singleton
-    }
-
-    fn key(&self) -> Option<&'static str> {
-        None
+impl super::ErasedSoraTable for GameSettingsTable {
+    fn info(&self) -> &'static super::SoraTableInfo {
+        &Self::INFO
     }
 
     fn len(&self) -> usize {
         1
+    }
+}
+
+impl super::SoraSingleTable for GameSettingsTable {
+    type Row = GameSettings;
+
+    fn get(&self) -> &Self::Row {
+        &self.rows
     }
 }

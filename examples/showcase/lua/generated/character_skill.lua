@@ -23,6 +23,14 @@ end
 local CharacterSkillTable = {}
 CharacterSkillTable.__index = CharacterSkillTable
 CharacterSkillTable.NAME = "CharacterSkill"
+CharacterSkillTable.INFO = {
+    name = CharacterSkillTable.NAME,
+    row_type = "CharacterSkill",
+    shape = "list",
+    primary_key = nil,
+    indexes = {
+    },
+}
 
 ---@param rows CharacterSkill[]
 ---@return CharacterSkillTable
@@ -32,19 +40,9 @@ function CharacterSkillTable.decode(rows)
     }, CharacterSkillTable)
 end
 
----@return string
-function CharacterSkillTable:name()
-    return CharacterSkillTable.NAME
-end
-
----@return string
-function CharacterSkillTable:mode()
-    return "list"
-end
-
----@return string?
-function CharacterSkillTable:key()
-    return nil
+---@return table
+function CharacterSkillTable:info()
+    return CharacterSkillTable.INFO
 end
 
 ---@return integer

@@ -36,9 +36,18 @@ public sealed record Dungeon(
     }
 }
 
-public sealed class DungeonTable : ISoraTable, IReadOnlyDictionary<int, Dungeon>
+public sealed class DungeonTable : ISoraKeyedTable<int, Dungeon>
 {
     public const string TableName = "Dungeon";
+    public static readonly SoraTableInfo TableInfo = new(
+        TableName,
+        "Dungeon",
+        SoraTableShape.Keyed,
+        new SoraKeyInfo("id", "int"),
+        new SoraIndexInfo[]
+        {
+        }
+    );
     private readonly List<int> keys;
     private readonly Dictionary<int, Dungeon> rows;
 
@@ -113,8 +122,6 @@ public sealed class DungeonTable : ISoraTable, IReadOnlyDictionary<int, Dungeon>
             return orderedRows;
         }
     }
-    public string Name => TableName;
-    public SoraTableMode Mode => SoraTableMode.Map;
-    public string? Key => "id";
+    public SoraTableInfo Info => TableInfo;
     public int Count => rows.Count;
 }

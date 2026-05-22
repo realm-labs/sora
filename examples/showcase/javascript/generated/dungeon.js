@@ -28,6 +28,14 @@ export function decodeDungeonValue(value) {
 
 export class DungeonTable {
     static tableName = "Dungeon";
+    static tableInfo = {
+        name: DungeonTable.tableName,
+        rowType: "Dungeon",
+        shape: "keyed",
+        primaryKey: { name: "id", type: "number" },
+        indexes: [
+        ],
+    };
 
     constructor(
         keys,
@@ -44,16 +52,8 @@ export class DungeonTable {
         );
     }
 
-    name() {
-        return DungeonTable.tableName;
-    }
-
-    mode() {
-        return "map";
-    }
-
-    key() {
-        return "id";
+    info() {
+        return DungeonTable.tableInfo;
     }
 
     len() {

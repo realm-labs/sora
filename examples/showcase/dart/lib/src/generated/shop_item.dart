@@ -30,8 +30,16 @@ final class ShopItem {
   }
 }
 
-final class ShopItemTable extends Iterable<ShopItem> implements SoraConfigTable {
+final class ShopItemTable extends Iterable<ShopItem> implements SoraListTable<ShopItem> {
   static const tableName = 'ShopItem';
+  static const tableInfo = SoraTableInfo(
+    name: tableName,
+    rowType: 'ShopItem',
+    shape: SoraTableShape.list,
+    primaryKey: null,
+    indexes: [
+    ],
+  );
   final List<ShopItem> _rows;
 
   const ShopItemTable(
@@ -45,13 +53,7 @@ final class ShopItemTable extends Iterable<ShopItem> implements SoraConfigTable 
   }
 
   @override
-  String get name => tableName;
-
-  @override
-  String get mode => 'list';
-
-  @override
-  String? get key => null;
+  SoraTableInfo get info => tableInfo;
 
   @override
   int get length => _rows.length;

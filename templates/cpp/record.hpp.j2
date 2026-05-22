@@ -38,6 +38,25 @@ struct {{ record.pascal_name }} {
 class {{ table.pascal_name }}Table final : public SoraTable {
 public:
     static constexpr const char* NAME = "{{ table.name }}";
+    static const SoraTableInfo& table_info() {
+        static const SoraTableInfo info = {
+            NAME,
+            "{{ table.row_type }}",
+{%- if table.mode == "map" %}
+            "keyed",
+{%- elif table.mode == "singleton" %}
+            "singleton",
+{%- else %}
+            "list",
+{%- endif %}
+{%- if table.key_name %}
+            "{{ table.key_name }}"
+{%- else %}
+            nullptr
+{%- endif %}
+        };
+        return info;
+    }
 
     {{ table.pascal_name }}Table() {}
     {{ table.pascal_name }}Table(const {{ table.pascal_name }}Table&) = delete;
@@ -66,13 +85,7 @@ public:
         return table;
     }
 
-    const char* name() const override { return NAME; }
-    const char* mode() const override { return "{{ table.mode }}"; }
-{%- if table.key_name %}
-    const char* key() const override { return "{{ table.key_name }}"; }
-{%- else %}
-    const char* key() const override { return nullptr; }
-{%- endif %}
+    const SoraTableInfo& info() const override { return table_info(); }
     std::size_t size() const override {
 {%- if table.mode == "singleton" %}
         return 1;

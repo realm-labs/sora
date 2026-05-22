@@ -32,6 +32,13 @@ pub struct QuestRewardTable {
 
 impl QuestRewardTable {
     pub const NAME: &'static str = "QuestReward";
+    pub const INFO: super::SoraTableInfo = super::SoraTableInfo {
+        name: Self::NAME,
+        row_type: "QuestReward",
+        shape: super::SoraTableShape::List,
+        primary_key: None,
+        indexes: &[],
+    };
 
     pub(super) fn from_rows(rows: Vec<QuestReward>) -> Result<Self, super::runtime::SoraReadError> {
         Ok(Self { rows })
@@ -39,27 +46,27 @@ impl QuestRewardTable {
 }
 
 impl std::ops::Deref for QuestRewardTable {
-    type Target = Vec<QuestReward>;
+    type Target = [QuestReward];
 
     fn deref(&self) -> &Self::Target {
         &self.rows
     }
 }
 
-impl super::SoraTable for QuestRewardTable {
-    fn name(&self) -> &'static str {
-        Self::NAME
-    }
-
-    fn mode(&self) -> super::SoraTableMode {
-        super::SoraTableMode::List
-    }
-
-    fn key(&self) -> Option<&'static str> {
-        None
+impl super::ErasedSoraTable for QuestRewardTable {
+    fn info(&self) -> &'static super::SoraTableInfo {
+        &Self::INFO
     }
 
     fn len(&self) -> usize {
         self.rows.len()
+    }
+}
+
+impl super::SoraListTable for QuestRewardTable {
+    type Row = QuestReward;
+
+    fn as_slice(&self) -> &[Self::Row] {
+        &self.rows
     }
 }

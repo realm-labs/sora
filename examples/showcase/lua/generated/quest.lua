@@ -35,6 +35,14 @@ end
 local QuestTable = {}
 QuestTable.__index = QuestTable
 QuestTable.NAME = "Quest"
+QuestTable.INFO = {
+    name = QuestTable.NAME,
+    row_type = "Quest",
+    shape = "keyed",
+    primary_key = { name = "id", type = "integer" },
+    indexes = {
+    },
+}
 
 ---@param rows Quest[]
 ---@return QuestTable
@@ -49,19 +57,9 @@ function QuestTable.decode(rows)
     }, QuestTable)
 end
 
----@return string
-function QuestTable:name()
-    return QuestTable.NAME
-end
-
----@return string
-function QuestTable:mode()
-    return "map"
-end
-
----@return string?
-function QuestTable:key()
-    return "id"
+---@return table
+function QuestTable:info()
+    return QuestTable.INFO
 end
 
 ---@return integer

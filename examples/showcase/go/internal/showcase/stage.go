@@ -67,6 +67,14 @@ func decodeStageValue(input SoraValue) (Stage, error) {
 
 const stageTableName = "Stage"
 
+var stageTableInfo = SoraTableInfo{
+	Name:       stageTableName,
+	RowType:    "Stage",
+	Shape:      SoraTableShapeKeyed,
+	PrimaryKey: &SoraKeyInfo{Name: "id", Type: "int32"},
+	Indexes:    []SoraIndexInfo{},
+}
+
 type StageTable struct {
 	keys []int32
 	rows map[int32]Stage
@@ -109,16 +117,8 @@ func (table *StageTable) OrderedRows() []Stage {
 	}
 	return rows
 }
-func (table *StageTable) Name() string {
-	return stageTableName
-}
-
-func (table *StageTable) Mode() SoraTableMode {
-	return SoraTableModeMap
-}
-
-func (table *StageTable) Key() string {
-	return "id"
+func (table *StageTable) Info() SoraTableInfo {
+	return stageTableInfo
 }
 
 func (table *StageTable) Len() int {

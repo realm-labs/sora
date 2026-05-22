@@ -49,6 +49,14 @@ func decodeDialogueValue(input SoraValue) (Dialogue, error) {
 
 const dialogueTableName = "Dialogue"
 
+var dialogueTableInfo = SoraTableInfo{
+	Name:       dialogueTableName,
+	RowType:    "Dialogue",
+	Shape:      SoraTableShapeKeyed,
+	PrimaryKey: &SoraKeyInfo{Name: "id", Type: "int32"},
+	Indexes:    []SoraIndexInfo{},
+}
+
 type DialogueTable struct {
 	keys []int32
 	rows map[int32]Dialogue
@@ -91,16 +99,8 @@ func (table *DialogueTable) OrderedRows() []Dialogue {
 	}
 	return rows
 }
-func (table *DialogueTable) Name() string {
-	return dialogueTableName
-}
-
-func (table *DialogueTable) Mode() SoraTableMode {
-	return SoraTableModeMap
-}
-
-func (table *DialogueTable) Key() string {
-	return "id"
+func (table *DialogueTable) Info() SoraTableInfo {
+	return dialogueTableInfo
 }
 
 func (table *DialogueTable) Len() int {

@@ -35,6 +35,16 @@ export function decodeItemValue(value) {
 
 export class ItemTable {
     static tableName = "Item";
+    static tableInfo = {
+        name: ItemTable.tableName,
+        rowType: "Item",
+        shape: "keyed",
+        primaryKey: { name: "id", type: "number" },
+        indexes: [
+            { name: "by_name", unique: true, fields: ["name"] },
+            { name: "by_item_type", unique: false, fields: ["itemType"] },
+        ],
+    };
 
     constructor(
         keys,
@@ -57,16 +67,8 @@ export class ItemTable {
         );
     }
 
-    name() {
-        return ItemTable.tableName;
-    }
-
-    mode() {
-        return "map";
-    }
-
-    key() {
-        return "id";
+    info() {
+        return ItemTable.tableInfo;
     }
 
     len() {

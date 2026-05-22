@@ -65,8 +65,18 @@ public final class Item {
     }
 }
 
-final class ItemTable extends java.util.AbstractMap<Integer, Item> implements SoraTable {
+final class ItemTable extends java.util.AbstractMap<Integer, Item> implements SoraKeyedTable<Integer, Item> {
     static final String NAME = "Item";
+    static final SoraTableInfo INFO = new SoraTableInfo(
+        NAME,
+        "Item",
+        SoraTableShape.KEYED,
+        new SoraKeyInfo("id", "Integer"),
+        List.of(
+            new SoraIndexInfo("byName", true, List.of("name")),
+            new SoraIndexInfo("byItemType", false, List.of("itemType"))
+        )
+    );
     private final List<Integer> keys;
     private final java.util.Map<Integer, Item> rows;
     private final Map<String, Item> byName;
@@ -100,7 +110,7 @@ final class ItemTable extends java.util.AbstractMap<Integer, Item> implements So
         return rows.get(key);
     }
 
-    public List<Integer> keys() {
+    public List<Integer> orderedKeys() {
         return keys;
     }
 
@@ -119,18 +129,8 @@ final class ItemTable extends java.util.AbstractMap<Integer, Item> implements So
         return byItemType.getOrDefault(itemType, List.of());
     }
     @Override
-    public String name() {
-        return NAME;
-    }
-
-    @Override
-    public SoraTableMode mode() {
-        return SoraTableMode.MAP;
-    }
-
-    @Override
-    public String key() {
-        return "id";
+    public SoraTableInfo info() {
+        return INFO;
     }
 
     @Override

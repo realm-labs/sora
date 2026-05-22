@@ -30,6 +30,14 @@ end
 local MailTemplateTable = {}
 MailTemplateTable.__index = MailTemplateTable
 MailTemplateTable.NAME = "MailTemplate"
+MailTemplateTable.INFO = {
+    name = MailTemplateTable.NAME,
+    row_type = "MailTemplate",
+    shape = "keyed",
+    primary_key = { name = "id", type = "integer" },
+    indexes = {
+    },
+}
 
 ---@param rows MailTemplate[]
 ---@return MailTemplateTable
@@ -44,19 +52,9 @@ function MailTemplateTable.decode(rows)
     }, MailTemplateTable)
 end
 
----@return string
-function MailTemplateTable:name()
-    return MailTemplateTable.NAME
-end
-
----@return string
-function MailTemplateTable:mode()
-    return "map"
-end
-
----@return string?
-function MailTemplateTable:key()
-    return "id"
+---@return table
+function MailTemplateTable:info()
+    return MailTemplateTable.INFO
 end
 
 ---@return integer

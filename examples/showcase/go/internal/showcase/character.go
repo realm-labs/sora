@@ -85,6 +85,14 @@ func decodeCharacterValue(input SoraValue) (Character, error) {
 
 const characterTableName = "Character"
 
+var characterTableInfo = SoraTableInfo{
+	Name:       characterTableName,
+	RowType:    "Character",
+	Shape:      SoraTableShapeKeyed,
+	PrimaryKey: &SoraKeyInfo{Name: "id", Type: "int32"},
+	Indexes:    []SoraIndexInfo{},
+}
+
 type CharacterTable struct {
 	keys []int32
 	rows map[int32]Character
@@ -127,16 +135,8 @@ func (table *CharacterTable) OrderedRows() []Character {
 	}
 	return rows
 }
-func (table *CharacterTable) Name() string {
-	return characterTableName
-}
-
-func (table *CharacterTable) Mode() SoraTableMode {
-	return SoraTableModeMap
-}
-
-func (table *CharacterTable) Key() string {
-	return "id"
+func (table *CharacterTable) Info() SoraTableInfo {
+	return characterTableInfo
 }
 
 func (table *CharacterTable) Len() int {

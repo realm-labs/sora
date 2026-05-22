@@ -25,6 +25,14 @@ export function decodeDialogueValue(value) {
 
 export class DialogueTable {
     static tableName = "Dialogue";
+    static tableInfo = {
+        name: DialogueTable.tableName,
+        rowType: "Dialogue",
+        shape: "keyed",
+        primaryKey: { name: "id", type: "number" },
+        indexes: [
+        ],
+    };
 
     constructor(
         keys,
@@ -41,16 +49,8 @@ export class DialogueTable {
         );
     }
 
-    name() {
-        return DialogueTable.tableName;
-    }
-
-    mode() {
-        return "map";
-    }
-
-    key() {
-        return "id";
+    info() {
+        return DialogueTable.tableInfo;
     }
 
     len() {

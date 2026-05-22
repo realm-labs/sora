@@ -29,6 +29,14 @@ end
 local StageTable = {}
 StageTable.__index = StageTable
 StageTable.NAME = "Stage"
+StageTable.INFO = {
+    name = StageTable.NAME,
+    row_type = "Stage",
+    shape = "keyed",
+    primary_key = { name = "id", type = "integer" },
+    indexes = {
+    },
+}
 
 ---@param rows Stage[]
 ---@return StageTable
@@ -43,19 +51,9 @@ function StageTable.decode(rows)
     }, StageTable)
 end
 
----@return string
-function StageTable:name()
-    return StageTable.NAME
-end
-
----@return string
-function StageTable:mode()
-    return "map"
-end
-
----@return string?
-function StageTable:key()
-    return "id"
+---@return table
+function StageTable:info()
+    return StageTable.INFO
 end
 
 ---@return integer

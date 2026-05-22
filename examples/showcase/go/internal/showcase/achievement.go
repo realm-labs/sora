@@ -58,6 +58,14 @@ func decodeAchievementValue(input SoraValue) (Achievement, error) {
 
 const achievementTableName = "Achievement"
 
+var achievementTableInfo = SoraTableInfo{
+	Name:       achievementTableName,
+	RowType:    "Achievement",
+	Shape:      SoraTableShapeKeyed,
+	PrimaryKey: &SoraKeyInfo{Name: "id", Type: "int32"},
+	Indexes:    []SoraIndexInfo{},
+}
+
 type AchievementTable struct {
 	keys []int32
 	rows map[int32]Achievement
@@ -100,16 +108,8 @@ func (table *AchievementTable) OrderedRows() []Achievement {
 	}
 	return rows
 }
-func (table *AchievementTable) Name() string {
-	return achievementTableName
-}
-
-func (table *AchievementTable) Mode() SoraTableMode {
-	return SoraTableModeMap
-}
-
-func (table *AchievementTable) Key() string {
-	return "id"
+func (table *AchievementTable) Info() SoraTableInfo {
+	return achievementTableInfo
 }
 
 func (table *AchievementTable) Len() int {

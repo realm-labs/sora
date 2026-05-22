@@ -32,8 +32,32 @@ final class {{ record.pascal_name }} {
 {%- if record.table %}
 {%- set table = record.table %}
 
-final class {{ table.pascal_name }}Table extends Iterable<{{ table.row_type }}> implements SoraConfigTable {
+final class {{ table.pascal_name }}Table extends Iterable<{{ table.row_type }}> implements {% if table.mode == "map" and table.key_field_name %}SoraKeyedTable<{{ table.key_type }}, {{ table.row_type }}>{% elif table.mode == "singleton" %}SoraSingleTable<{{ table.row_type }}>{% else %}SoraListTable<{{ table.row_type }}>{% endif %} {
   static const tableName = '{{ table.name }}';
+  static const tableInfo = SoraTableInfo(
+    name: tableName,
+    rowType: '{{ table.row_type }}',
+{%- if table.mode == "map" %}
+    shape: SoraTableShape.keyed,
+{%- elif table.mode == "singleton" %}
+    shape: SoraTableShape.singleton,
+{%- else %}
+    shape: SoraTableShape.list,
+{%- endif %}
+{%- if table.key_name %}
+    primaryKey: SoraKeyInfo('{{ table.key_name }}', '{{ table.key_type }}'),
+{%- else %}
+    primaryKey: null,
+{%- endif %}
+    indexes: [
+{%- for index in table.unique_indexes %}
+      SoraIndexInfo('{{ index.field_name }}', true, ['{{ index.field_name }}']),
+{%- endfor %}
+{%- for index in table.non_unique_indexes %}
+      SoraIndexInfo('{{ index.field_name }}', false, ['{{ index.field_name }}']),
+{%- endfor %}
+    ],
+  );
 
 {%- if table.mode == "map" and table.key_type %}
   final List<{{ table.key_type }}> _keys;
@@ -99,13 +123,7 @@ final class {{ table.pascal_name }}Table extends Iterable<{{ table.row_type }}> 
   }
 
   @override
-  String get name => tableName;
-
-  @override
-  String get mode => '{{ table.mode }}';
-
-  @override
-  String? get key => {% if table.key_name %}'{{ table.key_name }}'{% else %}null{% endif %};
+  SoraTableInfo get info => tableInfo;
 
   @override
   int get length => {% if table.mode == "singleton" %}1{% else %}_rows.length{% endif %};
@@ -116,13 +134,7 @@ final class {{ table.pascal_name }}Table extends Iterable<{{ table.row_type }}> 
 {%- if table.mode == "map" and table.key_field_name %}
   {{ table.row_type }}? operator []({{ table.key_type }} key) => _rows[key];
 
-  {{ table.row_type }} get({{ table.key_type }} key) {
-    final row = _rows[key];
-    if (row == null) {
-      throw SoraReadException('missing row in table `$tableName` for key `$key`');
-    }
-    return row;
-  }
+  {{ table.row_type }}? get({{ table.key_type }} key) => _rows[key];
 
   Map<{{ table.key_type }}, {{ table.row_type }}> get rows => _rows;
 

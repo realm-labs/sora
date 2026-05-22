@@ -36,9 +36,18 @@ public sealed record Localization(
     }
 }
 
-public sealed class LocalizationTable : ISoraTable, IReadOnlyDictionary<string, Localization>
+public sealed class LocalizationTable : ISoraKeyedTable<string, Localization>
 {
     public const string TableName = "Localization";
+    public static readonly SoraTableInfo TableInfo = new(
+        TableName,
+        "Localization",
+        SoraTableShape.Keyed,
+        new SoraKeyInfo("key", "string"),
+        new SoraIndexInfo[]
+        {
+        }
+    );
     private readonly List<string> keys;
     private readonly Dictionary<string, Localization> rows;
 
@@ -113,8 +122,6 @@ public sealed class LocalizationTable : ISoraTable, IReadOnlyDictionary<string, 
             return orderedRows;
         }
     }
-    public string Name => TableName;
-    public SoraTableMode Mode => SoraTableMode.Map;
-    public string? Key => "key";
+    public SoraTableInfo Info => TableInfo;
     public int Count => rows.Count;
 }

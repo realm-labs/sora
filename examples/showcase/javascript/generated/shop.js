@@ -26,6 +26,14 @@ export function decodeShopValue(value) {
 
 export class ShopTable {
     static tableName = "Shop";
+    static tableInfo = {
+        name: ShopTable.tableName,
+        rowType: "Shop",
+        shape: "keyed",
+        primaryKey: { name: "id", type: "number" },
+        indexes: [
+        ],
+    };
 
     constructor(
         keys,
@@ -42,16 +50,8 @@ export class ShopTable {
         );
     }
 
-    name() {
-        return ShopTable.tableName;
-    }
-
-    mode() {
-        return "map";
-    }
-
-    key() {
-        return "id";
+    info() {
+        return ShopTable.tableInfo;
     }
 
     len() {

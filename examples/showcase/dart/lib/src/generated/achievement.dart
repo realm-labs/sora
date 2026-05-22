@@ -27,8 +27,16 @@ final class Achievement {
   }
 }
 
-final class AchievementTable extends Iterable<Achievement> implements SoraConfigTable {
+final class AchievementTable extends Iterable<Achievement> implements SoraKeyedTable<int, Achievement> {
   static const tableName = 'Achievement';
+  static const tableInfo = SoraTableInfo(
+    name: tableName,
+    rowType: 'Achievement',
+    shape: SoraTableShape.keyed,
+    primaryKey: SoraKeyInfo('id', 'int'),
+    indexes: [
+    ],
+  );
   final List<int> _keys;
   final Map<int, Achievement> _rows;
 
@@ -45,13 +53,7 @@ final class AchievementTable extends Iterable<Achievement> implements SoraConfig
   }
 
   @override
-  String get name => tableName;
-
-  @override
-  String get mode => 'map';
-
-  @override
-  String? get key => 'id';
+  SoraTableInfo get info => tableInfo;
 
   @override
   int get length => _rows.length;
@@ -60,13 +62,7 @@ final class AchievementTable extends Iterable<Achievement> implements SoraConfig
   Iterator<Achievement> get iterator => _rows.values.iterator;
   Achievement? operator [](int key) => _rows[key];
 
-  Achievement get(int key) {
-    final row = _rows[key];
-    if (row == null) {
-      throw SoraReadException('missing row in table `$tableName` for key `$key`');
-    }
-    return row;
-  }
+  Achievement? get(int key) => _rows[key];
 
   Map<int, Achievement> get rows => _rows;
 

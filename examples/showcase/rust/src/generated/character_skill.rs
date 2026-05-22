@@ -29,6 +29,13 @@ pub struct CharacterSkillTable {
 
 impl CharacterSkillTable {
     pub const NAME: &'static str = "CharacterSkill";
+    pub const INFO: super::SoraTableInfo = super::SoraTableInfo {
+        name: Self::NAME,
+        row_type: "CharacterSkill",
+        shape: super::SoraTableShape::List,
+        primary_key: None,
+        indexes: &[],
+    };
 
     pub(super) fn from_rows(
         rows: Vec<CharacterSkill>,
@@ -38,27 +45,27 @@ impl CharacterSkillTable {
 }
 
 impl std::ops::Deref for CharacterSkillTable {
-    type Target = Vec<CharacterSkill>;
+    type Target = [CharacterSkill];
 
     fn deref(&self) -> &Self::Target {
         &self.rows
     }
 }
 
-impl super::SoraTable for CharacterSkillTable {
-    fn name(&self) -> &'static str {
-        Self::NAME
-    }
-
-    fn mode(&self) -> super::SoraTableMode {
-        super::SoraTableMode::List
-    }
-
-    fn key(&self) -> Option<&'static str> {
-        None
+impl super::ErasedSoraTable for CharacterSkillTable {
+    fn info(&self) -> &'static super::SoraTableInfo {
+        &Self::INFO
     }
 
     fn len(&self) -> usize {
         self.rows.len()
+    }
+}
+
+impl super::SoraListTable for CharacterSkillTable {
+    type Row = CharacterSkill;
+
+    fn as_slice(&self) -> &[Self::Row] {
+        &self.rows
     }
 }

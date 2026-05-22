@@ -22,6 +22,14 @@ end
 local DropGroupTable = {}
 DropGroupTable.__index = DropGroupTable
 DropGroupTable.NAME = "DropGroup"
+DropGroupTable.INFO = {
+    name = DropGroupTable.NAME,
+    row_type = "DropGroup",
+    shape = "keyed",
+    primary_key = { name = "id", type = "integer" },
+    indexes = {
+    },
+}
 
 ---@param rows DropGroup[]
 ---@return DropGroupTable
@@ -36,19 +44,9 @@ function DropGroupTable.decode(rows)
     }, DropGroupTable)
 end
 
----@return string
-function DropGroupTable:name()
-    return DropGroupTable.NAME
-end
-
----@return string
-function DropGroupTable:mode()
-    return "map"
-end
-
----@return string?
-function DropGroupTable:key()
-    return "id"
+---@return table
+function DropGroupTable:info()
+    return DropGroupTable.INFO
 end
 
 ---@return integer

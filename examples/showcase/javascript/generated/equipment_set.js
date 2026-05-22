@@ -28,6 +28,14 @@ export function decodeEquipmentSetValue(value) {
 
 export class EquipmentSetTable {
     static tableName = "EquipmentSet";
+    static tableInfo = {
+        name: EquipmentSetTable.tableName,
+        rowType: "EquipmentSet",
+        shape: "keyed",
+        primaryKey: { name: "id", type: "number" },
+        indexes: [
+        ],
+    };
 
     constructor(
         keys,
@@ -44,16 +52,8 @@ export class EquipmentSetTable {
         );
     }
 
-    name() {
-        return EquipmentSetTable.tableName;
-    }
-
-    mode() {
-        return "map";
-    }
-
-    key() {
-        return "id";
+    info() {
+        return EquipmentSetTable.tableInfo;
     }
 
     len() {

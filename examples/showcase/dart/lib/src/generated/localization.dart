@@ -26,8 +26,16 @@ final class Localization {
   }
 }
 
-final class LocalizationTable extends Iterable<Localization> implements SoraConfigTable {
+final class LocalizationTable extends Iterable<Localization> implements SoraKeyedTable<String, Localization> {
   static const tableName = 'Localization';
+  static const tableInfo = SoraTableInfo(
+    name: tableName,
+    rowType: 'Localization',
+    shape: SoraTableShape.keyed,
+    primaryKey: SoraKeyInfo('key', 'String'),
+    indexes: [
+    ],
+  );
   final List<String> _keys;
   final Map<String, Localization> _rows;
 
@@ -44,13 +52,7 @@ final class LocalizationTable extends Iterable<Localization> implements SoraConf
   }
 
   @override
-  String get name => tableName;
-
-  @override
-  String get mode => 'map';
-
-  @override
-  String? get key => 'key';
+  SoraTableInfo get info => tableInfo;
 
   @override
   int get length => _rows.length;
@@ -59,13 +61,7 @@ final class LocalizationTable extends Iterable<Localization> implements SoraConf
   Iterator<Localization> get iterator => _rows.values.iterator;
   Localization? operator [](String key) => _rows[key];
 
-  Localization get(String key) {
-    final row = _rows[key];
-    if (row == null) {
-      throw SoraReadException('missing row in table `$tableName` for key `$key`');
-    }
-    return row;
-  }
+  Localization? get(String key) => _rows[key];
 
   Map<String, Localization> get rows => _rows;
 

@@ -25,6 +25,14 @@ end
 local GachaPoolTable = {}
 GachaPoolTable.__index = GachaPoolTable
 GachaPoolTable.NAME = "GachaPool"
+GachaPoolTable.INFO = {
+    name = GachaPoolTable.NAME,
+    row_type = "GachaPool",
+    shape = "keyed",
+    primary_key = { name = "id", type = "integer" },
+    indexes = {
+    },
+}
 
 ---@param rows GachaPool[]
 ---@return GachaPoolTable
@@ -39,19 +47,9 @@ function GachaPoolTable.decode(rows)
     }, GachaPoolTable)
 end
 
----@return string
-function GachaPoolTable:name()
-    return GachaPoolTable.NAME
-end
-
----@return string
-function GachaPoolTable:mode()
-    return "map"
-end
-
----@return string?
-function GachaPoolTable:key()
-    return "id"
+---@return table
+function GachaPoolTable:info()
+    return GachaPoolTable.INFO
 end
 
 ---@return integer

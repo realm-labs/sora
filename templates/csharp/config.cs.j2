@@ -8,19 +8,50 @@ using System.Linq;
 
 namespace {{ model.package }};
 
-public enum SoraTableMode
+public enum SoraTableShape
 {
     List,
-    Map,
+    Keyed,
     Singleton,
 }
 
+public sealed record SoraKeyInfo(string Name, string Type);
+
+public sealed record SoraIndexInfo(string Name, bool Unique, IReadOnlyList<string> Fields);
+
+public sealed record SoraTableInfo(
+    string Name,
+    string RowType,
+    SoraTableShape Shape,
+    SoraKeyInfo? PrimaryKey,
+    IReadOnlyList<SoraIndexInfo> Indexes
+);
+
 public interface ISoraTable
 {
-    string Name { get; }
-    SoraTableMode Mode { get; }
-    string? Key { get; }
+    SoraTableInfo Info { get; }
     int Count { get; }
+}
+
+public interface ISoraTable<out TRow> : ISoraTable
+{
+}
+
+public interface ISoraKeyedTable<TKey, TRow> : ISoraTable<TRow>, IReadOnlyDictionary<TKey, TRow>
+    where TKey : notnull
+{
+    IReadOnlyList<TKey> OrderedKeys { get; }
+    IReadOnlyList<TRow> OrderedRows { get; }
+    TRow? Get(TKey key);
+}
+
+public interface ISoraListTable<TRow> : ISoraTable<TRow>, IReadOnlyList<TRow>
+{
+}
+
+public interface ISoraSingleTable<out TRow> : ISoraTable<TRow>
+{
+    TRow Row { get; }
 }
 
 public sealed class SoraConfig

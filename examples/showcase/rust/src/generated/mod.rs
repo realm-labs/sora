@@ -50,21 +50,65 @@ pub type SoraMap<K, V> = rustc_hash::FxHashMap<K, V>;
 pub const SCHEMA_FINGERPRINT: &str = "a0390c24663ecbfc";
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum SoraTableMode {
+pub enum SoraTableShape {
     List,
-    Map,
+    Keyed,
     Singleton,
 }
 
-pub trait SoraTable: std::any::Any + Send + Sync {
-    fn name(&self) -> &'static str;
-    fn mode(&self) -> SoraTableMode;
-    fn key(&self) -> Option<&'static str>;
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct SoraKeyInfo {
+    pub name: &'static str,
+    pub ty: &'static str,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct SoraIndexInfo {
+    pub name: &'static str,
+    pub unique: bool,
+    pub fields: &'static [&'static str],
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct SoraTableInfo {
+    pub name: &'static str,
+    pub row_type: &'static str,
+    pub shape: SoraTableShape,
+    pub primary_key: Option<SoraKeyInfo>,
+    pub indexes: &'static [SoraIndexInfo],
+}
+
+pub trait ErasedSoraTable: std::any::Any + Send + Sync {
+    fn info(&self) -> &'static SoraTableInfo;
     fn len(&self) -> usize;
+
+    fn is_empty(&self) -> bool {
+        self.len() == 0
+    }
+}
+
+pub trait SoraKeyedTable: ErasedSoraTable {
+    type Key: std::cmp::Eq + std::hash::Hash + 'static;
+    type Row: 'static;
+
+    fn get(&self, key: &Self::Key) -> Option<&Self::Row>;
+    fn keys(&self) -> &[Self::Key];
+}
+
+pub trait SoraListTable: ErasedSoraTable {
+    type Row: 'static;
+
+    fn as_slice(&self) -> &[Self::Row];
+}
+
+pub trait SoraSingleTable: ErasedSoraTable {
+    type Row: 'static;
+
+    fn get(&self) -> &Self::Row;
 }
 
 pub struct SoraConfig {
-    tables: SoraMap<&'static str, Box<dyn SoraTable>>,
+    tables: SoraMap<&'static str, Box<dyn ErasedSoraTable>>,
 }
 
 impl std::fmt::Debug for SoraConfig {
@@ -88,7 +132,8 @@ impl SoraConfig {
                 SCHEMA_FINGERPRINT, schema_fingerprint
             )));
         }
-        let mut tables: SoraMap<&'static str, Box<dyn SoraTable>> = sora_map_with_capacity(28);
+        let mut tables: SoraMap<&'static str, Box<dyn ErasedSoraTable>> =
+            sora_map_with_capacity(28);
         tables.insert(
             item::ItemTable::NAME,
             Box::new(item::ItemTable::from_rows(
@@ -277,7 +322,7 @@ impl SoraConfig {
         Ok(Self { tables })
     }
 
-    fn table<T: SoraTable + 'static>(&self, name: &'static str) -> &T {
+    fn table<T: ErasedSoraTable + 'static>(&self, name: &'static str) -> &T {
         self.tables
             .get(name)
             .and_then(|table| {
@@ -292,7 +337,7 @@ impl SoraConfig {
             })
     }
 
-    pub fn tables(&self) -> impl Iterator<Item = &dyn SoraTable> {
+    pub fn tables(&self) -> impl Iterator<Item = &dyn ErasedSoraTable> {
         self.tables.values().map(Box::as_ref)
     }
 

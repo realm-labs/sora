@@ -39,9 +39,18 @@ public sealed record ShopItem(
     }
 }
 
-public sealed class ShopItemTable : ISoraTable, IReadOnlyList<ShopItem>
+public sealed class ShopItemTable : ISoraListTable<ShopItem>
 {
     public const string TableName = "ShopItem";
+    public static readonly SoraTableInfo TableInfo = new(
+        TableName,
+        "ShopItem",
+        SoraTableShape.List,
+        null,
+        new SoraIndexInfo[]
+        {
+        }
+    );
     private readonly List<ShopItem> rows;
 
     internal ShopItemTable(List<ShopItem> rows)
@@ -71,8 +80,6 @@ public sealed class ShopItemTable : ISoraTable, IReadOnlyList<ShopItem>
     {
         return GetEnumerator();
     }
-    public string Name => TableName;
-    public SoraTableMode Mode => SoraTableMode.List;
-    public string? Key => null;
+    public SoraTableInfo Info => TableInfo;
     public int Count => rows.Count;
 }

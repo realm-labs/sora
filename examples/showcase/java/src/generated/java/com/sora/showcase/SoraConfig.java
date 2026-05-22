@@ -8,25 +8,46 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 
-enum SoraTableMode {
+enum SoraTableShape {
     LIST,
-    MAP,
+    KEYED,
     SINGLETON,
 }
 
-interface SoraTable {
-    String name();
-    SoraTableMode mode();
-    String key();
+record SoraKeyInfo(String name, String type) {}
+
+record SoraIndexInfo(String name, boolean unique, List<String> fields) {}
+
+record SoraTableInfo(
+    String name,
+    String rowType,
+    SoraTableShape shape,
+    SoraKeyInfo primaryKey,
+    List<SoraIndexInfo> indexes
+) {}
+
+interface SoraTable<R> {
+    SoraTableInfo info();
     int size();
+}
+
+interface SoraKeyedTable<K, R> extends SoraTable<R>, Map<K, R> {
+    List<K> orderedKeys();
+    List<R> orderedRows();
+}
+
+interface SoraListTable<R> extends SoraTable<R>, List<R> {}
+
+interface SoraSingleTable<R> extends SoraTable<R> {
+    R row();
 }
 
 public final class SoraConfig {
     public static final String SCHEMA_FINGERPRINT = "a0390c24663ecbfc";
 
-    private final Map<String, SoraTable> tables;
+    private final Map<String, SoraTable<?>> tables;
 
-    private SoraConfig(Map<String, SoraTable> tables) {
+    private SoraConfig(Map<String, SoraTable<?>> tables) {
         this.tables = tables;
     }
 
@@ -37,7 +58,7 @@ public final class SoraConfig {
                     + ", bundle contains " + source.schemaFingerprint()
             );
         }
-        var tables = new HashMap<String, SoraTable>(28);
+        var tables = new HashMap<String, SoraTable<?>>(28);
         tables.put(ItemTable.NAME, ItemTable.decode(source));
         tables.put(SkillTable.NAME, SkillTable.decode(source));
         tables.put(QuestTable.NAME, QuestTable.decode(source));
@@ -69,11 +90,11 @@ public final class SoraConfig {
         return new SoraConfig(tables);
     }
 
-    public Collection<SoraTable> tables() {
+    public Collection<SoraTable<?>> tables() {
         return tables.values();
     }
 
-    private <T extends SoraTable> T table(String name, Class<T> type) {
+    private <T extends SoraTable<?>> T table(String name, Class<T> type) {
         var table = tables.get(name);
         if (type.isInstance(table)) {
             return type.cast(table);

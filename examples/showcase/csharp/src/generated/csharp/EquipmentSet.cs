@@ -36,9 +36,18 @@ public sealed record EquipmentSet(
     }
 }
 
-public sealed class EquipmentSetTable : ISoraTable, IReadOnlyDictionary<int, EquipmentSet>
+public sealed class EquipmentSetTable : ISoraKeyedTable<int, EquipmentSet>
 {
     public const string TableName = "EquipmentSet";
+    public static readonly SoraTableInfo TableInfo = new(
+        TableName,
+        "EquipmentSet",
+        SoraTableShape.Keyed,
+        new SoraKeyInfo("id", "int"),
+        new SoraIndexInfo[]
+        {
+        }
+    );
     private readonly List<int> keys;
     private readonly Dictionary<int, EquipmentSet> rows;
 
@@ -113,8 +122,6 @@ public sealed class EquipmentSetTable : ISoraTable, IReadOnlyDictionary<int, Equ
             return orderedRows;
         }
     }
-    public string Name => TableName;
-    public SoraTableMode Mode => SoraTableMode.Map;
-    public string? Key => "id";
+    public SoraTableInfo Info => TableInfo;
     public int Count => rows.Count;
 }

@@ -33,9 +33,18 @@ public sealed record CharacterSkill(
     }
 }
 
-public sealed class CharacterSkillTable : ISoraTable, IReadOnlyList<CharacterSkill>
+public sealed class CharacterSkillTable : ISoraListTable<CharacterSkill>
 {
     public const string TableName = "CharacterSkill";
+    public static readonly SoraTableInfo TableInfo = new(
+        TableName,
+        "CharacterSkill",
+        SoraTableShape.List,
+        null,
+        new SoraIndexInfo[]
+        {
+        }
+    );
     private readonly List<CharacterSkill> rows;
 
     internal CharacterSkillTable(List<CharacterSkill> rows)
@@ -65,8 +74,6 @@ public sealed class CharacterSkillTable : ISoraTable, IReadOnlyList<CharacterSki
     {
         return GetEnumerator();
     }
-    public string Name => TableName;
-    public SoraTableMode Mode => SoraTableMode.List;
-    public string? Key => null;
+    public SoraTableInfo Info => TableInfo;
     public int Count => rows.Count;
 }

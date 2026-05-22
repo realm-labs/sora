@@ -30,8 +30,16 @@ final class Stage {
   }
 }
 
-final class StageTable extends Iterable<Stage> implements SoraConfigTable {
+final class StageTable extends Iterable<Stage> implements SoraKeyedTable<int, Stage> {
   static const tableName = 'Stage';
+  static const tableInfo = SoraTableInfo(
+    name: tableName,
+    rowType: 'Stage',
+    shape: SoraTableShape.keyed,
+    primaryKey: SoraKeyInfo('id', 'int'),
+    indexes: [
+    ],
+  );
   final List<int> _keys;
   final Map<int, Stage> _rows;
 
@@ -48,13 +56,7 @@ final class StageTable extends Iterable<Stage> implements SoraConfigTable {
   }
 
   @override
-  String get name => tableName;
-
-  @override
-  String get mode => 'map';
-
-  @override
-  String? get key => 'id';
+  SoraTableInfo get info => tableInfo;
 
   @override
   int get length => _rows.length;
@@ -63,13 +65,7 @@ final class StageTable extends Iterable<Stage> implements SoraConfigTable {
   Iterator<Stage> get iterator => _rows.values.iterator;
   Stage? operator [](int key) => _rows[key];
 
-  Stage get(int key) {
-    final row = _rows[key];
-    if (row == null) {
-      throw SoraReadException('missing row in table `$tableName` for key `$key`');
-    }
-    return row;
-  }
+  Stage? get(int key) => _rows[key];
 
   Map<int, Stage> get rows => _rows;
 

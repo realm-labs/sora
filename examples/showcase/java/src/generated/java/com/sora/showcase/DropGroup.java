@@ -33,8 +33,16 @@ public final class DropGroup {
     }
 }
 
-final class DropGroupTable extends java.util.AbstractMap<Integer, DropGroup> implements SoraTable {
+final class DropGroupTable extends java.util.AbstractMap<Integer, DropGroup> implements SoraKeyedTable<Integer, DropGroup> {
     static final String NAME = "DropGroup";
+    static final SoraTableInfo INFO = new SoraTableInfo(
+        NAME,
+        "DropGroup",
+        SoraTableShape.KEYED,
+        new SoraKeyInfo("id", "Integer"),
+        List.of(
+        )
+    );
     private final List<Integer> keys;
     private final java.util.Map<Integer, DropGroup> rows;
 
@@ -59,7 +67,7 @@ final class DropGroupTable extends java.util.AbstractMap<Integer, DropGroup> imp
         return rows.get(key);
     }
 
-    public List<Integer> keys() {
+    public List<Integer> orderedKeys() {
         return keys;
     }
 
@@ -72,18 +80,8 @@ final class DropGroupTable extends java.util.AbstractMap<Integer, DropGroup> imp
         return rows.entrySet();
     }
     @Override
-    public String name() {
-        return NAME;
-    }
-
-    @Override
-    public SoraTableMode mode() {
-        return SoraTableMode.MAP;
-    }
-
-    @Override
-    public String key() {
-        return "id";
+    public SoraTableInfo info() {
+        return INFO;
     }
 
     @Override

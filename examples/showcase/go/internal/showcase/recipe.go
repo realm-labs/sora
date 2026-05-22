@@ -49,6 +49,14 @@ func decodeRecipeValue(input SoraValue) (Recipe, error) {
 
 const recipeTableName = "Recipe"
 
+var recipeTableInfo = SoraTableInfo{
+	Name:       recipeTableName,
+	RowType:    "Recipe",
+	Shape:      SoraTableShapeKeyed,
+	PrimaryKey: &SoraKeyInfo{Name: "id", Type: "int32"},
+	Indexes:    []SoraIndexInfo{},
+}
+
 type RecipeTable struct {
 	keys []int32
 	rows map[int32]Recipe
@@ -91,16 +99,8 @@ func (table *RecipeTable) OrderedRows() []Recipe {
 	}
 	return rows
 }
-func (table *RecipeTable) Name() string {
-	return recipeTableName
-}
-
-func (table *RecipeTable) Mode() SoraTableMode {
-	return SoraTableModeMap
-}
-
-func (table *RecipeTable) Key() string {
-	return "id"
+func (table *RecipeTable) Info() SoraTableInfo {
+	return recipeTableInfo
 }
 
 func (table *RecipeTable) Len() int {

@@ -43,8 +43,16 @@ public final class StageReward {
     }
 }
 
-final class StageRewardTable extends java.util.AbstractList<StageReward> implements SoraTable {
+final class StageRewardTable extends java.util.AbstractList<StageReward> implements SoraListTable<StageReward> {
     static final String NAME = "StageReward";
+    static final SoraTableInfo INFO = new SoraTableInfo(
+        NAME,
+        "StageReward",
+        SoraTableShape.LIST,
+        null,
+        List.of(
+        )
+    );
     private final java.util.List<StageReward> rows;
 
     private StageRewardTable(java.util.List<StageReward> rows) {
@@ -67,18 +75,8 @@ final class StageRewardTable extends java.util.AbstractList<StageReward> impleme
         return rows.get(index);
     }
     @Override
-    public String name() {
-        return NAME;
-    }
-
-    @Override
-    public SoraTableMode mode() {
-        return SoraTableMode.LIST;
-    }
-
-    @Override
-    public String key() {
-        return null;
+    public SoraTableInfo info() {
+        return INFO;
     }
 
     @Override

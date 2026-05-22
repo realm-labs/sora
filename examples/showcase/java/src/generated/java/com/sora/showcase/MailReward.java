@@ -43,8 +43,16 @@ public final class MailReward {
     }
 }
 
-final class MailRewardTable extends java.util.AbstractList<MailReward> implements SoraTable {
+final class MailRewardTable extends java.util.AbstractList<MailReward> implements SoraListTable<MailReward> {
     static final String NAME = "MailReward";
+    static final SoraTableInfo INFO = new SoraTableInfo(
+        NAME,
+        "MailReward",
+        SoraTableShape.LIST,
+        null,
+        List.of(
+        )
+    );
     private final java.util.List<MailReward> rows;
 
     private MailRewardTable(java.util.List<MailReward> rows) {
@@ -67,18 +75,8 @@ final class MailRewardTable extends java.util.AbstractList<MailReward> implement
         return rows.get(index);
     }
     @Override
-    public String name() {
-        return NAME;
-    }
-
-    @Override
-    public SoraTableMode mode() {
-        return SoraTableMode.LIST;
-    }
-
-    @Override
-    public String key() {
-        return null;
+    public SoraTableInfo info() {
+        return INFO;
     }
 
     @Override

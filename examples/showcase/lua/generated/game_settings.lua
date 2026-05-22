@@ -28,6 +28,14 @@ end
 local GameSettingsTable = {}
 GameSettingsTable.__index = GameSettingsTable
 GameSettingsTable.NAME = "GameSettings"
+GameSettingsTable.INFO = {
+    name = GameSettingsTable.NAME,
+    row_type = "GameSettings",
+    shape = "singleton",
+    primary_key = nil,
+    indexes = {
+    },
+}
 
 ---@param rows GameSettings[]
 ---@return GameSettingsTable
@@ -37,19 +45,9 @@ function GameSettingsTable.decode(rows)
     }, GameSettingsTable)
 end
 
----@return string
-function GameSettingsTable:name()
-    return GameSettingsTable.NAME
-end
-
----@return string
-function GameSettingsTable:mode()
-    return "singleton"
-end
-
----@return string?
-function GameSettingsTable:key()
-    return nil
+---@return table
+function GameSettingsTable:info()
+    return GameSettingsTable.INFO
 end
 
 ---@return integer

@@ -55,6 +55,41 @@ pub struct {{ table.pascal_name }}Table {
 
 impl {{ table.pascal_name }}Table {
     pub const NAME: &'static str = "{{ table.name }}";
+    pub const INFO: super::SoraTableInfo = super::SoraTableInfo {
+        name: Self::NAME,
+        row_type: "{{ table.row_type }}",
+{%- if table.mode == "map" %}
+        shape: super::SoraTableShape::Keyed,
+{%- elif table.mode == "singleton" %}
+        shape: super::SoraTableShape::Singleton,
+{%- else %}
+        shape: super::SoraTableShape::List,
+{%- endif %}
+{%- if table.key_name %}
+        primary_key: Some(super::SoraKeyInfo {
+            name: "{{ table.key_name }}",
+            ty: "{{ table.key_type }}",
+        }),
+{%- else %}
+        primary_key: None,
+{%- endif %}
+        indexes: &[
+{%- for index in table.unique_indexes %}
+            super::SoraIndexInfo {
+                name: "{{ index.name }}",
+                unique: true,
+                fields: &["{{ index.field_name }}"],
+            },
+{%- endfor %}
+{%- for index in table.non_unique_indexes %}
+            super::SoraIndexInfo {
+                name: "{{ index.name }}",
+                unique: false,
+                fields: &["{{ index.field_name }}"],
+            },
+{%- endfor %}
+        ],
+    };
 
     pub(super) fn from_rows(rows: Vec<{{ table.row_type }}>) -> Result<Self, super::runtime::SoraReadError> {
 {%- if table.mode == "map" and table.key_field_name %}
@@ -149,15 +184,9 @@ impl {{ table.pascal_name }}Table {
 
 {%- if table.mode == "map" and table.key_field_name %}
 
-{%- if table.key_is_copy %}
-    pub fn get(&self, key: {{ table.key_type }}) -> Option<&{{ table.row_type }}> {
-        self.rows.get(&key)
-    }
-{%- else %}
     pub fn get(&self, key: &{{ table.key_param_type }}) -> Option<&{{ table.row_type }}> {
         self.rows.get(key)
     }
-{%- endif %}
 
     pub fn keys(&self) -> &[{{ table.key_type }}] {
         &self.keys
@@ -215,34 +244,22 @@ impl {{ table.pascal_name }}Table {
 }
 
 impl std::ops::Deref for {{ table.pascal_name }}Table {
+{%- if table.mode == "list" %}
+    type Target = [{{ table.row_type }}];
+{%- elif table.mode == "singleton" %}
+    type Target = {{ table.row_type }};
+{%- else %}
     type Target = {{ table.container_type }};
+{%- endif %}
 
     fn deref(&self) -> &Self::Target {
         &self.rows
     }
 }
 
-impl super::SoraTable for {{ table.pascal_name }}Table {
-    fn name(&self) -> &'static str {
-        Self::NAME
-    }
-
-    fn mode(&self) -> super::SoraTableMode {
-{%- if table.mode == "map" %}
-        super::SoraTableMode::Map
-{%- elif table.mode == "singleton" %}
-        super::SoraTableMode::Singleton
-{%- else %}
-        super::SoraTableMode::List
-{%- endif %}
-    }
-
-    fn key(&self) -> Option<&'static str> {
-{%- if table.key_name %}
-        Some("{{ table.key_name }}")
-{%- else %}
-        None
-{%- endif %}
+impl super::ErasedSoraTable for {{ table.pascal_name }}Table {
+    fn info(&self) -> &'static super::SoraTableInfo {
+        &Self::INFO
     }
 
     fn len(&self) -> usize {
@@ -253,4 +270,38 @@ impl super::SoraTable for {{ table.pascal_name }}Table {
 {%- endif %}
     }
 }
+
+{%- if table.mode == "map" and table.key_field_name %}
+
+impl super::SoraKeyedTable for {{ table.pascal_name }}Table {
+    type Key = {{ table.key_type }};
+    type Row = {{ table.row_type }};
+
+    fn get(&self, key: &Self::Key) -> Option<&Self::Row> {
+        self.rows.get(key)
+    }
+
+    fn keys(&self) -> &[Self::Key] {
+        &self.keys
+    }
+}
+{%- elif table.mode == "list" %}
+
+impl super::SoraListTable for {{ table.pascal_name }}Table {
+    type Row = {{ table.row_type }};
+
+    fn as_slice(&self) -> &[Self::Row] {
+        &self.rows
+    }
+}
+{%- elif table.mode == "singleton" %}
+
+impl super::SoraSingleTable for {{ table.pascal_name }}Table {
+    type Row = {{ table.row_type }};
+
+    fn get(&self) -> &Self::Row {
+        &self.rows
+    }
+}
+{%- endif %}
 {%- endif %}

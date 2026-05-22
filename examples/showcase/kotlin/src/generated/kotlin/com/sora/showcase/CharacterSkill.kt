@@ -27,18 +27,27 @@ data class CharacterSkill(
 }
 
 class CharacterSkillTable private constructor(
-    val rows: List<CharacterSkill>,
-) : AbstractList<CharacterSkill>(), SoraTable {
+    override val rows: List<CharacterSkill>,
+) : AbstractList<CharacterSkill>(), SoraListTable<CharacterSkill> {
     override fun get(index: Int): CharacterSkill = rows[index]
 
     fun values(): List<CharacterSkill> = rows
-    override val name: String = NAME
-    override val mode: SoraTableMode = SoraTableMode.List
-    override val key: String? = null
+    override val info: SoraTableInfo
+        get() = INFO
     override val size: Int
         get() = rows.size
 
     companion object {
+        const val NAME: String = "CharacterSkill"
+        val INFO: SoraTableInfo = SoraTableInfo(
+            name = NAME,
+            rowType = "CharacterSkill",
+            shape = SoraTableShape.List,
+            primaryKey = null,
+            indexes = listOf(
+            ),
+        )
+
         fun decode(source: SoraTableSource): CharacterSkillTable =
             fromRows(source.decodeTable(NAME, CharacterSkill::decode, CharacterSkill::decode))
 
@@ -46,7 +55,5 @@ class CharacterSkillTable private constructor(
             CharacterSkillTable(
                 rows,
             )
-
-        const val NAME: String = "CharacterSkill"
     }
 }

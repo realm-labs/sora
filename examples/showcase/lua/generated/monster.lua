@@ -32,6 +32,14 @@ end
 local MonsterTable = {}
 MonsterTable.__index = MonsterTable
 MonsterTable.NAME = "Monster"
+MonsterTable.INFO = {
+    name = MonsterTable.NAME,
+    row_type = "Monster",
+    shape = "keyed",
+    primary_key = { name = "id", type = "integer" },
+    indexes = {
+    },
+}
 
 ---@param rows Monster[]
 ---@return MonsterTable
@@ -46,19 +54,9 @@ function MonsterTable.decode(rows)
     }, MonsterTable)
 end
 
----@return string
-function MonsterTable:name()
-    return MonsterTable.NAME
-end
-
----@return string
-function MonsterTable:mode()
-    return "map"
-end
-
----@return string?
-function MonsterTable:key()
-    return "id"
+---@return table
+function MonsterTable:info()
+    return MonsterTable.INFO
 end
 
 ---@return integer

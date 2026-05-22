@@ -249,7 +249,7 @@ mod tests {
     fn loads_sora_bundle() {
         let bundle = __BUNDLE_TYPE__::parse(include_bytes!("../__CONFIG_FILE__")).unwrap();
         let config = SoraConfig::from_source(&bundle).unwrap();
-        let item = config.item().get(1002).unwrap();
+        let item = config.item().get(&1002).unwrap();
 
         assert_eq!(item.name, "Magic Stone");
         assert_eq!(item.item_type, ItemType::Material);

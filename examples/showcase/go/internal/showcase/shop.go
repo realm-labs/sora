@@ -49,6 +49,14 @@ func decodeShopValue(input SoraValue) (Shop, error) {
 
 const shopTableName = "Shop"
 
+var shopTableInfo = SoraTableInfo{
+	Name:       shopTableName,
+	RowType:    "Shop",
+	Shape:      SoraTableShapeKeyed,
+	PrimaryKey: &SoraKeyInfo{Name: "id", Type: "int32"},
+	Indexes:    []SoraIndexInfo{},
+}
+
 type ShopTable struct {
 	keys []int32
 	rows map[int32]Shop
@@ -91,16 +99,8 @@ func (table *ShopTable) OrderedRows() []Shop {
 	}
 	return rows
 }
-func (table *ShopTable) Name() string {
-	return shopTableName
-}
-
-func (table *ShopTable) Mode() SoraTableMode {
-	return SoraTableModeMap
-}
-
-func (table *ShopTable) Key() string {
-	return "id"
+func (table *ShopTable) Info() SoraTableInfo {
+	return shopTableInfo
 }
 
 func (table *ShopTable) Len() int {

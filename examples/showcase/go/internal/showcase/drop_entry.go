@@ -67,6 +67,13 @@ func decodeDropEntryValue(input SoraValue) (DropEntry, error) {
 
 const dropEntryTableName = "DropEntry"
 
+var dropEntryTableInfo = SoraTableInfo{
+	Name:    dropEntryTableName,
+	RowType: "DropEntry",
+	Shape:   SoraTableShapeList,
+	Indexes: []SoraIndexInfo{},
+}
+
 type DropEntryTable struct {
 	rows []DropEntry
 }
@@ -86,16 +93,8 @@ func decodeDropEntryTable(source SoraTableSource) (*DropEntryTable, error) {
 func (table *DropEntryTable) Rows() []DropEntry {
 	return table.rows
 }
-func (table *DropEntryTable) Name() string {
-	return dropEntryTableName
-}
-
-func (table *DropEntryTable) Mode() SoraTableMode {
-	return SoraTableModeList
-}
-
-func (table *DropEntryTable) Key() string {
-	return ""
+func (table *DropEntryTable) Info() SoraTableInfo {
+	return dropEntryTableInfo
 }
 
 func (table *DropEntryTable) Len() int {

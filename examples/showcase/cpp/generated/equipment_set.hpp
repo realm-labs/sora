@@ -30,6 +30,15 @@ struct EquipmentSet {
 class EquipmentSetTable final : public SoraTable {
 public:
     static constexpr const char* NAME = "EquipmentSet";
+    static const SoraTableInfo& table_info() {
+        static const SoraTableInfo info = {
+            NAME,
+            "EquipmentSet",
+            "keyed",
+            "id"
+        };
+        return info;
+    }
 
     EquipmentSetTable() {}
     EquipmentSetTable(const EquipmentSetTable&) = delete;
@@ -49,9 +58,7 @@ public:
         return table;
     }
 
-    const char* name() const override { return NAME; }
-    const char* mode() const override { return "map"; }
-    const char* key() const override { return "id"; }
+    const SoraTableInfo& info() const override { return table_info(); }
     std::size_t size() const override {
         return rows_.size();
     }

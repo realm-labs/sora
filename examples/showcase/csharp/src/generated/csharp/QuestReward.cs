@@ -36,9 +36,18 @@ public sealed record QuestReward(
     }
 }
 
-public sealed class QuestRewardTable : ISoraTable, IReadOnlyList<QuestReward>
+public sealed class QuestRewardTable : ISoraListTable<QuestReward>
 {
     public const string TableName = "QuestReward";
+    public static readonly SoraTableInfo TableInfo = new(
+        TableName,
+        "QuestReward",
+        SoraTableShape.List,
+        null,
+        new SoraIndexInfo[]
+        {
+        }
+    );
     private readonly List<QuestReward> rows;
 
     internal QuestRewardTable(List<QuestReward> rows)
@@ -68,8 +77,6 @@ public sealed class QuestRewardTable : ISoraTable, IReadOnlyList<QuestReward>
     {
         return GetEnumerator();
     }
-    public string Name => TableName;
-    public SoraTableMode Mode => SoraTableMode.List;
-    public string? Key => null;
+    public SoraTableInfo Info => TableInfo;
     public int Count => rows.Count;
 }

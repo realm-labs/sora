@@ -27,17 +27,26 @@ data class LevelExp(
 }
 
 class LevelExpTable private constructor(
-    val orderedKeys: List<Int>,
+    override val orderedKeys: List<Int>,
     val rows: Map<Int, LevelExp>,
-) : SoraTable, Map<Int, LevelExp> by rows {
-    fun orderedValues(): List<LevelExp> = orderedKeys.mapNotNull { rows[it] }
-    override val name: String = NAME
-    override val mode: SoraTableMode = SoraTableMode.Map
-    override val key: String? = "level"
+) : SoraKeyedTable<Int, LevelExp>, Map<Int, LevelExp> by rows {
+    override fun orderedValues(): List<LevelExp> = orderedKeys.mapNotNull { rows[it] }
+    override val info: SoraTableInfo
+        get() = INFO
     override val size: Int
         get() = rows.size
 
     companion object {
+        const val NAME: String = "LevelExp"
+        val INFO: SoraTableInfo = SoraTableInfo(
+            name = NAME,
+            rowType = "LevelExp",
+            shape = SoraTableShape.Keyed,
+            primaryKey = SoraKeyInfo("level", "Int"),
+            indexes = listOf(
+            ),
+        )
+
         fun decode(source: SoraTableSource): LevelExpTable =
             fromRows(source.decodeTable(NAME, LevelExp::decode, LevelExp::decode))
 
@@ -46,7 +55,5 @@ class LevelExpTable private constructor(
                 rows.map { it.level },
                 rows.associateBy { it.level },
             )
-
-        const val NAME: String = "LevelExp"
     }
 }

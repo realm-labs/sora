@@ -46,9 +46,18 @@ public sealed record Quest(
     }
 }
 
-public sealed class QuestTable : ISoraTable, IReadOnlyDictionary<int, Quest>
+public sealed class QuestTable : ISoraKeyedTable<int, Quest>
 {
     public const string TableName = "Quest";
+    public static readonly SoraTableInfo TableInfo = new(
+        TableName,
+        "Quest",
+        SoraTableShape.Keyed,
+        new SoraKeyInfo("id", "int"),
+        new SoraIndexInfo[]
+        {
+        }
+    );
     private readonly List<int> keys;
     private readonly Dictionary<int, Quest> rows;
 
@@ -123,8 +132,6 @@ public sealed class QuestTable : ISoraTable, IReadOnlyDictionary<int, Quest>
             return orderedRows;
         }
     }
-    public string Name => TableName;
-    public SoraTableMode Mode => SoraTableMode.Map;
-    public string? Key => "id";
+    public SoraTableInfo Info => TableInfo;
     public int Count => rows.Count;
 }

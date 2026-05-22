@@ -27,6 +27,13 @@ export function decodeStageRewardValue(value) {
 
 export class StageRewardTable {
     static tableName = "StageReward";
+    static tableInfo = {
+        name: StageRewardTable.tableName,
+        rowType: "StageReward",
+        shape: "list",
+        indexes: [
+        ],
+    };
 
     constructor(
         rows,
@@ -40,16 +47,8 @@ export class StageRewardTable {
         );
     }
 
-    name() {
-        return StageRewardTable.tableName;
-    }
-
-    mode() {
-        return "list";
-    }
-
-    key() {
-        return undefined;
+    info() {
+        return StageRewardTable.tableInfo;
     }
 
     len() {

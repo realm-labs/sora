@@ -21,14 +21,20 @@ final class CharacterSkillTable private (
   val rows: Vector[CharacterSkill]
 ) extends SoraTable {
   def values: Vector[CharacterSkill] = rows
-  override val name: String = CharacterSkillTable.Name
-  override val mode: SoraTableMode = SoraTableMode.List
-  override val key: Option[String] = None
+  override val info: SoraTableInfo = CharacterSkillTable.Info
   override def size: Int = rows.size
 }
 
 object CharacterSkillTable {
   val Name: String = "CharacterSkill"
+  val Info: SoraTableInfo = SoraTableInfo(
+    name = Name,
+    rowType = "CharacterSkill",
+    shape = SoraTableShape.List,
+    primaryKey = None,
+    indexes = Vector(
+    )
+  )
 
   def decode(source: SoraTableSource): CharacterSkillTable =
     fromRows(source.decodeTable(Name, CharacterSkill.decode))

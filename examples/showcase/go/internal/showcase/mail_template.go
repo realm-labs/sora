@@ -67,6 +67,14 @@ func decodeMailTemplateValue(input SoraValue) (MailTemplate, error) {
 
 const mailTemplateTableName = "MailTemplate"
 
+var mailTemplateTableInfo = SoraTableInfo{
+	Name:       mailTemplateTableName,
+	RowType:    "MailTemplate",
+	Shape:      SoraTableShapeKeyed,
+	PrimaryKey: &SoraKeyInfo{Name: "id", Type: "int32"},
+	Indexes:    []SoraIndexInfo{},
+}
+
 type MailTemplateTable struct {
 	keys []int32
 	rows map[int32]MailTemplate
@@ -109,16 +117,8 @@ func (table *MailTemplateTable) OrderedRows() []MailTemplate {
 	}
 	return rows
 }
-func (table *MailTemplateTable) Name() string {
-	return mailTemplateTableName
-}
-
-func (table *MailTemplateTable) Mode() SoraTableMode {
-	return SoraTableModeMap
-}
-
-func (table *MailTemplateTable) Key() string {
-	return "id"
+func (table *MailTemplateTable) Info() SoraTableInfo {
+	return mailTemplateTableInfo
 }
 
 func (table *MailTemplateTable) Len() int {

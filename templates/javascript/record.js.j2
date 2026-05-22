@@ -34,6 +34,28 @@ export function decode{{ record.pascal_name }}Value(value) {
 
 export class {{ table.pascal_name }}Table {
     static tableName = "{{ table.name }}";
+    static tableInfo = {
+        name: {{ table.pascal_name }}Table.tableName,
+        rowType: "{{ table.row_type }}",
+{%- if table.mode == "map" %}
+        shape: "keyed",
+{%- elif table.mode == "singleton" %}
+        shape: "singleton",
+{%- else %}
+        shape: "list",
+{%- endif %}
+{%- if table.key_name %}
+        primaryKey: { name: "{{ table.key_name }}", type: "{{ table.key_type }}" },
+{%- endif %}
+        indexes: [
+{%- for index in table.unique_indexes %}
+            { name: "{{ index.name }}", unique: true, fields: ["{{ index.field_name }}"] },
+{%- endfor %}
+{%- for index in table.non_unique_indexes %}
+            { name: "{{ index.name }}", unique: false, fields: ["{{ index.field_name }}"] },
+{%- endfor %}
+        ],
+    };
 
     constructor(
 {%- if table.mode == "map" and table.key_type %}
@@ -96,20 +118,8 @@ export class {{ table.pascal_name }}Table {
 {%- endif %}
     }
 
-    name() {
-        return {{ table.pascal_name }}Table.tableName;
-    }
-
-    mode() {
-        return "{{ table.mode }}";
-    }
-
-    key() {
-{%- if table.key_name %}
-        return "{{ table.key_name }}";
-{%- else %}
-        return undefined;
-{%- endif %}
+    info() {
+        return {{ table.pascal_name }}Table.tableInfo;
     }
 
     len() {

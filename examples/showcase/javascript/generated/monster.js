@@ -33,6 +33,14 @@ export function decodeMonsterValue(value) {
 
 export class MonsterTable {
     static tableName = "Monster";
+    static tableInfo = {
+        name: MonsterTable.tableName,
+        rowType: "Monster",
+        shape: "keyed",
+        primaryKey: { name: "id", type: "number" },
+        indexes: [
+        ],
+    };
 
     constructor(
         keys,
@@ -49,16 +57,8 @@ export class MonsterTable {
         );
     }
 
-    name() {
-        return MonsterTable.tableName;
-    }
-
-    mode() {
-        return "map";
-    }
-
-    key() {
-        return "id";
+    info() {
+        return MonsterTable.tableInfo;
     }
 
     len() {

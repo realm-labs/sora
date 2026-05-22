@@ -31,8 +31,16 @@ final class MailTemplate {
   }
 }
 
-final class MailTemplateTable extends Iterable<MailTemplate> implements SoraConfigTable {
+final class MailTemplateTable extends Iterable<MailTemplate> implements SoraKeyedTable<int, MailTemplate> {
   static const tableName = 'MailTemplate';
+  static const tableInfo = SoraTableInfo(
+    name: tableName,
+    rowType: 'MailTemplate',
+    shape: SoraTableShape.keyed,
+    primaryKey: SoraKeyInfo('id', 'int'),
+    indexes: [
+    ],
+  );
   final List<int> _keys;
   final Map<int, MailTemplate> _rows;
 
@@ -49,13 +57,7 @@ final class MailTemplateTable extends Iterable<MailTemplate> implements SoraConf
   }
 
   @override
-  String get name => tableName;
-
-  @override
-  String get mode => 'map';
-
-  @override
-  String? get key => 'id';
+  SoraTableInfo get info => tableInfo;
 
   @override
   int get length => _rows.length;
@@ -64,13 +66,7 @@ final class MailTemplateTable extends Iterable<MailTemplate> implements SoraConf
   Iterator<MailTemplate> get iterator => _rows.values.iterator;
   MailTemplate? operator [](int key) => _rows[key];
 
-  MailTemplate get(int key) {
-    final row = _rows[key];
-    if (row == null) {
-      throw SoraReadException('missing row in table `$tableName` for key `$key`');
-    }
-    return row;
-  }
+  MailTemplate? get(int key) => _rows[key];
 
   Map<int, MailTemplate> get rows => _rows;
 

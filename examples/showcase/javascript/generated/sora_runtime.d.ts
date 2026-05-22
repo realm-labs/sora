@@ -4,11 +4,44 @@ export declare class SoraReadError extends Error {
     constructor(message: string);
 }
 
-export interface SoraConfigTable {
-    name(): string;
-    mode(): string;
-    key(): string | undefined;
+export type SoraTableShape = "list" | "keyed" | "singleton";
+
+export interface SoraKeyInfo {
+    name: string;
+    type: string;
+}
+
+export interface SoraIndexInfo {
+    name: string;
+    unique: boolean;
+    fields: readonly string[];
+}
+
+export interface SoraTableInfo {
+    name: string;
+    rowType: string;
+    shape: SoraTableShape;
+    primaryKey?: SoraKeyInfo;
+    indexes: readonly SoraIndexInfo[];
+}
+
+export interface SoraConfigTable<Row = unknown> {
+    info(): SoraTableInfo;
     len(): number;
+}
+
+export interface SoraKeyedTable<Key, Row> extends SoraConfigTable<Row> {
+    get(key: Key): Row | undefined;
+    keys(): readonly Key[];
+    orderedRows(): readonly Row[];
+}
+
+export interface SoraListTable<Row> extends SoraConfigTable<Row> {
+    rows(): readonly Row[];
+}
+
+export interface SoraSingleTable<Row> extends SoraConfigTable<Row> {
+    row(): Row;
 }
 
 export interface SoraTableSource {

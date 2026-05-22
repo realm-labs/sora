@@ -24,8 +24,16 @@ final class Recipe {
   }
 }
 
-final class RecipeTable extends Iterable<Recipe> implements SoraConfigTable {
+final class RecipeTable extends Iterable<Recipe> implements SoraKeyedTable<int, Recipe> {
   static const tableName = 'Recipe';
+  static const tableInfo = SoraTableInfo(
+    name: tableName,
+    rowType: 'Recipe',
+    shape: SoraTableShape.keyed,
+    primaryKey: SoraKeyInfo('id', 'int'),
+    indexes: [
+    ],
+  );
   final List<int> _keys;
   final Map<int, Recipe> _rows;
 
@@ -42,13 +50,7 @@ final class RecipeTable extends Iterable<Recipe> implements SoraConfigTable {
   }
 
   @override
-  String get name => tableName;
-
-  @override
-  String get mode => 'map';
-
-  @override
-  String? get key => 'id';
+  SoraTableInfo get info => tableInfo;
 
   @override
   int get length => _rows.length;
@@ -57,13 +59,7 @@ final class RecipeTable extends Iterable<Recipe> implements SoraConfigTable {
   Iterator<Recipe> get iterator => _rows.values.iterator;
   Recipe? operator [](int key) => _rows[key];
 
-  Recipe get(int key) {
-    final row = _rows[key];
-    if (row == null) {
-      throw SoraReadException('missing row in table `$tableName` for key `$key`');
-    }
-    return row;
-  }
+  Recipe? get(int key) => _rows[key];
 
   Map<int, Recipe> get rows => _rows;
 

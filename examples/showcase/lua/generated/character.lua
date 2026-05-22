@@ -34,6 +34,14 @@ end
 local CharacterTable = {}
 CharacterTable.__index = CharacterTable
 CharacterTable.NAME = "Character"
+CharacterTable.INFO = {
+    name = CharacterTable.NAME,
+    row_type = "Character",
+    shape = "keyed",
+    primary_key = { name = "id", type = "integer" },
+    indexes = {
+    },
+}
 
 ---@param rows Character[]
 ---@return CharacterTable
@@ -48,19 +56,9 @@ function CharacterTable.decode(rows)
     }, CharacterTable)
 end
 
----@return string
-function CharacterTable:name()
-    return CharacterTable.NAME
-end
-
----@return string
-function CharacterTable:mode()
-    return "map"
-end
-
----@return string?
-function CharacterTable:key()
-    return "id"
+---@return table
+function CharacterTable:info()
+    return CharacterTable.INFO
 end
 
 ---@return integer

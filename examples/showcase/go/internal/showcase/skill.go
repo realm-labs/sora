@@ -97,6 +97,14 @@ func decodeSkillValue(input SoraValue) (Skill, error) {
 
 const skillTableName = "Skill"
 
+var skillTableInfo = SoraTableInfo{
+	Name:       skillTableName,
+	RowType:    "Skill",
+	Shape:      SoraTableShapeKeyed,
+	PrimaryKey: &SoraKeyInfo{Name: "id", Type: "int32"},
+	Indexes:    []SoraIndexInfo{},
+}
+
 type SkillTable struct {
 	keys []int32
 	rows map[int32]Skill
@@ -139,16 +147,8 @@ func (table *SkillTable) OrderedRows() []Skill {
 	}
 	return rows
 }
-func (table *SkillTable) Name() string {
-	return skillTableName
-}
-
-func (table *SkillTable) Mode() SoraTableMode {
-	return SoraTableModeMap
-}
-
-func (table *SkillTable) Key() string {
-	return "id"
+func (table *SkillTable) Info() SoraTableInfo {
+	return skillTableInfo
 }
 
 func (table *SkillTable) Len() int {

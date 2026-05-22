@@ -58,6 +58,14 @@ func decodeEventRuleValue(input SoraValue) (EventRule, error) {
 
 const eventRuleTableName = "EventRule"
 
+var eventRuleTableInfo = SoraTableInfo{
+	Name:       eventRuleTableName,
+	RowType:    "EventRule",
+	Shape:      SoraTableShapeKeyed,
+	PrimaryKey: &SoraKeyInfo{Name: "id", Type: "int32"},
+	Indexes:    []SoraIndexInfo{},
+}
+
 type EventRuleTable struct {
 	keys []int32
 	rows map[int32]EventRule
@@ -100,16 +108,8 @@ func (table *EventRuleTable) OrderedRows() []EventRule {
 	}
 	return rows
 }
-func (table *EventRuleTable) Name() string {
-	return eventRuleTableName
-}
-
-func (table *EventRuleTable) Mode() SoraTableMode {
-	return SoraTableModeMap
-}
-
-func (table *EventRuleTable) Key() string {
-	return "id"
+func (table *EventRuleTable) Info() SoraTableInfo {
+	return eventRuleTableInfo
 }
 
 func (table *EventRuleTable) Len() int {

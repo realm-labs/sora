@@ -27,17 +27,26 @@ data class GachaPool(
 }
 
 class GachaPoolTable private constructor(
-    val orderedKeys: List<Int>,
+    override val orderedKeys: List<Int>,
     val rows: Map<Int, GachaPool>,
-) : SoraTable, Map<Int, GachaPool> by rows {
-    fun orderedValues(): List<GachaPool> = orderedKeys.mapNotNull { rows[it] }
-    override val name: String = NAME
-    override val mode: SoraTableMode = SoraTableMode.Map
-    override val key: String? = "id"
+) : SoraKeyedTable<Int, GachaPool>, Map<Int, GachaPool> by rows {
+    override fun orderedValues(): List<GachaPool> = orderedKeys.mapNotNull { rows[it] }
+    override val info: SoraTableInfo
+        get() = INFO
     override val size: Int
         get() = rows.size
 
     companion object {
+        const val NAME: String = "GachaPool"
+        val INFO: SoraTableInfo = SoraTableInfo(
+            name = NAME,
+            rowType = "GachaPool",
+            shape = SoraTableShape.Keyed,
+            primaryKey = SoraKeyInfo("id", "Int"),
+            indexes = listOf(
+            ),
+        )
+
         fun decode(source: SoraTableSource): GachaPoolTable =
             fromRows(source.decodeTable(NAME, GachaPool::decode, GachaPool::decode))
 
@@ -46,7 +55,5 @@ class GachaPoolTable private constructor(
                 rows.map { it.id },
                 rows.associateBy { it.id },
             )
-
-        const val NAME: String = "GachaPool"
     }
 }

@@ -30,9 +30,18 @@ public sealed record DropGroup(
     }
 }
 
-public sealed class DropGroupTable : ISoraTable, IReadOnlyDictionary<int, DropGroup>
+public sealed class DropGroupTable : ISoraKeyedTable<int, DropGroup>
 {
     public const string TableName = "DropGroup";
+    public static readonly SoraTableInfo TableInfo = new(
+        TableName,
+        "DropGroup",
+        SoraTableShape.Keyed,
+        new SoraKeyInfo("id", "int"),
+        new SoraIndexInfo[]
+        {
+        }
+    );
     private readonly List<int> keys;
     private readonly Dictionary<int, DropGroup> rows;
 
@@ -107,8 +116,6 @@ public sealed class DropGroupTable : ISoraTable, IReadOnlyDictionary<int, DropGr
             return orderedRows;
         }
     }
-    public string Name => TableName;
-    public SoraTableMode Mode => SoraTableMode.Map;
-    public string? Key => "id";
+    public SoraTableInfo Info => TableInfo;
     public int Count => rows.Count;
 }

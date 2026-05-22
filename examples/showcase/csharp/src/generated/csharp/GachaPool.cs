@@ -33,9 +33,18 @@ public sealed record GachaPool(
     }
 }
 
-public sealed class GachaPoolTable : ISoraTable, IReadOnlyDictionary<int, GachaPool>
+public sealed class GachaPoolTable : ISoraKeyedTable<int, GachaPool>
 {
     public const string TableName = "GachaPool";
+    public static readonly SoraTableInfo TableInfo = new(
+        TableName,
+        "GachaPool",
+        SoraTableShape.Keyed,
+        new SoraKeyInfo("id", "int"),
+        new SoraIndexInfo[]
+        {
+        }
+    );
     private readonly List<int> keys;
     private readonly Dictionary<int, GachaPool> rows;
 
@@ -110,8 +119,6 @@ public sealed class GachaPoolTable : ISoraTable, IReadOnlyDictionary<int, GachaP
             return orderedRows;
         }
     }
-    public string Name => TableName;
-    public SoraTableMode Mode => SoraTableMode.Map;
-    public string? Key => "id";
+    public SoraTableInfo Info => TableInfo;
     public int Count => rows.Count;
 }

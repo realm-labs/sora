@@ -23,14 +23,20 @@ final class StageRewardTable private (
   val rows: Vector[StageReward]
 ) extends SoraTable {
   def values: Vector[StageReward] = rows
-  override val name: String = StageRewardTable.Name
-  override val mode: SoraTableMode = SoraTableMode.List
-  override val key: Option[String] = None
+  override val info: SoraTableInfo = StageRewardTable.Info
   override def size: Int = rows.size
 }
 
 object StageRewardTable {
   val Name: String = "StageReward"
+  val Info: SoraTableInfo = SoraTableInfo(
+    name = Name,
+    rowType = "StageReward",
+    shape = SoraTableShape.List,
+    primaryKey = None,
+    indexes = Vector(
+    )
+  )
 
   def decode(source: SoraTableSource): StageRewardTable =
     fromRows(source.decodeTable(Name, StageReward.decode))

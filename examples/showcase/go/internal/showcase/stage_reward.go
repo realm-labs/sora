@@ -58,6 +58,13 @@ func decodeStageRewardValue(input SoraValue) (StageReward, error) {
 
 const stageRewardTableName = "StageReward"
 
+var stageRewardTableInfo = SoraTableInfo{
+	Name:    stageRewardTableName,
+	RowType: "StageReward",
+	Shape:   SoraTableShapeList,
+	Indexes: []SoraIndexInfo{},
+}
+
 type StageRewardTable struct {
 	rows []StageReward
 }
@@ -77,16 +84,8 @@ func decodeStageRewardTable(source SoraTableSource) (*StageRewardTable, error) {
 func (table *StageRewardTable) Rows() []StageReward {
 	return table.rows
 }
-func (table *StageRewardTable) Name() string {
-	return stageRewardTableName
-}
-
-func (table *StageRewardTable) Mode() SoraTableMode {
-	return SoraTableModeList
-}
-
-func (table *StageRewardTable) Key() string {
-	return ""
+func (table *StageRewardTable) Info() SoraTableInfo {
+	return stageRewardTableInfo
 }
 
 func (table *StageRewardTable) Len() int {

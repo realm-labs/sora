@@ -39,9 +39,18 @@ public sealed record GameSettings(
     }
 }
 
-public sealed class GameSettingsTable : ISoraTable
+public sealed class GameSettingsTable : ISoraSingleTable<GameSettings>
 {
     public const string TableName = "GameSettings";
+    public static readonly SoraTableInfo TableInfo = new(
+        TableName,
+        "GameSettings",
+        SoraTableShape.Singleton,
+        null,
+        new SoraIndexInfo[]
+        {
+        }
+    );
     private readonly GameSettings rows;
 
     internal GameSettingsTable(GameSettings rows)
@@ -60,8 +69,7 @@ public sealed class GameSettingsTable : ISoraTable
     }
 
     public GameSettings Rows => rows;
-    public string Name => TableName;
-    public SoraTableMode Mode => SoraTableMode.Singleton;
-    public string? Key => null;
+    public GameSettings Row => rows;
+    public SoraTableInfo Info => TableInfo;
     public int Count => 1;
 }

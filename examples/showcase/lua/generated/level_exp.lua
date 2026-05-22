@@ -24,6 +24,14 @@ end
 local LevelExpTable = {}
 LevelExpTable.__index = LevelExpTable
 LevelExpTable.NAME = "LevelExp"
+LevelExpTable.INFO = {
+    name = LevelExpTable.NAME,
+    row_type = "LevelExp",
+    shape = "keyed",
+    primary_key = { name = "level", type = "integer" },
+    indexes = {
+    },
+}
 
 ---@param rows LevelExp[]
 ---@return LevelExpTable
@@ -38,19 +46,9 @@ function LevelExpTable.decode(rows)
     }, LevelExpTable)
 end
 
----@return string
-function LevelExpTable:name()
-    return LevelExpTable.NAME
-end
-
----@return string
-function LevelExpTable:mode()
-    return "map"
-end
-
----@return string?
-function LevelExpTable:key()
-    return "level"
+---@return table
+function LevelExpTable:info()
+    return LevelExpTable.INFO
 end
 
 ---@return integer

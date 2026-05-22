@@ -67,6 +67,13 @@ func decodeGameSettingsValue(input SoraValue) (GameSettings, error) {
 
 const gameSettingsTableName = "GameSettings"
 
+var gameSettingsTableInfo = SoraTableInfo{
+	Name:    gameSettingsTableName,
+	RowType: "GameSettings",
+	Shape:   SoraTableShapeSingleton,
+	Indexes: []SoraIndexInfo{},
+}
+
 type GameSettingsTable struct {
 	rows GameSettings
 }
@@ -90,16 +97,11 @@ func decodeGameSettingsTable(source SoraTableSource) (*GameSettingsTable, error)
 func (table *GameSettingsTable) Rows() GameSettings {
 	return table.rows
 }
-func (table *GameSettingsTable) Name() string {
-	return gameSettingsTableName
+func (table *GameSettingsTable) Row() GameSettings {
+	return table.rows
 }
-
-func (table *GameSettingsTable) Mode() SoraTableMode {
-	return SoraTableModeSingleton
-}
-
-func (table *GameSettingsTable) Key() string {
-	return ""
+func (table *GameSettingsTable) Info() SoraTableInfo {
+	return gameSettingsTableInfo
 }
 
 func (table *GameSettingsTable) Len() int {

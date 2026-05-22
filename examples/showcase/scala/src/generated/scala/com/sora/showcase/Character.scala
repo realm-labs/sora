@@ -34,14 +34,20 @@ final class CharacterTable private (
   def values: Iterable[Character] = rows.values
 
   def orderedValues: Vector[Character] = keys.flatMap(rows.get)
-  override val name: String = CharacterTable.Name
-  override val mode: SoraTableMode = SoraTableMode.Map
-  override val key: Option[String] = Some("id")
+  override val info: SoraTableInfo = CharacterTable.Info
   override def size: Int = rows.size
 }
 
 object CharacterTable {
   val Name: String = "Character"
+  val Info: SoraTableInfo = SoraTableInfo(
+    name = Name,
+    rowType = "Character",
+    shape = SoraTableShape.Keyed,
+    primaryKey = Some(SoraKeyInfo("id", "Int")),
+    indexes = Vector(
+    )
+  )
 
   def decode(source: SoraTableSource): CharacterTable =
     fromRows(source.decodeTable(Name, Character.decode))

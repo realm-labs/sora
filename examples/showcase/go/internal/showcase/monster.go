@@ -76,6 +76,14 @@ func decodeMonsterValue(input SoraValue) (Monster, error) {
 
 const monsterTableName = "Monster"
 
+var monsterTableInfo = SoraTableInfo{
+	Name:       monsterTableName,
+	RowType:    "Monster",
+	Shape:      SoraTableShapeKeyed,
+	PrimaryKey: &SoraKeyInfo{Name: "id", Type: "int32"},
+	Indexes:    []SoraIndexInfo{},
+}
+
 type MonsterTable struct {
 	keys []int32
 	rows map[int32]Monster
@@ -118,16 +126,8 @@ func (table *MonsterTable) OrderedRows() []Monster {
 	}
 	return rows
 }
-func (table *MonsterTable) Name() string {
-	return monsterTableName
-}
-
-func (table *MonsterTable) Mode() SoraTableMode {
-	return SoraTableModeMap
-}
-
-func (table *MonsterTable) Key() string {
-	return "id"
+func (table *MonsterTable) Info() SoraTableInfo {
+	return monsterTableInfo
 }
 
 func (table *MonsterTable) Len() int {

@@ -43,8 +43,16 @@ public final class QuestReward {
     }
 }
 
-final class QuestRewardTable extends java.util.AbstractList<QuestReward> implements SoraTable {
+final class QuestRewardTable extends java.util.AbstractList<QuestReward> implements SoraListTable<QuestReward> {
     static final String NAME = "QuestReward";
+    static final SoraTableInfo INFO = new SoraTableInfo(
+        NAME,
+        "QuestReward",
+        SoraTableShape.LIST,
+        null,
+        List.of(
+        )
+    );
     private final java.util.List<QuestReward> rows;
 
     private QuestRewardTable(java.util.List<QuestReward> rows) {
@@ -67,18 +75,8 @@ final class QuestRewardTable extends java.util.AbstractList<QuestReward> impleme
         return rows.get(index);
     }
     @Override
-    public String name() {
-        return NAME;
-    }
-
-    @Override
-    public SoraTableMode mode() {
-        return SoraTableMode.LIST;
-    }
-
-    @Override
-    public String key() {
-        return null;
+    public SoraTableInfo info() {
+        return INFO;
     }
 
     @Override

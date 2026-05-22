@@ -10,10 +10,10 @@ fn main() {
         generated::runtime::SoraBundle::parse(include_bytes!("../../generated/config.sora"))
             .expect("bundle");
     let config = SoraConfig::from_source(&bundle).expect("config");
-    let sword = config.item().get(1001).expect("item 1001");
+    let sword = config.item().get(&1001).expect("item 1001");
     let sword_by_name = config.item().get_by_name("Iron Sword").expect("Iron Sword");
-    let flame_slash = config.skill().get(101).expect("skill 101");
-    let quest = config.quest().get(5001).expect("quest 5001");
+    let flame_slash = config.skill().get(&101).expect("skill 101");
+    let quest = config.quest().get(&5001).expect("quest 5001");
     let settings = config.game_settings();
 
     assert_eq!(sword.name.as_ref(), "Iron Sword");
@@ -36,7 +36,7 @@ fn main() {
     assert_eq!(config.localization().len(), 80);
     assert_eq!(config.event_rule().len(), 20);
 
-    let event_rule = config.event_rule().get(17001).expect("event rule 17001");
+    let event_rule = config.event_rule().get(&17001).expect("event rule 17001");
     assert!(matches!(
         &event_rule.condition,
         EventCondition::QuestCompleted { quest_id: 5002 }

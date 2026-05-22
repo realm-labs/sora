@@ -25,14 +25,20 @@ final class ShopItemTable private (
   val rows: Vector[ShopItem]
 ) extends SoraTable {
   def values: Vector[ShopItem] = rows
-  override val name: String = ShopItemTable.Name
-  override val mode: SoraTableMode = SoraTableMode.List
-  override val key: Option[String] = None
+  override val info: SoraTableInfo = ShopItemTable.Info
   override def size: Int = rows.size
 }
 
 object ShopItemTable {
   val Name: String = "ShopItem"
+  val Info: SoraTableInfo = SoraTableInfo(
+    name = Name,
+    rowType = "ShopItem",
+    shape = SoraTableShape.List,
+    primaryKey = None,
+    indexes = Vector(
+    )
+  )
 
   def decode(source: SoraTableSource): ShopItemTable =
     fromRows(source.decodeTable(Name, ShopItem.decode))

@@ -30,6 +30,13 @@ export function decodeGameSettingsValue(value) {
 
 export class GameSettingsTable {
     static tableName = "GameSettings";
+    static tableInfo = {
+        name: GameSettingsTable.tableName,
+        rowType: "GameSettings",
+        shape: "singleton",
+        indexes: [
+        ],
+    };
 
     constructor(
         row,
@@ -43,16 +50,8 @@ export class GameSettingsTable {
         );
     }
 
-    name() {
-        return GameSettingsTable.tableName;
-    }
-
-    mode() {
-        return "singleton";
-    }
-
-    key() {
-        return undefined;
+    info() {
+        return GameSettingsTable.tableInfo;
     }
 
     len() {

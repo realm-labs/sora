@@ -4,26 +4,57 @@ package com.sora.showcase
 
 const val SORA_SCHEMA_FINGERPRINT = "a0390c24663ecbfc"
 
-enum class SoraTableMode {
+enum class SoraTableShape {
     List,
-    Map,
+    Keyed,
     Singleton,
 }
 
-interface SoraTable {
-    val name: String
-    val mode: SoraTableMode
-    val key: String?
+data class SoraKeyInfo(
+    val name: String,
+    val type: String,
+)
+
+data class SoraIndexInfo(
+    val name: String,
+    val unique: Boolean,
+    val fields: List<String>,
+)
+
+data class SoraTableInfo(
+    val name: String,
+    val rowType: String,
+    val shape: SoraTableShape,
+    val primaryKey: SoraKeyInfo?,
+    val indexes: List<SoraIndexInfo>,
+)
+
+interface SoraTable<out R : Any> {
+    val info: SoraTableInfo
     val size: Int
 }
 
+interface SoraKeyedTable<K : Any, R : Any> : SoraTable<R> {
+    val orderedKeys: List<K>
+    fun get(key: K): R?
+    fun orderedValues(): List<R>
+}
+
+interface SoraListTable<R : Any> : SoraTable<R> {
+    val rows: List<R>
+}
+
+interface SoraSingleTable<R : Any> : SoraTable<R> {
+    val row: R
+}
+
 class SoraConfig private constructor(
-    private val tableMap: Map<String, SoraTable>,
+    private val tableMap: Map<String, SoraTable<*>>,
 ) {
-    val tables: Collection<SoraTable>
+    val tables: Collection<SoraTable<*>>
         get() = tableMap.values
 
-    private inline fun <reified T : SoraTable> table(name: String): T =
+    private inline fun <reified T : SoraTable<*>> table(name: String): T =
         tableMap[name] as? T
             ?: throw SoraReadException("generated SoraConfig is missing table `$name` or has an unexpected table type")
     val item: ItemTable
@@ -89,7 +120,7 @@ class SoraConfig private constructor(
                     "schema fingerprint mismatch: generated code expects $SORA_SCHEMA_FINGERPRINT, bundle contains ${source.schemaFingerprint}"
                 )
             }
-            val tables = LinkedHashMap<String, SoraTable>(28)
+            val tables = LinkedHashMap<String, SoraTable<*>>(28)
             tables[ItemTable.NAME] = ItemTable.decode(source)
             tables[SkillTable.NAME] = SkillTable.decode(source)
             tables[QuestTable.NAME] = QuestTable.decode(source)

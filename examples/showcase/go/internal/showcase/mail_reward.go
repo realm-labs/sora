@@ -58,6 +58,13 @@ func decodeMailRewardValue(input SoraValue) (MailReward, error) {
 
 const mailRewardTableName = "MailReward"
 
+var mailRewardTableInfo = SoraTableInfo{
+	Name:    mailRewardTableName,
+	RowType: "MailReward",
+	Shape:   SoraTableShapeList,
+	Indexes: []SoraIndexInfo{},
+}
+
 type MailRewardTable struct {
 	rows []MailReward
 }
@@ -77,16 +84,8 @@ func decodeMailRewardTable(source SoraTableSource) (*MailRewardTable, error) {
 func (table *MailRewardTable) Rows() []MailReward {
 	return table.rows
 }
-func (table *MailRewardTable) Name() string {
-	return mailRewardTableName
-}
-
-func (table *MailRewardTable) Mode() SoraTableMode {
-	return SoraTableModeList
-}
-
-func (table *MailRewardTable) Key() string {
-	return ""
+func (table *MailRewardTable) Info() SoraTableInfo {
+	return mailRewardTableInfo
 }
 
 func (table *MailRewardTable) Len() int {

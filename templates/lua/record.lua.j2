@@ -45,6 +45,30 @@ end
 local {{ table.pascal_name }}Table = {}
 {{ table.pascal_name }}Table.__index = {{ table.pascal_name }}Table
 {{ table.pascal_name }}Table.NAME = "{{ table.name }}"
+{{ table.pascal_name }}Table.INFO = {
+    name = {{ table.pascal_name }}Table.NAME,
+    row_type = "{{ table.row_type }}",
+{%- if table.mode == "map" %}
+    shape = "keyed",
+{%- elif table.mode == "singleton" %}
+    shape = "singleton",
+{%- else %}
+    shape = "list",
+{%- endif %}
+{%- if table.key_name %}
+    primary_key = { name = "{{ table.key_name }}", type = "{{ table.key_type }}" },
+{%- else %}
+    primary_key = nil,
+{%- endif %}
+    indexes = {
+{%- for index in table.unique_indexes %}
+        { name = "{{ index.name }}", unique = true, fields = { "{{ index.field_name }}" } },
+{%- endfor %}
+{%- for index in table.non_unique_indexes %}
+        { name = "{{ index.name }}", unique = false, fields = { "{{ index.field_name }}" } },
+{%- endfor %}
+    },
+}
 
 ---@param rows {{ table.row_type }}[]
 ---@return {{ table.pascal_name }}Table
@@ -81,23 +105,9 @@ function {{ table.pascal_name }}Table.decode(rows)
 {%- endif %}
 end
 
----@return string
-function {{ table.pascal_name }}Table:name()
-    return {{ table.pascal_name }}Table.NAME
-end
-
----@return string
-function {{ table.pascal_name }}Table:mode()
-    return "{{ table.mode }}"
-end
-
----@return string?
-function {{ table.pascal_name }}Table:key()
-{%- if table.key_name %}
-    return "{{ table.key_name }}"
-{%- else %}
-    return nil
-{%- endif %}
+---@return table
+function {{ table.pascal_name }}Table:info()
+    return {{ table.pascal_name }}Table.INFO
 end
 
 ---@return integer

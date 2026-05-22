@@ -32,6 +32,13 @@ pub struct StageRewardTable {
 
 impl StageRewardTable {
     pub const NAME: &'static str = "StageReward";
+    pub const INFO: super::SoraTableInfo = super::SoraTableInfo {
+        name: Self::NAME,
+        row_type: "StageReward",
+        shape: super::SoraTableShape::List,
+        primary_key: None,
+        indexes: &[],
+    };
 
     pub(super) fn from_rows(rows: Vec<StageReward>) -> Result<Self, super::runtime::SoraReadError> {
         Ok(Self { rows })
@@ -39,27 +46,27 @@ impl StageRewardTable {
 }
 
 impl std::ops::Deref for StageRewardTable {
-    type Target = Vec<StageReward>;
+    type Target = [StageReward];
 
     fn deref(&self) -> &Self::Target {
         &self.rows
     }
 }
 
-impl super::SoraTable for StageRewardTable {
-    fn name(&self) -> &'static str {
-        Self::NAME
-    }
-
-    fn mode(&self) -> super::SoraTableMode {
-        super::SoraTableMode::List
-    }
-
-    fn key(&self) -> Option<&'static str> {
-        None
+impl super::ErasedSoraTable for StageRewardTable {
+    fn info(&self) -> &'static super::SoraTableInfo {
+        &Self::INFO
     }
 
     fn len(&self) -> usize {
         self.rows.len()
+    }
+}
+
+impl super::SoraListTable for StageRewardTable {
+    type Row = StageReward;
+
+    fn as_slice(&self) -> &[Self::Row] {
+        &self.rows
     }
 }

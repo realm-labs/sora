@@ -28,14 +28,20 @@ final class EquipmentSetTable private (
   def values: Iterable[EquipmentSet] = rows.values
 
   def orderedValues: Vector[EquipmentSet] = keys.flatMap(rows.get)
-  override val name: String = EquipmentSetTable.Name
-  override val mode: SoraTableMode = SoraTableMode.Map
-  override val key: Option[String] = Some("id")
+  override val info: SoraTableInfo = EquipmentSetTable.Info
   override def size: Int = rows.size
 }
 
 object EquipmentSetTable {
   val Name: String = "EquipmentSet"
+  val Info: SoraTableInfo = SoraTableInfo(
+    name = Name,
+    rowType = "EquipmentSet",
+    shape = SoraTableShape.Keyed,
+    primaryKey = Some(SoraKeyInfo("id", "Int")),
+    indexes = Vector(
+    )
+  )
 
   def decode(source: SoraTableSource): EquipmentSetTable =
     fromRows(source.decodeTable(Name, EquipmentSet.decode))

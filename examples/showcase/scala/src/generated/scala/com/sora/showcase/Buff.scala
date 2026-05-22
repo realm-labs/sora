@@ -28,14 +28,20 @@ final class BuffTable private (
   def values: Iterable[Buff] = rows.values
 
   def orderedValues: Vector[Buff] = keys.flatMap(rows.get)
-  override val name: String = BuffTable.Name
-  override val mode: SoraTableMode = SoraTableMode.Map
-  override val key: Option[String] = Some("id")
+  override val info: SoraTableInfo = BuffTable.Info
   override def size: Int = rows.size
 }
 
 object BuffTable {
   val Name: String = "Buff"
+  val Info: SoraTableInfo = SoraTableInfo(
+    name = Name,
+    rowType = "Buff",
+    shape = SoraTableShape.Keyed,
+    primaryKey = Some(SoraKeyInfo("id", "Int")),
+    indexes = Vector(
+    )
+  )
 
   def decode(source: SoraTableSource): BuffTable =
     fromRows(source.decodeTable(Name, Buff.decode))

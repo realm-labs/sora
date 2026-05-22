@@ -48,8 +48,16 @@ public final class ShopItem {
     }
 }
 
-final class ShopItemTable extends java.util.AbstractList<ShopItem> implements SoraTable {
+final class ShopItemTable extends java.util.AbstractList<ShopItem> implements SoraListTable<ShopItem> {
     static final String NAME = "ShopItem";
+    static final SoraTableInfo INFO = new SoraTableInfo(
+        NAME,
+        "ShopItem",
+        SoraTableShape.LIST,
+        null,
+        List.of(
+        )
+    );
     private final java.util.List<ShopItem> rows;
 
     private ShopItemTable(java.util.List<ShopItem> rows) {
@@ -72,18 +80,8 @@ final class ShopItemTable extends java.util.AbstractList<ShopItem> implements So
         return rows.get(index);
     }
     @Override
-    public String name() {
-        return NAME;
-    }
-
-    @Override
-    public SoraTableMode mode() {
-        return SoraTableMode.LIST;
-    }
-
-    @Override
-    public String key() {
-        return null;
+    public SoraTableInfo info() {
+        return INFO;
     }
 
     @Override

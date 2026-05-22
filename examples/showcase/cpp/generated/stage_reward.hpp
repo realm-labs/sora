@@ -29,6 +29,15 @@ struct StageReward {
 class StageRewardTable final : public SoraTable {
 public:
     static constexpr const char* NAME = "StageReward";
+    static const SoraTableInfo& table_info() {
+        static const SoraTableInfo info = {
+            NAME,
+            "StageReward",
+            "list",
+            nullptr
+        };
+        return info;
+    }
 
     StageRewardTable() {}
     StageRewardTable(const StageRewardTable&) = delete;
@@ -44,9 +53,7 @@ public:
         return table;
     }
 
-    const char* name() const override { return NAME; }
-    const char* mode() const override { return "list"; }
-    const char* key() const override { return nullptr; }
+    const SoraTableInfo& info() const override { return table_info(); }
     std::size_t size() const override {
         return rows_.size();
     }

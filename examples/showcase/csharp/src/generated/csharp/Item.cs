@@ -52,9 +52,20 @@ public sealed record Item(
     }
 }
 
-public sealed class ItemTable : ISoraTable, IReadOnlyDictionary<int, Item>
+public sealed class ItemTable : ISoraKeyedTable<int, Item>
 {
     public const string TableName = "Item";
+    public static readonly SoraTableInfo TableInfo = new(
+        TableName,
+        "Item",
+        SoraTableShape.Keyed,
+        new SoraKeyInfo("id", "int"),
+        new SoraIndexInfo[]
+        {
+            new("byName", true, new[] { "Name" }),
+            new("byItemType", false, new[] { "ItemType" }),
+        }
+    );
     private readonly List<int> keys;
     private readonly Dictionary<int, Item> rows;
     private readonly Dictionary<string, Item> byName;
@@ -146,8 +157,6 @@ public sealed class ItemTable : ISoraTable, IReadOnlyDictionary<int, Item>
     {
         return byItemType.TryGetValue(itemType, out var rows) ? rows : Array.Empty<Item>();
     }
-    public string Name => TableName;
-    public SoraTableMode Mode => SoraTableMode.Map;
-    public string? Key => "id";
+    public SoraTableInfo Info => TableInfo;
     public int Count => rows.Count;
 }

@@ -26,14 +26,20 @@ final class VipLevelTable private (
   def values: Iterable[VipLevel] = rows.values
 
   def orderedValues: Vector[VipLevel] = keys.flatMap(rows.get)
-  override val name: String = VipLevelTable.Name
-  override val mode: SoraTableMode = SoraTableMode.Map
-  override val key: Option[String] = Some("level")
+  override val info: SoraTableInfo = VipLevelTable.Info
   override def size: Int = rows.size
 }
 
 object VipLevelTable {
   val Name: String = "VipLevel"
+  val Info: SoraTableInfo = SoraTableInfo(
+    name = Name,
+    rowType = "VipLevel",
+    shape = SoraTableShape.Keyed,
+    primaryKey = Some(SoraKeyInfo("level", "Int")),
+    indexes = Vector(
+    )
+  )
 
   def decode(source: SoraTableSource): VipLevelTable =
     fromRows(source.decodeTable(Name, VipLevel.decode))

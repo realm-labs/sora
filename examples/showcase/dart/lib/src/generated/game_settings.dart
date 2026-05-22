@@ -30,8 +30,16 @@ final class GameSettings {
   }
 }
 
-final class GameSettingsTable extends Iterable<GameSettings> implements SoraConfigTable {
+final class GameSettingsTable extends Iterable<GameSettings> implements SoraSingleTable<GameSettings> {
   static const tableName = 'GameSettings';
+  static const tableInfo = SoraTableInfo(
+    name: tableName,
+    rowType: 'GameSettings',
+    shape: SoraTableShape.singleton,
+    primaryKey: null,
+    indexes: [
+    ],
+  );
   final GameSettings _row;
 
   const GameSettingsTable(
@@ -45,13 +53,7 @@ final class GameSettingsTable extends Iterable<GameSettings> implements SoraConf
   }
 
   @override
-  String get name => tableName;
-
-  @override
-  String get mode => 'singleton';
-
-  @override
-  String? get key => null;
+  SoraTableInfo get info => tableInfo;
 
   @override
   int get length => 1;

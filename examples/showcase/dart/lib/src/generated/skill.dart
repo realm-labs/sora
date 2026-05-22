@@ -45,8 +45,16 @@ final class Skill {
   }
 }
 
-final class SkillTable extends Iterable<Skill> implements SoraConfigTable {
+final class SkillTable extends Iterable<Skill> implements SoraKeyedTable<int, Skill> {
   static const tableName = 'Skill';
+  static const tableInfo = SoraTableInfo(
+    name: tableName,
+    rowType: 'Skill',
+    shape: SoraTableShape.keyed,
+    primaryKey: SoraKeyInfo('id', 'int'),
+    indexes: [
+    ],
+  );
   final List<int> _keys;
   final Map<int, Skill> _rows;
 
@@ -63,13 +71,7 @@ final class SkillTable extends Iterable<Skill> implements SoraConfigTable {
   }
 
   @override
-  String get name => tableName;
-
-  @override
-  String get mode => 'map';
-
-  @override
-  String? get key => 'id';
+  SoraTableInfo get info => tableInfo;
 
   @override
   int get length => _rows.length;
@@ -78,13 +80,7 @@ final class SkillTable extends Iterable<Skill> implements SoraConfigTable {
   Iterator<Skill> get iterator => _rows.values.iterator;
   Skill? operator [](int key) => _rows[key];
 
-  Skill get(int key) {
-    final row = _rows[key];
-    if (row == null) {
-      throw SoraReadException('missing row in table `$tableName` for key `$key`');
-    }
-    return row;
-  }
+  Skill? get(int key) => _rows[key];
 
   Map<int, Skill> get rows => _rows;
 

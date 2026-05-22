@@ -28,6 +28,14 @@ end
 local EventRuleTable = {}
 EventRuleTable.__index = EventRuleTable
 EventRuleTable.NAME = "EventRule"
+EventRuleTable.INFO = {
+    name = EventRuleTable.NAME,
+    row_type = "EventRule",
+    shape = "keyed",
+    primary_key = { name = "id", type = "integer" },
+    indexes = {
+    },
+}
 
 ---@param rows EventRule[]
 ---@return EventRuleTable
@@ -42,19 +50,9 @@ function EventRuleTable.decode(rows)
     }, EventRuleTable)
 end
 
----@return string
-function EventRuleTable:name()
-    return EventRuleTable.NAME
-end
-
----@return string
-function EventRuleTable:mode()
-    return "map"
-end
-
----@return string?
-function EventRuleTable:key()
-    return "id"
+---@return table
+function EventRuleTable:info()
+    return EventRuleTable.INFO
 end
 
 ---@return integer

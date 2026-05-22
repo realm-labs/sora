@@ -32,6 +32,13 @@ pub struct MailRewardTable {
 
 impl MailRewardTable {
     pub const NAME: &'static str = "MailReward";
+    pub const INFO: super::SoraTableInfo = super::SoraTableInfo {
+        name: Self::NAME,
+        row_type: "MailReward",
+        shape: super::SoraTableShape::List,
+        primary_key: None,
+        indexes: &[],
+    };
 
     pub(super) fn from_rows(rows: Vec<MailReward>) -> Result<Self, super::runtime::SoraReadError> {
         Ok(Self { rows })
@@ -39,27 +46,27 @@ impl MailRewardTable {
 }
 
 impl std::ops::Deref for MailRewardTable {
-    type Target = Vec<MailReward>;
+    type Target = [MailReward];
 
     fn deref(&self) -> &Self::Target {
         &self.rows
     }
 }
 
-impl super::SoraTable for MailRewardTable {
-    fn name(&self) -> &'static str {
-        Self::NAME
-    }
-
-    fn mode(&self) -> super::SoraTableMode {
-        super::SoraTableMode::List
-    }
-
-    fn key(&self) -> Option<&'static str> {
-        None
+impl super::ErasedSoraTable for MailRewardTable {
+    fn info(&self) -> &'static super::SoraTableInfo {
+        &Self::INFO
     }
 
     fn len(&self) -> usize {
         self.rows.len()
+    }
+}
+
+impl super::SoraListTable for MailRewardTable {
+    type Row = MailReward;
+
+    fn as_slice(&self) -> &[Self::Row] {
+        &self.rows
     }
 }

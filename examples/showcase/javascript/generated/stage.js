@@ -30,6 +30,14 @@ export function decodeStageValue(value) {
 
 export class StageTable {
     static tableName = "Stage";
+    static tableInfo = {
+        name: StageTable.tableName,
+        rowType: "Stage",
+        shape: "keyed",
+        primaryKey: { name: "id", type: "number" },
+        indexes: [
+        ],
+    };
 
     constructor(
         keys,
@@ -46,16 +54,8 @@ export class StageTable {
         );
     }
 
-    name() {
-        return StageTable.tableName;
-    }
-
-    mode() {
-        return "map";
-    }
-
-    key() {
-        return "id";
+    info() {
+        return StageTable.tableInfo;
     }
 
     len() {

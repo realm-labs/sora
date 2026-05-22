@@ -27,8 +27,16 @@ final class GachaItem {
   }
 }
 
-final class GachaItemTable extends Iterable<GachaItem> implements SoraConfigTable {
+final class GachaItemTable extends Iterable<GachaItem> implements SoraListTable<GachaItem> {
   static const tableName = 'GachaItem';
+  static const tableInfo = SoraTableInfo(
+    name: tableName,
+    rowType: 'GachaItem',
+    shape: SoraTableShape.list,
+    primaryKey: null,
+    indexes: [
+    ],
+  );
   final List<GachaItem> _rows;
 
   const GachaItemTable(
@@ -42,13 +50,7 @@ final class GachaItemTable extends Iterable<GachaItem> implements SoraConfigTabl
   }
 
   @override
-  String get name => tableName;
-
-  @override
-  String get mode => 'list';
-
-  @override
-  String? get key => null;
+  SoraTableInfo get info => tableInfo;
 
   @override
   int get length => _rows.length;

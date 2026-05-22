@@ -20,8 +20,16 @@ final class DropGroup {
   }
 }
 
-final class DropGroupTable extends Iterable<DropGroup> implements SoraConfigTable {
+final class DropGroupTable extends Iterable<DropGroup> implements SoraKeyedTable<int, DropGroup> {
   static const tableName = 'DropGroup';
+  static const tableInfo = SoraTableInfo(
+    name: tableName,
+    rowType: 'DropGroup',
+    shape: SoraTableShape.keyed,
+    primaryKey: SoraKeyInfo('id', 'int'),
+    indexes: [
+    ],
+  );
   final List<int> _keys;
   final Map<int, DropGroup> _rows;
 
@@ -38,13 +46,7 @@ final class DropGroupTable extends Iterable<DropGroup> implements SoraConfigTabl
   }
 
   @override
-  String get name => tableName;
-
-  @override
-  String get mode => 'map';
-
-  @override
-  String? get key => 'id';
+  SoraTableInfo get info => tableInfo;
 
   @override
   int get length => _rows.length;
@@ -53,13 +55,7 @@ final class DropGroupTable extends Iterable<DropGroup> implements SoraConfigTabl
   Iterator<DropGroup> get iterator => _rows.values.iterator;
   DropGroup? operator [](int key) => _rows[key];
 
-  DropGroup get(int key) {
-    final row = _rows[key];
-    if (row == null) {
-      throw SoraReadException('missing row in table `$tableName` for key `$key`');
-    }
-    return row;
-  }
+  DropGroup? get(int key) => _rows[key];
 
   Map<int, DropGroup> get rows => _rows;
 

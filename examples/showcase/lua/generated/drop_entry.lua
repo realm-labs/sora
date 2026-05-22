@@ -27,6 +27,14 @@ end
 local DropEntryTable = {}
 DropEntryTable.__index = DropEntryTable
 DropEntryTable.NAME = "DropEntry"
+DropEntryTable.INFO = {
+    name = DropEntryTable.NAME,
+    row_type = "DropEntry",
+    shape = "list",
+    primary_key = nil,
+    indexes = {
+    },
+}
 
 ---@param rows DropEntry[]
 ---@return DropEntryTable
@@ -36,19 +44,9 @@ function DropEntryTable.decode(rows)
     }, DropEntryTable)
 end
 
----@return string
-function DropEntryTable:name()
-    return DropEntryTable.NAME
-end
-
----@return string
-function DropEntryTable:mode()
-    return "list"
-end
-
----@return string?
-function DropEntryTable:key()
-    return nil
+---@return table
+function DropEntryTable:info()
+    return DropEntryTable.INFO
 end
 
 ---@return integer

@@ -30,6 +30,13 @@ export function decodeShopItemValue(value) {
 
 export class ShopItemTable {
     static tableName = "ShopItem";
+    static tableInfo = {
+        name: ShopItemTable.tableName,
+        rowType: "ShopItem",
+        shape: "list",
+        indexes: [
+        ],
+    };
 
     constructor(
         rows,
@@ -43,16 +50,8 @@ export class ShopItemTable {
         );
     }
 
-    name() {
-        return ShopItemTable.tableName;
-    }
-
-    mode() {
-        return "list";
-    }
-
-    key() {
-        return undefined;
+    info() {
+        return ShopItemTable.tableInfo;
     }
 
     len() {

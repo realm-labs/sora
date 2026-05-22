@@ -33,9 +33,18 @@ public sealed record LevelExp(
     }
 }
 
-public sealed class LevelExpTable : ISoraTable, IReadOnlyDictionary<int, LevelExp>
+public sealed class LevelExpTable : ISoraKeyedTable<int, LevelExp>
 {
     public const string TableName = "LevelExp";
+    public static readonly SoraTableInfo TableInfo = new(
+        TableName,
+        "LevelExp",
+        SoraTableShape.Keyed,
+        new SoraKeyInfo("level", "int"),
+        new SoraIndexInfo[]
+        {
+        }
+    );
     private readonly List<int> keys;
     private readonly Dictionary<int, LevelExp> rows;
 
@@ -110,8 +119,6 @@ public sealed class LevelExpTable : ISoraTable, IReadOnlyDictionary<int, LevelEx
             return orderedRows;
         }
     }
-    public string Name => TableName;
-    public SoraTableMode Mode => SoraTableMode.Map;
-    public string? Key => "level";
+    public SoraTableInfo Info => TableInfo;
     public int Count => rows.Count;
 }

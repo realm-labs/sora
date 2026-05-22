@@ -58,6 +58,13 @@ func decodeQuestRewardValue(input SoraValue) (QuestReward, error) {
 
 const questRewardTableName = "QuestReward"
 
+var questRewardTableInfo = SoraTableInfo{
+	Name:    questRewardTableName,
+	RowType: "QuestReward",
+	Shape:   SoraTableShapeList,
+	Indexes: []SoraIndexInfo{},
+}
+
 type QuestRewardTable struct {
 	rows []QuestReward
 }
@@ -77,16 +84,8 @@ func decodeQuestRewardTable(source SoraTableSource) (*QuestRewardTable, error) {
 func (table *QuestRewardTable) Rows() []QuestReward {
 	return table.rows
 }
-func (table *QuestRewardTable) Name() string {
-	return questRewardTableName
-}
-
-func (table *QuestRewardTable) Mode() SoraTableMode {
-	return SoraTableModeList
-}
-
-func (table *QuestRewardTable) Key() string {
-	return ""
+func (table *QuestRewardTable) Info() SoraTableInfo {
+	return questRewardTableInfo
 }
 
 func (table *QuestRewardTable) Len() int {

@@ -28,14 +28,20 @@ final class AchievementTable private (
   def values: Iterable[Achievement] = rows.values
 
   def orderedValues: Vector[Achievement] = keys.flatMap(rows.get)
-  override val name: String = AchievementTable.Name
-  override val mode: SoraTableMode = SoraTableMode.Map
-  override val key: Option[String] = Some("id")
+  override val info: SoraTableInfo = AchievementTable.Info
   override def size: Int = rows.size
 }
 
 object AchievementTable {
   val Name: String = "Achievement"
+  val Info: SoraTableInfo = SoraTableInfo(
+    name = Name,
+    rowType = "Achievement",
+    shape = SoraTableShape.Keyed,
+    primaryKey = Some(SoraKeyInfo("id", "Int")),
+    indexes = Vector(
+    )
+  )
 
   def decode(source: SoraTableSource): AchievementTable =
     fromRows(source.decodeTable(Name, Achievement.decode))

@@ -38,8 +38,16 @@ public final class CharacterSkill {
     }
 }
 
-final class CharacterSkillTable extends java.util.AbstractList<CharacterSkill> implements SoraTable {
+final class CharacterSkillTable extends java.util.AbstractList<CharacterSkill> implements SoraListTable<CharacterSkill> {
     static final String NAME = "CharacterSkill";
+    static final SoraTableInfo INFO = new SoraTableInfo(
+        NAME,
+        "CharacterSkill",
+        SoraTableShape.LIST,
+        null,
+        List.of(
+        )
+    );
     private final java.util.List<CharacterSkill> rows;
 
     private CharacterSkillTable(java.util.List<CharacterSkill> rows) {
@@ -62,18 +70,8 @@ final class CharacterSkillTable extends java.util.AbstractList<CharacterSkill> i
         return rows.get(index);
     }
     @Override
-    public String name() {
-        return NAME;
-    }
-
-    @Override
-    public SoraTableMode mode() {
-        return SoraTableMode.LIST;
-    }
-
-    @Override
-    public String key() {
-        return null;
+    public SoraTableInfo info() {
+        return INFO;
     }
 
     @Override

@@ -30,18 +30,27 @@ data class MailReward(
 }
 
 class MailRewardTable private constructor(
-    val rows: List<MailReward>,
-) : AbstractList<MailReward>(), SoraTable {
+    override val rows: List<MailReward>,
+) : AbstractList<MailReward>(), SoraListTable<MailReward> {
     override fun get(index: Int): MailReward = rows[index]
 
     fun values(): List<MailReward> = rows
-    override val name: String = NAME
-    override val mode: SoraTableMode = SoraTableMode.List
-    override val key: String? = null
+    override val info: SoraTableInfo
+        get() = INFO
     override val size: Int
         get() = rows.size
 
     companion object {
+        const val NAME: String = "MailReward"
+        val INFO: SoraTableInfo = SoraTableInfo(
+            name = NAME,
+            rowType = "MailReward",
+            shape = SoraTableShape.List,
+            primaryKey = null,
+            indexes = listOf(
+            ),
+        )
+
         fun decode(source: SoraTableSource): MailRewardTable =
             fromRows(source.decodeTable(NAME, MailReward::decode, MailReward::decode))
 
@@ -49,7 +58,5 @@ class MailRewardTable private constructor(
             MailRewardTable(
                 rows,
             )
-
-        const val NAME: String = "MailReward"
     }
 }

@@ -39,6 +39,16 @@ pub struct MailTemplateTable {
 
 impl MailTemplateTable {
     pub const NAME: &'static str = "MailTemplate";
+    pub const INFO: super::SoraTableInfo = super::SoraTableInfo {
+        name: Self::NAME,
+        row_type: "MailTemplate",
+        shape: super::SoraTableShape::Keyed,
+        primary_key: Some(super::SoraKeyInfo {
+            name: "id",
+            ty: "i32",
+        }),
+        indexes: &[],
+    };
 
     pub(super) fn from_rows(
         rows: Vec<MailTemplate>,
@@ -49,8 +59,9 @@ impl MailTemplateTable {
             rows: super::decode_map_table(rows, |row| row.id),
         })
     }
-    pub fn get(&self, key: i32) -> Option<&MailTemplate> {
-        self.rows.get(&key)
+
+    pub fn get(&self, key: &i32) -> Option<&MailTemplate> {
+        self.rows.get(key)
     }
 
     pub fn keys(&self) -> &[i32] {
@@ -70,20 +81,25 @@ impl std::ops::Deref for MailTemplateTable {
     }
 }
 
-impl super::SoraTable for MailTemplateTable {
-    fn name(&self) -> &'static str {
-        Self::NAME
-    }
-
-    fn mode(&self) -> super::SoraTableMode {
-        super::SoraTableMode::Map
-    }
-
-    fn key(&self) -> Option<&'static str> {
-        Some("id")
+impl super::ErasedSoraTable for MailTemplateTable {
+    fn info(&self) -> &'static super::SoraTableInfo {
+        &Self::INFO
     }
 
     fn len(&self) -> usize {
         self.rows.len()
+    }
+}
+
+impl super::SoraKeyedTable for MailTemplateTable {
+    type Key = i32;
+    type Row = MailTemplate;
+
+    fn get(&self, key: &Self::Key) -> Option<&Self::Row> {
+        self.rows.get(key)
+    }
+
+    fn keys(&self) -> &[Self::Key] {
+        &self.keys
     }
 }

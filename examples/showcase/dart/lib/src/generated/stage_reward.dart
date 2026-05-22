@@ -26,8 +26,16 @@ final class StageReward {
   }
 }
 
-final class StageRewardTable extends Iterable<StageReward> implements SoraConfigTable {
+final class StageRewardTable extends Iterable<StageReward> implements SoraListTable<StageReward> {
   static const tableName = 'StageReward';
+  static const tableInfo = SoraTableInfo(
+    name: tableName,
+    rowType: 'StageReward',
+    shape: SoraTableShape.list,
+    primaryKey: null,
+    indexes: [
+    ],
+  );
   final List<StageReward> _rows;
 
   const StageRewardTable(
@@ -41,13 +49,7 @@ final class StageRewardTable extends Iterable<StageReward> implements SoraConfig
   }
 
   @override
-  String get name => tableName;
-
-  @override
-  String get mode => 'list';
-
-  @override
-  String? get key => null;
+  SoraTableInfo get info => tableInfo;
 
   @override
   int get length => _rows.length;

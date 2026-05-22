@@ -58,6 +58,14 @@ func decodeEquipmentSetValue(input SoraValue) (EquipmentSet, error) {
 
 const equipmentSetTableName = "EquipmentSet"
 
+var equipmentSetTableInfo = SoraTableInfo{
+	Name:       equipmentSetTableName,
+	RowType:    "EquipmentSet",
+	Shape:      SoraTableShapeKeyed,
+	PrimaryKey: &SoraKeyInfo{Name: "id", Type: "int32"},
+	Indexes:    []SoraIndexInfo{},
+}
+
 type EquipmentSetTable struct {
 	keys []int32
 	rows map[int32]EquipmentSet
@@ -100,16 +108,8 @@ func (table *EquipmentSetTable) OrderedRows() []EquipmentSet {
 	}
 	return rows
 }
-func (table *EquipmentSetTable) Name() string {
-	return equipmentSetTableName
-}
-
-func (table *EquipmentSetTable) Mode() SoraTableMode {
-	return SoraTableModeMap
-}
-
-func (table *EquipmentSetTable) Key() string {
-	return "id"
+func (table *EquipmentSetTable) Info() SoraTableInfo {
+	return equipmentSetTableInfo
 }
 
 func (table *EquipmentSetTable) Len() int {

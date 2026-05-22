@@ -54,6 +54,27 @@ pub struct ItemTable {
 
 impl ItemTable {
     pub const NAME: &'static str = "Item";
+    pub const INFO: super::SoraTableInfo = super::SoraTableInfo {
+        name: Self::NAME,
+        row_type: "Item",
+        shape: super::SoraTableShape::Keyed,
+        primary_key: Some(super::SoraKeyInfo {
+            name: "id",
+            ty: "i32",
+        }),
+        indexes: &[
+            super::SoraIndexInfo {
+                name: "by_name",
+                unique: true,
+                fields: &["name"],
+            },
+            super::SoraIndexInfo {
+                name: "by_item_type",
+                unique: false,
+                fields: &["item_type"],
+            },
+        ],
+    };
 
     pub(super) fn from_rows(rows: Vec<Item>) -> Result<Self, super::runtime::SoraReadError> {
         let keys = rows.iter().map(|row| row.id).collect::<Vec<_>>();
@@ -68,8 +89,9 @@ impl ItemTable {
             by_item_type,
         })
     }
-    pub fn get(&self, key: i32) -> Option<&Item> {
-        self.rows.get(&key)
+
+    pub fn get(&self, key: &i32) -> Option<&Item> {
+        self.rows.get(key)
     }
 
     pub fn keys(&self) -> &[i32] {
@@ -99,20 +121,25 @@ impl std::ops::Deref for ItemTable {
     }
 }
 
-impl super::SoraTable for ItemTable {
-    fn name(&self) -> &'static str {
-        Self::NAME
-    }
-
-    fn mode(&self) -> super::SoraTableMode {
-        super::SoraTableMode::Map
-    }
-
-    fn key(&self) -> Option<&'static str> {
-        Some("id")
+impl super::ErasedSoraTable for ItemTable {
+    fn info(&self) -> &'static super::SoraTableInfo {
+        &Self::INFO
     }
 
     fn len(&self) -> usize {
         self.rows.len()
+    }
+}
+
+impl super::SoraKeyedTable for ItemTable {
+    type Key = i32;
+    type Row = Item;
+
+    fn get(&self, key: &Self::Key) -> Option<&Self::Row> {
+        self.rows.get(key)
+    }
+
+    fn keys(&self) -> &[Self::Key] {
+        &self.keys
     }
 }

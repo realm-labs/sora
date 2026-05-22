@@ -33,9 +33,18 @@ public sealed record Recipe(
     }
 }
 
-public sealed class RecipeTable : ISoraTable, IReadOnlyDictionary<int, Recipe>
+public sealed class RecipeTable : ISoraKeyedTable<int, Recipe>
 {
     public const string TableName = "Recipe";
+    public static readonly SoraTableInfo TableInfo = new(
+        TableName,
+        "Recipe",
+        SoraTableShape.Keyed,
+        new SoraKeyInfo("id", "int"),
+        new SoraIndexInfo[]
+        {
+        }
+    );
     private readonly List<int> keys;
     private readonly Dictionary<int, Recipe> rows;
 
@@ -110,8 +119,6 @@ public sealed class RecipeTable : ISoraTable, IReadOnlyDictionary<int, Recipe>
             return orderedRows;
         }
     }
-    public string Name => TableName;
-    public SoraTableMode Mode => SoraTableMode.Map;
-    public string? Key => "id";
+    public SoraTableInfo Info => TableInfo;
     public int Count => rows.Count;
 }

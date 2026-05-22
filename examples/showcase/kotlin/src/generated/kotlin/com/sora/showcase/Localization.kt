@@ -30,17 +30,26 @@ data class Localization(
 }
 
 class LocalizationTable private constructor(
-    val orderedKeys: List<String>,
+    override val orderedKeys: List<String>,
     val rows: Map<String, Localization>,
-) : SoraTable, Map<String, Localization> by rows {
-    fun orderedValues(): List<Localization> = orderedKeys.mapNotNull { rows[it] }
-    override val name: String = NAME
-    override val mode: SoraTableMode = SoraTableMode.Map
-    override val key: String? = "key"
+) : SoraKeyedTable<String, Localization>, Map<String, Localization> by rows {
+    override fun orderedValues(): List<Localization> = orderedKeys.mapNotNull { rows[it] }
+    override val info: SoraTableInfo
+        get() = INFO
     override val size: Int
         get() = rows.size
 
     companion object {
+        const val NAME: String = "Localization"
+        val INFO: SoraTableInfo = SoraTableInfo(
+            name = NAME,
+            rowType = "Localization",
+            shape = SoraTableShape.Keyed,
+            primaryKey = SoraKeyInfo("key", "String"),
+            indexes = listOf(
+            ),
+        )
+
         fun decode(source: SoraTableSource): LocalizationTable =
             fromRows(source.decodeTable(NAME, Localization::decode, Localization::decode))
 
@@ -49,7 +58,5 @@ class LocalizationTable private constructor(
                 rows.map { it.key },
                 rows.associateBy { it.key },
             )
-
-        const val NAME: String = "Localization"
     }
 }

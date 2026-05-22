@@ -58,6 +58,13 @@ func decodeGachaItemValue(input SoraValue) (GachaItem, error) {
 
 const gachaItemTableName = "GachaItem"
 
+var gachaItemTableInfo = SoraTableInfo{
+	Name:    gachaItemTableName,
+	RowType: "GachaItem",
+	Shape:   SoraTableShapeList,
+	Indexes: []SoraIndexInfo{},
+}
+
 type GachaItemTable struct {
 	rows []GachaItem
 }
@@ -77,16 +84,8 @@ func decodeGachaItemTable(source SoraTableSource) (*GachaItemTable, error) {
 func (table *GachaItemTable) Rows() []GachaItem {
 	return table.rows
 }
-func (table *GachaItemTable) Name() string {
-	return gachaItemTableName
-}
-
-func (table *GachaItemTable) Mode() SoraTableMode {
-	return SoraTableModeList
-}
-
-func (table *GachaItemTable) Key() string {
-	return ""
+func (table *GachaItemTable) Info() SoraTableInfo {
+	return gachaItemTableInfo
 }
 
 func (table *GachaItemTable) Len() int {

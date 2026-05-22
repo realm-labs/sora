@@ -26,6 +26,14 @@ export function decodeVipLevelValue(value) {
 
 export class VipLevelTable {
     static tableName = "VipLevel";
+    static tableInfo = {
+        name: VipLevelTable.tableName,
+        rowType: "VipLevel",
+        shape: "keyed",
+        primaryKey: { name: "level", type: "number" },
+        indexes: [
+        ],
+    };
 
     constructor(
         keys,
@@ -42,16 +50,8 @@ export class VipLevelTable {
         );
     }
 
-    name() {
-        return VipLevelTable.tableName;
-    }
-
-    mode() {
-        return "map";
-    }
-
-    key() {
-        return "level";
+    info() {
+        return VipLevelTable.tableInfo;
     }
 
     len() {

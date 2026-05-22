@@ -27,6 +27,14 @@ end
 local BuffTable = {}
 BuffTable.__index = BuffTable
 BuffTable.NAME = "Buff"
+BuffTable.INFO = {
+    name = BuffTable.NAME,
+    row_type = "Buff",
+    shape = "keyed",
+    primary_key = { name = "id", type = "integer" },
+    indexes = {
+    },
+}
 
 ---@param rows Buff[]
 ---@return BuffTable
@@ -41,19 +49,9 @@ function BuffTable.decode(rows)
     }, BuffTable)
 end
 
----@return string
-function BuffTable:name()
-    return BuffTable.NAME
-end
-
----@return string
-function BuffTable:mode()
-    return "map"
-end
-
----@return string?
-function BuffTable:key()
-    return "id"
+---@return table
+function BuffTable:info()
+    return BuffTable.INFO
 end
 
 ---@return integer

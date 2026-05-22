@@ -67,6 +67,13 @@ func decodeShopItemValue(input SoraValue) (ShopItem, error) {
 
 const shopItemTableName = "ShopItem"
 
+var shopItemTableInfo = SoraTableInfo{
+	Name:    shopItemTableName,
+	RowType: "ShopItem",
+	Shape:   SoraTableShapeList,
+	Indexes: []SoraIndexInfo{},
+}
+
 type ShopItemTable struct {
 	rows []ShopItem
 }
@@ -86,16 +93,8 @@ func decodeShopItemTable(source SoraTableSource) (*ShopItemTable, error) {
 func (table *ShopItemTable) Rows() []ShopItem {
 	return table.rows
 }
-func (table *ShopItemTable) Name() string {
-	return shopItemTableName
-}
-
-func (table *ShopItemTable) Mode() SoraTableMode {
-	return SoraTableModeList
-}
-
-func (table *ShopItemTable) Key() string {
-	return ""
+func (table *ShopItemTable) Info() SoraTableInfo {
+	return shopItemTableInfo
 }
 
 func (table *ShopItemTable) Len() int {

@@ -45,9 +45,18 @@ public sealed record Character(
     }
 }
 
-public sealed class CharacterTable : ISoraTable, IReadOnlyDictionary<int, Character>
+public sealed class CharacterTable : ISoraKeyedTable<int, Character>
 {
     public const string TableName = "Character";
+    public static readonly SoraTableInfo TableInfo = new(
+        TableName,
+        "Character",
+        SoraTableShape.Keyed,
+        new SoraKeyInfo("id", "int"),
+        new SoraIndexInfo[]
+        {
+        }
+    );
     private readonly List<int> keys;
     private readonly Dictionary<int, Character> rows;
 
@@ -122,8 +131,6 @@ public sealed class CharacterTable : ISoraTable, IReadOnlyDictionary<int, Charac
             return orderedRows;
         }
     }
-    public string Name => TableName;
-    public SoraTableMode Mode => SoraTableMode.Map;
-    public string? Key => "id";
+    public SoraTableInfo Info => TableInfo;
     public int Count => rows.Count;
 }

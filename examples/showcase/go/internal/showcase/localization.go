@@ -58,6 +58,14 @@ func decodeLocalizationValue(input SoraValue) (Localization, error) {
 
 const localizationTableName = "Localization"
 
+var localizationTableInfo = SoraTableInfo{
+	Name:       localizationTableName,
+	RowType:    "Localization",
+	Shape:      SoraTableShapeKeyed,
+	PrimaryKey: &SoraKeyInfo{Name: "key", Type: "string"},
+	Indexes:    []SoraIndexInfo{},
+}
+
 type LocalizationTable struct {
 	keys []string
 	rows map[string]Localization
@@ -100,16 +108,8 @@ func (table *LocalizationTable) OrderedRows() []Localization {
 	}
 	return rows
 }
-func (table *LocalizationTable) Name() string {
-	return localizationTableName
-}
-
-func (table *LocalizationTable) Mode() SoraTableMode {
-	return SoraTableModeMap
-}
-
-func (table *LocalizationTable) Key() string {
-	return "key"
+func (table *LocalizationTable) Info() SoraTableInfo {
+	return localizationTableInfo
 }
 
 func (table *LocalizationTable) Len() int {

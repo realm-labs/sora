@@ -9,7 +9,7 @@ fun main() {
     val sword = config.item[1001] ?: error("item 1001")
     val swordByName = config.item.getByName("Iron Sword") ?: error("Iron Sword")
     val quest = config.quest[5001] ?: error("quest 5001")
-    val settings = config.gameSettings.value()
+    val settings = config.gameSettings.row
 
     check(sword.name == "Iron Sword")
     check(swordByName.id == 1001)

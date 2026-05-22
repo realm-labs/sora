@@ -49,6 +49,14 @@ func decodeGachaPoolValue(input SoraValue) (GachaPool, error) {
 
 const gachaPoolTableName = "GachaPool"
 
+var gachaPoolTableInfo = SoraTableInfo{
+	Name:       gachaPoolTableName,
+	RowType:    "GachaPool",
+	Shape:      SoraTableShapeKeyed,
+	PrimaryKey: &SoraKeyInfo{Name: "id", Type: "int32"},
+	Indexes:    []SoraIndexInfo{},
+}
+
 type GachaPoolTable struct {
 	keys []int32
 	rows map[int32]GachaPool
@@ -91,16 +99,8 @@ func (table *GachaPoolTable) OrderedRows() []GachaPool {
 	}
 	return rows
 }
-func (table *GachaPoolTable) Name() string {
-	return gachaPoolTableName
-}
-
-func (table *GachaPoolTable) Mode() SoraTableMode {
-	return SoraTableModeMap
-}
-
-func (table *GachaPoolTable) Key() string {
-	return "id"
+func (table *GachaPoolTable) Info() SoraTableInfo {
+	return gachaPoolTableInfo
 }
 
 func (table *GachaPoolTable) Len() int {

@@ -27,6 +27,14 @@ end
 local AchievementTable = {}
 AchievementTable.__index = AchievementTable
 AchievementTable.NAME = "Achievement"
+AchievementTable.INFO = {
+    name = AchievementTable.NAME,
+    row_type = "Achievement",
+    shape = "keyed",
+    primary_key = { name = "id", type = "integer" },
+    indexes = {
+    },
+}
 
 ---@param rows Achievement[]
 ---@return AchievementTable
@@ -41,19 +49,9 @@ function AchievementTable.decode(rows)
     }, AchievementTable)
 end
 
----@return string
-function AchievementTable:name()
-    return AchievementTable.NAME
-end
-
----@return string
-function AchievementTable:mode()
-    return "map"
-end
-
----@return string?
-function AchievementTable:key()
-    return "id"
+---@return table
+function AchievementTable:info()
+    return AchievementTable.INFO
 end
 
 ---@return integer

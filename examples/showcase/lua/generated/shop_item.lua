@@ -28,6 +28,14 @@ end
 local ShopItemTable = {}
 ShopItemTable.__index = ShopItemTable
 ShopItemTable.NAME = "ShopItem"
+ShopItemTable.INFO = {
+    name = ShopItemTable.NAME,
+    row_type = "ShopItem",
+    shape = "list",
+    primary_key = nil,
+    indexes = {
+    },
+}
 
 ---@param rows ShopItem[]
 ---@return ShopItemTable
@@ -37,19 +45,9 @@ function ShopItemTable.decode(rows)
     }, ShopItemTable)
 end
 
----@return string
-function ShopItemTable:name()
-    return ShopItemTable.NAME
-end
-
----@return string
-function ShopItemTable:mode()
-    return "list"
-end
-
----@return string?
-function ShopItemTable:key()
-    return nil
+---@return table
+function ShopItemTable:info()
+    return ShopItemTable.INFO
 end
 
 ---@return integer

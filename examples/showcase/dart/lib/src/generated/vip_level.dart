@@ -24,8 +24,16 @@ final class VipLevel {
   }
 }
 
-final class VipLevelTable extends Iterable<VipLevel> implements SoraConfigTable {
+final class VipLevelTable extends Iterable<VipLevel> implements SoraKeyedTable<int, VipLevel> {
   static const tableName = 'VipLevel';
+  static const tableInfo = SoraTableInfo(
+    name: tableName,
+    rowType: 'VipLevel',
+    shape: SoraTableShape.keyed,
+    primaryKey: SoraKeyInfo('level', 'int'),
+    indexes: [
+    ],
+  );
   final List<int> _keys;
   final Map<int, VipLevel> _rows;
 
@@ -42,13 +50,7 @@ final class VipLevelTable extends Iterable<VipLevel> implements SoraConfigTable 
   }
 
   @override
-  String get name => tableName;
-
-  @override
-  String get mode => 'map';
-
-  @override
-  String? get key => 'level';
+  SoraTableInfo get info => tableInfo;
 
   @override
   int get length => _rows.length;
@@ -57,13 +59,7 @@ final class VipLevelTable extends Iterable<VipLevel> implements SoraConfigTable 
   Iterator<VipLevel> get iterator => _rows.values.iterator;
   VipLevel? operator [](int key) => _rows[key];
 
-  VipLevel get(int key) {
-    final row = _rows[key];
-    if (row == null) {
-      throw SoraReadException('missing row in table `$tableName` for key `$key`');
-    }
-    return row;
-  }
+  VipLevel? get(int key) => _rows[key];
 
   Map<int, VipLevel> get rows => _rows;
 

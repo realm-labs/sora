@@ -45,17 +45,26 @@ data class Skill(
 }
 
 class SkillTable private constructor(
-    val orderedKeys: List<Int>,
+    override val orderedKeys: List<Int>,
     val rows: Map<Int, Skill>,
-) : SoraTable, Map<Int, Skill> by rows {
-    fun orderedValues(): List<Skill> = orderedKeys.mapNotNull { rows[it] }
-    override val name: String = NAME
-    override val mode: SoraTableMode = SoraTableMode.Map
-    override val key: String? = "id"
+) : SoraKeyedTable<Int, Skill>, Map<Int, Skill> by rows {
+    override fun orderedValues(): List<Skill> = orderedKeys.mapNotNull { rows[it] }
+    override val info: SoraTableInfo
+        get() = INFO
     override val size: Int
         get() = rows.size
 
     companion object {
+        const val NAME: String = "Skill"
+        val INFO: SoraTableInfo = SoraTableInfo(
+            name = NAME,
+            rowType = "Skill",
+            shape = SoraTableShape.Keyed,
+            primaryKey = SoraKeyInfo("id", "Int"),
+            indexes = listOf(
+            ),
+        )
+
         fun decode(source: SoraTableSource): SkillTable =
             fromRows(source.decodeTable(NAME, Skill::decode, Skill::decode))
 
@@ -64,7 +73,5 @@ class SkillTable private constructor(
                 rows.map { it.id },
                 rows.associateBy { it.id },
             )
-
-        const val NAME: String = "Skill"
     }
 }

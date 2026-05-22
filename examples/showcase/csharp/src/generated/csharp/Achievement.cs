@@ -36,9 +36,18 @@ public sealed record Achievement(
     }
 }
 
-public sealed class AchievementTable : ISoraTable, IReadOnlyDictionary<int, Achievement>
+public sealed class AchievementTable : ISoraKeyedTable<int, Achievement>
 {
     public const string TableName = "Achievement";
+    public static readonly SoraTableInfo TableInfo = new(
+        TableName,
+        "Achievement",
+        SoraTableShape.Keyed,
+        new SoraKeyInfo("id", "int"),
+        new SoraIndexInfo[]
+        {
+        }
+    );
     private readonly List<int> keys;
     private readonly Dictionary<int, Achievement> rows;
 
@@ -113,8 +122,6 @@ public sealed class AchievementTable : ISoraTable, IReadOnlyDictionary<int, Achi
             return orderedRows;
         }
     }
-    public string Name => TableName;
-    public SoraTableMode Mode => SoraTableMode.Map;
-    public string? Key => "id";
+    public SoraTableInfo Info => TableInfo;
     public int Count => rows.Count;
 }

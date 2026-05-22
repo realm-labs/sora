@@ -25,6 +25,14 @@ end
 local VipLevelTable = {}
 VipLevelTable.__index = VipLevelTable
 VipLevelTable.NAME = "VipLevel"
+VipLevelTable.INFO = {
+    name = VipLevelTable.NAME,
+    row_type = "VipLevel",
+    shape = "keyed",
+    primary_key = { name = "level", type = "integer" },
+    indexes = {
+    },
+}
 
 ---@param rows VipLevel[]
 ---@return VipLevelTable
@@ -39,19 +47,9 @@ function VipLevelTable.decode(rows)
     }, VipLevelTable)
 end
 
----@return string
-function VipLevelTable:name()
-    return VipLevelTable.NAME
-end
-
----@return string
-function VipLevelTable:mode()
-    return "map"
-end
-
----@return string?
-function VipLevelTable:key()
-    return "level"
+---@return table
+function VipLevelTable:info()
+    return VipLevelTable.INFO
 end
 
 ---@return integer

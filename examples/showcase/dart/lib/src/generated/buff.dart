@@ -27,8 +27,16 @@ final class Buff {
   }
 }
 
-final class BuffTable extends Iterable<Buff> implements SoraConfigTable {
+final class BuffTable extends Iterable<Buff> implements SoraKeyedTable<int, Buff> {
   static const tableName = 'Buff';
+  static const tableInfo = SoraTableInfo(
+    name: tableName,
+    rowType: 'Buff',
+    shape: SoraTableShape.keyed,
+    primaryKey: SoraKeyInfo('id', 'int'),
+    indexes: [
+    ],
+  );
   final List<int> _keys;
   final Map<int, Buff> _rows;
 
@@ -45,13 +53,7 @@ final class BuffTable extends Iterable<Buff> implements SoraConfigTable {
   }
 
   @override
-  String get name => tableName;
-
-  @override
-  String get mode => 'map';
-
-  @override
-  String? get key => 'id';
+  SoraTableInfo get info => tableInfo;
 
   @override
   int get length => _rows.length;
@@ -60,13 +62,7 @@ final class BuffTable extends Iterable<Buff> implements SoraConfigTable {
   Iterator<Buff> get iterator => _rows.values.iterator;
   Buff? operator [](int key) => _rows[key];
 
-  Buff get(int key) {
-    final row = _rows[key];
-    if (row == null) {
-      throw SoraReadException('missing row in table `$tableName` for key `$key`');
-    }
-    return row;
-  }
+  Buff? get(int key) => _rows[key];
 
   Map<int, Buff> get rows => _rows;
 

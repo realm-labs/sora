@@ -51,9 +51,18 @@ public sealed record Skill(
     }
 }
 
-public sealed class SkillTable : ISoraTable, IReadOnlyDictionary<int, Skill>
+public sealed class SkillTable : ISoraKeyedTable<int, Skill>
 {
     public const string TableName = "Skill";
+    public static readonly SoraTableInfo TableInfo = new(
+        TableName,
+        "Skill",
+        SoraTableShape.Keyed,
+        new SoraKeyInfo("id", "int"),
+        new SoraIndexInfo[]
+        {
+        }
+    );
     private readonly List<int> keys;
     private readonly Dictionary<int, Skill> rows;
 
@@ -128,8 +137,6 @@ public sealed class SkillTable : ISoraTable, IReadOnlyDictionary<int, Skill>
             return orderedRows;
         }
     }
-    public string Name => TableName;
-    public SoraTableMode Mode => SoraTableMode.Map;
-    public string? Key => "id";
+    public SoraTableInfo Info => TableInfo;
     public int Count => rows.Count;
 }

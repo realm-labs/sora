@@ -59,19 +59,7 @@ final class {{ table.pascal_name }}Table private (
     {{ index.param_camel_name }}Index.getOrElse({{ index.param_camel_name }}, Vector.empty)
 
 {%- endfor %}
-  override val name: String = {{ table.pascal_name }}Table.Name
-{%- if table.mode == "map" %}
-  override val mode: SoraTableMode = SoraTableMode.Map
-{%- elif table.mode == "singleton" %}
-  override val mode: SoraTableMode = SoraTableMode.Singleton
-{%- else %}
-  override val mode: SoraTableMode = SoraTableMode.List
-{%- endif %}
-{%- if table.key_name %}
-  override val key: Option[String] = Some("{{ table.key_name }}")
-{%- else %}
-  override val key: Option[String] = None
-{%- endif %}
+  override val info: SoraTableInfo = {{ table.pascal_name }}Table.Info
 {%- if table.mode == "singleton" %}
   override val size: Int = 1
 {%- else %}
@@ -81,6 +69,30 @@ final class {{ table.pascal_name }}Table private (
 
 object {{ table.pascal_name }}Table {
   val Name: String = "{{ table.name }}"
+  val Info: SoraTableInfo = SoraTableInfo(
+    name = Name,
+    rowType = "{{ table.row_type }}",
+{%- if table.mode == "map" %}
+    shape = SoraTableShape.Keyed,
+{%- elif table.mode == "singleton" %}
+    shape = SoraTableShape.Singleton,
+{%- else %}
+    shape = SoraTableShape.List,
+{%- endif %}
+{%- if table.key_name %}
+    primaryKey = Some(SoraKeyInfo("{{ table.key_name }}", "{{ table.key_type }}")),
+{%- else %}
+    primaryKey = None,
+{%- endif %}
+    indexes = Vector(
+{%- for index in table.unique_indexes %}
+      SoraIndexInfo("{{ index.param_camel_name }}", unique = true, Vector("{{ index.field_name }}")){% if not loop.last or table.non_unique_indexes %},{% endif %}
+{%- endfor %}
+{%- for index in table.non_unique_indexes %}
+      SoraIndexInfo("{{ index.param_camel_name }}", unique = false, Vector("{{ index.field_name }}")){% if not loop.last %},{% endif %}
+{%- endfor %}
+    )
+  )
 
   def decode(source: SoraTableSource): {{ table.pascal_name }}Table =
     fromRows(source.decodeTable(Name, {{ table.row_type }}.decode))

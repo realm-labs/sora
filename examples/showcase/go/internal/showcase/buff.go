@@ -58,6 +58,14 @@ func decodeBuffValue(input SoraValue) (Buff, error) {
 
 const buffTableName = "Buff"
 
+var buffTableInfo = SoraTableInfo{
+	Name:       buffTableName,
+	RowType:    "Buff",
+	Shape:      SoraTableShapeKeyed,
+	PrimaryKey: &SoraKeyInfo{Name: "id", Type: "int32"},
+	Indexes:    []SoraIndexInfo{},
+}
+
 type BuffTable struct {
 	keys []int32
 	rows map[int32]Buff
@@ -100,16 +108,8 @@ func (table *BuffTable) OrderedRows() []Buff {
 	}
 	return rows
 }
-func (table *BuffTable) Name() string {
-	return buffTableName
-}
-
-func (table *BuffTable) Mode() SoraTableMode {
-	return SoraTableModeMap
-}
-
-func (table *BuffTable) Key() string {
-	return "id"
+func (table *BuffTable) Info() SoraTableInfo {
+	return buffTableInfo
 }
 
 func (table *BuffTable) Len() int {

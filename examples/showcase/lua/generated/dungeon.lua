@@ -27,6 +27,14 @@ end
 local DungeonTable = {}
 DungeonTable.__index = DungeonTable
 DungeonTable.NAME = "Dungeon"
+DungeonTable.INFO = {
+    name = DungeonTable.NAME,
+    row_type = "Dungeon",
+    shape = "keyed",
+    primary_key = { name = "id", type = "integer" },
+    indexes = {
+    },
+}
 
 ---@param rows Dungeon[]
 ---@return DungeonTable
@@ -41,19 +49,9 @@ function DungeonTable.decode(rows)
     }, DungeonTable)
 end
 
----@return string
-function DungeonTable:name()
-    return DungeonTable.NAME
-end
-
----@return string
-function DungeonTable:mode()
-    return "map"
-end
-
----@return string?
-function DungeonTable:key()
-    return "id"
+---@return table
+function DungeonTable:info()
+    return DungeonTable.INFO
 end
 
 ---@return integer

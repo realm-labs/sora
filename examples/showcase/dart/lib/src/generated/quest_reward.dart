@@ -26,8 +26,16 @@ final class QuestReward {
   }
 }
 
-final class QuestRewardTable extends Iterable<QuestReward> implements SoraConfigTable {
+final class QuestRewardTable extends Iterable<QuestReward> implements SoraListTable<QuestReward> {
   static const tableName = 'QuestReward';
+  static const tableInfo = SoraTableInfo(
+    name: tableName,
+    rowType: 'QuestReward',
+    shape: SoraTableShape.list,
+    primaryKey: null,
+    indexes: [
+    ],
+  );
   final List<QuestReward> _rows;
 
   const QuestRewardTable(
@@ -41,13 +49,7 @@ final class QuestRewardTable extends Iterable<QuestReward> implements SoraConfig
   }
 
   @override
-  String get name => tableName;
-
-  @override
-  String get mode => 'list';
-
-  @override
-  String? get key => null;
+  SoraTableInfo get info => tableInfo;
 
   @override
   int get length => _rows.length;

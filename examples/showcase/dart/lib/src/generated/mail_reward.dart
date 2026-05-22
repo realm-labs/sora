@@ -26,8 +26,16 @@ final class MailReward {
   }
 }
 
-final class MailRewardTable extends Iterable<MailReward> implements SoraConfigTable {
+final class MailRewardTable extends Iterable<MailReward> implements SoraListTable<MailReward> {
   static const tableName = 'MailReward';
+  static const tableInfo = SoraTableInfo(
+    name: tableName,
+    rowType: 'MailReward',
+    shape: SoraTableShape.list,
+    primaryKey: null,
+    indexes: [
+    ],
+  );
   final List<MailReward> _rows;
 
   const MailRewardTable(
@@ -41,13 +49,7 @@ final class MailRewardTable extends Iterable<MailReward> implements SoraConfigTa
   }
 
   @override
-  String get name => tableName;
-
-  @override
-  String get mode => 'list';
-
-  @override
-  String? get key => null;
+  SoraTableInfo get info => tableInfo;
 
   @override
   int get length => _rows.length;

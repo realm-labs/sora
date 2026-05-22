@@ -36,9 +36,18 @@ public sealed record MailReward(
     }
 }
 
-public sealed class MailRewardTable : ISoraTable, IReadOnlyList<MailReward>
+public sealed class MailRewardTable : ISoraListTable<MailReward>
 {
     public const string TableName = "MailReward";
+    public static readonly SoraTableInfo TableInfo = new(
+        TableName,
+        "MailReward",
+        SoraTableShape.List,
+        null,
+        new SoraIndexInfo[]
+        {
+        }
+    );
     private readonly List<MailReward> rows;
 
     internal MailRewardTable(List<MailReward> rows)
@@ -68,8 +77,6 @@ public sealed class MailRewardTable : ISoraTable, IReadOnlyList<MailReward>
     {
         return GetEnumerator();
     }
-    public string Name => TableName;
-    public SoraTableMode Mode => SoraTableMode.List;
-    public string? Key => null;
+    public SoraTableInfo Info => TableInfo;
     public int Count => rows.Count;
 }

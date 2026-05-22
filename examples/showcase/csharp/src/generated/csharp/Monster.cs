@@ -42,9 +42,18 @@ public sealed record Monster(
     }
 }
 
-public sealed class MonsterTable : ISoraTable, IReadOnlyDictionary<int, Monster>
+public sealed class MonsterTable : ISoraKeyedTable<int, Monster>
 {
     public const string TableName = "Monster";
+    public static readonly SoraTableInfo TableInfo = new(
+        TableName,
+        "Monster",
+        SoraTableShape.Keyed,
+        new SoraKeyInfo("id", "int"),
+        new SoraIndexInfo[]
+        {
+        }
+    );
     private readonly List<int> keys;
     private readonly Dictionary<int, Monster> rows;
 
@@ -119,8 +128,6 @@ public sealed class MonsterTable : ISoraTable, IReadOnlyDictionary<int, Monster>
             return orderedRows;
         }
     }
-    public string Name => TableName;
-    public SoraTableMode Mode => SoraTableMode.Map;
-    public string? Key => "id";
+    public SoraTableInfo Info => TableInfo;
     public int Count => rows.Count;
 }

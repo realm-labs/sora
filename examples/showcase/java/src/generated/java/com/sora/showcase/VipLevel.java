@@ -38,8 +38,16 @@ public final class VipLevel {
     }
 }
 
-final class VipLevelTable extends java.util.AbstractMap<Integer, VipLevel> implements SoraTable {
+final class VipLevelTable extends java.util.AbstractMap<Integer, VipLevel> implements SoraKeyedTable<Integer, VipLevel> {
     static final String NAME = "VipLevel";
+    static final SoraTableInfo INFO = new SoraTableInfo(
+        NAME,
+        "VipLevel",
+        SoraTableShape.KEYED,
+        new SoraKeyInfo("level", "Integer"),
+        List.of(
+        )
+    );
     private final List<Integer> keys;
     private final java.util.Map<Integer, VipLevel> rows;
 
@@ -64,7 +72,7 @@ final class VipLevelTable extends java.util.AbstractMap<Integer, VipLevel> imple
         return rows.get(key);
     }
 
-    public List<Integer> keys() {
+    public List<Integer> orderedKeys() {
         return keys;
     }
 
@@ -77,18 +85,8 @@ final class VipLevelTable extends java.util.AbstractMap<Integer, VipLevel> imple
         return rows.entrySet();
     }
     @Override
-    public String name() {
-        return NAME;
-    }
-
-    @Override
-    public SoraTableMode mode() {
-        return SoraTableMode.MAP;
-    }
-
-    @Override
-    public String key() {
-        return "level";
+    public SoraTableInfo info() {
+        return INFO;
     }
 
     @Override

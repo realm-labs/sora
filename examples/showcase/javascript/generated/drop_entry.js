@@ -29,6 +29,13 @@ export function decodeDropEntryValue(value) {
 
 export class DropEntryTable {
     static tableName = "DropEntry";
+    static tableInfo = {
+        name: DropEntryTable.tableName,
+        rowType: "DropEntry",
+        shape: "list",
+        indexes: [
+        ],
+    };
 
     constructor(
         rows,
@@ -42,16 +49,8 @@ export class DropEntryTable {
         );
     }
 
-    name() {
-        return DropEntryTable.tableName;
-    }
-
-    mode() {
-        return "list";
-    }
-
-    key() {
-        return undefined;
+    info() {
+        return DropEntryTable.tableInfo;
     }
 
     len() {

@@ -26,6 +26,14 @@ export function decodeRecipeValue(value) {
 
 export class RecipeTable {
     static tableName = "Recipe";
+    static tableInfo = {
+        name: RecipeTable.tableName,
+        rowType: "Recipe",
+        shape: "keyed",
+        primaryKey: { name: "id", type: "number" },
+        indexes: [
+        ],
+    };
 
     constructor(
         keys,
@@ -42,16 +50,8 @@ export class RecipeTable {
         );
     }
 
-    name() {
-        return RecipeTable.tableName;
-    }
-
-    mode() {
-        return "map";
-    }
-
-    key() {
-        return "id";
+    info() {
+        return RecipeTable.tableInfo;
     }
 
     len() {
