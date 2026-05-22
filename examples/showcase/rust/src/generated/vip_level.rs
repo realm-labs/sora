@@ -9,7 +9,7 @@ pub struct VipLevel {
     #[serde(rename = "cost")]
     pub cost: ResourceCost,
     #[serde(rename = "perks")]
-    pub perks: Vec<String>,
+    pub perks: Vec<std::sync::Arc<str>>,
 }
 
 impl super::runtime::SoraDecode for VipLevel {
@@ -19,7 +19,7 @@ impl super::runtime::SoraDecode for VipLevel {
         Ok(Self {
             level: <i32 as super::runtime::SoraDecode>::decode(reader)?,
             cost: <ResourceCost as super::runtime::SoraDecode>::decode(reader)?,
-            perks: <Vec<String> as super::runtime::SoraDecode>::decode(reader)?,
+            perks: <Vec<std::sync::Arc<str>> as super::runtime::SoraDecode>::decode(reader)?,
         })
     }
 }

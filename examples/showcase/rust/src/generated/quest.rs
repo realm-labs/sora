@@ -11,7 +11,7 @@ pub struct Quest {
     #[serde(rename = "quest_type")]
     pub quest_type: QuestType,
     #[serde(rename = "title")]
-    pub title: String,
+    pub title: std::sync::Arc<str>,
     #[serde(rename = "required_item")]
     pub required_item: i32,
     #[serde(rename = "unlock_skills")]
@@ -30,7 +30,7 @@ impl super::runtime::SoraDecode for Quest {
         Ok(Self {
             id: <i32 as super::runtime::SoraDecode>::decode(reader)?,
             quest_type: <QuestType as super::runtime::SoraDecode>::decode(reader)?,
-            title: <String as super::runtime::SoraDecode>::decode(reader)?,
+            title: <std::sync::Arc<str> as super::runtime::SoraDecode>::decode(reader)?,
             required_item: <i32 as super::runtime::SoraDecode>::decode(reader)?,
             unlock_skills: <Vec<i32> as super::runtime::SoraDecode>::decode(reader)?,
             start_pos: <Vec3 as super::runtime::SoraDecode>::decode(reader)?,

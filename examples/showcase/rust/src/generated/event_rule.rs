@@ -8,7 +8,7 @@ pub struct EventRule {
     #[serde(rename = "id")]
     pub id: i32,
     #[serde(rename = "name")]
-    pub name: String,
+    pub name: std::sync::Arc<str>,
     #[serde(rename = "condition")]
     pub condition: EventCondition,
     #[serde(rename = "actions")]
@@ -21,7 +21,7 @@ impl super::runtime::SoraDecode for EventRule {
     ) -> Result<Self, super::runtime::SoraReadError> {
         Ok(Self {
             id: <i32 as super::runtime::SoraDecode>::decode(reader)?,
-            name: <String as super::runtime::SoraDecode>::decode(reader)?,
+            name: <std::sync::Arc<str> as super::runtime::SoraDecode>::decode(reader)?,
             condition: <EventCondition as super::runtime::SoraDecode>::decode(reader)?,
             actions: <Vec<RewardAction> as super::runtime::SoraDecode>::decode(reader)?,
         })

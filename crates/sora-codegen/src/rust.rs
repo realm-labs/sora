@@ -4,7 +4,7 @@ use heck::ToSnakeCase;
 use minijinja::context;
 use serde::Serialize;
 use sora_diagnostics::Result;
-use sora_ir::model::{ConfigIr, TableModeIr, TypeIr};
+use sora_ir::model::{ConfigIr, RustStringStorageIr, TableModeIr, TypeIr};
 
 use crate::{
     generator::{CodeGenerator, runtime_format_name},
@@ -56,7 +56,10 @@ impl CodeGenerator for RustCodeGenerator {
         let rendered = render_template(
             "rust",
             "runtime.rs.j2",
-            context! { runtime_format => runtime_format },
+            context! {
+                runtime_format => runtime_format,
+                string_storage => rust_string_storage_name(ir.codegen.rust.string_storage),
+            },
         )?;
         write_file(&out_dir.join("runtime.rs"), rendered)
     }
@@ -128,6 +131,7 @@ struct RustTable {
     key_name: Option<String>,
     key_field_name: Option<String>,
     key_type: Option<String>,
+    key_param_type: Option<String>,
     key_is_copy: bool,
     unique_indexes: Vec<RustIndex>,
     non_unique_indexes: Vec<RustIndex>,
@@ -251,6 +255,10 @@ fn rust_table(ir: &ConfigIr, table: BaseTable) -> RustTable {
         .key_field
         .as_ref()
         .map(|field| rust_local_table_key_type(ir, &field.ty));
+    let key_param_type = table
+        .key_field
+        .as_ref()
+        .map(|field| rust_key_param_type(ir, &field.ty));
     let container_type = rust_container_type(table.mode, &row_type, key_type.as_deref());
     let key_field_name = table
         .key_field
@@ -273,6 +281,7 @@ fn rust_table(ir: &ConfigIr, table: BaseTable) -> RustTable {
         key_name: table.key_name,
         key_field_name,
         key_type,
+        key_param_type,
         key_is_copy,
         unique_indexes: table
             .unique_indexes
@@ -328,7 +337,7 @@ fn rust_container_type(mode: TableModeIr, row_type: &str, key_type: Option<&str>
 
 fn rust_key_param_type(ir: &ConfigIr, ty: &TypeIr) -> String {
     let type_name = rust_local_table_key_type(ir, ty);
-    if type_name == "String" {
+    if type_name == "String" || type_name == "std::sync::Arc<str>" {
         "str".to_owned()
     } else {
         type_name
@@ -377,5 +386,12 @@ fn rust_key_type_is_copy(ir: &ConfigIr, ty: &TypeIr) -> bool {
         | TypeIr::Set(_)
         | TypeIr::Map { .. }
         | TypeIr::Array { .. } => false,
+    }
+}
+
+fn rust_string_storage_name(storage: RustStringStorageIr) -> &'static str {
+    match storage {
+        RustStringStorageIr::Owned => "owned",
+        RustStringStorageIr::Arc => "arc",
     }
 }

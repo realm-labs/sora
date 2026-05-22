@@ -45,7 +45,7 @@ pub struct SoraBundle<'a> {
     bytes: &'a [u8],
     sections: Vec<Section>,
     schema_fingerprint: String,
-    strings: Vec<String>,
+    strings: Vec<std::sync::Arc<str>>,
 }
 
 #[derive(Debug, Clone)]
@@ -234,7 +234,7 @@ impl SoraTableSource for SoraBundle<'_> {
     }
 }
 
-fn decode_rows<T: SoraDecode>(payload: &[u8], strings: &[String]) -> Result<Vec<T>, SoraReadError> {
+fn decode_rows<T: SoraDecode>(payload: &[u8], strings: &[std::sync::Arc<str>]) -> Result<Vec<T>, SoraReadError> {
     if payload.len() < 12 {
         return Err(SoraReadError::new("Sora table section is too short"));
     }
@@ -278,12 +278,12 @@ fn decode_rows<T: SoraDecode>(payload: &[u8], strings: &[String]) -> Result<Vec<
 
 pub struct SoraReader<'a> {
     bytes: &'a [u8],
-    strings: &'a [String],
+    strings: &'a [std::sync::Arc<str>],
     cursor: usize,
 }
 
 impl<'a> SoraReader<'a> {
-    pub fn new(bytes: &'a [u8], strings: &'a [String]) -> Self {
+    pub fn new(bytes: &'a [u8], strings: &'a [std::sync::Arc<str>]) -> Self {
         Self { bytes, strings, cursor: 0 }
     }
 
@@ -330,6 +330,10 @@ impl<'a> SoraReader<'a> {
     }
 
     pub fn read_string(&mut self) -> Result<String, SoraReadError> {
+        Ok(self.read_arc_str()?.to_string())
+    }
+
+    pub fn read_arc_str(&mut self) -> Result<std::sync::Arc<str>, SoraReadError> {
         let id = self.read_u32()? as usize;
         self.strings
             .get(id)
@@ -351,7 +355,7 @@ impl<'a> SoraReader<'a> {
     }
 }
 
-fn decode_string_table(payload: &[u8]) -> Result<Vec<String>, SoraReadError> {
+fn decode_string_table(payload: &[u8]) -> Result<Vec<std::sync::Arc<str>>, SoraReadError> {
     if payload.len() < 4 {
         return Err(SoraReadError::new("Sora string table section is too short"));
     }
@@ -370,9 +374,8 @@ fn decode_string_table(payload: &[u8]) -> Result<Vec<String>, SoraReadError> {
             return Err(SoraReadError::new("Sora string exceeds string table section"));
         }
         let value = std::str::from_utf8(&payload[cursor..end])
-            .map_err(|error| SoraReadError::new(format!("invalid UTF-8 string: {}", error)))?
-            .to_owned();
-        strings.push(value);
+            .map_err(|error| SoraReadError::new(format!("invalid UTF-8 string: {}", error)))?;
+        strings.push(std::sync::Arc::<str>::from(value));
         cursor = end;
     }
     if cursor != payload.len() {
@@ -414,6 +417,12 @@ impl SoraDecode for f64 {
 impl SoraDecode for String {
     fn decode(reader: &mut SoraReader<'_>) -> Result<Self, SoraReadError> {
         reader.read_string()
+    }
+}
+
+impl SoraDecode for std::sync::Arc<str> {
+    fn decode(reader: &mut SoraReader<'_>) -> Result<Self, SoraReadError> {
+        reader.read_arc_str()
     }
 }
 

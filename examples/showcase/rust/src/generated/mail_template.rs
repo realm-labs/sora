@@ -10,9 +10,9 @@ pub struct MailTemplate {
     #[serde(rename = "mail_type")]
     pub mail_type: MailType,
     #[serde(rename = "title_key")]
-    pub title_key: String,
+    pub title_key: std::sync::Arc<str>,
     #[serde(rename = "body_key")]
-    pub body_key: String,
+    pub body_key: std::sync::Arc<str>,
     #[serde(rename = "rewards")]
     pub rewards: Vec<Reward>,
 }
@@ -24,8 +24,8 @@ impl super::runtime::SoraDecode for MailTemplate {
         Ok(Self {
             id: <i32 as super::runtime::SoraDecode>::decode(reader)?,
             mail_type: <MailType as super::runtime::SoraDecode>::decode(reader)?,
-            title_key: <String as super::runtime::SoraDecode>::decode(reader)?,
-            body_key: <String as super::runtime::SoraDecode>::decode(reader)?,
+            title_key: <std::sync::Arc<str> as super::runtime::SoraDecode>::decode(reader)?,
+            body_key: <std::sync::Arc<str> as super::runtime::SoraDecode>::decode(reader)?,
             rewards: <Vec<Reward> as super::runtime::SoraDecode>::decode(reader)?,
         })
     }

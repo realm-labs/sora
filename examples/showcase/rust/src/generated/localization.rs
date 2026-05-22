@@ -4,13 +4,13 @@ use super::SoraMap;
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct Localization {
     #[serde(rename = "key")]
-    pub key: String,
+    pub key: std::sync::Arc<str>,
     #[serde(rename = "zh_cn")]
-    pub zh_cn: String,
+    pub zh_cn: std::sync::Arc<str>,
     #[serde(rename = "en_us")]
-    pub en_us: String,
+    pub en_us: std::sync::Arc<str>,
     #[serde(rename = "note")]
-    pub note: Option<String>,
+    pub note: Option<std::sync::Arc<str>>,
 }
 
 impl super::runtime::SoraDecode for Localization {
@@ -18,18 +18,18 @@ impl super::runtime::SoraDecode for Localization {
         reader: &mut super::runtime::SoraReader<'_>,
     ) -> Result<Self, super::runtime::SoraReadError> {
         Ok(Self {
-            key: <String as super::runtime::SoraDecode>::decode(reader)?,
-            zh_cn: <String as super::runtime::SoraDecode>::decode(reader)?,
-            en_us: <String as super::runtime::SoraDecode>::decode(reader)?,
-            note: <Option<String> as super::runtime::SoraDecode>::decode(reader)?,
+            key: <std::sync::Arc<str> as super::runtime::SoraDecode>::decode(reader)?,
+            zh_cn: <std::sync::Arc<str> as super::runtime::SoraDecode>::decode(reader)?,
+            en_us: <std::sync::Arc<str> as super::runtime::SoraDecode>::decode(reader)?,
+            note: <Option<std::sync::Arc<str>> as super::runtime::SoraDecode>::decode(reader)?,
         })
     }
 }
 
 #[derive(Debug, Clone)]
 pub struct LocalizationTable {
-    keys: Vec<String>,
-    rows: SoraMap<String, Localization>,
+    keys: Vec<std::sync::Arc<str>>,
+    rows: SoraMap<std::sync::Arc<str>, Localization>,
 }
 
 impl LocalizationTable {
@@ -44,11 +44,11 @@ impl LocalizationTable {
             rows: super::decode_map_table(rows, |row| row.key.clone()),
         })
     }
-    pub fn get(&self, key: &String) -> Option<&Localization> {
+    pub fn get(&self, key: &str) -> Option<&Localization> {
         self.rows.get(key)
     }
 
-    pub fn keys(&self) -> &[String] {
+    pub fn keys(&self) -> &[std::sync::Arc<str>] {
         &self.keys
     }
 
@@ -58,7 +58,7 @@ impl LocalizationTable {
 }
 
 impl std::ops::Deref for LocalizationTable {
-    type Target = SoraMap<String, Localization>;
+    type Target = SoraMap<std::sync::Arc<str>, Localization>;
 
     fn deref(&self) -> &Self::Target {
         &self.rows

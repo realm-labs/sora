@@ -10,7 +10,7 @@ pub struct Item {
     pub id: i32,
     /// Display name
     #[serde(rename = "name")]
-    pub name: String,
+    pub name: std::sync::Arc<str>,
     /// Item category
     #[serde(rename = "item_type")]
     pub item_type: ItemType,
@@ -22,10 +22,10 @@ pub struct Item {
     pub price: ResourceCost,
     /// JSON string set
     #[serde(rename = "tags")]
-    pub tags: std::collections::HashSet<String>,
+    pub tags: std::collections::HashSet<std::sync::Arc<str>>,
     /// Map pairs: key,value|key,value
     #[serde(rename = "attributes")]
-    pub attributes: std::collections::HashMap<String, i32>,
+    pub attributes: std::collections::HashMap<std::sync::Arc<str>, i32>,
 }
 
 impl super::runtime::SoraDecode for Item {
@@ -34,17 +34,12 @@ impl super::runtime::SoraDecode for Item {
     ) -> Result<Self, super::runtime::SoraReadError> {
         Ok(Self {
             id: <i32 as super::runtime::SoraDecode>::decode(reader)?,
-            name: <String as super::runtime::SoraDecode>::decode(reader)?,
+            name: <std::sync::Arc<str> as super::runtime::SoraDecode>::decode(reader)?,
             item_type: <ItemType as super::runtime::SoraDecode>::decode(reader)?,
             max_stack: <i32 as super::runtime::SoraDecode>::decode(reader)?,
             price: <ResourceCost as super::runtime::SoraDecode>::decode(reader)?,
-            tags: <std::collections::HashSet<String> as super::runtime::SoraDecode>::decode(
-                reader,
-            )?,
-            attributes:
-                <std::collections::HashMap<String, i32> as super::runtime::SoraDecode>::decode(
-                    reader,
-                )?,
+            tags: <std::collections::HashSet<std::sync::Arc<str>> as super::runtime::SoraDecode>::decode(reader)?,
+            attributes: <std::collections::HashMap<std::sync::Arc<str>, i32> as super::runtime::SoraDecode>::decode(reader)?,
         })
     }
 }
@@ -53,7 +48,7 @@ impl super::runtime::SoraDecode for Item {
 pub struct ItemTable {
     keys: Vec<i32>,
     rows: SoraMap<i32, Item>,
-    by_name: SoraMap<String, i32>,
+    by_name: SoraMap<std::sync::Arc<str>, i32>,
     by_item_type: SoraMap<ItemType, Vec<i32>>,
 }
 

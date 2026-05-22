@@ -8,7 +8,7 @@ pub struct LevelExp {
     #[serde(rename = "exp")]
     pub exp: i64,
     #[serde(rename = "unlock_feature")]
-    pub unlock_feature: Option<String>,
+    pub unlock_feature: Option<std::sync::Arc<str>>,
 }
 
 impl super::runtime::SoraDecode for LevelExp {
@@ -18,7 +18,9 @@ impl super::runtime::SoraDecode for LevelExp {
         Ok(Self {
             level: <i32 as super::runtime::SoraDecode>::decode(reader)?,
             exp: <i64 as super::runtime::SoraDecode>::decode(reader)?,
-            unlock_feature: <Option<String> as super::runtime::SoraDecode>::decode(reader)?,
+            unlock_feature: <Option<std::sync::Arc<str>> as super::runtime::SoraDecode>::decode(
+                reader,
+            )?,
         })
     }
 }

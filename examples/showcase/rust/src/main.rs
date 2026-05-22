@@ -16,7 +16,7 @@ fn main() {
     let quest = config.quest().get(5001).expect("quest 5001");
     let settings = config.game_settings();
 
-    assert_eq!(sword.name, "Iron Sword");
+    assert_eq!(sword.name.as_ref(), "Iron Sword");
     assert_eq!(sword_by_name.id, 1001);
     assert!(matches!(sword.item_type, ItemType::Weapon));
     assert!(
@@ -25,8 +25,8 @@ fn main() {
             .find_by_item_type(ItemType::Weapon)
             .any(|item| item.id == sword.id)
     );
-    assert_eq!(flame_slash.name, "Flame Slash");
-    assert_eq!(quest.title, "First Trial");
+    assert_eq!(flame_slash.name.as_ref(), "Flame Slash");
+    assert_eq!(quest.title.as_ref(), "First Trial");
     assert!(matches!(quest.quest_type, QuestType::Main));
     assert_eq!(quest.rewards.len(), 2);
     assert_eq!(config.quest_reward().len(), 49);

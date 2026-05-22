@@ -69,6 +69,9 @@ pub struct RustCodegenSchema {
 
     #[serde(default)]
     pub map_type: RustMapTypeSchema,
+
+    #[serde(default)]
+    pub string_storage: RustStringStorageSchema,
 }
 
 impl Default for RustCodegenSchema {
@@ -76,6 +79,7 @@ impl Default for RustCodegenSchema {
         Self {
             runtime_format: RuntimeFormatSchema::Sora,
             map_type: RustMapTypeSchema::Std,
+            string_storage: RustStringStorageSchema::Owned,
         }
     }
 }
@@ -333,6 +337,14 @@ pub enum RustMapTypeSchema {
     #[default]
     Std,
     FxHashMap,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, Default)]
+#[serde(rename_all = "snake_case")]
+pub enum RustStringStorageSchema {
+    #[default]
+    Owned,
+    Arc,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
@@ -609,6 +621,7 @@ package = "game_config"
 [codegen.rust]
 runtime_format = "sora"
 map_type = "fx_hash_map"
+string_storage = "arc"
 
 [codegen.kotlin]
 runtime_format = "sora"
@@ -653,6 +666,10 @@ enum_repr = "string"
             RuntimeFormatSchema::Sora
         );
         assert_eq!(schema.codegen.rust.map_type, RustMapTypeSchema::FxHashMap);
+        assert_eq!(
+            schema.codegen.rust.string_storage,
+            RustStringStorageSchema::Arc
+        );
         assert_eq!(
             schema.codegen.kotlin.runtime_format,
             RuntimeFormatSchema::Sora

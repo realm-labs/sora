@@ -50,6 +50,7 @@ impl CodegenIr {
 pub struct RustCodegenIr {
     pub runtime_format: RuntimeFormatIr,
     pub map_type: RustMapTypeIr,
+    pub string_storage: RustStringStorageIr,
 }
 
 impl Default for RustCodegenIr {
@@ -57,6 +58,7 @@ impl Default for RustCodegenIr {
         Self {
             runtime_format: RuntimeFormatIr::Sora,
             map_type: RustMapTypeIr::Std,
+            string_storage: RustStringStorageIr::Owned,
         }
     }
 }
@@ -261,6 +263,13 @@ pub enum RustMapTypeIr {
     #[default]
     Std,
     FxHashMap,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
+pub enum RustStringStorageIr {
+    #[default]
+    Owned,
+    Arc,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]

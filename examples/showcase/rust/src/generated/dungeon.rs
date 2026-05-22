@@ -7,7 +7,7 @@ pub struct Dungeon {
     #[serde(rename = "id")]
     pub id: i32,
     #[serde(rename = "name")]
-    pub name: String,
+    pub name: std::sync::Arc<str>,
     #[serde(rename = "stage_ids")]
     pub stage_ids: Vec<i32>,
     #[serde(rename = "entry_cost")]
@@ -20,7 +20,7 @@ impl super::runtime::SoraDecode for Dungeon {
     ) -> Result<Self, super::runtime::SoraReadError> {
         Ok(Self {
             id: <i32 as super::runtime::SoraDecode>::decode(reader)?,
-            name: <String as super::runtime::SoraDecode>::decode(reader)?,
+            name: <std::sync::Arc<str> as super::runtime::SoraDecode>::decode(reader)?,
             stage_ids: <Vec<i32> as super::runtime::SoraDecode>::decode(reader)?,
             entry_cost: <ResourceCost as super::runtime::SoraDecode>::decode(reader)?,
         })

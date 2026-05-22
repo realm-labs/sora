@@ -10,7 +10,7 @@ pub struct Skill {
     #[serde(rename = "id")]
     pub id: i32,
     #[serde(rename = "name")]
-    pub name: String,
+    pub name: std::sync::Arc<str>,
     #[serde(rename = "element")]
     pub element: ElementType,
     /// Tuple cost, e.g. Gold,0,150
@@ -34,7 +34,7 @@ impl super::runtime::SoraDecode for Skill {
     ) -> Result<Self, super::runtime::SoraReadError> {
         Ok(Self {
             id: <i32 as super::runtime::SoraDecode>::decode(reader)?,
-            name: <String as super::runtime::SoraDecode>::decode(reader)?,
+            name: <std::sync::Arc<str> as super::runtime::SoraDecode>::decode(reader)?,
             element: <ElementType as super::runtime::SoraDecode>::decode(reader)?,
             cost: <ResourceCost as super::runtime::SoraDecode>::decode(reader)?,
             effect: <SkillEffect as super::runtime::SoraDecode>::decode(reader)?,

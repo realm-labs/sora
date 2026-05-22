@@ -154,7 +154,7 @@ impl {{ table.pascal_name }}Table {
         self.rows.get(&key)
     }
 {%- else %}
-    pub fn get(&self, key: &{{ table.key_type }}) -> Option<&{{ table.row_type }}> {
+    pub fn get(&self, key: &{{ table.key_param_type }}) -> Option<&{{ table.row_type }}> {
         self.rows.get(key)
     }
 {%- endif %}

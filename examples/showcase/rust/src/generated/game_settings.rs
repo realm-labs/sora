@@ -4,7 +4,7 @@ use super::vec3::Vec3;
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct GameSettings {
     #[serde(rename = "version")]
-    pub version: String,
+    pub version: std::sync::Arc<str>,
     #[serde(rename = "daily_reset_hour")]
     pub daily_reset_hour: i32,
     #[serde(rename = "starting_gold")]
@@ -20,7 +20,7 @@ impl super::runtime::SoraDecode for GameSettings {
         reader: &mut super::runtime::SoraReader<'_>,
     ) -> Result<Self, super::runtime::SoraReadError> {
         Ok(Self {
-            version: <String as super::runtime::SoraDecode>::decode(reader)?,
+            version: <std::sync::Arc<str> as super::runtime::SoraDecode>::decode(reader)?,
             daily_reset_hour: <i32 as super::runtime::SoraDecode>::decode(reader)?,
             starting_gold: <i32 as super::runtime::SoraDecode>::decode(reader)?,
             spawn_pos: <Vec3 as super::runtime::SoraDecode>::decode(reader)?,

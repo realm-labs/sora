@@ -7,7 +7,7 @@ pub struct Shop {
     #[serde(rename = "id")]
     pub id: i32,
     #[serde(rename = "name")]
-    pub name: String,
+    pub name: std::sync::Arc<str>,
     #[serde(rename = "currency")]
     pub currency: ResourceKind,
 }
@@ -18,7 +18,7 @@ impl super::runtime::SoraDecode for Shop {
     ) -> Result<Self, super::runtime::SoraReadError> {
         Ok(Self {
             id: <i32 as super::runtime::SoraDecode>::decode(reader)?,
-            name: <String as super::runtime::SoraDecode>::decode(reader)?,
+            name: <std::sync::Arc<str> as super::runtime::SoraDecode>::decode(reader)?,
             currency: <ResourceKind as super::runtime::SoraDecode>::decode(reader)?,
         })
     }

@@ -2,14 +2,14 @@ use sora_schema::model::{
     CStandardSchema, CodegenSchema, CppStandardSchema, EnumReprSchema, ErlangCodegenSchema,
     ErlangEnumReprSchema, JavaScriptCodegenSchema, LanguageCodegenSchema, LuaCodegenSchema,
     LuaEnumReprSchema, LuaVersionSchema, RuntimeFormatSchema, RustMapTypeSchema,
-    ScalaCodegenSchema, ScalaVersionSchema, TypeScriptCodegenSchema,
+    RustStringStorageSchema, ScalaCodegenSchema, ScalaVersionSchema, TypeScriptCodegenSchema,
 };
 
 use crate::model::{
     CCodegenIr, CStandardIr, CodegenIr, CppCodegenIr, CppStandardIr, EnumReprIr, ErlangCodegenIr,
     ErlangEnumReprIr, JavaScriptCodegenIr, LanguageCodegenIr, LuaCodegenIr, LuaEnumReprIr,
-    LuaVersionIr, RuntimeFormatIr, RustCodegenIr, RustMapTypeIr, ScalaCodegenIr, ScalaVersionIr,
-    TypeScriptCodegenIr,
+    LuaVersionIr, RuntimeFormatIr, RustCodegenIr, RustMapTypeIr, RustStringStorageIr,
+    ScalaCodegenIr, ScalaVersionIr, TypeScriptCodegenIr,
 };
 impl From<CodegenSchema> for CodegenIr {
     fn from(value: CodegenSchema) -> Self {
@@ -19,6 +19,10 @@ impl From<CodegenSchema> for CodegenIr {
                 map_type: match value.rust.map_type {
                     RustMapTypeSchema::Std => RustMapTypeIr::Std,
                     RustMapTypeSchema::FxHashMap => RustMapTypeIr::FxHashMap,
+                },
+                string_storage: match value.rust.string_storage {
+                    RustStringStorageSchema::Owned => RustStringStorageIr::Owned,
+                    RustStringStorageSchema::Arc => RustStringStorageIr::Arc,
                 },
             },
             kotlin: LanguageCodegenIr::from(value.kotlin),

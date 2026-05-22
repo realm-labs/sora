@@ -6,9 +6,9 @@ pub struct Dialogue {
     #[serde(rename = "id")]
     pub id: i32,
     #[serde(rename = "speaker_key")]
-    pub speaker_key: String,
+    pub speaker_key: std::sync::Arc<str>,
     #[serde(rename = "lines")]
-    pub lines: Vec<String>,
+    pub lines: Vec<std::sync::Arc<str>>,
 }
 
 impl super::runtime::SoraDecode for Dialogue {
@@ -17,8 +17,8 @@ impl super::runtime::SoraDecode for Dialogue {
     ) -> Result<Self, super::runtime::SoraReadError> {
         Ok(Self {
             id: <i32 as super::runtime::SoraDecode>::decode(reader)?,
-            speaker_key: <String as super::runtime::SoraDecode>::decode(reader)?,
-            lines: <Vec<String> as super::runtime::SoraDecode>::decode(reader)?,
+            speaker_key: <std::sync::Arc<str> as super::runtime::SoraDecode>::decode(reader)?,
+            lines: <Vec<std::sync::Arc<str>> as super::runtime::SoraDecode>::decode(reader)?,
         })
     }
 }

@@ -8,7 +8,7 @@ pub struct Character {
     #[serde(rename = "id")]
     pub id: i32,
     #[serde(rename = "name")]
-    pub name: String,
+    pub name: std::sync::Arc<str>,
     #[serde(rename = "rarity")]
     pub rarity: Rarity,
     #[serde(rename = "base_level")]
@@ -27,7 +27,7 @@ impl super::runtime::SoraDecode for Character {
     ) -> Result<Self, super::runtime::SoraReadError> {
         Ok(Self {
             id: <i32 as super::runtime::SoraDecode>::decode(reader)?,
-            name: <String as super::runtime::SoraDecode>::decode(reader)?,
+            name: <std::sync::Arc<str> as super::runtime::SoraDecode>::decode(reader)?,
             rarity: <Rarity as super::runtime::SoraDecode>::decode(reader)?,
             base_level: <i32 as super::runtime::SoraDecode>::decode(reader)?,
             base_skill: <i32 as super::runtime::SoraDecode>::decode(reader)?,

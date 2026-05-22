@@ -8,7 +8,7 @@ pub struct Monster {
     #[serde(rename = "id")]
     pub id: i32,
     #[serde(rename = "name")]
-    pub name: String,
+    pub name: std::sync::Arc<str>,
     #[serde(rename = "level")]
     pub level: i32,
     #[serde(rename = "element")]
@@ -25,7 +25,7 @@ impl super::runtime::SoraDecode for Monster {
     ) -> Result<Self, super::runtime::SoraReadError> {
         Ok(Self {
             id: <i32 as super::runtime::SoraDecode>::decode(reader)?,
-            name: <String as super::runtime::SoraDecode>::decode(reader)?,
+            name: <std::sync::Arc<str> as super::runtime::SoraDecode>::decode(reader)?,
             level: <i32 as super::runtime::SoraDecode>::decode(reader)?,
             element: <ElementType as super::runtime::SoraDecode>::decode(reader)?,
             drop_group: <i32 as super::runtime::SoraDecode>::decode(reader)?,

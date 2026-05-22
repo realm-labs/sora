@@ -7,7 +7,7 @@ pub struct EquipmentSet {
     #[serde(rename = "id")]
     pub id: i32,
     #[serde(rename = "name")]
-    pub name: String,
+    pub name: std::sync::Arc<str>,
     #[serde(rename = "item_ids")]
     pub item_ids: Vec<i32>,
     #[serde(rename = "bonus_effect")]
@@ -20,7 +20,7 @@ impl super::runtime::SoraDecode for EquipmentSet {
     ) -> Result<Self, super::runtime::SoraReadError> {
         Ok(Self {
             id: <i32 as super::runtime::SoraDecode>::decode(reader)?,
-            name: <String as super::runtime::SoraDecode>::decode(reader)?,
+            name: <std::sync::Arc<str> as super::runtime::SoraDecode>::decode(reader)?,
             item_ids: <Vec<i32> as super::runtime::SoraDecode>::decode(reader)?,
             bonus_effect: <SkillEffect as super::runtime::SoraDecode>::decode(reader)?,
         })

@@ -121,6 +121,7 @@ out = "generated/debug-json"
 [codegen.rust]
 runtime_format = "sora"
 map_type = "fx_hash_map"
+string_storage = "arc"
 
 [codegen.kotlin]
 runtime_format = "sora"

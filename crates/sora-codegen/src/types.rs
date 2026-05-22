@@ -1,4 +1,4 @@
-use sora_ir::model::{ConfigIr, TypeIr};
+use sora_ir::model::{ConfigIr, RustStringStorageIr, TypeIr};
 
 pub fn rust_type_name(ir: &ConfigIr, ty: &TypeIr) -> String {
     rust_type_name_inner(ir, ty)
@@ -43,7 +43,7 @@ fn rust_type_name_inner(ir: &ConfigIr, ty: &TypeIr) -> String {
         TypeIr::I64 => "i64".to_owned(),
         TypeIr::F32 => "f32".to_owned(),
         TypeIr::F64 => "f64".to_owned(),
-        TypeIr::String => "String".to_owned(),
+        TypeIr::String => rust_string_type(ir),
         TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => name.clone(),
         TypeIr::List(element) => format!("Vec<{}>", rust_type_name_inner(ir, element)),
         TypeIr::Set(element) => {
@@ -62,6 +62,13 @@ fn rust_type_name_inner(ir: &ConfigIr, ty: &TypeIr) -> String {
         }
         TypeIr::Ref { table, field } => ref_type(ir, table, field, rust_type_name_inner, "i32"),
         TypeIr::Optional(element) => format!("Option<{}>", rust_type_name_inner(ir, element)),
+    }
+}
+
+fn rust_string_type(ir: &ConfigIr) -> String {
+    match ir.codegen.rust.string_storage {
+        RustStringStorageIr::Owned => "String".to_owned(),
+        RustStringStorageIr::Arc => "std::sync::Arc<str>".to_owned(),
     }
 }
 
