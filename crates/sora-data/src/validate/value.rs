@@ -93,8 +93,10 @@ fn validate_typed_value(
             config_data,
             table,
             path,
-            key,
-            element,
+            MapExpectation {
+                key,
+                value: element,
+            },
             constraints,
             value,
         ),
@@ -325,13 +327,17 @@ fn validate_list(
     Ok(())
 }
 
+struct MapExpectation<'a> {
+    key: &'a TypeIr,
+    value: &'a TypeIr,
+}
+
 fn validate_map(
     ir: &ConfigIr,
     config_data: &ConfigData,
     table: &str,
     path: &str,
-    key_ty: &TypeIr,
-    value_ty: &TypeIr,
+    expectation: MapExpectation<'_>,
     constraints: ValueConstraints,
     value: &Value,
 ) -> Result<()> {
@@ -340,8 +346,8 @@ fn validate_map(
             table,
             path,
             &TypeIr::Map {
-                key: Box::new(key_ty.clone()),
-                value: Box::new(value_ty.clone()),
+                key: Box::new(expectation.key.clone()),
+                value: Box::new(expectation.value.clone()),
             },
             value,
         );
@@ -349,7 +355,7 @@ fn validate_map(
     validate_length(table, path, items.len(), constraints.length)?;
     for (index, item) in items.iter().enumerate() {
         let Value::List(pair) = item else {
-            return type_mismatch(table, &format!("{path}[{index}]"), value_ty, item);
+            return type_mismatch(table, &format!("{path}[{index}]"), expectation.value, item);
         };
         if pair.len() != 2 {
             return Err(SoraError::InvalidSchema(format!(
@@ -361,7 +367,7 @@ fn validate_map(
             config_data,
             table,
             &format!("{path}[{index}].key"),
-            key_ty,
+            expectation.key,
             ValueConstraints {
                 range: None,
                 length: None,
@@ -373,7 +379,7 @@ fn validate_map(
             config_data,
             table,
             &format!("{path}[{index}].value"),
-            value_ty,
+            expectation.value,
             ValueConstraints {
                 range: None,
                 length: None,
