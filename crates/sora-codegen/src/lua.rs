@@ -7,7 +7,7 @@ use sora_diagnostics::Result;
 use sora_ir::model::{ConfigIr, TypeIr};
 
 use crate::{
-    generator::{CodeGenerator, CodegenContext, ensure_sora_runtime_format},
+    generator::{CodeGenerator, CodegenContext, runtime_format_name},
     model::{
         BaseField, BaseImport, BaseIndex, BaseModel, BaseRecord, BaseTable, BaseUnion,
         BaseUnionVariant, build_base_model,
@@ -23,9 +23,9 @@ impl CodeGenerator for LuaCodeGenerator {
     fn generate(&self, context: CodegenContext<'_>, out_dir: &Path) -> Result<()> {
         let ir = context.ir;
         let codegen_options = context.options::<LuaCodegenOptions>()?;
-        ensure_sora_runtime_format("lua", codegen_options.runtime_format)?;
         ensure_supported_lua_version(codegen_options.lua_version)?;
         ensure_dir(out_dir)?;
+        let runtime_format = runtime_format_name(codegen_options.runtime_format);
 
         let options = LuaOptionsView::new(
             codegen_options.module.as_deref(),
@@ -50,7 +50,7 @@ impl CodeGenerator for LuaCodeGenerator {
             let rendered = render_template(
                 "lua",
                 "record.lua.j2",
-                context! { options => &options, record => record },
+                context! { options => &options, record => record, runtime_format => runtime_format },
             )?;
             write_file(
                 &out_dir.join(format!("{}.lua", record.snake_name)),
@@ -62,18 +62,22 @@ impl CodeGenerator for LuaCodeGenerator {
             let rendered = render_template(
                 "lua",
                 "union.lua.j2",
-                context! { options => &options, union => union },
+                context! { options => &options, union => union, runtime_format => runtime_format },
             )?;
             write_file(&out_dir.join(format!("{}.lua", union.snake_name)), rendered)?;
         }
 
-        let rendered = render_template("lua", "runtime.lua.j2", context! { options => &options })?;
+        let rendered = render_template(
+            "lua",
+            "runtime.lua.j2",
+            context! { options => &options, runtime_format => runtime_format },
+        )?;
         write_file(&out_dir.join("sora_runtime.lua"), rendered)?;
 
         let rendered = render_template(
             "lua",
             "config.lua.j2",
-            context! { model => &model, options => &options },
+            context! { model => &model, options => &options, runtime_format => runtime_format },
         )?;
         write_file(&out_dir.join("sora_config.lua"), rendered)
     }
@@ -172,9 +176,11 @@ struct LuaIndex {
 
 #[derive(Debug, Clone, Serialize)]
 struct LuaField {
+    raw_name: String,
     name: String,
     type_name: String,
     decode: String,
+    value_decode: String,
     comment: Option<String>,
 }
 
@@ -313,9 +319,11 @@ fn lua_index(ir: &ConfigIr, index: BaseIndex, options: &LuaOptionsView) -> LuaIn
 
 fn lua_field(ir: &ConfigIr, field: BaseField, options: &LuaOptionsView) -> LuaField {
     LuaField {
+        raw_name: field.raw_name,
         name: field.camel_name,
         type_name: lua_type_name(ir, &field.ty, options),
         decode: lua_decode_expr(ir, &field.ty, options),
+        value_decode: lua_value_decode_expr(ir, &field.ty, options, "__VALUE__"),
         comment: field.comment,
     }
 }
@@ -384,6 +392,46 @@ fn lua_decode_expr(ir: &ConfigIr, ty: &TypeIr, _options: &LuaOptionsView) -> Str
     }
 }
 
+fn lua_value_decode_expr(
+    ir: &ConfigIr,
+    ty: &TypeIr,
+    options: &LuaOptionsView,
+    value: &str,
+) -> String {
+    match ty {
+        TypeIr::Bool => format!("Runtime.expect_boolean({value})"),
+        TypeIr::I32 | TypeIr::I64 => format!("Runtime.expect_integer({value})"),
+        TypeIr::F32 | TypeIr::F64 => format!("Runtime.expect_number({value})"),
+        TypeIr::String => format!("Runtime.expect_string({value})"),
+        TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => {
+            format!("{name}.decode_value({value})")
+        }
+        TypeIr::List(element) | TypeIr::Set(element) | TypeIr::Array { element, .. } => {
+            format!(
+                "Runtime.decode_value_list({value}, function(item) return {} end)",
+                lua_value_decode_expr(ir, element, options, "item")
+            )
+        }
+        TypeIr::Map {
+            key,
+            value: element,
+        } => format!(
+            "Runtime.decode_value_map({value}, function(item) return {} end, function(item) return {} end)",
+            lua_value_decode_expr(ir, key, options, "item"),
+            lua_value_decode_expr(ir, element, options, "item")
+        ),
+        TypeIr::Ref { table, field } => ref_target_type(ir, table, field)
+            .map(|ty| lua_value_decode_expr(ir, ty, options, value))
+            .unwrap_or_else(|| format!("Runtime.expect_integer({value})")),
+        TypeIr::Optional(element) => {
+            format!(
+                "{value} == nil and nil or {}",
+                lua_value_decode_expr(ir, element, options, value)
+            )
+        }
+    }
+}
+
 fn ref_target_type<'a>(ir: &'a ConfigIr, table: &str, field: &str) -> Option<&'a TypeIr> {
     ir.tables
         .iter()
@@ -421,7 +469,7 @@ fn lua_i64_type_name(version: LuaVersion) -> &'static str {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::options::{LuaCodegenOptions, LuaEnumRepr, LuaVersion};
+    use crate::options::{LuaCodegenOptions, LuaEnumRepr, LuaVersion, RuntimeFormat};
     use sora_ir::normalize::normalize_schema;
     use sora_schema::model::SchemaFile;
     use std::{
@@ -553,6 +601,54 @@ mod tests {
         assert!(runtime.contains("safe integer range"));
 
         let _ = std::fs::remove_dir_all(base);
+    }
+
+    #[test]
+    fn lua_supports_adapter_export_runtime_formats() {
+        for (runtime_format, parse_function, adapter) in [
+            (RuntimeFormat::Json, "parse_json_bundle", "decode_json"),
+            (RuntimeFormat::Cbor, "parse_cbor_bundle", "decode_cbor"),
+            (
+                RuntimeFormat::SoraProtobuf,
+                "parse_protobuf_bundle",
+                "decode_protobuf",
+            ),
+        ] {
+            let ir = example_ir();
+            let base = temp_dir();
+
+            LuaCodeGenerator
+                .generate_with_options(
+                    &ir,
+                    LuaCodegenOptions {
+                        runtime_format,
+                        ..Default::default()
+                    },
+                    &base,
+                )
+                .unwrap();
+
+            let item = std::fs::read_to_string(base.join("item.lua")).unwrap();
+            let item_type = std::fs::read_to_string(base.join("item_type.lua")).unwrap();
+            let action = std::fs::read_to_string(base.join("action.lua")).unwrap();
+            let runtime = std::fs::read_to_string(base.join("sora_runtime.lua")).unwrap();
+            let config = std::fs::read_to_string(base.join("sora_config.lua")).unwrap();
+
+            assert!(runtime.contains(&format!(
+                "function Runtime.{parse_function}(bytes, options)"
+            )));
+            assert!(runtime.contains(adapter));
+            assert!(runtime.contains("local SoraValueBundle = {}"));
+            assert!(config.contains("function SoraConfig.from_bundle(bundle)"));
+            assert!(config.contains(parse_function));
+            assert!(config.contains("Item.decode_value"));
+            assert!(item.contains("function Item.decode_value(value)"));
+            assert!(item.contains("Runtime.expect_integer(obj[\"id\"])"));
+            assert!(item_type.contains("function ItemType.decode_value(value)"));
+            assert!(action.contains("function Action.decode_value(value)"));
+
+            let _ = std::fs::remove_dir_all(base);
+        }
     }
 
     fn example_ir() -> ConfigIr {

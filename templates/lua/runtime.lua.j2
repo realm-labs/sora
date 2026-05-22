@@ -37,6 +37,12 @@ local ldexp = math.ldexp or function(value, exponent) return value * 2 ^ exponen
 local SoraBundle = {}
 SoraBundle.__index = SoraBundle
 
+---@class SoraValueBundle
+---@field private tables table<string, table[]>
+---@field private schemaFingerprint string
+local SoraValueBundle = {}
+SoraValueBundle.__index = SoraValueBundle
+
 ---@class SoraReader
 ---@field private bytes string
 ---@field private strings string[]
@@ -195,16 +201,94 @@ end
 
 ---@generic T
 ---@param name string
----@param decode fun(reader: SoraReader): T
+---@param decode_binary fun(reader: SoraReader): T
+---@param decode_value fun(value: table): T
 ---@return T[]
-function SoraBundle:decode_table(name, decode)
+function SoraBundle:decode_table(name, decode_binary, decode_value)
     for _, section in ipairs(self.sections) do
         if section.kind == SECTION_KIND_TABLE and section.name == name then
             local payload = section_payload(self.bytes, section, self.decompress)
-            return decode_rows(payload, self.strings, decode)
+            return decode_rows(payload, self.strings, decode_binary)
         end
     end
     error("missing Sora table section `" .. name .. "`")
+end
+
+---@param root table
+---@param expected_format string
+---@return SoraValueBundle
+function Runtime.parse_value_bundle(root, expected_format)
+    Runtime.expect_table(root)
+    local format = Runtime.expect_string(root.format)
+    if format ~= expected_format then
+        error("expected " .. expected_format .. " bundle, got " .. format)
+    end
+    local version = Runtime.expect_integer(root.format_version)
+    if version ~= SORA_BUNDLE_VERSION then
+        error("unsupported " .. expected_format .. " bundle version " .. tostring(version))
+    end
+    local data = Runtime.expect_table(root.data)
+    local tables = {}
+    for _, table_value in ipairs(Runtime.expect_table(data.tables)) do
+        Runtime.expect_table(table_value)
+        tables[Runtime.expect_string(table_value.name)] = Runtime.expect_table(table_value.rows)
+    end
+    return setmetatable({
+        tables = tables,
+        schemaFingerprint = Runtime.expect_string(root.schema_fingerprint),
+    }, SoraValueBundle)
+end
+
+---@param bytes string
+---@param options table
+---@return SoraValueBundle
+function Runtime.parse_json_bundle(bytes, options)
+    if options == nil or options.decode_json == nil then
+        error("json runtime_format requires options.decode_json")
+    end
+    return Runtime.parse_value_bundle(options.decode_json(bytes), "json")
+end
+
+---@param bytes string
+---@param options table
+---@return SoraValueBundle
+function Runtime.parse_cbor_bundle(bytes, options)
+    if options == nil or options.decode_cbor == nil then
+        error("cbor runtime_format requires options.decode_cbor")
+    end
+    return Runtime.parse_value_bundle(options.decode_cbor(bytes), "cbor")
+end
+
+---@param bytes string
+---@param options table
+---@return SoraValueBundle
+function Runtime.parse_protobuf_bundle(bytes, options)
+    if options == nil or options.decode_protobuf == nil then
+        error("sora-protobuf runtime_format requires options.decode_protobuf")
+    end
+    return Runtime.parse_value_bundle(options.decode_protobuf(bytes), "sora-protobuf")
+end
+
+---@return string
+function SoraValueBundle:schema_fingerprint()
+    return self.schemaFingerprint
+end
+
+---@generic T
+---@param name string
+---@param decode_binary fun(reader: SoraReader): T
+---@param decode_value fun(value: table): T
+---@return T[]
+function SoraValueBundle:decode_table(name, decode_binary, decode_value)
+    local rows = self.tables[name]
+    if rows == nil then
+        error("missing Sora table `" .. name .. "`")
+    end
+    local decoded = {}
+    for index, row in ipairs(rows) do
+        decoded[index] = decode_value(row)
+    end
+    return decoded
 end
 
 ---@param bytes string
@@ -675,7 +759,84 @@ function json_string_field(json, field)
     return value
 end
 
+---@param value any
+---@return table
+function Runtime.expect_table(value)
+    if type(value) ~= "table" then
+        error("expected table")
+    end
+    return value
+end
+
+---@param value any
+---@return boolean
+function Runtime.expect_boolean(value)
+    if type(value) ~= "boolean" then
+        error("expected boolean")
+    end
+    return value
+end
+
+---@param value any
+---@return number
+function Runtime.expect_number(value)
+    if type(value) ~= "number" then
+        error("expected number")
+    end
+    return value
+end
+
+---@param value any
+---@return integer
+function Runtime.expect_integer(value)
+    if type(value) ~= "number" or value % 1 ~= 0 then
+        error("expected integer")
+    end
+    return value
+end
+
+---@param value any
+---@return string
+function Runtime.expect_string(value)
+    if type(value) ~= "string" then
+        error("expected string")
+    end
+    return value
+end
+
+---@generic T
+---@param value any
+---@param decode fun(value: any): T
+---@return T[]
+function Runtime.decode_value_list(value, decode)
+    local list = Runtime.expect_table(value)
+    local decoded = {}
+    for index, item in ipairs(list) do
+        decoded[index] = decode(item)
+    end
+    return decoded
+end
+
+---@generic K, V
+---@param value any
+---@param decode_key fun(value: any): K
+---@param decode_value fun(value: any): V
+---@return table<K, V>
+function Runtime.decode_value_map(value, decode_key, decode_value)
+    local list = Runtime.expect_table(value)
+    local decoded = {}
+    for _, item in ipairs(list) do
+        local pair = Runtime.expect_table(item)
+        if #pair ~= 2 then
+            error("expected map entry pair")
+        end
+        decoded[decode_key(pair[1])] = decode_value(pair[2])
+    end
+    return decoded
+end
+
 Runtime.SoraBundle = SoraBundle
 Runtime.SoraReader = SoraReader
+Runtime.SoraValueBundle = SoraValueBundle
 
 return Runtime

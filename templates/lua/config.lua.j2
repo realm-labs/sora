@@ -18,7 +18,21 @@ SoraConfig.__index = SoraConfig
 ---@param options table?
 ---@return SoraConfig
 function SoraConfig.from_bytes(bytes, options)
+{%- if runtime_format == "sora" %}
     local bundle = Runtime.parse_bundle(bytes, options)
+{%- elif runtime_format == "json" %}
+    local bundle = Runtime.parse_json_bundle(bytes, options)
+{%- elif runtime_format == "cbor" %}
+    local bundle = Runtime.parse_cbor_bundle(bytes, options)
+{%- elif runtime_format == "sora-protobuf" %}
+    local bundle = Runtime.parse_protobuf_bundle(bytes, options)
+{%- endif %}
+    return SoraConfig.from_bundle(bundle)
+end
+
+---@param bundle table
+---@return SoraConfig
+function SoraConfig.from_bundle(bundle)
     if bundle:schema_fingerprint() ~= SORA_SCHEMA_FINGERPRINT then
         error(
             "schema fingerprint mismatch: generated code expects "
@@ -29,7 +43,7 @@ function SoraConfig.from_bytes(bytes, options)
     end
     return setmetatable({
 {%- for table in model.tables %}
-        _{{ table.snake_name }} = {{ table.row_type }}.Table.decode(bundle:decode_table({{ table.row_type }}.Table.NAME, {{ table.row_type }}.decode)),
+        _{{ table.snake_name }} = {{ table.row_type }}.Table.decode(bundle:decode_table({{ table.row_type }}.Table.NAME, {{ table.row_type }}.decode, {{ table.row_type }}.decode_value)),
 {%- endfor %}
     }, SoraConfig)
 end

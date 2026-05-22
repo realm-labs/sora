@@ -119,6 +119,13 @@ const RUNTIME_DART_EXPORTS: &[RuntimeCapability] = &[
     capability(RuntimeFormat::SoraProtobuf, USER_ADAPTER),
 ];
 
+const RUNTIME_LUA_EXPORTS: &[RuntimeCapability] = &[
+    capability(RuntimeFormat::Sora, SELF_CONTAINED),
+    capability(RuntimeFormat::Json, USER_ADAPTER),
+    capability(RuntimeFormat::Cbor, USER_ADAPTER),
+    capability(RuntimeFormat::SoraProtobuf, USER_ADAPTER),
+];
+
 const RUNTIME_MANAGED_EXPORTS: &[RuntimeCapability] = &[
     capability(RuntimeFormat::Sora, SELF_CONTAINED),
     capability(RuntimeFormat::Json, MANAGED_DEPENDENCY),
@@ -297,7 +304,7 @@ impl CodegenRegistry {
                 id: "lua",
                 aliases: &[],
                 display_name: "Lua",
-                runtime_capabilities: RUNTIME_SORA_ONLY,
+                runtime_capabilities: RUNTIME_LUA_EXPORTS,
                 runtime_format: runtime_format_from_options::<LuaCodegenOptions>,
                 formatter: None,
                 generator: Box::new(LuaCodeGenerator),

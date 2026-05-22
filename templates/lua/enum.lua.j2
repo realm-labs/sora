@@ -31,10 +31,20 @@ local values = {
     [{{ loop.index0 }}] = true,
 {%- endfor %}
 }
+local values_by_name = {
+{%- for value in enum.values %}
+    ["{{ value }}"] = {{ loop.index0 }},
+{%- endfor %}
+}
 {%- else %}
 local values = {
 {%- for value in enum.values %}
     [{{ loop.index0 }}] = {{ enum.name }}.{{ value }},
+{%- endfor %}
+}
+local values_by_name = {
+{%- for value in enum.values %}
+    ["{{ value }}"] = {{ enum.name }}.{{ value }},
 {%- endfor %}
 }
 {%- endif %}
@@ -55,6 +65,16 @@ function {{ enum.name }}.decode(reader)
     end
     return value
 {%- endif %}
+end
+
+---@param value any
+---@return {{ enum.name }}
+function {{ enum.name }}.decode_value(value)
+    local decoded = values_by_name[value]
+    if decoded == nil then
+        error("invalid enum value " .. tostring(value) .. " for {{ enum.name }}")
+    end
+    return decoded
 end
 
 return {{ enum.name }}
