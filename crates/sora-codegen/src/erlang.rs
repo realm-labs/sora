@@ -7,7 +7,7 @@ use sora_diagnostics::Result;
 use sora_ir::model::{ConfigIr, TableModeIr, TypeIr};
 
 use crate::{
-    generator::{CodeGenerator, CodegenContext, ensure_sora_runtime_format},
+    generator::{CodeGenerator, CodegenContext, runtime_format_name},
     model::{
         BaseField, BaseIndex, BaseModel, BaseRecord, BaseTable, BaseUnion, BaseUnionVariant,
         build_base_model,
@@ -23,8 +23,8 @@ impl CodeGenerator for ErlangCodeGenerator {
     fn generate(&self, context: CodegenContext<'_>, out_dir: &Path) -> Result<()> {
         let ir = context.ir;
         let codegen_options = context.options::<ErlangCodegenOptions>()?;
-        ensure_sora_runtime_format("erlang", codegen_options.runtime_format)?;
         ensure_dir(out_dir)?;
+        let runtime_format = runtime_format_name(codegen_options.runtime_format);
 
         let options = ErlangOptionsView::new(codegen_options.enum_repr);
         let model = ErlangModel::from_base_model(ir, build_base_model(ir)?);
@@ -39,8 +39,11 @@ impl CodeGenerator for ErlangCodeGenerator {
         }
 
         for record in &model.records {
-            let rendered =
-                render_template("erlang", "record.erl.j2", context! { record => record })?;
+            let rendered = render_template(
+                "erlang",
+                "record.erl.j2",
+                context! { record => record, runtime_format => runtime_format },
+            )?;
             write_file(
                 &out_dir.join(format!("{}.erl", record.snake_name)),
                 rendered,
@@ -48,14 +51,26 @@ impl CodeGenerator for ErlangCodeGenerator {
         }
 
         for union in &model.unions {
-            let rendered = render_template("erlang", "union.erl.j2", context! { union => union })?;
+            let rendered = render_template(
+                "erlang",
+                "union.erl.j2",
+                context! { union => union, runtime_format => runtime_format },
+            )?;
             write_file(&out_dir.join(format!("{}.erl", union.snake_name)), rendered)?;
         }
 
-        let rendered = render_template("erlang", "runtime.erl.j2", context! {})?;
+        let rendered = render_template(
+            "erlang",
+            "runtime.erl.j2",
+            context! { runtime_format => runtime_format },
+        )?;
         write_file(&out_dir.join("sora_runtime.erl"), rendered)?;
 
-        let rendered = render_template("erlang", "config.erl.j2", context! { model => &model })?;
+        let rendered = render_template(
+            "erlang",
+            "config.erl.j2",
+            context! { model => &model, runtime_format => runtime_format },
+        )?;
         write_file(&out_dir.join("sora_config.erl"), rendered)
     }
 }
@@ -100,6 +115,7 @@ struct ErlangUnion {
 
 #[derive(Debug, Clone, Serialize)]
 struct ErlangUnionVariant {
+    raw_name: String,
     snake_name: String,
     reader_var: String,
     fields: Vec<ErlangField>,
@@ -139,10 +155,12 @@ struct ErlangIndex {
 
 #[derive(Debug, Clone, Serialize)]
 struct ErlangField {
+    raw_name: String,
     name: String,
     var_name: String,
     type_name: String,
     decode: String,
+    value_decode: String,
 }
 
 impl ErlangModel {
@@ -209,6 +227,7 @@ fn erlang_variant(ir: &ConfigIr, variant: BaseUnionVariant) -> ErlangUnionVarian
         .map(|field| erlang_field(ir, field))
         .collect::<Vec<_>>();
     ErlangUnionVariant {
+        raw_name: variant.name,
         snake_name: variant.snake_name,
         reader_var: format!("Reader{}", fields.len() + 1),
         fields,
@@ -276,10 +295,12 @@ fn erlang_index(ir: &ConfigIr, index: BaseIndex) -> ErlangIndex {
 
 fn erlang_field(ir: &ConfigIr, field: BaseField) -> ErlangField {
     ErlangField {
+        raw_name: field.raw_name,
         name: field.snake_name,
         var_name: field.pascal_name,
         type_name: erlang_type_name(ir, &field.ty),
         decode: erlang_decode_fun(ir, &field.ty),
+        value_decode: erlang_value_decode_expr(ir, &field.ty, "__VALUE__"),
     }
 }
 
@@ -352,6 +373,41 @@ fn erlang_decode_fun(ir: &ConfigIr, ty: &TypeIr) -> String {
     }
 }
 
+fn erlang_value_decode_expr(ir: &ConfigIr, ty: &TypeIr, value: &str) -> String {
+    match ty {
+        TypeIr::Bool => format!("sora_runtime:expect_boolean({value})"),
+        TypeIr::I32 | TypeIr::I64 => format!("sora_runtime:expect_integer({value})"),
+        TypeIr::F32 | TypeIr::F64 => format!("sora_runtime:expect_float({value})"),
+        TypeIr::String => format!("sora_runtime:expect_binary({value})"),
+        TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => {
+            format!("{}:decode_value({value})", name.to_snake_case())
+        }
+        TypeIr::List(element) | TypeIr::Set(element) | TypeIr::Array { element, .. } => {
+            format!(
+                "sora_runtime:decode_value_list(fun(Item) -> {} end, {value})",
+                erlang_value_decode_expr(ir, element, "Item")
+            )
+        }
+        TypeIr::Map {
+            key,
+            value: element,
+        } => format!(
+            "sora_runtime:decode_value_map(fun(Item) -> {} end, fun(Item) -> {} end, {value})",
+            erlang_value_decode_expr(ir, key, "Item"),
+            erlang_value_decode_expr(ir, element, "Item")
+        ),
+        TypeIr::Ref { table, field } => ref_type(ir, table, field)
+            .map(|ty| erlang_value_decode_expr(ir, ty, value))
+            .unwrap_or_else(|| format!("sora_runtime:expect_integer({value})")),
+        TypeIr::Optional(element) => {
+            format!(
+                "(fun(OptionalValue) -> case OptionalValue of undefined -> undefined; _ -> {} end end)({value})",
+                erlang_value_decode_expr(ir, element, "OptionalValue")
+            )
+        }
+    }
+}
+
 fn ref_type<'a>(ir: &'a ConfigIr, table_name: &str, field_name: &str) -> Option<&'a TypeIr> {
     ir.tables
         .iter()
@@ -363,7 +419,7 @@ fn ref_type<'a>(ir: &'a ConfigIr, table_name: &str, field_name: &str) -> Option<
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::options::{ErlangCodegenOptions, ErlangEnumRepr};
+    use crate::options::{ErlangCodegenOptions, ErlangEnumRepr, RuntimeFormat};
     use sora_ir::normalize::normalize_schema;
     use sora_schema::model::SchemaFile;
     use std::{
@@ -397,7 +453,7 @@ mod tests {
         assert!(action.contains("'type' := 'add_item'"));
         assert!(runtime.contains("read_i64(Reader0) ->"));
         assert!(runtime.contains("zigzag_decode(Value)"));
-        assert!(item.contains("-export([decode/1, decode_table/1"));
+        assert!(item.contains("-export([decode/1, decode_value/1, decode_table/1"));
         assert!(item.contains("get(Key, Table) ->"));
         assert!(item.contains("get_by_name(Name, Table) ->"));
         assert!(item.contains("find_by_item_type(ItemType, Table) ->"));
@@ -431,6 +487,56 @@ mod tests {
         assert!(item_type.contains("0 -> {Ordinal, Reader1};"));
 
         let _ = std::fs::remove_dir_all(base);
+    }
+
+    #[test]
+    fn erlang_supports_adapter_export_runtime_formats() {
+        for (runtime_format, parse_function, adapter) in [
+            (RuntimeFormat::Json, "parse_json_bundle", "decode_json"),
+            (RuntimeFormat::Cbor, "parse_cbor_bundle", "decode_cbor"),
+            (
+                RuntimeFormat::SoraProtobuf,
+                "parse_protobuf_bundle",
+                "decode_protobuf",
+            ),
+        ] {
+            let ir = example_ir();
+            let base = temp_dir();
+
+            ErlangCodeGenerator
+                .generate_with_options(
+                    &ir,
+                    ErlangCodegenOptions {
+                        runtime_format,
+                        ..Default::default()
+                    },
+                    &base,
+                )
+                .unwrap();
+
+            let item = std::fs::read_to_string(base.join("item.erl")).unwrap();
+            let item_type = std::fs::read_to_string(base.join("item_type.erl")).unwrap();
+            let action = std::fs::read_to_string(base.join("action.erl")).unwrap();
+            let runtime = std::fs::read_to_string(base.join("sora_runtime.erl")).unwrap();
+            let config = std::fs::read_to_string(base.join("sora_config.erl")).unwrap();
+
+            assert!(runtime.contains(&format!("{parse_function}(Bytes, Options) ->")));
+            assert!(runtime.contains(adapter));
+            assert!(runtime.contains("-type value_bundle() ::"));
+            assert!(config.contains("from_bundle/1"));
+            assert!(config.contains(parse_function));
+            assert!(item.contains("-export([decode/1, decode_value/1, decode_table/1"));
+            assert!(item.contains("decode_value(Value) ->"));
+            assert!(
+                item.contains(
+                    "sora_runtime:expect_integer(sora_runtime:value_get(<<\"id\">>, Obj))"
+                )
+            );
+            assert!(item_type.contains("-export([decode/1, decode_value/1])."));
+            assert!(action.contains("decode_value(Value) ->"));
+
+            let _ = std::fs::remove_dir_all(base);
+        }
     }
 
     fn example_ir() -> ConfigIr {

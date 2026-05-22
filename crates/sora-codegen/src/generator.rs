@@ -126,6 +126,13 @@ const RUNTIME_LUA_EXPORTS: &[RuntimeCapability] = &[
     capability(RuntimeFormat::SoraProtobuf, USER_ADAPTER),
 ];
 
+const RUNTIME_ERLANG_EXPORTS: &[RuntimeCapability] = &[
+    capability(RuntimeFormat::Sora, SELF_CONTAINED),
+    capability(RuntimeFormat::Json, USER_ADAPTER),
+    capability(RuntimeFormat::Cbor, USER_ADAPTER),
+    capability(RuntimeFormat::SoraProtobuf, USER_ADAPTER),
+];
+
 const RUNTIME_MANAGED_EXPORTS: &[RuntimeCapability] = &[
     capability(RuntimeFormat::Sora, SELF_CONTAINED),
     capability(RuntimeFormat::Json, MANAGED_DEPENDENCY),
@@ -293,7 +300,7 @@ impl CodegenRegistry {
                 id: "erlang",
                 aliases: &["erl"],
                 display_name: "Erlang",
-                runtime_capabilities: RUNTIME_SORA_ONLY,
+                runtime_capabilities: RUNTIME_ERLANG_EXPORTS,
                 runtime_format: runtime_format_from_options::<ErlangCodegenOptions>,
                 formatter: Some(FormatterConfig::new("Erlang", "erlfmt", &["-w"], &["erl"])),
                 generator: Box::new(ErlangCodeGenerator),

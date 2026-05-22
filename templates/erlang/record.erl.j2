@@ -3,7 +3,7 @@
 -module({{ record.snake_name }}).
 
 {%- if record.table %}
--export([decode/1, decode_table/1, rows/1
+-export([decode/1, decode_value/1, decode_table/1, rows/1
 {%- set table = record.table %}
 {%- if table.mode == "map" and table.key_field_name %}
     , get/2, keys/1, ordered_rows/1
@@ -19,7 +19,7 @@
 ]).
 -export_type([t/0, table/0]).
 {%- else %}
--export([decode/1]).
+-export([decode/1, decode_value/1]).
 -export_type([t/0]).
 {%- endif %}
 
@@ -45,12 +45,21 @@ decode(Reader0) ->
 {%- endfor %}
     }, {{ record.reader_var }}}.
 
+-spec decode_value(map()) -> t().
+decode_value(Value) ->
+    Obj = sora_runtime:expect_map(Value),
+    {{ "#{" }}
+{%- for field in record.fields %}
+        '{{ field.name }}' => {{ field.value_decode | replace("__VALUE__", "sora_runtime:value_get(<<\"" ~ field.raw_name ~ "\">>, Obj)") }}{% if not loop.last %},{% endif %}
+{%- endfor %}
+    }.
+
 {%- if record.table %}
 {%- set table = record.table %}
 
 -spec decode_table(map()) -> table().
 decode_table(Bundle) ->
-    Rows = sora_runtime:decode_table(Bundle, ?TABLE_NAME, fun ?MODULE:decode/1),
+    Rows = sora_runtime:decode_table(Bundle, ?TABLE_NAME, fun ?MODULE:decode/1, fun ?MODULE:decode_value/1),
 {%- if table.mode == "map" and table.key_field_name %}
     Data = sora_runtime:decode_map_table(Rows, fun(Row) -> maps:get('{{ table.key_field_name }}', Row) end),
     Keys = [maps:get('{{ table.key_field_name }}', Row) || Row <- Rows],

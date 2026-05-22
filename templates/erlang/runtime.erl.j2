@@ -5,12 +5,24 @@
 -export([
     parse_bundle/1,
     parse_bundle/2,
+    parse_json_bundle/2,
+    parse_cbor_bundle/2,
+    parse_protobuf_bundle/2,
+    parse_value_bundle/2,
     schema_fingerprint/1,
-    decode_table/3,
+    decode_table/4,
     require_singleton_table/2,
     decode_map_table/2,
     decode_unique_index/2,
     decode_index/2,
+    value_get/2,
+    expect_map/1,
+    expect_boolean/1,
+    expect_integer/1,
+    expect_float/1,
+    expect_binary/1,
+    decode_value_list/2,
+    decode_value_map/3,
     read_bool/1,
     read_u32/1,
     read_i32/1,
@@ -51,6 +63,10 @@
     schema_fingerprint := binary(),
     strings := [binary()],
     decompress := decompressor() | undefined
+}.
+-type value_bundle() :: {{ "#{" }}
+    schema_fingerprint := binary(),
+    tables := {{ "#{" }}binary() => [map()]}
 }.
 
 -spec parse_bundle(binary()) -> bundle().
@@ -112,8 +128,55 @@ parse_bundle(_Bytes, _Options) ->
 schema_fingerprint(Bundle) ->
     maps:get(schema_fingerprint, Bundle).
 
--spec decode_table(bundle(), binary(), fun((reader()) -> {T, reader()})) -> [T].
-decode_table(Bundle, Name, Decode) ->
+-spec parse_json_bundle(binary(), map()) -> value_bundle().
+parse_json_bundle(Bytes, Options) ->
+    Decode = maps:get(decode_json, Options, undefined),
+    case Decode of
+        undefined -> error(json_runtime_requires_decode_json);
+        _ -> parse_value_bundle(Decode(Bytes), <<"json">>)
+    end.
+
+-spec parse_cbor_bundle(binary(), map()) -> value_bundle().
+parse_cbor_bundle(Bytes, Options) ->
+    Decode = maps:get(decode_cbor, Options, undefined),
+    case Decode of
+        undefined -> error(cbor_runtime_requires_decode_cbor);
+        _ -> parse_value_bundle(Decode(Bytes), <<"cbor">>)
+    end.
+
+-spec parse_protobuf_bundle(binary(), map()) -> value_bundle().
+parse_protobuf_bundle(Bytes, Options) ->
+    Decode = maps:get(decode_protobuf, Options, undefined),
+    case Decode of
+        undefined -> error(sora_protobuf_runtime_requires_decode_protobuf);
+        _ -> parse_value_bundle(Decode(Bytes), <<"sora-protobuf">>)
+    end.
+
+-spec parse_value_bundle(map(), binary()) -> value_bundle().
+parse_value_bundle(Root, ExpectedFormat) ->
+    Format = expect_binary(value_get(<<"format">>, Root)),
+    case Format of
+        ExpectedFormat -> ok;
+        _ -> error({unexpected_runtime_format, ExpectedFormat, Format})
+    end,
+    Version = expect_integer(value_get(<<"format_version">>, Root)),
+    case Version of
+        ?SORA_BUNDLE_VERSION -> ok;
+        _ -> error({unsupported_runtime_bundle_version, ExpectedFormat, Version})
+    end,
+    Data = expect_map(value_get(<<"data">>, Root)),
+    TableValues = expect_list(value_get(<<"tables">>, Data)),
+    Tables = maps:from_list([
+        {expect_binary(value_get(<<"name">>, Table)), expect_list(value_get(<<"rows">>, Table))}
+        || Table <- TableValues
+    ]),
+    {{ "#{" }}
+        schema_fingerprint => expect_binary(value_get(<<"schema_fingerprint">>, Root)),
+        tables => Tables
+    }.
+
+-spec decode_table(bundle() | value_bundle(), binary(), fun((reader()) -> {T, reader()}), fun((map()) -> T)) -> [T].
+decode_table(Bundle, Name, Decode, _DecodeValue) when is_map_key(sections, Bundle) ->
     Sections = maps:get(sections, Bundle),
     case [Section || Section <- Sections, maps:get(kind, Section) =:= ?SECTION_KIND_TABLE, maps:get(name, Section) =:= Name] of
         [Section] ->
@@ -122,6 +185,12 @@ decode_table(Bundle, Name, Decode) ->
             decode_rows(Payload, maps:get(strings, Bundle), Decode);
         [] ->
             error({missing_sora_table_section, Name})
+    end;
+decode_table(Bundle, Name, _Decode, DecodeValue) ->
+    Tables = maps:get(tables, Bundle),
+    case maps:get(Name, Tables, undefined) of
+        undefined -> error({missing_sora_table, Name});
+        Rows -> [DecodeValue(Row) || Row <- Rows]
     end.
 
 -spec require_singleton_table([T], binary()) -> T.
@@ -445,6 +514,70 @@ decode_string_table_items(Count, Payload, Cursor0, Values) ->
     end,
     Value = binary:part(Payload, Cursor1, Length),
     decode_string_table_items(Count - 1, Payload, Cursor1 + Length, [Value | Values]).
+
+-spec value_get(binary(), map()) -> term().
+value_get(Key, Map) ->
+    case maps:find(Key, Map) of
+        {ok, Value} ->
+            Value;
+        error ->
+            maps:get(binary_to_atom(Key, utf8), Map, undefined)
+    end.
+
+-spec expect_map(term()) -> map().
+expect_map(Value) when is_map(Value) ->
+    Value;
+expect_map(_Value) ->
+    error(expected_map).
+
+-spec expect_list(term()) -> list().
+expect_list(Value) when is_list(Value) ->
+    Value;
+expect_list(_Value) ->
+    error(expected_list).
+
+-spec expect_boolean(term()) -> boolean().
+expect_boolean(Value) when is_boolean(Value) ->
+    Value;
+expect_boolean(_Value) ->
+    error(expected_boolean).
+
+-spec expect_integer(term()) -> integer().
+expect_integer(Value) when is_integer(Value) ->
+    Value;
+expect_integer(_Value) ->
+    error(expected_integer).
+
+-spec expect_float(term()) -> float().
+expect_float(Value) when is_float(Value) ->
+    Value;
+expect_float(Value) when is_integer(Value) ->
+    float(Value);
+expect_float(_Value) ->
+    error(expected_float).
+
+-spec expect_binary(term()) -> binary().
+expect_binary(Value) when is_binary(Value) ->
+    Value;
+expect_binary(_Value) ->
+    error(expected_binary).
+
+-spec decode_value_list(fun((term()) -> T), term()) -> [T].
+decode_value_list(Decode, Value) ->
+    [Decode(Item) || Item <- expect_list(Value)].
+
+-spec decode_value_map(fun((term()) -> K), fun((term()) -> V), term()) -> {{ "#{" }}K => V}.
+decode_value_map(DecodeKey, DecodeValue, Value) ->
+    maps:from_list([
+        begin
+            Pair = expect_list(Item),
+            case Pair of
+                [Key, RowValue] -> {DecodeKey(Key), DecodeValue(RowValue)};
+                _ -> error(expected_map_entry_pair)
+            end
+        end
+        || Item <- expect_list(Value)
+    ]).
 
 -spec read_list_items(integer(), fun((reader()) -> {T, reader()}), reader(), [T]) -> {[T], reader()}.
 read_list_items(0, _Decode, Reader, Values) ->
