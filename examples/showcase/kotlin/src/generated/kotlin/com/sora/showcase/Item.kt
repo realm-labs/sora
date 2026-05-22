@@ -13,8 +13,10 @@ data class Item(
     val maxStack: Int,
     /** Tuple: kind,id,count */
     val price: ResourceCost,
-    /** JSON string array */
+    /** JSON string set */
     val tags: List<String>,
+    /** Map pairs: key,value|key,value */
+    val attributes: Map<String, Int>,
 ) {
     companion object {
         fun decode(reader: SoraReader): Item =
@@ -25,6 +27,7 @@ data class Item(
                 maxStack = reader.readI32(),
                 price = ResourceCost.decode(reader),
                 tags = reader.readList { reader.readString() },
+                attributes = reader.readMap({ reader.readString() }, { reader.readI32() }),
             )
 
         fun decode(value: SoraValue): Item {
@@ -36,6 +39,7 @@ data class Item(
                 maxStack = obj.get("max_stack").asInt(),
                 price = ResourceCost.decode(obj.get("price")),
                 tags = obj.get("tags").asList { item -> item.asString() },
+                attributes = obj.get("attributes").asMap({ item -> item.asString() }, { item -> item.asInt() }),
             )
         }
     }

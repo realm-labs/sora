@@ -16,8 +16,10 @@ public final class Item {
     public final Integer maxStack;
     /** Tuple: kind,id,count */
     public final ResourceCost price;
-    /** JSON string array */
+    /** JSON string set */
     public final java.util.List<String> tags;
+    /** Map pairs: key,value|key,value */
+    public final java.util.Map<String, Integer> attributes;
 
     public Item(
         Integer id,
@@ -25,7 +27,8 @@ public final class Item {
         ItemType itemType,
         Integer maxStack,
         ResourceCost price,
-        java.util.List<String> tags
+        java.util.List<String> tags,
+        java.util.Map<String, Integer> attributes
     ) {
         this.id = id;
         this.name = name;
@@ -33,6 +36,7 @@ public final class Item {
         this.maxStack = maxStack;
         this.price = price;
         this.tags = tags;
+        this.attributes = attributes;
     }
 
     static Item decode(SoraReader reader) {
@@ -42,7 +46,8 @@ public final class Item {
             ItemType.decode(reader),
             reader.readI32(),
             ResourceCost.decode(reader),
-            reader.readList(() -> reader.readString())
+            reader.readList(() -> reader.readString()),
+            reader.readMap(() -> reader.readString(), () -> reader.readI32())
         );
     }
 
@@ -54,7 +59,8 @@ public final class Item {
             ItemType.decode(obj.get("item_type")),
             obj.get("max_stack").asInt(),
             ResourceCost.decode(obj.get("price")),
-            obj.get("tags").asList(item -> item.asString())
+            obj.get("tags").asList(item -> item.asString()),
+            obj.get("attributes").asMap(item -> item.asString(), item -> item.asInt())
         );
     }
 }

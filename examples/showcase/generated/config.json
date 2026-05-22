@@ -1,8 +1,8 @@
 {
   "format": "json",
   "format_version": 1,
-  "schema_fingerprint": "8cc3361563a68f03",
-  "data_fingerprint": "8cb5cd02d092ff62",
+  "schema_fingerprint": "a0390c24663ecbfc",
+  "data_fingerprint": "76b0bef865988544",
   "schema": {
     "package": "com.sora.showcase",
     "enums": [
@@ -836,7 +836,7 @@
           {
             "name": "tags",
             "ty": {
-              "List": "String"
+              "Set": "String"
             },
             "scope": {
               "values": [
@@ -844,7 +844,7 @@
               ]
             },
             "key": false,
-            "comment": "JSON string array",
+            "comment": "JSON string set",
             "required": false,
             "default": "[\"misc\"]",
             "range": null,
@@ -852,7 +852,35 @@
               1,
               5
             ],
-            "parser": null,
+            "parser": {
+              "kind": "json",
+              "options": {}
+            },
+            "aggregation": null
+          },
+          {
+            "name": "attributes",
+            "ty": {
+              "Map": {
+                "key": "String",
+                "value": "I32"
+              }
+            },
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
+            "key": false,
+            "comment": "Map pairs: key,value|key,value",
+            "required": true,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": {
+              "kind": "map",
+              "options": {}
+            },
             "aggregation": null
           }
         ],
@@ -3665,6 +3693,16 @@
         "name": "Item",
         "rows": [
           {
+            "attributes": [
+              [
+                "tier",
+                1
+              ],
+              [
+                "power",
+                10
+              ]
+            ],
             "id": 1001,
             "item_type": "Weapon",
             "max_stack": 1,
@@ -3680,6 +3718,16 @@
             ]
           },
           {
+            "attributes": [
+              [
+                "tier",
+                2
+              ],
+              [
+                "power",
+                11
+              ]
+            ],
             "id": 1002,
             "item_type": "Material",
             "max_stack": 999,
@@ -3695,6 +3743,16 @@
             ]
           },
           {
+            "attributes": [
+              [
+                "tier",
+                3
+              ],
+              [
+                "power",
+                12
+              ]
+            ],
             "id": 2001,
             "item_type": "Consumable",
             "max_stack": 50,
@@ -3710,6 +3768,16 @@
             ]
           },
           {
+            "attributes": [
+              [
+                "tier",
+                4
+              ],
+              [
+                "power",
+                13
+              ]
+            ],
             "id": 3001,
             "item_type": "Currency",
             "max_stack": 1,
@@ -3725,6 +3793,16 @@
             ]
           },
           {
+            "attributes": [
+              [
+                "tier",
+                5
+              ],
+              [
+                "power",
+                14
+              ]
+            ],
             "id": 1003,
             "item_type": "Material",
             "max_stack": 14,
@@ -3740,6 +3818,16 @@
             ]
           },
           {
+            "attributes": [
+              [
+                "tier",
+                1
+              ],
+              [
+                "power",
+                15
+              ]
+            ],
             "id": 1004,
             "item_type": "Consumable",
             "max_stack": 15,
@@ -3755,6 +3843,16 @@
             ]
           },
           {
+            "attributes": [
+              [
+                "tier",
+                2
+              ],
+              [
+                "power",
+                16
+              ]
+            ],
             "id": 1005,
             "item_type": "Weapon",
             "max_stack": 1,
@@ -3770,6 +3868,16 @@
             ]
           },
           {
+            "attributes": [
+              [
+                "tier",
+                3
+              ],
+              [
+                "power",
+                17
+              ]
+            ],
             "id": 1006,
             "item_type": "Armor",
             "max_stack": 1,
@@ -3785,6 +3893,16 @@
             ]
           },
           {
+            "attributes": [
+              [
+                "tier",
+                4
+              ],
+              [
+                "power",
+                18
+              ]
+            ],
             "id": 1007,
             "item_type": "Currency",
             "max_stack": 18,
@@ -3800,6 +3918,16 @@
             ]
           },
           {
+            "attributes": [
+              [
+                "tier",
+                5
+              ],
+              [
+                "power",
+                19
+              ]
+            ],
             "id": 1008,
             "item_type": "Material",
             "max_stack": 19,
@@ -3815,6 +3943,16 @@
             ]
           },
           {
+            "attributes": [
+              [
+                "tier",
+                1
+              ],
+              [
+                "power",
+                20
+              ]
+            ],
             "id": 1009,
             "item_type": "Consumable",
             "max_stack": 20,
@@ -3830,6 +3968,16 @@
             ]
           },
           {
+            "attributes": [
+              [
+                "tier",
+                2
+              ],
+              [
+                "power",
+                21
+              ]
+            ],
             "id": 1010,
             "item_type": "Weapon",
             "max_stack": 1,
@@ -3845,6 +3993,16 @@
             ]
           },
           {
+            "attributes": [
+              [
+                "tier",
+                3
+              ],
+              [
+                "power",
+                22
+              ]
+            ],
             "id": 1011,
             "item_type": "Armor",
             "max_stack": 1,
@@ -3860,6 +4018,16 @@
             ]
           },
           {
+            "attributes": [
+              [
+                "tier",
+                4
+              ],
+              [
+                "power",
+                23
+              ]
+            ],
             "id": 1012,
             "item_type": "Currency",
             "max_stack": 23,
@@ -3875,6 +4043,16 @@
             ]
           },
           {
+            "attributes": [
+              [
+                "tier",
+                5
+              ],
+              [
+                "power",
+                24
+              ]
+            ],
             "id": 1013,
             "item_type": "Material",
             "max_stack": 24,
@@ -3890,6 +4068,16 @@
             ]
           },
           {
+            "attributes": [
+              [
+                "tier",
+                1
+              ],
+              [
+                "power",
+                25
+              ]
+            ],
             "id": 1014,
             "item_type": "Consumable",
             "max_stack": 25,
@@ -3905,6 +4093,16 @@
             ]
           },
           {
+            "attributes": [
+              [
+                "tier",
+                2
+              ],
+              [
+                "power",
+                26
+              ]
+            ],
             "id": 1015,
             "item_type": "Weapon",
             "max_stack": 1,
@@ -3920,6 +4118,16 @@
             ]
           },
           {
+            "attributes": [
+              [
+                "tier",
+                3
+              ],
+              [
+                "power",
+                27
+              ]
+            ],
             "id": 1016,
             "item_type": "Armor",
             "max_stack": 1,
@@ -3935,6 +4143,16 @@
             ]
           },
           {
+            "attributes": [
+              [
+                "tier",
+                4
+              ],
+              [
+                "power",
+                28
+              ]
+            ],
             "id": 1017,
             "item_type": "Currency",
             "max_stack": 28,
@@ -3950,6 +4168,16 @@
             ]
           },
           {
+            "attributes": [
+              [
+                "tier",
+                5
+              ],
+              [
+                "power",
+                29
+              ]
+            ],
             "id": 1018,
             "item_type": "Material",
             "max_stack": 29,
@@ -3965,6 +4193,16 @@
             ]
           },
           {
+            "attributes": [
+              [
+                "tier",
+                1
+              ],
+              [
+                "power",
+                30
+              ]
+            ],
             "id": 1019,
             "item_type": "Consumable",
             "max_stack": 30,
@@ -3980,6 +4218,16 @@
             ]
           },
           {
+            "attributes": [
+              [
+                "tier",
+                2
+              ],
+              [
+                "power",
+                31
+              ]
+            ],
             "id": 1020,
             "item_type": "Weapon",
             "max_stack": 1,
@@ -3995,6 +4243,16 @@
             ]
           },
           {
+            "attributes": [
+              [
+                "tier",
+                3
+              ],
+              [
+                "power",
+                32
+              ]
+            ],
             "id": 1021,
             "item_type": "Armor",
             "max_stack": 1,
@@ -4010,6 +4268,16 @@
             ]
           },
           {
+            "attributes": [
+              [
+                "tier",
+                4
+              ],
+              [
+                "power",
+                33
+              ]
+            ],
             "id": 1022,
             "item_type": "Currency",
             "max_stack": 33,
@@ -4025,6 +4293,16 @@
             ]
           },
           {
+            "attributes": [
+              [
+                "tier",
+                5
+              ],
+              [
+                "power",
+                34
+              ]
+            ],
             "id": 1023,
             "item_type": "Material",
             "max_stack": 34,
@@ -4040,6 +4318,16 @@
             ]
           },
           {
+            "attributes": [
+              [
+                "tier",
+                1
+              ],
+              [
+                "power",
+                35
+              ]
+            ],
             "id": 1024,
             "item_type": "Consumable",
             "max_stack": 35,
@@ -4055,6 +4343,16 @@
             ]
           },
           {
+            "attributes": [
+              [
+                "tier",
+                2
+              ],
+              [
+                "power",
+                36
+              ]
+            ],
             "id": 1025,
             "item_type": "Weapon",
             "max_stack": 1,
@@ -4070,6 +4368,16 @@
             ]
           },
           {
+            "attributes": [
+              [
+                "tier",
+                3
+              ],
+              [
+                "power",
+                37
+              ]
+            ],
             "id": 1026,
             "item_type": "Armor",
             "max_stack": 1,
@@ -4085,6 +4393,16 @@
             ]
           },
           {
+            "attributes": [
+              [
+                "tier",
+                4
+              ],
+              [
+                "power",
+                38
+              ]
+            ],
             "id": 1027,
             "item_type": "Currency",
             "max_stack": 38,
@@ -4100,6 +4418,16 @@
             ]
           },
           {
+            "attributes": [
+              [
+                "tier",
+                5
+              ],
+              [
+                "power",
+                39
+              ]
+            ],
             "id": 1028,
             "item_type": "Material",
             "max_stack": 39,
@@ -4115,6 +4443,16 @@
             ]
           },
           {
+            "attributes": [
+              [
+                "tier",
+                1
+              ],
+              [
+                "power",
+                40
+              ]
+            ],
             "id": 1029,
             "item_type": "Consumable",
             "max_stack": 40,
@@ -4130,6 +4468,16 @@
             ]
           },
           {
+            "attributes": [
+              [
+                "tier",
+                2
+              ],
+              [
+                "power",
+                41
+              ]
+            ],
             "id": 1030,
             "item_type": "Weapon",
             "max_stack": 1,
@@ -4145,6 +4493,16 @@
             ]
           },
           {
+            "attributes": [
+              [
+                "tier",
+                3
+              ],
+              [
+                "power",
+                42
+              ]
+            ],
             "id": 1031,
             "item_type": "Armor",
             "max_stack": 1,
@@ -4160,6 +4518,16 @@
             ]
           },
           {
+            "attributes": [
+              [
+                "tier",
+                4
+              ],
+              [
+                "power",
+                43
+              ]
+            ],
             "id": 1032,
             "item_type": "Currency",
             "max_stack": 43,
@@ -4175,6 +4543,16 @@
             ]
           },
           {
+            "attributes": [
+              [
+                "tier",
+                5
+              ],
+              [
+                "power",
+                44
+              ]
+            ],
             "id": 1033,
             "item_type": "Material",
             "max_stack": 44,
@@ -4190,6 +4568,16 @@
             ]
           },
           {
+            "attributes": [
+              [
+                "tier",
+                1
+              ],
+              [
+                "power",
+                45
+              ]
+            ],
             "id": 1034,
             "item_type": "Consumable",
             "max_stack": 45,
@@ -4205,6 +4593,16 @@
             ]
           },
           {
+            "attributes": [
+              [
+                "tier",
+                2
+              ],
+              [
+                "power",
+                46
+              ]
+            ],
             "id": 1035,
             "item_type": "Weapon",
             "max_stack": 1,
@@ -4220,6 +4618,16 @@
             ]
           },
           {
+            "attributes": [
+              [
+                "tier",
+                3
+              ],
+              [
+                "power",
+                47
+              ]
+            ],
             "id": 1036,
             "item_type": "Armor",
             "max_stack": 1,
@@ -4235,6 +4643,16 @@
             ]
           },
           {
+            "attributes": [
+              [
+                "tier",
+                4
+              ],
+              [
+                "power",
+                48
+              ]
+            ],
             "id": 1037,
             "item_type": "Currency",
             "max_stack": 48,
@@ -4250,6 +4668,16 @@
             ]
           },
           {
+            "attributes": [
+              [
+                "tier",
+                5
+              ],
+              [
+                "power",
+                49
+              ]
+            ],
             "id": 1038,
             "item_type": "Material",
             "max_stack": 49,
@@ -4265,6 +4693,16 @@
             ]
           },
           {
+            "attributes": [
+              [
+                "tier",
+                1
+              ],
+              [
+                "power",
+                50
+              ]
+            ],
             "id": 1039,
             "item_type": "Consumable",
             "max_stack": 50,
@@ -4280,6 +4718,16 @@
             ]
           },
           {
+            "attributes": [
+              [
+                "tier",
+                2
+              ],
+              [
+                "power",
+                51
+              ]
+            ],
             "id": 1040,
             "item_type": "Weapon",
             "max_stack": 1,
@@ -4295,6 +4743,16 @@
             ]
           },
           {
+            "attributes": [
+              [
+                "tier",
+                3
+              ],
+              [
+                "power",
+                52
+              ]
+            ],
             "id": 1041,
             "item_type": "Armor",
             "max_stack": 1,
@@ -4310,6 +4768,16 @@
             ]
           },
           {
+            "attributes": [
+              [
+                "tier",
+                4
+              ],
+              [
+                "power",
+                53
+              ]
+            ],
             "id": 1042,
             "item_type": "Currency",
             "max_stack": 53,
@@ -4325,6 +4793,16 @@
             ]
           },
           {
+            "attributes": [
+              [
+                "tier",
+                5
+              ],
+              [
+                "power",
+                54
+              ]
+            ],
             "id": 1043,
             "item_type": "Material",
             "max_stack": 54,
@@ -4340,6 +4818,16 @@
             ]
           },
           {
+            "attributes": [
+              [
+                "tier",
+                1
+              ],
+              [
+                "power",
+                55
+              ]
+            ],
             "id": 1044,
             "item_type": "Consumable",
             "max_stack": 55,
@@ -4355,6 +4843,16 @@
             ]
           },
           {
+            "attributes": [
+              [
+                "tier",
+                2
+              ],
+              [
+                "power",
+                56
+              ]
+            ],
             "id": 1045,
             "item_type": "Weapon",
             "max_stack": 1,
@@ -4370,6 +4868,16 @@
             ]
           },
           {
+            "attributes": [
+              [
+                "tier",
+                3
+              ],
+              [
+                "power",
+                57
+              ]
+            ],
             "id": 1046,
             "item_type": "Armor",
             "max_stack": 1,
@@ -4385,6 +4893,16 @@
             ]
           },
           {
+            "attributes": [
+              [
+                "tier",
+                4
+              ],
+              [
+                "power",
+                58
+              ]
+            ],
             "id": 1047,
             "item_type": "Currency",
             "max_stack": 58,
@@ -4400,6 +4918,16 @@
             ]
           },
           {
+            "attributes": [
+              [
+                "tier",
+                5
+              ],
+              [
+                "power",
+                59
+              ]
+            ],
             "id": 1048,
             "item_type": "Material",
             "max_stack": 59,
@@ -4415,6 +4943,16 @@
             ]
           },
           {
+            "attributes": [
+              [
+                "tier",
+                1
+              ],
+              [
+                "power",
+                60
+              ]
+            ],
             "id": 1049,
             "item_type": "Consumable",
             "max_stack": 60,
@@ -4430,6 +4968,16 @@
             ]
           },
           {
+            "attributes": [
+              [
+                "tier",
+                2
+              ],
+              [
+                "power",
+                61
+              ]
+            ],
             "id": 1050,
             "item_type": "Weapon",
             "max_stack": 1,
@@ -4445,6 +4993,16 @@
             ]
           },
           {
+            "attributes": [
+              [
+                "tier",
+                3
+              ],
+              [
+                "power",
+                62
+              ]
+            ],
             "id": 1051,
             "item_type": "Armor",
             "max_stack": 1,
@@ -4460,6 +5018,16 @@
             ]
           },
           {
+            "attributes": [
+              [
+                "tier",
+                4
+              ],
+              [
+                "power",
+                63
+              ]
+            ],
             "id": 1052,
             "item_type": "Currency",
             "max_stack": 63,
@@ -4475,6 +5043,16 @@
             ]
           },
           {
+            "attributes": [
+              [
+                "tier",
+                5
+              ],
+              [
+                "power",
+                64
+              ]
+            ],
             "id": 1053,
             "item_type": "Material",
             "max_stack": 64,
@@ -4490,6 +5068,16 @@
             ]
           },
           {
+            "attributes": [
+              [
+                "tier",
+                1
+              ],
+              [
+                "power",
+                65
+              ]
+            ],
             "id": 1054,
             "item_type": "Consumable",
             "max_stack": 65,
@@ -4505,6 +5093,16 @@
             ]
           },
           {
+            "attributes": [
+              [
+                "tier",
+                2
+              ],
+              [
+                "power",
+                66
+              ]
+            ],
             "id": 1055,
             "item_type": "Weapon",
             "max_stack": 1,
@@ -4520,6 +5118,16 @@
             ]
           },
           {
+            "attributes": [
+              [
+                "tier",
+                3
+              ],
+              [
+                "power",
+                67
+              ]
+            ],
             "id": 1056,
             "item_type": "Armor",
             "max_stack": 1,
@@ -4535,6 +5143,16 @@
             ]
           },
           {
+            "attributes": [
+              [
+                "tier",
+                4
+              ],
+              [
+                "power",
+                68
+              ]
+            ],
             "id": 1057,
             "item_type": "Currency",
             "max_stack": 68,
@@ -4550,6 +5168,16 @@
             ]
           },
           {
+            "attributes": [
+              [
+                "tier",
+                5
+              ],
+              [
+                "power",
+                69
+              ]
+            ],
             "id": 1058,
             "item_type": "Material",
             "max_stack": 69,
@@ -4565,6 +5193,16 @@
             ]
           },
           {
+            "attributes": [
+              [
+                "tier",
+                1
+              ],
+              [
+                "power",
+                70
+              ]
+            ],
             "id": 1059,
             "item_type": "Consumable",
             "max_stack": 70,
@@ -4580,6 +5218,16 @@
             ]
           },
           {
+            "attributes": [
+              [
+                "tier",
+                2
+              ],
+              [
+                "power",
+                71
+              ]
+            ],
             "id": 1060,
             "item_type": "Weapon",
             "max_stack": 1,
@@ -4595,6 +5243,16 @@
             ]
           },
           {
+            "attributes": [
+              [
+                "tier",
+                3
+              ],
+              [
+                "power",
+                72
+              ]
+            ],
             "id": 1061,
             "item_type": "Armor",
             "max_stack": 1,
@@ -4610,6 +5268,16 @@
             ]
           },
           {
+            "attributes": [
+              [
+                "tier",
+                4
+              ],
+              [
+                "power",
+                73
+              ]
+            ],
             "id": 1062,
             "item_type": "Currency",
             "max_stack": 73,
@@ -4625,6 +5293,16 @@
             ]
           },
           {
+            "attributes": [
+              [
+                "tier",
+                5
+              ],
+              [
+                "power",
+                74
+              ]
+            ],
             "id": 1063,
             "item_type": "Material",
             "max_stack": 74,
@@ -4640,6 +5318,16 @@
             ]
           },
           {
+            "attributes": [
+              [
+                "tier",
+                1
+              ],
+              [
+                "power",
+                75
+              ]
+            ],
             "id": 1064,
             "item_type": "Consumable",
             "max_stack": 75,
@@ -4655,6 +5343,16 @@
             ]
           },
           {
+            "attributes": [
+              [
+                "tier",
+                2
+              ],
+              [
+                "power",
+                76
+              ]
+            ],
             "id": 1065,
             "item_type": "Weapon",
             "max_stack": 1,
@@ -4670,6 +5368,16 @@
             ]
           },
           {
+            "attributes": [
+              [
+                "tier",
+                3
+              ],
+              [
+                "power",
+                77
+              ]
+            ],
             "id": 1066,
             "item_type": "Armor",
             "max_stack": 1,
@@ -4685,6 +5393,16 @@
             ]
           },
           {
+            "attributes": [
+              [
+                "tier",
+                4
+              ],
+              [
+                "power",
+                78
+              ]
+            ],
             "id": 1067,
             "item_type": "Currency",
             "max_stack": 78,
@@ -4700,6 +5418,16 @@
             ]
           },
           {
+            "attributes": [
+              [
+                "tier",
+                5
+              ],
+              [
+                "power",
+                79
+              ]
+            ],
             "id": 1068,
             "item_type": "Material",
             "max_stack": 79,
@@ -4715,6 +5443,16 @@
             ]
           },
           {
+            "attributes": [
+              [
+                "tier",
+                1
+              ],
+              [
+                "power",
+                80
+              ]
+            ],
             "id": 1069,
             "item_type": "Consumable",
             "max_stack": 80,
@@ -4730,6 +5468,16 @@
             ]
           },
           {
+            "attributes": [
+              [
+                "tier",
+                2
+              ],
+              [
+                "power",
+                81
+              ]
+            ],
             "id": 1070,
             "item_type": "Weapon",
             "max_stack": 1,
@@ -4745,6 +5493,16 @@
             ]
           },
           {
+            "attributes": [
+              [
+                "tier",
+                3
+              ],
+              [
+                "power",
+                82
+              ]
+            ],
             "id": 1071,
             "item_type": "Armor",
             "max_stack": 1,
@@ -4760,6 +5518,16 @@
             ]
           },
           {
+            "attributes": [
+              [
+                "tier",
+                4
+              ],
+              [
+                "power",
+                83
+              ]
+            ],
             "id": 1072,
             "item_type": "Currency",
             "max_stack": 83,
@@ -4775,6 +5543,16 @@
             ]
           },
           {
+            "attributes": [
+              [
+                "tier",
+                5
+              ],
+              [
+                "power",
+                84
+              ]
+            ],
             "id": 1073,
             "item_type": "Material",
             "max_stack": 84,
@@ -4790,6 +5568,16 @@
             ]
           },
           {
+            "attributes": [
+              [
+                "tier",
+                1
+              ],
+              [
+                "power",
+                85
+              ]
+            ],
             "id": 1074,
             "item_type": "Consumable",
             "max_stack": 85,
@@ -4805,6 +5593,16 @@
             ]
           },
           {
+            "attributes": [
+              [
+                "tier",
+                2
+              ],
+              [
+                "power",
+                86
+              ]
+            ],
             "id": 1075,
             "item_type": "Weapon",
             "max_stack": 1,
@@ -4820,6 +5618,16 @@
             ]
           },
           {
+            "attributes": [
+              [
+                "tier",
+                3
+              ],
+              [
+                "power",
+                87
+              ]
+            ],
             "id": 1076,
             "item_type": "Armor",
             "max_stack": 1,
@@ -4835,6 +5643,16 @@
             ]
           },
           {
+            "attributes": [
+              [
+                "tier",
+                4
+              ],
+              [
+                "power",
+                88
+              ]
+            ],
             "id": 1077,
             "item_type": "Currency",
             "max_stack": 88,
@@ -4850,6 +5668,16 @@
             ]
           },
           {
+            "attributes": [
+              [
+                "tier",
+                5
+              ],
+              [
+                "power",
+                89
+              ]
+            ],
             "id": 1078,
             "item_type": "Material",
             "max_stack": 89,
@@ -4865,6 +5693,16 @@
             ]
           },
           {
+            "attributes": [
+              [
+                "tier",
+                1
+              ],
+              [
+                "power",
+                90
+              ]
+            ],
             "id": 1079,
             "item_type": "Consumable",
             "max_stack": 90,
@@ -4880,6 +5718,16 @@
             ]
           },
           {
+            "attributes": [
+              [
+                "tier",
+                2
+              ],
+              [
+                "power",
+                91
+              ]
+            ],
             "id": 1080,
             "item_type": "Weapon",
             "max_stack": 1,
@@ -4895,6 +5743,16 @@
             ]
           },
           {
+            "attributes": [
+              [
+                "tier",
+                3
+              ],
+              [
+                "power",
+                92
+              ]
+            ],
             "id": 1081,
             "item_type": "Armor",
             "max_stack": 1,
@@ -4910,6 +5768,16 @@
             ]
           },
           {
+            "attributes": [
+              [
+                "tier",
+                4
+              ],
+              [
+                "power",
+                93
+              ]
+            ],
             "id": 1082,
             "item_type": "Currency",
             "max_stack": 93,
@@ -4925,6 +5793,16 @@
             ]
           },
           {
+            "attributes": [
+              [
+                "tier",
+                5
+              ],
+              [
+                "power",
+                94
+              ]
+            ],
             "id": 1083,
             "item_type": "Material",
             "max_stack": 94,
@@ -4940,6 +5818,16 @@
             ]
           },
           {
+            "attributes": [
+              [
+                "tier",
+                1
+              ],
+              [
+                "power",
+                95
+              ]
+            ],
             "id": 1084,
             "item_type": "Consumable",
             "max_stack": 95,
@@ -4955,6 +5843,16 @@
             ]
           },
           {
+            "attributes": [
+              [
+                "tier",
+                2
+              ],
+              [
+                "power",
+                96
+              ]
+            ],
             "id": 1085,
             "item_type": "Weapon",
             "max_stack": 1,
@@ -4970,6 +5868,16 @@
             ]
           },
           {
+            "attributes": [
+              [
+                "tier",
+                3
+              ],
+              [
+                "power",
+                97
+              ]
+            ],
             "id": 1086,
             "item_type": "Armor",
             "max_stack": 1,
@@ -4985,6 +5893,16 @@
             ]
           },
           {
+            "attributes": [
+              [
+                "tier",
+                4
+              ],
+              [
+                "power",
+                98
+              ]
+            ],
             "id": 1087,
             "item_type": "Currency",
             "max_stack": 98,
@@ -5000,6 +5918,16 @@
             ]
           },
           {
+            "attributes": [
+              [
+                "tier",
+                5
+              ],
+              [
+                "power",
+                99
+              ]
+            ],
             "id": 1088,
             "item_type": "Material",
             "max_stack": 99,
@@ -5015,6 +5943,16 @@
             ]
           },
           {
+            "attributes": [
+              [
+                "tier",
+                1
+              ],
+              [
+                "power",
+                100
+              ]
+            ],
             "id": 1089,
             "item_type": "Consumable",
             "max_stack": 1,
@@ -5030,6 +5968,16 @@
             ]
           },
           {
+            "attributes": [
+              [
+                "tier",
+                2
+              ],
+              [
+                "power",
+                101
+              ]
+            ],
             "id": 1090,
             "item_type": "Weapon",
             "max_stack": 1,
@@ -5045,6 +5993,16 @@
             ]
           },
           {
+            "attributes": [
+              [
+                "tier",
+                3
+              ],
+              [
+                "power",
+                102
+              ]
+            ],
             "id": 1091,
             "item_type": "Armor",
             "max_stack": 1,
@@ -5060,6 +6018,16 @@
             ]
           },
           {
+            "attributes": [
+              [
+                "tier",
+                4
+              ],
+              [
+                "power",
+                103
+              ]
+            ],
             "id": 1092,
             "item_type": "Currency",
             "max_stack": 4,
@@ -5075,6 +6043,16 @@
             ]
           },
           {
+            "attributes": [
+              [
+                "tier",
+                5
+              ],
+              [
+                "power",
+                104
+              ]
+            ],
             "id": 1093,
             "item_type": "Material",
             "max_stack": 5,
@@ -5090,6 +6068,16 @@
             ]
           },
           {
+            "attributes": [
+              [
+                "tier",
+                1
+              ],
+              [
+                "power",
+                105
+              ]
+            ],
             "id": 1094,
             "item_type": "Consumable",
             "max_stack": 6,
@@ -5105,6 +6093,16 @@
             ]
           },
           {
+            "attributes": [
+              [
+                "tier",
+                2
+              ],
+              [
+                "power",
+                106
+              ]
+            ],
             "id": 1095,
             "item_type": "Weapon",
             "max_stack": 1,
@@ -5120,6 +6118,16 @@
             ]
           },
           {
+            "attributes": [
+              [
+                "tier",
+                3
+              ],
+              [
+                "power",
+                107
+              ]
+            ],
             "id": 1096,
             "item_type": "Armor",
             "max_stack": 1,
@@ -5135,6 +6143,16 @@
             ]
           },
           {
+            "attributes": [
+              [
+                "tier",
+                4
+              ],
+              [
+                "power",
+                108
+              ]
+            ],
             "id": 1097,
             "item_type": "Currency",
             "max_stack": 9,
@@ -5150,6 +6168,16 @@
             ]
           },
           {
+            "attributes": [
+              [
+                "tier",
+                5
+              ],
+              [
+                "power",
+                109
+              ]
+            ],
             "id": 1098,
             "item_type": "Material",
             "max_stack": 10,
@@ -5165,6 +6193,16 @@
             ]
           },
           {
+            "attributes": [
+              [
+                "tier",
+                1
+              ],
+              [
+                "power",
+                110
+              ]
+            ],
             "id": 1099,
             "item_type": "Consumable",
             "max_stack": 11,
@@ -5180,6 +6218,16 @@
             ]
           },
           {
+            "attributes": [
+              [
+                "tier",
+                2
+              ],
+              [
+                "power",
+                111
+              ]
+            ],
             "id": 1100,
             "item_type": "Weapon",
             "max_stack": 1,
@@ -5195,6 +6243,16 @@
             ]
           },
           {
+            "attributes": [
+              [
+                "tier",
+                3
+              ],
+              [
+                "power",
+                112
+              ]
+            ],
             "id": 1101,
             "item_type": "Armor",
             "max_stack": 1,
@@ -5210,6 +6268,16 @@
             ]
           },
           {
+            "attributes": [
+              [
+                "tier",
+                4
+              ],
+              [
+                "power",
+                113
+              ]
+            ],
             "id": 1102,
             "item_type": "Currency",
             "max_stack": 14,
@@ -5225,6 +6293,16 @@
             ]
           },
           {
+            "attributes": [
+              [
+                "tier",
+                5
+              ],
+              [
+                "power",
+                114
+              ]
+            ],
             "id": 1103,
             "item_type": "Material",
             "max_stack": 15,
@@ -5240,6 +6318,16 @@
             ]
           },
           {
+            "attributes": [
+              [
+                "tier",
+                1
+              ],
+              [
+                "power",
+                115
+              ]
+            ],
             "id": 1104,
             "item_type": "Consumable",
             "max_stack": 16,
@@ -5255,6 +6343,16 @@
             ]
           },
           {
+            "attributes": [
+              [
+                "tier",
+                2
+              ],
+              [
+                "power",
+                116
+              ]
+            ],
             "id": 1105,
             "item_type": "Weapon",
             "max_stack": 1,
@@ -5270,6 +6368,16 @@
             ]
           },
           {
+            "attributes": [
+              [
+                "tier",
+                3
+              ],
+              [
+                "power",
+                117
+              ]
+            ],
             "id": 1106,
             "item_type": "Armor",
             "max_stack": 1,
@@ -5285,6 +6393,16 @@
             ]
           },
           {
+            "attributes": [
+              [
+                "tier",
+                4
+              ],
+              [
+                "power",
+                118
+              ]
+            ],
             "id": 1107,
             "item_type": "Currency",
             "max_stack": 19,
@@ -5300,6 +6418,16 @@
             ]
           },
           {
+            "attributes": [
+              [
+                "tier",
+                5
+              ],
+              [
+                "power",
+                119
+              ]
+            ],
             "id": 1108,
             "item_type": "Material",
             "max_stack": 20,
@@ -5315,6 +6443,16 @@
             ]
           },
           {
+            "attributes": [
+              [
+                "tier",
+                1
+              ],
+              [
+                "power",
+                120
+              ]
+            ],
             "id": 1109,
             "item_type": "Consumable",
             "max_stack": 21,
@@ -5330,6 +6468,16 @@
             ]
           },
           {
+            "attributes": [
+              [
+                "tier",
+                2
+              ],
+              [
+                "power",
+                121
+              ]
+            ],
             "id": 1110,
             "item_type": "Weapon",
             "max_stack": 1,
@@ -5345,6 +6493,16 @@
             ]
           },
           {
+            "attributes": [
+              [
+                "tier",
+                3
+              ],
+              [
+                "power",
+                122
+              ]
+            ],
             "id": 1111,
             "item_type": "Armor",
             "max_stack": 1,
@@ -5360,6 +6518,16 @@
             ]
           },
           {
+            "attributes": [
+              [
+                "tier",
+                4
+              ],
+              [
+                "power",
+                123
+              ]
+            ],
             "id": 1112,
             "item_type": "Currency",
             "max_stack": 24,
@@ -5375,6 +6543,16 @@
             ]
           },
           {
+            "attributes": [
+              [
+                "tier",
+                5
+              ],
+              [
+                "power",
+                124
+              ]
+            ],
             "id": 1113,
             "item_type": "Material",
             "max_stack": 25,
@@ -5390,6 +6568,16 @@
             ]
           },
           {
+            "attributes": [
+              [
+                "tier",
+                1
+              ],
+              [
+                "power",
+                125
+              ]
+            ],
             "id": 1114,
             "item_type": "Consumable",
             "max_stack": 26,
@@ -5405,6 +6593,16 @@
             ]
           },
           {
+            "attributes": [
+              [
+                "tier",
+                2
+              ],
+              [
+                "power",
+                126
+              ]
+            ],
             "id": 1115,
             "item_type": "Weapon",
             "max_stack": 1,
@@ -5420,6 +6618,16 @@
             ]
           },
           {
+            "attributes": [
+              [
+                "tier",
+                3
+              ],
+              [
+                "power",
+                127
+              ]
+            ],
             "id": 1116,
             "item_type": "Armor",
             "max_stack": 1,
@@ -5435,6 +6643,16 @@
             ]
           },
           {
+            "attributes": [
+              [
+                "tier",
+                4
+              ],
+              [
+                "power",
+                128
+              ]
+            ],
             "id": 1117,
             "item_type": "Currency",
             "max_stack": 29,
@@ -5450,6 +6668,16 @@
             ]
           },
           {
+            "attributes": [
+              [
+                "tier",
+                5
+              ],
+              [
+                "power",
+                129
+              ]
+            ],
             "id": 1118,
             "item_type": "Material",
             "max_stack": 30,
@@ -5465,6 +6693,16 @@
             ]
           },
           {
+            "attributes": [
+              [
+                "tier",
+                1
+              ],
+              [
+                "power",
+                130
+              ]
+            ],
             "id": 1119,
             "item_type": "Consumable",
             "max_stack": 31,
@@ -5480,6 +6718,16 @@
             ]
           },
           {
+            "attributes": [
+              [
+                "tier",
+                2
+              ],
+              [
+                "power",
+                131
+              ]
+            ],
             "id": 1120,
             "item_type": "Weapon",
             "max_stack": 1,

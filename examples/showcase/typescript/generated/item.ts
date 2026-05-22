@@ -26,8 +26,10 @@ export interface Item {
     maxStack: number;
     /** Tuple: kind,id,count */
     price: ResourceCost;
-    /** JSON string array */
+    /** JSON string set */
     tags: string[];
+    /** Map pairs: key,value|key,value */
+    attributes: Map<string, number>;
 }
 
 export function decodeItem(reader: SoraReader): Item {
@@ -38,6 +40,7 @@ export function decodeItem(reader: SoraReader): Item {
         maxStack: reader.readI32(),
         price: decodeResourceCost(reader),
         tags: reader.readList(() => reader.readString()),
+        attributes: reader.readMap(() => reader.readString(), () => reader.readI32()),
     };
 }
 
@@ -50,6 +53,7 @@ export function decodeItemValue(value: SoraValue): Item {
         maxStack: object.get("max_stack").asInt(),
         price: decodeResourceCostValue(object.get("price")),
         tags: object.get("tags").asList((item) => item.asString()),
+        attributes: object.get("attributes").asMap((item) => item.asString(), (item) => item.asInt()),
     };
 }
 

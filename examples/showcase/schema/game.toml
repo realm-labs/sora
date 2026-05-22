@@ -240,10 +240,18 @@ comment = "Tuple: kind,id,count"
 
 [[tables.fields]]
 name = "tags"
-type = "list<string>"
+type = "set<string>"
+parser = { kind = "json" }
 default = "[\"misc\"]"
 length = [1, 5]
-comment = "JSON string array"
+comment = "JSON string set"
+
+[[tables.fields]]
+name = "attributes"
+type = "map<string,i32>"
+parser = { kind = "map" }
+required = true
+comment = "Map pairs: key,value|key,value"
 
 [[tables.indexes]]
 name = "by_name"

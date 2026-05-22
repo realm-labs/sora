@@ -32,8 +32,10 @@ class Item:
     max_stack: int
     # Tuple: kind,id,count
     price: ResourceCost
-    # JSON string array
+    # JSON string set
     tags: list[str]
+    # Map pairs: key,value|key,value
+    attributes: dict[str, int]
 
     @staticmethod
     def decode(reader: SoraReader) -> Item:
@@ -45,6 +47,7 @@ class Item:
         max_stack = reader.read_i32()
         price = ResourceCost.decode(reader)
         tags = reader.read_list(lambda: reader.read_string())
+        attributes = reader.read_map(lambda: reader.read_string(), lambda: reader.read_i32())
         return Item(
             id=id,
             name=name,
@@ -52,6 +55,7 @@ class Item:
             max_stack=max_stack,
             price=price,
             tags=tags,
+            attributes=attributes,
         )
 
 

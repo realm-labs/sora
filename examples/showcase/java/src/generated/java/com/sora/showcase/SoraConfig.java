@@ -22,7 +22,7 @@ interface SoraTable {
 }
 
 public final class SoraConfig {
-    public static final String SCHEMA_FINGERPRINT = "8cc3361563a68f03";
+    public static final String SCHEMA_FINGERPRINT = "a0390c24663ecbfc";
 
     private final Map<String, SoraTable> tables;
 

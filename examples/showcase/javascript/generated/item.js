@@ -16,6 +16,7 @@ export function decodeItem(reader) {
         maxStack: reader.readI32(),
         price: decodeResourceCost(reader),
         tags: reader.readList(() => reader.readString()),
+        attributes: reader.readMap(() => reader.readString(), () => reader.readI32()),
     };
 }
 
@@ -28,6 +29,7 @@ export function decodeItemValue(value) {
         maxStack: object.get("max_stack").asInt(),
         price: decodeResourceCostValue(object.get("price")),
         tags: object.get("tags").asList((item) => item.asString()),
+        attributes: object.get("attributes").asMap((item) => item.asString(), (item) => item.asInt()),
     };
 }
 

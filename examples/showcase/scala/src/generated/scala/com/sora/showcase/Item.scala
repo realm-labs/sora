@@ -13,8 +13,10 @@ final case class Item(
   maxStack: Int,
   /** Tuple: kind,id,count */
   price: ResourceCost,
-  /** JSON string array */
-  tags: Vector[String]
+  /** JSON string set */
+  tags: Vector[String],
+  /** Map pairs: key,value|key,value */
+  attributes: Map[String, Int]
 )
 
 object Item {
@@ -25,7 +27,8 @@ object Item {
       itemType = ItemType.decode(reader),
       maxStack = reader.readI32(),
       price = ResourceCost.decode(reader),
-      tags = reader.readList(reader.readString())
+      tags = reader.readList(reader.readString()),
+      attributes = reader.readMap(reader.readString(), reader.readI32())
     )
 }
 

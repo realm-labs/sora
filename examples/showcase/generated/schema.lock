@@ -1,7 +1,7 @@
 {
   "version": 1,
   "package": "com.sora.showcase",
-  "fingerprint": "8cc3361563a68f03",
+  "fingerprint": "a0390c24663ecbfc",
   "schema": {
     "package": "com.sora.showcase",
     "enums": [
@@ -835,7 +835,7 @@
           {
             "name": "tags",
             "ty": {
-              "List": "String"
+              "Set": "String"
             },
             "scope": {
               "values": [
@@ -843,7 +843,7 @@
               ]
             },
             "key": false,
-            "comment": "JSON string array",
+            "comment": "JSON string set",
             "required": false,
             "default": "[\"misc\"]",
             "range": null,
@@ -851,7 +851,35 @@
               1,
               5
             ],
-            "parser": null,
+            "parser": {
+              "kind": "json",
+              "options": {}
+            },
+            "aggregation": null
+          },
+          {
+            "name": "attributes",
+            "ty": {
+              "Map": {
+                "key": "String",
+                "value": "I32"
+              }
+            },
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
+            "key": false,
+            "comment": "Map pairs: key,value|key,value",
+            "required": true,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": {
+              "kind": "map",
+              "options": {}
+            },
             "aggregation": null
           }
         ],

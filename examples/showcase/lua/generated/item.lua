@@ -9,7 +9,8 @@ local ResourceCost = require("generated.resource_cost")
 ---@field itemType ItemType Item category
 ---@field maxStack integer Stack limit; blank cells use the default
 ---@field price ResourceCost Tuple: kind,id,count
----@field tags string[] JSON string array
+---@field tags string[] JSON string set
+---@field attributes {[string]: integer} Map pairs: key,value|key,value
 
 local Item = {}
 
@@ -23,6 +24,7 @@ function Item.decode(reader)
         maxStack = reader:read_i32(),
         price = ResourceCost.decode(reader),
         tags = reader:read_list(function() return reader:read_string() end),
+        attributes = reader:read_map(function() return reader:read_string() end, function() return reader:read_i32() end),
     }
 end
 

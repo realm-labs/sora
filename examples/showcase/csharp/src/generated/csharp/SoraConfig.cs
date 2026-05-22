@@ -25,7 +25,7 @@ public interface ISoraTable
 
 public sealed class SoraConfig
 {
-    public const string SchemaFingerprint = "8cc3361563a68f03";
+    public const string SchemaFingerprint = "a0390c24663ecbfc";
 
     private readonly Dictionary<string, ISoraTable> tables;
 

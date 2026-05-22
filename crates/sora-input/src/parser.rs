@@ -39,6 +39,7 @@ impl ParserRegistry {
         registry.register(SplitParser);
         registry.register(TupleParser);
         registry.register(TupleListParser);
+        registry.register(MapParser);
         registry.register(JsonParser);
         registry
     }
@@ -146,6 +147,24 @@ impl CellParser for TupleListParser {
             }
             _ => Err(context.error("tuple_list parser requires list or array type")),
         }
+    }
+}
+
+struct MapParser;
+
+impl CellParser for MapParser {
+    fn kind(&self) -> &'static str {
+        "map"
+    }
+
+    fn parse(
+        &self,
+        cell: &CellValue<'_>,
+        ty: &TypeIr,
+        context: &CellContext<'_>,
+        _registry: &ParserRegistry,
+    ) -> Result<Value> {
+        map_value(&cell.display_text(), ty, context)
     }
 }
 
@@ -320,6 +339,65 @@ fn tuple_list_value(
             .map(|item| tuple_object_value(item, struct_name, context, registry))
             .collect::<Result<Vec<_>>>()?,
     ))
+}
+
+fn map_value(source: &str, ty: &TypeIr, context: &CellContext<'_>) -> Result<Value> {
+    match ty {
+        TypeIr::Optional(inner) => map_value(source, inner, context),
+        TypeIr::Map {
+            key,
+            value: element,
+        } => separated_map_value(source, key, element, context),
+        _ => Err(context.error("map parser requires map type")),
+    }
+}
+
+fn separated_map_value(
+    source: &str,
+    key_ty: &TypeIr,
+    value_ty: &TypeIr,
+    context: &CellContext<'_>,
+) -> Result<Value> {
+    let separator = parser_option(context, "separator").unwrap_or(",");
+    let item_separator = parser_option(context, "item_separator").unwrap_or("|");
+    let source = split_source(source);
+    let items = if source.trim().is_empty() {
+        Vec::new()
+    } else {
+        source
+            .split(item_separator)
+            .map(str::trim)
+            .collect::<Vec<_>>()
+    };
+
+    Ok(Value::List(
+        items
+            .iter()
+            .enumerate()
+            .map(|(index, item)| {
+                separated_map_pair(item, key_ty, value_ty, index, separator, context)
+            })
+            .collect::<Result<Vec<_>>>()?,
+    ))
+}
+
+fn separated_map_pair(
+    item: &str,
+    key_ty: &TypeIr,
+    value_ty: &TypeIr,
+    index: usize,
+    separator: &str,
+    context: &CellContext<'_>,
+) -> Result<Value> {
+    let Some((key, value)) = item.split_once(separator) else {
+        return Err(context.error(format!(
+            "expected map item at index {index} to contain separator `{separator}`"
+        )));
+    };
+    Ok(Value::List(vec![
+        source_to_default_value(key, key_ty, context)?,
+        source_to_default_value(value, value_ty, context)?,
+    ]))
 }
 
 fn struct_type_name(ty: &TypeIr) -> Option<&str> {
@@ -564,6 +642,11 @@ fn source_to_value(
     registry.parse_cell(&cell, ty, context)
 }
 
+fn source_to_default_value(source: &str, ty: &TypeIr, context: &CellContext<'_>) -> Result<Value> {
+    let cell = CellValue::Text(Cow::Owned(source.trim().to_owned()));
+    default_cell_value(&cell, ty, context)
+}
+
 fn json_to_untyped_value(value: &JsonValue, context: &CellContext<'_>) -> Result<Value> {
     Ok(match value {
         JsonValue::Null => Value::Null,
@@ -621,6 +704,89 @@ mod tests {
         ) -> Result<Value> {
             Ok(Value::String(cell.display_text().to_uppercase()))
         }
+    }
+
+    #[test]
+    fn parses_map_cells_as_pairs() {
+        let registry = ParserRegistry::builtin();
+        let ir = ConfigIr {
+            package: "test".to_owned(),
+            codegen: Default::default(),
+            enums: Vec::new(),
+            structs: Vec::new(),
+            unions: Vec::new(),
+            tables: Vec::new(),
+        };
+        let parser = ParserIr {
+            kind: "map".to_owned(),
+            options: BTreeMap::new(),
+        };
+        let context = CellContext {
+            path: Path::new("<test>"),
+            ir: &ir,
+            location: CellLocation::Default,
+            field: "attributes",
+            parser: Some(&parser),
+        };
+
+        let value = registry
+            .parse_cell(
+                &CellValue::Text("tier,1|power,10".into()),
+                &parse_type("map<string,i32>").unwrap(),
+                &context,
+            )
+            .unwrap();
+
+        assert_eq!(
+            value,
+            Value::List(vec![
+                Value::List(vec![Value::String("tier".to_owned()), Value::Integer(1)]),
+                Value::List(vec![Value::String("power".to_owned()), Value::Integer(10)]),
+            ])
+        );
+    }
+
+    #[test]
+    fn parses_map_cells_with_custom_separators() {
+        let registry = ParserRegistry::builtin();
+        let ir = ConfigIr {
+            package: "test".to_owned(),
+            codegen: Default::default(),
+            enums: Vec::new(),
+            structs: Vec::new(),
+            unions: Vec::new(),
+            tables: Vec::new(),
+        };
+        let parser = ParserIr {
+            kind: "map".to_owned(),
+            options: BTreeMap::from([
+                ("item_separator".to_owned(), ";".to_owned()),
+                ("separator".to_owned(), ":".to_owned()),
+            ]),
+        };
+        let context = CellContext {
+            path: Path::new("<test>"),
+            ir: &ir,
+            location: CellLocation::Default,
+            field: "attributes",
+            parser: Some(&parser),
+        };
+
+        let value = registry
+            .parse_cell(
+                &CellValue::Text("tier:1;power:10".into()),
+                &parse_type("map<string,i32>").unwrap(),
+                &context,
+            )
+            .unwrap();
+
+        assert_eq!(
+            value,
+            Value::List(vec![
+                Value::List(vec![Value::String("tier".to_owned()), Value::Integer(1)]),
+                Value::List(vec![Value::String("power".to_owned()), Value::Integer(10)]),
+            ])
+        );
     }
 
     #[test]

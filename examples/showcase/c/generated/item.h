@@ -22,8 +22,10 @@ typedef struct sora_showcase_item {
     int32_t max_stack;
     /* Tuple: kind,id,count */
     sora_showcase_resource_cost price;
-    /* JSON string array */
+    /* JSON string set */
     sora_showcase_string_array tags;
+    /* Map pairs: key,value|key,value */
+    sora_showcase_string_i32_map attributes;
 } sora_showcase_item;
 
 sora_result sora_showcase_item_decode(sora_reader* reader, sora_showcase_item* out);

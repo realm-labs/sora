@@ -168,6 +168,7 @@ message Item {
   int32 max_stack = 4;
   ResourceCost price = 5;
   repeated string tags = 6;
+  repeated int32 attributes = 7;
 }
 
 message Skill {

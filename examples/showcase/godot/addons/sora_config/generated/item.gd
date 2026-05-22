@@ -12,8 +12,10 @@ var item_type: String = ""
 var max_stack: int = 0
 # Tuple: kind,id,count
 var price: ResourceCost = null
-# JSON string array
+# JSON string set
 var tags: Array = []
+# Map pairs: key,value|key,value
+var attributes: Array = []
 
 static func decode(value: Variant) -> Item:
 	if value == null:
@@ -29,6 +31,7 @@ static func decode(value: Variant) -> Item:
 	out.max_stack = int(SoraRuntime.read_field(data, "max_stack", 0))
 	out.price = ResourceCost.decode(SoraRuntime.read_field(data, "price", null))
 	out.tags = SoraRuntime.decode_array(SoraRuntime.read_field(data, "tags", []), func(item): return str(item))
+	out.attributes = SoraRuntime.decode_map(SoraRuntime.read_field(data, "attributes", []), func(item): return str(item), func(item): return int(item))
 	return out
 
 class ItemTable:
