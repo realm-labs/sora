@@ -4,6 +4,7 @@
 
 -export([
     parse_bundle/1,
+    schema_fingerprint/1,
     decode_table/3,
     require_singleton_table/2,
     decode_map_table/2,
@@ -40,7 +41,8 @@
 }.
 -type bundle() :: {{ "#{" }}
     bytes := binary(),
-    sections := [section()]
+    sections := [section()],
+    schema_fingerprint := binary()
 }.
 
 -spec parse_bundle(binary()) -> bundle().
@@ -81,9 +83,14 @@ parse_bundle(Bytes) when byte_size(Bytes) >= ?SORA_HEADER_LENGTH ->
         1 -> ok;
         _ -> error({invalid_sora_schema_section_count, SchemaCount})
     end,
-    {{ "#{" }}bytes => Bytes, sections => Sections};
+    SchemaFingerprint = read_schema_fingerprint(Bytes, Sections),
+    {{ "#{" }}bytes => Bytes, sections => Sections, schema_fingerprint => SchemaFingerprint};
 parse_bundle(_Bytes) ->
     error(sora_bundle_shorter_than_header).
+
+-spec schema_fingerprint(bundle()) -> binary().
+schema_fingerprint(Bundle) ->
+    maps:get(schema_fingerprint, Bundle).
 
 -spec decode_table(bundle(), binary(), fun((reader()) -> {T, reader()})) -> [T].
 decode_table(Bundle, Name, Decode) ->
@@ -257,6 +264,68 @@ validate_section_name(?SECTION_KIND_TABLE, Name, ManifestCount, SchemaCount, Tab
     end;
 validate_section_name(Kind, _Name, _ManifestCount, _SchemaCount, _TableNames) ->
     error({unknown_sora_section_kind, Kind}).
+
+-spec read_schema_fingerprint(binary(), [section()]) -> binary().
+read_schema_fingerprint(Bytes, Sections) ->
+    case [Section || Section <- Sections, maps:get(kind, Section) =:= ?SECTION_KIND_MANIFEST] of
+        [Section] ->
+            Payload = binary:part(Bytes, maps:get(offset, Section), maps:get(length, Section)),
+            case json_string_field(Payload, <<"schema_fingerprint">>) of
+                undefined -> error(missing_sora_schema_fingerprint);
+                Value -> Value
+            end;
+        [] ->
+            error(missing_sora_manifest_section)
+    end.
+
+-spec json_string_field(binary(), binary()) -> binary() | undefined.
+json_string_field(Json, Field) ->
+    Key = <<$", Field/binary, $">>,
+    case binary:match(Json, Key) of
+        {KeyPosition, KeyLength} ->
+            json_string_field_after_key(Json, KeyPosition + KeyLength);
+        nomatch ->
+            undefined
+    end.
+
+-spec json_string_field_after_key(binary(), integer()) -> binary() | undefined.
+json_string_field_after_key(Json, Cursor0) ->
+    Cursor1 = skip_json_space(Json, Cursor0),
+    case byte_at(Json, Cursor1) of
+        $: ->
+            Cursor2 = skip_json_space(Json, Cursor1 + 1),
+            case byte_at(Json, Cursor2) of
+                $" -> read_json_string(Json, Cursor2 + 1);
+                _ -> undefined
+            end;
+        _ ->
+            undefined
+    end.
+
+-spec read_json_string(binary(), integer()) -> binary() | undefined.
+read_json_string(Json, Start) ->
+    case binary:match(Json, <<"\"">>, [{scope, {Start, byte_size(Json) - Start}}]) of
+        {End, 1} -> binary:part(Json, Start, End - Start);
+        nomatch -> undefined
+    end.
+
+-spec skip_json_space(binary(), integer()) -> integer().
+skip_json_space(Json, Cursor) when Cursor < byte_size(Json) ->
+    case byte_at(Json, Cursor) of
+        $\s -> skip_json_space(Json, Cursor + 1);
+        $\n -> skip_json_space(Json, Cursor + 1);
+        $\r -> skip_json_space(Json, Cursor + 1);
+        $\t -> skip_json_space(Json, Cursor + 1);
+        _ -> Cursor
+    end;
+skip_json_space(_Json, Cursor) ->
+    Cursor.
+
+-spec byte_at(binary(), integer()) -> integer() | undefined.
+byte_at(Json, Cursor) when Cursor >= 0, Cursor < byte_size(Json) ->
+    binary:at(Json, Cursor);
+byte_at(_Json, _Cursor) ->
+    undefined.
 
 -spec decode_rows(binary(), fun((reader()) -> {T, reader()})) -> [T].
 decode_rows(Payload, Decode) when byte_size(Payload) >= 12 ->

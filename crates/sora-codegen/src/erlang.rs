@@ -72,6 +72,7 @@ impl ErlangOptionsView {
 #[derive(Debug, Clone, Serialize)]
 struct ErlangModel {
     package: String,
+    schema_fingerprint: String,
     enums: Vec<ErlangEnum>,
     unions: Vec<ErlangUnion>,
     records: Vec<ErlangRecord>,
@@ -176,6 +177,7 @@ impl ErlangModel {
 
         Self {
             package: model.package,
+            schema_fingerprint: model.schema_fingerprint,
             enums,
             unions,
             records,

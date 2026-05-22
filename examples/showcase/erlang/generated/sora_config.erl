@@ -39,9 +39,15 @@
 
 -type t() :: map().
 
+-define(SORA_SCHEMA_FINGERPRINT, <<"8cc3361563a68f03">>).
+
 -spec from_binary(binary()) -> t().
 from_binary(Bytes) ->
     Bundle = sora_runtime:parse_bundle(Bytes),
+    case sora_runtime:schema_fingerprint(Bundle) of
+        ?SORA_SCHEMA_FINGERPRINT -> ok;
+        Actual -> error({schema_fingerprint_mismatch, ?SORA_SCHEMA_FINGERPRINT, Actual})
+    end,
     Item = item:decode_table(Bundle),
     Skill = skill:decode_table(Bundle),
     Quest = quest:decode_table(Bundle),
