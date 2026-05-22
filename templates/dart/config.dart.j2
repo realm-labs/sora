@@ -12,8 +12,24 @@ final class SoraConfig {
 
   const SoraConfig._(this._tables);
 
-  static SoraConfig fromBytes(List<int> bytes) {
+  static SoraConfig fromBytes(
+    List<int> bytes{% if runtime_format == "cbor" %}, {
+    required Object? Function(List<int> bytes) decodeCbor,
+  }{% elif runtime_format == "sora-protobuf" %}, {
+    required Object? Function(List<int> bytes) decodeProtobuf,
+  }{% endif %}
+  ) {
+{%- if runtime_format == "json" %}
     final bundle = SoraValueBundle.parseJson(bytes);
+{%- elif runtime_format == "cbor" %}
+    final bundle = SoraValueBundle.parseCbor(bytes, decodeCbor);
+{%- elif runtime_format == "sora-protobuf" %}
+    final bundle = SoraValueBundle.parseProtobuf(bytes, decodeProtobuf);
+{%- endif %}
+    return fromBundle(bundle);
+  }
+
+  static SoraConfig fromBundle(SoraValueBundle bundle) {
     if (bundle.schemaFingerprint != soraSchemaFingerprint) {
       throw SoraReadException(
         'schema fingerprint mismatch: generated code expects $soraSchemaFingerprint, bundle contains ${bundle.schemaFingerprint}',

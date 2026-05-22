@@ -102,6 +102,7 @@ pub enum RuntimeDependency {
 const SELF_CONTAINED: RuntimeDependency = RuntimeDependency::SelfContained;
 const STANDARD_LIBRARY: RuntimeDependency = RuntimeDependency::StandardLibrary;
 const MANAGED_DEPENDENCY: RuntimeDependency = RuntimeDependency::ManagedDependency;
+const USER_ADAPTER: RuntimeDependency = RuntimeDependency::UserAdapter;
 
 const fn capability(format: RuntimeFormat, dependency: RuntimeDependency) -> RuntimeCapability {
     RuntimeCapability::new(format, dependency)
@@ -111,6 +112,12 @@ const RUNTIME_SORA_ONLY: &[RuntimeCapability] = &[capability(RuntimeFormat::Sora
 
 const RUNTIME_JSON_ONLY: &[RuntimeCapability] =
     &[capability(RuntimeFormat::Json, STANDARD_LIBRARY)];
+
+const RUNTIME_DART_EXPORTS: &[RuntimeCapability] = &[
+    capability(RuntimeFormat::Json, STANDARD_LIBRARY),
+    capability(RuntimeFormat::Cbor, USER_ADAPTER),
+    capability(RuntimeFormat::SoraProtobuf, USER_ADAPTER),
+];
 
 const RUNTIME_MANAGED_EXPORTS: &[RuntimeCapability] = &[
     capability(RuntimeFormat::Sora, SELF_CONTAINED),
@@ -203,7 +210,7 @@ impl CodegenRegistry {
                 id: "dart",
                 aliases: &[],
                 display_name: "Dart",
-                runtime_capabilities: RUNTIME_JSON_ONLY,
+                runtime_capabilities: RUNTIME_DART_EXPORTS,
                 runtime_format: runtime_format_from_options::<LanguageCodegenOptions>,
                 formatter: None,
                 generator: Box::new(DartCodeGenerator),
