@@ -6,7 +6,7 @@ use std::{
 
 use rust_xlsxwriter::Workbook;
 use sora_codegen::target::CodegenTarget;
-use sora_excel::projection::table_template_rows;
+use sora_excel::projection::{DATA_START_ROW, FIELD_START_COLUMN, table_template_rows};
 use sora_export::exporter::ExportOutput;
 use sora_input_toml::{input::TomlSchemaInput, schema::load_project_schema_file};
 use sora_input_xlsx::input::XlsxProjectInput;
@@ -145,7 +145,11 @@ fn write_item_workbook(project: &Path, out_dir: &Path) {
     for (offset, row) in rows.iter().enumerate() {
         for (column, value) in row.iter().enumerate() {
             worksheet
-                .write_string((12 + offset) as u32, column as u16, *value)
+                .write_string(
+                    DATA_START_ROW + offset as u32,
+                    FIELD_START_COLUMN + column as u16,
+                    *value,
+                )
                 .unwrap();
         }
     }

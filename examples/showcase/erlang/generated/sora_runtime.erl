@@ -203,7 +203,7 @@ read_list(Decode, Reader0) ->
     {Length, Reader1} = read_u32(Reader0),
     read_list_items(Length, Decode, Reader1, []).
 
--spec read_map(fun((reader()) -> {K, reader()}), fun((reader()) -> {V, reader()}), reader()) ->
+-spec read_map(fun((reader()) -> {term(), reader()}), fun((reader()) -> {term(), reader()}), reader()) ->
     {map(), reader()}.
 read_map(DecodeKey, DecodeValue, Reader0) ->
     {Length, Reader1} = read_u32(Reader0),
@@ -453,7 +453,7 @@ read_list_items(Length, Decode, Reader0, Values) ->
     {Value, Reader1} = Decode(Reader0),
     read_list_items(Length - 1, Decode, Reader1, [Value | Values]).
 
--spec read_map_items(integer(), fun((reader()) -> {K, reader()}), fun((reader()) -> {V, reader()}), reader(), map()) ->
+-spec read_map_items(integer(), fun((reader()) -> {term(), reader()}), fun((reader()) -> {term(), reader()}), reader(), map()) ->
     {map(), reader()}.
 read_map_items(0, _DecodeKey, _DecodeValue, Reader, Values) ->
     {Values, Reader};
