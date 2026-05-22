@@ -9,6 +9,7 @@ use sora_ir::model::{ConfigIr, FieldIr, TableIr, TypeIr};
 use crate::projection::{table_template_rows, tuple_shape};
 
 const DATA_START_ROW: u32 = 12;
+const FIELD_START_COLUMN: u16 = 1;
 const DATA_VALIDATION_ROWS: u32 = 1000;
 
 pub(crate) fn write_workbook_with_rows(
@@ -79,7 +80,7 @@ fn write_data_rows(
             worksheet
                 .write_with_format(
                     DATA_START_ROW + row_offset as u32,
-                    column as u16,
+                    FIELD_START_COLUMN + column as u16,
                     value,
                     formats.data_cell(),
                 )

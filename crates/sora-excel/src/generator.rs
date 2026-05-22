@@ -94,8 +94,8 @@ mod tests {
         let range = workbook.worksheet_range("Item").unwrap();
 
         assert_eq!(range.get((6, 0)).unwrap().to_string(), "#name");
-        assert_eq!(range.get((12, 0)).unwrap().to_string(), "1001");
-        assert_eq!(range.get((12, 1)).unwrap().to_string(), "Iron Sword");
+        assert_eq!(range.get((12, 1)).unwrap().to_string(), "1001");
+        assert_eq!(range.get((12, 2)).unwrap().to_string(), "Iron Sword");
 
         let _ = fs::remove_dir_all(out_dir);
     }

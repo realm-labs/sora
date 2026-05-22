@@ -16,6 +16,8 @@ use crate::{
     workbook::{group_xlsx_tables, load_grouped_ranges},
 };
 
+const FIELD_START_COLUMN: usize = 1;
+
 pub fn load_xlsx_config_data(ir: &ConfigIr, data_root: &Path) -> Result<ConfigData> {
     load_xlsx_config_data_with_context_and_parsers(
         ir,
@@ -148,7 +150,8 @@ fn load_xlsx_table_data_from_range(
 
         let mut values = BTreeMap::new();
         for (column, field) in table.fields.iter().enumerate() {
-            let cell = row.get(column).unwrap_or(&Data::Empty);
+            let field_column = FIELD_START_COLUMN + column;
+            let cell = row.get(field_column).unwrap_or(&Data::Empty);
             if cell_is_empty(cell) && !matches!(field.ty, TypeIr::Optional(_)) {
                 continue;
             }
@@ -158,7 +161,7 @@ fn load_xlsx_table_data_from_range(
                 location: CellLocation::Worksheet {
                     sheet,
                     row: row_index + 1,
-                    column: column + 1,
+                    column: field_column + 1,
                 },
                 field: &field.name,
                 parser: field.parser.as_ref(),
@@ -280,7 +283,7 @@ mod tests {
         let message = error.to_string();
 
         assert!(message.contains("Item.xlsx"));
-        assert!(message.contains("worksheet `Item` row 13, column 1, field `id`"));
+        assert!(message.contains("worksheet `Item` row 13, column 2, field `id`"));
         assert!(message.contains("expected integer"));
 
         let _ = std::fs::remove_dir_all(base);
@@ -555,7 +558,11 @@ parser = { kind = "tuple_list" }
         for (offset, row) in rows.iter().enumerate() {
             for (column, value) in row.iter().enumerate() {
                 worksheet
-                    .write_string((12 + offset) as u32, column as u16, *value)
+                    .write_string(
+                        (12 + offset) as u32,
+                        (FIELD_START_COLUMN + column) as u16,
+                        *value,
+                    )
                     .unwrap();
             }
         }
