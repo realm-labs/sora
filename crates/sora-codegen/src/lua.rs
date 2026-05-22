@@ -4,29 +4,33 @@ use heck::ToSnakeCase;
 use minijinja::context;
 use serde::Serialize;
 use sora_diagnostics::Result;
-use sora_ir::model::{ConfigIr, LuaEnumReprIr, LuaVersionIr, TypeIr};
+use sora_ir::model::{ConfigIr, TypeIr};
 
 use crate::{
-    generator::{CodeGenerator, ensure_sora_runtime_format},
+    generator::{CodeGenerator, CodegenContext, ensure_sora_runtime_format},
     model::{
         BaseField, BaseImport, BaseIndex, BaseModel, BaseRecord, BaseTable, BaseUnion,
         BaseUnionVariant, build_base_model,
     },
+    options::{LuaCodegenOptions, LuaEnumRepr, LuaVersion},
     render::{ensure_dir, render_template, write_file},
 };
 
 pub struct LuaCodeGenerator;
+crate::impl_test_codegen_generate!(LuaCodeGenerator, "lua");
 
 impl CodeGenerator for LuaCodeGenerator {
-    fn generate(&self, ir: &ConfigIr, out_dir: &Path) -> Result<()> {
-        ensure_sora_runtime_format("lua", ir.codegen.lua.runtime_format)?;
-        ensure_supported_lua_version(ir.codegen.lua.lua_version)?;
+    fn generate(&self, context: CodegenContext<'_>, out_dir: &Path) -> Result<()> {
+        let ir = context.ir;
+        let codegen_options = context.options::<LuaCodegenOptions>()?;
+        ensure_sora_runtime_format("lua", codegen_options.runtime_format)?;
+        ensure_supported_lua_version(codegen_options.lua_version)?;
         ensure_dir(out_dir)?;
 
         let options = LuaOptionsView::new(
-            ir.codegen.lua.module.as_deref(),
-            ir.codegen.lua.lua_version,
-            ir.codegen.lua.enum_repr,
+            codegen_options.module.as_deref(),
+            codegen_options.lua_version,
+            codegen_options.enum_repr,
         );
         let model = LuaModel::from_base_model(ir, build_base_model(ir)?, &options);
 
@@ -84,7 +88,7 @@ struct LuaOptionsView {
 }
 
 impl LuaOptionsView {
-    fn new(module: Option<&str>, lua_version: LuaVersionIr, enum_repr: LuaEnumReprIr) -> Self {
+    fn new(module: Option<&str>, lua_version: LuaVersion, enum_repr: LuaEnumRepr) -> Self {
         let require_prefix = module
             .filter(|module| !module.trim().is_empty())
             .map(|module| format!("{module}."))
@@ -93,7 +97,7 @@ impl LuaOptionsView {
             require_prefix,
             uses_string_unpack: uses_string_unpack(lua_version),
             i64_type_name: lua_i64_type_name(lua_version),
-            enum_is_integer: enum_repr == LuaEnumReprIr::Integer,
+            enum_is_integer: enum_repr == LuaEnumRepr::Integer,
         }
     }
 }
@@ -393,30 +397,31 @@ fn ref_target_type<'a>(ir: &'a ConfigIr, table: &str, field: &str) -> Option<&'a
         .map(|field| &field.ty)
 }
 
-fn ensure_supported_lua_version(version: LuaVersionIr) -> Result<()> {
+fn ensure_supported_lua_version(version: LuaVersion) -> Result<()> {
     match version {
-        LuaVersionIr::Lua51
-        | LuaVersionIr::Lua52
-        | LuaVersionIr::Lua53
-        | LuaVersionIr::Lua54
-        | LuaVersionIr::LuaJit => Ok(()),
+        LuaVersion::Lua51
+        | LuaVersion::Lua52
+        | LuaVersion::Lua53
+        | LuaVersion::Lua54
+        | LuaVersion::LuaJit => Ok(()),
     }
 }
 
-fn uses_string_unpack(version: LuaVersionIr) -> bool {
-    matches!(version, LuaVersionIr::Lua53 | LuaVersionIr::Lua54)
+fn uses_string_unpack(version: LuaVersion) -> bool {
+    matches!(version, LuaVersion::Lua53 | LuaVersion::Lua54)
 }
 
-fn lua_i64_type_name(version: LuaVersionIr) -> &'static str {
+fn lua_i64_type_name(version: LuaVersion) -> &'static str {
     match version {
-        LuaVersionIr::Lua53 | LuaVersionIr::Lua54 => "integer",
-        LuaVersionIr::Lua51 | LuaVersionIr::Lua52 | LuaVersionIr::LuaJit => "number",
+        LuaVersion::Lua53 | LuaVersion::Lua54 => "integer",
+        LuaVersion::Lua51 | LuaVersion::Lua52 | LuaVersion::LuaJit => "number",
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::options::{LuaCodegenOptions, LuaEnumRepr, LuaVersion};
     use sora_ir::normalize::normalize_schema;
     use sora_schema::model::SchemaFile;
     use std::{
@@ -428,11 +433,19 @@ mod tests {
 
     #[test]
     fn generates_lua_files_with_emmylua_annotations() {
-        let mut ir = example_ir();
-        ir.codegen.lua.module = Some("generated.lua".to_owned());
+        let ir = example_ir();
         let base = temp_dir();
 
-        LuaCodeGenerator.generate(&ir, &base).unwrap();
+        LuaCodeGenerator
+            .generate_with_options(
+                &ir,
+                LuaCodegenOptions {
+                    module: Some("generated.lua".to_owned()),
+                    ..Default::default()
+                },
+                &base,
+            )
+            .unwrap();
 
         let item = std::fs::read_to_string(base.join("item.lua")).unwrap();
         let item_type = std::fs::read_to_string(base.join("item_type.lua")).unwrap();
@@ -470,11 +483,19 @@ mod tests {
 
     #[test]
     fn lua_version_changes_i64_api() {
-        let mut ir = example_ir();
-        ir.codegen.lua.lua_version = LuaVersionIr::LuaJit;
+        let ir = example_ir();
         let base = temp_dir();
 
-        LuaCodeGenerator.generate(&ir, &base).unwrap();
+        LuaCodeGenerator
+            .generate_with_options(
+                &ir,
+                LuaCodegenOptions {
+                    lua_version: LuaVersion::LuaJit,
+                    ..Default::default()
+                },
+                &base,
+            )
+            .unwrap();
 
         let item = std::fs::read_to_string(base.join("item.lua")).unwrap();
 
@@ -486,11 +507,19 @@ mod tests {
 
     #[test]
     fn lua_enum_options_change_generated_api() {
-        let mut ir = example_ir();
-        ir.codegen.lua.enum_repr = LuaEnumReprIr::Integer;
+        let ir = example_ir();
         let base = temp_dir();
 
-        LuaCodeGenerator.generate(&ir, &base).unwrap();
+        LuaCodeGenerator
+            .generate_with_options(
+                &ir,
+                LuaCodegenOptions {
+                    enum_repr: LuaEnumRepr::Integer,
+                    ..Default::default()
+                },
+                &base,
+            )
+            .unwrap();
 
         let item_type = std::fs::read_to_string(base.join("item_type.lua")).unwrap();
 
@@ -503,11 +532,19 @@ mod tests {
 
     #[test]
     fn lua_compat_runtime_avoids_string_unpack() {
-        let mut ir = example_ir();
-        ir.codegen.lua.lua_version = LuaVersionIr::LuaJit;
+        let ir = example_ir();
         let base = temp_dir();
 
-        LuaCodeGenerator.generate(&ir, &base).unwrap();
+        LuaCodeGenerator
+            .generate_with_options(
+                &ir,
+                LuaCodegenOptions {
+                    lua_version: LuaVersion::LuaJit,
+                    ..Default::default()
+                },
+                &base,
+            )
+            .unwrap();
 
         let runtime = std::fs::read_to_string(base.join("sora_runtime.lua")).unwrap();
         assert!(!runtime.contains("string.unpack"));

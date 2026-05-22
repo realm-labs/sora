@@ -1,5 +1,6 @@
 use super::*;
 use sora_data::model::{ConfigData, RowData, TableData, Value};
+use sora_diagnostics::Result;
 use sora_export::exporter::ExportOutput;
 use sora_input::loaded::LoadedInput;
 use sora_input_toml::input::{TomlProjectInput, TomlSchemaInput};
@@ -21,15 +22,15 @@ fn checks_schema_and_generates_outputs() {
     check_schema(&input).unwrap();
     generate_schema_lock(&input, &base.join("schema.lock")).unwrap();
     check_schema_with_lock(&input, &base.join("schema.lock")).unwrap();
-    generate_code(&input, CodegenTarget::Rust, &base.join("rust")).unwrap();
-    generate_code(&input, CodegenTarget::Kotlin, &base.join("kotlin")).unwrap();
-    generate_code(&input, CodegenTarget::TypeScript, &base.join("typescript")).unwrap();
-    generate_code(&input, CodegenTarget::JavaScript, &base.join("javascript")).unwrap();
-    generate_code(&input, CodegenTarget::C, &base.join("c")).unwrap();
-    generate_code(&input, CodegenTarget::Cpp, &base.join("cpp")).unwrap();
-    generate_code(&input, CodegenTarget::Erlang, &base.join("erlang")).unwrap();
-    generate_code(&input, CodegenTarget::Python, &base.join("python")).unwrap();
-    generate_code(&input, CodegenTarget::ProtoSchema, &base.join("proto")).unwrap();
+    generate_code(&input, "rust", &base.join("rust")).unwrap();
+    generate_code(&input, "kotlin", &base.join("kotlin")).unwrap();
+    generate_code(&input, "typescript", &base.join("typescript")).unwrap();
+    generate_code(&input, "javascript", &base.join("javascript")).unwrap();
+    generate_code(&input, "c", &base.join("c")).unwrap();
+    generate_code(&input, "cpp", &base.join("cpp")).unwrap();
+    generate_code(&input, "erlang", &base.join("erlang")).unwrap();
+    generate_code(&input, "python", &base.join("python")).unwrap();
+    generate_code(&input, "proto-schema", &base.join("proto")).unwrap();
     generate_excel_template(&input, &base.join("excel")).unwrap();
 
     assert!(base.join("rust/item.rs").exists());
@@ -44,6 +45,56 @@ fn checks_schema_and_generates_outputs() {
     assert!(base.join("proto/sora_config.proto").exists());
     assert!(base.join("excel/Item.xlsx").exists());
     assert!(base.join("schema.lock").exists());
+
+    let _ = fs::remove_dir_all(base);
+}
+
+#[test]
+fn accepts_registered_codegen_target() {
+    struct MarkerGenerator;
+
+    impl sora_codegen::generator::CodeGenerator for MarkerGenerator {
+        fn generate(
+            &self,
+            _context: sora_codegen::generator::CodegenContext<'_>,
+            out_dir: &std::path::Path,
+        ) -> Result<()> {
+            fs::create_dir_all(out_dir).unwrap();
+            fs::write(out_dir.join("marker.txt"), "generated").unwrap();
+            Ok(())
+        }
+    }
+
+    let base = temp_dir();
+    let project_path = write_example(&base);
+    let input = TomlSchemaInput::new(&project_path);
+    let mut registry = sora_codegen::generator::CodegenRegistry::new();
+    registry
+        .register(sora_codegen::generator::CodegenRegistration {
+            id: "marker",
+            aliases: &[],
+            display_name: "Marker",
+            supported_runtime_formats: &[],
+            runtime_format: |_, _| Ok(None),
+            formatter: None,
+            generator: Box::new(MarkerGenerator),
+        })
+        .unwrap();
+
+    generate_code_with_registry_scope_and_format(
+        &input,
+        "marker",
+        &base.join("marker"),
+        sora_codegen::format::FormatMode::Never,
+        None,
+        &registry,
+    )
+    .unwrap();
+
+    assert_eq!(
+        fs::read_to_string(base.join("marker/marker.txt")).unwrap(),
+        "generated"
+    );
 
     let _ = fs::remove_dir_all(base);
 }
@@ -135,7 +186,7 @@ fn accepts_loaded_input_adapter() {
     let input = LoadedInput::with_data(example_schema(), example_data());
 
     check_schema(&input).unwrap();
-    generate_code(&input, CodegenTarget::Rust, &base.join("rust")).unwrap();
+    generate_code(&input, "rust", &base.join("rust")).unwrap();
     export_data(
         &input,
         "json-debug",

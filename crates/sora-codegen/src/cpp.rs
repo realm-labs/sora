@@ -4,25 +4,29 @@ use heck::ToSnakeCase;
 use minijinja::context;
 use serde::Serialize;
 use sora_diagnostics::{Result, SoraError};
-use sora_ir::model::{ConfigIr, CppStandardIr, TableModeIr, TypeIr};
+use sora_ir::model::{ConfigIr, TableModeIr, TypeIr};
 
 use crate::{
-    generator::{CodeGenerator, ensure_sora_runtime_format},
+    generator::{CodeGenerator, CodegenContext, ensure_sora_runtime_format},
     model::{
         BaseField, BaseImport, BaseIndex, BaseModel, BaseRecord, BaseTable, BaseUnion,
         BaseUnionVariant, build_base_model,
     },
+    options::{CppCodegenOptions, CppStandard},
     render::{ensure_dir, render_template, write_file},
 };
 
 pub struct CppCodeGenerator;
+crate::impl_test_codegen_generate!(CppCodeGenerator, "cpp");
 
 impl CodeGenerator for CppCodeGenerator {
-    fn generate(&self, ir: &ConfigIr, out_dir: &Path) -> Result<()> {
-        ensure_sora_runtime_format("cpp", ir.codegen.cpp.runtime_format)?;
+    fn generate(&self, context: CodegenContext<'_>, out_dir: &Path) -> Result<()> {
+        let ir = context.ir;
+        let codegen_options = context.options::<CppCodegenOptions>()?;
+        ensure_sora_runtime_format("cpp", codegen_options.runtime_format)?;
         ensure_dir(out_dir)?;
 
-        let options = CppOptionsView::new(ir)?;
+        let options = CppOptionsView::new(ir, &codegen_options)?;
         let model = CppModel::from_base_model(ir, build_base_model(ir)?, &options);
 
         for item in &model.enums {
@@ -81,15 +85,13 @@ struct CppOptionsView {
 }
 
 impl CppOptionsView {
-    fn new(ir: &ConfigIr) -> Result<Self> {
-        let namespace = ir
-            .codegen
-            .cpp
+    fn new(ir: &ConfigIr, codegen_options: &CppCodegenOptions) -> Result<Self> {
+        let namespace = codegen_options
             .namespace
             .clone()
             .unwrap_or_else(|| ir.package.replace('.', "::"));
         let namespace_segments = parse_cpp_namespace(&namespace)?;
-        let standard = ir.codegen.cpp.cpp_standard;
+        let standard = codegen_options.cpp_standard;
         Ok(Self {
             standard_name: cpp_standard_name(standard),
             namespace_name: namespace_segments.join("::"),
@@ -97,11 +99,11 @@ impl CppOptionsView {
             namespace_close: namespace_close(&namespace_segments, standard),
             has_std_optional: matches!(
                 standard,
-                CppStandardIr::Cpp17 | CppStandardIr::Cpp20 | CppStandardIr::Cpp23
+                CppStandard::Cpp17 | CppStandard::Cpp20 | CppStandard::Cpp23
             ),
             has_std_variant: matches!(
                 standard,
-                CppStandardIr::Cpp17 | CppStandardIr::Cpp20 | CppStandardIr::Cpp23
+                CppStandard::Cpp17 | CppStandard::Cpp20 | CppStandard::Cpp23
             ),
         })
     }
@@ -443,13 +445,13 @@ fn cpp_decode_expr(ir: &ConfigIr, ty: &TypeIr, options: &CppOptionsView) -> Stri
     }
 }
 
-fn cpp_standard_name(standard: CppStandardIr) -> &'static str {
+fn cpp_standard_name(standard: CppStandard) -> &'static str {
     match standard {
-        CppStandardIr::Cpp11 => "c++11",
-        CppStandardIr::Cpp14 => "c++14",
-        CppStandardIr::Cpp17 => "c++17",
-        CppStandardIr::Cpp20 => "c++20",
-        CppStandardIr::Cpp23 => "c++23",
+        CppStandard::Cpp11 => "c++11",
+        CppStandard::Cpp14 => "c++14",
+        CppStandard::Cpp17 => "c++17",
+        CppStandard::Cpp20 => "c++20",
+        CppStandard::Cpp23 => "c++23",
     }
 }
 
@@ -472,10 +474,10 @@ fn is_cpp_identifier(segment: &str) -> bool {
         && chars.all(|value| value.is_ascii_alphanumeric() || value == '_')
 }
 
-fn namespace_open(segments: &[String], standard: CppStandardIr) -> String {
+fn namespace_open(segments: &[String], standard: CppStandard) -> String {
     if matches!(
         standard,
-        CppStandardIr::Cpp17 | CppStandardIr::Cpp20 | CppStandardIr::Cpp23
+        CppStandard::Cpp17 | CppStandard::Cpp20 | CppStandard::Cpp23
     ) {
         format!("namespace {} {{", segments.join("::"))
     } else {
@@ -487,10 +489,10 @@ fn namespace_open(segments: &[String], standard: CppStandardIr) -> String {
     }
 }
 
-fn namespace_close(segments: &[String], standard: CppStandardIr) -> String {
+fn namespace_close(segments: &[String], standard: CppStandard) -> String {
     let close_count = if matches!(
         standard,
-        CppStandardIr::Cpp17 | CppStandardIr::Cpp20 | CppStandardIr::Cpp23
+        CppStandard::Cpp17 | CppStandard::Cpp20 | CppStandard::Cpp23
     ) {
         1
     } else {
@@ -545,11 +547,20 @@ mod tests {
 
     #[test]
     fn cpp11_uses_fallback_optional_and_union_storage() {
-        let mut ir = example_ir();
-        ir.codegen.cpp.cpp_standard = CppStandardIr::Cpp11;
+        let ir = example_ir();
         let base = temp_dir();
 
-        CppCodeGenerator.generate(&ir, &base).unwrap();
+        CppCodeGenerator
+            .generate_with_options(
+                &ir,
+                CppCodegenOptions {
+                    cpp_standard: CppStandard::Cpp11,
+                    namespace: Some("sora::game_config".to_owned()),
+                    ..Default::default()
+                },
+                &base,
+            )
+            .unwrap();
 
         let action = std::fs::read_to_string(base.join("action.hpp")).unwrap();
         let runtime = std::fs::read_to_string(base.join("sora_runtime.hpp")).unwrap();

@@ -153,8 +153,8 @@ key = "id"
 
         assert_eq!(schema.package, "game_config");
         assert_eq!(
-            schema.codegen.rust.map_type,
-            sora_schema::model::RustMapTypeSchema::FxHashMap
+            schema.codegen.targets["rust"]["map_type"].as_str(),
+            Some("fx_hash_map")
         );
         assert_eq!(schema.includes, ["schema/items.toml"]);
         assert_eq!(schema.enums[0].name, "ItemType");

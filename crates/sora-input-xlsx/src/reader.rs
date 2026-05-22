@@ -76,7 +76,6 @@ pub fn load_xlsx_table_data_with_parsers(
     load_xlsx_table_data_with_ir_and_parsers(
         &ConfigIr {
             package: String::new(),
-            codegen: Default::default(),
             enums: Vec::new(),
             structs: Vec::new(),
             unions: Vec::new(),

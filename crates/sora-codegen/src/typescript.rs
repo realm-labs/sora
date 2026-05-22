@@ -2,25 +2,28 @@ use std::path::Path;
 
 use minijinja::context;
 use sora_diagnostics::Result;
-use sora_ir::model::ConfigIr;
 
 use crate::{
     ecmascript::{EcmaScriptModel, EcmaScriptOptionsView, EcmaScriptTarget},
-    generator::{CodeGenerator, runtime_format_name},
+    generator::{CodeGenerator, CodegenContext, runtime_format_name},
     model::build_base_model,
+    options::TypeScriptCodegenOptions,
     render::{ensure_dir, render_template, write_file},
 };
 
 pub struct TypeScriptCodeGenerator;
+crate::impl_test_codegen_generate!(TypeScriptCodeGenerator, "typescript");
 
 impl CodeGenerator for TypeScriptCodeGenerator {
-    fn generate(&self, ir: &ConfigIr, out_dir: &Path) -> Result<()> {
+    fn generate(&self, context: CodegenContext<'_>, out_dir: &Path) -> Result<()> {
+        let ir = context.ir;
+        let codegen_options = context.options::<TypeScriptCodegenOptions>()?;
         ensure_dir(out_dir)?;
-        let runtime_format = runtime_format_name(ir.codegen.typescript.runtime_format);
+        let runtime_format = runtime_format_name(codegen_options.runtime_format);
 
         let options = EcmaScriptOptionsView::new(
             EcmaScriptTarget::TypeScript,
-            ir.codegen.typescript.enum_repr,
+            codegen_options.enum_repr,
             false,
         );
         let model = EcmaScriptModel::from_base_model(ir, build_base_model(ir)?);
@@ -78,7 +81,8 @@ impl CodeGenerator for TypeScriptCodeGenerator {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use sora_ir::{model::EnumReprIr, normalize::normalize_schema};
+    use crate::options::{EnumRepr, RuntimeFormat, TypeScriptCodegenOptions};
+    use sora_ir::{model::ConfigIr, normalize::normalize_schema};
     use sora_schema::model::SchemaFile;
     use std::{
         path::PathBuf,
@@ -132,11 +136,19 @@ mod tests {
 
     #[test]
     fn typescript_enum_integer_option_changes_api() {
-        let mut ir = example_ir();
-        ir.codegen.typescript.enum_repr = EnumReprIr::Integer;
+        let ir = example_ir();
         let base = temp_dir();
 
-        TypeScriptCodeGenerator.generate(&ir, &base).unwrap();
+        TypeScriptCodeGenerator
+            .generate_with_options(
+                &ir,
+                TypeScriptCodegenOptions {
+                    enum_repr: EnumRepr::Integer,
+                    ..Default::default()
+                },
+                &base,
+            )
+            .unwrap();
 
         let item_type = std::fs::read_to_string(base.join("item_type.ts")).unwrap();
         assert!(item_type.contains("export type ItemType ="));
@@ -151,27 +163,27 @@ mod tests {
     #[test]
     fn typescript_supports_export_runtime_formats() {
         for (format, parse_fn, decode_fn) in [
+            (RuntimeFormat::Json, "static parseJson", "decodeItemValue"),
+            (RuntimeFormat::Cbor, "static parseCbor", "decodeItemValue"),
             (
-                sora_ir::model::RuntimeFormatIr::Json,
-                "static parseJson",
-                "decodeItemValue",
-            ),
-            (
-                sora_ir::model::RuntimeFormatIr::Cbor,
-                "static parseCbor",
-                "decodeItemValue",
-            ),
-            (
-                sora_ir::model::RuntimeFormatIr::SoraProtobuf,
+                RuntimeFormat::SoraProtobuf,
                 "static parseProtobuf",
                 "decodeItemValue",
             ),
         ] {
-            let mut ir = example_ir();
-            ir.codegen.typescript.runtime_format = format;
+            let ir = example_ir();
             let base = temp_dir();
 
-            TypeScriptCodeGenerator.generate(&ir, &base).unwrap();
+            TypeScriptCodeGenerator
+                .generate_with_options(
+                    &ir,
+                    TypeScriptCodegenOptions {
+                        runtime_format: format,
+                        ..Default::default()
+                    },
+                    &base,
+                )
+                .unwrap();
 
             let config = std::fs::read_to_string(base.join("sora_config.ts")).unwrap();
             let runtime = std::fs::read_to_string(base.join("sora_runtime.ts")).unwrap();
@@ -186,10 +198,10 @@ mod tests {
             assert!(item.contains("decodeItemValue"));
             assert!(item.contains("object.get(\"id\")"));
             assert!(item_type.contains("decodeItemTypeValue"));
-            if format == sora_ir::model::RuntimeFormatIr::Cbor {
+            if format == RuntimeFormat::Cbor {
                 assert!(runtime.contains("from \"cbor-x\""));
             }
-            if format == sora_ir::model::RuntimeFormatIr::SoraProtobuf {
+            if format == RuntimeFormat::SoraProtobuf {
                 assert!(runtime.contains("from \"protobufjs\""));
                 assert!(runtime.contains("new protobuf.Type(\"Bundle\")"));
             }

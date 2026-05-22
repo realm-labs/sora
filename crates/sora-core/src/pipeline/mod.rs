@@ -4,8 +4,7 @@ use crate::diff::{ConfigDiff, diff_config_data};
 use crate::schema_lock::{read_schema_lock_file, verify_schema_lock, write_schema_lock_file};
 use sora_codegen::{
     format::{FormatMode, format_generated_code},
-    generator::generator_for_target,
-    target::CodegenTarget,
+    generator::{CodegenContext, CodegenRegistry, empty_options},
 };
 use sora_diagnostics::{Result, SoraError};
 use sora_excel::generator::ExcelTemplateGenerator;
@@ -19,7 +18,8 @@ use sora_input::traits::{ProjectInput, SchemaInput};
 mod support;
 
 use support::{
-    filter_ir_and_data_by_scope, load_ir, load_ir_with_scope, load_validated_data, write_json_file,
+    filter_ir_and_data_by_scope, load_ir, load_ir_with_scope, load_validated_data,
+    validate_schema_ir, write_json_file,
 };
 
 pub fn load_schema_ir(input: &impl SchemaInput) -> Result<sora_ir::model::ConfigIr> {
@@ -59,17 +59,13 @@ pub fn generate_schema_lock_with_scope(
     write_schema_lock_file(&ir, path)
 }
 
-pub fn generate_code(
-    input: &impl SchemaInput,
-    target: CodegenTarget,
-    out_dir: &Path,
-) -> Result<()> {
+pub fn generate_code(input: &impl SchemaInput, target: &str, out_dir: &Path) -> Result<()> {
     generate_code_with_format(input, target, out_dir, FormatMode::Never)
 }
 
 pub fn generate_code_with_format(
     input: &impl SchemaInput,
-    target: CodegenTarget,
+    target: &str,
     out_dir: &Path,
     format_mode: FormatMode,
 ) -> Result<()> {
@@ -78,14 +74,64 @@ pub fn generate_code_with_format(
 
 pub fn generate_code_with_scope_and_format(
     input: &impl SchemaInput,
-    target: CodegenTarget,
+    target: &str,
     out_dir: &Path,
     format_mode: FormatMode,
     scope: Option<&str>,
 ) -> Result<()> {
-    let ir = load_ir_with_scope(input, scope)?;
-    generator_for_target(target).generate(&ir, out_dir)?;
-    format_generated_code(target, out_dir, format_mode)
+    let registry = CodegenRegistry::with_builtin_generators();
+    generate_code_with_registry_scope_and_format(
+        input,
+        target,
+        out_dir,
+        format_mode,
+        scope,
+        &registry,
+    )
+}
+
+pub fn generate_code_with_registry_scope_and_format(
+    input: &impl SchemaInput,
+    target: &str,
+    out_dir: &Path,
+    format_mode: FormatMode,
+    scope: Option<&str>,
+    registry: &CodegenRegistry,
+) -> Result<()> {
+    let schema = input.load_schema()?;
+    let codegen_options = schema.codegen.clone();
+    let ir = validate_schema_ir(schema)?;
+    let ir = match scope {
+        Some(scope) => sora_ir::scope::filter_config_ir_by_scope(&ir, scope)?,
+        None => ir,
+    };
+    let generator = registry.get(target).ok_or_else(|| {
+        SoraError::InvalidSchema(format!(
+            "unknown codegen target `{}`; supported targets: {}",
+            target,
+            registry.supported_targets().join(", ")
+        ))
+    })?;
+    let canonical_target = registry.canonical_id(target).unwrap_or(target);
+    let empty = empty_options();
+    let options = codegen_options
+        .target_options(canonical_target)
+        .or_else(|| codegen_options.target_options(target))
+        .unwrap_or(&empty);
+    generator.generator.generate(
+        CodegenContext {
+            target: canonical_target,
+            ir: &ir,
+            options,
+        },
+        out_dir,
+    )?;
+    format_generated_code(
+        generator.display_name,
+        generator.formatter,
+        out_dir,
+        format_mode,
+    )
 }
 
 pub fn export_data(input: &impl ProjectInput, format: &str, output: ExportOutput) -> Result<()> {

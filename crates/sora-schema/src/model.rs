@@ -5,7 +5,7 @@ use serde::{
     de::{SeqAccess, Visitor},
 };
 
-#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Deserialize)]
 pub struct SchemaFile {
     pub package: String,
 
@@ -28,323 +28,16 @@ pub struct SchemaFile {
     pub tables: Vec<TableSchema>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Default)]
+#[derive(Debug, Clone, PartialEq, Deserialize, Default)]
 pub struct CodegenSchema {
-    #[serde(default)]
-    pub rust: RustCodegenSchema,
-    #[serde(default)]
-    pub kotlin: LanguageCodegenSchema,
-    #[serde(default)]
-    pub csharp: LanguageCodegenSchema,
-    #[serde(default)]
-    pub java: LanguageCodegenSchema,
-    #[serde(default)]
-    pub scala: ScalaCodegenSchema,
-    #[serde(default)]
-    pub go: LanguageCodegenSchema,
-    #[serde(default)]
-    pub dart: LanguageCodegenSchema,
-    #[serde(default)]
-    pub godot: LanguageCodegenSchema,
-    #[serde(default)]
-    pub c: CCodegenSchema,
-    #[serde(default)]
-    pub cpp: CppCodegenSchema,
-    #[serde(default)]
-    pub typescript: TypeScriptCodegenSchema,
-    #[serde(default)]
-    pub javascript: JavaScriptCodegenSchema,
-    #[serde(default)]
-    pub erlang: ErlangCodegenSchema,
-    #[serde(default)]
-    pub lua: LuaCodegenSchema,
-    #[serde(default)]
-    pub python: LanguageCodegenSchema,
+    #[serde(flatten)]
+    pub targets: BTreeMap<String, serde_json::Value>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
-pub struct RustCodegenSchema {
-    #[serde(default)]
-    pub runtime_format: RuntimeFormatSchema,
-
-    #[serde(default)]
-    pub map_type: RustMapTypeSchema,
-
-    #[serde(default)]
-    pub string_storage: RustStringStorageSchema,
-}
-
-impl Default for RustCodegenSchema {
-    fn default() -> Self {
-        Self {
-            runtime_format: RuntimeFormatSchema::Sora,
-            map_type: RustMapTypeSchema::Std,
-            string_storage: RustStringStorageSchema::Owned,
-        }
+impl CodegenSchema {
+    pub fn target_options(&self, target: &str) -> Option<&serde_json::Value> {
+        self.targets.get(target)
     }
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
-pub struct CCodegenSchema {
-    #[serde(default)]
-    pub runtime_format: RuntimeFormatSchema,
-
-    #[serde(default)]
-    pub c_standard: CStandardSchema,
-
-    pub prefix: Option<String>,
-}
-
-impl Default for CCodegenSchema {
-    fn default() -> Self {
-        Self {
-            runtime_format: RuntimeFormatSchema::Sora,
-            c_standard: CStandardSchema::C11,
-            prefix: None,
-        }
-    }
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
-pub struct CppCodegenSchema {
-    #[serde(default)]
-    pub runtime_format: RuntimeFormatSchema,
-
-    #[serde(default)]
-    pub cpp_standard: CppStandardSchema,
-
-    pub namespace: Option<String>,
-}
-
-impl Default for CppCodegenSchema {
-    fn default() -> Self {
-        Self {
-            runtime_format: RuntimeFormatSchema::Sora,
-            cpp_standard: CppStandardSchema::Cpp17,
-            namespace: None,
-        }
-    }
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
-pub struct LanguageCodegenSchema {
-    #[serde(default)]
-    pub runtime_format: RuntimeFormatSchema,
-}
-
-impl Default for LanguageCodegenSchema {
-    fn default() -> Self {
-        Self {
-            runtime_format: RuntimeFormatSchema::Sora,
-        }
-    }
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
-pub struct ScalaCodegenSchema {
-    #[serde(default)]
-    pub runtime_format: RuntimeFormatSchema,
-
-    #[serde(default)]
-    pub scala_version: ScalaVersionSchema,
-}
-
-impl Default for ScalaCodegenSchema {
-    fn default() -> Self {
-        Self {
-            runtime_format: RuntimeFormatSchema::Sora,
-            scala_version: ScalaVersionSchema::Scala3,
-        }
-    }
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
-pub struct TypeScriptCodegenSchema {
-    #[serde(default)]
-    pub runtime_format: RuntimeFormatSchema,
-
-    #[serde(default)]
-    pub enum_repr: EnumReprSchema,
-}
-
-impl Default for TypeScriptCodegenSchema {
-    fn default() -> Self {
-        Self {
-            runtime_format: RuntimeFormatSchema::Sora,
-            enum_repr: EnumReprSchema::String,
-        }
-    }
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
-pub struct JavaScriptCodegenSchema {
-    #[serde(default)]
-    pub runtime_format: RuntimeFormatSchema,
-
-    #[serde(default)]
-    pub enum_repr: EnumReprSchema,
-
-    #[serde(default = "default_emit_dts")]
-    pub emit_dts: bool,
-}
-
-impl Default for JavaScriptCodegenSchema {
-    fn default() -> Self {
-        Self {
-            runtime_format: RuntimeFormatSchema::Sora,
-            enum_repr: EnumReprSchema::String,
-            emit_dts: default_emit_dts(),
-        }
-    }
-}
-
-fn default_emit_dts() -> bool {
-    true
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
-pub struct ErlangCodegenSchema {
-    #[serde(default)]
-    pub runtime_format: RuntimeFormatSchema,
-
-    #[serde(default)]
-    pub enum_repr: ErlangEnumReprSchema,
-}
-
-impl Default for ErlangCodegenSchema {
-    fn default() -> Self {
-        Self {
-            runtime_format: RuntimeFormatSchema::Sora,
-            enum_repr: ErlangEnumReprSchema::Atom,
-        }
-    }
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
-pub struct LuaCodegenSchema {
-    #[serde(default)]
-    pub runtime_format: RuntimeFormatSchema,
-
-    pub module: Option<String>,
-
-    #[serde(default)]
-    pub lua_version: LuaVersionSchema,
-
-    #[serde(default)]
-    pub enum_repr: LuaEnumReprSchema,
-}
-
-impl Default for LuaCodegenSchema {
-    fn default() -> Self {
-        Self {
-            runtime_format: RuntimeFormatSchema::Sora,
-            module: None,
-            lua_version: LuaVersionSchema::Lua54,
-            enum_repr: LuaEnumReprSchema::String,
-        }
-    }
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, Default)]
-#[serde(rename_all = "snake_case")]
-pub enum RuntimeFormatSchema {
-    #[default]
-    Sora,
-    Json,
-    #[serde(rename = "sora-protobuf")]
-    SoraProtobuf,
-    Cbor,
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, Default)]
-#[serde(rename_all = "lowercase")]
-pub enum CStandardSchema {
-    C99,
-    #[default]
-    C11,
-    C17,
-    C23,
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, Default)]
-pub enum CppStandardSchema {
-    #[serde(rename = "c++11")]
-    Cpp11,
-    #[serde(rename = "c++14")]
-    Cpp14,
-    #[default]
-    #[serde(rename = "c++17")]
-    Cpp17,
-    #[serde(rename = "c++20")]
-    Cpp20,
-    #[serde(rename = "c++23")]
-    Cpp23,
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, Default)]
-pub enum ScalaVersionSchema {
-    #[serde(rename = "2.12")]
-    Scala212,
-    #[serde(rename = "2.13")]
-    Scala213,
-    #[default]
-    #[serde(rename = "3")]
-    Scala3,
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, Default)]
-pub enum LuaVersionSchema {
-    #[serde(rename = "5.1")]
-    Lua51,
-    #[serde(rename = "5.2")]
-    Lua52,
-    #[serde(rename = "5.3")]
-    Lua53,
-    #[default]
-    #[serde(rename = "5.4")]
-    Lua54,
-    #[serde(rename = "luajit")]
-    LuaJit,
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, Default)]
-#[serde(rename_all = "snake_case")]
-pub enum LuaEnumReprSchema {
-    Integer,
-    #[default]
-    String,
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, Default)]
-#[serde(rename_all = "snake_case")]
-pub enum EnumReprSchema {
-    Integer,
-    #[default]
-    String,
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, Default)]
-#[serde(rename_all = "snake_case")]
-pub enum ErlangEnumReprSchema {
-    Integer,
-    #[default]
-    Atom,
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, Default)]
-#[serde(rename_all = "snake_case")]
-pub enum RustMapTypeSchema {
-    #[default]
-    Std,
-    FxHashMap,
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, Default)]
-#[serde(rename_all = "snake_case")]
-pub enum RustStringStorageSchema {
-    #[default]
-    Owned,
-    Arc,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
@@ -573,7 +266,7 @@ parser = { kind = "split", separator = "|" }
         .expect("schema should parse");
 
         assert_eq!(schema.package, "game_config");
-        assert_eq!(schema.codegen.rust.map_type, RustMapTypeSchema::Std);
+        assert!(schema.codegen.targets.is_empty());
         assert!(schema.includes.is_empty());
         assert_eq!(schema.enums[0].name, "ItemType");
         assert_eq!(schema.tables[0].mode, TableModeSchema::Map);
@@ -662,50 +355,24 @@ enum_repr = "string"
         .expect("schema should parse");
 
         assert_eq!(
-            schema.codegen.rust.runtime_format,
-            RuntimeFormatSchema::Sora
-        );
-        assert_eq!(schema.codegen.rust.map_type, RustMapTypeSchema::FxHashMap);
-        assert_eq!(
-            schema.codegen.rust.string_storage,
-            RustStringStorageSchema::Arc
+            schema.codegen.targets["rust"]["map_type"],
+            serde_json::Value::String("fx_hash_map".to_owned())
         );
         assert_eq!(
-            schema.codegen.kotlin.runtime_format,
-            RuntimeFormatSchema::Sora
+            schema.codegen.targets["rust"]["string_storage"],
+            serde_json::Value::String("arc".to_owned())
         );
         assert_eq!(
-            schema.codegen.godot.runtime_format,
-            RuntimeFormatSchema::Json
-        );
-        assert_eq!(schema.codegen.c.runtime_format, RuntimeFormatSchema::Sora);
-        assert_eq!(schema.codegen.c.c_standard, CStandardSchema::C17);
-        assert_eq!(schema.codegen.c.prefix.as_deref(), Some("game_config"));
-        assert_eq!(schema.codegen.cpp.runtime_format, RuntimeFormatSchema::Sora);
-        assert_eq!(schema.codegen.cpp.cpp_standard, CppStandardSchema::Cpp20);
-        assert_eq!(
-            schema.codegen.cpp.namespace.as_deref(),
-            Some("sora::game_config")
+            schema.codegen.targets["godot"]["runtime_format"],
+            serde_json::Value::String("json".to_owned())
         );
         assert_eq!(
-            schema.codegen.typescript.runtime_format,
-            RuntimeFormatSchema::Sora
+            schema.codegen.targets["cpp"]["namespace"],
+            serde_json::Value::String("sora::game_config".to_owned())
         );
-        assert_eq!(schema.codegen.typescript.enum_repr, EnumReprSchema::String);
         assert_eq!(
-            schema.codegen.javascript.runtime_format,
-            RuntimeFormatSchema::Sora
+            schema.codegen.targets["javascript"]["emit_dts"],
+            serde_json::Value::Bool(false)
         );
-        assert_eq!(schema.codegen.javascript.enum_repr, EnumReprSchema::Integer);
-        assert!(!schema.codegen.javascript.emit_dts);
-        assert_eq!(
-            schema.codegen.erlang.runtime_format,
-            RuntimeFormatSchema::Sora
-        );
-        assert_eq!(schema.codegen.erlang.enum_repr, ErlangEnumReprSchema::Atom);
-        assert_eq!(schema.codegen.lua.runtime_format, RuntimeFormatSchema::Sora);
-        assert_eq!(schema.codegen.lua.module.as_deref(), Some("generated.lua"));
-        assert_eq!(schema.codegen.lua.lua_version, LuaVersionSchema::Lua54);
-        assert_eq!(schema.codegen.lua.enum_repr, LuaEnumReprSchema::String);
     }
 }

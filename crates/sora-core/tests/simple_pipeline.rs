@@ -5,7 +5,6 @@ use std::{
 };
 
 use rust_xlsxwriter::Workbook;
-use sora_codegen::target::CodegenTarget;
 use sora_excel::projection::{DATA_START_ROW, FIELD_START_COLUMN, table_template_rows};
 use sora_export::exporter::ExportOutput;
 use sora_input_toml::{input::TomlSchemaInput, schema::load_project_schema_file};
@@ -24,20 +23,10 @@ fn simple_example_pipeline_generates_all_artifacts() {
 
     sora_core::pipeline::check_schema(&schema_input).unwrap();
 
-    sora_core::pipeline::generate_code(&schema_input, CodegenTarget::Rust, &out_dir.join("rust"))
+    sora_core::pipeline::generate_code(&schema_input, "rust", &out_dir.join("rust")).unwrap();
+    sora_core::pipeline::generate_code(&schema_input, "kotlin", &out_dir.join("kotlin")).unwrap();
+    sora_core::pipeline::generate_code(&schema_input, "proto-schema", &out_dir.join("proto"))
         .unwrap();
-    sora_core::pipeline::generate_code(
-        &schema_input,
-        CodegenTarget::Kotlin,
-        &out_dir.join("kotlin"),
-    )
-    .unwrap();
-    sora_core::pipeline::generate_code(
-        &schema_input,
-        CodegenTarget::ProtoSchema,
-        &out_dir.join("proto"),
-    )
-    .unwrap();
     sora_core::pipeline::export_data(
         &project_input,
         "binary",

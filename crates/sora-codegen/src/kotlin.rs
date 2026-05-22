@@ -6,23 +6,27 @@ use sora_diagnostics::Result;
 use sora_ir::model::{ConfigIr, TableModeIr, TypeIr};
 
 use crate::{
-    generator::{CodeGenerator, runtime_format_name},
+    generator::{CodeGenerator, CodegenContext, runtime_format_name},
     model::{
         BaseField, BaseIndex, BaseModel, BaseRecord, BaseTable, BaseUnion, BaseUnionVariant,
         build_base_model,
     },
+    options::LanguageCodegenOptions,
     render::{ensure_dir, render_template, write_file},
     types::kotlin_type_name,
 };
 
 pub struct KotlinCodeGenerator;
+crate::impl_test_codegen_generate!(KotlinCodeGenerator, "kotlin");
 
 impl CodeGenerator for KotlinCodeGenerator {
-    fn generate(&self, ir: &ConfigIr, out_dir: &Path) -> Result<()> {
+    fn generate(&self, context: CodegenContext<'_>, out_dir: &Path) -> Result<()> {
+        let ir = context.ir;
+        let options = context.options::<LanguageCodegenOptions>()?;
         ensure_dir(out_dir)?;
         let model = KotlinModel::from_base_model(ir, build_base_model(ir)?);
         let package_dir = kotlin_package_dir(out_dir, &model.package)?;
-        let runtime_format = runtime_format_name(ir.codegen.kotlin.runtime_format);
+        let runtime_format = runtime_format_name(options.runtime_format);
 
         for item in &model.enums {
             let rendered = render_template(

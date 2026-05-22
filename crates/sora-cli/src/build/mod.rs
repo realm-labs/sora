@@ -6,17 +6,16 @@ use std::{
 use anyhow::{Context, Result, bail};
 use sora_codegen::{
     format::FormatMode,
-    generator::{
-        runtime_format_for_target, runtime_format_name, runtime_format_supported,
-        supported_runtime_formats,
-    },
+    generator::{CodegenRegistry, empty_options, runtime_format_name},
+    options::RuntimeFormat,
 };
 use sora_execution::ExecutionContext;
 use sora_export::exporter::{ExportCompression, ExportOptions};
+use sora_input::traits::SchemaInput;
 use sora_input_toml::input::TomlSchemaInput;
-use sora_ir::model::{ConfigIr, RuntimeFormatIr};
+use sora_schema::model::CodegenSchema;
 
-use crate::args::{BuildArgs, BuildTarget};
+use crate::args::BuildArgs;
 
 mod manifest;
 
@@ -38,8 +37,9 @@ pub fn run(args: BuildArgs, execution: &ExecutionContext) -> Result<()> {
     let data_root = resolve_project_path(project_dir, &data_root);
     let scope = args.scope.as_deref().or(build.scope.as_deref());
 
+    let registry = CodegenRegistry::with_builtin_generators();
     let requested_targets = args.target;
-    let codegen = selected_codegen_targets(&build.codegen, &requested_targets)?;
+    let codegen = selected_codegen_targets(&build.codegen, &requested_targets, &registry)?;
 
     if build.is_empty() {
         bail!(
@@ -49,14 +49,17 @@ pub fn run(args: BuildArgs, execution: &ExecutionContext) -> Result<()> {
     }
 
     validate_export_formats(&build.exports)?;
-
     if args.clean {
         clean_build_outputs(project_dir, &build, &codegen)?;
     }
 
-    let ir = sora_core::pipeline::load_schema_ir(&schema_input)
+    let schema = schema_input.load_schema()?;
+    let codegen_options = schema.codegen.clone();
+    let ir = sora_ir::normalize::normalize_schema(schema)
         .with_context(|| format!("failed to check project `{}`", args.project.display()))?;
-    validate_codegen_runtime_exports(&ir, &codegen, &build.exports, scope)?;
+    sora_ir::validate::validate_config_ir(&ir)
+        .with_context(|| format!("failed to check project `{}`", args.project.display()))?;
+    validate_codegen_runtime_exports(&codegen, &build.exports, scope, &registry, &codegen_options)?;
 
     if let Some(path) = build.schema_lock.as_ref() {
         let path = resolve_project_path(project_dir, path);
@@ -87,7 +90,7 @@ pub fn run(args: BuildArgs, execution: &ExecutionContext) -> Result<()> {
         let item_scope = item.scope.as_deref().or(scope);
         sora_core::pipeline::generate_code_with_scope_and_format(
             &schema_input,
-            item.target.into(),
+            &item.target,
             &out,
             FormatMode::from(item.format),
             item_scope,
@@ -95,7 +98,7 @@ pub fn run(args: BuildArgs, execution: &ExecutionContext) -> Result<()> {
         .with_context(|| {
             format!(
                 "failed to generate {} code from `{}` into `{}`",
-                item.target.as_str(),
+                item.target,
                 args.project.display(),
                 out.display()
             )
@@ -158,25 +161,39 @@ fn validate_export_formats(exports: &[BuildExport]) -> Result<()> {
 }
 
 fn validate_codegen_runtime_exports(
-    ir: &ConfigIr,
     codegen: &[&BuildCodegen],
     exports: &[BuildExport],
     build_scope: Option<&str>,
+    registry: &CodegenRegistry,
+    codegen_options: &CodegenSchema,
 ) -> Result<()> {
     for item in codegen {
-        let target = item.target.into();
-        let Some(runtime_format) = runtime_format_for_target(ir, target) else {
+        let generator = registry.get(&item.target).ok_or_else(|| {
+            anyhow::anyhow!(
+                "unknown codegen target `{}`; supported targets: {}",
+                item.target,
+                registry.supported_targets().join(", ")
+            )
+        })?;
+        let canonical_target = registry.canonical_id(&item.target).unwrap_or(&item.target);
+        let empty = empty_options();
+        let options = codegen_options
+            .target_options(canonical_target)
+            .or_else(|| codegen_options.target_options(&item.target))
+            .unwrap_or(&empty);
+        let Some(runtime_format) = (generator.runtime_format)(canonical_target, options)? else {
             continue;
         };
-        if !runtime_format_supported(target, runtime_format) {
-            let supported = supported_runtime_formats(target)
+        if !generator.supports_runtime_format(runtime_format) {
+            let supported = generator
+                .supported_runtime_formats
                 .iter()
                 .map(|format| runtime_format_name(*format))
                 .collect::<Vec<_>>()
                 .join(", ");
             bail!(
                 "{} codegen runtime_format `{}` is not supported; supported runtime_format: {}",
-                item.target.as_str(),
+                item.target,
                 runtime_format_name(runtime_format),
                 supported
             );
@@ -198,7 +215,7 @@ fn validate_codegen_runtime_exports(
                 .unwrap_or_else(|| " without scope".to_owned());
             bail!(
                 "{} codegen uses runtime_format `{}` and requires a `{}` export{}",
-                item.target.as_str(),
+                item.target,
                 runtime_format_name(runtime_format),
                 required_format,
                 scope_message
@@ -208,12 +225,12 @@ fn validate_codegen_runtime_exports(
     Ok(())
 }
 
-fn export_format_for_runtime(runtime_format: RuntimeFormatIr) -> &'static str {
+fn export_format_for_runtime(runtime_format: RuntimeFormat) -> &'static str {
     match runtime_format {
-        RuntimeFormatIr::Sora => "binary",
-        RuntimeFormatIr::Json => "json",
-        RuntimeFormatIr::SoraProtobuf => "sora-protobuf",
-        RuntimeFormatIr::Cbor => "cbor",
+        RuntimeFormat::Sora => "binary",
+        RuntimeFormat::Json => "json",
+        RuntimeFormat::SoraProtobuf => "sora-protobuf",
+        RuntimeFormat::Cbor => "cbor",
     }
 }
 
@@ -255,7 +272,8 @@ fn export_options(item: &BuildExport) -> Result<ExportOptions> {
 
 fn selected_codegen_targets<'a>(
     configured: &'a [BuildCodegen],
-    requested: &[BuildTarget],
+    requested: &[String],
+    registry: &CodegenRegistry,
 ) -> Result<Vec<&'a BuildCodegen>> {
     if requested.is_empty() {
         return Ok(configured.iter().collect());
@@ -263,17 +281,31 @@ fn selected_codegen_targets<'a>(
 
     let selected = configured
         .iter()
-        .filter(|item| requested.contains(&item.target))
+        .filter(|item| {
+            requested
+                .iter()
+                .any(|target| codegen_targets_match(target, &item.target, registry))
+        })
         .collect::<Vec<_>>();
     for target in requested {
-        if !configured.iter().any(|item| item.target == *target) {
+        if !configured
+            .iter()
+            .any(|item| codegen_targets_match(target, &item.target, registry))
+        {
             bail!(
                 "build target `{}` was requested but is not declared in [[build.codegen]]",
-                target.as_str()
+                target
             );
         }
     }
     Ok(selected)
+}
+
+fn codegen_targets_match(left: &str, right: &str, registry: &CodegenRegistry) -> bool {
+    match (registry.canonical_id(left), registry.canonical_id(right)) {
+        (Some(left), Some(right)) => left == right,
+        _ => left == right,
+    }
 }
 
 fn clean_build_outputs(

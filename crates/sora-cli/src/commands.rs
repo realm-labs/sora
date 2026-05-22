@@ -1,12 +1,11 @@
 use anyhow::{Context, Result, bail};
-use sora_codegen::target::CodegenTarget;
 use sora_execution::{ExecutionContext, ExecutionOptions};
 use sora_export::exporter::{ExportCompression, ExportOptions, ExportOutput, OutputKind};
 use sora_input_toml::input::TomlSchemaInput;
 
 use crate::args::{
     CheckArgs, Cli, Command, DiffArgs, ExcelTemplateArgs, ExportArgs, ExportCompressionArg,
-    GenArgs, GenCommand, SchemaLockArgs, SourceFormatArg,
+    GenArgs, SchemaLockArgs, SourceFormatArg,
 };
 use crate::source::MixedProjectInput;
 
@@ -23,24 +22,7 @@ pub fn run(cli: Cli) -> Result<()> {
     match cli.command {
         Command::Build(args) => crate::build::run(args, &execution),
         Command::Check(args) => check(args),
-        Command::Gen { target } => match target {
-            GenCommand::Rust(args) => generate(args, CodegenTarget::Rust),
-            GenCommand::Kotlin(args) => generate(args, CodegenTarget::Kotlin),
-            GenCommand::Csharp(args) => generate(args, CodegenTarget::CSharp),
-            GenCommand::Java(args) => generate(args, CodegenTarget::Java),
-            GenCommand::Scala(args) => generate(args, CodegenTarget::Scala),
-            GenCommand::Go(args) => generate(args, CodegenTarget::Go),
-            GenCommand::Dart(args) => generate(args, CodegenTarget::Dart),
-            GenCommand::Godot(args) => generate(args, CodegenTarget::Godot),
-            GenCommand::C(args) => generate(args, CodegenTarget::C),
-            GenCommand::Cpp(args) => generate(args, CodegenTarget::Cpp),
-            GenCommand::Typescript(args) => generate(args, CodegenTarget::TypeScript),
-            GenCommand::Javascript(args) => generate(args, CodegenTarget::JavaScript),
-            GenCommand::Erlang(args) => generate(args, CodegenTarget::Erlang),
-            GenCommand::Lua(args) => generate(args, CodegenTarget::Lua),
-            GenCommand::ProtoSchema(args) => generate(args, CodegenTarget::ProtoSchema),
-            GenCommand::Python(args) => generate(args, CodegenTarget::Python),
-        },
+        Command::Gen { target, args } => generate(args, &target),
         Command::Export(args) => export(args, &execution),
         Command::Diff(args) => diff(args, &execution),
         Command::ExcelTemplate(args) => excel_template(args),
@@ -65,7 +47,7 @@ fn check(args: CheckArgs) -> Result<()> {
     }
 }
 
-fn generate(args: GenArgs, target: CodegenTarget) -> Result<()> {
+fn generate(args: GenArgs, target: &str) -> Result<()> {
     let input = TomlSchemaInput::new(&args.project);
     sora_core::pipeline::generate_code_with_scope_and_format(
         &input,

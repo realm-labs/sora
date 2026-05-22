@@ -1,12 +1,12 @@
 use super::*;
 use crate::{
-    csharp::CSharpCodeGenerator, go::GoCodeGenerator, java::JavaCodeGenerator,
+    csharp::CSharpCodeGenerator,
+    go::GoCodeGenerator,
+    java::JavaCodeGenerator,
+    options::{LanguageCodegenOptions, RuntimeFormat, RustCodegenOptions, RustMapType},
     rust::RustCodeGenerator,
 };
-use sora_ir::{
-    model::{ConfigIr, RuntimeFormatIr},
-    normalize::normalize_schema,
-};
+use sora_ir::{model::ConfigIr, normalize::normalize_schema};
 use sora_schema::model::SchemaFile;
 use std::{
     path::PathBuf,
@@ -231,12 +231,20 @@ fn kotlin_list_tables_extend_abstract_list() {
 
 #[test]
 fn rust_config_api_can_use_fx_hash_map() {
-    let mut ir = example_ir();
-    ir.codegen.rust.map_type = sora_ir::model::RustMapTypeIr::FxHashMap;
+    let ir = example_ir();
     let base = temp_dir();
     let rust_out = base.join("rust");
 
-    RustCodeGenerator.generate(&ir, &rust_out).unwrap();
+    RustCodeGenerator
+        .generate_with_options(
+            &ir,
+            RustCodegenOptions {
+                map_type: RustMapType::FxHashMap,
+                ..Default::default()
+            },
+            &rust_out,
+        )
+        .unwrap();
 
     let rust_mod = std::fs::read_to_string(rust_out.join("mod.rs")).unwrap();
     let rust_item = std::fs::read_to_string(rust_out.join("item.rs")).unwrap();
@@ -251,16 +259,17 @@ fn rust_config_api_can_use_fx_hash_map() {
 #[test]
 fn csharp_supports_export_runtime_formats() {
     for (runtime_format, parse_function) in [
-        (RuntimeFormatIr::Json, "ParseJson"),
-        (RuntimeFormatIr::Cbor, "ParseCbor"),
-        (RuntimeFormatIr::SoraProtobuf, "ParseProtobuf"),
+        (RuntimeFormat::Json, "ParseJson"),
+        (RuntimeFormat::Cbor, "ParseCbor"),
+        (RuntimeFormat::SoraProtobuf, "ParseProtobuf"),
     ] {
-        let mut ir = example_ir();
-        ir.codegen.csharp.runtime_format = runtime_format;
+        let ir = example_ir();
         let base = temp_dir();
         let csharp_out = base.join("csharp");
 
-        CSharpCodeGenerator.generate(&ir, &csharp_out).unwrap();
+        CSharpCodeGenerator
+            .generate_with_options(&ir, LanguageCodegenOptions { runtime_format }, &csharp_out)
+            .unwrap();
 
         let runtime = std::fs::read_to_string(csharp_out.join("Runtime.cs")).unwrap();
         let config = std::fs::read_to_string(csharp_out.join("SoraConfig.cs")).unwrap();
@@ -284,16 +293,17 @@ fn csharp_supports_export_runtime_formats() {
 #[test]
 fn kotlin_supports_export_runtime_formats() {
     for (runtime_format, parse_function) in [
-        (RuntimeFormatIr::Json, "parseJson"),
-        (RuntimeFormatIr::Cbor, "parseCbor"),
-        (RuntimeFormatIr::SoraProtobuf, "parseProtobuf"),
+        (RuntimeFormat::Json, "parseJson"),
+        (RuntimeFormat::Cbor, "parseCbor"),
+        (RuntimeFormat::SoraProtobuf, "parseProtobuf"),
     ] {
-        let mut ir = example_ir();
-        ir.codegen.kotlin.runtime_format = runtime_format;
+        let ir = example_ir();
         let base = temp_dir();
         let kotlin_out = base.join("kotlin");
 
-        KotlinCodeGenerator.generate(&ir, &kotlin_out).unwrap();
+        KotlinCodeGenerator
+            .generate_with_options(&ir, LanguageCodegenOptions { runtime_format }, &kotlin_out)
+            .unwrap();
 
         let package_out = kotlin_out.join("game_config");
         let runtime = std::fs::read_to_string(package_out.join("Runtime.kt")).unwrap();
@@ -317,16 +327,17 @@ fn kotlin_supports_export_runtime_formats() {
 #[test]
 fn go_supports_export_runtime_formats() {
     for (runtime_format, parse_function) in [
-        (RuntimeFormatIr::Json, "ParseJsonBundle"),
-        (RuntimeFormatIr::Cbor, "ParseCborBundle"),
-        (RuntimeFormatIr::SoraProtobuf, "ParseProtobufBundle"),
+        (RuntimeFormat::Json, "ParseJsonBundle"),
+        (RuntimeFormat::Cbor, "ParseCborBundle"),
+        (RuntimeFormat::SoraProtobuf, "ParseProtobufBundle"),
     ] {
-        let mut ir = example_ir();
-        ir.codegen.go.runtime_format = runtime_format;
+        let ir = example_ir();
         let base = temp_dir();
         let go_out = base.join("go");
 
-        GoCodeGenerator.generate(&ir, &go_out).unwrap();
+        GoCodeGenerator
+            .generate_with_options(&ir, LanguageCodegenOptions { runtime_format }, &go_out)
+            .unwrap();
 
         let runtime = std::fs::read_to_string(go_out.join("runtime.go")).unwrap();
         let config = std::fs::read_to_string(go_out.join("config.go")).unwrap();
@@ -350,16 +361,17 @@ fn go_supports_export_runtime_formats() {
 #[test]
 fn java_supports_export_runtime_formats() {
     for (runtime_format, parse_function) in [
-        (RuntimeFormatIr::Json, "parseJson"),
-        (RuntimeFormatIr::Cbor, "parseCbor"),
-        (RuntimeFormatIr::SoraProtobuf, "parseProtobuf"),
+        (RuntimeFormat::Json, "parseJson"),
+        (RuntimeFormat::Cbor, "parseCbor"),
+        (RuntimeFormat::SoraProtobuf, "parseProtobuf"),
     ] {
-        let mut ir = example_ir();
-        ir.codegen.java.runtime_format = runtime_format;
+        let ir = example_ir();
         let base = temp_dir();
         let java_out = base.join("java");
 
-        JavaCodeGenerator.generate(&ir, &java_out).unwrap();
+        JavaCodeGenerator
+            .generate_with_options(&ir, LanguageCodegenOptions { runtime_format }, &java_out)
+            .unwrap();
 
         let package_out = java_out.join("game_config");
         let runtime = std::fs::read_to_string(package_out.join("Runtime.java")).unwrap();

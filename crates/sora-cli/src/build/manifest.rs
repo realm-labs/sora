@@ -5,9 +5,8 @@ use std::{
 
 use anyhow::{Context, Result};
 use serde::Deserialize;
-use sora_codegen::target::CodegenTarget;
 
-use crate::args::{BuildTarget, CodeFormatMode, SourceFormatArg};
+use crate::args::{CodeFormatMode, SourceFormatArg};
 #[derive(Debug, Deserialize)]
 pub(super) struct BuildManifest {
     #[serde(default)]
@@ -49,7 +48,7 @@ impl BuildConfig {
 
 #[derive(Debug, Deserialize)]
 pub(super) struct BuildCodegen {
-    pub(super) target: BuildTarget,
+    pub(super) target: String,
     pub(super) out: PathBuf,
     pub(super) scope: Option<String>,
     #[serde(default)]
@@ -106,16 +105,6 @@ impl<'de> Deserialize<'de> for ExportCompressionArg {
     }
 }
 
-impl<'de> Deserialize<'de> for BuildTarget {
-    fn deserialize<D>(deserializer: D) -> std::result::Result<Self, D::Error>
-    where
-        D: serde::Deserializer<'de>,
-    {
-        let value = String::deserialize(deserializer)?;
-        Self::from_str(&value).map_err(serde::de::Error::custom)
-    }
-}
-
 impl<'de> Deserialize<'de> for CodeFormatMode {
     fn deserialize<D>(deserializer: D) -> std::result::Result<Self, D::Error>
     where
@@ -129,76 +118,6 @@ impl<'de> Deserialize<'de> for CodeFormatMode {
             _ => Err(serde::de::Error::custom(format!(
                 "unsupported code format mode `{value}`; expected never, auto, or required"
             ))),
-        }
-    }
-}
-
-impl BuildTarget {
-    pub(super) fn from_str(value: &str) -> std::result::Result<Self, String> {
-        match value {
-            "rust" => Ok(Self::Rust),
-            "kotlin" => Ok(Self::Kotlin),
-            "csharp" | "cs" => Ok(Self::Csharp),
-            "java" => Ok(Self::Java),
-            "scala" => Ok(Self::Scala),
-            "go" => Ok(Self::Go),
-            "dart" => Ok(Self::Dart),
-            "godot" | "gdscript" => Ok(Self::Godot),
-            "c" => Ok(Self::C),
-            "cpp" | "c++" => Ok(Self::Cpp),
-            "typescript" | "ts" => Ok(Self::Typescript),
-            "javascript" | "js" => Ok(Self::Javascript),
-            "erlang" | "erl" => Ok(Self::Erlang),
-            "lua" => Ok(Self::Lua),
-            "proto-schema" => Ok(Self::ProtoSchema),
-            "python" | "py" => Ok(Self::Python),
-            _ => Err(format!(
-                "unsupported codegen target `{value}`; expected rust, kotlin, csharp, java, scala, go, dart, godot, c, cpp, typescript, javascript, erlang, lua, proto-schema, or python"
-            )),
-        }
-    }
-
-    pub(super) fn as_str(self) -> &'static str {
-        match self {
-            Self::Rust => "rust",
-            Self::Kotlin => "kotlin",
-            Self::Csharp => "csharp",
-            Self::Java => "java",
-            Self::Scala => "scala",
-            Self::Go => "go",
-            Self::Dart => "dart",
-            Self::Godot => "godot",
-            Self::C => "c",
-            Self::Cpp => "cpp",
-            Self::Typescript => "typescript",
-            Self::Javascript => "javascript",
-            Self::Erlang => "erlang",
-            Self::Lua => "lua",
-            Self::ProtoSchema => "proto-schema",
-            Self::Python => "python",
-        }
-    }
-}
-
-impl From<BuildTarget> for CodegenTarget {
-    fn from(value: BuildTarget) -> Self {
-        match value {
-            BuildTarget::Rust => Self::Rust,
-            BuildTarget::Kotlin => Self::Kotlin,
-            BuildTarget::Csharp => Self::CSharp,
-            BuildTarget::Java => Self::Java,
-            BuildTarget::Scala => Self::Scala,
-            BuildTarget::Go => Self::Go,
-            BuildTarget::Dart => Self::Dart,
-            BuildTarget::Godot => Self::Godot,
-            BuildTarget::C => Self::C,
-            BuildTarget::Cpp => Self::Cpp,
-            BuildTarget::Typescript => Self::TypeScript,
-            BuildTarget::Javascript => Self::JavaScript,
-            BuildTarget::Erlang => Self::Erlang,
-            BuildTarget::Lua => Self::Lua,
-            BuildTarget::ProtoSchema => Self::ProtoSchema,
-            BuildTarget::Python => Self::Python,
         }
     }
 }

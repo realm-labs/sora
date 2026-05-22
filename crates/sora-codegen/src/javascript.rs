@@ -2,26 +2,29 @@ use std::path::Path;
 
 use minijinja::context;
 use sora_diagnostics::Result;
-use sora_ir::model::ConfigIr;
 
 use crate::{
     ecmascript::{EcmaScriptModel, EcmaScriptOptionsView, EcmaScriptTarget},
-    generator::{CodeGenerator, runtime_format_name},
+    generator::{CodeGenerator, CodegenContext, runtime_format_name},
     model::build_base_model,
+    options::JavaScriptCodegenOptions,
     render::{ensure_dir, render_template, write_file},
 };
 
 pub struct JavaScriptCodeGenerator;
+crate::impl_test_codegen_generate!(JavaScriptCodeGenerator, "javascript");
 
 impl CodeGenerator for JavaScriptCodeGenerator {
-    fn generate(&self, ir: &ConfigIr, out_dir: &Path) -> Result<()> {
+    fn generate(&self, context: CodegenContext<'_>, out_dir: &Path) -> Result<()> {
+        let ir = context.ir;
+        let codegen_options = context.options::<JavaScriptCodegenOptions>()?;
         ensure_dir(out_dir)?;
-        let runtime_format = runtime_format_name(ir.codegen.javascript.runtime_format);
+        let runtime_format = runtime_format_name(codegen_options.runtime_format);
 
         let options = EcmaScriptOptionsView::new(
             EcmaScriptTarget::JavaScript,
-            ir.codegen.javascript.enum_repr,
-            ir.codegen.javascript.emit_dts,
+            codegen_options.enum_repr,
+            codegen_options.emit_dts,
         );
         let model = EcmaScriptModel::from_base_model(ir, build_base_model(ir)?);
 
@@ -135,7 +138,8 @@ impl CodeGenerator for JavaScriptCodeGenerator {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use sora_ir::{model::EnumReprIr, normalize::normalize_schema};
+    use crate::options::{EnumRepr, JavaScriptCodegenOptions, RuntimeFormat};
+    use sora_ir::{model::ConfigIr, normalize::normalize_schema};
     use sora_schema::model::SchemaFile;
     use std::{
         path::PathBuf,
@@ -183,12 +187,20 @@ mod tests {
 
     #[test]
     fn javascript_can_skip_declarations_and_use_integer_enums() {
-        let mut ir = example_ir();
-        ir.codegen.javascript.emit_dts = false;
-        ir.codegen.javascript.enum_repr = EnumReprIr::Integer;
+        let ir = example_ir();
         let base = temp_dir();
 
-        JavaScriptCodeGenerator.generate(&ir, &base).unwrap();
+        JavaScriptCodeGenerator
+            .generate_with_options(
+                &ir,
+                JavaScriptCodegenOptions {
+                    enum_repr: EnumRepr::Integer,
+                    emit_dts: false,
+                    ..Default::default()
+                },
+                &base,
+            )
+            .unwrap();
 
         let item_type = std::fs::read_to_string(base.join("item_type.js")).unwrap();
         assert!(item_type.contains("Weapon: 0"));
@@ -201,27 +213,27 @@ mod tests {
     #[test]
     fn javascript_supports_export_runtime_formats() {
         for (format, parse_fn, decode_fn) in [
+            (RuntimeFormat::Json, "static parseJson", "decodeItemValue"),
+            (RuntimeFormat::Cbor, "static parseCbor", "decodeItemValue"),
             (
-                sora_ir::model::RuntimeFormatIr::Json,
-                "static parseJson",
-                "decodeItemValue",
-            ),
-            (
-                sora_ir::model::RuntimeFormatIr::Cbor,
-                "static parseCbor",
-                "decodeItemValue",
-            ),
-            (
-                sora_ir::model::RuntimeFormatIr::SoraProtobuf,
+                RuntimeFormat::SoraProtobuf,
                 "static parseProtobuf",
                 "decodeItemValue",
             ),
         ] {
-            let mut ir = example_ir();
-            ir.codegen.javascript.runtime_format = format;
+            let ir = example_ir();
             let base = temp_dir();
 
-            JavaScriptCodeGenerator.generate(&ir, &base).unwrap();
+            JavaScriptCodeGenerator
+                .generate_with_options(
+                    &ir,
+                    JavaScriptCodegenOptions {
+                        runtime_format: format,
+                        ..Default::default()
+                    },
+                    &base,
+                )
+                .unwrap();
 
             let config = std::fs::read_to_string(base.join("sora_config.js")).unwrap();
             let runtime = std::fs::read_to_string(base.join("sora_runtime.js")).unwrap();
@@ -239,10 +251,10 @@ mod tests {
             assert!(item_dts.contains("decodeItemValue(value: SoraValue)"));
             assert!(runtime_dts.contains("export declare class SoraValueBundle"));
             assert!(runtime_dts.contains("export interface SoraTableSource"));
-            if format == sora_ir::model::RuntimeFormatIr::Cbor {
+            if format == RuntimeFormat::Cbor {
                 assert!(runtime.contains("from \"cbor-x\""));
             }
-            if format == sora_ir::model::RuntimeFormatIr::SoraProtobuf {
+            if format == RuntimeFormat::SoraProtobuf {
                 assert!(runtime.contains("from \"protobufjs\""));
                 assert!(runtime.contains("new protobuf.Type(\"Bundle\")"));
             }

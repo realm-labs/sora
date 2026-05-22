@@ -5,7 +5,6 @@ use std::{
     time::{SystemTime, UNIX_EPOCH},
 };
 
-use sora_codegen::target::CodegenTarget;
 use sora_export::exporter::ExportOutput;
 use sora_input_toml::input::{TomlProjectInput, TomlSchemaInput};
 
@@ -39,8 +38,7 @@ fn generated_rust_runtime_compiles_and_loads_config_bundles() {
         let generated_src = generated_dir.join("src/generated");
 
         let schema_input = TomlSchemaInput::new(&project_path);
-        sora_core::pipeline::generate_code(&schema_input, CodegenTarget::Rust, &generated_src)
-            .unwrap();
+        sora_core::pipeline::generate_code(&schema_input, "rust", &generated_src).unwrap();
 
         let project_input = TomlProjectInput::new(&project_path, base.join("data"));
         sora_core::pipeline::export_data(

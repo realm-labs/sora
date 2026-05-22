@@ -23,8 +23,11 @@ pub enum Command {
     Build(BuildArgs),
     Check(CheckArgs),
     Gen {
-        #[command(subcommand)]
-        target: GenCommand,
+        #[arg(long)]
+        target: String,
+
+        #[command(flatten)]
+        args: GenArgs,
     },
     Export(ExportArgs),
     Diff(DiffArgs),
@@ -39,27 +42,6 @@ pub struct CheckArgs {
 
     #[arg(long)]
     pub lock: Option<PathBuf>,
-}
-
-#[derive(Debug, Subcommand)]
-pub enum GenCommand {
-    Rust(GenArgs),
-    Kotlin(GenArgs),
-    Csharp(GenArgs),
-    Java(GenArgs),
-    Scala(GenArgs),
-    Go(GenArgs),
-    Dart(GenArgs),
-    Godot(GenArgs),
-    C(GenArgs),
-    Cpp(GenArgs),
-    Typescript(GenArgs),
-    Javascript(GenArgs),
-    Erlang(GenArgs),
-    Lua(GenArgs),
-    #[command(name = "proto-schema")]
-    ProtoSchema(GenArgs),
-    Python(GenArgs),
 }
 
 #[derive(Debug, Args)]
@@ -91,8 +73,8 @@ pub struct BuildArgs {
     #[arg(long)]
     pub scope: Option<String>,
 
-    #[arg(long, value_enum)]
-    pub target: Vec<BuildTarget>,
+    #[arg(long)]
+    pub target: Vec<String>,
 
     #[arg(long)]
     pub clean: bool,
@@ -167,26 +149,6 @@ impl SourceFormatArg {
             Self::Xlsx => "xlsx",
         }
     }
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, clap::ValueEnum)]
-pub enum BuildTarget {
-    Rust,
-    Kotlin,
-    Csharp,
-    Java,
-    Scala,
-    Go,
-    Dart,
-    Godot,
-    C,
-    Cpp,
-    Typescript,
-    Javascript,
-    Erlang,
-    Lua,
-    ProtoSchema,
-    Python,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default, clap::ValueEnum)]

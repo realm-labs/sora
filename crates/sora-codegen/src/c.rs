@@ -4,25 +4,29 @@ use heck::{ToShoutySnakeCase, ToSnakeCase};
 use minijinja::context;
 use serde::Serialize;
 use sora_diagnostics::{Result, SoraError};
-use sora_ir::model::{CStandardIr, ConfigIr, TypeIr};
+use sora_ir::model::{ConfigIr, TypeIr};
 
 use crate::{
-    generator::{CodeGenerator, ensure_sora_runtime_format},
+    generator::{CodeGenerator, CodegenContext, ensure_sora_runtime_format},
     model::{
         BaseField, BaseImport, BaseIndex, BaseModel, BaseRecord, BaseTable, BaseUnion,
         BaseUnionVariant, build_base_model,
     },
+    options::{CCodegenOptions, CStandard},
     render::{ensure_dir, render_template, write_file},
 };
 
 pub struct CCodeGenerator;
+crate::impl_test_codegen_generate!(CCodeGenerator, "c");
 
 impl CodeGenerator for CCodeGenerator {
-    fn generate(&self, ir: &ConfigIr, out_dir: &Path) -> Result<()> {
-        ensure_sora_runtime_format("c", ir.codegen.c.runtime_format)?;
+    fn generate(&self, context: CodegenContext<'_>, out_dir: &Path) -> Result<()> {
+        let ir = context.ir;
+        let codegen_options = context.options::<CCodegenOptions>()?;
+        ensure_sora_runtime_format("c", codegen_options.runtime_format)?;
         ensure_dir(out_dir)?;
 
-        let options = COptionsView::new(ir)?;
+        let options = COptionsView::new(ir, &codegen_options)?;
         let mut helpers = CHelperRegistry::new(options.prefix.clone());
         let model = CModel::from_base_model(ir, build_base_model(ir)?, &options, &mut helpers);
         let helpers = helpers.into_helpers();
@@ -113,10 +117,8 @@ struct COptionsView {
 }
 
 impl COptionsView {
-    fn new(ir: &ConfigIr) -> Result<Self> {
-        let prefix = ir
-            .codegen
-            .c
+    fn new(ir: &ConfigIr, codegen_options: &CCodegenOptions) -> Result<Self> {
+        let prefix = codegen_options
             .prefix
             .clone()
             .unwrap_or_else(|| ir.package.replace('.', "_").to_snake_case());
@@ -128,7 +130,7 @@ impl COptionsView {
         Ok(Self {
             prefix_upper: prefix.to_shouty_snake_case(),
             prefix,
-            standard_name: c_standard_name(ir.codegen.c.c_standard),
+            standard_name: c_standard_name(codegen_options.c_standard),
         })
     }
 }
@@ -971,12 +973,12 @@ fn c_free_fn(options: &COptionsView, snake_name: &str) -> String {
     format!("{}_{}_free", options.prefix, snake_name)
 }
 
-fn c_standard_name(standard: CStandardIr) -> &'static str {
+fn c_standard_name(standard: CStandard) -> &'static str {
     match standard {
-        CStandardIr::C99 => "c99",
-        CStandardIr::C11 => "c11",
-        CStandardIr::C17 => "c17",
-        CStandardIr::C23 => "c23",
+        CStandard::C99 => "c99",
+        CStandard::C11 => "c11",
+        CStandard::C17 => "c17",
+        CStandard::C23 => "c23",
     }
 }
 

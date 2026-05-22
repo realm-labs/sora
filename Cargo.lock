@@ -613,6 +613,7 @@ dependencies = [
  "heck",
  "minijinja",
  "serde",
+ "serde_json",
  "sora-diagnostics",
  "sora-ir",
  "sora-schema",
@@ -768,6 +769,7 @@ name = "sora-schema"
 version = "0.1.0"
 dependencies = [
  "serde",
+ "serde_json",
  "toml",
 ]
 

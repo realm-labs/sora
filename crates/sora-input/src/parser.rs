@@ -711,7 +711,6 @@ mod tests {
         let registry = ParserRegistry::builtin();
         let ir = ConfigIr {
             package: "test".to_owned(),
-            codegen: Default::default(),
             enums: Vec::new(),
             structs: Vec::new(),
             unions: Vec::new(),
@@ -751,7 +750,6 @@ mod tests {
         let registry = ParserRegistry::builtin();
         let ir = ConfigIr {
             package: "test".to_owned(),
-            codegen: Default::default(),
             enums: Vec::new(),
             structs: Vec::new(),
             unions: Vec::new(),
@@ -795,7 +793,6 @@ mod tests {
         registry.register(UpperParser);
         let ir = ConfigIr {
             package: "test".to_owned(),
-            codegen: Default::default(),
             enums: Vec::new(),
             structs: Vec::new(),
             unions: Vec::new(),
@@ -830,7 +827,6 @@ mod tests {
         registry.register(UpperParser);
         let ir = ConfigIr {
             package: "test".to_owned(),
-            codegen: Default::default(),
             enums: Vec::new(),
             structs: Vec::new(),
             unions: Vec::new(),

@@ -1,9 +1,13 @@
 use heck::ToLowerCamelCase;
 use serde::Serialize;
-use sora_ir::model::{ConfigIr, EnumReprIr, TypeIr};
+use sora_ir::model::{ConfigIr, TypeIr};
 
-use crate::model::{
-    BaseField, BaseImport, BaseIndex, BaseModel, BaseRecord, BaseTable, BaseUnion, BaseUnionVariant,
+use crate::{
+    model::{
+        BaseField, BaseImport, BaseIndex, BaseModel, BaseRecord, BaseTable, BaseUnion,
+        BaseUnionVariant,
+    },
+    options::EnumRepr,
 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -20,10 +24,10 @@ pub struct EcmaScriptOptionsView {
 }
 
 impl EcmaScriptOptionsView {
-    pub fn new(target: EcmaScriptTarget, enum_repr: EnumReprIr, emit_dts: bool) -> Self {
+    pub fn new(target: EcmaScriptTarget, enum_repr: EnumRepr, emit_dts: bool) -> Self {
         Self {
             import_ext: ".js",
-            enum_is_integer: enum_repr == EnumReprIr::Integer,
+            enum_is_integer: enum_repr == EnumRepr::Integer,
             emit_dts: target == EcmaScriptTarget::JavaScript && emit_dts,
         }
     }

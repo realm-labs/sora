@@ -17,7 +17,6 @@ pub fn filter_config_ir_by_scope(ir: &ConfigIr, target: &str) -> Result<ConfigIr
 
     let mut filtered = ConfigIr {
         package: ir.package.clone(),
-        codegen: ir.codegen.clone(),
         enums: ir
             .enums
             .iter()

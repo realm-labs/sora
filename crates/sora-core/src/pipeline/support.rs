@@ -7,10 +7,16 @@ use sora_ir::{
     model::ConfigIr, normalize::normalize_schema, scope::filter_config_ir_by_scope,
     validate::validate_config_ir,
 };
-pub(super) fn load_ir(input: &impl SchemaInput) -> Result<ConfigIr> {
-    let ir = normalize_schema(input.load_schema()?)?;
+use sora_schema::model::SchemaFile;
+
+pub(super) fn validate_schema_ir(schema: SchemaFile) -> Result<ConfigIr> {
+    let ir = normalize_schema(schema)?;
     validate_config_ir(&ir)?;
     Ok(ir)
+}
+
+pub(super) fn load_ir(input: &impl SchemaInput) -> Result<ConfigIr> {
+    validate_schema_ir(input.load_schema()?)
 }
 
 pub(super) fn load_ir_with_scope(

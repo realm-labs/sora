@@ -7,23 +7,27 @@ use sora_diagnostics::{Result, SoraError};
 use sora_ir::model::{ConfigIr, TableModeIr, TypeIr};
 
 use crate::{
-    generator::{CodeGenerator, runtime_format_name},
+    generator::{CodeGenerator, CodegenContext, runtime_format_name},
     model::{
         BaseField, BaseIndex, BaseModel, BaseRecord, BaseTable, BaseUnion, BaseUnionVariant,
         build_base_model,
     },
+    options::LanguageCodegenOptions,
     render::{ensure_dir, render_template, write_file},
     types::java_type_name,
 };
 
 pub struct JavaCodeGenerator;
+crate::impl_test_codegen_generate!(JavaCodeGenerator, "java");
 
 impl CodeGenerator for JavaCodeGenerator {
-    fn generate(&self, ir: &ConfigIr, out_dir: &Path) -> Result<()> {
+    fn generate(&self, context: CodegenContext<'_>, out_dir: &Path) -> Result<()> {
+        let ir = context.ir;
+        let options = context.options::<LanguageCodegenOptions>()?;
         ensure_dir(out_dir)?;
         let model = JavaModel::from_base_model(ir, build_base_model(ir)?);
         let package_dir = java_package_dir(out_dir, &model.package)?;
-        let runtime_format = runtime_format_name(ir.codegen.java.runtime_format);
+        let runtime_format = runtime_format_name(options.runtime_format);
 
         for item in &model.enums {
             let rendered = render_template(

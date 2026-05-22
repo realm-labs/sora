@@ -4,25 +4,29 @@ use heck::ToSnakeCase;
 use minijinja::context;
 use serde::Serialize;
 use sora_diagnostics::Result;
-use sora_ir::model::{ConfigIr, RustStringStorageIr, TableModeIr, TypeIr};
+use sora_ir::model::{ConfigIr, TableModeIr, TypeIr};
 
 use crate::{
-    generator::{CodeGenerator, runtime_format_name},
+    generator::{CodeGenerator, CodegenContext, runtime_format_name},
     model::{
         BaseField, BaseImport, BaseIndex, BaseModel, BaseRecord, BaseTable, BaseUnion,
         BaseUnionVariant, build_base_model,
     },
+    options::{RustCodegenOptions, RustMapType, RustStringStorage},
     render::{ensure_dir, render_template, write_file},
-    types::rust_type_name,
+    types::rust_type_name_with_options,
 };
 
 pub struct RustCodeGenerator;
+crate::impl_test_codegen_generate!(RustCodeGenerator, "rust");
 
 impl CodeGenerator for RustCodeGenerator {
-    fn generate(&self, ir: &ConfigIr, out_dir: &Path) -> Result<()> {
+    fn generate(&self, context: CodegenContext<'_>, out_dir: &Path) -> Result<()> {
+        let ir = context.ir;
+        let options = context.options::<RustCodegenOptions>()?;
         ensure_dir(out_dir)?;
-        let model = RustModel::from_base_model(ir, build_base_model(ir)?);
-        let runtime_format = runtime_format_name(ir.codegen.rust.runtime_format);
+        let model = RustModel::from_base_model(ir, build_base_model(ir)?, &options);
+        let runtime_format = runtime_format_name(options.runtime_format);
 
         for item in &model.enums {
             let rendered = render_template("rust", "enum.rs.j2", context! { enum => item })?;
@@ -42,9 +46,9 @@ impl CodeGenerator for RustCodeGenerator {
             write_file(&out_dir.join(format!("{}.rs", union.snake_name)), rendered)?;
         }
 
-        let rust_map_type = match ir.codegen.rust.map_type {
-            sora_ir::model::RustMapTypeIr::Std => "std",
-            sora_ir::model::RustMapTypeIr::FxHashMap => "fx_hash_map",
+        let rust_map_type = match options.map_type {
+            RustMapType::Std => "std",
+            RustMapType::FxHashMap => "fx_hash_map",
         };
         let rendered = render_template(
             "rust",
@@ -58,7 +62,7 @@ impl CodeGenerator for RustCodeGenerator {
             "runtime.rs.j2",
             context! {
                 runtime_format => runtime_format,
-                string_storage => rust_string_storage_name(ir.codegen.rust.string_storage),
+                string_storage => rust_string_storage_name(options.string_storage),
             },
         )?;
         write_file(&out_dir.join("runtime.rs"), rendered)
@@ -157,11 +161,11 @@ struct RustField {
 }
 
 impl RustModel {
-    fn from_base_model(ir: &ConfigIr, model: BaseModel) -> Self {
+    fn from_base_model(ir: &ConfigIr, model: BaseModel, options: &RustCodegenOptions) -> Self {
         let tables = model
             .tables
             .into_iter()
-            .map(|item| rust_table(ir, item))
+            .map(|item| rust_table(ir, item, options))
             .collect::<Vec<_>>();
         Self {
             package: model.package,
@@ -178,7 +182,7 @@ impl RustModel {
             unions: model
                 .unions
                 .into_iter()
-                .map(|item| rust_union(ir, item))
+                .map(|item| rust_union(ir, item, options))
                 .collect(),
             records: model
                 .records
@@ -188,7 +192,7 @@ impl RustModel {
                         .iter()
                         .find(|table| table.snake_name == item.snake_name)
                         .cloned();
-                    rust_record(ir, item, table)
+                    rust_record(ir, item, table, options)
                 })
                 .collect(),
             has_map_tables: tables
@@ -208,7 +212,7 @@ impl RustModel {
     }
 }
 
-fn rust_union(ir: &ConfigIr, union: BaseUnion) -> RustUnion {
+fn rust_union(ir: &ConfigIr, union: BaseUnion, options: &RustCodegenOptions) -> RustUnion {
     RustUnion {
         pascal_name: union.pascal_name,
         snake_name: union.snake_name,
@@ -216,24 +220,33 @@ fn rust_union(ir: &ConfigIr, union: BaseUnion) -> RustUnion {
         variants: union
             .variants
             .into_iter()
-            .map(|variant| rust_variant(ir, variant))
+            .map(|variant| rust_variant(ir, variant, options))
             .collect(),
         imports: union.imports.into_iter().map(rust_import).collect(),
     }
 }
 
-fn rust_variant(ir: &ConfigIr, variant: BaseUnionVariant) -> RustUnionVariant {
+fn rust_variant(
+    ir: &ConfigIr,
+    variant: BaseUnionVariant,
+    options: &RustCodegenOptions,
+) -> RustUnionVariant {
     RustUnionVariant {
         name: variant.pascal_name,
         fields: variant
             .fields
             .into_iter()
-            .map(|field| rust_field(ir, field))
+            .map(|field| rust_field(ir, field, options))
             .collect(),
     }
 }
 
-fn rust_record(ir: &ConfigIr, record: BaseRecord, table: Option<RustTable>) -> RustRecord {
+fn rust_record(
+    ir: &ConfigIr,
+    record: BaseRecord,
+    table: Option<RustTable>,
+    options: &RustCodegenOptions,
+) -> RustRecord {
     RustRecord {
         pascal_name: record.pascal_name,
         snake_name: record.snake_name,
@@ -241,24 +254,24 @@ fn rust_record(ir: &ConfigIr, record: BaseRecord, table: Option<RustTable>) -> R
         fields: record
             .fields
             .into_iter()
-            .map(|field| rust_field(ir, field))
+            .map(|field| rust_field(ir, field, options))
             .collect(),
         table,
     }
 }
 
-fn rust_table(ir: &ConfigIr, table: BaseTable) -> RustTable {
+fn rust_table(ir: &ConfigIr, table: BaseTable, options: &RustCodegenOptions) -> RustTable {
     let row_type = table.pascal_name.clone();
     let row_path = format!("{}::{}", table.snake_name, table.pascal_name);
     let table_path = format!("{}::{}Table", table.snake_name, table.pascal_name);
     let key_type = table
         .key_field
         .as_ref()
-        .map(|field| rust_local_table_key_type(ir, &field.ty));
+        .map(|field| rust_local_table_key_type(ir, &field.ty, options));
     let key_param_type = table
         .key_field
         .as_ref()
-        .map(|field| rust_key_param_type(ir, &field.ty));
+        .map(|field| rust_key_param_type(ir, &field.ty, options));
     let container_type = rust_container_type(table.mode, &row_type, key_type.as_deref());
     let key_field_name = table
         .key_field
@@ -286,33 +299,33 @@ fn rust_table(ir: &ConfigIr, table: BaseTable) -> RustTable {
         unique_indexes: table
             .unique_indexes
             .into_iter()
-            .map(|index| rust_index(ir, index))
+            .map(|index| rust_index(ir, index, options))
             .collect(),
         non_unique_indexes: table
             .non_unique_indexes
             .into_iter()
-            .map(|index| rust_index(ir, index))
+            .map(|index| rust_index(ir, index, options))
             .collect(),
     }
 }
 
-fn rust_index(ir: &ConfigIr, index: BaseIndex) -> RustIndex {
+fn rust_index(ir: &ConfigIr, index: BaseIndex, options: &RustCodegenOptions) -> RustIndex {
     RustIndex {
         name: index.snake_name,
         method_name: index.method_name,
         field_name: index.field.snake_name.clone(),
         param_name: index.field.snake_name.clone(),
-        param_type: rust_key_param_type(ir, &index.field.ty),
-        key_type: rust_local_table_key_type(ir, &index.field.ty),
+        param_type: rust_key_param_type(ir, &index.field.ty, options),
+        key_type: rust_local_table_key_type(ir, &index.field.ty, options),
         key_is_copy: rust_key_type_is_copy(ir, &index.field.ty),
     }
 }
 
-fn rust_field(ir: &ConfigIr, field: BaseField) -> RustField {
+fn rust_field(ir: &ConfigIr, field: BaseField, options: &RustCodegenOptions) -> RustField {
     RustField {
         raw_name: field.raw_name,
         name: field.snake_name,
-        type_name: rust_type_name(ir, &field.ty),
+        type_name: rust_type_name_with_options(ir, &field.ty, options),
         comment: field.comment,
     }
 }
@@ -335,8 +348,8 @@ fn rust_container_type(mode: TableModeIr, row_type: &str, key_type: Option<&str>
     }
 }
 
-fn rust_key_param_type(ir: &ConfigIr, ty: &TypeIr) -> String {
-    let type_name = rust_local_table_key_type(ir, ty);
+fn rust_key_param_type(ir: &ConfigIr, ty: &TypeIr, options: &RustCodegenOptions) -> String {
+    let type_name = rust_local_table_key_type(ir, ty, options);
     if type_name == "String" || type_name == "std::sync::Arc<str>" {
         "str".to_owned()
     } else {
@@ -344,7 +357,7 @@ fn rust_key_param_type(ir: &ConfigIr, ty: &TypeIr) -> String {
     }
 }
 
-fn rust_local_table_key_type(ir: &ConfigIr, ty: &TypeIr) -> String {
+fn rust_local_table_key_type(ir: &ConfigIr, ty: &TypeIr, options: &RustCodegenOptions) -> String {
     match ty {
         TypeIr::Ref { table, field } => ir
             .tables
@@ -356,9 +369,9 @@ fn rust_local_table_key_type(ir: &ConfigIr, ty: &TypeIr) -> String {
                     .iter()
                     .find(|candidate| candidate.name == *field)
             })
-            .map(|field| rust_local_table_key_type(ir, &field.ty))
-            .unwrap_or_else(|| rust_type_name(ir, ty)),
-        _ => rust_type_name(ir, ty),
+            .map(|field| rust_local_table_key_type(ir, &field.ty, options))
+            .unwrap_or_else(|| rust_type_name_with_options(ir, ty, options)),
+        _ => rust_type_name_with_options(ir, ty, options),
     }
 }
 
@@ -389,9 +402,9 @@ fn rust_key_type_is_copy(ir: &ConfigIr, ty: &TypeIr) -> bool {
     }
 }
 
-fn rust_string_storage_name(storage: RustStringStorageIr) -> &'static str {
+fn rust_string_storage_name(storage: RustStringStorage) -> &'static str {
     match storage {
-        RustStringStorageIr::Owned => "owned",
-        RustStringStorageIr::Arc => "arc",
+        RustStringStorage::Owned => "owned",
+        RustStringStorage::Arc => "arc",
     }
 }

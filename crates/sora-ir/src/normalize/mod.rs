@@ -6,8 +6,8 @@ use sora_schema::model::{
 
 use crate::{
     model::{
-        AggregationIr, CodegenIr, ConfigIr, EnumAliasIr, EnumIr, FieldIr, IndexIr, ParserIr,
-        ScopeIr, StructIr, TableIr, TableModeIr, TableSourceIr, TypeIr, UnionIr, UnionVariantIr,
+        AggregationIr, ConfigIr, EnumAliasIr, EnumIr, FieldIr, IndexIr, ParserIr, ScopeIr,
+        StructIr, TableIr, TableModeIr, TableSourceIr, TypeIr, UnionIr, UnionVariantIr,
     },
     parse::parse_type,
     parser::ParserRegistry,
@@ -23,7 +23,6 @@ pub fn normalize_schema_with_parsers(
 ) -> Result<ConfigIr> {
     Ok(ConfigIr {
         package: schema.package,
-        codegen: CodegenIr::from(schema.codegen),
         enums: schema
             .enums
             .into_iter()
@@ -67,8 +66,6 @@ impl TryFrom<SchemaFile> for ConfigIr {
         normalize_schema(schema)
     }
 }
-
-mod codegen;
 
 impl TryFrom<UnionSchema> for UnionIr {
     type Error = SoraError;

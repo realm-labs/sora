@@ -7,22 +7,26 @@ use sora_diagnostics::{Result, SoraError};
 use sora_ir::model::{ConfigIr, TypeIr};
 
 use crate::{
-    generator::{CodeGenerator, runtime_format_name},
+    generator::{CodeGenerator, CodegenContext, runtime_format_name},
     model::{
         BaseField, BaseImport, BaseIndex, BaseModel, BaseRecord, BaseTable, BaseUnion,
         BaseUnionVariant, build_base_model,
     },
+    options::LanguageCodegenOptions,
     render::{ensure_dir, render_template, write_file},
 };
 
 pub struct PythonCodeGenerator;
+crate::impl_test_codegen_generate!(PythonCodeGenerator, "python");
 
 impl CodeGenerator for PythonCodeGenerator {
-    fn generate(&self, ir: &ConfigIr, out_dir: &Path) -> Result<()> {
+    fn generate(&self, context: CodegenContext<'_>, out_dir: &Path) -> Result<()> {
+        let ir = context.ir;
+        let options = context.options::<LanguageCodegenOptions>()?;
         ensure_dir(out_dir)?;
 
         let model = PythonModel::from_base_model(ir, build_base_model(ir)?);
-        let runtime_format = runtime_format_name(ir.codegen.python.runtime_format);
+        let runtime_format = runtime_format_name(options.runtime_format);
         validate_python_model(&model)?;
 
         for item in &model.enums {
@@ -568,6 +572,7 @@ fn is_python_keyword(value: &str) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::options::{LanguageCodegenOptions, RuntimeFormat};
     use sora_ir::normalize::normalize_schema;
     use sora_schema::model::SchemaFile;
     use std::{
@@ -620,18 +625,16 @@ mod tests {
     #[test]
     fn python_supports_export_runtime_formats() {
         for (runtime_format, parse_function) in [
-            (sora_ir::model::RuntimeFormatIr::Json, "parse_json"),
-            (sora_ir::model::RuntimeFormatIr::Cbor, "parse_cbor"),
-            (
-                sora_ir::model::RuntimeFormatIr::SoraProtobuf,
-                "parse_protobuf",
-            ),
+            (RuntimeFormat::Json, "parse_json"),
+            (RuntimeFormat::Cbor, "parse_cbor"),
+            (RuntimeFormat::SoraProtobuf, "parse_protobuf"),
         ] {
-            let mut ir = example_ir();
-            ir.codegen.python.runtime_format = runtime_format;
+            let ir = example_ir();
             let base = temp_dir();
 
-            PythonCodeGenerator.generate(&ir, &base).unwrap();
+            PythonCodeGenerator
+                .generate_with_options(&ir, LanguageCodegenOptions { runtime_format }, &base)
+                .unwrap();
 
             let item = std::fs::read_to_string(base.join("item.py")).unwrap();
             let item_type = std::fs::read_to_string(base.join("item_type.py")).unwrap();

@@ -3,26 +3,30 @@ use std::path::{Path, PathBuf};
 use minijinja::context;
 use serde::Serialize;
 use sora_diagnostics::{Result, SoraError};
-use sora_ir::model::{ConfigIr, ScalaVersionIr, TableModeIr, TypeIr};
+use sora_ir::model::{ConfigIr, TableModeIr, TypeIr};
 
 use crate::{
-    generator::{CodeGenerator, ensure_sora_runtime_format},
+    generator::{CodeGenerator, CodegenContext, ensure_sora_runtime_format},
     model::{
         BaseField, BaseIndex, BaseModel, BaseRecord, BaseTable, BaseUnion, BaseUnionVariant,
         build_base_model,
     },
+    options::{ScalaCodegenOptions, ScalaVersion},
     render::{ensure_dir, render_template, write_file},
     types::scala_type_name,
 };
 
 pub struct ScalaCodeGenerator;
+crate::impl_test_codegen_generate!(ScalaCodeGenerator, "scala");
 
 impl CodeGenerator for ScalaCodeGenerator {
-    fn generate(&self, ir: &ConfigIr, out_dir: &Path) -> Result<()> {
-        ensure_sora_runtime_format("scala", ir.codegen.scala.runtime_format)?;
+    fn generate(&self, context: CodegenContext<'_>, out_dir: &Path) -> Result<()> {
+        let ir = context.ir;
+        let codegen_options = context.options::<ScalaCodegenOptions>()?;
+        ensure_sora_runtime_format("scala", codegen_options.runtime_format)?;
         ensure_dir(out_dir)?;
 
-        let model = ScalaModel::from_base_model(ir, build_base_model(ir)?);
+        let model = ScalaModel::from_base_model(ir, build_base_model(ir)?, &codegen_options);
         let package_dir = scala_package_dir(out_dir, &model.package)?;
 
         for item in &model.enums {
@@ -140,8 +144,12 @@ struct ScalaField {
 }
 
 impl ScalaModel {
-    fn from_base_model(ir: &ConfigIr, model: BaseModel) -> Self {
-        let is_scala3 = ir.codegen.scala.scala_version == ScalaVersionIr::Scala3;
+    fn from_base_model(
+        ir: &ConfigIr,
+        model: BaseModel,
+        codegen_options: &ScalaCodegenOptions,
+    ) -> Self {
+        let is_scala3 = codegen_options.scala_version == ScalaVersion::Scala3;
         let tables = model
             .tables
             .into_iter()

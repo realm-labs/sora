@@ -6,8 +6,6 @@ use std::{
 
 use sora_diagnostics::{Result, SoraError};
 
-use crate::target::CodegenTarget;
-
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum FormatMode {
     Never,
@@ -15,8 +13,33 @@ pub enum FormatMode {
     Required,
 }
 
+#[derive(Debug, Clone, Copy)]
+pub struct FormatterConfig {
+    pub language: &'static str,
+    pub command: &'static str,
+    pub args: &'static [&'static str],
+    pub extensions: &'static [&'static str],
+}
+
+impl FormatterConfig {
+    pub const fn new(
+        language: &'static str,
+        command: &'static str,
+        args: &'static [&'static str],
+        extensions: &'static [&'static str],
+    ) -> Self {
+        Self {
+            language,
+            command,
+            args,
+            extensions,
+        }
+    }
+}
+
 pub fn format_generated_code(
-    target: CodegenTarget,
+    language: &'static str,
+    formatter: Option<FormatterConfig>,
     out_dir: &Path,
     mode: FormatMode,
 ) -> Result<()> {
@@ -24,11 +47,11 @@ pub fn format_generated_code(
         return Ok(());
     }
 
-    let Some(formatter) = Formatter::for_target(target) else {
+    let Some(formatter) = formatter else {
         return match mode {
             FormatMode::Never | FormatMode::Auto => Ok(()),
             FormatMode::Required => Err(format_error(
-                target.language_name(),
+                language,
                 "<none>",
                 "no formatter is configured for this codegen target",
             )),
@@ -65,71 +88,6 @@ pub fn format_generated_code(
 
     let message = command_output_message(&output.stdout, &output.stderr);
     Err(format_error(formatter.language, formatter.command, message))
-}
-
-struct Formatter {
-    language: &'static str,
-    command: &'static str,
-    args: &'static [&'static str],
-    extensions: &'static [&'static str],
-}
-
-impl Formatter {
-    fn for_target(target: CodegenTarget) -> Option<Self> {
-        match target {
-            CodegenTarget::Rust => Some(Self {
-                language: "Rust",
-                command: "rustfmt",
-                args: &[],
-                extensions: &["rs"],
-            }),
-            CodegenTarget::Go => Some(Self {
-                language: "Go",
-                command: "gofmt",
-                args: &["-w"],
-                extensions: &["go"],
-            }),
-            CodegenTarget::Erlang => Some(Self {
-                language: "Erlang",
-                command: "erlfmt",
-                args: &["-w"],
-                extensions: &["erl"],
-            }),
-            CodegenTarget::Python => Some(Self {
-                language: "Python",
-                command: "black",
-                args: &["--quiet"],
-                extensions: &["py"],
-            }),
-            CodegenTarget::C => Some(Self {
-                language: "C",
-                command: "clang-format",
-                args: &["-i"],
-                extensions: &["h", "c"],
-            }),
-            CodegenTarget::Cpp => Some(Self {
-                language: "C++",
-                command: "clang-format",
-                args: &["-i"],
-                extensions: &["hpp"],
-            }),
-            CodegenTarget::Scala => Some(Self {
-                language: "Scala",
-                command: "scalafmt",
-                args: &[],
-                extensions: &["scala"],
-            }),
-            CodegenTarget::Kotlin
-            | CodegenTarget::CSharp
-            | CodegenTarget::Java
-            | CodegenTarget::Dart
-            | CodegenTarget::Godot
-            | CodegenTarget::TypeScript
-            | CodegenTarget::JavaScript
-            | CodegenTarget::Lua
-            | CodegenTarget::ProtoSchema => None,
-        }
-    }
 }
 
 fn collect_files(root: &Path, extensions: &[&str]) -> Result<Vec<PathBuf>> {
@@ -203,29 +161,6 @@ fn format_error(
     }
 }
 
-impl CodegenTarget {
-    fn language_name(self) -> &'static str {
-        match self {
-            CodegenTarget::Rust => "Rust",
-            CodegenTarget::Kotlin => "Kotlin",
-            CodegenTarget::CSharp => "C#",
-            CodegenTarget::Java => "Java",
-            CodegenTarget::Scala => "Scala",
-            CodegenTarget::Go => "Go",
-            CodegenTarget::Dart => "Dart",
-            CodegenTarget::Godot => "Godot",
-            CodegenTarget::C => "C",
-            CodegenTarget::Cpp => "C++",
-            CodegenTarget::TypeScript => "TypeScript",
-            CodegenTarget::JavaScript => "JavaScript",
-            CodegenTarget::Erlang => "Erlang",
-            CodegenTarget::Lua => "Lua",
-            CodegenTarget::ProtoSchema => "Proto schema",
-            CodegenTarget::Python => "Python",
-        }
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -233,14 +168,15 @@ mod tests {
     #[test]
     fn auto_skips_missing_formatter() {
         let base = env::temp_dir().join("sora-codegen-format-missing");
-        format_generated_code(CodegenTarget::Erlang, &base, FormatMode::Auto).unwrap();
+        let formatter = FormatterConfig::new("Erlang", "erlfmt", &["-w"], &["erl"]);
+        format_generated_code("Erlang", Some(formatter), &base, FormatMode::Auto).unwrap();
     }
 
     #[test]
     fn required_rejects_unsupported_target() {
         let base = env::temp_dir().join("sora-codegen-format-unsupported");
-        let error = format_generated_code(CodegenTarget::ProtoSchema, &base, FormatMode::Required)
-            .unwrap_err();
+        let error =
+            format_generated_code("Proto schema", None, &base, FormatMode::Required).unwrap_err();
         assert!(error.to_string().contains("no formatter is configured"));
     }
 }

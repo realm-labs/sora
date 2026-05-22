@@ -4,25 +4,29 @@ use heck::ToLowerCamelCase;
 use minijinja::context;
 use serde::Serialize;
 use sora_diagnostics::Result;
-use sora_ir::model::{ConfigIr, RuntimeFormatIr, TableModeIr, TypeIr};
+use sora_ir::model::{ConfigIr, TableModeIr, TypeIr};
 
 use crate::{
-    generator::{CodeGenerator, runtime_format_name},
+    generator::{CodeGenerator, CodegenContext, runtime_format_name},
     model::{
         BaseField, BaseIndex, BaseModel, BaseRecord, BaseTable, BaseUnion, BaseUnionVariant,
         build_base_model,
     },
+    options::{LanguageCodegenOptions, RuntimeFormat},
     render::{ensure_dir, render_template, write_file},
     types::csharp_type_name,
 };
 
 pub struct CSharpCodeGenerator;
+crate::impl_test_codegen_generate!(CSharpCodeGenerator, "csharp");
 
 impl CodeGenerator for CSharpCodeGenerator {
-    fn generate(&self, ir: &ConfigIr, out_dir: &Path) -> Result<()> {
+    fn generate(&self, context: CodegenContext<'_>, out_dir: &Path) -> Result<()> {
+        let ir = context.ir;
+        let options = context.options::<LanguageCodegenOptions>()?;
         ensure_dir(out_dir)?;
         let model = CSharpModel::from_base_model(ir, build_base_model(ir)?);
-        let runtime_format = runtime_format_name(ir.codegen.csharp.runtime_format);
+        let runtime_format = runtime_format_name(options.runtime_format);
 
         for item in &model.enums {
             let rendered = render_template(
@@ -61,7 +65,7 @@ impl CodeGenerator for CSharpCodeGenerator {
         )?;
         write_file(&out_dir.join("Runtime.cs"), rendered)?;
 
-        if ir.codegen.csharp.runtime_format == RuntimeFormatIr::SoraProtobuf {
+        if options.runtime_format == RuntimeFormat::SoraProtobuf {
             let rendered = render_template("csharp", "protobuf_bundle.cs.j2", context! {})?;
             write_file(&out_dir.join("SoraRuntimeBundle.cs"), rendered)?;
         }

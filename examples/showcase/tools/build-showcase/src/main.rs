@@ -4,7 +4,6 @@ use std::{
 };
 
 use anyhow::{Context, Result};
-use sora_codegen::target::CodegenTarget;
 use sora_export::exporter::ExportOutput;
 use sora_input_toml::{input::TomlSchemaInput, schema::load_project_schema_file};
 use sora_input_xlsx::input::XlsxProjectInput;
@@ -70,34 +69,30 @@ fn main() -> Result<()> {
 
     sora_core::pipeline::check_schema(&schema_input)?;
     sora_core::pipeline::generate_schema_lock(&schema_input, &generated_root.join("schema.lock"))?;
-    sora_core::pipeline::generate_code(&schema_input, CodegenTarget::Rust, &rust_generated)?;
-    sora_core::pipeline::generate_code(&schema_input, CodegenTarget::Kotlin, &kotlin_generated)?;
-    sora_core::pipeline::generate_code(&schema_input, CodegenTarget::CSharp, &csharp_generated)?;
-    sora_core::pipeline::generate_code(&schema_input, CodegenTarget::Java, &java_generated)?;
-    sora_core::pipeline::generate_code(&schema_input, CodegenTarget::Scala, &scala_generated)?;
-    sora_core::pipeline::generate_code(&schema_input, CodegenTarget::Go, &go_generated)?;
+    sora_core::pipeline::generate_code(&schema_input, "rust", &rust_generated)?;
+    sora_core::pipeline::generate_code(&schema_input, "kotlin", &kotlin_generated)?;
+    sora_core::pipeline::generate_code(&schema_input, "csharp", &csharp_generated)?;
+    sora_core::pipeline::generate_code(&schema_input, "java", &java_generated)?;
+    sora_core::pipeline::generate_code(&schema_input, "scala", &scala_generated)?;
+    sora_core::pipeline::generate_code(&schema_input, "go", &go_generated)?;
     sora_core::pipeline::generate_code_with_scope_and_format(
         &schema_input,
-        CodegenTarget::Dart,
+        "dart",
         &dart_generated,
         sora_codegen::format::FormatMode::Never,
         Some("client"),
     )?;
     sora_core::pipeline::generate_code_with_scope_and_format(
         &schema_input,
-        CodegenTarget::Godot,
+        "godot",
         &godot_generated,
         sora_codegen::format::FormatMode::Never,
         Some("client"),
     )?;
-    sora_core::pipeline::generate_code(&schema_input, CodegenTarget::C, &c_generated)?;
-    sora_core::pipeline::generate_code(&schema_input, CodegenTarget::Cpp, &cpp_generated)?;
-    sora_core::pipeline::generate_code(&schema_input, CodegenTarget::Python, &python_generated)?;
-    sora_core::pipeline::generate_code(
-        &schema_input,
-        CodegenTarget::ProtoSchema,
-        &proto_generated,
-    )?;
+    sora_core::pipeline::generate_code(&schema_input, "c", &c_generated)?;
+    sora_core::pipeline::generate_code(&schema_input, "cpp", &cpp_generated)?;
+    sora_core::pipeline::generate_code(&schema_input, "python", &python_generated)?;
+    sora_core::pipeline::generate_code(&schema_input, "proto-schema", &proto_generated)?;
     sora_core::pipeline::export_data(
         &project_input,
         "binary",

@@ -4,26 +4,30 @@ use heck::{ToLowerCamelCase, ToPascalCase, ToSnakeCase};
 use minijinja::context;
 use serde::Serialize;
 use sora_diagnostics::{Result, SoraError};
-use sora_ir::model::{ConfigIr, RuntimeFormatIr, TypeIr};
+use sora_ir::model::{ConfigIr, TypeIr};
 
 use crate::{
-    generator::CodeGenerator,
+    generator::{CodeGenerator, CodegenContext, runtime_format_name},
     model::{
         BaseField, BaseImport, BaseIndex, BaseModel, BaseRecord, BaseTable, BaseUnion,
         BaseUnionVariant, build_base_model,
     },
+    options::{LanguageCodegenOptions, RuntimeFormat},
     render::{ensure_dir, render_template, write_file},
     types::dart_type_name,
 };
 
 pub struct DartCodeGenerator;
+crate::impl_test_codegen_generate!(DartCodeGenerator, "dart");
 
 impl CodeGenerator for DartCodeGenerator {
-    fn generate(&self, ir: &ConfigIr, out_dir: &Path) -> Result<()> {
-        if ir.codegen.dart.runtime_format != RuntimeFormatIr::Json {
+    fn generate(&self, context: CodegenContext<'_>, out_dir: &Path) -> Result<()> {
+        let ir = context.ir;
+        let options = context.options::<LanguageCodegenOptions>()?;
+        if options.runtime_format != RuntimeFormat::Json {
             return Err(SoraError::InvalidSchema(format!(
                 "dart codegen runtime_format `{}` is not implemented yet; supported runtime_format: json",
-                crate::generator::runtime_format_name(ir.codegen.dart.runtime_format)
+                runtime_format_name(options.runtime_format)
             )));
         }
 
@@ -476,6 +480,7 @@ fn is_dart_keyword(value: &str) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::options::{LanguageCodegenOptions, RuntimeFormat};
     use sora_ir::normalize::normalize_schema;
     use sora_schema::model::SchemaFile;
 
@@ -541,7 +546,15 @@ type = "union<Action>"
         let base = std::env::temp_dir().join("sora-codegen-dart-test");
         let _ = std::fs::remove_dir_all(&base);
 
-        DartCodeGenerator.generate(&ir, &base).unwrap();
+        DartCodeGenerator
+            .generate_with_options(
+                &ir,
+                LanguageCodegenOptions {
+                    runtime_format: RuntimeFormat::Json,
+                },
+                &base,
+            )
+            .unwrap();
 
         let item = std::fs::read_to_string(base.join("item.dart")).unwrap();
         let action = std::fs::read_to_string(base.join("action.dart")).unwrap();

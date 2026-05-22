@@ -1,8 +1,5 @@
 use super::*;
-use crate::model::{
-    CStandardIr, CppStandardIr, EnumReprIr, ErlangEnumReprIr, LuaEnumReprIr, LuaVersionIr,
-    RuntimeFormatIr, TableModeIr, TypeIr,
-};
+use crate::model::{TableModeIr, TypeIr};
 
 #[test]
 fn normalizes_schema() {
@@ -41,24 +38,6 @@ length = [1, 3]
 
     let ir = normalize_schema(schema).unwrap();
     assert_eq!(ir.package, "game_config");
-    assert_eq!(ir.codegen.rust.runtime_format, RuntimeFormatIr::Sora);
-    assert_eq!(ir.codegen.kotlin.runtime_format, RuntimeFormatIr::Sora);
-    assert_eq!(ir.codegen.dart.runtime_format, RuntimeFormatIr::Sora);
-    assert_eq!(ir.codegen.godot.runtime_format, RuntimeFormatIr::Sora);
-    assert_eq!(ir.codegen.c.runtime_format, RuntimeFormatIr::Sora);
-    assert_eq!(ir.codegen.c.c_standard, CStandardIr::C11);
-    assert_eq!(ir.codegen.cpp.runtime_format, RuntimeFormatIr::Sora);
-    assert_eq!(ir.codegen.cpp.cpp_standard, CppStandardIr::Cpp17);
-    assert_eq!(ir.codegen.typescript.runtime_format, RuntimeFormatIr::Sora);
-    assert_eq!(ir.codegen.typescript.enum_repr, EnumReprIr::String);
-    assert_eq!(ir.codegen.javascript.runtime_format, RuntimeFormatIr::Sora);
-    assert_eq!(ir.codegen.javascript.enum_repr, EnumReprIr::String);
-    assert!(ir.codegen.javascript.emit_dts);
-    assert_eq!(ir.codegen.erlang.runtime_format, RuntimeFormatIr::Sora);
-    assert_eq!(ir.codegen.erlang.enum_repr, ErlangEnumReprIr::Atom);
-    assert_eq!(ir.codegen.lua.runtime_format, RuntimeFormatIr::Sora);
-    assert_eq!(ir.codegen.lua.lua_version, LuaVersionIr::Lua54);
-    assert_eq!(ir.codegen.lua.enum_repr, LuaEnumReprIr::String);
     assert_eq!(ir.enums[0].name, "ItemType");
     assert_eq!(ir.enums[0].aliases[0].name, "Weapon");
     assert_eq!(ir.enums[0].aliases[0].alias, "weapon");

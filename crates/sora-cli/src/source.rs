@@ -243,7 +243,6 @@ mod tests {
         registry.register(FakeSourceLoader);
         let ir = ConfigIr {
             package: "game".to_owned(),
-            codegen: Default::default(),
             enums: Vec::new(),
             structs: Vec::new(),
             unions: Vec::new(),

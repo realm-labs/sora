@@ -4,25 +4,29 @@ use heck::ToSnakeCase;
 use minijinja::context;
 use serde::Serialize;
 use sora_diagnostics::Result;
-use sora_ir::model::{ConfigIr, ErlangEnumReprIr, TableModeIr, TypeIr};
+use sora_ir::model::{ConfigIr, TableModeIr, TypeIr};
 
 use crate::{
-    generator::{CodeGenerator, ensure_sora_runtime_format},
+    generator::{CodeGenerator, CodegenContext, ensure_sora_runtime_format},
     model::{
         BaseField, BaseIndex, BaseModel, BaseRecord, BaseTable, BaseUnion, BaseUnionVariant,
         build_base_model,
     },
+    options::{ErlangCodegenOptions, ErlangEnumRepr},
     render::{ensure_dir, render_template, write_file},
 };
 
 pub struct ErlangCodeGenerator;
+crate::impl_test_codegen_generate!(ErlangCodeGenerator, "erlang");
 
 impl CodeGenerator for ErlangCodeGenerator {
-    fn generate(&self, ir: &ConfigIr, out_dir: &Path) -> Result<()> {
-        ensure_sora_runtime_format("erlang", ir.codegen.erlang.runtime_format)?;
+    fn generate(&self, context: CodegenContext<'_>, out_dir: &Path) -> Result<()> {
+        let ir = context.ir;
+        let codegen_options = context.options::<ErlangCodegenOptions>()?;
+        ensure_sora_runtime_format("erlang", codegen_options.runtime_format)?;
         ensure_dir(out_dir)?;
 
-        let options = ErlangOptionsView::new(ir.codegen.erlang.enum_repr);
+        let options = ErlangOptionsView::new(codegen_options.enum_repr);
         let model = ErlangModel::from_base_model(ir, build_base_model(ir)?);
 
         for item in &model.enums {
@@ -62,9 +66,9 @@ struct ErlangOptionsView {
 }
 
 impl ErlangOptionsView {
-    fn new(enum_repr: ErlangEnumReprIr) -> Self {
+    fn new(enum_repr: ErlangEnumRepr) -> Self {
         Self {
-            enum_is_integer: enum_repr == ErlangEnumReprIr::Integer,
+            enum_is_integer: enum_repr == ErlangEnumRepr::Integer,
         }
     }
 }
@@ -359,7 +363,8 @@ fn ref_type<'a>(ir: &'a ConfigIr, table_name: &str, field_name: &str) -> Option<
 #[cfg(test)]
 mod tests {
     use super::*;
-    use sora_ir::{model::ErlangEnumReprIr, normalize::normalize_schema};
+    use crate::options::{ErlangCodegenOptions, ErlangEnumRepr};
+    use sora_ir::normalize::normalize_schema;
     use sora_schema::model::SchemaFile;
     use std::{
         path::PathBuf,
@@ -405,11 +410,19 @@ mod tests {
 
     #[test]
     fn erlang_integer_enum_option_changes_api() {
-        let mut ir = example_ir();
-        ir.codegen.erlang.enum_repr = ErlangEnumReprIr::Integer;
+        let ir = example_ir();
         let base = temp_dir();
 
-        ErlangCodeGenerator.generate(&ir, &base).unwrap();
+        ErlangCodeGenerator
+            .generate_with_options(
+                &ir,
+                ErlangCodegenOptions {
+                    enum_repr: ErlangEnumRepr::Integer,
+                    ..Default::default()
+                },
+                &base,
+            )
+            .unwrap();
 
         let item_type = std::fs::read_to_string(base.join("item_type.erl")).unwrap();
         assert!(item_type.contains("-type t() ::"));

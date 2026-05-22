@@ -5,14 +5,16 @@ use sora_diagnostics::Result;
 use sora_ir::model::{ConfigIr, FieldIr, TypeIr};
 
 use crate::{
-    generator::CodeGenerator,
+    generator::{CodeGenerator, CodegenContext},
     render::{ensure_dir, write_file},
 };
 
 pub struct ProtoCodeGenerator;
+crate::impl_test_codegen_generate!(ProtoCodeGenerator, "proto-schema");
 
 impl CodeGenerator for ProtoCodeGenerator {
-    fn generate(&self, ir: &ConfigIr, out_dir: &Path) -> Result<()> {
+    fn generate(&self, context: CodegenContext<'_>, out_dir: &Path) -> Result<()> {
+        let ir = context.ir;
         ensure_dir(out_dir)?;
         write_file(&out_dir.join("sora_config.proto"), render_proto(ir))
     }

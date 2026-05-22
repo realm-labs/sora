@@ -1,7 +1,17 @@
-use sora_ir::model::{ConfigIr, RustStringStorageIr, TypeIr};
+use sora_ir::model::{ConfigIr, TypeIr};
+
+use crate::options::{RustCodegenOptions, RustStringStorage};
 
 pub fn rust_type_name(ir: &ConfigIr, ty: &TypeIr) -> String {
-    rust_type_name_inner(ir, ty)
+    rust_type_name_with_options(ir, ty, &RustCodegenOptions::default())
+}
+
+pub fn rust_type_name_with_options(
+    ir: &ConfigIr,
+    ty: &TypeIr,
+    options: &RustCodegenOptions,
+) -> String {
+    rust_type_name_inner(ir, ty, options)
 }
 
 pub fn kotlin_type_name(ir: &ConfigIr, ty: &TypeIr) -> String {
@@ -36,39 +46,43 @@ pub fn python_type_name(ir: &ConfigIr, ty: &TypeIr) -> String {
     python_type_name_inner(ir, ty)
 }
 
-fn rust_type_name_inner(ir: &ConfigIr, ty: &TypeIr) -> String {
+fn rust_type_name_inner(ir: &ConfigIr, ty: &TypeIr, options: &RustCodegenOptions) -> String {
     match ty {
         TypeIr::Bool => "bool".to_owned(),
         TypeIr::I32 => "i32".to_owned(),
         TypeIr::I64 => "i64".to_owned(),
         TypeIr::F32 => "f32".to_owned(),
         TypeIr::F64 => "f64".to_owned(),
-        TypeIr::String => rust_string_type(ir),
+        TypeIr::String => rust_string_type(options),
         TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => name.clone(),
-        TypeIr::List(element) => format!("Vec<{}>", rust_type_name_inner(ir, element)),
+        TypeIr::List(element) => format!("Vec<{}>", rust_type_name_inner(ir, element, options)),
         TypeIr::Set(element) => {
             format!(
                 "std::collections::HashSet<{}>",
-                rust_type_name_inner(ir, element)
+                rust_type_name_inner(ir, element, options)
             )
         }
         TypeIr::Map { key, value } => format!(
             "std::collections::HashMap<{}, {}>",
-            rust_type_name_inner(ir, key),
-            rust_type_name_inner(ir, value)
+            rust_type_name_inner(ir, key, options),
+            rust_type_name_inner(ir, value, options)
         ),
         TypeIr::Array { element, len } => {
-            format!("[{}; {len}]", rust_type_name_inner(ir, element))
+            format!("[{}; {len}]", rust_type_name_inner(ir, element, options))
         }
-        TypeIr::Ref { table, field } => ref_type(ir, table, field, rust_type_name_inner, "i32"),
-        TypeIr::Optional(element) => format!("Option<{}>", rust_type_name_inner(ir, element)),
+        TypeIr::Ref { table, field } => {
+            ref_type_with_options(ir, table, field, options, rust_type_name_inner, "i32")
+        }
+        TypeIr::Optional(element) => {
+            format!("Option<{}>", rust_type_name_inner(ir, element, options))
+        }
     }
 }
 
-fn rust_string_type(ir: &ConfigIr) -> String {
-    match ir.codegen.rust.string_storage {
-        RustStringStorageIr::Owned => "String".to_owned(),
-        RustStringStorageIr::Arc => "std::sync::Arc<str>".to_owned(),
+fn rust_string_type(options: &RustCodegenOptions) -> String {
+    match options.string_storage {
+        RustStringStorage::Owned => "String".to_owned(),
+        RustStringStorage::Arc => "std::sync::Arc<str>".to_owned(),
     }
 }
 
@@ -249,6 +263,22 @@ fn ref_type(
         .find(|table| table.name == table_name)
         .and_then(|table| table.fields.iter().find(|field| field.name == field_name))
         .map(|field| mapper(ir, &field.ty))
+        .unwrap_or_else(|| fallback.to_owned())
+}
+
+fn ref_type_with_options<T>(
+    ir: &ConfigIr,
+    table_name: &str,
+    field_name: &str,
+    options: &T,
+    mapper: fn(&ConfigIr, &TypeIr, &T) -> String,
+    fallback: &str,
+) -> String {
+    ir.tables
+        .iter()
+        .find(|table| table.name == table_name)
+        .and_then(|table| table.fields.iter().find(|field| field.name == field_name))
+        .map(|field| mapper(ir, &field.ty, options))
         .unwrap_or_else(|| fallback.to_owned())
 }
 
