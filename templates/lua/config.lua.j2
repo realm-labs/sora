@@ -15,9 +15,10 @@ local SoraConfig = {}
 SoraConfig.__index = SoraConfig
 
 ---@param bytes string
+---@param options table?
 ---@return SoraConfig
-function SoraConfig.from_bytes(bytes)
-    local bundle = Runtime.parse_bundle(bytes)
+function SoraConfig.from_bytes(bytes, options)
+    local bundle = Runtime.parse_bundle(bytes, options)
     if bundle:schema_fingerprint() ~= SORA_SCHEMA_FINGERPRINT then
         error(
             "schema fingerprint mismatch: generated code expects "

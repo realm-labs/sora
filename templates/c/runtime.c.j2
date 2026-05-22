@@ -22,6 +22,13 @@ struct sora_bundle {
     sora_string* strings;
     size_t string_count;
     char* schema_fingerprint;
+    sora_bundle_options options;
+};
+
+struct sora_payload_view {
+    const uint8_t* bytes;
+    size_t len;
+    uint8_t* owned;
 };
 
 static const uint32_t SORA_BUNDLE_VERSION = 1;
@@ -32,6 +39,7 @@ static const uint32_t SORA_SECTION_KIND_SCHEMA = 1;
 static const uint32_t SORA_SECTION_KIND_TABLE = 2;
 static const uint32_t SORA_SECTION_KIND_STRINGS = 3;
 static const uint32_t SORA_COMPRESSION_NONE = 0;
+static const uint32_t SORA_COMPRESSION_ZSTD = 1;
 
 static sora_result sora_read_u32_at(const uint8_t* bytes, size_t len, size_t offset, uint32_t* out) {
     if (offset > len || len - offset < 4) {
@@ -126,6 +134,63 @@ static char* sora_copy_json_string_field(const uint8_t* bytes, size_t len, const
         return sora_copy_name(bytes + value_start, value_end - value_start);
     }
     return NULL;
+}
+
+static void sora_payload_view_free(struct sora_payload_view* view) {
+    if (view == NULL) {
+        return;
+    }
+    free(view->owned);
+    view->bytes = NULL;
+    view->len = 0;
+    view->owned = NULL;
+}
+
+static sora_result sora_section_payload(
+    const sora_bundle* bundle,
+    const struct sora_section* section,
+    struct sora_payload_view* out
+) {
+    out->bytes = NULL;
+    out->len = 0;
+    out->owned = NULL;
+    if (section->compression == SORA_COMPRESSION_NONE) {
+        if (section->uncompressed_len != section->len) {
+            return sora_error(SORA_ERROR_INVALID_BUNDLE, "uncompressed Sora section length mismatch");
+        }
+        out->bytes = bundle->bytes + section->offset;
+        out->len = section->len;
+        return sora_ok();
+    }
+    if (bundle->options.decompress == NULL) {
+        if (section->compression == SORA_COMPRESSION_ZSTD) {
+            return sora_error(SORA_ERROR_UNSUPPORTED_VERSION, "zstd-compressed Sora section requires a decompressor");
+        }
+        return sora_error(SORA_ERROR_UNSUPPORTED_VERSION, "compressed Sora section requires a decompressor");
+    }
+    uint8_t* decoded = NULL;
+    if (section->uncompressed_len > 0) {
+        decoded = (uint8_t*)malloc(section->uncompressed_len);
+        if (decoded == NULL) {
+            return sora_error(SORA_ERROR_OUT_OF_MEMORY, "failed to allocate decompressed Sora section");
+        }
+    }
+    sora_result result = bundle->options.decompress(
+        section->compression,
+        bundle->bytes + section->offset,
+        section->len,
+        decoded,
+        section->uncompressed_len,
+        bundle->options.user_data
+    );
+    if (result.code != SORA_OK) {
+        free(decoded);
+        return result;
+    }
+    out->bytes = decoded;
+    out->len = section->uncompressed_len;
+    out->owned = decoded;
+    return sora_ok();
 }
 
 void sora_string_free(sora_string* value) {
@@ -331,6 +396,15 @@ static sora_result sora_decode_string_table(const uint8_t* bytes, size_t len, so
 }
 
 sora_result sora_bundle_parse(const uint8_t* bytes, size_t len, sora_bundle** out) {
+    return sora_bundle_parse_with_options(bytes, len, NULL, out);
+}
+
+sora_result sora_bundle_parse_with_options(
+    const uint8_t* bytes,
+    size_t len,
+    const sora_bundle_options* options,
+    sora_bundle** out
+) {
     if (len < SORA_HEADER_LEN) {
         return sora_error(SORA_ERROR_INVALID_BUNDLE, "Sora bundle is shorter than header");
     }
@@ -365,6 +439,9 @@ sora_result sora_bundle_parse(const uint8_t* bytes, size_t len, sora_bundle** ou
     sora_bundle* bundle = (sora_bundle*)calloc(1, sizeof(sora_bundle));
     if (bundle == NULL) {
         return sora_error(SORA_ERROR_OUT_OF_MEMORY, "failed to allocate bundle");
+    }
+    if (options != NULL) {
+        bundle->options = *options;
     }
     bundle->bytes = (uint8_t*)malloc(len);
     bundle->sections = (struct sora_section*)calloc(section_count, sizeof(struct sora_section));
@@ -467,16 +544,19 @@ sora_result sora_bundle_parse(const uint8_t* bytes, size_t len, sora_bundle** ou
     for (size_t index = 0; index < bundle->section_count; ++index) {
         const struct sora_section* section = &bundle->sections[index];
         if (section->kind == SORA_SECTION_KIND_STRINGS) {
-            if (section->compression != SORA_COMPRESSION_NONE || section->uncompressed_len != section->len) {
+            struct sora_payload_view payload;
+            sora_result payload_result = sora_section_payload(bundle, section, &payload);
+            if (payload_result.code != SORA_OK) {
                 sora_bundle_free(bundle);
-                return sora_error(SORA_ERROR_INVALID_BUNDLE, "invalid Sora strings section");
+                return payload_result;
             }
             sora_result result = sora_decode_string_table(
-                bundle->bytes + section->offset,
-                section->len,
+                payload.bytes,
+                payload.len,
                 &bundle->strings,
                 &bundle->string_count
             );
+            sora_payload_view_free(&payload);
             if (result.code != SORA_OK) {
                 sora_bundle_free(bundle);
                 return result;
@@ -541,19 +621,23 @@ sora_result sora_bundle_decode_table(
     if (section == NULL) {
         return sora_error(SORA_ERROR_INVALID_BUNDLE, "missing Sora table section");
     }
-    if (section->compression != SORA_COMPRESSION_NONE) {
-        return sora_error(SORA_ERROR_UNSUPPORTED_VERSION, "unsupported table compression");
-    }
-
-    const uint8_t* payload = bundle->bytes + section->offset;
-    size_t payload_len = section->len;
+    struct sora_payload_view payload_view;
+    SORA_TRY(sora_section_payload(bundle, section, &payload_view));
+    const uint8_t* payload = payload_view.bytes;
+    size_t payload_len = payload_view.len;
     if (payload_len < 8) {
+        sora_payload_view_free(&payload_view);
         return sora_error(SORA_ERROR_INVALID_BUNDLE, "Sora table section is too short");
     }
     uint32_t row_count = 0;
-    SORA_TRY(sora_read_u32_at(payload, payload_len, 0, &row_count));
+    sora_result header_result = sora_read_u32_at(payload, payload_len, 0, &row_count);
+    if (header_result.code != SORA_OK) {
+        sora_payload_view_free(&payload_view);
+        return header_result;
+    }
     size_t offsets_len = (size_t)row_count + 1;
     if (offsets_len > (payload_len - 4) / 4) {
+        sora_payload_view_free(&payload_view);
         return sora_error(SORA_ERROR_INVALID_BUNDLE, "Sora row offset table exceeds payload length");
     }
     size_t row_data_start = 4 + offsets_len * 4;
@@ -561,19 +645,37 @@ sora_result sora_bundle_decode_table(
     if (row_count > 0) {
         rows = (uint8_t*)calloc(row_count, row_size);
         if (rows == NULL) {
+            sora_payload_view_free(&payload_view);
             return sora_error(SORA_ERROR_OUT_OF_MEMORY, "failed to allocate table rows");
         }
     }
     for (uint32_t index = 0; index < row_count; ++index) {
         uint32_t start = 0;
         uint32_t end = 0;
-        SORA_TRY(sora_read_u32_at(payload, payload_len, 4 + (size_t)index * 4, &start));
-        SORA_TRY(sora_read_u32_at(payload, payload_len, 4 + ((size_t)index + 1) * 4, &end));
+        sora_result start_result = sora_read_u32_at(payload, payload_len, 4 + (size_t)index * 4, &start);
+        if (start_result.code != SORA_OK) {
+            for (uint32_t cleanup = 0; cleanup < index; ++cleanup) {
+                free_row(rows + (size_t)cleanup * row_size);
+            }
+            free(rows);
+            sora_payload_view_free(&payload_view);
+            return start_result;
+        }
+        sora_result end_result = sora_read_u32_at(payload, payload_len, 4 + ((size_t)index + 1) * 4, &end);
+        if (end_result.code != SORA_OK) {
+            for (uint32_t cleanup = 0; cleanup < index; ++cleanup) {
+                free_row(rows + (size_t)cleanup * row_size);
+            }
+            free(rows);
+            sora_payload_view_free(&payload_view);
+            return end_result;
+        }
         if (start > end || end > payload_len - row_data_start) {
             for (uint32_t cleanup = 0; cleanup < index; ++cleanup) {
                 free_row(rows + (size_t)cleanup * row_size);
             }
             free(rows);
+            sora_payload_view_free(&payload_view);
             return sora_error(SORA_ERROR_INVALID_BUNDLE, "Sora row offsets are invalid");
         }
         sora_reader reader;
@@ -590,6 +692,7 @@ sora_result sora_bundle_decode_table(
                 free_row(rows + (size_t)cleanup * row_size);
             }
             free(rows);
+            sora_payload_view_free(&payload_view);
             if (result.code != SORA_OK) {
                 return result;
             }
@@ -599,5 +702,6 @@ sora_result sora_bundle_decode_table(
 
     *out_rows = rows;
     *out_len = row_count;
+    sora_payload_view_free(&payload_view);
     return sora_ok();
 }

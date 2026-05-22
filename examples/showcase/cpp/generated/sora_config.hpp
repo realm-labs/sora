@@ -59,7 +59,11 @@ public:
     static const char* schema_fingerprint() { return "a0390c24663ecbfc"; }
 
     static SoraConfig from_bytes(const std::vector<std::uint8_t>& bytes) {
-        SoraBundle bundle = SoraBundle::parse(bytes);
+        return from_bytes(bytes, SoraBundleOptions());
+    }
+
+    static SoraConfig from_bytes(const std::vector<std::uint8_t>& bytes, const SoraBundleOptions& options) {
+        SoraBundle bundle = SoraBundle::parse(bytes, options);
         if (bundle.schema_fingerprint() != schema_fingerprint()) {
             throw SoraReadException("schema fingerprint mismatch");
         }

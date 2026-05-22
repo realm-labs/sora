@@ -22,6 +22,20 @@ public:
 
 class SoraReader;
 
+typedef std::vector<std::uint8_t> (*SoraDecompressSectionFn)(
+    std::uint32_t compression,
+    const std::uint8_t* input,
+    std::size_t input_length,
+    std::size_t output_length
+);
+
+struct SoraBundleOptions {
+    SoraBundleOptions() : decompress(NULL) {}
+    explicit SoraBundleOptions(SoraDecompressSectionFn decompress_fn) : decompress(decompress_fn) {}
+
+    SoraDecompressSectionFn decompress;
+};
+
 struct SoraTableInfo {
     const char* name;
     const char* row_type;
@@ -234,6 +248,10 @@ inline std::string decode_value<std::string>(SoraReader& reader) {
 class SoraBundle {
 public:
     static SoraBundle parse(const std::vector<std::uint8_t>& bytes) {
+        return parse(bytes, SoraBundleOptions());
+    }
+
+    static SoraBundle parse(const std::vector<std::uint8_t>& bytes, const SoraBundleOptions& options) {
         if (bytes.size() < kHeaderLength) {
             throw SoraReadException("Sora bundle is shorter than header");
         }
@@ -312,11 +330,8 @@ public:
                 if (section.name != "$strings") {
                     throw SoraReadException("Sora strings section must be named `$strings`");
                 }
-                if (section.compression != kCompressionNone ||
-                    section.uncompressed_length != section.length) {
-                    throw SoraReadException("invalid Sora strings section");
-                }
-                strings = decode_string_table(&bytes[section.offset], section.length);
+                std::vector<std::uint8_t> payload = section_payload(bytes, section, options);
+                strings = decode_string_table(payload.data(), payload.size());
             } else if (section.kind != kSectionKindTable) {
                 throw SoraReadException("unknown Sora section kind");
             }
@@ -337,7 +352,7 @@ public:
         if (schema_fingerprint.empty()) {
             throw SoraReadException("Sora manifest is missing string field `schema_fingerprint`");
         }
-        return SoraBundle(bytes, sections, schema_fingerprint, strings);
+        return SoraBundle(bytes, sections, schema_fingerprint, strings, options);
     }
 
     const std::string& schema_fingerprint() const { return schema_fingerprint_; }
@@ -347,13 +362,8 @@ public:
         for (std::size_t index = 0; index < sections_.size(); ++index) {
             const Section& section = sections_[index];
             if (section.kind == kSectionKindTable && section.name == name) {
-                if (section.compression != kCompressionNone) {
-                    throw SoraReadException("unsupported table compression");
-                }
-                if (section.uncompressed_length != section.length) {
-                    throw SoraReadException("table has invalid uncompressed length");
-                }
-                return decode_rows<T>(&bytes_[section.offset], section.length, &strings_);
+                std::vector<std::uint8_t> payload = section_payload(bytes_, section, options_);
+                return decode_rows<T>(payload.data(), payload.size(), &strings_);
             }
         }
         throw SoraReadException("missing Sora table section");
@@ -373,8 +383,41 @@ private:
         const std::vector<std::uint8_t>& bytes,
         const std::vector<Section>& sections,
         const std::string& schema_fingerprint,
-        const std::vector<std::string>& strings
-    ) : bytes_(bytes), sections_(sections), schema_fingerprint_(schema_fingerprint), strings_(strings) {}
+        const std::vector<std::string>& strings,
+        const SoraBundleOptions& options
+    ) : bytes_(bytes), sections_(sections), schema_fingerprint_(schema_fingerprint), strings_(strings), options_(options) {}
+
+    static std::vector<std::uint8_t> section_payload(
+        const std::vector<std::uint8_t>& bytes,
+        const Section& section,
+        const SoraBundleOptions& options
+    ) {
+        if (section.compression == kCompressionNone) {
+            if (section.uncompressed_length != section.length) {
+                throw SoraReadException("uncompressed Sora section length mismatch");
+            }
+            return std::vector<std::uint8_t>(
+                bytes.begin() + static_cast<std::ptrdiff_t>(section.offset),
+                bytes.begin() + static_cast<std::ptrdiff_t>(section.offset + section.length)
+            );
+        }
+        if (options.decompress == NULL) {
+            if (section.compression == kCompressionZstd) {
+                throw SoraReadException("zstd-compressed Sora section requires a decompressor");
+            }
+            throw SoraReadException("compressed Sora section requires a decompressor");
+        }
+        std::vector<std::uint8_t> payload = options.decompress(
+            section.compression,
+            &bytes[section.offset],
+            section.length,
+            section.uncompressed_length
+        );
+        if (payload.size() != section.uncompressed_length) {
+            throw SoraReadException("decompressed Sora section length mismatch");
+        }
+        return payload;
+    }
 
     template <typename T>
     static std::vector<T> decode_rows(
@@ -522,11 +565,13 @@ private:
     static const std::uint32_t kSectionKindTable = 2;
     static const std::uint32_t kSectionKindStrings = 3;
     static const std::uint32_t kCompressionNone = 0;
+    static const std::uint32_t kCompressionZstd = 1;
 
     std::vector<std::uint8_t> bytes_;
     std::vector<Section> sections_;
     std::string schema_fingerprint_;
     std::vector<std::string> strings_;
+    SoraBundleOptions options_;
 };
 
 } // namespace sora::showcase

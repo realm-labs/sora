@@ -4,6 +4,7 @@
 
 -export([
     parse_bundle/1,
+    parse_bundle/2,
     schema_fingerprint/1,
     decode_table/3,
     require_singleton_table/2,
@@ -32,8 +33,10 @@
 -define(SECTION_KIND_TABLE, 2).
 -define(SECTION_KIND_STRINGS, 3).
 -define(COMPRESSION_NONE, 0).
+-define(COMPRESSION_ZSTD, 1).
 
 -type reader() :: {binary(), [binary()]}.
+-type decompressor() :: fun((integer(), binary(), integer()) -> binary()).
 -type section() :: {{ "#{" }}
     kind := integer(),
     compression := integer(),
@@ -46,11 +49,16 @@
     bytes := binary(),
     sections := [section()],
     schema_fingerprint := binary(),
-    strings := [binary()]
+    strings := [binary()],
+    decompress := decompressor() | undefined
 }.
 
 -spec parse_bundle(binary()) -> bundle().
-parse_bundle(Bytes) when byte_size(Bytes) >= ?SORA_HEADER_LENGTH ->
+parse_bundle(Bytes) ->
+    parse_bundle(Bytes, {{ "#{" }}}).
+
+-spec parse_bundle(binary(), map()) -> bundle().
+parse_bundle(Bytes, Options) when byte_size(Bytes) >= ?SORA_HEADER_LENGTH ->
     case binary:part(Bytes, 0, 4) of
         <<"SORA">> -> ok;
         _ -> error(invalid_sora_bundle_magic)
@@ -88,9 +96,16 @@ parse_bundle(Bytes) when byte_size(Bytes) >= ?SORA_HEADER_LENGTH ->
         _ -> error({invalid_sora_schema_section_count, SchemaCount})
     end,
     SchemaFingerprint = read_schema_fingerprint(Bytes, Sections),
-    Strings = read_string_table(Bytes, Sections),
-    {{ "#{" }}bytes => Bytes, sections => Sections, schema_fingerprint => SchemaFingerprint, strings => Strings};
-parse_bundle(_Bytes) ->
+    Decompress = maps:get(decompress, Options, undefined),
+    Strings = read_string_table(Bytes, Sections, Decompress),
+    {{ "#{" }}
+        bytes => Bytes,
+        sections => Sections,
+        schema_fingerprint => SchemaFingerprint,
+        strings => Strings,
+        decompress => Decompress
+    };
+parse_bundle(_Bytes, _Options) ->
     error(sora_bundle_shorter_than_header).
 
 -spec schema_fingerprint(bundle()) -> binary().
@@ -102,18 +117,8 @@ decode_table(Bundle, Name, Decode) ->
     Sections = maps:get(sections, Bundle),
     case [Section || Section <- Sections, maps:get(kind, Section) =:= ?SECTION_KIND_TABLE, maps:get(name, Section) =:= Name] of
         [Section] ->
-            Compression = maps:get(compression, Section),
-            case Compression of
-                ?COMPRESSION_NONE -> ok;
-                _ -> error({unsupported_sora_table_compression, Name, Compression})
-            end,
-            Length = maps:get(length, Section),
-            case maps:get(uncompressed_length, Section) of
-                Length -> ok;
-                _ -> error({invalid_sora_table_uncompressed_length, Name})
-            end,
             Bytes = maps:get(bytes, Bundle),
-            Payload = binary:part(Bytes, maps:get(offset, Section), Length),
+            Payload = section_payload(Bytes, Section, maps:get(decompress, Bundle, undefined)),
             decode_rows(Payload, maps:get(strings, Bundle), Decode);
         [] ->
             error({missing_sora_table_section, Name})
@@ -297,25 +302,40 @@ read_schema_fingerprint(Bytes, Sections) ->
             error(missing_sora_manifest_section)
     end.
 
--spec read_string_table(binary(), [section()]) -> [binary()].
-read_string_table(Bytes, Sections) ->
+-spec read_string_table(binary(), [section()], decompressor() | undefined) -> [binary()].
+read_string_table(Bytes, Sections, Decompress) ->
     case [Section || Section <- Sections, maps:get(kind, Section) =:= ?SECTION_KIND_STRINGS] of
         [Section] ->
-            case maps:get(compression, Section) of
-                ?COMPRESSION_NONE -> ok;
-                Compression -> error({unsupported_sora_strings_compression, Compression})
-            end,
-            Length = maps:get(length, Section),
-            case maps:get(uncompressed_length, Section) of
-                Length -> ok;
-                _ -> error(invalid_sora_strings_uncompressed_length)
-            end,
-            Payload = binary:part(Bytes, maps:get(offset, Section), Length),
+            Payload = section_payload(Bytes, Section, Decompress),
             decode_string_table(Payload);
         [] ->
             error(missing_sora_strings_section);
         _ ->
             error(duplicate_sora_strings_section)
+    end.
+
+-spec section_payload(binary(), section(), decompressor() | undefined) -> binary().
+section_payload(Bytes, Section, Decompress) ->
+    Compression = maps:get(compression, Section),
+    Length = maps:get(length, Section),
+    UncompressedLength = maps:get(uncompressed_length, Section),
+    Payload = binary:part(Bytes, maps:get(offset, Section), Length),
+    case Compression of
+        ?COMPRESSION_NONE ->
+            case UncompressedLength of
+                Length -> Payload;
+                _ -> error(uncompressed_sora_section_length_mismatch)
+            end;
+        ?COMPRESSION_ZSTD when Decompress =:= undefined ->
+            error(zstd_compressed_sora_section_requires_decompressor);
+        _ when Decompress =:= undefined ->
+            error(compressed_sora_section_requires_decompressor);
+        _ ->
+            Decoded = Decompress(Compression, Payload, UncompressedLength),
+            case byte_size(Decoded) of
+                UncompressedLength -> Decoded;
+                _ -> error(decompressed_sora_section_length_mismatch)
+            end
     end.
 
 -spec json_string_field(binary(), binary()) -> binary() | undefined.

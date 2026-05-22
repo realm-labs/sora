@@ -61,6 +61,12 @@ sora_result sora_showcase_config_load_from_bytes(
     size_t len,
     sora_showcase_config** out
 );
+sora_result sora_showcase_config_load_from_bytes_with_options(
+    const uint8_t* bytes,
+    size_t len,
+    const sora_bundle_options* options,
+    sora_showcase_config** out
+);
 void sora_showcase_config_free(sora_showcase_config* config);
 const sora_showcase_item_table* sora_showcase_config_item(
     const sora_showcase_config* config

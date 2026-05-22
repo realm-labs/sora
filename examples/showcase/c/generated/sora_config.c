@@ -43,9 +43,18 @@ sora_result sora_showcase_config_load_from_bytes(
     size_t len,
     sora_showcase_config** out
 ) {
+    return sora_showcase_config_load_from_bytes_with_options(bytes, len, NULL, out);
+}
+
+sora_result sora_showcase_config_load_from_bytes_with_options(
+    const uint8_t* bytes,
+    size_t len,
+    const sora_bundle_options* options,
+    sora_showcase_config** out
+) {
     sora_bundle* bundle = NULL;
     sora_showcase_config* config = NULL;
-    SORA_TRY(sora_bundle_parse(bytes, len, &bundle));
+    SORA_TRY(sora_bundle_parse_with_options(bytes, len, options, &bundle));
     const char* schema_fingerprint = sora_bundle_schema_fingerprint(bundle);
     if (schema_fingerprint == NULL || strcmp(schema_fingerprint, SORA_SCHEMA_FINGERPRINT) != 0) {
         sora_bundle_free(bundle);

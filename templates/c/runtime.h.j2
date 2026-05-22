@@ -59,6 +59,19 @@ typedef struct sora_bundle sora_bundle;
 
 typedef sora_result (*sora_decode_row_fn)(sora_reader* reader, void* out);
 typedef void (*sora_free_row_fn)(void* value);
+typedef sora_result (*sora_decompress_section_fn)(
+    uint32_t compression,
+    const uint8_t* input,
+    size_t input_len,
+    uint8_t* output,
+    size_t output_len,
+    void* user_data
+);
+
+typedef struct sora_bundle_options {
+    sora_decompress_section_fn decompress;
+    void* user_data;
+} sora_bundle_options;
 
 void sora_string_free(sora_string* value);
 bool sora_string_equal(const sora_string* left, const sora_string* right);
@@ -81,6 +94,12 @@ sora_result sora_reader_read_f64(sora_reader* reader, double* out);
 sora_result sora_reader_read_string(sora_reader* reader, sora_string* out);
 
 sora_result sora_bundle_parse(const uint8_t* bytes, size_t len, sora_bundle** out);
+sora_result sora_bundle_parse_with_options(
+    const uint8_t* bytes,
+    size_t len,
+    const sora_bundle_options* options,
+    sora_bundle** out
+);
 void sora_bundle_free(sora_bundle* bundle);
 const char* sora_bundle_schema_fingerprint(const sora_bundle* bundle);
 sora_result sora_bundle_decode_table(

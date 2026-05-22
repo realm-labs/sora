@@ -10,6 +10,7 @@ local SECTION_KIND_SCHEMA = 1
 local SECTION_KIND_TABLE = 2
 local SECTION_KIND_STRINGS = 3
 local COMPRESSION_NONE = 0
+local COMPRESSION_ZSTD = 1
 
 ---@class SoraSection
 ---@field kind integer
@@ -24,6 +25,7 @@ local COMPRESSION_NONE = 0
 ---@field private sections SoraSection[]
 ---@field private schemaFingerprint string
 ---@field private strings string[]
+---@field private decompress fun(compression: integer, payload: string, uncompressed_length: integer): string
 local SoraBundle = {}
 SoraBundle.__index = SoraBundle
 
@@ -35,8 +37,10 @@ local SoraReader = {}
 SoraReader.__index = SoraReader
 
 ---@param bytes string
+---@param options table?
 ---@return SoraBundle
-function Runtime.parse_bundle(bytes)
+function Runtime.parse_bundle(bytes, options)
+    options = options or {}
     if #bytes < SORA_HEADER_LENGTH then
         error("Sora bundle is shorter than header")
     end
@@ -156,13 +160,7 @@ function Runtime.parse_bundle(bytes)
             local payload = bytes:sub(section.offset + 1, section.offset + section.length)
             schema_fingerprint = json_string_field(payload, "schema_fingerprint")
         elseif section.kind == SECTION_KIND_STRINGS then
-            if section.compression ~= COMPRESSION_NONE then
-                error("unsupported compression " .. tostring(section.compression) .. " for strings")
-            end
-            if section.uncompressedLength ~= section.length then
-                error("Sora strings section has invalid uncompressed length")
-            end
-            local payload = bytes:sub(section.offset + 1, section.offset + section.length)
+            local payload = section_payload(bytes, section, options.decompress)
             strings = decode_string_table(payload)
         end
     end
@@ -173,7 +171,13 @@ function Runtime.parse_bundle(bytes)
         error("missing Sora strings section")
     end
 
-    return setmetatable({ bytes = bytes, sections = sections, schemaFingerprint = schema_fingerprint, strings = strings }, SoraBundle)
+    return setmetatable({
+        bytes = bytes,
+        sections = sections,
+        schemaFingerprint = schema_fingerprint,
+        strings = strings,
+        decompress = options.decompress,
+    }, SoraBundle)
 end
 
 ---@return string
@@ -188,13 +192,7 @@ end
 function SoraBundle:decode_table(name, decode)
     for _, section in ipairs(self.sections) do
         if section.kind == SECTION_KIND_TABLE and section.name == name then
-            if section.compression ~= COMPRESSION_NONE then
-                error("unsupported compression " .. tostring(section.compression) .. " for table `" .. name .. "`")
-            end
-            if section.uncompressedLength ~= section.length then
-                error("table `" .. name .. "` has invalid uncompressed length")
-            end
-            local payload = self.bytes:sub(section.offset + 1, section.offset + section.length)
+            local payload = section_payload(self.bytes, section, self.decompress)
             return decode_rows(payload, self.strings, decode)
         end
     end
@@ -435,6 +433,31 @@ function decode_rows(payload, strings, decode)
         rows[#rows + 1] = row
     end
     return rows
+end
+
+---@param bytes string
+---@param section SoraSection
+---@param decompress fun(compression: integer, payload: string, uncompressed_length: integer): string
+---@return string
+function section_payload(bytes, section, decompress)
+    local payload = bytes:sub(section.offset + 1, section.offset + section.length)
+    if section.compression == COMPRESSION_NONE then
+        if section.uncompressedLength ~= section.length then
+            error("uncompressed Sora section length mismatch")
+        end
+        return payload
+    end
+    if decompress == nil then
+        if section.compression == COMPRESSION_ZSTD then
+            error("zstd-compressed Sora section requires a decompressor")
+        end
+        error("compressed Sora section requires a decompressor")
+    end
+    local decoded = decompress(section.compression, payload, section.uncompressedLength)
+    if #decoded ~= section.uncompressedLength then
+        error("decompressed Sora section length mismatch")
+    end
+    return decoded
 end
 
 ---@param payload string

@@ -453,7 +453,7 @@ mod tests {
         assert!(action.contains("---@alias Action"));
         assert!(action.contains("---@class ActionAddItem"));
         assert!(action.contains("type = \"AddItem\""));
-        assert!(runtime.contains("function Runtime.parse_bundle(bytes)"));
+        assert!(runtime.contains("function Runtime.parse_bundle(bytes, options)"));
         assert!(runtime.contains("string.unpack(\"<I4\""));
         assert!(config.contains("local Runtime = require(\"generated.lua.sora_runtime\")"));
         assert!(item.contains("---@class ItemTable"));
@@ -461,7 +461,7 @@ mod tests {
         assert!(item.contains("function ItemTable:get_by_name(name)"));
         assert!(item.contains("function ItemTable:find_by_item_type(itemType)"));
         assert!(!config.contains("---@class ItemTable"));
-        assert!(config.contains("function SoraConfig.from_bytes(bytes)"));
+        assert!(config.contains("function SoraConfig.from_bytes(bytes, options)"));
         assert!(config.contains("function SoraConfig:item()"));
         assert!(config.ends_with('\n'));
 

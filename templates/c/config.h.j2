@@ -22,6 +22,12 @@ sora_result {{ options.prefix }}_config_load_from_bytes(
     size_t len,
     {{ options.prefix }}_config** out
 );
+sora_result {{ options.prefix }}_config_load_from_bytes_with_options(
+    const uint8_t* bytes,
+    size_t len,
+    const sora_bundle_options* options,
+    {{ options.prefix }}_config** out
+);
 void {{ options.prefix }}_config_free({{ options.prefix }}_config* config);
 
 {%- for table in model.tables %}
