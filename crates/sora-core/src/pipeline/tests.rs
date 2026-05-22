@@ -74,7 +74,7 @@ fn accepts_registered_codegen_target() {
             id: "marker",
             aliases: &[],
             display_name: "Marker",
-            supported_runtime_formats: &[],
+            runtime_capabilities: &[],
             runtime_format: |_, _| Ok(None),
             formatter: None,
             generator: Box::new(MarkerGenerator),

@@ -54,7 +54,7 @@ pub struct CodegenRegistration {
     pub id: &'static str,
     pub aliases: &'static [&'static str],
     pub display_name: &'static str,
-    pub supported_runtime_formats: &'static [RuntimeFormat],
+    pub runtime_capabilities: &'static [RuntimeCapability],
     pub runtime_format: fn(&str, &Value) -> Result<Option<RuntimeFormat>>,
     pub formatter: Option<FormatterConfig>,
     pub generator: Box<dyn CodeGenerator>,
@@ -62,9 +62,62 @@ pub struct CodegenRegistration {
 
 impl CodegenRegistration {
     pub fn supports_runtime_format(&self, runtime_format: RuntimeFormat) -> bool {
-        self.supported_runtime_formats.contains(&runtime_format)
+        self.runtime_capability(runtime_format).is_some()
+    }
+
+    pub fn runtime_capability(&self, runtime_format: RuntimeFormat) -> Option<&RuntimeCapability> {
+        self.runtime_capabilities
+            .iter()
+            .find(|capability| capability.format == runtime_format)
+    }
+
+    pub fn supported_runtime_formats(&self) -> Vec<RuntimeFormat> {
+        self.runtime_capabilities
+            .iter()
+            .map(|capability| capability.format)
+            .collect()
     }
 }
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct RuntimeCapability {
+    pub format: RuntimeFormat,
+    pub dependency: RuntimeDependency,
+}
+
+impl RuntimeCapability {
+    pub const fn new(format: RuntimeFormat, dependency: RuntimeDependency) -> Self {
+        Self { format, dependency }
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum RuntimeDependency {
+    SelfContained,
+    StandardLibrary,
+    ManagedDependency,
+    UserAdapter,
+}
+
+const SELF_CONTAINED: RuntimeDependency = RuntimeDependency::SelfContained;
+const STANDARD_LIBRARY: RuntimeDependency = RuntimeDependency::StandardLibrary;
+const MANAGED_DEPENDENCY: RuntimeDependency = RuntimeDependency::ManagedDependency;
+
+const fn capability(format: RuntimeFormat, dependency: RuntimeDependency) -> RuntimeCapability {
+    RuntimeCapability::new(format, dependency)
+}
+
+const RUNTIME_SORA_ONLY: &[RuntimeCapability] = &[capability(RuntimeFormat::Sora, SELF_CONTAINED)];
+
+const RUNTIME_JSON_ONLY: &[RuntimeCapability] =
+    &[capability(RuntimeFormat::Json, STANDARD_LIBRARY)];
+
+const RUNTIME_MANAGED_EXPORTS: &[RuntimeCapability] = &[
+    capability(RuntimeFormat::Sora, SELF_CONTAINED),
+    capability(RuntimeFormat::Json, MANAGED_DEPENDENCY),
+    capability(RuntimeFormat::Cbor, MANAGED_DEPENDENCY),
+    capability(RuntimeFormat::SoraProtobuf, MANAGED_DEPENDENCY),
+];
 
 #[derive(Default)]
 pub struct CodegenRegistry {
@@ -78,15 +131,13 @@ impl CodegenRegistry {
     }
 
     pub fn with_builtin_generators() -> Self {
-        use RuntimeFormat::{Cbor, Json, Sora, SoraProtobuf};
-
         let mut registry = Self::new();
         registry
             .register(CodegenRegistration {
                 id: "rust",
                 aliases: &["rs"],
                 display_name: "Rust",
-                supported_runtime_formats: &[Sora, Json, Cbor, SoraProtobuf],
+                runtime_capabilities: RUNTIME_MANAGED_EXPORTS,
                 runtime_format: runtime_format_from_options::<RustCodegenOptions>,
                 formatter: Some(FormatterConfig::new("Rust", "rustfmt", &[], &["rs"])),
                 generator: Box::new(RustCodeGenerator),
@@ -97,7 +148,7 @@ impl CodegenRegistry {
                 id: "kotlin",
                 aliases: &["kt"],
                 display_name: "Kotlin",
-                supported_runtime_formats: &[Sora, Json, Cbor, SoraProtobuf],
+                runtime_capabilities: RUNTIME_MANAGED_EXPORTS,
                 runtime_format: runtime_format_from_options::<LanguageCodegenOptions>,
                 formatter: None,
                 generator: Box::new(KotlinCodeGenerator),
@@ -108,7 +159,7 @@ impl CodegenRegistry {
                 id: "csharp",
                 aliases: &["cs"],
                 display_name: "C#",
-                supported_runtime_formats: &[Sora, Json, Cbor, SoraProtobuf],
+                runtime_capabilities: RUNTIME_MANAGED_EXPORTS,
                 runtime_format: runtime_format_from_options::<LanguageCodegenOptions>,
                 formatter: None,
                 generator: Box::new(CSharpCodeGenerator),
@@ -119,7 +170,7 @@ impl CodegenRegistry {
                 id: "java",
                 aliases: &[],
                 display_name: "Java",
-                supported_runtime_formats: &[Sora, Json, Cbor, SoraProtobuf],
+                runtime_capabilities: RUNTIME_MANAGED_EXPORTS,
                 runtime_format: runtime_format_from_options::<LanguageCodegenOptions>,
                 formatter: None,
                 generator: Box::new(JavaCodeGenerator),
@@ -130,7 +181,7 @@ impl CodegenRegistry {
                 id: "scala",
                 aliases: &[],
                 display_name: "Scala",
-                supported_runtime_formats: &[Sora],
+                runtime_capabilities: RUNTIME_SORA_ONLY,
                 runtime_format: runtime_format_from_options::<ScalaCodegenOptions>,
                 formatter: Some(FormatterConfig::new("Scala", "scalafmt", &[], &["scala"])),
                 generator: Box::new(ScalaCodeGenerator),
@@ -141,7 +192,7 @@ impl CodegenRegistry {
                 id: "go",
                 aliases: &[],
                 display_name: "Go",
-                supported_runtime_formats: &[Sora, Json, Cbor, SoraProtobuf],
+                runtime_capabilities: RUNTIME_MANAGED_EXPORTS,
                 runtime_format: runtime_format_from_options::<LanguageCodegenOptions>,
                 formatter: Some(FormatterConfig::new("Go", "gofmt", &["-w"], &["go"])),
                 generator: Box::new(GoCodeGenerator),
@@ -152,7 +203,7 @@ impl CodegenRegistry {
                 id: "dart",
                 aliases: &[],
                 display_name: "Dart",
-                supported_runtime_formats: &[Json],
+                runtime_capabilities: RUNTIME_JSON_ONLY,
                 runtime_format: runtime_format_from_options::<LanguageCodegenOptions>,
                 formatter: None,
                 generator: Box::new(DartCodeGenerator),
@@ -163,7 +214,7 @@ impl CodegenRegistry {
                 id: "godot",
                 aliases: &["gdscript"],
                 display_name: "Godot",
-                supported_runtime_formats: &[Json],
+                runtime_capabilities: RUNTIME_JSON_ONLY,
                 runtime_format: runtime_format_from_options::<LanguageCodegenOptions>,
                 formatter: None,
                 generator: Box::new(GodotCodeGenerator),
@@ -174,7 +225,7 @@ impl CodegenRegistry {
                 id: "c",
                 aliases: &[],
                 display_name: "C",
-                supported_runtime_formats: &[Sora],
+                runtime_capabilities: RUNTIME_SORA_ONLY,
                 runtime_format: runtime_format_from_options::<CCodegenOptions>,
                 formatter: Some(FormatterConfig::new(
                     "C",
@@ -190,7 +241,7 @@ impl CodegenRegistry {
                 id: "cpp",
                 aliases: &["c++"],
                 display_name: "C++",
-                supported_runtime_formats: &[Sora],
+                runtime_capabilities: RUNTIME_SORA_ONLY,
                 runtime_format: runtime_format_from_options::<CppCodegenOptions>,
                 formatter: Some(FormatterConfig::new(
                     "C++",
@@ -206,7 +257,7 @@ impl CodegenRegistry {
                 id: "typescript",
                 aliases: &["ts"],
                 display_name: "TypeScript",
-                supported_runtime_formats: &[Sora, Json, Cbor, SoraProtobuf],
+                runtime_capabilities: RUNTIME_MANAGED_EXPORTS,
                 runtime_format: runtime_format_from_options::<TypeScriptCodegenOptions>,
                 formatter: None,
                 generator: Box::new(TypeScriptCodeGenerator),
@@ -217,7 +268,7 @@ impl CodegenRegistry {
                 id: "javascript",
                 aliases: &["js"],
                 display_name: "JavaScript",
-                supported_runtime_formats: &[Sora, Json, Cbor, SoraProtobuf],
+                runtime_capabilities: RUNTIME_MANAGED_EXPORTS,
                 runtime_format: runtime_format_from_options::<JavaScriptCodegenOptions>,
                 formatter: None,
                 generator: Box::new(JavaScriptCodeGenerator),
@@ -228,7 +279,7 @@ impl CodegenRegistry {
                 id: "erlang",
                 aliases: &["erl"],
                 display_name: "Erlang",
-                supported_runtime_formats: &[Sora],
+                runtime_capabilities: RUNTIME_SORA_ONLY,
                 runtime_format: runtime_format_from_options::<ErlangCodegenOptions>,
                 formatter: Some(FormatterConfig::new("Erlang", "erlfmt", &["-w"], &["erl"])),
                 generator: Box::new(ErlangCodeGenerator),
@@ -239,7 +290,7 @@ impl CodegenRegistry {
                 id: "lua",
                 aliases: &[],
                 display_name: "Lua",
-                supported_runtime_formats: &[Sora],
+                runtime_capabilities: RUNTIME_SORA_ONLY,
                 runtime_format: runtime_format_from_options::<LuaCodegenOptions>,
                 formatter: None,
                 generator: Box::new(LuaCodeGenerator),
@@ -250,7 +301,7 @@ impl CodegenRegistry {
                 id: "proto-schema",
                 aliases: &["protobuf-schema"],
                 display_name: "Proto schema",
-                supported_runtime_formats: &[],
+                runtime_capabilities: &[],
                 runtime_format: |_, _| Ok(None),
                 formatter: None,
                 generator: Box::new(ProtoCodeGenerator),
@@ -261,7 +312,7 @@ impl CodegenRegistry {
                 id: "python",
                 aliases: &["py"],
                 display_name: "Python",
-                supported_runtime_formats: &[Sora, Json, Cbor, SoraProtobuf],
+                runtime_capabilities: RUNTIME_MANAGED_EXPORTS,
                 runtime_format: runtime_format_from_options::<LanguageCodegenOptions>,
                 formatter: Some(FormatterConfig::new(
                     "Python",
@@ -422,7 +473,7 @@ mod tests {
             id,
             aliases,
             display_name: id,
-            supported_runtime_formats: &[],
+            runtime_capabilities: &[],
             runtime_format: |_, _| Ok(None),
             formatter: None,
             generator: Box::new(NoopGenerator),

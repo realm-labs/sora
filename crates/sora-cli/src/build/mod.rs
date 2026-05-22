@@ -186,7 +186,7 @@ fn validate_codegen_runtime_exports(
         };
         if !generator.supports_runtime_format(runtime_format) {
             let supported = generator
-                .supported_runtime_formats
+                .supported_runtime_formats()
                 .iter()
                 .map(|format| runtime_format_name(*format))
                 .collect::<Vec<_>>()
