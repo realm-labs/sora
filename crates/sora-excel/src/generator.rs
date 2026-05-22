@@ -52,6 +52,7 @@ impl ExcelTemplateGenerator {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::projection::{DATA_START_ROW, NAME_ROW};
     use calamine::Reader;
     use sora_ir::normalize::normalize_schema;
     use sora_schema::model::SchemaFile;
@@ -93,9 +94,18 @@ mod tests {
             calamine::open_workbook(out_dir.join("Item.xlsx")).unwrap();
         let range = workbook.worksheet_range("Item").unwrap();
 
-        assert_eq!(range.get((6, 0)).unwrap().to_string(), "#name");
-        assert_eq!(range.get((12, 1)).unwrap().to_string(), "1001");
-        assert_eq!(range.get((12, 2)).unwrap().to_string(), "Iron Sword");
+        assert_eq!(
+            range.get((NAME_ROW as usize, 0)).unwrap().to_string(),
+            "#name"
+        );
+        assert_eq!(
+            range.get((DATA_START_ROW as usize, 1)).unwrap().to_string(),
+            "1001"
+        );
+        assert_eq!(
+            range.get((DATA_START_ROW as usize, 2)).unwrap().to_string(),
+            "Iron Sword"
+        );
 
         let _ = fs::remove_dir_all(out_dir);
     }

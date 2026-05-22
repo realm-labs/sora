@@ -6,10 +6,10 @@ use rust_xlsxwriter::{
 use sora_diagnostics::{Result, SoraError};
 use sora_ir::model::{ConfigIr, FieldIr, TableIr, TypeIr};
 
-use crate::projection::{table_template_rows, tuple_shape};
+use crate::projection::{
+    DATA_START_ROW, DESC_ROW, FIELD_START_COLUMN, NAME_ROW, table_template_rows, tuple_shape,
+};
 
-const DATA_START_ROW: u32 = 12;
-const FIELD_START_COLUMN: u16 = 1;
 const DATA_VALIDATION_ROWS: u32 = 1000;
 
 pub(crate) fn write_workbook_with_rows(
@@ -130,7 +130,7 @@ fn apply_field_notes(
 
         let note = Note::new(note_text).set_author("Sora");
         worksheet
-            .insert_note(6, (index + 1) as u16, &note)
+            .insert_note(NAME_ROW, (index + 1) as u16, &note)
             .map_err(|source| excel_error(path, source))?;
     }
 
@@ -303,7 +303,6 @@ struct TemplateFormats {
     schema_label: Format,
     schema_value: Format,
     description: Format,
-    spacer: Format,
 }
 
 impl TemplateFormats {
@@ -341,20 +340,18 @@ impl TemplateFormats {
                 .set_border(FormatBorder::Thin)
                 .set_text_wrap()
                 .set_align(FormatAlign::Top),
-            spacer: Format::new().set_background_color(Color::RGB(0xFFFFFF)),
         }
     }
 
     fn for_cell(&self, row: usize, column: usize) -> &Format {
+        let row = row as u32;
         match row {
-            0..=4 if column == 0 => &self.metadata_label,
-            0..=4 => &self.metadata_value,
-            5 => &self.spacer,
-            6 => &self.display_header,
-            7..=10 if column == 0 => &self.schema_label,
-            7..=10 => &self.schema_value,
-            11 if column == 0 => &self.schema_label,
-            11 => &self.description,
+            0 if column.is_multiple_of(2) => &self.metadata_label,
+            0 => &self.metadata_value,
+            NAME_ROW => &self.display_header,
+            row if row == DESC_ROW && column == 0 => &self.schema_label,
+            row if row == DESC_ROW => &self.description,
+            _ if column == 0 => &self.schema_label,
             _ => &self.schema_value,
         }
     }
@@ -371,13 +368,10 @@ fn apply_sheet_layout(
     path: &Path,
 ) -> Result<()> {
     worksheet
-        .set_row_height(5, 6)
+        .set_row_height(NAME_ROW, 24)
         .map_err(|source| excel_error(path, source))?;
     worksheet
-        .set_row_height(6, 24)
-        .map_err(|source| excel_error(path, source))?;
-    worksheet
-        .set_row_height(11, 42)
+        .set_row_height(DESC_ROW, 42)
         .map_err(|source| excel_error(path, source))?;
     worksheet
         .set_column_width(0, 12)

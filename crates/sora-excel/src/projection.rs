@@ -1,16 +1,29 @@
 use sora_ir::model::{ConfigIr, FieldIr, StructIr, TableIr, TableModeIr, TypeIr};
 
+pub const METADATA_ROW: u32 = 0;
+pub const NAME_ROW: u32 = 1;
+pub const FIELD_ROW: u32 = 2;
+pub const TYPE_ROW: u32 = 3;
+pub const SCOPE_ROW: u32 = 4;
+pub const RULE_ROW: u32 = 5;
+pub const DESC_ROW: u32 = 6;
+pub const DATA_START_ROW: u32 = 7;
+pub const FIELD_START_COLUMN: u16 = 1;
+
 pub fn table_template_rows(ir: &ConfigIr, table: &TableIr) -> Vec<Vec<String>> {
     vec![
-        vec!["@table".to_owned(), table.name.clone()],
-        vec!["@mode".to_owned(), table_mode_name(table.mode).to_owned()],
         vec![
+            "@table".to_owned(),
+            table.name.clone(),
+            "@mode".to_owned(),
+            table_mode_name(table.mode).to_owned(),
             "@key".to_owned(),
             table.key.as_deref().unwrap_or("").to_owned(),
+            "@scope".to_owned(),
+            table.scope.display(),
+            "@schema".to_owned(),
+            schema_hash(ir, table),
         ],
-        vec!["@scope".to_owned(), table.scope.display()],
-        vec!["@schema".to_owned(), schema_hash(ir, table)],
-        Vec::new(),
         std::iter::once("#name".to_owned())
             .chain(table.fields.iter().map(|field| field.name.clone()))
             .collect(),
@@ -177,20 +190,34 @@ mod tests {
         let ir = example_ir();
         let rows = table_template_rows(&ir, &ir.tables[0]);
 
-        assert_eq!(rows[0], ["@table", "Item"]);
-        assert_eq!(rows[1], ["@mode", "map"]);
-        assert_eq!(rows[2], ["@key", "id"]);
-        assert_eq!(rows[3], ["@scope", "all"]);
-        assert_eq!(rows[6], ["#name", "id", "name", "item_type", "max_stack"]);
-        assert_eq!(rows[7], ["#field", "id", "name", "item_type", "max_stack"]);
-        assert_eq!(rows[8], ["#type", "i32", "string", "enum<ItemType>", "i32"]);
-        assert_eq!(rows[9], ["#scope", "all", "all", "all", "all"]);
         assert_eq!(
-            rows[10],
+            rows[METADATA_ROW as usize][..9],
+            [
+                "@table", "Item", "@mode", "map", "@key", "id", "@scope", "all", "@schema"
+            ]
+        );
+        assert_eq!(
+            rows[NAME_ROW as usize],
+            ["#name", "id", "name", "item_type", "max_stack"]
+        );
+        assert_eq!(
+            rows[FIELD_ROW as usize],
+            ["#field", "id", "name", "item_type", "max_stack"]
+        );
+        assert_eq!(
+            rows[TYPE_ROW as usize],
+            ["#type", "i32", "string", "enum<ItemType>", "i32"]
+        );
+        assert_eq!(
+            rows[SCOPE_ROW as usize],
+            ["#scope", "all", "all", "all", "all"]
+        );
+        assert_eq!(
+            rows[RULE_ROW as usize],
             ["#rule", "key", "required", "required", "required"]
         );
         assert_eq!(
-            rows[11],
+            rows[DESC_ROW as usize],
             [
                 "#desc",
                 "Item id",
@@ -217,13 +244,13 @@ mod tests {
         let rows = table_template_rows(&ir, &ir.tables[0]);
 
         assert_eq!(
-            rows[8],
+            rows[TYPE_ROW as usize],
             [
                 "#type",
                 "struct<ResourceCost>(kind: enum<ResourceType>, id: i32, count: i32)"
             ]
         );
-        assert_eq!(rows[10], ["#rule", "required;parser=tuple"]);
+        assert_eq!(rows[RULE_ROW as usize], ["#rule", "required;parser=tuple"]);
     }
 
     #[test]
@@ -232,13 +259,16 @@ mod tests {
         let rows = table_template_rows(&ir, &ir.tables[0]);
 
         assert_eq!(
-            rows[8],
+            rows[TYPE_ROW as usize],
             [
                 "#type",
                 "list<struct<ResourceCost>>(kind: enum<ResourceType>, id: i32, count: i32)"
             ]
         );
-        assert_eq!(rows[10], ["#rule", "required;parser=tuple_list"]);
+        assert_eq!(
+            rows[RULE_ROW as usize],
+            ["#rule", "required;parser=tuple_list"]
+        );
     }
 
     fn example_ir() -> ConfigIr {

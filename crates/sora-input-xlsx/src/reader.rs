@@ -3,6 +3,7 @@ use std::{collections::BTreeMap, path::Path};
 use calamine::{Data, Reader, open_workbook_auto};
 use sora_data::model::{ConfigData, RowData, TableData};
 use sora_diagnostics::{Result, SoraError};
+use sora_excel::projection::{DATA_START_ROW, FIELD_START_COLUMN};
 use sora_execution::ExecutionContext;
 use sora_input::{
     cell::{CellContext, CellLocation},
@@ -15,8 +16,6 @@ use crate::{
     value::{cell_is_empty, cell_to_value_with_registry},
     workbook::{group_xlsx_tables, load_grouped_ranges},
 };
-
-const FIELD_START_COLUMN: usize = 1;
 
 pub fn load_xlsx_config_data(ir: &ConfigIr, data_root: &Path) -> Result<ConfigData> {
     load_xlsx_config_data_with_context_and_parsers(
@@ -143,14 +142,14 @@ fn load_xlsx_table_data_from_range(
         .map(|field| field.name.as_str())
         .collect::<Vec<_>>();
 
-    for (row_index, row) in range.rows().enumerate().skip(12) {
+    for (row_index, row) in range.rows().enumerate().skip(DATA_START_ROW as usize) {
         if row.iter().all(cell_is_empty) {
             continue;
         }
 
         let mut values = BTreeMap::new();
         for (column, field) in table.fields.iter().enumerate() {
-            let field_column = FIELD_START_COLUMN + column;
+            let field_column = FIELD_START_COLUMN as usize + column;
             let cell = row.get(field_column).unwrap_or(&Data::Empty);
             if cell_is_empty(cell) && !matches!(field.ty, TypeIr::Optional(_)) {
                 continue;
@@ -283,7 +282,7 @@ mod tests {
         let message = error.to_string();
 
         assert!(message.contains("Item.xlsx"));
-        assert!(message.contains("worksheet `Item` row 13, column 2, field `id`"));
+        assert!(message.contains("worksheet `Item` row 8, column 2, field `id`"));
         assert!(message.contains("expected integer"));
 
         let _ = std::fs::remove_dir_all(base);
@@ -559,8 +558,8 @@ parser = { kind = "tuple_list" }
             for (column, value) in row.iter().enumerate() {
                 worksheet
                     .write_string(
-                        (12 + offset) as u32,
-                        (FIELD_START_COLUMN + column) as u16,
+                        DATA_START_ROW + offset as u32,
+                        FIELD_START_COLUMN + column as u16,
                         *value,
                     )
                     .unwrap();
