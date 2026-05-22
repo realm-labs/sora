@@ -69,14 +69,28 @@ static func read_field(data: Dictionary, name: String, default_value: Variant) -
 	return value
 
 static func decode_array(value: Variant, decode: Callable) -> Array:
-	if value == null:
-		return []
-	if typeof(value) != TYPE_ARRAY:
-		report_error("expected array")
+    if value == null:
+        return []
+    if typeof(value) != TYPE_ARRAY:
+        report_error("expected array")
 		return []
 	var out := []
 	for item in value:
 		out.append(decode.call(item))
+	return out
+
+static func decode_map(value: Variant, decode_key: Callable, decode_value: Callable) -> Dictionary:
+	if value == null:
+		return {}
+	if typeof(value) != TYPE_ARRAY:
+		report_error("expected map array")
+		return {}
+	var out := {}
+	for item in value:
+		if typeof(item) != TYPE_ARRAY or item.size() != 2:
+			report_error("expected map entry pair")
+			continue
+		out[decode_key.call(item[0])] = decode_value.call(item[1])
 	return out
 
 static func decode_map_table(rows: Array, key: Callable) -> Dictionary:

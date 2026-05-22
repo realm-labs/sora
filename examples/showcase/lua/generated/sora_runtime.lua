@@ -258,6 +258,19 @@ function SoraReader:read_list(read)
     return values
 end
 
+---@generic K, V
+---@param read_key fun(): K
+---@param read_value fun(): V
+---@return table<K, V>
+function SoraReader:read_map(read_key, read_value)
+    local length = self:read_u32()
+    local values = {}
+    for _ = 1, length do
+        values[read_key()] = read_value()
+    end
+    return values
+end
+
 ---@param length integer
 ---@return string
 function SoraReader:take(length)

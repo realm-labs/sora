@@ -30,6 +30,10 @@ fn parse_type_inner(input: &str) -> Result<TypeIr> {
                 TypeIr::Union(inner.to_owned())
             } else if let Some(inner) = generic_inner(input, "list") {
                 TypeIr::List(Box::new(parse_nested_type(inner)?))
+            } else if let Some(inner) = generic_inner(input, "set") {
+                TypeIr::Set(Box::new(parse_nested_type(inner)?))
+            } else if let Some(inner) = generic_inner(input, "map") {
+                parse_map_type(input, inner)?
             } else if let Some(inner) = generic_inner(input, "optional") {
                 TypeIr::Optional(Box::new(parse_nested_type(inner)?))
             } else if let Some(inner) = generic_inner(input, "array") {
@@ -57,9 +61,10 @@ fn generic_inner<'a>(input: &'a str, name: &str) -> Option<&'a str> {
 }
 
 fn parse_array_type(original: &str, inner: &str) -> Result<TypeIr> {
-    let (element, len) = inner
-        .rsplit_once(',')
-        .ok_or_else(|| SoraError::InvalidType(original.to_owned()))?;
+    let parts = split_top_level(inner, ',');
+    let [element, len] = parts.as_slice() else {
+        return Err(SoraError::InvalidType(original.to_owned()));
+    };
     let len = len
         .trim()
         .parse::<usize>()
@@ -68,6 +73,18 @@ fn parse_array_type(original: &str, inner: &str) -> Result<TypeIr> {
     Ok(TypeIr::Array {
         element: Box::new(parse_nested_type(element)?),
         len,
+    })
+}
+
+fn parse_map_type(original: &str, inner: &str) -> Result<TypeIr> {
+    let parts = split_top_level(inner, ',');
+    let [key, value] = parts.as_slice() else {
+        return Err(SoraError::InvalidType(original.to_owned()));
+    };
+
+    Ok(TypeIr::Map {
+        key: Box::new(parse_nested_type(key)?),
+        value: Box::new(parse_nested_type(value)?),
     })
 }
 
@@ -82,6 +99,25 @@ fn parse_ref_type(original: &str, inner: &str) -> Result<TypeIr> {
         table: table.to_owned(),
         field: field.to_owned(),
     })
+}
+
+fn split_top_level(input: &str, separator: char) -> Vec<&str> {
+    let mut parts = Vec::new();
+    let mut depth = 0usize;
+    let mut start = 0usize;
+    for (index, ch) in input.char_indices() {
+        match ch {
+            '<' => depth += 1,
+            '>' => depth = depth.saturating_sub(1),
+            _ if ch == separator && depth == 0 => {
+                parts.push(input[start..index].trim());
+                start = index + ch.len_utf8();
+            }
+            _ => {}
+        }
+    }
+    parts.push(input[start..].trim());
+    parts
 }
 
 fn require_identifier(input: &str) -> Result<()> {
@@ -115,6 +151,14 @@ mod tests {
             ("struct<Reward>", TypeIr::Struct("Reward".to_owned())),
             ("union<Action>", TypeIr::Union("Action".to_owned())),
             ("list<i32>", TypeIr::List(Box::new(TypeIr::I32))),
+            ("set<i32>", TypeIr::Set(Box::new(TypeIr::I32))),
+            (
+                "map<string,i32>",
+                TypeIr::Map {
+                    key: Box::new(TypeIr::String),
+                    value: Box::new(TypeIr::I32),
+                },
+            ),
             (
                 "list<Reward>",
                 TypeIr::List(Box::new(TypeIr::Struct("Reward".to_owned()))),

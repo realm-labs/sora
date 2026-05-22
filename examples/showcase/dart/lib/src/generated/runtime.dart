@@ -87,6 +87,21 @@ final class SoraValue {
   List<T> asList<T>(T Function(SoraValue value) decode) =>
       asRawList().map(decode).toList(growable: false);
 
+  Map<K, V> asMap<K, V>(
+    K Function(SoraValue value) decodeKey,
+    V Function(SoraValue value) decodeValue,
+  ) {
+    final values = <K, V>{};
+    for (final item in asRawList()) {
+      final pair = item.asRawList();
+      if (pair.length != 2) {
+        throw const SoraReadException('expected map entry pair');
+      }
+      values[decodeKey(pair[0])] = decodeValue(pair[1]);
+    }
+    return values;
+  }
+
   bool asBool() {
     final value = _value;
     if (value is bool) {

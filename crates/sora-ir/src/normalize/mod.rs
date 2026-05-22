@@ -1,13 +1,13 @@
 use sora_diagnostics::{Result, SoraError};
 use sora_schema::model::{
-    FieldSchema, IndexSchema, ParserSchema, SchemaFile, ScopeSchema, TableModeSchema, TableSchema,
-    TableSourceSchema, UnionSchema, UnionVariantSchema,
+    EnumAliasSchema, FieldSchema, IndexSchema, ParserSchema, SchemaFile, ScopeSchema,
+    TableModeSchema, TableSchema, TableSourceSchema, UnionSchema, UnionVariantSchema,
 };
 
 use crate::{
     model::{
-        AggregationIr, CodegenIr, ConfigIr, EnumIr, FieldIr, IndexIr, ParserIr, ScopeIr, StructIr,
-        TableIr, TableModeIr, TableSourceIr, TypeIr, UnionIr, UnionVariantIr,
+        AggregationIr, CodegenIr, ConfigIr, EnumAliasIr, EnumIr, FieldIr, IndexIr, ParserIr,
+        ScopeIr, StructIr, TableIr, TableModeIr, TableSourceIr, TypeIr, UnionIr, UnionVariantIr,
     },
     parse::parse_type,
     parser::ParserRegistry,
@@ -32,6 +32,7 @@ pub fn normalize_schema_with_parsers(
                     name: item.name,
                     scope: ScopeIr::try_from(item.scope)?,
                     values: item.values,
+                    aliases: convert_enum_aliases(item.aliases),
                 })
             })
             .collect::<Result<Vec<_>>>()?,
@@ -207,6 +208,16 @@ fn convert_fields(fields: Vec<FieldSchema>) -> Result<Vec<FieldIr>> {
     convert_fields_with_parsers(fields, &ParserRegistry::builtin())
 }
 
+fn convert_enum_aliases(aliases: Vec<EnumAliasSchema>) -> Vec<EnumAliasIr> {
+    aliases
+        .into_iter()
+        .map(|item| EnumAliasIr {
+            name: item.name,
+            alias: item.alias,
+        })
+        .collect()
+}
+
 fn convert_fields_with_parsers(
     fields: Vec<FieldSchema>,
     parser_registry: &ParserRegistry,
@@ -326,7 +337,11 @@ fn validate_length_constraint(
     }
 
     match ty {
-        TypeIr::String | TypeIr::List(_) | TypeIr::Array { .. } => Ok(()),
+        TypeIr::String
+        | TypeIr::List(_)
+        | TypeIr::Set(_)
+        | TypeIr::Map { .. }
+        | TypeIr::Array { .. } => Ok(()),
         TypeIr::Optional(inner) => validate_length_constraint(field_name, inner, length),
         _ => Err(SoraError::InvalidSchema(format!(
             "field `{field_name}` declares `length` but type `{ty}` is not string, list, or array"

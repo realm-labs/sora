@@ -283,6 +283,13 @@ class SoraReader:
             values.append(read_fn())
         return values
 
+    def read_map(self, read_key: Callable[[], K], read_value: Callable[[], V]) -> dict[K, V]:
+        length = self.read_u32()
+        values = {}
+        for _ in range(length):
+            values[read_key()] = read_value()
+        return values
+
 
 {%- if runtime_format != "sora" %}
 
@@ -366,6 +373,19 @@ class SoraValue:
 
     def as_list(self, decode_fn: Callable[[SoraValue], T]) -> list[T]:
         return [decode_fn(item) for item in self.as_raw_list()]
+
+    def as_map(
+        self,
+        decode_key: Callable[[SoraValue], K],
+        decode_value: Callable[[SoraValue], V],
+    ) -> dict[K, V]:
+        values = {}
+        for item in self.as_raw_list():
+            pair = item.as_raw_list()
+            if len(pair) != 2:
+                raise SoraReadError("expected map entry pair")
+            values[decode_key(pair[0])] = decode_value(pair[1])
+        return values
 
     def as_bool(self) -> bool:
         if isinstance(self._value, bool):

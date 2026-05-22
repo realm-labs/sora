@@ -374,6 +374,8 @@ fn rust_key_type_is_copy(ir: &ConfigIr, ty: &TypeIr) -> bool {
         | TypeIr::Struct(_)
         | TypeIr::Union(_)
         | TypeIr::List(_)
+        | TypeIr::Set(_)
+        | TypeIr::Map { .. }
         | TypeIr::Array { .. } => false,
     }
 }

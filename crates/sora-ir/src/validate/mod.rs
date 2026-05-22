@@ -42,6 +42,24 @@ pub fn validate_config_ir(ir: &ConfigIr) -> Result<()> {
 
     for item in &ir.enums {
         validate_unique_names("enum value", item.values.iter().map(String::as_str))?;
+        validate_unique_names(
+            "enum alias",
+            item.aliases.iter().map(|alias| alias.alias.as_str()),
+        )?;
+        for alias in &item.aliases {
+            if !item.values.iter().any(|value| value == &alias.name) {
+                return Err(SoraError::InvalidSchema(format!(
+                    "enum `{}` alias `{}` targets unknown value `{}`",
+                    item.name, alias.alias, alias.name
+                )));
+            }
+            if item.values.iter().any(|value| value == &alias.alias) {
+                return Err(SoraError::InvalidSchema(format!(
+                    "enum `{}` alias `{}` conflicts with an enum value",
+                    item.name, alias.alias
+                )));
+            }
+        }
     }
 
     for item in &ir.structs {

@@ -297,9 +297,14 @@ fn erlang_type_name(ir: &ConfigIr, ty: &TypeIr) -> String {
         TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => {
             format!("{}:t()", name.to_snake_case())
         }
-        TypeIr::List(element) | TypeIr::Array { element, .. } => {
+        TypeIr::List(element) | TypeIr::Set(element) | TypeIr::Array { element, .. } => {
             format!("[{}]", erlang_type_name(ir, element))
         }
+        TypeIr::Map { key, value } => format!(
+            "#{{{} => {}}}",
+            erlang_type_name(ir, key),
+            erlang_type_name(ir, value)
+        ),
         TypeIr::Ref { table, field } => ref_type(ir, table, field)
             .map(|ty| erlang_type_name(ir, ty))
             .unwrap_or_else(|| "integer()".to_owned()),
@@ -318,12 +323,17 @@ fn erlang_decode_fun(ir: &ConfigIr, ty: &TypeIr) -> String {
         TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => {
             format!("fun {}:decode/1", name.to_snake_case())
         }
-        TypeIr::List(element) | TypeIr::Array { element, .. } => {
+        TypeIr::List(element) | TypeIr::Set(element) | TypeIr::Array { element, .. } => {
             format!(
                 "fun(Reader) -> sora_runtime:read_list({}, Reader) end",
                 erlang_decode_fun(ir, element)
             )
         }
+        TypeIr::Map { key, value } => format!(
+            "fun(Reader) -> sora_runtime:read_map({}, {}, Reader) end",
+            erlang_decode_fun(ir, key),
+            erlang_decode_fun(ir, value)
+        ),
         TypeIr::Ref { table, field } => ref_type(ir, table, field)
             .map(|ty| erlang_decode_fun(ir, ty))
             .unwrap_or_else(|| "fun sora_runtime:read_i32/1".to_owned()),

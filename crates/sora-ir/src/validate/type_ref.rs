@@ -46,8 +46,12 @@ pub(super) fn validate_type_references(
                 field: field_name.to_owned(),
             })
         }
-        TypeIr::List(element) | TypeIr::Optional(element) => {
+        TypeIr::List(element) | TypeIr::Set(element) | TypeIr::Optional(element) => {
             validate_type_references(owner_kind, owner, field_name, element, context)
+        }
+        TypeIr::Map { key, value } => {
+            validate_type_references(owner_kind, owner, field_name, key, context)?;
+            validate_type_references(owner_kind, owner, field_name, value, context)
         }
         TypeIr::Array { element, .. } => {
             validate_type_references(owner_kind, owner, field_name, element, context)
@@ -136,6 +140,8 @@ fn is_valid_map_key_type(ty: &TypeIr, tables: &[TableIr]) -> bool {
         | TypeIr::Struct(_)
         | TypeIr::Union(_)
         | TypeIr::List(_)
+        | TypeIr::Set(_)
+        | TypeIr::Map { .. }
         | TypeIr::Array { .. }
         | TypeIr::Optional(_) => false,
     }

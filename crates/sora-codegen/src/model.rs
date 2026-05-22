@@ -296,8 +296,12 @@ fn collect_type_imports(
         TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => {
             push_named_import(owner_name, name, imports)
         }
-        TypeIr::List(element) | TypeIr::Optional(element) => {
+        TypeIr::List(element) | TypeIr::Set(element) | TypeIr::Optional(element) => {
             collect_type_imports(ir, owner_name, element, imports);
+        }
+        TypeIr::Map { key, value } => {
+            collect_type_imports(ir, owner_name, key, imports);
+            collect_type_imports(ir, owner_name, value, imports);
         }
         TypeIr::Array { element, .. } => {
             collect_type_imports(ir, owner_name, element, imports);

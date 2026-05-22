@@ -14,6 +14,10 @@ package = "game_config"
 name = "ItemType"
 values = ["Weapon"]
 
+[[enums.aliases]]
+name = "Weapon"
+alias = "weapon"
+
 [[tables]]
 name = "Item"
 mode = "map"
@@ -56,6 +60,8 @@ length = [1, 3]
     assert_eq!(ir.codegen.lua.lua_version, LuaVersionIr::Lua54);
     assert_eq!(ir.codegen.lua.enum_repr, LuaEnumReprIr::String);
     assert_eq!(ir.enums[0].name, "ItemType");
+    assert_eq!(ir.enums[0].aliases[0].name, "Weapon");
+    assert_eq!(ir.enums[0].aliases[0].alias, "weapon");
     assert_eq!(ir.tables[0].mode, TableModeIr::Map);
     assert!(ir.tables[0].fields[0].required);
     assert_eq!(ir.tables[0].fields[0].ty, TypeIr::I32);

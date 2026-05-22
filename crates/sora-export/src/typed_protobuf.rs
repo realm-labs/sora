@@ -102,10 +102,26 @@ fn encode_field(
     }
 
     match ty {
-        TypeIr::List(element) | TypeIr::Array { element, .. } => {
+        TypeIr::List(element) | TypeIr::Set(element) | TypeIr::Array { element, .. } => {
             let values = expect_list(table, field, value)?;
             for item in values {
                 encode_value(ir, writer, table, field, tag, element, item)?;
+            }
+            Ok(())
+        }
+        TypeIr::Map {
+            key,
+            value: element,
+        } => {
+            let values = expect_list(table, field, value)?;
+            for item in values {
+                let pair = expect_list(table, field, item)?;
+                if pair.len() == 2 {
+                    writer.message(tag, |writer| {
+                        encode_value(ir, writer, table, field, 1, key, &pair[0])?;
+                        encode_value(ir, writer, table, field, 2, element, &pair[1])
+                    })?;
+                }
             }
             Ok(())
         }
@@ -125,24 +141,38 @@ fn encode_value(
 ) -> Result<()> {
     match ty {
         TypeIr::Bool => writer.bool(tag, expect_bool(table, field, value)?),
-        TypeIr::I32 => writer.int64(tag, expect_integer(table, field, value)?),
-        TypeIr::I64 => writer.int64(tag, expect_integer(table, field, value)?),
+        TypeIr::I32 | TypeIr::I64 => writer.int64(tag, expect_integer(table, field, value)?),
         TypeIr::F32 => writer.float(tag, expect_float(table, field, value)? as f32),
         TypeIr::F64 => writer.double(tag, expect_float(table, field, value)?),
         TypeIr::String => writer.string(tag, expect_string(table, field, value)?),
         TypeIr::Enum(name) => {
             let value = expect_string(table, field, value)?;
-            let ordinal = ir
+            let enum_ir = ir
                 .enums
                 .iter()
                 .find(|item| item.name == *name)
-                .and_then(|item| item.values.iter().position(|candidate| candidate == value))
                 .ok_or_else(|| SoraError::InvalidEnumValue {
                     table: table.to_owned(),
                     field: field.name.clone(),
                     value: value.to_owned(),
                 })?;
-            writer.uint64(tag, ordinal as u64);
+            let value = enum_ir
+                .aliases
+                .iter()
+                .find(|item| item.alias == value)
+                .map(|item| item.name.as_str())
+                .unwrap_or(value);
+            let number = enum_ir
+                .values
+                .iter()
+                .position(|candidate| candidate == value)
+                .map(|value| value as i64)
+                .ok_or_else(|| SoraError::InvalidEnumValue {
+                    table: table.to_owned(),
+                    field: field.name.clone(),
+                    value: value.to_owned(),
+                })?;
+            writer.int64(tag, number);
         }
         TypeIr::Struct(name) => {
             let fields = ir
@@ -177,9 +207,11 @@ fn encode_value(
                 encode_union(ir, writer, table, field, union, value)
             })?;
         }
-        TypeIr::List(_) | TypeIr::Array { .. } | TypeIr::Optional(_) => {
-            encode_field(ir, writer, table, field, tag, ty, value)?
-        }
+        TypeIr::List(_)
+        | TypeIr::Set(_)
+        | TypeIr::Map { .. }
+        | TypeIr::Array { .. }
+        | TypeIr::Optional(_) => encode_field(ir, writer, table, field, tag, ty, value)?,
         TypeIr::Ref {
             table: ref_table,
             field: ref_field,

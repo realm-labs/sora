@@ -209,13 +209,32 @@ impl<'a> BinaryEncoder<'a> {
                     self.encode_value(&field.ty, value, out)?;
                 }
             }
-            TypeIr::List(element) => {
+            TypeIr::List(element) | TypeIr::Set(element) => {
                 let Value::List(values) = value else {
                     return Err(type_error(ty, value));
                 };
                 write_u32(out, checked_u32(values.len(), "list length")?);
                 for value in values {
                     self.encode_value(element, value, out)?;
+                }
+            }
+            TypeIr::Map {
+                key,
+                value: element,
+            } => {
+                let Value::List(values) = value else {
+                    return Err(type_error(ty, value));
+                };
+                write_u32(out, checked_u32(values.len(), "map length")?);
+                for entry in values {
+                    let Value::List(pair) = entry else {
+                        return Err(type_error(ty, entry));
+                    };
+                    let [entry_key, entry_value] = pair.as_slice() else {
+                        return Err(type_error(ty, entry));
+                    };
+                    self.encode_value(key, entry_key, out)?;
+                    self.encode_value(element, entry_value, out)?;
                 }
             }
             TypeIr::Array { element, len } => {
@@ -246,6 +265,19 @@ impl<'a> BinaryEncoder<'a> {
             .iter()
             .find(|candidate| candidate.name == enum_name)
             .ok_or_else(|| binary_error(format!("unknown enum `{enum_name}`")))?;
+        if let Some(entry) = enum_ir
+            .aliases
+            .iter()
+            .find(|candidate| candidate.name == value || candidate.alias == value)
+        {
+            let ordinal = enum_ir
+                .values
+                .iter()
+                .position(|candidate| candidate == &entry.name)
+                .ok_or_else(|| binary_error(format!("unknown enum value `{enum_name}.{value}`")))?;
+            return checked_u32(ordinal, "enum ordinal");
+        }
+
         let ordinal = enum_ir
             .values
             .iter()

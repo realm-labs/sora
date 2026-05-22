@@ -303,13 +303,20 @@ fn go_decode_expr(ir: &ConfigIr, ty: &TypeIr) -> String {
         TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => {
             format!("decode{name}(reader)")
         }
-        TypeIr::List(element) | TypeIr::Array { element, .. } => {
+        TypeIr::List(element) | TypeIr::Set(element) | TypeIr::Array { element, .. } => {
             format!(
                 "ReadList(reader, func(reader *SoraReader) ({}, error) {{ return {} }})",
                 go_type_name(ir, element),
                 go_decode_expr(ir, element)
             )
         }
+        TypeIr::Map { key, value } => format!(
+            "ReadMap(reader, func(reader *SoraReader) ({}, error) {{ return {} }}, func(reader *SoraReader) ({}, error) {{ return {} }})",
+            go_type_name(ir, key),
+            go_decode_expr(ir, key),
+            go_type_name(ir, value),
+            go_decode_expr(ir, value)
+        ),
         TypeIr::Ref { table, field } => ir
             .tables
             .iter()
@@ -343,13 +350,23 @@ fn go_value_decode_expr(ir: &ConfigIr, ty: &TypeIr, value: &str) -> String {
         TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => {
             format!("decode{name}Value({value})")
         }
-        TypeIr::List(element) | TypeIr::Array { element, .. } => {
+        TypeIr::List(element) | TypeIr::Set(element) | TypeIr::Array { element, .. } => {
             format!(
                 "DecodeSoraValueList({value}, func(item SoraValue) ({}, error) {{ return {} }})",
                 go_type_name(ir, element),
                 go_value_decode_expr(ir, element, "item")
             )
         }
+        TypeIr::Map {
+            key,
+            value: element,
+        } => format!(
+            "DecodeSoraValueMap({value}, func(item SoraValue) ({}, error) {{ return {} }}, func(item SoraValue) ({}, error) {{ return {} }})",
+            go_type_name(ir, key),
+            go_value_decode_expr(ir, key, "item"),
+            go_type_name(ir, element),
+            go_value_decode_expr(ir, element, "item")
+        ),
         TypeIr::Ref { table, field } => ir
             .tables
             .iter()

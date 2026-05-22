@@ -285,8 +285,16 @@ fn godot_value_decode_expr(ir: &ConfigIr, ty: &TypeIr, value: &str) -> String {
         TypeIr::Struct(name) | TypeIr::Union(name) => {
             format!("{}.decode({value})", godot_type_identifier(name))
         }
-        TypeIr::List(element) | TypeIr::Array { element, .. } => format!(
+        TypeIr::List(element) | TypeIr::Set(element) | TypeIr::Array { element, .. } => format!(
             "SoraRuntime.decode_array({value}, func(item): return {})",
+            godot_value_decode_expr(ir, element, "item")
+        ),
+        TypeIr::Map {
+            key,
+            value: element,
+        } => format!(
+            "SoraRuntime.decode_map({value}, func(item): return {}, func(item): return {})",
+            godot_value_decode_expr(ir, key, "item"),
             godot_value_decode_expr(ir, element, "item")
         ),
         TypeIr::Ref { table, field } => ir
@@ -316,7 +324,9 @@ fn godot_default_value(ir: &ConfigIr, ty: &TypeIr) -> String {
         TypeIr::I32 | TypeIr::I64 => "0".to_owned(),
         TypeIr::F32 | TypeIr::F64 => "0.0".to_owned(),
         TypeIr::String | TypeIr::Enum(_) => "\"\"".to_owned(),
-        TypeIr::List(_) | TypeIr::Array { .. } => "[]".to_owned(),
+        TypeIr::List(_) | TypeIr::Set(_) | TypeIr::Map { .. } | TypeIr::Array { .. } => {
+            "[]".to_owned()
+        }
         TypeIr::Optional(_) | TypeIr::Struct(_) | TypeIr::Union(_) => "null".to_owned(),
         TypeIr::Ref { table, field } => ir
             .tables

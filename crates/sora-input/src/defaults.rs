@@ -90,9 +90,28 @@ fn materialize_nested_defaults(
             Ok(())
         }
         (TypeIr::List(element), Value::List(values))
+        | (TypeIr::Set(element), Value::List(values))
         | (TypeIr::Array { element, .. }, Value::List(values)) => {
             for value in values {
                 materialize_nested_defaults(ir, element, value, parser_registry)?;
+            }
+            Ok(())
+        }
+        (
+            TypeIr::Map {
+                key,
+                value: element,
+            },
+            Value::List(values),
+        ) => {
+            for value in values {
+                let Value::List(pair) = value else {
+                    continue;
+                };
+                if pair.len() == 2 {
+                    materialize_nested_defaults(ir, key, &mut pair[0], parser_registry)?;
+                    materialize_nested_defaults(ir, element, &mut pair[1], parser_registry)?;
+                }
             }
             Ok(())
         }

@@ -41,6 +41,8 @@ fn generates_rust_and_kotlin_files() {
     assert!(rust_item.contains("/// Item id"));
     assert!(rust_item.contains("pub item_type: ItemType"));
     assert!(rust_item.contains("pub action: Action"));
+    assert!(rust_item.contains("pub tags: std::collections::HashSet<String>"));
+    assert!(rust_item.contains("pub weights: std::collections::HashMap<String, i32>"));
     assert!(rust_item.contains("impl super::runtime::SoraDecode for Item"));
     assert!(!rust_item.contains("impl std::fmt::Display for Item"));
     assert!(!rust_item_type.contains("impl std::fmt::Display for ItemType"));
@@ -50,6 +52,10 @@ fn generates_rust_and_kotlin_files() {
     assert!(!rust_action.contains("impl std::fmt::Display for Action"));
     assert!(rust_runtime.contains("pub struct SoraBundle"));
     assert!(rust_runtime.contains("pub trait SoraTableSource"));
+    assert!(rust_runtime.contains(
+        "impl<T: SoraDecode + Eq + std::hash::Hash> SoraDecode for std::collections::HashSet<T>"
+    ));
+    assert!(rust_runtime.contains("impl<K, V> SoraDecode for std::collections::HashMap<K, V>"));
     assert!(rust_mod.contains("pub struct SoraConfig"));
     assert!(rust_mod.contains("from_source"));
     assert!(!rust_mod.contains("from_bytes"));
@@ -93,6 +99,12 @@ fn generates_rust_and_kotlin_files() {
     assert!(kotlin_item.contains("/** Item id */"));
     assert!(kotlin_item.contains("val itemType: ItemType"));
     assert!(kotlin_item.contains("val action: Action"));
+    assert!(kotlin_item.contains("val tags: List<String>"));
+    assert!(kotlin_item.contains("val weights: Map<String, Int>"));
+    assert!(kotlin_item.contains("reader.readMap({ reader.readString() }, { reader.readI32() })"));
+    assert!(kotlin_item.contains(
+        "obj.get(\"weights\").asMap({ item -> item.asString() }, { item -> item.asInt() })"
+    ));
     assert!(kotlin_action.contains("sealed class Action"));
     assert!(kotlin_action.contains("data class AddItem"));
     assert!(kotlin_action.contains("fun decode(reader: SoraReader): Action"));
@@ -386,6 +398,16 @@ fn generates_csharp_java_and_go_files() {
     assert!(csharp_item.contains("namespace com.sora.game_config;"));
     assert!(csharp_item.contains("public sealed record Item"));
     assert!(csharp_item.contains("// Item id"));
+    assert!(csharp_item.contains("List<string> Tags"));
+    assert!(csharp_item.contains("Dictionary<string, int> Weights"));
+    assert!(
+        csharp_item.contains("reader.ReadMap(() => reader.ReadString(), () => reader.ReadInt32())")
+    );
+    assert!(
+        csharp_item.contains(
+            "obj.Get(\"weights\").AsMap(item => item.AsString(), item => item.AsInt32())"
+        )
+    );
     assert!(
         csharp_item
             .contains("public sealed class ItemTable : ISoraTable, IReadOnlyDictionary<int, Item>")
@@ -414,6 +436,15 @@ fn generates_csharp_java_and_go_files() {
     assert!(java_item.contains("package com.sora.game_config;"));
     assert!(java_item.contains("public final class Item"));
     assert!(java_item.contains("/** Item id */"));
+    assert!(java_item.contains("java.util.List<String> tags"));
+    assert!(java_item.contains("java.util.Map<String, Integer> weights"));
+    assert!(
+        java_item.contains("reader.readMap(() -> reader.readString(), () -> reader.readI32())")
+    );
+    assert!(
+        java_item
+            .contains("obj.get(\"weights\").asMap(item -> item.asString(), item -> item.asInt())")
+    );
     assert!(java_item.contains(
         "final class ItemTable extends java.util.AbstractMap<Integer, Item> implements SoraTable"
     ));
@@ -439,6 +470,10 @@ fn generates_csharp_java_and_go_files() {
     assert!(go_item.contains("package game_config"));
     assert!(go_item.contains("type Item struct"));
     assert!(go_item.contains("// Id: Item id"));
+    assert!(go_item.contains("Tags []string"));
+    assert!(go_item.contains("Weights map[string]int32"));
+    assert!(go_item.contains("ReadMap(reader, func(reader *SoraReader) (string, error) { return reader.ReadString() }, func(reader *SoraReader) (int32, error) { return reader.ReadInt32() })"));
+    assert!(go_item.contains("DecodeSoraValueMap(obj.Get(\"weights\"), func(item SoraValue) (string, error) { return item.AsString() }, func(item SoraValue) (int32, error) { return item.AsInt32() })"));
     assert!(go_item.contains("type ItemTable struct"));
     assert!(go_item.contains("const itemTableName = \"Item\""));
     assert!(go_item.contains("map[int32]Item"));
@@ -506,6 +541,18 @@ name = "action"
 type = "union<Action>"
 required = true
 comment = "Action"
+
+[[tables.fields]]
+name = "tags"
+type = "set<string>"
+required = true
+comment = "Tags"
+
+[[tables.fields]]
+name = "weights"
+type = "map<string,i32>"
+required = true
+comment = "Weights"
 
 [[tables.indexes]]
 name = "by_name"

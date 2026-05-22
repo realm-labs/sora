@@ -277,6 +277,13 @@ class SoraReader:
             values.append(read_fn())
         return values
 
+    def read_map(self, read_key: Callable[[], K], read_value: Callable[[], V]) -> dict[K, V]:
+        length = self.read_u32()
+        values = {}
+        for _ in range(length):
+            values[read_key()] = read_value()
+        return values
+
 
 def require_singleton_table(rows: list[T], name: str) -> T:
     if len(rows) != 1:

@@ -223,6 +223,15 @@ export class SoraReader {
         return values;
     }
 
+    readMap(readKey, readValue) {
+        const length = this.readU32();
+        const values = new Map();
+        for (let index = 0; index < length; index += 1) {
+            values.set(readKey(), readValue());
+        }
+        return values;
+    }
+
     take(length) {
         const end = checkedAdd(this.cursor, length, "Sora row slice length overflow");
         if (end > this.bytes.byteLength) {
@@ -302,6 +311,18 @@ export class SoraValue {
 
     asList(decode) {
         return this.asRawList().map(decode);
+    }
+
+    asMap(decodeKey, decodeValue) {
+        const values = new Map();
+        for (const item of this.asRawList()) {
+            const pair = item.asRawList();
+            if (pair.length !== 2) {
+                throw new SoraReadError("expected map entry pair");
+            }
+            values.set(decodeKey(pair[0]), decodeValue(pair[1]));
+        }
+        return values;
     }
 
     asBool() {

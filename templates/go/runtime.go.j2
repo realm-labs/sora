@@ -347,6 +347,26 @@ func ReadList[T any](reader *SoraReader, read func(*SoraReader) (T, error)) ([]T
     return values, nil
 }
 
+func ReadMap[K comparable, V any](reader *SoraReader, readKey func(*SoraReader) (K, error), readValue func(*SoraReader) (V, error)) (map[K]V, error) {
+    length, err := reader.ReadUInt32()
+    if err != nil {
+        return nil, err
+    }
+    values := make(map[K]V, length)
+    for i := 0; i < length; i++ {
+        key, err := readKey(reader)
+        if err != nil {
+            return nil, err
+        }
+        value, err := readValue(reader)
+        if err != nil {
+            return nil, err
+        }
+        values[key] = value
+    }
+    return values, nil
+}
+
 func (reader *SoraReader) take(length int) ([]byte, error) {
     end, err := checkedAdd(reader.cursor, length, "Sora reader cursor overflow")
     if err != nil {
@@ -607,6 +627,33 @@ func DecodeSoraValueList[T any](value SoraValue, decode func(SoraValue) (T, erro
             return nil, err
         }
         decoded = append(decoded, value)
+    }
+    return decoded, nil
+}
+
+func DecodeSoraValueMap[K comparable, V any](value SoraValue, decodeKey func(SoraValue) (K, error), decodeValue func(SoraValue) (V, error)) (map[K]V, error) {
+    values, err := value.AsList()
+    if err != nil {
+        return nil, err
+    }
+    decoded := make(map[K]V, len(values))
+    for _, item := range values {
+        pair, err := item.AsList()
+        if err != nil {
+            return nil, err
+        }
+        if len(pair) != 2 {
+            return nil, fmt.Errorf("expected map entry pair")
+        }
+        key, err := decodeKey(pair[0])
+        if err != nil {
+            return nil, err
+        }
+        value, err := decodeValue(pair[1])
+        if err != nil {
+            return nil, err
+        }
+        decoded[key] = value
     }
     return decoded, nil
 }

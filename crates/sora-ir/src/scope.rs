@@ -211,8 +211,12 @@ fn collect_type_names(
         TypeIr::Union(name) => {
             union_names.insert(name.clone());
         }
-        TypeIr::List(element) | TypeIr::Optional(element) => {
+        TypeIr::List(element) | TypeIr::Set(element) | TypeIr::Optional(element) => {
             collect_type_names(element, enum_names, struct_names, union_names);
+        }
+        TypeIr::Map { key, value } => {
+            collect_type_names(key, enum_names, struct_names, union_names);
+            collect_type_names(value, enum_names, struct_names, union_names);
         }
         TypeIr::Array { element, .. } => {
             collect_type_names(element, enum_names, struct_names, union_names);

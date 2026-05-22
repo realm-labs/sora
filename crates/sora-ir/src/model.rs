@@ -268,6 +268,14 @@ pub struct EnumIr {
     pub name: String,
     pub scope: ScopeIr,
     pub values: Vec<String>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub aliases: Vec<EnumAliasIr>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct EnumAliasIr {
+    pub name: String,
+    pub alias: String,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -392,8 +400,19 @@ pub enum TypeIr {
     Struct(String),
     Union(String),
     List(Box<TypeIr>),
-    Array { element: Box<TypeIr>, len: usize },
-    Ref { table: String, field: String },
+    Set(Box<TypeIr>),
+    Map {
+        key: Box<TypeIr>,
+        value: Box<TypeIr>,
+    },
+    Array {
+        element: Box<TypeIr>,
+        len: usize,
+    },
+    Ref {
+        table: String,
+        field: String,
+    },
     Optional(Box<TypeIr>),
 }
 
@@ -410,6 +429,8 @@ impl fmt::Display for TypeIr {
             TypeIr::Struct(name) => write!(f, "struct<{name}>"),
             TypeIr::Union(name) => write!(f, "union<{name}>"),
             TypeIr::List(element) => write!(f, "list<{element}>"),
+            TypeIr::Set(element) => write!(f, "set<{element}>"),
+            TypeIr::Map { key, value } => write!(f, "map<{key},{value}>"),
             TypeIr::Array { element, len } => write!(f, "array<{element},{len}>"),
             TypeIr::Ref { table, field } => write!(f, "ref<{table}.{field}>"),
             TypeIr::Optional(element) => write!(f, "optional<{element}>"),

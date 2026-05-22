@@ -143,7 +143,7 @@ fn validate_tuple_target(field_name: &str, ty: &TypeIr) -> Result<()> {
 
 fn validate_tuple_list_target(field_name: &str, ty: &TypeIr) -> Result<()> {
     match ty {
-        TypeIr::List(element) | TypeIr::Array { element, .. } => validate_tuple_target(
+        TypeIr::List(element) | TypeIr::Set(element) | TypeIr::Array { element, .. } => validate_tuple_target(
             field_name,
             element,
         )
@@ -161,7 +161,7 @@ fn validate_tuple_list_target(field_name: &str, ty: &TypeIr) -> Result<()> {
 
 fn validate_collection_target(field_name: &str, ty: &TypeIr) -> Result<()> {
     match ty {
-        TypeIr::List(_) | TypeIr::Array { .. } => Ok(()),
+        TypeIr::List(_) | TypeIr::Set(_) | TypeIr::Map { .. } | TypeIr::Array { .. } => Ok(()),
         TypeIr::Optional(inner) => validate_collection_target(field_name, inner),
         _ => Err(SoraError::InvalidSchema(format!(
             "field `{field_name}` declares parser `split` but type `{ty}` is not list or array"

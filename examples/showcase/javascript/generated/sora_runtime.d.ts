@@ -33,6 +33,7 @@ export declare class SoraReader {
     readString(): string;
     readOptional<T>(read: () => T): T | undefined;
     readList<T>(read: () => T): T[];
+    readMap<K, V>(readKey: () => K, readValue: () => V): Map<K, V>;
 }
 
 export declare class SoraValueBundle {
@@ -48,6 +49,7 @@ export declare class SoraValue {
     asObject(): SoraObject;
     asRawList(): SoraValue[];
     asList<T>(decode: (value: SoraValue) => T): T[];
+    asMap<K, V>(decodeKey: (value: SoraValue) => K, decodeValue: (value: SoraValue) => V): Map<K, V>;
     asBool(): boolean;
     asInt(): number;
     asBigInt(): bigint;
