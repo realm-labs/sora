@@ -323,7 +323,7 @@ fn lua_field(ir: &ConfigIr, field: BaseField, options: &LuaOptionsView) -> LuaFi
         name: field.camel_name,
         type_name: lua_type_name(ir, &field.ty, options),
         decode: lua_decode_expr(ir, &field.ty, options),
-        value_decode: lua_value_decode_expr(ir, &field.ty, options, "__VALUE__"),
+        value_decode: lua_value_decode_expr(ir, &field.ty, "__VALUE__"),
         comment: field.comment,
     }
 }
@@ -392,12 +392,7 @@ fn lua_decode_expr(ir: &ConfigIr, ty: &TypeIr, _options: &LuaOptionsView) -> Str
     }
 }
 
-fn lua_value_decode_expr(
-    ir: &ConfigIr,
-    ty: &TypeIr,
-    options: &LuaOptionsView,
-    value: &str,
-) -> String {
+fn lua_value_decode_expr(ir: &ConfigIr, ty: &TypeIr, value: &str) -> String {
     match ty {
         TypeIr::Bool => format!("Runtime.expect_boolean({value})"),
         TypeIr::I32 | TypeIr::I64 => format!("Runtime.expect_integer({value})"),
@@ -409,7 +404,7 @@ fn lua_value_decode_expr(
         TypeIr::List(element) | TypeIr::Set(element) | TypeIr::Array { element, .. } => {
             format!(
                 "Runtime.decode_value_list({value}, function(item) return {} end)",
-                lua_value_decode_expr(ir, element, options, "item")
+                lua_value_decode_expr(ir, element, "item")
             )
         }
         TypeIr::Map {
@@ -417,16 +412,16 @@ fn lua_value_decode_expr(
             value: element,
         } => format!(
             "Runtime.decode_value_map({value}, function(item) return {} end, function(item) return {} end)",
-            lua_value_decode_expr(ir, key, options, "item"),
-            lua_value_decode_expr(ir, element, options, "item")
+            lua_value_decode_expr(ir, key, "item"),
+            lua_value_decode_expr(ir, element, "item")
         ),
         TypeIr::Ref { table, field } => ref_target_type(ir, table, field)
-            .map(|ty| lua_value_decode_expr(ir, ty, options, value))
+            .map(|ty| lua_value_decode_expr(ir, ty, value))
             .unwrap_or_else(|| format!("Runtime.expect_integer({value})")),
         TypeIr::Optional(element) => {
             format!(
                 "{value} == nil and nil or {}",
-                lua_value_decode_expr(ir, element, options, value)
+                lua_value_decode_expr(ir, element, value)
             )
         }
     }
