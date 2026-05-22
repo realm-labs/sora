@@ -11,7 +11,7 @@ impl super::runtime::SoraDecode for MailType {
     fn decode(
         reader: &mut super::runtime::SoraReader<'_>,
     ) -> Result<Self, super::runtime::SoraReadError> {
-        match reader.read_u32()? {
+        match reader.read_var_u32()? {
             0 => Ok(Self::System),
             1 => Ok(Self::Event),
             2 => Ok(Self::Compensation),

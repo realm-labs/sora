@@ -19,7 +19,7 @@ pub enum {{ union.pascal_name }} {
 
 impl super::runtime::SoraDecode for {{ union.pascal_name }} {
     fn decode(reader: &mut super::runtime::SoraReader<'_>) -> Result<Self, super::runtime::SoraReadError> {
-        match reader.read_u32()? {
+        match reader.read_var_u32()? {
 {%- for variant in union.variants %}
             {{ loop.index0 }} => Ok(Self::{{ variant.name }} {
 {%- for field in variant.fields %}

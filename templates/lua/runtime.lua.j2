@@ -4,6 +4,7 @@ local Runtime = {}
 
 local SORA_BUNDLE_VERSION = 1
 local SORA_HEADER_LENGTH = 24
+local SORA_SECTION_ENTRY_LENGTH = 28
 local SECTION_KIND_MANIFEST = 0
 local SECTION_KIND_SCHEMA = 1
 local SECTION_KIND_TABLE = 2
@@ -79,7 +80,7 @@ function Runtime.parse_bundle(bytes)
     local strings_count = 0
     local table_names = {}
     for _ = 1, section_count do
-        if cursor + 40 > directory_end then
+        if cursor + SORA_SECTION_ENTRY_LENGTH > directory_end then
             error("truncated Sora section directory entry")
         end
 
@@ -87,14 +88,14 @@ function Runtime.parse_bundle(bytes)
         local compression = read_u32_at(bytes, cursor + 4)
         local name_length = read_u32_at(bytes, cursor + 8)
         local entry_flags = read_u32_at(bytes, cursor + 12)
-        local offset = read_u64_at(bytes, cursor + 16)
-        local length = read_u64_at(bytes, cursor + 24)
-        local uncompressed_length = read_u64_at(bytes, cursor + 32)
+        local offset = read_u32_at(bytes, cursor + 16)
+        local length = read_u32_at(bytes, cursor + 20)
+        local uncompressed_length = read_u32_at(bytes, cursor + 24)
         if entry_flags ~= 0 then
             error("unsupported Sora section flags " .. tostring(entry_flags))
         end
 
-        local name_start = cursor + 40
+        local name_start = cursor + SORA_SECTION_ENTRY_LENGTH
         local name_end = name_start + name_length
         if name_end > directory_end then
             error("Sora section name exceeds directory")
@@ -244,41 +245,25 @@ end
 
 ---@return integer
 function SoraReader:read_u32()
-{%- if options.uses_string_unpack %}
-    local value, next_cursor = string.unpack("<I4", self.bytes, self.cursor)
-    self.cursor = next_cursor
-    return value
-{%- else %}
-    local value = read_u32_at(self.bytes, self.cursor - 1)
-    self.cursor = self.cursor + 4
-    return value
-{%- endif %}
+    return self:read_var_u64()
 end
 
 ---@return integer
 function SoraReader:read_i32()
-{%- if options.uses_string_unpack %}
-    local value, next_cursor = string.unpack("<i4", self.bytes, self.cursor)
-    self.cursor = next_cursor
-    return value
-{%- else %}
-    local value = read_i32_at(self.bytes, self.cursor - 1)
-    self.cursor = self.cursor + 4
-    return value
-{%- endif %}
+    local value = self:read_u32()
+    if value % 2 == 0 then
+        return value / 2
+    end
+    return -((value + 1) / 2)
 end
 
 ---@return integer
 function SoraReader:read_i64()
-{%- if options.uses_string_unpack %}
-    local value, next_cursor = string.unpack("<i8", self.bytes, self.cursor)
-    self.cursor = next_cursor
-    return value
-{%- else %}
-    local value = read_i64_at(self.bytes, self.cursor - 1)
-    self.cursor = self.cursor + 8
-    return value
-{%- endif %}
+    local value = self:read_var_u64()
+    if value % 2 == 0 then
+        return value / 2
+    end
+    return -((value + 1) / 2)
 end
 
 ---@return number
@@ -368,6 +353,23 @@ function SoraReader:take(length)
     return self.bytes:sub(start, ending)
 end
 
+---@return integer
+function SoraReader:read_var_u64()
+    local value = 0
+    local shift = 0
+    while true do
+        if shift >= 64 then
+            error("Sora varint is too long")
+        end
+        local byte = self:read_u8()
+        value = value + (byte % 128) * 2 ^ shift
+        if byte < 128 then
+            return value
+        end
+        shift = shift + 7
+    end
+end
+
 ---@generic T
 ---@param rows T[]
 ---@param name string
@@ -423,20 +425,20 @@ end
 ---@param decode fun(reader: SoraReader): T
 ---@return T[]
 function decode_rows(payload, strings, decode)
-    if #payload < 12 then
+    if #payload < 8 then
         error("Sora table section is too short")
     end
 
     local row_count = read_u32_at(payload, 0)
-    local row_data_start = 4 + (row_count + 1) * 8
+    local row_data_start = 4 + (row_count + 1) * 4
     if row_data_start > #payload then
         error("Sora row offset table exceeds payload length")
     end
 
     local rows = {}
     for index = 0, row_count - 1 do
-        local start = read_u64_at(payload, 4 + index * 8)
-        local ending = read_u64_at(payload, 4 + (index + 1) * 8)
+        local start = read_u32_at(payload, 4 + index * 4)
+        local ending = read_u32_at(payload, 4 + (index + 1) * 4)
         if start > ending then
             error("Sora row offsets are not monotonic")
         end
@@ -458,15 +460,16 @@ end
 ---@param payload string
 ---@return string[]
 function decode_string_table(payload)
-    if #payload < 4 then
+    if #payload == 0 then
         error("Sora strings section is too short")
     end
-    local count = read_u32_at(payload, 0)
     local strings = {}
-    local cursor = 4
+    local cursor = 0
+    local count
+    count, cursor = read_var_u32_at(payload, cursor)
     for index = 1, count do
-        local length = read_u32_at(payload, cursor)
-        cursor = cursor + 4
+        local length
+        length, cursor = read_var_u32_at(payload, cursor)
         local ending = cursor + length
         if ending > #payload then
             error("Sora string exceeds strings section length")
@@ -510,6 +513,29 @@ function read_u64_at(bytes, offset)
     local high = b5 + b6 * 256 + b7 * 65536 + b8 * 16777216
     return checked_safe_integer(high * TWO_32 + low, "u64")
 {%- endif %}
+end
+
+---@param bytes string
+---@param offset integer
+---@return integer, integer
+function read_var_u32_at(bytes, offset)
+    local value = 0
+    local shift = 0
+    while true do
+        if shift >= 32 then
+            error("Sora varint exceeds u32")
+        end
+        local byte = string.byte(bytes, offset + 1)
+        if byte == nil then
+            error("unexpected end while reading varint")
+        end
+        offset = offset + 1
+        value = value + (byte % 128) * 2 ^ shift
+        if byte < 128 then
+            return value, offset
+        end
+        shift = shift + 7
+    end
 end
 
 {%- if not options.uses_string_unpack %}

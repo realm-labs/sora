@@ -12,7 +12,7 @@ impl super::runtime::SoraDecode for ElementType {
     fn decode(
         reader: &mut super::runtime::SoraReader<'_>,
     ) -> Result<Self, super::runtime::SoraReadError> {
-        match reader.read_u32()? {
+        match reader.read_var_u32()? {
             0 => Ok(Self::Fire),
             1 => Ok(Self::Ice),
             2 => Ok(Self::Lightning),

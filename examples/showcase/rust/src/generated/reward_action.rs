@@ -29,7 +29,7 @@ impl super::runtime::SoraDecode for RewardAction {
     fn decode(
         reader: &mut super::runtime::SoraReader<'_>,
     ) -> Result<Self, super::runtime::SoraReadError> {
-        match reader.read_u32()? {
+        match reader.read_var_u32()? {
             0 => Ok(Self::AddItem {
                 item_id: <i32 as super::runtime::SoraDecode>::decode(reader)?,
                 count: <i32 as super::runtime::SoraDecode>::decode(reader)?,

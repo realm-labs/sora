@@ -45,6 +45,7 @@ interface SoraTableSource {
 final class SoraBundle implements SoraTableSource {
     private static final int BUNDLE_VERSION = 1;
     private static final int HEADER_LENGTH = 24;
+    private static final int SECTION_ENTRY_LENGTH = 28;
     private static final int SECTION_KIND_MANIFEST = 0;
     private static final int SECTION_KIND_SCHEMA = 1;
     private static final int SECTION_KIND_TABLE = 2;
@@ -121,20 +122,20 @@ final class SoraBundle implements SoraTableSource {
         var stringsCount = 0;
         var tableNames = new HashSet<String>();
         for (var i = 0; i < sectionCount; i++) {
-            if (cursor + 40 > directoryEnd) {
+            if (cursor + SECTION_ENTRY_LENGTH > directoryEnd) {
                 throw new SoraReadException("truncated Sora section directory entry");
             }
             var kind = readI32At(bytes, cursor);
             var compression = readI32At(bytes, cursor + 4);
             var nameLength = readI32At(bytes, cursor + 8);
             var entryFlags = readI32At(bytes, cursor + 12);
-            var offset = checkedLongToInt(readI64At(bytes, cursor + 16), "Sora section offset exceeds Integer.MAX_VALUE");
-            var length = checkedLongToInt(readI64At(bytes, cursor + 24), "Sora section length exceeds Integer.MAX_VALUE");
-            var uncompressedLength = checkedLongToInt(readI64At(bytes, cursor + 32), "Sora section uncompressed length exceeds Integer.MAX_VALUE");
+            var offset = readI32At(bytes, cursor + 16);
+            var length = readI32At(bytes, cursor + 20);
+            var uncompressedLength = readI32At(bytes, cursor + 24);
             if (entryFlags != 0) {
                 throw new SoraReadException("unsupported Sora section flags " + entryFlags);
             }
-            var nameStart = cursor + 40;
+            var nameStart = cursor + SECTION_ENTRY_LENGTH;
             var nameEnd = checkedAdd(nameStart, nameLength, "Sora section name length overflow");
             if (nameEnd > directoryEnd) {
                 throw new SoraReadException("Sora section name exceeds directory");
@@ -204,20 +205,20 @@ final class SoraBundle implements SoraTableSource {
     }
 
     private static <T> List<T> decodeRows(byte[] payload, List<String> strings, SoraRowDecoder<T> decode) {
-        if (payload.length < 12) {
+        if (payload.length < 8) {
             throw new SoraReadException("Sora table section is too short");
         }
         var rowCount = readI32At(payload, 0);
         var offsetsLength = checkedAdd(rowCount, 1, "Sora row offset count overflow");
-        var rowDataStart = checkedAdd(4, checkedMultiply(offsetsLength, 8, "Sora row offsets overflow"), "Sora row data offset overflow");
+        var rowDataStart = checkedAdd(4, checkedMultiply(offsetsLength, 4, "Sora row offsets overflow"), "Sora row data offset overflow");
         if (rowDataStart > payload.length) {
             throw new SoraReadException("Sora row offset table exceeds payload length");
         }
 
         var rows = new ArrayList<T>(rowCount);
         for (var index = 0; index < rowCount; index++) {
-            var start = checkedLongToInt(readI64At(payload, 4 + index * 8), "Sora row start exceeds Integer.MAX_VALUE");
-            var end = checkedLongToInt(readI64At(payload, 4 + (index + 1) * 8), "Sora row end exceeds Integer.MAX_VALUE");
+            var start = readI32At(payload, 4 + index * 4);
+            var end = readI32At(payload, 4 + (index + 1) * 4);
             if (start > end) {
                 throw new SoraReadException("Sora row offsets are not monotonic");
             }
@@ -237,26 +238,44 @@ final class SoraBundle implements SoraTableSource {
     }
 
     private static List<String> decodeStringTable(byte[] payload) {
-        if (payload.length < 4) {
+        if (payload.length == 0) {
             throw new SoraReadException("Sora string table section is too short");
         }
-        var count = readI32At(payload, 0);
-        var cursor = 4;
+        var cursor = new int[] { 0 };
+        var count = readVarU32At(payload, cursor);
         var values = new ArrayList<String>(count);
         for (var i = 0; i < count; i++) {
-            var length = readI32At(payload, cursor);
-            cursor = checkedAdd(cursor, 4, "Sora string table cursor overflow");
-            var end = checkedAdd(cursor, length, "Sora string length overflow");
+            var length = readVarU32At(payload, cursor);
+            var end = checkedAdd(cursor[0], length, "Sora string length overflow");
             if (end > payload.length) {
                 throw new SoraReadException("Sora string exceeds string table section");
             }
-            values.add(new String(payload, cursor, length, StandardCharsets.UTF_8));
-            cursor = end;
+            values.add(new String(payload, cursor[0], length, StandardCharsets.UTF_8));
+            cursor[0] = end;
         }
-        if (cursor != payload.length) {
+        if (cursor[0] != payload.length) {
             throw new SoraReadException("Sora string table section has trailing bytes");
         }
         return values;
+    }
+
+    static int readVarU32At(byte[] bytes, int[] cursor) {
+        var value = 0;
+        var shift = 0;
+        while (true) {
+            if (shift >= 32) {
+                throw new SoraReadException("Sora varint exceeds u32");
+            }
+            if (cursor[0] >= bytes.length) {
+                throw new SoraReadException("unexpected end while reading varint");
+            }
+            var next = bytes[cursor[0]++] & 0xff;
+            value |= (next & 0x7f) << shift;
+            if ((next & 0x80) == 0) {
+                return value;
+            }
+            shift += 7;
+        }
     }
 
     static int readI32At(byte[] bytes, int offset) {
@@ -290,13 +309,6 @@ final class SoraBundle implements SoraTableSource {
 
     private static int checkedMultiply(int left, int right, String message) {
         var value = (long)left * right;
-        if (value > Integer.MAX_VALUE || value < Integer.MIN_VALUE) {
-            throw new SoraReadException(message);
-        }
-        return (int)value;
-    }
-
-    private static int checkedLongToInt(long value, String message) {
         if (value > Integer.MAX_VALUE || value < Integer.MIN_VALUE) {
             throw new SoraReadException(message);
         }
@@ -361,23 +373,29 @@ final class SoraReader {
     }
 
     int readU32() {
-        return readI32();
+        var value = readVarU64();
+        if (value > Integer.MAX_VALUE) {
+            throw new SoraReadException("Sora varint exceeds Integer.MAX_VALUE");
+        }
+        return (int)value;
     }
 
     Integer readI32() {
-        return SoraBundle.readI32At(take(4), 0);
+        var value = readU32();
+        return (value >>> 1) ^ -(value & 1);
     }
 
     Long readI64() {
-        return SoraBundle.readI64At(take(8), 0);
+        var value = readVarU64();
+        return (value >>> 1) ^ -(value & 1L);
     }
 
     Float readF32() {
-        return Float.intBitsToFloat(readI32());
+        return Float.intBitsToFloat(SoraBundle.readI32At(take(4), 0));
     }
 
     Double readF64() {
-        return Double.longBitsToDouble(readI64());
+        return Double.longBitsToDouble(SoraBundle.readI64At(take(8), 0));
     }
 
     String readString() {
@@ -425,6 +443,22 @@ final class SoraReader {
         var chunk = Arrays.copyOfRange(bytes, cursor, end);
         cursor = end;
         return chunk;
+    }
+
+    private long readVarU64() {
+        var value = 0L;
+        var shift = 0;
+        while (true) {
+            if (shift >= 64) {
+                throw new SoraReadException("Sora varint is too long");
+            }
+            var next = readU8();
+            value |= (long)(next & 0x7f) << shift;
+            if ((next & 0x80) == 0) {
+                return value;
+            }
+            shift += 7;
+        }
     }
 }
 

@@ -26,6 +26,7 @@
 
 -define(SORA_BUNDLE_VERSION, 1).
 -define(SORA_HEADER_LENGTH, 24).
+-define(SORA_SECTION_ENTRY_LENGTH, 28).
 -define(SECTION_KIND_MANIFEST, 0).
 -define(SECTION_KIND_SCHEMA, 1).
 -define(SECTION_KIND_TABLE, 2).
@@ -154,16 +155,18 @@ read_bool(Reader0) ->
     end.
 
 -spec read_u32(reader()) -> {integer(), reader()}.
-read_u32({<<Value:32/little-unsigned-integer, Rest/binary>>, Strings}) ->
-    {Value, {Rest, Strings}}.
+read_u32(Reader) ->
+    read_var_u64(Reader, 0, 0).
 
 -spec read_i32(reader()) -> {integer(), reader()}.
-read_i32({<<Value:32/little-signed-integer, Rest/binary>>, Strings}) ->
-    {Value, {Rest, Strings}}.
+read_i32(Reader0) ->
+    {Value, Reader1} = read_u32(Reader0),
+    {zigzag_decode(Value), Reader1}.
 
 -spec read_i64(reader()) -> {integer(), reader()}.
-read_i64({<<Value:64/little-signed-integer, Rest/binary>>, Strings}) ->
-    {Value, {Rest, Strings}}.
+read_i64(Reader0) ->
+    {Value, Reader1} = read_var_u64(Reader0, 0, 0),
+    {zigzag_decode(Value), Reader1}.
 
 -spec read_f32(reader()) -> {float(), reader()}.
 read_f32({<<Value:32/little-float, Rest/binary>>, Strings}) ->
@@ -209,7 +212,7 @@ read_sections(_Bytes, Cursor, DirectoryEnd, 0, Sections, ManifestCount, SchemaCo
         _ -> error(sora_section_directory_has_trailing_bytes)
     end;
 read_sections(Bytes, Cursor, DirectoryEnd, Count, Sections, ManifestCount, SchemaCount, TableNames) ->
-    case Cursor + 40 =< DirectoryEnd of
+    case Cursor + ?SORA_SECTION_ENTRY_LENGTH =< DirectoryEnd of
         true -> ok;
         false -> error(truncated_sora_section_directory_entry)
     end,
@@ -217,14 +220,14 @@ read_sections(Bytes, Cursor, DirectoryEnd, Count, Sections, ManifestCount, Schem
     Compression = read_u32_at(Bytes, Cursor + 4),
     NameLength = read_u32_at(Bytes, Cursor + 8),
     EntryFlags = read_u32_at(Bytes, Cursor + 12),
-    Offset = read_u64_at(Bytes, Cursor + 16),
-    Length = read_u64_at(Bytes, Cursor + 24),
-    UncompressedLength = read_u64_at(Bytes, Cursor + 32),
+    Offset = read_u32_at(Bytes, Cursor + 16),
+    Length = read_u32_at(Bytes, Cursor + 20),
+    UncompressedLength = read_u32_at(Bytes, Cursor + 24),
     case EntryFlags of
         0 -> ok;
         _ -> error({unsupported_sora_section_flags, EntryFlags})
     end,
-    NameStart = Cursor + 40,
+    NameStart = Cursor + ?SORA_SECTION_ENTRY_LENGTH,
     NameEnd = NameStart + NameLength,
     case NameEnd =< DirectoryEnd of
         true -> ok;
@@ -365,9 +368,9 @@ byte_at(_Json, _Cursor) ->
     undefined.
 
 -spec decode_rows(binary(), [binary()], fun((reader()) -> {T, reader()})) -> [T].
-decode_rows(Payload, Strings, Decode) when byte_size(Payload) >= 12 ->
+decode_rows(Payload, Strings, Decode) when byte_size(Payload) >= 8 ->
     RowCount = read_u32_at(Payload, 0),
-    RowDataStart = 4 + (RowCount + 1) * 8,
+    RowDataStart = 4 + (RowCount + 1) * 4,
     case RowDataStart =< byte_size(Payload) of
         true -> ok;
         false -> error(sora_row_offset_table_exceeds_payload_length)
@@ -380,8 +383,8 @@ decode_rows(_Payload, _Strings, _Decode) ->
 decode_row_loop(RowCount, RowCount, _RowDataStart, _Payload, _Strings, _Decode, Rows) ->
     lists:reverse(Rows);
 decode_row_loop(Index, RowCount, RowDataStart, Payload, Strings, Decode, Rows) ->
-    Start = read_u64_at(Payload, 4 + Index * 8),
-    Ending = read_u64_at(Payload, 4 + (Index + 1) * 8),
+    Start = read_u32_at(Payload, 4 + Index * 4),
+    Ending = read_u32_at(Payload, 4 + (Index + 1) * 4),
     case Start =< Ending of
         true -> ok;
         false -> error(sora_row_offsets_are_not_monotonic)
@@ -401,9 +404,9 @@ decode_row_loop(Index, RowCount, RowDataStart, Payload, Strings, Decode, Rows) -
     decode_row_loop(Index + 1, RowCount, RowDataStart, Payload, Strings, Decode, [Row | Rows]).
 
 -spec decode_string_table(binary()) -> [binary()].
-decode_string_table(Payload) when byte_size(Payload) >= 4 ->
-    Count = read_u32_at(Payload, 0),
-    {Strings, Cursor} = decode_string_table_items(Count, Payload, 4, []),
+decode_string_table(Payload) when byte_size(Payload) >= 1 ->
+    {Count, Cursor0} = read_var_u32_at(Payload, 0),
+    {Strings, Cursor} = decode_string_table_items(Count, Payload, Cursor0, []),
     case Cursor of
         Size when Size =:= byte_size(Payload) -> Strings;
         _ -> error(sora_strings_section_has_trailing_bytes)
@@ -415,8 +418,7 @@ decode_string_table(_Payload) ->
 decode_string_table_items(0, _Payload, Cursor, Values) ->
     {lists:reverse(Values), Cursor};
 decode_string_table_items(Count, Payload, Cursor0, Values) ->
-    Length = read_u32_at(Payload, Cursor0),
-    Cursor1 = Cursor0 + 4,
+    {Length, Cursor1} = read_var_u32_at(Payload, Cursor0),
     case Cursor1 + Length =< byte_size(Payload) of
         true -> ok;
         false -> error(sora_string_exceeds_strings_section_length)
@@ -444,12 +446,44 @@ read_map_items(Length, DecodeKey, DecodeValue, Reader0, Values) ->
 read_u8({<<Value:8/unsigned-integer, Rest/binary>>, Strings}) ->
     {Value, {Rest, Strings}}.
 
+-spec read_var_u64(reader(), integer(), integer()) -> {integer(), reader()}.
+read_var_u64(_Reader, _Value, Shift) when Shift >= 64 ->
+    error(sora_varint_too_long);
+read_var_u64(Reader0, Value0, Shift) ->
+    {Byte, Reader1} = read_u8(Reader0),
+    Value1 = Value0 bor ((Byte band 16#7f) bsl Shift),
+    case Byte band 16#80 of
+        0 -> {Value1, Reader1};
+        _ -> read_var_u64(Reader1, Value1, Shift + 7)
+    end.
+
+-spec zigzag_decode(integer()) -> integer().
+zigzag_decode(Value) ->
+    (Value bsr 1) bxor -(Value band 1).
+
 -spec read_u32_at(binary(), integer()) -> integer().
 read_u32_at(Bytes, Offset) when Offset >= 0, Offset + 4 =< byte_size(Bytes) ->
     <<_:Offset/binary, Value:32/little-unsigned-integer, _/binary>> = Bytes,
     Value;
 read_u32_at(_Bytes, _Offset) ->
     error(unexpected_end_while_reading_u32).
+
+-spec read_var_u32_at(binary(), integer()) -> {integer(), integer()}.
+read_var_u32_at(Bytes, Cursor) ->
+    read_var_u32_at(Bytes, Cursor, 0, 0).
+
+-spec read_var_u32_at(binary(), integer(), integer(), integer()) -> {integer(), integer()}.
+read_var_u32_at(_Bytes, _Cursor, _Value, Shift) when Shift >= 32 ->
+    error(sora_varint_exceeds_u32);
+read_var_u32_at(Bytes, Cursor, Value0, Shift) when Cursor >= 0, Cursor < byte_size(Bytes) ->
+    Byte = binary:at(Bytes, Cursor),
+    Value1 = Value0 bor ((Byte band 16#7f) bsl Shift),
+    case Byte band 16#80 of
+        0 -> {Value1, Cursor + 1};
+        _ -> read_var_u32_at(Bytes, Cursor + 1, Value1, Shift + 7)
+    end;
+read_var_u32_at(_Bytes, _Cursor, _Value, _Shift) ->
+    error(unexpected_end_while_reading_varint).
 
 -spec read_u64_at(binary(), integer()) -> integer().
 read_u64_at(Bytes, Offset) when Offset >= 0, Offset + 8 =< byte_size(Bytes) ->

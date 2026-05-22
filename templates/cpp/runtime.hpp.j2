@@ -89,22 +89,25 @@ public:
     }
 
     std::uint32_t read_u32() {
-        const std::uint8_t* bytes = take(4);
-        return static_cast<std::uint32_t>(bytes[0]) |
-            (static_cast<std::uint32_t>(bytes[1]) << 8) |
-            (static_cast<std::uint32_t>(bytes[2]) << 16) |
-            (static_cast<std::uint32_t>(bytes[3]) << 24);
+        std::uint64_t value = read_var_u64();
+        if (value > UINT32_MAX) {
+            throw SoraReadException("Sora varint exceeds u32");
+        }
+        return static_cast<std::uint32_t>(value);
     }
 
-    std::int32_t read_i32() { return static_cast<std::int32_t>(read_u32()); }
+    std::int32_t read_i32() {
+        std::uint32_t value = read_u32();
+        return static_cast<std::int32_t>(value >> 1) ^ -static_cast<std::int32_t>(value & 1);
+    }
 
     std::int64_t read_i64() {
-        std::uint64_t value = read_u64();
-        return static_cast<std::int64_t>(value);
+        std::uint64_t value = read_var_u64();
+        return static_cast<std::int64_t>(value >> 1) ^ -static_cast<std::int64_t>(value & 1);
     }
 
     float read_f32() {
-        std::uint32_t bits = read_u32();
+        std::uint32_t bits = read_fixed_u32();
         float value;
         std::memcpy(&value, &bits, sizeof(value));
         return value;
@@ -186,6 +189,14 @@ public:
     }
 
 private:
+    std::uint32_t read_fixed_u32() {
+        const std::uint8_t* bytes = take(4);
+        return static_cast<std::uint32_t>(bytes[0]) |
+            (static_cast<std::uint32_t>(bytes[1]) << 8) |
+            (static_cast<std::uint32_t>(bytes[2]) << 16) |
+            (static_cast<std::uint32_t>(bytes[3]) << 24);
+    }
+
     std::uint64_t read_u64() {
         const std::uint8_t* bytes = take(8);
         std::uint64_t value = 0;
@@ -193,6 +204,22 @@ private:
             value |= static_cast<std::uint64_t>(bytes[index]) << (index * 8);
         }
         return value;
+    }
+
+    std::uint64_t read_var_u64() {
+        std::uint64_t value = 0;
+        std::uint32_t shift = 0;
+        while (true) {
+            if (shift >= 64) {
+                throw SoraReadException("Sora varint is too long");
+            }
+            std::uint8_t next = read_u8();
+            value |= static_cast<std::uint64_t>(next & 0x7f) << shift;
+            if ((next & 0x80) == 0) {
+                return value;
+            }
+            shift += 7;
+        }
     }
 
     const std::uint8_t* take(std::size_t length) {
@@ -276,7 +303,7 @@ public:
         std::string manifest_payload;
         std::vector<std::string> strings;
         for (std::size_t index = 0; index < section_count; ++index) {
-            if (cursor > directory_end || directory_end - cursor < 40) {
+            if (cursor > directory_end || directory_end - cursor < kSectionEntryLength) {
                 throw SoraReadException("truncated Sora section directory entry");
             }
             Section section;
@@ -284,13 +311,13 @@ public:
             section.compression = read_u32_at(bytes, cursor + 4);
             std::size_t name_length = static_cast<std::size_t>(read_u32_at(bytes, cursor + 8));
             std::uint32_t entry_flags = read_u32_at(bytes, cursor + 12);
-            section.offset = static_cast<std::size_t>(read_u64_at(bytes, cursor + 16));
-            section.length = static_cast<std::size_t>(read_u64_at(bytes, cursor + 24));
-            section.uncompressed_length = static_cast<std::size_t>(read_u64_at(bytes, cursor + 32));
+            section.offset = static_cast<std::size_t>(read_u32_at(bytes, cursor + 16));
+            section.length = static_cast<std::size_t>(read_u32_at(bytes, cursor + 20));
+            section.uncompressed_length = static_cast<std::size_t>(read_u32_at(bytes, cursor + 24));
             if (entry_flags != 0) {
                 throw SoraReadException("unsupported Sora section flags");
             }
-            std::size_t name_start = cursor + 40;
+            std::size_t name_start = cursor + kSectionEntryLength;
             if (name_length > directory_end || name_start > directory_end - name_length) {
                 throw SoraReadException("Sora section name exceeds directory");
             }
@@ -391,20 +418,20 @@ private:
         std::size_t length,
         const std::vector<std::string>* strings
     ) {
-        if (length < 12) {
+        if (length < 8) {
             throw SoraReadException("Sora table section is too short");
         }
         std::uint32_t row_count = read_u32_at(payload, length, 0);
         std::size_t offsets_length = static_cast<std::size_t>(row_count) + 1;
-        if (offsets_length > (length - 4) / 8) {
+        if (offsets_length > (length - 4) / 4) {
             throw SoraReadException("Sora row offset table exceeds payload length");
         }
-        std::size_t row_data_start = 4 + offsets_length * 8;
+        std::size_t row_data_start = 4 + offsets_length * 4;
         std::vector<T> rows;
         rows.reserve(row_count);
         for (std::uint32_t index = 0; index < row_count; ++index) {
-            std::size_t start = static_cast<std::size_t>(read_u64_at(payload, length, 4 + index * 8));
-            std::size_t end = static_cast<std::size_t>(read_u64_at(payload, length, 4 + (index + 1) * 8));
+            std::size_t start = static_cast<std::size_t>(read_u32_at(payload, length, 4 + index * 4));
+            std::size_t end = static_cast<std::size_t>(read_u32_at(payload, length, 4 + (index + 1) * 4));
             if (start > end) {
                 throw SoraReadException("Sora row offsets are not monotonic");
             }
@@ -422,16 +449,15 @@ private:
     }
 
     static std::vector<std::string> decode_string_table(const std::uint8_t* payload, std::size_t length) {
-        if (length < 4) {
+        if (length == 0) {
             throw SoraReadException("Sora strings section is too short");
         }
-        std::uint32_t count = read_u32_at(payload, length, 0);
+        std::size_t cursor = 0;
+        std::uint32_t count = read_var_u32_at(payload, length, cursor);
         std::vector<std::string> strings;
         strings.reserve(count);
-        std::size_t cursor = 4;
         for (std::uint32_t index = 0; index < count; ++index) {
-            std::uint32_t string_length = read_u32_at(payload, length, cursor);
-            cursor += 4;
+            std::uint32_t string_length = read_var_u32_at(payload, length, cursor);
             if (string_length > length || cursor > length - string_length) {
                 throw SoraReadException("Sora string exceeds strings section length");
             }
@@ -473,6 +499,25 @@ private:
         return value;
     }
 
+    static std::uint32_t read_var_u32_at(const std::uint8_t* bytes, std::size_t length, std::size_t& cursor) {
+        std::uint32_t value = 0;
+        std::uint32_t shift = 0;
+        while (true) {
+            if (shift >= 32) {
+                throw SoraReadException("Sora varint exceeds u32");
+            }
+            if (cursor >= length) {
+                throw SoraReadException("unexpected end while reading varint");
+            }
+            std::uint8_t next = bytes[cursor++];
+            value |= static_cast<std::uint32_t>(next & 0x7f) << shift;
+            if ((next & 0x80) == 0) {
+                return value;
+            }
+            shift += 7;
+        }
+    }
+
     static std::string json_string_field(const std::string& json, const std::string& field) {
         std::string key = "\"" + field + "\"";
         std::size_t key_pos = json.find(key);
@@ -507,6 +552,7 @@ private:
 
     static const std::uint32_t kBundleVersion = 1;
     static const std::size_t kHeaderLength = 24;
+    static const std::size_t kSectionEntryLength = 28;
     static const std::uint32_t kSectionKindManifest = 0;
     static const std::uint32_t kSectionKindSchema = 1;
     static const std::uint32_t kSectionKindTable = 2;

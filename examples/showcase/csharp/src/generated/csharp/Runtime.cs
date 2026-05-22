@@ -29,6 +29,7 @@ public sealed class SoraBundle : ISoraTableSource
 {
     private const int BundleVersion = 1;
     private const int HeaderLength = 24;
+    private const int SectionEntryLength = 28;
     private const int SectionKindManifest = 0;
     private const int SectionKindSchema = 1;
     private const int SectionKindTable = 2;
@@ -113,7 +114,7 @@ public sealed class SoraBundle : ISoraTableSource
         var tableNames = new HashSet<string>();
         for (var i = 0; i < sectionCount; i++)
         {
-            if (cursor + 40 > directoryEnd)
+            if (cursor + SectionEntryLength > directoryEnd)
             {
                 throw new SoraReadException("truncated Sora section directory entry");
             }
@@ -121,14 +122,14 @@ public sealed class SoraBundle : ISoraTableSource
             var compression = ReadInt32At(bytes, cursor + 4);
             var nameLength = ReadInt32At(bytes, cursor + 8);
             var entryFlags = ReadInt32At(bytes, cursor + 12);
-            var offset = CheckedLongToInt(ReadInt64At(bytes, cursor + 16), "Sora section offset exceeds Int32.MaxValue");
-            var length = CheckedLongToInt(ReadInt64At(bytes, cursor + 24), "Sora section length exceeds Int32.MaxValue");
-            var uncompressedLength = CheckedLongToInt(ReadInt64At(bytes, cursor + 32), "Sora section uncompressed length exceeds Int32.MaxValue");
+            var offset = ReadInt32At(bytes, cursor + 16);
+            var length = ReadInt32At(bytes, cursor + 20);
+            var uncompressedLength = ReadInt32At(bytes, cursor + 24);
             if (entryFlags != 0)
             {
                 throw new SoraReadException($"unsupported Sora section flags {entryFlags}");
             }
-            var nameStart = cursor + 40;
+            var nameStart = cursor + SectionEntryLength;
             var nameEnd = CheckedAdd(nameStart, nameLength, "Sora section name length overflow");
             if (nameEnd > directoryEnd)
             {
@@ -217,13 +218,13 @@ public sealed class SoraBundle : ISoraTableSource
 
     private static List<T> DecodeRows<T>(byte[] payload, List<string> strings, Func<SoraReader, T> decode)
     {
-        if (payload.Length < 12)
+        if (payload.Length < 8)
         {
             throw new SoraReadException("Sora table section is too short");
         }
         var rowCount = ReadInt32At(payload, 0);
         var offsetsLength = CheckedAdd(rowCount, 1, "Sora row offset count overflow");
-        var rowDataStart = CheckedAdd(4, CheckedMultiply(offsetsLength, 8, "Sora row offsets overflow"), "Sora row data offset overflow");
+        var rowDataStart = CheckedAdd(4, CheckedMultiply(offsetsLength, 4, "Sora row offsets overflow"), "Sora row data offset overflow");
         if (rowDataStart > payload.Length)
         {
             throw new SoraReadException("Sora row offset table exceeds payload length");
@@ -232,8 +233,8 @@ public sealed class SoraBundle : ISoraTableSource
         var rows = new List<T>(rowCount);
         for (var index = 0; index < rowCount; index++)
         {
-            var start = CheckedLongToInt(ReadInt64At(payload, 4 + index * 8), "Sora row start exceeds Int32.MaxValue");
-            var end = CheckedLongToInt(ReadInt64At(payload, 4 + (index + 1) * 8), "Sora row end exceeds Int32.MaxValue");
+            var start = ReadInt32At(payload, 4 + index * 4);
+            var end = ReadInt32At(payload, 4 + (index + 1) * 4);
             if (start > end)
             {
                 throw new SoraReadException("Sora row offsets are not monotonic");
@@ -259,17 +260,16 @@ public sealed class SoraBundle : ISoraTableSource
 
     private static List<string> DecodeStringTable(byte[] payload)
     {
-        if (payload.Length < 4)
+        if (payload.Length == 0)
         {
             throw new SoraReadException("Sora string table section is too short");
         }
-        var count = ReadInt32At(payload, 0);
-        var cursor = 4;
+        var cursor = 0;
+        var count = ReadVarUInt32At(payload, ref cursor);
         var values = new List<string>(count);
         for (var i = 0; i < count; i++)
         {
-            var length = ReadInt32At(payload, cursor);
-            cursor = CheckedAdd(cursor, 4, "Sora string table cursor overflow");
+            var length = ReadVarUInt32At(payload, ref cursor);
             var end = CheckedAdd(cursor, length, "Sora string length overflow");
             if (end > payload.Length)
             {
@@ -309,6 +309,30 @@ public sealed class SoraBundle : ISoraTableSource
             value |= ((long)bytes[offset + i] & 0xffL) << (i * 8);
         }
         return value;
+    }
+
+    internal static int ReadVarUInt32At(byte[] bytes, ref int cursor)
+    {
+        var value = 0;
+        var shift = 0;
+        while (true)
+        {
+            if (shift >= 32)
+            {
+                throw new SoraReadException("Sora varint exceeds u32");
+            }
+            if (cursor >= bytes.Length)
+            {
+                throw new SoraReadException("unexpected end while reading varint");
+            }
+            var next = bytes[cursor++] & 0xff;
+            value |= (next & 0x7f) << shift;
+            if ((next & 0x80) == 0)
+            {
+                return value;
+            }
+            shift += 7;
+        }
     }
 
     internal static int CheckedAdd(int left, int right, string message)
@@ -382,27 +406,34 @@ public sealed class SoraReader
 
     internal int ReadUInt32()
     {
-        return ReadInt32();
+        var value = ReadVarUInt64();
+        if (value > int.MaxValue)
+        {
+            throw new SoraReadException("Sora varint exceeds Int32.MaxValue");
+        }
+        return (int)value;
     }
 
     internal int ReadInt32()
     {
-        return SoraBundle.ReadInt32At(Take(4), 0);
+        var value = ReadUInt32();
+        return (int)((uint)value >> 1) ^ -(value & 1);
     }
 
     internal long ReadInt64()
     {
-        return SoraBundle.ReadInt64At(Take(8), 0);
+        var value = ReadVarUInt64();
+        return (long)(value >> 1) ^ -((long)value & 1L);
     }
 
     internal float ReadFloat()
     {
-        return BitConverter.Int32BitsToSingle(ReadInt32());
+        return BitConverter.Int32BitsToSingle(SoraBundle.ReadInt32At(Take(4), 0));
     }
 
     internal double ReadDouble()
     {
-        return BitConverter.Int64BitsToDouble(ReadInt64());
+        return BitConverter.Int64BitsToDouble(SoraBundle.ReadInt64At(Take(8), 0));
     }
 
     internal string ReadString()
@@ -459,6 +490,26 @@ public sealed class SoraReader
         Array.Copy(bytes, cursor, chunk, 0, length);
         cursor = end;
         return chunk;
+    }
+
+    private ulong ReadVarUInt64()
+    {
+        var value = 0UL;
+        var shift = 0;
+        while (true)
+        {
+            if (shift >= 64)
+            {
+                throw new SoraReadException("Sora varint is too long");
+            }
+            var next = ReadByte();
+            value |= (ulong)(next & 0x7f) << shift;
+            if ((next & 0x80) == 0)
+            {
+                return value;
+            }
+            shift += 7;
+        }
     }
 }
 

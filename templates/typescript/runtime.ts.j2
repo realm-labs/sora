@@ -8,6 +8,7 @@ import protobuf from "protobufjs";
 
 const SORA_BUNDLE_VERSION = 1;
 const SORA_HEADER_LENGTH = 24;
+const SORA_SECTION_ENTRY_LENGTH = 28;
 const SECTION_KIND_MANIFEST = 0;
 const SECTION_KIND_SCHEMA = 1;
 const SECTION_KIND_TABLE = 2;
@@ -90,7 +91,7 @@ export class SoraBundle {
         let stringsCount = 0;
         const tableNames = new Set<string>();
         for (let index = 0; index < sectionCount; index += 1) {
-            if (cursor + 40 > directoryEnd) {
+            if (cursor + SORA_SECTION_ENTRY_LENGTH > directoryEnd) {
                 throw new SoraReadError("truncated Sora section directory entry");
             }
 
@@ -98,14 +99,14 @@ export class SoraBundle {
             const compression = readU32At(bytes, cursor + 4);
             const nameLength = readU32At(bytes, cursor + 8);
             const entryFlags = readU32At(bytes, cursor + 12);
-            const offset = readU64At(bytes, cursor + 16);
-            const length = readU64At(bytes, cursor + 24);
-            const uncompressedLength = readU64At(bytes, cursor + 32);
+            const offset = readU32At(bytes, cursor + 16);
+            const length = readU32At(bytes, cursor + 20);
+            const uncompressedLength = readU32At(bytes, cursor + 24);
             if (entryFlags !== 0) {
                 throw new SoraReadError(`unsupported Sora section flags ${entryFlags}`);
             }
 
-            const nameStart = cursor + 40;
+            const nameStart = cursor + SORA_SECTION_ENTRY_LENGTH;
             const nameEnd = checkedAdd(nameStart, nameLength, "Sora section name length overflow");
             if (nameEnd > directoryEnd) {
                 throw new SoraReadError("Sora section name exceeds directory");
@@ -227,21 +228,17 @@ export class SoraReader {
     }
 
     readU32(): number {
-        const value = readU32At(this.bytes, this.cursor);
-        this.cursor += 4;
-        return value;
+        return this.readVarU32();
     }
 
     readI32(): number {
-        const value = readI32At(this.bytes, this.cursor);
-        this.cursor += 4;
-        return value;
+        const value = this.readVarU32();
+        return (value >>> 1) ^ -(value & 1);
     }
 
     readI64(): bigint {
-        const value = readI64At(this.bytes, this.cursor);
-        this.cursor += 8;
-        return value;
+        const value = this.readVarU64();
+        return (value >> 1n) ^ -(value & 1n);
     }
 
     readF32(): number {
@@ -302,6 +299,26 @@ export class SoraReader {
         const value = this.bytes.subarray(this.cursor, end);
         this.cursor = end;
         return value;
+    }
+
+    private readVarU32(): number {
+        return checkedU64ToNumber(this.readVarU64(), "varint exceeds safe integer range");
+    }
+
+    private readVarU64(): bigint {
+        let value = 0n;
+        let shift = 0n;
+        while (true) {
+            if (shift >= 64n) {
+                throw new SoraReadError("Sora varint is too long");
+            }
+            const byte = this.readU8();
+            value |= BigInt(byte & 0x7f) << shift;
+            if ((byte & 0x80) === 0) {
+                return value;
+            }
+            shift += 7n;
+        }
     }
 }
 
@@ -688,20 +705,20 @@ export function decodeIndex<K, V>(rows: V[], key: (row: V) => K): Map<K, V[]> {
 }
 
 function decodeRows<T>(payload: Uint8Array, strings: readonly string[], decode: (reader: SoraReader) => T): T[] {
-    if (payload.byteLength < 12) {
+    if (payload.byteLength < 8) {
         throw new SoraReadError("Sora table section is too short");
     }
 
     const rowCount = readU32At(payload, 0);
-    const rowDataStart = 4 + (rowCount + 1) * 8;
+    const rowDataStart = 4 + (rowCount + 1) * 4;
     if (rowDataStart > payload.byteLength) {
         throw new SoraReadError("Sora row offset table exceeds payload length");
     }
 
     const rows: T[] = [];
     for (let index = 0; index < rowCount; index += 1) {
-        const start = readU64At(payload, 4 + index * 8);
-        const end = readU64At(payload, 4 + (index + 1) * 8);
+        const start = readU32At(payload, 4 + index * 4);
+        const end = readU32At(payload, 4 + (index + 1) * 4);
         if (start > end) {
             throw new SoraReadError("Sora row offsets are not monotonic");
         }
@@ -721,15 +738,18 @@ function decodeRows<T>(payload: Uint8Array, strings: readonly string[], decode: 
 }
 
 function decodeStringTable(payload: Uint8Array): string[] {
-    if (payload.byteLength < 4) {
+    if (payload.byteLength === 0) {
         throw new SoraReadError("Sora strings section is too short");
     }
-    const count = readU32At(payload, 0);
+    let cursor = 0;
+    const countResult = readVarU32At(payload, cursor);
+    const count = countResult.value;
+    cursor = countResult.cursor;
     const strings: string[] = [];
-    let cursor = 4;
     for (let index = 0; index < count; index += 1) {
-        const length = readU32At(payload, cursor);
-        cursor += 4;
+        const lengthResult = readVarU32At(payload, cursor);
+        const length = lengthResult.value;
+        cursor = lengthResult.cursor;
         const end = checkedAdd(cursor, length, "Sora string length overflow");
         if (end > payload.byteLength) {
             throw new SoraReadError("Sora string exceeds strings section length");
@@ -772,6 +792,26 @@ function readU32At(bytes: Uint8Array, offset: number): number {
 
 function readI32At(bytes: Uint8Array, offset: number): number {
     return viewAt(bytes, offset, 4).getInt32(0, true);
+}
+
+function readVarU32At(bytes: Uint8Array, cursor: number): { value: number; cursor: number } {
+    let value = 0;
+    let shift = 0;
+    while (true) {
+        if (shift >= 32) {
+            throw new SoraReadError("Sora varint exceeds u32");
+        }
+        const byte = bytes[cursor];
+        if (byte === undefined) {
+            throw new SoraReadError("unexpected end while reading varint");
+        }
+        cursor += 1;
+        value |= (byte & 0x7f) << shift;
+        if ((byte & 0x80) === 0) {
+            return { value, cursor };
+        }
+        shift += 7;
+    }
 }
 
 function readU64At(bytes: Uint8Array, offset: number): number {

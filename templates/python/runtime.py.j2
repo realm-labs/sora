@@ -15,6 +15,7 @@ from typing import Any, Callable, TypeVar
 
 SORA_BUNDLE_VERSION = 1
 SORA_HEADER_LENGTH = 24
+SORA_SECTION_ENTRY_LENGTH = 28
 SECTION_KIND_MANIFEST = 0
 SECTION_KIND_SCHEMA = 1
 SECTION_KIND_TABLE = 2
@@ -105,7 +106,7 @@ class SoraBundle:
         table_names: set[str] = set()
 
         for _ in range(section_count):
-            if cursor + 40 > directory_end:
+            if cursor + SORA_SECTION_ENTRY_LENGTH > directory_end:
                 raise SoraReadError("truncated Sora section directory entry")
 
             kind, compression, name_length, entry_flags = struct.unpack_from(
@@ -113,14 +114,14 @@ class SoraBundle:
                 data,
                 cursor,
             )
-            offset = struct.unpack_from("<Q", data, cursor + 16)[0]
-            length = struct.unpack_from("<Q", data, cursor + 24)[0]
-            uncompressed_length = struct.unpack_from("<Q", data, cursor + 32)[0]
+            offset = struct.unpack_from("<I", data, cursor + 16)[0]
+            length = struct.unpack_from("<I", data, cursor + 20)[0]
+            uncompressed_length = struct.unpack_from("<I", data, cursor + 24)[0]
 
             if entry_flags != 0:
                 raise SoraReadError(f"unsupported Sora section flags {entry_flags}")
 
-            name_start = cursor + 40
+            name_start = cursor + SORA_SECTION_ENTRY_LENGTH
             name_end = name_start + name_length
             if name_end > directory_end:
                 raise SoraReadError("Sora section name exceeds directory")
@@ -253,25 +254,15 @@ class SoraReader:
         raise SoraReadError(f"invalid bool value {value}")
 
     def read_u32(self) -> int:
-        if self._cursor + 4 > len(self._data):
-            raise SoraReadError("Sora reader reached end of row")
-        value = struct.unpack_from("<I", self._data, self._cursor)[0]
-        self._cursor += 4
-        return value
+        return self._read_var_u64()
 
     def read_i32(self) -> int:
-        if self._cursor + 4 > len(self._data):
-            raise SoraReadError("Sora reader reached end of row")
-        value = struct.unpack_from("<i", self._data, self._cursor)[0]
-        self._cursor += 4
-        return value
+        value = self.read_u32()
+        return (value >> 1) ^ -(value & 1)
 
     def read_i64(self) -> int:
-        if self._cursor + 8 > len(self._data):
-            raise SoraReadError("Sora reader reached end of row")
-        value = struct.unpack_from("<q", self._data, self._cursor)[0]
-        self._cursor += 8
-        return value
+        value = self._read_var_u64()
+        return (value >> 1) ^ -(value & 1)
 
     def read_f32(self) -> float:
         if self._cursor + 4 > len(self._data):
@@ -316,6 +307,18 @@ class SoraReader:
             key = read_key()
             values[key] = read_value()
         return values
+
+    def _read_var_u64(self) -> int:
+        value = 0
+        shift = 0
+        while True:
+            if shift >= 64:
+                raise SoraReadError("Sora varint is too long")
+            byte = self.read_u8()
+            value |= (byte & 0x7F) << shift
+            if byte & 0x80 == 0:
+                return value
+            shift += 7
 
 
 {%- if runtime_format != "sora" %}
@@ -737,16 +740,15 @@ def decode_index(rows: list[V], key_fn: Callable[[V], K]) -> dict[K, list[V]]:
 
 
 def decode_string_table(payload: bytes) -> list[str]:
-    if len(payload) < 4:
+    if not payload:
         raise SoraReadError("Sora string table section is too short")
-    count = struct.unpack_from("<I", payload, 0)[0]
-    cursor = 4
+    cursor = 0
+    count = read_var_u32_at(payload, cursor)
+    cursor = count[1]
+    count = count[0]
     values = []
     for _ in range(count):
-        if cursor + 4 > len(payload):
-            raise SoraReadError("Sora string table is truncated")
-        length = struct.unpack_from("<I", payload, cursor)[0]
-        cursor += 4
+        length, cursor = read_var_u32_at(payload, cursor)
         end = cursor + length
         if end > len(payload):
             raise SoraReadError("Sora string exceeds string table section")
@@ -758,18 +760,18 @@ def decode_string_table(payload: bytes) -> list[str]:
 
 
 def decode_rows(payload: bytes, strings: list[str], decode_fn: Callable[[SoraReader], T]) -> list[T]:
-    if len(payload) < 12:
+    if len(payload) < 8:
         raise SoraReadError("Sora table section is too short")
 
     row_count = struct.unpack_from("<I", payload, 0)[0]
-    row_data_start = 4 + (row_count + 1) * 8
+    row_data_start = 4 + (row_count + 1) * 4
     if row_data_start > len(payload):
         raise SoraReadError("Sora row offset table exceeds payload length")
 
     rows = []
     for index in range(row_count):
-        start = struct.unpack_from("<Q", payload, 4 + index * 8)[0]
-        end = struct.unpack_from("<Q", payload, 4 + (index + 1) * 8)[0]
+        start = struct.unpack_from("<I", payload, 4 + index * 4)[0]
+        end = struct.unpack_from("<I", payload, 4 + (index + 1) * 4)[0]
         if start > end:
             raise SoraReadError("Sora row offsets are not monotonic")
         absolute_start = row_data_start + start
@@ -783,3 +785,19 @@ def decode_rows(payload: bytes, strings: list[str], decode_fn: Callable[[SoraRea
             raise SoraReadError("Sora row has trailing bytes")
         rows.append(row)
     return rows
+
+
+def read_var_u32_at(payload: bytes, cursor: int) -> tuple[int, int]:
+    value = 0
+    shift = 0
+    while True:
+        if shift >= 32:
+            raise SoraReadError("Sora varint exceeds u32")
+        if cursor >= len(payload):
+            raise SoraReadError("unexpected end while reading varint")
+        byte = payload[cursor]
+        cursor += 1
+        value |= (byte & 0x7F) << shift
+        if byte & 0x80 == 0:
+            return value, cursor
+        shift += 7

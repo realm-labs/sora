@@ -10,6 +10,7 @@ use crate::bundle::{data_fingerprint, schema_fingerprint};
 const MAGIC: &[u8; 4] = b"SORA";
 const VERSION: u32 = 1;
 const HEADER_LEN: u32 = 24;
+const SECTION_ENTRY_LEN: usize = 28;
 const SECTION_KIND_MANIFEST: u32 = 0;
 const SECTION_KIND_SCHEMA: u32 = 1;
 const SECTION_KIND_TABLE: u32 = 2;
@@ -214,20 +215,21 @@ impl<'a> BinaryEncoder<'a> {
             rows.push(row_bytes);
         }
 
-        let row_count = rows.len();
-        let offsets_len = row_count + 1;
-        let row_data_start = 4 + offsets_len * 8;
+        let row_count = checked_u32(rows.len(), "row count")?;
+        let offsets_len = rows.len() + 1;
+        let row_data_start = 4 + offsets_len * 4;
         let mut payload = Vec::new();
-        write_u32(&mut payload, checked_u32(row_count, "row count")?);
+        write_u32(&mut payload, row_count);
 
-        let mut offset = 0_u64;
+        let mut offset = 0_u32;
         for row in &rows {
-            write_u64(&mut payload, offset);
+            write_u32(&mut payload, offset);
+            let row_len = checked_u32(row.len(), "row payload length")?;
             offset = offset
-                .checked_add(row.len() as u64)
+                .checked_add(row_len)
                 .ok_or_else(|| binary_error("table row payload is too large"))?;
         }
-        write_u64(&mut payload, offset);
+        write_u32(&mut payload, offset);
 
         debug_assert_eq!(payload.len(), row_data_start);
         for row in rows {
@@ -266,13 +268,13 @@ impl<'a> BinaryEncoder<'a> {
                 let value = i32::try_from(*value).map_err(|_| {
                     binary_error(format!("cannot encode integer `{value}` as `{ty}`"))
                 })?;
-                write_i32(out, value);
+                write_var_i32(out, value);
             }
             TypeIr::I64 => {
                 let Value::Integer(value) = value else {
                     return Err(type_error(ty, value));
                 };
-                write_i64(out, *value);
+                write_var_i64(out, *value);
             }
             TypeIr::F32 => match value {
                 Value::Integer(value) => write_f32(out, *value as f32),
@@ -288,14 +290,14 @@ impl<'a> BinaryEncoder<'a> {
                 let Value::String(value) = value else {
                     return Err(type_error(ty, value));
                 };
-                write_u32(out, strings.id(value)?);
+                write_var_u32(out, strings.id(value)?);
             }
             TypeIr::Enum(enum_name) => {
                 let Value::String(value) = value else {
                     return Err(type_error(ty, value));
                 };
                 let ordinal = self.enum_ordinal(enum_name, value)?;
-                write_u32(out, ordinal);
+                write_var_u32(out, ordinal);
             }
             TypeIr::Struct(struct_name) => {
                 let Value::Object(values) = value else {
@@ -329,7 +331,7 @@ impl<'a> BinaryEncoder<'a> {
                         "unknown union variant `{union_name}.{variant_name}`"
                     )));
                 };
-                write_u32(out, checked_u32(ordinal, "union ordinal")?);
+                write_var_u32(out, checked_u32(ordinal, "union ordinal")?);
                 for field in &variant.fields {
                     let null = Value::Null;
                     let value = values.get(&field.name).unwrap_or(&null);
@@ -340,7 +342,7 @@ impl<'a> BinaryEncoder<'a> {
                 let Value::List(values) = value else {
                     return Err(type_error(ty, value));
                 };
-                write_u32(out, checked_u32(values.len(), "list length")?);
+                write_var_u32(out, checked_u32(values.len(), "list length")?);
                 for value in values {
                     self.encode_value(element, value, out, strings)?;
                 }
@@ -352,7 +354,7 @@ impl<'a> BinaryEncoder<'a> {
                 let Value::List(values) = value else {
                     return Err(type_error(ty, value));
                 };
-                write_u32(out, checked_u32(values.len(), "map length")?);
+                write_var_u32(out, checked_u32(values.len(), "map length")?);
                 for entry in values {
                     let Value::List(pair) = entry else {
                         return Err(type_error(ty, entry));
@@ -371,7 +373,7 @@ impl<'a> BinaryEncoder<'a> {
                 if values.len() != *len {
                     return Err(type_error(ty, value));
                 }
-                write_u32(out, checked_u32(values.len(), "array length")?);
+                write_var_u32(out, checked_u32(values.len(), "array length")?);
                 for value in values {
                     self.encode_value(element, value, out, strings)?;
                 }
@@ -470,7 +472,7 @@ impl StringTable {
         }
 
         let mut out = Vec::new();
-        write_u32(&mut out, checked_u32(by_id.len(), "string table size")?);
+        write_var_u32(&mut out, checked_u32(by_id.len(), "string table size")?);
         for value in by_id {
             write_string(&mut out, &value)?;
         }
@@ -504,7 +506,7 @@ fn encode_bundle(sections: Vec<Section>) -> Result<Vec<u8>> {
     let section_count = sections.len();
     let directory_len = sections
         .iter()
-        .map(|section| 40_usize + section.name.len())
+        .map(|section| SECTION_ENTRY_LEN + section.name.len())
         .sum::<usize>();
     let mut offset = u64::from(HEADER_LEN)
         .checked_add(directory_len as u64)
@@ -520,9 +522,18 @@ fn encode_bundle(sections: Vec<Section>) -> Result<Vec<u8>> {
             checked_u32(section.name.len(), "section name length")?,
         );
         write_u32(&mut directory, 0);
-        write_u64(&mut directory, offset);
-        write_u64(&mut directory, section.payload.len() as u64);
-        write_u64(&mut directory, section.payload.len() as u64);
+        write_u32(
+            &mut directory,
+            u32::try_from(offset).map_err(|_| binary_error("section offset exceeds u32::MAX"))?,
+        );
+        write_u32(
+            &mut directory,
+            checked_u32(section.payload.len(), "section payload length")?,
+        );
+        write_u32(
+            &mut directory,
+            checked_u32(section.payload.len(), "section uncompressed length")?,
+        );
         directory.extend_from_slice(section.name.as_bytes());
 
         offset = offset
@@ -555,18 +566,6 @@ fn write_u32(out: &mut Vec<u8>, value: u32) {
     out.extend_from_slice(&value.to_le_bytes());
 }
 
-fn write_i32(out: &mut Vec<u8>, value: i32) {
-    out.extend_from_slice(&value.to_le_bytes());
-}
-
-fn write_u64(out: &mut Vec<u8>, value: u64) {
-    out.extend_from_slice(&value.to_le_bytes());
-}
-
-fn write_i64(out: &mut Vec<u8>, value: i64) {
-    out.extend_from_slice(&value.to_le_bytes());
-}
-
 fn write_f32(out: &mut Vec<u8>, value: f32) {
     out.extend_from_slice(&value.to_le_bytes());
 }
@@ -576,9 +575,29 @@ fn write_f64(out: &mut Vec<u8>, value: f64) {
 }
 
 fn write_string(out: &mut Vec<u8>, value: &str) -> Result<()> {
-    write_u32(out, checked_u32(value.len(), "string length")?);
+    write_var_u32(out, checked_u32(value.len(), "string length")?);
     out.extend_from_slice(value.as_bytes());
     Ok(())
+}
+
+fn write_var_u32(out: &mut Vec<u8>, value: u32) {
+    write_var_u64(out, u64::from(value));
+}
+
+fn write_var_i32(out: &mut Vec<u8>, value: i32) {
+    write_var_u32(out, ((value << 1) ^ (value >> 31)) as u32);
+}
+
+fn write_var_i64(out: &mut Vec<u8>, value: i64) {
+    write_var_u64(out, ((value << 1) ^ (value >> 63)) as u64);
+}
+
+fn write_var_u64(out: &mut Vec<u8>, mut value: u64) {
+    while value >= 0x80 {
+        out.push((value as u8) | 0x80);
+        value >>= 7;
+    }
+    out.push(value as u8);
 }
 
 fn checked_u32(value: usize, kind: &'static str) -> Result<u32> {

@@ -99,9 +99,14 @@ mod tests {
         assert_eq!(sections[2].name, "$strings");
         assert_eq!(sections[2].len, sections[2].uncompressed_len);
         let strings_payload = &bytes[sections[2].offset..sections[2].offset + sections[2].len];
-        assert_eq!(read_u32(strings_payload, 0), 1);
-        assert_eq!(read_u32(strings_payload, 4), 10);
-        assert_eq!(&strings_payload[8..18], b"Iron Sword");
+        let (string_count, cursor) = read_var_u32(strings_payload, 0);
+        let (string_len, cursor) = read_var_u32(strings_payload, cursor);
+        assert_eq!(string_count, 1);
+        assert_eq!(string_len, 10);
+        assert_eq!(
+            &strings_payload[cursor..cursor + string_len as usize],
+            b"Iron Sword"
+        );
         assert_eq!(sections[3].kind, 2);
         assert_eq!(sections[3].compression, 0);
         assert_eq!(sections[3].name, "Item");
@@ -109,13 +114,13 @@ mod tests {
 
         let table_payload = &bytes[sections[3].offset..sections[3].offset + sections[3].len];
         assert_eq!(read_u32(table_payload, 0), 1);
-        assert_eq!(read_u64(table_payload, 4), 0);
-        assert_eq!(read_u64(table_payload, 12), 8);
-        assert_eq!(
-            i32::from_le_bytes(table_payload[20..24].try_into().unwrap()),
-            1001
-        );
-        assert_eq!(read_u32(table_payload, 24), 0);
+        assert_eq!(read_u32(table_payload, 4), 0);
+        assert_eq!(read_u32(table_payload, 8), 3);
+        let (id, cursor) = read_var_i32(table_payload, 12);
+        let (name_id, cursor) = read_var_u32(table_payload, cursor);
+        assert_eq!(id, 1001);
+        assert_eq!(name_id, 0);
+        assert_eq!(cursor, table_payload.len());
 
         let _ = fs::remove_dir_all(path.parent().unwrap());
     }
@@ -187,10 +192,10 @@ required = true
             let kind = read_u32(bytes, cursor);
             let compression = read_u32(bytes, cursor + 4);
             let name_len = read_u32(bytes, cursor + 8) as usize;
-            let offset = read_u64(bytes, cursor + 16) as usize;
-            let len = read_u64(bytes, cursor + 24) as usize;
-            let uncompressed_len = read_u64(bytes, cursor + 32) as usize;
-            let name_start = cursor + 40;
+            let offset = read_u32(bytes, cursor + 16) as usize;
+            let len = read_u32(bytes, cursor + 20) as usize;
+            let uncompressed_len = read_u32(bytes, cursor + 24) as usize;
+            let name_start = cursor + 28;
             let name = std::str::from_utf8(&bytes[name_start..name_start + name_len])
                 .unwrap()
                 .to_owned();
@@ -212,7 +217,22 @@ required = true
         u32::from_le_bytes(bytes[offset..offset + 4].try_into().unwrap())
     }
 
-    fn read_u64(bytes: &[u8], offset: usize) -> u64 {
-        u64::from_le_bytes(bytes[offset..offset + 8].try_into().unwrap())
+    fn read_var_u32(bytes: &[u8], mut offset: usize) -> (u32, usize) {
+        let mut value = 0u32;
+        let mut shift = 0;
+        loop {
+            let byte = bytes[offset];
+            offset += 1;
+            value |= u32::from(byte & 0x7f) << shift;
+            if byte & 0x80 == 0 {
+                return (value, offset);
+            }
+            shift += 7;
+        }
+    }
+
+    fn read_var_i32(bytes: &[u8], offset: usize) -> (i32, usize) {
+        let (value, offset) = read_var_u32(bytes, offset);
+        (((value >> 1) as i32) ^ (-((value & 1) as i32)), offset)
     }
 }

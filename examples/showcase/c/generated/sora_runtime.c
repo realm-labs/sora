@@ -26,6 +26,7 @@ struct sora_bundle {
 
 static const uint32_t SORA_BUNDLE_VERSION = 1;
 static const size_t SORA_HEADER_LEN = 24;
+static const size_t SORA_SECTION_ENTRY_LEN = 28;
 static const uint32_t SORA_SECTION_KIND_MANIFEST = 0;
 static const uint32_t SORA_SECTION_KIND_SCHEMA = 1;
 static const uint32_t SORA_SECTION_KIND_TABLE = 2;
@@ -53,6 +54,27 @@ static sora_result sora_read_u64_at(const uint8_t* bytes, size_t len, size_t off
     }
     *out = value;
     return sora_ok();
+}
+
+static sora_result sora_read_var_u32_at(const uint8_t* bytes, size_t len, size_t* cursor, uint32_t* out) {
+    uint32_t value = 0;
+    uint32_t shift = 0;
+    while (true) {
+        if (shift >= 32) {
+            return sora_error(SORA_ERROR_INVALID_BUNDLE, "Sora varint exceeds u32");
+        }
+        if (*cursor >= len) {
+            return sora_error(SORA_ERROR_INVALID_BUNDLE, "unexpected end while reading varint");
+        }
+        uint8_t next = bytes[*cursor];
+        *cursor += 1;
+        value |= (uint32_t)(next & 0x7f) << shift;
+        if ((next & 0x80) == 0) {
+            *out = value;
+            return sora_ok();
+        }
+        shift += 7;
+    }
 }
 
 static char* sora_copy_name(const uint8_t* bytes, size_t len) {
@@ -177,30 +199,53 @@ sora_result sora_reader_read_bool(sora_reader* reader, bool* out) {
 }
 
 sora_result sora_reader_read_u32(sora_reader* reader, uint32_t* out) {
-    const uint8_t* bytes = NULL;
-    SORA_TRY(sora_reader_take(reader, 4, &bytes));
-    return sora_read_u32_at(bytes, 4, 0, out);
+    uint32_t value = 0;
+    uint32_t shift = 0;
+    while (true) {
+        if (shift >= 32) {
+            return sora_error(SORA_ERROR_DECODE, "Sora varint exceeds u32");
+        }
+        uint8_t next = 0;
+        SORA_TRY(sora_reader_read_u8(reader, &next));
+        value |= (uint32_t)(next & 0x7f) << shift;
+        if ((next & 0x80) == 0) {
+            *out = value;
+            return sora_ok();
+        }
+        shift += 7;
+    }
 }
 
 sora_result sora_reader_read_i32(sora_reader* reader, int32_t* out) {
     uint32_t value = 0;
     SORA_TRY(sora_reader_read_u32(reader, &value));
-    *out = (int32_t)value;
+    *out = (int32_t)(value >> 1) ^ -((int32_t)value & 1);
     return sora_ok();
 }
 
 sora_result sora_reader_read_i64(sora_reader* reader, int64_t* out) {
-    const uint8_t* bytes = NULL;
     uint64_t value = 0;
-    SORA_TRY(sora_reader_take(reader, 8, &bytes));
-    SORA_TRY(sora_read_u64_at(bytes, 8, 0, &value));
-    *out = (int64_t)value;
-    return sora_ok();
+    uint32_t shift = 0;
+    while (true) {
+        if (shift >= 64) {
+            return sora_error(SORA_ERROR_DECODE, "Sora varint is too long");
+        }
+        uint8_t next = 0;
+        SORA_TRY(sora_reader_read_u8(reader, &next));
+        value |= (uint64_t)(next & 0x7f) << shift;
+        if ((next & 0x80) == 0) {
+            *out = (int64_t)(value >> 1) ^ -((int64_t)value & 1);
+            return sora_ok();
+        }
+        shift += 7;
+    }
 }
 
 sora_result sora_reader_read_f32(sora_reader* reader, float* out) {
+    const uint8_t* bytes = NULL;
     uint32_t bits = 0;
-    SORA_TRY(sora_reader_read_u32(reader, &bits));
+    SORA_TRY(sora_reader_take(reader, 4, &bytes));
+    SORA_TRY(sora_read_u32_at(bytes, 4, 0, &bits));
     memcpy(out, &bits, sizeof(float));
     return sora_ok();
 }
@@ -232,11 +277,12 @@ sora_result sora_reader_read_string(sora_reader* reader, sora_string* out) {
 }
 
 static sora_result sora_decode_string_table(const uint8_t* bytes, size_t len, sora_string** out_strings, size_t* out_count) {
-    if (len < 4) {
+    if (len == 0) {
         return sora_error(SORA_ERROR_INVALID_BUNDLE, "Sora strings section is too short");
     }
     uint32_t count = 0;
-    SORA_TRY(sora_read_u32_at(bytes, len, 0, &count));
+    size_t cursor = 0;
+    SORA_TRY(sora_read_var_u32_at(bytes, len, &cursor, &count));
     sora_string* strings = NULL;
     if (count > 0) {
         strings = (sora_string*)calloc(count, sizeof(sora_string));
@@ -244,10 +290,9 @@ static sora_result sora_decode_string_table(const uint8_t* bytes, size_t len, so
             return sora_error(SORA_ERROR_OUT_OF_MEMORY, "failed to allocate string table");
         }
     }
-    size_t cursor = 4;
     for (uint32_t index = 0; index < count; ++index) {
         uint32_t string_len = 0;
-        sora_result result = sora_read_u32_at(bytes, len, cursor, &string_len);
+        sora_result result = sora_read_var_u32_at(bytes, len, &cursor, &string_len);
         if (result.code != SORA_OK) {
             for (uint32_t cleanup = 0; cleanup < index; ++cleanup) {
                 sora_string_free(&strings[cleanup]);
@@ -255,7 +300,6 @@ static sora_result sora_decode_string_table(const uint8_t* bytes, size_t len, so
             free(strings);
             return result;
         }
-        cursor += 4;
         if ((size_t)string_len > len || cursor > len - (size_t)string_len) {
             for (uint32_t cleanup = 0; cleanup < index; ++cleanup) {
                 sora_string_free(&strings[cleanup]);
@@ -338,35 +382,31 @@ sora_result sora_bundle_parse(const uint8_t* bytes, size_t len, sora_bundle** ou
     size_t schema_count = 0;
     size_t strings_count = 0;
     for (size_t index = 0; index < section_count; ++index) {
-        if (cursor > directory_end || directory_end - cursor < 40) {
+        if (cursor > directory_end || directory_end - cursor < SORA_SECTION_ENTRY_LEN) {
             sora_bundle_free(bundle);
             return sora_error(SORA_ERROR_INVALID_BUNDLE, "truncated Sora section directory entry");
         }
         struct sora_section* section = &bundle->sections[index];
         uint32_t name_len = 0;
         uint32_t entry_flags = 0;
-        uint64_t offset = 0;
-        uint64_t payload_len = 0;
-        uint64_t uncompressed_len = 0;
+        uint32_t offset = 0;
+        uint32_t payload_len = 0;
+        uint32_t uncompressed_len = 0;
         SORA_TRY(sora_read_u32_at(bytes, len, cursor, &section->kind));
         SORA_TRY(sora_read_u32_at(bytes, len, cursor + 4, &section->compression));
         SORA_TRY(sora_read_u32_at(bytes, len, cursor + 8, &name_len));
         SORA_TRY(sora_read_u32_at(bytes, len, cursor + 12, &entry_flags));
-        SORA_TRY(sora_read_u64_at(bytes, len, cursor + 16, &offset));
-        SORA_TRY(sora_read_u64_at(bytes, len, cursor + 24, &payload_len));
-        SORA_TRY(sora_read_u64_at(bytes, len, cursor + 32, &uncompressed_len));
+        SORA_TRY(sora_read_u32_at(bytes, len, cursor + 16, &offset));
+        SORA_TRY(sora_read_u32_at(bytes, len, cursor + 20, &payload_len));
+        SORA_TRY(sora_read_u32_at(bytes, len, cursor + 24, &uncompressed_len));
         if (entry_flags != 0) {
             sora_bundle_free(bundle);
             return sora_error(SORA_ERROR_UNSUPPORTED_VERSION, "unsupported Sora section flags");
         }
-        size_t name_start = cursor + 40;
+        size_t name_start = cursor + SORA_SECTION_ENTRY_LEN;
         if ((size_t)name_len > directory_end || name_start > directory_end - (size_t)name_len) {
             sora_bundle_free(bundle);
             return sora_error(SORA_ERROR_INVALID_BUNDLE, "Sora section name exceeds directory");
-        }
-        if (offset > SIZE_MAX || payload_len > SIZE_MAX || uncompressed_len > SIZE_MAX) {
-            sora_bundle_free(bundle);
-            return sora_error(SORA_ERROR_INVALID_BUNDLE, "Sora section size exceeds platform limit");
         }
         section->offset = (size_t)offset;
         section->len = (size_t)payload_len;
@@ -507,16 +547,16 @@ sora_result sora_bundle_decode_table(
 
     const uint8_t* payload = bundle->bytes + section->offset;
     size_t payload_len = section->len;
-    if (payload_len < 12) {
+    if (payload_len < 8) {
         return sora_error(SORA_ERROR_INVALID_BUNDLE, "Sora table section is too short");
     }
     uint32_t row_count = 0;
     SORA_TRY(sora_read_u32_at(payload, payload_len, 0, &row_count));
     size_t offsets_len = (size_t)row_count + 1;
-    if (offsets_len > (payload_len - 4) / 8) {
+    if (offsets_len > (payload_len - 4) / 4) {
         return sora_error(SORA_ERROR_INVALID_BUNDLE, "Sora row offset table exceeds payload length");
     }
-    size_t row_data_start = 4 + offsets_len * 8;
+    size_t row_data_start = 4 + offsets_len * 4;
     uint8_t* rows = NULL;
     if (row_count > 0) {
         rows = (uint8_t*)calloc(row_count, row_size);
@@ -525,10 +565,10 @@ sora_result sora_bundle_decode_table(
         }
     }
     for (uint32_t index = 0; index < row_count; ++index) {
-        uint64_t start = 0;
-        uint64_t end = 0;
-        SORA_TRY(sora_read_u64_at(payload, payload_len, 4 + (size_t)index * 8, &start));
-        SORA_TRY(sora_read_u64_at(payload, payload_len, 4 + ((size_t)index + 1) * 8, &end));
+        uint32_t start = 0;
+        uint32_t end = 0;
+        SORA_TRY(sora_read_u32_at(payload, payload_len, 4 + (size_t)index * 4, &start));
+        SORA_TRY(sora_read_u32_at(payload, payload_len, 4 + ((size_t)index + 1) * 4, &end));
         if (start > end || end > payload_len - row_data_start) {
             for (uint32_t cleanup = 0; cleanup < index; ++cleanup) {
                 free_row(rows + (size_t)cleanup * row_size);

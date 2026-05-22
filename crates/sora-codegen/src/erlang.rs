@@ -390,10 +390,8 @@ mod tests {
         assert!(item_type.contains("'armor'."));
         assert!(item_type.contains("0 -> {'weapon', Reader1};"));
         assert!(action.contains("'type' := 'add_item'"));
-        assert!(
-            runtime
-                .contains("read_i64({<<Value:64/little-signed-integer, Rest/binary>>, Strings})")
-        );
+        assert!(runtime.contains("read_i64(Reader0) ->"));
+        assert!(runtime.contains("zigzag_decode(Value)"));
         assert!(item.contains("-export([decode/1, decode_table/1"));
         assert!(item.contains("get(Key, Table) ->"));
         assert!(item.contains("get_by_name(Name, Table) ->"));
