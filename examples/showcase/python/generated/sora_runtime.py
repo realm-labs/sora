@@ -4,6 +4,10 @@ from __future__ import annotations
 
 import json
 import struct
+try:
+    import zstandard
+except ImportError:
+    zstandard = None
 from dataclasses import dataclass
 from typing import Any, Callable, TypeVar
 
@@ -15,6 +19,7 @@ SECTION_KIND_SCHEMA = 1
 SECTION_KIND_TABLE = 2
 SECTION_KIND_STRINGS = 3
 COMPRESSION_NONE = 0
+COMPRESSION_ZSTD = 1
 
 T = TypeVar("T")
 K = TypeVar("K")
@@ -206,14 +211,7 @@ class SoraBundle:
         )
         if strings_section is None:
             raise SoraReadError("missing Sora string table section")
-        if (
-            strings_section.compression != COMPRESSION_NONE
-            or strings_section.uncompressed_length != strings_section.length
-        ):
-            raise SoraReadError("Sora string table section has invalid compression or length")
-        strings = decode_string_table(
-            data[strings_section.offset : strings_section.offset + strings_section.length]
-        )
+        strings = decode_string_table(read_section_payload(data, strings_section))
 
         return SoraBundle(data, sections, schema_fingerprint, strings)
 
@@ -228,15 +226,27 @@ class SoraBundle:
         )
         if section is None:
             raise SoraReadError(f"missing Sora table section `{name}`")
-        if section.compression != COMPRESSION_NONE:
-            raise SoraReadError(
-                f"unsupported compression {section.compression} for table `{name}`"
-            )
-        if section.uncompressed_length != section.length:
-            raise SoraReadError(f"table `{name}` has invalid uncompressed length")
-
-        payload = self._bytes[section.offset : section.offset + section.length]
+        payload = read_section_payload(self._bytes, section)
         return decode_rows(payload, self._strings, decode_fn)
+
+
+def read_section_payload(data: bytes, section: SoraSection) -> bytes:
+    payload = data[section.offset : section.offset + section.length]
+    if section.compression == COMPRESSION_NONE:
+        if section.uncompressed_length != section.length:
+            raise SoraReadError("uncompressed Sora section length mismatch")
+        return payload
+    if section.compression == COMPRESSION_ZSTD:
+        if zstandard is None:
+            raise SoraReadError("zstd-compressed Sora bundles require the `zstandard` package")
+        decoded = zstandard.ZstdDecompressor().decompress(
+            payload,
+            max_output_size=section.uncompressed_length,
+        )
+        if len(decoded) != section.uncompressed_length:
+            raise SoraReadError("zstd Sora section length mismatch")
+        return decoded
+    raise SoraReadError(f"unsupported Sora section compression {section.compression}")
 
 
 class SoraReader:

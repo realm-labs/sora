@@ -82,6 +82,8 @@ out = "generated/proto"
 [[build.exports]]
 format = "binary"
 out = "generated/config.sora"
+compression = "zstd"
+compression_level = 3
 
 [[build.exports]]
 format = "json"

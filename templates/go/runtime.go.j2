@@ -12,6 +12,7 @@ import (
     "fmt"
     "math"
     "strconv"
+    "github.com/klauspost/compress/zstd"
 {%- if runtime_format == "sora-protobuf" %}
     "google.golang.org/protobuf/proto"
     "google.golang.org/protobuf/reflect/protodesc"
@@ -30,6 +31,7 @@ const (
     soraSectionTable      = 2
     soraSectionStrings    = 3
     soraCompressionNone   = 0
+    soraCompressionZstd   = 1
 )
 
 type soraSection struct {
@@ -178,10 +180,12 @@ func ParseSoraBundle(bytes []byte) (*SoraBundle, error) {
             }
         }
         if section.kind == soraSectionStrings {
-            if section.compression != soraCompressionNone || section.uncompressedLength != section.length {
-                return nil, fmt.Errorf("Sora string table section has invalid compression or length")
+            var payload []byte
+            payload, err = readSectionPayload(bytes, section)
+            if err != nil {
+                return nil, err
             }
-            strings, err = decodeStringTable(bytes[section.offset:section.offset+section.length])
+            strings, err = decodeStringTable(payload)
             if err != nil {
                 return nil, err
             }
@@ -199,13 +203,11 @@ func ParseSoraBundle(bytes []byte) (*SoraBundle, error) {
 func DecodeTable[T any](bundle *SoraBundle, name string, decode func(*SoraReader) (T, error)) ([]T, error) {
     for _, section := range bundle.sections {
         if section.kind == soraSectionTable && section.name == name {
-            if section.compression != soraCompressionNone {
-                return nil, fmt.Errorf("unsupported compression %d for table `%s`", section.compression, name)
+            payload, err := readSectionPayload(bundle.bytes, section)
+            if err != nil {
+                return nil, err
             }
-            if section.uncompressedLength != section.length {
-                return nil, fmt.Errorf("table `%s` has invalid uncompressed length", name)
-            }
-            return decodeRows(bundle.bytes[section.offset:section.offset+section.length], bundle.strings, decode)
+            return decodeRows(payload, bundle.strings, decode)
         }
     }
     return nil, fmt.Errorf("missing Sora table section `%s`", name)
@@ -217,6 +219,33 @@ func (bundle *SoraBundle) DecodeTable(name string, decodeBinary func(*SoraReader
 
 func (bundle *SoraBundle) SchemaFingerprint() (string, error) {
     return bundle.schemaFingerprint, nil
+}
+
+func readSectionPayload(bytes []byte, section soraSection) ([]byte, error) {
+    payload := bytes[section.offset:section.offset+section.length]
+    switch section.compression {
+    case soraCompressionNone:
+        if section.uncompressedLength != section.length {
+            return nil, fmt.Errorf("uncompressed Sora section length mismatch")
+        }
+        return payload, nil
+    case soraCompressionZstd:
+        decoder, err := zstd.NewReader(nil)
+        if err != nil {
+            return nil, err
+        }
+        defer decoder.Close()
+        decoded, err := decoder.DecodeAll(payload, make([]byte, 0, section.uncompressedLength))
+        if err != nil {
+            return nil, err
+        }
+        if len(decoded) != section.uncompressedLength {
+            return nil, fmt.Errorf("zstd Sora section length mismatch")
+        }
+        return decoded, nil
+    default:
+        return nil, fmt.Errorf("unsupported Sora section compression %d", section.compression)
+    }
 }
 
 func DecodeSourceTable[T any](source SoraTableSource, name string, decodeBinary func(*SoraReader) (T, error), decodeValue func(SoraValue) (T, error)) ([]T, error) {

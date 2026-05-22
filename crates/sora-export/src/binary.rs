@@ -32,7 +32,8 @@ impl DataExporter for BinaryBundleExporter {
             create_dir_all(parent)?;
         }
 
-        let bundle = BinaryEncoder::new(request.ir, request.data).encode(request.execution)?;
+        let bundle = BinaryEncoder::new(request.ir, request.data, request.options.compression)
+            .encode(request.execution)?;
 
         write_file(path, bundle)
     }
@@ -49,6 +50,7 @@ mod tests {
         collections::BTreeMap,
         fs,
         path::PathBuf,
+        sync::atomic::{AtomicUsize, Ordering},
         time::{SystemTime, UNIX_EPOCH},
     };
 
@@ -63,6 +65,7 @@ mod tests {
                 ir: &ir,
                 data: &data,
                 execution: &sora_execution::ExecutionContext::default(),
+                options: Default::default(),
                 output: ExportOutput::File(path.clone()),
             })
             .unwrap();
@@ -125,6 +128,38 @@ mod tests {
         let _ = fs::remove_dir_all(path.parent().unwrap());
     }
 
+    #[test]
+    fn binary_bundle_can_compress_sections_with_zstd() {
+        let ir = example_ir();
+        let data = example_data();
+        let path = temp_dir().join("config.sora");
+
+        BinaryBundleExporter
+            .export(ExportRequest {
+                ir: &ir,
+                data: &data,
+                execution: &sora_execution::ExecutionContext::default(),
+                options: crate::exporter::ExportOptions {
+                    compression: crate::exporter::ExportCompression::Zstd { level: 3 },
+                },
+                output: ExportOutput::File(path.clone()),
+            })
+            .unwrap();
+
+        let bytes = fs::read(&path).unwrap();
+        let sections = read_sections(&bytes);
+        assert_eq!(sections[0].compression, 0);
+        assert_eq!(sections[1].compression, 0);
+        assert_eq!(sections[2].compression, 1);
+        assert_eq!(sections[3].compression, 1);
+        assert!(sections[2].len > 0);
+        assert!(sections[3].len > 0);
+        assert_ne!(sections[2].len, sections[2].uncompressed_len);
+        assert_ne!(sections[3].len, sections[3].uncompressed_len);
+
+        let _ = fs::remove_dir_all(path.parent().unwrap());
+    }
+
     fn example_ir() -> ConfigIr {
         let schema: SchemaFile = toml::from_str(
             r#"
@@ -165,11 +200,13 @@ required = true
     }
 
     fn temp_dir() -> PathBuf {
+        static NEXT_ID: AtomicUsize = AtomicUsize::new(0);
         let unique = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .unwrap()
             .as_nanos();
-        std::env::temp_dir().join(format!("sora-export-test-{unique}"))
+        let id = NEXT_ID.fetch_add(1, Ordering::Relaxed);
+        std::env::temp_dir().join(format!("sora-export-test-{unique}-{id}"))
     }
 
     #[derive(Debug)]

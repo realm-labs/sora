@@ -35,6 +35,7 @@ public sealed class SoraBundle : ISoraTableSource
     private const int SectionKindTable = 2;
     private const int SectionKindStrings = 3;
     private const int CompressionNone = 0;
+    private const int CompressionZstd = 1;
 
     private readonly byte[] bytes;
     private readonly List<SoraSection> sections;
@@ -54,17 +55,7 @@ public sealed class SoraBundle : ISoraTableSource
     {
         var section = sections.Find(value => value.Kind == SectionKindTable && value.Name == name)
             ?? throw new SoraReadException($"missing Sora table section `{name}`");
-        if (section.Compression != CompressionNone)
-        {
-            throw new SoraReadException($"unsupported compression {section.Compression} for table `{name}`");
-        }
-        if (section.UncompressedLength != section.Length)
-        {
-            throw new SoraReadException($"table `{name}` has invalid uncompressed length");
-        }
-        var payload = new byte[section.Length];
-        Array.Copy(bytes, section.Offset, payload, 0, section.Length);
-        return DecodeRows(payload, strings, decode);
+        return DecodeRows(ReadSectionPayload(bytes, section), strings, decode);
     }
 
     public List<T> DecodeTable<T>(string name, Func<SoraReader, T> decodeBinary, Func<SoraValue, T> decodeValue)
@@ -206,14 +197,33 @@ public sealed class SoraBundle : ISoraTableSource
         var schemaFingerprint = ReadJsonStringField(manifestBytes, "schema_fingerprint");
         var stringsSection = sections.Find(value => value.Kind == SectionKindStrings)
             ?? throw new SoraReadException("missing Sora string table section");
-        if (stringsSection.Compression != CompressionNone || stringsSection.UncompressedLength != stringsSection.Length)
-        {
-            throw new SoraReadException("Sora string table section has invalid compression or length");
-        }
-        var stringsBytes = new byte[stringsSection.Length];
-        Array.Copy(bytes, stringsSection.Offset, stringsBytes, 0, stringsSection.Length);
-        var strings = DecodeStringTable(stringsBytes);
+        var strings = DecodeStringTable(ReadSectionPayload(bytes, stringsSection));
         return new SoraBundle(bytes, sections, schemaFingerprint, strings);
+    }
+
+    private static byte[] ReadSectionPayload(byte[] bytes, SoraSection section)
+    {
+        var payload = new byte[section.Length];
+        Array.Copy(bytes, section.Offset, payload, 0, section.Length);
+        if (section.Compression == CompressionNone)
+        {
+            if (section.UncompressedLength != section.Length)
+            {
+                throw new SoraReadException("uncompressed Sora section length mismatch");
+            }
+            return payload;
+        }
+        if (section.Compression == CompressionZstd)
+        {
+            using var decompressor = new ZstdSharp.Decompressor();
+            var decompressed = decompressor.Unwrap(payload).ToArray();
+            if (decompressed.Length != section.UncompressedLength)
+            {
+                throw new SoraReadException("zstd Sora section length mismatch");
+            }
+            return decompressed;
+        }
+        throw new SoraReadException($"unsupported Sora section compression {section.Compression}");
     }
 
     private static List<T> DecodeRows<T>(byte[] payload, List<string> strings, Func<SoraReader, T> decode)

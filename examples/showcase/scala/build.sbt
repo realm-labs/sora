@@ -7,5 +7,6 @@ lazy val root = (project in file("."))
       baseDirectory.value / "src" / "generated" / "scala",
       baseDirectory.value / "src" / "main" / "scala",
     ),
+    libraryDependencies += "com.github.luben" % "zstd-jni" % "1.5.7-5",
     run / fork := true,
   )

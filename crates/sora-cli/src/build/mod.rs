@@ -12,6 +12,7 @@ use sora_codegen::{
     },
 };
 use sora_execution::ExecutionContext;
+use sora_export::exporter::{ExportCompression, ExportOptions};
 use sora_input_toml::input::TomlSchemaInput;
 use sora_ir::model::{ConfigIr, RuntimeFormatIr};
 
@@ -19,7 +20,7 @@ use crate::args::{BuildArgs, BuildTarget};
 
 mod manifest;
 
-use manifest::{BuildCodegen, BuildConfig, BuildExport, BuildManifest};
+use manifest::{BuildCodegen, BuildConfig, BuildExport, BuildManifest, ExportCompressionArg};
 
 pub fn run(args: BuildArgs, execution: &ExecutionContext) -> Result<()> {
     let manifest = BuildManifest::load(&args.project)?;
@@ -121,13 +122,14 @@ pub fn run(args: BuildArgs, execution: &ExecutionContext) -> Result<()> {
             let out = resolve_project_path(project_dir, &item.out);
             let item_scope = item.scope.as_deref().or(scope);
             let output = export_output(&item.format, out)?;
-            sora_core::pipeline::export_loaded_data_with_scope_and_context(
+            sora_core::pipeline::export_loaded_data_with_scope_context_and_options(
                 &ir,
                 &data,
                 &item.format,
                 output,
                 item_scope,
                 execution,
+                export_options(item)?,
             )
             .with_context(|| {
                 format!(
@@ -231,6 +233,24 @@ fn export_output(format: &str, out: PathBuf) -> Result<sora_export::exporter::Ex
             );
         }
     }
+}
+
+fn export_options(item: &BuildExport) -> Result<ExportOptions> {
+    let compression = match item.compression {
+        ExportCompressionArg::None => ExportCompression::None,
+        ExportCompressionArg::Zstd => {
+            if item.format != "binary" {
+                bail!(
+                    "export compression `zstd` is only supported by `binary` exports, got `{}`",
+                    item.format
+                );
+            }
+            ExportCompression::Zstd {
+                level: item.compression_level.unwrap_or(3),
+            }
+        }
+    };
+    Ok(ExportOptions { compression })
 }
 
 fn selected_codegen_targets<'a>(

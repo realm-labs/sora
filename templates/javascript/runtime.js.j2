@@ -14,9 +14,11 @@ const SECTION_KIND_SCHEMA = 1;
 const SECTION_KIND_TABLE = 2;
 const SECTION_KIND_STRINGS = 3;
 const COMPRESSION_NONE = 0;
+const COMPRESSION_ZSTD = 1;
 const MAX_SAFE_INTEGER = BigInt(Number.MAX_SAFE_INTEGER);
 
 const textDecoder = new TextDecoder();
+const nodeZlib = globalThis.process?.getBuiltinModule?.("node:zlib");
 
 export class SoraReadError extends Error {
     constructor(message) {
@@ -150,13 +152,7 @@ export class SoraBundle {
         if (stringsSection === undefined) {
             throw new SoraReadError("missing Sora strings section");
         }
-        if (stringsSection.compression !== COMPRESSION_NONE) {
-            throw new SoraReadError(`unsupported compression ${stringsSection.compression} for strings`);
-        }
-        if (stringsSection.uncompressedLength !== stringsSection.length) {
-            throw new SoraReadError("Sora strings section has invalid uncompressed length");
-        }
-        const strings = decodeStringTable(bytes.subarray(stringsSection.offset, stringsSection.offset + stringsSection.length));
+        const strings = decodeStringTable(readSectionPayload(bytes, stringsSection));
 
         return new SoraBundle(bytes, sections, schemaFingerprint, strings);
     }
@@ -166,15 +162,30 @@ export class SoraBundle {
         if (section === undefined) {
             throw new SoraReadError(`missing Sora table section \`${name}\``);
         }
-        if (section.compression !== COMPRESSION_NONE) {
-            throw new SoraReadError(`unsupported compression ${section.compression} for table \`${name}\``);
-        }
-        if (section.uncompressedLength !== section.length) {
-            throw new SoraReadError(`table \`${name}\` has invalid uncompressed length`);
-        }
-        const payload = this.bytes.subarray(section.offset, section.offset + section.length);
+        const payload = readSectionPayload(this.bytes, section);
         return decodeRows(payload, this.strings, decodeBinary);
     }
+}
+
+function readSectionPayload(bytes, section) {
+    const payload = bytes.subarray(section.offset, section.offset + section.length);
+    if (section.compression === COMPRESSION_NONE) {
+        if (section.uncompressedLength !== section.length) {
+            throw new SoraReadError("uncompressed Sora section length mismatch");
+        }
+        return payload;
+    }
+    if (section.compression === COMPRESSION_ZSTD) {
+        if (nodeZlib?.zstdDecompressSync === undefined) {
+            throw new SoraReadError("zstd-compressed Sora bundles require node:zlib.zstdDecompressSync");
+        }
+        const decoded = nodeZlib.zstdDecompressSync(payload);
+        if (decoded.byteLength !== section.uncompressedLength) {
+            throw new SoraReadError("zstd Sora section length mismatch");
+        }
+        return decoded;
+    }
+    throw new SoraReadError(`unsupported Sora section compression ${section.compression}`);
 }
 
 export class SoraReader {

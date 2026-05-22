@@ -56,6 +56,7 @@ sora-schema = { path = "crates/sora-schema" }
 sora-templates = { path = "crates/sora-templates" }
 thiserror = "2"
 toml = "0.8"
+zstd = "0.13"
 
 [profile.release]
 codegen-units = 1

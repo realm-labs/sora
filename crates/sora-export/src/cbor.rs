@@ -60,6 +60,7 @@ mod tests {
                 ir: &ir,
                 data: &data,
                 execution: &sora_execution::ExecutionContext::default(),
+                options: Default::default(),
                 output: ExportOutput::File(path.clone()),
             })
             .unwrap();

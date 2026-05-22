@@ -66,6 +66,7 @@ final class SoraBundle implements SoraTableSource {
     private static final int SECTION_KIND_TABLE = 2;
     private static final int SECTION_KIND_STRINGS = 3;
     private static final int COMPRESSION_NONE = 0;
+    private static final int COMPRESSION_ZSTD = 1;
 
     private final byte[] bytes;
     private final List<SoraSection> sections;
@@ -89,13 +90,7 @@ final class SoraBundle implements SoraTableSource {
             .filter(value -> value.kind == SECTION_KIND_TABLE && value.name.equals(name))
             .findFirst()
             .orElseThrow(() -> new SoraReadException("missing Sora table section `" + name + "`"));
-        if (section.compression != COMPRESSION_NONE) {
-            throw new SoraReadException("unsupported compression " + section.compression + " for table `" + name + "`");
-        }
-        if (section.uncompressedLength != section.length) {
-            throw new SoraReadException("table `" + name + "` has invalid uncompressed length");
-        }
-        return decodeRows(Arrays.copyOfRange(bytes, section.offset, section.offset + section.length), strings, decode);
+        return decodeRows(readSectionPayload(bytes, section), strings, decode);
     }
 
     @Override
@@ -212,11 +207,26 @@ final class SoraBundle implements SoraTableSource {
             .filter(value -> value.kind == SECTION_KIND_STRINGS)
             .findFirst()
             .orElseThrow(() -> new SoraReadException("missing Sora string table section"));
-        if (stringsSection.compression != COMPRESSION_NONE || stringsSection.uncompressedLength != stringsSection.length) {
-            throw new SoraReadException("Sora string table section has invalid compression or length");
-        }
-        var strings = decodeStringTable(Arrays.copyOfRange(bytes, stringsSection.offset, stringsSection.offset + stringsSection.length));
+        var strings = decodeStringTable(readSectionPayload(bytes, stringsSection));
         return new SoraBundle(bytes, sections, schemaFingerprint, strings);
+    }
+
+    private static byte[] readSectionPayload(byte[] bytes, SoraSection section) {
+        var payload = Arrays.copyOfRange(bytes, section.offset, section.offset + section.length);
+        if (section.compression == COMPRESSION_NONE) {
+            if (section.uncompressedLength != section.length) {
+                throw new SoraReadException("uncompressed Sora section length mismatch");
+            }
+            return payload;
+        }
+        if (section.compression == COMPRESSION_ZSTD) {
+            var decompressed = com.github.luben.zstd.Zstd.decompress(payload, section.uncompressedLength);
+            if (decompressed.length != section.uncompressedLength) {
+                throw new SoraReadException("zstd Sora section length mismatch");
+            }
+            return decompressed;
+        }
+        throw new SoraReadException("unsupported Sora section compression " + section.compression);
     }
 
     private static <T> List<T> decodeRows(byte[] payload, List<String> strings, SoraRowDecoder<T> decode) {

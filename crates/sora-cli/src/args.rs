@@ -117,6 +117,12 @@ pub struct ExportArgs {
 
     #[arg(long)]
     pub scope: Option<String>,
+
+    #[arg(long, value_enum, default_value = "none")]
+    pub compression: ExportCompressionArg,
+
+    #[arg(long)]
+    pub compression_level: Option<i32>,
 }
 
 #[derive(Debug, Args)]
@@ -145,6 +151,12 @@ pub enum SourceFormatArg {
     Csv,
     Toml,
     Xlsx,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, clap::ValueEnum)]
+pub enum ExportCompressionArg {
+    None,
+    Zstd,
 }
 
 impl SourceFormatArg {

@@ -5,7 +5,10 @@ use sora_diagnostics::{Result, SoraError};
 use sora_execution::ExecutionContext;
 use sora_ir::model::{ConfigIr, FieldIr, StructIr, TableIr, TypeIr, UnionIr};
 
-use crate::bundle::{data_fingerprint, schema_fingerprint};
+use crate::{
+    bundle::{data_fingerprint, schema_fingerprint},
+    exporter::ExportCompression,
+};
 
 const MAGIC: &[u8; 4] = b"SORA";
 const VERSION: u32 = 1;
@@ -16,49 +19,55 @@ const SECTION_KIND_SCHEMA: u32 = 1;
 const SECTION_KIND_TABLE: u32 = 2;
 const SECTION_KIND_STRINGS: u32 = 3;
 const COMPRESSION_NONE: u32 = 0;
+const COMPRESSION_ZSTD: u32 = 1;
 
 pub(crate) struct BinaryEncoder<'a> {
     ir: &'a ConfigIr,
     data: &'a ConfigData,
+    compression: ExportCompression,
 }
 
 impl<'a> BinaryEncoder<'a> {
-    pub(crate) fn new(ir: &'a ConfigIr, data: &'a ConfigData) -> Self {
-        Self { ir, data }
+    pub(crate) fn new(
+        ir: &'a ConfigIr,
+        data: &'a ConfigData,
+        compression: ExportCompression,
+    ) -> Self {
+        Self {
+            ir,
+            data,
+            compression,
+        }
     }
 
     pub(crate) fn encode(&self, execution: &ExecutionContext) -> Result<Vec<u8>> {
         let schema = self.ir.data_schema();
         let strings = self.string_table()?;
         let mut sections = Vec::new();
-        sections.push(Section {
-            kind: SECTION_KIND_MANIFEST,
-            compression: COMPRESSION_NONE,
-            name: "$manifest".to_owned(),
-            payload: serde_json::to_vec(&self.manifest()?).map_err(SoraError::SerializeData)?,
-        });
-        sections.push(Section {
-            kind: SECTION_KIND_SCHEMA,
-            compression: COMPRESSION_NONE,
-            name: "$schema".to_owned(),
-            payload: serde_json::to_vec(&schema).map_err(SoraError::SerializeData)?,
-        });
-        sections.push(Section {
-            kind: SECTION_KIND_STRINGS,
-            compression: COMPRESSION_NONE,
-            name: "$strings".to_owned(),
-            payload: strings.encode()?,
-        });
+        sections.push(Section::plain(
+            SECTION_KIND_MANIFEST,
+            "$manifest",
+            serde_json::to_vec(&self.manifest()?).map_err(SoraError::SerializeData)?,
+        ));
+        sections.push(Section::plain(
+            SECTION_KIND_SCHEMA,
+            "$schema",
+            serde_json::to_vec(&schema).map_err(SoraError::SerializeData)?,
+        ));
+        sections.push(
+            Section::plain(SECTION_KIND_STRINGS, "$strings", strings.encode()?)
+                .compress(self.compression)?,
+        );
 
         let tables = self.ir.tables.iter().collect::<Vec<_>>();
         let mut table_sections = execution.map(tables, |table| {
             let table_data = self.table_data(&table.name)?;
-            Ok(Section {
-                kind: SECTION_KIND_TABLE,
-                compression: COMPRESSION_NONE,
-                name: table.name.clone(),
-                payload: self.encode_table(table, table_data, &strings)?,
-            })
+            Section::plain(
+                SECTION_KIND_TABLE,
+                &table.name,
+                self.encode_table(table, table_data, &strings)?,
+            )
+            .compress(self.compression)
         })?;
         sections.append(&mut table_sections);
 
@@ -500,6 +509,37 @@ struct Section {
     compression: u32,
     name: String,
     payload: Vec<u8>,
+    uncompressed_len: usize,
+}
+
+impl Section {
+    fn plain(kind: u32, name: impl Into<String>, payload: Vec<u8>) -> Self {
+        let uncompressed_len = payload.len();
+        Self {
+            kind,
+            compression: COMPRESSION_NONE,
+            name: name.into(),
+            payload,
+            uncompressed_len,
+        }
+    }
+
+    fn compress(self, compression: ExportCompression) -> Result<Self> {
+        match compression {
+            ExportCompression::None => Ok(self),
+            ExportCompression::Zstd { level } => {
+                let uncompressed_len = self.payload.len();
+                let payload = zstd::bulk::compress(&self.payload, level)
+                    .map_err(|error| binary_error(format!("zstd compression failed: {error}")))?;
+                Ok(Self {
+                    compression: COMPRESSION_ZSTD,
+                    payload,
+                    uncompressed_len,
+                    ..self
+                })
+            }
+        }
+    }
 }
 
 fn encode_bundle(sections: Vec<Section>) -> Result<Vec<u8>> {
@@ -532,7 +572,7 @@ fn encode_bundle(sections: Vec<Section>) -> Result<Vec<u8>> {
         );
         write_u32(
             &mut directory,
-            checked_u32(section.payload.len(), "section uncompressed length")?,
+            checked_u32(section.uncompressed_len, "section uncompressed length")?,
         );
         directory.extend_from_slice(section.name.as_bytes());
 

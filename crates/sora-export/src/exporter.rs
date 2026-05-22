@@ -17,10 +17,25 @@ pub enum OutputKind {
     File,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum ExportCompression {
+    #[default]
+    None,
+    Zstd {
+        level: i32,
+    },
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub struct ExportOptions {
+    pub compression: ExportCompression,
+}
+
 pub struct ExportRequest<'a> {
     pub ir: &'a ConfigIr,
     pub data: &'a ConfigData,
     pub execution: &'a ExecutionContext,
+    pub options: ExportOptions,
     pub output: ExportOutput,
 }
 

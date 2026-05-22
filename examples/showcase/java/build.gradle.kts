@@ -12,6 +12,7 @@ dependencies {
     implementation("com.fasterxml.jackson.core:jackson-databind:2.21.3")
     implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-cbor:2.21.3")
     implementation("com.google.protobuf:protobuf-java:4.34.1")
+    implementation("com.github.luben:zstd-jni:1.5.7-5")
 }
 
 sourceSets {

@@ -12,6 +12,7 @@ private const val SECTION_KIND_SCHEMA = 1
 private const val SECTION_KIND_TABLE = 2
 private const val SECTION_KIND_STRINGS = 3
 private const val COMPRESSION_NONE = 0
+private const val COMPRESSION_ZSTD = 1
 
 interface SoraTableSource {
     val schemaFingerprint: String
@@ -41,13 +42,7 @@ class SoraBundle private constructor(
     fun <T> decodeTable(name: String, decode: (SoraReader) -> T): List<T> {
         val section = sections.firstOrNull { it.kind == SECTION_KIND_TABLE && it.name == name }
             ?: throw SoraReadException("missing Sora table section `$name`")
-        if (section.compression != COMPRESSION_NONE) {
-            throw SoraReadException("unsupported compression ${section.compression} for table `$name`")
-        }
-        if (section.uncompressedLength != section.length) {
-            throw SoraReadException("table `$name` has invalid uncompressed length")
-        }
-        return decodeRows(bytes.copyOfRange(section.offset, section.offset + section.length), strings, decode)
+        return decodeRows(readSectionPayload(bytes, section), strings, decode)
     }
 
     override fun <T> decodeTable(
@@ -172,14 +167,31 @@ class SoraBundle private constructor(
             val schemaFingerprint = readJsonStringField(manifestBytes, "schema_fingerprint")
             val stringsSection = sections.firstOrNull { it.kind == SECTION_KIND_STRINGS }
                 ?: throw SoraReadException("missing Sora string table section")
-            if (stringsSection.compression != COMPRESSION_NONE || stringsSection.uncompressedLength != stringsSection.length) {
-                throw SoraReadException("Sora string table section has invalid compression or length")
-            }
-            val stringsPayload = bytes.copyOfRange(stringsSection.offset, stringsSection.offset + stringsSection.length)
+            val stringsPayload = readSectionPayload(bytes, stringsSection)
             val strings = decodeStringTable(stringsPayload)
 
             return SoraBundle(bytes, sections, schemaFingerprint, strings)
         }
+    }
+}
+
+private fun readSectionPayload(bytes: ByteArray, section: SoraSection): ByteArray {
+    val payload = bytes.copyOfRange(section.offset, section.offset + section.length)
+    return when (section.compression) {
+        COMPRESSION_NONE -> {
+            if (section.uncompressedLength != section.length) {
+                throw SoraReadException("uncompressed Sora section length mismatch")
+            }
+            payload
+        }
+        COMPRESSION_ZSTD -> {
+            val decompressed = com.github.luben.zstd.Zstd.decompress(payload, section.uncompressedLength)
+            if (decompressed.size != section.uncompressedLength) {
+                throw SoraReadException("zstd Sora section length mismatch")
+            }
+            decompressed
+        }
+        else -> throw SoraReadException("unsupported Sora section compression ${section.compression}")
     }
 }
 

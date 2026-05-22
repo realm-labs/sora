@@ -61,6 +61,16 @@ pub(super) struct BuildExport {
     pub(super) format: String,
     pub(super) out: PathBuf,
     pub(super) scope: Option<String>,
+    #[serde(default)]
+    pub(super) compression: ExportCompressionArg,
+    pub(super) compression_level: Option<i32>,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub(super) enum ExportCompressionArg {
+    #[default]
+    None,
+    Zstd,
 }
 
 impl<'de> Deserialize<'de> for SourceFormatArg {
@@ -75,6 +85,22 @@ impl<'de> Deserialize<'de> for SourceFormatArg {
             "xlsx" => Ok(Self::Xlsx),
             _ => Err(serde::de::Error::custom(format!(
                 "unsupported source format `{value}`; expected csv, toml, or xlsx"
+            ))),
+        }
+    }
+}
+
+impl<'de> Deserialize<'de> for ExportCompressionArg {
+    fn deserialize<D>(deserializer: D) -> std::result::Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let value = String::deserialize(deserializer)?;
+        match value.as_str() {
+            "none" => Ok(Self::None),
+            "zstd" => Ok(Self::Zstd),
+            _ => Err(serde::de::Error::custom(format!(
+                "unsupported export compression `{value}`; expected none or zstd"
             ))),
         }
     }

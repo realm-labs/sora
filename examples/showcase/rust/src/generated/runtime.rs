@@ -8,6 +8,7 @@ const SECTION_KIND_SCHEMA: u32 = 1;
 const SECTION_KIND_TABLE: u32 = 2;
 const SECTION_KIND_STRINGS: u32 = 3;
 const COMPRESSION_NONE: u32 = 0;
+const COMPRESSION_ZSTD: u32 = 1;
 
 #[derive(Debug, Clone)]
 pub struct SoraReadError {
@@ -228,16 +229,8 @@ impl<'a> SoraBundle<'a> {
             .iter()
             .find(|section| section.kind == SECTION_KIND_STRINGS)
             .ok_or_else(|| SoraReadError::new("missing Sora string table section"))?;
-        if strings_section.compression != COMPRESSION_NONE
-            || strings_section.uncompressed_len != strings_section.len
-        {
-            return Err(SoraReadError::new(
-                "Sora string table section has invalid compression or length",
-            ));
-        }
-        let strings_payload =
-            &bytes[strings_section.offset..strings_section.offset + strings_section.len];
-        let strings = decode_string_table(strings_payload)?;
+        let strings_payload = read_section_payload(bytes, strings_section)?;
+        let strings = decode_string_table(&strings_payload)?;
 
         Ok(Self {
             bytes,
@@ -253,20 +246,8 @@ impl<'a> SoraBundle<'a> {
             .iter()
             .find(|section| section.kind == SECTION_KIND_TABLE && section.name == name)
             .ok_or_else(|| SoraReadError::new(format!("missing Sora table section `{}`", name)))?;
-        if section.compression != COMPRESSION_NONE {
-            return Err(SoraReadError::new(format!(
-                "unsupported compression {} for table `{}`",
-                section.compression, name
-            )));
-        }
-        if section.uncompressed_len != section.len {
-            return Err(SoraReadError::new(format!(
-                "table `{}` has invalid uncompressed length",
-                name
-            )));
-        }
-        let payload = &self.bytes[section.offset..section.offset + section.len];
-        decode_rows(payload, &self.strings)
+        let payload = read_section_payload(self.bytes, section)?;
+        decode_rows(&payload, &self.strings)
     }
 }
 
@@ -338,6 +319,37 @@ pub struct SoraReader<'a> {
     bytes: &'a [u8],
     strings: &'a [std::sync::Arc<str>],
     cursor: usize,
+}
+
+fn read_section_payload<'a>(
+    bytes: &'a [u8],
+    section: &Section,
+) -> Result<std::borrow::Cow<'a, [u8]>, SoraReadError> {
+    let compressed = &bytes[section.offset..section.offset + section.len];
+    match section.compression {
+        COMPRESSION_NONE => {
+            if section.uncompressed_len != section.len {
+                return Err(SoraReadError::new(
+                    "uncompressed Sora section length mismatch",
+                ));
+            }
+            Ok(std::borrow::Cow::Borrowed(compressed))
+        }
+        COMPRESSION_ZSTD => {
+            let payload =
+                zstd::bulk::decompress(compressed, section.uncompressed_len).map_err(|error| {
+                    SoraReadError::new(format!("zstd decompression failed: {}", error))
+                })?;
+            if payload.len() != section.uncompressed_len {
+                return Err(SoraReadError::new("zstd Sora section length mismatch"));
+            }
+            Ok(std::borrow::Cow::Owned(payload))
+        }
+        compression => Err(SoraReadError::new(format!(
+            "unsupported Sora section compression {}",
+            compression
+        ))),
+    }
 }
 
 impl<'a> SoraReader<'a> {

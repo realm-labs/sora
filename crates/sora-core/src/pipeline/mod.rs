@@ -11,7 +11,7 @@ use sora_diagnostics::{Result, SoraError};
 use sora_excel::generator::ExcelTemplateGenerator;
 use sora_execution::ExecutionContext;
 use sora_export::{
-    exporter::{ExportOutput, ExportRequest, OutputKind},
+    exporter::{ExportOptions, ExportOutput, ExportRequest, OutputKind},
     registry::ExporterRegistry,
 };
 use sora_input::traits::{ProjectInput, SchemaInput};
@@ -129,6 +129,26 @@ pub fn export_loaded_data_with_scope_and_context(
     scope: Option<&str>,
     execution: &ExecutionContext,
 ) -> Result<()> {
+    export_loaded_data_with_scope_context_and_options(
+        ir,
+        data,
+        format,
+        output,
+        scope,
+        execution,
+        ExportOptions::default(),
+    )
+}
+
+pub fn export_loaded_data_with_scope_context_and_options(
+    ir: &sora_ir::model::ConfigIr,
+    data: &sora_data::model::ConfigData,
+    format: &str,
+    output: ExportOutput,
+    scope: Option<&str>,
+    execution: &ExecutionContext,
+    options: ExportOptions,
+) -> Result<()> {
     let (ir, data) = filter_ir_and_data_by_scope(ir, data, scope)?;
     let registry = ExporterRegistry::with_builtin_exporters();
     let exporter = registry
@@ -142,6 +162,7 @@ pub fn export_loaded_data_with_scope_and_context(
         ir: &ir,
         data: &data,
         execution,
+        options,
         output,
     })
 }

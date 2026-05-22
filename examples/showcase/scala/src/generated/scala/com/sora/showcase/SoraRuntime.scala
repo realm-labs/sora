@@ -33,14 +33,7 @@ final class SoraBundle private (
       .find(value => value.kind == SoraBundle.SectionKindTable && value.name == name)
       .getOrElse(throw new SoraReadException(s"missing Sora table section `$name`"))
 
-    if (section.compression != SoraBundle.CompressionNone) {
-      throw new SoraReadException(s"unsupported compression ${section.compression} for table `$name`")
-    }
-    if (section.uncompressedLength != section.length) {
-      throw new SoraReadException(s"table `$name` has invalid uncompressed length")
-    }
-
-    SoraRuntime.decodeRows(bytes.slice(section.offset, section.offset + section.length), strings, decode)
+    SoraRuntime.decodeRows(SoraRuntime.readSectionPayload(bytes, section), strings, decode)
   }
 }
 
@@ -52,6 +45,7 @@ object SoraBundle {
   val SectionKindTable = 2
   val SectionKindStrings = 3
   val CompressionNone = 0
+  val CompressionZstd = 1
 
   def parse(bytes: Array[Byte]): SoraBundle = {
     if (bytes.length < HeaderLength) {
@@ -172,10 +166,7 @@ object SoraBundle {
     val stringsSection = sections
       .find(value => value.kind == SectionKindStrings)
       .getOrElse(throw new SoraReadException("missing Sora string table section"))
-    if (stringsSection.compression != CompressionNone || stringsSection.uncompressedLength != stringsSection.length) {
-      throw new SoraReadException("Sora string table section has invalid compression or length")
-    }
-    val strings = SoraRuntime.decodeStringTable(bytes.slice(stringsSection.offset, stringsSection.offset + stringsSection.length))
+    val strings = SoraRuntime.decodeStringTable(SoraRuntime.readSectionPayload(bytes, stringsSection))
 
     new SoraBundle(bytes, sections.toVector, schemaFingerprint, strings)
   }
@@ -247,6 +238,25 @@ final class SoraReader(private val bytes: Array[Byte], private val strings: Vect
 }
 
 object SoraRuntime {
+  def readSectionPayload(bytes: Array[Byte], section: SoraSection): Array[Byte] = {
+    val payload = bytes.slice(section.offset, section.offset + section.length)
+    section.compression match {
+      case SoraBundle.CompressionNone =>
+        if (section.uncompressedLength != section.length) {
+          throw new SoraReadException("uncompressed Sora section length mismatch")
+        }
+        payload
+      case SoraBundle.CompressionZstd =>
+        val decoded = com.github.luben.zstd.Zstd.decompress(payload, section.uncompressedLength)
+        if (decoded.length != section.uncompressedLength) {
+          throw new SoraReadException("zstd Sora section length mismatch")
+        }
+        decoded
+      case compression =>
+        throw new SoraReadException(s"unsupported Sora section compression $compression")
+    }
+  }
+
   def requireSingletonTable[T](rows: Vector[T], name: String): T = {
     if (rows.size != 1) {
       throw new SoraReadException(s"expected singleton table `$name` to contain exactly 1 row, got ${rows.size}")

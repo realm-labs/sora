@@ -1,14 +1,12 @@
-use std::path::{Path, PathBuf};
-
 use anyhow::{Context, Result, bail};
 use sora_codegen::target::CodegenTarget;
 use sora_execution::{ExecutionContext, ExecutionOptions};
-use sora_export::exporter::{ExportOutput, OutputKind};
+use sora_export::exporter::{ExportCompression, ExportOptions, ExportOutput, OutputKind};
 use sora_input_toml::input::TomlSchemaInput;
 
 use crate::args::{
-    CheckArgs, Cli, Command, DiffArgs, ExcelTemplateArgs, ExportArgs, GenArgs, GenCommand,
-    SchemaLockArgs, SourceFormatArg,
+    CheckArgs, Cli, Command, DiffArgs, ExcelTemplateArgs, ExportArgs, ExportCompressionArg,
+    GenArgs, GenCommand, SchemaLockArgs, SourceFormatArg,
 };
 use crate::source::MixedProjectInput;
 
@@ -113,14 +111,39 @@ fn schema_lock(args: SchemaLockArgs) -> Result<()> {
 }
 
 fn export(args: ExportArgs, execution: &ExecutionContext) -> Result<()> {
-    export_project_data(
-        &args.project,
+    let options = export_options(args.compression, args.compression_level)?;
+    let format = args.format.as_str();
+    if matches!(options.compression, ExportCompression::Zstd { .. }) && format != "binary" {
+        bail!("export compression `zstd` is only supported by `binary` exports, got `{format}`");
+    }
+
+    let output = match sora_core::pipeline::export_output_kind(format) {
+        Some(OutputKind::File) => ExportOutput::File(args.out.clone()),
+        Some(OutputKind::Directory) => ExportOutput::Directory(args.out.clone()),
+        None => {
+            bail!(
+                "unknown export format `{}`; supported formats: {}",
+                format,
+                sora_core::pipeline::supported_export_formats().join(", ")
+            );
+        }
+    };
+
+    let schema_input = TomlSchemaInput::new(&args.project);
+    let input = MixedProjectInput::new(
+        schema_input,
         &args.data_root,
-        args.default_source_format,
-        &args.format,
-        args.out,
+        args.default_source_format.map(SourceFormatArg::as_str),
+    );
+    let (ir, data) = sora_core::pipeline::load_project_data_with_context(&input, execution)?;
+    sora_core::pipeline::export_loaded_data_with_scope_context_and_options(
+        &ir,
+        &data,
+        format,
+        output,
         args.scope.as_deref(),
         execution,
+        options,
     )
     .with_context(|| {
         format!(
@@ -131,37 +154,17 @@ fn export(args: ExportArgs, execution: &ExecutionContext) -> Result<()> {
     })
 }
 
-pub(crate) fn export_project_data(
-    project: &Path,
-    data_root: &Path,
-    default_source_format: Option<SourceFormatArg>,
-    format: &str,
-    out: PathBuf,
-    scope: Option<&str>,
-    execution: &ExecutionContext,
-) -> Result<()> {
-    let output = match sora_core::pipeline::export_output_kind(format) {
-        Some(OutputKind::File) => ExportOutput::File(out.clone()),
-        Some(OutputKind::Directory) => ExportOutput::Directory(out.clone()),
-        None => {
-            bail!(
-                "unknown export format `{}`; supported formats: {}",
-                format,
-                sora_core::pipeline::supported_export_formats().join(", ")
-            );
-        }
+fn export_options(
+    compression: ExportCompressionArg,
+    compression_level: Option<i32>,
+) -> Result<ExportOptions> {
+    let compression = match compression {
+        ExportCompressionArg::None => ExportCompression::None,
+        ExportCompressionArg::Zstd => ExportCompression::Zstd {
+            level: compression_level.unwrap_or(3),
+        },
     };
-
-    let schema_input = TomlSchemaInput::new(project);
-    let input = MixedProjectInput::new(
-        schema_input,
-        data_root,
-        default_source_format.map(SourceFormatArg::as_str),
-    );
-    sora_core::pipeline::export_data_with_scope_and_context(
-        &input, format, output, scope, execution,
-    )?;
-    Ok(())
+    Ok(ExportOptions { compression })
 }
 
 fn diff(args: DiffArgs, execution: &ExecutionContext) -> Result<()> {
