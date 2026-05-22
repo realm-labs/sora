@@ -58,7 +58,7 @@ import { DialogueTable, decodeDialogue, decodeDialogueValue } from "./dialogue.j
 import { EventRuleTable, decodeEventRule, decodeEventRuleValue } from "./event_rule.js";
 
 
-export const SORA_SCHEMA_FINGERPRINT = "8cc3361563a68f03";
+export const SORA_SCHEMA_FINGERPRINT = "a0390c24663ecbfc";
 
 export class SoraConfig {
     constructor(

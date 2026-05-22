@@ -281,7 +281,8 @@ class SoraReader:
         length = self.read_u32()
         values = {}
         for _ in range(length):
-            values[read_key()] = read_value()
+            key = read_key()
+            values[key] = read_value()
         return values
 
 

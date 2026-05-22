@@ -57,6 +57,8 @@ jobs:
           distribution: temurin
           java-version: "21"
 
+      - uses: sbt/setup-sbt@v1
+
       - uses: actions/setup-dotnet@v5
         with:
           dotnet-version: "10.0.x"
@@ -65,27 +67,32 @@ jobs:
         with:
           go-version-file: examples/showcase/go/go.mod
 
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+
+      - name: Install TypeScript
+        run: npm install -g typescript@5.9.3
+
+      - uses: dart-lang/setup-dart@v1
+
+      - uses: erlef/setup-beam@v1
+        with:
+          otp-version: "27.2"
+
+      - uses: leafo/gh-actions-lua@v11
+        with:
+          luaVersion: "5.4"
+
       - name: Regenerate showcase outputs
         run: cargo run -p sora-cli -- build --project examples/showcase/project.toml --clean
 
-      - name: Run Rust showcase
-        run: cargo run -p sora-showcase-rust
-
-      - name: Run Kotlin showcase
-        working-directory: examples/showcase/kotlin
+      - name: Verify showcase runtimes
         run: |
-          chmod +x ./gradlew
-          ./gradlew run --no-daemon
-
-      - name: Run C# showcase
-        run: dotnet run --project examples/showcase/csharp/SoraShowcase.csproj
-
-      - name: Run Java showcase
-        working-directory: examples/showcase/java
-        run: |
-          chmod +x ./gradlew
-          ./gradlew run --no-daemon
-
-      - name: Run Go showcase
-        working-directory: examples/showcase/go
-        run: go run ./cmd/showcase
+          chmod +x examples/showcase/kotlin/gradlew
+          chmod +x examples/showcase/java/gradlew
+          python3 scripts/verify_showcase.py --strict --only rust,kotlin,csharp,java,scala,go,python,typescript,javascript,dart,lua,erlang,c,cpp

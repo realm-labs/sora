@@ -31,6 +31,15 @@ Regenerate everything:
 cargo run -p sora-showcase-builder
 ```
 
+Verify every showcase runtime supported by the tools installed on the machine:
+
+```powershell
+uv run python scripts/verify_showcase.py
+```
+
+CI runs the same verifier in strict mode for Rust, Kotlin, C#, Java, Scala, Go,
+Python, TypeScript, JavaScript, Dart, Lua, Erlang, C, and C++.
+
 Run the Rust smoke example:
 
 ```powershell

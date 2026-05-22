@@ -30,7 +30,7 @@ local MailReward = require("generated.mail_reward")
 local Dialogue = require("generated.dialogue")
 local EventRule = require("generated.event_rule")
 
-local SORA_SCHEMA_FINGERPRINT = "8cc3361563a68f03"
+local SORA_SCHEMA_FINGERPRINT = "a0390c24663ecbfc"
 
 ---@class SoraConfig
 ---@field private _item ItemTable
