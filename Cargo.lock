@@ -600,6 +600,7 @@ dependencies = [
 name = "sora-excel"
 version = "0.1.0"
 dependencies = [
+ "calamine",
  "rust_xlsxwriter",
  "sora-diagnostics",
  "sora-input",
@@ -710,7 +711,6 @@ name = "sora-showcase-builder"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "rust_xlsxwriter",
  "sora-codegen",
  "sora-core",
  "sora-excel",

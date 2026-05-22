@@ -6,7 +6,6 @@ license.workspace = true
 
 [dependencies]
 anyhow.workspace = true
-rust_xlsxwriter.workspace = true
 sora-codegen.workspace = true
 sora-core.workspace = true
 sora-excel.workspace = true

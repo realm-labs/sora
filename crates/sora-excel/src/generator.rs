@@ -4,12 +4,21 @@ use sora_diagnostics::{Result, SoraError};
 use sora_input::source::{SourceFormat, resolve_table_source_format};
 use sora_ir::model::{ConfigIr, TableIr};
 
-use crate::writer::write_workbook;
+use crate::writer::write_workbook_with_rows;
 
 pub struct ExcelTemplateGenerator;
 
 impl ExcelTemplateGenerator {
     pub fn generate(&self, ir: &ConfigIr, out_dir: &Path) -> Result<()> {
+        self.generate_with_rows(ir, out_dir, |_| Vec::new())
+    }
+
+    pub fn generate_with_rows(
+        &self,
+        ir: &ConfigIr,
+        out_dir: &Path,
+        rows_for_table: impl Fn(&TableIr) -> Vec<Vec<String>>,
+    ) -> Result<()> {
         fs::create_dir_all(out_dir).map_err(|source| SoraError::CreateDir {
             path: out_dir.to_path_buf(),
             source,
@@ -33,7 +42,7 @@ impl ExcelTemplateGenerator {
 
         for (file_name, tables) in workbooks {
             let path = out_dir.join(file_name);
-            write_workbook(ir, &tables, &path)?;
+            write_workbook_with_rows(ir, &tables, &path, &rows_for_table)?;
         }
 
         Ok(())
@@ -43,9 +52,12 @@ impl ExcelTemplateGenerator {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use calamine::Reader;
     use sora_ir::normalize::normalize_schema;
     use sora_schema::model::SchemaFile;
-    use std::time::{SystemTime, UNIX_EPOCH};
+    use std::sync::atomic::{AtomicU64, Ordering};
+
+    static TEMP_COUNTER: AtomicU64 = AtomicU64::new(0);
 
     #[test]
     fn writes_xlsx_template_file() {
@@ -57,6 +69,33 @@ mod tests {
         let bytes = fs::read(out_dir.join("Item.xlsx")).unwrap();
         assert_eq!(&bytes[0..2], b"PK");
         assert!(bytes.len() > 1024);
+
+        let _ = fs::remove_dir_all(out_dir);
+    }
+
+    #[test]
+    fn writes_xlsx_template_file_with_rows() {
+        let ir = example_ir();
+        let out_dir = temp_dir();
+
+        ExcelTemplateGenerator
+            .generate_with_rows(&ir, &out_dir, |_| {
+                vec![vec![
+                    "1001".to_owned(),
+                    "Iron Sword".to_owned(),
+                    "Weapon".to_owned(),
+                    "1".to_owned(),
+                ]]
+            })
+            .unwrap();
+
+        let mut workbook: calamine::Xlsx<_> =
+            calamine::open_workbook(out_dir.join("Item.xlsx")).unwrap();
+        let range = workbook.worksheet_range("Item").unwrap();
+
+        assert_eq!(range.get((6, 0)).unwrap().to_string(), "#name");
+        assert_eq!(range.get((12, 0)).unwrap().to_string(), "1001");
+        assert_eq!(range.get((12, 1)).unwrap().to_string(), "Iron Sword");
 
         let _ = fs::remove_dir_all(out_dir);
     }
@@ -110,10 +149,7 @@ comment = "Max stack count"
     }
 
     fn temp_dir() -> std::path::PathBuf {
-        let unique = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .unwrap()
-            .as_nanos();
-        std::env::temp_dir().join(format!("sora-excel-test-{unique}"))
+        let unique = TEMP_COUNTER.fetch_add(1, Ordering::Relaxed);
+        std::env::temp_dir().join(format!("sora-excel-test-{}-{unique}", std::process::id()))
     }
 }

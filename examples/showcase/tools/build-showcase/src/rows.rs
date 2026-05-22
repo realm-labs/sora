@@ -8,6 +8,7 @@ pub(crate) fn showcase_rows(table: &str) -> Vec<Vec<String>> {
                 "1".into(),
                 "Gold,0,120".into(),
                 "[\"starter\",\"melee\"]".into(),
+                "tier,1|power,10".into(),
             ],
             vec![
                 "1002".into(),
@@ -16,6 +17,7 @@ pub(crate) fn showcase_rows(table: &str) -> Vec<Vec<String>> {
                 "999".into(),
                 "Diamond,0,3".into(),
                 "[\"craft\",\"rare\"]".into(),
+                "tier,2|power,11".into(),
             ],
             vec![
                 "2001".into(),
@@ -24,6 +26,7 @@ pub(crate) fn showcase_rows(table: &str) -> Vec<Vec<String>> {
                 "50".into(),
                 "Gold,0,25".into(),
                 "[\"potion\",\"recover\"]".into(),
+                "tier,3|power,12".into(),
             ],
             vec![
                 "3001".into(),
@@ -32,6 +35,7 @@ pub(crate) fn showcase_rows(table: &str) -> Vec<Vec<String>> {
                 "".into(),
                 "Gold,0,1".into(),
                 "[\"quest\",\"token\"]".into(),
+                "tier,4|power,13".into(),
             ],
         ]
         .into_iter()
@@ -54,6 +58,7 @@ pub(crate) fn showcase_rows(table: &str) -> Vec<Vec<String>> {
                 },
                 format!("Gold,0,{}", 10 + id % 500),
                 format!("[\"auto\",\"{}\"]", item_type.to_ascii_lowercase()),
+                format!("tier,{}|power,{}", ((id - 999) % 5) + 1, id - 989),
             ]
         }))
         .collect(),

@@ -11,7 +11,12 @@ use crate::projection::{table_template_rows, tuple_shape};
 const DATA_START_ROW: u32 = 12;
 const DATA_VALIDATION_ROWS: u32 = 1000;
 
-pub(crate) fn write_workbook(ir: &ConfigIr, tables: &[&TableIr], path: &Path) -> Result<()> {
+pub(crate) fn write_workbook_with_rows(
+    ir: &ConfigIr,
+    tables: &[&TableIr],
+    path: &Path,
+    rows_for_table: impl Fn(&TableIr) -> Vec<Vec<String>>,
+) -> Result<()> {
     let mut workbook = Workbook::new();
     let formats = TemplateFormats::new();
 
@@ -52,6 +57,7 @@ pub(crate) fn write_workbook(ir: &ConfigIr, tables: &[&TableIr], path: &Path) ->
         apply_sheet_layout(table, worksheet, &formats, path)?;
         apply_field_notes(ir, table, worksheet, path)?;
         apply_data_validations(ir, table, worksheet, path)?;
+        write_data_rows(worksheet, &formats, path, rows_for_table(table))?;
         worksheet
             .set_freeze_panes(DATA_START_ROW, 1)
             .map_err(|source| excel_error(path, source))?;
@@ -60,6 +66,28 @@ pub(crate) fn write_workbook(ir: &ConfigIr, tables: &[&TableIr], path: &Path) ->
     workbook
         .save(path)
         .map_err(|source| excel_error(path, source))
+}
+
+fn write_data_rows(
+    worksheet: &mut rust_xlsxwriter::Worksheet,
+    formats: &TemplateFormats,
+    path: &Path,
+    rows: Vec<Vec<String>>,
+) -> Result<()> {
+    for (row_offset, row) in rows.iter().enumerate() {
+        for (column, value) in row.iter().enumerate() {
+            worksheet
+                .write_with_format(
+                    DATA_START_ROW + row_offset as u32,
+                    column as u16,
+                    value,
+                    formats.data_cell(),
+                )
+                .map_err(|source| excel_error(path, source))?;
+        }
+    }
+
+    Ok(())
 }
 
 fn apply_data_validations(
@@ -328,6 +356,10 @@ impl TemplateFormats {
             11 => &self.description,
             _ => &self.schema_value,
         }
+    }
+
+    fn data_cell(&self) -> &Format {
+        &self.schema_value
     }
 }
 
