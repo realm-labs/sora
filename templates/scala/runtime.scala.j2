@@ -2,6 +2,18 @@
 
 package {{ package }}
 
+{%- if runtime_format == "json" or runtime_format == "cbor" %}
+import com.fasterxml.jackson.core.`type`.TypeReference
+import com.fasterxml.jackson.databind.ObjectMapper
+{%- endif %}
+{%- if runtime_format == "cbor" %}
+import com.fasterxml.jackson.dataformat.cbor.CBORFactory
+{%- endif %}
+{%- if runtime_format == "sora-protobuf" %}
+import com.google.protobuf.DescriptorProtos
+import com.google.protobuf.Descriptors
+import com.google.protobuf.DynamicMessage
+{%- endif %}
 import java.nio.charset.StandardCharsets
 import java.util.regex.Pattern
 import scala.collection.mutable.ArrayBuffer
@@ -10,7 +22,7 @@ final class SoraReadException(message: String) extends RuntimeException(message)
 
 trait SoraTableSource {
   def schemaFingerprint: String
-  def decodeTable[T](name: String, decode: SoraReader => T): Vector[T]
+  def decodeTable[T](name: String, decodeBinary: SoraReader => T, decodeValue: SoraValue => T): Vector[T]
 }
 
 final case class SoraSection(
@@ -28,13 +40,16 @@ final class SoraBundle private (
   override val schemaFingerprint: String,
   private val strings: Vector[String]
 ) extends SoraTableSource {
-  override def decodeTable[T](name: String, decode: SoraReader => T): Vector[T] = {
+  def decodeTable[T](name: String, decode: SoraReader => T): Vector[T] = {
     val section = sections
       .find(value => value.kind == SoraBundle.SectionKindTable && value.name == name)
       .getOrElse(throw new SoraReadException(s"missing Sora table section `$name`"))
 
     SoraRuntime.decodeRows(SoraRuntime.readSectionPayload(bytes, section), strings, decode)
   }
+
+  override def decodeTable[T](name: String, decodeBinary: SoraReader => T, decodeValue: SoraValue => T): Vector[T] =
+    decodeTable(name, decodeBinary)
 }
 
 object SoraBundle {
@@ -236,6 +251,338 @@ final class SoraReader(private val bytes: Array[Byte], private val strings: Vect
     chunk
   }
 }
+
+final class SoraObject(private val fields: Map[String, SoraValue]) {
+  def get(name: String): SoraValue = fields.getOrElse(name, new SoraValue(null))
+}
+
+final class SoraValue(private val value: Any) {
+  def isNull: Boolean = value == null
+
+  def asObject: SoraObject =
+    value match {
+      case typed: SoraObject => typed
+      case _ => throw new SoraReadException("expected object")
+    }
+
+  def asRawList: Vector[SoraValue] =
+    value match {
+      case typed: Vector[_] => typed.asInstanceOf[Vector[SoraValue]]
+      case _ => throw new SoraReadException("expected list")
+    }
+
+  def asList[T](decode: SoraValue => T): Vector[T] =
+    asRawList.map(decode)
+
+  def asMap[K, V](decodeKey: SoraValue => K, decodeValue: SoraValue => V): Map[K, V] =
+    asRawList.map { item =>
+      val pair = item.asRawList
+      if (pair.size != 2) {
+        throw new SoraReadException("expected map entry pair")
+      }
+      decodeKey(pair(0)) -> decodeValue(pair(1))
+    }.toMap
+
+  def asBool: Boolean =
+    value match {
+      case typed: Boolean => typed
+      case _ => throw new SoraReadException("expected bool")
+    }
+
+  def asInt: Int = {
+    val value = asLong
+    if (value < Int.MinValue || value > Int.MaxValue) {
+      throw new SoraReadException("integer exceeds Int")
+    }
+    value.toInt
+  }
+
+  def asLong: Long =
+    value match {
+      case typed: java.lang.Byte => typed.longValue()
+      case typed: java.lang.Short => typed.longValue()
+      case typed: java.lang.Integer => typed.longValue()
+      case typed: java.lang.Long => typed.longValue()
+      case typed: BigInt => typed.longValue
+      case typed: java.lang.Number =>
+        val doubleValue = typed.doubleValue()
+        if (Math.rint(doubleValue) != doubleValue || doubleValue < Long.MinValue.toDouble || doubleValue > Long.MaxValue.toDouble) {
+          throw new SoraReadException("expected integer")
+        }
+        doubleValue.toLong
+      case _ => throw new SoraReadException("expected integer")
+    }
+
+  def asFloat: Float = asDouble.toFloat
+
+  def asDouble: Double =
+    value match {
+      case typed: java.lang.Number => typed.doubleValue()
+      case _ => throw new SoraReadException("expected float")
+    }
+
+  def asString: String =
+    value match {
+      case typed: String => typed
+      case _ => throw new SoraReadException("expected string")
+    }
+}
+
+object SoraValue {
+  def fromJava(value: Any): SoraValue =
+    value match {
+      case map: java.util.Map[_, _] =>
+        val fields = scala.collection.mutable.LinkedHashMap.empty[String, SoraValue]
+        val iterator = map.entrySet().iterator()
+        while (iterator.hasNext) {
+          val entry = iterator.next()
+          fields += entry.getKey.asInstanceOf[String] -> fromJava(entry.getValue)
+        }
+        new SoraValue(new SoraObject(fields.toMap))
+      case list: java.util.List[_] =>
+        val values = ArrayBuffer[SoraValue]()
+        val iterator = list.iterator()
+        while (iterator.hasNext) {
+          values += fromJava(iterator.next())
+        }
+        new SoraValue(values.toVector)
+      case _ => new SoraValue(value)
+    }
+}
+
+{%- if runtime_format != "sora" %}
+
+final class SoraValueBundle private (
+  private val tables: Map[String, Vector[SoraValue]],
+  override val schemaFingerprint: String
+) extends SoraTableSource {
+  def decodeTable[T](name: String, decode: SoraValue => T): Vector[T] = {
+    val values = tables.getOrElse(name, throw new SoraReadException(s"missing table `$name`"))
+    values.map(decode)
+  }
+
+  override def decodeTable[T](name: String, decodeBinary: SoraReader => T, decodeValue: SoraValue => T): Vector[T] =
+    decodeTable(name, decodeValue)
+}
+
+object SoraValueBundle {
+  val FormatVersion = 1
+
+{%- if runtime_format == "json" %}
+  def parseJson(bytes: Array[Byte]): SoraValueBundle = {
+    try {
+      val mapper = new ObjectMapper()
+      val root = mapper.readValue(bytes, new TypeReference[java.util.Map[String, Object]]() {})
+      fromRoot("json", SoraValue.fromJava(root))
+    } catch {
+      case error: Exception => throw new SoraReadException(s"failed to parse json bundle: ${error.getMessage}")
+    }
+  }
+{%- endif %}
+
+{%- if runtime_format == "cbor" %}
+  def parseCbor(bytes: Array[Byte]): SoraValueBundle = {
+    try {
+      val mapper = new ObjectMapper(new CBORFactory())
+      val root = mapper.readValue(bytes, new TypeReference[java.util.Map[String, Object]]() {})
+      fromRoot("cbor", SoraValue.fromJava(root))
+    } catch {
+      case error: Exception => throw new SoraReadException(s"failed to parse cbor bundle: ${error.getMessage}")
+    }
+  }
+{%- endif %}
+
+{%- if runtime_format == "sora-protobuf" %}
+  def parseProtobuf(bytes: Array[Byte]): SoraValueBundle = {
+    try {
+      fromRoot("sora-protobuf", SoraProtobufBundle.decode(bytes))
+    } catch {
+      case error: Exception => throw new SoraReadException(s"failed to parse protobuf bundle: ${error.getMessage}")
+    }
+  }
+{%- endif %}
+
+  private def fromRoot(expectedFormat: String, rootValue: SoraValue): SoraValueBundle = {
+    val root = rootValue.asObject
+    val format = root.get("format").asString
+    if (format != expectedFormat) {
+      throw new SoraReadException(s"expected $expectedFormat bundle, got $format")
+    }
+    val version = root.get("format_version").asLong
+    if (version != FormatVersion.toLong) {
+      throw new SoraReadException(s"unsupported $expectedFormat bundle version $version")
+    }
+    val schemaFingerprint = root.get("schema_fingerprint").asString
+    val data = root.get("data").asObject
+    val tables = data.get("tables").asRawList.map { tableValue =>
+      val table = tableValue.asObject
+      table.get("name").asString -> table.get("rows").asRawList
+    }.toMap
+    new SoraValueBundle(tables, schemaFingerprint)
+  }
+}
+
+{%- endif %}
+
+{%- if runtime_format == "sora-protobuf" %}
+
+object SoraProtobufBundle {
+  private val bundleDescriptor: Descriptors.Descriptor =
+    buildFileDescriptor().findMessageTypeByName("Bundle")
+
+  def decode(bytes: Array[Byte]): SoraValue =
+    fromBundle(DynamicMessage.parseFrom(bundleDescriptor, bytes))
+
+  private def fromBundle(message: DynamicMessage): SoraValue = {
+    val tables = ArrayBuffer[SoraValue]()
+    val obj = scala.collection.mutable.LinkedHashMap.empty[String, SoraValue]
+    obj += "format_version" -> new SoraValue(message.getField(field(message, "format_version")).asInstanceOf[java.lang.Number].longValue())
+    obj += "format" -> new SoraValue(message.getField(field(message, "format")).asInstanceOf[String])
+    obj += "schema_fingerprint" -> new SoraValue(message.getField(field(message, "schema_fingerprint")).asInstanceOf[String])
+    val iterator = repeated(message, "tables").iterator()
+    while (iterator.hasNext) {
+      tables += fromTable(iterator.next().asInstanceOf[DynamicMessage])
+    }
+    obj += "data" -> new SoraValue(new SoraObject(Map("tables" -> new SoraValue(tables.toVector))))
+    new SoraValue(new SoraObject(obj.toMap))
+  }
+
+  private def fromTable(message: DynamicMessage): SoraValue = {
+    val rows = ArrayBuffer[SoraValue]()
+    val iterator = repeated(message, "rows").iterator()
+    while (iterator.hasNext) {
+      rows += fromRow(iterator.next().asInstanceOf[DynamicMessage])
+    }
+    new SoraValue(new SoraObject(Map(
+      "name" -> new SoraValue(message.getField(field(message, "name")).asInstanceOf[String]),
+      "rows" -> new SoraValue(rows.toVector)
+    )))
+  }
+
+  private def fromRow(message: DynamicMessage): SoraValue = {
+    val obj = scala.collection.mutable.LinkedHashMap.empty[String, SoraValue]
+    val iterator = repeated(message, "fields").iterator()
+    while (iterator.hasNext) {
+      val fieldMessage = iterator.next().asInstanceOf[DynamicMessage]
+      obj += fieldMessage.getField(field(fieldMessage, "name")).asInstanceOf[String] ->
+        fromValue(fieldMessage.getField(field(fieldMessage, "value")).asInstanceOf[DynamicMessage])
+    }
+    new SoraValue(new SoraObject(obj.toMap))
+  }
+
+  private def fromValue(message: DynamicMessage): SoraValue = {
+    val kind = message.getOneofFieldDescriptor(message.getDescriptorForType.getOneofs.get(0))
+    if (kind == null) {
+      throw new SoraReadException("protobuf value is missing kind")
+    }
+    val value = message.getField(kind)
+    kind.getName match {
+      case "bool_value" => new SoraValue(value)
+      case "integer_value" => new SoraValue(value)
+      case "float_value" => new SoraValue(value)
+      case "string_value" => new SoraValue(value)
+      case "list_value" => fromList(value.asInstanceOf[DynamicMessage])
+      case "object_value" => fromObject(value.asInstanceOf[DynamicMessage])
+      case "null_value" => new SoraValue(null)
+      case name => throw new SoraReadException(s"unknown protobuf value kind `$name`")
+    }
+  }
+
+  private def fromList(message: DynamicMessage): SoraValue = {
+    val values = ArrayBuffer[SoraValue]()
+    val iterator = repeated(message, "values").iterator()
+    while (iterator.hasNext) {
+      values += fromValue(iterator.next().asInstanceOf[DynamicMessage])
+    }
+    new SoraValue(values.toVector)
+  }
+
+  private def fromObject(message: DynamicMessage): SoraValue = {
+    val obj = scala.collection.mutable.LinkedHashMap.empty[String, SoraValue]
+    val iterator = repeated(message, "fields").iterator()
+    while (iterator.hasNext) {
+      val fieldMessage = iterator.next().asInstanceOf[DynamicMessage]
+      obj += fieldMessage.getField(field(fieldMessage, "name")).asInstanceOf[String] ->
+        fromValue(fieldMessage.getField(field(fieldMessage, "value")).asInstanceOf[DynamicMessage])
+    }
+    new SoraValue(new SoraObject(obj.toMap))
+  }
+
+  private def repeated(message: DynamicMessage, name: String): java.util.List[AnyRef] =
+    message.getField(field(message, name)).asInstanceOf[java.util.List[AnyRef]]
+
+  private def field(message: DynamicMessage, name: String): Descriptors.FieldDescriptor =
+    message.getDescriptorForType.findFieldByName(name)
+
+  private def buildFileDescriptor(): Descriptors.FileDescriptor = {
+    try {
+      val value = DescriptorProtos.DescriptorProto.newBuilder()
+        .setName("Value")
+        .addOneofDecl(DescriptorProtos.OneofDescriptorProto.newBuilder().setName("kind"))
+        .addField(field("bool_value", 1, DescriptorProtos.FieldDescriptorProto.Type.TYPE_BOOL).setOneofIndex(0))
+        .addField(field("integer_value", 2, DescriptorProtos.FieldDescriptorProto.Type.TYPE_INT64).setOneofIndex(0))
+        .addField(field("float_value", 3, DescriptorProtos.FieldDescriptorProto.Type.TYPE_DOUBLE).setOneofIndex(0))
+        .addField(field("string_value", 4, DescriptorProtos.FieldDescriptorProto.Type.TYPE_STRING).setOneofIndex(0))
+        .addField(field("list_value", 5, DescriptorProtos.FieldDescriptorProto.Type.TYPE_MESSAGE).setTypeName(".sora.runtime.ListValue").setOneofIndex(0))
+        .addField(field("object_value", 6, DescriptorProtos.FieldDescriptorProto.Type.TYPE_MESSAGE).setTypeName(".sora.runtime.ObjectValue").setOneofIndex(0))
+        .addField(field("null_value", 7, DescriptorProtos.FieldDescriptorProto.Type.TYPE_BOOL).setOneofIndex(0))
+      val file = DescriptorProtos.FileDescriptorProto.newBuilder()
+        .setName("sora_runtime_bundle.proto")
+        .setPackage("sora.runtime")
+        .setSyntax("proto3")
+        .addMessageType(DescriptorProtos.DescriptorProto.newBuilder()
+          .setName("Bundle")
+          .addField(field("format_version", 1, DescriptorProtos.FieldDescriptorProto.Type.TYPE_UINT32))
+          .addField(field("format", 2, DescriptorProtos.FieldDescriptorProto.Type.TYPE_STRING))
+          .addField(field("package", 3, DescriptorProtos.FieldDescriptorProto.Type.TYPE_STRING))
+          .addField(field("schema_json", 4, DescriptorProtos.FieldDescriptorProto.Type.TYPE_BYTES))
+          .addField(repeatedField("tables", 5, ".sora.runtime.Table"))
+          .addField(field("schema_fingerprint", 6, DescriptorProtos.FieldDescriptorProto.Type.TYPE_STRING))
+          .addField(field("data_fingerprint", 7, DescriptorProtos.FieldDescriptorProto.Type.TYPE_STRING)))
+        .addMessageType(DescriptorProtos.DescriptorProto.newBuilder()
+          .setName("Table")
+          .addField(field("name", 1, DescriptorProtos.FieldDescriptorProto.Type.TYPE_STRING))
+          .addField(repeatedField("rows", 2, ".sora.runtime.Row")))
+        .addMessageType(DescriptorProtos.DescriptorProto.newBuilder()
+          .setName("Row")
+          .addField(repeatedField("fields", 1, ".sora.runtime.Field")))
+        .addMessageType(DescriptorProtos.DescriptorProto.newBuilder()
+          .setName("Field")
+          .addField(field("name", 1, DescriptorProtos.FieldDescriptorProto.Type.TYPE_STRING))
+          .addField(field("value", 2, DescriptorProtos.FieldDescriptorProto.Type.TYPE_MESSAGE).setTypeName(".sora.runtime.Value")))
+        .addMessageType(value)
+        .addMessageType(DescriptorProtos.DescriptorProto.newBuilder()
+          .setName("ListValue")
+          .addField(repeatedField("values", 1, ".sora.runtime.Value")))
+        .addMessageType(DescriptorProtos.DescriptorProto.newBuilder()
+          .setName("ObjectValue")
+          .addField(repeatedField("fields", 1, ".sora.runtime.Field")))
+        .build()
+      Descriptors.FileDescriptor.buildFrom(file, Array.empty[Descriptors.FileDescriptor])
+    } catch {
+      case error: Descriptors.DescriptorValidationException =>
+        throw new SoraReadException(s"failed to build protobuf descriptor: ${error.getMessage}")
+    }
+  }
+
+  private def field(
+    name: String,
+    number: Int,
+    tpe: DescriptorProtos.FieldDescriptorProto.Type
+  ): DescriptorProtos.FieldDescriptorProto.Builder =
+    DescriptorProtos.FieldDescriptorProto.newBuilder()
+      .setName(name)
+      .setNumber(number)
+      .setLabel(DescriptorProtos.FieldDescriptorProto.Label.LABEL_OPTIONAL)
+      .setType(tpe)
+
+  private def repeatedField(name: String, number: Int, typeName: String): DescriptorProtos.FieldDescriptorProto.Builder =
+    field(name, number, DescriptorProtos.FieldDescriptorProto.Type.TYPE_MESSAGE)
+      .setLabel(DescriptorProtos.FieldDescriptorProto.Label.LABEL_REPEATED)
+      .setTypeName(typeName)
+}
+
+{%- endif %}
 
 object SoraRuntime {
   def readSectionPayload(bytes: Array[Byte], section: SoraSection): Array[Byte] = {

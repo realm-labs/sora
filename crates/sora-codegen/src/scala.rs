@@ -6,7 +6,7 @@ use sora_diagnostics::{Result, SoraError};
 use sora_ir::model::{ConfigIr, TableModeIr, TypeIr};
 
 use crate::{
-    generator::{CodeGenerator, CodegenContext, ensure_sora_runtime_format},
+    generator::{CodeGenerator, CodegenContext, runtime_format_name},
     model::{
         BaseField, BaseIndex, BaseModel, BaseRecord, BaseTable, BaseUnion, BaseUnionVariant,
         build_base_model,
@@ -23,8 +23,8 @@ impl CodeGenerator for ScalaCodeGenerator {
     fn generate(&self, context: CodegenContext<'_>, out_dir: &Path) -> Result<()> {
         let ir = context.ir;
         let codegen_options = context.options::<ScalaCodegenOptions>()?;
-        ensure_sora_runtime_format("scala", codegen_options.runtime_format)?;
         ensure_dir(out_dir)?;
+        let runtime_format = runtime_format_name(codegen_options.runtime_format);
 
         let model = ScalaModel::from_base_model(ir, build_base_model(ir)?, &codegen_options);
         let package_dir = scala_package_dir(out_dir, &model.package)?;
@@ -33,7 +33,7 @@ impl CodeGenerator for ScalaCodeGenerator {
             let rendered = render_template(
                 "scala",
                 "enum.scala.j2",
-                context! { package => &model.package, enum => item },
+                context! { package => &model.package, enum => item, runtime_format => runtime_format },
             )?;
             write_file(&package_dir.join(format!("{}.scala", item.name)), rendered)?;
         }
@@ -42,7 +42,7 @@ impl CodeGenerator for ScalaCodeGenerator {
             let rendered = render_template(
                 "scala",
                 "record.scala.j2",
-                context! { package => &model.package, record => record },
+                context! { package => &model.package, record => record, runtime_format => runtime_format },
             )?;
             write_file(
                 &package_dir.join(format!("{}.scala", record.pascal_name)),
@@ -54,7 +54,7 @@ impl CodeGenerator for ScalaCodeGenerator {
             let rendered = render_template(
                 "scala",
                 "union.scala.j2",
-                context! { package => &model.package, union => union },
+                context! { package => &model.package, union => union, runtime_format => runtime_format },
             )?;
             write_file(
                 &package_dir.join(format!("{}.scala", union.pascal_name)),
@@ -65,7 +65,7 @@ impl CodeGenerator for ScalaCodeGenerator {
         let rendered = render_template(
             "scala",
             "runtime.scala.j2",
-            context! { package => &model.package },
+            context! { package => &model.package, runtime_format => runtime_format },
         )?;
         write_file(&package_dir.join("SoraRuntime.scala"), rendered)?;
 
@@ -140,6 +140,7 @@ struct ScalaField {
     name: String,
     type_name: String,
     decode: String,
+    value_decode: String,
     comment: Option<String>,
 }
 
@@ -274,6 +275,7 @@ fn scala_field(ir: &ConfigIr, field: BaseField) -> ScalaField {
         name: field.camel_name,
         type_name: scala_type_name(ir, &field.ty),
         decode: scala_decode_expr(ir, &field.ty),
+        value_decode: scala_value_decode_expr(ir, &field.ty, "__VALUE__"),
         comment: field.comment,
     }
 }
@@ -322,6 +324,52 @@ fn scala_decode_expr(ir: &ConfigIr, ty: &TypeIr) -> String {
             .unwrap_or_else(|| "reader.readI32()".to_owned()),
         TypeIr::Optional(element) => {
             format!("reader.readOptional({})", scala_decode_expr(ir, element))
+        }
+    }
+}
+
+fn scala_value_decode_expr(ir: &ConfigIr, ty: &TypeIr, value: &str) -> String {
+    match ty {
+        TypeIr::Bool => format!("{value}.asBool"),
+        TypeIr::I32 => format!("{value}.asInt"),
+        TypeIr::I64 => format!("{value}.asLong"),
+        TypeIr::F32 => format!("{value}.asFloat"),
+        TypeIr::F64 => format!("{value}.asDouble"),
+        TypeIr::String => format!("{value}.asString"),
+        TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => {
+            format!("{name}.decode({value})")
+        }
+        TypeIr::List(element) | TypeIr::Set(element) | TypeIr::Array { element, .. } => {
+            format!(
+                "{value}.asList(item => {})",
+                scala_value_decode_expr(ir, element, "item")
+            )
+        }
+        TypeIr::Map {
+            key,
+            value: element,
+        } => format!(
+            "{value}.asMap(item => {}, item => {})",
+            scala_value_decode_expr(ir, key, "item"),
+            scala_value_decode_expr(ir, element, "item")
+        ),
+        TypeIr::Ref { table, field } => ir
+            .tables
+            .iter()
+            .find(|candidate| candidate.name == *table)
+            .and_then(|table| {
+                table
+                    .fields
+                    .iter()
+                    .find(|candidate| candidate.name == *field)
+            })
+            .map(|field| scala_value_decode_expr(ir, &field.ty, value))
+            .unwrap_or_else(|| format!("{value}.asInt")),
+        TypeIr::Optional(element) => {
+            format!(
+                "if ({value}.isNull) None else Some({})",
+                scala_value_decode_expr(ir, element, value)
+            )
         }
     }
 }

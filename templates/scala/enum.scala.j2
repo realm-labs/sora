@@ -18,6 +18,14 @@ object {{ enum.name }} {
 {%- endfor %}
       case ordinal => throw new SoraReadException(s"invalid enum ordinal $ordinal for {{ enum.name }}")
     }
+
+  def decode(value: SoraValue): {{ enum.name }} =
+    value.asString match {
+{%- for value in enum.values %}
+      case "{{ value }}" => {{ enum.name }}.{{ value }}
+{%- endfor %}
+      case name => throw new SoraReadException(s"invalid enum value $name for {{ enum.name }}")
+    }
 }
 {%- else %}
 
@@ -40,6 +48,14 @@ object {{ enum.name }} {
       case {{ loop.index0 }} => {{ value }}
 {%- endfor %}
       case ordinal => throw new SoraReadException(s"invalid enum ordinal $ordinal for {{ enum.name }}")
+    }
+
+  def decode(value: SoraValue): {{ enum.name }} =
+    value.asString match {
+{%- for value in enum.values %}
+      case "{{ value }}" => {{ value }}
+{%- endfor %}
+      case name => throw new SoraReadException(s"invalid enum value $name for {{ enum.name }}")
     }
 }
 {%- endif %}

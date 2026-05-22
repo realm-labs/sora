@@ -18,6 +18,15 @@ object {{ record.pascal_name }} {
       {{ field.name }} = {{ field.decode }}{% if not loop.last %},{% endif %}
 {%- endfor %}
     )
+
+  def decode(value: SoraValue): {{ record.pascal_name }} = {
+    val obj = value.asObject
+    {{ record.pascal_name }}(
+{%- for field in record.fields %}
+      {{ field.name }} = {{ field.value_decode | replace("__VALUE__", "obj.get(\"" ~ field.raw_name ~ "\")") }}{% if not loop.last %},{% endif %}
+{%- endfor %}
+    )
+  }
 }
 
 {%- if record.table %}
@@ -95,7 +104,7 @@ object {{ table.pascal_name }}Table {
   )
 
   def decode(source: SoraTableSource): {{ table.pascal_name }}Table =
-    fromRows(source.decodeTable(Name, {{ table.row_type }}.decode))
+    fromRows(source.decodeTable(Name, (reader: SoraReader) => {{ table.row_type }}.decode(reader), (value: SoraValue) => {{ table.row_type }}.decode(value)))
 
   private def fromRows(rows: Vector[{{ table.row_type }}]): {{ table.pascal_name }}Table =
 {%- if table.mode == "map" and table.key_field_name %}

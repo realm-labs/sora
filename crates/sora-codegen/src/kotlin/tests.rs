@@ -5,6 +5,7 @@ use crate::{
     java::JavaCodeGenerator,
     options::{LanguageCodegenOptions, RuntimeFormat, RustCodegenOptions, RustMapType},
     rust::RustCodeGenerator,
+    scala::ScalaCodeGenerator,
 };
 use sora_ir::{model::ConfigIr, normalize::normalize_schema};
 use sora_schema::model::SchemaFile;
@@ -388,6 +389,47 @@ fn java_supports_export_runtime_formats() {
         assert!(item.contains("obj.get(\"id\").asInt()"));
         assert!(item.contains("ItemType.decode(obj.get(\"item_type\"))"));
         assert!(action.contains("static Action decode(SoraValue value)"));
+
+        let _ = std::fs::remove_dir_all(base);
+    }
+}
+
+#[test]
+fn scala_supports_export_runtime_formats() {
+    for (runtime_format, parse_function) in [
+        (RuntimeFormat::Json, "parseJson"),
+        (RuntimeFormat::Cbor, "parseCbor"),
+        (RuntimeFormat::SoraProtobuf, "parseProtobuf"),
+    ] {
+        let ir = example_ir();
+        let base = temp_dir();
+        let scala_out = base.join("scala");
+
+        ScalaCodeGenerator
+            .generate_with_options(
+                &ir,
+                crate::options::ScalaCodegenOptions {
+                    runtime_format,
+                    ..Default::default()
+                },
+                &scala_out,
+            )
+            .unwrap();
+
+        let package_out = scala_out.join("game_config");
+        let runtime = std::fs::read_to_string(package_out.join("SoraRuntime.scala")).unwrap();
+        let config = std::fs::read_to_string(package_out.join("SoraConfig.scala")).unwrap();
+        let item = std::fs::read_to_string(package_out.join("Item.scala")).unwrap();
+        let action = std::fs::read_to_string(package_out.join("Action.scala")).unwrap();
+
+        assert!(runtime.contains("final class SoraValueBundle"));
+        assert!(runtime.contains(parse_function));
+        assert!(!config.contains(&format!("SoraValueBundle.{parse_function}(bytes)")));
+        assert!(config.contains("def fromSource(source: SoraTableSource): SoraConfig"));
+        assert!(item.contains("def decode(value: SoraValue): Item"));
+        assert!(item.contains("obj.get(\"id\").asInt"));
+        assert!(item.contains("ItemType.decode(obj.get(\"item_type\"))"));
+        assert!(action.contains("def decode(value: SoraValue): Action"));
 
         let _ = std::fs::remove_dir_all(base);
     }

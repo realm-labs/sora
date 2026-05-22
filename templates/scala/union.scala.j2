@@ -28,4 +28,19 @@ object {{ union.pascal_name }} {
 {%- endfor %}
       case ordinal => throw new SoraReadException(s"invalid union ordinal $ordinal for {{ union.pascal_name }}")
     }
+
+  def decode(value: SoraValue): {{ union.pascal_name }} = {
+    val obj = value.asObject
+    obj.get("{{ union.tag }}").asString match {
+{%- for variant in union.variants %}
+      case "{{ variant.name }}" =>
+        {{ variant.name }}(
+{%- for field in variant.fields %}
+          {{ field.name }} = {{ field.value_decode | replace("__VALUE__", "obj.get(\"" ~ field.raw_name ~ "\")") }}{% if not loop.last %},{% endif %}
+{%- endfor %}
+        )
+{%- endfor %}
+      case tag => throw new SoraReadException(s"invalid union tag $tag for {{ union.pascal_name }}")
+    }
+  }
 }

@@ -181,7 +181,7 @@ impl CodegenRegistry {
                 id: "scala",
                 aliases: &[],
                 display_name: "Scala",
-                runtime_capabilities: RUNTIME_SORA_ONLY,
+                runtime_capabilities: RUNTIME_MANAGED_EXPORTS,
                 runtime_format: runtime_format_from_options::<ScalaCodegenOptions>,
                 formatter: Some(FormatterConfig::new("Scala", "scalafmt", &[], &["scala"])),
                 generator: Box::new(ScalaCodeGenerator),
