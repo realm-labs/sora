@@ -98,7 +98,7 @@ Use unions when a field can contain one of several tagged shapes. Examples inclu
 
 The union `tag` defaults to `type` if omitted. Source data must include that tag with the variant name. The remaining fields must match the selected variant; unknown fields and missing non-optional variant fields are validation errors.
 
-For a single union value in Excel or CSV, write JSON object text:
+The most direct Excel or CSV form is JSON object text in one cell:
 
 | Field type | Cell value |
 | --- | --- |
@@ -120,7 +120,69 @@ parser = { kind = "json" }
 ]
 ```
 
-If you do not want JSON in Excel or CSV, the new part is the entry table's `union<T>` field: it can use `parser = { kind = "tagged_columns", prefix = "" }` so the workbook has normal columns such as `type`, `quest_id`, `item_id`, and `count`. Any parent table reference to that entry row still uses the existing `ref<Table.key>` or `list<ref<Table.key>>` semantics. See [Cell Parsers](parsers.md#tagged-union-columns) for the exact rules.
+If you do not want JSON in Excel or CSV cells, a single `union<T>` field can be expanded into several columns. This `action` field is one union value:
+
+```toml
+[[tables.fields]]
+name = "action"
+type = "union<RewardAction>"
+parser = { kind = "tagged_columns" }
+```
+
+The Excel sheet then has columns like this:
+
+| A | B | C | D | E | F |
+| --- | --- | --- | --- | --- | --- |
+| `id` | `name` | `action.type` | `action.item_id` | `action.count` | `action.stage_id` |
+| `1` | `Give Sword` | `AddItem` | `1001` | `2` |  |
+| `2` | `Open Stage` | `UnlockStage` |  |  | `9002` |
+
+`action.type` contains the variant name. An `AddItem` row fills only `item_id` and `count`; an `UnlockStage` row fills only `stage_id`. Columns for other variants stay empty.
+
+`tagged_columns` is only valid on a field whose type is exactly `union<T>`; it cannot be applied directly to `list<union<T>>`. When a parent field needs several union values, put each union value in a child row and derive the parent list from that child table:
+
+```toml
+[[tables.fields]]
+name = "actions"
+type = "list<union<RewardAction>>"
+from = { table = "EventActionEntry", parent_key = "id", child_key = "event_id", field = "value", order_by = "seq" }
+
+[[tables]]
+name = "EventActionEntry"
+mode = "list"
+
+[[tables.fields]]
+name = "event_id"
+type = "ref<EventRule.id>"
+
+[[tables.fields]]
+name = "seq"
+type = "i32"
+
+[[tables.fields]]
+name = "value"
+type = "union<RewardAction>"
+parser = { kind = "tagged_columns", prefix = "" }
+```
+
+The parent `EventRule` sheet keeps ordinary columns:
+
+| A | B |
+| --- | --- |
+| `id` | `name` |
+| `1` | `First Event` |
+
+The child `EventActionEntry` sheet stores one action per row:
+
+| A | B | C | D | E | F |
+| --- | --- | --- | --- | --- | --- |
+| `event_id` | `seq` | `type` | `item_id` | `count` | `stage_id` |
+| `1` | `1` | `AddItem` | `1001` | `2` |  |
+| `1` | `2` | `UnlockStage` |  |  | `9002` |
+
+On export, `EventRule.actions` receives two union values ordered by `seq`. The `prefix = ""` option makes the child table columns use plain names such as `type`, `item_id`, `count`, and `stage_id`; do not use an empty prefix if those names conflict with other fields on the same table.
+
+See [Cell Parsers](parsers.md#tagged_columns) for the exact column rules.
 
 In TOML data files, unions can be written as normal nested tables:
 

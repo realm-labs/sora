@@ -98,7 +98,7 @@ type = "ref<Stage.id>"
 
 如果省略，union 的 `tag` 默认是 `type`。源数据必须包含这个 tag，值是 variant 名称。其余字段必须匹配被选中的 variant；未知字段和缺少非 optional 的 variant field 都会校验失败。
 
-Excel 或 CSV 中的单个 union 值写成 JSON object 文本：
+最直接的 Excel 或 CSV 写法是把单个 union 值写成 JSON object 文本：
 
 | 字段类型 | 单元格值 |
 | --- | --- |
@@ -120,7 +120,69 @@ parser = { kind = "json" }
 ]
 ```
 
-如果不想在 Excel/CSV 里写 JSON，这次新增的是条目表里的 `union<T>` 字段写法：它可以使用 `parser = { kind = "tagged_columns", prefix = "" }`，这样工作簿里就是 `type`、`quest_id`、`item_id`、`count` 这类普通列。父表引用这些条目行时仍然使用已有的 `ref<Table.key>` 或 `list<ref<Table.key>>` 语义。完整规则见[单元格 Parser](parsers.md#tagged-union-columns)。
+如果不想在 Excel/CSV 单元格里写 JSON，可以把一个 `union<T>` 字段展开成多列。下面的 `action` 字段是单个 union 值：
+
+```toml
+[[tables.fields]]
+name = "action"
+type = "union<RewardAction>"
+parser = { kind = "tagged_columns" }
+```
+
+Excel 中会出现这些列：
+
+| A | B | C | D | E | F |
+| --- | --- | --- | --- | --- | --- |
+| `id` | `name` | `action.type` | `action.item_id` | `action.count` | `action.stage_id` |
+| `1` | `Give Sword` | `AddItem` | `1001` | `2` |  |
+| `2` | `Open Stage` | `UnlockStage` |  |  | `9002` |
+
+`action.type` 填 variant 名称。当前行如果是 `AddItem`，只填写 `item_id` 和 `count`；如果是 `UnlockStage`，只填写 `stage_id`。其它 variant 的列保持为空。
+
+`tagged_columns` 只能用于类型正好是 `union<T>` 的字段，不能直接用于 `list<union<T>>`。如果一个父表字段需要多个 union 值，通常把每个 union 值拆成子表的一行，再由父表聚合回来：
+
+```toml
+[[tables.fields]]
+name = "actions"
+type = "list<union<RewardAction>>"
+from = { table = "EventActionEntry", parent_key = "id", child_key = "event_id", field = "value", order_by = "seq" }
+
+[[tables]]
+name = "EventActionEntry"
+mode = "list"
+
+[[tables.fields]]
+name = "event_id"
+type = "ref<EventRule.id>"
+
+[[tables.fields]]
+name = "seq"
+type = "i32"
+
+[[tables.fields]]
+name = "value"
+type = "union<RewardAction>"
+parser = { kind = "tagged_columns", prefix = "" }
+```
+
+父表 `EventRule` 只保留普通字段：
+
+| A | B |
+| --- | --- |
+| `id` | `name` |
+| `1` | `First Event` |
+
+子表 `EventActionEntry` 每一行填写一个 action：
+
+| A | B | C | D | E | F |
+| --- | --- | --- | --- | --- | --- |
+| `event_id` | `seq` | `type` | `item_id` | `count` | `stage_id` |
+| `1` | `1` | `AddItem` | `1001` | `2` |  |
+| `1` | `2` | `UnlockStage` |  |  | `9002` |
+
+导出时，`EventRule.actions` 会得到两个 union 值，顺序由 `seq` 决定。这里的 `prefix = ""` 让子表列名直接叫 `type`、`item_id`、`count`、`stage_id`；如果这些列名会和同一张表的其它字段冲突，就不要使用空 prefix。
+
+完整展开规则见[单元格 Parser](parsers.md#tagged_columns)。
 
 TOML 数据文件里可以直接用普通嵌套 table 写 union：
 

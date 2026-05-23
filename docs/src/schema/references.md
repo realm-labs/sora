@@ -138,13 +138,56 @@ Without `from.field`, Sora assembles a struct from child table fields with the s
 When the parent should receive one field from the child row instead, set `from.field`:
 
 ```toml
+[[unions]]
+name = "EventCondition"
+tag = "type"
+
+[[unions.variants]]
+name = "QuestCompleted"
+
+[[unions.variants.fields]]
+name = "quest_id"
+type = "ref<Quest.id>"
+
+[[unions.variants]]
+name = "HasItem"
+
+[[unions.variants.fields]]
+name = "item_id"
+type = "ref<Item.id>"
+
+[[unions.variants.fields]]
+name = "count"
+type = "i32"
+
 [[tables.fields]]
 name = "condition"
 type = "union<EventCondition>"
 from = { table = "EventConditionEntry", parent_key = "id", child_key = "event_id", field = "value" }
+
+[[tables]]
+name = "EventConditionEntry"
+mode = "list"
+
+[[tables.fields]]
+name = "event_id"
+type = "ref<Event.id>"
+
+[[tables.fields]]
+name = "value"
+type = "union<EventCondition>"
+parser = { kind = "tagged_columns", prefix = "" }
 ```
 
-This means `Event.condition` receives `EventConditionEntry.value` for the child row whose `event_id` matches `Event.id`. The child table may still contain helper columns such as `id`, `event_id`, notes, or sort fields; only `from.field` is copied into the parent field.
+This means `Event.condition` receives `EventConditionEntry.value` for the child row whose `event_id` matches `Event.id`. The child table may still contain helper columns such as `id`, `event_id`, notes, or sort fields; only the `value` field named by `from.field` is copied into the parent field.
+
+In Excel, `EventConditionEntry` can look like this:
+
+| A | B | C | D | E |
+| --- | --- | --- | --- | --- |
+| `event_id` | `type` | `quest_id` | `item_id` | `count` |
+| `1` | `QuestCompleted` | `5002` |  |  |
+| `2` | `HasItem` |  | `1001` | `2` |
 
 ## From Options
 

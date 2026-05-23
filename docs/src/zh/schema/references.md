@@ -138,13 +138,56 @@ type = "i32"
 如果父字段只需要接收子行中的某一个字段，设置 `from.field`：
 
 ```toml
+[[unions]]
+name = "EventCondition"
+tag = "type"
+
+[[unions.variants]]
+name = "QuestCompleted"
+
+[[unions.variants.fields]]
+name = "quest_id"
+type = "ref<Quest.id>"
+
+[[unions.variants]]
+name = "HasItem"
+
+[[unions.variants.fields]]
+name = "item_id"
+type = "ref<Item.id>"
+
+[[unions.variants.fields]]
+name = "count"
+type = "i32"
+
 [[tables.fields]]
 name = "condition"
 type = "union<EventCondition>"
 from = { table = "EventConditionEntry", parent_key = "id", child_key = "event_id", field = "value" }
+
+[[tables]]
+name = "EventConditionEntry"
+mode = "list"
+
+[[tables.fields]]
+name = "event_id"
+type = "ref<Event.id>"
+
+[[tables.fields]]
+name = "value"
+type = "union<EventCondition>"
+parser = { kind = "tagged_columns", prefix = "" }
 ```
 
-含义是：`Event.condition` 接收 `EventConditionEntry.value`，前提是该子行的 `event_id` 等于 `Event.id`。子表里仍然可以有 `id`、`event_id`、备注、排序字段等辅助列；只有 `from.field` 会被复制到父表字段。
+含义是：`Event.condition` 接收 `EventConditionEntry.value`，前提是该子行的 `event_id` 等于 `Event.id`。子表里仍然可以有 `id`、`event_id`、备注、排序字段等辅助列；只有 `from.field` 指向的 `value` 会被复制到父表字段。
+
+`EventConditionEntry` 在 Excel 中可以这样写：
+
+| A | B | C | D | E |
+| --- | --- | --- | --- | --- |
+| `event_id` | `type` | `quest_id` | `item_id` | `count` |
+| `1` | `QuestCompleted` | `5002` |  |  |
+| `2` | `HasItem` |  | `1001` | `2` |
 
 ## From 配置
 
