@@ -28,6 +28,7 @@ pub fn run(cli: Cli) -> Result<()> {
         Command::Diff(args) => diff(args, &execution),
         Command::ExcelTemplate(args) => excel_template(args),
         Command::SchemaLock(args) => schema_lock(args),
+        Command::Studio(args) => crate::studio::run(args),
     }
 }
 

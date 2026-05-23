@@ -4,6 +4,7 @@ mod commands;
 mod init;
 mod report;
 mod source;
+mod studio;
 
 use clap::Parser;
 
