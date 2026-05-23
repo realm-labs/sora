@@ -1,7 +1,7 @@
 use anyhow::{Context, Result, bail};
 use sora_execution::{ExecutionContext, ExecutionOptions};
 use sora_export::exporter::{ExportCompression, ExportOptions, ExportOutput, OutputKind};
-use sora_input_toml::input::TomlSchemaInput;
+use sora_input_toml::input::SchemaFileInput;
 
 use crate::args::{
     CheckArgs, Cli, Command, DiffArgs, ExcelTemplateArgs, ExportArgs, ExportCompressionArg,
@@ -31,7 +31,7 @@ pub fn run(cli: Cli) -> Result<()> {
 }
 
 fn check(args: CheckArgs) -> Result<()> {
-    let input = TomlSchemaInput::new(&args.project);
+    let input = SchemaFileInput::new(&args.project);
     match &args.lock {
         Some(lock) => {
             sora_core::pipeline::check_schema_with_lock(&input, lock).with_context(|| {
@@ -48,7 +48,7 @@ fn check(args: CheckArgs) -> Result<()> {
 }
 
 fn generate(args: GenArgs, target: &str) -> Result<()> {
-    let input = TomlSchemaInput::new(&args.project);
+    let input = SchemaFileInput::new(&args.project);
     sora_core::pipeline::generate_code_with_scope_and_format(
         &input,
         target,
@@ -66,7 +66,7 @@ fn generate(args: GenArgs, target: &str) -> Result<()> {
 }
 
 fn excel_template(args: ExcelTemplateArgs) -> Result<()> {
-    let input = TomlSchemaInput::new(&args.project);
+    let input = SchemaFileInput::new(&args.project);
     sora_core::pipeline::generate_excel_template_with_scope(
         &input,
         &args.out,
@@ -81,7 +81,7 @@ fn excel_template(args: ExcelTemplateArgs) -> Result<()> {
 }
 
 fn schema_lock(args: SchemaLockArgs) -> Result<()> {
-    let input = TomlSchemaInput::new(&args.project);
+    let input = SchemaFileInput::new(&args.project);
     sora_core::pipeline::generate_schema_lock_with_scope(&input, &args.out, args.scope.as_deref())
         .with_context(|| {
             format!(
@@ -111,7 +111,7 @@ fn export(args: ExportArgs, execution: &ExecutionContext) -> Result<()> {
         }
     };
 
-    let schema_input = TomlSchemaInput::new(&args.project);
+    let schema_input = SchemaFileInput::new(&args.project);
     let input = MixedProjectInput::new(
         schema_input,
         &args.data_root,
@@ -151,8 +151,8 @@ fn export_options(
 
 fn diff(args: DiffArgs, execution: &ExecutionContext) -> Result<()> {
     let default_source_format = args.default_source_format.map(SourceFormatArg::as_str);
-    let left_schema = TomlSchemaInput::new(&args.project);
-    let right_schema = TomlSchemaInput::new(&args.project);
+    let left_schema = SchemaFileInput::new(&args.project);
+    let right_schema = SchemaFileInput::new(&args.project);
     let left = MixedProjectInput::new(left_schema, &args.left_root, default_source_format);
     let right = MixedProjectInput::new(right_schema, &args.right_root, default_source_format);
     sora_core::pipeline::diff_data_with_scope_and_context(

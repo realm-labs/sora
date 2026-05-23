@@ -1,6 +1,6 @@
 # Schema
 
-A schema module is a TOML file included by a project manifest.
+A schema module is a TOML or YAML file included by a project manifest.
 
 ```toml
 package = "game_config"
@@ -8,6 +8,8 @@ includes = ["schema/items.toml", "schema/skills.toml"]
 ```
 
 Schema modules are the source of truth for Sora. They describe the stable data contract; source files such as Excel workbooks contain row values that are checked against that contract.
+
+See [Schema Formats](schema/formats.md) for the supported file formats and equivalent TOML/YAML shapes.
 
 ## Enums
 

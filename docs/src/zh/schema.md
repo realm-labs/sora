@@ -1,6 +1,6 @@
 # Schema
 
-schema module 是被项目清单 include 的 TOML 文件。
+schema module 是被项目清单 include 的 TOML 或 YAML 文件。
 
 ```toml
 package = "game_config"
@@ -8,6 +8,8 @@ includes = ["schema/items.toml", "schema/skills.toml"]
 ```
 
 Schema 是 Sora 的事实来源。它描述稳定的数据契约；Excel 工作簿等源文件只包含需要按契约校验的行数据。
+
+支持的文件格式以及等价的 TOML/YAML 写法见 [Schema 格式](schema/formats.md)。
 
 ## Enums
 

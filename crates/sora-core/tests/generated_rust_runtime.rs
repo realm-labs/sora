@@ -6,7 +6,7 @@ use std::{
 };
 
 use sora_export::exporter::ExportOutput;
-use sora_input_toml::input::{TomlProjectInput, TomlSchemaInput};
+use sora_input_toml::input::{ProjectFileInput, SchemaFileInput};
 
 #[test]
 fn generated_rust_runtime_compiles_and_loads_config_bundles() {
@@ -37,10 +37,10 @@ fn generated_rust_runtime_compiles_and_loads_config_bundles() {
         let generated_dir = base.join("generated-crate");
         let generated_src = generated_dir.join("src/generated");
 
-        let schema_input = TomlSchemaInput::new(&project_path);
+        let schema_input = SchemaFileInput::new(&project_path);
         sora_core::pipeline::generate_code(&schema_input, "rust", &generated_src).unwrap();
 
-        let project_input = TomlProjectInput::new(&project_path, base.join("data"));
+        let project_input = ProjectFileInput::new(&project_path, base.join("data"));
         sora_core::pipeline::export_data(
             &project_input,
             case.export_format,

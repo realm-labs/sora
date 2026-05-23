@@ -9,11 +9,11 @@ use sora_schema::model::SchemaFile;
 use crate::{data::load_config_data, schema::load_project_schema_file};
 
 #[derive(Debug, Clone)]
-pub struct TomlSchemaInput {
+pub struct SchemaFileInput {
     project_path: PathBuf,
 }
 
-impl TomlSchemaInput {
+impl SchemaFileInput {
     pub fn new(project_path: impl Into<PathBuf>) -> Self {
         Self {
             project_path: project_path.into(),
@@ -25,19 +25,19 @@ impl TomlSchemaInput {
     }
 }
 
-impl SchemaInput for TomlSchemaInput {
+impl SchemaInput for SchemaFileInput {
     fn load_schema(&self) -> Result<SchemaFile> {
         load_project_schema_file(&self.project_path)
     }
 }
 
 #[derive(Debug, Clone)]
-pub struct TomlProjectInput {
+pub struct ProjectFileInput {
     project_path: PathBuf,
     data_root: PathBuf,
 }
 
-impl TomlProjectInput {
+impl ProjectFileInput {
     pub fn new(project_path: impl Into<PathBuf>, data_root: impl Into<PathBuf>) -> Self {
         Self {
             project_path: project_path.into(),
@@ -54,13 +54,13 @@ impl TomlProjectInput {
     }
 }
 
-impl SchemaInput for TomlProjectInput {
+impl SchemaInput for ProjectFileInput {
     fn load_schema(&self) -> Result<SchemaFile> {
         load_project_schema_file(&self.project_path)
     }
 }
 
-impl DataInput for TomlProjectInput {
+impl DataInput for ProjectFileInput {
     fn load_data(&self, ir: &ConfigIr) -> Result<ConfigData> {
         load_config_data(ir, &self.data_root)
     }

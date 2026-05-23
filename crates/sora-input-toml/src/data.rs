@@ -92,7 +92,7 @@ fn convert_toml_value(value: toml::Value) -> Result<Value> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::input::TomlProjectInput;
+    use crate::input::ProjectFileInput;
     use sora_input::traits::{DataInput, SchemaInput};
     use sora_ir::normalize::normalize_schema;
     use std::{
@@ -171,7 +171,7 @@ id = 1001
         )
         .unwrap();
 
-        let input = TomlProjectInput::new(&project_path, &data_dir);
+        let input = ProjectFileInput::new(&project_path, &data_dir);
         let ir = normalize_schema(input.load_schema().unwrap()).unwrap();
         let data = input.load_data(&ir).unwrap();
 

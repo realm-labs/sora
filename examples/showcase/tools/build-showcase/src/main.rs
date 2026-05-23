@@ -5,7 +5,7 @@ use std::{
 
 use anyhow::{Context, Result};
 use sora_export::exporter::ExportOutput;
-use sora_input_toml::{input::TomlSchemaInput, schema::load_project_schema_file};
+use sora_input_toml::{input::SchemaFileInput, schema::load_project_schema_file};
 use sora_input_xlsx::input::XlsxProjectInput;
 use sora_ir::{model::ConfigIr, normalize::normalize_schema, validate::validate_config_ir};
 
@@ -43,8 +43,8 @@ fn main() -> Result<()> {
     clean_xlsx_files(&data_root)?;
     write_workbooks(&ir, &data_root)?;
 
-    let schema_input = TomlSchemaInput::new(&project);
-    let project_input = XlsxProjectInput::new(TomlSchemaInput::new(&project), &data_root);
+    let schema_input = SchemaFileInput::new(&project);
+    let project_input = XlsxProjectInput::new(SchemaFileInput::new(&project), &data_root);
 
     clean_dir(&rust_generated)?;
     clean_dir(&kotlin_generated)?;

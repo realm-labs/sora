@@ -17,8 +17,17 @@ impl BuildManifest {
     pub(super) fn load(path: &Path) -> Result<Self> {
         let content = fs::read_to_string(path)
             .with_context(|| format!("failed to read project `{}`", path.display()))?;
-        toml::from_str(&content)
-            .with_context(|| format!("failed to parse build config from `{}`", path.display()))
+        match path.extension().and_then(|extension| extension.to_str()) {
+            Some("toml") => toml::from_str(&content)
+                .with_context(|| format!("failed to parse build config from `{}`", path.display())),
+            Some("yaml" | "yml") => serde_yaml::from_str(&content)
+                .with_context(|| format!("failed to parse build config from `{}`", path.display())),
+            Some(extension) => anyhow::bail!(
+                "project `{}` has unsupported extension `{extension}`",
+                path.display()
+            ),
+            None => anyhow::bail!("project `{}` must have an extension", path.display()),
+        }
     }
 }
 

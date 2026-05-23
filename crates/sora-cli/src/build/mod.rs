@@ -12,7 +12,7 @@ use sora_codegen::{
 use sora_execution::ExecutionContext;
 use sora_export::exporter::{ExportCompression, ExportOptions};
 use sora_input::traits::SchemaInput;
-use sora_input_toml::input::TomlSchemaInput;
+use sora_input_toml::input::SchemaFileInput;
 use sora_schema::model::CodegenSchema;
 
 use crate::args::BuildArgs;
@@ -25,7 +25,7 @@ pub fn run(args: BuildArgs, execution: &ExecutionContext) -> Result<()> {
     let manifest = BuildManifest::load(&args.project)?;
     let build = manifest.build;
     let project_dir = args.project.parent().unwrap_or_else(|| Path::new("."));
-    let schema_input = TomlSchemaInput::new(&args.project);
+    let schema_input = SchemaFileInput::new(&args.project);
 
     let default_source_format = args.default_source_format.or(build.default_source_format);
     let data_root = args
@@ -107,7 +107,7 @@ pub fn run(args: BuildArgs, execution: &ExecutionContext) -> Result<()> {
 
     if !build.exports.is_empty() {
         let project_input = crate::source::MixedProjectInput::new(
-            TomlSchemaInput::new(&args.project),
+            SchemaFileInput::new(&args.project),
             &data_root,
             default_source_format.map(crate::args::SourceFormatArg::as_str),
         );

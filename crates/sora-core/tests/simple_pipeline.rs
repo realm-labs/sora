@@ -7,7 +7,7 @@ use std::{
 use rust_xlsxwriter::Workbook;
 use sora_excel::projection::{DATA_START_ROW, FIELD_START_COLUMN, table_template_rows};
 use sora_export::exporter::ExportOutput;
-use sora_input_toml::{input::TomlSchemaInput, schema::load_project_schema_file};
+use sora_input_toml::{input::SchemaFileInput, schema::load_project_schema_file};
 use sora_input_xlsx::input::XlsxProjectInput;
 use sora_ir::{normalize::normalize_schema, validate::validate_config_ir};
 
@@ -15,11 +15,11 @@ use sora_ir::{normalize::normalize_schema, validate::validate_config_ir};
 fn simple_example_pipeline_generates_all_artifacts() {
     let root = workspace_root();
     let project = root.join("examples/simple/project.toml");
-    let schema_input = TomlSchemaInput::new(&project);
+    let schema_input = SchemaFileInput::new(&project);
     let out_dir = temp_dir();
     let data_root = out_dir.join("excel-data");
     write_item_workbook(&project, &data_root);
-    let project_input = XlsxProjectInput::new(TomlSchemaInput::new(&project), &data_root);
+    let project_input = XlsxProjectInput::new(SchemaFileInput::new(&project), &data_root);
 
     sora_core::pipeline::check_schema(&schema_input).unwrap();
 

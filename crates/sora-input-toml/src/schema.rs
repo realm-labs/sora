@@ -77,20 +77,51 @@ fn merge_includes(
     Ok(())
 }
 
-fn load_schema_document(path: &Path) -> Result<TomlSchemaDocument> {
+fn load_schema_document(path: &Path) -> Result<SchemaDocument> {
     let content = fs::read_to_string(path).map_err(|source| SoraError::ReadFile {
         path: path.to_path_buf(),
         source,
     })?;
 
-    toml::from_str(&content).map_err(|source: toml::de::Error| SoraError::ParseSchema {
-        path: path.to_path_buf(),
-        message: source.to_string(),
-    })
+    match schema_format(path)? {
+        SchemaFormat::Toml => {
+            toml::from_str(&content).map_err(|source: toml::de::Error| SoraError::ParseSchema {
+                path: path.to_path_buf(),
+                message: source.to_string(),
+            })
+        }
+        SchemaFormat::Yaml => {
+            serde_yaml::from_str(&content).map_err(|source| SoraError::ParseSchema {
+                path: path.to_path_buf(),
+                message: source.to_string(),
+            })
+        }
+    }
+}
+
+fn schema_format(path: &Path) -> Result<SchemaFormat> {
+    match path.extension().and_then(|extension| extension.to_str()) {
+        Some("toml") => Ok(SchemaFormat::Toml),
+        Some("yaml" | "yml") => Ok(SchemaFormat::Yaml),
+        Some(extension) => Err(SoraError::InvalidSchema(format!(
+            "schema file `{}` has unsupported extension `{extension}`",
+            path.display()
+        ))),
+        None => Err(SoraError::InvalidSchema(format!(
+            "schema file `{}` must have an extension",
+            path.display()
+        ))),
+    }
+}
+
+#[derive(Debug, Clone, Copy)]
+enum SchemaFormat {
+    Toml,
+    Yaml,
 }
 
 #[derive(Debug, Deserialize)]
-struct TomlSchemaDocument {
+struct SchemaDocument {
     pub package: Option<String>,
     pub codegen: Option<CodegenSchema>,
 
@@ -118,7 +149,7 @@ mod tests {
     static TEMP_COUNTER: AtomicU64 = AtomicU64::new(0);
 
     #[test]
-    fn loads_project_schema_with_includes() {
+    fn loads_project_schema_with_toml_includes() {
         let base = temp_dir();
         let schema_dir = base.join("schema");
         fs::create_dir_all(&schema_dir).unwrap();
@@ -163,8 +194,87 @@ key = "id"
         let _ = fs::remove_dir_all(base);
     }
 
+    #[test]
+    fn loads_project_schema_with_yaml_includes() {
+        let base = temp_dir();
+        let schema_dir = base.join("schema");
+        fs::create_dir_all(&schema_dir).unwrap();
+        let project_path = base.join("project.yaml");
+        fs::write(
+            &project_path,
+            r#"
+package: game_config
+includes:
+  - schema/items.yml
+codegen:
+  rust:
+    map_type: fx_hash_map
+"#,
+        )
+        .unwrap();
+        fs::write(
+            schema_dir.join("items.yml"),
+            r#"
+enums:
+  - name: ItemType
+    values: [Weapon, Armor]
+tables:
+  - name: Item
+    mode: map
+    key: id
+"#,
+        )
+        .unwrap();
+
+        let schema = load_project_schema_file(&project_path).unwrap();
+
+        assert_eq!(schema.package, "game_config");
+        assert_eq!(
+            schema.codegen.targets["rust"]["map_type"].as_str(),
+            Some("fx_hash_map")
+        );
+        assert_eq!(schema.includes, ["schema/items.yml"]);
+        assert_eq!(schema.enums[0].name, "ItemType");
+        assert_eq!(schema.tables[0].name, "Item");
+
+        let _ = fs::remove_dir_all(base);
+    }
+
+    #[test]
+    fn allows_mixed_schema_include_formats() {
+        let base = temp_dir();
+        let schema_dir = base.join("schema");
+        fs::create_dir_all(&schema_dir).unwrap();
+        let project_path = base.join("project.yaml");
+        fs::write(
+            &project_path,
+            r#"
+package: game_config
+includes:
+  - schema/items.toml
+"#,
+        )
+        .unwrap();
+        fs::write(
+            schema_dir.join("items.toml"),
+            r#"
+[[tables]]
+name = "Item"
+mode = "map"
+key = "id"
+"#,
+        )
+        .unwrap();
+
+        let schema = load_project_schema_file(&project_path).unwrap();
+
+        assert_eq!(schema.tables[0].name, "Item");
+
+        let _ = fs::remove_dir_all(base);
+    }
+
     fn temp_dir() -> PathBuf {
         let unique = TEMP_COUNTER.fetch_add(1, Ordering::Relaxed);
-        std::env::temp_dir().join(format!("sora-input-toml-schema-test-{unique}"))
+        std::env::temp_dir().join(format!("sora-input-schema-test-{unique}"))
     }
 }
