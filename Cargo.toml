@@ -25,7 +25,13 @@ resolver = "3"
 [workspace.package]
 version = "0.1.0"
 edition = "2024"
+rust-version = "1.87"
 license = "MIT OR Apache-2.0"
+description = "Simple and powerful configuration table compiler for games and data-heavy tools."
+repository = "https://github.com/realm-labs/sora"
+homepage = "https://realm-labs.github.io/sora/"
+documentation = "https://realm-labs.github.io/sora/"
+readme = "README.md"
 
 [workspace.dependencies]
 anyhow = "1"
@@ -43,23 +49,23 @@ serde = { version = "1", features = ["derive", "rc"] }
 serde_cbor = "0.11"
 serde_json = "1"
 serde_yaml = "0.9"
-sora-cli = { path = "crates/sora-cli" }
-sora-codegen = { path = "crates/sora-codegen" }
-sora-config-format = { path = "crates/sora-config-format" }
-sora-core = { path = "crates/sora-core" }
-sora-data = { path = "crates/sora-data" }
-sora-diagnostics = { path = "crates/sora-diagnostics" }
-sora-excel = { path = "crates/sora-excel" }
-sora-export = { path = "crates/sora-export" }
-sora-execution = { path = "crates/sora-execution" }
-sora-input = { path = "crates/sora-input" }
-sora-input-csv = { path = "crates/sora-input-csv" }
-sora-input-schema = { path = "crates/sora-input-schema" }
-sora-input-toml = { path = "crates/sora-input-toml" }
-sora-input-xlsx = { path = "crates/sora-input-xlsx" }
-sora-ir = { path = "crates/sora-ir" }
-sora-schema = { path = "crates/sora-schema" }
-sora-templates = { path = "crates/sora-templates" }
+sora-cli = { path = "crates/sora-cli", version = "0.1.0" }
+sora-codegen = { path = "crates/sora-codegen", version = "0.1.0" }
+sora-config-format = { path = "crates/sora-config-format", version = "0.1.0" }
+sora-core = { path = "crates/sora-core", version = "0.1.0" }
+sora-data = { path = "crates/sora-data", version = "0.1.0" }
+sora-diagnostics = { path = "crates/sora-diagnostics", version = "0.1.0" }
+sora-excel = { path = "crates/sora-excel", version = "0.1.0" }
+sora-export = { path = "crates/sora-export", version = "0.1.0" }
+sora-execution = { path = "crates/sora-execution", version = "0.1.0" }
+sora-input = { path = "crates/sora-input", version = "0.1.0" }
+sora-input-csv = { path = "crates/sora-input-csv", version = "0.1.0" }
+sora-input-schema = { path = "crates/sora-input-schema", version = "0.1.0" }
+sora-input-toml = { path = "crates/sora-input-toml", version = "0.1.0" }
+sora-input-xlsx = { path = "crates/sora-input-xlsx", version = "0.1.0" }
+sora-ir = { path = "crates/sora-ir", version = "0.1.0" }
+sora-schema = { path = "crates/sora-schema", version = "0.1.0" }
+sora-templates = { path = "crates/sora-templates", version = "0.1.0" }
 thiserror = "2"
 toml = "0.8"
 zstd = "0.13"

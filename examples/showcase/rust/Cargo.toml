@@ -3,6 +3,7 @@ name = "sora-showcase-rust"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
+publish = false
 
 [dependencies]
 rustc-hash.workspace = true
