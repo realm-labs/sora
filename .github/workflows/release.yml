@@ -254,20 +254,28 @@ jobs:
             sora-cli
           )
 
-          crate_version_exists() {
+          publish_crate() {
             local crate="$1"
-            local status
-            status="$(curl -sS -o /dev/null -w "%{http_code}" "https://crates.io/api/v1/crates/${crate}/${VERSION}")"
-            [[ "$status" == "200" ]]
+            local output
+
+            echo "Publishing ${crate} ${VERSION}."
+            if output="$(cargo publish -p "$crate" --locked --allow-dirty 2>&1)"; then
+              echo "$output"
+            else
+              local status="$?"
+              echo "$output"
+
+              if grep -qi "already exists" <<< "$output"; then
+                echo "${crate} ${VERSION} already exists on crates.io; skipping."
+                return 0
+              fi
+
+              return "$status"
+            fi
           }
 
           for crate in "${crates[@]}"; do
-            if crate_version_exists "$crate"; then
-              echo "${crate} ${VERSION} already exists on crates.io; skipping."
-            else
-              echo "Publishing ${crate} ${VERSION}."
-              cargo publish -p "$crate" --locked --allow-dirty
-            fi
+            publish_crate "$crate"
           done
 
   publish-release:
