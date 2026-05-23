@@ -1,18 +1,46 @@
 # Sora
 
-Sora is a Rust-first game configuration compiler that turns schemas and table data into strongly typed code and runtime-ready data artifacts.
+Sora is a configuration table compiler for games and data-heavy tools. It turns a small schema plus editable table data into strongly typed code and runtime-ready data bundles.
+
+The goal is practical, restrained configuration tooling. A project should be able to keep data in Excel or another familiar source, generate the code and data files needed by runtime systems, and still leave the workbook understandable to someone who has not read a large manual first.
 
 [Documentation](https://realm-labs.github.io/sora/) · [中文文档](https://realm-labs.github.io/sora/zh/)
 
+## Purpose
+
+Sora exists to make configuration tables simple to edit, validate, generate, and ship:
+
+- describe the data contract once in schema files;
+- generate spreadsheet templates from that schema instead of hand-maintaining headers;
+- load data from Excel `.xlsx`, CSV, or TOML row files;
+- validate required fields, types, references, indexes, defaults, and nested values;
+- export compact runtime bundles and inspection-friendly JSON;
+- generate typed access code for the languages used by the project.
+
+The project deliberately avoids turning table editing into a second programming language. When a feature would make a normal spreadsheet hard to read, Sora prefers explicit schema, generated templates, references to child tables, and small parser conventions over large cell-local DSLs. Advanced cases should be possible, but the common path should remain obvious from the sheet.
+
 ## Status
 
-Sora is in an early but runnable milestone. It currently supports TOML schemas, TOML/CSV/Excel `.xlsx` table data, normalized IR, recursive data validation, defaults, tuple-style inline struct parsing, child table aggregation, polymorphic union types, secondary unique-index validation, schema locks, config diffs, generated Excel `.xlsx` template projections, a pluggable exporter registry, a native sectioned binary exporter, a debug JSON exporter, and generated Rust/Kotlin/C#/Java/Go/Lua code with binary runtime readers.
+Sora is in an early but runnable milestone. The public schema and CLI can still change while the core model settles.
+
+Current support includes:
+
+- schema files in TOML, YAML, JSON, or Lua;
+- table data from Excel `.xlsx`, CSV, or TOML;
+- generated Excel `.xlsx` templates;
+- normalized IR, recursive validation, defaults, references, child table aggregation, polymorphic unions, and secondary unique indexes;
+- schema locks and config diffs;
+- runtime exports as Sora binary, JSON, debug JSON, CBOR, Sora Protobuf, and typed Protobuf;
+- generated Rust, Kotlin, C#, Java, Scala, Go, C, C++, TypeScript, JavaScript, Erlang, Lua, Python, and Proto code.
 
 ## Design Principles
 
 - Schema is the source of truth.
-- Excel is the editing surface.
+- Excel and other table sources are editing surfaces, not hidden schemas.
 - Generated Excel headers are schema projections, not a second schema.
+- Common table cells should stay readable without project-specific DSL knowledge.
+- Complex data should move into schema, references, or child tables before it makes a workbook unreadable.
+- New concepts need to earn their place; useful beats clever.
 - Data exporters are pluggable backends, not hardcoded pipeline stages.
 - Debug JSON is useful for inspection, but it is not special in the core architecture.
 
@@ -125,7 +153,7 @@ sora export \
 - `sora-core`: pipeline orchestration.
 - `sora-input`: input adapter traits and loaded in-memory input.
 - `sora-input-csv`: CSV data input adapter.
-- `sora-input-toml`: TOML schema and TOML data input adapter.
+- `sora-input-toml`: TOML/YAML/JSON/Lua schema input and TOML data input adapter.
 - `sora-input-xlsx`: Excel `.xlsx` data input adapter.
 - `sora-schema`: format-neutral schema model.
 - `sora-ir`: normalized schema IR and type parsing.
@@ -138,7 +166,7 @@ sora export \
 
 ## Schema Format
 
-TOML projects use a root manifest plus included schema modules. The root manifest declares the package and module list:
+Projects use a root manifest plus included schema modules. Schema and project files can be written as TOML, YAML, JSON, or Lua; examples here use TOML. The root manifest declares the package and module list:
 
 ```toml
 package = "game_config"
@@ -235,7 +263,7 @@ Multiple tables may point at different sheets in the same workbook by reusing th
 
 ## Input Architecture
 
-Sora core consumes input through `SchemaInput` and `DataInput` traits. Concrete source formats live in separate adapter crates. TOML is implemented by `sora-input-toml`, CSV by `sora-input-csv`, and Excel by `sora-input-xlsx`, not by `sora-core` or `sora-input`. Future adapters, such as RON or JSON, should translate their source format into `SchemaFile` and `ConfigData` before entering the normal IR, validation, codegen, and exporter pipeline.
+Sora core consumes input through `SchemaInput` and `DataInput` traits. Concrete source formats live in separate adapter crates. TOML/YAML/JSON/Lua schema loading and TOML row data are implemented by `sora-input-toml`, CSV by `sora-input-csv`, and Excel by `sora-input-xlsx`, not by `sora-core` or `sora-input`. Future adapters, such as HOCON or XML, should translate their source format into `SchemaFile` and `ConfigData` before entering the normal IR, validation, codegen, and exporter pipeline.
 
 Cell parser behavior is registry-driven. `sora-ir::parser::ParserRegistry` validates parser metadata during schema normalization, and `sora-input::parser::ParserRegistry` executes cell parsing at input time. The default registries include `split`, `tuple`, `tuple_list`, and `json`; library users can register additional Rust parser implementations and call the `_with_parsers` APIs when they need project-specific DSLs.
 
