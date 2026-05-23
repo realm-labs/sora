@@ -1,22 +1,138 @@
 name: Release
 
 on:
-  push:
-    tags:
-      - "v*.*.*"
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: "Version bump to apply when version is empty."
+        required: true
+        default: "patch"
+        type: choice
+        options:
+          - major
+          - minor
+          - patch
+      version:
+        description: "Explicit release version, for example 0.1.0. Leave empty to auto-bump."
+        required: false
+        type: string
 
 permissions:
   contents: write
 
+concurrency:
+  group: release-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
-  create-release:
-    name: Create GitHub release
+  prepare:
+    name: Prepare release
     runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.release.outputs.version }}
+      tag: ${{ steps.release.outputs.tag }}
+      create-tag: ${{ steps.release.outputs.create-tag }}
+
     steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Prepare release version
+        id: release
+        env:
+          INPUT_BUMP: ${{ inputs.bump }}
+          INPUT_VERSION: ${{ inputs.version }}
+        run: |
+          set -euo pipefail
+
+          git fetch --force --tags
+
+          VERSION_NAME="$(echo "${INPUT_VERSION#v}" | xargs)"
+          BUMP="${INPUT_BUMP:-patch}"
+
+          if [[ -z "${VERSION_NAME}" ]]; then
+            LATEST_VERSION="$(
+              git tag -l 'v*' \
+                | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' \
+                | sed -E 's/^v//' \
+                | sort -V \
+                | tail -n 1 \
+                || true
+            )"
+
+            if [[ -z "${LATEST_VERSION}" ]]; then
+              LATEST_VERSION="0.0.0"
+            fi
+
+            IFS='.' read -r MAJOR MINOR PATCH <<< "${LATEST_VERSION}"
+            case "${BUMP}" in
+              major)
+                MAJOR=$((MAJOR + 1))
+                MINOR=0
+                PATCH=0
+                ;;
+              minor)
+                MINOR=$((MINOR + 1))
+                PATCH=0
+                ;;
+              patch)
+                PATCH=$((PATCH + 1))
+                ;;
+              *)
+                echo "Unsupported bump: ${BUMP}" >&2
+                exit 1
+                ;;
+            esac
+
+            VERSION_NAME="${MAJOR}.${MINOR}.${PATCH}"
+          fi
+
+          TAG_NAME="v${VERSION_NAME}"
+
+          if [[ ! "${VERSION_NAME}" =~ ^[0-9]+\.[0-9]+\.[0-9]+([.-][0-9A-Za-z.-]+)?$ ]]; then
+            echo "Invalid release version: ${VERSION_NAME}" >&2
+            exit 1
+          fi
+
+          CREATE_TAG="true"
+          TAG_SHA="$(git rev-list -n 1 "${TAG_NAME}" 2>/dev/null || true)"
+          if [[ -n "${TAG_SHA}" ]]; then
+            if [[ "${TAG_SHA}" != "${GITHUB_SHA}" ]]; then
+              echo "Release tag already exists on another commit: ${TAG_NAME}" >&2
+              exit 1
+            fi
+
+            CREATE_TAG="false"
+            echo "Release tag already exists on current commit and will be reused: ${TAG_NAME}"
+          fi
+
+          {
+            echo "version=${VERSION_NAME}"
+            echo "tag=${TAG_NAME}"
+            echo "create-tag=${CREATE_TAG}"
+          } >> "${GITHUB_OUTPUT}"
+
+          echo "Preparing release ${VERSION_NAME} (${TAG_NAME})"
+
+      - name: Create release tag
+        if: steps.release.outputs.create-tag == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "${{ steps.release.outputs.tag }}" -m "Release ${{ steps.release.outputs.version }}"
+          git push "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "${{ steps.release.outputs.tag }}"
+
       - name: Create release
         env:
           GH_TOKEN: ${{ github.token }}
-          TAG: ${{ github.ref_name }}
+          TAG: ${{ steps.release.outputs.tag }}
         run: |
           gh release view "$TAG" >/dev/null 2>&1 || \
             gh release create "$TAG" \
@@ -25,7 +141,7 @@ jobs:
 
   build:
     name: Build ${{ matrix.package_suffix }}
-    needs: create-release
+    needs: prepare
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -69,7 +185,7 @@ jobs:
           PACKAGE_SUFFIX: ${{ matrix.package_suffix }}
           ARCHIVE_EXT: ${{ matrix.archive_ext }}
           BINARY_NAME: ${{ matrix.binary_name }}
-          TAG: ${{ github.ref_name }}
+          TAG: ${{ needs.prepare.outputs.tag }}
         run: |
           $ErrorActionPreference = 'Stop'
           $packageName = "sora-$TAG-$PACKAGE_SUFFIX"
@@ -95,7 +211,7 @@ jobs:
         shell: pwsh
         env:
           GH_TOKEN: ${{ github.token }}
-          TAG: ${{ github.ref_name }}
+          TAG: ${{ needs.prepare.outputs.tag }}
           PACKAGE_SUFFIX: ${{ matrix.package_suffix }}
           ARCHIVE_EXT: ${{ matrix.archive_ext }}
         run: |

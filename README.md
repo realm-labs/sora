@@ -36,12 +36,14 @@ cargo run -p sora-cli -- --version
 cargo install --path crates/sora-cli
 ```
 
-Maintainers publish a release by pushing a semver tag:
+Maintainers publish a release from GitHub Actions:
 
-```bash
-git tag v0.1.0
-git push origin v0.1.0
-```
+1. Open the `Release` workflow.
+2. Select `Run workflow`.
+3. Choose `major`, `minor`, or `patch`, or enter an explicit version such as `0.1.0`.
+4. Run the workflow from `main`.
+
+The workflow creates or reuses the `vX.Y.Z` release tag on the selected commit, creates the GitHub release, builds all platform archives, and uploads checksums. Maintainers do not need to create or push a tag locally.
 
 ## Example Commands
 
