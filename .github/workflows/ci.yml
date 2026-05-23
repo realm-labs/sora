@@ -96,3 +96,36 @@ jobs:
           chmod +x examples/showcase/kotlin/gradlew
           chmod +x examples/showcase/java/gradlew
           python3 scripts/verify_showcase.py --strict --only rust,kotlin,csharp,java,scala,go,python,typescript,javascript,dart,lua,erlang,c,cpp
+
+  runtime-matrix:
+    name: Runtime format matrix
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+
+      - uses: dart-lang/setup-dart@v1
+
+      - uses: erlef/setup-beam@v1
+        with:
+          otp-version: "27.2"
+
+      - uses: leafo/gh-actions-lua@v11
+        with:
+          luaVersion: "5.4"
+
+      - name: Build CLI
+        run: cargo build -p sora-cli
+
+      - name: Verify runtime format matrix
+        run: python3 scripts/verify_runtime_matrix.py --sora-bin target/debug/sora --strict-tools

@@ -49,6 +49,8 @@ The preferred workflow is to declare build outputs in `project.toml` and run one
 sora build --project examples/showcase/project.toml
 ```
 
+The official documentation source lives in `docs/` and is published to GitHub Pages from the `Docs` workflow.
+
 For one-off or CI workflows, each stage is still available as a separate command:
 
 ```bash

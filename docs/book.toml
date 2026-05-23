@@ -1,0 +1,11 @@
+[book]
+title = "Sora"
+description = "A schema-first game configuration compiler."
+authors = ["Realm Labs"]
+language = "en"
+src = "src"
+
+[output.html]
+git-repository-url = "https://github.com/realm-labs/sora"
+edit-url-template = "https://github.com/realm-labs/sora/edit/main/docs/{path}"
+site-url = "/sora/"

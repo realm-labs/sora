@@ -1,2 +1,4 @@
 /target
 /generated
+/docs/book
+__pycache__/
