@@ -14,6 +14,7 @@ members = [
     "crates/sora-codegen",
     "crates/sora-export",
     "crates/sora-excel",
+    "crates/sora-studio",
     "crates/sora-diagnostics",
     "crates/sora-execution",
     "crates/sora-templates",
@@ -35,6 +36,7 @@ readme = "README.md"
 
 [workspace.dependencies]
 anyhow = "1"
+axum = "0.8"
 calamine = "0.35"
 clap = { version = "4", features = ["derive"] }
 csv = "1"
@@ -65,9 +67,12 @@ sora-input-toml = { path = "crates/sora-input-toml", version = "0.1.0" }
 sora-input-xlsx = { path = "crates/sora-input-xlsx", version = "0.1.0" }
 sora-ir = { path = "crates/sora-ir", version = "0.1.0" }
 sora-schema = { path = "crates/sora-schema", version = "0.1.0" }
+sora-studio = { path = "crates/sora-studio", version = "0.1.0" }
 sora-templates = { path = "crates/sora-templates", version = "0.1.0" }
 thiserror = "2"
+tokio = { version = "1", features = ["macros", "rt-multi-thread", "signal"] }
 toml = "0.8"
+tower-http = { version = "0.6", features = ["cors"] }
 zstd = "0.13"
 
 [profile.release]

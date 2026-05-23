@@ -34,6 +34,7 @@ pub enum Command {
     Diff(DiffArgs),
     ExcelTemplate(ExcelTemplateArgs),
     SchemaLock(SchemaLockArgs),
+    Studio(StudioArgs),
 }
 
 #[derive(Debug, Args)]
@@ -212,4 +213,16 @@ pub struct SchemaLockArgs {
 
     #[arg(long)]
     pub scope: Option<String>,
+}
+
+#[derive(Debug, Args)]
+pub struct StudioArgs {
+    #[arg(long)]
+    pub project: PathBuf,
+
+    #[arg(long, default_value = "127.0.0.1")]
+    pub host: std::net::IpAddr,
+
+    #[arg(long, default_value_t = 5174)]
+    pub port: u16,
 }

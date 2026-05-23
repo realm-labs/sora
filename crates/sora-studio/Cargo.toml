@@ -1,0 +1,21 @@
+[package]
+name = "sora-studio"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description.workspace = true
+repository.workspace = true
+homepage.workspace = true
+documentation.workspace = true
+readme.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+anyhow.workspace = true
+axum.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+sora-input-schema.workspace = true
+sora-ir.workspace = true
+tokio.workspace = true
+tower-http.workspace = true

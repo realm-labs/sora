@@ -33,3 +33,4 @@ sora-input-toml.workspace = true
 sora-input-xlsx.workspace = true
 sora-ir.workspace = true
 sora-schema.workspace = true
+sora-studio.workspace = true
