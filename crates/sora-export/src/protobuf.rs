@@ -257,6 +257,6 @@ type = "i32"
             .unwrap()
             .as_nanos();
         let id = NEXT_ID.fetch_add(1, Ordering::Relaxed);
-        std::env::temp_dir().join(format!("sora-export-test-{unique}-{id}"))
+        std::env::temp_dir().join(format!("sora-export-protobuf-test-{unique}-{id}"))
     }
 }
