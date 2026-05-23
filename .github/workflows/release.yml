@@ -120,18 +120,18 @@ jobs:
       - name: Create release tag
         if: steps.release.outputs.create-tag == 'true'
         env:
-          GH_TOKEN: ${{ github.token }}
+          GITHUB_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
 
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git tag -a "${{ steps.release.outputs.tag }}" -m "Release ${{ steps.release.outputs.version }}"
-          git push "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "${{ steps.release.outputs.tag }}"
+          git push "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "${{ steps.release.outputs.tag }}"
 
       - name: Create release
         env:
-          GH_TOKEN: ${{ github.token }}
+          GITHUB_TOKEN: ${{ github.token }}
           TAG: ${{ steps.release.outputs.tag }}
         run: |
           gh release view "$TAG" >/dev/null 2>&1 || \
@@ -216,7 +216,7 @@ jobs:
       - name: Upload release assets
         shell: pwsh
         env:
-          GH_TOKEN: ${{ github.token }}
+          GITHUB_TOKEN: ${{ github.token }}
           TAG: ${{ needs.prepare.outputs.tag }}
           PACKAGE_SUFFIX: ${{ matrix.package_suffix }}
           ARCHIVE_EXT: ${{ matrix.archive_ext }}
