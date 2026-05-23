@@ -4,18 +4,63 @@ Excel 支持围绕生成模板设计。schema 拥有表结构，Excel 是这个 
 
 ## 生成模板
 
+有两种生成 Excel 模板的方式。
+
+第一种是直接运行命令：
+
 ```bash
 sora excel-template --project project.toml --out generated/excel
 ```
 
-也可以在 `[build].excel_templates` 中配置，让 `sora build` 生成模板：
+这条命令的意思是：读取 `project.toml` 里的 schema，然后把 Excel 模板写到 `generated/excel` 目录。
+
+第二种是把模板输出目录写进 `project.toml`，之后统一运行 `sora build`：
 
 ```toml
 [build]
 excel_templates = "generated/excel"
 ```
 
-Sora 会按 `tables.source.file` 将 sheet 分组。多个表可以通过指向同一个 `.xlsx` 文件，放到同一个工作簿的不同 sheet 中。
+```bash
+sora build --project project.toml
+```
+
+这两种方式生成的是同一类文件。区别只是：第一种只生成 Excel 模板；第二种会和 schema lock、codegen、export 等 build 输出一起执行。
+
+`excel_templates` 不是输入数据目录，而是模板输出目录。真正的数据输入目录通常是 `[build].data_root` 或命令里的 `--data-root`。
+
+每个表最终生成到哪个 workbook 和 sheet，由表自己的 source 决定：
+
+```toml
+[[tables]]
+name = "Item"
+
+[tables.source]
+format = "xlsx"
+file = "Core.xlsx"
+sheet = "Item"
+
+[[tables]]
+name = "Quest"
+
+[tables.source]
+format = "xlsx"
+file = "Core.xlsx"
+sheet = "Quest"
+```
+
+上面的配置会在 `generated/excel/Core.xlsx` 中生成两个 sheet：`Item` 和 `Quest`。
+
+如果另一个表写成：
+
+```toml
+[tables.source]
+format = "xlsx"
+file = "Battle.xlsx"
+sheet = "Skill"
+```
+
+它就会生成到另一个文件：`generated/excel/Battle.xlsx` 的 `Skill` sheet。
 
 ## 表头行
 

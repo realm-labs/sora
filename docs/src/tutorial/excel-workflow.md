@@ -4,18 +4,63 @@ Excel support is designed around generated templates. The schema owns the table 
 
 ## Generate Templates
 
+There are two ways to generate Excel templates.
+
+The direct command only writes templates:
+
 ```bash
 sora excel-template --project project.toml --out generated/excel
 ```
 
-Or let `sora build` generate templates when `[build].excel_templates` is configured:
+This reads the schema from `project.toml` and writes generated workbooks under `generated/excel`.
+
+The build workflow can do the same thing when `excel_templates` is configured:
 
 ```toml
 [build]
 excel_templates = "generated/excel"
 ```
 
-Sora groups sheets by `tables.source.file`. Multiple tables can live in the same workbook when their sources point at the same `.xlsx` file.
+```bash
+sora build --project project.toml
+```
+
+Both paths generate the same kind of template files. The direct command only writes Excel templates. `sora build` runs the template output together with the other configured build outputs such as schema locks, code generation, and exports.
+
+`excel_templates` is an output directory for templates. It is not the runtime data input directory. Data input normally comes from `[build].data_root` or the `--data-root` command option.
+
+The workbook and sheet for each table come from that table's source:
+
+```toml
+[[tables]]
+name = "Item"
+
+[tables.source]
+format = "xlsx"
+file = "Core.xlsx"
+sheet = "Item"
+
+[[tables]]
+name = "Quest"
+
+[tables.source]
+format = "xlsx"
+file = "Core.xlsx"
+sheet = "Quest"
+```
+
+This writes two sheets, `Item` and `Quest`, into `generated/excel/Core.xlsx`.
+
+A table with a different source file goes into a different workbook:
+
+```toml
+[tables.source]
+format = "xlsx"
+file = "Battle.xlsx"
+sheet = "Skill"
+```
+
+This writes the `Skill` sheet into `generated/excel/Battle.xlsx`.
 
 ## Header Rows
 
