@@ -276,7 +276,7 @@ fn separated_value(
     context: &CellContext<'_>,
 ) -> Result<Value> {
     let separator = parser_option(context, "separator").unwrap_or(",");
-    let source = split_source(source);
+    let source = separated_source(source, context)?;
     let items = source.split(separator).map(str::trim).collect::<Vec<_>>();
     if let Some(expected_len) = expected_len
         && items.len() != expected_len
@@ -296,12 +296,14 @@ fn separated_value(
     ))
 }
 
-fn split_source(source: &str) -> &str {
+fn separated_source<'a>(source: &'a str, context: &CellContext<'_>) -> Result<&'a str> {
     let source = source.trim();
-    source
-        .strip_prefix('[')
-        .and_then(|inner| inner.strip_suffix(']'))
-        .unwrap_or(source)
+    if source.starts_with('[') && source.ends_with(']') {
+        return Err(
+            context.error("bracketed collection syntax is JSON; use parser `{ kind = \"json\" }`")
+        );
+    }
+    Ok(source)
 }
 
 fn tuple_list_value(
@@ -314,7 +316,7 @@ fn tuple_list_value(
     let struct_name = struct_type_name(element)
         .ok_or_else(|| context.error("tuple_list parser requires list or array of struct"))?;
     let item_separator = parser_option(context, "item_separator").unwrap_or("|");
-    let source = split_source(source);
+    let source = separated_source(source, context)?;
     let items = if source.trim().is_empty() {
         Vec::new()
     } else {
@@ -360,7 +362,7 @@ fn separated_map_value(
 ) -> Result<Value> {
     let separator = parser_option(context, "separator").unwrap_or(",");
     let item_separator = parser_option(context, "item_separator").unwrap_or("|");
-    let source = split_source(source);
+    let source = separated_source(source, context)?;
     let items = if source.trim().is_empty() {
         Vec::new()
     } else {
@@ -785,6 +787,39 @@ mod tests {
                 Value::List(vec![Value::String("power".to_owned()), Value::Integer(10)]),
             ])
         );
+    }
+
+    #[test]
+    fn separated_parsers_reject_json_array_shape() {
+        let registry = ParserRegistry::builtin();
+        let ir = ConfigIr {
+            package: "test".to_owned(),
+            enums: Vec::new(),
+            structs: Vec::new(),
+            unions: Vec::new(),
+            tables: Vec::new(),
+        };
+        let parser = ParserIr {
+            kind: "split".to_owned(),
+            options: BTreeMap::new(),
+        };
+        let context = CellContext {
+            path: Path::new("<test>"),
+            ir: &ir,
+            location: CellLocation::Default,
+            field: "tags",
+            parser: Some(&parser),
+        };
+
+        let error = registry
+            .parse_cell(
+                &CellValue::Text("[1,2,3]".into()),
+                &parse_type("list<i32>").unwrap(),
+                &context,
+            )
+            .unwrap_err();
+
+        assert!(error.to_string().contains("bracketed collection syntax"));
     }
 
     #[test]
