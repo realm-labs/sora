@@ -11,12 +11,17 @@ import {
 import { RotateCcw } from "lucide-react";
 
 import { SchemaCard } from "./SchemaCard";
+import { SchemaEdge } from "./SchemaEdge";
 import type { SchemaCardData } from "../graph";
 import type { Translation } from "../i18n";
 import type { GraphMode, Theme } from "../types";
 
 const nodeTypes = {
   schemaCard: SchemaCard
+};
+
+const edgeTypes = {
+  schemaEdge: SchemaEdge
 };
 
 export function GraphCanvas({
@@ -76,9 +81,10 @@ export function GraphCanvas({
         edges={edges}
         onNodesChange={onNodesChange}
         onNodeClick={onNodeClick}
+        edgeTypes={edgeTypes}
         nodeTypes={nodeTypes}
         fitView
-        fitViewOptions={{ padding: 0.18 }}
+        fitViewOptions={{ padding: 0.08 }}
         minZoom={0.08}
         maxZoom={1.35}
         nodesDraggable

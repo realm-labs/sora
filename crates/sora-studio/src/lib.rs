@@ -1,13 +1,18 @@
 use std::{
     collections::{BTreeMap, BTreeSet},
+    fs,
     net::{IpAddr, Ipv4Addr, SocketAddr},
     path::{Path, PathBuf},
     sync::Arc,
 };
 
 use anyhow::{Context, Result};
-use axum::{Json, Router, extract::State, routing::get};
-use serde::Serialize;
+use axum::{
+    Json, Router,
+    extract::State,
+    routing::{get, put},
+};
+use serde::{Deserialize, Serialize};
 use sora_input_schema::schema::load_project_schema_file;
 use sora_ir::{
     model::{ConfigIr, FieldIr, TableModeIr, TypeIr},
@@ -47,6 +52,7 @@ pub async fn run(options: StudioOptions) -> Result<()> {
     let app = Router::new()
         .route("/api/health", get(health))
         .route("/api/schema", get(schema))
+        .route("/api/schema", put(save_schema))
         .with_state(state)
         .layer(CorsLayer::permissive());
     let listener = tokio::net::TcpListener::bind(addr)
@@ -75,6 +81,13 @@ async fn schema(State(state): State<StudioState>) -> Json<StudioSchemaResponse> 
     Json(load_studio_schema(&state.project))
 }
 
+async fn save_schema(
+    State(state): State<StudioState>,
+    Json(schema): Json<StudioSchema>,
+) -> Json<StudioSchemaResponse> {
+    Json(save_studio_schema(&state.project, &schema))
+}
+
 #[derive(Debug, Serialize)]
 struct HealthResponse {
     ok: bool,
@@ -101,7 +114,7 @@ pub enum DiagnosticLevel {
     Info,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct StudioSchema {
     pub package: String,
     pub summary: StudioSummary,
@@ -109,7 +122,7 @@ pub struct StudioSchema {
     pub edges: Vec<StudioEdge>,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct StudioSummary {
     pub enums: usize,
     pub structs: usize,
@@ -118,7 +131,7 @@ pub struct StudioSummary {
     pub edges: usize,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct StudioNode {
     pub id: String,
     pub name: String,
@@ -129,7 +142,7 @@ pub struct StudioNode {
     pub metadata: BTreeMap<String, String>,
 }
 
-#[derive(Debug, Serialize, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 #[serde(rename_all = "snake_case")]
 pub enum StudioNodeKind {
     Enum,
@@ -138,26 +151,31 @@ pub enum StudioNodeKind {
     Table,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct StudioField {
     pub name: String,
     pub ty: String,
     pub scope: String,
     pub parser: Option<String>,
     pub comment: Option<String>,
+    pub default: Option<String>,
+    pub range: Option<[i64; 2]>,
+    pub length: Option<[usize; 2]>,
     pub source: Option<String>,
 }
 
-#[derive(Debug, Serialize, Clone, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct StudioEdge {
     pub id: String,
     pub source: String,
     pub target: String,
     pub kind: StudioEdgeKind,
     pub label: String,
+    #[serde(default, rename = "targetLabel")]
+    pub target_label: Option<String>,
 }
 
-#[derive(Debug, Serialize, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 #[serde(rename_all = "snake_case")]
 pub enum StudioEdgeKind {
     Type,
@@ -196,6 +214,367 @@ fn load_studio_schema(project: &Path) -> StudioSchemaResponse {
     }
 }
 
+fn save_studio_schema(project: &Path, schema: &StudioSchema) -> StudioSchemaResponse {
+    match write_studio_schema(project, schema) {
+        Ok(path) => {
+            let mut response = load_studio_schema(project);
+            if response.ok {
+                response.diagnostics = vec![StudioDiagnostic {
+                    level: DiagnosticLevel::Info,
+                    message: format!("schema saved to {}", path.display()),
+                }];
+            }
+            response
+        }
+        Err(error) => StudioSchemaResponse {
+            ok: false,
+            project: project.display().to_string(),
+            diagnostics: vec![StudioDiagnostic {
+                level: DiagnosticLevel::Error,
+                message: error.to_string(),
+            }],
+            schema: Some(schema.clone()),
+        },
+    }
+}
+
+fn write_studio_schema(project: &Path, schema: &StudioSchema) -> Result<PathBuf> {
+    ensure_toml_path(project, "project")?;
+    let project_text = fs::read_to_string(project)
+        .with_context(|| format!("failed to read project file `{}`", project.display()))?;
+    let project_doc = project_text
+        .parse::<toml::Value>()
+        .with_context(|| format!("failed to parse project TOML `{}`", project.display()))?;
+    let includes = project_doc
+        .get("includes")
+        .and_then(toml_array_strings)
+        .unwrap_or_default();
+    if includes.len() != 1 {
+        anyhow::bail!(
+            "Studio save currently supports projects with exactly one TOML include; found {} includes",
+            includes.len()
+        );
+    }
+
+    let base_dir = project.parent().unwrap_or_else(|| Path::new("."));
+    let include_path = base_dir.join(&includes[0]);
+    ensure_toml_path(&include_path, "schema include")?;
+    let content = render_schema_module(schema);
+    fs::write(&include_path, content).with_context(|| {
+        format!(
+            "failed to write schema include `{}`",
+            include_path.display()
+        )
+    })?;
+    Ok(include_path)
+}
+
+fn ensure_toml_path(path: &Path, label: &str) -> Result<()> {
+    let extension = path.extension().and_then(|value| value.to_str());
+    if extension != Some("toml") {
+        anyhow::bail!(
+            "Studio save currently supports TOML {label} files only: {}",
+            path.display()
+        );
+    }
+    Ok(())
+}
+
+fn toml_array_strings(value: &toml::Value) -> Option<Vec<String>> {
+    Some(
+        value
+            .as_array()?
+            .iter()
+            .filter_map(|item| item.as_str().map(ToOwned::to_owned))
+            .collect(),
+    )
+}
+
+fn render_schema_module(schema: &StudioSchema) -> String {
+    let mut out = String::from("# Generated by Sora Studio. Review before committing.\n\n");
+    for node in schema
+        .nodes
+        .iter()
+        .filter(|node| node.kind == StudioNodeKind::Enum)
+    {
+        out.push_str("[[enums]]\n");
+        push_string(&mut out, "name", &node.name);
+        push_scope(&mut out, &node.scope);
+        let values = node
+            .fields
+            .iter()
+            .filter(|field| field.ty == "enum value")
+            .map(|field| field.name.as_str())
+            .collect::<Vec<_>>();
+        push_string_array(&mut out, "values", &values);
+        out.push('\n');
+    }
+
+    for node in schema
+        .nodes
+        .iter()
+        .filter(|node| node.kind == StudioNodeKind::Struct)
+    {
+        out.push_str("[[structs]]\n");
+        push_string(&mut out, "name", &node.name);
+        push_scope(&mut out, &node.scope);
+        out.push('\n');
+        for field in &node.fields {
+            out.push_str("[[structs.fields]]\n");
+            push_field(&mut out, field);
+            out.push('\n');
+        }
+    }
+
+    for node in schema
+        .nodes
+        .iter()
+        .filter(|node| node.kind == StudioNodeKind::Union)
+    {
+        out.push_str("[[unions]]\n");
+        push_string(&mut out, "name", &node.name);
+        push_scope(&mut out, &node.scope);
+        if let Some(tag) = node.metadata.get("tag") {
+            push_string(&mut out, "tag", tag);
+        }
+        out.push('\n');
+
+        for (variant, fields) in union_variants(node) {
+            out.push_str("[[unions.variants]]\n");
+            push_string(&mut out, "name", &variant);
+            out.push('\n');
+            for field in fields {
+                out.push_str("[[unions.variants.fields]]\n");
+                push_field(&mut out, &field);
+                out.push('\n');
+            }
+        }
+    }
+
+    for node in schema
+        .nodes
+        .iter()
+        .filter(|node| node.kind == StudioNodeKind::Table)
+    {
+        out.push_str("[[tables]]\n");
+        push_string(&mut out, "name", &node.name);
+        push_scope(&mut out, &node.scope);
+        if let Some(mode) = node.metadata.get("mode") {
+            push_string(&mut out, "mode", mode);
+        }
+        if let Some(key) = node.metadata.get("key").filter(|value| *value != "<none>") {
+            push_string(&mut out, "key", key);
+        }
+        if let Some(source) = node.metadata.get("source") {
+            out.push_str("source = { ");
+            push_inline_pair(&mut out, "file", source);
+            if let Some(sheet) = node.metadata.get("sheet") {
+                out.push_str(", ");
+                push_inline_pair(&mut out, "sheet", sheet);
+            }
+            out.push_str(" }\n");
+        }
+        out.push('\n');
+        for field in &node.fields {
+            out.push_str("[[tables.fields]]\n");
+            push_field(&mut out, field);
+            if let Some(source) = parse_source(&field.source) {
+                out.push_str("from = { ");
+                push_inline_pair(&mut out, "table", &source.table);
+                out.push_str(", ");
+                push_inline_pair(&mut out, "parent_key", &source.parent_key);
+                out.push_str(", ");
+                push_inline_pair(&mut out, "child_key", &source.child_key);
+                if let Some(value_field) = source.value_field {
+                    out.push_str(", ");
+                    push_inline_pair(&mut out, "field", &value_field);
+                }
+                if let Some(order_by) = source.order_by {
+                    out.push_str(", ");
+                    push_inline_pair(&mut out, "order_by", &order_by);
+                }
+                out.push_str(" }\n");
+            }
+            out.push('\n');
+        }
+    }
+
+    out
+}
+
+fn union_variants(node: &StudioNode) -> Vec<(String, Vec<StudioField>)> {
+    let mut variants = Vec::<(String, Vec<StudioField>)>::new();
+    let mut current: Option<usize> = None;
+    for field in &node.fields {
+        if field.ty == "variant" {
+            variants.push((field.name.clone(), Vec::new()));
+            current = Some(variants.len() - 1);
+            continue;
+        }
+        if let Some((variant, name)) = field.name.split_once('.') {
+            let index = variants
+                .iter()
+                .position(|(candidate, _)| candidate == variant)
+                .unwrap_or_else(|| {
+                    variants.push((variant.to_owned(), Vec::new()));
+                    variants.len() - 1
+                });
+            let mut next = field.clone();
+            next.name = name.to_owned();
+            variants[index].1.push(next);
+            current = Some(index);
+        } else if let Some(index) = current {
+            variants[index].1.push(field.clone());
+        }
+    }
+    variants
+}
+
+fn push_field(out: &mut String, field: &StudioField) {
+    push_string(out, "name", &field.name);
+    push_string(out, "type", &field.ty);
+    push_scope(out, &field.scope);
+    if let Some(comment) = &field.comment {
+        push_string(out, "comment", comment);
+    }
+    if let Some(default) = &field.default {
+        push_string(out, "default", default);
+    }
+    if let Some(range) = field.range {
+        out.push_str(&format!("range = [{}, {}]\n", range[0], range[1]));
+    }
+    if let Some(length) = field.length {
+        out.push_str(&format!("length = [{}, {}]\n", length[0], length[1]));
+    }
+    if let Some(parser) = parse_parser(&field.parser) {
+        out.push_str("parser = { ");
+        push_inline_pair(out, "kind", &parser.kind);
+        for (key, value) in parser.options {
+            out.push_str(", ");
+            push_inline_pair(out, &key, &value);
+        }
+        out.push_str(" }\n");
+    }
+}
+
+fn push_scope(out: &mut String, scope: &str) {
+    if scope == "all" || scope.trim().is_empty() {
+        return;
+    }
+    let values = scope.split(',').map(str::trim).collect::<Vec<_>>();
+    if values.len() == 1 {
+        push_string(out, "scope", values[0]);
+    } else {
+        push_string_array(out, "scope", &values);
+    }
+}
+
+fn push_string(out: &mut String, key: &str, value: &str) {
+    out.push_str(key);
+    out.push_str(" = ");
+    push_quoted(out, value);
+    out.push('\n');
+}
+
+fn push_string_array(out: &mut String, key: &str, values: &[&str]) {
+    out.push_str(key);
+    out.push_str(" = [");
+    for (index, value) in values.iter().enumerate() {
+        if index > 0 {
+            out.push_str(", ");
+        }
+        push_quoted(out, value);
+    }
+    out.push_str("]\n");
+}
+
+fn push_inline_pair(out: &mut String, key: &str, value: &str) {
+    out.push_str(key);
+    out.push_str(" = ");
+    push_quoted(out, value);
+}
+
+fn push_quoted(out: &mut String, value: &str) {
+    out.push('"');
+    for ch in value.chars() {
+        match ch {
+            '\\' => out.push_str("\\\\"),
+            '"' => out.push_str("\\\""),
+            '\n' => out.push_str("\\n"),
+            '\r' => out.push_str("\\r"),
+            '\t' => out.push_str("\\t"),
+            ch => out.push(ch),
+        }
+    }
+    out.push('"');
+}
+
+#[derive(Debug)]
+struct ParserParts {
+    kind: String,
+    options: BTreeMap<String, String>,
+}
+
+fn parse_parser(value: &Option<String>) -> Option<ParserParts> {
+    let value = value.as_deref()?.trim();
+    if value.is_empty() {
+        return None;
+    }
+    if let Some((kind, rest)) = value.split_once(" (") {
+        let options_text = rest.strip_suffix(')').unwrap_or(rest);
+        let options = options_text
+            .split(',')
+            .filter_map(|entry| {
+                let (key, value) = entry.trim().split_once('=')?;
+                Some((key.trim().to_owned(), value.trim().to_owned()))
+            })
+            .collect();
+        return Some(ParserParts {
+            kind: kind.trim().to_owned(),
+            options,
+        });
+    }
+    Some(ParserParts {
+        kind: value.to_owned(),
+        options: BTreeMap::new(),
+    })
+}
+
+#[derive(Debug)]
+struct SourceParts {
+    table: String,
+    parent_key: String,
+    child_key: String,
+    value_field: Option<String>,
+    order_by: Option<String>,
+}
+
+fn parse_source(value: &Option<String>) -> Option<SourceParts> {
+    let value = value.as_deref()?;
+    let (table, rest) = value.split_once(':')?;
+    let (keys, options) = rest.split_once(',').unwrap_or((rest, ""));
+    let (child_key, parent_key) = keys.trim().split_once(" -> ")?;
+    let mut value_field = None;
+    let mut order_by = None;
+    for option in options.split(',') {
+        let Some((key, value)) = option.trim().split_once('=') else {
+            continue;
+        };
+        match key {
+            "field" => value_field = Some(value.to_owned()),
+            "order_by" => order_by = Some(value.to_owned()),
+            _ => {}
+        }
+    }
+    Some(SourceParts {
+        table: table.trim().to_owned(),
+        parent_key: parent_key.trim().to_owned(),
+        child_key: child_key.trim().to_owned(),
+        value_field,
+        order_by,
+    })
+}
+
 fn build_schema(ir: &ConfigIr) -> StudioSchema {
     let mut nodes = Vec::new();
     let mut edges = BTreeSet::new();
@@ -216,6 +595,9 @@ fn build_schema(ir: &ConfigIr) -> StudioSchema {
                     scope: item.scope.display(),
                     parser: None,
                     comment: None,
+                    default: None,
+                    range: None,
+                    length: None,
                     source: None,
                 })
                 .collect(),
@@ -240,7 +622,14 @@ fn build_schema(ir: &ConfigIr) -> StudioSchema {
     for item in &ir.unions {
         let owner = node_id(StudioNodeKind::Union, &item.name);
         for variant in &item.variants {
-            collect_field_edges(&owner, &variant.fields, &mut edges);
+            for field in &variant.fields {
+                collect_type_edges(
+                    &owner,
+                    &format!("{}.{}", variant.name, field.name),
+                    &field.ty,
+                    &mut edges,
+                );
+            }
         }
         let fields = item
             .variants
@@ -252,6 +641,9 @@ fn build_schema(ir: &ConfigIr) -> StudioSchema {
                     scope: variant.scope.display(),
                     parser: None,
                     comment: None,
+                    default: None,
+                    range: None,
+                    length: None,
                     source: None,
                 })
                 .chain(variant.fields.iter().map(move |field| {
@@ -291,6 +683,7 @@ fn build_schema(ir: &ConfigIr) -> StudioSchema {
                     target: node_id(StudioNodeKind::Table, &derived_from.source_table),
                     kind: StudioEdgeKind::Derived,
                     label: field.name.clone(),
+                    target_label: Some(derived_from.child_key.clone()),
                 });
             }
         }
@@ -356,6 +749,9 @@ fn studio_field(field: &FieldIr) -> StudioField {
             }
         }),
         comment: field.comment.clone(),
+        default: field.default.clone(),
+        range: field.range,
+        length: field.length,
         source: field.derived_from.as_ref().map(|from| {
             let mut value = format!(
                 "{}: {} -> {}",
@@ -394,7 +790,7 @@ fn collect_type_edges(
         TypeIr::Union(name) => {
             insert_type_edge(owner, StudioNodeKind::Union, name, field_name, edges)
         }
-        TypeIr::Ref { table, .. } => {
+        TypeIr::Ref { table, field } => {
             let target = node_id(StudioNodeKind::Table, table);
             edges.insert(StudioEdge {
                 id: edge_id(owner, &target, StudioEdgeKind::Ref, field_name),
@@ -402,6 +798,7 @@ fn collect_type_edges(
                 target,
                 kind: StudioEdgeKind::Ref,
                 label: field_name.to_owned(),
+                target_label: Some(field.clone()),
             });
         }
         TypeIr::List(inner) | TypeIr::Set(inner) | TypeIr::Optional(inner) => {
@@ -430,6 +827,7 @@ fn insert_type_edge(
         target,
         kind: StudioEdgeKind::Type,
         label: field_name.to_owned(),
+        target_label: None,
     });
 }
 

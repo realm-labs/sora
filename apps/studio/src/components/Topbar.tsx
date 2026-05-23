@@ -1,4 +1,4 @@
-import { ChevronLeft, ChevronRight, Moon, RefreshCw, Sun } from "lucide-react";
+import { ChevronLeft, ChevronRight, Moon, RefreshCw, RotateCcw, Save, Sun } from "lucide-react";
 
 import type { Translation } from "../i18n";
 import type { Language, StudioSchema, Theme } from "../types";
@@ -6,6 +6,8 @@ import type { Language, StudioSchema, Theme } from "../types";
 export function Topbar({
   canGoBack,
   canGoForward,
+  dirty,
+  discardLocalChanges,
   goBack,
   goForward,
   language,
@@ -13,6 +15,9 @@ export function Topbar({
   project,
   refresh,
   schema,
+  saveDisabled,
+  saveLocalChanges,
+  saving,
   setLanguage,
   t,
   theme,
@@ -20,6 +25,8 @@ export function Topbar({
 }: {
   canGoBack: boolean;
   canGoForward: boolean;
+  dirty: boolean;
+  discardLocalChanges: () => void;
   goBack: () => void;
   goForward: () => void;
   language: Language;
@@ -27,6 +34,9 @@ export function Topbar({
   project: string;
   refresh: () => void;
   schema: StudioSchema | null;
+  saveDisabled: boolean;
+  saveLocalChanges: () => void;
+  saving: boolean;
   setLanguage: (language: Language) => void;
   t: Translation;
   theme: Theme;
@@ -39,6 +49,24 @@ export function Topbar({
         <h2>{schema ? schema.package : t.schemaUnavailable}</h2>
       </div>
       <div className="topbar-actions">
+        {dirty && (
+          <div className="dirty-state">
+            <span>{t.unsaved}</span>
+            <button
+              className="icon-button"
+              disabled={saving || saveDisabled}
+              onClick={saveLocalChanges}
+              title={saveDisabled ? t.saveDisabled : t.save}
+            >
+              <Save size={14} />
+              {saving ? t.saving : t.save}
+            </button>
+            <button className="icon-button" onClick={discardLocalChanges}>
+              <RotateCcw size={14} />
+              {t.discard}
+            </button>
+          </div>
+        )}
         <button className="icon-button icon-only" onClick={goBack} disabled={!canGoBack}>
           <ChevronLeft size={17} />
         </button>

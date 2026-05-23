@@ -1,12 +1,13 @@
-import { Network, Search } from "lucide-react";
+import { Network, Plus, Search } from "lucide-react";
 
 import { Metric } from "./Metric";
 import { kindMeta, kindOrder } from "../constants";
 import type { Translation } from "../i18n";
-import type { StudioNode, StudioSchema } from "../types";
+import type { NodeKind, StudioNode, StudioSchema } from "../types";
 
 export function Sidebar({
   navigateToNode,
+  onAddNode,
   query,
   schema,
   selectedId,
@@ -15,6 +16,7 @@ export function Sidebar({
   visibleNodes
 }: {
   navigateToNode: (id: string) => void;
+  onAddNode: (kind: NodeKind) => void;
   query: string;
   schema: StudioSchema | null;
   selectedId: string | null;
@@ -65,6 +67,10 @@ export function Sidebar({
                 {t.kindPlural[kind]}
                 <span>{items.length}</span>
               </h2>
+              <button className="list-item add-item" onClick={() => onAddNode(kind)} type="button">
+                <Plus size={14} />
+                <span>{t.addKind[kind]}</span>
+              </button>
               {items.map((node) => (
                 <button
                   key={node.id}

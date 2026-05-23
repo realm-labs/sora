@@ -10,6 +10,9 @@ export type StudioField = {
   scope: string;
   parser?: string | null;
   comment?: string | null;
+  default?: string | null;
+  range?: [number, number] | null;
+  length?: [number, number] | null;
   source?: string | null;
 };
 
@@ -29,6 +32,7 @@ export type StudioEdge = {
   target: string;
   kind: EdgeKind;
   label: string;
+  targetLabel?: string | null;
 };
 
 export type StudioSchema = {
@@ -45,6 +49,13 @@ export type StudioSchema = {
 };
 
 export type StudioResponse = {
+  ok: boolean;
+  project: string;
+  diagnostics: Array<{ level: "error" | "info"; message: string }>;
+  schema?: StudioSchema | null;
+};
+
+export type StudioSaveResponse = {
   ok: boolean;
   project: string;
   diagnostics: Array<{ level: "error" | "info"; message: string }>;
