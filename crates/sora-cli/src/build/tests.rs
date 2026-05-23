@@ -206,6 +206,69 @@ fn build_command_accepts_json_project_manifest() {
 }
 
 #[test]
+fn build_command_accepts_lua_project_manifest() {
+    let base = temp_dir();
+    let schema_dir = base.join("schema");
+    fs::create_dir_all(&schema_dir).unwrap();
+    let project = base.join("project.lua");
+    fs::write(
+        &project,
+        r#"
+return {
+  package = "game_config",
+  includes = { "schema/items.lua" },
+  build = {
+    schema_lock = "generated/schema.lock",
+    excel_templates = "generated/excel",
+  },
+}
+"#,
+    )
+    .unwrap();
+    fs::write(
+        schema_dir.join("items.lua"),
+        r#"
+return {
+  enums = {
+    { name = "ItemType", values = { "Weapon", "Armor" } },
+  },
+  tables = {
+    {
+      name = "Item",
+      mode = "map",
+      key = "id",
+      source = { file = "Item.xlsx" },
+      fields = {
+        { name = "id", type = "i32", key = true, required = true },
+        { name = "item_type", type = "enum<ItemType>" },
+      },
+    },
+  },
+}
+"#,
+    )
+    .unwrap();
+
+    run(
+        BuildArgs {
+            project: project.clone(),
+            default_source_format: None,
+            data_root: None,
+            scope: None,
+            target: Vec::new(),
+            clean: false,
+        },
+        &ExecutionContext::default(),
+    )
+    .unwrap();
+
+    assert!(base.join("generated/schema.lock").exists());
+    assert!(base.join("generated/excel/Item.xlsx").exists());
+
+    let _ = fs::remove_dir_all(base);
+}
+
+#[test]
 fn build_command_rejects_missing_runtime_export() {
     let base = temp_dir();
     let project = write_project(&base);

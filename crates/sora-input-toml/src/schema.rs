@@ -4,7 +4,9 @@ use std::{
     path::{Path, PathBuf},
 };
 
+use mlua::{Lua, LuaOptions, LuaSerdeExt, StdLib};
 use serde::Deserialize;
+use serde::de::DeserializeOwned;
 use sora_diagnostics::{Result, SoraError};
 use sora_schema::model::{
     CodegenSchema, EnumSchema, SchemaFile, StructSchema, TableSchema, UnionSchema,
@@ -102,7 +104,35 @@ fn load_schema_document(path: &Path) -> Result<SchemaDocument> {
                 message: source.to_string(),
             })
         }
+        SchemaFormat::Lua => parse_lua_document(path, &content),
     }
+}
+
+fn parse_lua_document<T>(path: &Path, content: &str) -> Result<T>
+where
+    T: DeserializeOwned,
+{
+    let lua = Lua::new_with(
+        StdLib::TABLE | StdLib::STRING | StdLib::MATH | StdLib::UTF8,
+        LuaOptions::default(),
+    )
+    .map_err(|source| SoraError::ParseSchema {
+        path: path.to_path_buf(),
+        message: source.to_string(),
+    })?;
+    let value = lua
+        .load(content)
+        .eval()
+        .map_err(|source| SoraError::ParseSchema {
+            path: path.to_path_buf(),
+            message: source.to_string(),
+        })?;
+
+    lua.from_value(value)
+        .map_err(|source| SoraError::ParseSchema {
+            path: path.to_path_buf(),
+            message: source.to_string(),
+        })
 }
 
 fn schema_format(path: &Path) -> Result<SchemaFormat> {
@@ -110,6 +140,7 @@ fn schema_format(path: &Path) -> Result<SchemaFormat> {
         Some("toml") => Ok(SchemaFormat::Toml),
         Some("yaml" | "yml") => Ok(SchemaFormat::Yaml),
         Some("json") => Ok(SchemaFormat::Json),
+        Some("lua") => Ok(SchemaFormat::Lua),
         Some(extension) => Err(SoraError::InvalidSchema(format!(
             "schema file `{}` has unsupported extension `{extension}`",
             path.display()
@@ -126,6 +157,7 @@ enum SchemaFormat {
     Toml,
     Yaml,
     Json,
+    Lua,
 }
 
 #[derive(Debug, Deserialize)]
@@ -292,6 +324,56 @@ tables:
             Some("fx_hash_map")
         );
         assert_eq!(schema.includes, ["schema/items.json"]);
+        assert_eq!(schema.enums[0].name, "ItemType");
+        assert_eq!(schema.tables[0].name, "Item");
+
+        let _ = fs::remove_dir_all(base);
+    }
+
+    #[test]
+    fn loads_project_schema_with_lua_includes() {
+        let base = temp_dir();
+        let schema_dir = base.join("schema");
+        fs::create_dir_all(&schema_dir).unwrap();
+        let project_path = base.join("project.lua");
+        fs::write(
+            &project_path,
+            r#"
+return {
+  package = "game_config",
+  includes = { "schema/items.lua" },
+  codegen = {
+    rust = {
+      map_type = "fx_hash_map",
+    },
+  },
+}
+"#,
+        )
+        .unwrap();
+        fs::write(
+            schema_dir.join("items.lua"),
+            r#"
+return {
+  enums = {
+    { name = "ItemType", values = { "Weapon", "Armor" } },
+  },
+  tables = {
+    { name = "Item", mode = "map", key = "id" },
+  },
+}
+"#,
+        )
+        .unwrap();
+
+        let schema = load_project_schema_file(&project_path).unwrap();
+
+        assert_eq!(schema.package, "game_config");
+        assert_eq!(
+            schema.codegen.targets["rust"]["map_type"].as_str(),
+            Some("fx_hash_map")
+        );
+        assert_eq!(schema.includes, ["schema/items.lua"]);
         assert_eq!(schema.enums[0].name, "ItemType");
         assert_eq!(schema.tables[0].name, "Item");
 

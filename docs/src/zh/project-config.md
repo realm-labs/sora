@@ -1,6 +1,6 @@
 # 项目配置
 
-项目清单既可以只是 schema root，也可以是完整的构建描述。它可以写成 TOML、YAML 或 JSON；本页示例使用 TOML。
+项目清单既可以只是 schema root，也可以是完整的构建描述。它可以写成 TOML、YAML、JSON 或 Lua；本页示例使用 TOML。
 
 ```toml
 package = "game_config"
