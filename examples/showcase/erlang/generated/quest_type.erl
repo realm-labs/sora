@@ -2,7 +2,7 @@
 
 -module(quest_type).
 
--export([decode/1]).
+-export([decode/1, decode_value/1]).
 -export_type([t/0]).
 -type t() ::
     'main' |
@@ -17,4 +17,13 @@ decode(Reader0) ->
         1 -> {'side', Reader1};
         2 -> {'daily', Reader1};
         _ -> error({invalid_enum_ordinal, quest_type, Ordinal})
+    end.
+
+-spec decode_value(binary()) -> t().
+decode_value(Value) ->
+    case Value of
+        <<"Main">> -> 'main';
+        <<"Side">> -> 'side';
+        <<"Daily">> -> 'daily';
+        _ -> error({invalid_enum_value, quest_type, Value})
     end.

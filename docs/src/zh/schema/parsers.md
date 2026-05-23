@@ -51,7 +51,6 @@ Parser option 都是字符串。未知 parser、当前 parser 不支持的 optio
 [[tables.fields]]
 name = "value"
 type = "union<EventCondition>"
-required = true
 parser = { kind = "tagged_columns", prefix = "" }
 ```
 

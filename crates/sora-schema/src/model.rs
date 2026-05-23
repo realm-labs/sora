@@ -155,7 +155,6 @@ pub struct FieldSchema {
     pub scope: ScopeSchema,
 
     pub comment: Option<String>,
-    pub required: Option<bool>,
     pub default: Option<String>,
     pub range: Option<[i64; 2]>,
     pub length: Option<[usize; 2]>,
@@ -177,7 +176,6 @@ pub struct TableFieldSchema {
     pub key: bool,
 
     pub comment: Option<String>,
-    pub required: Option<bool>,
     pub default: Option<String>,
     pub range: Option<[i64; 2]>,
     pub length: Option<[usize; 2]>,
@@ -282,7 +280,6 @@ file = "items.toml"
 name = "id"
 type = "i32"
 key = true
-required = true
 comment = "Item id"
 
 [[tables.fields]]
@@ -301,7 +298,6 @@ parser = { kind = "split", separator = "|" }
         assert_eq!(schema.tables[0].source.as_ref().unwrap().format, None);
         assert_eq!(schema.tables[0].fields[0].name, "id");
         assert!(schema.tables[0].fields[0].key);
-        assert_eq!(schema.tables[0].fields[0].required, Some(true));
         let parser = schema.tables[0].fields[1].parser.as_ref().unwrap();
         assert_eq!(parser.kind, "split");
         assert_eq!(parser.options["separator"], "|");
@@ -330,7 +326,6 @@ type = "string"
         assert!(schema.structs.is_empty());
         assert!(schema.tables[0].indexes.is_empty());
         assert!(!schema.tables[0].fields[0].key);
-        assert_eq!(schema.tables[0].fields[0].required, None);
     }
 
     #[test]

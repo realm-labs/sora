@@ -183,7 +183,7 @@ fn derive_struct_value(source_table: &str, row: &RowData, struct_ir: &StructIr) 
     for field in &struct_ir.fields {
         if let Some(value) = row.values.get(&field.name) {
             values.insert(field.name.clone(), value.clone());
-        } else if field.required {
+        } else if field.is_required() {
             return Err(SoraError::MissingRequiredField {
                 table: source_table.to_owned(),
                 field: field.name.clone(),
@@ -470,12 +470,10 @@ name = "Reward"
 [[structs.fields]]
 name = "reward_item_id"
 type = "i32"
-required = true
 
 [[structs.fields]]
 name = "count"
 type = "i32"
-required = true
 
 [[tables]]
 name = "Item"
@@ -485,12 +483,10 @@ key = "id"
 [[tables.fields]]
 name = "id"
 type = "i32"
-required = true
 
 [[tables.fields]]
 name = "name"
 type = "string"
-required = true
 
 [[tables.fields]]
 name = "rewards"
@@ -504,22 +500,18 @@ mode = "list"
 [[tables.fields]]
 name = "item_id"
 type = "i32"
-required = true
 
 [[tables.fields]]
 name = "seq"
 type = "i32"
-required = true
 
 [[tables.fields]]
 name = "reward_item_id"
 type = "i32"
-required = true
 
 [[tables.fields]]
 name = "count"
 type = "i32"
-required = true
 "#,
         )
         .unwrap();
@@ -541,7 +533,6 @@ key = "id"
 [[tables.fields]]
 name = "id"
 type = "i32"
-required = true
 
 [[tables.fields]]
 name = "display_name"
@@ -555,12 +546,10 @@ mode = "list"
 [[tables.fields]]
 name = "item_id"
 type = "i32"
-required = true
 
 [[tables.fields]]
 name = "name"
 type = "string"
-required = true
 
 [[tables.fields]]
 name = "notes"

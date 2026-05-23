@@ -116,7 +116,6 @@ tables:
       - name: id
         type: i32
         key: true
-        required: true
       - name: item_type
         type: enum<ItemType>
 "#,
@@ -176,7 +175,7 @@ fn build_command_accepts_json_project_manifest() {
       "key": "id",
       "source": { "file": "Item.xlsx" },
       "fields": [
-        { "name": "id", "type": "i32", "key": true, "required": true },
+        { "name": "id", "type": "i32", "key": true },
         { "name": "item_type", "type": "enum<ItemType>" }
       ]
     }
@@ -239,7 +238,7 @@ return {
       key = "id",
       source = { file = "Item.xlsx" },
       fields = {
-        { name = "id", type = "i32", key = true, required = true },
+        { name = "id", type = "i32", key = true },
         { name = "item_type", type = "enum<ItemType>" },
       },
     },
@@ -463,17 +462,14 @@ file = "items.toml"
 name = "id"
 type = "i32"
 key = true
-required = true
 
 [[tables.fields]]
 name = "name"
 type = "string"
-required = true
 
 [[tables.fields]]
 name = "item_type"
 type = "enum<ItemType>"
-required = true
 "#,
     )
     .unwrap();

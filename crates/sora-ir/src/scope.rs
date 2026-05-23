@@ -252,7 +252,6 @@ name = "Reward"
 [[structs.fields]]
 name = "item_id"
 type = "i32"
-required = true
 
 [[structs.fields]]
 name = "debug_note"

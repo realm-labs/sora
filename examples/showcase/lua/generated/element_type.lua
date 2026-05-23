@@ -25,6 +25,12 @@ local values = {
     [2] = ElementType.Lightning,
     [3] = ElementType.Physical,
 }
+local values_by_name = {
+    ["Fire"] = ElementType.Fire,
+    ["Ice"] = ElementType.Ice,
+    ["Lightning"] = ElementType.Lightning,
+    ["Physical"] = ElementType.Physical,
+}
 
 ---@param reader SoraReader
 ---@return ElementType
@@ -35,6 +41,16 @@ function ElementType.decode(reader)
         error("invalid enum ordinal " .. tostring(ordinal) .. " for ElementType")
     end
     return value
+end
+
+---@param value any
+---@return ElementType
+function ElementType.decode_value(value)
+    local decoded = values_by_name[value]
+    if decoded == nil then
+        error("invalid enum value " .. tostring(value) .. " for ElementType")
+    end
+    return decoded
 end
 
 return ElementType

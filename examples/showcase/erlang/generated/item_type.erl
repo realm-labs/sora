@@ -2,7 +2,7 @@
 
 -module(item_type).
 
--export([decode/1]).
+-export([decode/1, decode_value/1]).
 -export_type([t/0]).
 -type t() ::
     'weapon' |
@@ -21,4 +21,15 @@ decode(Reader0) ->
         3 -> {'material', Reader1};
         4 -> {'consumable', Reader1};
         _ -> error({invalid_enum_ordinal, item_type, Ordinal})
+    end.
+
+-spec decode_value(binary()) -> t().
+decode_value(Value) ->
+    case Value of
+        <<"Weapon">> -> 'weapon';
+        <<"Armor">> -> 'armor';
+        <<"Currency">> -> 'currency';
+        <<"Material">> -> 'material';
+        <<"Consumable">> -> 'consumable';
+        _ -> error({invalid_enum_value, item_type, Value})
     end.

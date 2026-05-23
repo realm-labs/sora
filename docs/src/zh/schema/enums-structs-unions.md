@@ -29,23 +29,20 @@ name = "ResourceCost"
 [[structs.fields]]
 name = "kind"
 type = "enum<ResourceKind>"
-required = true
 
 [[structs.fields]]
 name = "id"
 type = "i32"
-required = true
 
 [[structs.fields]]
 name = "count"
 type = "i32"
-required = true
 range = [1, 999999]
 ```
 
 结构体适合多处复用的嵌套值。字段可以通过 `type = "struct<ResourceCost>"` 引用结构体。
 
-Struct field 使用和 table field 相同的字段属性，包括 `name`、`type`、`required`、`default`、`comment`、`range`、`length`、`parser` 和 `scope`。`key`、`from` 这类表专用属性对普通 struct field 没有意义。完整字段参考见[类型](types.md#field-rules)。
+Struct field 使用和 table field 相同的字段属性，包括 `name`、`type`、`default`、`comment`、`range`、`length`、`parser` 和 `scope`。`key`、`from` 这类表专用属性对普通 struct field 没有意义。完整字段参考见[类型](types.md#field-rules)。
 
 在 Excel、CSV 这类单元格输入中，struct 字段默认可以写成 JSON object 文本：
 
@@ -72,12 +69,10 @@ name = "AddItem"
 [[unions.variants.fields]]
 name = "item_id"
 type = "ref<Item.id>"
-required = true
 
 [[unions.variants.fields]]
 name = "count"
 type = "i32"
-required = true
 
 [[unions.variants]]
 name = "UnlockStage"
@@ -85,12 +80,11 @@ name = "UnlockStage"
 [[unions.variants.fields]]
 name = "stage_id"
 type = "ref<Stage.id>"
-required = true
 ```
 
 当一个字段可能是多个 tagged shape 之一时，使用 union。常见例子包括条件、奖励、触发器和脚本动作。
 
-如果省略，union 的 `tag` 默认是 `type`。源数据必须包含这个 tag，值是 variant 名称。其余字段必须匹配被选中的 variant；未知字段和缺少 required variant field 都会校验失败。
+如果省略，union 的 `tag` 默认是 `type`。源数据必须包含这个 tag，值是 variant 名称。其余字段必须匹配被选中的 variant；未知字段和缺少非 optional 的 variant field 都会校验失败。
 
 Excel 或 CSV 中的单个 union 值写成 JSON object 文本：
 

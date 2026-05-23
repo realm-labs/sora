@@ -2,7 +2,7 @@
 
 -module(element_type).
 
--export([decode/1]).
+-export([decode/1, decode_value/1]).
 -export_type([t/0]).
 -type t() ::
     'fire' |
@@ -19,4 +19,14 @@ decode(Reader0) ->
         2 -> {'lightning', Reader1};
         3 -> {'physical', Reader1};
         _ -> error({invalid_enum_ordinal, element_type, Ordinal})
+    end.
+
+-spec decode_value(binary()) -> t().
+decode_value(Value) ->
+    case Value of
+        <<"Fire">> -> 'fire';
+        <<"Ice">> -> 'ice';
+        <<"Lightning">> -> 'lightning';
+        <<"Physical">> -> 'physical';
+        _ -> error({invalid_enum_value, element_type, Value})
     end.

@@ -221,7 +221,7 @@ fn field_note_text(ir: &ConfigIr, field: &FieldIr) -> Option<String> {
     if field.key {
         lines.push("Key: yes".to_owned());
     }
-    if field.required {
+    if field.is_required() {
         lines.push("Required: yes".to_owned());
     }
     if let Some(default) = &field.default {
@@ -514,7 +514,6 @@ mod tests {
             scope: ScopeIr::default(),
             key: false,
             comment: Some("Reward rows".to_owned()),
-            required: true,
             default: Some("[]".to_owned()),
             range: Some([1, 99]),
             length: Some([1, 3]),
@@ -535,7 +534,6 @@ mod tests {
         assert!(note_text.contains("Field: rewards"));
         assert!(note_text.contains("Type: list<struct<Reward>>"));
         assert!(note_text.contains("Scope: all"));
-        assert!(note_text.contains("Required: yes"));
         assert!(note_text.contains("Default: []"));
         assert!(note_text.contains("Range: 1..99"));
         assert!(note_text.contains("Length: 1..3"));
@@ -551,7 +549,6 @@ mod tests {
             scope: ScopeIr::default(),
             key: false,
             comment: Some("   ".to_owned()),
-            required: false,
             default: None,
             range: None,
             length: None,
@@ -583,7 +580,6 @@ mod tests {
                         scope: ScopeIr::default(),
                         key: false,
                         comment: None,
-                        required: true,
                         default: None,
                         range: None,
                         length: None,
@@ -596,7 +592,6 @@ mod tests {
                         scope: ScopeIr::default(),
                         key: false,
                         comment: None,
-                        required: true,
                         default: None,
                         range: None,
                         length: None,
@@ -609,7 +604,6 @@ mod tests {
                         scope: ScopeIr::default(),
                         key: false,
                         comment: None,
-                        required: true,
                         default: None,
                         range: None,
                         length: None,
@@ -627,7 +621,6 @@ mod tests {
             scope: ScopeIr::default(),
             key: false,
             comment: None,
-            required: true,
             default: None,
             range: None,
             length: None,

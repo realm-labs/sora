@@ -506,7 +506,6 @@ name = "Cost"
 [[structs.fields]]
 name = "item_id"
 type = "i32"
-required = true
 
 [[unions]]
 name = "Action"
@@ -517,7 +516,6 @@ name = "AddItem"
 [[unions.variants.fields]]
 name = "item_id"
 type = "i32"
-required = true
 
 [[tables]]
 name = "Item"
@@ -527,13 +525,11 @@ key = "id"
 [[tables.fields]]
 name = "id"
 type = "i32"
-required = true
 comment = "Item id"
 
 [[tables.fields]]
 name = "item_type"
 type = "enum<ItemType>"
-required = true
 
 [[tables.fields]]
 name = "tags"

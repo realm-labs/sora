@@ -21,6 +21,11 @@ local values = {
     [1] = MailType.Event,
     [2] = MailType.Compensation,
 }
+local values_by_name = {
+    ["System"] = MailType.System,
+    ["Event"] = MailType.Event,
+    ["Compensation"] = MailType.Compensation,
+}
 
 ---@param reader SoraReader
 ---@return MailType
@@ -31,6 +36,16 @@ function MailType.decode(reader)
         error("invalid enum ordinal " .. tostring(ordinal) .. " for MailType")
     end
     return value
+end
+
+---@param value any
+---@return MailType
+function MailType.decode_value(value)
+    local decoded = values_by_name[value]
+    if decoded == nil then
+        error("invalid enum value " .. tostring(value) .. " for MailType")
+    end
+    return decoded
 end
 
 return MailType

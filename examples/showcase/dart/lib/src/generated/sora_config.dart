@@ -44,15 +44,21 @@ import 'event_rule.dart';
 import 'event_condition.dart';
 import 'reward_action.dart';
 
-const soraSchemaFingerprint = 'be63e7040c45fe7d';
+const soraSchemaFingerprint = '10071e9e44d618bc';
 
 final class SoraConfig {
   final Map<Type, Object> _tables;
 
   const SoraConfig._(this._tables);
 
-  static SoraConfig fromBytes(List<int> bytes) {
+  static SoraConfig fromBytes(
+    List<int> bytes
+  ) {
     final bundle = SoraValueBundle.parseJson(bytes);
+    return fromBundle(bundle);
+  }
+
+  static SoraConfig fromBundle(SoraValueBundle bundle) {
     if (bundle.schemaFingerprint != soraSchemaFingerprint) {
       throw SoraReadException(
         'schema fingerprint mismatch: generated code expects $soraSchemaFingerprint, bundle contains ${bundle.schemaFingerprint}',

@@ -29,6 +29,13 @@ local values = {
     [3] = ItemType.Material,
     [4] = ItemType.Consumable,
 }
+local values_by_name = {
+    ["Weapon"] = ItemType.Weapon,
+    ["Armor"] = ItemType.Armor,
+    ["Currency"] = ItemType.Currency,
+    ["Material"] = ItemType.Material,
+    ["Consumable"] = ItemType.Consumable,
+}
 
 ---@param reader SoraReader
 ---@return ItemType
@@ -39,6 +46,16 @@ function ItemType.decode(reader)
         error("invalid enum ordinal " .. tostring(ordinal) .. " for ItemType")
     end
     return value
+end
+
+---@param value any
+---@return ItemType
+function ItemType.decode_value(value)
+    local decoded = values_by_name[value]
+    if decoded == nil then
+        error("invalid enum value " .. tostring(value) .. " for ItemType")
+    end
+    return decoded
 end
 
 return ItemType

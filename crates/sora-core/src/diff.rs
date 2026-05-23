@@ -262,7 +262,6 @@ mod tests {
             scope: ScopeIr::default(),
             key: name == "id",
             comment: None,
-            required: true,
             default: None,
             range: None,
             length: None,

@@ -1,7 +1,7 @@
 {
   "version": 1,
   "package": "com.sora.showcase",
-  "fingerprint": "a0390c24663ecbfc",
+  "fingerprint": "9bc8b7cd2c2ad93e",
   "schema": {
     "package": "com.sora.showcase",
     "enums": [
@@ -125,12 +125,11 @@
             },
             "key": false,
             "comment": null,
-            "required": true,
             "default": null,
             "range": null,
             "length": null,
             "parser": null,
-            "aggregation": null
+            "derived_from": null
           },
           {
             "name": "id",
@@ -142,12 +141,11 @@
             },
             "key": false,
             "comment": null,
-            "required": true,
             "default": null,
             "range": null,
             "length": null,
             "parser": null,
-            "aggregation": null
+            "derived_from": null
           },
           {
             "name": "count",
@@ -159,7 +157,6 @@
             },
             "key": false,
             "comment": null,
-            "required": true,
             "default": null,
             "range": [
               1,
@@ -167,7 +164,7 @@
             ],
             "length": null,
             "parser": null,
-            "aggregation": null
+            "derived_from": null
           }
         ]
       },
@@ -189,12 +186,11 @@
             },
             "key": false,
             "comment": null,
-            "required": true,
             "default": null,
             "range": null,
             "length": null,
             "parser": null,
-            "aggregation": null
+            "derived_from": null
           },
           {
             "name": "y",
@@ -206,12 +202,11 @@
             },
             "key": false,
             "comment": null,
-            "required": true,
             "default": null,
             "range": null,
             "length": null,
             "parser": null,
-            "aggregation": null
+            "derived_from": null
           },
           {
             "name": "z",
@@ -223,12 +218,11 @@
             },
             "key": false,
             "comment": null,
-            "required": true,
             "default": null,
             "range": null,
             "length": null,
             "parser": null,
-            "aggregation": null
+            "derived_from": null
           }
         ]
       },
@@ -252,12 +246,11 @@
             },
             "key": false,
             "comment": null,
-            "required": true,
             "default": null,
             "range": null,
             "length": null,
             "parser": null,
-            "aggregation": null
+            "derived_from": null
           },
           {
             "name": "power",
@@ -269,7 +262,6 @@
             },
             "key": false,
             "comment": null,
-            "required": true,
             "default": null,
             "range": [
               1,
@@ -277,7 +269,7 @@
             ],
             "length": null,
             "parser": null,
-            "aggregation": null
+            "derived_from": null
           },
           {
             "name": "radius",
@@ -289,12 +281,11 @@
             },
             "key": false,
             "comment": null,
-            "required": false,
             "default": "1.0",
             "range": null,
             "length": null,
             "parser": null,
-            "aggregation": null
+            "derived_from": null
           }
         ]
       },
@@ -321,12 +312,11 @@
             },
             "key": false,
             "comment": null,
-            "required": true,
             "default": null,
             "range": null,
             "length": null,
             "parser": null,
-            "aggregation": null
+            "derived_from": null
           },
           {
             "name": "count",
@@ -338,7 +328,6 @@
             },
             "key": false,
             "comment": null,
-            "required": true,
             "default": null,
             "range": [
               1,
@@ -346,7 +335,7 @@
             ],
             "length": null,
             "parser": null,
-            "aggregation": null
+            "derived_from": null
           }
         ]
       },
@@ -370,12 +359,11 @@
             },
             "key": false,
             "comment": null,
-            "required": true,
             "default": null,
             "range": null,
             "length": null,
             "parser": null,
-            "aggregation": null
+            "derived_from": null
           },
           {
             "name": "value",
@@ -387,12 +375,11 @@
             },
             "key": false,
             "comment": null,
-            "required": true,
             "default": null,
             "range": null,
             "length": null,
             "parser": null,
-            "aggregation": null
+            "derived_from": null
           },
           {
             "name": "is_percent",
@@ -404,12 +391,11 @@
             },
             "key": false,
             "comment": null,
-            "required": false,
             "default": "false",
             "range": null,
             "length": null,
             "parser": null,
-            "aggregation": null
+            "derived_from": null
           }
         ]
       }
@@ -447,12 +433,11 @@
                 },
                 "key": false,
                 "comment": null,
-                "required": true,
                 "default": null,
                 "range": null,
                 "length": null,
                 "parser": null,
-                "aggregation": null
+                "derived_from": null
               }
             ]
           },
@@ -479,12 +464,11 @@
                 },
                 "key": false,
                 "comment": null,
-                "required": true,
                 "default": null,
                 "range": null,
                 "length": null,
                 "parser": null,
-                "aggregation": null
+                "derived_from": null
               }
             ]
           },
@@ -511,12 +495,11 @@
                 },
                 "key": false,
                 "comment": null,
-                "required": true,
                 "default": null,
                 "range": null,
                 "length": null,
                 "parser": null,
-                "aggregation": null
+                "derived_from": null
               },
               {
                 "name": "count",
@@ -528,7 +511,6 @@
                 },
                 "key": false,
                 "comment": null,
-                "required": true,
                 "default": null,
                 "range": [
                   1,
@@ -536,7 +518,7 @@
                 ],
                 "length": null,
                 "parser": null,
-                "aggregation": null
+                "derived_from": null
               }
             ]
           }
@@ -574,12 +556,11 @@
                 },
                 "key": false,
                 "comment": null,
-                "required": true,
                 "default": null,
                 "range": null,
                 "length": null,
                 "parser": null,
-                "aggregation": null
+                "derived_from": null
               },
               {
                 "name": "count",
@@ -591,7 +572,6 @@
                 },
                 "key": false,
                 "comment": null,
-                "required": true,
                 "default": null,
                 "range": [
                   1,
@@ -599,7 +579,7 @@
                 ],
                 "length": null,
                 "parser": null,
-                "aggregation": null
+                "derived_from": null
               }
             ]
           },
@@ -626,12 +606,11 @@
                 },
                 "key": false,
                 "comment": null,
-                "required": true,
                 "default": null,
                 "range": null,
                 "length": null,
                 "parser": null,
-                "aggregation": null
+                "derived_from": null
               },
               {
                 "name": "duration",
@@ -643,12 +622,11 @@
                 },
                 "key": false,
                 "comment": null,
-                "required": false,
                 "default": "10.0",
                 "range": null,
                 "length": null,
                 "parser": null,
-                "aggregation": null
+                "derived_from": null
               }
             ]
           },
@@ -675,12 +653,11 @@
                 },
                 "key": false,
                 "comment": null,
-                "required": true,
                 "default": null,
                 "range": null,
                 "length": null,
                 "parser": null,
-                "aggregation": null
+                "derived_from": null
               }
             ]
           },
@@ -707,12 +684,11 @@
                 },
                 "key": false,
                 "comment": null,
-                "required": true,
                 "default": null,
                 "range": null,
                 "length": null,
                 "parser": null,
-                "aggregation": null
+                "derived_from": null
               }
             ]
           }
@@ -744,12 +720,11 @@
             },
             "key": true,
             "comment": "Item id",
-            "required": true,
             "default": null,
             "range": null,
             "length": null,
             "parser": null,
-            "aggregation": null
+            "derived_from": null
           },
           {
             "name": "name",
@@ -761,7 +736,6 @@
             },
             "key": false,
             "comment": "Display name",
-            "required": true,
             "default": null,
             "range": null,
             "length": [
@@ -769,7 +743,7 @@
               32
             ],
             "parser": null,
-            "aggregation": null
+            "derived_from": null
           },
           {
             "name": "item_type",
@@ -783,12 +757,11 @@
             },
             "key": false,
             "comment": "Item category",
-            "required": true,
             "default": null,
             "range": null,
             "length": null,
             "parser": null,
-            "aggregation": null
+            "derived_from": null
           },
           {
             "name": "max_stack",
@@ -800,7 +773,6 @@
             },
             "key": false,
             "comment": "Stack limit; blank cells use the default",
-            "required": false,
             "default": "1",
             "range": [
               1,
@@ -808,7 +780,7 @@
             ],
             "length": null,
             "parser": null,
-            "aggregation": null
+            "derived_from": null
           },
           {
             "name": "price",
@@ -822,7 +794,6 @@
             },
             "key": false,
             "comment": "Tuple: kind,id,count",
-            "required": true,
             "default": null,
             "range": null,
             "length": null,
@@ -830,7 +801,7 @@
               "kind": "tuple",
               "options": {}
             },
-            "aggregation": null
+            "derived_from": null
           },
           {
             "name": "tags",
@@ -844,7 +815,6 @@
             },
             "key": false,
             "comment": "JSON string set",
-            "required": false,
             "default": "[\"misc\"]",
             "range": null,
             "length": [
@@ -855,7 +825,7 @@
               "kind": "json",
               "options": {}
             },
-            "aggregation": null
+            "derived_from": null
           },
           {
             "name": "attributes",
@@ -872,7 +842,6 @@
             },
             "key": false,
             "comment": "Map pairs: key,value|key,value",
-            "required": true,
             "default": null,
             "range": null,
             "length": null,
@@ -880,7 +849,7 @@
               "kind": "map",
               "options": {}
             },
-            "aggregation": null
+            "derived_from": null
           }
         ],
         "indexes": [
@@ -924,12 +893,11 @@
             },
             "key": true,
             "comment": null,
-            "required": true,
             "default": null,
             "range": null,
             "length": null,
             "parser": null,
-            "aggregation": null
+            "derived_from": null
           },
           {
             "name": "name",
@@ -941,7 +909,6 @@
             },
             "key": false,
             "comment": null,
-            "required": true,
             "default": null,
             "range": null,
             "length": [
@@ -949,7 +916,7 @@
               32
             ],
             "parser": null,
-            "aggregation": null
+            "derived_from": null
           },
           {
             "name": "element",
@@ -963,12 +930,11 @@
             },
             "key": false,
             "comment": null,
-            "required": true,
             "default": null,
             "range": null,
             "length": null,
             "parser": null,
-            "aggregation": null
+            "derived_from": null
           },
           {
             "name": "cost",
@@ -982,7 +948,6 @@
             },
             "key": false,
             "comment": "Tuple cost, e.g. Gold,0,150",
-            "required": true,
             "default": null,
             "range": null,
             "length": null,
@@ -990,7 +955,7 @@
               "kind": "tuple",
               "options": {}
             },
-            "aggregation": null
+            "derived_from": null
           },
           {
             "name": "effect",
@@ -1004,12 +969,11 @@
             },
             "key": false,
             "comment": "JSON object with element/power/radius",
-            "required": true,
             "default": null,
             "range": null,
             "length": null,
             "parser": null,
-            "aggregation": null
+            "derived_from": null
           },
           {
             "name": "required_level",
@@ -1021,7 +985,6 @@
             },
             "key": false,
             "comment": null,
-            "required": false,
             "default": "1",
             "range": [
               1,
@@ -1029,7 +992,7 @@
             ],
             "length": null,
             "parser": null,
-            "aggregation": null
+            "derived_from": null
           },
           {
             "name": "required_item",
@@ -1048,12 +1011,11 @@
             },
             "key": false,
             "comment": "Optional item requirement",
-            "required": false,
             "default": null,
             "range": null,
             "length": null,
             "parser": null,
-            "aggregation": null
+            "derived_from": null
           },
           {
             "name": "cast_origin",
@@ -1067,7 +1029,6 @@
             },
             "key": false,
             "comment": null,
-            "required": true,
             "default": null,
             "range": null,
             "length": null,
@@ -1075,7 +1036,7 @@
               "kind": "tuple",
               "options": {}
             },
-            "aggregation": null
+            "derived_from": null
           }
         ],
         "indexes": []
@@ -1104,12 +1065,11 @@
             },
             "key": true,
             "comment": null,
-            "required": true,
             "default": null,
             "range": null,
             "length": null,
             "parser": null,
-            "aggregation": null
+            "derived_from": null
           },
           {
             "name": "quest_type",
@@ -1123,12 +1083,11 @@
             },
             "key": false,
             "comment": null,
-            "required": true,
             "default": null,
             "range": null,
             "length": null,
             "parser": null,
-            "aggregation": null
+            "derived_from": null
           },
           {
             "name": "title",
@@ -1140,7 +1099,6 @@
             },
             "key": false,
             "comment": null,
-            "required": true,
             "default": null,
             "range": null,
             "length": [
@@ -1148,7 +1106,7 @@
               64
             ],
             "parser": null,
-            "aggregation": null
+            "derived_from": null
           },
           {
             "name": "required_item",
@@ -1165,12 +1123,11 @@
             },
             "key": false,
             "comment": null,
-            "required": true,
             "default": null,
             "range": null,
             "length": null,
             "parser": null,
-            "aggregation": null
+            "derived_from": null
           },
           {
             "name": "unlock_skills",
@@ -1189,7 +1146,6 @@
             },
             "key": false,
             "comment": null,
-            "required": true,
             "default": null,
             "range": null,
             "length": [
@@ -1197,7 +1153,7 @@
               3
             ],
             "parser": null,
-            "aggregation": null
+            "derived_from": null
           },
           {
             "name": "start_pos",
@@ -1211,7 +1167,6 @@
             },
             "key": false,
             "comment": null,
-            "required": true,
             "default": null,
             "range": null,
             "length": null,
@@ -1219,7 +1174,7 @@
               "kind": "tuple",
               "options": {}
             },
-            "aggregation": null
+            "derived_from": null
           },
           {
             "name": "rewards",
@@ -1235,15 +1190,15 @@
             },
             "key": false,
             "comment": "Materialized from QuestReward child rows",
-            "required": false,
             "default": null,
             "range": null,
             "length": null,
             "parser": null,
-            "aggregation": {
+            "derived_from": {
               "source_table": "QuestReward",
               "parent_key": "id",
               "child_key": "quest_id",
+              "value_field": null,
               "order_by": "seq"
             }
           }
@@ -1279,12 +1234,11 @@
             },
             "key": false,
             "comment": null,
-            "required": true,
             "default": null,
             "range": null,
             "length": null,
             "parser": null,
-            "aggregation": null
+            "derived_from": null
           },
           {
             "name": "seq",
@@ -1296,12 +1250,11 @@
             },
             "key": false,
             "comment": null,
-            "required": true,
             "default": null,
             "range": null,
             "length": null,
             "parser": null,
-            "aggregation": null
+            "derived_from": null
           },
           {
             "name": "item_id",
@@ -1318,12 +1271,11 @@
             },
             "key": false,
             "comment": null,
-            "required": true,
             "default": null,
             "range": null,
             "length": null,
             "parser": null,
-            "aggregation": null
+            "derived_from": null
           },
           {
             "name": "count",
@@ -1335,7 +1287,6 @@
             },
             "key": false,
             "comment": null,
-            "required": true,
             "default": null,
             "range": [
               1,
@@ -1343,7 +1294,7 @@
             ],
             "length": null,
             "parser": null,
-            "aggregation": null
+            "derived_from": null
           }
         ],
         "indexes": []
@@ -1372,12 +1323,11 @@
             },
             "key": false,
             "comment": null,
-            "required": true,
             "default": null,
             "range": null,
             "length": null,
             "parser": null,
-            "aggregation": null
+            "derived_from": null
           },
           {
             "name": "daily_reset_hour",
@@ -1389,7 +1339,6 @@
             },
             "key": false,
             "comment": null,
-            "required": true,
             "default": null,
             "range": [
               0,
@@ -1397,7 +1346,7 @@
             ],
             "length": null,
             "parser": null,
-            "aggregation": null
+            "derived_from": null
           },
           {
             "name": "starting_gold",
@@ -1409,7 +1358,6 @@
             },
             "key": false,
             "comment": null,
-            "required": false,
             "default": "100",
             "range": [
               0,
@@ -1417,7 +1365,7 @@
             ],
             "length": null,
             "parser": null,
-            "aggregation": null
+            "derived_from": null
           },
           {
             "name": "spawn_pos",
@@ -1431,7 +1379,6 @@
             },
             "key": false,
             "comment": null,
-            "required": true,
             "default": null,
             "range": null,
             "length": null,
@@ -1439,7 +1386,7 @@
               "kind": "tuple",
               "options": {}
             },
-            "aggregation": null
+            "derived_from": null
           },
           {
             "name": "starter_items",
@@ -1458,7 +1405,6 @@
             },
             "key": false,
             "comment": null,
-            "required": true,
             "default": null,
             "range": null,
             "length": [
@@ -1466,7 +1412,7 @@
               4
             ],
             "parser": null,
-            "aggregation": null
+            "derived_from": null
           }
         ],
         "indexes": []
@@ -1495,7 +1441,6 @@
             },
             "key": true,
             "comment": null,
-            "required": true,
             "default": null,
             "range": null,
             "length": [
@@ -1503,7 +1448,7 @@
               64
             ],
             "parser": null,
-            "aggregation": null
+            "derived_from": null
           },
           {
             "name": "zh_cn",
@@ -1515,12 +1460,11 @@
             },
             "key": false,
             "comment": null,
-            "required": true,
             "default": null,
             "range": null,
             "length": null,
             "parser": null,
-            "aggregation": null
+            "derived_from": null
           },
           {
             "name": "en_us",
@@ -1532,12 +1476,11 @@
             },
             "key": false,
             "comment": null,
-            "required": true,
             "default": null,
             "range": null,
             "length": null,
             "parser": null,
-            "aggregation": null
+            "derived_from": null
           },
           {
             "name": "note",
@@ -1551,12 +1494,11 @@
             },
             "key": false,
             "comment": null,
-            "required": false,
             "default": null,
             "range": null,
             "length": null,
             "parser": null,
-            "aggregation": null
+            "derived_from": null
           }
         ],
         "indexes": []
@@ -1585,7 +1527,6 @@
             },
             "key": true,
             "comment": null,
-            "required": true,
             "default": null,
             "range": [
               1,
@@ -1593,7 +1534,7 @@
             ],
             "length": null,
             "parser": null,
-            "aggregation": null
+            "derived_from": null
           },
           {
             "name": "exp",
@@ -1605,7 +1546,6 @@
             },
             "key": false,
             "comment": null,
-            "required": true,
             "default": null,
             "range": [
               0,
@@ -1613,7 +1553,7 @@
             ],
             "length": null,
             "parser": null,
-            "aggregation": null
+            "derived_from": null
           },
           {
             "name": "unlock_feature",
@@ -1627,12 +1567,11 @@
             },
             "key": false,
             "comment": null,
-            "required": false,
             "default": null,
             "range": null,
             "length": null,
             "parser": null,
-            "aggregation": null
+            "derived_from": null
           }
         ],
         "indexes": []
@@ -1661,12 +1600,11 @@
             },
             "key": true,
             "comment": null,
-            "required": true,
             "default": null,
             "range": null,
             "length": null,
             "parser": null,
-            "aggregation": null
+            "derived_from": null
           },
           {
             "name": "name",
@@ -1678,7 +1616,6 @@
             },
             "key": false,
             "comment": null,
-            "required": true,
             "default": null,
             "range": null,
             "length": [
@@ -1686,7 +1623,7 @@
               32
             ],
             "parser": null,
-            "aggregation": null
+            "derived_from": null
           },
           {
             "name": "rarity",
@@ -1700,12 +1637,11 @@
             },
             "key": false,
             "comment": null,
-            "required": true,
             "default": null,
             "range": null,
             "length": null,
             "parser": null,
-            "aggregation": null
+            "derived_from": null
           },
           {
             "name": "base_level",
@@ -1722,12 +1658,11 @@
             },
             "key": false,
             "comment": null,
-            "required": true,
             "default": null,
             "range": null,
             "length": null,
             "parser": null,
-            "aggregation": null
+            "derived_from": null
           },
           {
             "name": "base_skill",
@@ -1744,12 +1679,11 @@
             },
             "key": false,
             "comment": null,
-            "required": true,
             "default": null,
             "range": null,
             "length": null,
             "parser": null,
-            "aggregation": null
+            "derived_from": null
           },
           {
             "name": "starter_items",
@@ -1768,7 +1702,6 @@
             },
             "key": false,
             "comment": null,
-            "required": true,
             "default": null,
             "range": null,
             "length": [
@@ -1776,7 +1709,7 @@
               4
             ],
             "parser": null,
-            "aggregation": null
+            "derived_from": null
           },
           {
             "name": "spawn_pos",
@@ -1790,7 +1723,6 @@
             },
             "key": false,
             "comment": null,
-            "required": true,
             "default": null,
             "range": null,
             "length": null,
@@ -1798,7 +1730,7 @@
               "kind": "tuple",
               "options": {}
             },
-            "aggregation": null
+            "derived_from": null
           }
         ],
         "indexes": []
@@ -1832,12 +1764,11 @@
             },
             "key": false,
             "comment": null,
-            "required": true,
             "default": null,
             "range": null,
             "length": null,
             "parser": null,
-            "aggregation": null
+            "derived_from": null
           },
           {
             "name": "skill_id",
@@ -1854,12 +1785,11 @@
             },
             "key": false,
             "comment": null,
-            "required": true,
             "default": null,
             "range": null,
             "length": null,
             "parser": null,
-            "aggregation": null
+            "derived_from": null
           },
           {
             "name": "unlock_level",
@@ -1876,12 +1806,11 @@
             },
             "key": false,
             "comment": null,
-            "required": true,
             "default": null,
             "range": null,
             "length": null,
             "parser": null,
-            "aggregation": null
+            "derived_from": null
           }
         ],
         "indexes": []
@@ -1910,12 +1839,11 @@
             },
             "key": true,
             "comment": null,
-            "required": true,
             "default": null,
             "range": null,
             "length": null,
             "parser": null,
-            "aggregation": null
+            "derived_from": null
           },
           {
             "name": "name",
@@ -1927,12 +1855,11 @@
             },
             "key": false,
             "comment": null,
-            "required": true,
             "default": null,
             "range": null,
             "length": null,
             "parser": null,
-            "aggregation": null
+            "derived_from": null
           },
           {
             "name": "duration",
@@ -1944,12 +1871,11 @@
             },
             "key": false,
             "comment": null,
-            "required": true,
             "default": null,
             "range": null,
             "length": null,
             "parser": null,
-            "aggregation": null
+            "derived_from": null
           },
           {
             "name": "modifiers",
@@ -1965,7 +1891,6 @@
             },
             "key": false,
             "comment": null,
-            "required": true,
             "default": null,
             "range": null,
             "length": [
@@ -1976,7 +1901,7 @@
               "kind": "json",
               "options": {}
             },
-            "aggregation": null
+            "derived_from": null
           }
         ],
         "indexes": []
@@ -2005,12 +1930,11 @@
             },
             "key": true,
             "comment": null,
-            "required": true,
             "default": null,
             "range": null,
             "length": null,
             "parser": null,
-            "aggregation": null
+            "derived_from": null
           },
           {
             "name": "name",
@@ -2022,12 +1946,11 @@
             },
             "key": false,
             "comment": null,
-            "required": true,
             "default": null,
             "range": null,
             "length": null,
             "parser": null,
-            "aggregation": null
+            "derived_from": null
           }
         ],
         "indexes": []
@@ -2061,12 +1984,11 @@
             },
             "key": false,
             "comment": null,
-            "required": true,
             "default": null,
             "range": null,
             "length": null,
             "parser": null,
-            "aggregation": null
+            "derived_from": null
           },
           {
             "name": "seq",
@@ -2078,12 +2000,11 @@
             },
             "key": false,
             "comment": null,
-            "required": true,
             "default": null,
             "range": null,
             "length": null,
             "parser": null,
-            "aggregation": null
+            "derived_from": null
           },
           {
             "name": "item_id",
@@ -2100,12 +2021,11 @@
             },
             "key": false,
             "comment": null,
-            "required": true,
             "default": null,
             "range": null,
             "length": null,
             "parser": null,
-            "aggregation": null
+            "derived_from": null
           },
           {
             "name": "count",
@@ -2117,7 +2037,6 @@
             },
             "key": false,
             "comment": null,
-            "required": true,
             "default": null,
             "range": [
               1,
@@ -2125,7 +2044,7 @@
             ],
             "length": null,
             "parser": null,
-            "aggregation": null
+            "derived_from": null
           },
           {
             "name": "weight",
@@ -2137,12 +2056,11 @@
             },
             "key": false,
             "comment": null,
-            "required": true,
             "default": null,
             "range": null,
             "length": null,
             "parser": null,
-            "aggregation": null
+            "derived_from": null
           }
         ],
         "indexes": []
@@ -2171,12 +2089,11 @@
             },
             "key": true,
             "comment": null,
-            "required": true,
             "default": null,
             "range": null,
             "length": null,
             "parser": null,
-            "aggregation": null
+            "derived_from": null
           },
           {
             "name": "name",
@@ -2188,12 +2105,11 @@
             },
             "key": false,
             "comment": null,
-            "required": true,
             "default": null,
             "range": null,
             "length": null,
             "parser": null,
-            "aggregation": null
+            "derived_from": null
           },
           {
             "name": "level",
@@ -2210,12 +2126,11 @@
             },
             "key": false,
             "comment": null,
-            "required": true,
             "default": null,
             "range": null,
             "length": null,
             "parser": null,
-            "aggregation": null
+            "derived_from": null
           },
           {
             "name": "element",
@@ -2229,12 +2144,11 @@
             },
             "key": false,
             "comment": null,
-            "required": true,
             "default": null,
             "range": null,
             "length": null,
             "parser": null,
-            "aggregation": null
+            "derived_from": null
           },
           {
             "name": "drop_group",
@@ -2251,12 +2165,11 @@
             },
             "key": false,
             "comment": null,
-            "required": true,
             "default": null,
             "range": null,
             "length": null,
             "parser": null,
-            "aggregation": null
+            "derived_from": null
           },
           {
             "name": "spawn_pos",
@@ -2270,7 +2183,6 @@
             },
             "key": false,
             "comment": null,
-            "required": true,
             "default": null,
             "range": null,
             "length": null,
@@ -2278,7 +2190,7 @@
               "kind": "tuple",
               "options": {}
             },
-            "aggregation": null
+            "derived_from": null
           }
         ],
         "indexes": []
@@ -2307,12 +2219,11 @@
             },
             "key": true,
             "comment": null,
-            "required": true,
             "default": null,
             "range": null,
             "length": null,
             "parser": null,
-            "aggregation": null
+            "derived_from": null
           },
           {
             "name": "name",
@@ -2324,12 +2235,11 @@
             },
             "key": false,
             "comment": null,
-            "required": true,
             "default": null,
             "range": null,
             "length": null,
             "parser": null,
-            "aggregation": null
+            "derived_from": null
           },
           {
             "name": "monster_ids",
@@ -2348,7 +2258,6 @@
             },
             "key": false,
             "comment": null,
-            "required": true,
             "default": null,
             "range": null,
             "length": [
@@ -2356,7 +2265,7 @@
               5
             ],
             "parser": null,
-            "aggregation": null
+            "derived_from": null
           },
           {
             "name": "recommended_power",
@@ -2368,12 +2277,11 @@
             },
             "key": false,
             "comment": null,
-            "required": true,
             "default": null,
             "range": null,
             "length": null,
             "parser": null,
-            "aggregation": null
+            "derived_from": null
           },
           {
             "name": "first_clear_rewards",
@@ -2389,15 +2297,15 @@
             },
             "key": false,
             "comment": null,
-            "required": false,
             "default": null,
             "range": null,
             "length": null,
             "parser": null,
-            "aggregation": {
+            "derived_from": {
               "source_table": "StageReward",
               "parent_key": "id",
               "child_key": "stage_id",
+              "value_field": null,
               "order_by": "seq"
             }
           }
@@ -2433,12 +2341,11 @@
             },
             "key": false,
             "comment": null,
-            "required": true,
             "default": null,
             "range": null,
             "length": null,
             "parser": null,
-            "aggregation": null
+            "derived_from": null
           },
           {
             "name": "seq",
@@ -2450,12 +2357,11 @@
             },
             "key": false,
             "comment": null,
-            "required": true,
             "default": null,
             "range": null,
             "length": null,
             "parser": null,
-            "aggregation": null
+            "derived_from": null
           },
           {
             "name": "item_id",
@@ -2472,12 +2378,11 @@
             },
             "key": false,
             "comment": null,
-            "required": true,
             "default": null,
             "range": null,
             "length": null,
             "parser": null,
-            "aggregation": null
+            "derived_from": null
           },
           {
             "name": "count",
@@ -2489,12 +2394,11 @@
             },
             "key": false,
             "comment": null,
-            "required": true,
             "default": null,
             "range": null,
             "length": null,
             "parser": null,
-            "aggregation": null
+            "derived_from": null
           }
         ],
         "indexes": []
@@ -2523,12 +2427,11 @@
             },
             "key": true,
             "comment": null,
-            "required": true,
             "default": null,
             "range": null,
             "length": null,
             "parser": null,
-            "aggregation": null
+            "derived_from": null
           },
           {
             "name": "name",
@@ -2540,12 +2443,11 @@
             },
             "key": false,
             "comment": null,
-            "required": true,
             "default": null,
             "range": null,
             "length": null,
             "parser": null,
-            "aggregation": null
+            "derived_from": null
           },
           {
             "name": "stage_ids",
@@ -2564,7 +2466,6 @@
             },
             "key": false,
             "comment": null,
-            "required": true,
             "default": null,
             "range": null,
             "length": [
@@ -2572,7 +2473,7 @@
               6
             ],
             "parser": null,
-            "aggregation": null
+            "derived_from": null
           },
           {
             "name": "entry_cost",
@@ -2586,7 +2487,6 @@
             },
             "key": false,
             "comment": null,
-            "required": true,
             "default": null,
             "range": null,
             "length": null,
@@ -2594,7 +2494,7 @@
               "kind": "tuple",
               "options": {}
             },
-            "aggregation": null
+            "derived_from": null
           }
         ],
         "indexes": []
@@ -2623,12 +2523,11 @@
             },
             "key": true,
             "comment": null,
-            "required": true,
             "default": null,
             "range": null,
             "length": null,
             "parser": null,
-            "aggregation": null
+            "derived_from": null
           },
           {
             "name": "name",
@@ -2640,12 +2539,11 @@
             },
             "key": false,
             "comment": null,
-            "required": true,
             "default": null,
             "range": null,
             "length": null,
             "parser": null,
-            "aggregation": null
+            "derived_from": null
           },
           {
             "name": "currency",
@@ -2659,12 +2557,11 @@
             },
             "key": false,
             "comment": null,
-            "required": true,
             "default": null,
             "range": null,
             "length": null,
             "parser": null,
-            "aggregation": null
+            "derived_from": null
           }
         ],
         "indexes": []
@@ -2698,12 +2595,11 @@
             },
             "key": false,
             "comment": null,
-            "required": true,
             "default": null,
             "range": null,
             "length": null,
             "parser": null,
-            "aggregation": null
+            "derived_from": null
           },
           {
             "name": "seq",
@@ -2715,12 +2611,11 @@
             },
             "key": false,
             "comment": null,
-            "required": true,
             "default": null,
             "range": null,
             "length": null,
             "parser": null,
-            "aggregation": null
+            "derived_from": null
           },
           {
             "name": "item_id",
@@ -2737,12 +2632,11 @@
             },
             "key": false,
             "comment": null,
-            "required": true,
             "default": null,
             "range": null,
             "length": null,
             "parser": null,
-            "aggregation": null
+            "derived_from": null
           },
           {
             "name": "price",
@@ -2756,7 +2650,6 @@
             },
             "key": false,
             "comment": null,
-            "required": true,
             "default": null,
             "range": null,
             "length": null,
@@ -2764,7 +2657,7 @@
               "kind": "tuple",
               "options": {}
             },
-            "aggregation": null
+            "derived_from": null
           },
           {
             "name": "daily_limit",
@@ -2778,12 +2671,11 @@
             },
             "key": false,
             "comment": null,
-            "required": false,
             "default": null,
             "range": null,
             "length": null,
             "parser": null,
-            "aggregation": null
+            "derived_from": null
           }
         ],
         "indexes": []
@@ -2812,12 +2704,11 @@
             },
             "key": true,
             "comment": null,
-            "required": true,
             "default": null,
             "range": null,
             "length": null,
             "parser": null,
-            "aggregation": null
+            "derived_from": null
           },
           {
             "name": "result_item",
@@ -2834,12 +2725,11 @@
             },
             "key": false,
             "comment": null,
-            "required": true,
             "default": null,
             "range": null,
             "length": null,
             "parser": null,
-            "aggregation": null
+            "derived_from": null
           },
           {
             "name": "materials",
@@ -2855,7 +2745,6 @@
             },
             "key": false,
             "comment": null,
-            "required": true,
             "default": null,
             "range": null,
             "length": [
@@ -2866,7 +2755,7 @@
               "kind": "tuple_list",
               "options": {}
             },
-            "aggregation": null
+            "derived_from": null
           }
         ],
         "indexes": []
@@ -2895,12 +2784,11 @@
             },
             "key": true,
             "comment": null,
-            "required": true,
             "default": null,
             "range": null,
             "length": null,
             "parser": null,
-            "aggregation": null
+            "derived_from": null
           },
           {
             "name": "name",
@@ -2912,12 +2800,11 @@
             },
             "key": false,
             "comment": null,
-            "required": true,
             "default": null,
             "range": null,
             "length": null,
             "parser": null,
-            "aggregation": null
+            "derived_from": null
           },
           {
             "name": "cost",
@@ -2931,7 +2818,6 @@
             },
             "key": false,
             "comment": null,
-            "required": true,
             "default": null,
             "range": null,
             "length": null,
@@ -2939,7 +2825,7 @@
               "kind": "tuple",
               "options": {}
             },
-            "aggregation": null
+            "derived_from": null
           }
         ],
         "indexes": []
@@ -2973,12 +2859,11 @@
             },
             "key": false,
             "comment": null,
-            "required": true,
             "default": null,
             "range": null,
             "length": null,
             "parser": null,
-            "aggregation": null
+            "derived_from": null
           },
           {
             "name": "item_id",
@@ -2995,12 +2880,11 @@
             },
             "key": false,
             "comment": null,
-            "required": true,
             "default": null,
             "range": null,
             "length": null,
             "parser": null,
-            "aggregation": null
+            "derived_from": null
           },
           {
             "name": "rarity",
@@ -3014,12 +2898,11 @@
             },
             "key": false,
             "comment": null,
-            "required": true,
             "default": null,
             "range": null,
             "length": null,
             "parser": null,
-            "aggregation": null
+            "derived_from": null
           },
           {
             "name": "weight",
@@ -3031,12 +2914,11 @@
             },
             "key": false,
             "comment": null,
-            "required": true,
             "default": null,
             "range": null,
             "length": null,
             "parser": null,
-            "aggregation": null
+            "derived_from": null
           }
         ],
         "indexes": []
@@ -3065,12 +2947,11 @@
             },
             "key": true,
             "comment": null,
-            "required": true,
             "default": null,
             "range": null,
             "length": null,
             "parser": null,
-            "aggregation": null
+            "derived_from": null
           },
           {
             "name": "name",
@@ -3082,12 +2963,11 @@
             },
             "key": false,
             "comment": null,
-            "required": true,
             "default": null,
             "range": null,
             "length": null,
             "parser": null,
-            "aggregation": null
+            "derived_from": null
           },
           {
             "name": "item_ids",
@@ -3106,7 +2986,6 @@
             },
             "key": false,
             "comment": null,
-            "required": true,
             "default": null,
             "range": null,
             "length": [
@@ -3114,7 +2993,7 @@
               4
             ],
             "parser": null,
-            "aggregation": null
+            "derived_from": null
           },
           {
             "name": "bonus_effect",
@@ -3128,12 +3007,11 @@
             },
             "key": false,
             "comment": null,
-            "required": true,
             "default": null,
             "range": null,
             "length": null,
             "parser": null,
-            "aggregation": null
+            "derived_from": null
           }
         ],
         "indexes": []
@@ -3162,12 +3040,11 @@
             },
             "key": true,
             "comment": null,
-            "required": true,
             "default": null,
             "range": null,
             "length": null,
             "parser": null,
-            "aggregation": null
+            "derived_from": null
           },
           {
             "name": "title_key",
@@ -3179,12 +3056,11 @@
             },
             "key": false,
             "comment": null,
-            "required": true,
             "default": null,
             "range": null,
             "length": null,
             "parser": null,
-            "aggregation": null
+            "derived_from": null
           },
           {
             "name": "target_count",
@@ -3196,12 +3072,11 @@
             },
             "key": false,
             "comment": null,
-            "required": true,
             "default": null,
             "range": null,
             "length": null,
             "parser": null,
-            "aggregation": null
+            "derived_from": null
           },
           {
             "name": "reward",
@@ -3215,7 +3090,6 @@
             },
             "key": false,
             "comment": null,
-            "required": true,
             "default": null,
             "range": null,
             "length": null,
@@ -3223,7 +3097,7 @@
               "kind": "tuple",
               "options": {}
             },
-            "aggregation": null
+            "derived_from": null
           }
         ],
         "indexes": []
@@ -3252,12 +3126,11 @@
             },
             "key": true,
             "comment": null,
-            "required": true,
             "default": null,
             "range": null,
             "length": null,
             "parser": null,
-            "aggregation": null
+            "derived_from": null
           },
           {
             "name": "cost",
@@ -3271,7 +3144,6 @@
             },
             "key": false,
             "comment": null,
-            "required": true,
             "default": null,
             "range": null,
             "length": null,
@@ -3279,7 +3151,7 @@
               "kind": "tuple",
               "options": {}
             },
-            "aggregation": null
+            "derived_from": null
           },
           {
             "name": "perks",
@@ -3293,7 +3165,6 @@
             },
             "key": false,
             "comment": null,
-            "required": true,
             "default": null,
             "range": null,
             "length": [
@@ -3301,7 +3172,7 @@
               5
             ],
             "parser": null,
-            "aggregation": null
+            "derived_from": null
           }
         ],
         "indexes": []
@@ -3330,12 +3201,11 @@
             },
             "key": true,
             "comment": null,
-            "required": true,
             "default": null,
             "range": null,
             "length": null,
             "parser": null,
-            "aggregation": null
+            "derived_from": null
           },
           {
             "name": "mail_type",
@@ -3349,12 +3219,11 @@
             },
             "key": false,
             "comment": null,
-            "required": true,
             "default": null,
             "range": null,
             "length": null,
             "parser": null,
-            "aggregation": null
+            "derived_from": null
           },
           {
             "name": "title_key",
@@ -3366,12 +3235,11 @@
             },
             "key": false,
             "comment": null,
-            "required": true,
             "default": null,
             "range": null,
             "length": null,
             "parser": null,
-            "aggregation": null
+            "derived_from": null
           },
           {
             "name": "body_key",
@@ -3383,12 +3251,11 @@
             },
             "key": false,
             "comment": null,
-            "required": true,
             "default": null,
             "range": null,
             "length": null,
             "parser": null,
-            "aggregation": null
+            "derived_from": null
           },
           {
             "name": "rewards",
@@ -3404,15 +3271,15 @@
             },
             "key": false,
             "comment": null,
-            "required": false,
             "default": null,
             "range": null,
             "length": null,
             "parser": null,
-            "aggregation": {
+            "derived_from": {
               "source_table": "MailReward",
               "parent_key": "id",
               "child_key": "mail_id",
+              "value_field": null,
               "order_by": "seq"
             }
           }
@@ -3448,12 +3315,11 @@
             },
             "key": false,
             "comment": null,
-            "required": true,
             "default": null,
             "range": null,
             "length": null,
             "parser": null,
-            "aggregation": null
+            "derived_from": null
           },
           {
             "name": "seq",
@@ -3465,12 +3331,11 @@
             },
             "key": false,
             "comment": null,
-            "required": true,
             "default": null,
             "range": null,
             "length": null,
             "parser": null,
-            "aggregation": null
+            "derived_from": null
           },
           {
             "name": "item_id",
@@ -3487,12 +3352,11 @@
             },
             "key": false,
             "comment": null,
-            "required": true,
             "default": null,
             "range": null,
             "length": null,
             "parser": null,
-            "aggregation": null
+            "derived_from": null
           },
           {
             "name": "count",
@@ -3504,12 +3368,11 @@
             },
             "key": false,
             "comment": null,
-            "required": true,
             "default": null,
             "range": null,
             "length": null,
             "parser": null,
-            "aggregation": null
+            "derived_from": null
           }
         ],
         "indexes": []
@@ -3538,12 +3401,11 @@
             },
             "key": true,
             "comment": null,
-            "required": true,
             "default": null,
             "range": null,
             "length": null,
             "parser": null,
-            "aggregation": null
+            "derived_from": null
           },
           {
             "name": "speaker_key",
@@ -3555,12 +3417,11 @@
             },
             "key": false,
             "comment": null,
-            "required": true,
             "default": null,
             "range": null,
             "length": null,
             "parser": null,
-            "aggregation": null
+            "derived_from": null
           },
           {
             "name": "lines",
@@ -3574,7 +3435,6 @@
             },
             "key": false,
             "comment": null,
-            "required": true,
             "default": null,
             "range": null,
             "length": [
@@ -3582,7 +3442,7 @@
               5
             ],
             "parser": null,
-            "aggregation": null
+            "derived_from": null
           }
         ],
         "indexes": []
@@ -3611,12 +3471,11 @@
             },
             "key": true,
             "comment": null,
-            "required": true,
             "default": null,
             "range": null,
             "length": null,
             "parser": null,
-            "aggregation": null
+            "derived_from": null
           },
           {
             "name": "name",
@@ -3628,12 +3487,11 @@
             },
             "key": false,
             "comment": null,
-            "required": true,
             "default": null,
             "range": null,
             "length": null,
             "parser": null,
-            "aggregation": null
+            "derived_from": null
           },
           {
             "name": "condition",
@@ -3647,12 +3505,11 @@
             },
             "key": false,
             "comment": null,
-            "required": true,
             "default": null,
             "range": null,
             "length": null,
             "parser": null,
-            "aggregation": null
+            "derived_from": null
           },
           {
             "name": "actions",
@@ -3668,7 +3525,6 @@
             },
             "key": false,
             "comment": null,
-            "required": true,
             "default": null,
             "range": null,
             "length": [
@@ -3679,7 +3535,7 @@
               "kind": "json",
               "options": {}
             },
-            "aggregation": null
+            "derived_from": null
           }
         ],
         "indexes": []

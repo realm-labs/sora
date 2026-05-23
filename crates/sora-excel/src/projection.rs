@@ -159,7 +159,7 @@ pub fn schema_hash(ir: &ConfigIr, table: &TableIr) -> String {
         );
         update(
             &mut hash,
-            if field.required {
+            if field.is_required() {
                 "required"
             } else {
                 "optional"
@@ -247,7 +247,7 @@ fn field_rule(field: &FieldIr) -> String {
 fn field_presence(field: &FieldIr) -> String {
     if field.key {
         "key".to_owned()
-    } else if field.required {
+    } else if field.is_required() {
         "required".to_owned()
     } else {
         "optional".to_owned()
@@ -413,25 +413,21 @@ sheet = "Item"
 name = "id"
 type = "i32"
 key = true
-required = true
 comment = "Item id"
 
 [[tables.fields]]
 name = "name"
 type = "string"
-required = true
 comment = "Display name"
 
 [[tables.fields]]
 name = "item_type"
 type = "enum<ItemType>"
-required = true
 comment = "Item type"
 
 [[tables.fields]]
 name = "max_stack"
 type = "i32"
-required = true
 comment = "Max stack count"
 "#,
         )
@@ -470,7 +466,6 @@ mode = "list"
 [[tables.fields]]
 name = "cost"
 type = "struct<ResourceCost>"
-required = true
 parser = { kind = "tuple" }
 "#,
         )
@@ -509,7 +504,6 @@ mode = "list"
 [[tables.fields]]
 name = "materials"
 type = "list<ResourceCost>"
-required = true
 parser = { kind = "tuple_list" }
 "#,
         )
@@ -532,7 +526,6 @@ name = "QuestCompleted"
 [[unions.variants.fields]]
 name = "quest_id"
 type = "i32"
-required = true
 
 [[unions.variants]]
 name = "HasItem"
@@ -540,12 +533,10 @@ name = "HasItem"
 [[unions.variants.fields]]
 name = "item_id"
 type = "i32"
-required = true
 
 [[unions.variants.fields]]
 name = "count"
 type = "i32"
-required = true
 
 [[tables]]
 name = "EventConditionEntry"
@@ -556,12 +547,10 @@ key = "id"
 name = "id"
 type = "i32"
 key = true
-required = true
 
 [[tables.fields]]
 name = "value"
 type = "union<EventCondition>"
-required = true
 parser = { kind = "tagged_columns", prefix = "" }
 "#,
         )

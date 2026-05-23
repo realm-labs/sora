@@ -726,22 +726,18 @@ sheet = "Item"
 name = "id"
 type = "i32"
 key = true
-required = true
 
 [[tables.fields]]
 name = "name"
 type = "string"
-required = true
 
 [[tables.fields]]
 name = "item_type"
 type = "enum<ItemType>"
-required = true
 
 [[tables.fields]]
 name = "max_stack"
 type = "i32"
-required = true
 "#,
         )
         .unwrap();
@@ -780,7 +776,6 @@ sheet = "Item"
 name = "id"
 type = "i32"
 key = true
-required = true
 
 [[tables.fields]]
 name = "optional_note"
@@ -888,7 +883,6 @@ sheet = "Recipe"
 name = "id"
 type = "i32"
 key = true
-required = true
 
 [[tables.fields]]
 name = "materials"
@@ -917,7 +911,6 @@ name = "QuestCompleted"
 [[unions.variants.fields]]
 name = "quest_id"
 type = "i32"
-required = true
 
 [[unions.variants]]
 name = "HasItem"
@@ -925,12 +918,10 @@ name = "HasItem"
 [[unions.variants.fields]]
 name = "item_id"
 type = "i32"
-required = true
 
 [[unions.variants.fields]]
 name = "count"
 type = "i32"
-required = true
 
 [[tables]]
 name = "EventConditionEntry"
@@ -946,12 +937,10 @@ sheet = "EventConditionEntry"
 name = "id"
 type = "i32"
 key = true
-required = true
 
 [[tables.fields]]
 name = "value"
 type = "union<EventCondition>"
-required = true
 parser = { kind = "tagged_columns", prefix = "" }
 "#,
         )

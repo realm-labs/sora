@@ -156,7 +156,7 @@ fn validate_row_fields(
             Some(value) => {
                 validate_field_value(ir, config_data, table_name, field, &field.name, value)?
             }
-            None if field.required => {
+            None if field.is_required() => {
                 return Err(SoraError::MissingRequiredField {
                     table: table_name.to_owned(),
                     field: field.name.clone(),

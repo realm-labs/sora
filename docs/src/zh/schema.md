@@ -30,7 +30,6 @@ name = "Cost"
 [[structs.fields]]
 name = "gold"
 type = "i32"
-required = true
 ```
 
 结构体适合复用的对象形状，比如消耗、奖励、坐标、属性修正等嵌套值。
@@ -48,7 +47,6 @@ name = "AddItem"
 [[unions.variants.fields]]
 name = "item_id"
 type = "ref<Item.id>"
-required = true
 ```
 
 联合用于 tagged variant。`tag` 是源数据和运行时值里的判别字段名。

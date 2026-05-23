@@ -93,7 +93,6 @@ key = "id"
 [[tables.fields]]
 name = "id"
 type = "i32"
-required = true
 "#,
         )
         .unwrap();

@@ -30,7 +30,6 @@ name = "Cost"
 [[structs.fields]]
 name = "gold"
 type = "i32"
-required = true
 ```
 
 Structs model repeated object shapes. They are useful for costs, rewards, coordinates, stat modifiers, and other nested values.
@@ -48,7 +47,6 @@ name = "AddItem"
 [[unions.variants.fields]]
 name = "item_id"
 type = "ref<Item.id>"
-required = true
 ```
 
 Unions model tagged variants. The `tag` field is the discriminator name used in source data and runtime values.

@@ -29,6 +29,13 @@ local values = {
     [3] = StatType.Speed,
     [4] = StatType.CritRate,
 }
+local values_by_name = {
+    ["Hp"] = StatType.Hp,
+    ["Attack"] = StatType.Attack,
+    ["Defense"] = StatType.Defense,
+    ["Speed"] = StatType.Speed,
+    ["CritRate"] = StatType.CritRate,
+}
 
 ---@param reader SoraReader
 ---@return StatType
@@ -39,6 +46,16 @@ function StatType.decode(reader)
         error("invalid enum ordinal " .. tostring(ordinal) .. " for StatType")
     end
     return value
+end
+
+---@param value any
+---@return StatType
+function StatType.decode_value(value)
+    local decoded = values_by_name[value]
+    if decoded == nil then
+        error("invalid enum value " .. tostring(value) .. " for StatType")
+    end
+    return decoded
 end
 
 return StatType

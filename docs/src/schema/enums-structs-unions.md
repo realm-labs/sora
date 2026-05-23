@@ -29,23 +29,20 @@ name = "ResourceCost"
 [[structs.fields]]
 name = "kind"
 type = "enum<ResourceKind>"
-required = true
 
 [[structs.fields]]
 name = "id"
 type = "i32"
-required = true
 
 [[structs.fields]]
 name = "count"
 type = "i32"
-required = true
 range = [1, 999999]
 ```
 
 Use structs for nested values that appear in many places. A field can reference a struct with `type = "struct<ResourceCost>"`.
 
-Struct fields use the same field properties as table fields, including `name`, `type`, `required`, `default`, `comment`, `range`, `length`, `parser`, and `scope`. Table-specific properties such as `key` and `from` are not meaningful for normal struct fields. See [Types](types.md#field-rules) for the full field reference.
+Struct fields use the same field properties as table fields, including `name`, `type`, `default`, `comment`, `range`, `length`, `parser`, and `scope`. Table-specific properties such as `key` and `from` are not meaningful for normal struct fields. See [Types](types.md#field-rules) for the full field reference.
 
 In cell-based inputs, a struct field can be written as JSON object text by default:
 
@@ -72,12 +69,10 @@ name = "AddItem"
 [[unions.variants.fields]]
 name = "item_id"
 type = "ref<Item.id>"
-required = true
 
 [[unions.variants.fields]]
 name = "count"
 type = "i32"
-required = true
 
 [[unions.variants]]
 name = "UnlockStage"
@@ -85,12 +80,11 @@ name = "UnlockStage"
 [[unions.variants.fields]]
 name = "stage_id"
 type = "ref<Stage.id>"
-required = true
 ```
 
 Use unions when a field can contain one of several tagged shapes. Examples include conditions, rewards, triggers, and scripted actions.
 
-The union `tag` defaults to `type` if omitted. Source data must include that tag with the variant name. The remaining fields must match the selected variant; unknown fields and missing required variant fields are validation errors.
+The union `tag` defaults to `type` if omitted. Source data must include that tag with the variant name. The remaining fields must match the selected variant; unknown fields and missing non-optional variant fields are validation errors.
 
 For a single union value in Excel or CSV, write JSON object text:
 

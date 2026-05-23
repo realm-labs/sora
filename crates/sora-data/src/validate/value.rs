@@ -202,7 +202,7 @@ fn validate_object_fields(
             Some(value) => {
                 validate_field_value(ir, config_data, table, field, &child_path, value)?;
             }
-            None if field.required => {
+            None if field.is_required() => {
                 return Err(SoraError::MissingRequiredField {
                     table: table.to_owned(),
                     field: child_path,
@@ -282,7 +282,7 @@ fn validate_union_object(
             Some(value) => {
                 validate_field_value(ir, config_data, table, field, &child_path, value)?;
             }
-            None if field.required => {
+            None if field.is_required() => {
                 return Err(SoraError::MissingRequiredField {
                     table: table.to_owned(),
                     field: child_path,

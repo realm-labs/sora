@@ -32,7 +32,6 @@ key = "id"
 name = "id"
 type = "i32"
 key = true
-required = true
 ```
 
 ## YAML
@@ -54,7 +53,6 @@ tables:
       - name: id
         type: i32
         key: true
-        required: true
 ```
 
 ## JSON
@@ -72,7 +70,7 @@ tables:
       "mode": "map",
       "key": "id",
       "fields": [
-        { "name": "id", "type": "i32", "key": true, "required": true }
+        { "name": "id", "type": "i32", "key": true }
       ]
     }
   ]
@@ -98,7 +96,7 @@ return {
       mode = "map",
       key = "id",
       fields = {
-        { name = "id", type = "i32", key = true, required = true },
+        { name = "id", type = "i32", key = true },
       },
     },
   },

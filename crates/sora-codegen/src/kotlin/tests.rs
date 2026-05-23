@@ -584,37 +584,31 @@ key = "id"
 name = "id"
 type = "i32"
 key = true
-required = true
 comment = "Item id"
 
 [[tables.fields]]
 name = "name"
 type = "string"
-required = true
 comment = "Item name"
 
 [[tables.fields]]
 name = "item_type"
 type = "enum<ItemType>"
-required = true
 comment = "Item type"
 
 [[tables.fields]]
 name = "action"
 type = "union<Action>"
-required = true
 comment = "Action"
 
 [[tables.fields]]
 name = "tags"
 type = "set<string>"
-required = true
 comment = "Tags"
 
 [[tables.fields]]
 name = "weights"
 type = "map<string,i32>"
-required = true
 comment = "Weights"
 
 [[tables.indexes]]
@@ -645,7 +639,6 @@ key = "id"
 [[tables.fields]]
 name = "id"
 type = "i32"
-required = true
 
 [[tables]]
 name = "Settings"
@@ -654,7 +647,6 @@ mode = "singleton"
 [[tables.fields]]
 name = "version"
 type = "string"
-required = true
 
 [[tables]]
 name = "Reward"
@@ -663,7 +655,6 @@ mode = "list"
 [[tables.fields]]
 name = "id"
 type = "i32"
-required = true
 "#,
     )
     .unwrap();

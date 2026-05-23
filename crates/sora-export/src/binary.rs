@@ -173,12 +173,10 @@ key = "id"
 [[tables.fields]]
 name = "id"
 type = "i32"
-required = true
 
 [[tables.fields]]
 name = "name"
 type = "string"
-required = true
 "#,
         )
         .unwrap();

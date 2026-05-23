@@ -32,17 +32,14 @@ name = "ResourceCost"
 [[structs.fields]]
 name = "kind"
 type = "enum<ResourceKind>"
-required = true
 
 [[structs.fields]]
 name = "id"
 type = "i32"
-required = true
 
 [[structs.fields]]
 name = "count"
 type = "i32"
-required = true
 range = [1, 999999]
 
 [[structs]]
@@ -51,17 +48,14 @@ name = "Vec3"
 [[structs.fields]]
 name = "x"
 type = "f32"
-required = true
 
 [[structs.fields]]
 name = "y"
 type = "f32"
-required = true
 
 [[structs.fields]]
 name = "z"
 type = "f32"
-required = true
 
 [[structs]]
 name = "SkillEffect"
@@ -69,12 +63,10 @@ name = "SkillEffect"
 [[structs.fields]]
 name = "element"
 type = "enum<ElementType>"
-required = true
 
 [[structs.fields]]
 name = "power"
 type = "i32"
-required = true
 range = [1, 9999]
 
 [[structs.fields]]
@@ -88,12 +80,10 @@ name = "Reward"
 [[structs.fields]]
 name = "item_id"
 type = "ref<Item.id>"
-required = true
 
 [[structs.fields]]
 name = "count"
 type = "i32"
-required = true
 range = [1, 9999]
 
 [[structs]]
@@ -102,12 +92,10 @@ name = "StatModifier"
 [[structs.fields]]
 name = "stat"
 type = "enum<StatType>"
-required = true
 
 [[structs.fields]]
 name = "value"
 type = "f32"
-required = true
 
 [[structs.fields]]
 name = "is_percent"
@@ -124,7 +112,6 @@ name = "LevelAtLeast"
 [[unions.variants.fields]]
 name = "level"
 type = "ref<LevelExp.level>"
-required = true
 
 [[unions.variants]]
 name = "QuestCompleted"
@@ -132,7 +119,6 @@ name = "QuestCompleted"
 [[unions.variants.fields]]
 name = "quest_id"
 type = "ref<Quest.id>"
-required = true
 
 [[unions.variants]]
 name = "HasItem"
@@ -140,12 +126,10 @@ name = "HasItem"
 [[unions.variants.fields]]
 name = "item_id"
 type = "ref<Item.id>"
-required = true
 
 [[unions.variants.fields]]
 name = "count"
 type = "i32"
-required = true
 range = [1, 9999]
 
 [[unions]]
@@ -158,12 +142,10 @@ name = "AddItem"
 [[unions.variants.fields]]
 name = "item_id"
 type = "ref<Item.id>"
-required = true
 
 [[unions.variants.fields]]
 name = "count"
 type = "i32"
-required = true
 range = [1, 9999]
 
 [[unions.variants]]
@@ -172,7 +154,6 @@ name = "AddBuff"
 [[unions.variants.fields]]
 name = "buff_id"
 type = "ref<Buff.id>"
-required = true
 
 [[unions.variants.fields]]
 name = "duration"
@@ -185,7 +166,6 @@ name = "UnlockStage"
 [[unions.variants.fields]]
 name = "stage_id"
 type = "ref<Stage.id>"
-required = true
 
 [[unions.variants]]
 name = "SendMail"
@@ -193,7 +173,6 @@ name = "SendMail"
 [[unions.variants.fields]]
 name = "mail_id"
 type = "ref<MailTemplate.id>"
-required = true
 
 [[tables]]
 name = "Item"
@@ -208,20 +187,17 @@ sheet = "Item"
 name = "id"
 type = "i32"
 key = true
-required = true
 comment = "Item id"
 
 [[tables.fields]]
 name = "name"
 type = "string"
-required = true
 comment = "Display name"
 length = [2, 32]
 
 [[tables.fields]]
 name = "item_type"
 type = "enum<ItemType>"
-required = true
 comment = "Item category"
 
 [[tables.fields]]
@@ -235,7 +211,6 @@ comment = "Stack limit; blank cells use the default"
 name = "price"
 type = "struct<ResourceCost>"
 parser = { kind = "tuple" }
-required = true
 comment = "Tuple: kind,id,count"
 
 [[tables.fields]]
@@ -250,7 +225,6 @@ comment = "JSON string set"
 name = "attributes"
 type = "map<string,i32>"
 parser = { kind = "map" }
-required = true
 comment = "Map pairs: key,value|key,value"
 
 [[tables.indexes]]
@@ -275,30 +249,25 @@ sheet = "Skill"
 name = "id"
 type = "i32"
 key = true
-required = true
 
 [[tables.fields]]
 name = "name"
 type = "string"
-required = true
 length = [2, 32]
 
 [[tables.fields]]
 name = "element"
 type = "enum<ElementType>"
-required = true
 
 [[tables.fields]]
 name = "cost"
 type = "struct<ResourceCost>"
 parser = { kind = "tuple" }
-required = true
 comment = "Tuple cost, e.g. Gold,0,150"
 
 [[tables.fields]]
 name = "effect"
 type = "struct<SkillEffect>"
-required = true
 comment = "JSON object with element/power/radius"
 
 [[tables.fields]]
@@ -316,7 +285,6 @@ comment = "Optional item requirement"
 name = "cast_origin"
 type = "struct<Vec3>"
 parser = { kind = "tuple" }
-required = true
 
 [[tables]]
 name = "Quest"
@@ -331,35 +299,29 @@ sheet = "Quest"
 name = "id"
 type = "i32"
 key = true
-required = true
 
 [[tables.fields]]
 name = "quest_type"
 type = "enum<QuestType>"
-required = true
 
 [[tables.fields]]
 name = "title"
 type = "string"
-required = true
 length = [4, 64]
 
 [[tables.fields]]
 name = "required_item"
 type = "ref<Item.id>"
-required = true
 
 [[tables.fields]]
 name = "unlock_skills"
 type = "list<ref<Skill.id>>"
 length = [1, 3]
-required = true
 
 [[tables.fields]]
 name = "start_pos"
 type = "struct<Vec3>"
 parser = { kind = "tuple" }
-required = true
 
 [[tables.fields]]
 name = "rewards"
@@ -378,22 +340,18 @@ sheet = "QuestReward"
 [[tables.fields]]
 name = "quest_id"
 type = "ref<Quest.id>"
-required = true
 
 [[tables.fields]]
 name = "seq"
 type = "i32"
-required = true
 
 [[tables.fields]]
 name = "item_id"
 type = "ref<Item.id>"
-required = true
 
 [[tables.fields]]
 name = "count"
 type = "i32"
-required = true
 range = [1, 9999]
 
 [[tables]]
@@ -407,12 +365,10 @@ sheet = "GameSettings"
 [[tables.fields]]
 name = "version"
 type = "string"
-required = true
 
 [[tables.fields]]
 name = "daily_reset_hour"
 type = "i32"
-required = true
 range = [0, 23]
 
 [[tables.fields]]
@@ -425,13 +381,11 @@ range = [0, 999999]
 name = "spawn_pos"
 type = "struct<Vec3>"
 parser = { kind = "tuple" }
-required = true
 
 [[tables.fields]]
 name = "starter_items"
 type = "list<ref<Item.id>>"
 length = [1, 4]
-required = true
 
 [[tables]]
 name = "Localization"
@@ -446,18 +400,15 @@ sheet = "Localization"
 name = "key"
 type = "string"
 key = true
-required = true
 length = [3, 64]
 
 [[tables.fields]]
 name = "zh_cn"
 type = "string"
-required = true
 
 [[tables.fields]]
 name = "en_us"
 type = "string"
-required = true
 
 [[tables.fields]]
 name = "note"
@@ -476,13 +427,11 @@ sheet = "LevelExp"
 name = "level"
 type = "i32"
 key = true
-required = true
 range = [1, 100]
 
 [[tables.fields]]
 name = "exp"
 type = "i64"
-required = true
 range = [0, 999999999]
 
 [[tables.fields]]
@@ -502,40 +451,33 @@ sheet = "Character"
 name = "id"
 type = "i32"
 key = true
-required = true
 
 [[tables.fields]]
 name = "name"
 type = "string"
-required = true
 length = [2, 32]
 
 [[tables.fields]]
 name = "rarity"
 type = "enum<Rarity>"
-required = true
 
 [[tables.fields]]
 name = "base_level"
 type = "ref<LevelExp.level>"
-required = true
 
 [[tables.fields]]
 name = "base_skill"
 type = "ref<Skill.id>"
-required = true
 
 [[tables.fields]]
 name = "starter_items"
 type = "list<ref<Item.id>>"
 length = [1, 4]
-required = true
 
 [[tables.fields]]
 name = "spawn_pos"
 type = "struct<Vec3>"
 parser = { kind = "tuple" }
-required = true
 
 [[tables]]
 name = "CharacterSkill"
@@ -548,17 +490,14 @@ sheet = "CharacterSkill"
 [[tables.fields]]
 name = "character_id"
 type = "ref<Character.id>"
-required = true
 
 [[tables.fields]]
 name = "skill_id"
 type = "ref<Skill.id>"
-required = true
 
 [[tables.fields]]
 name = "unlock_level"
 type = "ref<LevelExp.level>"
-required = true
 
 [[tables]]
 name = "Buff"
@@ -573,24 +512,20 @@ sheet = "Buff"
 name = "id"
 type = "i32"
 key = true
-required = true
 
 [[tables.fields]]
 name = "name"
 type = "string"
-required = true
 
 [[tables.fields]]
 name = "duration"
 type = "f32"
-required = true
 
 [[tables.fields]]
 name = "modifiers"
 type = "list<StatModifier>"
 parser = { kind = "json" }
 length = [1, 3]
-required = true
 
 [[tables]]
 name = "DropGroup"
@@ -605,12 +540,10 @@ sheet = "DropGroup"
 name = "id"
 type = "i32"
 key = true
-required = true
 
 [[tables.fields]]
 name = "name"
 type = "string"
-required = true
 
 [[tables]]
 name = "DropEntry"
@@ -623,28 +556,23 @@ sheet = "DropEntry"
 [[tables.fields]]
 name = "group_id"
 type = "ref<DropGroup.id>"
-required = true
 
 [[tables.fields]]
 name = "seq"
 type = "i32"
-required = true
 
 [[tables.fields]]
 name = "item_id"
 type = "ref<Item.id>"
-required = true
 
 [[tables.fields]]
 name = "count"
 type = "i32"
-required = true
 range = [1, 9999]
 
 [[tables.fields]]
 name = "weight"
 type = "f32"
-required = true
 scope = "server"
 
 [[tables]]
@@ -660,33 +588,27 @@ sheet = "Monster"
 name = "id"
 type = "i32"
 key = true
-required = true
 
 [[tables.fields]]
 name = "name"
 type = "string"
-required = true
 
 [[tables.fields]]
 name = "level"
 type = "ref<LevelExp.level>"
-required = true
 
 [[tables.fields]]
 name = "element"
 type = "enum<ElementType>"
-required = true
 
 [[tables.fields]]
 name = "drop_group"
 type = "ref<DropGroup.id>"
-required = true
 
 [[tables.fields]]
 name = "spawn_pos"
 type = "struct<Vec3>"
 parser = { kind = "tuple" }
-required = true
 
 [[tables]]
 name = "Stage"
@@ -701,23 +623,19 @@ sheet = "Stage"
 name = "id"
 type = "i32"
 key = true
-required = true
 
 [[tables.fields]]
 name = "name"
 type = "string"
-required = true
 
 [[tables.fields]]
 name = "monster_ids"
 type = "list<ref<Monster.id>>"
 length = [1, 5]
-required = true
 
 [[tables.fields]]
 name = "recommended_power"
 type = "i32"
-required = true
 
 [[tables.fields]]
 name = "first_clear_rewards"
@@ -735,22 +653,18 @@ sheet = "StageReward"
 [[tables.fields]]
 name = "stage_id"
 type = "ref<Stage.id>"
-required = true
 
 [[tables.fields]]
 name = "seq"
 type = "i32"
-required = true
 
 [[tables.fields]]
 name = "item_id"
 type = "ref<Item.id>"
-required = true
 
 [[tables.fields]]
 name = "count"
 type = "i32"
-required = true
 
 [[tables]]
 name = "Dungeon"
@@ -765,24 +679,20 @@ sheet = "Dungeon"
 name = "id"
 type = "i32"
 key = true
-required = true
 
 [[tables.fields]]
 name = "name"
 type = "string"
-required = true
 
 [[tables.fields]]
 name = "stage_ids"
 type = "list<ref<Stage.id>>"
 length = [2, 6]
-required = true
 
 [[tables.fields]]
 name = "entry_cost"
 type = "struct<ResourceCost>"
 parser = { kind = "tuple" }
-required = true
 
 [[tables]]
 name = "Shop"
@@ -797,17 +707,14 @@ sheet = "Shop"
 name = "id"
 type = "i32"
 key = true
-required = true
 
 [[tables.fields]]
 name = "name"
 type = "string"
-required = true
 
 [[tables.fields]]
 name = "currency"
 type = "enum<ResourceKind>"
-required = true
 
 [[tables]]
 name = "ShopItem"
@@ -820,23 +727,19 @@ sheet = "ShopItem"
 [[tables.fields]]
 name = "shop_id"
 type = "ref<Shop.id>"
-required = true
 
 [[tables.fields]]
 name = "seq"
 type = "i32"
-required = true
 
 [[tables.fields]]
 name = "item_id"
 type = "ref<Item.id>"
-required = true
 
 [[tables.fields]]
 name = "price"
 type = "struct<ResourceCost>"
 parser = { kind = "tuple" }
-required = true
 
 [[tables.fields]]
 name = "daily_limit"
@@ -855,19 +758,16 @@ sheet = "Recipe"
 name = "id"
 type = "i32"
 key = true
-required = true
 
 [[tables.fields]]
 name = "result_item"
 type = "ref<Item.id>"
-required = true
 
 [[tables.fields]]
 name = "materials"
 type = "list<ResourceCost>"
 parser = { kind = "tuple_list" }
 length = [1, 4]
-required = true
 
 [[tables]]
 name = "GachaPool"
@@ -882,18 +782,15 @@ sheet = "GachaPool"
 name = "id"
 type = "i32"
 key = true
-required = true
 
 [[tables.fields]]
 name = "name"
 type = "string"
-required = true
 
 [[tables.fields]]
 name = "cost"
 type = "struct<ResourceCost>"
 parser = { kind = "tuple" }
-required = true
 
 [[tables]]
 name = "GachaItem"
@@ -906,22 +803,18 @@ sheet = "GachaItem"
 [[tables.fields]]
 name = "pool_id"
 type = "ref<GachaPool.id>"
-required = true
 
 [[tables.fields]]
 name = "item_id"
 type = "ref<Item.id>"
-required = true
 
 [[tables.fields]]
 name = "rarity"
 type = "enum<Rarity>"
-required = true
 
 [[tables.fields]]
 name = "weight"
 type = "f32"
-required = true
 
 [[tables]]
 name = "EquipmentSet"
@@ -936,23 +829,19 @@ sheet = "EquipmentSet"
 name = "id"
 type = "i32"
 key = true
-required = true
 
 [[tables.fields]]
 name = "name"
 type = "string"
-required = true
 
 [[tables.fields]]
 name = "item_ids"
 type = "list<ref<Item.id>>"
 length = [2, 4]
-required = true
 
 [[tables.fields]]
 name = "bonus_effect"
 type = "struct<SkillEffect>"
-required = true
 
 [[tables]]
 name = "Achievement"
@@ -967,23 +856,19 @@ sheet = "Achievement"
 name = "id"
 type = "i32"
 key = true
-required = true
 
 [[tables.fields]]
 name = "title_key"
 type = "string"
-required = true
 
 [[tables.fields]]
 name = "target_count"
 type = "i64"
-required = true
 
 [[tables.fields]]
 name = "reward"
 type = "struct<ResourceCost>"
 parser = { kind = "tuple" }
-required = true
 
 [[tables]]
 name = "VipLevel"
@@ -998,19 +883,16 @@ sheet = "VipLevel"
 name = "level"
 type = "i32"
 key = true
-required = true
 
 [[tables.fields]]
 name = "cost"
 type = "struct<ResourceCost>"
 parser = { kind = "tuple" }
-required = true
 
 [[tables.fields]]
 name = "perks"
 type = "list<string>"
 length = [1, 5]
-required = true
 
 [[tables]]
 name = "MailTemplate"
@@ -1025,22 +907,18 @@ sheet = "MailTemplate"
 name = "id"
 type = "i32"
 key = true
-required = true
 
 [[tables.fields]]
 name = "mail_type"
 type = "enum<MailType>"
-required = true
 
 [[tables.fields]]
 name = "title_key"
 type = "string"
-required = true
 
 [[tables.fields]]
 name = "body_key"
 type = "string"
-required = true
 
 [[tables.fields]]
 name = "rewards"
@@ -1058,22 +936,18 @@ sheet = "MailReward"
 [[tables.fields]]
 name = "mail_id"
 type = "ref<MailTemplate.id>"
-required = true
 
 [[tables.fields]]
 name = "seq"
 type = "i32"
-required = true
 
 [[tables.fields]]
 name = "item_id"
 type = "ref<Item.id>"
-required = true
 
 [[tables.fields]]
 name = "count"
 type = "i32"
-required = true
 
 [[tables]]
 name = "Dialogue"
@@ -1088,18 +962,15 @@ sheet = "Dialogue"
 name = "id"
 type = "i32"
 key = true
-required = true
 
 [[tables.fields]]
 name = "speaker_key"
 type = "string"
-required = true
 
 [[tables.fields]]
 name = "lines"
 type = "list<string>"
 length = [1, 5]
-required = true
 
 [[tables]]
 name = "EventRule"
@@ -1114,21 +985,17 @@ sheet = "EventRule"
 name = "id"
 type = "i32"
 key = true
-required = true
 
 [[tables.fields]]
 name = "name"
 type = "string"
-required = true
 
 [[tables.fields]]
 name = "condition"
 type = "union<EventCondition>"
-required = true
 
 [[tables.fields]]
 name = "actions"
 type = "list<union<RewardAction>>"
 parser = { kind = "json" }
 length = [1, 4]
-required = true

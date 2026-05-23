@@ -479,22 +479,18 @@ file = "items.toml"
 name = "id"
 type = "i32"
 key = true
-required = true
 
 [[tables.fields]]
 name = "name"
 type = "string"
-required = true
 
 [[tables.fields]]
 name = "item_type"
 type = "enum<ItemType>"
-required = true
 
 [[tables.fields]]
 name = "max_stack"
 type = "i32"
-required = true
 "#,
     )
     .unwrap();
@@ -513,12 +509,10 @@ name = "Reward"
 [[structs.fields]]
 name = "item_id"
 type = "ref<RewardSource.id>"
-required = true
 
 [[structs.fields]]
 name = "count"
 type = "i32"
-required = true
 range = [1, 10]
 
 [[tables]]
@@ -529,7 +523,6 @@ key = "id"
 [[tables.fields]]
 name = "id"
 type = "i32"
-required = true
 
 [[tables]]
 name = "Item"
@@ -539,17 +532,14 @@ key = "id"
 [[tables.fields]]
 name = "id"
 type = "i32"
-required = true
 
 [[tables.fields]]
 name = "reward"
 type = "struct<Reward>"
-required = true
 
 [[tables.fields]]
 name = "rolls"
 type = "array<i32,2>"
-required = true
 range = [1, 6]
 
 [[tables]]
@@ -559,7 +549,6 @@ mode = "singleton"
 [[tables.fields]]
 name = "id"
 type = "i32"
-required = true
 "#,
     )
     .unwrap();
@@ -584,17 +573,14 @@ key = "id"
 [[tables.fields]]
 name = "id"
 type = "i32"
-required = true
 
 [[tables.fields]]
 name = "item_type"
 type = "enum<ItemType>"
-required = true
 
 [[tables.fields]]
 name = "name"
 type = "string"
-required = true
 
 [[tables.indexes]]
 name = "by_type_name"
@@ -620,12 +606,10 @@ key = "id"
 [[tables.fields]]
 name = "id"
 type = "i32"
-required = true
 
 [[tables.fields]]
 name = "name"
 type = "string"
-required = true
 length = [2, 8]
 
 [[tables.fields]]

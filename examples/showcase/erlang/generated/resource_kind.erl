@@ -2,7 +2,7 @@
 
 -module(resource_kind).
 
--export([decode/1]).
+-export([decode/1, decode_value/1]).
 -export_type([t/0]).
 -type t() ::
     'item' |
@@ -17,4 +17,13 @@ decode(Reader0) ->
         1 -> {'gold', Reader1};
         2 -> {'diamond', Reader1};
         _ -> error({invalid_enum_ordinal, resource_kind, Ordinal})
+    end.
+
+-spec decode_value(binary()) -> t().
+decode_value(Value) ->
+    case Value of
+        <<"Item">> -> 'item';
+        <<"Gold">> -> 'gold';
+        <<"Diamond">> -> 'diamond';
+        _ -> error({invalid_enum_value, resource_kind, Value})
     end.

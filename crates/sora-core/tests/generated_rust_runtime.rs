@@ -99,12 +99,10 @@ name = "Reward"
 [[structs.fields]]
 name = "reward_item_id"
 type = "i32"
-required = true
 
 [[structs.fields]]
 name = "count"
 type = "i32"
-required = true
 
 [[tables]]
 name = "Item"
@@ -118,22 +116,18 @@ file = "items.toml"
 [[tables.fields]]
 name = "id"
 type = "i32"
-required = true
 
 [[tables.fields]]
 name = "name"
 type = "string"
-required = true
 
 [[tables.fields]]
 name = "item_type"
 type = "enum<ItemType>"
-required = true
 
 [[tables.fields]]
 name = "max_stack"
 type = "i32"
-required = true
 
 [[tables.fields]]
 name = "rewards"
@@ -151,22 +145,18 @@ file = "item_rewards.toml"
 [[tables.fields]]
 name = "item_id"
 type = "i32"
-required = true
 
 [[tables.fields]]
 name = "seq"
 type = "i32"
-required = true
 
 [[tables.fields]]
 name = "reward_item_id"
 type = "i32"
-required = true
 
 [[tables.fields]]
 name = "count"
 type = "i32"
-required = true
 "#,
     )
     .unwrap();

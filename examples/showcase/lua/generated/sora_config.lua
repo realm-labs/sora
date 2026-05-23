@@ -30,7 +30,7 @@ local MailReward = require("generated.mail_reward")
 local Dialogue = require("generated.dialogue")
 local EventRule = require("generated.event_rule")
 
-local SORA_SCHEMA_FINGERPRINT = "a0390c24663ecbfc"
+local SORA_SCHEMA_FINGERPRINT = "9bc8b7cd2c2ad93e"
 
 ---@class SoraConfig
 ---@field private _item ItemTable
@@ -69,6 +69,12 @@ SoraConfig.__index = SoraConfig
 ---@return SoraConfig
 function SoraConfig.from_bytes(bytes, options)
     local bundle = Runtime.parse_bundle(bytes, options)
+    return SoraConfig.from_bundle(bundle)
+end
+
+---@param bundle table
+---@return SoraConfig
+function SoraConfig.from_bundle(bundle)
     if bundle:schema_fingerprint() ~= SORA_SCHEMA_FINGERPRINT then
         error(
             "schema fingerprint mismatch: generated code expects "
@@ -78,34 +84,34 @@ function SoraConfig.from_bytes(bytes, options)
         )
     end
     return setmetatable({
-        _item = Item.Table.decode(bundle:decode_table(Item.Table.NAME, Item.decode)),
-        _skill = Skill.Table.decode(bundle:decode_table(Skill.Table.NAME, Skill.decode)),
-        _quest = Quest.Table.decode(bundle:decode_table(Quest.Table.NAME, Quest.decode)),
-        _quest_reward = QuestReward.Table.decode(bundle:decode_table(QuestReward.Table.NAME, QuestReward.decode)),
-        _game_settings = GameSettings.Table.decode(bundle:decode_table(GameSettings.Table.NAME, GameSettings.decode)),
-        _localization = Localization.Table.decode(bundle:decode_table(Localization.Table.NAME, Localization.decode)),
-        _level_exp = LevelExp.Table.decode(bundle:decode_table(LevelExp.Table.NAME, LevelExp.decode)),
-        _character = Character.Table.decode(bundle:decode_table(Character.Table.NAME, Character.decode)),
-        _character_skill = CharacterSkill.Table.decode(bundle:decode_table(CharacterSkill.Table.NAME, CharacterSkill.decode)),
-        _buff = Buff.Table.decode(bundle:decode_table(Buff.Table.NAME, Buff.decode)),
-        _drop_group = DropGroup.Table.decode(bundle:decode_table(DropGroup.Table.NAME, DropGroup.decode)),
-        _drop_entry = DropEntry.Table.decode(bundle:decode_table(DropEntry.Table.NAME, DropEntry.decode)),
-        _monster = Monster.Table.decode(bundle:decode_table(Monster.Table.NAME, Monster.decode)),
-        _stage = Stage.Table.decode(bundle:decode_table(Stage.Table.NAME, Stage.decode)),
-        _stage_reward = StageReward.Table.decode(bundle:decode_table(StageReward.Table.NAME, StageReward.decode)),
-        _dungeon = Dungeon.Table.decode(bundle:decode_table(Dungeon.Table.NAME, Dungeon.decode)),
-        _shop = Shop.Table.decode(bundle:decode_table(Shop.Table.NAME, Shop.decode)),
-        _shop_item = ShopItem.Table.decode(bundle:decode_table(ShopItem.Table.NAME, ShopItem.decode)),
-        _recipe = Recipe.Table.decode(bundle:decode_table(Recipe.Table.NAME, Recipe.decode)),
-        _gacha_pool = GachaPool.Table.decode(bundle:decode_table(GachaPool.Table.NAME, GachaPool.decode)),
-        _gacha_item = GachaItem.Table.decode(bundle:decode_table(GachaItem.Table.NAME, GachaItem.decode)),
-        _equipment_set = EquipmentSet.Table.decode(bundle:decode_table(EquipmentSet.Table.NAME, EquipmentSet.decode)),
-        _achievement = Achievement.Table.decode(bundle:decode_table(Achievement.Table.NAME, Achievement.decode)),
-        _vip_level = VipLevel.Table.decode(bundle:decode_table(VipLevel.Table.NAME, VipLevel.decode)),
-        _mail_template = MailTemplate.Table.decode(bundle:decode_table(MailTemplate.Table.NAME, MailTemplate.decode)),
-        _mail_reward = MailReward.Table.decode(bundle:decode_table(MailReward.Table.NAME, MailReward.decode)),
-        _dialogue = Dialogue.Table.decode(bundle:decode_table(Dialogue.Table.NAME, Dialogue.decode)),
-        _event_rule = EventRule.Table.decode(bundle:decode_table(EventRule.Table.NAME, EventRule.decode)),
+        _item = Item.Table.decode(bundle:decode_table(Item.Table.NAME, Item.decode, Item.decode_value)),
+        _skill = Skill.Table.decode(bundle:decode_table(Skill.Table.NAME, Skill.decode, Skill.decode_value)),
+        _quest = Quest.Table.decode(bundle:decode_table(Quest.Table.NAME, Quest.decode, Quest.decode_value)),
+        _quest_reward = QuestReward.Table.decode(bundle:decode_table(QuestReward.Table.NAME, QuestReward.decode, QuestReward.decode_value)),
+        _game_settings = GameSettings.Table.decode(bundle:decode_table(GameSettings.Table.NAME, GameSettings.decode, GameSettings.decode_value)),
+        _localization = Localization.Table.decode(bundle:decode_table(Localization.Table.NAME, Localization.decode, Localization.decode_value)),
+        _level_exp = LevelExp.Table.decode(bundle:decode_table(LevelExp.Table.NAME, LevelExp.decode, LevelExp.decode_value)),
+        _character = Character.Table.decode(bundle:decode_table(Character.Table.NAME, Character.decode, Character.decode_value)),
+        _character_skill = CharacterSkill.Table.decode(bundle:decode_table(CharacterSkill.Table.NAME, CharacterSkill.decode, CharacterSkill.decode_value)),
+        _buff = Buff.Table.decode(bundle:decode_table(Buff.Table.NAME, Buff.decode, Buff.decode_value)),
+        _drop_group = DropGroup.Table.decode(bundle:decode_table(DropGroup.Table.NAME, DropGroup.decode, DropGroup.decode_value)),
+        _drop_entry = DropEntry.Table.decode(bundle:decode_table(DropEntry.Table.NAME, DropEntry.decode, DropEntry.decode_value)),
+        _monster = Monster.Table.decode(bundle:decode_table(Monster.Table.NAME, Monster.decode, Monster.decode_value)),
+        _stage = Stage.Table.decode(bundle:decode_table(Stage.Table.NAME, Stage.decode, Stage.decode_value)),
+        _stage_reward = StageReward.Table.decode(bundle:decode_table(StageReward.Table.NAME, StageReward.decode, StageReward.decode_value)),
+        _dungeon = Dungeon.Table.decode(bundle:decode_table(Dungeon.Table.NAME, Dungeon.decode, Dungeon.decode_value)),
+        _shop = Shop.Table.decode(bundle:decode_table(Shop.Table.NAME, Shop.decode, Shop.decode_value)),
+        _shop_item = ShopItem.Table.decode(bundle:decode_table(ShopItem.Table.NAME, ShopItem.decode, ShopItem.decode_value)),
+        _recipe = Recipe.Table.decode(bundle:decode_table(Recipe.Table.NAME, Recipe.decode, Recipe.decode_value)),
+        _gacha_pool = GachaPool.Table.decode(bundle:decode_table(GachaPool.Table.NAME, GachaPool.decode, GachaPool.decode_value)),
+        _gacha_item = GachaItem.Table.decode(bundle:decode_table(GachaItem.Table.NAME, GachaItem.decode, GachaItem.decode_value)),
+        _equipment_set = EquipmentSet.Table.decode(bundle:decode_table(EquipmentSet.Table.NAME, EquipmentSet.decode, EquipmentSet.decode_value)),
+        _achievement = Achievement.Table.decode(bundle:decode_table(Achievement.Table.NAME, Achievement.decode, Achievement.decode_value)),
+        _vip_level = VipLevel.Table.decode(bundle:decode_table(VipLevel.Table.NAME, VipLevel.decode, VipLevel.decode_value)),
+        _mail_template = MailTemplate.Table.decode(bundle:decode_table(MailTemplate.Table.NAME, MailTemplate.decode, MailTemplate.decode_value)),
+        _mail_reward = MailReward.Table.decode(bundle:decode_table(MailReward.Table.NAME, MailReward.decode, MailReward.decode_value)),
+        _dialogue = Dialogue.Table.decode(bundle:decode_table(Dialogue.Table.NAME, Dialogue.decode, Dialogue.decode_value)),
+        _event_rule = EventRule.Table.decode(bundle:decode_table(EventRule.Table.NAME, EventRule.decode, EventRule.decode_value)),
     }, SoraConfig)
 end
 

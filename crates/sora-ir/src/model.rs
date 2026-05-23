@@ -95,12 +95,17 @@ pub struct FieldIr {
     pub scope: ScopeIr,
     pub key: bool,
     pub comment: Option<String>,
-    pub required: bool,
     pub default: Option<String>,
     pub range: Option<[i64; 2]>,
     pub length: Option<[usize; 2]>,
     pub parser: Option<ParserIr>,
     pub derived_from: Option<DerivedFieldIr>,
+}
+
+impl FieldIr {
+    pub fn is_required(&self) -> bool {
+        !self.ty.is_optional() && self.default.is_none()
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -169,6 +174,12 @@ pub enum TypeIr {
         field: String,
     },
     Optional(Box<TypeIr>),
+}
+
+impl TypeIr {
+    pub fn is_optional(&self) -> bool {
+        matches!(self, Self::Optional(_))
+    }
 }
 
 impl fmt::Display for TypeIr {

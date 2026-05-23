@@ -8,7 +8,6 @@ References let one table point to another table's primary key. The target table 
 [[tables.fields]]
 name = "required_item"
 type = "ref<Item.id>"
-required = true
 ```
 
 Sora validates that every value points to an existing row in the referenced table.
@@ -106,12 +105,10 @@ name = "Reward"
 [[structs.fields]]
 name = "item_id"
 type = "ref<Item.id>"
-required = true
 
 [[structs.fields]]
 name = "count"
 type = "i32"
-required = true
 ```
 
 Here `Reward.item_id` and `Reward.count` must both exist as compatible fields on `QuestReward`.

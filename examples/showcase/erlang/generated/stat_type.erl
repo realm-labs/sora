@@ -2,7 +2,7 @@
 
 -module(stat_type).
 
--export([decode/1]).
+-export([decode/1, decode_value/1]).
 -export_type([t/0]).
 -type t() ::
     'hp' |
@@ -21,4 +21,15 @@ decode(Reader0) ->
         3 -> {'speed', Reader1};
         4 -> {'crit_rate', Reader1};
         _ -> error({invalid_enum_ordinal, stat_type, Ordinal})
+    end.
+
+-spec decode_value(binary()) -> t().
+decode_value(Value) ->
+    case Value of
+        <<"Hp">> -> 'hp';
+        <<"Attack">> -> 'attack';
+        <<"Defense">> -> 'defense';
+        <<"Speed">> -> 'speed';
+        <<"CritRate">> -> 'crit_rate';
+        _ -> error({invalid_enum_value, stat_type, Value})
     end.

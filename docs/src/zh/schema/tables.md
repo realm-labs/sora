@@ -20,7 +20,6 @@ key = "id"
 name = "id"
 type = "i32"
 key = true
-required = true
 ```
 
 对于 map 表，`key` 指定生成 lookup API 使用的字段。
@@ -57,17 +56,14 @@ key = "id"
 name = "id"
 type = "i32"
 key = true
-required = true
 
 [[tables.fields]]
 name = "name"
 type = "string"
-required = true
 
 [[tables.fields]]
 name = "item_type"
 type = "enum<ItemType>"
-required = true
 ```
 
 如果还希望按 `name` 查道具，可以加一个 unique index：
@@ -122,7 +118,7 @@ unique = true
 
 加载 source 数据后，Sora 会校验表行：
 
-- required 字段必须存在，除非有 default；
+- 非 optional 字段必须存在，除非有 default；
 - map 表的 key 字段必须唯一；
 - enum value 必须有效；
 - reference 必须指向已有行；

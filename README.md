@@ -13,7 +13,7 @@ Sora exists to make configuration tables simple to edit, validate, generate, and
 - describe the data contract once in schema files;
 - generate spreadsheet templates from that schema instead of hand-maintaining headers;
 - load data from Excel `.xlsx`, CSV, or TOML row files;
-- validate required fields, types, references, indexes, defaults, and nested values;
+- validate non-optional fields, types, references, indexes, defaults, and nested values;
 - export compact runtime bundles and inspection-friendly JSON;
 - generate typed access code for the languages used by the project.
 
@@ -271,7 +271,7 @@ file = "Item.xlsx"
 sheet = "Item"
 ```
 
-The CLI can still read TOML row data through `--default-source-format toml` for tests and simple automation, and CSV row data through `--default-source-format csv` when each file has a header row matching schema field names. Validation checks required fields, unknown fields, primitive compatibility, enum values, ranges, struct fields, references, map keys, and singleton row counts.
+The CLI can still read TOML row data through `--default-source-format toml` for tests and simple automation, and CSV row data through `--default-source-format csv` when each file has a header row matching schema field names. Validation checks non-optional fields, unknown fields, primitive compatibility, enum values, ranges, struct fields, references, map keys, and singleton row counts.
 
 Inline object fields can use tuple parsing when JSON is too verbose for table editing. Define a struct, then set `parser = { kind = "tuple" }` on a `struct<T>` field:
 

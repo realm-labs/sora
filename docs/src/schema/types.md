@@ -17,7 +17,6 @@ Sora type expressions are written as strings in schema fields.
 [[tables.fields]]
 name = "level"
 type = "i32"
-required = true
 range = [1, 100]
 ```
 
@@ -36,7 +35,6 @@ References must point to the primary key of a `mode = "map"` table. Containers c
 [[tables.fields]]
 name = "item_type"
 type = "enum<ItemType>"
-required = true
 
 [[tables.fields]]
 name = "price"
@@ -71,11 +69,12 @@ parser = { kind = "map" }
 
 `[[tables.fields]]`, `[[structs.fields]]`, and `[[unions.variants.fields]]` share the common field properties. Table fields have extra table-only properties for keys and derived values; those properties are invalid on struct fields and union variant fields.
 
+Field presence is part of the type: `optional<T>` means the value may be absent or null, while every other type is required unless a `default` fills the missing value.
+
 | Property | Applies To | Purpose |
 | --- | --- | --- |
 | `name` | all fields | Field name used in source data, validation errors, generated code, and exported runtime data. |
 | `type` | all fields | Type expression such as `i32`, `struct<ResourceCost>`, or `list<union<RewardAction>>`. |
-| `required` | all fields | Requires a value unless a default applies. Defaults to `false`. |
 | `default` | all fields except derived fields | String value used when the source cell or object field is absent. |
 | `key` | table fields only | Marks the table key field. Usually matches the table-level `key`. |
 | `comment` | all fields | Description used in generated Excel headers. |

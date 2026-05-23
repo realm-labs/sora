@@ -2,7 +2,7 @@
 
 -module(event_condition).
 
--export([decode/1]).
+-export([decode/1, decode_value/1]).
 -export_type([t/0]).
 
 -type t() ::
@@ -45,4 +45,28 @@ decode(Reader0) ->
                 'count' => Count
             }, Reader3};
         _ -> error({invalid_union_ordinal, event_condition, Ordinal})
+    end.
+
+-spec decode_value(map()) -> t().
+decode_value(Value) ->
+    Obj = sora_runtime:expect_map(Value),
+    Tag = sora_runtime:expect_binary(sora_runtime:value_get(<<"type">>, Obj)),
+    case Tag of
+        <<"LevelAtLeast">> ->
+            #{
+                'type' => 'level_at_least',
+                'level' => sora_runtime:expect_integer(sora_runtime:value_get(<<"level">>, Obj))
+            };
+        <<"QuestCompleted">> ->
+            #{
+                'type' => 'quest_completed',
+                'quest_id' => sora_runtime:expect_integer(sora_runtime:value_get(<<"quest_id">>, Obj))
+            };
+        <<"HasItem">> ->
+            #{
+                'type' => 'has_item',
+                'item_id' => sora_runtime:expect_integer(sora_runtime:value_get(<<"item_id">>, Obj)),
+                'count' => sora_runtime:expect_integer(sora_runtime:value_get(<<"count">>, Obj))
+            };
+        _ -> error({invalid_union_tag, event_condition, Tag})
     end.

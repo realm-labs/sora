@@ -8,7 +8,6 @@
 [[tables.fields]]
 name = "required_item"
 type = "ref<Item.id>"
-required = true
 ```
 
 Sora 会校验每个值都指向被引用表中存在的行。
@@ -106,12 +105,10 @@ name = "Reward"
 [[structs.fields]]
 name = "item_id"
 type = "ref<Item.id>"
-required = true
 
 [[structs.fields]]
 name = "count"
 type = "i32"
-required = true
 ```
 
 这里 `Reward.item_id` 和 `Reward.count` 都必须在 `QuestReward` 上存在兼容字段。

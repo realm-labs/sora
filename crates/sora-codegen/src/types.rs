@@ -560,13 +560,11 @@ key = "id"
 name = "id"
 type = "i32"
 key = true
-required = true
 comment = "Item id"
 
 [[tables.fields]]
 name = "item_type"
 type = "enum<ItemType>"
-required = true
 comment = "Item type"
 "#,
         )

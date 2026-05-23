@@ -280,22 +280,18 @@ key = "id"
 [[tables.fields]]
 name = "id"
 type = "i32"
-required = true
 
 [[tables.fields]]
 name = "name"
 type = "string"
-required = true
 
 [[tables.fields]]
 name = "item_type"
 type = "enum<ItemType>"
-required = true
 
 [[tables.fields]]
 name = "large_id"
 type = "i64"
-required = true
 
 [[tables.indexes]]
 name = "by_name"

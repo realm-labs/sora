@@ -29,6 +29,13 @@ local values = {
     [3] = Rarity.Epic,
     [4] = Rarity.Legendary,
 }
+local values_by_name = {
+    ["Common"] = Rarity.Common,
+    ["Uncommon"] = Rarity.Uncommon,
+    ["Rare"] = Rarity.Rare,
+    ["Epic"] = Rarity.Epic,
+    ["Legendary"] = Rarity.Legendary,
+}
 
 ---@param reader SoraReader
 ---@return Rarity
@@ -39,6 +46,16 @@ function Rarity.decode(reader)
         error("invalid enum ordinal " .. tostring(ordinal) .. " for Rarity")
     end
     return value
+end
+
+---@param value any
+---@return Rarity
+function Rarity.decode_value(value)
+    local decoded = values_by_name[value]
+    if decoded == nil then
+        error("invalid enum value " .. tostring(value) .. " for Rarity")
+    end
+    return decoded
 end
 
 return Rarity

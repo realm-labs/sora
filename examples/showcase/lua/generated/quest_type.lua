@@ -21,6 +21,11 @@ local values = {
     [1] = QuestType.Side,
     [2] = QuestType.Daily,
 }
+local values_by_name = {
+    ["Main"] = QuestType.Main,
+    ["Side"] = QuestType.Side,
+    ["Daily"] = QuestType.Daily,
+}
 
 ---@param reader SoraReader
 ---@return QuestType
@@ -31,6 +36,16 @@ function QuestType.decode(reader)
         error("invalid enum ordinal " .. tostring(ordinal) .. " for QuestType")
     end
     return value
+end
+
+---@param value any
+---@return QuestType
+function QuestType.decode_value(value)
+    local decoded = values_by_name[value]
+    if decoded == nil then
+        error("invalid enum value " .. tostring(value) .. " for QuestType")
+    end
+    return decoded
 end
 
 return QuestType

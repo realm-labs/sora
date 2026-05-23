@@ -94,7 +94,7 @@ final class SoraConfig private (
 }
 
 object SoraConfig {
-  val SchemaFingerprint = "a0390c24663ecbfc"
+  val SchemaFingerprint = "9bc8b7cd2c2ad93e"
 
   def fromSource(source: SoraTableSource): SoraConfig = {
     if (source.schemaFingerprint != SchemaFingerprint) {

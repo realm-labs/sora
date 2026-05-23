@@ -20,7 +20,6 @@ key = "id"
 name = "id"
 type = "i32"
 key = true
-required = true
 ```
 
 For map tables, `key` names the field used by generated lookup APIs.
@@ -57,17 +56,14 @@ key = "id"
 name = "id"
 type = "i32"
 key = true
-required = true
 
 [[tables.fields]]
 name = "name"
 type = "string"
-required = true
 
 [[tables.fields]]
 name = "item_type"
 type = "enum<ItemType>"
-required = true
 ```
 
 Add a unique index when another field should also identify at most one row:
@@ -122,7 +118,7 @@ This requires each `(world, stage)` pair to be unique. For example, `(1, 1)` can
 
 Sora validates table rows after loading source data:
 
-- required fields must be present unless a default exists;
+- non-optional fields must be present unless a default exists;
 - key fields must be unique for map tables;
 - enum values must be valid;
 - references must point to existing rows;

@@ -480,12 +480,10 @@ key = "id"
 name = "id"
 type = "i32"
 key = true
-required = true
 
 [[tables.fields]]
 name = "item_type"
 type = "enum<ItemType>"
-required = true
 
 [[tables.indexes]]
 name = "by_item_type"

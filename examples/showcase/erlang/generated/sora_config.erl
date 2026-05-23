@@ -5,6 +5,7 @@
 -export([
     from_binary/1,
     from_binary/2,
+    from_bundle/1,
     tables/1
     , item/1
     , skill/1
@@ -40,7 +41,7 @@
 
 -type t() :: map().
 
--define(SORA_SCHEMA_FINGERPRINT, <<"a0390c24663ecbfc">>).
+-define(SORA_SCHEMA_FINGERPRINT, <<"9bc8b7cd2c2ad93e">>).
 
 -spec from_binary(binary()) -> t().
 from_binary(Bytes) ->
@@ -49,6 +50,10 @@ from_binary(Bytes) ->
 -spec from_binary(binary(), map()) -> t().
 from_binary(Bytes, Options) ->
     Bundle = sora_runtime:parse_bundle(Bytes, Options),
+    from_bundle(Bundle).
+
+-spec from_bundle(map()) -> t().
+from_bundle(Bundle) ->
     case sora_runtime:schema_fingerprint(Bundle) of
         ?SORA_SCHEMA_FINGERPRINT -> ok;
         Actual -> error({schema_fingerprint_mismatch, ?SORA_SCHEMA_FINGERPRINT, Actual})

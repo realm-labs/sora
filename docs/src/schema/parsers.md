@@ -51,7 +51,6 @@ With the default prefix, a field named `condition` for `union<EventCondition>` p
 [[tables.fields]]
 name = "value"
 type = "union<EventCondition>"
-required = true
 parser = { kind = "tagged_columns", prefix = "" }
 ```
 

@@ -132,25 +132,21 @@ sheet = "Item"
 name = "id"
 type = "i32"
 key = true
-required = true
 comment = "Item id"
 
 [[tables.fields]]
 name = "name"
 type = "string"
-required = true
 comment = "Display name"
 
 [[tables.fields]]
 name = "item_type"
 type = "enum<ItemType>"
-required = true
 comment = "Item type"
 
 [[tables.fields]]
 name = "max_stack"
 type = "i32"
-required = true
 comment = "Max stack count"
 "#,
         )

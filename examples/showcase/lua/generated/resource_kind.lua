@@ -21,6 +21,11 @@ local values = {
     [1] = ResourceKind.Gold,
     [2] = ResourceKind.Diamond,
 }
+local values_by_name = {
+    ["Item"] = ResourceKind.Item,
+    ["Gold"] = ResourceKind.Gold,
+    ["Diamond"] = ResourceKind.Diamond,
+}
 
 ---@param reader SoraReader
 ---@return ResourceKind
@@ -31,6 +36,16 @@ function ResourceKind.decode(reader)
         error("invalid enum ordinal " .. tostring(ordinal) .. " for ResourceKind")
     end
     return value
+end
+
+---@param value any
+---@return ResourceKind
+function ResourceKind.decode_value(value)
+    local decoded = values_by_name[value]
+    if decoded == nil then
+        error("invalid enum value " .. tostring(value) .. " for ResourceKind")
+    end
+    return decoded
 end
 
 return ResourceKind

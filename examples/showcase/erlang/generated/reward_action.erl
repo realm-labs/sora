@@ -2,7 +2,7 @@
 
 -module(reward_action).
 
--export([decode/1]).
+-export([decode/1, decode_value/1]).
 -export_type([t/0]).
 
 -type t() ::
@@ -58,4 +58,34 @@ decode(Reader0) ->
                 'mail_id' => MailId
             }, Reader2};
         _ -> error({invalid_union_ordinal, reward_action, Ordinal})
+    end.
+
+-spec decode_value(map()) -> t().
+decode_value(Value) ->
+    Obj = sora_runtime:expect_map(Value),
+    Tag = sora_runtime:expect_binary(sora_runtime:value_get(<<"type">>, Obj)),
+    case Tag of
+        <<"AddItem">> ->
+            #{
+                'type' => 'add_item',
+                'item_id' => sora_runtime:expect_integer(sora_runtime:value_get(<<"item_id">>, Obj)),
+                'count' => sora_runtime:expect_integer(sora_runtime:value_get(<<"count">>, Obj))
+            };
+        <<"AddBuff">> ->
+            #{
+                'type' => 'add_buff',
+                'buff_id' => sora_runtime:expect_integer(sora_runtime:value_get(<<"buff_id">>, Obj)),
+                'duration' => sora_runtime:expect_float(sora_runtime:value_get(<<"duration">>, Obj))
+            };
+        <<"UnlockStage">> ->
+            #{
+                'type' => 'unlock_stage',
+                'stage_id' => sora_runtime:expect_integer(sora_runtime:value_get(<<"stage_id">>, Obj))
+            };
+        <<"SendMail">> ->
+            #{
+                'type' => 'send_mail',
+                'mail_id' => sora_runtime:expect_integer(sora_runtime:value_get(<<"mail_id">>, Obj))
+            };
+        _ -> error({invalid_union_tag, reward_action, Tag})
     end.

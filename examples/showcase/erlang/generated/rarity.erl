@@ -2,7 +2,7 @@
 
 -module(rarity).
 
--export([decode/1]).
+-export([decode/1, decode_value/1]).
 -export_type([t/0]).
 -type t() ::
     'common' |
@@ -21,4 +21,15 @@ decode(Reader0) ->
         3 -> {'epic', Reader1};
         4 -> {'legendary', Reader1};
         _ -> error({invalid_enum_ordinal, rarity, Ordinal})
+    end.
+
+-spec decode_value(binary()) -> t().
+decode_value(Value) ->
+    case Value of
+        <<"Common">> -> 'common';
+        <<"Uncommon">> -> 'uncommon';
+        <<"Rare">> -> 'rare';
+        <<"Epic">> -> 'epic';
+        <<"Legendary">> -> 'legendary';
+        _ -> error({invalid_enum_value, rarity, Value})
     end.

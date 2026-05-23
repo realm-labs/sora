@@ -2,7 +2,7 @@
 
 -module(mail_type).
 
--export([decode/1]).
+-export([decode/1, decode_value/1]).
 -export_type([t/0]).
 -type t() ::
     'system' |
@@ -17,4 +17,13 @@ decode(Reader0) ->
         1 -> {'event', Reader1};
         2 -> {'compensation', Reader1};
         _ -> error({invalid_enum_ordinal, mail_type, Ordinal})
+    end.
+
+-spec decode_value(binary()) -> t().
+decode_value(Value) ->
+    case Value of
+        <<"System">> -> 'system';
+        <<"Event">> -> 'event';
+        <<"Compensation">> -> 'compensation';
+        _ -> error({invalid_enum_value, mail_type, Value})
     end.

@@ -116,7 +116,6 @@ key = "id"
 name = "id"
 type = "{id_type}"
 key = true
-required = true
 "#
         ))
         .unwrap();

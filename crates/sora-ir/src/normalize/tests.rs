@@ -24,7 +24,6 @@ key = "id"
 name = "id"
 type = "i32"
 key = true
-required = true
 
 [[tables.fields]]
 name = "tags"
@@ -42,7 +41,7 @@ length = [1, 3]
     assert_eq!(ir.enums[0].aliases[0].name, "Weapon");
     assert_eq!(ir.enums[0].aliases[0].alias, "weapon");
     assert_eq!(ir.tables[0].mode, TableModeIr::Map);
-    assert!(ir.tables[0].fields[0].required);
+    assert!(ir.tables[0].fields[0].is_required());
     assert_eq!(ir.tables[0].fields[0].ty, TypeIr::I32);
     let parser = ir.tables[0].fields[1].parser.as_ref().unwrap();
     assert_eq!(parser.kind, "split");
