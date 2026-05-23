@@ -2,3 +2,4 @@
 /generated
 /docs/book
 __pycache__/
+.dart_tool/

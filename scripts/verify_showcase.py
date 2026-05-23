@@ -158,6 +158,7 @@ def check_javascript() -> None:
 
 
 def check_dart() -> None:
+    run(["dart", "pub", "get"], cwd=SHOWCASE / "dart")
     run(["dart", "analyze"], cwd=SHOWCASE / "dart")
     run(["dart", "run", "bin/showcase.dart"], cwd=SHOWCASE / "dart")
 

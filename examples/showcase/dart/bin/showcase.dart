@@ -6,9 +6,9 @@ void main() {
   final bytes = File('../generated/client/config.json').readAsBytesSync();
   final config = SoraConfig.fromBytes(bytes);
 
-  final sword = config.item.get(1001);
+  final sword = config.item.get(1001)!;
   final swordByName = config.item.getByName('Iron Sword');
-  final quest = config.quest.get(5001);
+  final quest = config.quest.get(5001)!;
   final settings = config.gameSettings.row;
 
   check(sword.name == 'Iron Sword');
@@ -24,7 +24,7 @@ void main() {
   check(config.localization.length == 80);
   check(config.eventRule.length == 20);
 
-  final eventRule = config.eventRule.get(17001);
+  final eventRule = config.eventRule.get(17001)!;
   check(eventRule.condition is EventConditionQuestCompleted);
   final condition = eventRule.condition as EventConditionQuestCompleted;
   check(condition.questId == 5002);
