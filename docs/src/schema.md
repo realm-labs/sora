@@ -1,6 +1,6 @@
 # Schema
 
-A schema module is a TOML or YAML file included by a project manifest.
+A schema module is a TOML, YAML, or JSON file included by a project manifest.
 
 ```toml
 package = "game_config"

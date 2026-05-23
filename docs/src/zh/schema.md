@@ -1,6 +1,6 @@
 # Schema
 
-schema module 是被项目清单 include 的 TOML 或 YAML 文件。
+schema module 是被项目清单 include 的 TOML、YAML 或 JSON 文件。
 
 ```toml
 package = "game_config"

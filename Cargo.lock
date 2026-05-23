@@ -604,6 +604,7 @@ dependencies = [
  "anyhow",
  "clap",
  "serde",
+ "serde_json",
  "serde_yaml",
  "sora-codegen",
  "sora-core",
@@ -743,6 +744,7 @@ name = "sora-input-toml"
 version = "0.1.0"
 dependencies = [
  "serde",
+ "serde_json",
  "serde_yaml",
  "sora-data",
  "sora-diagnostics",

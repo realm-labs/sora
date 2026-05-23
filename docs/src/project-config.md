@@ -1,6 +1,6 @@
 # Project Config
 
-The project manifest can be used as a simple schema root or as a full build description. It can be written as TOML or YAML; examples on this page use TOML.
+The project manifest can be used as a simple schema root or as a full build description. It can be written as TOML, YAML, or JSON; examples on this page use TOML.
 
 ```toml
 package = "game_config"

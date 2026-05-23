@@ -22,6 +22,8 @@ impl BuildManifest {
                 .with_context(|| format!("failed to parse build config from `{}`", path.display())),
             Some("yaml" | "yml") => serde_yaml::from_str(&content)
                 .with_context(|| format!("failed to parse build config from `{}`", path.display())),
+            Some("json") => serde_json::from_str(&content)
+                .with_context(|| format!("failed to parse build config from `{}`", path.display())),
             Some(extension) => anyhow::bail!(
                 "project `{}` has unsupported extension `{extension}`",
                 path.display()

@@ -96,6 +96,12 @@ fn load_schema_document(path: &Path) -> Result<SchemaDocument> {
                 message: source.to_string(),
             })
         }
+        SchemaFormat::Json => {
+            serde_json::from_str(&content).map_err(|source| SoraError::ParseSchema {
+                path: path.to_path_buf(),
+                message: source.to_string(),
+            })
+        }
     }
 }
 
@@ -103,6 +109,7 @@ fn schema_format(path: &Path) -> Result<SchemaFormat> {
     match path.extension().and_then(|extension| extension.to_str()) {
         Some("toml") => Ok(SchemaFormat::Toml),
         Some("yaml" | "yml") => Ok(SchemaFormat::Yaml),
+        Some("json") => Ok(SchemaFormat::Json),
         Some(extension) => Err(SoraError::InvalidSchema(format!(
             "schema file `{}` has unsupported extension `{extension}`",
             path.display()
@@ -118,6 +125,7 @@ fn schema_format(path: &Path) -> Result<SchemaFormat> {
 enum SchemaFormat {
     Toml,
     Yaml,
+    Json,
 }
 
 #[derive(Debug, Deserialize)]
@@ -234,6 +242,56 @@ tables:
             Some("fx_hash_map")
         );
         assert_eq!(schema.includes, ["schema/items.yml"]);
+        assert_eq!(schema.enums[0].name, "ItemType");
+        assert_eq!(schema.tables[0].name, "Item");
+
+        let _ = fs::remove_dir_all(base);
+    }
+
+    #[test]
+    fn loads_project_schema_with_json_includes() {
+        let base = temp_dir();
+        let schema_dir = base.join("schema");
+        fs::create_dir_all(&schema_dir).unwrap();
+        let project_path = base.join("project.json");
+        fs::write(
+            &project_path,
+            r#"
+{
+  "package": "game_config",
+  "includes": ["schema/items.json"],
+  "codegen": {
+    "rust": {
+      "map_type": "fx_hash_map"
+    }
+  }
+}
+"#,
+        )
+        .unwrap();
+        fs::write(
+            schema_dir.join("items.json"),
+            r#"
+{
+  "enums": [
+    { "name": "ItemType", "values": ["Weapon", "Armor"] }
+  ],
+  "tables": [
+    { "name": "Item", "mode": "map", "key": "id" }
+  ]
+}
+"#,
+        )
+        .unwrap();
+
+        let schema = load_project_schema_file(&project_path).unwrap();
+
+        assert_eq!(schema.package, "game_config");
+        assert_eq!(
+            schema.codegen.targets["rust"]["map_type"].as_str(),
+            Some("fx_hash_map")
+        );
+        assert_eq!(schema.includes, ["schema/items.json"]);
         assert_eq!(schema.enums[0].name, "ItemType");
         assert_eq!(schema.tables[0].name, "Item");
 
