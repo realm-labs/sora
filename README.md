@@ -2,6 +2,8 @@
 
 Sora is a Rust-first game configuration compiler that turns schemas and table data into strongly typed code and runtime-ready data artifacts.
 
+[Documentation](https://realm-labs.github.io/sora/) · [中文文档](https://realm-labs.github.io/sora/zh/)
+
 ## Status
 
 Sora is in an early but runnable milestone. It currently supports TOML schemas, TOML/CSV/Excel `.xlsx` table data, normalized IR, recursive data validation, defaults, tuple-style inline struct parsing, child table aggregation, polymorphic union types, secondary unique-index validation, schema locks, config diffs, generated Excel `.xlsx` template projections, a pluggable exporter registry, a native sectioned binary exporter, a debug JSON exporter, and generated Rust/Kotlin/C#/Java/Go/Lua code with binary runtime readers.
@@ -57,35 +59,35 @@ For one-off or CI workflows, each stage is still available as a separate command
 sora check \
   --project examples/simple/project.toml
 
-sora gen rust \
+sora gen --target rust \
   --project examples/simple/project.toml \
   --out generated/rust
 
-sora gen kotlin \
+sora gen --target kotlin \
   --project examples/simple/project.toml \
   --out generated/kotlin
 
-sora gen scala \
+sora gen --target scala \
   --project examples/simple/project.toml \
   --out generated/scala
 
-sora gen c \
+sora gen --target c \
   --project examples/simple/project.toml \
   --out generated/c
 
-sora gen cpp \
+sora gen --target cpp \
   --project examples/simple/project.toml \
   --out generated/cpp
 
-sora gen typescript \
+sora gen --target typescript \
   --project examples/simple/project.toml \
   --out generated/typescript
 
-sora gen javascript \
+sora gen --target javascript \
   --project examples/simple/project.toml \
   --out generated/javascript
 
-sora gen erlang \
+sora gen --target erlang \
   --project examples/simple/project.toml \
   --out generated/erlang
 
@@ -95,21 +97,21 @@ sora excel-template \
 
 sora export \
   --format binary \
-  --data-format xlsx \
+  --default-source-format xlsx \
   --project examples/simple/project.toml \
   --data-root generated/excel \
   --out generated/config.sora
 
 sora export \
   --format json-debug \
-  --data-format xlsx \
+  --default-source-format xlsx \
   --project examples/simple/project.toml \
   --data-root generated/excel \
   --out generated/debug-json
 
 sora export \
   --format json-debug \
-  --data-format csv \
+  --default-source-format csv \
   --project examples/simple/project.toml \
   --data-root generated/csv \
   --out generated/debug-json
@@ -145,7 +147,7 @@ The same root manifest can declare build outputs. Relative paths are resolved fr
 
 ```toml
 [build]
-data_format = "xlsx"
+default_source_format = "xlsx"
 data_root = "data"
 schema_lock = "generated/schema.lock"
 excel_templates = "generated/excel"
@@ -248,7 +250,7 @@ file = "Item.xlsx"
 sheet = "Item"
 ```
 
-The CLI can still read TOML row data through `--data-format toml` for tests and simple automation, and CSV row data through `--data-format csv` when each file has a header row matching schema field names. Validation checks required fields, unknown fields, primitive compatibility, enum values, ranges, struct fields, references, map keys, and singleton row counts.
+The CLI can still read TOML row data through `--default-source-format toml` for tests and simple automation, and CSV row data through `--default-source-format csv` when each file has a header row matching schema field names. Validation checks required fields, unknown fields, primitive compatibility, enum values, ranges, struct fields, references, map keys, and singleton row counts.
 
 Inline object fields can use tuple parsing when JSON is too verbose for table editing. Define a struct, then set `parser = { kind = "tuple" }` on a `struct<T>` field:
 
@@ -285,7 +287,7 @@ Lists of small inline structs can use `tuple_list`. The default item separator i
 ```toml
 [[tables.fields]]
 name = "materials"
-type = "list<ResourceCost>"
+type = "list<struct<ResourceCost>>"
 parser = { kind = "tuple_list" }
 ```
 
@@ -311,6 +313,10 @@ Exporters implement a common `DataExporter` trait and are selected by format nam
 
 - `binary`: writes a production-oriented `.sora` bundle file.
 - `json-debug`: writes deterministic per-table JSON files for inspection.
+- `json`: writes a runtime JSON bundle.
+- `cbor`: writes a runtime CBOR bundle.
+- `sora-protobuf`: writes a Sora value-model Protobuf bundle.
+- `proto`: writes a typed Protobuf bundle.
 
 The binary bundle uses a language-neutral sectioned layout: a fixed header, a section directory, a schema section, and one raw table section per table. Compression is currently `none` at the section level, leaving room for future LZ4/Zstd without changing the table row encoding.
 
