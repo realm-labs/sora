@@ -84,9 +84,44 @@
     }
   }
 
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", addLanguageToggle);
-  } else {
+  function languageForPath(path) {
+    var marker = "/sora/";
+    var index = path.indexOf(marker);
+    var relative = index >= 0 ? path.slice(index + marker.length) : path.replace(/^\/+/, "");
+    return relative.startsWith("zh/") ? "zh" : "en";
+  }
+
+  function filterSidebar() {
+    var currentLanguage = languageForPath(window.location.pathname);
+    var sidebar = document.getElementById("sidebar");
+    if (!sidebar) {
+      return;
+    }
+
+    sidebar.querySelectorAll("li.chapter-item").forEach(function (item) {
+      if (item.querySelector(".part-title")) {
+        item.hidden = true;
+        return;
+      }
+
+      var link = item.querySelector(".chapter-link-wrapper > a");
+      if (!link) {
+        return;
+      }
+
+      var linkLanguage = languageForPath(new URL(link.href, window.location.href).pathname);
+      item.hidden = linkLanguage !== currentLanguage;
+    });
+  }
+
+  function initialize() {
     addLanguageToggle();
+    filterSidebar();
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initialize);
+  } else {
+    initialize();
   }
 })();
