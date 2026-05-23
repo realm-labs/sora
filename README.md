@@ -52,7 +52,6 @@ Release asset names follow this pattern:
 
 - `sora-vX.Y.Z-windows-x64.zip`
 - `sora-vX.Y.Z-linux-x64.tar.gz`
-- `sora-vX.Y.Z-macos-x64.tar.gz`
 - `sora-vX.Y.Z-macos-arm64.tar.gz`
 
 Each release also publishes a `.sha256` checksum file next to every archive.

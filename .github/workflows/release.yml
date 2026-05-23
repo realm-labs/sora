@@ -157,11 +157,6 @@ jobs:
             package_suffix: windows-x64
             archive_ext: zip
             binary_name: sora.exe
-          - os: macos-13
-            target: x86_64-apple-darwin
-            package_suffix: macos-x64
-            archive_ext: tar.gz
-            binary_name: sora
           - os: macos-latest
             target: aarch64-apple-darwin
             package_suffix: macos-arm64
@@ -176,9 +171,16 @@ jobs:
           targets: ${{ matrix.target }}
 
       - name: Apply release version
-        run: python3 scripts/set_release_version.py "${{ needs.prepare.outputs.version }}"
+        shell: bash
+        run: |
+          if command -v python3 >/dev/null 2>&1; then
+            python3 scripts/set_release_version.py "${{ needs.prepare.outputs.version }}"
+          else
+            python scripts/set_release_version.py "${{ needs.prepare.outputs.version }}"
+          fi
 
       - name: Refresh lockfile metadata
+        shell: bash
         run: cargo metadata --format-version 1 > /dev/null
 
       - name: Build release binary
@@ -194,14 +196,15 @@ jobs:
           TAG: ${{ needs.prepare.outputs.tag }}
         run: |
           $ErrorActionPreference = 'Stop'
-          $packageName = "sora-$TAG-$PACKAGE_SUFFIX"
+          $packageName = "sora-{0}-{1}" -f $env:TAG, $env:PACKAGE_SUFFIX
           $packageDir = Join-Path "dist" $packageName
           New-Item -ItemType Directory -Force -Path $packageDir | Out-Null
 
-          Copy-Item "target/$TARGET/release/$BINARY_NAME" "$packageDir/$BINARY_NAME"
+          $binaryPath = "target/{0}/release/{1}" -f $env:TARGET, $env:BINARY_NAME
+          Copy-Item $binaryPath "$packageDir/$env:BINARY_NAME"
           Copy-Item "README.md" "$packageDir/README.md"
 
-          if ($ARCHIVE_EXT -eq "zip") {
+          if ($env:ARCHIVE_EXT -eq "zip") {
               $archive = "dist/$packageName.zip"
               Compress-Archive -Path $packageDir -DestinationPath $archive -Force
           } else {
@@ -211,7 +214,8 @@ jobs:
 
           $hash = (Get-FileHash $archive -Algorithm SHA256).Hash.ToLowerInvariant()
           $archiveName = Split-Path $archive -Leaf
-          Set-Content -Path "$archive.sha256" -Value "$hash  $archiveName"
+          $checksum = "$archive.sha256"
+          Set-Content -Path $checksum -Value "$hash  $archiveName"
 
       - name: Upload release assets
         shell: pwsh
@@ -222,8 +226,9 @@ jobs:
           ARCHIVE_EXT: ${{ matrix.archive_ext }}
         run: |
           $ErrorActionPreference = 'Stop'
-          $archive = "dist/sora-$TAG-$PACKAGE_SUFFIX.$ARCHIVE_EXT"
-          gh release upload $TAG $archive "$archive.sha256" --clobber
+          $archive = "dist/sora-{0}-{1}.{2}" -f $env:TAG, $env:PACKAGE_SUFFIX, $env:ARCHIVE_EXT
+          $checksum = "$archive.sha256"
+          gh release upload $env:TAG $archive $checksum --clobber
 
   publish-crates:
     name: Publish crates.io packages
