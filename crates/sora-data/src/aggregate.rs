@@ -32,7 +32,7 @@ fn materialize_table_aggregation(
         .aggregation
         .as_ref()
         .expect("caller filters to aggregation fields");
-    let element_struct = aggregation_element_struct(ir, field)?;
+    let shape = aggregation_shape(ir, field)?;
     let Some(parent_data) = materialized
         .tables
         .iter_mut()
@@ -62,31 +62,87 @@ fn materialize_table_aggregation(
 
         let values = child_rows
             .into_iter()
-            .map(|row| aggregate_struct_value(&aggregation.source_table, row, element_struct))
+            .map(|row| aggregate_child_value(&aggregation.source_table, row, &shape.value))
             .collect::<Result<Vec<_>>>()?;
-        parent_row
-            .values
-            .insert(field.name.clone(), Value::List(values));
+        let value = match shape.cardinality {
+            AggregationCardinality::List => Value::List(values),
+            AggregationCardinality::RequiredOne => {
+                if values.len() != 1 {
+                    return Err(aggregation_row_count_error(
+                        parent_table,
+                        field,
+                        aggregation,
+                        parent_key,
+                        "exactly 1",
+                        values.len(),
+                    ));
+                }
+                values.into_iter().next().expect("checked one value")
+            }
+            AggregationCardinality::OptionalOne => {
+                if values.len() > 1 {
+                    return Err(aggregation_row_count_error(
+                        parent_table,
+                        field,
+                        aggregation,
+                        parent_key,
+                        "at most 1",
+                        values.len(),
+                    ));
+                }
+                values.into_iter().next().unwrap_or(Value::Null)
+            }
+        };
+        parent_row.values.insert(field.name.clone(), value);
     }
 
     Ok(())
 }
 
-fn aggregation_element_struct<'a>(ir: &'a ConfigIr, field: &FieldIr) -> Result<&'a StructIr> {
-    let TypeIr::List(element) = &field.ty else {
-        return Err(SoraError::InvalidSchema(format!(
-            "aggregation field `{}` must have type `list<struct>`",
-            field.name
-        )));
+struct AggregationShape<'a> {
+    cardinality: AggregationCardinality,
+    value: AggregationValue<'a>,
+}
+
+#[derive(Debug, Clone, Copy)]
+enum AggregationCardinality {
+    List,
+    RequiredOne,
+    OptionalOne,
+}
+
+enum AggregationValue<'a> {
+    Struct(&'a StructIr),
+    Field(&'a str),
+}
+
+fn aggregation_shape<'a>(ir: &'a ConfigIr, field: &'a FieldIr) -> Result<AggregationShape<'a>> {
+    let aggregation = field
+        .aggregation
+        .as_ref()
+        .expect("caller filters to aggregation fields");
+    let (cardinality, value_ty) = match &field.ty {
+        TypeIr::List(element) => (AggregationCardinality::List, element.as_ref()),
+        TypeIr::Optional(element) => (AggregationCardinality::OptionalOne, element.as_ref()),
+        ty => (AggregationCardinality::RequiredOne, ty),
     };
-    let TypeIr::Struct(struct_name) = element.as_ref() else {
+
+    if let Some(value_field) = &aggregation.value_field {
+        return Ok(AggregationShape {
+            cardinality,
+            value: AggregationValue::Field(value_field),
+        });
+    }
+
+    let TypeIr::Struct(struct_name) = value_ty else {
         return Err(SoraError::InvalidSchema(format!(
-            "aggregation field `{}` must aggregate struct values",
+            "aggregation field `{}` must aggregate struct values or declare `value_field`",
             field.name
         )));
     };
 
-    ir.structs
+    let struct_ir = ir
+        .structs
         .iter()
         .find(|item| item.name == *struct_name)
         .ok_or_else(|| {
@@ -94,7 +150,12 @@ fn aggregation_element_struct<'a>(ir: &'a ConfigIr, field: &FieldIr) -> Result<&
                 "aggregation field `{}` references unknown struct `{struct_name}`",
                 field.name
             ))
-        })
+        })?;
+
+    Ok(AggregationShape {
+        cardinality,
+        value: AggregationValue::Struct(struct_ir),
+    })
 }
 
 fn matching_child_rows<'a>(
@@ -134,6 +195,45 @@ fn aggregate_struct_value(
         }
     }
     Ok(Value::Object(values))
+}
+
+fn aggregate_child_value(
+    source_table: &str,
+    row: &RowData,
+    value: &AggregationValue<'_>,
+) -> Result<Value> {
+    match value {
+        AggregationValue::Struct(struct_ir) => aggregate_struct_value(source_table, row, struct_ir),
+        AggregationValue::Field(field) => {
+            row.values
+                .get(*field)
+                .cloned()
+                .ok_or_else(|| SoraError::MissingRequiredField {
+                    table: source_table.to_owned(),
+                    field: (*field).to_owned(),
+                })
+        }
+    }
+}
+
+fn aggregation_row_count_error(
+    parent_table: &TableIr,
+    field: &FieldIr,
+    aggregation: &AggregationIr,
+    parent_key: &Value,
+    expected: &'static str,
+    actual: usize,
+) -> SoraError {
+    SoraError::InvalidSchema(format!(
+        "aggregation field `{}` in table `{}` expected {} row from `{}` where `{}` = `{}`, but found {}",
+        field.name,
+        parent_table.name,
+        expected,
+        aggregation.source_table,
+        aggregation.child_key,
+        stable_key(parent_key),
+        actual
+    ))
 }
 
 fn compare_order_field(left: &RowData, right: &RowData, order_by: &str) -> Ordering {
@@ -238,6 +338,131 @@ mod tests {
         );
     }
 
+    #[test]
+    fn materializes_single_child_value_field() {
+        let ir = single_value_aggregation_ir("string");
+        let data = ConfigData {
+            tables: vec![
+                TableData {
+                    name: "Item".to_owned(),
+                    rows: vec![RowData {
+                        values: BTreeMap::from([("id".to_owned(), Value::Integer(1001))]),
+                    }],
+                },
+                TableData {
+                    name: "ItemProfile".to_owned(),
+                    rows: vec![RowData {
+                        values: BTreeMap::from([
+                            ("item_id".to_owned(), Value::Integer(1001)),
+                            ("name".to_owned(), Value::String("Iron Sword".to_owned())),
+                            ("notes".to_owned(), Value::String("ignored".to_owned())),
+                        ]),
+                    }],
+                },
+            ],
+        };
+
+        let materialized = materialize_aggregations(&ir, &data).unwrap();
+
+        assert_eq!(
+            materialized.tables[0].rows[0].values["display_name"],
+            Value::String("Iron Sword".to_owned())
+        );
+    }
+
+    #[test]
+    fn materializes_missing_optional_child_value_as_null() {
+        let ir = single_value_aggregation_ir("optional<string>");
+        let data = ConfigData {
+            tables: vec![
+                TableData {
+                    name: "Item".to_owned(),
+                    rows: vec![RowData {
+                        values: BTreeMap::from([("id".to_owned(), Value::Integer(1001))]),
+                    }],
+                },
+                TableData {
+                    name: "ItemProfile".to_owned(),
+                    rows: Vec::new(),
+                },
+            ],
+        };
+
+        let materialized = materialize_aggregations(&ir, &data).unwrap();
+
+        assert_eq!(
+            materialized.tables[0].rows[0].values["display_name"],
+            Value::Null
+        );
+    }
+
+    #[test]
+    fn rejects_missing_required_single_child_value() {
+        let ir = single_value_aggregation_ir("string");
+        let data = ConfigData {
+            tables: vec![
+                TableData {
+                    name: "Item".to_owned(),
+                    rows: vec![RowData {
+                        values: BTreeMap::from([("id".to_owned(), Value::Integer(1001))]),
+                    }],
+                },
+                TableData {
+                    name: "ItemProfile".to_owned(),
+                    rows: Vec::new(),
+                },
+            ],
+        };
+
+        let error = materialize_aggregations(&ir, &data).unwrap_err();
+
+        assert!(
+            error
+                .to_string()
+                .contains("expected exactly 1 row from `ItemProfile`")
+        );
+    }
+
+    #[test]
+    fn rejects_multiple_single_child_values() {
+        let ir = single_value_aggregation_ir("optional<string>");
+        let data = ConfigData {
+            tables: vec![
+                TableData {
+                    name: "Item".to_owned(),
+                    rows: vec![RowData {
+                        values: BTreeMap::from([("id".to_owned(), Value::Integer(1001))]),
+                    }],
+                },
+                TableData {
+                    name: "ItemProfile".to_owned(),
+                    rows: vec![
+                        RowData {
+                            values: BTreeMap::from([
+                                ("item_id".to_owned(), Value::Integer(1001)),
+                                ("name".to_owned(), Value::String("Iron Sword".to_owned())),
+                            ]),
+                        },
+                        RowData {
+                            values: BTreeMap::from([
+                                ("item_id".to_owned(), Value::Integer(1001)),
+                                ("name".to_owned(), Value::String("Sword".to_owned())),
+                            ]),
+                        },
+                    ],
+                },
+            ],
+        };
+
+        let error = materialize_aggregations(&ir, &data).unwrap_err();
+
+        assert!(
+            error
+                .to_string()
+                .contains("expected at most 1 row from `ItemProfile`")
+        );
+    }
+
     fn aggregation_ir() -> ConfigIr {
         let schema: SchemaFile = toml::from_str(
             r#"
@@ -304,6 +529,54 @@ type = "i32"
 required = true
 "#,
         )
+        .unwrap();
+        let ir = normalize_schema(schema).unwrap();
+        validate_config_ir(&ir).unwrap();
+        ir
+    }
+
+    fn single_value_aggregation_ir(field_type: &str) -> ConfigIr {
+        let schema: SchemaFile = toml::from_str(&format!(
+            r#"
+package = "game_config"
+
+[[tables]]
+name = "Item"
+mode = "map"
+key = "id"
+
+[[tables.fields]]
+name = "id"
+type = "i32"
+required = true
+
+[[tables.fields]]
+name = "display_name"
+type = "{field_type}"
+source_table = "ItemProfile"
+parent_key = "id"
+child_key = "item_id"
+value_field = "name"
+
+[[tables]]
+name = "ItemProfile"
+mode = "list"
+
+[[tables.fields]]
+name = "item_id"
+type = "i32"
+required = true
+
+[[tables.fields]]
+name = "name"
+type = "string"
+required = true
+
+[[tables.fields]]
+name = "notes"
+type = "string"
+"#
+        ))
         .unwrap();
         let ir = normalize_schema(schema).unwrap();
         validate_config_ir(&ir).unwrap();

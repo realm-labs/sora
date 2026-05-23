@@ -114,6 +114,7 @@ pub struct AggregationIr {
     pub source_table: String,
     pub parent_key: String,
     pub child_key: String,
+    pub value_field: Option<String>,
     pub order_by: Option<String>,
 }
 

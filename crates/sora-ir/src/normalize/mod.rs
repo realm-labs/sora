@@ -230,13 +230,16 @@ fn convert_field_with_parsers(
     field: FieldSchema,
     parser_registry: &ParserRegistry,
 ) -> Result<FieldIr> {
+    let value_field = field.value_field;
+    let order_by = field.order_by;
     let aggregation = match (field.source_table, field.parent_key, field.child_key) {
-        (None, None, None) => None,
+        (None, None, None) if value_field.is_none() && order_by.is_none() => None,
         (Some(source_table), Some(parent_key), Some(child_key)) => Some(AggregationIr {
             source_table,
             parent_key,
             child_key,
-            order_by: field.order_by,
+            value_field,
+            order_by,
         }),
         _ => {
             return Err(SoraError::InvalidSchema(format!(

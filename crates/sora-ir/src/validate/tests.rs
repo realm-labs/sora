@@ -345,6 +345,251 @@ type = "i32"
 }
 
 #[test]
+fn validates_single_value_field_aggregation() {
+    let ir = example_ir(
+        r#"
+[[unions]]
+name = "EventCondition"
+tag = "type"
+
+[[unions.variants]]
+name = "QuestCompleted"
+
+[[unions.variants.fields]]
+name = "quest_id"
+type = "i32"
+
+[[tables]]
+name = "Event"
+mode = "map"
+key = "id"
+
+[[tables.fields]]
+name = "id"
+type = "i32"
+
+[[tables.fields]]
+name = "condition"
+type = "union<EventCondition>"
+source_table = "EventConditionEntry"
+parent_key = "id"
+child_key = "event_id"
+value_field = "value"
+
+[[tables]]
+name = "EventConditionEntry"
+mode = "list"
+
+[[tables.fields]]
+name = "event_id"
+type = "ref<Event.id>"
+
+[[tables.fields]]
+name = "value"
+type = "union<EventCondition>"
+"#,
+    );
+
+    validate_config_ir(&ir).unwrap();
+}
+
+#[test]
+fn validates_optional_value_field_aggregation() {
+    let ir = example_ir(
+        r#"
+[[tables]]
+name = "Item"
+mode = "map"
+key = "id"
+
+[[tables.fields]]
+name = "id"
+type = "i32"
+
+[[tables.fields]]
+name = "display_name"
+type = "optional<string>"
+source_table = "ItemProfile"
+parent_key = "id"
+child_key = "item_id"
+value_field = "name"
+
+[[tables]]
+name = "ItemProfile"
+mode = "list"
+
+[[tables.fields]]
+name = "item_id"
+type = "ref<Item.id>"
+
+[[tables.fields]]
+name = "name"
+type = "string"
+"#,
+    );
+
+    validate_config_ir(&ir).unwrap();
+}
+
+#[test]
+fn rejects_scalar_aggregation_without_value_field() {
+    let ir = example_ir(
+        r#"
+[[tables]]
+name = "Item"
+mode = "map"
+key = "id"
+
+[[tables.fields]]
+name = "id"
+type = "i32"
+
+[[tables.fields]]
+name = "display_name"
+type = "string"
+source_table = "ItemProfile"
+parent_key = "id"
+child_key = "item_id"
+
+[[tables]]
+name = "ItemProfile"
+mode = "list"
+
+[[tables.fields]]
+name = "item_id"
+type = "ref<Item.id>"
+"#,
+    );
+
+    assert!(matches!(
+        validate_config_ir(&ir).unwrap_err(),
+        SoraError::InvalidSchema(message)
+            if message.contains("must aggregate struct values or declare `value_field`")
+    ));
+}
+
+#[test]
+fn rejects_unknown_aggregation_value_field() {
+    let ir = example_ir(
+        r#"
+[[tables]]
+name = "Item"
+mode = "map"
+key = "id"
+
+[[tables.fields]]
+name = "id"
+type = "i32"
+
+[[tables.fields]]
+name = "display_name"
+type = "string"
+source_table = "ItemProfile"
+parent_key = "id"
+child_key = "item_id"
+value_field = "missing"
+
+[[tables]]
+name = "ItemProfile"
+mode = "list"
+
+[[tables.fields]]
+name = "item_id"
+type = "ref<Item.id>"
+"#,
+    );
+
+    assert!(matches!(
+        validate_config_ir(&ir).unwrap_err(),
+        SoraError::UnknownRefField { ref_field, .. } if ref_field == "missing"
+    ));
+}
+
+#[test]
+fn rejects_incompatible_aggregation_value_field_type() {
+    let ir = example_ir(
+        r#"
+[[tables]]
+name = "Item"
+mode = "map"
+key = "id"
+
+[[tables.fields]]
+name = "id"
+type = "i32"
+
+[[tables.fields]]
+name = "display_name"
+type = "string"
+source_table = "ItemProfile"
+parent_key = "id"
+child_key = "item_id"
+value_field = "level"
+
+[[tables]]
+name = "ItemProfile"
+mode = "list"
+
+[[tables.fields]]
+name = "item_id"
+type = "ref<Item.id>"
+
+[[tables.fields]]
+name = "level"
+type = "i32"
+"#,
+    );
+
+    assert!(matches!(
+        validate_config_ir(&ir).unwrap_err(),
+        SoraError::InvalidSchema(message)
+            if message.contains("maps source value field `level` with incompatible type")
+    ));
+}
+
+#[test]
+fn rejects_optional_source_for_required_aggregation_value_field() {
+    let ir = example_ir(
+        r#"
+[[tables]]
+name = "Item"
+mode = "map"
+key = "id"
+
+[[tables.fields]]
+name = "id"
+type = "i32"
+
+[[tables.fields]]
+name = "display_name"
+type = "string"
+source_table = "ItemProfile"
+parent_key = "id"
+child_key = "item_id"
+value_field = "name"
+
+[[tables]]
+name = "ItemProfile"
+mode = "list"
+
+[[tables.fields]]
+name = "item_id"
+type = "ref<Item.id>"
+
+[[tables.fields]]
+name = "name"
+type = "optional<string>"
+"#,
+    );
+
+    assert!(matches!(
+        validate_config_ir(&ir).unwrap_err(),
+        SoraError::InvalidSchema(message)
+            if message.contains("maps source value field `name` with incompatible type")
+    ));
+}
+
+#[test]
 fn validates_tagged_columns_projection() {
     let ir = example_ir(
         r#"

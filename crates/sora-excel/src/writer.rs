@@ -238,6 +238,9 @@ fn field_note_text(ir: &ConfigIr, field: &FieldIr) -> Option<String> {
             "Aggregation: {}.{} -> {}",
             aggregation.source_table, aggregation.child_key, aggregation.parent_key
         ));
+        if let Some(value_field) = &aggregation.value_field {
+            lines.push(format!("Aggregation value field: {value_field}"));
+        }
     }
 
     Some(lines.join("\n"))
@@ -520,6 +523,7 @@ mod tests {
                 source_table: "Reward".to_owned(),
                 parent_key: "id".to_owned(),
                 child_key: "item_id".to_owned(),
+                value_field: Some("value".to_owned()),
                 order_by: Some("rank".to_owned()),
             }),
         };
@@ -536,6 +540,7 @@ mod tests {
         assert!(note_text.contains("Range: 1..99"));
         assert!(note_text.contains("Length: 1..3"));
         assert!(note_text.contains("Aggregation: Reward.item_id -> id"));
+        assert!(note_text.contains("Aggregation value field: value"));
     }
 
     #[test]

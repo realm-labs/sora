@@ -480,6 +480,66 @@ mode = "list"
 }
 
 #[test]
+fn normalizes_aggregation_value_field() {
+    let schema: SchemaFile = toml::from_str(
+        r#"
+package = "game_config"
+
+[[tables]]
+name = "Item"
+mode = "map"
+key = "id"
+
+[[tables.fields]]
+name = "id"
+type = "i32"
+
+[[tables.fields]]
+name = "display_name"
+type = "string"
+source_table = "ItemProfile"
+parent_key = "id"
+child_key = "item_id"
+value_field = "name"
+
+[[tables]]
+name = "ItemProfile"
+mode = "list"
+"#,
+    )
+    .unwrap();
+
+    let ir = normalize_schema(schema).unwrap();
+    let aggregation = ir.tables[0].fields[1].aggregation.as_ref().unwrap();
+    assert_eq!(aggregation.value_field.as_deref(), Some("name"));
+}
+
+#[test]
+fn rejects_value_field_without_aggregation_keys() {
+    let schema: SchemaFile = toml::from_str(
+        r#"
+package = "game_config"
+
+[[tables]]
+name = "Item"
+mode = "list"
+
+[[tables.fields]]
+name = "display_name"
+type = "string"
+value_field = "name"
+"#,
+    )
+    .unwrap();
+
+    assert!(matches!(
+        normalize_schema(schema).unwrap_err(),
+        SoraError::InvalidSchema(message)
+            if message.contains("incomplete aggregation metadata")
+    ));
+}
+
+#[test]
 fn rejects_default_on_aggregation_fields() {
     let schema: SchemaFile = toml::from_str(
         r#"

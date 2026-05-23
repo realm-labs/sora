@@ -72,7 +72,7 @@ pub(super) fn validate_aggregation(
         )));
     }
 
-    validate_aggregation_result_type(field, source_table, structs, tables)?;
+    validate_aggregation_result_type(field, aggregation, source_table, structs, tables)?;
 
     if let Some(order_by) = &aggregation.order_by
         && !source_table
@@ -94,19 +94,38 @@ pub(super) fn validate_aggregation(
 
 fn validate_aggregation_result_type(
     field: &FieldIr,
+    aggregation: &AggregationIr,
     source_table: &TableIr,
     structs: &[StructIr],
     tables: &[TableIr],
 ) -> Result<()> {
-    let TypeIr::List(element) = &field.ty else {
+    let value_ty = aggregation_value_type(&field.ty);
+    if let Some(value_field) = &aggregation.value_field {
+        let Some(source_field) = source_table
+            .fields
+            .iter()
+            .find(|candidate| candidate.name == *value_field)
+        else {
+            return Err(SoraError::UnknownRefField {
+                owner_kind: "table",
+                owner: source_table.name.clone(),
+                field: field.name.clone(),
+                table: source_table.name.clone(),
+                ref_field: value_field.clone(),
+            });
+        };
+        if !aggregation_value_types_compatible(&field.ty, value_ty, &source_field.ty, tables) {
+            return Err(SoraError::InvalidSchema(format!(
+                "aggregation field `{}` maps source value field `{}` with incompatible type `{}` into `{}`",
+                field.name, source_field.name, source_field.ty, field.ty
+            )));
+        }
+        return Ok(());
+    }
+
+    let TypeIr::Struct(struct_name) = value_ty else {
         return Err(SoraError::InvalidSchema(format!(
-            "aggregation field `{}` must have type `list<struct>`",
-            field.name
-        )));
-    };
-    let TypeIr::Struct(struct_name) = element.as_ref() else {
-        return Err(SoraError::InvalidSchema(format!(
-            "aggregation field `{}` must aggregate struct values",
+            "aggregation field `{}` must aggregate struct values or declare `value_field`",
             field.name
         )));
     };
@@ -140,6 +159,24 @@ fn validate_aggregation_result_type(
     }
 
     Ok(())
+}
+
+fn aggregation_value_type(ty: &TypeIr) -> &TypeIr {
+    match ty {
+        TypeIr::List(element) => element,
+        TypeIr::Optional(element) => element,
+        _ => ty,
+    }
+}
+
+fn aggregation_value_types_compatible(
+    target_field: &TypeIr,
+    target_value: &TypeIr,
+    source: &TypeIr,
+    tables: &[TableIr],
+) -> bool {
+    types_compatible(target_value, source, tables)
+        || matches!(target_field, TypeIr::Optional(_) if types_compatible(target_field, source, tables))
 }
 
 fn types_compatible(left: &TypeIr, right: &TypeIr, tables: &[TableIr]) -> bool {

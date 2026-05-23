@@ -84,8 +84,9 @@ parser = { kind = "map" }
 | `source_table` | 仅表字段 | 聚合 source table。必须和 `parent_key`、`child_key` 一起使用。 |
 | `parent_key` | 仅表字段 | 聚合时 owner table 上的 key 字段。 |
 | `child_key` | 仅表字段 | 聚合时 source table 上的 key 字段。 |
+| `value_field` | 表聚合字段 | 可选的 source-table 字段，用作聚合值。 |
 | `order_by` | 表聚合字段 | 可选的 source-table 排序字段，按升序聚合。 |
 
 default 写成字符串，因为它会走和源数据相同的类型感知转换路径。
 
-`source_table`、`parent_key`、`child_key` 用来描述聚合字段，详见[引用和聚合](references.md)。聚合字段必须是 `list<struct<...>>`，且不能声明 `default`。
+`source_table`、`parent_key`、`child_key` 用来描述聚合字段，详见[引用和聚合](references.md)。聚合字段可以是 `list<T>`、`T` 或 `optional<T>`，且不能声明 `default`。

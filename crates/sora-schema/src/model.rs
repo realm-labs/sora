@@ -165,6 +165,7 @@ pub struct FieldSchema {
     pub source_table: Option<String>,
     pub parent_key: Option<String>,
     pub child_key: Option<String>,
+    pub value_field: Option<String>,
     pub order_by: Option<String>,
 }
 

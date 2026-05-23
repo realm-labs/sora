@@ -84,8 +84,9 @@ The same field object is used in `[[tables.fields]]`, `[[structs.fields]]`, and 
 | `source_table` | table fields only | Aggregation source table. Must be used with `parent_key` and `child_key`. |
 | `parent_key` | table fields only | Aggregation key field on the owner table. |
 | `child_key` | table fields only | Aggregation key field on the source table. |
+| `value_field` | table aggregation fields | Optional source-table field copied as the aggregation value. |
 | `order_by` | table aggregation fields | Optional source-table field used for ascending aggregation order. |
 
 Defaults are written as strings because they are parsed through the same type-aware conversion path as source data.
 
-`source_table`, `parent_key`, and `child_key` describe aggregation fields; see [References and Aggregation](references.md). Aggregation fields must have type `list<struct<...>>` and cannot declare `default`.
+`source_table`, `parent_key`, and `child_key` describe aggregation fields; see [References and Aggregation](references.md). Aggregation fields can be `list<T>`, `T`, or `optional<T>` and cannot declare `default`.
