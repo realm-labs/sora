@@ -1,19 +1,38 @@
 # Quick Start
 
-Install from source during development:
+This guide builds a minimal item table, generates an Excel template, exports a runtime bundle, and generates Rust code that can load it.
+
+Install the CLI from source during development:
 
 ```bash
 cargo install --path crates/sora-cli
 ```
 
-Create a project manifest:
+## 1. Create a Project
+
+Create `project.toml`:
 
 ```toml
 package = "game_config"
 includes = ["schema/items.toml"]
+
+[build]
+default_source_format = "xlsx"
+data_root = "data"
+schema_lock = "generated/schema.lock"
+excel_templates = "generated/excel"
+
+[[build.codegen]]
+target = "rust"
+out = "generated/rust"
+format = "auto"
+
+[[build.exports]]
+format = "binary"
+out = "generated/config.sora"
 ```
 
-Define a schema module:
+Create `schema/items.toml`:
 
 ```toml
 [[enums]]
@@ -35,33 +54,70 @@ name = "id"
 type = "i32"
 key = true
 required = true
+comment = "Item id"
 
 [[tables.fields]]
 name = "name"
 type = "string"
 required = true
+comment = "Display name"
 
 [[tables.fields]]
 name = "item_type"
 type = "enum<ItemType>"
 required = true
+comment = "Item category"
+
+[[tables.fields]]
+name = "max_stack"
+type = "i32"
+default = "1"
+range = [1, 9999]
+comment = "Stack limit"
 ```
 
-Generate code:
+## 2. Generate the Excel Template
+
+The workbook header is generated from the schema:
 
 ```bash
-sora gen rust --project project.toml --out generated/rust
+sora excel-template --project project.toml --out generated/excel
 ```
 
-Export data:
+This creates `generated/excel/Item.xlsx`. Copy it to `data/Item.xlsx` and fill rows below the generated header:
+
+| id | name | item_type | max_stack |
+| --- | --- | --- | --- |
+| 1001 | Iron Sword | Weapon | 1 |
+| 2001 | Health Potion | Consumable | 99 |
+
+## 3. Check, Export, and Generate
+
+Validate the schema:
 
 ```bash
+sora check --project project.toml
+```
+
+Run every output declared in `[build]`. This also loads and validates source data before writing exports:
+
+```bash
+sora build --project project.toml
+```
+
+Or run the steps separately:
+
+```bash
+sora gen --target rust --project project.toml --out generated/rust
+
 sora export \
   --format binary \
-  --data-format xlsx \
+  --default-source-format xlsx \
   --project project.toml \
   --data-root data \
   --out generated/config.sora
 ```
 
-For a complete multi-language project, start from `examples/showcase/project.toml`.
+## 4. Next Steps
+
+Read [First Config](tutorial/first-config.md) for the same example with the generated runtime usage, or inspect `examples/showcase/project.toml` for a larger multi-language setup.

@@ -7,6 +7,15 @@ Select a runtime format per codegen target:
 runtime_format = "sora"
 ```
 
+Runtime formats are the formats generated code can load. They correspond to export formats:
+
+| Codegen `runtime_format` | Required Export |
+| --- | --- |
+| `sora` | `binary` |
+| `json` | `json` |
+| `cbor` | `cbor` |
+| `sora-protobuf` | `sora-protobuf` |
+
 ## Support Matrix
 
 | Target | `sora` | `json` | `cbor` | `sora-protobuf` |
@@ -35,5 +44,15 @@ Dependency meanings:
 | standard library | Generated runtime uses the language standard library. |
 | managed dependency | Generated runtime expects normal package dependencies for that ecosystem. |
 | user adapter | Generated runtime exposes an adapter hook and the application supplies the concrete decoder. |
+
+## Choosing a Format
+
+Use `sora` when you want the native Sora binary bundle and the target supports it.
+
+Use `json` when inspectability, tooling, or platform simplicity matters more than compactness.
+
+Use `cbor` when you want a compact general-purpose binary value format and your runtime already has a CBOR dependency.
+
+Use `sora-protobuf` when your environment prefers Protobuf transport but you still want Sora's schema-driven value model.
 
 The CI runtime matrix generates every supported combination in this table and syntax-checks languages where the check is lightweight.

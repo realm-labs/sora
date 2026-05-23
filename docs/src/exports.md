@@ -2,7 +2,7 @@
 
 Sora separates data export from language code generation.
 
-The exporter receives validated data and writes a runtime bundle. Generated code then reads one of those bundle formats.
+The exporter receives validated data and writes a runtime bundle. Generated code then reads one of those bundle formats. This lets the same schema and data feed several languages or runtime storage choices.
 
 ## Built-in Exports
 
@@ -13,17 +13,22 @@ The exporter receives validated data and writes a runtime bundle. Generated code
 | `json` | Runtime JSON bundle. |
 | `cbor` | Runtime CBOR bundle. |
 | `sora-protobuf` | Runtime Protobuf bundle using Sora's value model. |
+| `proto` | Typed Protobuf bundle using a generated game-specific schema. |
 
-Example:
+The `binary` export is selected by `runtime_format = "sora"` in codegen options.
+
+## Command Example
 
 ```bash
 sora export \
   --format binary \
-  --data-format xlsx \
+  --default-source-format xlsx \
   --project project.toml \
   --data-root data \
   --out generated/config.sora
 ```
+
+## Build Manifest Example
 
 Build manifests can declare multiple exports:
 
@@ -36,3 +41,5 @@ out = "generated/config.sora"
 format = "json-debug"
 out = "generated/debug-json"
 ```
+
+When `sora build` runs, it checks that configured codegen targets have a matching export for their selected runtime format.

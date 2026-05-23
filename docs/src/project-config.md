@@ -7,7 +7,7 @@ package = "game_config"
 includes = ["schema/items.toml"]
 
 [build]
-data_format = "xlsx"
+default_source_format = "xlsx"
 data_root = "data"
 schema_lock = "generated/schema.lock"
 excel_templates = "generated/excel"
