@@ -185,6 +185,7 @@ mod tests {
         collections::BTreeMap,
         fs,
         path::PathBuf,
+        sync::atomic::{AtomicUsize, Ordering},
         time::{SystemTime, UNIX_EPOCH},
     };
 
@@ -250,10 +251,12 @@ type = "i32"
     }
 
     fn temp_dir() -> PathBuf {
+        static NEXT_ID: AtomicUsize = AtomicUsize::new(0);
         let unique = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .unwrap()
             .as_nanos();
-        std::env::temp_dir().join(format!("sora-export-test-{unique}"))
+        let id = NEXT_ID.fetch_add(1, Ordering::Relaxed);
+        std::env::temp_dir().join(format!("sora-export-test-{unique}-{id}"))
     }
 }
