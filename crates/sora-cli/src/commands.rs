@@ -1,7 +1,7 @@
 use anyhow::{Context, Result, bail};
 use sora_execution::{ExecutionContext, ExecutionOptions};
 use sora_export::exporter::{ExportCompression, ExportOptions, ExportOutput, OutputKind};
-use sora_input_toml::input::SchemaFileInput;
+use sora_input_schema::input::SchemaFileInput;
 
 use crate::args::{
     CheckArgs, Cli, Command, DiffArgs, ExcelTemplateArgs, ExportArgs, ExportCompressionArg,

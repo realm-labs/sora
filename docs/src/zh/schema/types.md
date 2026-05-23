@@ -67,7 +67,7 @@ parser = { kind = "map" }
 
 ## Field Rules
 
-`[[tables.fields]]`、`[[structs.fields]]` 和 `[[unions.variants.fields]]` 使用同一种 field object。只对表字段有意义的配置在下表单独标出。
+`[[tables.fields]]`、`[[structs.fields]]` 和 `[[unions.variants.fields]]` 共享通用字段属性。表字段额外拥有 key 和聚合相关属性；这些表专用属性不能写在 struct field 或 union variant field 上。
 
 | Property | 适用范围 | 作用 |
 | --- | --- | --- |
@@ -75,7 +75,7 @@ parser = { kind = "map" }
 | `type` | 所有字段 | 类型表达式，例如 `i32`、`struct<ResourceCost>` 或 `list<union<RewardAction>>`。 |
 | `required` | 所有字段 | 要求有值，除非存在 default。默认是 `false`。 |
 | `default` | 除聚合字段外的所有字段 | 源单元格或 object 字段缺失时使用的字符串值。 |
-| `key` | 表字段 | 标记表 key 字段。通常和 table-level `key` 一致。 |
+| `key` | 仅表字段 | 标记表 key 字段。通常和 table-level `key` 一致。 |
 | `comment` | 所有字段 | 用于生成 Excel 表头说明。 |
 | `range` | 数值字段和数值集合元素 | 数值闭区间，写作 `[min, max]`。 |
 | `length` | `string`、`list`、`set`、`array`、`map` | 长度闭区间，写作 `[min, max]`。 |

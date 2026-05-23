@@ -775,11 +775,9 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "clap",
- "mlua",
  "serde",
- "serde_json",
- "serde_yaml",
  "sora-codegen",
+ "sora-config-format",
  "sora-core",
  "sora-data",
  "sora-diagnostics",
@@ -787,11 +785,11 @@ dependencies = [
  "sora-export",
  "sora-input",
  "sora-input-csv",
+ "sora-input-schema",
  "sora-input-toml",
  "sora-input-xlsx",
  "sora-ir",
  "sora-schema",
- "toml",
 ]
 
 [[package]]
@@ -810,6 +808,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "sora-config-format"
+version = "0.1.0"
+dependencies = [
+ "mlua",
+ "serde",
+ "serde_json",
+ "serde_yaml",
+ "thiserror",
+ "toml",
+]
+
+[[package]]
 name = "sora-core"
 version = "0.1.0"
 dependencies = [
@@ -823,6 +833,7 @@ dependencies = [
  "sora-execution",
  "sora-export",
  "sora-input",
+ "sora-input-schema",
  "sora-input-toml",
  "sora-input-xlsx",
  "sora-ir",
@@ -913,13 +924,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "sora-input-schema"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "sora-config-format",
+ "sora-diagnostics",
+ "sora-input",
+ "sora-schema",
+]
+
+[[package]]
 name = "sora-input-toml"
 version = "0.1.0"
 dependencies = [
- "mlua",
  "serde",
- "serde_json",
- "serde_yaml",
  "sora-data",
  "sora-diagnostics",
  "sora-input",
@@ -973,7 +992,7 @@ dependencies = [
  "sora-core",
  "sora-excel",
  "sora-export",
- "sora-input-toml",
+ "sora-input-schema",
  "sora-input-xlsx",
  "sora-ir",
 ]

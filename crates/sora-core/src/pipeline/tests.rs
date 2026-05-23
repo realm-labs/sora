@@ -3,7 +3,9 @@ use sora_data::model::{ConfigData, RowData, TableData, Value};
 use sora_diagnostics::Result;
 use sora_export::exporter::ExportOutput;
 use sora_input::loaded::LoadedInput;
-use sora_input_toml::input::{ProjectFileInput, SchemaFileInput};
+use sora_input::project::SplitProjectInput;
+use sora_input_schema::input::SchemaFileInput;
+use sora_input_toml::input::TomlDataInput;
 use sora_schema::model::SchemaFile;
 use std::{
     collections::BTreeMap,
@@ -103,7 +105,10 @@ fn accepts_registered_codegen_target() {
 fn exports_data_through_registry() {
     let base = temp_dir();
     let project_path = write_example(&base);
-    let input = ProjectFileInput::new(&project_path, base.join("data"));
+    let input = SplitProjectInput::new(
+        SchemaFileInput::new(&project_path),
+        TomlDataInput::new(base.join("data")),
+    );
 
     export_data(
         &input,
@@ -168,7 +173,10 @@ fn scoped_export_filters_schema_and_data() {
 fn reports_unknown_export_format() {
     let base = temp_dir();
     let project_path = write_example(&base);
-    let input = ProjectFileInput::new(&project_path, base.join("data"));
+    let input = SplitProjectInput::new(
+        SchemaFileInput::new(&project_path),
+        TomlDataInput::new(base.join("data")),
+    );
 
     let error = export_data(&input, "nope", ExportOutput::File(base.join("out.bin"))).unwrap_err();
 

@@ -1,12 +1,8 @@
-use std::{
-    fs,
-    path::{Path, PathBuf},
-};
+use std::path::{Path, PathBuf};
 
 use anyhow::{Context, Result};
-use mlua::{Lua, LuaOptions, LuaSerdeExt, StdLib};
 use serde::Deserialize;
-use serde::de::DeserializeOwned;
+use sora_config_format::load_document;
 
 use crate::args::{CodeFormatMode, SourceFormatArg};
 #[derive(Debug, Deserialize)]
@@ -17,41 +13,9 @@ pub(super) struct BuildManifest {
 
 impl BuildManifest {
     pub(super) fn load(path: &Path) -> Result<Self> {
-        let content = fs::read_to_string(path)
-            .with_context(|| format!("failed to read project `{}`", path.display()))?;
-        match path.extension().and_then(|extension| extension.to_str()) {
-            Some("toml") => toml::from_str(&content)
-                .with_context(|| format!("failed to parse build config from `{}`", path.display())),
-            Some("yaml" | "yml") => serde_yaml::from_str(&content)
-                .with_context(|| format!("failed to parse build config from `{}`", path.display())),
-            Some("json") => serde_json::from_str(&content)
-                .with_context(|| format!("failed to parse build config from `{}`", path.display())),
-            Some("lua") => parse_lua_document(&content)
-                .with_context(|| format!("failed to parse build config from `{}`", path.display())),
-            Some(extension) => anyhow::bail!(
-                "project `{}` has unsupported extension `{extension}`",
-                path.display()
-            ),
-            None => anyhow::bail!("project `{}` must have an extension", path.display()),
-        }
+        load_document(path)
+            .with_context(|| format!("failed to load build config from `{}`", path.display()))
     }
-}
-
-fn parse_lua_document<T>(content: &str) -> Result<T>
-where
-    T: DeserializeOwned,
-{
-    let lua = Lua::new_with(
-        StdLib::TABLE | StdLib::STRING | StdLib::MATH | StdLib::UTF8,
-        LuaOptions::default(),
-    )
-    .map_err(|source| anyhow::anyhow!(source.to_string()))?;
-    let value = lua
-        .load(content)
-        .eval()
-        .map_err(|source| anyhow::anyhow!(source.to_string()))?;
-    lua.from_value(value)
-        .map_err(|source| anyhow::anyhow!(source.to_string()))
 }
 
 #[derive(Debug, Default, Deserialize)]

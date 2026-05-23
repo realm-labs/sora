@@ -18,6 +18,7 @@ sora-ir.workspace = true
 sora-schema.workspace = true
 
 [dev-dependencies]
+sora-input-schema.workspace = true
 sora-input-toml.workspace = true
 sora-input-xlsx.workspace = true
 rust_xlsxwriter.workspace = true

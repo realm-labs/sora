@@ -6,7 +6,9 @@ use std::{
 };
 
 use sora_export::exporter::ExportOutput;
-use sora_input_toml::input::{ProjectFileInput, SchemaFileInput};
+use sora_input::project::SplitProjectInput;
+use sora_input_schema::input::SchemaFileInput;
+use sora_input_toml::input::TomlDataInput;
 
 #[test]
 fn generated_rust_runtime_compiles_and_loads_config_bundles() {
@@ -40,7 +42,10 @@ fn generated_rust_runtime_compiles_and_loads_config_bundles() {
         let schema_input = SchemaFileInput::new(&project_path);
         sora_core::pipeline::generate_code(&schema_input, "rust", &generated_src).unwrap();
 
-        let project_input = ProjectFileInput::new(&project_path, base.join("data"));
+        let project_input = SplitProjectInput::new(
+            SchemaFileInput::new(&project_path),
+            TomlDataInput::new(base.join("data")),
+        );
         sora_core::pipeline::export_data(
             &project_input,
             case.export_format,

@@ -111,7 +111,7 @@ pub struct TableSchema {
     pub source: Option<TableSourceSchema>,
 
     #[serde(default)]
-    pub fields: Vec<FieldSchema>,
+    pub fields: Vec<TableFieldSchema>,
 
     #[serde(default)]
     pub indexes: Vec<IndexSchema>,
@@ -144,7 +144,27 @@ pub struct IndexSchema {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct FieldSchema {
+    pub name: String,
+
+    #[serde(rename = "type")]
+    pub ty: String,
+
+    #[serde(default)]
+    pub scope: ScopeSchema,
+
+    pub comment: Option<String>,
+    pub required: Option<bool>,
+    pub default: Option<String>,
+    pub range: Option<[i64; 2]>,
+    pub length: Option<[usize; 2]>,
+    pub parser: Option<ParserSchema>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct TableFieldSchema {
     pub name: String,
 
     #[serde(rename = "type")]
@@ -304,6 +324,26 @@ type = "string"
         assert!(schema.tables[0].indexes.is_empty());
         assert!(!schema.tables[0].fields[0].key);
         assert_eq!(schema.tables[0].fields[0].required, None);
+    }
+
+    #[test]
+    fn rejects_table_only_properties_on_struct_fields() {
+        let error = toml::from_str::<SchemaFile>(
+            r#"
+package = "game_config"
+
+[[structs]]
+name = "Reward"
+
+[[structs.fields]]
+name = "item_id"
+type = "i32"
+key = true
+"#,
+        )
+        .unwrap_err();
+
+        assert!(error.to_string().contains("unknown field `key`"));
     }
 
     #[test]

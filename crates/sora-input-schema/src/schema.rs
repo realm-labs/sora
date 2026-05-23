@@ -1,12 +1,10 @@
 use std::{
     collections::BTreeSet,
-    fs,
     path::{Path, PathBuf},
 };
 
-use mlua::{Lua, LuaOptions, LuaSerdeExt, StdLib};
 use serde::Deserialize;
-use serde::de::DeserializeOwned;
+use sora_config_format::{DocumentError, load_document};
 use sora_diagnostics::{Result, SoraError};
 use sora_schema::model::{
     CodegenSchema, EnumSchema, SchemaFile, StructSchema, TableSchema, UnionSchema,
@@ -80,84 +78,24 @@ fn merge_includes(
 }
 
 fn load_schema_document(path: &Path) -> Result<SchemaDocument> {
-    let content = fs::read_to_string(path).map_err(|source| SoraError::ReadFile {
-        path: path.to_path_buf(),
-        source,
-    })?;
-
-    match schema_format(path)? {
-        SchemaFormat::Toml => {
-            toml::from_str(&content).map_err(|source: toml::de::Error| SoraError::ParseSchema {
-                path: path.to_path_buf(),
-                message: source.to_string(),
-            })
-        }
-        SchemaFormat::Yaml => {
-            serde_yaml::from_str(&content).map_err(|source| SoraError::ParseSchema {
-                path: path.to_path_buf(),
-                message: source.to_string(),
-            })
-        }
-        SchemaFormat::Json => {
-            serde_json::from_str(&content).map_err(|source| SoraError::ParseSchema {
-                path: path.to_path_buf(),
-                message: source.to_string(),
-            })
-        }
-        SchemaFormat::Lua => parse_lua_document(path, &content),
-    }
+    load_document(path).map_err(schema_document_error)
 }
 
-fn parse_lua_document<T>(path: &Path, content: &str) -> Result<T>
-where
-    T: DeserializeOwned,
-{
-    let lua = Lua::new_with(
-        StdLib::TABLE | StdLib::STRING | StdLib::MATH | StdLib::UTF8,
-        LuaOptions::default(),
-    )
-    .map_err(|source| SoraError::ParseSchema {
-        path: path.to_path_buf(),
-        message: source.to_string(),
-    })?;
-    let value = lua
-        .load(content)
-        .eval()
-        .map_err(|source| SoraError::ParseSchema {
-            path: path.to_path_buf(),
-            message: source.to_string(),
-        })?;
-
-    lua.from_value(value)
-        .map_err(|source| SoraError::ParseSchema {
-            path: path.to_path_buf(),
-            message: source.to_string(),
-        })
-}
-
-fn schema_format(path: &Path) -> Result<SchemaFormat> {
-    match path.extension().and_then(|extension| extension.to_str()) {
-        Some("toml") => Ok(SchemaFormat::Toml),
-        Some("yaml" | "yml") => Ok(SchemaFormat::Yaml),
-        Some("json") => Ok(SchemaFormat::Json),
-        Some("lua") => Ok(SchemaFormat::Lua),
-        Some(extension) => Err(SoraError::InvalidSchema(format!(
-            "schema file `{}` has unsupported extension `{extension}`",
-            path.display()
-        ))),
-        None => Err(SoraError::InvalidSchema(format!(
+fn schema_document_error(error: DocumentError) -> SoraError {
+    match error {
+        DocumentError::Read { path, source } => SoraError::ReadFile { path, source },
+        DocumentError::Parse { path, message } => SoraError::ParseSchema { path, message },
+        DocumentError::UnsupportedExtension { path, extension } => {
+            SoraError::InvalidSchema(format!(
+                "schema file `{}` has unsupported extension `{extension}`",
+                path.display()
+            ))
+        }
+        DocumentError::MissingExtension { path } => SoraError::InvalidSchema(format!(
             "schema file `{}` must have an extension",
             path.display()
-        ))),
+        )),
     }
-}
-
-#[derive(Debug, Clone, Copy)]
-enum SchemaFormat {
-    Toml,
-    Yaml,
-    Json,
-    Lua,
 }
 
 #[derive(Debug, Deserialize)]
@@ -184,7 +122,10 @@ struct SchemaDocument {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::sync::atomic::{AtomicU64, Ordering};
+    use std::{
+        fs,
+        sync::atomic::{AtomicU64, Ordering},
+    };
 
     static TEMP_COUNTER: AtomicU64 = AtomicU64::new(0);
 

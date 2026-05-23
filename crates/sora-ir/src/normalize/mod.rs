@@ -1,7 +1,8 @@
 use sora_diagnostics::{Result, SoraError};
 use sora_schema::model::{
     EnumAliasSchema, FieldSchema, IndexSchema, ParserSchema, SchemaFile, ScopeSchema,
-    TableModeSchema, TableSchema, TableSourceSchema, UnionSchema, UnionVariantSchema,
+    TableFieldSchema, TableModeSchema, TableSchema, TableSourceSchema, UnionSchema,
+    UnionVariantSchema,
 };
 
 use crate::{
@@ -114,7 +115,7 @@ impl TryFrom<TableSchema> for TableIr {
             mode: table.mode.into(),
             key: table.key,
             source: table.source.map(Into::into),
-            fields: convert_fields(table.fields)?,
+            fields: convert_table_fields(table.fields)?,
             indexes: table.indexes.into_iter().map(IndexIr::from).collect(),
         })
     }
@@ -230,6 +231,54 @@ fn convert_field_with_parsers(
     field: FieldSchema,
     parser_registry: &ParserRegistry,
 ) -> Result<FieldIr> {
+    let ty = parse_type(&field.ty)?;
+    validate_length_constraint(&field.name, &ty, field.length)?;
+    if field.default.is_some()
+        && field
+            .parser
+            .as_ref()
+            .is_some_and(|parser| parser.kind == TAGGED_COLUMNS_PARSER)
+    {
+        return Err(SoraError::InvalidSchema(format!(
+            "field `{}` declares both `default` and parser `tagged_columns`",
+            field.name
+        )));
+    }
+    parser_registry.validate_field_parser(&field.name, &ty, field.parser.as_ref())?;
+
+    Ok(FieldIr {
+        name: field.name,
+        ty,
+        scope: ScopeIr::try_from(field.scope)?,
+        key: false,
+        comment: field.comment,
+        required: field.required.unwrap_or(false),
+        default: field.default,
+        range: field.range,
+        length: field.length,
+        parser: field.parser.map(ParserIr::from),
+        aggregation: None,
+    })
+}
+
+fn convert_table_fields(fields: Vec<TableFieldSchema>) -> Result<Vec<FieldIr>> {
+    convert_table_fields_with_parsers(fields, &ParserRegistry::builtin())
+}
+
+fn convert_table_fields_with_parsers(
+    fields: Vec<TableFieldSchema>,
+    parser_registry: &ParserRegistry,
+) -> Result<Vec<FieldIr>> {
+    fields
+        .into_iter()
+        .map(|field| convert_table_field_with_parsers(field, parser_registry))
+        .collect()
+}
+
+fn convert_table_field_with_parsers(
+    field: TableFieldSchema,
+    parser_registry: &ParserRegistry,
+) -> Result<FieldIr> {
     let value_field = field.value_field;
     let order_by = field.order_by;
     let aggregation = match (field.source_table, field.parent_key, field.child_key) {
@@ -329,7 +378,7 @@ fn convert_table_with_parsers(
         mode: table.mode.into(),
         key: table.key,
         source: table.source.map(Into::into),
-        fields: convert_fields_with_parsers(table.fields, parser_registry)?,
+        fields: convert_table_fields_with_parsers(table.fields, parser_registry)?,
         indexes: table.indexes.into_iter().map(IndexIr::from).collect(),
     })
 }

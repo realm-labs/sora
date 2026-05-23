@@ -5,7 +5,7 @@ use std::{
 
 use anyhow::{Context, Result};
 use sora_export::exporter::ExportOutput;
-use sora_input_toml::{input::SchemaFileInput, schema::load_project_schema_file};
+use sora_input_schema::{input::SchemaFileInput, schema::load_project_schema_file};
 use sora_input_xlsx::input::XlsxProjectInput;
 use sora_ir::{model::ConfigIr, normalize::normalize_schema, validate::validate_config_ir};
 

@@ -12,7 +12,7 @@ use sora_codegen::{
 use sora_execution::ExecutionContext;
 use sora_export::exporter::{ExportCompression, ExportOptions};
 use sora_input::traits::SchemaInput;
-use sora_input_toml::input::SchemaFileInput;
+use sora_input_schema::input::SchemaFileInput;
 use sora_schema::model::CodegenSchema;
 
 use crate::args::BuildArgs;

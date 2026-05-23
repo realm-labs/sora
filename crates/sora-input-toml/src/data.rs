@@ -92,9 +92,10 @@ fn convert_toml_value(value: toml::Value) -> Result<Value> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::input::ProjectFileInput;
-    use sora_input::traits::{DataInput, SchemaInput};
+    use crate::input::TomlDataInput;
+    use sora_input::traits::DataInput;
     use sora_ir::normalize::normalize_schema;
+    use sora_schema::model::SchemaFile;
     use std::{
         fs,
         path::PathBuf,
@@ -128,24 +129,13 @@ name = "Iron Sword"
     }
 
     #[test]
-    fn toml_project_input_loads_schema_and_data() {
+    fn toml_data_input_loads_project_data() {
         let base = temp_dir();
         let data_dir = base.join("data");
         fs::create_dir_all(&data_dir).unwrap();
-        let schema_dir = base.join("schema");
-        fs::create_dir_all(&schema_dir).unwrap();
-        let project_path = base.join("project.toml");
-        fs::write(
-            &project_path,
+        let schema = toml::from_str::<SchemaFile>(
             r#"
 package = "game_config"
-includes = ["schema/items.toml"]
-"#,
-        )
-        .unwrap();
-        fs::write(
-            schema_dir.join("items.toml"),
-            r#"
 
 [[tables]]
 name = "Item"
@@ -171,8 +161,8 @@ id = 1001
         )
         .unwrap();
 
-        let input = ProjectFileInput::new(&project_path, &data_dir);
-        let ir = normalize_schema(input.load_schema().unwrap()).unwrap();
+        let input = TomlDataInput::new(&data_dir);
+        let ir = normalize_schema(schema).unwrap();
         let data = input.load_data(&ir).unwrap();
 
         assert_eq!(data.tables[0].rows[0].values["id"], Value::Integer(1001));

@@ -7,7 +7,7 @@ use std::{
 use rust_xlsxwriter::Workbook;
 use sora_excel::projection::{DATA_START_ROW, FIELD_START_COLUMN, table_template_rows};
 use sora_export::exporter::ExportOutput;
-use sora_input_toml::{input::SchemaFileInput, schema::load_project_schema_file};
+use sora_input_schema::{input::SchemaFileInput, schema::load_project_schema_file};
 use sora_input_xlsx::input::XlsxProjectInput;
 use sora_ir::{normalize::normalize_schema, validate::validate_config_ir};
 

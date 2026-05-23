@@ -64,15 +64,6 @@ cargo run -p sora-cli -- --version
 cargo install --path crates/sora-cli
 ```
 
-Maintainers publish a release from GitHub Actions:
-
-1. Open the `Release` workflow.
-2. Select `Run workflow`.
-3. Choose `major`, `minor`, or `patch`, or enter an explicit version such as `0.1.0`.
-4. Run the workflow from `main`.
-
-The workflow creates or reuses the `vX.Y.Z` release tag on the selected commit, creates the GitHub release, builds all platform archives, and uploads checksums. Maintainers do not need to create or push a tag locally.
-
 ## Example Commands
 
 The preferred workflow is to declare build outputs in `project.toml` and run one command:
@@ -80,8 +71,6 @@ The preferred workflow is to declare build outputs in `project.toml` and run one
 ```bash
 sora build --project examples/showcase/project.toml
 ```
-
-The official documentation source lives in `docs/` and is published to GitHub Pages from the `Docs` workflow.
 
 For one-off or CI workflows, each stage is still available as a separate command:
 
@@ -150,10 +139,12 @@ sora export \
 ## Workspace Architecture
 
 - `sora-cli`: command-line interface.
+- `sora-config-format`: shared TOML/YAML/JSON/Lua document loading.
 - `sora-core`: pipeline orchestration.
 - `sora-input`: input adapter traits and loaded in-memory input.
 - `sora-input-csv`: CSV data input adapter.
-- `sora-input-toml`: TOML/YAML/JSON/Lua schema input and TOML data input adapter.
+- `sora-input-schema`: schema project file input.
+- `sora-input-toml`: TOML data input adapter.
 - `sora-input-xlsx`: Excel `.xlsx` data input adapter.
 - `sora-schema`: format-neutral schema model.
 - `sora-ir`: normalized schema IR and type parsing.
@@ -246,7 +237,7 @@ out = "generated/debug-json"
 
 `sora build --project project.toml --target rust --clean` rebuilds only the configured Rust codegen target, while schema lock, Excel templates, and exports still follow the project build config.
 
-Codegen targets can opt into post-generation formatting with `format = "never"`, `format = "auto"`, or `format = "required"`. `auto` runs a supported formatter when the command exists in `PATH`; `required` fails the build if the formatter is missing or exits with an error. Built-in formatter hooks currently cover Rust (`rustfmt`), Go (`gofmt`), Erlang (`erlfmt`), Python (`black`), C (`clang-format`), C++ (`clang-format`), and Scala (`scalafmt`).
+Codegen targets can opt into post-generation formatting with `format = "never"`, `format = "auto"`, or `format = "required"`. `auto` runs a supported formatter when the command exists in `PATH`; `required` fails the build if the formatter is missing or exits with an error. Built-in formatter hooks cover Rust (`rustfmt`), Go (`gofmt`), Erlang (`erlfmt`), Python (`black`), C (`clang-format`), C++ (`clang-format`), and Scala (`scalafmt`).
 
 Included modules define enums, structs, unions, tables, fields, keys, indexes, comments, source files, and aggregation metadata. Field type strings are normalized into IR types such as `i32`, `string`, `enum<ItemType>`, `struct<ResourceCost>`, `union<RewardAction>`, `list<i32>`, `array<i32,3>`, `ref<Item.id>`, and `optional<string>`.
 
@@ -263,7 +254,7 @@ Multiple tables may point at different sheets in the same workbook by reusing th
 
 ## Input Architecture
 
-Sora core consumes input through `SchemaInput` and `DataInput` traits. Concrete source formats live in separate adapter crates. TOML/YAML/JSON/Lua schema loading and TOML row data are implemented by `sora-input-toml`, CSV by `sora-input-csv`, and Excel by `sora-input-xlsx`, not by `sora-core` or `sora-input`. Future adapters, such as HOCON or XML, should translate their source format into `SchemaFile` and `ConfigData` before entering the normal IR, validation, codegen, and exporter pipeline.
+Sora core consumes input through `SchemaInput` and `DataInput` traits. Shared TOML/YAML/JSON/Lua document parsing lives in `sora-config-format`; schema project loading lives in `sora-input-schema`; concrete table data formats live in separate adapter crates. TOML row data is implemented by `sora-input-toml`, CSV by `sora-input-csv`, and Excel by `sora-input-xlsx`, not by `sora-core` or `sora-input`. When a caller needs a full project input, `sora-input::project::SplitProjectInput` composes one schema input with one data input without making either adapter own the other side.
 
 Cell parser behavior is registry-driven. `sora-ir::parser::ParserRegistry` validates parser metadata during schema normalization, and `sora-input::parser::ParserRegistry` executes cell parsing at input time. The default registries include `split`, `tuple`, `tuple_list`, and `json`; library users can register additional Rust parser implementations and call the `_with_parsers` APIs when they need project-specific DSLs.
 
@@ -348,7 +339,7 @@ Exporters implement a common `DataExporter` trait and are selected by format nam
 - `sora-protobuf`: writes a Sora value-model Protobuf bundle.
 - `proto`: writes a typed Protobuf bundle.
 
-The binary bundle uses a language-neutral sectioned layout: a fixed header, a section directory, a schema section, and one raw table section per table. Compression is currently `none` at the section level, leaving room for future LZ4/Zstd without changing the table row encoding.
+The binary bundle uses a language-neutral sectioned layout: a fixed header, a section directory, a schema section, and one raw table section per table. Compression is `none` at the section level.
 
 ## Codegen Architecture
 
@@ -356,20 +347,4 @@ Codegen uses MiniJinja templates embedded into the CLI binary, but type mapping 
 
 ## Excel Template Projection
 
-Sora generates `.xlsx` templates from schema IR. Header rows include the table name, mode, key, schema hash, field names, field types, rules, and descriptions. These headers are projections for human editing and future verification; they are not authoritative schema.
-
-## Roadmap
-
-- Stable release packaging for the single `sora` binary.
-- CI that builds and runs every generated showcase target.
-- Aggregated diagnostics and CI-friendly reports.
-- Excel dropdowns, validation rules, and schema hash checks.
-- Generated secondary-index lookup APIs.
-- Client/server field tags and target-specific export filters.
-- Incremental builds for large projects.
-- Custom parser system for reward, condition, formula, and DSL fields.
-- Stable compact binary format.
-- Hot reload friendly bundles.
-- Compatibility checking.
-- External exporter plugin mechanism.
-- VSCode extension or LSP.
+Sora generates `.xlsx` templates from schema IR. Header rows include the table name, mode, key, schema hash, field names, field types, rules, and descriptions. These headers are projections for human editing; they are not authoritative schema.

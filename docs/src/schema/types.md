@@ -67,7 +67,7 @@ parser = { kind = "map" }
 
 ## Field Rules
 
-The same field object is used in `[[tables.fields]]`, `[[structs.fields]]`, and `[[unions.variants.fields]]`. Table-only settings are ignored or invalid outside table fields as noted below.
+`[[tables.fields]]`, `[[structs.fields]]`, and `[[unions.variants.fields]]` share the common field properties. Table fields have extra table-only properties for keys and aggregation; those properties are invalid on struct fields and union variant fields.
 
 | Property | Applies To | Purpose |
 | --- | --- | --- |
@@ -75,7 +75,7 @@ The same field object is used in `[[tables.fields]]`, `[[structs.fields]]`, and 
 | `type` | all fields | Type expression such as `i32`, `struct<ResourceCost>`, or `list<union<RewardAction>>`. |
 | `required` | all fields | Requires a value unless a default applies. Defaults to `false`. |
 | `default` | all fields except aggregation fields | String value used when the source cell or object field is absent. |
-| `key` | table fields | Marks the table key field. Usually matches the table-level `key`. |
+| `key` | table fields only | Marks the table key field. Usually matches the table-level `key`. |
 | `comment` | all fields | Description used in generated Excel headers. |
 | `range` | numeric fields and numeric collection elements | Inclusive numeric range, written as `[min, max]`. |
 | `length` | `string`, `list`, `set`, `array`, `map` | Inclusive length range, written as `[min, max]`. |
