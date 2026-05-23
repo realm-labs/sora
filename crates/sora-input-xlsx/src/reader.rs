@@ -4,7 +4,7 @@ use std::{
 };
 
 use calamine::{Data, Reader, open_workbook_auto};
-use sora_data::model::{ConfigData, RowData, TableData};
+use sora_data::model::{ConfigData, RowData, TableData, Value};
 use sora_diagnostics::{Result, SoraError};
 use sora_excel::projection::{DATA_START_ROW, FIELD_ROW, FIELD_START_COLUMN};
 use sora_execution::ExecutionContext;
@@ -12,11 +12,14 @@ use sora_input::{
     cell::{CellContext, CellLocation},
     parser::{ParserRegistry, builtin_registry},
 };
-use sora_ir::model::{ConfigIr, TableIr, TypeIr};
+use sora_ir::{
+    input_projection::{TaggedColumnKind, tagged_columns, tagged_columns_union},
+    model::{ConfigIr, TableIr, TypeIr},
+};
 
 use crate::{
     projection::verify_projection,
-    value::{cell_is_empty, cell_to_value_with_registry},
+    value::{cell_is_empty, cell_to_string, cell_to_value_with_registry},
     workbook::{group_xlsx_tables, load_grouped_ranges},
 };
 
@@ -138,7 +141,7 @@ fn load_xlsx_table_data_from_range(
 ) -> Result<TableData> {
     verify_projection(ir, table, path, sheet, &range)?;
     let mut rows = Vec::new();
-    let field_columns = field_columns(table, path, sheet, &range)?;
+    let field_columns = field_columns(table, ir, path, sheet, &range)?;
 
     for (row_index, row) in range.rows().enumerate().skip(DATA_START_ROW as usize) {
         if row_is_empty(row, &field_columns) {
@@ -147,26 +150,45 @@ fn load_xlsx_table_data_from_range(
 
         let mut values = BTreeMap::new();
         for (column, field) in table.fields.iter().enumerate() {
-            let field_column = field_columns[column];
-            let cell = row.get(field_column).unwrap_or(&Data::Empty);
-            if cell_is_empty(cell) && !matches!(field.ty, TypeIr::Optional(_)) {
-                continue;
+            match &field_columns[column] {
+                FieldColumns::Single(field_column) => {
+                    let cell = row.get(*field_column).unwrap_or(&Data::Empty);
+                    if cell_is_empty(cell) && !matches!(field.ty, TypeIr::Optional(_)) {
+                        continue;
+                    }
+                    let context = CellContext {
+                        path,
+                        ir,
+                        location: CellLocation::Worksheet {
+                            sheet,
+                            row: row_index + 1,
+                            column: field_column + 1,
+                        },
+                        field: &field.name,
+                        parser: field.parser.as_ref(),
+                    };
+                    values.insert(
+                        field.name.clone(),
+                        cell_to_value_with_registry(cell, &field.ty, &context, parser_registry)?,
+                    );
+                }
+                FieldColumns::Tagged(columns) => {
+                    if let Some(value) = tagged_columns_value(
+                        ir,
+                        field,
+                        columns,
+                        row,
+                        TaggedRowContext {
+                            path,
+                            sheet,
+                            row: row_index + 1,
+                        },
+                        parser_registry,
+                    )? {
+                        values.insert(field.name.clone(), value);
+                    }
+                }
             }
-            let context = CellContext {
-                path,
-                ir,
-                location: CellLocation::Worksheet {
-                    sheet,
-                    row: row_index + 1,
-                    column: field_column + 1,
-                },
-                field: &field.name,
-                parser: field.parser.as_ref(),
-            };
-            values.insert(
-                field.name.clone(),
-                cell_to_value_with_registry(cell, &field.ty, &context, parser_registry)?,
-            );
         }
         rows.push(RowData { values });
     }
@@ -177,19 +199,45 @@ fn load_xlsx_table_data_from_range(
     })
 }
 
+#[derive(Debug, Clone)]
+enum FieldColumns {
+    Single(usize),
+    Tagged(BTreeMap<String, usize>),
+}
+
 fn field_columns(
     table: &TableIr,
+    ir: &ConfigIr,
     path: &Path,
     sheet: &str,
     range: &calamine::Range<Data>,
-) -> Result<Vec<usize>> {
-    let schema_field_indexes = table
+) -> Result<Vec<FieldColumns>> {
+    let expected_columns = table
         .fields
         .iter()
         .enumerate()
-        .map(|(index, field)| (field.name.as_str(), index))
+        .flat_map(|(index, field)| {
+            tagged_columns(ir, field)
+                .map(|columns| {
+                    columns
+                        .into_iter()
+                        .map(move |column| (column.name, index))
+                        .collect::<Vec<_>>()
+                })
+                .unwrap_or_else(|| vec![(field.name.clone(), index)])
+        })
         .collect::<HashMap<_, _>>();
-    let mut columns = vec![None; table.fields.len()];
+    let mut columns = table
+        .fields
+        .iter()
+        .map(|field| {
+            if tagged_columns(ir, field).is_some() {
+                FieldColumnsBuilder::Tagged(BTreeMap::new())
+            } else {
+                FieldColumnsBuilder::Single(None)
+            }
+        })
+        .collect::<Vec<_>>();
     let Some(field_row) = range.rows().nth(FIELD_ROW as usize) else {
         return Err(SoraError::InvalidSchema(format!(
             "worksheet `{}` in `{}` is missing #field row {}",
@@ -209,39 +257,191 @@ fn field_columns(
         if field_name.is_empty() {
             continue;
         }
-        let Some(&field_index) = schema_field_indexes.get(field_name) else {
+        let Some(&field_index) = expected_columns.get(field_name) else {
             continue;
         };
-        if columns[field_index].replace(column).is_some() {
-            return Err(SoraError::InvalidSchema(format!(
-                "worksheet `{}` in `{}` declares duplicate field `{}` in #field row",
-                sheet,
-                path.display(),
-                field_name
-            )));
+        match &mut columns[field_index] {
+            FieldColumnsBuilder::Single(value) => {
+                if value.replace(column).is_some() {
+                    return Err(duplicate_field_column(path, sheet, field_name));
+                }
+            }
+            FieldColumnsBuilder::Tagged(values) => {
+                if values.insert(field_name.to_owned(), column).is_some() {
+                    return Err(duplicate_field_column(path, sheet, field_name));
+                }
+            }
         }
     }
 
     columns
         .into_iter()
         .enumerate()
-        .map(|(index, column)| {
-            column.ok_or_else(|| {
-                SoraError::InvalidSchema(format!(
-                    "worksheet `{}` in `{}` is missing field `{}` in #field row",
-                    sheet,
-                    path.display(),
-                    table.fields[index].name
-                ))
-            })
+        .map(|(index, columns)| match columns {
+            FieldColumnsBuilder::Single(column) => column
+                .map(FieldColumns::Single)
+                .ok_or_else(|| missing_field_column(path, sheet, &table.fields[index].name)),
+            FieldColumnsBuilder::Tagged(values) => {
+                let expected = tagged_columns(ir, &table.fields[index])
+                    .expect("tagged builder should have tagged field");
+                for column in expected {
+                    if !values.contains_key(&column.name) {
+                        return Err(missing_field_column(path, sheet, &column.name));
+                    }
+                }
+                Ok(FieldColumns::Tagged(values))
+            }
         })
         .collect()
 }
 
-fn row_is_empty(row: &[Data], field_columns: &[usize]) -> bool {
-    field_columns
+enum FieldColumnsBuilder {
+    Single(Option<usize>),
+    Tagged(BTreeMap<String, usize>),
+}
+
+fn duplicate_field_column(path: &Path, sheet: &str, field_name: &str) -> SoraError {
+    SoraError::InvalidSchema(format!(
+        "worksheet `{}` in `{}` declares duplicate field `{}` in #field row",
+        sheet,
+        path.display(),
+        field_name
+    ))
+}
+
+fn missing_field_column(path: &Path, sheet: &str, field_name: &str) -> SoraError {
+    SoraError::InvalidSchema(format!(
+        "worksheet `{}` in `{}` is missing field `{}` in #field row",
+        sheet,
+        path.display(),
+        field_name
+    ))
+}
+
+struct TaggedRowContext<'a> {
+    path: &'a Path,
+    sheet: &'a str,
+    row: usize,
+}
+
+fn tagged_columns_value(
+    ir: &ConfigIr,
+    field: &sora_ir::model::FieldIr,
+    columns: &BTreeMap<String, usize>,
+    row: &[Data],
+    row_context: TaggedRowContext<'_>,
+    parser_registry: &ParserRegistry,
+) -> Result<Option<Value>> {
+    let Some(union) = tagged_columns_union(ir, field) else {
+        return Ok(None);
+    };
+    let projected = tagged_columns(ir, field).unwrap_or_default();
+    if projected.iter().all(|column| {
+        let index = columns[&column.name];
+        row.get(index).is_none_or(cell_is_empty)
+    }) {
+        return Ok(None);
+    }
+
+    let tag_column = projected
         .iter()
-        .all(|&column| row.get(column).is_none_or(cell_is_empty))
+        .find(|column| matches!(column.kind, TaggedColumnKind::Tag))
+        .expect("tagged columns should include tag column");
+    let tag_index = columns[&tag_column.name];
+    let tag_cell = row.get(tag_index).unwrap_or(&Data::Empty);
+    let tag = cell_to_string(tag_cell).trim().to_owned();
+    if tag.is_empty() {
+        return Err(CellContext {
+            path: row_context.path,
+            ir,
+            location: CellLocation::Worksheet {
+                sheet: row_context.sheet,
+                row: row_context.row,
+                column: tag_index + 1,
+            },
+            field: &field.name,
+            parser: field.parser.as_ref(),
+        }
+        .error("tagged_columns requires a union tag"));
+    }
+
+    let Some(variant) = union.variants.iter().find(|variant| variant.name == tag) else {
+        return Err(CellContext {
+            path: row_context.path,
+            ir,
+            location: CellLocation::Worksheet {
+                sheet: row_context.sheet,
+                row: row_context.row,
+                column: tag_index + 1,
+            },
+            field: &field.name,
+            parser: field.parser.as_ref(),
+        }
+        .error(format!("unknown union variant `{tag}`")));
+    };
+
+    let mut values = BTreeMap::from([(union.tag.clone(), Value::String(tag))]);
+    for tagged_column in projected {
+        let TaggedColumnKind::VariantField(variant_field) = tagged_column.kind else {
+            continue;
+        };
+        let column_index = columns[&tagged_column.name];
+        let cell = row.get(column_index).unwrap_or(&Data::Empty);
+        let selected = variant
+            .fields
+            .iter()
+            .any(|candidate| candidate.name == variant_field.name);
+        if !selected {
+            if !cell_is_empty(cell) {
+                return Err(CellContext {
+                    path: row_context.path,
+                    ir,
+                    location: CellLocation::Worksheet {
+                        sheet: row_context.sheet,
+                        row: row_context.row,
+                        column: column_index + 1,
+                    },
+                    field: &field.name,
+                    parser: field.parser.as_ref(),
+                }
+                .error(format!(
+                    "field `{}` is not part of union variant `{}`",
+                    tagged_column.name, variant.name
+                )));
+            }
+            continue;
+        }
+        if cell_is_empty(cell) {
+            continue;
+        }
+        let nested_field = format!("{}.{}", field.name, variant_field.name);
+        let context = CellContext {
+            path: row_context.path,
+            ir,
+            location: CellLocation::Worksheet {
+                sheet: row_context.sheet,
+                row: row_context.row,
+                column: column_index + 1,
+            },
+            field: &nested_field,
+            parser: variant_field.parser.as_ref(),
+        };
+        values.insert(
+            variant_field.name.clone(),
+            cell_to_value_with_registry(cell, &variant_field.ty, &context, parser_registry)?,
+        );
+    }
+
+    Ok(Some(Value::Object(values)))
+}
+
+fn row_is_empty(row: &[Data], field_columns: &[FieldColumns]) -> bool {
+    field_columns.iter().all(|columns| match columns {
+        FieldColumns::Single(column) => row.get(*column).is_none_or(cell_is_empty),
+        FieldColumns::Tagged(columns) => columns
+            .values()
+            .all(|column| row.get(*column).is_none_or(cell_is_empty)),
+    })
 }
 
 #[cfg(test)]
@@ -440,6 +640,69 @@ mod tests {
         let _ = std::fs::remove_dir_all(base);
     }
 
+    #[test]
+    fn loads_tagged_union_columns() {
+        let ir = tagged_union_ir();
+        let base = temp_dir();
+        let xlsx_path = base.join("EventConditionEntry.xlsx");
+        write_workbook_rows_with_field_columns(
+            &ir,
+            &ir.tables[0],
+            &xlsx_path,
+            &["id", "type", "quest_id", "item_id", "count"],
+            &[
+                vec!["1", "QuestCompleted", "5002", "", ""],
+                vec!["2", "HasItem", "", "1001", "2"],
+            ],
+        );
+
+        let data = load_xlsx_config_data(&ir, &base).unwrap();
+
+        assert_eq!(data.tables[0].rows.len(), 2);
+        assert_eq!(
+            data.tables[0].rows[0].values["value"],
+            Value::Object(BTreeMap::from([
+                (
+                    "type".to_owned(),
+                    Value::String("QuestCompleted".to_owned())
+                ),
+                ("quest_id".to_owned(), Value::Integer(5002)),
+            ]))
+        );
+        assert_eq!(
+            data.tables[0].rows[1].values["value"],
+            Value::Object(BTreeMap::from([
+                ("type".to_owned(), Value::String("HasItem".to_owned())),
+                ("item_id".to_owned(), Value::Integer(1001)),
+                ("count".to_owned(), Value::Integer(2)),
+            ]))
+        );
+
+        let _ = std::fs::remove_dir_all(base);
+    }
+
+    #[test]
+    fn rejects_tagged_union_columns_for_other_variants() {
+        let ir = tagged_union_ir();
+        let base = temp_dir();
+        let xlsx_path = base.join("EventConditionEntry.xlsx");
+        write_workbook_rows_with_field_columns(
+            &ir,
+            &ir.tables[0],
+            &xlsx_path,
+            &["id", "type", "quest_id", "item_id", "count"],
+            &[vec!["1", "QuestCompleted", "5002", "1001", ""]],
+        );
+
+        let error = load_xlsx_config_data(&ir, &base).unwrap_err();
+        let message = error.to_string();
+
+        assert!(message.contains("worksheet `EventConditionEntry` row 8, column 5, field `value`"));
+        assert!(message.contains("is not part of union variant `QuestCompleted`"));
+
+        let _ = std::fs::remove_dir_all(base);
+    }
+
     fn example_ir() -> ConfigIr {
         let schema = toml::from_str(
             r#"
@@ -631,6 +894,65 @@ required = true
 name = "materials"
 type = "list<ResourceCost>"
 parser = { kind = "tuple_list" }
+"#,
+        )
+        .unwrap();
+        let ir = normalize_schema(schema).unwrap();
+        validate_config_ir(&ir).unwrap();
+        ir
+    }
+
+    fn tagged_union_ir() -> ConfigIr {
+        let schema = toml::from_str(
+            r#"
+package = "game_config"
+
+[[unions]]
+name = "EventCondition"
+tag = "type"
+
+[[unions.variants]]
+name = "QuestCompleted"
+
+[[unions.variants.fields]]
+name = "quest_id"
+type = "i32"
+required = true
+
+[[unions.variants]]
+name = "HasItem"
+
+[[unions.variants.fields]]
+name = "item_id"
+type = "i32"
+required = true
+
+[[unions.variants.fields]]
+name = "count"
+type = "i32"
+required = true
+
+[[tables]]
+name = "EventConditionEntry"
+mode = "map"
+key = "id"
+
+[tables.source]
+format = "xlsx"
+file = "EventConditionEntry.xlsx"
+sheet = "EventConditionEntry"
+
+[[tables.fields]]
+name = "id"
+type = "i32"
+key = true
+required = true
+
+[[tables.fields]]
+name = "value"
+type = "union<EventCondition>"
+required = true
+parser = { kind = "tagged_columns", prefix = "" }
 "#,
         )
         .unwrap();

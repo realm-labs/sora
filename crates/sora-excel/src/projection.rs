@@ -1,4 +1,7 @@
-use sora_ir::model::{ConfigIr, FieldIr, StructIr, TableIr, TableModeIr, TypeIr};
+use sora_ir::{
+    input_projection::{TaggedColumnKind, tagged_columns},
+    model::{ConfigIr, FieldIr, StructIr, TableIr, TableModeIr, TypeIr},
+};
 
 pub const METADATA_ROW: u32 = 0;
 pub const NAME_ROW: u32 = 1;
@@ -11,6 +14,7 @@ pub const DATA_START_ROW: u32 = 7;
 pub const FIELD_START_COLUMN: u16 = 1;
 
 pub fn table_template_rows(ir: &ConfigIr, table: &TableIr) -> Vec<Vec<String>> {
+    let columns = table_template_columns(ir, table);
     vec![
         vec![
             "@table".to_owned(),
@@ -25,29 +29,76 @@ pub fn table_template_rows(ir: &ConfigIr, table: &TableIr) -> Vec<Vec<String>> {
             schema_hash(ir, table),
         ],
         std::iter::once("#name".to_owned())
-            .chain(table.fields.iter().map(|field| field.name.clone()))
+            .chain(columns.iter().map(|column| column.name.clone()))
             .collect(),
         std::iter::once("#field".to_owned())
-            .chain(table.fields.iter().map(|field| field.name.clone()))
+            .chain(columns.iter().map(|column| column.name.clone()))
             .collect(),
         std::iter::once("#type".to_owned())
-            .chain(table.fields.iter().map(|field| field_type_hint(ir, field)))
+            .chain(columns.iter().map(|column| column.type_hint.clone()))
             .collect(),
         std::iter::once("#scope".to_owned())
-            .chain(table.fields.iter().map(|field| field.scope.display()))
+            .chain(columns.iter().map(|column| column.scope.clone()))
             .collect(),
         std::iter::once("#rule".to_owned())
-            .chain(table.fields.iter().map(field_rule))
+            .chain(columns.iter().map(|column| column.rule.clone()))
             .collect(),
         std::iter::once("#desc".to_owned())
-            .chain(
-                table
-                    .fields
-                    .iter()
-                    .map(|field| field.comment.clone().unwrap_or_default()),
-            )
+            .chain(columns.iter().map(|column| column.comment.clone()))
             .collect(),
     ]
+}
+
+#[derive(Debug, Clone)]
+pub struct TemplateColumn {
+    pub name: String,
+    pub type_hint: String,
+    pub scope: String,
+    pub rule: String,
+    pub comment: String,
+}
+
+pub fn table_template_columns(ir: &ConfigIr, table: &TableIr) -> Vec<TemplateColumn> {
+    table
+        .fields
+        .iter()
+        .flat_map(|field| {
+            tagged_columns(ir, field)
+                .map(|columns| {
+                    columns
+                        .into_iter()
+                        .map(|column| match column.kind {
+                            TaggedColumnKind::Tag => TemplateColumn {
+                                name: column.name,
+                                type_hint: format!("{} tag", field.ty),
+                                scope: field.scope.display(),
+                                rule: format!(
+                                    "{};parser=tagged_columns;tag",
+                                    field_presence(field)
+                                ),
+                                comment: format!("Tag for union field `{}`.", field.name),
+                            },
+                            TaggedColumnKind::VariantField(variant_field) => TemplateColumn {
+                                name: column.name,
+                                type_hint: field_type_hint(ir, variant_field),
+                                scope: field.scope.display(),
+                                rule: field_rule(variant_field),
+                                comment: variant_field.comment.clone().unwrap_or_default(),
+                            },
+                        })
+                        .collect::<Vec<_>>()
+                })
+                .unwrap_or_else(|| {
+                    vec![TemplateColumn {
+                        name: field.name.clone(),
+                        type_hint: field_type_hint(ir, field),
+                        scope: field.scope.display(),
+                        rule: field_rule(field),
+                        comment: field.comment.clone().unwrap_or_default(),
+                    }]
+                })
+        })
+        .collect()
 }
 
 pub fn schema_hash(ir: &ConfigIr, table: &TableIr) -> String {
@@ -74,6 +125,26 @@ pub fn schema_hash(ir: &ConfigIr, table: &TableIr) -> String {
             for (key, value) in &parser.options {
                 update(&mut hash, key);
                 update(&mut hash, value);
+            }
+        }
+        if let Some(columns) = tagged_columns(ir, field) {
+            for column in columns {
+                update(&mut hash, &column.name);
+                match column.kind {
+                    TaggedColumnKind::Tag => update(&mut hash, "tag"),
+                    TaggedColumnKind::VariantField(variant_field) => {
+                        update(&mut hash, "variant_field");
+                        update(&mut hash, &variant_field.name);
+                        update(&mut hash, &variant_field.ty.to_string());
+                        if let Some(parser) = &variant_field.parser {
+                            update(&mut hash, &parser.kind);
+                            for (key, value) in &parser.options {
+                                update(&mut hash, key);
+                                update(&mut hash, value);
+                            }
+                        }
+                    }
+                }
             }
         }
         if let Some(tuple_shape) = tuple_shape(ir, field) {
@@ -159,13 +230,7 @@ fn list_struct_type_name(ty: &TypeIr) -> Option<&str> {
 
 fn field_rule(field: &FieldIr) -> String {
     let mut parts = Vec::new();
-    if field.key {
-        parts.push("key".to_owned());
-    } else if field.required {
-        parts.push("required".to_owned());
-    } else {
-        parts.push("optional".to_owned());
-    }
+    parts.push(field_presence(field));
 
     if let Some(parser) = &field.parser {
         parts.push(format!("parser={}", parser.kind));
@@ -177,6 +242,16 @@ fn field_rule(field: &FieldIr) -> String {
         parts.push(format!("range={min}..{max}"));
     }
     parts.join(";")
+}
+
+fn field_presence(field: &FieldIr) -> String {
+    if field.key {
+        "key".to_owned()
+    } else if field.required {
+        "required".to_owned()
+    } else {
+        "optional".to_owned()
+    }
 }
 
 #[cfg(test)]
@@ -239,6 +314,18 @@ mod tests {
     }
 
     #[test]
+    fn tagged_union_projection_affects_schema_hash() {
+        let ir = tagged_union_ir();
+        let mut changed = ir.clone();
+        changed.unions[0].variants[0].fields[0].name = "changed_quest_id".to_owned();
+
+        assert_ne!(
+            schema_hash(&ir, &ir.tables[0]),
+            schema_hash(&changed, &changed.tables[0])
+        );
+    }
+
+    #[test]
     fn expands_tuple_struct_type_hints() {
         let ir = tuple_ir();
         let rows = table_template_rows(&ir, &ir.tables[0]);
@@ -268,6 +355,39 @@ mod tests {
         assert_eq!(
             rows[RULE_ROW as usize],
             ["#rule", "required;parser=tuple_list"]
+        );
+    }
+
+    #[test]
+    fn expands_tagged_union_columns() {
+        let ir = tagged_union_ir();
+        let rows = table_template_rows(&ir, &ir.tables[0]);
+
+        assert_eq!(
+            rows[FIELD_ROW as usize],
+            ["#field", "id", "type", "quest_id", "item_id", "count"]
+        );
+        assert_eq!(
+            rows[TYPE_ROW as usize],
+            [
+                "#type",
+                "i32",
+                "union<EventCondition> tag",
+                "i32",
+                "i32",
+                "i32"
+            ]
+        );
+        assert_eq!(
+            rows[RULE_ROW as usize],
+            [
+                "#rule",
+                "key",
+                "required;parser=tagged_columns;tag",
+                "required",
+                "required",
+                "required"
+            ]
         );
     }
 
@@ -391,6 +511,58 @@ name = "materials"
 type = "list<ResourceCost>"
 required = true
 parser = { kind = "tuple_list" }
+"#,
+        )
+        .unwrap();
+        normalize_schema(schema).unwrap()
+    }
+
+    fn tagged_union_ir() -> ConfigIr {
+        let schema: SchemaFile = toml::from_str(
+            r#"
+package = "game_config"
+
+[[unions]]
+name = "EventCondition"
+tag = "type"
+
+[[unions.variants]]
+name = "QuestCompleted"
+
+[[unions.variants.fields]]
+name = "quest_id"
+type = "i32"
+required = true
+
+[[unions.variants]]
+name = "HasItem"
+
+[[unions.variants.fields]]
+name = "item_id"
+type = "i32"
+required = true
+
+[[unions.variants.fields]]
+name = "count"
+type = "i32"
+required = true
+
+[[tables]]
+name = "EventConditionEntry"
+mode = "map"
+key = "id"
+
+[[tables.fields]]
+name = "id"
+type = "i32"
+key = true
+required = true
+
+[[tables.fields]]
+name = "value"
+type = "union<EventCondition>"
+required = true
+parser = { kind = "tagged_columns", prefix = "" }
 "#,
         )
         .unwrap();

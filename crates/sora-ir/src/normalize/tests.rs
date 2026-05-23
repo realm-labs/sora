@@ -160,6 +160,41 @@ parser = { kind = "map", item_separator = ";", separator = ":" }
 }
 
 #[test]
+fn normalizes_tagged_columns_parser() {
+    let schema: SchemaFile = toml::from_str(
+        r#"
+package = "game_config"
+
+[[unions]]
+name = "Action"
+tag = "type"
+
+[[unions.variants]]
+name = "AddItem"
+
+[[unions.variants.fields]]
+name = "item_id"
+type = "i32"
+
+[[tables]]
+name = "Event"
+mode = "list"
+
+[[tables.fields]]
+name = "action"
+type = "union<Action>"
+parser = { kind = "tagged_columns", prefix = "" }
+"#,
+    )
+    .unwrap();
+
+    let ir = normalize_schema(schema).unwrap();
+    let parser = ir.tables[0].fields[0].parser.as_ref().unwrap();
+    assert_eq!(parser.kind, "tagged_columns");
+    assert_eq!(parser.options["prefix"], "");
+}
+
+#[test]
 fn default_collections_do_not_need_parser_metadata() {
     let schema: SchemaFile = toml::from_str(
         r#"
@@ -280,6 +315,60 @@ parser = { kind = "lua" }
     assert!(matches!(
         normalize_schema(unknown_parser).unwrap_err(),
         SoraError::InvalidSchema(message) if message.contains("unsupported parser")
+    ));
+
+    let list_union_tagged_columns: SchemaFile = toml::from_str(
+        r#"
+package = "game_config"
+
+[[unions]]
+name = "Action"
+tag = "type"
+
+[[unions.variants]]
+name = "AddItem"
+
+[[tables]]
+name = "Event"
+mode = "list"
+
+[[tables.fields]]
+name = "actions"
+type = "list<union<Action>>"
+parser = { kind = "tagged_columns" }
+"#,
+    )
+    .unwrap();
+    assert!(matches!(
+        normalize_schema(list_union_tagged_columns).unwrap_err(),
+        SoraError::InvalidSchema(message) if message.contains("is not union")
+    ));
+
+    let tagged_columns_bad_option: SchemaFile = toml::from_str(
+        r#"
+package = "game_config"
+
+[[unions]]
+name = "Action"
+tag = "type"
+
+[[unions.variants]]
+name = "AddItem"
+
+[[tables]]
+name = "Event"
+mode = "list"
+
+[[tables.fields]]
+name = "action"
+type = "union<Action>"
+parser = { kind = "tagged_columns", separator = "," }
+"#,
+    )
+    .unwrap();
+    assert!(matches!(
+        normalize_schema(tagged_columns_bad_option).unwrap_err(),
+        SoraError::InvalidSchema(message) if message.contains("unsupported option `separator`")
     ));
 }
 
@@ -427,5 +516,38 @@ mode = "list"
         normalize_schema(schema).unwrap_err(),
         SoraError::InvalidSchema(message)
             if message.contains("declares both `default` and aggregation")
+    ));
+}
+
+#[test]
+fn rejects_default_on_tagged_columns_fields() {
+    let schema: SchemaFile = toml::from_str(
+        r#"
+package = "game_config"
+
+[[unions]]
+name = "Action"
+tag = "type"
+
+[[unions.variants]]
+name = "AddItem"
+
+[[tables]]
+name = "Event"
+mode = "list"
+
+[[tables.fields]]
+name = "action"
+type = "union<Action>"
+parser = { kind = "tagged_columns" }
+default = "{\"type\":\"AddItem\"}"
+"#,
+    )
+    .unwrap();
+
+    assert!(matches!(
+        normalize_schema(schema).unwrap_err(),
+        SoraError::InvalidSchema(message)
+            if message.contains("declares both `default` and parser `tagged_columns`")
     ));
 }

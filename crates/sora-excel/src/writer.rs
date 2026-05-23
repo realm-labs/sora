@@ -4,10 +4,14 @@ use rust_xlsxwriter::{
     Color, DataValidation, DataValidationRule, Format, FormatAlign, FormatBorder, Note, Workbook,
 };
 use sora_diagnostics::{Result, SoraError};
-use sora_ir::model::{ConfigIr, FieldIr, TableIr, TypeIr};
+use sora_ir::{
+    input_projection::{TaggedColumnKind, tagged_columns, tagged_columns_union},
+    model::{ConfigIr, FieldIr, TableIr, TypeIr},
+};
 
 use crate::projection::{
-    DATA_START_ROW, DESC_ROW, FIELD_START_COLUMN, NAME_ROW, table_template_rows, tuple_shape,
+    DATA_START_ROW, DESC_ROW, FIELD_START_COLUMN, NAME_ROW, table_template_columns,
+    table_template_rows, tuple_shape,
 };
 
 const DATA_VALIDATION_ROWS: u32 = 1000;
@@ -55,7 +59,7 @@ pub(crate) fn write_workbook_with_rows(
             }
         }
 
-        apply_sheet_layout(table, worksheet, &formats, path)?;
+        apply_sheet_layout(ir, table, worksheet, &formats, path)?;
         apply_field_notes(ir, table, worksheet, path)?;
         apply_data_validations(ir, table, worksheet, path)?;
         write_data_rows(worksheet, &formats, path, rows_for_table(table))?;
@@ -97,21 +101,55 @@ fn apply_data_validations(
     worksheet: &mut rust_xlsxwriter::Worksheet,
     path: &Path,
 ) -> Result<()> {
-    for (index, field) in table.fields.iter().enumerate() {
-        let Some(data_validation) = data_validation_for_field(ir, field, path)? else {
+    let mut column = FIELD_START_COLUMN;
+    for field in &table.fields {
+        if let Some(columns) = tagged_columns(ir, field) {
+            for tagged_column in columns {
+                let data_validation = match tagged_column.kind {
+                    TaggedColumnKind::Tag => {
+                        if let Some(union) = tagged_columns_union(ir, field) {
+                            union_tag_validation(
+                                union.variants.iter().map(|variant| variant.name.as_str()),
+                                path,
+                            )?
+                        } else {
+                            None
+                        }
+                    }
+                    TaggedColumnKind::VariantField(variant_field) => {
+                        data_validation_for_field(ir, variant_field, path)?
+                    }
+                };
+                if let Some(data_validation) = data_validation {
+                    worksheet
+                        .add_data_validation(
+                            DATA_START_ROW,
+                            column,
+                            DATA_START_ROW + DATA_VALIDATION_ROWS - 1,
+                            column,
+                            &data_validation,
+                        )
+                        .map_err(|source| excel_error(path, source))?;
+                }
+                column += 1;
+            }
             continue;
-        };
+        }
 
-        let column = (index + 1) as u16;
-        worksheet
-            .add_data_validation(
-                DATA_START_ROW,
-                column,
-                DATA_START_ROW + DATA_VALIDATION_ROWS - 1,
-                column,
-                &data_validation,
-            )
-            .map_err(|source| excel_error(path, source))?;
+        let data_validation = data_validation_for_field(ir, field, path)?;
+        if let Some(data_validation) = data_validation {
+            worksheet
+                .add_data_validation(
+                    DATA_START_ROW,
+                    column,
+                    DATA_START_ROW + DATA_VALIDATION_ROWS - 1,
+                    column,
+                    &data_validation,
+                )
+                .map_err(|source| excel_error(path, source))?;
+        }
+
+        column += 1;
     }
 
     Ok(())
@@ -123,15 +161,39 @@ fn apply_field_notes(
     worksheet: &mut rust_xlsxwriter::Worksheet,
     path: &Path,
 ) -> Result<()> {
-    for (index, field) in table.fields.iter().enumerate() {
-        let Some(note_text) = field_note_text(ir, field) else {
+    let mut column = FIELD_START_COLUMN;
+    for field in &table.fields {
+        if let Some(columns) = tagged_columns(ir, field) {
+            for tagged_column in columns {
+                let note_text = match tagged_column.kind {
+                    TaggedColumnKind::Tag => Some(format!(
+                        "Field: {}\nType: {}\nParser: tagged_columns\nColumn: {}",
+                        field.name, field.ty, tagged_column.name
+                    )),
+                    TaggedColumnKind::VariantField(variant_field) => {
+                        field_note_text(ir, variant_field)
+                    }
+                };
+                if let Some(note_text) = note_text {
+                    let note = Note::new(note_text).set_author("Sora");
+                    worksheet
+                        .insert_note(NAME_ROW, column, &note)
+                        .map_err(|source| excel_error(path, source))?;
+                }
+                column += 1;
+            }
             continue;
-        };
+        }
 
-        let note = Note::new(note_text).set_author("Sora");
-        worksheet
-            .insert_note(NAME_ROW, (index + 1) as u16, &note)
-            .map_err(|source| excel_error(path, source))?;
+        let note_text = field_note_text(ir, field);
+        if let Some(note_text) = note_text {
+            let note = Note::new(note_text).set_author("Sora");
+            worksheet
+                .insert_note(NAME_ROW, column, &note)
+                .map_err(|source| excel_error(path, source))?;
+        }
+
+        column += 1;
     }
 
     Ok(())
@@ -244,6 +306,29 @@ fn enum_validation(ir: &ConfigIr, enum_name: &str, path: &Path) -> Result<Option
         .set_error_title("Invalid enum value")
         .map_err(|source| excel_error(path, source))?
         .set_error_message(format!("Value must be one of: {}", enum_values.join(", ")))
+        .map_err(|source| excel_error(path, source))?;
+    Ok(Some(data_validation))
+}
+
+fn union_tag_validation<'a>(
+    values: impl IntoIterator<Item = &'a str>,
+    path: &Path,
+) -> Result<Option<DataValidation>> {
+    let values = values.into_iter().collect::<Vec<_>>();
+    if values.is_empty() {
+        return Ok(None);
+    }
+
+    let data_validation = DataValidation::new()
+        .allow_list_strings(&values)
+        .map_err(|source| excel_error(path, source))?
+        .set_input_title("Union tag")
+        .map_err(|source| excel_error(path, source))?
+        .set_input_message("Select a union variant.")
+        .map_err(|source| excel_error(path, source))?
+        .set_error_title("Invalid union variant")
+        .map_err(|source| excel_error(path, source))?
+        .set_error_message(format!("Value must be one of: {}", values.join(", ")))
         .map_err(|source| excel_error(path, source))?;
     Ok(Some(data_validation))
 }
@@ -362,6 +447,7 @@ impl TemplateFormats {
 }
 
 fn apply_sheet_layout(
+    ir: &ConfigIr,
     table: &TableIr,
     worksheet: &mut rust_xlsxwriter::Worksheet,
     formats: &TemplateFormats,
@@ -377,12 +463,12 @@ fn apply_sheet_layout(
         .set_column_width(0, 12)
         .map_err(|source| excel_error(path, source))?;
 
-    for (index, field) in table.fields.iter().enumerate() {
+    for (index, column_info) in table_template_columns(ir, table).iter().enumerate() {
         let column = (index + 1) as u16;
         let width = field_width(
-            field.name.as_str(),
-            field.comment.as_deref(),
-            &field.ty.to_string(),
+            column_info.name.as_str(),
+            Some(&column_info.comment),
+            &column_info.type_hint,
         );
         worksheet
             .set_column_width(column, width)

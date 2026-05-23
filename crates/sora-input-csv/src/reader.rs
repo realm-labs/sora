@@ -8,7 +8,10 @@ use sora_input::{
     parser::{ParserRegistry, builtin_registry},
     source::{SourceFormat, resolve_table_source_format},
 };
-use sora_ir::model::{ConfigIr, TableIr, TypeIr};
+use sora_ir::{
+    input_projection::{TaggedColumnKind, tagged_columns, tagged_columns_union},
+    model::{ConfigIr, TableIr, TypeIr},
+};
 
 pub fn load_csv_config_data(ir: &ConfigIr, data_root: &Path) -> Result<ConfigData> {
     load_csv_config_data_with_parsers(ir, data_root, builtin_registry())
@@ -63,7 +66,7 @@ pub fn load_csv_table_data_with_parsers(
         .map_err(|source| csv_error(path, source))?
         .clone();
     let header_index = header_index(&headers);
-    validate_headers(table, path, &headers, &header_index)?;
+    validate_headers(ir, table, path, &headers, &header_index)?;
     let mut rows = Vec::new();
 
     for (record_index, record) in reader.records().enumerate() {
@@ -74,14 +77,28 @@ pub fn load_csv_table_data_with_parsers(
 
         let mut values = BTreeMap::new();
         for field in &table.fields {
-            let Some(column) = header_index.get(&field.name).copied() else {
+            if tagged_columns(ir, field).is_some() {
+                if let Some(value) = tagged_columns_value(
+                    ir,
+                    field,
+                    &header_index,
+                    &record,
+                    CsvRowContext {
+                        path,
+                        row: record_index + 2,
+                    },
+                    parser_registry,
+                )? {
+                    values.insert(field.name.clone(), value);
+                }
                 continue;
-            };
+            }
+
+            let column = header_index[&field.name];
             let cell = record.get(column).unwrap_or_default();
             if cell.trim().is_empty() && !matches!(field.ty, TypeIr::Optional(_)) {
                 continue;
             }
-
             let context = CellContext {
                 path,
                 ir,
@@ -111,6 +128,123 @@ pub fn load_csv_table_data_with_parsers(
     })
 }
 
+struct CsvRowContext<'a> {
+    path: &'a Path,
+    row: usize,
+}
+
+fn tagged_columns_value(
+    ir: &ConfigIr,
+    field: &sora_ir::model::FieldIr,
+    header_index: &BTreeMap<String, usize>,
+    record: &StringRecord,
+    row_context: CsvRowContext<'_>,
+    parser_registry: &ParserRegistry,
+) -> Result<Option<sora_data::model::Value>> {
+    let Some(union) = tagged_columns_union(ir, field) else {
+        return Ok(None);
+    };
+    let projected = tagged_columns(ir, field).unwrap_or_default();
+    if projected.iter().all(|column| {
+        let index = header_index[&column.name];
+        record.get(index).unwrap_or_default().trim().is_empty()
+    }) {
+        return Ok(None);
+    }
+
+    let tag_column = projected
+        .iter()
+        .find(|column| matches!(column.kind, TaggedColumnKind::Tag))
+        .expect("tagged columns should include tag column");
+    let tag_index = header_index[&tag_column.name];
+    let tag = record.get(tag_index).unwrap_or_default().trim().to_owned();
+    if tag.is_empty() {
+        return Err(CellContext {
+            path: row_context.path,
+            ir,
+            location: CellLocation::Csv {
+                row: row_context.row,
+                column: tag_index + 1,
+            },
+            field: &field.name,
+            parser: field.parser.as_ref(),
+        }
+        .error("tagged_columns requires a union tag"));
+    }
+
+    let Some(variant) = union.variants.iter().find(|variant| variant.name == tag) else {
+        return Err(CellContext {
+            path: row_context.path,
+            ir,
+            location: CellLocation::Csv {
+                row: row_context.row,
+                column: tag_index + 1,
+            },
+            field: &field.name,
+            parser: field.parser.as_ref(),
+        }
+        .error(format!("unknown union variant `{tag}`")));
+    };
+
+    let mut values = BTreeMap::from([(union.tag.clone(), sora_data::model::Value::String(tag))]);
+    for tagged_column in projected {
+        let TaggedColumnKind::VariantField(variant_field) = tagged_column.kind else {
+            continue;
+        };
+        let column_index = header_index[&tagged_column.name];
+        let cell = record.get(column_index).unwrap_or_default().trim();
+        let selected = variant
+            .fields
+            .iter()
+            .any(|candidate| candidate.name == variant_field.name);
+        if !selected {
+            if !cell.is_empty() {
+                return Err(CellContext {
+                    path: row_context.path,
+                    ir,
+                    location: CellLocation::Csv {
+                        row: row_context.row,
+                        column: column_index + 1,
+                    },
+                    field: &field.name,
+                    parser: field.parser.as_ref(),
+                }
+                .error(format!(
+                    "field `{}` is not part of union variant `{}`",
+                    tagged_column.name, variant.name
+                )));
+            }
+            continue;
+        }
+        if cell.is_empty() {
+            continue;
+        }
+
+        let nested_field = format!("{}.{}", field.name, variant_field.name);
+        let context = CellContext {
+            path: row_context.path,
+            ir,
+            location: CellLocation::Csv {
+                row: row_context.row,
+                column: column_index + 1,
+            },
+            field: &nested_field,
+            parser: variant_field.parser.as_ref(),
+        };
+        values.insert(
+            variant_field.name.clone(),
+            cell_to_value_with_parsers(
+                &CellValue::Text(cell.into()),
+                &variant_field.ty,
+                &context,
+                parser_registry,
+            )?,
+        );
+    }
+
+    Ok(Some(sora_data::model::Value::Object(values)))
+}
+
 fn header_index(headers: &StringRecord) -> BTreeMap<String, usize> {
     headers
         .iter()
@@ -120,18 +254,20 @@ fn header_index(headers: &StringRecord) -> BTreeMap<String, usize> {
 }
 
 fn validate_headers(
+    ir: &ConfigIr,
     table: &TableIr,
     path: &Path,
     headers: &StringRecord,
     header_index: &BTreeMap<String, usize>,
 ) -> Result<()> {
-    for field in &table.fields {
-        if !header_index.contains_key(&field.name) {
+    let expected_headers = expected_headers(ir, table);
+    for header in &expected_headers {
+        if !header_index.contains_key(header) {
             return Err(SoraError::ParseData {
                 path: path.to_path_buf(),
                 message: format!(
                     "CSV table `{}` is missing header for field `{}`",
-                    table.name, field.name
+                    table.name, header
                 ),
             });
         }
@@ -142,7 +278,7 @@ fn validate_headers(
         .map(str::trim)
         .filter(|header| !header.is_empty())
     {
-        if !table.fields.iter().any(|field| field.name == header) {
+        if !expected_headers.iter().any(|expected| expected == header) {
             return Err(SoraError::ParseData {
                 path: path.to_path_buf(),
                 message: format!("CSV table `{}` has unknown header `{header}`", table.name),
@@ -151,6 +287,23 @@ fn validate_headers(
     }
 
     Ok(())
+}
+
+fn expected_headers(ir: &ConfigIr, table: &TableIr) -> Vec<String> {
+    table
+        .fields
+        .iter()
+        .flat_map(|field| {
+            tagged_columns(ir, field)
+                .map(|columns| {
+                    columns
+                        .into_iter()
+                        .map(|column| column.name)
+                        .collect::<Vec<_>>()
+                })
+                .unwrap_or_else(|| vec![field.name.clone()])
+        })
+        .collect()
 }
 
 fn csv_error(path: &Path, source: csv::Error) -> SoraError {
@@ -296,6 +449,62 @@ mod tests {
         let _ = fs::remove_dir_all(base);
     }
 
+    #[test]
+    fn loads_tagged_union_columns() {
+        let ir = tagged_union_ir();
+        let base = temp_dir();
+        fs::create_dir_all(&base).unwrap();
+        fs::write(
+            base.join("EventConditionEntry.csv"),
+            "id,type,quest_id,item_id,count\n1,QuestCompleted,5002,,\n2,HasItem,,1001,2\n",
+        )
+        .unwrap();
+
+        let data = load_csv_config_data(&ir, &base).unwrap();
+
+        assert_eq!(data.tables[0].rows.len(), 2);
+        assert_eq!(
+            data.tables[0].rows[0].values["value"],
+            Value::Object(BTreeMap::from([
+                (
+                    "type".to_owned(),
+                    Value::String("QuestCompleted".to_owned())
+                ),
+                ("quest_id".to_owned(), Value::Integer(5002)),
+            ]))
+        );
+        assert_eq!(
+            data.tables[0].rows[1].values["value"],
+            Value::Object(BTreeMap::from([
+                ("type".to_owned(), Value::String("HasItem".to_owned())),
+                ("item_id".to_owned(), Value::Integer(1001)),
+                ("count".to_owned(), Value::Integer(2)),
+            ]))
+        );
+
+        let _ = fs::remove_dir_all(base);
+    }
+
+    #[test]
+    fn rejects_tagged_union_columns_for_other_variants() {
+        let ir = tagged_union_ir();
+        let base = temp_dir();
+        fs::create_dir_all(&base).unwrap();
+        fs::write(
+            base.join("EventConditionEntry.csv"),
+            "id,type,quest_id,item_id,count\n1,QuestCompleted,5002,1001,\n",
+        )
+        .unwrap();
+
+        let error = load_csv_config_data(&ir, &base).unwrap_err();
+        let message = error.to_string();
+
+        assert!(message.contains("CSV row 2, column 4, field `value`"));
+        assert!(message.contains("is not part of union variant `QuestCompleted`"));
+
+        let _ = fs::remove_dir_all(base);
+    }
+
     fn example_ir() -> ConfigIr {
         let schema = toml::from_str(
             r#"
@@ -382,6 +591,64 @@ file = "Reward.csv"
 name = "cost"
 type = "struct<ResourceCost>"
 parser = { kind = "tuple" }
+"#,
+        )
+        .unwrap();
+        let ir = normalize_schema(schema).unwrap();
+        validate_config_ir(&ir).unwrap();
+        ir
+    }
+
+    fn tagged_union_ir() -> ConfigIr {
+        let schema = toml::from_str(
+            r#"
+package = "game_config"
+
+[[unions]]
+name = "EventCondition"
+tag = "type"
+
+[[unions.variants]]
+name = "QuestCompleted"
+
+[[unions.variants.fields]]
+name = "quest_id"
+type = "i32"
+required = true
+
+[[unions.variants]]
+name = "HasItem"
+
+[[unions.variants.fields]]
+name = "item_id"
+type = "i32"
+required = true
+
+[[unions.variants.fields]]
+name = "count"
+type = "i32"
+required = true
+
+[[tables]]
+name = "EventConditionEntry"
+mode = "map"
+key = "id"
+
+[tables.source]
+format = "csv"
+file = "EventConditionEntry.csv"
+
+[[tables.fields]]
+name = "id"
+type = "i32"
+key = true
+required = true
+
+[[tables.fields]]
+name = "value"
+type = "union<EventCondition>"
+required = true
+parser = { kind = "tagged_columns", prefix = "" }
 "#,
         )
         .unwrap();

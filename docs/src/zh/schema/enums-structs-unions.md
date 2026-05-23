@@ -114,6 +114,8 @@ parser = { kind = "json" }
 ]
 ```
 
+如果不想在 Excel/CSV 里写 JSON，这次新增的是条目表里的 `union<T>` 字段写法：它可以使用 `parser = { kind = "tagged_columns", prefix = "" }`，这样工作簿里就是 `type`、`quest_id`、`item_id`、`count` 这类普通列。父表引用这些条目行时仍然使用已有的 `ref<Table.key>` 或 `list<ref<Table.key>>` 语义。完整规则见[单元格 Parser](parsers.md#tagged-union-columns)。
+
 TOML 数据文件里可以直接用普通嵌套 table 写 union：
 
 ```toml

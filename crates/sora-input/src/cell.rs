@@ -63,7 +63,7 @@ pub struct CellContext<'a> {
 }
 
 impl CellContext<'_> {
-    pub(crate) fn error(&self, message: impl Into<String>) -> SoraError {
+    pub fn error(&self, message: impl Into<String>) -> SoraError {
         let location = match self.location {
             CellLocation::Default => "schema default".to_owned(),
             CellLocation::Csv { row, column } => format!("CSV row {row}, column {column}"),

@@ -9,7 +9,7 @@ type = "list<string>"
 parser = { kind = "split", separator = "|" }
 ```
 
-Parser option 都是字符串。未知 parser、当前 parser 不支持的 option、空 option value 都会在 schema normalization 阶段报错。
+Parser option 都是字符串。未知 parser、当前 parser 不支持的 option、空 option value 都会在 schema normalization 阶段报错。例外是 `tagged_columns.prefix`，`""` 有明确含义。
 
 ## 默认 Cell 解析
 
@@ -36,9 +36,34 @@ Parser option 都是字符串。未知 parser、当前 parser 不支持的 optio
 | `tuple` | `struct<T>` 或 `optional<struct<T>>` | `separator`，默认 `,` | 按 struct 字段声明顺序写值，例如 `Gold,0,100` |
 | `tuple_list` | `list<struct<T>>`、`set<struct<T>>`、`array<struct<T>,N>`，或包在这些类型外的 `optional` | `separator`，默认 `,`；`item_separator`，默认 `|` | `Gold,0,100|Gem,0,5` |
 | `map` | `map<K,V>` 或 `optional<map<K,V>>` | `separator`，默认 `,`；`item_separator`，默认 `|` | `atk,10|hp,20` |
+| `tagged_columns` | 只能用于 `union<T>` | `prefix`，默认 `<field>.` | 多列：一个 tag 列加 union variant fields |
 | `json` | 任意类型 | 无 | 匹配字段类型的 JSON value |
 
 `array<T,N>` 会检查 item 数量。`tuple` 会检查 value 数量是否等于被引用 struct 的字段数。
+
+## Tagged Union Columns
+
+`tagged_columns` 用来把一个 `union<T>` 值展开到多列 Excel/CSV 中编辑。它只能用于类型正好是 `union<T>` 的 table field。它不能用于 `optional<union<T>>`、`list<union<T>>`、`set<union<T>>` 或其它容器。`ref<EventConditionEntry.id>` 这类引用仍然是已有语义；这个 parser 只改变被引用的 union 条目表如何填写自己的 `union<T>` 值。
+
+默认 prefix 会使用字段名。例如字段 `condition` 的类型是 `union<EventCondition>`，会投影出 `condition.type`、`condition.quest_id`、`condition.item_id` 这类列。如果这个表本身就是 union 词表，可以设置 `prefix = ""` 让列展开到顶层：
+
+```toml
+[[tables.fields]]
+name = "value"
+type = "union<EventCondition>"
+required = true
+parser = { kind = "tagged_columns", prefix = "" }
+```
+
+CSV 示例：
+
+```csv
+id,type,quest_id,item_id,count
+1,QuestCompleted,5002,,
+2,HasItem,,1001,2
+```
+
+tag 列必须填写 union variant 名称。只有被选中的 variant 的字段列可以填写值。Sora 会拒绝投影列名冲突，例如表里已经有普通字段 `type`，同时又对 tag 也是 `type` 的 union 使用 `prefix = ""`。
 
 ## JSON 形状
 

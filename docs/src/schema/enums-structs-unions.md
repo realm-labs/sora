@@ -114,6 +114,8 @@ parser = { kind = "json" }
 ]
 ```
 
+If you do not want JSON in Excel or CSV, the new part is the entry table's `union<T>` field: it can use `parser = { kind = "tagged_columns", prefix = "" }` so the workbook has normal columns such as `type`, `quest_id`, `item_id`, and `count`. Any parent table reference to that entry row still uses the existing `ref<Table.key>` or `list<ref<Table.key>>` semantics. See [Cell Parsers](parsers.md#tagged-union-columns) for the exact rules.
+
 In TOML data files, unions can be written as normal nested tables:
 
 ```toml

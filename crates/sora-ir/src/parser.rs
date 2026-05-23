@@ -29,6 +29,7 @@ impl ParserRegistry {
         registry.register(TupleListParserValidator);
         registry.register(MapParserValidator);
         registry.register(JsonParserValidator);
+        registry.register(TaggedColumnsParserValidator);
         registry
     }
 
@@ -137,6 +138,19 @@ impl ParserValidator for JsonParserValidator {
     }
 }
 
+struct TaggedColumnsParserValidator;
+
+impl ParserValidator for TaggedColumnsParserValidator {
+    fn kind(&self) -> &'static str {
+        "tagged_columns"
+    }
+
+    fn validate(&self, field_name: &str, ty: &TypeIr, parser: &ParserSchema) -> Result<()> {
+        validate_union_target(field_name, ty)?;
+        validate_parser_options(field_name, &parser.kind, &parser.options, &["prefix"])
+    }
+}
+
 fn validate_required_non_empty(
     field_name: &str,
     property: &str,
@@ -198,6 +212,15 @@ fn validate_map_target(field_name: &str, ty: &TypeIr) -> Result<()> {
     }
 }
 
+fn validate_union_target(field_name: &str, ty: &TypeIr) -> Result<()> {
+    match ty {
+        TypeIr::Union(_) => Ok(()),
+        _ => Err(SoraError::InvalidSchema(format!(
+            "field `{field_name}` declares parser `tagged_columns` but type `{ty}` is not union"
+        ))),
+    }
+}
+
 fn validate_parser_options(
     field_name: &str,
     parser: &str,
@@ -210,7 +233,9 @@ fn validate_parser_options(
                 "field `{field_name}` declares unsupported option `{key}` for parser `{parser}`"
             )));
         }
-        validate_required_non_empty(field_name, &format!("parser.{key}"), Some(value))?;
+        if !(parser == "tagged_columns" && key == "prefix") {
+            validate_required_non_empty(field_name, &format!("parser.{key}"), Some(value))?;
+        }
     }
     Ok(())
 }

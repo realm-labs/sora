@@ -1,8 +1,13 @@
-use std::collections::BTreeSet;
+use std::collections::{BTreeMap, BTreeSet};
 
 use sora_diagnostics::{Result, SoraError};
 
-use crate::model::{ConfigIr, FieldIr, StructIr, TableIr, TableModeIr};
+use crate::{
+    input_projection::{
+        TAGGED_COLUMNS_PARSER, tagged_columns, tagged_columns_prefix, tagged_columns_union,
+    },
+    model::{ConfigIr, FieldIr, StructIr, TableIr, TableModeIr},
+};
 
 mod aggregation;
 mod type_ref;
@@ -120,6 +125,7 @@ pub fn validate_config_ir(ir: &ConfigIr) -> Result<()> {
                 tables: &ir.tables,
             },
         )?;
+        validate_table_input_columns(ir, table)?;
 
         if table.mode == TableModeIr::Map && table.key.is_none() {
             return Err(SoraError::InvalidSchema(format!(
@@ -215,6 +221,18 @@ fn validate_fields<'a>(
             },
         )?;
 
+        if field
+            .parser
+            .as_ref()
+            .is_some_and(|parser| parser.kind == TAGGED_COLUMNS_PARSER)
+            && owner_kind != "table"
+        {
+            return Err(SoraError::InvalidSchema(format!(
+                "{owner_kind} `{owner}` field `{}` declares parser `tagged_columns`, but tagged columns are only supported on table fields",
+                field.name
+            )));
+        }
+
         if let Some(aggregation) = &field.aggregation {
             validate_aggregation(
                 owner_kind,
@@ -228,6 +246,71 @@ fn validate_fields<'a>(
     }
 
     Ok(field_names)
+}
+
+fn validate_table_input_columns(ir: &ConfigIr, table: &TableIr) -> Result<()> {
+    let mut columns = BTreeSet::<String>::new();
+
+    for field in &table.fields {
+        let Some(projected) = tagged_columns(ir, field) else {
+            if !columns.insert(field.name.clone()) {
+                return Err(input_column_conflict(&table.name, &field.name, &field.name));
+            }
+            continue;
+        };
+
+        validate_tagged_columns_internal(ir, table, field)?;
+        for column in projected {
+            if !columns.insert(column.name.clone()) {
+                return Err(input_column_conflict(
+                    &table.name,
+                    &field.name,
+                    &column.name,
+                ));
+            }
+        }
+    }
+
+    Ok(())
+}
+
+fn validate_tagged_columns_internal(ir: &ConfigIr, table: &TableIr, field: &FieldIr) -> Result<()> {
+    let Some(union) = tagged_columns_union(ir, field) else {
+        return Ok(());
+    };
+    let prefix = tagged_columns_prefix(field).unwrap_or_default();
+    let tag_column = format!("{prefix}{}", union.tag);
+    let mut variant_columns = BTreeMap::<String, &FieldIr>::new();
+
+    for variant in &union.variants {
+        for variant_field in &variant.fields {
+            let column = format!("{prefix}{}", variant_field.name);
+            if column == tag_column {
+                return Err(SoraError::InvalidSchema(format!(
+                    "table `{}` field `{}` uses tagged_columns with column `{column}`, but it conflicts with union tag column `{tag_column}`",
+                    table.name, field.name
+                )));
+            }
+
+            if let Some(existing) = variant_columns.get(&column)
+                && (existing.ty != variant_field.ty || existing.parser != variant_field.parser)
+            {
+                return Err(SoraError::InvalidSchema(format!(
+                    "table `{}` field `{}` uses tagged_columns with incompatible repeated variant column `{column}`",
+                    table.name, field.name
+                )));
+            }
+            variant_columns.entry(column).or_insert(variant_field);
+        }
+    }
+
+    Ok(())
+}
+
+fn input_column_conflict(table: &str, field: &str, column: &str) -> SoraError {
+    SoraError::InvalidSchema(format!(
+        "table `{table}` field `{field}` maps to input column `{column}`, but that column is already used"
+    ))
 }
 
 struct ValidationContext<'a> {

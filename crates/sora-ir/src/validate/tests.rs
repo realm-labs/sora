@@ -344,6 +344,145 @@ type = "i32"
     validate_config_ir(&ir).unwrap();
 }
 
+#[test]
+fn validates_tagged_columns_projection() {
+    let ir = example_ir(
+        r#"
+[[unions]]
+name = "Action"
+tag = "type"
+
+[[unions.variants]]
+name = "AddItem"
+
+[[unions.variants.fields]]
+name = "item_id"
+type = "i32"
+
+[[unions.variants]]
+name = "AddBuff"
+
+[[unions.variants.fields]]
+name = "buff_id"
+type = "i32"
+
+[[tables]]
+name = "Event"
+mode = "list"
+
+[[tables.fields]]
+name = "action"
+type = "union<Action>"
+parser = { kind = "tagged_columns", prefix = "" }
+"#,
+    );
+
+    validate_config_ir(&ir).unwrap();
+}
+
+#[test]
+fn rejects_tagged_columns_input_column_conflicts() {
+    let ir = example_ir(
+        r#"
+[[unions]]
+name = "Action"
+tag = "type"
+
+[[unions.variants]]
+name = "AddItem"
+
+[[unions.variants.fields]]
+name = "item_id"
+type = "i32"
+
+[[tables]]
+name = "Event"
+mode = "list"
+
+[[tables.fields]]
+name = "type"
+type = "string"
+
+[[tables.fields]]
+name = "action"
+type = "union<Action>"
+parser = { kind = "tagged_columns", prefix = "" }
+"#,
+    );
+
+    assert!(matches!(
+        validate_config_ir(&ir).unwrap_err(),
+        SoraError::InvalidSchema(message)
+            if message.contains("maps to input column `type`")
+                && message.contains("already used")
+    ));
+}
+
+#[test]
+fn rejects_tagged_columns_outside_table_fields() {
+    let ir = example_ir(
+        r#"
+[[unions]]
+name = "Action"
+tag = "type"
+
+[[unions.variants]]
+name = "AddItem"
+
+[[unions.variants.fields]]
+name = "nested"
+type = "union<Action>"
+parser = { kind = "tagged_columns" }
+"#,
+    );
+
+    assert!(matches!(
+        validate_config_ir(&ir).unwrap_err(),
+        SoraError::InvalidSchema(message)
+            if message.contains("tagged columns are only supported on table fields")
+    ));
+}
+
+#[test]
+fn rejects_incompatible_repeated_tagged_columns() {
+    let ir = example_ir(
+        r#"
+[[unions]]
+name = "Action"
+tag = "type"
+
+[[unions.variants]]
+name = "AddItem"
+
+[[unions.variants.fields]]
+name = "value"
+type = "i32"
+
+[[unions.variants]]
+name = "SetName"
+
+[[unions.variants.fields]]
+name = "value"
+type = "string"
+
+[[tables]]
+name = "Event"
+mode = "list"
+
+[[tables.fields]]
+name = "action"
+type = "union<Action>"
+parser = { kind = "tagged_columns" }
+"#,
+    );
+
+    assert!(matches!(
+        validate_config_ir(&ir).unwrap_err(),
+        SoraError::InvalidSchema(message)
+            if message.contains("incompatible repeated variant column `action.value`")
+    ));
+}
+
 fn example_ir(extra: &str) -> ConfigIr {
     let source = format!(
         r#"

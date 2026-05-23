@@ -5,6 +5,7 @@ use sora_schema::model::{
 };
 
 use crate::{
+    input_projection::TAGGED_COLUMNS_PARSER,
     model::{
         AggregationIr, ConfigIr, EnumAliasIr, EnumIr, FieldIr, IndexIr, ParserIr, ScopeIr,
         StructIr, TableIr, TableModeIr, TableSourceIr, TypeIr, UnionIr, UnionVariantIr,
@@ -250,6 +251,17 @@ fn convert_field_with_parsers(
     if field.default.is_some() && aggregation.is_some() {
         return Err(SoraError::InvalidSchema(format!(
             "field `{}` declares both `default` and aggregation metadata",
+            field.name
+        )));
+    }
+    if field.default.is_some()
+        && field
+            .parser
+            .as_ref()
+            .is_some_and(|parser| parser.kind == TAGGED_COLUMNS_PARSER)
+    {
+        return Err(SoraError::InvalidSchema(format!(
+            "field `{}` declares both `default` and parser `tagged_columns`",
             field.name
         )));
     }

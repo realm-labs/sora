@@ -9,7 +9,7 @@ type = "list<string>"
 parser = { kind = "split", separator = "|" }
 ```
 
-Parser options are string values. Unknown parser kinds, unsupported options, and empty option values fail during schema normalization.
+Parser options are string values. Unknown parser kinds, unsupported options, and empty option values fail during schema normalization. The exception is `tagged_columns.prefix`, where `""` is meaningful.
 
 ## Default Cell Parsing
 
@@ -36,9 +36,34 @@ For comma-separated collections, primitive items are parsed by type. Struct and 
 | `tuple` | `struct<T>` or `optional<struct<T>>` | `separator`, default `,` | Values in the struct field declaration order, for example `Gold,0,100` |
 | `tuple_list` | `list<struct<T>>`, `set<struct<T>>`, `array<struct<T>,N>`, or `optional` around those types | `separator`, default `,`; `item_separator`, default `|` | `Gold,0,100|Gem,0,5` |
 | `map` | `map<K,V>` or `optional<map<K,V>>` | `separator`, default `,`; `item_separator`, default `|` | `atk,10|hp,20` |
+| `tagged_columns` | `union<T>` only | `prefix`, default `<field>.` | Multiple columns: one tag column plus the union variant fields |
 | `json` | Any type | none | JSON value matching the field type |
 
 `array<T,N>` checks the parsed item count. `tuple` checks the value count against the referenced struct's field count.
+
+## Tagged Union Columns
+
+`tagged_columns` is for editing one `union<T>` value across several Excel or CSV columns. It is only valid on table fields whose type is exactly `union<T>`. It is intentionally not valid for `optional<union<T>>`, `list<union<T>>`, `set<union<T>>`, or other containers. References such as `ref<EventConditionEntry.id>` keep their existing meaning; this parser only changes how the referenced union-entry table can write its own `union<T>` value.
+
+With the default prefix, a field named `condition` for `union<EventCondition>` projects columns such as `condition.type`, `condition.quest_id`, and `condition.item_id`. Set `prefix = ""` when the table itself is the union entry table and you want top-level columns:
+
+```toml
+[[tables.fields]]
+name = "value"
+type = "union<EventCondition>"
+required = true
+parser = { kind = "tagged_columns", prefix = "" }
+```
+
+Example CSV headers and rows:
+
+```csv
+id,type,quest_id,item_id,count
+1,QuestCompleted,5002,,
+2,HasItem,,1001,2
+```
+
+The tag column must contain a union variant name. Only fields for the selected variant may contain values. Sora rejects projected column name conflicts, for example a normal table field named `type` plus `prefix = ""` for a union whose tag is also `type`.
 
 ## JSON Shapes
 
