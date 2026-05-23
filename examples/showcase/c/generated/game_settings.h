@@ -4,6 +4,7 @@
 #define SORA_SHOWCASE_GAME_SETTINGS_H
 
 #include "sora_types.h"
+#include "maintenance_info.h"
 #include "vec3.h"
 
 #ifdef __cplusplus
@@ -16,6 +17,14 @@ typedef struct sora_showcase_game_settings {
     int32_t starting_gold;
     sora_showcase_vec3 spawn_pos;
     sora_showcase_i32_array starter_items;
+    /* Double precision tuning value */
+    double gravity;
+    /* Fixed-length array parsed from one cell */
+    sora_showcase_i32_array_3 daily_bonus_items;
+    /* Fixed-length array of structs */
+    sora_showcase_vec3_array_2 spawn_points;
+    /* Optional derived struct copied from a child row */
+    sora_showcase_optional_maintenance_info maintenance;
 } sora_showcase_game_settings;
 
 sora_result sora_showcase_game_settings_decode(sora_reader* reader, sora_showcase_game_settings* out);

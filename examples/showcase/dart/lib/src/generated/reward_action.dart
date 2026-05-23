@@ -27,6 +27,10 @@ sealed class RewardAction {
         return RewardActionSendMail(
           mailId: obj.get("mail_id").asInt(),
         );
+      case 'RunActionGroup':
+        return RewardActionRunActionGroup(
+          actionGroupId: obj.get("action_group_id").asInt(),
+        );
       default:
         throw SoraReadException('invalid union tag `$tag` for RewardAction');
     }
@@ -66,5 +70,13 @@ final class RewardActionSendMail extends RewardAction {
 
   const RewardActionSendMail({
     required this.mailId,
+  });
+}
+
+final class RewardActionRunActionGroup extends RewardAction {
+  final int actionGroupId;
+
+  const RewardActionRunActionGroup({
+    required this.actionGroupId,
   });
 }

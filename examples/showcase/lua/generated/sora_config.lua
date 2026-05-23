@@ -6,6 +6,7 @@ local Skill = require("generated.skill")
 local Quest = require("generated.quest")
 local QuestReward = require("generated.quest_reward")
 local GameSettings = require("generated.game_settings")
+local MaintenanceWindow = require("generated.maintenance_window")
 local Localization = require("generated.localization")
 local LevelExp = require("generated.level_exp")
 local Character = require("generated.character")
@@ -29,8 +30,14 @@ local MailTemplate = require("generated.mail_template")
 local MailReward = require("generated.mail_reward")
 local Dialogue = require("generated.dialogue")
 local EventRule = require("generated.event_rule")
+local ComplexRule = require("generated.complex_rule")
+local ComplexConditionGroup = require("generated.complex_condition_group")
+local ComplexConditionGroupEntry = require("generated.complex_condition_group_entry")
+local ComplexRuleCondition = require("generated.complex_rule_condition")
+local ComplexActionGroup = require("generated.complex_action_group")
+local ComplexActionEntry = require("generated.complex_action_entry")
 
-local SORA_SCHEMA_FINGERPRINT = "f8d1c90e3e197c78"
+local SORA_SCHEMA_FINGERPRINT = "3df8793f70d7fc54"
 
 ---@class SoraConfig
 ---@field private _item ItemTable
@@ -38,6 +45,7 @@ local SORA_SCHEMA_FINGERPRINT = "f8d1c90e3e197c78"
 ---@field private _quest QuestTable
 ---@field private _quest_reward QuestRewardTable
 ---@field private _game_settings GameSettingsTable
+---@field private _maintenance_window MaintenanceWindowTable
 ---@field private _localization LocalizationTable
 ---@field private _level_exp LevelExpTable
 ---@field private _character CharacterTable
@@ -61,6 +69,12 @@ local SORA_SCHEMA_FINGERPRINT = "f8d1c90e3e197c78"
 ---@field private _mail_reward MailRewardTable
 ---@field private _dialogue DialogueTable
 ---@field private _event_rule EventRuleTable
+---@field private _complex_rule ComplexRuleTable
+---@field private _complex_condition_group ComplexConditionGroupTable
+---@field private _complex_condition_group_entry ComplexConditionGroupEntryTable
+---@field private _complex_rule_condition ComplexRuleConditionTable
+---@field private _complex_action_group ComplexActionGroupTable
+---@field private _complex_action_entry ComplexActionEntryTable
 local SoraConfig = {}
 SoraConfig.__index = SoraConfig
 
@@ -89,6 +103,7 @@ function SoraConfig.from_bundle(bundle)
         _quest = Quest.Table.decode(bundle:decode_table(Quest.Table.NAME, Quest.decode, Quest.decode_value)),
         _quest_reward = QuestReward.Table.decode(bundle:decode_table(QuestReward.Table.NAME, QuestReward.decode, QuestReward.decode_value)),
         _game_settings = GameSettings.Table.decode(bundle:decode_table(GameSettings.Table.NAME, GameSettings.decode, GameSettings.decode_value)),
+        _maintenance_window = MaintenanceWindow.Table.decode(bundle:decode_table(MaintenanceWindow.Table.NAME, MaintenanceWindow.decode, MaintenanceWindow.decode_value)),
         _localization = Localization.Table.decode(bundle:decode_table(Localization.Table.NAME, Localization.decode, Localization.decode_value)),
         _level_exp = LevelExp.Table.decode(bundle:decode_table(LevelExp.Table.NAME, LevelExp.decode, LevelExp.decode_value)),
         _character = Character.Table.decode(bundle:decode_table(Character.Table.NAME, Character.decode, Character.decode_value)),
@@ -112,6 +127,12 @@ function SoraConfig.from_bundle(bundle)
         _mail_reward = MailReward.Table.decode(bundle:decode_table(MailReward.Table.NAME, MailReward.decode, MailReward.decode_value)),
         _dialogue = Dialogue.Table.decode(bundle:decode_table(Dialogue.Table.NAME, Dialogue.decode, Dialogue.decode_value)),
         _event_rule = EventRule.Table.decode(bundle:decode_table(EventRule.Table.NAME, EventRule.decode, EventRule.decode_value)),
+        _complex_rule = ComplexRule.Table.decode(bundle:decode_table(ComplexRule.Table.NAME, ComplexRule.decode, ComplexRule.decode_value)),
+        _complex_condition_group = ComplexConditionGroup.Table.decode(bundle:decode_table(ComplexConditionGroup.Table.NAME, ComplexConditionGroup.decode, ComplexConditionGroup.decode_value)),
+        _complex_condition_group_entry = ComplexConditionGroupEntry.Table.decode(bundle:decode_table(ComplexConditionGroupEntry.Table.NAME, ComplexConditionGroupEntry.decode, ComplexConditionGroupEntry.decode_value)),
+        _complex_rule_condition = ComplexRuleCondition.Table.decode(bundle:decode_table(ComplexRuleCondition.Table.NAME, ComplexRuleCondition.decode, ComplexRuleCondition.decode_value)),
+        _complex_action_group = ComplexActionGroup.Table.decode(bundle:decode_table(ComplexActionGroup.Table.NAME, ComplexActionGroup.decode, ComplexActionGroup.decode_value)),
+        _complex_action_entry = ComplexActionEntry.Table.decode(bundle:decode_table(ComplexActionEntry.Table.NAME, ComplexActionEntry.decode, ComplexActionEntry.decode_value)),
     }, SoraConfig)
 end
 
@@ -123,6 +144,7 @@ function SoraConfig:tables()
         self._quest,
         self._quest_reward,
         self._game_settings,
+        self._maintenance_window,
         self._localization,
         self._level_exp,
         self._character,
@@ -146,6 +168,12 @@ function SoraConfig:tables()
         self._mail_reward,
         self._dialogue,
         self._event_rule,
+        self._complex_rule,
+        self._complex_condition_group,
+        self._complex_condition_group_entry,
+        self._complex_rule_condition,
+        self._complex_action_group,
+        self._complex_action_entry,
     }
 end
 ---@return ItemTable
@@ -167,6 +195,10 @@ end
 ---@return GameSettingsTable
 function SoraConfig:game_settings()
     return self._game_settings
+end
+---@return MaintenanceWindowTable
+function SoraConfig:maintenance_window()
+    return self._maintenance_window
 end
 ---@return LocalizationTable
 function SoraConfig:localization()
@@ -259,5 +291,29 @@ end
 ---@return EventRuleTable
 function SoraConfig:event_rule()
     return self._event_rule
+end
+---@return ComplexRuleTable
+function SoraConfig:complex_rule()
+    return self._complex_rule
+end
+---@return ComplexConditionGroupTable
+function SoraConfig:complex_condition_group()
+    return self._complex_condition_group
+end
+---@return ComplexConditionGroupEntryTable
+function SoraConfig:complex_condition_group_entry()
+    return self._complex_condition_group_entry
+end
+---@return ComplexRuleConditionTable
+function SoraConfig:complex_rule_condition()
+    return self._complex_rule_condition
+end
+---@return ComplexActionGroupTable
+function SoraConfig:complex_action_group()
+    return self._complex_action_group
+end
+---@return ComplexActionEntryTable
+function SoraConfig:complex_action_entry()
+    return self._complex_action_entry
 end
 return SoraConfig

@@ -10,7 +10,7 @@ use sora_ir::{
 };
 
 use crate::projection::{
-    DATA_START_ROW, DESC_ROW, FIELD_START_COLUMN, NAME_ROW, table_template_columns,
+    DATA_START_ROW, DESC_ROW, FIELD_START_COLUMN, NAME_ROW, TemplateColumn, table_template_columns,
     table_template_rows, tuple_shape,
 };
 
@@ -62,7 +62,8 @@ pub(crate) fn write_workbook_with_rows(
         apply_sheet_layout(ir, table, worksheet, &formats, path)?;
         apply_field_notes(ir, table, worksheet, path)?;
         apply_data_validations(ir, table, worksheet, path)?;
-        write_data_rows(worksheet, &formats, path, rows_for_table(table))?;
+        let columns = table_template_columns(ir, table);
+        write_data_rows(worksheet, &formats, path, &columns, rows_for_table(table))?;
         worksheet
             .set_freeze_panes(DATA_START_ROW, 1)
             .map_err(|source| excel_error(path, source))?;
@@ -77,22 +78,37 @@ fn write_data_rows(
     worksheet: &mut rust_xlsxwriter::Worksheet,
     formats: &TemplateFormats,
     path: &Path,
+    columns: &[TemplateColumn],
     rows: Vec<Vec<String>>,
 ) -> Result<()> {
     for (row_offset, row) in rows.iter().enumerate() {
-        for (column, value) in row.iter().enumerate() {
+        let column_count = row.len().max(columns.len());
+        for column in 0..column_count {
+            let value = row.get(column).map(String::as_str).unwrap_or_default();
+            let derived = columns.get(column).is_some_and(|column| column.derived);
+            let value = if derived && value.is_empty() {
+                derived_placeholder(columns.get(column))
+            } else {
+                value.to_owned()
+            };
             worksheet
                 .write_with_format(
                     DATA_START_ROW + row_offset as u32,
                     FIELD_START_COLUMN + column as u16,
-                    value,
-                    formats.data_cell(),
+                    &value,
+                    formats.data_cell(derived),
                 )
                 .map_err(|source| excel_error(path, source))?;
         }
     }
 
     Ok(())
+}
+
+fn derived_placeholder(column: Option<&TemplateColumn>) -> String {
+    column
+        .and_then(|column| (!column.input.is_empty()).then(|| column.input.clone()))
+        .unwrap_or_else(|| "generated".to_owned())
 }
 
 fn apply_data_validations(
@@ -103,6 +119,12 @@ fn apply_data_validations(
 ) -> Result<()> {
     let mut column = FIELD_START_COLUMN;
     for field in &table.fields {
+        if field.derived_from.is_some() {
+            column += tagged_columns(ir, field)
+                .map(|columns| columns.len() as u16)
+                .unwrap_or(1);
+            continue;
+        }
         if let Some(columns) = tagged_columns(ir, field) {
             for tagged_column in columns {
                 let data_validation = match tagged_column.kind {
@@ -221,11 +243,14 @@ fn field_note_text(ir: &ConfigIr, field: &FieldIr) -> Option<String> {
     if field.key {
         lines.push("Key: yes".to_owned());
     }
-    if field.is_required() {
-        lines.push("Required: yes".to_owned());
-    }
     if let Some(default) = &field.default {
         lines.push(format!("Default: {default}"));
+    }
+    if let Some(parser) = &field.parser {
+        lines.push(format!("Parser: {}", parser.kind));
+        for (key, value) in &parser.options {
+            lines.push(format!("Parser {key}: {value}"));
+        }
     }
     if let Some([min, max]) = field.range {
         lines.push(format!("Range: {min}..{max}"));
@@ -234,6 +259,7 @@ fn field_note_text(ir: &ConfigIr, field: &FieldIr) -> Option<String> {
         lines.push(format!("Length: {min}..{max}"));
     }
     if let Some(derived_from) = &field.derived_from {
+        lines.push("Generated: yes; do not fill this column.".to_owned());
         lines.push(format!(
             "From: {}.{} -> {}",
             derived_from.source_table, derived_from.child_key, derived_from.parent_key
@@ -391,6 +417,7 @@ struct TemplateFormats {
     schema_label: Format,
     schema_value: Format,
     description: Format,
+    derived_data: Format,
 }
 
 impl TemplateFormats {
@@ -428,6 +455,12 @@ impl TemplateFormats {
                 .set_border(FormatBorder::Thin)
                 .set_text_wrap()
                 .set_align(FormatAlign::Top),
+            derived_data: Format::new()
+                .set_background_color(Color::RGB(0xE5E7EB))
+                .set_font_color(Color::RGB(0x6B7280))
+                .set_border(FormatBorder::Thin)
+                .set_italic()
+                .set_align(FormatAlign::VerticalCenter),
         }
     }
 
@@ -444,8 +477,12 @@ impl TemplateFormats {
         }
     }
 
-    fn data_cell(&self) -> &Format {
-        &self.schema_value
+    fn data_cell(&self, derived: bool) -> &Format {
+        if derived {
+            &self.derived_data
+        } else {
+            &self.schema_value
+        }
     }
 }
 
@@ -477,7 +514,14 @@ fn apply_sheet_layout(
             .set_column_width(column, width)
             .map_err(|source| excel_error(path, source))?;
         worksheet
-            .set_column_format(column, &formats.schema_value)
+            .set_column_format(
+                column,
+                if column_info.derived {
+                    &formats.derived_data
+                } else {
+                    &formats.schema_value
+                },
+            )
             .map_err(|source| excel_error(path, source))?;
     }
 

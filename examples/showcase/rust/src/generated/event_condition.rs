@@ -17,6 +17,14 @@ pub enum EventCondition {
         #[serde(rename = "count")]
         count: i32,
     },
+    AllConditions {
+        #[serde(rename = "condition_group_id")]
+        condition_group_id: i32,
+    },
+    AnyCondition {
+        #[serde(rename = "condition_group_id")]
+        condition_group_id: i32,
+    },
 }
 
 impl super::runtime::SoraDecode for EventCondition {
@@ -33,6 +41,12 @@ impl super::runtime::SoraDecode for EventCondition {
             2 => Ok(Self::HasItem {
                 item_id: <i32 as super::runtime::SoraDecode>::decode(reader)?,
                 count: <i32 as super::runtime::SoraDecode>::decode(reader)?,
+            }),
+            3 => Ok(Self::AllConditions {
+                condition_group_id: <i32 as super::runtime::SoraDecode>::decode(reader)?,
+            }),
+            4 => Ok(Self::AnyCondition {
+                condition_group_id: <i32 as super::runtime::SoraDecode>::decode(reader)?,
             }),
             value => Err(super::runtime::SoraReadError::new(format!(
                 "invalid union ordinal {} for EventCondition",

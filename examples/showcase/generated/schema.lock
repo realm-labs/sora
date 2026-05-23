@@ -1,7 +1,7 @@
 {
   "version": 1,
   "package": "com.sora.showcase",
-  "fingerprint": "f8d1c90e3e197c78",
+  "fingerprint": "3df8793f70d7fc54",
   "schema": {
     "package": "com.sora.showcase",
     "enums": [
@@ -398,6 +398,230 @@
             "derived_from": null
           }
         ]
+      },
+      {
+        "name": "RewardBundle",
+        "scope": {
+          "values": [
+            "all"
+          ]
+        },
+        "fields": [
+          {
+            "name": "cost",
+            "ty": {
+              "Struct": "ResourceCost"
+            },
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
+            "key": false,
+            "comment": null,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": {
+              "kind": "tuple",
+              "options": {
+                "separator": ":"
+              }
+            },
+            "derived_from": null
+          },
+          {
+            "name": "weight",
+            "ty": "I32",
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
+            "key": false,
+            "comment": null,
+            "default": null,
+            "range": [
+              1,
+              10000
+            ],
+            "length": null,
+            "parser": null,
+            "derived_from": null
+          },
+          {
+            "name": "labels",
+            "ty": {
+              "List": "String"
+            },
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
+            "key": false,
+            "comment": null,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": {
+              "kind": "split",
+              "options": {
+                "separator": "+"
+              }
+            },
+            "derived_from": null
+          }
+        ]
+      },
+      {
+        "name": "ComplexBudget",
+        "scope": {
+          "values": [
+            "all"
+          ]
+        },
+        "fields": [
+          {
+            "name": "fixed",
+            "ty": {
+              "Struct": "ResourceCost"
+            },
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
+            "key": false,
+            "comment": null,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": {
+              "kind": "tuple",
+              "options": {
+                "separator": ":"
+              }
+            },
+            "derived_from": null
+          },
+          {
+            "name": "random",
+            "ty": {
+              "List": {
+                "Struct": "RewardBundle"
+              }
+            },
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
+            "key": false,
+            "comment": null,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": {
+              "kind": "tuple_list",
+              "options": {
+                "item_separator": "|",
+                "separator": ";"
+              }
+            },
+            "derived_from": null
+          },
+          {
+            "name": "limits",
+            "ty": {
+              "Map": {
+                "key": "String",
+                "value": "I32"
+              }
+            },
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
+            "key": false,
+            "comment": null,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": {
+              "kind": "map",
+              "options": {
+                "item_separator": "|",
+                "separator": ":"
+              }
+            },
+            "derived_from": null
+          }
+        ]
+      },
+      {
+        "name": "MaintenanceInfo",
+        "scope": {
+          "values": [
+            "all"
+          ]
+        },
+        "fields": [
+          {
+            "name": "starts_at",
+            "ty": "String",
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
+            "key": false,
+            "comment": null,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "derived_from": null
+          },
+          {
+            "name": "duration_minutes",
+            "ty": "I32",
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
+            "key": false,
+            "comment": null,
+            "default": null,
+            "range": [
+              1,
+              1440
+            ],
+            "length": null,
+            "parser": null,
+            "derived_from": null
+          },
+          {
+            "name": "reason",
+            "ty": {
+              "Optional": "String"
+            },
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
+            "key": false,
+            "comment": null,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "derived_from": null
+          }
+        ]
       }
     ],
     "unions": [
@@ -516,6 +740,68 @@
                   1,
                   9999
                 ],
+                "length": null,
+                "parser": null,
+                "derived_from": null
+              }
+            ]
+          },
+          {
+            "name": "AllConditions",
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
+            "fields": [
+              {
+                "name": "condition_group_id",
+                "ty": {
+                  "Ref": {
+                    "table": "ComplexConditionGroup",
+                    "field": "id"
+                  }
+                },
+                "scope": {
+                  "values": [
+                    "all"
+                  ]
+                },
+                "key": false,
+                "comment": null,
+                "default": null,
+                "range": null,
+                "length": null,
+                "parser": null,
+                "derived_from": null
+              }
+            ]
+          },
+          {
+            "name": "AnyCondition",
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
+            "fields": [
+              {
+                "name": "condition_group_id",
+                "ty": {
+                  "Ref": {
+                    "table": "ComplexConditionGroup",
+                    "field": "id"
+                  }
+                },
+                "scope": {
+                  "values": [
+                    "all"
+                  ]
+                },
+                "key": false,
+                "comment": null,
+                "default": null,
+                "range": null,
                 "length": null,
                 "parser": null,
                 "derived_from": null
@@ -674,6 +960,37 @@
                 "ty": {
                   "Ref": {
                     "table": "MailTemplate",
+                    "field": "id"
+                  }
+                },
+                "scope": {
+                  "values": [
+                    "all"
+                  ]
+                },
+                "key": false,
+                "comment": null,
+                "default": null,
+                "range": null,
+                "length": null,
+                "parser": null,
+                "derived_from": null
+              }
+            ]
+          },
+          {
+            "name": "RunActionGroup",
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
+            "fields": [
+              {
+                "name": "action_group_id",
+                "ty": {
+                  "Ref": {
+                    "table": "ComplexActionGroup",
                     "field": "id"
                   }
                 },
@@ -1418,6 +1735,189 @@
               "kind": "json",
               "options": {}
             },
+            "derived_from": null
+          },
+          {
+            "name": "gravity",
+            "ty": "F64",
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
+            "key": false,
+            "comment": "Double precision tuning value",
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "derived_from": null
+          },
+          {
+            "name": "daily_bonus_items",
+            "ty": {
+              "Array": {
+                "element": {
+                  "Ref": {
+                    "table": "Item",
+                    "field": "id"
+                  }
+                },
+                "len": 3
+              }
+            },
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
+            "key": false,
+            "comment": "Fixed-length array parsed from one cell",
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": {
+              "kind": "split",
+              "options": {}
+            },
+            "derived_from": null
+          },
+          {
+            "name": "spawn_points",
+            "ty": {
+              "Array": {
+                "element": {
+                  "Struct": "Vec3"
+                },
+                "len": 2
+              }
+            },
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
+            "key": false,
+            "comment": "Fixed-length array of structs",
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": {
+              "kind": "tuple_list",
+              "options": {}
+            },
+            "derived_from": null
+          },
+          {
+            "name": "maintenance",
+            "ty": {
+              "Optional": {
+                "Struct": "MaintenanceInfo"
+              }
+            },
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
+            "key": false,
+            "comment": "Optional derived struct copied from a child row",
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "derived_from": {
+              "source_table": "MaintenanceWindow",
+              "parent_key": "version",
+              "child_key": "version",
+              "value_field": null,
+              "order_by": null
+            }
+          }
+        ],
+        "indexes": []
+      },
+      {
+        "name": "MaintenanceWindow",
+        "scope": {
+          "values": [
+            "all"
+          ]
+        },
+        "mode": "List",
+        "key": null,
+        "source": {
+          "file": "Core.xlsx",
+          "sheet": "MaintenanceWindow"
+        },
+        "fields": [
+          {
+            "name": "version",
+            "ty": "String",
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
+            "key": false,
+            "comment": null,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "derived_from": null
+          },
+          {
+            "name": "starts_at",
+            "ty": "String",
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
+            "key": false,
+            "comment": null,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "derived_from": null
+          },
+          {
+            "name": "duration_minutes",
+            "ty": "I32",
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
+            "key": false,
+            "comment": null,
+            "default": null,
+            "range": [
+              1,
+              1440
+            ],
+            "length": null,
+            "parser": null,
+            "derived_from": null
+          },
+          {
+            "name": "reason",
+            "ty": {
+              "Optional": "String"
+            },
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
+            "key": false,
+            "comment": null,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
             "derived_from": null
           }
         ],
@@ -3558,6 +4058,562 @@
             "parser": {
               "kind": "json",
               "options": {}
+            },
+            "derived_from": null
+          }
+        ],
+        "indexes": []
+      },
+      {
+        "name": "ComplexRule",
+        "scope": {
+          "values": [
+            "all"
+          ]
+        },
+        "mode": "Map",
+        "key": "id",
+        "source": {
+          "file": "Complex.xlsx",
+          "sheet": "ComplexRule"
+        },
+        "fields": [
+          {
+            "name": "id",
+            "ty": "I32",
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
+            "key": true,
+            "comment": null,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "derived_from": null
+          },
+          {
+            "name": "name",
+            "ty": "String",
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
+            "key": false,
+            "comment": null,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "derived_from": null
+          },
+          {
+            "name": "root_condition",
+            "ty": {
+              "Union": "EventCondition"
+            },
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
+            "key": false,
+            "comment": "Single union value derived from a tagged_columns child row",
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "derived_from": {
+              "source_table": "ComplexRuleCondition",
+              "parent_key": "id",
+              "child_key": "rule_id",
+              "value_field": "value",
+              "order_by": null
+            }
+          },
+          {
+            "name": "root_action_group",
+            "ty": {
+              "Ref": {
+                "table": "ComplexActionGroup",
+                "field": "id"
+              }
+            },
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
+            "key": false,
+            "comment": null,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "derived_from": null
+          },
+          {
+            "name": "actions",
+            "ty": {
+              "List": {
+                "Union": "RewardAction"
+              }
+            },
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
+            "key": false,
+            "comment": "Non-JSON list<union<RewardAction>> assembled from child rows",
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "derived_from": {
+              "source_table": "ComplexActionEntry",
+              "parent_key": "root_action_group",
+              "child_key": "group_id",
+              "value_field": "value",
+              "order_by": "seq"
+            }
+          },
+          {
+            "name": "budget",
+            "ty": {
+              "Struct": "ComplexBudget"
+            },
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
+            "key": false,
+            "comment": "Nested tuple, tuple_list, split, and map parsers in one cell",
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": {
+              "kind": "tuple",
+              "options": {
+                "separator": ","
+              }
+            },
+            "derived_from": null
+          }
+        ],
+        "indexes": []
+      },
+      {
+        "name": "ComplexConditionGroup",
+        "scope": {
+          "values": [
+            "all"
+          ]
+        },
+        "mode": "Map",
+        "key": "id",
+        "source": {
+          "file": "Complex.xlsx",
+          "sheet": "ComplexConditionGroup"
+        },
+        "fields": [
+          {
+            "name": "id",
+            "ty": "I32",
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
+            "key": true,
+            "comment": null,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "derived_from": null
+          },
+          {
+            "name": "name",
+            "ty": "String",
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
+            "key": false,
+            "comment": null,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "derived_from": null
+          },
+          {
+            "name": "conditions",
+            "ty": {
+              "List": {
+                "Union": "EventCondition"
+              }
+            },
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
+            "key": false,
+            "comment": "A derived list of union values; each child row is edited without JSON",
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "derived_from": {
+              "source_table": "ComplexConditionGroupEntry",
+              "parent_key": "id",
+              "child_key": "group_id",
+              "value_field": "value",
+              "order_by": "seq"
+            }
+          }
+        ],
+        "indexes": []
+      },
+      {
+        "name": "ComplexConditionGroupEntry",
+        "scope": {
+          "values": [
+            "all"
+          ]
+        },
+        "mode": "Map",
+        "key": "id",
+        "source": {
+          "file": "Complex.xlsx",
+          "sheet": "ComplexConditionGroupEntry"
+        },
+        "fields": [
+          {
+            "name": "id",
+            "ty": "I32",
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
+            "key": true,
+            "comment": null,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "derived_from": null
+          },
+          {
+            "name": "group_id",
+            "ty": {
+              "Ref": {
+                "table": "ComplexConditionGroup",
+                "field": "id"
+              }
+            },
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
+            "key": false,
+            "comment": null,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "derived_from": null
+          },
+          {
+            "name": "seq",
+            "ty": "I32",
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
+            "key": false,
+            "comment": null,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "derived_from": null
+          },
+          {
+            "name": "value",
+            "ty": {
+              "Union": "EventCondition"
+            },
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
+            "key": false,
+            "comment": null,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": {
+              "kind": "tagged_columns",
+              "options": {
+                "prefix": ""
+              }
+            },
+            "derived_from": null
+          }
+        ],
+        "indexes": []
+      },
+      {
+        "name": "ComplexRuleCondition",
+        "scope": {
+          "values": [
+            "all"
+          ]
+        },
+        "mode": "Map",
+        "key": "id",
+        "source": {
+          "file": "Complex.xlsx",
+          "sheet": "ComplexRuleCondition"
+        },
+        "fields": [
+          {
+            "name": "id",
+            "ty": "I32",
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
+            "key": true,
+            "comment": null,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "derived_from": null
+          },
+          {
+            "name": "rule_id",
+            "ty": {
+              "Ref": {
+                "table": "ComplexRule",
+                "field": "id"
+              }
+            },
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
+            "key": false,
+            "comment": null,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "derived_from": null
+          },
+          {
+            "name": "value",
+            "ty": {
+              "Union": "EventCondition"
+            },
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
+            "key": false,
+            "comment": null,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": {
+              "kind": "tagged_columns",
+              "options": {
+                "prefix": ""
+              }
+            },
+            "derived_from": null
+          }
+        ],
+        "indexes": []
+      },
+      {
+        "name": "ComplexActionGroup",
+        "scope": {
+          "values": [
+            "all"
+          ]
+        },
+        "mode": "Map",
+        "key": "id",
+        "source": {
+          "file": "Complex.xlsx",
+          "sheet": "ComplexActionGroup"
+        },
+        "fields": [
+          {
+            "name": "id",
+            "ty": "I32",
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
+            "key": true,
+            "comment": null,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "derived_from": null
+          },
+          {
+            "name": "name",
+            "ty": "String",
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
+            "key": false,
+            "comment": null,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "derived_from": null
+          },
+          {
+            "name": "actions",
+            "ty": {
+              "List": {
+                "Union": "RewardAction"
+              }
+            },
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
+            "key": false,
+            "comment": null,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "derived_from": {
+              "source_table": "ComplexActionEntry",
+              "parent_key": "id",
+              "child_key": "group_id",
+              "value_field": "value",
+              "order_by": "seq"
+            }
+          }
+        ],
+        "indexes": []
+      },
+      {
+        "name": "ComplexActionEntry",
+        "scope": {
+          "values": [
+            "all"
+          ]
+        },
+        "mode": "Map",
+        "key": "id",
+        "source": {
+          "file": "Complex.xlsx",
+          "sheet": "ComplexActionEntry"
+        },
+        "fields": [
+          {
+            "name": "id",
+            "ty": "I32",
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
+            "key": true,
+            "comment": null,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "derived_from": null
+          },
+          {
+            "name": "group_id",
+            "ty": {
+              "Ref": {
+                "table": "ComplexActionGroup",
+                "field": "id"
+              }
+            },
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
+            "key": false,
+            "comment": null,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "derived_from": null
+          },
+          {
+            "name": "seq",
+            "ty": "I32",
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
+            "key": false,
+            "comment": null,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "derived_from": null
+          },
+          {
+            "name": "value",
+            "ty": {
+              "Union": "RewardAction"
+            },
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
+            "key": false,
+            "comment": null,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": {
+              "kind": "tagged_columns",
+              "options": {
+                "prefix": ""
+              }
             },
             "derived_from": null
           }

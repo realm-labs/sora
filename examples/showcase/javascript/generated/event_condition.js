@@ -21,6 +21,18 @@ export function decodeEventCondition(reader) {
             count: reader.readI32(),
         };
     }
+    if (ordinal === 3) {
+        return {
+            type: "AllConditions",
+            conditionGroupId: reader.readI32(),
+        };
+    }
+    if (ordinal === 4) {
+        return {
+            type: "AnyCondition",
+            conditionGroupId: reader.readI32(),
+        };
+    }
     throw new Error(`invalid union ordinal ${ordinal} for EventCondition`);
 }
 
@@ -44,6 +56,18 @@ export function decodeEventConditionValue(value) {
             type: "HasItem",
             itemId: object.get("item_id").asInt(),
             count: object.get("count").asInt(),
+        };
+    }
+    if (tag === "AllConditions") {
+        return {
+            type: "AllConditions",
+            conditionGroupId: object.get("condition_group_id").asInt(),
+        };
+    }
+    if (tag === "AnyCondition") {
+        return {
+            type: "AnyCondition",
+            conditionGroupId: object.get("condition_group_id").asInt(),
         };
     }
     throw new Error(`invalid union tag ${tag} for EventCondition`);

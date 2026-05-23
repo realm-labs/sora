@@ -1,4 +1,4 @@
-sora-protobufcom.sora.showcase"‹˛{"package":"com.sora.showcase","enums":[{"name":"ItemType","scope":{"values":["all"]},"values":["Weapon","Armor","Currency","Material","Consumable"]},{"name":"ResourceKind","scope":{"values":["all"]},"values":["Item","Gold","Diamond"]},{"name":"ElementType","scope":{"values":["all"]},"values":["Fire","Ice","Lightning","Physical"]},{"name":"QuestType","scope":{"values":["all"]},"values":["Main","Side","Daily"]},{"name":"Rarity","scope":{"values":["all"]},"values":["Common","Uncommon","Rare","Epic","Legendary"]},{"name":"StatType","scope":{"values":["all"]},"values":["Hp","Attack","Defense","Speed","CritRate"]},{"name":"MailType","scope":{"values":["all"]},"values":["System","Event","Compensation"]}],"structs":[{"name":"ResourceCost","scope":{"values":["all"]},"fields":[{"name":"kind","ty":{"Enum":"ResourceKind"},"scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"id","ty":"I32","scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"count","ty":"I32","scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":[1,999999],"length":null,"parser":null,"derived_from":null}]},{"name":"Vec3","scope":{"values":["all"]},"fields":[{"name":"x","ty":"F32","scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"y","ty":"F32","scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"z","ty":"F32","scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null}]},{"name":"SkillEffect","scope":{"values":["all"]},"fields":[{"name":"element","ty":{"Enum":"ElementType"},"scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"power","ty":"I32","scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":[1,9999],"length":null,"parser":null,"derived_from":null},{"name":"radius","ty":"F32","scope":{"values":["all"]},"key":false,"comment":null,"default":"1.0","range":null,"length":null,"parser":null,"derived_from":null}]},{"name":"Reward","scope":{"values":["all"]},"fields":[{"name":"item_id","ty":{"Ref":{"table":"Item","field":"id"}},"scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"count","ty":"I32","scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":[1,9999],"length":null,"parser":null,"derived_from":null}]},{"name":"StatModifier","scope":{"values":["all"]},"fields":[{"name":"stat","ty":{"Enum":"StatType"},"scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"value","ty":"F32","scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"is_percent","ty":"Bool","scope":{"values":["all"]},"key":false,"comment":null,"default":"false","range":null,"length":null,"parser":null,"derived_from":null}]}],"unions":[{"name":"EventCondition","scope":{"values":["all"]},"tag":"type","variants":[{"name":"LevelAtLeast","scope":{"values":["all"]},"fields":[{"name":"level","ty":{"Ref":{"table":"LevelExp","field":"level"}},"scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null}]},{"name":"QuestCompleted","scope":{"values":["all"]},"fields":[{"name":"quest_id","ty":{"Ref":{"table":"Quest","field":"id"}},"scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null}]},{"name":"HasItem","scope":{"values":["all"]},"fields":[{"name":"item_id","ty":{"Ref":{"table":"Item","field":"id"}},"scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"count","ty":"I32","scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":[1,9999],"length":null,"parser":null,"derived_from":null}]}]},{"name":"RewardAction","scope":{"values":["all"]},"tag":"type","variants":[{"name":"AddItem","scope":{"values":["all"]},"fields":[{"name":"item_id","ty":{"Ref":{"table":"Item","field":"id"}},"scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"count","ty":"I32","scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":[1,9999],"length":null,"parser":null,"derived_from":null}]},{"name":"AddBuff","scope":{"values":["all"]},"fields":[{"name":"buff_id","ty":{"Ref":{"table":"Buff","field":"id"}},"scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"duration","ty":"F32","scope":{"values":["all"]},"key":false,"comment":null,"default":"10.0","range":null,"length":null,"parser":null,"derived_from":null}]},{"name":"UnlockStage","scope":{"values":["all"]},"fields":[{"name":"stage_id","ty":{"Ref":{"table":"Stage","field":"id"}},"scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null}]},{"name":"SendMail","scope":{"values":["all"]},"fields":[{"name":"mail_id","ty":{"Ref":{"table":"MailTemplate","field":"id"}},"scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null}]}]}],"tables":[{"name":"Item","scope":{"values":["all"]},"mode":"Map","key":"id","source":{"file":"Core.xlsx","sheet":"Item"},"fields":[{"name":"id","ty":"I32","scope":{"values":["all"]},"key":true,"comment":"Item id","default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"name","ty":"String","scope":{"values":["all"]},"key":false,"comment":"Display name","default":null,"range":null,"length":[2,32],"parser":null,"derived_from":null},{"name":"item_type","ty":{"Enum":"ItemType"},"scope":{"values":["all"]},"key":false,"comment":"Item category","default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"max_stack","ty":"I32","scope":{"values":["all"]},"key":false,"comment":"Stack limit; blank cells use the default","default":"1","range":[1,9999],"length":null,"parser":null,"derived_from":null},{"name":"price","ty":{"Struct":"ResourceCost"},"scope":{"values":["all"]},"key":false,"comment":"Tuple: kind,id,count","default":null,"range":null,"length":null,"parser":{"kind":"tuple","options":{}},"derived_from":null},{"name":"tags","ty":{"Set":"String"},"scope":{"values":["all"]},"key":false,"comment":"JSON string set","default":"[\"misc\"]","range":null,"length":[1,5],"parser":{"kind":"json","options":{}},"derived_from":null},{"name":"attributes","ty":{"Map":{"key":"String","value":"I32"}},"scope":{"values":["all"]},"key":false,"comment":"Map pairs: key,value|key,value","default":null,"range":null,"length":null,"parser":{"kind":"map","options":{}},"derived_from":null}],"indexes":[{"name":"by_name","fields":["name"],"unique":true},{"name":"by_item_type","fields":["item_type"],"unique":false}]},{"name":"Skill","scope":{"values":["all"]},"mode":"Map","key":"id","source":{"file":"Battle.xlsx","sheet":"Skill"},"fields":[{"name":"id","ty":"I32","scope":{"values":["all"]},"key":true,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"name","ty":"String","scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":[2,32],"parser":null,"derived_from":null},{"name":"element","ty":{"Enum":"ElementType"},"scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"cost","ty":{"Struct":"ResourceCost"},"scope":{"values":["all"]},"key":false,"comment":"Tuple cost, e.g. Gold,0,150","default":null,"range":null,"length":null,"parser":{"kind":"tuple","options":{}},"derived_from":null},{"name":"effect","ty":{"Struct":"SkillEffect"},"scope":{"values":["all"]},"key":false,"comment":"JSON object with element/power/radius","default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"required_level","ty":"I32","scope":{"values":["all"]},"key":false,"comment":null,"default":"1","range":[1,100],"length":null,"parser":null,"derived_from":null},{"name":"required_item","ty":{"Optional":{"Ref":{"table":"Item","field":"id"}}},"scope":{"values":["all"]},"key":false,"comment":"Optional item requirement","default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"cast_origin","ty":{"Struct":"Vec3"},"scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":{"kind":"tuple","options":{}},"derived_from":null}],"indexes":[]},{"name":"Quest","scope":{"values":["all"]},"mode":"Map","key":"id","source":{"file":"Quest.xlsx","sheet":"Quest"},"fields":[{"name":"id","ty":"I32","scope":{"values":["all"]},"key":true,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"quest_type","ty":{"Enum":"QuestType"},"scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"title","ty":"String","scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":[4,64],"parser":null,"derived_from":null},{"name":"required_item","ty":{"Ref":{"table":"Item","field":"id"}},"scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"unlock_skills","ty":{"List":{"Ref":{"table":"Skill","field":"id"}}},"scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":[1,3],"parser":{"kind":"json","options":{}},"derived_from":null},{"name":"start_pos","ty":{"Struct":"Vec3"},"scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":{"kind":"tuple","options":{}},"derived_from":null},{"name":"rewards","ty":{"List":{"Struct":"Reward"}},"scope":{"values":["all"]},"key":false,"comment":"Materialized from QuestReward child rows","default":null,"range":null,"length":null,"parser":null,"derived_from":{"source_table":"QuestReward","parent_key":"id","child_key":"quest_id","value_field":null,"order_by":"seq"}}],"indexes":[]},{"name":"QuestReward","scope":{"values":["all"]},"mode":"List","key":null,"source":{"file":"Quest.xlsx","sheet":"QuestReward"},"fields":[{"name":"quest_id","ty":{"Ref":{"table":"Quest","field":"id"}},"scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"seq","ty":"I32","scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"item_id","ty":{"Ref":{"table":"Item","field":"id"}},"scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"count","ty":"I32","scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":[1,9999],"length":null,"parser":null,"derived_from":null}],"indexes":[]},{"name":"GameSettings","scope":{"values":["all"]},"mode":"Singleton","key":null,"source":{"file":"Core.xlsx","sheet":"GameSettings"},"fields":[{"name":"version","ty":"String","scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"daily_reset_hour","ty":"I32","scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":[0,23],"length":null,"parser":null,"derived_from":null},{"name":"starting_gold","ty":"I32","scope":{"values":["all"]},"key":false,"comment":null,"default":"100","range":[0,999999],"length":null,"parser":null,"derived_from":null},{"name":"spawn_pos","ty":{"Struct":"Vec3"},"scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":{"kind":"tuple","options":{}},"derived_from":null},{"name":"starter_items","ty":{"List":{"Ref":{"table":"Item","field":"id"}}},"scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":[1,4],"parser":{"kind":"json","options":{}},"derived_from":null}],"indexes":[]},{"name":"Localization","scope":{"values":["all"]},"mode":"Map","key":"key","source":{"file":"Core.xlsx","sheet":"Localization"},"fields":[{"name":"key","ty":"String","scope":{"values":["all"]},"key":true,"comment":null,"default":null,"range":null,"length":[3,64],"parser":null,"derived_from":null},{"name":"zh_cn","ty":"String","scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"en_us","ty":"String","scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"note","ty":{"Optional":"String"},"scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null}],"indexes":[]},{"name":"LevelExp","scope":{"values":["all"]},"mode":"Map","key":"level","source":{"file":"Core.xlsx","sheet":"LevelExp"},"fields":[{"name":"level","ty":"I32","scope":{"values":["all"]},"key":true,"comment":null,"default":null,"range":[1,100],"length":null,"parser":null,"derived_from":null},{"name":"exp","ty":"I64","scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":[0,999999999],"length":null,"parser":null,"derived_from":null},{"name":"unlock_feature","ty":{"Optional":"String"},"scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null}],"indexes":[]},{"name":"Character","scope":{"values":["all"]},"mode":"Map","key":"id","source":{"file":"Battle.xlsx","sheet":"Character"},"fields":[{"name":"id","ty":"I32","scope":{"values":["all"]},"key":true,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"name","ty":"String","scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":[2,32],"parser":null,"derived_from":null},{"name":"rarity","ty":{"Enum":"Rarity"},"scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"base_level","ty":{"Ref":{"table":"LevelExp","field":"level"}},"scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"base_skill","ty":{"Ref":{"table":"Skill","field":"id"}},"scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"starter_items","ty":{"List":{"Ref":{"table":"Item","field":"id"}}},"scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":[1,4],"parser":{"kind":"json","options":{}},"derived_from":null},{"name":"spawn_pos","ty":{"Struct":"Vec3"},"scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":{"kind":"tuple","options":{}},"derived_from":null}],"indexes":[]},{"name":"CharacterSkill","scope":{"values":["all"]},"mode":"List","key":null,"source":{"file":"Battle.xlsx","sheet":"CharacterSkill"},"fields":[{"name":"character_id","ty":{"Ref":{"table":"Character","field":"id"}},"scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"skill_id","ty":{"Ref":{"table":"Skill","field":"id"}},"scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"unlock_level","ty":{"Ref":{"table":"LevelExp","field":"level"}},"scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null}],"indexes":[]},{"name":"Buff","scope":{"values":["all"]},"mode":"Map","key":"id","source":{"file":"Battle.xlsx","sheet":"Buff"},"fields":[{"name":"id","ty":"I32","scope":{"values":["all"]},"key":true,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"name","ty":"String","scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"duration","ty":"F32","scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"modifiers","ty":{"List":{"Struct":"StatModifier"}},"scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":[1,3],"parser":{"kind":"json","options":{}},"derived_from":null}],"indexes":[]},{"name":"DropGroup","scope":{"values":["all"]},"mode":"Map","key":"id","source":{"file":"Battle.xlsx","sheet":"DropGroup"},"fields":[{"name":"id","ty":"I32","scope":{"values":["all"]},"key":true,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"name","ty":"String","scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null}],"indexes":[]},{"name":"DropEntry","scope":{"values":["all"]},"mode":"List","key":null,"source":{"file":"Battle.xlsx","sheet":"DropEntry"},"fields":[{"name":"group_id","ty":{"Ref":{"table":"DropGroup","field":"id"}},"scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"seq","ty":"I32","scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"item_id","ty":{"Ref":{"table":"Item","field":"id"}},"scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"count","ty":"I32","scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":[1,9999],"length":null,"parser":null,"derived_from":null},{"name":"weight","ty":"F32","scope":{"values":["server"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null}],"indexes":[]},{"name":"Monster","scope":{"values":["all"]},"mode":"Map","key":"id","source":{"file":"Battle.xlsx","sheet":"Monster"},"fields":[{"name":"id","ty":"I32","scope":{"values":["all"]},"key":true,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"name","ty":"String","scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"level","ty":{"Ref":{"table":"LevelExp","field":"level"}},"scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"element","ty":{"Enum":"ElementType"},"scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"drop_group","ty":{"Ref":{"table":"DropGroup","field":"id"}},"scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"spawn_pos","ty":{"Struct":"Vec3"},"scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":{"kind":"tuple","options":{}},"derived_from":null}],"indexes":[]},{"name":"Stage","scope":{"values":["all"]},"mode":"Map","key":"id","source":{"file":"Battle.xlsx","sheet":"Stage"},"fields":[{"name":"id","ty":"I32","scope":{"values":["all"]},"key":true,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"name","ty":"String","scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"monster_ids","ty":{"List":{"Ref":{"table":"Monster","field":"id"}}},"scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":[1,5],"parser":{"kind":"json","options":{}},"derived_from":null},{"name":"recommended_power","ty":"I32","scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"first_clear_rewards","ty":{"List":{"Struct":"Reward"}},"scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":{"source_table":"StageReward","parent_key":"id","child_key":"stage_id","value_field":null,"order_by":"seq"}}],"indexes":[]},{"name":"StageReward","scope":{"values":["all"]},"mode":"List","key":null,"source":{"file":"Battle.xlsx","sheet":"StageReward"},"fields":[{"name":"stage_id","ty":{"Ref":{"table":"Stage","field":"id"}},"scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"seq","ty":"I32","scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"item_id","ty":{"Ref":{"table":"Item","field":"id"}},"scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"count","ty":"I32","scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null}],"indexes":[]},{"name":"Dungeon","scope":{"values":["all"]},"mode":"Map","key":"id","source":{"file":"Battle.xlsx","sheet":"Dungeon"},"fields":[{"name":"id","ty":"I32","scope":{"values":["all"]},"key":true,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"name","ty":"String","scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"stage_ids","ty":{"List":{"Ref":{"table":"Stage","field":"id"}}},"scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":[2,6],"parser":{"kind":"json","options":{}},"derived_from":null},{"name":"entry_cost","ty":{"Struct":"ResourceCost"},"scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":{"kind":"tuple","options":{}},"derived_from":null}],"indexes":[]},{"name":"Shop","scope":{"values":["all"]},"mode":"Map","key":"id","source":{"file":"Economy.xlsx","sheet":"Shop"},"fields":[{"name":"id","ty":"I32","scope":{"values":["all"]},"key":true,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"name","ty":"String","scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"currency","ty":{"Enum":"ResourceKind"},"scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null}],"indexes":[]},{"name":"ShopItem","scope":{"values":["all"]},"mode":"List","key":null,"source":{"file":"Economy.xlsx","sheet":"ShopItem"},"fields":[{"name":"shop_id","ty":{"Ref":{"table":"Shop","field":"id"}},"scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"seq","ty":"I32","scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"item_id","ty":{"Ref":{"table":"Item","field":"id"}},"scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"price","ty":{"Struct":"ResourceCost"},"scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":{"kind":"tuple","options":{}},"derived_from":null},{"name":"daily_limit","ty":{"Optional":"I32"},"scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null}],"indexes":[]},{"name":"Recipe","scope":{"values":["all"]},"mode":"Map","key":"id","source":{"file":"Economy.xlsx","sheet":"Recipe"},"fields":[{"name":"id","ty":"I32","scope":{"values":["all"]},"key":true,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"result_item","ty":{"Ref":{"table":"Item","field":"id"}},"scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"materials","ty":{"List":{"Struct":"ResourceCost"}},"scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":[1,4],"parser":{"kind":"tuple_list","options":{}},"derived_from":null}],"indexes":[]},{"name":"GachaPool","scope":{"values":["all"]},"mode":"Map","key":"id","source":{"file":"Economy.xlsx","sheet":"GachaPool"},"fields":[{"name":"id","ty":"I32","scope":{"values":["all"]},"key":true,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"name","ty":"String","scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"cost","ty":{"Struct":"ResourceCost"},"scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":{"kind":"tuple","options":{}},"derived_from":null}],"indexes":[]},{"name":"GachaItem","scope":{"values":["all"]},"mode":"List","key":null,"source":{"file":"Economy.xlsx","sheet":"GachaItem"},"fields":[{"name":"pool_id","ty":{"Ref":{"table":"GachaPool","field":"id"}},"scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"item_id","ty":{"Ref":{"table":"Item","field":"id"}},"scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"rarity","ty":{"Enum":"Rarity"},"scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"weight","ty":"F32","scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null}],"indexes":[]},{"name":"EquipmentSet","scope":{"values":["all"]},"mode":"Map","key":"id","source":{"file":"Economy.xlsx","sheet":"EquipmentSet"},"fields":[{"name":"id","ty":"I32","scope":{"values":["all"]},"key":true,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"name","ty":"String","scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"item_ids","ty":{"List":{"Ref":{"table":"Item","field":"id"}}},"scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":[2,4],"parser":{"kind":"json","options":{}},"derived_from":null},{"name":"bonus_effect","ty":{"Struct":"SkillEffect"},"scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null}],"indexes":[]},{"name":"Achievement","scope":{"values":["all"]},"mode":"Map","key":"id","source":{"file":"Economy.xlsx","sheet":"Achievement"},"fields":[{"name":"id","ty":"I32","scope":{"values":["all"]},"key":true,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"title_key","ty":"String","scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"target_count","ty":"I64","scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"reward","ty":{"Struct":"ResourceCost"},"scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":{"kind":"tuple","options":{}},"derived_from":null}],"indexes":[]},{"name":"VipLevel","scope":{"values":["all"]},"mode":"Map","key":"level","source":{"file":"Economy.xlsx","sheet":"VipLevel"},"fields":[{"name":"level","ty":"I32","scope":{"values":["all"]},"key":true,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"cost","ty":{"Struct":"ResourceCost"},"scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":{"kind":"tuple","options":{}},"derived_from":null},{"name":"perks","ty":{"List":"String"},"scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":[1,5],"parser":{"kind":"json","options":{}},"derived_from":null}],"indexes":[]},{"name":"MailTemplate","scope":{"values":["all"]},"mode":"Map","key":"id","source":{"file":"Quest.xlsx","sheet":"MailTemplate"},"fields":[{"name":"id","ty":"I32","scope":{"values":["all"]},"key":true,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"mail_type","ty":{"Enum":"MailType"},"scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"title_key","ty":"String","scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"body_key","ty":"String","scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"rewards","ty":{"List":{"Struct":"Reward"}},"scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":{"source_table":"MailReward","parent_key":"id","child_key":"mail_id","value_field":null,"order_by":"seq"}}],"indexes":[]},{"name":"MailReward","scope":{"values":["all"]},"mode":"List","key":null,"source":{"file":"Quest.xlsx","sheet":"MailReward"},"fields":[{"name":"mail_id","ty":{"Ref":{"table":"MailTemplate","field":"id"}},"scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"seq","ty":"I32","scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"item_id","ty":{"Ref":{"table":"Item","field":"id"}},"scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"count","ty":"I32","scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null}],"indexes":[]},{"name":"Dialogue","scope":{"values":["all"]},"mode":"Map","key":"id","source":{"file":"Quest.xlsx","sheet":"Dialogue"},"fields":[{"name":"id","ty":"I32","scope":{"values":["all"]},"key":true,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"speaker_key","ty":"String","scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"lines","ty":{"List":"String"},"scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":[1,5],"parser":{"kind":"json","options":{}},"derived_from":null}],"indexes":[]},{"name":"EventRule","scope":{"values":["all"]},"mode":"Map","key":"id","source":{"file":"Quest.xlsx","sheet":"EventRule"},"fields":[{"name":"id","ty":"I32","scope":{"values":["all"]},"key":true,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"name","ty":"String","scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"condition","ty":{"Union":"EventCondition"},"scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"actions","ty":{"List":{"Union":"RewardAction"}},"scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":[1,4],"parser":{"kind":"json","options":{}},"derived_from":null}],"indexes":[]}]}*ô…
+sora-protobufcom.sora.showcase"¡“{"package":"com.sora.showcase","enums":[{"name":"ItemType","scope":{"values":["all"]},"values":["Weapon","Armor","Currency","Material","Consumable"]},{"name":"ResourceKind","scope":{"values":["all"]},"values":["Item","Gold","Diamond"]},{"name":"ElementType","scope":{"values":["all"]},"values":["Fire","Ice","Lightning","Physical"]},{"name":"QuestType","scope":{"values":["all"]},"values":["Main","Side","Daily"]},{"name":"Rarity","scope":{"values":["all"]},"values":["Common","Uncommon","Rare","Epic","Legendary"]},{"name":"StatType","scope":{"values":["all"]},"values":["Hp","Attack","Defense","Speed","CritRate"]},{"name":"MailType","scope":{"values":["all"]},"values":["System","Event","Compensation"]}],"structs":[{"name":"ResourceCost","scope":{"values":["all"]},"fields":[{"name":"kind","ty":{"Enum":"ResourceKind"},"scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"id","ty":"I32","scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"count","ty":"I32","scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":[1,999999],"length":null,"parser":null,"derived_from":null}]},{"name":"Vec3","scope":{"values":["all"]},"fields":[{"name":"x","ty":"F32","scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"y","ty":"F32","scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"z","ty":"F32","scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null}]},{"name":"SkillEffect","scope":{"values":["all"]},"fields":[{"name":"element","ty":{"Enum":"ElementType"},"scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"power","ty":"I32","scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":[1,9999],"length":null,"parser":null,"derived_from":null},{"name":"radius","ty":"F32","scope":{"values":["all"]},"key":false,"comment":null,"default":"1.0","range":null,"length":null,"parser":null,"derived_from":null}]},{"name":"Reward","scope":{"values":["all"]},"fields":[{"name":"item_id","ty":{"Ref":{"table":"Item","field":"id"}},"scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"count","ty":"I32","scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":[1,9999],"length":null,"parser":null,"derived_from":null}]},{"name":"StatModifier","scope":{"values":["all"]},"fields":[{"name":"stat","ty":{"Enum":"StatType"},"scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"value","ty":"F32","scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"is_percent","ty":"Bool","scope":{"values":["all"]},"key":false,"comment":null,"default":"false","range":null,"length":null,"parser":null,"derived_from":null}]},{"name":"RewardBundle","scope":{"values":["all"]},"fields":[{"name":"cost","ty":{"Struct":"ResourceCost"},"scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":{"kind":"tuple","options":{"separator":":"}},"derived_from":null},{"name":"weight","ty":"I32","scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":[1,10000],"length":null,"parser":null,"derived_from":null},{"name":"labels","ty":{"List":"String"},"scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":{"kind":"split","options":{"separator":"+"}},"derived_from":null}]},{"name":"ComplexBudget","scope":{"values":["all"]},"fields":[{"name":"fixed","ty":{"Struct":"ResourceCost"},"scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":{"kind":"tuple","options":{"separator":":"}},"derived_from":null},{"name":"random","ty":{"List":{"Struct":"RewardBundle"}},"scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":{"kind":"tuple_list","options":{"item_separator":"|","separator":";"}},"derived_from":null},{"name":"limits","ty":{"Map":{"key":"String","value":"I32"}},"scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":{"kind":"map","options":{"item_separator":"|","separator":":"}},"derived_from":null}]},{"name":"MaintenanceInfo","scope":{"values":["all"]},"fields":[{"name":"starts_at","ty":"String","scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"duration_minutes","ty":"I32","scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":[1,1440],"length":null,"parser":null,"derived_from":null},{"name":"reason","ty":{"Optional":"String"},"scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null}]}],"unions":[{"name":"EventCondition","scope":{"values":["all"]},"tag":"type","variants":[{"name":"LevelAtLeast","scope":{"values":["all"]},"fields":[{"name":"level","ty":{"Ref":{"table":"LevelExp","field":"level"}},"scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null}]},{"name":"QuestCompleted","scope":{"values":["all"]},"fields":[{"name":"quest_id","ty":{"Ref":{"table":"Quest","field":"id"}},"scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null}]},{"name":"HasItem","scope":{"values":["all"]},"fields":[{"name":"item_id","ty":{"Ref":{"table":"Item","field":"id"}},"scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"count","ty":"I32","scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":[1,9999],"length":null,"parser":null,"derived_from":null}]},{"name":"AllConditions","scope":{"values":["all"]},"fields":[{"name":"condition_group_id","ty":{"Ref":{"table":"ComplexConditionGroup","field":"id"}},"scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null}]},{"name":"AnyCondition","scope":{"values":["all"]},"fields":[{"name":"condition_group_id","ty":{"Ref":{"table":"ComplexConditionGroup","field":"id"}},"scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null}]}]},{"name":"RewardAction","scope":{"values":["all"]},"tag":"type","variants":[{"name":"AddItem","scope":{"values":["all"]},"fields":[{"name":"item_id","ty":{"Ref":{"table":"Item","field":"id"}},"scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"count","ty":"I32","scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":[1,9999],"length":null,"parser":null,"derived_from":null}]},{"name":"AddBuff","scope":{"values":["all"]},"fields":[{"name":"buff_id","ty":{"Ref":{"table":"Buff","field":"id"}},"scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"duration","ty":"F32","scope":{"values":["all"]},"key":false,"comment":null,"default":"10.0","range":null,"length":null,"parser":null,"derived_from":null}]},{"name":"UnlockStage","scope":{"values":["all"]},"fields":[{"name":"stage_id","ty":{"Ref":{"table":"Stage","field":"id"}},"scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null}]},{"name":"SendMail","scope":{"values":["all"]},"fields":[{"name":"mail_id","ty":{"Ref":{"table":"MailTemplate","field":"id"}},"scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null}]},{"name":"RunActionGroup","scope":{"values":["all"]},"fields":[{"name":"action_group_id","ty":{"Ref":{"table":"ComplexActionGroup","field":"id"}},"scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null}]}]}],"tables":[{"name":"Item","scope":{"values":["all"]},"mode":"Map","key":"id","source":{"file":"Core.xlsx","sheet":"Item"},"fields":[{"name":"id","ty":"I32","scope":{"values":["all"]},"key":true,"comment":"Item id","default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"name","ty":"String","scope":{"values":["all"]},"key":false,"comment":"Display name","default":null,"range":null,"length":[2,32],"parser":null,"derived_from":null},{"name":"item_type","ty":{"Enum":"ItemType"},"scope":{"values":["all"]},"key":false,"comment":"Item category","default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"max_stack","ty":"I32","scope":{"values":["all"]},"key":false,"comment":"Stack limit; blank cells use the default","default":"1","range":[1,9999],"length":null,"parser":null,"derived_from":null},{"name":"price","ty":{"Struct":"ResourceCost"},"scope":{"values":["all"]},"key":false,"comment":"Tuple: kind,id,count","default":null,"range":null,"length":null,"parser":{"kind":"tuple","options":{}},"derived_from":null},{"name":"tags","ty":{"Set":"String"},"scope":{"values":["all"]},"key":false,"comment":"JSON string set","default":"[\"misc\"]","range":null,"length":[1,5],"parser":{"kind":"json","options":{}},"derived_from":null},{"name":"attributes","ty":{"Map":{"key":"String","value":"I32"}},"scope":{"values":["all"]},"key":false,"comment":"Map pairs: key,value|key,value","default":null,"range":null,"length":null,"parser":{"kind":"map","options":{}},"derived_from":null}],"indexes":[{"name":"by_name","fields":["name"],"unique":true},{"name":"by_item_type","fields":["item_type"],"unique":false}]},{"name":"Skill","scope":{"values":["all"]},"mode":"Map","key":"id","source":{"file":"Battle.xlsx","sheet":"Skill"},"fields":[{"name":"id","ty":"I32","scope":{"values":["all"]},"key":true,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"name","ty":"String","scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":[2,32],"parser":null,"derived_from":null},{"name":"element","ty":{"Enum":"ElementType"},"scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"cost","ty":{"Struct":"ResourceCost"},"scope":{"values":["all"]},"key":false,"comment":"Tuple cost, e.g. Gold,0,150","default":null,"range":null,"length":null,"parser":{"kind":"tuple","options":{}},"derived_from":null},{"name":"effect","ty":{"Struct":"SkillEffect"},"scope":{"values":["all"]},"key":false,"comment":"JSON object with element/power/radius","default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"required_level","ty":"I32","scope":{"values":["all"]},"key":false,"comment":null,"default":"1","range":[1,100],"length":null,"parser":null,"derived_from":null},{"name":"required_item","ty":{"Optional":{"Ref":{"table":"Item","field":"id"}}},"scope":{"values":["all"]},"key":false,"comment":"Optional item requirement","default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"cast_origin","ty":{"Struct":"Vec3"},"scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":{"kind":"tuple","options":{}},"derived_from":null}],"indexes":[]},{"name":"Quest","scope":{"values":["all"]},"mode":"Map","key":"id","source":{"file":"Quest.xlsx","sheet":"Quest"},"fields":[{"name":"id","ty":"I32","scope":{"values":["all"]},"key":true,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"quest_type","ty":{"Enum":"QuestType"},"scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"title","ty":"String","scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":[4,64],"parser":null,"derived_from":null},{"name":"required_item","ty":{"Ref":{"table":"Item","field":"id"}},"scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"unlock_skills","ty":{"List":{"Ref":{"table":"Skill","field":"id"}}},"scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":[1,3],"parser":{"kind":"json","options":{}},"derived_from":null},{"name":"start_pos","ty":{"Struct":"Vec3"},"scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":{"kind":"tuple","options":{}},"derived_from":null},{"name":"rewards","ty":{"List":{"Struct":"Reward"}},"scope":{"values":["all"]},"key":false,"comment":"Materialized from QuestReward child rows","default":null,"range":null,"length":null,"parser":null,"derived_from":{"source_table":"QuestReward","parent_key":"id","child_key":"quest_id","value_field":null,"order_by":"seq"}}],"indexes":[]},{"name":"QuestReward","scope":{"values":["all"]},"mode":"List","key":null,"source":{"file":"Quest.xlsx","sheet":"QuestReward"},"fields":[{"name":"quest_id","ty":{"Ref":{"table":"Quest","field":"id"}},"scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"seq","ty":"I32","scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"item_id","ty":{"Ref":{"table":"Item","field":"id"}},"scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"count","ty":"I32","scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":[1,9999],"length":null,"parser":null,"derived_from":null}],"indexes":[]},{"name":"GameSettings","scope":{"values":["all"]},"mode":"Singleton","key":null,"source":{"file":"Core.xlsx","sheet":"GameSettings"},"fields":[{"name":"version","ty":"String","scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"daily_reset_hour","ty":"I32","scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":[0,23],"length":null,"parser":null,"derived_from":null},{"name":"starting_gold","ty":"I32","scope":{"values":["all"]},"key":false,"comment":null,"default":"100","range":[0,999999],"length":null,"parser":null,"derived_from":null},{"name":"spawn_pos","ty":{"Struct":"Vec3"},"scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":{"kind":"tuple","options":{}},"derived_from":null},{"name":"starter_items","ty":{"List":{"Ref":{"table":"Item","field":"id"}}},"scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":[1,4],"parser":{"kind":"json","options":{}},"derived_from":null},{"name":"gravity","ty":"F64","scope":{"values":["all"]},"key":false,"comment":"Double precision tuning value","default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"daily_bonus_items","ty":{"Array":{"element":{"Ref":{"table":"Item","field":"id"}},"len":3}},"scope":{"values":["all"]},"key":false,"comment":"Fixed-length array parsed from one cell","default":null,"range":null,"length":null,"parser":{"kind":"split","options":{}},"derived_from":null},{"name":"spawn_points","ty":{"Array":{"element":{"Struct":"Vec3"},"len":2}},"scope":{"values":["all"]},"key":false,"comment":"Fixed-length array of structs","default":null,"range":null,"length":null,"parser":{"kind":"tuple_list","options":{}},"derived_from":null},{"name":"maintenance","ty":{"Optional":{"Struct":"MaintenanceInfo"}},"scope":{"values":["all"]},"key":false,"comment":"Optional derived struct copied from a child row","default":null,"range":null,"length":null,"parser":null,"derived_from":{"source_table":"MaintenanceWindow","parent_key":"version","child_key":"version","value_field":null,"order_by":null}}],"indexes":[]},{"name":"MaintenanceWindow","scope":{"values":["all"]},"mode":"List","key":null,"source":{"file":"Core.xlsx","sheet":"MaintenanceWindow"},"fields":[{"name":"version","ty":"String","scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"starts_at","ty":"String","scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"duration_minutes","ty":"I32","scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":[1,1440],"length":null,"parser":null,"derived_from":null},{"name":"reason","ty":{"Optional":"String"},"scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null}],"indexes":[]},{"name":"Localization","scope":{"values":["all"]},"mode":"Map","key":"key","source":{"file":"Core.xlsx","sheet":"Localization"},"fields":[{"name":"key","ty":"String","scope":{"values":["all"]},"key":true,"comment":null,"default":null,"range":null,"length":[3,64],"parser":null,"derived_from":null},{"name":"zh_cn","ty":"String","scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"en_us","ty":"String","scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"note","ty":{"Optional":"String"},"scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null}],"indexes":[]},{"name":"LevelExp","scope":{"values":["all"]},"mode":"Map","key":"level","source":{"file":"Core.xlsx","sheet":"LevelExp"},"fields":[{"name":"level","ty":"I32","scope":{"values":["all"]},"key":true,"comment":null,"default":null,"range":[1,100],"length":null,"parser":null,"derived_from":null},{"name":"exp","ty":"I64","scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":[0,999999999],"length":null,"parser":null,"derived_from":null},{"name":"unlock_feature","ty":{"Optional":"String"},"scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null}],"indexes":[]},{"name":"Character","scope":{"values":["all"]},"mode":"Map","key":"id","source":{"file":"Battle.xlsx","sheet":"Character"},"fields":[{"name":"id","ty":"I32","scope":{"values":["all"]},"key":true,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"name","ty":"String","scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":[2,32],"parser":null,"derived_from":null},{"name":"rarity","ty":{"Enum":"Rarity"},"scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"base_level","ty":{"Ref":{"table":"LevelExp","field":"level"}},"scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"base_skill","ty":{"Ref":{"table":"Skill","field":"id"}},"scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"starter_items","ty":{"List":{"Ref":{"table":"Item","field":"id"}}},"scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":[1,4],"parser":{"kind":"json","options":{}},"derived_from":null},{"name":"spawn_pos","ty":{"Struct":"Vec3"},"scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":{"kind":"tuple","options":{}},"derived_from":null}],"indexes":[]},{"name":"CharacterSkill","scope":{"values":["all"]},"mode":"List","key":null,"source":{"file":"Battle.xlsx","sheet":"CharacterSkill"},"fields":[{"name":"character_id","ty":{"Ref":{"table":"Character","field":"id"}},"scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"skill_id","ty":{"Ref":{"table":"Skill","field":"id"}},"scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"unlock_level","ty":{"Ref":{"table":"LevelExp","field":"level"}},"scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null}],"indexes":[]},{"name":"Buff","scope":{"values":["all"]},"mode":"Map","key":"id","source":{"file":"Battle.xlsx","sheet":"Buff"},"fields":[{"name":"id","ty":"I32","scope":{"values":["all"]},"key":true,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"name","ty":"String","scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"duration","ty":"F32","scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"modifiers","ty":{"List":{"Struct":"StatModifier"}},"scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":[1,3],"parser":{"kind":"json","options":{}},"derived_from":null}],"indexes":[]},{"name":"DropGroup","scope":{"values":["all"]},"mode":"Map","key":"id","source":{"file":"Battle.xlsx","sheet":"DropGroup"},"fields":[{"name":"id","ty":"I32","scope":{"values":["all"]},"key":true,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"name","ty":"String","scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null}],"indexes":[]},{"name":"DropEntry","scope":{"values":["all"]},"mode":"List","key":null,"source":{"file":"Battle.xlsx","sheet":"DropEntry"},"fields":[{"name":"group_id","ty":{"Ref":{"table":"DropGroup","field":"id"}},"scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"seq","ty":"I32","scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"item_id","ty":{"Ref":{"table":"Item","field":"id"}},"scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"count","ty":"I32","scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":[1,9999],"length":null,"parser":null,"derived_from":null},{"name":"weight","ty":"F32","scope":{"values":["server"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null}],"indexes":[]},{"name":"Monster","scope":{"values":["all"]},"mode":"Map","key":"id","source":{"file":"Battle.xlsx","sheet":"Monster"},"fields":[{"name":"id","ty":"I32","scope":{"values":["all"]},"key":true,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"name","ty":"String","scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"level","ty":{"Ref":{"table":"LevelExp","field":"level"}},"scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"element","ty":{"Enum":"ElementType"},"scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"drop_group","ty":{"Ref":{"table":"DropGroup","field":"id"}},"scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"spawn_pos","ty":{"Struct":"Vec3"},"scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":{"kind":"tuple","options":{}},"derived_from":null}],"indexes":[]},{"name":"Stage","scope":{"values":["all"]},"mode":"Map","key":"id","source":{"file":"Battle.xlsx","sheet":"Stage"},"fields":[{"name":"id","ty":"I32","scope":{"values":["all"]},"key":true,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"name","ty":"String","scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"monster_ids","ty":{"List":{"Ref":{"table":"Monster","field":"id"}}},"scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":[1,5],"parser":{"kind":"json","options":{}},"derived_from":null},{"name":"recommended_power","ty":"I32","scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"first_clear_rewards","ty":{"List":{"Struct":"Reward"}},"scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":{"source_table":"StageReward","parent_key":"id","child_key":"stage_id","value_field":null,"order_by":"seq"}}],"indexes":[]},{"name":"StageReward","scope":{"values":["all"]},"mode":"List","key":null,"source":{"file":"Battle.xlsx","sheet":"StageReward"},"fields":[{"name":"stage_id","ty":{"Ref":{"table":"Stage","field":"id"}},"scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"seq","ty":"I32","scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"item_id","ty":{"Ref":{"table":"Item","field":"id"}},"scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"count","ty":"I32","scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null}],"indexes":[]},{"name":"Dungeon","scope":{"values":["all"]},"mode":"Map","key":"id","source":{"file":"Battle.xlsx","sheet":"Dungeon"},"fields":[{"name":"id","ty":"I32","scope":{"values":["all"]},"key":true,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"name","ty":"String","scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"stage_ids","ty":{"List":{"Ref":{"table":"Stage","field":"id"}}},"scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":[2,6],"parser":{"kind":"json","options":{}},"derived_from":null},{"name":"entry_cost","ty":{"Struct":"ResourceCost"},"scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":{"kind":"tuple","options":{}},"derived_from":null}],"indexes":[]},{"name":"Shop","scope":{"values":["all"]},"mode":"Map","key":"id","source":{"file":"Economy.xlsx","sheet":"Shop"},"fields":[{"name":"id","ty":"I32","scope":{"values":["all"]},"key":true,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"name","ty":"String","scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"currency","ty":{"Enum":"ResourceKind"},"scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null}],"indexes":[]},{"name":"ShopItem","scope":{"values":["all"]},"mode":"List","key":null,"source":{"file":"Economy.xlsx","sheet":"ShopItem"},"fields":[{"name":"shop_id","ty":{"Ref":{"table":"Shop","field":"id"}},"scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"seq","ty":"I32","scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"item_id","ty":{"Ref":{"table":"Item","field":"id"}},"scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"price","ty":{"Struct":"ResourceCost"},"scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":{"kind":"tuple","options":{}},"derived_from":null},{"name":"daily_limit","ty":{"Optional":"I32"},"scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null}],"indexes":[]},{"name":"Recipe","scope":{"values":["all"]},"mode":"Map","key":"id","source":{"file":"Economy.xlsx","sheet":"Recipe"},"fields":[{"name":"id","ty":"I32","scope":{"values":["all"]},"key":true,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"result_item","ty":{"Ref":{"table":"Item","field":"id"}},"scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"materials","ty":{"List":{"Struct":"ResourceCost"}},"scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":[1,4],"parser":{"kind":"tuple_list","options":{}},"derived_from":null}],"indexes":[]},{"name":"GachaPool","scope":{"values":["all"]},"mode":"Map","key":"id","source":{"file":"Economy.xlsx","sheet":"GachaPool"},"fields":[{"name":"id","ty":"I32","scope":{"values":["all"]},"key":true,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"name","ty":"String","scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"cost","ty":{"Struct":"ResourceCost"},"scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":{"kind":"tuple","options":{}},"derived_from":null}],"indexes":[]},{"name":"GachaItem","scope":{"values":["all"]},"mode":"List","key":null,"source":{"file":"Economy.xlsx","sheet":"GachaItem"},"fields":[{"name":"pool_id","ty":{"Ref":{"table":"GachaPool","field":"id"}},"scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"item_id","ty":{"Ref":{"table":"Item","field":"id"}},"scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"rarity","ty":{"Enum":"Rarity"},"scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"weight","ty":"F32","scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null}],"indexes":[]},{"name":"EquipmentSet","scope":{"values":["all"]},"mode":"Map","key":"id","source":{"file":"Economy.xlsx","sheet":"EquipmentSet"},"fields":[{"name":"id","ty":"I32","scope":{"values":["all"]},"key":true,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"name","ty":"String","scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"item_ids","ty":{"List":{"Ref":{"table":"Item","field":"id"}}},"scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":[2,4],"parser":{"kind":"json","options":{}},"derived_from":null},{"name":"bonus_effect","ty":{"Struct":"SkillEffect"},"scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null}],"indexes":[]},{"name":"Achievement","scope":{"values":["all"]},"mode":"Map","key":"id","source":{"file":"Economy.xlsx","sheet":"Achievement"},"fields":[{"name":"id","ty":"I32","scope":{"values":["all"]},"key":true,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"title_key","ty":"String","scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"target_count","ty":"I64","scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"reward","ty":{"Struct":"ResourceCost"},"scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":{"kind":"tuple","options":{}},"derived_from":null}],"indexes":[]},{"name":"VipLevel","scope":{"values":["all"]},"mode":"Map","key":"level","source":{"file":"Economy.xlsx","sheet":"VipLevel"},"fields":[{"name":"level","ty":"I32","scope":{"values":["all"]},"key":true,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"cost","ty":{"Struct":"ResourceCost"},"scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":{"kind":"tuple","options":{}},"derived_from":null},{"name":"perks","ty":{"List":"String"},"scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":[1,5],"parser":{"kind":"json","options":{}},"derived_from":null}],"indexes":[]},{"name":"MailTemplate","scope":{"values":["all"]},"mode":"Map","key":"id","source":{"file":"Quest.xlsx","sheet":"MailTemplate"},"fields":[{"name":"id","ty":"I32","scope":{"values":["all"]},"key":true,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"mail_type","ty":{"Enum":"MailType"},"scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"title_key","ty":"String","scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"body_key","ty":"String","scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"rewards","ty":{"List":{"Struct":"Reward"}},"scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":{"source_table":"MailReward","parent_key":"id","child_key":"mail_id","value_field":null,"order_by":"seq"}}],"indexes":[]},{"name":"MailReward","scope":{"values":["all"]},"mode":"List","key":null,"source":{"file":"Quest.xlsx","sheet":"MailReward"},"fields":[{"name":"mail_id","ty":{"Ref":{"table":"MailTemplate","field":"id"}},"scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"seq","ty":"I32","scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"item_id","ty":{"Ref":{"table":"Item","field":"id"}},"scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"count","ty":"I32","scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null}],"indexes":[]},{"name":"Dialogue","scope":{"values":["all"]},"mode":"Map","key":"id","source":{"file":"Quest.xlsx","sheet":"Dialogue"},"fields":[{"name":"id","ty":"I32","scope":{"values":["all"]},"key":true,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"speaker_key","ty":"String","scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"lines","ty":{"List":"String"},"scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":[1,5],"parser":{"kind":"json","options":{}},"derived_from":null}],"indexes":[]},{"name":"EventRule","scope":{"values":["all"]},"mode":"Map","key":"id","source":{"file":"Quest.xlsx","sheet":"EventRule"},"fields":[{"name":"id","ty":"I32","scope":{"values":["all"]},"key":true,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"name","ty":"String","scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"condition","ty":{"Union":"EventCondition"},"scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"actions","ty":{"List":{"Union":"RewardAction"}},"scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":[1,4],"parser":{"kind":"json","options":{}},"derived_from":null}],"indexes":[]},{"name":"ComplexRule","scope":{"values":["all"]},"mode":"Map","key":"id","source":{"file":"Complex.xlsx","sheet":"ComplexRule"},"fields":[{"name":"id","ty":"I32","scope":{"values":["all"]},"key":true,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"name","ty":"String","scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"root_condition","ty":{"Union":"EventCondition"},"scope":{"values":["all"]},"key":false,"comment":"Single union value derived from a tagged_columns child row","default":null,"range":null,"length":null,"parser":null,"derived_from":{"source_table":"ComplexRuleCondition","parent_key":"id","child_key":"rule_id","value_field":"value","order_by":null}},{"name":"root_action_group","ty":{"Ref":{"table":"ComplexActionGroup","field":"id"}},"scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"actions","ty":{"List":{"Union":"RewardAction"}},"scope":{"values":["all"]},"key":false,"comment":"Non-JSON list<union<RewardAction>> assembled from child rows","default":null,"range":null,"length":null,"parser":null,"derived_from":{"source_table":"ComplexActionEntry","parent_key":"root_action_group","child_key":"group_id","value_field":"value","order_by":"seq"}},{"name":"budget","ty":{"Struct":"ComplexBudget"},"scope":{"values":["all"]},"key":false,"comment":"Nested tuple, tuple_list, split, and map parsers in one cell","default":null,"range":null,"length":null,"parser":{"kind":"tuple","options":{"separator":","}},"derived_from":null}],"indexes":[]},{"name":"ComplexConditionGroup","scope":{"values":["all"]},"mode":"Map","key":"id","source":{"file":"Complex.xlsx","sheet":"ComplexConditionGroup"},"fields":[{"name":"id","ty":"I32","scope":{"values":["all"]},"key":true,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"name","ty":"String","scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"conditions","ty":{"List":{"Union":"EventCondition"}},"scope":{"values":["all"]},"key":false,"comment":"A derived list of union values; each child row is edited without JSON","default":null,"range":null,"length":null,"parser":null,"derived_from":{"source_table":"ComplexConditionGroupEntry","parent_key":"id","child_key":"group_id","value_field":"value","order_by":"seq"}}],"indexes":[]},{"name":"ComplexConditionGroupEntry","scope":{"values":["all"]},"mode":"Map","key":"id","source":{"file":"Complex.xlsx","sheet":"ComplexConditionGroupEntry"},"fields":[{"name":"id","ty":"I32","scope":{"values":["all"]},"key":true,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"group_id","ty":{"Ref":{"table":"ComplexConditionGroup","field":"id"}},"scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"seq","ty":"I32","scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"value","ty":{"Union":"EventCondition"},"scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":{"kind":"tagged_columns","options":{"prefix":""}},"derived_from":null}],"indexes":[]},{"name":"ComplexRuleCondition","scope":{"values":["all"]},"mode":"Map","key":"id","source":{"file":"Complex.xlsx","sheet":"ComplexRuleCondition"},"fields":[{"name":"id","ty":"I32","scope":{"values":["all"]},"key":true,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"rule_id","ty":{"Ref":{"table":"ComplexRule","field":"id"}},"scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"value","ty":{"Union":"EventCondition"},"scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":{"kind":"tagged_columns","options":{"prefix":""}},"derived_from":null}],"indexes":[]},{"name":"ComplexActionGroup","scope":{"values":["all"]},"mode":"Map","key":"id","source":{"file":"Complex.xlsx","sheet":"ComplexActionGroup"},"fields":[{"name":"id","ty":"I32","scope":{"values":["all"]},"key":true,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"name","ty":"String","scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"actions","ty":{"List":{"Union":"RewardAction"}},"scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":{"source_table":"ComplexActionEntry","parent_key":"id","child_key":"group_id","value_field":"value","order_by":"seq"}}],"indexes":[]},{"name":"ComplexActionEntry","scope":{"values":["all"]},"mode":"Map","key":"id","source":{"file":"Complex.xlsx","sheet":"ComplexActionEntry"},"fields":[{"name":"id","ty":"I32","scope":{"values":["all"]},"key":true,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"group_id","ty":{"Ref":{"table":"ComplexActionGroup","field":"id"}},"scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"seq","ty":"I32","scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":null,"derived_from":null},{"name":"value","ty":{"Union":"RewardAction"},"scope":{"values":["all"]},"key":false,"comment":null,"default":null,"range":null,"length":null,"parser":{"kind":"tagged_columns","options":{"prefix":""}},"derived_from":null}],"indexes":[]}]}*ô…
 Item–
 1
 
@@ -5979,10 +5979,41 @@ Quest 5025
 
 quest_id°'
 	
-seq*¥
-GameSettings£
+seq*⁄
+GameSettings…
+&
+daily_bonus_items*
+È
+Í
+—
 
 daily_reset_hour
+
+gravity	£í:ù#@
+j
+maintenance[2Y
+
+duration_minutesZ
+
+reason"Season rollout
+#
+	starts_at"2026-06-01T03:00:00Z
+z
+spawn_pointsj*h
+220
+
+x	        
+
+y	        
+
+z	        
+220
+
+x	      (@
+
+y	        
+
+z	       @
 ?
 	spawn_pos220
 
@@ -5998,6 +6029,15 @@ Quest 5025
 —
 
 starting_goldd
+
+version	"2026.05*Ñ
+MaintenanceWindowo
+
+duration_minutesZ
+
+reason"Season rollout
+#
+	starts_at"2026-06-01T03:00:00Z
 
 version	"2026.05*¥7
 LocalizationT
@@ -16797,4 +16837,431 @@ MailReward8
 
 id¸Ñ
 
-name"Event Rule 202f8d1c90e3e197c78:76b0bef865988544
+name"Event Rule 20*Ù	
+ComplexRuleü
+∏
+actions¨*©
+220
+
+count
+
+item_idÈ
+
+type	"AddItem
+<2:
+
+buff_idÒ.
+
+duration	      >@
+
+type	"AddBuff
+523
+
+action_group_id∑ç
+
+type"RunActionGroup
+Œ
+budget√2¿
+3
+fixed*2(
+
+countË
+
+id 
+
+kind"Gold
+.
+limits$*"
+*
+"quest
+
+*
+"daily
+
+ÿ
+randomÕ* 
+g2e
+2
+cost*2(
+
+count
+	
+idÈ
+
+kind"Item
+!
+labels*
+	"starter
+"weapon
+
+weightd
+_2]
+4
+cost,2*
+
+count
+
+id 
+
+kind	"Diamond
+
+labels*
+	"premium
+
+weight
+
+
+id—å
+
+name"Nested launch rewards
+
+root_action_groupµç
+I
+root_condition725
+
+condition_group_idπî
+
+type"AllConditions¬
+a
+actionsV*T
+*2(
+
+stage_id™F
+
+type"UnlockStage
+&2$
+
+mail_idôu
+
+type
+"SendMail
+Õ
+budget¬2ø
+3
+fixed*2(
+
+count
+	
+idÍ
+
+kind"Item
+-
+limits#*!
+*
+"weekly
+
+*
+"vip
+
+ÿ
+randomÕ* 
+^2\
+2
+cost*2(
+
+countÙ
+
+id 
+
+kind"Gold
+
+labels*
+
+"currency
+
+weight<
+h2f
+2
+cost*2(
+
+count
+	
+id—
+
+kind"Item
+"
+labels*
+"potion
+
+"fallback
+
+weight(
+
+
+id“å
+
+name"Quest chain unlock
+
+root_action_group∂ç
+H
+root_condition624
+
+condition_group_id∫î
+
+type"AnyCondition*ﬁ
+ComplexConditionGroupõ
+m
+
+conditions_*]
+'2%
+
+level
+
+type"LevelAtLeast
+220
+
+count
+
+item_idÈ
+
+type	"HasItem
+
+
+idπî
+
+name"Veteran player gates¶
+s
+
+conditionse*c
+-2+
+
+quest_idä'
+
+type"QuestCompleted
+220
+
+count
+
+item_idÍ
+
+type	"HasItem
+
+
+id∫î
+#
+name"Quest and inventory gates*¨
+ComplexConditionGroupEntry[
+
+group_idπî
+
+
+idùï
+	
+seq
+0
+value'2%
+
+level
+
+type"LevelAtLeastf
+
+group_idπî
+
+
+idûï
+	
+seq
+;
+value220
+
+count
+
+item_idÈ
+
+type	"HasItema
+
+group_id∫î
+
+
+idüï
+	
+seq
+6
+value-2+
+
+quest_idä'
+
+type"QuestCompletedf
+
+group_id∫î
+
+
+id†ï
+	
+seq
+;
+value220
+
+count
+
+item_idÍ
+
+type	"HasItem*◊
+ComplexRuleCondition_
+
+
+idÅñ
+
+rule_id—å
+@
+value725
+
+condition_group_idπî
+
+type"AllConditions^
+
+
+idÇñ
+
+rule_id“å
+?
+value624
+
+condition_group_id∫î
+
+type"AnyCondition*¸
+ComplexActionGroupÊ
+∏
+actions¨*©
+220
+
+count
+
+item_idÈ
+
+type	"AddItem
+<2:
+
+buff_idÒ.
+
+duration	      >@
+
+type	"AddBuff
+523
+
+action_group_id∑ç
+
+type"RunActionGroup
+
+
+idµç
+
+name"Launch reward chainç
+a
+actionsV*T
+*2(
+
+stage_id™F
+
+type"UnlockStage
+&2$
+
+mail_idôu
+
+type
+"SendMail
+
+
+id∂ç
+
+name"Quest unlock chainm
+A
+actions6*4
+220
+
+count
+
+item_id—
+
+type	"AddItem
+
+
+id∑ç
+
+name"Nested bonus group*˝
+ComplexActionEntryf
+
+group_idµç
+
+
+idôé
+	
+seq
+;
+value220
+
+count
+
+item_idÈ
+
+type	"AddItemp
+
+group_idµç
+
+
+idöé
+	
+seq
+E
+value<2:
+
+buff_idÒ.
+
+duration	      >@
+
+type	"AddBuffi
+
+group_idµç
+
+
+idõé
+	
+seq
+>
+value523
+
+action_group_id∑ç
+
+type"RunActionGroup^
+
+group_id∂ç
+
+
+idúé
+	
+seq
+3
+value*2(
+
+stage_id™F
+
+type"UnlockStageZ
+
+group_id∂ç
+
+
+idùé
+	
+seq
+/
+value&2$
+
+mail_idôu
+
+type
+"SendMailf
+
+group_id∑ç
+
+
+idûé
+	
+seq
+;
+value220
+
+count
+
+item_id—
+
+type	"AddItem23df8793f70d7fc54:daa9a7aaa84a7363

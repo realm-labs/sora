@@ -11,10 +11,18 @@ local Runtime = require("generated.sora_runtime")
 ---@field type '"HasItem"'
 ---@field itemId integer
 ---@field count integer
+---@class EventConditionAllConditions
+---@field type '"AllConditions"'
+---@field conditionGroupId integer
+---@class EventConditionAnyCondition
+---@field type '"AnyCondition"'
+---@field conditionGroupId integer
 ---@alias EventCondition
 ---| EventConditionLevelAtLeast
 ---| EventConditionQuestCompleted
 ---| EventConditionHasItem
+---| EventConditionAllConditions
+---| EventConditionAnyCondition
 
 local EventCondition = {}
 
@@ -39,6 +47,18 @@ function EventCondition.decode(reader)
             type = "HasItem",
             itemId = reader:read_i32(),
             count = reader:read_i32(),
+        }
+    end
+    if ordinal == 3 then
+        return {
+            type = "AllConditions",
+            conditionGroupId = reader:read_i32(),
+        }
+    end
+    if ordinal == 4 then
+        return {
+            type = "AnyCondition",
+            conditionGroupId = reader:read_i32(),
         }
     end
     error("invalid union ordinal " .. tostring(ordinal) .. " for EventCondition")
@@ -66,6 +86,18 @@ function EventCondition.decode_value(value)
             type = "HasItem",
             itemId = Runtime.expect_integer(obj["item_id"]),
             count = Runtime.expect_integer(obj["count"]),
+        }
+    end
+    if tag == "AllConditions" then
+        return {
+            type = "AllConditions",
+            conditionGroupId = Runtime.expect_integer(obj["condition_group_id"]),
+        }
+    end
+    if tag == "AnyCondition" then
+        return {
+            type = "AnyCondition",
+            conditionGroupId = Runtime.expect_integer(obj["condition_group_id"]),
         }
     end
     error("invalid union tag " .. tostring(tag) .. " for EventCondition")

@@ -71,12 +71,15 @@ pub fn load_csv_table_data_with_parsers(
 
     for (record_index, record) in reader.records().enumerate() {
         let record = record.map_err(|source| csv_error(path, source))?;
-        if record.iter().all(|cell| cell.trim().is_empty()) {
+        if record_is_empty(ir, table, &header_index, &record) {
             continue;
         }
 
         let mut values = BTreeMap::new();
         for field in &table.fields {
+            if field.derived_from.is_some() {
+                continue;
+            }
             if tagged_columns(ir, field).is_some() {
                 if let Some(value) = tagged_columns_value(
                     ir,
@@ -126,6 +129,29 @@ pub fn load_csv_table_data_with_parsers(
         name: table.name.clone(),
         rows,
     })
+}
+
+fn record_is_empty(
+    ir: &ConfigIr,
+    table: &TableIr,
+    header_index: &BTreeMap<String, usize>,
+    record: &StringRecord,
+) -> bool {
+    table
+        .fields
+        .iter()
+        .filter(|field| field.derived_from.is_none())
+        .all(|field| {
+            if let Some(columns) = tagged_columns(ir, field) {
+                columns.into_iter().all(|column| {
+                    let index = header_index[&column.name];
+                    record.get(index).unwrap_or_default().trim().is_empty()
+                })
+            } else {
+                let index = header_index[&field.name];
+                record.get(index).unwrap_or_default().trim().is_empty()
+            }
+        })
 }
 
 struct CsvRowContext<'a> {

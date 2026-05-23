@@ -22,6 +22,10 @@ class EventCondition:
             return EventConditionQuestCompleted.decode_payload(reader)
         if ordinal == 2:
             return EventConditionHasItem.decode_payload(reader)
+        if ordinal == 3:
+            return EventConditionAllConditions.decode_payload(reader)
+        if ordinal == 4:
+            return EventConditionAnyCondition.decode_payload(reader)
         raise SoraReadError(f"invalid union ordinal {ordinal} for EventCondition")
 
 
@@ -65,5 +69,31 @@ class EventConditionHasItem(EventCondition):
         return EventConditionHasItem(
             item_id=item_id,
             count=count,
+        )
+
+
+@dataclass(frozen=True, slots=True)
+class EventConditionAllConditions(EventCondition):
+    type: ClassVar[str] = "AllConditions"
+    condition_group_id: int
+
+    @staticmethod
+    def decode_payload(reader: SoraReader) -> EventConditionAllConditions:
+        condition_group_id = reader.read_i32()
+        return EventConditionAllConditions(
+            condition_group_id=condition_group_id,
+        )
+
+
+@dataclass(frozen=True, slots=True)
+class EventConditionAnyCondition(EventCondition):
+    type: ClassVar[str] = "AnyCondition"
+    condition_group_id: int
+
+    @staticmethod
+    def decode_payload(reader: SoraReader) -> EventConditionAnyCondition:
+        condition_group_id = reader.read_i32()
+        return EventConditionAnyCondition(
+            condition_group_id=condition_group_id,
         )
 

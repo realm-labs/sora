@@ -24,6 +24,8 @@ class RewardAction:
             return RewardActionUnlockStage.decode_payload(reader)
         if ordinal == 3:
             return RewardActionSendMail.decode_payload(reader)
+        if ordinal == 4:
+            return RewardActionRunActionGroup.decode_payload(reader)
         raise SoraReadError(f"invalid union ordinal {ordinal} for RewardAction")
 
 
@@ -83,5 +85,18 @@ class RewardActionSendMail(RewardAction):
         mail_id = reader.read_i32()
         return RewardActionSendMail(
             mail_id=mail_id,
+        )
+
+
+@dataclass(frozen=True, slots=True)
+class RewardActionRunActionGroup(RewardAction):
+    type: ClassVar[str] = "RunActionGroup"
+    action_group_id: int
+
+    @staticmethod
+    def decode_payload(reader: SoraReader) -> RewardActionRunActionGroup:
+        action_group_id = reader.read_i32()
+        return RewardActionRunActionGroup(
+            action_group_id=action_group_id,
         )
 

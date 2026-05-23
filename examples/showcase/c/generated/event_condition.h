@@ -13,6 +13,8 @@ typedef enum sora_showcase_event_condition_tag {
     SORA_SHOWCASE_EVENT_CONDITION_LEVEL_AT_LEAST = 0,
     SORA_SHOWCASE_EVENT_CONDITION_QUEST_COMPLETED = 1,
     SORA_SHOWCASE_EVENT_CONDITION_HAS_ITEM = 2,
+    SORA_SHOWCASE_EVENT_CONDITION_ALL_CONDITIONS = 3,
+    SORA_SHOWCASE_EVENT_CONDITION_ANY_CONDITION = 4,
 } sora_showcase_event_condition_tag;
 
 typedef struct sora_showcase_event_condition {
@@ -28,6 +30,12 @@ typedef struct sora_showcase_event_condition {
             int32_t item_id;
             int32_t count;
         } has_item;
+        struct {
+            int32_t condition_group_id;
+        } all_conditions;
+        struct {
+            int32_t condition_group_id;
+        } any_condition;
     } value;
 } sora_showcase_event_condition;
 

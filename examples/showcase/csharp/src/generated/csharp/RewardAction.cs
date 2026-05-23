@@ -22,6 +22,9 @@ public abstract record RewardAction
     public sealed record SendMail(
         int MailId
     ) : RewardAction;
+    public sealed record RunActionGroup(
+        int ActionGroupId
+    ) : RewardAction;
     internal static RewardAction Decode(SoraReader reader)
     {
         return reader.ReadUInt32() switch
@@ -38,6 +41,9 @@ public abstract record RewardAction
                 reader.ReadInt32()
             ),
             3 => new SendMail(
+                reader.ReadInt32()
+            ),
+            4 => new RunActionGroup(
                 reader.ReadInt32()
             ),
             var value => throw new SoraReadException($"invalid union ordinal {value} for RewardAction"),
@@ -62,6 +68,9 @@ public abstract record RewardAction
             ),
             "SendMail" => new SendMail(
                 obj.Get("mail_id").AsInt32()
+            ),
+            "RunActionGroup" => new RunActionGroup(
+                obj.Get("action_group_id").AsInt32()
             ),
             var tag => throw new SoraReadException($"invalid union tag `{tag}` for RewardAction"),
         };

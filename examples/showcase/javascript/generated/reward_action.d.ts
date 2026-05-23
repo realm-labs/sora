@@ -20,11 +20,16 @@ export interface RewardActionSendMail {
     type: "SendMail";
     mailId: number;
 }
+export interface RewardActionRunActionGroup {
+    type: "RunActionGroup";
+    actionGroupId: number;
+}
 export type RewardAction =
     | RewardActionAddItem
     | RewardActionAddBuff
     | RewardActionUnlockStage
-    | RewardActionSendMail;
+    | RewardActionSendMail
+    | RewardActionRunActionGroup;
 
 export declare function decodeRewardAction(reader: SoraReader): RewardAction;
 export declare function decodeRewardActionValue(value: SoraValue): RewardAction;

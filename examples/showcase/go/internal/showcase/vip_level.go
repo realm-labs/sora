@@ -3,106 +3,107 @@
 package showcase
 
 type VipLevel struct {
-	Level int32
-	Cost  ResourceCost
-	Perks []string
+    Level int32
+    Cost ResourceCost
+    Perks []string
 }
 
 func decodeVipLevel(reader *SoraReader) (VipLevel, error) {
-	var value VipLevel
-	var err error
-	value.Level, err = reader.ReadInt32()
-	if err != nil {
-		return value, err
-	}
-	value.Cost, err = decodeResourceCost(reader)
-	if err != nil {
-		return value, err
-	}
-	value.Perks, err = ReadList(reader, func(reader *SoraReader) (string, error) { return reader.ReadString() })
-	if err != nil {
-		return value, err
-	}
-	return value, nil
+    var value VipLevel
+    var err error
+    value.Level, err = reader.ReadInt32()
+    if err != nil {
+        return value, err
+    }
+    value.Cost, err = decodeResourceCost(reader)
+    if err != nil {
+        return value, err
+    }
+    value.Perks, err = ReadList(reader, func(reader *SoraReader) (string, error) { return reader.ReadString() })
+    if err != nil {
+        return value, err
+    }
+    return value, nil
 }
 
 func decodeVipLevelValue(input SoraValue) (VipLevel, error) {
-	var value VipLevel
-	obj, err := input.AsObject()
-	if err != nil {
-		return value, err
-	}
-	value.Level, err = obj.Get("level").AsInt32()
-	if err != nil {
-		return value, err
-	}
-	value.Cost, err = decodeResourceCostValue(obj.Get("cost"))
-	if err != nil {
-		return value, err
-	}
-	value.Perks, err = DecodeSoraValueList(obj.Get("perks"), func(item SoraValue) (string, error) { return item.AsString() })
-	if err != nil {
-		return value, err
-	}
-	return value, nil
+    var value VipLevel
+    obj, err := input.AsObject()
+    if err != nil {
+        return value, err
+    }
+    value.Level, err = obj.Get("level").AsInt32()
+    if err != nil {
+        return value, err
+    }
+    value.Cost, err = decodeResourceCostValue(obj.Get("cost"))
+    if err != nil {
+        return value, err
+    }
+    value.Perks, err = DecodeSoraValueList(obj.Get("perks"), func(item SoraValue) (string, error) { return item.AsString() })
+    if err != nil {
+        return value, err
+    }
+    return value, nil
 }
 
 const vipLevelTableName = "VipLevel"
 
 var vipLevelTableInfo = SoraTableInfo{
-	Name:       vipLevelTableName,
-	RowType:    "VipLevel",
-	Shape:      SoraTableShapeKeyed,
-	PrimaryKey: &SoraKeyInfo{Name: "level", Type: "int32"},
-	Indexes:    []SoraIndexInfo{},
+    Name: vipLevelTableName,
+    RowType: "VipLevel",
+    Shape: SoraTableShapeKeyed,
+    PrimaryKey: &SoraKeyInfo{Name: "level", Type: "int32"},
+    Indexes: []SoraIndexInfo{
+    },
 }
 
 type VipLevelTable struct {
-	keys []int32
-	rows map[int32]VipLevel
+    keys []int32
+    rows map[int32]VipLevel
 }
 
 func buildVipLevelTable(rows []VipLevel) (*VipLevelTable, error) {
-	keys := make([]int32, 0, len(rows))
-	for _, row := range rows {
-		keys = append(keys, row.Level)
-	}
-	return &VipLevelTable{keys: keys, rows: DecodeMapTable(rows, func(row VipLevel) int32 { return row.Level })}, nil
+    keys := make([]int32, 0, len(rows))
+    for _, row := range rows {
+        keys = append(keys, row.Level)
+    }
+    return &VipLevelTable{keys: keys, rows: DecodeMapTable(rows, func(row VipLevel) int32 { return row.Level })}, nil
 }
 
 func decodeVipLevelTable(source SoraTableSource) (*VipLevelTable, error) {
-	rows, err := DecodeSourceTable(source, vipLevelTableName, decodeVipLevel, decodeVipLevelValue)
-	if err != nil {
-		return nil, err
-	}
-	return buildVipLevelTable(rows)
+    rows, err := DecodeSourceTable(source, vipLevelTableName, decodeVipLevel, decodeVipLevelValue)
+    if err != nil {
+        return nil, err
+    }
+    return buildVipLevelTable(rows)
 }
 
 func (table *VipLevelTable) Rows() map[int32]VipLevel {
-	return table.rows
+    return table.rows
 }
 func (table *VipLevelTable) Get(key int32) (VipLevel, bool) {
-	value, ok := table.rows[key]
-	return value, ok
+    value, ok := table.rows[key]
+    return value, ok
 }
 
 func (table *VipLevelTable) Keys() []int32 {
-	return table.keys
+    return table.keys
 }
 
 func (table *VipLevelTable) OrderedRows() []VipLevel {
-	rows := make([]VipLevel, 0, len(table.keys))
-	for _, key := range table.keys {
-		if row, ok := table.rows[key]; ok {
-			rows = append(rows, row)
-		}
-	}
-	return rows
+    rows := make([]VipLevel, 0, len(table.keys))
+    for _, key := range table.keys {
+        if row, ok := table.rows[key]; ok {
+            rows = append(rows, row)
+        }
+    }
+    return rows
 }
 func (table *VipLevelTable) Info() SoraTableInfo {
-	return vipLevelTableInfo
+    return vipLevelTableInfo
 }
 
 func (table *VipLevelTable) Len() int {
-	return len(table.rows)
+    return len(table.rows)
 }

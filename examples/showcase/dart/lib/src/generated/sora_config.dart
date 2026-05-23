@@ -13,11 +13,15 @@ import 'vec3.dart';
 import 'skill_effect.dart';
 import 'reward.dart';
 import 'stat_modifier.dart';
+import 'reward_bundle.dart';
+import 'complex_budget.dart';
+import 'maintenance_info.dart';
 import 'item.dart';
 import 'skill.dart';
 import 'quest.dart';
 import 'quest_reward.dart';
 import 'game_settings.dart';
+import 'maintenance_window.dart';
 import 'localization.dart';
 import 'level_exp.dart';
 import 'character.dart';
@@ -41,10 +45,16 @@ import 'mail_template.dart';
 import 'mail_reward.dart';
 import 'dialogue.dart';
 import 'event_rule.dart';
+import 'complex_rule.dart';
+import 'complex_condition_group.dart';
+import 'complex_condition_group_entry.dart';
+import 'complex_rule_condition.dart';
+import 'complex_action_group.dart';
+import 'complex_action_entry.dart';
 import 'event_condition.dart';
 import 'reward_action.dart';
 
-const soraSchemaFingerprint = 'ceb957dd8fc38a7a';
+const soraSchemaFingerprint = '21344513cce60506';
 
 final class SoraConfig {
   final Map<Type, Object> _tables;
@@ -79,6 +89,9 @@ final class SoraConfig {
       ),
       GameSettingsTable: GameSettingsTable.decode(
         bundle.decodeTable(GameSettingsTable.tableName, GameSettings.decode),
+      ),
+      MaintenanceWindowTable: MaintenanceWindowTable.decode(
+        bundle.decodeTable(MaintenanceWindowTable.tableName, MaintenanceWindow.decode),
       ),
       LocalizationTable: LocalizationTable.decode(
         bundle.decodeTable(LocalizationTable.tableName, Localization.decode),
@@ -149,6 +162,24 @@ final class SoraConfig {
       EventRuleTable: EventRuleTable.decode(
         bundle.decodeTable(EventRuleTable.tableName, EventRule.decode),
       ),
+      ComplexRuleTable: ComplexRuleTable.decode(
+        bundle.decodeTable(ComplexRuleTable.tableName, ComplexRule.decode),
+      ),
+      ComplexConditionGroupTable: ComplexConditionGroupTable.decode(
+        bundle.decodeTable(ComplexConditionGroupTable.tableName, ComplexConditionGroup.decode),
+      ),
+      ComplexConditionGroupEntryTable: ComplexConditionGroupEntryTable.decode(
+        bundle.decodeTable(ComplexConditionGroupEntryTable.tableName, ComplexConditionGroupEntry.decode),
+      ),
+      ComplexRuleConditionTable: ComplexRuleConditionTable.decode(
+        bundle.decodeTable(ComplexRuleConditionTable.tableName, ComplexRuleCondition.decode),
+      ),
+      ComplexActionGroupTable: ComplexActionGroupTable.decode(
+        bundle.decodeTable(ComplexActionGroupTable.tableName, ComplexActionGroup.decode),
+      ),
+      ComplexActionEntryTable: ComplexActionEntryTable.decode(
+        bundle.decodeTable(ComplexActionEntryTable.tableName, ComplexActionEntry.decode),
+      ),
     });
   }
 
@@ -166,6 +197,7 @@ final class SoraConfig {
   QuestTable get quest => _table<QuestTable>();
   QuestRewardTable get questReward => _table<QuestRewardTable>();
   GameSettingsTable get gameSettings => _table<GameSettingsTable>();
+  MaintenanceWindowTable get maintenanceWindow => _table<MaintenanceWindowTable>();
   LocalizationTable get localization => _table<LocalizationTable>();
   LevelExpTable get levelExp => _table<LevelExpTable>();
   CharacterTable get character => _table<CharacterTable>();
@@ -189,4 +221,10 @@ final class SoraConfig {
   MailRewardTable get mailReward => _table<MailRewardTable>();
   DialogueTable get dialogue => _table<DialogueTable>();
   EventRuleTable get eventRule => _table<EventRuleTable>();
+  ComplexRuleTable get complexRule => _table<ComplexRuleTable>();
+  ComplexConditionGroupTable get complexConditionGroup => _table<ComplexConditionGroupTable>();
+  ComplexConditionGroupEntryTable get complexConditionGroupEntry => _table<ComplexConditionGroupEntryTable>();
+  ComplexRuleConditionTable get complexRuleCondition => _table<ComplexRuleConditionTable>();
+  ComplexActionGroupTable get complexActionGroup => _table<ComplexActionGroupTable>();
+  ComplexActionEntryTable get complexActionEntry => _table<ComplexActionEntryTable>();
 }

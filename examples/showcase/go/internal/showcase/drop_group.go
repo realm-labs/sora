@@ -3,97 +3,98 @@
 package showcase
 
 type DropGroup struct {
-	Id   int32
-	Name string
+    Id int32
+    Name string
 }
 
 func decodeDropGroup(reader *SoraReader) (DropGroup, error) {
-	var value DropGroup
-	var err error
-	value.Id, err = reader.ReadInt32()
-	if err != nil {
-		return value, err
-	}
-	value.Name, err = reader.ReadString()
-	if err != nil {
-		return value, err
-	}
-	return value, nil
+    var value DropGroup
+    var err error
+    value.Id, err = reader.ReadInt32()
+    if err != nil {
+        return value, err
+    }
+    value.Name, err = reader.ReadString()
+    if err != nil {
+        return value, err
+    }
+    return value, nil
 }
 
 func decodeDropGroupValue(input SoraValue) (DropGroup, error) {
-	var value DropGroup
-	obj, err := input.AsObject()
-	if err != nil {
-		return value, err
-	}
-	value.Id, err = obj.Get("id").AsInt32()
-	if err != nil {
-		return value, err
-	}
-	value.Name, err = obj.Get("name").AsString()
-	if err != nil {
-		return value, err
-	}
-	return value, nil
+    var value DropGroup
+    obj, err := input.AsObject()
+    if err != nil {
+        return value, err
+    }
+    value.Id, err = obj.Get("id").AsInt32()
+    if err != nil {
+        return value, err
+    }
+    value.Name, err = obj.Get("name").AsString()
+    if err != nil {
+        return value, err
+    }
+    return value, nil
 }
 
 const dropGroupTableName = "DropGroup"
 
 var dropGroupTableInfo = SoraTableInfo{
-	Name:       dropGroupTableName,
-	RowType:    "DropGroup",
-	Shape:      SoraTableShapeKeyed,
-	PrimaryKey: &SoraKeyInfo{Name: "id", Type: "int32"},
-	Indexes:    []SoraIndexInfo{},
+    Name: dropGroupTableName,
+    RowType: "DropGroup",
+    Shape: SoraTableShapeKeyed,
+    PrimaryKey: &SoraKeyInfo{Name: "id", Type: "int32"},
+    Indexes: []SoraIndexInfo{
+    },
 }
 
 type DropGroupTable struct {
-	keys []int32
-	rows map[int32]DropGroup
+    keys []int32
+    rows map[int32]DropGroup
 }
 
 func buildDropGroupTable(rows []DropGroup) (*DropGroupTable, error) {
-	keys := make([]int32, 0, len(rows))
-	for _, row := range rows {
-		keys = append(keys, row.Id)
-	}
-	return &DropGroupTable{keys: keys, rows: DecodeMapTable(rows, func(row DropGroup) int32 { return row.Id })}, nil
+    keys := make([]int32, 0, len(rows))
+    for _, row := range rows {
+        keys = append(keys, row.Id)
+    }
+    return &DropGroupTable{keys: keys, rows: DecodeMapTable(rows, func(row DropGroup) int32 { return row.Id })}, nil
 }
 
 func decodeDropGroupTable(source SoraTableSource) (*DropGroupTable, error) {
-	rows, err := DecodeSourceTable(source, dropGroupTableName, decodeDropGroup, decodeDropGroupValue)
-	if err != nil {
-		return nil, err
-	}
-	return buildDropGroupTable(rows)
+    rows, err := DecodeSourceTable(source, dropGroupTableName, decodeDropGroup, decodeDropGroupValue)
+    if err != nil {
+        return nil, err
+    }
+    return buildDropGroupTable(rows)
 }
 
 func (table *DropGroupTable) Rows() map[int32]DropGroup {
-	return table.rows
+    return table.rows
 }
 func (table *DropGroupTable) Get(key int32) (DropGroup, bool) {
-	value, ok := table.rows[key]
-	return value, ok
+    value, ok := table.rows[key]
+    return value, ok
 }
 
 func (table *DropGroupTable) Keys() []int32 {
-	return table.keys
+    return table.keys
 }
 
 func (table *DropGroupTable) OrderedRows() []DropGroup {
-	rows := make([]DropGroup, 0, len(table.keys))
-	for _, key := range table.keys {
-		if row, ok := table.rows[key]; ok {
-			rows = append(rows, row)
-		}
-	}
-	return rows
+    rows := make([]DropGroup, 0, len(table.keys))
+    for _, key := range table.keys {
+        if row, ok := table.rows[key]; ok {
+            rows = append(rows, row)
+        }
+    }
+    return rows
 }
 func (table *DropGroupTable) Info() SoraTableInfo {
-	return dropGroupTableInfo
+    return dropGroupTableInfo
 }
 
 func (table *DropGroupTable) Len() int {
-	return len(table.rows)
+    return len(table.rows)
 }

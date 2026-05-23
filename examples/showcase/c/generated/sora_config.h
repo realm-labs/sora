@@ -16,11 +16,15 @@
 #include "skill_effect.h"
 #include "reward.h"
 #include "stat_modifier.h"
+#include "reward_bundle.h"
+#include "complex_budget.h"
+#include "maintenance_info.h"
 #include "item.h"
 #include "skill.h"
 #include "quest.h"
 #include "quest_reward.h"
 #include "game_settings.h"
+#include "maintenance_window.h"
 #include "localization.h"
 #include "level_exp.h"
 #include "character.h"
@@ -44,6 +48,12 @@
 #include "mail_reward.h"
 #include "dialogue.h"
 #include "event_rule.h"
+#include "complex_rule.h"
+#include "complex_condition_group.h"
+#include "complex_condition_group_entry.h"
+#include "complex_rule_condition.h"
+#include "complex_action_group.h"
+#include "complex_action_entry.h"
 #include "event_condition.h"
 #include "reward_action.h"
 
@@ -81,6 +91,9 @@ const sora_showcase_quest_reward_table* sora_showcase_config_quest_reward(
     const sora_showcase_config* config
 );
 const sora_showcase_game_settings_table* sora_showcase_config_game_settings(
+    const sora_showcase_config* config
+);
+const sora_showcase_maintenance_window_table* sora_showcase_config_maintenance_window(
     const sora_showcase_config* config
 );
 const sora_showcase_localization_table* sora_showcase_config_localization(
@@ -150,6 +163,24 @@ const sora_showcase_dialogue_table* sora_showcase_config_dialogue(
     const sora_showcase_config* config
 );
 const sora_showcase_event_rule_table* sora_showcase_config_event_rule(
+    const sora_showcase_config* config
+);
+const sora_showcase_complex_rule_table* sora_showcase_config_complex_rule(
+    const sora_showcase_config* config
+);
+const sora_showcase_complex_condition_group_table* sora_showcase_config_complex_condition_group(
+    const sora_showcase_config* config
+);
+const sora_showcase_complex_condition_group_entry_table* sora_showcase_config_complex_condition_group_entry(
+    const sora_showcase_config* config
+);
+const sora_showcase_complex_rule_condition_table* sora_showcase_config_complex_rule_condition(
+    const sora_showcase_config* config
+);
+const sora_showcase_complex_action_group_table* sora_showcase_config_complex_action_group(
+    const sora_showcase_config* config
+);
+const sora_showcase_complex_action_entry_table* sora_showcase_config_complex_action_entry(
     const sora_showcase_config* config
 );
 

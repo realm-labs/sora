@@ -15,10 +15,20 @@ export interface EventConditionHasItem {
     itemId: number;
     count: number;
 }
+export interface EventConditionAllConditions {
+    type: "AllConditions";
+    conditionGroupId: number;
+}
+export interface EventConditionAnyCondition {
+    type: "AnyCondition";
+    conditionGroupId: number;
+}
 export type EventCondition =
     | EventConditionLevelAtLeast
     | EventConditionQuestCompleted
-    | EventConditionHasItem;
+    | EventConditionHasItem
+    | EventConditionAllConditions
+    | EventConditionAnyCondition;
 
 export declare function decodeEventCondition(reader: SoraReader): EventCondition;
 export declare function decodeEventConditionValue(value: SoraValue): EventCondition;

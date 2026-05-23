@@ -12,6 +12,8 @@ import type { QuestRewardTable } from "./quest_reward.js";
 
 import type { GameSettingsTable } from "./game_settings.js";
 
+import type { MaintenanceWindowTable } from "./maintenance_window.js";
+
 import type { LocalizationTable } from "./localization.js";
 
 import type { LevelExpTable } from "./level_exp.js";
@@ -58,6 +60,18 @@ import type { DialogueTable } from "./dialogue.js";
 
 import type { EventRuleTable } from "./event_rule.js";
 
+import type { ComplexRuleTable } from "./complex_rule.js";
+
+import type { ComplexConditionGroupTable } from "./complex_condition_group.js";
+
+import type { ComplexConditionGroupEntryTable } from "./complex_condition_group_entry.js";
+
+import type { ComplexRuleConditionTable } from "./complex_rule_condition.js";
+
+import type { ComplexActionGroupTable } from "./complex_action_group.js";
+
+import type { ComplexActionEntryTable } from "./complex_action_entry.js";
+
 export declare const SORA_SCHEMA_FINGERPRINT: string;
 
 export declare class SoraConfig {
@@ -68,6 +82,7 @@ export declare class SoraConfig {
     quest(): QuestTable;
     questReward(): QuestRewardTable;
     gameSettings(): GameSettingsTable;
+    maintenanceWindow(): MaintenanceWindowTable;
     localization(): LocalizationTable;
     levelExp(): LevelExpTable;
     character(): CharacterTable;
@@ -91,4 +106,10 @@ export declare class SoraConfig {
     mailReward(): MailRewardTable;
     dialogue(): DialogueTable;
     eventRule(): EventRuleTable;
+    complexRule(): ComplexRuleTable;
+    complexConditionGroup(): ComplexConditionGroupTable;
+    complexConditionGroupEntry(): ComplexConditionGroupEntryTable;
+    complexRuleCondition(): ComplexRuleConditionTable;
+    complexActionGroup(): ComplexActionGroupTable;
+    complexActionEntry(): ComplexActionEntryTable;
 }

@@ -5,7 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-static const char* SORA_SCHEMA_FINGERPRINT = "f8d1c90e3e197c78";
+static const char* SORA_SCHEMA_FINGERPRINT = "3df8793f70d7fc54";
 
 struct sora_showcase_config {
     sora_showcase_item_table* item;
@@ -13,6 +13,7 @@ struct sora_showcase_config {
     sora_showcase_quest_table* quest;
     sora_showcase_quest_reward_table* quest_reward;
     sora_showcase_game_settings_table* game_settings;
+    sora_showcase_maintenance_window_table* maintenance_window;
     sora_showcase_localization_table* localization;
     sora_showcase_level_exp_table* level_exp;
     sora_showcase_character_table* character;
@@ -36,6 +37,12 @@ struct sora_showcase_config {
     sora_showcase_mail_reward_table* mail_reward;
     sora_showcase_dialogue_table* dialogue;
     sora_showcase_event_rule_table* event_rule;
+    sora_showcase_complex_rule_table* complex_rule;
+    sora_showcase_complex_condition_group_table* complex_condition_group;
+    sora_showcase_complex_condition_group_entry_table* complex_condition_group_entry;
+    sora_showcase_complex_rule_condition_table* complex_rule_condition;
+    sora_showcase_complex_action_group_table* complex_action_group;
+    sora_showcase_complex_action_entry_table* complex_action_entry;
 };
 
 sora_result sora_showcase_config_load_from_bytes(
@@ -99,6 +106,14 @@ sora_result sora_showcase_config_load_from_bytes_with_options(
     }
     {
         sora_result result = sora_showcase_game_settings_table_load(bundle, &config->game_settings);
+        if (result.code != SORA_OK) {
+            sora_bundle_free(bundle);
+            sora_showcase_config_free(config);
+            return result;
+        }
+    }
+    {
+        sora_result result = sora_showcase_maintenance_window_table_load(bundle, &config->maintenance_window);
         if (result.code != SORA_OK) {
             sora_bundle_free(bundle);
             sora_showcase_config_free(config);
@@ -289,6 +304,54 @@ sora_result sora_showcase_config_load_from_bytes_with_options(
             return result;
         }
     }
+    {
+        sora_result result = sora_showcase_complex_rule_table_load(bundle, &config->complex_rule);
+        if (result.code != SORA_OK) {
+            sora_bundle_free(bundle);
+            sora_showcase_config_free(config);
+            return result;
+        }
+    }
+    {
+        sora_result result = sora_showcase_complex_condition_group_table_load(bundle, &config->complex_condition_group);
+        if (result.code != SORA_OK) {
+            sora_bundle_free(bundle);
+            sora_showcase_config_free(config);
+            return result;
+        }
+    }
+    {
+        sora_result result = sora_showcase_complex_condition_group_entry_table_load(bundle, &config->complex_condition_group_entry);
+        if (result.code != SORA_OK) {
+            sora_bundle_free(bundle);
+            sora_showcase_config_free(config);
+            return result;
+        }
+    }
+    {
+        sora_result result = sora_showcase_complex_rule_condition_table_load(bundle, &config->complex_rule_condition);
+        if (result.code != SORA_OK) {
+            sora_bundle_free(bundle);
+            sora_showcase_config_free(config);
+            return result;
+        }
+    }
+    {
+        sora_result result = sora_showcase_complex_action_group_table_load(bundle, &config->complex_action_group);
+        if (result.code != SORA_OK) {
+            sora_bundle_free(bundle);
+            sora_showcase_config_free(config);
+            return result;
+        }
+    }
+    {
+        sora_result result = sora_showcase_complex_action_entry_table_load(bundle, &config->complex_action_entry);
+        if (result.code != SORA_OK) {
+            sora_bundle_free(bundle);
+            sora_showcase_config_free(config);
+            return result;
+        }
+    }
     sora_bundle_free(bundle);
     *out = config;
     return sora_ok();
@@ -303,6 +366,7 @@ void sora_showcase_config_free(sora_showcase_config* config) {
     sora_showcase_quest_table_free(config->quest);
     sora_showcase_quest_reward_table_free(config->quest_reward);
     sora_showcase_game_settings_table_free(config->game_settings);
+    sora_showcase_maintenance_window_table_free(config->maintenance_window);
     sora_showcase_localization_table_free(config->localization);
     sora_showcase_level_exp_table_free(config->level_exp);
     sora_showcase_character_table_free(config->character);
@@ -326,6 +390,12 @@ void sora_showcase_config_free(sora_showcase_config* config) {
     sora_showcase_mail_reward_table_free(config->mail_reward);
     sora_showcase_dialogue_table_free(config->dialogue);
     sora_showcase_event_rule_table_free(config->event_rule);
+    sora_showcase_complex_rule_table_free(config->complex_rule);
+    sora_showcase_complex_condition_group_table_free(config->complex_condition_group);
+    sora_showcase_complex_condition_group_entry_table_free(config->complex_condition_group_entry);
+    sora_showcase_complex_rule_condition_table_free(config->complex_rule_condition);
+    sora_showcase_complex_action_group_table_free(config->complex_action_group);
+    sora_showcase_complex_action_entry_table_free(config->complex_action_entry);
     free(config);
 }
 
@@ -357,6 +427,12 @@ const sora_showcase_game_settings_table* sora_showcase_config_game_settings(
     const sora_showcase_config* config
 ) {
     return config->game_settings;
+}
+
+const sora_showcase_maintenance_window_table* sora_showcase_config_maintenance_window(
+    const sora_showcase_config* config
+) {
+    return config->maintenance_window;
 }
 
 const sora_showcase_localization_table* sora_showcase_config_localization(
@@ -495,4 +571,40 @@ const sora_showcase_event_rule_table* sora_showcase_config_event_rule(
     const sora_showcase_config* config
 ) {
     return config->event_rule;
+}
+
+const sora_showcase_complex_rule_table* sora_showcase_config_complex_rule(
+    const sora_showcase_config* config
+) {
+    return config->complex_rule;
+}
+
+const sora_showcase_complex_condition_group_table* sora_showcase_config_complex_condition_group(
+    const sora_showcase_config* config
+) {
+    return config->complex_condition_group;
+}
+
+const sora_showcase_complex_condition_group_entry_table* sora_showcase_config_complex_condition_group_entry(
+    const sora_showcase_config* config
+) {
+    return config->complex_condition_group_entry;
+}
+
+const sora_showcase_complex_rule_condition_table* sora_showcase_config_complex_rule_condition(
+    const sora_showcase_config* config
+) {
+    return config->complex_rule_condition;
+}
+
+const sora_showcase_complex_action_group_table* sora_showcase_config_complex_action_group(
+    const sora_showcase_config* config
+) {
+    return config->complex_action_group;
+}
+
+const sora_showcase_complex_action_entry_table* sora_showcase_config_complex_action_entry(
+    const sora_showcase_config* config
+) {
+    return config->complex_action_entry;
 }

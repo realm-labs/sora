@@ -3,106 +3,107 @@
 package showcase
 
 type Dialogue struct {
-	Id         int32
-	SpeakerKey string
-	Lines      []string
+    Id int32
+    SpeakerKey string
+    Lines []string
 }
 
 func decodeDialogue(reader *SoraReader) (Dialogue, error) {
-	var value Dialogue
-	var err error
-	value.Id, err = reader.ReadInt32()
-	if err != nil {
-		return value, err
-	}
-	value.SpeakerKey, err = reader.ReadString()
-	if err != nil {
-		return value, err
-	}
-	value.Lines, err = ReadList(reader, func(reader *SoraReader) (string, error) { return reader.ReadString() })
-	if err != nil {
-		return value, err
-	}
-	return value, nil
+    var value Dialogue
+    var err error
+    value.Id, err = reader.ReadInt32()
+    if err != nil {
+        return value, err
+    }
+    value.SpeakerKey, err = reader.ReadString()
+    if err != nil {
+        return value, err
+    }
+    value.Lines, err = ReadList(reader, func(reader *SoraReader) (string, error) { return reader.ReadString() })
+    if err != nil {
+        return value, err
+    }
+    return value, nil
 }
 
 func decodeDialogueValue(input SoraValue) (Dialogue, error) {
-	var value Dialogue
-	obj, err := input.AsObject()
-	if err != nil {
-		return value, err
-	}
-	value.Id, err = obj.Get("id").AsInt32()
-	if err != nil {
-		return value, err
-	}
-	value.SpeakerKey, err = obj.Get("speaker_key").AsString()
-	if err != nil {
-		return value, err
-	}
-	value.Lines, err = DecodeSoraValueList(obj.Get("lines"), func(item SoraValue) (string, error) { return item.AsString() })
-	if err != nil {
-		return value, err
-	}
-	return value, nil
+    var value Dialogue
+    obj, err := input.AsObject()
+    if err != nil {
+        return value, err
+    }
+    value.Id, err = obj.Get("id").AsInt32()
+    if err != nil {
+        return value, err
+    }
+    value.SpeakerKey, err = obj.Get("speaker_key").AsString()
+    if err != nil {
+        return value, err
+    }
+    value.Lines, err = DecodeSoraValueList(obj.Get("lines"), func(item SoraValue) (string, error) { return item.AsString() })
+    if err != nil {
+        return value, err
+    }
+    return value, nil
 }
 
 const dialogueTableName = "Dialogue"
 
 var dialogueTableInfo = SoraTableInfo{
-	Name:       dialogueTableName,
-	RowType:    "Dialogue",
-	Shape:      SoraTableShapeKeyed,
-	PrimaryKey: &SoraKeyInfo{Name: "id", Type: "int32"},
-	Indexes:    []SoraIndexInfo{},
+    Name: dialogueTableName,
+    RowType: "Dialogue",
+    Shape: SoraTableShapeKeyed,
+    PrimaryKey: &SoraKeyInfo{Name: "id", Type: "int32"},
+    Indexes: []SoraIndexInfo{
+    },
 }
 
 type DialogueTable struct {
-	keys []int32
-	rows map[int32]Dialogue
+    keys []int32
+    rows map[int32]Dialogue
 }
 
 func buildDialogueTable(rows []Dialogue) (*DialogueTable, error) {
-	keys := make([]int32, 0, len(rows))
-	for _, row := range rows {
-		keys = append(keys, row.Id)
-	}
-	return &DialogueTable{keys: keys, rows: DecodeMapTable(rows, func(row Dialogue) int32 { return row.Id })}, nil
+    keys := make([]int32, 0, len(rows))
+    for _, row := range rows {
+        keys = append(keys, row.Id)
+    }
+    return &DialogueTable{keys: keys, rows: DecodeMapTable(rows, func(row Dialogue) int32 { return row.Id })}, nil
 }
 
 func decodeDialogueTable(source SoraTableSource) (*DialogueTable, error) {
-	rows, err := DecodeSourceTable(source, dialogueTableName, decodeDialogue, decodeDialogueValue)
-	if err != nil {
-		return nil, err
-	}
-	return buildDialogueTable(rows)
+    rows, err := DecodeSourceTable(source, dialogueTableName, decodeDialogue, decodeDialogueValue)
+    if err != nil {
+        return nil, err
+    }
+    return buildDialogueTable(rows)
 }
 
 func (table *DialogueTable) Rows() map[int32]Dialogue {
-	return table.rows
+    return table.rows
 }
 func (table *DialogueTable) Get(key int32) (Dialogue, bool) {
-	value, ok := table.rows[key]
-	return value, ok
+    value, ok := table.rows[key]
+    return value, ok
 }
 
 func (table *DialogueTable) Keys() []int32 {
-	return table.keys
+    return table.keys
 }
 
 func (table *DialogueTable) OrderedRows() []Dialogue {
-	rows := make([]Dialogue, 0, len(table.keys))
-	for _, key := range table.keys {
-		if row, ok := table.rows[key]; ok {
-			rows = append(rows, row)
-		}
-	}
-	return rows
+    rows := make([]Dialogue, 0, len(table.keys))
+    for _, key := range table.keys {
+        if row, ok := table.rows[key]; ok {
+            rows = append(rows, row)
+        }
+    }
+    return rows
 }
 func (table *DialogueTable) Info() SoraTableInfo {
-	return dialogueTableInfo
+    return dialogueTableInfo
 }
 
 func (table *DialogueTable) Len() int {
-	return len(table.rows)
+    return len(table.rows)
 }

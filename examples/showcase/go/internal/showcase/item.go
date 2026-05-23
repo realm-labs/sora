@@ -3,166 +3,166 @@
 package showcase
 
 type Item struct {
-	// Id: Item id
-	Id int32
-	// Name: Display name
-	Name string
-	// ItemType: Item category
-	ItemType ItemType
-	// MaxStack: Stack limit; blank cells use the default
-	MaxStack int32
-	// Price: Tuple: kind,id,count
-	Price ResourceCost
-	// Tags: JSON string set
-	Tags []string
-	// Attributes: Map pairs: key,value|key,value
-	Attributes map[string]int32
+    // Id: Item id
+    Id int32
+    // Name: Display name
+    Name string
+    // ItemType: Item category
+    ItemType ItemType
+    // MaxStack: Stack limit; blank cells use the default
+    MaxStack int32
+    // Price: Tuple: kind,id,count
+    Price ResourceCost
+    // Tags: JSON string set
+    Tags []string
+    // Attributes: Map pairs: key,value|key,value
+    Attributes map[string]int32
 }
 
 func decodeItem(reader *SoraReader) (Item, error) {
-	var value Item
-	var err error
-	value.Id, err = reader.ReadInt32()
-	if err != nil {
-		return value, err
-	}
-	value.Name, err = reader.ReadString()
-	if err != nil {
-		return value, err
-	}
-	value.ItemType, err = decodeItemType(reader)
-	if err != nil {
-		return value, err
-	}
-	value.MaxStack, err = reader.ReadInt32()
-	if err != nil {
-		return value, err
-	}
-	value.Price, err = decodeResourceCost(reader)
-	if err != nil {
-		return value, err
-	}
-	value.Tags, err = ReadList(reader, func(reader *SoraReader) (string, error) { return reader.ReadString() })
-	if err != nil {
-		return value, err
-	}
-	value.Attributes, err = ReadMap(reader, func(reader *SoraReader) (string, error) { return reader.ReadString() }, func(reader *SoraReader) (int32, error) { return reader.ReadInt32() })
-	if err != nil {
-		return value, err
-	}
-	return value, nil
+    var value Item
+    var err error
+    value.Id, err = reader.ReadInt32()
+    if err != nil {
+        return value, err
+    }
+    value.Name, err = reader.ReadString()
+    if err != nil {
+        return value, err
+    }
+    value.ItemType, err = decodeItemType(reader)
+    if err != nil {
+        return value, err
+    }
+    value.MaxStack, err = reader.ReadInt32()
+    if err != nil {
+        return value, err
+    }
+    value.Price, err = decodeResourceCost(reader)
+    if err != nil {
+        return value, err
+    }
+    value.Tags, err = ReadList(reader, func(reader *SoraReader) (string, error) { return reader.ReadString() })
+    if err != nil {
+        return value, err
+    }
+    value.Attributes, err = ReadMap(reader, func(reader *SoraReader) (string, error) { return reader.ReadString() }, func(reader *SoraReader) (int32, error) { return reader.ReadInt32() })
+    if err != nil {
+        return value, err
+    }
+    return value, nil
 }
 
 func decodeItemValue(input SoraValue) (Item, error) {
-	var value Item
-	obj, err := input.AsObject()
-	if err != nil {
-		return value, err
-	}
-	value.Id, err = obj.Get("id").AsInt32()
-	if err != nil {
-		return value, err
-	}
-	value.Name, err = obj.Get("name").AsString()
-	if err != nil {
-		return value, err
-	}
-	value.ItemType, err = decodeItemTypeValue(obj.Get("item_type"))
-	if err != nil {
-		return value, err
-	}
-	value.MaxStack, err = obj.Get("max_stack").AsInt32()
-	if err != nil {
-		return value, err
-	}
-	value.Price, err = decodeResourceCostValue(obj.Get("price"))
-	if err != nil {
-		return value, err
-	}
-	value.Tags, err = DecodeSoraValueList(obj.Get("tags"), func(item SoraValue) (string, error) { return item.AsString() })
-	if err != nil {
-		return value, err
-	}
-	value.Attributes, err = DecodeSoraValueMap(obj.Get("attributes"), func(item SoraValue) (string, error) { return item.AsString() }, func(item SoraValue) (int32, error) { return item.AsInt32() })
-	if err != nil {
-		return value, err
-	}
-	return value, nil
+    var value Item
+    obj, err := input.AsObject()
+    if err != nil {
+        return value, err
+    }
+    value.Id, err = obj.Get("id").AsInt32()
+    if err != nil {
+        return value, err
+    }
+    value.Name, err = obj.Get("name").AsString()
+    if err != nil {
+        return value, err
+    }
+    value.ItemType, err = decodeItemTypeValue(obj.Get("item_type"))
+    if err != nil {
+        return value, err
+    }
+    value.MaxStack, err = obj.Get("max_stack").AsInt32()
+    if err != nil {
+        return value, err
+    }
+    value.Price, err = decodeResourceCostValue(obj.Get("price"))
+    if err != nil {
+        return value, err
+    }
+    value.Tags, err = DecodeSoraValueList(obj.Get("tags"), func(item SoraValue) (string, error) { return item.AsString() })
+    if err != nil {
+        return value, err
+    }
+    value.Attributes, err = DecodeSoraValueMap(obj.Get("attributes"), func(item SoraValue) (string, error) { return item.AsString() }, func(item SoraValue) (int32, error) { return item.AsInt32() })
+    if err != nil {
+        return value, err
+    }
+    return value, nil
 }
 
 const itemTableName = "Item"
 
 var itemTableInfo = SoraTableInfo{
-	Name:       itemTableName,
-	RowType:    "Item",
-	Shape:      SoraTableShapeKeyed,
-	PrimaryKey: &SoraKeyInfo{Name: "id", Type: "int32"},
-	Indexes: []SoraIndexInfo{
-		{Name: "byName", Unique: true, Fields: []string{"Name"}},
-		{Name: "byItemType", Unique: false, Fields: []string{"ItemType"}},
-	},
+    Name: itemTableName,
+    RowType: "Item",
+    Shape: SoraTableShapeKeyed,
+    PrimaryKey: &SoraKeyInfo{Name: "id", Type: "int32"},
+    Indexes: []SoraIndexInfo{
+        {Name: "byName", Unique: true, Fields: []string{"Name"}},
+        {Name: "byItemType", Unique: false, Fields: []string{"ItemType"}},
+    },
 }
 
 type ItemTable struct {
-	keys       []int32
-	rows       map[int32]Item
-	byName     map[string]Item
-	byItemType map[ItemType][]Item
+    keys []int32
+    rows map[int32]Item
+    byName map[string]Item
+    byItemType map[ItemType][]Item
 }
 
 func buildItemTable(rows []Item) (*ItemTable, error) {
-	keys := make([]int32, 0, len(rows))
-	for _, row := range rows {
-		keys = append(keys, row.Id)
-	}
-	return &ItemTable{
-		keys:       keys,
-		rows:       DecodeMapTable(rows, func(row Item) int32 { return row.Id }),
-		byName:     DecodeUniqueIndex(rows, func(row Item) string { return row.Name }),
-		byItemType: DecodeIndex(rows, func(row Item) ItemType { return row.ItemType }),
-	}, nil
+    keys := make([]int32, 0, len(rows))
+    for _, row := range rows {
+        keys = append(keys, row.Id)
+    }
+    return &ItemTable{
+        keys: keys,
+        rows: DecodeMapTable(rows, func(row Item) int32 { return row.Id }),
+        byName: DecodeUniqueIndex(rows, func(row Item) string { return row.Name }),
+        byItemType: DecodeIndex(rows, func(row Item) ItemType { return row.ItemType }),
+    }, nil
 }
 
 func decodeItemTable(source SoraTableSource) (*ItemTable, error) {
-	rows, err := DecodeSourceTable(source, itemTableName, decodeItem, decodeItemValue)
-	if err != nil {
-		return nil, err
-	}
-	return buildItemTable(rows)
+    rows, err := DecodeSourceTable(source, itemTableName, decodeItem, decodeItemValue)
+    if err != nil {
+        return nil, err
+    }
+    return buildItemTable(rows)
 }
 
 func (table *ItemTable) Rows() map[int32]Item {
-	return table.rows
+    return table.rows
 }
 func (table *ItemTable) Get(key int32) (Item, bool) {
-	value, ok := table.rows[key]
-	return value, ok
+    value, ok := table.rows[key]
+    return value, ok
 }
 
 func (table *ItemTable) Keys() []int32 {
-	return table.keys
+    return table.keys
 }
 
 func (table *ItemTable) OrderedRows() []Item {
-	rows := make([]Item, 0, len(table.keys))
-	for _, key := range table.keys {
-		if row, ok := table.rows[key]; ok {
-			rows = append(rows, row)
-		}
-	}
-	return rows
+    rows := make([]Item, 0, len(table.keys))
+    for _, key := range table.keys {
+        if row, ok := table.rows[key]; ok {
+            rows = append(rows, row)
+        }
+    }
+    return rows
 }
 func (table *ItemTable) GetByName(name string) (Item, bool) {
-	value, ok := table.byName[name]
-	return value, ok
+    value, ok := table.byName[name]
+    return value, ok
 }
 func (table *ItemTable) FindByItemType(itemType ItemType) []Item {
-	return table.byItemType[itemType]
+    return table.byItemType[itemType]
 }
 func (table *ItemTable) Info() SoraTableInfo {
-	return itemTableInfo
+    return itemTableInfo
 }
 
 func (table *ItemTable) Len() int {
-	return len(table.rows)
+    return len(table.rows)
 }

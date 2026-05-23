@@ -11,19 +11,35 @@ public final class GameSettings {
     public final Integer startingGold;
     public final Vec3 spawnPos;
     public final java.util.List<Integer> starterItems;
+    /** Double precision tuning value */
+    public final Double gravity;
+    /** Fixed-length array parsed from one cell */
+    public final java.util.List<Integer> dailyBonusItems;
+    /** Fixed-length array of structs */
+    public final java.util.List<Vec3> spawnPoints;
+    /** Optional derived struct copied from a child row */
+    public final MaintenanceInfo maintenance;
 
     public GameSettings(
         String version,
         Integer dailyResetHour,
         Integer startingGold,
         Vec3 spawnPos,
-        java.util.List<Integer> starterItems
+        java.util.List<Integer> starterItems,
+        Double gravity,
+        java.util.List<Integer> dailyBonusItems,
+        java.util.List<Vec3> spawnPoints,
+        MaintenanceInfo maintenance
     ) {
         this.version = version;
         this.dailyResetHour = dailyResetHour;
         this.startingGold = startingGold;
         this.spawnPos = spawnPos;
         this.starterItems = starterItems;
+        this.gravity = gravity;
+        this.dailyBonusItems = dailyBonusItems;
+        this.spawnPoints = spawnPoints;
+        this.maintenance = maintenance;
     }
 
     static GameSettings decode(SoraReader reader) {
@@ -32,7 +48,11 @@ public final class GameSettings {
             reader.readI32(),
             reader.readI32(),
             Vec3.decode(reader),
-            reader.readList(() -> reader.readI32())
+            reader.readList(() -> reader.readI32()),
+            reader.readF64(),
+            reader.readList(() -> reader.readI32()),
+            reader.readList(() -> Vec3.decode(reader)),
+            reader.readOptional(() -> MaintenanceInfo.decode(reader))
         );
     }
 
@@ -43,7 +63,11 @@ public final class GameSettings {
             obj.get("daily_reset_hour").asInt(),
             obj.get("starting_gold").asInt(),
             Vec3.decode(obj.get("spawn_pos")),
-            obj.get("starter_items").asList(item -> item.asInt())
+            obj.get("starter_items").asList(item -> item.asInt()),
+            obj.get("gravity").asDouble(),
+            obj.get("daily_bonus_items").asList(item -> item.asInt()),
+            obj.get("spawn_points").asList(item -> Vec3.decode(item)),
+            obj.get("maintenance").isNull() ? null : MaintenanceInfo.decode(obj.get("maintenance"))
         );
     }
 }

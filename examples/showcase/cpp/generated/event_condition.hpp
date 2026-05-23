@@ -17,10 +17,18 @@ struct EventCondition {
         std::int32_t item_id;
         std::int32_t count;
     };
+    struct AllConditions {
+        std::int32_t condition_group_id;
+    };
+    struct AnyCondition {
+        std::int32_t condition_group_id;
+    };
     std::variant<
         LevelAtLeast,
         QuestCompleted,
-        HasItem
+        HasItem,
+        AllConditions,
+        AnyCondition
     > value;
 
     static EventCondition decode(SoraReader& reader) {
@@ -36,6 +44,14 @@ struct EventCondition {
         case 2:
             return EventCondition{ HasItem{
                 reader.read_i32(),
+                reader.read_i32(),
+            } };
+        case 3:
+            return EventCondition{ AllConditions{
+                reader.read_i32(),
+            } };
+        case 4:
+            return EventCondition{ AnyCondition{
                 reader.read_i32(),
             } };
         default:

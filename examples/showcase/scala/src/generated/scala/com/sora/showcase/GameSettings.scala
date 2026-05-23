@@ -7,7 +7,15 @@ final case class GameSettings(
   dailyResetHour: Int,
   startingGold: Int,
   spawnPos: Vec3,
-  starterItems: Vector[Int]
+  starterItems: Vector[Int],
+  /** Double precision tuning value */
+  gravity: Double,
+  /** Fixed-length array parsed from one cell */
+  dailyBonusItems: Vector[Int],
+  /** Fixed-length array of structs */
+  spawnPoints: Vector[Vec3],
+  /** Optional derived struct copied from a child row */
+  maintenance: Option[MaintenanceInfo]
 )
 
 object GameSettings {
@@ -17,7 +25,11 @@ object GameSettings {
       dailyResetHour = reader.readI32(),
       startingGold = reader.readI32(),
       spawnPos = Vec3.decode(reader),
-      starterItems = reader.readList(reader.readI32())
+      starterItems = reader.readList(reader.readI32()),
+      gravity = reader.readF64(),
+      dailyBonusItems = reader.readList(reader.readI32()),
+      spawnPoints = reader.readList(Vec3.decode(reader)),
+      maintenance = reader.readOptional(MaintenanceInfo.decode(reader))
     )
 
   def decode(value: SoraValue): GameSettings = {
@@ -27,7 +39,11 @@ object GameSettings {
       dailyResetHour = obj.get("daily_reset_hour").asInt,
       startingGold = obj.get("starting_gold").asInt,
       spawnPos = Vec3.decode(obj.get("spawn_pos")),
-      starterItems = obj.get("starter_items").asList(item => item.asInt)
+      starterItems = obj.get("starter_items").asList(item => item.asInt),
+      gravity = obj.get("gravity").asDouble,
+      dailyBonusItems = obj.get("daily_bonus_items").asList(item => item.asInt),
+      spawnPoints = obj.get("spawn_points").asList(item => Vec3.decode(item)),
+      maintenance = if (obj.get("maintenance").isNull) None else Some(MaintenanceInfo.decode(obj.get("maintenance")))
     )
   }
 }

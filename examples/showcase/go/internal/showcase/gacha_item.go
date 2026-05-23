@@ -3,91 +3,92 @@
 package showcase
 
 type GachaItem struct {
-	PoolId int32
-	ItemId int32
-	Rarity Rarity
-	Weight float32
+    PoolId int32
+    ItemId int32
+    Rarity Rarity
+    Weight float32
 }
 
 func decodeGachaItem(reader *SoraReader) (GachaItem, error) {
-	var value GachaItem
-	var err error
-	value.PoolId, err = reader.ReadInt32()
-	if err != nil {
-		return value, err
-	}
-	value.ItemId, err = reader.ReadInt32()
-	if err != nil {
-		return value, err
-	}
-	value.Rarity, err = decodeRarity(reader)
-	if err != nil {
-		return value, err
-	}
-	value.Weight, err = reader.ReadFloat32()
-	if err != nil {
-		return value, err
-	}
-	return value, nil
+    var value GachaItem
+    var err error
+    value.PoolId, err = reader.ReadInt32()
+    if err != nil {
+        return value, err
+    }
+    value.ItemId, err = reader.ReadInt32()
+    if err != nil {
+        return value, err
+    }
+    value.Rarity, err = decodeRarity(reader)
+    if err != nil {
+        return value, err
+    }
+    value.Weight, err = reader.ReadFloat32()
+    if err != nil {
+        return value, err
+    }
+    return value, nil
 }
 
 func decodeGachaItemValue(input SoraValue) (GachaItem, error) {
-	var value GachaItem
-	obj, err := input.AsObject()
-	if err != nil {
-		return value, err
-	}
-	value.PoolId, err = obj.Get("pool_id").AsInt32()
-	if err != nil {
-		return value, err
-	}
-	value.ItemId, err = obj.Get("item_id").AsInt32()
-	if err != nil {
-		return value, err
-	}
-	value.Rarity, err = decodeRarityValue(obj.Get("rarity"))
-	if err != nil {
-		return value, err
-	}
-	value.Weight, err = obj.Get("weight").AsFloat32()
-	if err != nil {
-		return value, err
-	}
-	return value, nil
+    var value GachaItem
+    obj, err := input.AsObject()
+    if err != nil {
+        return value, err
+    }
+    value.PoolId, err = obj.Get("pool_id").AsInt32()
+    if err != nil {
+        return value, err
+    }
+    value.ItemId, err = obj.Get("item_id").AsInt32()
+    if err != nil {
+        return value, err
+    }
+    value.Rarity, err = decodeRarityValue(obj.Get("rarity"))
+    if err != nil {
+        return value, err
+    }
+    value.Weight, err = obj.Get("weight").AsFloat32()
+    if err != nil {
+        return value, err
+    }
+    return value, nil
 }
 
 const gachaItemTableName = "GachaItem"
 
 var gachaItemTableInfo = SoraTableInfo{
-	Name:    gachaItemTableName,
-	RowType: "GachaItem",
-	Shape:   SoraTableShapeList,
-	Indexes: []SoraIndexInfo{},
+    Name: gachaItemTableName,
+    RowType: "GachaItem",
+    Shape: SoraTableShapeList,
+    Indexes: []SoraIndexInfo{
+    },
 }
 
 type GachaItemTable struct {
-	rows []GachaItem
+    rows []GachaItem
 }
 
 func buildGachaItemTable(rows []GachaItem) (*GachaItemTable, error) {
-	return &GachaItemTable{rows: rows}, nil
+    return &GachaItemTable{rows: rows}, nil
 }
 
 func decodeGachaItemTable(source SoraTableSource) (*GachaItemTable, error) {
-	rows, err := DecodeSourceTable(source, gachaItemTableName, decodeGachaItem, decodeGachaItemValue)
-	if err != nil {
-		return nil, err
-	}
-	return buildGachaItemTable(rows)
+    rows, err := DecodeSourceTable(source, gachaItemTableName, decodeGachaItem, decodeGachaItemValue)
+    if err != nil {
+        return nil, err
+    }
+    return buildGachaItemTable(rows)
 }
 
 func (table *GachaItemTable) Rows() []GachaItem {
-	return table.rows
+    return table.rows
 }
 func (table *GachaItemTable) Info() SoraTableInfo {
-	return gachaItemTableInfo
+    return gachaItemTableInfo
 }
 
 func (table *GachaItemTable) Len() int {
-	return len(table.rows)
+    return len(table.rows)
 }

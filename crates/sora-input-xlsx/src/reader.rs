@@ -144,12 +144,15 @@ fn load_xlsx_table_data_from_range(
     let field_columns = field_columns(table, ir, path, sheet, &range)?;
 
     for (row_index, row) in range.rows().enumerate().skip(DATA_START_ROW as usize) {
-        if row_is_empty(row, &field_columns) {
+        if row_is_empty(table, row, &field_columns) {
             continue;
         }
 
         let mut values = BTreeMap::new();
         for (column, field) in table.fields.iter().enumerate() {
+            if field.derived_from.is_some() {
+                continue;
+            }
             match &field_columns[column] {
                 FieldColumns::Single(field_column) => {
                     let cell = row.get(*field_column).unwrap_or(&Data::Empty);
@@ -435,13 +438,18 @@ fn tagged_columns_value(
     Ok(Some(Value::Object(values)))
 }
 
-fn row_is_empty(row: &[Data], field_columns: &[FieldColumns]) -> bool {
-    field_columns.iter().all(|columns| match columns {
-        FieldColumns::Single(column) => row.get(*column).is_none_or(cell_is_empty),
-        FieldColumns::Tagged(columns) => columns
-            .values()
-            .all(|column| row.get(*column).is_none_or(cell_is_empty)),
-    })
+fn row_is_empty(table: &TableIr, row: &[Data], field_columns: &[FieldColumns]) -> bool {
+    table
+        .fields
+        .iter()
+        .zip(field_columns)
+        .filter(|(field, _)| field.derived_from.is_none())
+        .all(|(_, columns)| match columns {
+            FieldColumns::Single(column) => row.get(*column).is_none_or(cell_is_empty),
+            FieldColumns::Tagged(columns) => columns
+                .values()
+                .all(|column| row.get(*column).is_none_or(cell_is_empty)),
+        })
 }
 
 #[cfg(test)]

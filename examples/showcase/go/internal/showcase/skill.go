@@ -3,154 +3,155 @@
 package showcase
 
 type Skill struct {
-	Id      int32
-	Name    string
-	Element ElementType
-	// Cost: Tuple cost, e.g. Gold,0,150
-	Cost ResourceCost
-	// Effect: JSON object with element/power/radius
-	Effect        SkillEffect
-	RequiredLevel int32
-	// RequiredItem: Optional item requirement
-	RequiredItem *int32
-	CastOrigin   Vec3
+    Id int32
+    Name string
+    Element ElementType
+    // Cost: Tuple cost, e.g. Gold,0,150
+    Cost ResourceCost
+    // Effect: JSON object with element/power/radius
+    Effect SkillEffect
+    RequiredLevel int32
+    // RequiredItem: Optional item requirement
+    RequiredItem *int32
+    CastOrigin Vec3
 }
 
 func decodeSkill(reader *SoraReader) (Skill, error) {
-	var value Skill
-	var err error
-	value.Id, err = reader.ReadInt32()
-	if err != nil {
-		return value, err
-	}
-	value.Name, err = reader.ReadString()
-	if err != nil {
-		return value, err
-	}
-	value.Element, err = decodeElementType(reader)
-	if err != nil {
-		return value, err
-	}
-	value.Cost, err = decodeResourceCost(reader)
-	if err != nil {
-		return value, err
-	}
-	value.Effect, err = decodeSkillEffect(reader)
-	if err != nil {
-		return value, err
-	}
-	value.RequiredLevel, err = reader.ReadInt32()
-	if err != nil {
-		return value, err
-	}
-	value.RequiredItem, err = ReadOptional(reader, func(reader *SoraReader) (int32, error) { return reader.ReadInt32() })
-	if err != nil {
-		return value, err
-	}
-	value.CastOrigin, err = decodeVec3(reader)
-	if err != nil {
-		return value, err
-	}
-	return value, nil
+    var value Skill
+    var err error
+    value.Id, err = reader.ReadInt32()
+    if err != nil {
+        return value, err
+    }
+    value.Name, err = reader.ReadString()
+    if err != nil {
+        return value, err
+    }
+    value.Element, err = decodeElementType(reader)
+    if err != nil {
+        return value, err
+    }
+    value.Cost, err = decodeResourceCost(reader)
+    if err != nil {
+        return value, err
+    }
+    value.Effect, err = decodeSkillEffect(reader)
+    if err != nil {
+        return value, err
+    }
+    value.RequiredLevel, err = reader.ReadInt32()
+    if err != nil {
+        return value, err
+    }
+    value.RequiredItem, err = ReadOptional(reader, func(reader *SoraReader) (int32, error) { return reader.ReadInt32() })
+    if err != nil {
+        return value, err
+    }
+    value.CastOrigin, err = decodeVec3(reader)
+    if err != nil {
+        return value, err
+    }
+    return value, nil
 }
 
 func decodeSkillValue(input SoraValue) (Skill, error) {
-	var value Skill
-	obj, err := input.AsObject()
-	if err != nil {
-		return value, err
-	}
-	value.Id, err = obj.Get("id").AsInt32()
-	if err != nil {
-		return value, err
-	}
-	value.Name, err = obj.Get("name").AsString()
-	if err != nil {
-		return value, err
-	}
-	value.Element, err = decodeElementTypeValue(obj.Get("element"))
-	if err != nil {
-		return value, err
-	}
-	value.Cost, err = decodeResourceCostValue(obj.Get("cost"))
-	if err != nil {
-		return value, err
-	}
-	value.Effect, err = decodeSkillEffectValue(obj.Get("effect"))
-	if err != nil {
-		return value, err
-	}
-	value.RequiredLevel, err = obj.Get("required_level").AsInt32()
-	if err != nil {
-		return value, err
-	}
-	value.RequiredItem, err = DecodeOptionalSoraValue(obj.Get("required_item"), func(item SoraValue) (int32, error) { return item.AsInt32() })
-	if err != nil {
-		return value, err
-	}
-	value.CastOrigin, err = decodeVec3Value(obj.Get("cast_origin"))
-	if err != nil {
-		return value, err
-	}
-	return value, nil
+    var value Skill
+    obj, err := input.AsObject()
+    if err != nil {
+        return value, err
+    }
+    value.Id, err = obj.Get("id").AsInt32()
+    if err != nil {
+        return value, err
+    }
+    value.Name, err = obj.Get("name").AsString()
+    if err != nil {
+        return value, err
+    }
+    value.Element, err = decodeElementTypeValue(obj.Get("element"))
+    if err != nil {
+        return value, err
+    }
+    value.Cost, err = decodeResourceCostValue(obj.Get("cost"))
+    if err != nil {
+        return value, err
+    }
+    value.Effect, err = decodeSkillEffectValue(obj.Get("effect"))
+    if err != nil {
+        return value, err
+    }
+    value.RequiredLevel, err = obj.Get("required_level").AsInt32()
+    if err != nil {
+        return value, err
+    }
+    value.RequiredItem, err = DecodeOptionalSoraValue(obj.Get("required_item"), func(item SoraValue) (int32, error) { return item.AsInt32() })
+    if err != nil {
+        return value, err
+    }
+    value.CastOrigin, err = decodeVec3Value(obj.Get("cast_origin"))
+    if err != nil {
+        return value, err
+    }
+    return value, nil
 }
 
 const skillTableName = "Skill"
 
 var skillTableInfo = SoraTableInfo{
-	Name:       skillTableName,
-	RowType:    "Skill",
-	Shape:      SoraTableShapeKeyed,
-	PrimaryKey: &SoraKeyInfo{Name: "id", Type: "int32"},
-	Indexes:    []SoraIndexInfo{},
+    Name: skillTableName,
+    RowType: "Skill",
+    Shape: SoraTableShapeKeyed,
+    PrimaryKey: &SoraKeyInfo{Name: "id", Type: "int32"},
+    Indexes: []SoraIndexInfo{
+    },
 }
 
 type SkillTable struct {
-	keys []int32
-	rows map[int32]Skill
+    keys []int32
+    rows map[int32]Skill
 }
 
 func buildSkillTable(rows []Skill) (*SkillTable, error) {
-	keys := make([]int32, 0, len(rows))
-	for _, row := range rows {
-		keys = append(keys, row.Id)
-	}
-	return &SkillTable{keys: keys, rows: DecodeMapTable(rows, func(row Skill) int32 { return row.Id })}, nil
+    keys := make([]int32, 0, len(rows))
+    for _, row := range rows {
+        keys = append(keys, row.Id)
+    }
+    return &SkillTable{keys: keys, rows: DecodeMapTable(rows, func(row Skill) int32 { return row.Id })}, nil
 }
 
 func decodeSkillTable(source SoraTableSource) (*SkillTable, error) {
-	rows, err := DecodeSourceTable(source, skillTableName, decodeSkill, decodeSkillValue)
-	if err != nil {
-		return nil, err
-	}
-	return buildSkillTable(rows)
+    rows, err := DecodeSourceTable(source, skillTableName, decodeSkill, decodeSkillValue)
+    if err != nil {
+        return nil, err
+    }
+    return buildSkillTable(rows)
 }
 
 func (table *SkillTable) Rows() map[int32]Skill {
-	return table.rows
+    return table.rows
 }
 func (table *SkillTable) Get(key int32) (Skill, bool) {
-	value, ok := table.rows[key]
-	return value, ok
+    value, ok := table.rows[key]
+    return value, ok
 }
 
 func (table *SkillTable) Keys() []int32 {
-	return table.keys
+    return table.keys
 }
 
 func (table *SkillTable) OrderedRows() []Skill {
-	rows := make([]Skill, 0, len(table.keys))
-	for _, key := range table.keys {
-		if row, ok := table.rows[key]; ok {
-			rows = append(rows, row)
-		}
-	}
-	return rows
+    rows := make([]Skill, 0, len(table.keys))
+    for _, key := range table.keys {
+        if row, ok := table.rows[key]; ok {
+            rows = append(rows, row)
+        }
+    }
+    return rows
 }
 func (table *SkillTable) Info() SoraTableInfo {
-	return skillTableInfo
+    return skillTableInfo
 }
 
 func (table *SkillTable) Len() int {
-	return len(table.rows)
+    return len(table.rows)
 }

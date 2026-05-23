@@ -1,0 +1,23 @@
+{
+  "table": {
+    "name": "MaintenanceWindow",
+    "rows": [
+      {
+        "values": {
+          "duration_minutes": {
+            "Integer": 90
+          },
+          "reason": {
+            "String": "Season rollout"
+          },
+          "starts_at": {
+            "String": "2026-06-01T03:00:00Z"
+          },
+          "version": {
+            "String": "2026.05"
+          }
+        }
+      }
+    ]
+  }
+}

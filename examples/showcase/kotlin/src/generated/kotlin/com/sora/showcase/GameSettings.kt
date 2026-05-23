@@ -8,6 +8,14 @@ data class GameSettings(
     val startingGold: Int,
     val spawnPos: Vec3,
     val starterItems: List<Int>,
+    /** Double precision tuning value */
+    val gravity: Double,
+    /** Fixed-length array parsed from one cell */
+    val dailyBonusItems: List<Int>,
+    /** Fixed-length array of structs */
+    val spawnPoints: List<Vec3>,
+    /** Optional derived struct copied from a child row */
+    val maintenance: MaintenanceInfo?,
 ) {
     companion object {
         fun decode(reader: SoraReader): GameSettings =
@@ -17,6 +25,10 @@ data class GameSettings(
                 startingGold = reader.readI32(),
                 spawnPos = Vec3.decode(reader),
                 starterItems = reader.readList { reader.readI32() },
+                gravity = reader.readF64(),
+                dailyBonusItems = reader.readList { reader.readI32() },
+                spawnPoints = reader.readList { Vec3.decode(reader) },
+                maintenance = reader.readOptional { MaintenanceInfo.decode(reader) },
             )
 
         fun decode(value: SoraValue): GameSettings {
@@ -27,6 +39,10 @@ data class GameSettings(
                 startingGold = obj.get("starting_gold").asInt(),
                 spawnPos = Vec3.decode(obj.get("spawn_pos")),
                 starterItems = obj.get("starter_items").asList { item -> item.asInt() },
+                gravity = obj.get("gravity").asDouble(),
+                dailyBonusItems = obj.get("daily_bonus_items").asList { item -> item.asInt() },
+                spawnPoints = obj.get("spawn_points").asList { item -> Vec3.decode(item) },
+                maintenance = if (obj.get("maintenance").isNull()) null else MaintenanceInfo.decode(obj.get("maintenance")),
             )
         }
     }

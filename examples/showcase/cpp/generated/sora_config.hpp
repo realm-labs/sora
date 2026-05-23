@@ -15,11 +15,15 @@
 #include "skill_effect.hpp"
 #include "reward.hpp"
 #include "stat_modifier.hpp"
+#include "reward_bundle.hpp"
+#include "complex_budget.hpp"
+#include "maintenance_info.hpp"
 #include "item.hpp"
 #include "skill.hpp"
 #include "quest.hpp"
 #include "quest_reward.hpp"
 #include "game_settings.hpp"
+#include "maintenance_window.hpp"
 #include "localization.hpp"
 #include "level_exp.hpp"
 #include "character.hpp"
@@ -43,6 +47,12 @@
 #include "mail_reward.hpp"
 #include "dialogue.hpp"
 #include "event_rule.hpp"
+#include "complex_rule.hpp"
+#include "complex_condition_group.hpp"
+#include "complex_condition_group_entry.hpp"
+#include "complex_rule_condition.hpp"
+#include "complex_action_group.hpp"
+#include "complex_action_entry.hpp"
 #include "event_condition.hpp"
 #include "reward_action.hpp"
 
@@ -56,7 +66,7 @@ namespace sora::showcase {
 
 class SoraConfig {
 public:
-    static const char* schema_fingerprint() { return "f8d1c90e3e197c78"; }
+    static const char* schema_fingerprint() { return "3df8793f70d7fc54"; }
 
     static SoraConfig from_bytes(const std::vector<std::uint8_t>& bytes) {
         return from_bytes(bytes, SoraBundleOptions());
@@ -87,6 +97,10 @@ public:
         config.tables_.emplace(
             GameSettingsTable::NAME,
             std::unique_ptr<SoraTable>(new GameSettingsTable(GameSettingsTable::decode(bundle)))
+        );
+        config.tables_.emplace(
+            MaintenanceWindowTable::NAME,
+            std::unique_ptr<SoraTable>(new MaintenanceWindowTable(MaintenanceWindowTable::decode(bundle)))
         );
         config.tables_.emplace(
             LocalizationTable::NAME,
@@ -180,6 +194,30 @@ public:
             EventRuleTable::NAME,
             std::unique_ptr<SoraTable>(new EventRuleTable(EventRuleTable::decode(bundle)))
         );
+        config.tables_.emplace(
+            ComplexRuleTable::NAME,
+            std::unique_ptr<SoraTable>(new ComplexRuleTable(ComplexRuleTable::decode(bundle)))
+        );
+        config.tables_.emplace(
+            ComplexConditionGroupTable::NAME,
+            std::unique_ptr<SoraTable>(new ComplexConditionGroupTable(ComplexConditionGroupTable::decode(bundle)))
+        );
+        config.tables_.emplace(
+            ComplexConditionGroupEntryTable::NAME,
+            std::unique_ptr<SoraTable>(new ComplexConditionGroupEntryTable(ComplexConditionGroupEntryTable::decode(bundle)))
+        );
+        config.tables_.emplace(
+            ComplexRuleConditionTable::NAME,
+            std::unique_ptr<SoraTable>(new ComplexRuleConditionTable(ComplexRuleConditionTable::decode(bundle)))
+        );
+        config.tables_.emplace(
+            ComplexActionGroupTable::NAME,
+            std::unique_ptr<SoraTable>(new ComplexActionGroupTable(ComplexActionGroupTable::decode(bundle)))
+        );
+        config.tables_.emplace(
+            ComplexActionEntryTable::NAME,
+            std::unique_ptr<SoraTable>(new ComplexActionEntryTable(ComplexActionEntryTable::decode(bundle)))
+        );
         return config;
     }
     const ItemTable& item() const {
@@ -196,6 +234,9 @@ public:
     }
     const GameSettingsTable& game_settings() const {
         return table_as<GameSettingsTable>(GameSettingsTable::NAME);
+    }
+    const MaintenanceWindowTable& maintenance_window() const {
+        return table_as<MaintenanceWindowTable>(MaintenanceWindowTable::NAME);
     }
     const LocalizationTable& localization() const {
         return table_as<LocalizationTable>(LocalizationTable::NAME);
@@ -265,6 +306,24 @@ public:
     }
     const EventRuleTable& event_rule() const {
         return table_as<EventRuleTable>(EventRuleTable::NAME);
+    }
+    const ComplexRuleTable& complex_rule() const {
+        return table_as<ComplexRuleTable>(ComplexRuleTable::NAME);
+    }
+    const ComplexConditionGroupTable& complex_condition_group() const {
+        return table_as<ComplexConditionGroupTable>(ComplexConditionGroupTable::NAME);
+    }
+    const ComplexConditionGroupEntryTable& complex_condition_group_entry() const {
+        return table_as<ComplexConditionGroupEntryTable>(ComplexConditionGroupEntryTable::NAME);
+    }
+    const ComplexRuleConditionTable& complex_rule_condition() const {
+        return table_as<ComplexRuleConditionTable>(ComplexRuleConditionTable::NAME);
+    }
+    const ComplexActionGroupTable& complex_action_group() const {
+        return table_as<ComplexActionGroupTable>(ComplexActionGroupTable::NAME);
+    }
+    const ComplexActionEntryTable& complex_action_entry() const {
+        return table_as<ComplexActionEntryTable>(ComplexActionEntryTable::NAME);
     }
 private:
     template <typename T>

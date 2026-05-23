@@ -2,6 +2,8 @@
 
 import type { SoraSingleTable, SoraTableInfo, SoraReader, SoraValue } from "./sora_runtime.js";
 
+import type { MaintenanceInfo } from "./maintenance_info.js";
+
 import type { Vec3 } from "./vec3.js";
 
 
@@ -11,6 +13,14 @@ export interface GameSettings {
     startingGold: number;
     spawnPos: Vec3;
     starterItems: number[];
+    /** Double precision tuning value */
+    gravity: number;
+    /** Fixed-length array parsed from one cell */
+    dailyBonusItems: number[];
+    /** Fixed-length array of structs */
+    spawnPoints: Vec3[];
+    /** Optional derived struct copied from a child row */
+    maintenance: MaintenanceInfo | undefined;
 }
 
 export declare function decodeGameSettings(reader: SoraReader): GameSettings;

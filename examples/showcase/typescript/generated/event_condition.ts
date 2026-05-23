@@ -15,10 +15,20 @@ export interface EventConditionHasItem {
     itemId: number;
     count: number;
 }
+export interface EventConditionAllConditions {
+    type: "AllConditions";
+    conditionGroupId: number;
+}
+export interface EventConditionAnyCondition {
+    type: "AnyCondition";
+    conditionGroupId: number;
+}
 export type EventCondition =
     | EventConditionLevelAtLeast
     | EventConditionQuestCompleted
-    | EventConditionHasItem;
+    | EventConditionHasItem
+    | EventConditionAllConditions
+    | EventConditionAnyCondition;
 
 export function decodeEventCondition(reader: SoraReader): EventCondition {
     const ordinal = reader.readU32();
@@ -39,6 +49,18 @@ export function decodeEventCondition(reader: SoraReader): EventCondition {
             type: "HasItem",
             itemId: reader.readI32(),
             count: reader.readI32(),
+        };
+    }
+    if (ordinal === 3) {
+        return {
+            type: "AllConditions",
+            conditionGroupId: reader.readI32(),
+        };
+    }
+    if (ordinal === 4) {
+        return {
+            type: "AnyCondition",
+            conditionGroupId: reader.readI32(),
         };
     }
     throw new Error(`invalid union ordinal ${ordinal} for EventCondition`);
@@ -64,6 +86,18 @@ export function decodeEventConditionValue(value: SoraValue): EventCondition {
             type: "HasItem",
             itemId: object.get("item_id").asInt(),
             count: object.get("count").asInt(),
+        };
+    }
+    if (tag === "AllConditions") {
+        return {
+            type: "AllConditions",
+            conditionGroupId: object.get("condition_group_id").asInt(),
+        };
+    }
+    if (tag === "AnyCondition") {
+        return {
+            type: "AnyCondition",
+            conditionGroupId: object.get("condition_group_id").asInt(),
         };
     }
     throw new Error(`invalid union tag ${tag} for EventCondition`);

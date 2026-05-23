@@ -11,6 +11,8 @@ import { QuestRewardTable, decodeQuestReward, decodeQuestRewardValue } from "./q
 
 import { GameSettingsTable, decodeGameSettings, decodeGameSettingsValue } from "./game_settings.js";
 
+import { MaintenanceWindowTable, decodeMaintenanceWindow, decodeMaintenanceWindowValue } from "./maintenance_window.js";
+
 import { LocalizationTable, decodeLocalization, decodeLocalizationValue } from "./localization.js";
 
 import { LevelExpTable, decodeLevelExp, decodeLevelExpValue } from "./level_exp.js";
@@ -57,8 +59,20 @@ import { DialogueTable, decodeDialogue, decodeDialogueValue } from "./dialogue.j
 
 import { EventRuleTable, decodeEventRule, decodeEventRuleValue } from "./event_rule.js";
 
+import { ComplexRuleTable, decodeComplexRule, decodeComplexRuleValue } from "./complex_rule.js";
 
-export const SORA_SCHEMA_FINGERPRINT = "f8d1c90e3e197c78";
+import { ComplexConditionGroupTable, decodeComplexConditionGroup, decodeComplexConditionGroupValue } from "./complex_condition_group.js";
+
+import { ComplexConditionGroupEntryTable, decodeComplexConditionGroupEntry, decodeComplexConditionGroupEntryValue } from "./complex_condition_group_entry.js";
+
+import { ComplexRuleConditionTable, decodeComplexRuleCondition, decodeComplexRuleConditionValue } from "./complex_rule_condition.js";
+
+import { ComplexActionGroupTable, decodeComplexActionGroup, decodeComplexActionGroupValue } from "./complex_action_group.js";
+
+import { ComplexActionEntryTable, decodeComplexActionEntry, decodeComplexActionEntryValue } from "./complex_action_entry.js";
+
+
+export const SORA_SCHEMA_FINGERPRINT = "3df8793f70d7fc54";
 
 export class SoraConfig {
     constructor(
@@ -67,6 +81,7 @@ export class SoraConfig {
         quest,
         questReward,
         gameSettings,
+        maintenanceWindow,
         localization,
         levelExp,
         character,
@@ -90,12 +105,19 @@ export class SoraConfig {
         mailReward,
         dialogue,
         eventRule,
+        complexRule,
+        complexConditionGroup,
+        complexConditionGroupEntry,
+        complexRuleCondition,
+        complexActionGroup,
+        complexActionEntry,
     ) {
         this._item = item;
         this._skill = skill;
         this._quest = quest;
         this._questReward = questReward;
         this._gameSettings = gameSettings;
+        this._maintenanceWindow = maintenanceWindow;
         this._localization = localization;
         this._levelExp = levelExp;
         this._character = character;
@@ -119,6 +141,12 @@ export class SoraConfig {
         this._mailReward = mailReward;
         this._dialogue = dialogue;
         this._eventRule = eventRule;
+        this._complexRule = complexRule;
+        this._complexConditionGroup = complexConditionGroup;
+        this._complexConditionGroupEntry = complexConditionGroupEntry;
+        this._complexRuleCondition = complexRuleCondition;
+        this._complexActionGroup = complexActionGroup;
+        this._complexActionEntry = complexActionEntry;
     }
 
     static fromSource(source) {
@@ -133,6 +161,7 @@ export class SoraConfig {
             QuestTable.decode(source.decodeTable(QuestTable.tableName, decodeQuest, decodeQuestValue)),
             QuestRewardTable.decode(source.decodeTable(QuestRewardTable.tableName, decodeQuestReward, decodeQuestRewardValue)),
             GameSettingsTable.decode(source.decodeTable(GameSettingsTable.tableName, decodeGameSettings, decodeGameSettingsValue)),
+            MaintenanceWindowTable.decode(source.decodeTable(MaintenanceWindowTable.tableName, decodeMaintenanceWindow, decodeMaintenanceWindowValue)),
             LocalizationTable.decode(source.decodeTable(LocalizationTable.tableName, decodeLocalization, decodeLocalizationValue)),
             LevelExpTable.decode(source.decodeTable(LevelExpTable.tableName, decodeLevelExp, decodeLevelExpValue)),
             CharacterTable.decode(source.decodeTable(CharacterTable.tableName, decodeCharacter, decodeCharacterValue)),
@@ -156,6 +185,12 @@ export class SoraConfig {
             MailRewardTable.decode(source.decodeTable(MailRewardTable.tableName, decodeMailReward, decodeMailRewardValue)),
             DialogueTable.decode(source.decodeTable(DialogueTable.tableName, decodeDialogue, decodeDialogueValue)),
             EventRuleTable.decode(source.decodeTable(EventRuleTable.tableName, decodeEventRule, decodeEventRuleValue)),
+            ComplexRuleTable.decode(source.decodeTable(ComplexRuleTable.tableName, decodeComplexRule, decodeComplexRuleValue)),
+            ComplexConditionGroupTable.decode(source.decodeTable(ComplexConditionGroupTable.tableName, decodeComplexConditionGroup, decodeComplexConditionGroupValue)),
+            ComplexConditionGroupEntryTable.decode(source.decodeTable(ComplexConditionGroupEntryTable.tableName, decodeComplexConditionGroupEntry, decodeComplexConditionGroupEntryValue)),
+            ComplexRuleConditionTable.decode(source.decodeTable(ComplexRuleConditionTable.tableName, decodeComplexRuleCondition, decodeComplexRuleConditionValue)),
+            ComplexActionGroupTable.decode(source.decodeTable(ComplexActionGroupTable.tableName, decodeComplexActionGroup, decodeComplexActionGroupValue)),
+            ComplexActionEntryTable.decode(source.decodeTable(ComplexActionEntryTable.tableName, decodeComplexActionEntry, decodeComplexActionEntryValue)),
         );
     }
 
@@ -166,6 +201,7 @@ export class SoraConfig {
             this._quest,
             this._questReward,
             this._gameSettings,
+            this._maintenanceWindow,
             this._localization,
             this._levelExp,
             this._character,
@@ -189,6 +225,12 @@ export class SoraConfig {
             this._mailReward,
             this._dialogue,
             this._eventRule,
+            this._complexRule,
+            this._complexConditionGroup,
+            this._complexConditionGroupEntry,
+            this._complexRuleCondition,
+            this._complexActionGroup,
+            this._complexActionEntry,
         ];
     }
     item() {
@@ -205,6 +247,9 @@ export class SoraConfig {
     }
     gameSettings() {
         return this._gameSettings;
+    }
+    maintenanceWindow() {
+        return this._maintenanceWindow;
     }
     localization() {
         return this._localization;
@@ -274,5 +319,23 @@ export class SoraConfig {
     }
     eventRule() {
         return this._eventRule;
+    }
+    complexRule() {
+        return this._complexRule;
+    }
+    complexConditionGroup() {
+        return this._complexConditionGroup;
+    }
+    complexConditionGroupEntry() {
+        return this._complexConditionGroupEntry;
+    }
+    complexRuleCondition() {
+        return this._complexRuleCondition;
+    }
+    complexActionGroup() {
+        return this._complexActionGroup;
+    }
+    complexActionEntry() {
+        return this._complexActionEntry;
     }
 }

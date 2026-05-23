@@ -1,0 +1,321 @@
+{
+  "table": {
+    "name": "ComplexRule",
+    "rows": [
+      {
+        "values": {
+          "actions": {
+            "List": [
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 2
+                  },
+                  "item_id": {
+                    "Integer": 1001
+                  },
+                  "type": {
+                    "String": "AddItem"
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "buff_id": {
+                    "Integer": 6001
+                  },
+                  "duration": {
+                    "Float": 30.0
+                  },
+                  "type": {
+                    "String": "AddBuff"
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "action_group_id": {
+                    "Integer": 18103
+                  },
+                  "type": {
+                    "String": "RunActionGroup"
+                  }
+                }
+              }
+            ]
+          },
+          "budget": {
+            "Object": {
+              "fixed": {
+                "Object": {
+                  "count": {
+                    "Integer": 1000
+                  },
+                  "id": {
+                    "Integer": 0
+                  },
+                  "kind": {
+                    "String": "Gold"
+                  }
+                }
+              },
+              "limits": {
+                "List": [
+                  {
+                    "List": [
+                      {
+                        "String": "quest"
+                      },
+                      {
+                        "Integer": 1
+                      }
+                    ]
+                  },
+                  {
+                    "List": [
+                      {
+                        "String": "daily"
+                      },
+                      {
+                        "Integer": 3
+                      }
+                    ]
+                  }
+                ]
+              },
+              "random": {
+                "List": [
+                  {
+                    "Object": {
+                      "cost": {
+                        "Object": {
+                          "count": {
+                            "Integer": 1
+                          },
+                          "id": {
+                            "Integer": 1001
+                          },
+                          "kind": {
+                            "String": "Item"
+                          }
+                        }
+                      },
+                      "labels": {
+                        "List": [
+                          {
+                            "String": "starter"
+                          },
+                          {
+                            "String": "weapon"
+                          }
+                        ]
+                      },
+                      "weight": {
+                        "Integer": 100
+                      }
+                    }
+                  },
+                  {
+                    "Object": {
+                      "cost": {
+                        "Object": {
+                          "count": {
+                            "Integer": 5
+                          },
+                          "id": {
+                            "Integer": 0
+                          },
+                          "kind": {
+                            "String": "Diamond"
+                          }
+                        }
+                      },
+                      "labels": {
+                        "List": [
+                          {
+                            "String": "premium"
+                          }
+                        ]
+                      },
+                      "weight": {
+                        "Integer": 25
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          },
+          "id": {
+            "Integer": 18001
+          },
+          "name": {
+            "String": "Nested launch rewards"
+          },
+          "root_action_group": {
+            "Integer": 18101
+          },
+          "root_condition": {
+            "Object": {
+              "condition_group_id": {
+                "Integer": 19001
+              },
+              "type": {
+                "String": "AllConditions"
+              }
+            }
+          }
+        }
+      },
+      {
+        "values": {
+          "actions": {
+            "List": [
+              {
+                "Object": {
+                  "stage_id": {
+                    "Integer": 9002
+                  },
+                  "type": {
+                    "String": "UnlockStage"
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "mail_id": {
+                    "Integer": 15001
+                  },
+                  "type": {
+                    "String": "SendMail"
+                  }
+                }
+              }
+            ]
+          },
+          "budget": {
+            "Object": {
+              "fixed": {
+                "Object": {
+                  "count": {
+                    "Integer": 2
+                  },
+                  "id": {
+                    "Integer": 1002
+                  },
+                  "kind": {
+                    "String": "Item"
+                  }
+                }
+              },
+              "limits": {
+                "List": [
+                  {
+                    "List": [
+                      {
+                        "String": "weekly"
+                      },
+                      {
+                        "Integer": 2
+                      }
+                    ]
+                  },
+                  {
+                    "List": [
+                      {
+                        "String": "vip"
+                      },
+                      {
+                        "Integer": 1
+                      }
+                    ]
+                  }
+                ]
+              },
+              "random": {
+                "List": [
+                  {
+                    "Object": {
+                      "cost": {
+                        "Object": {
+                          "count": {
+                            "Integer": 500
+                          },
+                          "id": {
+                            "Integer": 0
+                          },
+                          "kind": {
+                            "String": "Gold"
+                          }
+                        }
+                      },
+                      "labels": {
+                        "List": [
+                          {
+                            "String": "currency"
+                          }
+                        ]
+                      },
+                      "weight": {
+                        "Integer": 60
+                      }
+                    }
+                  },
+                  {
+                    "Object": {
+                      "cost": {
+                        "Object": {
+                          "count": {
+                            "Integer": 3
+                          },
+                          "id": {
+                            "Integer": 2001
+                          },
+                          "kind": {
+                            "String": "Item"
+                          }
+                        }
+                      },
+                      "labels": {
+                        "List": [
+                          {
+                            "String": "potion"
+                          },
+                          {
+                            "String": "fallback"
+                          }
+                        ]
+                      },
+                      "weight": {
+                        "Integer": 40
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          },
+          "id": {
+            "Integer": 18002
+          },
+          "name": {
+            "String": "Quest chain unlock"
+          },
+          "root_action_group": {
+            "Integer": 18102
+          },
+          "root_condition": {
+            "Object": {
+              "condition_group_id": {
+                "Integer": 19002
+              },
+              "type": {
+                "String": "AnyCondition"
+              }
+            }
+          }
+        }
+      }
+    ]
+  }
+}

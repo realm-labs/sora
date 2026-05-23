@@ -1,0 +1,47 @@
+{
+  "table": {
+    "name": "ComplexRuleCondition",
+    "rows": [
+      {
+        "values": {
+          "id": {
+            "Integer": 19201
+          },
+          "rule_id": {
+            "Integer": 18001
+          },
+          "value": {
+            "Object": {
+              "condition_group_id": {
+                "Integer": 19001
+              },
+              "type": {
+                "String": "AllConditions"
+              }
+            }
+          }
+        }
+      },
+      {
+        "values": {
+          "id": {
+            "Integer": 19202
+          },
+          "rule_id": {
+            "Integer": 18002
+          },
+          "value": {
+            "Object": {
+              "condition_group_id": {
+                "Integer": 19002
+              },
+              "type": {
+                "String": "AnyCondition"
+              }
+            }
+          }
+        }
+      }
+    ]
+  }
+}

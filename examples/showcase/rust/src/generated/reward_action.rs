@@ -23,6 +23,10 @@ pub enum RewardAction {
         #[serde(rename = "mail_id")]
         mail_id: i32,
     },
+    RunActionGroup {
+        #[serde(rename = "action_group_id")]
+        action_group_id: i32,
+    },
 }
 
 impl super::runtime::SoraDecode for RewardAction {
@@ -43,6 +47,9 @@ impl super::runtime::SoraDecode for RewardAction {
             }),
             3 => Ok(Self::SendMail {
                 mail_id: <i32 as super::runtime::SoraDecode>::decode(reader)?,
+            }),
+            4 => Ok(Self::RunActionGroup {
+                action_group_id: <i32 as super::runtime::SoraDecode>::decode(reader)?,
             }),
             value => Err(super::runtime::SoraReadError::new(format!(
                 "invalid union ordinal {} for RewardAction",

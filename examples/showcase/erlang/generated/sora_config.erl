@@ -12,6 +12,7 @@
     , quest/1
     , quest_reward/1
     , game_settings/1
+    , maintenance_window/1
     , localization/1
     , level_exp/1
     , character/1
@@ -35,13 +36,19 @@
     , mail_reward/1
     , dialogue/1
     , event_rule/1
+    , complex_rule/1
+    , complex_condition_group/1
+    , complex_condition_group_entry/1
+    , complex_rule_condition/1
+    , complex_action_group/1
+    , complex_action_entry/1
 ]).
 
 -export_type([t/0]).
 
 -type t() :: map().
 
--define(SORA_SCHEMA_FINGERPRINT, <<"f8d1c90e3e197c78">>).
+-define(SORA_SCHEMA_FINGERPRINT, <<"3df8793f70d7fc54">>).
 
 -spec from_binary(binary()) -> t().
 from_binary(Bytes) ->
@@ -63,6 +70,7 @@ from_bundle(Bundle) ->
     Quest = quest:decode_table(Bundle),
     QuestReward = quest_reward:decode_table(Bundle),
     GameSettings = game_settings:decode_table(Bundle),
+    MaintenanceWindow = maintenance_window:decode_table(Bundle),
     Localization = localization:decode_table(Bundle),
     LevelExp = level_exp:decode_table(Bundle),
     Character = character:decode_table(Bundle),
@@ -86,12 +94,19 @@ from_bundle(Bundle) ->
     MailReward = mail_reward:decode_table(Bundle),
     Dialogue = dialogue:decode_table(Bundle),
     EventRule = event_rule:decode_table(Bundle),
+    ComplexRule = complex_rule:decode_table(Bundle),
+    ComplexConditionGroup = complex_condition_group:decode_table(Bundle),
+    ComplexConditionGroupEntry = complex_condition_group_entry:decode_table(Bundle),
+    ComplexRuleCondition = complex_rule_condition:decode_table(Bundle),
+    ComplexActionGroup = complex_action_group:decode_table(Bundle),
+    ComplexActionEntry = complex_action_entry:decode_table(Bundle),
     #{
         'item' => Item,
         'skill' => Skill,
         'quest' => Quest,
         'quest_reward' => QuestReward,
         'game_settings' => GameSettings,
+        'maintenance_window' => MaintenanceWindow,
         'localization' => Localization,
         'level_exp' => LevelExp,
         'character' => Character,
@@ -114,7 +129,13 @@ from_bundle(Bundle) ->
         'mail_template' => MailTemplate,
         'mail_reward' => MailReward,
         'dialogue' => Dialogue,
-        'event_rule' => EventRule
+        'event_rule' => EventRule,
+        'complex_rule' => ComplexRule,
+        'complex_condition_group' => ComplexConditionGroup,
+        'complex_condition_group_entry' => ComplexConditionGroupEntry,
+        'complex_rule_condition' => ComplexRuleCondition,
+        'complex_action_group' => ComplexActionGroup,
+        'complex_action_entry' => ComplexActionEntry
     }.
 
 -spec tables(t()) -> [term()].
@@ -125,6 +146,7 @@ tables(Config) ->
         quest(Config),
         quest_reward(Config),
         game_settings(Config),
+        maintenance_window(Config),
         localization(Config),
         level_exp(Config),
         character(Config),
@@ -147,7 +169,13 @@ tables(Config) ->
         mail_template(Config),
         mail_reward(Config),
         dialogue(Config),
-        event_rule(Config)
+        event_rule(Config),
+        complex_rule(Config),
+        complex_condition_group(Config),
+        complex_condition_group_entry(Config),
+        complex_rule_condition(Config),
+        complex_action_group(Config),
+        complex_action_entry(Config)
     ].
 -spec item(t()) -> item:table().
 item(Config) ->
@@ -164,6 +192,9 @@ quest_reward(Config) ->
 -spec game_settings(t()) -> game_settings:table().
 game_settings(Config) ->
     maps:get('game_settings', Config).
+-spec maintenance_window(t()) -> maintenance_window:table().
+maintenance_window(Config) ->
+    maps:get('maintenance_window', Config).
 -spec localization(t()) -> localization:table().
 localization(Config) ->
     maps:get('localization', Config).
@@ -233,3 +264,21 @@ dialogue(Config) ->
 -spec event_rule(t()) -> event_rule:table().
 event_rule(Config) ->
     maps:get('event_rule', Config).
+-spec complex_rule(t()) -> complex_rule:table().
+complex_rule(Config) ->
+    maps:get('complex_rule', Config).
+-spec complex_condition_group(t()) -> complex_condition_group:table().
+complex_condition_group(Config) ->
+    maps:get('complex_condition_group', Config).
+-spec complex_condition_group_entry(t()) -> complex_condition_group_entry:table().
+complex_condition_group_entry(Config) ->
+    maps:get('complex_condition_group_entry', Config).
+-spec complex_rule_condition(t()) -> complex_rule_condition:table().
+complex_rule_condition(Config) ->
+    maps:get('complex_rule_condition', Config).
+-spec complex_action_group(t()) -> complex_action_group:table().
+complex_action_group(Config) ->
+    maps:get('complex_action_group', Config).
+-spec complex_action_entry(t()) -> complex_action_entry:table().
+complex_action_entry(Config) ->
+    maps:get('complex_action_entry', Config).

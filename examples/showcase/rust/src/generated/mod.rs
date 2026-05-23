@@ -6,6 +6,13 @@ pub mod achievement;
 pub mod buff;
 pub mod character;
 pub mod character_skill;
+pub mod complex_action_entry;
+pub mod complex_action_group;
+pub mod complex_budget;
+pub mod complex_condition_group;
+pub mod complex_condition_group_entry;
+pub mod complex_rule;
+pub mod complex_rule_condition;
 pub mod dialogue;
 pub mod drop_entry;
 pub mod drop_group;
@@ -24,6 +31,8 @@ pub mod localization;
 pub mod mail_reward;
 pub mod mail_template;
 pub mod mail_type;
+pub mod maintenance_info;
+pub mod maintenance_window;
 pub mod monster;
 pub mod quest;
 pub mod quest_reward;
@@ -34,6 +43,7 @@ pub mod resource_cost;
 pub mod resource_kind;
 pub mod reward;
 pub mod reward_action;
+pub mod reward_bundle;
 pub mod runtime;
 pub mod shop;
 pub mod shop_item;
@@ -47,7 +57,7 @@ pub mod vec3;
 pub mod vip_level;
 pub type SoraMap<K, V> = rustc_hash::FxHashMap<K, V>;
 
-pub const SCHEMA_FINGERPRINT: &str = "f8d1c90e3e197c78";
+pub const SCHEMA_FINGERPRINT: &str = "3df8793f70d7fc54";
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum SoraTableShape {
@@ -133,7 +143,7 @@ impl SoraConfig {
             )));
         }
         let mut tables: SoraMap<&'static str, Box<dyn ErasedSoraTable>> =
-            sora_map_with_capacity(28);
+            sora_map_with_capacity(35);
         tables.insert(
             item::ItemTable::NAME,
             Box::new(item::ItemTable::from_rows(
@@ -165,6 +175,14 @@ impl SoraConfig {
             Box::new(game_settings::GameSettingsTable::from_rows(
                 source.decode_table::<game_settings::GameSettings>(
                     game_settings::GameSettingsTable::NAME,
+                )?,
+            )?),
+        );
+        tables.insert(
+            maintenance_window::MaintenanceWindowTable::NAME,
+            Box::new(maintenance_window::MaintenanceWindowTable::from_rows(
+                source.decode_table::<maintenance_window::MaintenanceWindow>(
+                    maintenance_window::MaintenanceWindowTable::NAME,
                 )?,
             )?),
         );
@@ -319,6 +337,61 @@ impl SoraConfig {
                 source.decode_table::<event_rule::EventRule>(event_rule::EventRuleTable::NAME)?,
             )?),
         );
+        tables.insert(
+            complex_rule::ComplexRuleTable::NAME,
+            Box::new(complex_rule::ComplexRuleTable::from_rows(
+                source.decode_table::<complex_rule::ComplexRule>(
+                    complex_rule::ComplexRuleTable::NAME,
+                )?,
+            )?),
+        );
+        tables.insert(
+            complex_condition_group::ComplexConditionGroupTable::NAME,
+            Box::new(
+                complex_condition_group::ComplexConditionGroupTable::from_rows(
+                    source.decode_table::<complex_condition_group::ComplexConditionGroup>(
+                        complex_condition_group::ComplexConditionGroupTable::NAME,
+                    )?,
+                )?,
+            ),
+        );
+        tables.insert(
+            complex_condition_group_entry::ComplexConditionGroupEntryTable::NAME,
+            Box::new(
+                complex_condition_group_entry::ComplexConditionGroupEntryTable::from_rows(
+                    source
+                        .decode_table::<complex_condition_group_entry::ComplexConditionGroupEntry>(
+                            complex_condition_group_entry::ComplexConditionGroupEntryTable::NAME,
+                        )?,
+                )?,
+            ),
+        );
+        tables.insert(
+            complex_rule_condition::ComplexRuleConditionTable::NAME,
+            Box::new(
+                complex_rule_condition::ComplexRuleConditionTable::from_rows(
+                    source.decode_table::<complex_rule_condition::ComplexRuleCondition>(
+                        complex_rule_condition::ComplexRuleConditionTable::NAME,
+                    )?,
+                )?,
+            ),
+        );
+        tables.insert(
+            complex_action_group::ComplexActionGroupTable::NAME,
+            Box::new(complex_action_group::ComplexActionGroupTable::from_rows(
+                source.decode_table::<complex_action_group::ComplexActionGroup>(
+                    complex_action_group::ComplexActionGroupTable::NAME,
+                )?,
+            )?),
+        );
+        tables.insert(
+            complex_action_entry::ComplexActionEntryTable::NAME,
+            Box::new(complex_action_entry::ComplexActionEntryTable::from_rows(
+                source.decode_table::<complex_action_entry::ComplexActionEntry>(
+                    complex_action_entry::ComplexActionEntryTable::NAME,
+                )?,
+            )?),
+        );
         Ok(Self { tables })
     }
 
@@ -359,6 +432,10 @@ impl SoraConfig {
 
     pub fn game_settings(&self) -> &game_settings::GameSettingsTable {
         self.table(game_settings::GameSettingsTable::NAME)
+    }
+
+    pub fn maintenance_window(&self) -> &maintenance_window::MaintenanceWindowTable {
+        self.table(maintenance_window::MaintenanceWindowTable::NAME)
     }
 
     pub fn localization(&self) -> &localization::LocalizationTable {
@@ -451,6 +528,32 @@ impl SoraConfig {
 
     pub fn event_rule(&self) -> &event_rule::EventRuleTable {
         self.table(event_rule::EventRuleTable::NAME)
+    }
+
+    pub fn complex_rule(&self) -> &complex_rule::ComplexRuleTable {
+        self.table(complex_rule::ComplexRuleTable::NAME)
+    }
+
+    pub fn complex_condition_group(&self) -> &complex_condition_group::ComplexConditionGroupTable {
+        self.table(complex_condition_group::ComplexConditionGroupTable::NAME)
+    }
+
+    pub fn complex_condition_group_entry(
+        &self,
+    ) -> &complex_condition_group_entry::ComplexConditionGroupEntryTable {
+        self.table(complex_condition_group_entry::ComplexConditionGroupEntryTable::NAME)
+    }
+
+    pub fn complex_rule_condition(&self) -> &complex_rule_condition::ComplexRuleConditionTable {
+        self.table(complex_rule_condition::ComplexRuleConditionTable::NAME)
+    }
+
+    pub fn complex_action_group(&self) -> &complex_action_group::ComplexActionGroupTable {
+        self.table(complex_action_group::ComplexActionGroupTable::NAME)
+    }
+
+    pub fn complex_action_entry(&self) -> &complex_action_entry::ComplexActionEntryTable {
+        self.table(complex_action_entry::ComplexActionEntryTable::NAME)
     }
 }
 

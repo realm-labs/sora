@@ -56,7 +56,7 @@ public interface ISoraSingleTable<out TRow> : ISoraTable<TRow>
 
 public sealed class SoraConfig
 {
-    public const string SchemaFingerprint = "f8d1c90e3e197c78";
+    public const string SchemaFingerprint = "3df8793f70d7fc54";
 
     private readonly Dictionary<string, ISoraTable> tables;
 
@@ -73,12 +73,13 @@ public sealed class SoraConfig
                 $"schema fingerprint mismatch: generated code expects {SchemaFingerprint}, bundle contains {source.SchemaFingerprint}"
             );
         }
-        var tables = new Dictionary<string, ISoraTable>(28);
+        var tables = new Dictionary<string, ISoraTable>(35);
         tables[ItemTable.TableName] = ItemTable.Decode(source);
         tables[SkillTable.TableName] = SkillTable.Decode(source);
         tables[QuestTable.TableName] = QuestTable.Decode(source);
         tables[QuestRewardTable.TableName] = QuestRewardTable.Decode(source);
         tables[GameSettingsTable.TableName] = GameSettingsTable.Decode(source);
+        tables[MaintenanceWindowTable.TableName] = MaintenanceWindowTable.Decode(source);
         tables[LocalizationTable.TableName] = LocalizationTable.Decode(source);
         tables[LevelExpTable.TableName] = LevelExpTable.Decode(source);
         tables[CharacterTable.TableName] = CharacterTable.Decode(source);
@@ -102,6 +103,12 @@ public sealed class SoraConfig
         tables[MailRewardTable.TableName] = MailRewardTable.Decode(source);
         tables[DialogueTable.TableName] = DialogueTable.Decode(source);
         tables[EventRuleTable.TableName] = EventRuleTable.Decode(source);
+        tables[ComplexRuleTable.TableName] = ComplexRuleTable.Decode(source);
+        tables[ComplexConditionGroupTable.TableName] = ComplexConditionGroupTable.Decode(source);
+        tables[ComplexConditionGroupEntryTable.TableName] = ComplexConditionGroupEntryTable.Decode(source);
+        tables[ComplexRuleConditionTable.TableName] = ComplexRuleConditionTable.Decode(source);
+        tables[ComplexActionGroupTable.TableName] = ComplexActionGroupTable.Decode(source);
+        tables[ComplexActionEntryTable.TableName] = ComplexActionEntryTable.Decode(source);
         return new SoraConfig(tables);
     }
 
@@ -120,6 +127,7 @@ public sealed class SoraConfig
     public QuestTable Quest => Table<QuestTable>(QuestTable.TableName);
     public QuestRewardTable QuestReward => Table<QuestRewardTable>(QuestRewardTable.TableName);
     public GameSettingsTable GameSettings => Table<GameSettingsTable>(GameSettingsTable.TableName);
+    public MaintenanceWindowTable MaintenanceWindow => Table<MaintenanceWindowTable>(MaintenanceWindowTable.TableName);
     public LocalizationTable Localization => Table<LocalizationTable>(LocalizationTable.TableName);
     public LevelExpTable LevelExp => Table<LevelExpTable>(LevelExpTable.TableName);
     public CharacterTable Character => Table<CharacterTable>(CharacterTable.TableName);
@@ -143,6 +151,12 @@ public sealed class SoraConfig
     public MailRewardTable MailReward => Table<MailRewardTable>(MailRewardTable.TableName);
     public DialogueTable Dialogue => Table<DialogueTable>(DialogueTable.TableName);
     public EventRuleTable EventRule => Table<EventRuleTable>(EventRuleTable.TableName);
+    public ComplexRuleTable ComplexRule => Table<ComplexRuleTable>(ComplexRuleTable.TableName);
+    public ComplexConditionGroupTable ComplexConditionGroup => Table<ComplexConditionGroupTable>(ComplexConditionGroupTable.TableName);
+    public ComplexConditionGroupEntryTable ComplexConditionGroupEntry => Table<ComplexConditionGroupEntryTable>(ComplexConditionGroupEntryTable.TableName);
+    public ComplexRuleConditionTable ComplexRuleCondition => Table<ComplexRuleConditionTable>(ComplexRuleConditionTable.TableName);
+    public ComplexActionGroupTable ComplexActionGroup => Table<ComplexActionGroupTable>(ComplexActionGroupTable.TableName);
+    public ComplexActionEntryTable ComplexActionEntry => Table<ComplexActionEntryTable>(ComplexActionEntryTable.TableName);
     internal static Dictionary<TKey, TValue> DecodeMapTable<TKey, TValue>(List<TValue> rows, Func<TValue, TKey> key)
         where TKey : notnull
     {

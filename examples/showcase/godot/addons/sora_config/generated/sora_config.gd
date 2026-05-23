@@ -3,7 +3,7 @@
 class_name SoraConfig
 extends RefCounted
 
-const SORA_SCHEMA_FINGERPRINT := "ceb957dd8fc38a7a"
+const SORA_SCHEMA_FINGERPRINT := "21344513cce60506"
 
 var _tables: Dictionary = {}
 
@@ -38,6 +38,9 @@ static func from_json_root(root: Dictionary) -> SoraConfig:
 	)
 	config._tables[GameSettings.GameSettingsTable.TABLE_NAME] = GameSettings.GameSettingsTable.decode(
 		SoraRuntime.decode_table(bundle, GameSettings.GameSettingsTable.TABLE_NAME, GameSettings.decode)
+	)
+	config._tables[MaintenanceWindow.MaintenanceWindowTable.TABLE_NAME] = MaintenanceWindow.MaintenanceWindowTable.decode(
+		SoraRuntime.decode_table(bundle, MaintenanceWindow.MaintenanceWindowTable.TABLE_NAME, MaintenanceWindow.decode)
 	)
 	config._tables[Localization.LocalizationTable.TABLE_NAME] = Localization.LocalizationTable.decode(
 		SoraRuntime.decode_table(bundle, Localization.LocalizationTable.TABLE_NAME, Localization.decode)
@@ -108,6 +111,24 @@ static func from_json_root(root: Dictionary) -> SoraConfig:
 	config._tables[EventRule.EventRuleTable.TABLE_NAME] = EventRule.EventRuleTable.decode(
 		SoraRuntime.decode_table(bundle, EventRule.EventRuleTable.TABLE_NAME, EventRule.decode)
 	)
+	config._tables[ComplexRule.ComplexRuleTable.TABLE_NAME] = ComplexRule.ComplexRuleTable.decode(
+		SoraRuntime.decode_table(bundle, ComplexRule.ComplexRuleTable.TABLE_NAME, ComplexRule.decode)
+	)
+	config._tables[ComplexConditionGroup.ComplexConditionGroupTable.TABLE_NAME] = ComplexConditionGroup.ComplexConditionGroupTable.decode(
+		SoraRuntime.decode_table(bundle, ComplexConditionGroup.ComplexConditionGroupTable.TABLE_NAME, ComplexConditionGroup.decode)
+	)
+	config._tables[ComplexConditionGroupEntry.ComplexConditionGroupEntryTable.TABLE_NAME] = ComplexConditionGroupEntry.ComplexConditionGroupEntryTable.decode(
+		SoraRuntime.decode_table(bundle, ComplexConditionGroupEntry.ComplexConditionGroupEntryTable.TABLE_NAME, ComplexConditionGroupEntry.decode)
+	)
+	config._tables[ComplexRuleCondition.ComplexRuleConditionTable.TABLE_NAME] = ComplexRuleCondition.ComplexRuleConditionTable.decode(
+		SoraRuntime.decode_table(bundle, ComplexRuleCondition.ComplexRuleConditionTable.TABLE_NAME, ComplexRuleCondition.decode)
+	)
+	config._tables[ComplexActionGroup.ComplexActionGroupTable.TABLE_NAME] = ComplexActionGroup.ComplexActionGroupTable.decode(
+		SoraRuntime.decode_table(bundle, ComplexActionGroup.ComplexActionGroupTable.TABLE_NAME, ComplexActionGroup.decode)
+	)
+	config._tables[ComplexActionEntry.ComplexActionEntryTable.TABLE_NAME] = ComplexActionEntry.ComplexActionEntryTable.decode(
+		SoraRuntime.decode_table(bundle, ComplexActionEntry.ComplexActionEntryTable.TABLE_NAME, ComplexActionEntry.decode)
+	)
 	return config
 
 func tables() -> Array:
@@ -125,6 +146,8 @@ func quest_reward() -> QuestReward.QuestRewardTable:
 	return _tables[QuestReward.QuestRewardTable.TABLE_NAME]
 func game_settings() -> GameSettings.GameSettingsTable:
 	return _tables[GameSettings.GameSettingsTable.TABLE_NAME]
+func maintenance_window() -> MaintenanceWindow.MaintenanceWindowTable:
+	return _tables[MaintenanceWindow.MaintenanceWindowTable.TABLE_NAME]
 func localization() -> Localization.LocalizationTable:
 	return _tables[Localization.LocalizationTable.TABLE_NAME]
 func level_exp() -> LevelExp.LevelExpTable:
@@ -171,3 +194,15 @@ func dialogue() -> Dialogue.DialogueTable:
 	return _tables[Dialogue.DialogueTable.TABLE_NAME]
 func event_rule() -> EventRule.EventRuleTable:
 	return _tables[EventRule.EventRuleTable.TABLE_NAME]
+func complex_rule() -> ComplexRule.ComplexRuleTable:
+	return _tables[ComplexRule.ComplexRuleTable.TABLE_NAME]
+func complex_condition_group() -> ComplexConditionGroup.ComplexConditionGroupTable:
+	return _tables[ComplexConditionGroup.ComplexConditionGroupTable.TABLE_NAME]
+func complex_condition_group_entry() -> ComplexConditionGroupEntry.ComplexConditionGroupEntryTable:
+	return _tables[ComplexConditionGroupEntry.ComplexConditionGroupEntryTable.TABLE_NAME]
+func complex_rule_condition() -> ComplexRuleCondition.ComplexRuleConditionTable:
+	return _tables[ComplexRuleCondition.ComplexRuleConditionTable.TABLE_NAME]
+func complex_action_group() -> ComplexActionGroup.ComplexActionGroupTable:
+	return _tables[ComplexActionGroup.ComplexActionGroupTable.TABLE_NAME]
+func complex_action_entry() -> ComplexActionEntry.ComplexActionEntryTable:
+	return _tables[ComplexActionEntry.ComplexActionEntryTable.TABLE_NAME]

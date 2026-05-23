@@ -1,0 +1,105 @@
+{
+  "table": {
+    "name": "ComplexConditionGroupEntry",
+    "rows": [
+      {
+        "values": {
+          "group_id": {
+            "Integer": 19001
+          },
+          "id": {
+            "Integer": 19101
+          },
+          "seq": {
+            "Integer": 1
+          },
+          "value": {
+            "Object": {
+              "level": {
+                "Integer": 20
+              },
+              "type": {
+                "String": "LevelAtLeast"
+              }
+            }
+          }
+        }
+      },
+      {
+        "values": {
+          "group_id": {
+            "Integer": 19001
+          },
+          "id": {
+            "Integer": 19102
+          },
+          "seq": {
+            "Integer": 2
+          },
+          "value": {
+            "Object": {
+              "count": {
+                "Integer": 1
+              },
+              "item_id": {
+                "Integer": 1001
+              },
+              "type": {
+                "String": "HasItem"
+              }
+            }
+          }
+        }
+      },
+      {
+        "values": {
+          "group_id": {
+            "Integer": 19002
+          },
+          "id": {
+            "Integer": 19103
+          },
+          "seq": {
+            "Integer": 1
+          },
+          "value": {
+            "Object": {
+              "quest_id": {
+                "Integer": 5002
+              },
+              "type": {
+                "String": "QuestCompleted"
+              }
+            }
+          }
+        }
+      },
+      {
+        "values": {
+          "group_id": {
+            "Integer": 19002
+          },
+          "id": {
+            "Integer": 19104
+          },
+          "seq": {
+            "Integer": 2
+          },
+          "value": {
+            "Object": {
+              "count": {
+                "Integer": 2
+              },
+              "item_id": {
+                "Integer": 1002
+              },
+              "type": {
+                "String": "HasItem"
+              }
+            }
+          }
+        }
+      }
+    ]
+  }
+}
