@@ -117,28 +117,6 @@ jobs:
 
           echo "Preparing release ${VERSION_NAME} (${TAG_NAME})"
 
-      - name: Create release tag
-        if: steps.release.outputs.create-tag == 'true'
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
-        run: |
-          set -euo pipefail
-
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git tag -a "${{ steps.release.outputs.tag }}" -m "Release ${{ steps.release.outputs.version }}"
-          git push "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "${{ steps.release.outputs.tag }}"
-
-      - name: Create release
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
-          TAG: ${{ steps.release.outputs.tag }}
-        run: |
-          gh release view "$TAG" >/dev/null 2>&1 || \
-            gh release create "$TAG" \
-              --title "$TAG" \
-              --notes "Sora $TAG release."
-
   build:
     name: Build ${{ matrix.package_suffix }}
     needs: prepare
@@ -217,18 +195,14 @@ jobs:
           $checksum = "$archive.sha256"
           Set-Content -Path $checksum -Value "$hash  $archiveName"
 
-      - name: Upload release assets
-        shell: pwsh
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
-          TAG: ${{ needs.prepare.outputs.tag }}
-          PACKAGE_SUFFIX: ${{ matrix.package_suffix }}
-          ARCHIVE_EXT: ${{ matrix.archive_ext }}
-        run: |
-          $ErrorActionPreference = 'Stop'
-          $archive = "dist/sora-{0}-{1}.{2}" -f $env:TAG, $env:PACKAGE_SUFFIX, $env:ARCHIVE_EXT
-          $checksum = "$archive.sha256"
-          gh release upload $env:TAG $archive $checksum --clobber
+      - name: Upload packaged asset
+        uses: actions/upload-artifact@v4
+        with:
+          name: sora-${{ needs.prepare.outputs.tag }}-${{ matrix.package_suffix }}
+          path: |
+            dist/sora-${{ needs.prepare.outputs.tag }}-${{ matrix.package_suffix }}.${{ matrix.archive_ext }}
+            dist/sora-${{ needs.prepare.outputs.tag }}-${{ matrix.package_suffix }}.${{ matrix.archive_ext }}.sha256
+          if-no-files-found: error
 
   publish-crates:
     name: Publish crates.io packages
@@ -310,3 +284,67 @@ jobs:
 
             wait_for_crate_version "$crate"
           done
+
+  publish-release:
+    name: Publish GitHub release
+    needs:
+      - prepare
+      - build
+      - publish-crates
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Download release assets
+        uses: actions/download-artifact@v4
+        with:
+          pattern: sora-${{ needs.prepare.outputs.tag }}-*
+          path: dist
+          merge-multiple: true
+
+      - name: Publish release
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          TAG: ${{ needs.prepare.outputs.tag }}
+          VERSION: ${{ needs.prepare.outputs.version }}
+        run: |
+          set -euo pipefail
+
+          git fetch --force --tags
+
+          TAG_SHA="$(git rev-list -n 1 "${TAG}" 2>/dev/null || true)"
+          if [[ -n "${TAG_SHA}" && "${TAG_SHA}" != "${GITHUB_SHA}" ]]; then
+            echo "Release tag already exists on another commit: ${TAG}" >&2
+            exit 1
+          fi
+
+          if [[ -z "${TAG_SHA}" ]]; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git tag -a "${TAG}" -m "Release ${VERSION}"
+            git push "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "${TAG}"
+          else
+            echo "Release tag already exists on current commit and will be reused: ${TAG}"
+          fi
+
+          shopt -s nullglob
+          assets=(dist/*)
+          if [[ "${#assets[@]}" -eq 0 ]]; then
+            echo "No release assets were downloaded." >&2
+            exit 1
+          fi
+
+          if ! gh release view "${TAG}" >/dev/null 2>&1; then
+            gh release create "${TAG}" \
+              --draft \
+              --title "${TAG}" \
+              --notes "Sora ${TAG} release."
+          fi
+
+          gh release upload "${TAG}" "${assets[@]}" --clobber
+          gh release edit "${TAG}" --draft=false
