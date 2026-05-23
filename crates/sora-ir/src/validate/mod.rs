@@ -9,10 +9,10 @@ use crate::{
     model::{ConfigIr, FieldIr, StructIr, TableIr, TableModeIr},
 };
 
-mod aggregation;
+mod derived_field;
 mod type_ref;
 
-use aggregation::validate_aggregation;
+use derived_field::validate_derived_field;
 use type_ref::{
     TypeReferenceContext, validate_index_field_type, validate_map_key_type,
     validate_type_references,
@@ -233,12 +233,12 @@ fn validate_fields<'a>(
             )));
         }
 
-        if let Some(aggregation) = &field.aggregation {
-            validate_aggregation(
+        if let Some(derived_from) = &field.derived_from {
+            validate_derived_field(
                 owner_kind,
                 owner,
                 field,
-                aggregation,
+                derived_from,
                 context.structs,
                 context.tables,
             )?;

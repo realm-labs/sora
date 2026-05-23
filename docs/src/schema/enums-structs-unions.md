@@ -45,7 +45,7 @@ range = [1, 999999]
 
 Use structs for nested values that appear in many places. A field can reference a struct with `type = "struct<ResourceCost>"`.
 
-Struct fields use the same field properties as table fields, including `name`, `type`, `required`, `default`, `comment`, `range`, `length`, `parser`, and `scope`. Table-specific properties such as `key` and aggregation metadata are not meaningful for normal struct fields. See [Types](types.md#field-rules) for the full field reference.
+Struct fields use the same field properties as table fields, including `name`, `type`, `required`, `default`, `comment`, `range`, `length`, `parser`, and `scope`. Table-specific properties such as `key` and `from` are not meaningful for normal struct fields. See [Types](types.md#field-rules) for the full field reference.
 
 In cell-based inputs, a struct field can be written as JSON object text by default:
 

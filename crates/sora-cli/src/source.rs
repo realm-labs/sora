@@ -267,7 +267,7 @@ mod tests {
                     range: None,
                     length: None,
                     parser: None,
-                    aggregation: None,
+                    derived_from: None,
                 }],
                 indexes: Vec::new(),
             }],

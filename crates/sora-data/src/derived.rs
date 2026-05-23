@@ -1,38 +1,38 @@
 use std::{cmp::Ordering, collections::BTreeMap};
 
 use sora_diagnostics::{Result, SoraError};
-use sora_ir::model::{AggregationIr, ConfigIr, FieldIr, StructIr, TableIr, TypeIr};
+use sora_ir::model::{ConfigIr, DerivedFieldIr, FieldIr, StructIr, TableIr, TypeIr};
 
 use crate::model::{ConfigData, RowData, Value};
 
-pub fn materialize_aggregations(ir: &ConfigIr, data: &ConfigData) -> Result<ConfigData> {
+pub fn materialize_derived_fields(ir: &ConfigIr, data: &ConfigData) -> Result<ConfigData> {
     let mut materialized = data.clone();
 
     for table in &ir.tables {
         for field in table
             .fields
             .iter()
-            .filter(|field| field.aggregation.is_some())
+            .filter(|field| field.derived_from.is_some())
         {
-            materialize_table_aggregation(ir, data, &mut materialized, table, field)?;
+            materialize_table_derived_field(ir, data, &mut materialized, table, field)?;
         }
     }
 
     Ok(materialized)
 }
 
-fn materialize_table_aggregation(
+fn materialize_table_derived_field(
     ir: &ConfigIr,
     source_data: &ConfigData,
     materialized: &mut ConfigData,
     parent_table: &TableIr,
     field: &FieldIr,
 ) -> Result<()> {
-    let aggregation = field
-        .aggregation
+    let derived_from = field
+        .derived_from
         .as_ref()
-        .expect("caller filters to aggregation fields");
-    let shape = aggregation_shape(ir, field)?;
+        .expect("caller filters to derived fields");
+    let shape = derived_field_shape(ir, field)?;
     let Some(parent_data) = materialized
         .tables
         .iter_mut()
@@ -43,35 +43,35 @@ fn materialize_table_aggregation(
     let source_rows = source_data
         .tables
         .iter()
-        .find(|table| table.name == aggregation.source_table)
+        .find(|table| table.name == derived_from.source_table)
         .map(|table| table.rows.as_slice())
         .unwrap_or(&[]);
 
     for parent_row in &mut parent_data.rows {
         let parent_key = parent_row
             .values
-            .get(&aggregation.parent_key)
+            .get(&derived_from.parent_key)
             .ok_or_else(|| SoraError::MissingRequiredField {
                 table: parent_table.name.clone(),
-                field: aggregation.parent_key.clone(),
+                field: derived_from.parent_key.clone(),
             })?;
-        let mut child_rows = matching_child_rows(source_rows, aggregation, parent_key)?;
-        if let Some(order_by) = &aggregation.order_by {
+        let mut child_rows = matching_child_rows(source_rows, derived_from, parent_key)?;
+        if let Some(order_by) = &derived_from.order_by {
             child_rows.sort_by(|left, right| compare_order_field(left, right, order_by));
         }
 
         let values = child_rows
             .into_iter()
-            .map(|row| aggregate_child_value(&aggregation.source_table, row, &shape.value))
+            .map(|row| derive_child_value(&derived_from.source_table, row, &shape.value))
             .collect::<Result<Vec<_>>>()?;
         let value = match shape.cardinality {
-            AggregationCardinality::List => Value::List(values),
-            AggregationCardinality::RequiredOne => {
+            DerivedFieldCardinality::List => Value::List(values),
+            DerivedFieldCardinality::RequiredOne => {
                 if values.len() != 1 {
-                    return Err(aggregation_row_count_error(
+                    return Err(derived_field_row_count_error(
                         parent_table,
                         field,
-                        aggregation,
+                        derived_from,
                         parent_key,
                         "exactly 1",
                         values.len(),
@@ -79,12 +79,12 @@ fn materialize_table_aggregation(
                 }
                 values.into_iter().next().expect("checked one value")
             }
-            AggregationCardinality::OptionalOne => {
+            DerivedFieldCardinality::OptionalOne => {
                 if values.len() > 1 {
-                    return Err(aggregation_row_count_error(
+                    return Err(derived_field_row_count_error(
                         parent_table,
                         field,
-                        aggregation,
+                        derived_from,
                         parent_key,
                         "at most 1",
                         values.len(),
@@ -99,44 +99,44 @@ fn materialize_table_aggregation(
     Ok(())
 }
 
-struct AggregationShape<'a> {
-    cardinality: AggregationCardinality,
-    value: AggregationValue<'a>,
+struct DerivedFieldShape<'a> {
+    cardinality: DerivedFieldCardinality,
+    value: DerivedFieldValue<'a>,
 }
 
 #[derive(Debug, Clone, Copy)]
-enum AggregationCardinality {
+enum DerivedFieldCardinality {
     List,
     RequiredOne,
     OptionalOne,
 }
 
-enum AggregationValue<'a> {
+enum DerivedFieldValue<'a> {
     Struct(&'a StructIr),
     Field(&'a str),
 }
 
-fn aggregation_shape<'a>(ir: &'a ConfigIr, field: &'a FieldIr) -> Result<AggregationShape<'a>> {
-    let aggregation = field
-        .aggregation
+fn derived_field_shape<'a>(ir: &'a ConfigIr, field: &'a FieldIr) -> Result<DerivedFieldShape<'a>> {
+    let derived_from = field
+        .derived_from
         .as_ref()
-        .expect("caller filters to aggregation fields");
+        .expect("caller filters to derived fields");
     let (cardinality, value_ty) = match &field.ty {
-        TypeIr::List(element) => (AggregationCardinality::List, element.as_ref()),
-        TypeIr::Optional(element) => (AggregationCardinality::OptionalOne, element.as_ref()),
-        ty => (AggregationCardinality::RequiredOne, ty),
+        TypeIr::List(element) => (DerivedFieldCardinality::List, element.as_ref()),
+        TypeIr::Optional(element) => (DerivedFieldCardinality::OptionalOne, element.as_ref()),
+        ty => (DerivedFieldCardinality::RequiredOne, ty),
     };
 
-    if let Some(value_field) = &aggregation.value_field {
-        return Ok(AggregationShape {
+    if let Some(value_field) = &derived_from.value_field {
+        return Ok(DerivedFieldShape {
             cardinality,
-            value: AggregationValue::Field(value_field),
+            value: DerivedFieldValue::Field(value_field),
         });
     }
 
     let TypeIr::Struct(struct_name) = value_ty else {
         return Err(SoraError::InvalidSchema(format!(
-            "aggregation field `{}` must aggregate struct values or declare `value_field`",
+            "derived field `{}` must assemble struct values or declare `from.field`",
             field.name
         )));
     };
@@ -147,28 +147,28 @@ fn aggregation_shape<'a>(ir: &'a ConfigIr, field: &'a FieldIr) -> Result<Aggrega
         .find(|item| item.name == *struct_name)
         .ok_or_else(|| {
             SoraError::InvalidSchema(format!(
-                "aggregation field `{}` references unknown struct `{struct_name}`",
+                "derived field `{}` references unknown struct `{struct_name}`",
                 field.name
             ))
         })?;
 
-    Ok(AggregationShape {
+    Ok(DerivedFieldShape {
         cardinality,
-        value: AggregationValue::Struct(struct_ir),
+        value: DerivedFieldValue::Struct(struct_ir),
     })
 }
 
 fn matching_child_rows<'a>(
     source_rows: &'a [RowData],
-    aggregation: &AggregationIr,
+    derived_from: &DerivedFieldIr,
     parent_key: &Value,
 ) -> Result<Vec<&'a RowData>> {
     let mut rows = Vec::new();
     for row in source_rows {
-        let Some(child_key) = row.values.get(&aggregation.child_key) else {
+        let Some(child_key) = row.values.get(&derived_from.child_key) else {
             return Err(SoraError::MissingRequiredField {
-                table: aggregation.source_table.clone(),
-                field: aggregation.child_key.clone(),
+                table: derived_from.source_table.clone(),
+                field: derived_from.child_key.clone(),
             });
         };
         if stable_key(child_key) == stable_key(parent_key) {
@@ -178,11 +178,7 @@ fn matching_child_rows<'a>(
     Ok(rows)
 }
 
-fn aggregate_struct_value(
-    source_table: &str,
-    row: &RowData,
-    struct_ir: &StructIr,
-) -> Result<Value> {
+fn derive_struct_value(source_table: &str, row: &RowData, struct_ir: &StructIr) -> Result<Value> {
     let mut values = BTreeMap::new();
     for field in &struct_ir.fields {
         if let Some(value) = row.values.get(&field.name) {
@@ -197,14 +193,14 @@ fn aggregate_struct_value(
     Ok(Value::Object(values))
 }
 
-fn aggregate_child_value(
+fn derive_child_value(
     source_table: &str,
     row: &RowData,
-    value: &AggregationValue<'_>,
+    value: &DerivedFieldValue<'_>,
 ) -> Result<Value> {
     match value {
-        AggregationValue::Struct(struct_ir) => aggregate_struct_value(source_table, row, struct_ir),
-        AggregationValue::Field(field) => {
+        DerivedFieldValue::Struct(struct_ir) => derive_struct_value(source_table, row, struct_ir),
+        DerivedFieldValue::Field(field) => {
             row.values
                 .get(*field)
                 .cloned()
@@ -216,21 +212,21 @@ fn aggregate_child_value(
     }
 }
 
-fn aggregation_row_count_error(
+fn derived_field_row_count_error(
     parent_table: &TableIr,
     field: &FieldIr,
-    aggregation: &AggregationIr,
+    derived_from: &DerivedFieldIr,
     parent_key: &Value,
     expected: &'static str,
     actual: usize,
 ) -> SoraError {
     SoraError::InvalidSchema(format!(
-        "aggregation field `{}` in table `{}` expected {} row from `{}` where `{}` = `{}`, but found {}",
+        "derived field `{}` in table `{}` expected {} row from `{}` where `{}` = `{}`, but found {}",
         field.name,
         parent_table.name,
         expected,
-        aggregation.source_table,
-        aggregation.child_key,
+        derived_from.source_table,
+        derived_from.child_key,
         stable_key(parent_key),
         actual
     ))
@@ -284,7 +280,7 @@ mod tests {
 
     #[test]
     fn materializes_child_rows_into_parent_list_field() {
-        let ir = aggregation_ir();
+        let ir = derived_field_ir();
         let data = ConfigData {
             tables: vec![
                 TableData {
@@ -320,7 +316,7 @@ mod tests {
             ],
         };
 
-        let materialized = materialize_aggregations(&ir, &data).unwrap();
+        let materialized = materialize_derived_fields(&ir, &data).unwrap();
         let rewards = &materialized.tables[0].rows[0].values["rewards"];
 
         assert_eq!(
@@ -340,7 +336,7 @@ mod tests {
 
     #[test]
     fn materializes_single_child_value_field() {
-        let ir = single_value_aggregation_ir("string");
+        let ir = single_value_derived_field_ir("string");
         let data = ConfigData {
             tables: vec![
                 TableData {
@@ -362,7 +358,7 @@ mod tests {
             ],
         };
 
-        let materialized = materialize_aggregations(&ir, &data).unwrap();
+        let materialized = materialize_derived_fields(&ir, &data).unwrap();
 
         assert_eq!(
             materialized.tables[0].rows[0].values["display_name"],
@@ -372,7 +368,7 @@ mod tests {
 
     #[test]
     fn materializes_missing_optional_child_value_as_null() {
-        let ir = single_value_aggregation_ir("optional<string>");
+        let ir = single_value_derived_field_ir("optional<string>");
         let data = ConfigData {
             tables: vec![
                 TableData {
@@ -388,7 +384,7 @@ mod tests {
             ],
         };
 
-        let materialized = materialize_aggregations(&ir, &data).unwrap();
+        let materialized = materialize_derived_fields(&ir, &data).unwrap();
 
         assert_eq!(
             materialized.tables[0].rows[0].values["display_name"],
@@ -398,7 +394,7 @@ mod tests {
 
     #[test]
     fn rejects_missing_required_single_child_value() {
-        let ir = single_value_aggregation_ir("string");
+        let ir = single_value_derived_field_ir("string");
         let data = ConfigData {
             tables: vec![
                 TableData {
@@ -414,7 +410,7 @@ mod tests {
             ],
         };
 
-        let error = materialize_aggregations(&ir, &data).unwrap_err();
+        let error = materialize_derived_fields(&ir, &data).unwrap_err();
 
         assert!(
             error
@@ -425,7 +421,7 @@ mod tests {
 
     #[test]
     fn rejects_multiple_single_child_values() {
-        let ir = single_value_aggregation_ir("optional<string>");
+        let ir = single_value_derived_field_ir("optional<string>");
         let data = ConfigData {
             tables: vec![
                 TableData {
@@ -454,7 +450,7 @@ mod tests {
             ],
         };
 
-        let error = materialize_aggregations(&ir, &data).unwrap_err();
+        let error = materialize_derived_fields(&ir, &data).unwrap_err();
 
         assert!(
             error
@@ -463,7 +459,7 @@ mod tests {
         );
     }
 
-    fn aggregation_ir() -> ConfigIr {
+    fn derived_field_ir() -> ConfigIr {
         let schema: SchemaFile = toml::from_str(
             r#"
 package = "game_config"
@@ -499,10 +495,7 @@ required = true
 [[tables.fields]]
 name = "rewards"
 type = "list<Reward>"
-source_table = "ItemReward"
-parent_key = "id"
-child_key = "item_id"
-order_by = "seq"
+from = { table = "ItemReward", parent_key = "id", child_key = "item_id", order_by = "seq" }
 
 [[tables]]
 name = "ItemReward"
@@ -535,7 +528,7 @@ required = true
         ir
     }
 
-    fn single_value_aggregation_ir(field_type: &str) -> ConfigIr {
+    fn single_value_derived_field_ir(field_type: &str) -> ConfigIr {
         let schema: SchemaFile = toml::from_str(&format!(
             r#"
 package = "game_config"
@@ -553,10 +546,7 @@ required = true
 [[tables.fields]]
 name = "display_name"
 type = "{field_type}"
-source_table = "ItemProfile"
-parent_key = "id"
-child_key = "item_id"
-value_field = "name"
+from = {{ table = "ItemProfile", parent_key = "id", child_key = "item_id", field = "name" }}
 
 [[tables]]
 name = "ItemProfile"

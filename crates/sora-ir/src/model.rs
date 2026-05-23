@@ -100,7 +100,7 @@ pub struct FieldIr {
     pub range: Option<[i64; 2]>,
     pub length: Option<[usize; 2]>,
     pub parser: Option<ParserIr>,
-    pub aggregation: Option<AggregationIr>,
+    pub derived_from: Option<DerivedFieldIr>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -110,7 +110,7 @@ pub struct ParserIr {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-pub struct AggregationIr {
+pub struct DerivedFieldIr {
     pub source_table: String,
     pub parent_key: String,
     pub child_key: String,

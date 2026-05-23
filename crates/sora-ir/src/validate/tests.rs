@@ -284,7 +284,7 @@ type = "ref<Missing.id>"
 }
 
 #[test]
-fn aggregation_key_compatibility_resolves_ref_types() {
+fn derived_field_key_compatibility_resolves_ref_types() {
     let ir = example_ir(
         r#"
 [[structs]]
@@ -319,9 +319,7 @@ type = "i32"
 [[tables.fields]]
 name = "rewards"
 type = "list<Reward>"
-source_table = "QuestReward"
-parent_key = "id"
-child_key = "quest_id"
+from = { table = "QuestReward", parent_key = "id", child_key = "quest_id" }
 
 [[tables]]
 name = "QuestReward"
@@ -345,7 +343,7 @@ type = "i32"
 }
 
 #[test]
-fn validates_single_value_field_aggregation() {
+fn validates_single_value_derived_field() {
     let ir = example_ir(
         r#"
 [[unions]]
@@ -371,10 +369,7 @@ type = "i32"
 [[tables.fields]]
 name = "condition"
 type = "union<EventCondition>"
-source_table = "EventConditionEntry"
-parent_key = "id"
-child_key = "event_id"
-value_field = "value"
+from = { table = "EventConditionEntry", parent_key = "id", child_key = "event_id", field = "value" }
 
 [[tables]]
 name = "EventConditionEntry"
@@ -394,7 +389,7 @@ type = "union<EventCondition>"
 }
 
 #[test]
-fn validates_optional_value_field_aggregation() {
+fn validates_optional_value_derived_field() {
     let ir = example_ir(
         r#"
 [[tables]]
@@ -409,10 +404,7 @@ type = "i32"
 [[tables.fields]]
 name = "display_name"
 type = "optional<string>"
-source_table = "ItemProfile"
-parent_key = "id"
-child_key = "item_id"
-value_field = "name"
+from = { table = "ItemProfile", parent_key = "id", child_key = "item_id", field = "name" }
 
 [[tables]]
 name = "ItemProfile"
@@ -432,7 +424,7 @@ type = "string"
 }
 
 #[test]
-fn rejects_scalar_aggregation_without_value_field() {
+fn rejects_scalar_derived_field_without_from_field() {
     let ir = example_ir(
         r#"
 [[tables]]
@@ -447,9 +439,7 @@ type = "i32"
 [[tables.fields]]
 name = "display_name"
 type = "string"
-source_table = "ItemProfile"
-parent_key = "id"
-child_key = "item_id"
+from = { table = "ItemProfile", parent_key = "id", child_key = "item_id" }
 
 [[tables]]
 name = "ItemProfile"
@@ -464,12 +454,12 @@ type = "ref<Item.id>"
     assert!(matches!(
         validate_config_ir(&ir).unwrap_err(),
         SoraError::InvalidSchema(message)
-            if message.contains("must aggregate struct values or declare `value_field`")
+            if message.contains("must assemble struct values or declare `from.field`")
     ));
 }
 
 #[test]
-fn rejects_unknown_aggregation_value_field() {
+fn rejects_unknown_derived_source_field() {
     let ir = example_ir(
         r#"
 [[tables]]
@@ -484,10 +474,7 @@ type = "i32"
 [[tables.fields]]
 name = "display_name"
 type = "string"
-source_table = "ItemProfile"
-parent_key = "id"
-child_key = "item_id"
-value_field = "missing"
+from = { table = "ItemProfile", parent_key = "id", child_key = "item_id", field = "missing" }
 
 [[tables]]
 name = "ItemProfile"
@@ -506,7 +493,7 @@ type = "ref<Item.id>"
 }
 
 #[test]
-fn rejects_incompatible_aggregation_value_field_type() {
+fn rejects_incompatible_derived_source_field_type() {
     let ir = example_ir(
         r#"
 [[tables]]
@@ -521,10 +508,7 @@ type = "i32"
 [[tables.fields]]
 name = "display_name"
 type = "string"
-source_table = "ItemProfile"
-parent_key = "id"
-child_key = "item_id"
-value_field = "level"
+from = { table = "ItemProfile", parent_key = "id", child_key = "item_id", field = "level" }
 
 [[tables]]
 name = "ItemProfile"
@@ -543,12 +527,12 @@ type = "i32"
     assert!(matches!(
         validate_config_ir(&ir).unwrap_err(),
         SoraError::InvalidSchema(message)
-            if message.contains("maps source value field `level` with incompatible type")
+            if message.contains("maps source field `level` with incompatible type")
     ));
 }
 
 #[test]
-fn rejects_optional_source_for_required_aggregation_value_field() {
+fn rejects_optional_source_for_required_derived_field() {
     let ir = example_ir(
         r#"
 [[tables]]
@@ -563,10 +547,7 @@ type = "i32"
 [[tables.fields]]
 name = "display_name"
 type = "string"
-source_table = "ItemProfile"
-parent_key = "id"
-child_key = "item_id"
-value_field = "name"
+from = { table = "ItemProfile", parent_key = "id", child_key = "item_id", field = "name" }
 
 [[tables]]
 name = "ItemProfile"
@@ -585,7 +566,7 @@ type = "optional<string>"
     assert!(matches!(
         validate_config_ir(&ir).unwrap_err(),
         SoraError::InvalidSchema(message)
-            if message.contains("maps source value field `name` with incompatible type")
+            if message.contains("maps source field `name` with incompatible type")
     ));
 }
 

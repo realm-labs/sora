@@ -182,9 +182,16 @@ pub struct TableFieldSchema {
     pub range: Option<[i64; 2]>,
     pub length: Option<[usize; 2]>,
     pub parser: Option<ParserSchema>,
-    pub source_table: Option<String>,
+    pub from: Option<TableFieldFromSchema>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct TableFieldFromSchema {
+    pub table: String,
     pub parent_key: Option<String>,
     pub child_key: Option<String>,
+    #[serde(rename = "field")]
     pub value_field: Option<String>,
     pub order_by: Option<String>,
 }

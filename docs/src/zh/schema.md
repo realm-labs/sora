@@ -67,7 +67,7 @@ file = "Item.xlsx"
 sheet = "Item"
 ```
 
-表定义带 source 的行集合。模式、key、source、索引和聚合见[表](schema/tables.md)。
+表定义带 source 的行集合。模式、key、source、索引和派生字段见[表](schema/tables.md)。
 
 ## Field Types
 

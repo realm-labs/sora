@@ -67,7 +67,7 @@ file = "Item.xlsx"
 sheet = "Item"
 ```
 
-Tables define source-backed row collections. See [Tables](schema/tables.md) for modes, keys, sources, indexes, and aggregation.
+Tables define source-backed row collections. See [Tables](schema/tables.md) for modes, keys, sources, indexes, and derived fields.
 
 ## Field Types
 

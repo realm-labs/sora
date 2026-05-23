@@ -9,7 +9,7 @@
 - table mode 和 key；
 - source metadata；
 - field type、default、parser、range、length 和 comment；
-- reference 和 aggregation metadata；
+- reference 和派生子表字段 metadata；
 - scope。
 
 ## 不属于 IR 的内容

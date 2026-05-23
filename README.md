@@ -28,7 +28,7 @@ Current support includes:
 - schema files in TOML, YAML, JSON, or Lua;
 - table data from Excel `.xlsx`, CSV, or TOML;
 - generated Excel `.xlsx` templates;
-- normalized IR, recursive validation, defaults, references, child table aggregation, polymorphic unions, and secondary unique indexes;
+- normalized IR, recursive validation, defaults, references, derived child-table fields, polymorphic unions, and secondary unique indexes;
 - schema locks and config diffs;
 - runtime exports as Sora binary, JSON, debug JSON, CBOR, Sora Protobuf, and typed Protobuf;
 - generated Rust, Kotlin, C#, Java, Scala, Go, C, C++, TypeScript, JavaScript, Erlang, Lua, Python, and Proto code.
@@ -239,7 +239,7 @@ out = "generated/debug-json"
 
 Codegen targets can opt into post-generation formatting with `format = "never"`, `format = "auto"`, or `format = "required"`. `auto` runs a supported formatter when the command exists in `PATH`; `required` fails the build if the formatter is missing or exits with an error. Built-in formatter hooks cover Rust (`rustfmt`), Go (`gofmt`), Erlang (`erlfmt`), Python (`black`), C (`clang-format`), C++ (`clang-format`), and Scala (`scalafmt`).
 
-Included modules define enums, structs, unions, tables, fields, keys, indexes, comments, source files, and aggregation metadata. Field type strings are normalized into IR types such as `i32`, `string`, `enum<ItemType>`, `struct<ResourceCost>`, `union<RewardAction>`, `list<i32>`, `array<i32,3>`, `ref<Item.id>`, and `optional<string>`.
+Included modules define enums, structs, unions, tables, fields, keys, indexes, comments, source files, and derived field metadata. Field type strings are normalized into IR types such as `i32`, `string`, `enum<ItemType>`, `struct<ResourceCost>`, `union<RewardAction>`, `list<i32>`, `array<i32,3>`, `ref<Item.id>`, and `optional<string>`.
 
 Table data sources are structured:
 

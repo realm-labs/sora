@@ -138,10 +138,7 @@ required = true
 [[tables.fields]]
 name = "rewards"
 type = "list<Reward>"
-source_table = "ItemReward"
-parent_key = "id"
-child_key = "item_id"
-order_by = "seq"
+from = { table = "ItemReward", parent_key = "id", child_key = "item_id", order_by = "seq" }
 
 [[tables]]
 name = "ItemReward"

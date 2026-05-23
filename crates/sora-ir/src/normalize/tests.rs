@@ -439,7 +439,7 @@ parser = { kind = "tuple" }
 }
 
 #[test]
-fn aggregation_list_fields_do_not_need_separator_metadata() {
+fn derived_list_fields_do_not_need_separator_metadata() {
     let schema: SchemaFile = toml::from_str(
         r#"
 package = "game_config"
@@ -463,9 +463,7 @@ type = "i32"
 [[tables.fields]]
 name = "rewards"
 type = "list<Reward>"
-source_table = "ItemReward"
-parent_key = "id"
-child_key = "item_id"
+from = { table = "ItemReward", parent_key = "id", child_key = "item_id" }
 
 [[tables]]
 name = "ItemReward"
@@ -475,12 +473,12 @@ mode = "list"
     .unwrap();
 
     let ir = normalize_schema(schema).unwrap();
-    assert!(ir.tables[0].fields[1].aggregation.is_some());
+    assert!(ir.tables[0].fields[1].derived_from.is_some());
     assert_eq!(ir.tables[0].fields[1].parser, None);
 }
 
 #[test]
-fn normalizes_aggregation_value_field() {
+fn normalizes_derived_from_field() {
     let schema: SchemaFile = toml::from_str(
         r#"
 package = "game_config"
@@ -497,10 +495,7 @@ type = "i32"
 [[tables.fields]]
 name = "display_name"
 type = "string"
-source_table = "ItemProfile"
-parent_key = "id"
-child_key = "item_id"
-value_field = "name"
+from = { table = "ItemProfile", parent_key = "id", child_key = "item_id", field = "name" }
 
 [[tables]]
 name = "ItemProfile"
@@ -510,12 +505,12 @@ mode = "list"
     .unwrap();
 
     let ir = normalize_schema(schema).unwrap();
-    let aggregation = ir.tables[0].fields[1].aggregation.as_ref().unwrap();
-    assert_eq!(aggregation.value_field.as_deref(), Some("name"));
+    let derived_from = ir.tables[0].fields[1].derived_from.as_ref().unwrap();
+    assert_eq!(derived_from.value_field.as_deref(), Some("name"));
 }
 
 #[test]
-fn rejects_value_field_without_aggregation_keys() {
+fn rejects_incomplete_from_metadata() {
     let schema: SchemaFile = toml::from_str(
         r#"
 package = "game_config"
@@ -527,7 +522,7 @@ mode = "list"
 [[tables.fields]]
 name = "display_name"
 type = "string"
-value_field = "name"
+from = { table = "ItemProfile", field = "name" }
 "#,
     )
     .unwrap();
@@ -535,12 +530,12 @@ value_field = "name"
     assert!(matches!(
         normalize_schema(schema).unwrap_err(),
         SoraError::InvalidSchema(message)
-            if message.contains("incomplete aggregation metadata")
+            if message.contains("incomplete `from` metadata")
     ));
 }
 
 #[test]
-fn rejects_default_on_aggregation_fields() {
+fn rejects_default_on_derived_fields() {
     let schema: SchemaFile = toml::from_str(
         r#"
 package = "game_config"
@@ -560,9 +555,7 @@ type = "i32"
 [[tables.fields]]
 name = "rewards"
 type = "list<Reward>"
-source_table = "ItemReward"
-parent_key = "id"
-child_key = "item_id"
+from = { table = "ItemReward", parent_key = "id", child_key = "item_id" }
 default = "[]"
 
 [[tables]]
@@ -575,7 +568,7 @@ mode = "list"
     assert!(matches!(
         normalize_schema(schema).unwrap_err(),
         SoraError::InvalidSchema(message)
-            if message.contains("declares both `default` and aggregation")
+            if message.contains("declares both `default` and `from`")
     ));
 }
 

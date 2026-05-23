@@ -9,7 +9,7 @@ The normalized IR describes schema semantics. It should not encode language-spec
 - table modes and keys;
 - source metadata;
 - field types, defaults, parsers, ranges, lengths, and comments;
-- references and aggregation metadata;
+- references and derived child-table field metadata;
 - scopes.
 
 ## Does Not Belong in IR

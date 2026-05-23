@@ -8,7 +8,7 @@ use sora_schema::model::{
 use crate::{
     input_projection::TAGGED_COLUMNS_PARSER,
     model::{
-        AggregationIr, ConfigIr, EnumAliasIr, EnumIr, FieldIr, IndexIr, ParserIr, ScopeIr,
+        ConfigIr, DerivedFieldIr, EnumAliasIr, EnumIr, FieldIr, IndexIr, ParserIr, ScopeIr,
         StructIr, TableIr, TableModeIr, TableSourceIr, TypeIr, UnionIr, UnionVariantIr,
     },
     parse::parse_type,
@@ -257,7 +257,7 @@ fn convert_field_with_parsers(
         range: field.range,
         length: field.length,
         parser: field.parser.map(ParserIr::from),
-        aggregation: None,
+        derived_from: None,
     })
 }
 
@@ -279,30 +279,36 @@ fn convert_table_field_with_parsers(
     field: TableFieldSchema,
     parser_registry: &ParserRegistry,
 ) -> Result<FieldIr> {
-    let value_field = field.value_field;
-    let order_by = field.order_by;
-    let aggregation = match (field.source_table, field.parent_key, field.child_key) {
-        (None, None, None) if value_field.is_none() && order_by.is_none() => None,
-        (Some(source_table), Some(parent_key), Some(child_key)) => Some(AggregationIr {
-            source_table,
-            parent_key,
-            child_key,
-            value_field,
-            order_by,
-        }),
-        _ => {
-            return Err(SoraError::InvalidSchema(format!(
-                "field `{}` has incomplete aggregation metadata",
-                field.name
-            )));
-        }
-    };
+    let derived_from = field
+        .from
+        .map(|from| {
+            let Some(parent_key) = from.parent_key else {
+                return Err(SoraError::InvalidSchema(format!(
+                    "field `{}` has incomplete `from` metadata: missing `parent_key`",
+                    field.name
+                )));
+            };
+            let Some(child_key) = from.child_key else {
+                return Err(SoraError::InvalidSchema(format!(
+                    "field `{}` has incomplete `from` metadata: missing `child_key`",
+                    field.name
+                )));
+            };
+            Ok(DerivedFieldIr {
+                source_table: from.table,
+                parent_key,
+                child_key,
+                value_field: from.value_field,
+                order_by: from.order_by,
+            })
+        })
+        .transpose()?;
 
     let ty = parse_type(&field.ty)?;
     validate_length_constraint(&field.name, &ty, field.length)?;
-    if field.default.is_some() && aggregation.is_some() {
+    if field.default.is_some() && derived_from.is_some() {
         return Err(SoraError::InvalidSchema(format!(
-            "field `{}` declares both `default` and aggregation metadata",
+            "field `{}` declares both `default` and `from` metadata",
             field.name
         )));
     }
@@ -330,7 +336,7 @@ fn convert_table_field_with_parsers(
         range: field.range,
         length: field.length,
         parser: field.parser.map(ParserIr::from),
-        aggregation,
+        derived_from,
     })
 }
 

@@ -1,80 +1,80 @@
 use sora_diagnostics::{Result, SoraError};
 
-use crate::model::{AggregationIr, FieldIr, StructIr, TableIr, TypeIr};
-pub(super) fn validate_aggregation(
+use crate::model::{DerivedFieldIr, FieldIr, StructIr, TableIr, TypeIr};
+pub(super) fn validate_derived_field(
     owner_kind: &'static str,
     owner: &str,
     field: &FieldIr,
-    aggregation: &AggregationIr,
+    derived_from: &DerivedFieldIr,
     structs: &[StructIr],
     tables: &[TableIr],
 ) -> Result<()> {
     if owner_kind != "table" {
         return Err(SoraError::InvalidSchema(format!(
-            "aggregation field `{}` is only supported on tables",
+            "derived field `{}` is only supported on tables",
             field.name
         )));
     }
 
     let Some(owner_table) = tables.iter().find(|table| table.name == owner) else {
         return Err(SoraError::InvalidSchema(format!(
-            "aggregation owner table `{owner}` does not exist"
+            "derived field owner table `{owner}` does not exist"
         )));
     };
     let Some(source_table) = tables
         .iter()
-        .find(|table| table.name == aggregation.source_table)
+        .find(|table| table.name == derived_from.source_table)
     else {
         return Err(SoraError::UnknownRefTable {
             owner_kind,
             owner: owner.to_owned(),
             field: field.name.clone(),
-            table: aggregation.source_table.clone(),
+            table: derived_from.source_table.clone(),
         });
     };
 
     let Some(parent_key_field) = owner_table
         .fields
         .iter()
-        .find(|candidate| candidate.name == aggregation.parent_key)
+        .find(|candidate| candidate.name == derived_from.parent_key)
     else {
         return Err(SoraError::UnknownRefField {
             owner_kind,
             owner: owner.to_owned(),
             field: field.name.clone(),
             table: owner.to_owned(),
-            ref_field: aggregation.parent_key.clone(),
+            ref_field: derived_from.parent_key.clone(),
         });
     };
 
     let Some(child_key_field) = source_table
         .fields
         .iter()
-        .find(|candidate| candidate.name == aggregation.child_key)
+        .find(|candidate| candidate.name == derived_from.child_key)
     else {
         return Err(SoraError::UnknownRefField {
             owner_kind,
             owner: owner.to_owned(),
             field: field.name.clone(),
-            table: aggregation.source_table.clone(),
-            ref_field: aggregation.child_key.clone(),
+            table: derived_from.source_table.clone(),
+            ref_field: derived_from.child_key.clone(),
         });
     };
 
     if !types_compatible(&parent_key_field.ty, &child_key_field.ty, tables) {
         return Err(SoraError::InvalidSchema(format!(
-            "aggregation field `{}` joins `{}` and `{}` with incompatible key types `{}` and `{}`",
+            "derived field `{}` joins `{}` and `{}` with incompatible key types `{}` and `{}`",
             field.name,
-            aggregation.parent_key,
-            aggregation.child_key,
+            derived_from.parent_key,
+            derived_from.child_key,
             parent_key_field.ty,
             child_key_field.ty
         )));
     }
 
-    validate_aggregation_result_type(field, aggregation, source_table, structs, tables)?;
+    validate_derived_field_result_type(field, derived_from, source_table, structs, tables)?;
 
-    if let Some(order_by) = &aggregation.order_by
+    if let Some(order_by) = &derived_from.order_by
         && !source_table
             .fields
             .iter()
@@ -84,7 +84,7 @@ pub(super) fn validate_aggregation(
             owner_kind,
             owner: owner.to_owned(),
             field: field.name.clone(),
-            table: aggregation.source_table.clone(),
+            table: derived_from.source_table.clone(),
             ref_field: order_by.clone(),
         });
     }
@@ -92,15 +92,15 @@ pub(super) fn validate_aggregation(
     Ok(())
 }
 
-fn validate_aggregation_result_type(
+fn validate_derived_field_result_type(
     field: &FieldIr,
-    aggregation: &AggregationIr,
+    derived_from: &DerivedFieldIr,
     source_table: &TableIr,
     structs: &[StructIr],
     tables: &[TableIr],
 ) -> Result<()> {
-    let value_ty = aggregation_value_type(&field.ty);
-    if let Some(value_field) = &aggregation.value_field {
+    let value_ty = derived_field_value_type(&field.ty);
+    if let Some(value_field) = &derived_from.value_field {
         let Some(source_field) = source_table
             .fields
             .iter()
@@ -114,9 +114,9 @@ fn validate_aggregation_result_type(
                 ref_field: value_field.clone(),
             });
         };
-        if !aggregation_value_types_compatible(&field.ty, value_ty, &source_field.ty, tables) {
+        if !derived_field_value_types_compatible(&field.ty, value_ty, &source_field.ty, tables) {
             return Err(SoraError::InvalidSchema(format!(
-                "aggregation field `{}` maps source value field `{}` with incompatible type `{}` into `{}`",
+                "derived field `{}` maps source field `{}` with incompatible type `{}` into `{}`",
                 field.name, source_field.name, source_field.ty, field.ty
             )));
         }
@@ -125,13 +125,13 @@ fn validate_aggregation_result_type(
 
     let TypeIr::Struct(struct_name) = value_ty else {
         return Err(SoraError::InvalidSchema(format!(
-            "aggregation field `{}` must aggregate struct values or declare `value_field`",
+            "derived field `{}` must assemble struct values or declare `from.field`",
             field.name
         )));
     };
     let Some(struct_ir) = structs.iter().find(|item| item.name == *struct_name) else {
         return Err(SoraError::InvalidSchema(format!(
-            "aggregation field `{}` references unknown struct `{struct_name}`",
+            "derived field `{}` references unknown struct `{struct_name}`",
             field.name
         )));
     };
@@ -152,7 +152,7 @@ fn validate_aggregation_result_type(
         };
         if !types_compatible(&struct_field.ty, &source_field.ty, tables) {
             return Err(SoraError::InvalidSchema(format!(
-                "aggregation field `{}` maps source field `{}` with incompatible type `{}` into `{}`",
+                "derived field `{}` maps source field `{}` with incompatible type `{}` into `{}`",
                 field.name, source_field.name, source_field.ty, struct_field.ty
             )));
         }
@@ -161,7 +161,7 @@ fn validate_aggregation_result_type(
     Ok(())
 }
 
-fn aggregation_value_type(ty: &TypeIr) -> &TypeIr {
+fn derived_field_value_type(ty: &TypeIr) -> &TypeIr {
     match ty {
         TypeIr::List(element) => element,
         TypeIr::Optional(element) => element,
@@ -169,7 +169,7 @@ fn aggregation_value_type(ty: &TypeIr) -> &TypeIr {
     }
 }
 
-fn aggregation_value_types_compatible(
+fn derived_field_value_types_compatible(
     target_field: &TypeIr,
     target_value: &TypeIr,
     source: &TypeIr,

@@ -364,10 +364,7 @@ required = true
 [[tables.fields]]
 name = "rewards"
 type = "list<Reward>"
-source_table = "QuestReward"
-parent_key = "id"
-child_key = "quest_id"
-order_by = "seq"
+from = { table = "QuestReward", parent_key = "id", child_key = "quest_id", order_by = "seq" }
 comment = "Materialized from QuestReward child rows"
 
 [[tables]]
@@ -725,10 +722,7 @@ required = true
 [[tables.fields]]
 name = "first_clear_rewards"
 type = "list<Reward>"
-source_table = "StageReward"
-parent_key = "id"
-child_key = "stage_id"
-order_by = "seq"
+from = { table = "StageReward", parent_key = "id", child_key = "stage_id", order_by = "seq" }
 
 [[tables]]
 name = "StageReward"
@@ -1051,10 +1045,7 @@ required = true
 [[tables.fields]]
 name = "rewards"
 type = "list<Reward>"
-source_table = "MailReward"
-parent_key = "id"
-child_key = "mail_id"
-order_by = "seq"
+from = { table = "MailReward", parent_key = "id", child_key = "mail_id", order_by = "seq" }
 
 [[tables]]
 name = "MailReward"

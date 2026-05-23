@@ -233,13 +233,13 @@ fn field_note_text(ir: &ConfigIr, field: &FieldIr) -> Option<String> {
     if let Some([min, max]) = field.length {
         lines.push(format!("Length: {min}..{max}"));
     }
-    if let Some(aggregation) = &field.aggregation {
+    if let Some(derived_from) = &field.derived_from {
         lines.push(format!(
-            "Aggregation: {}.{} -> {}",
-            aggregation.source_table, aggregation.child_key, aggregation.parent_key
+            "From: {}.{} -> {}",
+            derived_from.source_table, derived_from.child_key, derived_from.parent_key
         ));
-        if let Some(value_field) = &aggregation.value_field {
-            lines.push(format!("Aggregation value field: {value_field}"));
+        if let Some(value_field) = &derived_from.value_field {
+            lines.push(format!("From field: {value_field}"));
         }
     }
 
@@ -504,7 +504,7 @@ mod tests {
     use std::collections::BTreeMap;
 
     use super::*;
-    use sora_ir::model::{AggregationIr, ConfigIr, EnumIr, ScopeIr, StructIr, TypeIr};
+    use sora_ir::model::{ConfigIr, DerivedFieldIr, EnumIr, ScopeIr, StructIr, TypeIr};
 
     #[test]
     fn field_note_text_includes_comment_and_metadata() {
@@ -519,7 +519,7 @@ mod tests {
             range: Some([1, 99]),
             length: Some([1, 3]),
             parser: None,
-            aggregation: Some(AggregationIr {
+            derived_from: Some(DerivedFieldIr {
                 source_table: "Reward".to_owned(),
                 parent_key: "id".to_owned(),
                 child_key: "item_id".to_owned(),
@@ -539,8 +539,8 @@ mod tests {
         assert!(note_text.contains("Default: []"));
         assert!(note_text.contains("Range: 1..99"));
         assert!(note_text.contains("Length: 1..3"));
-        assert!(note_text.contains("Aggregation: Reward.item_id -> id"));
-        assert!(note_text.contains("Aggregation value field: value"));
+        assert!(note_text.contains("From: Reward.item_id -> id"));
+        assert!(note_text.contains("From field: value"));
     }
 
     #[test]
@@ -556,7 +556,7 @@ mod tests {
             range: None,
             length: None,
             parser: None,
-            aggregation: None,
+            derived_from: None,
         };
 
         let ir = empty_ir();
@@ -588,7 +588,7 @@ mod tests {
                         range: None,
                         length: None,
                         parser: None,
-                        aggregation: None,
+                        derived_from: None,
                     },
                     FieldIr {
                         name: "id".to_owned(),
@@ -601,7 +601,7 @@ mod tests {
                         range: None,
                         length: None,
                         parser: None,
-                        aggregation: None,
+                        derived_from: None,
                     },
                     FieldIr {
                         name: "count".to_owned(),
@@ -614,7 +614,7 @@ mod tests {
                         range: None,
                         length: None,
                         parser: None,
-                        aggregation: None,
+                        derived_from: None,
                     },
                 ],
             }],
@@ -635,7 +635,7 @@ mod tests {
                 kind: "tuple".to_owned(),
                 options: BTreeMap::new(),
             }),
-            aggregation: None,
+            derived_from: None,
         };
 
         let note_text = field_note_text(&ir, &field).unwrap();

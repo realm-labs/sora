@@ -51,7 +51,7 @@ pub(super) fn load_validated_data(
 ) -> Result<sora_data::model::ConfigData> {
     let data = input.load_data_with_context(ir, execution)?;
     let data = sora_input::defaults::materialize_defaults(ir, &data)?;
-    let data = sora_data::aggregate::materialize_aggregations(ir, &data)?;
+    let data = sora_data::derived::materialize_derived_fields(ir, &data)?;
     sora_data::validate::validate_config_data(ir, &data)?;
     Ok(data)
 }

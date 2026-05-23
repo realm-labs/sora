@@ -45,7 +45,7 @@ range = [1, 999999]
 
 结构体适合多处复用的嵌套值。字段可以通过 `type = "struct<ResourceCost>"` 引用结构体。
 
-Struct field 使用和 table field 相同的字段属性，包括 `name`、`type`、`required`、`default`、`comment`、`range`、`length`、`parser` 和 `scope`。`key`、聚合配置这类表专用属性对普通 struct field 没有意义。完整字段参考见[类型](types.md#field-rules)。
+Struct field 使用和 table field 相同的字段属性，包括 `name`、`type`、`required`、`default`、`comment`、`range`、`length`、`parser` 和 `scope`。`key`、`from` 这类表专用属性对普通 struct field 没有意义。完整字段参考见[类型](types.md#field-rules)。
 
 在 Excel、CSV 这类单元格输入中，struct 字段默认可以写成 JSON object 文本：
 
