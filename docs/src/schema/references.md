@@ -1,6 +1,6 @@
 # References and Derived Fields
 
-References let one table point to another table's key field.
+References let one table point to another table's primary key. The target table must be `mode = "map"`, and the referenced field must be that table's `key`.
 
 ## References
 
@@ -14,6 +14,8 @@ required = true
 Sora validates that every value points to an existing row in the referenced table.
 
 References are still stored as values in source data. The generated runtime can expose them as key values or target-specific wrapper types depending on the language backend.
+
+References can be nested in containers such as `list<ref<Item.id>>`, `set<ref<Item.id>>`, or `optional<ref<Item.id>>`. The same primary-key rule applies to the inner `ref`.
 
 ## Derived Fields
 

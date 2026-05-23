@@ -281,6 +281,85 @@ type = "ref<Missing.id>"
         validate_config_ir(&bad_ref).unwrap_err(),
         SoraError::UnknownRefTable { table, .. } if table == "Missing"
     ));
+
+    let non_key_ref = example_ir(
+        r#"
+[[tables]]
+name = "Item"
+mode = "map"
+key = "id"
+
+[[tables.fields]]
+name = "id"
+type = "i32"
+
+[[tables.fields]]
+name = "name"
+type = "string"
+
+[[tables]]
+name = "Reward"
+mode = "list"
+
+[[tables.fields]]
+name = "item_name"
+type = "ref<Item.name>"
+"#,
+    );
+    assert!(matches!(
+        validate_config_ir(&non_key_ref).unwrap_err(),
+        SoraError::InvalidSchema(message)
+            if message.contains("references `Item.name`")
+                && message.contains("primary key")
+    ));
+
+    let list_ref_to_primary_key = example_ir(
+        r#"
+[[tables]]
+name = "Item"
+mode = "map"
+key = "id"
+
+[[tables.fields]]
+name = "id"
+type = "i32"
+
+[[tables]]
+name = "Reward"
+mode = "list"
+
+[[tables.fields]]
+name = "item_ids"
+type = "list<ref<Item.id>>"
+"#,
+    );
+    validate_config_ir(&list_ref_to_primary_key).unwrap();
+
+    let ref_to_list_table_field = example_ir(
+        r#"
+[[tables]]
+name = "RewardSource"
+mode = "list"
+
+[[tables.fields]]
+name = "id"
+type = "i32"
+
+[[tables]]
+name = "Reward"
+mode = "list"
+
+[[tables.fields]]
+name = "source_id"
+type = "ref<RewardSource.id>"
+"#,
+    );
+    assert!(matches!(
+        validate_config_ir(&ref_to_list_table_field).unwrap_err(),
+        SoraError::InvalidSchema(message)
+            if message.contains("references `RewardSource.id`")
+                && message.contains("map table")
+    ));
 }
 
 #[test]

@@ -30,6 +30,8 @@ range = [1, 100]
 | Union | `union<RewardAction>` |
 | Reference | `ref<Item.id>` |
 
+引用必须指向 `mode = "map"` 表的主键。容器可以包住引用，例如 `list<ref<Item.id>>`。
+
 ```toml
 [[tables.fields]]
 name = "item_type"

@@ -2,7 +2,7 @@ use std::collections::BTreeSet;
 
 use sora_diagnostics::{Result, SoraError};
 
-use crate::model::{FieldIr, TableIr, TypeIr};
+use crate::model::{FieldIr, TableIr, TableModeIr, TypeIr};
 pub(super) struct TypeReferenceContext<'a> {
     pub(super) enum_names: &'a BTreeSet<&'a str>,
     pub(super) struct_names: &'a BTreeSet<&'a str>,
@@ -83,6 +83,12 @@ pub(super) fn validate_type_references(
                     table: table.clone(),
                     ref_field: field.clone(),
                 });
+            }
+            if table_ir.mode != TableModeIr::Map || table_ir.key.as_deref() != Some(field) {
+                let primary_key = table_ir.key.as_deref().unwrap_or("<none>");
+                return Err(SoraError::InvalidSchema(format!(
+                    "field `{owner}.{field_name}` references `{table}.{field}`, but references can only target the primary key of a map table; `{table}` primary key is `{primary_key}`"
+                )));
             }
 
             Ok(())

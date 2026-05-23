@@ -18,7 +18,7 @@ If a field has no `parser`, Sora uses type-aware default parsing:
 | Type | Cell format |
 | --- | --- |
 | `bool` | Boolean cells, `true`, `false`, or numeric cells where zero is false and non-zero is true. |
-| `i32`, `i64`, `ref<Table.field>` | Integer cells, integer text, or whole-number float cells. |
+| `i32`, `i64`, `ref<Table.key>` | Integer cells, integer text, or whole-number float cells. |
 | `f32`, `f64` | Numeric cells or numeric text. |
 | `string`, `enum<Name>` | Cell display text. |
 | `struct<Name>`, `union<Name>` | JSON object text. |
@@ -43,7 +43,7 @@ For comma-separated collections, primitive items are parsed by type. Struct and 
 
 ## Tagged Union Columns
 
-`tagged_columns` is for editing one `union<T>` value across several Excel or CSV columns. It is only valid on table fields whose type is exactly `union<T>`. It is intentionally not valid for `optional<union<T>>`, `list<union<T>>`, `set<union<T>>`, or other containers. References such as `ref<EventConditionEntry.id>` keep their existing meaning; this parser only changes how the referenced union-entry table can write its own `union<T>` value.
+`tagged_columns` is for editing one `union<T>` value across several Excel or CSV columns. It is only valid on table fields whose type is exactly `union<T>`. It is intentionally not valid for `optional<union<T>>`, `list<union<T>>`, `set<union<T>>`, or other containers. References such as `ref<EventConditionEntry.id>` keep their existing primary-key meaning; this parser only changes how the referenced union-entry table can write its own `union<T>` value.
 
 With the default prefix, a field named `condition` for `union<EventCondition>` projects columns such as `condition.type`, `condition.quest_id`, and `condition.item_id`. Set `prefix = ""` when the table itself is the union entry table and you want top-level columns:
 

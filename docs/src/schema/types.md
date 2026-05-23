@@ -30,6 +30,8 @@ range = [1, 100]
 | Union | `union<RewardAction>` |
 | Reference | `ref<Item.id>` |
 
+References must point to the primary key of a `mode = "map"` table. Containers can wrap references, for example `list<ref<Item.id>>`.
+
 ```toml
 [[tables.fields]]
 name = "item_type"

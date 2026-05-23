@@ -18,7 +18,7 @@ Parser option 都是字符串。未知 parser、当前 parser 不支持的 optio
 | 类型 | Cell 写法 |
 | --- | --- |
 | `bool` | 布尔 cell、`true`、`false`，或数字 cell：0 为 false，非 0 为 true。 |
-| `i32`、`i64`、`ref<Table.field>` | 整数 cell、整数字符串，或无小数部分的 float cell。 |
+| `i32`、`i64`、`ref<Table.key>` | 整数 cell、整数字符串，或无小数部分的 float cell。 |
 | `f32`、`f64` | 数字 cell 或数字字符串。 |
 | `string`、`enum<Name>` | cell 展示文本。 |
 | `struct<Name>`、`union<Name>` | JSON object 文本。 |
@@ -43,7 +43,7 @@ Parser option 都是字符串。未知 parser、当前 parser 不支持的 optio
 
 ## Tagged Union Columns
 
-`tagged_columns` 用来把一个 `union<T>` 值展开到多列 Excel/CSV 中编辑。它只能用于类型正好是 `union<T>` 的 table field。它不能用于 `optional<union<T>>`、`list<union<T>>`、`set<union<T>>` 或其它容器。`ref<EventConditionEntry.id>` 这类引用仍然是已有语义；这个 parser 只改变被引用的 union 条目表如何填写自己的 `union<T>` 值。
+`tagged_columns` 用来把一个 `union<T>` 值展开到多列 Excel/CSV 中编辑。它只能用于类型正好是 `union<T>` 的 table field。它不能用于 `optional<union<T>>`、`list<union<T>>`、`set<union<T>>` 或其它容器。`ref<EventConditionEntry.id>` 这类引用仍然是已有的主键引用语义；这个 parser 只改变被引用的 union 条目表如何填写自己的 `union<T>` 值。
 
 默认 prefix 会使用字段名。例如字段 `condition` 的类型是 `union<EventCondition>`，会投影出 `condition.type`、`condition.quest_id`、`condition.item_id` 这类列。如果这个表本身就是 union 词表，可以设置 `prefix = ""` 让列展开到顶层：
 
