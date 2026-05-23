@@ -1,9 +1,6 @@
 (function () {
   function normalizedRelativePath() {
-    var path = window.location.pathname;
-    var marker = "/sora/";
-    var index = path.indexOf(marker);
-    var relative = index >= 0 ? path.slice(index + marker.length) : path.replace(/^\/+/, "");
+    var relative = relativePathFromLocation(window.location);
 
     if (relative === "" || relative.endsWith("/")) {
       relative += "index.html";
@@ -27,6 +24,7 @@
       "tutorial/excel-workflow.html",
       "tutorial/load-generated-code.html",
       "schema/types.html",
+      "schema/parsers.html",
       "schema/tables.html",
       "schema/enums-structs-unions.html",
       "schema/references.html",
@@ -84,21 +82,57 @@
     }
   }
 
-  function languageForPath(path) {
+  function relativePathFromLocation(location) {
+    return relativePathFromPath(location.pathname);
+  }
+
+  function relativePathFromPath(path) {
     var marker = "/sora/";
     var index = path.indexOf(marker);
-    var relative = index >= 0 ? path.slice(index + marker.length) : path.replace(/^\/+/, "");
+    if (index >= 0) {
+      return path.slice(index + marker.length);
+    }
+
+    var bookIndex = path.indexOf("/docs/book/");
+    if (bookIndex >= 0) {
+      return path.slice(bookIndex + "/docs/book/".length);
+    }
+
+    var root = typeof path_to_root === "string" ? path_to_root : "";
+    var rootPath = new URL(root || ".", window.location.href).pathname;
+    if (!rootPath.endsWith("/")) {
+      rootPath += "/";
+    }
+    if (path.startsWith(rootPath)) {
+      return path.slice(rootPath.length);
+    }
+
+    return path.replace(/^\/+/, "");
+  }
+
+  function languageForPath(path) {
+    var relative = relativePathFromPath(path);
     return relative.startsWith("zh/") ? "zh" : "en";
   }
 
   function filterSidebar() {
     var currentLanguage = languageForPath(window.location.pathname);
-    var sidebar = document.getElementById("sidebar");
+    var sidebar = document.getElementById("mdbook-sidebar") || document.getElementById("sidebar");
     if (!sidebar) {
       return;
     }
 
-    sidebar.querySelectorAll("li.chapter-item").forEach(function (item) {
+    var chapter = sidebar.querySelector("ol.chapter");
+    if (!chapter) {
+      return;
+    }
+
+    Array.from(chapter.children).forEach(function (item) {
+      if (item.classList.contains("part-title")) {
+        item.hidden = true;
+        return;
+      }
+
       if (item.querySelector(".part-title")) {
         item.hidden = true;
         return;
@@ -106,6 +140,7 @@
 
       var link = item.querySelector(".chapter-link-wrapper > a");
       if (!link) {
+        item.hidden = true;
         return;
       }
 

@@ -52,3 +52,45 @@ lua_version = "5.4"
 ```
 
 These options are consumed by the selected generator. The normalized IR stays language-neutral.
+
+`runtime_format` can be `sora`, `json`, `cbor`, or `sora-protobuf`, but not every target supports every runtime format. See [Runtime Formats](codegen/runtime-formats.md) for the support matrix.
+
+## Built-In Target Options
+
+| Target | Options |
+| --- | --- |
+| `rust` | `runtime_format` default `sora`; `map_type = "std"` or `"fx_hash_map"` default `std`; `string_storage = "owned"` or `"arc"` default `owned`. |
+| `kotlin` | `runtime_format` default `sora`. |
+| `csharp` | `runtime_format` default `sora`. |
+| `java` | `runtime_format` default `sora`. |
+| `scala` | `runtime_format` default `sora`; `scala_version = "2.12"`, `"2.13"`, or `"3"` default `3`. |
+| `go` | `runtime_format` default `sora`. |
+| `dart` | `runtime_format = "json"`, `"cbor"`, or `"sora-protobuf"`. Set this explicitly; `sora` is not supported for Dart. |
+| `godot` | `runtime_format = "json"`. Set this explicitly; it is the only supported Godot runtime format. |
+| `c` | `runtime_format = "sora"`; `c_standard = "c99"`, `"c11"`, `"c17"`, or `"c23"` default `c11`; `prefix` optional symbol prefix. |
+| `cpp` | `runtime_format = "sora"`; `cpp_standard = "c++11"`, `"c++14"`, `"c++17"`, `"c++20"`, or `"c++23"` default `c++17`; `namespace` optional C++ namespace. |
+| `typescript` | `runtime_format` default `sora`; `enum_repr = "string"` or `"integer"` default `string`. |
+| `javascript` | `runtime_format` default `sora`; `enum_repr = "string"` or `"integer"` default `string`; `emit_dts` boolean default `true`. |
+| `erlang` | `runtime_format` default `sora`; `enum_repr = "atom"` or `"integer"` default `atom`. |
+| `lua` | `runtime_format` default `sora`; `module` optional require/import prefix; `lua_version = "5.1"`, `"5.2"`, `"5.3"`, `"5.4"`, or `"luajit"` default `5.4`; `enum_repr = "string"` or `"integer"` default `string`. |
+| `python` | `runtime_format` default `sora`. |
+| `proto-schema` | No target options. Generates `.proto` schema files instead of a runtime loader. |
+
+Example with several language-specific options:
+
+```toml
+[codegen.rust]
+runtime_format = "sora"
+map_type = "fx_hash_map"
+string_storage = "arc"
+
+[codegen.cpp]
+runtime_format = "sora"
+cpp_standard = "c++20"
+namespace = "game::config"
+
+[codegen.javascript]
+runtime_format = "json"
+enum_repr = "integer"
+emit_dts = true
+```

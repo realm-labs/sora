@@ -67,15 +67,25 @@ parser = { kind = "map" }
 
 ## Field Rules
 
-| Property | Purpose |
-| --- | --- |
-| `required` | Requires a value unless a default applies. |
-| `default` | Value used when the source cell is blank. |
-| `key` | Marks the table key field. |
-| `comment` | Description used in generated Excel headers. |
-| `range` | Inclusive numeric range. |
-| `length` | Inclusive collection or string length range. |
-| `parser` | Cell parser hint such as `json`, `tuple`, `tuple_list`, or `map`. |
-| `scope` | Includes the field only for selected generation/export scopes. |
+The same field object is used in `[[tables.fields]]`, `[[structs.fields]]`, and `[[unions.variants.fields]]`. Table-only settings are ignored or invalid outside table fields as noted below.
+
+| Property | Applies To | Purpose |
+| --- | --- | --- |
+| `name` | all fields | Field name used in source data, validation errors, generated code, and exported runtime data. |
+| `type` | all fields | Type expression such as `i32`, `struct<ResourceCost>`, or `list<union<RewardAction>>`. |
+| `required` | all fields | Requires a value unless a default applies. Defaults to `false`. |
+| `default` | all fields except aggregation fields | String value used when the source cell or object field is absent. |
+| `key` | table fields | Marks the table key field. Usually matches the table-level `key`. |
+| `comment` | all fields | Description used in generated Excel headers. |
+| `range` | numeric fields and numeric collection elements | Inclusive numeric range, written as `[min, max]`. |
+| `length` | `string`, `list`, `set`, `array`, `map` | Inclusive length range, written as `[min, max]`. |
+| `parser` | cell-based inputs and defaults | Cell parser hint. See [Cell Parsers](parsers.md). |
+| `scope` | all fields | Includes the field only for selected generation/export scopes. Defaults to `all`. |
+| `source_table` | table fields only | Aggregation source table. Must be used with `parent_key` and `child_key`. |
+| `parent_key` | table fields only | Aggregation key field on the owner table. |
+| `child_key` | table fields only | Aggregation key field on the source table. |
+| `order_by` | table aggregation fields | Optional source-table field used for ascending aggregation order. |
 
 Defaults are written as strings because they are parsed through the same type-aware conversion path as source data.
+
+`source_table`, `parent_key`, and `child_key` describe aggregation fields; see [References and Aggregation](references.md). Aggregation fields must have type `list<struct<...>>` and cannot declare `default`.

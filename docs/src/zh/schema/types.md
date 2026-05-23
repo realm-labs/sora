@@ -67,15 +67,25 @@ parser = { kind = "map" }
 
 ## Field Rules
 
-| Property | Purpose |
-| --- | --- |
-| `required` | 要求有值，除非存在 default。 |
-| `default` | 源单元格为空时使用的值。 |
-| `key` | 标记表 key 字段。 |
-| `comment` | 用于生成 Excel 表头说明。 |
-| `range` | 数值闭区间。 |
-| `length` | 字符串或集合长度闭区间。 |
-| `parser` | 单元格 parser 提示，例如 `json`、`tuple`、`tuple_list` 或 `map`。 |
-| `scope` | 仅在选定 generation/export scope 下包含该字段。 |
+`[[tables.fields]]`、`[[structs.fields]]` 和 `[[unions.variants.fields]]` 使用同一种 field object。只对表字段有意义的配置在下表单独标出。
+
+| Property | 适用范围 | 作用 |
+| --- | --- | --- |
+| `name` | 所有字段 | 字段名。用于源数据、校验错误、生成代码和导出的运行时数据。 |
+| `type` | 所有字段 | 类型表达式，例如 `i32`、`struct<ResourceCost>` 或 `list<union<RewardAction>>`。 |
+| `required` | 所有字段 | 要求有值，除非存在 default。默认是 `false`。 |
+| `default` | 除聚合字段外的所有字段 | 源单元格或 object 字段缺失时使用的字符串值。 |
+| `key` | 表字段 | 标记表 key 字段。通常和 table-level `key` 一致。 |
+| `comment` | 所有字段 | 用于生成 Excel 表头说明。 |
+| `range` | 数值字段和数值集合元素 | 数值闭区间，写作 `[min, max]`。 |
+| `length` | `string`、`list`、`set`、`array`、`map` | 长度闭区间，写作 `[min, max]`。 |
+| `parser` | 单元格输入和 default | 单元格 parser 提示。见[单元格 Parser](parsers.md)。 |
+| `scope` | 所有字段 | 仅在选定 generation/export scope 下包含该字段。默认是 `all`。 |
+| `source_table` | 仅表字段 | 聚合 source table。必须和 `parent_key`、`child_key` 一起使用。 |
+| `parent_key` | 仅表字段 | 聚合时 owner table 上的 key 字段。 |
+| `child_key` | 仅表字段 | 聚合时 source table 上的 key 字段。 |
+| `order_by` | 表聚合字段 | 可选的 source-table 排序字段，按升序聚合。 |
 
 default 写成字符串，因为它会走和源数据相同的类型感知转换路径。
+
+`source_table`、`parent_key`、`child_key` 用来描述聚合字段，详见[引用和聚合](references.md)。聚合字段必须是 `list<struct<...>>`，且不能声明 `default`。

@@ -86,3 +86,5 @@ optional<string>
 ```
 
 See [Types](schema/types.md) for the full list and examples.
+
+See [Cell Parsers](schema/parsers.md) for compact Excel/CSV cell formats such as `split`, `tuple`, `tuple_list`, `map`, and `json`.

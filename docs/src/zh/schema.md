@@ -86,3 +86,5 @@ optional<string>
 ```
 
 完整说明见[类型](schema/types.md)。
+
+`split`、`tuple`、`tuple_list`、`map`、`json` 等 Excel/CSV 紧凑单元格写法见[单元格 Parser](schema/parsers.md)。
