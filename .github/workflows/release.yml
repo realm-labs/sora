@@ -234,49 +234,11 @@ jobs:
             exit 1
           fi
 
-          crates=(
-            sora-diagnostics
-            sora-schema
-            sora-templates
-            sora-config-format
-            sora-execution
-            sora-ir
-            sora-data
-            sora-input
-            sora-codegen
-            sora-export
-            sora-excel
-            sora-input-schema
-            sora-input-toml
-            sora-input-csv
-            sora-input-xlsx
-            sora-core
-            sora-cli
-          )
-
-          publish_crate() {
-            local crate="$1"
-            local output
-
-            echo "Publishing ${crate} ${VERSION}."
-            if output="$(cargo publish -p "$crate" --locked --allow-dirty 2>&1)"; then
-              echo "$output"
-            else
-              local status="$?"
-              echo "$output"
-
-              if grep -qi "already exists" <<< "$output"; then
-                echo "${crate} ${VERSION} already exists on crates.io; skipping."
-                return 0
-              fi
-
-              return "$status"
-            fi
-          }
-
-          for crate in "${crates[@]}"; do
-            publish_crate "$crate"
-          done
+          cargo publish --workspace \
+            --exclude sora-showcase-builder \
+            --exclude sora-showcase-rust \
+            --locked \
+            --allow-dirty
 
   publish-release:
     name: Publish GitHub release
