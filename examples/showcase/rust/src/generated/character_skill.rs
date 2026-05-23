@@ -11,7 +11,9 @@ pub struct CharacterSkill {
 }
 
 impl super::runtime::SoraDecode for CharacterSkill {
-    fn decode(reader: &mut super::runtime::SoraReader<'_>) -> Result<Self, super::runtime::SoraReadError> {
+    fn decode(
+        reader: &mut super::runtime::SoraReader<'_>,
+    ) -> Result<Self, super::runtime::SoraReadError> {
         Ok(Self {
             character_id: <i32 as super::runtime::SoraDecode>::decode(reader)?,
             skill_id: <i32 as super::runtime::SoraDecode>::decode(reader)?,
@@ -32,11 +34,12 @@ impl CharacterSkillTable {
         row_type: "CharacterSkill",
         shape: super::SoraTableShape::List,
         primary_key: None,
-        indexes: &[
-        ],
+        indexes: &[],
     };
 
-    pub(super) fn from_rows(rows: Vec<CharacterSkill>) -> Result<Self, super::runtime::SoraReadError> {
+    pub(super) fn from_rows(
+        rows: Vec<CharacterSkill>,
+    ) -> Result<Self, super::runtime::SoraReadError> {
         Ok(Self { rows })
     }
 }

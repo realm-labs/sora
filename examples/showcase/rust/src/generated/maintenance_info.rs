@@ -11,7 +11,9 @@ pub struct MaintenanceInfo {
 }
 
 impl super::runtime::SoraDecode for MaintenanceInfo {
-    fn decode(reader: &mut super::runtime::SoraReader<'_>) -> Result<Self, super::runtime::SoraReadError> {
+    fn decode(
+        reader: &mut super::runtime::SoraReader<'_>,
+    ) -> Result<Self, super::runtime::SoraReadError> {
         Ok(Self {
             starts_at: <std::sync::Arc<str> as super::runtime::SoraDecode>::decode(reader)?,
             duration_minutes: <i32 as super::runtime::SoraDecode>::decode(reader)?,

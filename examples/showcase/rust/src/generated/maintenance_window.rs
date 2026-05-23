@@ -13,7 +13,9 @@ pub struct MaintenanceWindow {
 }
 
 impl super::runtime::SoraDecode for MaintenanceWindow {
-    fn decode(reader: &mut super::runtime::SoraReader<'_>) -> Result<Self, super::runtime::SoraReadError> {
+    fn decode(
+        reader: &mut super::runtime::SoraReader<'_>,
+    ) -> Result<Self, super::runtime::SoraReadError> {
         Ok(Self {
             version: <std::sync::Arc<str> as super::runtime::SoraDecode>::decode(reader)?,
             starts_at: <std::sync::Arc<str> as super::runtime::SoraDecode>::decode(reader)?,
@@ -35,11 +37,12 @@ impl MaintenanceWindowTable {
         row_type: "MaintenanceWindow",
         shape: super::SoraTableShape::List,
         primary_key: None,
-        indexes: &[
-        ],
+        indexes: &[],
     };
 
-    pub(super) fn from_rows(rows: Vec<MaintenanceWindow>) -> Result<Self, super::runtime::SoraReadError> {
+    pub(super) fn from_rows(
+        rows: Vec<MaintenanceWindow>,
+    ) -> Result<Self, super::runtime::SoraReadError> {
         Ok(Self { rows })
     }
 }

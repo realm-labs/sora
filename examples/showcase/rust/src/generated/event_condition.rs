@@ -28,7 +28,9 @@ pub enum EventCondition {
 }
 
 impl super::runtime::SoraDecode for EventCondition {
-    fn decode(reader: &mut super::runtime::SoraReader<'_>) -> Result<Self, super::runtime::SoraReadError> {
+    fn decode(
+        reader: &mut super::runtime::SoraReader<'_>,
+    ) -> Result<Self, super::runtime::SoraReadError> {
         match reader.read_var_u32()? {
             0 => Ok(Self::LevelAtLeast {
                 level: <i32 as super::runtime::SoraDecode>::decode(reader)?,
@@ -46,7 +48,10 @@ impl super::runtime::SoraDecode for EventCondition {
             4 => Ok(Self::AnyCondition {
                 condition_group_id: <i32 as super::runtime::SoraDecode>::decode(reader)?,
             }),
-            value => Err(super::runtime::SoraReadError::new(format!("invalid union ordinal {} for EventCondition", value))),
+            value => Err(super::runtime::SoraReadError::new(format!(
+                "invalid union ordinal {} for EventCondition",
+                value
+            ))),
         }
     }
 }

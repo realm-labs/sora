@@ -14,7 +14,9 @@ pub struct GachaItem {
 }
 
 impl super::runtime::SoraDecode for GachaItem {
-    fn decode(reader: &mut super::runtime::SoraReader<'_>) -> Result<Self, super::runtime::SoraReadError> {
+    fn decode(
+        reader: &mut super::runtime::SoraReader<'_>,
+    ) -> Result<Self, super::runtime::SoraReadError> {
         Ok(Self {
             pool_id: <i32 as super::runtime::SoraDecode>::decode(reader)?,
             item_id: <i32 as super::runtime::SoraDecode>::decode(reader)?,
@@ -36,8 +38,7 @@ impl GachaItemTable {
         row_type: "GachaItem",
         shape: super::SoraTableShape::List,
         primary_key: None,
-        indexes: &[
-        ],
+        indexes: &[],
     };
 
     pub(super) fn from_rows(rows: Vec<GachaItem>) -> Result<Self, super::runtime::SoraReadError> {

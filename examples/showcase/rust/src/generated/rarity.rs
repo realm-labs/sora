@@ -10,14 +10,19 @@ pub enum Rarity {
 }
 
 impl super::runtime::SoraDecode for Rarity {
-    fn decode(reader: &mut super::runtime::SoraReader<'_>) -> Result<Self, super::runtime::SoraReadError> {
+    fn decode(
+        reader: &mut super::runtime::SoraReader<'_>,
+    ) -> Result<Self, super::runtime::SoraReadError> {
         match reader.read_var_u32()? {
             0 => Ok(Self::Common),
             1 => Ok(Self::Uncommon),
             2 => Ok(Self::Rare),
             3 => Ok(Self::Epic),
             4 => Ok(Self::Legendary),
-            value => Err(super::runtime::SoraReadError::new(format!("invalid enum ordinal {} for Rarity", value))),
+            value => Err(super::runtime::SoraReadError::new(format!(
+                "invalid enum ordinal {} for Rarity",
+                value
+            ))),
         }
     }
 }

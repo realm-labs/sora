@@ -12,11 +12,15 @@ pub struct LevelExp {
 }
 
 impl super::runtime::SoraDecode for LevelExp {
-    fn decode(reader: &mut super::runtime::SoraReader<'_>) -> Result<Self, super::runtime::SoraReadError> {
+    fn decode(
+        reader: &mut super::runtime::SoraReader<'_>,
+    ) -> Result<Self, super::runtime::SoraReadError> {
         Ok(Self {
             level: <i32 as super::runtime::SoraDecode>::decode(reader)?,
             exp: <i64 as super::runtime::SoraDecode>::decode(reader)?,
-            unlock_feature: <Option<std::sync::Arc<str>> as super::runtime::SoraDecode>::decode(reader)?,
+            unlock_feature: <Option<std::sync::Arc<str>> as super::runtime::SoraDecode>::decode(
+                reader,
+            )?,
         })
     }
 }
@@ -37,13 +41,15 @@ impl LevelExpTable {
             name: "level",
             ty: "i32",
         }),
-        indexes: &[
-        ],
+        indexes: &[],
     };
 
     pub(super) fn from_rows(rows: Vec<LevelExp>) -> Result<Self, super::runtime::SoraReadError> {
         let keys = rows.iter().map(|row| row.level).collect::<Vec<_>>();
-        Ok(Self { keys, rows: super::decode_map_table(rows, |row| row.level) })
+        Ok(Self {
+            keys,
+            rows: super::decode_map_table(rows, |row| row.level),
+        })
     }
 
     pub fn get(&self, key: &i32) -> Option<&LevelExp> {

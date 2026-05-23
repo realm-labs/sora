@@ -29,7 +29,9 @@ pub struct GameSettings {
 }
 
 impl super::runtime::SoraDecode for GameSettings {
-    fn decode(reader: &mut super::runtime::SoraReader<'_>) -> Result<Self, super::runtime::SoraReadError> {
+    fn decode(
+        reader: &mut super::runtime::SoraReader<'_>,
+    ) -> Result<Self, super::runtime::SoraReadError> {
         Ok(Self {
             version: <std::sync::Arc<str> as super::runtime::SoraDecode>::decode(reader)?,
             daily_reset_hour: <i32 as super::runtime::SoraDecode>::decode(reader)?,
@@ -56,12 +58,15 @@ impl GameSettingsTable {
         row_type: "GameSettings",
         shape: super::SoraTableShape::Singleton,
         primary_key: None,
-        indexes: &[
-        ],
+        indexes: &[],
     };
 
-    pub(super) fn from_rows(rows: Vec<GameSettings>) -> Result<Self, super::runtime::SoraReadError> {
-        Ok(Self { rows: super::decode_singleton_table(rows, Self::NAME)? })
+    pub(super) fn from_rows(
+        rows: Vec<GameSettings>,
+    ) -> Result<Self, super::runtime::SoraReadError> {
+        Ok(Self {
+            rows: super::decode_singleton_table(rows, Self::NAME)?,
+        })
     }
 }
 

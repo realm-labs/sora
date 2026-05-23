@@ -12,7 +12,9 @@ pub struct RewardBundle {
 }
 
 impl super::runtime::SoraDecode for RewardBundle {
-    fn decode(reader: &mut super::runtime::SoraReader<'_>) -> Result<Self, super::runtime::SoraReadError> {
+    fn decode(
+        reader: &mut super::runtime::SoraReader<'_>,
+    ) -> Result<Self, super::runtime::SoraReadError> {
         Ok(Self {
             cost: <ResourceCost as super::runtime::SoraDecode>::decode(reader)?,
             weight: <i32 as super::runtime::SoraDecode>::decode(reader)?,

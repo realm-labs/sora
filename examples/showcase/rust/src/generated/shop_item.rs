@@ -16,7 +16,9 @@ pub struct ShopItem {
 }
 
 impl super::runtime::SoraDecode for ShopItem {
-    fn decode(reader: &mut super::runtime::SoraReader<'_>) -> Result<Self, super::runtime::SoraReadError> {
+    fn decode(
+        reader: &mut super::runtime::SoraReader<'_>,
+    ) -> Result<Self, super::runtime::SoraReadError> {
         Ok(Self {
             shop_id: <i32 as super::runtime::SoraDecode>::decode(reader)?,
             seq: <i32 as super::runtime::SoraDecode>::decode(reader)?,
@@ -39,8 +41,7 @@ impl ShopItemTable {
         row_type: "ShopItem",
         shape: super::SoraTableShape::List,
         primary_key: None,
-        indexes: &[
-        ],
+        indexes: &[],
     };
 
     pub(super) fn from_rows(rows: Vec<ShopItem>) -> Result<Self, super::runtime::SoraReadError> {

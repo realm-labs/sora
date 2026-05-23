@@ -10,7 +10,9 @@ pub struct DropGroup {
 }
 
 impl super::runtime::SoraDecode for DropGroup {
-    fn decode(reader: &mut super::runtime::SoraReader<'_>) -> Result<Self, super::runtime::SoraReadError> {
+    fn decode(
+        reader: &mut super::runtime::SoraReader<'_>,
+    ) -> Result<Self, super::runtime::SoraReadError> {
         Ok(Self {
             id: <i32 as super::runtime::SoraDecode>::decode(reader)?,
             name: <std::sync::Arc<str> as super::runtime::SoraDecode>::decode(reader)?,
@@ -34,13 +36,15 @@ impl DropGroupTable {
             name: "id",
             ty: "i32",
         }),
-        indexes: &[
-        ],
+        indexes: &[],
     };
 
     pub(super) fn from_rows(rows: Vec<DropGroup>) -> Result<Self, super::runtime::SoraReadError> {
         let keys = rows.iter().map(|row| row.id).collect::<Vec<_>>();
-        Ok(Self { keys, rows: super::decode_map_table(rows, |row| row.id) })
+        Ok(Self {
+            keys,
+            rows: super::decode_map_table(rows, |row| row.id),
+        })
     }
 
     pub fn get(&self, key: &i32) -> Option<&DropGroup> {

@@ -13,7 +13,9 @@ pub struct ComplexBudget {
 }
 
 impl super::runtime::SoraDecode for ComplexBudget {
-    fn decode(reader: &mut super::runtime::SoraReader<'_>) -> Result<Self, super::runtime::SoraReadError> {
+    fn decode(
+        reader: &mut super::runtime::SoraReader<'_>,
+    ) -> Result<Self, super::runtime::SoraReadError> {
         Ok(Self {
             fixed: <ResourceCost as super::runtime::SoraDecode>::decode(reader)?,
             random: <Vec<RewardBundle> as super::runtime::SoraDecode>::decode(reader)?,

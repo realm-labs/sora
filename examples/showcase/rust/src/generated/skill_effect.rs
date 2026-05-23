@@ -12,7 +12,9 @@ pub struct SkillEffect {
 }
 
 impl super::runtime::SoraDecode for SkillEffect {
-    fn decode(reader: &mut super::runtime::SoraReader<'_>) -> Result<Self, super::runtime::SoraReadError> {
+    fn decode(
+        reader: &mut super::runtime::SoraReader<'_>,
+    ) -> Result<Self, super::runtime::SoraReadError> {
         Ok(Self {
             element: <ElementType as super::runtime::SoraDecode>::decode(reader)?,
             power: <i32 as super::runtime::SoraDecode>::decode(reader)?,
