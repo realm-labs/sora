@@ -4,8 +4,67 @@
     "rows": [
       {
         "values": {
+          "daily_bonus_items": {
+            "List": [
+              {
+                "Integer": 1001
+              },
+              {
+                "Integer": 1002
+              },
+              {
+                "Integer": 2001
+              }
+            ]
+          },
           "daily_reset_hour": {
             "Integer": 5
+          },
+          "gravity": {
+            "Float": 9.80665
+          },
+          "maintenance": {
+            "Object": {
+              "duration_minutes": {
+                "Integer": 90
+              },
+              "reason": {
+                "String": "Season rollout"
+              },
+              "starts_at": {
+                "String": "2026-06-01T03:00:00Z"
+              }
+            }
+          },
+          "spawn_points": {
+            "List": [
+              {
+                "Object": {
+                  "x": {
+                    "Float": 0.0
+                  },
+                  "y": {
+                    "Float": 0.0
+                  },
+                  "z": {
+                    "Float": 0.0
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "x": {
+                    "Float": 12.0
+                  },
+                  "y": {
+                    "Float": 0.0
+                  },
+                  "z": {
+                    "Float": 8.0
+                  }
+                }
+              }
+            ]
           },
           "spawn_pos": {
             "Object": {

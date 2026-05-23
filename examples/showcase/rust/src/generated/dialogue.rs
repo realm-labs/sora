@@ -12,9 +12,7 @@ pub struct Dialogue {
 }
 
 impl super::runtime::SoraDecode for Dialogue {
-    fn decode(
-        reader: &mut super::runtime::SoraReader<'_>,
-    ) -> Result<Self, super::runtime::SoraReadError> {
+    fn decode(reader: &mut super::runtime::SoraReader<'_>) -> Result<Self, super::runtime::SoraReadError> {
         Ok(Self {
             id: <i32 as super::runtime::SoraDecode>::decode(reader)?,
             speaker_key: <std::sync::Arc<str> as super::runtime::SoraDecode>::decode(reader)?,
@@ -39,15 +37,13 @@ impl DialogueTable {
             name: "id",
             ty: "i32",
         }),
-        indexes: &[],
+        indexes: &[
+        ],
     };
 
     pub(super) fn from_rows(rows: Vec<Dialogue>) -> Result<Self, super::runtime::SoraReadError> {
         let keys = rows.iter().map(|row| row.id).collect::<Vec<_>>();
-        Ok(Self {
-            keys,
-            rows: super::decode_map_table(rows, |row| row.id),
-        })
+        Ok(Self { keys, rows: super::decode_map_table(rows, |row| row.id) })
     }
 
     pub fn get(&self, key: &i32) -> Option<&Dialogue> {

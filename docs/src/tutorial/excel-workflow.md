@@ -73,14 +73,16 @@ Generated sheets include several header rows:
 | `#field` | Stable schema field names read by Sora. |
 | `#type` | Type hints such as `i32`, `enum<ItemType>`, or `struct<Cost>(kind: enum<ResourceKind>, id: i32, count: i32)`. |
 | `#scope` | Scope information for each field. |
-| `#rule` | Key, required, optional, parser, and range hints. |
+| `#input` | Input hints such as key, parser, range, length, or derived-field source. |
 | `#desc` | Field comments for designers and reviewers. |
 
 Data rows start after the generated header.
 
 ## What Users Should Edit
 
-Users should edit data rows. They should not hand-maintain field names, types, key metadata, or validation rules in Excel. Those rows are regenerated from schema changes.
+Users should edit data rows. They should not hand-maintain field names, types, key metadata, input hints, or validation rules in Excel. Those rows are regenerated from schema changes.
+
+If a column's `#input` cell starts with `from=`, that field is derived from another table. Leave the generated placeholder in that column and edit the child table rows instead.
 
 When the schema changes, regenerate the template, then migrate or paste the data rows into the new sheet. This keeps spreadsheet editing convenient without making Excel a second schema language.
 

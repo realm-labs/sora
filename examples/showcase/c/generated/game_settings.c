@@ -40,6 +40,34 @@ sora_result sora_showcase_game_settings_decode(sora_reader* reader, sora_showcas
             return result;
         }
     }
+    {
+        sora_result result = sora_reader_read_f64(reader, &out->gravity);
+        if (result.code != SORA_OK) {
+            sora_showcase_game_settings_free(out);
+            return result;
+        }
+    }
+    {
+        sora_result result = sora_showcase_i32_array_3_decode(reader, &out->daily_bonus_items);
+        if (result.code != SORA_OK) {
+            sora_showcase_game_settings_free(out);
+            return result;
+        }
+    }
+    {
+        sora_result result = sora_showcase_vec3_array_2_decode(reader, &out->spawn_points);
+        if (result.code != SORA_OK) {
+            sora_showcase_game_settings_free(out);
+            return result;
+        }
+    }
+    {
+        sora_result result = sora_showcase_optional_maintenance_info_decode(reader, &out->maintenance);
+        if (result.code != SORA_OK) {
+            sora_showcase_game_settings_free(out);
+            return result;
+        }
+    }
     return sora_ok();
 }
 
@@ -50,6 +78,9 @@ void sora_showcase_game_settings_free(sora_showcase_game_settings* value) {
     sora_string_free(&value->version);
     sora_showcase_vec3_free(&value->spawn_pos);
     sora_showcase_i32_array_free(&value->starter_items);
+    sora_showcase_i32_array_3_free(&value->daily_bonus_items);
+    sora_showcase_vec3_array_2_free(&value->spawn_points);
+    sora_showcase_optional_maintenance_info_free(&value->maintenance);
     *value = (sora_showcase_game_settings){0};
 }
 

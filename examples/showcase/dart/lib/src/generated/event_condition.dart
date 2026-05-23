@@ -22,6 +22,14 @@ sealed class EventCondition {
           itemId: obj.get("item_id").asInt(),
           count: obj.get("count").asInt(),
         );
+      case 'AllConditions':
+        return EventConditionAllConditions(
+          conditionGroupId: obj.get("condition_group_id").asInt(),
+        );
+      case 'AnyCondition':
+        return EventConditionAnyCondition(
+          conditionGroupId: obj.get("condition_group_id").asInt(),
+        );
       default:
         throw SoraReadException('invalid union tag `$tag` for EventCondition');
     }
@@ -51,5 +59,21 @@ final class EventConditionHasItem extends EventCondition {
   const EventConditionHasItem({
     required this.itemId,
     required this.count,
+  });
+}
+
+final class EventConditionAllConditions extends EventCondition {
+  final int conditionGroupId;
+
+  const EventConditionAllConditions({
+    required this.conditionGroupId,
+  });
+}
+
+final class EventConditionAnyCondition extends EventCondition {
+  final int conditionGroupId;
+
+  const EventConditionAnyCondition({
+    required this.conditionGroupId,
   });
 }

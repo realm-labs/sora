@@ -8,6 +8,9 @@ import {
     requireSingletonTable,
 } from "./sora_runtime.js";
 
+import type { MaintenanceInfo } from "./maintenance_info.js";
+import { decodeMaintenanceInfo, decodeMaintenanceInfoValue } from "./maintenance_info.js";
+
 import type { Vec3 } from "./vec3.js";
 import { decodeVec3, decodeVec3Value } from "./vec3.js";
 
@@ -18,6 +21,14 @@ export interface GameSettings {
     startingGold: number;
     spawnPos: Vec3;
     starterItems: number[];
+    /** Double precision tuning value */
+    gravity: number;
+    /** Fixed-length array parsed from one cell */
+    dailyBonusItems: number[];
+    /** Fixed-length array of structs */
+    spawnPoints: Vec3[];
+    /** Optional derived struct copied from a child row */
+    maintenance: MaintenanceInfo | undefined;
 }
 
 export function decodeGameSettings(reader: SoraReader): GameSettings {
@@ -27,6 +38,10 @@ export function decodeGameSettings(reader: SoraReader): GameSettings {
         startingGold: reader.readI32(),
         spawnPos: decodeVec3(reader),
         starterItems: reader.readList(() => reader.readI32()),
+        gravity: reader.readF64(),
+        dailyBonusItems: reader.readList(() => reader.readI32()),
+        spawnPoints: reader.readList(() => decodeVec3(reader)),
+        maintenance: reader.readOptional(() => decodeMaintenanceInfo(reader)),
     };
 }
 
@@ -38,6 +53,10 @@ export function decodeGameSettingsValue(value: SoraValue): GameSettings {
         startingGold: object.get("starting_gold").asInt(),
         spawnPos: decodeVec3Value(object.get("spawn_pos")),
         starterItems: object.get("starter_items").asList((item) => item.asInt()),
+        gravity: object.get("gravity").asNumber(),
+        dailyBonusItems: object.get("daily_bonus_items").asList((item) => item.asInt()),
+        spawnPoints: object.get("spawn_points").asList((item) => decodeVec3Value(item)),
+        maintenance: object.get("maintenance").isNull() ? undefined : decodeMaintenanceInfoValue(object.get("maintenance")),
     };
 }
 

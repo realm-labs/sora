@@ -73,14 +73,16 @@ sheet = "Skill"
 | `#field` | Sora 读取的稳定 schema 字段名。 |
 | `#type` | 类型提示，例如 `i32`、`enum<ItemType>` 或 `struct<Cost>(kind: enum<ResourceKind>, id: i32, count: i32)`。 |
 | `#scope` | 每个字段的 scope 信息。 |
-| `#rule` | key、required、optional、parser 和 range 提示。 |
+| `#input` | key、parser、range、length 或派生字段来源等输入提示。 |
 | `#desc` | 给编辑者和 reviewer 看的字段注释。 |
 
 数据行从生成表头之后开始。
 
 ## 用户应该编辑什么
 
-用户应该编辑数据行，不应该手工维护 Excel 里的字段名、类型、key 元数据或校验规则。这些行会从 schema 重新生成。
+用户应该编辑数据行，不应该手工维护 Excel 里的字段名、类型、key 元数据、输入提示或校验规则。这些行会从 schema 重新生成。
+
+如果某列的 `#input` 以 `from=` 开头，这个字段是从另一张表派生出来的。保留该列里的生成占位内容，去编辑对应的子表行。
 
 schema 变更后，重新生成模板，然后迁移或粘贴已有数据行。这样既保留了电子表格编辑体验，也避免 Excel 变成第二套 schema 语言。
 

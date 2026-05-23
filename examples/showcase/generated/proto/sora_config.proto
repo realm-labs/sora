@@ -10,29 +10,36 @@ message SoraConfigData {
   repeated Quest quest = 3;
   repeated QuestReward quest_reward = 4;
   GameSettings game_settings = 5;
-  repeated Localization localization = 6;
-  repeated LevelExp level_exp = 7;
-  repeated Character character = 8;
-  repeated CharacterSkill character_skill = 9;
-  repeated Buff buff = 10;
-  repeated DropGroup drop_group = 11;
-  repeated DropEntry drop_entry = 12;
-  repeated Monster monster = 13;
-  repeated Stage stage = 14;
-  repeated StageReward stage_reward = 15;
-  repeated Dungeon dungeon = 16;
-  repeated Shop shop = 17;
-  repeated ShopItem shop_item = 18;
-  repeated Recipe recipe = 19;
-  repeated GachaPool gacha_pool = 20;
-  repeated GachaItem gacha_item = 21;
-  repeated EquipmentSet equipment_set = 22;
-  repeated Achievement achievement = 23;
-  repeated VipLevel vip_level = 24;
-  repeated MailTemplate mail_template = 25;
-  repeated MailReward mail_reward = 26;
-  repeated Dialogue dialogue = 27;
-  repeated EventRule event_rule = 28;
+  repeated MaintenanceWindow maintenance_window = 6;
+  repeated Localization localization = 7;
+  repeated LevelExp level_exp = 8;
+  repeated Character character = 9;
+  repeated CharacterSkill character_skill = 10;
+  repeated Buff buff = 11;
+  repeated DropGroup drop_group = 12;
+  repeated DropEntry drop_entry = 13;
+  repeated Monster monster = 14;
+  repeated Stage stage = 15;
+  repeated StageReward stage_reward = 16;
+  repeated Dungeon dungeon = 17;
+  repeated Shop shop = 18;
+  repeated ShopItem shop_item = 19;
+  repeated Recipe recipe = 20;
+  repeated GachaPool gacha_pool = 21;
+  repeated GachaItem gacha_item = 22;
+  repeated EquipmentSet equipment_set = 23;
+  repeated Achievement achievement = 24;
+  repeated VipLevel vip_level = 25;
+  repeated MailTemplate mail_template = 26;
+  repeated MailReward mail_reward = 27;
+  repeated Dialogue dialogue = 28;
+  repeated EventRule event_rule = 29;
+  repeated ComplexRule complex_rule = 30;
+  repeated ComplexConditionGroup complex_condition_group = 31;
+  repeated ComplexConditionGroupEntry complex_condition_group_entry = 32;
+  repeated ComplexRuleCondition complex_rule_condition = 33;
+  repeated ComplexActionGroup complex_action_group = 34;
+  repeated ComplexActionEntry complex_action_entry = 35;
 }
 
 enum ItemType {
@@ -113,11 +120,31 @@ message StatModifier {
   bool is_percent = 3;
 }
 
+message RewardBundle {
+  ResourceCost cost = 1;
+  int32 weight = 2;
+  repeated string labels = 3;
+}
+
+message ComplexBudget {
+  ResourceCost fixed = 1;
+  repeated RewardBundle random = 2;
+  repeated int32 limits = 3;
+}
+
+message MaintenanceInfo {
+  string starts_at = 1;
+  int32 duration_minutes = 2;
+  optional string reason = 3;
+}
+
 message EventCondition {
   oneof kind {
     EventConditionLevelAtLeast level_at_least = 1;
     EventConditionQuestCompleted quest_completed = 2;
     EventConditionHasItem has_item = 3;
+    EventConditionAllConditions all_conditions = 4;
+    EventConditionAnyCondition any_condition = 5;
   }
 }
 
@@ -134,12 +161,21 @@ message EventConditionHasItem {
   int32 count = 2;
 }
 
+message EventConditionAllConditions {
+  int32 condition_group_id = 1;
+}
+
+message EventConditionAnyCondition {
+  int32 condition_group_id = 1;
+}
+
 message RewardAction {
   oneof kind {
     RewardActionAddItem add_item = 1;
     RewardActionAddBuff add_buff = 2;
     RewardActionUnlockStage unlock_stage = 3;
     RewardActionSendMail send_mail = 4;
+    RewardActionRunActionGroup run_action_group = 5;
   }
 }
 
@@ -159,6 +195,10 @@ message RewardActionUnlockStage {
 
 message RewardActionSendMail {
   int32 mail_id = 1;
+}
+
+message RewardActionRunActionGroup {
+  int32 action_group_id = 1;
 }
 
 message Item {
@@ -205,6 +245,17 @@ message GameSettings {
   int32 starting_gold = 3;
   Vec3 spawn_pos = 4;
   repeated int32 starter_items = 5;
+  double gravity = 6;
+  repeated int32 daily_bonus_items = 7;
+  repeated Vec3 spawn_points = 8;
+  MaintenanceInfo maintenance = 9;
+}
+
+message MaintenanceWindow {
+  string version = 1;
+  string starts_at = 2;
+  int32 duration_minutes = 3;
+  optional string reason = 4;
 }
 
 message Localization {
@@ -366,5 +417,46 @@ message EventRule {
   string name = 2;
   EventCondition condition = 3;
   repeated RewardAction actions = 4;
+}
+
+message ComplexRule {
+  int32 id = 1;
+  string name = 2;
+  EventCondition root_condition = 3;
+  int32 root_action_group = 4;
+  repeated RewardAction actions = 5;
+  ComplexBudget budget = 6;
+}
+
+message ComplexConditionGroup {
+  int32 id = 1;
+  string name = 2;
+  repeated EventCondition conditions = 3;
+}
+
+message ComplexConditionGroupEntry {
+  int32 id = 1;
+  int32 group_id = 2;
+  int32 seq = 3;
+  EventCondition value = 4;
+}
+
+message ComplexRuleCondition {
+  int32 id = 1;
+  int32 rule_id = 2;
+  EventCondition value = 3;
+}
+
+message ComplexActionGroup {
+  int32 id = 1;
+  string name = 2;
+  repeated RewardAction actions = 3;
+}
+
+message ComplexActionEntry {
+  int32 id = 1;
+  int32 group_id = 2;
+  int32 seq = 3;
+  RewardAction value = 4;
 }
 

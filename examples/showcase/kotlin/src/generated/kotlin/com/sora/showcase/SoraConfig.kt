@@ -2,7 +2,7 @@
 
 package com.sora.showcase
 
-const val SORA_SCHEMA_FINGERPRINT = "f8d1c90e3e197c78"
+const val SORA_SCHEMA_FINGERPRINT = "3df8793f70d7fc54"
 
 enum class SoraTableShape {
     List,
@@ -67,6 +67,8 @@ class SoraConfig private constructor(
         get() = table(QuestRewardTable.NAME)
     val gameSettings: GameSettingsTable
         get() = table(GameSettingsTable.NAME)
+    val maintenanceWindow: MaintenanceWindowTable
+        get() = table(MaintenanceWindowTable.NAME)
     val localization: LocalizationTable
         get() = table(LocalizationTable.NAME)
     val levelExp: LevelExpTable
@@ -113,6 +115,18 @@ class SoraConfig private constructor(
         get() = table(DialogueTable.NAME)
     val eventRule: EventRuleTable
         get() = table(EventRuleTable.NAME)
+    val complexRule: ComplexRuleTable
+        get() = table(ComplexRuleTable.NAME)
+    val complexConditionGroup: ComplexConditionGroupTable
+        get() = table(ComplexConditionGroupTable.NAME)
+    val complexConditionGroupEntry: ComplexConditionGroupEntryTable
+        get() = table(ComplexConditionGroupEntryTable.NAME)
+    val complexRuleCondition: ComplexRuleConditionTable
+        get() = table(ComplexRuleConditionTable.NAME)
+    val complexActionGroup: ComplexActionGroupTable
+        get() = table(ComplexActionGroupTable.NAME)
+    val complexActionEntry: ComplexActionEntryTable
+        get() = table(ComplexActionEntryTable.NAME)
     companion object {
         fun fromSource(source: SoraTableSource): SoraConfig {
             if (source.schemaFingerprint != SORA_SCHEMA_FINGERPRINT) {
@@ -120,12 +134,13 @@ class SoraConfig private constructor(
                     "schema fingerprint mismatch: generated code expects $SORA_SCHEMA_FINGERPRINT, bundle contains ${source.schemaFingerprint}"
                 )
             }
-            val tables = LinkedHashMap<String, SoraTable<*>>(28)
+            val tables = LinkedHashMap<String, SoraTable<*>>(35)
             tables[ItemTable.NAME] = ItemTable.decode(source)
             tables[SkillTable.NAME] = SkillTable.decode(source)
             tables[QuestTable.NAME] = QuestTable.decode(source)
             tables[QuestRewardTable.NAME] = QuestRewardTable.decode(source)
             tables[GameSettingsTable.NAME] = GameSettingsTable.decode(source)
+            tables[MaintenanceWindowTable.NAME] = MaintenanceWindowTable.decode(source)
             tables[LocalizationTable.NAME] = LocalizationTable.decode(source)
             tables[LevelExpTable.NAME] = LevelExpTable.decode(source)
             tables[CharacterTable.NAME] = CharacterTable.decode(source)
@@ -149,6 +164,12 @@ class SoraConfig private constructor(
             tables[MailRewardTable.NAME] = MailRewardTable.decode(source)
             tables[DialogueTable.NAME] = DialogueTable.decode(source)
             tables[EventRuleTable.NAME] = EventRuleTable.decode(source)
+            tables[ComplexRuleTable.NAME] = ComplexRuleTable.decode(source)
+            tables[ComplexConditionGroupTable.NAME] = ComplexConditionGroupTable.decode(source)
+            tables[ComplexConditionGroupEntryTable.NAME] = ComplexConditionGroupEntryTable.decode(source)
+            tables[ComplexRuleConditionTable.NAME] = ComplexRuleConditionTable.decode(source)
+            tables[ComplexActionGroupTable.NAME] = ComplexActionGroupTable.decode(source)
+            tables[ComplexActionEntryTable.NAME] = ComplexActionEntryTable.decode(source)
             return SoraConfig(tables)
         }
     }

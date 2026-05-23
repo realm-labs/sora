@@ -3,12 +3,21 @@
 This example is intentionally much larger than `examples/simple`.
 
 It keeps real Excel workbooks in `data/` and generated outputs in `generated/`
-so the whole pipeline is easy to inspect. The showcase currently covers 27
-tables across core, battle, economy, and quest domains, with hundreds of rows
-and mixed map/list/singleton table modes.
+so the whole pipeline is easy to inspect. The showcase currently covers 34
+tables across core, battle, economy, quest, and complex-data domains, with
+hundreds of rows and mixed map/list/singleton table modes.
+
+`data/Complex.xlsx` is the stress case for Sora's Excel projection. It shows
+single `union<T>` values edited through `tagged_columns`, non-JSON
+`list<union<T>>` values assembled from child rows, derived fields that point at
+other derived groups, and a nested tuple cell that combines struct, tuple-list,
+split, and map parsers.
+
+`data/Core.xlsx` also includes smaller coverage examples for singleton tables,
+`f64`, fixed-size arrays, and an optional struct derived from a child table.
 
 - schema: `project.toml` and `schema/game.toml`
-- Excel data: `data/Core.xlsx`, `data/Battle.xlsx`, `data/Economy.xlsx`, `data/Quest.xlsx`
+- Excel data: `data/Core.xlsx`, `data/Battle.xlsx`, `data/Economy.xlsx`, `data/Quest.xlsx`, `data/Complex.xlsx`
 - Rust Cargo project: `rust`
 - Kotlin Gradle project: `kotlin`
 - C# .NET project: `csharp`

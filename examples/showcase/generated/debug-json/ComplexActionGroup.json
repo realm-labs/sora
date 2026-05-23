@@ -1,0 +1,118 @@
+{
+  "table": {
+    "name": "ComplexActionGroup",
+    "rows": [
+      {
+        "values": {
+          "actions": {
+            "List": [
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 2
+                  },
+                  "item_id": {
+                    "Integer": 1001
+                  },
+                  "type": {
+                    "String": "AddItem"
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "buff_id": {
+                    "Integer": 6001
+                  },
+                  "duration": {
+                    "Float": 30.0
+                  },
+                  "type": {
+                    "String": "AddBuff"
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "action_group_id": {
+                    "Integer": 18103
+                  },
+                  "type": {
+                    "String": "RunActionGroup"
+                  }
+                }
+              }
+            ]
+          },
+          "id": {
+            "Integer": 18101
+          },
+          "name": {
+            "String": "Launch reward chain"
+          }
+        }
+      },
+      {
+        "values": {
+          "actions": {
+            "List": [
+              {
+                "Object": {
+                  "stage_id": {
+                    "Integer": 9002
+                  },
+                  "type": {
+                    "String": "UnlockStage"
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "mail_id": {
+                    "Integer": 15001
+                  },
+                  "type": {
+                    "String": "SendMail"
+                  }
+                }
+              }
+            ]
+          },
+          "id": {
+            "Integer": 18102
+          },
+          "name": {
+            "String": "Quest unlock chain"
+          }
+        }
+      },
+      {
+        "values": {
+          "actions": {
+            "List": [
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 5
+                  },
+                  "item_id": {
+                    "Integer": 2001
+                  },
+                  "type": {
+                    "String": "AddItem"
+                  }
+                }
+              }
+            ]
+          },
+          "id": {
+            "Integer": 18103
+          },
+          "name": {
+            "String": "Nested bonus group"
+          }
+        }
+      }
+    ]
+  }
+}

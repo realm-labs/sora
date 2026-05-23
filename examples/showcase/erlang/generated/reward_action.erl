@@ -23,6 +23,10 @@
     #{
         'type' := 'send_mail',
         'mail_id' := integer()
+    } |
+    #{
+        'type' := 'run_action_group',
+        'action_group_id' := integer()
     }.
 
 -spec decode(sora_runtime:reader()) -> {t(), sora_runtime:reader()}.
@@ -57,6 +61,12 @@ decode(Reader0) ->
                 'type' => 'send_mail',
                 'mail_id' => MailId
             }, Reader2};
+        4 ->
+            {ActionGroupId, Reader2} = (fun sora_runtime:read_i32/1)(Reader1),
+            {#{
+                'type' => 'run_action_group',
+                'action_group_id' => ActionGroupId
+            }, Reader2};
         _ -> error({invalid_union_ordinal, reward_action, Ordinal})
     end.
 
@@ -86,6 +96,11 @@ decode_value(Value) ->
             #{
                 'type' => 'send_mail',
                 'mail_id' => sora_runtime:expect_integer(sora_runtime:value_get(<<"mail_id">>, Obj))
+            };
+        <<"RunActionGroup">> ->
+            #{
+                'type' => 'run_action_group',
+                'action_group_id' => sora_runtime:expect_integer(sora_runtime:value_get(<<"action_group_id">>, Obj))
             };
         _ -> error({invalid_union_tag, reward_action, Tag})
     end.

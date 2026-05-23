@@ -49,14 +49,45 @@ fn main() {
         }
     ));
     assert_eq!(settings.starting_gold, 100);
+    assert!((settings.gravity - 9.80665).abs() < f64::EPSILON);
+    assert_eq!(settings.daily_bonus_items, [1001, 1002, 2001]);
+    assert_eq!(settings.spawn_points[1].x, 12.0);
+    let maintenance = settings.maintenance.as_ref().expect("maintenance window");
+    assert_eq!(maintenance.duration_minutes, 90);
+    assert_eq!(config.maintenance_window().len(), 1);
+
+    let complex_rule = config
+        .complex_rule()
+        .get(&18001)
+        .expect("complex rule 18001");
+    assert!(matches!(
+        &complex_rule.root_condition,
+        EventCondition::AllConditions {
+            condition_group_id: 19001
+        }
+    ));
+    assert!(matches!(
+        &complex_rule.actions[2],
+        RewardAction::RunActionGroup {
+            action_group_id: 18103
+        }
+    ));
+    assert_eq!(complex_rule.budget.random.len(), 2);
+    assert_eq!(complex_rule.budget.limits.get("daily").copied(), Some(3));
+    let nested_conditions = config
+        .complex_condition_group()
+        .get(&19001)
+        .expect("complex condition group 19001");
+    assert_eq!(nested_conditions.conditions.len(), 2);
 
     println!(
-        "loaded {} items, {} skills, {} quests, {} stages, {} event rules; first quest rewards: {}",
+        "loaded {} items, {} skills, {} quests, {} stages, {} event rules, {} complex rules; first quest rewards: {}",
         config.item().values().count(),
         config.skill().values().count(),
         config.quest().values().count(),
         config.stage().values().count(),
         config.event_rule().values().count(),
+        config.complex_rule().values().count(),
         quest.rewards.len()
     );
 }

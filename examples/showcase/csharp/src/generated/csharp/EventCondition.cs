@@ -18,6 +18,12 @@ public abstract record EventCondition
         int ItemId,
         int Count
     ) : EventCondition;
+    public sealed record AllConditions(
+        int ConditionGroupId
+    ) : EventCondition;
+    public sealed record AnyCondition(
+        int ConditionGroupId
+    ) : EventCondition;
     internal static EventCondition Decode(SoraReader reader)
     {
         return reader.ReadUInt32() switch
@@ -30,6 +36,12 @@ public abstract record EventCondition
             ),
             2 => new HasItem(
                 reader.ReadInt32(),
+                reader.ReadInt32()
+            ),
+            3 => new AllConditions(
+                reader.ReadInt32()
+            ),
+            4 => new AnyCondition(
                 reader.ReadInt32()
             ),
             var value => throw new SoraReadException($"invalid union ordinal {value} for EventCondition"),
@@ -50,6 +62,12 @@ public abstract record EventCondition
             "HasItem" => new HasItem(
                 obj.Get("item_id").AsInt32(),
                 obj.Get("count").AsInt32()
+            ),
+            "AllConditions" => new AllConditions(
+                obj.Get("condition_group_id").AsInt32()
+            ),
+            "AnyCondition" => new AnyCondition(
+                obj.Get("condition_group_id").AsInt32()
             ),
             var tag => throw new SoraReadException($"invalid union tag `{tag}` for EventCondition"),
         };

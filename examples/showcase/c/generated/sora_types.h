@@ -23,11 +23,15 @@ typedef struct sora_showcase_vec3 sora_showcase_vec3;
 typedef struct sora_showcase_skill_effect sora_showcase_skill_effect;
 typedef struct sora_showcase_reward sora_showcase_reward;
 typedef struct sora_showcase_stat_modifier sora_showcase_stat_modifier;
+typedef struct sora_showcase_reward_bundle sora_showcase_reward_bundle;
+typedef struct sora_showcase_complex_budget sora_showcase_complex_budget;
+typedef struct sora_showcase_maintenance_info sora_showcase_maintenance_info;
 typedef struct sora_showcase_item sora_showcase_item;
 typedef struct sora_showcase_skill sora_showcase_skill;
 typedef struct sora_showcase_quest sora_showcase_quest;
 typedef struct sora_showcase_quest_reward sora_showcase_quest_reward;
 typedef struct sora_showcase_game_settings sora_showcase_game_settings;
+typedef struct sora_showcase_maintenance_window sora_showcase_maintenance_window;
 typedef struct sora_showcase_localization sora_showcase_localization;
 typedef struct sora_showcase_level_exp sora_showcase_level_exp;
 typedef struct sora_showcase_character sora_showcase_character;
@@ -51,8 +55,22 @@ typedef struct sora_showcase_mail_template sora_showcase_mail_template;
 typedef struct sora_showcase_mail_reward sora_showcase_mail_reward;
 typedef struct sora_showcase_dialogue sora_showcase_dialogue;
 typedef struct sora_showcase_event_rule sora_showcase_event_rule;
+typedef struct sora_showcase_complex_rule sora_showcase_complex_rule;
+typedef struct sora_showcase_complex_condition_group sora_showcase_complex_condition_group;
+typedef struct sora_showcase_complex_condition_group_entry sora_showcase_complex_condition_group_entry;
+typedef struct sora_showcase_complex_rule_condition sora_showcase_complex_rule_condition;
+typedef struct sora_showcase_complex_action_group sora_showcase_complex_action_group;
+typedef struct sora_showcase_complex_action_entry sora_showcase_complex_action_entry;
 typedef struct sora_showcase_event_condition sora_showcase_event_condition;
 typedef struct sora_showcase_reward_action sora_showcase_reward_action;
+
+typedef struct sora_showcase_event_condition_array {
+    sora_showcase_event_condition* data;
+    size_t len;
+} sora_showcase_event_condition_array;
+
+sora_result sora_showcase_event_condition_array_decode(sora_reader* reader, sora_showcase_event_condition_array* out);
+void sora_showcase_event_condition_array_free(sora_showcase_event_condition_array* value);
 
 typedef struct sora_showcase_i32_array {
     int32_t* data;
@@ -62,6 +80,14 @@ typedef struct sora_showcase_i32_array {
 sora_result sora_showcase_i32_array_decode(sora_reader* reader, sora_showcase_i32_array* out);
 void sora_showcase_i32_array_free(sora_showcase_i32_array* value);
 
+typedef struct sora_showcase_i32_array_3 {
+    int32_t* data;
+    size_t len;
+} sora_showcase_i32_array_3;
+
+sora_result sora_showcase_i32_array_3_decode(sora_reader* reader, sora_showcase_i32_array_3* out);
+void sora_showcase_i32_array_3_free(sora_showcase_i32_array_3* value);
+
 typedef struct sora_showcase_optional_i32 {
     bool has_value;
     int32_t* value;
@@ -69,6 +95,14 @@ typedef struct sora_showcase_optional_i32 {
 
 sora_result sora_showcase_optional_i32_decode(sora_reader* reader, sora_showcase_optional_i32* out);
 void sora_showcase_optional_i32_free(sora_showcase_optional_i32* value);
+
+typedef struct sora_showcase_optional_maintenance_info {
+    bool has_value;
+    sora_showcase_maintenance_info* value;
+} sora_showcase_optional_maintenance_info;
+
+sora_result sora_showcase_optional_maintenance_info_decode(sora_reader* reader, sora_showcase_optional_maintenance_info* out);
+void sora_showcase_optional_maintenance_info_free(sora_showcase_optional_maintenance_info* value);
 
 typedef struct sora_showcase_optional_string {
     bool has_value;
@@ -102,6 +136,14 @@ typedef struct sora_showcase_reward_array {
 sora_result sora_showcase_reward_array_decode(sora_reader* reader, sora_showcase_reward_array* out);
 void sora_showcase_reward_array_free(sora_showcase_reward_array* value);
 
+typedef struct sora_showcase_reward_bundle_array {
+    sora_showcase_reward_bundle* data;
+    size_t len;
+} sora_showcase_reward_bundle_array;
+
+sora_result sora_showcase_reward_bundle_array_decode(sora_reader* reader, sora_showcase_reward_bundle_array* out);
+void sora_showcase_reward_bundle_array_free(sora_showcase_reward_bundle_array* value);
+
 typedef struct sora_showcase_stat_modifier_array {
     sora_showcase_stat_modifier* data;
     size_t len;
@@ -130,6 +172,14 @@ typedef struct sora_showcase_string_i32_map {
 
 sora_result sora_showcase_string_i32_map_decode(sora_reader* reader, sora_showcase_string_i32_map* out);
 void sora_showcase_string_i32_map_free(sora_showcase_string_i32_map* value);
+
+typedef struct sora_showcase_vec3_array_2 {
+    sora_showcase_vec3* data;
+    size_t len;
+} sora_showcase_vec3_array_2;
+
+sora_result sora_showcase_vec3_array_2_decode(sora_reader* reader, sora_showcase_vec3_array_2* out);
+void sora_showcase_vec3_array_2_free(sora_showcase_vec3_array_2* value);
 
 #ifdef __cplusplus
 }

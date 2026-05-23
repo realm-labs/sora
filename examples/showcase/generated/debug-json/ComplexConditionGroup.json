@@ -1,0 +1,81 @@
+{
+  "table": {
+    "name": "ComplexConditionGroup",
+    "rows": [
+      {
+        "values": {
+          "conditions": {
+            "List": [
+              {
+                "Object": {
+                  "level": {
+                    "Integer": 20
+                  },
+                  "type": {
+                    "String": "LevelAtLeast"
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 1
+                  },
+                  "item_id": {
+                    "Integer": 1001
+                  },
+                  "type": {
+                    "String": "HasItem"
+                  }
+                }
+              }
+            ]
+          },
+          "id": {
+            "Integer": 19001
+          },
+          "name": {
+            "String": "Veteran player gates"
+          }
+        }
+      },
+      {
+        "values": {
+          "conditions": {
+            "List": [
+              {
+                "Object": {
+                  "quest_id": {
+                    "Integer": 5002
+                  },
+                  "type": {
+                    "String": "QuestCompleted"
+                  }
+                }
+              },
+              {
+                "Object": {
+                  "count": {
+                    "Integer": 2
+                  },
+                  "item_id": {
+                    "Integer": 1002
+                  },
+                  "type": {
+                    "String": "HasItem"
+                  }
+                }
+              }
+            ]
+          },
+          "id": {
+            "Integer": 19002
+          },
+          "name": {
+            "String": "Quest and inventory gates"
+          }
+        }
+      }
+    ]
+  }
+}

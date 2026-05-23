@@ -14,9 +14,7 @@ pub struct Localization {
 }
 
 impl super::runtime::SoraDecode for Localization {
-    fn decode(
-        reader: &mut super::runtime::SoraReader<'_>,
-    ) -> Result<Self, super::runtime::SoraReadError> {
+    fn decode(reader: &mut super::runtime::SoraReader<'_>) -> Result<Self, super::runtime::SoraReadError> {
         Ok(Self {
             key: <std::sync::Arc<str> as super::runtime::SoraDecode>::decode(reader)?,
             zh_cn: <std::sync::Arc<str> as super::runtime::SoraDecode>::decode(reader)?,
@@ -42,17 +40,13 @@ impl LocalizationTable {
             name: "key",
             ty: "std::sync::Arc<str>",
         }),
-        indexes: &[],
+        indexes: &[
+        ],
     };
 
-    pub(super) fn from_rows(
-        rows: Vec<Localization>,
-    ) -> Result<Self, super::runtime::SoraReadError> {
+    pub(super) fn from_rows(rows: Vec<Localization>) -> Result<Self, super::runtime::SoraReadError> {
         let keys = rows.iter().map(|row| row.key.clone()).collect::<Vec<_>>();
-        Ok(Self {
-            keys,
-            rows: super::decode_map_table(rows, |row| row.key.clone()),
-        })
+        Ok(Self { keys, rows: super::decode_map_table(rows, |row| row.key.clone()) })
     }
 
     pub fn get(&self, key: &str) -> Option<&Localization> {

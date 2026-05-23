@@ -18,6 +18,14 @@
         'type' := 'has_item',
         'item_id' := integer(),
         'count' := integer()
+    } |
+    #{
+        'type' := 'all_conditions',
+        'condition_group_id' := integer()
+    } |
+    #{
+        'type' := 'any_condition',
+        'condition_group_id' := integer()
     }.
 
 -spec decode(sora_runtime:reader()) -> {t(), sora_runtime:reader()}.
@@ -44,6 +52,18 @@ decode(Reader0) ->
                 'item_id' => ItemId,
                 'count' => Count
             }, Reader3};
+        3 ->
+            {ConditionGroupId, Reader2} = (fun sora_runtime:read_i32/1)(Reader1),
+            {#{
+                'type' => 'all_conditions',
+                'condition_group_id' => ConditionGroupId
+            }, Reader2};
+        4 ->
+            {ConditionGroupId, Reader2} = (fun sora_runtime:read_i32/1)(Reader1),
+            {#{
+                'type' => 'any_condition',
+                'condition_group_id' => ConditionGroupId
+            }, Reader2};
         _ -> error({invalid_union_ordinal, event_condition, Ordinal})
     end.
 
@@ -67,6 +87,16 @@ decode_value(Value) ->
                 'type' => 'has_item',
                 'item_id' => sora_runtime:expect_integer(sora_runtime:value_get(<<"item_id">>, Obj)),
                 'count' => sora_runtime:expect_integer(sora_runtime:value_get(<<"count">>, Obj))
+            };
+        <<"AllConditions">> ->
+            #{
+                'type' => 'all_conditions',
+                'condition_group_id' => sora_runtime:expect_integer(sora_runtime:value_get(<<"condition_group_id">>, Obj))
+            };
+        <<"AnyCondition">> ->
+            #{
+                'type' => 'any_condition',
+                'condition_group_id' => sora_runtime:expect_integer(sora_runtime:value_get(<<"condition_group_id">>, Obj))
             };
         _ -> error({invalid_union_tag, event_condition, Tag})
     end.

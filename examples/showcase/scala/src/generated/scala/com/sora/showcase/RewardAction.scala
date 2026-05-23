@@ -19,6 +19,9 @@ object RewardAction {
   final case class SendMail(
     mailId: Int
   ) extends RewardAction
+  final case class RunActionGroup(
+    actionGroupId: Int
+  ) extends RewardAction
 
   def decode(reader: SoraReader): RewardAction =
     reader.readU32() match {
@@ -39,6 +42,10 @@ object RewardAction {
       case 3 =>
         SendMail(
           mailId = reader.readI32()
+        )
+      case 4 =>
+        RunActionGroup(
+          actionGroupId = reader.readI32()
         )
       case ordinal => throw new SoraReadException(s"invalid union ordinal $ordinal for RewardAction")
     }
@@ -63,6 +70,10 @@ object RewardAction {
       case "SendMail" =>
         SendMail(
           mailId = obj.get("mail_id").asInt
+        )
+      case "RunActionGroup" =>
+        RunActionGroup(
+          actionGroupId = obj.get("action_group_id").asInt
         )
       case tag => throw new SoraReadException(s"invalid union tag $tag for RewardAction")
     }

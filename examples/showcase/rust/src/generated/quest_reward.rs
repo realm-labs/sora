@@ -13,9 +13,7 @@ pub struct QuestReward {
 }
 
 impl super::runtime::SoraDecode for QuestReward {
-    fn decode(
-        reader: &mut super::runtime::SoraReader<'_>,
-    ) -> Result<Self, super::runtime::SoraReadError> {
+    fn decode(reader: &mut super::runtime::SoraReader<'_>) -> Result<Self, super::runtime::SoraReadError> {
         Ok(Self {
             quest_id: <i32 as super::runtime::SoraDecode>::decode(reader)?,
             seq: <i32 as super::runtime::SoraDecode>::decode(reader)?,
@@ -37,7 +35,8 @@ impl QuestRewardTable {
         row_type: "QuestReward",
         shape: super::SoraTableShape::List,
         primary_key: None,
-        indexes: &[],
+        indexes: &[
+        ],
     };
 
     pub(super) fn from_rows(rows: Vec<QuestReward>) -> Result<Self, super::runtime::SoraReadError> {

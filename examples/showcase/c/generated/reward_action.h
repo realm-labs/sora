@@ -14,6 +14,7 @@ typedef enum sora_showcase_reward_action_tag {
     SORA_SHOWCASE_REWARD_ACTION_ADD_BUFF = 1,
     SORA_SHOWCASE_REWARD_ACTION_UNLOCK_STAGE = 2,
     SORA_SHOWCASE_REWARD_ACTION_SEND_MAIL = 3,
+    SORA_SHOWCASE_REWARD_ACTION_RUN_ACTION_GROUP = 4,
 } sora_showcase_reward_action_tag;
 
 typedef struct sora_showcase_reward_action {
@@ -33,6 +34,9 @@ typedef struct sora_showcase_reward_action {
         struct {
             int32_t mail_id;
         } send_mail;
+        struct {
+            int32_t action_group_id;
+        } run_action_group;
     } value;
 } sora_showcase_reward_action;
 

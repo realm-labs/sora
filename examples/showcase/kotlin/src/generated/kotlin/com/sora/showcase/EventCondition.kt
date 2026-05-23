@@ -13,6 +13,12 @@ sealed class EventCondition {
         val itemId: Int,
         val count: Int,
     ) : EventCondition()
+    data class AllConditions(
+        val conditionGroupId: Int,
+    ) : EventCondition()
+    data class AnyCondition(
+        val conditionGroupId: Int,
+    ) : EventCondition()
 
     companion object {
         fun decode(reader: SoraReader): EventCondition =
@@ -26,6 +32,12 @@ sealed class EventCondition {
                 2 -> HasItem(
                     itemId = reader.readI32(),
                     count = reader.readI32(),
+                )
+                3 -> AllConditions(
+                    conditionGroupId = reader.readI32(),
+                )
+                4 -> AnyCondition(
+                    conditionGroupId = reader.readI32(),
                 )
                 else -> throw SoraReadException("invalid union ordinal $ordinal for EventCondition")
             }
@@ -42,6 +54,12 @@ sealed class EventCondition {
                 "HasItem" -> HasItem(
                     itemId = obj.get("item_id").asInt(),
                     count = obj.get("count").asInt(),
+                )
+                "AllConditions" -> AllConditions(
+                    conditionGroupId = obj.get("condition_group_id").asInt(),
+                )
+                "AnyCondition" -> AnyCondition(
+                    conditionGroupId = obj.get("condition_group_id").asInt(),
                 )
                 else -> throw SoraReadException("invalid union tag $tag for EventCondition")
             }

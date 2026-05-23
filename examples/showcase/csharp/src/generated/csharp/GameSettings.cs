@@ -12,7 +12,15 @@ public sealed record GameSettings(
     int DailyResetHour,
     int StartingGold,
     Vec3 SpawnPos,
-    List<int> StarterItems
+    List<int> StarterItems,
+    // Double precision tuning value
+    double Gravity,
+    // Fixed-length array parsed from one cell
+    List<int> DailyBonusItems,
+    // Fixed-length array of structs
+    List<Vec3> SpawnPoints,
+    // Optional derived struct copied from a child row
+    MaintenanceInfo? Maintenance
 )
 {
     internal static GameSettings Decode(SoraReader reader)
@@ -22,7 +30,11 @@ public sealed record GameSettings(
             reader.ReadInt32(),
             reader.ReadInt32(),
             Vec3.Decode(reader),
-            reader.ReadList(() => reader.ReadInt32())
+            reader.ReadList(() => reader.ReadInt32()),
+            reader.ReadDouble(),
+            reader.ReadList(() => reader.ReadInt32()),
+            reader.ReadList(() => Vec3.Decode(reader)),
+            reader.ReadOptional(() => MaintenanceInfo.Decode(reader))
         );
     }
 
@@ -34,7 +46,11 @@ public sealed record GameSettings(
             obj.Get("daily_reset_hour").AsInt32(),
             obj.Get("starting_gold").AsInt32(),
             Vec3.Decode(obj.Get("spawn_pos")),
-            obj.Get("starter_items").AsList(item => item.AsInt32())
+            obj.Get("starter_items").AsList(item => item.AsInt32()),
+            obj.Get("gravity").AsDouble(),
+            obj.Get("daily_bonus_items").AsList(item => item.AsInt32()),
+            obj.Get("spawn_points").AsList(item => Vec3.Decode(item)),
+            obj.Get("maintenance").IsNull ? default : MaintenanceInfo.Decode(obj.Get("maintenance"))
         );
     }
 }

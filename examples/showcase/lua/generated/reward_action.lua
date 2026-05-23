@@ -15,11 +15,15 @@ local Runtime = require("generated.sora_runtime")
 ---@class RewardActionSendMail
 ---@field type '"SendMail"'
 ---@field mailId integer
+---@class RewardActionRunActionGroup
+---@field type '"RunActionGroup"'
+---@field actionGroupId integer
 ---@alias RewardAction
 ---| RewardActionAddItem
 ---| RewardActionAddBuff
 ---| RewardActionUnlockStage
 ---| RewardActionSendMail
+---| RewardActionRunActionGroup
 
 local RewardAction = {}
 
@@ -51,6 +55,12 @@ function RewardAction.decode(reader)
         return {
             type = "SendMail",
             mailId = reader:read_i32(),
+        }
+    end
+    if ordinal == 4 then
+        return {
+            type = "RunActionGroup",
+            actionGroupId = reader:read_i32(),
         }
     end
     error("invalid union ordinal " .. tostring(ordinal) .. " for RewardAction")
@@ -85,6 +95,12 @@ function RewardAction.decode_value(value)
         return {
             type = "SendMail",
             mailId = Runtime.expect_integer(obj["mail_id"]),
+        }
+    end
+    if tag == "RunActionGroup" then
+        return {
+            type = "RunActionGroup",
+            actionGroupId = Runtime.expect_integer(obj["action_group_id"]),
         }
     end
     error("invalid union tag " .. tostring(tag) .. " for RewardAction")

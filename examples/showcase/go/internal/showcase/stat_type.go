@@ -7,51 +7,51 @@ import "fmt"
 type StatType int32
 
 const (
-	StatTypeHp       StatType = 0
-	StatTypeAttack   StatType = 1
-	StatTypeDefense  StatType = 2
-	StatTypeSpeed    StatType = 3
-	StatTypeCritRate StatType = 4
+    StatTypeHp StatType = 0
+    StatTypeAttack StatType = 1
+    StatTypeDefense StatType = 2
+    StatTypeSpeed StatType = 3
+    StatTypeCritRate StatType = 4
 )
 
 func decodeStatType(reader *SoraReader) (StatType, error) {
-	ordinal, err := reader.ReadUInt32()
-	if err != nil {
-		return 0, err
-	}
-	switch ordinal {
-	case 0:
-		return StatTypeHp, nil
-	case 1:
-		return StatTypeAttack, nil
-	case 2:
-		return StatTypeDefense, nil
-	case 3:
-		return StatTypeSpeed, nil
-	case 4:
-		return StatTypeCritRate, nil
-	default:
-		return 0, fmt.Errorf("invalid enum ordinal %d for StatType", ordinal)
-	}
+    ordinal, err := reader.ReadUInt32()
+    if err != nil {
+        return 0, err
+    }
+    switch ordinal {
+    case 0:
+        return StatTypeHp, nil
+    case 1:
+        return StatTypeAttack, nil
+    case 2:
+        return StatTypeDefense, nil
+    case 3:
+        return StatTypeSpeed, nil
+    case 4:
+        return StatTypeCritRate, nil
+    default:
+        return 0, fmt.Errorf("invalid enum ordinal %d for StatType", ordinal)
+    }
 }
 
 func decodeStatTypeValue(value SoraValue) (StatType, error) {
-	name, err := value.AsString()
-	if err != nil {
-		return 0, err
-	}
-	switch name {
-	case "Hp":
-		return StatTypeHp, nil
-	case "Attack":
-		return StatTypeAttack, nil
-	case "Defense":
-		return StatTypeDefense, nil
-	case "Speed":
-		return StatTypeSpeed, nil
-	case "CritRate":
-		return StatTypeCritRate, nil
-	default:
-		return 0, fmt.Errorf("invalid enum value %s for StatType", name)
-	}
+    name, err := value.AsString()
+    if err != nil {
+        return 0, err
+    }
+    switch name {
+    case "Hp":
+        return StatTypeHp, nil
+    case "Attack":
+        return StatTypeAttack, nil
+    case "Defense":
+        return StatTypeDefense, nil
+    case "Speed":
+        return StatTypeSpeed, nil
+    case "CritRate":
+        return StatTypeCritRate, nil
+    default:
+        return 0, fmt.Errorf("invalid enum value %s for StatType", name)
+    }
 }

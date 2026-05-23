@@ -8,7 +8,7 @@ pub const NAME_ROW: u32 = 1;
 pub const FIELD_ROW: u32 = 2;
 pub const TYPE_ROW: u32 = 3;
 pub const SCOPE_ROW: u32 = 4;
-pub const RULE_ROW: u32 = 5;
+pub const INPUT_ROW: u32 = 5;
 pub const DESC_ROW: u32 = 6;
 pub const DATA_START_ROW: u32 = 7;
 pub const FIELD_START_COLUMN: u16 = 1;
@@ -40,8 +40,8 @@ pub fn table_template_rows(ir: &ConfigIr, table: &TableIr) -> Vec<Vec<String>> {
         std::iter::once("#scope".to_owned())
             .chain(columns.iter().map(|column| column.scope.clone()))
             .collect(),
-        std::iter::once("#rule".to_owned())
-            .chain(columns.iter().map(|column| column.rule.clone()))
+        std::iter::once("#input".to_owned())
+            .chain(columns.iter().map(|column| column.input.clone()))
             .collect(),
         std::iter::once("#desc".to_owned())
             .chain(columns.iter().map(|column| column.comment.clone()))
@@ -54,8 +54,9 @@ pub struct TemplateColumn {
     pub name: String,
     pub type_hint: String,
     pub scope: String,
-    pub rule: String,
+    pub input: String,
     pub comment: String,
+    pub derived: bool,
 }
 
 pub fn table_template_columns(ir: &ConfigIr, table: &TableIr) -> Vec<TemplateColumn> {
@@ -72,18 +73,17 @@ pub fn table_template_columns(ir: &ConfigIr, table: &TableIr) -> Vec<TemplateCol
                                 name: column.name,
                                 type_hint: format!("{} tag", field.ty),
                                 scope: field.scope.display(),
-                                rule: format!(
-                                    "{};parser=tagged_columns;tag",
-                                    field_presence(field)
-                                ),
+                                input: "parser=tagged_columns;tag".to_owned(),
                                 comment: format!("Tag for union field `{}`.", field.name),
+                                derived: false,
                             },
                             TaggedColumnKind::VariantField(variant_field) => TemplateColumn {
                                 name: column.name,
                                 type_hint: field_type_hint(ir, variant_field),
                                 scope: field.scope.display(),
-                                rule: field_rule(variant_field),
+                                input: field_input(variant_field),
                                 comment: variant_field.comment.clone().unwrap_or_default(),
+                                derived: false,
                             },
                         })
                         .collect::<Vec<_>>()
@@ -93,8 +93,9 @@ pub fn table_template_columns(ir: &ConfigIr, table: &TableIr) -> Vec<TemplateCol
                         name: field.name.clone(),
                         type_hint: field_type_hint(ir, field),
                         scope: field.scope.display(),
-                        rule: field_rule(field),
-                        comment: field.comment.clone().unwrap_or_default(),
+                        input: field_input(field),
+                        comment: field_comment(field),
+                        derived: field.derived_from.is_some(),
                     }]
                 })
         })
@@ -228,10 +229,26 @@ fn list_struct_type_name(ty: &TypeIr) -> Option<&str> {
     }
 }
 
-fn field_rule(field: &FieldIr) -> String {
+fn field_input(field: &FieldIr) -> String {
     let mut parts = Vec::new();
-    parts.push(field_presence(field));
 
+    if field.key {
+        parts.push("key".to_owned());
+    }
+    if let Some(derived_from) = &field.derived_from {
+        let mut from = format!("from={}", derived_from.source_table);
+        if let Some(value_field) = &derived_from.value_field {
+            from.push_str(&format!(";field={value_field}"));
+        }
+        from.push_str(&format!(
+            ";match={}->{}",
+            derived_from.child_key, derived_from.parent_key
+        ));
+        if let Some(order_by) = &derived_from.order_by {
+            from.push_str(&format!(";order_by={order_by}"));
+        }
+        parts.push(from);
+    }
     if let Some(parser) = &field.parser {
         parts.push(format!("parser={}", parser.kind));
         for (key, value) in &parser.options {
@@ -241,16 +258,27 @@ fn field_rule(field: &FieldIr) -> String {
     if let Some([min, max]) = field.range {
         parts.push(format!("range={min}..{max}"));
     }
+    if let Some([min, max]) = field.length {
+        parts.push(format!("length={min}..{max}"));
+    }
     parts.join(";")
 }
 
-fn field_presence(field: &FieldIr) -> String {
-    if field.key {
-        "key".to_owned()
-    } else if field.is_required() {
-        "required".to_owned()
+fn field_comment(field: &FieldIr) -> String {
+    let comment = field.comment.clone().unwrap_or_default();
+    if let Some(derived_from) = &field.derived_from {
+        let source = match &derived_from.value_field {
+            Some(value_field) => format!("{}.{}", derived_from.source_table, value_field),
+            None => derived_from.source_table.clone(),
+        };
+        let derived_comment = format!("Generated from {source}; do not fill this column.");
+        if comment.is_empty() {
+            derived_comment
+        } else {
+            format!("{comment} {derived_comment}")
+        }
     } else {
-        "optional".to_owned()
+        comment
     }
 }
 
@@ -287,10 +315,7 @@ mod tests {
             rows[SCOPE_ROW as usize],
             ["#scope", "all", "all", "all", "all"]
         );
-        assert_eq!(
-            rows[RULE_ROW as usize],
-            ["#rule", "key", "required", "required", "required"]
-        );
+        assert_eq!(rows[INPUT_ROW as usize], ["#input", "key", "", "", ""]);
         assert_eq!(
             rows[DESC_ROW as usize],
             [
@@ -337,7 +362,7 @@ mod tests {
                 "struct<ResourceCost>(kind: enum<ResourceType>, id: i32, count: i32)"
             ]
         );
-        assert_eq!(rows[RULE_ROW as usize], ["#rule", "required;parser=tuple"]);
+        assert_eq!(rows[INPUT_ROW as usize], ["#input", "parser=tuple"]);
     }
 
     #[test]
@@ -352,10 +377,7 @@ mod tests {
                 "list<struct<ResourceCost>>(kind: enum<ResourceType>, id: i32, count: i32)"
             ]
         );
-        assert_eq!(
-            rows[RULE_ROW as usize],
-            ["#rule", "required;parser=tuple_list"]
-        );
+        assert_eq!(rows[INPUT_ROW as usize], ["#input", "parser=tuple_list"]);
     }
 
     #[test]
@@ -379,15 +401,8 @@ mod tests {
             ]
         );
         assert_eq!(
-            rows[RULE_ROW as usize],
-            [
-                "#rule",
-                "key",
-                "required;parser=tagged_columns;tag",
-                "required",
-                "required",
-                "required"
-            ]
+            rows[INPUT_ROW as usize],
+            ["#input", "key", "parser=tagged_columns;tag", "", "", ""]
         );
     }
 

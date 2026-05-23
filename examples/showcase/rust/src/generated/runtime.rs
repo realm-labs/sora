@@ -70,20 +70,14 @@ impl<'a> SoraBundle<'a> {
         }
         let version = read_u32_at(bytes, 4)?;
         if version != SORA_BUNDLE_VERSION {
-            return Err(SoraReadError::new(format!(
-                "unsupported Sora bundle version {}",
-                version
-            )));
+            return Err(SoraReadError::new(format!("unsupported Sora bundle version {}", version)));
         }
         let header_len = read_u32_at(bytes, 8)? as usize;
         let directory_len = read_u32_at(bytes, 12)? as usize;
         let section_count = read_u32_at(bytes, 16)? as usize;
         let flags = read_u32_at(bytes, 20)?;
         if flags != 0 {
-            return Err(SoraReadError::new(format!(
-                "unsupported Sora bundle flags {}",
-                flags
-            )));
+            return Err(SoraReadError::new(format!("unsupported Sora bundle flags {}", flags)));
         }
         if header_len != SORA_HEADER_LEN || header_len > bytes.len() {
             return Err(SoraReadError::new("invalid Sora bundle header length"));
@@ -92,9 +86,7 @@ impl<'a> SoraBundle<'a> {
             .checked_add(directory_len)
             .ok_or_else(|| SoraReadError::new("Sora section directory length overflow"))?;
         if directory_end > bytes.len() {
-            return Err(SoraReadError::new(
-                "Sora section directory exceeds bundle length",
-            ));
+            return Err(SoraReadError::new("Sora section directory exceeds bundle length"));
         }
 
         let mut cursor = header_len;
@@ -115,10 +107,7 @@ impl<'a> SoraBundle<'a> {
             let len = read_u32_at(bytes, cursor + 20)? as usize;
             let uncompressed_len = read_u32_at(bytes, cursor + 24)? as usize;
             if entry_flags != 0 {
-                return Err(SoraReadError::new(format!(
-                    "unsupported Sora section flags {}",
-                    entry_flags
-                )));
+                return Err(SoraReadError::new(format!("unsupported Sora section flags {}", entry_flags)));
             }
             let name_start = cursor + SORA_SECTION_ENTRY_LEN;
             let name_end = name_start
@@ -131,59 +120,41 @@ impl<'a> SoraBundle<'a> {
                 .checked_add(len)
                 .ok_or_else(|| SoraReadError::new("Sora section payload length overflow"))?;
             if payload_end > bytes.len() {
-                return Err(SoraReadError::new(
-                    "Sora section payload exceeds bundle length",
-                ));
+                return Err(SoraReadError::new("Sora section payload exceeds bundle length"));
             }
             let name = std::str::from_utf8(&bytes[name_start..name_end])
-                .map_err(|error| {
-                    SoraReadError::new(format!("invalid Sora section name: {}", error))
-                })?
+                .map_err(|error| SoraReadError::new(format!("invalid Sora section name: {}", error)))?
                 .to_owned();
             match kind {
                 SECTION_KIND_MANIFEST => {
                     manifest_count += 1;
                     if name != "$manifest" {
-                        return Err(SoraReadError::new(
-                            "Sora manifest section must be named `$manifest`",
-                        ));
+                        return Err(SoraReadError::new("Sora manifest section must be named `$manifest`"));
                     }
                 }
                 SECTION_KIND_SCHEMA => {
                     schema_count += 1;
                     if name != "$schema" {
-                        return Err(SoraReadError::new(
-                            "Sora schema section must be named `$schema`",
-                        ));
+                        return Err(SoraReadError::new("Sora schema section must be named `$schema`"));
                     }
                 }
                 SECTION_KIND_TABLE => {
                     if !table_names.insert(name.clone()) {
-                        return Err(SoraReadError::new(format!(
-                            "duplicate Sora table section `{}`",
-                            name
-                        )));
+                        return Err(SoraReadError::new(format!("duplicate Sora table section `{}`", name)));
                     }
                 }
                 SECTION_KIND_STRINGS => {
                     strings_count += 1;
                     if name != "$strings" {
-                        return Err(SoraReadError::new(
-                            "Sora string table section must be named `$strings`",
-                        ));
+                        return Err(SoraReadError::new("Sora string table section must be named `$strings`"));
                     }
                 }
                 _ => {
-                    return Err(SoraReadError::new(format!(
-                        "unknown Sora section kind {}",
-                        kind
-                    )));
+                    return Err(SoraReadError::new(format!("unknown Sora section kind {}", kind)));
                 }
             }
             if compression == COMPRESSION_NONE && uncompressed_len != len {
-                return Err(SoraReadError::new(
-                    "uncompressed Sora section length mismatch",
-                ));
+                return Err(SoraReadError::new("uncompressed Sora section length mismatch"));
             }
             sections.push(Section {
                 kind,
@@ -196,27 +167,16 @@ impl<'a> SoraBundle<'a> {
             cursor = name_end;
         }
         if cursor != directory_end {
-            return Err(SoraReadError::new(
-                "Sora section directory has trailing bytes",
-            ));
+            return Err(SoraReadError::new("Sora section directory has trailing bytes"));
         }
         if manifest_count != 1 {
-            return Err(SoraReadError::new(format!(
-                "expected exactly 1 Sora manifest section, got {}",
-                manifest_count
-            )));
+            return Err(SoraReadError::new(format!("expected exactly 1 Sora manifest section, got {}", manifest_count)));
         }
         if schema_count != 1 {
-            return Err(SoraReadError::new(format!(
-                "expected exactly 1 Sora schema section, got {}",
-                schema_count
-            )));
+            return Err(SoraReadError::new(format!("expected exactly 1 Sora schema section, got {}", schema_count)));
         }
         if strings_count != 1 {
-            return Err(SoraReadError::new(format!(
-                "expected exactly 1 Sora string table section, got {}",
-                strings_count
-            )));
+            return Err(SoraReadError::new(format!("expected exactly 1 Sora string table section, got {}", strings_count)));
         }
 
         let manifest = sections
@@ -264,10 +224,7 @@ impl SoraTableSource for SoraBundle<'_> {
     }
 }
 
-fn decode_rows<T: SoraDecode>(
-    payload: &[u8],
-    strings: &[std::sync::Arc<str>],
-) -> Result<Vec<T>, SoraReadError> {
+fn decode_rows<T: SoraDecode>(payload: &[u8], strings: &[std::sync::Arc<str>]) -> Result<Vec<T>, SoraReadError> {
     if payload.len() < 8 {
         return Err(SoraReadError::new("Sora table section is too short"));
     }
@@ -276,16 +233,10 @@ fn decode_rows<T: SoraDecode>(
         .checked_add(1)
         .ok_or_else(|| SoraReadError::new("Sora row offset count overflow"))?;
     let row_data_start = 4usize
-        .checked_add(
-            offsets_len
-                .checked_mul(4)
-                .ok_or_else(|| SoraReadError::new("Sora row offsets overflow"))?,
-        )
+        .checked_add(offsets_len.checked_mul(4).ok_or_else(|| SoraReadError::new("Sora row offsets overflow"))?)
         .ok_or_else(|| SoraReadError::new("Sora row data offset overflow"))?;
     if row_data_start > payload.len() {
-        return Err(SoraReadError::new(
-            "Sora row offset table exceeds payload length",
-        ));
+        return Err(SoraReadError::new("Sora row offset table exceeds payload length"));
     }
 
     let mut rows = Vec::with_capacity(row_count);
@@ -329,17 +280,13 @@ fn read_section_payload<'a>(
     match section.compression {
         COMPRESSION_NONE => {
             if section.uncompressed_len != section.len {
-                return Err(SoraReadError::new(
-                    "uncompressed Sora section length mismatch",
-                ));
+                return Err(SoraReadError::new("uncompressed Sora section length mismatch"));
             }
             Ok(std::borrow::Cow::Borrowed(compressed))
         }
         COMPRESSION_ZSTD => {
-            let payload =
-                zstd::bulk::decompress(compressed, section.uncompressed_len).map_err(|error| {
-                    SoraReadError::new(format!("zstd decompression failed: {}", error))
-                })?;
+            let payload = zstd::bulk::decompress(compressed, section.uncompressed_len)
+                .map_err(|error| SoraReadError::new(format!("zstd decompression failed: {}", error)))?;
             if payload.len() != section.uncompressed_len {
                 return Err(SoraReadError::new("zstd Sora section length mismatch"));
             }
@@ -354,11 +301,7 @@ fn read_section_payload<'a>(
 
 impl<'a> SoraReader<'a> {
     pub fn new(bytes: &'a [u8], strings: &'a [std::sync::Arc<str>]) -> Self {
-        Self {
-            bytes,
-            strings,
-            cursor: 0,
-        }
+        Self { bytes, strings, cursor: 0 }
     }
 
     pub fn is_finished(&self) -> bool {
@@ -463,9 +406,7 @@ fn decode_string_table(payload: &[u8]) -> Result<Vec<std::sync::Arc<str>>, SoraR
             .checked_add(len)
             .ok_or_else(|| SoraReadError::new("Sora string length overflow"))?;
         if end > payload.len() {
-            return Err(SoraReadError::new(
-                "Sora string exceeds string table section",
-            ));
+            return Err(SoraReadError::new("Sora string exceeds string table section"));
         }
         let value = std::str::from_utf8(&payload[cursor..end])
             .map_err(|error| SoraReadError::new(format!("invalid UTF-8 string: {}", error)))?;
@@ -473,9 +414,7 @@ fn decode_string_table(payload: &[u8]) -> Result<Vec<std::sync::Arc<str>>, SoraR
         cursor = end;
     }
     if cursor != payload.len() {
-        return Err(SoraReadError::new(
-            "Sora string table section has trailing bytes",
-        ));
+        return Err(SoraReadError::new("Sora string table section has trailing bytes"));
     }
     Ok(strings)
 }
@@ -527,10 +466,7 @@ impl<T: SoraDecode> SoraDecode for Option<T> {
         match reader.read_u8()? {
             0 => Ok(None),
             1 => T::decode(reader).map(Some),
-            value => Err(SoraReadError::new(format!(
-                "invalid option presence {}",
-                value
-            ))),
+            value => Err(SoraReadError::new(format!("invalid option presence {}", value))),
         }
     }
 }
@@ -575,9 +511,9 @@ where
 impl<T: SoraDecode, const N: usize> SoraDecode for [T; N] {
     fn decode(reader: &mut SoraReader<'_>) -> Result<Self, SoraReadError> {
         let values = Vec::<T>::decode(reader)?;
-        values.try_into().map_err(|values: Vec<T>| {
-            SoraReadError::new(format!("expected array length {}, got {}", N, values.len()))
-        })
+        values
+            .try_into()
+            .map_err(|values: Vec<T>| SoraReadError::new(format!("expected array length {}, got {}", N, values.len())))
     }
 }
 
@@ -585,9 +521,7 @@ fn read_u32_at(bytes: &[u8], offset: usize) -> Result<u32, SoraReadError> {
     if offset + 4 > bytes.len() {
         return Err(SoraReadError::new("unexpected end while reading u32"));
     }
-    Ok(u32::from_le_bytes(
-        bytes[offset..offset + 4].try_into().unwrap(),
-    ))
+    Ok(u32::from_le_bytes(bytes[offset..offset + 4].try_into().unwrap()))
 }
 
 fn read_var_u32_at(bytes: &[u8], cursor: &mut usize) -> Result<u32, SoraReadError> {
@@ -618,18 +552,15 @@ fn read_json_string_field(bytes: &[u8], field: &str) -> Result<String, SoraReadE
         .find(&key)
         .ok_or_else(|| SoraReadError::new(format!("Sora manifest is missing `{}`", field)))?;
     let after_key = &text[field_start + key.len()..];
-    let colon = after_key.find(':').ok_or_else(|| {
-        SoraReadError::new(format!("Sora manifest field `{}` is missing `:`", field))
-    })?;
+    let colon = after_key
+        .find(':')
+        .ok_or_else(|| SoraReadError::new(format!("Sora manifest field `{}` is missing `:`", field)))?;
     let value = after_key[colon + 1..].trim_start();
-    let value = value.strip_prefix('"').ok_or_else(|| {
-        SoraReadError::new(format!("Sora manifest field `{}` is not a string", field))
-    })?;
-    let end = value.find('"').ok_or_else(|| {
-        SoraReadError::new(format!(
-            "Sora manifest field `{}` string is unterminated",
-            field
-        ))
-    })?;
+    let value = value
+        .strip_prefix('"')
+        .ok_or_else(|| SoraReadError::new(format!("Sora manifest field `{}` is not a string", field)))?;
+    let end = value
+        .find('"')
+        .ok_or_else(|| SoraReadError::new(format!("Sora manifest field `{}` string is unterminated", field)))?;
     Ok(value[..end].to_owned())
 }

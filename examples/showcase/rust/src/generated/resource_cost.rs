@@ -12,9 +12,7 @@ pub struct ResourceCost {
 }
 
 impl super::runtime::SoraDecode for ResourceCost {
-    fn decode(
-        reader: &mut super::runtime::SoraReader<'_>,
-    ) -> Result<Self, super::runtime::SoraReadError> {
+    fn decode(reader: &mut super::runtime::SoraReader<'_>) -> Result<Self, super::runtime::SoraReadError> {
         Ok(Self {
             kind: <ResourceKind as super::runtime::SoraDecode>::decode(reader)?,
             id: <i32 as super::runtime::SoraDecode>::decode(reader)?,

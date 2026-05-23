@@ -19,6 +19,7 @@ from .sora_runtime import (
 
 
 if TYPE_CHECKING:
+    from .maintenance_info import MaintenanceInfo
     from .vec3 import Vec3
 
 
@@ -29,21 +30,38 @@ class GameSettings:
     starting_gold: int
     spawn_pos: Vec3
     starter_items: list[int]
+    # Double precision tuning value
+    gravity: float
+    # Fixed-length array parsed from one cell
+    daily_bonus_items: list[int]
+    # Fixed-length array of structs
+    spawn_points: list[Vec3]
+    # Optional derived struct copied from a child row
+    maintenance: MaintenanceInfo | None
 
     @staticmethod
     def decode(reader: SoraReader) -> GameSettings:
+        from .maintenance_info import MaintenanceInfo
         from .vec3 import Vec3
         version = reader.read_string()
         daily_reset_hour = reader.read_i32()
         starting_gold = reader.read_i32()
         spawn_pos = Vec3.decode(reader)
         starter_items = reader.read_list(lambda: reader.read_i32())
+        gravity = reader.read_f64()
+        daily_bonus_items = reader.read_list(lambda: reader.read_i32())
+        spawn_points = reader.read_list(lambda: Vec3.decode(reader))
+        maintenance = reader.read_optional(lambda: MaintenanceInfo.decode(reader))
         return GameSettings(
             version=version,
             daily_reset_hour=daily_reset_hour,
             starting_gold=starting_gold,
             spawn_pos=spawn_pos,
             starter_items=starter_items,
+            gravity=gravity,
+            daily_bonus_items=daily_bonus_items,
+            spawn_points=spawn_points,
+            maintenance=maintenance,
         )
 
 

@@ -28,6 +28,12 @@ export function decodeRewardAction(reader) {
             mailId: reader.readI32(),
         };
     }
+    if (ordinal === 4) {
+        return {
+            type: "RunActionGroup",
+            actionGroupId: reader.readI32(),
+        };
+    }
     throw new Error(`invalid union ordinal ${ordinal} for RewardAction`);
 }
 
@@ -58,6 +64,12 @@ export function decodeRewardActionValue(value) {
         return {
             type: "SendMail",
             mailId: object.get("mail_id").asInt(),
+        };
+    }
+    if (tag === "RunActionGroup") {
+        return {
+            type: "RunActionGroup",
+            actionGroupId: object.get("action_group_id").asInt(),
         };
     }
     throw new Error(`invalid union tag ${tag} for RewardAction`);

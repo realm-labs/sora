@@ -1,0 +1,154 @@
+{
+  "table": {
+    "name": "ComplexActionEntry",
+    "rows": [
+      {
+        "values": {
+          "group_id": {
+            "Integer": 18101
+          },
+          "id": {
+            "Integer": 18201
+          },
+          "seq": {
+            "Integer": 1
+          },
+          "value": {
+            "Object": {
+              "count": {
+                "Integer": 2
+              },
+              "item_id": {
+                "Integer": 1001
+              },
+              "type": {
+                "String": "AddItem"
+              }
+            }
+          }
+        }
+      },
+      {
+        "values": {
+          "group_id": {
+            "Integer": 18101
+          },
+          "id": {
+            "Integer": 18202
+          },
+          "seq": {
+            "Integer": 2
+          },
+          "value": {
+            "Object": {
+              "buff_id": {
+                "Integer": 6001
+              },
+              "duration": {
+                "Float": 30.0
+              },
+              "type": {
+                "String": "AddBuff"
+              }
+            }
+          }
+        }
+      },
+      {
+        "values": {
+          "group_id": {
+            "Integer": 18101
+          },
+          "id": {
+            "Integer": 18203
+          },
+          "seq": {
+            "Integer": 3
+          },
+          "value": {
+            "Object": {
+              "action_group_id": {
+                "Integer": 18103
+              },
+              "type": {
+                "String": "RunActionGroup"
+              }
+            }
+          }
+        }
+      },
+      {
+        "values": {
+          "group_id": {
+            "Integer": 18102
+          },
+          "id": {
+            "Integer": 18204
+          },
+          "seq": {
+            "Integer": 1
+          },
+          "value": {
+            "Object": {
+              "stage_id": {
+                "Integer": 9002
+              },
+              "type": {
+                "String": "UnlockStage"
+              }
+            }
+          }
+        }
+      },
+      {
+        "values": {
+          "group_id": {
+            "Integer": 18102
+          },
+          "id": {
+            "Integer": 18205
+          },
+          "seq": {
+            "Integer": 2
+          },
+          "value": {
+            "Object": {
+              "mail_id": {
+                "Integer": 15001
+              },
+              "type": {
+                "String": "SendMail"
+              }
+            }
+          }
+        }
+      },
+      {
+        "values": {
+          "group_id": {
+            "Integer": 18103
+          },
+          "id": {
+            "Integer": 18206
+          },
+          "seq": {
+            "Integer": 1
+          },
+          "value": {
+            "Object": {
+              "count": {
+                "Integer": 5
+              },
+              "item_id": {
+                "Integer": 2001
+              },
+              "type": {
+                "String": "AddItem"
+              }
+            }
+          }
+        }
+      }
+    ]
+  }
+}

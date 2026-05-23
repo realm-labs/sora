@@ -6,11 +6,15 @@
 #include "skill_effect.h"
 #include "reward.h"
 #include "stat_modifier.h"
+#include "reward_bundle.h"
+#include "complex_budget.h"
+#include "maintenance_info.h"
 #include "item.h"
 #include "skill.h"
 #include "quest.h"
 #include "quest_reward.h"
 #include "game_settings.h"
+#include "maintenance_window.h"
 #include "localization.h"
 #include "level_exp.h"
 #include "character.h"
@@ -34,10 +38,59 @@
 #include "mail_reward.h"
 #include "dialogue.h"
 #include "event_rule.h"
+#include "complex_rule.h"
+#include "complex_condition_group.h"
+#include "complex_condition_group_entry.h"
+#include "complex_rule_condition.h"
+#include "complex_action_group.h"
+#include "complex_action_entry.h"
 #include "event_condition.h"
 #include "reward_action.h"
 
 #include <stdlib.h>
+
+sora_result sora_showcase_event_condition_array_decode(sora_reader* reader, sora_showcase_event_condition_array* out) {
+    uint32_t length = 0;
+    SORA_TRY(sora_reader_read_u32(reader, &length));
+    out->data = NULL;
+    out->len = length;
+    if (length == 0) {
+        return sora_ok();
+    }
+    out->data = (sora_showcase_event_condition*)calloc(length, sizeof(sora_showcase_event_condition));
+    if (out->data == NULL) {
+        return sora_error(SORA_ERROR_OUT_OF_MEMORY, "failed to allocate array");
+    }
+    for (size_t index = 0; index < length; ++index) {
+        sora_result result = sora_showcase_event_condition_decode(reader, &out->data[index]);
+        if (result.code != SORA_OK) {
+            for (size_t cleanup = 0; cleanup < index; ++cleanup) {
+                size_t previous = index;
+                index = cleanup;
+        sora_showcase_event_condition_free(&out->data[index]);
+                index = previous;
+            }
+            free(out->data);
+            out->data = NULL;
+            out->len = 0;
+            return result;
+        }
+    }
+    return sora_ok();
+}
+
+void sora_showcase_event_condition_array_free(sora_showcase_event_condition_array* value) {
+    if (value == NULL || value->data == NULL) {
+        return;
+    }
+    for (size_t index = 0; index < value->len; ++index) {
+        sora_showcase_event_condition_free(&value->data[index]);
+    }
+    free(value->data);
+    value->data = NULL;
+    value->len = 0;
+}
+
 
 sora_result sora_showcase_i32_array_decode(sora_reader* reader, sora_showcase_i32_array* out) {
     uint32_t length = 0;
@@ -80,6 +133,50 @@ void sora_showcase_i32_array_free(sora_showcase_i32_array* value) {
 }
 
 
+sora_result sora_showcase_i32_array_3_decode(sora_reader* reader, sora_showcase_i32_array_3* out) {
+    uint32_t length = 0;
+    SORA_TRY(sora_reader_read_u32(reader, &length));
+    if (length != 3) {
+        return sora_error(SORA_ERROR_DECODE, "array length does not match schema");
+    }
+    out->data = NULL;
+    out->len = length;
+    if (length == 0) {
+        return sora_ok();
+    }
+    out->data = (int32_t*)calloc(length, sizeof(int32_t));
+    if (out->data == NULL) {
+        return sora_error(SORA_ERROR_OUT_OF_MEMORY, "failed to allocate array");
+    }
+    for (size_t index = 0; index < length; ++index) {
+        sora_result result = sora_reader_read_i32(reader, &out->data[index]);
+        if (result.code != SORA_OK) {
+            for (size_t cleanup = 0; cleanup < index; ++cleanup) {
+                size_t previous = index;
+                index = cleanup;
+                index = previous;
+            }
+            free(out->data);
+            out->data = NULL;
+            out->len = 0;
+            return result;
+        }
+    }
+    return sora_ok();
+}
+
+void sora_showcase_i32_array_3_free(sora_showcase_i32_array_3* value) {
+    if (value == NULL || value->data == NULL) {
+        return;
+    }
+    for (size_t index = 0; index < value->len; ++index) {
+    }
+    free(value->data);
+    value->data = NULL;
+    value->len = 0;
+}
+
+
 sora_result sora_showcase_optional_i32_decode(sora_reader* reader, sora_showcase_optional_i32* out) {
     uint8_t presence = 0;
     SORA_TRY(sora_reader_read_u8(reader, &presence));
@@ -109,6 +206,43 @@ void sora_showcase_optional_i32_free(sora_showcase_optional_i32* value) {
     if (value == NULL || value->value == NULL) {
         return;
     }
+    free(value->value);
+    value->value = NULL;
+    value->has_value = false;
+}
+
+
+sora_result sora_showcase_optional_maintenance_info_decode(sora_reader* reader, sora_showcase_optional_maintenance_info* out) {
+    uint8_t presence = 0;
+    SORA_TRY(sora_reader_read_u8(reader, &presence));
+    out->has_value = false;
+    out->value = NULL;
+    if (presence == 0) {
+        return sora_ok();
+    }
+    if (presence != 1) {
+        return sora_error(SORA_ERROR_DECODE, "invalid optional presence");
+    }
+    out->value = (sora_showcase_maintenance_info*)calloc(1, sizeof(sora_showcase_maintenance_info));
+    if (out->value == NULL) {
+        return sora_error(SORA_ERROR_OUT_OF_MEMORY, "failed to allocate optional");
+    }
+    sora_result result = sora_showcase_maintenance_info_decode(reader, out->value);
+    if (result.code != SORA_OK) {
+    sora_showcase_maintenance_info_free(out->value);
+        free(out->value);
+        out->value = NULL;
+        return result;
+    }
+    out->has_value = true;
+    return sora_ok();
+}
+
+void sora_showcase_optional_maintenance_info_free(sora_showcase_optional_maintenance_info* value) {
+    if (value == NULL || value->value == NULL) {
+        return;
+    }
+    sora_showcase_maintenance_info_free(value->value);
     free(value->value);
     value->value = NULL;
     value->has_value = false;
@@ -281,6 +415,49 @@ void sora_showcase_reward_array_free(sora_showcase_reward_array* value) {
 }
 
 
+sora_result sora_showcase_reward_bundle_array_decode(sora_reader* reader, sora_showcase_reward_bundle_array* out) {
+    uint32_t length = 0;
+    SORA_TRY(sora_reader_read_u32(reader, &length));
+    out->data = NULL;
+    out->len = length;
+    if (length == 0) {
+        return sora_ok();
+    }
+    out->data = (sora_showcase_reward_bundle*)calloc(length, sizeof(sora_showcase_reward_bundle));
+    if (out->data == NULL) {
+        return sora_error(SORA_ERROR_OUT_OF_MEMORY, "failed to allocate array");
+    }
+    for (size_t index = 0; index < length; ++index) {
+        sora_result result = sora_showcase_reward_bundle_decode(reader, &out->data[index]);
+        if (result.code != SORA_OK) {
+            for (size_t cleanup = 0; cleanup < index; ++cleanup) {
+                size_t previous = index;
+                index = cleanup;
+        sora_showcase_reward_bundle_free(&out->data[index]);
+                index = previous;
+            }
+            free(out->data);
+            out->data = NULL;
+            out->len = 0;
+            return result;
+        }
+    }
+    return sora_ok();
+}
+
+void sora_showcase_reward_bundle_array_free(sora_showcase_reward_bundle_array* value) {
+    if (value == NULL || value->data == NULL) {
+        return;
+    }
+    for (size_t index = 0; index < value->len; ++index) {
+        sora_showcase_reward_bundle_free(&value->data[index]);
+    }
+    free(value->data);
+    value->data = NULL;
+    value->len = 0;
+}
+
+
 sora_result sora_showcase_stat_modifier_array_decode(sora_reader* reader, sora_showcase_stat_modifier_array* out) {
     uint32_t length = 0;
     SORA_TRY(sora_reader_read_u32(reader, &length));
@@ -404,6 +581,52 @@ void sora_showcase_string_i32_map_free(sora_showcase_string_i32_map* value) {
     }
     for (size_t index = 0; index < value->len; ++index) {
         sora_string_free(&value->data[index].key);
+    }
+    free(value->data);
+    value->data = NULL;
+    value->len = 0;
+}
+
+
+sora_result sora_showcase_vec3_array_2_decode(sora_reader* reader, sora_showcase_vec3_array_2* out) {
+    uint32_t length = 0;
+    SORA_TRY(sora_reader_read_u32(reader, &length));
+    if (length != 2) {
+        return sora_error(SORA_ERROR_DECODE, "array length does not match schema");
+    }
+    out->data = NULL;
+    out->len = length;
+    if (length == 0) {
+        return sora_ok();
+    }
+    out->data = (sora_showcase_vec3*)calloc(length, sizeof(sora_showcase_vec3));
+    if (out->data == NULL) {
+        return sora_error(SORA_ERROR_OUT_OF_MEMORY, "failed to allocate array");
+    }
+    for (size_t index = 0; index < length; ++index) {
+        sora_result result = sora_showcase_vec3_decode(reader, &out->data[index]);
+        if (result.code != SORA_OK) {
+            for (size_t cleanup = 0; cleanup < index; ++cleanup) {
+                size_t previous = index;
+                index = cleanup;
+        sora_showcase_vec3_free(&out->data[index]);
+                index = previous;
+            }
+            free(out->data);
+            out->data = NULL;
+            out->len = 0;
+            return result;
+        }
+    }
+    return sora_ok();
+}
+
+void sora_showcase_vec3_array_2_free(sora_showcase_vec3_array_2* value) {
+    if (value == NULL || value->data == NULL) {
+        return;
+    }
+    for (size_t index = 0; index < value->len; ++index) {
+        sora_showcase_vec3_free(&value->data[index]);
     }
     free(value->data);
     value->data = NULL;

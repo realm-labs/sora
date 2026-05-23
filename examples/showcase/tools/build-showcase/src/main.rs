@@ -31,6 +31,10 @@ fn main() -> Result<()> {
     let godot_generated = root.join("godot/addons/sora_config/generated");
     let c_generated = root.join("c/generated");
     let cpp_generated = root.join("cpp/generated");
+    let typescript_generated = root.join("typescript/generated");
+    let javascript_generated = root.join("javascript/generated");
+    let erlang_generated = root.join("erlang/generated");
+    let lua_generated = root.join("lua/generated");
     let python_generated = root.join("python/generated");
     let proto_generated = generated_root.join("proto");
 
@@ -56,6 +60,10 @@ fn main() -> Result<()> {
     clean_dir(&godot_generated)?;
     clean_dir(&c_generated)?;
     clean_dir(&cpp_generated)?;
+    clean_dir(&typescript_generated)?;
+    clean_dir(&javascript_generated)?;
+    clean_dir(&erlang_generated)?;
+    clean_dir(&lua_generated)?;
     clean_dir(&python_generated)?;
     clean_dir(&proto_generated)?;
     clean_dir(&generated_root.join("debug-json"))?;
@@ -91,6 +99,10 @@ fn main() -> Result<()> {
     )?;
     sora_core::pipeline::generate_code(&schema_input, "c", &c_generated)?;
     sora_core::pipeline::generate_code(&schema_input, "cpp", &cpp_generated)?;
+    sora_core::pipeline::generate_code(&schema_input, "typescript", &typescript_generated)?;
+    sora_core::pipeline::generate_code(&schema_input, "javascript", &javascript_generated)?;
+    sora_core::pipeline::generate_code(&schema_input, "erlang", &erlang_generated)?;
+    sora_core::pipeline::generate_code(&schema_input, "lua", &lua_generated)?;
     sora_core::pipeline::generate_code(&schema_input, "python", &python_generated)?;
     sora_core::pipeline::generate_code(&schema_input, "proto-schema", &proto_generated)?;
     sora_core::pipeline::export_data(

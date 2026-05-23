@@ -4,6 +4,7 @@ class_name EventCondition
 extends RefCounted
 
 var type: String = ""
+var condition_group_id: int = 0
 var count: int = 0
 var item_id: int = 0
 var level: int = 0
@@ -26,6 +27,10 @@ static func decode(value: Variant) -> EventCondition:
 		"HasItem":
 			out.item_id = int(SoraRuntime.read_field(data, "item_id", 0))
 			out.count = int(SoraRuntime.read_field(data, "count", 0))
+		"AllConditions":
+			out.condition_group_id = int(SoraRuntime.read_field(data, "condition_group_id", 0))
+		"AnyCondition":
+			out.condition_group_id = int(SoraRuntime.read_field(data, "condition_group_id", 0))
 		_:
 			SoraRuntime.report_error("unknown EventCondition variant `%s`" % out.type)
 	return out

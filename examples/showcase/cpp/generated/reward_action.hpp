@@ -21,11 +21,15 @@ struct RewardAction {
     struct SendMail {
         std::int32_t mail_id;
     };
+    struct RunActionGroup {
+        std::int32_t action_group_id;
+    };
     std::variant<
         AddItem,
         AddBuff,
         UnlockStage,
-        SendMail
+        SendMail,
+        RunActionGroup
     > value;
 
     static RewardAction decode(SoraReader& reader) {
@@ -46,6 +50,10 @@ struct RewardAction {
             } };
         case 3:
             return RewardAction{ SendMail{
+                reader.read_i32(),
+            } };
+        case 4:
+            return RewardAction{ RunActionGroup{
                 reader.read_i32(),
             } };
         default:

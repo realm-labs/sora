@@ -44,6 +44,26 @@ sora_result sora_showcase_event_condition_decode(sora_reader* reader, sora_showc
             }
         }
         return sora_ok();
+    case 3:
+        out->tag = SORA_SHOWCASE_EVENT_CONDITION_ALL_CONDITIONS;
+        {
+            sora_result result = sora_reader_read_i32(reader, &out->value.all_conditions.condition_group_id);
+            if (result.code != SORA_OK) {
+                sora_showcase_event_condition_free(out);
+                return result;
+            }
+        }
+        return sora_ok();
+    case 4:
+        out->tag = SORA_SHOWCASE_EVENT_CONDITION_ANY_CONDITION;
+        {
+            sora_result result = sora_reader_read_i32(reader, &out->value.any_condition.condition_group_id);
+            if (result.code != SORA_OK) {
+                sora_showcase_event_condition_free(out);
+                return result;
+            }
+        }
+        return sora_ok();
     default:
         return sora_error(SORA_ERROR_DECODE, "invalid union ordinal for EventCondition");
     }
@@ -59,6 +79,10 @@ void sora_showcase_event_condition_free(sora_showcase_event_condition* value) {
     case SORA_SHOWCASE_EVENT_CONDITION_QUEST_COMPLETED:
         break;
     case SORA_SHOWCASE_EVENT_CONDITION_HAS_ITEM:
+        break;
+    case SORA_SHOWCASE_EVENT_CONDITION_ALL_CONDITIONS:
+        break;
+    case SORA_SHOWCASE_EVENT_CONDITION_ANY_CONDITION:
         break;
     default:
         break;

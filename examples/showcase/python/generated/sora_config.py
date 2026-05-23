@@ -12,6 +12,7 @@ from .skill import SkillTable, Skill
 from .quest import QuestTable, Quest
 from .quest_reward import QuestRewardTable, QuestReward
 from .game_settings import GameSettingsTable, GameSettings
+from .maintenance_window import MaintenanceWindowTable, MaintenanceWindow
 from .localization import LocalizationTable, Localization
 from .level_exp import LevelExpTable, LevelExp
 from .character import CharacterTable, Character
@@ -35,6 +36,12 @@ from .mail_template import MailTemplateTable, MailTemplate
 from .mail_reward import MailRewardTable, MailReward
 from .dialogue import DialogueTable, Dialogue
 from .event_rule import EventRuleTable, EventRule
+from .complex_rule import ComplexRuleTable, ComplexRule
+from .complex_condition_group import ComplexConditionGroupTable, ComplexConditionGroup
+from .complex_condition_group_entry import ComplexConditionGroupEntryTable, ComplexConditionGroupEntry
+from .complex_rule_condition import ComplexRuleConditionTable, ComplexRuleCondition
+from .complex_action_group import ComplexActionGroupTable, ComplexActionGroup
+from .complex_action_entry import ComplexActionEntryTable, ComplexActionEntry
 from .item_type import ItemType
 from .resource_kind import ResourceKind
 from .element_type import ElementType
@@ -44,7 +51,7 @@ from .stat_type import StatType
 from .mail_type import MailType
 
 
-SCHEMA_FINGERPRINT = "f8d1c90e3e197c78"
+SCHEMA_FINGERPRINT = "3df8793f70d7fc54"
 
 
 class SoraConfig:
@@ -55,6 +62,7 @@ class SoraConfig:
         quest: QuestTable,
         quest_reward: QuestRewardTable,
         game_settings: GameSettingsTable,
+        maintenance_window: MaintenanceWindowTable,
         localization: LocalizationTable,
         level_exp: LevelExpTable,
         character: CharacterTable,
@@ -78,12 +86,19 @@ class SoraConfig:
         mail_reward: MailRewardTable,
         dialogue: DialogueTable,
         event_rule: EventRuleTable,
+        complex_rule: ComplexRuleTable,
+        complex_condition_group: ComplexConditionGroupTable,
+        complex_condition_group_entry: ComplexConditionGroupEntryTable,
+        complex_rule_condition: ComplexRuleConditionTable,
+        complex_action_group: ComplexActionGroupTable,
+        complex_action_entry: ComplexActionEntryTable,
     ) -> None:
         self._item = item
         self._skill = skill
         self._quest = quest
         self._quest_reward = quest_reward
         self._game_settings = game_settings
+        self._maintenance_window = maintenance_window
         self._localization = localization
         self._level_exp = level_exp
         self._character = character
@@ -107,6 +122,12 @@ class SoraConfig:
         self._mail_reward = mail_reward
         self._dialogue = dialogue
         self._event_rule = event_rule
+        self._complex_rule = complex_rule
+        self._complex_condition_group = complex_condition_group
+        self._complex_condition_group_entry = complex_condition_group_entry
+        self._complex_rule_condition = complex_rule_condition
+        self._complex_action_group = complex_action_group
+        self._complex_action_entry = complex_action_entry
 
     @staticmethod
     def from_bytes(bytes_data: bytes) -> SoraConfig:
@@ -131,6 +152,9 @@ class SoraConfig:
             ),
             GameSettingsTable.decode(
                 bundle.decode_table(GameSettingsTable.NAME, GameSettings.decode)
+            ),
+            MaintenanceWindowTable.decode(
+                bundle.decode_table(MaintenanceWindowTable.NAME, MaintenanceWindow.decode)
             ),
             LocalizationTable.decode(
                 bundle.decode_table(LocalizationTable.NAME, Localization.decode)
@@ -201,6 +225,24 @@ class SoraConfig:
             EventRuleTable.decode(
                 bundle.decode_table(EventRuleTable.NAME, EventRule.decode)
             ),
+            ComplexRuleTable.decode(
+                bundle.decode_table(ComplexRuleTable.NAME, ComplexRule.decode)
+            ),
+            ComplexConditionGroupTable.decode(
+                bundle.decode_table(ComplexConditionGroupTable.NAME, ComplexConditionGroup.decode)
+            ),
+            ComplexConditionGroupEntryTable.decode(
+                bundle.decode_table(ComplexConditionGroupEntryTable.NAME, ComplexConditionGroupEntry.decode)
+            ),
+            ComplexRuleConditionTable.decode(
+                bundle.decode_table(ComplexRuleConditionTable.NAME, ComplexRuleCondition.decode)
+            ),
+            ComplexActionGroupTable.decode(
+                bundle.decode_table(ComplexActionGroupTable.NAME, ComplexActionGroup.decode)
+            ),
+            ComplexActionEntryTable.decode(
+                bundle.decode_table(ComplexActionEntryTable.NAME, ComplexActionEntry.decode)
+            ),
         )
 
     def tables(self) -> list[SoraConfigTable]:
@@ -210,6 +252,7 @@ class SoraConfig:
             self._quest,
             self._quest_reward,
             self._game_settings,
+            self._maintenance_window,
             self._localization,
             self._level_exp,
             self._character,
@@ -233,6 +276,12 @@ class SoraConfig:
             self._mail_reward,
             self._dialogue,
             self._event_rule,
+            self._complex_rule,
+            self._complex_condition_group,
+            self._complex_condition_group_entry,
+            self._complex_rule_condition,
+            self._complex_action_group,
+            self._complex_action_entry,
         ]
 
 
@@ -254,6 +303,10 @@ class SoraConfig:
 
     def game_settings(self) -> GameSettingsTable:
         return self._game_settings
+
+
+    def maintenance_window(self) -> MaintenanceWindowTable:
+        return self._maintenance_window
 
 
     def localization(self) -> LocalizationTable:
@@ -346,5 +399,29 @@ class SoraConfig:
 
     def event_rule(self) -> EventRuleTable:
         return self._event_rule
+
+
+    def complex_rule(self) -> ComplexRuleTable:
+        return self._complex_rule
+
+
+    def complex_condition_group(self) -> ComplexConditionGroupTable:
+        return self._complex_condition_group
+
+
+    def complex_condition_group_entry(self) -> ComplexConditionGroupEntryTable:
+        return self._complex_condition_group_entry
+
+
+    def complex_rule_condition(self) -> ComplexRuleConditionTable:
+        return self._complex_rule_condition
+
+
+    def complex_action_group(self) -> ComplexActionGroupTable:
+        return self._complex_action_group
+
+
+    def complex_action_entry(self) -> ComplexActionEntryTable:
+        return self._complex_action_entry
 
 

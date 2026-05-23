@@ -3,115 +3,116 @@
 package showcase
 
 type Dungeon struct {
-	Id        int32
-	Name      string
-	StageIds  []int32
-	EntryCost ResourceCost
+    Id int32
+    Name string
+    StageIds []int32
+    EntryCost ResourceCost
 }
 
 func decodeDungeon(reader *SoraReader) (Dungeon, error) {
-	var value Dungeon
-	var err error
-	value.Id, err = reader.ReadInt32()
-	if err != nil {
-		return value, err
-	}
-	value.Name, err = reader.ReadString()
-	if err != nil {
-		return value, err
-	}
-	value.StageIds, err = ReadList(reader, func(reader *SoraReader) (int32, error) { return reader.ReadInt32() })
-	if err != nil {
-		return value, err
-	}
-	value.EntryCost, err = decodeResourceCost(reader)
-	if err != nil {
-		return value, err
-	}
-	return value, nil
+    var value Dungeon
+    var err error
+    value.Id, err = reader.ReadInt32()
+    if err != nil {
+        return value, err
+    }
+    value.Name, err = reader.ReadString()
+    if err != nil {
+        return value, err
+    }
+    value.StageIds, err = ReadList(reader, func(reader *SoraReader) (int32, error) { return reader.ReadInt32() })
+    if err != nil {
+        return value, err
+    }
+    value.EntryCost, err = decodeResourceCost(reader)
+    if err != nil {
+        return value, err
+    }
+    return value, nil
 }
 
 func decodeDungeonValue(input SoraValue) (Dungeon, error) {
-	var value Dungeon
-	obj, err := input.AsObject()
-	if err != nil {
-		return value, err
-	}
-	value.Id, err = obj.Get("id").AsInt32()
-	if err != nil {
-		return value, err
-	}
-	value.Name, err = obj.Get("name").AsString()
-	if err != nil {
-		return value, err
-	}
-	value.StageIds, err = DecodeSoraValueList(obj.Get("stage_ids"), func(item SoraValue) (int32, error) { return item.AsInt32() })
-	if err != nil {
-		return value, err
-	}
-	value.EntryCost, err = decodeResourceCostValue(obj.Get("entry_cost"))
-	if err != nil {
-		return value, err
-	}
-	return value, nil
+    var value Dungeon
+    obj, err := input.AsObject()
+    if err != nil {
+        return value, err
+    }
+    value.Id, err = obj.Get("id").AsInt32()
+    if err != nil {
+        return value, err
+    }
+    value.Name, err = obj.Get("name").AsString()
+    if err != nil {
+        return value, err
+    }
+    value.StageIds, err = DecodeSoraValueList(obj.Get("stage_ids"), func(item SoraValue) (int32, error) { return item.AsInt32() })
+    if err != nil {
+        return value, err
+    }
+    value.EntryCost, err = decodeResourceCostValue(obj.Get("entry_cost"))
+    if err != nil {
+        return value, err
+    }
+    return value, nil
 }
 
 const dungeonTableName = "Dungeon"
 
 var dungeonTableInfo = SoraTableInfo{
-	Name:       dungeonTableName,
-	RowType:    "Dungeon",
-	Shape:      SoraTableShapeKeyed,
-	PrimaryKey: &SoraKeyInfo{Name: "id", Type: "int32"},
-	Indexes:    []SoraIndexInfo{},
+    Name: dungeonTableName,
+    RowType: "Dungeon",
+    Shape: SoraTableShapeKeyed,
+    PrimaryKey: &SoraKeyInfo{Name: "id", Type: "int32"},
+    Indexes: []SoraIndexInfo{
+    },
 }
 
 type DungeonTable struct {
-	keys []int32
-	rows map[int32]Dungeon
+    keys []int32
+    rows map[int32]Dungeon
 }
 
 func buildDungeonTable(rows []Dungeon) (*DungeonTable, error) {
-	keys := make([]int32, 0, len(rows))
-	for _, row := range rows {
-		keys = append(keys, row.Id)
-	}
-	return &DungeonTable{keys: keys, rows: DecodeMapTable(rows, func(row Dungeon) int32 { return row.Id })}, nil
+    keys := make([]int32, 0, len(rows))
+    for _, row := range rows {
+        keys = append(keys, row.Id)
+    }
+    return &DungeonTable{keys: keys, rows: DecodeMapTable(rows, func(row Dungeon) int32 { return row.Id })}, nil
 }
 
 func decodeDungeonTable(source SoraTableSource) (*DungeonTable, error) {
-	rows, err := DecodeSourceTable(source, dungeonTableName, decodeDungeon, decodeDungeonValue)
-	if err != nil {
-		return nil, err
-	}
-	return buildDungeonTable(rows)
+    rows, err := DecodeSourceTable(source, dungeonTableName, decodeDungeon, decodeDungeonValue)
+    if err != nil {
+        return nil, err
+    }
+    return buildDungeonTable(rows)
 }
 
 func (table *DungeonTable) Rows() map[int32]Dungeon {
-	return table.rows
+    return table.rows
 }
 func (table *DungeonTable) Get(key int32) (Dungeon, bool) {
-	value, ok := table.rows[key]
-	return value, ok
+    value, ok := table.rows[key]
+    return value, ok
 }
 
 func (table *DungeonTable) Keys() []int32 {
-	return table.keys
+    return table.keys
 }
 
 func (table *DungeonTable) OrderedRows() []Dungeon {
-	rows := make([]Dungeon, 0, len(table.keys))
-	for _, key := range table.keys {
-		if row, ok := table.rows[key]; ok {
-			rows = append(rows, row)
-		}
-	}
-	return rows
+    rows := make([]Dungeon, 0, len(table.keys))
+    for _, key := range table.keys {
+        if row, ok := table.rows[key]; ok {
+            rows = append(rows, row)
+        }
+    }
+    return rows
 }
 func (table *DungeonTable) Info() SoraTableInfo {
-	return dungeonTableInfo
+    return dungeonTableInfo
 }
 
 func (table *DungeonTable) Len() int {
-	return len(table.rows)
+    return len(table.rows)
 }

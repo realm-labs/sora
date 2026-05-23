@@ -13,9 +13,7 @@ pub struct MailReward {
 }
 
 impl super::runtime::SoraDecode for MailReward {
-    fn decode(
-        reader: &mut super::runtime::SoraReader<'_>,
-    ) -> Result<Self, super::runtime::SoraReadError> {
+    fn decode(reader: &mut super::runtime::SoraReader<'_>) -> Result<Self, super::runtime::SoraReadError> {
         Ok(Self {
             mail_id: <i32 as super::runtime::SoraDecode>::decode(reader)?,
             seq: <i32 as super::runtime::SoraDecode>::decode(reader)?,
@@ -37,7 +35,8 @@ impl MailRewardTable {
         row_type: "MailReward",
         shape: super::SoraTableShape::List,
         primary_key: None,
-        indexes: &[],
+        indexes: &[
+        ],
     };
 
     pub(super) fn from_rows(rows: Vec<MailReward>) -> Result<Self, super::runtime::SoraReadError> {

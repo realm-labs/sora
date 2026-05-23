@@ -61,6 +61,16 @@ sora_result sora_showcase_reward_action_decode(sora_reader* reader, sora_showcas
             }
         }
         return sora_ok();
+    case 4:
+        out->tag = SORA_SHOWCASE_REWARD_ACTION_RUN_ACTION_GROUP;
+        {
+            sora_result result = sora_reader_read_i32(reader, &out->value.run_action_group.action_group_id);
+            if (result.code != SORA_OK) {
+                sora_showcase_reward_action_free(out);
+                return result;
+            }
+        }
+        return sora_ok();
     default:
         return sora_error(SORA_ERROR_DECODE, "invalid union ordinal for RewardAction");
     }
@@ -78,6 +88,8 @@ void sora_showcase_reward_action_free(sora_showcase_reward_action* value) {
     case SORA_SHOWCASE_REWARD_ACTION_UNLOCK_STAGE:
         break;
     case SORA_SHOWCASE_REWARD_ACTION_SEND_MAIL:
+        break;
+    case SORA_SHOWCASE_REWARD_ACTION_RUN_ACTION_GROUP:
         break;
     default:
         break;

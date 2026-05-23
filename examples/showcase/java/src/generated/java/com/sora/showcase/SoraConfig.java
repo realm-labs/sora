@@ -43,7 +43,7 @@ interface SoraSingleTable<R> extends SoraTable<R> {
 }
 
 public final class SoraConfig {
-    public static final String SCHEMA_FINGERPRINT = "f8d1c90e3e197c78";
+    public static final String SCHEMA_FINGERPRINT = "3df8793f70d7fc54";
 
     private final Map<String, SoraTable<?>> tables;
 
@@ -58,12 +58,13 @@ public final class SoraConfig {
                     + ", bundle contains " + source.schemaFingerprint()
             );
         }
-        var tables = new HashMap<String, SoraTable<?>>(28);
+        var tables = new HashMap<String, SoraTable<?>>(35);
         tables.put(ItemTable.NAME, ItemTable.decode(source));
         tables.put(SkillTable.NAME, SkillTable.decode(source));
         tables.put(QuestTable.NAME, QuestTable.decode(source));
         tables.put(QuestRewardTable.NAME, QuestRewardTable.decode(source));
         tables.put(GameSettingsTable.NAME, GameSettingsTable.decode(source));
+        tables.put(MaintenanceWindowTable.NAME, MaintenanceWindowTable.decode(source));
         tables.put(LocalizationTable.NAME, LocalizationTable.decode(source));
         tables.put(LevelExpTable.NAME, LevelExpTable.decode(source));
         tables.put(CharacterTable.NAME, CharacterTable.decode(source));
@@ -87,6 +88,12 @@ public final class SoraConfig {
         tables.put(MailRewardTable.NAME, MailRewardTable.decode(source));
         tables.put(DialogueTable.NAME, DialogueTable.decode(source));
         tables.put(EventRuleTable.NAME, EventRuleTable.decode(source));
+        tables.put(ComplexRuleTable.NAME, ComplexRuleTable.decode(source));
+        tables.put(ComplexConditionGroupTable.NAME, ComplexConditionGroupTable.decode(source));
+        tables.put(ComplexConditionGroupEntryTable.NAME, ComplexConditionGroupEntryTable.decode(source));
+        tables.put(ComplexRuleConditionTable.NAME, ComplexRuleConditionTable.decode(source));
+        tables.put(ComplexActionGroupTable.NAME, ComplexActionGroupTable.decode(source));
+        tables.put(ComplexActionEntryTable.NAME, ComplexActionEntryTable.decode(source));
         return new SoraConfig(tables);
     }
 
@@ -115,6 +122,9 @@ public final class SoraConfig {
     }
     public GameSettingsTable gameSettings() {
         return table(GameSettingsTable.NAME, GameSettingsTable.class);
+    }
+    public MaintenanceWindowTable maintenanceWindow() {
+        return table(MaintenanceWindowTable.NAME, MaintenanceWindowTable.class);
     }
     public LocalizationTable localization() {
         return table(LocalizationTable.NAME, LocalizationTable.class);
@@ -184,6 +194,24 @@ public final class SoraConfig {
     }
     public EventRuleTable eventRule() {
         return table(EventRuleTable.NAME, EventRuleTable.class);
+    }
+    public ComplexRuleTable complexRule() {
+        return table(ComplexRuleTable.NAME, ComplexRuleTable.class);
+    }
+    public ComplexConditionGroupTable complexConditionGroup() {
+        return table(ComplexConditionGroupTable.NAME, ComplexConditionGroupTable.class);
+    }
+    public ComplexConditionGroupEntryTable complexConditionGroupEntry() {
+        return table(ComplexConditionGroupEntryTable.NAME, ComplexConditionGroupEntryTable.class);
+    }
+    public ComplexRuleConditionTable complexRuleCondition() {
+        return table(ComplexRuleConditionTable.NAME, ComplexRuleConditionTable.class);
+    }
+    public ComplexActionGroupTable complexActionGroup() {
+        return table(ComplexActionGroupTable.NAME, ComplexActionGroupTable.class);
+    }
+    public ComplexActionEntryTable complexActionEntry() {
+        return table(ComplexActionEntryTable.NAME, ComplexActionEntryTable.class);
     }
     static <K, V> Map<K, V> decodeMapTable(List<V> rows, Function<V, K> key) {
         var map = new HashMap<K, V>(rows.size());

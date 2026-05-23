@@ -3,6 +3,7 @@
 #pragma once
 
 #include "sora_runtime.hpp"
+#include "maintenance_info.hpp"
 #include "vec3.hpp"
 
 #include <unordered_map>
@@ -17,6 +18,14 @@ struct GameSettings {
     std::int32_t starting_gold;
     Vec3 spawn_pos;
     std::vector<std::int32_t> starter_items;
+    // Double precision tuning value
+    double gravity;
+    // Fixed-length array parsed from one cell
+    std::array<std::int32_t, 3> daily_bonus_items;
+    // Fixed-length array of structs
+    std::array<Vec3, 2> spawn_points;
+    // Optional derived struct copied from a child row
+    std::optional<MaintenanceInfo> maintenance;
 
     static GameSettings decode(SoraReader& reader) {
         return GameSettings{
@@ -25,6 +34,10 @@ struct GameSettings {
             reader.read_i32(),
             Vec3::decode(reader),
             reader.read_vector<std::int32_t>(),
+            reader.read_f64(),
+            reader.read_array<std::int32_t, 3>(),
+            reader.read_array<Vec3, 2>(),
+            reader.read_optional<MaintenanceInfo>(),
         };
     }
 };

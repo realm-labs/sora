@@ -17,6 +17,9 @@ sealed class RewardAction {
     data class SendMail(
         val mailId: Int,
     ) : RewardAction()
+    data class RunActionGroup(
+        val actionGroupId: Int,
+    ) : RewardAction()
 
     companion object {
         fun decode(reader: SoraReader): RewardAction =
@@ -34,6 +37,9 @@ sealed class RewardAction {
                 )
                 3 -> SendMail(
                     mailId = reader.readI32(),
+                )
+                4 -> RunActionGroup(
+                    actionGroupId = reader.readI32(),
                 )
                 else -> throw SoraReadException("invalid union ordinal $ordinal for RewardAction")
             }
@@ -54,6 +60,9 @@ sealed class RewardAction {
                 )
                 "SendMail" -> SendMail(
                     mailId = obj.get("mail_id").asInt(),
+                )
+                "RunActionGroup" -> RunActionGroup(
+                    actionGroupId = obj.get("action_group_id").asInt(),
                 )
                 else -> throw SoraReadException("invalid union tag $tag for RewardAction")
             }

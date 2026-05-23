@@ -45,6 +45,15 @@ public interface RewardAction {
             this.mailId = mailId;
         }
     }
+    final class RunActionGroup implements RewardAction {
+        public final Integer actionGroupId;
+
+        public RunActionGroup(
+            Integer actionGroupId
+        ) {
+            this.actionGroupId = actionGroupId;
+        }
+    }
     static RewardAction decode(SoraReader reader) {
         switch (reader.readU32()) {
             case 0:
@@ -63,6 +72,10 @@ public interface RewardAction {
                 );
             case 3:
                 return new SendMail(
+                    reader.readI32()
+                );
+            case 4:
+                return new RunActionGroup(
                     reader.readI32()
                 );
             default:
@@ -90,6 +103,10 @@ public interface RewardAction {
             case "SendMail":
                 return new SendMail(
                     obj.get("mail_id").asInt()
+                );
+            case "RunActionGroup":
+                return new RunActionGroup(
+                    obj.get("action_group_id").asInt()
                 );
             default:
                 throw new SoraReadException("invalid union tag for RewardAction");

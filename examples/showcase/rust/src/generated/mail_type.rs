@@ -8,17 +8,12 @@ pub enum MailType {
 }
 
 impl super::runtime::SoraDecode for MailType {
-    fn decode(
-        reader: &mut super::runtime::SoraReader<'_>,
-    ) -> Result<Self, super::runtime::SoraReadError> {
+    fn decode(reader: &mut super::runtime::SoraReader<'_>) -> Result<Self, super::runtime::SoraReadError> {
         match reader.read_var_u32()? {
             0 => Ok(Self::System),
             1 => Ok(Self::Event),
             2 => Ok(Self::Compensation),
-            value => Err(super::runtime::SoraReadError::new(format!(
-                "invalid enum ordinal {} for MailType",
-                value
-            ))),
+            value => Err(super::runtime::SoraReadError::new(format!("invalid enum ordinal {} for MailType", value))),
         }
     }
 }

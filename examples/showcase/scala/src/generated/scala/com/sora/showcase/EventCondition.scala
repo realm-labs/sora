@@ -15,6 +15,12 @@ object EventCondition {
     itemId: Int,
     count: Int
   ) extends EventCondition
+  final case class AllConditions(
+    conditionGroupId: Int
+  ) extends EventCondition
+  final case class AnyCondition(
+    conditionGroupId: Int
+  ) extends EventCondition
 
   def decode(reader: SoraReader): EventCondition =
     reader.readU32() match {
@@ -30,6 +36,14 @@ object EventCondition {
         HasItem(
           itemId = reader.readI32(),
           count = reader.readI32()
+        )
+      case 3 =>
+        AllConditions(
+          conditionGroupId = reader.readI32()
+        )
+      case 4 =>
+        AnyCondition(
+          conditionGroupId = reader.readI32()
         )
       case ordinal => throw new SoraReadException(s"invalid union ordinal $ordinal for EventCondition")
     }
@@ -49,6 +63,14 @@ object EventCondition {
         HasItem(
           itemId = obj.get("item_id").asInt,
           count = obj.get("count").asInt
+        )
+      case "AllConditions" =>
+        AllConditions(
+          conditionGroupId = obj.get("condition_group_id").asInt
+        )
+      case "AnyCondition" =>
+        AnyCondition(
+          conditionGroupId = obj.get("condition_group_id").asInt
         )
       case tag => throw new SoraReadException(s"invalid union tag $tag for EventCondition")
     }

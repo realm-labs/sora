@@ -45,6 +45,8 @@ final class SoraConfig private (
     table(QuestRewardTable.Name)
   def gameSettings: GameSettingsTable =
     table(GameSettingsTable.Name)
+  def maintenanceWindow: MaintenanceWindowTable =
+    table(MaintenanceWindowTable.Name)
   def localization: LocalizationTable =
     table(LocalizationTable.Name)
   def levelExp: LevelExpTable =
@@ -91,10 +93,22 @@ final class SoraConfig private (
     table(DialogueTable.Name)
   def eventRule: EventRuleTable =
     table(EventRuleTable.Name)
+  def complexRule: ComplexRuleTable =
+    table(ComplexRuleTable.Name)
+  def complexConditionGroup: ComplexConditionGroupTable =
+    table(ComplexConditionGroupTable.Name)
+  def complexConditionGroupEntry: ComplexConditionGroupEntryTable =
+    table(ComplexConditionGroupEntryTable.Name)
+  def complexRuleCondition: ComplexRuleConditionTable =
+    table(ComplexRuleConditionTable.Name)
+  def complexActionGroup: ComplexActionGroupTable =
+    table(ComplexActionGroupTable.Name)
+  def complexActionEntry: ComplexActionEntryTable =
+    table(ComplexActionEntryTable.Name)
 }
 
 object SoraConfig {
-  val SchemaFingerprint = "f8d1c90e3e197c78"
+  val SchemaFingerprint = "3df8793f70d7fc54"
 
   def fromSource(source: SoraTableSource): SoraConfig = {
     if (source.schemaFingerprint != SchemaFingerprint) {
@@ -108,6 +122,7 @@ object SoraConfig {
       QuestTable.Name -> QuestTable.decode(source),
       QuestRewardTable.Name -> QuestRewardTable.decode(source),
       GameSettingsTable.Name -> GameSettingsTable.decode(source),
+      MaintenanceWindowTable.Name -> MaintenanceWindowTable.decode(source),
       LocalizationTable.Name -> LocalizationTable.decode(source),
       LevelExpTable.Name -> LevelExpTable.decode(source),
       CharacterTable.Name -> CharacterTable.decode(source),
@@ -130,7 +145,13 @@ object SoraConfig {
       MailTemplateTable.Name -> MailTemplateTable.decode(source),
       MailRewardTable.Name -> MailRewardTable.decode(source),
       DialogueTable.Name -> DialogueTable.decode(source),
-      EventRuleTable.Name -> EventRuleTable.decode(source)
+      EventRuleTable.Name -> EventRuleTable.decode(source),
+      ComplexRuleTable.Name -> ComplexRuleTable.decode(source),
+      ComplexConditionGroupTable.Name -> ComplexConditionGroupTable.decode(source),
+      ComplexConditionGroupEntryTable.Name -> ComplexConditionGroupEntryTable.decode(source),
+      ComplexRuleConditionTable.Name -> ComplexRuleConditionTable.decode(source),
+      ComplexActionGroupTable.Name -> ComplexActionGroupTable.decode(source),
+      ComplexActionEntryTable.Name -> ComplexActionEntryTable.decode(source)
     )
     new SoraConfig(tables)
   }

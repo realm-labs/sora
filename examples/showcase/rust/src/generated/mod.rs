@@ -2,52 +2,62 @@
 
 #![allow(dead_code)]
 
-pub mod achievement;
-pub mod buff;
-pub mod character;
-pub mod character_skill;
-pub mod dialogue;
-pub mod drop_entry;
-pub mod drop_group;
-pub mod dungeon;
-pub mod element_type;
-pub mod equipment_set;
-pub mod event_condition;
-pub mod event_rule;
-pub mod gacha_item;
-pub mod gacha_pool;
-pub mod game_settings;
-pub mod item;
+pub mod runtime;
 pub mod item_type;
-pub mod level_exp;
-pub mod localization;
-pub mod mail_reward;
-pub mod mail_template;
-pub mod mail_type;
-pub mod monster;
-pub mod quest;
-pub mod quest_reward;
+pub mod resource_kind;
+pub mod element_type;
 pub mod quest_type;
 pub mod rarity;
-pub mod recipe;
+pub mod stat_type;
+pub mod mail_type;
 pub mod resource_cost;
-pub mod resource_kind;
-pub mod reward;
-pub mod reward_action;
-pub mod runtime;
-pub mod shop;
-pub mod shop_item;
-pub mod skill;
+pub mod vec3;
 pub mod skill_effect;
+pub mod reward;
+pub mod stat_modifier;
+pub mod reward_bundle;
+pub mod complex_budget;
+pub mod maintenance_info;
+pub mod item;
+pub mod skill;
+pub mod quest;
+pub mod quest_reward;
+pub mod game_settings;
+pub mod maintenance_window;
+pub mod localization;
+pub mod level_exp;
+pub mod character;
+pub mod character_skill;
+pub mod buff;
+pub mod drop_group;
+pub mod drop_entry;
+pub mod monster;
 pub mod stage;
 pub mod stage_reward;
-pub mod stat_modifier;
-pub mod stat_type;
-pub mod vec3;
+pub mod dungeon;
+pub mod shop;
+pub mod shop_item;
+pub mod recipe;
+pub mod gacha_pool;
+pub mod gacha_item;
+pub mod equipment_set;
+pub mod achievement;
 pub mod vip_level;
+pub mod mail_template;
+pub mod mail_reward;
+pub mod dialogue;
+pub mod event_rule;
+pub mod complex_rule;
+pub mod complex_condition_group;
+pub mod complex_condition_group_entry;
+pub mod complex_rule_condition;
+pub mod complex_action_group;
+pub mod complex_action_entry;
+pub mod event_condition;
+pub mod reward_action;
 pub type SoraMap<K, V> = rustc_hash::FxHashMap<K, V>;
 
-pub const SCHEMA_FINGERPRINT: &str = "f8d1c90e3e197c78";
+pub const SCHEMA_FINGERPRINT: &str = "3df8793f70d7fc54";
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum SoraTableShape {
@@ -115,210 +125,57 @@ impl std::fmt::Debug for SoraConfig {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let mut tables = self.tables.keys().copied().collect::<Vec<_>>();
         tables.sort_unstable();
-        f.debug_struct("SoraConfig")
-            .field("tables", &tables)
-            .finish()
+        f.debug_struct("SoraConfig").field("tables", &tables).finish()
     }
 }
 
 impl SoraConfig {
-    pub fn from_source(
-        source: &impl runtime::SoraTableSource,
-    ) -> Result<Self, runtime::SoraReadError> {
+    pub fn from_source(source: &impl runtime::SoraTableSource) -> Result<Self, runtime::SoraReadError> {
         let schema_fingerprint = source.schema_fingerprint()?;
         if schema_fingerprint != SCHEMA_FINGERPRINT {
             return Err(runtime::SoraReadError::new(format!(
                 "schema fingerprint mismatch: generated code expects {}, bundle contains {}",
-                SCHEMA_FINGERPRINT, schema_fingerprint
+                SCHEMA_FINGERPRINT,
+                schema_fingerprint
             )));
         }
         let mut tables: SoraMap<&'static str, Box<dyn ErasedSoraTable>> =
-            sora_map_with_capacity(28);
-        tables.insert(
-            item::ItemTable::NAME,
-            Box::new(item::ItemTable::from_rows(
-                source.decode_table::<item::Item>(item::ItemTable::NAME)?,
-            )?),
-        );
-        tables.insert(
-            skill::SkillTable::NAME,
-            Box::new(skill::SkillTable::from_rows(
-                source.decode_table::<skill::Skill>(skill::SkillTable::NAME)?,
-            )?),
-        );
-        tables.insert(
-            quest::QuestTable::NAME,
-            Box::new(quest::QuestTable::from_rows(
-                source.decode_table::<quest::Quest>(quest::QuestTable::NAME)?,
-            )?),
-        );
-        tables.insert(
-            quest_reward::QuestRewardTable::NAME,
-            Box::new(quest_reward::QuestRewardTable::from_rows(
-                source.decode_table::<quest_reward::QuestReward>(
-                    quest_reward::QuestRewardTable::NAME,
-                )?,
-            )?),
-        );
-        tables.insert(
-            game_settings::GameSettingsTable::NAME,
-            Box::new(game_settings::GameSettingsTable::from_rows(
-                source.decode_table::<game_settings::GameSettings>(
-                    game_settings::GameSettingsTable::NAME,
-                )?,
-            )?),
-        );
-        tables.insert(
-            localization::LocalizationTable::NAME,
-            Box::new(localization::LocalizationTable::from_rows(
-                source.decode_table::<localization::Localization>(
-                    localization::LocalizationTable::NAME,
-                )?,
-            )?),
-        );
-        tables.insert(
-            level_exp::LevelExpTable::NAME,
-            Box::new(level_exp::LevelExpTable::from_rows(
-                source.decode_table::<level_exp::LevelExp>(level_exp::LevelExpTable::NAME)?,
-            )?),
-        );
-        tables.insert(
-            character::CharacterTable::NAME,
-            Box::new(character::CharacterTable::from_rows(
-                source.decode_table::<character::Character>(character::CharacterTable::NAME)?,
-            )?),
-        );
-        tables.insert(
-            character_skill::CharacterSkillTable::NAME,
-            Box::new(character_skill::CharacterSkillTable::from_rows(
-                source.decode_table::<character_skill::CharacterSkill>(
-                    character_skill::CharacterSkillTable::NAME,
-                )?,
-            )?),
-        );
-        tables.insert(
-            buff::BuffTable::NAME,
-            Box::new(buff::BuffTable::from_rows(
-                source.decode_table::<buff::Buff>(buff::BuffTable::NAME)?,
-            )?),
-        );
-        tables.insert(
-            drop_group::DropGroupTable::NAME,
-            Box::new(drop_group::DropGroupTable::from_rows(
-                source.decode_table::<drop_group::DropGroup>(drop_group::DropGroupTable::NAME)?,
-            )?),
-        );
-        tables.insert(
-            drop_entry::DropEntryTable::NAME,
-            Box::new(drop_entry::DropEntryTable::from_rows(
-                source.decode_table::<drop_entry::DropEntry>(drop_entry::DropEntryTable::NAME)?,
-            )?),
-        );
-        tables.insert(
-            monster::MonsterTable::NAME,
-            Box::new(monster::MonsterTable::from_rows(
-                source.decode_table::<monster::Monster>(monster::MonsterTable::NAME)?,
-            )?),
-        );
-        tables.insert(
-            stage::StageTable::NAME,
-            Box::new(stage::StageTable::from_rows(
-                source.decode_table::<stage::Stage>(stage::StageTable::NAME)?,
-            )?),
-        );
-        tables.insert(
-            stage_reward::StageRewardTable::NAME,
-            Box::new(stage_reward::StageRewardTable::from_rows(
-                source.decode_table::<stage_reward::StageReward>(
-                    stage_reward::StageRewardTable::NAME,
-                )?,
-            )?),
-        );
-        tables.insert(
-            dungeon::DungeonTable::NAME,
-            Box::new(dungeon::DungeonTable::from_rows(
-                source.decode_table::<dungeon::Dungeon>(dungeon::DungeonTable::NAME)?,
-            )?),
-        );
-        tables.insert(
-            shop::ShopTable::NAME,
-            Box::new(shop::ShopTable::from_rows(
-                source.decode_table::<shop::Shop>(shop::ShopTable::NAME)?,
-            )?),
-        );
-        tables.insert(
-            shop_item::ShopItemTable::NAME,
-            Box::new(shop_item::ShopItemTable::from_rows(
-                source.decode_table::<shop_item::ShopItem>(shop_item::ShopItemTable::NAME)?,
-            )?),
-        );
-        tables.insert(
-            recipe::RecipeTable::NAME,
-            Box::new(recipe::RecipeTable::from_rows(
-                source.decode_table::<recipe::Recipe>(recipe::RecipeTable::NAME)?,
-            )?),
-        );
-        tables.insert(
-            gacha_pool::GachaPoolTable::NAME,
-            Box::new(gacha_pool::GachaPoolTable::from_rows(
-                source.decode_table::<gacha_pool::GachaPool>(gacha_pool::GachaPoolTable::NAME)?,
-            )?),
-        );
-        tables.insert(
-            gacha_item::GachaItemTable::NAME,
-            Box::new(gacha_item::GachaItemTable::from_rows(
-                source.decode_table::<gacha_item::GachaItem>(gacha_item::GachaItemTable::NAME)?,
-            )?),
-        );
-        tables.insert(
-            equipment_set::EquipmentSetTable::NAME,
-            Box::new(equipment_set::EquipmentSetTable::from_rows(
-                source.decode_table::<equipment_set::EquipmentSet>(
-                    equipment_set::EquipmentSetTable::NAME,
-                )?,
-            )?),
-        );
-        tables.insert(
-            achievement::AchievementTable::NAME,
-            Box::new(achievement::AchievementTable::from_rows(
-                source.decode_table::<achievement::Achievement>(
-                    achievement::AchievementTable::NAME,
-                )?,
-            )?),
-        );
-        tables.insert(
-            vip_level::VipLevelTable::NAME,
-            Box::new(vip_level::VipLevelTable::from_rows(
-                source.decode_table::<vip_level::VipLevel>(vip_level::VipLevelTable::NAME)?,
-            )?),
-        );
-        tables.insert(
-            mail_template::MailTemplateTable::NAME,
-            Box::new(mail_template::MailTemplateTable::from_rows(
-                source.decode_table::<mail_template::MailTemplate>(
-                    mail_template::MailTemplateTable::NAME,
-                )?,
-            )?),
-        );
-        tables.insert(
-            mail_reward::MailRewardTable::NAME,
-            Box::new(mail_reward::MailRewardTable::from_rows(
-                source
-                    .decode_table::<mail_reward::MailReward>(mail_reward::MailRewardTable::NAME)?,
-            )?),
-        );
-        tables.insert(
-            dialogue::DialogueTable::NAME,
-            Box::new(dialogue::DialogueTable::from_rows(
-                source.decode_table::<dialogue::Dialogue>(dialogue::DialogueTable::NAME)?,
-            )?),
-        );
-        tables.insert(
-            event_rule::EventRuleTable::NAME,
-            Box::new(event_rule::EventRuleTable::from_rows(
-                source.decode_table::<event_rule::EventRule>(event_rule::EventRuleTable::NAME)?,
-            )?),
-        );
+            sora_map_with_capacity(35);
+        tables.insert(item::ItemTable::NAME, Box::new(item::ItemTable::from_rows(source.decode_table::<item::Item>(item::ItemTable::NAME)?)?));
+        tables.insert(skill::SkillTable::NAME, Box::new(skill::SkillTable::from_rows(source.decode_table::<skill::Skill>(skill::SkillTable::NAME)?)?));
+        tables.insert(quest::QuestTable::NAME, Box::new(quest::QuestTable::from_rows(source.decode_table::<quest::Quest>(quest::QuestTable::NAME)?)?));
+        tables.insert(quest_reward::QuestRewardTable::NAME, Box::new(quest_reward::QuestRewardTable::from_rows(source.decode_table::<quest_reward::QuestReward>(quest_reward::QuestRewardTable::NAME)?)?));
+        tables.insert(game_settings::GameSettingsTable::NAME, Box::new(game_settings::GameSettingsTable::from_rows(source.decode_table::<game_settings::GameSettings>(game_settings::GameSettingsTable::NAME)?)?));
+        tables.insert(maintenance_window::MaintenanceWindowTable::NAME, Box::new(maintenance_window::MaintenanceWindowTable::from_rows(source.decode_table::<maintenance_window::MaintenanceWindow>(maintenance_window::MaintenanceWindowTable::NAME)?)?));
+        tables.insert(localization::LocalizationTable::NAME, Box::new(localization::LocalizationTable::from_rows(source.decode_table::<localization::Localization>(localization::LocalizationTable::NAME)?)?));
+        tables.insert(level_exp::LevelExpTable::NAME, Box::new(level_exp::LevelExpTable::from_rows(source.decode_table::<level_exp::LevelExp>(level_exp::LevelExpTable::NAME)?)?));
+        tables.insert(character::CharacterTable::NAME, Box::new(character::CharacterTable::from_rows(source.decode_table::<character::Character>(character::CharacterTable::NAME)?)?));
+        tables.insert(character_skill::CharacterSkillTable::NAME, Box::new(character_skill::CharacterSkillTable::from_rows(source.decode_table::<character_skill::CharacterSkill>(character_skill::CharacterSkillTable::NAME)?)?));
+        tables.insert(buff::BuffTable::NAME, Box::new(buff::BuffTable::from_rows(source.decode_table::<buff::Buff>(buff::BuffTable::NAME)?)?));
+        tables.insert(drop_group::DropGroupTable::NAME, Box::new(drop_group::DropGroupTable::from_rows(source.decode_table::<drop_group::DropGroup>(drop_group::DropGroupTable::NAME)?)?));
+        tables.insert(drop_entry::DropEntryTable::NAME, Box::new(drop_entry::DropEntryTable::from_rows(source.decode_table::<drop_entry::DropEntry>(drop_entry::DropEntryTable::NAME)?)?));
+        tables.insert(monster::MonsterTable::NAME, Box::new(monster::MonsterTable::from_rows(source.decode_table::<monster::Monster>(monster::MonsterTable::NAME)?)?));
+        tables.insert(stage::StageTable::NAME, Box::new(stage::StageTable::from_rows(source.decode_table::<stage::Stage>(stage::StageTable::NAME)?)?));
+        tables.insert(stage_reward::StageRewardTable::NAME, Box::new(stage_reward::StageRewardTable::from_rows(source.decode_table::<stage_reward::StageReward>(stage_reward::StageRewardTable::NAME)?)?));
+        tables.insert(dungeon::DungeonTable::NAME, Box::new(dungeon::DungeonTable::from_rows(source.decode_table::<dungeon::Dungeon>(dungeon::DungeonTable::NAME)?)?));
+        tables.insert(shop::ShopTable::NAME, Box::new(shop::ShopTable::from_rows(source.decode_table::<shop::Shop>(shop::ShopTable::NAME)?)?));
+        tables.insert(shop_item::ShopItemTable::NAME, Box::new(shop_item::ShopItemTable::from_rows(source.decode_table::<shop_item::ShopItem>(shop_item::ShopItemTable::NAME)?)?));
+        tables.insert(recipe::RecipeTable::NAME, Box::new(recipe::RecipeTable::from_rows(source.decode_table::<recipe::Recipe>(recipe::RecipeTable::NAME)?)?));
+        tables.insert(gacha_pool::GachaPoolTable::NAME, Box::new(gacha_pool::GachaPoolTable::from_rows(source.decode_table::<gacha_pool::GachaPool>(gacha_pool::GachaPoolTable::NAME)?)?));
+        tables.insert(gacha_item::GachaItemTable::NAME, Box::new(gacha_item::GachaItemTable::from_rows(source.decode_table::<gacha_item::GachaItem>(gacha_item::GachaItemTable::NAME)?)?));
+        tables.insert(equipment_set::EquipmentSetTable::NAME, Box::new(equipment_set::EquipmentSetTable::from_rows(source.decode_table::<equipment_set::EquipmentSet>(equipment_set::EquipmentSetTable::NAME)?)?));
+        tables.insert(achievement::AchievementTable::NAME, Box::new(achievement::AchievementTable::from_rows(source.decode_table::<achievement::Achievement>(achievement::AchievementTable::NAME)?)?));
+        tables.insert(vip_level::VipLevelTable::NAME, Box::new(vip_level::VipLevelTable::from_rows(source.decode_table::<vip_level::VipLevel>(vip_level::VipLevelTable::NAME)?)?));
+        tables.insert(mail_template::MailTemplateTable::NAME, Box::new(mail_template::MailTemplateTable::from_rows(source.decode_table::<mail_template::MailTemplate>(mail_template::MailTemplateTable::NAME)?)?));
+        tables.insert(mail_reward::MailRewardTable::NAME, Box::new(mail_reward::MailRewardTable::from_rows(source.decode_table::<mail_reward::MailReward>(mail_reward::MailRewardTable::NAME)?)?));
+        tables.insert(dialogue::DialogueTable::NAME, Box::new(dialogue::DialogueTable::from_rows(source.decode_table::<dialogue::Dialogue>(dialogue::DialogueTable::NAME)?)?));
+        tables.insert(event_rule::EventRuleTable::NAME, Box::new(event_rule::EventRuleTable::from_rows(source.decode_table::<event_rule::EventRule>(event_rule::EventRuleTable::NAME)?)?));
+        tables.insert(complex_rule::ComplexRuleTable::NAME, Box::new(complex_rule::ComplexRuleTable::from_rows(source.decode_table::<complex_rule::ComplexRule>(complex_rule::ComplexRuleTable::NAME)?)?));
+        tables.insert(complex_condition_group::ComplexConditionGroupTable::NAME, Box::new(complex_condition_group::ComplexConditionGroupTable::from_rows(source.decode_table::<complex_condition_group::ComplexConditionGroup>(complex_condition_group::ComplexConditionGroupTable::NAME)?)?));
+        tables.insert(complex_condition_group_entry::ComplexConditionGroupEntryTable::NAME, Box::new(complex_condition_group_entry::ComplexConditionGroupEntryTable::from_rows(source.decode_table::<complex_condition_group_entry::ComplexConditionGroupEntry>(complex_condition_group_entry::ComplexConditionGroupEntryTable::NAME)?)?));
+        tables.insert(complex_rule_condition::ComplexRuleConditionTable::NAME, Box::new(complex_rule_condition::ComplexRuleConditionTable::from_rows(source.decode_table::<complex_rule_condition::ComplexRuleCondition>(complex_rule_condition::ComplexRuleConditionTable::NAME)?)?));
+        tables.insert(complex_action_group::ComplexActionGroupTable::NAME, Box::new(complex_action_group::ComplexActionGroupTable::from_rows(source.decode_table::<complex_action_group::ComplexActionGroup>(complex_action_group::ComplexActionGroupTable::NAME)?)?));
+        tables.insert(complex_action_entry::ComplexActionEntryTable::NAME, Box::new(complex_action_entry::ComplexActionEntryTable::from_rows(source.decode_table::<complex_action_entry::ComplexActionEntry>(complex_action_entry::ComplexActionEntryTable::NAME)?)?));
         Ok(Self { tables })
     }
 
@@ -359,6 +216,10 @@ impl SoraConfig {
 
     pub fn game_settings(&self) -> &game_settings::GameSettingsTable {
         self.table(game_settings::GameSettingsTable::NAME)
+    }
+
+    pub fn maintenance_window(&self) -> &maintenance_window::MaintenanceWindowTable {
+        self.table(maintenance_window::MaintenanceWindowTable::NAME)
     }
 
     pub fn localization(&self) -> &localization::LocalizationTable {
@@ -451,6 +312,30 @@ impl SoraConfig {
 
     pub fn event_rule(&self) -> &event_rule::EventRuleTable {
         self.table(event_rule::EventRuleTable::NAME)
+    }
+
+    pub fn complex_rule(&self) -> &complex_rule::ComplexRuleTable {
+        self.table(complex_rule::ComplexRuleTable::NAME)
+    }
+
+    pub fn complex_condition_group(&self) -> &complex_condition_group::ComplexConditionGroupTable {
+        self.table(complex_condition_group::ComplexConditionGroupTable::NAME)
+    }
+
+    pub fn complex_condition_group_entry(&self) -> &complex_condition_group_entry::ComplexConditionGroupEntryTable {
+        self.table(complex_condition_group_entry::ComplexConditionGroupEntryTable::NAME)
+    }
+
+    pub fn complex_rule_condition(&self) -> &complex_rule_condition::ComplexRuleConditionTable {
+        self.table(complex_rule_condition::ComplexRuleConditionTable::NAME)
+    }
+
+    pub fn complex_action_group(&self) -> &complex_action_group::ComplexActionGroupTable {
+        self.table(complex_action_group::ComplexActionGroupTable::NAME)
+    }
+
+    pub fn complex_action_entry(&self) -> &complex_action_entry::ComplexActionEntryTable {
+        self.table(complex_action_entry::ComplexActionEntryTable::NAME)
     }
 }
 

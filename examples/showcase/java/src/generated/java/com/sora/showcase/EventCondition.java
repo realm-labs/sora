@@ -33,6 +33,24 @@ public interface EventCondition {
             this.count = count;
         }
     }
+    final class AllConditions implements EventCondition {
+        public final Integer conditionGroupId;
+
+        public AllConditions(
+            Integer conditionGroupId
+        ) {
+            this.conditionGroupId = conditionGroupId;
+        }
+    }
+    final class AnyCondition implements EventCondition {
+        public final Integer conditionGroupId;
+
+        public AnyCondition(
+            Integer conditionGroupId
+        ) {
+            this.conditionGroupId = conditionGroupId;
+        }
+    }
     static EventCondition decode(SoraReader reader) {
         switch (reader.readU32()) {
             case 0:
@@ -46,6 +64,14 @@ public interface EventCondition {
             case 2:
                 return new HasItem(
                     reader.readI32(),
+                    reader.readI32()
+                );
+            case 3:
+                return new AllConditions(
+                    reader.readI32()
+                );
+            case 4:
+                return new AnyCondition(
                     reader.readI32()
                 );
             default:
@@ -68,6 +94,14 @@ public interface EventCondition {
                 return new HasItem(
                     obj.get("item_id").asInt(),
                     obj.get("count").asInt()
+                );
+            case "AllConditions":
+                return new AllConditions(
+                    obj.get("condition_group_id").asInt()
+                );
+            case "AnyCondition":
+                return new AnyCondition(
+                    obj.get("condition_group_id").asInt()
                 );
             default:
                 throw new SoraReadException("invalid union tag for EventCondition");

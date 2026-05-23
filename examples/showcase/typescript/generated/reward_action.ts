@@ -20,11 +20,16 @@ export interface RewardActionSendMail {
     type: "SendMail";
     mailId: number;
 }
+export interface RewardActionRunActionGroup {
+    type: "RunActionGroup";
+    actionGroupId: number;
+}
 export type RewardAction =
     | RewardActionAddItem
     | RewardActionAddBuff
     | RewardActionUnlockStage
-    | RewardActionSendMail;
+    | RewardActionSendMail
+    | RewardActionRunActionGroup;
 
 export function decodeRewardAction(reader: SoraReader): RewardAction {
     const ordinal = reader.readU32();
@@ -52,6 +57,12 @@ export function decodeRewardAction(reader: SoraReader): RewardAction {
         return {
             type: "SendMail",
             mailId: reader.readI32(),
+        };
+    }
+    if (ordinal === 4) {
+        return {
+            type: "RunActionGroup",
+            actionGroupId: reader.readI32(),
         };
     }
     throw new Error(`invalid union ordinal ${ordinal} for RewardAction`);
@@ -84,6 +95,12 @@ export function decodeRewardActionValue(value: SoraValue): RewardAction {
         return {
             type: "SendMail",
             mailId: object.get("mail_id").asInt(),
+        };
+    }
+    if (tag === "RunActionGroup") {
+        return {
+            type: "RunActionGroup",
+            actionGroupId: object.get("action_group_id").asInt(),
         };
     }
     throw new Error(`invalid union tag ${tag} for RewardAction`);

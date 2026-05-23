@@ -90,7 +90,7 @@ The generated sheet has metadata rows above the editable data area:
 | #field | id | name | item_type | max_stack |
 | --- | --- | --- | --- | --- |
 | #type | i32 | string | `enum<ItemType>` | i32 |
-| #rule | key | required | required | range=1..9999 |
+| #input | key |  |  | range=1..9999 |
 | #desc | Item id | Display name | Item category | Stack limit |
 
 Rows start after the generated header:

@@ -132,6 +132,20 @@ name = "count"
 type = "i32"
 range = [1, 9999]
 
+[[unions.variants]]
+name = "AllConditions"
+
+[[unions.variants.fields]]
+name = "condition_group_id"
+type = "ref<ComplexConditionGroup.id>"
+
+[[unions.variants]]
+name = "AnyCondition"
+
+[[unions.variants.fields]]
+name = "condition_group_id"
+type = "ref<ComplexConditionGroup.id>"
+
 [[unions]]
 name = "RewardAction"
 tag = "type"
@@ -173,6 +187,65 @@ name = "SendMail"
 [[unions.variants.fields]]
 name = "mail_id"
 type = "ref<MailTemplate.id>"
+
+[[unions.variants]]
+name = "RunActionGroup"
+
+[[unions.variants.fields]]
+name = "action_group_id"
+type = "ref<ComplexActionGroup.id>"
+
+[[structs]]
+name = "RewardBundle"
+
+[[structs.fields]]
+name = "cost"
+type = "struct<ResourceCost>"
+parser = { kind = "tuple", separator = ":" }
+
+[[structs.fields]]
+name = "weight"
+type = "i32"
+range = [1, 10000]
+
+[[structs.fields]]
+name = "labels"
+type = "list<string>"
+parser = { kind = "split", separator = "+" }
+
+[[structs]]
+name = "ComplexBudget"
+
+[[structs.fields]]
+name = "fixed"
+type = "struct<ResourceCost>"
+parser = { kind = "tuple", separator = ":" }
+
+[[structs.fields]]
+name = "random"
+type = "list<RewardBundle>"
+parser = { kind = "tuple_list", separator = ";", item_separator = "|" }
+
+[[structs.fields]]
+name = "limits"
+type = "map<string,i32>"
+parser = { kind = "map", separator = ":", item_separator = "|" }
+
+[[structs]]
+name = "MaintenanceInfo"
+
+[[structs.fields]]
+name = "starts_at"
+type = "string"
+
+[[structs.fields]]
+name = "duration_minutes"
+type = "i32"
+range = [1, 1440]
+
+[[structs.fields]]
+name = "reason"
+type = "optional<string>"
 
 [[tables]]
 name = "Item"
@@ -385,6 +458,54 @@ name = "starter_items"
 type = "list<ref<Item.id>>"
 parser = { kind = "json" }
 length = [1, 4]
+
+[[tables.fields]]
+name = "gravity"
+type = "f64"
+comment = "Double precision tuning value"
+
+[[tables.fields]]
+name = "daily_bonus_items"
+type = "array<ref<Item.id>,3>"
+parser = { kind = "split" }
+comment = "Fixed-length array parsed from one cell"
+
+[[tables.fields]]
+name = "spawn_points"
+type = "array<struct<Vec3>,2>"
+parser = { kind = "tuple_list" }
+comment = "Fixed-length array of structs"
+
+[[tables.fields]]
+name = "maintenance"
+type = "optional<MaintenanceInfo>"
+from = { table = "MaintenanceWindow", parent_key = "version", child_key = "version" }
+comment = "Optional derived struct copied from a child row"
+
+[[tables]]
+name = "MaintenanceWindow"
+mode = "list"
+
+[tables.source]
+file = "Core.xlsx"
+sheet = "MaintenanceWindow"
+
+[[tables.fields]]
+name = "version"
+type = "string"
+
+[[tables.fields]]
+name = "starts_at"
+type = "string"
+
+[[tables.fields]]
+name = "duration_minutes"
+type = "i32"
+range = [1, 1440]
+
+[[tables.fields]]
+name = "reason"
+type = "optional<string>"
 
 [[tables]]
 name = "Localization"
@@ -987,3 +1108,161 @@ name = "actions"
 type = "list<union<RewardAction>>"
 parser = { kind = "json" }
 length = [1, 4]
+
+[[tables]]
+name = "ComplexRule"
+mode = "map"
+key = "id"
+
+[tables.source]
+file = "Complex.xlsx"
+sheet = "ComplexRule"
+
+[[tables.fields]]
+name = "id"
+type = "i32"
+
+[[tables.fields]]
+name = "name"
+type = "string"
+
+[[tables.fields]]
+name = "root_condition"
+type = "union<EventCondition>"
+from = { table = "ComplexRuleCondition", parent_key = "id", child_key = "rule_id", field = "value" }
+comment = "Single union value derived from a tagged_columns child row"
+
+[[tables.fields]]
+name = "root_action_group"
+type = "ref<ComplexActionGroup.id>"
+
+[[tables.fields]]
+name = "actions"
+type = "list<union<RewardAction>>"
+from = { table = "ComplexActionEntry", parent_key = "root_action_group", child_key = "group_id", field = "value", order_by = "seq" }
+comment = "Non-JSON list<union<RewardAction>> assembled from child rows"
+
+[[tables.fields]]
+name = "budget"
+type = "struct<ComplexBudget>"
+parser = { kind = "tuple", separator = "," }
+comment = "Nested tuple, tuple_list, split, and map parsers in one cell"
+
+[[tables]]
+name = "ComplexConditionGroup"
+mode = "map"
+key = "id"
+
+[tables.source]
+file = "Complex.xlsx"
+sheet = "ComplexConditionGroup"
+
+[[tables.fields]]
+name = "id"
+type = "i32"
+
+[[tables.fields]]
+name = "name"
+type = "string"
+
+[[tables.fields]]
+name = "conditions"
+type = "list<union<EventCondition>>"
+from = { table = "ComplexConditionGroupEntry", parent_key = "id", child_key = "group_id", field = "value", order_by = "seq" }
+comment = "A derived list of union values; each child row is edited without JSON"
+
+[[tables]]
+name = "ComplexConditionGroupEntry"
+mode = "map"
+key = "id"
+
+[tables.source]
+file = "Complex.xlsx"
+sheet = "ComplexConditionGroupEntry"
+
+[[tables.fields]]
+name = "id"
+type = "i32"
+
+[[tables.fields]]
+name = "group_id"
+type = "ref<ComplexConditionGroup.id>"
+
+[[tables.fields]]
+name = "seq"
+type = "i32"
+
+[[tables.fields]]
+name = "value"
+type = "union<EventCondition>"
+parser = { kind = "tagged_columns", prefix = "" }
+
+[[tables]]
+name = "ComplexRuleCondition"
+mode = "map"
+key = "id"
+
+[tables.source]
+file = "Complex.xlsx"
+sheet = "ComplexRuleCondition"
+
+[[tables.fields]]
+name = "id"
+type = "i32"
+
+[[tables.fields]]
+name = "rule_id"
+type = "ref<ComplexRule.id>"
+
+[[tables.fields]]
+name = "value"
+type = "union<EventCondition>"
+parser = { kind = "tagged_columns", prefix = "" }
+
+[[tables]]
+name = "ComplexActionGroup"
+mode = "map"
+key = "id"
+
+[tables.source]
+file = "Complex.xlsx"
+sheet = "ComplexActionGroup"
+
+[[tables.fields]]
+name = "id"
+type = "i32"
+
+[[tables.fields]]
+name = "name"
+type = "string"
+
+[[tables.fields]]
+name = "actions"
+type = "list<union<RewardAction>>"
+from = { table = "ComplexActionEntry", parent_key = "id", child_key = "group_id", field = "value", order_by = "seq" }
+
+[[tables]]
+name = "ComplexActionEntry"
+mode = "map"
+key = "id"
+
+[tables.source]
+file = "Complex.xlsx"
+sheet = "ComplexActionEntry"
+
+[[tables.fields]]
+name = "id"
+type = "i32"
+
+[[tables.fields]]
+name = "group_id"
+type = "ref<ComplexActionGroup.id>"
+
+[[tables.fields]]
+name = "seq"
+type = "i32"
+
+[[tables.fields]]
+name = "value"
+type = "union<RewardAction>"
+parser = { kind = "tagged_columns", prefix = "" }
