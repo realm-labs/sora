@@ -17,6 +17,16 @@ object Achievement {
       targetCount = reader.readI64(),
       reward = ResourceCost.decode(reader)
     )
+
+  def decode(value: SoraValue): Achievement = {
+    val obj = value.asObject
+    Achievement(
+      id = obj.get("id").asInt,
+      titleKey = obj.get("title_key").asString,
+      targetCount = obj.get("target_count").asLong,
+      reward = ResourceCost.decode(obj.get("reward"))
+    )
+  }
 }
 
 final class AchievementTable private (
@@ -44,7 +54,7 @@ object AchievementTable {
   )
 
   def decode(source: SoraTableSource): AchievementTable =
-    fromRows(source.decodeTable(Name, Achievement.decode))
+    fromRows(source.decodeTable(Name, (reader: SoraReader) => Achievement.decode(reader), (value: SoraValue) => Achievement.decode(value)))
 
   private def fromRows(rows: Vector[Achievement]): AchievementTable =
     new AchievementTable(

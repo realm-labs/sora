@@ -21,6 +21,18 @@ object Monster {
       dropGroup = reader.readI32(),
       spawnPos = Vec3.decode(reader)
     )
+
+  def decode(value: SoraValue): Monster = {
+    val obj = value.asObject
+    Monster(
+      id = obj.get("id").asInt,
+      name = obj.get("name").asString,
+      level = obj.get("level").asInt,
+      element = ElementType.decode(obj.get("element")),
+      dropGroup = obj.get("drop_group").asInt,
+      spawnPos = Vec3.decode(obj.get("spawn_pos"))
+    )
+  }
 }
 
 final class MonsterTable private (
@@ -48,7 +60,7 @@ object MonsterTable {
   )
 
   def decode(source: SoraTableSource): MonsterTable =
-    fromRows(source.decodeTable(Name, Monster.decode))
+    fromRows(source.decodeTable(Name, (reader: SoraReader) => Monster.decode(reader), (value: SoraValue) => Monster.decode(value)))
 
   private def fromRows(rows: Vector[Monster]): MonsterTable =
     new MonsterTable(

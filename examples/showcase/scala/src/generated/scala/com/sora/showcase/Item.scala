@@ -30,6 +30,19 @@ object Item {
       tags = reader.readList(reader.readString()),
       attributes = reader.readMap(reader.readString(), reader.readI32())
     )
+
+  def decode(value: SoraValue): Item = {
+    val obj = value.asObject
+    Item(
+      id = obj.get("id").asInt,
+      name = obj.get("name").asString,
+      itemType = ItemType.decode(obj.get("item_type")),
+      maxStack = obj.get("max_stack").asInt,
+      price = ResourceCost.decode(obj.get("price")),
+      tags = obj.get("tags").asList(item => item.asString),
+      attributes = obj.get("attributes").asMap(item => item.asString, item => item.asInt)
+    )
+  }
 }
 
 final class ItemTable private (
@@ -65,7 +78,7 @@ object ItemTable {
   )
 
   def decode(source: SoraTableSource): ItemTable =
-    fromRows(source.decodeTable(Name, Item.decode))
+    fromRows(source.decodeTable(Name, (reader: SoraReader) => Item.decode(reader), (value: SoraValue) => Item.decode(value)))
 
   private def fromRows(rows: Vector[Item]): ItemTable =
     new ItemTable(

@@ -17,6 +17,16 @@ object Dungeon {
       stageIds = reader.readList(reader.readI32()),
       entryCost = ResourceCost.decode(reader)
     )
+
+  def decode(value: SoraValue): Dungeon = {
+    val obj = value.asObject
+    Dungeon(
+      id = obj.get("id").asInt,
+      name = obj.get("name").asString,
+      stageIds = obj.get("stage_ids").asList(item => item.asInt),
+      entryCost = ResourceCost.decode(obj.get("entry_cost"))
+    )
+  }
 }
 
 final class DungeonTable private (
@@ -44,7 +54,7 @@ object DungeonTable {
   )
 
   def decode(source: SoraTableSource): DungeonTable =
-    fromRows(source.decodeTable(Name, Dungeon.decode))
+    fromRows(source.decodeTable(Name, (reader: SoraReader) => Dungeon.decode(reader), (value: SoraValue) => Dungeon.decode(value)))
 
   private def fromRows(rows: Vector[Dungeon]): DungeonTable =
     new DungeonTable(

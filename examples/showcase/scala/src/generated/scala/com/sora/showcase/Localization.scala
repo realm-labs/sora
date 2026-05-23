@@ -17,6 +17,16 @@ object Localization {
       enUs = reader.readString(),
       note = reader.readOptional(reader.readString())
     )
+
+  def decode(value: SoraValue): Localization = {
+    val obj = value.asObject
+    Localization(
+      key = obj.get("key").asString,
+      zhCn = obj.get("zh_cn").asString,
+      enUs = obj.get("en_us").asString,
+      note = if (obj.get("note").isNull) None else Some(obj.get("note").asString)
+    )
+  }
 }
 
 final class LocalizationTable private (
@@ -44,7 +54,7 @@ object LocalizationTable {
   )
 
   def decode(source: SoraTableSource): LocalizationTable =
-    fromRows(source.decodeTable(Name, Localization.decode))
+    fromRows(source.decodeTable(Name, (reader: SoraReader) => Localization.decode(reader), (value: SoraValue) => Localization.decode(value)))
 
   private def fromRows(rows: Vector[Localization]): LocalizationTable =
     new LocalizationTable(

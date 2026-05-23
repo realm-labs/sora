@@ -15,6 +15,15 @@ object Dialogue {
       speakerKey = reader.readString(),
       lines = reader.readList(reader.readString())
     )
+
+  def decode(value: SoraValue): Dialogue = {
+    val obj = value.asObject
+    Dialogue(
+      id = obj.get("id").asInt,
+      speakerKey = obj.get("speaker_key").asString,
+      lines = obj.get("lines").asList(item => item.asString)
+    )
+  }
 }
 
 final class DialogueTable private (
@@ -42,7 +51,7 @@ object DialogueTable {
   )
 
   def decode(source: SoraTableSource): DialogueTable =
-    fromRows(source.decodeTable(Name, Dialogue.decode))
+    fromRows(source.decodeTable(Name, (reader: SoraReader) => Dialogue.decode(reader), (value: SoraValue) => Dialogue.decode(value)))
 
   private def fromRows(rows: Vector[Dialogue]): DialogueTable =
     new DialogueTable(

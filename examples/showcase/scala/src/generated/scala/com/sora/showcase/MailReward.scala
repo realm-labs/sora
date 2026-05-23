@@ -17,6 +17,16 @@ object MailReward {
       itemId = reader.readI32(),
       count = reader.readI32()
     )
+
+  def decode(value: SoraValue): MailReward = {
+    val obj = value.asObject
+    MailReward(
+      mailId = obj.get("mail_id").asInt,
+      seq = obj.get("seq").asInt,
+      itemId = obj.get("item_id").asInt,
+      count = obj.get("count").asInt
+    )
+  }
 }
 
 final class MailRewardTable private (
@@ -39,7 +49,7 @@ object MailRewardTable {
   )
 
   def decode(source: SoraTableSource): MailRewardTable =
-    fromRows(source.decodeTable(Name, MailReward.decode))
+    fromRows(source.decodeTable(Name, (reader: SoraReader) => MailReward.decode(reader), (value: SoraValue) => MailReward.decode(value)))
 
   private def fromRows(rows: Vector[MailReward]): MailRewardTable =
     new MailRewardTable(

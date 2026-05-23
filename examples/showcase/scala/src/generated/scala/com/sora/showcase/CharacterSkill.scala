@@ -15,6 +15,15 @@ object CharacterSkill {
       skillId = reader.readI32(),
       unlockLevel = reader.readI32()
     )
+
+  def decode(value: SoraValue): CharacterSkill = {
+    val obj = value.asObject
+    CharacterSkill(
+      characterId = obj.get("character_id").asInt,
+      skillId = obj.get("skill_id").asInt,
+      unlockLevel = obj.get("unlock_level").asInt
+    )
+  }
 }
 
 final class CharacterSkillTable private (
@@ -37,7 +46,7 @@ object CharacterSkillTable {
   )
 
   def decode(source: SoraTableSource): CharacterSkillTable =
-    fromRows(source.decodeTable(Name, CharacterSkill.decode))
+    fromRows(source.decodeTable(Name, (reader: SoraReader) => CharacterSkill.decode(reader), (value: SoraValue) => CharacterSkill.decode(value)))
 
   private def fromRows(rows: Vector[CharacterSkill]): CharacterSkillTable =
     new CharacterSkillTable(

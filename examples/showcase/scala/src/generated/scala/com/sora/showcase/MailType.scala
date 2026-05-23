@@ -16,4 +16,12 @@ object MailType {
       case 2 => MailType.Compensation
       case ordinal => throw new SoraReadException(s"invalid enum ordinal $ordinal for MailType")
     }
+
+  def decode(value: SoraValue): MailType =
+    value.asString match {
+      case "System" => MailType.System
+      case "Event" => MailType.Event
+      case "Compensation" => MailType.Compensation
+      case name => throw new SoraReadException(s"invalid enum value $name for MailType")
+    }
 }

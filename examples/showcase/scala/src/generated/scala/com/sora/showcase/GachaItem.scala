@@ -17,6 +17,16 @@ object GachaItem {
       rarity = Rarity.decode(reader),
       weight = reader.readF32()
     )
+
+  def decode(value: SoraValue): GachaItem = {
+    val obj = value.asObject
+    GachaItem(
+      poolId = obj.get("pool_id").asInt,
+      itemId = obj.get("item_id").asInt,
+      rarity = Rarity.decode(obj.get("rarity")),
+      weight = obj.get("weight").asFloat
+    )
+  }
 }
 
 final class GachaItemTable private (
@@ -39,7 +49,7 @@ object GachaItemTable {
   )
 
   def decode(source: SoraTableSource): GachaItemTable =
-    fromRows(source.decodeTable(Name, GachaItem.decode))
+    fromRows(source.decodeTable(Name, (reader: SoraReader) => GachaItem.decode(reader), (value: SoraValue) => GachaItem.decode(value)))
 
   private def fromRows(rows: Vector[GachaItem]): GachaItemTable =
     new GachaItemTable(

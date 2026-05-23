@@ -18,4 +18,13 @@ object ElementType {
       case 3 => ElementType.Physical
       case ordinal => throw new SoraReadException(s"invalid enum ordinal $ordinal for ElementType")
     }
+
+  def decode(value: SoraValue): ElementType =
+    value.asString match {
+      case "Fire" => ElementType.Fire
+      case "Ice" => ElementType.Ice
+      case "Lightning" => ElementType.Lightning
+      case "Physical" => ElementType.Physical
+      case name => throw new SoraReadException(s"invalid enum value $name for ElementType")
+    }
 }

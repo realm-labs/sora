@@ -15,4 +15,13 @@ object Vec3 {
       y = reader.readF32(),
       z = reader.readF32()
     )
+
+  def decode(value: SoraValue): Vec3 = {
+    val obj = value.asObject
+    Vec3(
+      x = obj.get("x").asFloat,
+      y = obj.get("y").asFloat,
+      z = obj.get("z").asFloat
+    )
+  }
 }

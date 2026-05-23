@@ -15,6 +15,15 @@ object VipLevel {
       cost = ResourceCost.decode(reader),
       perks = reader.readList(reader.readString())
     )
+
+  def decode(value: SoraValue): VipLevel = {
+    val obj = value.asObject
+    VipLevel(
+      level = obj.get("level").asInt,
+      cost = ResourceCost.decode(obj.get("cost")),
+      perks = obj.get("perks").asList(item => item.asString)
+    )
+  }
 }
 
 final class VipLevelTable private (
@@ -42,7 +51,7 @@ object VipLevelTable {
   )
 
   def decode(source: SoraTableSource): VipLevelTable =
-    fromRows(source.decodeTable(Name, VipLevel.decode))
+    fromRows(source.decodeTable(Name, (reader: SoraReader) => VipLevel.decode(reader), (value: SoraValue) => VipLevel.decode(value)))
 
   private def fromRows(rows: Vector[VipLevel]): VipLevelTable =
     new VipLevelTable(

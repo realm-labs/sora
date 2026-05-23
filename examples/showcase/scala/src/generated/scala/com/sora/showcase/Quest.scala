@@ -24,6 +24,19 @@ object Quest {
       startPos = Vec3.decode(reader),
       rewards = reader.readList(Reward.decode(reader))
     )
+
+  def decode(value: SoraValue): Quest = {
+    val obj = value.asObject
+    Quest(
+      id = obj.get("id").asInt,
+      questType = QuestType.decode(obj.get("quest_type")),
+      title = obj.get("title").asString,
+      requiredItem = obj.get("required_item").asInt,
+      unlockSkills = obj.get("unlock_skills").asList(item => item.asInt),
+      startPos = Vec3.decode(obj.get("start_pos")),
+      rewards = obj.get("rewards").asList(item => Reward.decode(item))
+    )
+  }
 }
 
 final class QuestTable private (
@@ -51,7 +64,7 @@ object QuestTable {
   )
 
   def decode(source: SoraTableSource): QuestTable =
-    fromRows(source.decodeTable(Name, Quest.decode))
+    fromRows(source.decodeTable(Name, (reader: SoraReader) => Quest.decode(reader), (value: SoraValue) => Quest.decode(value)))
 
   private def fromRows(rows: Vector[Quest]): QuestTable =
     new QuestTable(

@@ -19,6 +19,17 @@ object DropEntry {
       count = reader.readI32(),
       weight = reader.readF32()
     )
+
+  def decode(value: SoraValue): DropEntry = {
+    val obj = value.asObject
+    DropEntry(
+      groupId = obj.get("group_id").asInt,
+      seq = obj.get("seq").asInt,
+      itemId = obj.get("item_id").asInt,
+      count = obj.get("count").asInt,
+      weight = obj.get("weight").asFloat
+    )
+  }
 }
 
 final class DropEntryTable private (
@@ -41,7 +52,7 @@ object DropEntryTable {
   )
 
   def decode(source: SoraTableSource): DropEntryTable =
-    fromRows(source.decodeTable(Name, DropEntry.decode))
+    fromRows(source.decodeTable(Name, (reader: SoraReader) => DropEntry.decode(reader), (value: SoraValue) => DropEntry.decode(value)))
 
   private def fromRows(rows: Vector[DropEntry]): DropEntryTable =
     new DropEntryTable(

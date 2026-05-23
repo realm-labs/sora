@@ -15,6 +15,15 @@ object LevelExp {
       exp = reader.readI64(),
       unlockFeature = reader.readOptional(reader.readString())
     )
+
+  def decode(value: SoraValue): LevelExp = {
+    val obj = value.asObject
+    LevelExp(
+      level = obj.get("level").asInt,
+      exp = obj.get("exp").asLong,
+      unlockFeature = if (obj.get("unlock_feature").isNull) None else Some(obj.get("unlock_feature").asString)
+    )
+  }
 }
 
 final class LevelExpTable private (
@@ -42,7 +51,7 @@ object LevelExpTable {
   )
 
   def decode(source: SoraTableSource): LevelExpTable =
-    fromRows(source.decodeTable(Name, LevelExp.decode))
+    fromRows(source.decodeTable(Name, (reader: SoraReader) => LevelExp.decode(reader), (value: SoraValue) => LevelExp.decode(value)))
 
   private def fromRows(rows: Vector[LevelExp]): LevelExpTable =
     new LevelExpTable(

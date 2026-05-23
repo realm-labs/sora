@@ -13,4 +13,12 @@ object Reward {
       itemId = reader.readI32(),
       count = reader.readI32()
     )
+
+  def decode(value: SoraValue): Reward = {
+    val obj = value.asObject
+    Reward(
+      itemId = obj.get("item_id").asInt,
+      count = obj.get("count").asInt
+    )
+  }
 }

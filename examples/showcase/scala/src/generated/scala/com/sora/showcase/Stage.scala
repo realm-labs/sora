@@ -19,6 +19,17 @@ object Stage {
       recommendedPower = reader.readI32(),
       firstClearRewards = reader.readList(Reward.decode(reader))
     )
+
+  def decode(value: SoraValue): Stage = {
+    val obj = value.asObject
+    Stage(
+      id = obj.get("id").asInt,
+      name = obj.get("name").asString,
+      monsterIds = obj.get("monster_ids").asList(item => item.asInt),
+      recommendedPower = obj.get("recommended_power").asInt,
+      firstClearRewards = obj.get("first_clear_rewards").asList(item => Reward.decode(item))
+    )
+  }
 }
 
 final class StageTable private (
@@ -46,7 +57,7 @@ object StageTable {
   )
 
   def decode(source: SoraTableSource): StageTable =
-    fromRows(source.decodeTable(Name, Stage.decode))
+    fromRows(source.decodeTable(Name, (reader: SoraReader) => Stage.decode(reader), (value: SoraValue) => Stage.decode(value)))
 
   private def fromRows(rows: Vector[Stage]): StageTable =
     new StageTable(

@@ -19,6 +19,17 @@ object ShopItem {
       price = ResourceCost.decode(reader),
       dailyLimit = reader.readOptional(reader.readI32())
     )
+
+  def decode(value: SoraValue): ShopItem = {
+    val obj = value.asObject
+    ShopItem(
+      shopId = obj.get("shop_id").asInt,
+      seq = obj.get("seq").asInt,
+      itemId = obj.get("item_id").asInt,
+      price = ResourceCost.decode(obj.get("price")),
+      dailyLimit = if (obj.get("daily_limit").isNull) None else Some(obj.get("daily_limit").asInt)
+    )
+  }
 }
 
 final class ShopItemTable private (
@@ -41,7 +52,7 @@ object ShopItemTable {
   )
 
   def decode(source: SoraTableSource): ShopItemTable =
-    fromRows(source.decodeTable(Name, ShopItem.decode))
+    fromRows(source.decodeTable(Name, (reader: SoraReader) => ShopItem.decode(reader), (value: SoraValue) => ShopItem.decode(value)))
 
   private def fromRows(rows: Vector[ShopItem]): ShopItemTable =
     new ShopItemTable(

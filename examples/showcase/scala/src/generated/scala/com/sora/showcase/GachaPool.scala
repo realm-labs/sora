@@ -15,6 +15,15 @@ object GachaPool {
       name = reader.readString(),
       cost = ResourceCost.decode(reader)
     )
+
+  def decode(value: SoraValue): GachaPool = {
+    val obj = value.asObject
+    GachaPool(
+      id = obj.get("id").asInt,
+      name = obj.get("name").asString,
+      cost = ResourceCost.decode(obj.get("cost"))
+    )
+  }
 }
 
 final class GachaPoolTable private (
@@ -42,7 +51,7 @@ object GachaPoolTable {
   )
 
   def decode(source: SoraTableSource): GachaPoolTable =
-    fromRows(source.decodeTable(Name, GachaPool.decode))
+    fromRows(source.decodeTable(Name, (reader: SoraReader) => GachaPool.decode(reader), (value: SoraValue) => GachaPool.decode(value)))
 
   private def fromRows(rows: Vector[GachaPool]): GachaPoolTable =
     new GachaPoolTable(

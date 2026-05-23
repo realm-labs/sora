@@ -17,6 +17,16 @@ object Buff {
       duration = reader.readF32(),
       modifiers = reader.readList(StatModifier.decode(reader))
     )
+
+  def decode(value: SoraValue): Buff = {
+    val obj = value.asObject
+    Buff(
+      id = obj.get("id").asInt,
+      name = obj.get("name").asString,
+      duration = obj.get("duration").asFloat,
+      modifiers = obj.get("modifiers").asList(item => StatModifier.decode(item))
+    )
+  }
 }
 
 final class BuffTable private (
@@ -44,7 +54,7 @@ object BuffTable {
   )
 
   def decode(source: SoraTableSource): BuffTable =
-    fromRows(source.decodeTable(Name, Buff.decode))
+    fromRows(source.decodeTable(Name, (reader: SoraReader) => Buff.decode(reader), (value: SoraValue) => Buff.decode(value)))
 
   private def fromRows(rows: Vector[Buff]): BuffTable =
     new BuffTable(

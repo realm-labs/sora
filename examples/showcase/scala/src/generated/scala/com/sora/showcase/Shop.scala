@@ -15,6 +15,15 @@ object Shop {
       name = reader.readString(),
       currency = ResourceKind.decode(reader)
     )
+
+  def decode(value: SoraValue): Shop = {
+    val obj = value.asObject
+    Shop(
+      id = obj.get("id").asInt,
+      name = obj.get("name").asString,
+      currency = ResourceKind.decode(obj.get("currency"))
+    )
+  }
 }
 
 final class ShopTable private (
@@ -42,7 +51,7 @@ object ShopTable {
   )
 
   def decode(source: SoraTableSource): ShopTable =
-    fromRows(source.decodeTable(Name, Shop.decode))
+    fromRows(source.decodeTable(Name, (reader: SoraReader) => Shop.decode(reader), (value: SoraValue) => Shop.decode(value)))
 
   private def fromRows(rows: Vector[Shop]): ShopTable =
     new ShopTable(

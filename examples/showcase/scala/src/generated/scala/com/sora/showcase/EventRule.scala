@@ -17,6 +17,16 @@ object EventRule {
       condition = EventCondition.decode(reader),
       actions = reader.readList(RewardAction.decode(reader))
     )
+
+  def decode(value: SoraValue): EventRule = {
+    val obj = value.asObject
+    EventRule(
+      id = obj.get("id").asInt,
+      name = obj.get("name").asString,
+      condition = EventCondition.decode(obj.get("condition")),
+      actions = obj.get("actions").asList(item => RewardAction.decode(item))
+    )
+  }
 }
 
 final class EventRuleTable private (
@@ -44,7 +54,7 @@ object EventRuleTable {
   )
 
   def decode(source: SoraTableSource): EventRuleTable =
-    fromRows(source.decodeTable(Name, EventRule.decode))
+    fromRows(source.decodeTable(Name, (reader: SoraReader) => EventRule.decode(reader), (value: SoraValue) => EventRule.decode(value)))
 
   private def fromRows(rows: Vector[EventRule]): EventRuleTable =
     new EventRuleTable(

@@ -20,4 +20,14 @@ object ItemType {
       case 4 => ItemType.Consumable
       case ordinal => throw new SoraReadException(s"invalid enum ordinal $ordinal for ItemType")
     }
+
+  def decode(value: SoraValue): ItemType =
+    value.asString match {
+      case "Weapon" => ItemType.Weapon
+      case "Armor" => ItemType.Armor
+      case "Currency" => ItemType.Currency
+      case "Material" => ItemType.Material
+      case "Consumable" => ItemType.Consumable
+      case name => throw new SoraReadException(s"invalid enum value $name for ItemType")
+    }
 }

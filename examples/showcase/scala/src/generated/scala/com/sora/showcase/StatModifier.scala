@@ -15,4 +15,13 @@ object StatModifier {
       value = reader.readF32(),
       isPercent = reader.readBool()
     )
+
+  def decode(value: SoraValue): StatModifier = {
+    val obj = value.asObject
+    StatModifier(
+      stat = StatType.decode(obj.get("stat")),
+      value = obj.get("value").asFloat,
+      isPercent = obj.get("is_percent").asBool
+    )
+  }
 }

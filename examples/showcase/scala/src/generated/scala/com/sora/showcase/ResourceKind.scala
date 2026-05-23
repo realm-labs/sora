@@ -16,4 +16,12 @@ object ResourceKind {
       case 2 => ResourceKind.Diamond
       case ordinal => throw new SoraReadException(s"invalid enum ordinal $ordinal for ResourceKind")
     }
+
+  def decode(value: SoraValue): ResourceKind =
+    value.asString match {
+      case "Item" => ResourceKind.Item
+      case "Gold" => ResourceKind.Gold
+      case "Diamond" => ResourceKind.Diamond
+      case name => throw new SoraReadException(s"invalid enum value $name for ResourceKind")
+    }
 }

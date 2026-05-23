@@ -20,4 +20,14 @@ object StatType {
       case 4 => StatType.CritRate
       case ordinal => throw new SoraReadException(s"invalid enum ordinal $ordinal for StatType")
     }
+
+  def decode(value: SoraValue): StatType =
+    value.asString match {
+      case "Hp" => StatType.Hp
+      case "Attack" => StatType.Attack
+      case "Defense" => StatType.Defense
+      case "Speed" => StatType.Speed
+      case "CritRate" => StatType.CritRate
+      case name => throw new SoraReadException(s"invalid enum value $name for StatType")
+    }
 }

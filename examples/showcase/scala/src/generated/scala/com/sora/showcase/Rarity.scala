@@ -20,4 +20,14 @@ object Rarity {
       case 4 => Rarity.Legendary
       case ordinal => throw new SoraReadException(s"invalid enum ordinal $ordinal for Rarity")
     }
+
+  def decode(value: SoraValue): Rarity =
+    value.asString match {
+      case "Common" => Rarity.Common
+      case "Uncommon" => Rarity.Uncommon
+      case "Rare" => Rarity.Rare
+      case "Epic" => Rarity.Epic
+      case "Legendary" => Rarity.Legendary
+      case name => throw new SoraReadException(s"invalid enum value $name for Rarity")
+    }
 }

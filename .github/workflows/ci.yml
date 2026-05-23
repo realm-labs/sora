@@ -71,6 +71,9 @@ jobs:
         with:
           python-version: "3.13"
 
+      - name: Install Python runtime dependencies
+        run: python3 -m pip install -r examples/showcase/python/requirements.txt
+
       - uses: actions/setup-node@v6
         with:
           node-version: "24"

@@ -19,6 +19,17 @@ object GameSettings {
       spawnPos = Vec3.decode(reader),
       starterItems = reader.readList(reader.readI32())
     )
+
+  def decode(value: SoraValue): GameSettings = {
+    val obj = value.asObject
+    GameSettings(
+      version = obj.get("version").asString,
+      dailyResetHour = obj.get("daily_reset_hour").asInt,
+      startingGold = obj.get("starting_gold").asInt,
+      spawnPos = Vec3.decode(obj.get("spawn_pos")),
+      starterItems = obj.get("starter_items").asList(item => item.asInt)
+    )
+  }
 }
 
 final class GameSettingsTable private (
@@ -41,7 +52,7 @@ object GameSettingsTable {
   )
 
   def decode(source: SoraTableSource): GameSettingsTable =
-    fromRows(source.decodeTable(Name, GameSettings.decode))
+    fromRows(source.decodeTable(Name, (reader: SoraReader) => GameSettings.decode(reader), (value: SoraValue) => GameSettings.decode(value)))
 
   private def fromRows(rows: Vector[GameSettings]): GameSettingsTable =
     new GameSettingsTable(

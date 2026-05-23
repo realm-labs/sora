@@ -33,4 +33,24 @@ object EventCondition {
         )
       case ordinal => throw new SoraReadException(s"invalid union ordinal $ordinal for EventCondition")
     }
+
+  def decode(value: SoraValue): EventCondition = {
+    val obj = value.asObject
+    obj.get("type").asString match {
+      case "LevelAtLeast" =>
+        LevelAtLeast(
+          level = obj.get("level").asInt
+        )
+      case "QuestCompleted" =>
+        QuestCompleted(
+          questId = obj.get("quest_id").asInt
+        )
+      case "HasItem" =>
+        HasItem(
+          itemId = obj.get("item_id").asInt,
+          count = obj.get("count").asInt
+        )
+      case tag => throw new SoraReadException(s"invalid union tag $tag for EventCondition")
+    }
+  }
 }

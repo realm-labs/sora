@@ -15,6 +15,15 @@ object Recipe {
       resultItem = reader.readI32(),
       materials = reader.readList(ResourceCost.decode(reader))
     )
+
+  def decode(value: SoraValue): Recipe = {
+    val obj = value.asObject
+    Recipe(
+      id = obj.get("id").asInt,
+      resultItem = obj.get("result_item").asInt,
+      materials = obj.get("materials").asList(item => ResourceCost.decode(item))
+    )
+  }
 }
 
 final class RecipeTable private (
@@ -42,7 +51,7 @@ object RecipeTable {
   )
 
   def decode(source: SoraTableSource): RecipeTable =
-    fromRows(source.decodeTable(Name, Recipe.decode))
+    fromRows(source.decodeTable(Name, (reader: SoraReader) => Recipe.decode(reader), (value: SoraValue) => Recipe.decode(value)))
 
   private def fromRows(rows: Vector[Recipe]): RecipeTable =
     new RecipeTable(

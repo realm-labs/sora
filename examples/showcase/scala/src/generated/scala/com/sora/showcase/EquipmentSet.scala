@@ -17,6 +17,16 @@ object EquipmentSet {
       itemIds = reader.readList(reader.readI32()),
       bonusEffect = SkillEffect.decode(reader)
     )
+
+  def decode(value: SoraValue): EquipmentSet = {
+    val obj = value.asObject
+    EquipmentSet(
+      id = obj.get("id").asInt,
+      name = obj.get("name").asString,
+      itemIds = obj.get("item_ids").asList(item => item.asInt),
+      bonusEffect = SkillEffect.decode(obj.get("bonus_effect"))
+    )
+  }
 }
 
 final class EquipmentSetTable private (
@@ -44,7 +54,7 @@ object EquipmentSetTable {
   )
 
   def decode(source: SoraTableSource): EquipmentSetTable =
-    fromRows(source.decodeTable(Name, EquipmentSet.decode))
+    fromRows(source.decodeTable(Name, (reader: SoraReader) => EquipmentSet.decode(reader), (value: SoraValue) => EquipmentSet.decode(value)))
 
   private def fromRows(rows: Vector[EquipmentSet]): EquipmentSetTable =
     new EquipmentSetTable(

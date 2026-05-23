@@ -16,4 +16,12 @@ object QuestType {
       case 2 => QuestType.Daily
       case ordinal => throw new SoraReadException(s"invalid enum ordinal $ordinal for QuestType")
     }
+
+  def decode(value: SoraValue): QuestType =
+    value.asString match {
+      case "Main" => QuestType.Main
+      case "Side" => QuestType.Side
+      case "Daily" => QuestType.Daily
+      case name => throw new SoraReadException(s"invalid enum value $name for QuestType")
+    }
 }

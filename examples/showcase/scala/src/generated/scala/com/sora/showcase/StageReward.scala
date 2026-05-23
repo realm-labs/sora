@@ -17,6 +17,16 @@ object StageReward {
       itemId = reader.readI32(),
       count = reader.readI32()
     )
+
+  def decode(value: SoraValue): StageReward = {
+    val obj = value.asObject
+    StageReward(
+      stageId = obj.get("stage_id").asInt,
+      seq = obj.get("seq").asInt,
+      itemId = obj.get("item_id").asInt,
+      count = obj.get("count").asInt
+    )
+  }
 }
 
 final class StageRewardTable private (
@@ -39,7 +49,7 @@ object StageRewardTable {
   )
 
   def decode(source: SoraTableSource): StageRewardTable =
-    fromRows(source.decodeTable(Name, StageReward.decode))
+    fromRows(source.decodeTable(Name, (reader: SoraReader) => StageReward.decode(reader), (value: SoraValue) => StageReward.decode(value)))
 
   private def fromRows(rows: Vector[StageReward]): StageRewardTable =
     new StageRewardTable(

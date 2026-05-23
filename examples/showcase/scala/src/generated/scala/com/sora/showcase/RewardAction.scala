@@ -42,4 +42,29 @@ object RewardAction {
         )
       case ordinal => throw new SoraReadException(s"invalid union ordinal $ordinal for RewardAction")
     }
+
+  def decode(value: SoraValue): RewardAction = {
+    val obj = value.asObject
+    obj.get("type").asString match {
+      case "AddItem" =>
+        AddItem(
+          itemId = obj.get("item_id").asInt,
+          count = obj.get("count").asInt
+        )
+      case "AddBuff" =>
+        AddBuff(
+          buffId = obj.get("buff_id").asInt,
+          duration = obj.get("duration").asFloat
+        )
+      case "UnlockStage" =>
+        UnlockStage(
+          stageId = obj.get("stage_id").asInt
+        )
+      case "SendMail" =>
+        SendMail(
+          mailId = obj.get("mail_id").asInt
+        )
+      case tag => throw new SoraReadException(s"invalid union tag $tag for RewardAction")
+    }
+  }
 }

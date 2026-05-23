@@ -19,6 +19,17 @@ object MailTemplate {
       bodyKey = reader.readString(),
       rewards = reader.readList(Reward.decode(reader))
     )
+
+  def decode(value: SoraValue): MailTemplate = {
+    val obj = value.asObject
+    MailTemplate(
+      id = obj.get("id").asInt,
+      mailType = MailType.decode(obj.get("mail_type")),
+      titleKey = obj.get("title_key").asString,
+      bodyKey = obj.get("body_key").asString,
+      rewards = obj.get("rewards").asList(item => Reward.decode(item))
+    )
+  }
 }
 
 final class MailTemplateTable private (
@@ -46,7 +57,7 @@ object MailTemplateTable {
   )
 
   def decode(source: SoraTableSource): MailTemplateTable =
-    fromRows(source.decodeTable(Name, MailTemplate.decode))
+    fromRows(source.decodeTable(Name, (reader: SoraReader) => MailTemplate.decode(reader), (value: SoraValue) => MailTemplate.decode(value)))
 
   private def fromRows(rows: Vector[MailTemplate]): MailTemplateTable =
     new MailTemplateTable(

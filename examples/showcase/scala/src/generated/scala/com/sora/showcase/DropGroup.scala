@@ -13,6 +13,14 @@ object DropGroup {
       id = reader.readI32(),
       name = reader.readString()
     )
+
+  def decode(value: SoraValue): DropGroup = {
+    val obj = value.asObject
+    DropGroup(
+      id = obj.get("id").asInt,
+      name = obj.get("name").asString
+    )
+  }
 }
 
 final class DropGroupTable private (
@@ -40,7 +48,7 @@ object DropGroupTable {
   )
 
   def decode(source: SoraTableSource): DropGroupTable =
-    fromRows(source.decodeTable(Name, DropGroup.decode))
+    fromRows(source.decodeTable(Name, (reader: SoraReader) => DropGroup.decode(reader), (value: SoraValue) => DropGroup.decode(value)))
 
   private def fromRows(rows: Vector[DropGroup]): DropGroupTable =
     new DropGroupTable(

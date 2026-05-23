@@ -23,6 +23,19 @@ object Character {
       starterItems = reader.readList(reader.readI32()),
       spawnPos = Vec3.decode(reader)
     )
+
+  def decode(value: SoraValue): Character = {
+    val obj = value.asObject
+    Character(
+      id = obj.get("id").asInt,
+      name = obj.get("name").asString,
+      rarity = Rarity.decode(obj.get("rarity")),
+      baseLevel = obj.get("base_level").asInt,
+      baseSkill = obj.get("base_skill").asInt,
+      starterItems = obj.get("starter_items").asList(item => item.asInt),
+      spawnPos = Vec3.decode(obj.get("spawn_pos"))
+    )
+  }
 }
 
 final class CharacterTable private (
@@ -50,7 +63,7 @@ object CharacterTable {
   )
 
   def decode(source: SoraTableSource): CharacterTable =
-    fromRows(source.decodeTable(Name, Character.decode))
+    fromRows(source.decodeTable(Name, (reader: SoraReader) => Character.decode(reader), (value: SoraValue) => Character.decode(value)))
 
   private def fromRows(rows: Vector[Character]): CharacterTable =
     new CharacterTable(

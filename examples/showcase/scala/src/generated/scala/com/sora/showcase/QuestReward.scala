@@ -17,6 +17,16 @@ object QuestReward {
       itemId = reader.readI32(),
       count = reader.readI32()
     )
+
+  def decode(value: SoraValue): QuestReward = {
+    val obj = value.asObject
+    QuestReward(
+      questId = obj.get("quest_id").asInt,
+      seq = obj.get("seq").asInt,
+      itemId = obj.get("item_id").asInt,
+      count = obj.get("count").asInt
+    )
+  }
 }
 
 final class QuestRewardTable private (
@@ -39,7 +49,7 @@ object QuestRewardTable {
   )
 
   def decode(source: SoraTableSource): QuestRewardTable =
-    fromRows(source.decodeTable(Name, QuestReward.decode))
+    fromRows(source.decodeTable(Name, (reader: SoraReader) => QuestReward.decode(reader), (value: SoraValue) => QuestReward.decode(value)))
 
   private def fromRows(rows: Vector[QuestReward]): QuestRewardTable =
     new QuestRewardTable(
