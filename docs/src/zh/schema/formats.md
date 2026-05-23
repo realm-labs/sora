@@ -31,7 +31,6 @@ key = "id"
 [[tables.fields]]
 name = "id"
 type = "i32"
-key = true
 ```
 
 ## YAML
@@ -52,7 +51,6 @@ tables:
     fields:
       - name: id
         type: i32
-        key: true
 ```
 
 ## JSON
@@ -70,7 +68,7 @@ tables:
       "mode": "map",
       "key": "id",
       "fields": [
-        { "name": "id", "type": "i32", "key": true }
+        { "name": "id", "type": "i32" }
       ]
     }
   ]
@@ -96,7 +94,7 @@ return {
       mode = "map",
       key = "id",
       fields = {
-        { name = "id", type = "i32", key = true },
+        { name = "id", type = "i32" },
       },
     },
   },

@@ -42,8 +42,8 @@ Default collection parsing is intentionally simple. Primitive items are parsed b
 | --- | --- | --- |
 | `split` | `list<T>`, `set<T>`, `array<T,N>`, or `optional` around those types | `a,b,c` |
 | `tuple` | `struct<T>` or `optional<struct<T>>` | `Gold,0,100` |
-| `tuple_list` | `list<struct<T>>`, `set<struct<T>>`, `array<struct<T>,N>`, or `optional` around those types | `Gold,0,100|Gem,0,5` |
-| `map` | `map<K,V>` or `optional<map<K,V>>` | `atk,10|hp,20` |
+| `tuple_list` | `list<struct<T>>`, `set<struct<T>>`, `array<struct<T>,N>`, or `optional` around those types | `Gold,0,100\|Gem,0,5` |
+| `map` | `map<K,V>` or `optional<map<K,V>>` | `atk,10\|hp,20` |
 | `tagged_columns` | `union<T>` only | Multiple columns |
 | `json` | Any type | JSON value matching the field type |
 

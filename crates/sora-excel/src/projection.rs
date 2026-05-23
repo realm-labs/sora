@@ -412,7 +412,6 @@ sheet = "Item"
 [[tables.fields]]
 name = "id"
 type = "i32"
-key = true
 comment = "Item id"
 
 [[tables.fields]]
@@ -546,7 +545,6 @@ key = "id"
 [[tables.fields]]
 name = "id"
 type = "i32"
-key = true
 
 [[tables.fields]]
 name = "value"

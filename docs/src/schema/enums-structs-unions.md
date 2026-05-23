@@ -58,6 +58,18 @@ Gold,0,100
 
 ## Unions
 
+Use a union when one field can contain different shapes. For example, an event condition might be either "quest completed" or "player has item":
+
+```json
+{"type":"QuestCompleted","quest_id":5002}
+```
+
+```json
+{"type":"HasItem","item_id":1001,"count":2}
+```
+
+The `type` value selects which variant is present. The rest of the fields depend on that variant.
+
 ```toml
 [[unions]]
 name = "RewardAction"

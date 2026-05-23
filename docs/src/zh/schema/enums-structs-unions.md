@@ -58,6 +58,18 @@ Gold,0,100
 
 ## Unions
 
+当一个字段可能是几种不同形状之一时，使用 union。例如事件条件可能是“完成任务”，也可能是“拥有道具”：
+
+```json
+{"type":"QuestCompleted","quest_id":5002}
+```
+
+```json
+{"type":"HasItem","item_id":1001,"count":2}
+```
+
+`type` 的值决定当前是哪一个 variant。剩余字段取决于这个 variant。
+
 ```toml
 [[unions]]
 name = "RewardAction"

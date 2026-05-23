@@ -10,6 +10,15 @@ cargo install --path crates/sora-cli
 
 ## 1. 创建项目
 
+创建这个目录结构：
+
+| 路径 | 谁编辑 | 作用 |
+| --- | --- | --- |
+| `project.toml` | 你 | 项目入口、构建输出、默认数据目录。 |
+| `schema/items.toml` | 你 | `Item` 表的 schema。 |
+| `data/Item.xlsx` | 策划或工具 | 可编辑行数据。 |
+| `generated/` | Sora | schema lock、Excel 模板、生成代码、导出数据。 |
+
 创建 `project.toml`：
 
 ```toml
@@ -32,6 +41,8 @@ format = "binary"
 out = "generated/config.sora"
 ```
 
+这里 `default_source_format = "xlsx"` 表示表数据默认来自 Excel。`data_root = "data"` 表示导出和 build 时会从 `data/Item.xlsx` 读取 `Item.xlsx`。`binary` export 会写出 Rust 代码要加载的运行时数据包，因为 Rust 默认使用 `runtime_format = "sora"`。
+
 创建 `schema/items.toml`：
 
 ```toml
@@ -52,7 +63,6 @@ sheet = "Item"
 [[tables.fields]]
 name = "id"
 type = "i32"
-key = true
 comment = "Item id"
 
 [[tables.fields]]
@@ -90,7 +100,7 @@ sora excel-template --project project.toml --out generated/excel
 
 ## 3. 检查、导出和生成代码
 
-校验 schema：
+只校验 schema：
 
 ```bash
 sora check --project project.toml

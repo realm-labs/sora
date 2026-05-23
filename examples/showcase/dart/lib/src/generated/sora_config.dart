@@ -44,7 +44,7 @@ import 'event_rule.dart';
 import 'event_condition.dart';
 import 'reward_action.dart';
 
-const soraSchemaFingerprint = '10071e9e44d618bc';
+const soraSchemaFingerprint = 'ceb957dd8fc38a7a';
 
 final class SoraConfig {
   final Map<Type, Object> _tables;

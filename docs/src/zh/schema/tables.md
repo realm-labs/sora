@@ -19,10 +19,9 @@ key = "id"
 [[tables.fields]]
 name = "id"
 type = "i32"
-key = true
 ```
 
-对于 map 表，`key` 指定生成 lookup API 使用的字段。
+对于 map 表，`key` 指定表的主键字段。Sora 会用它做行唯一性校验、生成 lookup API、生成 Excel 模板提示，并校验 `ref<Table.key>`。
 
 ## Source
 
@@ -55,7 +54,6 @@ key = "id"
 [[tables.fields]]
 name = "id"
 type = "i32"
-key = true
 
 [[tables.fields]]
 name = "name"

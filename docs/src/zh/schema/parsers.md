@@ -42,8 +42,8 @@ Parser option 都是字符串。未知 parser、当前 parser 不支持的 optio
 | --- | --- | --- |
 | `split` | `list<T>`、`set<T>`、`array<T,N>`，或包在这些类型外的 `optional` | `a,b,c` |
 | `tuple` | `struct<T>` 或 `optional<struct<T>>` | `Gold,0,100` |
-| `tuple_list` | `list<struct<T>>`、`set<struct<T>>`、`array<struct<T>,N>`，或包在这些类型外的 `optional` | `Gold,0,100|Gem,0,5` |
-| `map` | `map<K,V>` 或 `optional<map<K,V>>` | `atk,10|hp,20` |
+| `tuple_list` | `list<struct<T>>`、`set<struct<T>>`、`array<struct<T>,N>`，或包在这些类型外的 `optional` | `Gold,0,100\|Gem,0,5` |
+| `map` | `map<K,V>` 或 `optional<map<K,V>>` | `atk,10\|hp,20` |
 | `tagged_columns` | 只能用于 `union<T>` | 多列 |
 | `json` | 任意类型 | 匹配字段类型的 JSON value |
 

@@ -10,6 +10,15 @@ cargo install --path crates/sora-cli
 
 ## 1. Create a Project
 
+Create this layout:
+
+| Path | Who edits it | Purpose |
+| --- | --- | --- |
+| `project.toml` | You | Project entry point, build outputs, default data location. |
+| `schema/items.toml` | You | Schema for the `Item` table. |
+| `data/Item.xlsx` | Designers or tools | Editable row data. |
+| `generated/` | Sora | Schema lock, Excel templates, generated code, exported data. |
+
 Create `project.toml`:
 
 ```toml
@@ -32,6 +41,8 @@ format = "binary"
 out = "generated/config.sora"
 ```
 
+In this file, `default_source_format = "xlsx"` means table sources default to Excel. `data_root = "data"` means `Item.xlsx` is read from `data/Item.xlsx` during export and build. The `binary` export writes the runtime bundle that Rust code will load because Rust defaults to `runtime_format = "sora"`.
+
 Create `schema/items.toml`:
 
 ```toml
@@ -52,7 +63,6 @@ sheet = "Item"
 [[tables.fields]]
 name = "id"
 type = "i32"
-key = true
 comment = "Item id"
 
 [[tables.fields]]
@@ -90,7 +100,7 @@ This creates `generated/excel/Item.xlsx`. Copy it to `data/Item.xlsx` and fill r
 
 ## 3. Check, Export, and Generate
 
-Validate the schema:
+Validate the schema without reading row data:
 
 ```bash
 sora check --project project.toml

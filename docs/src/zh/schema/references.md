@@ -1,6 +1,15 @@
 # 引用和派生字段
 
-引用让一张表指向另一张表的主键。目标表必须是 `mode = "map"`，被引用字段必须是那张表的 `key`。
+引用让一张表指向另一张表的主键。派生字段则从另一张表匹配行，并把值复制或组装到当前表。
+
+| 功能 | 源数据里存什么 | 运行时模型得到什么 |
+| --- | --- | --- |
+| `ref<Item.id>` | 目标行 id，例如 `1001`。 | id 值，或目标语言专用包装类型。 |
+| `from = { ... }` | 数据仍然放在子表行里。 | 父行得到复制或嵌套出来的字段。 |
+
+当关系本身应该保留为 id 时，用 `ref`。当导出数据希望直接带有嵌套字段时，用 `from`。
+
+`ref` 的目标表必须是 `mode = "map"`，被引用字段必须是那张表的 `key`。
 
 ## 引用
 
@@ -40,10 +49,54 @@ Sora 会校验每个值都指向被引用表中存在的行。
 运行时如果希望 `Quest` 里直接有 `rewards: list<Reward>` 字段，可以声明这个字段来自 `QuestReward`：
 
 ```toml
+[[structs]]
+name = "Reward"
+
+[[structs.fields]]
+name = "item_id"
+type = "ref<Item.id>"
+
+[[structs.fields]]
+name = "count"
+type = "i32"
+
+[[tables]]
+name = "Quest"
+mode = "map"
+key = "id"
+
+[[tables.fields]]
+name = "id"
+type = "i32"
+
+[[tables.fields]]
+name = "name"
+type = "string"
+
 [[tables.fields]]
 name = "rewards"
 type = "list<struct<Reward>>"
 from = { table = "QuestReward", parent_key = "id", child_key = "quest_id", order_by = "sort_order" }
+
+[[tables]]
+name = "QuestReward"
+mode = "list"
+
+[[tables.fields]]
+name = "quest_id"
+type = "ref<Quest.id>"
+
+[[tables.fields]]
+name = "sort_order"
+type = "i32"
+
+[[tables.fields]]
+name = "item_id"
+type = "ref<Item.id>"
+
+[[tables.fields]]
+name = "count"
+type = "i32"
 ```
 
 含义是：
@@ -54,6 +107,19 @@ from = { table = "QuestReward", parent_key = "id", child_key = "quest_id", order
 - `from.order_by = "sort_order"`：匹配到多行时，按子表里的 `sort_order` 字段升序排序。
 
 用上面的示例数据，`Quest.id = 1001` 会得到两行奖励，顺序是 `2001`，然后 `2002`。
+
+导出后的父行就像直接拥有了 `rewards` 字段：
+
+```json
+{
+  "id": 1001,
+  "name": "First Quest",
+  "rewards": [
+    {"item_id": 2001, "count": 10},
+    {"item_id": 2002, "count": 1}
+  ]
+}
+```
 
 字段类型决定允许匹配多少行：
 

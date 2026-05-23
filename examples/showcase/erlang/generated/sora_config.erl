@@ -41,7 +41,7 @@
 
 -type t() :: map().
 
--define(SORA_SCHEMA_FINGERPRINT, <<"9bc8b7cd2c2ad93e">>).
+-define(SORA_SCHEMA_FINGERPRINT, <<"f8d1c90e3e197c78">>).
 
 -spec from_binary(binary()) -> t().
 from_binary(Bytes) ->

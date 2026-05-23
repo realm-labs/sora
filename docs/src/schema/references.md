@@ -1,6 +1,15 @@
 # References and Derived Fields
 
-References let one table point to another table's primary key. The target table must be `mode = "map"`, and the referenced field must be that table's `key`.
+References let one table point to another table's primary key. Derived fields copy or assemble data from matching rows in another table.
+
+| Feature | What source data stores | What runtime model gets |
+| --- | --- | --- |
+| `ref<Item.id>` | The target row id, such as `1001`. | The id value or a target-specific wrapper. |
+| `from = { ... }` | Rows stay in a child table. | The parent row receives a copied/nested value. |
+
+Use `ref` when the relationship itself should remain an id. Use `from` when exported data should contain a convenient nested field.
+
+The target of a `ref` must be a `mode = "map"` table, and the referenced field must be that table's `key`.
 
 ## References
 
@@ -40,10 +49,54 @@ This keeps editable data normalized while generated runtime models can expose co
 At runtime, `Quest` may want a direct `rewards: list<Reward>` field. Declare that the field comes from `QuestReward`:
 
 ```toml
+[[structs]]
+name = "Reward"
+
+[[structs.fields]]
+name = "item_id"
+type = "ref<Item.id>"
+
+[[structs.fields]]
+name = "count"
+type = "i32"
+
+[[tables]]
+name = "Quest"
+mode = "map"
+key = "id"
+
+[[tables.fields]]
+name = "id"
+type = "i32"
+
+[[tables.fields]]
+name = "name"
+type = "string"
+
 [[tables.fields]]
 name = "rewards"
 type = "list<struct<Reward>>"
 from = { table = "QuestReward", parent_key = "id", child_key = "quest_id", order_by = "sort_order" }
+
+[[tables]]
+name = "QuestReward"
+mode = "list"
+
+[[tables.fields]]
+name = "quest_id"
+type = "ref<Quest.id>"
+
+[[tables.fields]]
+name = "sort_order"
+type = "i32"
+
+[[tables.fields]]
+name = "item_id"
+type = "ref<Item.id>"
+
+[[tables.fields]]
+name = "count"
+type = "i32"
 ```
 
 This means:
@@ -54,6 +107,19 @@ This means:
 - `from.order_by = "sort_order"`: when several child rows match, sort them by the child table's `sort_order` field in ascending order.
 
 With the example data above, `Quest.id = 1001` receives two reward rows, ordered as `2001`, then `2002`.
+
+The exported parent row is shaped as if `rewards` had been written directly on `Quest`:
+
+```json
+{
+  "id": 1001,
+  "name": "First Quest",
+  "rewards": [
+    {"item_id": 2001, "count": 10},
+    {"item_id": 2002, "count": 1}
+  ]
+}
+```
 
 The field type controls how many child rows may match:
 

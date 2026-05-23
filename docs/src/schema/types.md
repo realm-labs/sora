@@ -65,18 +65,41 @@ type = "map<string,i32>"
 parser = { kind = "map" }
 ```
 
+## Cell Examples
+
+These examples show what a designer would put in an Excel or CSV cell:
+
+| Field type | Parser | Cell value |
+| --- | --- | --- |
+| `i32` | none | `1001` |
+| `enum<ItemType>` | none | `Weapon` |
+| `list<i32>` | none or `split` | `1,2,3` |
+| `set<string>` | `json` | `["starter","melee"]` |
+| `struct<ResourceCost>` | `tuple` | `Gold,0,100` |
+| `map<string,i32>` | `map` | `atk,10\|hp,20` |
+| `union<EventCondition>` | `json` | `{"type":"QuestCompleted","quest_id":5002}` |
+| `optional<ref<Item.id>>` | none | empty cell or `1001` |
+
 ## Field Rules
 
-`[[tables.fields]]`, `[[structs.fields]]`, and `[[unions.variants.fields]]` share the common field properties. Table fields have extra table-only properties for keys and derived values; those properties are invalid on struct fields and union variant fields.
+`[[tables.fields]]`, `[[structs.fields]]`, and `[[unions.variants.fields]]` share the common field properties. Table fields have extra table-only properties for derived values; those properties are invalid on struct fields and union variant fields. A table primary key is declared once on the table itself with `key = "field_name"`.
 
 Field presence is part of the type: `optional<T>` means the value may be absent or null, while every other type is required unless a `default` fills the missing value.
+
+For JSON/TOML/YAML/Lua-style object inputs, a field can be absent from the object. For Excel and CSV, the column must exist in the header; an omitted cell, blank cell, or short CSV record is treated as an empty cell.
+
+| Schema field | Object field absent | Excel/CSV cell empty |
+| --- | --- | --- |
+| `type = "i32"` | Validation error. | Validation error. |
+| `type = "optional<i32>"` | `null`. | `null`. |
+| `type = "i32"` plus `default = "1"` | `1`. | `1`. |
+| `type = "optional<i32>"` plus `default = "1"` | `1`. | `null`. |
 
 | Property | Applies To | Purpose |
 | --- | --- | --- |
 | `name` | all fields | Field name used in source data, validation errors, generated code, and exported runtime data. |
 | `type` | all fields | Type expression such as `i32`, `struct<ResourceCost>`, or `list<union<RewardAction>>`. |
-| `default` | all fields except derived fields | String value used when the source cell or object field is absent. |
-| `key` | table fields only | Marks the table key field. Usually matches the table-level `key`. |
+| `default` | all fields except derived fields | String value used when the source object field is absent or a required Excel/CSV cell is empty. |
 | `comment` | all fields | Description used in generated Excel headers. |
 | `range` | numeric fields and numeric collection elements | Inclusive numeric range, written as `[min, max]`. |
 | `length` | `string`, `list`, `set`, `array`, `map` | Inclusive length range, written as `[min, max]`. |

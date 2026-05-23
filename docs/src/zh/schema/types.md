@@ -65,18 +65,41 @@ type = "map<string,i32>"
 parser = { kind = "map" }
 ```
 
+## 单元格示例
+
+这些例子展示策划在 Excel 或 CSV cell 里会填写什么：
+
+| 字段类型 | Parser | Cell 值 |
+| --- | --- | --- |
+| `i32` | 无 | `1001` |
+| `enum<ItemType>` | 无 | `Weapon` |
+| `list<i32>` | 无或 `split` | `1,2,3` |
+| `set<string>` | `json` | `["starter","melee"]` |
+| `struct<ResourceCost>` | `tuple` | `Gold,0,100` |
+| `map<string,i32>` | `map` | `atk,10\|hp,20` |
+| `union<EventCondition>` | `json` | `{"type":"QuestCompleted","quest_id":5002}` |
+| `optional<ref<Item.id>>` | 无 | 空 cell 或 `1001` |
+
 ## Field Rules
 
-`[[tables.fields]]`、`[[structs.fields]]` 和 `[[unions.variants.fields]]` 共享通用字段属性。表字段额外拥有 key 和派生值相关属性；这些表专用属性不能写在 struct field 或 union variant field 上。
+`[[tables.fields]]`、`[[structs.fields]]` 和 `[[unions.variants.fields]]` 共享通用字段属性。表字段额外拥有派生值相关属性；这些表专用属性不能写在 struct field 或 union variant field 上。表主键只在表本身用 `key = "field_name"` 声明一次。
 
 字段是否可缺省由类型表达：`optional<T>` 表示值可以缺失或为空；其它类型都要求有值，除非 `default` 填充了缺失值。
+
+对 JSON/TOML/YAML/Lua 这类 object 输入，字段可以不存在。对 Excel 和 CSV，表头列必须存在；某一行没有对应 cell、cell 为空，或者 CSV 行列数不够，都会按空 cell 处理。
+
+| Schema 字段 | object 字段不存在 | Excel/CSV cell 为空 |
+| --- | --- | --- |
+| `type = "i32"` | 校验错误。 | 校验错误。 |
+| `type = "optional<i32>"` | `null`。 | `null`。 |
+| `type = "i32"` 加 `default = "1"` | `1`。 | `1`。 |
+| `type = "optional<i32>"` 加 `default = "1"` | `1`。 | `null`。 |
 
 | Property | 适用范围 | 作用 |
 | --- | --- | --- |
 | `name` | 所有字段 | 字段名。用于源数据、校验错误、生成代码和导出的运行时数据。 |
 | `type` | 所有字段 | 类型表达式，例如 `i32`、`struct<ResourceCost>` 或 `list<union<RewardAction>>`。 |
-| `default` | 除派生字段外的所有字段 | 源单元格或 object 字段缺失时使用的字符串值。 |
-| `key` | 仅表字段 | 标记表 key 字段。通常和 table-level `key` 一致。 |
+| `default` | 除派生字段外的所有字段 | object 字段不存在，或 required Excel/CSV cell 为空时使用的字符串值。 |
 | `comment` | 所有字段 | 用于生成 Excel 表头说明。 |
 | `range` | 数值字段和数值集合元素 | 数值闭区间，写作 `[min, max]`。 |
 | `length` | `string`、`list`、`set`、`array`、`map` | 长度闭区间，写作 `[min, max]`。 |

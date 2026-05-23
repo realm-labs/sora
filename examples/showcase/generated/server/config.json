@@ -1,7 +1,7 @@
 {
   "format": "json",
   "format_version": 1,
-  "schema_fingerprint": "9bc8b7cd2c2ad93e",
+  "schema_fingerprint": "f8d1c90e3e197c78",
   "data_fingerprint": "76b0bef865988544",
   "schema": {
     "package": "com.sora.showcase",
@@ -1153,7 +1153,10 @@
               1,
               3
             ],
-            "parser": null,
+            "parser": {
+              "kind": "json",
+              "options": {}
+            },
             "derived_from": null
           },
           {
@@ -1412,7 +1415,10 @@
               1,
               4
             ],
-            "parser": null,
+            "parser": {
+              "kind": "json",
+              "options": {}
+            },
             "derived_from": null
           }
         ],
@@ -1709,7 +1715,10 @@
               1,
               4
             ],
-            "parser": null,
+            "parser": {
+              "kind": "json",
+              "options": {}
+            },
             "derived_from": null
           },
           {
@@ -2265,7 +2274,10 @@
               1,
               5
             ],
-            "parser": null,
+            "parser": {
+              "kind": "json",
+              "options": {}
+            },
             "derived_from": null
           },
           {
@@ -2473,7 +2485,10 @@
               2,
               6
             ],
-            "parser": null,
+            "parser": {
+              "kind": "json",
+              "options": {}
+            },
             "derived_from": null
           },
           {
@@ -2993,7 +3008,10 @@
               2,
               4
             ],
-            "parser": null,
+            "parser": {
+              "kind": "json",
+              "options": {}
+            },
             "derived_from": null
           },
           {
@@ -3172,7 +3190,10 @@
               1,
               5
             ],
-            "parser": null,
+            "parser": {
+              "kind": "json",
+              "options": {}
+            },
             "derived_from": null
           }
         ],
@@ -3442,7 +3463,10 @@
               1,
               5
             ],
-            "parser": null,
+            "parser": {
+              "kind": "json",
+              "options": {}
+            },
             "derived_from": null
           }
         ],

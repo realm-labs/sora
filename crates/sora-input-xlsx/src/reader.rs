@@ -725,7 +725,6 @@ sheet = "Item"
 [[tables.fields]]
 name = "id"
 type = "i32"
-key = true
 
 [[tables.fields]]
 name = "name"
@@ -775,7 +774,6 @@ sheet = "Item"
 [[tables.fields]]
 name = "id"
 type = "i32"
-key = true
 
 [[tables.fields]]
 name = "optional_note"
@@ -882,7 +880,6 @@ sheet = "Recipe"
 [[tables.fields]]
 name = "id"
 type = "i32"
-key = true
 
 [[tables.fields]]
 name = "materials"
@@ -936,7 +933,6 @@ sheet = "EventConditionEntry"
 [[tables.fields]]
 name = "id"
 type = "i32"
-key = true
 
 [[tables.fields]]
 name = "value"

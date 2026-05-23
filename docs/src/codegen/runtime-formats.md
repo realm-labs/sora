@@ -16,6 +16,8 @@ Runtime formats are the formats generated code can load. They correspond to expo
 | `cbor` | `cbor` |
 | `sora-protobuf` | `sora-protobuf` |
 
+This setting does not change Excel, CSV, TOML, or schema files. It only changes the loader generated for the target language. The selected runtime format must have a matching export in the project build.
+
 ## Support Matrix
 
 | Target | `sora` | `json` | `cbor` | `sora-protobuf` |

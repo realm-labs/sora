@@ -19,10 +19,9 @@ key = "id"
 [[tables.fields]]
 name = "id"
 type = "i32"
-key = true
 ```
 
-For map tables, `key` names the field used by generated lookup APIs.
+For map tables, `key` names the table's primary key field. Sora uses it for row uniqueness, generated lookup APIs, Excel template hints, and `ref<Table.key>` validation.
 
 ## Source
 
@@ -55,7 +54,6 @@ key = "id"
 [[tables.fields]]
 name = "id"
 type = "i32"
-key = true
 
 [[tables.fields]]
 name = "name"

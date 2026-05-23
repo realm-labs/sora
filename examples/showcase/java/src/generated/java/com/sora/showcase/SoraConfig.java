@@ -43,7 +43,7 @@ interface SoraSingleTable<R> extends SoraTable<R> {
 }
 
 public final class SoraConfig {
-    public static final String SCHEMA_FINGERPRINT = "9bc8b7cd2c2ad93e";
+    public static final String SCHEMA_FINGERPRINT = "f8d1c90e3e197c78";
 
     private final Map<String, SoraTable<?>> tables;
 

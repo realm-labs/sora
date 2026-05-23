@@ -478,7 +478,6 @@ file = "items.toml"
 [[tables.fields]]
 name = "id"
 type = "i32"
-key = true
 
 [[tables.fields]]
 name = "name"

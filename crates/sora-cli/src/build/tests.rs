@@ -115,7 +115,6 @@ tables:
     fields:
       - name: id
         type: i32
-        key: true
       - name: item_type
         type: enum<ItemType>
 "#,
@@ -175,7 +174,7 @@ fn build_command_accepts_json_project_manifest() {
       "key": "id",
       "source": { "file": "Item.xlsx" },
       "fields": [
-        { "name": "id", "type": "i32", "key": true },
+        { "name": "id", "type": "i32" },
         { "name": "item_type", "type": "enum<ItemType>" }
       ]
     }
@@ -238,7 +237,7 @@ return {
       key = "id",
       source = { file = "Item.xlsx" },
       fields = {
-        { name = "id", type = "i32", key = true },
+        { name = "id", type = "i32" },
         { name = "item_type", type = "enum<ItemType>" },
       },
     },
@@ -461,7 +460,6 @@ file = "items.toml"
 [[tables.fields]]
 name = "id"
 type = "i32"
-key = true
 
 [[tables.fields]]
 name = "name"

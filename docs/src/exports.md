@@ -4,6 +4,14 @@ Sora separates data export from language code generation.
 
 The exporter receives validated data and writes a runtime bundle. Generated code then reads one of those bundle formats. This lets the same schema and data feed several languages or runtime storage choices.
 
+The short version:
+
+```text
+source data -> export format -> generated code runtime_format
+```
+
+For example, if generated Rust code uses `runtime_format = "sora"`, the build must also write a `binary` export. Code generation decides how to read; export writes the file that will be read.
+
 ## Built-in Exports
 
 | Format | Purpose |

@@ -115,7 +115,6 @@ key = "id"
 [[tables.fields]]
 name = "id"
 type = "{id_type}"
-key = true
 "#
         ))
         .unwrap();

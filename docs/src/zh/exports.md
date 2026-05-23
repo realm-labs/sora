@@ -4,6 +4,14 @@ Sora 将数据导出和语言代码生成分离。
 
 Exporter 接收已经校验的数据，并写出运行时数据包。生成代码随后读取这些数据包格式。这允许同一份 schema 和数据服务多个语言或不同运行时存储选择。
 
+简化来看：
+
+```text
+source data -> export format -> generated code runtime_format
+```
+
+例如生成的 Rust 代码使用 `runtime_format = "sora"` 时，构建配置里也必须写出一个 `binary` export。代码生成决定“怎么读”，数据导出负责“写出要读的文件”。
+
 ## 内置导出
 
 | Format | Purpose |

@@ -109,15 +109,7 @@ impl TryFrom<TableSchema> for TableIr {
     type Error = SoraError;
 
     fn try_from(table: TableSchema) -> Result<Self> {
-        Ok(Self {
-            name: table.name,
-            scope: ScopeIr::try_from(table.scope)?,
-            mode: table.mode.into(),
-            key: table.key,
-            source: table.source.map(Into::into),
-            fields: convert_table_fields(table.fields)?,
-            indexes: table.indexes.into_iter().map(IndexIr::from).collect(),
-        })
+        convert_table_with_parsers(table, &ParserRegistry::builtin())
     }
 }
 
@@ -260,22 +252,23 @@ fn convert_field_with_parsers(
     })
 }
 
-fn convert_table_fields(fields: Vec<TableFieldSchema>) -> Result<Vec<FieldIr>> {
-    convert_table_fields_with_parsers(fields, &ParserRegistry::builtin())
-}
-
 fn convert_table_fields_with_parsers(
     fields: Vec<TableFieldSchema>,
+    table_key: Option<&str>,
     parser_registry: &ParserRegistry,
 ) -> Result<Vec<FieldIr>> {
     fields
         .into_iter()
-        .map(|field| convert_table_field_with_parsers(field, parser_registry))
+        .map(|field| {
+            let is_key = table_key == Some(field.name.as_str());
+            convert_table_field_with_parsers(field, is_key, parser_registry)
+        })
         .collect()
 }
 
 fn convert_table_field_with_parsers(
     field: TableFieldSchema,
+    is_key: bool,
     parser_registry: &ParserRegistry,
 ) -> Result<FieldIr> {
     let derived_from = field
@@ -328,7 +321,7 @@ fn convert_table_field_with_parsers(
         name: field.name,
         ty,
         scope: ScopeIr::try_from(field.scope)?,
-        key: field.key,
+        key: is_key,
         comment: field.comment,
         default: field.default,
         range: field.range,
@@ -376,13 +369,15 @@ fn convert_table_with_parsers(
     table: TableSchema,
     parser_registry: &ParserRegistry,
 ) -> Result<TableIr> {
+    let key = table.key;
+    let fields = convert_table_fields_with_parsers(table.fields, key.as_deref(), parser_registry)?;
     Ok(TableIr {
         name: table.name,
         scope: ScopeIr::try_from(table.scope)?,
         mode: table.mode.into(),
-        key: table.key,
+        key,
         source: table.source.map(Into::into),
-        fields: convert_table_fields_with_parsers(table.fields, parser_registry)?,
+        fields,
         indexes: table.indexes.into_iter().map(IndexIr::from).collect(),
     })
 }

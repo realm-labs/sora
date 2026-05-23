@@ -186,7 +186,6 @@ sheet = "Item"
 [[tables.fields]]
 name = "id"
 type = "i32"
-key = true
 comment = "Item id"
 
 [[tables.fields]]
@@ -248,7 +247,6 @@ sheet = "Skill"
 [[tables.fields]]
 name = "id"
 type = "i32"
-key = true
 
 [[tables.fields]]
 name = "name"
@@ -298,7 +296,6 @@ sheet = "Quest"
 [[tables.fields]]
 name = "id"
 type = "i32"
-key = true
 
 [[tables.fields]]
 name = "quest_type"
@@ -316,6 +313,7 @@ type = "ref<Item.id>"
 [[tables.fields]]
 name = "unlock_skills"
 type = "list<ref<Skill.id>>"
+parser = { kind = "json" }
 length = [1, 3]
 
 [[tables.fields]]
@@ -385,6 +383,7 @@ parser = { kind = "tuple" }
 [[tables.fields]]
 name = "starter_items"
 type = "list<ref<Item.id>>"
+parser = { kind = "json" }
 length = [1, 4]
 
 [[tables]]
@@ -399,7 +398,6 @@ sheet = "Localization"
 [[tables.fields]]
 name = "key"
 type = "string"
-key = true
 length = [3, 64]
 
 [[tables.fields]]
@@ -426,7 +424,6 @@ sheet = "LevelExp"
 [[tables.fields]]
 name = "level"
 type = "i32"
-key = true
 range = [1, 100]
 
 [[tables.fields]]
@@ -450,7 +447,6 @@ sheet = "Character"
 [[tables.fields]]
 name = "id"
 type = "i32"
-key = true
 
 [[tables.fields]]
 name = "name"
@@ -472,6 +468,7 @@ type = "ref<Skill.id>"
 [[tables.fields]]
 name = "starter_items"
 type = "list<ref<Item.id>>"
+parser = { kind = "json" }
 length = [1, 4]
 
 [[tables.fields]]
@@ -511,7 +508,6 @@ sheet = "Buff"
 [[tables.fields]]
 name = "id"
 type = "i32"
-key = true
 
 [[tables.fields]]
 name = "name"
@@ -539,7 +535,6 @@ sheet = "DropGroup"
 [[tables.fields]]
 name = "id"
 type = "i32"
-key = true
 
 [[tables.fields]]
 name = "name"
@@ -587,7 +582,6 @@ sheet = "Monster"
 [[tables.fields]]
 name = "id"
 type = "i32"
-key = true
 
 [[tables.fields]]
 name = "name"
@@ -622,7 +616,6 @@ sheet = "Stage"
 [[tables.fields]]
 name = "id"
 type = "i32"
-key = true
 
 [[tables.fields]]
 name = "name"
@@ -631,6 +624,7 @@ type = "string"
 [[tables.fields]]
 name = "monster_ids"
 type = "list<ref<Monster.id>>"
+parser = { kind = "json" }
 length = [1, 5]
 
 [[tables.fields]]
@@ -678,7 +672,6 @@ sheet = "Dungeon"
 [[tables.fields]]
 name = "id"
 type = "i32"
-key = true
 
 [[tables.fields]]
 name = "name"
@@ -687,6 +680,7 @@ type = "string"
 [[tables.fields]]
 name = "stage_ids"
 type = "list<ref<Stage.id>>"
+parser = { kind = "json" }
 length = [2, 6]
 
 [[tables.fields]]
@@ -706,7 +700,6 @@ sheet = "Shop"
 [[tables.fields]]
 name = "id"
 type = "i32"
-key = true
 
 [[tables.fields]]
 name = "name"
@@ -757,7 +750,6 @@ sheet = "Recipe"
 [[tables.fields]]
 name = "id"
 type = "i32"
-key = true
 
 [[tables.fields]]
 name = "result_item"
@@ -781,7 +773,6 @@ sheet = "GachaPool"
 [[tables.fields]]
 name = "id"
 type = "i32"
-key = true
 
 [[tables.fields]]
 name = "name"
@@ -828,7 +819,6 @@ sheet = "EquipmentSet"
 [[tables.fields]]
 name = "id"
 type = "i32"
-key = true
 
 [[tables.fields]]
 name = "name"
@@ -837,6 +827,7 @@ type = "string"
 [[tables.fields]]
 name = "item_ids"
 type = "list<ref<Item.id>>"
+parser = { kind = "json" }
 length = [2, 4]
 
 [[tables.fields]]
@@ -855,7 +846,6 @@ sheet = "Achievement"
 [[tables.fields]]
 name = "id"
 type = "i32"
-key = true
 
 [[tables.fields]]
 name = "title_key"
@@ -882,7 +872,6 @@ sheet = "VipLevel"
 [[tables.fields]]
 name = "level"
 type = "i32"
-key = true
 
 [[tables.fields]]
 name = "cost"
@@ -892,6 +881,7 @@ parser = { kind = "tuple" }
 [[tables.fields]]
 name = "perks"
 type = "list<string>"
+parser = { kind = "json" }
 length = [1, 5]
 
 [[tables]]
@@ -906,7 +896,6 @@ sheet = "MailTemplate"
 [[tables.fields]]
 name = "id"
 type = "i32"
-key = true
 
 [[tables.fields]]
 name = "mail_type"
@@ -961,7 +950,6 @@ sheet = "Dialogue"
 [[tables.fields]]
 name = "id"
 type = "i32"
-key = true
 
 [[tables.fields]]
 name = "speaker_key"
@@ -970,6 +958,7 @@ type = "string"
 [[tables.fields]]
 name = "lines"
 type = "list<string>"
+parser = { kind = "json" }
 length = [1, 5]
 
 [[tables]]
@@ -984,7 +973,6 @@ sheet = "EventRule"
 [[tables.fields]]
 name = "id"
 type = "i32"
-key = true
 
 [[tables.fields]]
 name = "name"

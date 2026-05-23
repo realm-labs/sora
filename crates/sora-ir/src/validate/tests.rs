@@ -21,7 +21,6 @@ key = "id"
 [[tables.fields]]
 name = "id"
 type = "i32"
-key = true
 
 [[tables.fields]]
 name = "item_type"

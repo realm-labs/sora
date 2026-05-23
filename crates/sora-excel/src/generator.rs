@@ -131,7 +131,6 @@ sheet = "Item"
 [[tables.fields]]
 name = "id"
 type = "i32"
-key = true
 comment = "Item id"
 
 [[tables.fields]]
