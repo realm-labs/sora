@@ -10,7 +10,14 @@ cargo install --path crates/sora-cli
 
 ## 1. Create a Project
 
-Create this layout:
+The fastest path is to scaffold the same minimal project:
+
+```bash
+sora init --out my-config --schema-format toml
+cd my-config
+```
+
+`--schema-format` accepts `toml`, `yaml`, `json`, or `lua`. The scaffold creates this layout:
 
 | Path | Who edits it | Purpose |
 | --- | --- | --- |
@@ -19,7 +26,7 @@ Create this layout:
 | `data/Item.xlsx` | Designers or tools | Editable row data. |
 | `generated/` | Sora | Schema lock, Excel templates, generated code, exported data. |
 
-Create `project.toml`:
+The rest of this section shows the generated files so you can understand the project shape. `project.toml` looks like this:
 
 ```toml
 package = "game_config"

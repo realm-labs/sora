@@ -1,6 +1,7 @@
 mod args;
 mod build;
 mod commands;
+mod init;
 mod report;
 mod source;
 

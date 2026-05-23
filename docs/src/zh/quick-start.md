@@ -10,7 +10,14 @@ cargo install --path crates/sora-cli
 
 ## 1. 创建项目
 
-创建这个目录结构：
+最快的方式是直接生成同一个最小项目：
+
+```bash
+sora init --out my-config --schema-format toml
+cd my-config
+```
+
+`--schema-format` 支持 `toml`、`yaml`、`json` 和 `lua`。脚手架会生成这个目录结构：
 
 | 路径 | 谁编辑 | 作用 |
 | --- | --- | --- |
@@ -19,7 +26,7 @@ cargo install --path crates/sora-cli
 | `data/Item.xlsx` | 策划或工具 | 可编辑行数据。 |
 | `generated/` | Sora | schema lock、Excel 模板、生成代码、导出数据。 |
 
-创建 `project.toml`：
+本节后面的内容展示生成出来的文件，方便理解项目结构。`project.toml` 内容如下：
 
 ```toml
 package = "game_config"

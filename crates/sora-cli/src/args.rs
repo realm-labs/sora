@@ -22,6 +22,7 @@ pub struct Cli {
 pub enum Command {
     Build(BuildArgs),
     Check(CheckArgs),
+    Init(InitArgs),
     Gen {
         #[arg(long)]
         target: String,
@@ -126,6 +127,26 @@ pub struct DiffArgs {
 
     #[arg(long)]
     pub scope: Option<String>,
+}
+
+#[derive(Debug, Args)]
+pub struct InitArgs {
+    #[arg(long)]
+    pub out: PathBuf,
+
+    #[arg(long, value_enum, default_value_t = SchemaFormatArg::Toml)]
+    pub schema_format: SchemaFormatArg,
+
+    #[arg(long)]
+    pub force: bool,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, clap::ValueEnum)]
+pub enum SchemaFormatArg {
+    Toml,
+    Yaml,
+    Json,
+    Lua,
 }
 
 #[derive(Debug, Clone, Copy, clap::ValueEnum)]

@@ -22,6 +22,7 @@ pub fn run(cli: Cli) -> Result<()> {
     match cli.command {
         Command::Build(args) => crate::build::run(args, &execution),
         Command::Check(args) => check(args),
+        Command::Init(args) => crate::init::run(args),
         Command::Gen { target, args } => generate(args, &target),
         Command::Export(args) => export(args, &execution),
         Command::Diff(args) => diff(args, &execution),

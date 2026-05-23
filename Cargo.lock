@@ -781,6 +781,7 @@ dependencies = [
  "sora-core",
  "sora-data",
  "sora-diagnostics",
+ "sora-excel",
  "sora-execution",
  "sora-export",
  "sora-input",
