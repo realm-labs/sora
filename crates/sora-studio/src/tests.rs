@@ -10,8 +10,8 @@ use crate::{
     model::{StudioField, StudioNode, StudioNodeKind, StudioSchema, StudioSummary},
     render::{parse_parser, push_field, render_schema_module},
     service::{
-        load_studio_schema, preview_studio_schema, project_text_with_schema_files,
-        save_studio_schema, write_studio_schema,
+        TextFileWrite, load_studio_schema, preview_studio_schema, project_text_with_schema_files,
+        save_studio_schema, write_studio_schema, write_text_files_transactionally,
     },
 };
 
@@ -681,6 +681,43 @@ values = ["Common"]
     assert!(project_text.contains("package = \"edited_config\""));
     assert!(project_text.contains("[build]"));
     assert!(load_studio_schema(&project).ok);
+
+    let _ = fs::remove_dir_all(base);
+}
+
+#[test]
+fn transactional_text_write_keeps_existing_files_on_prepare_failure() {
+    let base = temp_dir();
+    fs::create_dir_all(&base).unwrap();
+    let existing = base.join("existing.toml");
+    let blocked = base.join("blocked");
+    fs::write(&existing, "original").unwrap();
+    fs::write(&blocked, "not a directory").unwrap();
+
+    let error = write_text_files_transactionally(&[
+        TextFileWrite {
+            path: existing.clone(),
+            content: "changed".to_owned(),
+        },
+        TextFileWrite {
+            path: blocked.join("new.toml"),
+            content: "new".to_owned(),
+        },
+    ])
+    .unwrap_err();
+
+    assert!(
+        error
+            .to_string()
+            .contains("failed to create output directory")
+    );
+    assert_eq!(fs::read_to_string(&existing).unwrap(), "original");
+    assert!(
+        fs::read_dir(&base)
+            .unwrap()
+            .filter_map(Result::ok)
+            .all(|entry| !entry.file_name().to_string_lossy().contains("sora-studio"))
+    );
 
     let _ = fs::remove_dir_all(base);
 }

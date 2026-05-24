@@ -1,7 +1,9 @@
 use std::{
     collections::BTreeMap,
-    fs,
+    fs, io,
     path::{Component, Path, PathBuf},
+    sync::atomic::{AtomicU64, Ordering},
+    time::{SystemTime, UNIX_EPOCH},
 };
 
 use anyhow::{Context, Result};
@@ -365,7 +367,10 @@ struct SchemaDocument {
 pub(crate) fn write_studio_schema(project: &Path, schema: &StudioSchema) -> Result<Vec<PathBuf>> {
     let includes = schema_includes_from_sources(project, &schema.sources)?;
     validate_node_sources(schema, &includes)?;
-    write_project_settings(project, &schema.package, &schema.sources)?;
+    let mut writes = vec![TextFileWrite {
+        path: project.to_path_buf(),
+        content: project_text_with_schema_files(project, &schema.package, &schema.sources)?,
+    }];
     let mut written = Vec::new();
     for include in includes {
         let current_include = fs::read_to_string(&include.path).unwrap_or_default();
@@ -374,22 +379,13 @@ pub(crate) fn write_studio_schema(project: &Path, schema: &StudioSchema) -> Resu
             &include.path,
             &current_include,
         )?;
-        if let Some(parent) = include.path.parent() {
-            fs::create_dir_all(parent).with_context(|| {
-                format!(
-                    "failed to create schema include directory `{}`",
-                    parent.display()
-                )
-            })?;
-        }
-        fs::write(&include.path, content).with_context(|| {
-            format!(
-                "failed to write schema include `{}`",
-                include.path.display()
-            )
-        })?;
+        writes.push(TextFileWrite {
+            path: include.path.clone(),
+            content,
+        });
         written.push(include.path);
     }
+    write_text_files_transactionally(&writes)?;
     Ok(written)
 }
 
@@ -512,12 +508,6 @@ fn schema_for_source(schema: &StudioSchema, source: &str) -> StudioSchema {
         nodes,
         edges,
     }
-}
-
-fn write_project_settings(project: &Path, package: &str, sources: &[String]) -> Result<()> {
-    let content = project_text_with_schema_files(project, package, sources)?;
-    fs::write(project, content)
-        .with_context(|| format!("failed to write project file `{}`", project.display()))
 }
 
 pub(crate) fn project_text_with_schema_files(
@@ -683,4 +673,129 @@ struct ProjectDocument {
     package: Option<String>,
     #[allow(dead_code)]
     codegen: Option<CodegenSchema>,
+}
+
+#[derive(Debug)]
+pub(crate) struct TextFileWrite {
+    pub path: PathBuf,
+    pub content: String,
+}
+
+#[derive(Debug)]
+struct PreparedTextFileWrite {
+    target: PathBuf,
+    temp: PathBuf,
+    backup: Option<PathBuf>,
+}
+
+static TEXT_WRITE_COUNTER: AtomicU64 = AtomicU64::new(0);
+
+pub(crate) fn write_text_files_transactionally(writes: &[TextFileWrite]) -> Result<()> {
+    let mut prepared = Vec::with_capacity(writes.len());
+    for write in writes {
+        let result = (|| {
+            if let Some(parent) = write.path.parent() {
+                fs::create_dir_all(parent).with_context(|| {
+                    format!("failed to create output directory `{}`", parent.display())
+                })?;
+            }
+            let temp = sibling_temp_path(&write.path, "write");
+            let backup = if write.path.exists() {
+                let backup = sibling_temp_path(&write.path, "backup");
+                fs::copy(&write.path, &backup).with_context(|| {
+                    format!(
+                        "failed to back up `{}` before writing",
+                        write.path.display()
+                    )
+                })?;
+                Some(backup)
+            } else {
+                None
+            };
+            fs::write(&temp, &write.content)
+                .with_context(|| format!("failed to write temporary file `{}`", temp.display()))?;
+            Ok(PreparedTextFileWrite {
+                target: write.path.clone(),
+                temp,
+                backup,
+            })
+        })();
+        match result {
+            Ok(write) => prepared.push(write),
+            Err(error) => {
+                cleanup_prepared_text_writes(&prepared);
+                return Err(error);
+            }
+        };
+    }
+
+    let mut applied = Vec::new();
+    for (index, write) in prepared.iter().enumerate() {
+        if let Err(error) = replace_file(&write.temp, &write.target) {
+            rollback_text_writes(&prepared, &applied);
+            cleanup_prepared_text_writes(&prepared);
+            return Err(error).with_context(|| {
+                format!(
+                    "failed to replace `{}` with rendered content",
+                    write.target.display()
+                )
+            });
+        }
+        applied.push(index);
+    }
+
+    cleanup_prepared_text_writes(&prepared);
+    Ok(())
+}
+
+fn rollback_text_writes(prepared: &[PreparedTextFileWrite], applied: &[usize]) {
+    for index in applied.iter().rev() {
+        let write = &prepared[*index];
+        if let Some(backup) = &write.backup {
+            let _ = replace_file(backup, &write.target);
+        } else {
+            let _ = fs::remove_file(&write.target);
+        }
+    }
+}
+
+fn cleanup_prepared_text_writes(prepared: &[PreparedTextFileWrite]) {
+    for write in prepared {
+        let _ = fs::remove_file(&write.temp);
+        if let Some(backup) = &write.backup {
+            let _ = fs::remove_file(backup);
+        }
+    }
+}
+
+fn replace_file(source: &Path, target: &Path) -> io::Result<()> {
+    match fs::rename(source, target) {
+        Ok(()) => Ok(()),
+        Err(error) if target.exists() => {
+            fs::remove_file(target)?;
+            fs::rename(source, target).map_err(|second_error| {
+                io::Error::new(
+                    second_error.kind(),
+                    format!("failed after initial replace error `{error}`: {second_error}"),
+                )
+            })
+        }
+        Err(error) => Err(error),
+    }
+}
+
+fn sibling_temp_path(target: &Path, purpose: &str) -> PathBuf {
+    let id = TEXT_WRITE_COUNTER.fetch_add(1, Ordering::Relaxed);
+    let timestamp = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .map(|duration| duration.as_nanos())
+        .unwrap_or_default();
+    let name = target
+        .file_name()
+        .and_then(|name| name.to_str())
+        .unwrap_or("file");
+    target.with_file_name(format!(
+        ".{name}.sora-studio-{purpose}-{}-{timestamp}-{id}.tmp",
+        std::process::id()
+    ))
 }

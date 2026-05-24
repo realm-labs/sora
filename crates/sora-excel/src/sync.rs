@@ -1,7 +1,8 @@
 use std::{
     collections::{BTreeMap, BTreeSet, HashMap},
-    fs,
+    fs, io,
     path::{Path, PathBuf},
+    sync::atomic::{AtomicU64, Ordering},
     time::{SystemTime, UNIX_EPOCH},
 };
 
@@ -99,7 +100,13 @@ impl ExcelTemplateSync {
                         source,
                     })?;
                 }
-                write_synced_workbook(ir, &table_sheets, &preserved_sheets, &path)?;
+                write_synced_workbook_transactionally(
+                    ir,
+                    &table_sheets,
+                    &preserved_sheets,
+                    &path,
+                    backup_path.as_deref(),
+                )?;
             }
 
             report.workbooks.push(ExcelSyncWorkbookReport {
@@ -117,6 +124,62 @@ impl ExcelTemplateSync {
 
         Ok(report)
     }
+}
+
+static WORKBOOK_WRITE_COUNTER: AtomicU64 = AtomicU64::new(0);
+
+fn write_synced_workbook_transactionally(
+    ir: &ConfigIr,
+    table_sheets: &[SyncedTableSheet<'_>],
+    preserved_sheets: &[PreservedSheet],
+    path: &Path,
+    backup_path: Option<&Path>,
+) -> Result<()> {
+    let temp_path = sibling_temp_path(path);
+    write_synced_workbook(ir, table_sheets, preserved_sheets, &temp_path)?;
+    if let Err(source) = replace_file(&temp_path, path) {
+        let _ = fs::remove_file(&temp_path);
+        if let Some(backup_path) = backup_path {
+            let _ = fs::copy(backup_path, path);
+        }
+        return Err(SoraError::WriteFile {
+            path: path.to_path_buf(),
+            source,
+        });
+    }
+    Ok(())
+}
+
+fn replace_file(source: &Path, target: &Path) -> io::Result<()> {
+    match fs::rename(source, target) {
+        Ok(()) => Ok(()),
+        Err(error) if target.exists() => {
+            fs::remove_file(target)?;
+            fs::rename(source, target).map_err(|second_error| {
+                io::Error::new(
+                    second_error.kind(),
+                    format!("failed after initial replace error `{error}`: {second_error}"),
+                )
+            })
+        }
+        Err(error) => Err(error),
+    }
+}
+
+fn sibling_temp_path(target: &Path) -> PathBuf {
+    let id = WORKBOOK_WRITE_COUNTER.fetch_add(1, Ordering::Relaxed);
+    let timestamp = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .map(|duration| duration.as_nanos())
+        .unwrap_or_default();
+    let name = target
+        .file_name()
+        .and_then(|name| name.to_str())
+        .unwrap_or("workbook.xlsx");
+    target.with_file_name(format!(
+        ".{name}.sora-excel-write-{}-{timestamp}-{id}.tmp",
+        std::process::id()
+    ))
 }
 
 fn backup_existing_workbook(data_root: &Path, path: &Path) -> Result<PathBuf> {
