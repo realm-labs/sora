@@ -495,6 +495,123 @@ values = ["Common"]
 }
 
 #[test]
+fn save_edits_mixed_schema_include_formats() {
+    let base = temp_dir();
+    let schema_dir = base.join("schema");
+    fs::create_dir_all(&schema_dir).unwrap();
+    let project = base.join("project.yaml");
+    fs::write(
+        &project,
+        r#"
+package: game_config
+includes:
+  - schema/items.toml
+  - schema/quests.yaml
+  - schema/rewards.json
+  - schema/events.lua
+build:
+  data_root: data
+"#,
+    )
+    .unwrap();
+    fs::write(
+        schema_dir.join("items.toml"),
+        r#"
+[[tables]]
+name = "Item"
+mode = "map"
+key = "id"
+
+[[tables.fields]]
+name = "id"
+type = "i32"
+"#,
+    )
+    .unwrap();
+    fs::write(
+        schema_dir.join("quests.yaml"),
+        r#"
+tables:
+  - name: Quest
+    mode: map
+    key: id
+    fields:
+      - name: id
+        type: i32
+"#,
+    )
+    .unwrap();
+    fs::write(
+        schema_dir.join("rewards.json"),
+        r#"
+{
+  "enums": [
+    { "name": "Rarity", "values": ["Common"] }
+  ]
+}
+"#,
+    )
+    .unwrap();
+    fs::write(
+        schema_dir.join("events.lua"),
+        r#"
+return {
+  structs = {
+    { name = "EventPayload", fields = { { name = "value", type = "string" } } },
+  },
+}
+"#,
+    )
+    .unwrap();
+
+    let mut schema = load_studio_schema(&project).schema.unwrap();
+    assert_eq!(
+        schema.sources,
+        [
+            "schema/items.toml",
+            "schema/quests.yaml",
+            "schema/rewards.json",
+            "schema/events.lua"
+        ]
+    );
+    let quest = schema
+        .nodes
+        .iter_mut()
+        .find(|node| node.id == "table:Quest")
+        .unwrap();
+    assert_eq!(quest.source, "schema/quests.yaml");
+    quest.fields.push(StudioField {
+        name: "title".to_owned(),
+        ty: "string".to_owned(),
+        scope: "all".to_owned(),
+        parser: None,
+        comment: Some("Quest title".to_owned()),
+        default: None,
+        range: None,
+        length: None,
+        source: None,
+    });
+    schema.sources.push("schema/new.lua".to_owned());
+
+    write_studio_schema(&project, &schema).unwrap();
+
+    let project_text = fs::read_to_string(&project).unwrap();
+    let quests = fs::read_to_string(schema_dir.join("quests.yaml")).unwrap();
+    let rewards = fs::read_to_string(schema_dir.join("rewards.json")).unwrap();
+    let events = fs::read_to_string(schema_dir.join("events.lua")).unwrap();
+    let new_lua = fs::read_to_string(schema_dir.join("new.lua")).unwrap();
+    assert!(project_text.contains("- schema/new.lua"));
+    assert!(project_text.contains("data_root: data"));
+    assert!(quests.contains("Quest title"));
+    assert!(rewards.contains("\"enums\""));
+    assert!(events.starts_with("return "));
+    assert_eq!(new_lua, "return {}\n");
+    assert!(load_studio_schema(&project).ok);
+
+    let _ = fs::remove_dir_all(base);
+}
+
+#[test]
 fn save_updates_project_package() {
     let base = temp_dir();
     let project = write_project(

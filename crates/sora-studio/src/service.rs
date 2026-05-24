@@ -5,9 +5,13 @@ use std::{
 };
 
 use anyhow::{Context, Result};
+use serde::Deserialize;
+use serde_json::Value;
+use sora_config_format::load_document;
 use sora_diagnostics::SoraError;
 use sora_input_schema::schema::load_project_schema_file;
 use sora_ir::{normalize::normalize_schema, validate::validate_config_ir};
+use sora_schema::model::{CodegenSchema, EnumSchema, StructSchema, TableSchema, UnionSchema};
 
 use crate::{
     diff::simple_diff,
@@ -16,7 +20,10 @@ use crate::{
         DiagnosticLevel, StudioDiagnostic, StudioNodeKind, StudioPreviewResponse, StudioSchema,
         StudioSchemaResponse,
     },
-    render::{push_quoted, render_schema_module, render_schema_module_like, schema_node_order},
+    render::{
+        StudioDocumentFormat, document_format, push_quoted, render_lua_document,
+        render_schema_module, render_schema_module_for_path,
+    },
 };
 
 pub(crate) fn load_studio_schema(project: &Path) -> StudioSchemaResponse {
@@ -155,14 +162,36 @@ pub(crate) fn preview_studio_schema(
             for include in &includes {
                 let current_include = fs::read_to_string(&include.path).unwrap_or_default();
                 let next_schema = schema_for_source(schema, &include.source);
-                let next_content = render_schema_module_like(&next_schema, &current_include);
+                let next_content = match render_schema_module_for_path(
+                    &next_schema,
+                    &include.path,
+                    &current_include,
+                ) {
+                    Ok(content) => content,
+                    Err(error) => {
+                        return StudioPreviewResponse {
+                            ok: false,
+                            project: project.display().to_string(),
+                            target: None,
+                            content: Some(render_schema_module(schema)),
+                            diff: None,
+                            diagnostics: vec![StudioDiagnostic {
+                                level: DiagnosticLevel::Error,
+                                message: error.to_string(),
+                                target_id: None,
+                            }],
+                        };
+                    }
+                };
                 let base_content = base_schema
                     .as_ref()
-                    .map(|schema| {
-                        render_schema_module_like(
+                    .and_then(|schema| {
+                        render_schema_module_for_path(
                             &schema_for_source(schema, &include.source),
+                            &include.path,
                             &current_include,
                         )
+                        .ok()
                     })
                     .unwrap_or_else(|| current_include.clone());
                 diff.push_str(&format!(
@@ -280,10 +309,8 @@ fn schema_source_index(project: &Path) -> Result<SchemaSourceIndex> {
     let includes = schema_include_paths(project)?;
     let mut source_by_node = BTreeMap::new();
     for include in &includes {
-        let content = fs::read_to_string(&include.path).with_context(|| {
-            format!("failed to read schema include `{}`", include.path.display())
-        })?;
-        for id in schema_node_order(&content) {
+        let module = load_schema_document(&include.path)?;
+        for id in schema_document_node_order(&module) {
             source_by_node.insert(id, include.source.clone());
         }
     }
@@ -293,6 +320,48 @@ fn schema_source_index(project: &Path) -> Result<SchemaSourceIndex> {
     })
 }
 
+fn load_schema_document(path: &Path) -> Result<SchemaDocument> {
+    load_document(path).with_context(|| format!("failed to load schema `{}`", path.display()))
+}
+
+fn schema_document_node_order(module: &SchemaDocument) -> Vec<String> {
+    module
+        .enums
+        .iter()
+        .map(|item| node_id(StudioNodeKind::Enum, &item.name))
+        .chain(
+            module
+                .structs
+                .iter()
+                .map(|item| node_id(StudioNodeKind::Struct, &item.name)),
+        )
+        .chain(
+            module
+                .unions
+                .iter()
+                .map(|item| node_id(StudioNodeKind::Union, &item.name)),
+        )
+        .chain(
+            module
+                .tables
+                .iter()
+                .map(|item| node_id(StudioNodeKind::Table, &item.name)),
+        )
+        .collect()
+}
+
+#[derive(Debug, Deserialize)]
+struct SchemaDocument {
+    #[serde(default)]
+    pub enums: Vec<EnumSchema>,
+    #[serde(default)]
+    pub structs: Vec<StructSchema>,
+    #[serde(default)]
+    pub unions: Vec<UnionSchema>,
+    #[serde(default)]
+    pub tables: Vec<TableSchema>,
+}
+
 pub(crate) fn write_studio_schema(project: &Path, schema: &StudioSchema) -> Result<Vec<PathBuf>> {
     let includes = schema_includes_from_sources(project, &schema.sources)?;
     validate_node_sources(schema, &includes)?;
@@ -300,10 +369,11 @@ pub(crate) fn write_studio_schema(project: &Path, schema: &StudioSchema) -> Resu
     let mut written = Vec::new();
     for include in includes {
         let current_include = fs::read_to_string(&include.path).unwrap_or_default();
-        let content = render_schema_module_like(
+        let content = render_schema_module_for_path(
             &schema_for_source(schema, &include.source),
+            &include.path,
             &current_include,
-        );
+        )?;
         if let Some(parent) = include.path.parent() {
             fs::create_dir_all(parent).with_context(|| {
                 format!(
@@ -330,7 +400,7 @@ fn schema_includes_from_sources(project: &Path, sources: &[String]) -> Result<Ve
         .iter()
         .map(|source| {
             let path = base_dir.join(source);
-            ensure_toml_path(&path, "schema include")?;
+            document_format(&path)?;
             Ok(SchemaInclude {
                 source: source.clone(),
                 path,
@@ -341,7 +411,7 @@ fn schema_includes_from_sources(project: &Path, sources: &[String]) -> Result<Ve
 
 fn validate_schema_sources(sources: &[String]) -> Result<()> {
     if sources.is_empty() {
-        anyhow::bail!("Studio project must declare at least one TOML include");
+        anyhow::bail!("Studio project must declare at least one schema include");
     }
     let mut seen = BTreeMap::<&str, usize>::new();
     for source in sources {
@@ -356,9 +426,7 @@ fn validate_schema_sources(sources: &[String]) -> Result<()> {
         if path.is_absolute() {
             anyhow::bail!("schema include path `{source}` must be relative");
         }
-        if path.extension().and_then(|value| value.to_str()) != Some("toml") {
-            anyhow::bail!("schema include path `{source}` must end with .toml");
-        }
+        document_format(path)?;
         for component in path.components() {
             if matches!(
                 component,
@@ -458,6 +526,25 @@ pub(crate) fn project_text_with_schema_files(
     sources: &[String],
 ) -> Result<String> {
     validate_schema_sources(sources)?;
+    match document_format(project)? {
+        StudioDocumentFormat::Toml => {
+            project_toml_text_with_schema_files(project, package, sources)
+        }
+        StudioDocumentFormat::Yaml => {
+            project_yaml_text_with_schema_files(project, package, sources)
+        }
+        StudioDocumentFormat::Json => {
+            project_json_text_with_schema_files(project, package, sources)
+        }
+        StudioDocumentFormat::Lua => project_lua_text_with_schema_files(project, package, sources),
+    }
+}
+
+fn project_toml_text_with_schema_files(
+    project: &Path,
+    package: &str,
+    sources: &[String],
+) -> Result<String> {
     let project_text = fs::read_to_string(project)
         .with_context(|| format!("failed to read project file `{}`", project.display()))?;
     let mut project_doc = project_text
@@ -491,6 +578,82 @@ pub(crate) fn project_text_with_schema_files(
         .unwrap_or_else(|| prepend_root_package_line(&project_text, package));
     Ok(replace_root_includes_line(&content, sources)
         .unwrap_or_else(|| insert_root_includes_line(&content, sources)))
+}
+
+fn project_yaml_text_with_schema_files(
+    project: &Path,
+    package: &str,
+    sources: &[String],
+) -> Result<String> {
+    let mut value = load_document::<serde_yaml::Value>(project)
+        .with_context(|| format!("failed to load project `{}`", project.display()))?;
+    set_yaml_project_fields(&mut value, package, sources)?;
+    serde_yaml::to_string(&value).context("failed to render project YAML")
+}
+
+fn project_json_text_with_schema_files(
+    project: &Path,
+    package: &str,
+    sources: &[String],
+) -> Result<String> {
+    let mut value = load_document::<Value>(project)
+        .with_context(|| format!("failed to load project `{}`", project.display()))?;
+    set_json_project_fields(&mut value, package, sources)?;
+    let mut out = serde_json::to_string_pretty(&value).context("failed to render project JSON")?;
+    out.push('\n');
+    Ok(out)
+}
+
+fn project_lua_text_with_schema_files(
+    project: &Path,
+    package: &str,
+    sources: &[String],
+) -> Result<String> {
+    let mut value = load_document::<Value>(project)
+        .with_context(|| format!("failed to load project `{}`", project.display()))?;
+    set_json_project_fields(&mut value, package, sources)?;
+    Ok(render_lua_document(&value))
+}
+
+fn set_json_project_fields(value: &mut Value, package: &str, sources: &[String]) -> Result<()> {
+    let object = value
+        .as_object_mut()
+        .context("project document root must be an object")?;
+    object.insert("package".to_owned(), Value::String(package.to_owned()));
+    object.insert(
+        "includes".to_owned(),
+        Value::Array(
+            sources
+                .iter()
+                .map(|source| Value::String(source.clone()))
+                .collect(),
+        ),
+    );
+    Ok(())
+}
+
+fn set_yaml_project_fields(
+    value: &mut serde_yaml::Value,
+    package: &str,
+    sources: &[String],
+) -> Result<()> {
+    let object = value
+        .as_mapping_mut()
+        .context("project document root must be a mapping")?;
+    object.insert(
+        serde_yaml::Value::String("package".to_owned()),
+        serde_yaml::Value::String(package.to_owned()),
+    );
+    object.insert(
+        serde_yaml::Value::String("includes".to_owned()),
+        serde_yaml::Value::Sequence(
+            sources
+                .iter()
+                .map(|source| serde_yaml::Value::String(source.clone()))
+                .collect(),
+        ),
+    );
+    Ok(())
 }
 
 fn replace_root_package_line(project_text: &str, package: &str) -> Option<String> {
@@ -615,32 +778,15 @@ fn includes_line(sources: &[String]) -> String {
 }
 
 fn schema_include_paths(project: &Path) -> Result<Vec<SchemaInclude>> {
-    ensure_toml_path(project, "project")?;
-    let project_text = fs::read_to_string(project)
-        .with_context(|| format!("failed to read project file `{}`", project.display()))?;
-    let project_doc = project_text
-        .parse::<toml::Value>()
-        .with_context(|| format!("failed to parse project TOML `{}`", project.display()))?;
-    let includes = project_doc
-        .get("includes")
-        .and_then(toml_array_strings)
-        .unwrap_or_default();
+    document_format(project)?;
+    let project_doc = load_document::<ProjectDocument>(project)
+        .with_context(|| format!("failed to load project `{}`", project.display()))?;
+    let includes = project_doc.includes;
     if includes.is_empty() {
-        anyhow::bail!("Studio project must declare at least one TOML include");
+        anyhow::bail!("Studio project must declare at least one schema include");
     }
 
     schema_includes_from_sources(project, &includes)
-}
-
-fn ensure_toml_path(path: &Path, label: &str) -> Result<()> {
-    let extension = path.extension().and_then(|value| value.to_str());
-    if extension != Some("toml") {
-        anyhow::bail!(
-            "Studio save currently supports TOML {label} files only: {}",
-            path.display()
-        );
-    }
-    Ok(())
 }
 
 fn toml_array_strings(value: &toml::Value) -> Option<Vec<String>> {
@@ -651,4 +797,14 @@ fn toml_array_strings(value: &toml::Value) -> Option<Vec<String>> {
             .filter_map(|item| item.as_str().map(ToOwned::to_owned))
             .collect(),
     )
+}
+
+#[derive(Debug, Deserialize)]
+struct ProjectDocument {
+    #[serde(default)]
+    includes: Vec<String>,
+    #[allow(dead_code)]
+    package: Option<String>,
+    #[allow(dead_code)]
+    codegen: Option<CodegenSchema>,
 }

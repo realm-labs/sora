@@ -1296,6 +1296,8 @@ dependencies = [
  "axum",
  "serde",
  "serde_json",
+ "serde_yaml",
+ "sora-config-format",
  "sora-diagnostics",
  "sora-input-schema",
  "sora-ir",

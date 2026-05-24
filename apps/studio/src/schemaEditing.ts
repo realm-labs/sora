@@ -549,10 +549,10 @@ function validateSchemaSources(schema: StudioSchema): StudioValidationIssue[] {
         message: `Schema file "${source}" must be a plain relative path.`
       });
     }
-    if (!source.endsWith(".toml")) {
+    if (!schemaSourceExtension(source)) {
       issues.push({
         id: `schema:sources:${index}:extension`,
-        message: `Schema file "${source}" must end with .toml.`
+        message: `Schema file "${source}" must end with .toml, .yaml, .yml, .json, or .lua.`
       });
     }
     if (seen.has(source)) {
@@ -564,6 +564,10 @@ function validateSchemaSources(schema: StudioSchema): StudioValidationIssue[] {
     seen.add(source);
   });
   return issues;
+}
+
+function schemaSourceExtension(source: string): boolean {
+  return /\.(toml|ya?ml|json|lua)$/.test(source);
 }
 
 function buildEdges(nodes: StudioNode[]): StudioEdge[] {
