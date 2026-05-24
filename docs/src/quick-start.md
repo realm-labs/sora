@@ -56,7 +56,7 @@ format = "binary"
 out = "generated/config.sora"
 ```
 
-In this file, `default_source_format = "xlsx"` means table sources default to Excel. `data_root = "data"` means `Item.xlsx` is read from `data/Item.xlsx` during export and build. The `binary` export writes the runtime bundle that Rust code will load because Rust defaults to `runtime_format = "sora"`.
+In this file, `default_source_format = "xlsx"` means table sources default to Excel. `data_root = "data"` means `Item.xlsx` is read from `data/Item.xlsx` during export and build. `excel_templates = "generated/excel"` is only the generated template output directory. It is where Sora writes fresh workbooks with schema headers; it is not the source data directory. Keep it separate from `data` so regenerating templates cannot overwrite edited row data. The `binary` export writes the runtime bundle that Rust code will load because Rust defaults to `runtime_format = "sora"`.
 
 Create `schema/items.toml`:
 
@@ -106,12 +106,23 @@ The workbook header is generated from the schema:
 sora excel-template --project project.toml --out generated/excel
 ```
 
-This creates `generated/excel/Item.xlsx`. Copy it to `data/Item.xlsx` and fill rows below the generated header:
+This creates `generated/excel/Item.xlsx`. Treat that file as a template artifact that can be regenerated after schema changes. For a new table, copy it to `data/Item.xlsx` and fill rows below the generated header:
 
 | id | name | item_type | max_stack |
 | --- | --- | --- | --- |
 | 1001 | Iron Sword | Weapon | 1 |
 | 2001 | Health Potion | Consumable | 99 |
+
+After you have real data in `data/Item.xlsx`, do not run `excel-template --out data` unless you intentionally want to replace those files. Keep generating empty templates into `generated/excel`, and use `excel-sync` to update existing data workbooks in place when the schema changes.
+
+For existing data workbooks, prefer syncing headers in place:
+
+```bash
+sora excel-sync --project project.toml --data-root data
+sora excel-sync --project project.toml --data-root data --write
+```
+
+The preview command shows added fields and legacy columns. The `--write` command refreshes generated header rows while preserving data rows; fields removed from schema stay in Excel as legacy columns that Sora ignores.
 
 ## 3. Check, Export, and Generate
 

@@ -12,7 +12,7 @@ The direct command only writes templates:
 sora excel-template --project project.toml --out generated/excel
 ```
 
-This reads the schema from `project.toml` and writes generated workbooks under `generated/excel`.
+This reads the schema from `project.toml` and writes generated workbooks under `generated/excel`. The directory is safe to delete and regenerate because it should contain template artifacts, not hand-edited source data.
 
 The build workflow can do the same thing when `excel_templates` is configured:
 
@@ -27,7 +27,42 @@ sora build --project project.toml
 
 Both paths generate the same kind of template files. The direct command only writes Excel templates. `sora build` runs the template output together with the other configured build outputs such as schema locks, code generation, and exports.
 
+## Template Directory vs Data Directory
+
 `excel_templates` is an output directory for templates. It is not the runtime data input directory. Data input normally comes from `[build].data_root` or the `--data-root` command option.
+
+The usual layout keeps these paths separate:
+
+| Path | Role | Can be regenerated |
+| --- | --- | --- |
+| `generated/excel` | Generated workbook templates with schema headers. | Yes |
+| `data` | Edited table rows used by export and build. | No |
+
+Do not point `excel-template --out` or `[build].excel_templates` at a directory that already contains edited data workbooks unless replacing those files is intentional. Use generated templates for new workbooks; use `excel-sync` for workbooks that already contain real data.
+
+## Sync Existing Workbooks
+
+For real projects with existing data, use `excel-sync` instead of copying rows into a fresh template. It updates workbook headers from the current schema while preserving data rows:
+
+```bash
+sora excel-sync --project project.toml --data-root data
+```
+
+Without `--write`, the command only previews what would change. To write the updated workbook files:
+
+```bash
+sora excel-sync --project project.toml --data-root data --write
+```
+
+When writing an existing workbook, Sora first copies the old file under `data/.sora-backup/<timestamp>/`.
+
+Sync matches columns by the `#field` row, not by column position:
+
+- existing schema fields keep their data;
+- new schema fields are added as empty columns;
+- changed type, parser, scope, range, length, comments, and table metadata refresh the generated header rows;
+- fields removed from schema are not deleted from Excel. They are kept as legacy columns ignored by Sora, so designers can delete them manually when they are ready;
+- non-schema sheets in the same workbook are preserved as value-only sheets.
 
 The workbook and sheet for each table come from that table's source:
 
@@ -84,7 +119,7 @@ Users should edit data rows. They should not hand-maintain field names, types, k
 
 If a column's `#input` cell starts with `from=`, that field is derived from another table. Leave the generated placeholder in that column and edit the child table rows instead.
 
-When the schema changes, regenerate the template, then migrate or paste the data rows into the new sheet. This keeps spreadsheet editing convenient without making Excel a second schema language.
+When the schema changes, run `sora excel-sync --project project.toml --data-root data` to preview header changes, then rerun with `--write` after reviewing them. This keeps spreadsheet editing convenient without making Excel a second schema language.
 
 ## Common Field Shapes
 

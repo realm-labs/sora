@@ -12,7 +12,7 @@ Excel 支持围绕生成模板设计。schema 拥有表结构，Excel 是这个 
 sora excel-template --project project.toml --out generated/excel
 ```
 
-这条命令的意思是：读取 `project.toml` 里的 schema，然后把 Excel 模板写到 `generated/excel` 目录。
+这条命令的意思是：读取 `project.toml` 里的 schema，然后把 Excel 模板写到 `generated/excel` 目录。这个目录应该只放模板产物，可以删除后重新生成，不应该放手工编辑的源数据。
 
 第二种是把模板输出目录写进 `project.toml`，之后统一运行 `sora build`：
 
@@ -27,7 +27,42 @@ sora build --project project.toml
 
 这两种方式生成的是同一类文件。区别只是：第一种只生成 Excel 模板；第二种会和 schema lock、codegen、export 等 build 输出一起执行。
 
+## 模板目录和数据目录
+
 `excel_templates` 不是输入数据目录，而是模板输出目录。真正的数据输入目录通常是 `[build].data_root` 或命令里的 `--data-root`。
+
+推荐把两个目录分开：
+
+| 路径 | 作用 | 是否可重新生成 |
+| --- | --- | --- |
+| `generated/excel` | 带 schema 表头的生成 workbook 模板。 | 是 |
+| `data` | export 和 build 读取的、已经填写行数据的文件。 | 否 |
+
+不要把 `excel-template --out` 或 `[build].excel_templates` 指向已经有手工编辑数据 workbook 的目录，除非你明确想替换这些文件。生成模板用于新 workbook；已经有真实数据的 workbook 应该使用 `excel-sync`。
+
+## 同步已有 Workbook
+
+真实项目里已有数据通常很多，这时不要把数据行复制到新模板，而应该使用 `excel-sync`。它会根据当前 schema 更新 workbook 表头，同时保留数据行：
+
+```bash
+sora excel-sync --project project.toml --data-root data
+```
+
+不带 `--write` 时，命令只预览将要发生的变化。确认后再写入文件：
+
+```bash
+sora excel-sync --project project.toml --data-root data --write
+```
+
+写入已有 workbook 前，Sora 会先把旧文件复制到 `data/.sora-backup/<timestamp>/` 下。
+
+同步时按 `#field` 行匹配字段，而不是按列位置匹配：
+
+- 仍然存在于 schema 中的字段会保留原数据；
+- schema 新增字段会插入为空列；
+- 类型、parser、scope、range、length、注释和表 metadata 变化会刷新生成表头；
+- 从 schema 中删除的字段不会从 Excel 中删除，而是保留为 Sora 忽略的 legacy 列，由策划在合适的时候手动删除；
+- 同一个 workbook 中不属于 schema 的 sheet 会作为 value-only sheet 保留下来。
 
 每个表最终生成到哪个 workbook 和 sheet，由表自己的 source 决定：
 
@@ -84,7 +119,7 @@ sheet = "Skill"
 
 如果某列的 `#input` 以 `from=` 开头，这个字段是从另一张表派生出来的。保留该列里的生成占位内容，去编辑对应的子表行。
 
-schema 变更后，重新生成模板，然后迁移或粘贴已有数据行。这样既保留了电子表格编辑体验，也避免 Excel 变成第二套 schema 语言。
+schema 变更后，先运行 `sora excel-sync --project project.toml --data-root data` 预览表头变化，确认后再加 `--write` 写回。这样既保留了电子表格编辑体验，也避免 Excel 变成第二套 schema 语言。
 
 ## 常见字段形状
 

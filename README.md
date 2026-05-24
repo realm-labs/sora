@@ -86,6 +86,13 @@ To inspect and edit the same schema in Sora Studio:
 sora studio --project examples/showcase/project.toml
 ```
 
+To update headers in existing Excel data workbooks after schema changes:
+
+```bash
+sora excel-sync --project project.toml --data-root data
+sora excel-sync --project project.toml --data-root data --write
+```
+
 For one-off or CI workflows, each stage is still available as a separate command:
 
 ```bash
@@ -249,6 +256,8 @@ out = "generated/config.sora"
 format = "json-debug"
 out = "generated/debug-json"
 ```
+
+`data_root` is the source data directory read by export and build. `excel_templates` is only the generated workbook template output directory. Keep those paths separate: regenerate templates into `generated/excel`, then copy or migrate rows into `data` when the schema changes.
 
 `sora build --project project.toml --target rust --clean` rebuilds only the configured Rust codegen target, while schema lock, Excel templates, and exports still follow the project build config.
 

@@ -56,7 +56,7 @@ format = "binary"
 out = "generated/config.sora"
 ```
 
-这里 `default_source_format = "xlsx"` 表示表数据默认来自 Excel。`data_root = "data"` 表示导出和 build 时会从 `data/Item.xlsx` 读取 `Item.xlsx`。`binary` export 会写出 Rust 代码要加载的运行时数据包，因为 Rust 默认使用 `runtime_format = "sora"`。
+这里 `default_source_format = "xlsx"` 表示表数据默认来自 Excel。`data_root = "data"` 表示导出和 build 时会从 `data/Item.xlsx` 读取 `Item.xlsx`。`excel_templates = "generated/excel"` 只是生成模板的输出目录。Sora 会在这里写入带 schema 表头的新 workbook；它不是源数据目录。把它和 `data` 分开，重新生成模板时才不会覆盖已经填写过的行数据。`binary` export 会写出 Rust 代码要加载的运行时数据包，因为 Rust 默认使用 `runtime_format = "sora"`。
 
 创建 `schema/items.toml`：
 
@@ -106,12 +106,23 @@ comment = "Stack limit"
 sora excel-template --project project.toml --out generated/excel
 ```
 
-这会生成 `generated/excel/Item.xlsx`。复制到 `data/Item.xlsx`，然后在生成表头下面填写行数据：
+这会生成 `generated/excel/Item.xlsx`。把这个文件当作 schema 变更后可以重新生成的模板产物。新建表时，可以把它复制到 `data/Item.xlsx`，然后在生成表头下面填写行数据：
 
 | id | name | item_type | max_stack |
 | --- | --- | --- | --- |
 | 1001 | Iron Sword | Weapon | 1 |
 | 2001 | Health Potion | Consumable | 99 |
+
+当 `data/Item.xlsx` 里已经有真实数据后，不要运行 `excel-template --out data`，除非你就是想替换这些文件。空模板继续生成到 `generated/excel`；schema 变更后，用 `excel-sync` 原地更新已有数据 workbook。
+
+对于已经有数据的 workbook，更推荐原地同步表头：
+
+```bash
+sora excel-sync --project project.toml --data-root data
+sora excel-sync --project project.toml --data-root data --write
+```
+
+第一条命令会预览新增字段和 legacy 列。带 `--write` 的命令会刷新生成表头并保留数据行；从 schema 中删除的字段会继续留在 Excel 中，作为 Sora 忽略的 legacy 列。
 
 ## 3. 检查、导出和生成代码
 

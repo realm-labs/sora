@@ -1,11 +1,12 @@
 use anyhow::{Context, Result, bail};
+use sora_excel::sync::ExcelSyncReport;
 use sora_execution::{ExecutionContext, ExecutionOptions};
 use sora_export::exporter::{ExportCompression, ExportOptions, ExportOutput, OutputKind};
 use sora_input_schema::input::SchemaFileInput;
 
 use crate::args::{
-    CheckArgs, Cli, Command, DiffArgs, ExcelTemplateArgs, ExportArgs, ExportCompressionArg,
-    GenArgs, SchemaLockArgs, SourceFormatArg,
+    CheckArgs, Cli, Command, DiffArgs, ExcelSyncArgs, ExcelTemplateArgs, ExportArgs,
+    ExportCompressionArg, GenArgs, SchemaLockArgs, SourceFormatArg,
 };
 use crate::source::MixedProjectInput;
 
@@ -27,6 +28,7 @@ pub fn run(cli: Cli) -> Result<()> {
         Command::Export(args) => export(args, &execution),
         Command::Diff(args) => diff(args, &execution),
         Command::ExcelTemplate(args) => excel_template(args),
+        Command::ExcelSync(args) => excel_sync(args),
         Command::SchemaLock(args) => schema_lock(args),
         Command::Studio(args) => crate::studio::run(args),
     }
@@ -80,6 +82,74 @@ fn excel_template(args: ExcelTemplateArgs) -> Result<()> {
             args.project.display()
         )
     })
+}
+
+fn excel_sync(args: ExcelSyncArgs) -> Result<()> {
+    let input = SchemaFileInput::new(&args.project);
+    let report = if args.write {
+        sora_core::pipeline::write_excel_sync(&input, &args.data_root, args.scope.as_deref())
+    } else {
+        sora_core::pipeline::preview_excel_sync(&input, &args.data_root, args.scope.as_deref())
+    }
+    .with_context(|| {
+        format!(
+            "failed to sync Excel headers from `{}` into `{}`",
+            args.project.display(),
+            args.data_root.display()
+        )
+    })?;
+    print_excel_sync_report(&report, args.write);
+    if !args.write {
+        println!("Preview only. Re-run with --write to update workbooks.");
+    }
+    Ok(())
+}
+
+fn print_excel_sync_report(report: &ExcelSyncReport, write: bool) {
+    if report.is_empty() {
+        println!("No xlsx tables to sync.");
+        return;
+    }
+
+    for workbook in &report.workbooks {
+        let action = if workbook.created {
+            "create"
+        } else if write {
+            "update"
+        } else {
+            "preview"
+        };
+        println!("{action}: {}", workbook.path.display());
+        if let Some(backup_path) = &workbook.backup_path {
+            println!("  backup: {}", backup_path.display());
+        }
+        for sheet in &workbook.sheets {
+            let sheet_action = if sheet.created {
+                "create sheet"
+            } else {
+                "sync sheet"
+            };
+            println!(
+                "  {sheet_action}: {} ({} data rows)",
+                sheet.sheet, sheet.rows
+            );
+            if !sheet.added_columns.is_empty() {
+                println!("    add columns: {}", sheet.added_columns.join(", "));
+            }
+            if !sheet.legacy_columns.is_empty() {
+                println!(
+                    "    keep legacy columns ignored by schema: {}",
+                    sheet.legacy_columns.join(", ")
+                );
+            }
+        }
+        if !workbook.preserved_sheets.is_empty() {
+            println!(
+                "  preserve non-schema sheets: {}",
+                workbook.preserved_sheets.join(", ")
+            );
+        }
+    }
 }
 
 fn schema_lock(args: SchemaLockArgs) -> Result<()> {

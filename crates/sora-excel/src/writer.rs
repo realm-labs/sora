@@ -10,7 +10,7 @@ use sora_ir::{
 };
 
 use crate::projection::{
-    DATA_START_ROW, DESC_ROW, FIELD_START_COLUMN, NAME_ROW, TYPE_ROW, TemplateColumn,
+    DATA_START_ROW, DESC_ROW, FIELD_ROW, FIELD_START_COLUMN, NAME_ROW, TYPE_ROW, TemplateColumn,
     TemplateColumnGroupRole, table_template_columns, table_template_rows, tuple_shape,
 };
 
@@ -75,6 +75,221 @@ pub(crate) fn write_workbook_with_rows(
     workbook
         .save(path)
         .map_err(|source| excel_error(path, source))
+}
+
+pub(crate) struct SyncedTableSheet<'a> {
+    pub table: &'a TableIr,
+    pub sheet_name: String,
+    pub rows: Vec<Vec<String>>,
+    pub legacy_columns: Vec<LegacyColumn>,
+}
+
+pub(crate) struct LegacyColumn {
+    pub headers: Vec<String>,
+    pub values: Vec<String>,
+}
+
+pub(crate) struct PreservedSheet {
+    pub sheet_name: String,
+    pub rows: Vec<Vec<String>>,
+}
+
+pub(crate) fn write_synced_workbook(
+    ir: &ConfigIr,
+    table_sheets: &[SyncedTableSheet<'_>],
+    preserved_sheets: &[PreservedSheet],
+    path: &Path,
+) -> Result<()> {
+    let mut workbook = Workbook::new();
+    let formats = TemplateFormats::new();
+
+    for sheet in table_sheets {
+        let worksheet = workbook.add_worksheet();
+        worksheet
+            .set_name(&sheet.sheet_name)
+            .map_err(|source| excel_error(path, source))?;
+
+        let columns = table_template_columns(ir, sheet.table);
+        write_synced_headers(ir, sheet, worksheet, &formats, path)?;
+        apply_sheet_layout(ir, sheet.table, worksheet, &formats, path)?;
+        apply_legacy_column_layout(&columns, &sheet.legacy_columns, worksheet, &formats, path)?;
+        apply_field_notes(ir, sheet.table, worksheet, path)?;
+        apply_data_validations(ir, sheet.table, worksheet, path)?;
+        write_synced_data_rows(worksheet, &formats, path, &columns, sheet)?;
+        worksheet
+            .set_freeze_panes(DATA_START_ROW, 1)
+            .map_err(|source| excel_error(path, source))?;
+    }
+
+    for sheet in preserved_sheets {
+        let worksheet = workbook.add_worksheet();
+        worksheet
+            .set_name(&sheet.sheet_name)
+            .map_err(|source| excel_error(path, source))?;
+        for (row_index, row) in sheet.rows.iter().enumerate() {
+            for (column_index, value) in row.iter().enumerate() {
+                if !value.is_empty() {
+                    worksheet
+                        .write_string(row_index as u32, column_index as u16, value)
+                        .map_err(|source| excel_error(path, source))?;
+                }
+            }
+        }
+    }
+
+    workbook
+        .save(path)
+        .map_err(|source| excel_error(path, source))
+}
+
+fn write_synced_headers(
+    ir: &ConfigIr,
+    sheet: &SyncedTableSheet<'_>,
+    worksheet: &mut rust_xlsxwriter::Worksheet,
+    formats: &TemplateFormats,
+    path: &Path,
+) -> Result<()> {
+    let columns = table_template_columns(ir, sheet.table);
+    for (row_index, row) in table_template_rows(ir, sheet.table).iter().enumerate() {
+        for (column_index, value) in row.iter().enumerate() {
+            let column_info = column_index
+                .checked_sub(FIELD_START_COLUMN as usize)
+                .and_then(|index| columns.get(index));
+            write_header_cell(
+                worksheet,
+                row_index,
+                column_index,
+                value,
+                formats.for_cell(row_index, column_index, column_info),
+                path,
+            )?;
+        }
+
+        let legacy_start = FIELD_START_COLUMN as usize + columns.len();
+        for (legacy_index, legacy) in sheet.legacy_columns.iter().enumerate() {
+            let value = legacy
+                .headers
+                .get(row_index)
+                .map(String::as_str)
+                .unwrap_or_default();
+            write_header_cell(
+                worksheet,
+                row_index,
+                legacy_start + legacy_index,
+                value,
+                formats.legacy_cell(row_index),
+                path,
+            )?;
+        }
+    }
+
+    Ok(())
+}
+
+fn write_header_cell(
+    worksheet: &mut rust_xlsxwriter::Worksheet,
+    row: usize,
+    column: usize,
+    value: &str,
+    format: &Format,
+    path: &Path,
+) -> Result<()> {
+    if value.is_empty() {
+        worksheet
+            .write_blank(row as u32, column as u16, format)
+            .map_err(|source| excel_error(path, source))?;
+    } else {
+        worksheet
+            .write_with_format(row as u32, column as u16, value, format)
+            .map_err(|source| excel_error(path, source))?;
+    }
+    Ok(())
+}
+
+fn apply_legacy_column_layout(
+    columns: &[TemplateColumn],
+    legacy_columns: &[LegacyColumn],
+    worksheet: &mut rust_xlsxwriter::Worksheet,
+    formats: &TemplateFormats,
+    path: &Path,
+) -> Result<()> {
+    let start = FIELD_START_COLUMN + columns.len() as u16;
+    for (index, legacy) in legacy_columns.iter().enumerate() {
+        let column = start + index as u16;
+        let name = legacy
+            .headers
+            .get(DESC_ROW as usize)
+            .filter(|value| !value.is_empty())
+            .or_else(|| legacy.headers.get(FIELD_ROW as usize))
+            .map(String::as_str)
+            .unwrap_or("legacy");
+        worksheet
+            .set_column_width(column, field_width(name, None, "legacy"))
+            .map_err(|source| excel_error(path, source))?;
+        worksheet
+            .set_column_format(column, &formats.legacy_data)
+            .map_err(|source| excel_error(path, source))?;
+    }
+    Ok(())
+}
+
+fn write_synced_data_rows(
+    worksheet: &mut rust_xlsxwriter::Worksheet,
+    formats: &TemplateFormats,
+    path: &Path,
+    columns: &[TemplateColumn],
+    sheet: &SyncedTableSheet<'_>,
+) -> Result<()> {
+    let legacy_row_count = sheet
+        .legacy_columns
+        .iter()
+        .map(|column| column.values.len())
+        .max()
+        .unwrap_or_default();
+    let row_count = sheet.rows.len().max(legacy_row_count);
+    for row_offset in 0..row_count {
+        let row = sheet.rows.get(row_offset);
+        for (column, column_info) in columns.iter().enumerate() {
+            let value = row
+                .and_then(|row| row.get(column))
+                .map(String::as_str)
+                .unwrap_or_default();
+            let value = if column_info.derived && value.is_empty() {
+                derived_placeholder(Some(column_info))
+            } else {
+                value.to_owned()
+            };
+            worksheet
+                .write_with_format(
+                    DATA_START_ROW + row_offset as u32,
+                    FIELD_START_COLUMN + column as u16,
+                    &value,
+                    formats.data_cell(column_info.derived),
+                )
+                .map_err(|source| excel_error(path, source))?;
+        }
+
+        let legacy_start = FIELD_START_COLUMN + columns.len() as u16;
+        for (legacy_index, legacy) in sheet.legacy_columns.iter().enumerate() {
+            let value = legacy
+                .values
+                .get(row_offset)
+                .map(String::as_str)
+                .unwrap_or_default();
+            if !value.is_empty() {
+                worksheet
+                    .write_with_format(
+                        DATA_START_ROW + row_offset as u32,
+                        legacy_start + legacy_index as u16,
+                        value,
+                        &formats.legacy_data,
+                    )
+                    .map_err(|source| excel_error(path, source))?;
+            }
+        }
+    }
+
+    Ok(())
 }
 
 fn write_data_rows(
@@ -543,6 +758,8 @@ struct TemplateFormats {
     description: Format,
     grouped_description: Vec<Format>,
     derived_data: Format,
+    legacy_header: Format,
+    legacy_data: Format,
 }
 
 impl TemplateFormats {
@@ -630,6 +847,18 @@ impl TemplateFormats {
                 .set_border(FormatBorder::Thin)
                 .set_italic()
                 .set_align(FormatAlign::VerticalCenter),
+            legacy_header: Format::new()
+                .set_background_color(Color::RGB(0xF3F4F6))
+                .set_font_color(Color::RGB(0x6B7280))
+                .set_border(FormatBorder::Thin)
+                .set_italic()
+                .set_align(FormatAlign::VerticalCenter),
+            legacy_data: Format::new()
+                .set_background_color(Color::RGB(0xFAFAFA))
+                .set_font_color(Color::RGB(0x6B7280))
+                .set_border(FormatBorder::Thin)
+                .set_italic()
+                .set_align(FormatAlign::VerticalCenter),
         }
     }
 
@@ -665,6 +894,14 @@ impl TemplateFormats {
             &self.derived_data
         } else {
             &self.schema_value
+        }
+    }
+
+    fn legacy_cell(&self, row: usize) -> &Format {
+        if row == DESC_ROW as usize {
+            &self.description
+        } else {
+            &self.legacy_header
         }
     }
 }

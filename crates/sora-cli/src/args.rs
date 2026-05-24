@@ -33,6 +33,7 @@ pub enum Command {
     Export(ExportArgs),
     Diff(DiffArgs),
     ExcelTemplate(ExcelTemplateArgs),
+    ExcelSync(ExcelSyncArgs),
     SchemaLock(SchemaLockArgs),
     Studio(StudioArgs),
 }
@@ -201,6 +202,21 @@ pub struct ExcelTemplateArgs {
 
     #[arg(long)]
     pub scope: Option<String>,
+}
+
+#[derive(Debug, Args)]
+pub struct ExcelSyncArgs {
+    #[arg(long)]
+    pub project: PathBuf,
+
+    #[arg(long)]
+    pub data_root: PathBuf,
+
+    #[arg(long)]
+    pub scope: Option<String>,
+
+    #[arg(long)]
+    pub write: bool,
 }
 
 #[derive(Debug, Args)]

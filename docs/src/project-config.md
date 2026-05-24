@@ -28,6 +28,8 @@ Run every configured output:
 sora build --project project.toml
 ```
 
+`data_root` and `excel_templates` serve different purposes. `data_root` is the input directory used by export and build, so it contains edited table rows. `excel_templates` is an output directory for generated workbook templates, so it can be deleted and regenerated after schema changes. Do not point `excel_templates` at your edited data directory unless replacing those workbooks is intentional.
+
 Run one configured codegen target:
 
 ```bash

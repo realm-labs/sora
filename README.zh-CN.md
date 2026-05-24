@@ -86,6 +86,13 @@ sora build --project examples/showcase/project.toml
 sora studio --project examples/showcase/project.toml
 ```
 
+schema 变更后，如果要更新已有 Excel 数据 workbook 的表头：
+
+```bash
+sora excel-sync --project project.toml --data-root data
+sora excel-sync --project project.toml --data-root data --write
+```
+
 对于一次性任务或 CI 流程，每个阶段也可以单独执行：
 
 ```bash
@@ -249,6 +256,8 @@ out = "generated/config.sora"
 format = "json-debug"
 out = "generated/debug-json"
 ```
+
+`data_root` 是 export 和 build 读取的源数据目录。`excel_templates` 只是生成 workbook 模板的输出目录。建议始终把两者分开：schema 变更后先重新生成模板到 `generated/excel`，再把行数据复制或迁移到 `data`。
 
 `sora build --project project.toml --target rust --clean` 只会重建配置好的 Rust codegen target；schema lock、Excel 模板和 export 仍按项目 build 配置执行。
 

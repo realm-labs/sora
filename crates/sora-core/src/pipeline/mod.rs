@@ -8,6 +8,7 @@ use sora_codegen::{
 };
 use sora_diagnostics::{Result, SoraError};
 use sora_excel::generator::ExcelTemplateGenerator;
+use sora_excel::sync::{ExcelSyncReport, ExcelTemplateSync};
 use sora_execution::ExecutionContext;
 use sora_export::{
     exporter::{ExportOptions, ExportOutput, ExportRequest, OutputKind},
@@ -24,6 +25,13 @@ use support::{
 
 pub fn load_schema_ir(input: &impl SchemaInput) -> Result<sora_ir::model::ConfigIr> {
     load_ir(input)
+}
+
+pub fn load_schema_ir_with_scope(
+    input: &impl SchemaInput,
+    scope: Option<&str>,
+) -> Result<sora_ir::model::ConfigIr> {
+    load_ir_with_scope(input, scope)
 }
 
 pub fn load_project_data_with_context(
@@ -280,6 +288,24 @@ pub fn generate_excel_template_with_scope(
 ) -> Result<()> {
     let ir = load_ir_with_scope(input, scope)?;
     ExcelTemplateGenerator.generate(&ir, out_dir)
+}
+
+pub fn preview_excel_sync(
+    input: &impl SchemaInput,
+    data_root: &Path,
+    scope: Option<&str>,
+) -> Result<ExcelSyncReport> {
+    let ir = load_ir_with_scope(input, scope)?;
+    ExcelTemplateSync.preview(&ir, data_root)
+}
+
+pub fn write_excel_sync(
+    input: &impl SchemaInput,
+    data_root: &Path,
+    scope: Option<&str>,
+) -> Result<ExcelSyncReport> {
+    let ir = load_ir_with_scope(input, scope)?;
+    ExcelTemplateSync.write(&ir, data_root)
 }
 
 pub fn supported_export_formats() -> Vec<&'static str> {
