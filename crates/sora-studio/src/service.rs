@@ -21,8 +21,8 @@ use crate::{
         StudioSchemaResponse,
     },
     render::{
-        StudioDocumentFormat, document_format, push_quoted, render_lua_document,
-        render_schema_module, render_schema_module_for_path,
+        StudioDocumentFormat, document_format, render_lua_document, render_schema_module,
+        render_schema_module_for_path,
     },
 };
 
@@ -574,10 +574,7 @@ fn project_toml_text_with_schema_files(
                 .collect(),
         ),
     );
-    let content = replace_root_package_line(&project_text, package)
-        .unwrap_or_else(|| prepend_root_package_line(&project_text, package));
-    Ok(replace_root_includes_line(&content, sources)
-        .unwrap_or_else(|| insert_root_includes_line(&content, sources)))
+    toml::to_string_pretty(&project_doc).context("failed to render project TOML")
 }
 
 fn project_yaml_text_with_schema_files(
@@ -654,127 +651,6 @@ fn set_yaml_project_fields(
         ),
     );
     Ok(())
-}
-
-fn replace_root_package_line(project_text: &str, package: &str) -> Option<String> {
-    let mut changed = false;
-    let mut out = String::with_capacity(project_text.len() + package.len());
-    let mut quoted_package = String::new();
-    push_quoted(&mut quoted_package, package);
-    for line in project_text.split_inclusive('\n') {
-        let newline_len = if line.ends_with("\r\n") {
-            2
-        } else if line.ends_with('\n') {
-            1
-        } else {
-            0
-        };
-        let (body, newline) = line.split_at(line.len() - newline_len);
-        let indent_len = body.len() - body.trim_start().len();
-        let trimmed = &body[indent_len..];
-        if !changed && root_package_assignment(trimmed) {
-            out.push_str(&body[..indent_len]);
-            out.push_str("package = ");
-            out.push_str(&quoted_package);
-            out.push_str(newline);
-            changed = true;
-        } else {
-            out.push_str(line);
-        }
-    }
-    changed.then_some(out)
-}
-
-fn root_package_assignment(line: &str) -> bool {
-    let Some(rest) = line.strip_prefix("package") else {
-        return false;
-    };
-    rest.trim_start().starts_with('=')
-}
-
-fn replace_root_includes_line(project_text: &str, sources: &[String]) -> Option<String> {
-    replace_root_line(
-        project_text,
-        root_includes_assignment,
-        &includes_line(sources),
-    )
-}
-
-fn replace_root_line(
-    project_text: &str,
-    matcher: impl Fn(&str) -> bool,
-    replacement: &str,
-) -> Option<String> {
-    let mut changed = false;
-    let mut out = String::with_capacity(project_text.len() + replacement.len());
-    for line in project_text.split_inclusive('\n') {
-        let newline_len = if line.ends_with("\r\n") {
-            2
-        } else if line.ends_with('\n') {
-            1
-        } else {
-            0
-        };
-        let (body, newline) = line.split_at(line.len() - newline_len);
-        let indent_len = body.len() - body.trim_start().len();
-        let trimmed = &body[indent_len..];
-        if !changed && matcher(trimmed) {
-            out.push_str(&body[..indent_len]);
-            out.push_str(replacement);
-            out.push_str(newline);
-            changed = true;
-        } else {
-            out.push_str(line);
-        }
-    }
-    changed.then_some(out)
-}
-
-fn prepend_root_package_line(project_text: &str, package: &str) -> String {
-    let mut package_line = String::new();
-    package_line.push_str("package = ");
-    push_quoted(&mut package_line, package);
-    package_line.push('\n');
-    package_line.push_str(project_text);
-    package_line
-}
-
-fn insert_root_includes_line(project_text: &str, sources: &[String]) -> String {
-    let mut out =
-        String::with_capacity(project_text.len() + sources.iter().map(String::len).sum::<usize>());
-    let mut inserted = false;
-    for line in project_text.split_inclusive('\n') {
-        out.push_str(line);
-        if !inserted && root_package_assignment(line.trim()) {
-            out.push_str(&includes_line(sources));
-            out.push('\n');
-            inserted = true;
-        }
-    }
-    if !inserted {
-        out.push_str(&includes_line(sources));
-        out.push('\n');
-    }
-    out
-}
-
-fn root_includes_assignment(line: &str) -> bool {
-    let Some(rest) = line.strip_prefix("includes") else {
-        return false;
-    };
-    rest.trim_start().starts_with('=')
-}
-
-fn includes_line(sources: &[String]) -> String {
-    let mut out = String::from("includes = [");
-    for (index, source) in sources.iter().enumerate() {
-        if index > 0 {
-            out.push_str(", ");
-        }
-        push_quoted(&mut out, source);
-    }
-    out.push(']');
-    out
 }
 
 fn schema_include_paths(project: &Path) -> Result<Vec<SchemaInclude>> {
