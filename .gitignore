@@ -5,4 +5,6 @@ __pycache__/
 .dart_tool/
 node_modules/
 dist/
+!crates/sora-studio/dist/
+!crates/sora-studio/dist/**
 *.tsbuildinfo

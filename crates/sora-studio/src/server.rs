@@ -22,7 +22,7 @@ use crate::{
     service::{load_studio_schema, preview_studio_schema, save_studio_schema},
 };
 
-static STUDIO_DIST: Dir<'_> = include_dir!("$CARGO_MANIFEST_DIR/../../apps/studio/dist");
+static STUDIO_DIST: Dir<'_> = include_dir!("$CARGO_MANIFEST_DIR/dist");
 
 #[derive(Debug, Clone)]
 pub struct StudioOptions {
@@ -162,7 +162,7 @@ mod tests {
     fn embeds_studio_frontend_entrypoint() {
         let index = STUDIO_DIST
             .get_file("index.html")
-            .expect("apps/studio/dist/index.html must be embedded");
+            .expect("crates/sora-studio/dist/index.html must be embedded");
 
         assert!(
             std::str::from_utf8(index.contents())
