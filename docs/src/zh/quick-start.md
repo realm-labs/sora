@@ -2,7 +2,15 @@
 
 这一页会创建一个最小的道具表，生成 Excel 模板，导出运行时数据包，并生成可以读取它的 Rust 代码。
 
-开发阶段可以从源码安装 CLI：
+可以从 [GitHub Releases](https://github.com/realm-labs/sora/releases) 下载对应平台的压缩包，解压后把 `sora` 放到 `PATH` 中。
+
+如果本机已有 Rust 工具链，也可以从 crates.io 安装已发布的 CLI：
+
+```bash
+cargo install sora-cli
+```
+
+本地开发时可以从源码安装：
 
 ```bash
 cargo install --path crates/sora-cli
@@ -119,6 +127,14 @@ sora check --project project.toml
 sora build --project project.toml
 ```
 
+也可以用 CLI 内置的 Sora Studio 打开这个项目：
+
+```bash
+sora studio --project project.toml
+```
+
+命令会打印一个本地地址。用浏览器打开后，可以可视化 schema 关系、编辑 schema module、预览将要写入的变更，并保存回项目文件。
+
 也可以分开执行：
 
 ```bash
@@ -134,4 +150,4 @@ sora export \
 
 ## 4. 下一步
 
-阅读[第一份配置](tutorial/first-config.md)了解完整闭环，或者查看 `examples/showcase/project.toml` 作为多语言项目参考。
+如果想用可视化方式编辑 schema，继续读 [Sora Studio](studio.md)。也可以阅读[第一份配置](tutorial/first-config.md)了解完整闭环，或者查看 `examples/showcase/project.toml` 作为多语言项目参考。

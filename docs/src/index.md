@@ -29,6 +29,7 @@ schema modules -> Excel/CSV/TOML data -> validation
 Sora currently focuses on these stages:
 
 - describe tables, records, enums, unions, references, indexes, and validation rules in schema files;
+- inspect and edit schema modules in the embedded Sora Studio UI;
 - generate Excel templates from the schema so spreadsheet headers stay consistent;
 - load table data from TOML, CSV, or Excel `.xlsx`;
 - validate data against the normalized schema and cross-table references;
@@ -61,6 +62,6 @@ The project is still early, so the public API can change. The design goal is to 
 
 ## Suggested Reading Order
 
-Start with [Quick Start](quick-start.md), then read [First Config](tutorial/first-config.md) and [Excel Workflow](tutorial/excel-workflow.md). After that, the most useful reference pages are [Types](schema/types.md), [Tables](schema/tables.md), [Cell Parsers](schema/parsers.md), and [References and Derived Fields](schema/references.md).
+Start with [Quick Start](quick-start.md), then read [Sora Studio](studio.md), [First Config](tutorial/first-config.md), and [Excel Workflow](tutorial/excel-workflow.md). After that, the most useful reference pages are [Types](schema/types.md), [Tables](schema/tables.md), [Cell Parsers](schema/parsers.md), and [References and Derived Fields](schema/references.md).
 
 Design notes and extension pages are meant for readers who already understand the basic build flow.

@@ -2,6 +2,7 @@
 
 - [Overview](index.md)
 - [Quick Start](quick-start.md)
+- [Sora Studio](studio.md)
 - [Core Concepts](concepts.md)
 - [Tutorials](tutorial/overview.md)
   - [First Config](tutorial/first-config.md)
@@ -32,6 +33,7 @@
 
 - [概览](zh/index.md)
 - [快速开始](zh/quick-start.md)
+- [Sora Studio](zh/studio.md)
 - [核心概念](zh/concepts.md)
 - [教程](zh/tutorial/overview.md)
   - [第一份配置](zh/tutorial/first-config.md)

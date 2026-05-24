@@ -2,7 +2,15 @@
 
 This guide builds a minimal item table, generates an Excel template, exports a runtime bundle, and generates Rust code that can load it.
 
-Install the CLI from source during development:
+Install the CLI from the [GitHub Releases](https://github.com/realm-labs/sora/releases) page by downloading the archive for your platform and placing the `sora` binary on your `PATH`.
+
+If you already have a Rust toolchain, you can also install the published package from crates.io:
+
+```bash
+cargo install sora-cli
+```
+
+For local development from a checkout:
 
 ```bash
 cargo install --path crates/sora-cli
@@ -119,6 +127,14 @@ Run every output declared in `[build]`. This also loads and validates source dat
 sora build --project project.toml
 ```
 
+You can also open the project in Sora Studio, the schema editor embedded in the CLI:
+
+```bash
+sora studio --project project.toml
+```
+
+The command prints a local URL. Open it in a browser to visualize schema relationships, edit schema modules, preview the generated changes, and save them back to the project.
+
 Or run the steps separately:
 
 ```bash
@@ -134,4 +150,4 @@ sora export \
 
 ## 4. Next Steps
 
-Read [First Config](tutorial/first-config.md) for the same example with the generated runtime usage, or inspect `examples/showcase/project.toml` for a larger multi-language setup.
+Read [Sora Studio](studio.md) if you want to edit schemas visually. Read [First Config](tutorial/first-config.md) for the same example with the generated runtime usage, or inspect `examples/showcase/project.toml` for a larger multi-language setup.

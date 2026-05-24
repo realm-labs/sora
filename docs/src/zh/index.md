@@ -29,6 +29,7 @@ schema modules -> Excel/CSV/TOML data -> validation
 Sora 当前聚焦这些阶段：
 
 - 用 schema 描述表、记录、枚举、联合、引用、索引和校验规则；
+- 在内置的 Sora Studio UI 中查看和编辑 schema module；
 - 根据 schema 生成 Excel 模板，避免表头和字段定义漂移；
 - 从 TOML、CSV 或 Excel `.xlsx` 加载表格数据；
 - 按归一化 schema 校验数据和跨表引用；
@@ -61,6 +62,6 @@ Sora 适合游戏配置和类似的数据密集型项目：
 
 ## 推荐阅读顺序
 
-先读[快速开始](quick-start.md)，再读[第一份配置](tutorial/first-config.md)和[Excel 工作流](tutorial/excel-workflow.md)。之后最常用的参考页是[类型](schema/types.md)、[表](schema/tables.md)、[单元格 Parser](schema/parsers.md)、[引用和派生字段](schema/references.md)。
+先读[快速开始](quick-start.md)，再读 [Sora Studio](studio.md)、[第一份配置](tutorial/first-config.md)和[Excel 工作流](tutorial/excel-workflow.md)。之后最常用的参考页是[类型](schema/types.md)、[表](schema/tables.md)、[单元格 Parser](schema/parsers.md)、[引用和派生字段](schema/references.md)。
 
 设计说明和扩展页面适合已经理解基本构建流程之后再读。

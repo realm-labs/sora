@@ -27,6 +27,7 @@ Current support includes:
 
 - schema files in TOML, YAML, JSON, or Lua;
 - table data from Excel `.xlsx`, CSV, or TOML;
+- Sora Studio, an embedded browser UI for visual schema editing;
 - generated Excel `.xlsx` templates;
 - normalized IR, recursive validation, defaults, references, derived child-table fields, polymorphic unions, and secondary unique indexes;
 - schema locks and config diffs;
@@ -46,7 +47,7 @@ Current support includes:
 
 ## Installation
 
-Download the archive for your platform from the GitHub release page, unpack it, and place the `sora` binary on your `PATH`.
+Download the archive for your platform from the [GitHub Releases](https://github.com/realm-labs/sora/releases) page, unpack it, and place the `sora` binary on your `PATH`.
 
 Release asset names follow this pattern:
 
@@ -55,6 +56,12 @@ Release asset names follow this pattern:
 - `sora-vX.Y.Z-macos-arm64.tar.gz`
 
 Each release also publishes a `.sha256` checksum file next to every archive.
+
+If you already have a Rust toolchain, you can also install the published CLI from crates.io:
+
+```bash
+cargo install sora-cli
+```
 
 For local development from a checkout:
 
@@ -69,6 +76,12 @@ The preferred workflow is to declare build outputs in `project.toml` and run one
 
 ```bash
 sora build --project examples/showcase/project.toml
+```
+
+To inspect and edit the same schema in Sora Studio:
+
+```bash
+sora studio --project examples/showcase/project.toml
 ```
 
 For one-off or CI workflows, each stage is still available as a separate command:
@@ -151,6 +164,7 @@ sora export \
 - `sora-codegen`: Rust, Kotlin, C#, Java, Scala, Go, C, C++, TypeScript, JavaScript, Erlang, Lua, Python, and Proto code generation.
 - `sora-export`: exporter trait, registry, and built-in exporters.
 - `sora-excel`: Excel `.xlsx` template projection.
+- `sora-studio`: embedded schema visualization and editing UI served by the CLI.
 - `sora-diagnostics`: shared typed errors.
 - `sora-templates`: built-in templates embedded into the CLI binary.
 
