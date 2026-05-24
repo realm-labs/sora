@@ -1,5 +1,7 @@
 # Sora
 
+[English](README.md) · [中文](README.zh-CN.md)
+
 Sora is a configuration table compiler for games and data-heavy tools. It turns a small schema plus editable table data into strongly typed code and runtime-ready data bundles.
 
 The goal is practical, restrained configuration tooling. A project should be able to keep data in Excel or another familiar source, generate the code and data files needed by runtime systems, and still leave the workbook understandable to someone who has not read a large manual first.
