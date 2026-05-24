@@ -245,3 +245,105 @@ fn diff(args: DiffArgs, execution: &ExecutionContext) -> Result<()> {
 
     Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+    use std::{
+        fs,
+        path::{Path, PathBuf},
+        sync::atomic::{AtomicU64, Ordering},
+    };
+
+    use super::*;
+
+    static TEMP_COUNTER: AtomicU64 = AtomicU64::new(0);
+
+    #[test]
+    fn excel_sync_command_preview_is_readonly_and_write_updates_workbook() {
+        let base = temp_dir();
+        let project = write_xlsx_project(&base, false);
+        let data_root = base.join("data");
+
+        excel_sync(ExcelSyncArgs {
+            project: project.clone(),
+            data_root: data_root.clone(),
+            scope: None,
+            write: false,
+        })
+        .unwrap();
+        assert!(!data_root.join("Item.xlsx").exists());
+
+        excel_sync(ExcelSyncArgs {
+            project: project.clone(),
+            data_root: data_root.clone(),
+            scope: None,
+            write: true,
+        })
+        .unwrap();
+        assert!(data_root.join("Item.xlsx").exists());
+
+        write_xlsx_project(&base, true);
+        excel_sync(ExcelSyncArgs {
+            project: project.clone(),
+            data_root: data_root.clone(),
+            scope: None,
+            write: true,
+        })
+        .unwrap();
+        assert!(data_root.join(".sora-backup").exists());
+
+        let _ = fs::remove_dir_all(base);
+    }
+
+    fn write_xlsx_project(base: &Path, include_name: bool) -> PathBuf {
+        let schema_dir = base.join("schema");
+        fs::create_dir_all(&schema_dir).unwrap();
+        let project = base.join("project.toml");
+        fs::write(
+            &project,
+            r#"
+package = "game_config"
+includes = ["schema/items.toml"]
+"#,
+        )
+        .unwrap();
+        let name_field = if include_name {
+            r#"
+[[tables.fields]]
+name = "name"
+type = "string"
+"#
+        } else {
+            ""
+        };
+        fs::write(
+            schema_dir.join("items.toml"),
+            format!(
+                r#"
+[[tables]]
+name = "Item"
+mode = "map"
+key = "id"
+
+[tables.source]
+file = "Item.xlsx"
+
+[[tables.fields]]
+name = "id"
+type = "i32"
+{name_field}
+"#
+            ),
+        )
+        .unwrap();
+        project
+    }
+
+    fn temp_dir() -> PathBuf {
+        let id = TEMP_COUNTER.fetch_add(1, Ordering::Relaxed);
+        std::env::temp_dir().join(format!(
+            "sora-cli-commands-test-{}-{id}",
+            std::process::id()
+        ))
+    }
+}

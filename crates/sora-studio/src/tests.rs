@@ -686,6 +686,29 @@ values = ["Common"]
 }
 
 #[test]
+fn showcase_project_roundtrips_through_studio_save() {
+    let base = temp_dir();
+    let project = copy_showcase_project(&base);
+    let mut schema = load_studio_schema(&project).schema.unwrap();
+    let node_count = schema.nodes.len();
+
+    schema.package = "com.sora.showcase.edited".to_owned();
+    let response = save_studio_schema(&project, &schema);
+    let reloaded = load_studio_schema(&project);
+
+    assert!(response.ok, "{:?}", response.diagnostics);
+    assert!(reloaded.ok, "{:?}", reloaded.diagnostics);
+    assert_eq!(reloaded.schema.unwrap().nodes.len(), node_count);
+    assert!(
+        fs::read_to_string(&project)
+            .unwrap()
+            .contains("package = \"com.sora.showcase.edited\"")
+    );
+
+    let _ = fs::remove_dir_all(base);
+}
+
+#[test]
 fn transactional_text_write_keeps_existing_files_on_prepare_failure() {
     let base = temp_dir();
     fs::create_dir_all(&base).unwrap();
@@ -736,6 +759,26 @@ includes = ["schema/items.toml"]
     .unwrap();
     fs::write(schema_dir.join("items.toml"), schema_text).unwrap();
     project
+}
+
+fn copy_showcase_project(base: &Path) -> PathBuf {
+    let showcase = Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("../..")
+        .join("examples/showcase");
+    let schema_dir = base.join("schema");
+    fs::create_dir_all(&schema_dir).unwrap();
+    fs::copy(showcase.join("project.toml"), base.join("project.toml")).unwrap();
+    for file in [
+        "core.toml",
+        "items.toml",
+        "combat.toml",
+        "quests.toml",
+        "system.toml",
+        "events.toml",
+    ] {
+        fs::copy(showcase.join("schema").join(file), schema_dir.join(file)).unwrap();
+    }
+    base.join("project.toml")
 }
 
 fn temp_dir() -> PathBuf {

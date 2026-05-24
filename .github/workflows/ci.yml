@@ -43,6 +43,30 @@ jobs:
       - name: Smoke test showcase build
         run: cargo run -p sora-cli -- build --project examples/showcase/project.toml --target rust
 
+  studio-frontend:
+    name: Studio frontend
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: apps/studio/package-lock.json
+
+      - name: Install Studio dependencies
+        working-directory: apps/studio
+        run: npm ci
+
+      - name: Build Studio frontend
+        working-directory: apps/studio
+        run: npm run build
+
+      - name: Verify embedded Studio assets are current
+        run: git diff --exit-code -- crates/sora-studio/dist
+
   showcase:
     name: Showcase runtimes
     runs-on: ubuntu-latest
