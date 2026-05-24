@@ -2,6 +2,7 @@
 
 - [Overview](index.md)
 - [Quick Start](quick-start.md)
+- [CLI Reference](cli.md)
 - [Sora Studio](studio.md)
 - [Core Concepts](concepts.md)
 - [Tutorials](tutorial/overview.md)
@@ -34,6 +35,7 @@
 
 - [概览](zh/index.md)
 - [快速开始](zh/quick-start.md)
+- [CLI 参考](zh/cli.md)
 - [Sora Studio](zh/studio.md)
 - [核心概念](zh/concepts.md)
 - [教程](zh/tutorial/overview.md)
