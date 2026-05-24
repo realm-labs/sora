@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState, type PointerEvent as ReactPointerEvent } from "react";
 import { type NodeChange, type NodeMouseHandler } from "@xyflow/react";
-import { AlertTriangle, CircleDot } from "lucide-react";
+import { AlertTriangle, CircleDot, X } from "lucide-react";
 
 import { GraphCanvas } from "./components/GraphCanvas";
 import { Inspector } from "./components/Inspector";
@@ -9,13 +9,25 @@ import { Topbar } from "./components/Topbar";
 import { buildGraph, filterGraphNodes, filterVisibleNodes } from "./graph";
 import { translations } from "./i18n";
 import {
+  addEnumValue,
   addField,
   addNode,
+  addUnionVariant,
+  addUnionVariantField,
   deleteField,
   deleteNode,
+  deleteUnionVariant,
+  moveField,
+  moveUnionVariant,
+  moveUnionVariantField,
   renameNode,
+  updateEnumValue,
+  updateNodeSettings,
   updateField,
+  updatePackage,
+  updateUnionVariant,
   validateSchema,
+  type EditableNodeSettingsDraft,
   type EditableFieldDraft,
   type StudioValidationIssue
 } from "./schemaEditing";
@@ -24,6 +36,7 @@ import type {
   Language,
   NodeKind,
   StudioDiagnostic,
+  StudioPreviewResponse,
   StudioResponse,
   StudioSaveResponse,
   StudioSchema,
@@ -49,6 +62,8 @@ export function App() {
   const [dirty, setDirty] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [previewing, setPreviewing] = useState(false);
+  const [preview, setPreview] = useState<StudioPreviewResponse | null>(null);
   const [query, setQuery] = useState("");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [selectionHistory, setSelectionHistory] = useState<{ items: string[]; index: number }>({
@@ -56,7 +71,7 @@ export function App() {
     index: -1
   });
   const [graphMode, setGraphMode] = useState<GraphMode>("fields");
-  const [theme, setTheme] = useState<Theme>("dark");
+  const [theme, setTheme] = useState<Theme>("light");
   const [language, setLanguage] = useState<Language>("en");
   const [panelWidths, setPanelWidths] = useState<PanelWidths>(loadPanelWidths);
   const [manualPositions, setManualPositions] = useState<Record<string, { x: number; y: number }>>(
@@ -278,6 +293,35 @@ export function App() {
     }
   };
 
+  const previewLocalChanges = async () => {
+    if (!schema || localValidationIssues.length > 0) return;
+    setPreviewing(true);
+    try {
+      const next: StudioPreviewResponse = await fetch("/api/schema/preview", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(schema)
+      }).then((res) => res.json());
+      setPreview(next);
+    } catch (error) {
+      setPreview({
+        ok: false,
+        project: response?.project ?? "",
+        target: null,
+        content: null,
+        diff: null,
+        diagnostics: [
+          {
+            level: "error",
+            message: error instanceof Error ? error.message : String(error)
+          }
+        ]
+      });
+    } finally {
+      setPreviewing(false);
+    }
+  };
+
   const createNode = (kind: NodeKind) => {
     if (!schema) return;
     const result = addNode(schema, kind);
@@ -319,9 +363,57 @@ export function App() {
     setSelectionHistory(fallback ? { items: [fallback], index: 0 } : { items: [], index: -1 });
   };
 
+  const editNodeSettings = (id: string, draft: EditableNodeSettingsDraft) => {
+    if (!schema) return;
+    setEditableSchema(updateNodeSettings(schema, id, draft));
+    setDirty(true);
+  };
+
+  const editPackage = (packageName: string) => {
+    if (!schema) return;
+    setEditableSchema(updatePackage(schema, packageName));
+    setDirty(true);
+  };
+
   const createField = (ownerId: string, draft: EditableFieldDraft) => {
     if (!schema) return;
     setEditableSchema(addField(schema, ownerId, draft));
+    setDirty(true);
+  };
+
+  const createEnumValue = (ownerId: string, name: string) => {
+    if (!schema) return;
+    setEditableSchema(addEnumValue(schema, ownerId, name));
+    setDirty(true);
+  };
+
+  const editEnumValue = (ownerId: string, fieldIndex: number, name: string) => {
+    if (!schema) return;
+    setEditableSchema(updateEnumValue(schema, ownerId, fieldIndex, name));
+    setDirty(true);
+  };
+
+  const createUnionVariant = (ownerId: string, name: string) => {
+    if (!schema) return;
+    setEditableSchema(addUnionVariant(schema, ownerId, name));
+    setDirty(true);
+  };
+
+  const editUnionVariant = (ownerId: string, fieldIndex: number, name: string) => {
+    if (!schema) return;
+    setEditableSchema(updateUnionVariant(schema, ownerId, fieldIndex, name));
+    setDirty(true);
+  };
+
+  const removeUnionVariant = (ownerId: string, fieldIndex: number) => {
+    if (!schema) return;
+    setEditableSchema(deleteUnionVariant(schema, ownerId, fieldIndex));
+    setDirty(true);
+  };
+
+  const createUnionVariantField = (ownerId: string, variantName: string, draft: EditableFieldDraft) => {
+    if (!schema) return;
+    setEditableSchema(addUnionVariantField(schema, ownerId, variantName, draft));
     setDirty(true);
   };
 
@@ -334,6 +426,29 @@ export function App() {
   const removeField = (ownerId: string, fieldIndex: number) => {
     if (!schema) return;
     setEditableSchema(deleteField(schema, ownerId, fieldIndex));
+    setDirty(true);
+  };
+
+  const reorderField = (ownerId: string, fieldIndex: number, direction: -1 | 1) => {
+    if (!schema) return;
+    setEditableSchema(moveField(schema, ownerId, fieldIndex, direction));
+    setDirty(true);
+  };
+
+  const reorderUnionVariant = (ownerId: string, fieldIndex: number, direction: -1 | 1) => {
+    if (!schema) return;
+    setEditableSchema(moveUnionVariant(schema, ownerId, fieldIndex, direction));
+    setDirty(true);
+  };
+
+  const reorderUnionVariantField = (
+    ownerId: string,
+    variantName: string,
+    fieldIndex: number,
+    direction: -1 | 1
+  ) => {
+    if (!schema) return;
+    setEditableSchema(moveUnionVariantField(schema, ownerId, variantName, fieldIndex, direction));
     setDirty(true);
   };
 
@@ -387,10 +502,13 @@ export function App() {
           goForward={goForward}
           language={language}
           loading={loading}
+          previewLocalChanges={() => void previewLocalChanges()}
+          previewing={previewing}
           project={response?.project ?? ""}
           refresh={() => void load()}
           schema={schema}
           setLanguage={setLanguage}
+          updatePackage={editPackage}
           saveDisabled={localValidationIssues.length > 0}
           saveLocalChanges={() => void saveLocalChanges()}
           saving={saving}
@@ -443,11 +561,21 @@ export function App() {
             edges={schema?.edges ?? []}
             language={language}
             node={selected}
+            onAddEnumValue={createEnumValue}
             onAddField={createField}
+            onAddUnionVariant={createUnionVariant}
+            onAddUnionVariantField={createUnionVariantField}
             onDeleteField={removeField}
             onDeleteNode={deleteSelectedNode}
+            onDeleteUnionVariant={removeUnionVariant}
+            onMoveField={reorderField}
+            onMoveUnionVariant={reorderUnionVariant}
+            onMoveUnionVariantField={reorderUnionVariantField}
             onRenameNode={renameSelectedNode}
+            onUpdateEnumValue={editEnumValue}
+            onUpdateNodeSettings={editNodeSettings}
             onUpdateField={editField}
+            onUpdateUnionVariant={editUnionVariant}
             schema={schema}
             validationIssues={validationIssues.filter((issue) => issue.targetId === selected.id)}
           />
@@ -455,8 +583,62 @@ export function App() {
           <div className="empty-state">{t.selectSchemaItem}</div>
         )}
       </aside>
+
+      {preview && (
+        <div className="modal-backdrop" role="presentation">
+          <section aria-modal="true" className="preview-modal" role="dialog">
+            <header>
+              <div>
+                <p>{t.targetFile}</p>
+                <h3>{preview.target ?? t.schemaPreview}</h3>
+              </div>
+              <button className="icon-button icon-only" onClick={() => setPreview(null)} title={t.close}>
+                <X size={16} />
+              </button>
+            </header>
+            {preview.diagnostics.length > 0 && (
+              <div className={preview.ok ? "diagnostics ok" : "diagnostics error"}>
+                {preview.diagnostics[0].message}
+              </div>
+            )}
+            <div className="preview-grid">
+              <section>
+                <h4>{t.previewDiff}</h4>
+                <DiffView value={preview.diff ?? ""} />
+              </section>
+              <section>
+                <h4>{t.renderedToml}</h4>
+                <pre>{preview.content ?? ""}</pre>
+              </section>
+            </div>
+          </section>
+        </div>
+      )}
     </main>
   );
+}
+
+function DiffView({ value }: { value: string }) {
+  const lines = value.split("\n");
+  return (
+    <pre className="diff-view">
+      {lines.map((line, index) => (
+        <span className={`diff-line ${diffLineClass(line)}`} key={`${index}:${line}`}>
+          {line || " "}
+        </span>
+      ))}
+    </pre>
+  );
+}
+
+function diffLineClass(line: string) {
+  if (line === "No changes.") return "diff-empty";
+  if (line.startsWith("@@")) return "diff-hunk";
+  if (line.startsWith("project:") || line.startsWith("include:")) return "diff-file";
+  if (line.startsWith("+++") || line.startsWith("---")) return "diff-marker";
+  if (line.startsWith("+")) return "diff-add";
+  if (line.startsWith("-")) return "diff-delete";
+  return "diff-context";
 }
 
 function loadPanelWidths(): PanelWidths {

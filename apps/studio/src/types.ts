@@ -20,6 +20,7 @@ export type StudioNode = {
   id: string;
   name: string;
   kind: NodeKind;
+  source: string;
   scope: string;
   subtitle: string;
   fields: StudioField[];
@@ -37,6 +38,7 @@ export type StudioEdge = {
 
 export type StudioSchema = {
   package: string;
+  sources: string[];
   summary: {
     enums: number;
     structs: number;
@@ -60,6 +62,15 @@ export type StudioSaveResponse = {
   project: string;
   diagnostics: StudioDiagnostic[];
   schema?: StudioSchema | null;
+};
+
+export type StudioPreviewResponse = {
+  ok: boolean;
+  project: string;
+  target?: string | null;
+  content?: string | null;
+  diff?: string | null;
+  diagnostics: StudioDiagnostic[];
 };
 
 export type StudioDiagnostic = {

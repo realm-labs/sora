@@ -1,4 +1,5 @@
-import { ChevronLeft, ChevronRight, Moon, RefreshCw, RotateCcw, Save, Sun } from "lucide-react";
+import { useEffect, useState } from "react";
+import { ChevronLeft, ChevronRight, Eye, Moon, RefreshCw, RotateCcw, Save, Sun } from "lucide-react";
 
 import type { Translation } from "../i18n";
 import type { Language, StudioSchema, Theme } from "../types";
@@ -13,6 +14,8 @@ export function Topbar({
   language,
   loading,
   project,
+  previewLocalChanges,
+  previewing,
   refresh,
   schema,
   saveDisabled,
@@ -21,7 +24,8 @@ export function Topbar({
   setLanguage,
   t,
   theme,
-  toggleTheme
+  toggleTheme,
+  updatePackage
 }: {
   canGoBack: boolean;
   canGoForward: boolean;
@@ -32,6 +36,8 @@ export function Topbar({
   language: Language;
   loading: boolean;
   project: string;
+  previewLocalChanges: () => void;
+  previewing: boolean;
   refresh: () => void;
   schema: StudioSchema | null;
   saveDisabled: boolean;
@@ -41,17 +47,54 @@ export function Topbar({
   t: Translation;
   theme: Theme;
   toggleTheme: () => void;
+  updatePackage: (packageName: string) => void;
 }) {
+  const [packageDraft, setPackageDraft] = useState(schema?.package ?? "");
+
+  useEffect(() => {
+    setPackageDraft(schema?.package ?? "");
+  }, [schema?.package]);
+
+  const commitPackage = () => {
+    const clean = packageDraft.trim();
+    if (clean && clean !== schema?.package) updatePackage(clean);
+    else setPackageDraft(schema?.package ?? "");
+  };
+
   return (
     <header className="topbar">
       <div>
         <p>{project || t.noProjectLoaded}</p>
-        <h2>{schema ? schema.package : t.schemaUnavailable}</h2>
+        {schema ? (
+          <label className="package-editor">
+            <span>{t.package}</span>
+            <input
+              aria-label={t.package}
+              value={packageDraft}
+              onBlur={commitPackage}
+              onChange={(event) => setPackageDraft(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") commitPackage();
+              }}
+            />
+          </label>
+        ) : (
+          <h2>{t.schemaUnavailable}</h2>
+        )}
       </div>
       <div className="topbar-actions">
         {dirty && (
           <div className="dirty-state">
             <span>{t.unsaved}</span>
+            <button
+              className="icon-button"
+              disabled={saving || previewing || saveDisabled}
+              onClick={previewLocalChanges}
+              title={saveDisabled ? t.saveDisabled : t.preview}
+            >
+              <Eye size={14} />
+              {previewing ? t.previewing : t.preview}
+            </button>
             <button
               className="icon-button"
               disabled={saving || saveDisabled}

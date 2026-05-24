@@ -3,6 +3,7 @@ import type { StudioField, StudioNode } from "./types";
 export type UnionVariantView = {
   name: string;
   fieldIndex: number;
+  marker: StudioField;
   fields: Array<{
     field: StudioField;
     fieldIndex: number;
@@ -17,7 +18,7 @@ export function unionVariants(node: StudioNode): UnionVariantView[] {
 
   node.fields.forEach((field, fieldIndex) => {
     if (field.ty === "variant") {
-      current = { name: field.name, fieldIndex, fields: [] };
+      current = { name: field.name, fieldIndex, marker: field, fields: [] };
       variants.push(current);
       return;
     }
@@ -26,7 +27,22 @@ export function unionVariants(node: StudioNode): UnionVariantView[] {
     if (variantName) {
       let variant = variants.find((item) => item.name === variantName);
       if (!variant) {
-        variant = { name: variantName, fieldIndex, fields: [] };
+        variant = {
+          name: variantName,
+          fieldIndex,
+          marker: {
+            name: variantName,
+            ty: "variant",
+            scope: field.scope,
+            parser: null,
+            comment: null,
+            default: null,
+            range: null,
+            length: null,
+            source: null
+          },
+          fields: []
+        };
         variants.push(variant);
       }
       variant.fields.push({ field, fieldIndex, displayName: fieldName });
