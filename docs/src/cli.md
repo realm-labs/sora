@@ -87,7 +87,7 @@ sora b -p project.toml -t rust -c
 | Option | Description |
 | --- | --- |
 | `-p, --project <PATH>` | Project manifest path. |
-| `--default-source-format <csv|toml|xlsx>` | Source format used when a table source omits `format`. |
+| `--default-source-format <csv|json|toml|xlsx|yaml>` | Source format used when a table source omits `format`. |
 | `-d, --data-root <DIR>` | Data input root. Overrides `[build].data_root`. |
 | `-s, --scope <NAME>` | Build only schema items included in a scope. |
 | `-t, --target <NAME>` | Codegen target to run. Can be repeated. |
@@ -122,7 +122,7 @@ sora e -p project.toml -d data -f binary -o generated/config.sora
 | Option | Description |
 | --- | --- |
 | `-f, --format <NAME>` | Export format, such as `binary`, `json`, `debug-json`, `cbor`, `sora-protobuf`, or `typed-protobuf`. |
-| `--default-source-format <csv|toml|xlsx>` | Source format used when a table source omits `format`. |
+| `--default-source-format <csv|json|toml|xlsx|yaml>` | Source format used when a table source omits `format`. |
 | `-p, --project <PATH>` | Project manifest path. |
 | `-d, --data-root <DIR>` | Data input root. |
 | `-o, --out <PATH>` | Output file or directory, depending on export format. |
@@ -141,7 +141,7 @@ sora d -p project.toml -l old-data -r data -o generated/diff.json
 
 | Option | Description |
 | --- | --- |
-| `--default-source-format <csv|toml|xlsx>` | Source format used when a table source omits `format`. |
+| `--default-source-format <csv|json|toml|xlsx|yaml>` | Source format used when a table source omits `format`. |
 | `-p, --project <PATH>` | Project manifest path. |
 | `-l, --left-root <DIR>` | Baseline data root. |
 | `-r, --right-root <DIR>` | Changed data root. |

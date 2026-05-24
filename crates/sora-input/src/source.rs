@@ -11,26 +11,32 @@ use crate::parser::ParserRegistry;
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum SourceFormat {
     Csv,
+    Json,
     Toml,
     Xlsx,
+    Yaml,
 }
 
 impl SourceFormat {
     pub fn as_str(self) -> &'static str {
         match self {
             Self::Csv => "csv",
+            Self::Json => "json",
             Self::Toml => "toml",
             Self::Xlsx => "xlsx",
+            Self::Yaml => "yaml",
         }
     }
 
     pub fn parse(value: &str) -> Result<Self> {
         match value {
             "csv" => Ok(Self::Csv),
+            "json" => Ok(Self::Json),
             "toml" => Ok(Self::Toml),
             "xlsx" => Ok(Self::Xlsx),
+            "yaml" | "yml" => Ok(Self::Yaml),
             _ => Err(SoraError::InvalidSchema(format!(
-                "unsupported source format `{value}`; expected csv, toml, or xlsx"
+                "unsupported source format `{value}`; expected csv, json, toml, xlsx, or yaml"
             ))),
         }
     }
@@ -38,8 +44,10 @@ impl SourceFormat {
     fn infer_from_file(file: &str) -> Option<Self> {
         match Path::new(file).extension().and_then(|ext| ext.to_str()) {
             Some("csv") => Some(Self::Csv),
+            Some("json") => Some(Self::Json),
             Some("toml") => Some(Self::Toml),
             Some("xlsx") => Some(Self::Xlsx),
+            Some("yaml" | "yml") => Some(Self::Yaml),
             _ => None,
         }
     }
@@ -216,6 +224,29 @@ mod tests {
         assert_eq!(
             resolve_source_format("Item", &source, Some("xlsx")).unwrap(),
             SourceFormat::Csv
+        );
+    }
+
+    #[test]
+    fn resolves_json_and_yaml_extensions() {
+        let json = TableSourceIr {
+            format: None,
+            file: "items.json".to_owned(),
+            sheet: None,
+        };
+        let yaml = TableSourceIr {
+            format: None,
+            file: "items.yml".to_owned(),
+            sheet: None,
+        };
+
+        assert_eq!(
+            resolve_source_format("Item", &json, None).unwrap(),
+            SourceFormat::Json
+        );
+        assert_eq!(
+            resolve_source_format("Item", &yaml, None).unwrap(),
+            SourceFormat::Yaml
         );
     }
 

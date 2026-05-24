@@ -14,7 +14,7 @@ Sora exists to make configuration tables simple to edit, validate, generate, and
 
 - describe the data contract once in schema files;
 - generate spreadsheet templates from that schema instead of hand-maintaining headers;
-- load data from Excel `.xlsx`, CSV, or TOML row files;
+- load data from Excel `.xlsx`, CSV, TOML, JSON, or YAML row files;
 - validate non-optional fields, types, references, indexes, defaults, and nested values;
 - export compact runtime bundles and inspection-friendly JSON;
 - generate typed access code for the languages used by the project.
@@ -30,7 +30,7 @@ Projects that need stable generated output should pin the `sora` CLI version. Ru
 Current support includes:
 
 - schema files in TOML, YAML, JSON, or Lua;
-- table data from Excel `.xlsx`, CSV, or TOML;
+- table data from Excel `.xlsx`, CSV, TOML, JSON, or YAML;
 - custom Lua cell parsers configured in `project.toml` or loaded by the CLI;
 - Sora Studio, an embedded browser UI for visual schema editing;
 - generated Excel `.xlsx` templates;
@@ -168,6 +168,7 @@ sora export \
 - `sora-input`: input adapter traits and loaded in-memory input.
 - `sora-input-csv`: CSV data input adapter.
 - `sora-input-schema`: schema project file input.
+- `sora-input-structured`: JSON and YAML data input adapter.
 - `sora-input-toml`: TOML data input adapter.
 - `sora-input-xlsx`: Excel `.xlsx` data input adapter.
 - `sora-schema`: format-neutral schema model.
@@ -281,7 +282,7 @@ Multiple tables may point at different sheets in the same workbook by reusing th
 
 ## Input Architecture
 
-Sora core consumes input through `SchemaInput` and `DataInput` traits. Shared TOML/YAML/JSON/Lua document parsing lives in `sora-config-format`; schema project loading lives in `sora-input-schema`; concrete table data formats live in separate adapter crates. TOML row data is implemented by `sora-input-toml`, CSV by `sora-input-csv`, and Excel by `sora-input-xlsx`, not by `sora-core` or `sora-input`. When a caller needs a full project input, `sora-input::project::SplitProjectInput` composes one schema input with one data input without making either adapter own the other side.
+Sora core consumes input through `SchemaInput` and `DataInput` traits. Shared TOML/YAML/JSON/Lua document parsing lives in `sora-config-format`; schema project loading lives in `sora-input-schema`; concrete table data formats live in separate adapter crates. TOML row data is implemented by `sora-input-toml`, CSV by `sora-input-csv`, JSON/YAML by `sora-input-structured`, and Excel by `sora-input-xlsx`, not by `sora-core` or `sora-input`. When a caller needs a full project input, `sora-input::project::SplitProjectInput` composes one schema input with one data input without making either adapter own the other side.
 
 Cell parser behavior is registry-driven. `sora-ir::parser::ParserRegistry` validates parser metadata during schema normalization, and `sora-input::parser::ParserRegistry` executes cell parsing at input time. The default registries include `split`, `tuple`, `tuple_list`, and `json`; library users can register additional Rust parser implementations and call the `_with_parsers` APIs when they need project-specific DSLs.
 
@@ -298,7 +299,7 @@ file = "Item.xlsx"
 sheet = "Item"
 ```
 
-The CLI can still read TOML row data through `--default-source-format toml` for tests and simple automation, and CSV row data through `--default-source-format csv` when each file has a header row matching schema field names. Validation checks non-optional fields, unknown fields, primitive compatibility, enum values, ranges, struct fields, references, map keys, and singleton row counts.
+The CLI can also read TOML, JSON, YAML, and CSV row data through `--default-source-format` or per-table `source.format`. JSON/YAML table files are arrays of row objects; when `source.file` points to a directory, every matching JSON/YAML file is read as one row object. CSV files use a header row matching schema field names. Validation checks non-optional fields, unknown fields, primitive compatibility, enum values, ranges, struct fields, references, map keys, and singleton row counts.
 
 Inline object fields can use tuple parsing when JSON is too verbose for table editing. Define a struct, then set `parser = { kind = "tuple" }` on a `struct<T>` field:
 

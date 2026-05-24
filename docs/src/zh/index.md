@@ -2,7 +2,7 @@
 
 Sora 用来让游戏配置表保持易懂，同时让运行时代码获得强类型访问。
 
-你先用 schema 描述表结构，再用 Excel、CSV 或 TOML 填行数据。Sora 会校验这些数据，校验通过后导出运行时数据包，并生成知道如何加载这个数据包的代码。
+你先用 schema 描述表结构，再用 Excel、CSV、TOML、JSON 或 YAML 填行数据。Sora 会校验这些数据，校验通过后导出运行时数据包，并生成知道如何加载这个数据包的代码。
 
 核心思路是：schema 是契约。Excel、CSV、TOML、生成代码和运行时数据包，都是这个契约的不同投影。策划可以在工作簿里编辑行数据，游戏代码则通过生成出来的强类型 API 读取配置。
 
@@ -21,7 +21,7 @@ project.toml
 ## Sora 做什么
 
 ```text
-schema modules -> Excel/CSV/TOML data -> validation
+schema modules -> Excel/CSV/TOML/JSON/YAML data -> validation
                                       |-> runtime bundle
                                       |-> generated code
 ```
@@ -31,7 +31,7 @@ Sora 当前聚焦这些阶段：
 - 用 schema 描述表、记录、枚举、联合、引用、索引和校验规则；
 - 在内置的 Sora Studio UI 中查看和编辑 schema module；
 - 根据 schema 生成 Excel 模板，避免表头和字段定义漂移；
-- 从 TOML、CSV 或 Excel `.xlsx` 加载表格数据；
+- 从 TOML、JSON、YAML、CSV 或 Excel `.xlsx` 加载表格数据；
 - 按归一化 schema 校验数据和跨表引用；
 - 导出 Sora binary、debug JSON、JSON bundle、CBOR bundle 或 Sora Protobuf bundle；
 - 生成可以加载这些数据包的语言运行时代码。
@@ -43,7 +43,7 @@ Sora 里 `format` 会出现在几个不同位置：
 | 术语 | 含义 | 例子 |
 | --- | --- | --- |
 | Schema format | schema/project 文件本身的格式。 | TOML、YAML、JSON、Lua |
-| Source format | 可编辑表格数据的格式。 | Excel `.xlsx`、CSV、TOML |
+| Source format | 可编辑表格数据的格式。 | Excel `.xlsx`、CSV、TOML、JSON、YAML |
 | Export format | 校验后写出的数据包格式。 | `binary`、`json`、`cbor` |
 | Runtime format | 生成代码期望加载的数据包格式。 | `sora`、`json`、`cbor` |
 

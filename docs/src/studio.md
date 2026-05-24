@@ -27,7 +27,7 @@ The editor can update:
 - table mode, primary key, source settings, parser settings, defaults, comments, range and length constraints;
 - reference fields and derived child-table fields.
 
-Studio is a schema editor, not a row-data editor. Excel, CSV, and TOML table rows are still edited in their source files and validated by `sora check`, `sora export`, or `sora build`.
+Studio is a schema editor, not a row-data editor. Excel, CSV, TOML, JSON, and YAML table rows are still edited in their source files and validated by `sora check`, `sora export`, or `sora build`.
 
 ## Visualization
 

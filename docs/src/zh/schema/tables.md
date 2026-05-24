@@ -34,6 +34,17 @@ sheet = "Item"
 
 当项目或命令提供默认 source format 时，`format` 可以省略。导出和校验时，`file` 会基于命令的 `--data-root` 解析。
 
+内置 source format 包括 `xlsx`、`csv`、`toml`、`json` 和 `yaml`。JSON 和 YAML 表文件是 row object 数组：
+
+```json
+[
+  { "id": 1001, "name": "Iron Sword" },
+  { "id": 1002, "name": "Health Potion" }
+]
+```
+
+对 JSON 和 YAML，`file` 也可以指向目录。这种情况下，Sora 会递归读取每个匹配的 `.json`、`.yaml` 或 `.yml` 文件，每个文件作为一条 row object，并按路径排序。
+
 ## Indexes
 
 索引是表上的额外查询入口。它和 `mode = "map"` 的 `key` 不一样：

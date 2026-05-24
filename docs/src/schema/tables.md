@@ -34,6 +34,17 @@ sheet = "Item"
 
 `format` can be omitted when the project or command provides a default source format. `file` is resolved under the command's `--data-root` during export and validation.
 
+Built-in source formats are `xlsx`, `csv`, `toml`, `json`, and `yaml`. JSON and YAML table files are arrays of row objects:
+
+```json
+[
+  { "id": 1001, "name": "Iron Sword" },
+  { "id": 1002, "name": "Health Potion" }
+]
+```
+
+For JSON and YAML, `file` can also point to a directory. In that case Sora recursively reads every matching `.json`, `.yaml`, or `.yml` file as one row object, sorted by path.
+
 ## Indexes
 
 Indexes are extra lookup paths on a table. They are different from the `key` of a `mode = "map"` table:

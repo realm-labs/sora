@@ -87,7 +87,7 @@ These examples show what a designer would put in an Excel or CSV cell:
 
 Field presence is part of the type: `optional<T>` means the value may be absent or null, while every other type is required unless a `default` fills the missing value.
 
-For JSON/TOML/YAML/Lua-style object inputs, a field can be absent from the object. For Excel and CSV, the column must exist in the header; an omitted cell, blank cell, or short CSV record is treated as an empty cell.
+For TOML/JSON/YAML-style object inputs, a field can be absent from the object. For Excel and CSV, the column must exist in the header; an omitted cell, blank cell, or short CSV record is treated as an empty cell.
 
 | Schema field | Object field absent | Excel/CSV cell empty |
 | --- | --- | --- |

@@ -1,0 +1,18 @@
+[package]
+name = "sora-input-structured"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description.workspace = true
+repository.workspace = true
+homepage.workspace = true
+documentation.workspace = true
+readme.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+serde_json.workspace = true
+serde_yaml.workspace = true
+sora-data.workspace = true
+sora-diagnostics.workspace = true
+

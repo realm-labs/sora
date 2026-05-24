@@ -1087,6 +1087,7 @@ dependencies = [
  "sora-input",
  "sora-input-csv",
  "sora-input-schema",
+ "sora-input-structured",
  "sora-input-toml",
  "sora-input-xlsx",
  "sora-ir",
@@ -1234,6 +1235,16 @@ dependencies = [
  "sora-diagnostics",
  "sora-input",
  "sora-schema",
+]
+
+[[package]]
+name = "sora-input-structured"
+version = "0.1.0"
+dependencies = [
+ "serde_json",
+ "serde_yaml",
+ "sora-data",
+ "sora-diagnostics",
 ]
 
 [[package]]

@@ -87,7 +87,7 @@ sora b -p project.toml -t rust -c
 | 参数 | 说明 |
 | --- | --- |
 | `-p, --project <PATH>` | 项目清单路径。 |
-| `--default-source-format <csv|toml|xlsx>` | 表 source 未声明 `format` 时使用的 source 格式。 |
+| `--default-source-format <csv|json|toml|xlsx|yaml>` | 表 source 未声明 `format` 时使用的 source 格式。 |
 | `-d, --data-root <DIR>` | 数据输入根目录。覆盖 `[build].data_root`。 |
 | `-s, --scope <NAME>` | 只构建包含在某个 scope 中的 schema item。 |
 | `-t, --target <NAME>` | 要运行的 codegen target。可以重复传。 |
@@ -122,7 +122,7 @@ sora e -p project.toml -d data -f binary -o generated/config.sora
 | 参数 | 说明 |
 | --- | --- |
 | `-f, --format <NAME>` | 导出格式，例如 `binary`、`json`、`debug-json`、`cbor`、`sora-protobuf` 或 `typed-protobuf`。 |
-| `--default-source-format <csv|toml|xlsx>` | 表 source 未声明 `format` 时使用的 source 格式。 |
+| `--default-source-format <csv|json|toml|xlsx|yaml>` | 表 source 未声明 `format` 时使用的 source 格式。 |
 | `-p, --project <PATH>` | 项目清单路径。 |
 | `-d, --data-root <DIR>` | 数据输入根目录。 |
 | `-o, --out <PATH>` | 输出文件或目录，取决于导出格式。 |
@@ -141,7 +141,7 @@ sora d -p project.toml -l old-data -r data -o generated/diff.json
 
 | 参数 | 说明 |
 | --- | --- |
-| `--default-source-format <csv|toml|xlsx>` | 表 source 未声明 `format` 时使用的 source 格式。 |
+| `--default-source-format <csv|json|toml|xlsx|yaml>` | 表 source 未声明 `format` 时使用的 source 格式。 |
 | `-p, --project <PATH>` | 项目清单路径。 |
 | `-l, --left-root <DIR>` | 基准数据根目录。 |
 | `-r, --right-root <DIR>` | 变更后的数据根目录。 |

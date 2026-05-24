@@ -167,8 +167,10 @@ pub enum SchemaFormatArg {
 #[derive(Debug, Clone, Copy, clap::ValueEnum)]
 pub enum SourceFormatArg {
     Csv,
+    Json,
     Toml,
     Xlsx,
+    Yaml,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, clap::ValueEnum)]
@@ -181,8 +183,10 @@ impl SourceFormatArg {
     pub fn as_str(self) -> &'static str {
         match self {
             Self::Csv => "csv",
+            Self::Json => "json",
             Self::Toml => "toml",
             Self::Xlsx => "xlsx",
+            Self::Yaml => "yaml",
         }
     }
 }

@@ -2,7 +2,7 @@
 
 Sora helps you keep game configuration data understandable while still giving runtime code typed access.
 
-You write a schema that describes table shapes, fill the table rows in Excel, CSV, or TOML, and let Sora validate the data. After validation, Sora writes a runtime data bundle and generates code that knows how to load that bundle.
+You write a schema that describes table shapes, fill the table rows in Excel, CSV, TOML, JSON, or YAML, and let Sora validate the data. After validation, Sora writes a runtime data bundle and generates code that knows how to load that bundle.
 
 The schema is the contract. Excel, CSV, TOML, generated code, and exported runtime bundles are all projections of that contract. A designer can edit rows in a workbook, while game code consumes strongly typed generated APIs.
 
@@ -21,7 +21,7 @@ You normally hand-write `project.toml` and schema files. Designers or tools edit
 ## What Sora Does
 
 ```text
-schema modules -> Excel/CSV/TOML data -> validation
+schema modules -> Excel/CSV/TOML/JSON/YAML data -> validation
                                       |-> runtime bundle
                                       |-> generated code
 ```
@@ -31,7 +31,7 @@ Sora currently focuses on these stages:
 - describe tables, records, enums, unions, references, indexes, and validation rules in schema files;
 - inspect and edit schema modules in the embedded Sora Studio UI;
 - generate Excel templates from the schema so spreadsheet headers stay consistent;
-- load table data from TOML, CSV, or Excel `.xlsx`;
+- load table data from TOML, JSON, YAML, CSV, or Excel `.xlsx`;
 - validate data against the normalized schema and cross-table references;
 - export data as Sora binary, debug JSON, JSON bundle, CBOR bundle, or Sora Protobuf bundle;
 - generate language runtimes that load those exported bundles.
@@ -43,7 +43,7 @@ Sora uses the word `format` in a few different places:
 | Term | Meaning | Example |
 | --- | --- | --- |
 | Schema format | The file format used to write schema/project files. | TOML, YAML, JSON, Lua |
-| Source format | The editable table data format. | Excel `.xlsx`, CSV, TOML |
+| Source format | The editable table data format. | Excel `.xlsx`, CSV, TOML, JSON, YAML |
 | Export format | The data bundle written after validation. | `binary`, `json`, `cbor` |
 | Runtime format | The bundle format generated code expects to load. | `sora`, `json`, `cbor` |
 

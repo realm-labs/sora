@@ -14,7 +14,7 @@ Sora 用来让配置表的编辑、校验、生成和交付更简单：
 
 - 在 schema 文件中一次性描述数据契约；
 - 从 schema 生成电子表格模板，避免手工维护表头；
-- 从 Excel `.xlsx`、CSV 或 TOML 行数据加载数据；
+- 从 Excel `.xlsx`、CSV、TOML、JSON 或 YAML 行数据加载数据；
 - 校验必填字段、类型、引用、索引、默认值和嵌套值；
 - 导出紧凑的运行时数据包和便于检查的 JSON；
 - 为项目使用的语言生成强类型访问代码。
@@ -30,7 +30,7 @@ Sora 还处在早期但可运行的里程碑阶段。核心模型稳定之前，
 当前支持：
 
 - TOML、YAML、JSON 或 Lua schema 文件；
-- 来自 Excel `.xlsx`、CSV 或 TOML 的表格数据；
+- 来自 Excel `.xlsx`、CSV、TOML、JSON 或 YAML 的表格数据；
 - 在 `project.toml` 中配置或由 CLI 加载的自定义 Lua 单元格 parser；
 - Sora Studio，内置在 CLI 中的浏览器可视化 schema 编辑器；
 - 生成 Excel `.xlsx` 模板；
@@ -168,6 +168,7 @@ sora export \
 - `sora-input`: 输入 adapter trait 和加载后的内存输入。
 - `sora-input-csv`: CSV 数据输入 adapter。
 - `sora-input-schema`: schema project 文件输入。
+- `sora-input-structured`: JSON 和 YAML 数据输入 adapter。
 - `sora-input-toml`: TOML 数据输入 adapter。
 - `sora-input-xlsx`: Excel `.xlsx` 数据输入 adapter。
 - `sora-schema`: 与格式无关的 schema model。
@@ -281,7 +282,7 @@ sheet = "Item"
 
 ## 输入架构
 
-Sora core 通过 `SchemaInput` 和 `DataInput` trait 消费输入。共享的 TOML/YAML/JSON/Lua 文档解析位于 `sora-config-format`；schema project 加载位于 `sora-input-schema`；具体表格数据格式位于独立 adapter crate。TOML 行数据由 `sora-input-toml` 实现，CSV 由 `sora-input-csv` 实现，Excel 由 `sora-input-xlsx` 实现，而不是放在 `sora-core` 或 `sora-input` 中。当调用方需要完整项目输入时，`sora-input::project::SplitProjectInput` 会组合一个 schema input 和一个 data input，而不让任一 adapter 拥有另一侧。
+Sora core 通过 `SchemaInput` 和 `DataInput` trait 消费输入。共享的 TOML/YAML/JSON/Lua 文档解析位于 `sora-config-format`；schema project 加载位于 `sora-input-schema`；具体表格数据格式位于独立 adapter crate。TOML 行数据由 `sora-input-toml` 实现，CSV 由 `sora-input-csv` 实现，JSON/YAML 由 `sora-input-structured` 实现，Excel 由 `sora-input-xlsx` 实现，而不是放在 `sora-core` 或 `sora-input` 中。当调用方需要完整项目输入时，`sora-input::project::SplitProjectInput` 会组合一个 schema input 和一个 data input，而不让任一 adapter 拥有另一侧。
 
 单元格 parser 行为由 registry 驱动。`sora-ir::parser::ParserRegistry` 在 schema 归一化时校验 parser 元数据，`sora-input::parser::ParserRegistry` 在输入阶段执行单元格解析。默认 registry 包含 `split`、`tuple`、`tuple_list` 和 `json`；库用户需要项目专属 DSL 时，可以注册额外的 Rust parser 实现，并调用 `_with_parsers` API。
 
@@ -298,7 +299,7 @@ file = "Item.xlsx"
 sheet = "Item"
 ```
 
-CLI 仍可以通过 `--default-source-format toml` 读取 TOML 行数据，用于测试和简单自动化；也可以通过 `--default-source-format csv` 读取 CSV 行数据，此时每个文件都需要有和 schema 字段名匹配的 header row。校验会检查必填字段、未知字段、primitive 兼容性、枚举值、范围、结构体字段、引用、map key 和 singleton 行数。
+CLI 也可以通过 `--default-source-format` 或每张表的 `source.format` 读取 TOML、JSON、YAML 和 CSV 行数据。JSON/YAML 表文件是 row object 数组；当 `source.file` 指向目录时，每个匹配的 JSON/YAML 文件会作为一条 row object 读入。CSV 文件使用和 schema 字段名匹配的 header row。校验会检查必填字段、未知字段、primitive 兼容性、枚举值、范围、结构体字段、引用、map key 和 singleton 行数。
 
 当 JSON 对表格编辑来说过于冗长时，内联 object 字段可以使用 tuple 解析。先定义一个 struct，然后在 `struct<T>` 字段上设置 `parser = { kind = "tuple" }`：
 

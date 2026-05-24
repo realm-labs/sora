@@ -27,7 +27,7 @@ Studio 会加载项目文件，以及 `includes` 中列出的每个 schema modul
 - 表模式、主键、数据源设置、parser 设置、默认值、备注、范围和长度约束；
 - 引用字段和从子表派生出来的字段。
 
-Studio 是 schema 编辑器，不是行数据编辑器。Excel、CSV 和 TOML 表数据仍然在各自的源文件中编辑，并通过 `sora check`、`sora export` 或 `sora build` 校验。
+Studio 是 schema 编辑器，不是行数据编辑器。Excel、CSV、TOML、JSON 和 YAML 表数据仍然在各自的源文件中编辑，并通过 `sora check`、`sora export` 或 `sora build` 校验。
 
 ## 可视化能力
 

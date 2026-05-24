@@ -1,6 +1,6 @@
 # 导出格式
 
-导出格式是运行时数据包格式。它和 Excel、CSV、TOML 这类 source format 是两回事。
+导出格式是运行时数据包格式。它和 Excel、CSV、TOML、JSON、YAML 这类 source format 是两回事。
 
 | Export | Codegen Runtime Format | Output Shape | Use When |
 | --- | --- | --- | --- |

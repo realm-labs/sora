@@ -30,6 +30,7 @@ sora-execution.workspace = true
 sora-input.workspace = true
 sora-input-csv.workspace = true
 sora-input-schema.workspace = true
+sora-input-structured.workspace = true
 sora-input-toml.workspace = true
 sora-input-xlsx.workspace = true
 sora-ir.workspace = true

@@ -7,6 +7,7 @@ members = [
     "crates/sora-ir",
     "crates/sora-input",
     "crates/sora-input-csv",
+    "crates/sora-input-structured",
     "crates/sora-input-schema",
     "crates/sora-input-toml",
     "crates/sora-input-xlsx",
@@ -63,6 +64,7 @@ sora-export = { path = "crates/sora-export", version = "0.1.0" }
 sora-execution = { path = "crates/sora-execution", version = "0.1.0" }
 sora-input = { path = "crates/sora-input", version = "0.1.0" }
 sora-input-csv = { path = "crates/sora-input-csv", version = "0.1.0" }
+sora-input-structured = { path = "crates/sora-input-structured", version = "0.1.0" }
 sora-input-schema = { path = "crates/sora-input-schema", version = "0.1.0" }
 sora-input-toml = { path = "crates/sora-input-toml", version = "0.1.0" }
 sora-input-xlsx = { path = "crates/sora-input-xlsx", version = "0.1.0" }

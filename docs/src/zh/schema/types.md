@@ -87,7 +87,7 @@ parser = { kind = "map" }
 
 字段是否可缺省由类型表达：`optional<T>` 表示值可以缺失或为空；其它类型都要求有值，除非 `default` 填充了缺失值。
 
-对 JSON/TOML/YAML/Lua 这类 object 输入，字段可以不存在。对 Excel 和 CSV，表头列必须存在；某一行没有对应 cell、cell 为空，或者 CSV 行列数不够，都会按空 cell 处理。
+对 TOML/JSON/YAML 这类 object 输入，字段可以不存在。对 Excel 和 CSV，表头列必须存在；某一行没有对应 cell、cell 为空，或者 CSV 行列数不够，都会按空 cell 处理。
 
 | Schema 字段 | object 字段不存在 | Excel/CSV cell 为空 |
 | --- | --- | --- |

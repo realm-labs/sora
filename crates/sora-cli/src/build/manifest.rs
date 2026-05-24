@@ -76,10 +76,12 @@ impl<'de> Deserialize<'de> for SourceFormatArg {
         let value = String::deserialize(deserializer)?;
         match value.as_str() {
             "csv" => Ok(Self::Csv),
+            "json" => Ok(Self::Json),
             "toml" => Ok(Self::Toml),
             "xlsx" => Ok(Self::Xlsx),
+            "yaml" | "yml" => Ok(Self::Yaml),
             _ => Err(serde::de::Error::custom(format!(
-                "unsupported source format `{value}`; expected csv, toml, or xlsx"
+                "unsupported source format `{value}`; expected csv, json, toml, xlsx, or yaml"
             ))),
         }
     }

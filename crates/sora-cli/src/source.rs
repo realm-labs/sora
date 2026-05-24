@@ -15,6 +15,7 @@ use sora_input::{
     traits::{DataInput, SchemaInput},
 };
 use sora_input_csv::reader::load_csv_table_data_with_parsers;
+use sora_input_structured::reader::{load_json_table_data, load_yaml_table_data};
 use sora_input_toml::data::load_table_data_file;
 use sora_input_xlsx::reader::load_xlsx_table_data_with_ir_and_parsers;
 use sora_ir::model::{ConfigIr, TableIr};
@@ -170,8 +171,10 @@ fn load_mixed_table_data(
 pub fn builtin_source_registry() -> DataSourceRegistry {
     let mut registry = DataSourceRegistry::new();
     registry.register(CsvSourceLoader);
+    registry.register(JsonSourceLoader);
     registry.register(TomlSourceLoader);
     registry.register(XlsxSourceLoader);
+    registry.register(YamlSourceLoader);
     registry
 }
 
@@ -212,6 +215,38 @@ impl DataSourceLoader for TomlSourceLoader {
     }
 }
 
+struct JsonSourceLoader;
+
+impl DataSourceLoader for JsonSourceLoader {
+    fn format_name(&self) -> &'static str {
+        "json"
+    }
+
+    fn file_extensions(&self) -> &'static [&'static str] {
+        &["json"]
+    }
+
+    fn load_table(&self, request: DataSourceRequest<'_>) -> Result<TableData> {
+        load_json_table_data(&request.table.name, request.path)
+    }
+}
+
+struct YamlSourceLoader;
+
+impl DataSourceLoader for YamlSourceLoader {
+    fn format_name(&self) -> &'static str {
+        "yaml"
+    }
+
+    fn file_extensions(&self) -> &'static [&'static str] {
+        &["yaml", "yml"]
+    }
+
+    fn load_table(&self, request: DataSourceRequest<'_>) -> Result<TableData> {
+        load_yaml_table_data(&request.table.name, request.path)
+    }
+}
+
 struct XlsxSourceLoader;
 
 impl DataSourceLoader for XlsxSourceLoader {
@@ -242,12 +277,19 @@ impl DataSourceLoader for XlsxSourceLoader {
 
 #[cfg(test)]
 mod tests {
-    use std::{collections::BTreeMap, path::Path};
+    use std::{
+        collections::BTreeMap,
+        fs,
+        path::{Path, PathBuf},
+        sync::atomic::{AtomicU64, Ordering},
+    };
 
     use sora_data::model::{RowData, Value};
     use sora_ir::model::{FieldIr, ScopeIr, TableModeIr, TableSourceIr, TypeIr};
 
     use super::*;
+
+    static TEMP_COUNTER: AtomicU64 = AtomicU64::new(0);
 
     #[test]
     fn mixed_source_loads_tables_through_registered_loader() {
@@ -296,6 +338,116 @@ mod tests {
 
         assert_eq!(data.tables[0].name, "Item");
         assert_eq!(data.tables[0].rows[0].values["id"], Value::Integer(1001));
+    }
+
+    #[test]
+    fn builtin_source_loads_json_table_file() {
+        let base = temp_dir();
+        let data_root = base.join("data");
+        fs::create_dir_all(&data_root).unwrap();
+        fs::write(
+            data_root.join("items.json"),
+            r#"[{"id": 1001, "name": "Sword"}]"#,
+        )
+        .unwrap();
+        let ir = item_ir("items.json", None);
+        let parser_registry = ParserRegistry::builtin();
+
+        let data = load_mixed_config_data_with_registry(
+            &ir,
+            &data_root,
+            None,
+            &builtin_source_registry(),
+            &parser_registry,
+        )
+        .unwrap();
+
+        assert_eq!(data.tables[0].rows[0].values["id"], Value::Integer(1001));
+        assert_eq!(
+            data.tables[0].rows[0].values["name"],
+            Value::String("Sword".to_owned())
+        );
+
+        let _ = fs::remove_dir_all(base);
+    }
+
+    #[test]
+    fn builtin_source_loads_yaml_directory() {
+        let base = temp_dir();
+        let data_root = base.join("data");
+        let item_dir = data_root.join("items");
+        fs::create_dir_all(&item_dir).unwrap();
+        fs::write(item_dir.join("1001.yaml"), "id: 1001\nname: Sword\n").unwrap();
+        fs::write(item_dir.join("1002.yml"), "id: 1002\nname: Potion\n").unwrap();
+        let ir = item_ir("items", Some("yaml"));
+        let parser_registry = ParserRegistry::builtin();
+
+        let data = load_mixed_config_data_with_registry(
+            &ir,
+            &data_root,
+            None,
+            &builtin_source_registry(),
+            &parser_registry,
+        )
+        .unwrap();
+
+        assert_eq!(data.tables[0].rows.len(), 2);
+        assert_eq!(data.tables[0].rows[0].values["id"], Value::Integer(1001));
+        assert_eq!(data.tables[0].rows[1].values["id"], Value::Integer(1002));
+
+        let _ = fs::remove_dir_all(base);
+    }
+
+    fn item_ir(file: &str, format: Option<&str>) -> ConfigIr {
+        ConfigIr {
+            package: "game".to_owned(),
+            enums: Vec::new(),
+            structs: Vec::new(),
+            unions: Vec::new(),
+            tables: vec![TableIr {
+                name: "Item".to_owned(),
+                scope: ScopeIr::default(),
+                mode: TableModeIr::Map,
+                key: Some("id".to_owned()),
+                source: Some(TableSourceIr {
+                    format: format.map(str::to_owned),
+                    file: file.to_owned(),
+                    sheet: None,
+                }),
+                fields: vec![
+                    FieldIr {
+                        name: "id".to_owned(),
+                        ty: TypeIr::I32,
+                        scope: ScopeIr::default(),
+                        key: true,
+                        comment: None,
+                        default: None,
+                        range: None,
+                        length: None,
+                        parser: None,
+                        derived_from: None,
+                    },
+                    FieldIr {
+                        name: "name".to_owned(),
+                        ty: TypeIr::String,
+                        scope: ScopeIr::default(),
+                        key: false,
+                        comment: None,
+                        default: None,
+                        range: None,
+                        length: None,
+                        parser: None,
+                        derived_from: None,
+                    },
+                ],
+                indexes: Vec::new(),
+            }],
+        }
+    }
+
+    fn temp_dir() -> PathBuf {
+        let unique = TEMP_COUNTER.fetch_add(1, Ordering::Relaxed);
+        std::env::temp_dir().join(format!("sora-cli-source-test-{unique}"))
     }
 
     struct FakeSourceLoader;

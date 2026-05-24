@@ -1,6 +1,6 @@
 # Export Formats
 
-Export formats are runtime bundle formats. They are independent from source formats such as Excel, CSV, or TOML.
+Export formats are runtime bundle formats. They are independent from source formats such as Excel, CSV, TOML, JSON, or YAML.
 
 | Export | Codegen Runtime Format | Output Shape | Use When |
 | --- | --- | --- | --- |
