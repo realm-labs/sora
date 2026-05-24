@@ -17,7 +17,7 @@ pub struct Item {
     /// Stack limit; blank cells use the default
     #[serde(rename = "max_stack")]
     pub max_stack: i32,
-    /// Tuple: kind,id,count
+    /// Struct columns: price_kind, price_id, price_count
     #[serde(rename = "price")]
     pub price: ResourceCost,
     /// JSON string set

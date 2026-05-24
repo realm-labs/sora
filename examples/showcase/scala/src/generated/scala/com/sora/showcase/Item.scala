@@ -11,7 +11,7 @@ final case class Item(
   itemType: ItemType,
   /** Stack limit; blank cells use the default */
   maxStack: Int,
-  /** Tuple: kind,id,count */
+  /** Struct columns: price_kind, price_id, price_count */
   price: ResourceCost,
   /** JSON string set */
   tags: Vector[String],

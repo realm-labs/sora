@@ -4,7 +4,8 @@ use sora_diagnostics::{Result, SoraError};
 
 use crate::{
     input_projection::{
-        TAGGED_COLUMNS_PARSER, tagged_columns, tagged_columns_prefix, tagged_columns_union,
+        COLUMNS_PARSER, TAGGED_COLUMNS_PARSER, struct_columns, tagged_columns,
+        tagged_columns_prefix, tagged_columns_union,
     },
     model::{ConfigIr, FieldIr, StructIr, TableIr, TableModeIr},
 };
@@ -221,14 +222,13 @@ fn validate_fields<'a>(
             },
         )?;
 
-        if field
-            .parser
-            .as_ref()
-            .is_some_and(|parser| parser.kind == TAGGED_COLUMNS_PARSER)
-            && owner_kind != "table"
+        if field.parser.as_ref().is_some_and(|parser| {
+            parser.kind == TAGGED_COLUMNS_PARSER || parser.kind == COLUMNS_PARSER
+        }) && owner_kind != "table"
         {
+            let parser = &field.parser.as_ref().expect("parser checked above").kind;
             return Err(SoraError::InvalidSchema(format!(
-                "{owner_kind} `{owner}` field `{}` declares parser `tagged_columns`, but tagged columns are only supported on table fields",
+                "{owner_kind} `{owner}` field `{}` declares parser `{parser}`, but column projection parsers are only supported on table fields",
                 field.name
             )));
         }
@@ -252,21 +252,36 @@ fn validate_table_input_columns(ir: &ConfigIr, table: &TableIr) -> Result<()> {
     let mut columns = BTreeSet::<String>::new();
 
     for field in &table.fields {
-        let Some(projected) = tagged_columns(ir, field) else {
-            if !columns.insert(field.name.clone()) {
-                return Err(input_column_conflict(&table.name, &field.name, &field.name));
+        if let Some(projected) = tagged_columns(ir, field) {
+            validate_tagged_columns_internal(ir, table, field)?;
+            for column in projected {
+                if !columns.insert(column.name.clone()) {
+                    return Err(input_column_conflict(
+                        &table.name,
+                        &field.name,
+                        &column.name,
+                    ));
+                }
             }
             continue;
-        };
+        }
 
-        validate_tagged_columns_internal(ir, table, field)?;
-        for column in projected {
-            if !columns.insert(column.name.clone()) {
-                return Err(input_column_conflict(
-                    &table.name,
-                    &field.name,
-                    &column.name,
-                ));
+        if let Some(projected) = struct_columns(ir, field) {
+            for column in projected {
+                if !columns.insert(column.name.clone()) {
+                    return Err(input_column_conflict(
+                        &table.name,
+                        &field.name,
+                        &column.name,
+                    ));
+                }
+            }
+            continue;
+        }
+
+        {
+            if !columns.insert(field.name.clone()) {
+                return Err(input_column_conflict(&table.name, &field.name, &field.name));
             }
         }
     }

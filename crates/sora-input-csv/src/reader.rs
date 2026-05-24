@@ -9,8 +9,8 @@ use sora_input::{
     source::{SourceFormat, resolve_table_source_format},
 };
 use sora_ir::{
-    input_projection::{TaggedColumnKind, tagged_columns, tagged_columns_union},
-    model::{ConfigIr, TableIr, TypeIr},
+    input_projection::{TaggedColumnKind, struct_columns, tagged_columns, tagged_columns_union},
+    model::{ConfigIr, FieldIr, TableIr, TypeIr},
 };
 
 pub fn load_csv_config_data(ir: &ConfigIr, data_root: &Path) -> Result<ConfigData> {
@@ -96,6 +96,22 @@ pub fn load_csv_table_data_with_parsers(
                 }
                 continue;
             }
+            if struct_columns(ir, field).is_some() {
+                if let Some(value) = struct_columns_value(
+                    ir,
+                    field,
+                    &header_index,
+                    &record,
+                    CsvRowContext {
+                        path,
+                        row: record_index + 2,
+                    },
+                    parser_registry,
+                )? {
+                    values.insert(field.name.clone(), value);
+                }
+                continue;
+            }
 
             let column = header_index[&field.name];
             let cell = record.get(column).unwrap_or_default();
@@ -143,6 +159,11 @@ fn record_is_empty(
         .filter(|field| field.derived_from.is_none())
         .all(|field| {
             if let Some(columns) = tagged_columns(ir, field) {
+                columns.into_iter().all(|column| {
+                    let index = header_index[&column.name];
+                    record.get(index).unwrap_or_default().trim().is_empty()
+                })
+            } else if let Some(columns) = struct_columns(ir, field) {
                 columns.into_iter().all(|column| {
                     let index = header_index[&column.name];
                     record.get(index).unwrap_or_default().trim().is_empty()
@@ -271,6 +292,56 @@ fn tagged_columns_value(
     Ok(Some(sora_data::model::Value::Object(values)))
 }
 
+fn struct_columns_value(
+    ir: &ConfigIr,
+    field: &FieldIr,
+    header_index: &BTreeMap<String, usize>,
+    record: &StringRecord,
+    row_context: CsvRowContext<'_>,
+    parser_registry: &ParserRegistry,
+) -> Result<Option<sora_data::model::Value>> {
+    let projected = struct_columns(ir, field).unwrap_or_default();
+    let all_empty = projected.iter().all(|column| {
+        let index = header_index[&column.name];
+        record.get(index).unwrap_or_default().trim().is_empty()
+    });
+    if all_empty {
+        return Ok(matches!(field.ty, TypeIr::Optional(_)).then_some(sora_data::model::Value::Null));
+    }
+
+    let mut values = BTreeMap::new();
+    for struct_column in projected {
+        let column_index = header_index[&struct_column.name];
+        let cell = record.get(column_index).unwrap_or_default().trim();
+        if cell.is_empty() {
+            continue;
+        }
+
+        let nested_field = format!("{}.{}", field.name, struct_column.field.name);
+        let context = CellContext {
+            path: row_context.path,
+            ir,
+            location: CellLocation::Csv {
+                row: row_context.row,
+                column: column_index + 1,
+            },
+            field: &nested_field,
+            parser: struct_column.field.parser.as_ref(),
+        };
+        values.insert(
+            struct_column.field.name.clone(),
+            cell_to_value_with_parsers(
+                &CellValue::Text(cell.into()),
+                &struct_column.field.ty,
+                &context,
+                parser_registry,
+            )?,
+        );
+    }
+
+    Ok(Some(sora_data::model::Value::Object(values)))
+}
+
 fn header_index(headers: &StringRecord) -> BTreeMap<String, usize> {
     headers
         .iter()
@@ -326,6 +397,14 @@ fn expected_headers(ir: &ConfigIr, table: &TableIr) -> Vec<String> {
                         .into_iter()
                         .map(|column| column.name)
                         .collect::<Vec<_>>()
+                })
+                .or_else(|| {
+                    struct_columns(ir, field).map(|columns| {
+                        columns
+                            .into_iter()
+                            .map(|column| column.name)
+                            .collect::<Vec<_>>()
+                    })
                 })
                 .unwrap_or_else(|| vec![field.name.clone()])
         })
@@ -444,6 +523,31 @@ mod tests {
         let base = temp_dir();
         fs::create_dir_all(&base).unwrap();
         fs::write(base.join("Reward.csv"), "cost\n\"Item,2003,4\"\n").unwrap();
+
+        let data = load_csv_config_data(&ir, &base).unwrap();
+
+        assert_eq!(
+            data.tables[0].rows[0].values["cost"],
+            Value::Object(BTreeMap::from([
+                ("count".to_owned(), Value::Integer(4)),
+                ("id".to_owned(), Value::Integer(2003)),
+                ("kind".to_owned(), Value::String("Item".to_owned())),
+            ]))
+        );
+
+        let _ = fs::remove_dir_all(base);
+    }
+
+    #[test]
+    fn loads_struct_columns() {
+        let ir = struct_columns_ir();
+        let base = temp_dir();
+        fs::create_dir_all(&base).unwrap();
+        fs::write(
+            base.join("Reward.csv"),
+            "id,cost_kind,cost_id,cost_count\n1,Item,2003,4\n",
+        )
+        .unwrap();
 
         let data = load_csv_config_data(&ir, &base).unwrap();
 
@@ -664,6 +768,55 @@ type = "i32"
 name = "value"
 type = "union<EventCondition>"
 parser = { kind = "tagged_columns", prefix = "" }
+"#,
+        )
+        .unwrap();
+        let ir = normalize_schema(schema).unwrap();
+        validate_config_ir(&ir).unwrap();
+        ir
+    }
+
+    fn struct_columns_ir() -> ConfigIr {
+        let schema = toml::from_str(
+            r#"
+package = "game_config"
+
+[[enums]]
+name = "ResourceType"
+values = ["Item", "Gold"]
+
+[[structs]]
+name = "ResourceCost"
+
+[[structs.fields]]
+name = "kind"
+type = "enum<ResourceType>"
+
+[[structs.fields]]
+name = "id"
+type = "i32"
+
+[[structs.fields]]
+name = "count"
+type = "i32"
+
+[[tables]]
+name = "Reward"
+mode = "map"
+key = "id"
+
+[tables.source]
+format = "csv"
+file = "Reward.csv"
+
+[[tables.fields]]
+name = "id"
+type = "i32"
+
+[[tables.fields]]
+name = "cost"
+type = "struct<ResourceCost>"
+parser = { kind = "columns", prefix = "cost_" }
 "#,
         )
         .unwrap();

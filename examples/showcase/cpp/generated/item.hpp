@@ -21,7 +21,7 @@ struct Item {
     ItemType item_type;
     // Stack limit; blank cells use the default
     std::int32_t max_stack;
-    // Tuple: kind,id,count
+    // Struct columns: price_kind, price_id, price_count
     ResourceCost price;
     // JSON string set
     std::vector<std::string> tags;

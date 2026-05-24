@@ -16,7 +16,7 @@ public sealed record Item(
     ItemType ItemType,
     // Stack limit; blank cells use the default
     int MaxStack,
-    // Tuple: kind,id,count
+    // Struct columns: price_kind, price_id, price_count
     ResourceCost Price,
     // JSON string set
     List<string> Tags,

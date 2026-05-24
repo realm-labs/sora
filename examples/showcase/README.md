@@ -13,8 +13,9 @@ single `union<T>` values edited through `tagged_columns`, non-JSON
 other derived groups, and a nested tuple cell that combines struct, tuple-list,
 split, and map parsers.
 
-`data/Core.xlsx` also includes smaller coverage examples for singleton tables,
-`f64`, fixed-size arrays, and an optional struct derived from a child table.
+`data/Core.xlsx` also includes smaller coverage examples for struct columns,
+singleton tables, `f64`, fixed-size arrays, and an optional struct derived from
+a child table.
 
 - schema: `project.toml` and `schema/game.toml`
 - Excel data: `data/Core.xlsx`, `data/Battle.xlsx`, `data/Economy.xlsx`, `data/Quest.xlsx`, `data/Complex.xlsx`

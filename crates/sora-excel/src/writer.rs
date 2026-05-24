@@ -5,13 +5,13 @@ use rust_xlsxwriter::{
 };
 use sora_diagnostics::{Result, SoraError};
 use sora_ir::{
-    input_projection::{TaggedColumnKind, tagged_columns, tagged_columns_union},
+    input_projection::{TaggedColumnKind, struct_columns, tagged_columns, tagged_columns_union},
     model::{ConfigIr, FieldIr, TableIr, TypeIr},
 };
 
 use crate::projection::{
-    DATA_START_ROW, DESC_ROW, FIELD_START_COLUMN, NAME_ROW, TemplateColumn, table_template_columns,
-    table_template_rows, tuple_shape,
+    DATA_START_ROW, DESC_ROW, FIELD_START_COLUMN, NAME_ROW, TYPE_ROW, TemplateColumn,
+    TemplateColumnGroupRole, table_template_columns, table_template_rows, tuple_shape,
 };
 
 const DATA_VALIDATION_ROWS: u32 = 1000;
@@ -36,14 +36,18 @@ pub(crate) fn write_workbook_with_rows(
             .set_name(sheet_name)
             .map_err(|source| excel_error(path, source))?;
 
+        let columns = table_template_columns(ir, table);
         for (row_index, row) in table_template_rows(ir, table).iter().enumerate() {
             for (column_index, value) in row.iter().enumerate() {
+                let column_info = column_index
+                    .checked_sub(FIELD_START_COLUMN as usize)
+                    .and_then(|index| columns.get(index));
                 if value.is_empty() {
                     worksheet
                         .write_blank(
                             row_index as u32,
                             column_index as u16,
-                            formats.for_cell(row_index, column_index),
+                            formats.for_cell(row_index, column_index, column_info),
                         )
                         .map_err(|source| excel_error(path, source))?;
                 } else {
@@ -52,7 +56,7 @@ pub(crate) fn write_workbook_with_rows(
                             row_index as u32,
                             column_index as u16,
                             value,
-                            formats.for_cell(row_index, column_index),
+                            formats.for_cell(row_index, column_index, column_info),
                         )
                         .map_err(|source| excel_error(path, source))?;
                 }
@@ -62,7 +66,6 @@ pub(crate) fn write_workbook_with_rows(
         apply_sheet_layout(ir, table, worksheet, &formats, path)?;
         apply_field_notes(ir, table, worksheet, path)?;
         apply_data_validations(ir, table, worksheet, path)?;
-        let columns = table_template_columns(ir, table);
         write_data_rows(worksheet, &formats, path, &columns, rows_for_table(table))?;
         worksheet
             .set_freeze_panes(DATA_START_ROW, 1)
@@ -122,7 +125,26 @@ fn apply_data_validations(
         if field.derived_from.is_some() {
             column += tagged_columns(ir, field)
                 .map(|columns| columns.len() as u16)
+                .or_else(|| struct_columns(ir, field).map(|columns| columns.len() as u16))
                 .unwrap_or(1);
+            continue;
+        }
+        if let Some(columns) = struct_columns(ir, field) {
+            for struct_column in columns {
+                let data_validation = data_validation_for_field(ir, struct_column.field, path)?;
+                if let Some(data_validation) = data_validation {
+                    worksheet
+                        .add_data_validation(
+                            DATA_START_ROW,
+                            column,
+                            DATA_START_ROW + DATA_VALIDATION_ROWS - 1,
+                            column,
+                            &data_validation,
+                        )
+                        .map_err(|source| excel_error(path, source))?;
+                }
+                column += 1;
+            }
             continue;
         }
         if let Some(columns) = tagged_columns(ir, field) {
@@ -185,23 +207,43 @@ fn apply_field_notes(
 ) -> Result<()> {
     let mut column = FIELD_START_COLUMN;
     for field in &table.fields {
+        if let Some(columns) = struct_columns(ir, field) {
+            for struct_column in columns {
+                insert_note(
+                    worksheet,
+                    NAME_ROW,
+                    column,
+                    struct_column_note_text(ir, field, struct_column.field, &struct_column.name),
+                    path,
+                )?;
+                insert_note(
+                    worksheet,
+                    TYPE_ROW,
+                    column,
+                    root_type_note_text(field, "columns"),
+                    path,
+                )?;
+                column += 1;
+            }
+            continue;
+        }
+
         if let Some(columns) = tagged_columns(ir, field) {
             for tagged_column in columns {
-                let note_text = match tagged_column.kind {
-                    TaggedColumnKind::Tag => Some(format!(
-                        "Field: {}\nType: {}\nParser: tagged_columns\nColumn: {}",
-                        field.name, field.ty, tagged_column.name
-                    )),
-                    TaggedColumnKind::VariantField(variant_field) => {
-                        field_note_text(ir, variant_field)
-                    }
-                };
-                if let Some(note_text) = note_text {
-                    let note = Note::new(note_text).set_author("Sora");
-                    worksheet
-                        .insert_note(NAME_ROW, column, &note)
-                        .map_err(|source| excel_error(path, source))?;
-                }
+                insert_note(
+                    worksheet,
+                    NAME_ROW,
+                    column,
+                    tagged_column_note_text(ir, field, &tagged_column),
+                    path,
+                )?;
+                insert_note(
+                    worksheet,
+                    TYPE_ROW,
+                    column,
+                    root_type_note_text(field, "tagged_columns"),
+                    path,
+                )?;
                 column += 1;
             }
             continue;
@@ -219,6 +261,85 @@ fn apply_field_notes(
     }
 
     Ok(())
+}
+
+fn insert_note(
+    worksheet: &mut rust_xlsxwriter::Worksheet,
+    row: u32,
+    column: u16,
+    text: String,
+    path: &Path,
+) -> Result<()> {
+    let note = Note::new(text).set_author("Sora");
+    worksheet
+        .insert_note(row, column, &note)
+        .map_err(|source| excel_error(path, source))?;
+    Ok(())
+}
+
+fn struct_column_note_text(
+    ir: &ConfigIr,
+    root_field: &FieldIr,
+    struct_field: &FieldIr,
+    column: &str,
+) -> String {
+    let mut note_text = field_note_text(ir, struct_field).unwrap_or_default();
+    append_section(
+        &mut note_text,
+        &format!(
+            "Field: {}.{}\nType: {}\nRoot field: {}\nRoot type: {}\nParser: columns\nColumn: {}",
+            root_field.name,
+            struct_field.name,
+            struct_field.ty,
+            root_field.name,
+            root_field.ty,
+            column
+        ),
+    );
+    note_text
+}
+
+fn tagged_column_note_text(
+    ir: &ConfigIr,
+    root_field: &FieldIr,
+    tagged_column: &sora_ir::input_projection::TaggedColumn<'_>,
+) -> String {
+    match tagged_column.kind {
+        TaggedColumnKind::Tag => format!(
+            "Field: {}\nType: {} tag\nRoot field: {}\nRoot type: {}\nParser: tagged_columns\nColumn: {}",
+            root_field.name, root_field.ty, root_field.name, root_field.ty, tagged_column.name
+        ),
+        TaggedColumnKind::VariantField(variant_field) => {
+            let mut note_text = field_note_text(ir, variant_field).unwrap_or_default();
+            append_section(
+                &mut note_text,
+                &format!(
+                    "Field: {}.{}\nType: {}\nRoot field: {}\nRoot type: {}\nParser: tagged_columns\nColumn: {}",
+                    root_field.name,
+                    variant_field.name,
+                    variant_field.ty,
+                    root_field.name,
+                    root_field.ty,
+                    tagged_column.name
+                ),
+            );
+            note_text
+        }
+    }
+}
+
+fn root_type_note_text(field: &FieldIr, parser: &str) -> String {
+    format!(
+        "Root field: {}\nRoot type: {}\nParser: {}",
+        field.name, field.ty, parser
+    )
+}
+
+fn append_section(text: &mut String, section: &str) {
+    if !text.is_empty() {
+        text.push_str("\n\n");
+    }
+    text.push_str(section);
 }
 
 fn field_note_text(ir: &ConfigIr, field: &FieldIr) -> Option<String> {
@@ -414,9 +535,13 @@ struct TemplateFormats {
     metadata_label: Format,
     metadata_value: Format,
     display_header: Format,
+    grouped_header: Vec<Format>,
+    grouped_tag_header: Vec<Format>,
     schema_label: Format,
     schema_value: Format,
+    grouped_schema_value: Vec<Format>,
     description: Format,
+    grouped_description: Vec<Format>,
     derived_data: Format,
 }
 
@@ -440,6 +565,31 @@ impl TemplateFormats {
                 .set_border(FormatBorder::Thin)
                 .set_align(FormatAlign::Center)
                 .set_align(FormatAlign::VerticalCenter),
+            grouped_header: group_palette()
+                .into_iter()
+                .map(|color| {
+                    Format::new()
+                        .set_bold()
+                        .set_font_color(Color::RGB(0x0F172A))
+                        .set_background_color(color)
+                        .set_border(FormatBorder::Thin)
+                        .set_align(FormatAlign::Center)
+                        .set_align(FormatAlign::VerticalCenter)
+                })
+                .collect(),
+            grouped_tag_header: group_palette()
+                .into_iter()
+                .map(|color| {
+                    Format::new()
+                        .set_bold()
+                        .set_font_color(Color::RGB(0x0F172A))
+                        .set_background_color(color)
+                        .set_border(FormatBorder::Thin)
+                        .set_align(FormatAlign::Center)
+                        .set_align(FormatAlign::VerticalCenter)
+                        .set_italic()
+                })
+                .collect(),
             schema_label: Format::new()
                 .set_bold()
                 .set_font_color(Color::RGB(0x1F2937))
@@ -450,11 +600,30 @@ impl TemplateFormats {
                 .set_background_color(Color::RGB(0xF6F8FB))
                 .set_border(FormatBorder::Thin)
                 .set_align(FormatAlign::VerticalCenter),
+            grouped_schema_value: group_palette()
+                .into_iter()
+                .map(|color| {
+                    Format::new()
+                        .set_background_color(color)
+                        .set_border(FormatBorder::Thin)
+                        .set_align(FormatAlign::VerticalCenter)
+                })
+                .collect(),
             description: Format::new()
                 .set_background_color(Color::RGB(0xFFF7DB))
                 .set_border(FormatBorder::Thin)
                 .set_text_wrap()
                 .set_align(FormatAlign::Top),
+            grouped_description: group_palette()
+                .into_iter()
+                .map(|color| {
+                    Format::new()
+                        .set_background_color(color)
+                        .set_border(FormatBorder::Thin)
+                        .set_text_wrap()
+                        .set_align(FormatAlign::Top)
+                })
+                .collect(),
             derived_data: Format::new()
                 .set_background_color(Color::RGB(0xE5E7EB))
                 .set_font_color(Color::RGB(0x6B7280))
@@ -464,8 +633,22 @@ impl TemplateFormats {
         }
     }
 
-    fn for_cell(&self, row: usize, column: usize) -> &Format {
+    fn for_cell(&self, row: usize, column: usize, column_info: Option<&TemplateColumn>) -> &Format {
         let row = row as u32;
+        if row != 0
+            && column != 0
+            && let Some(group) = column_info.and_then(|column| column.group)
+        {
+            let index = group.index % self.grouped_header.len();
+            return match row {
+                NAME_ROW if group.role == TemplateColumnGroupRole::Tag => {
+                    &self.grouped_tag_header[index]
+                }
+                NAME_ROW => &self.grouped_header[index],
+                row if row == DESC_ROW => &self.grouped_description[index],
+                _ => &self.grouped_schema_value[index],
+            };
+        }
         match row {
             0 if column.is_multiple_of(2) => &self.metadata_label,
             0 => &self.metadata_value,
@@ -484,6 +667,17 @@ impl TemplateFormats {
             &self.schema_value
         }
     }
+}
+
+fn group_palette() -> [Color; 6] {
+    [
+        Color::RGB(0xDDF7EE),
+        Color::RGB(0xDBEAFE),
+        Color::RGB(0xFCE7F3),
+        Color::RGB(0xFEF3C7),
+        Color::RGB(0xEDE9FE),
+        Color::RGB(0xE0F2FE),
+    ]
 }
 
 fn apply_sheet_layout(
@@ -678,6 +872,111 @@ mod tests {
         let note_text = field_note_text(&ir, &field).unwrap();
 
         assert!(note_text.contains("Tuple fields: kind: enum<ResourceType>, id: i32, count: i32"));
+    }
+
+    #[test]
+    fn expanded_struct_column_note_includes_root_type() {
+        let root_field = FieldIr {
+            name: "cost".to_owned(),
+            ty: TypeIr::Struct("ResourceCost".to_owned()),
+            scope: ScopeIr::default(),
+            key: false,
+            comment: None,
+            default: None,
+            range: None,
+            length: None,
+            parser: Some(sora_ir::model::ParserIr {
+                kind: "columns".to_owned(),
+                options: BTreeMap::new(),
+            }),
+            derived_from: None,
+        };
+        let struct_field = FieldIr {
+            name: "kind".to_owned(),
+            ty: TypeIr::Enum("ResourceType".to_owned()),
+            scope: ScopeIr::default(),
+            key: false,
+            comment: Some("Resource kind".to_owned()),
+            default: None,
+            range: None,
+            length: None,
+            parser: None,
+            derived_from: None,
+        };
+
+        let note_text =
+            struct_column_note_text(&empty_ir(), &root_field, &struct_field, "cost_kind");
+
+        assert!(note_text.contains("Resource kind"));
+        assert!(note_text.contains("Field: cost.kind"));
+        assert!(note_text.contains("Type: enum<ResourceType>"));
+        assert!(note_text.contains("Root field: cost"));
+        assert!(note_text.contains("Root type: struct<ResourceCost>"));
+        assert!(note_text.contains("Parser: columns"));
+    }
+
+    #[test]
+    fn expanded_tagged_column_note_includes_root_type_without_variant_comment() {
+        let root_field = FieldIr {
+            name: "value".to_owned(),
+            ty: TypeIr::Union("EventCondition".to_owned()),
+            scope: ScopeIr::default(),
+            key: false,
+            comment: None,
+            default: None,
+            range: None,
+            length: None,
+            parser: Some(sora_ir::model::ParserIr {
+                kind: "tagged_columns".to_owned(),
+                options: BTreeMap::new(),
+            }),
+            derived_from: None,
+        };
+        let variant_field = FieldIr {
+            name: "quest_id".to_owned(),
+            ty: TypeIr::I32,
+            scope: ScopeIr::default(),
+            key: false,
+            comment: None,
+            default: None,
+            range: None,
+            length: None,
+            parser: None,
+            derived_from: None,
+        };
+        let tagged_column = sora_ir::input_projection::TaggedColumn {
+            name: "quest_id".to_owned(),
+            kind: sora_ir::input_projection::TaggedColumnKind::VariantField(&variant_field),
+        };
+
+        let note_text = tagged_column_note_text(&empty_ir(), &root_field, &tagged_column);
+
+        assert!(note_text.contains("Field: value.quest_id"));
+        assert!(note_text.contains("Type: i32"));
+        assert!(note_text.contains("Root field: value"));
+        assert!(note_text.contains("Root type: union<EventCondition>"));
+        assert!(note_text.contains("Parser: tagged_columns"));
+    }
+
+    #[test]
+    fn root_type_note_targets_type_row_content() {
+        let field = FieldIr {
+            name: "cost".to_owned(),
+            ty: TypeIr::Struct("ResourceCost".to_owned()),
+            scope: ScopeIr::default(),
+            key: false,
+            comment: None,
+            default: None,
+            range: None,
+            length: None,
+            parser: None,
+            derived_from: None,
+        };
+
+        assert_eq!(
+            root_type_note_text(&field, "columns"),
+            "Root field: cost\nRoot type: struct<ResourceCost>\nParser: columns"
+        );
     }
 
     fn empty_ir() -> ConfigIr {

@@ -11,7 +11,7 @@ data class Item(
     val itemType: ItemType,
     /** Stack limit; blank cells use the default */
     val maxStack: Int,
-    /** Tuple: kind,id,count */
+    /** Struct columns: price_kind, price_id, price_count */
     val price: ResourceCost,
     /** JSON string set */
     val tags: List<String>,

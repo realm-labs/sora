@@ -742,7 +742,7 @@ parser = { kind = "tagged_columns" }
     assert!(matches!(
         validate_config_ir(&ir).unwrap_err(),
         SoraError::InvalidSchema(message)
-            if message.contains("tagged columns are only supported on table fields")
+            if message.contains("column projection parsers are only supported on table fields")
     ));
 }
 
@@ -783,6 +783,94 @@ parser = { kind = "tagged_columns" }
         validate_config_ir(&ir).unwrap_err(),
         SoraError::InvalidSchema(message)
             if message.contains("incompatible repeated variant column `action.value`")
+    ));
+}
+
+#[test]
+fn validates_struct_columns_projection() {
+    let ir = example_ir(
+        r#"
+[[structs]]
+name = "SkillEffect"
+
+[[structs.fields]]
+name = "element"
+type = "enum<ItemType>"
+
+[[structs.fields]]
+name = "power"
+type = "i32"
+
+[[tables]]
+name = "EquipmentSet"
+mode = "list"
+
+[[tables.fields]]
+name = "bonus"
+type = "struct<SkillEffect>"
+parser = { kind = "columns", prefix = "bonus_" }
+"#,
+    );
+
+    validate_config_ir(&ir).unwrap();
+}
+
+#[test]
+fn rejects_struct_columns_input_column_conflicts() {
+    let ir = example_ir(
+        r#"
+[[structs]]
+name = "SkillEffect"
+
+[[structs.fields]]
+name = "power"
+type = "i32"
+
+[[tables]]
+name = "EquipmentSet"
+mode = "list"
+
+[[tables.fields]]
+name = "power"
+type = "i32"
+
+[[tables.fields]]
+name = "bonus"
+type = "struct<SkillEffect>"
+parser = { kind = "columns", prefix = "" }
+"#,
+    );
+
+    assert!(matches!(
+        validate_config_ir(&ir).unwrap_err(),
+        SoraError::InvalidSchema(message)
+            if message.contains("maps to input column `power`")
+                && message.contains("already used")
+    ));
+}
+
+#[test]
+fn rejects_columns_outside_table_fields() {
+    let ir = example_ir(
+        r#"
+[[structs]]
+name = "SkillEffect"
+
+[[structs.fields]]
+name = "power"
+type = "i32"
+
+[[structs.fields]]
+name = "nested"
+type = "struct<SkillEffect>"
+parser = { kind = "columns" }
+"#,
+    );
+
+    assert!(matches!(
+        validate_config_ir(&ir).unwrap_err(),
+        SoraError::InvalidSchema(message)
+            if message.contains("column projection parsers are only supported on table fields")
     ));
 }
 

@@ -282,8 +282,8 @@ comment = "Stack limit; blank cells use the default"
 [[tables.fields]]
 name = "price"
 type = "struct<ResourceCost>"
-parser = { kind = "tuple" }
-comment = "Tuple: kind,id,count"
+parser = { kind = "columns", prefix = "price_" }
+comment = "Struct columns: price_kind, price_id, price_count"
 
 [[tables.fields]]
 name = "tags"

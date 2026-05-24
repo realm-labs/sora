@@ -33,7 +33,7 @@ class Item:
     item_type: ItemType
     # Stack limit; blank cells use the default
     max_stack: int
-    # Tuple: kind,id,count
+    # Struct columns: price_kind, price_id, price_count
     price: ResourceCost
     # JSON string set
     tags: list[str]

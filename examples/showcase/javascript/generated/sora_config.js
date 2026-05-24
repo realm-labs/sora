@@ -72,7 +72,7 @@ import { ComplexActionGroupTable, decodeComplexActionGroup, decodeComplexActionG
 import { ComplexActionEntryTable, decodeComplexActionEntry, decodeComplexActionEntryValue } from "./complex_action_entry.js";
 
 
-export const SORA_SCHEMA_FINGERPRINT = "3df8793f70d7fc54";
+export const SORA_SCHEMA_FINGERPRINT = "70733f887d9adc7d";
 
 export class SoraConfig {
     constructor(

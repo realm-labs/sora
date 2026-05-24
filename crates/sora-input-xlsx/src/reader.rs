@@ -13,8 +13,8 @@ use sora_input::{
     parser::{ParserRegistry, builtin_registry},
 };
 use sora_ir::{
-    input_projection::{TaggedColumnKind, tagged_columns, tagged_columns_union},
-    model::{ConfigIr, TableIr, TypeIr},
+    input_projection::{TaggedColumnKind, struct_columns, tagged_columns, tagged_columns_union},
+    model::{ConfigIr, FieldIr, TableIr, TypeIr},
 };
 
 use crate::{
@@ -191,6 +191,22 @@ fn load_xlsx_table_data_from_range(
                         values.insert(field.name.clone(), value);
                     }
                 }
+                FieldColumns::Struct(columns) => {
+                    if let Some(value) = struct_columns_value(
+                        ir,
+                        field,
+                        columns,
+                        row,
+                        TaggedRowContext {
+                            path,
+                            sheet,
+                            row: row_index + 1,
+                        },
+                        parser_registry,
+                    )? {
+                        values.insert(field.name.clone(), value);
+                    }
+                }
             }
         }
         rows.push(RowData { values });
@@ -206,6 +222,7 @@ fn load_xlsx_table_data_from_range(
 enum FieldColumns {
     Single(usize),
     Tagged(BTreeMap<String, usize>),
+    Struct(BTreeMap<String, usize>),
 }
 
 fn field_columns(
@@ -227,6 +244,14 @@ fn field_columns(
                         .map(move |column| (column.name, index))
                         .collect::<Vec<_>>()
                 })
+                .or_else(|| {
+                    struct_columns(ir, field).map(|columns| {
+                        columns
+                            .into_iter()
+                            .map(move |column| (column.name, index))
+                            .collect::<Vec<_>>()
+                    })
+                })
                 .unwrap_or_else(|| vec![(field.name.clone(), index)])
         })
         .collect::<HashMap<_, _>>();
@@ -236,6 +261,8 @@ fn field_columns(
         .map(|field| {
             if tagged_columns(ir, field).is_some() {
                 FieldColumnsBuilder::Tagged(BTreeMap::new())
+            } else if struct_columns(ir, field).is_some() {
+                FieldColumnsBuilder::Struct(BTreeMap::new())
             } else {
                 FieldColumnsBuilder::Single(None)
             }
@@ -274,6 +301,11 @@ fn field_columns(
                     return Err(duplicate_field_column(path, sheet, field_name));
                 }
             }
+            FieldColumnsBuilder::Struct(values) => {
+                if values.insert(field_name.to_owned(), column).is_some() {
+                    return Err(duplicate_field_column(path, sheet, field_name));
+                }
+            }
         }
     }
 
@@ -294,6 +326,16 @@ fn field_columns(
                 }
                 Ok(FieldColumns::Tagged(values))
             }
+            FieldColumnsBuilder::Struct(values) => {
+                let expected = struct_columns(ir, &table.fields[index])
+                    .expect("struct builder should have struct columns field");
+                for column in expected {
+                    if !values.contains_key(&column.name) {
+                        return Err(missing_field_column(path, sheet, &column.name));
+                    }
+                }
+                Ok(FieldColumns::Struct(values))
+            }
         })
         .collect()
 }
@@ -301,6 +343,7 @@ fn field_columns(
 enum FieldColumnsBuilder {
     Single(Option<usize>),
     Tagged(BTreeMap<String, usize>),
+    Struct(BTreeMap<String, usize>),
 }
 
 fn duplicate_field_column(path: &Path, sheet: &str, field_name: &str) -> SoraError {
@@ -438,6 +481,51 @@ fn tagged_columns_value(
     Ok(Some(Value::Object(values)))
 }
 
+fn struct_columns_value(
+    ir: &ConfigIr,
+    field: &FieldIr,
+    columns: &BTreeMap<String, usize>,
+    row: &[Data],
+    row_context: TaggedRowContext<'_>,
+    parser_registry: &ParserRegistry,
+) -> Result<Option<Value>> {
+    let projected = struct_columns(ir, field).unwrap_or_default();
+    let all_empty = projected.iter().all(|column| {
+        let index = columns[&column.name];
+        row.get(index).is_none_or(cell_is_empty)
+    });
+    if all_empty {
+        return Ok(matches!(field.ty, TypeIr::Optional(_)).then_some(Value::Null));
+    }
+
+    let mut values = BTreeMap::new();
+    for struct_column in projected {
+        let column_index = columns[&struct_column.name];
+        let cell = row.get(column_index).unwrap_or(&Data::Empty);
+        if cell_is_empty(cell) {
+            continue;
+        }
+        let nested_field = format!("{}.{}", field.name, struct_column.field.name);
+        let context = CellContext {
+            path: row_context.path,
+            ir,
+            location: CellLocation::Worksheet {
+                sheet: row_context.sheet,
+                row: row_context.row,
+                column: column_index + 1,
+            },
+            field: &nested_field,
+            parser: struct_column.field.parser.as_ref(),
+        };
+        values.insert(
+            struct_column.field.name.clone(),
+            cell_to_value_with_registry(cell, &struct_column.field.ty, &context, parser_registry)?,
+        );
+    }
+
+    Ok(Some(Value::Object(values)))
+}
+
 fn row_is_empty(table: &TableIr, row: &[Data], field_columns: &[FieldColumns]) -> bool {
     table
         .fields
@@ -447,6 +535,9 @@ fn row_is_empty(table: &TableIr, row: &[Data], field_columns: &[FieldColumns]) -
         .all(|(_, columns)| match columns {
             FieldColumns::Single(column) => row.get(*column).is_none_or(cell_is_empty),
             FieldColumns::Tagged(columns) => columns
+                .values()
+                .all(|column| row.get(*column).is_none_or(cell_is_empty)),
+            FieldColumns::Struct(columns) => columns
                 .values()
                 .all(|column| row.get(*column).is_none_or(cell_is_empty)),
         })
@@ -633,6 +724,33 @@ mod tests {
         let base = temp_dir();
         let xlsx_path = base.join("Reward.xlsx");
         write_workbook_rows(&ir, &ir.tables[0], &xlsx_path, &[vec!["Item,2003,4"]]);
+
+        let data = load_xlsx_config_data(&ir, &base).unwrap();
+
+        assert_eq!(
+            data.tables[0].rows[0].values["cost"],
+            Value::Object(BTreeMap::from([
+                ("count".to_owned(), Value::Integer(4)),
+                ("id".to_owned(), Value::Integer(2003)),
+                ("kind".to_owned(), Value::String("Item".to_owned())),
+            ]))
+        );
+
+        let _ = std::fs::remove_dir_all(base);
+    }
+
+    #[test]
+    fn loads_struct_columns() {
+        let ir = struct_columns_ir();
+        let base = temp_dir();
+        let xlsx_path = base.join("Reward.xlsx");
+        write_workbook_rows_with_field_columns(
+            &ir,
+            &ir.tables[0],
+            &xlsx_path,
+            &["id", "cost_kind", "cost_id", "cost_count"],
+            &[vec!["1", "Item", "2003", "4"]],
+        );
 
         let data = load_xlsx_config_data(&ir, &base).unwrap();
 
@@ -946,6 +1064,56 @@ type = "i32"
 name = "value"
 type = "union<EventCondition>"
 parser = { kind = "tagged_columns", prefix = "" }
+"#,
+        )
+        .unwrap();
+        let ir = normalize_schema(schema).unwrap();
+        validate_config_ir(&ir).unwrap();
+        ir
+    }
+
+    fn struct_columns_ir() -> ConfigIr {
+        let schema = toml::from_str(
+            r#"
+package = "game_config"
+
+[[enums]]
+name = "ResourceType"
+values = ["Item", "Gold"]
+
+[[structs]]
+name = "ResourceCost"
+
+[[structs.fields]]
+name = "kind"
+type = "enum<ResourceType>"
+
+[[structs.fields]]
+name = "id"
+type = "i32"
+
+[[structs.fields]]
+name = "count"
+type = "i32"
+
+[[tables]]
+name = "Reward"
+mode = "map"
+key = "id"
+
+[tables.source]
+format = "xlsx"
+file = "Reward.xlsx"
+sheet = "Reward"
+
+[[tables.fields]]
+name = "id"
+type = "i32"
+
+[[tables.fields]]
+name = "cost"
+type = "struct<ResourceCost>"
+parser = { kind = "columns", prefix = "cost_" }
 "#,
         )
         .unwrap();

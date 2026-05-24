@@ -76,6 +76,7 @@ These examples show what a designer would put in an Excel or CSV cell:
 | `list<i32>` | none or `split` | `1,2,3` |
 | `set<string>` | `json` | `["starter","melee"]` |
 | `struct<ResourceCost>` | `tuple` | `Gold,0,100` |
+| `struct<ResourceCost>` | `columns` | spread across `cost_kind`, `cost_id`, `cost_count` columns |
 | `map<string,i32>` | `map` | `atk,10\|hp,20` |
 | `union<EventCondition>` | `json` | `{"type":"QuestCompleted","quest_id":5002}` |
 | `optional<ref<Item.id>>` | none | empty cell or `1001` |

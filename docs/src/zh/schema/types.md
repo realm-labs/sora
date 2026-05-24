@@ -76,6 +76,7 @@ parser = { kind = "map" }
 | `list<i32>` | 无或 `split` | `1,2,3` |
 | `set<string>` | `json` | `["starter","melee"]` |
 | `struct<ResourceCost>` | `tuple` | `Gold,0,100` |
+| `struct<ResourceCost>` | `columns` | 展开到 `cost_kind`、`cost_id`、`cost_count` 多列 |
 | `map<string,i32>` | `map` | `atk,10\|hp,20` |
 | `union<EventCondition>` | `json` | `{"type":"QuestCompleted","quest_id":5002}` |
 | `optional<ref<Item.id>>` | 无 | 空 cell 或 `1001` |

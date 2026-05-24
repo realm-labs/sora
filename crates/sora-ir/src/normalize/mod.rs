@@ -6,7 +6,7 @@ use sora_schema::model::{
 };
 
 use crate::{
-    input_projection::TAGGED_COLUMNS_PARSER,
+    input_projection::{COLUMNS_PARSER, TAGGED_COLUMNS_PARSER},
     model::{
         ConfigIr, DerivedFieldIr, EnumAliasIr, EnumIr, FieldIr, IndexIr, ParserIr, ScopeIr,
         StructIr, TableIr, TableModeIr, TableSourceIr, TypeIr, UnionIr, UnionVariantIr,
@@ -229,11 +229,16 @@ fn convert_field_with_parsers(
         && field
             .parser
             .as_ref()
-            .is_some_and(|parser| parser.kind == TAGGED_COLUMNS_PARSER)
+            .is_some_and(|parser| is_projection_parser(&parser.kind))
     {
         return Err(SoraError::InvalidSchema(format!(
-            "field `{}` declares both `default` and parser `tagged_columns`",
-            field.name
+            "field `{}` declares both `default` and parser `{}`",
+            field.name,
+            field
+                .parser
+                .as_ref()
+                .map(|parser| parser.kind.as_str())
+                .unwrap_or("")
         )));
     }
     parser_registry.validate_field_parser(&field.name, &ty, field.parser.as_ref())?;
@@ -308,11 +313,16 @@ fn convert_table_field_with_parsers(
         && field
             .parser
             .as_ref()
-            .is_some_and(|parser| parser.kind == TAGGED_COLUMNS_PARSER)
+            .is_some_and(|parser| is_projection_parser(&parser.kind))
     {
         return Err(SoraError::InvalidSchema(format!(
-            "field `{}` declares both `default` and parser `tagged_columns`",
-            field.name
+            "field `{}` declares both `default` and parser `{}`",
+            field.name,
+            field
+                .parser
+                .as_ref()
+                .map(|parser| parser.kind.as_str())
+                .unwrap_or("")
         )));
     }
     parser_registry.validate_field_parser(&field.name, &ty, field.parser.as_ref())?;
@@ -407,6 +417,10 @@ fn validate_length_constraint(
             "field `{field_name}` declares `length` but type `{ty}` is not string, list, or array"
         ))),
     }
+}
+
+fn is_projection_parser(parser: &str) -> bool {
+    matches!(parser, TAGGED_COLUMNS_PARSER | COLUMNS_PARSER)
 }
 
 #[cfg(test)]

@@ -37,7 +37,7 @@ local ComplexRuleCondition = require("generated.complex_rule_condition")
 local ComplexActionGroup = require("generated.complex_action_group")
 local ComplexActionEntry = require("generated.complex_action_entry")
 
-local SORA_SCHEMA_FINGERPRINT = "3df8793f70d7fc54"
+local SORA_SCHEMA_FINGERPRINT = "70733f887d9adc7d"
 
 ---@class SoraConfig
 ---@field private _item ItemTable

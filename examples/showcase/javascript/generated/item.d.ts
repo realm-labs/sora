@@ -16,7 +16,7 @@ export interface Item {
     itemType: ItemType;
     /** Stack limit; blank cells use the default */
     maxStack: number;
-    /** Tuple: kind,id,count */
+    /** Struct columns: price_kind, price_id, price_count */
     price: ResourceCost;
     /** JSON string set */
     tags: string[];

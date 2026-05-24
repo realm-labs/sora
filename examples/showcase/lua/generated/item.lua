@@ -9,7 +9,7 @@ local ResourceCost = require("generated.resource_cost")
 ---@field name string Display name
 ---@field itemType ItemType Item category
 ---@field maxStack integer Stack limit; blank cells use the default
----@field price ResourceCost Tuple: kind,id,count
+---@field price ResourceCost Struct columns: price_kind, price_id, price_count
 ---@field tags string[] JSON string set
 ---@field attributes {[string]: integer} Map pairs: key,value|key,value
 

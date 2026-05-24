@@ -1,6 +1,6 @@
 # Cell Parsers
 
-Parsers are only for cell-based inputs such as Excel and CSV. They tell Sora how to turn one cell into a typed value. String `default` values use the same parser path. TOML row data can usually use native TOML arrays and tables instead.
+Parsers are only for cell-based inputs such as Excel and CSV. Most parsers tell Sora how to turn one cell into a typed value; projection parsers such as `columns` and `tagged_columns` tell Sora how one field maps to several input columns. String `default` values use the same parser path for single-cell parsers. TOML row data can usually use native TOML arrays and tables instead.
 
 Use a parser when the default cell format is too verbose or ambiguous:
 
@@ -17,7 +17,7 @@ With that schema, the cell value is:
 starter|melee|weapon
 ```
 
-Parser options are string values. Unknown parser kinds, unsupported options, and empty option values fail during schema normalization. The exception is `tagged_columns.prefix`, where `""` is meaningful.
+Parser options are string values. Unknown parser kinds, unsupported options, and empty option values fail during schema normalization. The exception is projection prefixes such as `columns.prefix` and `tagged_columns.prefix`, where `""` is meaningful.
 
 ## Default Parsing
 
@@ -42,6 +42,7 @@ Default collection parsing is intentionally simple. Primitive items are parsed b
 | --- | --- | --- |
 | `split` | `list<T>`, `set<T>`, `array<T,N>`, or `optional` around those types | `a,b,c` |
 | `tuple` | `struct<T>` or `optional<struct<T>>` | `Gold,0,100` |
+| `columns` | `struct<T>` or `optional<struct<T>>` | Multiple columns |
 | `tuple_list` | `list<struct<T>>`, `set<struct<T>>`, `array<struct<T>,N>`, or `optional` around those types | `Gold,0,100\|Gem,0,5` |
 | `map` | `map<K,V>` or `optional<map<K,V>>` | `atk,10\|hp,20` |
 | `tagged_columns` | `union<T>` only | Multiple columns |
@@ -136,6 +137,51 @@ Cell:
 ```text
 Gold|0|100
 ```
+
+## columns
+
+Use `columns` when one struct should be edited as normal Excel or CSV columns instead of as JSON or one compact tuple cell. It is valid on `struct<T>` and `optional<struct<T>>` table fields.
+
+```toml
+[[structs]]
+name = "ResourceCost"
+
+[[structs.fields]]
+name = "kind"
+type = "enum<ResourceKind>"
+
+[[structs.fields]]
+name = "id"
+type = "i32"
+
+[[structs.fields]]
+name = "count"
+type = "i32"
+
+[[tables.fields]]
+name = "price"
+type = "struct<ResourceCost>"
+parser = { kind = "columns", prefix = "price_" }
+```
+
+CSV headers and row:
+
+```csv
+id,name,price_kind,price_id,price_count
+1,Iron Sword,Gold,0,100
+```
+
+Parsed `price` value:
+
+```json
+{"kind":"Gold","id":0,"count":100}
+```
+
+With the default prefix, a field named `price` projects columns such as `price.kind`, `price.id`, and `price.count`. Use `prefix = ""` only when the struct field names should live at the table's top level. Sora rejects projected column name conflicts.
+
+`columns` does not recursively project nested structs or unions. If a projected struct field is itself complex, either give that child field a single-cell parser such as `tuple`, `split`, `map`, or `json`, or move the nested data into a dedicated table and connect it with `ref` or a derived field. This keeps the spreadsheet narrow and keeps complex records reusable.
+
+For generated XLSX templates, columns projected from the same `columns` field share the same header color.
 
 ## tuple_list
 
@@ -249,6 +295,10 @@ The tag column contains the union variant name. Only fields for the selected var
 
 Sora rejects projected column name conflicts, for example a normal table field named `type` plus `prefix = ""` for a union whose tag is also `type`.
 
+`tagged_columns` also does not recursively project nested structs or nested unions inside variant fields. Variant fields can still use single-cell parsers such as `tuple`, `split`, `map`, or `json`. If a variant needs a large nested object or repeated nested objects, model that data as a dedicated table and reference or derive it instead of widening the union row.
+
+For generated XLSX templates, columns projected from the same `tagged_columns` field share the same header color. The tag column uses the same color group with stronger emphasis.
+
 ## json
 
 Use `json` for nested values, unions inside containers, nested collections, and any shape that needs explicit escaping.
@@ -296,6 +346,7 @@ For `map<K,V>`, JSON uses an array of pairs, not a JSON object:
 | --- | --- |
 | Flat list of primitive values | `split` |
 | One compact struct | `tuple` |
+| One struct spread across columns | `columns` |
 | Repeated compact structs | `tuple_list` |
 | Simple key/value pairs | `map` |
 | One union spread across columns | `tagged_columns` |

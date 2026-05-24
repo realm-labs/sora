@@ -1,7 +1,7 @@
 {
   "format": "json",
   "format_version": 1,
-  "schema_fingerprint": "3df8793f70d7fc54",
+  "schema_fingerprint": "70733f887d9adc7d",
   "data_fingerprint": "daa9a7aaa84a7363",
   "schema": {
     "package": "com.sora.showcase",
@@ -1111,13 +1111,15 @@
               ]
             },
             "key": false,
-            "comment": "Tuple: kind,id,count",
+            "comment": "Struct columns: price_kind, price_id, price_count",
             "default": null,
             "range": null,
             "length": null,
             "parser": {
-              "kind": "tuple",
-              "options": {}
+              "kind": "columns",
+              "options": {
+                "prefix": "price_"
+              }
             },
             "derived_from": null
           },

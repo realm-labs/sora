@@ -20,7 +20,7 @@ typedef struct sora_showcase_item {
     sora_showcase_item_type item_type;
     /* Stack limit; blank cells use the default */
     int32_t max_stack;
-    /* Tuple: kind,id,count */
+    /* Struct columns: price_kind, price_id, price_count */
     sora_showcase_resource_cost price;
     /* JSON string set */
     sora_showcase_string_array tags;

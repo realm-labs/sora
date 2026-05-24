@@ -11,7 +11,7 @@ type Item struct {
     ItemType ItemType
     // MaxStack: Stack limit; blank cells use the default
     MaxStack int32
-    // Price: Tuple: kind,id,count
+    // Price: Struct columns: price_kind, price_id, price_count
     Price ResourceCost
     // Tags: JSON string set
     Tags []string

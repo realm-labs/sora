@@ -13,7 +13,7 @@ final class Item {
   final ItemType itemType;
   /// Stack limit; blank cells use the default
   final int maxStack;
-  /// Tuple: kind,id,count
+  /// Struct columns: price_kind, price_id, price_count
   final ResourceCost price;
   /// JSON string set
   final List<String> tags;

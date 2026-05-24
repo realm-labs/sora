@@ -14,7 +14,7 @@ public final class Item {
     public final ItemType itemType;
     /** Stack limit; blank cells use the default */
     public final Integer maxStack;
-    /** Tuple: kind,id,count */
+    /** Struct columns: price_kind, price_id, price_count */
     public final ResourceCost price;
     /** JSON string set */
     public final java.util.List<String> tags;

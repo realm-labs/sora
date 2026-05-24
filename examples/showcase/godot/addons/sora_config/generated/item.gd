@@ -10,7 +10,7 @@ var name: String = ""
 var item_type: String = ""
 # Stack limit; blank cells use the default
 var max_stack: int = 0
-# Tuple: kind,id,count
+# Struct columns: price_kind, price_id, price_count
 var price: ResourceCost = null
 # JSON string set
 var tags: Array = []
