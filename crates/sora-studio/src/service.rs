@@ -12,7 +12,10 @@ use serde_json::Value;
 use sora_config_format::load_document;
 use sora_diagnostics::SoraError;
 use sora_input_schema::schema::load_project_schema_file;
-use sora_ir::{normalize::normalize_schema, validate::validate_config_ir};
+use sora_ir::{
+    normalize::normalize_schema_with_parsers, parser::ParserRegistry as SchemaParserRegistry,
+    validate::validate_config_ir,
+};
 use sora_schema::model::{CodegenSchema, EnumSchema, StructSchema, TableSchema, UnionSchema};
 
 use crate::{
@@ -28,7 +31,15 @@ use crate::{
     },
 };
 
+#[cfg(test)]
 pub(crate) fn load_studio_schema(project: &Path) -> StudioSchemaResponse {
+    load_studio_schema_with_parsers(project, &SchemaParserRegistry::builtin())
+}
+
+pub(crate) fn load_studio_schema_with_parsers(
+    project: &Path,
+    parser_registry: &SchemaParserRegistry,
+) -> StudioSchemaResponse {
     let source_index = match schema_source_index(project) {
         Ok(index) => index,
         Err(error) => {
@@ -63,7 +74,7 @@ pub(crate) fn load_studio_schema(project: &Path) -> StudioSchemaResponse {
             &source_index.source_by_node,
         )
     };
-    match normalize_schema(raw_schema.clone()) {
+    match normalize_schema_with_parsers(raw_schema.clone(), parser_registry) {
         Ok(ir) => match validate_config_ir(&ir) {
             Ok(()) => StudioSchemaResponse {
                 ok: true,
@@ -99,10 +110,19 @@ pub(crate) fn load_studio_schema(project: &Path) -> StudioSchemaResponse {
     }
 }
 
+#[cfg(test)]
 pub(crate) fn save_studio_schema(project: &Path, schema: &StudioSchema) -> StudioSchemaResponse {
+    save_studio_schema_with_parsers(project, schema, &SchemaParserRegistry::builtin())
+}
+
+pub(crate) fn save_studio_schema_with_parsers(
+    project: &Path,
+    schema: &StudioSchema,
+    parser_registry: &SchemaParserRegistry,
+) -> StudioSchemaResponse {
     match write_studio_schema(project, schema) {
         Ok(path) => {
-            let mut response = load_studio_schema(project);
+            let mut response = load_studio_schema_with_parsers(project, parser_registry);
             if response.ok {
                 let targets = path
                     .iter()
@@ -130,9 +150,18 @@ pub(crate) fn save_studio_schema(project: &Path, schema: &StudioSchema) -> Studi
     }
 }
 
+#[cfg(test)]
 pub(crate) fn preview_studio_schema(
     project: &Path,
     schema: &StudioSchema,
+) -> StudioPreviewResponse {
+    preview_studio_schema_with_parsers(project, schema, &SchemaParserRegistry::builtin())
+}
+
+pub(crate) fn preview_studio_schema_with_parsers(
+    project: &Path,
+    schema: &StudioSchema,
+    parser_registry: &SchemaParserRegistry,
 ) -> StudioPreviewResponse {
     match schema_includes_from_sources(project, &schema.sources) {
         Ok(includes) => {
@@ -154,7 +183,7 @@ pub(crate) fn preview_studio_schema(
             let next_project =
                 project_text_with_schema_files(project, &schema.package, &schema.sources)
                     .unwrap_or(current_project.clone());
-            let base_schema = load_studio_schema(project).schema;
+            let base_schema = load_studio_schema_with_parsers(project, parser_registry).schema;
             let mut diff = format!(
                 "project: {}\n{}",
                 project.display(),

@@ -7,7 +7,7 @@ use sora_data::model::{ConfigData, TableData};
 use sora_diagnostics::{Result, SoraError};
 use sora_execution::ExecutionContext;
 use sora_input::{
-    parser::builtin_registry,
+    parser::ParserRegistry,
     source::{
         DataSourceLoader, DataSourceRegistry, DataSourceRequest,
         resolve_table_source_format_with_registry,
@@ -26,34 +26,39 @@ pub struct MixedProjectInput<S> {
     data_root: PathBuf,
     default_source_format: Option<Arc<str>>,
     source_registry: Arc<DataSourceRegistry>,
+    parser_registry: Arc<ParserRegistry>,
 }
 
 impl<S> MixedProjectInput<S> {
-    pub fn new(
-        schema_input: S,
-        data_root: impl Into<PathBuf>,
-        default_source_format: Option<&str>,
-    ) -> Self {
-        Self::with_source_registry(
-            schema_input,
-            data_root,
-            default_source_format,
-            Arc::new(builtin_source_registry()),
-        )
-    }
-
     pub fn with_source_registry(
         schema_input: S,
         data_root: impl Into<PathBuf>,
         default_source_format: Option<&str>,
         source_registry: Arc<DataSourceRegistry>,
+        parser_registry: Arc<ParserRegistry>,
     ) -> Self {
         Self {
             schema_input,
             data_root: data_root.into(),
             default_source_format: default_source_format.map(Arc::from),
             source_registry,
+            parser_registry,
         }
+    }
+
+    pub fn with_parser_registry(
+        schema_input: S,
+        data_root: impl Into<PathBuf>,
+        default_source_format: Option<&str>,
+        parser_registry: Arc<ParserRegistry>,
+    ) -> Self {
+        Self::with_source_registry(
+            schema_input,
+            data_root,
+            default_source_format,
+            Arc::new(builtin_source_registry()),
+            parser_registry,
+        )
     }
 }
 
@@ -70,6 +75,7 @@ impl<S: SchemaInput> DataInput for MixedProjectInput<S> {
             &self.data_root,
             self.default_source_format.as_deref(),
             &self.source_registry,
+            &self.parser_registry,
         )
     }
 
@@ -83,6 +89,7 @@ impl<S: SchemaInput> DataInput for MixedProjectInput<S> {
             &self.data_root,
             self.default_source_format.as_deref(),
             &self.source_registry,
+            &self.parser_registry,
             execution,
         )
     }
@@ -93,12 +100,14 @@ pub fn load_mixed_config_data_with_registry(
     data_root: &Path,
     default_source_format: Option<&str>,
     source_registry: &DataSourceRegistry,
+    parser_registry: &ParserRegistry,
 ) -> Result<ConfigData> {
     load_mixed_config_data_with_context(
         ir,
         data_root,
         default_source_format,
         source_registry,
+        parser_registry,
         &ExecutionContext::default(),
     )
 }
@@ -108,6 +117,7 @@ pub fn load_mixed_config_data_with_context(
     data_root: &Path,
     default_source_format: Option<&str>,
     source_registry: &DataSourceRegistry,
+    parser_registry: &ParserRegistry,
     execution: &ExecutionContext,
 ) -> Result<ConfigData> {
     let mut tables = Vec::with_capacity(ir.tables.len());
@@ -118,6 +128,7 @@ pub fn load_mixed_config_data_with_context(
             data_root,
             default_source_format,
             source_registry,
+            parser_registry,
             execution,
         )?);
     }
@@ -130,6 +141,7 @@ fn load_mixed_table_data(
     data_root: &Path,
     default_source_format: Option<&str>,
     source_registry: &DataSourceRegistry,
+    parser_registry: &ParserRegistry,
     execution: &ExecutionContext,
 ) -> Result<TableData> {
     let source = table
@@ -151,7 +163,7 @@ fn load_mixed_table_data(
         source,
         path: &path,
         execution,
-        parser_registry: builtin_registry(),
+        parser_registry,
     })
 }
 
@@ -272,8 +284,15 @@ mod tests {
             }],
         };
 
-        let data =
-            load_mixed_config_data_with_registry(&ir, Path::new("data"), None, &registry).unwrap();
+        let parser_registry = ParserRegistry::builtin();
+        let data = load_mixed_config_data_with_registry(
+            &ir,
+            Path::new("data"),
+            None,
+            &registry,
+            &parser_registry,
+        )
+        .unwrap();
 
         assert_eq!(data.tables[0].name, "Item");
         assert_eq!(data.tables[0].rows[0].values["id"], Value::Integer(1001));

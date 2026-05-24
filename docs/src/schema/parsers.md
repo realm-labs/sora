@@ -19,6 +19,71 @@ starter|melee|weapon
 
 Parser options are string values. Unknown parser kinds, unsupported options, and empty option values fail during schema normalization. The exception is projection prefixes such as `columns.prefix` and `tagged_columns.prefix`, where `""` is meaningful.
 
+## Custom Lua Parsers
+
+Projects can load project-local Lua parser scripts from `project.toml`:
+
+```toml
+[parsers]
+scripts = ["tools/parsers.lua"]
+```
+
+Script paths are resolved relative to the project file. After that, every command that reads the project can use the custom parsers without repeating command-line flags:
+
+```bash
+sora build --project project.toml
+sora export --project project.toml --data-root data --format json --out generated/config.json
+```
+
+CLI commands can also load temporary parser scripts with the global `--parser-script` option:
+
+```bash
+sora --parser-script tools/parsers.lua build --project project.toml
+sora --parser-script tools/parsers.lua export --project project.toml --data-root data --format json --out generated/config.json
+```
+
+The option can be repeated and is appended after project-configured scripts. Custom parsers are trusted project code. Sora loads them with a limited Lua standard library and does not expose `io`, `os`, `package`, or `debug`.
+
+A parser script returns a table with `parsers`. Each parser must define `parse(cell, ctx)`. `options` is the list of supported parser options. `validate(field)` is optional and runs during schema normalization.
+
+```lua
+return {
+  parsers = {
+    duration = {
+      options = { "unit" },
+      validate = function(field)
+        if field.type ~= "i32" and field.type ~= "i64" then
+          error("duration parser requires i32 or i64")
+        end
+      end,
+      parse = function(cell, ctx)
+        local value, unit = string.match(cell.text, "^(%d+)(%a*)$")
+        if value == nil then
+          error("expected duration like 500ms or 3s")
+        end
+        unit = unit ~= "" and unit or ctx.options.unit or "ms"
+        if unit == "ms" then return tonumber(value) end
+        if unit == "s" then return tonumber(value) * 1000 end
+        error("unsupported duration unit `" .. unit .. "`")
+      end,
+    },
+  },
+}
+```
+
+Schema fields use the custom parser by name:
+
+```toml
+[[tables.fields]]
+name = "cooldown"
+type = "i32"
+parser = { kind = "duration", unit = "ms" }
+```
+
+`cell` contains `kind`, `text`, and `value` where applicable. `ctx` contains `field`, `type`, `options`, `path`, and location fields such as `row`, `column`, and `sheet` for worksheets. Lua return values map to Sora data values: `nil`, booleans, integers, floats, strings, array-like tables, and string-keyed tables.
+
+Custom Lua parsers are single-cell parsers. They do not replace projection parsers such as `columns` or `tagged_columns`, cannot read neighboring cells, and do not change schema, source loading, or generated runtime behavior.
+
 ## Default Parsing
 
 If a field has no `parser`, Sora uses type-aware default parsing:

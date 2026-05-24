@@ -31,6 +31,7 @@ Sora 还处在早期但可运行的里程碑阶段。核心模型稳定之前，
 
 - TOML、YAML、JSON 或 Lua schema 文件；
 - 来自 Excel `.xlsx`、CSV 或 TOML 的表格数据；
+- 在 `project.toml` 中配置或由 CLI 加载的自定义 Lua 单元格 parser；
 - Sora Studio，内置在 CLI 中的浏览器可视化 schema 编辑器；
 - 生成 Excel `.xlsx` 模板；
 - 归一化 IR、递归校验、默认值、引用、派生子表字段、多态联合和 secondary unique index；

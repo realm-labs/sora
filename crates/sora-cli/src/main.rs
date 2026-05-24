@@ -2,6 +2,7 @@ mod args;
 mod build;
 mod commands;
 mod init;
+mod lua_parser;
 mod report;
 mod source;
 mod studio;

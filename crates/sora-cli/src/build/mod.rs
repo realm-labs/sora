@@ -9,19 +9,19 @@ use sora_codegen::{
     generator::{CodegenRegistry, empty_options, runtime_format_name},
     options::RuntimeFormat,
 };
-use sora_execution::ExecutionContext;
 use sora_export::exporter::{ExportCompression, ExportOptions};
 use sora_input::traits::SchemaInput;
 use sora_input_schema::input::SchemaFileInput;
 use sora_schema::model::CodegenSchema;
 
 use crate::args::BuildArgs;
+use crate::commands::CliContext;
 
 mod manifest;
 
 use manifest::{BuildCodegen, BuildConfig, BuildExport, BuildManifest, ExportCompressionArg};
 
-pub fn run(args: BuildArgs, execution: &ExecutionContext) -> Result<()> {
+pub fn run(args: BuildArgs, context: &CliContext) -> Result<()> {
     let manifest = BuildManifest::load(&args.project)?;
     let build = manifest.build;
     let project_dir = args.project.parent().unwrap_or_else(|| Path::new("."));
@@ -55,7 +55,7 @@ pub fn run(args: BuildArgs, execution: &ExecutionContext) -> Result<()> {
 
     let schema = schema_input.load_schema()?;
     let codegen_options = schema.codegen.clone();
-    let ir = sora_ir::normalize::normalize_schema(schema)
+    let ir = sora_ir::normalize::normalize_schema_with_parsers(schema, &context.schema_parsers)
         .with_context(|| format!("failed to check project `{}`", args.project.display()))?;
     sora_ir::validate::validate_config_ir(&ir)
         .with_context(|| format!("failed to check project `{}`", args.project.display()))?;
@@ -63,37 +63,48 @@ pub fn run(args: BuildArgs, execution: &ExecutionContext) -> Result<()> {
 
     if let Some(path) = build.schema_lock.as_ref() {
         let path = resolve_project_path(project_dir, path);
-        sora_core::pipeline::generate_schema_lock_with_scope(&schema_input, &path, scope)
-            .with_context(|| {
-                format!(
-                    "failed to generate schema lock from `{}` into `{}`",
-                    args.project.display(),
-                    path.display()
-                )
-            })?;
+        sora_core::pipeline::generate_schema_lock_with_scope_and_parsers(
+            &schema_input,
+            &path,
+            scope,
+            &context.schema_parsers,
+        )
+        .with_context(|| {
+            format!(
+                "failed to generate schema lock from `{}` into `{}`",
+                args.project.display(),
+                path.display()
+            )
+        })?;
     }
 
     if let Some(path) = build.excel_templates.as_ref() {
         let path = resolve_project_path(project_dir, path);
-        sora_core::pipeline::generate_excel_template_with_scope(&schema_input, &path, scope)
-            .with_context(|| {
-                format!(
-                    "failed to generate Excel templates from `{}` into `{}`",
-                    args.project.display(),
-                    path.display()
-                )
-            })?;
+        sora_core::pipeline::generate_excel_template_with_scope_and_parsers(
+            &schema_input,
+            &path,
+            scope,
+            &context.schema_parsers,
+        )
+        .with_context(|| {
+            format!(
+                "failed to generate Excel templates from `{}` into `{}`",
+                args.project.display(),
+                path.display()
+            )
+        })?;
     }
 
     for item in codegen {
         let out = resolve_project_path(project_dir, &item.out);
         let item_scope = item.scope.as_deref().or(scope);
-        sora_core::pipeline::generate_code_with_scope_and_format(
+        sora_core::pipeline::generate_code_with_scope_format_and_parsers(
             &schema_input,
             &item.target,
             &out,
             FormatMode::from(item.format),
             item_scope,
+            &context.schema_parsers,
         )
         .with_context(|| {
             format!(
@@ -106,20 +117,25 @@ pub fn run(args: BuildArgs, execution: &ExecutionContext) -> Result<()> {
     }
 
     if !build.exports.is_empty() {
-        let project_input = crate::source::MixedProjectInput::new(
+        let project_input = crate::source::MixedProjectInput::with_parser_registry(
             SchemaFileInput::new(&args.project),
             &data_root,
             default_source_format.map(crate::args::SourceFormatArg::as_str),
+            std::sync::Arc::clone(&context.cell_parsers),
         );
-        let (ir, data) =
-            sora_core::pipeline::load_project_data_with_context(&project_input, execution)
-                .with_context(|| {
-                    format!(
-                        "failed to load data from `{}` for project `{}`",
-                        data_root.display(),
-                        args.project.display()
-                    )
-                })?;
+        let (ir, data) = sora_core::pipeline::load_project_data_with_context_and_parsers(
+            &project_input,
+            &context.execution,
+            &context.schema_parsers,
+            &context.cell_parsers,
+        )
+        .with_context(|| {
+            format!(
+                "failed to load data from `{}` for project `{}`",
+                data_root.display(),
+                args.project.display()
+            )
+        })?;
 
         for item in &build.exports {
             let out = resolve_project_path(project_dir, &item.out);
@@ -131,7 +147,7 @@ pub fn run(args: BuildArgs, execution: &ExecutionContext) -> Result<()> {
                 &item.format,
                 output,
                 item_scope,
-                execution,
+                &context.execution,
                 export_options(item)?,
             )
             .with_context(|| {

@@ -14,6 +14,9 @@ pub struct Cli {
     #[arg(long, global = true)]
     pub serial: bool,
 
+    #[arg(long, global = true, value_name = "PATH")]
+    pub parser_script: Vec<PathBuf>,
+
     #[command(subcommand)]
     pub command: Command,
 }

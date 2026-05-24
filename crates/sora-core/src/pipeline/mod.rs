@@ -14,7 +14,9 @@ use sora_export::{
     exporter::{ExportOptions, ExportOutput, ExportRequest, OutputKind},
     registry::ExporterRegistry,
 };
+use sora_input::parser::ParserRegistry as CellParserRegistry;
 use sora_input::traits::{ProjectInput, SchemaInput};
+use sora_ir::parser::ParserRegistry as SchemaParserRegistry;
 
 mod support;
 
@@ -27,11 +29,26 @@ pub fn load_schema_ir(input: &impl SchemaInput) -> Result<sora_ir::model::Config
     load_ir(input)
 }
 
+pub fn load_schema_ir_with_parsers(
+    input: &impl SchemaInput,
+    parser_registry: &SchemaParserRegistry,
+) -> Result<sora_ir::model::ConfigIr> {
+    support::load_ir_with_parsers(input, parser_registry)
+}
+
 pub fn load_schema_ir_with_scope(
     input: &impl SchemaInput,
     scope: Option<&str>,
 ) -> Result<sora_ir::model::ConfigIr> {
     load_ir_with_scope(input, scope)
+}
+
+pub fn load_schema_ir_with_scope_and_parsers(
+    input: &impl SchemaInput,
+    scope: Option<&str>,
+    parser_registry: &SchemaParserRegistry,
+) -> Result<sora_ir::model::ConfigIr> {
+    support::load_ir_with_scope_and_parsers(input, scope, parser_registry)
 }
 
 pub fn load_project_data_with_context(
@@ -43,13 +60,43 @@ pub fn load_project_data_with_context(
     Ok((ir, data))
 }
 
+pub fn load_project_data_with_context_and_parsers(
+    input: &impl ProjectInput,
+    execution: &ExecutionContext,
+    schema_parser_registry: &SchemaParserRegistry,
+    cell_parser_registry: &CellParserRegistry,
+) -> Result<(sora_ir::model::ConfigIr, sora_data::model::ConfigData)> {
+    let ir = support::load_ir_with_parsers(input, schema_parser_registry)?;
+    let data =
+        support::load_validated_data_with_parsers(input, &ir, execution, cell_parser_registry)?;
+    Ok((ir, data))
+}
+
 pub fn check_schema(input: &impl SchemaInput) -> Result<()> {
     let _ = load_ir(input)?;
     Ok(())
 }
 
+pub fn check_schema_with_parsers(
+    input: &impl SchemaInput,
+    parser_registry: &SchemaParserRegistry,
+) -> Result<()> {
+    let _ = support::load_ir_with_parsers(input, parser_registry)?;
+    Ok(())
+}
+
 pub fn check_schema_with_lock(input: &impl SchemaInput, lock_path: &Path) -> Result<()> {
     let ir = load_ir(input)?;
+    let lock = read_schema_lock_file(lock_path)?;
+    verify_schema_lock(&ir, &lock)
+}
+
+pub fn check_schema_with_lock_and_parsers(
+    input: &impl SchemaInput,
+    lock_path: &Path,
+    parser_registry: &SchemaParserRegistry,
+) -> Result<()> {
+    let ir = support::load_ir_with_parsers(input, parser_registry)?;
     let lock = read_schema_lock_file(lock_path)?;
     verify_schema_lock(&ir, &lock)
 }
@@ -64,6 +111,16 @@ pub fn generate_schema_lock_with_scope(
     scope: Option<&str>,
 ) -> Result<()> {
     let ir = load_ir_with_scope(input, scope)?;
+    write_schema_lock_file(&ir, path)
+}
+
+pub fn generate_schema_lock_with_scope_and_parsers(
+    input: &impl SchemaInput,
+    path: &Path,
+    scope: Option<&str>,
+    parser_registry: &SchemaParserRegistry,
+) -> Result<()> {
+    let ir = support::load_ir_with_scope_and_parsers(input, scope, parser_registry)?;
     write_schema_lock_file(&ir, path)
 }
 
@@ -98,6 +155,26 @@ pub fn generate_code_with_scope_and_format(
     )
 }
 
+pub fn generate_code_with_scope_format_and_parsers(
+    input: &impl SchemaInput,
+    target: &str,
+    out_dir: &Path,
+    format_mode: FormatMode,
+    scope: Option<&str>,
+    parser_registry: &SchemaParserRegistry,
+) -> Result<()> {
+    let registry = CodegenRegistry::with_builtin_generators();
+    generate_code_with_registry_scope_format_and_parsers(
+        input,
+        target,
+        out_dir,
+        format_mode,
+        scope,
+        &registry,
+        parser_registry,
+    )
+}
+
 pub fn generate_code_with_registry_scope_and_format(
     input: &impl SchemaInput,
     target: &str,
@@ -109,6 +186,51 @@ pub fn generate_code_with_registry_scope_and_format(
     let schema = input.load_schema()?;
     let codegen_options = schema.codegen.clone();
     let ir = validate_schema_ir(schema)?;
+    let ir = match scope {
+        Some(scope) => sora_ir::scope::filter_config_ir_by_scope(&ir, scope)?,
+        None => ir,
+    };
+    let generator = registry.get(target).ok_or_else(|| {
+        SoraError::InvalidSchema(format!(
+            "unknown codegen target `{}`; supported targets: {}",
+            target,
+            registry.supported_targets().join(", ")
+        ))
+    })?;
+    let canonical_target = registry.canonical_id(target).unwrap_or(target);
+    let empty = empty_options();
+    let options = codegen_options
+        .target_options(canonical_target)
+        .or_else(|| codegen_options.target_options(target))
+        .unwrap_or(&empty);
+    generator.generator.generate(
+        CodegenContext {
+            target: canonical_target,
+            ir: &ir,
+            options,
+        },
+        out_dir,
+    )?;
+    format_generated_code(
+        generator.display_name,
+        generator.formatter,
+        out_dir,
+        format_mode,
+    )
+}
+
+pub fn generate_code_with_registry_scope_format_and_parsers(
+    input: &impl SchemaInput,
+    target: &str,
+    out_dir: &Path,
+    format_mode: FormatMode,
+    scope: Option<&str>,
+    registry: &CodegenRegistry,
+    parser_registry: &SchemaParserRegistry,
+) -> Result<()> {
+    let schema = input.load_schema()?;
+    let codegen_options = schema.codegen.clone();
+    let ir = support::validate_schema_ir_with_parsers(schema, parser_registry)?;
     let ir = match scope {
         Some(scope) => sora_ir::scope::filter_config_ir_by_scope(&ir, scope)?,
         None => ir,
@@ -277,6 +399,34 @@ pub fn diff_data_with_scope_and_context(
     Ok(diff)
 }
 
+pub fn diff_data_with_scope_context_and_parsers(
+    left: &impl ProjectInput,
+    right: &impl ProjectInput,
+    output_path: &Path,
+    scope: Option<&str>,
+    execution: &ExecutionContext,
+    schema_parser_registry: &SchemaParserRegistry,
+    cell_parser_registry: &CellParserRegistry,
+) -> Result<ConfigDiff> {
+    let ir = support::load_ir_with_parsers(left, schema_parser_registry)?;
+    let left_data =
+        support::load_validated_data_with_parsers(left, &ir, execution, cell_parser_registry)?;
+    let right_data =
+        support::load_validated_data_with_parsers(right, &ir, execution, cell_parser_registry)?;
+    let (ir, left_data) = filter_ir_and_data_by_scope(&ir, &left_data, scope)?;
+    let right_data = match scope {
+        Some(_) => {
+            let scoped = sora_data::scope::filter_config_data_by_ir(&ir, &right_data);
+            sora_data::validate::validate_config_data(&ir, &scoped)?;
+            scoped
+        }
+        None => right_data,
+    };
+    let diff = diff_config_data(&ir, &left_data, &right_data)?;
+    write_json_file(output_path, &diff)?;
+    Ok(diff)
+}
+
 pub fn generate_excel_template(input: &impl SchemaInput, out_dir: &Path) -> Result<()> {
     generate_excel_template_with_scope(input, out_dir, None)
 }
@@ -290,6 +440,16 @@ pub fn generate_excel_template_with_scope(
     ExcelTemplateGenerator.generate(&ir, out_dir)
 }
 
+pub fn generate_excel_template_with_scope_and_parsers(
+    input: &impl SchemaInput,
+    out_dir: &Path,
+    scope: Option<&str>,
+    parser_registry: &SchemaParserRegistry,
+) -> Result<()> {
+    let ir = support::load_ir_with_scope_and_parsers(input, scope, parser_registry)?;
+    ExcelTemplateGenerator.generate(&ir, out_dir)
+}
+
 pub fn preview_excel_sync(
     input: &impl SchemaInput,
     data_root: &Path,
@@ -299,12 +459,32 @@ pub fn preview_excel_sync(
     ExcelTemplateSync.preview(&ir, data_root)
 }
 
+pub fn preview_excel_sync_with_parsers(
+    input: &impl SchemaInput,
+    data_root: &Path,
+    scope: Option<&str>,
+    parser_registry: &SchemaParserRegistry,
+) -> Result<ExcelSyncReport> {
+    let ir = support::load_ir_with_scope_and_parsers(input, scope, parser_registry)?;
+    ExcelTemplateSync.preview(&ir, data_root)
+}
+
 pub fn write_excel_sync(
     input: &impl SchemaInput,
     data_root: &Path,
     scope: Option<&str>,
 ) -> Result<ExcelSyncReport> {
     let ir = load_ir_with_scope(input, scope)?;
+    ExcelTemplateSync.write(&ir, data_root)
+}
+
+pub fn write_excel_sync_with_parsers(
+    input: &impl SchemaInput,
+    data_root: &Path,
+    scope: Option<&str>,
+    parser_registry: &SchemaParserRegistry,
+) -> Result<ExcelSyncReport> {
+    let ir = support::load_ir_with_scope_and_parsers(input, scope, parser_registry)?;
     ExcelTemplateSync.write(&ir, data_root)
 }
 

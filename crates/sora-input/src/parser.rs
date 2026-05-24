@@ -12,7 +12,7 @@ use sora_ir::model::TypeIr;
 use crate::cell::{CellContext, CellValue};
 
 pub trait CellParser: Send + Sync {
-    fn kind(&self) -> &'static str;
+    fn kind(&self) -> &str;
 
     fn parse(
         &self,
@@ -47,6 +47,10 @@ impl ParserRegistry {
     pub fn register(&mut self, parser: impl CellParser + 'static) {
         self.parsers
             .insert(parser.kind().to_owned(), Box::new(parser));
+    }
+
+    pub fn contains(&self, kind: &str) -> bool {
+        self.parsers.contains_key(kind)
     }
 
     pub fn parse_cell(
@@ -87,7 +91,7 @@ pub fn builtin_registry() -> &'static ParserRegistry {
 struct SplitParser;
 
 impl CellParser for SplitParser {
-    fn kind(&self) -> &'static str {
+    fn kind(&self) -> &str {
         "split"
     }
 
@@ -105,7 +109,7 @@ impl CellParser for SplitParser {
 struct TupleParser;
 
 impl CellParser for TupleParser {
-    fn kind(&self) -> &'static str {
+    fn kind(&self) -> &str {
         "tuple"
     }
 
@@ -125,7 +129,7 @@ impl CellParser for TupleParser {
 struct TupleListParser;
 
 impl CellParser for TupleListParser {
-    fn kind(&self) -> &'static str {
+    fn kind(&self) -> &str {
         "tuple_list"
     }
 
@@ -153,7 +157,7 @@ impl CellParser for TupleListParser {
 struct MapParser;
 
 impl CellParser for MapParser {
-    fn kind(&self) -> &'static str {
+    fn kind(&self) -> &str {
         "map"
     }
 
@@ -171,7 +175,7 @@ impl CellParser for MapParser {
 struct JsonParser;
 
 impl CellParser for JsonParser {
-    fn kind(&self) -> &'static str {
+    fn kind(&self) -> &str {
         "json"
     }
 
@@ -693,7 +697,7 @@ mod tests {
     struct UpperParser;
 
     impl CellParser for UpperParser {
-        fn kind(&self) -> &'static str {
+        fn kind(&self) -> &str {
             "upper"
         }
 

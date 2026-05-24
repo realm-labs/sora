@@ -17,6 +17,7 @@ path = "src/main.rs"
 [dependencies]
 anyhow.workspace = true
 clap.workspace = true
+mlua.workspace = true
 serde.workspace = true
 sora-codegen.workspace = true
 sora-config-format.workspace = true

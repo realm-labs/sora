@@ -385,7 +385,10 @@ mod tests {
     use super::*;
     use crate::{args::BuildArgs, build};
     use sora_execution::ExecutionContext;
-    use std::sync::atomic::{AtomicU64, Ordering};
+    use std::sync::{
+        Arc,
+        atomic::{AtomicU64, Ordering},
+    };
 
     static TEMP_COUNTER: AtomicU64 = AtomicU64::new(0);
 
@@ -413,7 +416,7 @@ mod tests {
                 target: Vec::new(),
                 clean: false,
             },
-            &ExecutionContext::default(),
+            &test_context(),
         )
         .unwrap();
 
@@ -476,5 +479,13 @@ mod tests {
     fn temp_dir() -> PathBuf {
         let unique = TEMP_COUNTER.fetch_add(1, Ordering::Relaxed);
         std::env::temp_dir().join(format!("sora-init-test-{}-{unique}", std::process::id()))
+    }
+
+    fn test_context() -> crate::commands::CliContext {
+        crate::commands::CliContext {
+            execution: ExecutionContext::default(),
+            schema_parsers: Arc::new(sora_ir::parser::ParserRegistry::builtin()),
+            cell_parsers: Arc::new(sora_input::parser::ParserRegistry::builtin()),
+        }
     }
 }

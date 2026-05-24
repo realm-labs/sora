@@ -6,6 +6,9 @@ The project manifest can be used as a simple schema root or as a full build desc
 package = "game_config"
 includes = ["schema/items.toml"]
 
+[parsers]
+scripts = ["tools/parsers.lua"]
+
 [build]
 default_source_format = "xlsx"
 data_root = "data"
@@ -29,6 +32,8 @@ sora build --project project.toml
 ```
 
 `data_root` and `excel_templates` serve different purposes. `data_root` is the input directory used by export and build, so it contains edited table rows. `excel_templates` is an output directory for generated workbook templates, so it can be deleted and regenerated after schema changes. Do not point `excel_templates` at your edited data directory unless replacing those workbooks is intentional.
+
+`[parsers].scripts` lists custom Lua cell parser scripts used by CLI commands that read the project. Paths are relative to the project file. See [Cell Parsers](schema/parsers.md#custom-lua-parsers) for the script API.
 
 Run one configured codegen target:
 

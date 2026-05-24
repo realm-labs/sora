@@ -1,5 +1,9 @@
 use super::*;
-use std::sync::atomic::{AtomicU64, Ordering};
+use sora_execution::ExecutionContext;
+use std::sync::{
+    Arc,
+    atomic::{AtomicU64, Ordering},
+};
 
 static TEMP_COUNTER: AtomicU64 = AtomicU64::new(0);
 
@@ -17,7 +21,7 @@ fn build_command_generates_configured_outputs() {
             target: Vec::new(),
             clean: false,
         },
-        &ExecutionContext::default(),
+        &test_context(),
     )
     .unwrap();
 
@@ -70,7 +74,7 @@ fn build_command_can_filter_codegen_targets() {
             target: vec!["rs".to_owned()],
             clean: true,
         },
-        &ExecutionContext::default(),
+        &test_context(),
     )
     .unwrap();
 
@@ -130,7 +134,7 @@ tables:
             target: Vec::new(),
             clean: false,
         },
-        &ExecutionContext::default(),
+        &test_context(),
     )
     .unwrap();
 
@@ -193,7 +197,7 @@ fn build_command_accepts_json_project_manifest() {
             target: Vec::new(),
             clean: false,
         },
-        &ExecutionContext::default(),
+        &test_context(),
     )
     .unwrap();
 
@@ -256,7 +260,7 @@ return {
             target: Vec::new(),
             clean: false,
         },
-        &ExecutionContext::default(),
+        &test_context(),
     )
     .unwrap();
 
@@ -289,7 +293,7 @@ out = "generated/config.sora"
             target: vec!["rust".to_owned()],
             clean: false,
         },
-        &ExecutionContext::default(),
+        &test_context(),
     )
     .unwrap_err();
 
@@ -323,7 +327,7 @@ runtime_format = "sora""#,
             target: vec!["dart".to_owned()],
             clean: false,
         },
-        &ExecutionContext::default(),
+        &test_context(),
     )
     .unwrap_err();
 
@@ -489,4 +493,12 @@ item_type = "Weapon"
 fn temp_dir() -> PathBuf {
     let unique = TEMP_COUNTER.fetch_add(1, Ordering::Relaxed);
     std::env::temp_dir().join(format!("sora-cli-build-test-{unique}"))
+}
+
+fn test_context() -> crate::commands::CliContext {
+    crate::commands::CliContext {
+        execution: ExecutionContext::default(),
+        schema_parsers: Arc::new(sora_ir::parser::ParserRegistry::builtin()),
+        cell_parsers: Arc::new(sora_input::parser::ParserRegistry::builtin()),
+    }
 }

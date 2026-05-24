@@ -6,7 +6,7 @@ use sora_schema::model::ParserSchema;
 use crate::model::TypeIr;
 
 pub trait ParserValidator: Send + Sync {
-    fn kind(&self) -> &'static str;
+    fn kind(&self) -> &str;
 
     fn validate(&self, field_name: &str, ty: &TypeIr, parser: &ParserSchema) -> Result<()>;
 }
@@ -39,6 +39,10 @@ impl ParserRegistry {
             .insert(validator.kind().to_owned(), Box::new(validator));
     }
 
+    pub fn contains(&self, kind: &str) -> bool {
+        self.validators.contains_key(kind)
+    }
+
     pub fn validate_field_parser(
         &self,
         field_name: &str,
@@ -68,7 +72,7 @@ impl Default for ParserRegistry {
 struct SplitParserValidator;
 
 impl ParserValidator for SplitParserValidator {
-    fn kind(&self) -> &'static str {
+    fn kind(&self) -> &str {
         "split"
     }
 
@@ -81,7 +85,7 @@ impl ParserValidator for SplitParserValidator {
 struct TupleParserValidator;
 
 impl ParserValidator for TupleParserValidator {
-    fn kind(&self) -> &'static str {
+    fn kind(&self) -> &str {
         "tuple"
     }
 
@@ -94,7 +98,7 @@ impl ParserValidator for TupleParserValidator {
 struct TupleListParserValidator;
 
 impl ParserValidator for TupleListParserValidator {
-    fn kind(&self) -> &'static str {
+    fn kind(&self) -> &str {
         "tuple_list"
     }
 
@@ -112,7 +116,7 @@ impl ParserValidator for TupleListParserValidator {
 struct MapParserValidator;
 
 impl ParserValidator for MapParserValidator {
-    fn kind(&self) -> &'static str {
+    fn kind(&self) -> &str {
         "map"
     }
 
@@ -130,7 +134,7 @@ impl ParserValidator for MapParserValidator {
 struct JsonParserValidator;
 
 impl ParserValidator for JsonParserValidator {
-    fn kind(&self) -> &'static str {
+    fn kind(&self) -> &str {
         "json"
     }
 
@@ -144,7 +148,7 @@ struct TaggedColumnsParserValidator;
 struct ColumnsParserValidator;
 
 impl ParserValidator for ColumnsParserValidator {
-    fn kind(&self) -> &'static str {
+    fn kind(&self) -> &str {
         "columns"
     }
 
@@ -155,7 +159,7 @@ impl ParserValidator for ColumnsParserValidator {
 }
 
 impl ParserValidator for TaggedColumnsParserValidator {
-    fn kind(&self) -> &'static str {
+    fn kind(&self) -> &str {
         "tagged_columns"
     }
 
@@ -271,7 +275,7 @@ mod tests {
     struct DslParserValidator;
 
     impl ParserValidator for DslParserValidator {
-        fn kind(&self) -> &'static str {
+        fn kind(&self) -> &str {
             "dsl"
         }
 

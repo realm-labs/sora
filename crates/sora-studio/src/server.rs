@@ -15,20 +15,25 @@ use axum::{
 };
 use include_dir::{Dir, include_dir};
 use serde::Serialize;
+use sora_ir::parser::ParserRegistry as SchemaParserRegistry;
 use tower_http::cors::CorsLayer;
 
 use crate::{
     model::{StudioPreviewResponse, StudioSchema, StudioSchemaResponse},
-    service::{load_studio_schema, preview_studio_schema, save_studio_schema},
+    service::{
+        load_studio_schema_with_parsers, preview_studio_schema_with_parsers,
+        save_studio_schema_with_parsers,
+    },
 };
 
 static STUDIO_DIST: Dir<'_> = include_dir!("$CARGO_MANIFEST_DIR/dist");
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct StudioOptions {
     pub project: PathBuf,
     pub host: IpAddr,
     pub port: u16,
+    pub schema_parser_registry: Arc<SchemaParserRegistry>,
 }
 
 impl StudioOptions {
@@ -37,6 +42,7 @@ impl StudioOptions {
             project,
             host: IpAddr::V4(Ipv4Addr::LOCALHOST),
             port,
+            schema_parser_registry: Arc::new(SchemaParserRegistry::builtin()),
         }
     }
 }
@@ -51,6 +57,7 @@ pub async fn run(options: StudioOptions) -> Result<()> {
     let project = options.project.clone();
     let state = StudioState {
         project: Arc::new(project.clone()),
+        schema_parser_registry: options.schema_parser_registry,
     };
     let app = Router::new()
         .route("/api/health", get(health))
@@ -74,9 +81,10 @@ pub async fn run(options: StudioOptions) -> Result<()> {
         .context("studio server stopped unexpectedly")
 }
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 struct StudioState {
     project: Arc<PathBuf>,
+    schema_parser_registry: Arc<SchemaParserRegistry>,
 }
 
 async fn health() -> Json<HealthResponse> {
@@ -84,21 +92,32 @@ async fn health() -> Json<HealthResponse> {
 }
 
 async fn schema(State(state): State<StudioState>) -> Json<StudioSchemaResponse> {
-    Json(load_studio_schema(&state.project))
+    Json(load_studio_schema_with_parsers(
+        &state.project,
+        &state.schema_parser_registry,
+    ))
 }
 
 async fn save_schema(
     State(state): State<StudioState>,
     Json(schema): Json<StudioSchema>,
 ) -> Json<StudioSchemaResponse> {
-    Json(save_studio_schema(&state.project, &schema))
+    Json(save_studio_schema_with_parsers(
+        &state.project,
+        &schema,
+        &state.schema_parser_registry,
+    ))
 }
 
 async fn preview_schema(
     State(state): State<StudioState>,
     Json(schema): Json<StudioSchema>,
 ) -> Json<StudioPreviewResponse> {
-    Json(preview_studio_schema(&state.project, &schema))
+    Json(preview_studio_schema_with_parsers(
+        &state.project,
+        &schema,
+        &state.schema_parser_registry,
+    ))
 }
 
 async fn studio_index() -> Response {

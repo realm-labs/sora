@@ -6,6 +6,9 @@
 package = "game_config"
 includes = ["schema/items.toml"]
 
+[parsers]
+scripts = ["tools/parsers.lua"]
+
 [build]
 default_source_format = "xlsx"
 data_root = "data"
@@ -29,6 +32,8 @@ sora build --project project.toml
 ```
 
 `data_root` 和 `excel_templates` 的用途不同。`data_root` 是 export 和 build 读取的输入目录，里面放已经填写过行数据的文件。`excel_templates` 是生成 workbook 模板的输出目录，schema 变更后可以删除并重新生成。不要把 `excel_templates` 指向已经编辑过的数据目录，除非你明确想替换那些 workbook。
+
+`[parsers].scripts` 列出 CLI 读取该 project 时使用的自定义 Lua 单元格 parser 脚本。路径相对 project 文件所在目录。脚本 API 见[单元格 Parser](schema/parsers.md#自定义-lua-parser)。
 
 只运行一个配置好的 codegen target：
 

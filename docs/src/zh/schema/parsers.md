@@ -19,6 +19,71 @@ starter|melee|weapon
 
 Parser option 都是字符串。未知 parser、当前 parser 不支持的 option、空 option value 都会在 schema normalization 阶段报错。例外是 `columns.prefix`、`tagged_columns.prefix` 这类投影前缀，`""` 有明确含义。
 
+## 自定义 Lua Parser
+
+项目可以在 `project.toml` 里加载项目内的 Lua parser 脚本：
+
+```toml
+[parsers]
+scripts = ["tools/parsers.lua"]
+```
+
+脚本路径按 project 文件所在目录解析。之后所有读取该 project 的命令都能使用这些自定义 parser，不需要反复写命令行参数：
+
+```bash
+sora build --project project.toml
+sora export --project project.toml --data-root data --format json --out generated/config.json
+```
+
+CLI 命令也可以通过全局 `--parser-script` 临时追加 parser 脚本：
+
+```bash
+sora --parser-script tools/parsers.lua build --project project.toml
+sora --parser-script tools/parsers.lua export --project project.toml --data-root data --format json --out generated/config.json
+```
+
+这个参数可以重复传，并追加在 project 配置的脚本之后。自定义 parser 属于项目可信代码。Sora 会用受限 Lua 标准库加载脚本，不暴露 `io`、`os`、`package` 或 `debug`。
+
+Parser 脚本返回一个带 `parsers` 的 table。每个 parser 必须定义 `parse(cell, ctx)`。`options` 是支持的 parser option 列表。`validate(field)` 可选，会在 schema normalization 阶段执行。
+
+```lua
+return {
+  parsers = {
+    duration = {
+      options = { "unit" },
+      validate = function(field)
+        if field.type ~= "i32" and field.type ~= "i64" then
+          error("duration parser requires i32 or i64")
+        end
+      end,
+      parse = function(cell, ctx)
+        local value, unit = string.match(cell.text, "^(%d+)(%a*)$")
+        if value == nil then
+          error("expected duration like 500ms or 3s")
+        end
+        unit = unit ~= "" and unit or ctx.options.unit or "ms"
+        if unit == "ms" then return tonumber(value) end
+        if unit == "s" then return tonumber(value) * 1000 end
+        error("unsupported duration unit `" .. unit .. "`")
+      end,
+    },
+  },
+}
+```
+
+Schema 字段按名字使用自定义 parser：
+
+```toml
+[[tables.fields]]
+name = "cooldown"
+type = "i32"
+parser = { kind = "duration", unit = "ms" }
+```
+
+`cell` 包含 `kind`、`text`，以及适用时的 `value`。`ctx` 包含 `field`、`type`、`options`、`path`，以及 `row`、`column`、worksheet 的 `sheet` 等位置信息。Lua 返回值会映射成 Sora 数据值：`nil`、bool、integer、float、string、array-like table 和 string-keyed table。
+
+自定义 Lua parser 是单 cell parser。它不会替代 `columns`、`tagged_columns` 这类投影 parser，不能读取相邻 cell，也不会改变 schema、source loading 或生成 runtime 的行为。
+
 ## 默认解析
 
 字段没有声明 `parser` 时，Sora 按字段类型做默认解析：
