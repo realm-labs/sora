@@ -60,8 +60,10 @@ Sora 适合游戏配置和类似的数据密集型项目：
 
 项目仍处于早期阶段，公共 API 可能继续调整。设计目标是让核心 schema 和 IR 独立于具体语言后端，方便下游用户增加生成器或导出器，而不用 patch 核心管线。
 
+需要稳定输出的项目应该固定 `sora` CLI 版本。只有真实的生成 runtime 不兼容时，Sora 才会升级 runtime/export format version；当前不会用 edition flag 保留旧 schema 语义。见[版本与兼容性](versioning.md)。
+
 ## 推荐阅读顺序
 
-先读[快速开始](quick-start.md)，再读 [Sora Studio](studio.md)、[第一份配置](tutorial/first-config.md)和[Excel 工作流](tutorial/excel-workflow.md)。之后最常用的参考页是[类型](schema/types.md)、[表](schema/tables.md)、[单元格 Parser](schema/parsers.md)、[引用和派生字段](schema/references.md)。
+先读[快速开始](quick-start.md)，再读 [Sora Studio](studio.md)、[第一份配置](tutorial/first-config.md)和[Excel 工作流](tutorial/excel-workflow.md)。之后最常用的参考页是[类型](schema/types.md)、[表](schema/tables.md)、[单元格 Parser](schema/parsers.md)、[引用和派生字段](schema/references.md)和[版本与兼容性](versioning.md)。
 
 设计说明和扩展页面适合已经理解基本构建流程之后再读。

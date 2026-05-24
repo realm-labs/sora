@@ -60,8 +60,10 @@ Sora is intended for game configuration and similar data-heavy applications wher
 
 The project is still early, so the public API can change. The design goal is to keep the core schema and IR independent from individual language backends, so downstream users can add generators or exporters without patching the core pipeline.
 
+Projects that need stable output should pin the `sora` CLI version. Runtime/export format versions are bumped only for actual generated-runtime incompatibility; Sora does not currently maintain old schema semantics behind edition flags. See [Versioning and Compatibility](versioning.md).
+
 ## Suggested Reading Order
 
-Start with [Quick Start](quick-start.md), then read [Sora Studio](studio.md), [First Config](tutorial/first-config.md), and [Excel Workflow](tutorial/excel-workflow.md). After that, the most useful reference pages are [Types](schema/types.md), [Tables](schema/tables.md), [Cell Parsers](schema/parsers.md), and [References and Derived Fields](schema/references.md).
+Start with [Quick Start](quick-start.md), then read [Sora Studio](studio.md), [First Config](tutorial/first-config.md), and [Excel Workflow](tutorial/excel-workflow.md). After that, the most useful reference pages are [Types](schema/types.md), [Tables](schema/tables.md), [Cell Parsers](schema/parsers.md), [References and Derived Fields](schema/references.md), and [Versioning and Compatibility](versioning.md).
 
 Design notes and extension pages are meant for readers who already understand the basic build flow.

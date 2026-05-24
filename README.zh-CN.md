@@ -25,6 +25,8 @@ Sora 用来让配置表的编辑、校验、生成和交付更简单：
 
 Sora 还处在早期但可运行的里程碑阶段。核心模型稳定之前，公开 schema 和 CLI 仍可能变化。
 
+需要稳定生成输出的项目应该固定 `sora` CLI 版本。只有真实的生成 runtime 不兼容时，Sora 才会手动升级 runtime/export format version；当前不会用 edition flag 保留旧 schema 语义。见[版本与兼容性](https://realm-labs.github.io/sora/zh/versioning.html)。
+
 当前支持：
 
 - TOML、YAML、JSON 或 Lua schema 文件；

@@ -25,6 +25,8 @@ The project deliberately avoids turning table editing into a second programming 
 
 Sora is in an early but runnable milestone. The public schema and CLI can still change while the core model settles.
 
+Projects that need stable generated output should pin the `sora` CLI version. Runtime/export format versions are bumped manually only for actual generated-runtime incompatibility; Sora does not currently keep old schema semantics behind edition flags. See [Versioning and Compatibility](https://realm-labs.github.io/sora/versioning.html).
+
 Current support includes:
 
 - schema files in TOML, YAML, JSON, or Lua;
