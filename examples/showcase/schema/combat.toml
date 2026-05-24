@@ -1,0 +1,292 @@
+[[tables]]
+name = "Skill"
+mode = "map"
+key = "id"
+
+[tables.source]
+file = "Battle.xlsx"
+sheet = "Skill"
+
+[[tables.fields]]
+name = "id"
+type = "i32"
+
+[[tables.fields]]
+name = "name"
+type = "string"
+length = [2, 32]
+
+[[tables.fields]]
+name = "element"
+type = "enum<ElementType>"
+
+[[tables.fields]]
+name = "cost"
+type = "struct<ResourceCost>"
+parser = { kind = "tuple" }
+comment = "Tuple cost, e.g. Gold,0,150"
+
+[[tables.fields]]
+name = "effect"
+type = "struct<SkillEffect>"
+comment = "JSON object with element/power/radius"
+
+[[tables.fields]]
+name = "required_level"
+type = "i32"
+default = "1"
+range = [1, 100]
+
+[[tables.fields]]
+name = "required_item"
+type = "optional<ref<Item.id>>"
+comment = "Optional item requirement"
+
+[[tables.fields]]
+name = "cast_origin"
+type = "struct<Vec3>"
+parser = { kind = "tuple" }
+[[tables]]
+name = "Character"
+mode = "map"
+key = "id"
+
+[tables.source]
+file = "Battle.xlsx"
+sheet = "Character"
+
+[[tables.fields]]
+name = "id"
+type = "i32"
+
+[[tables.fields]]
+name = "name"
+type = "string"
+length = [2, 32]
+
+[[tables.fields]]
+name = "rarity"
+type = "enum<Rarity>"
+
+[[tables.fields]]
+name = "base_level"
+type = "ref<LevelExp.level>"
+
+[[tables.fields]]
+name = "base_skill"
+type = "ref<Skill.id>"
+
+[[tables.fields]]
+name = "starter_items"
+type = "list<ref<Item.id>>"
+parser = { kind = "json" }
+length = [1, 4]
+
+[[tables.fields]]
+name = "spawn_pos"
+type = "struct<Vec3>"
+parser = { kind = "tuple" }
+[[tables]]
+name = "CharacterSkill"
+mode = "list"
+
+[tables.source]
+file = "Battle.xlsx"
+sheet = "CharacterSkill"
+
+[[tables.fields]]
+name = "character_id"
+type = "ref<Character.id>"
+
+[[tables.fields]]
+name = "skill_id"
+type = "ref<Skill.id>"
+
+[[tables.fields]]
+name = "unlock_level"
+type = "ref<LevelExp.level>"
+[[tables]]
+name = "Buff"
+mode = "map"
+key = "id"
+
+[tables.source]
+file = "Battle.xlsx"
+sheet = "Buff"
+
+[[tables.fields]]
+name = "id"
+type = "i32"
+
+[[tables.fields]]
+name = "name"
+type = "string"
+
+[[tables.fields]]
+name = "duration"
+type = "f32"
+
+[[tables.fields]]
+name = "modifiers"
+type = "list<StatModifier>"
+parser = { kind = "json" }
+length = [1, 3]
+[[tables]]
+name = "DropGroup"
+mode = "map"
+key = "id"
+
+[tables.source]
+file = "Battle.xlsx"
+sheet = "DropGroup"
+
+[[tables.fields]]
+name = "id"
+type = "i32"
+
+[[tables.fields]]
+name = "name"
+type = "string"
+[[tables]]
+name = "DropEntry"
+mode = "list"
+
+[tables.source]
+file = "Battle.xlsx"
+sheet = "DropEntry"
+
+[[tables.fields]]
+name = "group_id"
+type = "ref<DropGroup.id>"
+
+[[tables.fields]]
+name = "seq"
+type = "i32"
+
+[[tables.fields]]
+name = "item_id"
+type = "ref<Item.id>"
+
+[[tables.fields]]
+name = "count"
+type = "i32"
+range = [1, 9999]
+
+[[tables.fields]]
+name = "weight"
+type = "f32"
+scope = "server"
+[[tables]]
+name = "Monster"
+mode = "map"
+key = "id"
+
+[tables.source]
+file = "Battle.xlsx"
+sheet = "Monster"
+
+[[tables.fields]]
+name = "id"
+type = "i32"
+
+[[tables.fields]]
+name = "name"
+type = "string"
+
+[[tables.fields]]
+name = "level"
+type = "ref<LevelExp.level>"
+
+[[tables.fields]]
+name = "element"
+type = "enum<ElementType>"
+
+[[tables.fields]]
+name = "drop_group"
+type = "ref<DropGroup.id>"
+
+[[tables.fields]]
+name = "spawn_pos"
+type = "struct<Vec3>"
+parser = { kind = "tuple" }
+[[tables]]
+name = "Stage"
+mode = "map"
+key = "id"
+
+[tables.source]
+file = "Battle.xlsx"
+sheet = "Stage"
+
+[[tables.fields]]
+name = "id"
+type = "i32"
+
+[[tables.fields]]
+name = "name"
+type = "string"
+
+[[tables.fields]]
+name = "monster_ids"
+type = "list<ref<Monster.id>>"
+parser = { kind = "json" }
+length = [1, 5]
+
+[[tables.fields]]
+name = "recommended_power"
+type = "i32"
+
+[[tables.fields]]
+name = "first_clear_rewards"
+type = "list<Reward>"
+from = { table = "StageReward", parent_key = "id", child_key = "stage_id", order_by = "seq" }
+[[tables]]
+name = "StageReward"
+mode = "list"
+
+[tables.source]
+file = "Battle.xlsx"
+sheet = "StageReward"
+
+[[tables.fields]]
+name = "stage_id"
+type = "ref<Stage.id>"
+
+[[tables.fields]]
+name = "seq"
+type = "i32"
+
+[[tables.fields]]
+name = "item_id"
+type = "ref<Item.id>"
+
+[[tables.fields]]
+name = "count"
+type = "i32"
+[[tables]]
+name = "Dungeon"
+mode = "map"
+key = "id"
+
+[tables.source]
+file = "Battle.xlsx"
+sheet = "Dungeon"
+
+[[tables.fields]]
+name = "id"
+type = "i32"
+
+[[tables.fields]]
+name = "name"
+type = "string"
+
+[[tables.fields]]
+name = "stage_ids"
+type = "list<ref<Stage.id>>"
+parser = { kind = "json" }
+length = [2, 6]
+
+[[tables.fields]]
+name = "entry_cost"
+type = "struct<ResourceCost>"
+parser = { kind = "tuple" }

@@ -1,5 +1,12 @@
 package = "com.sora.showcase"
-includes = ["schema/game.toml"]
+includes = [
+    "schema/core.toml",
+    "schema/items.toml",
+    "schema/combat.toml",
+    "schema/quests.toml",
+    "schema/system.toml",
+    "schema/events.toml",
+]
 
 [build]
 default_source_format = "xlsx"

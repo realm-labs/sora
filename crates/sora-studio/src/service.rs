@@ -1,7 +1,7 @@
 use std::{
     collections::BTreeMap,
     fs,
-    path::{Path, PathBuf},
+    path::{Component, Path, PathBuf},
 };
 
 use anyhow::{Context, Result};
@@ -125,7 +125,7 @@ pub(crate) fn preview_studio_schema(
     project: &Path,
     schema: &StudioSchema,
 ) -> StudioPreviewResponse {
-    match schema_include_paths(project) {
+    match schema_includes_from_sources(project, &schema.sources) {
         Ok(includes) => {
             if let Err(error) = validate_node_sources(schema, &includes) {
                 return StudioPreviewResponse {
@@ -142,8 +142,9 @@ pub(crate) fn preview_studio_schema(
                 };
             }
             let current_project = fs::read_to_string(project).unwrap_or_default();
-            let next_project = project_text_with_package(project, &schema.package)
-                .unwrap_or(current_project.clone());
+            let next_project =
+                project_text_with_schema_files(project, &schema.package, &schema.sources)
+                    .unwrap_or(current_project.clone());
             let base_schema = load_studio_schema(project).schema;
             let mut diff = format!(
                 "project: {}\n{}",
@@ -293,9 +294,9 @@ fn schema_source_index(project: &Path) -> Result<SchemaSourceIndex> {
 }
 
 pub(crate) fn write_studio_schema(project: &Path, schema: &StudioSchema) -> Result<Vec<PathBuf>> {
-    let includes = schema_include_paths(project)?;
+    let includes = schema_includes_from_sources(project, &schema.sources)?;
     validate_node_sources(schema, &includes)?;
-    write_project_package(project, &schema.package)?;
+    write_project_settings(project, &schema.package, &schema.sources)?;
     let mut written = Vec::new();
     for include in includes {
         let current_include = fs::read_to_string(&include.path).unwrap_or_default();
@@ -303,6 +304,14 @@ pub(crate) fn write_studio_schema(project: &Path, schema: &StudioSchema) -> Resu
             &schema_for_source(schema, &include.source),
             &current_include,
         );
+        if let Some(parent) = include.path.parent() {
+            fs::create_dir_all(parent).with_context(|| {
+                format!(
+                    "failed to create schema include directory `{}`",
+                    parent.display()
+                )
+            })?;
+        }
         fs::write(&include.path, content).with_context(|| {
             format!(
                 "failed to write schema include `{}`",
@@ -312,6 +321,63 @@ pub(crate) fn write_studio_schema(project: &Path, schema: &StudioSchema) -> Resu
         written.push(include.path);
     }
     Ok(written)
+}
+
+fn schema_includes_from_sources(project: &Path, sources: &[String]) -> Result<Vec<SchemaInclude>> {
+    validate_schema_sources(sources)?;
+    let base_dir = project.parent().unwrap_or_else(|| Path::new("."));
+    sources
+        .iter()
+        .map(|source| {
+            let path = base_dir.join(source);
+            ensure_toml_path(&path, "schema include")?;
+            Ok(SchemaInclude {
+                source: source.clone(),
+                path,
+            })
+        })
+        .collect()
+}
+
+fn validate_schema_sources(sources: &[String]) -> Result<()> {
+    if sources.is_empty() {
+        anyhow::bail!("Studio project must declare at least one TOML include");
+    }
+    let mut seen = BTreeMap::<&str, usize>::new();
+    for source in sources {
+        let clean = source.trim();
+        if clean.is_empty() {
+            anyhow::bail!("schema include path cannot be empty");
+        }
+        if clean != source {
+            anyhow::bail!("schema include path `{source}` must not contain surrounding whitespace");
+        }
+        let path = Path::new(source);
+        if path.is_absolute() {
+            anyhow::bail!("schema include path `{source}` must be relative");
+        }
+        if path.extension().and_then(|value| value.to_str()) != Some("toml") {
+            anyhow::bail!("schema include path `{source}` must end with .toml");
+        }
+        for component in path.components() {
+            if matches!(
+                component,
+                Component::CurDir
+                    | Component::ParentDir
+                    | Component::RootDir
+                    | Component::Prefix(_)
+            ) {
+                anyhow::bail!("schema include path `{source}` must be a plain relative path");
+            }
+        }
+        if let Some(first_index) = seen.insert(clean, seen.len()) {
+            anyhow::bail!(
+                "schema include path `{source}` duplicates include at index {}",
+                first_index + 1
+            );
+        }
+    }
+    Ok(())
 }
 
 fn validate_node_sources(schema: &StudioSchema, includes: &[SchemaInclude]) -> Result<()> {
@@ -380,13 +446,18 @@ fn schema_for_source(schema: &StudioSchema, source: &str) -> StudioSchema {
     }
 }
 
-fn write_project_package(project: &Path, package: &str) -> Result<()> {
-    let content = project_text_with_package(project, package)?;
+fn write_project_settings(project: &Path, package: &str, sources: &[String]) -> Result<()> {
+    let content = project_text_with_schema_files(project, package, sources)?;
     fs::write(project, content)
         .with_context(|| format!("failed to write project file `{}`", project.display()))
 }
 
-pub(crate) fn project_text_with_package(project: &Path, package: &str) -> Result<String> {
+pub(crate) fn project_text_with_schema_files(
+    project: &Path,
+    package: &str,
+    sources: &[String],
+) -> Result<String> {
+    validate_schema_sources(sources)?;
     let project_text = fs::read_to_string(project)
         .with_context(|| format!("failed to read project file `{}`", project.display()))?;
     let mut project_doc = project_text
@@ -395,22 +466,31 @@ pub(crate) fn project_text_with_package(project: &Path, package: &str) -> Result
     let table = project_doc
         .as_table_mut()
         .context("project TOML root must be a table")?;
-    if table.get("package").and_then(toml::Value::as_str) == Some(package) {
+    if table.get("package").and_then(toml::Value::as_str) == Some(package)
+        && table
+            .get("includes")
+            .and_then(toml_array_strings)
+            .is_some_and(|current| current == sources)
+    {
         return Ok(project_text);
     }
     table.insert(
         "package".to_owned(),
         toml::Value::String(package.to_owned()),
     );
-    if let Some(content) = replace_root_package_line(&project_text, package) {
-        return Ok(content);
-    }
-    let mut package_line = String::new();
-    package_line.push_str("package = ");
-    push_quoted(&mut package_line, package);
-    package_line.push('\n');
-    package_line.push_str(&project_text);
-    Ok(package_line)
+    table.insert(
+        "includes".to_owned(),
+        toml::Value::Array(
+            sources
+                .iter()
+                .map(|source| toml::Value::String(source.clone()))
+                .collect(),
+        ),
+    );
+    let content = replace_root_package_line(&project_text, package)
+        .unwrap_or_else(|| prepend_root_package_line(&project_text, package));
+    Ok(replace_root_includes_line(&content, sources)
+        .unwrap_or_else(|| insert_root_includes_line(&content, sources)))
 }
 
 fn replace_root_package_line(project_text: &str, package: &str) -> Option<String> {
@@ -449,6 +529,91 @@ fn root_package_assignment(line: &str) -> bool {
     rest.trim_start().starts_with('=')
 }
 
+fn replace_root_includes_line(project_text: &str, sources: &[String]) -> Option<String> {
+    replace_root_line(
+        project_text,
+        root_includes_assignment,
+        &includes_line(sources),
+    )
+}
+
+fn replace_root_line(
+    project_text: &str,
+    matcher: impl Fn(&str) -> bool,
+    replacement: &str,
+) -> Option<String> {
+    let mut changed = false;
+    let mut out = String::with_capacity(project_text.len() + replacement.len());
+    for line in project_text.split_inclusive('\n') {
+        let newline_len = if line.ends_with("\r\n") {
+            2
+        } else if line.ends_with('\n') {
+            1
+        } else {
+            0
+        };
+        let (body, newline) = line.split_at(line.len() - newline_len);
+        let indent_len = body.len() - body.trim_start().len();
+        let trimmed = &body[indent_len..];
+        if !changed && matcher(trimmed) {
+            out.push_str(&body[..indent_len]);
+            out.push_str(replacement);
+            out.push_str(newline);
+            changed = true;
+        } else {
+            out.push_str(line);
+        }
+    }
+    changed.then_some(out)
+}
+
+fn prepend_root_package_line(project_text: &str, package: &str) -> String {
+    let mut package_line = String::new();
+    package_line.push_str("package = ");
+    push_quoted(&mut package_line, package);
+    package_line.push('\n');
+    package_line.push_str(project_text);
+    package_line
+}
+
+fn insert_root_includes_line(project_text: &str, sources: &[String]) -> String {
+    let mut out =
+        String::with_capacity(project_text.len() + sources.iter().map(String::len).sum::<usize>());
+    let mut inserted = false;
+    for line in project_text.split_inclusive('\n') {
+        out.push_str(line);
+        if !inserted && root_package_assignment(line.trim()) {
+            out.push_str(&includes_line(sources));
+            out.push('\n');
+            inserted = true;
+        }
+    }
+    if !inserted {
+        out.push_str(&includes_line(sources));
+        out.push('\n');
+    }
+    out
+}
+
+fn root_includes_assignment(line: &str) -> bool {
+    let Some(rest) = line.strip_prefix("includes") else {
+        return false;
+    };
+    rest.trim_start().starts_with('=')
+}
+
+fn includes_line(sources: &[String]) -> String {
+    let mut out = String::from("includes = [");
+    for (index, source) in sources.iter().enumerate() {
+        if index > 0 {
+            out.push_str(", ");
+        }
+        push_quoted(&mut out, source);
+    }
+    out.push(']');
+    out
+}
+
 fn schema_include_paths(project: &Path) -> Result<Vec<SchemaInclude>> {
     ensure_toml_path(project, "project")?;
     let project_text = fs::read_to_string(project)
@@ -464,15 +629,7 @@ fn schema_include_paths(project: &Path) -> Result<Vec<SchemaInclude>> {
         anyhow::bail!("Studio project must declare at least one TOML include");
     }
 
-    let base_dir = project.parent().unwrap_or_else(|| Path::new("."));
-    includes
-        .into_iter()
-        .map(|source| {
-            let path = base_dir.join(&source);
-            ensure_toml_path(&path, "schema include")?;
-            Ok(SchemaInclude { source, path })
-        })
-        .collect()
+    schema_includes_from_sources(project, &includes)
 }
 
 fn ensure_toml_path(path: &Path, label: &str) -> Result<()> {

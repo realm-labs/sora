@@ -1,0 +1,179 @@
+[[tables]]
+name = "GameSettings"
+mode = "singleton"
+
+[tables.source]
+file = "Core.xlsx"
+sheet = "GameSettings"
+
+[[tables.fields]]
+name = "version"
+type = "string"
+
+[[tables.fields]]
+name = "daily_reset_hour"
+type = "i32"
+range = [0, 23]
+
+[[tables.fields]]
+name = "starting_gold"
+type = "i32"
+default = "100"
+range = [0, 999999]
+
+[[tables.fields]]
+name = "spawn_pos"
+type = "struct<Vec3>"
+parser = { kind = "tuple" }
+
+[[tables.fields]]
+name = "starter_items"
+type = "list<ref<Item.id>>"
+parser = { kind = "json" }
+length = [1, 4]
+
+[[tables.fields]]
+name = "gravity"
+type = "f64"
+comment = "Double precision tuning value"
+
+[[tables.fields]]
+name = "daily_bonus_items"
+type = "array<ref<Item.id>,3>"
+parser = { kind = "split" }
+comment = "Fixed-length array parsed from one cell"
+
+[[tables.fields]]
+name = "spawn_points"
+type = "array<struct<Vec3>,2>"
+parser = { kind = "tuple_list" }
+comment = "Fixed-length array of structs"
+
+[[tables.fields]]
+name = "maintenance"
+type = "optional<MaintenanceInfo>"
+from = { table = "MaintenanceWindow", parent_key = "version", child_key = "version" }
+comment = "Optional derived struct copied from a child row"
+[[tables]]
+name = "MaintenanceWindow"
+mode = "list"
+
+[tables.source]
+file = "Core.xlsx"
+sheet = "MaintenanceWindow"
+
+[[tables.fields]]
+name = "version"
+type = "string"
+
+[[tables.fields]]
+name = "starts_at"
+type = "string"
+
+[[tables.fields]]
+name = "duration_minutes"
+type = "i32"
+range = [1, 1440]
+
+[[tables.fields]]
+name = "reason"
+type = "optional<string>"
+[[tables]]
+name = "Localization"
+mode = "map"
+key = "key"
+
+[tables.source]
+file = "Core.xlsx"
+sheet = "Localization"
+
+[[tables.fields]]
+name = "key"
+type = "string"
+length = [3, 64]
+
+[[tables.fields]]
+name = "zh_cn"
+type = "string"
+
+[[tables.fields]]
+name = "en_us"
+type = "string"
+
+[[tables.fields]]
+name = "note"
+type = "optional<string>"
+[[tables]]
+name = "MailTemplate"
+mode = "map"
+key = "id"
+
+[tables.source]
+file = "Quest.xlsx"
+sheet = "MailTemplate"
+
+[[tables.fields]]
+name = "id"
+type = "i32"
+
+[[tables.fields]]
+name = "mail_type"
+type = "enum<MailType>"
+
+[[tables.fields]]
+name = "title_key"
+type = "string"
+
+[[tables.fields]]
+name = "body_key"
+type = "string"
+
+[[tables.fields]]
+name = "rewards"
+type = "list<Reward>"
+from = { table = "MailReward", parent_key = "id", child_key = "mail_id", order_by = "seq" }
+[[tables]]
+name = "MailReward"
+mode = "list"
+
+[tables.source]
+file = "Quest.xlsx"
+sheet = "MailReward"
+
+[[tables.fields]]
+name = "mail_id"
+type = "ref<MailTemplate.id>"
+
+[[tables.fields]]
+name = "seq"
+type = "i32"
+
+[[tables.fields]]
+name = "item_id"
+type = "ref<Item.id>"
+
+[[tables.fields]]
+name = "count"
+type = "i32"
+[[tables]]
+name = "Dialogue"
+mode = "map"
+key = "id"
+
+[tables.source]
+file = "Quest.xlsx"
+sheet = "Dialogue"
+
+[[tables.fields]]
+name = "id"
+type = "i32"
+
+[[tables.fields]]
+name = "speaker_key"
+type = "string"
+
+[[tables.fields]]
+name = "lines"
+type = "list<string>"
+parser = { kind = "json" }
+length = [1, 5]

@@ -12,10 +12,12 @@ import {
   addEnumValue,
   addField,
   addNode,
+  addSchemaSource,
   addUnionVariant,
   addUnionVariantField,
   deleteField,
   deleteNode,
+  deleteSchemaSource,
   deleteUnionVariant,
   moveField,
   moveUnionVariant,
@@ -375,6 +377,23 @@ export function App() {
     setDirty(true);
   };
 
+  const createSchemaSource = (source: string) => {
+    if (!schema) return;
+    const next = addSchemaSource(schema, source);
+    if (next === schema) return;
+    setEditableSchema(next);
+    setDirty(true);
+  };
+
+  const removeSchemaSource = (source: string) => {
+    if (!schema) return;
+    if (!window.confirm(t.deleteSchemaFileConfirm.replace("{source}", source))) return;
+    const next = deleteSchemaSource(schema, source);
+    if (next === schema) return;
+    setEditableSchema(next);
+    setDirty(true);
+  };
+
   const createField = (ownerId: string, draft: EditableFieldDraft) => {
     if (!schema) return;
     setEditableSchema(addField(schema, ownerId, draft));
@@ -475,6 +494,8 @@ export function App() {
         issueCounts={nodeIssueCounts}
         navigateToNode={navigateToNode}
         onAddNode={createNode}
+        onAddSchemaSource={createSchemaSource}
+        onDeleteSchemaSource={removeSchemaSource}
         query={query}
         schema={schema}
         selectedId={selected?.id ?? null}

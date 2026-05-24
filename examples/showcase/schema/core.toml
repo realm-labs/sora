@@ -1,0 +1,141 @@
+[[enums]]
+name = "ItemType"
+values = ["Weapon", "Armor", "Currency", "Material", "Consumable"]
+[[enums]]
+name = "ResourceKind"
+values = ["Item", "Gold", "Diamond"]
+[[enums]]
+name = "ElementType"
+values = ["Fire", "Ice", "Lightning", "Physical"]
+[[enums]]
+name = "QuestType"
+values = ["Main", "Side", "Daily"]
+[[enums]]
+name = "Rarity"
+values = ["Common", "Uncommon", "Rare", "Epic", "Legendary"]
+[[enums]]
+name = "StatType"
+values = ["Hp", "Attack", "Defense", "Speed", "CritRate"]
+[[enums]]
+name = "MailType"
+values = ["System", "Event", "Compensation"]
+[[structs]]
+name = "ResourceCost"
+
+[[structs.fields]]
+name = "kind"
+type = "enum<ResourceKind>"
+
+[[structs.fields]]
+name = "id"
+type = "i32"
+
+[[structs.fields]]
+name = "count"
+type = "i32"
+range = [1, 999999]
+[[structs]]
+name = "Vec3"
+
+[[structs.fields]]
+name = "x"
+type = "f32"
+
+[[structs.fields]]
+name = "y"
+type = "f32"
+
+[[structs.fields]]
+name = "z"
+type = "f32"
+[[structs]]
+name = "SkillEffect"
+
+[[structs.fields]]
+name = "element"
+type = "enum<ElementType>"
+
+[[structs.fields]]
+name = "power"
+type = "i32"
+range = [1, 9999]
+
+[[structs.fields]]
+name = "radius"
+type = "f32"
+default = "1.0"
+[[structs]]
+name = "Reward"
+
+[[structs.fields]]
+name = "item_id"
+type = "ref<Item.id>"
+
+[[structs.fields]]
+name = "count"
+type = "i32"
+range = [1, 9999]
+[[structs]]
+name = "StatModifier"
+
+[[structs.fields]]
+name = "stat"
+type = "enum<StatType>"
+
+[[structs.fields]]
+name = "value"
+type = "f32"
+
+[[structs.fields]]
+name = "is_percent"
+type = "bool"
+default = "false"
+[[structs]]
+name = "RewardBundle"
+
+[[structs.fields]]
+name = "cost"
+type = "struct<ResourceCost>"
+parser = { kind = "tuple", separator = ":" }
+
+[[structs.fields]]
+name = "weight"
+type = "i32"
+range = [1, 10000]
+
+[[structs.fields]]
+name = "labels"
+type = "list<string>"
+parser = { kind = "split", separator = "+" }
+[[structs]]
+name = "ComplexBudget"
+
+[[structs.fields]]
+name = "fixed"
+type = "struct<ResourceCost>"
+parser = { kind = "tuple", separator = ":" }
+
+[[structs.fields]]
+name = "random"
+type = "list<RewardBundle>"
+parser = { kind = "tuple_list", separator = ";", item_separator = "|" }
+
+[[structs.fields]]
+name = "limits"
+type = "map<string,i32>"
+parser = { kind = "map", separator = ":", item_separator = "|" }
+[[structs]]
+name = "MaintenanceInfo"
+
+[[structs.fields]]
+name = "starts_at"
+type = "string"
+
+[[structs.fields]]
+name = "duration_minutes"
+type = "i32"
+range = [1, 1440]
+
+[[structs.fields]]
+name = "reason"
+type = "optional<string>"

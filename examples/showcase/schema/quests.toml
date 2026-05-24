@@ -1,0 +1,136 @@
+[[tables]]
+name = "Quest"
+mode = "map"
+key = "id"
+
+[tables.source]
+file = "Quest.xlsx"
+sheet = "Quest"
+
+[[tables.fields]]
+name = "id"
+type = "i32"
+
+[[tables.fields]]
+name = "quest_type"
+type = "enum<QuestType>"
+
+[[tables.fields]]
+name = "title"
+type = "string"
+length = [4, 64]
+
+[[tables.fields]]
+name = "required_item"
+type = "ref<Item.id>"
+
+[[tables.fields]]
+name = "unlock_skills"
+type = "list<ref<Skill.id>>"
+parser = { kind = "json" }
+length = [1, 3]
+
+[[tables.fields]]
+name = "start_pos"
+type = "struct<Vec3>"
+parser = { kind = "tuple" }
+
+[[tables.fields]]
+name = "rewards"
+type = "list<Reward>"
+from = { table = "QuestReward", parent_key = "id", child_key = "quest_id", order_by = "seq" }
+comment = "Materialized from QuestReward child rows"
+[[tables]]
+name = "QuestReward"
+mode = "list"
+
+[tables.source]
+file = "Quest.xlsx"
+sheet = "QuestReward"
+
+[[tables.fields]]
+name = "quest_id"
+type = "ref<Quest.id>"
+
+[[tables.fields]]
+name = "seq"
+type = "i32"
+
+[[tables.fields]]
+name = "item_id"
+type = "ref<Item.id>"
+
+[[tables.fields]]
+name = "count"
+type = "i32"
+range = [1, 9999]
+[[tables]]
+name = "LevelExp"
+mode = "map"
+key = "level"
+
+[tables.source]
+file = "Core.xlsx"
+sheet = "LevelExp"
+
+[[tables.fields]]
+name = "level"
+type = "i32"
+range = [1, 100]
+
+[[tables.fields]]
+name = "exp"
+type = "i64"
+range = [0, 999999999]
+
+[[tables.fields]]
+name = "unlock_feature"
+type = "optional<string>"
+[[tables]]
+name = "Achievement"
+mode = "map"
+key = "id"
+
+[tables.source]
+file = "Economy.xlsx"
+sheet = "Achievement"
+
+[[tables.fields]]
+name = "id"
+type = "i32"
+
+[[tables.fields]]
+name = "title_key"
+type = "string"
+
+[[tables.fields]]
+name = "target_count"
+type = "i64"
+
+[[tables.fields]]
+name = "reward"
+type = "struct<ResourceCost>"
+parser = { kind = "tuple" }
+[[tables]]
+name = "VipLevel"
+mode = "map"
+key = "level"
+
+[tables.source]
+file = "Economy.xlsx"
+sheet = "VipLevel"
+
+[[tables.fields]]
+name = "level"
+type = "i32"
+
+[[tables.fields]]
+name = "cost"
+type = "struct<ResourceCost>"
+parser = { kind = "tuple" }
+
+[[tables.fields]]
+name = "perks"
+type = "list<string>"
+parser = { kind = "json" }
+length = [1, 5]

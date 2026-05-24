@@ -1,0 +1,269 @@
+[[unions]]
+name = "EventCondition"
+tag = "type"
+
+[[unions.variants]]
+name = "LevelAtLeast"
+
+[[unions.variants.fields]]
+name = "level"
+type = "ref<LevelExp.level>"
+
+[[unions.variants]]
+name = "QuestCompleted"
+
+[[unions.variants.fields]]
+name = "quest_id"
+type = "ref<Quest.id>"
+
+[[unions.variants]]
+name = "HasItem"
+
+[[unions.variants.fields]]
+name = "item_id"
+type = "ref<Item.id>"
+
+[[unions.variants.fields]]
+name = "count"
+type = "i32"
+range = [1, 9999]
+
+[[unions.variants]]
+name = "AllConditions"
+
+[[unions.variants.fields]]
+name = "condition_group_id"
+type = "ref<ComplexConditionGroup.id>"
+
+[[unions.variants]]
+name = "AnyCondition"
+
+[[unions.variants.fields]]
+name = "condition_group_id"
+type = "ref<ComplexConditionGroup.id>"
+[[unions]]
+name = "RewardAction"
+tag = "type"
+
+[[unions.variants]]
+name = "AddItem"
+
+[[unions.variants.fields]]
+name = "item_id"
+type = "ref<Item.id>"
+
+[[unions.variants.fields]]
+name = "count"
+type = "i32"
+range = [1, 9999]
+
+[[unions.variants]]
+name = "AddBuff"
+
+[[unions.variants.fields]]
+name = "buff_id"
+type = "ref<Buff.id>"
+
+[[unions.variants.fields]]
+name = "duration"
+type = "f32"
+default = "10.0"
+
+[[unions.variants]]
+name = "UnlockStage"
+
+[[unions.variants.fields]]
+name = "stage_id"
+type = "ref<Stage.id>"
+
+[[unions.variants]]
+name = "SendMail"
+
+[[unions.variants.fields]]
+name = "mail_id"
+type = "ref<MailTemplate.id>"
+
+[[unions.variants]]
+name = "RunActionGroup"
+
+[[unions.variants.fields]]
+name = "action_group_id"
+type = "ref<ComplexActionGroup.id>"
+[[tables]]
+name = "EventRule"
+mode = "map"
+key = "id"
+
+[tables.source]
+file = "Quest.xlsx"
+sheet = "EventRule"
+
+[[tables.fields]]
+name = "id"
+type = "i32"
+
+[[tables.fields]]
+name = "name"
+type = "string"
+
+[[tables.fields]]
+name = "condition"
+type = "union<EventCondition>"
+
+[[tables.fields]]
+name = "actions"
+type = "list<union<RewardAction>>"
+parser = { kind = "json" }
+length = [1, 4]
+[[tables]]
+name = "ComplexRule"
+mode = "map"
+key = "id"
+
+[tables.source]
+file = "Complex.xlsx"
+sheet = "ComplexRule"
+
+[[tables.fields]]
+name = "id"
+type = "i32"
+
+[[tables.fields]]
+name = "name"
+type = "string"
+
+[[tables.fields]]
+name = "root_condition"
+type = "union<EventCondition>"
+from = { table = "ComplexRuleCondition", parent_key = "id", child_key = "rule_id", field = "value" }
+comment = "Single union value derived from a tagged_columns child row"
+
+[[tables.fields]]
+name = "root_action_group"
+type = "ref<ComplexActionGroup.id>"
+
+[[tables.fields]]
+name = "actions"
+type = "list<union<RewardAction>>"
+from = { table = "ComplexActionEntry", parent_key = "root_action_group", child_key = "group_id", field = "value", order_by = "seq" }
+comment = "Non-JSON list<union<RewardAction>> assembled from child rows"
+
+[[tables.fields]]
+name = "budget"
+type = "struct<ComplexBudget>"
+parser = { kind = "tuple", separator = "," }
+comment = "Nested tuple, tuple_list, split, and map parsers in one cell"
+[[tables]]
+name = "ComplexConditionGroup"
+mode = "map"
+key = "id"
+
+[tables.source]
+file = "Complex.xlsx"
+sheet = "ComplexConditionGroup"
+
+[[tables.fields]]
+name = "id"
+type = "i32"
+
+[[tables.fields]]
+name = "name"
+type = "string"
+
+[[tables.fields]]
+name = "conditions"
+type = "list<union<EventCondition>>"
+from = { table = "ComplexConditionGroupEntry", parent_key = "id", child_key = "group_id", field = "value", order_by = "seq" }
+comment = "A derived list of union values; each child row is edited without JSON"
+[[tables]]
+name = "ComplexConditionGroupEntry"
+mode = "map"
+key = "id"
+
+[tables.source]
+file = "Complex.xlsx"
+sheet = "ComplexConditionGroupEntry"
+
+[[tables.fields]]
+name = "id"
+type = "i32"
+
+[[tables.fields]]
+name = "group_id"
+type = "ref<ComplexConditionGroup.id>"
+
+[[tables.fields]]
+name = "seq"
+type = "i32"
+
+[[tables.fields]]
+name = "value"
+type = "union<EventCondition>"
+parser = { kind = "tagged_columns", prefix = "" }
+[[tables]]
+name = "ComplexRuleCondition"
+mode = "map"
+key = "id"
+
+[tables.source]
+file = "Complex.xlsx"
+sheet = "ComplexRuleCondition"
+
+[[tables.fields]]
+name = "id"
+type = "i32"
+
+[[tables.fields]]
+name = "rule_id"
+type = "ref<ComplexRule.id>"
+
+[[tables.fields]]
+name = "value"
+type = "union<EventCondition>"
+parser = { kind = "tagged_columns", prefix = "" }
+[[tables]]
+name = "ComplexActionGroup"
+mode = "map"
+key = "id"
+
+[tables.source]
+file = "Complex.xlsx"
+sheet = "ComplexActionGroup"
+
+[[tables.fields]]
+name = "id"
+type = "i32"
+
+[[tables.fields]]
+name = "name"
+type = "string"
+
+[[tables.fields]]
+name = "actions"
+type = "list<union<RewardAction>>"
+from = { table = "ComplexActionEntry", parent_key = "id", child_key = "group_id", field = "value", order_by = "seq" }
+[[tables]]
+name = "ComplexActionEntry"
+mode = "map"
+key = "id"
+
+[tables.source]
+file = "Complex.xlsx"
+sheet = "ComplexActionEntry"
+
+[[tables.fields]]
+name = "id"
+type = "i32"
+
+[[tables.fields]]
+name = "group_id"
+type = "ref<ComplexActionGroup.id>"
+
+[[tables.fields]]
+name = "seq"
+type = "i32"
+
+[[tables.fields]]
+name = "value"
+type = "union<RewardAction>"
+parser = { kind = "tagged_columns", prefix = "" }

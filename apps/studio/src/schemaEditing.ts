@@ -128,6 +128,18 @@ export function updatePackage(schema: StudioSchema, packageName: string): Studio
   return { ...schema, package: cleanName };
 }
 
+export function addSchemaSource(schema: StudioSchema, source: string): StudioSchema {
+  const cleanSource = source.trim();
+  if (!cleanSource || schema.sources.includes(cleanSource)) return schema;
+  return { ...schema, sources: [...schema.sources, cleanSource] };
+}
+
+export function deleteSchemaSource(schema: StudioSchema, source: string): StudioSchema {
+  if (schema.sources.length <= 1) return schema;
+  if (schema.nodes.some((node) => node.source === source)) return schema;
+  return { ...schema, sources: schema.sources.filter((item) => item !== source) };
+}
+
 export function addNode(schema: StudioSchema, kind: NodeKind): { schema: StudioSchema; nodeId: string } {
   const name = nextAvailableName(
     schema.nodes.filter((node) => node.kind === kind).map((node) => node.name),
@@ -397,6 +409,9 @@ export function validateSchema(schema: StudioSchema): StudioValidationIssue[] {
   if (!schema.package.trim()) {
     issues.push({ id: "schema:package", message: "Schema package is required.", setting: "package" });
   }
+  for (const issue of validateSchemaSources(schema)) {
+    issues.push(issue);
+  }
 
   for (const node of schema.nodes) {
     const names = namesByKind.get(node.kind) ?? new Set<string>();
@@ -411,6 +426,13 @@ export function validateSchema(schema: StudioSchema): StudioValidationIssue[] {
     }
     names.add(node.name);
     namesByKind.set(node.kind, names);
+    if (!schema.sources.includes(node.source)) {
+      issues.push({
+        id: `${node.id}:schema-source`,
+        targetId: node.id,
+        message: `${node.name} belongs to unknown schema file "${node.source}".`
+      });
+    }
 
     const fieldNames = new Set<string>();
     node.fields.forEach((field, index) => {
@@ -501,6 +523,46 @@ export function validateSchema(schema: StudioSchema): StudioValidationIssue[] {
     }
   }
 
+  return issues;
+}
+
+function validateSchemaSources(schema: StudioSchema): StudioValidationIssue[] {
+  const issues: StudioValidationIssue[] = [];
+  if (schema.sources.length === 0) {
+    issues.push({ id: "schema:sources:empty", message: "At least one schema file is required." });
+  }
+  const seen = new Set<string>();
+  schema.sources.forEach((source, index) => {
+    if (!source.trim()) {
+      issues.push({ id: `schema:sources:${index}:empty`, message: "Schema file path cannot be empty." });
+      return;
+    }
+    if (source.trim() !== source) {
+      issues.push({
+        id: `schema:sources:${index}:whitespace`,
+        message: `Schema file "${source}" cannot contain surrounding whitespace.`
+      });
+    }
+    if (source.startsWith("/") || source.includes("\\") || source.split("/").some((part) => part === "." || part === ".." || part === "")) {
+      issues.push({
+        id: `schema:sources:${index}:relative`,
+        message: `Schema file "${source}" must be a plain relative path.`
+      });
+    }
+    if (!source.endsWith(".toml")) {
+      issues.push({
+        id: `schema:sources:${index}:extension`,
+        message: `Schema file "${source}" must end with .toml.`
+      });
+    }
+    if (seen.has(source)) {
+      issues.push({
+        id: `schema:sources:${index}:duplicate`,
+        message: `Schema file "${source}" is duplicated.`
+      });
+    }
+    seen.add(source);
+  });
   return issues;
 }
 
