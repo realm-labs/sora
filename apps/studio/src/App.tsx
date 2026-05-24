@@ -16,12 +16,14 @@ import {
   renameNode,
   updateField,
   validateSchema,
-  type EditableFieldDraft
+  type EditableFieldDraft,
+  type StudioValidationIssue
 } from "./schemaEditing";
 import type {
   GraphMode,
   Language,
   NodeKind,
+  StudioDiagnostic,
   StudioResponse,
   StudioSaveResponse,
   StudioSchema,
@@ -120,7 +122,16 @@ export function App() {
   }, [manualSizes]);
 
   const schema = editableSchema ?? response?.schema ?? null;
-  const validationIssues = useMemo(() => (schema ? validateSchema(schema) : []), [schema]);
+  const localValidationIssues = useMemo(() => (schema ? validateSchema(schema) : []), [schema]);
+  const backendValidationIssues = useMemo(
+    () => (dirty ? [] : diagnosticsToValidationIssues(response?.diagnostics ?? [])),
+    [dirty, response?.diagnostics]
+  );
+  const validationIssues = useMemo(
+    () => [...backendValidationIssues, ...localValidationIssues],
+    [backendValidationIssues, localValidationIssues]
+  );
+  const nodeIssueCounts = useMemo(() => issueCountsByNode(validationIssues), [validationIssues]);
   const visibleNodes = useMemo(() => filterVisibleNodes(schema, query), [query, schema]);
   const selected = useMemo(() => {
     if (!schema) return null;
@@ -160,11 +171,22 @@ export function App() {
       language,
       manualPositions,
       manualSizes,
+      nodeIssueCounts,
       resizeNode,
       schema,
       selected
     });
-  }, [graphMode, graphNodes, language, manualPositions, manualSizes, resizeNode, schema, selected]);
+  }, [
+    graphMode,
+    graphNodes,
+    language,
+    manualPositions,
+    manualSizes,
+    nodeIssueCounts,
+    resizeNode,
+    schema,
+    selected
+  ]);
 
   const navigateToNode = useCallback(
     (id: string) => {
@@ -226,7 +248,7 @@ export function App() {
     setDirty(false);
   };
   const saveLocalChanges = async () => {
-    if (!schema || validationIssues.length > 0) return;
+    if (!schema || localValidationIssues.length > 0) return;
     setSaving(true);
     try {
       const next: StudioSaveResponse = await fetch("/api/schema", {
@@ -335,6 +357,7 @@ export function App() {
       }}
     >
       <Sidebar
+        issueCounts={nodeIssueCounts}
         navigateToNode={navigateToNode}
         onAddNode={createNode}
         query={query}
@@ -368,7 +391,7 @@ export function App() {
           refresh={() => void load()}
           schema={schema}
           setLanguage={setLanguage}
-          saveDisabled={validationIssues.length > 0}
+          saveDisabled={localValidationIssues.length > 0}
           saveLocalChanges={() => void saveLocalChanges()}
           saving={saving}
           t={t}
@@ -497,4 +520,23 @@ function fitPanelWidths(current: PanelWidths): PanelWidths {
 function clamp(value: number, min: number, max: number) {
   if (!Number.isFinite(value)) return min;
   return Math.min(Math.max(value, min), max);
+}
+
+function diagnosticsToValidationIssues(diagnostics: StudioDiagnostic[]): StudioValidationIssue[] {
+  return diagnostics
+    .filter((diagnostic) => diagnostic.level === "error")
+    .map((diagnostic, index) => ({
+      id: `backend:${index}:${diagnostic.targetId ?? "global"}`,
+      message: diagnostic.message,
+      targetId: diagnostic.targetId ?? undefined
+    }));
+}
+
+function issueCountsByNode(issues: StudioValidationIssue[]): Record<string, number> {
+  const counts: Record<string, number> = {};
+  for (const issue of issues) {
+    if (!issue.targetId) continue;
+    counts[issue.targetId] = (counts[issue.targetId] ?? 0) + 1;
+  }
+  return counts;
 }

@@ -6,6 +6,7 @@ import type { Translation } from "../i18n";
 import type { NodeKind, StudioNode, StudioSchema } from "../types";
 
 export function Sidebar({
+  issueCounts,
   navigateToNode,
   onAddNode,
   query,
@@ -15,6 +16,7 @@ export function Sidebar({
   t,
   visibleNodes
 }: {
+  issueCounts: Record<string, number>;
   navigateToNode: (id: string) => void;
   onAddNode: (kind: NodeKind) => void;
   query: string;
@@ -74,11 +76,12 @@ export function Sidebar({
               {items.map((node) => (
                 <button
                   key={node.id}
-                  className={node.id === selectedId ? "list-item active" : "list-item"}
+                  className={listItemClass(node.id, selectedId, issueCounts)}
                   onClick={() => navigateToNode(node.id)}
                 >
                   <span className="dot" style={{ background: kindMeta[node.kind].color }} />
                   <span>{node.name}</span>
+                  {issueCounts[node.id] ? <span className="issue-badge">{issueCounts[node.id]}</span> : null}
                 </button>
               ))}
             </section>
@@ -87,4 +90,18 @@ export function Sidebar({
       </nav>
     </aside>
   );
+}
+
+function listItemClass(
+  nodeId: string,
+  selectedId: string | null,
+  issueCounts: Record<string, number>
+) {
+  return [
+    "list-item",
+    nodeId === selectedId ? "active" : "",
+    issueCounts[nodeId] ? "has-issue" : ""
+  ]
+    .filter(Boolean)
+    .join(" ");
 }

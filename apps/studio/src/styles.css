@@ -248,6 +248,27 @@ body.resizing-panel {
   box-shadow: inset 3px 0 0 #2563eb;
 }
 
+.list-item.has-issue {
+  color: #991b1b;
+}
+
+.list-item.has-issue.active {
+  box-shadow: inset 3px 0 0 #dc2626;
+}
+
+.issue-badge {
+  margin-left: auto;
+  min-width: 20px;
+  border-radius: 999px;
+  background: #dc2626;
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1;
+  padding: 4px 7px;
+  text-align: center;
+}
+
 .list-item.add-item {
   margin-bottom: 5px;
   border: 1px dashed rgba(148, 163, 184, 0.32);
@@ -684,6 +705,11 @@ body.resizing-card {
     0 24px 52px rgba(0, 0, 0, 0.44);
 }
 
+.schema-card.has-issue {
+  border-color: rgba(248, 113, 113, 0.75);
+  border-top-color: #ef4444;
+}
+
 .schema-card-header {
   display: grid;
   grid-template-columns: 30px 1fr auto;
@@ -738,6 +764,11 @@ body.resizing-card {
   font-weight: 800;
   padding: 4px 8px;
   text-align: center;
+}
+
+.schema-card-count.issue {
+  background: #dc2626;
+  color: #ffffff;
 }
 
 .schema-card-fields {
@@ -1447,6 +1478,14 @@ code {
 
 .studio-shell[data-theme="dark"] .list-item.active {
   box-shadow: inset 3px 0 0 #38bdf8;
+}
+
+.studio-shell[data-theme="dark"] .list-item.has-issue {
+  color: #fecaca;
+}
+
+.studio-shell[data-theme="dark"] .list-item.has-issue.active {
+  box-shadow: inset 3px 0 0 #f87171;
 }
 
 .studio-shell[data-theme="dark"] .detail-section {

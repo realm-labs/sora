@@ -10,6 +10,7 @@ export type SchemaCardData = {
   linkedSourceFields: Set<string>;
   linkedTargetFields: Set<string>;
   linkedTargetNode: boolean;
+  issueCount: number;
   language: Language;
   resizeNode: (
     id: string,
@@ -23,6 +24,7 @@ type BuildGraphOptions = {
   language: Language;
   manualPositions: Record<string, { x: number; y: number }>;
   manualSizes: Record<string, { width: number; height: number }>;
+  nodeIssueCounts: Record<string, number>;
   resizeNode: SchemaCardData["resizeNode"];
   schema: StudioSchema;
   selected: StudioNode | null;
@@ -34,6 +36,7 @@ export function buildGraph({
   language,
   manualPositions,
   manualSizes,
+  nodeIssueCounts,
   resizeNode,
   schema,
   selected
@@ -61,6 +64,7 @@ export function buildGraph({
         linkedSourceFields: linkedPorts?.sourceFields ?? new Set<string>(),
         linkedTargetFields: linkedPorts?.targetFields ?? new Set<string>(),
         linkedTargetNode: linkedPorts?.targetNode ?? false,
+        issueCount: nodeIssueCounts[node.id] ?? 0,
         language,
         resizeNode
       }

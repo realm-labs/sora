@@ -21,7 +21,15 @@ export function SchemaCard({
   positionAbsoluteY,
   width
 }: NodeProps<Node<SchemaCardData>>) {
-  const { node, selected, linkedSourceFields, linkedTargetFields, linkedTargetNode, language } = data;
+  const {
+    node,
+    selected,
+    linkedSourceFields,
+    linkedTargetFields,
+    linkedTargetNode,
+    issueCount,
+    language
+  } = data;
   const { zoom } = useViewport();
   const t = translations[language];
   const Icon = kindMeta[node.kind].icon;
@@ -58,8 +66,8 @@ export function SchemaCard({
 
   return (
     <article
-      className={`schema-card ${node.kind}${selected ? " selected" : ""}`}
-      style={{ borderColor: kindMeta[node.kind].color }}
+      className={`schema-card ${node.kind}${selected ? " selected" : ""}${issueCount ? " has-issue" : ""}`}
+      style={{ borderColor: issueCount ? "#ef4444" : kindMeta[node.kind].color }}
     >
       {resizeDirections.map((direction) => (
         <div
@@ -82,7 +90,9 @@ export function SchemaCard({
           <p>{t.kindSingular[node.kind]}</p>
           <strong>{node.name}</strong>
         </div>
-        <span className="schema-card-count">{count}</span>
+        <span className={issueCount ? "schema-card-count issue" : "schema-card-count"}>
+          {issueCount || count}
+        </span>
       </header>
       <div className="schema-card-fields">
         {node.kind === "union"

@@ -51,13 +51,19 @@ export type StudioSchema = {
 export type StudioResponse = {
   ok: boolean;
   project: string;
-  diagnostics: Array<{ level: "error" | "info"; message: string }>;
+  diagnostics: StudioDiagnostic[];
   schema?: StudioSchema | null;
 };
 
 export type StudioSaveResponse = {
   ok: boolean;
   project: string;
-  diagnostics: Array<{ level: "error" | "info"; message: string }>;
+  diagnostics: StudioDiagnostic[];
   schema?: StudioSchema | null;
+};
+
+export type StudioDiagnostic = {
+  level: "error" | "info";
+  message: string;
+  targetId?: string | null;
 };

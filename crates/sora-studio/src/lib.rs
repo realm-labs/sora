@@ -13,11 +13,16 @@ use axum::{
     routing::{get, put},
 };
 use serde::{Deserialize, Serialize};
+use sora_diagnostics::SoraError;
 use sora_input_schema::schema::load_project_schema_file;
 use sora_ir::{
     model::{ConfigIr, FieldIr, TableModeIr, TypeIr},
     normalize::normalize_schema,
     validate::validate_config_ir,
+};
+use sora_schema::model::{
+    FieldSchema, ParserSchema, SchemaFile, ScopeSchema, TableFieldFromSchema, TableFieldSchema,
+    TableModeSchema,
 };
 use tower_http::cors::CorsLayer;
 
@@ -105,6 +110,8 @@ pub struct StudioSchemaResponse {
 pub struct StudioDiagnostic {
     pub level: DiagnosticLevel,
     pub message: String,
+    #[serde(rename = "targetId", skip_serializing_if = "Option::is_none")]
+    pub target_id: Option<String>,
 }
 
 #[derive(Debug, Serialize)]
@@ -184,32 +191,43 @@ pub enum StudioEdgeKind {
 }
 
 fn load_studio_schema(project: &Path) -> StudioSchemaResponse {
-    match load_project_schema_file(project)
-        .and_then(normalize_schema)
-        .and_then(|ir| {
-            validate_config_ir(&ir)?;
-            Ok(ir)
-        }) {
-        Ok(ir) => {
-            let schema = build_schema(&ir);
-            StudioSchemaResponse {
+    let raw_schema = match load_project_schema_file(project) {
+        Ok(schema) => schema,
+        Err(error) => {
+            return StudioSchemaResponse {
+                ok: false,
+                project: project.display().to_string(),
+                diagnostics: studio_diagnostics(&error),
+                schema: None,
+            };
+        }
+    };
+
+    let raw_fallback = || build_schema_from_raw(&raw_schema);
+    match normalize_schema(raw_schema.clone()) {
+        Ok(ir) => match validate_config_ir(&ir) {
+            Ok(()) => StudioSchemaResponse {
                 ok: true,
                 project: project.display().to_string(),
                 diagnostics: vec![StudioDiagnostic {
                     level: DiagnosticLevel::Info,
                     message: "schema loaded successfully".to_owned(),
+                    target_id: None,
                 }],
-                schema: Some(schema),
-            }
-        }
+                schema: Some(build_schema(&ir)),
+            },
+            Err(error) => StudioSchemaResponse {
+                ok: false,
+                project: project.display().to_string(),
+                diagnostics: studio_diagnostics(&error),
+                schema: Some(build_schema(&ir)),
+            },
+        },
         Err(error) => StudioSchemaResponse {
             ok: false,
             project: project.display().to_string(),
-            diagnostics: vec![StudioDiagnostic {
-                level: DiagnosticLevel::Error,
-                message: error.to_string(),
-            }],
-            schema: None,
+            diagnostics: studio_diagnostics(&error),
+            schema: Some(raw_fallback()),
         },
     }
 }
@@ -222,6 +240,7 @@ fn save_studio_schema(project: &Path, schema: &StudioSchema) -> StudioSchemaResp
                 response.diagnostics = vec![StudioDiagnostic {
                     level: DiagnosticLevel::Info,
                     message: format!("schema saved to {}", path.display()),
+                    target_id: None,
                 }];
             }
             response
@@ -232,9 +251,70 @@ fn save_studio_schema(project: &Path, schema: &StudioSchema) -> StudioSchemaResp
             diagnostics: vec![StudioDiagnostic {
                 level: DiagnosticLevel::Error,
                 message: error.to_string(),
+                target_id: None,
             }],
             schema: Some(schema.clone()),
         },
+    }
+}
+
+fn studio_diagnostics(error: &SoraError) -> Vec<StudioDiagnostic> {
+    if let Some(errors) = error.errors() {
+        return errors
+            .iter()
+            .flat_map(studio_diagnostics)
+            .collect::<Vec<_>>();
+    }
+
+    vec![StudioDiagnostic {
+        level: DiagnosticLevel::Error,
+        message: error.to_string(),
+        target_id: diagnostic_target_id(error),
+    }]
+}
+
+fn diagnostic_target_id(error: &SoraError) -> Option<String> {
+    match error {
+        SoraError::DuplicateSchemaName { kind, name } => {
+            studio_node_kind(*kind).map(|kind| node_id(kind, name))
+        }
+        SoraError::DuplicateFieldName {
+            owner_kind, owner, ..
+        }
+        | SoraError::UnknownTypeReference {
+            owner_kind, owner, ..
+        }
+        | SoraError::UnknownRefTable {
+            owner_kind, owner, ..
+        }
+        | SoraError::UnknownRefField {
+            owner_kind, owner, ..
+        } => studio_node_kind(*owner_kind).map(|kind| node_id(kind, owner)),
+        SoraError::MissingTableKey { table, .. }
+        | SoraError::UnknownIndexField { table, .. }
+        | SoraError::MissingTableSource { table }
+        | SoraError::UnknownField { table, .. }
+        | SoraError::TypeMismatch { table, .. }
+        | SoraError::InvalidEnumValue { table, .. }
+        | SoraError::DuplicateKey { table, .. }
+        | SoraError::DuplicateIndexKey { table, .. }
+        | SoraError::RangeOutOfBounds { table, .. }
+        | SoraError::LengthOutOfBounds { table, .. }
+        | SoraError::MissingReference { table, .. }
+        | SoraError::InvalidTableRowCount { table, .. } => {
+            Some(node_id(StudioNodeKind::Table, table))
+        }
+        _ => None,
+    }
+}
+
+fn studio_node_kind(kind: &str) -> Option<StudioNodeKind> {
+    match kind {
+        "enum" => Some(StudioNodeKind::Enum),
+        "struct" => Some(StudioNodeKind::Struct),
+        "union" => Some(StudioNodeKind::Union),
+        "table" => Some(StudioNodeKind::Table),
+        _ => None,
     }
 }
 
@@ -731,6 +811,202 @@ fn build_schema(ir: &ConfigIr) -> StudioSchema {
     }
 }
 
+fn build_schema_from_raw(schema: &SchemaFile) -> StudioSchema {
+    let mut nodes = Vec::new();
+
+    for item in &schema.enums {
+        nodes.push(StudioNode {
+            id: node_id(StudioNodeKind::Enum, &item.name),
+            name: item.name.clone(),
+            kind: StudioNodeKind::Enum,
+            scope: raw_scope(&item.scope),
+            subtitle: format!("{} values", item.values.len()),
+            fields: item
+                .values
+                .iter()
+                .map(|value| StudioField {
+                    name: value.clone(),
+                    ty: "enum value".to_owned(),
+                    scope: raw_scope(&item.scope),
+                    parser: None,
+                    comment: None,
+                    default: None,
+                    range: None,
+                    length: None,
+                    source: None,
+                })
+                .collect(),
+            metadata: BTreeMap::from([("values".to_owned(), item.values.len().to_string())]),
+        });
+    }
+
+    for item in &schema.structs {
+        nodes.push(StudioNode {
+            id: node_id(StudioNodeKind::Struct, &item.name),
+            name: item.name.clone(),
+            kind: StudioNodeKind::Struct,
+            scope: raw_scope(&item.scope),
+            subtitle: format!("{} fields", item.fields.len()),
+            fields: item.fields.iter().map(raw_field).collect(),
+            metadata: BTreeMap::from([("fields".to_owned(), item.fields.len().to_string())]),
+        });
+    }
+
+    for item in &schema.unions {
+        let fields = item
+            .variants
+            .iter()
+            .flat_map(|variant| {
+                std::iter::once(StudioField {
+                    name: variant.name.clone(),
+                    ty: "variant".to_owned(),
+                    scope: raw_scope(&variant.scope),
+                    parser: None,
+                    comment: None,
+                    default: None,
+                    range: None,
+                    length: None,
+                    source: None,
+                })
+                .chain(variant.fields.iter().map(move |field| {
+                    let mut field = raw_field(field);
+                    field.name = format!("{}.{}", variant.name, field.name);
+                    field
+                }))
+            })
+            .collect::<Vec<_>>();
+        nodes.push(StudioNode {
+            id: node_id(StudioNodeKind::Union, &item.name),
+            name: item.name.clone(),
+            kind: StudioNodeKind::Union,
+            scope: raw_scope(&item.scope),
+            subtitle: format!("{} variants", item.variants.len()),
+            fields,
+            metadata: BTreeMap::from([
+                ("tag".to_owned(), item.tag.clone()),
+                ("variants".to_owned(), item.variants.len().to_string()),
+            ]),
+        });
+    }
+
+    for item in &schema.tables {
+        let mut metadata = BTreeMap::from([
+            ("mode".to_owned(), raw_table_mode(item.mode).to_owned()),
+            (
+                "key".to_owned(),
+                item.key.as_deref().unwrap_or("<none>").to_owned(),
+            ),
+            ("fields".to_owned(), item.fields.len().to_string()),
+        ]);
+        if let Some(source) = &item.source {
+            metadata.insert("source".to_owned(), source.file.clone());
+            if let Some(sheet) = &source.sheet {
+                metadata.insert("sheet".to_owned(), sheet.clone());
+            }
+        }
+        nodes.push(StudioNode {
+            id: node_id(StudioNodeKind::Table, &item.name),
+            name: item.name.clone(),
+            kind: StudioNodeKind::Table,
+            scope: raw_scope(&item.scope),
+            subtitle: format!(
+                "{} table, {} fields",
+                raw_table_mode(item.mode),
+                item.fields.len()
+            ),
+            fields: item.fields.iter().map(raw_table_field).collect(),
+            metadata,
+        });
+    }
+
+    let edges = build_studio_edges(&nodes);
+    StudioSchema {
+        package: schema.package.clone(),
+        summary: StudioSummary {
+            enums: schema.enums.len(),
+            structs: schema.structs.len(),
+            unions: schema.unions.len(),
+            tables: schema.tables.len(),
+            edges: edges.len(),
+        },
+        nodes,
+        edges,
+    }
+}
+
+fn raw_field(field: &FieldSchema) -> StudioField {
+    StudioField {
+        name: field.name.clone(),
+        ty: field.ty.clone(),
+        scope: raw_scope(&field.scope),
+        parser: raw_parser(&field.parser),
+        comment: field.comment.clone(),
+        default: field.default.clone(),
+        range: field.range,
+        length: field.length,
+        source: None,
+    }
+}
+
+fn raw_table_field(field: &TableFieldSchema) -> StudioField {
+    StudioField {
+        name: field.name.clone(),
+        ty: field.ty.clone(),
+        scope: raw_scope(&field.scope),
+        parser: raw_parser(&field.parser),
+        comment: field.comment.clone(),
+        default: field.default.clone(),
+        range: field.range,
+        length: field.length,
+        source: raw_from(&field.from),
+    }
+}
+
+fn raw_parser(parser: &Option<ParserSchema>) -> Option<String> {
+    parser.as_ref().map(|parser| {
+        let options = parser
+            .options
+            .iter()
+            .map(|(key, value)| format!("{key}={value}"))
+            .collect::<Vec<_>>();
+        if options.is_empty() {
+            parser.kind.clone()
+        } else {
+            format!("{} ({})", parser.kind, options.join(", "))
+        }
+    })
+}
+
+fn raw_from(from: &Option<TableFieldFromSchema>) -> Option<String> {
+    from.as_ref().map(|from| {
+        let mut value = format!(
+            "{}: {} -> {}",
+            from.table,
+            from.child_key.as_deref().unwrap_or("<child_key>"),
+            from.parent_key.as_deref().unwrap_or("<parent_key>")
+        );
+        if let Some(field) = &from.value_field {
+            value.push_str(&format!(", field={field}"));
+        }
+        if let Some(order_by) = &from.order_by {
+            value.push_str(&format!(", order_by={order_by}"));
+        }
+        value
+    })
+}
+
+fn raw_scope(scope: &ScopeSchema) -> String {
+    scope.values.join(",")
+}
+
+fn raw_table_mode(mode: TableModeSchema) -> &'static str {
+    match mode {
+        TableModeSchema::List => "list",
+        TableModeSchema::Map => "map",
+        TableModeSchema::Singleton => "singleton",
+    }
+}
+
 fn studio_field(field: &FieldIr) -> StudioField {
     StudioField {
         name: field.name.clone(),
@@ -766,6 +1042,106 @@ fn studio_field(field: &FieldIr) -> StudioField {
             value
         }),
     }
+}
+
+fn build_studio_edges(nodes: &[StudioNode]) -> Vec<StudioEdge> {
+    let mut edges = BTreeSet::new();
+    for node in nodes {
+        for field in &node.fields {
+            for (table, ref_field) in ref_targets(&field.ty) {
+                if let Some(target) = nodes
+                    .iter()
+                    .find(|item| item.kind == StudioNodeKind::Table && item.name == table)
+                {
+                    edges.insert(StudioEdge {
+                        id: edge_id(&node.id, &target.id, StudioEdgeKind::Ref, &field.name),
+                        source: node.id.clone(),
+                        target: target.id.clone(),
+                        kind: StudioEdgeKind::Ref,
+                        label: field.name.clone(),
+                        target_label: Some(ref_field),
+                    });
+                }
+            }
+
+            for target in nodes
+                .iter()
+                .filter(|item| item.kind != StudioNodeKind::Table)
+            {
+                if type_mentions_symbol(&field.ty, &target.name) {
+                    edges.insert(StudioEdge {
+                        id: edge_id(&node.id, &target.id, StudioEdgeKind::Type, &field.name),
+                        source: node.id.clone(),
+                        target: target.id.clone(),
+                        kind: StudioEdgeKind::Type,
+                        label: field.name.clone(),
+                        target_label: None,
+                    });
+                }
+            }
+
+            if let Some(source) = parse_source(&field.source) {
+                if let Some(target) = nodes
+                    .iter()
+                    .find(|item| item.kind == StudioNodeKind::Table && item.name == source.table)
+                {
+                    edges.insert(StudioEdge {
+                        id: edge_id(&node.id, &target.id, StudioEdgeKind::Derived, &field.name),
+                        source: node.id.clone(),
+                        target: target.id.clone(),
+                        kind: StudioEdgeKind::Derived,
+                        label: field.name.clone(),
+                        target_label: Some(source.child_key),
+                    });
+                }
+            }
+        }
+    }
+    edges.into_iter().collect()
+}
+
+fn ref_targets(ty: &str) -> Vec<(String, String)> {
+    let mut targets = Vec::new();
+    let mut rest = ty;
+    while let Some(start) = rest.find("ref<") {
+        let after_start = &rest[start + 4..];
+        let Some(end) = after_start.find('>') else {
+            break;
+        };
+        let body = &after_start[..end];
+        if let Some((table, field)) = body.split_once('.') {
+            targets.push((table.trim().to_owned(), field.trim().to_owned()));
+        }
+        rest = &after_start[end + 1..];
+    }
+    targets
+}
+
+fn type_mentions_symbol(ty: &str, symbol: &str) -> bool {
+    if symbol.is_empty() {
+        return false;
+    }
+    let bytes = ty.as_bytes();
+    let symbol_bytes = symbol.as_bytes();
+    let mut offset = 0;
+    while let Some(position) = ty[offset..].find(symbol) {
+        let start = offset + position;
+        let end = start + symbol_bytes.len();
+        let before = start
+            .checked_sub(1)
+            .and_then(|index| bytes.get(index))
+            .copied();
+        let after = bytes.get(end).copied();
+        if !is_ident_byte(before) && !is_ident_byte(after) {
+            return true;
+        }
+        offset = end;
+    }
+    false
+}
+
+fn is_ident_byte(value: Option<u8>) -> bool {
+    value.is_some_and(|value| value.is_ascii_alphanumeric() || value == b'_')
 }
 
 fn collect_field_edges(owner: &str, fields: &[FieldIr], edges: &mut BTreeSet<StudioEdge>) {
@@ -850,5 +1226,118 @@ fn table_mode(mode: TableModeIr) -> &'static str {
         TableModeIr::List => "list",
         TableModeIr::Map => "map",
         TableModeIr::Singleton => "singleton",
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::{
+        fs,
+        sync::atomic::{AtomicU64, Ordering},
+    };
+
+    static TEMP_COUNTER: AtomicU64 = AtomicU64::new(0);
+
+    #[test]
+    fn returns_partial_graph_for_validation_error() {
+        let base = temp_dir();
+        let project = write_project(
+            &base,
+            r#"
+[[tables]]
+name = "Item"
+mode = "map"
+key = "missing_id"
+
+[[tables.fields]]
+name = "id"
+type = "i32"
+"#,
+        );
+
+        let response = load_studio_schema(&project);
+
+        assert!(!response.ok);
+        assert_eq!(
+            response
+                .schema
+                .as_ref()
+                .unwrap()
+                .nodes
+                .iter()
+                .find(|node| node.id == "table:Item")
+                .map(|node| node.name.as_str()),
+            Some("Item")
+        );
+        assert_eq!(
+            response
+                .diagnostics
+                .iter()
+                .find(|diagnostic| diagnostic.message.contains("key field `missing_id`"))
+                .and_then(|diagnostic| diagnostic.target_id.as_deref()),
+            Some("table:Item")
+        );
+
+        let _ = fs::remove_dir_all(base);
+    }
+
+    #[test]
+    fn returns_raw_graph_for_normalization_error() {
+        let base = temp_dir();
+        let project = write_project(
+            &base,
+            r#"
+[[tables]]
+name = "Item"
+mode = "list"
+
+[[tables.fields]]
+name = "tags"
+type = "set<string>"
+parser = { kind = "unknown_parser" }
+"#,
+        );
+
+        let response = load_studio_schema(&project);
+
+        assert!(!response.ok);
+        let schema = response.schema.as_ref().unwrap();
+        let item = schema
+            .nodes
+            .iter()
+            .find(|node| node.id == "table:Item")
+            .unwrap();
+        assert_eq!(item.fields[0].name, "tags");
+        assert_eq!(item.fields[0].parser.as_deref(), Some("unknown_parser"));
+        assert!(
+            response
+                .diagnostics
+                .iter()
+                .any(|diagnostic| diagnostic.message.contains("unsupported parser"))
+        );
+
+        let _ = fs::remove_dir_all(base);
+    }
+
+    fn write_project(base: &Path, schema_text: &str) -> PathBuf {
+        let schema_dir = base.join("schema");
+        fs::create_dir_all(&schema_dir).unwrap();
+        let project = base.join("project.toml");
+        fs::write(
+            &project,
+            r#"
+package = "game_config"
+includes = ["schema/items.toml"]
+"#,
+        )
+        .unwrap();
+        fs::write(schema_dir.join("items.toml"), schema_text).unwrap();
+        project
+    }
+
+    fn temp_dir() -> PathBuf {
+        let id = TEMP_COUNTER.fetch_add(1, Ordering::Relaxed);
+        std::env::temp_dir().join(format!("sora-studio-test-{}-{id}", std::process::id()))
     }
 }
