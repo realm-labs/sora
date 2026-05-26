@@ -1,4 +1,38 @@
 (function () {
+  var knownPages = new Set([
+    "index.html",
+    "concepts.html",
+    "quick-start.html",
+    "tutorial/overview.html",
+    "tutorial/first-config.html",
+    "tutorial/excel-workflow.html",
+    "tutorial/load-generated-code.html",
+    "schema.html",
+    "schema/formats.html",
+    "schema/tables.html",
+    "schema/types.html",
+    "schema/enums-structs-unions.html",
+    "schema/references.html",
+    "schema/parsers.html",
+    "project-config.html",
+    "localization.html",
+    "studio.html",
+    "cli.html",
+    "exports.html",
+    "export/formats.html",
+    "codegen/overview.html",
+    "codegen/runtime-formats.html",
+    "codegen/adapters.html",
+    "versioning.html",
+    "extension.html",
+    "extension/generators.html",
+    "extension/exporters.html",
+    "design/overview.html",
+    "design/schema-as-source-of-truth.html",
+    "design/excel-header-projection.html",
+    "design/ir-boundaries.html"
+  ]);
+
   function normalizedRelativePath() {
     var relative = relativePathFromLocation(window.location);
 
@@ -9,35 +43,6 @@
   }
 
   function pageExists(relativePath) {
-    var knownPages = new Set([
-      "index.html",
-      "quick-start.html",
-      "concepts.html",
-      "schema.html",
-      "project-config.html",
-      "exports.html",
-      "codegen/overview.html",
-      "codegen/runtime-formats.html",
-      "codegen/adapters.html",
-      "tutorial/overview.html",
-      "tutorial/first-config.html",
-      "tutorial/excel-workflow.html",
-      "tutorial/load-generated-code.html",
-      "schema/types.html",
-      "schema/parsers.html",
-      "schema/tables.html",
-      "schema/enums-structs-unions.html",
-      "schema/references.html",
-      "export/formats.html",
-      "design/overview.html",
-      "design/schema-as-source-of-truth.html",
-      "design/excel-header-projection.html",
-      "design/ir-boundaries.html",
-      "extension.html",
-      "extension/generators.html",
-      "extension/exporters.html"
-    ]);
-
     var englishPath = relativePath.startsWith("zh/")
       ? relativePath.slice(3)
       : relativePath;
@@ -59,8 +64,7 @@
 
     var isChinese = relative.startsWith("zh/");
     var link = document.createElement("a");
-    var root = typeof path_to_root === "string" ? path_to_root : "";
-    link.href = root + targetFor(relative);
+    link.href = siteRootFromLocation(window.location) + targetFor(relative);
     link.textContent = isChinese ? "English" : "中文";
     link.setAttribute("aria-label", isChinese ? "Switch to English" : "切换到中文");
     link.style.marginLeft = "0.75rem";
@@ -110,48 +114,32 @@
     return path.replace(/^\/+/, "");
   }
 
-  function languageForPath(path) {
-    var relative = relativePathFromPath(path);
-    return relative.startsWith("zh/") ? "zh" : "en";
-  }
-
-  function filterSidebar() {
-    var currentLanguage = languageForPath(window.location.pathname);
-    var sidebar = document.getElementById("mdbook-sidebar") || document.getElementById("sidebar");
-    if (!sidebar) {
-      return;
+  function siteRootFromLocation(location) {
+    var path = location.pathname;
+    var marker = "/sora/";
+    var index = path.indexOf(marker);
+    if (index >= 0) {
+      return path.slice(0, index + marker.length);
     }
 
-    var chapter = sidebar.querySelector("ol.chapter");
-    if (!chapter) {
-      return;
+    var bookIndex = path.indexOf("/docs/book/");
+    if (bookIndex >= 0) {
+      return path.slice(0, bookIndex + "/docs/book/".length);
     }
 
-    Array.from(chapter.children).forEach(function (item) {
-      if (item.classList.contains("part-title")) {
-        item.hidden = true;
-        return;
-      }
-
-      if (item.querySelector(".part-title")) {
-        item.hidden = true;
-        return;
-      }
-
-      var link = item.querySelector(".chapter-link-wrapper > a");
-      if (!link) {
-        item.hidden = true;
-        return;
-      }
-
-      var linkLanguage = languageForPath(new URL(link.href, window.location.href).pathname);
-      item.hidden = linkLanguage !== currentLanguage;
-    });
+    var root = typeof path_to_root === "string" ? path_to_root : "";
+    var rootPath = new URL(root || ".", location.href).pathname;
+    if (!rootPath.endsWith("/")) {
+      rootPath += "/";
+    }
+    if (rootPath.endsWith("/zh/")) {
+      return rootPath.slice(0, -3);
+    }
+    return rootPath;
   }
 
   function initialize() {
     addLanguageToggle();
-    filterSidebar();
   }
 
   if (document.readyState === "loading") {
