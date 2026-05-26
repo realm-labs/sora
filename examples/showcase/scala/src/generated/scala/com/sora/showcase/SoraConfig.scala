@@ -37,20 +37,20 @@ final class SoraConfig private (
     }
   def item: ItemTable =
     table(ItemTable.Name)
+  def shop: ShopTable =
+    table(ShopTable.Name)
+  def shopItem: ShopItemTable =
+    table(ShopItemTable.Name)
+  def recipe: RecipeTable =
+    table(RecipeTable.Name)
+  def gachaPool: GachaPoolTable =
+    table(GachaPoolTable.Name)
+  def gachaItem: GachaItemTable =
+    table(GachaItemTable.Name)
+  def equipmentSet: EquipmentSetTable =
+    table(EquipmentSetTable.Name)
   def skill: SkillTable =
     table(SkillTable.Name)
-  def quest: QuestTable =
-    table(QuestTable.Name)
-  def questReward: QuestRewardTable =
-    table(QuestRewardTable.Name)
-  def gameSettings: GameSettingsTable =
-    table(GameSettingsTable.Name)
-  def maintenanceWindow: MaintenanceWindowTable =
-    table(MaintenanceWindowTable.Name)
-  def localization: LocalizationTable =
-    table(LocalizationTable.Name)
-  def levelExp: LevelExpTable =
-    table(LevelExpTable.Name)
   def character: CharacterTable =
     table(CharacterTable.Name)
   def characterSkill: CharacterSkillTable =
@@ -69,22 +69,20 @@ final class SoraConfig private (
     table(StageRewardTable.Name)
   def dungeon: DungeonTable =
     table(DungeonTable.Name)
-  def shop: ShopTable =
-    table(ShopTable.Name)
-  def shopItem: ShopItemTable =
-    table(ShopItemTable.Name)
-  def recipe: RecipeTable =
-    table(RecipeTable.Name)
-  def gachaPool: GachaPoolTable =
-    table(GachaPoolTable.Name)
-  def gachaItem: GachaItemTable =
-    table(GachaItemTable.Name)
-  def equipmentSet: EquipmentSetTable =
-    table(EquipmentSetTable.Name)
+  def quest: QuestTable =
+    table(QuestTable.Name)
+  def questReward: QuestRewardTable =
+    table(QuestRewardTable.Name)
+  def levelExp: LevelExpTable =
+    table(LevelExpTable.Name)
   def achievement: AchievementTable =
     table(AchievementTable.Name)
   def vipLevel: VipLevelTable =
     table(VipLevelTable.Name)
+  def gameSettings: GameSettingsTable =
+    table(GameSettingsTable.Name)
+  def maintenanceWindow: MaintenanceWindowTable =
+    table(MaintenanceWindowTable.Name)
   def mailTemplate: MailTemplateTable =
     table(MailTemplateTable.Name)
   def mailReward: MailRewardTable =
@@ -108,7 +106,7 @@ final class SoraConfig private (
 }
 
 object SoraConfig {
-  val SchemaFingerprint = "70733f887d9adc7d"
+  val SchemaFingerprint = "1439cc1e8c6581b3"
 
   def fromSource(source: SoraTableSource): SoraConfig = {
     if (source.schemaFingerprint != SchemaFingerprint) {
@@ -118,13 +116,13 @@ object SoraConfig {
     }
     val tables = Map[String, SoraTable](
       ItemTable.Name -> ItemTable.decode(source),
+      ShopTable.Name -> ShopTable.decode(source),
+      ShopItemTable.Name -> ShopItemTable.decode(source),
+      RecipeTable.Name -> RecipeTable.decode(source),
+      GachaPoolTable.Name -> GachaPoolTable.decode(source),
+      GachaItemTable.Name -> GachaItemTable.decode(source),
+      EquipmentSetTable.Name -> EquipmentSetTable.decode(source),
       SkillTable.Name -> SkillTable.decode(source),
-      QuestTable.Name -> QuestTable.decode(source),
-      QuestRewardTable.Name -> QuestRewardTable.decode(source),
-      GameSettingsTable.Name -> GameSettingsTable.decode(source),
-      MaintenanceWindowTable.Name -> MaintenanceWindowTable.decode(source),
-      LocalizationTable.Name -> LocalizationTable.decode(source),
-      LevelExpTable.Name -> LevelExpTable.decode(source),
       CharacterTable.Name -> CharacterTable.decode(source),
       CharacterSkillTable.Name -> CharacterSkillTable.decode(source),
       BuffTable.Name -> BuffTable.decode(source),
@@ -134,14 +132,13 @@ object SoraConfig {
       StageTable.Name -> StageTable.decode(source),
       StageRewardTable.Name -> StageRewardTable.decode(source),
       DungeonTable.Name -> DungeonTable.decode(source),
-      ShopTable.Name -> ShopTable.decode(source),
-      ShopItemTable.Name -> ShopItemTable.decode(source),
-      RecipeTable.Name -> RecipeTable.decode(source),
-      GachaPoolTable.Name -> GachaPoolTable.decode(source),
-      GachaItemTable.Name -> GachaItemTable.decode(source),
-      EquipmentSetTable.Name -> EquipmentSetTable.decode(source),
+      QuestTable.Name -> QuestTable.decode(source),
+      QuestRewardTable.Name -> QuestRewardTable.decode(source),
+      LevelExpTable.Name -> LevelExpTable.decode(source),
       AchievementTable.Name -> AchievementTable.decode(source),
       VipLevelTable.Name -> VipLevelTable.decode(source),
+      GameSettingsTable.Name -> GameSettingsTable.decode(source),
+      MaintenanceWindowTable.Name -> MaintenanceWindowTable.decode(source),
       MailTemplateTable.Name -> MailTemplateTable.decode(source),
       MailRewardTable.Name -> MailRewardTable.decode(source),
       DialogueTable.Name -> DialogueTable.decode(source),

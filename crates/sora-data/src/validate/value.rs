@@ -66,7 +66,7 @@ fn validate_typed_value(
             Value::Float(number) => validate_float_range(table, path, *number, constraints.range),
             _ => type_mismatch(table, path, ty, value),
         },
-        TypeIr::String => match value {
+        TypeIr::String | TypeIr::Text => match value {
             Value::String(value) => {
                 validate_length(table, path, value.chars().count(), constraints.length)
             }

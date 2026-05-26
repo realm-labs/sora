@@ -3,7 +3,7 @@
 class_name SoraConfig
 extends RefCounted
 
-const SORA_SCHEMA_FINGERPRINT := "276aaca7bfd433ff"
+const SORA_SCHEMA_FINGERPRINT := "d960f9e36f012c5d"
 
 var _tables: Dictionary = {}
 
@@ -27,26 +27,26 @@ static func from_json_root(root: Dictionary) -> SoraConfig:
 	config._tables[Item.ItemTable.TABLE_NAME] = Item.ItemTable.decode(
 		SoraRuntime.decode_table(bundle, Item.ItemTable.TABLE_NAME, Item.decode)
 	)
+	config._tables[Shop.ShopTable.TABLE_NAME] = Shop.ShopTable.decode(
+		SoraRuntime.decode_table(bundle, Shop.ShopTable.TABLE_NAME, Shop.decode)
+	)
+	config._tables[ShopItem.ShopItemTable.TABLE_NAME] = ShopItem.ShopItemTable.decode(
+		SoraRuntime.decode_table(bundle, ShopItem.ShopItemTable.TABLE_NAME, ShopItem.decode)
+	)
+	config._tables[Recipe.RecipeTable.TABLE_NAME] = Recipe.RecipeTable.decode(
+		SoraRuntime.decode_table(bundle, Recipe.RecipeTable.TABLE_NAME, Recipe.decode)
+	)
+	config._tables[GachaPool.GachaPoolTable.TABLE_NAME] = GachaPool.GachaPoolTable.decode(
+		SoraRuntime.decode_table(bundle, GachaPool.GachaPoolTable.TABLE_NAME, GachaPool.decode)
+	)
+	config._tables[GachaItem.GachaItemTable.TABLE_NAME] = GachaItem.GachaItemTable.decode(
+		SoraRuntime.decode_table(bundle, GachaItem.GachaItemTable.TABLE_NAME, GachaItem.decode)
+	)
+	config._tables[EquipmentSet.EquipmentSetTable.TABLE_NAME] = EquipmentSet.EquipmentSetTable.decode(
+		SoraRuntime.decode_table(bundle, EquipmentSet.EquipmentSetTable.TABLE_NAME, EquipmentSet.decode)
+	)
 	config._tables[Skill.SkillTable.TABLE_NAME] = Skill.SkillTable.decode(
 		SoraRuntime.decode_table(bundle, Skill.SkillTable.TABLE_NAME, Skill.decode)
-	)
-	config._tables[Quest.QuestTable.TABLE_NAME] = Quest.QuestTable.decode(
-		SoraRuntime.decode_table(bundle, Quest.QuestTable.TABLE_NAME, Quest.decode)
-	)
-	config._tables[QuestReward.QuestRewardTable.TABLE_NAME] = QuestReward.QuestRewardTable.decode(
-		SoraRuntime.decode_table(bundle, QuestReward.QuestRewardTable.TABLE_NAME, QuestReward.decode)
-	)
-	config._tables[GameSettings.GameSettingsTable.TABLE_NAME] = GameSettings.GameSettingsTable.decode(
-		SoraRuntime.decode_table(bundle, GameSettings.GameSettingsTable.TABLE_NAME, GameSettings.decode)
-	)
-	config._tables[MaintenanceWindow.MaintenanceWindowTable.TABLE_NAME] = MaintenanceWindow.MaintenanceWindowTable.decode(
-		SoraRuntime.decode_table(bundle, MaintenanceWindow.MaintenanceWindowTable.TABLE_NAME, MaintenanceWindow.decode)
-	)
-	config._tables[Localization.LocalizationTable.TABLE_NAME] = Localization.LocalizationTable.decode(
-		SoraRuntime.decode_table(bundle, Localization.LocalizationTable.TABLE_NAME, Localization.decode)
-	)
-	config._tables[LevelExp.LevelExpTable.TABLE_NAME] = LevelExp.LevelExpTable.decode(
-		SoraRuntime.decode_table(bundle, LevelExp.LevelExpTable.TABLE_NAME, LevelExp.decode)
 	)
 	config._tables[Character.CharacterTable.TABLE_NAME] = Character.CharacterTable.decode(
 		SoraRuntime.decode_table(bundle, Character.CharacterTable.TABLE_NAME, Character.decode)
@@ -75,29 +75,26 @@ static func from_json_root(root: Dictionary) -> SoraConfig:
 	config._tables[Dungeon.DungeonTable.TABLE_NAME] = Dungeon.DungeonTable.decode(
 		SoraRuntime.decode_table(bundle, Dungeon.DungeonTable.TABLE_NAME, Dungeon.decode)
 	)
-	config._tables[Shop.ShopTable.TABLE_NAME] = Shop.ShopTable.decode(
-		SoraRuntime.decode_table(bundle, Shop.ShopTable.TABLE_NAME, Shop.decode)
+	config._tables[Quest.QuestTable.TABLE_NAME] = Quest.QuestTable.decode(
+		SoraRuntime.decode_table(bundle, Quest.QuestTable.TABLE_NAME, Quest.decode)
 	)
-	config._tables[ShopItem.ShopItemTable.TABLE_NAME] = ShopItem.ShopItemTable.decode(
-		SoraRuntime.decode_table(bundle, ShopItem.ShopItemTable.TABLE_NAME, ShopItem.decode)
+	config._tables[QuestReward.QuestRewardTable.TABLE_NAME] = QuestReward.QuestRewardTable.decode(
+		SoraRuntime.decode_table(bundle, QuestReward.QuestRewardTable.TABLE_NAME, QuestReward.decode)
 	)
-	config._tables[Recipe.RecipeTable.TABLE_NAME] = Recipe.RecipeTable.decode(
-		SoraRuntime.decode_table(bundle, Recipe.RecipeTable.TABLE_NAME, Recipe.decode)
-	)
-	config._tables[GachaPool.GachaPoolTable.TABLE_NAME] = GachaPool.GachaPoolTable.decode(
-		SoraRuntime.decode_table(bundle, GachaPool.GachaPoolTable.TABLE_NAME, GachaPool.decode)
-	)
-	config._tables[GachaItem.GachaItemTable.TABLE_NAME] = GachaItem.GachaItemTable.decode(
-		SoraRuntime.decode_table(bundle, GachaItem.GachaItemTable.TABLE_NAME, GachaItem.decode)
-	)
-	config._tables[EquipmentSet.EquipmentSetTable.TABLE_NAME] = EquipmentSet.EquipmentSetTable.decode(
-		SoraRuntime.decode_table(bundle, EquipmentSet.EquipmentSetTable.TABLE_NAME, EquipmentSet.decode)
+	config._tables[LevelExp.LevelExpTable.TABLE_NAME] = LevelExp.LevelExpTable.decode(
+		SoraRuntime.decode_table(bundle, LevelExp.LevelExpTable.TABLE_NAME, LevelExp.decode)
 	)
 	config._tables[Achievement.AchievementTable.TABLE_NAME] = Achievement.AchievementTable.decode(
 		SoraRuntime.decode_table(bundle, Achievement.AchievementTable.TABLE_NAME, Achievement.decode)
 	)
 	config._tables[VipLevel.VipLevelTable.TABLE_NAME] = VipLevel.VipLevelTable.decode(
 		SoraRuntime.decode_table(bundle, VipLevel.VipLevelTable.TABLE_NAME, VipLevel.decode)
+	)
+	config._tables[GameSettings.GameSettingsTable.TABLE_NAME] = GameSettings.GameSettingsTable.decode(
+		SoraRuntime.decode_table(bundle, GameSettings.GameSettingsTable.TABLE_NAME, GameSettings.decode)
+	)
+	config._tables[MaintenanceWindow.MaintenanceWindowTable.TABLE_NAME] = MaintenanceWindow.MaintenanceWindowTable.decode(
+		SoraRuntime.decode_table(bundle, MaintenanceWindow.MaintenanceWindowTable.TABLE_NAME, MaintenanceWindow.decode)
 	)
 	config._tables[MailTemplate.MailTemplateTable.TABLE_NAME] = MailTemplate.MailTemplateTable.decode(
 		SoraRuntime.decode_table(bundle, MailTemplate.MailTemplateTable.TABLE_NAME, MailTemplate.decode)
@@ -138,20 +135,20 @@ func table(name: String) -> SoraRuntime.SoraConfigTable:
 	return _tables.get(name)
 func item() -> Item.ItemTable:
 	return _tables[Item.ItemTable.TABLE_NAME]
+func shop() -> Shop.ShopTable:
+	return _tables[Shop.ShopTable.TABLE_NAME]
+func shop_item() -> ShopItem.ShopItemTable:
+	return _tables[ShopItem.ShopItemTable.TABLE_NAME]
+func recipe() -> Recipe.RecipeTable:
+	return _tables[Recipe.RecipeTable.TABLE_NAME]
+func gacha_pool() -> GachaPool.GachaPoolTable:
+	return _tables[GachaPool.GachaPoolTable.TABLE_NAME]
+func gacha_item() -> GachaItem.GachaItemTable:
+	return _tables[GachaItem.GachaItemTable.TABLE_NAME]
+func equipment_set() -> EquipmentSet.EquipmentSetTable:
+	return _tables[EquipmentSet.EquipmentSetTable.TABLE_NAME]
 func skill() -> Skill.SkillTable:
 	return _tables[Skill.SkillTable.TABLE_NAME]
-func quest() -> Quest.QuestTable:
-	return _tables[Quest.QuestTable.TABLE_NAME]
-func quest_reward() -> QuestReward.QuestRewardTable:
-	return _tables[QuestReward.QuestRewardTable.TABLE_NAME]
-func game_settings() -> GameSettings.GameSettingsTable:
-	return _tables[GameSettings.GameSettingsTable.TABLE_NAME]
-func maintenance_window() -> MaintenanceWindow.MaintenanceWindowTable:
-	return _tables[MaintenanceWindow.MaintenanceWindowTable.TABLE_NAME]
-func localization() -> Localization.LocalizationTable:
-	return _tables[Localization.LocalizationTable.TABLE_NAME]
-func level_exp() -> LevelExp.LevelExpTable:
-	return _tables[LevelExp.LevelExpTable.TABLE_NAME]
 func character() -> Character.CharacterTable:
 	return _tables[Character.CharacterTable.TABLE_NAME]
 func character_skill() -> CharacterSkill.CharacterSkillTable:
@@ -170,22 +167,20 @@ func stage_reward() -> StageReward.StageRewardTable:
 	return _tables[StageReward.StageRewardTable.TABLE_NAME]
 func dungeon() -> Dungeon.DungeonTable:
 	return _tables[Dungeon.DungeonTable.TABLE_NAME]
-func shop() -> Shop.ShopTable:
-	return _tables[Shop.ShopTable.TABLE_NAME]
-func shop_item() -> ShopItem.ShopItemTable:
-	return _tables[ShopItem.ShopItemTable.TABLE_NAME]
-func recipe() -> Recipe.RecipeTable:
-	return _tables[Recipe.RecipeTable.TABLE_NAME]
-func gacha_pool() -> GachaPool.GachaPoolTable:
-	return _tables[GachaPool.GachaPoolTable.TABLE_NAME]
-func gacha_item() -> GachaItem.GachaItemTable:
-	return _tables[GachaItem.GachaItemTable.TABLE_NAME]
-func equipment_set() -> EquipmentSet.EquipmentSetTable:
-	return _tables[EquipmentSet.EquipmentSetTable.TABLE_NAME]
+func quest() -> Quest.QuestTable:
+	return _tables[Quest.QuestTable.TABLE_NAME]
+func quest_reward() -> QuestReward.QuestRewardTable:
+	return _tables[QuestReward.QuestRewardTable.TABLE_NAME]
+func level_exp() -> LevelExp.LevelExpTable:
+	return _tables[LevelExp.LevelExpTable.TABLE_NAME]
 func achievement() -> Achievement.AchievementTable:
 	return _tables[Achievement.AchievementTable.TABLE_NAME]
 func vip_level() -> VipLevel.VipLevelTable:
 	return _tables[VipLevel.VipLevelTable.TABLE_NAME]
+func game_settings() -> GameSettings.GameSettingsTable:
+	return _tables[GameSettings.GameSettingsTable.TABLE_NAME]
+func maintenance_window() -> MaintenanceWindow.MaintenanceWindowTable:
+	return _tables[MaintenanceWindow.MaintenanceWindowTable.TABLE_NAME]
 func mail_template() -> MailTemplate.MailTemplateTable:
 	return _tables[MailTemplate.MailTemplateTable.TABLE_NAME]
 func mail_reward() -> MailReward.MailRewardTable:

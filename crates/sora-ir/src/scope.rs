@@ -17,6 +17,7 @@ pub fn filter_config_ir_by_scope(ir: &ConfigIr, target: &str) -> Result<ConfigIr
 
     let mut filtered = ConfigIr {
         package: ir.package.clone(),
+        localization: ir.localization.clone(),
         enums: ir
             .enums
             .iter()
@@ -226,6 +227,7 @@ fn collect_type_names(
         | TypeIr::F32
         | TypeIr::F64
         | TypeIr::String
+        | TypeIr::Text
         | TypeIr::Ref { .. } => {}
     }
 }

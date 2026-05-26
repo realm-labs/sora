@@ -1,9 +1,26 @@
 {
   "version": 1,
   "package": "com.sora.showcase",
-  "fingerprint": "70733f887d9adc7d",
+  "fingerprint": "1439cc1e8c6581b3",
   "schema": {
     "package": "com.sora.showcase",
+    "localization": {
+      "locales": [
+        "zh_cn",
+        "en_us"
+      ],
+      "default_locale": "zh_cn",
+      "fallback_locale": "en_us",
+      "strict": true,
+      "sources": [
+        {
+          "name": "Localization",
+          "file": "Core.xlsx",
+          "sheet": "Localization",
+          "key": "key"
+        }
+      ]
+    },
     "enums": [
       {
         "name": "ItemType",
@@ -1189,6 +1206,526 @@
         ]
       },
       {
+        "name": "Shop",
+        "scope": {
+          "values": [
+            "all"
+          ]
+        },
+        "mode": "Map",
+        "key": "id",
+        "source": {
+          "file": "Economy.xlsx",
+          "sheet": "Shop"
+        },
+        "fields": [
+          {
+            "name": "id",
+            "ty": "I32",
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
+            "key": true,
+            "comment": null,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "derived_from": null
+          },
+          {
+            "name": "name",
+            "ty": "String",
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
+            "key": false,
+            "comment": null,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "derived_from": null
+          },
+          {
+            "name": "currency",
+            "ty": {
+              "Enum": "ResourceKind"
+            },
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
+            "key": false,
+            "comment": null,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "derived_from": null
+          }
+        ],
+        "indexes": []
+      },
+      {
+        "name": "ShopItem",
+        "scope": {
+          "values": [
+            "all"
+          ]
+        },
+        "mode": "List",
+        "key": null,
+        "source": {
+          "file": "Economy.xlsx",
+          "sheet": "ShopItem"
+        },
+        "fields": [
+          {
+            "name": "shop_id",
+            "ty": {
+              "Ref": {
+                "table": "Shop",
+                "field": "id"
+              }
+            },
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
+            "key": false,
+            "comment": null,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "derived_from": null
+          },
+          {
+            "name": "seq",
+            "ty": "I32",
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
+            "key": false,
+            "comment": null,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "derived_from": null
+          },
+          {
+            "name": "item_id",
+            "ty": {
+              "Ref": {
+                "table": "Item",
+                "field": "id"
+              }
+            },
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
+            "key": false,
+            "comment": null,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "derived_from": null
+          },
+          {
+            "name": "price",
+            "ty": {
+              "Struct": "ResourceCost"
+            },
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
+            "key": false,
+            "comment": null,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": {
+              "kind": "tuple",
+              "options": {}
+            },
+            "derived_from": null
+          },
+          {
+            "name": "daily_limit",
+            "ty": {
+              "Optional": "I32"
+            },
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
+            "key": false,
+            "comment": null,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "derived_from": null
+          }
+        ],
+        "indexes": []
+      },
+      {
+        "name": "Recipe",
+        "scope": {
+          "values": [
+            "all"
+          ]
+        },
+        "mode": "Map",
+        "key": "id",
+        "source": {
+          "file": "Economy.xlsx",
+          "sheet": "Recipe"
+        },
+        "fields": [
+          {
+            "name": "id",
+            "ty": "I32",
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
+            "key": true,
+            "comment": null,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "derived_from": null
+          },
+          {
+            "name": "result_item",
+            "ty": {
+              "Ref": {
+                "table": "Item",
+                "field": "id"
+              }
+            },
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
+            "key": false,
+            "comment": null,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "derived_from": null
+          },
+          {
+            "name": "materials",
+            "ty": {
+              "List": {
+                "Struct": "ResourceCost"
+              }
+            },
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
+            "key": false,
+            "comment": null,
+            "default": null,
+            "range": null,
+            "length": [
+              1,
+              4
+            ],
+            "parser": {
+              "kind": "tuple_list",
+              "options": {}
+            },
+            "derived_from": null
+          }
+        ],
+        "indexes": []
+      },
+      {
+        "name": "GachaPool",
+        "scope": {
+          "values": [
+            "all"
+          ]
+        },
+        "mode": "Map",
+        "key": "id",
+        "source": {
+          "file": "Economy.xlsx",
+          "sheet": "GachaPool"
+        },
+        "fields": [
+          {
+            "name": "id",
+            "ty": "I32",
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
+            "key": true,
+            "comment": null,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "derived_from": null
+          },
+          {
+            "name": "name",
+            "ty": "String",
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
+            "key": false,
+            "comment": null,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "derived_from": null
+          },
+          {
+            "name": "cost",
+            "ty": {
+              "Struct": "ResourceCost"
+            },
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
+            "key": false,
+            "comment": null,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": {
+              "kind": "tuple",
+              "options": {}
+            },
+            "derived_from": null
+          }
+        ],
+        "indexes": []
+      },
+      {
+        "name": "GachaItem",
+        "scope": {
+          "values": [
+            "all"
+          ]
+        },
+        "mode": "List",
+        "key": null,
+        "source": {
+          "file": "Economy.xlsx",
+          "sheet": "GachaItem"
+        },
+        "fields": [
+          {
+            "name": "pool_id",
+            "ty": {
+              "Ref": {
+                "table": "GachaPool",
+                "field": "id"
+              }
+            },
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
+            "key": false,
+            "comment": null,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "derived_from": null
+          },
+          {
+            "name": "item_id",
+            "ty": {
+              "Ref": {
+                "table": "Item",
+                "field": "id"
+              }
+            },
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
+            "key": false,
+            "comment": null,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "derived_from": null
+          },
+          {
+            "name": "rarity",
+            "ty": {
+              "Enum": "Rarity"
+            },
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
+            "key": false,
+            "comment": null,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "derived_from": null
+          },
+          {
+            "name": "weight",
+            "ty": "F32",
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
+            "key": false,
+            "comment": null,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "derived_from": null
+          }
+        ],
+        "indexes": []
+      },
+      {
+        "name": "EquipmentSet",
+        "scope": {
+          "values": [
+            "all"
+          ]
+        },
+        "mode": "Map",
+        "key": "id",
+        "source": {
+          "file": "Economy.xlsx",
+          "sheet": "EquipmentSet"
+        },
+        "fields": [
+          {
+            "name": "id",
+            "ty": "I32",
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
+            "key": true,
+            "comment": null,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "derived_from": null
+          },
+          {
+            "name": "name",
+            "ty": "String",
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
+            "key": false,
+            "comment": null,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "derived_from": null
+          },
+          {
+            "name": "item_ids",
+            "ty": {
+              "List": {
+                "Ref": {
+                  "table": "Item",
+                  "field": "id"
+                }
+              }
+            },
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
+            "key": false,
+            "comment": null,
+            "default": null,
+            "range": null,
+            "length": [
+              2,
+              4
+            ],
+            "parser": {
+              "kind": "json",
+              "options": {}
+            },
+            "derived_from": null
+          },
+          {
+            "name": "bonus_effect",
+            "ty": {
+              "Struct": "SkillEffect"
+            },
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
+            "key": false,
+            "comment": null,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "derived_from": null
+          }
+        ],
+        "indexes": []
+      },
+      {
         "name": "Skill",
         "scope": {
           "values": [
@@ -1355,730 +1892,6 @@
               "kind": "tuple",
               "options": {}
             },
-            "derived_from": null
-          }
-        ],
-        "indexes": []
-      },
-      {
-        "name": "Quest",
-        "scope": {
-          "values": [
-            "all"
-          ]
-        },
-        "mode": "Map",
-        "key": "id",
-        "source": {
-          "file": "Quest.xlsx",
-          "sheet": "Quest"
-        },
-        "fields": [
-          {
-            "name": "id",
-            "ty": "I32",
-            "scope": {
-              "values": [
-                "all"
-              ]
-            },
-            "key": true,
-            "comment": null,
-            "default": null,
-            "range": null,
-            "length": null,
-            "parser": null,
-            "derived_from": null
-          },
-          {
-            "name": "quest_type",
-            "ty": {
-              "Enum": "QuestType"
-            },
-            "scope": {
-              "values": [
-                "all"
-              ]
-            },
-            "key": false,
-            "comment": null,
-            "default": null,
-            "range": null,
-            "length": null,
-            "parser": null,
-            "derived_from": null
-          },
-          {
-            "name": "title",
-            "ty": "String",
-            "scope": {
-              "values": [
-                "all"
-              ]
-            },
-            "key": false,
-            "comment": null,
-            "default": null,
-            "range": null,
-            "length": [
-              4,
-              64
-            ],
-            "parser": null,
-            "derived_from": null
-          },
-          {
-            "name": "required_item",
-            "ty": {
-              "Ref": {
-                "table": "Item",
-                "field": "id"
-              }
-            },
-            "scope": {
-              "values": [
-                "all"
-              ]
-            },
-            "key": false,
-            "comment": null,
-            "default": null,
-            "range": null,
-            "length": null,
-            "parser": null,
-            "derived_from": null
-          },
-          {
-            "name": "unlock_skills",
-            "ty": {
-              "List": {
-                "Ref": {
-                  "table": "Skill",
-                  "field": "id"
-                }
-              }
-            },
-            "scope": {
-              "values": [
-                "all"
-              ]
-            },
-            "key": false,
-            "comment": null,
-            "default": null,
-            "range": null,
-            "length": [
-              1,
-              3
-            ],
-            "parser": {
-              "kind": "json",
-              "options": {}
-            },
-            "derived_from": null
-          },
-          {
-            "name": "start_pos",
-            "ty": {
-              "Struct": "Vec3"
-            },
-            "scope": {
-              "values": [
-                "all"
-              ]
-            },
-            "key": false,
-            "comment": null,
-            "default": null,
-            "range": null,
-            "length": null,
-            "parser": {
-              "kind": "tuple",
-              "options": {}
-            },
-            "derived_from": null
-          },
-          {
-            "name": "rewards",
-            "ty": {
-              "List": {
-                "Struct": "Reward"
-              }
-            },
-            "scope": {
-              "values": [
-                "all"
-              ]
-            },
-            "key": false,
-            "comment": "Materialized from QuestReward child rows",
-            "default": null,
-            "range": null,
-            "length": null,
-            "parser": null,
-            "derived_from": {
-              "source_table": "QuestReward",
-              "parent_key": "id",
-              "child_key": "quest_id",
-              "value_field": null,
-              "order_by": "seq"
-            }
-          }
-        ],
-        "indexes": []
-      },
-      {
-        "name": "QuestReward",
-        "scope": {
-          "values": [
-            "all"
-          ]
-        },
-        "mode": "List",
-        "key": null,
-        "source": {
-          "file": "Quest.xlsx",
-          "sheet": "QuestReward"
-        },
-        "fields": [
-          {
-            "name": "quest_id",
-            "ty": {
-              "Ref": {
-                "table": "Quest",
-                "field": "id"
-              }
-            },
-            "scope": {
-              "values": [
-                "all"
-              ]
-            },
-            "key": false,
-            "comment": null,
-            "default": null,
-            "range": null,
-            "length": null,
-            "parser": null,
-            "derived_from": null
-          },
-          {
-            "name": "seq",
-            "ty": "I32",
-            "scope": {
-              "values": [
-                "all"
-              ]
-            },
-            "key": false,
-            "comment": null,
-            "default": null,
-            "range": null,
-            "length": null,
-            "parser": null,
-            "derived_from": null
-          },
-          {
-            "name": "item_id",
-            "ty": {
-              "Ref": {
-                "table": "Item",
-                "field": "id"
-              }
-            },
-            "scope": {
-              "values": [
-                "all"
-              ]
-            },
-            "key": false,
-            "comment": null,
-            "default": null,
-            "range": null,
-            "length": null,
-            "parser": null,
-            "derived_from": null
-          },
-          {
-            "name": "count",
-            "ty": "I32",
-            "scope": {
-              "values": [
-                "all"
-              ]
-            },
-            "key": false,
-            "comment": null,
-            "default": null,
-            "range": [
-              1,
-              9999
-            ],
-            "length": null,
-            "parser": null,
-            "derived_from": null
-          }
-        ],
-        "indexes": []
-      },
-      {
-        "name": "GameSettings",
-        "scope": {
-          "values": [
-            "all"
-          ]
-        },
-        "mode": "Singleton",
-        "key": null,
-        "source": {
-          "file": "Core.xlsx",
-          "sheet": "GameSettings"
-        },
-        "fields": [
-          {
-            "name": "version",
-            "ty": "String",
-            "scope": {
-              "values": [
-                "all"
-              ]
-            },
-            "key": false,
-            "comment": null,
-            "default": null,
-            "range": null,
-            "length": null,
-            "parser": null,
-            "derived_from": null
-          },
-          {
-            "name": "daily_reset_hour",
-            "ty": "I32",
-            "scope": {
-              "values": [
-                "all"
-              ]
-            },
-            "key": false,
-            "comment": null,
-            "default": null,
-            "range": [
-              0,
-              23
-            ],
-            "length": null,
-            "parser": null,
-            "derived_from": null
-          },
-          {
-            "name": "starting_gold",
-            "ty": "I32",
-            "scope": {
-              "values": [
-                "all"
-              ]
-            },
-            "key": false,
-            "comment": null,
-            "default": "100",
-            "range": [
-              0,
-              999999
-            ],
-            "length": null,
-            "parser": null,
-            "derived_from": null
-          },
-          {
-            "name": "spawn_pos",
-            "ty": {
-              "Struct": "Vec3"
-            },
-            "scope": {
-              "values": [
-                "all"
-              ]
-            },
-            "key": false,
-            "comment": null,
-            "default": null,
-            "range": null,
-            "length": null,
-            "parser": {
-              "kind": "tuple",
-              "options": {}
-            },
-            "derived_from": null
-          },
-          {
-            "name": "starter_items",
-            "ty": {
-              "List": {
-                "Ref": {
-                  "table": "Item",
-                  "field": "id"
-                }
-              }
-            },
-            "scope": {
-              "values": [
-                "all"
-              ]
-            },
-            "key": false,
-            "comment": null,
-            "default": null,
-            "range": null,
-            "length": [
-              1,
-              4
-            ],
-            "parser": {
-              "kind": "json",
-              "options": {}
-            },
-            "derived_from": null
-          },
-          {
-            "name": "gravity",
-            "ty": "F64",
-            "scope": {
-              "values": [
-                "all"
-              ]
-            },
-            "key": false,
-            "comment": "Double precision tuning value",
-            "default": null,
-            "range": null,
-            "length": null,
-            "parser": null,
-            "derived_from": null
-          },
-          {
-            "name": "daily_bonus_items",
-            "ty": {
-              "Array": {
-                "element": {
-                  "Ref": {
-                    "table": "Item",
-                    "field": "id"
-                  }
-                },
-                "len": 3
-              }
-            },
-            "scope": {
-              "values": [
-                "all"
-              ]
-            },
-            "key": false,
-            "comment": "Fixed-length array parsed from one cell",
-            "default": null,
-            "range": null,
-            "length": null,
-            "parser": {
-              "kind": "split",
-              "options": {}
-            },
-            "derived_from": null
-          },
-          {
-            "name": "spawn_points",
-            "ty": {
-              "Array": {
-                "element": {
-                  "Struct": "Vec3"
-                },
-                "len": 2
-              }
-            },
-            "scope": {
-              "values": [
-                "all"
-              ]
-            },
-            "key": false,
-            "comment": "Fixed-length array of structs",
-            "default": null,
-            "range": null,
-            "length": null,
-            "parser": {
-              "kind": "tuple_list",
-              "options": {}
-            },
-            "derived_from": null
-          },
-          {
-            "name": "maintenance",
-            "ty": {
-              "Optional": {
-                "Struct": "MaintenanceInfo"
-              }
-            },
-            "scope": {
-              "values": [
-                "all"
-              ]
-            },
-            "key": false,
-            "comment": "Optional derived struct copied from a child row",
-            "default": null,
-            "range": null,
-            "length": null,
-            "parser": null,
-            "derived_from": {
-              "source_table": "MaintenanceWindow",
-              "parent_key": "version",
-              "child_key": "version",
-              "value_field": null,
-              "order_by": null
-            }
-          }
-        ],
-        "indexes": []
-      },
-      {
-        "name": "MaintenanceWindow",
-        "scope": {
-          "values": [
-            "all"
-          ]
-        },
-        "mode": "List",
-        "key": null,
-        "source": {
-          "file": "Core.xlsx",
-          "sheet": "MaintenanceWindow"
-        },
-        "fields": [
-          {
-            "name": "version",
-            "ty": "String",
-            "scope": {
-              "values": [
-                "all"
-              ]
-            },
-            "key": false,
-            "comment": null,
-            "default": null,
-            "range": null,
-            "length": null,
-            "parser": null,
-            "derived_from": null
-          },
-          {
-            "name": "starts_at",
-            "ty": "String",
-            "scope": {
-              "values": [
-                "all"
-              ]
-            },
-            "key": false,
-            "comment": null,
-            "default": null,
-            "range": null,
-            "length": null,
-            "parser": null,
-            "derived_from": null
-          },
-          {
-            "name": "duration_minutes",
-            "ty": "I32",
-            "scope": {
-              "values": [
-                "all"
-              ]
-            },
-            "key": false,
-            "comment": null,
-            "default": null,
-            "range": [
-              1,
-              1440
-            ],
-            "length": null,
-            "parser": null,
-            "derived_from": null
-          },
-          {
-            "name": "reason",
-            "ty": {
-              "Optional": "String"
-            },
-            "scope": {
-              "values": [
-                "all"
-              ]
-            },
-            "key": false,
-            "comment": null,
-            "default": null,
-            "range": null,
-            "length": null,
-            "parser": null,
-            "derived_from": null
-          }
-        ],
-        "indexes": []
-      },
-      {
-        "name": "Localization",
-        "scope": {
-          "values": [
-            "all"
-          ]
-        },
-        "mode": "Map",
-        "key": "key",
-        "source": {
-          "file": "Core.xlsx",
-          "sheet": "Localization"
-        },
-        "fields": [
-          {
-            "name": "key",
-            "ty": "String",
-            "scope": {
-              "values": [
-                "all"
-              ]
-            },
-            "key": true,
-            "comment": null,
-            "default": null,
-            "range": null,
-            "length": [
-              3,
-              64
-            ],
-            "parser": null,
-            "derived_from": null
-          },
-          {
-            "name": "zh_cn",
-            "ty": "String",
-            "scope": {
-              "values": [
-                "all"
-              ]
-            },
-            "key": false,
-            "comment": null,
-            "default": null,
-            "range": null,
-            "length": null,
-            "parser": null,
-            "derived_from": null
-          },
-          {
-            "name": "en_us",
-            "ty": "String",
-            "scope": {
-              "values": [
-                "all"
-              ]
-            },
-            "key": false,
-            "comment": null,
-            "default": null,
-            "range": null,
-            "length": null,
-            "parser": null,
-            "derived_from": null
-          },
-          {
-            "name": "note",
-            "ty": {
-              "Optional": "String"
-            },
-            "scope": {
-              "values": [
-                "all"
-              ]
-            },
-            "key": false,
-            "comment": null,
-            "default": null,
-            "range": null,
-            "length": null,
-            "parser": null,
-            "derived_from": null
-          }
-        ],
-        "indexes": []
-      },
-      {
-        "name": "LevelExp",
-        "scope": {
-          "values": [
-            "all"
-          ]
-        },
-        "mode": "Map",
-        "key": "level",
-        "source": {
-          "file": "Core.xlsx",
-          "sheet": "LevelExp"
-        },
-        "fields": [
-          {
-            "name": "level",
-            "ty": "I32",
-            "scope": {
-              "values": [
-                "all"
-              ]
-            },
-            "key": true,
-            "comment": null,
-            "default": null,
-            "range": [
-              1,
-              100
-            ],
-            "length": null,
-            "parser": null,
-            "derived_from": null
-          },
-          {
-            "name": "exp",
-            "ty": "I64",
-            "scope": {
-              "values": [
-                "all"
-              ]
-            },
-            "key": false,
-            "comment": null,
-            "default": null,
-            "range": [
-              0,
-              999999999
-            ],
-            "length": null,
-            "parser": null,
-            "derived_from": null
-          },
-          {
-            "name": "unlock_feature",
-            "ty": {
-              "Optional": "String"
-            },
-            "scope": {
-              "values": [
-                "all"
-              ]
-            },
-            "key": false,
-            "comment": null,
-            "default": null,
-            "range": null,
-            "length": null,
-            "parser": null,
             "derived_from": null
           }
         ],
@@ -3017,7 +2830,7 @@
         "indexes": []
       },
       {
-        "name": "Shop",
+        "name": "Quest",
         "scope": {
           "values": [
             "all"
@@ -3026,8 +2839,8 @@
         "mode": "Map",
         "key": "id",
         "source": {
-          "file": "Economy.xlsx",
-          "sheet": "Shop"
+          "file": "Quest.xlsx",
+          "sheet": "Quest"
         },
         "fields": [
           {
@@ -3047,8 +2860,10 @@
             "derived_from": null
           },
           {
-            "name": "name",
-            "ty": "String",
+            "name": "quest_type",
+            "ty": {
+              "Enum": "QuestType"
+            },
             "scope": {
               "values": [
                 "all"
@@ -3063,9 +2878,31 @@
             "derived_from": null
           },
           {
-            "name": "currency",
+            "name": "title",
+            "ty": "String",
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
+            "key": false,
+            "comment": null,
+            "default": null,
+            "range": null,
+            "length": [
+              4,
+              64
+            ],
+            "parser": null,
+            "derived_from": null
+          },
+          {
+            "name": "required_item",
             "ty": {
-              "Enum": "ResourceKind"
+              "Ref": {
+                "table": "Item",
+                "field": "id"
+              }
             },
             "scope": {
               "values": [
@@ -3079,12 +2916,88 @@
             "length": null,
             "parser": null,
             "derived_from": null
+          },
+          {
+            "name": "unlock_skills",
+            "ty": {
+              "List": {
+                "Ref": {
+                  "table": "Skill",
+                  "field": "id"
+                }
+              }
+            },
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
+            "key": false,
+            "comment": null,
+            "default": null,
+            "range": null,
+            "length": [
+              1,
+              3
+            ],
+            "parser": {
+              "kind": "json",
+              "options": {}
+            },
+            "derived_from": null
+          },
+          {
+            "name": "start_pos",
+            "ty": {
+              "Struct": "Vec3"
+            },
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
+            "key": false,
+            "comment": null,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": {
+              "kind": "tuple",
+              "options": {}
+            },
+            "derived_from": null
+          },
+          {
+            "name": "rewards",
+            "ty": {
+              "List": {
+                "Struct": "Reward"
+              }
+            },
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
+            "key": false,
+            "comment": "Materialized from QuestReward child rows",
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "derived_from": {
+              "source_table": "QuestReward",
+              "parent_key": "id",
+              "child_key": "quest_id",
+              "value_field": null,
+              "order_by": "seq"
+            }
           }
         ],
         "indexes": []
       },
       {
-        "name": "ShopItem",
+        "name": "QuestReward",
         "scope": {
           "values": [
             "all"
@@ -3093,15 +3006,15 @@
         "mode": "List",
         "key": null,
         "source": {
-          "file": "Economy.xlsx",
-          "sheet": "ShopItem"
+          "file": "Quest.xlsx",
+          "sheet": "QuestReward"
         },
         "fields": [
           {
-            "name": "shop_id",
+            "name": "quest_id",
             "ty": {
               "Ref": {
-                "table": "Shop",
+                "table": "Quest",
                 "field": "id"
               }
             },
@@ -3156,143 +3069,43 @@
             "derived_from": null
           },
           {
-            "name": "price",
-            "ty": {
-              "Struct": "ResourceCost"
-            },
-            "scope": {
-              "values": [
-                "all"
-              ]
-            },
-            "key": false,
-            "comment": null,
-            "default": null,
-            "range": null,
-            "length": null,
-            "parser": {
-              "kind": "tuple",
-              "options": {}
-            },
-            "derived_from": null
-          },
-          {
-            "name": "daily_limit",
-            "ty": {
-              "Optional": "I32"
-            },
-            "scope": {
-              "values": [
-                "all"
-              ]
-            },
-            "key": false,
-            "comment": null,
-            "default": null,
-            "range": null,
-            "length": null,
-            "parser": null,
-            "derived_from": null
-          }
-        ],
-        "indexes": []
-      },
-      {
-        "name": "Recipe",
-        "scope": {
-          "values": [
-            "all"
-          ]
-        },
-        "mode": "Map",
-        "key": "id",
-        "source": {
-          "file": "Economy.xlsx",
-          "sheet": "Recipe"
-        },
-        "fields": [
-          {
-            "name": "id",
+            "name": "count",
             "ty": "I32",
             "scope": {
               "values": [
                 "all"
               ]
             },
-            "key": true,
-            "comment": null,
-            "default": null,
-            "range": null,
-            "length": null,
-            "parser": null,
-            "derived_from": null
-          },
-          {
-            "name": "result_item",
-            "ty": {
-              "Ref": {
-                "table": "Item",
-                "field": "id"
-              }
-            },
-            "scope": {
-              "values": [
-                "all"
-              ]
-            },
             "key": false,
             "comment": null,
             "default": null,
-            "range": null,
-            "length": null,
-            "parser": null,
-            "derived_from": null
-          },
-          {
-            "name": "materials",
-            "ty": {
-              "List": {
-                "Struct": "ResourceCost"
-              }
-            },
-            "scope": {
-              "values": [
-                "all"
-              ]
-            },
-            "key": false,
-            "comment": null,
-            "default": null,
-            "range": null,
-            "length": [
+            "range": [
               1,
-              4
+              9999
             ],
-            "parser": {
-              "kind": "tuple_list",
-              "options": {}
-            },
+            "length": null,
+            "parser": null,
             "derived_from": null
           }
         ],
         "indexes": []
       },
       {
-        "name": "GachaPool",
+        "name": "LevelExp",
         "scope": {
           "values": [
             "all"
           ]
         },
         "mode": "Map",
-        "key": "id",
+        "key": "level",
         "source": {
-          "file": "Economy.xlsx",
-          "sheet": "GachaPool"
+          "file": "Core.xlsx",
+          "sheet": "LevelExp"
         },
         "fields": [
           {
-            "name": "id",
+            "name": "level",
             "ty": "I32",
             "scope": {
               "values": [
@@ -3302,223 +3115,37 @@
             "key": true,
             "comment": null,
             "default": null,
-            "range": null,
-            "length": null,
-            "parser": null,
-            "derived_from": null
-          },
-          {
-            "name": "name",
-            "ty": "String",
-            "scope": {
-              "values": [
-                "all"
-              ]
-            },
-            "key": false,
-            "comment": null,
-            "default": null,
-            "range": null,
-            "length": null,
-            "parser": null,
-            "derived_from": null
-          },
-          {
-            "name": "cost",
-            "ty": {
-              "Struct": "ResourceCost"
-            },
-            "scope": {
-              "values": [
-                "all"
-              ]
-            },
-            "key": false,
-            "comment": null,
-            "default": null,
-            "range": null,
-            "length": null,
-            "parser": {
-              "kind": "tuple",
-              "options": {}
-            },
-            "derived_from": null
-          }
-        ],
-        "indexes": []
-      },
-      {
-        "name": "GachaItem",
-        "scope": {
-          "values": [
-            "all"
-          ]
-        },
-        "mode": "List",
-        "key": null,
-        "source": {
-          "file": "Economy.xlsx",
-          "sheet": "GachaItem"
-        },
-        "fields": [
-          {
-            "name": "pool_id",
-            "ty": {
-              "Ref": {
-                "table": "GachaPool",
-                "field": "id"
-              }
-            },
-            "scope": {
-              "values": [
-                "all"
-              ]
-            },
-            "key": false,
-            "comment": null,
-            "default": null,
-            "range": null,
-            "length": null,
-            "parser": null,
-            "derived_from": null
-          },
-          {
-            "name": "item_id",
-            "ty": {
-              "Ref": {
-                "table": "Item",
-                "field": "id"
-              }
-            },
-            "scope": {
-              "values": [
-                "all"
-              ]
-            },
-            "key": false,
-            "comment": null,
-            "default": null,
-            "range": null,
-            "length": null,
-            "parser": null,
-            "derived_from": null
-          },
-          {
-            "name": "rarity",
-            "ty": {
-              "Enum": "Rarity"
-            },
-            "scope": {
-              "values": [
-                "all"
-              ]
-            },
-            "key": false,
-            "comment": null,
-            "default": null,
-            "range": null,
-            "length": null,
-            "parser": null,
-            "derived_from": null
-          },
-          {
-            "name": "weight",
-            "ty": "F32",
-            "scope": {
-              "values": [
-                "all"
-              ]
-            },
-            "key": false,
-            "comment": null,
-            "default": null,
-            "range": null,
-            "length": null,
-            "parser": null,
-            "derived_from": null
-          }
-        ],
-        "indexes": []
-      },
-      {
-        "name": "EquipmentSet",
-        "scope": {
-          "values": [
-            "all"
-          ]
-        },
-        "mode": "Map",
-        "key": "id",
-        "source": {
-          "file": "Economy.xlsx",
-          "sheet": "EquipmentSet"
-        },
-        "fields": [
-          {
-            "name": "id",
-            "ty": "I32",
-            "scope": {
-              "values": [
-                "all"
-              ]
-            },
-            "key": true,
-            "comment": null,
-            "default": null,
-            "range": null,
-            "length": null,
-            "parser": null,
-            "derived_from": null
-          },
-          {
-            "name": "name",
-            "ty": "String",
-            "scope": {
-              "values": [
-                "all"
-              ]
-            },
-            "key": false,
-            "comment": null,
-            "default": null,
-            "range": null,
-            "length": null,
-            "parser": null,
-            "derived_from": null
-          },
-          {
-            "name": "item_ids",
-            "ty": {
-              "List": {
-                "Ref": {
-                  "table": "Item",
-                  "field": "id"
-                }
-              }
-            },
-            "scope": {
-              "values": [
-                "all"
-              ]
-            },
-            "key": false,
-            "comment": null,
-            "default": null,
-            "range": null,
-            "length": [
-              2,
-              4
+            "range": [
+              1,
+              100
             ],
-            "parser": {
-              "kind": "json",
-              "options": {}
-            },
+            "length": null,
+            "parser": null,
             "derived_from": null
           },
           {
-            "name": "bonus_effect",
+            "name": "exp",
+            "ty": "I64",
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
+            "key": false,
+            "comment": null,
+            "default": null,
+            "range": [
+              0,
+              999999999
+            ],
+            "length": null,
+            "parser": null,
+            "derived_from": null
+          },
+          {
+            "name": "unlock_feature",
             "ty": {
-              "Struct": "SkillEffect"
+              "Optional": "String"
             },
             "scope": {
               "values": [
@@ -3568,7 +3195,7 @@
           },
           {
             "name": "title_key",
-            "ty": "String",
+            "ty": "Text",
             "scope": {
               "values": [
                 "all"
@@ -3701,6 +3328,310 @@
         "indexes": []
       },
       {
+        "name": "GameSettings",
+        "scope": {
+          "values": [
+            "all"
+          ]
+        },
+        "mode": "Singleton",
+        "key": null,
+        "source": {
+          "file": "Core.xlsx",
+          "sheet": "GameSettings"
+        },
+        "fields": [
+          {
+            "name": "version",
+            "ty": "String",
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
+            "key": false,
+            "comment": null,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "derived_from": null
+          },
+          {
+            "name": "daily_reset_hour",
+            "ty": "I32",
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
+            "key": false,
+            "comment": null,
+            "default": null,
+            "range": [
+              0,
+              23
+            ],
+            "length": null,
+            "parser": null,
+            "derived_from": null
+          },
+          {
+            "name": "starting_gold",
+            "ty": "I32",
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
+            "key": false,
+            "comment": null,
+            "default": "100",
+            "range": [
+              0,
+              999999
+            ],
+            "length": null,
+            "parser": null,
+            "derived_from": null
+          },
+          {
+            "name": "spawn_pos",
+            "ty": {
+              "Struct": "Vec3"
+            },
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
+            "key": false,
+            "comment": null,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": {
+              "kind": "tuple",
+              "options": {}
+            },
+            "derived_from": null
+          },
+          {
+            "name": "starter_items",
+            "ty": {
+              "List": {
+                "Ref": {
+                  "table": "Item",
+                  "field": "id"
+                }
+              }
+            },
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
+            "key": false,
+            "comment": null,
+            "default": null,
+            "range": null,
+            "length": [
+              1,
+              4
+            ],
+            "parser": {
+              "kind": "json",
+              "options": {}
+            },
+            "derived_from": null
+          },
+          {
+            "name": "gravity",
+            "ty": "F64",
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
+            "key": false,
+            "comment": "Double precision tuning value",
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "derived_from": null
+          },
+          {
+            "name": "daily_bonus_items",
+            "ty": {
+              "Array": {
+                "element": {
+                  "Ref": {
+                    "table": "Item",
+                    "field": "id"
+                  }
+                },
+                "len": 3
+              }
+            },
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
+            "key": false,
+            "comment": "Fixed-length array parsed from one cell",
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": {
+              "kind": "split",
+              "options": {}
+            },
+            "derived_from": null
+          },
+          {
+            "name": "spawn_points",
+            "ty": {
+              "Array": {
+                "element": {
+                  "Struct": "Vec3"
+                },
+                "len": 2
+              }
+            },
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
+            "key": false,
+            "comment": "Fixed-length array of structs",
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": {
+              "kind": "tuple_list",
+              "options": {}
+            },
+            "derived_from": null
+          },
+          {
+            "name": "maintenance",
+            "ty": {
+              "Optional": {
+                "Struct": "MaintenanceInfo"
+              }
+            },
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
+            "key": false,
+            "comment": "Optional derived struct copied from a child row",
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "derived_from": {
+              "source_table": "MaintenanceWindow",
+              "parent_key": "version",
+              "child_key": "version",
+              "value_field": null,
+              "order_by": null
+            }
+          }
+        ],
+        "indexes": []
+      },
+      {
+        "name": "MaintenanceWindow",
+        "scope": {
+          "values": [
+            "all"
+          ]
+        },
+        "mode": "List",
+        "key": null,
+        "source": {
+          "file": "Core.xlsx",
+          "sheet": "MaintenanceWindow"
+        },
+        "fields": [
+          {
+            "name": "version",
+            "ty": "String",
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
+            "key": false,
+            "comment": null,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "derived_from": null
+          },
+          {
+            "name": "starts_at",
+            "ty": "String",
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
+            "key": false,
+            "comment": null,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "derived_from": null
+          },
+          {
+            "name": "duration_minutes",
+            "ty": "I32",
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
+            "key": false,
+            "comment": null,
+            "default": null,
+            "range": [
+              1,
+              1440
+            ],
+            "length": null,
+            "parser": null,
+            "derived_from": null
+          },
+          {
+            "name": "reason",
+            "ty": {
+              "Optional": "String"
+            },
+            "scope": {
+              "values": [
+                "all"
+              ]
+            },
+            "key": false,
+            "comment": null,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "derived_from": null
+          }
+        ],
+        "indexes": []
+      },
+      {
         "name": "MailTemplate",
         "scope": {
           "values": [
@@ -3750,7 +3681,7 @@
           },
           {
             "name": "title_key",
-            "ty": "String",
+            "ty": "Text",
             "scope": {
               "values": [
                 "all"
@@ -3766,7 +3697,7 @@
           },
           {
             "name": "body_key",
-            "ty": "String",
+            "ty": "Text",
             "scope": {
               "values": [
                 "all"
@@ -3932,7 +3863,7 @@
           },
           {
             "name": "speaker_key",
-            "ty": "String",
+            "ty": "Text",
             "scope": {
               "values": [
                 "all"

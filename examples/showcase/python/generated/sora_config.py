@@ -8,13 +8,13 @@ from .sora_runtime import (
     SoraReadError,
 )
 from .item import ItemTable, Item
+from .shop import ShopTable, Shop
+from .shop_item import ShopItemTable, ShopItem
+from .recipe import RecipeTable, Recipe
+from .gacha_pool import GachaPoolTable, GachaPool
+from .gacha_item import GachaItemTable, GachaItem
+from .equipment_set import EquipmentSetTable, EquipmentSet
 from .skill import SkillTable, Skill
-from .quest import QuestTable, Quest
-from .quest_reward import QuestRewardTable, QuestReward
-from .game_settings import GameSettingsTable, GameSettings
-from .maintenance_window import MaintenanceWindowTable, MaintenanceWindow
-from .localization import LocalizationTable, Localization
-from .level_exp import LevelExpTable, LevelExp
 from .character import CharacterTable, Character
 from .character_skill import CharacterSkillTable, CharacterSkill
 from .buff import BuffTable, Buff
@@ -24,14 +24,13 @@ from .monster import MonsterTable, Monster
 from .stage import StageTable, Stage
 from .stage_reward import StageRewardTable, StageReward
 from .dungeon import DungeonTable, Dungeon
-from .shop import ShopTable, Shop
-from .shop_item import ShopItemTable, ShopItem
-from .recipe import RecipeTable, Recipe
-from .gacha_pool import GachaPoolTable, GachaPool
-from .gacha_item import GachaItemTable, GachaItem
-from .equipment_set import EquipmentSetTable, EquipmentSet
+from .quest import QuestTable, Quest
+from .quest_reward import QuestRewardTable, QuestReward
+from .level_exp import LevelExpTable, LevelExp
 from .achievement import AchievementTable, Achievement
 from .vip_level import VipLevelTable, VipLevel
+from .game_settings import GameSettingsTable, GameSettings
+from .maintenance_window import MaintenanceWindowTable, MaintenanceWindow
 from .mail_template import MailTemplateTable, MailTemplate
 from .mail_reward import MailRewardTable, MailReward
 from .dialogue import DialogueTable, Dialogue
@@ -51,20 +50,20 @@ from .stat_type import StatType
 from .mail_type import MailType
 
 
-SCHEMA_FINGERPRINT = "70733f887d9adc7d"
+SCHEMA_FINGERPRINT = "1439cc1e8c6581b3"
 
 
 class SoraConfig:
     def __init__(
         self,
         item: ItemTable,
+        shop: ShopTable,
+        shop_item: ShopItemTable,
+        recipe: RecipeTable,
+        gacha_pool: GachaPoolTable,
+        gacha_item: GachaItemTable,
+        equipment_set: EquipmentSetTable,
         skill: SkillTable,
-        quest: QuestTable,
-        quest_reward: QuestRewardTable,
-        game_settings: GameSettingsTable,
-        maintenance_window: MaintenanceWindowTable,
-        localization: LocalizationTable,
-        level_exp: LevelExpTable,
         character: CharacterTable,
         character_skill: CharacterSkillTable,
         buff: BuffTable,
@@ -74,14 +73,13 @@ class SoraConfig:
         stage: StageTable,
         stage_reward: StageRewardTable,
         dungeon: DungeonTable,
-        shop: ShopTable,
-        shop_item: ShopItemTable,
-        recipe: RecipeTable,
-        gacha_pool: GachaPoolTable,
-        gacha_item: GachaItemTable,
-        equipment_set: EquipmentSetTable,
+        quest: QuestTable,
+        quest_reward: QuestRewardTable,
+        level_exp: LevelExpTable,
         achievement: AchievementTable,
         vip_level: VipLevelTable,
+        game_settings: GameSettingsTable,
+        maintenance_window: MaintenanceWindowTable,
         mail_template: MailTemplateTable,
         mail_reward: MailRewardTable,
         dialogue: DialogueTable,
@@ -94,13 +92,13 @@ class SoraConfig:
         complex_action_entry: ComplexActionEntryTable,
     ) -> None:
         self._item = item
+        self._shop = shop
+        self._shop_item = shop_item
+        self._recipe = recipe
+        self._gacha_pool = gacha_pool
+        self._gacha_item = gacha_item
+        self._equipment_set = equipment_set
         self._skill = skill
-        self._quest = quest
-        self._quest_reward = quest_reward
-        self._game_settings = game_settings
-        self._maintenance_window = maintenance_window
-        self._localization = localization
-        self._level_exp = level_exp
         self._character = character
         self._character_skill = character_skill
         self._buff = buff
@@ -110,14 +108,13 @@ class SoraConfig:
         self._stage = stage
         self._stage_reward = stage_reward
         self._dungeon = dungeon
-        self._shop = shop
-        self._shop_item = shop_item
-        self._recipe = recipe
-        self._gacha_pool = gacha_pool
-        self._gacha_item = gacha_item
-        self._equipment_set = equipment_set
+        self._quest = quest
+        self._quest_reward = quest_reward
+        self._level_exp = level_exp
         self._achievement = achievement
         self._vip_level = vip_level
+        self._game_settings = game_settings
+        self._maintenance_window = maintenance_window
         self._mail_template = mail_template
         self._mail_reward = mail_reward
         self._dialogue = dialogue
@@ -141,26 +138,26 @@ class SoraConfig:
             ItemTable.decode(
                 bundle.decode_table(ItemTable.NAME, Item.decode)
             ),
+            ShopTable.decode(
+                bundle.decode_table(ShopTable.NAME, Shop.decode)
+            ),
+            ShopItemTable.decode(
+                bundle.decode_table(ShopItemTable.NAME, ShopItem.decode)
+            ),
+            RecipeTable.decode(
+                bundle.decode_table(RecipeTable.NAME, Recipe.decode)
+            ),
+            GachaPoolTable.decode(
+                bundle.decode_table(GachaPoolTable.NAME, GachaPool.decode)
+            ),
+            GachaItemTable.decode(
+                bundle.decode_table(GachaItemTable.NAME, GachaItem.decode)
+            ),
+            EquipmentSetTable.decode(
+                bundle.decode_table(EquipmentSetTable.NAME, EquipmentSet.decode)
+            ),
             SkillTable.decode(
                 bundle.decode_table(SkillTable.NAME, Skill.decode)
-            ),
-            QuestTable.decode(
-                bundle.decode_table(QuestTable.NAME, Quest.decode)
-            ),
-            QuestRewardTable.decode(
-                bundle.decode_table(QuestRewardTable.NAME, QuestReward.decode)
-            ),
-            GameSettingsTable.decode(
-                bundle.decode_table(GameSettingsTable.NAME, GameSettings.decode)
-            ),
-            MaintenanceWindowTable.decode(
-                bundle.decode_table(MaintenanceWindowTable.NAME, MaintenanceWindow.decode)
-            ),
-            LocalizationTable.decode(
-                bundle.decode_table(LocalizationTable.NAME, Localization.decode)
-            ),
-            LevelExpTable.decode(
-                bundle.decode_table(LevelExpTable.NAME, LevelExp.decode)
             ),
             CharacterTable.decode(
                 bundle.decode_table(CharacterTable.NAME, Character.decode)
@@ -189,29 +186,26 @@ class SoraConfig:
             DungeonTable.decode(
                 bundle.decode_table(DungeonTable.NAME, Dungeon.decode)
             ),
-            ShopTable.decode(
-                bundle.decode_table(ShopTable.NAME, Shop.decode)
+            QuestTable.decode(
+                bundle.decode_table(QuestTable.NAME, Quest.decode)
             ),
-            ShopItemTable.decode(
-                bundle.decode_table(ShopItemTable.NAME, ShopItem.decode)
+            QuestRewardTable.decode(
+                bundle.decode_table(QuestRewardTable.NAME, QuestReward.decode)
             ),
-            RecipeTable.decode(
-                bundle.decode_table(RecipeTable.NAME, Recipe.decode)
-            ),
-            GachaPoolTable.decode(
-                bundle.decode_table(GachaPoolTable.NAME, GachaPool.decode)
-            ),
-            GachaItemTable.decode(
-                bundle.decode_table(GachaItemTable.NAME, GachaItem.decode)
-            ),
-            EquipmentSetTable.decode(
-                bundle.decode_table(EquipmentSetTable.NAME, EquipmentSet.decode)
+            LevelExpTable.decode(
+                bundle.decode_table(LevelExpTable.NAME, LevelExp.decode)
             ),
             AchievementTable.decode(
                 bundle.decode_table(AchievementTable.NAME, Achievement.decode)
             ),
             VipLevelTable.decode(
                 bundle.decode_table(VipLevelTable.NAME, VipLevel.decode)
+            ),
+            GameSettingsTable.decode(
+                bundle.decode_table(GameSettingsTable.NAME, GameSettings.decode)
+            ),
+            MaintenanceWindowTable.decode(
+                bundle.decode_table(MaintenanceWindowTable.NAME, MaintenanceWindow.decode)
             ),
             MailTemplateTable.decode(
                 bundle.decode_table(MailTemplateTable.NAME, MailTemplate.decode)
@@ -248,13 +242,13 @@ class SoraConfig:
     def tables(self) -> list[SoraConfigTable]:
         return [
             self._item,
+            self._shop,
+            self._shop_item,
+            self._recipe,
+            self._gacha_pool,
+            self._gacha_item,
+            self._equipment_set,
             self._skill,
-            self._quest,
-            self._quest_reward,
-            self._game_settings,
-            self._maintenance_window,
-            self._localization,
-            self._level_exp,
             self._character,
             self._character_skill,
             self._buff,
@@ -264,14 +258,13 @@ class SoraConfig:
             self._stage,
             self._stage_reward,
             self._dungeon,
-            self._shop,
-            self._shop_item,
-            self._recipe,
-            self._gacha_pool,
-            self._gacha_item,
-            self._equipment_set,
+            self._quest,
+            self._quest_reward,
+            self._level_exp,
             self._achievement,
             self._vip_level,
+            self._game_settings,
+            self._maintenance_window,
             self._mail_template,
             self._mail_reward,
             self._dialogue,
@@ -289,32 +282,32 @@ class SoraConfig:
         return self._item
 
 
+    def shop(self) -> ShopTable:
+        return self._shop
+
+
+    def shop_item(self) -> ShopItemTable:
+        return self._shop_item
+
+
+    def recipe(self) -> RecipeTable:
+        return self._recipe
+
+
+    def gacha_pool(self) -> GachaPoolTable:
+        return self._gacha_pool
+
+
+    def gacha_item(self) -> GachaItemTable:
+        return self._gacha_item
+
+
+    def equipment_set(self) -> EquipmentSetTable:
+        return self._equipment_set
+
+
     def skill(self) -> SkillTable:
         return self._skill
-
-
-    def quest(self) -> QuestTable:
-        return self._quest
-
-
-    def quest_reward(self) -> QuestRewardTable:
-        return self._quest_reward
-
-
-    def game_settings(self) -> GameSettingsTable:
-        return self._game_settings
-
-
-    def maintenance_window(self) -> MaintenanceWindowTable:
-        return self._maintenance_window
-
-
-    def localization(self) -> LocalizationTable:
-        return self._localization
-
-
-    def level_exp(self) -> LevelExpTable:
-        return self._level_exp
 
 
     def character(self) -> CharacterTable:
@@ -353,28 +346,16 @@ class SoraConfig:
         return self._dungeon
 
 
-    def shop(self) -> ShopTable:
-        return self._shop
+    def quest(self) -> QuestTable:
+        return self._quest
 
 
-    def shop_item(self) -> ShopItemTable:
-        return self._shop_item
+    def quest_reward(self) -> QuestRewardTable:
+        return self._quest_reward
 
 
-    def recipe(self) -> RecipeTable:
-        return self._recipe
-
-
-    def gacha_pool(self) -> GachaPoolTable:
-        return self._gacha_pool
-
-
-    def gacha_item(self) -> GachaItemTable:
-        return self._gacha_item
-
-
-    def equipment_set(self) -> EquipmentSetTable:
-        return self._equipment_set
+    def level_exp(self) -> LevelExpTable:
+        return self._level_exp
 
 
     def achievement(self) -> AchievementTable:
@@ -383,6 +364,14 @@ class SoraConfig:
 
     def vip_level(self) -> VipLevelTable:
         return self._vip_level
+
+
+    def game_settings(self) -> GameSettingsTable:
+        return self._game_settings
+
+
+    def maintenance_window(self) -> MaintenanceWindowTable:
+        return self._maintenance_window
 
 
     def mail_template(self) -> MailTemplateTable:

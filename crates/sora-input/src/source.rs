@@ -1,10 +1,10 @@
 use std::{collections::BTreeMap, path::Path};
 
-use sora_data::model::TableData;
+use sora_data::model::{LocalizationSourceData, TableData};
 use sora_diagnostics::{Result, SoraError};
 use sora_execution::ExecutionContext;
 use sora_ir::model::ConfigIr;
-use sora_ir::model::{TableIr, TableSourceIr};
+use sora_ir::model::{LocalizationSourceIr, TableIr, TableSourceIr};
 
 use crate::parser::ParserRegistry;
 
@@ -62,6 +62,14 @@ pub struct DataSourceRequest<'a> {
     pub parser_registry: &'a ParserRegistry,
 }
 
+pub struct LocalizationSourceRequest<'a> {
+    pub ir: &'a ConfigIr,
+    pub source: &'a LocalizationSourceIr,
+    pub path: &'a Path,
+    pub execution: &'a ExecutionContext,
+    pub parser_registry: &'a ParserRegistry,
+}
+
 pub trait DataSourceLoader: Send + Sync {
     fn format_name(&self) -> &'static str;
 
@@ -70,6 +78,16 @@ pub trait DataSourceLoader: Send + Sync {
     }
 
     fn load_table(&self, request: DataSourceRequest<'_>) -> Result<TableData>;
+
+    fn load_localization_source(
+        &self,
+        _request: LocalizationSourceRequest<'_>,
+    ) -> Result<LocalizationSourceData> {
+        Err(SoraError::InvalidSchema(format!(
+            "source format `{}` does not support localization sources",
+            self.format_name()
+        )))
+    }
 }
 
 #[derive(Default)]
@@ -116,6 +134,31 @@ pub fn resolve_table_source_format_with_registry<'a>(
             table: table.name.clone(),
         })?;
     resolve_source_format_with_registry(&table.name, source, default_source_format, registry)
+}
+
+pub fn resolve_localization_source_format_with_registry<'a>(
+    source: &LocalizationSourceIr,
+    default_source_format: Option<&str>,
+    registry: &'a DataSourceRegistry,
+) -> Result<&'a str> {
+    if let Some(format) = source.format.as_deref() {
+        return validate_registered_format(format, registry);
+    }
+
+    if let Some(format) = registry.infer_from_file(&source.file) {
+        return Ok(format);
+    }
+
+    if let Some(format) = default_source_format {
+        return validate_registered_format(format, registry);
+    }
+
+    Err(SoraError::InvalidSchema(format!(
+        "localization source `{}` file `{}` does not have a supported extension; set `format` or `[build].default_source_format`; supported formats: {}",
+        source.name,
+        source.file,
+        registry.supported_formats().join(", ")
+    )))
 }
 
 pub fn resolve_source_format_with_registry<'a>(

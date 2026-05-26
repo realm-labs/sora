@@ -26,7 +26,6 @@ check(quest?.rewards.length === 2);
 check(settings.startingGold === 100);
 check(config.stage().len() === 40);
 check(config.monster().len() === 80);
-check(config.localization().len() === 80);
 check(config.eventRule().len() === 20);
 check(eventRule?.condition.type === "QuestCompleted");
 check(eventRule.condition.questId === 5002);

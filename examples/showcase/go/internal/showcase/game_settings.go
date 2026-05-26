@@ -3,148 +3,147 @@
 package showcase
 
 type GameSettings struct {
-    Version string
-    DailyResetHour int32
-    StartingGold int32
-    SpawnPos Vec3
-    StarterItems []int32
-    // Gravity: Double precision tuning value
-    Gravity float64
-    // DailyBonusItems: Fixed-length array parsed from one cell
-    DailyBonusItems []int32
-    // SpawnPoints: Fixed-length array of structs
-    SpawnPoints []Vec3
-    // Maintenance: Optional derived struct copied from a child row
-    Maintenance *MaintenanceInfo
+	Version        string
+	DailyResetHour int32
+	StartingGold   int32
+	SpawnPos       Vec3
+	StarterItems   []int32
+	// Gravity: Double precision tuning value
+	Gravity float64
+	// DailyBonusItems: Fixed-length array parsed from one cell
+	DailyBonusItems []int32
+	// SpawnPoints: Fixed-length array of structs
+	SpawnPoints []Vec3
+	// Maintenance: Optional derived struct copied from a child row
+	Maintenance *MaintenanceInfo
 }
 
 func decodeGameSettings(reader *SoraReader) (GameSettings, error) {
-    var value GameSettings
-    var err error
-    value.Version, err = reader.ReadString()
-    if err != nil {
-        return value, err
-    }
-    value.DailyResetHour, err = reader.ReadInt32()
-    if err != nil {
-        return value, err
-    }
-    value.StartingGold, err = reader.ReadInt32()
-    if err != nil {
-        return value, err
-    }
-    value.SpawnPos, err = decodeVec3(reader)
-    if err != nil {
-        return value, err
-    }
-    value.StarterItems, err = ReadList(reader, func(reader *SoraReader) (int32, error) { return reader.ReadInt32() })
-    if err != nil {
-        return value, err
-    }
-    value.Gravity, err = reader.ReadFloat64()
-    if err != nil {
-        return value, err
-    }
-    value.DailyBonusItems, err = ReadList(reader, func(reader *SoraReader) (int32, error) { return reader.ReadInt32() })
-    if err != nil {
-        return value, err
-    }
-    value.SpawnPoints, err = ReadList(reader, func(reader *SoraReader) (Vec3, error) { return decodeVec3(reader) })
-    if err != nil {
-        return value, err
-    }
-    value.Maintenance, err = ReadOptional(reader, func(reader *SoraReader) (MaintenanceInfo, error) { return decodeMaintenanceInfo(reader) })
-    if err != nil {
-        return value, err
-    }
-    return value, nil
+	var value GameSettings
+	var err error
+	value.Version, err = reader.ReadString()
+	if err != nil {
+		return value, err
+	}
+	value.DailyResetHour, err = reader.ReadInt32()
+	if err != nil {
+		return value, err
+	}
+	value.StartingGold, err = reader.ReadInt32()
+	if err != nil {
+		return value, err
+	}
+	value.SpawnPos, err = decodeVec3(reader)
+	if err != nil {
+		return value, err
+	}
+	value.StarterItems, err = ReadList(reader, func(reader *SoraReader) (int32, error) { return reader.ReadInt32() })
+	if err != nil {
+		return value, err
+	}
+	value.Gravity, err = reader.ReadFloat64()
+	if err != nil {
+		return value, err
+	}
+	value.DailyBonusItems, err = ReadList(reader, func(reader *SoraReader) (int32, error) { return reader.ReadInt32() })
+	if err != nil {
+		return value, err
+	}
+	value.SpawnPoints, err = ReadList(reader, func(reader *SoraReader) (Vec3, error) { return decodeVec3(reader) })
+	if err != nil {
+		return value, err
+	}
+	value.Maintenance, err = ReadOptional(reader, func(reader *SoraReader) (MaintenanceInfo, error) { return decodeMaintenanceInfo(reader) })
+	if err != nil {
+		return value, err
+	}
+	return value, nil
 }
 
 func decodeGameSettingsValue(input SoraValue) (GameSettings, error) {
-    var value GameSettings
-    obj, err := input.AsObject()
-    if err != nil {
-        return value, err
-    }
-    value.Version, err = obj.Get("version").AsString()
-    if err != nil {
-        return value, err
-    }
-    value.DailyResetHour, err = obj.Get("daily_reset_hour").AsInt32()
-    if err != nil {
-        return value, err
-    }
-    value.StartingGold, err = obj.Get("starting_gold").AsInt32()
-    if err != nil {
-        return value, err
-    }
-    value.SpawnPos, err = decodeVec3Value(obj.Get("spawn_pos"))
-    if err != nil {
-        return value, err
-    }
-    value.StarterItems, err = DecodeSoraValueList(obj.Get("starter_items"), func(item SoraValue) (int32, error) { return item.AsInt32() })
-    if err != nil {
-        return value, err
-    }
-    value.Gravity, err = obj.Get("gravity").AsFloat64()
-    if err != nil {
-        return value, err
-    }
-    value.DailyBonusItems, err = DecodeSoraValueList(obj.Get("daily_bonus_items"), func(item SoraValue) (int32, error) { return item.AsInt32() })
-    if err != nil {
-        return value, err
-    }
-    value.SpawnPoints, err = DecodeSoraValueList(obj.Get("spawn_points"), func(item SoraValue) (Vec3, error) { return decodeVec3Value(item) })
-    if err != nil {
-        return value, err
-    }
-    value.Maintenance, err = DecodeOptionalSoraValue(obj.Get("maintenance"), func(item SoraValue) (MaintenanceInfo, error) { return decodeMaintenanceInfoValue(item) })
-    if err != nil {
-        return value, err
-    }
-    return value, nil
+	var value GameSettings
+	obj, err := input.AsObject()
+	if err != nil {
+		return value, err
+	}
+	value.Version, err = obj.Get("version").AsString()
+	if err != nil {
+		return value, err
+	}
+	value.DailyResetHour, err = obj.Get("daily_reset_hour").AsInt32()
+	if err != nil {
+		return value, err
+	}
+	value.StartingGold, err = obj.Get("starting_gold").AsInt32()
+	if err != nil {
+		return value, err
+	}
+	value.SpawnPos, err = decodeVec3Value(obj.Get("spawn_pos"))
+	if err != nil {
+		return value, err
+	}
+	value.StarterItems, err = DecodeSoraValueList(obj.Get("starter_items"), func(item SoraValue) (int32, error) { return item.AsInt32() })
+	if err != nil {
+		return value, err
+	}
+	value.Gravity, err = obj.Get("gravity").AsFloat64()
+	if err != nil {
+		return value, err
+	}
+	value.DailyBonusItems, err = DecodeSoraValueList(obj.Get("daily_bonus_items"), func(item SoraValue) (int32, error) { return item.AsInt32() })
+	if err != nil {
+		return value, err
+	}
+	value.SpawnPoints, err = DecodeSoraValueList(obj.Get("spawn_points"), func(item SoraValue) (Vec3, error) { return decodeVec3Value(item) })
+	if err != nil {
+		return value, err
+	}
+	value.Maintenance, err = DecodeOptionalSoraValue(obj.Get("maintenance"), func(item SoraValue) (MaintenanceInfo, error) { return decodeMaintenanceInfoValue(item) })
+	if err != nil {
+		return value, err
+	}
+	return value, nil
 }
 
 const gameSettingsTableName = "GameSettings"
 
 var gameSettingsTableInfo = SoraTableInfo{
-    Name: gameSettingsTableName,
-    RowType: "GameSettings",
-    Shape: SoraTableShapeSingleton,
-    Indexes: []SoraIndexInfo{
-    },
+	Name:    gameSettingsTableName,
+	RowType: "GameSettings",
+	Shape:   SoraTableShapeSingleton,
+	Indexes: []SoraIndexInfo{},
 }
 
 type GameSettingsTable struct {
-    rows GameSettings
+	rows GameSettings
 }
 
 func buildGameSettingsTable(rows []GameSettings) (*GameSettingsTable, error) {
-    row, err := RequireSingletonTable(rows, gameSettingsTableName)
-    if err != nil {
-        return nil, err
-    }
-    return &GameSettingsTable{rows: row}, nil
+	row, err := RequireSingletonTable(rows, gameSettingsTableName)
+	if err != nil {
+		return nil, err
+	}
+	return &GameSettingsTable{rows: row}, nil
 }
 
 func decodeGameSettingsTable(source SoraTableSource) (*GameSettingsTable, error) {
-    rows, err := DecodeSourceTable(source, gameSettingsTableName, decodeGameSettings, decodeGameSettingsValue)
-    if err != nil {
-        return nil, err
-    }
-    return buildGameSettingsTable(rows)
+	rows, err := DecodeSourceTable(source, gameSettingsTableName, decodeGameSettings, decodeGameSettingsValue)
+	if err != nil {
+		return nil, err
+	}
+	return buildGameSettingsTable(rows)
 }
 
 func (table *GameSettingsTable) Rows() GameSettings {
-    return table.rows
+	return table.rows
 }
 func (table *GameSettingsTable) Row() GameSettings {
-    return table.rows
+	return table.rows
 }
 func (table *GameSettingsTable) Info() SoraTableInfo {
-    return gameSettingsTableInfo
+	return gameSettingsTableInfo
 }
 
 func (table *GameSettingsTable) Len() int {
-    return 1
+	return 1
 }

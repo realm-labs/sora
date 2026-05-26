@@ -3,143 +3,142 @@
 package showcase
 
 type Character struct {
-    Id int32
-    Name string
-    Rarity Rarity
-    BaseLevel int32
-    BaseSkill int32
-    StarterItems []int32
-    SpawnPos Vec3
+	Id           int32
+	Name         string
+	Rarity       Rarity
+	BaseLevel    int32
+	BaseSkill    int32
+	StarterItems []int32
+	SpawnPos     Vec3
 }
 
 func decodeCharacter(reader *SoraReader) (Character, error) {
-    var value Character
-    var err error
-    value.Id, err = reader.ReadInt32()
-    if err != nil {
-        return value, err
-    }
-    value.Name, err = reader.ReadString()
-    if err != nil {
-        return value, err
-    }
-    value.Rarity, err = decodeRarity(reader)
-    if err != nil {
-        return value, err
-    }
-    value.BaseLevel, err = reader.ReadInt32()
-    if err != nil {
-        return value, err
-    }
-    value.BaseSkill, err = reader.ReadInt32()
-    if err != nil {
-        return value, err
-    }
-    value.StarterItems, err = ReadList(reader, func(reader *SoraReader) (int32, error) { return reader.ReadInt32() })
-    if err != nil {
-        return value, err
-    }
-    value.SpawnPos, err = decodeVec3(reader)
-    if err != nil {
-        return value, err
-    }
-    return value, nil
+	var value Character
+	var err error
+	value.Id, err = reader.ReadInt32()
+	if err != nil {
+		return value, err
+	}
+	value.Name, err = reader.ReadString()
+	if err != nil {
+		return value, err
+	}
+	value.Rarity, err = decodeRarity(reader)
+	if err != nil {
+		return value, err
+	}
+	value.BaseLevel, err = reader.ReadInt32()
+	if err != nil {
+		return value, err
+	}
+	value.BaseSkill, err = reader.ReadInt32()
+	if err != nil {
+		return value, err
+	}
+	value.StarterItems, err = ReadList(reader, func(reader *SoraReader) (int32, error) { return reader.ReadInt32() })
+	if err != nil {
+		return value, err
+	}
+	value.SpawnPos, err = decodeVec3(reader)
+	if err != nil {
+		return value, err
+	}
+	return value, nil
 }
 
 func decodeCharacterValue(input SoraValue) (Character, error) {
-    var value Character
-    obj, err := input.AsObject()
-    if err != nil {
-        return value, err
-    }
-    value.Id, err = obj.Get("id").AsInt32()
-    if err != nil {
-        return value, err
-    }
-    value.Name, err = obj.Get("name").AsString()
-    if err != nil {
-        return value, err
-    }
-    value.Rarity, err = decodeRarityValue(obj.Get("rarity"))
-    if err != nil {
-        return value, err
-    }
-    value.BaseLevel, err = obj.Get("base_level").AsInt32()
-    if err != nil {
-        return value, err
-    }
-    value.BaseSkill, err = obj.Get("base_skill").AsInt32()
-    if err != nil {
-        return value, err
-    }
-    value.StarterItems, err = DecodeSoraValueList(obj.Get("starter_items"), func(item SoraValue) (int32, error) { return item.AsInt32() })
-    if err != nil {
-        return value, err
-    }
-    value.SpawnPos, err = decodeVec3Value(obj.Get("spawn_pos"))
-    if err != nil {
-        return value, err
-    }
-    return value, nil
+	var value Character
+	obj, err := input.AsObject()
+	if err != nil {
+		return value, err
+	}
+	value.Id, err = obj.Get("id").AsInt32()
+	if err != nil {
+		return value, err
+	}
+	value.Name, err = obj.Get("name").AsString()
+	if err != nil {
+		return value, err
+	}
+	value.Rarity, err = decodeRarityValue(obj.Get("rarity"))
+	if err != nil {
+		return value, err
+	}
+	value.BaseLevel, err = obj.Get("base_level").AsInt32()
+	if err != nil {
+		return value, err
+	}
+	value.BaseSkill, err = obj.Get("base_skill").AsInt32()
+	if err != nil {
+		return value, err
+	}
+	value.StarterItems, err = DecodeSoraValueList(obj.Get("starter_items"), func(item SoraValue) (int32, error) { return item.AsInt32() })
+	if err != nil {
+		return value, err
+	}
+	value.SpawnPos, err = decodeVec3Value(obj.Get("spawn_pos"))
+	if err != nil {
+		return value, err
+	}
+	return value, nil
 }
 
 const characterTableName = "Character"
 
 var characterTableInfo = SoraTableInfo{
-    Name: characterTableName,
-    RowType: "Character",
-    Shape: SoraTableShapeKeyed,
-    PrimaryKey: &SoraKeyInfo{Name: "id", Type: "int32"},
-    Indexes: []SoraIndexInfo{
-    },
+	Name:       characterTableName,
+	RowType:    "Character",
+	Shape:      SoraTableShapeKeyed,
+	PrimaryKey: &SoraKeyInfo{Name: "id", Type: "int32"},
+	Indexes:    []SoraIndexInfo{},
 }
 
 type CharacterTable struct {
-    keys []int32
-    rows map[int32]Character
+	keys []int32
+	rows map[int32]Character
 }
 
 func buildCharacterTable(rows []Character) (*CharacterTable, error) {
-    keys := make([]int32, 0, len(rows))
-    for _, row := range rows {
-        keys = append(keys, row.Id)
-    }
-    return &CharacterTable{keys: keys, rows: DecodeMapTable(rows, func(row Character) int32 { return row.Id })}, nil
+	keys := make([]int32, 0, len(rows))
+	for _, row := range rows {
+		keys = append(keys, row.Id)
+	}
+	return &CharacterTable{keys: keys, rows: DecodeMapTable(rows, func(row Character) int32 { return row.Id })}, nil
 }
 
 func decodeCharacterTable(source SoraTableSource) (*CharacterTable, error) {
-    rows, err := DecodeSourceTable(source, characterTableName, decodeCharacter, decodeCharacterValue)
-    if err != nil {
-        return nil, err
-    }
-    return buildCharacterTable(rows)
+	rows, err := DecodeSourceTable(source, characterTableName, decodeCharacter, decodeCharacterValue)
+	if err != nil {
+		return nil, err
+	}
+	return buildCharacterTable(rows)
 }
 
 func (table *CharacterTable) Rows() map[int32]Character {
-    return table.rows
+	return table.rows
 }
 func (table *CharacterTable) Get(key int32) (Character, bool) {
-    value, ok := table.rows[key]
-    return value, ok
+	value, ok := table.rows[key]
+	return value, ok
 }
 
 func (table *CharacterTable) Keys() []int32 {
-    return table.keys
+	return table.keys
 }
 
 func (table *CharacterTable) OrderedRows() []Character {
-    rows := make([]Character, 0, len(table.keys))
-    for _, key := range table.keys {
-        if row, ok := table.rows[key]; ok {
-            rows = append(rows, row)
-        }
-    }
-    return rows
+	rows := make([]Character, 0, len(table.keys))
+	for _, key := range table.keys {
+		if row, ok := table.rows[key]; ok {
+			rows = append(rows, row)
+		}
+	}
+	return rows
 }
 func (table *CharacterTable) Info() SoraTableInfo {
-    return characterTableInfo
+	return characterTableInfo
 }
 
 func (table *CharacterTable) Len() int {
-    return len(table.rows)
+	return len(table.rows)
 }

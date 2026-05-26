@@ -3,46 +3,46 @@
 package showcase
 
 type MaintenanceInfo struct {
-    StartsAt string
-    DurationMinutes int32
-    Reason *string
+	StartsAt        string
+	DurationMinutes int32
+	Reason          *string
 }
 
 func decodeMaintenanceInfo(reader *SoraReader) (MaintenanceInfo, error) {
-    var value MaintenanceInfo
-    var err error
-    value.StartsAt, err = reader.ReadString()
-    if err != nil {
-        return value, err
-    }
-    value.DurationMinutes, err = reader.ReadInt32()
-    if err != nil {
-        return value, err
-    }
-    value.Reason, err = ReadOptional(reader, func(reader *SoraReader) (string, error) { return reader.ReadString() })
-    if err != nil {
-        return value, err
-    }
-    return value, nil
+	var value MaintenanceInfo
+	var err error
+	value.StartsAt, err = reader.ReadString()
+	if err != nil {
+		return value, err
+	}
+	value.DurationMinutes, err = reader.ReadInt32()
+	if err != nil {
+		return value, err
+	}
+	value.Reason, err = ReadOptional(reader, func(reader *SoraReader) (string, error) { return reader.ReadString() })
+	if err != nil {
+		return value, err
+	}
+	return value, nil
 }
 
 func decodeMaintenanceInfoValue(input SoraValue) (MaintenanceInfo, error) {
-    var value MaintenanceInfo
-    obj, err := input.AsObject()
-    if err != nil {
-        return value, err
-    }
-    value.StartsAt, err = obj.Get("starts_at").AsString()
-    if err != nil {
-        return value, err
-    }
-    value.DurationMinutes, err = obj.Get("duration_minutes").AsInt32()
-    if err != nil {
-        return value, err
-    }
-    value.Reason, err = DecodeOptionalSoraValue(obj.Get("reason"), func(item SoraValue) (string, error) { return item.AsString() })
-    if err != nil {
-        return value, err
-    }
-    return value, nil
+	var value MaintenanceInfo
+	obj, err := input.AsObject()
+	if err != nil {
+		return value, err
+	}
+	value.StartsAt, err = obj.Get("starts_at").AsString()
+	if err != nil {
+		return value, err
+	}
+	value.DurationMinutes, err = obj.Get("duration_minutes").AsInt32()
+	if err != nil {
+		return value, err
+	}
+	value.Reason, err = DecodeOptionalSoraValue(obj.Get("reason"), func(item SoraValue) (string, error) { return item.AsString() })
+	if err != nil {
+		return value, err
+	}
+	return value, nil
 }

@@ -1,7 +1,9 @@
 use std::{collections::BTreeMap, path::Path};
 
 use csv::StringRecord;
-use sora_data::model::{ConfigData, RowData, TableData};
+use sora_data::model::{
+    ConfigData, LocalizationRowData, LocalizationSourceData, RowData, TableData,
+};
 use sora_diagnostics::{Result, SoraError};
 use sora_input::{
     cell::{CellContext, CellLocation, CellValue, cell_to_value_with_parsers},
@@ -10,7 +12,7 @@ use sora_input::{
 };
 use sora_ir::{
     input_projection::{TaggedColumnKind, struct_columns, tagged_columns, tagged_columns_union},
-    model::{ConfigIr, FieldIr, TableIr, TypeIr},
+    model::{ConfigIr, FieldIr, LocalizationSourceIr, TableIr, TypeIr},
 };
 
 pub fn load_csv_config_data(ir: &ConfigIr, data_root: &Path) -> Result<ConfigData> {
@@ -143,6 +145,41 @@ pub fn load_csv_table_data_with_parsers(
 
     Ok(TableData {
         name: table.name.clone(),
+        rows,
+    })
+}
+
+pub fn load_csv_localization_source_data(
+    source: &LocalizationSourceIr,
+    path: &Path,
+) -> Result<LocalizationSourceData> {
+    let mut reader = csv::Reader::from_path(path).map_err(|source| csv_error(path, source))?;
+    let headers = reader
+        .headers()
+        .map_err(|source| csv_error(path, source))?
+        .clone();
+    let columns = headers
+        .iter()
+        .map(|header| header.trim().to_owned())
+        .filter(|header| !header.is_empty())
+        .collect::<Vec<_>>();
+    let mut rows = Vec::new();
+    for record in reader.records() {
+        let record = record.map_err(|source| csv_error(path, source))?;
+        let mut values = BTreeMap::new();
+        for (index, name) in columns.iter().enumerate() {
+            let value = record.get(index).unwrap_or_default().trim();
+            if !value.is_empty() {
+                values.insert(name.clone(), value.to_owned());
+            }
+        }
+        if !values.is_empty() {
+            rows.push(LocalizationRowData { values });
+        }
+    }
+    Ok(LocalizationSourceData {
+        name: source.name.clone(),
+        columns,
         rows,
     })
 }

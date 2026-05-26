@@ -83,6 +83,9 @@ struct RustModel {
     has_unique_indexes: bool,
     has_non_unique_list_indexes: bool,
     has_non_unique_map_indexes: bool,
+    has_localization: bool,
+    locales: Vec<String>,
+    default_locale: String,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -206,6 +209,17 @@ impl RustModel {
             has_non_unique_map_indexes: tables
                 .iter()
                 .any(|table| table.mode == "map" && !table.non_unique_indexes.is_empty()),
+            has_localization: ir.localization.is_some(),
+            locales: ir
+                .localization
+                .as_ref()
+                .map(|item| item.locales.clone())
+                .unwrap_or_default(),
+            default_locale: ir
+                .localization
+                .as_ref()
+                .map(|item| item.default_locale.clone())
+                .unwrap_or_default(),
             tables,
             modules: model.modules,
         }
@@ -393,6 +407,7 @@ fn rust_key_type_is_copy(ir: &ConfigIr, ty: &TypeIr) -> bool {
             .is_some_and(|field| rust_key_type_is_copy(ir, &field.ty)),
         TypeIr::Optional(element) => rust_key_type_is_copy(ir, element),
         TypeIr::String
+        | TypeIr::Text
         | TypeIr::Struct(_)
         | TypeIr::Union(_)
         | TypeIr::List(_)

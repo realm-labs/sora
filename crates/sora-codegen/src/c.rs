@@ -791,7 +791,7 @@ fn c_type_name(
         TypeIr::I64 => "int64_t".to_owned(),
         TypeIr::F32 => "float".to_owned(),
         TypeIr::F64 => "double".to_owned(),
-        TypeIr::String => "sora_string".to_owned(),
+        TypeIr::String | TypeIr::Text => "sora_string".to_owned(),
         TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => {
             c_named_type(options, &name.to_snake_case())
         }
@@ -816,7 +816,7 @@ fn c_type_suffix(ir: &ConfigIr, ty: &TypeIr) -> String {
         TypeIr::I64 => "i64".to_owned(),
         TypeIr::F32 => "f32".to_owned(),
         TypeIr::F64 => "f64".to_owned(),
-        TypeIr::String => "string".to_owned(),
+        TypeIr::String | TypeIr::Text => "string".to_owned(),
         TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => name.to_snake_case(),
         TypeIr::List(element) | TypeIr::Set(element) => {
             format!("{}_array", c_type_suffix(ir, element))
@@ -849,7 +849,7 @@ fn c_decode_into(
         TypeIr::I64 => format!("sora_reader_read_i64(reader, {target})"),
         TypeIr::F32 => format!("sora_reader_read_f32(reader, {target})"),
         TypeIr::F64 => format!("sora_reader_read_f64(reader, {target})"),
-        TypeIr::String => format!("sora_reader_read_string(reader, {target})"),
+        TypeIr::String | TypeIr::Text => format!("sora_reader_read_string(reader, {target})"),
         TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => {
             format!(
                 "{}(reader, {target})",
@@ -878,7 +878,7 @@ fn c_free_into(
     helpers: &mut CHelperRegistry,
 ) -> Option<String> {
     match ty {
-        TypeIr::String => Some(format!("sora_string_free({target});")),
+        TypeIr::String | TypeIr::Text => Some(format!("sora_string_free({target});")),
         TypeIr::Struct(name) | TypeIr::Union(name) => Some(format!(
             "{}({target});",
             c_free_fn(options, &name.to_snake_case())
@@ -917,6 +917,7 @@ fn c_param_decl(
 fn c_type_is_pointer_param(ir: &ConfigIr, ty: &TypeIr) -> bool {
     match ty {
         TypeIr::String
+        | TypeIr::Text
         | TypeIr::List(_)
         | TypeIr::Set(_)
         | TypeIr::Map { .. }
@@ -933,7 +934,7 @@ fn c_type_is_pointer_param(ir: &ConfigIr, ty: &TypeIr) -> bool {
 
 fn c_key_match_expr(ir: &ConfigIr, ty: &TypeIr, row_value: &str, param_name: &str) -> String {
     match ty {
-        TypeIr::String => format!("sora_string_equal(&{row_value}, {param_name})"),
+        TypeIr::String | TypeIr::Text => format!("sora_string_equal(&{row_value}, {param_name})"),
         TypeIr::Ref { table, field } => ref_field_type(ir, table, field)
             .map(|field| c_key_match_expr(ir, &field.ty, row_value, param_name))
             .unwrap_or_else(|| format!("{row_value} == {param_name}")),

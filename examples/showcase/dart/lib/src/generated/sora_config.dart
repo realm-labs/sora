@@ -17,13 +17,13 @@ import 'reward_bundle.dart';
 import 'complex_budget.dart';
 import 'maintenance_info.dart';
 import 'item.dart';
+import 'shop.dart';
+import 'shop_item.dart';
+import 'recipe.dart';
+import 'gacha_pool.dart';
+import 'gacha_item.dart';
+import 'equipment_set.dart';
 import 'skill.dart';
-import 'quest.dart';
-import 'quest_reward.dart';
-import 'game_settings.dart';
-import 'maintenance_window.dart';
-import 'localization.dart';
-import 'level_exp.dart';
 import 'character.dart';
 import 'character_skill.dart';
 import 'buff.dart';
@@ -33,14 +33,13 @@ import 'monster.dart';
 import 'stage.dart';
 import 'stage_reward.dart';
 import 'dungeon.dart';
-import 'shop.dart';
-import 'shop_item.dart';
-import 'recipe.dart';
-import 'gacha_pool.dart';
-import 'gacha_item.dart';
-import 'equipment_set.dart';
+import 'quest.dart';
+import 'quest_reward.dart';
+import 'level_exp.dart';
 import 'achievement.dart';
 import 'vip_level.dart';
+import 'game_settings.dart';
+import 'maintenance_window.dart';
 import 'mail_template.dart';
 import 'mail_reward.dart';
 import 'dialogue.dart';
@@ -54,7 +53,7 @@ import 'complex_action_entry.dart';
 import 'event_condition.dart';
 import 'reward_action.dart';
 
-const soraSchemaFingerprint = '276aaca7bfd433ff';
+const soraSchemaFingerprint = 'd960f9e36f012c5d';
 
 final class SoraConfig {
   final Map<Type, Object> _tables;
@@ -78,26 +77,26 @@ final class SoraConfig {
       ItemTable: ItemTable.decode(
         bundle.decodeTable(ItemTable.tableName, Item.decode),
       ),
+      ShopTable: ShopTable.decode(
+        bundle.decodeTable(ShopTable.tableName, Shop.decode),
+      ),
+      ShopItemTable: ShopItemTable.decode(
+        bundle.decodeTable(ShopItemTable.tableName, ShopItem.decode),
+      ),
+      RecipeTable: RecipeTable.decode(
+        bundle.decodeTable(RecipeTable.tableName, Recipe.decode),
+      ),
+      GachaPoolTable: GachaPoolTable.decode(
+        bundle.decodeTable(GachaPoolTable.tableName, GachaPool.decode),
+      ),
+      GachaItemTable: GachaItemTable.decode(
+        bundle.decodeTable(GachaItemTable.tableName, GachaItem.decode),
+      ),
+      EquipmentSetTable: EquipmentSetTable.decode(
+        bundle.decodeTable(EquipmentSetTable.tableName, EquipmentSet.decode),
+      ),
       SkillTable: SkillTable.decode(
         bundle.decodeTable(SkillTable.tableName, Skill.decode),
-      ),
-      QuestTable: QuestTable.decode(
-        bundle.decodeTable(QuestTable.tableName, Quest.decode),
-      ),
-      QuestRewardTable: QuestRewardTable.decode(
-        bundle.decodeTable(QuestRewardTable.tableName, QuestReward.decode),
-      ),
-      GameSettingsTable: GameSettingsTable.decode(
-        bundle.decodeTable(GameSettingsTable.tableName, GameSettings.decode),
-      ),
-      MaintenanceWindowTable: MaintenanceWindowTable.decode(
-        bundle.decodeTable(MaintenanceWindowTable.tableName, MaintenanceWindow.decode),
-      ),
-      LocalizationTable: LocalizationTable.decode(
-        bundle.decodeTable(LocalizationTable.tableName, Localization.decode),
-      ),
-      LevelExpTable: LevelExpTable.decode(
-        bundle.decodeTable(LevelExpTable.tableName, LevelExp.decode),
       ),
       CharacterTable: CharacterTable.decode(
         bundle.decodeTable(CharacterTable.tableName, Character.decode),
@@ -126,29 +125,26 @@ final class SoraConfig {
       DungeonTable: DungeonTable.decode(
         bundle.decodeTable(DungeonTable.tableName, Dungeon.decode),
       ),
-      ShopTable: ShopTable.decode(
-        bundle.decodeTable(ShopTable.tableName, Shop.decode),
+      QuestTable: QuestTable.decode(
+        bundle.decodeTable(QuestTable.tableName, Quest.decode),
       ),
-      ShopItemTable: ShopItemTable.decode(
-        bundle.decodeTable(ShopItemTable.tableName, ShopItem.decode),
+      QuestRewardTable: QuestRewardTable.decode(
+        bundle.decodeTable(QuestRewardTable.tableName, QuestReward.decode),
       ),
-      RecipeTable: RecipeTable.decode(
-        bundle.decodeTable(RecipeTable.tableName, Recipe.decode),
-      ),
-      GachaPoolTable: GachaPoolTable.decode(
-        bundle.decodeTable(GachaPoolTable.tableName, GachaPool.decode),
-      ),
-      GachaItemTable: GachaItemTable.decode(
-        bundle.decodeTable(GachaItemTable.tableName, GachaItem.decode),
-      ),
-      EquipmentSetTable: EquipmentSetTable.decode(
-        bundle.decodeTable(EquipmentSetTable.tableName, EquipmentSet.decode),
+      LevelExpTable: LevelExpTable.decode(
+        bundle.decodeTable(LevelExpTable.tableName, LevelExp.decode),
       ),
       AchievementTable: AchievementTable.decode(
         bundle.decodeTable(AchievementTable.tableName, Achievement.decode),
       ),
       VipLevelTable: VipLevelTable.decode(
         bundle.decodeTable(VipLevelTable.tableName, VipLevel.decode),
+      ),
+      GameSettingsTable: GameSettingsTable.decode(
+        bundle.decodeTable(GameSettingsTable.tableName, GameSettings.decode),
+      ),
+      MaintenanceWindowTable: MaintenanceWindowTable.decode(
+        bundle.decodeTable(MaintenanceWindowTable.tableName, MaintenanceWindow.decode),
       ),
       MailTemplateTable: MailTemplateTable.decode(
         bundle.decodeTable(MailTemplateTable.tableName, MailTemplate.decode),
@@ -193,13 +189,13 @@ final class SoraConfig {
     throw const SoraReadException('generated SoraConfig is missing a table or has an unexpected table type');
   }
   ItemTable get item => _table<ItemTable>();
+  ShopTable get shop => _table<ShopTable>();
+  ShopItemTable get shopItem => _table<ShopItemTable>();
+  RecipeTable get recipe => _table<RecipeTable>();
+  GachaPoolTable get gachaPool => _table<GachaPoolTable>();
+  GachaItemTable get gachaItem => _table<GachaItemTable>();
+  EquipmentSetTable get equipmentSet => _table<EquipmentSetTable>();
   SkillTable get skill => _table<SkillTable>();
-  QuestTable get quest => _table<QuestTable>();
-  QuestRewardTable get questReward => _table<QuestRewardTable>();
-  GameSettingsTable get gameSettings => _table<GameSettingsTable>();
-  MaintenanceWindowTable get maintenanceWindow => _table<MaintenanceWindowTable>();
-  LocalizationTable get localization => _table<LocalizationTable>();
-  LevelExpTable get levelExp => _table<LevelExpTable>();
   CharacterTable get character => _table<CharacterTable>();
   CharacterSkillTable get characterSkill => _table<CharacterSkillTable>();
   BuffTable get buff => _table<BuffTable>();
@@ -209,14 +205,13 @@ final class SoraConfig {
   StageTable get stage => _table<StageTable>();
   StageRewardTable get stageReward => _table<StageRewardTable>();
   DungeonTable get dungeon => _table<DungeonTable>();
-  ShopTable get shop => _table<ShopTable>();
-  ShopItemTable get shopItem => _table<ShopItemTable>();
-  RecipeTable get recipe => _table<RecipeTable>();
-  GachaPoolTable get gachaPool => _table<GachaPoolTable>();
-  GachaItemTable get gachaItem => _table<GachaItemTable>();
-  EquipmentSetTable get equipmentSet => _table<EquipmentSetTable>();
+  QuestTable get quest => _table<QuestTable>();
+  QuestRewardTable get questReward => _table<QuestRewardTable>();
+  LevelExpTable get levelExp => _table<LevelExpTable>();
   AchievementTable get achievement => _table<AchievementTable>();
   VipLevelTable get vipLevel => _table<VipLevelTable>();
+  GameSettingsTable get gameSettings => _table<GameSettingsTable>();
+  MaintenanceWindowTable get maintenanceWindow => _table<MaintenanceWindowTable>();
   MailTemplateTable get mailTemplate => _table<MailTemplateTable>();
   MailRewardTable get mailReward => _table<MailRewardTable>();
   DialogueTable get dialogue => _table<DialogueTable>();

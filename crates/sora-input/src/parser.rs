@@ -201,7 +201,7 @@ fn default_cell_value(
         TypeIr::Bool => bool_cell(cell, context)?,
         TypeIr::I32 | TypeIr::I64 | TypeIr::Ref { .. } => integer_cell(cell, context)?,
         TypeIr::F32 | TypeIr::F64 => float_cell(cell, context)?,
-        TypeIr::String | TypeIr::Enum(_) => Value::String(cell.display_text()),
+        TypeIr::String | TypeIr::Text | TypeIr::Enum(_) => Value::String(cell.display_text()),
         TypeIr::Struct(_) | TypeIr::Union(_) => json_object_value(&cell.display_text(), context)?,
         TypeIr::List(_) | TypeIr::Set(_) | TypeIr::Array { .. } => {
             parse_collection_with_separator(&cell.display_text(), ty, context)?
@@ -490,7 +490,7 @@ fn json_to_cell_value(
             .as_f64()
             .map(Value::Float)
             .ok_or_else(|| context.error("expected JSON number"))?,
-        TypeIr::String | TypeIr::Enum(_) => value
+        TypeIr::String | TypeIr::Text | TypeIr::Enum(_) => value
             .as_str()
             .map(|value| Value::String(value.to_owned()))
             .ok_or_else(|| context.error("expected JSON string"))?,
@@ -563,7 +563,7 @@ fn separated_item_to_value(
             .parse::<f64>()
             .map(Value::Float)
             .map_err(|_| context.error(format!("expected float list item, got `{item}`"))),
-        TypeIr::String | TypeIr::Enum(_) => string_item_to_value(item, context),
+        TypeIr::String | TypeIr::Text | TypeIr::Enum(_) => string_item_to_value(item, context),
         TypeIr::Struct(_) | TypeIr::Union(_) => {
             let parsed: JsonValue = serde_json::from_str(item).map_err(|error| {
                 context.error(format!(

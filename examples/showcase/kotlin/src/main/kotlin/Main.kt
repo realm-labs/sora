@@ -21,7 +21,6 @@ fun main() {
     check(settings.startingGold == 100)
     check(config.stage.values.size == 40)
     check(config.monster.values.size == 80)
-    check(config.localization.values.size == 80)
     check(config.eventRule.values.size == 20)
 
     val eventRule = config.eventRule[17001] ?: error("event rule 17001")

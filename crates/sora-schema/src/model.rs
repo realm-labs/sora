@@ -13,6 +13,9 @@ pub struct SchemaFile {
     pub codegen: CodegenSchema,
 
     #[serde(default)]
+    pub localization: Option<LocalizationSchema>,
+
+    #[serde(default)]
     pub includes: Vec<String>,
 
     #[serde(default)]
@@ -26,6 +29,36 @@ pub struct SchemaFile {
 
     #[serde(default)]
     pub tables: Vec<TableSchema>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
+pub struct LocalizationSchema {
+    #[serde(default)]
+    pub locales: Vec<String>,
+    pub default_locale: Option<String>,
+    pub fallback_locale: Option<String>,
+    #[serde(default = "default_localization_strict")]
+    pub strict: bool,
+    #[serde(default)]
+    pub sources: Vec<LocalizationSourceSchema>,
+}
+
+fn default_localization_strict() -> bool {
+    true
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
+pub struct LocalizationSourceSchema {
+    pub name: String,
+    pub file: String,
+    pub sheet: Option<String>,
+    pub format: Option<String>,
+    #[serde(default = "default_localization_key")]
+    pub key: String,
+}
+
+fn default_localization_key() -> String {
+    "key".to_owned()
 }
 
 #[derive(Debug, Clone, PartialEq, Deserialize, Default)]

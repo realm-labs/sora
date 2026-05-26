@@ -3,107 +3,106 @@
 package showcase
 
 type Recipe struct {
-    Id int32
-    ResultItem int32
-    Materials []ResourceCost
+	Id         int32
+	ResultItem int32
+	Materials  []ResourceCost
 }
 
 func decodeRecipe(reader *SoraReader) (Recipe, error) {
-    var value Recipe
-    var err error
-    value.Id, err = reader.ReadInt32()
-    if err != nil {
-        return value, err
-    }
-    value.ResultItem, err = reader.ReadInt32()
-    if err != nil {
-        return value, err
-    }
-    value.Materials, err = ReadList(reader, func(reader *SoraReader) (ResourceCost, error) { return decodeResourceCost(reader) })
-    if err != nil {
-        return value, err
-    }
-    return value, nil
+	var value Recipe
+	var err error
+	value.Id, err = reader.ReadInt32()
+	if err != nil {
+		return value, err
+	}
+	value.ResultItem, err = reader.ReadInt32()
+	if err != nil {
+		return value, err
+	}
+	value.Materials, err = ReadList(reader, func(reader *SoraReader) (ResourceCost, error) { return decodeResourceCost(reader) })
+	if err != nil {
+		return value, err
+	}
+	return value, nil
 }
 
 func decodeRecipeValue(input SoraValue) (Recipe, error) {
-    var value Recipe
-    obj, err := input.AsObject()
-    if err != nil {
-        return value, err
-    }
-    value.Id, err = obj.Get("id").AsInt32()
-    if err != nil {
-        return value, err
-    }
-    value.ResultItem, err = obj.Get("result_item").AsInt32()
-    if err != nil {
-        return value, err
-    }
-    value.Materials, err = DecodeSoraValueList(obj.Get("materials"), func(item SoraValue) (ResourceCost, error) { return decodeResourceCostValue(item) })
-    if err != nil {
-        return value, err
-    }
-    return value, nil
+	var value Recipe
+	obj, err := input.AsObject()
+	if err != nil {
+		return value, err
+	}
+	value.Id, err = obj.Get("id").AsInt32()
+	if err != nil {
+		return value, err
+	}
+	value.ResultItem, err = obj.Get("result_item").AsInt32()
+	if err != nil {
+		return value, err
+	}
+	value.Materials, err = DecodeSoraValueList(obj.Get("materials"), func(item SoraValue) (ResourceCost, error) { return decodeResourceCostValue(item) })
+	if err != nil {
+		return value, err
+	}
+	return value, nil
 }
 
 const recipeTableName = "Recipe"
 
 var recipeTableInfo = SoraTableInfo{
-    Name: recipeTableName,
-    RowType: "Recipe",
-    Shape: SoraTableShapeKeyed,
-    PrimaryKey: &SoraKeyInfo{Name: "id", Type: "int32"},
-    Indexes: []SoraIndexInfo{
-    },
+	Name:       recipeTableName,
+	RowType:    "Recipe",
+	Shape:      SoraTableShapeKeyed,
+	PrimaryKey: &SoraKeyInfo{Name: "id", Type: "int32"},
+	Indexes:    []SoraIndexInfo{},
 }
 
 type RecipeTable struct {
-    keys []int32
-    rows map[int32]Recipe
+	keys []int32
+	rows map[int32]Recipe
 }
 
 func buildRecipeTable(rows []Recipe) (*RecipeTable, error) {
-    keys := make([]int32, 0, len(rows))
-    for _, row := range rows {
-        keys = append(keys, row.Id)
-    }
-    return &RecipeTable{keys: keys, rows: DecodeMapTable(rows, func(row Recipe) int32 { return row.Id })}, nil
+	keys := make([]int32, 0, len(rows))
+	for _, row := range rows {
+		keys = append(keys, row.Id)
+	}
+	return &RecipeTable{keys: keys, rows: DecodeMapTable(rows, func(row Recipe) int32 { return row.Id })}, nil
 }
 
 func decodeRecipeTable(source SoraTableSource) (*RecipeTable, error) {
-    rows, err := DecodeSourceTable(source, recipeTableName, decodeRecipe, decodeRecipeValue)
-    if err != nil {
-        return nil, err
-    }
-    return buildRecipeTable(rows)
+	rows, err := DecodeSourceTable(source, recipeTableName, decodeRecipe, decodeRecipeValue)
+	if err != nil {
+		return nil, err
+	}
+	return buildRecipeTable(rows)
 }
 
 func (table *RecipeTable) Rows() map[int32]Recipe {
-    return table.rows
+	return table.rows
 }
 func (table *RecipeTable) Get(key int32) (Recipe, bool) {
-    value, ok := table.rows[key]
-    return value, ok
+	value, ok := table.rows[key]
+	return value, ok
 }
 
 func (table *RecipeTable) Keys() []int32 {
-    return table.keys
+	return table.keys
 }
 
 func (table *RecipeTable) OrderedRows() []Recipe {
-    rows := make([]Recipe, 0, len(table.keys))
-    for _, key := range table.keys {
-        if row, ok := table.rows[key]; ok {
-            rows = append(rows, row)
-        }
-    }
-    return rows
+	rows := make([]Recipe, 0, len(table.keys))
+	for _, key := range table.keys {
+		if row, ok := table.rows[key]; ok {
+			rows = append(rows, row)
+		}
+	}
+	return rows
 }
 func (table *RecipeTable) Info() SoraTableInfo {
-    return recipeTableInfo
+	return recipeTableInfo
 }
 
 func (table *RecipeTable) Len() int {
-    return len(table.rows)
+	return len(table.rows)
 }

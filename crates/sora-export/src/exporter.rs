@@ -1,5 +1,6 @@
 use std::path::PathBuf;
 
+use sora_data::localization::LocaleCatalog;
 use sora_data::model::ConfigData;
 use sora_diagnostics::Result;
 use sora_execution::ExecutionContext;
@@ -26,14 +27,16 @@ pub enum ExportCompression {
     },
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+#[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub struct ExportOptions {
     pub compression: ExportCompression,
+    pub locale: Option<String>,
 }
 
 pub struct ExportRequest<'a> {
     pub ir: &'a ConfigIr,
     pub data: &'a ConfigData,
+    pub locale_catalog: Option<&'a LocaleCatalog>,
     pub execution: &'a ExecutionContext,
     pub options: ExportOptions,
     pub output: ExportOutput,

@@ -8,13 +8,13 @@
     from_bundle/1,
     tables/1
     , item/1
+    , shop/1
+    , shop_item/1
+    , recipe/1
+    , gacha_pool/1
+    , gacha_item/1
+    , equipment_set/1
     , skill/1
-    , quest/1
-    , quest_reward/1
-    , game_settings/1
-    , maintenance_window/1
-    , localization/1
-    , level_exp/1
     , character/1
     , character_skill/1
     , buff/1
@@ -24,14 +24,13 @@
     , stage/1
     , stage_reward/1
     , dungeon/1
-    , shop/1
-    , shop_item/1
-    , recipe/1
-    , gacha_pool/1
-    , gacha_item/1
-    , equipment_set/1
+    , quest/1
+    , quest_reward/1
+    , level_exp/1
     , achievement/1
     , vip_level/1
+    , game_settings/1
+    , maintenance_window/1
     , mail_template/1
     , mail_reward/1
     , dialogue/1
@@ -48,7 +47,7 @@
 
 -type t() :: map().
 
--define(SORA_SCHEMA_FINGERPRINT, <<"70733f887d9adc7d">>).
+-define(SORA_SCHEMA_FINGERPRINT, <<"1439cc1e8c6581b3">>).
 
 -spec from_binary(binary()) -> t().
 from_binary(Bytes) ->
@@ -66,13 +65,13 @@ from_bundle(Bundle) ->
         Actual -> error({schema_fingerprint_mismatch, ?SORA_SCHEMA_FINGERPRINT, Actual})
     end,
     Item = item:decode_table(Bundle),
+    Shop = shop:decode_table(Bundle),
+    ShopItem = shop_item:decode_table(Bundle),
+    Recipe = recipe:decode_table(Bundle),
+    GachaPool = gacha_pool:decode_table(Bundle),
+    GachaItem = gacha_item:decode_table(Bundle),
+    EquipmentSet = equipment_set:decode_table(Bundle),
     Skill = skill:decode_table(Bundle),
-    Quest = quest:decode_table(Bundle),
-    QuestReward = quest_reward:decode_table(Bundle),
-    GameSettings = game_settings:decode_table(Bundle),
-    MaintenanceWindow = maintenance_window:decode_table(Bundle),
-    Localization = localization:decode_table(Bundle),
-    LevelExp = level_exp:decode_table(Bundle),
     Character = character:decode_table(Bundle),
     CharacterSkill = character_skill:decode_table(Bundle),
     Buff = buff:decode_table(Bundle),
@@ -82,14 +81,13 @@ from_bundle(Bundle) ->
     Stage = stage:decode_table(Bundle),
     StageReward = stage_reward:decode_table(Bundle),
     Dungeon = dungeon:decode_table(Bundle),
-    Shop = shop:decode_table(Bundle),
-    ShopItem = shop_item:decode_table(Bundle),
-    Recipe = recipe:decode_table(Bundle),
-    GachaPool = gacha_pool:decode_table(Bundle),
-    GachaItem = gacha_item:decode_table(Bundle),
-    EquipmentSet = equipment_set:decode_table(Bundle),
+    Quest = quest:decode_table(Bundle),
+    QuestReward = quest_reward:decode_table(Bundle),
+    LevelExp = level_exp:decode_table(Bundle),
     Achievement = achievement:decode_table(Bundle),
     VipLevel = vip_level:decode_table(Bundle),
+    GameSettings = game_settings:decode_table(Bundle),
+    MaintenanceWindow = maintenance_window:decode_table(Bundle),
     MailTemplate = mail_template:decode_table(Bundle),
     MailReward = mail_reward:decode_table(Bundle),
     Dialogue = dialogue:decode_table(Bundle),
@@ -102,13 +100,13 @@ from_bundle(Bundle) ->
     ComplexActionEntry = complex_action_entry:decode_table(Bundle),
     #{
         'item' => Item,
+        'shop' => Shop,
+        'shop_item' => ShopItem,
+        'recipe' => Recipe,
+        'gacha_pool' => GachaPool,
+        'gacha_item' => GachaItem,
+        'equipment_set' => EquipmentSet,
         'skill' => Skill,
-        'quest' => Quest,
-        'quest_reward' => QuestReward,
-        'game_settings' => GameSettings,
-        'maintenance_window' => MaintenanceWindow,
-        'localization' => Localization,
-        'level_exp' => LevelExp,
         'character' => Character,
         'character_skill' => CharacterSkill,
         'buff' => Buff,
@@ -118,14 +116,13 @@ from_bundle(Bundle) ->
         'stage' => Stage,
         'stage_reward' => StageReward,
         'dungeon' => Dungeon,
-        'shop' => Shop,
-        'shop_item' => ShopItem,
-        'recipe' => Recipe,
-        'gacha_pool' => GachaPool,
-        'gacha_item' => GachaItem,
-        'equipment_set' => EquipmentSet,
+        'quest' => Quest,
+        'quest_reward' => QuestReward,
+        'level_exp' => LevelExp,
         'achievement' => Achievement,
         'vip_level' => VipLevel,
+        'game_settings' => GameSettings,
+        'maintenance_window' => MaintenanceWindow,
         'mail_template' => MailTemplate,
         'mail_reward' => MailReward,
         'dialogue' => Dialogue,
@@ -142,13 +139,13 @@ from_bundle(Bundle) ->
 tables(Config) ->
     [
         item(Config),
+        shop(Config),
+        shop_item(Config),
+        recipe(Config),
+        gacha_pool(Config),
+        gacha_item(Config),
+        equipment_set(Config),
         skill(Config),
-        quest(Config),
-        quest_reward(Config),
-        game_settings(Config),
-        maintenance_window(Config),
-        localization(Config),
-        level_exp(Config),
         character(Config),
         character_skill(Config),
         buff(Config),
@@ -158,14 +155,13 @@ tables(Config) ->
         stage(Config),
         stage_reward(Config),
         dungeon(Config),
-        shop(Config),
-        shop_item(Config),
-        recipe(Config),
-        gacha_pool(Config),
-        gacha_item(Config),
-        equipment_set(Config),
+        quest(Config),
+        quest_reward(Config),
+        level_exp(Config),
         achievement(Config),
         vip_level(Config),
+        game_settings(Config),
+        maintenance_window(Config),
         mail_template(Config),
         mail_reward(Config),
         dialogue(Config),
@@ -180,27 +176,27 @@ tables(Config) ->
 -spec item(t()) -> item:table().
 item(Config) ->
     maps:get('item', Config).
+-spec shop(t()) -> shop:table().
+shop(Config) ->
+    maps:get('shop', Config).
+-spec shop_item(t()) -> shop_item:table().
+shop_item(Config) ->
+    maps:get('shop_item', Config).
+-spec recipe(t()) -> recipe:table().
+recipe(Config) ->
+    maps:get('recipe', Config).
+-spec gacha_pool(t()) -> gacha_pool:table().
+gacha_pool(Config) ->
+    maps:get('gacha_pool', Config).
+-spec gacha_item(t()) -> gacha_item:table().
+gacha_item(Config) ->
+    maps:get('gacha_item', Config).
+-spec equipment_set(t()) -> equipment_set:table().
+equipment_set(Config) ->
+    maps:get('equipment_set', Config).
 -spec skill(t()) -> skill:table().
 skill(Config) ->
     maps:get('skill', Config).
--spec quest(t()) -> quest:table().
-quest(Config) ->
-    maps:get('quest', Config).
--spec quest_reward(t()) -> quest_reward:table().
-quest_reward(Config) ->
-    maps:get('quest_reward', Config).
--spec game_settings(t()) -> game_settings:table().
-game_settings(Config) ->
-    maps:get('game_settings', Config).
--spec maintenance_window(t()) -> maintenance_window:table().
-maintenance_window(Config) ->
-    maps:get('maintenance_window', Config).
--spec localization(t()) -> localization:table().
-localization(Config) ->
-    maps:get('localization', Config).
--spec level_exp(t()) -> level_exp:table().
-level_exp(Config) ->
-    maps:get('level_exp', Config).
 -spec character(t()) -> character:table().
 character(Config) ->
     maps:get('character', Config).
@@ -228,30 +224,27 @@ stage_reward(Config) ->
 -spec dungeon(t()) -> dungeon:table().
 dungeon(Config) ->
     maps:get('dungeon', Config).
--spec shop(t()) -> shop:table().
-shop(Config) ->
-    maps:get('shop', Config).
--spec shop_item(t()) -> shop_item:table().
-shop_item(Config) ->
-    maps:get('shop_item', Config).
--spec recipe(t()) -> recipe:table().
-recipe(Config) ->
-    maps:get('recipe', Config).
--spec gacha_pool(t()) -> gacha_pool:table().
-gacha_pool(Config) ->
-    maps:get('gacha_pool', Config).
--spec gacha_item(t()) -> gacha_item:table().
-gacha_item(Config) ->
-    maps:get('gacha_item', Config).
--spec equipment_set(t()) -> equipment_set:table().
-equipment_set(Config) ->
-    maps:get('equipment_set', Config).
+-spec quest(t()) -> quest:table().
+quest(Config) ->
+    maps:get('quest', Config).
+-spec quest_reward(t()) -> quest_reward:table().
+quest_reward(Config) ->
+    maps:get('quest_reward', Config).
+-spec level_exp(t()) -> level_exp:table().
+level_exp(Config) ->
+    maps:get('level_exp', Config).
 -spec achievement(t()) -> achievement:table().
 achievement(Config) ->
     maps:get('achievement', Config).
 -spec vip_level(t()) -> vip_level:table().
 vip_level(Config) ->
     maps:get('vip_level', Config).
+-spec game_settings(t()) -> game_settings:table().
+game_settings(Config) ->
+    maps:get('game_settings', Config).
+-spec maintenance_window(t()) -> maintenance_window:table().
+maintenance_window(Config) ->
+    maps:get('maintenance_window', Config).
 -spec mail_template(t()) -> mail_template:table().
 mail_template(Config) ->
     maps:get('mail_template', Config).

@@ -33,7 +33,6 @@ func main() {
 	check(settings.StartingGold == 100)
 	check(cfg.Stage().Len() == 40)
 	check(cfg.Monster().Len() == 80)
-	check(cfg.Localization().Len() == 80)
 	check(cfg.EventRule().Len() == 20)
 
 	eventRule, ok := cfg.EventRule().Get(17001)

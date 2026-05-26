@@ -2,7 +2,7 @@
 
 package com.sora.showcase
 
-const val SORA_SCHEMA_FINGERPRINT = "70733f887d9adc7d"
+const val SORA_SCHEMA_FINGERPRINT = "1439cc1e8c6581b3"
 
 enum class SoraTableShape {
     List,
@@ -59,20 +59,20 @@ class SoraConfig private constructor(
             ?: throw SoraReadException("generated SoraConfig is missing table `$name` or has an unexpected table type")
     val item: ItemTable
         get() = table(ItemTable.NAME)
+    val shop: ShopTable
+        get() = table(ShopTable.NAME)
+    val shopItem: ShopItemTable
+        get() = table(ShopItemTable.NAME)
+    val recipe: RecipeTable
+        get() = table(RecipeTable.NAME)
+    val gachaPool: GachaPoolTable
+        get() = table(GachaPoolTable.NAME)
+    val gachaItem: GachaItemTable
+        get() = table(GachaItemTable.NAME)
+    val equipmentSet: EquipmentSetTable
+        get() = table(EquipmentSetTable.NAME)
     val skill: SkillTable
         get() = table(SkillTable.NAME)
-    val quest: QuestTable
-        get() = table(QuestTable.NAME)
-    val questReward: QuestRewardTable
-        get() = table(QuestRewardTable.NAME)
-    val gameSettings: GameSettingsTable
-        get() = table(GameSettingsTable.NAME)
-    val maintenanceWindow: MaintenanceWindowTable
-        get() = table(MaintenanceWindowTable.NAME)
-    val localization: LocalizationTable
-        get() = table(LocalizationTable.NAME)
-    val levelExp: LevelExpTable
-        get() = table(LevelExpTable.NAME)
     val character: CharacterTable
         get() = table(CharacterTable.NAME)
     val characterSkill: CharacterSkillTable
@@ -91,22 +91,20 @@ class SoraConfig private constructor(
         get() = table(StageRewardTable.NAME)
     val dungeon: DungeonTable
         get() = table(DungeonTable.NAME)
-    val shop: ShopTable
-        get() = table(ShopTable.NAME)
-    val shopItem: ShopItemTable
-        get() = table(ShopItemTable.NAME)
-    val recipe: RecipeTable
-        get() = table(RecipeTable.NAME)
-    val gachaPool: GachaPoolTable
-        get() = table(GachaPoolTable.NAME)
-    val gachaItem: GachaItemTable
-        get() = table(GachaItemTable.NAME)
-    val equipmentSet: EquipmentSetTable
-        get() = table(EquipmentSetTable.NAME)
+    val quest: QuestTable
+        get() = table(QuestTable.NAME)
+    val questReward: QuestRewardTable
+        get() = table(QuestRewardTable.NAME)
+    val levelExp: LevelExpTable
+        get() = table(LevelExpTable.NAME)
     val achievement: AchievementTable
         get() = table(AchievementTable.NAME)
     val vipLevel: VipLevelTable
         get() = table(VipLevelTable.NAME)
+    val gameSettings: GameSettingsTable
+        get() = table(GameSettingsTable.NAME)
+    val maintenanceWindow: MaintenanceWindowTable
+        get() = table(MaintenanceWindowTable.NAME)
     val mailTemplate: MailTemplateTable
         get() = table(MailTemplateTable.NAME)
     val mailReward: MailRewardTable
@@ -134,15 +132,15 @@ class SoraConfig private constructor(
                     "schema fingerprint mismatch: generated code expects $SORA_SCHEMA_FINGERPRINT, bundle contains ${source.schemaFingerprint}"
                 )
             }
-            val tables = LinkedHashMap<String, SoraTable<*>>(35)
+            val tables = LinkedHashMap<String, SoraTable<*>>(34)
             tables[ItemTable.NAME] = ItemTable.decode(source)
+            tables[ShopTable.NAME] = ShopTable.decode(source)
+            tables[ShopItemTable.NAME] = ShopItemTable.decode(source)
+            tables[RecipeTable.NAME] = RecipeTable.decode(source)
+            tables[GachaPoolTable.NAME] = GachaPoolTable.decode(source)
+            tables[GachaItemTable.NAME] = GachaItemTable.decode(source)
+            tables[EquipmentSetTable.NAME] = EquipmentSetTable.decode(source)
             tables[SkillTable.NAME] = SkillTable.decode(source)
-            tables[QuestTable.NAME] = QuestTable.decode(source)
-            tables[QuestRewardTable.NAME] = QuestRewardTable.decode(source)
-            tables[GameSettingsTable.NAME] = GameSettingsTable.decode(source)
-            tables[MaintenanceWindowTable.NAME] = MaintenanceWindowTable.decode(source)
-            tables[LocalizationTable.NAME] = LocalizationTable.decode(source)
-            tables[LevelExpTable.NAME] = LevelExpTable.decode(source)
             tables[CharacterTable.NAME] = CharacterTable.decode(source)
             tables[CharacterSkillTable.NAME] = CharacterSkillTable.decode(source)
             tables[BuffTable.NAME] = BuffTable.decode(source)
@@ -152,14 +150,13 @@ class SoraConfig private constructor(
             tables[StageTable.NAME] = StageTable.decode(source)
             tables[StageRewardTable.NAME] = StageRewardTable.decode(source)
             tables[DungeonTable.NAME] = DungeonTable.decode(source)
-            tables[ShopTable.NAME] = ShopTable.decode(source)
-            tables[ShopItemTable.NAME] = ShopItemTable.decode(source)
-            tables[RecipeTable.NAME] = RecipeTable.decode(source)
-            tables[GachaPoolTable.NAME] = GachaPoolTable.decode(source)
-            tables[GachaItemTable.NAME] = GachaItemTable.decode(source)
-            tables[EquipmentSetTable.NAME] = EquipmentSetTable.decode(source)
+            tables[QuestTable.NAME] = QuestTable.decode(source)
+            tables[QuestRewardTable.NAME] = QuestRewardTable.decode(source)
+            tables[LevelExpTable.NAME] = LevelExpTable.decode(source)
             tables[AchievementTable.NAME] = AchievementTable.decode(source)
             tables[VipLevelTable.NAME] = VipLevelTable.decode(source)
+            tables[GameSettingsTable.NAME] = GameSettingsTable.decode(source)
+            tables[MaintenanceWindowTable.NAME] = MaintenanceWindowTable.decode(source)
             tables[MailTemplateTable.NAME] = MailTemplateTable.decode(source)
             tables[MailRewardTable.NAME] = MailRewardTable.decode(source)
             tables[DialogueTable.NAME] = DialogueTable.decode(source)

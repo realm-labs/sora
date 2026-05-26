@@ -7,7 +7,8 @@ use serde::Deserialize;
 use sora_config_format::{DocumentError, load_document};
 use sora_diagnostics::{Result, SoraError};
 use sora_schema::model::{
-    CodegenSchema, EnumSchema, SchemaFile, StructSchema, TableSchema, UnionSchema,
+    CodegenSchema, EnumSchema, LocalizationSchema, SchemaFile, StructSchema, TableSchema,
+    UnionSchema,
 };
 
 pub fn load_project_schema_file(path: &Path) -> Result<SchemaFile> {
@@ -22,6 +23,7 @@ pub fn load_project_schema_file(path: &Path) -> Result<SchemaFile> {
     let mut merged = SchemaFile {
         package,
         codegen: root.codegen.unwrap_or_default(),
+        localization: root.localization,
         includes: root.includes.clone(),
         enums: root.enums,
         structs: root.structs,
@@ -66,6 +68,12 @@ fn merge_includes(
                 include_path.display()
             )));
         }
+        if module.localization.is_some() {
+            return Err(SoraError::InvalidSchema(format!(
+                "included schema module `{}` must not declare `localization`",
+                include_path.display()
+            )));
+        }
 
         merged.enums.extend(module.enums);
         merged.structs.extend(module.structs);
@@ -102,6 +110,7 @@ fn schema_document_error(error: DocumentError) -> SoraError {
 struct SchemaDocument {
     pub package: Option<String>,
     pub codegen: Option<CodegenSchema>,
+    pub localization: Option<LocalizationSchema>,
 
     #[serde(default)]
     pub includes: Vec<String>,

@@ -73,6 +73,75 @@ pub trait SoraSingleTable: ErasedSoraTable {
     fn get(&self) -> &Self::Row;
 }
 
+{%- if model.has_localization %}
+pub struct SoraI18n {
+    active_locale: &'static str,
+    packs: SoraMap<String, runtime::LocalePack>,
+}
+
+impl SoraI18n {
+    pub const LOCALES: &'static [&'static str] = &[
+{%- for locale in model.locales %}
+        "{{ locale }}",
+{%- endfor %}
+    ];
+    pub const DEFAULT_LOCALE: &'static str = "{{ model.default_locale }}";
+
+    pub fn new() -> Self {
+        Self {
+            active_locale: Self::DEFAULT_LOCALE,
+            packs: SoraMap::default(),
+        }
+    }
+
+    pub fn mount(&mut self, pack: runtime::LocalePack) -> Result<(), runtime::SoraReadError> {
+        if pack.schema_fingerprint() != SCHEMA_FINGERPRINT {
+            return Err(runtime::SoraReadError::new(format!(
+                "locale pack schema fingerprint mismatch: generated code expects {}, pack contains {}",
+                SCHEMA_FINGERPRINT,
+                pack.schema_fingerprint()
+            )));
+        }
+        if !Self::LOCALES.contains(&pack.locale()) {
+            return Err(runtime::SoraReadError::new(format!(
+                "locale pack `{}` is not declared by generated code",
+                pack.locale()
+            )));
+        }
+        self.packs.insert(pack.locale().to_owned(), pack);
+        Ok(())
+    }
+
+    pub fn set_locale(&mut self, locale: &'static str) -> Result<(), runtime::SoraReadError> {
+        if !Self::LOCALES.contains(&locale) {
+            return Err(runtime::SoraReadError::new(format!("unknown locale `{}`", locale)));
+        }
+        if !self.packs.contains_key(locale) {
+            return Err(runtime::SoraReadError::new(format!("locale `{}` is not mounted", locale)));
+        }
+        self.active_locale = locale;
+        Ok(())
+    }
+
+    pub fn text(&self, key: &runtime::TextKey) -> Result<&str, runtime::SoraReadError> {
+        self.packs
+            .get(self.active_locale)
+            .and_then(|pack| pack.get(key))
+            .ok_or_else(|| runtime::SoraReadError::new(format!(
+                "missing text key `{}` for locale `{}`",
+                key.as_str(),
+                self.active_locale
+            )))
+    }
+}
+
+impl Default for SoraI18n {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+{%- endif %}
+
 pub struct SoraConfig {
     tables: SoraMap<&'static str, Box<dyn ErasedSoraTable>>,
 }

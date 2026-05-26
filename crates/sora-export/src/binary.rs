@@ -64,6 +64,7 @@ mod tests {
             .export(ExportRequest {
                 ir: &ir,
                 data: &data,
+                locale_catalog: None,
                 execution: &sora_execution::ExecutionContext::default(),
                 options: Default::default(),
                 output: ExportOutput::File(path.clone()),
@@ -138,9 +139,11 @@ mod tests {
             .export(ExportRequest {
                 ir: &ir,
                 data: &data,
+                locale_catalog: None,
                 execution: &sora_execution::ExecutionContext::default(),
                 options: crate::exporter::ExportOptions {
                     compression: crate::exporter::ExportCompression::Zstd { level: 3 },
+                    locale: None,
                 },
                 output: ExportOutput::File(path.clone()),
             })

@@ -21,7 +21,6 @@ void main() {
   check(settings.startingGold == 100);
   check(config.stage.length == 40);
   check(config.monster.length == 80);
-  check(config.localization.length == 80);
   check(config.eventRule.length == 20);
 
   final eventRule = config.eventRule.get(17001)!;

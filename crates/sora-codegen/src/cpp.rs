@@ -361,7 +361,7 @@ fn cpp_type_name(ir: &ConfigIr, ty: &TypeIr, options: &CppOptionsView) -> String
         TypeIr::I64 => "std::int64_t".to_owned(),
         TypeIr::F32 => "float".to_owned(),
         TypeIr::F64 => "double".to_owned(),
-        TypeIr::String => "std::string".to_owned(),
+        TypeIr::String | TypeIr::Text => "std::string".to_owned(),
         TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => name.clone(),
         TypeIr::List(element) | TypeIr::Set(element) => {
             format!("std::vector<{}>", cpp_type_name(ir, element, options))
@@ -404,7 +404,7 @@ fn cpp_decode_expr(ir: &ConfigIr, ty: &TypeIr, options: &CppOptionsView) -> Stri
         TypeIr::I64 => "reader.read_i64()".to_owned(),
         TypeIr::F32 => "reader.read_f32()".to_owned(),
         TypeIr::F64 => "reader.read_f64()".to_owned(),
-        TypeIr::String => "reader.read_string()".to_owned(),
+        TypeIr::String | TypeIr::Text => "reader.read_string()".to_owned(),
         TypeIr::Enum(name) => format!("decode_value<{name}>(reader)"),
         TypeIr::Struct(name) | TypeIr::Union(name) => format!("{name}::decode(reader)"),
         TypeIr::List(element) | TypeIr::Set(element) => {

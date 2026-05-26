@@ -1,4 +1,4 @@
-use sora_data::model::ConfigData;
+use sora_data::model::{ConfigData, LocalizationData};
 use sora_diagnostics::Result;
 use sora_execution::ExecutionContext;
 use sora_ir::model::ConfigIr;
@@ -11,12 +11,24 @@ pub trait SchemaInput {
 pub trait DataInput {
     fn load_data(&self, ir: &ConfigIr) -> Result<ConfigData>;
 
+    fn load_localization_data(&self, _ir: &ConfigIr) -> Result<LocalizationData> {
+        Ok(LocalizationData::default())
+    }
+
     fn load_data_with_context(
         &self,
         ir: &ConfigIr,
         _execution: &ExecutionContext,
     ) -> Result<ConfigData> {
         self.load_data(ir)
+    }
+
+    fn load_localization_data_with_context(
+        &self,
+        ir: &ConfigIr,
+        _execution: &ExecutionContext,
+    ) -> Result<LocalizationData> {
+        self.load_localization_data(ir)
     }
 }
 

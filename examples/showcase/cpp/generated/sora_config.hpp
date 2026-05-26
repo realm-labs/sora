@@ -19,13 +19,13 @@
 #include "complex_budget.hpp"
 #include "maintenance_info.hpp"
 #include "item.hpp"
+#include "shop.hpp"
+#include "shop_item.hpp"
+#include "recipe.hpp"
+#include "gacha_pool.hpp"
+#include "gacha_item.hpp"
+#include "equipment_set.hpp"
 #include "skill.hpp"
-#include "quest.hpp"
-#include "quest_reward.hpp"
-#include "game_settings.hpp"
-#include "maintenance_window.hpp"
-#include "localization.hpp"
-#include "level_exp.hpp"
 #include "character.hpp"
 #include "character_skill.hpp"
 #include "buff.hpp"
@@ -35,14 +35,13 @@
 #include "stage.hpp"
 #include "stage_reward.hpp"
 #include "dungeon.hpp"
-#include "shop.hpp"
-#include "shop_item.hpp"
-#include "recipe.hpp"
-#include "gacha_pool.hpp"
-#include "gacha_item.hpp"
-#include "equipment_set.hpp"
+#include "quest.hpp"
+#include "quest_reward.hpp"
+#include "level_exp.hpp"
 #include "achievement.hpp"
 #include "vip_level.hpp"
+#include "game_settings.hpp"
+#include "maintenance_window.hpp"
 #include "mail_template.hpp"
 #include "mail_reward.hpp"
 #include "dialogue.hpp"
@@ -66,7 +65,7 @@ namespace sora::showcase {
 
 class SoraConfig {
 public:
-    static const char* schema_fingerprint() { return "70733f887d9adc7d"; }
+    static const char* schema_fingerprint() { return "1439cc1e8c6581b3"; }
 
     static SoraConfig from_bytes(const std::vector<std::uint8_t>& bytes) {
         return from_bytes(bytes, SoraBundleOptions());
@@ -83,32 +82,32 @@ public:
             std::unique_ptr<SoraTable>(new ItemTable(ItemTable::decode(bundle)))
         );
         config.tables_.emplace(
+            ShopTable::NAME,
+            std::unique_ptr<SoraTable>(new ShopTable(ShopTable::decode(bundle)))
+        );
+        config.tables_.emplace(
+            ShopItemTable::NAME,
+            std::unique_ptr<SoraTable>(new ShopItemTable(ShopItemTable::decode(bundle)))
+        );
+        config.tables_.emplace(
+            RecipeTable::NAME,
+            std::unique_ptr<SoraTable>(new RecipeTable(RecipeTable::decode(bundle)))
+        );
+        config.tables_.emplace(
+            GachaPoolTable::NAME,
+            std::unique_ptr<SoraTable>(new GachaPoolTable(GachaPoolTable::decode(bundle)))
+        );
+        config.tables_.emplace(
+            GachaItemTable::NAME,
+            std::unique_ptr<SoraTable>(new GachaItemTable(GachaItemTable::decode(bundle)))
+        );
+        config.tables_.emplace(
+            EquipmentSetTable::NAME,
+            std::unique_ptr<SoraTable>(new EquipmentSetTable(EquipmentSetTable::decode(bundle)))
+        );
+        config.tables_.emplace(
             SkillTable::NAME,
             std::unique_ptr<SoraTable>(new SkillTable(SkillTable::decode(bundle)))
-        );
-        config.tables_.emplace(
-            QuestTable::NAME,
-            std::unique_ptr<SoraTable>(new QuestTable(QuestTable::decode(bundle)))
-        );
-        config.tables_.emplace(
-            QuestRewardTable::NAME,
-            std::unique_ptr<SoraTable>(new QuestRewardTable(QuestRewardTable::decode(bundle)))
-        );
-        config.tables_.emplace(
-            GameSettingsTable::NAME,
-            std::unique_ptr<SoraTable>(new GameSettingsTable(GameSettingsTable::decode(bundle)))
-        );
-        config.tables_.emplace(
-            MaintenanceWindowTable::NAME,
-            std::unique_ptr<SoraTable>(new MaintenanceWindowTable(MaintenanceWindowTable::decode(bundle)))
-        );
-        config.tables_.emplace(
-            LocalizationTable::NAME,
-            std::unique_ptr<SoraTable>(new LocalizationTable(LocalizationTable::decode(bundle)))
-        );
-        config.tables_.emplace(
-            LevelExpTable::NAME,
-            std::unique_ptr<SoraTable>(new LevelExpTable(LevelExpTable::decode(bundle)))
         );
         config.tables_.emplace(
             CharacterTable::NAME,
@@ -147,28 +146,16 @@ public:
             std::unique_ptr<SoraTable>(new DungeonTable(DungeonTable::decode(bundle)))
         );
         config.tables_.emplace(
-            ShopTable::NAME,
-            std::unique_ptr<SoraTable>(new ShopTable(ShopTable::decode(bundle)))
+            QuestTable::NAME,
+            std::unique_ptr<SoraTable>(new QuestTable(QuestTable::decode(bundle)))
         );
         config.tables_.emplace(
-            ShopItemTable::NAME,
-            std::unique_ptr<SoraTable>(new ShopItemTable(ShopItemTable::decode(bundle)))
+            QuestRewardTable::NAME,
+            std::unique_ptr<SoraTable>(new QuestRewardTable(QuestRewardTable::decode(bundle)))
         );
         config.tables_.emplace(
-            RecipeTable::NAME,
-            std::unique_ptr<SoraTable>(new RecipeTable(RecipeTable::decode(bundle)))
-        );
-        config.tables_.emplace(
-            GachaPoolTable::NAME,
-            std::unique_ptr<SoraTable>(new GachaPoolTable(GachaPoolTable::decode(bundle)))
-        );
-        config.tables_.emplace(
-            GachaItemTable::NAME,
-            std::unique_ptr<SoraTable>(new GachaItemTable(GachaItemTable::decode(bundle)))
-        );
-        config.tables_.emplace(
-            EquipmentSetTable::NAME,
-            std::unique_ptr<SoraTable>(new EquipmentSetTable(EquipmentSetTable::decode(bundle)))
+            LevelExpTable::NAME,
+            std::unique_ptr<SoraTable>(new LevelExpTable(LevelExpTable::decode(bundle)))
         );
         config.tables_.emplace(
             AchievementTable::NAME,
@@ -177,6 +164,14 @@ public:
         config.tables_.emplace(
             VipLevelTable::NAME,
             std::unique_ptr<SoraTable>(new VipLevelTable(VipLevelTable::decode(bundle)))
+        );
+        config.tables_.emplace(
+            GameSettingsTable::NAME,
+            std::unique_ptr<SoraTable>(new GameSettingsTable(GameSettingsTable::decode(bundle)))
+        );
+        config.tables_.emplace(
+            MaintenanceWindowTable::NAME,
+            std::unique_ptr<SoraTable>(new MaintenanceWindowTable(MaintenanceWindowTable::decode(bundle)))
         );
         config.tables_.emplace(
             MailTemplateTable::NAME,
@@ -223,26 +218,26 @@ public:
     const ItemTable& item() const {
         return table_as<ItemTable>(ItemTable::NAME);
     }
+    const ShopTable& shop() const {
+        return table_as<ShopTable>(ShopTable::NAME);
+    }
+    const ShopItemTable& shop_item() const {
+        return table_as<ShopItemTable>(ShopItemTable::NAME);
+    }
+    const RecipeTable& recipe() const {
+        return table_as<RecipeTable>(RecipeTable::NAME);
+    }
+    const GachaPoolTable& gacha_pool() const {
+        return table_as<GachaPoolTable>(GachaPoolTable::NAME);
+    }
+    const GachaItemTable& gacha_item() const {
+        return table_as<GachaItemTable>(GachaItemTable::NAME);
+    }
+    const EquipmentSetTable& equipment_set() const {
+        return table_as<EquipmentSetTable>(EquipmentSetTable::NAME);
+    }
     const SkillTable& skill() const {
         return table_as<SkillTable>(SkillTable::NAME);
-    }
-    const QuestTable& quest() const {
-        return table_as<QuestTable>(QuestTable::NAME);
-    }
-    const QuestRewardTable& quest_reward() const {
-        return table_as<QuestRewardTable>(QuestRewardTable::NAME);
-    }
-    const GameSettingsTable& game_settings() const {
-        return table_as<GameSettingsTable>(GameSettingsTable::NAME);
-    }
-    const MaintenanceWindowTable& maintenance_window() const {
-        return table_as<MaintenanceWindowTable>(MaintenanceWindowTable::NAME);
-    }
-    const LocalizationTable& localization() const {
-        return table_as<LocalizationTable>(LocalizationTable::NAME);
-    }
-    const LevelExpTable& level_exp() const {
-        return table_as<LevelExpTable>(LevelExpTable::NAME);
     }
     const CharacterTable& character() const {
         return table_as<CharacterTable>(CharacterTable::NAME);
@@ -271,29 +266,26 @@ public:
     const DungeonTable& dungeon() const {
         return table_as<DungeonTable>(DungeonTable::NAME);
     }
-    const ShopTable& shop() const {
-        return table_as<ShopTable>(ShopTable::NAME);
+    const QuestTable& quest() const {
+        return table_as<QuestTable>(QuestTable::NAME);
     }
-    const ShopItemTable& shop_item() const {
-        return table_as<ShopItemTable>(ShopItemTable::NAME);
+    const QuestRewardTable& quest_reward() const {
+        return table_as<QuestRewardTable>(QuestRewardTable::NAME);
     }
-    const RecipeTable& recipe() const {
-        return table_as<RecipeTable>(RecipeTable::NAME);
-    }
-    const GachaPoolTable& gacha_pool() const {
-        return table_as<GachaPoolTable>(GachaPoolTable::NAME);
-    }
-    const GachaItemTable& gacha_item() const {
-        return table_as<GachaItemTable>(GachaItemTable::NAME);
-    }
-    const EquipmentSetTable& equipment_set() const {
-        return table_as<EquipmentSetTable>(EquipmentSetTable::NAME);
+    const LevelExpTable& level_exp() const {
+        return table_as<LevelExpTable>(LevelExpTable::NAME);
     }
     const AchievementTable& achievement() const {
         return table_as<AchievementTable>(AchievementTable::NAME);
     }
     const VipLevelTable& vip_level() const {
         return table_as<VipLevelTable>(VipLevelTable::NAME);
+    }
+    const GameSettingsTable& game_settings() const {
+        return table_as<GameSettingsTable>(GameSettingsTable::NAME);
+    }
+    const MaintenanceWindowTable& maintenance_window() const {
+        return table_as<MaintenanceWindowTable>(MaintenanceWindowTable::NAME);
     }
     const MailTemplateTable& mail_template() const {
         return table_as<MailTemplateTable>(MailTemplateTable::NAME);

@@ -275,7 +275,10 @@ fn export_options(
             level: compression_level.unwrap_or(3),
         },
     };
-    Ok(ExportOptions { compression })
+    Ok(ExportOptions {
+        compression,
+        locale: None,
+    })
 }
 
 fn diff(args: DiffArgs, context: &CliContext) -> Result<()> {

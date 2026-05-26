@@ -4,7 +4,9 @@ use std::{
 };
 
 use calamine::{Data, Reader, open_workbook_auto};
-use sora_data::model::{ConfigData, RowData, TableData, Value};
+use sora_data::model::{
+    ConfigData, LocalizationRowData, LocalizationSourceData, RowData, TableData, Value,
+};
 use sora_diagnostics::{Result, SoraError};
 use sora_excel::projection::{DATA_START_ROW, FIELD_ROW, FIELD_START_COLUMN};
 use sora_execution::ExecutionContext;
@@ -14,7 +16,7 @@ use sora_input::{
 };
 use sora_ir::{
     input_projection::{TaggedColumnKind, struct_columns, tagged_columns, tagged_columns_union},
-    model::{ConfigIr, FieldIr, TableIr, TypeIr},
+    model::{ConfigIr, FieldIr, LocalizationSourceIr, TableIr, TypeIr},
 };
 
 use crate::{
@@ -79,6 +81,7 @@ pub fn load_xlsx_table_data_with_parsers(
     load_xlsx_table_data_with_ir_and_parsers(
         &ConfigIr {
             package: String::new(),
+            localization: None,
             enums: Vec::new(),
             structs: Vec::new(),
             unions: Vec::new(),
@@ -129,6 +132,86 @@ pub fn load_xlsx_table_data_with_ir_and_parsers(
         })?;
 
     load_xlsx_table_data_from_range(ir, table, path, sheet, range, parser_registry)
+}
+
+pub fn load_xlsx_localization_source_data(
+    source: &LocalizationSourceIr,
+    path: &Path,
+    sheet: &str,
+) -> Result<LocalizationSourceData> {
+    let mut workbook = open_workbook_auto(path).map_err(|source| SoraError::ParseData {
+        path: path.to_path_buf(),
+        message: source.to_string(),
+    })?;
+    let range = workbook
+        .worksheet_range(sheet)
+        .map_err(|source| SoraError::ParseData {
+            path: path.to_path_buf(),
+            message: source.to_string(),
+        })?;
+    load_xlsx_localization_source_data_from_range(source, path, sheet, range)
+}
+
+fn load_xlsx_localization_source_data_from_range(
+    source: &LocalizationSourceIr,
+    path: &Path,
+    sheet: &str,
+    range: calamine::Range<Data>,
+) -> Result<LocalizationSourceData> {
+    let columns = localization_columns(path, sheet, &range)?;
+    let mut rows = Vec::new();
+
+    for row in range.rows().skip(DATA_START_ROW as usize) {
+        let mut values = BTreeMap::new();
+        for (name, column) in &columns {
+            let cell = row.get(*column).unwrap_or(&Data::Empty);
+            if !cell_is_empty(cell) {
+                values.insert(name.clone(), cell_to_string(cell));
+            }
+        }
+        if !values.is_empty() {
+            rows.push(LocalizationRowData { values });
+        }
+    }
+
+    Ok(LocalizationSourceData {
+        name: source.name.clone(),
+        columns: columns.into_iter().map(|(name, _)| name).collect(),
+        rows,
+    })
+}
+
+fn localization_columns(
+    path: &Path,
+    sheet: &str,
+    range: &calamine::Range<Data>,
+) -> Result<Vec<(String, usize)>> {
+    let Some(field_row) = range.rows().nth(FIELD_ROW as usize) else {
+        return Err(SoraError::InvalidSchema(format!(
+            "worksheet `{}` in `{}` is missing #field row {}",
+            sheet,
+            path.display(),
+            FIELD_ROW + 1
+        )));
+    };
+
+    let mut columns = Vec::new();
+    let mut seen = BTreeMap::<String, usize>::new();
+    for (column, cell) in field_row
+        .iter()
+        .enumerate()
+        .skip(FIELD_START_COLUMN as usize)
+    {
+        let name = cell_to_string(cell).trim().to_owned();
+        if name.is_empty() {
+            continue;
+        }
+        if seen.insert(name.clone(), column).is_some() {
+            return Err(duplicate_field_column(path, sheet, &name));
+        }
+        columns.push((name, column));
+    }
+    Ok(columns)
 }
 
 fn load_xlsx_table_data_from_range(

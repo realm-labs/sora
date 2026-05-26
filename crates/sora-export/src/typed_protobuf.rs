@@ -144,7 +144,7 @@ fn encode_value(
         TypeIr::I32 | TypeIr::I64 => writer.int64(tag, expect_integer(table, field, value)?),
         TypeIr::F32 => writer.float(tag, expect_float(table, field, value)? as f32),
         TypeIr::F64 => writer.double(tag, expect_float(table, field, value)?),
-        TypeIr::String => writer.string(tag, expect_string(table, field, value)?),
+        TypeIr::String | TypeIr::Text => writer.string(tag, expect_string(table, field, value)?),
         TypeIr::Enum(name) => {
             let value = expect_string(table, field, value)?;
             let enum_ir = ir

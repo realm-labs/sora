@@ -72,6 +72,26 @@ pub fn load_project_data_with_context_and_parsers(
     Ok((ir, data))
 }
 
+pub fn load_project_data_and_catalog_with_context_and_parsers(
+    input: &impl ProjectInput,
+    execution: &ExecutionContext,
+    schema_parser_registry: &SchemaParserRegistry,
+    cell_parser_registry: &CellParserRegistry,
+) -> Result<(
+    sora_ir::model::ConfigIr,
+    sora_data::model::ConfigData,
+    Option<sora_data::localization::LocaleCatalog>,
+)> {
+    let ir = support::load_ir_with_parsers(input, schema_parser_registry)?;
+    let project_data = support::load_validated_project_data_with_parsers(
+        input,
+        &ir,
+        execution,
+        cell_parser_registry,
+    )?;
+    Ok((ir, project_data.config, project_data.locale_catalog))
+}
+
 pub fn check_schema(input: &impl SchemaInput) -> Result<()> {
     let _ = load_ir(input)?;
     Ok(())
@@ -293,8 +313,23 @@ pub fn export_data_with_scope_and_context(
     scope: Option<&str>,
     execution: &ExecutionContext,
 ) -> Result<()> {
-    let (ir, data) = load_project_data_with_context(input, execution)?;
-    export_loaded_data_with_scope_and_context(&ir, &data, format, output, scope, execution)
+    let ir = load_ir(input)?;
+    let project_data = support::load_validated_project_data_with_parsers(
+        input,
+        &ir,
+        execution,
+        sora_input::parser::builtin_registry(),
+    )?;
+    export_loaded_data_with_scope_context_options_and_catalog(
+        &ir,
+        &project_data.config,
+        project_data.locale_catalog.as_ref(),
+        format,
+        output,
+        scope,
+        execution,
+        ExportOptions::default(),
+    )
 }
 
 pub fn export_loaded_data_with_scope_and_context(
@@ -325,7 +360,49 @@ pub fn export_loaded_data_with_scope_context_and_options(
     execution: &ExecutionContext,
     options: ExportOptions,
 ) -> Result<()> {
+    export_loaded_data_with_scope_context_options_and_catalog(
+        ir, data, None, format, output, scope, execution, options,
+    )
+}
+
+pub fn export_loaded_data_with_scope_context_options_and_catalog(
+    ir: &sora_ir::model::ConfigIr,
+    data: &sora_data::model::ConfigData,
+    locale_catalog: Option<&sora_data::localization::LocaleCatalog>,
+    format: &str,
+    output: ExportOutput,
+    scope: Option<&str>,
+    execution: &ExecutionContext,
+    options: ExportOptions,
+) -> Result<()> {
+    export_loaded_data_with_scope_context_options_and_catalog_impl(
+        ir,
+        data,
+        locale_catalog,
+        format,
+        output,
+        scope,
+        execution,
+        options,
+    )
+}
+
+fn export_loaded_data_with_scope_context_options_and_catalog_impl(
+    ir: &sora_ir::model::ConfigIr,
+    data: &sora_data::model::ConfigData,
+    locale_catalog: Option<&sora_data::localization::LocaleCatalog>,
+    format: &str,
+    output: ExportOutput,
+    scope: Option<&str>,
+    execution: &ExecutionContext,
+    options: ExportOptions,
+) -> Result<()> {
     let (ir, data) = filter_ir_and_data_by_scope(ir, data, scope)?;
+    let locale_catalog = if format.starts_with("i18n-") {
+        locale_catalog
+    } else {
+        None
+    };
     let registry = ExporterRegistry::with_builtin_exporters();
     let exporter = registry
         .get(format)
@@ -337,6 +414,7 @@ pub fn export_loaded_data_with_scope_context_and_options(
     exporter.export(ExportRequest {
         ir: &ir,
         data: &data,
+        locale_catalog,
         execution,
         options,
         output,

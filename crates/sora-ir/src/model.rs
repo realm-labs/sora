@@ -5,6 +5,8 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ConfigIr {
     pub package: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub localization: Option<LocalizationIr>,
     pub enums: Vec<EnumIr>,
     pub structs: Vec<StructIr>,
     pub unions: Vec<UnionIr>,
@@ -15,6 +17,26 @@ impl ConfigIr {
     pub fn data_schema(&self) -> Self {
         self.clone()
     }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct LocalizationIr {
+    pub locales: Vec<String>,
+    pub default_locale: String,
+    pub fallback_locale: Option<String>,
+    pub strict: bool,
+    pub sources: Vec<LocalizationSourceIr>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct LocalizationSourceIr {
+    pub name: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub format: Option<String>,
+    pub file: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub sheet: Option<String>,
+    pub key: String,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -156,6 +178,7 @@ pub enum TypeIr {
     F32,
     F64,
     String,
+    Text,
     Enum(String),
     Struct(String),
     Union(String),
@@ -191,6 +214,7 @@ impl fmt::Display for TypeIr {
             TypeIr::F32 => f.write_str("f32"),
             TypeIr::F64 => f.write_str("f64"),
             TypeIr::String => f.write_str("string"),
+            TypeIr::Text => f.write_str("text"),
             TypeIr::Enum(name) => write!(f, "enum<{name}>"),
             TypeIr::Struct(name) => write!(f, "struct<{name}>"),
             TypeIr::Union(name) => write!(f, "union<{name}>"),

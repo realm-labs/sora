@@ -54,6 +54,7 @@ fn rust_type_name_inner(ir: &ConfigIr, ty: &TypeIr, options: &RustCodegenOptions
         TypeIr::F32 => "f32".to_owned(),
         TypeIr::F64 => "f64".to_owned(),
         TypeIr::String => rust_string_type(options),
+        TypeIr::Text => "super::runtime::TextKey".to_owned(),
         TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => name.clone(),
         TypeIr::List(element) => format!("Vec<{}>", rust_type_name_inner(ir, element, options)),
         TypeIr::Set(element) => {
@@ -93,7 +94,7 @@ fn kotlin_type_name_inner(ir: &ConfigIr, ty: &TypeIr) -> String {
         TypeIr::I64 => "Long".to_owned(),
         TypeIr::F32 => "Float".to_owned(),
         TypeIr::F64 => "Double".to_owned(),
-        TypeIr::String => "String".to_owned(),
+        TypeIr::String | TypeIr::Text => "String".to_owned(),
         TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => name.clone(),
         TypeIr::List(element) | TypeIr::Set(element) | TypeIr::Array { element, .. } => {
             format!("List<{}>", kotlin_type_name_inner(ir, element))
@@ -115,7 +116,7 @@ fn csharp_type_name_inner(ir: &ConfigIr, ty: &TypeIr) -> String {
         TypeIr::I64 => "long".to_owned(),
         TypeIr::F32 => "float".to_owned(),
         TypeIr::F64 => "double".to_owned(),
-        TypeIr::String => "string".to_owned(),
+        TypeIr::String | TypeIr::Text => "string".to_owned(),
         TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => name.clone(),
         TypeIr::List(element) | TypeIr::Set(element) | TypeIr::Array { element, .. } => {
             format!("List<{}>", csharp_type_name_inner(ir, element))
@@ -137,7 +138,7 @@ fn java_type_name_inner(ir: &ConfigIr, ty: &TypeIr) -> String {
         TypeIr::I64 => "Long".to_owned(),
         TypeIr::F32 => "Float".to_owned(),
         TypeIr::F64 => "Double".to_owned(),
-        TypeIr::String => "String".to_owned(),
+        TypeIr::String | TypeIr::Text => "String".to_owned(),
         TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => name.clone(),
         TypeIr::List(element) | TypeIr::Set(element) | TypeIr::Array { element, .. } => {
             format!("java.util.List<{}>", java_type_name_inner(ir, element))
@@ -159,7 +160,7 @@ fn scala_type_name_inner(ir: &ConfigIr, ty: &TypeIr) -> String {
         TypeIr::I64 => "Long".to_owned(),
         TypeIr::F32 => "Float".to_owned(),
         TypeIr::F64 => "Double".to_owned(),
-        TypeIr::String => "String".to_owned(),
+        TypeIr::String | TypeIr::Text => "String".to_owned(),
         TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => name.clone(),
         TypeIr::List(element) | TypeIr::Set(element) | TypeIr::Array { element, .. } => {
             format!("Vector[{}]", scala_type_name_inner(ir, element))
@@ -181,7 +182,7 @@ fn go_type_name_inner(ir: &ConfigIr, ty: &TypeIr) -> String {
         TypeIr::I64 => "int64".to_owned(),
         TypeIr::F32 => "float32".to_owned(),
         TypeIr::F64 => "float64".to_owned(),
-        TypeIr::String => "string".to_owned(),
+        TypeIr::String | TypeIr::Text => "string".to_owned(),
         TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => name.clone(),
         TypeIr::List(element) | TypeIr::Set(element) | TypeIr::Array { element, .. } => {
             format!("[]{}", go_type_name_inner(ir, element))
@@ -201,7 +202,7 @@ fn dart_type_name_inner(ir: &ConfigIr, ty: &TypeIr) -> String {
         TypeIr::Bool => "bool".to_owned(),
         TypeIr::I32 | TypeIr::I64 => "int".to_owned(),
         TypeIr::F32 | TypeIr::F64 => "double".to_owned(),
-        TypeIr::String => "String".to_owned(),
+        TypeIr::String | TypeIr::Text => "String".to_owned(),
         TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => name.clone(),
         TypeIr::List(element) | TypeIr::Set(element) | TypeIr::Array { element, .. } => {
             format!("List<{}>", dart_type_name_inner(ir, element))
@@ -221,7 +222,7 @@ fn godot_type_name_inner(ir: &ConfigIr, ty: &TypeIr) -> String {
         TypeIr::Bool => "bool".to_owned(),
         TypeIr::I32 | TypeIr::I64 => "int".to_owned(),
         TypeIr::F32 | TypeIr::F64 => "float".to_owned(),
-        TypeIr::String | TypeIr::Enum(_) => "String".to_owned(),
+        TypeIr::String | TypeIr::Text | TypeIr::Enum(_) => "String".to_owned(),
         TypeIr::Struct(name) | TypeIr::Union(name) => name.clone(),
         TypeIr::List(_) | TypeIr::Set(_) | TypeIr::Map { .. } | TypeIr::Array { .. } => {
             "Array".to_owned()
@@ -236,7 +237,7 @@ fn python_type_name_inner(ir: &ConfigIr, ty: &TypeIr) -> String {
         TypeIr::Bool => "bool".to_owned(),
         TypeIr::I32 | TypeIr::I64 => "int".to_owned(),
         TypeIr::F32 | TypeIr::F64 => "float".to_owned(),
-        TypeIr::String => "str".to_owned(),
+        TypeIr::String | TypeIr::Text => "str".to_owned(),
         TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => name.clone(),
         TypeIr::List(element) | TypeIr::Set(element) | TypeIr::Array { element, .. } => {
             format!("list[{}]", python_type_name_inner(ir, element))

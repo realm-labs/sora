@@ -7,51 +7,51 @@ import "fmt"
 type ItemType int32
 
 const (
-    ItemTypeWeapon ItemType = 0
-    ItemTypeArmor ItemType = 1
-    ItemTypeCurrency ItemType = 2
-    ItemTypeMaterial ItemType = 3
-    ItemTypeConsumable ItemType = 4
+	ItemTypeWeapon     ItemType = 0
+	ItemTypeArmor      ItemType = 1
+	ItemTypeCurrency   ItemType = 2
+	ItemTypeMaterial   ItemType = 3
+	ItemTypeConsumable ItemType = 4
 )
 
 func decodeItemType(reader *SoraReader) (ItemType, error) {
-    ordinal, err := reader.ReadUInt32()
-    if err != nil {
-        return 0, err
-    }
-    switch ordinal {
-    case 0:
-        return ItemTypeWeapon, nil
-    case 1:
-        return ItemTypeArmor, nil
-    case 2:
-        return ItemTypeCurrency, nil
-    case 3:
-        return ItemTypeMaterial, nil
-    case 4:
-        return ItemTypeConsumable, nil
-    default:
-        return 0, fmt.Errorf("invalid enum ordinal %d for ItemType", ordinal)
-    }
+	ordinal, err := reader.ReadUInt32()
+	if err != nil {
+		return 0, err
+	}
+	switch ordinal {
+	case 0:
+		return ItemTypeWeapon, nil
+	case 1:
+		return ItemTypeArmor, nil
+	case 2:
+		return ItemTypeCurrency, nil
+	case 3:
+		return ItemTypeMaterial, nil
+	case 4:
+		return ItemTypeConsumable, nil
+	default:
+		return 0, fmt.Errorf("invalid enum ordinal %d for ItemType", ordinal)
+	}
 }
 
 func decodeItemTypeValue(value SoraValue) (ItemType, error) {
-    name, err := value.AsString()
-    if err != nil {
-        return 0, err
-    }
-    switch name {
-    case "Weapon":
-        return ItemTypeWeapon, nil
-    case "Armor":
-        return ItemTypeArmor, nil
-    case "Currency":
-        return ItemTypeCurrency, nil
-    case "Material":
-        return ItemTypeMaterial, nil
-    case "Consumable":
-        return ItemTypeConsumable, nil
-    default:
-        return 0, fmt.Errorf("invalid enum value %s for ItemType", name)
-    }
+	name, err := value.AsString()
+	if err != nil {
+		return 0, err
+	}
+	switch name {
+	case "Weapon":
+		return ItemTypeWeapon, nil
+	case "Armor":
+		return ItemTypeArmor, nil
+	case "Currency":
+		return ItemTypeCurrency, nil
+	case "Material":
+		return ItemTypeMaterial, nil
+	case "Consumable":
+		return ItemTypeConsumable, nil
+	default:
+		return 0, fmt.Errorf("invalid enum value %s for ItemType", name)
+	}
 }

@@ -3,46 +3,46 @@
 package showcase
 
 type ResourceCost struct {
-    Kind ResourceKind
-    Id int32
-    Count int32
+	Kind  ResourceKind
+	Id    int32
+	Count int32
 }
 
 func decodeResourceCost(reader *SoraReader) (ResourceCost, error) {
-    var value ResourceCost
-    var err error
-    value.Kind, err = decodeResourceKind(reader)
-    if err != nil {
-        return value, err
-    }
-    value.Id, err = reader.ReadInt32()
-    if err != nil {
-        return value, err
-    }
-    value.Count, err = reader.ReadInt32()
-    if err != nil {
-        return value, err
-    }
-    return value, nil
+	var value ResourceCost
+	var err error
+	value.Kind, err = decodeResourceKind(reader)
+	if err != nil {
+		return value, err
+	}
+	value.Id, err = reader.ReadInt32()
+	if err != nil {
+		return value, err
+	}
+	value.Count, err = reader.ReadInt32()
+	if err != nil {
+		return value, err
+	}
+	return value, nil
 }
 
 func decodeResourceCostValue(input SoraValue) (ResourceCost, error) {
-    var value ResourceCost
-    obj, err := input.AsObject()
-    if err != nil {
-        return value, err
-    }
-    value.Kind, err = decodeResourceKindValue(obj.Get("kind"))
-    if err != nil {
-        return value, err
-    }
-    value.Id, err = obj.Get("id").AsInt32()
-    if err != nil {
-        return value, err
-    }
-    value.Count, err = obj.Get("count").AsInt32()
-    if err != nil {
-        return value, err
-    }
-    return value, nil
+	var value ResourceCost
+	obj, err := input.AsObject()
+	if err != nil {
+		return value, err
+	}
+	value.Kind, err = decodeResourceKindValue(obj.Get("kind"))
+	if err != nil {
+		return value, err
+	}
+	value.Id, err = obj.Get("id").AsInt32()
+	if err != nil {
+		return value, err
+	}
+	value.Count, err = obj.Get("count").AsInt32()
+	if err != nil {
+		return value, err
+	}
+	return value, nil
 }

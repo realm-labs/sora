@@ -4,19 +4,19 @@ import type { SoraConfigTable, SoraTableSource } from "./sora_runtime.js";
 
 import { ItemTable, decodeItem, decodeItemValue } from "./item.js";
 
+import { ShopTable, decodeShop, decodeShopValue } from "./shop.js";
+
+import { ShopItemTable, decodeShopItem, decodeShopItemValue } from "./shop_item.js";
+
+import { RecipeTable, decodeRecipe, decodeRecipeValue } from "./recipe.js";
+
+import { GachaPoolTable, decodeGachaPool, decodeGachaPoolValue } from "./gacha_pool.js";
+
+import { GachaItemTable, decodeGachaItem, decodeGachaItemValue } from "./gacha_item.js";
+
+import { EquipmentSetTable, decodeEquipmentSet, decodeEquipmentSetValue } from "./equipment_set.js";
+
 import { SkillTable, decodeSkill, decodeSkillValue } from "./skill.js";
-
-import { QuestTable, decodeQuest, decodeQuestValue } from "./quest.js";
-
-import { QuestRewardTable, decodeQuestReward, decodeQuestRewardValue } from "./quest_reward.js";
-
-import { GameSettingsTable, decodeGameSettings, decodeGameSettingsValue } from "./game_settings.js";
-
-import { MaintenanceWindowTable, decodeMaintenanceWindow, decodeMaintenanceWindowValue } from "./maintenance_window.js";
-
-import { LocalizationTable, decodeLocalization, decodeLocalizationValue } from "./localization.js";
-
-import { LevelExpTable, decodeLevelExp, decodeLevelExpValue } from "./level_exp.js";
 
 import { CharacterTable, decodeCharacter, decodeCharacterValue } from "./character.js";
 
@@ -36,21 +36,19 @@ import { StageRewardTable, decodeStageReward, decodeStageRewardValue } from "./s
 
 import { DungeonTable, decodeDungeon, decodeDungeonValue } from "./dungeon.js";
 
-import { ShopTable, decodeShop, decodeShopValue } from "./shop.js";
+import { QuestTable, decodeQuest, decodeQuestValue } from "./quest.js";
 
-import { ShopItemTable, decodeShopItem, decodeShopItemValue } from "./shop_item.js";
+import { QuestRewardTable, decodeQuestReward, decodeQuestRewardValue } from "./quest_reward.js";
 
-import { RecipeTable, decodeRecipe, decodeRecipeValue } from "./recipe.js";
-
-import { GachaPoolTable, decodeGachaPool, decodeGachaPoolValue } from "./gacha_pool.js";
-
-import { GachaItemTable, decodeGachaItem, decodeGachaItemValue } from "./gacha_item.js";
-
-import { EquipmentSetTable, decodeEquipmentSet, decodeEquipmentSetValue } from "./equipment_set.js";
+import { LevelExpTable, decodeLevelExp, decodeLevelExpValue } from "./level_exp.js";
 
 import { AchievementTable, decodeAchievement, decodeAchievementValue } from "./achievement.js";
 
 import { VipLevelTable, decodeVipLevel, decodeVipLevelValue } from "./vip_level.js";
+
+import { GameSettingsTable, decodeGameSettings, decodeGameSettingsValue } from "./game_settings.js";
+
+import { MaintenanceWindowTable, decodeMaintenanceWindow, decodeMaintenanceWindowValue } from "./maintenance_window.js";
 
 import { MailTemplateTable, decodeMailTemplate, decodeMailTemplateValue } from "./mail_template.js";
 
@@ -72,18 +70,18 @@ import { ComplexActionGroupTable, decodeComplexActionGroup, decodeComplexActionG
 
 import { ComplexActionEntryTable, decodeComplexActionEntry, decodeComplexActionEntryValue } from "./complex_action_entry.js";
 
-export const SORA_SCHEMA_FINGERPRINT = "70733f887d9adc7d";
+export const SORA_SCHEMA_FINGERPRINT = "1439cc1e8c6581b3";
 
 export class SoraConfig {
     private constructor(
         private readonly _item: ItemTable,
+        private readonly _shop: ShopTable,
+        private readonly _shopItem: ShopItemTable,
+        private readonly _recipe: RecipeTable,
+        private readonly _gachaPool: GachaPoolTable,
+        private readonly _gachaItem: GachaItemTable,
+        private readonly _equipmentSet: EquipmentSetTable,
         private readonly _skill: SkillTable,
-        private readonly _quest: QuestTable,
-        private readonly _questReward: QuestRewardTable,
-        private readonly _gameSettings: GameSettingsTable,
-        private readonly _maintenanceWindow: MaintenanceWindowTable,
-        private readonly _localization: LocalizationTable,
-        private readonly _levelExp: LevelExpTable,
         private readonly _character: CharacterTable,
         private readonly _characterSkill: CharacterSkillTable,
         private readonly _buff: BuffTable,
@@ -93,14 +91,13 @@ export class SoraConfig {
         private readonly _stage: StageTable,
         private readonly _stageReward: StageRewardTable,
         private readonly _dungeon: DungeonTable,
-        private readonly _shop: ShopTable,
-        private readonly _shopItem: ShopItemTable,
-        private readonly _recipe: RecipeTable,
-        private readonly _gachaPool: GachaPoolTable,
-        private readonly _gachaItem: GachaItemTable,
-        private readonly _equipmentSet: EquipmentSetTable,
+        private readonly _quest: QuestTable,
+        private readonly _questReward: QuestRewardTable,
+        private readonly _levelExp: LevelExpTable,
         private readonly _achievement: AchievementTable,
         private readonly _vipLevel: VipLevelTable,
+        private readonly _gameSettings: GameSettingsTable,
+        private readonly _maintenanceWindow: MaintenanceWindowTable,
         private readonly _mailTemplate: MailTemplateTable,
         private readonly _mailReward: MailRewardTable,
         private readonly _dialogue: DialogueTable,
@@ -121,13 +118,13 @@ export class SoraConfig {
         }
         return new SoraConfig(
             ItemTable.decode(source.decodeTable(ItemTable.tableName, decodeItem, decodeItemValue)),
+            ShopTable.decode(source.decodeTable(ShopTable.tableName, decodeShop, decodeShopValue)),
+            ShopItemTable.decode(source.decodeTable(ShopItemTable.tableName, decodeShopItem, decodeShopItemValue)),
+            RecipeTable.decode(source.decodeTable(RecipeTable.tableName, decodeRecipe, decodeRecipeValue)),
+            GachaPoolTable.decode(source.decodeTable(GachaPoolTable.tableName, decodeGachaPool, decodeGachaPoolValue)),
+            GachaItemTable.decode(source.decodeTable(GachaItemTable.tableName, decodeGachaItem, decodeGachaItemValue)),
+            EquipmentSetTable.decode(source.decodeTable(EquipmentSetTable.tableName, decodeEquipmentSet, decodeEquipmentSetValue)),
             SkillTable.decode(source.decodeTable(SkillTable.tableName, decodeSkill, decodeSkillValue)),
-            QuestTable.decode(source.decodeTable(QuestTable.tableName, decodeQuest, decodeQuestValue)),
-            QuestRewardTable.decode(source.decodeTable(QuestRewardTable.tableName, decodeQuestReward, decodeQuestRewardValue)),
-            GameSettingsTable.decode(source.decodeTable(GameSettingsTable.tableName, decodeGameSettings, decodeGameSettingsValue)),
-            MaintenanceWindowTable.decode(source.decodeTable(MaintenanceWindowTable.tableName, decodeMaintenanceWindow, decodeMaintenanceWindowValue)),
-            LocalizationTable.decode(source.decodeTable(LocalizationTable.tableName, decodeLocalization, decodeLocalizationValue)),
-            LevelExpTable.decode(source.decodeTable(LevelExpTable.tableName, decodeLevelExp, decodeLevelExpValue)),
             CharacterTable.decode(source.decodeTable(CharacterTable.tableName, decodeCharacter, decodeCharacterValue)),
             CharacterSkillTable.decode(source.decodeTable(CharacterSkillTable.tableName, decodeCharacterSkill, decodeCharacterSkillValue)),
             BuffTable.decode(source.decodeTable(BuffTable.tableName, decodeBuff, decodeBuffValue)),
@@ -137,14 +134,13 @@ export class SoraConfig {
             StageTable.decode(source.decodeTable(StageTable.tableName, decodeStage, decodeStageValue)),
             StageRewardTable.decode(source.decodeTable(StageRewardTable.tableName, decodeStageReward, decodeStageRewardValue)),
             DungeonTable.decode(source.decodeTable(DungeonTable.tableName, decodeDungeon, decodeDungeonValue)),
-            ShopTable.decode(source.decodeTable(ShopTable.tableName, decodeShop, decodeShopValue)),
-            ShopItemTable.decode(source.decodeTable(ShopItemTable.tableName, decodeShopItem, decodeShopItemValue)),
-            RecipeTable.decode(source.decodeTable(RecipeTable.tableName, decodeRecipe, decodeRecipeValue)),
-            GachaPoolTable.decode(source.decodeTable(GachaPoolTable.tableName, decodeGachaPool, decodeGachaPoolValue)),
-            GachaItemTable.decode(source.decodeTable(GachaItemTable.tableName, decodeGachaItem, decodeGachaItemValue)),
-            EquipmentSetTable.decode(source.decodeTable(EquipmentSetTable.tableName, decodeEquipmentSet, decodeEquipmentSetValue)),
+            QuestTable.decode(source.decodeTable(QuestTable.tableName, decodeQuest, decodeQuestValue)),
+            QuestRewardTable.decode(source.decodeTable(QuestRewardTable.tableName, decodeQuestReward, decodeQuestRewardValue)),
+            LevelExpTable.decode(source.decodeTable(LevelExpTable.tableName, decodeLevelExp, decodeLevelExpValue)),
             AchievementTable.decode(source.decodeTable(AchievementTable.tableName, decodeAchievement, decodeAchievementValue)),
             VipLevelTable.decode(source.decodeTable(VipLevelTable.tableName, decodeVipLevel, decodeVipLevelValue)),
+            GameSettingsTable.decode(source.decodeTable(GameSettingsTable.tableName, decodeGameSettings, decodeGameSettingsValue)),
+            MaintenanceWindowTable.decode(source.decodeTable(MaintenanceWindowTable.tableName, decodeMaintenanceWindow, decodeMaintenanceWindowValue)),
             MailTemplateTable.decode(source.decodeTable(MailTemplateTable.tableName, decodeMailTemplate, decodeMailTemplateValue)),
             MailRewardTable.decode(source.decodeTable(MailRewardTable.tableName, decodeMailReward, decodeMailRewardValue)),
             DialogueTable.decode(source.decodeTable(DialogueTable.tableName, decodeDialogue, decodeDialogueValue)),
@@ -161,13 +157,13 @@ export class SoraConfig {
     tables(): SoraConfigTable[] {
         return [
             this._item,
+            this._shop,
+            this._shopItem,
+            this._recipe,
+            this._gachaPool,
+            this._gachaItem,
+            this._equipmentSet,
             this._skill,
-            this._quest,
-            this._questReward,
-            this._gameSettings,
-            this._maintenanceWindow,
-            this._localization,
-            this._levelExp,
             this._character,
             this._characterSkill,
             this._buff,
@@ -177,14 +173,13 @@ export class SoraConfig {
             this._stage,
             this._stageReward,
             this._dungeon,
-            this._shop,
-            this._shopItem,
-            this._recipe,
-            this._gachaPool,
-            this._gachaItem,
-            this._equipmentSet,
+            this._quest,
+            this._questReward,
+            this._levelExp,
             this._achievement,
             this._vipLevel,
+            this._gameSettings,
+            this._maintenanceWindow,
             this._mailTemplate,
             this._mailReward,
             this._dialogue,
@@ -200,26 +195,26 @@ export class SoraConfig {
     item(): ItemTable {
         return this._item;
     }
+    shop(): ShopTable {
+        return this._shop;
+    }
+    shopItem(): ShopItemTable {
+        return this._shopItem;
+    }
+    recipe(): RecipeTable {
+        return this._recipe;
+    }
+    gachaPool(): GachaPoolTable {
+        return this._gachaPool;
+    }
+    gachaItem(): GachaItemTable {
+        return this._gachaItem;
+    }
+    equipmentSet(): EquipmentSetTable {
+        return this._equipmentSet;
+    }
     skill(): SkillTable {
         return this._skill;
-    }
-    quest(): QuestTable {
-        return this._quest;
-    }
-    questReward(): QuestRewardTable {
-        return this._questReward;
-    }
-    gameSettings(): GameSettingsTable {
-        return this._gameSettings;
-    }
-    maintenanceWindow(): MaintenanceWindowTable {
-        return this._maintenanceWindow;
-    }
-    localization(): LocalizationTable {
-        return this._localization;
-    }
-    levelExp(): LevelExpTable {
-        return this._levelExp;
     }
     character(): CharacterTable {
         return this._character;
@@ -248,29 +243,26 @@ export class SoraConfig {
     dungeon(): DungeonTable {
         return this._dungeon;
     }
-    shop(): ShopTable {
-        return this._shop;
+    quest(): QuestTable {
+        return this._quest;
     }
-    shopItem(): ShopItemTable {
-        return this._shopItem;
+    questReward(): QuestRewardTable {
+        return this._questReward;
     }
-    recipe(): RecipeTable {
-        return this._recipe;
-    }
-    gachaPool(): GachaPoolTable {
-        return this._gachaPool;
-    }
-    gachaItem(): GachaItemTable {
-        return this._gachaItem;
-    }
-    equipmentSet(): EquipmentSetTable {
-        return this._equipmentSet;
+    levelExp(): LevelExpTable {
+        return this._levelExp;
     }
     achievement(): AchievementTable {
         return this._achievement;
     }
     vipLevel(): VipLevelTable {
         return this._vipLevel;
+    }
+    gameSettings(): GameSettingsTable {
+        return this._gameSettings;
+    }
+    maintenanceWindow(): MaintenanceWindowTable {
+        return this._maintenanceWindow;
     }
     mailTemplate(): MailTemplateTable {
         return this._mailTemplate;

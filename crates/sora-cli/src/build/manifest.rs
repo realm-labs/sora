@@ -56,6 +56,7 @@ pub(super) struct BuildExport {
     pub(super) format: String,
     pub(super) out: PathBuf,
     pub(super) scope: Option<String>,
+    pub(super) locale: Option<String>,
     #[serde(default)]
     pub(super) compression: ExportCompressionArg,
     pub(super) compression_level: Option<i32>,

@@ -120,6 +120,7 @@ fn supports_proto_optional(ir: &ConfigIr, ty: &TypeIr) -> bool {
         | TypeIr::F32
         | TypeIr::F64
         | TypeIr::String
+        | TypeIr::Text
         | TypeIr::Enum(_) => true,
         TypeIr::Ref { table, field } => supports_proto_optional(ir, ref_type(ir, table, field)),
         _ => false,
@@ -133,7 +134,7 @@ fn proto_type(ir: &ConfigIr, ty: &TypeIr) -> String {
         TypeIr::I64 => "int64".to_owned(),
         TypeIr::F32 => "float".to_owned(),
         TypeIr::F64 => "double".to_owned(),
-        TypeIr::String => "string".to_owned(),
+        TypeIr::String | TypeIr::Text => "string".to_owned(),
         TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => name.clone(),
         TypeIr::List(element)
         | TypeIr::Set(element)

@@ -101,7 +101,7 @@ type = "i32"
 
 [[tables.fields]]
 name = "title_key"
-type = "string"
+type = "text"
 
 [[tables.fields]]
 name = "target_count"

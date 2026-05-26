@@ -2,13 +2,13 @@
 
 local Runtime = require("generated.sora_runtime")
 local Item = require("generated.item")
+local Shop = require("generated.shop")
+local ShopItem = require("generated.shop_item")
+local Recipe = require("generated.recipe")
+local GachaPool = require("generated.gacha_pool")
+local GachaItem = require("generated.gacha_item")
+local EquipmentSet = require("generated.equipment_set")
 local Skill = require("generated.skill")
-local Quest = require("generated.quest")
-local QuestReward = require("generated.quest_reward")
-local GameSettings = require("generated.game_settings")
-local MaintenanceWindow = require("generated.maintenance_window")
-local Localization = require("generated.localization")
-local LevelExp = require("generated.level_exp")
 local Character = require("generated.character")
 local CharacterSkill = require("generated.character_skill")
 local Buff = require("generated.buff")
@@ -18,14 +18,13 @@ local Monster = require("generated.monster")
 local Stage = require("generated.stage")
 local StageReward = require("generated.stage_reward")
 local Dungeon = require("generated.dungeon")
-local Shop = require("generated.shop")
-local ShopItem = require("generated.shop_item")
-local Recipe = require("generated.recipe")
-local GachaPool = require("generated.gacha_pool")
-local GachaItem = require("generated.gacha_item")
-local EquipmentSet = require("generated.equipment_set")
+local Quest = require("generated.quest")
+local QuestReward = require("generated.quest_reward")
+local LevelExp = require("generated.level_exp")
 local Achievement = require("generated.achievement")
 local VipLevel = require("generated.vip_level")
+local GameSettings = require("generated.game_settings")
+local MaintenanceWindow = require("generated.maintenance_window")
 local MailTemplate = require("generated.mail_template")
 local MailReward = require("generated.mail_reward")
 local Dialogue = require("generated.dialogue")
@@ -37,17 +36,17 @@ local ComplexRuleCondition = require("generated.complex_rule_condition")
 local ComplexActionGroup = require("generated.complex_action_group")
 local ComplexActionEntry = require("generated.complex_action_entry")
 
-local SORA_SCHEMA_FINGERPRINT = "70733f887d9adc7d"
+local SORA_SCHEMA_FINGERPRINT = "1439cc1e8c6581b3"
 
 ---@class SoraConfig
 ---@field private _item ItemTable
+---@field private _shop ShopTable
+---@field private _shop_item ShopItemTable
+---@field private _recipe RecipeTable
+---@field private _gacha_pool GachaPoolTable
+---@field private _gacha_item GachaItemTable
+---@field private _equipment_set EquipmentSetTable
 ---@field private _skill SkillTable
----@field private _quest QuestTable
----@field private _quest_reward QuestRewardTable
----@field private _game_settings GameSettingsTable
----@field private _maintenance_window MaintenanceWindowTable
----@field private _localization LocalizationTable
----@field private _level_exp LevelExpTable
 ---@field private _character CharacterTable
 ---@field private _character_skill CharacterSkillTable
 ---@field private _buff BuffTable
@@ -57,14 +56,13 @@ local SORA_SCHEMA_FINGERPRINT = "70733f887d9adc7d"
 ---@field private _stage StageTable
 ---@field private _stage_reward StageRewardTable
 ---@field private _dungeon DungeonTable
----@field private _shop ShopTable
----@field private _shop_item ShopItemTable
----@field private _recipe RecipeTable
----@field private _gacha_pool GachaPoolTable
----@field private _gacha_item GachaItemTable
----@field private _equipment_set EquipmentSetTable
+---@field private _quest QuestTable
+---@field private _quest_reward QuestRewardTable
+---@field private _level_exp LevelExpTable
 ---@field private _achievement AchievementTable
 ---@field private _vip_level VipLevelTable
+---@field private _game_settings GameSettingsTable
+---@field private _maintenance_window MaintenanceWindowTable
 ---@field private _mail_template MailTemplateTable
 ---@field private _mail_reward MailRewardTable
 ---@field private _dialogue DialogueTable
@@ -99,13 +97,13 @@ function SoraConfig.from_bundle(bundle)
     end
     return setmetatable({
         _item = Item.Table.decode(bundle:decode_table(Item.Table.NAME, Item.decode, Item.decode_value)),
+        _shop = Shop.Table.decode(bundle:decode_table(Shop.Table.NAME, Shop.decode, Shop.decode_value)),
+        _shop_item = ShopItem.Table.decode(bundle:decode_table(ShopItem.Table.NAME, ShopItem.decode, ShopItem.decode_value)),
+        _recipe = Recipe.Table.decode(bundle:decode_table(Recipe.Table.NAME, Recipe.decode, Recipe.decode_value)),
+        _gacha_pool = GachaPool.Table.decode(bundle:decode_table(GachaPool.Table.NAME, GachaPool.decode, GachaPool.decode_value)),
+        _gacha_item = GachaItem.Table.decode(bundle:decode_table(GachaItem.Table.NAME, GachaItem.decode, GachaItem.decode_value)),
+        _equipment_set = EquipmentSet.Table.decode(bundle:decode_table(EquipmentSet.Table.NAME, EquipmentSet.decode, EquipmentSet.decode_value)),
         _skill = Skill.Table.decode(bundle:decode_table(Skill.Table.NAME, Skill.decode, Skill.decode_value)),
-        _quest = Quest.Table.decode(bundle:decode_table(Quest.Table.NAME, Quest.decode, Quest.decode_value)),
-        _quest_reward = QuestReward.Table.decode(bundle:decode_table(QuestReward.Table.NAME, QuestReward.decode, QuestReward.decode_value)),
-        _game_settings = GameSettings.Table.decode(bundle:decode_table(GameSettings.Table.NAME, GameSettings.decode, GameSettings.decode_value)),
-        _maintenance_window = MaintenanceWindow.Table.decode(bundle:decode_table(MaintenanceWindow.Table.NAME, MaintenanceWindow.decode, MaintenanceWindow.decode_value)),
-        _localization = Localization.Table.decode(bundle:decode_table(Localization.Table.NAME, Localization.decode, Localization.decode_value)),
-        _level_exp = LevelExp.Table.decode(bundle:decode_table(LevelExp.Table.NAME, LevelExp.decode, LevelExp.decode_value)),
         _character = Character.Table.decode(bundle:decode_table(Character.Table.NAME, Character.decode, Character.decode_value)),
         _character_skill = CharacterSkill.Table.decode(bundle:decode_table(CharacterSkill.Table.NAME, CharacterSkill.decode, CharacterSkill.decode_value)),
         _buff = Buff.Table.decode(bundle:decode_table(Buff.Table.NAME, Buff.decode, Buff.decode_value)),
@@ -115,14 +113,13 @@ function SoraConfig.from_bundle(bundle)
         _stage = Stage.Table.decode(bundle:decode_table(Stage.Table.NAME, Stage.decode, Stage.decode_value)),
         _stage_reward = StageReward.Table.decode(bundle:decode_table(StageReward.Table.NAME, StageReward.decode, StageReward.decode_value)),
         _dungeon = Dungeon.Table.decode(bundle:decode_table(Dungeon.Table.NAME, Dungeon.decode, Dungeon.decode_value)),
-        _shop = Shop.Table.decode(bundle:decode_table(Shop.Table.NAME, Shop.decode, Shop.decode_value)),
-        _shop_item = ShopItem.Table.decode(bundle:decode_table(ShopItem.Table.NAME, ShopItem.decode, ShopItem.decode_value)),
-        _recipe = Recipe.Table.decode(bundle:decode_table(Recipe.Table.NAME, Recipe.decode, Recipe.decode_value)),
-        _gacha_pool = GachaPool.Table.decode(bundle:decode_table(GachaPool.Table.NAME, GachaPool.decode, GachaPool.decode_value)),
-        _gacha_item = GachaItem.Table.decode(bundle:decode_table(GachaItem.Table.NAME, GachaItem.decode, GachaItem.decode_value)),
-        _equipment_set = EquipmentSet.Table.decode(bundle:decode_table(EquipmentSet.Table.NAME, EquipmentSet.decode, EquipmentSet.decode_value)),
+        _quest = Quest.Table.decode(bundle:decode_table(Quest.Table.NAME, Quest.decode, Quest.decode_value)),
+        _quest_reward = QuestReward.Table.decode(bundle:decode_table(QuestReward.Table.NAME, QuestReward.decode, QuestReward.decode_value)),
+        _level_exp = LevelExp.Table.decode(bundle:decode_table(LevelExp.Table.NAME, LevelExp.decode, LevelExp.decode_value)),
         _achievement = Achievement.Table.decode(bundle:decode_table(Achievement.Table.NAME, Achievement.decode, Achievement.decode_value)),
         _vip_level = VipLevel.Table.decode(bundle:decode_table(VipLevel.Table.NAME, VipLevel.decode, VipLevel.decode_value)),
+        _game_settings = GameSettings.Table.decode(bundle:decode_table(GameSettings.Table.NAME, GameSettings.decode, GameSettings.decode_value)),
+        _maintenance_window = MaintenanceWindow.Table.decode(bundle:decode_table(MaintenanceWindow.Table.NAME, MaintenanceWindow.decode, MaintenanceWindow.decode_value)),
         _mail_template = MailTemplate.Table.decode(bundle:decode_table(MailTemplate.Table.NAME, MailTemplate.decode, MailTemplate.decode_value)),
         _mail_reward = MailReward.Table.decode(bundle:decode_table(MailReward.Table.NAME, MailReward.decode, MailReward.decode_value)),
         _dialogue = Dialogue.Table.decode(bundle:decode_table(Dialogue.Table.NAME, Dialogue.decode, Dialogue.decode_value)),
@@ -140,13 +137,13 @@ end
 function SoraConfig:tables()
     return {
         self._item,
+        self._shop,
+        self._shop_item,
+        self._recipe,
+        self._gacha_pool,
+        self._gacha_item,
+        self._equipment_set,
         self._skill,
-        self._quest,
-        self._quest_reward,
-        self._game_settings,
-        self._maintenance_window,
-        self._localization,
-        self._level_exp,
         self._character,
         self._character_skill,
         self._buff,
@@ -156,14 +153,13 @@ function SoraConfig:tables()
         self._stage,
         self._stage_reward,
         self._dungeon,
-        self._shop,
-        self._shop_item,
-        self._recipe,
-        self._gacha_pool,
-        self._gacha_item,
-        self._equipment_set,
+        self._quest,
+        self._quest_reward,
+        self._level_exp,
         self._achievement,
         self._vip_level,
+        self._game_settings,
+        self._maintenance_window,
         self._mail_template,
         self._mail_reward,
         self._dialogue,
@@ -176,37 +172,44 @@ function SoraConfig:tables()
         self._complex_action_entry,
     }
 end
+---@return SoraI18n
+function SoraConfig.new_i18n()
+    return Runtime.new_i18n(SORA_SCHEMA_FINGERPRINT, {
+        "zh_cn",
+        "en_us",
+    }, "zh_cn")
+end
 ---@return ItemTable
 function SoraConfig:item()
     return self._item
 end
+---@return ShopTable
+function SoraConfig:shop()
+    return self._shop
+end
+---@return ShopItemTable
+function SoraConfig:shop_item()
+    return self._shop_item
+end
+---@return RecipeTable
+function SoraConfig:recipe()
+    return self._recipe
+end
+---@return GachaPoolTable
+function SoraConfig:gacha_pool()
+    return self._gacha_pool
+end
+---@return GachaItemTable
+function SoraConfig:gacha_item()
+    return self._gacha_item
+end
+---@return EquipmentSetTable
+function SoraConfig:equipment_set()
+    return self._equipment_set
+end
 ---@return SkillTable
 function SoraConfig:skill()
     return self._skill
-end
----@return QuestTable
-function SoraConfig:quest()
-    return self._quest
-end
----@return QuestRewardTable
-function SoraConfig:quest_reward()
-    return self._quest_reward
-end
----@return GameSettingsTable
-function SoraConfig:game_settings()
-    return self._game_settings
-end
----@return MaintenanceWindowTable
-function SoraConfig:maintenance_window()
-    return self._maintenance_window
-end
----@return LocalizationTable
-function SoraConfig:localization()
-    return self._localization
-end
----@return LevelExpTable
-function SoraConfig:level_exp()
-    return self._level_exp
 end
 ---@return CharacterTable
 function SoraConfig:character()
@@ -244,29 +247,17 @@ end
 function SoraConfig:dungeon()
     return self._dungeon
 end
----@return ShopTable
-function SoraConfig:shop()
-    return self._shop
+---@return QuestTable
+function SoraConfig:quest()
+    return self._quest
 end
----@return ShopItemTable
-function SoraConfig:shop_item()
-    return self._shop_item
+---@return QuestRewardTable
+function SoraConfig:quest_reward()
+    return self._quest_reward
 end
----@return RecipeTable
-function SoraConfig:recipe()
-    return self._recipe
-end
----@return GachaPoolTable
-function SoraConfig:gacha_pool()
-    return self._gacha_pool
-end
----@return GachaItemTable
-function SoraConfig:gacha_item()
-    return self._gacha_item
-end
----@return EquipmentSetTable
-function SoraConfig:equipment_set()
-    return self._equipment_set
+---@return LevelExpTable
+function SoraConfig:level_exp()
+    return self._level_exp
 end
 ---@return AchievementTable
 function SoraConfig:achievement()
@@ -275,6 +266,14 @@ end
 ---@return VipLevelTable
 function SoraConfig:vip_level()
     return self._vip_level
+end
+---@return GameSettingsTable
+function SoraConfig:game_settings()
+    return self._game_settings
+end
+---@return MaintenanceWindowTable
+function SoraConfig:maintenance_window()
+    return self._maintenance_window
 end
 ---@return MailTemplateTable
 function SoraConfig:mail_template()

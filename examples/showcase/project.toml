@@ -8,6 +8,17 @@ includes = [
     "schema/events.toml",
 ]
 
+[localization]
+locales = ["zh_cn", "en_us"]
+default_locale = "zh_cn"
+fallback_locale = "en_us"
+strict = true
+
+[[localization.sources]]
+name = "Localization"
+file = "Core.xlsx"
+sheet = "Localization"
+
 [build]
 default_source_format = "xlsx"
 data_root = "data"
@@ -95,6 +106,26 @@ compression_level = 3
 [[build.exports]]
 format = "json"
 out = "generated/config.json"
+
+[[build.exports]]
+format = "i18n-binary"
+out = "generated/i18n/zh_cn.sora-i18n"
+locale = "zh_cn"
+
+[[build.exports]]
+format = "i18n-json"
+out = "generated/i18n/zh_cn.json"
+locale = "zh_cn"
+
+[[build.exports]]
+format = "i18n-binary"
+out = "generated/i18n/en_us.sora-i18n"
+locale = "en_us"
+
+[[build.exports]]
+format = "i18n-json"
+out = "generated/i18n/en_us.json"
+locale = "en_us"
 
 [[build.exports]]
 format = "json"

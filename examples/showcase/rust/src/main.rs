@@ -1,8 +1,8 @@
 mod generated;
 
 use generated::{
-    SoraConfig, event_condition::EventCondition, item_type::ItemType, quest_type::QuestType,
-    reward_action::RewardAction,
+    SoraConfig, SoraI18n, event_condition::EventCondition, item_type::ItemType,
+    quest_type::QuestType, reward_action::RewardAction,
 };
 
 fn main() {
@@ -10,6 +10,13 @@ fn main() {
         generated::runtime::SoraBundle::parse(include_bytes!("../../generated/config.sora"))
             .expect("bundle");
     let config = SoraConfig::from_source(&bundle).expect("config");
+    let locale_pack = generated::runtime::LocalePack::from_bytes(include_bytes!(
+        "../../generated/i18n/zh_cn.sora-i18n"
+    ))
+    .expect("locale pack");
+    let mut i18n = SoraI18n::new();
+    i18n.mount(locale_pack).expect("mount zh_cn");
+    i18n.set_locale("zh_cn").expect("set zh_cn");
     let sword = config.item().get(&1001).expect("item 1001");
     let sword_by_name = config.item().get_by_name("Iron Sword").expect("Iron Sword");
     let flame_slash = config.skill().get(&101).expect("skill 101");
@@ -33,7 +40,11 @@ fn main() {
     assert_eq!(config.quest_reward().iter().count(), 49);
     assert_eq!(config.stage().len(), 40);
     assert_eq!(config.monster().len(), 80);
-    assert_eq!(config.localization().len(), 80);
+    let achievement = config.achievement().get(&14001).expect("achievement 14001");
+    assert_eq!(
+        i18n.text(&achievement.title_key).expect("title text"),
+        "中文文本 1"
+    );
     assert_eq!(config.event_rule().len(), 20);
 
     let event_rule = config.event_rule().get(&17001).expect("event rule 17001");

@@ -1,23 +1,27 @@
 use std::{
+    collections::BTreeMap,
     path::{Path, PathBuf},
     sync::Arc,
 };
 
-use sora_data::model::{ConfigData, TableData};
+use sora_data::model::{ConfigData, LocalizationData, LocalizationSourceData, TableData};
 use sora_diagnostics::{Result, SoraError};
 use sora_execution::ExecutionContext;
 use sora_input::{
     parser::ParserRegistry,
     source::{
-        DataSourceLoader, DataSourceRegistry, DataSourceRequest,
+        DataSourceLoader, DataSourceRegistry, DataSourceRequest, LocalizationSourceRequest,
+        resolve_localization_source_format_with_registry,
         resolve_table_source_format_with_registry,
     },
     traits::{DataInput, SchemaInput},
 };
-use sora_input_csv::reader::load_csv_table_data_with_parsers;
+use sora_input_csv::reader::{load_csv_localization_source_data, load_csv_table_data_with_parsers};
 use sora_input_structured::reader::{load_json_table_data, load_yaml_table_data};
 use sora_input_toml::data::load_table_data_file;
-use sora_input_xlsx::reader::load_xlsx_table_data_with_ir_and_parsers;
+use sora_input_xlsx::reader::{
+    load_xlsx_localization_source_data, load_xlsx_table_data_with_ir_and_parsers,
+};
 use sora_ir::model::{ConfigIr, TableIr};
 use sora_schema::model::SchemaFile;
 
@@ -80,12 +84,37 @@ impl<S: SchemaInput> DataInput for MixedProjectInput<S> {
         )
     }
 
+    fn load_localization_data(&self, ir: &ConfigIr) -> Result<LocalizationData> {
+        load_mixed_localization_data_with_registry(
+            ir,
+            &self.data_root,
+            self.default_source_format.as_deref(),
+            &self.source_registry,
+            &self.parser_registry,
+        )
+    }
+
     fn load_data_with_context(
         &self,
         ir: &ConfigIr,
         execution: &ExecutionContext,
     ) -> Result<ConfigData> {
         load_mixed_config_data_with_context(
+            ir,
+            &self.data_root,
+            self.default_source_format.as_deref(),
+            &self.source_registry,
+            &self.parser_registry,
+            execution,
+        )
+    }
+
+    fn load_localization_data_with_context(
+        &self,
+        ir: &ConfigIr,
+        execution: &ExecutionContext,
+    ) -> Result<LocalizationData> {
+        load_mixed_localization_data_with_context(
             ir,
             &self.data_root,
             self.default_source_format.as_deref(),
@@ -134,6 +163,76 @@ pub fn load_mixed_config_data_with_context(
         )?);
     }
     Ok(ConfigData { tables })
+}
+
+pub fn load_mixed_localization_data_with_registry(
+    ir: &ConfigIr,
+    data_root: &Path,
+    default_source_format: Option<&str>,
+    source_registry: &DataSourceRegistry,
+    parser_registry: &ParserRegistry,
+) -> Result<LocalizationData> {
+    load_mixed_localization_data_with_context(
+        ir,
+        data_root,
+        default_source_format,
+        source_registry,
+        parser_registry,
+        &ExecutionContext::default(),
+    )
+}
+
+pub fn load_mixed_localization_data_with_context(
+    ir: &ConfigIr,
+    data_root: &Path,
+    default_source_format: Option<&str>,
+    source_registry: &DataSourceRegistry,
+    parser_registry: &ParserRegistry,
+    execution: &ExecutionContext,
+) -> Result<LocalizationData> {
+    let Some(localization) = &ir.localization else {
+        return Ok(LocalizationData::default());
+    };
+    let mut sources = Vec::with_capacity(localization.sources.len());
+    for source in &localization.sources {
+        sources.push(load_mixed_localization_source_data(
+            ir,
+            source,
+            data_root,
+            default_source_format,
+            source_registry,
+            parser_registry,
+            execution,
+        )?);
+    }
+    Ok(LocalizationData { sources })
+}
+
+fn load_mixed_localization_source_data(
+    ir: &ConfigIr,
+    source: &sora_ir::model::LocalizationSourceIr,
+    data_root: &Path,
+    default_source_format: Option<&str>,
+    source_registry: &DataSourceRegistry,
+    parser_registry: &ParserRegistry,
+    execution: &ExecutionContext,
+) -> Result<LocalizationSourceData> {
+    let path = data_root.join(&source.file);
+    let format = resolve_localization_source_format_with_registry(
+        source,
+        default_source_format,
+        source_registry,
+    )?;
+    let loader = source_registry
+        .get(format)
+        .ok_or_else(|| SoraError::InvalidSchema(format!("missing source loader `{format}`")))?;
+    loader.load_localization_source(LocalizationSourceRequest {
+        ir,
+        source,
+        path: &path,
+        execution,
+        parser_registry,
+    })
 }
 
 fn load_mixed_table_data(
@@ -197,6 +296,13 @@ impl DataSourceLoader for CsvSourceLoader {
             request.parser_registry,
         )
     }
+
+    fn load_localization_source(
+        &self,
+        request: LocalizationSourceRequest<'_>,
+    ) -> Result<LocalizationSourceData> {
+        load_csv_localization_source_data(request.source, request.path)
+    }
 }
 
 struct TomlSourceLoader;
@@ -212,6 +318,13 @@ impl DataSourceLoader for TomlSourceLoader {
 
     fn load_table(&self, request: DataSourceRequest<'_>) -> Result<TableData> {
         load_table_data_file(&request.table.name, request.path)
+    }
+
+    fn load_localization_source(
+        &self,
+        request: LocalizationSourceRequest<'_>,
+    ) -> Result<LocalizationSourceData> {
+        localization_source_from_table(load_table_data_file(&request.source.name, request.path)?)
     }
 }
 
@@ -229,6 +342,13 @@ impl DataSourceLoader for JsonSourceLoader {
     fn load_table(&self, request: DataSourceRequest<'_>) -> Result<TableData> {
         load_json_table_data(&request.table.name, request.path)
     }
+
+    fn load_localization_source(
+        &self,
+        request: LocalizationSourceRequest<'_>,
+    ) -> Result<LocalizationSourceData> {
+        localization_source_from_table(load_json_table_data(&request.source.name, request.path)?)
+    }
 }
 
 struct YamlSourceLoader;
@@ -244,6 +364,13 @@ impl DataSourceLoader for YamlSourceLoader {
 
     fn load_table(&self, request: DataSourceRequest<'_>) -> Result<TableData> {
         load_yaml_table_data(&request.table.name, request.path)
+    }
+
+    fn load_localization_source(
+        &self,
+        request: LocalizationSourceRequest<'_>,
+    ) -> Result<LocalizationSourceData> {
+        localization_source_from_table(load_yaml_table_data(&request.source.name, request.path)?)
     }
 }
 
@@ -272,6 +399,57 @@ impl DataSourceLoader for XlsxSourceLoader {
             sheet,
             request.parser_registry,
         )
+    }
+
+    fn load_localization_source(
+        &self,
+        request: LocalizationSourceRequest<'_>,
+    ) -> Result<LocalizationSourceData> {
+        let sheet = request
+            .source
+            .sheet
+            .as_deref()
+            .unwrap_or(&request.source.name);
+        let _ = (request.ir, request.execution, request.parser_registry);
+        load_xlsx_localization_source_data(request.source, request.path, sheet)
+    }
+}
+
+fn localization_source_from_table(table: TableData) -> Result<LocalizationSourceData> {
+    let mut columns = Vec::new();
+    let mut rows = Vec::with_capacity(table.rows.len());
+    for row in table.rows {
+        let mut values = BTreeMap::new();
+        for (field, value) in row.values {
+            let value = localization_value_to_string(value).ok_or_else(|| {
+                SoraError::InvalidSchema(format!(
+                    "localization source `{}` field `{field}` must be a scalar string-compatible value",
+                    table.name
+                ))
+            })?;
+            if !columns.iter().any(|column| column == &field) {
+                columns.push(field.clone());
+            }
+            values.insert(field, value);
+        }
+        rows.push(sora_data::model::LocalizationRowData { values });
+    }
+    Ok(LocalizationSourceData {
+        name: table.name,
+        columns,
+        rows,
+    })
+}
+
+fn localization_value_to_string(value: sora_data::model::Value) -> Option<String> {
+    match value {
+        sora_data::model::Value::String(value) => Some(value),
+        sora_data::model::Value::Integer(value) => Some(value.to_string()),
+        sora_data::model::Value::Float(value) => Some(value.to_string()),
+        sora_data::model::Value::Bool(value) => Some(value.to_string()),
+        sora_data::model::Value::Null
+        | sora_data::model::Value::List(_)
+        | sora_data::model::Value::Object(_) => None,
     }
 }
 

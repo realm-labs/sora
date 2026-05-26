@@ -123,7 +123,7 @@ impl<'a> BinaryEncoder<'a> {
                     self.collect_strings(inner, value, strings)?;
                 }
             }
-            TypeIr::String => {
+            TypeIr::String | TypeIr::Text => {
                 let Value::String(value) = value else {
                     return Err(type_error(ty, value));
                 };
@@ -295,7 +295,7 @@ impl<'a> BinaryEncoder<'a> {
                 Value::Float(value) => write_f64(out, *value),
                 _ => return Err(type_error(ty, value)),
             },
-            TypeIr::String => {
+            TypeIr::String | TypeIr::Text => {
                 let Value::String(value) = value else {
                     return Err(type_error(ty, value));
                 };

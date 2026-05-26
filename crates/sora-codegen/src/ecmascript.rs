@@ -274,7 +274,7 @@ pub fn ecmascript_type_name(ir: &ConfigIr, ty: &TypeIr) -> String {
         TypeIr::I32 => "number".to_owned(),
         TypeIr::I64 => "bigint".to_owned(),
         TypeIr::F32 | TypeIr::F64 => "number".to_owned(),
-        TypeIr::String => "string".to_owned(),
+        TypeIr::String | TypeIr::Text => "string".to_owned(),
         TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => name.clone(),
         TypeIr::List(element) | TypeIr::Set(element) | TypeIr::Array { element, .. } => {
             format!("{}[]", array_element_type(ir, element))
@@ -298,7 +298,7 @@ pub fn ecmascript_decode_expr(ir: &ConfigIr, ty: &TypeIr) -> String {
         TypeIr::I64 => "reader.readI64()".to_owned(),
         TypeIr::F32 => "reader.readF32()".to_owned(),
         TypeIr::F64 => "reader.readF64()".to_owned(),
-        TypeIr::String => "reader.readString()".to_owned(),
+        TypeIr::String | TypeIr::Text => "reader.readString()".to_owned(),
         TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => {
             format!("decode{name}(reader)")
         }
@@ -331,7 +331,7 @@ pub fn ecmascript_value_decode_expr(ir: &ConfigIr, ty: &TypeIr, value: &str) -> 
         TypeIr::I32 => format!("{value}.asInt()"),
         TypeIr::I64 => format!("{value}.asBigInt()"),
         TypeIr::F32 | TypeIr::F64 => format!("{value}.asNumber()"),
-        TypeIr::String => format!("{value}.asString()"),
+        TypeIr::String | TypeIr::Text => format!("{value}.asString()"),
         TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => {
             format!("decode{name}Value({value})")
         }

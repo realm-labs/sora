@@ -194,6 +194,107 @@ function Runtime.parse_bundle(bytes, options)
     }, SoraBundle)
 end
 
+---@class LocalePack
+---@field schema_fingerprint string
+---@field locale string
+---@field translations table<string, string>
+
+---@param bytes string
+---@return LocalePack
+function Runtime.parse_locale_pack(bytes)
+    if #bytes < 8 or bytes:sub(1, 4) ~= "SORI" then
+        error("invalid Sora i18n pack magic")
+    end
+    local version = read_u32_at(bytes, 4)
+    if version ~= 1 then
+        error("unsupported Sora i18n pack version " .. tostring(version))
+    end
+    local cursor = 8
+    local schema_fingerprint
+    schema_fingerprint, cursor = read_len_prefixed_string(bytes, cursor)
+    local locale
+    locale, cursor = read_len_prefixed_string(bytes, cursor)
+    local count = read_u32_at(bytes, cursor)
+    cursor = cursor + 4
+    local translations = {}
+    for _ = 1, count do
+        local key
+        key, cursor = read_len_prefixed_string(bytes, cursor)
+        local value
+        value, cursor = read_len_prefixed_string(bytes, cursor)
+        translations[key] = value
+    end
+    if cursor ~= #bytes then
+        error("Sora i18n pack has trailing bytes")
+    end
+    return {
+        schema_fingerprint = schema_fingerprint,
+        locale = locale,
+        translations = translations,
+    }
+end
+
+---@class SoraI18n
+---@field private expected_fingerprint string
+---@field private locales table<string, boolean>
+---@field private active_locale string
+---@field private packs table<string, LocalePack>
+local SoraI18n = {}
+SoraI18n.__index = SoraI18n
+
+---@param expected_fingerprint string
+---@param locales string[]
+---@param default_locale string
+---@return SoraI18n
+function Runtime.new_i18n(expected_fingerprint, locales, default_locale)
+    local locale_set = {}
+    for _, locale in ipairs(locales) do
+        locale_set[locale] = true
+    end
+    return setmetatable({
+        expected_fingerprint = expected_fingerprint,
+        locales = locale_set,
+        active_locale = default_locale,
+        packs = {},
+    }, SoraI18n)
+end
+
+---@param pack LocalePack
+function SoraI18n:mount(pack)
+    if pack.schema_fingerprint ~= self.expected_fingerprint then
+        error("locale pack schema fingerprint mismatch")
+    end
+    if not self.locales[pack.locale] then
+        error("locale pack `" .. tostring(pack.locale) .. "` is not declared")
+    end
+    self.packs[pack.locale] = pack
+end
+
+---@param locale string
+function SoraI18n:set_locale(locale)
+    if not self.locales[locale] then
+        error("unknown locale `" .. tostring(locale) .. "`")
+    end
+    if self.packs[locale] == nil then
+        error("locale `" .. tostring(locale) .. "` is not mounted")
+    end
+    self.active_locale = locale
+end
+
+---@param key string
+---@return string
+function SoraI18n:text(key)
+    local pack = self.packs[self.active_locale]
+    if pack == nil then
+        error("locale `" .. tostring(self.active_locale) .. "` is not mounted")
+    end
+    local value = pack.translations[key]
+    if value == nil then
+        error("missing text key `" .. tostring(key) .. "` for locale `" .. tostring(self.active_locale) .. "`")
+    end
+    return value
+end
+
 ---@return string
 function SoraBundle:schema_fingerprint()
     return self.schemaFingerprint
@@ -603,6 +704,16 @@ function read_u32_at(bytes, offset)
     local b1, b2, b3, b4 = string.byte(bytes, offset + 1, offset + 4)
     return b1 + b2 * 256 + b3 * 65536 + b4 * 16777216
 {%- endif %}
+end
+
+function read_len_prefixed_string(bytes, cursor)
+    local len = read_u32_at(bytes, cursor)
+    cursor = cursor + 4
+    local finish = cursor + len
+    if finish > #bytes then
+        error("Sora i18n string exceeds pack length")
+    end
+    return bytes:sub(cursor + 1, finish), finish
 end
 
 ---@param bytes string

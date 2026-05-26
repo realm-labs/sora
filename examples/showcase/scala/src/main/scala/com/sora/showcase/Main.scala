@@ -22,7 +22,6 @@ object Main {
     check(settings.startingGold == 100)
     check(config.stage.size == 40)
     check(config.monster.size == 80)
-    check(config.localization.size == 80)
     check(config.eventRule.size == 20)
 
     val eventRule = config.eventRule.get(17001).getOrElse(sys.error("event rule 17001"))

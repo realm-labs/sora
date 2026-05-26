@@ -51,6 +51,66 @@ length = [1, 3]
 }
 
 #[test]
+fn normalizes_localization_sources_and_text_type() {
+    let schema: SchemaFile = toml::from_str(
+        r#"
+package = "game_config"
+
+[localization]
+locales = ["zh_cn", "en_us"]
+default_locale = "zh_cn"
+fallback_locale = "en_us"
+
+[[localization.sources]]
+name = "QuestText"
+file = "Quest.xlsx"
+sheet = "Localization"
+
+[[tables]]
+name = "Quest"
+mode = "map"
+key = "id"
+
+[[tables.fields]]
+name = "id"
+type = "i32"
+
+[[tables.fields]]
+name = "title"
+type = "text"
+"#,
+    )
+    .unwrap();
+
+    let ir = normalize_schema(schema).unwrap();
+    let localization = ir.localization.as_ref().unwrap();
+    assert_eq!(localization.locales, vec!["zh_cn", "en_us"]);
+    assert_eq!(localization.sources[0].name, "QuestText");
+    assert_eq!(localization.sources[0].file, "Quest.xlsx");
+    assert_eq!(ir.tables[0].fields[1].ty, TypeIr::Text);
+    assert_eq!(ir.tables.len(), 1);
+}
+
+#[test]
+fn rejects_invalid_localization_source_name() {
+    let schema: SchemaFile = toml::from_str(
+        r#"
+package = "game_config"
+
+[localization]
+locales = ["zh_cn"]
+
+[[localization.sources]]
+name = "bad-name"
+file = "Core.xlsx"
+"#,
+    )
+    .unwrap();
+
+    assert!(normalize_schema(schema).is_err());
+}
+
+#[test]
 fn normalizes_tuple_struct_parser() {
     let schema: SchemaFile = toml::from_str(
         r#"

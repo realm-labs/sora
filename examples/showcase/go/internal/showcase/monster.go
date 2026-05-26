@@ -3,134 +3,133 @@
 package showcase
 
 type Monster struct {
-    Id int32
-    Name string
-    Level int32
-    Element ElementType
-    DropGroup int32
-    SpawnPos Vec3
+	Id        int32
+	Name      string
+	Level     int32
+	Element   ElementType
+	DropGroup int32
+	SpawnPos  Vec3
 }
 
 func decodeMonster(reader *SoraReader) (Monster, error) {
-    var value Monster
-    var err error
-    value.Id, err = reader.ReadInt32()
-    if err != nil {
-        return value, err
-    }
-    value.Name, err = reader.ReadString()
-    if err != nil {
-        return value, err
-    }
-    value.Level, err = reader.ReadInt32()
-    if err != nil {
-        return value, err
-    }
-    value.Element, err = decodeElementType(reader)
-    if err != nil {
-        return value, err
-    }
-    value.DropGroup, err = reader.ReadInt32()
-    if err != nil {
-        return value, err
-    }
-    value.SpawnPos, err = decodeVec3(reader)
-    if err != nil {
-        return value, err
-    }
-    return value, nil
+	var value Monster
+	var err error
+	value.Id, err = reader.ReadInt32()
+	if err != nil {
+		return value, err
+	}
+	value.Name, err = reader.ReadString()
+	if err != nil {
+		return value, err
+	}
+	value.Level, err = reader.ReadInt32()
+	if err != nil {
+		return value, err
+	}
+	value.Element, err = decodeElementType(reader)
+	if err != nil {
+		return value, err
+	}
+	value.DropGroup, err = reader.ReadInt32()
+	if err != nil {
+		return value, err
+	}
+	value.SpawnPos, err = decodeVec3(reader)
+	if err != nil {
+		return value, err
+	}
+	return value, nil
 }
 
 func decodeMonsterValue(input SoraValue) (Monster, error) {
-    var value Monster
-    obj, err := input.AsObject()
-    if err != nil {
-        return value, err
-    }
-    value.Id, err = obj.Get("id").AsInt32()
-    if err != nil {
-        return value, err
-    }
-    value.Name, err = obj.Get("name").AsString()
-    if err != nil {
-        return value, err
-    }
-    value.Level, err = obj.Get("level").AsInt32()
-    if err != nil {
-        return value, err
-    }
-    value.Element, err = decodeElementTypeValue(obj.Get("element"))
-    if err != nil {
-        return value, err
-    }
-    value.DropGroup, err = obj.Get("drop_group").AsInt32()
-    if err != nil {
-        return value, err
-    }
-    value.SpawnPos, err = decodeVec3Value(obj.Get("spawn_pos"))
-    if err != nil {
-        return value, err
-    }
-    return value, nil
+	var value Monster
+	obj, err := input.AsObject()
+	if err != nil {
+		return value, err
+	}
+	value.Id, err = obj.Get("id").AsInt32()
+	if err != nil {
+		return value, err
+	}
+	value.Name, err = obj.Get("name").AsString()
+	if err != nil {
+		return value, err
+	}
+	value.Level, err = obj.Get("level").AsInt32()
+	if err != nil {
+		return value, err
+	}
+	value.Element, err = decodeElementTypeValue(obj.Get("element"))
+	if err != nil {
+		return value, err
+	}
+	value.DropGroup, err = obj.Get("drop_group").AsInt32()
+	if err != nil {
+		return value, err
+	}
+	value.SpawnPos, err = decodeVec3Value(obj.Get("spawn_pos"))
+	if err != nil {
+		return value, err
+	}
+	return value, nil
 }
 
 const monsterTableName = "Monster"
 
 var monsterTableInfo = SoraTableInfo{
-    Name: monsterTableName,
-    RowType: "Monster",
-    Shape: SoraTableShapeKeyed,
-    PrimaryKey: &SoraKeyInfo{Name: "id", Type: "int32"},
-    Indexes: []SoraIndexInfo{
-    },
+	Name:       monsterTableName,
+	RowType:    "Monster",
+	Shape:      SoraTableShapeKeyed,
+	PrimaryKey: &SoraKeyInfo{Name: "id", Type: "int32"},
+	Indexes:    []SoraIndexInfo{},
 }
 
 type MonsterTable struct {
-    keys []int32
-    rows map[int32]Monster
+	keys []int32
+	rows map[int32]Monster
 }
 
 func buildMonsterTable(rows []Monster) (*MonsterTable, error) {
-    keys := make([]int32, 0, len(rows))
-    for _, row := range rows {
-        keys = append(keys, row.Id)
-    }
-    return &MonsterTable{keys: keys, rows: DecodeMapTable(rows, func(row Monster) int32 { return row.Id })}, nil
+	keys := make([]int32, 0, len(rows))
+	for _, row := range rows {
+		keys = append(keys, row.Id)
+	}
+	return &MonsterTable{keys: keys, rows: DecodeMapTable(rows, func(row Monster) int32 { return row.Id })}, nil
 }
 
 func decodeMonsterTable(source SoraTableSource) (*MonsterTable, error) {
-    rows, err := DecodeSourceTable(source, monsterTableName, decodeMonster, decodeMonsterValue)
-    if err != nil {
-        return nil, err
-    }
-    return buildMonsterTable(rows)
+	rows, err := DecodeSourceTable(source, monsterTableName, decodeMonster, decodeMonsterValue)
+	if err != nil {
+		return nil, err
+	}
+	return buildMonsterTable(rows)
 }
 
 func (table *MonsterTable) Rows() map[int32]Monster {
-    return table.rows
+	return table.rows
 }
 func (table *MonsterTable) Get(key int32) (Monster, bool) {
-    value, ok := table.rows[key]
-    return value, ok
+	value, ok := table.rows[key]
+	return value, ok
 }
 
 func (table *MonsterTable) Keys() []int32 {
-    return table.keys
+	return table.keys
 }
 
 func (table *MonsterTable) OrderedRows() []Monster {
-    rows := make([]Monster, 0, len(table.keys))
-    for _, key := range table.keys {
-        if row, ok := table.rows[key]; ok {
-            rows = append(rows, row)
-        }
-    }
-    return rows
+	rows := make([]Monster, 0, len(table.keys))
+	for _, key := range table.keys {
+		if row, ok := table.rows[key]; ok {
+			rows = append(rows, row)
+		}
+	}
+	return rows
 }
 func (table *MonsterTable) Info() SoraTableInfo {
-    return monsterTableInfo
+	return monsterTableInfo
 }
 
 func (table *MonsterTable) Len() int {
-    return len(table.rows)
+	return len(table.rows)
 }

@@ -7,41 +7,41 @@ import "fmt"
 type QuestType int32
 
 const (
-    QuestTypeMain QuestType = 0
-    QuestTypeSide QuestType = 1
-    QuestTypeDaily QuestType = 2
+	QuestTypeMain  QuestType = 0
+	QuestTypeSide  QuestType = 1
+	QuestTypeDaily QuestType = 2
 )
 
 func decodeQuestType(reader *SoraReader) (QuestType, error) {
-    ordinal, err := reader.ReadUInt32()
-    if err != nil {
-        return 0, err
-    }
-    switch ordinal {
-    case 0:
-        return QuestTypeMain, nil
-    case 1:
-        return QuestTypeSide, nil
-    case 2:
-        return QuestTypeDaily, nil
-    default:
-        return 0, fmt.Errorf("invalid enum ordinal %d for QuestType", ordinal)
-    }
+	ordinal, err := reader.ReadUInt32()
+	if err != nil {
+		return 0, err
+	}
+	switch ordinal {
+	case 0:
+		return QuestTypeMain, nil
+	case 1:
+		return QuestTypeSide, nil
+	case 2:
+		return QuestTypeDaily, nil
+	default:
+		return 0, fmt.Errorf("invalid enum ordinal %d for QuestType", ordinal)
+	}
 }
 
 func decodeQuestTypeValue(value SoraValue) (QuestType, error) {
-    name, err := value.AsString()
-    if err != nil {
-        return 0, err
-    }
-    switch name {
-    case "Main":
-        return QuestTypeMain, nil
-    case "Side":
-        return QuestTypeSide, nil
-    case "Daily":
-        return QuestTypeDaily, nil
-    default:
-        return 0, fmt.Errorf("invalid enum value %s for QuestType", name)
-    }
+	name, err := value.AsString()
+	if err != nil {
+		return 0, err
+	}
+	switch name {
+	case "Main":
+		return QuestTypeMain, nil
+	case "Side":
+		return QuestTypeSide, nil
+	case "Daily":
+		return QuestTypeDaily, nil
+	default:
+		return 0, fmt.Errorf("invalid enum value %s for QuestType", name)
+	}
 }

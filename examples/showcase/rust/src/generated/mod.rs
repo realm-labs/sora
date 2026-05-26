@@ -27,7 +27,6 @@ pub mod game_settings;
 pub mod item;
 pub mod item_type;
 pub mod level_exp;
-pub mod localization;
 pub mod mail_reward;
 pub mod mail_template;
 pub mod mail_type;
@@ -57,7 +56,7 @@ pub mod vec3;
 pub mod vip_level;
 pub type SoraMap<K, V> = rustc_hash::FxHashMap<K, V>;
 
-pub const SCHEMA_FINGERPRINT: &str = "70733f887d9adc7d";
+pub const SCHEMA_FINGERPRINT: &str = "1439cc1e8c6581b3";
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum SoraTableShape {
@@ -116,6 +115,76 @@ pub trait SoraSingleTable: ErasedSoraTable {
 
     fn get(&self) -> &Self::Row;
 }
+pub struct SoraI18n {
+    active_locale: &'static str,
+    packs: SoraMap<String, runtime::LocalePack>,
+}
+
+impl SoraI18n {
+    pub const LOCALES: &'static [&'static str] = &["zh_cn", "en_us"];
+    pub const DEFAULT_LOCALE: &'static str = "zh_cn";
+
+    pub fn new() -> Self {
+        Self {
+            active_locale: Self::DEFAULT_LOCALE,
+            packs: SoraMap::default(),
+        }
+    }
+
+    pub fn mount(&mut self, pack: runtime::LocalePack) -> Result<(), runtime::SoraReadError> {
+        if pack.schema_fingerprint() != SCHEMA_FINGERPRINT {
+            return Err(runtime::SoraReadError::new(format!(
+                "locale pack schema fingerprint mismatch: generated code expects {}, pack contains {}",
+                SCHEMA_FINGERPRINT,
+                pack.schema_fingerprint()
+            )));
+        }
+        if !Self::LOCALES.contains(&pack.locale()) {
+            return Err(runtime::SoraReadError::new(format!(
+                "locale pack `{}` is not declared by generated code",
+                pack.locale()
+            )));
+        }
+        self.packs.insert(pack.locale().to_owned(), pack);
+        Ok(())
+    }
+
+    pub fn set_locale(&mut self, locale: &'static str) -> Result<(), runtime::SoraReadError> {
+        if !Self::LOCALES.contains(&locale) {
+            return Err(runtime::SoraReadError::new(format!(
+                "unknown locale `{}`",
+                locale
+            )));
+        }
+        if !self.packs.contains_key(locale) {
+            return Err(runtime::SoraReadError::new(format!(
+                "locale `{}` is not mounted",
+                locale
+            )));
+        }
+        self.active_locale = locale;
+        Ok(())
+    }
+
+    pub fn text(&self, key: &runtime::TextKey) -> Result<&str, runtime::SoraReadError> {
+        self.packs
+            .get(self.active_locale)
+            .and_then(|pack| pack.get(key))
+            .ok_or_else(|| {
+                runtime::SoraReadError::new(format!(
+                    "missing text key `{}` for locale `{}`",
+                    key.as_str(),
+                    self.active_locale
+                ))
+            })
+    }
+}
+
+impl Default for SoraI18n {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 
 pub struct SoraConfig {
     tables: SoraMap<&'static str, Box<dyn ErasedSoraTable>>,
@@ -143,7 +212,7 @@ impl SoraConfig {
             )));
         }
         let mut tables: SoraMap<&'static str, Box<dyn ErasedSoraTable>> =
-            sora_map_with_capacity(35);
+            sora_map_with_capacity(34);
         tables.insert(
             item::ItemTable::NAME,
             Box::new(item::ItemTable::from_rows(
@@ -151,53 +220,47 @@ impl SoraConfig {
             )?),
         );
         tables.insert(
+            shop::ShopTable::NAME,
+            Box::new(shop::ShopTable::from_rows(
+                source.decode_table::<shop::Shop>(shop::ShopTable::NAME)?,
+            )?),
+        );
+        tables.insert(
+            shop_item::ShopItemTable::NAME,
+            Box::new(shop_item::ShopItemTable::from_rows(
+                source.decode_table::<shop_item::ShopItem>(shop_item::ShopItemTable::NAME)?,
+            )?),
+        );
+        tables.insert(
+            recipe::RecipeTable::NAME,
+            Box::new(recipe::RecipeTable::from_rows(
+                source.decode_table::<recipe::Recipe>(recipe::RecipeTable::NAME)?,
+            )?),
+        );
+        tables.insert(
+            gacha_pool::GachaPoolTable::NAME,
+            Box::new(gacha_pool::GachaPoolTable::from_rows(
+                source.decode_table::<gacha_pool::GachaPool>(gacha_pool::GachaPoolTable::NAME)?,
+            )?),
+        );
+        tables.insert(
+            gacha_item::GachaItemTable::NAME,
+            Box::new(gacha_item::GachaItemTable::from_rows(
+                source.decode_table::<gacha_item::GachaItem>(gacha_item::GachaItemTable::NAME)?,
+            )?),
+        );
+        tables.insert(
+            equipment_set::EquipmentSetTable::NAME,
+            Box::new(equipment_set::EquipmentSetTable::from_rows(
+                source.decode_table::<equipment_set::EquipmentSet>(
+                    equipment_set::EquipmentSetTable::NAME,
+                )?,
+            )?),
+        );
+        tables.insert(
             skill::SkillTable::NAME,
             Box::new(skill::SkillTable::from_rows(
                 source.decode_table::<skill::Skill>(skill::SkillTable::NAME)?,
-            )?),
-        );
-        tables.insert(
-            quest::QuestTable::NAME,
-            Box::new(quest::QuestTable::from_rows(
-                source.decode_table::<quest::Quest>(quest::QuestTable::NAME)?,
-            )?),
-        );
-        tables.insert(
-            quest_reward::QuestRewardTable::NAME,
-            Box::new(quest_reward::QuestRewardTable::from_rows(
-                source.decode_table::<quest_reward::QuestReward>(
-                    quest_reward::QuestRewardTable::NAME,
-                )?,
-            )?),
-        );
-        tables.insert(
-            game_settings::GameSettingsTable::NAME,
-            Box::new(game_settings::GameSettingsTable::from_rows(
-                source.decode_table::<game_settings::GameSettings>(
-                    game_settings::GameSettingsTable::NAME,
-                )?,
-            )?),
-        );
-        tables.insert(
-            maintenance_window::MaintenanceWindowTable::NAME,
-            Box::new(maintenance_window::MaintenanceWindowTable::from_rows(
-                source.decode_table::<maintenance_window::MaintenanceWindow>(
-                    maintenance_window::MaintenanceWindowTable::NAME,
-                )?,
-            )?),
-        );
-        tables.insert(
-            localization::LocalizationTable::NAME,
-            Box::new(localization::LocalizationTable::from_rows(
-                source.decode_table::<localization::Localization>(
-                    localization::LocalizationTable::NAME,
-                )?,
-            )?),
-        );
-        tables.insert(
-            level_exp::LevelExpTable::NAME,
-            Box::new(level_exp::LevelExpTable::from_rows(
-                source.decode_table::<level_exp::LevelExp>(level_exp::LevelExpTable::NAME)?,
             )?),
         );
         tables.insert(
@@ -259,41 +322,23 @@ impl SoraConfig {
             )?),
         );
         tables.insert(
-            shop::ShopTable::NAME,
-            Box::new(shop::ShopTable::from_rows(
-                source.decode_table::<shop::Shop>(shop::ShopTable::NAME)?,
+            quest::QuestTable::NAME,
+            Box::new(quest::QuestTable::from_rows(
+                source.decode_table::<quest::Quest>(quest::QuestTable::NAME)?,
             )?),
         );
         tables.insert(
-            shop_item::ShopItemTable::NAME,
-            Box::new(shop_item::ShopItemTable::from_rows(
-                source.decode_table::<shop_item::ShopItem>(shop_item::ShopItemTable::NAME)?,
-            )?),
-        );
-        tables.insert(
-            recipe::RecipeTable::NAME,
-            Box::new(recipe::RecipeTable::from_rows(
-                source.decode_table::<recipe::Recipe>(recipe::RecipeTable::NAME)?,
-            )?),
-        );
-        tables.insert(
-            gacha_pool::GachaPoolTable::NAME,
-            Box::new(gacha_pool::GachaPoolTable::from_rows(
-                source.decode_table::<gacha_pool::GachaPool>(gacha_pool::GachaPoolTable::NAME)?,
-            )?),
-        );
-        tables.insert(
-            gacha_item::GachaItemTable::NAME,
-            Box::new(gacha_item::GachaItemTable::from_rows(
-                source.decode_table::<gacha_item::GachaItem>(gacha_item::GachaItemTable::NAME)?,
-            )?),
-        );
-        tables.insert(
-            equipment_set::EquipmentSetTable::NAME,
-            Box::new(equipment_set::EquipmentSetTable::from_rows(
-                source.decode_table::<equipment_set::EquipmentSet>(
-                    equipment_set::EquipmentSetTable::NAME,
+            quest_reward::QuestRewardTable::NAME,
+            Box::new(quest_reward::QuestRewardTable::from_rows(
+                source.decode_table::<quest_reward::QuestReward>(
+                    quest_reward::QuestRewardTable::NAME,
                 )?,
+            )?),
+        );
+        tables.insert(
+            level_exp::LevelExpTable::NAME,
+            Box::new(level_exp::LevelExpTable::from_rows(
+                source.decode_table::<level_exp::LevelExp>(level_exp::LevelExpTable::NAME)?,
             )?),
         );
         tables.insert(
@@ -308,6 +353,22 @@ impl SoraConfig {
             vip_level::VipLevelTable::NAME,
             Box::new(vip_level::VipLevelTable::from_rows(
                 source.decode_table::<vip_level::VipLevel>(vip_level::VipLevelTable::NAME)?,
+            )?),
+        );
+        tables.insert(
+            game_settings::GameSettingsTable::NAME,
+            Box::new(game_settings::GameSettingsTable::from_rows(
+                source.decode_table::<game_settings::GameSettings>(
+                    game_settings::GameSettingsTable::NAME,
+                )?,
+            )?),
+        );
+        tables.insert(
+            maintenance_window::MaintenanceWindowTable::NAME,
+            Box::new(maintenance_window::MaintenanceWindowTable::from_rows(
+                source.decode_table::<maintenance_window::MaintenanceWindow>(
+                    maintenance_window::MaintenanceWindowTable::NAME,
+                )?,
             )?),
         );
         tables.insert(
@@ -418,32 +479,32 @@ impl SoraConfig {
         self.table(item::ItemTable::NAME)
     }
 
+    pub fn shop(&self) -> &shop::ShopTable {
+        self.table(shop::ShopTable::NAME)
+    }
+
+    pub fn shop_item(&self) -> &shop_item::ShopItemTable {
+        self.table(shop_item::ShopItemTable::NAME)
+    }
+
+    pub fn recipe(&self) -> &recipe::RecipeTable {
+        self.table(recipe::RecipeTable::NAME)
+    }
+
+    pub fn gacha_pool(&self) -> &gacha_pool::GachaPoolTable {
+        self.table(gacha_pool::GachaPoolTable::NAME)
+    }
+
+    pub fn gacha_item(&self) -> &gacha_item::GachaItemTable {
+        self.table(gacha_item::GachaItemTable::NAME)
+    }
+
+    pub fn equipment_set(&self) -> &equipment_set::EquipmentSetTable {
+        self.table(equipment_set::EquipmentSetTable::NAME)
+    }
+
     pub fn skill(&self) -> &skill::SkillTable {
         self.table(skill::SkillTable::NAME)
-    }
-
-    pub fn quest(&self) -> &quest::QuestTable {
-        self.table(quest::QuestTable::NAME)
-    }
-
-    pub fn quest_reward(&self) -> &quest_reward::QuestRewardTable {
-        self.table(quest_reward::QuestRewardTable::NAME)
-    }
-
-    pub fn game_settings(&self) -> &game_settings::GameSettingsTable {
-        self.table(game_settings::GameSettingsTable::NAME)
-    }
-
-    pub fn maintenance_window(&self) -> &maintenance_window::MaintenanceWindowTable {
-        self.table(maintenance_window::MaintenanceWindowTable::NAME)
-    }
-
-    pub fn localization(&self) -> &localization::LocalizationTable {
-        self.table(localization::LocalizationTable::NAME)
-    }
-
-    pub fn level_exp(&self) -> &level_exp::LevelExpTable {
-        self.table(level_exp::LevelExpTable::NAME)
     }
 
     pub fn character(&self) -> &character::CharacterTable {
@@ -482,28 +543,16 @@ impl SoraConfig {
         self.table(dungeon::DungeonTable::NAME)
     }
 
-    pub fn shop(&self) -> &shop::ShopTable {
-        self.table(shop::ShopTable::NAME)
+    pub fn quest(&self) -> &quest::QuestTable {
+        self.table(quest::QuestTable::NAME)
     }
 
-    pub fn shop_item(&self) -> &shop_item::ShopItemTable {
-        self.table(shop_item::ShopItemTable::NAME)
+    pub fn quest_reward(&self) -> &quest_reward::QuestRewardTable {
+        self.table(quest_reward::QuestRewardTable::NAME)
     }
 
-    pub fn recipe(&self) -> &recipe::RecipeTable {
-        self.table(recipe::RecipeTable::NAME)
-    }
-
-    pub fn gacha_pool(&self) -> &gacha_pool::GachaPoolTable {
-        self.table(gacha_pool::GachaPoolTable::NAME)
-    }
-
-    pub fn gacha_item(&self) -> &gacha_item::GachaItemTable {
-        self.table(gacha_item::GachaItemTable::NAME)
-    }
-
-    pub fn equipment_set(&self) -> &equipment_set::EquipmentSetTable {
-        self.table(equipment_set::EquipmentSetTable::NAME)
+    pub fn level_exp(&self) -> &level_exp::LevelExpTable {
+        self.table(level_exp::LevelExpTable::NAME)
     }
 
     pub fn achievement(&self) -> &achievement::AchievementTable {
@@ -512,6 +561,14 @@ impl SoraConfig {
 
     pub fn vip_level(&self) -> &vip_level::VipLevelTable {
         self.table(vip_level::VipLevelTable::NAME)
+    }
+
+    pub fn game_settings(&self) -> &game_settings::GameSettingsTable {
+        self.table(game_settings::GameSettingsTable::NAME)
+    }
+
+    pub fn maintenance_window(&self) -> &maintenance_window::MaintenanceWindowTable {
+        self.table(maintenance_window::MaintenanceWindowTable::NAME)
     }
 
     pub fn mail_template(&self) -> &mail_template::MailTemplateTable {

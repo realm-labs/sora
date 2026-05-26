@@ -4,19 +4,19 @@ import type { SoraConfigTable, SoraTableSource } from "./sora_runtime.js";
 
 import type { ItemTable } from "./item.js";
 
+import type { ShopTable } from "./shop.js";
+
+import type { ShopItemTable } from "./shop_item.js";
+
+import type { RecipeTable } from "./recipe.js";
+
+import type { GachaPoolTable } from "./gacha_pool.js";
+
+import type { GachaItemTable } from "./gacha_item.js";
+
+import type { EquipmentSetTable } from "./equipment_set.js";
+
 import type { SkillTable } from "./skill.js";
-
-import type { QuestTable } from "./quest.js";
-
-import type { QuestRewardTable } from "./quest_reward.js";
-
-import type { GameSettingsTable } from "./game_settings.js";
-
-import type { MaintenanceWindowTable } from "./maintenance_window.js";
-
-import type { LocalizationTable } from "./localization.js";
-
-import type { LevelExpTable } from "./level_exp.js";
 
 import type { CharacterTable } from "./character.js";
 
@@ -36,21 +36,19 @@ import type { StageRewardTable } from "./stage_reward.js";
 
 import type { DungeonTable } from "./dungeon.js";
 
-import type { ShopTable } from "./shop.js";
+import type { QuestTable } from "./quest.js";
 
-import type { ShopItemTable } from "./shop_item.js";
+import type { QuestRewardTable } from "./quest_reward.js";
 
-import type { RecipeTable } from "./recipe.js";
-
-import type { GachaPoolTable } from "./gacha_pool.js";
-
-import type { GachaItemTable } from "./gacha_item.js";
-
-import type { EquipmentSetTable } from "./equipment_set.js";
+import type { LevelExpTable } from "./level_exp.js";
 
 import type { AchievementTable } from "./achievement.js";
 
 import type { VipLevelTable } from "./vip_level.js";
+
+import type { GameSettingsTable } from "./game_settings.js";
+
+import type { MaintenanceWindowTable } from "./maintenance_window.js";
 
 import type { MailTemplateTable } from "./mail_template.js";
 
@@ -78,13 +76,13 @@ export declare class SoraConfig {
     static fromSource(source: SoraTableSource): SoraConfig;
     tables(): SoraConfigTable[];
     item(): ItemTable;
+    shop(): ShopTable;
+    shopItem(): ShopItemTable;
+    recipe(): RecipeTable;
+    gachaPool(): GachaPoolTable;
+    gachaItem(): GachaItemTable;
+    equipmentSet(): EquipmentSetTable;
     skill(): SkillTable;
-    quest(): QuestTable;
-    questReward(): QuestRewardTable;
-    gameSettings(): GameSettingsTable;
-    maintenanceWindow(): MaintenanceWindowTable;
-    localization(): LocalizationTable;
-    levelExp(): LevelExpTable;
     character(): CharacterTable;
     characterSkill(): CharacterSkillTable;
     buff(): BuffTable;
@@ -94,14 +92,13 @@ export declare class SoraConfig {
     stage(): StageTable;
     stageReward(): StageRewardTable;
     dungeon(): DungeonTable;
-    shop(): ShopTable;
-    shopItem(): ShopItemTable;
-    recipe(): RecipeTable;
-    gachaPool(): GachaPoolTable;
-    gachaItem(): GachaItemTable;
-    equipmentSet(): EquipmentSetTable;
+    quest(): QuestTable;
+    questReward(): QuestRewardTable;
+    levelExp(): LevelExpTable;
     achievement(): AchievementTable;
     vipLevel(): VipLevelTable;
+    gameSettings(): GameSettingsTable;
+    maintenanceWindow(): MaintenanceWindowTable;
     mailTemplate(): MailTemplateTable;
     mailReward(): MailRewardTable;
     dialogue(): DialogueTable;

@@ -160,7 +160,12 @@ impl CodegenRegistry {
                 display_name: "Rust",
                 runtime_capabilities: RUNTIME_MANAGED_EXPORTS,
                 runtime_format: runtime_format_from_options::<RustCodegenOptions>,
-                formatter: Some(FormatterConfig::new("Rust", "rustfmt", &[], &["rs"])),
+                formatter: Some(FormatterConfig::new(
+                    "Rust",
+                    "rustfmt",
+                    &["--edition", "2024"],
+                    &["rs"],
+                )),
                 generator: Box::new(RustCodeGenerator),
             })
             .expect("built-in codegen target must be unique");

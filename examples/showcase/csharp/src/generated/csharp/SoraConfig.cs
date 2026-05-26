@@ -56,7 +56,7 @@ public interface ISoraSingleTable<out TRow> : ISoraTable<TRow>
 
 public sealed class SoraConfig
 {
-    public const string SchemaFingerprint = "70733f887d9adc7d";
+    public const string SchemaFingerprint = "1439cc1e8c6581b3";
 
     private readonly Dictionary<string, ISoraTable> tables;
 
@@ -73,15 +73,15 @@ public sealed class SoraConfig
                 $"schema fingerprint mismatch: generated code expects {SchemaFingerprint}, bundle contains {source.SchemaFingerprint}"
             );
         }
-        var tables = new Dictionary<string, ISoraTable>(35);
+        var tables = new Dictionary<string, ISoraTable>(34);
         tables[ItemTable.TableName] = ItemTable.Decode(source);
+        tables[ShopTable.TableName] = ShopTable.Decode(source);
+        tables[ShopItemTable.TableName] = ShopItemTable.Decode(source);
+        tables[RecipeTable.TableName] = RecipeTable.Decode(source);
+        tables[GachaPoolTable.TableName] = GachaPoolTable.Decode(source);
+        tables[GachaItemTable.TableName] = GachaItemTable.Decode(source);
+        tables[EquipmentSetTable.TableName] = EquipmentSetTable.Decode(source);
         tables[SkillTable.TableName] = SkillTable.Decode(source);
-        tables[QuestTable.TableName] = QuestTable.Decode(source);
-        tables[QuestRewardTable.TableName] = QuestRewardTable.Decode(source);
-        tables[GameSettingsTable.TableName] = GameSettingsTable.Decode(source);
-        tables[MaintenanceWindowTable.TableName] = MaintenanceWindowTable.Decode(source);
-        tables[LocalizationTable.TableName] = LocalizationTable.Decode(source);
-        tables[LevelExpTable.TableName] = LevelExpTable.Decode(source);
         tables[CharacterTable.TableName] = CharacterTable.Decode(source);
         tables[CharacterSkillTable.TableName] = CharacterSkillTable.Decode(source);
         tables[BuffTable.TableName] = BuffTable.Decode(source);
@@ -91,14 +91,13 @@ public sealed class SoraConfig
         tables[StageTable.TableName] = StageTable.Decode(source);
         tables[StageRewardTable.TableName] = StageRewardTable.Decode(source);
         tables[DungeonTable.TableName] = DungeonTable.Decode(source);
-        tables[ShopTable.TableName] = ShopTable.Decode(source);
-        tables[ShopItemTable.TableName] = ShopItemTable.Decode(source);
-        tables[RecipeTable.TableName] = RecipeTable.Decode(source);
-        tables[GachaPoolTable.TableName] = GachaPoolTable.Decode(source);
-        tables[GachaItemTable.TableName] = GachaItemTable.Decode(source);
-        tables[EquipmentSetTable.TableName] = EquipmentSetTable.Decode(source);
+        tables[QuestTable.TableName] = QuestTable.Decode(source);
+        tables[QuestRewardTable.TableName] = QuestRewardTable.Decode(source);
+        tables[LevelExpTable.TableName] = LevelExpTable.Decode(source);
         tables[AchievementTable.TableName] = AchievementTable.Decode(source);
         tables[VipLevelTable.TableName] = VipLevelTable.Decode(source);
+        tables[GameSettingsTable.TableName] = GameSettingsTable.Decode(source);
+        tables[MaintenanceWindowTable.TableName] = MaintenanceWindowTable.Decode(source);
         tables[MailTemplateTable.TableName] = MailTemplateTable.Decode(source);
         tables[MailRewardTable.TableName] = MailRewardTable.Decode(source);
         tables[DialogueTable.TableName] = DialogueTable.Decode(source);
@@ -123,13 +122,13 @@ public sealed class SoraConfig
         throw new SoraReadException($"generated SoraConfig is missing table `{name}` or has an unexpected table type");
     }
     public ItemTable Item => Table<ItemTable>(ItemTable.TableName);
+    public ShopTable Shop => Table<ShopTable>(ShopTable.TableName);
+    public ShopItemTable ShopItem => Table<ShopItemTable>(ShopItemTable.TableName);
+    public RecipeTable Recipe => Table<RecipeTable>(RecipeTable.TableName);
+    public GachaPoolTable GachaPool => Table<GachaPoolTable>(GachaPoolTable.TableName);
+    public GachaItemTable GachaItem => Table<GachaItemTable>(GachaItemTable.TableName);
+    public EquipmentSetTable EquipmentSet => Table<EquipmentSetTable>(EquipmentSetTable.TableName);
     public SkillTable Skill => Table<SkillTable>(SkillTable.TableName);
-    public QuestTable Quest => Table<QuestTable>(QuestTable.TableName);
-    public QuestRewardTable QuestReward => Table<QuestRewardTable>(QuestRewardTable.TableName);
-    public GameSettingsTable GameSettings => Table<GameSettingsTable>(GameSettingsTable.TableName);
-    public MaintenanceWindowTable MaintenanceWindow => Table<MaintenanceWindowTable>(MaintenanceWindowTable.TableName);
-    public LocalizationTable Localization => Table<LocalizationTable>(LocalizationTable.TableName);
-    public LevelExpTable LevelExp => Table<LevelExpTable>(LevelExpTable.TableName);
     public CharacterTable Character => Table<CharacterTable>(CharacterTable.TableName);
     public CharacterSkillTable CharacterSkill => Table<CharacterSkillTable>(CharacterSkillTable.TableName);
     public BuffTable Buff => Table<BuffTable>(BuffTable.TableName);
@@ -139,14 +138,13 @@ public sealed class SoraConfig
     public StageTable Stage => Table<StageTable>(StageTable.TableName);
     public StageRewardTable StageReward => Table<StageRewardTable>(StageRewardTable.TableName);
     public DungeonTable Dungeon => Table<DungeonTable>(DungeonTable.TableName);
-    public ShopTable Shop => Table<ShopTable>(ShopTable.TableName);
-    public ShopItemTable ShopItem => Table<ShopItemTable>(ShopItemTable.TableName);
-    public RecipeTable Recipe => Table<RecipeTable>(RecipeTable.TableName);
-    public GachaPoolTable GachaPool => Table<GachaPoolTable>(GachaPoolTable.TableName);
-    public GachaItemTable GachaItem => Table<GachaItemTable>(GachaItemTable.TableName);
-    public EquipmentSetTable EquipmentSet => Table<EquipmentSetTable>(EquipmentSetTable.TableName);
+    public QuestTable Quest => Table<QuestTable>(QuestTable.TableName);
+    public QuestRewardTable QuestReward => Table<QuestRewardTable>(QuestRewardTable.TableName);
+    public LevelExpTable LevelExp => Table<LevelExpTable>(LevelExpTable.TableName);
     public AchievementTable Achievement => Table<AchievementTable>(AchievementTable.TableName);
     public VipLevelTable VipLevel => Table<VipLevelTable>(VipLevelTable.TableName);
+    public GameSettingsTable GameSettings => Table<GameSettingsTable>(GameSettingsTable.TableName);
+    public MaintenanceWindowTable MaintenanceWindow => Table<MaintenanceWindowTable>(MaintenanceWindowTable.TableName);
     public MailTemplateTable MailTemplate => Table<MailTemplateTable>(MailTemplateTable.TableName);
     public MailRewardTable MailReward => Table<MailRewardTable>(MailRewardTable.TableName);
     public DialogueTable Dialogue => Table<DialogueTable>(DialogueTable.TableName);

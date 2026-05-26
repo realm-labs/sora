@@ -302,7 +302,7 @@ fn csharp_decode_expr(ir: &ConfigIr, ty: &TypeIr) -> String {
         TypeIr::I64 => "reader.ReadInt64()".to_owned(),
         TypeIr::F32 => "reader.ReadFloat()".to_owned(),
         TypeIr::F64 => "reader.ReadDouble()".to_owned(),
-        TypeIr::String => "reader.ReadString()".to_owned(),
+        TypeIr::String | TypeIr::Text => "reader.ReadString()".to_owned(),
         TypeIr::Enum(name) => format!("{name}Codec.Decode(reader)"),
         TypeIr::Struct(name) | TypeIr::Union(name) => format!("{name}.Decode(reader)"),
         TypeIr::List(element) | TypeIr::Set(element) | TypeIr::Array { element, .. } => {
@@ -343,7 +343,7 @@ fn csharp_value_decode_expr(ir: &ConfigIr, ty: &TypeIr, value: &str) -> String {
         TypeIr::I64 => format!("{value}.AsInt64()"),
         TypeIr::F32 => format!("{value}.AsFloat()"),
         TypeIr::F64 => format!("{value}.AsDouble()"),
-        TypeIr::String => format!("{value}.AsString()"),
+        TypeIr::String | TypeIr::Text => format!("{value}.AsString()"),
         TypeIr::Enum(name) => format!("{name}Codec.Decode({value})"),
         TypeIr::Struct(name) | TypeIr::Union(name) => format!("{name}.Decode({value})"),
         TypeIr::List(element) | TypeIr::Set(element) | TypeIr::Array { element, .. } => {

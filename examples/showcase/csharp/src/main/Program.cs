@@ -26,7 +26,6 @@ internal static class Program
         Check(settings.StartingGold == 100);
         Check(config.Stage.Count == 40);
         Check(config.Monster.Count == 80);
-        Check(config.Localization.Count == 80);
         Check(config.EventRule.Count == 20);
 
         var eventRule = config.EventRule.Get(17001) ?? throw new InvalidOperationException("event rule 17001");

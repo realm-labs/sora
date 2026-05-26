@@ -68,6 +68,7 @@ mod tests {
             .export(ExportRequest {
                 ir: &ir,
                 data: &data,
+                locale_catalog: None,
                 execution: &sora_execution::ExecutionContext::default(),
                 options: Default::default(),
                 output: ExportOutput::Directory(out_dir.clone()),

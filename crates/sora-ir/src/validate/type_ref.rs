@@ -130,7 +130,12 @@ pub(super) fn validate_index_field_type(
 
 fn is_valid_map_key_type(ty: &TypeIr, tables: &[TableIr]) -> bool {
     match ty {
-        TypeIr::Bool | TypeIr::I32 | TypeIr::I64 | TypeIr::String | TypeIr::Enum(_) => true,
+        TypeIr::Bool
+        | TypeIr::I32
+        | TypeIr::I64
+        | TypeIr::String
+        | TypeIr::Text
+        | TypeIr::Enum(_) => true,
         TypeIr::Ref { table, field } => tables
             .iter()
             .find(|candidate| candidate.name == *table)

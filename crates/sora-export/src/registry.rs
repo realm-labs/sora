@@ -1,8 +1,13 @@
 use std::collections::BTreeMap;
 
 use crate::{
-    binary::BinaryBundleExporter, cbor::CborBundleExporter, debug_json::DebugJsonExporter,
-    exporter::DataExporter, json::JsonBundleExporter, protobuf::ProtobufBundleExporter,
+    binary::BinaryBundleExporter,
+    cbor::CborBundleExporter,
+    debug_json::DebugJsonExporter,
+    exporter::DataExporter,
+    i18n::{I18nBinaryExporter, I18nJsonExporter},
+    json::JsonBundleExporter,
+    protobuf::ProtobufBundleExporter,
     typed_protobuf::TypedProtobufExporter,
 };
 
@@ -21,6 +26,8 @@ impl ExporterRegistry {
         registry.register(BinaryBundleExporter);
         registry.register(CborBundleExporter);
         registry.register(DebugJsonExporter);
+        registry.register(I18nBinaryExporter);
+        registry.register(I18nJsonExporter);
         registry.register(JsonBundleExporter);
         registry.register(ProtobufBundleExporter);
         registry.register(TypedProtobufExporter);
@@ -87,6 +94,8 @@ mod tests {
             vec![
                 "binary",
                 "cbor",
+                "i18n-binary",
+                "i18n-json",
                 "json",
                 "json-debug",
                 "proto",

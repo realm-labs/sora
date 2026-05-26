@@ -7,6 +7,23 @@ pub struct ConfigData {
     pub tables: Vec<TableData>,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, Default, Serialize, Deserialize)]
+pub struct LocalizationData {
+    pub sources: Vec<LocalizationSourceData>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct LocalizationSourceData {
+    pub name: String,
+    pub columns: Vec<String>,
+    pub rows: Vec<LocalizationRowData>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct LocalizationRowData {
+    pub values: BTreeMap<String, String>,
+}
+
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct TableData {
     pub name: String,

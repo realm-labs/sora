@@ -57,6 +57,17 @@ function SoraConfig:tables()
     }
 end
 
+{%- if model.has_localization %}
+---@return SoraI18n
+function SoraConfig.new_i18n()
+    return Runtime.new_i18n(SORA_SCHEMA_FINGERPRINT, {
+{%- for locale in model.locales %}
+        "{{ locale }}",
+{%- endfor %}
+    }, "{{ model.default_locale }}")
+end
+
+{%- endif %}
 {%- for table in model.tables %}
 ---@return {{ table.pascal_name }}Table
 function SoraConfig:{{ table.snake_name }}()

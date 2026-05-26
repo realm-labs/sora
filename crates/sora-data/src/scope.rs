@@ -90,6 +90,7 @@ fn filter_value(ir: &ConfigIr, ty: &TypeIr, value: &Value) -> Option<Value> {
         | TypeIr::F32
         | TypeIr::F64
         | TypeIr::String
+        | TypeIr::Text
         | TypeIr::Enum(_)
         | TypeIr::Ref { .. } => Some(value.clone()),
     }

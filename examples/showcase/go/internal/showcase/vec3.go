@@ -3,46 +3,46 @@
 package showcase
 
 type Vec3 struct {
-    X float32
-    Y float32
-    Z float32
+	X float32
+	Y float32
+	Z float32
 }
 
 func decodeVec3(reader *SoraReader) (Vec3, error) {
-    var value Vec3
-    var err error
-    value.X, err = reader.ReadFloat32()
-    if err != nil {
-        return value, err
-    }
-    value.Y, err = reader.ReadFloat32()
-    if err != nil {
-        return value, err
-    }
-    value.Z, err = reader.ReadFloat32()
-    if err != nil {
-        return value, err
-    }
-    return value, nil
+	var value Vec3
+	var err error
+	value.X, err = reader.ReadFloat32()
+	if err != nil {
+		return value, err
+	}
+	value.Y, err = reader.ReadFloat32()
+	if err != nil {
+		return value, err
+	}
+	value.Z, err = reader.ReadFloat32()
+	if err != nil {
+		return value, err
+	}
+	return value, nil
 }
 
 func decodeVec3Value(input SoraValue) (Vec3, error) {
-    var value Vec3
-    obj, err := input.AsObject()
-    if err != nil {
-        return value, err
-    }
-    value.X, err = obj.Get("x").AsFloat32()
-    if err != nil {
-        return value, err
-    }
-    value.Y, err = obj.Get("y").AsFloat32()
-    if err != nil {
-        return value, err
-    }
-    value.Z, err = obj.Get("z").AsFloat32()
-    if err != nil {
-        return value, err
-    }
-    return value, nil
+	var value Vec3
+	obj, err := input.AsObject()
+	if err != nil {
+		return value, err
+	}
+	value.X, err = obj.Get("x").AsFloat32()
+	if err != nil {
+		return value, err
+	}
+	value.Y, err = obj.Get("y").AsFloat32()
+	if err != nil {
+		return value, err
+	}
+	value.Z, err = obj.Get("z").AsFloat32()
+	if err != nil {
+		return value, err
+	}
+	return value, nil
 }

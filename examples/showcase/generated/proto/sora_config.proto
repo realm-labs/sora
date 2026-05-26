@@ -6,13 +6,13 @@ package com.sora.showcase;
 
 message SoraConfigData {
   repeated Item item = 1;
-  repeated Skill skill = 2;
-  repeated Quest quest = 3;
-  repeated QuestReward quest_reward = 4;
-  GameSettings game_settings = 5;
-  repeated MaintenanceWindow maintenance_window = 6;
-  repeated Localization localization = 7;
-  repeated LevelExp level_exp = 8;
+  repeated Shop shop = 2;
+  repeated ShopItem shop_item = 3;
+  repeated Recipe recipe = 4;
+  repeated GachaPool gacha_pool = 5;
+  repeated GachaItem gacha_item = 6;
+  repeated EquipmentSet equipment_set = 7;
+  repeated Skill skill = 8;
   repeated Character character = 9;
   repeated CharacterSkill character_skill = 10;
   repeated Buff buff = 11;
@@ -22,24 +22,23 @@ message SoraConfigData {
   repeated Stage stage = 15;
   repeated StageReward stage_reward = 16;
   repeated Dungeon dungeon = 17;
-  repeated Shop shop = 18;
-  repeated ShopItem shop_item = 19;
-  repeated Recipe recipe = 20;
-  repeated GachaPool gacha_pool = 21;
-  repeated GachaItem gacha_item = 22;
-  repeated EquipmentSet equipment_set = 23;
-  repeated Achievement achievement = 24;
-  repeated VipLevel vip_level = 25;
-  repeated MailTemplate mail_template = 26;
-  repeated MailReward mail_reward = 27;
-  repeated Dialogue dialogue = 28;
-  repeated EventRule event_rule = 29;
-  repeated ComplexRule complex_rule = 30;
-  repeated ComplexConditionGroup complex_condition_group = 31;
-  repeated ComplexConditionGroupEntry complex_condition_group_entry = 32;
-  repeated ComplexRuleCondition complex_rule_condition = 33;
-  repeated ComplexActionGroup complex_action_group = 34;
-  repeated ComplexActionEntry complex_action_entry = 35;
+  repeated Quest quest = 18;
+  repeated QuestReward quest_reward = 19;
+  repeated LevelExp level_exp = 20;
+  repeated Achievement achievement = 21;
+  repeated VipLevel vip_level = 22;
+  GameSettings game_settings = 23;
+  repeated MaintenanceWindow maintenance_window = 24;
+  repeated MailTemplate mail_template = 25;
+  repeated MailReward mail_reward = 26;
+  repeated Dialogue dialogue = 27;
+  repeated EventRule event_rule = 28;
+  repeated ComplexRule complex_rule = 29;
+  repeated ComplexConditionGroup complex_condition_group = 30;
+  repeated ComplexConditionGroupEntry complex_condition_group_entry = 31;
+  repeated ComplexRuleCondition complex_rule_condition = 32;
+  repeated ComplexActionGroup complex_action_group = 33;
+  repeated ComplexActionEntry complex_action_entry = 34;
 }
 
 enum ItemType {
@@ -211,6 +210,46 @@ message Item {
   repeated int32 attributes = 7;
 }
 
+message Shop {
+  int32 id = 1;
+  string name = 2;
+  ResourceKind currency = 3;
+}
+
+message ShopItem {
+  int32 shop_id = 1;
+  int32 seq = 2;
+  int32 item_id = 3;
+  ResourceCost price = 4;
+  optional int32 daily_limit = 5;
+}
+
+message Recipe {
+  int32 id = 1;
+  int32 result_item = 2;
+  repeated ResourceCost materials = 3;
+}
+
+message GachaPool {
+  int32 id = 1;
+  string name = 2;
+  ResourceCost cost = 3;
+}
+
+message GachaItem {
+  int32 pool_id = 1;
+  int32 item_id = 2;
+  Rarity rarity = 3;
+  float weight = 4;
+}
+
+message EquipmentSet {
+  int32 id = 1;
+  string name = 2;
+  repeated int32 item_ids = 3;
+  SkillEffect bonus_effect = 4;
+}
+
 message Skill {
   int32 id = 1;
   string name = 2;
@@ -220,55 +259,6 @@ message Skill {
   int32 required_level = 6;
   optional int32 required_item = 7;
   Vec3 cast_origin = 8;
-}
-
-message Quest {
-  int32 id = 1;
-  QuestType quest_type = 2;
-  string title = 3;
-  int32 required_item = 4;
-  repeated int32 unlock_skills = 5;
-  Vec3 start_pos = 6;
-  repeated Reward rewards = 7;
-}
-
-message QuestReward {
-  int32 quest_id = 1;
-  int32 seq = 2;
-  int32 item_id = 3;
-  int32 count = 4;
-}
-
-message GameSettings {
-  string version = 1;
-  int32 daily_reset_hour = 2;
-  int32 starting_gold = 3;
-  Vec3 spawn_pos = 4;
-  repeated int32 starter_items = 5;
-  double gravity = 6;
-  repeated int32 daily_bonus_items = 7;
-  repeated Vec3 spawn_points = 8;
-  MaintenanceInfo maintenance = 9;
-}
-
-message MaintenanceWindow {
-  string version = 1;
-  string starts_at = 2;
-  int32 duration_minutes = 3;
-  optional string reason = 4;
-}
-
-message Localization {
-  string key = 1;
-  string zh_cn = 2;
-  string en_us = 3;
-  optional string note = 4;
-}
-
-message LevelExp {
-  int32 level = 1;
-  int64 exp = 2;
-  optional string unlock_feature = 3;
 }
 
 message Character {
@@ -338,44 +328,27 @@ message Dungeon {
   ResourceCost entry_cost = 4;
 }
 
-message Shop {
+message Quest {
   int32 id = 1;
-  string name = 2;
-  ResourceKind currency = 3;
+  QuestType quest_type = 2;
+  string title = 3;
+  int32 required_item = 4;
+  repeated int32 unlock_skills = 5;
+  Vec3 start_pos = 6;
+  repeated Reward rewards = 7;
 }
 
-message ShopItem {
-  int32 shop_id = 1;
+message QuestReward {
+  int32 quest_id = 1;
   int32 seq = 2;
   int32 item_id = 3;
-  ResourceCost price = 4;
-  optional int32 daily_limit = 5;
+  int32 count = 4;
 }
 
-message Recipe {
-  int32 id = 1;
-  int32 result_item = 2;
-  repeated ResourceCost materials = 3;
-}
-
-message GachaPool {
-  int32 id = 1;
-  string name = 2;
-  ResourceCost cost = 3;
-}
-
-message GachaItem {
-  int32 pool_id = 1;
-  int32 item_id = 2;
-  Rarity rarity = 3;
-  float weight = 4;
-}
-
-message EquipmentSet {
-  int32 id = 1;
-  string name = 2;
-  repeated int32 item_ids = 3;
-  SkillEffect bonus_effect = 4;
+message LevelExp {
+  int32 level = 1;
+  int64 exp = 2;
+  optional string unlock_feature = 3;
 }
 
 message Achievement {
@@ -389,6 +362,25 @@ message VipLevel {
   int32 level = 1;
   ResourceCost cost = 2;
   repeated string perks = 3;
+}
+
+message GameSettings {
+  string version = 1;
+  int32 daily_reset_hour = 2;
+  int32 starting_gold = 3;
+  Vec3 spawn_pos = 4;
+  repeated int32 starter_items = 5;
+  double gravity = 6;
+  repeated int32 daily_bonus_items = 7;
+  repeated Vec3 spawn_points = 8;
+  MaintenanceInfo maintenance = 9;
+}
+
+message MaintenanceWindow {
+  string version = 1;
+  string starts_at = 2;
+  int32 duration_minutes = 3;
+  optional string reason = 4;
 }
 
 message MailTemplate {

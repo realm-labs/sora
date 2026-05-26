@@ -1,7 +1,7 @@
 use sora_diagnostics::{Result, SoraError};
 use sora_schema::model::{
-    EnumAliasSchema, FieldSchema, IndexSchema, ParserSchema, SchemaFile, ScopeSchema,
-    TableFieldSchema, TableModeSchema, TableSchema, TableSourceSchema, UnionSchema,
+    EnumAliasSchema, FieldSchema, IndexSchema, LocalizationSchema, ParserSchema, SchemaFile,
+    ScopeSchema, TableFieldSchema, TableModeSchema, TableSchema, TableSourceSchema, UnionSchema,
     UnionVariantSchema,
 };
 
@@ -53,12 +53,69 @@ pub fn normalize_schema_with_parsers(
             .into_iter()
             .map(|union| convert_union_with_parsers(union, parser_registry))
             .collect::<Result<Vec<_>>>()?,
+        localization: convert_localization(schema.localization.as_ref())?,
         tables: schema
             .tables
             .into_iter()
             .map(|table| convert_table_with_parsers(table, parser_registry))
             .collect::<Result<Vec<_>>>()?,
     })
+}
+
+fn convert_localization(
+    localization: Option<&LocalizationSchema>,
+) -> Result<Option<crate::model::LocalizationIr>> {
+    let Some(localization) = localization else {
+        return Ok(None);
+    };
+    if localization.locales.is_empty() {
+        return Err(SoraError::InvalidSchema(
+            "localization.locales must contain at least one locale".to_owned(),
+        ));
+    }
+    for locale in &localization.locales {
+        validate_locale(locale)?;
+    }
+    let default_locale = localization
+        .default_locale
+        .clone()
+        .unwrap_or_else(|| localization.locales[0].clone());
+    if !localization.locales.contains(&default_locale) {
+        return Err(SoraError::InvalidSchema(format!(
+            "localization.default_locale `{default_locale}` is not listed in localization.locales"
+        )));
+    }
+    if let Some(fallback) = &localization.fallback_locale
+        && !localization.locales.contains(fallback)
+    {
+        return Err(SoraError::InvalidSchema(format!(
+            "localization.fallback_locale `{fallback}` is not listed in localization.locales"
+        )));
+    }
+    if localization.sources.is_empty() {
+        return Err(SoraError::InvalidSchema(
+            "localization.sources must contain at least one source".to_owned(),
+        ));
+    }
+    let mut sources = Vec::with_capacity(localization.sources.len());
+    for source in &localization.sources {
+        validate_identifier("localization source", &source.name)?;
+        validate_identifier("localization key field", &source.key)?;
+        sources.push(crate::model::LocalizationSourceIr {
+            name: source.name.clone(),
+            format: source.format.clone(),
+            file: source.file.clone(),
+            sheet: source.sheet.clone(),
+            key: source.key.clone(),
+        });
+    }
+    Ok(Some(crate::model::LocalizationIr {
+        locales: localization.locales.clone(),
+        default_locale,
+        fallback_locale: localization.fallback_locale.clone(),
+        strict: localization.strict,
+        sources,
+    }))
 }
 
 impl TryFrom<SchemaFile> for ConfigIr {
@@ -408,6 +465,7 @@ fn validate_length_constraint(
 
     match ty {
         TypeIr::String
+        | TypeIr::Text
         | TypeIr::List(_)
         | TypeIr::Set(_)
         | TypeIr::Map { .. }
@@ -417,6 +475,38 @@ fn validate_length_constraint(
             "field `{field_name}` declares `length` but type `{ty}` is not string, list, or array"
         ))),
     }
+}
+
+fn validate_identifier(kind: &str, value: &str) -> Result<()> {
+    let mut chars = value.chars();
+    if !matches!(chars.next(), Some(first) if first == '_' || first.is_ascii_alphabetic()) {
+        return Err(SoraError::InvalidSchema(format!(
+            "{kind} `{value}` must start with an ASCII letter or `_`"
+        )));
+    }
+    if !chars.all(|ch| ch == '_' || ch.is_ascii_alphanumeric()) {
+        return Err(SoraError::InvalidSchema(format!(
+            "{kind} `{value}` must contain only ASCII letters, digits, or `_`"
+        )));
+    }
+    Ok(())
+}
+
+fn validate_locale(locale: &str) -> Result<()> {
+    if locale.is_empty() {
+        return Err(SoraError::InvalidSchema(
+            "localization locale must not be empty".to_owned(),
+        ));
+    }
+    if !locale
+        .chars()
+        .all(|ch| ch == '_' || ch == '-' || ch.is_ascii_alphanumeric())
+    {
+        return Err(SoraError::InvalidSchema(format!(
+            "localization locale `{locale}` must contain only ASCII letters, digits, `_`, or `-`"
+        )));
+    }
+    Ok(())
 }
 
 fn is_projection_parser(parser: &str) -> bool {

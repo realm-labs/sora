@@ -79,31 +79,6 @@ range = [1, 1440]
 name = "reason"
 type = "optional<string>"
 [[tables]]
-name = "Localization"
-mode = "map"
-key = "key"
-
-[tables.source]
-file = "Core.xlsx"
-sheet = "Localization"
-
-[[tables.fields]]
-name = "key"
-type = "string"
-length = [3, 64]
-
-[[tables.fields]]
-name = "zh_cn"
-type = "string"
-
-[[tables.fields]]
-name = "en_us"
-type = "string"
-
-[[tables.fields]]
-name = "note"
-type = "optional<string>"
-[[tables]]
 name = "MailTemplate"
 mode = "map"
 key = "id"
@@ -122,11 +97,11 @@ type = "enum<MailType>"
 
 [[tables.fields]]
 name = "title_key"
-type = "string"
+type = "text"
 
 [[tables.fields]]
 name = "body_key"
-type = "string"
+type = "text"
 
 [[tables.fields]]
 name = "rewards"
@@ -170,7 +145,7 @@ type = "i32"
 
 [[tables.fields]]
 name = "speaker_key"
-type = "string"
+type = "text"
 
 [[tables.fields]]
 name = "lines"

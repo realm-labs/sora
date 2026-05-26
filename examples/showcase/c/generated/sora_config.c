@@ -5,17 +5,17 @@
 #include <stdlib.h>
 #include <string.h>
 
-static const char* SORA_SCHEMA_FINGERPRINT = "70733f887d9adc7d";
+static const char* SORA_SCHEMA_FINGERPRINT = "1439cc1e8c6581b3";
 
 struct sora_showcase_config {
     sora_showcase_item_table* item;
+    sora_showcase_shop_table* shop;
+    sora_showcase_shop_item_table* shop_item;
+    sora_showcase_recipe_table* recipe;
+    sora_showcase_gacha_pool_table* gacha_pool;
+    sora_showcase_gacha_item_table* gacha_item;
+    sora_showcase_equipment_set_table* equipment_set;
     sora_showcase_skill_table* skill;
-    sora_showcase_quest_table* quest;
-    sora_showcase_quest_reward_table* quest_reward;
-    sora_showcase_game_settings_table* game_settings;
-    sora_showcase_maintenance_window_table* maintenance_window;
-    sora_showcase_localization_table* localization;
-    sora_showcase_level_exp_table* level_exp;
     sora_showcase_character_table* character;
     sora_showcase_character_skill_table* character_skill;
     sora_showcase_buff_table* buff;
@@ -25,14 +25,13 @@ struct sora_showcase_config {
     sora_showcase_stage_table* stage;
     sora_showcase_stage_reward_table* stage_reward;
     sora_showcase_dungeon_table* dungeon;
-    sora_showcase_shop_table* shop;
-    sora_showcase_shop_item_table* shop_item;
-    sora_showcase_recipe_table* recipe;
-    sora_showcase_gacha_pool_table* gacha_pool;
-    sora_showcase_gacha_item_table* gacha_item;
-    sora_showcase_equipment_set_table* equipment_set;
+    sora_showcase_quest_table* quest;
+    sora_showcase_quest_reward_table* quest_reward;
+    sora_showcase_level_exp_table* level_exp;
     sora_showcase_achievement_table* achievement;
     sora_showcase_vip_level_table* vip_level;
+    sora_showcase_game_settings_table* game_settings;
+    sora_showcase_maintenance_window_table* maintenance_window;
     sora_showcase_mail_template_table* mail_template;
     sora_showcase_mail_reward_table* mail_reward;
     sora_showcase_dialogue_table* dialogue;
@@ -81,55 +80,55 @@ sora_result sora_showcase_config_load_from_bytes_with_options(
         }
     }
     {
+        sora_result result = sora_showcase_shop_table_load(bundle, &config->shop);
+        if (result.code != SORA_OK) {
+            sora_bundle_free(bundle);
+            sora_showcase_config_free(config);
+            return result;
+        }
+    }
+    {
+        sora_result result = sora_showcase_shop_item_table_load(bundle, &config->shop_item);
+        if (result.code != SORA_OK) {
+            sora_bundle_free(bundle);
+            sora_showcase_config_free(config);
+            return result;
+        }
+    }
+    {
+        sora_result result = sora_showcase_recipe_table_load(bundle, &config->recipe);
+        if (result.code != SORA_OK) {
+            sora_bundle_free(bundle);
+            sora_showcase_config_free(config);
+            return result;
+        }
+    }
+    {
+        sora_result result = sora_showcase_gacha_pool_table_load(bundle, &config->gacha_pool);
+        if (result.code != SORA_OK) {
+            sora_bundle_free(bundle);
+            sora_showcase_config_free(config);
+            return result;
+        }
+    }
+    {
+        sora_result result = sora_showcase_gacha_item_table_load(bundle, &config->gacha_item);
+        if (result.code != SORA_OK) {
+            sora_bundle_free(bundle);
+            sora_showcase_config_free(config);
+            return result;
+        }
+    }
+    {
+        sora_result result = sora_showcase_equipment_set_table_load(bundle, &config->equipment_set);
+        if (result.code != SORA_OK) {
+            sora_bundle_free(bundle);
+            sora_showcase_config_free(config);
+            return result;
+        }
+    }
+    {
         sora_result result = sora_showcase_skill_table_load(bundle, &config->skill);
-        if (result.code != SORA_OK) {
-            sora_bundle_free(bundle);
-            sora_showcase_config_free(config);
-            return result;
-        }
-    }
-    {
-        sora_result result = sora_showcase_quest_table_load(bundle, &config->quest);
-        if (result.code != SORA_OK) {
-            sora_bundle_free(bundle);
-            sora_showcase_config_free(config);
-            return result;
-        }
-    }
-    {
-        sora_result result = sora_showcase_quest_reward_table_load(bundle, &config->quest_reward);
-        if (result.code != SORA_OK) {
-            sora_bundle_free(bundle);
-            sora_showcase_config_free(config);
-            return result;
-        }
-    }
-    {
-        sora_result result = sora_showcase_game_settings_table_load(bundle, &config->game_settings);
-        if (result.code != SORA_OK) {
-            sora_bundle_free(bundle);
-            sora_showcase_config_free(config);
-            return result;
-        }
-    }
-    {
-        sora_result result = sora_showcase_maintenance_window_table_load(bundle, &config->maintenance_window);
-        if (result.code != SORA_OK) {
-            sora_bundle_free(bundle);
-            sora_showcase_config_free(config);
-            return result;
-        }
-    }
-    {
-        sora_result result = sora_showcase_localization_table_load(bundle, &config->localization);
-        if (result.code != SORA_OK) {
-            sora_bundle_free(bundle);
-            sora_showcase_config_free(config);
-            return result;
-        }
-    }
-    {
-        sora_result result = sora_showcase_level_exp_table_load(bundle, &config->level_exp);
         if (result.code != SORA_OK) {
             sora_bundle_free(bundle);
             sora_showcase_config_free(config);
@@ -209,7 +208,7 @@ sora_result sora_showcase_config_load_from_bytes_with_options(
         }
     }
     {
-        sora_result result = sora_showcase_shop_table_load(bundle, &config->shop);
+        sora_result result = sora_showcase_quest_table_load(bundle, &config->quest);
         if (result.code != SORA_OK) {
             sora_bundle_free(bundle);
             sora_showcase_config_free(config);
@@ -217,7 +216,7 @@ sora_result sora_showcase_config_load_from_bytes_with_options(
         }
     }
     {
-        sora_result result = sora_showcase_shop_item_table_load(bundle, &config->shop_item);
+        sora_result result = sora_showcase_quest_reward_table_load(bundle, &config->quest_reward);
         if (result.code != SORA_OK) {
             sora_bundle_free(bundle);
             sora_showcase_config_free(config);
@@ -225,31 +224,7 @@ sora_result sora_showcase_config_load_from_bytes_with_options(
         }
     }
     {
-        sora_result result = sora_showcase_recipe_table_load(bundle, &config->recipe);
-        if (result.code != SORA_OK) {
-            sora_bundle_free(bundle);
-            sora_showcase_config_free(config);
-            return result;
-        }
-    }
-    {
-        sora_result result = sora_showcase_gacha_pool_table_load(bundle, &config->gacha_pool);
-        if (result.code != SORA_OK) {
-            sora_bundle_free(bundle);
-            sora_showcase_config_free(config);
-            return result;
-        }
-    }
-    {
-        sora_result result = sora_showcase_gacha_item_table_load(bundle, &config->gacha_item);
-        if (result.code != SORA_OK) {
-            sora_bundle_free(bundle);
-            sora_showcase_config_free(config);
-            return result;
-        }
-    }
-    {
-        sora_result result = sora_showcase_equipment_set_table_load(bundle, &config->equipment_set);
+        sora_result result = sora_showcase_level_exp_table_load(bundle, &config->level_exp);
         if (result.code != SORA_OK) {
             sora_bundle_free(bundle);
             sora_showcase_config_free(config);
@@ -266,6 +241,22 @@ sora_result sora_showcase_config_load_from_bytes_with_options(
     }
     {
         sora_result result = sora_showcase_vip_level_table_load(bundle, &config->vip_level);
+        if (result.code != SORA_OK) {
+            sora_bundle_free(bundle);
+            sora_showcase_config_free(config);
+            return result;
+        }
+    }
+    {
+        sora_result result = sora_showcase_game_settings_table_load(bundle, &config->game_settings);
+        if (result.code != SORA_OK) {
+            sora_bundle_free(bundle);
+            sora_showcase_config_free(config);
+            return result;
+        }
+    }
+    {
+        sora_result result = sora_showcase_maintenance_window_table_load(bundle, &config->maintenance_window);
         if (result.code != SORA_OK) {
             sora_bundle_free(bundle);
             sora_showcase_config_free(config);
@@ -362,13 +353,13 @@ void sora_showcase_config_free(sora_showcase_config* config) {
         return;
     }
     sora_showcase_item_table_free(config->item);
+    sora_showcase_shop_table_free(config->shop);
+    sora_showcase_shop_item_table_free(config->shop_item);
+    sora_showcase_recipe_table_free(config->recipe);
+    sora_showcase_gacha_pool_table_free(config->gacha_pool);
+    sora_showcase_gacha_item_table_free(config->gacha_item);
+    sora_showcase_equipment_set_table_free(config->equipment_set);
     sora_showcase_skill_table_free(config->skill);
-    sora_showcase_quest_table_free(config->quest);
-    sora_showcase_quest_reward_table_free(config->quest_reward);
-    sora_showcase_game_settings_table_free(config->game_settings);
-    sora_showcase_maintenance_window_table_free(config->maintenance_window);
-    sora_showcase_localization_table_free(config->localization);
-    sora_showcase_level_exp_table_free(config->level_exp);
     sora_showcase_character_table_free(config->character);
     sora_showcase_character_skill_table_free(config->character_skill);
     sora_showcase_buff_table_free(config->buff);
@@ -378,14 +369,13 @@ void sora_showcase_config_free(sora_showcase_config* config) {
     sora_showcase_stage_table_free(config->stage);
     sora_showcase_stage_reward_table_free(config->stage_reward);
     sora_showcase_dungeon_table_free(config->dungeon);
-    sora_showcase_shop_table_free(config->shop);
-    sora_showcase_shop_item_table_free(config->shop_item);
-    sora_showcase_recipe_table_free(config->recipe);
-    sora_showcase_gacha_pool_table_free(config->gacha_pool);
-    sora_showcase_gacha_item_table_free(config->gacha_item);
-    sora_showcase_equipment_set_table_free(config->equipment_set);
+    sora_showcase_quest_table_free(config->quest);
+    sora_showcase_quest_reward_table_free(config->quest_reward);
+    sora_showcase_level_exp_table_free(config->level_exp);
     sora_showcase_achievement_table_free(config->achievement);
     sora_showcase_vip_level_table_free(config->vip_level);
+    sora_showcase_game_settings_table_free(config->game_settings);
+    sora_showcase_maintenance_window_table_free(config->maintenance_window);
     sora_showcase_mail_template_table_free(config->mail_template);
     sora_showcase_mail_reward_table_free(config->mail_reward);
     sora_showcase_dialogue_table_free(config->dialogue);
@@ -405,46 +395,46 @@ const sora_showcase_item_table* sora_showcase_config_item(
     return config->item;
 }
 
+const sora_showcase_shop_table* sora_showcase_config_shop(
+    const sora_showcase_config* config
+) {
+    return config->shop;
+}
+
+const sora_showcase_shop_item_table* sora_showcase_config_shop_item(
+    const sora_showcase_config* config
+) {
+    return config->shop_item;
+}
+
+const sora_showcase_recipe_table* sora_showcase_config_recipe(
+    const sora_showcase_config* config
+) {
+    return config->recipe;
+}
+
+const sora_showcase_gacha_pool_table* sora_showcase_config_gacha_pool(
+    const sora_showcase_config* config
+) {
+    return config->gacha_pool;
+}
+
+const sora_showcase_gacha_item_table* sora_showcase_config_gacha_item(
+    const sora_showcase_config* config
+) {
+    return config->gacha_item;
+}
+
+const sora_showcase_equipment_set_table* sora_showcase_config_equipment_set(
+    const sora_showcase_config* config
+) {
+    return config->equipment_set;
+}
+
 const sora_showcase_skill_table* sora_showcase_config_skill(
     const sora_showcase_config* config
 ) {
     return config->skill;
-}
-
-const sora_showcase_quest_table* sora_showcase_config_quest(
-    const sora_showcase_config* config
-) {
-    return config->quest;
-}
-
-const sora_showcase_quest_reward_table* sora_showcase_config_quest_reward(
-    const sora_showcase_config* config
-) {
-    return config->quest_reward;
-}
-
-const sora_showcase_game_settings_table* sora_showcase_config_game_settings(
-    const sora_showcase_config* config
-) {
-    return config->game_settings;
-}
-
-const sora_showcase_maintenance_window_table* sora_showcase_config_maintenance_window(
-    const sora_showcase_config* config
-) {
-    return config->maintenance_window;
-}
-
-const sora_showcase_localization_table* sora_showcase_config_localization(
-    const sora_showcase_config* config
-) {
-    return config->localization;
-}
-
-const sora_showcase_level_exp_table* sora_showcase_config_level_exp(
-    const sora_showcase_config* config
-) {
-    return config->level_exp;
 }
 
 const sora_showcase_character_table* sora_showcase_config_character(
@@ -501,40 +491,22 @@ const sora_showcase_dungeon_table* sora_showcase_config_dungeon(
     return config->dungeon;
 }
 
-const sora_showcase_shop_table* sora_showcase_config_shop(
+const sora_showcase_quest_table* sora_showcase_config_quest(
     const sora_showcase_config* config
 ) {
-    return config->shop;
+    return config->quest;
 }
 
-const sora_showcase_shop_item_table* sora_showcase_config_shop_item(
+const sora_showcase_quest_reward_table* sora_showcase_config_quest_reward(
     const sora_showcase_config* config
 ) {
-    return config->shop_item;
+    return config->quest_reward;
 }
 
-const sora_showcase_recipe_table* sora_showcase_config_recipe(
+const sora_showcase_level_exp_table* sora_showcase_config_level_exp(
     const sora_showcase_config* config
 ) {
-    return config->recipe;
-}
-
-const sora_showcase_gacha_pool_table* sora_showcase_config_gacha_pool(
-    const sora_showcase_config* config
-) {
-    return config->gacha_pool;
-}
-
-const sora_showcase_gacha_item_table* sora_showcase_config_gacha_item(
-    const sora_showcase_config* config
-) {
-    return config->gacha_item;
-}
-
-const sora_showcase_equipment_set_table* sora_showcase_config_equipment_set(
-    const sora_showcase_config* config
-) {
-    return config->equipment_set;
+    return config->level_exp;
 }
 
 const sora_showcase_achievement_table* sora_showcase_config_achievement(
@@ -547,6 +519,18 @@ const sora_showcase_vip_level_table* sora_showcase_config_vip_level(
     const sora_showcase_config* config
 ) {
     return config->vip_level;
+}
+
+const sora_showcase_game_settings_table* sora_showcase_config_game_settings(
+    const sora_showcase_config* config
+) {
+    return config->game_settings;
+}
+
+const sora_showcase_maintenance_window_table* sora_showcase_config_maintenance_window(
+    const sora_showcase_config* config
+) {
+    return config->maintenance_window;
 }
 
 const sora_showcase_mail_template_table* sora_showcase_config_mail_template(

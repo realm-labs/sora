@@ -578,7 +578,13 @@ fn collect_type_edges(
             collect_type_edges(owner, field_name, key, edges);
             collect_type_edges(owner, field_name, value, edges);
         }
-        TypeIr::Bool | TypeIr::I32 | TypeIr::I64 | TypeIr::F32 | TypeIr::F64 | TypeIr::String => {}
+        TypeIr::Bool
+        | TypeIr::I32
+        | TypeIr::I64
+        | TypeIr::F32
+        | TypeIr::F64
+        | TypeIr::String
+        | TypeIr::Text => {}
     }
 }
 

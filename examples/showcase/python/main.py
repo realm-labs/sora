@@ -54,7 +54,6 @@ def main():
     assert config.quest_reward().len() == 49
     assert config.stage().len() == 40
     assert config.monster().len() == 80
-    assert config.localization().len() == 80
     assert config.event_rule().len() == 20
 
     # Event rule checking

@@ -114,6 +114,9 @@ struct LuaModel {
     unions: Vec<LuaUnion>,
     records: Vec<LuaRecord>,
     tables: Vec<LuaTable>,
+    has_localization: bool,
+    locales: Vec<String>,
+    default_locale: String,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -223,6 +226,17 @@ impl LuaModel {
             unions,
             records,
             tables,
+            has_localization: ir.localization.is_some(),
+            locales: ir
+                .localization
+                .as_ref()
+                .map(|item| item.locales.clone())
+                .unwrap_or_default(),
+            default_locale: ir
+                .localization
+                .as_ref()
+                .map(|item| item.default_locale.clone())
+                .unwrap_or_default(),
         }
     }
 }
@@ -341,7 +355,7 @@ fn lua_type_name(ir: &ConfigIr, ty: &TypeIr, options: &LuaOptionsView) -> String
         TypeIr::I32 => "integer".to_owned(),
         TypeIr::I64 => options.i64_type_name.to_owned(),
         TypeIr::F32 | TypeIr::F64 => "number".to_owned(),
-        TypeIr::String => "string".to_owned(),
+        TypeIr::String | TypeIr::Text => "string".to_owned(),
         TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => name.clone(),
         TypeIr::List(element) | TypeIr::Set(element) | TypeIr::Array { element, .. } => {
             format!("{}[]", lua_type_name(ir, element, options))
@@ -365,7 +379,7 @@ fn lua_decode_expr(ir: &ConfigIr, ty: &TypeIr, _options: &LuaOptionsView) -> Str
         TypeIr::I64 => "reader:read_i64()".to_owned(),
         TypeIr::F32 => "reader:read_f32()".to_owned(),
         TypeIr::F64 => "reader:read_f64()".to_owned(),
-        TypeIr::String => "reader:read_string()".to_owned(),
+        TypeIr::String | TypeIr::Text => "reader:read_string()".to_owned(),
         TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => {
             format!("{name}.decode(reader)")
         }
@@ -397,7 +411,7 @@ fn lua_value_decode_expr(ir: &ConfigIr, ty: &TypeIr, value: &str) -> String {
         TypeIr::Bool => format!("Runtime.expect_boolean({value})"),
         TypeIr::I32 | TypeIr::I64 => format!("Runtime.expect_integer({value})"),
         TypeIr::F32 | TypeIr::F64 => format!("Runtime.expect_number({value})"),
-        TypeIr::String => format!("Runtime.expect_string({value})"),
+        TypeIr::String | TypeIr::Text => format!("Runtime.expect_string({value})"),
         TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => {
             format!("{name}.decode_value({value})")
         }

@@ -389,7 +389,7 @@ fn python_type_name(ir: &ConfigIr, ty: &TypeIr) -> String {
         TypeIr::Bool => "bool".to_owned(),
         TypeIr::I32 | TypeIr::I64 => "int".to_owned(),
         TypeIr::F32 | TypeIr::F64 => "float".to_owned(),
-        TypeIr::String => "str".to_owned(),
+        TypeIr::String | TypeIr::Text => "str".to_owned(),
         TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => {
             python_type_identifier(name)
         }
@@ -419,7 +419,7 @@ fn python_decode_expr(ir: &ConfigIr, ty: &TypeIr) -> String {
         TypeIr::I64 => "reader.read_i64()".to_owned(),
         TypeIr::F32 => "reader.read_f32()".to_owned(),
         TypeIr::F64 => "reader.read_f64()".to_owned(),
-        TypeIr::String => "reader.read_string()".to_owned(),
+        TypeIr::String | TypeIr::Text => "reader.read_string()".to_owned(),
         TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => {
             format!("{}.decode(reader)", python_type_identifier(name))
         }
@@ -451,7 +451,7 @@ fn python_value_decode_expr(ir: &ConfigIr, ty: &TypeIr, value: &str) -> String {
         TypeIr::Bool => format!("{value}.as_bool()"),
         TypeIr::I32 | TypeIr::I64 => format!("{value}.as_int()"),
         TypeIr::F32 | TypeIr::F64 => format!("{value}.as_float()"),
-        TypeIr::String => format!("{value}.as_string()"),
+        TypeIr::String | TypeIr::Text => format!("{value}.as_string()"),
         TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => {
             format!("{}.decode_value({value})", python_type_identifier(name))
         }

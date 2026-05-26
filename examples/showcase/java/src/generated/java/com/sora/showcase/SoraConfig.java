@@ -43,7 +43,7 @@ interface SoraSingleTable<R> extends SoraTable<R> {
 }
 
 public final class SoraConfig {
-    public static final String SCHEMA_FINGERPRINT = "70733f887d9adc7d";
+    public static final String SCHEMA_FINGERPRINT = "1439cc1e8c6581b3";
 
     private final Map<String, SoraTable<?>> tables;
 
@@ -58,15 +58,15 @@ public final class SoraConfig {
                     + ", bundle contains " + source.schemaFingerprint()
             );
         }
-        var tables = new HashMap<String, SoraTable<?>>(35);
+        var tables = new HashMap<String, SoraTable<?>>(34);
         tables.put(ItemTable.NAME, ItemTable.decode(source));
+        tables.put(ShopTable.NAME, ShopTable.decode(source));
+        tables.put(ShopItemTable.NAME, ShopItemTable.decode(source));
+        tables.put(RecipeTable.NAME, RecipeTable.decode(source));
+        tables.put(GachaPoolTable.NAME, GachaPoolTable.decode(source));
+        tables.put(GachaItemTable.NAME, GachaItemTable.decode(source));
+        tables.put(EquipmentSetTable.NAME, EquipmentSetTable.decode(source));
         tables.put(SkillTable.NAME, SkillTable.decode(source));
-        tables.put(QuestTable.NAME, QuestTable.decode(source));
-        tables.put(QuestRewardTable.NAME, QuestRewardTable.decode(source));
-        tables.put(GameSettingsTable.NAME, GameSettingsTable.decode(source));
-        tables.put(MaintenanceWindowTable.NAME, MaintenanceWindowTable.decode(source));
-        tables.put(LocalizationTable.NAME, LocalizationTable.decode(source));
-        tables.put(LevelExpTable.NAME, LevelExpTable.decode(source));
         tables.put(CharacterTable.NAME, CharacterTable.decode(source));
         tables.put(CharacterSkillTable.NAME, CharacterSkillTable.decode(source));
         tables.put(BuffTable.NAME, BuffTable.decode(source));
@@ -76,14 +76,13 @@ public final class SoraConfig {
         tables.put(StageTable.NAME, StageTable.decode(source));
         tables.put(StageRewardTable.NAME, StageRewardTable.decode(source));
         tables.put(DungeonTable.NAME, DungeonTable.decode(source));
-        tables.put(ShopTable.NAME, ShopTable.decode(source));
-        tables.put(ShopItemTable.NAME, ShopItemTable.decode(source));
-        tables.put(RecipeTable.NAME, RecipeTable.decode(source));
-        tables.put(GachaPoolTable.NAME, GachaPoolTable.decode(source));
-        tables.put(GachaItemTable.NAME, GachaItemTable.decode(source));
-        tables.put(EquipmentSetTable.NAME, EquipmentSetTable.decode(source));
+        tables.put(QuestTable.NAME, QuestTable.decode(source));
+        tables.put(QuestRewardTable.NAME, QuestRewardTable.decode(source));
+        tables.put(LevelExpTable.NAME, LevelExpTable.decode(source));
         tables.put(AchievementTable.NAME, AchievementTable.decode(source));
         tables.put(VipLevelTable.NAME, VipLevelTable.decode(source));
+        tables.put(GameSettingsTable.NAME, GameSettingsTable.decode(source));
+        tables.put(MaintenanceWindowTable.NAME, MaintenanceWindowTable.decode(source));
         tables.put(MailTemplateTable.NAME, MailTemplateTable.decode(source));
         tables.put(MailRewardTable.NAME, MailRewardTable.decode(source));
         tables.put(DialogueTable.NAME, DialogueTable.decode(source));
@@ -111,26 +110,26 @@ public final class SoraConfig {
     public ItemTable item() {
         return table(ItemTable.NAME, ItemTable.class);
     }
+    public ShopTable shop() {
+        return table(ShopTable.NAME, ShopTable.class);
+    }
+    public ShopItemTable shopItem() {
+        return table(ShopItemTable.NAME, ShopItemTable.class);
+    }
+    public RecipeTable recipe() {
+        return table(RecipeTable.NAME, RecipeTable.class);
+    }
+    public GachaPoolTable gachaPool() {
+        return table(GachaPoolTable.NAME, GachaPoolTable.class);
+    }
+    public GachaItemTable gachaItem() {
+        return table(GachaItemTable.NAME, GachaItemTable.class);
+    }
+    public EquipmentSetTable equipmentSet() {
+        return table(EquipmentSetTable.NAME, EquipmentSetTable.class);
+    }
     public SkillTable skill() {
         return table(SkillTable.NAME, SkillTable.class);
-    }
-    public QuestTable quest() {
-        return table(QuestTable.NAME, QuestTable.class);
-    }
-    public QuestRewardTable questReward() {
-        return table(QuestRewardTable.NAME, QuestRewardTable.class);
-    }
-    public GameSettingsTable gameSettings() {
-        return table(GameSettingsTable.NAME, GameSettingsTable.class);
-    }
-    public MaintenanceWindowTable maintenanceWindow() {
-        return table(MaintenanceWindowTable.NAME, MaintenanceWindowTable.class);
-    }
-    public LocalizationTable localization() {
-        return table(LocalizationTable.NAME, LocalizationTable.class);
-    }
-    public LevelExpTable levelExp() {
-        return table(LevelExpTable.NAME, LevelExpTable.class);
     }
     public CharacterTable character() {
         return table(CharacterTable.NAME, CharacterTable.class);
@@ -159,29 +158,26 @@ public final class SoraConfig {
     public DungeonTable dungeon() {
         return table(DungeonTable.NAME, DungeonTable.class);
     }
-    public ShopTable shop() {
-        return table(ShopTable.NAME, ShopTable.class);
+    public QuestTable quest() {
+        return table(QuestTable.NAME, QuestTable.class);
     }
-    public ShopItemTable shopItem() {
-        return table(ShopItemTable.NAME, ShopItemTable.class);
+    public QuestRewardTable questReward() {
+        return table(QuestRewardTable.NAME, QuestRewardTable.class);
     }
-    public RecipeTable recipe() {
-        return table(RecipeTable.NAME, RecipeTable.class);
-    }
-    public GachaPoolTable gachaPool() {
-        return table(GachaPoolTable.NAME, GachaPoolTable.class);
-    }
-    public GachaItemTable gachaItem() {
-        return table(GachaItemTable.NAME, GachaItemTable.class);
-    }
-    public EquipmentSetTable equipmentSet() {
-        return table(EquipmentSetTable.NAME, EquipmentSetTable.class);
+    public LevelExpTable levelExp() {
+        return table(LevelExpTable.NAME, LevelExpTable.class);
     }
     public AchievementTable achievement() {
         return table(AchievementTable.NAME, AchievementTable.class);
     }
     public VipLevelTable vipLevel() {
         return table(VipLevelTable.NAME, VipLevelTable.class);
+    }
+    public GameSettingsTable gameSettings() {
+        return table(GameSettingsTable.NAME, GameSettingsTable.class);
+    }
+    public MaintenanceWindowTable maintenanceWindow() {
+        return table(MaintenanceWindowTable.NAME, MaintenanceWindowTable.class);
     }
     public MailTemplateTable mailTemplate() {
         return table(MailTemplateTable.NAME, MailTemplateTable.class);

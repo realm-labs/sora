@@ -3,107 +3,106 @@
 package showcase
 
 type LevelExp struct {
-    Level int32
-    Exp int64
-    UnlockFeature *string
+	Level         int32
+	Exp           int64
+	UnlockFeature *string
 }
 
 func decodeLevelExp(reader *SoraReader) (LevelExp, error) {
-    var value LevelExp
-    var err error
-    value.Level, err = reader.ReadInt32()
-    if err != nil {
-        return value, err
-    }
-    value.Exp, err = reader.ReadInt64()
-    if err != nil {
-        return value, err
-    }
-    value.UnlockFeature, err = ReadOptional(reader, func(reader *SoraReader) (string, error) { return reader.ReadString() })
-    if err != nil {
-        return value, err
-    }
-    return value, nil
+	var value LevelExp
+	var err error
+	value.Level, err = reader.ReadInt32()
+	if err != nil {
+		return value, err
+	}
+	value.Exp, err = reader.ReadInt64()
+	if err != nil {
+		return value, err
+	}
+	value.UnlockFeature, err = ReadOptional(reader, func(reader *SoraReader) (string, error) { return reader.ReadString() })
+	if err != nil {
+		return value, err
+	}
+	return value, nil
 }
 
 func decodeLevelExpValue(input SoraValue) (LevelExp, error) {
-    var value LevelExp
-    obj, err := input.AsObject()
-    if err != nil {
-        return value, err
-    }
-    value.Level, err = obj.Get("level").AsInt32()
-    if err != nil {
-        return value, err
-    }
-    value.Exp, err = obj.Get("exp").AsInt64()
-    if err != nil {
-        return value, err
-    }
-    value.UnlockFeature, err = DecodeOptionalSoraValue(obj.Get("unlock_feature"), func(item SoraValue) (string, error) { return item.AsString() })
-    if err != nil {
-        return value, err
-    }
-    return value, nil
+	var value LevelExp
+	obj, err := input.AsObject()
+	if err != nil {
+		return value, err
+	}
+	value.Level, err = obj.Get("level").AsInt32()
+	if err != nil {
+		return value, err
+	}
+	value.Exp, err = obj.Get("exp").AsInt64()
+	if err != nil {
+		return value, err
+	}
+	value.UnlockFeature, err = DecodeOptionalSoraValue(obj.Get("unlock_feature"), func(item SoraValue) (string, error) { return item.AsString() })
+	if err != nil {
+		return value, err
+	}
+	return value, nil
 }
 
 const levelExpTableName = "LevelExp"
 
 var levelExpTableInfo = SoraTableInfo{
-    Name: levelExpTableName,
-    RowType: "LevelExp",
-    Shape: SoraTableShapeKeyed,
-    PrimaryKey: &SoraKeyInfo{Name: "level", Type: "int32"},
-    Indexes: []SoraIndexInfo{
-    },
+	Name:       levelExpTableName,
+	RowType:    "LevelExp",
+	Shape:      SoraTableShapeKeyed,
+	PrimaryKey: &SoraKeyInfo{Name: "level", Type: "int32"},
+	Indexes:    []SoraIndexInfo{},
 }
 
 type LevelExpTable struct {
-    keys []int32
-    rows map[int32]LevelExp
+	keys []int32
+	rows map[int32]LevelExp
 }
 
 func buildLevelExpTable(rows []LevelExp) (*LevelExpTable, error) {
-    keys := make([]int32, 0, len(rows))
-    for _, row := range rows {
-        keys = append(keys, row.Level)
-    }
-    return &LevelExpTable{keys: keys, rows: DecodeMapTable(rows, func(row LevelExp) int32 { return row.Level })}, nil
+	keys := make([]int32, 0, len(rows))
+	for _, row := range rows {
+		keys = append(keys, row.Level)
+	}
+	return &LevelExpTable{keys: keys, rows: DecodeMapTable(rows, func(row LevelExp) int32 { return row.Level })}, nil
 }
 
 func decodeLevelExpTable(source SoraTableSource) (*LevelExpTable, error) {
-    rows, err := DecodeSourceTable(source, levelExpTableName, decodeLevelExp, decodeLevelExpValue)
-    if err != nil {
-        return nil, err
-    }
-    return buildLevelExpTable(rows)
+	rows, err := DecodeSourceTable(source, levelExpTableName, decodeLevelExp, decodeLevelExpValue)
+	if err != nil {
+		return nil, err
+	}
+	return buildLevelExpTable(rows)
 }
 
 func (table *LevelExpTable) Rows() map[int32]LevelExp {
-    return table.rows
+	return table.rows
 }
 func (table *LevelExpTable) Get(key int32) (LevelExp, bool) {
-    value, ok := table.rows[key]
-    return value, ok
+	value, ok := table.rows[key]
+	return value, ok
 }
 
 func (table *LevelExpTable) Keys() []int32 {
-    return table.keys
+	return table.keys
 }
 
 func (table *LevelExpTable) OrderedRows() []LevelExp {
-    rows := make([]LevelExp, 0, len(table.keys))
-    for _, key := range table.keys {
-        if row, ok := table.rows[key]; ok {
-            rows = append(rows, row)
-        }
-    }
-    return rows
+	rows := make([]LevelExp, 0, len(table.keys))
+	for _, key := range table.keys {
+		if row, ok := table.rows[key]; ok {
+			rows = append(rows, row)
+		}
+	}
+	return rows
 }
 func (table *LevelExpTable) Info() SoraTableInfo {
-    return levelExpTableInfo
+	return levelExpTableInfo
 }
 
 func (table *LevelExpTable) Len() int {
-    return len(table.rows)
+	return len(table.rows)
 }

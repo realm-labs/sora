@@ -10,6 +10,11 @@ use sora_ir::{
 };
 use sora_schema::model::SchemaFile;
 
+pub(super) struct ValidatedProjectData {
+    pub config: sora_data::model::ConfigData,
+    pub locale_catalog: Option<sora_data::localization::LocaleCatalog>,
+}
+
 pub(super) fn validate_schema_ir(schema: SchemaFile) -> Result<ConfigIr> {
     validate_schema_ir_with_parsers(schema, &SchemaParserRegistry::builtin())
 }
@@ -72,7 +77,13 @@ pub(super) fn load_validated_data(
     ir: &ConfigIr,
     execution: &ExecutionContext,
 ) -> Result<sora_data::model::ConfigData> {
-    load_validated_data_with_parsers(input, ir, execution, sora_input::parser::builtin_registry())
+    Ok(load_validated_project_data_with_parsers(
+        input,
+        ir,
+        execution,
+        sora_input::parser::builtin_registry(),
+    )?
+    .config)
 }
 
 pub(super) fn load_validated_data_with_parsers(
@@ -81,11 +92,26 @@ pub(super) fn load_validated_data_with_parsers(
     execution: &ExecutionContext,
     parser_registry: &sora_input::parser::ParserRegistry,
 ) -> Result<sora_data::model::ConfigData> {
+    Ok(load_validated_project_data_with_parsers(input, ir, execution, parser_registry)?.config)
+}
+
+pub(super) fn load_validated_project_data_with_parsers(
+    input: &impl ProjectInput,
+    ir: &ConfigIr,
+    execution: &ExecutionContext,
+    parser_registry: &sora_input::parser::ParserRegistry,
+) -> Result<ValidatedProjectData> {
     let data = input.load_data_with_context(ir, execution)?;
     let data = sora_input::defaults::materialize_defaults_with_parsers(ir, &data, parser_registry)?;
     let data = sora_data::derived::materialize_derived_fields(ir, &data)?;
     sora_data::validate::validate_config_data(ir, &data)?;
-    Ok(data)
+    let localization_data = input.load_localization_data_with_context(ir, execution)?;
+    let locale_catalog =
+        sora_data::localization::build_locale_catalog(ir, &data, &localization_data)?;
+    Ok(ValidatedProjectData {
+        config: data,
+        locale_catalog,
+    })
 }
 
 pub(super) fn write_json_file<T: serde::Serialize>(path: &Path, value: &T) -> Result<()> {

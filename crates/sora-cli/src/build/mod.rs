@@ -123,27 +123,29 @@ pub fn run(args: BuildArgs, context: &CliContext) -> Result<()> {
             default_source_format.map(crate::args::SourceFormatArg::as_str),
             std::sync::Arc::clone(&context.cell_parsers),
         );
-        let (ir, data) = sora_core::pipeline::load_project_data_with_context_and_parsers(
-            &project_input,
-            &context.execution,
-            &context.schema_parsers,
-            &context.cell_parsers,
-        )
-        .with_context(|| {
-            format!(
-                "failed to load data from `{}` for project `{}`",
-                data_root.display(),
-                args.project.display()
+        let (ir, data, locale_catalog) =
+            sora_core::pipeline::load_project_data_and_catalog_with_context_and_parsers(
+                &project_input,
+                &context.execution,
+                &context.schema_parsers,
+                &context.cell_parsers,
             )
-        })?;
+            .with_context(|| {
+                format!(
+                    "failed to load data from `{}` for project `{}`",
+                    data_root.display(),
+                    args.project.display()
+                )
+            })?;
 
         for item in &build.exports {
             let out = resolve_project_path(project_dir, &item.out);
             let item_scope = item.scope.as_deref().or(scope);
             let output = export_output(&item.format, out)?;
-            sora_core::pipeline::export_loaded_data_with_scope_context_and_options(
+            sora_core::pipeline::export_loaded_data_with_scope_context_options_and_catalog(
                 &ir,
                 &data,
+                locale_catalog.as_ref(),
                 &item.format,
                 output,
                 item_scope,
@@ -283,7 +285,10 @@ fn export_options(item: &BuildExport) -> Result<ExportOptions> {
             }
         }
     };
-    Ok(ExportOptions { compression })
+    Ok(ExportOptions {
+        compression,
+        locale: item.locale.clone(),
+    })
 }
 
 fn selected_codegen_targets<'a>(

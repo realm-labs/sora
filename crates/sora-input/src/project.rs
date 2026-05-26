@@ -1,4 +1,4 @@
-use sora_data::model::ConfigData;
+use sora_data::model::{ConfigData, LocalizationData};
 use sora_diagnostics::Result;
 use sora_execution::ExecutionContext;
 use sora_ir::model::ConfigIr;
@@ -40,11 +40,24 @@ impl<S, D: DataInput> DataInput for SplitProjectInput<S, D> {
         self.data_input.load_data(ir)
     }
 
+    fn load_localization_data(&self, ir: &ConfigIr) -> Result<LocalizationData> {
+        self.data_input.load_localization_data(ir)
+    }
+
     fn load_data_with_context(
         &self,
         ir: &ConfigIr,
         execution: &ExecutionContext,
     ) -> Result<ConfigData> {
         self.data_input.load_data_with_context(ir, execution)
+    }
+
+    fn load_localization_data_with_context(
+        &self,
+        ir: &ConfigIr,
+        execution: &ExecutionContext,
+    ) -> Result<LocalizationData> {
+        self.data_input
+            .load_localization_data_with_context(ir, execution)
     }
 }

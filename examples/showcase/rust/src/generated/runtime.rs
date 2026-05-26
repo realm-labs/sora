@@ -35,6 +35,77 @@ pub trait SoraDecode: Sized {
     fn decode(reader: &mut SoraReader<'_>) -> Result<Self, SoraReadError>;
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, Hash, serde::Serialize, serde::Deserialize)]
+pub struct TextKey(pub std::sync::Arc<str>);
+
+impl TextKey {
+    pub fn as_str(&self) -> &str {
+        &self.0
+    }
+}
+
+impl std::ops::Deref for TextKey {
+    type Target = str;
+
+    fn deref(&self) -> &Self::Target {
+        self.as_str()
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct LocalePack {
+    schema_fingerprint: String,
+    locale: String,
+    translations: std::collections::HashMap<std::sync::Arc<str>, std::sync::Arc<str>>,
+}
+
+impl LocalePack {
+    pub fn from_bytes(bytes: &[u8]) -> Result<Self, SoraReadError> {
+        if bytes.len() < 8 || &bytes[0..4] != b"SORI" {
+            return Err(SoraReadError::new("invalid Sora i18n pack magic"));
+        }
+        let version = read_u32_at(bytes, 4)?;
+        if version != 1 {
+            return Err(SoraReadError::new(format!(
+                "unsupported Sora i18n pack version {}",
+                version
+            )));
+        }
+        let mut cursor = 8usize;
+        let schema_fingerprint = read_len_prefixed_utf8(bytes, &mut cursor)?.to_owned();
+        let locale = read_len_prefixed_utf8(bytes, &mut cursor)?.to_owned();
+        let count = read_u32_cursor(bytes, &mut cursor)? as usize;
+        let mut translations = std::collections::HashMap::with_capacity(count);
+        for _ in 0..count {
+            let key = std::sync::Arc::<str>::from(read_len_prefixed_utf8(bytes, &mut cursor)?);
+            let value = std::sync::Arc::<str>::from(read_len_prefixed_utf8(bytes, &mut cursor)?);
+            translations.insert(key, value);
+        }
+        if cursor != bytes.len() {
+            return Err(SoraReadError::new("Sora i18n pack has trailing bytes"));
+        }
+        Ok(Self {
+            schema_fingerprint,
+            locale,
+            translations,
+        })
+    }
+
+    pub fn schema_fingerprint(&self) -> &str {
+        &self.schema_fingerprint
+    }
+
+    pub fn locale(&self) -> &str {
+        &self.locale
+    }
+
+    pub fn get(&self, key: &TextKey) -> Option<&str> {
+        self.translations
+            .get(key.as_str())
+            .map(|value| value.as_ref())
+    }
+}
+
 pub trait SoraTableSource {
     fn schema_fingerprint(&self) -> Result<&str, SoraReadError>;
 
@@ -522,6 +593,12 @@ impl SoraDecode for std::sync::Arc<str> {
     }
 }
 
+impl SoraDecode for TextKey {
+    fn decode(reader: &mut SoraReader<'_>) -> Result<Self, SoraReadError> {
+        Ok(Self(reader.read_arc_str()?))
+    }
+}
+
 impl<T: SoraDecode> SoraDecode for Option<T> {
     fn decode(reader: &mut SoraReader<'_>) -> Result<Self, SoraReadError> {
         match reader.read_u8()? {
@@ -588,6 +665,31 @@ fn read_u32_at(bytes: &[u8], offset: usize) -> Result<u32, SoraReadError> {
     Ok(u32::from_le_bytes(
         bytes[offset..offset + 4].try_into().unwrap(),
     ))
+}
+
+fn read_u32_cursor(bytes: &[u8], cursor: &mut usize) -> Result<u32, SoraReadError> {
+    let value = read_u32_at(bytes, *cursor)?;
+    *cursor = cursor
+        .checked_add(4)
+        .ok_or_else(|| SoraReadError::new("Sora i18n cursor overflow"))?;
+    Ok(value)
+}
+
+fn read_len_prefixed_utf8<'a>(
+    bytes: &'a [u8],
+    cursor: &mut usize,
+) -> Result<&'a str, SoraReadError> {
+    let len = read_u32_cursor(bytes, cursor)? as usize;
+    let end = cursor
+        .checked_add(len)
+        .ok_or_else(|| SoraReadError::new("Sora i18n string length overflow"))?;
+    if end > bytes.len() {
+        return Err(SoraReadError::new("Sora i18n string exceeds pack length"));
+    }
+    let value = std::str::from_utf8(&bytes[*cursor..end])
+        .map_err(|error| SoraReadError::new(format!("invalid Sora i18n UTF-8: {}", error)))?;
+    *cursor = end;
+    Ok(value)
 }
 
 fn read_var_u32_at(bytes: &[u8], cursor: &mut usize) -> Result<u32, SoraReadError> {

@@ -7,7 +7,7 @@ pub struct Achievement {
     #[serde(rename = "id")]
     pub id: i32,
     #[serde(rename = "title_key")]
-    pub title_key: std::sync::Arc<str>,
+    pub title_key: super::runtime::TextKey,
     #[serde(rename = "target_count")]
     pub target_count: i64,
     #[serde(rename = "reward")]
@@ -20,7 +20,7 @@ impl super::runtime::SoraDecode for Achievement {
     ) -> Result<Self, super::runtime::SoraReadError> {
         Ok(Self {
             id: <i32 as super::runtime::SoraDecode>::decode(reader)?,
-            title_key: <std::sync::Arc<str> as super::runtime::SoraDecode>::decode(reader)?,
+            title_key: <super::runtime::TextKey as super::runtime::SoraDecode>::decode(reader)?,
             target_count: <i64 as super::runtime::SoraDecode>::decode(reader)?,
             reward: <ResourceCost as super::runtime::SoraDecode>::decode(reader)?,
         })
