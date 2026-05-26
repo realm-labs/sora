@@ -128,14 +128,3 @@ let title = i18n.text(&quest.title_key)?;
 | 已挂载语言 | `set_locale` 只能切到已经 mount 的语言。 |
 
 业务代码不感知 key 来自哪张 source 表，只把 `TextKey` 交给 i18n runtime。
-
-## 从 Localization 表迁移
-
-如果已有项目把 `Localization` 做成普通业务表：
-
-1. 把该表从 `[[tables]]` 移到 `[localization].sources`。
-2. 将 `title_key` 这类业务字段从 `string` 改成 `text`。
-3. 添加带 `locale` 的 `i18n-binary` 或 `i18n-json` 导出。
-4. 将运行时代码里的 `config.localization()` 改成 `SoraI18n::mount` 和 `SoraI18n::text`。
-
-这是有意的不兼容设计。Localization catalog 是运行时资源，不是业务表。

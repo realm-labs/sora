@@ -128,14 +128,3 @@ Mounting validates:
 | mounted locale | `set_locale` fails until a pack for that locale has been mounted. |
 
 Business code does not know which source sheet a key came from. It only passes `TextKey` values to the i18n runtime.
-
-## Migration From A Localization Table
-
-If an existing project has a normal `Localization` table:
-
-1. Move that table declaration out of `[[tables]]` and into `[localization].sources`.
-2. Change business fields such as `title_key` from `string` to `text`.
-3. Add `i18n-binary` or `i18n-json` exports with a `locale`.
-4. Replace runtime calls such as `config.localization()` with `SoraI18n::mount` and `SoraI18n::text`.
-
-This is intentionally incompatible. Localization catalogs are runtime assets, not business tables.
