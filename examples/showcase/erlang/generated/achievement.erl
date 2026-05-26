@@ -8,7 +8,7 @@
 
 -type t() :: #{
     'id' := integer(),
-    'title_key' := binary(),
+    'title_key' := sora_runtime:text_key(),
     'target_count' := integer(),
     'reward' := resource_cost:t()
 }.
@@ -19,7 +19,7 @@
 -spec decode(sora_runtime:reader()) -> {t(), sora_runtime:reader()}.
 decode(Reader0) ->
     {Id, Reader1} = (fun sora_runtime:read_i32/1)(Reader0),
-    {TitleKey, Reader2} = (fun sora_runtime:read_string/1)(Reader1),
+    {TitleKey, Reader2} = (fun sora_runtime:read_text_key/1)(Reader1),
     {TargetCount, Reader3} = (fun sora_runtime:read_i64/1)(Reader2),
     {Reward, Reader4} = (fun resource_cost:decode/1)(Reader3),
     {#{
@@ -34,7 +34,7 @@ decode_value(Value) ->
     Obj = sora_runtime:expect_map(Value),
     #{
         'id' => sora_runtime:expect_integer(sora_runtime:value_get(<<"id">>, Obj)),
-        'title_key' => sora_runtime:expect_binary(sora_runtime:value_get(<<"title_key">>, Obj)),
+        'title_key' => sora_runtime:expect_text_key(sora_runtime:value_get(<<"title_key">>, Obj)),
         'target_count' => sora_runtime:expect_integer(sora_runtime:value_get(<<"target_count">>, Obj)),
         'reward' => resource_cost:decode_value(sora_runtime:value_get(<<"reward">>, Obj))
     }.

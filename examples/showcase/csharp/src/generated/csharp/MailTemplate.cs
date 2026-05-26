@@ -10,8 +10,8 @@ namespace com.sora.showcase;
 public sealed record MailTemplate(
     int Id,
     MailType MailType,
-    string TitleKey,
-    string BodyKey,
+    TextKey TitleKey,
+    TextKey BodyKey,
     List<Reward> Rewards
 )
 {
@@ -20,8 +20,8 @@ public sealed record MailTemplate(
         return new MailTemplate(
             reader.ReadInt32(),
             MailTypeCodec.Decode(reader),
-            reader.ReadString(),
-            reader.ReadString(),
+            new TextKey(reader.ReadString()),
+            new TextKey(reader.ReadString()),
             reader.ReadList(() => Reward.Decode(reader))
         );
     }
@@ -32,8 +32,8 @@ public sealed record MailTemplate(
         return new MailTemplate(
             obj.Get("id").AsInt32(),
             MailTypeCodec.Decode(obj.Get("mail_type")),
-            obj.Get("title_key").AsString(),
-            obj.Get("body_key").AsString(),
+            new TextKey(obj.Get("title_key").AsString()),
+            new TextKey(obj.Get("body_key").AsString()),
             obj.Get("rewards").AsList(item => Reward.Decode(item))
         );
     }

@@ -20,14 +20,14 @@ sora_result sora_showcase_mail_template_decode(sora_reader* reader, sora_showcas
         }
     }
     {
-        sora_result result = sora_reader_read_string(reader, &out->title_key);
+        sora_result result = sora_reader_read_text_key(reader, &out->title_key);
         if (result.code != SORA_OK) {
             sora_showcase_mail_template_free(out);
             return result;
         }
     }
     {
-        sora_result result = sora_reader_read_string(reader, &out->body_key);
+        sora_result result = sora_reader_read_text_key(reader, &out->body_key);
         if (result.code != SORA_OK) {
             sora_showcase_mail_template_free(out);
             return result;
@@ -47,8 +47,8 @@ void sora_showcase_mail_template_free(sora_showcase_mail_template* value) {
     if (value == NULL) {
         return;
     }
-    sora_string_free(&value->title_key);
-    sora_string_free(&value->body_key);
+    sora_text_key_free(&value->title_key);
+    sora_text_key_free(&value->body_key);
     sora_showcase_reward_array_free(&value->rewards);
     *value = (sora_showcase_mail_template){0};
 }

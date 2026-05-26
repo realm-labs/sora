@@ -9,7 +9,7 @@ namespace com.sora.showcase;
 
 public sealed record Dialogue(
     int Id,
-    string SpeakerKey,
+    TextKey SpeakerKey,
     List<string> Lines
 )
 {
@@ -17,7 +17,7 @@ public sealed record Dialogue(
     {
         return new Dialogue(
             reader.ReadInt32(),
-            reader.ReadString(),
+            new TextKey(reader.ReadString()),
             reader.ReadList(() => reader.ReadString())
         );
     }
@@ -27,7 +27,7 @@ public sealed record Dialogue(
         var obj = value.AsObject("Dialogue");
         return new Dialogue(
             obj.Get("id").AsInt32(),
-            obj.Get("speaker_key").AsString(),
+            new TextKey(obj.Get("speaker_key").AsString()),
             obj.Get("lines").AsList(item => item.AsString())
         );
     }

@@ -11,6 +11,20 @@ class SoraConfigTable:
 	func length() -> int:
 		return 0
 
+class TextKey:
+	extends RefCounted
+
+	var value: String = ""
+
+	func _init(text_value: String = "") -> void:
+		value = text_value
+
+	func resolve(resolver: Variant) -> String:
+		return resolver.text(self)
+
+	func _to_string() -> String:
+		return value
+
 static func report_error(message: String) -> void:
 	push_error("Sora: " + message)
 

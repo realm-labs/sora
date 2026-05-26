@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
-from .sora_runtime import SoraReader
+from .sora_runtime import SoraReader, TextKey
 from .sora_runtime import (
     SoraConfigTable,
     SoraIndexInfo,
@@ -25,13 +25,13 @@ if TYPE_CHECKING:
 @dataclass(frozen=True, slots=True)
 class Dialogue:
     id: int
-    speaker_key: str
+    speaker_key: TextKey
     lines: list[str]
 
     @staticmethod
     def decode(reader: SoraReader) -> Dialogue:
         id = reader.read_i32()
-        speaker_key = reader.read_string()
+        speaker_key = TextKey(reader.read_string())
         lines = reader.read_list(lambda: reader.read_string())
         return Dialogue(
             id=id,

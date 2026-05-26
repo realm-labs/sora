@@ -73,6 +73,7 @@ pub struct EcmaScriptRecord {
     pub snake_name: String,
     pub imports: Vec<EcmaScriptImport>,
     pub fields: Vec<EcmaScriptField>,
+    pub uses_text_key: bool,
     pub table: Option<EcmaScriptTable>,
 }
 
@@ -190,15 +191,20 @@ fn ecmascript_record(
     record: BaseRecord,
     table: Option<EcmaScriptTable>,
 ) -> EcmaScriptRecord {
+    let fields = record
+        .fields
+        .into_iter()
+        .map(|field| ecmascript_field(ir, field))
+        .collect::<Vec<_>>();
+    let uses_text_key = fields
+        .iter()
+        .any(|field| field.type_name.contains("TextKey"));
     EcmaScriptRecord {
         pascal_name: record.pascal_name,
         snake_name: record.snake_name,
         imports: record.imports.into_iter().map(ecmascript_import).collect(),
-        fields: record
-            .fields
-            .into_iter()
-            .map(|field| ecmascript_field(ir, field))
-            .collect(),
+        fields,
+        uses_text_key,
         table,
     }
 }
@@ -276,7 +282,8 @@ pub fn ecmascript_type_name(ir: &ConfigIr, ty: &TypeIr) -> String {
         }
         TypeIr::I64 => "bigint".to_owned(),
         TypeIr::F32 | TypeIr::F64 => "number".to_owned(),
-        TypeIr::String | TypeIr::Text => "string".to_owned(),
+        TypeIr::String => "string".to_owned(),
+        TypeIr::Text => "TextKey".to_owned(),
         TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => name.clone(),
         TypeIr::List(element) | TypeIr::Set(element) | TypeIr::Array { element, .. } => {
             format!("{}[]", array_element_type(ir, element))
@@ -301,7 +308,8 @@ pub fn ecmascript_decode_expr(ir: &ConfigIr, ty: &TypeIr) -> String {
         TypeIr::I64 => "reader.readI64()".to_owned(),
         TypeIr::F32 => "reader.readF32()".to_owned(),
         TypeIr::F64 => "reader.readF64()".to_owned(),
-        TypeIr::String | TypeIr::Text => "reader.readString()".to_owned(),
+        TypeIr::String => "reader.readString()".to_owned(),
+        TypeIr::Text => "new TextKey(reader.readString())".to_owned(),
         TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => {
             format!("decode{name}(reader)")
         }
@@ -336,7 +344,8 @@ pub fn ecmascript_value_decode_expr(ir: &ConfigIr, ty: &TypeIr, value: &str) -> 
         }
         TypeIr::I64 => format!("{value}.asBigInt()"),
         TypeIr::F32 | TypeIr::F64 => format!("{value}.asNumber()"),
-        TypeIr::String | TypeIr::Text => format!("{value}.asString()"),
+        TypeIr::String => format!("{value}.asString()"),
+        TypeIr::Text => format!("new TextKey({value}.asString())"),
         TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => {
             format!("decode{name}Value({value})")
         }

@@ -12,7 +12,6 @@ includes = [
 locales = ["zh_cn", "en_us"]
 default_locale = "zh_cn"
 fallback_locale = "en_us"
-strict = true
 
 [[localization.sources]]
 name = "Localization"

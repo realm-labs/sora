@@ -292,7 +292,8 @@ fn godot_value_decode_expr(ir: &ConfigIr, ty: &TypeIr, value: &str) -> String {
         | TypeIr::U32
         | TypeIr::I64 => format!("int({value})"),
         TypeIr::F32 | TypeIr::F64 => format!("float({value})"),
-        TypeIr::String | TypeIr::Text => format!("str({value})"),
+        TypeIr::String => format!("str({value})"),
+        TypeIr::Text => format!("SoraRuntime.TextKey.new(str({value}))"),
         TypeIr::Enum(name) => format!("{}.decode({value})", godot_type_identifier(name)),
         TypeIr::Struct(name) | TypeIr::Union(name) => {
             format!("{}.decode({value})", godot_type_identifier(name))
@@ -341,7 +342,8 @@ fn godot_default_value(ir: &ConfigIr, ty: &TypeIr) -> String {
         | TypeIr::U32
         | TypeIr::I64 => "0".to_owned(),
         TypeIr::F32 | TypeIr::F64 => "0.0".to_owned(),
-        TypeIr::String | TypeIr::Text | TypeIr::Enum(_) => "\"\"".to_owned(),
+        TypeIr::String | TypeIr::Enum(_) => "\"\"".to_owned(),
+        TypeIr::Text => "null".to_owned(),
         TypeIr::List(_) | TypeIr::Set(_) | TypeIr::Map { .. } | TypeIr::Array { .. } => {
             "[]".to_owned()
         }

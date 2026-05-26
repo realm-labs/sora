@@ -4,7 +4,7 @@ package showcase
 
 type Dialogue struct {
 	Id         int32
-	SpeakerKey string
+	SpeakerKey TextKey
 	Lines      []string
 }
 
@@ -15,7 +15,7 @@ func decodeDialogue(reader *SoraReader) (Dialogue, error) {
 	if err != nil {
 		return value, err
 	}
-	value.SpeakerKey, err = reader.ReadString()
+	value.SpeakerKey, err = ReadTextKey(reader)
 	if err != nil {
 		return value, err
 	}
@@ -36,7 +36,7 @@ func decodeDialogueValue(input SoraValue) (Dialogue, error) {
 	if err != nil {
 		return value, err
 	}
-	value.SpeakerKey, err = obj.Get("speaker_key").AsString()
+	value.SpeakerKey, err = DecodeTextKeyValue(obj.Get("speaker_key"))
 	if err != nil {
 		return value, err
 	}

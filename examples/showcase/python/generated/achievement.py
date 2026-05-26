@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
-from .sora_runtime import SoraReader
+from .sora_runtime import SoraReader, TextKey
 from .sora_runtime import (
     SoraConfigTable,
     SoraIndexInfo,
@@ -25,7 +25,7 @@ if TYPE_CHECKING:
 @dataclass(frozen=True, slots=True)
 class Achievement:
     id: int
-    title_key: str
+    title_key: TextKey
     target_count: int
     reward: ResourceCost
 
@@ -33,7 +33,7 @@ class Achievement:
     def decode(reader: SoraReader) -> Achievement:
         from .resource_cost import ResourceCost
         id = reader.read_i32()
-        title_key = reader.read_string()
+        title_key = TextKey(reader.read_string())
         target_count = reader.read_i64()
         reward = ResourceCost.decode(reader)
         return Achievement(

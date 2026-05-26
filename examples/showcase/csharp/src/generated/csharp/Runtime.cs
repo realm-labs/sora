@@ -25,6 +25,24 @@ public interface ISoraTableSource
     List<T> DecodeTable<T>(string name, Func<SoraReader, T> decodeBinary, Func<SoraValue, T> decodeValue);
 }
 
+public interface ISoraTextResolver
+{
+    string Text(TextKey key);
+}
+
+public readonly record struct TextKey(string Value)
+{
+    public string Resolve(ISoraTextResolver resolver)
+    {
+        return resolver.Text(this);
+    }
+
+    public override string ToString()
+    {
+        return Value;
+    }
+}
+
 public sealed class SoraBundle : ISoraTableSource
 {
     private const int BundleVersion = 1;
@@ -414,20 +432,20 @@ public sealed class SoraReader
         };
     }
 
-    internal int ReadUInt32()
+    internal uint ReadUInt32()
     {
         var value = ReadVarUInt64();
-        if (value > int.MaxValue)
+        if (value > uint.MaxValue)
         {
-            throw new SoraReadException("Sora varint exceeds Int32.MaxValue");
+            throw new SoraReadException("Sora varint exceeds UInt32.MaxValue");
         }
-        return (int)value;
+        return (uint)value;
     }
 
     internal int ReadInt32()
     {
         var value = ReadUInt32();
-        return (int)((uint)value >> 1) ^ -(value & 1);
+        return (int)(value >> 1) ^ -((int)value & 1);
     }
 
     internal long ReadInt64()
@@ -449,11 +467,11 @@ public sealed class SoraReader
     internal string ReadString()
     {
         var id = ReadUInt32();
-        if (id < 0 || id >= strings.Count)
+        if (id > int.MaxValue || (int)id >= strings.Count)
         {
             throw new SoraReadException($"invalid string id {id}");
         }
-        return strings[id];
+        return strings[(int)id];
     }
 
     internal T? ReadOptional<T>(Func<T> read)
@@ -469,8 +487,13 @@ public sealed class SoraReader
     internal List<T> ReadList<T>(Func<T> read)
     {
         var length = ReadUInt32();
-        var values = new List<T>(length);
-        for (var i = 0; i < length; i++)
+        if (length > int.MaxValue)
+        {
+            throw new SoraReadException("list length exceeds Int32.MaxValue");
+        }
+        var count = (int)length;
+        var values = new List<T>(count);
+        for (var i = 0; i < count; i++)
         {
             values.Add(read());
         }
@@ -481,8 +504,13 @@ public sealed class SoraReader
         where K : notnull
     {
         var length = ReadUInt32();
-        var values = new Dictionary<K, V>(length);
-        for (var i = 0; i < length; i++)
+        if (length > int.MaxValue)
+        {
+            throw new SoraReadException("map length exceeds Int32.MaxValue");
+        }
+        var count = (int)length;
+        var values = new Dictionary<K, V>(count);
+        for (var i = 0; i < count; i++)
         {
             values[readKey()] = readValue();
         }

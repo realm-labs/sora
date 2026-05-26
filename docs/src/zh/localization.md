@@ -23,9 +23,9 @@ name = "body_keys"
 type = "list<text>"
 ```
 
-`text` 保存的是 key，不是实际翻译文本。源数据里应填写 `quest.1001.title`、`ui.confirm` 这类值。Rust 生成代码会暴露为 `TextKey`；动态语言目标可以仍表现为字符串 key。
+`text` 保存的是 key，不是实际翻译文本。源数据里应填写 `quest.1001.title`、`ui.confirm` 这类值。目标语言支持独立生成运行时类型时，生成代码会暴露为 `TextKey`。
 
-catalog 校验会扫描业务数据里的所有 `text` 值。key 不存在会直接构建失败。
+catalog 校验会扫描业务数据里的所有 `text` 值。key 不存在或翻译为空都会直接构建失败。
 
 ## Catalog Sources
 
@@ -36,7 +36,6 @@ catalog 校验会扫描业务数据里的所有 `text` 值。key 不存在会直
 locales = ["zh_cn", "en_us"]
 default_locale = "zh_cn"
 fallback_locale = "en_us"
-strict = true
 
 [[localization.sources]]
 name = "ui"
@@ -67,7 +66,7 @@ sheet = "QuestLocalization"
 | 多个 source | 合并成一个逻辑 catalog。 |
 | 重复 key | 构建失败。key 在所有 source 里全局唯一。 |
 | 缺少 locale 列 | 构建失败。 |
-| `strict = true` 时翻译为空 | 构建失败。 |
+| 翻译为空 | 构建失败。 |
 
 如果 key 列不叫 `key`，可以在 source 上指定：
 
@@ -116,7 +115,7 @@ i18n.mount(pack)?;
 i18n.set_locale("zh_cn")?;
 
 let quest = config.quest().get(&1001).unwrap();
-let title = i18n.text(&quest.title_key)?;
+let title = quest.title_key.resolve(&i18n)?;
 ```
 
 挂载时会校验：
@@ -127,4 +126,4 @@ let title = i18n.text(&quest.title_key)?;
 | locale 声明 | 拒绝 `[localization].locales` 未声明的语言包。 |
 | 已挂载语言 | `set_locale` 只能切到已经 mount 的语言。 |
 
-业务代码不感知 key 来自哪张 source 表，只把 `TextKey` 交给 i18n runtime。
+业务代码不感知 key 来自哪张 source 表，只用已挂载的 i18n runtime 解析 `TextKey`。

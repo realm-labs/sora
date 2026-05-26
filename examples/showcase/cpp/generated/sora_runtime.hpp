@@ -22,6 +22,28 @@ public:
 
 class SoraReader;
 
+class TextKey;
+
+class SoraTextResolver {
+public:
+    virtual ~SoraTextResolver() {}
+    virtual std::string text(const TextKey& key) const = 0;
+};
+
+class TextKey {
+public:
+    TextKey() {}
+    explicit TextKey(const std::string& value) : value_(value) {}
+
+    const std::string& value() const { return value_; }
+    std::string resolve(const SoraTextResolver& resolver) const { return resolver.text(*this); }
+    bool operator==(const TextKey& other) const { return value_ == other.value_; }
+    bool operator!=(const TextKey& other) const { return !(*this == other); }
+
+private:
+    std::string value_;
+};
+
 typedef std::vector<std::uint8_t> (*SoraDecompressSectionFn)(
     std::uint32_t compression,
     const std::uint8_t* input,
@@ -116,6 +138,10 @@ public:
             throw SoraReadException("string id is out of range");
         }
         return (*strings_)[id];
+    }
+
+    TextKey read_text_key() {
+        return TextKey(read_string());
     }
 
     template <typename T>
@@ -243,6 +269,11 @@ inline double decode_value<double>(SoraReader& reader) {
 template <>
 inline std::string decode_value<std::string>(SoraReader& reader) {
     return reader.read_string();
+}
+
+template <>
+inline TextKey decode_value<TextKey>(SoraReader& reader) {
+    return reader.read_text_key();
 }
 
 class SoraBundle {

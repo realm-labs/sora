@@ -24,7 +24,6 @@ pub struct LocalizationIr {
     pub locales: Vec<String>,
     pub default_locale: String,
     pub fallback_locale: Option<String>,
-    pub strict: bool,
     pub sources: Vec<LocalizationSourceIr>,
 }
 

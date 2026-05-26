@@ -37,14 +37,8 @@ pub struct LocalizationSchema {
     pub locales: Vec<String>,
     pub default_locale: Option<String>,
     pub fallback_locale: Option<String>,
-    #[serde(default = "default_localization_strict")]
-    pub strict: bool,
     #[serde(default)]
     pub sources: Vec<LocalizationSourceSchema>,
-}
-
-fn default_localization_strict() -> bool {
-    true
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]

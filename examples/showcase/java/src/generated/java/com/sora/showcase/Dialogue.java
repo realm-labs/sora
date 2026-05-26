@@ -7,12 +7,12 @@ import java.util.Map;
 
 public final class Dialogue {
     public final Integer id;
-    public final String speakerKey;
+    public final TextKey speakerKey;
     public final java.util.List<String> lines;
 
     public Dialogue(
         Integer id,
-        String speakerKey,
+        TextKey speakerKey,
         java.util.List<String> lines
     ) {
         this.id = id;
@@ -23,7 +23,7 @@ public final class Dialogue {
     static Dialogue decode(SoraReader reader) {
         return new Dialogue(
             reader.readI32(),
-            reader.readString(),
+            new TextKey(reader.readString()),
             reader.readList(() -> reader.readString())
         );
     }
@@ -32,7 +32,7 @@ public final class Dialogue {
         var obj = value.asObject();
         return new Dialogue(
             obj.get("id").asInt(),
-            obj.get("speaker_key").asString(),
+            new TextKey(obj.get("speaker_key").asString()),
             obj.get("lines").asList(item -> item.asString())
         );
     }

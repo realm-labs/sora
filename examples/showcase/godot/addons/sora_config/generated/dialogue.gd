@@ -3,7 +3,7 @@
 class_name Dialogue
 extends RefCounted
 var id: int = 0
-var speaker_key: String = ""
+var speaker_key: SoraRuntime.TextKey = null
 var lines: Array = []
 
 static func decode(value: Variant) -> Dialogue:
@@ -15,7 +15,7 @@ static func decode(value: Variant) -> Dialogue:
 	var data: Dictionary = value
 	var out := Dialogue.new()
 	out.id = int(SoraRuntime.read_field(data, "id", 0))
-	out.speaker_key = str(SoraRuntime.read_field(data, "speaker_key", ""))
+	out.speaker_key = SoraRuntime.TextKey.new(str(SoraRuntime.read_field(data, "speaker_key", null)))
 	out.lines = SoraRuntime.decode_array(SoraRuntime.read_field(data, "lines", []), func(item): return str(item))
 	return out
 

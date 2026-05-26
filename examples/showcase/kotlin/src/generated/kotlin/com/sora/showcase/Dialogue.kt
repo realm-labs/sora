@@ -4,14 +4,14 @@ package com.sora.showcase
 
 data class Dialogue(
     val id: Int,
-    val speakerKey: String,
+    val speakerKey: TextKey,
     val lines: List<String>,
 ) {
     companion object {
         fun decode(reader: SoraReader): Dialogue =
             Dialogue(
                 id = reader.readI32(),
-                speakerKey = reader.readString(),
+                speakerKey = TextKey(reader.readString()),
                 lines = reader.readList { reader.readString() },
             )
 
@@ -19,7 +19,7 @@ data class Dialogue(
             val obj = value.asObject()
             return Dialogue(
                 id = obj.get("id").asInt(),
-                speakerKey = obj.get("speaker_key").asString(),
+                speakerKey = TextKey(obj.get("speaker_key").asString()),
                 lines = obj.get("lines").asList { item -> item.asString() },
             )
         }

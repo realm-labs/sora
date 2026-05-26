@@ -56,7 +56,7 @@ pub mod vec3;
 pub mod vip_level;
 pub type SoraMap<K, V> = rustc_hash::FxHashMap<K, V>;
 
-pub const SCHEMA_FINGERPRINT: &str = "1439cc1e8c6581b3";
+pub const SCHEMA_FINGERPRINT: &str = "7e14f0cc1d24d238";
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum SoraTableShape {
@@ -177,6 +177,12 @@ impl SoraI18n {
                     self.active_locale
                 ))
             })
+    }
+}
+
+impl runtime::TextKey {
+    pub fn resolve<'a>(&self, i18n: &'a SoraI18n) -> Result<&'a str, runtime::SoraReadError> {
+        i18n.text(self)
     }
 }
 

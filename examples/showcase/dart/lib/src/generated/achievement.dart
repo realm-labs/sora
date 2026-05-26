@@ -5,7 +5,7 @@ import 'resource_cost.dart';
 
 final class Achievement {
   final int id;
-  final String titleKey;
+  final TextKey titleKey;
   final int targetCount;
   final ResourceCost reward;
 
@@ -20,7 +20,7 @@ final class Achievement {
     final obj = value.asObject();
     return Achievement(
       id: obj.get("id").asInt(),
-      titleKey: obj.get("title_key").asString(),
+      titleKey: TextKey(obj.get("title_key").asString()),
       targetCount: obj.get("target_count").asInt(),
       reward: ResourceCost.decode(obj.get("reward")),
     );

@@ -7,13 +7,13 @@ import java.util.Map;
 
 public final class Achievement {
     public final Integer id;
-    public final String titleKey;
+    public final TextKey titleKey;
     public final Long targetCount;
     public final ResourceCost reward;
 
     public Achievement(
         Integer id,
-        String titleKey,
+        TextKey titleKey,
         Long targetCount,
         ResourceCost reward
     ) {
@@ -26,7 +26,7 @@ public final class Achievement {
     static Achievement decode(SoraReader reader) {
         return new Achievement(
             reader.readI32(),
-            reader.readString(),
+            new TextKey(reader.readString()),
             reader.readI64(),
             ResourceCost.decode(reader)
         );
@@ -36,7 +36,7 @@ public final class Achievement {
         var obj = value.asObject();
         return new Achievement(
             obj.get("id").asInt(),
-            obj.get("title_key").asString(),
+            new TextKey(obj.get("title_key").asString()),
             obj.get("target_count").asLong(),
             ResourceCost.decode(obj.get("reward"))
         );

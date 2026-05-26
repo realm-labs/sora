@@ -308,7 +308,8 @@ fn go_decode_expr(ir: &ConfigIr, ty: &TypeIr) -> String {
         TypeIr::I64 => "reader.ReadInt64()".to_owned(),
         TypeIr::F32 => "reader.ReadFloat32()".to_owned(),
         TypeIr::F64 => "reader.ReadFloat64()".to_owned(),
-        TypeIr::String | TypeIr::Text => "reader.ReadString()".to_owned(),
+        TypeIr::String => "reader.ReadString()".to_owned(),
+        TypeIr::Text => "ReadTextKey(reader)".to_owned(),
         TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => {
             format!("decode{name}(reader)")
         }
@@ -360,7 +361,8 @@ fn go_value_decode_expr(ir: &ConfigIr, ty: &TypeIr, value: &str) -> String {
         TypeIr::I64 => format!("{value}.AsInt64()"),
         TypeIr::F32 => format!("{value}.AsFloat32()"),
         TypeIr::F64 => format!("{value}.AsFloat64()"),
-        TypeIr::String | TypeIr::Text => format!("{value}.AsString()"),
+        TypeIr::String => format!("{value}.AsString()"),
+        TypeIr::Text => format!("DecodeTextKeyValue({value})"),
         TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => {
             format!("decode{name}Value({value})")
         }

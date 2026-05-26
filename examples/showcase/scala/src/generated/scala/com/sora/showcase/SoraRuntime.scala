@@ -12,6 +12,15 @@ trait SoraTableSource {
   def decodeTable[T](name: String, decodeBinary: SoraReader => T, decodeValue: SoraValue => T): Vector[T]
 }
 
+trait SoraTextResolver {
+  def text(key: TextKey): String
+}
+
+final case class TextKey(value: String) {
+  def resolve(resolver: SoraTextResolver): String = resolver.text(this)
+  override def toString: String = value
+}
+
 final case class SoraSection(
   kind: Int,
   compression: Int,
@@ -190,8 +199,8 @@ final class SoraReader(private val bytes: Array[Byte], private val strings: Vect
 
   def readU32(): Int = {
     val value = readVarU64()
-    if (value > Int.MaxValue) {
-      throw new SoraReadException("Sora varint exceeds Int.MaxValue")
+    if (value > 0xffffffffL) {
+      throw new SoraReadException("Sora varint exceeds uint32")
     }
     value.toInt
   }

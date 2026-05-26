@@ -135,6 +135,12 @@ impl SoraI18n {
     }
 }
 
+impl runtime::TextKey {
+    pub fn resolve<'a>(&self, i18n: &'a SoraI18n) -> Result<&'a str, runtime::SoraReadError> {
+        i18n.text(self)
+    }
+}
+
 impl Default for SoraI18n {
     fn default() -> Self {
         Self::new()

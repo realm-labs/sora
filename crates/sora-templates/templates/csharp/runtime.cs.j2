@@ -28,6 +28,24 @@ public interface ISoraTableSource
     List<T> DecodeTable<T>(string name, Func<SoraReader, T> decodeBinary, Func<SoraValue, T> decodeValue);
 }
 
+public interface ISoraTextResolver
+{
+    string Text(TextKey key);
+}
+
+public readonly record struct TextKey(string Value)
+{
+    public string Resolve(ISoraTextResolver resolver)
+    {
+        return resolver.Text(this);
+    }
+
+    public override string ToString()
+    {
+        return Value;
+    }
+}
+
 public sealed class SoraBundle : ISoraTableSource
 {
     private const int BundleVersion = 1;

@@ -1,7 +1,7 @@
 {
   "version": 1,
   "package": "com.sora.showcase",
-  "fingerprint": "1439cc1e8c6581b3",
+  "fingerprint": "7e14f0cc1d24d238",
   "schema": {
     "package": "com.sora.showcase",
     "localization": {
@@ -11,7 +11,6 @@
       ],
       "default_locale": "zh_cn",
       "fallback_locale": "en_us",
-      "strict": true,
       "sources": [
         {
           "name": "Localization",

@@ -4,7 +4,7 @@ package showcase
 
 type Achievement struct {
 	Id          int32
-	TitleKey    string
+	TitleKey    TextKey
 	TargetCount int64
 	Reward      ResourceCost
 }
@@ -16,7 +16,7 @@ func decodeAchievement(reader *SoraReader) (Achievement, error) {
 	if err != nil {
 		return value, err
 	}
-	value.TitleKey, err = reader.ReadString()
+	value.TitleKey, err = ReadTextKey(reader)
 	if err != nil {
 		return value, err
 	}
@@ -41,7 +41,7 @@ func decodeAchievementValue(input SoraValue) (Achievement, error) {
 	if err != nil {
 		return value, err
 	}
-	value.TitleKey, err = obj.Get("title_key").AsString()
+	value.TitleKey, err = DecodeTextKeyValue(obj.Get("title_key"))
 	if err != nil {
 		return value, err
 	}

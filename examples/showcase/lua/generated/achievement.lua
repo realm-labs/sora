@@ -5,7 +5,7 @@ local ResourceCost = require("generated.resource_cost")
 
 ---@class Achievement
 ---@field id integer
----@field titleKey string
+---@field titleKey TextKey
 ---@field targetCount integer
 ---@field reward ResourceCost
 
@@ -16,7 +16,7 @@ local Achievement = {}
 function Achievement.decode(reader)
     return {
         id = reader:read_i32(),
-        titleKey = reader:read_string(),
+        titleKey = Runtime.new_text_key(reader:read_string()),
         targetCount = reader:read_i64(),
         reward = ResourceCost.decode(reader),
     }
@@ -28,7 +28,7 @@ function Achievement.decode_value(value)
     local obj = Runtime.expect_table(value)
     return {
         id = Runtime.expect_integer(obj["id"]),
-        titleKey = Runtime.expect_string(obj["title_key"]),
+        titleKey = Runtime.new_text_key(Runtime.expect_string(obj["title_key"])),
         targetCount = Runtime.expect_integer(obj["target_count"]),
         reward = ResourceCost.decode_value(obj["reward"]),
     }

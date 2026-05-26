@@ -12,7 +12,7 @@ extern "C" {
 
 typedef struct sora_showcase_achievement {
     int32_t id;
-    sora_string title_key;
+    sora_text_key title_key;
     int64_t target_count;
     sora_showcase_resource_cost reward;
 } sora_showcase_achievement;

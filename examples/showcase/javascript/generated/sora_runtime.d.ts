@@ -4,6 +4,17 @@ export declare class SoraReadError extends Error {
     constructor(message: string);
 }
 
+export interface SoraTextResolver {
+    text(key: TextKey): string;
+}
+
+export declare class TextKey {
+    readonly value: string;
+    constructor(value: string);
+    resolve(resolver: SoraTextResolver): string;
+    toString(): string;
+}
+
 export type SoraTableShape = "list" | "keyed" | "singleton";
 
 export interface SoraKeyInfo {

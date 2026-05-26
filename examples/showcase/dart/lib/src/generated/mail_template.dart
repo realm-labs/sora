@@ -7,8 +7,8 @@ import 'reward.dart';
 final class MailTemplate {
   final int id;
   final MailType mailType;
-  final String titleKey;
-  final String bodyKey;
+  final TextKey titleKey;
+  final TextKey bodyKey;
   final List<Reward> rewards;
 
   const MailTemplate({
@@ -24,8 +24,8 @@ final class MailTemplate {
     return MailTemplate(
       id: obj.get("id").asInt(),
       mailType: MailType.decode(obj.get("mail_type")),
-      titleKey: obj.get("title_key").asString(),
-      bodyKey: obj.get("body_key").asString(),
+      titleKey: TextKey(obj.get("title_key").asString()),
+      bodyKey: TextKey(obj.get("body_key").asString()),
       rewards: obj.get("rewards").asList((item) => Reward.decode(item)),
     );
   }

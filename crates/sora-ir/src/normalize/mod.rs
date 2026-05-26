@@ -113,7 +113,6 @@ fn convert_localization(
         locales: localization.locales.clone(),
         default_locale,
         fallback_locale: localization.fallback_locale.clone(),
-        strict: localization.strict,
         sources,
     }))
 }

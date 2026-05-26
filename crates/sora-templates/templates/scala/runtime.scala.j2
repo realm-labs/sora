@@ -25,6 +25,15 @@ trait SoraTableSource {
   def decodeTable[T](name: String, decodeBinary: SoraReader => T, decodeValue: SoraValue => T): Vector[T]
 }
 
+trait SoraTextResolver {
+  def text(key: TextKey): String
+}
+
+final case class TextKey(value: String) {
+  def resolve(resolver: SoraTextResolver): String = resolver.text(this)
+  override def toString: String = value
+}
+
 final case class SoraSection(
   kind: Int,
   compression: Int,

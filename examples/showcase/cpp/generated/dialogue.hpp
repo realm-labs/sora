@@ -12,13 +12,13 @@ namespace sora::showcase {
 
 struct Dialogue {
     std::int32_t id;
-    std::string speaker_key;
+    TextKey speaker_key;
     std::vector<std::string> lines;
 
     static Dialogue decode(SoraReader& reader) {
         return Dialogue{
             reader.read_i32(),
-            reader.read_string(),
+            reader.read_text_key(),
             reader.read_vector<std::string>(),
         };
     }

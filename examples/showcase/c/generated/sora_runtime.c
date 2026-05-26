@@ -215,6 +215,39 @@ bool sora_string_equal(const sora_string* left, const sora_string* right) {
     return memcmp(left->data, right->data, left->len) == 0;
 }
 
+void sora_text_key_free(sora_text_key* value) {
+    if (value == NULL) {
+        return;
+    }
+    sora_string_free(&value->value);
+}
+
+bool sora_text_key_equal(const sora_text_key* left, const sora_text_key* right) {
+    if (left == NULL || right == NULL) {
+        return false;
+    }
+    return sora_string_equal(&left->value, &right->value);
+}
+
+const sora_string* sora_text_key_value(const sora_text_key* key) {
+    if (key == NULL) {
+        return NULL;
+    }
+    return &key->value;
+}
+
+sora_result sora_text_key_resolve(
+    const sora_text_key* key,
+    sora_text_resolver_fn resolver,
+    void* user_data,
+    const char** out
+) {
+    if (key == NULL || resolver == NULL || out == NULL) {
+        return sora_error(SORA_ERROR_DECODE, "invalid text key resolver");
+    }
+    return resolver(key, out, user_data);
+}
+
 void sora_reader_init(
     sora_reader* reader,
     const uint8_t* bytes,
@@ -242,7 +275,7 @@ static sora_result sora_reader_take(sora_reader* reader, size_t len, const uint8
     return sora_ok();
 }
 
-sora_result sora_reader_read_u8(sora_reader* reader, uint8_t* out) {
+sora_result sora_reader_read_byte(sora_reader* reader, uint8_t* out) {
     const uint8_t* bytes = NULL;
     SORA_TRY(sora_reader_take(reader, 1, &bytes));
     *out = bytes[0];
@@ -251,7 +284,7 @@ sora_result sora_reader_read_u8(sora_reader* reader, uint8_t* out) {
 
 sora_result sora_reader_read_bool(sora_reader* reader, bool* out) {
     uint8_t value = 0;
-    SORA_TRY(sora_reader_read_u8(reader, &value));
+    SORA_TRY(sora_reader_read_byte(reader, &value));
     if (value == 0) {
         *out = false;
         return sora_ok();
@@ -271,7 +304,7 @@ sora_result sora_reader_read_u32(sora_reader* reader, uint32_t* out) {
             return sora_error(SORA_ERROR_DECODE, "Sora varint exceeds u32");
         }
         uint8_t next = 0;
-        SORA_TRY(sora_reader_read_u8(reader, &next));
+        SORA_TRY(sora_reader_read_byte(reader, &next));
         value |= (uint32_t)(next & 0x7f) << shift;
         if ((next & 0x80) == 0) {
             *out = value;
@@ -279,6 +312,46 @@ sora_result sora_reader_read_u32(sora_reader* reader, uint32_t* out) {
         }
         shift += 7;
     }
+}
+
+sora_result sora_reader_read_u8(sora_reader* reader, uint8_t* out) {
+    uint32_t value = 0;
+    SORA_TRY(sora_reader_read_u32(reader, &value));
+    if (value > 255) {
+        return sora_error(SORA_ERROR_DECODE, "integer exceeds u8");
+    }
+    *out = (uint8_t)value;
+    return sora_ok();
+}
+
+sora_result sora_reader_read_i8(sora_reader* reader, int8_t* out) {
+    int32_t value = 0;
+    SORA_TRY(sora_reader_read_i32(reader, &value));
+    if (value < -128 || value > 127) {
+        return sora_error(SORA_ERROR_DECODE, "integer exceeds i8");
+    }
+    *out = (int8_t)value;
+    return sora_ok();
+}
+
+sora_result sora_reader_read_u16(sora_reader* reader, uint16_t* out) {
+    uint32_t value = 0;
+    SORA_TRY(sora_reader_read_u32(reader, &value));
+    if (value > 65535) {
+        return sora_error(SORA_ERROR_DECODE, "integer exceeds u16");
+    }
+    *out = (uint16_t)value;
+    return sora_ok();
+}
+
+sora_result sora_reader_read_i16(sora_reader* reader, int16_t* out) {
+    int32_t value = 0;
+    SORA_TRY(sora_reader_read_i32(reader, &value));
+    if (value < -32768 || value > 32767) {
+        return sora_error(SORA_ERROR_DECODE, "integer exceeds i16");
+    }
+    *out = (int16_t)value;
+    return sora_ok();
 }
 
 sora_result sora_reader_read_i32(sora_reader* reader, int32_t* out) {
@@ -296,7 +369,7 @@ sora_result sora_reader_read_i64(sora_reader* reader, int64_t* out) {
             return sora_error(SORA_ERROR_DECODE, "Sora varint is too long");
         }
         uint8_t next = 0;
-        SORA_TRY(sora_reader_read_u8(reader, &next));
+        SORA_TRY(sora_reader_read_byte(reader, &next));
         value |= (uint64_t)(next & 0x7f) << shift;
         if ((next & 0x80) == 0) {
             *out = (int64_t)(value >> 1) ^ -((int64_t)value & 1);
@@ -339,6 +412,10 @@ sora_result sora_reader_read_string(sora_reader* reader, sora_string* out) {
     out->data[source->len] = '\0';
     out->len = source->len;
     return sora_ok();
+}
+
+sora_result sora_reader_read_text_key(sora_reader* reader, sora_text_key* out) {
+    return sora_reader_read_string(reader, &out->value);
 }
 
 static sora_result sora_decode_string_table(const uint8_t* bytes, size_t len, sora_string** out_strings, size_t* out_count) {

@@ -326,7 +326,8 @@ fn erlang_type_name(ir: &ConfigIr, ty: &TypeIr) -> String {
         | TypeIr::U32
         | TypeIr::I64 => "integer()".to_owned(),
         TypeIr::F32 | TypeIr::F64 => "float()".to_owned(),
-        TypeIr::String | TypeIr::Text => "binary()".to_owned(),
+        TypeIr::String => "binary()".to_owned(),
+        TypeIr::Text => "sora_runtime:text_key()".to_owned(),
         TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => {
             format!("{}:t()", name.to_snake_case())
         }
@@ -353,7 +354,8 @@ fn erlang_decode_fun(ir: &ConfigIr, ty: &TypeIr) -> String {
         TypeIr::I64 => "fun sora_runtime:read_i64/1".to_owned(),
         TypeIr::F32 => "fun sora_runtime:read_f32/1".to_owned(),
         TypeIr::F64 => "fun sora_runtime:read_f64/1".to_owned(),
-        TypeIr::String | TypeIr::Text => "fun sora_runtime:read_string/1".to_owned(),
+        TypeIr::String => "fun sora_runtime:read_string/1".to_owned(),
+        TypeIr::Text => "fun sora_runtime:read_text_key/1".to_owned(),
         TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => {
             format!("fun {}:decode/1", name.to_snake_case())
         }
@@ -391,7 +393,8 @@ fn erlang_value_decode_expr(ir: &ConfigIr, ty: &TypeIr, value: &str) -> String {
         | TypeIr::U32
         | TypeIr::I64 => format!("sora_runtime:expect_integer({value})"),
         TypeIr::F32 | TypeIr::F64 => format!("sora_runtime:expect_float({value})"),
-        TypeIr::String | TypeIr::Text => format!("sora_runtime:expect_binary({value})"),
+        TypeIr::String => format!("sora_runtime:expect_binary({value})"),
+        TypeIr::Text => format!("sora_runtime:expect_text_key({value})"),
         TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => {
             format!("{}:decode_value({value})", name.to_snake_case())
         }

@@ -30,6 +30,17 @@ class SoraReadError(Exception):
     pass
 
 
+@dataclass(frozen=True, slots=True)
+class TextKey:
+    value: str
+
+    def resolve(self, resolver: Any) -> str:
+        return resolver.text(self)
+
+    def __str__(self) -> str:
+        return self.value
+
+
 class SoraConfigTable:
     def info(self) -> SoraTableInfo:
         raise NotImplementedError()

@@ -23,9 +23,9 @@ name = "body_keys"
 type = "list<text>"
 ```
 
-`text` is a key, not the translated text itself. Source data should contain values such as `quest.1001.title` or `ui.confirm`. Generated Rust code exposes this as `TextKey`; dynamic targets may represent it as a string key.
+`text` is a key, not the translated text itself. Source data should contain values such as `quest.1001.title` or `ui.confirm`. Generated code exposes this as a `TextKey` where the target language has a distinct generated runtime type.
 
-The catalog validator checks every `text` value in business data. A missing key is a build error.
+The catalog validator checks every `text` value in business data. A missing key or empty translation is a build error.
 
 ## Catalog Sources
 
@@ -36,7 +36,6 @@ Declare localization at the project schema root:
 locales = ["zh_cn", "en_us"]
 default_locale = "zh_cn"
 fallback_locale = "en_us"
-strict = true
 
 [[localization.sources]]
 name = "ui"
@@ -67,7 +66,7 @@ Rules:
 | Multiple sources | All sources merge into one logical catalog. |
 | Duplicate keys | Build error. Keys are globally unique across all sources. |
 | Missing locale column | Build error. |
-| Empty translations with `strict = true` | Build error. |
+| Empty translation | Build error. |
 
 Use `key = "id"` on a source if the key column is not named `key`:
 
@@ -116,7 +115,7 @@ i18n.mount(pack)?;
 i18n.set_locale("zh_cn")?;
 
 let quest = config.quest().get(&1001).unwrap();
-let title = i18n.text(&quest.title_key)?;
+let title = quest.title_key.resolve(&i18n)?;
 ```
 
 Mounting validates:
@@ -127,4 +126,4 @@ Mounting validates:
 | locale declaration | Rejects packs for locales not declared in `[localization].locales`. |
 | mounted locale | `set_locale` fails until a pack for that locale has been mounted. |
 
-Business code does not know which source sheet a key came from. It only passes `TextKey` values to the i18n runtime.
+Business code does not know which source sheet a key came from. It resolves `TextKey` values with the mounted i18n runtime.

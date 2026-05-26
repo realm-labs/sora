@@ -42,6 +42,37 @@ interface SoraTableSource {
     <T> List<T> decodeTable(String name, SoraRowDecoder<T> decodeBinary, Function<SoraValue, T> decodeValue);
 }
 
+interface SoraTextResolver {
+    String text(TextKey key);
+}
+
+final class TextKey {
+    final String value;
+
+    TextKey(String value) {
+        this.value = value;
+    }
+
+    String resolve(SoraTextResolver resolver) {
+        return resolver.text(this);
+    }
+
+    @Override
+    public String toString() {
+        return value;
+    }
+
+    @Override
+    public boolean equals(Object other) {
+        return other instanceof TextKey key && value.equals(key.value);
+    }
+
+    @Override
+    public int hashCode() {
+        return value.hashCode();
+    }
+}
+
 final class SoraBundle implements SoraTableSource {
     private static final int BUNDLE_VERSION = 1;
     private static final int HEADER_LENGTH = 24;
@@ -384,8 +415,8 @@ final class SoraReader {
 
     int readU32() {
         var value = readVarU64();
-        if (value > Integer.MAX_VALUE) {
-            throw new SoraReadException("Sora varint exceeds Integer.MAX_VALUE");
+        if (value > 0xffffffffL) {
+            throw new SoraReadException("Sora varint exceeds uint32");
         }
         return (int)value;
     }

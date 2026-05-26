@@ -357,7 +357,8 @@ fn lua_type_name(ir: &ConfigIr, ty: &TypeIr, options: &LuaOptionsView) -> String
         }
         TypeIr::I64 => options.i64_type_name.to_owned(),
         TypeIr::F32 | TypeIr::F64 => "number".to_owned(),
-        TypeIr::String | TypeIr::Text => "string".to_owned(),
+        TypeIr::String => "string".to_owned(),
+        TypeIr::Text => "TextKey".to_owned(),
         TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => name.clone(),
         TypeIr::List(element) | TypeIr::Set(element) | TypeIr::Array { element, .. } => {
             format!("{}[]", lua_type_name(ir, element, options))
@@ -382,7 +383,8 @@ fn lua_decode_expr(ir: &ConfigIr, ty: &TypeIr, _options: &LuaOptionsView) -> Str
         TypeIr::I64 => "reader:read_i64()".to_owned(),
         TypeIr::F32 => "reader:read_f32()".to_owned(),
         TypeIr::F64 => "reader:read_f64()".to_owned(),
-        TypeIr::String | TypeIr::Text => "reader:read_string()".to_owned(),
+        TypeIr::String => "reader:read_string()".to_owned(),
+        TypeIr::Text => "Runtime.new_text_key(reader:read_string())".to_owned(),
         TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => {
             format!("{name}.decode(reader)")
         }
@@ -420,7 +422,8 @@ fn lua_value_decode_expr(ir: &ConfigIr, ty: &TypeIr, value: &str) -> String {
         | TypeIr::U32
         | TypeIr::I64 => format!("Runtime.expect_integer({value})"),
         TypeIr::F32 | TypeIr::F64 => format!("Runtime.expect_number({value})"),
-        TypeIr::String | TypeIr::Text => format!("Runtime.expect_string({value})"),
+        TypeIr::String => format!("Runtime.expect_string({value})"),
+        TypeIr::Text => format!("Runtime.new_text_key(Runtime.expect_string({value}))"),
         TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => {
             format!("{name}.decode_value({value})")
         }

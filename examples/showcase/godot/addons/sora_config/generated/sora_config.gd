@@ -3,7 +3,7 @@
 class_name SoraConfig
 extends RefCounted
 
-const SORA_SCHEMA_FINGERPRINT := "d960f9e36f012c5d"
+const SORA_SCHEMA_FINGERPRINT := "5486bd0c240997a2"
 
 var _tables: Dictionary = {}
 

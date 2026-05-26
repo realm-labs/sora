@@ -45,6 +45,36 @@ type SoraTableSource interface {
 	DecodeTable(name string, decodeBinary func(*SoraReader) (any, error), decodeValue func(SoraValue) (any, error)) ([]any, error)
 }
 
+type TextResolver interface {
+	Text(key TextKey) (string, error)
+}
+
+type TextKey string
+
+func (key TextKey) String() string {
+	return string(key)
+}
+
+func (key TextKey) Resolve(resolver TextResolver) (string, error) {
+	return resolver.Text(key)
+}
+
+func ReadTextKey(reader *SoraReader) (TextKey, error) {
+	value, err := reader.ReadString()
+	if err != nil {
+		return "", err
+	}
+	return TextKey(value), nil
+}
+
+func DecodeTextKeyValue(value SoraValue) (TextKey, error) {
+	text, err := value.AsString()
+	if err != nil {
+		return "", err
+	}
+	return TextKey(text), nil
+}
+
 func ParseSoraBundle(bytes []byte) (*SoraBundle, error) {
 	if len(bytes) < soraHeaderLength {
 		return nil, fmt.Errorf("Sora bundle is shorter than header")
@@ -280,6 +310,50 @@ func (reader *SoraReader) ReadUInt8() (byte, error) {
 	return bytes[0], nil
 }
 
+func (reader *SoraReader) ReadUInt8Value() (uint8, error) {
+	value, err := reader.ReadUInt32()
+	if err != nil {
+		return 0, err
+	}
+	if value > math.MaxUint8 {
+		return 0, fmt.Errorf("integer %d exceeds uint8", value)
+	}
+	return uint8(value), nil
+}
+
+func (reader *SoraReader) ReadInt8() (int8, error) {
+	value, err := reader.ReadInt32()
+	if err != nil {
+		return 0, err
+	}
+	if value < math.MinInt8 || value > math.MaxInt8 {
+		return 0, fmt.Errorf("integer %d exceeds int8", value)
+	}
+	return int8(value), nil
+}
+
+func (reader *SoraReader) ReadUInt16() (uint16, error) {
+	value, err := reader.ReadUInt32()
+	if err != nil {
+		return 0, err
+	}
+	if value > math.MaxUint16 {
+		return 0, fmt.Errorf("integer %d exceeds uint16", value)
+	}
+	return uint16(value), nil
+}
+
+func (reader *SoraReader) ReadInt16() (int16, error) {
+	value, err := reader.ReadInt32()
+	if err != nil {
+		return 0, err
+	}
+	if value < math.MinInt16 || value > math.MaxInt16 {
+		return 0, fmt.Errorf("integer %d exceeds int16", value)
+	}
+	return int16(value), nil
+}
+
 func (reader *SoraReader) ReadBool() (bool, error) {
 	value, err := reader.ReadUInt8()
 	if err != nil {
@@ -295,15 +369,15 @@ func (reader *SoraReader) ReadBool() (bool, error) {
 	}
 }
 
-func (reader *SoraReader) ReadUInt32() (int, error) {
+func (reader *SoraReader) ReadUInt32() (uint32, error) {
 	value, err := reader.readVarUInt64()
 	if err != nil {
 		return 0, err
 	}
-	if value > uint64(^uint(0)>>1) {
-		return 0, fmt.Errorf("Sora varint exceeds int")
+	if value > math.MaxUint32 {
+		return 0, fmt.Errorf("Sora varint exceeds uint32")
 	}
-	return int(value), nil
+	return uint32(value), nil
 }
 
 func (reader *SoraReader) ReadInt32() (int32, error) {
@@ -344,10 +418,10 @@ func (reader *SoraReader) ReadString() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	if id < 0 || id >= len(reader.strings) {
+	if uint64(id) >= uint64(len(reader.strings)) {
 		return "", fmt.Errorf("invalid string id %d", id)
 	}
-	return reader.strings[id], nil
+	return reader.strings[int(id)], nil
 }
 
 func ReadOptional[T any](reader *SoraReader, read func(*SoraReader) (T, error)) (*T, error) {
@@ -374,8 +448,11 @@ func ReadList[T any](reader *SoraReader, read func(*SoraReader) (T, error)) ([]T
 	if err != nil {
 		return nil, err
 	}
-	values := make([]T, 0, length)
-	for i := 0; i < length; i++ {
+	if uint64(length) > uint64(int(^uint(0)>>1)) {
+		return nil, fmt.Errorf("list length exceeds int")
+	}
+	values := make([]T, 0, int(length))
+	for i := uint32(0); i < length; i++ {
 		value, err := read(reader)
 		if err != nil {
 			return nil, err
@@ -390,8 +467,11 @@ func ReadMap[K comparable, V any](reader *SoraReader, readKey func(*SoraReader) 
 	if err != nil {
 		return nil, err
 	}
-	values := make(map[K]V, length)
-	for i := 0; i < length; i++ {
+	if uint64(length) > uint64(int(^uint(0)>>1)) {
+		return nil, fmt.Errorf("map length exceeds int")
+	}
+	values := make(map[K]V, int(length))
+	for i := uint32(0); i < length; i++ {
 		key, err := readKey(reader)
 		if err != nil {
 			return nil, err
@@ -653,6 +733,61 @@ func (value SoraValue) AsInt32() (int32, error) {
 		return 0, fmt.Errorf("integer %d exceeds int32", typed)
 	}
 	return int32(typed), nil
+}
+
+func (value SoraValue) AsUInt32() (uint32, error) {
+	typed, err := value.AsInt64()
+	if err != nil {
+		return 0, err
+	}
+	if typed < 0 || typed > math.MaxUint32 {
+		return 0, fmt.Errorf("integer %d exceeds uint32", typed)
+	}
+	return uint32(typed), nil
+}
+
+func (value SoraValue) AsInt8() (int8, error) {
+	typed, err := value.AsInt32()
+	if err != nil {
+		return 0, err
+	}
+	if typed < math.MinInt8 || typed > math.MaxInt8 {
+		return 0, fmt.Errorf("integer %d exceeds int8", typed)
+	}
+	return int8(typed), nil
+}
+
+func (value SoraValue) AsUInt8() (uint8, error) {
+	typed, err := value.AsUInt32()
+	if err != nil {
+		return 0, err
+	}
+	if typed > math.MaxUint8 {
+		return 0, fmt.Errorf("integer %d exceeds uint8", typed)
+	}
+	return uint8(typed), nil
+}
+
+func (value SoraValue) AsInt16() (int16, error) {
+	typed, err := value.AsInt32()
+	if err != nil {
+		return 0, err
+	}
+	if typed < math.MinInt16 || typed > math.MaxInt16 {
+		return 0, fmt.Errorf("integer %d exceeds int16", typed)
+	}
+	return int16(typed), nil
+}
+
+func (value SoraValue) AsUInt16() (uint16, error) {
+	typed, err := value.AsUInt32()
+	if err != nil {
+		return 0, err
+	}
+	if typed > math.MaxUint16 {
+		return 0, fmt.Errorf("integer %d exceeds uint16", typed)
+	}
+	return uint16(typed), nil
 }
 
 func (value SoraValue) AsInt64() (int64, error) {

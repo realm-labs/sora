@@ -327,7 +327,8 @@ fn dart_value_decode_expr(ir: &ConfigIr, ty: &TypeIr, value: &str) -> String {
         | TypeIr::U32
         | TypeIr::I64 => format!("{value}.asInt()"),
         TypeIr::F32 | TypeIr::F64 => format!("{value}.asDouble()"),
-        TypeIr::String | TypeIr::Text => format!("{value}.asString()"),
+        TypeIr::String => format!("{value}.asString()"),
+        TypeIr::Text => format!("TextKey({value}.asString())"),
         TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => {
             format!("{}.decode({value})", dart_type_identifier(name))
         }

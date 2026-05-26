@@ -11,7 +11,7 @@ extern "C" {
 
 typedef struct sora_showcase_dialogue {
     int32_t id;
-    sora_string speaker_key;
+    sora_text_key speaker_key;
     sora_showcase_string_array lines;
 } sora_showcase_dialogue;
 

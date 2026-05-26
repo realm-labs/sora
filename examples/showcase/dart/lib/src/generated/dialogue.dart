@@ -4,7 +4,7 @@ import 'runtime.dart';
 
 final class Dialogue {
   final int id;
-  final String speakerKey;
+  final TextKey speakerKey;
   final List<String> lines;
 
   const Dialogue({
@@ -17,7 +17,7 @@ final class Dialogue {
     final obj = value.asObject();
     return Dialogue(
       id: obj.get("id").asInt(),
-      speakerKey: obj.get("speaker_key").asString(),
+      speakerKey: TextKey(obj.get("speaker_key").asString()),
       lines: obj.get("lines").asList((item) => item.asString()),
     );
   }

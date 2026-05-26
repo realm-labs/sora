@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
-from .sora_runtime import SoraReader
+from .sora_runtime import SoraReader, TextKey
 from .sora_runtime import (
     SoraConfigTable,
     SoraIndexInfo,
@@ -27,8 +27,8 @@ if TYPE_CHECKING:
 class MailTemplate:
     id: int
     mail_type: MailType
-    title_key: str
-    body_key: str
+    title_key: TextKey
+    body_key: TextKey
     rewards: list[Reward]
 
     @staticmethod
@@ -37,8 +37,8 @@ class MailTemplate:
         from .reward import Reward
         id = reader.read_i32()
         mail_type = MailType.decode(reader)
-        title_key = reader.read_string()
-        body_key = reader.read_string()
+        title_key = TextKey(reader.read_string())
+        body_key = TextKey(reader.read_string())
         rewards = reader.read_list(lambda: Reward.decode(reader))
         return MailTemplate(
             id=id,

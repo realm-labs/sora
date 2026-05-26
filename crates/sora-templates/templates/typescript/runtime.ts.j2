@@ -33,6 +33,22 @@ export class SoraReadError extends Error {
     }
 }
 
+export interface SoraTextResolver {
+    text(key: TextKey): string;
+}
+
+export class TextKey {
+    constructor(readonly value: string) {}
+
+    resolve(resolver: SoraTextResolver): string {
+        return resolver.text(this);
+    }
+
+    toString(): string {
+        return this.value;
+    }
+}
+
 export type SoraTableShape = "list" | "keyed" | "singleton";
 
 export interface SoraKeyInfo {

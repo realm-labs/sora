@@ -2,6 +2,28 @@
 
 local Runtime = {}
 
+---@class TextKey
+---@field value string
+local TextKey = {}
+TextKey.__index = TextKey
+
+---@param value string
+---@return TextKey
+function Runtime.new_text_key(value)
+    return setmetatable({ value = value }, TextKey)
+end
+
+---@return string
+function TextKey:as_string()
+    return self.value
+end
+
+---@param i18n SoraI18n
+---@return string
+function TextKey:resolve(i18n)
+    return i18n:text(self)
+end
+
 local SORA_BUNDLE_VERSION = 1
 local SORA_HEADER_LENGTH = 24
 local SORA_SECTION_ENTRY_LENGTH = 28
@@ -284,6 +306,9 @@ end
 ---@param key string
 ---@return string
 function SoraI18n:text(key)
+    if type(key) == "table" and key.value ~= nil then
+        key = key.value
+    end
     local pack = self.packs[self.active_locale]
     if pack == nil then
         error("locale `" .. tostring(self.active_locale) .. "` is not mounted")

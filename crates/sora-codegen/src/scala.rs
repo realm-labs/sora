@@ -301,7 +301,8 @@ fn scala_decode_expr(ir: &ConfigIr, ty: &TypeIr) -> String {
         TypeIr::I64 => "reader.readI64()".to_owned(),
         TypeIr::F32 => "reader.readF32()".to_owned(),
         TypeIr::F64 => "reader.readF64()".to_owned(),
-        TypeIr::String | TypeIr::Text => "reader.readString()".to_owned(),
+        TypeIr::String => "reader.readString()".to_owned(),
+        TypeIr::Text => "TextKey(reader.readString())".to_owned(),
         TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => {
             format!("{name}.decode(reader)")
         }
@@ -340,7 +341,8 @@ fn scala_value_decode_expr(ir: &ConfigIr, ty: &TypeIr, value: &str) -> String {
         TypeIr::I64 => format!("{value}.asLong"),
         TypeIr::F32 => format!("{value}.asFloat"),
         TypeIr::F64 => format!("{value}.asDouble"),
-        TypeIr::String | TypeIr::Text => format!("{value}.asString"),
+        TypeIr::String => format!("{value}.asString"),
+        TypeIr::Text => format!("TextKey({value}.asString)"),
         TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => {
             format!("{name}.decode({value})")
         }

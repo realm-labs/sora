@@ -55,6 +55,36 @@ type SoraTableSource interface {
     DecodeTable(name string, decodeBinary func(*SoraReader) (any, error), decodeValue func(SoraValue) (any, error)) ([]any, error)
 }
 
+type TextResolver interface {
+    Text(key TextKey) (string, error)
+}
+
+type TextKey string
+
+func (key TextKey) String() string {
+    return string(key)
+}
+
+func (key TextKey) Resolve(resolver TextResolver) (string, error) {
+    return resolver.Text(key)
+}
+
+func ReadTextKey(reader *SoraReader) (TextKey, error) {
+    value, err := reader.ReadString()
+    if err != nil {
+        return "", err
+    }
+    return TextKey(value), nil
+}
+
+func DecodeTextKeyValue(value SoraValue) (TextKey, error) {
+    text, err := value.AsString()
+    if err != nil {
+        return "", err
+    }
+    return TextKey(text), nil
+}
+
 func ParseSoraBundle(bytes []byte) (*SoraBundle, error) {
     if len(bytes) < soraHeaderLength {
         return nil, fmt.Errorf("Sora bundle is shorter than header")

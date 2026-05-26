@@ -215,6 +215,39 @@ bool sora_string_equal(const sora_string* left, const sora_string* right) {
     return memcmp(left->data, right->data, left->len) == 0;
 }
 
+void sora_text_key_free(sora_text_key* value) {
+    if (value == NULL) {
+        return;
+    }
+    sora_string_free(&value->value);
+}
+
+bool sora_text_key_equal(const sora_text_key* left, const sora_text_key* right) {
+    if (left == NULL || right == NULL) {
+        return false;
+    }
+    return sora_string_equal(&left->value, &right->value);
+}
+
+const sora_string* sora_text_key_value(const sora_text_key* key) {
+    if (key == NULL) {
+        return NULL;
+    }
+    return &key->value;
+}
+
+sora_result sora_text_key_resolve(
+    const sora_text_key* key,
+    sora_text_resolver_fn resolver,
+    void* user_data,
+    const char** out
+) {
+    if (key == NULL || resolver == NULL || out == NULL) {
+        return sora_error(SORA_ERROR_DECODE, "invalid text key resolver");
+    }
+    return resolver(key, out, user_data);
+}
+
 void sora_reader_init(
     sora_reader* reader,
     const uint8_t* bytes,
@@ -379,6 +412,10 @@ sora_result sora_reader_read_string(sora_reader* reader, sora_string* out) {
     out->data[source->len] = '\0';
     out->len = source->len;
     return sora_ok();
+}
+
+sora_result sora_reader_read_text_key(sora_reader* reader, sora_text_key* out) {
+    return sora_reader_read_string(reader, &out->value);
 }
 
 static sora_result sora_decode_string_table(const uint8_t* bytes, size_t len, sora_string** out_strings, size_t* out_count) {

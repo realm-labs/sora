@@ -13,7 +13,7 @@ sora_result sora_showcase_dialogue_decode(sora_reader* reader, sora_showcase_dia
         }
     }
     {
-        sora_result result = sora_reader_read_string(reader, &out->speaker_key);
+        sora_result result = sora_reader_read_text_key(reader, &out->speaker_key);
         if (result.code != SORA_OK) {
             sora_showcase_dialogue_free(out);
             return result;
@@ -33,7 +33,7 @@ void sora_showcase_dialogue_free(sora_showcase_dialogue* value) {
     if (value == NULL) {
         return;
     }
-    sora_string_free(&value->speaker_key);
+    sora_text_key_free(&value->speaker_key);
     sora_showcase_string_array_free(&value->lines);
     *value = (sora_showcase_dialogue){0};
 }

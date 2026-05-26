@@ -7,8 +7,8 @@ local Reward = require("generated.reward")
 ---@class MailTemplate
 ---@field id integer
 ---@field mailType MailType
----@field titleKey string
----@field bodyKey string
+---@field titleKey TextKey
+---@field bodyKey TextKey
 ---@field rewards Reward[]
 
 local MailTemplate = {}
@@ -19,8 +19,8 @@ function MailTemplate.decode(reader)
     return {
         id = reader:read_i32(),
         mailType = MailType.decode(reader),
-        titleKey = reader:read_string(),
-        bodyKey = reader:read_string(),
+        titleKey = Runtime.new_text_key(reader:read_string()),
+        bodyKey = Runtime.new_text_key(reader:read_string()),
         rewards = reader:read_list(function() return Reward.decode(reader) end),
     }
 end
@@ -32,8 +32,8 @@ function MailTemplate.decode_value(value)
     return {
         id = Runtime.expect_integer(obj["id"]),
         mailType = MailType.decode_value(obj["mail_type"]),
-        titleKey = Runtime.expect_string(obj["title_key"]),
-        bodyKey = Runtime.expect_string(obj["body_key"]),
+        titleKey = Runtime.new_text_key(Runtime.expect_string(obj["title_key"])),
+        bodyKey = Runtime.new_text_key(Runtime.expect_string(obj["body_key"])),
         rewards = Runtime.decode_value_list(obj["rewards"], function(item) return Reward.decode_value(item) end),
     }
 end

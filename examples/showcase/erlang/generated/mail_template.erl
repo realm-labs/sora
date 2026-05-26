@@ -9,8 +9,8 @@
 -type t() :: #{
     'id' := integer(),
     'mail_type' := mail_type:t(),
-    'title_key' := binary(),
-    'body_key' := binary(),
+    'title_key' := sora_runtime:text_key(),
+    'body_key' := sora_runtime:text_key(),
     'rewards' := [reward:t()]
 }.
 
@@ -21,8 +21,8 @@
 decode(Reader0) ->
     {Id, Reader1} = (fun sora_runtime:read_i32/1)(Reader0),
     {MailType, Reader2} = (fun mail_type:decode/1)(Reader1),
-    {TitleKey, Reader3} = (fun sora_runtime:read_string/1)(Reader2),
-    {BodyKey, Reader4} = (fun sora_runtime:read_string/1)(Reader3),
+    {TitleKey, Reader3} = (fun sora_runtime:read_text_key/1)(Reader2),
+    {BodyKey, Reader4} = (fun sora_runtime:read_text_key/1)(Reader3),
     {Rewards, Reader5} = (fun(Reader) -> sora_runtime:read_list(fun reward:decode/1, Reader) end)(Reader4),
     {#{
         'id' => Id,
@@ -38,8 +38,8 @@ decode_value(Value) ->
     #{
         'id' => sora_runtime:expect_integer(sora_runtime:value_get(<<"id">>, Obj)),
         'mail_type' => mail_type:decode_value(sora_runtime:value_get(<<"mail_type">>, Obj)),
-        'title_key' => sora_runtime:expect_binary(sora_runtime:value_get(<<"title_key">>, Obj)),
-        'body_key' => sora_runtime:expect_binary(sora_runtime:value_get(<<"body_key">>, Obj)),
+        'title_key' => sora_runtime:expect_text_key(sora_runtime:value_get(<<"title_key">>, Obj)),
+        'body_key' => sora_runtime:expect_text_key(sora_runtime:value_get(<<"body_key">>, Obj)),
         'rewards' => sora_runtime:decode_value_list(fun(Item) -> reward:decode_value(Item) end, sora_runtime:value_get(<<"rewards">>, Obj))
     }.
 

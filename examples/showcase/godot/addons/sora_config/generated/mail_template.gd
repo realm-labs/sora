@@ -4,8 +4,8 @@ class_name MailTemplate
 extends RefCounted
 var id: int = 0
 var mail_type: String = ""
-var title_key: String = ""
-var body_key: String = ""
+var title_key: SoraRuntime.TextKey = null
+var body_key: SoraRuntime.TextKey = null
 var rewards: Array = []
 
 static func decode(value: Variant) -> MailTemplate:
@@ -18,8 +18,8 @@ static func decode(value: Variant) -> MailTemplate:
 	var out := MailTemplate.new()
 	out.id = int(SoraRuntime.read_field(data, "id", 0))
 	out.mail_type = MailType.decode(SoraRuntime.read_field(data, "mail_type", ""))
-	out.title_key = str(SoraRuntime.read_field(data, "title_key", ""))
-	out.body_key = str(SoraRuntime.read_field(data, "body_key", ""))
+	out.title_key = SoraRuntime.TextKey.new(str(SoraRuntime.read_field(data, "title_key", null)))
+	out.body_key = SoraRuntime.TextKey.new(str(SoraRuntime.read_field(data, "body_key", null)))
 	out.rewards = SoraRuntime.decode_array(SoraRuntime.read_field(data, "rewards", []), func(item): return Reward.decode(item))
 	return out
 

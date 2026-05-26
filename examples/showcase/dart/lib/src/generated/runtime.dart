@@ -11,6 +11,27 @@ final class SoraReadException implements Exception {
   String toString() => 'SoraReadException: $message';
 }
 
+abstract interface class SoraTextResolver {
+  String text(TextKey key);
+}
+
+final class TextKey {
+  final String value;
+
+  const TextKey(this.value);
+
+  String resolve(SoraTextResolver resolver) => resolver.text(this);
+
+  @override
+  String toString() => value;
+
+  @override
+  bool operator ==(Object other) => other is TextKey && value == other.value;
+
+  @override
+  int get hashCode => value.hashCode;
+}
+
 final class SoraValueBundle {
   final Map<String, List<SoraValue>> _tables;
   final String schemaFingerprint;

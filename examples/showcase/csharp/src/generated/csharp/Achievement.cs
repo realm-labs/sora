@@ -9,7 +9,7 @@ namespace com.sora.showcase;
 
 public sealed record Achievement(
     int Id,
-    string TitleKey,
+    TextKey TitleKey,
     long TargetCount,
     ResourceCost Reward
 )
@@ -18,7 +18,7 @@ public sealed record Achievement(
     {
         return new Achievement(
             reader.ReadInt32(),
-            reader.ReadString(),
+            new TextKey(reader.ReadString()),
             reader.ReadInt64(),
             ResourceCost.Decode(reader)
         );
@@ -29,7 +29,7 @@ public sealed record Achievement(
         var obj = value.AsObject("Achievement");
         return new Achievement(
             obj.Get("id").AsInt32(),
-            obj.Get("title_key").AsString(),
+            new TextKey(obj.Get("title_key").AsString()),
             obj.Get("target_count").AsInt64(),
             ResourceCost.Decode(obj.Get("reward"))
         );

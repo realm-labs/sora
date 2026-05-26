@@ -5,8 +5,8 @@ package com.sora.showcase
 data class MailTemplate(
     val id: Int,
     val mailType: MailType,
-    val titleKey: String,
-    val bodyKey: String,
+    val titleKey: TextKey,
+    val bodyKey: TextKey,
     val rewards: List<Reward>,
 ) {
     companion object {
@@ -14,8 +14,8 @@ data class MailTemplate(
             MailTemplate(
                 id = reader.readI32(),
                 mailType = MailType.decode(reader),
-                titleKey = reader.readString(),
-                bodyKey = reader.readString(),
+                titleKey = TextKey(reader.readString()),
+                bodyKey = TextKey(reader.readString()),
                 rewards = reader.readList { Reward.decode(reader) },
             )
 
@@ -24,8 +24,8 @@ data class MailTemplate(
             return MailTemplate(
                 id = obj.get("id").asInt(),
                 mailType = MailType.decode(obj.get("mail_type")),
-                titleKey = obj.get("title_key").asString(),
-                bodyKey = obj.get("body_key").asString(),
+                titleKey = TextKey(obj.get("title_key").asString()),
+                bodyKey = TextKey(obj.get("body_key").asString()),
                 rewards = obj.get("rewards").asList { item -> Reward.decode(item) },
             )
         }

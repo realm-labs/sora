@@ -47,6 +47,16 @@ typedef struct sora_string {
     size_t len;
 } sora_string;
 
+typedef struct sora_text_key {
+    sora_string value;
+} sora_text_key;
+
+typedef sora_result (*sora_text_resolver_fn)(
+    const sora_text_key* key,
+    const char** out,
+    void* user_data
+);
+
 typedef struct sora_reader {
     const uint8_t* bytes;
     size_t len;
@@ -75,6 +85,15 @@ typedef struct sora_bundle_options {
 
 void sora_string_free(sora_string* value);
 bool sora_string_equal(const sora_string* left, const sora_string* right);
+void sora_text_key_free(sora_text_key* value);
+bool sora_text_key_equal(const sora_text_key* left, const sora_text_key* right);
+const sora_string* sora_text_key_value(const sora_text_key* key);
+sora_result sora_text_key_resolve(
+    const sora_text_key* key,
+    sora_text_resolver_fn resolver,
+    void* user_data,
+    const char** out
+);
 
 void sora_reader_init(
     sora_reader* reader,
@@ -84,7 +103,11 @@ void sora_reader_init(
     size_t string_count
 );
 bool sora_reader_is_finished(const sora_reader* reader);
+sora_result sora_reader_read_byte(sora_reader* reader, uint8_t* out);
+sora_result sora_reader_read_i8(sora_reader* reader, int8_t* out);
 sora_result sora_reader_read_u8(sora_reader* reader, uint8_t* out);
+sora_result sora_reader_read_i16(sora_reader* reader, int16_t* out);
+sora_result sora_reader_read_u16(sora_reader* reader, uint16_t* out);
 sora_result sora_reader_read_bool(sora_reader* reader, bool* out);
 sora_result sora_reader_read_u32(sora_reader* reader, uint32_t* out);
 sora_result sora_reader_read_i32(sora_reader* reader, int32_t* out);
@@ -92,6 +115,7 @@ sora_result sora_reader_read_i64(sora_reader* reader, int64_t* out);
 sora_result sora_reader_read_f32(sora_reader* reader, float* out);
 sora_result sora_reader_read_f64(sora_reader* reader, double* out);
 sora_result sora_reader_read_string(sora_reader* reader, sora_string* out);
+sora_result sora_reader_read_text_key(sora_reader* reader, sora_text_key* out);
 
 sora_result sora_bundle_parse(const uint8_t* bytes, size_t len, sora_bundle** out);
 sora_result sora_bundle_parse_with_options(

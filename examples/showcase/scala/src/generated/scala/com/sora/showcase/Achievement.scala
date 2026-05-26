@@ -4,7 +4,7 @@ package com.sora.showcase
 
 final case class Achievement(
   id: Int,
-  titleKey: String,
+  titleKey: TextKey,
   targetCount: Long,
   reward: ResourceCost
 )
@@ -13,7 +13,7 @@ object Achievement {
   def decode(reader: SoraReader): Achievement =
     Achievement(
       id = reader.readI32(),
-      titleKey = reader.readString(),
+      titleKey = TextKey(reader.readString()),
       targetCount = reader.readI64(),
       reward = ResourceCost.decode(reader)
     )
@@ -22,7 +22,7 @@ object Achievement {
     val obj = value.asObject
     Achievement(
       id = obj.get("id").asInt,
-      titleKey = obj.get("title_key").asString,
+      titleKey = TextKey(obj.get("title_key").asString),
       targetCount = obj.get("target_count").asLong,
       reward = ResourceCost.decode(obj.get("reward"))
     )

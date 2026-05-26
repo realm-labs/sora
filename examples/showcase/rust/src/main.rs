@@ -42,7 +42,7 @@ fn main() {
     assert_eq!(config.monster().len(), 80);
     let achievement = config.achievement().get(&14001).expect("achievement 14001");
     assert_eq!(
-        i18n.text(&achievement.title_key).expect("title text"),
+        achievement.title_key.resolve(&i18n).expect("title text"),
         "中文文本 1"
     );
     assert_eq!(config.event_rule().len(), 20);

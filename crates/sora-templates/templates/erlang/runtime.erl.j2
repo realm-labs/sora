@@ -21,6 +21,10 @@
     expect_integer/1,
     expect_float/1,
     expect_binary/1,
+    expect_text_key/1,
+    text_key/1,
+    text_key_value/1,
+    resolve_text_key/2,
     decode_value_list/2,
     decode_value_map/3,
     read_bool/1,
@@ -30,12 +34,13 @@
     read_f32/1,
     read_f64/1,
     read_string/1,
+    read_text_key/1,
     read_optional/2,
     read_list/2,
     read_map/3
 ]).
 
--export_type([reader/0]).
+-export_type([reader/0, text_key/0]).
 
 -define(SORA_BUNDLE_VERSION, 1).
 -define(SORA_HEADER_LENGTH, 24).
@@ -48,6 +53,7 @@
 -define(COMPRESSION_ZSTD, 1).
 
 -type reader() :: {binary(), [binary()]}.
+-type text_key() :: {text_key, binary()}.
 -type decompressor() :: fun((integer(), binary(), integer()) -> binary()).
 -type section() :: {{ "#{" }}
     kind := integer(),
@@ -257,6 +263,23 @@ read_string(Reader0) ->
         true -> {lists:nth(Id + 1, Strings), {Rest, Strings}};
         false -> error({sora_string_id_out_of_range, Id})
     end.
+
+-spec read_text_key(reader()) -> {text_key(), reader()}.
+read_text_key(Reader0) ->
+    {Value, Reader1} = read_string(Reader0),
+    {text_key(Value), Reader1}.
+
+-spec text_key(binary()) -> text_key().
+text_key(Value) when is_binary(Value) ->
+    {text_key, Value}.
+
+-spec text_key_value(text_key()) -> binary().
+text_key_value({text_key, Value}) ->
+    Value.
+
+-spec resolve_text_key(text_key(), fun((text_key()) -> binary())) -> binary().
+resolve_text_key(Key, Resolver) when is_function(Resolver, 1) ->
+    Resolver(Key).
 
 -spec read_optional(fun((reader()) -> {T, reader()}), reader()) -> {T | undefined, reader()}.
 read_optional(Decode, Reader0) ->
@@ -561,6 +584,10 @@ expect_binary(Value) when is_binary(Value) ->
     Value;
 expect_binary(_Value) ->
     error(expected_binary).
+
+-spec expect_text_key(term()) -> text_key().
+expect_text_key(Value) ->
+    text_key(expect_binary(Value)).
 
 -spec decode_value_list(fun((term()) -> T), term()) -> [T].
 decode_value_list(Decode, Value) ->

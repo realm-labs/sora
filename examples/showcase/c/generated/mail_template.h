@@ -14,8 +14,8 @@ extern "C" {
 typedef struct sora_showcase_mail_template {
     int32_t id;
     sora_showcase_mail_type mail_type;
-    sora_string title_key;
-    sora_string body_key;
+    sora_text_key title_key;
+    sora_text_key body_key;
     sora_showcase_reward_array rewards;
 } sora_showcase_mail_template;
 

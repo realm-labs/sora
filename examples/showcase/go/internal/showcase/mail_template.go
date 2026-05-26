@@ -5,8 +5,8 @@ package showcase
 type MailTemplate struct {
 	Id       int32
 	MailType MailType
-	TitleKey string
-	BodyKey  string
+	TitleKey TextKey
+	BodyKey  TextKey
 	Rewards  []Reward
 }
 
@@ -21,11 +21,11 @@ func decodeMailTemplate(reader *SoraReader) (MailTemplate, error) {
 	if err != nil {
 		return value, err
 	}
-	value.TitleKey, err = reader.ReadString()
+	value.TitleKey, err = ReadTextKey(reader)
 	if err != nil {
 		return value, err
 	}
-	value.BodyKey, err = reader.ReadString()
+	value.BodyKey, err = ReadTextKey(reader)
 	if err != nil {
 		return value, err
 	}
@@ -50,11 +50,11 @@ func decodeMailTemplateValue(input SoraValue) (MailTemplate, error) {
 	if err != nil {
 		return value, err
 	}
-	value.TitleKey, err = obj.Get("title_key").AsString()
+	value.TitleKey, err = DecodeTextKeyValue(obj.Get("title_key"))
 	if err != nil {
 		return value, err
 	}
-	value.BodyKey, err = obj.Get("body_key").AsString()
+	value.BodyKey, err = DecodeTextKeyValue(obj.Get("body_key"))
 	if err != nil {
 		return value, err
 	}

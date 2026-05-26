@@ -4,7 +4,7 @@ package com.sora.showcase
 
 final case class Dialogue(
   id: Int,
-  speakerKey: String,
+  speakerKey: TextKey,
   lines: Vector[String]
 )
 
@@ -12,7 +12,7 @@ object Dialogue {
   def decode(reader: SoraReader): Dialogue =
     Dialogue(
       id = reader.readI32(),
-      speakerKey = reader.readString(),
+      speakerKey = TextKey(reader.readString()),
       lines = reader.readList(reader.readString())
     )
 
@@ -20,7 +20,7 @@ object Dialogue {
     val obj = value.asObject
     Dialogue(
       id = obj.get("id").asInt,
-      speakerKey = obj.get("speaker_key").asString,
+      speakerKey = TextKey(obj.get("speaker_key").asString),
       lines = obj.get("lines").asList(item => item.asString)
     )
   }

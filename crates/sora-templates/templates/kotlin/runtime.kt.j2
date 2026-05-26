@@ -37,6 +37,16 @@ interface SoraTableSource {
     ): List<T>
 }
 
+fun interface SoraTextResolver {
+    fun text(key: TextKey): String
+}
+
+@JvmInline
+value class TextKey(val value: String) {
+    fun resolve(resolver: SoraTextResolver): String = resolver.text(this)
+    override fun toString(): String = value
+}
+
 private data class SoraSection(
     val kind: Int,
     val compression: Int,

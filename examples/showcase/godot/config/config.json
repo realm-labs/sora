@@ -1,7 +1,7 @@
 {
   "format": "json",
   "format_version": 1,
-  "schema_fingerprint": "d960f9e36f012c5d",
+  "schema_fingerprint": "5486bd0c240997a2",
   "data_fingerprint": "ca516ff89018615a",
   "schema": {
     "package": "com.sora.showcase",
@@ -12,7 +12,6 @@
       ],
       "default_locale": "zh_cn",
       "fallback_locale": "en_us",
-      "strict": true,
       "sources": [
         {
           "name": "Localization",

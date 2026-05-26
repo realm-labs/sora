@@ -11,7 +11,6 @@ pub struct LocaleCatalog {
     pub locales: Vec<String>,
     pub default_locale: String,
     pub fallback_locale: Option<String>,
-    pub strict: bool,
     pub entries: BTreeMap<String, BTreeMap<String, String>>,
 }
 
@@ -77,7 +76,7 @@ pub fn build_locale_catalog(
                         source.name
                     ))
                 })?;
-                if localization.strict && value.is_empty() {
+                if value.is_empty() {
                     return Err(SoraError::InvalidSchema(format!(
                         "localization key `{key}` in source `{}` has empty `{locale}` text",
                         source.name
@@ -95,7 +94,6 @@ pub fn build_locale_catalog(
         locales: localization.locales.clone(),
         default_locale: localization.default_locale.clone(),
         fallback_locale: localization.fallback_locale.clone(),
-        strict: localization.strict,
         entries,
     }))
 }
@@ -329,6 +327,27 @@ mod tests {
                 locale_source("UiText", "ui.ok", "确认", "OK"),
                 locale_source("QuestText", "quest.title", "任务", "Quest"),
             ],
+        };
+
+        assert!(build_locale_catalog(&ir, &data, &localization_data).is_err());
+    }
+
+    #[test]
+    fn rejects_empty_translation() {
+        let ir = example_ir();
+        let data = ConfigData {
+            tables: vec![TableData {
+                name: "Quest".to_owned(),
+                rows: vec![RowData {
+                    values: BTreeMap::from([
+                        ("id".to_owned(), Value::Integer(1)),
+                        ("title".to_owned(), Value::String("quest.title".to_owned())),
+                    ]),
+                }],
+            }],
+        };
+        let localization_data = LocalizationData {
+            sources: vec![locale_source("QuestText", "quest.title", "", "Quest")],
         };
 
         assert!(build_locale_catalog(&ir, &data, &localization_data).is_err());

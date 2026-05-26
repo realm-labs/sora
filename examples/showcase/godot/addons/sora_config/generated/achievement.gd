@@ -3,7 +3,7 @@
 class_name Achievement
 extends RefCounted
 var id: int = 0
-var title_key: String = ""
+var title_key: SoraRuntime.TextKey = null
 var target_count: int = 0
 var reward: ResourceCost = null
 
@@ -16,7 +16,7 @@ static func decode(value: Variant) -> Achievement:
 	var data: Dictionary = value
 	var out := Achievement.new()
 	out.id = int(SoraRuntime.read_field(data, "id", 0))
-	out.title_key = str(SoraRuntime.read_field(data, "title_key", ""))
+	out.title_key = SoraRuntime.TextKey.new(str(SoraRuntime.read_field(data, "title_key", null)))
 	out.target_count = int(SoraRuntime.read_field(data, "target_count", 0))
 	out.reward = ResourceCost.decode(SoraRuntime.read_field(data, "reward", null))
 	return out

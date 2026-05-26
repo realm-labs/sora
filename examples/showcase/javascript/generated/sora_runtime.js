@@ -21,6 +21,20 @@ export class SoraReadError extends Error {
     }
 }
 
+export class TextKey {
+    constructor(value) {
+        this.value = value;
+    }
+
+    resolve(resolver) {
+        return resolver.text(this);
+    }
+
+    toString() {
+        return this.value;
+    }
+}
+
 export class SoraBundle {
     constructor(bytes, sections, schemaFingerprint, strings) {
         this.bytes = bytes;

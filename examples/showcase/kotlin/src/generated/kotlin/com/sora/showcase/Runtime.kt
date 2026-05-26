@@ -24,6 +24,16 @@ interface SoraTableSource {
     ): List<T>
 }
 
+fun interface SoraTextResolver {
+    fun text(key: TextKey): String
+}
+
+@JvmInline
+value class TextKey(val value: String) {
+    fun resolve(resolver: SoraTextResolver): String = resolver.text(this)
+    override fun toString(): String = value
+}
+
 private data class SoraSection(
     val kind: Int,
     val compression: Int,
@@ -211,8 +221,8 @@ class SoraReader(private val bytes: ByteArray, private val strings: List<String>
 
     fun readU32(): Int {
         val value = readVarU64()
-        if (value > Int.MAX_VALUE) {
-            throw SoraReadException("Sora varint exceeds Int.MAX_VALUE")
+        if (value > 0xffffffffL) {
+            throw SoraReadException("Sora varint exceeds uint32")
         }
         return value.toInt()
     }

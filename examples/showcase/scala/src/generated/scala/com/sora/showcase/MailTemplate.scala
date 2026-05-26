@@ -5,8 +5,8 @@ package com.sora.showcase
 final case class MailTemplate(
   id: Int,
   mailType: MailType,
-  titleKey: String,
-  bodyKey: String,
+  titleKey: TextKey,
+  bodyKey: TextKey,
   rewards: Vector[Reward]
 )
 
@@ -15,8 +15,8 @@ object MailTemplate {
     MailTemplate(
       id = reader.readI32(),
       mailType = MailType.decode(reader),
-      titleKey = reader.readString(),
-      bodyKey = reader.readString(),
+      titleKey = TextKey(reader.readString()),
+      bodyKey = TextKey(reader.readString()),
       rewards = reader.readList(Reward.decode(reader))
     )
 
@@ -25,8 +25,8 @@ object MailTemplate {
     MailTemplate(
       id = obj.get("id").asInt,
       mailType = MailType.decode(obj.get("mail_type")),
-      titleKey = obj.get("title_key").asString,
-      bodyKey = obj.get("body_key").asString,
+      titleKey = TextKey(obj.get("title_key").asString),
+      bodyKey = TextKey(obj.get("body_key").asString),
       rewards = obj.get("rewards").asList(item => Reward.decode(item))
     )
   }

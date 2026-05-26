@@ -3,6 +3,9 @@
 {%- for import in record.imports %}
 import { decode{{ import.name }}, decode{{ import.name }}Value } from "./{{ import.module }}{{ options.import_ext }}";
 {%- endfor %}
+{%- if record.uses_text_key %}
+import { TextKey } from "./sora_runtime{{ options.import_ext }}";
+{%- endif %}
 {%- if record.table %}
 import {
     decodeIndex,

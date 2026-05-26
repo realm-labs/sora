@@ -178,7 +178,7 @@ void sora_showcase_i32_array_3_free(sora_showcase_i32_array_3* value) {
 
 sora_result sora_showcase_optional_i32_decode(sora_reader* reader, sora_showcase_optional_i32* out) {
     uint8_t presence = 0;
-    SORA_TRY(sora_reader_read_u8(reader, &presence));
+    SORA_TRY(sora_reader_read_byte(reader, &presence));
     out->has_value = false;
     out->value = NULL;
     if (presence == 0) {
@@ -213,7 +213,7 @@ void sora_showcase_optional_i32_free(sora_showcase_optional_i32* value) {
 
 sora_result sora_showcase_optional_maintenance_info_decode(sora_reader* reader, sora_showcase_optional_maintenance_info* out) {
     uint8_t presence = 0;
-    SORA_TRY(sora_reader_read_u8(reader, &presence));
+    SORA_TRY(sora_reader_read_byte(reader, &presence));
     out->has_value = false;
     out->value = NULL;
     if (presence == 0) {
@@ -250,7 +250,7 @@ void sora_showcase_optional_maintenance_info_free(sora_showcase_optional_mainten
 
 sora_result sora_showcase_optional_string_decode(sora_reader* reader, sora_showcase_optional_string* out) {
     uint8_t presence = 0;
-    SORA_TRY(sora_reader_read_u8(reader, &presence));
+    SORA_TRY(sora_reader_read_byte(reader, &presence));
     out->has_value = false;
     out->value = NULL;
     if (presence == 0) {

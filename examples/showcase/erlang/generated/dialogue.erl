@@ -8,7 +8,7 @@
 
 -type t() :: #{
     'id' := integer(),
-    'speaker_key' := binary(),
+    'speaker_key' := sora_runtime:text_key(),
     'lines' := [binary()]
 }.
 
@@ -18,7 +18,7 @@
 -spec decode(sora_runtime:reader()) -> {t(), sora_runtime:reader()}.
 decode(Reader0) ->
     {Id, Reader1} = (fun sora_runtime:read_i32/1)(Reader0),
-    {SpeakerKey, Reader2} = (fun sora_runtime:read_string/1)(Reader1),
+    {SpeakerKey, Reader2} = (fun sora_runtime:read_text_key/1)(Reader1),
     {Lines, Reader3} = (fun(Reader) -> sora_runtime:read_list(fun sora_runtime:read_string/1, Reader) end)(Reader2),
     {#{
         'id' => Id,
@@ -31,7 +31,7 @@ decode_value(Value) ->
     Obj = sora_runtime:expect_map(Value),
     #{
         'id' => sora_runtime:expect_integer(sora_runtime:value_get(<<"id">>, Obj)),
-        'speaker_key' => sora_runtime:expect_binary(sora_runtime:value_get(<<"speaker_key">>, Obj)),
+        'speaker_key' => sora_runtime:expect_text_key(sora_runtime:value_get(<<"speaker_key">>, Obj)),
         'lines' => sora_runtime:decode_value_list(fun(Item) -> sora_runtime:expect_binary(Item) end, sora_runtime:value_get(<<"lines">>, Obj))
     }.
 
