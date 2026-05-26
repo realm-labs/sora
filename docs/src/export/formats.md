@@ -10,6 +10,8 @@ Export formats are runtime bundle formats. They are independent from source form
 | `sora-protobuf` | `sora-protobuf` | Sora value model encoded with Protobuf. | You want Protobuf-based transport without per-game `.proto` models. |
 | `proto` | none | Typed Protobuf bundle using the generated game-specific schema. | You want a business `.proto` contract for external tooling. |
 | `json-debug` | none | Per-table debug JSON. | You want reviewable output for inspection and tests. |
+| `i18n-binary` | none | Native binary locale pack for one locale. | You want production localization packs mounted separately from config. |
+| `i18n-json` | none | Debug JSON locale pack for one locale. | You want reviewable text for translation handoff or tests. |
 
 Example build outputs:
 
@@ -25,6 +27,13 @@ out = "generated/config.json"
 [[build.exports]]
 format = "json-debug"
 out = "generated/debug-json"
+
+[[build.exports]]
+format = "i18n-binary"
+out = "generated/i18n/zh_cn.sora-i18n"
+locale = "zh_cn"
 ```
 
 Generated runtimes only load runtime formats they support. `json-debug` is for humans and tools, not generated runtime loading.
+
+Localization exports require `[localization]` and a `locale` in the build manifest. See [Localization](../localization.md).

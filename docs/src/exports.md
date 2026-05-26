@@ -22,6 +22,8 @@ For example, if generated Rust code uses `runtime_format = "sora"`, the build mu
 | `cbor` | Runtime CBOR bundle. |
 | `sora-protobuf` | Runtime Protobuf bundle using Sora's value model. |
 | `proto` | Typed Protobuf bundle using a generated game-specific schema. |
+| `i18n-binary` | Binary locale pack for one locale. |
+| `i18n-json` | JSON locale pack for one locale. |
 
 The `binary` export is selected by `runtime_format = "sora"` in codegen options.
 
@@ -48,6 +50,13 @@ out = "generated/config.sora"
 [[build.exports]]
 format = "json-debug"
 out = "generated/debug-json"
+
+[[build.exports]]
+format = "i18n-binary"
+out = "generated/i18n/zh_cn.sora-i18n"
+locale = "zh_cn"
 ```
 
 When `sora build` runs, it checks that configured codegen targets have a matching export for their selected runtime format.
+
+Localization packs are separate runtime assets and are mounted by the generated i18n runtime. See [Localization](localization.md).

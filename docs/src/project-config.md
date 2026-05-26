@@ -35,6 +35,8 @@ sora build --project project.toml
 
 `[parsers].scripts` lists custom Lua cell parser scripts used by CLI commands that read the project. Paths are relative to the project file. See [Cell Parsers](schema/parsers.md#custom-lua-parsers) for the script API.
 
+Localization is declared at the project root with `[localization]`. Its sources are independent from normal `[[tables]]`; see [Localization](localization.md).
+
 Run one configured codegen target:
 
 ```bash

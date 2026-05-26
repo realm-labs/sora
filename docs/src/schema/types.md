@@ -12,6 +12,7 @@ Sora type expressions are written as strings in schema fields.
 | `f32` | 32-bit floating point value. |
 | `f64` | 64-bit floating point value. |
 | `string` | UTF-8 string. |
+| `text` | Localization text key. See [Localization](../localization.md). |
 
 ```toml
 [[tables.fields]]
@@ -74,6 +75,7 @@ These examples show what a designer would put in an Excel or CSV cell:
 | `i32` | none | `1001` |
 | `enum<ItemType>` | none | `Weapon` |
 | `list<i32>` | none or `split` | `1,2,3` |
+| `text` | none | `quest.1001.title` |
 | `set<string>` | `json` | `["starter","melee"]` |
 | `struct<ResourceCost>` | `tuple` | `Gold,0,100` |
 | `struct<ResourceCost>` | `columns` | spread across `cost_kind`, `cost_id`, `cost_count` columns |

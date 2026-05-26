@@ -12,6 +12,7 @@ Sora 的类型表达式在 schema 字段中以字符串形式书写。
 | `f32` | 32-bit floating point。 |
 | `f64` | 64-bit floating point。 |
 | `string` | UTF-8 字符串。 |
+| `text` | 多语言文案 key。见[多语言](../localization.md)。 |
 
 ```toml
 [[tables.fields]]
@@ -74,6 +75,7 @@ parser = { kind = "map" }
 | `i32` | 无 | `1001` |
 | `enum<ItemType>` | 无 | `Weapon` |
 | `list<i32>` | 无或 `split` | `1,2,3` |
+| `text` | 无 | `quest.1001.title` |
 | `set<string>` | `json` | `["starter","melee"]` |
 | `struct<ResourceCost>` | `tuple` | `Gold,0,100` |
 | `struct<ResourceCost>` | `columns` | 展开到 `cost_kind`、`cost_id`、`cost_count` 多列 |

@@ -35,6 +35,8 @@ sora build --project project.toml
 
 `[parsers].scripts` 列出 CLI 读取该 project 时使用的自定义 Lua 单元格 parser 脚本。路径相对 project 文件所在目录。脚本 API 见[单元格 Parser](schema/parsers.md#自定义-lua-parser)。
 
+多语言通过 project root 的 `[localization]` 声明。它的 sources 独立于普通 `[[tables]]`；见[多语言](localization.md)。
+
 只运行一个配置好的 codegen target：
 
 ```bash

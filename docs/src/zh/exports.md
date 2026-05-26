@@ -22,6 +22,8 @@ source data -> export format -> generated code runtime_format
 | `cbor` | Runtime CBOR bundle。 |
 | `sora-protobuf` | 使用 Sora value model 的 runtime Protobuf bundle。 |
 | `proto` | 使用生成出的业务 schema 的 typed Protobuf bundle。 |
+| `i18n-binary` | 单个 locale 的二进制语言包。 |
+| `i18n-json` | 单个 locale 的 JSON 语言包。 |
 
 codegen 中的 `runtime_format = "sora"` 对应 `binary` 导出。
 
@@ -48,6 +50,13 @@ out = "generated/config.sora"
 [[build.exports]]
 format = "json-debug"
 out = "generated/debug-json"
+
+[[build.exports]]
+format = "i18n-binary"
+out = "generated/i18n/zh_cn.sora-i18n"
+locale = "zh_cn"
 ```
 
 `sora build` 运行时会检查配置的 codegen target 是否有匹配的 runtime format 导出。
+
+语言包是独立运行时资源，由生成的 i18n runtime 挂载。见[多语言](localization.md)。
