@@ -13,7 +13,12 @@ fn parse_type_inner(input: &str) -> Result<TypeIr> {
 
     Ok(match input {
         "bool" => TypeIr::Bool,
+        "i8" => TypeIr::I8,
+        "u8" => TypeIr::U8,
+        "i16" => TypeIr::I16,
+        "u16" => TypeIr::U16,
         "i32" => TypeIr::I32,
+        "u32" => TypeIr::U32,
         "i64" => TypeIr::I64,
         "f32" => TypeIr::F32,
         "f64" => TypeIr::F64,
@@ -143,7 +148,12 @@ mod tests {
     fn parses_required_type_forms() {
         let cases = [
             ("bool", TypeIr::Bool),
+            ("i8", TypeIr::I8),
+            ("u8", TypeIr::U8),
+            ("i16", TypeIr::I16),
+            ("u16", TypeIr::U16),
             ("i32", TypeIr::I32),
+            ("u32", TypeIr::U32),
             ("i64", TypeIr::I64),
             ("f32", TypeIr::F32),
             ("f64", TypeIr::F64),

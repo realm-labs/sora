@@ -199,7 +199,14 @@ fn default_cell_value(
         TypeIr::Optional(_) if cell.is_empty() => Value::Null,
         TypeIr::Optional(inner) => default_cell_value(cell, inner, context)?,
         TypeIr::Bool => bool_cell(cell, context)?,
-        TypeIr::I32 | TypeIr::I64 | TypeIr::Ref { .. } => integer_cell(cell, context)?,
+        TypeIr::I8
+        | TypeIr::U8
+        | TypeIr::I16
+        | TypeIr::U16
+        | TypeIr::I32
+        | TypeIr::U32
+        | TypeIr::I64
+        | TypeIr::Ref { .. } => integer_cell(cell, context)?,
         TypeIr::F32 | TypeIr::F64 => float_cell(cell, context)?,
         TypeIr::String | TypeIr::Text | TypeIr::Enum(_) => Value::String(cell.display_text()),
         TypeIr::Struct(_) | TypeIr::Union(_) => json_object_value(&cell.display_text(), context)?,
@@ -482,7 +489,14 @@ fn json_to_cell_value(
             .as_bool()
             .map(Value::Bool)
             .ok_or_else(|| context.error("expected JSON bool"))?,
-        TypeIr::I32 | TypeIr::I64 | TypeIr::Ref { .. } => value
+        TypeIr::I8
+        | TypeIr::U8
+        | TypeIr::I16
+        | TypeIr::U16
+        | TypeIr::I32
+        | TypeIr::U32
+        | TypeIr::I64
+        | TypeIr::Ref { .. } => value
             .as_i64()
             .map(Value::Integer)
             .ok_or_else(|| context.error("expected JSON integer"))?,
@@ -555,7 +569,14 @@ fn separated_item_to_value(
             value if value.eq_ignore_ascii_case("false") => Ok(Value::Bool(false)),
             _ => Err(context.error(format!("expected bool list item, got `{item}`"))),
         },
-        TypeIr::I32 | TypeIr::I64 | TypeIr::Ref { .. } => item
+        TypeIr::I8
+        | TypeIr::U8
+        | TypeIr::I16
+        | TypeIr::U16
+        | TypeIr::I32
+        | TypeIr::U32
+        | TypeIr::I64
+        | TypeIr::Ref { .. } => item
             .parse::<i64>()
             .map(Value::Integer)
             .map_err(|_| context.error(format!("expected integer list item, got `{item}`"))),
@@ -717,6 +738,7 @@ mod tests {
         let registry = ParserRegistry::builtin();
         let ir = ConfigIr {
             package: "test".to_owned(),
+            localization: None,
             enums: Vec::new(),
             structs: Vec::new(),
             unions: Vec::new(),
@@ -756,6 +778,7 @@ mod tests {
         let registry = ParserRegistry::builtin();
         let ir = ConfigIr {
             package: "test".to_owned(),
+            localization: None,
             enums: Vec::new(),
             structs: Vec::new(),
             unions: Vec::new(),
@@ -798,6 +821,7 @@ mod tests {
         let registry = ParserRegistry::builtin();
         let ir = ConfigIr {
             package: "test".to_owned(),
+            localization: None,
             enums: Vec::new(),
             structs: Vec::new(),
             unions: Vec::new(),
@@ -832,6 +856,7 @@ mod tests {
         registry.register(UpperParser);
         let ir = ConfigIr {
             package: "test".to_owned(),
+            localization: None,
             enums: Vec::new(),
             structs: Vec::new(),
             unions: Vec::new(),
@@ -866,6 +891,7 @@ mod tests {
         registry.register(UpperParser);
         let ir = ConfigIr {
             package: "test".to_owned(),
+            localization: None,
             enums: Vec::new(),
             structs: Vec::new(),
             unions: Vec::new(),

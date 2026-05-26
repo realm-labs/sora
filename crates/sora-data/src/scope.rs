@@ -85,7 +85,12 @@ fn filter_value(ir: &ConfigIr, ty: &TypeIr, value: &Value) -> Option<Value> {
             }
         }
         TypeIr::Bool
+        | TypeIr::I8
+        | TypeIr::U8
+        | TypeIr::I16
+        | TypeIr::U16
         | TypeIr::I32
+        | TypeIr::U32
         | TypeIr::I64
         | TypeIr::F32
         | TypeIr::F64

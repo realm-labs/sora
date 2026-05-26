@@ -299,7 +299,12 @@ fn go_container_type(mode: TableModeIr, row_type: &str, key_type: Option<&str>) 
 fn go_decode_expr(ir: &ConfigIr, ty: &TypeIr) -> String {
     match ty {
         TypeIr::Bool => "reader.ReadBool()".to_owned(),
+        TypeIr::I8 => "reader.ReadInt8()".to_owned(),
+        TypeIr::U8 => "reader.ReadUInt8Value()".to_owned(),
+        TypeIr::I16 => "reader.ReadInt16()".to_owned(),
+        TypeIr::U16 => "reader.ReadUInt16()".to_owned(),
         TypeIr::I32 => "reader.ReadInt32()".to_owned(),
+        TypeIr::U32 => "reader.ReadUInt32()".to_owned(),
         TypeIr::I64 => "reader.ReadInt64()".to_owned(),
         TypeIr::F32 => "reader.ReadFloat32()".to_owned(),
         TypeIr::F64 => "reader.ReadFloat64()".to_owned(),
@@ -346,7 +351,12 @@ fn go_decode_expr(ir: &ConfigIr, ty: &TypeIr) -> String {
 fn go_value_decode_expr(ir: &ConfigIr, ty: &TypeIr, value: &str) -> String {
     match ty {
         TypeIr::Bool => format!("{value}.AsBool()"),
+        TypeIr::I8 => format!("{value}.AsInt8()"),
+        TypeIr::U8 => format!("{value}.AsUInt8()"),
+        TypeIr::I16 => format!("{value}.AsInt16()"),
+        TypeIr::U16 => format!("{value}.AsUInt16()"),
         TypeIr::I32 => format!("{value}.AsInt32()"),
+        TypeIr::U32 => format!("{value}.AsUInt32()"),
         TypeIr::I64 => format!("{value}.AsInt64()"),
         TypeIr::F32 => format!("{value}.AsFloat32()"),
         TypeIr::F64 => format!("{value}.AsFloat64()"),

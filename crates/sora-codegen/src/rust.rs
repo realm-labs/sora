@@ -391,9 +391,17 @@ fn rust_local_table_key_type(ir: &ConfigIr, ty: &TypeIr, options: &RustCodegenOp
 
 fn rust_key_type_is_copy(ir: &ConfigIr, ty: &TypeIr) -> bool {
     match ty {
-        TypeIr::Bool | TypeIr::I32 | TypeIr::I64 | TypeIr::F32 | TypeIr::F64 | TypeIr::Enum(_) => {
-            true
-        }
+        TypeIr::Bool
+        | TypeIr::I8
+        | TypeIr::U8
+        | TypeIr::I16
+        | TypeIr::U16
+        | TypeIr::I32
+        | TypeIr::U32
+        | TypeIr::I64
+        | TypeIr::F32
+        | TypeIr::F64
+        | TypeIr::Enum(_) => true,
         TypeIr::Ref { table, field } => ir
             .tables
             .iter()

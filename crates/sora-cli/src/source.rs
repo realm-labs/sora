@@ -475,6 +475,7 @@ mod tests {
         registry.register(FakeSourceLoader);
         let ir = ConfigIr {
             package: "game".to_owned(),
+            localization: None,
             enums: Vec::new(),
             structs: Vec::new(),
             unions: Vec::new(),
@@ -579,6 +580,7 @@ mod tests {
     fn item_ir(file: &str, format: Option<&str>) -> ConfigIr {
         ConfigIr {
             package: "game".to_owned(),
+            localization: None,
             enums: Vec::new(),
             structs: Vec::new(),
             unions: Vec::new(),

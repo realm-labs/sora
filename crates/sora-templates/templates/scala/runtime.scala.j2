@@ -203,8 +203,8 @@ final class SoraReader(private val bytes: Array[Byte], private val strings: Vect
 
   def readU32(): Int = {
     val value = readVarU64()
-    if (value > Int.MaxValue) {
-      throw new SoraReadException("Sora varint exceeds Int.MaxValue")
+    if (value > 0xffffffffL) {
+      throw new SoraReadException("Sora varint exceeds uint32")
     }
     value.toInt
   }

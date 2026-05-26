@@ -717,7 +717,7 @@ void {free_fn}({name}* value) {{
         let implementation = format!(
             r#"sora_result {decode_fn}(sora_reader* reader, {name}* out) {{
     uint8_t presence = 0;
-    SORA_TRY(sora_reader_read_u8(reader, &presence));
+    SORA_TRY(sora_reader_read_byte(reader, &presence));
     out->has_value = false;
     out->value = NULL;
     if (presence == 0) {{
@@ -787,7 +787,12 @@ fn c_type_name(
 ) -> String {
     match ty {
         TypeIr::Bool => "bool".to_owned(),
+        TypeIr::I8 => "int8_t".to_owned(),
+        TypeIr::U8 => "uint8_t".to_owned(),
+        TypeIr::I16 => "int16_t".to_owned(),
+        TypeIr::U16 => "uint16_t".to_owned(),
         TypeIr::I32 => "int32_t".to_owned(),
+        TypeIr::U32 => "uint32_t".to_owned(),
         TypeIr::I64 => "int64_t".to_owned(),
         TypeIr::F32 => "float".to_owned(),
         TypeIr::F64 => "double".to_owned(),
@@ -812,7 +817,12 @@ fn c_type_name(
 fn c_type_suffix(ir: &ConfigIr, ty: &TypeIr) -> String {
     match ty {
         TypeIr::Bool => "bool".to_owned(),
+        TypeIr::I8 => "i8".to_owned(),
+        TypeIr::U8 => "u8".to_owned(),
+        TypeIr::I16 => "i16".to_owned(),
+        TypeIr::U16 => "u16".to_owned(),
         TypeIr::I32 => "i32".to_owned(),
+        TypeIr::U32 => "u32".to_owned(),
         TypeIr::I64 => "i64".to_owned(),
         TypeIr::F32 => "f32".to_owned(),
         TypeIr::F64 => "f64".to_owned(),
@@ -845,7 +855,12 @@ fn c_decode_into(
 ) -> String {
     match ty {
         TypeIr::Bool => format!("sora_reader_read_bool(reader, {target})"),
+        TypeIr::I8 => format!("sora_reader_read_i8(reader, {target})"),
+        TypeIr::U8 => format!("sora_reader_read_u8(reader, {target})"),
+        TypeIr::I16 => format!("sora_reader_read_i16(reader, {target})"),
+        TypeIr::U16 => format!("sora_reader_read_u16(reader, {target})"),
         TypeIr::I32 => format!("sora_reader_read_i32(reader, {target})"),
+        TypeIr::U32 => format!("sora_reader_read_u32(reader, {target})"),
         TypeIr::I64 => format!("sora_reader_read_i64(reader, {target})"),
         TypeIr::F32 => format!("sora_reader_read_f32(reader, {target})"),
         TypeIr::F64 => format!("sora_reader_read_f64(reader, {target})"),
@@ -893,9 +908,17 @@ fn c_free_into(
         }
         TypeIr::Ref { table, field } => ref_field_type(ir, table, field)
             .and_then(|field| c_free_into(ir, &field.ty, target, options, helpers)),
-        TypeIr::Bool | TypeIr::I32 | TypeIr::I64 | TypeIr::F32 | TypeIr::F64 | TypeIr::Enum(_) => {
-            None
-        }
+        TypeIr::Bool
+        | TypeIr::I8
+        | TypeIr::U8
+        | TypeIr::I16
+        | TypeIr::U16
+        | TypeIr::I32
+        | TypeIr::U32
+        | TypeIr::I64
+        | TypeIr::F32
+        | TypeIr::F64
+        | TypeIr::Enum(_) => None,
     }
 }
 
@@ -926,9 +949,17 @@ fn c_type_is_pointer_param(ir: &ConfigIr, ty: &TypeIr) -> bool {
         TypeIr::Struct(_) | TypeIr::Union(_) => true,
         TypeIr::Ref { table, field } => ref_field_type(ir, table, field)
             .is_some_and(|field| c_type_is_pointer_param(ir, &field.ty)),
-        TypeIr::Bool | TypeIr::I32 | TypeIr::I64 | TypeIr::F32 | TypeIr::F64 | TypeIr::Enum(_) => {
-            false
-        }
+        TypeIr::Bool
+        | TypeIr::I8
+        | TypeIr::U8
+        | TypeIr::I16
+        | TypeIr::U16
+        | TypeIr::I32
+        | TypeIr::U32
+        | TypeIr::I64
+        | TypeIr::F32
+        | TypeIr::F64
+        | TypeIr::Enum(_) => false,
     }
 }
 

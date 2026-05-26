@@ -141,7 +141,13 @@ fn encode_value(
 ) -> Result<()> {
     match ty {
         TypeIr::Bool => writer.bool(tag, expect_bool(table, field, value)?),
-        TypeIr::I32 | TypeIr::I64 => writer.int64(tag, expect_integer(table, field, value)?),
+        TypeIr::I8
+        | TypeIr::U8
+        | TypeIr::I16
+        | TypeIr::U16
+        | TypeIr::I32
+        | TypeIr::U32
+        | TypeIr::I64 => writer.int64(tag, expect_integer(table, field, value)?),
         TypeIr::F32 => writer.float(tag, expect_float(table, field, value)? as f32),
         TypeIr::F64 => writer.double(tag, expect_float(table, field, value)?),
         TypeIr::String | TypeIr::Text => writer.string(tag, expect_string(table, field, value)?),

@@ -298,6 +298,63 @@ fn validates_string_and_collection_lengths() {
 }
 
 #[test]
+fn validates_integer_width_bounds() {
+    let ir = integer_width_ir();
+    let valid = ConfigData {
+        tables: vec![TableData {
+            name: "Stats".to_owned(),
+            rows: vec![RowData {
+                values: BTreeMap::from([
+                    ("signed_byte_min".to_owned(), Value::Integer(i8::MIN as i64)),
+                    ("signed_byte_max".to_owned(), Value::Integer(i8::MAX as i64)),
+                    ("byte_max".to_owned(), Value::Integer(u8::MAX as i64)),
+                    ("short_min".to_owned(), Value::Integer(i16::MIN as i64)),
+                    ("ushort_max".to_owned(), Value::Integer(u16::MAX as i64)),
+                    ("uint_max".to_owned(), Value::Integer(u32::MAX as i64)),
+                ]),
+            }],
+        }],
+    };
+    validate_config_data(&ir, &valid).unwrap();
+
+    let negative_u8 = ConfigData {
+        tables: vec![TableData {
+            name: "Stats".to_owned(),
+            rows: vec![RowData {
+                values: BTreeMap::from([
+                    ("signed_byte_min".to_owned(), Value::Integer(0)),
+                    ("signed_byte_max".to_owned(), Value::Integer(0)),
+                    ("byte_max".to_owned(), Value::Integer(-1)),
+                    ("short_min".to_owned(), Value::Integer(0)),
+                    ("ushort_max".to_owned(), Value::Integer(0)),
+                    ("uint_max".to_owned(), Value::Integer(0)),
+                ]),
+            }],
+        }],
+    };
+    let error = validate_config_data(&ir, &negative_u8).unwrap_err();
+    assert!(matches!(error, SoraError::TypeMismatch { field, .. } if field == "byte_max"));
+
+    let overflowing_u32 = ConfigData {
+        tables: vec![TableData {
+            name: "Stats".to_owned(),
+            rows: vec![RowData {
+                values: BTreeMap::from([
+                    ("signed_byte_min".to_owned(), Value::Integer(0)),
+                    ("signed_byte_max".to_owned(), Value::Integer(0)),
+                    ("byte_max".to_owned(), Value::Integer(0)),
+                    ("short_min".to_owned(), Value::Integer(0)),
+                    ("ushort_max".to_owned(), Value::Integer(0)),
+                    ("uint_max".to_owned(), Value::Integer(u32::MAX as i64 + 1)),
+                ]),
+            }],
+        }],
+    };
+    let error = validate_config_data(&ir, &overflowing_u32).unwrap_err();
+    assert!(matches!(error, SoraError::TypeMismatch { field, .. } if field == "uint_max"));
+}
+
+#[test]
 fn rejects_range_struct_ref_and_singleton_errors() {
     let ir = complex_ir();
 
@@ -615,6 +672,45 @@ length = [2, 8]
 name = "tags"
 type = "list<string>"
 length = [1, 2]
+"#,
+    )
+    .unwrap();
+
+    normalize_schema(schema).unwrap()
+}
+
+fn integer_width_ir() -> ConfigIr {
+    let schema: SchemaFile = toml::from_str(
+        r#"
+package = "game_config"
+
+[[tables]]
+name = "Stats"
+mode = "list"
+
+[[tables.fields]]
+name = "signed_byte_min"
+type = "i8"
+
+[[tables.fields]]
+name = "signed_byte_max"
+type = "i8"
+
+[[tables.fields]]
+name = "byte_max"
+type = "u8"
+
+[[tables.fields]]
+name = "short_min"
+type = "i16"
+
+[[tables.fields]]
+name = "ushort_max"
+type = "u16"
+
+[[tables.fields]]
+name = "uint_max"
+type = "u32"
 "#,
     )
     .unwrap();

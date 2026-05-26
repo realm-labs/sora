@@ -299,7 +299,10 @@ fn java_container_type(mode: TableModeIr, row_type: &str, key_type: Option<&str>
 fn java_decode_expr(ir: &ConfigIr, ty: &TypeIr) -> String {
     match ty {
         TypeIr::Bool => "reader.readBool()".to_owned(),
+        TypeIr::I8 | TypeIr::I16 => "reader.readI32()".to_owned(),
+        TypeIr::U8 | TypeIr::U16 => "reader.readU32()".to_owned(),
         TypeIr::I32 => "reader.readI32()".to_owned(),
+        TypeIr::U32 => "Integer.toUnsignedLong(reader.readU32())".to_owned(),
         TypeIr::I64 => "reader.readI64()".to_owned(),
         TypeIr::F32 => "reader.readF32()".to_owned(),
         TypeIr::F64 => "reader.readF64()".to_owned(),
@@ -339,7 +342,9 @@ fn java_decode_expr(ir: &ConfigIr, ty: &TypeIr) -> String {
 fn java_value_decode_expr(ir: &ConfigIr, ty: &TypeIr, value: &str) -> String {
     match ty {
         TypeIr::Bool => format!("{value}.asBool()"),
+        TypeIr::I8 | TypeIr::U8 | TypeIr::I16 | TypeIr::U16 => format!("{value}.asInt()"),
         TypeIr::I32 => format!("{value}.asInt()"),
+        TypeIr::U32 => format!("{value}.asLong()"),
         TypeIr::I64 => format!("{value}.asLong()"),
         TypeIr::F32 => format!("{value}.asFloat()"),
         TypeIr::F64 => format!("{value}.asDouble()"),

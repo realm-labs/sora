@@ -84,7 +84,11 @@ void sora_reader_init(
     size_t string_count
 );
 bool sora_reader_is_finished(const sora_reader* reader);
+sora_result sora_reader_read_byte(sora_reader* reader, uint8_t* out);
+sora_result sora_reader_read_i8(sora_reader* reader, int8_t* out);
 sora_result sora_reader_read_u8(sora_reader* reader, uint8_t* out);
+sora_result sora_reader_read_i16(sora_reader* reader, int16_t* out);
+sora_result sora_reader_read_u16(sora_reader* reader, uint16_t* out);
 sora_result sora_reader_read_bool(sora_reader* reader, bool* out);
 sora_result sora_reader_read_u32(sora_reader* reader, uint32_t* out);
 sora_result sora_reader_read_i32(sora_reader* reader, int32_t* out);

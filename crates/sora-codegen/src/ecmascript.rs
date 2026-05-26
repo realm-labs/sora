@@ -271,7 +271,9 @@ fn ecmascript_import(import: BaseImport) -> EcmaScriptImport {
 pub fn ecmascript_type_name(ir: &ConfigIr, ty: &TypeIr) -> String {
     match ty {
         TypeIr::Bool => "boolean".to_owned(),
-        TypeIr::I32 => "number".to_owned(),
+        TypeIr::I8 | TypeIr::U8 | TypeIr::I16 | TypeIr::U16 | TypeIr::I32 | TypeIr::U32 => {
+            "number".to_owned()
+        }
         TypeIr::I64 => "bigint".to_owned(),
         TypeIr::F32 | TypeIr::F64 => "number".to_owned(),
         TypeIr::String | TypeIr::Text => "string".to_owned(),
@@ -294,7 +296,8 @@ pub fn ecmascript_type_name(ir: &ConfigIr, ty: &TypeIr) -> String {
 pub fn ecmascript_decode_expr(ir: &ConfigIr, ty: &TypeIr) -> String {
     match ty {
         TypeIr::Bool => "reader.readBool()".to_owned(),
-        TypeIr::I32 => "reader.readI32()".to_owned(),
+        TypeIr::I8 | TypeIr::I16 | TypeIr::I32 => "reader.readI32()".to_owned(),
+        TypeIr::U8 | TypeIr::U16 | TypeIr::U32 => "reader.readU32()".to_owned(),
         TypeIr::I64 => "reader.readI64()".to_owned(),
         TypeIr::F32 => "reader.readF32()".to_owned(),
         TypeIr::F64 => "reader.readF64()".to_owned(),
@@ -328,7 +331,9 @@ pub fn ecmascript_decode_expr(ir: &ConfigIr, ty: &TypeIr) -> String {
 pub fn ecmascript_value_decode_expr(ir: &ConfigIr, ty: &TypeIr, value: &str) -> String {
     match ty {
         TypeIr::Bool => format!("{value}.asBool()"),
-        TypeIr::I32 => format!("{value}.asInt()"),
+        TypeIr::I8 | TypeIr::U8 | TypeIr::I16 | TypeIr::U16 | TypeIr::I32 | TypeIr::U32 => {
+            format!("{value}.asInt()")
+        }
         TypeIr::I64 => format!("{value}.asBigInt()"),
         TypeIr::F32 | TypeIr::F64 => format!("{value}.asNumber()"),
         TypeIr::String | TypeIr::Text => format!("{value}.asString()"),

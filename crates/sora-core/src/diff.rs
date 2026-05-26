@@ -210,6 +210,7 @@ mod tests {
     fn diffs_added_removed_and_changed_map_rows() {
         let ir = ConfigIr {
             package: "game_config".to_owned(),
+            localization: None,
             enums: Vec::new(),
             structs: Vec::new(),
             unions: Vec::new(),

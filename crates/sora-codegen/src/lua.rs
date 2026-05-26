@@ -352,7 +352,9 @@ fn lua_import(import: BaseImport) -> LuaImport {
 fn lua_type_name(ir: &ConfigIr, ty: &TypeIr, options: &LuaOptionsView) -> String {
     match ty {
         TypeIr::Bool => "boolean".to_owned(),
-        TypeIr::I32 => "integer".to_owned(),
+        TypeIr::I8 | TypeIr::U8 | TypeIr::I16 | TypeIr::U16 | TypeIr::I32 | TypeIr::U32 => {
+            "integer".to_owned()
+        }
         TypeIr::I64 => options.i64_type_name.to_owned(),
         TypeIr::F32 | TypeIr::F64 => "number".to_owned(),
         TypeIr::String | TypeIr::Text => "string".to_owned(),
@@ -375,7 +377,8 @@ fn lua_type_name(ir: &ConfigIr, ty: &TypeIr, options: &LuaOptionsView) -> String
 fn lua_decode_expr(ir: &ConfigIr, ty: &TypeIr, _options: &LuaOptionsView) -> String {
     match ty {
         TypeIr::Bool => "reader:read_bool()".to_owned(),
-        TypeIr::I32 => "reader:read_i32()".to_owned(),
+        TypeIr::I8 | TypeIr::I16 | TypeIr::I32 => "reader:read_i32()".to_owned(),
+        TypeIr::U8 | TypeIr::U16 | TypeIr::U32 => "reader:read_u32()".to_owned(),
         TypeIr::I64 => "reader:read_i64()".to_owned(),
         TypeIr::F32 => "reader:read_f32()".to_owned(),
         TypeIr::F64 => "reader:read_f64()".to_owned(),
@@ -409,7 +412,13 @@ fn lua_decode_expr(ir: &ConfigIr, ty: &TypeIr, _options: &LuaOptionsView) -> Str
 fn lua_value_decode_expr(ir: &ConfigIr, ty: &TypeIr, value: &str) -> String {
     match ty {
         TypeIr::Bool => format!("Runtime.expect_boolean({value})"),
-        TypeIr::I32 | TypeIr::I64 => format!("Runtime.expect_integer({value})"),
+        TypeIr::I8
+        | TypeIr::U8
+        | TypeIr::I16
+        | TypeIr::U16
+        | TypeIr::I32
+        | TypeIr::U32
+        | TypeIr::I64 => format!("Runtime.expect_integer({value})"),
         TypeIr::F32 | TypeIr::F64 => format!("Runtime.expect_number({value})"),
         TypeIr::String | TypeIr::Text => format!("Runtime.expect_string({value})"),
         TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => {

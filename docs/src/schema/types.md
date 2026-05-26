@@ -7,17 +7,24 @@ Sora type expressions are written as strings in schema fields.
 | Type | Meaning |
 | --- | --- |
 | `bool` | Boolean value. |
+| `i8` | 8-bit signed integer. |
+| `u8` | 8-bit unsigned integer. |
+| `i16` | 16-bit signed integer. |
+| `u16` | 16-bit unsigned integer. |
 | `i32` | 32-bit signed integer. |
+| `u32` | 32-bit unsigned integer. |
 | `i64` | 64-bit signed integer. |
 | `f32` | 32-bit floating point value. |
 | `f64` | 64-bit floating point value. |
 | `string` | UTF-8 string. |
 | `text` | Localization text key. See [Localization](../localization.md). |
 
+Integer widths are validated by Sora before export. Some target languages do not have unsigned small integer types, so generated code may use a wider signed type while preserving the schema range.
+
 ```toml
 [[tables.fields]]
 name = "level"
-type = "i32"
+type = "u16"
 range = [1, 100]
 ```
 
@@ -72,7 +79,7 @@ These examples show what a designer would put in an Excel or CSV cell:
 
 | Field type | Parser | Cell value |
 | --- | --- | --- |
-| `i32` | none | `1001` |
+| `u16` | none | `1001` |
 | `enum<ItemType>` | none | `Weapon` |
 | `list<i32>` | none or `split` | `1,2,3` |
 | `text` | none | `quest.1001.title` |

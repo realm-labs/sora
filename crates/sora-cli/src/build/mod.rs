@@ -142,16 +142,16 @@ pub fn run(args: BuildArgs, context: &CliContext) -> Result<()> {
             let out = resolve_project_path(project_dir, &item.out);
             let item_scope = item.scope.as_deref().or(scope);
             let output = export_output(&item.format, out)?;
-            sora_core::pipeline::export_loaded_data_with_scope_context_options_and_catalog(
-                &ir,
-                &data,
-                locale_catalog.as_ref(),
-                &item.format,
+            sora_core::pipeline::export_loaded_data(sora_core::pipeline::LoadedDataExportRequest {
+                ir: &ir,
+                data: &data,
+                locale_catalog: locale_catalog.as_ref(),
+                format: &item.format,
                 output,
-                item_scope,
-                &context.execution,
-                export_options(item)?,
-            )
+                scope: item_scope,
+                execution: &context.execution,
+                options: export_options(item)?,
+            })
             .with_context(|| {
                 format!(
                     "failed to export `{}` data from `{}`",

@@ -298,7 +298,12 @@ fn csharp_container_type(mode: TableModeIr, row_type: &str, key_type: Option<&st
 fn csharp_decode_expr(ir: &ConfigIr, ty: &TypeIr) -> String {
     match ty {
         TypeIr::Bool => "reader.ReadBool()".to_owned(),
+        TypeIr::I8 => "(sbyte)reader.ReadInt32()".to_owned(),
+        TypeIr::U8 => "(byte)reader.ReadUInt32()".to_owned(),
+        TypeIr::I16 => "(short)reader.ReadInt32()".to_owned(),
+        TypeIr::U16 => "(ushort)reader.ReadUInt32()".to_owned(),
         TypeIr::I32 => "reader.ReadInt32()".to_owned(),
+        TypeIr::U32 => "(uint)reader.ReadUInt32()".to_owned(),
         TypeIr::I64 => "reader.ReadInt64()".to_owned(),
         TypeIr::F32 => "reader.ReadFloat()".to_owned(),
         TypeIr::F64 => "reader.ReadDouble()".to_owned(),
@@ -339,7 +344,12 @@ fn csharp_decode_expr(ir: &ConfigIr, ty: &TypeIr) -> String {
 fn csharp_value_decode_expr(ir: &ConfigIr, ty: &TypeIr, value: &str) -> String {
     match ty {
         TypeIr::Bool => format!("{value}.AsBool()"),
+        TypeIr::I8 => format!("(sbyte){value}.AsInt32()"),
+        TypeIr::U8 => format!("(byte){value}.AsInt32()"),
+        TypeIr::I16 => format!("(short){value}.AsInt32()"),
+        TypeIr::U16 => format!("(ushort){value}.AsInt32()"),
         TypeIr::I32 => format!("{value}.AsInt32()"),
+        TypeIr::U32 => format!("(uint){value}.AsInt64()"),
         TypeIr::I64 => format!("{value}.AsInt64()"),
         TypeIr::F32 => format!("{value}.AsFloat()"),
         TypeIr::F64 => format!("{value}.AsDouble()"),

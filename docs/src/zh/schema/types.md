@@ -2,22 +2,29 @@
 
 Sora 的类型表达式在 schema 字段中以字符串形式书写。
 
-## Primitive Types
+## 原始类型
 
-| Type | Meaning |
+| 类型 | 含义 |
 | --- | --- |
 | `bool` | 布尔值。 |
-| `i32` | 32-bit signed integer。 |
-| `i64` | 64-bit signed integer。 |
-| `f32` | 32-bit floating point。 |
-| `f64` | 64-bit floating point。 |
+| `i8` | 8 位有符号整数。 |
+| `u8` | 8 位无符号整数。 |
+| `i16` | 16 位有符号整数。 |
+| `u16` | 16 位无符号整数。 |
+| `i32` | 32 位有符号整数。 |
+| `u32` | 32 位无符号整数。 |
+| `i64` | 64 位有符号整数。 |
+| `f32` | 32 位浮点数。 |
+| `f64` | 64 位浮点数。 |
 | `string` | UTF-8 字符串。 |
 | `text` | 多语言文案 key。见[多语言](../localization.md)。 |
+
+Sora 会在导出前校验整数宽度范围。部分目标语言没有 unsigned 小整数类型，生成代码可能使用更宽的 signed 类型承载，但 schema 范围语义仍然保留。
 
 ```toml
 [[tables.fields]]
 name = "level"
-type = "i32"
+type = "u16"
 range = [1, 100]
 ```
 
@@ -72,7 +79,7 @@ parser = { kind = "map" }
 
 | 字段类型 | Parser | Cell 值 |
 | --- | --- | --- |
-| `i32` | 无 | `1001` |
+| `u16` | 无 | `1001` |
 | `enum<ItemType>` | 无 | `Weapon` |
 | `list<i32>` | 无或 `split` | `1,2,3` |
 | `text` | 无 | `quest.1001.title` |

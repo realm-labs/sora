@@ -31,7 +31,7 @@ impl DataExporter for I18nJsonExporter {
             });
         };
         let view = locale_view(self.format_name(), &request)?;
-        create_parent_dir(&path)?;
+        create_parent_dir(path)?;
         let content = serde_json::to_vec_pretty(&view).map_err(SoraError::SerializeData)?;
         write_file(path.clone(), content)
     }
@@ -56,7 +56,7 @@ impl DataExporter for I18nBinaryExporter {
             });
         };
         let view = locale_view(self.format_name(), &request)?;
-        create_parent_dir(&path)?;
+        create_parent_dir(path)?;
         write_file(path.clone(), encode_i18n_binary(&view)?)
     }
 }

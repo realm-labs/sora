@@ -49,7 +49,12 @@ pub fn python_type_name(ir: &ConfigIr, ty: &TypeIr) -> String {
 fn rust_type_name_inner(ir: &ConfigIr, ty: &TypeIr, options: &RustCodegenOptions) -> String {
     match ty {
         TypeIr::Bool => "bool".to_owned(),
+        TypeIr::I8 => "i8".to_owned(),
+        TypeIr::U8 => "u8".to_owned(),
+        TypeIr::I16 => "i16".to_owned(),
+        TypeIr::U16 => "u16".to_owned(),
         TypeIr::I32 => "i32".to_owned(),
+        TypeIr::U32 => "u32".to_owned(),
         TypeIr::I64 => "i64".to_owned(),
         TypeIr::F32 => "f32".to_owned(),
         TypeIr::F64 => "f64".to_owned(),
@@ -90,8 +95,10 @@ fn rust_string_type(options: &RustCodegenOptions) -> String {
 fn kotlin_type_name_inner(ir: &ConfigIr, ty: &TypeIr) -> String {
     match ty {
         TypeIr::Bool => "Boolean".to_owned(),
-        TypeIr::I32 => "Int".to_owned(),
-        TypeIr::I64 => "Long".to_owned(),
+        TypeIr::I8 => "Byte".to_owned(),
+        TypeIr::U8 | TypeIr::I16 => "Short".to_owned(),
+        TypeIr::U16 | TypeIr::I32 => "Int".to_owned(),
+        TypeIr::U32 | TypeIr::I64 => "Long".to_owned(),
         TypeIr::F32 => "Float".to_owned(),
         TypeIr::F64 => "Double".to_owned(),
         TypeIr::String | TypeIr::Text => "String".to_owned(),
@@ -112,7 +119,12 @@ fn kotlin_type_name_inner(ir: &ConfigIr, ty: &TypeIr) -> String {
 fn csharp_type_name_inner(ir: &ConfigIr, ty: &TypeIr) -> String {
     match ty {
         TypeIr::Bool => "bool".to_owned(),
+        TypeIr::I8 => "sbyte".to_owned(),
+        TypeIr::U8 => "byte".to_owned(),
+        TypeIr::I16 => "short".to_owned(),
+        TypeIr::U16 => "ushort".to_owned(),
         TypeIr::I32 => "int".to_owned(),
+        TypeIr::U32 => "uint".to_owned(),
         TypeIr::I64 => "long".to_owned(),
         TypeIr::F32 => "float".to_owned(),
         TypeIr::F64 => "double".to_owned(),
@@ -134,8 +146,9 @@ fn csharp_type_name_inner(ir: &ConfigIr, ty: &TypeIr) -> String {
 fn java_type_name_inner(ir: &ConfigIr, ty: &TypeIr) -> String {
     match ty {
         TypeIr::Bool => "Boolean".to_owned(),
-        TypeIr::I32 => "Integer".to_owned(),
-        TypeIr::I64 => "Long".to_owned(),
+        TypeIr::I8 | TypeIr::U8 | TypeIr::I16 => "Integer".to_owned(),
+        TypeIr::U16 | TypeIr::I32 => "Integer".to_owned(),
+        TypeIr::U32 | TypeIr::I64 => "Long".to_owned(),
         TypeIr::F32 => "Float".to_owned(),
         TypeIr::F64 => "Double".to_owned(),
         TypeIr::String | TypeIr::Text => "String".to_owned(),
@@ -156,8 +169,8 @@ fn java_type_name_inner(ir: &ConfigIr, ty: &TypeIr) -> String {
 fn scala_type_name_inner(ir: &ConfigIr, ty: &TypeIr) -> String {
     match ty {
         TypeIr::Bool => "Boolean".to_owned(),
-        TypeIr::I32 => "Int".to_owned(),
-        TypeIr::I64 => "Long".to_owned(),
+        TypeIr::I8 | TypeIr::U8 | TypeIr::I16 | TypeIr::U16 | TypeIr::I32 => "Int".to_owned(),
+        TypeIr::U32 | TypeIr::I64 => "Long".to_owned(),
         TypeIr::F32 => "Float".to_owned(),
         TypeIr::F64 => "Double".to_owned(),
         TypeIr::String | TypeIr::Text => "String".to_owned(),
@@ -178,7 +191,12 @@ fn scala_type_name_inner(ir: &ConfigIr, ty: &TypeIr) -> String {
 fn go_type_name_inner(ir: &ConfigIr, ty: &TypeIr) -> String {
     match ty {
         TypeIr::Bool => "bool".to_owned(),
+        TypeIr::I8 => "int8".to_owned(),
+        TypeIr::U8 => "uint8".to_owned(),
+        TypeIr::I16 => "int16".to_owned(),
+        TypeIr::U16 => "uint16".to_owned(),
         TypeIr::I32 => "int32".to_owned(),
+        TypeIr::U32 => "uint32".to_owned(),
         TypeIr::I64 => "int64".to_owned(),
         TypeIr::F32 => "float32".to_owned(),
         TypeIr::F64 => "float64".to_owned(),
@@ -200,7 +218,13 @@ fn go_type_name_inner(ir: &ConfigIr, ty: &TypeIr) -> String {
 fn dart_type_name_inner(ir: &ConfigIr, ty: &TypeIr) -> String {
     match ty {
         TypeIr::Bool => "bool".to_owned(),
-        TypeIr::I32 | TypeIr::I64 => "int".to_owned(),
+        TypeIr::I8
+        | TypeIr::U8
+        | TypeIr::I16
+        | TypeIr::U16
+        | TypeIr::I32
+        | TypeIr::U32
+        | TypeIr::I64 => "int".to_owned(),
         TypeIr::F32 | TypeIr::F64 => "double".to_owned(),
         TypeIr::String | TypeIr::Text => "String".to_owned(),
         TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => name.clone(),
@@ -220,7 +244,13 @@ fn dart_type_name_inner(ir: &ConfigIr, ty: &TypeIr) -> String {
 fn godot_type_name_inner(ir: &ConfigIr, ty: &TypeIr) -> String {
     match ty {
         TypeIr::Bool => "bool".to_owned(),
-        TypeIr::I32 | TypeIr::I64 => "int".to_owned(),
+        TypeIr::I8
+        | TypeIr::U8
+        | TypeIr::I16
+        | TypeIr::U16
+        | TypeIr::I32
+        | TypeIr::U32
+        | TypeIr::I64 => "int".to_owned(),
         TypeIr::F32 | TypeIr::F64 => "float".to_owned(),
         TypeIr::String | TypeIr::Text | TypeIr::Enum(_) => "String".to_owned(),
         TypeIr::Struct(name) | TypeIr::Union(name) => name.clone(),
@@ -235,7 +265,13 @@ fn godot_type_name_inner(ir: &ConfigIr, ty: &TypeIr) -> String {
 fn python_type_name_inner(ir: &ConfigIr, ty: &TypeIr) -> String {
     match ty {
         TypeIr::Bool => "bool".to_owned(),
-        TypeIr::I32 | TypeIr::I64 => "int".to_owned(),
+        TypeIr::I8
+        | TypeIr::U8
+        | TypeIr::I16
+        | TypeIr::U16
+        | TypeIr::I32
+        | TypeIr::U32
+        | TypeIr::I64 => "int".to_owned(),
         TypeIr::F32 | TypeIr::F64 => "float".to_owned(),
         TypeIr::String | TypeIr::Text => "str".to_owned(),
         TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => name.clone(),
@@ -530,6 +566,41 @@ mod tests {
                 python_type_name(&ir, &parse_type(source).unwrap()),
                 expected
             );
+        }
+    }
+
+    #[test]
+    fn maps_integer_width_types() {
+        let ir = example_ir();
+        let cases = [
+            (
+                "i8", "i8", "Byte", "sbyte", "Integer", "Int", "int8", "int", "int", "int",
+            ),
+            (
+                "u8", "u8", "Short", "byte", "Integer", "Int", "uint8", "int", "int", "int",
+            ),
+            (
+                "i16", "i16", "Short", "short", "Integer", "Int", "int16", "int", "int", "int",
+            ),
+            (
+                "u16", "u16", "Int", "ushort", "Integer", "Int", "uint16", "int", "int", "int",
+            ),
+            (
+                "u32", "u32", "Long", "uint", "Long", "Long", "uint32", "int", "int", "int",
+            ),
+        ];
+
+        for (source, rust, kotlin, csharp, java, scala, go, dart, godot, python) in cases {
+            let ty = parse_type(source).unwrap();
+            assert_eq!(rust_type_name(&ir, &ty), rust);
+            assert_eq!(kotlin_type_name(&ir, &ty), kotlin);
+            assert_eq!(csharp_type_name(&ir, &ty), csharp);
+            assert_eq!(java_type_name(&ir, &ty), java);
+            assert_eq!(scala_type_name(&ir, &ty), scala);
+            assert_eq!(go_type_name(&ir, &ty), go);
+            assert_eq!(dart_type_name(&ir, &ty), dart);
+            assert_eq!(godot_type_name(&ir, &ty), godot);
+            assert_eq!(python_type_name(&ir, &ty), python);
         }
     }
 

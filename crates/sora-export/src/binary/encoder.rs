@@ -197,7 +197,12 @@ impl<'a> BinaryEncoder<'a> {
                 self.collect_strings(target_ty, value, strings)?;
             }
             TypeIr::Bool
+            | TypeIr::I8
+            | TypeIr::U8
+            | TypeIr::I16
+            | TypeIr::U16
             | TypeIr::I32
+            | TypeIr::U32
             | TypeIr::I64
             | TypeIr::F32
             | TypeIr::F64
@@ -270,6 +275,10 @@ impl<'a> BinaryEncoder<'a> {
                 };
                 write_u8(out, u8::from(*value));
             }
+            TypeIr::I8 => Self::encode_i32_like(ty, value, out, i8::MIN as i64, i8::MAX as i64)?,
+            TypeIr::U8 => Self::encode_u32_like(ty, value, out, u8::MIN as i64, u8::MAX as i64)?,
+            TypeIr::I16 => Self::encode_i32_like(ty, value, out, i16::MIN as i64, i16::MAX as i64)?,
+            TypeIr::U16 => Self::encode_u32_like(ty, value, out, u16::MIN as i64, u16::MAX as i64)?,
             TypeIr::I32 => {
                 let Value::Integer(value) = value else {
                     return Err(type_error(ty, value));
@@ -279,6 +288,7 @@ impl<'a> BinaryEncoder<'a> {
                 })?;
                 write_var_i32(out, value);
             }
+            TypeIr::U32 => Self::encode_u32_like(ty, value, out, u32::MIN as i64, u32::MAX as i64)?,
             TypeIr::I64 => {
                 let Value::Integer(value) = value else {
                     return Err(type_error(ty, value));
@@ -393,6 +403,44 @@ impl<'a> BinaryEncoder<'a> {
             }
         }
 
+        Ok(())
+    }
+
+    fn encode_i32_like(
+        ty: &TypeIr,
+        value: &Value,
+        out: &mut Vec<u8>,
+        min: i64,
+        max: i64,
+    ) -> Result<()> {
+        let Value::Integer(value) = value else {
+            return Err(type_error(ty, value));
+        };
+        if *value < min || *value > max {
+            return Err(binary_error(format!(
+                "cannot encode integer `{value}` as `{ty}`"
+            )));
+        }
+        write_var_i32(out, *value as i32);
+        Ok(())
+    }
+
+    fn encode_u32_like(
+        ty: &TypeIr,
+        value: &Value,
+        out: &mut Vec<u8>,
+        min: i64,
+        max: i64,
+    ) -> Result<()> {
+        let Value::Integer(value) = value else {
+            return Err(type_error(ty, value));
+        };
+        if *value < min || *value > max {
+            return Err(binary_error(format!(
+                "cannot encode integer `{value}` as `{ty}`"
+            )));
+        }
+        write_var_u32(out, *value as u32);
         Ok(())
     }
 

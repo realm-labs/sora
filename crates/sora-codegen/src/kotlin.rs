@@ -295,7 +295,12 @@ fn kotlin_container_type(mode: TableModeIr, row_type: &str, key_type: Option<&st
 fn kotlin_decode_expr(ir: &ConfigIr, ty: &TypeIr) -> String {
     match ty {
         TypeIr::Bool => "reader.readBool()".to_owned(),
+        TypeIr::I8 => "reader.readI32().toByte()".to_owned(),
+        TypeIr::U8 => "reader.readU32().toShort()".to_owned(),
+        TypeIr::I16 => "reader.readI32().toShort()".to_owned(),
+        TypeIr::U16 => "reader.readU32()".to_owned(),
         TypeIr::I32 => "reader.readI32()".to_owned(),
+        TypeIr::U32 => "reader.readU32().toLong() and 0xffffffffL".to_owned(),
         TypeIr::I64 => "reader.readI64()".to_owned(),
         TypeIr::F32 => "reader.readF32()".to_owned(),
         TypeIr::F64 => "reader.readF64()".to_owned(),
@@ -335,7 +340,11 @@ fn kotlin_decode_expr(ir: &ConfigIr, ty: &TypeIr) -> String {
 fn kotlin_value_decode_expr(ir: &ConfigIr, ty: &TypeIr, value: &str) -> String {
     match ty {
         TypeIr::Bool => format!("{value}.asBool()"),
+        TypeIr::I8 => format!("{value}.asInt().toByte()"),
+        TypeIr::U8 | TypeIr::I16 => format!("{value}.asInt().toShort()"),
+        TypeIr::U16 => format!("{value}.asInt()"),
         TypeIr::I32 => format!("{value}.asInt()"),
+        TypeIr::U32 => format!("{value}.asLong()"),
         TypeIr::I64 => format!("{value}.asLong()"),
         TypeIr::F32 => format!("{value}.asFloat()"),
         TypeIr::F64 => format!("{value}.asDouble()"),

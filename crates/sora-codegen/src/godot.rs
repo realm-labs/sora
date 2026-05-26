@@ -284,7 +284,13 @@ fn godot_field(ir: &ConfigIr, field: BaseField) -> GodotField {
 fn godot_value_decode_expr(ir: &ConfigIr, ty: &TypeIr, value: &str) -> String {
     match ty {
         TypeIr::Bool => format!("bool({value})"),
-        TypeIr::I32 | TypeIr::I64 => format!("int({value})"),
+        TypeIr::I8
+        | TypeIr::U8
+        | TypeIr::I16
+        | TypeIr::U16
+        | TypeIr::I32
+        | TypeIr::U32
+        | TypeIr::I64 => format!("int({value})"),
         TypeIr::F32 | TypeIr::F64 => format!("float({value})"),
         TypeIr::String | TypeIr::Text => format!("str({value})"),
         TypeIr::Enum(name) => format!("{}.decode({value})", godot_type_identifier(name)),
@@ -327,7 +333,13 @@ fn godot_value_decode_expr(ir: &ConfigIr, ty: &TypeIr, value: &str) -> String {
 fn godot_default_value(ir: &ConfigIr, ty: &TypeIr) -> String {
     match ty {
         TypeIr::Bool => "false".to_owned(),
-        TypeIr::I32 | TypeIr::I64 => "0".to_owned(),
+        TypeIr::I8
+        | TypeIr::U8
+        | TypeIr::I16
+        | TypeIr::U16
+        | TypeIr::I32
+        | TypeIr::U32
+        | TypeIr::I64 => "0".to_owned(),
         TypeIr::F32 | TypeIr::F64 => "0.0".to_owned(),
         TypeIr::String | TypeIr::Text | TypeIr::Enum(_) => "\"\"".to_owned(),
         TypeIr::List(_) | TypeIr::Set(_) | TypeIr::Map { .. } | TypeIr::Array { .. } => {

@@ -399,8 +399,8 @@ final class SoraReader {
 
     int readU32() {
         var value = readVarU64();
-        if (value > Integer.MAX_VALUE) {
-            throw new SoraReadException("Sora varint exceeds Integer.MAX_VALUE");
+        if (value > 0xffffffffL) {
+            throw new SoraReadException("Sora varint exceeds uint32");
         }
         return (int)value;
     }

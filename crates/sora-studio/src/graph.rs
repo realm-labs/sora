@@ -579,7 +579,12 @@ fn collect_type_edges(
             collect_type_edges(owner, field_name, value, edges);
         }
         TypeIr::Bool
+        | TypeIr::I8
+        | TypeIr::U8
+        | TypeIr::I16
+        | TypeIr::U16
         | TypeIr::I32
+        | TypeIr::U32
         | TypeIr::I64
         | TypeIr::F32
         | TypeIr::F64

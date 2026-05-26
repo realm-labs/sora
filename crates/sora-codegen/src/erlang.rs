@@ -318,7 +318,13 @@ fn erlang_container_type(mode: TableModeIr, row_type: &str, key_type: Option<&st
 fn erlang_type_name(ir: &ConfigIr, ty: &TypeIr) -> String {
     match ty {
         TypeIr::Bool => "boolean()".to_owned(),
-        TypeIr::I32 | TypeIr::I64 => "integer()".to_owned(),
+        TypeIr::I8
+        | TypeIr::U8
+        | TypeIr::I16
+        | TypeIr::U16
+        | TypeIr::I32
+        | TypeIr::U32
+        | TypeIr::I64 => "integer()".to_owned(),
         TypeIr::F32 | TypeIr::F64 => "float()".to_owned(),
         TypeIr::String | TypeIr::Text => "binary()".to_owned(),
         TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => {
@@ -342,7 +348,8 @@ fn erlang_type_name(ir: &ConfigIr, ty: &TypeIr) -> String {
 fn erlang_decode_fun(ir: &ConfigIr, ty: &TypeIr) -> String {
     match ty {
         TypeIr::Bool => "fun sora_runtime:read_bool/1".to_owned(),
-        TypeIr::I32 => "fun sora_runtime:read_i32/1".to_owned(),
+        TypeIr::I8 | TypeIr::I16 | TypeIr::I32 => "fun sora_runtime:read_i32/1".to_owned(),
+        TypeIr::U8 | TypeIr::U16 | TypeIr::U32 => "fun sora_runtime:read_u32/1".to_owned(),
         TypeIr::I64 => "fun sora_runtime:read_i64/1".to_owned(),
         TypeIr::F32 => "fun sora_runtime:read_f32/1".to_owned(),
         TypeIr::F64 => "fun sora_runtime:read_f64/1".to_owned(),
@@ -376,7 +383,13 @@ fn erlang_decode_fun(ir: &ConfigIr, ty: &TypeIr) -> String {
 fn erlang_value_decode_expr(ir: &ConfigIr, ty: &TypeIr, value: &str) -> String {
     match ty {
         TypeIr::Bool => format!("sora_runtime:expect_boolean({value})"),
-        TypeIr::I32 | TypeIr::I64 => format!("sora_runtime:expect_integer({value})"),
+        TypeIr::I8
+        | TypeIr::U8
+        | TypeIr::I16
+        | TypeIr::U16
+        | TypeIr::I32
+        | TypeIr::U32
+        | TypeIr::I64 => format!("sora_runtime:expect_integer({value})"),
         TypeIr::F32 | TypeIr::F64 => format!("sora_runtime:expect_float({value})"),
         TypeIr::String | TypeIr::Text => format!("sora_runtime:expect_binary({value})"),
         TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => {

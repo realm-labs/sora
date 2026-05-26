@@ -222,7 +222,12 @@ fn collect_type_names(
             collect_type_names(element, enum_names, struct_names, union_names);
         }
         TypeIr::Bool
+        | TypeIr::I8
+        | TypeIr::U8
+        | TypeIr::I16
+        | TypeIr::U16
         | TypeIr::I32
+        | TypeIr::U32
         | TypeIr::I64
         | TypeIr::F32
         | TypeIr::F64

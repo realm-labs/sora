@@ -319,7 +319,13 @@ fn dart_import(import: BaseImport) -> DartImport {
 fn dart_value_decode_expr(ir: &ConfigIr, ty: &TypeIr, value: &str) -> String {
     match ty {
         TypeIr::Bool => format!("{value}.asBool()"),
-        TypeIr::I32 | TypeIr::I64 => format!("{value}.asInt()"),
+        TypeIr::I8
+        | TypeIr::U8
+        | TypeIr::I16
+        | TypeIr::U16
+        | TypeIr::I32
+        | TypeIr::U32
+        | TypeIr::I64 => format!("{value}.asInt()"),
         TypeIr::F32 | TypeIr::F64 => format!("{value}.asDouble()"),
         TypeIr::String | TypeIr::Text => format!("{value}.asString()"),
         TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => {

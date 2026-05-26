@@ -131,7 +131,12 @@ pub(super) fn validate_index_field_type(
 fn is_valid_map_key_type(ty: &TypeIr, tables: &[TableIr]) -> bool {
     match ty {
         TypeIr::Bool
+        | TypeIr::I8
+        | TypeIr::U8
+        | TypeIr::I16
+        | TypeIr::U16
         | TypeIr::I32
+        | TypeIr::U32
         | TypeIr::I64
         | TypeIr::String
         | TypeIr::Text

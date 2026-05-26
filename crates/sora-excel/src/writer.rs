@@ -616,7 +616,13 @@ fn data_validation_for_field(
     Ok(match &field.ty {
         TypeIr::Bool => Some(bool_validation(path)?),
         TypeIr::Enum(enum_name) => enum_validation(ir, enum_name, path)?,
-        TypeIr::I32 | TypeIr::I64 => integer_validation(field, path)?,
+        TypeIr::I8
+        | TypeIr::U8
+        | TypeIr::I16
+        | TypeIr::U16
+        | TypeIr::I32
+        | TypeIr::U32
+        | TypeIr::I64 => integer_validation(field, path)?,
         TypeIr::F32 | TypeIr::F64 => decimal_validation(field, path)?,
         TypeIr::Optional(inner) => data_validation_for_type(ir, inner, field, path)?,
         _ => None,
@@ -632,7 +638,13 @@ fn data_validation_for_type(
     Ok(match ty {
         TypeIr::Bool => Some(bool_validation(path)?),
         TypeIr::Enum(enum_name) => enum_validation(ir, enum_name, path)?,
-        TypeIr::I32 | TypeIr::I64 => integer_validation(field, path)?,
+        TypeIr::I8
+        | TypeIr::U8
+        | TypeIr::I16
+        | TypeIr::U16
+        | TypeIr::I32
+        | TypeIr::U32
+        | TypeIr::I64 => integer_validation(field, path)?,
         TypeIr::F32 | TypeIr::F64 => decimal_validation(field, path)?,
         _ => None,
     })
@@ -1039,6 +1051,7 @@ mod tests {
     fn field_note_text_includes_tuple_shape_without_comment() {
         let ir = ConfigIr {
             package: "game_config".to_owned(),
+            localization: None,
             enums: vec![EnumIr {
                 name: "ResourceType".to_owned(),
                 scope: ScopeIr::default(),
@@ -1219,6 +1232,7 @@ mod tests {
     fn empty_ir() -> ConfigIr {
         ConfigIr {
             package: "game_config".to_owned(),
+            localization: None,
             enums: Vec::new(),
             structs: Vec::new(),
             unions: Vec::new(),

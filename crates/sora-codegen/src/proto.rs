@@ -115,7 +115,12 @@ fn proto_label(ir: &ConfigIr, ty: &TypeIr) -> &'static str {
 fn supports_proto_optional(ir: &ConfigIr, ty: &TypeIr) -> bool {
     match ty {
         TypeIr::Bool
+        | TypeIr::I8
+        | TypeIr::U8
+        | TypeIr::I16
+        | TypeIr::U16
         | TypeIr::I32
+        | TypeIr::U32
         | TypeIr::I64
         | TypeIr::F32
         | TypeIr::F64
@@ -130,7 +135,8 @@ fn supports_proto_optional(ir: &ConfigIr, ty: &TypeIr) -> bool {
 fn proto_type(ir: &ConfigIr, ty: &TypeIr) -> String {
     match ty {
         TypeIr::Bool => "bool".to_owned(),
-        TypeIr::I32 => "int32".to_owned(),
+        TypeIr::I8 | TypeIr::I16 | TypeIr::I32 => "int32".to_owned(),
+        TypeIr::U8 | TypeIr::U16 | TypeIr::U32 => "uint32".to_owned(),
         TypeIr::I64 => "int64".to_owned(),
         TypeIr::F32 => "float".to_owned(),
         TypeIr::F64 => "double".to_owned(),

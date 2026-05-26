@@ -173,7 +173,12 @@ impl ScopeIr {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum TypeIr {
     Bool,
+    I8,
+    U8,
+    I16,
+    U16,
     I32,
+    U32,
     I64,
     F32,
     F64,
@@ -209,7 +214,12 @@ impl fmt::Display for TypeIr {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             TypeIr::Bool => f.write_str("bool"),
+            TypeIr::I8 => f.write_str("i8"),
+            TypeIr::U8 => f.write_str("u8"),
+            TypeIr::I16 => f.write_str("i16"),
+            TypeIr::U16 => f.write_str("u16"),
             TypeIr::I32 => f.write_str("i32"),
+            TypeIr::U32 => f.write_str("u32"),
             TypeIr::I64 => f.write_str("i64"),
             TypeIr::F32 => f.write_str("f32"),
             TypeIr::F64 => f.write_str("f64"),

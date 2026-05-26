@@ -216,7 +216,7 @@ edition = "2024"
 
 [dependencies]
 prost = "0.14"
-serde = { version = "1", features = ["derive"] }
+serde = { version = "1", features = ["derive", "rc"] }
 serde_cbor = "0.11"
 serde_json = "1"
 zstd = "0.13"

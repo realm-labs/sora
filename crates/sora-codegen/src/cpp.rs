@@ -357,7 +357,12 @@ fn cpp_container_type(mode: TableModeIr, row_type: &str, key_type: Option<&str>)
 fn cpp_type_name(ir: &ConfigIr, ty: &TypeIr, options: &CppOptionsView) -> String {
     match ty {
         TypeIr::Bool => "bool".to_owned(),
+        TypeIr::I8 => "std::int8_t".to_owned(),
+        TypeIr::U8 => "std::uint8_t".to_owned(),
+        TypeIr::I16 => "std::int16_t".to_owned(),
+        TypeIr::U16 => "std::uint16_t".to_owned(),
         TypeIr::I32 => "std::int32_t".to_owned(),
+        TypeIr::U32 => "std::uint32_t".to_owned(),
         TypeIr::I64 => "std::int64_t".to_owned(),
         TypeIr::F32 => "float".to_owned(),
         TypeIr::F64 => "double".to_owned(),
@@ -400,7 +405,8 @@ fn cpp_type_name(ir: &ConfigIr, ty: &TypeIr, options: &CppOptionsView) -> String
 fn cpp_decode_expr(ir: &ConfigIr, ty: &TypeIr, options: &CppOptionsView) -> String {
     match ty {
         TypeIr::Bool => "reader.read_bool()".to_owned(),
-        TypeIr::I32 => "reader.read_i32()".to_owned(),
+        TypeIr::I8 | TypeIr::I16 | TypeIr::I32 => "reader.read_i32()".to_owned(),
+        TypeIr::U8 | TypeIr::U16 | TypeIr::U32 => "reader.read_u32()".to_owned(),
         TypeIr::I64 => "reader.read_i64()".to_owned(),
         TypeIr::F32 => "reader.read_f32()".to_owned(),
         TypeIr::F64 => "reader.read_f64()".to_owned(),

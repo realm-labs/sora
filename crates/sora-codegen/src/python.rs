@@ -387,7 +387,13 @@ fn reject_duplicates<'a>(
 fn python_type_name(ir: &ConfigIr, ty: &TypeIr) -> String {
     match ty {
         TypeIr::Bool => "bool".to_owned(),
-        TypeIr::I32 | TypeIr::I64 => "int".to_owned(),
+        TypeIr::I8
+        | TypeIr::U8
+        | TypeIr::I16
+        | TypeIr::U16
+        | TypeIr::I32
+        | TypeIr::U32
+        | TypeIr::I64 => "int".to_owned(),
         TypeIr::F32 | TypeIr::F64 => "float".to_owned(),
         TypeIr::String | TypeIr::Text => "str".to_owned(),
         TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => {
@@ -415,7 +421,8 @@ fn python_type_name(ir: &ConfigIr, ty: &TypeIr) -> String {
 fn python_decode_expr(ir: &ConfigIr, ty: &TypeIr) -> String {
     match ty {
         TypeIr::Bool => "reader.read_bool()".to_owned(),
-        TypeIr::I32 => "reader.read_i32()".to_owned(),
+        TypeIr::I8 | TypeIr::I16 | TypeIr::I32 => "reader.read_i32()".to_owned(),
+        TypeIr::U8 | TypeIr::U16 | TypeIr::U32 => "reader.read_u32()".to_owned(),
         TypeIr::I64 => "reader.read_i64()".to_owned(),
         TypeIr::F32 => "reader.read_f32()".to_owned(),
         TypeIr::F64 => "reader.read_f64()".to_owned(),
@@ -449,7 +456,13 @@ fn python_decode_expr(ir: &ConfigIr, ty: &TypeIr) -> String {
 fn python_value_decode_expr(ir: &ConfigIr, ty: &TypeIr, value: &str) -> String {
     match ty {
         TypeIr::Bool => format!("{value}.as_bool()"),
-        TypeIr::I32 | TypeIr::I64 => format!("{value}.as_int()"),
+        TypeIr::I8
+        | TypeIr::U8
+        | TypeIr::I16
+        | TypeIr::U16
+        | TypeIr::I32
+        | TypeIr::U32
+        | TypeIr::I64 => format!("{value}.as_int()"),
         TypeIr::F32 | TypeIr::F64 => format!("{value}.as_float()"),
         TypeIr::String | TypeIr::Text => format!("{value}.as_string()"),
         TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => {

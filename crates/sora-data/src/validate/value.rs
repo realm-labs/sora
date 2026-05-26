@@ -47,12 +47,17 @@ fn validate_typed_value(
             validate_typed_value(ir, config_data, table, path, element, constraints, value)
         }
         TypeIr::Bool => expect_type(table, path, ty, value, matches!(value, Value::Bool(_))),
+        TypeIr::I8 => validate_integer_type::<i8>(table, path, ty, value, constraints.range),
+        TypeIr::U8 => validate_integer_type::<u8>(table, path, ty, value, constraints.range),
+        TypeIr::I16 => validate_integer_type::<i16>(table, path, ty, value, constraints.range),
+        TypeIr::U16 => validate_integer_type::<u16>(table, path, ty, value, constraints.range),
         TypeIr::I32 => match value {
             Value::Integer(number) if i32::try_from(*number).is_ok() => {
                 validate_integer_range(table, path, *number, constraints.range)
             }
             _ => type_mismatch(table, path, ty, value),
         },
+        TypeIr::U32 => validate_integer_type::<u32>(table, path, ty, value, constraints.range),
         TypeIr::I64 => match value {
             Value::Integer(number) => {
                 validate_integer_range(table, path, *number, constraints.range)
@@ -117,6 +122,24 @@ fn validate_typed_value(
             table: ref_table,
             field: ref_field,
         } => validate_ref(config_data, table, path, ty, ref_table, ref_field, value),
+    }
+}
+
+fn validate_integer_type<T>(
+    table: &str,
+    path: &str,
+    ty: &TypeIr,
+    value: &Value,
+    range: Option<[i64; 2]>,
+) -> Result<()>
+where
+    T: TryFrom<i64>,
+{
+    match value {
+        Value::Integer(number) if T::try_from(*number).is_ok() => {
+            validate_integer_range(table, path, *number, range)
+        }
+        _ => type_mismatch(table, path, ty, value),
     }
 }
 
