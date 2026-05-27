@@ -659,10 +659,3 @@ read_var_u32_at(Bytes, Cursor, Value0, Shift) when Cursor >= 0, Cursor < byte_si
     end;
 read_var_u32_at(_Bytes, _Cursor, _Value, _Shift) ->
     error(unexpected_end_while_reading_varint).
-
--spec read_u64_at(binary(), integer()) -> integer().
-read_u64_at(Bytes, Offset) when Offset >= 0, Offset + 8 =< byte_size(Bytes) ->
-    <<_:Offset/binary, Value:64/little-unsigned-integer, _/binary>> = Bytes,
-    Value;
-read_u64_at(_Bytes, _Offset) ->
-    error(unexpected_end_while_reading_u64).
