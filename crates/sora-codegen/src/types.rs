@@ -56,6 +56,7 @@ fn rust_type_name_inner(ir: &ConfigIr, ty: &TypeIr, options: &RustCodegenOptions
         TypeIr::I32 => "i32".to_owned(),
         TypeIr::U32 => "u32".to_owned(),
         TypeIr::I64 => "i64".to_owned(),
+        TypeIr::Duration => "i64".to_owned(),
         TypeIr::F32 => "f32".to_owned(),
         TypeIr::F64 => "f64".to_owned(),
         TypeIr::String => rust_string_type(options),
@@ -98,7 +99,7 @@ fn kotlin_type_name_inner(ir: &ConfigIr, ty: &TypeIr) -> String {
         TypeIr::I8 => "Byte".to_owned(),
         TypeIr::U8 | TypeIr::I16 => "Short".to_owned(),
         TypeIr::U16 | TypeIr::I32 => "Int".to_owned(),
-        TypeIr::U32 | TypeIr::I64 => "Long".to_owned(),
+        TypeIr::U32 | TypeIr::I64 | TypeIr::Duration => "Long".to_owned(),
         TypeIr::F32 => "Float".to_owned(),
         TypeIr::F64 => "Double".to_owned(),
         TypeIr::String => "String".to_owned(),
@@ -127,6 +128,7 @@ fn csharp_type_name_inner(ir: &ConfigIr, ty: &TypeIr) -> String {
         TypeIr::I32 => "int".to_owned(),
         TypeIr::U32 => "uint".to_owned(),
         TypeIr::I64 => "long".to_owned(),
+        TypeIr::Duration => "long".to_owned(),
         TypeIr::F32 => "float".to_owned(),
         TypeIr::F64 => "double".to_owned(),
         TypeIr::String => "string".to_owned(),
@@ -150,7 +152,7 @@ fn java_type_name_inner(ir: &ConfigIr, ty: &TypeIr) -> String {
         TypeIr::Bool => "Boolean".to_owned(),
         TypeIr::I8 | TypeIr::U8 | TypeIr::I16 => "Integer".to_owned(),
         TypeIr::U16 | TypeIr::I32 => "Integer".to_owned(),
-        TypeIr::U32 | TypeIr::I64 => "Long".to_owned(),
+        TypeIr::U32 | TypeIr::I64 | TypeIr::Duration => "Long".to_owned(),
         TypeIr::F32 => "Float".to_owned(),
         TypeIr::F64 => "Double".to_owned(),
         TypeIr::String => "String".to_owned(),
@@ -173,7 +175,7 @@ fn scala_type_name_inner(ir: &ConfigIr, ty: &TypeIr) -> String {
     match ty {
         TypeIr::Bool => "Boolean".to_owned(),
         TypeIr::I8 | TypeIr::U8 | TypeIr::I16 | TypeIr::U16 | TypeIr::I32 => "Int".to_owned(),
-        TypeIr::U32 | TypeIr::I64 => "Long".to_owned(),
+        TypeIr::U32 | TypeIr::I64 | TypeIr::Duration => "Long".to_owned(),
         TypeIr::F32 => "Float".to_owned(),
         TypeIr::F64 => "Double".to_owned(),
         TypeIr::String => "String".to_owned(),
@@ -202,6 +204,7 @@ fn go_type_name_inner(ir: &ConfigIr, ty: &TypeIr) -> String {
         TypeIr::I32 => "int32".to_owned(),
         TypeIr::U32 => "uint32".to_owned(),
         TypeIr::I64 => "int64".to_owned(),
+        TypeIr::Duration => "int64".to_owned(),
         TypeIr::F32 => "float32".to_owned(),
         TypeIr::F64 => "float64".to_owned(),
         TypeIr::String => "string".to_owned(),
@@ -229,7 +232,8 @@ fn dart_type_name_inner(ir: &ConfigIr, ty: &TypeIr) -> String {
         | TypeIr::U16
         | TypeIr::I32
         | TypeIr::U32
-        | TypeIr::I64 => "int".to_owned(),
+        | TypeIr::I64
+        | TypeIr::Duration => "int".to_owned(),
         TypeIr::F32 | TypeIr::F64 => "double".to_owned(),
         TypeIr::String => "String".to_owned(),
         TypeIr::Text => "TextKey".to_owned(),
@@ -256,7 +260,8 @@ fn godot_type_name_inner(ir: &ConfigIr, ty: &TypeIr) -> String {
         | TypeIr::U16
         | TypeIr::I32
         | TypeIr::U32
-        | TypeIr::I64 => "int".to_owned(),
+        | TypeIr::I64
+        | TypeIr::Duration => "int".to_owned(),
         TypeIr::F32 | TypeIr::F64 => "float".to_owned(),
         TypeIr::String | TypeIr::Enum(_) => "String".to_owned(),
         TypeIr::Text => "SoraRuntime.TextKey".to_owned(),
@@ -278,7 +283,8 @@ fn python_type_name_inner(ir: &ConfigIr, ty: &TypeIr) -> String {
         | TypeIr::U16
         | TypeIr::I32
         | TypeIr::U32
-        | TypeIr::I64 => "int".to_owned(),
+        | TypeIr::I64
+        | TypeIr::Duration => "int".to_owned(),
         TypeIr::F32 | TypeIr::F64 => "float".to_owned(),
         TypeIr::String => "str".to_owned(),
         TypeIr::Text => "TextKey".to_owned(),

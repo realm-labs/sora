@@ -147,7 +147,8 @@ fn encode_value(
         | TypeIr::U16
         | TypeIr::I32
         | TypeIr::U32
-        | TypeIr::I64 => writer.int64(tag, expect_integer(table, field, value)?),
+        | TypeIr::I64
+        | TypeIr::Duration => writer.int64(tag, expect_integer(table, field, value)?),
         TypeIr::F32 => writer.float(tag, expect_float(table, field, value)? as f32),
         TypeIr::F64 => writer.double(tag, expect_float(table, field, value)?),
         TypeIr::String | TypeIr::Text => writer.string(tag, expect_string(table, field, value)?),

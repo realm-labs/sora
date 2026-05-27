@@ -328,7 +328,7 @@ fn scala_decode_expr(ir: &ConfigIr, ty: &TypeIr) -> String {
         TypeIr::U8 | TypeIr::U16 => "reader.readU32()".to_owned(),
         TypeIr::I32 => "reader.readI32()".to_owned(),
         TypeIr::U32 => "java.lang.Integer.toUnsignedLong(reader.readU32())".to_owned(),
-        TypeIr::I64 => "reader.readI64()".to_owned(),
+        TypeIr::I64 | TypeIr::Duration => "reader.readI64()".to_owned(),
         TypeIr::F32 => "reader.readF32()".to_owned(),
         TypeIr::F64 => "reader.readF64()".to_owned(),
         TypeIr::String => "reader.readString()".to_owned(),
@@ -368,7 +368,7 @@ fn scala_value_decode_expr(ir: &ConfigIr, ty: &TypeIr, value: &str) -> String {
         TypeIr::I8 | TypeIr::U8 | TypeIr::I16 | TypeIr::U16 => format!("{value}.asInt"),
         TypeIr::I32 => format!("{value}.asInt"),
         TypeIr::U32 => format!("{value}.asLong"),
-        TypeIr::I64 => format!("{value}.asLong"),
+        TypeIr::I64 | TypeIr::Duration => format!("{value}.asLong"),
         TypeIr::F32 => format!("{value}.asFloat"),
         TypeIr::F64 => format!("{value}.asDouble"),
         TypeIr::String => format!("{value}.asString"),
@@ -467,6 +467,7 @@ fn scala_collect_text_keys(ir: &ConfigIr, ty: &TypeIr, value: &str, indent: usiz
         | TypeIr::I32
         | TypeIr::U32
         | TypeIr::I64
+        | TypeIr::Duration
         | TypeIr::F32
         | TypeIr::F64
         | TypeIr::String

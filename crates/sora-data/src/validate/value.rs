@@ -64,6 +64,12 @@ fn validate_typed_value(
             }
             _ => type_mismatch(table, path, ty, value),
         },
+        TypeIr::Duration => match value {
+            Value::Integer(number) if *number >= 0 => {
+                validate_integer_range(table, path, *number, constraints.range)
+            }
+            _ => type_mismatch(table, path, ty, value),
+        },
         TypeIr::F32 | TypeIr::F64 => match value {
             Value::Integer(number) => {
                 validate_float_range(table, path, *number as f64, constraints.range)

@@ -385,7 +385,7 @@ mod tests {
     fn lua_parser_script_extends_check_and_export() {
         let base = temp_dir();
         let project = write_csv_project_with_lua_parser(&base, false);
-        let parser_script = write_duration_parser(&base);
+        let parser_script = write_scale_parser(&base);
         let default_context = test_context();
 
         let error = check(
@@ -396,7 +396,7 @@ mod tests {
             &default_context,
         )
         .unwrap_err();
-        assert!(format!("{error:#}").contains("duration"), "{error:#}");
+        assert!(format!("{error:#}").contains("scale"), "{error:#}");
 
         let context = context_with_parser_script(&parser_script);
         check(
@@ -433,7 +433,7 @@ mod tests {
     fn project_parser_script_extends_check_and_export() {
         let base = temp_dir();
         let project = write_csv_project_with_lua_parser(&base, true);
-        write_duration_parser(&base);
+        write_scale_parser(&base);
         let context = context_for_project(&project);
 
         check(
@@ -553,15 +553,15 @@ type = "i32"
 [[tables.fields]]
 name = "cooldown"
 type = "i32"
-parser = { kind = "duration", unit = "ms" }
+parser = { kind = "scale", factor = "1000" }
 "#,
         )
         .unwrap();
-        fs::write(data_dir.join("Item.csv"), "id,cooldown\n1001,3s\n").unwrap();
+        fs::write(data_dir.join("Item.csv"), "id,cooldown\n1001,3\n").unwrap();
         project
     }
 
-    fn write_duration_parser(base: &Path) -> PathBuf {
+    fn write_scale_parser(base: &Path) -> PathBuf {
         let tools = base.join("tools");
         fs::create_dir_all(&tools).unwrap();
         let path = tools.join("parsers.lua");
@@ -570,26 +570,19 @@ parser = { kind = "duration", unit = "ms" }
             r#"
 return {
   parsers = {
-    duration = {
-      options = { "unit" },
+    scale = {
+      options = { "factor" },
       validate = function(field)
         if field.type ~= "i32" then
-          error("duration parser requires i32")
+          error("scale parser requires i32")
         end
       end,
       parse = function(cell, ctx)
-        local value, unit = string.match(cell.text, "^(%d+)(%a*)$")
+        local value = tonumber(cell.text)
         if value == nil then
-          error("expected duration")
+          error("expected number")
         end
-        unit = unit ~= "" and unit or ctx.options.unit or "ms"
-        if unit == "ms" then
-          return tonumber(value)
-        end
-        if unit == "s" then
-          return tonumber(value) * 1000
-        end
-        error("unsupported duration unit `" .. unit .. "`")
+        return value * tonumber(ctx.options.factor or "1")
       end,
     },
   },

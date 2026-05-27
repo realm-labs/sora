@@ -122,6 +122,7 @@ fn supports_proto_optional(ir: &ConfigIr, ty: &TypeIr) -> bool {
         | TypeIr::I32
         | TypeIr::U32
         | TypeIr::I64
+        | TypeIr::Duration
         | TypeIr::F32
         | TypeIr::F64
         | TypeIr::String
@@ -137,7 +138,7 @@ fn proto_type(ir: &ConfigIr, ty: &TypeIr) -> String {
         TypeIr::Bool => "bool".to_owned(),
         TypeIr::I8 | TypeIr::I16 | TypeIr::I32 => "int32".to_owned(),
         TypeIr::U8 | TypeIr::U16 | TypeIr::U32 => "uint32".to_owned(),
-        TypeIr::I64 => "int64".to_owned(),
+        TypeIr::I64 | TypeIr::Duration => "int64".to_owned(),
         TypeIr::F32 => "float".to_owned(),
         TypeIr::F64 => "double".to_owned(),
         TypeIr::String | TypeIr::Text => "string".to_owned(),

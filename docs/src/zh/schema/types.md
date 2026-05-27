@@ -17,6 +17,7 @@ Sora 的类型表达式在 schema 字段中以字符串形式书写。
 | `f32` | 32 位浮点数。 |
 | `f64` | 64 位浮点数。 |
 | `string` | UTF-8 字符串。 |
+| `duration` | 非负时长，写作 `500ms`、`30s`、`15m`、`2h`、`7d` 或 `1h 30m` 这类单位组合。运行时数据存储为毫秒。 |
 | `text` | 多语言文案 key。见[多语言](../localization.md)。 |
 
 Sora 会在导出前校验整数宽度范围。部分目标语言没有 unsigned 小整数类型，生成代码可能使用更宽的 signed 类型承载，但 schema 范围语义仍然保留。
@@ -82,6 +83,7 @@ parser = { kind = "map" }
 | `u16` | 无 | `1001` |
 | `enum<ItemType>` | 无 | `Weapon` |
 | `list<i32>` | 无或 `split` | `1,2,3` |
+| `duration` | 无 | `1h 30m` |
 | `text` | 无 | `quest.1001.title` |
 | `set<string>` | `json` | `["starter","melee"]` |
 | `struct<ResourceCost>` | `tuple` | `Gold,0,100` |
@@ -111,7 +113,7 @@ parser = { kind = "map" }
 | `type` | 所有字段 | 类型表达式，例如 `i32`、`struct<ResourceCost>` 或 `list<union<RewardAction>>`。 |
 | `default` | 除派生字段外的所有字段 | object 字段不存在，或 required Excel/CSV cell 为空时使用的字符串值。 |
 | `comment` | 所有字段 | 用于生成 Excel 表头说明。 |
-| `range` | 数值字段和数值集合元素 | 数值闭区间，写作 `[min, max]`。 |
+| `range` | 数值字段、`duration`，以及这些类型的集合元素 | 数值闭区间，写作 `[min, max]`。`duration` 的范围单位是毫秒。 |
 | `length` | `string`、`list`、`set`、`array`、`map` | 长度闭区间，写作 `[min, max]`。 |
 | `parser` | 单元格输入和 default | 单元格 parser 提示。见[单元格 Parser](parsers.md)。 |
 | `scope` | 所有字段 | 仅在选定 generation/export scope 下包含该字段。默认是 `all`。 |

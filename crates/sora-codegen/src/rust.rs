@@ -414,6 +414,7 @@ fn rust_collect_text_keys(ir: &ConfigIr, ty: &TypeIr, value: &str) -> String {
         | TypeIr::I32
         | TypeIr::U32
         | TypeIr::I64
+        | TypeIr::Duration
         | TypeIr::F32
         | TypeIr::F64
         | TypeIr::String
@@ -476,6 +477,7 @@ fn rust_key_type_is_copy(ir: &ConfigIr, ty: &TypeIr) -> bool {
         | TypeIr::I32
         | TypeIr::U32
         | TypeIr::I64
+        | TypeIr::Duration
         | TypeIr::F32
         | TypeIr::F64
         | TypeIr::Enum(_) => true,

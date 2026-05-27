@@ -23,6 +23,7 @@ fn parse_type_inner(input: &str) -> Result<TypeIr> {
         "f32" => TypeIr::F32,
         "f64" => TypeIr::F64,
         "string" => TypeIr::String,
+        "duration" => TypeIr::Duration,
         "text" => TypeIr::Text,
         _ => {
             if let Some(inner) = generic_inner(input, "enum") {
@@ -158,6 +159,7 @@ mod tests {
             ("f32", TypeIr::F32),
             ("f64", TypeIr::F64),
             ("string", TypeIr::String),
+            ("duration", TypeIr::Duration),
             ("text", TypeIr::Text),
             ("enum<ItemType>", TypeIr::Enum("ItemType".to_owned())),
             ("struct<Reward>", TypeIr::Struct("Reward".to_owned())),

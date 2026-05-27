@@ -329,7 +329,7 @@ fn go_decode_expr(ir: &ConfigIr, ty: &TypeIr) -> String {
         TypeIr::U16 => "reader.ReadUInt16()".to_owned(),
         TypeIr::I32 => "reader.ReadInt32()".to_owned(),
         TypeIr::U32 => "reader.ReadUInt32()".to_owned(),
-        TypeIr::I64 => "reader.ReadInt64()".to_owned(),
+        TypeIr::I64 | TypeIr::Duration => "reader.ReadInt64()".to_owned(),
         TypeIr::F32 => "reader.ReadFloat32()".to_owned(),
         TypeIr::F64 => "reader.ReadFloat64()".to_owned(),
         TypeIr::String => "reader.ReadString()".to_owned(),
@@ -382,7 +382,7 @@ fn go_value_decode_expr(ir: &ConfigIr, ty: &TypeIr, value: &str) -> String {
         TypeIr::U16 => format!("{value}.AsUInt16()"),
         TypeIr::I32 => format!("{value}.AsInt32()"),
         TypeIr::U32 => format!("{value}.AsUInt32()"),
-        TypeIr::I64 => format!("{value}.AsInt64()"),
+        TypeIr::I64 | TypeIr::Duration => format!("{value}.AsInt64()"),
         TypeIr::F32 => format!("{value}.AsFloat32()"),
         TypeIr::F64 => format!("{value}.AsFloat64()"),
         TypeIr::String => format!("{value}.AsString()"),
@@ -485,6 +485,7 @@ fn go_collect_text_keys(ir: &ConfigIr, ty: &TypeIr, value: &str) -> String {
         | TypeIr::I32
         | TypeIr::U32
         | TypeIr::I64
+        | TypeIr::Duration
         | TypeIr::F32
         | TypeIr::F64
         | TypeIr::String

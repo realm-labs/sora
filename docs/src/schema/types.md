@@ -17,6 +17,7 @@ Sora type expressions are written as strings in schema fields.
 | `f32` | 32-bit floating point value. |
 | `f64` | 64-bit floating point value. |
 | `string` | UTF-8 string. |
+| `duration` | Non-negative duration written as units such as `500ms`, `30s`, `15m`, `2h`, `7d`, or `1h 30m`. Runtime data stores milliseconds. |
 | `text` | Localization text key. See [Localization](../localization.md). |
 
 Integer widths are validated by Sora before export. Some target languages do not have unsigned small integer types, so generated code may use a wider signed type while preserving the schema range.
@@ -82,6 +83,7 @@ These examples show what a designer would put in an Excel or CSV cell:
 | `u16` | none | `1001` |
 | `enum<ItemType>` | none | `Weapon` |
 | `list<i32>` | none or `split` | `1,2,3` |
+| `duration` | none | `1h 30m` |
 | `text` | none | `quest.1001.title` |
 | `set<string>` | `json` | `["starter","melee"]` |
 | `struct<ResourceCost>` | `tuple` | `Gold,0,100` |
@@ -111,7 +113,7 @@ For TOML/JSON/YAML-style object inputs, a field can be absent from the object. F
 | `type` | all fields | Type expression such as `i32`, `struct<ResourceCost>`, or `list<union<RewardAction>>`. |
 | `default` | all fields except derived fields | String value used when the source object field is absent or a required Excel/CSV cell is empty. |
 | `comment` | all fields | Description used in generated Excel headers. |
-| `range` | numeric fields and numeric collection elements | Inclusive numeric range, written as `[min, max]`. |
+| `range` | numeric fields, `duration`, and collection elements of those types | Inclusive numeric range, written as `[min, max]`. Duration ranges are milliseconds. |
 | `length` | `string`, `list`, `set`, `array`, `map` | Inclusive length range, written as `[min, max]`. |
 | `parser` | cell-based inputs and defaults | Cell parser hint. See [Cell Parsers](parsers.md). |
 | `scope` | all fields | Includes the field only for selected generation/export scopes. Defaults to `all`. |

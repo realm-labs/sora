@@ -49,22 +49,19 @@ Parser 脚本返回一个带 `parsers` 的 table。每个 parser 必须定义 `p
 ```lua
 return {
   parsers = {
-    duration = {
-      options = { "unit" },
+    slug = {
+      options = { "prefix" },
       validate = function(field)
-        if field.type ~= "i32" and field.type ~= "i64" then
-          error("duration parser requires i32 or i64")
+        if field.type ~= "string" then
+          error("slug parser requires string")
         end
       end,
       parse = function(cell, ctx)
-        local value, unit = string.match(cell.text, "^(%d+)(%a*)$")
-        if value == nil then
-          error("expected duration like 500ms or 3s")
+        local text = string.lower(string.gsub(cell.text, "%s+", "-"))
+        if ctx.options.prefix ~= nil then
+          return ctx.options.prefix .. text
         end
-        unit = unit ~= "" and unit or ctx.options.unit or "ms"
-        if unit == "ms" then return tonumber(value) end
-        if unit == "s" then return tonumber(value) * 1000 end
-        error("unsupported duration unit `" .. unit .. "`")
+        return text
       end,
     },
   },
@@ -75,9 +72,9 @@ Schema 字段按名字使用自定义 parser：
 
 ```toml
 [[tables.fields]]
-name = "cooldown"
-type = "i32"
-parser = { kind = "duration", unit = "ms" }
+name = "tag"
+type = "string"
+parser = { kind = "slug", prefix = "item-" }
 ```
 
 `cell` 包含 `kind`、`text`，以及适用时的 `value`。`ctx` 包含 `field`、`type`、`options`、`path`，以及 `row`、`column`、worksheet 的 `sheet` 等位置信息。Lua 返回值会映射成 Sora 数据值：`nil`、bool、integer、float、string、array-like table 和 string-keyed table。
@@ -92,6 +89,7 @@ parser = { kind = "duration", unit = "ms" }
 | --- | --- |
 | `bool` | 布尔 cell、`true`、`false`，或数字 cell：0 为 false，非 0 为 true。 |
 | `i32`、`i64`、`ref<Table.key>` | 整数 cell、整数字符串，或无小数部分的 float cell。 |
+| `duration` | 带 `ms`、`s`、`m`、`h` 或 `d` 单位的时长文本，例如 `500ms`、`30s` 或 `1h 30m`。 |
 | `f32`、`f64` | 数字 cell 或数字字符串。 |
 | `string`、`enum<Name>` | cell 展示文本。 |
 | `struct<Name>`、`union<Name>` | JSON object 文本。 |
