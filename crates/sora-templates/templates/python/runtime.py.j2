@@ -324,10 +324,14 @@ def read_section_payload(data: bytes, section: SoraSection) -> bytes:
     raise SoraReadError(f"unsupported Sora section compression {section.compression}")
 
 
-def read_u32_cursor(data: bytes, cursor: int) -> tuple[int, int]:
-    if cursor + 4 > len(data):
+def read_u32_at(data: bytes, offset: int) -> int:
+    if offset < 0 or offset + 4 > len(data):
         raise SoraReadError("truncated u32")
-    return struct.unpack_from("<I", data, cursor)[0], cursor + 4
+    return struct.unpack_from("<I", data, offset)[0]
+
+
+def read_u32_cursor(data: bytes, cursor: int) -> tuple[int, int]:
+    return read_u32_at(data, cursor), cursor + 4
 
 
 def read_length_prefixed_string(data: bytes, cursor: int) -> tuple[str, int]:

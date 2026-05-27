@@ -711,6 +711,7 @@ mod tests {
         assert!(!action.contains("Action.decode = staticmethod"));
         assert!(runtime.contains("class SoraReader:"));
         assert!(runtime.contains("class SoraConfigTable:"));
+        assert!(runtime.contains("def read_u32_at(data: bytes, offset: int) -> int:"));
         assert!(runtime.contains("def read_i64(self) -> int:"));
         assert!(runtime.contains("duplicate map key"));
         assert!(item.contains("class ItemTable"));
