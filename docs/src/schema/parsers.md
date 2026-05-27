@@ -89,7 +89,7 @@ If a field has no `parser`, Sora uses type-aware default parsing:
 | --- | --- |
 | `bool` | Boolean cells, `true`, `false`, or numeric cells where zero is false and non-zero is true. |
 | `i32`, `i64`, `ref<Table.key>` | Integer cells, integer text, or whole-number float cells. |
-| `duration` | Duration text using `ms`, `s`, `m`, `h`, or `d`, for example `500ms`, `30s`, or `1h 30m`. |
+| `duration` | Duration text using `d`, `h`, `m`, `s`, or `ms`, for example `500ms`, `30s`, or `1h 30m`. Units must be ordered from largest to smallest. |
 | `f32`, `f64` | Numeric cells or numeric text. |
 | `string`, `enum<Name>` | Cell display text. |
 | `struct<Name>`, `union<Name>` | JSON object text. |

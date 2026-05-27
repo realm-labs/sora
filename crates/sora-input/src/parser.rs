@@ -270,6 +270,7 @@ fn parse_duration_millis(source: &str) -> std::result::Result<i64, String> {
     let mut index = 0usize;
     let mut total = 0i64;
     let mut parsed = false;
+    let mut last_unit_rank = None;
 
     while index < bytes.len() {
         while bytes.get(index).is_some_and(u8::is_ascii_whitespace) {
@@ -298,14 +299,20 @@ fn parse_duration_millis(source: &str) -> std::result::Result<i64, String> {
             return Err(format!("expected duration unit in `{source}`"));
         }
         let unit = &source[unit_start..index];
-        let factor = match unit {
-            "ms" => 1,
-            "s" => 1_000,
-            "m" => 60_000,
-            "h" => 3_600_000,
-            "d" => 86_400_000,
+        let (rank, factor) = match unit {
+            "d" => (0, 86_400_000),
+            "h" => (1, 3_600_000),
+            "m" => (2, 60_000),
+            "s" => (3, 1_000),
+            "ms" => (4, 1),
             _ => return Err(format!("unsupported duration unit `{unit}` in `{source}`")),
         };
+        if last_unit_rank.is_some_and(|last_rank| rank <= last_rank) {
+            return Err(format!(
+                "duration units must be ordered as d, h, m, s, ms in `{source}`"
+            ));
+        }
+        last_unit_rank = Some(rank);
         let millis = number
             .checked_mul(factor)
             .ok_or_else(|| format!("duration `{source}` is too large"))?;
@@ -835,13 +842,43 @@ mod tests {
 
         let value = registry
             .parse_cell(
-                &CellValue::Text("1h 30m 5s 250ms".into()),
+                &CellValue::Text("1h30m5s250ms".into()),
                 &parse_type("duration").unwrap(),
                 &context,
             )
             .unwrap();
 
         assert_eq!(value, Value::Integer(5_405_250));
+    }
+
+    #[test]
+    fn rejects_out_of_order_duration_units() {
+        let registry = ParserRegistry::builtin();
+        let ir = ConfigIr {
+            package: "test".to_owned(),
+            localization: None,
+            enums: Vec::new(),
+            structs: Vec::new(),
+            unions: Vec::new(),
+            tables: Vec::new(),
+        };
+        let context = CellContext {
+            path: Path::new("<test>"),
+            ir: &ir,
+            location: CellLocation::Default,
+            field: "duration",
+            parser: None,
+        };
+
+        let error = registry
+            .parse_cell(
+                &CellValue::Text("30s1h".into()),
+                &parse_type("duration").unwrap(),
+                &context,
+            )
+            .unwrap_err();
+
+        assert!(error.to_string().contains("must be ordered"));
     }
 
     #[test]

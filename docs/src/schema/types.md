@@ -17,7 +17,7 @@ Sora type expressions are written as strings in schema fields.
 | `f32` | 32-bit floating point value. |
 | `f64` | 64-bit floating point value. |
 | `string` | UTF-8 string. |
-| `duration` | Non-negative duration written as units such as `500ms`, `30s`, `15m`, `2h`, `7d`, or `1h 30m`. Runtime data stores milliseconds. |
+| `duration` | Non-negative duration written as units such as `500ms`, `30s`, `15m`, `2h`, `7d`, or `1h 30m`. Units must be ordered from largest to smallest: `d`, `h`, `m`, `s`, `ms`. Runtime data stores milliseconds. |
 | `text` | Localization text key. See [Localization](../localization.md). |
 
 Integer widths are validated by Sora before export. Some target languages do not have unsigned small integer types, so generated code may use a wider signed type while preserving the schema range.

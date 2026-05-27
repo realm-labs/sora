@@ -89,7 +89,7 @@ parser = { kind = "slug", prefix = "item-" }
 | --- | --- |
 | `bool` | 布尔 cell、`true`、`false`，或数字 cell：0 为 false，非 0 为 true。 |
 | `i32`、`i64`、`ref<Table.key>` | 整数 cell、整数字符串，或无小数部分的 float cell。 |
-| `duration` | 带 `ms`、`s`、`m`、`h` 或 `d` 单位的时长文本，例如 `500ms`、`30s` 或 `1h 30m`。 |
+| `duration` | 带 `d`、`h`、`m`、`s` 或 `ms` 单位的时长文本，例如 `500ms`、`30s` 或 `1h 30m`。单位必须按从大到小排列。 |
 | `f32`、`f64` | 数字 cell 或数字字符串。 |
 | `string`、`enum<Name>` | cell 展示文本。 |
 | `struct<Name>`、`union<Name>` | JSON object 文本。 |
