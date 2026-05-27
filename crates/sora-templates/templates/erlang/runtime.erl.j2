@@ -24,7 +24,6 @@
     expect_text_key/1,
     text_key/1,
     text_key_value/1,
-    resolve_text_key/2,
     decode_value_list/2,
     decode_value_map/3,
     read_bool/1,
@@ -276,10 +275,6 @@ text_key(Value) when is_binary(Value) ->
 -spec text_key_value(text_key()) -> binary().
 text_key_value({text_key, Value}) ->
     Value.
-
--spec resolve_text_key(text_key(), fun((text_key()) -> binary())) -> binary().
-resolve_text_key(Key, Resolver) when is_function(Resolver, 1) ->
-    Resolver(Key).
 
 -spec read_optional(fun((reader()) -> {T, reader()}), reader()) -> {T | undefined, reader()}.
 read_optional(Decode, Reader0) ->

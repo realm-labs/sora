@@ -19,9 +19,6 @@ class TextKey:
 	func _init(text_value: String = "") -> void:
 		value = text_value
 
-	func resolve(resolver: Variant) -> String:
-		return resolver.text(self)
-
 	func _to_string() -> String:
 		return value
 

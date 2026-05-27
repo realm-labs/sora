@@ -51,12 +51,6 @@ typedef struct sora_text_key {
     sora_string value;
 } sora_text_key;
 
-typedef sora_result (*sora_text_resolver_fn)(
-    const sora_text_key* key,
-    const char** out,
-    void* user_data
-);
-
 typedef struct sora_reader {
     const uint8_t* bytes;
     size_t len;
@@ -88,12 +82,6 @@ bool sora_string_equal(const sora_string* left, const sora_string* right);
 void sora_text_key_free(sora_text_key* value);
 bool sora_text_key_equal(const sora_text_key* left, const sora_text_key* right);
 const sora_string* sora_text_key_value(const sora_text_key* key);
-sora_result sora_text_key_resolve(
-    const sora_text_key* key,
-    sora_text_resolver_fn resolver,
-    void* user_data,
-    const char** out
-);
 
 void sora_reader_init(
     sora_reader* reader,

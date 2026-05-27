@@ -45,6 +45,16 @@ function Quest.decode_value(value)
     }
 end
 
+---@param value Quest?
+---@param out TextKey[]
+function Quest.collect_text_keys(value, out)
+    if value == nil then
+        return
+    end
+    Vec3.collect_text_keys(value.startPos, out)
+    for _, __sora_value in ipairs(value.rewards) do Reward.collect_text_keys(__sora_value, out) end
+end
+
 ---@class QuestTable
 ---@field private _keys integer[]
 ---@field private _rows table<integer, Quest>

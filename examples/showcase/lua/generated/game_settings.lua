@@ -50,6 +50,17 @@ function GameSettings.decode_value(value)
     }
 end
 
+---@param value GameSettings?
+---@param out TextKey[]
+function GameSettings.collect_text_keys(value, out)
+    if value == nil then
+        return
+    end
+    Vec3.collect_text_keys(value.spawnPos, out)
+    for _, __sora_value in ipairs(value.spawnPoints) do Vec3.collect_text_keys(__sora_value, out) end
+    if value.maintenance ~= nil then local __sora_value = value.maintenance; MaintenanceInfo.collect_text_keys(__sora_value, out) end
+end
+
 ---@class GameSettingsTable
 ---@field private _row GameSettings
 local GameSettingsTable = {}

@@ -34,6 +34,15 @@ function ComplexActionEntry.decode_value(value)
     }
 end
 
+---@param value ComplexActionEntry?
+---@param out TextKey[]
+function ComplexActionEntry.collect_text_keys(value, out)
+    if value == nil then
+        return
+    end
+    RewardAction.collect_text_keys(value.value, out)
+end
+
 ---@class ComplexActionEntryTable
 ---@field private _keys integer[]
 ---@field private _rows table<integer, ComplexActionEntry>

@@ -33,6 +33,14 @@ function MaintenanceWindow.decode_value(value)
     }
 end
 
+---@param value MaintenanceWindow?
+---@param out TextKey[]
+function MaintenanceWindow.collect_text_keys(value, out)
+    if value == nil then
+        return
+    end
+end
+
 ---@class MaintenanceWindowTable
 ---@field private _rows MaintenanceWindow[]
 local MaintenanceWindowTable = {}

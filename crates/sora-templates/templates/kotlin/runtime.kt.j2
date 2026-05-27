@@ -37,13 +37,13 @@ interface SoraTableSource {
     ): List<T>
 }
 
-fun interface SoraTextResolver {
+interface SoraTextResolver {
     fun text(key: TextKey): String
+    fun format(key: TextKey, args: Map<String, Any>): String
 }
 
 @JvmInline
 value class TextKey(val value: String) {
-    fun resolve(resolver: SoraTextResolver): String = resolver.text(this)
     override fun toString(): String = value
 }
 

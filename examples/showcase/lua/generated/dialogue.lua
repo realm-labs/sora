@@ -30,6 +30,15 @@ function Dialogue.decode_value(value)
     }
 end
 
+---@param value Dialogue?
+---@param out TextKey[]
+function Dialogue.collect_text_keys(value, out)
+    if value == nil then
+        return
+    end
+    out[#out + 1] = value.speakerKey
+end
+
 ---@class DialogueTable
 ---@field private _keys integer[]
 ---@field private _rows table<integer, Dialogue>

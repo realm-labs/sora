@@ -138,6 +138,7 @@ struct LuaUnion {
 struct LuaUnionVariant {
     name: String,
     fields: Vec<LuaField>,
+    has_text_keys: bool,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -184,6 +185,7 @@ struct LuaField {
     type_name: String,
     decode: String,
     value_decode: String,
+    collect_text_keys: String,
     comment: Option<String>,
 }
 
@@ -260,13 +262,18 @@ fn lua_variant(
     variant: BaseUnionVariant,
     options: &LuaOptionsView,
 ) -> LuaUnionVariant {
+    let fields = variant
+        .fields
+        .into_iter()
+        .map(|field| lua_field(ir, field, options))
+        .collect::<Vec<_>>();
+    let has_text_keys = fields
+        .iter()
+        .any(|field| !field.collect_text_keys.is_empty());
     LuaUnionVariant {
         name: variant.pascal_name,
-        fields: variant
-            .fields
-            .into_iter()
-            .map(|field| lua_field(ir, field, options))
-            .collect(),
+        fields,
+        has_text_keys,
     }
 }
 
@@ -332,12 +339,15 @@ fn lua_index(ir: &ConfigIr, index: BaseIndex, options: &LuaOptionsView) -> LuaIn
 }
 
 fn lua_field(ir: &ConfigIr, field: BaseField, options: &LuaOptionsView) -> LuaField {
+    let collect_text_keys =
+        lua_collect_text_keys(ir, &field.ty, &format!("value.{}", field.camel_name));
     LuaField {
         raw_name: field.raw_name,
         name: field.camel_name,
         type_name: lua_type_name(ir, &field.ty, options),
         decode: lua_decode_expr(ir, &field.ty, options),
         value_decode: lua_value_decode_expr(ir, &field.ty, "__VALUE__"),
+        collect_text_keys,
         comment: field.comment,
     }
 }
@@ -450,6 +460,60 @@ fn lua_value_decode_expr(ir: &ConfigIr, ty: &TypeIr, value: &str) -> String {
                 lua_value_decode_expr(ir, element, value)
             )
         }
+    }
+}
+
+fn lua_collect_text_keys(ir: &ConfigIr, ty: &TypeIr, value: &str) -> String {
+    match ty {
+        TypeIr::Text => format!("out[#out + 1] = {value}"),
+        TypeIr::Optional(element) => {
+            let inner = lua_collect_text_keys(ir, element, "__sora_value");
+            if inner.is_empty() {
+                String::new()
+            } else {
+                format!("if {value} ~= nil then local __sora_value = {value}; {inner} end")
+            }
+        }
+        TypeIr::List(element) | TypeIr::Set(element) | TypeIr::Array { element, .. } => {
+            let inner = lua_collect_text_keys(ir, element, "__sora_value");
+            if inner.is_empty() {
+                String::new()
+            } else {
+                format!("for _, __sora_value in ipairs({value}) do {inner} end")
+            }
+        }
+        TypeIr::Map {
+            key,
+            value: element,
+        } => {
+            let key_inner = lua_collect_text_keys(ir, key, "__sora_key");
+            let value_inner = lua_collect_text_keys(ir, element, "__sora_value");
+            if key_inner.is_empty() && value_inner.is_empty() {
+                String::new()
+            } else {
+                format!(
+                    "for __sora_key, __sora_value in pairs({value}) do {key_inner} {value_inner} end"
+                )
+            }
+        }
+        TypeIr::Struct(name) | TypeIr::Union(name) => {
+            format!("{name}.collect_text_keys({value}, out)")
+        }
+        TypeIr::Ref { table, field } => ref_target_type(ir, table, field)
+            .map(|ty| lua_collect_text_keys(ir, ty, value))
+            .unwrap_or_default(),
+        TypeIr::Bool
+        | TypeIr::I8
+        | TypeIr::U8
+        | TypeIr::I16
+        | TypeIr::U16
+        | TypeIr::I32
+        | TypeIr::U32
+        | TypeIr::I64
+        | TypeIr::F32
+        | TypeIr::F64
+        | TypeIr::String
+        | TypeIr::Enum(_) => String::new(),
     }
 }
 

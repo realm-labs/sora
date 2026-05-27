@@ -38,6 +38,17 @@ function MailTemplate.decode_value(value)
     }
 end
 
+---@param value MailTemplate?
+---@param out TextKey[]
+function MailTemplate.collect_text_keys(value, out)
+    if value == nil then
+        return
+    end
+    out[#out + 1] = value.titleKey
+    out[#out + 1] = value.bodyKey
+    for _, __sora_value in ipairs(value.rewards) do Reward.collect_text_keys(__sora_value, out) end
+end
+
 ---@class MailTemplateTable
 ---@field private _keys integer[]
 ---@field private _rows table<integer, MailTemplate>

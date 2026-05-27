@@ -29,14 +29,11 @@ export class SoraReadError extends Error {
 
 export interface SoraTextResolver {
     text(key: TextKey): string;
+    format(key: TextKey, args: Record<string, string | number | boolean>): string;
 }
 
 export class TextKey {
     constructor(readonly value: string) {}
-
-    resolve(resolver: SoraTextResolver): string {
-        return resolver.text(this);
-    }
 
     toString(): string {
         return this.value;

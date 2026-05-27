@@ -24,6 +24,13 @@ impl super::runtime::SoraDecode for GachaPool {
     }
 }
 
+impl GachaPool {
+    pub(super) fn collect_text_keys<'a>(&'a self, out: &mut Vec<&'a super::runtime::TextKey>) {
+        let _ = &out;
+        self.cost.collect_text_keys(out);
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct GachaPoolTable {
     keys: Vec<i32>,

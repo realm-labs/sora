@@ -33,6 +33,14 @@ function QuestReward.decode_value(value)
     }
 end
 
+---@param value QuestReward?
+---@param out TextKey[]
+function QuestReward.collect_text_keys(value, out)
+    if value == nil then
+        return
+    end
+end
+
 ---@class QuestRewardTable
 ---@field private _rows QuestReward[]
 local QuestRewardTable = {}

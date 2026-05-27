@@ -111,11 +111,12 @@ let config = SoraConfig::from_bytes(config_bytes)?;
 let pack = generated::runtime::LocalePack::from_bytes(locale_bytes)?;
 
 let mut i18n = generated::SoraI18n::new();
-i18n.mount(pack)?;
+i18n.mount(&config, pack)?;
 i18n.set_locale("zh_cn")?;
 
-let quest = config.quest().get(&1001).unwrap();
-let title = quest.title_key.resolve(&i18n)?;
+let mail = config.mail_template().get(&1001).unwrap();
+let title = i18n.text(&mail.title_key);
+let body = i18n.format(&mail.body_key, [("count", 100)])?;
 ```
 
 挂载时会校验：
@@ -124,6 +125,7 @@ let title = quest.title_key.resolve(&i18n)?;
 | --- | --- |
 | `schema_fingerprint` | 防止加载另一个 schema 生成的语言包。 |
 | locale 声明 | 拒绝 `[localization].locales` 未声明的语言包。 |
+| text keys | 拒绝缺少当前配置使用的 key 或包含空文本的语言包。 |
 | 已挂载语言 | `set_locale` 只能切到已经 mount 的语言。 |
 
-业务代码不感知 key 来自哪张 source 表，只用已挂载的 i18n runtime 解析 `TextKey`。
+业务代码不感知 key 来自哪张 source 表，只用已挂载的 i18n runtime 查询 `TextKey`。

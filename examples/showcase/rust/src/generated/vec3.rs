@@ -21,3 +21,9 @@ impl super::runtime::SoraDecode for Vec3 {
         })
     }
 }
+
+impl Vec3 {
+    pub(super) fn collect_text_keys<'a>(&'a self, out: &mut Vec<&'a super::runtime::TextKey>) {
+        let _ = &out;
+    }
+}

@@ -31,4 +31,13 @@ function RewardBundle.decode_value(value)
     }
 end
 
+---@param value RewardBundle?
+---@param out TextKey[]
+function RewardBundle.collect_text_keys(value, out)
+    if value == nil then
+        return
+    end
+    ResourceCost.collect_text_keys(value.cost, out)
+end
+
 return RewardBundle

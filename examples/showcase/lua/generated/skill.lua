@@ -49,6 +49,17 @@ function Skill.decode_value(value)
     }
 end
 
+---@param value Skill?
+---@param out TextKey[]
+function Skill.collect_text_keys(value, out)
+    if value == nil then
+        return
+    end
+    ResourceCost.collect_text_keys(value.cost, out)
+    SkillEffect.collect_text_keys(value.effect, out)
+    Vec3.collect_text_keys(value.castOrigin, out)
+end
+
 ---@class SkillTable
 ---@field private _keys integer[]
 ---@field private _rows table<integer, Skill>

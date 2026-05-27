@@ -17,14 +17,13 @@ final class SoraReadException implements Exception {
 
 abstract interface class SoraTextResolver {
   String text(TextKey key);
+  String format(TextKey key, Map<String, Object> args);
 }
 
 final class TextKey {
   final String value;
 
   const TextKey(this.value);
-
-  String resolve(SoraTextResolver resolver) => resolver.text(this);
 
   @override
   String toString() => value;

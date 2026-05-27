@@ -34,6 +34,14 @@ function GachaItem.decode_value(value)
     }
 end
 
+---@param value GachaItem?
+---@param out TextKey[]
+function GachaItem.collect_text_keys(value, out)
+    if value == nil then
+        return
+    end
+end
+
 ---@class GachaItemTable
 ---@field private _rows GachaItem[]
 local GachaItemTable = {}

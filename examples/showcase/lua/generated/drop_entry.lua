@@ -36,6 +36,14 @@ function DropEntry.decode_value(value)
     }
 end
 
+---@param value DropEntry?
+---@param out TextKey[]
+function DropEntry.collect_text_keys(value, out)
+    if value == nil then
+        return
+    end
+end
+
 ---@class DropEntryTable
 ---@field private _rows DropEntry[]
 local DropEntryTable = {}

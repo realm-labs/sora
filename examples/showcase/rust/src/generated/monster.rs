@@ -34,6 +34,13 @@ impl super::runtime::SoraDecode for Monster {
     }
 }
 
+impl Monster {
+    pub(super) fn collect_text_keys<'a>(&'a self, out: &mut Vec<&'a super::runtime::TextKey>) {
+        let _ = &out;
+        self.spawn_pos.collect_text_keys(out);
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct MonsterTable {
     keys: Vec<i32>,

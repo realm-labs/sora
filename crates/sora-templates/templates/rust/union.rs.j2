@@ -31,3 +31,24 @@ impl super::runtime::SoraDecode for {{ union.pascal_name }} {
         }
     }
 }
+
+impl {{ union.pascal_name }} {
+    pub(super) fn collect_text_keys<'a>(&'a self, out: &mut Vec<&'a super::runtime::TextKey>) {
+        let _ = &out;
+        match self {
+{%- for variant in union.variants %}
+{%- if variant.text_key_patterns %}
+            Self::{{ variant.name }} { {{ variant.text_key_patterns }}, .. } => {
+{%- for field in variant.fields %}
+{%- if field.collect_text_keys %}
+                {{ field.collect_text_keys | replace("self." ~ field.name, field.text_key_binding) }}
+{%- endif %}
+{%- endfor %}
+            }
+{%- else %}
+            Self::{{ variant.name }} { .. } => {}
+{%- endif %}
+{%- endfor %}
+        }
+    }
+}

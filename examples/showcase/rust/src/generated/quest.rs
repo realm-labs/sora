@@ -39,6 +39,16 @@ impl super::runtime::SoraDecode for Quest {
     }
 }
 
+impl Quest {
+    pub(super) fn collect_text_keys<'a>(&'a self, out: &mut Vec<&'a super::runtime::TextKey>) {
+        let _ = &out;
+        self.start_pos.collect_text_keys(out);
+        for value in self.rewards.iter() {
+            value.collect_text_keys(out);
+        }
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct QuestTable {
     keys: Vec<i32>,

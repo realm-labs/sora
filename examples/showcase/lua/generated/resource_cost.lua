@@ -31,4 +31,12 @@ function ResourceCost.decode_value(value)
     }
 end
 
+---@param value ResourceCost?
+---@param out TextKey[]
+function ResourceCost.collect_text_keys(value, out)
+    if value == nil then
+        return
+    end
+end
+
 return ResourceCost

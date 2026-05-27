@@ -23,6 +23,13 @@ impl super::runtime::SoraDecode for Dialogue {
     }
 }
 
+impl Dialogue {
+    pub(super) fn collect_text_keys<'a>(&'a self, out: &mut Vec<&'a super::runtime::TextKey>) {
+        let _ = &out;
+        out.push(&self.speaker_key);
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct DialogueTable {
     keys: Vec<i32>,

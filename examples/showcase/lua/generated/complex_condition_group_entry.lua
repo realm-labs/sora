@@ -34,6 +34,15 @@ function ComplexConditionGroupEntry.decode_value(value)
     }
 end
 
+---@param value ComplexConditionGroupEntry?
+---@param out TextKey[]
+function ComplexConditionGroupEntry.collect_text_keys(value, out)
+    if value == nil then
+        return
+    end
+    EventCondition.collect_text_keys(value.value, out)
+end
+
 ---@class ComplexConditionGroupEntryTable
 ---@field private _keys integer[]
 ---@field private _rows table<integer, ComplexConditionGroupEntry>

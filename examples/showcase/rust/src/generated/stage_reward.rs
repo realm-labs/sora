@@ -25,6 +25,12 @@ impl super::runtime::SoraDecode for StageReward {
     }
 }
 
+impl StageReward {
+    pub(super) fn collect_text_keys<'a>(&'a self, out: &mut Vec<&'a super::runtime::TextKey>) {
+        let _ = &out;
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct StageRewardTable {
     rows: Vec<StageReward>,

@@ -31,4 +31,12 @@ function SkillEffect.decode_value(value)
     }
 end
 
+---@param value SkillEffect?
+---@param out TextKey[]
+function SkillEffect.collect_text_keys(value, out)
+    if value == nil then
+        return
+    end
+end
+
 return SkillEffect

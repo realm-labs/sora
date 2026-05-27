@@ -30,6 +30,15 @@ impl super::runtime::SoraDecode for Stage {
     }
 }
 
+impl Stage {
+    pub(super) fn collect_text_keys<'a>(&'a self, out: &mut Vec<&'a super::runtime::TextKey>) {
+        let _ = &out;
+        for value in self.first_clear_rewards.iter() {
+            value.collect_text_keys(out);
+        }
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct StageTable {
     keys: Vec<i32>,

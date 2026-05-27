@@ -34,6 +34,16 @@ function Achievement.decode_value(value)
     }
 end
 
+---@param value Achievement?
+---@param out TextKey[]
+function Achievement.collect_text_keys(value, out)
+    if value == nil then
+        return
+    end
+    out[#out + 1] = value.titleKey
+    ResourceCost.collect_text_keys(value.reward, out)
+end
+
 ---@class AchievementTable
 ---@field private _keys integer[]
 ---@field private _rows table<integer, Achievement>

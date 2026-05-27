@@ -27,6 +27,13 @@ impl super::runtime::SoraDecode for EquipmentSet {
     }
 }
 
+impl EquipmentSet {
+    pub(super) fn collect_text_keys<'a>(&'a self, out: &mut Vec<&'a super::runtime::TextKey>) {
+        let _ = &out;
+        self.bonus_effect.collect_text_keys(out);
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct EquipmentSetTable {
     keys: Vec<i32>,

@@ -179,6 +179,125 @@ function SoraConfig.new_i18n()
         "en_us",
     }, "zh_cn")
 end
+
+---@param pack LocalePack
+function SoraConfig:validate_locale_pack(pack)
+    for _, key in ipairs(self:text_keys()) do
+        local value = pack.translations[key:as_string()]
+        if value == nil then
+            error("text key `" .. key:as_string() .. "` is missing for locale `" .. tostring(pack.locale) .. "`")
+        end
+        if value == "" then
+            error("text key `" .. key:as_string() .. "` has empty text for locale `" .. tostring(pack.locale) .. "`")
+        end
+    end
+end
+
+---@return TextKey[]
+function SoraConfig:text_keys()
+    local keys = {}
+    for _, row in pairs(self:item():rows()) do
+        Item.collect_text_keys(row, keys)
+    end
+    for _, row in pairs(self:shop():rows()) do
+        Shop.collect_text_keys(row, keys)
+    end
+    for _, row in pairs(self:shop_item():rows()) do
+        ShopItem.collect_text_keys(row, keys)
+    end
+    for _, row in pairs(self:recipe():rows()) do
+        Recipe.collect_text_keys(row, keys)
+    end
+    for _, row in pairs(self:gacha_pool():rows()) do
+        GachaPool.collect_text_keys(row, keys)
+    end
+    for _, row in pairs(self:gacha_item():rows()) do
+        GachaItem.collect_text_keys(row, keys)
+    end
+    for _, row in pairs(self:equipment_set():rows()) do
+        EquipmentSet.collect_text_keys(row, keys)
+    end
+    for _, row in pairs(self:skill():rows()) do
+        Skill.collect_text_keys(row, keys)
+    end
+    for _, row in pairs(self:character():rows()) do
+        Character.collect_text_keys(row, keys)
+    end
+    for _, row in pairs(self:character_skill():rows()) do
+        CharacterSkill.collect_text_keys(row, keys)
+    end
+    for _, row in pairs(self:buff():rows()) do
+        Buff.collect_text_keys(row, keys)
+    end
+    for _, row in pairs(self:drop_group():rows()) do
+        DropGroup.collect_text_keys(row, keys)
+    end
+    for _, row in pairs(self:drop_entry():rows()) do
+        DropEntry.collect_text_keys(row, keys)
+    end
+    for _, row in pairs(self:monster():rows()) do
+        Monster.collect_text_keys(row, keys)
+    end
+    for _, row in pairs(self:stage():rows()) do
+        Stage.collect_text_keys(row, keys)
+    end
+    for _, row in pairs(self:stage_reward():rows()) do
+        StageReward.collect_text_keys(row, keys)
+    end
+    for _, row in pairs(self:dungeon():rows()) do
+        Dungeon.collect_text_keys(row, keys)
+    end
+    for _, row in pairs(self:quest():rows()) do
+        Quest.collect_text_keys(row, keys)
+    end
+    for _, row in pairs(self:quest_reward():rows()) do
+        QuestReward.collect_text_keys(row, keys)
+    end
+    for _, row in pairs(self:level_exp():rows()) do
+        LevelExp.collect_text_keys(row, keys)
+    end
+    for _, row in pairs(self:achievement():rows()) do
+        Achievement.collect_text_keys(row, keys)
+    end
+    for _, row in pairs(self:vip_level():rows()) do
+        VipLevel.collect_text_keys(row, keys)
+    end
+    GameSettings.collect_text_keys(self:game_settings():row(), keys)
+    for _, row in pairs(self:maintenance_window():rows()) do
+        MaintenanceWindow.collect_text_keys(row, keys)
+    end
+    for _, row in pairs(self:mail_template():rows()) do
+        MailTemplate.collect_text_keys(row, keys)
+    end
+    for _, row in pairs(self:mail_reward():rows()) do
+        MailReward.collect_text_keys(row, keys)
+    end
+    for _, row in pairs(self:dialogue():rows()) do
+        Dialogue.collect_text_keys(row, keys)
+    end
+    for _, row in pairs(self:event_rule():rows()) do
+        EventRule.collect_text_keys(row, keys)
+    end
+    for _, row in pairs(self:complex_rule():rows()) do
+        ComplexRule.collect_text_keys(row, keys)
+    end
+    for _, row in pairs(self:complex_condition_group():rows()) do
+        ComplexConditionGroup.collect_text_keys(row, keys)
+    end
+    for _, row in pairs(self:complex_condition_group_entry():rows()) do
+        ComplexConditionGroupEntry.collect_text_keys(row, keys)
+    end
+    for _, row in pairs(self:complex_rule_condition():rows()) do
+        ComplexRuleCondition.collect_text_keys(row, keys)
+    end
+    for _, row in pairs(self:complex_action_group():rows()) do
+        ComplexActionGroup.collect_text_keys(row, keys)
+    end
+    for _, row in pairs(self:complex_action_entry():rows()) do
+        ComplexActionEntry.collect_text_keys(row, keys)
+    end
+    return keys
+end
 ---@return ItemTable
 function SoraConfig:item()
     return self._item

@@ -27,6 +27,14 @@ impl super::runtime::SoraDecode for Achievement {
     }
 }
 
+impl Achievement {
+    pub(super) fn collect_text_keys<'a>(&'a self, out: &mut Vec<&'a super::runtime::TextKey>) {
+        let _ = &out;
+        out.push(&self.title_key);
+        self.reward.collect_text_keys(out);
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct AchievementTable {
     keys: Vec<i32>,

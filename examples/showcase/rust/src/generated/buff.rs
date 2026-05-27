@@ -27,6 +27,15 @@ impl super::runtime::SoraDecode for Buff {
     }
 }
 
+impl Buff {
+    pub(super) fn collect_text_keys<'a>(&'a self, out: &mut Vec<&'a super::runtime::TextKey>) {
+        let _ = &out;
+        for value in self.modifiers.iter() {
+            value.collect_text_keys(out);
+        }
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct BuffTable {
     keys: Vec<i32>,

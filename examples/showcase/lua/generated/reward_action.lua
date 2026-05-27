@@ -106,4 +106,28 @@ function RewardAction.decode_value(value)
     error("invalid union tag " .. tostring(tag) .. " for RewardAction")
 end
 
+---@param value RewardAction?
+---@param out TextKey[]
+function RewardAction.collect_text_keys(value, out)
+    if value == nil then
+        return
+    end
+    local tag = value["type"]
+    if tag == "AddItem" then
+        return
+    end
+    if tag == "AddBuff" then
+        return
+    end
+    if tag == "UnlockStage" then
+        return
+    end
+    if tag == "SendMail" then
+        return
+    end
+    if tag == "RunActionGroup" then
+        return
+    end
+end
+
 return RewardAction

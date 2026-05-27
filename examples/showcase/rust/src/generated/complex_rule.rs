@@ -38,6 +38,17 @@ impl super::runtime::SoraDecode for ComplexRule {
     }
 }
 
+impl ComplexRule {
+    pub(super) fn collect_text_keys<'a>(&'a self, out: &mut Vec<&'a super::runtime::TextKey>) {
+        let _ = &out;
+        self.root_condition.collect_text_keys(out);
+        for value in self.actions.iter() {
+            value.collect_text_keys(out);
+        }
+        self.budget.collect_text_keys(out);
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct ComplexRuleTable {
     keys: Vec<i32>,

@@ -103,4 +103,28 @@ function EventCondition.decode_value(value)
     error("invalid union tag " .. tostring(tag) .. " for EventCondition")
 end
 
+---@param value EventCondition?
+---@param out TextKey[]
+function EventCondition.collect_text_keys(value, out)
+    if value == nil then
+        return
+    end
+    local tag = value["type"]
+    if tag == "LevelAtLeast" then
+        return
+    end
+    if tag == "QuestCompleted" then
+        return
+    end
+    if tag == "HasItem" then
+        return
+    end
+    if tag == "AllConditions" then
+        return
+    end
+    if tag == "AnyCondition" then
+        return
+    end
+end
+
 return EventCondition

@@ -47,16 +47,13 @@ type SoraTableSource interface {
 
 type TextResolver interface {
 	Text(key TextKey) (string, error)
+	Format(key TextKey, args map[string]any) (string, error)
 }
 
 type TextKey string
 
 func (key TextKey) String() string {
 	return string(key)
-}
-
-func (key TextKey) Resolve(resolver TextResolver) (string, error) {
-	return resolver.Text(key)
 }
 
 func ReadTextKey(reader *SoraReader) (TextKey, error) {

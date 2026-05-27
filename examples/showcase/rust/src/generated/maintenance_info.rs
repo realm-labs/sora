@@ -21,3 +21,9 @@ impl super::runtime::SoraDecode for MaintenanceInfo {
         })
     }
 }
+
+impl MaintenanceInfo {
+    pub(super) fn collect_text_keys<'a>(&'a self, out: &mut Vec<&'a super::runtime::TextKey>) {
+        let _ = &out;
+    }
+}

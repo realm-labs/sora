@@ -32,4 +32,14 @@ function ComplexBudget.decode_value(value)
     }
 end
 
+---@param value ComplexBudget?
+---@param out TextKey[]
+function ComplexBudget.collect_text_keys(value, out)
+    if value == nil then
+        return
+    end
+    ResourceCost.collect_text_keys(value.fixed, out)
+    for _, __sora_value in ipairs(value.random) do RewardBundle.collect_text_keys(__sora_value, out) end
+end
+
 return ComplexBudget

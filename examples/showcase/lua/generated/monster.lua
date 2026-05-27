@@ -41,6 +41,15 @@ function Monster.decode_value(value)
     }
 end
 
+---@param value Monster?
+---@param out TextKey[]
+function Monster.collect_text_keys(value, out)
+    if value == nil then
+        return
+    end
+    Vec3.collect_text_keys(value.spawnPos, out)
+end
+
 ---@class MonsterTable
 ---@field private _keys integer[]
 ---@field private _rows table<integer, Monster>

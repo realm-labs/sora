@@ -236,18 +236,6 @@ const sora_string* sora_text_key_value(const sora_text_key* key) {
     return &key->value;
 }
 
-sora_result sora_text_key_resolve(
-    const sora_text_key* key,
-    sora_text_resolver_fn resolver,
-    void* user_data,
-    const char** out
-) {
-    if (key == NULL || resolver == NULL || out == NULL) {
-        return sora_error(SORA_ERROR_DECODE, "invalid text key resolver");
-    }
-    return resolver(key, out, user_data);
-}
-
 void sora_reader_init(
     sora_reader* reader,
     const uint8_t* bytes,

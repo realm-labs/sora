@@ -34,6 +34,15 @@ function Buff.decode_value(value)
     }
 end
 
+---@param value Buff?
+---@param out TextKey[]
+function Buff.collect_text_keys(value, out)
+    if value == nil then
+        return
+    end
+    for _, __sora_value in ipairs(value.modifiers) do StatModifier.collect_text_keys(__sora_value, out) end
+end
+
 ---@class BuffTable
 ---@field private _keys integer[]
 ---@field private _rows table<integer, Buff>

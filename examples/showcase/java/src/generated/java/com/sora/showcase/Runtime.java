@@ -44,6 +44,7 @@ interface SoraTableSource {
 
 interface SoraTextResolver {
     String text(TextKey key);
+    String format(TextKey key, Map<String, ?> args);
 }
 
 final class TextKey {
@@ -51,10 +52,6 @@ final class TextKey {
 
     TextKey(String value) {
         this.value = value;
-    }
-
-    String resolve(SoraTextResolver resolver) {
-        return resolver.text(this);
     }
 
     @Override

@@ -34,9 +34,6 @@ class SoraReadError(Exception):
 class TextKey:
     value: str
 
-    def resolve(self, resolver: Any) -> str:
-        return resolver.text(self)
-
     def __str__(self) -> str:
         return self.value
 

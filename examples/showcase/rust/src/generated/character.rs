@@ -37,6 +37,13 @@ impl super::runtime::SoraDecode for Character {
     }
 }
 
+impl Character {
+    pub(super) fn collect_text_keys<'a>(&'a self, out: &mut Vec<&'a super::runtime::TextKey>) {
+        let _ = &out;
+        self.spawn_pos.collect_text_keys(out);
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct CharacterTable {
     keys: Vec<i32>,

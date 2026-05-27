@@ -108,6 +108,7 @@ struct RustUnion {
 struct RustUnionVariant {
     name: String,
     fields: Vec<RustField>,
+    text_key_patterns: String,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -160,6 +161,8 @@ struct RustField {
     raw_name: String,
     name: String,
     type_name: String,
+    collect_text_keys: String,
+    text_key_binding: String,
     comment: Option<String>,
 }
 
@@ -245,13 +248,24 @@ fn rust_variant(
     variant: BaseUnionVariant,
     options: &RustCodegenOptions,
 ) -> RustUnionVariant {
+    let mut fields = variant
+        .fields
+        .into_iter()
+        .map(|field| rust_field(ir, field, options))
+        .collect::<Vec<_>>();
+    for (index, field) in fields.iter_mut().enumerate() {
+        field.text_key_binding = format!("__sora_text_field_{index}");
+    }
+    let text_key_patterns = fields
+        .iter()
+        .filter(|field| !field.collect_text_keys.is_empty())
+        .map(|field| format!("{}: {}", field.name, field.text_key_binding))
+        .collect::<Vec<_>>()
+        .join(", ");
     RustUnionVariant {
         name: variant.pascal_name,
-        fields: variant
-            .fields
-            .into_iter()
-            .map(|field| rust_field(ir, field, options))
-            .collect(),
+        fields,
+        text_key_patterns,
     }
 }
 
@@ -336,11 +350,74 @@ fn rust_index(ir: &ConfigIr, index: BaseIndex, options: &RustCodegenOptions) -> 
 }
 
 fn rust_field(ir: &ConfigIr, field: BaseField, options: &RustCodegenOptions) -> RustField {
+    let collect_text_keys =
+        rust_collect_text_keys(ir, &field.ty, &format!("self.{}", field.snake_name));
     RustField {
         raw_name: field.raw_name,
         name: field.snake_name,
         type_name: rust_type_name_with_options(ir, &field.ty, options),
+        collect_text_keys,
+        text_key_binding: String::new(),
         comment: field.comment,
+    }
+}
+
+fn rust_collect_text_keys(ir: &ConfigIr, ty: &TypeIr, value: &str) -> String {
+    match ty {
+        TypeIr::Text => format!("out.push(&{value});"),
+        TypeIr::Optional(element) => {
+            let inner = rust_collect_text_keys(ir, element, "value");
+            if inner.is_empty() {
+                String::new()
+            } else {
+                format!("if let Some(value) = &{value} {{ {inner} }}")
+            }
+        }
+        TypeIr::List(element) | TypeIr::Set(element) | TypeIr::Array { element, .. } => {
+            let inner = rust_collect_text_keys(ir, element, "value");
+            if inner.is_empty() {
+                String::new()
+            } else {
+                format!("for value in {value}.iter() {{ {inner} }}")
+            }
+        }
+        TypeIr::Map {
+            key,
+            value: element,
+        } => {
+            let key_inner = rust_collect_text_keys(ir, key, "key");
+            let value_inner = rust_collect_text_keys(ir, element, "value");
+            if key_inner.is_empty() && value_inner.is_empty() {
+                String::new()
+            } else {
+                format!("for (key, value) in {value}.iter() {{ {key_inner} {value_inner} }}")
+            }
+        }
+        TypeIr::Struct(_) | TypeIr::Union(_) => format!("{value}.collect_text_keys(out);"),
+        TypeIr::Ref { table, field } => ir
+            .tables
+            .iter()
+            .find(|candidate| candidate.name == *table)
+            .and_then(|table| {
+                table
+                    .fields
+                    .iter()
+                    .find(|candidate| candidate.name == *field)
+            })
+            .map(|field| rust_collect_text_keys(ir, &field.ty, value))
+            .unwrap_or_default(),
+        TypeIr::Bool
+        | TypeIr::I8
+        | TypeIr::U8
+        | TypeIr::I16
+        | TypeIr::U16
+        | TypeIr::I32
+        | TypeIr::U32
+        | TypeIr::I64
+        | TypeIr::F32
+        | TypeIr::F64
+        | TypeIr::String
+        | TypeIr::Enum(_) => String::new(),
     }
 }
 

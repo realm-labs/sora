@@ -31,6 +31,15 @@ function Recipe.decode_value(value)
     }
 end
 
+---@param value Recipe?
+---@param out TextKey[]
+function Recipe.collect_text_keys(value, out)
+    if value == nil then
+        return
+    end
+    for _, __sora_value in ipairs(value.materials) do ResourceCost.collect_text_keys(__sora_value, out) end
+end
+
 ---@class RecipeTable
 ---@field private _keys integer[]
 ---@field private _rows table<integer, Recipe>

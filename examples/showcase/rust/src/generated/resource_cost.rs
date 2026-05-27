@@ -22,3 +22,9 @@ impl super::runtime::SoraDecode for ResourceCost {
         })
     }
 }
+
+impl ResourceCost {
+    pub(super) fn collect_text_keys<'a>(&'a self, out: &mut Vec<&'a super::runtime::TextKey>) {
+        let _ = &out;
+    }
+}

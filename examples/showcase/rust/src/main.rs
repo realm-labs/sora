@@ -15,7 +15,7 @@ fn main() {
     ))
     .expect("locale pack");
     let mut i18n = SoraI18n::new();
-    i18n.mount(locale_pack).expect("mount zh_cn");
+    i18n.mount(&config, locale_pack).expect("mount zh_cn");
     i18n.set_locale("zh_cn").expect("set zh_cn");
     let sword = config.item().get(&1001).expect("item 1001");
     let sword_by_name = config.item().get_by_name("Iron Sword").expect("Iron Sword");
@@ -41,8 +41,10 @@ fn main() {
     assert_eq!(config.stage().len(), 40);
     assert_eq!(config.monster().len(), 80);
     let achievement = config.achievement().get(&14001).expect("achievement 14001");
+    assert_eq!(i18n.text(&achievement.title_key), "中文文本 1");
     assert_eq!(
-        achievement.title_key.resolve(&i18n).expect("title text"),
+        i18n.format(&achievement.title_key, [("count", 100)])
+            .expect("formatted title text"),
         "中文文本 1"
     );
     assert_eq!(config.event_rule().len(), 20);

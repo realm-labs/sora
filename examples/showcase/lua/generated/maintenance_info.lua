@@ -30,4 +30,12 @@ function MaintenanceInfo.decode_value(value)
     }
 end
 
+---@param value MaintenanceInfo?
+---@param out TextKey[]
+function MaintenanceInfo.collect_text_keys(value, out)
+    if value == nil then
+        return
+    end
+end
+
 return MaintenanceInfo

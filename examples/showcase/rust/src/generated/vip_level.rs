@@ -24,6 +24,13 @@ impl super::runtime::SoraDecode for VipLevel {
     }
 }
 
+impl VipLevel {
+    pub(super) fn collect_text_keys<'a>(&'a self, out: &mut Vec<&'a super::runtime::TextKey>) {
+        let _ = &out;
+        self.cost.collect_text_keys(out);
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct VipLevelTable {
     keys: Vec<i32>,

@@ -18,12 +18,6 @@ function TextKey:as_string()
     return self.value
 end
 
----@param i18n SoraI18n
----@return string
-function TextKey:resolve(i18n)
-    return i18n:text(self)
-end
-
 local SORA_BUNDLE_VERSION = 1
 local SORA_HEADER_LENGTH = 24
 local SORA_SECTION_ENTRY_LENGTH = 28
@@ -236,6 +230,12 @@ function Runtime.parse_locale_pack(bytes)
         key, cursor = read_len_prefixed_string(bytes, cursor)
         local value
         value, cursor = read_len_prefixed_string(bytes, cursor)
+        if value == "" then
+            error("text key `" .. tostring(key) .. "` has empty text")
+        end
+        if translations[key] ~= nil then
+            error("duplicate text key `" .. tostring(key) .. "`")
+        end
         translations[key] = value
     end
     if cursor ~= #bytes then
@@ -273,14 +273,16 @@ function Runtime.new_i18n(expected_fingerprint, locales, default_locale)
     }, SoraI18n)
 end
 
+---@param config table
 ---@param pack LocalePack
-function SoraI18n:mount(pack)
+function SoraI18n:mount(config, pack)
     if pack.schema_fingerprint ~= self.expected_fingerprint then
         error("locale pack schema fingerprint mismatch")
     end
     if not self.locales[pack.locale] then
         error("locale pack `" .. tostring(pack.locale) .. "` is not declared")
     end
+    config:validate_locale_pack(pack)
     self.packs[pack.locale] = pack
 end
 
@@ -310,6 +312,20 @@ function SoraI18n:text(key)
         error("missing text key `" .. tostring(key) .. "` for locale `" .. tostring(self.active_locale) .. "`")
     end
     return value
+end
+
+---@param key string|TextKey
+---@param args table<string, any>
+---@return string
+function SoraI18n:format(key, args)
+    local template = self:text(key)
+    return (template:gsub("{([^{}]+)}", function(name)
+        local value = args[name]
+        if value == nil then
+            error("missing text argument `" .. tostring(name) .. "`")
+        end
+        return tostring(value)
+    end))
 end
 
 ---@return string

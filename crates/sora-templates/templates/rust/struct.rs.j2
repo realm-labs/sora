@@ -28,6 +28,17 @@ impl super::runtime::SoraDecode for {{ record.pascal_name }} {
     }
 }
 
+impl {{ record.pascal_name }} {
+    pub(super) fn collect_text_keys<'a>(&'a self, out: &mut Vec<&'a super::runtime::TextKey>) {
+        let _ = &out;
+{%- for field in record.fields %}
+{%- if field.collect_text_keys %}
+        {{ field.collect_text_keys }}
+{%- endif %}
+{%- endfor %}
+    }
+}
+
 {%- if record.table %}
 {%- set table = record.table %}
 

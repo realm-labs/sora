@@ -31,6 +31,17 @@ impl super::runtime::SoraDecode for MailTemplate {
     }
 }
 
+impl MailTemplate {
+    pub(super) fn collect_text_keys<'a>(&'a self, out: &mut Vec<&'a super::runtime::TextKey>) {
+        let _ = &out;
+        out.push(&self.title_key);
+        out.push(&self.body_key);
+        for value in self.rewards.iter() {
+            value.collect_text_keys(out);
+        }
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct MailTemplateTable {
     keys: Vec<i32>,

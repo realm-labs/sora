@@ -37,6 +37,15 @@ function ShopItem.decode_value(value)
     }
 end
 
+---@param value ShopItem?
+---@param out TextKey[]
+function ShopItem.collect_text_keys(value, out)
+    if value == nil then
+        return
+    end
+    ResourceCost.collect_text_keys(value.price, out)
+end
+
 ---@class ShopItemTable
 ---@field private _rows ShopItem[]
 local ShopItemTable = {}

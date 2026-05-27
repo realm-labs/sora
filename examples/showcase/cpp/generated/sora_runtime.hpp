@@ -28,6 +28,7 @@ class SoraTextResolver {
 public:
     virtual ~SoraTextResolver() {}
     virtual std::string text(const TextKey& key) const = 0;
+    virtual std::string format(const TextKey& key, const std::unordered_map<std::string, std::string>& args) const = 0;
 };
 
 class TextKey {
@@ -36,7 +37,6 @@ public:
     explicit TextKey(const std::string& value) : value_(value) {}
 
     const std::string& value() const { return value_; }
-    std::string resolve(const SoraTextResolver& resolver) const { return resolver.text(*this); }
     bool operator==(const TextKey& other) const { return value_ == other.value_; }
     bool operator!=(const TextKey& other) const { return !(*this == other); }
 

@@ -30,6 +30,14 @@ function LevelExp.decode_value(value)
     }
 end
 
+---@param value LevelExp?
+---@param out TextKey[]
+function LevelExp.collect_text_keys(value, out)
+    if value == nil then
+        return
+    end
+end
+
 ---@class LevelExpTable
 ---@field private _keys integer[]
 ---@field private _rows table<integer, LevelExp>

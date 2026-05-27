@@ -31,6 +31,14 @@ function Shop.decode_value(value)
     }
 end
 
+---@param value Shop?
+---@param out TextKey[]
+function Shop.collect_text_keys(value, out)
+    if value == nil then
+        return
+    end
+end
+
 ---@class ShopTable
 ---@field private _keys integer[]
 ---@field private _rows table<integer, Shop>

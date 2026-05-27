@@ -44,6 +44,15 @@ function Character.decode_value(value)
     }
 end
 
+---@param value Character?
+---@param out TextKey[]
+function Character.collect_text_keys(value, out)
+    if value == nil then
+        return
+    end
+    Vec3.collect_text_keys(value.spawnPos, out)
+end
+
 ---@class CharacterTable
 ---@field private _keys integer[]
 ---@field private _rows table<integer, Character>

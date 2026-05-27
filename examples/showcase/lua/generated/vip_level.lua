@@ -31,6 +31,15 @@ function VipLevel.decode_value(value)
     }
 end
 
+---@param value VipLevel?
+---@param out TextKey[]
+function VipLevel.collect_text_keys(value, out)
+    if value == nil then
+        return
+    end
+    ResourceCost.collect_text_keys(value.cost, out)
+end
+
 ---@class VipLevelTable
 ---@field private _keys integer[]
 ---@field private _rows table<integer, VipLevel>

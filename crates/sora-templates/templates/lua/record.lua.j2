@@ -33,6 +33,19 @@ function {{ record.pascal_name }}.decode_value(value)
     }
 end
 
+---@param value {{ record.pascal_name }}?
+---@param out TextKey[]
+function {{ record.pascal_name }}.collect_text_keys(value, out)
+    if value == nil then
+        return
+    end
+{%- for field in record.fields %}
+{%- if field.collect_text_keys %}
+    {{ field.collect_text_keys }}
+{%- endif %}
+{%- endfor %}
+end
+
 {%- if record.table %}
 {%- set table = record.table %}
 

@@ -24,6 +24,12 @@ impl super::runtime::SoraDecode for Shop {
     }
 }
 
+impl Shop {
+    pub(super) fn collect_text_keys<'a>(&'a self, out: &mut Vec<&'a super::runtime::TextKey>) {
+        let _ = &out;
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct ShopTable {
     keys: Vec<i32>,

@@ -6,12 +6,12 @@ export declare class SoraReadError extends Error {
 
 export interface SoraTextResolver {
     text(key: TextKey): string;
+    format(key: TextKey, args: Record<string, string | number | boolean>): string;
 }
 
 export declare class TextKey {
     readonly value: string;
     constructor(value: string);
-    resolve(resolver: SoraTextResolver): string;
     toString(): string;
 }
 

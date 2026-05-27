@@ -31,6 +31,15 @@ function ComplexConditionGroup.decode_value(value)
     }
 end
 
+---@param value ComplexConditionGroup?
+---@param out TextKey[]
+function ComplexConditionGroup.collect_text_keys(value, out)
+    if value == nil then
+        return
+    end
+    for _, __sora_value in ipairs(value.conditions) do EventCondition.collect_text_keys(__sora_value, out) end
+end
+
 ---@class ComplexConditionGroupTable
 ---@field private _keys integer[]
 ---@field private _rows table<integer, ComplexConditionGroup>

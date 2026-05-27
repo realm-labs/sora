@@ -46,6 +46,19 @@ impl super::runtime::SoraDecode for GameSettings {
     }
 }
 
+impl GameSettings {
+    pub(super) fn collect_text_keys<'a>(&'a self, out: &mut Vec<&'a super::runtime::TextKey>) {
+        let _ = &out;
+        self.spawn_pos.collect_text_keys(out);
+        for value in self.spawn_points.iter() {
+            value.collect_text_keys(out);
+        }
+        if let Some(value) = &self.maintenance {
+            value.collect_text_keys(out);
+        }
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct GameSettingsTable {
     rows: GameSettings,

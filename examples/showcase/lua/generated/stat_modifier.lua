@@ -31,4 +31,12 @@ function StatModifier.decode_value(value)
     }
 end
 
+---@param value StatModifier?
+---@param out TextKey[]
+function StatModifier.collect_text_keys(value, out)
+    if value == nil then
+        return
+    end
+end
+
 return StatModifier

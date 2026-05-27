@@ -28,15 +28,12 @@ public interface ISoraTableSource
 public interface ISoraTextResolver
 {
     string Text(TextKey key);
+
+    string Format(TextKey key, IReadOnlyDictionary<string, object> args);
 }
 
 public readonly record struct TextKey(string Value)
 {
-    public string Resolve(ISoraTextResolver resolver)
-    {
-        return resolver.Text(this);
-    }
-
     public override string ToString()
     {
         return Value;

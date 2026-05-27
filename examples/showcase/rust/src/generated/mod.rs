@@ -131,7 +131,11 @@ impl SoraI18n {
         }
     }
 
-    pub fn mount(&mut self, pack: runtime::LocalePack) -> Result<(), runtime::SoraReadError> {
+    pub fn mount(
+        &mut self,
+        config: &SoraConfig,
+        pack: runtime::LocalePack,
+    ) -> Result<(), runtime::SoraReadError> {
         if pack.schema_fingerprint() != SCHEMA_FINGERPRINT {
             return Err(runtime::SoraReadError::new(format!(
                 "locale pack schema fingerprint mismatch: generated code expects {}, pack contains {}",
@@ -145,6 +149,7 @@ impl SoraI18n {
                 pack.locale()
             )));
         }
+        config.validate_locale_pack(&pack)?;
         self.packs.insert(pack.locale().to_owned(), pack);
         Ok(())
     }
@@ -166,24 +171,56 @@ impl SoraI18n {
         Ok(())
     }
 
-    pub fn text(&self, key: &runtime::TextKey) -> Result<&str, runtime::SoraReadError> {
+    pub fn text(&self, key: &runtime::TextKey) -> &str {
         self.packs
             .get(self.active_locale)
             .and_then(|pack| pack.get(key))
-            .ok_or_else(|| {
-                runtime::SoraReadError::new(format!(
-                    "missing text key `{}` for locale `{}`",
-                    key.as_str(),
-                    self.active_locale
-                ))
-            })
+            .expect("active locale pack is not mounted or failed locale validation")
+    }
+
+    pub fn format<I, K, V>(
+        &self,
+        key: &runtime::TextKey,
+        args: I,
+    ) -> Result<String, runtime::SoraReadError>
+    where
+        I: IntoIterator<Item = (K, V)>,
+        K: AsRef<str>,
+        V: ToString,
+    {
+        let template = self.text(key);
+        let args = args
+            .into_iter()
+            .map(|(key, value)| (key.as_ref().to_owned(), value.to_string()))
+            .collect::<SoraMap<_, _>>();
+        format_text(template, &args)
     }
 }
 
-impl runtime::TextKey {
-    pub fn resolve<'a>(&self, i18n: &'a SoraI18n) -> Result<&'a str, runtime::SoraReadError> {
-        i18n.text(self)
+fn format_text(
+    template: &str,
+    args: &SoraMap<String, String>,
+) -> Result<String, runtime::SoraReadError> {
+    let mut out = String::with_capacity(template.len());
+    let mut rest = template;
+    while let Some(start) = rest.find('{') {
+        out.push_str(&rest[..start]);
+        rest = &rest[start + 1..];
+        let Some(end) = rest.find('}') else {
+            return Err(runtime::SoraReadError::new("unterminated text placeholder"));
+        };
+        let name = &rest[..end];
+        if name.is_empty() || name.contains('{') {
+            return Err(runtime::SoraReadError::new("invalid text placeholder"));
+        }
+        let value = args.get(name).ok_or_else(|| {
+            runtime::SoraReadError::new(format!("missing text argument `{}`", name))
+        })?;
+        out.push_str(value);
+        rest = &rest[end + 1..];
     }
+    out.push_str(rest);
+    Ok(out)
 }
 
 impl Default for SoraI18n {
@@ -479,6 +516,136 @@ impl SoraConfig {
 
     pub fn tables(&self) -> impl Iterator<Item = &dyn ErasedSoraTable> {
         self.tables.values().map(Box::as_ref)
+    }
+    fn validate_locale_pack(
+        &self,
+        pack: &runtime::LocalePack,
+    ) -> Result<(), runtime::SoraReadError> {
+        for key in self.text_keys() {
+            match pack.get(key) {
+                Some(value) if !value.is_empty() => {}
+                Some(_) => {
+                    return Err(runtime::SoraReadError::new(format!(
+                        "text key `{}` has empty text for locale `{}`",
+                        key.as_str(),
+                        pack.locale()
+                    )));
+                }
+                None => {
+                    return Err(runtime::SoraReadError::new(format!(
+                        "text key `{}` is missing for locale `{}`",
+                        key.as_str(),
+                        pack.locale()
+                    )));
+                }
+            }
+        }
+        Ok(())
+    }
+
+    fn text_keys(&self) -> Vec<&runtime::TextKey> {
+        let mut keys = Vec::new();
+        for row in self.item().values() {
+            row.collect_text_keys(&mut keys);
+        }
+        for row in self.shop().values() {
+            row.collect_text_keys(&mut keys);
+        }
+        for row in self.shop_item().iter() {
+            row.collect_text_keys(&mut keys);
+        }
+        for row in self.recipe().values() {
+            row.collect_text_keys(&mut keys);
+        }
+        for row in self.gacha_pool().values() {
+            row.collect_text_keys(&mut keys);
+        }
+        for row in self.gacha_item().iter() {
+            row.collect_text_keys(&mut keys);
+        }
+        for row in self.equipment_set().values() {
+            row.collect_text_keys(&mut keys);
+        }
+        for row in self.skill().values() {
+            row.collect_text_keys(&mut keys);
+        }
+        for row in self.character().values() {
+            row.collect_text_keys(&mut keys);
+        }
+        for row in self.character_skill().iter() {
+            row.collect_text_keys(&mut keys);
+        }
+        for row in self.buff().values() {
+            row.collect_text_keys(&mut keys);
+        }
+        for row in self.drop_group().values() {
+            row.collect_text_keys(&mut keys);
+        }
+        for row in self.drop_entry().iter() {
+            row.collect_text_keys(&mut keys);
+        }
+        for row in self.monster().values() {
+            row.collect_text_keys(&mut keys);
+        }
+        for row in self.stage().values() {
+            row.collect_text_keys(&mut keys);
+        }
+        for row in self.stage_reward().iter() {
+            row.collect_text_keys(&mut keys);
+        }
+        for row in self.dungeon().values() {
+            row.collect_text_keys(&mut keys);
+        }
+        for row in self.quest().values() {
+            row.collect_text_keys(&mut keys);
+        }
+        for row in self.quest_reward().iter() {
+            row.collect_text_keys(&mut keys);
+        }
+        for row in self.level_exp().values() {
+            row.collect_text_keys(&mut keys);
+        }
+        for row in self.achievement().values() {
+            row.collect_text_keys(&mut keys);
+        }
+        for row in self.vip_level().values() {
+            row.collect_text_keys(&mut keys);
+        }
+        self.game_settings().collect_text_keys(&mut keys);
+        for row in self.maintenance_window().iter() {
+            row.collect_text_keys(&mut keys);
+        }
+        for row in self.mail_template().values() {
+            row.collect_text_keys(&mut keys);
+        }
+        for row in self.mail_reward().iter() {
+            row.collect_text_keys(&mut keys);
+        }
+        for row in self.dialogue().values() {
+            row.collect_text_keys(&mut keys);
+        }
+        for row in self.event_rule().values() {
+            row.collect_text_keys(&mut keys);
+        }
+        for row in self.complex_rule().values() {
+            row.collect_text_keys(&mut keys);
+        }
+        for row in self.complex_condition_group().values() {
+            row.collect_text_keys(&mut keys);
+        }
+        for row in self.complex_condition_group_entry().values() {
+            row.collect_text_keys(&mut keys);
+        }
+        for row in self.complex_rule_condition().values() {
+            row.collect_text_keys(&mut keys);
+        }
+        for row in self.complex_action_group().values() {
+            row.collect_text_keys(&mut keys);
+        }
+        for row in self.complex_action_entry().values() {
+            row.collect_text_keys(&mut keys);
+        }
+        keys
     }
 
     pub fn item(&self) -> &item::ItemTable {

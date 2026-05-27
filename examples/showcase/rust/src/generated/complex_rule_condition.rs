@@ -24,6 +24,13 @@ impl super::runtime::SoraDecode for ComplexRuleCondition {
     }
 }
 
+impl ComplexRuleCondition {
+    pub(super) fn collect_text_keys<'a>(&'a self, out: &mut Vec<&'a super::runtime::TextKey>) {
+        let _ = &out;
+        self.value.collect_text_keys(out);
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct ComplexRuleConditionTable {
     keys: Vec<i32>,

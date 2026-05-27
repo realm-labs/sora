@@ -30,4 +30,12 @@ function Vec3.decode_value(value)
     }
 end
 
+---@param value Vec3?
+---@param out TextKey[]
+function Vec3.collect_text_keys(value, out)
+    if value == nil then
+        return
+    end
+end
+
 return Vec3

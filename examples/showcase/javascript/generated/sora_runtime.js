@@ -26,10 +26,6 @@ export class TextKey {
         this.value = value;
     }
 
-    resolve(resolver) {
-        return resolver.text(this);
-    }
-
     toString() {
         return this.value;
     }

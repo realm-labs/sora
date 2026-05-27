@@ -74,9 +74,18 @@ impl LocalePack {
         let count = read_u32_cursor(bytes, &mut cursor)? as usize;
         let mut translations = std::collections::HashMap::with_capacity(count);
         for _ in 0..count {
-            let key = std::sync::Arc::<str>::from(read_len_prefixed_utf8(bytes, &mut cursor)?);
-            let value = std::sync::Arc::<str>::from(read_len_prefixed_utf8(bytes, &mut cursor)?);
-            translations.insert(key, value);
+            let key = read_len_prefixed_utf8(bytes, &mut cursor)?;
+            let value = read_len_prefixed_utf8(bytes, &mut cursor)?;
+            if value.is_empty() {
+                return Err(SoraReadError::new(format!("text key `{key}` has empty text")));
+            }
+            if translations.contains_key(key) {
+                return Err(SoraReadError::new(format!("duplicate text key `{key}`")));
+            }
+            translations.insert(
+                std::sync::Arc::<str>::from(key),
+                std::sync::Arc::<str>::from(value),
+            );
         }
         if cursor != bytes.len() {
             return Err(SoraReadError::new("Sora i18n pack has trailing bytes"));

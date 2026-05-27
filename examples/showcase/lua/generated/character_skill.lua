@@ -30,6 +30,14 @@ function CharacterSkill.decode_value(value)
     }
 end
 
+---@param value CharacterSkill?
+---@param out TextKey[]
+function CharacterSkill.collect_text_keys(value, out)
+    if value == nil then
+        return
+    end
+end
+
 ---@class CharacterSkillTable
 ---@field private _rows CharacterSkill[]
 local CharacterSkillTable = {}

@@ -37,6 +37,15 @@ function Stage.decode_value(value)
     }
 end
 
+---@param value Stage?
+---@param out TextKey[]
+function Stage.collect_text_keys(value, out)
+    if value == nil then
+        return
+    end
+    for _, __sora_value in ipairs(value.firstClearRewards) do Reward.collect_text_keys(__sora_value, out) end
+end
+
 ---@class StageTable
 ---@field private _keys integer[]
 ---@field private _rows table<integer, Stage>

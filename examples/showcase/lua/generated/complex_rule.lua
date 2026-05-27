@@ -42,6 +42,17 @@ function ComplexRule.decode_value(value)
     }
 end
 
+---@param value ComplexRule?
+---@param out TextKey[]
+function ComplexRule.collect_text_keys(value, out)
+    if value == nil then
+        return
+    end
+    EventCondition.collect_text_keys(value.rootCondition, out)
+    for _, __sora_value in ipairs(value.actions) do RewardAction.collect_text_keys(__sora_value, out) end
+    ComplexBudget.collect_text_keys(value.budget, out)
+end
+
 ---@class ComplexRuleTable
 ---@field private _keys integer[]
 ---@field private _rows table<integer, ComplexRule>

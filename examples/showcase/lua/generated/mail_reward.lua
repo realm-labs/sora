@@ -33,6 +33,14 @@ function MailReward.decode_value(value)
     }
 end
 
+---@param value MailReward?
+---@param out TextKey[]
+function MailReward.collect_text_keys(value, out)
+    if value == nil then
+        return
+    end
+end
+
 ---@class MailRewardTable
 ---@field private _rows MailReward[]
 local MailRewardTable = {}

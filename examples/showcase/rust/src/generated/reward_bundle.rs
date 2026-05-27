@@ -22,3 +22,10 @@ impl super::runtime::SoraDecode for RewardBundle {
         })
     }
 }
+
+impl RewardBundle {
+    pub(super) fn collect_text_keys<'a>(&'a self, out: &mut Vec<&'a super::runtime::TextKey>) {
+        let _ = &out;
+        self.cost.collect_text_keys(out);
+    }
+}

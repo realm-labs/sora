@@ -27,6 +27,14 @@ function DropGroup.decode_value(value)
     }
 end
 
+---@param value DropGroup?
+---@param out TextKey[]
+function DropGroup.collect_text_keys(value, out)
+    if value == nil then
+        return
+    end
+end
+
 ---@class DropGroupTable
 ---@field private _keys integer[]
 ---@field private _rows table<integer, DropGroup>

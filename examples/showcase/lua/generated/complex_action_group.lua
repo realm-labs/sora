@@ -31,6 +31,15 @@ function ComplexActionGroup.decode_value(value)
     }
 end
 
+---@param value ComplexActionGroup?
+---@param out TextKey[]
+function ComplexActionGroup.collect_text_keys(value, out)
+    if value == nil then
+        return
+    end
+    for _, __sora_value in ipairs(value.actions) do RewardAction.collect_text_keys(__sora_value, out) end
+end
+
 ---@class ComplexActionGroupTable
 ---@field private _keys integer[]
 ---@field private _rows table<integer, ComplexActionGroup>

@@ -45,6 +45,15 @@ impl super::runtime::SoraDecode for Skill {
     }
 }
 
+impl Skill {
+    pub(super) fn collect_text_keys<'a>(&'a self, out: &mut Vec<&'a super::runtime::TextKey>) {
+        let _ = &out;
+        self.cost.collect_text_keys(out);
+        self.effect.collect_text_keys(out);
+        self.cast_origin.collect_text_keys(out);
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct SkillTable {
     keys: Vec<i32>,

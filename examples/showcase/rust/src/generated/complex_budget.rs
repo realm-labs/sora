@@ -23,3 +23,13 @@ impl super::runtime::SoraDecode for ComplexBudget {
         })
     }
 }
+
+impl ComplexBudget {
+    pub(super) fn collect_text_keys<'a>(&'a self, out: &mut Vec<&'a super::runtime::TextKey>) {
+        let _ = &out;
+        self.fixed.collect_text_keys(out);
+        for value in self.random.iter() {
+            value.collect_text_keys(out);
+        }
+    }
+}

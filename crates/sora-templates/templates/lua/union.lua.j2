@@ -55,4 +55,25 @@ function {{ union.pascal_name }}.decode_value(value)
     error("invalid union tag " .. tostring(tag) .. " for {{ union.pascal_name }}")
 end
 
+---@param value {{ union.pascal_name }}?
+---@param out TextKey[]
+function {{ union.pascal_name }}.collect_text_keys(value, out)
+    if value == nil then
+        return
+    end
+    local tag = value["{{ union.tag }}"]
+{%- for variant in union.variants %}
+    if tag == "{{ variant.name }}" then
+{%- if variant.has_text_keys %}
+{%- for field in variant.fields %}
+{%- if field.collect_text_keys %}
+        {{ field.collect_text_keys }}
+{%- endif %}
+{%- endfor %}
+{%- endif %}
+        return
+    end
+{%- endfor %}
+end
+
 return {{ union.pascal_name }}

@@ -67,6 +67,34 @@ function SoraConfig.new_i18n()
     }, "{{ model.default_locale }}")
 end
 
+---@param pack LocalePack
+function SoraConfig:validate_locale_pack(pack)
+    for _, key in ipairs(self:text_keys()) do
+        local value = pack.translations[key:as_string()]
+        if value == nil then
+            error("text key `" .. key:as_string() .. "` is missing for locale `" .. tostring(pack.locale) .. "`")
+        end
+        if value == "" then
+            error("text key `" .. key:as_string() .. "` has empty text for locale `" .. tostring(pack.locale) .. "`")
+        end
+    end
+end
+
+---@return TextKey[]
+function SoraConfig:text_keys()
+    local keys = {}
+{%- for table in model.tables %}
+{%- if table.mode == "singleton" %}
+    {{ table.row_type }}.collect_text_keys(self:{{ table.snake_name }}():row(), keys)
+{%- else %}
+    for _, row in pairs(self:{{ table.snake_name }}():rows()) do
+        {{ table.row_type }}.collect_text_keys(row, keys)
+    end
+{%- endif %}
+{%- endfor %}
+    return keys
+end
+
 {%- endif %}
 {%- for table in model.tables %}
 ---@return {{ table.pascal_name }}Table

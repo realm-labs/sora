@@ -111,11 +111,12 @@ let config = SoraConfig::from_bytes(config_bytes)?;
 let pack = generated::runtime::LocalePack::from_bytes(locale_bytes)?;
 
 let mut i18n = generated::SoraI18n::new();
-i18n.mount(pack)?;
+i18n.mount(&config, pack)?;
 i18n.set_locale("zh_cn")?;
 
-let quest = config.quest().get(&1001).unwrap();
-let title = quest.title_key.resolve(&i18n)?;
+let mail = config.mail_template().get(&1001).unwrap();
+let title = i18n.text(&mail.title_key);
+let body = i18n.format(&mail.body_key, [("count", 100)])?;
 ```
 
 Mounting validates:
@@ -124,6 +125,7 @@ Mounting validates:
 | --- | --- |
 | `schema_fingerprint` | Prevents loading a locale pack generated for a different schema. |
 | locale declaration | Rejects packs for locales not declared in `[localization].locales`. |
+| text keys | Rejects packs that miss keys used by this config or contain empty text. |
 | mounted locale | `set_locale` fails until a pack for that locale has been mounted. |
 
-Business code does not know which source sheet a key came from. It resolves `TextKey` values with the mounted i18n runtime.
+Business code does not know which source sheet a key came from. It looks up `TextKey` values with the mounted i18n runtime.

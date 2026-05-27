@@ -34,6 +34,15 @@ function Dungeon.decode_value(value)
     }
 end
 
+---@param value Dungeon?
+---@param out TextKey[]
+function Dungeon.collect_text_keys(value, out)
+    if value == nil then
+        return
+    end
+    ResourceCost.collect_text_keys(value.entryCost, out)
+end
+
 ---@class DungeonTable
 ---@field private _keys integer[]
 ---@field private _rows table<integer, Dungeon>

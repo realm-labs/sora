@@ -27,4 +27,12 @@ function Reward.decode_value(value)
     }
 end
 
+---@param value Reward?
+---@param out TextKey[]
+function Reward.collect_text_keys(value, out)
+    if value == nil then
+        return
+    end
+end
+
 return Reward

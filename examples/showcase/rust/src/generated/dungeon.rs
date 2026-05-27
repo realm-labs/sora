@@ -27,6 +27,13 @@ impl super::runtime::SoraDecode for Dungeon {
     }
 }
 
+impl Dungeon {
+    pub(super) fn collect_text_keys<'a>(&'a self, out: &mut Vec<&'a super::runtime::TextKey>) {
+        let _ = &out;
+        self.entry_cost.collect_text_keys(out);
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct DungeonTable {
     keys: Vec<i32>,

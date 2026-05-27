@@ -33,6 +33,14 @@ function StageReward.decode_value(value)
     }
 end
 
+---@param value StageReward?
+---@param out TextKey[]
+function StageReward.collect_text_keys(value, out)
+    if value == nil then
+        return
+    end
+end
+
 ---@class StageRewardTable
 ---@field private _rows StageReward[]
 local StageRewardTable = {}

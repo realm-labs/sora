@@ -14,10 +14,10 @@ trait SoraTableSource {
 
 trait SoraTextResolver {
   def text(key: TextKey): String
+  def format(key: TextKey, args: Map[String, Any]): String
 }
 
 final case class TextKey(value: String) {
-  def resolve(resolver: SoraTextResolver): String = resolver.text(this)
   override def toString: String = value
 }
 

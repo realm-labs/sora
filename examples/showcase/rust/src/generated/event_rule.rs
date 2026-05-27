@@ -28,6 +28,16 @@ impl super::runtime::SoraDecode for EventRule {
     }
 }
 
+impl EventRule {
+    pub(super) fn collect_text_keys<'a>(&'a self, out: &mut Vec<&'a super::runtime::TextKey>) {
+        let _ = &out;
+        self.condition.collect_text_keys(out);
+        for value in self.actions.iter() {
+            value.collect_text_keys(out);
+        }
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct EventRuleTable {
     keys: Vec<i32>,

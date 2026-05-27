@@ -44,6 +44,15 @@ function Item.decode_value(value)
     }
 end
 
+---@param value Item?
+---@param out TextKey[]
+function Item.collect_text_keys(value, out)
+    if value == nil then
+        return
+    end
+    ResourceCost.collect_text_keys(value.price, out)
+end
+
 ---@class ItemTable
 ---@field private _keys integer[]
 ---@field private _rows table<integer, Item>
