@@ -160,8 +160,10 @@ fn print_excel_sync_report(report: &ExcelSyncReport, write: bool) {
     for workbook in &report.workbooks {
         let action = if workbook.created {
             "create"
-        } else if write {
+        } else if workbook.written {
             "update"
+        } else if write {
+            "up-to-date"
         } else {
             "preview"
         };
@@ -172,8 +174,10 @@ fn print_excel_sync_report(report: &ExcelSyncReport, write: bool) {
         for sheet in &workbook.sheets {
             let sheet_action = if sheet.created {
                 "create sheet"
-            } else {
+            } else if sheet.changed {
                 "sync sheet"
+            } else {
+                "unchanged sheet"
             };
             println!(
                 "  {sheet_action}: {} ({} data rows)",

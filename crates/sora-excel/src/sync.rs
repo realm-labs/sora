@@ -12,7 +12,9 @@ use sora_input::source::{SourceFormat, resolve_table_source_format};
 use sora_ir::model::{ConfigIr, TableIr};
 
 use crate::{
-    projection::{DATA_START_ROW, FIELD_ROW, FIELD_START_COLUMN, table_template_columns},
+    projection::{
+        DATA_START_ROW, FIELD_ROW, FIELD_START_COLUMN, table_template_columns, table_template_rows,
+    },
     writer::{LegacyColumn, PreservedSheet, SyncedTableSheet, write_synced_workbook},
 };
 
@@ -41,6 +43,7 @@ pub struct ExcelSyncWorkbookReport {
 pub struct ExcelSyncSheetReport {
     pub sheet: String,
     pub created: bool,
+    pub changed: bool,
     pub rows: usize,
     pub added_columns: Vec<String>,
     pub legacy_columns: Vec<String>,
@@ -87,13 +90,15 @@ impl ExcelTemplateSync {
                 })
                 .collect::<Vec<_>>();
 
-            let backup_path = if write && existing.exists {
+            let has_changes = sheet_reports.iter().any(|sheet| sheet.changed);
+
+            let backup_path = if write && existing.exists && has_changes {
                 Some(backup_existing_workbook(data_root, &path)?)
             } else {
                 None
             };
 
-            if write {
+            if write && has_changes {
                 if let Some(parent) = path.parent() {
                     fs::create_dir_all(parent).map_err(|source| SoraError::CreateDir {
                         path: parent.to_path_buf(),
@@ -112,7 +117,7 @@ impl ExcelTemplateSync {
             report.workbooks.push(ExcelSyncWorkbookReport {
                 path,
                 created: !existing.exists,
-                written: write,
+                written: write && has_changes,
                 backup_path,
                 sheets: sheet_reports,
                 preserved_sheets: preserved_sheets
@@ -278,22 +283,114 @@ fn sync_table_sheet<'a>(
         .filter(|column| !old_by_name.contains_key(&column.name))
         .map(|column| column.name.clone())
         .collect::<Vec<_>>();
+    let sheet = SyncedTableSheet {
+        table,
+        sheet_name: sheet_name.to_owned(),
+        rows,
+        legacy_columns,
+    };
+    let changed = match existing_rows {
+        Some(existing_rows) => {
+            !rows_equal_ignoring_trailing_blanks(existing_rows, &synced_sheet_rows(ir, &sheet))
+        }
+        None => true,
+    };
 
     SyncedSheet {
-        sheet: SyncedTableSheet {
-            table,
-            sheet_name: sheet_name.to_owned(),
-            rows,
-            legacy_columns,
-        },
+        sheet,
         report: ExcelSyncSheetReport {
             sheet: sheet_name.to_owned(),
             created: existing_rows.is_none(),
+            changed,
             rows: data_row_count,
             added_columns,
             legacy_columns: legacy_names,
         },
     }
+}
+
+fn synced_sheet_rows(ir: &ConfigIr, sheet: &SyncedTableSheet<'_>) -> Vec<Vec<String>> {
+    let columns = table_template_columns(ir, sheet.table);
+    let mut rows = table_template_rows(ir, sheet.table);
+    let legacy_start = FIELD_START_COLUMN as usize + columns.len();
+    for (legacy_index, legacy) in sheet.legacy_columns.iter().enumerate() {
+        let column = legacy_start + legacy_index;
+        for row_index in 0..DATA_START_ROW as usize {
+            ensure_row_column(&mut rows, row_index, column);
+            rows[row_index][column] = legacy.headers.get(row_index).cloned().unwrap_or_default();
+        }
+    }
+
+    let legacy_row_count = sheet
+        .legacy_columns
+        .iter()
+        .map(|column| column.values.len())
+        .max()
+        .unwrap_or_default();
+    let row_count = sheet.rows.len().max(legacy_row_count);
+    for row_offset in 0..row_count {
+        let row_index = DATA_START_ROW as usize + row_offset;
+        ensure_row_column(
+            &mut rows,
+            row_index,
+            FIELD_START_COLUMN as usize + columns.len(),
+        );
+        if let Some(row) = sheet.rows.get(row_offset) {
+            for (column_index, value) in row.iter().enumerate() {
+                let column_info = &columns[column_index];
+                rows[row_index][FIELD_START_COLUMN as usize + column_index] =
+                    if column_info.derived && value.is_empty() {
+                        derived_placeholder(column_info)
+                    } else {
+                        value.clone()
+                    };
+            }
+        }
+        for (legacy_index, legacy) in sheet.legacy_columns.iter().enumerate() {
+            let column = legacy_start + legacy_index;
+            ensure_row_column(&mut rows, row_index, column);
+            rows[row_index][column] = legacy.values.get(row_offset).cloned().unwrap_or_default();
+        }
+    }
+    rows
+}
+
+fn derived_placeholder(column: &crate::projection::TemplateColumn) -> String {
+    if column.input.is_empty() {
+        "generated".to_owned()
+    } else {
+        column.input.clone()
+    }
+}
+
+fn ensure_row_column(rows: &mut Vec<Vec<String>>, row: usize, column: usize) {
+    while rows.len() <= row {
+        rows.push(Vec::new());
+    }
+    if rows[row].len() <= column {
+        rows[row].resize(column + 1, String::new());
+    }
+}
+
+fn rows_equal_ignoring_trailing_blanks(left: &[Vec<String>], right: &[Vec<String>]) -> bool {
+    normalized_rows(left) == normalized_rows(right)
+}
+
+fn normalized_rows(rows: &[Vec<String>]) -> Vec<Vec<String>> {
+    let mut rows = rows
+        .iter()
+        .map(|row| {
+            let mut row = row.clone();
+            while row.last().is_some_and(|value| value.is_empty()) {
+                row.pop();
+            }
+            row
+        })
+        .collect::<Vec<_>>();
+    while rows.last().is_some_and(Vec::is_empty) {
+        rows.pop();
+    }
+    rows
 }
 
 #[derive(Debug)]
@@ -529,6 +626,28 @@ mod tests {
         assert_eq!(cell_to_string(&data_row[3]), "");
         assert_eq!(cell_to_string(&data_row[4]), "1001");
         assert_eq!(cell_to_string(&data_row[5]), "5");
+
+        let _ = fs::remove_dir_all(base);
+    }
+
+    #[test]
+    fn sync_skips_writing_unchanged_workbook() {
+        let ir = example_ir();
+        let base = temp_dir();
+        fs::create_dir_all(&base).unwrap();
+
+        let first_report = ExcelTemplateSync.write(&ir, &base).unwrap();
+        assert!(first_report.workbooks[0].written);
+        assert!(first_report.workbooks[0].sheets[0].changed);
+        let path = base.join("Item.xlsx");
+        let before = fs::read(&path).unwrap();
+
+        let second_report = ExcelTemplateSync.write(&ir, &base).unwrap();
+
+        assert!(!second_report.workbooks[0].written);
+        assert!(second_report.workbooks[0].backup_path.is_none());
+        assert!(!second_report.workbooks[0].sheets[0].changed);
+        assert_eq!(fs::read(&path).unwrap(), before);
 
         let _ = fs::remove_dir_all(base);
     }
