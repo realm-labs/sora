@@ -471,6 +471,13 @@ object SoraValue {
 }
 
 object SoraRuntime {
+  def durationFromMillis(millis: Long): scala.concurrent.duration.FiniteDuration = {
+    if (millis < 0) {
+      throw new SoraReadException("duration must be non-negative")
+    }
+    scala.concurrent.duration.FiniteDuration(millis, java.util.concurrent.TimeUnit.MILLISECONDS)
+  }
+
   def readSectionPayload(bytes: Array[Byte], section: SoraSection): Array[Byte] = {
     val payload = bytes.slice(section.offset, section.offset + section.length)
     section.compression match {

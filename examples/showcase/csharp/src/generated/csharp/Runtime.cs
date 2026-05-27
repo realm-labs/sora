@@ -40,6 +40,18 @@ public readonly record struct TextKey(string Value)
     }
 }
 
+internal static class SoraDuration
+{
+    public static TimeSpan FromMilliseconds(long millis)
+    {
+        if (millis < 0)
+        {
+            throw new SoraReadException("duration must be non-negative");
+        }
+        return TimeSpan.FromTicks(checked(millis * TimeSpan.TicksPerMillisecond));
+    }
+}
+
 public sealed class LocalePack
 {
     private readonly Dictionary<string, string> translations;

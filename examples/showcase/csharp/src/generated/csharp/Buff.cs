@@ -10,7 +10,7 @@ namespace com.sora.showcase;
 public sealed record Buff(
     int Id,
     string Name,
-    long Duration,
+    global::System.TimeSpan Duration,
     List<StatModifier> Modifiers
 )
 {
@@ -19,7 +19,7 @@ public sealed record Buff(
         return new Buff(
             reader.ReadInt32(),
             reader.ReadString(),
-            reader.ReadInt64(),
+            SoraDuration.FromMilliseconds(reader.ReadInt64()),
             reader.ReadList(() => StatModifier.Decode(reader))
         );
     }
@@ -30,7 +30,7 @@ public sealed record Buff(
         return new Buff(
             obj.Get("id").AsInt32(),
             obj.Get("name").AsString(),
-            obj.Get("duration").AsInt64(),
+            SoraDuration.FromMilliseconds(obj.Get("duration").AsInt64()),
             obj.Get("modifiers").AsList(item => StatModifier.Decode(item))
         );
     }

@@ -355,8 +355,8 @@ fn dart_value_decode_expr(ir: &ConfigIr, ty: &TypeIr, value: &str) -> String {
         | TypeIr::U16
         | TypeIr::I32
         | TypeIr::U32
-        | TypeIr::I64
-        | TypeIr::Duration => format!("{value}.asInt()"),
+        | TypeIr::I64 => format!("{value}.asInt()"),
+        TypeIr::Duration => format!("Duration(milliseconds: {value}.asInt())"),
         TypeIr::F32 | TypeIr::F64 => format!("{value}.asDouble()"),
         TypeIr::String => format!("{value}.asString()"),
         TypeIr::Text => format!("TextKey({value}.asString())"),

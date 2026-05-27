@@ -3,6 +3,7 @@
 #pragma once
 
 #include <array>
+#include <chrono>
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
@@ -295,6 +296,19 @@ inline std::int32_t decode_value<std::int32_t>(SoraReader& reader) {
 template <>
 inline std::int64_t decode_value<std::int64_t>(SoraReader& reader) {
     return reader.read_i64();
+}
+
+inline std::chrono::milliseconds decode_duration(SoraReader& reader) {
+    std::int64_t millis = reader.read_i64();
+    if (millis < 0) {
+        throw SoraReadException("duration must be non-negative");
+    }
+    return std::chrono::milliseconds(millis);
+}
+
+template <>
+inline std::chrono::milliseconds decode_value<std::chrono::milliseconds>(SoraReader& reader) {
+    return decode_duration(reader);
 }
 
 template <>

@@ -10,6 +10,7 @@ import (
 	"github.com/klauspost/compress/zstd"
 	"math"
 	"strconv"
+	"time"
 	"unicode/utf8"
 )
 
@@ -71,6 +72,28 @@ func DecodeTextKeyValue(value SoraValue) (TextKey, error) {
 		return "", err
 	}
 	return TextKey(text), nil
+}
+
+func ReadDuration(reader *SoraReader) (time.Duration, error) {
+	millis, err := reader.ReadInt64()
+	if err != nil {
+		return 0, err
+	}
+	if millis < 0 {
+		return 0, fmt.Errorf("duration must be non-negative")
+	}
+	return time.Duration(millis) * time.Millisecond, nil
+}
+
+func DecodeDurationValue(value SoraValue) (time.Duration, error) {
+	millis, err := value.AsInt64()
+	if err != nil {
+		return 0, err
+	}
+	if millis < 0 {
+		return 0, fmt.Errorf("duration must be non-negative")
+	}
+	return time.Duration(millis) * time.Millisecond, nil
 }
 
 type LocalePack struct {

@@ -2,7 +2,14 @@
 
 package {{ package }}
 
+{%- if union.has_duration %}
+import (
+    "fmt"
+    "time"
+)
+{%- else %}
 import "fmt"
+{%- endif %}
 
 type {{ union.pascal_name }} interface {
     is{{ union.pascal_name }}()

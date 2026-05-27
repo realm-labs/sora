@@ -5,7 +5,7 @@ package com.sora.showcase
 final case class Buff(
   id: Int,
   name: String,
-  duration: Long,
+  duration: scala.concurrent.duration.FiniteDuration,
   modifiers: Vector[StatModifier]
 ) {
   def collectTextKeys(out: scala.collection.mutable.ArrayBuffer[TextKey]): Unit = {
@@ -20,7 +20,7 @@ object Buff {
     Buff(
       id = reader.readI32(),
       name = reader.readString(),
-      duration = reader.readI64(),
+      duration = SoraRuntime.durationFromMillis(reader.readI64()),
       modifiers = reader.readList(StatModifier.decode(reader))
     )
 
@@ -29,7 +29,7 @@ object Buff {
     Buff(
       id = obj.get("id").asInt,
       name = obj.get("name").asString,
-      duration = obj.get("duration").asLong,
+      duration = SoraRuntime.durationFromMillis(obj.get("duration").asLong),
       modifiers = obj.get("modifiers").asList(item => StatModifier.decode(item))
     )
   }

@@ -580,6 +580,16 @@ impl SoraDecode for i64 {
     }
 }
 
+impl SoraDecode for std::time::Duration {
+    fn decode(reader: &mut SoraReader<'_>) -> Result<Self, SoraReadError> {
+        let millis = reader.read_i64()?;
+        if millis < 0 {
+            return Err(SoraReadError::new("duration must be non-negative"));
+        }
+        Ok(std::time::Duration::from_millis(millis as u64))
+    }
+}
+
 impl SoraDecode for f32 {
     fn decode(reader: &mut SoraReader<'_>) -> Result<Self, SoraReadError> {
         reader.read_f32()

@@ -2,6 +2,8 @@
 
 package {{ package }}
 
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
 {%- if runtime_format == "json" or runtime_format == "cbor" %}
 import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.ObjectMapper
@@ -45,6 +47,13 @@ interface SoraTextResolver {
 @JvmInline
 value class TextKey(val value: String) {
     override fun toString(): String = value
+}
+
+fun soraDurationFromMillis(millis: Long): Duration {
+    if (millis < 0) {
+        throw SoraReadException("duration must be non-negative")
+    }
+    return millis.milliseconds
 }
 
 class LocalePack private constructor(

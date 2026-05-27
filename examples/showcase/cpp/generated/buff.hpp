@@ -14,14 +14,14 @@ namespace sora::showcase {
 struct Buff {
     std::int32_t id;
     std::string name;
-    std::int64_t duration;
+    std::chrono::milliseconds duration;
     std::vector<StatModifier> modifiers;
 
     static Buff decode(SoraReader& reader) {
         return Buff{
             reader.read_i32(),
             reader.read_string(),
-            reader.read_i64(),
+            decode_duration(reader),
             reader.read_vector<StatModifier>(),
         };
     }

@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import datetime
+
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
@@ -26,7 +28,7 @@ if TYPE_CHECKING:
 class Buff:
     id: int
     name: str
-    duration: int
+    duration: datetime.timedelta
     modifiers: list[StatModifier]
 
     @staticmethod
@@ -34,7 +36,7 @@ class Buff:
         from .stat_modifier import StatModifier
         id = reader.read_i32()
         name = reader.read_string()
-        duration = reader.read_i64()
+        duration = datetime.timedelta(milliseconds=reader.read_i64())
         modifiers = reader.read_list(lambda: StatModifier.decode(reader))
         return Buff(
             id=id,

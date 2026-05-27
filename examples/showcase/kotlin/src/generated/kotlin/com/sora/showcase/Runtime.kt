@@ -2,6 +2,9 @@
 
 package com.sora.showcase
 
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
+
 class SoraReadException(message: String) : RuntimeException(message)
 
 private const val SORA_BUNDLE_VERSION = 1
@@ -32,6 +35,13 @@ interface SoraTextResolver {
 @JvmInline
 value class TextKey(val value: String) {
     override fun toString(): String = value
+}
+
+fun soraDurationFromMillis(millis: Long): Duration {
+    if (millis < 0) {
+        throw SoraReadException("duration must be non-negative")
+    }
+    return millis.milliseconds
 }
 
 class LocalePack private constructor(

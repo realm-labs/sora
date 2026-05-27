@@ -2,10 +2,12 @@
 
 package showcase
 
+import "time"
+
 type Buff struct {
 	Id        int32
 	Name      string
-	Duration  int64
+	Duration  time.Duration
 	Modifiers []StatModifier
 }
 
@@ -20,7 +22,7 @@ func decodeBuff(reader *SoraReader) (Buff, error) {
 	if err != nil {
 		return value, err
 	}
-	value.Duration, err = reader.ReadInt64()
+	value.Duration, err = ReadDuration(reader)
 	if err != nil {
 		return value, err
 	}
@@ -45,7 +47,7 @@ func decodeBuffValue(input SoraValue) (Buff, error) {
 	if err != nil {
 		return value, err
 	}
-	value.Duration, err = obj.Get("duration").AsInt64()
+	value.Duration, err = DecodeDurationValue(obj.Get("duration"))
 	if err != nil {
 		return value, err
 	}

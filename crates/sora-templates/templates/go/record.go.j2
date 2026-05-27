@@ -2,6 +2,10 @@
 
 package {{ package }}
 
+{%- if record.has_duration %}
+import "time"
+{%- endif %}
+
 type {{ record.pascal_name }} struct {
 {%- for field in record.fields %}
 {%- if field.comment %}

@@ -70,6 +70,17 @@ final class TextKey {
     }
 }
 
+final class SoraDuration {
+    private SoraDuration() {}
+
+    static java.time.Duration fromMillis(long millis) {
+        if (millis < 0) {
+            throw new SoraReadException("duration must be non-negative");
+        }
+        return java.time.Duration.ofMillis(millis);
+    }
+}
+
 final class LocalePack {
     private final String schemaFingerprint;
     private final String locale;

@@ -104,6 +104,7 @@ struct PythonUnion {
     tag: String,
     variants: Vec<PythonUnionVariant>,
     imports: Vec<PythonImport>,
+    has_duration: bool,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -122,6 +123,7 @@ struct PythonRecord {
     fields: Vec<PythonField>,
     uses_text_key: bool,
     has_text_keys: bool,
+    has_duration: bool,
     table: Option<PythonTable>,
 }
 
@@ -246,6 +248,9 @@ fn python_record(ir: &ConfigIr, record: BaseRecord, table: Option<PythonTable>) 
     let has_text_keys = fields
         .iter()
         .any(|field| !field.collect_text_keys.is_empty());
+    let has_duration = fields
+        .iter()
+        .any(|field| field.type_name.contains("datetime.timedelta"));
     PythonRecord {
         pascal_name: python_type_identifier(&record.pascal_name),
         snake_name: python_module_name(&record.snake_name),
@@ -253,21 +258,28 @@ fn python_record(ir: &ConfigIr, record: BaseRecord, table: Option<PythonTable>) 
         fields,
         uses_text_key,
         has_text_keys,
+        has_duration,
         table,
     }
 }
 
 fn python_union(ir: &ConfigIr, union: BaseUnion) -> PythonUnion {
+    let variants = union
+        .variants
+        .into_iter()
+        .map(|variant| python_variant(ir, variant))
+        .collect::<Vec<_>>();
+    let has_duration = variants
+        .iter()
+        .flat_map(|variant| variant.fields.iter())
+        .any(|field| field.type_name.contains("datetime.timedelta"));
     PythonUnion {
         pascal_name: python_type_identifier(&union.pascal_name),
         snake_name: python_module_name(&union.snake_name),
         tag: python_field_identifier(&union.tag),
-        variants: union
-            .variants
-            .into_iter()
-            .map(|variant| python_variant(ir, variant))
-            .collect(),
+        variants,
         imports: union.imports.into_iter().map(python_import).collect(),
+        has_duration,
     }
 }
 
@@ -428,8 +440,8 @@ fn python_type_name(ir: &ConfigIr, ty: &TypeIr) -> String {
         | TypeIr::U16
         | TypeIr::I32
         | TypeIr::U32
-        | TypeIr::I64
-        | TypeIr::Duration => "int".to_owned(),
+        | TypeIr::I64 => "int".to_owned(),
+        TypeIr::Duration => "datetime.timedelta".to_owned(),
         TypeIr::F32 | TypeIr::F64 => "float".to_owned(),
         TypeIr::String => "str".to_owned(),
         TypeIr::Text => "TextKey".to_owned(),
@@ -460,7 +472,8 @@ fn python_decode_expr(ir: &ConfigIr, ty: &TypeIr) -> String {
         TypeIr::Bool => "reader.read_bool()".to_owned(),
         TypeIr::I8 | TypeIr::I16 | TypeIr::I32 => "reader.read_i32()".to_owned(),
         TypeIr::U8 | TypeIr::U16 | TypeIr::U32 => "reader.read_u32()".to_owned(),
-        TypeIr::I64 | TypeIr::Duration => "reader.read_i64()".to_owned(),
+        TypeIr::I64 => "reader.read_i64()".to_owned(),
+        TypeIr::Duration => "datetime.timedelta(milliseconds=reader.read_i64())".to_owned(),
         TypeIr::F32 => "reader.read_f32()".to_owned(),
         TypeIr::F64 => "reader.read_f64()".to_owned(),
         TypeIr::String => "reader.read_string()".to_owned(),
@@ -500,8 +513,8 @@ fn python_value_decode_expr(ir: &ConfigIr, ty: &TypeIr, value: &str) -> String {
         | TypeIr::U16
         | TypeIr::I32
         | TypeIr::U32
-        | TypeIr::I64
-        | TypeIr::Duration => format!("{value}.as_int()"),
+        | TypeIr::I64 => format!("{value}.as_int()"),
+        TypeIr::Duration => format!("datetime.timedelta(milliseconds={value}.as_int())"),
         TypeIr::F32 | TypeIr::F64 => format!("{value}.as_float()"),
         TypeIr::String => format!("{value}.as_string()"),
         TypeIr::Text => format!("TextKey({value}.as_string())"),

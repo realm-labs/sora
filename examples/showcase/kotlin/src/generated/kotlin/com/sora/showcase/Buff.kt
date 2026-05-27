@@ -5,7 +5,7 @@ package com.sora.showcase
 data class Buff(
     val id: Int,
     val name: String,
-    val duration: Long,
+    val duration: kotlin.time.Duration,
     val modifiers: List<StatModifier>,
 ) {
     fun collectTextKeys(out: MutableList<TextKey>) {
@@ -19,7 +19,7 @@ data class Buff(
             Buff(
                 id = reader.readI32(),
                 name = reader.readString(),
-                duration = reader.readI64(),
+                duration = soraDurationFromMillis(reader.readI64()),
                 modifiers = reader.readList { StatModifier.decode(reader) },
             )
 
@@ -28,7 +28,7 @@ data class Buff(
             return Buff(
                 id = obj.get("id").asInt(),
                 name = obj.get("name").asString(),
-                duration = obj.get("duration").asLong(),
+                duration = soraDurationFromMillis(obj.get("duration").asLong()),
                 modifiers = obj.get("modifiers").asList { item -> StatModifier.decode(item) },
             )
         }
