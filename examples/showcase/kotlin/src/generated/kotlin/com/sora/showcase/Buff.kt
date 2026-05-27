@@ -5,7 +5,7 @@ package com.sora.showcase
 data class Buff(
     val id: Int,
     val name: String,
-    val duration: Float,
+    val duration: Long,
     val modifiers: List<StatModifier>,
 ) {
     fun collectTextKeys(out: MutableList<TextKey>) {
@@ -19,7 +19,7 @@ data class Buff(
             Buff(
                 id = reader.readI32(),
                 name = reader.readString(),
-                duration = reader.readF32(),
+                duration = reader.readI64(),
                 modifiers = reader.readList { StatModifier.decode(reader) },
             )
 
@@ -28,7 +28,7 @@ data class Buff(
             return Buff(
                 id = obj.get("id").asInt(),
                 name = obj.get("name").asString(),
-                duration = obj.get("duration").asFloat(),
+                duration = obj.get("duration").asLong(),
                 modifiers = obj.get("modifiers").asList { item -> StatModifier.decode(item) },
             )
         }

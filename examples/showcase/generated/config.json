@@ -1,8 +1,8 @@
 {
   "format": "json",
   "format_version": 1,
-  "schema_fingerprint": "7e14f0cc1d24d238",
-  "data_fingerprint": "42fadb98e6ea583a",
+  "schema_fingerprint": "8519b38083babe03",
+  "data_fingerprint": "68de214b62c05454",
   "schema": {
     "package": "com.sora.showcase",
     "localization": {
@@ -2187,7 +2187,7 @@
           },
           {
             "name": "duration",
-            "ty": "F32",
+            "ty": "Duration",
             "scope": {
               "values": [
                 "all"
@@ -10543,7 +10543,7 @@
         "name": "Buff",
         "rows": [
           {
-            "duration": 4.0,
+            "duration": 4000,
             "id": 6001,
             "modifiers": [
               {
@@ -10555,7 +10555,7 @@
             "name": "Buff 6001"
           },
           {
-            "duration": 5.0,
+            "duration": 5000,
             "id": 6002,
             "modifiers": [
               {
@@ -10567,7 +10567,7 @@
             "name": "Buff 6002"
           },
           {
-            "duration": 6.0,
+            "duration": 6000,
             "id": 6003,
             "modifiers": [
               {
@@ -10579,7 +10579,7 @@
             "name": "Buff 6003"
           },
           {
-            "duration": 7.0,
+            "duration": 7000,
             "id": 6004,
             "modifiers": [
               {
@@ -10591,7 +10591,7 @@
             "name": "Buff 6004"
           },
           {
-            "duration": 8.0,
+            "duration": 8000,
             "id": 6005,
             "modifiers": [
               {
@@ -10603,7 +10603,7 @@
             "name": "Buff 6005"
           },
           {
-            "duration": 9.0,
+            "duration": 9000,
             "id": 6006,
             "modifiers": [
               {
@@ -10615,7 +10615,7 @@
             "name": "Buff 6006"
           },
           {
-            "duration": 10.0,
+            "duration": 10000,
             "id": 6007,
             "modifiers": [
               {
@@ -10627,7 +10627,7 @@
             "name": "Buff 6007"
           },
           {
-            "duration": 3.0,
+            "duration": 3000,
             "id": 6008,
             "modifiers": [
               {
@@ -10639,7 +10639,7 @@
             "name": "Buff 6008"
           },
           {
-            "duration": 4.0,
+            "duration": 4000,
             "id": 6009,
             "modifiers": [
               {
@@ -10651,7 +10651,7 @@
             "name": "Buff 6009"
           },
           {
-            "duration": 5.0,
+            "duration": 5000,
             "id": 6010,
             "modifiers": [
               {
@@ -10663,7 +10663,7 @@
             "name": "Buff 6010"
           },
           {
-            "duration": 6.0,
+            "duration": 6000,
             "id": 6011,
             "modifiers": [
               {
@@ -10675,7 +10675,7 @@
             "name": "Buff 6011"
           },
           {
-            "duration": 7.0,
+            "duration": 7000,
             "id": 6012,
             "modifiers": [
               {
@@ -10687,7 +10687,7 @@
             "name": "Buff 6012"
           },
           {
-            "duration": 8.0,
+            "duration": 8000,
             "id": 6013,
             "modifiers": [
               {
@@ -10699,7 +10699,7 @@
             "name": "Buff 6013"
           },
           {
-            "duration": 9.0,
+            "duration": 9000,
             "id": 6014,
             "modifiers": [
               {
@@ -10711,7 +10711,7 @@
             "name": "Buff 6014"
           },
           {
-            "duration": 10.0,
+            "duration": 10000,
             "id": 6015,
             "modifiers": [
               {
@@ -10723,7 +10723,7 @@
             "name": "Buff 6015"
           },
           {
-            "duration": 3.0,
+            "duration": 3000,
             "id": 6016,
             "modifiers": [
               {
@@ -10735,7 +10735,7 @@
             "name": "Buff 6016"
           },
           {
-            "duration": 4.0,
+            "duration": 4000,
             "id": 6017,
             "modifiers": [
               {
@@ -10747,7 +10747,7 @@
             "name": "Buff 6017"
           },
           {
-            "duration": 5.0,
+            "duration": 5000,
             "id": 6018,
             "modifiers": [
               {
@@ -10759,7 +10759,7 @@
             "name": "Buff 6018"
           },
           {
-            "duration": 6.0,
+            "duration": 6000,
             "id": 6019,
             "modifiers": [
               {
@@ -10771,7 +10771,7 @@
             "name": "Buff 6019"
           },
           {
-            "duration": 7.0,
+            "duration": 7000,
             "id": 6020,
             "modifiers": [
               {

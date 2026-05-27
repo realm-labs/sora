@@ -5,7 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-static const char* SORA_SCHEMA_FINGERPRINT = "7e14f0cc1d24d238";
+static const char* SORA_SCHEMA_FINGERPRINT = "8519b38083babe03";
 
 struct sora_showcase_config {
     sora_showcase_item_table* item;

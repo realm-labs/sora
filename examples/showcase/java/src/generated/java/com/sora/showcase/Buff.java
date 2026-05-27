@@ -8,13 +8,13 @@ import java.util.Map;
 public final class Buff {
     public final Integer id;
     public final String name;
-    public final Float duration;
+    public final Long duration;
     public final java.util.List<StatModifier> modifiers;
 
     public Buff(
         Integer id,
         String name,
-        Float duration,
+        Long duration,
         java.util.List<StatModifier> modifiers
     ) {
         this.id = id;
@@ -27,7 +27,7 @@ public final class Buff {
         return new Buff(
             reader.readI32(),
             reader.readString(),
-            reader.readF32(),
+            reader.readI64(),
             reader.readList(() -> StatModifier.decode(reader))
         );
     }
@@ -37,7 +37,7 @@ public final class Buff {
         return new Buff(
             obj.get("id").asInt(),
             obj.get("name").asString(),
-            obj.get("duration").asFloat(),
+            obj.get("duration").asLong(),
             obj.get("modifiers").asList(item -> StatModifier.decode(item))
         );
     }

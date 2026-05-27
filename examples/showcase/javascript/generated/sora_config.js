@@ -71,7 +71,7 @@ import { ComplexActionEntryTable, collectComplexActionEntryTextKeys, decodeCompl
 
 import { formatText } from "./sora_runtime.js";
 
-export const SORA_SCHEMA_FINGERPRINT = "7e14f0cc1d24d238";
+export const SORA_SCHEMA_FINGERPRINT = "8519b38083babe03";
 
 export class SoraConfig {
     constructor(

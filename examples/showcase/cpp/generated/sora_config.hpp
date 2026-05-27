@@ -65,7 +65,7 @@ namespace sora::showcase {
 
 class SoraConfig {
 public:
-    static const char* schema_fingerprint() { return "7e14f0cc1d24d238"; }
+    static const char* schema_fingerprint() { return "8519b38083babe03"; }
 
     static SoraConfig from_bytes(const std::vector<std::uint8_t>& bytes) {
         return from_bytes(bytes, SoraBundleOptions());

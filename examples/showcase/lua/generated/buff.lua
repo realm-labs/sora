@@ -6,7 +6,7 @@ local StatModifier = require("generated.stat_modifier")
 ---@class Buff
 ---@field id integer
 ---@field name string
----@field duration number
+---@field duration integer
 ---@field modifiers StatModifier[]
 
 local Buff = {}
@@ -17,7 +17,7 @@ function Buff.decode(reader)
     return {
         id = reader:read_i32(),
         name = reader:read_string(),
-        duration = reader:read_f32(),
+        duration = reader:read_i64(),
         modifiers = reader:read_list(function() return StatModifier.decode(reader) end),
     }
 end
@@ -29,7 +29,7 @@ function Buff.decode_value(value)
     return {
         id = Runtime.expect_integer(obj["id"]),
         name = Runtime.expect_string(obj["name"]),
-        duration = Runtime.expect_number(obj["duration"]),
+        duration = Runtime.expect_integer(obj["duration"]),
         modifiers = Runtime.decode_value_list(obj["modifiers"], function(item) return StatModifier.decode_value(item) end),
     }
 end

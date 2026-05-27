@@ -280,7 +280,7 @@ message CharacterSkill {
 message Buff {
   int32 id = 1;
   string name = 2;
-  float duration = 3;
+  int64 duration = 3;
   repeated StatModifier modifiers = 4;
 }
 

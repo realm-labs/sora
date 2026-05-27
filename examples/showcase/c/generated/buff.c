@@ -20,7 +20,7 @@ sora_result sora_showcase_buff_decode(sora_reader* reader, sora_showcase_buff* o
         }
     }
     {
-        sora_result result = sora_reader_read_f32(reader, &out->duration);
+        sora_result result = sora_reader_read_i64(reader, &out->duration);
         if (result.code != SORA_OK) {
             sora_showcase_buff_free(out);
             return result;

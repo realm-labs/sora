@@ -8,7 +8,7 @@ import type { StatModifier } from "./stat_modifier.js";
 export interface Buff {
     id: number;
     name: string;
-    duration: number;
+    duration: bigint;
     modifiers: StatModifier[];
 }
 

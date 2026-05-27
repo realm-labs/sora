@@ -4,7 +4,7 @@ class_name Buff
 extends RefCounted
 var id: int = 0
 var name: String = ""
-var duration: float = 0.0
+var duration: int = 0
 var modifiers: Array = []
 
 static func decode(value: Variant) -> Buff:
@@ -17,7 +17,7 @@ static func decode(value: Variant) -> Buff:
 	var out := Buff.new()
 	out.id = int(SoraRuntime.read_field(data, "id", 0))
 	out.name = str(SoraRuntime.read_field(data, "name", ""))
-	out.duration = float(SoraRuntime.read_field(data, "duration", 0.0))
+	out.duration = int(SoraRuntime.read_field(data, "duration", 0))
 	out.modifiers = SoraRuntime.decode_array(SoraRuntime.read_field(data, "modifiers", []), func(item): return StatModifier.decode(item))
 	return out
 

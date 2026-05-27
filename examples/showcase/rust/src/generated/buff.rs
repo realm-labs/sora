@@ -9,7 +9,7 @@ pub struct Buff {
     #[serde(rename = "name")]
     pub name: std::sync::Arc<str>,
     #[serde(rename = "duration")]
-    pub duration: f32,
+    pub duration: i64,
     #[serde(rename = "modifiers")]
     pub modifiers: Vec<StatModifier>,
 }
@@ -21,7 +21,7 @@ impl super::runtime::SoraDecode for Buff {
         Ok(Self {
             id: <i32 as super::runtime::SoraDecode>::decode(reader)?,
             name: <std::sync::Arc<str> as super::runtime::SoraDecode>::decode(reader)?,
-            duration: <f32 as super::runtime::SoraDecode>::decode(reader)?,
+            duration: <i64 as super::runtime::SoraDecode>::decode(reader)?,
             modifiers: <Vec<StatModifier> as super::runtime::SoraDecode>::decode(reader)?,
         })
     }

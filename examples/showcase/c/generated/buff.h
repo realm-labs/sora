@@ -13,7 +13,7 @@ extern "C" {
 typedef struct sora_showcase_buff {
     int32_t id;
     sora_string name;
-    float duration;
+    int64_t duration;
     sora_showcase_stat_modifier_array modifiers;
 } sora_showcase_buff;
 

@@ -6,7 +6,7 @@ import 'stat_modifier.dart';
 final class Buff {
   final int id;
   final String name;
-  final double duration;
+  final int duration;
   final List<StatModifier> modifiers;
 
   const Buff({
@@ -21,7 +21,7 @@ final class Buff {
     return Buff(
       id: obj.get("id").asInt(),
       name: obj.get("name").asString(),
-      duration: obj.get("duration").asDouble(),
+      duration: obj.get("duration").asInt(),
       modifiers: obj.get("modifiers").asList((item) => StatModifier.decode(item)),
     );
   }

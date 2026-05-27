@@ -9,7 +9,7 @@
 -type t() :: #{
     'id' := integer(),
     'name' := binary(),
-    'duration' := float(),
+    'duration' := integer(),
     'modifiers' := [stat_modifier:t()]
 }.
 
@@ -20,7 +20,7 @@
 decode(Reader0) ->
     {Id, Reader1} = (fun sora_runtime:read_i32/1)(Reader0),
     {Name, Reader2} = (fun sora_runtime:read_string/1)(Reader1),
-    {Duration, Reader3} = (fun sora_runtime:read_f32/1)(Reader2),
+    {Duration, Reader3} = (fun sora_runtime:read_i64/1)(Reader2),
     {Modifiers, Reader4} = (fun(Reader) -> sora_runtime:read_list(fun stat_modifier:decode/1, Reader) end)(Reader3),
     {#{
         'id' => Id,
@@ -35,7 +35,7 @@ decode_value(Value) ->
     #{
         'id' => sora_runtime:expect_integer(sora_runtime:value_get(<<"id">>, Obj)),
         'name' => sora_runtime:expect_binary(sora_runtime:value_get(<<"name">>, Obj)),
-        'duration' => sora_runtime:expect_float(sora_runtime:value_get(<<"duration">>, Obj)),
+        'duration' => sora_runtime:expect_integer(sora_runtime:value_get(<<"duration">>, Obj)),
         'modifiers' => sora_runtime:decode_value_list(fun(Item) -> stat_modifier:decode_value(Item) end, sora_runtime:value_get(<<"modifiers">>, Obj))
     }.
 

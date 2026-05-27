@@ -216,7 +216,7 @@ pub(crate) fn showcase_rows(table: &str) -> Vec<Vec<String>> {
                 vec![
                     id.to_string(),
                     format!("Buff {id}"),
-                    format!("{}", 3.0 + (id % 8) as f32),
+                    format!("{}s", 3 + id % 8),
                     format!(
                         "[{{\"stat\":\"{}\",\"value\":{},\"is_percent\":{}}}]",
                         stat(id),

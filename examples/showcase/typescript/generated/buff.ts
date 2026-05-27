@@ -15,7 +15,7 @@ import { collectStatModifierTextKeys, decodeStatModifier, decodeStatModifierValu
 export interface Buff {
     id: number;
     name: string;
-    duration: number;
+    duration: bigint;
     modifiers: StatModifier[];
 }
 
@@ -23,7 +23,7 @@ export function decodeBuff(reader: SoraReader): Buff {
     return {
         id: reader.readI32(),
         name: reader.readString(),
-        duration: reader.readF32(),
+        duration: reader.readI64(),
         modifiers: reader.readList(() => decodeStatModifier(reader)),
     };
 }
@@ -33,7 +33,7 @@ export function decodeBuffValue(value: SoraValue): Buff {
     return {
         id: object.get("id").asInt(),
         name: object.get("name").asString(),
-        duration: object.get("duration").asNumber(),
+        duration: object.get("duration").asBigInt(),
         modifiers: object.get("modifiers").asList((item) => decodeStatModifierValue(item)),
     };
 }

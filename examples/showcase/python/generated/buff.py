@@ -26,7 +26,7 @@ if TYPE_CHECKING:
 class Buff:
     id: int
     name: str
-    duration: float
+    duration: int
     modifiers: list[StatModifier]
 
     @staticmethod
@@ -34,7 +34,7 @@ class Buff:
         from .stat_modifier import StatModifier
         id = reader.read_i32()
         name = reader.read_string()
-        duration = reader.read_f32()
+        duration = reader.read_i64()
         modifiers = reader.read_list(lambda: StatModifier.decode(reader))
         return Buff(
             id=id,

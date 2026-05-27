@@ -1,7 +1,7 @@
 {
   "version": 1,
   "package": "com.sora.showcase",
-  "fingerprint": "7e14f0cc1d24d238",
+  "fingerprint": "8519b38083babe03",
   "schema": {
     "package": "com.sora.showcase",
     "localization": {
@@ -2186,7 +2186,7 @@
           },
           {
             "name": "duration",
-            "ty": "F32",
+            "ty": "Duration",
             "scope": {
               "values": [
                 "all"

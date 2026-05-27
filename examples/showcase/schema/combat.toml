@@ -124,7 +124,7 @@ type = "string"
 
 [[tables.fields]]
 name = "duration"
-type = "f32"
+type = "duration"
 
 [[tables.fields]]
 name = "modifiers"
