@@ -28,6 +28,10 @@ public sealed record DropGroup(
             obj.Get("name").AsString()
         );
     }
+
+    internal void CollectTextKeys(List<TextKey> keys)
+    {
+    }
 }
 
 public sealed class DropGroupTable : ISoraKeyedTable<int, DropGroup>

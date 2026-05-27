@@ -7,7 +7,13 @@ final case class ComplexConditionGroup(
   name: String,
   /** A derived list of union values; each child row is edited without JSON */
   conditions: Vector[EventCondition]
-)
+) {
+  def collectTextKeys(out: scala.collection.mutable.ArrayBuffer[TextKey]): Unit = {
+    this.conditions.foreach { item =>
+      EventCondition.collectTextKeys(item, out)
+    }
+  }
+}
 
 object ComplexConditionGroup {
   def decode(reader: SoraReader): ComplexConditionGroup =

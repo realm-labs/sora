@@ -3,9 +3,11 @@
 package com.sora.showcase;
 
 import java.util.Collection;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 
 enum SoraTableShape {
@@ -98,6 +100,122 @@ public final class SoraConfig {
 
     public Collection<SoraTable<?>> tables() {
         return tables.values();
+    }
+    void validateLocalePack(LocalePack pack) {
+        for (var key : textKeys()) {
+            var value = pack.get(key);
+            if (value == null) {
+                throw new SoraReadException("text key `" + key.value + "` is missing for locale `" + pack.locale() + "`");
+            }
+            if (value.isEmpty()) {
+                throw new SoraReadException("text key `" + key.value + "` has empty text for locale `" + pack.locale() + "`");
+            }
+        }
+    }
+
+    private List<TextKey> textKeys() {
+        var keys = new ArrayList<TextKey>();
+        for (var row : item().rows().values()) {
+            row.collectTextKeys(keys);
+        }
+        for (var row : shop().rows().values()) {
+            row.collectTextKeys(keys);
+        }
+        for (var row : shopItem().rows()) {
+            row.collectTextKeys(keys);
+        }
+        for (var row : recipe().rows().values()) {
+            row.collectTextKeys(keys);
+        }
+        for (var row : gachaPool().rows().values()) {
+            row.collectTextKeys(keys);
+        }
+        for (var row : gachaItem().rows()) {
+            row.collectTextKeys(keys);
+        }
+        for (var row : equipmentSet().rows().values()) {
+            row.collectTextKeys(keys);
+        }
+        for (var row : skill().rows().values()) {
+            row.collectTextKeys(keys);
+        }
+        for (var row : character().rows().values()) {
+            row.collectTextKeys(keys);
+        }
+        for (var row : characterSkill().rows()) {
+            row.collectTextKeys(keys);
+        }
+        for (var row : buff().rows().values()) {
+            row.collectTextKeys(keys);
+        }
+        for (var row : dropGroup().rows().values()) {
+            row.collectTextKeys(keys);
+        }
+        for (var row : dropEntry().rows()) {
+            row.collectTextKeys(keys);
+        }
+        for (var row : monster().rows().values()) {
+            row.collectTextKeys(keys);
+        }
+        for (var row : stage().rows().values()) {
+            row.collectTextKeys(keys);
+        }
+        for (var row : stageReward().rows()) {
+            row.collectTextKeys(keys);
+        }
+        for (var row : dungeon().rows().values()) {
+            row.collectTextKeys(keys);
+        }
+        for (var row : quest().rows().values()) {
+            row.collectTextKeys(keys);
+        }
+        for (var row : questReward().rows()) {
+            row.collectTextKeys(keys);
+        }
+        for (var row : levelExp().rows().values()) {
+            row.collectTextKeys(keys);
+        }
+        for (var row : achievement().rows().values()) {
+            row.collectTextKeys(keys);
+        }
+        for (var row : vipLevel().rows().values()) {
+            row.collectTextKeys(keys);
+        }
+        gameSettings().row().collectTextKeys(keys);
+        for (var row : maintenanceWindow().rows()) {
+            row.collectTextKeys(keys);
+        }
+        for (var row : mailTemplate().rows().values()) {
+            row.collectTextKeys(keys);
+        }
+        for (var row : mailReward().rows()) {
+            row.collectTextKeys(keys);
+        }
+        for (var row : dialogue().rows().values()) {
+            row.collectTextKeys(keys);
+        }
+        for (var row : eventRule().rows().values()) {
+            row.collectTextKeys(keys);
+        }
+        for (var row : complexRule().rows().values()) {
+            row.collectTextKeys(keys);
+        }
+        for (var row : complexConditionGroup().rows().values()) {
+            row.collectTextKeys(keys);
+        }
+        for (var row : complexConditionGroupEntry().rows().values()) {
+            row.collectTextKeys(keys);
+        }
+        for (var row : complexRuleCondition().rows().values()) {
+            row.collectTextKeys(keys);
+        }
+        for (var row : complexActionGroup().rows().values()) {
+            row.collectTextKeys(keys);
+        }
+        for (var row : complexActionEntry().rows().values()) {
+            row.collectTextKeys(keys);
+        }
+        return keys;
     }
 
     private <T extends SoraTable<?>> T table(String name, Class<T> type) {
@@ -235,5 +353,57 @@ public final class SoraConfig {
             throw new SoraReadException("expected singleton table `" + name + "` to contain exactly 1 row, got " + rows.size());
         }
         return rows.get(0);
+    }
+}
+final class SoraI18n implements SoraTextResolver {
+    static final Set<String> LOCALES = Set.of(
+        "zh_cn",
+        "en_us"
+    );
+    static final String DEFAULT_LOCALE = "zh_cn";
+
+    private String activeLocale = DEFAULT_LOCALE;
+    private final Map<String, LocalePack> packs = new HashMap<>();
+
+    void mount(SoraConfig config, LocalePack pack) {
+        if (!pack.schemaFingerprint().equals(SoraConfig.SCHEMA_FINGERPRINT)) {
+            throw new SoraReadException(
+                "locale pack schema fingerprint mismatch: generated code expects "
+                    + SoraConfig.SCHEMA_FINGERPRINT + ", pack contains " + pack.schemaFingerprint()
+            );
+        }
+        if (!LOCALES.contains(pack.locale())) {
+            throw new SoraReadException("locale pack `" + pack.locale() + "` is not declared by generated code");
+        }
+        config.validateLocalePack(pack);
+        packs.put(pack.locale(), pack);
+    }
+
+    void setLocale(String locale) {
+        if (!LOCALES.contains(locale)) {
+            throw new SoraReadException("unknown locale `" + locale + "`");
+        }
+        if (!packs.containsKey(locale)) {
+            throw new SoraReadException("locale `" + locale + "` is not mounted");
+        }
+        activeLocale = locale;
+    }
+
+    @Override
+    public String text(TextKey key) {
+        var pack = packs.get(activeLocale);
+        if (pack == null) {
+            throw new SoraReadException("locale `" + activeLocale + "` is not mounted");
+        }
+        var value = pack.get(key);
+        if (value == null) {
+            throw new SoraReadException("active locale pack failed locale validation");
+        }
+        return value;
+    }
+
+    @Override
+    public String format(TextKey key, Map<String, ?> args) {
+        return SoraText.format(text(key), args);
     }
 }

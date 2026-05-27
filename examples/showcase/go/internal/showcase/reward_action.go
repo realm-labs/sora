@@ -149,3 +149,10 @@ func decodeRewardActionValue(input SoraValue) (RewardAction, error) {
 		return nil, fmt.Errorf("invalid union tag %s for RewardAction", tag)
 	}
 }
+
+func collectRewardActionTextKeys(value RewardAction, out *[]TextKey) {
+	switch typed := value.(type) {
+	default:
+		_ = typed
+	}
+}

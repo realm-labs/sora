@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
-from .sora_runtime import SoraReader
+from .sora_runtime import SoraReader, TextKey
 
 
 if TYPE_CHECKING:
@@ -29,3 +29,6 @@ class ResourceCost:
             id=id,
             count=count,
         )
+
+    def collect_text_keys(self, out: list[TextKey]) -> None:
+        pass

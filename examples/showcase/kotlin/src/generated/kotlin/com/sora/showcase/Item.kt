@@ -18,6 +18,10 @@ data class Item(
     /** Map pairs: key,value|key,value */
     val attributes: Map<String, Int>,
 ) {
+    fun collectTextKeys(out: MutableList<TextKey>) {
+        this.price.collectTextKeys(out)
+    }
+
     companion object {
         fun decode(reader: SoraReader): Item =
             Item(

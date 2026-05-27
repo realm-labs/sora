@@ -31,4 +31,8 @@ public sealed record SkillEffect(
             obj.Get("radius").AsFloat()
         );
     }
+
+    internal void CollectTextKeys(List<TextKey> keys)
+    {
+    }
 }

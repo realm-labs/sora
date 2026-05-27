@@ -9,6 +9,14 @@ data class MailTemplate(
     val bodyKey: TextKey,
     val rewards: List<Reward>,
 ) {
+    fun collectTextKeys(out: MutableList<TextKey>) {
+        out.add(this.titleKey)
+        out.add(this.bodyKey)
+        for (item in this.rewards) {
+            item.collectTextKeys(out)
+        }
+    }
+
     companion object {
         fun decode(reader: SoraReader): MailTemplate =
             MailTemplate(

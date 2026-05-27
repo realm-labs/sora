@@ -6,7 +6,11 @@ final case class Dialogue(
   id: Int,
   speakerKey: TextKey,
   lines: Vector[String]
-)
+) {
+  def collectTextKeys(out: scala.collection.mutable.ArrayBuffer[TextKey]): Unit = {
+    out += this.speakerKey
+  }
+}
 
 object Dialogue {
   def decode(reader: SoraReader): Dialogue =

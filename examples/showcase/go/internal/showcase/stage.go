@@ -65,6 +65,12 @@ func decodeStageValue(input SoraValue) (Stage, error) {
 	return value, nil
 }
 
+func (value Stage) collectTextKeys(out *[]TextKey) {
+	for _, item := range value.FirstClearRewards {
+		item.collectTextKeys(out)
+	}
+}
+
 const stageTableName = "Stage"
 
 var stageTableInfo = SoraTableInfo{

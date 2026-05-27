@@ -88,6 +88,9 @@ struct KotlinModel {
     unions: Vec<KotlinUnion>,
     records: Vec<KotlinRecord>,
     tables: Vec<KotlinTable>,
+    has_localization: bool,
+    locales: Vec<String>,
+    default_locale: String,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -107,12 +110,14 @@ struct KotlinUnion {
 struct KotlinUnionVariant {
     name: String,
     fields: Vec<KotlinField>,
+    has_text_keys: bool,
 }
 
 #[derive(Debug, Clone, Serialize)]
 struct KotlinRecord {
     pascal_name: String,
     fields: Vec<KotlinField>,
+    has_text_keys: bool,
     table: Option<KotlinTable>,
 }
 
@@ -147,6 +152,7 @@ struct KotlinField {
     type_name: String,
     decode: String,
     value_decode: String,
+    collect_text_keys: String,
     comment: Option<String>,
 }
 
@@ -184,6 +190,17 @@ impl KotlinModel {
                     kotlin_record(ir, item, table)
                 })
                 .collect(),
+            has_localization: ir.localization.is_some(),
+            locales: ir
+                .localization
+                .as_ref()
+                .map(|item| item.locales.clone())
+                .unwrap_or_default(),
+            default_locale: ir
+                .localization
+                .as_ref()
+                .map(|item| item.default_locale.clone())
+                .unwrap_or_default(),
             tables,
         }
     }
@@ -202,24 +219,34 @@ fn kotlin_union(ir: &ConfigIr, union: BaseUnion) -> KotlinUnion {
 }
 
 fn kotlin_variant(ir: &ConfigIr, variant: BaseUnionVariant) -> KotlinUnionVariant {
+    let fields = variant
+        .fields
+        .into_iter()
+        .map(|field| kotlin_field(ir, field))
+        .collect::<Vec<_>>();
+    let has_text_keys = fields
+        .iter()
+        .any(|field| !field.collect_text_keys.is_empty());
     KotlinUnionVariant {
         name: variant.pascal_name,
-        fields: variant
-            .fields
-            .into_iter()
-            .map(|field| kotlin_field(ir, field))
-            .collect(),
+        fields,
+        has_text_keys,
     }
 }
 
 fn kotlin_record(ir: &ConfigIr, record: BaseRecord, table: Option<KotlinTable>) -> KotlinRecord {
+    let fields = record
+        .fields
+        .into_iter()
+        .map(|field| kotlin_field(ir, field))
+        .collect::<Vec<_>>();
+    let has_text_keys = fields
+        .iter()
+        .any(|field| !field.collect_text_keys.is_empty());
     KotlinRecord {
         pascal_name: record.pascal_name,
-        fields: record
-            .fields
-            .into_iter()
-            .map(|field| kotlin_field(ir, field))
-            .collect(),
+        fields,
+        has_text_keys,
         table,
     }
 }
@@ -271,12 +298,15 @@ fn kotlin_index(ir: &ConfigIr, index: BaseIndex) -> KotlinIndex {
 
 fn kotlin_field(ir: &ConfigIr, field: BaseField) -> KotlinField {
     let value_decode = kotlin_value_decode_expr(ir, &field.ty, "__VALUE__");
+    let collect_text_keys =
+        kotlin_collect_text_keys(ir, &field.ty, &format!("this.{}", field.camel_name), 8);
     KotlinField {
         raw_name: field.raw_name,
         name: field.camel_name,
         type_name: kotlin_type_name(ir, &field.ty),
         decode: kotlin_decode_expr(ir, &field.ty),
         value_decode,
+        collect_text_keys,
         comment: field.comment,
     }
 }
@@ -386,6 +416,67 @@ fn kotlin_value_decode_expr(ir: &ConfigIr, ty: &TypeIr, value: &str) -> String {
                 kotlin_value_decode_expr(ir, element, value)
             )
         }
+    }
+}
+
+fn kotlin_collect_text_keys(ir: &ConfigIr, ty: &TypeIr, value: &str, indent: usize) -> String {
+    let pad = " ".repeat(indent);
+    match ty {
+        TypeIr::Text => format!("{pad}out.add({value})"),
+        TypeIr::Optional(element) => {
+            let inner = kotlin_collect_text_keys(ir, element, "item", indent + 4);
+            if inner.is_empty() {
+                String::new()
+            } else {
+                format!("{pad}{value}?.let {{ item ->\n{inner}\n{pad}}}")
+            }
+        }
+        TypeIr::List(element) | TypeIr::Set(element) | TypeIr::Array { element, .. } => {
+            let inner = kotlin_collect_text_keys(ir, element, "item", indent + 4);
+            if inner.is_empty() {
+                String::new()
+            } else {
+                format!("{pad}for (item in {value}) {{\n{inner}\n{pad}}}")
+            }
+        }
+        TypeIr::Map {
+            key,
+            value: element,
+        } => {
+            let key_inner = kotlin_collect_text_keys(ir, key, "key", indent + 4);
+            let value_inner = kotlin_collect_text_keys(ir, element, "item", indent + 4);
+            if key_inner.is_empty() && value_inner.is_empty() {
+                String::new()
+            } else {
+                format!("{pad}for ((key, item) in {value}) {{\n{key_inner}\n{value_inner}\n{pad}}}")
+            }
+        }
+        TypeIr::Struct(_) => format!("{pad}{value}.collectTextKeys(out)"),
+        TypeIr::Union(name) => format!("{pad}{name}.collectTextKeys({value}, out)"),
+        TypeIr::Ref { table, field } => ir
+            .tables
+            .iter()
+            .find(|candidate| candidate.name == *table)
+            .and_then(|table| {
+                table
+                    .fields
+                    .iter()
+                    .find(|candidate| candidate.name == *field)
+            })
+            .map(|field| kotlin_collect_text_keys(ir, &field.ty, value, indent))
+            .unwrap_or_default(),
+        TypeIr::Bool
+        | TypeIr::I8
+        | TypeIr::U8
+        | TypeIr::I16
+        | TypeIr::U16
+        | TypeIr::I32
+        | TypeIr::U32
+        | TypeIr::I64
+        | TypeIr::F32
+        | TypeIr::F64
+        | TypeIr::String
+        | TypeIr::Enum(_) => String::new(),
     }
 }
 

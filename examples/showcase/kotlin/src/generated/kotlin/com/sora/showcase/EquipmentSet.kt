@@ -8,6 +8,10 @@ data class EquipmentSet(
     val itemIds: List<Int>,
     val bonusEffect: SkillEffect,
 ) {
+    fun collectTextKeys(out: MutableList<TextKey>) {
+        this.bonusEffect.collectTextKeys(out)
+    }
+
     companion object {
         fun decode(reader: SoraReader): EquipmentSet =
             EquipmentSet(

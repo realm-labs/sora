@@ -31,4 +31,8 @@ public sealed record StatModifier(
             obj.Get("is_percent").AsBool()
         );
     }
+
+    internal void CollectTextKeys(List<TextKey> keys)
+    {
+    }
 }

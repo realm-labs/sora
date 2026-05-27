@@ -2,6 +2,7 @@
 
 package com.sora.showcase;
 
+import java.util.List;
 public final class ResourceCost {
     public final ResourceKind kind;
     public final Integer id;
@@ -32,5 +33,8 @@ public final class ResourceCost {
             obj.get("id").asInt(),
             obj.get("count").asInt()
         );
+    }
+
+    void collectTextKeys(List<TextKey> out) {
     }
 }

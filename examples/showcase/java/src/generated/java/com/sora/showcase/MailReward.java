@@ -41,6 +41,9 @@ public final class MailReward {
             obj.get("count").asInt()
         );
     }
+
+    void collectTextKeys(List<TextKey> out) {
+    }
 }
 
 final class MailRewardTable extends java.util.AbstractList<MailReward> implements SoraListTable<MailReward> {

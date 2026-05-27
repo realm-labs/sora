@@ -36,6 +36,12 @@ public final class ComplexActionGroup {
             obj.get("actions").asList(item -> RewardAction.decode(item))
         );
     }
+
+    void collectTextKeys(List<TextKey> out) {
+        for (var item : this.actions) {
+            RewardAction.collectTextKeys(item, out);
+        }
+    }
 }
 
 final class ComplexActionGroupTable extends java.util.AbstractMap<Integer, ComplexActionGroup> implements SoraKeyedTable<Integer, ComplexActionGroup> {

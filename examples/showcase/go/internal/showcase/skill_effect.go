@@ -46,3 +46,6 @@ func decodeSkillEffectValue(input SoraValue) (SkillEffect, error) {
 	}
 	return value, nil
 }
+
+func (value SkillEffect) collectTextKeys(out *[]TextKey) {
+}

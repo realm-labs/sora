@@ -8,6 +8,10 @@ data class ComplexConditionGroupEntry(
     val seq: Int,
     val value: EventCondition,
 ) {
+    fun collectTextKeys(out: MutableList<TextKey>) {
+        EventCondition.collectTextKeys(this.value, out)
+    }
+
     companion object {
         fun decode(reader: SoraReader): ComplexConditionGroupEntry =
             ComplexConditionGroupEntry(

@@ -78,6 +78,9 @@ struct DartModel {
     records: Vec<DartRecord>,
     tables: Vec<DartTable>,
     modules: Vec<String>,
+    has_localization: bool,
+    locales: Vec<String>,
+    default_locale: String,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -107,6 +110,7 @@ struct DartUnionVariant {
     raw_name: String,
     class_name: String,
     fields: Vec<DartField>,
+    has_text_keys: bool,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -115,6 +119,7 @@ struct DartRecord {
     snake_name: String,
     imports: Vec<DartImport>,
     fields: Vec<DartField>,
+    has_text_keys: bool,
     table: Option<DartTable>,
 }
 
@@ -130,6 +135,7 @@ struct DartField {
     name: String,
     type_name: String,
     value_decode: String,
+    collect_text_keys: String,
     comment: Option<String>,
 }
 
@@ -211,20 +217,36 @@ impl DartModel {
             records,
             tables,
             modules,
+            has_localization: ir.localization.is_some(),
+            locales: ir
+                .localization
+                .as_ref()
+                .map(|item| item.locales.clone())
+                .unwrap_or_default(),
+            default_locale: ir
+                .localization
+                .as_ref()
+                .map(|item| item.default_locale.clone())
+                .unwrap_or_default(),
         }
     }
 }
 
 fn dart_record(ir: &ConfigIr, record: BaseRecord, table: Option<DartTable>) -> DartRecord {
+    let fields = record
+        .fields
+        .into_iter()
+        .map(|field| dart_field(ir, field))
+        .collect::<Vec<_>>();
+    let has_text_keys = fields
+        .iter()
+        .any(|field| !field.collect_text_keys.is_empty());
     DartRecord {
         pascal_name: dart_type_identifier(&record.pascal_name),
         snake_name: dart_module_name(&record.snake_name),
         imports: record.imports.into_iter().map(dart_import).collect(),
-        fields: record
-            .fields
-            .into_iter()
-            .map(|field| dart_field(ir, field))
-            .collect(),
+        fields,
+        has_text_keys,
         table,
     }
 }
@@ -244,14 +266,19 @@ fn dart_union(ir: &ConfigIr, union: BaseUnion) -> DartUnion {
 }
 
 fn dart_variant(ir: &ConfigIr, union_name: &str, variant: BaseUnionVariant) -> DartUnionVariant {
+    let fields = variant
+        .fields
+        .into_iter()
+        .map(|field| dart_field(ir, field))
+        .collect::<Vec<_>>();
+    let has_text_keys = fields
+        .iter()
+        .any(|field| !field.collect_text_keys.is_empty());
     DartUnionVariant {
         raw_name: variant.name,
         class_name: dart_type_identifier(&format!("{union_name}{}", variant.pascal_name)),
-        fields: variant
-            .fields
-            .into_iter()
-            .map(|field| dart_field(ir, field))
-            .collect(),
+        fields,
+        has_text_keys,
     }
 }
 
@@ -300,11 +327,14 @@ fn dart_index(ir: &ConfigIr, index: BaseIndex) -> DartIndex {
 }
 
 fn dart_field(ir: &ConfigIr, field: BaseField) -> DartField {
+    let collect_text_keys =
+        dart_collect_text_keys(ir, &field.ty, &format!("this.{}", field.camel_name), 4);
     DartField {
         raw_name: field.raw_name,
         name: dart_field_identifier(&field.camel_name),
         type_name: dart_type_name(ir, &field.ty),
         value_decode: dart_value_decode_expr(ir, &field.ty, "__VALUE__"),
+        collect_text_keys,
         comment: field.comment,
     }
 }
@@ -364,6 +394,71 @@ fn dart_value_decode_expr(ir: &ConfigIr, ty: &TypeIr, value: &str) -> String {
                 dart_value_decode_expr(ir, element, value)
             )
         }
+    }
+}
+
+fn dart_collect_text_keys(ir: &ConfigIr, ty: &TypeIr, value: &str, indent: usize) -> String {
+    let pad = " ".repeat(indent);
+    match ty {
+        TypeIr::Text => format!("{pad}out.add({value});"),
+        TypeIr::Optional(element) => {
+            let inner = dart_collect_text_keys(ir, element, "item", indent + 2);
+            if inner.is_empty() {
+                String::new()
+            } else {
+                format!(
+                    "{pad}{{\n{pad}  final item = {value};\n{pad}  if (item != null) {{\n{inner}\n{pad}  }}\n{pad}}}"
+                )
+            }
+        }
+        TypeIr::List(element) | TypeIr::Set(element) | TypeIr::Array { element, .. } => {
+            let inner = dart_collect_text_keys(ir, element, "item", indent + 2);
+            if inner.is_empty() {
+                String::new()
+            } else {
+                format!("{pad}for (final item in {value}) {{\n{inner}\n{pad}}}")
+            }
+        }
+        TypeIr::Map {
+            key,
+            value: element,
+        } => {
+            let key_inner = dart_collect_text_keys(ir, key, "entry.key", indent + 2);
+            let value_inner = dart_collect_text_keys(ir, element, "entry.value", indent + 2);
+            if key_inner.is_empty() && value_inner.is_empty() {
+                String::new()
+            } else {
+                format!(
+                    "{pad}for (final entry in {value}.entries) {{\n{key_inner}\n{value_inner}\n{pad}}}"
+                )
+            }
+        }
+        TypeIr::Struct(_) => format!("{pad}{value}.collectTextKeys(out);"),
+        TypeIr::Union(_) => format!("{pad}{value}.collectTextKeys(out);"),
+        TypeIr::Ref { table, field } => ir
+            .tables
+            .iter()
+            .find(|candidate| candidate.name == *table)
+            .and_then(|table| {
+                table
+                    .fields
+                    .iter()
+                    .find(|candidate| candidate.name == *field)
+            })
+            .map(|field| dart_collect_text_keys(ir, &field.ty, value, indent))
+            .unwrap_or_default(),
+        TypeIr::Bool
+        | TypeIr::I8
+        | TypeIr::U8
+        | TypeIr::I16
+        | TypeIr::U16
+        | TypeIr::I32
+        | TypeIr::U32
+        | TypeIr::I64
+        | TypeIr::F32
+        | TypeIr::F64
+        | TypeIr::String
+        | TypeIr::Enum(_) => String::new(),
     }
 }
 

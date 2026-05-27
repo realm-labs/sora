@@ -7,6 +7,13 @@ data class ComplexBudget(
     val random: List<RewardBundle>,
     val limits: Map<String, Int>,
 ) {
+    fun collectTextKeys(out: MutableList<TextKey>) {
+        this.fixed.collectTextKeys(out)
+        for (item in this.random) {
+            item.collectTextKeys(out)
+        }
+    }
+
     companion object {
         fun decode(reader: SoraReader): ComplexBudget =
             ComplexBudget(

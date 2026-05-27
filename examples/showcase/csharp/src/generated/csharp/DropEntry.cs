@@ -37,6 +37,10 @@ public sealed record DropEntry(
             obj.Get("weight").AsFloat()
         );
     }
+
+    internal void CollectTextKeys(List<TextKey> keys)
+    {
+    }
 }
 
 public sealed class DropEntryTable : ISoraListTable<DropEntry>

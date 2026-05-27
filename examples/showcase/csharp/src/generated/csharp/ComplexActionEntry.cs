@@ -34,6 +34,11 @@ public sealed record ComplexActionEntry(
             RewardAction.Decode(obj.Get("value"))
         );
     }
+
+    internal void CollectTextKeys(List<TextKey> keys)
+    {
+        RewardAction.CollectTextKeys(this.Value, keys);
+    }
 }
 
 public sealed class ComplexActionEntryTable : ISoraKeyedTable<int, ComplexActionEntry>

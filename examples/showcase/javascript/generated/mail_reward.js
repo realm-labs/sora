@@ -25,6 +25,9 @@ export function decodeMailRewardValue(value) {
     };
 }
 
+export function collectMailRewardTextKeys(value, out) {
+}
+
 export class MailRewardTable {
     static tableName = "MailReward";
     static tableInfo = {

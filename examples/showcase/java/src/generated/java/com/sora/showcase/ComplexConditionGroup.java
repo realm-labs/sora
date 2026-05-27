@@ -37,6 +37,12 @@ public final class ComplexConditionGroup {
             obj.get("conditions").asList(item -> EventCondition.decode(item))
         );
     }
+
+    void collectTextKeys(List<TextKey> out) {
+        for (var item : this.conditions) {
+            EventCondition.collectTextKeys(item, out);
+        }
+    }
 }
 
 final class ComplexConditionGroupTable extends java.util.AbstractMap<Integer, ComplexConditionGroup> implements SoraKeyedTable<Integer, ComplexConditionGroup> {

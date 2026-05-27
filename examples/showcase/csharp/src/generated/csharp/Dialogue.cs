@@ -31,6 +31,11 @@ public sealed record Dialogue(
             obj.Get("lines").AsList(item => item.AsString())
         );
     }
+
+    internal void CollectTextKeys(List<TextKey> keys)
+    {
+        keys.Add(this.SpeakerKey);
+    }
 }
 
 public sealed class DialogueTable : ISoraKeyedTable<int, Dialogue>

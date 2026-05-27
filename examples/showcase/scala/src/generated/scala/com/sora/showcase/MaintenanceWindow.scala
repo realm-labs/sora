@@ -7,7 +7,10 @@ final case class MaintenanceWindow(
   startsAt: String,
   durationMinutes: Int,
   reason: Option[String]
-)
+) {
+  def collectTextKeys(out: scala.collection.mutable.ArrayBuffer[TextKey]): Unit = {
+  }
+}
 
 object MaintenanceWindow {
   def decode(reader: SoraReader): MaintenanceWindow =

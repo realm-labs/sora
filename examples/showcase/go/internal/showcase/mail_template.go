@@ -65,6 +65,14 @@ func decodeMailTemplateValue(input SoraValue) (MailTemplate, error) {
 	return value, nil
 }
 
+func (value MailTemplate) collectTextKeys(out *[]TextKey) {
+	*out = append(*out, value.TitleKey)
+	*out = append(*out, value.BodyKey)
+	for _, item := range value.Rewards {
+		item.collectTextKeys(out)
+	}
+}
+
 const mailTemplateTableName = "MailTemplate"
 
 var mailTemplateTableInfo = SoraTableInfo{

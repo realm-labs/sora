@@ -2,6 +2,7 @@
 
 package com.sora.showcase;
 
+import java.util.List;
 public final class Vec3 {
     public final Float x;
     public final Float y;
@@ -32,5 +33,8 @@ public final class Vec3 {
             obj.get("y").asFloat(),
             obj.get("z").asFloat()
         );
+    }
+
+    void collectTextKeys(List<TextKey> out) {
     }
 }

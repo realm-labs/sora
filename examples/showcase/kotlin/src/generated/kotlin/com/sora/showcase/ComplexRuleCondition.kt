@@ -7,6 +7,10 @@ data class ComplexRuleCondition(
     val ruleId: Int,
     val value: EventCondition,
 ) {
+    fun collectTextKeys(out: MutableList<TextKey>) {
+        EventCondition.collectTextKeys(this.value, out)
+    }
+
     companion object {
         fun decode(reader: SoraReader): ComplexRuleCondition =
             ComplexRuleCondition(

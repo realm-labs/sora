@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, ClassVar
 
-from .sora_runtime import SoraReadError, SoraReader{% if runtime_format != "sora" %}, SoraValue{% endif %}
+from .sora_runtime import SoraReadError, SoraReader, TextKey{% if runtime_format != "sora" %}, SoraValue{% endif %}
 
 
 if TYPE_CHECKING:
@@ -17,6 +17,9 @@ if TYPE_CHECKING:
 
 
 class {{ union.pascal_name }}:
+    def collect_text_keys(self, out: list[TextKey]) -> None:
+        pass
+
     @staticmethod
     def decode(reader: SoraReader) -> {{ union.pascal_name }}:
         ordinal = reader.read_u32()
@@ -69,6 +72,17 @@ class {{ union.pascal_name }}{{ variant.name }}({{ union.pascal_name }}):
             {{ field.name }}={{ field.name }},
 {%- endfor %}
         )
+
+    def collect_text_keys(self, out: list[TextKey]) -> None:
+{%- if variant.has_text_keys %}
+{%- for field in variant.fields %}
+{%- if field.collect_text_keys %}
+{{ field.collect_text_keys }}
+{%- endif %}
+{%- endfor %}
+{%- else %}
+        pass
+{%- endif %}
 
 {%- if runtime_format != "sora" %}
 

@@ -34,6 +34,11 @@ public sealed record Dungeon(
             ResourceCost.Decode(obj.Get("entry_cost"))
         );
     }
+
+    internal void CollectTextKeys(List<TextKey> keys)
+    {
+        this.EntryCost.CollectTextKeys(keys);
+    }
 }
 
 public sealed class DungeonTable : ISoraKeyedTable<int, Dungeon>

@@ -23,4 +23,11 @@ final class ComplexBudget {
       limits: obj.get("limits").asMap((item) => item.asString(), (item) => item.asInt()),
     );
   }
+
+  void collectTextKeys(List<TextKey> out) {
+    this.fixed.collectTextKeys(out);
+    for (final item in this.random) {
+      item.collectTextKeys(out);
+    }
+  }
 }

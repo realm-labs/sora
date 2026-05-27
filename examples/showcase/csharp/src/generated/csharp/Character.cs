@@ -43,6 +43,11 @@ public sealed record Character(
             Vec3.Decode(obj.Get("spawn_pos"))
         );
     }
+
+    internal void CollectTextKeys(List<TextKey> keys)
+    {
+        this.SpawnPos.CollectTextKeys(keys);
+    }
 }
 
 public sealed class CharacterTable : ISoraKeyedTable<int, Character>

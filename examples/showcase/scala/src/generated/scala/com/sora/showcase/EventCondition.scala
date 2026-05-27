@@ -75,4 +75,9 @@ object EventCondition {
       case tag => throw new SoraReadException(s"invalid union tag $tag for EventCondition")
     }
   }
+
+  def collectTextKeys(value: EventCondition, out: scala.collection.mutable.ArrayBuffer[TextKey]): Unit =
+    value match {
+      case _ =>
+    }
 }

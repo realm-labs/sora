@@ -31,6 +31,10 @@ public sealed record LevelExp(
             obj.Get("unlock_feature").IsNull ? default : obj.Get("unlock_feature").AsString()
         );
     }
+
+    internal void CollectTextKeys(List<TextKey> keys)
+    {
+    }
 }
 
 public sealed class LevelExpTable : ISoraKeyedTable<int, LevelExp>

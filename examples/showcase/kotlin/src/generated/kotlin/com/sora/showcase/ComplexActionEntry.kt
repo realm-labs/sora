@@ -8,6 +8,10 @@ data class ComplexActionEntry(
     val seq: Int,
     val value: RewardAction,
 ) {
+    fun collectTextKeys(out: MutableList<TextKey>) {
+        RewardAction.collectTextKeys(this.value, out)
+    }
+
     companion object {
         fun decode(reader: SoraReader): ComplexActionEntry =
             ComplexActionEntry(

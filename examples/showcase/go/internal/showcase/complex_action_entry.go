@@ -56,6 +56,10 @@ func decodeComplexActionEntryValue(input SoraValue) (ComplexActionEntry, error) 
 	return value, nil
 }
 
+func (value ComplexActionEntry) collectTextKeys(out *[]TextKey) {
+	collectRewardActionTextKeys(value.Value, out)
+}
+
 const complexActionEntryTableName = "ComplexActionEntry"
 
 var complexActionEntryTableInfo = SoraTableInfo{

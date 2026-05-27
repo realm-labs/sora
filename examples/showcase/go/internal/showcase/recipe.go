@@ -47,6 +47,12 @@ func decodeRecipeValue(input SoraValue) (Recipe, error) {
 	return value, nil
 }
 
+func (value Recipe) collectTextKeys(out *[]TextKey) {
+	for _, item := range value.Materials {
+		item.collectTextKeys(out)
+	}
+}
+
 const recipeTableName = "Recipe"
 
 var recipeTableInfo = SoraTableInfo{

@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, ClassVar
 
-from .sora_runtime import SoraReadError, SoraReader
+from .sora_runtime import SoraReadError, SoraReader, TextKey
 
 
 if TYPE_CHECKING:
@@ -13,6 +13,9 @@ if TYPE_CHECKING:
 
 
 class RewardAction:
+    def collect_text_keys(self, out: list[TextKey]) -> None:
+        pass
+
     @staticmethod
     def decode(reader: SoraReader) -> RewardAction:
         ordinal = reader.read_u32()
@@ -45,6 +48,9 @@ class RewardActionAddItem(RewardAction):
             count=count,
         )
 
+    def collect_text_keys(self, out: list[TextKey]) -> None:
+        pass
+
 
 @dataclass(frozen=True, slots=True)
 class RewardActionAddBuff(RewardAction):
@@ -61,6 +67,9 @@ class RewardActionAddBuff(RewardAction):
             duration=duration,
         )
 
+    def collect_text_keys(self, out: list[TextKey]) -> None:
+        pass
+
 
 @dataclass(frozen=True, slots=True)
 class RewardActionUnlockStage(RewardAction):
@@ -73,6 +82,9 @@ class RewardActionUnlockStage(RewardAction):
         return RewardActionUnlockStage(
             stage_id=stage_id,
         )
+
+    def collect_text_keys(self, out: list[TextKey]) -> None:
+        pass
 
 
 @dataclass(frozen=True, slots=True)
@@ -87,6 +99,9 @@ class RewardActionSendMail(RewardAction):
             mail_id=mail_id,
         )
 
+    def collect_text_keys(self, out: list[TextKey]) -> None:
+        pass
+
 
 @dataclass(frozen=True, slots=True)
 class RewardActionRunActionGroup(RewardAction):
@@ -99,4 +114,7 @@ class RewardActionRunActionGroup(RewardAction):
         return RewardActionRunActionGroup(
             action_group_id=action_group_id,
         )
+
+    def collect_text_keys(self, out: list[TextKey]) -> None:
+        pass
 

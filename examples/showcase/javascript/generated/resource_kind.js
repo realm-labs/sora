@@ -27,3 +27,5 @@ export function decodeResourceKindValue(value) {
     }
     return name;
 }
+
+export function collectResourceKindTextKeys(_value, _out) {}

@@ -7,7 +7,11 @@ final case class EquipmentSet(
   name: String,
   itemIds: Vector[Int],
   bonusEffect: SkillEffect
-)
+) {
+  def collectTextKeys(out: scala.collection.mutable.ArrayBuffer[TextKey]): Unit = {
+    this.bonusEffect.collectTextKeys(out)
+  }
+}
 
 object EquipmentSet {
   def decode(reader: SoraReader): EquipmentSet =

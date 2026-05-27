@@ -8,6 +8,9 @@ data class GachaItem(
     val rarity: Rarity,
     val weight: Float,
 ) {
+    fun collectTextKeys(out: MutableList<TextKey>) {
+    }
+
     companion object {
         fun decode(reader: SoraReader): GachaItem =
             GachaItem(

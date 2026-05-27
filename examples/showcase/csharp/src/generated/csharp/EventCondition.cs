@@ -72,4 +72,8 @@ public abstract record EventCondition
             var tag => throw new SoraReadException($"invalid union tag `{tag}` for EventCondition"),
         };
     }
+
+    internal static void CollectTextKeys(EventCondition value, List<TextKey> keys)
+    {
+    }
 }

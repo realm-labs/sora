@@ -34,6 +34,10 @@ public sealed record QuestReward(
             obj.Get("count").AsInt32()
         );
     }
+
+    internal void CollectTextKeys(List<TextKey> keys)
+    {
+    }
 }
 
 public sealed class QuestRewardTable : ISoraListTable<QuestReward>

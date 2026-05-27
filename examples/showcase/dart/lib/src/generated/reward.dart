@@ -18,4 +18,7 @@ final class Reward {
       count: obj.get("count").asInt(),
     );
   }
+
+  void collectTextKeys(List<TextKey> out) {
+  }
 }

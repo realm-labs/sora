@@ -9,7 +9,11 @@ final case class Monster(
   element: ElementType,
   dropGroup: Int,
   spawnPos: Vec3
-)
+) {
+  def collectTextKeys(out: scala.collection.mutable.ArrayBuffer[TextKey]): Unit = {
+    this.spawnPos.collectTextKeys(out)
+  }
+}
 
 object Monster {
   def decode(reader: SoraReader): Monster =

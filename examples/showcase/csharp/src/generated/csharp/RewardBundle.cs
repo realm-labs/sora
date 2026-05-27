@@ -31,4 +31,9 @@ public sealed record RewardBundle(
             obj.Get("labels").AsList(item => item.AsString())
         );
     }
+
+    internal void CollectTextKeys(List<TextKey> keys)
+    {
+        this.Cost.CollectTextKeys(keys);
+    }
 }

@@ -22,6 +22,10 @@ final class ComplexRuleCondition {
       value: EventCondition.decode(obj.get("value")),
     );
   }
+
+  void collectTextKeys(List<TextKey> out) {
+    this.value.collectTextKeys(out);
+  }
 }
 
 final class ComplexRuleConditionTable extends Iterable<ComplexRuleCondition> implements SoraKeyedTable<int, ComplexRuleCondition> {

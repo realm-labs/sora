@@ -36,6 +36,10 @@ public final class Dialogue {
             obj.get("lines").asList(item -> item.asString())
         );
     }
+
+    void collectTextKeys(List<TextKey> out) {
+        out.add(this.speakerKey);
+    }
 }
 
 final class DialogueTable extends java.util.AbstractMap<Integer, Dialogue> implements SoraKeyedTable<Integer, Dialogue> {

@@ -32,6 +32,14 @@ public sealed record ComplexConditionGroup(
             obj.Get("conditions").AsList(item => EventCondition.Decode(item))
         );
     }
+
+    internal void CollectTextKeys(List<TextKey> keys)
+    {
+        foreach (var element in this.Conditions)
+        {
+            EventCondition.CollectTextKeys(element, keys);
+        }
+    }
 }
 
 public sealed class ComplexConditionGroupTable : ISoraKeyedTable<int, ComplexConditionGroup>

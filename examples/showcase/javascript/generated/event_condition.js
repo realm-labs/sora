@@ -72,3 +72,8 @@ export function decodeEventConditionValue(value) {
     }
     throw new Error(`invalid union tag ${tag} for EventCondition`);
 }
+
+export function collectEventConditionTextKeys(value, out) {
+    switch (value.type) {
+    }
+}

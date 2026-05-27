@@ -46,6 +46,10 @@ public final class ShopItem {
             obj.get("daily_limit").isNull() ? null : obj.get("daily_limit").asInt()
         );
     }
+
+    void collectTextKeys(List<TextKey> out) {
+        this.price.collectTextKeys(out);
+    }
 }
 
 final class ShopItemTable extends java.util.AbstractList<ShopItem> implements SoraListTable<ShopItem> {

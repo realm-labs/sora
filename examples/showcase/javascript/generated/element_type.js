@@ -29,3 +29,5 @@ export function decodeElementTypeValue(value) {
     }
     return name;
 }
+
+export function collectElementTypeTextKeys(_value, _out) {}

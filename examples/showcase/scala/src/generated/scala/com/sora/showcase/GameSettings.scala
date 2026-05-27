@@ -16,7 +16,17 @@ final case class GameSettings(
   spawnPoints: Vector[Vec3],
   /** Optional derived struct copied from a child row */
   maintenance: Option[MaintenanceInfo]
-)
+) {
+  def collectTextKeys(out: scala.collection.mutable.ArrayBuffer[TextKey]): Unit = {
+    this.spawnPos.collectTextKeys(out)
+    this.spawnPoints.foreach { item =>
+      item.collectTextKeys(out)
+    }
+    this.maintenance.foreach { item =>
+      item.collectTextKeys(out)
+    }
+  }
+}
 
 object GameSettings {
   def decode(reader: SoraReader): GameSettings =

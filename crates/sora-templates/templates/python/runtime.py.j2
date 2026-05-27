@@ -44,6 +44,67 @@ class TextKey:
         return self.value
 
 
+class LocalePack:
+    def __init__(
+        self,
+        schema_fingerprint: str,
+        locale: str,
+        translations: dict[str, str],
+    ) -> None:
+        self.schema_fingerprint = schema_fingerprint
+        self.locale = locale
+        self._translations = translations
+
+    @staticmethod
+    def parse(input_data: bytes | bytearray) -> LocalePack:
+        data = bytes(input_data)
+        if len(data) < 8 or data[0:4] != b"SORI":
+            raise SoraReadError("invalid Sora i18n pack magic")
+        version = read_u32_at(data, 4)
+        if version != 1:
+            raise SoraReadError(f"unsupported Sora i18n pack version {version}")
+        cursor = 8
+        schema_fingerprint, cursor = read_length_prefixed_string(data, cursor)
+        locale, cursor = read_length_prefixed_string(data, cursor)
+        count, cursor = read_u32_cursor(data, cursor)
+        translations: dict[str, str] = {}
+        for _ in range(count):
+            key, cursor = read_length_prefixed_string(data, cursor)
+            value, cursor = read_length_prefixed_string(data, cursor)
+            if value == "":
+                raise SoraReadError(f"text key `{key}` has empty text")
+            if key in translations:
+                raise SoraReadError(f"duplicate text key `{key}`")
+            translations[key] = value
+        if cursor != len(data):
+            raise SoraReadError("Sora i18n pack has trailing bytes")
+        return LocalePack(schema_fingerprint, locale, translations)
+
+    def get(self, key: TextKey) -> str | None:
+        return self._translations.get(key.value)
+
+
+def format_text(template: str, args: dict[str, object]) -> str:
+    out = []
+    cursor = 0
+    while True:
+        start = template.find("{", cursor)
+        if start < 0:
+            out.append(template[cursor:])
+            return "".join(out)
+        out.append(template[cursor:start])
+        end = template.find("}", start + 1)
+        if end < 0:
+            raise SoraReadError("unterminated text placeholder")
+        name = template[start + 1 : end]
+        if name == "" or "{" in name:
+            raise SoraReadError("invalid text placeholder")
+        if name not in args:
+            raise SoraReadError(f"missing text argument `{name}`")
+        out.append(str(args[name]))
+        cursor = end + 1
+
+
 class SoraConfigTable:
     def info(self) -> SoraTableInfo:
         raise NotImplementedError()
@@ -261,6 +322,20 @@ def read_section_payload(data: bytes, section: SoraSection) -> bytes:
             raise SoraReadError("zstd Sora section length mismatch")
         return decoded
     raise SoraReadError(f"unsupported Sora section compression {section.compression}")
+
+
+def read_u32_cursor(data: bytes, cursor: int) -> tuple[int, int]:
+    if cursor + 4 > len(data):
+        raise SoraReadError("truncated u32")
+    return struct.unpack_from("<I", data, cursor)[0], cursor + 4
+
+
+def read_length_prefixed_string(data: bytes, cursor: int) -> tuple[str, int]:
+    length, cursor = read_u32_cursor(data, cursor)
+    end = cursor + length
+    if end > len(data):
+        raise SoraReadError("truncated string")
+    return data[cursor:end].decode("utf-8"), end
 
 
 class SoraReader:

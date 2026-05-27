@@ -42,6 +42,9 @@ pub struct EcmaScriptModel {
     pub records: Vec<EcmaScriptRecord>,
     pub tables: Vec<EcmaScriptTable>,
     pub modules: Vec<String>,
+    pub has_localization: bool,
+    pub locales: Vec<String>,
+    pub default_locale: String,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -65,6 +68,7 @@ pub struct EcmaScriptUnionVariant {
     pub raw_name: String,
     pub name: String,
     pub fields: Vec<EcmaScriptField>,
+    pub has_text_keys: bool,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -116,6 +120,7 @@ pub struct EcmaScriptField {
     pub type_name: String,
     pub decode: String,
     pub value_decode: String,
+    pub collect_text_keys: String,
     pub comment: Option<String>,
 }
 
@@ -156,6 +161,17 @@ impl EcmaScriptModel {
                 .collect(),
             tables,
             modules: model.modules,
+            has_localization: ir.localization.is_some(),
+            locales: ir
+                .localization
+                .as_ref()
+                .map(|item| item.locales.clone())
+                .unwrap_or_default(),
+            default_locale: ir
+                .localization
+                .as_ref()
+                .map(|item| item.default_locale.clone())
+                .unwrap_or_default(),
         }
     }
 }
@@ -175,14 +191,19 @@ fn ecmascript_union(ir: &ConfigIr, union: BaseUnion) -> EcmaScriptUnion {
 }
 
 fn ecmascript_variant(ir: &ConfigIr, variant: BaseUnionVariant) -> EcmaScriptUnionVariant {
+    let fields = variant
+        .fields
+        .into_iter()
+        .map(|field| ecmascript_field(ir, field))
+        .collect::<Vec<_>>();
+    let has_text_keys = fields
+        .iter()
+        .any(|field| !field.collect_text_keys.is_empty());
     EcmaScriptUnionVariant {
         raw_name: variant.name,
         name: variant.pascal_name,
-        fields: variant
-            .fields
-            .into_iter()
-            .map(|field| ecmascript_field(ir, field))
-            .collect(),
+        fields,
+        has_text_keys,
     }
 }
 
@@ -257,12 +278,15 @@ fn ecmascript_index(ir: &ConfigIr, index: BaseIndex) -> EcmaScriptIndex {
 }
 
 fn ecmascript_field(ir: &ConfigIr, field: BaseField) -> EcmaScriptField {
+    let collect_text_keys =
+        ecmascript_collect_text_keys(ir, &field.ty, &format!("value.{}", field.camel_name));
     EcmaScriptField {
         raw_name: field.raw_name,
         name: field.camel_name,
         type_name: ecmascript_type_name(ir, &field.ty),
         decode: ecmascript_decode_expr(ir, &field.ty),
         value_decode: ecmascript_value_decode_expr(ir, &field.ty, "__VALUE__"),
+        collect_text_keys,
         comment: field.comment,
     }
 }
@@ -368,6 +392,57 @@ pub fn ecmascript_value_decode_expr(ir: &ConfigIr, ty: &TypeIr, value: &str) -> 
             let item_decode = ecmascript_value_decode_expr(ir, element, value);
             format!("{value}.isNull() ? undefined : {item_decode}")
         }
+    }
+}
+
+pub fn ecmascript_collect_text_keys(ir: &ConfigIr, ty: &TypeIr, value: &str) -> String {
+    match ty {
+        TypeIr::Text => format!("out.push({value});"),
+        TypeIr::Optional(element) => {
+            let inner = ecmascript_collect_text_keys(ir, element, "item");
+            if inner.is_empty() {
+                String::new()
+            } else {
+                format!("if ({value} !== undefined) {{ const item = {value}; {inner} }}")
+            }
+        }
+        TypeIr::List(element) | TypeIr::Set(element) | TypeIr::Array { element, .. } => {
+            let inner = ecmascript_collect_text_keys(ir, element, "item");
+            if inner.is_empty() {
+                String::new()
+            } else {
+                format!("for (const item of {value}) {{ {inner} }}")
+            }
+        }
+        TypeIr::Map {
+            key,
+            value: element,
+        } => {
+            let key_inner = ecmascript_collect_text_keys(ir, key, "mapKey");
+            let value_inner = ecmascript_collect_text_keys(ir, element, "item");
+            if key_inner.is_empty() && value_inner.is_empty() {
+                String::new()
+            } else {
+                format!("for (const [mapKey, item] of {value}) {{ {key_inner} {value_inner} }}")
+            }
+        }
+        TypeIr::Struct(name) => format!("collect{name}TextKeys({value}, out);"),
+        TypeIr::Union(name) => format!("collect{name}TextKeys({value}, out);"),
+        TypeIr::Ref { table, field } => ref_type(ir, table, field)
+            .map(|ty| ecmascript_collect_text_keys(ir, ty, value))
+            .unwrap_or_default(),
+        TypeIr::Bool
+        | TypeIr::I8
+        | TypeIr::U8
+        | TypeIr::I16
+        | TypeIr::U16
+        | TypeIr::I32
+        | TypeIr::U32
+        | TypeIr::I64
+        | TypeIr::F32
+        | TypeIr::F64
+        | TypeIr::String
+        | TypeIr::Enum(_) => String::new(),
     }
 }
 

@@ -31,6 +31,10 @@ public sealed record Shop(
             ResourceKindCodec.Decode(obj.Get("currency"))
         );
     }
+
+    internal void CollectTextKeys(List<TextKey> keys)
+    {
+    }
 }
 
 public sealed class ShopTable : ISoraKeyedTable<int, Shop>

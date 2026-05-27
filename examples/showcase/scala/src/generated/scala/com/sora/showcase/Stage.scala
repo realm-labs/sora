@@ -8,7 +8,13 @@ final case class Stage(
   monsterIds: Vector[Int],
   recommendedPower: Int,
   firstClearRewards: Vector[Reward]
-)
+) {
+  def collectTextKeys(out: scala.collection.mutable.ArrayBuffer[TextKey]): Unit = {
+    this.firstClearRewards.foreach { item =>
+      item.collectTextKeys(out)
+    }
+  }
+}
 
 object Stage {
   def decode(reader: SoraReader): Stage =

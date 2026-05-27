@@ -46,6 +46,14 @@ public final class MailTemplate {
             obj.get("rewards").asList(item -> Reward.decode(item))
         );
     }
+
+    void collectTextKeys(List<TextKey> out) {
+        out.add(this.titleKey);
+        out.add(this.bodyKey);
+        for (var item : this.rewards) {
+            item.collectTextKeys(out);
+        }
+    }
 }
 
 final class MailTemplateTable extends java.util.AbstractMap<Integer, MailTemplate> implements SoraKeyedTable<Integer, MailTemplate> {

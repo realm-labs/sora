@@ -23,6 +23,12 @@ final class ComplexConditionGroup {
       conditions: obj.get("conditions").asList((item) => EventCondition.decode(item)),
     );
   }
+
+  void collectTextKeys(List<TextKey> out) {
+    for (final item in this.conditions) {
+      item.collectTextKeys(out);
+    }
+  }
 }
 
 final class ComplexConditionGroupTable extends Iterable<ComplexConditionGroup> implements SoraKeyedTable<int, ComplexConditionGroup> {

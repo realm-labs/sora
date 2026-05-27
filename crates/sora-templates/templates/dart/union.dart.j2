@@ -8,6 +8,8 @@ import '{{ import.module }}.dart';
 sealed class {{ union.pascal_name }} {
   const {{ union.pascal_name }}();
 
+  void collectTextKeys(List<TextKey> out) {}
+
   static {{ union.pascal_name }} decode(SoraValue value) {
     final obj = value.asObject();
     final tag = obj.get('{{ union.tag }}').asString();
@@ -41,5 +43,16 @@ final class {{ variant.class_name }} extends {{ union.pascal_name }} {
     required this.{{ field.name }},
 {%- endfor %}
   });
+
+  @override
+  void collectTextKeys(List<TextKey> out) {
+{%- if variant.has_text_keys %}
+{%- for field in variant.fields %}
+{%- if field.collect_text_keys %}
+{{ field.collect_text_keys }}
+{%- endif %}
+{%- endfor %}
+{%- endif %}
+  }
 }
 {%- endfor %}

@@ -24,6 +24,9 @@ final class MaintenanceWindow {
       reason: obj.get("reason").isNull ? null : obj.get("reason").asString(),
     );
   }
+
+  void collectTextKeys(List<TextKey> out) {
+  }
 }
 
 final class MaintenanceWindowTable extends Iterable<MaintenanceWindow> implements SoraListTable<MaintenanceWindow> {

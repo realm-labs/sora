@@ -46,3 +46,6 @@ func decodeResourceCostValue(input SoraValue) (ResourceCost, error) {
 	}
 	return value, nil
 }
+
+func (value ResourceCost) collectTextKeys(out *[]TextKey) {
+}

@@ -24,6 +24,9 @@ final class StageReward {
       count: obj.get("count").asInt(),
     );
   }
+
+  void collectTextKeys(List<TextKey> out) {
+  }
 }
 
 final class StageRewardTable extends Iterable<StageReward> implements SoraListTable<StageReward> {

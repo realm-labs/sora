@@ -63,6 +63,10 @@ public final class Item {
             obj.get("attributes").asMap(item -> item.asString(), item -> item.asInt())
         );
     }
+
+    void collectTextKeys(List<TextKey> out) {
+        this.price.collectTextKeys(out);
+    }
 }
 
 final class ItemTable extends java.util.AbstractMap<Integer, Item> implements SoraKeyedTable<Integer, Item> {

@@ -248,6 +248,188 @@ func (config *SoraConfig) Tables() []SoraTable {
 	}
 	return tables
 }
+
+type SoraI18n struct {
+	activeLocale string
+	packs        map[string]*LocalePack
+}
+
+func NewSoraI18n() *SoraI18n {
+	return &SoraI18n{
+		activeLocale: "zh_cn",
+		packs:        make(map[string]*LocalePack),
+	}
+}
+
+func (i18n *SoraI18n) Mount(config *SoraConfig, pack *LocalePack) error {
+	if pack.SchemaFingerprint() != SoraSchemaFingerprint {
+		return fmt.Errorf("locale pack schema fingerprint mismatch: generated code expects %s, pack contains %s", SoraSchemaFingerprint, pack.SchemaFingerprint())
+	}
+	if !isDeclaredLocale(pack.Locale()) {
+		return fmt.Errorf("locale pack `%s` is not declared by generated code", pack.Locale())
+	}
+	if err := config.validateLocalePack(pack); err != nil {
+		return err
+	}
+	i18n.packs[pack.Locale()] = pack
+	return nil
+}
+
+func (i18n *SoraI18n) SetLocale(locale string) error {
+	if !isDeclaredLocale(locale) {
+		return fmt.Errorf("unknown locale `%s`", locale)
+	}
+	if _, ok := i18n.packs[locale]; !ok {
+		return fmt.Errorf("locale `%s` is not mounted", locale)
+	}
+	i18n.activeLocale = locale
+	return nil
+}
+
+func (i18n *SoraI18n) Text(key TextKey) string {
+	pack, ok := i18n.packs[i18n.activeLocale]
+	if !ok {
+		panic("active locale pack is not mounted or failed locale validation")
+	}
+	value, ok := pack.Get(key)
+	if !ok {
+		panic("active locale pack is not mounted or failed locale validation")
+	}
+	return value
+}
+
+func (i18n *SoraI18n) Format(key TextKey, args map[string]any) (string, error) {
+	return FormatText(i18n.Text(key), args)
+}
+
+func isDeclaredLocale(locale string) bool {
+	switch locale {
+	case "zh_cn":
+		return true
+	case "en_us":
+		return true
+	default:
+		return false
+	}
+}
+
+func (config *SoraConfig) validateLocalePack(pack *LocalePack) error {
+	for _, key := range config.textKeys() {
+		value, ok := pack.Get(key)
+		if !ok {
+			return fmt.Errorf("text key `%s` is missing for locale `%s`", key.String(), pack.Locale())
+		}
+		if value == "" {
+			return fmt.Errorf("text key `%s` has empty text for locale `%s`", key.String(), pack.Locale())
+		}
+	}
+	return nil
+}
+
+func (config *SoraConfig) textKeys() []TextKey {
+	keys := make([]TextKey, 0)
+	for _, row := range config.Item().Rows() {
+		row.collectTextKeys(&keys)
+	}
+	for _, row := range config.Shop().Rows() {
+		row.collectTextKeys(&keys)
+	}
+	for _, row := range config.ShopItem().Rows() {
+		row.collectTextKeys(&keys)
+	}
+	for _, row := range config.Recipe().Rows() {
+		row.collectTextKeys(&keys)
+	}
+	for _, row := range config.GachaPool().Rows() {
+		row.collectTextKeys(&keys)
+	}
+	for _, row := range config.GachaItem().Rows() {
+		row.collectTextKeys(&keys)
+	}
+	for _, row := range config.EquipmentSet().Rows() {
+		row.collectTextKeys(&keys)
+	}
+	for _, row := range config.Skill().Rows() {
+		row.collectTextKeys(&keys)
+	}
+	for _, row := range config.Character().Rows() {
+		row.collectTextKeys(&keys)
+	}
+	for _, row := range config.CharacterSkill().Rows() {
+		row.collectTextKeys(&keys)
+	}
+	for _, row := range config.Buff().Rows() {
+		row.collectTextKeys(&keys)
+	}
+	for _, row := range config.DropGroup().Rows() {
+		row.collectTextKeys(&keys)
+	}
+	for _, row := range config.DropEntry().Rows() {
+		row.collectTextKeys(&keys)
+	}
+	for _, row := range config.Monster().Rows() {
+		row.collectTextKeys(&keys)
+	}
+	for _, row := range config.Stage().Rows() {
+		row.collectTextKeys(&keys)
+	}
+	for _, row := range config.StageReward().Rows() {
+		row.collectTextKeys(&keys)
+	}
+	for _, row := range config.Dungeon().Rows() {
+		row.collectTextKeys(&keys)
+	}
+	for _, row := range config.Quest().Rows() {
+		row.collectTextKeys(&keys)
+	}
+	for _, row := range config.QuestReward().Rows() {
+		row.collectTextKeys(&keys)
+	}
+	for _, row := range config.LevelExp().Rows() {
+		row.collectTextKeys(&keys)
+	}
+	for _, row := range config.Achievement().Rows() {
+		row.collectTextKeys(&keys)
+	}
+	for _, row := range config.VipLevel().Rows() {
+		row.collectTextKeys(&keys)
+	}
+	config.GameSettings().Row().collectTextKeys(&keys)
+	for _, row := range config.MaintenanceWindow().Rows() {
+		row.collectTextKeys(&keys)
+	}
+	for _, row := range config.MailTemplate().Rows() {
+		row.collectTextKeys(&keys)
+	}
+	for _, row := range config.MailReward().Rows() {
+		row.collectTextKeys(&keys)
+	}
+	for _, row := range config.Dialogue().Rows() {
+		row.collectTextKeys(&keys)
+	}
+	for _, row := range config.EventRule().Rows() {
+		row.collectTextKeys(&keys)
+	}
+	for _, row := range config.ComplexRule().Rows() {
+		row.collectTextKeys(&keys)
+	}
+	for _, row := range config.ComplexConditionGroup().Rows() {
+		row.collectTextKeys(&keys)
+	}
+	for _, row := range config.ComplexConditionGroupEntry().Rows() {
+		row.collectTextKeys(&keys)
+	}
+	for _, row := range config.ComplexRuleCondition().Rows() {
+		row.collectTextKeys(&keys)
+	}
+	for _, row := range config.ComplexActionGroup().Rows() {
+		row.collectTextKeys(&keys)
+	}
+	for _, row := range config.ComplexActionEntry().Rows() {
+		row.collectTextKeys(&keys)
+	}
+	return keys
+}
 func (config *SoraConfig) Item() *ItemTable {
 	return config.tables[itemTableName].(*ItemTable)
 }

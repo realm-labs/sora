@@ -83,6 +83,10 @@ func decodeCharacterValue(input SoraValue) (Character, error) {
 	return value, nil
 }
 
+func (value Character) collectTextKeys(out *[]TextKey) {
+	value.SpawnPos.collectTextKeys(out)
+}
+
 const characterTableName = "Character"
 
 var characterTableInfo = SoraTableInfo{

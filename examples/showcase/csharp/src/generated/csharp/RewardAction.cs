@@ -75,4 +75,8 @@ public abstract record RewardAction
             var tag => throw new SoraReadException($"invalid union tag `{tag}` for RewardAction"),
         };
     }
+
+    internal static void CollectTextKeys(RewardAction value, List<TextKey> keys)
+    {
+    }
 }

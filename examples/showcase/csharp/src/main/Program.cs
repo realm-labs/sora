@@ -11,9 +11,14 @@ internal static class Program
         var bytes = File.ReadAllBytes(ConfigPath());
         var bundle = SoraBundle.Parse(bytes);
         var config = SoraConfig.FromSource(bundle);
+        var localePack = LocalePack.Parse(File.ReadAllBytes(LocalePath()));
+        var i18n = new SoraI18n();
+        i18n.Mount(config, localePack);
+        i18n.SetLocale("zh_cn");
         var sword = config.Item.Get(1001) ?? throw new InvalidOperationException("item 1001");
         var swordByName = config.Item.GetByName("Iron Sword") ?? throw new InvalidOperationException("Iron Sword");
         var quest = config.Quest.Get(5001) ?? throw new InvalidOperationException("quest 5001");
+        var achievement = config.Achievement.Get(14001) ?? throw new InvalidOperationException("achievement 14001");
         var settings = config.GameSettings.Rows;
 
         Check(sword.Name == "Iron Sword");
@@ -23,6 +28,7 @@ internal static class Program
         Check(quest.Title == "First Trial");
         Check(quest.QuestType == QuestType.Main);
         Check(quest.Rewards.Count == 2);
+        Check(i18n.Text(achievement.TitleKey) == "中文文本 1");
         Check(settings.StartingGold == 100);
         Check(config.Stage.Count == 40);
         Check(config.Monster.Count == 80);
@@ -40,6 +46,11 @@ internal static class Program
     private static string ConfigPath()
     {
         return Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "generated", "config.sora"));
+    }
+
+    private static string LocalePath()
+    {
+        return Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "generated", "i18n", "zh_cn.sora-i18n"));
     }
 
     private static void Check(bool condition)

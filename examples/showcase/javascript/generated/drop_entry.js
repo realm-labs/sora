@@ -27,6 +27,9 @@ export function decodeDropEntryValue(value) {
     };
 }
 
+export function collectDropEntryTextKeys(value, out) {
+}
+
 export class DropEntryTable {
     static tableName = "DropEntry";
     static tableInfo = {

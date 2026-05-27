@@ -6,9 +6,14 @@ fun main() {
     val bytes = Paths.get("..", "generated", "config.sora").toFile().readBytes()
     val bundle = SoraBundle.parse(bytes)
     val config = SoraConfig.fromSource(bundle)
+    val localePack = LocalePack.parse(Paths.get("..", "generated", "i18n", "zh_cn.sora-i18n").toFile().readBytes())
+    val i18n = SoraI18n()
+    i18n.mount(config, localePack)
+    i18n.setLocale("zh_cn")
     val sword = config.item[1001] ?: error("item 1001")
     val swordByName = config.item.getByName("Iron Sword") ?: error("Iron Sword")
     val quest = config.quest[5001] ?: error("quest 5001")
+    val achievement = config.achievement[14001] ?: error("achievement 14001")
     val settings = config.gameSettings.row
 
     check(sword.name == "Iron Sword")
@@ -18,6 +23,7 @@ fun main() {
     check(quest.title == "First Trial")
     check(quest.questType == QuestType.Main)
     check(quest.rewards.size == 2)
+    check(i18n.text(achievement.titleKey) == "中文文本 1")
     check(settings.startingGold == 100)
     check(config.stage.values.size == 40)
     check(config.monster.values.size == 80)

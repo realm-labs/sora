@@ -6,7 +6,10 @@ final case class LevelExp(
   level: Int,
   exp: Long,
   unlockFeature: Option[String]
-)
+) {
+  def collectTextKeys(out: scala.collection.mutable.ArrayBuffer[TextKey]): Unit = {
+  }
+}
 
 object LevelExp {
   def decode(reader: SoraReader): LevelExp =

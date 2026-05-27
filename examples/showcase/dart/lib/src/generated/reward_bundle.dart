@@ -22,4 +22,8 @@ final class RewardBundle {
       labels: obj.get("labels").asList((item) => item.asString()),
     );
   }
+
+  void collectTextKeys(List<TextKey> out) {
+    this.cost.collectTextKeys(out);
+  }
 }

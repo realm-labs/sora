@@ -41,6 +41,9 @@ public final class StageReward {
             obj.get("count").asInt()
         );
     }
+
+    void collectTextKeys(List<TextKey> out) {
+    }
 }
 
 final class StageRewardTable extends java.util.AbstractList<StageReward> implements SoraListTable<StageReward> {

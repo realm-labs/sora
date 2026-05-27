@@ -49,6 +49,13 @@ public sealed record Skill(
             Vec3.Decode(obj.Get("cast_origin"))
         );
     }
+
+    internal void CollectTextKeys(List<TextKey> keys)
+    {
+        this.Cost.CollectTextKeys(keys);
+        this.Effect.CollectTextKeys(keys);
+        this.CastOrigin.CollectTextKeys(keys);
+    }
 }
 
 public sealed class SkillTable : ISoraKeyedTable<int, Skill>

@@ -31,6 +31,11 @@ public sealed record VipLevel(
             obj.Get("perks").AsList(item => item.AsString())
         );
     }
+
+    internal void CollectTextKeys(List<TextKey> keys)
+    {
+        this.Cost.CollectTextKeys(keys);
+    }
 }
 
 public sealed class VipLevelTable : ISoraKeyedTable<int, VipLevel>

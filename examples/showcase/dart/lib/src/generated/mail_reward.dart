@@ -24,6 +24,9 @@ final class MailReward {
       count: obj.get("count").asInt(),
     );
   }
+
+  void collectTextKeys(List<TextKey> out) {
+  }
 }
 
 final class MailRewardTable extends Iterable<MailReward> implements SoraListTable<MailReward> {

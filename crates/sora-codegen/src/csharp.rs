@@ -89,6 +89,9 @@ struct CSharpModel {
     tables: Vec<CSharpTable>,
     has_unique_indexes: bool,
     has_non_unique_indexes: bool,
+    has_localization: bool,
+    locales: Vec<String>,
+    default_locale: String,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -108,12 +111,14 @@ struct CSharpUnion {
 struct CSharpUnionVariant {
     name: String,
     fields: Vec<CSharpField>,
+    has_text_keys: bool,
 }
 
 #[derive(Debug, Clone, Serialize)]
 struct CSharpRecord {
     pascal_name: String,
     fields: Vec<CSharpField>,
+    has_text_keys: bool,
     table: Option<CSharpTable>,
 }
 
@@ -147,6 +152,7 @@ struct CSharpField {
     type_name: String,
     decode: String,
     value_decode: String,
+    collect_text_keys: String,
     comment: Option<String>,
 }
 
@@ -188,6 +194,17 @@ impl CSharpModel {
             has_non_unique_indexes: tables
                 .iter()
                 .any(|table| !table.non_unique_indexes.is_empty()),
+            has_localization: ir.localization.is_some(),
+            locales: ir
+                .localization
+                .as_ref()
+                .map(|item| item.locales.clone())
+                .unwrap_or_default(),
+            default_locale: ir
+                .localization
+                .as_ref()
+                .map(|item| item.default_locale.clone())
+                .unwrap_or_default(),
             tables,
         }
     }
@@ -206,24 +223,34 @@ fn csharp_union(ir: &ConfigIr, union: BaseUnion) -> CSharpUnion {
 }
 
 fn csharp_variant(ir: &ConfigIr, variant: BaseUnionVariant) -> CSharpUnionVariant {
+    let fields = variant
+        .fields
+        .into_iter()
+        .map(|field| csharp_field(ir, field))
+        .collect::<Vec<_>>();
+    let has_text_keys = fields
+        .iter()
+        .any(|field| !field.collect_text_keys.is_empty());
     CSharpUnionVariant {
         name: variant.pascal_name,
-        fields: variant
-            .fields
-            .into_iter()
-            .map(|field| csharp_field(ir, field))
-            .collect(),
+        fields,
+        has_text_keys,
     }
 }
 
 fn csharp_record(ir: &ConfigIr, record: BaseRecord, table: Option<CSharpTable>) -> CSharpRecord {
+    let fields = record
+        .fields
+        .into_iter()
+        .map(|field| csharp_field(ir, field))
+        .collect::<Vec<_>>();
+    let has_text_keys = fields
+        .iter()
+        .any(|field| !field.collect_text_keys.is_empty());
     CSharpRecord {
         pascal_name: record.pascal_name,
-        fields: record
-            .fields
-            .into_iter()
-            .map(|field| csharp_field(ir, field))
-            .collect(),
+        fields,
+        has_text_keys,
         table,
     }
 }
@@ -274,12 +301,15 @@ fn csharp_index(ir: &ConfigIr, index: BaseIndex) -> CSharpIndex {
 
 fn csharp_field(ir: &ConfigIr, field: BaseField) -> CSharpField {
     let value_decode = csharp_value_decode_expr(ir, &field.ty, "__VALUE__");
+    let collect_text_keys =
+        csharp_collect_text_keys(ir, &field.ty, &format!("this.{}", field.pascal_name), 8);
     CSharpField {
         raw_name: field.raw_name,
         name: field.pascal_name,
         type_name: csharp_type_name(ir, &field.ty),
         decode: csharp_decode_expr(ir, &field.ty),
         value_decode,
+        collect_text_keys,
         comment: field.comment,
     }
 }
@@ -392,5 +422,68 @@ fn csharp_value_decode_expr(ir: &ConfigIr, ty: &TypeIr, value: &str) -> String {
                 csharp_value_decode_expr(ir, element, value)
             )
         }
+    }
+}
+
+fn csharp_collect_text_keys(ir: &ConfigIr, ty: &TypeIr, value: &str, indent: usize) -> String {
+    let pad = " ".repeat(indent);
+    match ty {
+        TypeIr::Text => format!("{pad}keys.Add({value});"),
+        TypeIr::Optional(element) => {
+            let inner = csharp_collect_text_keys(ir, element, "optionalValue", indent + 4);
+            if inner.is_empty() {
+                String::new()
+            } else {
+                format!("{pad}if ({value} is {{ }} optionalValue)\n{pad}{{\n{inner}\n{pad}}}")
+            }
+        }
+        TypeIr::List(element) | TypeIr::Set(element) | TypeIr::Array { element, .. } => {
+            let inner = csharp_collect_text_keys(ir, element, "element", indent + 4);
+            if inner.is_empty() {
+                String::new()
+            } else {
+                format!("{pad}foreach (var element in {value})\n{pad}{{\n{inner}\n{pad}}}")
+            }
+        }
+        TypeIr::Map {
+            key,
+            value: element,
+        } => {
+            let key_inner = csharp_collect_text_keys(ir, key, "entryKey", indent + 4);
+            let value_inner = csharp_collect_text_keys(ir, element, "entryValue", indent + 4);
+            if key_inner.is_empty() && value_inner.is_empty() {
+                String::new()
+            } else {
+                format!(
+                    "{pad}foreach (var entry in {value})\n{pad}{{\n{pad}    var entryKey = entry.Key;\n{pad}    var entryValue = entry.Value;\n{key_inner}\n{value_inner}\n{pad}}}"
+                )
+            }
+        }
+        TypeIr::Struct(_) => format!("{pad}{value}.CollectTextKeys(keys);"),
+        TypeIr::Union(name) => format!("{pad}{name}.CollectTextKeys({value}, keys);"),
+        TypeIr::Ref { table, field } => ir
+            .tables
+            .iter()
+            .find(|candidate| candidate.name == *table)
+            .and_then(|table| {
+                table
+                    .fields
+                    .iter()
+                    .find(|candidate| candidate.name == *field)
+            })
+            .map(|field| csharp_collect_text_keys(ir, &field.ty, value, indent))
+            .unwrap_or_default(),
+        TypeIr::Bool
+        | TypeIr::I8
+        | TypeIr::U8
+        | TypeIr::I16
+        | TypeIr::U16
+        | TypeIr::I32
+        | TypeIr::U32
+        | TypeIr::I64
+        | TypeIr::F32
+        | TypeIr::F64
+        | TypeIr::String
+        | TypeIr::Enum(_) => String::new(),
     }
 }

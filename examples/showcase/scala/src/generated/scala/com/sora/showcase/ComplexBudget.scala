@@ -6,7 +6,14 @@ final case class ComplexBudget(
   fixed: ResourceCost,
   random: Vector[RewardBundle],
   limits: Map[String, Int]
-)
+) {
+  def collectTextKeys(out: scala.collection.mutable.ArrayBuffer[TextKey]): Unit = {
+    this.fixed.collectTextKeys(out)
+    this.random.foreach { item =>
+      item.collectTextKeys(out)
+    }
+  }
+}
 
 object ComplexBudget {
   def decode(reader: SoraReader): ComplexBudget =

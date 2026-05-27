@@ -31,6 +31,14 @@ public sealed record ComplexActionGroup(
             obj.Get("actions").AsList(item => RewardAction.Decode(item))
         );
     }
+
+    internal void CollectTextKeys(List<TextKey> keys)
+    {
+        foreach (var element in this.Actions)
+        {
+            RewardAction.CollectTextKeys(element, keys);
+        }
+    }
 }
 
 public sealed class ComplexActionGroupTable : ISoraKeyedTable<int, ComplexActionGroup>

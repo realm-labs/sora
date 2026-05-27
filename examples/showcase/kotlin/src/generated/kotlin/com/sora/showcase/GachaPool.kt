@@ -7,6 +7,10 @@ data class GachaPool(
     val name: String,
     val cost: ResourceCost,
 ) {
+    fun collectTextKeys(out: MutableList<TextKey>) {
+        this.cost.collectTextKeys(out)
+    }
+
     companion object {
         fun decode(reader: SoraReader): GachaPool =
             GachaPool(

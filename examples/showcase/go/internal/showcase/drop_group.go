@@ -38,6 +38,9 @@ func decodeDropGroupValue(input SoraValue) (DropGroup, error) {
 	return value, nil
 }
 
+func (value DropGroup) collectTextKeys(out *[]TextKey) {
+}
+
 const dropGroupTableName = "DropGroup"
 
 var dropGroupTableInfo = SoraTableInfo{

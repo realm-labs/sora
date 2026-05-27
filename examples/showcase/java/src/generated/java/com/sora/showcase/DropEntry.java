@@ -46,6 +46,9 @@ public final class DropEntry {
             obj.get("weight").asFloat()
         );
     }
+
+    void collectTextKeys(List<TextKey> out) {
+    }
 }
 
 final class DropEntryTable extends java.util.AbstractList<DropEntry> implements SoraListTable<DropEntry> {

@@ -22,4 +22,7 @@ final class SkillEffect {
       radius: obj.get("radius").asDouble(),
     );
   }
+
+  void collectTextKeys(List<TextKey> out) {
+  }
 }

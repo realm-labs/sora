@@ -2,6 +2,7 @@
 
 package com.sora.showcase;
 
+import java.util.List;
 public final class RewardBundle {
     public final ResourceCost cost;
     public final Integer weight;
@@ -32,5 +33,9 @@ public final class RewardBundle {
             obj.get("weight").asInt(),
             obj.get("labels").asList(item -> item.asString())
         );
+    }
+
+    void collectTextKeys(List<TextKey> out) {
+        this.cost.collectTextKeys(out);
     }
 }

@@ -21,6 +21,9 @@ final class CharacterSkill {
       unlockLevel: obj.get("unlock_level").asInt(),
     );
   }
+
+  void collectTextKeys(List<TextKey> out) {
+  }
 }
 
 final class CharacterSkillTable extends Iterable<CharacterSkill> implements SoraListTable<CharacterSkill> {

@@ -21,4 +21,7 @@ final class MaintenanceInfo {
       reason: obj.get("reason").isNull ? null : obj.get("reason").asString(),
     );
   }
+
+  void collectTextKeys(List<TextKey> out) {
+  }
 }

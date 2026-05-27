@@ -42,6 +42,10 @@ final class Item {
       attributes: obj.get("attributes").asMap((item) => item.asString(), (item) => item.asInt()),
     );
   }
+
+  void collectTextKeys(List<TextKey> out) {
+    this.price.collectTextKeys(out);
+  }
 }
 
 final class ItemTable extends Iterable<Item> implements SoraKeyedTable<int, Item> {

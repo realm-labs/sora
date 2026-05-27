@@ -31,6 +31,9 @@ public final class DropGroup {
             obj.get("name").asString()
         );
     }
+
+    void collectTextKeys(List<TextKey> out) {
+    }
 }
 
 final class DropGroupTable extends java.util.AbstractMap<Integer, DropGroup> implements SoraKeyedTable<Integer, DropGroup> {

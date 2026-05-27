@@ -37,6 +37,14 @@ public sealed record Stage(
             obj.Get("first_clear_rewards").AsList(item => Reward.Decode(item))
         );
     }
+
+    internal void CollectTextKeys(List<TextKey> keys)
+    {
+        foreach (var element in this.FirstClearRewards)
+        {
+            element.CollectTextKeys(keys);
+        }
+    }
 }
 
 public sealed class StageTable : ISoraKeyedTable<int, Stage>

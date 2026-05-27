@@ -28,4 +28,8 @@ public sealed record Reward(
             obj.Get("count").AsInt32()
         );
     }
+
+    internal void CollectTextKeys(List<TextKey> keys)
+    {
+    }
 }

@@ -46,3 +46,6 @@ func decodeMaintenanceInfoValue(input SoraValue) (MaintenanceInfo, error) {
 	}
 	return value, nil
 }
+
+func (value MaintenanceInfo) collectTextKeys(out *[]TextKey) {
+}

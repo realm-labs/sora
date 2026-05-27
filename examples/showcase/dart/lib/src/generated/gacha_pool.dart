@@ -22,6 +22,10 @@ final class GachaPool {
       cost: ResourceCost.decode(obj.get("cost")),
     );
   }
+
+  void collectTextKeys(List<TextKey> out) {
+    this.cost.collectTextKeys(out);
+  }
 }
 
 final class GachaPoolTable extends Iterable<GachaPool> implements SoraKeyedTable<int, GachaPool> {

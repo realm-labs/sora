@@ -5,7 +5,9 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from generated import (
+    LocalePack,
     SoraConfig,
+    SoraI18n,
     ItemType,
     QuestType,
 )
@@ -21,6 +23,16 @@ def main():
         bytes_data = f.read()
 
     config = SoraConfig.from_bytes(bytes_data)
+    with open(
+        os.path.join(
+            os.path.dirname(os.path.abspath(__file__)),
+            "../generated/i18n/zh_cn.sora-i18n",
+        ),
+        "rb",
+    ) as f:
+        locale_pack = LocalePack.parse(f.read())
+    i18n = SoraI18n()
+    i18n.mount(config, locale_pack)
 
     # Tables and values validation
     sword = config.item().get(1001)
@@ -41,6 +53,10 @@ def main():
     assert quest.title == "First Trial"
     assert quest.quest_type == QuestType.MAIN
     assert len(quest.rewards) == 2
+
+    achievement = config.achievement().get(14001)
+    assert achievement is not None
+    assert i18n.text(achievement.title_key) == "中文文本 1"
 
     # Check search indices
     weapons = config.item().find_by_item_type(ItemType.WEAPON)

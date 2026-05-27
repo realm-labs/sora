@@ -32,6 +32,10 @@ final class Monster {
       spawnPos: Vec3.decode(obj.get("spawn_pos")),
     );
   }
+
+  void collectTextKeys(List<TextKey> out) {
+    this.spawnPos.collectTextKeys(out);
+  }
 }
 
 final class MonsterTable extends Iterable<Monster> implements SoraKeyedTable<int, Monster> {

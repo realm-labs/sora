@@ -47,6 +47,10 @@ func decodeDialogueValue(input SoraValue) (Dialogue, error) {
 	return value, nil
 }
 
+func (value Dialogue) collectTextKeys(out *[]TextKey) {
+	*out = append(*out, value.SpeakerKey)
+}
+
 const dialogueTableName = "Dialogue"
 
 var dialogueTableInfo = SoraTableInfo{

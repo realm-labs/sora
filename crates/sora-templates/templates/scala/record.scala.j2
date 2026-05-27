@@ -9,7 +9,17 @@ final case class {{ record.pascal_name }}(
 {%- endif %}
   {{ field.name }}: {{ field.type_name }}{% if not loop.last %},{% endif %}
 {%- endfor %}
-)
+) {
+  def collectTextKeys(out: scala.collection.mutable.ArrayBuffer[TextKey]): Unit = {
+{%- if record.has_text_keys %}
+{%- for field in record.fields %}
+{%- if field.collect_text_keys %}
+{{ field.collect_text_keys }}
+{%- endif %}
+{%- endfor %}
+{%- endif %}
+  }
+}
 
 object {{ record.pascal_name }} {
   def decode(reader: SoraReader): {{ record.pascal_name }} =

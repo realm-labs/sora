@@ -86,6 +86,103 @@ func (config *SoraConfig) Tables() []SoraTable {
     return tables
 }
 
+{%- if model.has_localization %}
+type SoraI18n struct {
+    activeLocale string
+    packs map[string]*LocalePack
+}
+
+func NewSoraI18n() *SoraI18n {
+    return &SoraI18n{
+        activeLocale: "{{ model.default_locale }}",
+        packs: make(map[string]*LocalePack),
+    }
+}
+
+func (i18n *SoraI18n) Mount(config *SoraConfig, pack *LocalePack) error {
+    if pack.SchemaFingerprint() != SoraSchemaFingerprint {
+        return fmt.Errorf("locale pack schema fingerprint mismatch: generated code expects %s, pack contains %s", SoraSchemaFingerprint, pack.SchemaFingerprint())
+    }
+    if !isDeclaredLocale(pack.Locale()) {
+        return fmt.Errorf("locale pack `%s` is not declared by generated code", pack.Locale())
+    }
+    if err := config.validateLocalePack(pack); err != nil {
+        return err
+    }
+    i18n.packs[pack.Locale()] = pack
+    return nil
+}
+
+func (i18n *SoraI18n) SetLocale(locale string) error {
+    if !isDeclaredLocale(locale) {
+        return fmt.Errorf("unknown locale `%s`", locale)
+    }
+    if _, ok := i18n.packs[locale]; !ok {
+        return fmt.Errorf("locale `%s` is not mounted", locale)
+    }
+    i18n.activeLocale = locale
+    return nil
+}
+
+func (i18n *SoraI18n) Text(key TextKey) string {
+    pack, ok := i18n.packs[i18n.activeLocale]
+    if !ok {
+        panic("active locale pack is not mounted or failed locale validation")
+    }
+    value, ok := pack.Get(key)
+    if !ok {
+        panic("active locale pack is not mounted or failed locale validation")
+    }
+    return value
+}
+
+func (i18n *SoraI18n) Format(key TextKey, args map[string]any) (string, error) {
+    return FormatText(i18n.Text(key), args)
+}
+
+func isDeclaredLocale(locale string) bool {
+    switch locale {
+{%- for locale in model.locales %}
+    case "{{ locale }}":
+        return true
+{%- endfor %}
+    default:
+        return false
+    }
+}
+
+func (config *SoraConfig) validateLocalePack(pack *LocalePack) error {
+    for _, key := range config.textKeys() {
+        value, ok := pack.Get(key)
+        if !ok {
+            return fmt.Errorf("text key `%s` is missing for locale `%s`", key.String(), pack.Locale())
+        }
+        if value == "" {
+            return fmt.Errorf("text key `%s` has empty text for locale `%s`", key.String(), pack.Locale())
+        }
+    }
+    return nil
+}
+
+func (config *SoraConfig) textKeys() []TextKey {
+    keys := make([]TextKey, 0)
+{%- for table in model.tables %}
+{%- if table.mode == "singleton" %}
+    config.{{ table.pascal_name }}().Row().collectTextKeys(&keys)
+{%- elif table.mode == "map" %}
+    for _, row := range config.{{ table.pascal_name }}().Rows() {
+        row.collectTextKeys(&keys)
+    }
+{%- else %}
+    for _, row := range config.{{ table.pascal_name }}().Rows() {
+        row.collectTextKeys(&keys)
+    }
+{%- endif %}
+{%- endfor %}
+    return keys
+}
+
+{%- endif %}
 {%- for table in model.tables %}
 func (config *SoraConfig) {{ table.pascal_name }}() *{{ table.pascal_name }}Table {
     return config.tables[{{ table.camel_name }}TableName].(*{{ table.pascal_name }}Table)

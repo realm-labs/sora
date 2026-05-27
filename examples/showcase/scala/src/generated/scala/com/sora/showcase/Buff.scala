@@ -7,7 +7,13 @@ final case class Buff(
   name: String,
   duration: Float,
   modifiers: Vector[StatModifier]
-)
+) {
+  def collectTextKeys(out: scala.collection.mutable.ArrayBuffer[TextKey]): Unit = {
+    this.modifiers.foreach { item =>
+      item.collectTextKeys(out)
+    }
+  }
+}
 
 object Buff {
   def decode(reader: SoraReader): Buff =

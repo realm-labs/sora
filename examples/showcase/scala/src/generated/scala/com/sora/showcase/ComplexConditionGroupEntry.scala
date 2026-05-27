@@ -7,7 +7,11 @@ final case class ComplexConditionGroupEntry(
   groupId: Int,
   seq: Int,
   value: EventCondition
-)
+) {
+  def collectTextKeys(out: scala.collection.mutable.ArrayBuffer[TextKey]): Unit = {
+    EventCondition.collectTextKeys(this.value, out)
+  }
+}
 
 object ComplexConditionGroupEntry {
   def decode(reader: SoraReader): ComplexConditionGroupEntry =

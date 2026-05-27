@@ -25,6 +25,9 @@ final class GachaItem {
       weight: obj.get("weight").asDouble(),
     );
   }
+
+  void collectTextKeys(List<TextKey> out) {
+  }
 }
 
 final class GachaItemTable extends Iterable<GachaItem> implements SoraListTable<GachaItem> {

@@ -23,6 +23,9 @@ export function decodeCharacterSkillValue(value) {
     };
 }
 
+export function collectCharacterSkillTextKeys(value, out) {
+}
+
 export class CharacterSkillTable {
     static tableName = "CharacterSkill";
     static tableInfo = {

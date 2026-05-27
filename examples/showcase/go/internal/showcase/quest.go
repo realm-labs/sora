@@ -84,6 +84,13 @@ func decodeQuestValue(input SoraValue) (Quest, error) {
 	return value, nil
 }
 
+func (value Quest) collectTextKeys(out *[]TextKey) {
+	value.StartPos.collectTextKeys(out)
+	for _, item := range value.Rewards {
+		item.collectTextKeys(out)
+	}
+}
+
 const questTableName = "Quest"
 
 var questTableInfo = SoraTableInfo{

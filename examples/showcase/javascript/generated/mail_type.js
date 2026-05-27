@@ -27,3 +27,5 @@ export function decodeMailTypeValue(value) {
     }
     return name;
 }
+
+export function collectMailTypeTextKeys(_value, _out) {}

@@ -31,6 +31,11 @@ public sealed record GachaPool(
             ResourceCost.Decode(obj.Get("cost"))
         );
     }
+
+    internal void CollectTextKeys(List<TextKey> keys)
+    {
+        this.Cost.CollectTextKeys(keys);
+    }
 }
 
 public sealed class GachaPoolTable : ISoraKeyedTable<int, GachaPool>

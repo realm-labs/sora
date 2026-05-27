@@ -6,7 +6,13 @@ final case class Recipe(
   id: Int,
   resultItem: Int,
   materials: Vector[ResourceCost]
-)
+) {
+  def collectTextKeys(out: scala.collection.mutable.ArrayBuffer[TextKey]): Unit = {
+    this.materials.foreach { item =>
+      item.collectTextKeys(out)
+    }
+  }
+}
 
 object Recipe {
   def decode(reader: SoraReader): Recipe =

@@ -2,6 +2,7 @@
 
 package com.sora.showcase;
 
+import java.util.List;
 public final class SkillEffect {
     public final ElementType element;
     public final Integer power;
@@ -32,5 +33,8 @@ public final class SkillEffect {
             obj.get("power").asInt(),
             obj.get("radius").asFloat()
         );
+    }
+
+    void collectTextKeys(List<TextKey> out) {
     }
 }

@@ -34,6 +34,101 @@ final case class TextKey(value: String) {
   override def toString: String = value
 }
 
+final class LocalePack private (
+  val schemaFingerprint: String,
+  val locale: String,
+  private val translations: Map[String, String]
+) {
+  def get(key: TextKey): Option[String] = translations.get(key.value)
+}
+
+object LocalePack {
+  def parse(bytes: Array[Byte]): LocalePack = {
+    if (bytes.length < 8 || new String(bytes.slice(0, 4), StandardCharsets.US_ASCII) != "SORI") {
+      throw new SoraReadException("invalid Sora i18n pack magic")
+    }
+    val version = SoraRuntime.readI32At(bytes, 4)
+    if (version != 1) {
+      throw new SoraReadException(s"unsupported Sora i18n pack version $version")
+    }
+    var cursor = 8
+    val schemaResult = readLengthPrefixedString(bytes, cursor)
+    val schemaFingerprint = schemaResult._1
+    cursor = schemaResult._2
+    val localeResult = readLengthPrefixedString(bytes, cursor)
+    val locale = localeResult._1
+    cursor = localeResult._2
+    val countResult = readU32At(bytes, cursor)
+    val count = countResult._1
+    cursor = countResult._2
+    var translations = Map.empty[String, String]
+    for (_ <- 0 until count) {
+      val keyResult = readLengthPrefixedString(bytes, cursor)
+      val key = keyResult._1
+      cursor = keyResult._2
+      val valueResult = readLengthPrefixedString(bytes, cursor)
+      val value = valueResult._1
+      cursor = valueResult._2
+      if (value.isEmpty) {
+        throw new SoraReadException(s"text key `$key` has empty text")
+      }
+      if (translations.contains(key)) {
+        throw new SoraReadException(s"duplicate text key `$key`")
+      }
+      translations += key -> value
+    }
+    if (cursor != bytes.length) {
+      throw new SoraReadException("Sora i18n pack has trailing bytes")
+    }
+    new LocalePack(schemaFingerprint, locale, translations)
+  }
+
+  private def readU32At(bytes: Array[Byte], cursor: Int): (Int, Int) = {
+    if (cursor + 4 > bytes.length) {
+      throw new SoraReadException("truncated u32")
+    }
+    (SoraRuntime.readI32At(bytes, cursor), cursor + 4)
+  }
+
+  private def readLengthPrefixedString(bytes: Array[Byte], cursor: Int): (String, Int) = {
+    val lengthResult = readU32At(bytes, cursor)
+    val length = lengthResult._1
+    val start = lengthResult._2
+    val end = SoraRuntime.checkedAdd(start, length, "Sora i18n string length overflow")
+    if (end > bytes.length) {
+      throw new SoraReadException("truncated string")
+    }
+    (new String(bytes.slice(start, end), StandardCharsets.UTF_8), end)
+  }
+}
+
+object SoraText {
+  def format(template: String, args: Map[String, Any]): String = {
+    val out = new StringBuilder(template.length)
+    var cursor = 0
+    while (true) {
+      val start = template.indexOf('{', cursor)
+      if (start < 0) {
+        out.append(template.substring(cursor))
+        return out.toString
+      }
+      out.append(template.substring(cursor, start))
+      val end = template.indexOf('}', start + 1)
+      if (end < 0) {
+        throw new SoraReadException("unterminated text placeholder")
+      }
+      val name = template.substring(start + 1, end)
+      if (name.isEmpty || name.contains("{")) {
+        throw new SoraReadException("invalid text placeholder")
+      }
+      val value = args.getOrElse(name, throw new SoraReadException(s"missing text argument `$name`"))
+      out.append(value.toString)
+      cursor = end + 1
+    }
+    out.toString
+  }
+}
+
 final case class SoraSection(
   kind: Int,
   compression: Int,

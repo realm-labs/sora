@@ -27,3 +27,5 @@ export function decodeQuestTypeValue(value) {
     }
     return name;
 }
+
+export function collectQuestTypeTextKeys(_value, _out) {}

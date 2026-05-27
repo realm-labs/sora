@@ -37,6 +37,11 @@ public sealed record ShopItem(
             obj.Get("daily_limit").IsNull ? default : obj.Get("daily_limit").AsInt32()
         );
     }
+
+    internal void CollectTextKeys(List<TextKey> keys)
+    {
+        this.Price.CollectTextKeys(keys);
+    }
 }
 
 public sealed class ShopItemTable : ISoraListTable<ShopItem>

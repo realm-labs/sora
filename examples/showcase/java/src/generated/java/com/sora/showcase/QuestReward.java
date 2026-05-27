@@ -41,6 +41,9 @@ public final class QuestReward {
             obj.get("count").asInt()
         );
     }
+
+    void collectTextKeys(List<TextKey> out) {
+    }
 }
 
 final class QuestRewardTable extends java.util.AbstractList<QuestReward> implements SoraListTable<QuestReward> {

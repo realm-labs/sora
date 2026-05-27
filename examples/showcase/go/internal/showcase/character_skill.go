@@ -47,6 +47,9 @@ func decodeCharacterSkillValue(input SoraValue) (CharacterSkill, error) {
 	return value, nil
 }
 
+func (value CharacterSkill) collectTextKeys(out *[]TextKey) {
+}
+
 const characterSkillTableName = "CharacterSkill"
 
 var characterSkillTableInfo = SoraTableInfo{

@@ -3,23 +3,39 @@
 package com.sora.showcase
 
 sealed class RewardAction {
+    open fun collectTextKeys(out: MutableList<TextKey>) {}
     data class AddItem(
         val itemId: Int,
         val count: Int,
-    ) : RewardAction()
+    ) : RewardAction() {
+        override fun collectTextKeys(out: MutableList<TextKey>) {
+        }
+    }
     data class AddBuff(
         val buffId: Int,
         val duration: Float,
-    ) : RewardAction()
+    ) : RewardAction() {
+        override fun collectTextKeys(out: MutableList<TextKey>) {
+        }
+    }
     data class UnlockStage(
         val stageId: Int,
-    ) : RewardAction()
+    ) : RewardAction() {
+        override fun collectTextKeys(out: MutableList<TextKey>) {
+        }
+    }
     data class SendMail(
         val mailId: Int,
-    ) : RewardAction()
+    ) : RewardAction() {
+        override fun collectTextKeys(out: MutableList<TextKey>) {
+        }
+    }
     data class RunActionGroup(
         val actionGroupId: Int,
-    ) : RewardAction()
+    ) : RewardAction() {
+        override fun collectTextKeys(out: MutableList<TextKey>) {
+        }
+    }
 
     companion object {
         fun decode(reader: SoraReader): RewardAction =
@@ -66,6 +82,10 @@ sealed class RewardAction {
                 )
                 else -> throw SoraReadException("invalid union tag $tag for RewardAction")
             }
+        }
+
+        fun collectTextKeys(value: RewardAction, out: MutableList<TextKey>) {
+            value.collectTextKeys(out)
         }
     }
 }

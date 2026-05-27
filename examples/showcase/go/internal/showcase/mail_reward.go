@@ -56,6 +56,9 @@ func decodeMailRewardValue(input SoraValue) (MailReward, error) {
 	return value, nil
 }
 
+func (value MailReward) collectTextKeys(out *[]TextKey) {
+}
+
 const mailRewardTableName = "MailReward"
 
 var mailRewardTableInfo = SoraTableInfo{

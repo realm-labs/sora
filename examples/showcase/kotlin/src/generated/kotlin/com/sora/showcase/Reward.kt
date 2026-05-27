@@ -6,6 +6,9 @@ data class Reward(
     val itemId: Int,
     val count: Int,
 ) {
+    fun collectTextKeys(out: MutableList<TextKey>) {
+    }
+
     companion object {
         fun decode(reader: SoraReader): Reward =
             Reward(

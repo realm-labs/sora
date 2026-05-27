@@ -3,6 +3,9 @@
 from __future__ import annotations
 
 from .sora_runtime import (
+{%- if model.has_localization %}
+    LocalePack,
+{%- endif %}
 {%- if runtime_format == "sora" %}
     SoraBundle,
 {%- elif runtime_format == "json" %}
@@ -14,6 +17,10 @@ from .sora_runtime import (
 {%- endif %}
     SoraConfigTable,
     SoraReadError,
+{%- if model.has_localization %}
+    TextKey,
+    format_text,
+{%- endif %}
 )
 {%- for table in model.tables %}
 from .{{ table.snake_name }} import {{ table.pascal_name }}Table, {{ table.row_type }}
@@ -72,8 +79,81 @@ class SoraConfig:
 {%- endfor %}
         ]
 
+{%- if model.has_localization %}
+    def validate_locale_pack(self, pack: LocalePack) -> None:
+        for key in self._text_keys():
+            value = pack.get(key)
+            if value is None:
+                raise SoraReadError(
+                    f"text key `{key.value}` is missing for locale `{pack.locale}`"
+                )
+            if value == "":
+                raise SoraReadError(
+                    f"text key `{key.value}` has empty text for locale `{pack.locale}`"
+                )
+
+    def _text_keys(self) -> list[TextKey]:
+        keys: list[TextKey] = []
+{%- for table in model.tables %}
+{%- if table.mode == "singleton" %}
+        self.{{ table.snake_name }}().row().collect_text_keys(keys)
+{%- elif table.mode == "map" %}
+        for row in self.{{ table.snake_name }}().rows().values():
+            row.collect_text_keys(keys)
+{%- else %}
+        for row in self.{{ table.snake_name }}().rows():
+            row.collect_text_keys(keys)
+{%- endif %}
+{%- endfor %}
+        return keys
+
+{%- endif %}
 {% for table in model.tables %}
     def {{ table.snake_name }}(self) -> {{ table.pascal_name }}Table:
         return self._{{ table.snake_name }}
 
 {% endfor %}
+{%- if model.has_localization %}
+
+class SoraI18n:
+    LOCALES = (
+{%- for locale in model.locales %}
+        "{{ locale }}",
+{%- endfor %}
+    )
+    DEFAULT_LOCALE = "{{ model.default_locale }}"
+
+    def __init__(self) -> None:
+        self._active_locale = self.DEFAULT_LOCALE
+        self._packs: dict[str, LocalePack] = {}
+
+    def mount(self, config: SoraConfig, pack: LocalePack) -> None:
+        if pack.schema_fingerprint != SCHEMA_FINGERPRINT:
+            raise SoraReadError(
+                "locale pack schema fingerprint mismatch: generated code expects "
+                f"{SCHEMA_FINGERPRINT}, pack contains {pack.schema_fingerprint}"
+            )
+        if pack.locale not in self.LOCALES:
+            raise SoraReadError(f"locale pack `{pack.locale}` is not declared by generated code")
+        config.validate_locale_pack(pack)
+        self._packs[pack.locale] = pack
+
+    def set_locale(self, locale: str) -> None:
+        if locale not in self.LOCALES:
+            raise SoraReadError(f"unknown locale `{locale}`")
+        if locale not in self._packs:
+            raise SoraReadError(f"locale `{locale}` is not mounted")
+        self._active_locale = locale
+
+    def text(self, key: TextKey) -> str:
+        pack = self._packs.get(self._active_locale)
+        if pack is None:
+            raise SoraReadError(f"locale `{self._active_locale}` is not mounted")
+        value = pack.get(key)
+        if value is None:
+            raise SoraReadError("active locale pack failed locale validation")
+        return value
+
+    def format(self, key: TextKey, args: dict[str, object]) -> str:
+        return format_text(self.text(key), args)
+{%- endif %}

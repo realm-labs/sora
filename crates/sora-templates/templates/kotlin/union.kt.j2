@@ -3,6 +3,8 @@
 package {{ package }}
 
 sealed class {{ union.pascal_name }} {
+    open fun collectTextKeys(out: MutableList<TextKey>) {}
+
 {%- for variant in union.variants %}
     data class {{ variant.name }}(
 {%- for field in variant.fields %}
@@ -11,7 +13,17 @@ sealed class {{ union.pascal_name }} {
 {%- endif %}
         val {{ field.name }}: {{ field.type_name }},
 {%- endfor %}
-    ) : {{ union.pascal_name }}()
+    ) : {{ union.pascal_name }}() {
+        override fun collectTextKeys(out: MutableList<TextKey>) {
+{%- if variant.has_text_keys %}
+{%- for field in variant.fields %}
+{%- if field.collect_text_keys %}
+{{ field.collect_text_keys }}
+{%- endif %}
+{%- endfor %}
+{%- endif %}
+        }
+    }
 {%- endfor %}
 
     companion object {
@@ -39,6 +51,10 @@ sealed class {{ union.pascal_name }} {
 {%- endfor %}
                 else -> throw SoraReadException("invalid union tag $tag for {{ union.pascal_name }}")
             }
+        }
+
+        fun collectTextKeys(value: {{ union.pascal_name }}, out: MutableList<TextKey>) {
+            value.collectTextKeys(out)
         }
     }
 }

@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
-from .sora_runtime import SoraReader
+from .sora_runtime import SoraReader, TextKey
 
 
 if TYPE_CHECKING:
@@ -29,3 +29,6 @@ class RewardBundle:
             weight=weight,
             labels=labels,
         )
+
+    def collect_text_keys(self, out: list[TextKey]) -> None:
+        self.cost.collect_text_keys(out)

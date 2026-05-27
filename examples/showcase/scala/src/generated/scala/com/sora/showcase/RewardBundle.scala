@@ -6,7 +6,11 @@ final case class RewardBundle(
   cost: ResourceCost,
   weight: Int,
   labels: Vector[String]
-)
+) {
+  def collectTextKeys(out: scala.collection.mutable.ArrayBuffer[TextKey]): Unit = {
+    this.cost.collectTextKeys(out)
+  }
+}
 
 object RewardBundle {
   def decode(reader: SoraReader): RewardBundle =

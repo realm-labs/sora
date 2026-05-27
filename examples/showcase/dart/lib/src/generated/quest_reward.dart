@@ -24,6 +24,9 @@ final class QuestReward {
       count: obj.get("count").asInt(),
     );
   }
+
+  void collectTextKeys(List<TextKey> out) {
+  }
 }
 
 final class QuestRewardTable extends Iterable<QuestReward> implements SoraListTable<QuestReward> {

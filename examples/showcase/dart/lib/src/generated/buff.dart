@@ -25,6 +25,12 @@ final class Buff {
       modifiers: obj.get("modifiers").asList((item) => StatModifier.decode(item)),
     );
   }
+
+  void collectTextKeys(List<TextKey> out) {
+    for (final item in this.modifiers) {
+      item.collectTextKeys(out);
+    }
+  }
 }
 
 final class BuffTable extends Iterable<Buff> implements SoraKeyedTable<int, Buff> {

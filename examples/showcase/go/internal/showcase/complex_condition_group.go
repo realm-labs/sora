@@ -48,6 +48,12 @@ func decodeComplexConditionGroupValue(input SoraValue) (ComplexConditionGroup, e
 	return value, nil
 }
 
+func (value ComplexConditionGroup) collectTextKeys(out *[]TextKey) {
+	for _, item := range value.Conditions {
+		collectEventConditionTextKeys(item, out)
+	}
+}
+
 const complexConditionGroupTableName = "ComplexConditionGroup"
 
 var complexConditionGroupTableInfo = SoraTableInfo{

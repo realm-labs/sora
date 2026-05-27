@@ -24,6 +24,10 @@ export function decodeDialogueValue(value) {
     };
 }
 
+export function collectDialogueTextKeys(value, out) {
+    out.push(value.speakerKey);
+}
+
 export class DialogueTable {
     static tableName = "Dialogue";
     static tableInfo = {

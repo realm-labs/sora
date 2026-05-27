@@ -7,6 +7,10 @@ data class Dialogue(
     val speakerKey: TextKey,
     val lines: List<String>,
 ) {
+    fun collectTextKeys(out: MutableList<TextKey>) {
+        out.add(this.speakerKey)
+    }
+
     companion object {
         fun decode(reader: SoraReader): Dialogue =
             Dialogue(

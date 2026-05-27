@@ -5,7 +5,10 @@ package com.sora.showcase
 final case class Reward(
   itemId: Int,
   count: Int
-)
+) {
+  def collectTextKeys(out: scala.collection.mutable.ArrayBuffer[TextKey]): Unit = {
+  }
+}
 
 object Reward {
   def decode(reader: SoraReader): Reward =

@@ -6,7 +6,11 @@ final case class GachaPool(
   id: Int,
   name: String,
   cost: ResourceCost
-)
+) {
+  def collectTextKeys(out: scala.collection.mutable.ArrayBuffer[TextKey]): Unit = {
+    this.cost.collectTextKeys(out)
+  }
+}
 
 object GachaPool {
   def decode(reader: SoraReader): GachaPool =

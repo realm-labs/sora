@@ -7,7 +7,10 @@ final case class GachaItem(
   itemId: Int,
   rarity: Rarity,
   weight: Float
-)
+) {
+  def collectTextKeys(out: scala.collection.mutable.ArrayBuffer[TextKey]): Unit = {
+  }
+}
 
 object GachaItem {
   def decode(reader: SoraReader): GachaItem =

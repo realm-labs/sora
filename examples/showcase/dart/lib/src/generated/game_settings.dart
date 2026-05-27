@@ -45,6 +45,19 @@ final class GameSettings {
       maintenance: obj.get("maintenance").isNull ? null : MaintenanceInfo.decode(obj.get("maintenance")),
     );
   }
+
+  void collectTextKeys(List<TextKey> out) {
+    this.spawnPos.collectTextKeys(out);
+    for (final item in this.spawnPoints) {
+      item.collectTextKeys(out);
+    }
+    {
+      final item = this.maintenance;
+      if (item != null) {
+      item.collectTextKeys(out);
+      }
+    }
+  }
 }
 
 final class GameSettingsTable extends Iterable<GameSettings> implements SoraSingleTable<GameSettings> {

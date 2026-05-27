@@ -12,6 +12,7 @@ import (
     "fmt"
     "math"
     "strconv"
+    "unicode/utf8"
     "github.com/klauspost/compress/zstd"
 {%- if runtime_format == "sora-protobuf" %}
     "google.golang.org/protobuf/proto"
@@ -56,7 +57,7 @@ type SoraTableSource interface {
 }
 
 type TextResolver interface {
-    Text(key TextKey) (string, error)
+    Text(key TextKey) string
     Format(key TextKey, args map[string]any) (string, error)
 }
 
@@ -80,6 +81,119 @@ func DecodeTextKeyValue(value SoraValue) (TextKey, error) {
         return "", err
     }
     return TextKey(text), nil
+}
+
+type LocalePack struct {
+    schemaFingerprint string
+    locale string
+    translations map[string]string
+}
+
+func ParseLocalePack(bytes []byte) (*LocalePack, error) {
+    if len(bytes) < 8 || string(bytes[:4]) != "SORI" {
+        return nil, fmt.Errorf("invalid Sora i18n pack magic")
+    }
+    version := binary.LittleEndian.Uint32(bytes[4:8])
+    if version != 1 {
+        return nil, fmt.Errorf("unsupported Sora i18n pack version %d", version)
+    }
+    cursor := 8
+    schemaFingerprint, err := readLengthPrefixedString(bytes, &cursor)
+    if err != nil {
+        return nil, err
+    }
+    locale, err := readLengthPrefixedString(bytes, &cursor)
+    if err != nil {
+        return nil, err
+    }
+    count, err := readUInt32Cursor(bytes, &cursor)
+    if err != nil {
+        return nil, err
+    }
+    translations := make(map[string]string, int(count))
+    for i := uint32(0); i < count; i++ {
+        key, err := readLengthPrefixedString(bytes, &cursor)
+        if err != nil {
+            return nil, err
+        }
+        value, err := readLengthPrefixedString(bytes, &cursor)
+        if err != nil {
+            return nil, err
+        }
+        if value == "" {
+            return nil, fmt.Errorf("text key `%s` has empty text", key)
+        }
+        if _, ok := translations[key]; ok {
+            return nil, fmt.Errorf("duplicate text key `%s`", key)
+        }
+        translations[key] = value
+    }
+    if cursor != len(bytes) {
+        return nil, fmt.Errorf("Sora i18n pack has trailing bytes")
+    }
+    return &LocalePack{
+        schemaFingerprint: schemaFingerprint,
+        locale: locale,
+        translations: translations,
+    }, nil
+}
+
+func (pack *LocalePack) SchemaFingerprint() string {
+    return pack.schemaFingerprint
+}
+
+func (pack *LocalePack) Locale() string {
+    return pack.locale
+}
+
+func (pack *LocalePack) Get(key TextKey) (string, bool) {
+    value, ok := pack.translations[key.String()]
+    return value, ok
+}
+
+func FormatText(template string, args map[string]any) (string, error) {
+    out := make([]byte, 0, len(template))
+    rest := template
+    for {
+        start := -1
+        for index := 0; index < len(rest); index++ {
+            if rest[index] == '{' {
+                start = index
+                break
+            }
+        }
+        if start < 0 {
+            out = append(out, rest...)
+            return string(out), nil
+        }
+        out = append(out, rest[:start]...)
+        rest = rest[start+1:]
+        end := -1
+        for index := 0; index < len(rest); index++ {
+            if rest[index] == '}' {
+                end = index
+                break
+            }
+        }
+        if end < 0 {
+            return "", fmt.Errorf("unterminated text placeholder")
+        }
+        name := rest[:end]
+        if name == "" {
+            return "", fmt.Errorf("invalid text placeholder")
+        }
+        for index := 0; index < len(name); index++ {
+            if name[index] == '{' {
+                return "", fmt.Errorf("invalid text placeholder")
+            }
+        }
+        value, ok := args[name]
+        if !ok {
+            return "", fmt.Errorf("missing text argument `%s`", name)
+        }
+        out = append(out, fmt.Sprint(value)...)
+        rest = rest[end+1:]
+    }
 }
 
 func ParseSoraBundle(bytes []byte) (*SoraBundle, error) {
@@ -607,6 +721,40 @@ func decodeStringTable(payload []byte) ([]string, error) {
 
 func readInt32At(bytes []byte, offset int) int32 {
     return int32(binary.LittleEndian.Uint32(bytes[offset:offset+4]))
+}
+
+func readUInt32Cursor(bytes []byte, cursor *int) (uint32, error) {
+    end, err := checkedAdd(*cursor, 4, "Sora i18n cursor overflow")
+    if err != nil {
+        return 0, err
+    }
+    if end > len(bytes) {
+        return 0, fmt.Errorf("unexpected end while reading i18n u32")
+    }
+    value := binary.LittleEndian.Uint32(bytes[*cursor:end])
+    *cursor = end
+    return value, nil
+}
+
+func readLengthPrefixedString(bytes []byte, cursor *int) (string, error) {
+    lengthValue, err := readUInt32Cursor(bytes, cursor)
+    if err != nil {
+        return "", err
+    }
+    length := int(lengthValue)
+    end, err := checkedAdd(*cursor, length, "Sora i18n string length overflow")
+    if err != nil {
+        return "", err
+    }
+    if end > len(bytes) {
+        return "", fmt.Errorf("Sora i18n string exceeds pack length")
+    }
+    raw := bytes[*cursor:end]
+    if !utf8.Valid(raw) {
+        return "", fmt.Errorf("invalid Sora i18n UTF-8")
+    }
+    *cursor = end
+    return string(raw), nil
 }
 
 func readInt64At(bytes []byte, offset int) int64 {

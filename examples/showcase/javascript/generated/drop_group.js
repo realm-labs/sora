@@ -21,6 +21,9 @@ export function decodeDropGroupValue(value) {
     };
 }
 
+export function collectDropGroupTextKeys(value, out) {
+}
+
 export class DropGroupTable {
     static tableName = "DropGroup";
     static tableInfo = {

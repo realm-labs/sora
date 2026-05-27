@@ -7,7 +7,12 @@ final case class Achievement(
   titleKey: TextKey,
   targetCount: Long,
   reward: ResourceCost
-)
+) {
+  def collectTextKeys(out: scala.collection.mutable.ArrayBuffer[TextKey]): Unit = {
+    out += this.titleKey
+    this.reward.collectTextKeys(out)
+  }
+}
 
 object Achievement {
   def decode(reader: SoraReader): Achievement =

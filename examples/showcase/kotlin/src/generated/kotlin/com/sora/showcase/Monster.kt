@@ -10,6 +10,10 @@ data class Monster(
     val dropGroup: Int,
     val spawnPos: Vec3,
 ) {
+    fun collectTextKeys(out: MutableList<TextKey>) {
+        this.spawnPos.collectTextKeys(out)
+    }
+
     companion object {
         fun decode(reader: SoraReader): Monster =
             Monster(

@@ -37,6 +37,16 @@ public sealed record MailTemplate(
             obj.Get("rewards").AsList(item => Reward.Decode(item))
         );
     }
+
+    internal void CollectTextKeys(List<TextKey> keys)
+    {
+        keys.Add(this.TitleKey);
+        keys.Add(this.BodyKey);
+        foreach (var element in this.Rewards)
+        {
+            element.CollectTextKeys(keys);
+        }
+    }
 }
 
 public sealed class MailTemplateTable : ISoraKeyedTable<int, MailTemplate>

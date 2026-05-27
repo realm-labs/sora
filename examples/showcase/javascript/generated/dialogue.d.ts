@@ -11,6 +11,7 @@ export interface Dialogue {
 
 export declare function decodeDialogue(reader: SoraReader): Dialogue;
 export declare function decodeDialogueValue(value: SoraValue): Dialogue;
+export declare function collectDialogueTextKeys(value: Dialogue, out: TextKey[]): void;
 
 export declare class DialogueTable implements SoraKeyedTable<number, Dialogue> {
     static readonly tableInfo: SoraTableInfo;

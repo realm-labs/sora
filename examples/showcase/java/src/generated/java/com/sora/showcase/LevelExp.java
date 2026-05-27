@@ -36,6 +36,9 @@ public final class LevelExp {
             obj.get("unlock_feature").isNull() ? null : obj.get("unlock_feature").asString()
         );
     }
+
+    void collectTextKeys(List<TextKey> out) {
+    }
 }
 
 final class LevelExpTable extends java.util.AbstractMap<Integer, LevelExp> implements SoraKeyedTable<Integer, LevelExp> {

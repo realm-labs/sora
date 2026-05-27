@@ -82,6 +82,46 @@ public sealed class SoraConfig
 
     public IEnumerable<ISoraTable> Tables => tables.Values;
 
+{%- if model.has_localization %}
+    internal void ValidateLocalePack(LocalePack pack)
+    {
+        foreach (var key in TextKeys())
+        {
+            var value = pack.Get(key);
+            if (value is null)
+            {
+                throw new SoraReadException($"text key `{key.Value}` is missing for locale `{pack.Locale}`");
+            }
+            if (value.Length == 0)
+            {
+                throw new SoraReadException($"text key `{key.Value}` has empty text for locale `{pack.Locale}`");
+            }
+        }
+    }
+
+    private List<TextKey> TextKeys()
+    {
+        var keys = new List<TextKey>();
+{%- for table in model.tables %}
+{%- if table.mode == "singleton" %}
+        {{ table.pascal_name }}.Row.CollectTextKeys(keys);
+{%- elif table.mode == "map" %}
+        foreach (var row in {{ table.pascal_name }}.Rows.Values)
+        {
+            row.CollectTextKeys(keys);
+        }
+{%- else %}
+        foreach (var row in {{ table.pascal_name }}.Rows)
+        {
+            row.CollectTextKeys(keys);
+        }
+{%- endif %}
+{%- endfor %}
+        return keys;
+    }
+
+{%- endif %}
+
     private T Table<T>(string name) where T : class, ISoraTable
     {
         if (tables.TryGetValue(name, out var table) && table is T typed)
@@ -137,3 +177,62 @@ public sealed class SoraConfig
         return rows[0];
     }
 }
+
+{%- if model.has_localization %}
+public sealed class SoraI18n : ISoraTextResolver
+{
+    public static readonly IReadOnlySet<string> Locales = new HashSet<string>
+    {
+{%- for locale in model.locales %}
+        "{{ locale }}",
+{%- endfor %}
+    };
+    public const string DefaultLocale = "{{ model.default_locale }}";
+
+    private string activeLocale = DefaultLocale;
+    private readonly Dictionary<string, LocalePack> packs = new();
+
+    public void Mount(SoraConfig config, LocalePack pack)
+    {
+        if (pack.SchemaFingerprint != SoraConfig.SchemaFingerprint)
+        {
+            throw new SoraReadException(
+                $"locale pack schema fingerprint mismatch: generated code expects {SoraConfig.SchemaFingerprint}, pack contains {pack.SchemaFingerprint}"
+            );
+        }
+        if (!Locales.Contains(pack.Locale))
+        {
+            throw new SoraReadException($"locale pack `{pack.Locale}` is not declared by generated code");
+        }
+        config.ValidateLocalePack(pack);
+        packs[pack.Locale] = pack;
+    }
+
+    public void SetLocale(string locale)
+    {
+        if (!Locales.Contains(locale))
+        {
+            throw new SoraReadException($"unknown locale `{locale}`");
+        }
+        if (!packs.ContainsKey(locale))
+        {
+            throw new SoraReadException($"locale `{locale}` is not mounted");
+        }
+        activeLocale = locale;
+    }
+
+    public string Text(TextKey key)
+    {
+        if (!packs.TryGetValue(activeLocale, out var pack))
+        {
+            throw new SoraReadException($"locale `{activeLocale}` is not mounted");
+        }
+        return pack.Get(key) ?? throw new SoraReadException("active locale pack failed locale validation");
+    }
+
+    public string Format(TextKey key, IReadOnlyDictionary<string, object> args)
+    {
+        return SoraText.Format(Text(key), args);
+    }
+}
+{%- endif %}

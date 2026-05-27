@@ -41,6 +41,10 @@ public final class Dungeon {
             ResourceCost.decode(obj.get("entry_cost"))
         );
     }
+
+    void collectTextKeys(List<TextKey> out) {
+        this.entryCost.collectTextKeys(out);
+    }
 }
 
 final class DungeonTable extends java.util.AbstractMap<Integer, Dungeon> implements SoraKeyedTable<Integer, Dungeon> {

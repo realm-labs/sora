@@ -14,3 +14,6 @@ export function decodeRewardValue(value) {
         count: object.get("count").asInt(),
     };
 }
+
+export function collectRewardTextKeys(value, out) {
+}

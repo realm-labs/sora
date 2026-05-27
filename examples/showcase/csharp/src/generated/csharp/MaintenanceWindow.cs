@@ -34,6 +34,10 @@ public sealed record MaintenanceWindow(
             obj.Get("reason").IsNull ? default : obj.Get("reason").AsString()
         );
     }
+
+    internal void CollectTextKeys(List<TextKey> keys)
+    {
+    }
 }
 
 public sealed class MaintenanceWindowTable : ISoraListTable<MaintenanceWindow>

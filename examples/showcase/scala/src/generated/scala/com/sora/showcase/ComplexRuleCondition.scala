@@ -6,7 +6,11 @@ final case class ComplexRuleCondition(
   id: Int,
   ruleId: Int,
   value: EventCondition
-)
+) {
+  def collectTextKeys(out: scala.collection.mutable.ArrayBuffer[TextKey]): Unit = {
+    EventCondition.collectTextKeys(this.value, out)
+  }
+}
 
 object ComplexRuleCondition {
   def decode(reader: SoraReader): ComplexRuleCondition =

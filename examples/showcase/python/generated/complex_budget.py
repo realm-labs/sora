@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
-from .sora_runtime import SoraReader
+from .sora_runtime import SoraReader, TextKey
 
 
 if TYPE_CHECKING:
@@ -31,3 +31,8 @@ class ComplexBudget:
             random=random,
             limits=limits,
         )
+
+    def collect_text_keys(self, out: list[TextKey]) -> None:
+        self.fixed.collect_text_keys(out)
+        for item in self.random:
+            item.collect_text_keys(out)

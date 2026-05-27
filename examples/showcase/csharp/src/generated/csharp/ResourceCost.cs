@@ -31,4 +31,8 @@ public sealed record ResourceCost(
             obj.Get("count").AsInt32()
         );
     }
+
+    internal void CollectTextKeys(List<TextKey> keys)
+    {
+    }
 }

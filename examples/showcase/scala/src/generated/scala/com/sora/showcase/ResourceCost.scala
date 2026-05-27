@@ -6,7 +6,10 @@ final case class ResourceCost(
   kind: ResourceKind,
   id: Int,
   count: Int
-)
+) {
+  def collectTextKeys(out: scala.collection.mutable.ArrayBuffer[TextKey]): Unit = {
+  }
+}
 
 object ResourceCost {
   def decode(reader: SoraReader): ResourceCost =

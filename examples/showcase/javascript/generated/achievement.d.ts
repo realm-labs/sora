@@ -14,6 +14,7 @@ export interface Achievement {
 
 export declare function decodeAchievement(reader: SoraReader): Achievement;
 export declare function decodeAchievementValue(value: SoraValue): Achievement;
+export declare function collectAchievementTextKeys(value: Achievement, out: TextKey[]): void;
 
 export declare class AchievementTable implements SoraKeyedTable<number, Achievement> {
     static readonly tableInfo: SoraTableInfo;

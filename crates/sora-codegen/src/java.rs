@@ -88,6 +88,9 @@ struct JavaModel {
     tables: Vec<JavaTable>,
     has_unique_indexes: bool,
     has_non_unique_indexes: bool,
+    has_localization: bool,
+    locales: Vec<String>,
+    default_locale: String,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -107,12 +110,14 @@ struct JavaUnion {
 struct JavaUnionVariant {
     name: String,
     fields: Vec<JavaField>,
+    has_text_keys: bool,
 }
 
 #[derive(Debug, Clone, Serialize)]
 struct JavaRecord {
     pascal_name: String,
     fields: Vec<JavaField>,
+    has_text_keys: bool,
     table: Option<JavaTable>,
 }
 
@@ -147,6 +152,7 @@ struct JavaField {
     type_name: String,
     decode: String,
     value_decode: String,
+    collect_text_keys: String,
     comment: Option<String>,
 }
 
@@ -188,6 +194,17 @@ impl JavaModel {
             has_non_unique_indexes: tables
                 .iter()
                 .any(|table| !table.non_unique_indexes.is_empty()),
+            has_localization: ir.localization.is_some(),
+            locales: ir
+                .localization
+                .as_ref()
+                .map(|item| item.locales.clone())
+                .unwrap_or_default(),
+            default_locale: ir
+                .localization
+                .as_ref()
+                .map(|item| item.default_locale.clone())
+                .unwrap_or_default(),
             tables,
         }
     }
@@ -206,24 +223,34 @@ fn java_union(ir: &ConfigIr, union: BaseUnion) -> JavaUnion {
 }
 
 fn java_variant(ir: &ConfigIr, variant: BaseUnionVariant) -> JavaUnionVariant {
+    let fields = variant
+        .fields
+        .into_iter()
+        .map(|field| java_field(ir, field))
+        .collect::<Vec<_>>();
+    let has_text_keys = fields
+        .iter()
+        .any(|field| !field.collect_text_keys.is_empty());
     JavaUnionVariant {
         name: variant.pascal_name,
-        fields: variant
-            .fields
-            .into_iter()
-            .map(|field| java_field(ir, field))
-            .collect(),
+        fields,
+        has_text_keys,
     }
 }
 
 fn java_record(ir: &ConfigIr, record: BaseRecord, table: Option<JavaTable>) -> JavaRecord {
+    let fields = record
+        .fields
+        .into_iter()
+        .map(|field| java_field(ir, field))
+        .collect::<Vec<_>>();
+    let has_text_keys = fields
+        .iter()
+        .any(|field| !field.collect_text_keys.is_empty());
     JavaRecord {
         pascal_name: record.pascal_name,
-        fields: record
-            .fields
-            .into_iter()
-            .map(|field| java_field(ir, field))
-            .collect(),
+        fields,
+        has_text_keys,
         table,
     }
 }
@@ -275,12 +302,15 @@ fn java_index(ir: &ConfigIr, index: BaseIndex) -> JavaIndex {
 
 fn java_field(ir: &ConfigIr, field: BaseField) -> JavaField {
     let value_decode = java_value_decode_expr(ir, &field.ty, "__VALUE__");
+    let collect_text_keys =
+        java_collect_text_keys(ir, &field.ty, &format!("this.{}", field.camel_name), 8);
     JavaField {
         raw_name: field.raw_name,
         name: field.camel_name,
         type_name: java_type_name(ir, &field.ty),
         decode: java_decode_expr(ir, &field.ty),
         value_decode,
+        collect_text_keys,
         comment: field.comment,
     }
 }
@@ -386,6 +416,71 @@ fn java_value_decode_expr(ir: &ConfigIr, ty: &TypeIr, value: &str) -> String {
                 java_value_decode_expr(ir, element, value)
             )
         }
+    }
+}
+
+fn java_collect_text_keys(ir: &ConfigIr, ty: &TypeIr, value: &str, indent: usize) -> String {
+    let pad = " ".repeat(indent);
+    match ty {
+        TypeIr::Text => format!("{pad}out.add({value});"),
+        TypeIr::Optional(element) => {
+            let inner = java_collect_text_keys(ir, element, "item", indent + 4);
+            if inner.is_empty() {
+                String::new()
+            } else {
+                format!(
+                    "{pad}if ({value} != null) {{\n{pad}    var item = {value};\n{inner}\n{pad}}}"
+                )
+            }
+        }
+        TypeIr::List(element) | TypeIr::Set(element) | TypeIr::Array { element, .. } => {
+            let inner = java_collect_text_keys(ir, element, "item", indent + 4);
+            if inner.is_empty() {
+                String::new()
+            } else {
+                format!("{pad}for (var item : {value}) {{\n{inner}\n{pad}}}")
+            }
+        }
+        TypeIr::Map {
+            key,
+            value: element,
+        } => {
+            let key_inner = java_collect_text_keys(ir, key, "key", indent + 4);
+            let value_inner = java_collect_text_keys(ir, element, "item", indent + 4);
+            if key_inner.is_empty() && value_inner.is_empty() {
+                String::new()
+            } else {
+                format!(
+                    "{pad}for (var entry : {value}.entrySet()) {{\n{pad}    var key = entry.getKey();\n{pad}    var item = entry.getValue();\n{key_inner}\n{value_inner}\n{pad}}}"
+                )
+            }
+        }
+        TypeIr::Struct(_) => format!("{pad}{value}.collectTextKeys(out);"),
+        TypeIr::Union(name) => format!("{pad}{name}.collectTextKeys({value}, out);"),
+        TypeIr::Ref { table, field } => ir
+            .tables
+            .iter()
+            .find(|candidate| candidate.name == *table)
+            .and_then(|table| {
+                table
+                    .fields
+                    .iter()
+                    .find(|candidate| candidate.name == *field)
+            })
+            .map(|field| java_collect_text_keys(ir, &field.ty, value, indent))
+            .unwrap_or_default(),
+        TypeIr::Bool
+        | TypeIr::I8
+        | TypeIr::U8
+        | TypeIr::I16
+        | TypeIr::U16
+        | TypeIr::I32
+        | TypeIr::U32
+        | TypeIr::I64
+        | TypeIr::F32
+        | TypeIr::F64
+        | TypeIr::String
+        | TypeIr::Enum(_) => String::new(),
     }
 }
 

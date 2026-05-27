@@ -36,6 +36,12 @@ public final class Recipe {
             obj.get("materials").asList(item -> ResourceCost.decode(item))
         );
     }
+
+    void collectTextKeys(List<TextKey> out) {
+        for (var item : this.materials) {
+            item.collectTextKeys(out);
+        }
+    }
 }
 
 final class RecipeTable extends java.util.AbstractMap<Integer, Recipe> implements SoraKeyedTable<Integer, Recipe> {

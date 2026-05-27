@@ -74,3 +74,8 @@ export function decodeRewardActionValue(value) {
     }
     throw new Error(`invalid union tag ${tag} for RewardAction`);
 }
+
+export function collectRewardActionTextKeys(value, out) {
+    switch (value.type) {
+    }
+}

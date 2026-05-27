@@ -28,6 +28,10 @@ final class ShopItem {
       dailyLimit: obj.get("daily_limit").isNull ? null : obj.get("daily_limit").asInt(),
     );
   }
+
+  void collectTextKeys(List<TextKey> out) {
+    this.price.collectTextKeys(out);
+  }
 }
 
 final class ShopItemTable extends Iterable<ShopItem> implements SoraListTable<ShopItem> {

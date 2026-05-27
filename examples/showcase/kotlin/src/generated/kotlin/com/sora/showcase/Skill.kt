@@ -15,6 +15,12 @@ data class Skill(
     val requiredItem: Int?,
     val castOrigin: Vec3,
 ) {
+    fun collectTextKeys(out: MutableList<TextKey>) {
+        this.cost.collectTextKeys(out)
+        this.effect.collectTextKeys(out)
+        this.castOrigin.collectTextKeys(out)
+    }
+
     companion object {
         fun decode(reader: SoraReader): Skill =
             Skill(

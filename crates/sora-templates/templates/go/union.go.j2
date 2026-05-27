@@ -68,3 +68,20 @@ func decode{{ union.pascal_name }}Value(input SoraValue) ({{ union.pascal_name }
         return nil, fmt.Errorf("invalid union tag %s for {{ union.pascal_name }}", tag)
     }
 }
+
+func collect{{ union.pascal_name }}TextKeys(value {{ union.pascal_name }}, out *[]TextKey) {
+    switch typed := value.(type) {
+{%- for variant in union.variants %}
+{%- if variant.has_text_keys %}
+    case {{ union.pascal_name }}{{ variant.name }}:
+{%- for field in variant.fields %}
+{%- if field.collect_text_keys %}
+        {{ field.collect_text_keys | replace("value." ~ field.name, "typed." ~ field.name) }}
+{%- endif %}
+{%- endfor %}
+{%- endif %}
+{%- endfor %}
+    default:
+        _ = typed
+    }
+}

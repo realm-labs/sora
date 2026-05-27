@@ -8,9 +8,13 @@ public final class Main {
         var bytes = Files.readAllBytes(Paths.get("..", "generated", "config.sora"));
         var bundle = SoraBundle.parse(bytes);
         var config = SoraConfig.fromSource(bundle);
+        var localePack = LocalePack.parse(Files.readAllBytes(Paths.get("..", "generated", "i18n", "zh_cn.sora-i18n")));
+        var i18n = new SoraI18n();
+        i18n.mount(config, localePack);
         var sword = config.item().get(1001);
         var swordByName = config.item().getByName("Iron Sword");
         var quest = config.quest().get(5001);
+        var achievement = config.achievement().get(14001);
         var settings = config.gameSettings().rows();
 
         check(sword.name.equals("Iron Sword"));
@@ -20,6 +24,7 @@ public final class Main {
         check(quest.title.equals("First Trial"));
         check(quest.questType == QuestType.Main);
         check(quest.rewards.size() == 2);
+        check(i18n.text(achievement.titleKey).equals("中文文本 1"));
         check(settings.startingGold == 100);
         check(config.stage().size() == 40);
         check(config.monster().size() == 80);

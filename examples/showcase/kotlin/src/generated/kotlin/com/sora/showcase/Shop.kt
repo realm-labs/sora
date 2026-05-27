@@ -7,6 +7,9 @@ data class Shop(
     val name: String,
     val currency: ResourceKind,
 ) {
+    fun collectTextKeys(out: MutableList<TextKey>) {
+    }
+
     companion object {
         fun decode(reader: SoraReader): Shop =
             Shop(

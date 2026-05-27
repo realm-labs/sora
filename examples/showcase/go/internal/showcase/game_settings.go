@@ -105,6 +105,17 @@ func decodeGameSettingsValue(input SoraValue) (GameSettings, error) {
 	return value, nil
 }
 
+func (value GameSettings) collectTextKeys(out *[]TextKey) {
+	value.SpawnPos.collectTextKeys(out)
+	for _, item := range value.SpawnPoints {
+		item.collectTextKeys(out)
+	}
+	if value.Maintenance != nil {
+		item := value.Maintenance
+		item.collectTextKeys(out)
+	}
+}
+
 const gameSettingsTableName = "GameSettings"
 
 var gameSettingsTableInfo = SoraTableInfo{

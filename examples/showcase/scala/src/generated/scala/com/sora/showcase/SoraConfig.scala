@@ -29,6 +29,56 @@ final class SoraConfig private (
   private val tableMap: Map[String, SoraTable]
 ) {
   def tables: Iterable[SoraTable] = tableMap.values
+  def validateLocalePack(pack: LocalePack): Unit = {
+    textKeys.foreach { key =>
+      pack.get(key) match {
+        case None =>
+          throw new SoraReadException(s"text key `${key.value}` is missing for locale `${pack.locale}`")
+        case Some(value) if value.isEmpty =>
+          throw new SoraReadException(s"text key `${key.value}` has empty text for locale `${pack.locale}`")
+        case Some(_) =>
+      }
+    }
+  }
+
+  private def textKeys: scala.collection.mutable.ArrayBuffer[TextKey] = {
+    val keys = scala.collection.mutable.ArrayBuffer.empty[TextKey]
+    item.values.foreach(_.collectTextKeys(keys))
+    shop.values.foreach(_.collectTextKeys(keys))
+    shopItem.values.foreach(_.collectTextKeys(keys))
+    recipe.values.foreach(_.collectTextKeys(keys))
+    gachaPool.values.foreach(_.collectTextKeys(keys))
+    gachaItem.values.foreach(_.collectTextKeys(keys))
+    equipmentSet.values.foreach(_.collectTextKeys(keys))
+    skill.values.foreach(_.collectTextKeys(keys))
+    character.values.foreach(_.collectTextKeys(keys))
+    characterSkill.values.foreach(_.collectTextKeys(keys))
+    buff.values.foreach(_.collectTextKeys(keys))
+    dropGroup.values.foreach(_.collectTextKeys(keys))
+    dropEntry.values.foreach(_.collectTextKeys(keys))
+    monster.values.foreach(_.collectTextKeys(keys))
+    stage.values.foreach(_.collectTextKeys(keys))
+    stageReward.values.foreach(_.collectTextKeys(keys))
+    dungeon.values.foreach(_.collectTextKeys(keys))
+    quest.values.foreach(_.collectTextKeys(keys))
+    questReward.values.foreach(_.collectTextKeys(keys))
+    levelExp.values.foreach(_.collectTextKeys(keys))
+    achievement.values.foreach(_.collectTextKeys(keys))
+    vipLevel.values.foreach(_.collectTextKeys(keys))
+    gameSettings.value.collectTextKeys(keys)
+    maintenanceWindow.values.foreach(_.collectTextKeys(keys))
+    mailTemplate.values.foreach(_.collectTextKeys(keys))
+    mailReward.values.foreach(_.collectTextKeys(keys))
+    dialogue.values.foreach(_.collectTextKeys(keys))
+    eventRule.values.foreach(_.collectTextKeys(keys))
+    complexRule.values.foreach(_.collectTextKeys(keys))
+    complexConditionGroup.values.foreach(_.collectTextKeys(keys))
+    complexConditionGroupEntry.values.foreach(_.collectTextKeys(keys))
+    complexRuleCondition.values.foreach(_.collectTextKeys(keys))
+    complexActionGroup.values.foreach(_.collectTextKeys(keys))
+    complexActionEntry.values.foreach(_.collectTextKeys(keys))
+    keys
+  }
 
   private def table[T <: SoraTable](name: String): T =
     tableMap.get(name) match {
@@ -155,4 +205,47 @@ object SoraConfig {
 
   def fromBytes(bytes: Array[Byte]): SoraConfig =
     fromSource(SoraBundle.parse(bytes))
+}
+final class SoraI18n extends SoraTextResolver {
+  private var activeLocale: String = SoraI18n.DefaultLocale
+  private var packs: Map[String, LocalePack] = Map.empty
+
+  def mount(config: SoraConfig, pack: LocalePack): Unit = {
+    if (pack.schemaFingerprint != SoraConfig.SchemaFingerprint) {
+      throw new SoraReadException(
+        s"locale pack schema fingerprint mismatch: generated code expects ${SoraConfig.SchemaFingerprint}, pack contains ${pack.schemaFingerprint}"
+      )
+    }
+    if (!SoraI18n.Locales.contains(pack.locale)) {
+      throw new SoraReadException(s"locale pack `${pack.locale}` is not declared by generated code")
+    }
+    config.validateLocalePack(pack)
+    packs += pack.locale -> pack
+  }
+
+  def setLocale(locale: String): Unit = {
+    if (!SoraI18n.Locales.contains(locale)) {
+      throw new SoraReadException(s"unknown locale `$locale`")
+    }
+    if (!packs.contains(locale)) {
+      throw new SoraReadException(s"locale `$locale` is not mounted")
+    }
+    activeLocale = locale
+  }
+
+  override def text(key: TextKey): String = {
+    val pack = packs.getOrElse(activeLocale, throw new SoraReadException(s"locale `$activeLocale` is not mounted"))
+    pack.get(key).getOrElse(throw new SoraReadException("active locale pack failed locale validation"))
+  }
+
+  override def format(key: TextKey, args: Map[String, Any]): String =
+    SoraText.format(text(key), args)
+}
+
+object SoraI18n {
+  val Locales: Set[String] = Set(
+    "zh_cn",
+    "en_us"
+  )
+  val DefaultLocale: String = "zh_cn"
 }

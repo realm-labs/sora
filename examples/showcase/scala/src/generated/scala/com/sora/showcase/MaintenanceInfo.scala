@@ -6,7 +6,10 @@ final case class MaintenanceInfo(
   startsAt: String,
   durationMinutes: Int,
   reason: Option[String]
-)
+) {
+  def collectTextKeys(out: scala.collection.mutable.ArrayBuffer[TextKey]): Unit = {
+  }
+}
 
 object MaintenanceInfo {
   def decode(reader: SoraReader): MaintenanceInfo =

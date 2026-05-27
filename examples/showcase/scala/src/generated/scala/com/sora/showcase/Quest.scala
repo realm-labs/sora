@@ -11,7 +11,14 @@ final case class Quest(
   startPos: Vec3,
   /** Materialized from QuestReward child rows */
   rewards: Vector[Reward]
-)
+) {
+  def collectTextKeys(out: scala.collection.mutable.ArrayBuffer[TextKey]): Unit = {
+    this.startPos.collectTextKeys(out)
+    this.rewards.foreach { item =>
+      item.collectTextKeys(out)
+    }
+  }
+}
 
 object Quest {
   def decode(reader: SoraReader): Quest =

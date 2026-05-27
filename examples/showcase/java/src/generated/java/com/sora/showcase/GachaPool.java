@@ -36,6 +36,10 @@ public final class GachaPool {
             ResourceCost.decode(obj.get("cost"))
         );
     }
+
+    void collectTextKeys(List<TextKey> out) {
+        this.cost.collectTextKeys(out);
+    }
 }
 
 final class GachaPoolTable extends java.util.AbstractMap<Integer, GachaPool> implements SoraKeyedTable<Integer, GachaPool> {

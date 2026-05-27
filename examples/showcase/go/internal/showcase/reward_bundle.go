@@ -46,3 +46,7 @@ func decodeRewardBundleValue(input SoraValue) (RewardBundle, error) {
 	}
 	return value, nil
 }
+
+func (value RewardBundle) collectTextKeys(out *[]TextKey) {
+	value.Cost.collectTextKeys(out)
+}

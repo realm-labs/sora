@@ -9,6 +9,10 @@ data class ShopItem(
     val price: ResourceCost,
     val dailyLimit: Int?,
 ) {
+    fun collectTextKeys(out: MutableList<TextKey>) {
+        this.price.collectTextKeys(out)
+    }
+
     companion object {
         fun decode(reader: SoraReader): ShopItem =
             ShopItem(

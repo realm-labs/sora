@@ -6,7 +6,13 @@ final case class ComplexActionGroup(
   id: Int,
   name: String,
   actions: Vector[RewardAction]
-)
+) {
+  def collectTextKeys(out: scala.collection.mutable.ArrayBuffer[TextKey]): Unit = {
+    this.actions.foreach { item =>
+      RewardAction.collectTextKeys(item, out)
+    }
+  }
+}
 
 object ComplexActionGroup {
   def decode(reader: SoraReader): ComplexActionGroup =

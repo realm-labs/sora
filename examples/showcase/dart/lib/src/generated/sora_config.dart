@@ -180,6 +180,122 @@ final class SoraConfig {
   }
 
   Iterable<SoraConfigTable> get tables => _tables.values.cast<SoraConfigTable>();
+  void validateLocalePack(LocalePack pack) {
+    for (final key in _textKeys()) {
+      final value = pack.get(key);
+      if (value == null) {
+        throw SoraReadException('text key `${key.value}` is missing for locale `${pack.locale}`');
+      }
+      if (value.isEmpty) {
+        throw SoraReadException('text key `${key.value}` has empty text for locale `${pack.locale}`');
+      }
+    }
+  }
+
+  List<TextKey> _textKeys() {
+    final keys = <TextKey>[];
+    for (final row in item.rows.values) {
+      row.collectTextKeys(keys);
+    }
+    for (final row in shop.rows.values) {
+      row.collectTextKeys(keys);
+    }
+    for (final row in shopItem.rows) {
+      row.collectTextKeys(keys);
+    }
+    for (final row in recipe.rows.values) {
+      row.collectTextKeys(keys);
+    }
+    for (final row in gachaPool.rows.values) {
+      row.collectTextKeys(keys);
+    }
+    for (final row in gachaItem.rows) {
+      row.collectTextKeys(keys);
+    }
+    for (final row in equipmentSet.rows.values) {
+      row.collectTextKeys(keys);
+    }
+    for (final row in skill.rows.values) {
+      row.collectTextKeys(keys);
+    }
+    for (final row in character.rows.values) {
+      row.collectTextKeys(keys);
+    }
+    for (final row in characterSkill.rows) {
+      row.collectTextKeys(keys);
+    }
+    for (final row in buff.rows.values) {
+      row.collectTextKeys(keys);
+    }
+    for (final row in dropGroup.rows.values) {
+      row.collectTextKeys(keys);
+    }
+    for (final row in dropEntry.rows) {
+      row.collectTextKeys(keys);
+    }
+    for (final row in monster.rows.values) {
+      row.collectTextKeys(keys);
+    }
+    for (final row in stage.rows.values) {
+      row.collectTextKeys(keys);
+    }
+    for (final row in stageReward.rows) {
+      row.collectTextKeys(keys);
+    }
+    for (final row in dungeon.rows.values) {
+      row.collectTextKeys(keys);
+    }
+    for (final row in quest.rows.values) {
+      row.collectTextKeys(keys);
+    }
+    for (final row in questReward.rows) {
+      row.collectTextKeys(keys);
+    }
+    for (final row in levelExp.rows.values) {
+      row.collectTextKeys(keys);
+    }
+    for (final row in achievement.rows.values) {
+      row.collectTextKeys(keys);
+    }
+    for (final row in vipLevel.rows.values) {
+      row.collectTextKeys(keys);
+    }
+    gameSettings.row.collectTextKeys(keys);
+    for (final row in maintenanceWindow.rows) {
+      row.collectTextKeys(keys);
+    }
+    for (final row in mailTemplate.rows.values) {
+      row.collectTextKeys(keys);
+    }
+    for (final row in mailReward.rows) {
+      row.collectTextKeys(keys);
+    }
+    for (final row in dialogue.rows.values) {
+      row.collectTextKeys(keys);
+    }
+    for (final row in eventRule.rows.values) {
+      row.collectTextKeys(keys);
+    }
+    for (final row in complexRule.rows.values) {
+      row.collectTextKeys(keys);
+    }
+    for (final row in complexConditionGroup.rows.values) {
+      row.collectTextKeys(keys);
+    }
+    for (final row in complexConditionGroupEntry.rows.values) {
+      row.collectTextKeys(keys);
+    }
+    for (final row in complexRuleCondition.rows.values) {
+      row.collectTextKeys(keys);
+    }
+    for (final row in complexActionGroup.rows.values) {
+      row.collectTextKeys(keys);
+    }
+    for (final row in complexActionEntry.rows.values) {
+      row.collectTextKeys(keys);
+    }
+    return keys;
+  }
 
   T _table<T extends Object>() {
     final table = _tables[T];
@@ -222,4 +338,49 @@ final class SoraConfig {
   ComplexRuleConditionTable get complexRuleCondition => _table<ComplexRuleConditionTable>();
   ComplexActionGroupTable get complexActionGroup => _table<ComplexActionGroupTable>();
   ComplexActionEntryTable get complexActionEntry => _table<ComplexActionEntryTable>();
+}
+final class SoraI18n implements SoraTextResolver {
+  static const locales = <String>{
+    'zh_cn',
+    'en_us',
+  };
+  static const defaultLocale = 'zh_cn';
+
+  String _activeLocale = defaultLocale;
+  final Map<String, LocalePack> _packs = {};
+
+  void mount(SoraConfig config, LocalePack pack) {
+    if (pack.schemaFingerprint != soraSchemaFingerprint) {
+      throw SoraReadException(
+        'locale pack schema fingerprint mismatch: generated code expects $soraSchemaFingerprint, pack contains ${pack.schemaFingerprint}',
+      );
+    }
+    if (!locales.contains(pack.locale)) {
+      throw SoraReadException('locale pack `${pack.locale}` is not declared by generated code');
+    }
+    config.validateLocalePack(pack);
+    _packs[pack.locale] = pack;
+  }
+
+  void setLocale(String locale) {
+    if (!locales.contains(locale)) {
+      throw SoraReadException('unknown locale `$locale`');
+    }
+    if (!_packs.containsKey(locale)) {
+      throw SoraReadException('locale `$locale` is not mounted');
+    }
+    _activeLocale = locale;
+  }
+
+  @override
+  String text(TextKey key) {
+    final pack = _packs[_activeLocale];
+    if (pack == null) {
+      throw SoraReadException('locale `$_activeLocale` is not mounted');
+    }
+    return pack.get(key) ?? (throw const SoraReadException('active locale pack failed locale validation'));
+  }
+
+  @override
+  String format(TextKey key, Map<String, Object> args) => formatText(text(key), args);
 }

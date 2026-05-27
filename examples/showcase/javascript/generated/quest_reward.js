@@ -25,6 +25,9 @@ export function decodeQuestRewardValue(value) {
     };
 }
 
+export function collectQuestRewardTextKeys(value, out) {
+}
+
 export class QuestRewardTable {
     static tableName = "QuestReward";
     static tableInfo = {

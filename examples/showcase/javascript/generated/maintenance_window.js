@@ -25,6 +25,9 @@ export function decodeMaintenanceWindowValue(value) {
     };
 }
 
+export function collectMaintenanceWindowTextKeys(value, out) {
+}
+
 export class MaintenanceWindowTable {
     static tableName = "MaintenanceWindow";
     static tableInfo = {

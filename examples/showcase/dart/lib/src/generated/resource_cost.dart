@@ -22,4 +22,7 @@ final class ResourceCost {
       count: obj.get("count").asInt(),
     );
   }
+
+  void collectTextKeys(List<TextKey> out) {
+  }
 }

@@ -112,6 +112,160 @@ public sealed class SoraConfig
     }
 
     public IEnumerable<ISoraTable> Tables => tables.Values;
+    internal void ValidateLocalePack(LocalePack pack)
+    {
+        foreach (var key in TextKeys())
+        {
+            var value = pack.Get(key);
+            if (value is null)
+            {
+                throw new SoraReadException($"text key `{key.Value}` is missing for locale `{pack.Locale}`");
+            }
+            if (value.Length == 0)
+            {
+                throw new SoraReadException($"text key `{key.Value}` has empty text for locale `{pack.Locale}`");
+            }
+        }
+    }
+
+    private List<TextKey> TextKeys()
+    {
+        var keys = new List<TextKey>();
+        foreach (var row in Item.Rows.Values)
+        {
+            row.CollectTextKeys(keys);
+        }
+        foreach (var row in Shop.Rows.Values)
+        {
+            row.CollectTextKeys(keys);
+        }
+        foreach (var row in ShopItem.Rows)
+        {
+            row.CollectTextKeys(keys);
+        }
+        foreach (var row in Recipe.Rows.Values)
+        {
+            row.CollectTextKeys(keys);
+        }
+        foreach (var row in GachaPool.Rows.Values)
+        {
+            row.CollectTextKeys(keys);
+        }
+        foreach (var row in GachaItem.Rows)
+        {
+            row.CollectTextKeys(keys);
+        }
+        foreach (var row in EquipmentSet.Rows.Values)
+        {
+            row.CollectTextKeys(keys);
+        }
+        foreach (var row in Skill.Rows.Values)
+        {
+            row.CollectTextKeys(keys);
+        }
+        foreach (var row in Character.Rows.Values)
+        {
+            row.CollectTextKeys(keys);
+        }
+        foreach (var row in CharacterSkill.Rows)
+        {
+            row.CollectTextKeys(keys);
+        }
+        foreach (var row in Buff.Rows.Values)
+        {
+            row.CollectTextKeys(keys);
+        }
+        foreach (var row in DropGroup.Rows.Values)
+        {
+            row.CollectTextKeys(keys);
+        }
+        foreach (var row in DropEntry.Rows)
+        {
+            row.CollectTextKeys(keys);
+        }
+        foreach (var row in Monster.Rows.Values)
+        {
+            row.CollectTextKeys(keys);
+        }
+        foreach (var row in Stage.Rows.Values)
+        {
+            row.CollectTextKeys(keys);
+        }
+        foreach (var row in StageReward.Rows)
+        {
+            row.CollectTextKeys(keys);
+        }
+        foreach (var row in Dungeon.Rows.Values)
+        {
+            row.CollectTextKeys(keys);
+        }
+        foreach (var row in Quest.Rows.Values)
+        {
+            row.CollectTextKeys(keys);
+        }
+        foreach (var row in QuestReward.Rows)
+        {
+            row.CollectTextKeys(keys);
+        }
+        foreach (var row in LevelExp.Rows.Values)
+        {
+            row.CollectTextKeys(keys);
+        }
+        foreach (var row in Achievement.Rows.Values)
+        {
+            row.CollectTextKeys(keys);
+        }
+        foreach (var row in VipLevel.Rows.Values)
+        {
+            row.CollectTextKeys(keys);
+        }
+        GameSettings.Row.CollectTextKeys(keys);
+        foreach (var row in MaintenanceWindow.Rows)
+        {
+            row.CollectTextKeys(keys);
+        }
+        foreach (var row in MailTemplate.Rows.Values)
+        {
+            row.CollectTextKeys(keys);
+        }
+        foreach (var row in MailReward.Rows)
+        {
+            row.CollectTextKeys(keys);
+        }
+        foreach (var row in Dialogue.Rows.Values)
+        {
+            row.CollectTextKeys(keys);
+        }
+        foreach (var row in EventRule.Rows.Values)
+        {
+            row.CollectTextKeys(keys);
+        }
+        foreach (var row in ComplexRule.Rows.Values)
+        {
+            row.CollectTextKeys(keys);
+        }
+        foreach (var row in ComplexConditionGroup.Rows.Values)
+        {
+            row.CollectTextKeys(keys);
+        }
+        foreach (var row in ComplexConditionGroupEntry.Rows.Values)
+        {
+            row.CollectTextKeys(keys);
+        }
+        foreach (var row in ComplexRuleCondition.Rows.Values)
+        {
+            row.CollectTextKeys(keys);
+        }
+        foreach (var row in ComplexActionGroup.Rows.Values)
+        {
+            row.CollectTextKeys(keys);
+        }
+        foreach (var row in ComplexActionEntry.Rows.Values)
+        {
+            row.CollectTextKeys(keys);
+        }
+        return keys;
+    }
 
     private T Table<T>(string name) where T : class, ISoraTable
     {
@@ -188,5 +342,60 @@ public sealed class SoraConfig
             throw new SoraReadException($"expected singleton table `{name}` to contain exactly 1 row, got {rows.Count}");
         }
         return rows[0];
+    }
+}
+public sealed class SoraI18n : ISoraTextResolver
+{
+    public static readonly IReadOnlySet<string> Locales = new HashSet<string>
+    {
+        "zh_cn",
+        "en_us",
+    };
+    public const string DefaultLocale = "zh_cn";
+
+    private string activeLocale = DefaultLocale;
+    private readonly Dictionary<string, LocalePack> packs = new();
+
+    public void Mount(SoraConfig config, LocalePack pack)
+    {
+        if (pack.SchemaFingerprint != SoraConfig.SchemaFingerprint)
+        {
+            throw new SoraReadException(
+                $"locale pack schema fingerprint mismatch: generated code expects {SoraConfig.SchemaFingerprint}, pack contains {pack.SchemaFingerprint}"
+            );
+        }
+        if (!Locales.Contains(pack.Locale))
+        {
+            throw new SoraReadException($"locale pack `{pack.Locale}` is not declared by generated code");
+        }
+        config.ValidateLocalePack(pack);
+        packs[pack.Locale] = pack;
+    }
+
+    public void SetLocale(string locale)
+    {
+        if (!Locales.Contains(locale))
+        {
+            throw new SoraReadException($"unknown locale `{locale}`");
+        }
+        if (!packs.ContainsKey(locale))
+        {
+            throw new SoraReadException($"locale `{locale}` is not mounted");
+        }
+        activeLocale = locale;
+    }
+
+    public string Text(TextKey key)
+    {
+        if (!packs.TryGetValue(activeLocale, out var pack))
+        {
+            throw new SoraReadException($"locale `{activeLocale}` is not mounted");
+        }
+        return pack.Get(key) ?? throw new SoraReadException("active locale pack failed locale validation");
+    }
+
+    public string Format(TextKey key, IReadOnlyDictionary<string, object> args)
+    {
+        return SoraText.Format(Text(key), args);
     }
 }

@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
-from .sora_runtime import SoraReader
+from .sora_runtime import SoraReader, TextKey
 from .sora_runtime import (
     SoraConfigTable,
     SoraIndexInfo,
@@ -39,6 +39,9 @@ class Shop:
             name=name,
             currency=currency,
         )
+
+    def collect_text_keys(self, out: list[TextKey]) -> None:
+        pass
 
 
 class ShopTable(SoraConfigTable):

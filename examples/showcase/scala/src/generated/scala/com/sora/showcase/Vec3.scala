@@ -6,7 +6,10 @@ final case class Vec3(
   x: Float,
   y: Float,
   z: Float
-)
+) {
+  def collectTextKeys(out: scala.collection.mutable.ArrayBuffer[TextKey]): Unit = {
+  }
+}
 
 object Vec3 {
   def decode(reader: SoraReader): Vec3 =

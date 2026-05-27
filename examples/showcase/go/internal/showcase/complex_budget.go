@@ -46,3 +46,10 @@ func decodeComplexBudgetValue(input SoraValue) (ComplexBudget, error) {
 	}
 	return value, nil
 }
+
+func (value ComplexBudget) collectTextKeys(out *[]TextKey) {
+	value.Fixed.collectTextKeys(out)
+	for _, item := range value.Random {
+		item.collectTextKeys(out)
+	}
+}

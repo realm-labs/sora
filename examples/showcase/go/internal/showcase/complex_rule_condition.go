@@ -47,6 +47,10 @@ func decodeComplexRuleConditionValue(input SoraValue) (ComplexRuleCondition, err
 	return value, nil
 }
 
+func (value ComplexRuleCondition) collectTextKeys(out *[]TextKey) {
+	collectEventConditionTextKeys(value.Value, out)
+}
+
 const complexRuleConditionTableName = "ComplexRuleCondition"
 
 var complexRuleConditionTableInfo = SoraTableInfo{

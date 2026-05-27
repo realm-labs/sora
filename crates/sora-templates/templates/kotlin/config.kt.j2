@@ -54,6 +54,38 @@ class SoraConfig private constructor(
     val tables: Collection<SoraTable<*>>
         get() = tableMap.values
 
+{%- if model.has_localization %}
+    fun validateLocalePack(pack: LocalePack) {
+        for (key in textKeys()) {
+            val value = pack.get(key)
+            if (value == null) {
+                throw SoraReadException("text key `${key.value}` is missing for locale `${pack.locale}`")
+            }
+            if (value.isEmpty()) {
+                throw SoraReadException("text key `${key.value}` has empty text for locale `${pack.locale}`")
+            }
+        }
+    }
+
+    private fun textKeys(): List<TextKey> {
+        val keys = ArrayList<TextKey>()
+{%- for table in model.tables %}
+{%- if table.mode == "singleton" %}
+        {{ table.camel_name }}.row.collectTextKeys(keys)
+{%- elif table.mode == "map" %}
+        for (row in {{ table.camel_name }}.rows.values) {
+            row.collectTextKeys(keys)
+        }
+{%- else %}
+        for (row in {{ table.camel_name }}.rows) {
+            row.collectTextKeys(keys)
+        }
+{%- endif %}
+{%- endfor %}
+        return keys
+    }
+
+{%- endif %}
     private inline fun <reified T : SoraTable<*>> table(name: String): T =
         tableMap[name] as? T
             ?: throw SoraReadException("generated SoraConfig is missing table `$name` or has an unexpected table type")
@@ -78,3 +110,50 @@ class SoraConfig private constructor(
         }
     }
 }
+
+{%- if model.has_localization %}
+class SoraI18n : SoraTextResolver {
+    private var activeLocale: String = DEFAULT_LOCALE
+    private val packs = LinkedHashMap<String, LocalePack>()
+
+    fun mount(config: SoraConfig, pack: LocalePack) {
+        if (pack.schemaFingerprint != SORA_SCHEMA_FINGERPRINT) {
+            throw SoraReadException(
+                "locale pack schema fingerprint mismatch: generated code expects $SORA_SCHEMA_FINGERPRINT, pack contains ${pack.schemaFingerprint}"
+            )
+        }
+        if (pack.locale !in LOCALES) {
+            throw SoraReadException("locale pack `${pack.locale}` is not declared by generated code")
+        }
+        config.validateLocalePack(pack)
+        packs[pack.locale] = pack
+    }
+
+    fun setLocale(locale: String) {
+        if (locale !in LOCALES) {
+            throw SoraReadException("unknown locale `$locale`")
+        }
+        if (locale !in packs) {
+            throw SoraReadException("locale `$locale` is not mounted")
+        }
+        activeLocale = locale
+    }
+
+    override fun text(key: TextKey): String {
+        val pack = packs[activeLocale] ?: throw SoraReadException("locale `$activeLocale` is not mounted")
+        return pack.get(key) ?: throw SoraReadException("active locale pack failed locale validation")
+    }
+
+    override fun format(key: TextKey, args: Map<String, Any>): String =
+        formatText(text(key), args)
+
+    companion object {
+        val LOCALES: Set<String> = setOf(
+{%- for locale in model.locales %}
+            "{{ locale }}"{% if not loop.last %},{% endif %}
+{%- endfor %}
+        )
+        const val DEFAULT_LOCALE: String = "{{ model.default_locale }}"
+    }
+}
+{%- endif %}

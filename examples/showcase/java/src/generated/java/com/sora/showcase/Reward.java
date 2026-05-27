@@ -2,6 +2,7 @@
 
 package com.sora.showcase;
 
+import java.util.List;
 public final class Reward {
     public final Integer itemId;
     public final Integer count;
@@ -27,5 +28,8 @@ public final class Reward {
             obj.get("item_id").asInt(),
             obj.get("count").asInt()
         );
+    }
+
+    void collectTextKeys(List<TextKey> out) {
     }
 }

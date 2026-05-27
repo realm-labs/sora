@@ -13,6 +13,14 @@ data class ComplexRule(
     /** Nested tuple, tuple_list, split, and map parsers in one cell */
     val budget: ComplexBudget,
 ) {
+    fun collectTextKeys(out: MutableList<TextKey>) {
+        EventCondition.collectTextKeys(this.rootCondition, out)
+        for (item in this.actions) {
+            RewardAction.collectTextKeys(item, out)
+        }
+        this.budget.collectTextKeys(out)
+    }
+
     companion object {
         fun decode(reader: SoraReader): ComplexRule =
             ComplexRule(

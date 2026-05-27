@@ -8,6 +8,12 @@ data class Buff(
     val duration: Float,
     val modifiers: List<StatModifier>,
 ) {
+    fun collectTextKeys(out: MutableList<TextKey>) {
+        for (item in this.modifiers) {
+            item.collectTextKeys(out)
+        }
+    }
+
     companion object {
         fun decode(reader: SoraReader): Buff =
             Buff(

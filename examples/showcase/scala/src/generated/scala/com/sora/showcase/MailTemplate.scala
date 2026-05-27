@@ -8,7 +8,15 @@ final case class MailTemplate(
   titleKey: TextKey,
   bodyKey: TextKey,
   rewards: Vector[Reward]
-)
+) {
+  def collectTextKeys(out: scala.collection.mutable.ArrayBuffer[TextKey]): Unit = {
+    out += this.titleKey
+    out += this.bodyKey
+    this.rewards.foreach { item =>
+      item.collectTextKeys(out)
+    }
+  }
+}
 
 object MailTemplate {
   def decode(reader: SoraReader): MailTemplate =

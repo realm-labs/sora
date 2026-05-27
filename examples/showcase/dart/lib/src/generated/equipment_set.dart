@@ -25,6 +25,10 @@ final class EquipmentSet {
       bonusEffect: SkillEffect.decode(obj.get("bonus_effect")),
     );
   }
+
+  void collectTextKeys(List<TextKey> out) {
+    this.bonusEffect.collectTextKeys(out);
+  }
 }
 
 final class EquipmentSetTable extends Iterable<EquipmentSet> implements SoraKeyedTable<int, EquipmentSet> {

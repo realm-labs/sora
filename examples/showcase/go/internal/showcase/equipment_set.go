@@ -56,6 +56,10 @@ func decodeEquipmentSetValue(input SoraValue) (EquipmentSet, error) {
 	return value, nil
 }
 
+func (value EquipmentSet) collectTextKeys(out *[]TextKey) {
+	value.BonusEffect.collectTextKeys(out)
+}
+
 const equipmentSetTableName = "EquipmentSet"
 
 var equipmentSetTableInfo = SoraTableInfo{

@@ -3,9 +3,11 @@
 package {{ model.package }};
 
 import java.util.Collection;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 
 enum SoraTableShape {
@@ -69,6 +71,39 @@ public final class SoraConfig {
         return tables.values();
     }
 
+{%- if model.has_localization %}
+    void validateLocalePack(LocalePack pack) {
+        for (var key : textKeys()) {
+            var value = pack.get(key);
+            if (value == null) {
+                throw new SoraReadException("text key `" + key.value + "` is missing for locale `" + pack.locale() + "`");
+            }
+            if (value.isEmpty()) {
+                throw new SoraReadException("text key `" + key.value + "` has empty text for locale `" + pack.locale() + "`");
+            }
+        }
+    }
+
+    private List<TextKey> textKeys() {
+        var keys = new ArrayList<TextKey>();
+{%- for table in model.tables %}
+{%- if table.mode == "singleton" %}
+        {{ table.camel_name }}().row().collectTextKeys(keys);
+{%- elif table.mode == "map" %}
+        for (var row : {{ table.camel_name }}().rows().values()) {
+            row.collectTextKeys(keys);
+        }
+{%- else %}
+        for (var row : {{ table.camel_name }}().rows()) {
+            row.collectTextKeys(keys);
+        }
+{%- endif %}
+{%- endfor %}
+        return keys;
+    }
+
+{%- endif %}
+
     private <T extends SoraTable<?>> T table(String name, Class<T> type) {
         var table = tables.get(name);
         if (type.isInstance(table)) {
@@ -118,3 +153,59 @@ public final class SoraConfig {
         return rows.get(0);
     }
 }
+
+{%- if model.has_localization %}
+final class SoraI18n implements SoraTextResolver {
+    static final Set<String> LOCALES = Set.of(
+{%- for locale in model.locales %}
+        "{{ locale }}"{% if not loop.last %},{% endif %}
+{%- endfor %}
+    );
+    static final String DEFAULT_LOCALE = "{{ model.default_locale }}";
+
+    private String activeLocale = DEFAULT_LOCALE;
+    private final Map<String, LocalePack> packs = new HashMap<>();
+
+    void mount(SoraConfig config, LocalePack pack) {
+        if (!pack.schemaFingerprint().equals(SoraConfig.SCHEMA_FINGERPRINT)) {
+            throw new SoraReadException(
+                "locale pack schema fingerprint mismatch: generated code expects "
+                    + SoraConfig.SCHEMA_FINGERPRINT + ", pack contains " + pack.schemaFingerprint()
+            );
+        }
+        if (!LOCALES.contains(pack.locale())) {
+            throw new SoraReadException("locale pack `" + pack.locale() + "` is not declared by generated code");
+        }
+        config.validateLocalePack(pack);
+        packs.put(pack.locale(), pack);
+    }
+
+    void setLocale(String locale) {
+        if (!LOCALES.contains(locale)) {
+            throw new SoraReadException("unknown locale `" + locale + "`");
+        }
+        if (!packs.containsKey(locale)) {
+            throw new SoraReadException("locale `" + locale + "` is not mounted");
+        }
+        activeLocale = locale;
+    }
+
+    @Override
+    public String text(TextKey key) {
+        var pack = packs.get(activeLocale);
+        if (pack == null) {
+            throw new SoraReadException("locale `" + activeLocale + "` is not mounted");
+        }
+        var value = pack.get(key);
+        if (value == null) {
+            throw new SoraReadException("active locale pack failed locale validation");
+        }
+        return value;
+    }
+
+    @Override
+    public String format(TextKey key, Map<String, ?> args) {
+        return SoraText.format(text(key), args);
+    }
+}
+{%- endif %}

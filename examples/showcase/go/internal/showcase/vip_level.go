@@ -47,6 +47,10 @@ func decodeVipLevelValue(input SoraValue) (VipLevel, error) {
 	return value, nil
 }
 
+func (value VipLevel) collectTextKeys(out *[]TextKey) {
+	value.Cost.collectTextKeys(out)
+}
+
 const vipLevelTableName = "VipLevel"
 
 var vipLevelTableInfo = SoraTableInfo{

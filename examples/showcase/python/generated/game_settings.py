@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
-from .sora_runtime import SoraReader
+from .sora_runtime import SoraReader, TextKey
 from .sora_runtime import (
     SoraConfigTable,
     SoraIndexInfo,
@@ -63,6 +63,14 @@ class GameSettings:
             spawn_points=spawn_points,
             maintenance=maintenance,
         )
+
+    def collect_text_keys(self, out: list[TextKey]) -> None:
+        self.spawn_pos.collect_text_keys(out)
+        for item in self.spawn_points:
+            item.collect_text_keys(out)
+        if self.maintenance is not None:
+            item = self.maintenance
+            item.collect_text_keys(out)
 
 
 class GameSettingsTable(SoraConfigTable):

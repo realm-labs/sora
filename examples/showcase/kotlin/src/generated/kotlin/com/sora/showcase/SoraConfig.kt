@@ -53,7 +53,122 @@ class SoraConfig private constructor(
 ) {
     val tables: Collection<SoraTable<*>>
         get() = tableMap.values
+    fun validateLocalePack(pack: LocalePack) {
+        for (key in textKeys()) {
+            val value = pack.get(key)
+            if (value == null) {
+                throw SoraReadException("text key `${key.value}` is missing for locale `${pack.locale}`")
+            }
+            if (value.isEmpty()) {
+                throw SoraReadException("text key `${key.value}` has empty text for locale `${pack.locale}`")
+            }
+        }
+    }
 
+    private fun textKeys(): List<TextKey> {
+        val keys = ArrayList<TextKey>()
+        for (row in item.rows.values) {
+            row.collectTextKeys(keys)
+        }
+        for (row in shop.rows.values) {
+            row.collectTextKeys(keys)
+        }
+        for (row in shopItem.rows) {
+            row.collectTextKeys(keys)
+        }
+        for (row in recipe.rows.values) {
+            row.collectTextKeys(keys)
+        }
+        for (row in gachaPool.rows.values) {
+            row.collectTextKeys(keys)
+        }
+        for (row in gachaItem.rows) {
+            row.collectTextKeys(keys)
+        }
+        for (row in equipmentSet.rows.values) {
+            row.collectTextKeys(keys)
+        }
+        for (row in skill.rows.values) {
+            row.collectTextKeys(keys)
+        }
+        for (row in character.rows.values) {
+            row.collectTextKeys(keys)
+        }
+        for (row in characterSkill.rows) {
+            row.collectTextKeys(keys)
+        }
+        for (row in buff.rows.values) {
+            row.collectTextKeys(keys)
+        }
+        for (row in dropGroup.rows.values) {
+            row.collectTextKeys(keys)
+        }
+        for (row in dropEntry.rows) {
+            row.collectTextKeys(keys)
+        }
+        for (row in monster.rows.values) {
+            row.collectTextKeys(keys)
+        }
+        for (row in stage.rows.values) {
+            row.collectTextKeys(keys)
+        }
+        for (row in stageReward.rows) {
+            row.collectTextKeys(keys)
+        }
+        for (row in dungeon.rows.values) {
+            row.collectTextKeys(keys)
+        }
+        for (row in quest.rows.values) {
+            row.collectTextKeys(keys)
+        }
+        for (row in questReward.rows) {
+            row.collectTextKeys(keys)
+        }
+        for (row in levelExp.rows.values) {
+            row.collectTextKeys(keys)
+        }
+        for (row in achievement.rows.values) {
+            row.collectTextKeys(keys)
+        }
+        for (row in vipLevel.rows.values) {
+            row.collectTextKeys(keys)
+        }
+        gameSettings.row.collectTextKeys(keys)
+        for (row in maintenanceWindow.rows) {
+            row.collectTextKeys(keys)
+        }
+        for (row in mailTemplate.rows.values) {
+            row.collectTextKeys(keys)
+        }
+        for (row in mailReward.rows) {
+            row.collectTextKeys(keys)
+        }
+        for (row in dialogue.rows.values) {
+            row.collectTextKeys(keys)
+        }
+        for (row in eventRule.rows.values) {
+            row.collectTextKeys(keys)
+        }
+        for (row in complexRule.rows.values) {
+            row.collectTextKeys(keys)
+        }
+        for (row in complexConditionGroup.rows.values) {
+            row.collectTextKeys(keys)
+        }
+        for (row in complexConditionGroupEntry.rows.values) {
+            row.collectTextKeys(keys)
+        }
+        for (row in complexRuleCondition.rows.values) {
+            row.collectTextKeys(keys)
+        }
+        for (row in complexActionGroup.rows.values) {
+            row.collectTextKeys(keys)
+        }
+        for (row in complexActionEntry.rows.values) {
+            row.collectTextKeys(keys)
+        }
+        return keys
+    }
     private inline fun <reified T : SoraTable<*>> table(name: String): T =
         tableMap[name] as? T
             ?: throw SoraReadException("generated SoraConfig is missing table `$name` or has an unexpected table type")
@@ -169,5 +284,48 @@ class SoraConfig private constructor(
             tables[ComplexActionEntryTable.NAME] = ComplexActionEntryTable.decode(source)
             return SoraConfig(tables)
         }
+    }
+}
+class SoraI18n : SoraTextResolver {
+    private var activeLocale: String = DEFAULT_LOCALE
+    private val packs = LinkedHashMap<String, LocalePack>()
+
+    fun mount(config: SoraConfig, pack: LocalePack) {
+        if (pack.schemaFingerprint != SORA_SCHEMA_FINGERPRINT) {
+            throw SoraReadException(
+                "locale pack schema fingerprint mismatch: generated code expects $SORA_SCHEMA_FINGERPRINT, pack contains ${pack.schemaFingerprint}"
+            )
+        }
+        if (pack.locale !in LOCALES) {
+            throw SoraReadException("locale pack `${pack.locale}` is not declared by generated code")
+        }
+        config.validateLocalePack(pack)
+        packs[pack.locale] = pack
+    }
+
+    fun setLocale(locale: String) {
+        if (locale !in LOCALES) {
+            throw SoraReadException("unknown locale `$locale`")
+        }
+        if (locale !in packs) {
+            throw SoraReadException("locale `$locale` is not mounted")
+        }
+        activeLocale = locale
+    }
+
+    override fun text(key: TextKey): String {
+        val pack = packs[activeLocale] ?: throw SoraReadException("locale `$activeLocale` is not mounted")
+        return pack.get(key) ?: throw SoraReadException("active locale pack failed locale validation")
+    }
+
+    override fun format(key: TextKey, args: Map<String, Any>): String =
+        formatText(text(key), args)
+
+    companion object {
+        val LOCALES: Set<String> = setOf(
+            "zh_cn",
+            "en_us"
+        )
+        const val DEFAULT_LOCALE: String = "zh_cn"
     }
 }

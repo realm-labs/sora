@@ -36,6 +36,10 @@ public final class VipLevel {
             obj.get("perks").asList(item -> item.asString())
         );
     }
+
+    void collectTextKeys(List<TextKey> out) {
+        this.cost.collectTextKeys(out);
+    }
 }
 
 final class VipLevelTable extends java.util.AbstractMap<Integer, VipLevel> implements SoraKeyedTable<Integer, VipLevel> {

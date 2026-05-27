@@ -41,6 +41,10 @@ public final class EquipmentSet {
             SkillEffect.decode(obj.get("bonus_effect"))
         );
     }
+
+    void collectTextKeys(List<TextKey> out) {
+        this.bonusEffect.collectTextKeys(out);
+    }
 }
 
 final class EquipmentSetTable extends java.util.AbstractMap<Integer, EquipmentSet> implements SoraKeyedTable<Integer, EquipmentSet> {

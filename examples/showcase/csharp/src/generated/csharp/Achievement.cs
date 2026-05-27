@@ -34,6 +34,12 @@ public sealed record Achievement(
             ResourceCost.Decode(obj.Get("reward"))
         );
     }
+
+    internal void CollectTextKeys(List<TextKey> keys)
+    {
+        keys.Add(this.TitleKey);
+        this.Reward.CollectTextKeys(keys);
+    }
 }
 
 public sealed class AchievementTable : ISoraKeyedTable<int, Achievement>

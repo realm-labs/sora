@@ -12,6 +12,13 @@ data class Quest(
     /** Materialized from QuestReward child rows */
     val rewards: List<Reward>,
 ) {
+    fun collectTextKeys(out: MutableList<TextKey>) {
+        this.startPos.collectTextKeys(out)
+        for (item in this.rewards) {
+            item.collectTextKeys(out)
+        }
+    }
+
     companion object {
         fun decode(reader: SoraReader): Quest =
             Quest(

@@ -5,7 +5,10 @@ package com.sora.showcase
 final case class DropGroup(
   id: Int,
   name: String
-)
+) {
+  def collectTextKeys(out: scala.collection.mutable.ArrayBuffer[TextKey]): Unit = {
+  }
+}
 
 object DropGroup {
   def decode(reader: SoraReader): DropGroup =

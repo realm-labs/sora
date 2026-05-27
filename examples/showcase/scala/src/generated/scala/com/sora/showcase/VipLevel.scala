@@ -6,7 +6,11 @@ final case class VipLevel(
   level: Int,
   cost: ResourceCost,
   perks: Vector[String]
-)
+) {
+  def collectTextKeys(out: scala.collection.mutable.ArrayBuffer[TextKey]): Unit = {
+    this.cost.collectTextKeys(out)
+  }
+}
 
 object VipLevel {
   def decode(reader: SoraReader): VipLevel =

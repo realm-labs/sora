@@ -8,7 +8,10 @@ final case class DropEntry(
   itemId: Int,
   count: Int,
   weight: Float
-)
+) {
+  def collectTextKeys(out: scala.collection.mutable.ArrayBuffer[TextKey]): Unit = {
+  }
+}
 
 object DropEntry {
   def decode(reader: SoraReader): DropEntry =

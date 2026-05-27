@@ -5,6 +5,8 @@ import 'runtime.dart';
 sealed class EventCondition {
   const EventCondition();
 
+  void collectTextKeys(List<TextKey> out) {}
+
   static EventCondition decode(SoraValue value) {
     final obj = value.asObject();
     final tag = obj.get('type').asString();
@@ -42,6 +44,10 @@ final class EventConditionLevelAtLeast extends EventCondition {
   const EventConditionLevelAtLeast({
     required this.level,
   });
+
+  @override
+  void collectTextKeys(List<TextKey> out) {
+  }
 }
 
 final class EventConditionQuestCompleted extends EventCondition {
@@ -50,6 +56,10 @@ final class EventConditionQuestCompleted extends EventCondition {
   const EventConditionQuestCompleted({
     required this.questId,
   });
+
+  @override
+  void collectTextKeys(List<TextKey> out) {
+  }
 }
 
 final class EventConditionHasItem extends EventCondition {
@@ -60,6 +70,10 @@ final class EventConditionHasItem extends EventCondition {
     required this.itemId,
     required this.count,
   });
+
+  @override
+  void collectTextKeys(List<TextKey> out) {
+  }
 }
 
 final class EventConditionAllConditions extends EventCondition {
@@ -68,6 +82,10 @@ final class EventConditionAllConditions extends EventCondition {
   const EventConditionAllConditions({
     required this.conditionGroupId,
   });
+
+  @override
+  void collectTextKeys(List<TextKey> out) {
+  }
 }
 
 final class EventConditionAnyCondition extends EventCondition {
@@ -76,4 +94,8 @@ final class EventConditionAnyCondition extends EventCondition {
   const EventConditionAnyCondition({
     required this.conditionGroupId,
   });
+
+  @override
+  void collectTextKeys(List<TextKey> out) {
+  }
 }

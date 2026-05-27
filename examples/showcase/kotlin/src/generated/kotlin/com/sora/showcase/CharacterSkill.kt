@@ -7,6 +7,9 @@ data class CharacterSkill(
     val skillId: Int,
     val unlockLevel: Int,
 ) {
+    fun collectTextKeys(out: MutableList<TextKey>) {
+    }
+
     companion object {
         fun decode(reader: SoraReader): CharacterSkill =
             CharacterSkill(

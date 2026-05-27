@@ -18,6 +18,9 @@ final class DropGroup {
       name: obj.get("name").asString(),
     );
   }
+
+  void collectTextKeys(List<TextKey> out) {
+  }
 }
 
 final class DropGroupTable extends Iterable<DropGroup> implements SoraKeyedTable<int, DropGroup> {

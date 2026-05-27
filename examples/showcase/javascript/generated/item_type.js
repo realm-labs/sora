@@ -31,3 +31,5 @@ export function decodeItemTypeValue(value) {
     }
     return name;
 }
+
+export function collectItemTypeTextKeys(_value, _out) {}

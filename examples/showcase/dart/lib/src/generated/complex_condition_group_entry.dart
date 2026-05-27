@@ -25,6 +25,10 @@ final class ComplexConditionGroupEntry {
       value: EventCondition.decode(obj.get("value")),
     );
   }
+
+  void collectTextKeys(List<TextKey> out) {
+    this.value.collectTextKeys(out);
+  }
 }
 
 final class ComplexConditionGroupEntryTable extends Iterable<ComplexConditionGroupEntry> implements SoraKeyedTable<int, ComplexConditionGroupEntry> {

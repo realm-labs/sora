@@ -25,6 +25,10 @@ final class Dungeon {
       entryCost: ResourceCost.decode(obj.get("entry_cost")),
     );
   }
+
+  void collectTextKeys(List<TextKey> out) {
+    this.entryCost.collectTextKeys(out);
+  }
 }
 
 final class DungeonTable extends Iterable<Dungeon> implements SoraKeyedTable<int, Dungeon> {

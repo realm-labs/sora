@@ -47,6 +47,9 @@ func decodeLevelExpValue(input SoraValue) (LevelExp, error) {
 	return value, nil
 }
 
+func (value LevelExp) collectTextKeys(out *[]TextKey) {
+}
+
 const levelExpTableName = "LevelExp"
 
 var levelExpTableInfo = SoraTableInfo{

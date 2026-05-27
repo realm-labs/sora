@@ -22,4 +22,7 @@ final class StatModifier {
       isPercent: obj.get("is_percent").asBool(),
     );
   }
+
+  void collectTextKeys(List<TextKey> out) {
+  }
 }

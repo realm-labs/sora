@@ -7,7 +7,14 @@ final case class EventRule(
   name: String,
   condition: EventCondition,
   actions: Vector[RewardAction]
-)
+) {
+  def collectTextKeys(out: scala.collection.mutable.ArrayBuffer[TextKey]): Unit = {
+    EventCondition.collectTextKeys(this.condition, out)
+    this.actions.foreach { item =>
+      RewardAction.collectTextKeys(item, out)
+    }
+  }
+}
 
 object EventRule {
   def decode(reader: SoraReader): EventRule =

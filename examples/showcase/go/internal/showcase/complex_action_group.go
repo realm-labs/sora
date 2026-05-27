@@ -47,6 +47,12 @@ func decodeComplexActionGroupValue(input SoraValue) (ComplexActionGroup, error) 
 	return value, nil
 }
 
+func (value ComplexActionGroup) collectTextKeys(out *[]TextKey) {
+	for _, item := range value.Actions {
+		collectRewardActionTextKeys(item, out)
+	}
+}
+
 const complexActionGroupTableName = "ComplexActionGroup"
 
 var complexActionGroupTableInfo = SoraTableInfo{

@@ -7,6 +7,9 @@ data class SkillEffect(
     val power: Int,
     val radius: Float,
 ) {
+    fun collectTextKeys(out: MutableList<TextKey>) {
+    }
+
     companion object {
         fun decode(reader: SoraReader): SkillEffect =
             SkillEffect(

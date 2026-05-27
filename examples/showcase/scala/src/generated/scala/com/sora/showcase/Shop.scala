@@ -6,7 +6,10 @@ final case class Shop(
   id: Int,
   name: String,
   currency: ResourceKind
-)
+) {
+  def collectTextKeys(out: scala.collection.mutable.ArrayBuffer[TextKey]): Unit = {
+  }
+}
 
 object Shop {
   def decode(reader: SoraReader): Shop =

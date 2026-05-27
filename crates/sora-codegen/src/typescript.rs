@@ -111,7 +111,7 @@ mod tests {
         assert!(item.contains("import type { ItemType } from \"./item_type.js\";"));
         assert!(
             item.contains(
-                "import { decodeItemType, decodeItemTypeValue } from \"./item_type.js\";"
+                "import { collectItemTypeTextKeys, decodeItemType, decodeItemTypeValue } from \"./item_type.js\";"
             )
         );
         assert!(item.contains("largeId: reader.readI64()"));

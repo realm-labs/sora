@@ -39,6 +39,9 @@ class Dialogue:
             lines=lines,
         )
 
+    def collect_text_keys(self, out: list[TextKey]) -> None:
+        out.append(self.speaker_key)
+
 
 class DialogueTable(SoraConfigTable):
     NAME = "Dialogue"

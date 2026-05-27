@@ -48,6 +48,12 @@ class MailTemplate:
             rewards=rewards,
         )
 
+    def collect_text_keys(self, out: list[TextKey]) -> None:
+        out.append(self.title_key)
+        out.append(self.body_key)
+        for item in self.rewards:
+            item.collect_text_keys(out)
+
 
 class MailTemplateTable(SoraConfigTable):
     NAME = "MailTemplate"

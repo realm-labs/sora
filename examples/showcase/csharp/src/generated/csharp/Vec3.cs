@@ -31,4 +31,8 @@ public sealed record Vec3(
             obj.Get("z").AsFloat()
         );
     }
+
+    internal void CollectTextKeys(List<TextKey> keys)
+    {
+    }
 }

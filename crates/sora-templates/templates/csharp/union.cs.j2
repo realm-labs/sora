@@ -49,4 +49,20 @@ public abstract record {{ union.pascal_name }}
             var tag => throw new SoraReadException($"invalid union tag `{tag}` for {{ union.pascal_name }}"),
         };
     }
+
+    internal static void CollectTextKeys({{ union.pascal_name }} value, List<TextKey> keys)
+    {
+{%- for variant in union.variants %}
+{%- if variant.has_text_keys %}
+        if (value is {{ variant.name }} typed)
+        {
+{%- for field in variant.fields %}
+{%- if field.collect_text_keys %}
+{{ field.collect_text_keys | replace("this." ~ field.name, "typed." ~ field.name) }}
+{%- endif %}
+{%- endfor %}
+        }
+{%- endif %}
+{%- endfor %}
+    }
 }

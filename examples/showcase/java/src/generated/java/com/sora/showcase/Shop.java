@@ -36,6 +36,9 @@ public final class Shop {
             ResourceKind.decode(obj.get("currency"))
         );
     }
+
+    void collectTextKeys(List<TextKey> out) {
+    }
 }
 
 final class ShopTable extends java.util.AbstractMap<Integer, Shop> implements SoraKeyedTable<Integer, Shop> {

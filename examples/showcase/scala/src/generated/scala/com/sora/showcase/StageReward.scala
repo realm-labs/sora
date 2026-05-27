@@ -7,7 +7,10 @@ final case class StageReward(
   seq: Int,
   itemId: Int,
   count: Int
-)
+) {
+  def collectTextKeys(out: scala.collection.mutable.ArrayBuffer[TextKey]): Unit = {
+  }
+}
 
 object StageReward {
   def decode(reader: SoraReader): StageReward =

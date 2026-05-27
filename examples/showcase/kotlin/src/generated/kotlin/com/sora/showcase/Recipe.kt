@@ -7,6 +7,12 @@ data class Recipe(
     val resultItem: Int,
     val materials: List<ResourceCost>,
 ) {
+    fun collectTextKeys(out: MutableList<TextKey>) {
+        for (item in this.materials) {
+            item.collectTextKeys(out)
+        }
+    }
+
     companion object {
         fun decode(reader: SoraReader): Recipe =
             Recipe(

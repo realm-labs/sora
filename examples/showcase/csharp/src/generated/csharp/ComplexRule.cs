@@ -43,6 +43,16 @@ public sealed record ComplexRule(
             ComplexBudget.Decode(obj.Get("budget"))
         );
     }
+
+    internal void CollectTextKeys(List<TextKey> keys)
+    {
+        EventCondition.CollectTextKeys(this.RootCondition, keys);
+        foreach (var element in this.Actions)
+        {
+            RewardAction.CollectTextKeys(element, keys);
+        }
+        this.Budget.CollectTextKeys(keys);
+    }
 }
 
 public sealed class ComplexRuleTable : ISoraKeyedTable<int, ComplexRule>

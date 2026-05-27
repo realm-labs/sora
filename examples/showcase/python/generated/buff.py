@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
-from .sora_runtime import SoraReader
+from .sora_runtime import SoraReader, TextKey
 from .sora_runtime import (
     SoraConfigTable,
     SoraIndexInfo,
@@ -42,6 +42,10 @@ class Buff:
             duration=duration,
             modifiers=modifiers,
         )
+
+    def collect_text_keys(self, out: list[TextKey]) -> None:
+        for item in self.modifiers:
+            item.collect_text_keys(out)
 
 
 class BuffTable(SoraConfigTable):

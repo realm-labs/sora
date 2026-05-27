@@ -31,4 +31,13 @@ public sealed record ComplexBudget(
             obj.Get("limits").AsMap(item => item.AsString(), item => item.AsInt32())
         );
     }
+
+    internal void CollectTextKeys(List<TextKey> keys)
+    {
+        this.Fixed.CollectTextKeys(keys);
+        foreach (var element in this.Random)
+        {
+            element.CollectTextKeys(keys);
+        }
+    }
 }

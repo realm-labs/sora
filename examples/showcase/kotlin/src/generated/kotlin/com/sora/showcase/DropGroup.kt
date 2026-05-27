@@ -6,6 +6,9 @@ data class DropGroup(
     val id: Int,
     val name: String,
 ) {
+    fun collectTextKeys(out: MutableList<TextKey>) {
+    }
+
     companion object {
         fun decode(reader: SoraReader): DropGroup =
             DropGroup(

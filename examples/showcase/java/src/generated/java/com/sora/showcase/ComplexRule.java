@@ -54,6 +54,14 @@ public final class ComplexRule {
             ComplexBudget.decode(obj.get("budget"))
         );
     }
+
+    void collectTextKeys(List<TextKey> out) {
+        EventCondition.collectTextKeys(this.rootCondition, out);
+        for (var item : this.actions) {
+            RewardAction.collectTextKeys(item, out);
+        }
+        this.budget.collectTextKeys(out);
+    }
 }
 
 final class ComplexRuleTable extends java.util.AbstractMap<Integer, ComplexRule> implements SoraKeyedTable<Integer, ComplexRule> {

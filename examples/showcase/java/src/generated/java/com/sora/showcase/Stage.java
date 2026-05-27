@@ -46,6 +46,12 @@ public final class Stage {
             obj.get("first_clear_rewards").asList(item -> Reward.decode(item))
         );
     }
+
+    void collectTextKeys(List<TextKey> out) {
+        for (var item : this.firstClearRewards) {
+            item.collectTextKeys(out);
+        }
+    }
 }
 
 final class StageTable extends java.util.AbstractMap<Integer, Stage> implements SoraKeyedTable<Integer, Stage> {

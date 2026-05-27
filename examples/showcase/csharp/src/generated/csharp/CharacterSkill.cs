@@ -31,6 +31,10 @@ public sealed record CharacterSkill(
             obj.Get("unlock_level").AsInt32()
         );
     }
+
+    internal void CollectTextKeys(List<TextKey> keys)
+    {
+    }
 }
 
 public sealed class CharacterSkillTable : ISoraListTable<CharacterSkill>

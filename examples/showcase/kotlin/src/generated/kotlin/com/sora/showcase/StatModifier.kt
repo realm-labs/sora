@@ -7,6 +7,9 @@ data class StatModifier(
     val value: Float,
     val isPercent: Boolean,
 ) {
+    fun collectTextKeys(out: MutableList<TextKey>) {
+    }
+
     companion object {
         fun decode(reader: SoraReader): StatModifier =
             StatModifier(

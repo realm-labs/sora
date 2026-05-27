@@ -56,6 +56,11 @@ func decodeAchievementValue(input SoraValue) (Achievement, error) {
 	return value, nil
 }
 
+func (value Achievement) collectTextKeys(out *[]TextKey) {
+	*out = append(*out, value.TitleKey)
+	value.Reward.collectTextKeys(out)
+}
+
 const achievementTableName = "Achievement"
 
 var achievementTableInfo = SoraTableInfo{

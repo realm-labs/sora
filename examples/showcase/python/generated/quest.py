@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
-from .sora_runtime import SoraReader
+from .sora_runtime import SoraReader, TextKey
 from .sora_runtime import (
     SoraConfigTable,
     SoraIndexInfo,
@@ -56,6 +56,11 @@ class Quest:
             start_pos=start_pos,
             rewards=rewards,
         )
+
+    def collect_text_keys(self, out: list[TextKey]) -> None:
+        self.start_pos.collect_text_keys(out)
+        for item in self.rewards:
+            item.collect_text_keys(out)
 
 
 class QuestTable(SoraConfigTable):

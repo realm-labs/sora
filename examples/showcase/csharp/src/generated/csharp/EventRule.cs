@@ -34,6 +34,15 @@ public sealed record EventRule(
             obj.Get("actions").AsList(item => RewardAction.Decode(item))
         );
     }
+
+    internal void CollectTextKeys(List<TextKey> keys)
+    {
+        EventCondition.CollectTextKeys(this.Condition, keys);
+        foreach (var element in this.Actions)
+        {
+            RewardAction.CollectTextKeys(element, keys);
+        }
+    }
 }
 
 public sealed class EventRuleTable : ISoraKeyedTable<int, EventRule>

@@ -56,6 +56,9 @@ func decodeStageRewardValue(input SoraValue) (StageReward, error) {
 	return value, nil
 }
 
+func (value StageReward) collectTextKeys(out *[]TextKey) {
+}
+
 const stageRewardTableName = "StageReward"
 
 var stageRewardTableInfo = SoraTableInfo{

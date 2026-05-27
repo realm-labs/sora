@@ -36,6 +36,14 @@ final class ComplexRule {
       budget: ComplexBudget.decode(obj.get("budget")),
     );
   }
+
+  void collectTextKeys(List<TextKey> out) {
+    this.rootCondition.collectTextKeys(out);
+    for (final item in this.actions) {
+      item.collectTextKeys(out);
+    }
+    this.budget.collectTextKeys(out);
+  }
 }
 
 final class ComplexRuleTable extends Iterable<ComplexRule> implements SoraKeyedTable<int, ComplexRule> {

@@ -56,6 +56,10 @@ public final class Character {
             Vec3.decode(obj.get("spawn_pos"))
         );
     }
+
+    void collectTextKeys(List<TextKey> out) {
+        this.spawnPos.collectTextKeys(out);
+    }
 }
 
 final class CharacterTable extends java.util.AbstractMap<Integer, Character> implements SoraKeyedTable<Integer, Character> {

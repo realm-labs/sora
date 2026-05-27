@@ -3,9 +3,12 @@
 from __future__ import annotations
 
 from .sora_runtime import (
+    LocalePack,
     SoraBundle,
     SoraConfigTable,
     SoraReadError,
+    TextKey,
+    format_text,
 )
 from .item import ItemTable, Item
 from .shop import ShopTable, Shop
@@ -276,7 +279,88 @@ class SoraConfig:
             self._complex_action_group,
             self._complex_action_entry,
         ]
+    def validate_locale_pack(self, pack: LocalePack) -> None:
+        for key in self._text_keys():
+            value = pack.get(key)
+            if value is None:
+                raise SoraReadError(
+                    f"text key `{key.value}` is missing for locale `{pack.locale}`"
+                )
+            if value == "":
+                raise SoraReadError(
+                    f"text key `{key.value}` has empty text for locale `{pack.locale}`"
+                )
 
+    def _text_keys(self) -> list[TextKey]:
+        keys: list[TextKey] = []
+        for row in self.item().rows().values():
+            row.collect_text_keys(keys)
+        for row in self.shop().rows().values():
+            row.collect_text_keys(keys)
+        for row in self.shop_item().rows():
+            row.collect_text_keys(keys)
+        for row in self.recipe().rows().values():
+            row.collect_text_keys(keys)
+        for row in self.gacha_pool().rows().values():
+            row.collect_text_keys(keys)
+        for row in self.gacha_item().rows():
+            row.collect_text_keys(keys)
+        for row in self.equipment_set().rows().values():
+            row.collect_text_keys(keys)
+        for row in self.skill().rows().values():
+            row.collect_text_keys(keys)
+        for row in self.character().rows().values():
+            row.collect_text_keys(keys)
+        for row in self.character_skill().rows():
+            row.collect_text_keys(keys)
+        for row in self.buff().rows().values():
+            row.collect_text_keys(keys)
+        for row in self.drop_group().rows().values():
+            row.collect_text_keys(keys)
+        for row in self.drop_entry().rows():
+            row.collect_text_keys(keys)
+        for row in self.monster().rows().values():
+            row.collect_text_keys(keys)
+        for row in self.stage().rows().values():
+            row.collect_text_keys(keys)
+        for row in self.stage_reward().rows():
+            row.collect_text_keys(keys)
+        for row in self.dungeon().rows().values():
+            row.collect_text_keys(keys)
+        for row in self.quest().rows().values():
+            row.collect_text_keys(keys)
+        for row in self.quest_reward().rows():
+            row.collect_text_keys(keys)
+        for row in self.level_exp().rows().values():
+            row.collect_text_keys(keys)
+        for row in self.achievement().rows().values():
+            row.collect_text_keys(keys)
+        for row in self.vip_level().rows().values():
+            row.collect_text_keys(keys)
+        self.game_settings().row().collect_text_keys(keys)
+        for row in self.maintenance_window().rows():
+            row.collect_text_keys(keys)
+        for row in self.mail_template().rows().values():
+            row.collect_text_keys(keys)
+        for row in self.mail_reward().rows():
+            row.collect_text_keys(keys)
+        for row in self.dialogue().rows().values():
+            row.collect_text_keys(keys)
+        for row in self.event_rule().rows().values():
+            row.collect_text_keys(keys)
+        for row in self.complex_rule().rows().values():
+            row.collect_text_keys(keys)
+        for row in self.complex_condition_group().rows().values():
+            row.collect_text_keys(keys)
+        for row in self.complex_condition_group_entry().rows().values():
+            row.collect_text_keys(keys)
+        for row in self.complex_rule_condition().rows().values():
+            row.collect_text_keys(keys)
+        for row in self.complex_action_group().rows().values():
+            row.collect_text_keys(keys)
+        for row in self.complex_action_entry().rows().values():
+            row.collect_text_keys(keys)
+        return keys
 
     def item(self) -> ItemTable:
         return self._item
@@ -414,3 +498,44 @@ class SoraConfig:
         return self._complex_action_entry
 
 
+
+class SoraI18n:
+    LOCALES = (
+        "zh_cn",
+        "en_us",
+    )
+    DEFAULT_LOCALE = "zh_cn"
+
+    def __init__(self) -> None:
+        self._active_locale = self.DEFAULT_LOCALE
+        self._packs: dict[str, LocalePack] = {}
+
+    def mount(self, config: SoraConfig, pack: LocalePack) -> None:
+        if pack.schema_fingerprint != SCHEMA_FINGERPRINT:
+            raise SoraReadError(
+                "locale pack schema fingerprint mismatch: generated code expects "
+                f"{SCHEMA_FINGERPRINT}, pack contains {pack.schema_fingerprint}"
+            )
+        if pack.locale not in self.LOCALES:
+            raise SoraReadError(f"locale pack `{pack.locale}` is not declared by generated code")
+        config.validate_locale_pack(pack)
+        self._packs[pack.locale] = pack
+
+    def set_locale(self, locale: str) -> None:
+        if locale not in self.LOCALES:
+            raise SoraReadError(f"unknown locale `{locale}`")
+        if locale not in self._packs:
+            raise SoraReadError(f"locale `{locale}` is not mounted")
+        self._active_locale = locale
+
+    def text(self, key: TextKey) -> str:
+        pack = self._packs.get(self._active_locale)
+        if pack is None:
+            raise SoraReadError(f"locale `{self._active_locale}` is not mounted")
+        value = pack.get(key)
+        if value is None:
+            raise SoraReadError("active locale pack failed locale validation")
+        return value
+
+    def format(self, key: TextKey, args: dict[str, object]) -> str:
+        return format_text(self.text(key), args)

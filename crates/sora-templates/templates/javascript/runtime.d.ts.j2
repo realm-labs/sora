@@ -6,7 +6,7 @@ export declare class SoraReadError extends Error {
 
 export interface SoraTextResolver {
     text(key: TextKey): string;
-    format(key: TextKey, args: Record<string, string | number | boolean>): string;
+    format(key: TextKey, args: Record<string, unknown>): string;
 }
 
 export declare class TextKey {
@@ -14,6 +14,15 @@ export declare class TextKey {
     constructor(value: string);
     toString(): string;
 }
+
+export declare class LocalePack {
+    readonly schemaFingerprint: string;
+    readonly locale: string;
+    static parse(input: Uint8Array | ArrayBuffer): LocalePack;
+    get(key: TextKey): string | undefined;
+}
+
+export declare function formatText(template: string, args: Record<string, unknown>): string;
 
 export type SoraTableShape = "list" | "keyed" | "singleton";
 

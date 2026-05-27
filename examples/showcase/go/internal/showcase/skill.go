@@ -95,6 +95,12 @@ func decodeSkillValue(input SoraValue) (Skill, error) {
 	return value, nil
 }
 
+func (value Skill) collectTextKeys(out *[]TextKey) {
+	value.Cost.collectTextKeys(out)
+	value.Effect.collectTextKeys(out)
+	value.CastOrigin.collectTextKeys(out)
+}
+
 const skillTableName = "Skill"
 
 var skillTableInfo = SoraTableInfo{

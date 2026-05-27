@@ -74,6 +74,10 @@ func decodeMonsterValue(input SoraValue) (Monster, error) {
 	return value, nil
 }
 
+func (value Monster) collectTextKeys(out *[]TextKey) {
+	value.SpawnPos.collectTextKeys(out)
+}
+
 const monsterTableName = "Monster"
 
 var monsterTableInfo = SoraTableInfo{

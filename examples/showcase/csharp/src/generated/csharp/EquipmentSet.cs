@@ -34,6 +34,11 @@ public sealed record EquipmentSet(
             SkillEffect.Decode(obj.Get("bonus_effect"))
         );
     }
+
+    internal void CollectTextKeys(List<TextKey> keys)
+    {
+        this.BonusEffect.CollectTextKeys(keys);
+    }
 }
 
 public sealed class EquipmentSetTable : ISoraKeyedTable<int, EquipmentSet>

@@ -28,6 +28,12 @@ final class Stage {
       firstClearRewards: obj.get("first_clear_rewards").asList((item) => Reward.decode(item)),
     );
   }
+
+  void collectTextKeys(List<TextKey> out) {
+    for (final item in this.firstClearRewards) {
+      item.collectTextKeys(out);
+    }
+  }
 }
 
 final class StageTable extends Iterable<Stage> implements SoraKeyedTable<int, Stage> {

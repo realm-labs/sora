@@ -2,6 +2,7 @@
 
 package com.sora.showcase;
 
+import java.util.List;
 public final class ComplexBudget {
     public final ResourceCost fixed;
     public final java.util.List<RewardBundle> random;
@@ -32,5 +33,12 @@ public final class ComplexBudget {
             obj.get("random").asList(item -> RewardBundle.decode(item)),
             obj.get("limits").asMap(item -> item.asString(), item -> item.asInt())
         );
+    }
+
+    void collectTextKeys(List<TextKey> out) {
+        this.fixed.collectTextKeys(out);
+        for (var item : this.random) {
+            item.collectTextKeys(out);
+        }
     }
 }

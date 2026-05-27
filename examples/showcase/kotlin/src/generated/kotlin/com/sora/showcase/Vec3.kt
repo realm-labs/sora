@@ -7,6 +7,9 @@ data class Vec3(
     val y: Float,
     val z: Float,
 ) {
+    fun collectTextKeys(out: MutableList<TextKey>) {
+    }
+
     companion object {
         fun decode(reader: SoraReader): Vec3 =
             Vec3(

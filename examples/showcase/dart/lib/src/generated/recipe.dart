@@ -22,6 +22,12 @@ final class Recipe {
       materials: obj.get("materials").asList((item) => ResourceCost.decode(item)),
     );
   }
+
+  void collectTextKeys(List<TextKey> out) {
+    for (final item in this.materials) {
+      item.collectTextKeys(out);
+    }
+  }
 }
 
 final class RecipeTable extends Iterable<Recipe> implements SoraKeyedTable<int, Recipe> {

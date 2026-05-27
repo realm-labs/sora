@@ -40,6 +40,123 @@ public readonly record struct TextKey(string Value)
     }
 }
 
+public sealed class LocalePack
+{
+    private readonly Dictionary<string, string> translations;
+
+    private LocalePack(string schemaFingerprint, string locale, Dictionary<string, string> translations)
+    {
+        SchemaFingerprint = schemaFingerprint;
+        Locale = locale;
+        this.translations = translations;
+    }
+
+    public string SchemaFingerprint { get; }
+
+    public string Locale { get; }
+
+    public string? Get(TextKey key)
+    {
+        return translations.TryGetValue(key.Value, out var value) ? value : null;
+    }
+
+    public static LocalePack Parse(byte[] bytes)
+    {
+        if (bytes.Length < 8 || Encoding.ASCII.GetString(bytes, 0, 4) != "SORI")
+        {
+            throw new SoraReadException("invalid Sora i18n pack magic");
+        }
+        var version = SoraBundle.ReadInt32At(bytes, 4);
+        if (version != 1)
+        {
+            throw new SoraReadException($"unsupported Sora i18n pack version {version}");
+        }
+        var cursor = 8;
+        var schemaFingerprint = ReadLengthPrefixedString(bytes, ref cursor);
+        var locale = ReadLengthPrefixedString(bytes, ref cursor);
+        var count = ReadUInt32At(bytes, ref cursor);
+        var translations = new Dictionary<string, string>(count);
+        for (var i = 0; i < count; i++)
+        {
+            var key = ReadLengthPrefixedString(bytes, ref cursor);
+            var value = ReadLengthPrefixedString(bytes, ref cursor);
+            if (value.Length == 0)
+            {
+                throw new SoraReadException($"text key `{key}` has empty text");
+            }
+            if (translations.ContainsKey(key))
+            {
+                throw new SoraReadException($"duplicate text key `{key}`");
+            }
+            translations[key] = value;
+        }
+        if (cursor != bytes.Length)
+        {
+            throw new SoraReadException("Sora i18n pack has trailing bytes");
+        }
+        return new LocalePack(schemaFingerprint, locale, translations);
+    }
+
+    private static int ReadUInt32At(byte[] bytes, ref int cursor)
+    {
+        if (cursor + 4 > bytes.Length)
+        {
+            throw new SoraReadException("truncated u32");
+        }
+        var value = SoraBundle.ReadInt32At(bytes, cursor);
+        cursor += 4;
+        return value;
+    }
+
+    private static string ReadLengthPrefixedString(byte[] bytes, ref int cursor)
+    {
+        var length = ReadUInt32At(bytes, ref cursor);
+        var end = SoraBundle.CheckedAdd(cursor, length, "Sora i18n string length overflow");
+        if (end > bytes.Length)
+        {
+            throw new SoraReadException("truncated string");
+        }
+        var value = Encoding.UTF8.GetString(bytes, cursor, length);
+        cursor = end;
+        return value;
+    }
+}
+
+public static class SoraText
+{
+    public static string Format(string template, IReadOnlyDictionary<string, object> args)
+    {
+        var outText = new StringBuilder(template.Length);
+        var cursor = 0;
+        while (true)
+        {
+            var start = template.IndexOf('{', cursor);
+            if (start < 0)
+            {
+                outText.Append(template, cursor, template.Length - cursor);
+                return outText.ToString();
+            }
+            outText.Append(template, cursor, start - cursor);
+            var end = template.IndexOf('}', start + 1);
+            if (end < 0)
+            {
+                throw new SoraReadException("unterminated text placeholder");
+            }
+            var name = template.Substring(start + 1, end - start - 1);
+            if (name.Length == 0 || name.Contains('{'))
+            {
+                throw new SoraReadException("invalid text placeholder");
+            }
+            if (!args.TryGetValue(name, out var value))
+            {
+                throw new SoraReadException($"missing text argument `{name}`");
+            }
+            outText.Append(value);
+            cursor = end + 1;
+        }
+    }
+}
+
 public sealed class SoraBundle : ISoraTableSource
 {
     private const int BundleVersion = 1;

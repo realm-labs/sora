@@ -8,6 +8,10 @@ data class Dungeon(
     val stageIds: List<Int>,
     val entryCost: ResourceCost,
 ) {
+    fun collectTextKeys(out: MutableList<TextKey>) {
+        this.entryCost.collectTextKeys(out)
+    }
+
     companion object {
         fun decode(reader: SoraReader): Dungeon =
             Dungeon(

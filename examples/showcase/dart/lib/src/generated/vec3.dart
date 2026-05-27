@@ -21,4 +21,7 @@ final class Vec3 {
       z: obj.get("z").asDouble(),
     );
   }
+
+  void collectTextKeys(List<TextKey> out) {
+  }
 }

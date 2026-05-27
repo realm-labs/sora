@@ -23,6 +23,9 @@ export function decodeLevelExpValue(value) {
     };
 }
 
+export function collectLevelExpTextKeys(value, out) {
+}
+
 export class LevelExpTable {
     static tableName = "LevelExp";
     static tableInfo = {

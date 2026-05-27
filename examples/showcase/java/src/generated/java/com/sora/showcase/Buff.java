@@ -41,6 +41,12 @@ public final class Buff {
             obj.get("modifiers").asList(item -> StatModifier.decode(item))
         );
     }
+
+    void collectTextKeys(List<TextKey> out) {
+        for (var item : this.modifiers) {
+            item.collectTextKeys(out);
+        }
+    }
 }
 
 final class BuffTable extends java.util.AbstractMap<Integer, Buff> implements SoraKeyedTable<Integer, Buff> {

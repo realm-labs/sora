@@ -7,6 +7,9 @@ data class ResourceCost(
     val id: Int,
     val count: Int,
 ) {
+    fun collectTextKeys(out: MutableList<TextKey>) {
+    }
+
     companion object {
         fun decode(reader: SoraReader): ResourceCost =
             ResourceCost(

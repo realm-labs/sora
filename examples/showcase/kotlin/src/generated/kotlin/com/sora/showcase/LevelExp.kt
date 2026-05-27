@@ -7,6 +7,9 @@ data class LevelExp(
     val exp: Long,
     val unlockFeature: String?,
 ) {
+    fun collectTextKeys(out: MutableList<TextKey>) {
+    }
+
     companion object {
         fun decode(reader: SoraReader): LevelExp =
             LevelExp(

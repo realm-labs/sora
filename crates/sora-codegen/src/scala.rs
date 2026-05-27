@@ -82,6 +82,9 @@ struct ScalaModel {
     unions: Vec<ScalaUnion>,
     records: Vec<ScalaRecord>,
     tables: Vec<ScalaTable>,
+    has_localization: bool,
+    locales: Vec<String>,
+    default_locale: String,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -102,12 +105,14 @@ struct ScalaUnion {
 struct ScalaUnionVariant {
     name: String,
     fields: Vec<ScalaField>,
+    has_text_keys: bool,
 }
 
 #[derive(Debug, Clone, Serialize)]
 struct ScalaRecord {
     pascal_name: String,
     fields: Vec<ScalaField>,
+    has_text_keys: bool,
     table: Option<ScalaTable>,
 }
 
@@ -141,6 +146,7 @@ struct ScalaField {
     type_name: String,
     decode: String,
     value_decode: String,
+    collect_text_keys: String,
     comment: Option<String>,
 }
 
@@ -185,6 +191,17 @@ impl ScalaModel {
                     scala_record(ir, item, table)
                 })
                 .collect(),
+            has_localization: ir.localization.is_some(),
+            locales: ir
+                .localization
+                .as_ref()
+                .map(|item| item.locales.clone())
+                .unwrap_or_default(),
+            default_locale: ir
+                .localization
+                .as_ref()
+                .map(|item| item.default_locale.clone())
+                .unwrap_or_default(),
             tables,
         }
     }
@@ -203,24 +220,34 @@ fn scala_union(ir: &ConfigIr, union: BaseUnion) -> ScalaUnion {
 }
 
 fn scala_variant(ir: &ConfigIr, variant: BaseUnionVariant) -> ScalaUnionVariant {
+    let fields = variant
+        .fields
+        .into_iter()
+        .map(|field| scala_field(ir, field))
+        .collect::<Vec<_>>();
+    let has_text_keys = fields
+        .iter()
+        .any(|field| !field.collect_text_keys.is_empty());
     ScalaUnionVariant {
         name: variant.pascal_name,
-        fields: variant
-            .fields
-            .into_iter()
-            .map(|field| scala_field(ir, field))
-            .collect(),
+        fields,
+        has_text_keys,
     }
 }
 
 fn scala_record(ir: &ConfigIr, record: BaseRecord, table: Option<ScalaTable>) -> ScalaRecord {
+    let fields = record
+        .fields
+        .into_iter()
+        .map(|field| scala_field(ir, field))
+        .collect::<Vec<_>>();
+    let has_text_keys = fields
+        .iter()
+        .any(|field| !field.collect_text_keys.is_empty());
     ScalaRecord {
         pascal_name: record.pascal_name,
-        fields: record
-            .fields
-            .into_iter()
-            .map(|field| scala_field(ir, field))
-            .collect(),
+        fields,
+        has_text_keys,
         table,
     }
 }
@@ -270,12 +297,15 @@ fn scala_index(ir: &ConfigIr, index: BaseIndex) -> ScalaIndex {
 }
 
 fn scala_field(ir: &ConfigIr, field: BaseField) -> ScalaField {
+    let collect_text_keys =
+        scala_collect_text_keys(ir, &field.ty, &format!("this.{}", field.camel_name), 4);
     ScalaField {
         raw_name: field.raw_name,
         name: field.camel_name,
         type_name: scala_type_name(ir, &field.ty),
         decode: scala_decode_expr(ir, &field.ty),
         value_decode: scala_value_decode_expr(ir, &field.ty, "__VALUE__"),
+        collect_text_keys,
         comment: field.comment,
     }
 }
@@ -378,6 +408,69 @@ fn scala_value_decode_expr(ir: &ConfigIr, ty: &TypeIr, value: &str) -> String {
                 scala_value_decode_expr(ir, element, value)
             )
         }
+    }
+}
+
+fn scala_collect_text_keys(ir: &ConfigIr, ty: &TypeIr, value: &str, indent: usize) -> String {
+    let pad = " ".repeat(indent);
+    match ty {
+        TypeIr::Text => format!("{pad}out += {value}"),
+        TypeIr::Optional(element) => {
+            let inner = scala_collect_text_keys(ir, element, "item", indent + 2);
+            if inner.is_empty() {
+                String::new()
+            } else {
+                format!("{pad}{value}.foreach {{ item =>\n{inner}\n{pad}}}")
+            }
+        }
+        TypeIr::List(element) | TypeIr::Set(element) | TypeIr::Array { element, .. } => {
+            let inner = scala_collect_text_keys(ir, element, "item", indent + 2);
+            if inner.is_empty() {
+                String::new()
+            } else {
+                format!("{pad}{value}.foreach {{ item =>\n{inner}\n{pad}}}")
+            }
+        }
+        TypeIr::Map {
+            key,
+            value: element,
+        } => {
+            let key_inner = scala_collect_text_keys(ir, key, "key", indent + 2);
+            let value_inner = scala_collect_text_keys(ir, element, "item", indent + 2);
+            if key_inner.is_empty() && value_inner.is_empty() {
+                String::new()
+            } else {
+                format!(
+                    "{pad}{value}.foreach {{ case (key, item) =>\n{key_inner}\n{value_inner}\n{pad}}}"
+                )
+            }
+        }
+        TypeIr::Struct(_) => format!("{pad}{value}.collectTextKeys(out)"),
+        TypeIr::Union(name) => format!("{pad}{name}.collectTextKeys({value}, out)"),
+        TypeIr::Ref { table, field } => ir
+            .tables
+            .iter()
+            .find(|candidate| candidate.name == *table)
+            .and_then(|table| {
+                table
+                    .fields
+                    .iter()
+                    .find(|candidate| candidate.name == *field)
+            })
+            .map(|field| scala_collect_text_keys(ir, &field.ty, value, indent))
+            .unwrap_or_default(),
+        TypeIr::Bool
+        | TypeIr::I8
+        | TypeIr::U8
+        | TypeIr::I16
+        | TypeIr::U16
+        | TypeIr::I32
+        | TypeIr::U32
+        | TypeIr::I64
+        | TypeIr::F32
+        | TypeIr::F64
+        | TypeIr::String
+        | TypeIr::Enum(_) => String::new(),
     }
 }
 

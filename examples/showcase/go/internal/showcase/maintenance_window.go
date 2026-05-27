@@ -56,6 +56,9 @@ func decodeMaintenanceWindowValue(input SoraValue) (MaintenanceWindow, error) {
 	return value, nil
 }
 
+func (value MaintenanceWindow) collectTextKeys(out *[]TextKey) {
+}
+
 const maintenanceWindowTableName = "MaintenanceWindow"
 
 var maintenanceWindowTableInfo = SoraTableInfo{

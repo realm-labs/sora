@@ -10,6 +10,16 @@ data class {{ record.pascal_name }}(
     val {{ field.name }}: {{ field.type_name }},
 {%- endfor %}
 ) {
+    fun collectTextKeys(out: MutableList<TextKey>) {
+{%- if record.has_text_keys %}
+{%- for field in record.fields %}
+{%- if field.collect_text_keys %}
+{{ field.collect_text_keys }}
+{%- endif %}
+{%- endfor %}
+{%- endif %}
+    }
+
     companion object {
         fun decode(reader: SoraReader): {{ record.pascal_name }} =
             {{ record.pascal_name }}(

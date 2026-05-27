@@ -36,6 +36,10 @@ public final class ComplexRuleCondition {
             EventCondition.decode(obj.get("value"))
         );
     }
+
+    void collectTextKeys(List<TextKey> out) {
+        EventCondition.collectTextKeys(this.value, out);
+    }
 }
 
 final class ComplexRuleConditionTable extends java.util.AbstractMap<Integer, ComplexRuleCondition> implements SoraKeyedTable<Integer, ComplexRuleCondition> {

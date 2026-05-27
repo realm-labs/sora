@@ -12,7 +12,15 @@ final case class ComplexRule(
   actions: Vector[RewardAction],
   /** Nested tuple, tuple_list, split, and map parsers in one cell */
   budget: ComplexBudget
-)
+) {
+  def collectTextKeys(out: scala.collection.mutable.ArrayBuffer[TextKey]): Unit = {
+    EventCondition.collectTextKeys(this.rootCondition, out)
+    this.actions.foreach { item =>
+      RewardAction.collectTextKeys(item, out)
+    }
+    this.budget.collectTextKeys(out)
+  }
+}
 
 object ComplexRule {
   def decode(reader: SoraReader): ComplexRule =

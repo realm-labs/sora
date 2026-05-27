@@ -2,6 +2,8 @@
 
 package com.sora.showcase;
 
+import java.util.List;
+
 public interface RewardAction {
     final class AddItem implements RewardAction {
         public final Integer itemId;
@@ -111,5 +113,8 @@ public interface RewardAction {
             default:
                 throw new SoraReadException("invalid union tag for RewardAction");
         }
+    }
+
+    static void collectTextKeys(RewardAction value, List<TextKey> out) {
     }
 }

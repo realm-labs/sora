@@ -31,6 +31,14 @@ public sealed record Recipe(
             obj.Get("materials").AsList(item => ResourceCost.Decode(item))
         );
     }
+
+    internal void CollectTextKeys(List<TextKey> keys)
+    {
+        foreach (var element in this.Materials)
+        {
+            element.CollectTextKeys(keys);
+        }
+    }
 }
 
 public sealed class RecipeTable : ISoraKeyedTable<int, Recipe>

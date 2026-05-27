@@ -26,6 +26,13 @@ final class EventRule {
       actions: obj.get("actions").asList((item) => RewardAction.decode(item)),
     );
   }
+
+  void collectTextKeys(List<TextKey> out) {
+    this.condition.collectTextKeys(out);
+    for (final item in this.actions) {
+      item.collectTextKeys(out);
+    }
+  }
 }
 
 final class EventRuleTable extends Iterable<EventRule> implements SoraKeyedTable<int, EventRule> {

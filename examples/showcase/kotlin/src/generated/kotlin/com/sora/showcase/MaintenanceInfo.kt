@@ -7,6 +7,9 @@ data class MaintenanceInfo(
     val durationMinutes: Int,
     val reason: String?,
 ) {
+    fun collectTextKeys(out: MutableList<TextKey>) {
+    }
+
     companion object {
         fun decode(reader: SoraReader): MaintenanceInfo =
             MaintenanceInfo(

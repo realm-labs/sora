@@ -7,7 +7,11 @@ final case class Dungeon(
   name: String,
   stageIds: Vector[Int],
   entryCost: ResourceCost
-)
+) {
+  def collectTextKeys(out: scala.collection.mutable.ArrayBuffer[TextKey]): Unit = {
+    this.entryCost.collectTextKeys(out)
+  }
+}
 
 object Dungeon {
   def decode(reader: SoraReader): Dungeon =

@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, ClassVar
 
-from .sora_runtime import SoraReadError, SoraReader
+from .sora_runtime import SoraReadError, SoraReader, TextKey
 
 
 if TYPE_CHECKING:
@@ -13,6 +13,9 @@ if TYPE_CHECKING:
 
 
 class EventCondition:
+    def collect_text_keys(self, out: list[TextKey]) -> None:
+        pass
+
     @staticmethod
     def decode(reader: SoraReader) -> EventCondition:
         ordinal = reader.read_u32()
@@ -42,6 +45,9 @@ class EventConditionLevelAtLeast(EventCondition):
             level=level,
         )
 
+    def collect_text_keys(self, out: list[TextKey]) -> None:
+        pass
+
 
 @dataclass(frozen=True, slots=True)
 class EventConditionQuestCompleted(EventCondition):
@@ -54,6 +60,9 @@ class EventConditionQuestCompleted(EventCondition):
         return EventConditionQuestCompleted(
             quest_id=quest_id,
         )
+
+    def collect_text_keys(self, out: list[TextKey]) -> None:
+        pass
 
 
 @dataclass(frozen=True, slots=True)
@@ -71,6 +80,9 @@ class EventConditionHasItem(EventCondition):
             count=count,
         )
 
+    def collect_text_keys(self, out: list[TextKey]) -> None:
+        pass
+
 
 @dataclass(frozen=True, slots=True)
 class EventConditionAllConditions(EventCondition):
@@ -84,6 +96,9 @@ class EventConditionAllConditions(EventCondition):
             condition_group_id=condition_group_id,
         )
 
+    def collect_text_keys(self, out: list[TextKey]) -> None:
+        pass
+
 
 @dataclass(frozen=True, slots=True)
 class EventConditionAnyCondition(EventCondition):
@@ -96,4 +111,7 @@ class EventConditionAnyCondition(EventCondition):
         return EventConditionAnyCondition(
             condition_group_id=condition_group_id,
         )
+
+    def collect_text_keys(self, out: list[TextKey]) -> None:
+        pass
 

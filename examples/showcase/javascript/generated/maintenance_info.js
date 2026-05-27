@@ -16,3 +16,6 @@ export function decodeMaintenanceInfoValue(value) {
         reason: object.get("reason").isNull() ? undefined : object.get("reason").asString(),
     };
 }
+
+export function collectMaintenanceInfoTextKeys(value, out) {
+}

@@ -53,6 +53,19 @@ public sealed record GameSettings(
             obj.Get("maintenance").IsNull ? default : MaintenanceInfo.Decode(obj.Get("maintenance"))
         );
     }
+
+    internal void CollectTextKeys(List<TextKey> keys)
+    {
+        this.SpawnPos.CollectTextKeys(keys);
+        foreach (var element in this.SpawnPoints)
+        {
+            element.CollectTextKeys(keys);
+        }
+        if (this.Maintenance is { } optionalValue)
+        {
+            optionalValue.CollectTextKeys(keys);
+        }
+    }
 }
 
 public sealed class GameSettingsTable : ISoraSingleTable<GameSettings>

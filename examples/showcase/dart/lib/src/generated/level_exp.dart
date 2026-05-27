@@ -21,6 +21,9 @@ final class LevelExp {
       unlockFeature: obj.get("unlock_feature").isNull ? null : obj.get("unlock_feature").asString(),
     );
   }
+
+  void collectTextKeys(List<TextKey> out) {
+  }
 }
 
 final class LevelExpTable extends Iterable<LevelExp> implements SoraKeyedTable<int, LevelExp> {

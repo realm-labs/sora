@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
-from .sora_runtime import SoraReader
+from .sora_runtime import SoraReader, TextKey
 from .sora_runtime import (
     SoraConfigTable,
     SoraIndexInfo,
@@ -40,6 +40,10 @@ class ComplexConditionGroup:
             name=name,
             conditions=conditions,
         )
+
+    def collect_text_keys(self, out: list[TextKey]) -> None:
+        for item in self.conditions:
+            item.collect_text_keys(out)
 
 
 class ComplexConditionGroupTable(SoraConfigTable):

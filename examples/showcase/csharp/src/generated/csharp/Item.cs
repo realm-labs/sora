@@ -50,6 +50,11 @@ public sealed record Item(
             obj.Get("attributes").AsMap(item => item.AsString(), item => item.AsInt32())
         );
     }
+
+    internal void CollectTextKeys(List<TextKey> keys)
+    {
+        this.Price.CollectTextKeys(keys);
+    }
 }
 
 public sealed class ItemTable : ISoraKeyedTable<int, Item>

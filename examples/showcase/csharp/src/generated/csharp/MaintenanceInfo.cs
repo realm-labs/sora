@@ -31,4 +31,8 @@ public sealed record MaintenanceInfo(
             obj.Get("reason").IsNull ? default : obj.Get("reason").AsString()
         );
     }
+
+    internal void CollectTextKeys(List<TextKey> keys)
+    {
+    }
 }

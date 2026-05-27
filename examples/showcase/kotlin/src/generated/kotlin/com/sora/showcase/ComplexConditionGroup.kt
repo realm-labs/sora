@@ -8,6 +8,12 @@ data class ComplexConditionGroup(
     /** A derived list of union values; each child row is edited without JSON */
     val conditions: List<EventCondition>,
 ) {
+    fun collectTextKeys(out: MutableList<TextKey>) {
+        for (item in this.conditions) {
+            EventCondition.collectTextKeys(item, out)
+        }
+    }
+
     companion object {
         fun decode(reader: SoraReader): ComplexConditionGroup =
             ComplexConditionGroup(

@@ -41,6 +41,10 @@ public final class ComplexActionEntry {
             RewardAction.decode(obj.get("value"))
         );
     }
+
+    void collectTextKeys(List<TextKey> out) {
+        RewardAction.collectTextKeys(this.value, out);
+    }
 }
 
 final class ComplexActionEntryTable extends java.util.AbstractMap<Integer, ComplexActionEntry> implements SoraKeyedTable<Integer, ComplexActionEntry> {

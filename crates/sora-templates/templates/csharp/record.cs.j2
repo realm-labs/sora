@@ -34,6 +34,17 @@ public sealed record {{ record.pascal_name }}(
 {%- endfor %}
         );
     }
+
+    internal void CollectTextKeys(List<TextKey> keys)
+    {
+{%- if record.has_text_keys %}
+{%- for field in record.fields %}
+{%- if field.collect_text_keys %}
+{{ field.collect_text_keys }}
+{%- endif %}
+{%- endfor %}
+{%- endif %}
+    }
 }
 
 {%- if record.table %}

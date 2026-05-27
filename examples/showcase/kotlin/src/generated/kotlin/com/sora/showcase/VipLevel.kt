@@ -7,6 +7,10 @@ data class VipLevel(
     val cost: ResourceCost,
     val perks: List<String>,
 ) {
+    fun collectTextKeys(out: MutableList<TextKey>) {
+        this.cost.collectTextKeys(out)
+    }
+
     companion object {
         fun decode(reader: SoraReader): VipLevel =
             VipLevel(

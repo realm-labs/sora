@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
-from .sora_runtime import SoraReader
+from .sora_runtime import SoraReader, TextKey
 from .sora_runtime import (
     SoraConfigTable,
     SoraIndexInfo,
@@ -38,6 +38,9 @@ class CharacterSkill:
             skill_id=skill_id,
             unlock_level=unlock_level,
         )
+
+    def collect_text_keys(self, out: list[TextKey]) -> None:
+        pass
 
 
 class CharacterSkillTable(SoraConfigTable):

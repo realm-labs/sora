@@ -25,6 +25,11 @@ final class Achievement {
       reward: ResourceCost.decode(obj.get("reward")),
     );
   }
+
+  void collectTextKeys(List<TextKey> out) {
+    out.add(this.titleKey);
+    this.reward.collectTextKeys(out);
+  }
 }
 
 final class AchievementTable extends Iterable<Achievement> implements SoraKeyedTable<int, Achievement> {

@@ -29,6 +29,14 @@ final class MailTemplate {
       rewards: obj.get("rewards").asList((item) => Reward.decode(item)),
     );
   }
+
+  void collectTextKeys(List<TextKey> out) {
+    out.add(this.titleKey);
+    out.add(this.bodyKey);
+    for (final item in this.rewards) {
+      item.collectTextKeys(out);
+    }
+  }
 }
 
 final class MailTemplateTable extends Iterable<MailTemplate> implements SoraKeyedTable<int, MailTemplate> {

@@ -56,6 +56,13 @@ func decodeEventRuleValue(input SoraValue) (EventRule, error) {
 	return value, nil
 }
 
+func (value EventRule) collectTextKeys(out *[]TextKey) {
+	collectEventConditionTextKeys(value.Condition, out)
+	for _, item := range value.Actions {
+		collectRewardActionTextKeys(item, out)
+	}
+}
+
 const eventRuleTableName = "EventRule"
 
 var eventRuleTableInfo = SoraTableInfo{

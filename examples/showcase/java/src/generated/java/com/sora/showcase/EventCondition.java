@@ -2,6 +2,8 @@
 
 package com.sora.showcase;
 
+import java.util.List;
+
 public interface EventCondition {
     final class LevelAtLeast implements EventCondition {
         public final Integer level;
@@ -106,5 +108,8 @@ public interface EventCondition {
             default:
                 throw new SoraReadException("invalid union tag for EventCondition");
         }
+    }
+
+    static void collectTextKeys(EventCondition value, List<TextKey> out) {
     }
 }

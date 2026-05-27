@@ -2,6 +2,8 @@
 
 package {{ package }};
 
+import java.util.List;
+
 public interface {{ union.pascal_name }} {
 {%- for variant in union.variants %}
     final class {{ variant.name }} implements {{ union.pascal_name }} {
@@ -53,5 +55,19 @@ public interface {{ union.pascal_name }} {
             default:
                 throw new SoraReadException("invalid union tag for {{ union.pascal_name }}");
         }
+    }
+
+    static void collectTextKeys({{ union.pascal_name }} value, List<TextKey> out) {
+{%- for variant in union.variants %}
+{%- if variant.has_text_keys %}
+        if (value instanceof {{ variant.name }} typed) {
+{%- for field in variant.fields %}
+{%- if field.collect_text_keys %}
+{{ field.collect_text_keys | replace("this." ~ field.name, "typed." ~ field.name) }}
+{%- endif %}
+{%- endfor %}
+        }
+{%- endif %}
+{%- endfor %}
     }
 }

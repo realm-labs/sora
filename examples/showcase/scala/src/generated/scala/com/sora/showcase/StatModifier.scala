@@ -6,7 +6,10 @@ final case class StatModifier(
   stat: StatType,
   value: Float,
   isPercent: Boolean
-)
+) {
+  def collectTextKeys(out: scala.collection.mutable.ArrayBuffer[TextKey]): Unit = {
+  }
+}
 
 object StatModifier {
   def decode(reader: SoraReader): StatModifier =

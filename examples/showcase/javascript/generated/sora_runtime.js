@@ -31,6 +31,80 @@ export class TextKey {
     }
 }
 
+export class LocalePack {
+    constructor(schemaFingerprint, locale, translations) {
+        this.schemaFingerprint = schemaFingerprint;
+        this.locale = locale;
+        this.translations = translations;
+    }
+
+    static parse(input) {
+        const bytes = asBytes(input);
+        if (bytes.byteLength < 8 || ascii(bytes.subarray(0, 4)) !== "SORI") {
+            throw new SoraReadError("invalid Sora i18n pack magic");
+        }
+        const version = readU32At(bytes, 4);
+        if (version !== 1) {
+            throw new SoraReadError(`unsupported Sora i18n pack version ${version}`);
+        }
+        let cursor = 8;
+        const schemaFingerprint = readLengthPrefixedString(bytes, cursor);
+        cursor = schemaFingerprint.cursor;
+        const locale = readLengthPrefixedString(bytes, cursor);
+        cursor = locale.cursor;
+        const count = readU32At(bytes, cursor);
+        cursor += 4;
+        const translations = new Map();
+        for (let index = 0; index < count; index += 1) {
+            const key = readLengthPrefixedString(bytes, cursor);
+            cursor = key.cursor;
+            const value = readLengthPrefixedString(bytes, cursor);
+            cursor = value.cursor;
+            if (value.value === "") {
+                throw new SoraReadError(`text key \`${key.value}\` has empty text`);
+            }
+            if (translations.has(key.value)) {
+                throw new SoraReadError(`duplicate text key \`${key.value}\``);
+            }
+            translations.set(key.value, value.value);
+        }
+        if (cursor !== bytes.byteLength) {
+            throw new SoraReadError("Sora i18n pack has trailing bytes");
+        }
+        return new LocalePack(schemaFingerprint.value, locale.value, translations);
+    }
+
+    get(key) {
+        return this.translations.get(key.value);
+    }
+}
+
+export function formatText(template, args) {
+    let out = "";
+    let rest = template;
+    while (true) {
+        const start = rest.indexOf("{");
+        if (start < 0) {
+            return out + rest;
+        }
+        out += rest.slice(0, start);
+        rest = rest.slice(start + 1);
+        const end = rest.indexOf("}");
+        if (end < 0) {
+            throw new SoraReadError("unterminated text placeholder");
+        }
+        const name = rest.slice(0, end);
+        if (name === "" || name.includes("{")) {
+            throw new SoraReadError("invalid text placeholder");
+        }
+        if (!(name in args)) {
+            throw new SoraReadError(`missing text argument \`${name}\``);
+        }
+        out += String(args[name]);
+        rest = rest.slice(end + 1);
+    }
+}
+
 export class SoraBundle {
     constructor(bytes, sections, schemaFingerprint, strings) {
         this.bytes = bytes;
@@ -588,6 +662,16 @@ function objectStringField(value, field, context) {
 
 function readU32At(bytes, offset) {
     return viewAt(bytes, offset, 4).getUint32(0, true);
+}
+
+function readLengthPrefixedString(bytes, cursor) {
+    const length = readU32At(bytes, cursor);
+    const start = checkedAdd(cursor, 4, "Sora i18n cursor overflow");
+    const end = checkedAdd(start, length, "Sora i18n string length overflow");
+    if (end > bytes.byteLength) {
+        throw new SoraReadError("Sora i18n string exceeds pack length");
+    }
+    return { value: utf8(bytes.subarray(start, end)), cursor: end };
 }
 
 function readI32At(bytes, offset) {

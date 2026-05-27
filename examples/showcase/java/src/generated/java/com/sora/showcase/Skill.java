@@ -64,6 +64,12 @@ public final class Skill {
             Vec3.decode(obj.get("cast_origin"))
         );
     }
+
+    void collectTextKeys(List<TextKey> out) {
+        this.cost.collectTextKeys(out);
+        this.effect.collectTextKeys(out);
+        this.castOrigin.collectTextKeys(out);
+    }
 }
 
 final class SkillTable extends java.util.AbstractMap<Integer, Skill> implements SoraKeyedTable<Integer, Skill> {

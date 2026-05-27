@@ -34,6 +34,11 @@ public sealed record ComplexConditionGroupEntry(
             EventCondition.Decode(obj.Get("value"))
         );
     }
+
+    internal void CollectTextKeys(List<TextKey> keys)
+    {
+        EventCondition.CollectTextKeys(this.Value, keys);
+    }
 }
 
 public sealed class ComplexConditionGroupEntryTable : ISoraKeyedTable<int, ComplexConditionGroupEntry>

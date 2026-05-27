@@ -17,6 +17,7 @@ export interface MailTemplate {
 
 export declare function decodeMailTemplate(reader: SoraReader): MailTemplate;
 export declare function decodeMailTemplateValue(value: SoraValue): MailTemplate;
+export declare function collectMailTemplateTextKeys(value: MailTemplate, out: TextKey[]): void;
 
 export declare class MailTemplateTable implements SoraKeyedTable<number, MailTemplate> {
     static readonly tableInfo: SoraTableInfo;

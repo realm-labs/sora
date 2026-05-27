@@ -90,6 +90,10 @@ func decodeItemValue(input SoraValue) (Item, error) {
 	return value, nil
 }
 
+func (value Item) collectTextKeys(out *[]TextKey) {
+	value.Price.collectTextKeys(out)
+}
+
 const itemTableName = "Item"
 
 var itemTableInfo = SoraTableInfo{

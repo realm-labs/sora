@@ -41,6 +41,13 @@ public final class EventRule {
             obj.get("actions").asList(item -> RewardAction.decode(item))
         );
     }
+
+    void collectTextKeys(List<TextKey> out) {
+        EventCondition.collectTextKeys(this.condition, out);
+        for (var item : this.actions) {
+            RewardAction.collectTextKeys(item, out);
+        }
+    }
 }
 
 final class EventRuleTable extends java.util.AbstractMap<Integer, EventRule> implements SoraKeyedTable<Integer, EventRule> {

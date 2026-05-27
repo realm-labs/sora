@@ -43,4 +43,19 @@ object {{ union.pascal_name }} {
       case tag => throw new SoraReadException(s"invalid union tag $tag for {{ union.pascal_name }}")
     }
   }
+
+  def collectTextKeys(value: {{ union.pascal_name }}, out: scala.collection.mutable.ArrayBuffer[TextKey]): Unit =
+    value match {
+{%- for variant in union.variants %}
+{%- if variant.has_text_keys %}
+      case typed: {{ variant.name }} =>
+{%- for field in variant.fields %}
+{%- if field.collect_text_keys %}
+{{ field.collect_text_keys | replace("this." ~ field.name, "typed." ~ field.name) }}
+{%- endif %}
+{%- endfor %}
+{%- endif %}
+{%- endfor %}
+      case _ =>
+    }
 }

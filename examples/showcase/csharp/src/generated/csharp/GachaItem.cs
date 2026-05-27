@@ -34,6 +34,10 @@ public sealed record GachaItem(
             obj.Get("weight").AsFloat()
         );
     }
+
+    internal void CollectTextKeys(List<TextKey> keys)
+    {
+    }
 }
 
 public sealed class GachaItemTable : ISoraListTable<GachaItem>

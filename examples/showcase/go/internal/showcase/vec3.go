@@ -46,3 +46,6 @@ func decodeVec3Value(input SoraValue) (Vec3, error) {
 	}
 	return value, nil
 }
+
+func (value Vec3) collectTextKeys(out *[]TextKey) {
+}

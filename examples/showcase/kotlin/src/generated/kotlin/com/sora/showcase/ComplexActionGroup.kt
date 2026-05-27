@@ -7,6 +7,12 @@ data class ComplexActionGroup(
     val name: String,
     val actions: List<RewardAction>,
 ) {
+    fun collectTextKeys(out: MutableList<TextKey>) {
+        for (item in this.actions) {
+            RewardAction.collectTextKeys(item, out)
+        }
+    }
+
     companion object {
         fun decode(reader: SoraReader): ComplexActionGroup =
             ComplexActionGroup(

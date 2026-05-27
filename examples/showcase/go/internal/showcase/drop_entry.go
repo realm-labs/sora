@@ -65,6 +65,9 @@ func decodeDropEntryValue(input SoraValue) (DropEntry, error) {
 	return value, nil
 }
 
+func (value DropEntry) collectTextKeys(out *[]TextKey) {
+}
+
 const dropEntryTableName = "DropEntry"
 
 var dropEntryTableInfo = SoraTableInfo{

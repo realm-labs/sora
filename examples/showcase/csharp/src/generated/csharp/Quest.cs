@@ -44,6 +44,15 @@ public sealed record Quest(
             obj.Get("rewards").AsList(item => Reward.Decode(item))
         );
     }
+
+    internal void CollectTextKeys(List<TextKey> keys)
+    {
+        this.StartPos.CollectTextKeys(keys);
+        foreach (var element in this.Rewards)
+        {
+            element.CollectTextKeys(keys);
+        }
+    }
 }
 
 public sealed class QuestTable : ISoraKeyedTable<int, Quest>

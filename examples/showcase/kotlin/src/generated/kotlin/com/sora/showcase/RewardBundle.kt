@@ -7,6 +7,10 @@ data class RewardBundle(
     val weight: Int,
     val labels: List<String>,
 ) {
+    fun collectTextKeys(out: MutableList<TextKey>) {
+        this.cost.collectTextKeys(out)
+    }
+
     companion object {
         fun decode(reader: SoraReader): RewardBundle =
             RewardBundle(

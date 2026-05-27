@@ -57,6 +57,13 @@ public final class Quest {
             obj.get("rewards").asList(item -> Reward.decode(item))
         );
     }
+
+    void collectTextKeys(List<TextKey> out) {
+        this.startPos.collectTextKeys(out);
+        for (var item : this.rewards) {
+            item.collectTextKeys(out);
+        }
+    }
 }
 
 final class QuestTable extends java.util.AbstractMap<Integer, Quest> implements SoraKeyedTable<Integer, Quest> {

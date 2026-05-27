@@ -8,6 +8,9 @@ data class MailReward(
     val itemId: Int,
     val count: Int,
 ) {
+    fun collectTextKeys(out: MutableList<TextKey>) {
+    }
+
     companion object {
         fun decode(reader: SoraReader): MailReward =
             MailReward(

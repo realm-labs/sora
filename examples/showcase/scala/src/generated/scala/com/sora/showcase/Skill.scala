@@ -14,7 +14,13 @@ final case class Skill(
   /** Optional item requirement */
   requiredItem: Option[Int],
   castOrigin: Vec3
-)
+) {
+  def collectTextKeys(out: scala.collection.mutable.ArrayBuffer[TextKey]): Unit = {
+    this.cost.collectTextKeys(out)
+    this.effect.collectTextKeys(out)
+    this.castOrigin.collectTextKeys(out)
+  }
+}
 
 object Skill {
   def decode(reader: SoraReader): Skill =

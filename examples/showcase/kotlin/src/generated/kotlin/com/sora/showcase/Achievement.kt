@@ -8,6 +8,11 @@ data class Achievement(
     val targetCount: Long,
     val reward: ResourceCost,
 ) {
+    fun collectTextKeys(out: MutableList<TextKey>) {
+        out.add(this.titleKey)
+        this.reward.collectTextKeys(out)
+    }
+
     companion object {
         fun decode(reader: SoraReader): Achievement =
             Achievement(

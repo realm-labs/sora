@@ -2,6 +2,7 @@
 
 package com.sora.showcase;
 
+import java.util.List;
 public final class MaintenanceInfo {
     public final String startsAt;
     public final Integer durationMinutes;
@@ -32,5 +33,8 @@ public final class MaintenanceInfo {
             obj.get("duration_minutes").asInt(),
             obj.get("reason").isNull() ? null : obj.get("reason").asString()
         );
+    }
+
+    void collectTextKeys(List<TextKey> out) {
     }
 }

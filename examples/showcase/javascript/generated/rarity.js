@@ -31,3 +31,5 @@ export function decodeRarityValue(value) {
     }
     return name;
 }
+
+export function collectRarityTextKeys(_value, _out) {}

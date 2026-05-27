@@ -9,6 +9,9 @@ data class DropEntry(
     val count: Int,
     val weight: Float,
 ) {
+    fun collectTextKeys(out: MutableList<TextKey>) {
+    }
+
     companion object {
         fun decode(reader: SoraReader): DropEntry =
             DropEntry(

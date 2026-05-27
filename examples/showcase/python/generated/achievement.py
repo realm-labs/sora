@@ -43,6 +43,10 @@ class Achievement:
             reward=reward,
         )
 
+    def collect_text_keys(self, out: list[TextKey]) -> None:
+        out.append(self.title_key)
+        self.reward.collect_text_keys(out)
+
 
 class AchievementTable(SoraConfigTable):
     NAME = "Achievement"

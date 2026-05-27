@@ -56,6 +56,12 @@ func decodeBuffValue(input SoraValue) (Buff, error) {
 	return value, nil
 }
 
+func (value Buff) collectTextKeys(out *[]TextKey) {
+	for _, item := range value.Modifiers {
+		item.collectTextKeys(out)
+	}
+}
+
 const buffTableName = "Buff"
 
 var buffTableInfo = SoraTableInfo{

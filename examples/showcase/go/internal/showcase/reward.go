@@ -37,3 +37,6 @@ func decodeRewardValue(input SoraValue) (Reward, error) {
 	}
 	return value, nil
 }
+
+func (value Reward) collectTextKeys(out *[]TextKey) {
+}

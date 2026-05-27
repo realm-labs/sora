@@ -5,6 +5,8 @@ import 'runtime.dart';
 sealed class RewardAction {
   const RewardAction();
 
+  void collectTextKeys(List<TextKey> out) {}
+
   static RewardAction decode(SoraValue value) {
     final obj = value.asObject();
     final tag = obj.get('type').asString();
@@ -45,6 +47,10 @@ final class RewardActionAddItem extends RewardAction {
     required this.itemId,
     required this.count,
   });
+
+  @override
+  void collectTextKeys(List<TextKey> out) {
+  }
 }
 
 final class RewardActionAddBuff extends RewardAction {
@@ -55,6 +61,10 @@ final class RewardActionAddBuff extends RewardAction {
     required this.buffId,
     required this.duration,
   });
+
+  @override
+  void collectTextKeys(List<TextKey> out) {
+  }
 }
 
 final class RewardActionUnlockStage extends RewardAction {
@@ -63,6 +73,10 @@ final class RewardActionUnlockStage extends RewardAction {
   const RewardActionUnlockStage({
     required this.stageId,
   });
+
+  @override
+  void collectTextKeys(List<TextKey> out) {
+  }
 }
 
 final class RewardActionSendMail extends RewardAction {
@@ -71,6 +85,10 @@ final class RewardActionSendMail extends RewardAction {
   const RewardActionSendMail({
     required this.mailId,
   });
+
+  @override
+  void collectTextKeys(List<TextKey> out) {
+  }
 }
 
 final class RewardActionRunActionGroup extends RewardAction {
@@ -79,4 +97,8 @@ final class RewardActionRunActionGroup extends RewardAction {
   const RewardActionRunActionGroup({
     required this.actionGroupId,
   });
+
+  @override
+  void collectTextKeys(List<TextKey> out) {
+  }
 }

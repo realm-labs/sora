@@ -9,6 +9,12 @@ data class Stage(
     val recommendedPower: Int,
     val firstClearRewards: List<Reward>,
 ) {
+    fun collectTextKeys(out: MutableList<TextKey>) {
+        for (item in this.firstClearRewards) {
+            item.collectTextKeys(out)
+        }
+    }
+
     companion object {
         fun decode(reader: SoraReader): Stage =
             Stage(

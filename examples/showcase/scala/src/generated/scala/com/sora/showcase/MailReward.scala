@@ -7,7 +7,10 @@ final case class MailReward(
   seq: Int,
   itemId: Int,
   count: Int
-)
+) {
+  def collectTextKeys(out: scala.collection.mutable.ArrayBuffer[TextKey]): Unit = {
+  }
+}
 
 object MailReward {
   def decode(reader: SoraReader): MailReward =

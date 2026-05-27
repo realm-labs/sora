@@ -41,6 +41,11 @@ public final class Achievement {
             ResourceCost.decode(obj.get("reward"))
         );
     }
+
+    void collectTextKeys(List<TextKey> out) {
+        out.add(this.titleKey);
+        this.reward.collectTextKeys(out);
+    }
 }
 
 final class AchievementTable extends java.util.AbstractMap<Integer, Achievement> implements SoraKeyedTable<Integer, Achievement> {

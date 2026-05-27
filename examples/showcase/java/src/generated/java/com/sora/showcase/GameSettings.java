@@ -70,6 +70,17 @@ public final class GameSettings {
             obj.get("maintenance").isNull() ? null : MaintenanceInfo.decode(obj.get("maintenance"))
         );
     }
+
+    void collectTextKeys(List<TextKey> out) {
+        this.spawnPos.collectTextKeys(out);
+        for (var item : this.spawnPoints) {
+            item.collectTextKeys(out);
+        }
+        if (this.maintenance != null) {
+            var item = this.maintenance;
+            item.collectTextKeys(out);
+        }
+    }
 }
 
 final class GameSettingsTable implements SoraSingleTable<GameSettings> {

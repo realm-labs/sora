@@ -34,6 +34,14 @@ public sealed record Buff(
             obj.Get("modifiers").AsList(item => StatModifier.Decode(item))
         );
     }
+
+    internal void CollectTextKeys(List<TextKey> keys)
+    {
+        foreach (var element in this.Modifiers)
+        {
+            element.CollectTextKeys(keys);
+        }
+    }
 }
 
 public sealed class BuffTable : ISoraKeyedTable<int, Buff>

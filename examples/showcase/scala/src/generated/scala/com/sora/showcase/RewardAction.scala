@@ -78,4 +78,9 @@ object RewardAction {
       case tag => throw new SoraReadException(s"invalid union tag $tag for RewardAction")
     }
   }
+
+  def collectTextKeys(value: RewardAction, out: scala.collection.mutable.ArrayBuffer[TextKey]): Unit =
+    value match {
+      case _ =>
+    }
 }

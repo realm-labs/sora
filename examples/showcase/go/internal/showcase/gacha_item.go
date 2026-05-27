@@ -56,6 +56,9 @@ func decodeGachaItemValue(input SoraValue) (GachaItem, error) {
 	return value, nil
 }
 
+func (value GachaItem) collectTextKeys(out *[]TextKey) {
+}
+
 const gachaItemTableName = "GachaItem"
 
 var gachaItemTableInfo = SoraTableInfo{

@@ -24,6 +24,9 @@ final class DropEntry {
       count: obj.get("count").asInt(),
     );
   }
+
+  void collectTextKeys(List<TextKey> out) {
+  }
 }
 
 final class DropEntryTable extends Iterable<DropEntry> implements SoraListTable<DropEntry> {

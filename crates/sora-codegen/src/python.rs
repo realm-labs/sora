@@ -84,6 +84,9 @@ struct PythonModel {
     records: Vec<PythonRecord>,
     tables: Vec<PythonTable>,
     modules: Vec<String>,
+    has_localization: bool,
+    locales: Vec<String>,
+    default_locale: String,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -108,6 +111,7 @@ struct PythonUnionVariant {
     raw_name: String,
     name: String,
     fields: Vec<PythonField>,
+    has_text_keys: bool,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -117,6 +121,7 @@ struct PythonRecord {
     imports: Vec<PythonImport>,
     fields: Vec<PythonField>,
     uses_text_key: bool,
+    has_text_keys: bool,
     table: Option<PythonTable>,
 }
 
@@ -156,6 +161,7 @@ struct PythonField {
     type_name: String,
     decode: String,
     value_decode: String,
+    collect_text_keys: String,
     comment: Option<String>,
 }
 
@@ -213,6 +219,17 @@ impl PythonModel {
             records,
             tables,
             modules,
+            has_localization: ir.localization.is_some(),
+            locales: ir
+                .localization
+                .as_ref()
+                .map(|item| item.locales.clone())
+                .unwrap_or_default(),
+            default_locale: ir
+                .localization
+                .as_ref()
+                .map(|item| item.default_locale.clone())
+                .unwrap_or_default(),
         }
     }
 }
@@ -226,12 +243,16 @@ fn python_record(ir: &ConfigIr, record: BaseRecord, table: Option<PythonTable>) 
     let uses_text_key = fields
         .iter()
         .any(|field| field.type_name.contains("TextKey"));
+    let has_text_keys = fields
+        .iter()
+        .any(|field| !field.collect_text_keys.is_empty());
     PythonRecord {
         pascal_name: python_type_identifier(&record.pascal_name),
         snake_name: python_module_name(&record.snake_name),
         imports: record.imports.into_iter().map(python_import).collect(),
         fields,
         uses_text_key,
+        has_text_keys,
         table,
     }
 }
@@ -251,14 +272,19 @@ fn python_union(ir: &ConfigIr, union: BaseUnion) -> PythonUnion {
 }
 
 fn python_variant(ir: &ConfigIr, variant: BaseUnionVariant) -> PythonUnionVariant {
+    let fields = variant
+        .fields
+        .into_iter()
+        .map(|field| python_field(ir, field))
+        .collect::<Vec<_>>();
+    let has_text_keys = fields
+        .iter()
+        .any(|field| !field.collect_text_keys.is_empty());
     PythonUnionVariant {
         raw_name: variant.name,
         name: python_type_identifier(&variant.pascal_name),
-        fields: variant
-            .fields
-            .into_iter()
-            .map(|field| python_field(ir, field))
-            .collect(),
+        fields,
+        has_text_keys,
     }
 }
 
@@ -304,12 +330,15 @@ fn python_index(ir: &ConfigIr, index: BaseIndex) -> PythonIndex {
 }
 
 fn python_field(ir: &ConfigIr, field: BaseField) -> PythonField {
+    let collect_text_keys =
+        python_collect_text_keys(ir, &field.ty, &format!("self.{}", field.snake_name), 8);
     PythonField {
         raw_name: field.raw_name,
         name: python_field_identifier(&field.snake_name),
         type_name: python_type_name(ir, &field.ty),
         decode: python_decode_expr(ir, &field.ty),
         value_decode: python_value_decode_expr(ir, &field.ty, "__VALUE__"),
+        collect_text_keys,
         comment: field.comment,
     }
 }
@@ -496,6 +525,58 @@ fn python_value_decode_expr(ir: &ConfigIr, ty: &TypeIr, value: &str) -> String {
             let item_decode = python_value_decode_expr(ir, element, value);
             format!("None if {value}.is_null() else {item_decode}")
         }
+    }
+}
+
+fn python_collect_text_keys(ir: &ConfigIr, ty: &TypeIr, value: &str, indent: usize) -> String {
+    let pad = " ".repeat(indent);
+    let nested_pad = " ".repeat(indent + 4);
+    match ty {
+        TypeIr::Text => format!("{pad}out.append({value})"),
+        TypeIr::Optional(element) => {
+            let inner = python_collect_text_keys(ir, element, "item", indent + 4);
+            if inner.is_empty() {
+                String::new()
+            } else {
+                format!("{pad}if {value} is not None:\n{nested_pad}item = {value}\n{inner}")
+            }
+        }
+        TypeIr::List(element) | TypeIr::Set(element) | TypeIr::Array { element, .. } => {
+            let inner = python_collect_text_keys(ir, element, "item", indent + 4);
+            if inner.is_empty() {
+                String::new()
+            } else {
+                format!("{pad}for item in {value}:\n{inner}")
+            }
+        }
+        TypeIr::Map {
+            key,
+            value: element,
+        } => {
+            let key_inner = python_collect_text_keys(ir, key, "key", indent + 4);
+            let value_inner = python_collect_text_keys(ir, element, "item", indent + 4);
+            if key_inner.is_empty() && value_inner.is_empty() {
+                String::new()
+            } else {
+                format!("{pad}for key, item in {value}.items():\n{key_inner}\n{value_inner}")
+            }
+        }
+        TypeIr::Struct(_) | TypeIr::Union(_) => format!("{pad}{value}.collect_text_keys(out)"),
+        TypeIr::Ref { table, field } => ref_target_type(ir, table, field)
+            .map(|ty| python_collect_text_keys(ir, ty, value, indent))
+            .unwrap_or_default(),
+        TypeIr::Bool
+        | TypeIr::I8
+        | TypeIr::U8
+        | TypeIr::I16
+        | TypeIr::U16
+        | TypeIr::I32
+        | TypeIr::U32
+        | TypeIr::I64
+        | TypeIr::F32
+        | TypeIr::F64
+        | TypeIr::String
+        | TypeIr::Enum(_) => String::new(),
     }
 }
 

@@ -41,6 +41,9 @@ public final class GachaItem {
             obj.get("weight").asFloat()
         );
     }
+
+    void collectTextKeys(List<TextKey> out) {
+    }
 }
 
 final class GachaItemTable extends java.util.AbstractList<GachaItem> implements SoraListTable<GachaItem> {

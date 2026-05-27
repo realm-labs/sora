@@ -8,6 +8,13 @@ data class EventRule(
     val condition: EventCondition,
     val actions: List<RewardAction>,
 ) {
+    fun collectTextKeys(out: MutableList<TextKey>) {
+        EventCondition.collectTextKeys(this.condition, out)
+        for (item in this.actions) {
+            RewardAction.collectTextKeys(item, out)
+        }
+    }
+
     companion object {
         fun decode(reader: SoraReader): EventRule =
             EventRule(

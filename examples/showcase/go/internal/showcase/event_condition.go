@@ -140,3 +140,10 @@ func decodeEventConditionValue(input SoraValue) (EventCondition, error) {
 		return nil, fmt.Errorf("invalid union tag %s for EventCondition", tag)
 	}
 }
+
+func collectEventConditionTextKeys(value EventCondition, out *[]TextKey) {
+	switch typed := value.(type) {
+	default:
+		_ = typed
+	}
+}

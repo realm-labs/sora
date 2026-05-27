@@ -46,3 +46,6 @@ func decodeStatModifierValue(input SoraValue) (StatModifier, error) {
 	}
 	return value, nil
 }
+
+func (value StatModifier) collectTextKeys(out *[]TextKey) {
+}

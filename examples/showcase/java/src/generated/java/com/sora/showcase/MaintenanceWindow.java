@@ -41,6 +41,9 @@ public final class MaintenanceWindow {
             obj.get("reason").isNull() ? null : obj.get("reason").asString()
         );
     }
+
+    void collectTextKeys(List<TextKey> out) {
+    }
 }
 
 final class MaintenanceWindowTable extends java.util.AbstractList<MaintenanceWindow> implements SoraListTable<MaintenanceWindow> {

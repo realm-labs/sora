@@ -7,7 +7,11 @@ final case class ComplexActionEntry(
   groupId: Int,
   seq: Int,
   value: RewardAction
-)
+) {
+  def collectTextKeys(out: scala.collection.mutable.ArrayBuffer[TextKey]): Unit = {
+    RewardAction.collectTextKeys(this.value, out)
+  }
+}
 
 object ComplexActionEntry {
   def decode(reader: SoraReader): ComplexActionEntry =

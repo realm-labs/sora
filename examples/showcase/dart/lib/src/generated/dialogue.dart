@@ -21,6 +21,10 @@ final class Dialogue {
       lines: obj.get("lines").asList((item) => item.asString()),
     );
   }
+
+  void collectTextKeys(List<TextKey> out) {
+    out.add(this.speakerKey);
+  }
 }
 
 final class DialogueTable extends Iterable<Dialogue> implements SoraKeyedTable<int, Dialogue> {

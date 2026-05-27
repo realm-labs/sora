@@ -11,6 +11,10 @@ data class Character(
     val starterItems: List<Int>,
     val spawnPos: Vec3,
 ) {
+    fun collectTextKeys(out: MutableList<TextKey>) {
+        this.spawnPos.collectTextKeys(out)
+    }
+
     companion object {
         fun decode(reader: SoraReader): Character =
             Character(

@@ -31,3 +31,5 @@ export function decodeStatTypeValue(value) {
     }
     return name;
 }
+
+export function collectStatTypeTextKeys(_value, _out) {}

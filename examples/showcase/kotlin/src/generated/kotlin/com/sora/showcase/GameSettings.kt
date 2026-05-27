@@ -17,6 +17,16 @@ data class GameSettings(
     /** Optional derived struct copied from a child row */
     val maintenance: MaintenanceInfo?,
 ) {
+    fun collectTextKeys(out: MutableList<TextKey>) {
+        this.spawnPos.collectTextKeys(out)
+        for (item in this.spawnPoints) {
+            item.collectTextKeys(out)
+        }
+        this.maintenance?.let { item ->
+            item.collectTextKeys(out)
+        }
+    }
+
     companion object {
         fun decode(reader: SoraReader): GameSettings =
             GameSettings(

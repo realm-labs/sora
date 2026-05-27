@@ -16,3 +16,6 @@ export function decodeVec3Value(value) {
         z: object.get("z").asNumber(),
     };
 }
+
+export function collectVec3TextKeys(value, out) {
+}

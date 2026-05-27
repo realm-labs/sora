@@ -6,7 +6,10 @@ final case class CharacterSkill(
   characterId: Int,
   skillId: Int,
   unlockLevel: Int
-)
+) {
+  def collectTextKeys(out: scala.collection.mutable.ArrayBuffer[TextKey]): Unit = {
+  }
+}
 
 object CharacterSkill {
   def decode(reader: SoraReader): CharacterSkill =

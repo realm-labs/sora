@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
-from .sora_runtime import SoraReader
+from .sora_runtime import SoraReader, TextKey
 from .sora_runtime import (
     SoraConfigTable,
     SoraIndexInfo,
@@ -55,6 +55,12 @@ class ComplexRule:
             actions=actions,
             budget=budget,
         )
+
+    def collect_text_keys(self, out: list[TextKey]) -> None:
+        self.root_condition.collect_text_keys(out)
+        for item in self.actions:
+            item.collect_text_keys(out)
+        self.budget.collect_text_keys(out)
 
 
 class ComplexRuleTable(SoraConfigTable):

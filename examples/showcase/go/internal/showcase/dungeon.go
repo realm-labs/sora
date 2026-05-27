@@ -56,6 +56,10 @@ func decodeDungeonValue(input SoraValue) (Dungeon, error) {
 	return value, nil
 }
 
+func (value Dungeon) collectTextKeys(out *[]TextKey) {
+	value.EntryCost.collectTextKeys(out)
+}
+
 const dungeonTableName = "Dungeon"
 
 var dungeonTableInfo = SoraTableInfo{

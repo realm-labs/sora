@@ -25,6 +25,9 @@ export function decodeStageRewardValue(value) {
     };
 }
 
+export function collectStageRewardTextKeys(value, out) {
+}
+
 export class StageRewardTable {
     static tableName = "StageReward";
     static tableInfo = {

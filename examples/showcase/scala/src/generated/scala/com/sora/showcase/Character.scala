@@ -10,7 +10,11 @@ final case class Character(
   baseSkill: Int,
   starterItems: Vector[Int],
   spawnPos: Vec3
-)
+) {
+  def collectTextKeys(out: scala.collection.mutable.ArrayBuffer[TextKey]): Unit = {
+    this.spawnPos.collectTextKeys(out)
+  }
+}
 
 object Character {
   def decode(reader: SoraReader): Character =

@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
-from .sora_runtime import SoraReader
+from .sora_runtime import SoraReader, TextKey
 from .sora_runtime import (
     SoraConfigTable,
     SoraIndexInfo,
@@ -45,6 +45,10 @@ class Stage:
             recommended_power=recommended_power,
             first_clear_rewards=first_clear_rewards,
         )
+
+    def collect_text_keys(self, out: list[TextKey]) -> None:
+        for item in self.first_clear_rewards:
+            item.collect_text_keys(out)
 
 
 class StageTable(SoraConfigTable):

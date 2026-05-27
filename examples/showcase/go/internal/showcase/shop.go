@@ -47,6 +47,9 @@ func decodeShopValue(input SoraValue) (Shop, error) {
 	return value, nil
 }
 
+func (value Shop) collectTextKeys(out *[]TextKey) {
+}
+
 const shopTableName = "Shop"
 
 var shopTableInfo = SoraTableInfo{

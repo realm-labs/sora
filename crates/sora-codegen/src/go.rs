@@ -82,6 +82,9 @@ struct GoModel {
     tables: Vec<GoTable>,
     has_unique_indexes: bool,
     has_non_unique_indexes: bool,
+    has_localization: bool,
+    locales: Vec<String>,
+    default_locale: String,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -103,6 +106,7 @@ struct GoUnion {
 struct GoUnionVariant {
     name: String,
     fields: Vec<GoField>,
+    has_text_keys: bool,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -144,6 +148,7 @@ struct GoField {
     type_name: String,
     decode: String,
     value_decode: String,
+    collect_text_keys: String,
     comment: Option<String>,
 }
 
@@ -186,6 +191,17 @@ impl GoModel {
             has_non_unique_indexes: tables
                 .iter()
                 .any(|table| !table.non_unique_indexes.is_empty()),
+            has_localization: ir.localization.is_some(),
+            locales: ir
+                .localization
+                .as_ref()
+                .map(|item| item.locales.clone())
+                .unwrap_or_default(),
+            default_locale: ir
+                .localization
+                .as_ref()
+                .map(|item| item.default_locale.clone())
+                .unwrap_or_default(),
             tables,
         }
     }
@@ -205,13 +221,18 @@ fn go_union(ir: &ConfigIr, union: BaseUnion) -> GoUnion {
 }
 
 fn go_variant(ir: &ConfigIr, variant: BaseUnionVariant) -> GoUnionVariant {
+    let fields = variant
+        .fields
+        .into_iter()
+        .map(|field| go_field(ir, field))
+        .collect::<Vec<_>>();
+    let has_text_keys = fields
+        .iter()
+        .any(|field| !field.collect_text_keys.is_empty());
     GoUnionVariant {
         name: variant.pascal_name,
-        fields: variant
-            .fields
-            .into_iter()
-            .map(|field| go_field(ir, field))
-            .collect(),
+        fields,
+        has_text_keys,
     }
 }
 
@@ -275,12 +296,15 @@ fn go_index(ir: &ConfigIr, index: BaseIndex) -> GoIndex {
 
 fn go_field(ir: &ConfigIr, field: BaseField) -> GoField {
     let value_decode = go_value_decode_expr(ir, &field.ty, "__VALUE__");
+    let collect_text_keys =
+        go_collect_text_keys(ir, &field.ty, &format!("value.{}", field.pascal_name));
     GoField {
         raw_name: field.raw_name,
         name: field.pascal_name,
         type_name: go_type_name(ir, &field.ty),
         decode: go_decode_expr(ir, &field.ty),
         value_decode,
+        collect_text_keys,
         comment: field.comment,
     }
 }
@@ -402,6 +426,69 @@ fn go_value_decode_expr(ir: &ConfigIr, ty: &TypeIr, value: &str) -> String {
                 go_value_decode_expr(ir, element, "item")
             )
         }
+    }
+}
+
+fn go_collect_text_keys(ir: &ConfigIr, ty: &TypeIr, value: &str) -> String {
+    match ty {
+        TypeIr::Text => format!("*out = append(*out, {value})"),
+        TypeIr::Optional(element) => {
+            if matches!(element.as_ref(), TypeIr::Text) {
+                return format!("if {value} != nil {{ *out = append(*out, *{value}) }}");
+            }
+            let inner = go_collect_text_keys(ir, element, "item");
+            if inner.is_empty() {
+                String::new()
+            } else {
+                format!("if {value} != nil {{ item := {value}; {inner} }}")
+            }
+        }
+        TypeIr::List(element) | TypeIr::Set(element) | TypeIr::Array { element, .. } => {
+            let inner = go_collect_text_keys(ir, element, "item");
+            if inner.is_empty() {
+                String::new()
+            } else {
+                format!("for _, item := range {value} {{ {inner} }}")
+            }
+        }
+        TypeIr::Map {
+            key,
+            value: element,
+        } => {
+            let key_inner = go_collect_text_keys(ir, key, "key");
+            let value_inner = go_collect_text_keys(ir, element, "item");
+            if key_inner.is_empty() && value_inner.is_empty() {
+                String::new()
+            } else {
+                format!("for key, item := range {value} {{ {key_inner}; {value_inner} }}")
+            }
+        }
+        TypeIr::Struct(_) => format!("{value}.collectTextKeys(out)"),
+        TypeIr::Union(name) => format!("collect{name}TextKeys({value}, out)"),
+        TypeIr::Ref { table, field } => ir
+            .tables
+            .iter()
+            .find(|candidate| candidate.name == *table)
+            .and_then(|table| {
+                table
+                    .fields
+                    .iter()
+                    .find(|candidate| candidate.name == *field)
+            })
+            .map(|field| go_collect_text_keys(ir, &field.ty, value))
+            .unwrap_or_default(),
+        TypeIr::Bool
+        | TypeIr::I8
+        | TypeIr::U8
+        | TypeIr::I16
+        | TypeIr::U16
+        | TypeIr::I32
+        | TypeIr::U32
+        | TypeIr::I64
+        | TypeIr::F32
+        | TypeIr::F64
+        | TypeIr::String
+        | TypeIr::Enum(_) => String::new(),
     }
 }
 

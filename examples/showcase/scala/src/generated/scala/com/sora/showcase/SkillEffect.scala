@@ -6,7 +6,10 @@ final case class SkillEffect(
   element: ElementType,
   power: Int,
   radius: Float
-)
+) {
+  def collectTextKeys(out: scala.collection.mutable.ArrayBuffer[TextKey]): Unit = {
+  }
+}
 
 object SkillEffect {
   def decode(reader: SoraReader): SkillEffect =

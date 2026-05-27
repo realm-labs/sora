@@ -17,7 +17,11 @@ final case class Item(
   tags: Vector[String],
   /** Map pairs: key,value|key,value */
   attributes: Map[String, Int]
-)
+) {
+  def collectTextKeys(out: scala.collection.mutable.ArrayBuffer[TextKey]): Unit = {
+    this.price.collectTextKeys(out)
+  }
+}
 
 object Item {
   def decode(reader: SoraReader): Item =

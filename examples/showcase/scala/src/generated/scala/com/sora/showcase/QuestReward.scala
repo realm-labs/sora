@@ -7,7 +7,10 @@ final case class QuestReward(
   seq: Int,
   itemId: Int,
   count: Int
-)
+) {
+  def collectTextKeys(out: scala.collection.mutable.ArrayBuffer[TextKey]): Unit = {
+  }
+}
 
 object QuestReward {
   def decode(reader: SoraReader): QuestReward =

@@ -22,6 +22,9 @@ final class Shop {
       currency: ResourceKind.decode(obj.get("currency")),
     );
   }
+
+  void collectTextKeys(List<TextKey> out) {
+  }
 }
 
 final class ShopTable extends Iterable<Shop> implements SoraKeyedTable<int, Shop> {

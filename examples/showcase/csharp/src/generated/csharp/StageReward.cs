@@ -34,6 +34,10 @@ public sealed record StageReward(
             obj.Get("count").AsInt32()
         );
     }
+
+    internal void CollectTextKeys(List<TextKey> keys)
+    {
+    }
 }
 
 public sealed class StageRewardTable : ISoraListTable<StageReward>

@@ -2,6 +2,7 @@
 
 package com.sora.showcase;
 
+import java.util.List;
 public final class StatModifier {
     public final StatType stat;
     public final Float value;
@@ -32,5 +33,8 @@ public final class StatModifier {
             obj.get("value").asFloat(),
             obj.get("is_percent").asBool()
         );
+    }
+
+    void collectTextKeys(List<TextKey> out) {
     }
 }

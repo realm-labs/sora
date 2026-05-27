@@ -8,7 +8,11 @@ final case class ShopItem(
   itemId: Int,
   price: ResourceCost,
   dailyLimit: Option[Int]
-)
+) {
+  def collectTextKeys(out: scala.collection.mutable.ArrayBuffer[TextKey]): Unit = {
+    this.price.collectTextKeys(out)
+  }
+}
 
 object ShopItem {
   def decode(reader: SoraReader): ShopItem =

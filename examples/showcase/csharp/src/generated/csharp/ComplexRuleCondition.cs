@@ -31,6 +31,11 @@ public sealed record ComplexRuleCondition(
             EventCondition.Decode(obj.Get("value"))
         );
     }
+
+    internal void CollectTextKeys(List<TextKey> keys)
+    {
+        EventCondition.CollectTextKeys(this.Value, keys);
+    }
 }
 
 public sealed class ComplexRuleConditionTable : ISoraKeyedTable<int, ComplexRuleCondition>

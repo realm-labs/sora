@@ -3,22 +3,38 @@
 package com.sora.showcase
 
 sealed class EventCondition {
+    open fun collectTextKeys(out: MutableList<TextKey>) {}
     data class LevelAtLeast(
         val level: Int,
-    ) : EventCondition()
+    ) : EventCondition() {
+        override fun collectTextKeys(out: MutableList<TextKey>) {
+        }
+    }
     data class QuestCompleted(
         val questId: Int,
-    ) : EventCondition()
+    ) : EventCondition() {
+        override fun collectTextKeys(out: MutableList<TextKey>) {
+        }
+    }
     data class HasItem(
         val itemId: Int,
         val count: Int,
-    ) : EventCondition()
+    ) : EventCondition() {
+        override fun collectTextKeys(out: MutableList<TextKey>) {
+        }
+    }
     data class AllConditions(
         val conditionGroupId: Int,
-    ) : EventCondition()
+    ) : EventCondition() {
+        override fun collectTextKeys(out: MutableList<TextKey>) {
+        }
+    }
     data class AnyCondition(
         val conditionGroupId: Int,
-    ) : EventCondition()
+    ) : EventCondition() {
+        override fun collectTextKeys(out: MutableList<TextKey>) {
+        }
+    }
 
     companion object {
         fun decode(reader: SoraReader): EventCondition =
@@ -63,6 +79,10 @@ sealed class EventCondition {
                 )
                 else -> throw SoraReadException("invalid union tag $tag for EventCondition")
             }
+        }
+
+        fun collectTextKeys(value: EventCondition, out: MutableList<TextKey>) {
+            value.collectTextKeys(out)
         }
     }
 }

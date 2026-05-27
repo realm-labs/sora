@@ -38,6 +38,14 @@ func decode{{ record.pascal_name }}Value(input SoraValue) ({{ record.pascal_name
     return value, nil
 }
 
+func (value {{ record.pascal_name }}) collectTextKeys(out *[]TextKey) {
+{%- for field in record.fields %}
+{%- if field.collect_text_keys %}
+    {{ field.collect_text_keys }}
+{%- endif %}
+{%- endfor %}
+}
+
 {%- if record.table %}
 {%- set table = record.table %}
 

@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
-from .sora_runtime import SoraReader{% if record.uses_text_key %}, TextKey{% endif %}{% if runtime_format != "sora" %}, SoraValue{% endif %}
+from .sora_runtime import SoraReader, TextKey{% if runtime_format != "sora" %}, SoraValue{% endif %}
 {%- if record.table %}
 from .sora_runtime import (
     SoraConfigTable,
@@ -55,6 +55,17 @@ class {{ record.pascal_name }}:
             {{ field.name }}={{ field.name }},
 {%- endfor %}
         )
+
+    def collect_text_keys(self, out: list[TextKey]) -> None:
+{%- if record.has_text_keys %}
+{%- for field in record.fields %}
+{%- if field.collect_text_keys %}
+{{ field.collect_text_keys }}
+{%- endif %}
+{%- endfor %}
+{%- else %}
+        pass
+{%- endif %}
 
 {%- if runtime_format != "sora" %}
 
