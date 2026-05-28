@@ -21,6 +21,7 @@
 - [Data Export](exports.md)
   - [Export Formats](export/formats.md)
 - [Code Generation](codegen/overview.md)
+  - [Identifier Naming](codegen/identifier-naming.md)
   - [Runtime Formats](codegen/runtime-formats.md)
   - [Runtime Adapters](codegen/adapters.md)
 - [Versioning and Compatibility](versioning.md)
