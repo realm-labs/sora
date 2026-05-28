@@ -100,7 +100,7 @@ struct GoUnion {
     snake_name: String,
     tag: String,
     variants: Vec<GoUnionVariant>,
-    has_duration: bool,
+    has_time: bool,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -115,7 +115,7 @@ struct GoRecord {
     pascal_name: String,
     snake_name: String,
     fields: Vec<GoField>,
-    has_duration: bool,
+    has_time: bool,
     table: Option<GoTable>,
 }
 
@@ -215,16 +215,16 @@ fn go_union(ir: &ConfigIr, union: BaseUnion) -> GoUnion {
         .into_iter()
         .map(|variant| go_variant(ir, variant))
         .collect::<Vec<_>>();
-    let has_duration = variants
+    let has_time = variants
         .iter()
         .flat_map(|variant| variant.fields.iter())
-        .any(|field| field.type_name.contains("time.Duration"));
+        .any(|field| field.type_name.contains("time."));
     GoUnion {
         pascal_name: union.pascal_name,
         snake_name: union.snake_name,
         tag: union.tag,
         variants,
-        has_duration,
+        has_time,
     }
 }
 
@@ -250,14 +250,12 @@ fn go_record(ir: &ConfigIr, record: BaseRecord, table: Option<GoTable>) -> GoRec
         .into_iter()
         .map(|field| go_field(ir, field))
         .collect::<Vec<_>>();
-    let has_duration = fields
-        .iter()
-        .any(|field| field.type_name.contains("time.Duration"));
+    let has_time = fields.iter().any(|field| field.type_name.contains("time."));
     GoRecord {
         pascal_name: record.pascal_name,
         snake_name: record.snake_name,
         fields,
-        has_duration,
+        has_time,
         table,
     }
 }
@@ -344,6 +342,7 @@ fn go_decode_expr(ir: &ConfigIr, ty: &TypeIr) -> String {
         TypeIr::U32 => "reader.ReadUInt32()".to_owned(),
         TypeIr::I64 => "reader.ReadInt64()".to_owned(),
         TypeIr::Duration => "ReadDuration(reader)".to_owned(),
+        TypeIr::DateTime => "ReadDateTime(reader)".to_owned(),
         TypeIr::F32 => "reader.ReadFloat32()".to_owned(),
         TypeIr::F64 => "reader.ReadFloat64()".to_owned(),
         TypeIr::String => "reader.ReadString()".to_owned(),
@@ -398,6 +397,7 @@ fn go_value_decode_expr(ir: &ConfigIr, ty: &TypeIr, value: &str) -> String {
         TypeIr::U32 => format!("{value}.AsUInt32()"),
         TypeIr::I64 => format!("{value}.AsInt64()"),
         TypeIr::Duration => format!("DecodeDurationValue({value})"),
+        TypeIr::DateTime => format!("DecodeDateTimeValue({value})"),
         TypeIr::F32 => format!("{value}.AsFloat32()"),
         TypeIr::F64 => format!("{value}.AsFloat64()"),
         TypeIr::String => format!("{value}.AsString()"),
@@ -501,6 +501,7 @@ fn go_collect_text_keys(ir: &ConfigIr, ty: &TypeIr, value: &str) -> String {
         | TypeIr::U32
         | TypeIr::I64
         | TypeIr::Duration
+        | TypeIr::DateTime
         | TypeIr::F32
         | TypeIr::F64
         | TypeIr::String

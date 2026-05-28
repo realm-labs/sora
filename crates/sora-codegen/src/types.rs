@@ -1,6 +1,6 @@
 use sora_ir::model::{ConfigIr, TypeIr};
 
-use crate::options::{RustCodegenOptions, RustStringStorage};
+use crate::options::{RustCodegenOptions, RustDateTimeType, RustStringStorage};
 
 pub fn rust_type_name(ir: &ConfigIr, ty: &TypeIr) -> String {
     rust_type_name_with_options(ir, ty, &RustCodegenOptions::default())
@@ -57,6 +57,7 @@ fn rust_type_name_inner(ir: &ConfigIr, ty: &TypeIr, options: &RustCodegenOptions
         TypeIr::U32 => "u32".to_owned(),
         TypeIr::I64 => "i64".to_owned(),
         TypeIr::Duration => "std::time::Duration".to_owned(),
+        TypeIr::DateTime => rust_datetime_type(options),
         TypeIr::F32 => "f32".to_owned(),
         TypeIr::F64 => "f64".to_owned(),
         TypeIr::String => rust_string_type(options),
@@ -93,6 +94,13 @@ fn rust_string_type(options: &RustCodegenOptions) -> String {
     }
 }
 
+fn rust_datetime_type(options: &RustCodegenOptions) -> String {
+    match options.datetime_type {
+        RustDateTimeType::SystemTime => "std::time::SystemTime".to_owned(),
+        RustDateTimeType::Chrono => "chrono::DateTime<chrono::Utc>".to_owned(),
+    }
+}
+
 fn kotlin_type_name_inner(ir: &ConfigIr, ty: &TypeIr) -> String {
     match ty {
         TypeIr::Bool => "Boolean".to_owned(),
@@ -101,6 +109,7 @@ fn kotlin_type_name_inner(ir: &ConfigIr, ty: &TypeIr) -> String {
         TypeIr::U16 | TypeIr::I32 => "Int".to_owned(),
         TypeIr::U32 | TypeIr::I64 => "Long".to_owned(),
         TypeIr::Duration => "kotlin.time.Duration".to_owned(),
+        TypeIr::DateTime => "java.time.Instant".to_owned(),
         TypeIr::F32 => "Float".to_owned(),
         TypeIr::F64 => "Double".to_owned(),
         TypeIr::String => "String".to_owned(),
@@ -130,6 +139,7 @@ fn csharp_type_name_inner(ir: &ConfigIr, ty: &TypeIr) -> String {
         TypeIr::U32 => "uint".to_owned(),
         TypeIr::I64 => "long".to_owned(),
         TypeIr::Duration => "global::System.TimeSpan".to_owned(),
+        TypeIr::DateTime => "global::System.DateTimeOffset".to_owned(),
         TypeIr::F32 => "float".to_owned(),
         TypeIr::F64 => "double".to_owned(),
         TypeIr::String => "string".to_owned(),
@@ -155,6 +165,7 @@ fn java_type_name_inner(ir: &ConfigIr, ty: &TypeIr) -> String {
         TypeIr::U16 | TypeIr::I32 => "Integer".to_owned(),
         TypeIr::U32 | TypeIr::I64 => "Long".to_owned(),
         TypeIr::Duration => "java.time.Duration".to_owned(),
+        TypeIr::DateTime => "java.time.Instant".to_owned(),
         TypeIr::F32 => "Float".to_owned(),
         TypeIr::F64 => "Double".to_owned(),
         TypeIr::String => "String".to_owned(),
@@ -179,6 +190,7 @@ fn scala_type_name_inner(ir: &ConfigIr, ty: &TypeIr) -> String {
         TypeIr::I8 | TypeIr::U8 | TypeIr::I16 | TypeIr::U16 | TypeIr::I32 => "Int".to_owned(),
         TypeIr::U32 | TypeIr::I64 => "Long".to_owned(),
         TypeIr::Duration => "scala.concurrent.duration.FiniteDuration".to_owned(),
+        TypeIr::DateTime => "java.time.Instant".to_owned(),
         TypeIr::F32 => "Float".to_owned(),
         TypeIr::F64 => "Double".to_owned(),
         TypeIr::String => "String".to_owned(),
@@ -208,6 +220,7 @@ fn go_type_name_inner(ir: &ConfigIr, ty: &TypeIr) -> String {
         TypeIr::U32 => "uint32".to_owned(),
         TypeIr::I64 => "int64".to_owned(),
         TypeIr::Duration => "time.Duration".to_owned(),
+        TypeIr::DateTime => "time.Time".to_owned(),
         TypeIr::F32 => "float32".to_owned(),
         TypeIr::F64 => "float64".to_owned(),
         TypeIr::String => "string".to_owned(),
@@ -237,6 +250,7 @@ fn dart_type_name_inner(ir: &ConfigIr, ty: &TypeIr) -> String {
         | TypeIr::U32
         | TypeIr::I64 => "int".to_owned(),
         TypeIr::Duration => "Duration".to_owned(),
+        TypeIr::DateTime => "DateTime".to_owned(),
         TypeIr::F32 | TypeIr::F64 => "double".to_owned(),
         TypeIr::String => "String".to_owned(),
         TypeIr::Text => "TextKey".to_owned(),
@@ -264,7 +278,8 @@ fn godot_type_name_inner(ir: &ConfigIr, ty: &TypeIr) -> String {
         | TypeIr::I32
         | TypeIr::U32
         | TypeIr::I64
-        | TypeIr::Duration => "int".to_owned(),
+        | TypeIr::Duration
+        | TypeIr::DateTime => "int".to_owned(),
         TypeIr::F32 | TypeIr::F64 => "float".to_owned(),
         TypeIr::String | TypeIr::Enum(_) => "String".to_owned(),
         TypeIr::Text => "SoraRuntime.TextKey".to_owned(),
@@ -288,6 +303,7 @@ fn python_type_name_inner(ir: &ConfigIr, ty: &TypeIr) -> String {
         | TypeIr::U32
         | TypeIr::I64 => "int".to_owned(),
         TypeIr::Duration => "datetime.timedelta".to_owned(),
+        TypeIr::DateTime => "datetime.datetime".to_owned(),
         TypeIr::F32 | TypeIr::F64 => "float".to_owned(),
         TypeIr::String => "str".to_owned(),
         TypeIr::Text => "TextKey".to_owned(),
@@ -350,6 +366,7 @@ mod tests {
             ("i32", "i32"),
             ("i64", "i64"),
             ("duration", "std::time::Duration"),
+            ("datetime", "std::time::SystemTime"),
             ("f32", "f32"),
             ("f64", "f64"),
             ("string", "String"),
@@ -370,6 +387,20 @@ mod tests {
     }
 
     #[test]
+    fn maps_rust_datetime_chrono_option() {
+        let ir = example_ir();
+        let options = RustCodegenOptions {
+            datetime_type: RustDateTimeType::Chrono,
+            ..RustCodegenOptions::default()
+        };
+
+        assert_eq!(
+            rust_type_name_with_options(&ir, &parse_type("datetime").unwrap(), &options),
+            "chrono::DateTime<chrono::Utc>"
+        );
+    }
+
+    #[test]
     fn maps_kotlin_types() {
         let ir = example_ir();
         let cases = [
@@ -377,6 +408,7 @@ mod tests {
             ("i32", "Int"),
             ("i64", "Long"),
             ("duration", "kotlin.time.Duration"),
+            ("datetime", "java.time.Instant"),
             ("f32", "Float"),
             ("f64", "Double"),
             ("string", "String"),
@@ -407,6 +439,7 @@ mod tests {
             ("i32", "int"),
             ("i64", "long"),
             ("duration", "global::System.TimeSpan"),
+            ("datetime", "global::System.DateTimeOffset"),
             ("f32", "float"),
             ("f64", "double"),
             ("string", "string"),
@@ -438,6 +471,7 @@ mod tests {
             ("i32", "Integer"),
             ("i64", "Long"),
             ("duration", "java.time.Duration"),
+            ("datetime", "java.time.Instant"),
             ("f32", "Float"),
             ("f64", "Double"),
             ("string", "String"),
@@ -465,6 +499,7 @@ mod tests {
             ("i32", "Int"),
             ("i64", "Long"),
             ("duration", "scala.concurrent.duration.FiniteDuration"),
+            ("datetime", "java.time.Instant"),
             ("f32", "Float"),
             ("f64", "Double"),
             ("string", "String"),
@@ -492,6 +527,7 @@ mod tests {
             ("i32", "int32"),
             ("i64", "int64"),
             ("duration", "time.Duration"),
+            ("datetime", "time.Time"),
             ("f32", "float32"),
             ("f64", "float64"),
             ("string", "string"),
@@ -519,6 +555,7 @@ mod tests {
             ("i32", "int"),
             ("i64", "int"),
             ("duration", "Duration"),
+            ("datetime", "DateTime"),
             ("f32", "double"),
             ("f64", "double"),
             ("string", "String"),
@@ -546,6 +583,7 @@ mod tests {
             ("i32", "int"),
             ("i64", "int"),
             ("duration", "int"),
+            ("datetime", "int"),
             ("f32", "float"),
             ("f64", "float"),
             ("string", "String"),
@@ -573,6 +611,7 @@ mod tests {
             ("i32", "int"),
             ("i64", "int"),
             ("duration", "datetime.timedelta"),
+            ("datetime", "datetime.datetime"),
             ("f32", "float"),
             ("f64", "float"),
             ("string", "str"),

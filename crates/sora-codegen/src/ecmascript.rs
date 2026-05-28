@@ -305,6 +305,7 @@ pub fn ecmascript_type_name(ir: &ConfigIr, ty: &TypeIr) -> String {
             "number".to_owned()
         }
         TypeIr::I64 | TypeIr::Duration => "bigint".to_owned(),
+        TypeIr::DateTime => "Date".to_owned(),
         TypeIr::F32 | TypeIr::F64 => "number".to_owned(),
         TypeIr::String => "string".to_owned(),
         TypeIr::Text => "TextKey".to_owned(),
@@ -330,6 +331,7 @@ pub fn ecmascript_decode_expr(ir: &ConfigIr, ty: &TypeIr) -> String {
         TypeIr::I8 | TypeIr::I16 | TypeIr::I32 => "reader.readI32()".to_owned(),
         TypeIr::U8 | TypeIr::U16 | TypeIr::U32 => "reader.readU32()".to_owned(),
         TypeIr::I64 | TypeIr::Duration => "reader.readI64()".to_owned(),
+        TypeIr::DateTime => "new Date(Number(reader.readI64()))".to_owned(),
         TypeIr::F32 => "reader.readF32()".to_owned(),
         TypeIr::F64 => "reader.readF64()".to_owned(),
         TypeIr::String => "reader.readString()".to_owned(),
@@ -367,6 +369,7 @@ pub fn ecmascript_value_decode_expr(ir: &ConfigIr, ty: &TypeIr, value: &str) -> 
             format!("{value}.asInt()")
         }
         TypeIr::I64 | TypeIr::Duration => format!("{value}.asBigInt()"),
+        TypeIr::DateTime => format!("new Date(Number({value}.asBigInt()))"),
         TypeIr::F32 | TypeIr::F64 => format!("{value}.asNumber()"),
         TypeIr::String => format!("{value}.asString()"),
         TypeIr::Text => format!("new TextKey({value}.asString())"),
@@ -440,6 +443,7 @@ pub fn ecmascript_collect_text_keys(ir: &ConfigIr, ty: &TypeIr, value: &str) -> 
         | TypeIr::U32
         | TypeIr::I64
         | TypeIr::Duration
+        | TypeIr::DateTime
         | TypeIr::F32
         | TypeIr::F64
         | TypeIr::String

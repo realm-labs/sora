@@ -139,6 +139,7 @@ fn is_valid_map_key_type(ty: &TypeIr, tables: &[TableIr]) -> bool {
         | TypeIr::U32
         | TypeIr::I64
         | TypeIr::Duration
+        | TypeIr::DateTime
         | TypeIr::String
         | TypeIr::Text
         | TypeIr::Enum(_) => true,

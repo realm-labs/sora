@@ -291,7 +291,8 @@ fn godot_value_decode_expr(ir: &ConfigIr, ty: &TypeIr, value: &str) -> String {
         | TypeIr::I32
         | TypeIr::U32
         | TypeIr::I64
-        | TypeIr::Duration => format!("int({value})"),
+        | TypeIr::Duration
+        | TypeIr::DateTime => format!("int({value})"),
         TypeIr::F32 | TypeIr::F64 => format!("float({value})"),
         TypeIr::String => format!("str({value})"),
         TypeIr::Text => format!("SoraRuntime.TextKey.new(str({value}))"),
@@ -342,7 +343,8 @@ fn godot_default_value(ir: &ConfigIr, ty: &TypeIr) -> String {
         | TypeIr::I32
         | TypeIr::U32
         | TypeIr::I64
-        | TypeIr::Duration => "0".to_owned(),
+        | TypeIr::Duration
+        | TypeIr::DateTime => "0".to_owned(),
         TypeIr::F32 | TypeIr::F64 => "0.0".to_owned(),
         TypeIr::String | TypeIr::Enum(_) => "\"\"".to_owned(),
         TypeIr::Text => "null".to_owned(),

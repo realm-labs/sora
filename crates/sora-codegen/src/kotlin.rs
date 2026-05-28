@@ -333,6 +333,7 @@ fn kotlin_decode_expr(ir: &ConfigIr, ty: &TypeIr) -> String {
         TypeIr::U32 => "reader.readU32().toLong() and 0xffffffffL".to_owned(),
         TypeIr::I64 => "reader.readI64()".to_owned(),
         TypeIr::Duration => "soraDurationFromMillis(reader.readI64())".to_owned(),
+        TypeIr::DateTime => "java.time.Instant.ofEpochMilli(reader.readI64())".to_owned(),
         TypeIr::F32 => "reader.readF32()".to_owned(),
         TypeIr::F64 => "reader.readF64()".to_owned(),
         TypeIr::String => "reader.readString()".to_owned(),
@@ -379,6 +380,7 @@ fn kotlin_value_decode_expr(ir: &ConfigIr, ty: &TypeIr, value: &str) -> String {
         TypeIr::U32 => format!("{value}.asLong()"),
         TypeIr::I64 => format!("{value}.asLong()"),
         TypeIr::Duration => format!("soraDurationFromMillis({value}.asLong())"),
+        TypeIr::DateTime => format!("java.time.Instant.ofEpochMilli({value}.asLong())"),
         TypeIr::F32 => format!("{value}.asFloat()"),
         TypeIr::F64 => format!("{value}.asDouble()"),
         TypeIr::String => format!("{value}.asString()"),
@@ -476,6 +478,7 @@ fn kotlin_collect_text_keys(ir: &ConfigIr, ty: &TypeIr, value: &str, indent: usi
         | TypeIr::U32
         | TypeIr::I64
         | TypeIr::Duration
+        | TypeIr::DateTime
         | TypeIr::F32
         | TypeIr::F64
         | TypeIr::String

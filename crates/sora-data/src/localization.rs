@@ -227,6 +227,7 @@ fn collect_missing_text_keys(
         | TypeIr::U32
         | TypeIr::I64
         | TypeIr::Duration
+        | TypeIr::DateTime
         | TypeIr::F32
         | TypeIr::F64
         | TypeIr::String

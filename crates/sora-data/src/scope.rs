@@ -93,6 +93,7 @@ fn filter_value(ir: &ConfigIr, ty: &TypeIr, value: &Value) -> Option<Value> {
         | TypeIr::U32
         | TypeIr::I64
         | TypeIr::Duration
+        | TypeIr::DateTime
         | TypeIr::F32
         | TypeIr::F64
         | TypeIr::String

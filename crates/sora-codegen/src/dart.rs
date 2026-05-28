@@ -357,6 +357,9 @@ fn dart_value_decode_expr(ir: &ConfigIr, ty: &TypeIr, value: &str) -> String {
         | TypeIr::U32
         | TypeIr::I64 => format!("{value}.asInt()"),
         TypeIr::Duration => format!("Duration(milliseconds: {value}.asInt())"),
+        TypeIr::DateTime => {
+            format!("DateTime.fromMillisecondsSinceEpoch({value}.asInt(), isUtc: true)")
+        }
         TypeIr::F32 | TypeIr::F64 => format!("{value}.asDouble()"),
         TypeIr::String => format!("{value}.asString()"),
         TypeIr::Text => format!("TextKey({value}.asString())"),
@@ -457,6 +460,7 @@ fn dart_collect_text_keys(ir: &ConfigIr, ty: &TypeIr, value: &str, indent: usize
         | TypeIr::U32
         | TypeIr::I64
         | TypeIr::Duration
+        | TypeIr::DateTime
         | TypeIr::F32
         | TypeIr::F64
         | TypeIr::String

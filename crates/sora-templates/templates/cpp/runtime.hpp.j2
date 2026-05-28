@@ -311,6 +311,16 @@ inline std::chrono::milliseconds decode_value<std::chrono::milliseconds>(SoraRea
     return decode_duration(reader);
 }
 
+inline std::chrono::system_clock::time_point decode_datetime(SoraReader& reader) {
+    std::int64_t millis = reader.read_i64();
+    return std::chrono::system_clock::time_point(std::chrono::milliseconds(millis));
+}
+
+template <>
+inline std::chrono::system_clock::time_point decode_value<std::chrono::system_clock::time_point>(SoraReader& reader) {
+    return decode_datetime(reader);
+}
+
 template <>
 inline float decode_value<float>(SoraReader& reader) {
     return reader.read_f32();

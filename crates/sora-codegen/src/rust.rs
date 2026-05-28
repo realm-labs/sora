@@ -12,7 +12,7 @@ use crate::{
         BaseField, BaseImport, BaseIndex, BaseModel, BaseRecord, BaseTable, BaseUnion,
         BaseUnionVariant, build_base_model,
     },
-    options::{RustCodegenOptions, RustMapType, RustStringStorage},
+    options::{RustCodegenOptions, RustDateTimeType, RustMapType, RustStringStorage},
     render::{ensure_dir, render_template, write_file},
     types::rust_type_name_with_options,
 };
@@ -63,6 +63,7 @@ impl CodeGenerator for RustCodeGenerator {
             context! {
                 runtime_format => runtime_format,
                 string_storage => rust_string_storage_name(options.string_storage),
+                datetime_type => rust_datetime_type_name(options.datetime_type),
             },
         )?;
         write_file(&out_dir.join("runtime.rs"), rendered)
@@ -161,6 +162,7 @@ struct RustField {
     raw_name: String,
     name: String,
     type_name: String,
+    serde_with: Option<String>,
     collect_text_keys: String,
     text_key_binding: String,
     comment: Option<String>,
@@ -356,6 +358,7 @@ fn rust_field(ir: &ConfigIr, field: BaseField, options: &RustCodegenOptions) -> 
         raw_name: field.raw_name,
         name: field.snake_name,
         type_name: rust_type_name_with_options(ir, &field.ty, options),
+        serde_with: rust_serde_with(&field.ty, options),
         collect_text_keys,
         text_key_binding: String::new(),
         comment: field.comment,
@@ -415,6 +418,7 @@ fn rust_collect_text_keys(ir: &ConfigIr, ty: &TypeIr, value: &str) -> String {
         | TypeIr::U32
         | TypeIr::I64
         | TypeIr::Duration
+        | TypeIr::DateTime
         | TypeIr::F32
         | TypeIr::F64
         | TypeIr::String
@@ -478,6 +482,7 @@ fn rust_key_type_is_copy(ir: &ConfigIr, ty: &TypeIr) -> bool {
         | TypeIr::U32
         | TypeIr::I64
         | TypeIr::Duration
+        | TypeIr::DateTime
         | TypeIr::F32
         | TypeIr::F64
         | TypeIr::Enum(_) => true,
@@ -508,5 +513,25 @@ fn rust_string_storage_name(storage: RustStringStorage) -> &'static str {
     match storage {
         RustStringStorage::Owned => "owned",
         RustStringStorage::Arc => "arc",
+    }
+}
+
+fn rust_datetime_type_name(datetime_type: RustDateTimeType) -> &'static str {
+    match datetime_type {
+        RustDateTimeType::SystemTime => "system_time",
+        RustDateTimeType::Chrono => "chrono",
+    }
+}
+
+fn rust_serde_with(ty: &TypeIr, options: &RustCodegenOptions) -> Option<String> {
+    match ty {
+        TypeIr::DateTime => Some(
+            match options.datetime_type {
+                RustDateTimeType::SystemTime => "super::runtime::serde_system_time_millis",
+                RustDateTimeType::Chrono => "super::runtime::serde_chrono_datetime_millis",
+            }
+            .to_owned(),
+        ),
+        _ => None,
     }
 }

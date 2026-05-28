@@ -28,6 +28,7 @@ pub struct RustCodegenOptions {
     pub runtime_format: RuntimeFormat,
     pub map_type: RustMapType,
     pub string_storage: RustStringStorage,
+    pub datetime_type: RustDateTimeType,
 }
 
 impl Default for RustCodegenOptions {
@@ -36,6 +37,7 @@ impl Default for RustCodegenOptions {
             runtime_format: RuntimeFormat::Sora,
             map_type: RustMapType::Std,
             string_storage: RustStringStorage::Owned,
+            datetime_type: RustDateTimeType::SystemTime,
         }
     }
 }
@@ -330,4 +332,12 @@ pub enum RustStringStorage {
     #[default]
     Owned,
     Arc,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, Serialize, Default)]
+#[serde(rename_all = "snake_case")]
+pub enum RustDateTimeType {
+    #[default]
+    SystemTime,
+    Chrono,
 }

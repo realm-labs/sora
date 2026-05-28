@@ -205,6 +205,7 @@ impl<'a> BinaryEncoder<'a> {
             | TypeIr::U32
             | TypeIr::I64
             | TypeIr::Duration
+            | TypeIr::DateTime
             | TypeIr::F32
             | TypeIr::F64
             | TypeIr::Enum(_) => {}
@@ -290,7 +291,7 @@ impl<'a> BinaryEncoder<'a> {
                 write_var_i32(out, value);
             }
             TypeIr::U32 => Self::encode_u32_like(ty, value, out, u32::MIN as i64, u32::MAX as i64)?,
-            TypeIr::I64 | TypeIr::Duration => {
+            TypeIr::I64 | TypeIr::Duration | TypeIr::DateTime => {
                 let Value::Integer(value) = value else {
                     return Err(type_error(ty, value));
                 };

@@ -793,7 +793,7 @@ fn c_type_name(
         TypeIr::U16 => "uint16_t".to_owned(),
         TypeIr::I32 => "int32_t".to_owned(),
         TypeIr::U32 => "uint32_t".to_owned(),
-        TypeIr::I64 | TypeIr::Duration => "int64_t".to_owned(),
+        TypeIr::I64 | TypeIr::Duration | TypeIr::DateTime => "int64_t".to_owned(),
         TypeIr::F32 => "float".to_owned(),
         TypeIr::F64 => "double".to_owned(),
         TypeIr::String => "sora_string".to_owned(),
@@ -824,7 +824,7 @@ fn c_type_suffix(ir: &ConfigIr, ty: &TypeIr) -> String {
         TypeIr::U16 => "u16".to_owned(),
         TypeIr::I32 => "i32".to_owned(),
         TypeIr::U32 => "u32".to_owned(),
-        TypeIr::I64 | TypeIr::Duration => "i64".to_owned(),
+        TypeIr::I64 | TypeIr::Duration | TypeIr::DateTime => "i64".to_owned(),
         TypeIr::F32 => "f32".to_owned(),
         TypeIr::F64 => "f64".to_owned(),
         TypeIr::String => "string".to_owned(),
@@ -863,7 +863,9 @@ fn c_decode_into(
         TypeIr::U16 => format!("sora_reader_read_u16(reader, {target})"),
         TypeIr::I32 => format!("sora_reader_read_i32(reader, {target})"),
         TypeIr::U32 => format!("sora_reader_read_u32(reader, {target})"),
-        TypeIr::I64 | TypeIr::Duration => format!("sora_reader_read_i64(reader, {target})"),
+        TypeIr::I64 | TypeIr::Duration | TypeIr::DateTime => {
+            format!("sora_reader_read_i64(reader, {target})")
+        }
         TypeIr::F32 => format!("sora_reader_read_f32(reader, {target})"),
         TypeIr::F64 => format!("sora_reader_read_f64(reader, {target})"),
         TypeIr::String => format!("sora_reader_read_string(reader, {target})"),
@@ -921,6 +923,7 @@ fn c_free_into(
         | TypeIr::U32
         | TypeIr::I64
         | TypeIr::Duration
+        | TypeIr::DateTime
         | TypeIr::F32
         | TypeIr::F64
         | TypeIr::Enum(_) => None,
@@ -963,6 +966,7 @@ fn c_type_is_pointer_param(ir: &ConfigIr, ty: &TypeIr) -> bool {
         | TypeIr::U32
         | TypeIr::I64
         | TypeIr::Duration
+        | TypeIr::DateTime
         | TypeIr::F32
         | TypeIr::F64
         | TypeIr::Enum(_) => false,

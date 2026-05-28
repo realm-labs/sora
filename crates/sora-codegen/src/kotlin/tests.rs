@@ -41,6 +41,8 @@ fn generates_rust_and_kotlin_files() {
     assert!(rust_item.contains("pub struct Item"));
     assert!(rust_item.contains("/// Item id"));
     assert!(rust_item.contains("pub item_type: ItemType"));
+    assert!(rust_item.contains("pub start_at: std::time::SystemTime"));
+    assert!(rust_item.contains("#[serde(with = \"super::runtime::serde_system_time_millis\")]"));
     assert!(rust_item.contains("pub action: Action"));
     assert!(rust_item.contains("pub tags: std::collections::HashSet<String>"));
     assert!(rust_item.contains("pub weights: std::collections::HashMap<String, i32>"));
@@ -107,6 +109,8 @@ fn generates_rust_and_kotlin_files() {
     assert!(kotlin_item.contains("package game_config"));
     assert!(kotlin_item.contains("/** Item id */"));
     assert!(kotlin_item.contains("val itemType: ItemType"));
+    assert!(kotlin_item.contains("val startAt: java.time.Instant"));
+    assert!(kotlin_item.contains("startAt = java.time.Instant.ofEpochMilli(reader.readI64())"));
     assert!(kotlin_item.contains("val action: Action"));
     assert!(kotlin_item.contains("val tags: List<String>"));
     assert!(kotlin_item.contains("val weights: Map<String, Int>"));
@@ -462,6 +466,7 @@ fn generates_csharp_java_and_go_files() {
     assert!(csharp_item.contains("public sealed record Item"));
     assert!(csharp_item.contains("// Item id"));
     assert!(csharp_item.contains("List<string> Tags"));
+    assert!(csharp_item.contains("global::System.DateTimeOffset StartAt"));
     assert!(csharp_item.contains("Dictionary<string, int> Weights"));
     assert!(
         csharp_item.contains("reader.ReadMap(() => reader.ReadString(), () => reader.ReadInt32())")
@@ -498,6 +503,7 @@ fn generates_csharp_java_and_go_files() {
     assert!(java_item.contains("public final class Item"));
     assert!(java_item.contains("/** Item id */"));
     assert!(java_item.contains("java.util.List<String> tags"));
+    assert!(java_item.contains("java.time.Instant startAt"));
     assert!(java_item.contains("java.util.Map<String, Integer> weights"));
     assert!(
         java_item.contains("reader.readMap(() -> reader.readString(), () -> reader.readI32())")
@@ -533,6 +539,8 @@ fn generates_csharp_java_and_go_files() {
     assert!(go_item.contains("type Item struct"));
     assert!(go_item.contains("// Id: Item id"));
     assert!(go_item.contains("Tags []string"));
+    assert!(go_item.contains("StartAt time.Time"));
+    assert!(go_item.contains("ReadDateTime(reader)"));
     assert!(go_item.contains("Weights map[string]int32"));
     assert!(go_item.contains("ReadMap(reader, func(reader *SoraReader) (string, error) { return reader.ReadString() }, func(reader *SoraReader) (int32, error) { return reader.ReadInt32() })"));
     assert!(go_item.contains("DecodeSoraValueMap(obj.Get(\"weights\"), func(item SoraValue) (string, error) { return item.AsString() }, func(item SoraValue) (int32, error) { return item.AsInt32() })"));
@@ -594,6 +602,11 @@ comment = "Item name"
 name = "item_type"
 type = "enum<ItemType>"
 comment = "Item type"
+
+[[tables.fields]]
+name = "start_at"
+type = "datetime"
+comment = "Start time"
 
 [[tables.fields]]
 name = "action"

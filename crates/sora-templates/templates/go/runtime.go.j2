@@ -106,6 +106,22 @@ func DecodeDurationValue(value SoraValue) (time.Duration, error) {
     return time.Duration(millis) * time.Millisecond, nil
 }
 
+func ReadDateTime(reader *SoraReader) (time.Time, error) {
+    millis, err := reader.ReadInt64()
+    if err != nil {
+        return time.Time{}, err
+    }
+    return time.Unix(millis/1000, (millis%1000)*int64(time.Millisecond)).UTC(), nil
+}
+
+func DecodeDateTimeValue(value SoraValue) (time.Time, error) {
+    millis, err := value.AsInt64()
+    if err != nil {
+        return time.Time{}, err
+    }
+    return time.Unix(millis/1000, (millis%1000)*int64(time.Millisecond)).UTC(), nil
+}
+
 type LocalePack struct {
     schemaFingerprint string
     locale string

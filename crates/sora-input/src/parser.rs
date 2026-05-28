@@ -208,6 +208,7 @@ fn default_cell_value(
         | TypeIr::I64
         | TypeIr::Ref { .. } => integer_cell(cell, context)?,
         TypeIr::Duration => duration_cell(cell, context)?,
+        TypeIr::DateTime => datetime_cell(cell, context)?,
         TypeIr::F32 | TypeIr::F64 => float_cell(cell, context)?,
         TypeIr::String | TypeIr::Text | TypeIr::Enum(_) => Value::String(cell.display_text()),
         TypeIr::Struct(_) | TypeIr::Union(_) => json_object_value(&cell.display_text(), context)?,
@@ -260,6 +261,18 @@ fn duration_cell(cell: &CellValue<'_>, context: &CellContext<'_>) -> Result<Valu
             .map_err(|message| context.error(message)),
         _ => Err(context.error(format!(
             "expected duration literal, got `{}`",
+            cell.display_text()
+        ))),
+    }
+}
+
+fn datetime_cell(cell: &CellValue<'_>, context: &CellContext<'_>) -> Result<Value> {
+    match cell {
+        CellValue::Text(value) => parse_datetime_millis(value.trim())
+            .map(Value::Integer)
+            .map_err(|message| context.error(message)),
+        _ => Err(context.error(format!(
+            "expected datetime literal, got `{}`",
             cell.display_text()
         ))),
     }
@@ -327,6 +340,12 @@ fn parse_duration_millis(source: &str) -> std::result::Result<i64, String> {
     } else {
         Err("expected duration literal".to_owned())
     }
+}
+
+fn parse_datetime_millis(source: &str) -> std::result::Result<i64, String> {
+    chrono::DateTime::parse_from_rfc3339(source)
+        .map(|value| value.timestamp_millis())
+        .map_err(|error| format!("expected RFC3339 datetime with timezone in `{source}`: {error}"))
 }
 
 fn float_cell(cell: &CellValue<'_>, context: &CellContext<'_>) -> Result<Value> {
@@ -585,6 +604,14 @@ fn json_to_cell_value(
                     .map(Value::Integer)
                     .map_err(|message| context.error(message))
             })?,
+        TypeIr::DateTime => value
+            .as_str()
+            .ok_or_else(|| context.error("expected JSON datetime string"))
+            .and_then(|source| {
+                parse_datetime_millis(source)
+                    .map(Value::Integer)
+                    .map_err(|message| context.error(message))
+            })?,
         TypeIr::F32 | TypeIr::F64 => value
             .as_f64()
             .map(Value::Float)
@@ -666,6 +693,9 @@ fn separated_item_to_value(
             .map(Value::Integer)
             .map_err(|_| context.error(format!("expected integer list item, got `{item}`"))),
         TypeIr::Duration => parse_duration_millis(item)
+            .map(Value::Integer)
+            .map_err(|message| context.error(message)),
+        TypeIr::DateTime => parse_datetime_millis(item)
             .map(Value::Integer)
             .map_err(|message| context.error(message)),
         TypeIr::F32 | TypeIr::F64 => item
@@ -909,6 +939,66 @@ mod tests {
             .unwrap_err();
 
         assert!(error.to_string().contains("expected duration literal"));
+    }
+
+    #[test]
+    fn parses_datetime_literals_as_utc_epoch_milliseconds() {
+        let registry = ParserRegistry::builtin();
+        let ir = ConfigIr {
+            package: "test".to_owned(),
+            localization: None,
+            enums: Vec::new(),
+            structs: Vec::new(),
+            unions: Vec::new(),
+            tables: Vec::new(),
+        };
+        let context = CellContext {
+            path: Path::new("<test>"),
+            ir: &ir,
+            location: CellLocation::Default,
+            field: "start_at",
+            parser: None,
+        };
+
+        let value = registry
+            .parse_cell(
+                &CellValue::Text("2026-05-27T22:00:00+08:00".into()),
+                &parse_type("datetime").unwrap(),
+                &context,
+            )
+            .unwrap();
+
+        assert_eq!(value, Value::Integer(1_779_890_400_000));
+    }
+
+    #[test]
+    fn rejects_datetime_without_timezone() {
+        let registry = ParserRegistry::builtin();
+        let ir = ConfigIr {
+            package: "test".to_owned(),
+            localization: None,
+            enums: Vec::new(),
+            structs: Vec::new(),
+            unions: Vec::new(),
+            tables: Vec::new(),
+        };
+        let context = CellContext {
+            path: Path::new("<test>"),
+            ir: &ir,
+            location: CellLocation::Default,
+            field: "start_at",
+            parser: None,
+        };
+
+        let error = registry
+            .parse_cell(
+                &CellValue::Text("2026-05-27T14:00:00".into()),
+                &parse_type("datetime").unwrap(),
+                &context,
+            )
+            .unwrap_err();
+
+        assert!(error.to_string().contains("expected RFC3339 datetime"));
     }
 
     #[test]

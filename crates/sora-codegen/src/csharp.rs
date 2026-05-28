@@ -336,6 +336,9 @@ fn csharp_decode_expr(ir: &ConfigIr, ty: &TypeIr) -> String {
         TypeIr::U32 => "(uint)reader.ReadUInt32()".to_owned(),
         TypeIr::I64 => "reader.ReadInt64()".to_owned(),
         TypeIr::Duration => "SoraDuration.FromMilliseconds(reader.ReadInt64())".to_owned(),
+        TypeIr::DateTime => {
+            "global::System.DateTimeOffset.FromUnixTimeMilliseconds(reader.ReadInt64())".to_owned()
+        }
         TypeIr::F32 => "reader.ReadFloat()".to_owned(),
         TypeIr::F64 => "reader.ReadDouble()".to_owned(),
         TypeIr::String => "reader.ReadString()".to_owned(),
@@ -384,6 +387,9 @@ fn csharp_value_decode_expr(ir: &ConfigIr, ty: &TypeIr, value: &str) -> String {
         TypeIr::U32 => format!("(uint){value}.AsInt64()"),
         TypeIr::I64 => format!("{value}.AsInt64()"),
         TypeIr::Duration => format!("SoraDuration.FromMilliseconds({value}.AsInt64())"),
+        TypeIr::DateTime => {
+            format!("global::System.DateTimeOffset.FromUnixTimeMilliseconds({value}.AsInt64())")
+        }
         TypeIr::F32 => format!("{value}.AsFloat()"),
         TypeIr::F64 => format!("{value}.AsDouble()"),
         TypeIr::String => format!("{value}.AsString()"),
@@ -484,6 +490,7 @@ fn csharp_collect_text_keys(ir: &ConfigIr, ty: &TypeIr, value: &str, indent: usi
         | TypeIr::U32
         | TypeIr::I64
         | TypeIr::Duration
+        | TypeIr::DateTime
         | TypeIr::F32
         | TypeIr::F64
         | TypeIr::String
