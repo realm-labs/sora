@@ -3,6 +3,9 @@
 package {{ package }};
 
 import java.util.List;
+{%- for import in union.imports %}
+import {{ import }};
+{%- endfor %}
 
 public interface {{ union.pascal_name }} {
 {%- for variant in union.variants %}

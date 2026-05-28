@@ -2,6 +2,9 @@
 
 class_name {{ record.class_name }}
 extends RefCounted
+{%- for import in record.custom_imports %}
+{{ import }}
+{%- endfor %}
 
 {%- for field in record.fields %}
 {%- if field.comment %}

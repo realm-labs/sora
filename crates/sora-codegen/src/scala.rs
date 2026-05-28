@@ -13,7 +13,7 @@ use crate::{
     },
     options::{ScalaCodegenOptions, ScalaVersion},
     render::{ensure_dir, render_template, write_file},
-    types::scala_type_name,
+    type_mapping::{TypeMapping, TypeMappingContext, TypeMappingRegistry},
 };
 
 pub struct ScalaCodeGenerator;
@@ -26,7 +26,9 @@ impl CodeGenerator for ScalaCodeGenerator {
         ensure_dir(out_dir)?;
         let runtime_format = runtime_format_name(codegen_options.runtime_format);
 
-        let model = ScalaModel::from_base_model(ir, build_base_model(ir)?, &codegen_options);
+        let mapper = ScalaTypeMapper::new(context.target, ir, context.type_mappings);
+        let model =
+            ScalaModel::from_base_model(ir, build_base_model(ir)?, &codegen_options, &mapper);
         let package_dir = scala_package_dir(out_dir, &model.package)?;
 
         for item in &model.enums {
@@ -99,6 +101,7 @@ struct ScalaUnion {
     pascal_name: String,
     tag: String,
     variants: Vec<ScalaUnionVariant>,
+    imports: Vec<String>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -114,6 +117,7 @@ struct ScalaRecord {
     fields: Vec<ScalaField>,
     has_text_keys: bool,
     table: Option<ScalaTable>,
+    imports: Vec<String>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -147,6 +151,7 @@ struct ScalaField {
     decode: String,
     value_decode: String,
     collect_text_keys: String,
+    imports: Vec<String>,
     comment: Option<String>,
 }
 
@@ -155,12 +160,13 @@ impl ScalaModel {
         ir: &ConfigIr,
         model: BaseModel,
         codegen_options: &ScalaCodegenOptions,
+        mapper: &ScalaTypeMapper<'_>,
     ) -> Self {
         let is_scala3 = codegen_options.scala_version == ScalaVersion::Scala3;
         let tables = model
             .tables
             .into_iter()
-            .map(|item| scala_table(ir, item))
+            .map(|item| scala_table(ir, item, mapper))
             .collect::<Vec<_>>();
 
         Self {
@@ -178,7 +184,7 @@ impl ScalaModel {
             unions: model
                 .unions
                 .into_iter()
-                .map(|item| scala_union(ir, item))
+                .map(|item| scala_union(ir, item, mapper))
                 .collect(),
             records: model
                 .records
@@ -188,7 +194,7 @@ impl ScalaModel {
                         .iter()
                         .find(|table| table.row_type == item.pascal_name)
                         .cloned();
-                    scala_record(ir, item, table)
+                    scala_record(ir, item, table, mapper)
                 })
                 .collect(),
             has_localization: ir.localization.is_some(),
@@ -207,23 +213,30 @@ impl ScalaModel {
     }
 }
 
-fn scala_union(ir: &ConfigIr, union: BaseUnion) -> ScalaUnion {
+fn scala_union(ir: &ConfigIr, union: BaseUnion, mapper: &ScalaTypeMapper<'_>) -> ScalaUnion {
+    let variants = union
+        .variants
+        .into_iter()
+        .map(|variant| scala_variant(ir, variant, mapper))
+        .collect::<Vec<_>>();
+    let imports = collect_scala_imports(variants.iter().flat_map(|variant| &variant.fields));
     ScalaUnion {
         pascal_name: union.pascal_name,
         tag: union.tag,
-        variants: union
-            .variants
-            .into_iter()
-            .map(|variant| scala_variant(ir, variant))
-            .collect(),
+        variants,
+        imports,
     }
 }
 
-fn scala_variant(ir: &ConfigIr, variant: BaseUnionVariant) -> ScalaUnionVariant {
+fn scala_variant(
+    ir: &ConfigIr,
+    variant: BaseUnionVariant,
+    mapper: &ScalaTypeMapper<'_>,
+) -> ScalaUnionVariant {
     let fields = variant
         .fields
         .into_iter()
-        .map(|field| scala_field(ir, field))
+        .map(|field| scala_field(ir, field, mapper))
         .collect::<Vec<_>>();
     let has_text_keys = fields
         .iter()
@@ -235,29 +248,36 @@ fn scala_variant(ir: &ConfigIr, variant: BaseUnionVariant) -> ScalaUnionVariant 
     }
 }
 
-fn scala_record(ir: &ConfigIr, record: BaseRecord, table: Option<ScalaTable>) -> ScalaRecord {
+fn scala_record(
+    ir: &ConfigIr,
+    record: BaseRecord,
+    table: Option<ScalaTable>,
+    mapper: &ScalaTypeMapper<'_>,
+) -> ScalaRecord {
     let fields = record
         .fields
         .into_iter()
-        .map(|field| scala_field(ir, field))
+        .map(|field| scala_field(ir, field, mapper))
         .collect::<Vec<_>>();
     let has_text_keys = fields
         .iter()
         .any(|field| !field.collect_text_keys.is_empty());
+    let imports = collect_scala_imports(fields.iter());
     ScalaRecord {
         pascal_name: record.pascal_name,
         fields,
         has_text_keys,
         table,
+        imports,
     }
 }
 
-fn scala_table(ir: &ConfigIr, table: BaseTable) -> ScalaTable {
+fn scala_table(ir: &ConfigIr, table: BaseTable, mapper: &ScalaTypeMapper<'_>) -> ScalaTable {
     let row_type = table.pascal_name.clone();
     let key_type = table
         .key_field
         .as_ref()
-        .map(|field| scala_type_name(ir, &field.ty));
+        .map(|field| mapper.type_name(&field.ty));
     let container_type = scala_container_type(table.mode, &row_type, key_type.as_deref());
     let key_field_name = table
         .key_field
@@ -277,37 +297,52 @@ fn scala_table(ir: &ConfigIr, table: BaseTable) -> ScalaTable {
         unique_indexes: table
             .unique_indexes
             .into_iter()
-            .map(|index| scala_index(ir, index))
+            .map(|index| scala_index(ir, index, mapper))
             .collect(),
         non_unique_indexes: table
             .non_unique_indexes
             .into_iter()
-            .map(|index| scala_index(ir, index))
+            .map(|index| scala_index(ir, index, mapper))
             .collect(),
     }
 }
 
-fn scala_index(ir: &ConfigIr, index: BaseIndex) -> ScalaIndex {
+fn scala_index(_ir: &ConfigIr, index: BaseIndex, mapper: &ScalaTypeMapper<'_>) -> ScalaIndex {
     ScalaIndex {
         pascal_name: index.pascal_name,
         field_name: index.field.camel_name.clone(),
         param_camel_name: index.field.camel_name,
-        key_type: scala_type_name(ir, &index.field.ty),
+        key_type: mapper.type_name(&index.field.ty),
     }
 }
 
-fn scala_field(ir: &ConfigIr, field: BaseField) -> ScalaField {
-    let collect_text_keys =
-        scala_collect_text_keys(ir, &field.ty, &format!("this.{}", field.camel_name), 4);
+fn scala_field(ir: &ConfigIr, field: BaseField, mapper: &ScalaTypeMapper<'_>) -> ScalaField {
+    let collect_text_keys = scala_collect_text_keys(
+        ir,
+        &field.ty,
+        &format!("this.{}", field.camel_name),
+        4,
+        mapper,
+    );
     ScalaField {
         raw_name: field.raw_name,
         name: field.camel_name,
-        type_name: scala_type_name(ir, &field.ty),
-        decode: scala_decode_expr(ir, &field.ty),
-        value_decode: scala_value_decode_expr(ir, &field.ty, "__VALUE__"),
+        type_name: mapper.type_name(&field.ty),
+        decode: scala_decode_expr(ir, &field.ty, mapper),
+        value_decode: scala_value_decode_expr(ir, &field.ty, "__VALUE__", mapper),
         collect_text_keys,
+        imports: mapper.imports(&field.ty),
         comment: field.comment,
     }
+}
+
+fn collect_scala_imports<'a>(fields: impl Iterator<Item = &'a ScalaField>) -> Vec<String> {
+    let mut imports = fields
+        .flat_map(|field| field.imports.iter().cloned())
+        .collect::<Vec<_>>();
+    imports.sort();
+    imports.dedup();
+    imports
 }
 
 fn scala_container_type(mode: TableModeIr, row_type: &str, key_type: Option<&str>) -> String {
@@ -321,7 +356,76 @@ fn scala_container_type(mode: TableModeIr, row_type: &str, key_type: Option<&str
     }
 }
 
-fn scala_decode_expr(ir: &ConfigIr, ty: &TypeIr) -> String {
+struct ScalaTypeMapper<'a> {
+    target: &'a str,
+    ir: &'a ConfigIr,
+    mappings: &'a TypeMappingRegistry,
+}
+
+impl<'a> ScalaTypeMapper<'a> {
+    fn new(target: &'a str, ir: &'a ConfigIr, mappings: &'a TypeMappingRegistry) -> Self {
+        Self {
+            target,
+            ir,
+            mappings,
+        }
+    }
+
+    fn type_name(&self, ty: &TypeIr) -> String {
+        if let Some(mapping) = self.mapping(ty) {
+            return mapping.type_name;
+        }
+
+        match ty {
+            TypeIr::Bool => "Boolean".to_owned(),
+            TypeIr::I8 | TypeIr::U8 | TypeIr::I16 | TypeIr::U16 | TypeIr::I32 => "Int".to_owned(),
+            TypeIr::U32 | TypeIr::I64 => "Long".to_owned(),
+            TypeIr::Duration => "scala.concurrent.duration.FiniteDuration".to_owned(),
+            TypeIr::DateTime => "java.time.Instant".to_owned(),
+            TypeIr::F32 => "Float".to_owned(),
+            TypeIr::F64 => "Double".to_owned(),
+            TypeIr::String => "String".to_owned(),
+            TypeIr::Text => "TextKey".to_owned(),
+            TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => name.clone(),
+            TypeIr::List(element) | TypeIr::Set(element) | TypeIr::Array { element, .. } => {
+                format!("Vector[{}]", self.type_name(element))
+            }
+            TypeIr::Map { key, value } => {
+                format!("Map[{}, {}]", self.type_name(key), self.type_name(value))
+            }
+            TypeIr::Ref { table, field } => ref_target_type(self.ir, table, field)
+                .map(|ty| self.type_name(ty))
+                .unwrap_or_else(|| "Int".to_owned()),
+            TypeIr::Optional(element) => format!("Option[{}]", self.type_name(element)),
+        }
+    }
+
+    fn imports(&self, ty: &TypeIr) -> Vec<String> {
+        self.mappings.imports_for(self.target, self.ir, ty)
+    }
+
+    fn mapping(&self, ty: &TypeIr) -> Option<TypeMapping> {
+        self.mappings.map_type(TypeMappingContext {
+            target: self.target,
+            ir: self.ir,
+            ty,
+        })
+    }
+
+    fn wrap_decode(&self, ty: &TypeIr, base_expr: String) -> String {
+        self.mapping(ty)
+            .map(|mapping| mapping.wrap_decode(&base_expr))
+            .unwrap_or(base_expr)
+    }
+
+    fn wrap_value_decode(&self, ty: &TypeIr, base_expr: String) -> String {
+        self.mapping(ty)
+            .map(|mapping| mapping.wrap_value_decode(&base_expr))
+            .unwrap_or(base_expr)
+    }
+}
+
+fn scala_decode_expr(ir: &ConfigIr, ty: &TypeIr, mapper: &ScalaTypeMapper<'_>) -> String {
     match ty {
         TypeIr::Bool => "reader.readBool()".to_owned(),
         TypeIr::I8 | TypeIr::I16 => "reader.readI32()".to_owned(),
@@ -336,15 +440,18 @@ fn scala_decode_expr(ir: &ConfigIr, ty: &TypeIr) -> String {
         TypeIr::String => "reader.readString()".to_owned(),
         TypeIr::Text => "TextKey(reader.readString())".to_owned(),
         TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => {
-            format!("{name}.decode(reader)")
+            mapper.wrap_decode(ty, format!("{name}.decode(reader)"))
         }
         TypeIr::List(element) | TypeIr::Set(element) | TypeIr::Array { element, .. } => {
-            format!("reader.readList({})", scala_decode_expr(ir, element))
+            format!(
+                "reader.readList({})",
+                scala_decode_expr(ir, element, mapper)
+            )
         }
         TypeIr::Map { key, value } => format!(
             "reader.readMap({}, {})",
-            scala_decode_expr(ir, key),
-            scala_decode_expr(ir, value)
+            scala_decode_expr(ir, key, mapper),
+            scala_decode_expr(ir, value, mapper)
         ),
         TypeIr::Ref { table, field } => ir
             .tables
@@ -356,15 +463,23 @@ fn scala_decode_expr(ir: &ConfigIr, ty: &TypeIr) -> String {
                     .iter()
                     .find(|candidate| candidate.name == *field)
             })
-            .map(|field| scala_decode_expr(ir, &field.ty))
+            .map(|field| scala_decode_expr(ir, &field.ty, mapper))
             .unwrap_or_else(|| "reader.readI32()".to_owned()),
         TypeIr::Optional(element) => {
-            format!("reader.readOptional({})", scala_decode_expr(ir, element))
+            format!(
+                "reader.readOptional({})",
+                scala_decode_expr(ir, element, mapper)
+            )
         }
     }
 }
 
-fn scala_value_decode_expr(ir: &ConfigIr, ty: &TypeIr, value: &str) -> String {
+fn scala_value_decode_expr(
+    ir: &ConfigIr,
+    ty: &TypeIr,
+    value: &str,
+    mapper: &ScalaTypeMapper<'_>,
+) -> String {
     match ty {
         TypeIr::Bool => format!("{value}.asBool"),
         TypeIr::I8 | TypeIr::U8 | TypeIr::I16 | TypeIr::U16 => format!("{value}.asInt"),
@@ -378,12 +493,12 @@ fn scala_value_decode_expr(ir: &ConfigIr, ty: &TypeIr, value: &str) -> String {
         TypeIr::String => format!("{value}.asString"),
         TypeIr::Text => format!("TextKey({value}.asString)"),
         TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => {
-            format!("{name}.decode({value})")
+            mapper.wrap_value_decode(ty, format!("{name}.decode({value})"))
         }
         TypeIr::List(element) | TypeIr::Set(element) | TypeIr::Array { element, .. } => {
             format!(
                 "{value}.asList(item => {})",
-                scala_value_decode_expr(ir, element, "item")
+                scala_value_decode_expr(ir, element, "item", mapper)
             )
         }
         TypeIr::Map {
@@ -391,8 +506,8 @@ fn scala_value_decode_expr(ir: &ConfigIr, ty: &TypeIr, value: &str) -> String {
             value: element,
         } => format!(
             "{value}.asMap(item => {}, item => {})",
-            scala_value_decode_expr(ir, key, "item"),
-            scala_value_decode_expr(ir, element, "item")
+            scala_value_decode_expr(ir, key, "item", mapper),
+            scala_value_decode_expr(ir, element, "item", mapper)
         ),
         TypeIr::Ref { table, field } => ir
             .tables
@@ -404,23 +519,32 @@ fn scala_value_decode_expr(ir: &ConfigIr, ty: &TypeIr, value: &str) -> String {
                     .iter()
                     .find(|candidate| candidate.name == *field)
             })
-            .map(|field| scala_value_decode_expr(ir, &field.ty, value))
+            .map(|field| scala_value_decode_expr(ir, &field.ty, value, mapper))
             .unwrap_or_else(|| format!("{value}.asInt")),
         TypeIr::Optional(element) => {
             format!(
                 "if ({value}.isNull) None else Some({})",
-                scala_value_decode_expr(ir, element, value)
+                scala_value_decode_expr(ir, element, value, mapper)
             )
         }
     }
 }
 
-fn scala_collect_text_keys(ir: &ConfigIr, ty: &TypeIr, value: &str, indent: usize) -> String {
+fn scala_collect_text_keys(
+    ir: &ConfigIr,
+    ty: &TypeIr,
+    value: &str,
+    indent: usize,
+    mapper: &ScalaTypeMapper<'_>,
+) -> String {
+    if mapper.mapping(ty).is_some() {
+        return String::new();
+    }
     let pad = " ".repeat(indent);
     match ty {
         TypeIr::Text => format!("{pad}out += {value}"),
         TypeIr::Optional(element) => {
-            let inner = scala_collect_text_keys(ir, element, "item", indent + 2);
+            let inner = scala_collect_text_keys(ir, element, "item", indent + 2, mapper);
             if inner.is_empty() {
                 String::new()
             } else {
@@ -428,7 +552,7 @@ fn scala_collect_text_keys(ir: &ConfigIr, ty: &TypeIr, value: &str, indent: usiz
             }
         }
         TypeIr::List(element) | TypeIr::Set(element) | TypeIr::Array { element, .. } => {
-            let inner = scala_collect_text_keys(ir, element, "item", indent + 2);
+            let inner = scala_collect_text_keys(ir, element, "item", indent + 2, mapper);
             if inner.is_empty() {
                 String::new()
             } else {
@@ -439,8 +563,8 @@ fn scala_collect_text_keys(ir: &ConfigIr, ty: &TypeIr, value: &str, indent: usiz
             key,
             value: element,
         } => {
-            let key_inner = scala_collect_text_keys(ir, key, "key", indent + 2);
-            let value_inner = scala_collect_text_keys(ir, element, "item", indent + 2);
+            let key_inner = scala_collect_text_keys(ir, key, "key", indent + 2, mapper);
+            let value_inner = scala_collect_text_keys(ir, element, "item", indent + 2, mapper);
             if key_inner.is_empty() && value_inner.is_empty() {
                 String::new()
             } else {
@@ -461,7 +585,7 @@ fn scala_collect_text_keys(ir: &ConfigIr, ty: &TypeIr, value: &str, indent: usiz
                     .iter()
                     .find(|candidate| candidate.name == *field)
             })
-            .map(|field| scala_collect_text_keys(ir, &field.ty, value, indent))
+            .map(|field| scala_collect_text_keys(ir, &field.ty, value, indent, mapper))
             .unwrap_or_default(),
         TypeIr::Bool
         | TypeIr::I8
@@ -478,6 +602,19 @@ fn scala_collect_text_keys(ir: &ConfigIr, ty: &TypeIr, value: &str, indent: usiz
         | TypeIr::String
         | TypeIr::Enum(_) => String::new(),
     }
+}
+
+fn ref_target_type<'a>(ir: &'a ConfigIr, table: &str, field: &str) -> Option<&'a TypeIr> {
+    ir.tables
+        .iter()
+        .find(|candidate| candidate.name == table)
+        .and_then(|table| {
+            table
+                .fields
+                .iter()
+                .find(|candidate| candidate.name == field)
+        })
+        .map(|field| &field.ty)
 }
 
 fn scala_package_dir(out_dir: &Path, package: &str) -> Result<PathBuf> {

@@ -11,6 +11,7 @@ Global options can be placed before or after the subcommand.
 | `-j, --jobs <N>` | Maximum worker threads. Must be greater than zero. |
 | `--serial` | Disable parallel execution. |
 | `--parser-script <PATH>` | Load a custom Lua cell parser script. Can be repeated. Project-level parser scripts can also be configured in `[parsers].scripts` in `project.toml`. |
+| `--type-mapping-script <PATH>` | Load a custom Lua type mapping script. Can be repeated. Project-level scripts can also be configured in `[type_mappings].scripts` in `project.toml`. |
 | `-h, --help` | Print help. |
 | `-V, --version` | Print the CLI version. |
 

@@ -19,5 +19,6 @@ pub mod python;
 mod render;
 pub mod rust;
 pub mod scala;
+pub mod type_mapping;
 pub mod types;
 pub mod typescript;

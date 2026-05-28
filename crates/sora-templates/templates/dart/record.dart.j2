@@ -4,6 +4,9 @@ import 'runtime.dart';
 {%- for import in record.imports %}
 import '{{ import.module }}.dart';
 {%- endfor %}
+{%- for import in record.custom_imports %}
+{{ import }}
+{%- endfor %}
 
 final class {{ record.pascal_name }} {
 {%- for field in record.fields %}

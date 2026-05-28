@@ -90,6 +90,7 @@ fn accepts_registered_codegen_target() {
         sora_codegen::format::FormatMode::Never,
         None,
         &registry,
+        &sora_codegen::type_mapping::TypeMappingRegistry::new(),
     )
     .unwrap();
 

@@ -28,6 +28,8 @@ See [Generators](extension/generators.md) for a longer walkthrough.
 
 Language-specific settings belong in target options and generator code. The normalized IR should describe schema semantics only: packages, tables, fields, types, keys, indexes, unions, and validation metadata.
 
+Project-specific language type mappings should use codegen type mapping providers, not schema fields. This keeps data semantics separate from target-language representation choices such as mapping `struct<Vec3>` to `UnityEngine.Vector3`.
+
 ## Add an Exporter
 
 Exporters are separate from generators. Add a data exporter when you need a new runtime bundle format. Add a code generator when you need a new language target.

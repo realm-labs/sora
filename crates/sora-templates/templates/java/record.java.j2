@@ -7,6 +7,9 @@ import java.util.List;
 import java.util.Map;
 
 {% endif -%}
+{%- for import in record.imports %}
+import {{ import }};
+{%- endfor %}
 public final class {{ record.pascal_name }} {
 {%- for field in record.fields %}
 {%- if field.comment %}

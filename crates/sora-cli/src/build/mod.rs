@@ -105,6 +105,7 @@ pub fn run(args: BuildArgs, context: &CliContext) -> Result<()> {
             FormatMode::from(item.format),
             item_scope,
             &context.schema_parsers,
+            &context.type_mappings,
         )
         .with_context(|| {
             format!(

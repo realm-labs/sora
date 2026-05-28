@@ -4,6 +4,9 @@ import type { {% if record.table %}{% if record.table.mode == "map" %}SoraKeyedT
 {% for import in record.imports %}
 import type { {{ import.name }} } from "./{{ import.module }}{{ options.import_ext }}";
 {% endfor %}
+{%- for import in record.custom_imports %}
+{{ import }}
+{%- endfor %}
 
 export interface {{ record.pascal_name }} {
 {%- for field in record.fields %}

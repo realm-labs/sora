@@ -14,6 +14,7 @@ use crate::{
     },
     options::LanguageCodegenOptions,
     render::{ensure_dir, render_template, write_file},
+    type_mapping::{TypeMapping, TypeMappingContext, TypeMappingRegistry},
 };
 
 pub struct PythonCodeGenerator;
@@ -25,7 +26,8 @@ impl CodeGenerator for PythonCodeGenerator {
         let options = context.options::<LanguageCodegenOptions>()?;
         ensure_dir(out_dir)?;
 
-        let model = PythonModel::from_base_model(ir, build_base_model(ir)?);
+        let mapper = PythonTypeMapper::new(context.target, ir, context.type_mappings);
+        let model = PythonModel::from_base_model(ir, build_base_model(ir)?, &mapper);
         let runtime_format = runtime_format_name(options.runtime_format);
         validate_python_model(&model)?;
 
@@ -105,6 +107,7 @@ struct PythonUnion {
     variants: Vec<PythonUnionVariant>,
     imports: Vec<PythonImport>,
     uses_datetime: bool,
+    custom_imports: Vec<String>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -120,6 +123,7 @@ struct PythonRecord {
     pascal_name: String,
     snake_name: String,
     imports: Vec<PythonImport>,
+    custom_imports: Vec<String>,
     fields: Vec<PythonField>,
     uses_text_key: bool,
     has_text_keys: bool,
@@ -164,11 +168,12 @@ struct PythonField {
     decode: String,
     value_decode: String,
     collect_text_keys: String,
+    imports: Vec<String>,
     comment: Option<String>,
 }
 
 impl PythonModel {
-    fn from_base_model(ir: &ConfigIr, model: BaseModel) -> Self {
+    fn from_base_model(ir: &ConfigIr, model: BaseModel, mapper: &PythonTypeMapper<'_>) -> Self {
         let enums = model
             .enums
             .into_iter()
@@ -187,7 +192,7 @@ impl PythonModel {
         let tables = model
             .tables
             .into_iter()
-            .map(|item| python_table(ir, item))
+            .map(|item| python_table(ir, item, mapper))
             .collect::<Vec<_>>();
         let records = model
             .records
@@ -198,13 +203,13 @@ impl PythonModel {
                     .iter()
                     .find(|table| table.row_type == row_type)
                     .cloned();
-                python_record(ir, item, table)
+                python_record(ir, item, table, mapper)
             })
             .collect::<Vec<_>>();
         let unions = model
             .unions
             .into_iter()
-            .map(|item| python_union(ir, item))
+            .map(|item| python_union(ir, item, mapper))
             .collect::<Vec<_>>();
         let modules = enums
             .iter()
@@ -236,11 +241,16 @@ impl PythonModel {
     }
 }
 
-fn python_record(ir: &ConfigIr, record: BaseRecord, table: Option<PythonTable>) -> PythonRecord {
+fn python_record(
+    ir: &ConfigIr,
+    record: BaseRecord,
+    table: Option<PythonTable>,
+    mapper: &PythonTypeMapper<'_>,
+) -> PythonRecord {
     let fields = record
         .fields
         .into_iter()
-        .map(|field| python_field(ir, field))
+        .map(|field| python_field(ir, field, mapper))
         .collect::<Vec<_>>();
     let uses_text_key = fields
         .iter()
@@ -255,6 +265,7 @@ fn python_record(ir: &ConfigIr, record: BaseRecord, table: Option<PythonTable>) 
         pascal_name: python_type_identifier(&record.pascal_name),
         snake_name: python_module_name(&record.snake_name),
         imports: record.imports.into_iter().map(python_import).collect(),
+        custom_imports: collect_python_imports(fields.iter()),
         fields,
         uses_text_key,
         has_text_keys,
@@ -263,16 +274,18 @@ fn python_record(ir: &ConfigIr, record: BaseRecord, table: Option<PythonTable>) 
     }
 }
 
-fn python_union(ir: &ConfigIr, union: BaseUnion) -> PythonUnion {
+fn python_union(ir: &ConfigIr, union: BaseUnion, mapper: &PythonTypeMapper<'_>) -> PythonUnion {
     let variants = union
         .variants
         .into_iter()
-        .map(|variant| python_variant(ir, variant))
+        .map(|variant| python_variant(ir, variant, mapper))
         .collect::<Vec<_>>();
     let uses_datetime = variants
         .iter()
         .flat_map(|variant| variant.fields.iter())
         .any(|field| field.type_name.contains("datetime."));
+    let custom_imports =
+        collect_python_imports(variants.iter().flat_map(|variant| &variant.fields));
     PythonUnion {
         pascal_name: python_type_identifier(&union.pascal_name),
         snake_name: python_module_name(&union.snake_name),
@@ -280,14 +293,19 @@ fn python_union(ir: &ConfigIr, union: BaseUnion) -> PythonUnion {
         variants,
         imports: union.imports.into_iter().map(python_import).collect(),
         uses_datetime,
+        custom_imports,
     }
 }
 
-fn python_variant(ir: &ConfigIr, variant: BaseUnionVariant) -> PythonUnionVariant {
+fn python_variant(
+    ir: &ConfigIr,
+    variant: BaseUnionVariant,
+    mapper: &PythonTypeMapper<'_>,
+) -> PythonUnionVariant {
     let fields = variant
         .fields
         .into_iter()
-        .map(|field| python_field(ir, field))
+        .map(|field| python_field(ir, field, mapper))
         .collect::<Vec<_>>();
     let has_text_keys = fields
         .iter()
@@ -300,11 +318,11 @@ fn python_variant(ir: &ConfigIr, variant: BaseUnionVariant) -> PythonUnionVarian
     }
 }
 
-fn python_table(ir: &ConfigIr, table: BaseTable) -> PythonTable {
+fn python_table(ir: &ConfigIr, table: BaseTable, mapper: &PythonTypeMapper<'_>) -> PythonTable {
     let key_type = table
         .key_field
         .as_ref()
-        .map(|field| python_type_name(ir, &field.ty));
+        .map(|field| mapper.type_name(&field.ty));
     PythonTable {
         name: table.name,
         pascal_name: python_type_identifier(&table.pascal_name),
@@ -320,18 +338,18 @@ fn python_table(ir: &ConfigIr, table: BaseTable) -> PythonTable {
         unique_indexes: table
             .unique_indexes
             .into_iter()
-            .map(|index| python_index(ir, index))
+            .map(|index| python_index(ir, index, mapper))
             .collect(),
         non_unique_indexes: table
             .non_unique_indexes
             .into_iter()
-            .map(|index| python_index(ir, index))
+            .map(|index| python_index(ir, index, mapper))
             .collect(),
     }
 }
 
-fn python_index(ir: &ConfigIr, index: BaseIndex) -> PythonIndex {
-    let key_type = python_type_name(ir, &index.field.ty);
+fn python_index(_ir: &ConfigIr, index: BaseIndex, mapper: &PythonTypeMapper<'_>) -> PythonIndex {
+    let key_type = mapper.type_name(&index.field.ty);
     PythonIndex {
         name: python_field_identifier(&index.snake_name),
         field_name: python_field_identifier(&index.field.snake_name),
@@ -341,18 +359,33 @@ fn python_index(ir: &ConfigIr, index: BaseIndex) -> PythonIndex {
     }
 }
 
-fn python_field(ir: &ConfigIr, field: BaseField) -> PythonField {
-    let collect_text_keys =
-        python_collect_text_keys(ir, &field.ty, &format!("self.{}", field.snake_name), 8);
+fn python_field(ir: &ConfigIr, field: BaseField, mapper: &PythonTypeMapper<'_>) -> PythonField {
+    let collect_text_keys = python_collect_text_keys(
+        ir,
+        &field.ty,
+        &format!("self.{}", field.snake_name),
+        8,
+        mapper,
+    );
     PythonField {
         raw_name: field.raw_name,
         name: python_field_identifier(&field.snake_name),
-        type_name: python_type_name(ir, &field.ty),
-        decode: python_decode_expr(ir, &field.ty),
-        value_decode: python_value_decode_expr(ir, &field.ty, "__VALUE__"),
+        type_name: mapper.type_name(&field.ty),
+        decode: python_decode_expr(ir, &field.ty, mapper),
+        value_decode: python_value_decode_expr(ir, &field.ty, "__VALUE__", mapper),
         collect_text_keys,
+        imports: mapper.imports(&field.ty),
         comment: field.comment,
     }
+}
+
+fn collect_python_imports<'a>(fields: impl Iterator<Item = &'a PythonField>) -> Vec<String> {
+    let mut imports = fields
+        .flat_map(|field| field.imports.iter().cloned())
+        .collect::<Vec<_>>();
+    imports.sort();
+    imports.dedup();
+    imports
 }
 
 fn python_import(import: BaseImport) -> PythonImport {
@@ -431,44 +464,82 @@ fn reject_duplicates<'a>(
     Ok(())
 }
 
-fn python_type_name(ir: &ConfigIr, ty: &TypeIr) -> String {
-    match ty {
-        TypeIr::Bool => "bool".to_owned(),
-        TypeIr::I8
-        | TypeIr::U8
-        | TypeIr::I16
-        | TypeIr::U16
-        | TypeIr::I32
-        | TypeIr::U32
-        | TypeIr::I64 => "int".to_owned(),
-        TypeIr::Duration => "datetime.timedelta".to_owned(),
-        TypeIr::DateTime => "datetime.datetime".to_owned(),
-        TypeIr::F32 | TypeIr::F64 => "float".to_owned(),
-        TypeIr::String => "str".to_owned(),
-        TypeIr::Text => "TextKey".to_owned(),
-        TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => {
-            python_type_identifier(name)
+struct PythonTypeMapper<'a> {
+    target: &'a str,
+    ir: &'a ConfigIr,
+    mappings: &'a TypeMappingRegistry,
+}
+
+impl<'a> PythonTypeMapper<'a> {
+    fn new(target: &'a str, ir: &'a ConfigIr, mappings: &'a TypeMappingRegistry) -> Self {
+        Self {
+            target,
+            ir,
+            mappings,
         }
-        TypeIr::List(element) | TypeIr::Set(element) | TypeIr::Array { element, .. } => {
-            format!("list[{}]", python_type_name(ir, element))
+    }
+
+    fn type_name(&self, ty: &TypeIr) -> String {
+        if let Some(mapping) = self.mapping(ty) {
+            return mapping.type_name;
         }
-        TypeIr::Map { key, value } => {
-            format!(
-                "dict[{}, {}]",
-                python_type_name(ir, key),
-                python_type_name(ir, value)
-            )
+
+        match ty {
+            TypeIr::Bool => "bool".to_owned(),
+            TypeIr::I8
+            | TypeIr::U8
+            | TypeIr::I16
+            | TypeIr::U16
+            | TypeIr::I32
+            | TypeIr::U32
+            | TypeIr::I64 => "int".to_owned(),
+            TypeIr::Duration => "datetime.timedelta".to_owned(),
+            TypeIr::DateTime => "datetime.datetime".to_owned(),
+            TypeIr::F32 | TypeIr::F64 => "float".to_owned(),
+            TypeIr::String => "str".to_owned(),
+            TypeIr::Text => "TextKey".to_owned(),
+            TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => {
+                python_type_identifier(name)
+            }
+            TypeIr::List(element) | TypeIr::Set(element) | TypeIr::Array { element, .. } => {
+                format!("list[{}]", self.type_name(element))
+            }
+            TypeIr::Map { key, value } => {
+                format!("dict[{}, {}]", self.type_name(key), self.type_name(value))
+            }
+            TypeIr::Ref { table, field } => ref_target_type(self.ir, table, field)
+                .map(|ty| self.type_name(ty))
+                .unwrap_or_else(|| "int".to_owned()),
+            TypeIr::Optional(element) => format!("{} | None", self.type_name(element)),
         }
-        TypeIr::Ref { table, field } => ref_target_type(ir, table, field)
-            .map(|ty| python_type_name(ir, ty))
-            .unwrap_or_else(|| "int".to_owned()),
-        TypeIr::Optional(element) => {
-            format!("{} | None", python_type_name(ir, element))
-        }
+    }
+
+    fn imports(&self, ty: &TypeIr) -> Vec<String> {
+        self.mappings.imports_for(self.target, self.ir, ty)
+    }
+
+    fn mapping(&self, ty: &TypeIr) -> Option<TypeMapping> {
+        self.mappings.map_type(TypeMappingContext {
+            target: self.target,
+            ir: self.ir,
+            ty,
+        })
+    }
+
+    fn wrap_decode(&self, ty: &TypeIr, base_expr: String) -> String {
+        self.mapping(ty)
+            .map(|mapping| mapping.wrap_decode(&base_expr))
+            .unwrap_or(base_expr)
+    }
+
+    fn wrap_value_decode(&self, ty: &TypeIr, base_expr: String) -> String {
+        self.mapping(ty)
+            .map(|mapping| mapping.wrap_value_decode(&base_expr))
+            .unwrap_or(base_expr)
     }
 }
 
-fn python_decode_expr(ir: &ConfigIr, ty: &TypeIr) -> String {
+fn python_decode_expr(ir: &ConfigIr, ty: &TypeIr, mapper: &PythonTypeMapper<'_>) -> String {
     match ty {
         TypeIr::Bool => "reader.read_bool()".to_owned(),
         TypeIr::I8 | TypeIr::I16 | TypeIr::I32 => "reader.read_i32()".to_owned(),
@@ -483,33 +554,39 @@ fn python_decode_expr(ir: &ConfigIr, ty: &TypeIr) -> String {
         TypeIr::F64 => "reader.read_f64()".to_owned(),
         TypeIr::String => "reader.read_string()".to_owned(),
         TypeIr::Text => "TextKey(reader.read_string())".to_owned(),
-        TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => {
-            format!("{}.decode(reader)", python_type_identifier(name))
-        }
+        TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => mapper.wrap_decode(
+            ty,
+            format!("{}.decode(reader)", python_type_identifier(name)),
+        ),
         TypeIr::List(element) | TypeIr::Set(element) | TypeIr::Array { element, .. } => {
             format!(
                 "reader.read_list(lambda: {})",
-                python_decode_expr(ir, element)
+                python_decode_expr(ir, element, mapper)
             )
         }
         TypeIr::Map { key, value } => format!(
             "reader.read_map(lambda: {}, lambda: {})",
-            python_decode_expr(ir, key),
-            python_decode_expr(ir, value)
+            python_decode_expr(ir, key, mapper),
+            python_decode_expr(ir, value, mapper)
         ),
         TypeIr::Ref { table, field } => ref_target_type(ir, table, field)
-            .map(|ty| python_decode_expr(ir, ty))
+            .map(|ty| python_decode_expr(ir, ty, mapper))
             .unwrap_or_else(|| "reader.read_i32()".to_owned()),
         TypeIr::Optional(element) => {
             format!(
                 "reader.read_optional(lambda: {})",
-                python_decode_expr(ir, element)
+                python_decode_expr(ir, element, mapper)
             )
         }
     }
 }
 
-fn python_value_decode_expr(ir: &ConfigIr, ty: &TypeIr, value: &str) -> String {
+fn python_value_decode_expr(
+    ir: &ConfigIr,
+    ty: &TypeIr,
+    value: &str,
+    mapper: &PythonTypeMapper<'_>,
+) -> String {
     match ty {
         TypeIr::Bool => format!("{value}.as_bool()"),
         TypeIr::I8
@@ -528,38 +605,49 @@ fn python_value_decode_expr(ir: &ConfigIr, ty: &TypeIr, value: &str) -> String {
         TypeIr::F32 | TypeIr::F64 => format!("{value}.as_float()"),
         TypeIr::String => format!("{value}.as_string()"),
         TypeIr::Text => format!("TextKey({value}.as_string())"),
-        TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => {
-            format!("{}.decode_value({value})", python_type_identifier(name))
-        }
+        TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => mapper
+            .wrap_value_decode(
+                ty,
+                format!("{}.decode_value({value})", python_type_identifier(name)),
+            ),
         TypeIr::List(element) | TypeIr::Set(element) | TypeIr::Array { element, .. } => {
-            let item_decode = python_value_decode_expr(ir, element, "item");
+            let item_decode = python_value_decode_expr(ir, element, "item", mapper);
             format!("{value}.as_list(lambda item: {item_decode})")
         }
         TypeIr::Map {
             key,
             value: element,
         } => {
-            let key_decode = python_value_decode_expr(ir, key, "item");
-            let value_decode = python_value_decode_expr(ir, element, "item");
+            let key_decode = python_value_decode_expr(ir, key, "item", mapper);
+            let value_decode = python_value_decode_expr(ir, element, "item", mapper);
             format!("{value}.as_map(lambda item: {key_decode}, lambda item: {value_decode})")
         }
         TypeIr::Ref { table, field } => ref_target_type(ir, table, field)
-            .map(|ty| python_value_decode_expr(ir, ty, value))
+            .map(|ty| python_value_decode_expr(ir, ty, value, mapper))
             .unwrap_or_else(|| format!("{value}.as_int()")),
         TypeIr::Optional(element) => {
-            let item_decode = python_value_decode_expr(ir, element, value);
+            let item_decode = python_value_decode_expr(ir, element, value, mapper);
             format!("None if {value}.is_null() else {item_decode}")
         }
     }
 }
 
-fn python_collect_text_keys(ir: &ConfigIr, ty: &TypeIr, value: &str, indent: usize) -> String {
+fn python_collect_text_keys(
+    ir: &ConfigIr,
+    ty: &TypeIr,
+    value: &str,
+    indent: usize,
+    mapper: &PythonTypeMapper<'_>,
+) -> String {
+    if mapper.mapping(ty).is_some() {
+        return String::new();
+    }
     let pad = " ".repeat(indent);
     let nested_pad = " ".repeat(indent + 4);
     match ty {
         TypeIr::Text => format!("{pad}out.append({value})"),
         TypeIr::Optional(element) => {
-            let inner = python_collect_text_keys(ir, element, "item", indent + 4);
+            let inner = python_collect_text_keys(ir, element, "item", indent + 4, mapper);
             if inner.is_empty() {
                 String::new()
             } else {
@@ -567,7 +655,7 @@ fn python_collect_text_keys(ir: &ConfigIr, ty: &TypeIr, value: &str, indent: usi
             }
         }
         TypeIr::List(element) | TypeIr::Set(element) | TypeIr::Array { element, .. } => {
-            let inner = python_collect_text_keys(ir, element, "item", indent + 4);
+            let inner = python_collect_text_keys(ir, element, "item", indent + 4, mapper);
             if inner.is_empty() {
                 String::new()
             } else {
@@ -578,8 +666,8 @@ fn python_collect_text_keys(ir: &ConfigIr, ty: &TypeIr, value: &str, indent: usi
             key,
             value: element,
         } => {
-            let key_inner = python_collect_text_keys(ir, key, "key", indent + 4);
-            let value_inner = python_collect_text_keys(ir, element, "item", indent + 4);
+            let key_inner = python_collect_text_keys(ir, key, "key", indent + 4, mapper);
+            let value_inner = python_collect_text_keys(ir, element, "item", indent + 4, mapper);
             if key_inner.is_empty() && value_inner.is_empty() {
                 String::new()
             } else {
@@ -588,7 +676,7 @@ fn python_collect_text_keys(ir: &ConfigIr, ty: &TypeIr, value: &str, indent: usi
         }
         TypeIr::Struct(_) | TypeIr::Union(_) => format!("{pad}{value}.collect_text_keys(out)"),
         TypeIr::Ref { table, field } => ref_target_type(ir, table, field)
-            .map(|ty| python_collect_text_keys(ir, ty, value, indent))
+            .map(|ty| python_collect_text_keys(ir, ty, value, indent, mapper))
             .unwrap_or_default(),
         TypeIr::Bool
         | TypeIr::I8

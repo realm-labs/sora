@@ -8,6 +8,9 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 from .sora_runtime import SoraReader, TextKey{% if runtime_format != "sora" %}, SoraValue{% endif %}
+{%- for import in record.custom_imports %}
+{{ import }}
+{%- endfor %}
 {%- if record.table %}
 from .sora_runtime import (
     SoraConfigTable,

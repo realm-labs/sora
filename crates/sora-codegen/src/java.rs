@@ -14,7 +14,7 @@ use crate::{
     },
     options::LanguageCodegenOptions,
     render::{ensure_dir, render_template, write_file},
-    types::java_type_name,
+    type_mapping::{TypeMapping, TypeMappingContext, TypeMappingRegistry},
 };
 
 pub struct JavaCodeGenerator;
@@ -25,7 +25,8 @@ impl CodeGenerator for JavaCodeGenerator {
         let ir = context.ir;
         let options = context.options::<LanguageCodegenOptions>()?;
         ensure_dir(out_dir)?;
-        let model = JavaModel::from_base_model(ir, build_base_model(ir)?);
+        let mapper = JavaTypeMapper::new(context.target, ir, context.type_mappings);
+        let model = JavaModel::from_base_model(ir, build_base_model(ir)?, &mapper);
         let package_dir = java_package_dir(out_dir, &model.package)?;
         let runtime_format = runtime_format_name(options.runtime_format);
 
@@ -104,6 +105,7 @@ struct JavaUnion {
     pascal_name: String,
     tag: String,
     variants: Vec<JavaUnionVariant>,
+    imports: Vec<String>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -119,6 +121,7 @@ struct JavaRecord {
     fields: Vec<JavaField>,
     has_text_keys: bool,
     table: Option<JavaTable>,
+    imports: Vec<String>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -153,15 +156,16 @@ struct JavaField {
     decode: String,
     value_decode: String,
     collect_text_keys: String,
+    imports: Vec<String>,
     comment: Option<String>,
 }
 
 impl JavaModel {
-    fn from_base_model(ir: &ConfigIr, model: BaseModel) -> Self {
+    fn from_base_model(ir: &ConfigIr, model: BaseModel, mapper: &JavaTypeMapper<'_>) -> Self {
         let tables = model
             .tables
             .into_iter()
-            .map(|table| java_table(ir, table))
+            .map(|table| java_table(ir, table, mapper))
             .collect::<Vec<_>>();
         Self {
             package: model.package,
@@ -177,7 +181,7 @@ impl JavaModel {
             unions: model
                 .unions
                 .into_iter()
-                .map(|item| java_union(ir, item))
+                .map(|item| java_union(ir, item, mapper))
                 .collect(),
             records: model
                 .records
@@ -187,7 +191,7 @@ impl JavaModel {
                         .iter()
                         .find(|table| table.row_type == item.pascal_name)
                         .cloned();
-                    java_record(ir, item, table)
+                    java_record(ir, item, table, mapper)
                 })
                 .collect(),
             has_unique_indexes: tables.iter().any(|table| !table.unique_indexes.is_empty()),
@@ -210,23 +214,30 @@ impl JavaModel {
     }
 }
 
-fn java_union(ir: &ConfigIr, union: BaseUnion) -> JavaUnion {
+fn java_union(ir: &ConfigIr, union: BaseUnion, mapper: &JavaTypeMapper<'_>) -> JavaUnion {
+    let variants = union
+        .variants
+        .into_iter()
+        .map(|variant| java_variant(ir, variant, mapper))
+        .collect::<Vec<_>>();
+    let imports = collect_java_imports(variants.iter().flat_map(|variant| &variant.fields));
     JavaUnion {
         pascal_name: union.pascal_name,
         tag: union.tag,
-        variants: union
-            .variants
-            .into_iter()
-            .map(|variant| java_variant(ir, variant))
-            .collect(),
+        variants,
+        imports,
     }
 }
 
-fn java_variant(ir: &ConfigIr, variant: BaseUnionVariant) -> JavaUnionVariant {
+fn java_variant(
+    ir: &ConfigIr,
+    variant: BaseUnionVariant,
+    mapper: &JavaTypeMapper<'_>,
+) -> JavaUnionVariant {
     let fields = variant
         .fields
         .into_iter()
-        .map(|field| java_field(ir, field))
+        .map(|field| java_field(ir, field, mapper))
         .collect::<Vec<_>>();
     let has_text_keys = fields
         .iter()
@@ -238,29 +249,36 @@ fn java_variant(ir: &ConfigIr, variant: BaseUnionVariant) -> JavaUnionVariant {
     }
 }
 
-fn java_record(ir: &ConfigIr, record: BaseRecord, table: Option<JavaTable>) -> JavaRecord {
+fn java_record(
+    ir: &ConfigIr,
+    record: BaseRecord,
+    table: Option<JavaTable>,
+    mapper: &JavaTypeMapper<'_>,
+) -> JavaRecord {
     let fields = record
         .fields
         .into_iter()
-        .map(|field| java_field(ir, field))
+        .map(|field| java_field(ir, field, mapper))
         .collect::<Vec<_>>();
     let has_text_keys = fields
         .iter()
         .any(|field| !field.collect_text_keys.is_empty());
+    let imports = collect_java_imports(fields.iter());
     JavaRecord {
         pascal_name: record.pascal_name,
         fields,
         has_text_keys,
         table,
+        imports,
     }
 }
 
-fn java_table(ir: &ConfigIr, table: BaseTable) -> JavaTable {
+fn java_table(ir: &ConfigIr, table: BaseTable, mapper: &JavaTypeMapper<'_>) -> JavaTable {
     let row_type = table.pascal_name.clone();
     let key_type = table
         .key_field
         .as_ref()
-        .map(|field| java_type_name(ir, &field.ty));
+        .map(|field| mapper.type_name(&field.ty));
     let container_type = java_container_type(table.mode, &row_type, key_type.as_deref());
     let key_field_name = table
         .key_field
@@ -280,39 +298,54 @@ fn java_table(ir: &ConfigIr, table: BaseTable) -> JavaTable {
         unique_indexes: table
             .unique_indexes
             .into_iter()
-            .map(|index| java_index(ir, index))
+            .map(|index| java_index(ir, index, mapper))
             .collect(),
         non_unique_indexes: table
             .non_unique_indexes
             .into_iter()
-            .map(|index| java_index(ir, index))
+            .map(|index| java_index(ir, index, mapper))
             .collect(),
     }
 }
 
-fn java_index(ir: &ConfigIr, index: BaseIndex) -> JavaIndex {
+fn java_index(_ir: &ConfigIr, index: BaseIndex, mapper: &JavaTypeMapper<'_>) -> JavaIndex {
     JavaIndex {
         pascal_name: index.pascal_name,
         camel_name: index.name.to_lower_camel_case(),
         field_name: index.field.camel_name.clone(),
         param_camel_name: index.field.camel_name,
-        key_type: java_type_name(ir, &index.field.ty),
+        key_type: mapper.type_name(&index.field.ty),
     }
 }
 
-fn java_field(ir: &ConfigIr, field: BaseField) -> JavaField {
-    let value_decode = java_value_decode_expr(ir, &field.ty, "__VALUE__");
-    let collect_text_keys =
-        java_collect_text_keys(ir, &field.ty, &format!("this.{}", field.camel_name), 8);
+fn java_field(ir: &ConfigIr, field: BaseField, mapper: &JavaTypeMapper<'_>) -> JavaField {
+    let value_decode = java_value_decode_expr(ir, &field.ty, "__VALUE__", mapper);
+    let collect_text_keys = java_collect_text_keys(
+        ir,
+        &field.ty,
+        &format!("this.{}", field.camel_name),
+        8,
+        mapper,
+    );
     JavaField {
         raw_name: field.raw_name,
         name: field.camel_name,
-        type_name: java_type_name(ir, &field.ty),
-        decode: java_decode_expr(ir, &field.ty),
+        type_name: mapper.type_name(&field.ty),
+        decode: java_decode_expr(ir, &field.ty, mapper),
         value_decode,
         collect_text_keys,
+        imports: mapper.imports(&field.ty),
         comment: field.comment,
     }
+}
+
+fn collect_java_imports<'a>(fields: impl Iterator<Item = &'a JavaField>) -> Vec<String> {
+    let mut imports = fields
+        .flat_map(|field| field.imports.iter().cloned())
+        .collect::<Vec<_>>();
+    imports.sort();
+    imports.dedup();
+    imports
 }
 
 fn java_container_type(mode: TableModeIr, row_type: &str, key_type: Option<&str>) -> String {
@@ -326,7 +359,97 @@ fn java_container_type(mode: TableModeIr, row_type: &str, key_type: Option<&str>
     }
 }
 
-fn java_decode_expr(ir: &ConfigIr, ty: &TypeIr) -> String {
+struct JavaTypeMapper<'a> {
+    target: &'a str,
+    ir: &'a ConfigIr,
+    mappings: &'a TypeMappingRegistry,
+}
+
+impl<'a> JavaTypeMapper<'a> {
+    fn new(target: &'a str, ir: &'a ConfigIr, mappings: &'a TypeMappingRegistry) -> Self {
+        Self {
+            target,
+            ir,
+            mappings,
+        }
+    }
+
+    fn type_name(&self, ty: &TypeIr) -> String {
+        if let Some(mapping) = self.mapping(ty) {
+            return mapping.type_name;
+        }
+
+        match ty {
+            TypeIr::Bool => "Boolean".to_owned(),
+            TypeIr::I8 | TypeIr::I16 | TypeIr::I32 => "Integer".to_owned(),
+            TypeIr::U8 | TypeIr::U16 => "Integer".to_owned(),
+            TypeIr::U32 | TypeIr::I64 => "long".to_owned(),
+            TypeIr::Duration => "java.time.Duration".to_owned(),
+            TypeIr::DateTime => "java.time.Instant".to_owned(),
+            TypeIr::F32 => "float".to_owned(),
+            TypeIr::F64 => "double".to_owned(),
+            TypeIr::String => "String".to_owned(),
+            TypeIr::Text => "TextKey".to_owned(),
+            TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => name.clone(),
+            TypeIr::List(element) | TypeIr::Set(element) | TypeIr::Array { element, .. } => {
+                format!("java.util.List<{}>", self.boxed_type_name(element))
+            }
+            TypeIr::Map { key, value } => {
+                format!(
+                    "java.util.Map<{}, {}>",
+                    self.boxed_type_name(key),
+                    self.boxed_type_name(value)
+                )
+            }
+            TypeIr::Ref { table, field } => ref_target_type(self.ir, table, field)
+                .map(|ty| self.type_name(ty))
+                .unwrap_or_else(|| "int".to_owned()),
+            TypeIr::Optional(element) => self.boxed_type_name(element),
+        }
+    }
+
+    fn boxed_type_name(&self, ty: &TypeIr) -> String {
+        if let Some(mapping) = self.mapping(ty) {
+            return mapping.type_name;
+        }
+
+        match ty {
+            TypeIr::Bool => "Boolean".to_owned(),
+            TypeIr::I8 | TypeIr::I16 | TypeIr::I32 => "Integer".to_owned(),
+            TypeIr::U8 | TypeIr::U16 => "Integer".to_owned(),
+            TypeIr::U32 | TypeIr::I64 => "Long".to_owned(),
+            TypeIr::F32 => "Float".to_owned(),
+            TypeIr::F64 => "Double".to_owned(),
+            _ => self.type_name(ty),
+        }
+    }
+
+    fn imports(&self, ty: &TypeIr) -> Vec<String> {
+        self.mappings.imports_for(self.target, self.ir, ty)
+    }
+
+    fn mapping(&self, ty: &TypeIr) -> Option<TypeMapping> {
+        self.mappings.map_type(TypeMappingContext {
+            target: self.target,
+            ir: self.ir,
+            ty,
+        })
+    }
+
+    fn wrap_decode(&self, ty: &TypeIr, base_expr: String) -> String {
+        self.mapping(ty)
+            .map(|mapping| mapping.wrap_decode(&base_expr))
+            .unwrap_or(base_expr)
+    }
+
+    fn wrap_value_decode(&self, ty: &TypeIr, base_expr: String) -> String {
+        self.mapping(ty)
+            .map(|mapping| mapping.wrap_value_decode(&base_expr))
+            .unwrap_or(base_expr)
+    }
+}
+
+fn java_decode_expr(ir: &ConfigIr, ty: &TypeIr, mapper: &JavaTypeMapper<'_>) -> String {
     match ty {
         TypeIr::Bool => "reader.readBool()".to_owned(),
         TypeIr::I8 | TypeIr::I16 => "reader.readI32()".to_owned(),
@@ -341,15 +464,18 @@ fn java_decode_expr(ir: &ConfigIr, ty: &TypeIr) -> String {
         TypeIr::String => "reader.readString()".to_owned(),
         TypeIr::Text => "new TextKey(reader.readString())".to_owned(),
         TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => {
-            format!("{name}.decode(reader)")
+            mapper.wrap_decode(ty, format!("{name}.decode(reader)"))
         }
         TypeIr::List(element) | TypeIr::Set(element) | TypeIr::Array { element, .. } => {
-            format!("reader.readList(() -> {})", java_decode_expr(ir, element))
+            format!(
+                "reader.readList(() -> {})",
+                java_decode_expr(ir, element, mapper)
+            )
         }
         TypeIr::Map { key, value } => format!(
             "reader.readMap(() -> {}, () -> {})",
-            java_decode_expr(ir, key),
-            java_decode_expr(ir, value)
+            java_decode_expr(ir, key, mapper),
+            java_decode_expr(ir, value, mapper)
         ),
         TypeIr::Ref { table, field } => ir
             .tables
@@ -361,18 +487,23 @@ fn java_decode_expr(ir: &ConfigIr, ty: &TypeIr) -> String {
                     .iter()
                     .find(|candidate| candidate.name == *field)
             })
-            .map(|field| java_decode_expr(ir, &field.ty))
+            .map(|field| java_decode_expr(ir, &field.ty, mapper))
             .unwrap_or_else(|| "reader.readI32()".to_owned()),
         TypeIr::Optional(element) => {
             format!(
                 "reader.readOptional(() -> {})",
-                java_decode_expr(ir, element)
+                java_decode_expr(ir, element, mapper)
             )
         }
     }
 }
 
-fn java_value_decode_expr(ir: &ConfigIr, ty: &TypeIr, value: &str) -> String {
+fn java_value_decode_expr(
+    ir: &ConfigIr,
+    ty: &TypeIr,
+    value: &str,
+    mapper: &JavaTypeMapper<'_>,
+) -> String {
     match ty {
         TypeIr::Bool => format!("{value}.asBool()"),
         TypeIr::I8 | TypeIr::U8 | TypeIr::I16 | TypeIr::U16 => format!("{value}.asInt()"),
@@ -386,12 +517,12 @@ fn java_value_decode_expr(ir: &ConfigIr, ty: &TypeIr, value: &str) -> String {
         TypeIr::String => format!("{value}.asString()"),
         TypeIr::Text => format!("new TextKey({value}.asString())"),
         TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => {
-            format!("{name}.decode({value})")
+            mapper.wrap_value_decode(ty, format!("{name}.decode({value})"))
         }
         TypeIr::List(element) | TypeIr::Set(element) | TypeIr::Array { element, .. } => {
             format!(
                 "{value}.asList(item -> {})",
-                java_value_decode_expr(ir, element, "item")
+                java_value_decode_expr(ir, element, "item", mapper)
             )
         }
         TypeIr::Map {
@@ -399,8 +530,8 @@ fn java_value_decode_expr(ir: &ConfigIr, ty: &TypeIr, value: &str) -> String {
             value: element,
         } => format!(
             "{value}.asMap(item -> {}, item -> {})",
-            java_value_decode_expr(ir, key, "item"),
-            java_value_decode_expr(ir, element, "item")
+            java_value_decode_expr(ir, key, "item", mapper),
+            java_value_decode_expr(ir, element, "item", mapper)
         ),
         TypeIr::Ref { table, field } => ir
             .tables
@@ -412,23 +543,32 @@ fn java_value_decode_expr(ir: &ConfigIr, ty: &TypeIr, value: &str) -> String {
                     .iter()
                     .find(|candidate| candidate.name == *field)
             })
-            .map(|field| java_value_decode_expr(ir, &field.ty, value))
+            .map(|field| java_value_decode_expr(ir, &field.ty, value, mapper))
             .unwrap_or_else(|| format!("{value}.asInt()")),
         TypeIr::Optional(element) => {
             format!(
                 "{value}.isNull() ? null : {}",
-                java_value_decode_expr(ir, element, value)
+                java_value_decode_expr(ir, element, value, mapper)
             )
         }
     }
 }
 
-fn java_collect_text_keys(ir: &ConfigIr, ty: &TypeIr, value: &str, indent: usize) -> String {
+fn java_collect_text_keys(
+    ir: &ConfigIr,
+    ty: &TypeIr,
+    value: &str,
+    indent: usize,
+    mapper: &JavaTypeMapper<'_>,
+) -> String {
+    if mapper.mapping(ty).is_some() {
+        return String::new();
+    }
     let pad = " ".repeat(indent);
     match ty {
         TypeIr::Text => format!("{pad}out.add({value});"),
         TypeIr::Optional(element) => {
-            let inner = java_collect_text_keys(ir, element, "item", indent + 4);
+            let inner = java_collect_text_keys(ir, element, "item", indent + 4, mapper);
             if inner.is_empty() {
                 String::new()
             } else {
@@ -438,7 +578,7 @@ fn java_collect_text_keys(ir: &ConfigIr, ty: &TypeIr, value: &str, indent: usize
             }
         }
         TypeIr::List(element) | TypeIr::Set(element) | TypeIr::Array { element, .. } => {
-            let inner = java_collect_text_keys(ir, element, "item", indent + 4);
+            let inner = java_collect_text_keys(ir, element, "item", indent + 4, mapper);
             if inner.is_empty() {
                 String::new()
             } else {
@@ -449,8 +589,8 @@ fn java_collect_text_keys(ir: &ConfigIr, ty: &TypeIr, value: &str, indent: usize
             key,
             value: element,
         } => {
-            let key_inner = java_collect_text_keys(ir, key, "key", indent + 4);
-            let value_inner = java_collect_text_keys(ir, element, "item", indent + 4);
+            let key_inner = java_collect_text_keys(ir, key, "key", indent + 4, mapper);
+            let value_inner = java_collect_text_keys(ir, element, "item", indent + 4, mapper);
             if key_inner.is_empty() && value_inner.is_empty() {
                 String::new()
             } else {
@@ -471,7 +611,7 @@ fn java_collect_text_keys(ir: &ConfigIr, ty: &TypeIr, value: &str, indent: usize
                     .iter()
                     .find(|candidate| candidate.name == *field)
             })
-            .map(|field| java_collect_text_keys(ir, &field.ty, value, indent))
+            .map(|field| java_collect_text_keys(ir, &field.ty, value, indent, mapper))
             .unwrap_or_default(),
         TypeIr::Bool
         | TypeIr::I8
@@ -510,4 +650,17 @@ fn is_java_package_segment(segment: &str) -> bool {
     };
     (first.is_ascii_alphabetic() || first == '_')
         && chars.all(|value| value.is_ascii_alphanumeric() || value == '_')
+}
+
+fn ref_target_type<'a>(ir: &'a ConfigIr, table: &str, field: &str) -> Option<&'a TypeIr> {
+    ir.tables
+        .iter()
+        .find(|candidate| candidate.name == table)
+        .and_then(|table| {
+            table
+                .fields
+                .iter()
+                .find(|candidate| candidate.name == field)
+        })
+        .map(|field| &field.ty)
 }

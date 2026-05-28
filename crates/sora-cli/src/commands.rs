@@ -1,4 +1,5 @@
 use anyhow::{Context, Result, bail};
+use sora_codegen::type_mapping::TypeMappingRegistry;
 use sora_excel::sync::ExcelSyncReport;
 use sora_execution::{ExecutionContext, ExecutionOptions};
 use sora_export::exporter::{ExportCompression, ExportOptions, ExportOutput, OutputKind};
@@ -24,10 +25,13 @@ pub fn run(cli: Cli) -> Result<()> {
         jobs: cli.jobs,
     })?;
     let parsers = crate::lua_parser::load_parser_registries(project, &cli.parser_script)?;
+    let type_mappings =
+        crate::lua_type_mapping::load_type_mapping_registry(project, &cli.type_mapping_script)?;
     let context = CliContext {
         execution,
         schema_parsers: Arc::new(parsers.schema),
         cell_parsers: Arc::new(parsers.cell),
+        type_mappings: Arc::new(type_mappings),
     };
 
     match cli.command {
@@ -63,6 +67,7 @@ pub struct CliContext {
     pub execution: ExecutionContext,
     pub schema_parsers: Arc<SchemaParserRegistry>,
     pub cell_parsers: Arc<CellParserRegistry>,
+    pub type_mappings: Arc<TypeMappingRegistry>,
 }
 
 fn check(args: CheckArgs, context: &CliContext) -> Result<()> {
@@ -94,6 +99,7 @@ fn generate(args: GenArgs, target: &str, context: &CliContext) -> Result<()> {
         args.format_code.into(),
         args.scope.as_deref(),
         &context.schema_parsers,
+        &context.type_mappings,
     )
     .with_context(|| {
         format!(
@@ -610,6 +616,7 @@ return {
             execution: ExecutionContext::default(),
             schema_parsers: Arc::new(sora_ir::parser::ParserRegistry::builtin()),
             cell_parsers: Arc::new(sora_input::parser::ParserRegistry::builtin()),
+            type_mappings: Arc::new(TypeMappingRegistry::new()),
         }
     }
 
@@ -620,6 +627,7 @@ return {
             execution: ExecutionContext::default(),
             schema_parsers: Arc::new(parsers.schema),
             cell_parsers: Arc::new(parsers.cell),
+            type_mappings: Arc::new(TypeMappingRegistry::new()),
         }
     }
 
@@ -629,6 +637,7 @@ return {
             execution: ExecutionContext::default(),
             schema_parsers: Arc::new(parsers.schema),
             cell_parsers: Arc::new(parsers.cell),
+            type_mappings: Arc::new(TypeMappingRegistry::new()),
         }
     }
 }

@@ -11,6 +11,7 @@
 | `-j, --jobs <N>` | 最大工作线程数。必须大于 0。 |
 | `--serial` | 禁用并行执行。 |
 | `--parser-script <PATH>` | 加载自定义 Lua 单元格 parser 脚本。可以重复传。项目级 parser 脚本也可以配置在 `project.toml` 的 `[parsers].scripts` 中。 |
+| `--type-mapping-script <PATH>` | 加载自定义 Lua 类型映射脚本。可以重复传。项目级脚本也可以配置在 `project.toml` 的 `[type_mappings].scripts` 中。 |
 | `-h, --help` | 打印帮助。 |
 | `-V, --version` | 打印 CLI 版本。 |
 

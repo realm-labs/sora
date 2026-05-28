@@ -8,6 +8,7 @@ use crate::{
         BaseUnionVariant,
     },
     options::EnumRepr,
+    type_mapping::{TypeMapping, TypeMappingContext, TypeMappingRegistry},
 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -61,6 +62,7 @@ pub struct EcmaScriptUnion {
     pub tag: String,
     pub variants: Vec<EcmaScriptUnionVariant>,
     pub imports: Vec<EcmaScriptImport>,
+    pub custom_imports: Vec<String>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -76,6 +78,7 @@ pub struct EcmaScriptRecord {
     pub pascal_name: String,
     pub snake_name: String,
     pub imports: Vec<EcmaScriptImport>,
+    pub custom_imports: Vec<String>,
     pub fields: Vec<EcmaScriptField>,
     pub uses_text_key: bool,
     pub table: Option<EcmaScriptTable>,
@@ -121,15 +124,22 @@ pub struct EcmaScriptField {
     pub decode: String,
     pub value_decode: String,
     pub collect_text_keys: String,
+    pub imports: Vec<String>,
     pub comment: Option<String>,
 }
 
 impl EcmaScriptModel {
-    pub fn from_base_model(ir: &ConfigIr, model: BaseModel) -> Self {
+    pub fn from_base_model(
+        target: &str,
+        ir: &ConfigIr,
+        model: BaseModel,
+        mappings: &TypeMappingRegistry,
+    ) -> Self {
+        let mapper = EcmaScriptTypeMapper::new(target, ir, mappings);
         let tables = model
             .tables
             .into_iter()
-            .map(|item| ecmascript_table(ir, item))
+            .map(|item| ecmascript_table(ir, item, &mapper))
             .collect::<Vec<_>>();
         Self {
             package: model.package,
@@ -146,7 +156,7 @@ impl EcmaScriptModel {
             unions: model
                 .unions
                 .into_iter()
-                .map(|item| ecmascript_union(ir, item))
+                .map(|item| ecmascript_union(ir, item, &mapper))
                 .collect(),
             records: model
                 .records
@@ -156,7 +166,7 @@ impl EcmaScriptModel {
                         .iter()
                         .find(|table| table.row_type == item.pascal_name)
                         .cloned();
-                    ecmascript_record(ir, item, table)
+                    ecmascript_record(ir, item, table, &mapper)
                 })
                 .collect(),
             tables,
@@ -176,25 +186,37 @@ impl EcmaScriptModel {
     }
 }
 
-fn ecmascript_union(ir: &ConfigIr, union: BaseUnion) -> EcmaScriptUnion {
+fn ecmascript_union(
+    ir: &ConfigIr,
+    union: BaseUnion,
+    mapper: &EcmaScriptTypeMapper<'_>,
+) -> EcmaScriptUnion {
+    let variants = union
+        .variants
+        .into_iter()
+        .map(|variant| ecmascript_variant(ir, variant, mapper))
+        .collect::<Vec<_>>();
+    let custom_imports =
+        collect_ecmascript_imports(variants.iter().flat_map(|variant| &variant.fields));
     EcmaScriptUnion {
         pascal_name: union.pascal_name,
         snake_name: union.snake_name,
         tag: union.tag.to_lower_camel_case(),
-        variants: union
-            .variants
-            .into_iter()
-            .map(|variant| ecmascript_variant(ir, variant))
-            .collect(),
+        variants,
         imports: union.imports.into_iter().map(ecmascript_import).collect(),
+        custom_imports,
     }
 }
 
-fn ecmascript_variant(ir: &ConfigIr, variant: BaseUnionVariant) -> EcmaScriptUnionVariant {
+fn ecmascript_variant(
+    ir: &ConfigIr,
+    variant: BaseUnionVariant,
+    mapper: &EcmaScriptTypeMapper<'_>,
+) -> EcmaScriptUnionVariant {
     let fields = variant
         .fields
         .into_iter()
-        .map(|field| ecmascript_field(ir, field))
+        .map(|field| ecmascript_field(ir, field, mapper))
         .collect::<Vec<_>>();
     let has_text_keys = fields
         .iter()
@@ -211,11 +233,12 @@ fn ecmascript_record(
     ir: &ConfigIr,
     record: BaseRecord,
     table: Option<EcmaScriptTable>,
+    mapper: &EcmaScriptTypeMapper<'_>,
 ) -> EcmaScriptRecord {
     let fields = record
         .fields
         .into_iter()
-        .map(|field| ecmascript_field(ir, field))
+        .map(|field| ecmascript_field(ir, field, mapper))
         .collect::<Vec<_>>();
     let uses_text_key = fields
         .iter()
@@ -224,18 +247,23 @@ fn ecmascript_record(
         pascal_name: record.pascal_name,
         snake_name: record.snake_name,
         imports: record.imports.into_iter().map(ecmascript_import).collect(),
+        custom_imports: collect_ecmascript_imports(fields.iter()),
         fields,
         uses_text_key,
         table,
     }
 }
 
-fn ecmascript_table(ir: &ConfigIr, table: BaseTable) -> EcmaScriptTable {
+fn ecmascript_table(
+    ir: &ConfigIr,
+    table: BaseTable,
+    mapper: &EcmaScriptTypeMapper<'_>,
+) -> EcmaScriptTable {
     let row_type = table.pascal_name.clone();
     let key_type = table
         .key_field
         .as_ref()
-        .map(|field| ecmascript_type_name(ir, &field.ty));
+        .map(|field| mapper.type_name(&field.ty));
     let key_field_name = table
         .key_field
         .as_ref()
@@ -254,18 +282,22 @@ fn ecmascript_table(ir: &ConfigIr, table: BaseTable) -> EcmaScriptTable {
         unique_indexes: table
             .unique_indexes
             .into_iter()
-            .map(|index| ecmascript_index(ir, index))
+            .map(|index| ecmascript_index(ir, index, mapper))
             .collect(),
         non_unique_indexes: table
             .non_unique_indexes
             .into_iter()
-            .map(|index| ecmascript_index(ir, index))
+            .map(|index| ecmascript_index(ir, index, mapper))
             .collect(),
     }
 }
 
-fn ecmascript_index(ir: &ConfigIr, index: BaseIndex) -> EcmaScriptIndex {
-    let key_type = ecmascript_type_name(ir, &index.field.ty);
+fn ecmascript_index(
+    _ir: &ConfigIr,
+    index: BaseIndex,
+    mapper: &EcmaScriptTypeMapper<'_>,
+) -> EcmaScriptIndex {
+    let key_type = mapper.type_name(&index.field.ty);
     EcmaScriptIndex {
         name: index.snake_name,
         pascal_name: index.pascal_name,
@@ -277,18 +309,38 @@ fn ecmascript_index(ir: &ConfigIr, index: BaseIndex) -> EcmaScriptIndex {
     }
 }
 
-fn ecmascript_field(ir: &ConfigIr, field: BaseField) -> EcmaScriptField {
-    let collect_text_keys =
-        ecmascript_collect_text_keys(ir, &field.ty, &format!("value.{}", field.camel_name));
+fn ecmascript_field(
+    ir: &ConfigIr,
+    field: BaseField,
+    mapper: &EcmaScriptTypeMapper<'_>,
+) -> EcmaScriptField {
+    let collect_text_keys = ecmascript_collect_text_keys(
+        ir,
+        &field.ty,
+        &format!("value.{}", field.camel_name),
+        mapper,
+    );
     EcmaScriptField {
         raw_name: field.raw_name,
         name: field.camel_name,
-        type_name: ecmascript_type_name(ir, &field.ty),
-        decode: ecmascript_decode_expr(ir, &field.ty),
-        value_decode: ecmascript_value_decode_expr(ir, &field.ty, "__VALUE__"),
+        type_name: mapper.type_name(&field.ty),
+        decode: ecmascript_decode_expr(ir, &field.ty, mapper),
+        value_decode: ecmascript_value_decode_expr(ir, &field.ty, "__VALUE__", mapper),
         collect_text_keys,
+        imports: mapper.imports(&field.ty),
         comment: field.comment,
     }
+}
+
+fn collect_ecmascript_imports<'a>(
+    fields: impl Iterator<Item = &'a EcmaScriptField>,
+) -> Vec<String> {
+    let mut imports = fields
+        .flat_map(|field| field.imports.iter().cloned())
+        .collect::<Vec<_>>();
+    imports.sort();
+    imports.dedup();
+    imports
 }
 
 fn ecmascript_import(import: BaseImport) -> EcmaScriptImport {
@@ -325,7 +377,85 @@ pub fn ecmascript_type_name(ir: &ConfigIr, ty: &TypeIr) -> String {
     }
 }
 
-pub fn ecmascript_decode_expr(ir: &ConfigIr, ty: &TypeIr) -> String {
+struct EcmaScriptTypeMapper<'a> {
+    target: &'a str,
+    ir: &'a ConfigIr,
+    mappings: &'a TypeMappingRegistry,
+}
+
+impl<'a> EcmaScriptTypeMapper<'a> {
+    fn new(target: &'a str, ir: &'a ConfigIr, mappings: &'a TypeMappingRegistry) -> Self {
+        Self {
+            target,
+            ir,
+            mappings,
+        }
+    }
+
+    fn type_name(&self, ty: &TypeIr) -> String {
+        if let Some(mapping) = self.mapping(ty) {
+            return mapping.type_name;
+        }
+
+        match ty {
+            TypeIr::Bool => "boolean".to_owned(),
+            TypeIr::I8 | TypeIr::U8 | TypeIr::I16 | TypeIr::U16 | TypeIr::I32 | TypeIr::U32 => {
+                "number".to_owned()
+            }
+            TypeIr::I64 | TypeIr::Duration => "bigint".to_owned(),
+            TypeIr::DateTime => "Date".to_owned(),
+            TypeIr::F32 | TypeIr::F64 => "number".to_owned(),
+            TypeIr::String => "string".to_owned(),
+            TypeIr::Text => "TextKey".to_owned(),
+            TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => name.clone(),
+            TypeIr::List(element) | TypeIr::Set(element) | TypeIr::Array { element, .. } => {
+                format!("{}[]", self.array_element_type(element))
+            }
+            TypeIr::Map { key, value } => {
+                format!("Map<{}, {}>", self.type_name(key), self.type_name(value))
+            }
+            TypeIr::Ref { table, field } => ref_type(self.ir, table, field)
+                .map(|ty| self.type_name(ty))
+                .unwrap_or_else(|| "number".to_owned()),
+            TypeIr::Optional(element) => format!("{} | undefined", self.type_name(element)),
+        }
+    }
+
+    fn array_element_type(&self, ty: &TypeIr) -> String {
+        let name = self.type_name(ty);
+        if name.contains(" | ") {
+            format!("({name})")
+        } else {
+            name
+        }
+    }
+
+    fn imports(&self, ty: &TypeIr) -> Vec<String> {
+        self.mappings.imports_for(self.target, self.ir, ty)
+    }
+
+    fn mapping(&self, ty: &TypeIr) -> Option<TypeMapping> {
+        self.mappings.map_type(TypeMappingContext {
+            target: self.target,
+            ir: self.ir,
+            ty,
+        })
+    }
+
+    fn wrap_decode(&self, ty: &TypeIr, base_expr: String) -> String {
+        self.mapping(ty)
+            .map(|mapping| mapping.wrap_decode(&base_expr))
+            .unwrap_or(base_expr)
+    }
+
+    fn wrap_value_decode(&self, ty: &TypeIr, base_expr: String) -> String {
+        self.mapping(ty)
+            .map(|mapping| mapping.wrap_value_decode(&base_expr))
+            .unwrap_or(base_expr)
+    }
+}
+
+fn ecmascript_decode_expr(ir: &ConfigIr, ty: &TypeIr, mapper: &EcmaScriptTypeMapper<'_>) -> String {
     match ty {
         TypeIr::Bool => "reader.readBool()".to_owned(),
         TypeIr::I8 | TypeIr::I16 | TypeIr::I32 => "reader.readI32()".to_owned(),
@@ -337,32 +467,37 @@ pub fn ecmascript_decode_expr(ir: &ConfigIr, ty: &TypeIr) -> String {
         TypeIr::String => "reader.readString()".to_owned(),
         TypeIr::Text => "new TextKey(reader.readString())".to_owned(),
         TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => {
-            format!("decode{name}(reader)")
+            mapper.wrap_decode(ty, format!("decode{name}(reader)"))
         }
         TypeIr::List(element) | TypeIr::Set(element) | TypeIr::Array { element, .. } => {
             format!(
                 "reader.readList(() => {})",
-                ecmascript_decode_expr(ir, element)
+                ecmascript_decode_expr(ir, element, mapper)
             )
         }
         TypeIr::Map { key, value } => format!(
             "reader.readMap(() => {}, () => {})",
-            ecmascript_decode_expr(ir, key),
-            ecmascript_decode_expr(ir, value)
+            ecmascript_decode_expr(ir, key, mapper),
+            ecmascript_decode_expr(ir, value, mapper)
         ),
         TypeIr::Ref { table, field } => ref_type(ir, table, field)
-            .map(|ty| ecmascript_decode_expr(ir, ty))
+            .map(|ty| ecmascript_decode_expr(ir, ty, mapper))
             .unwrap_or_else(|| "reader.readI32()".to_owned()),
         TypeIr::Optional(element) => {
             format!(
                 "reader.readOptional(() => {})",
-                ecmascript_decode_expr(ir, element)
+                ecmascript_decode_expr(ir, element, mapper)
             )
         }
     }
 }
 
-pub fn ecmascript_value_decode_expr(ir: &ConfigIr, ty: &TypeIr, value: &str) -> String {
+fn ecmascript_value_decode_expr(
+    ir: &ConfigIr,
+    ty: &TypeIr,
+    value: &str,
+    mapper: &EcmaScriptTypeMapper<'_>,
+) -> String {
     match ty {
         TypeIr::Bool => format!("{value}.asBool()"),
         TypeIr::I8 | TypeIr::U8 | TypeIr::I16 | TypeIr::U16 | TypeIr::I32 | TypeIr::U32 => {
@@ -374,35 +509,43 @@ pub fn ecmascript_value_decode_expr(ir: &ConfigIr, ty: &TypeIr, value: &str) -> 
         TypeIr::String => format!("{value}.asString()"),
         TypeIr::Text => format!("new TextKey({value}.asString())"),
         TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => {
-            format!("decode{name}Value({value})")
+            mapper.wrap_value_decode(ty, format!("decode{name}Value({value})"))
         }
         TypeIr::List(element) | TypeIr::Set(element) | TypeIr::Array { element, .. } => {
-            let item_decode = ecmascript_value_decode_expr(ir, element, "item");
+            let item_decode = ecmascript_value_decode_expr(ir, element, "item", mapper);
             format!("{value}.asList((item) => {item_decode})")
         }
         TypeIr::Map {
             key,
             value: element,
         } => {
-            let key_decode = ecmascript_value_decode_expr(ir, key, "item");
-            let value_decode = ecmascript_value_decode_expr(ir, element, "item");
+            let key_decode = ecmascript_value_decode_expr(ir, key, "item", mapper);
+            let value_decode = ecmascript_value_decode_expr(ir, element, "item", mapper);
             format!("{value}.asMap((item) => {key_decode}, (item) => {value_decode})")
         }
         TypeIr::Ref { table, field } => ref_type(ir, table, field)
-            .map(|ty| ecmascript_value_decode_expr(ir, ty, value))
+            .map(|ty| ecmascript_value_decode_expr(ir, ty, value, mapper))
             .unwrap_or_else(|| format!("{value}.asInt()")),
         TypeIr::Optional(element) => {
-            let item_decode = ecmascript_value_decode_expr(ir, element, value);
+            let item_decode = ecmascript_value_decode_expr(ir, element, value, mapper);
             format!("{value}.isNull() ? undefined : {item_decode}")
         }
     }
 }
 
-pub fn ecmascript_collect_text_keys(ir: &ConfigIr, ty: &TypeIr, value: &str) -> String {
+fn ecmascript_collect_text_keys(
+    ir: &ConfigIr,
+    ty: &TypeIr,
+    value: &str,
+    mapper: &EcmaScriptTypeMapper<'_>,
+) -> String {
+    if mapper.mapping(ty).is_some() {
+        return String::new();
+    }
     match ty {
         TypeIr::Text => format!("out.push({value});"),
         TypeIr::Optional(element) => {
-            let inner = ecmascript_collect_text_keys(ir, element, "item");
+            let inner = ecmascript_collect_text_keys(ir, element, "item", mapper);
             if inner.is_empty() {
                 String::new()
             } else {
@@ -410,7 +553,7 @@ pub fn ecmascript_collect_text_keys(ir: &ConfigIr, ty: &TypeIr, value: &str) -> 
             }
         }
         TypeIr::List(element) | TypeIr::Set(element) | TypeIr::Array { element, .. } => {
-            let inner = ecmascript_collect_text_keys(ir, element, "item");
+            let inner = ecmascript_collect_text_keys(ir, element, "item", mapper);
             if inner.is_empty() {
                 String::new()
             } else {
@@ -421,8 +564,8 @@ pub fn ecmascript_collect_text_keys(ir: &ConfigIr, ty: &TypeIr, value: &str) -> 
             key,
             value: element,
         } => {
-            let key_inner = ecmascript_collect_text_keys(ir, key, "mapKey");
-            let value_inner = ecmascript_collect_text_keys(ir, element, "item");
+            let key_inner = ecmascript_collect_text_keys(ir, key, "mapKey", mapper);
+            let value_inner = ecmascript_collect_text_keys(ir, element, "item", mapper);
             if key_inner.is_empty() && value_inner.is_empty() {
                 String::new()
             } else {
@@ -432,7 +575,7 @@ pub fn ecmascript_collect_text_keys(ir: &ConfigIr, ty: &TypeIr, value: &str) -> 
         TypeIr::Struct(name) => format!("collect{name}TextKeys({value}, out);"),
         TypeIr::Union(name) => format!("collect{name}TextKeys({value}, out);"),
         TypeIr::Ref { table, field } => ref_type(ir, table, field)
-            .map(|ty| ecmascript_collect_text_keys(ir, ty, value))
+            .map(|ty| ecmascript_collect_text_keys(ir, ty, value, mapper))
             .unwrap_or_default(),
         TypeIr::Bool
         | TypeIr::I8

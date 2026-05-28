@@ -3,6 +3,9 @@
 {%- for import in union.imports %}
 import { collect{{ import.name }}TextKeys, decode{{ import.name }}, decode{{ import.name }}Value } from "./{{ import.module }}{{ options.import_ext }}";
 {%- endfor %}
+{%- for import in union.custom_imports %}
+{{ import }}
+{%- endfor %}
 
 export function decode{{ union.pascal_name }}(reader) {
     const ordinal = reader.readU32();

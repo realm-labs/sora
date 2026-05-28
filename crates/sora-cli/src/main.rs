@@ -3,6 +3,7 @@ mod build;
 mod commands;
 mod init;
 mod lua_parser;
+mod lua_type_mapping;
 mod report;
 mod source;
 mod studio;

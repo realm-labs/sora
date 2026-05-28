@@ -5,6 +5,7 @@ use crate::schema_lock::{read_schema_lock_file, verify_schema_lock, write_schema
 use sora_codegen::{
     format::{FormatMode, format_generated_code},
     generator::{CodegenContext, CodegenRegistry, empty_options},
+    type_mapping::TypeMappingRegistry,
 };
 use sora_diagnostics::{Result, SoraError};
 use sora_excel::generator::ExcelTemplateGenerator;
@@ -24,6 +25,11 @@ use support::{
     filter_ir_and_data_by_scope, load_ir, load_ir_with_scope, load_validated_data,
     validate_schema_ir, write_json_file,
 };
+
+pub struct CodegenPipelineExtensions<'a> {
+    pub parser_registry: &'a SchemaParserRegistry,
+    pub type_mappings: &'a TypeMappingRegistry,
+}
 
 pub fn load_schema_ir(input: &impl SchemaInput) -> Result<sora_ir::model::ConfigIr> {
     load_ir(input)
@@ -165,6 +171,7 @@ pub fn generate_code_with_scope_and_format(
     scope: Option<&str>,
 ) -> Result<()> {
     let registry = CodegenRegistry::with_builtin_generators();
+    let type_mappings = TypeMappingRegistry::new();
     generate_code_with_registry_scope_and_format(
         input,
         target,
@@ -172,6 +179,7 @@ pub fn generate_code_with_scope_and_format(
         format_mode,
         scope,
         &registry,
+        &type_mappings,
     )
 }
 
@@ -182,16 +190,20 @@ pub fn generate_code_with_scope_format_and_parsers(
     format_mode: FormatMode,
     scope: Option<&str>,
     parser_registry: &SchemaParserRegistry,
+    type_mappings: &TypeMappingRegistry,
 ) -> Result<()> {
     let registry = CodegenRegistry::with_builtin_generators();
-    generate_code_with_registry_scope_format_and_parsers(
+    generate_code_with_registry_scope_format_and_extensions(
         input,
         target,
         out_dir,
         format_mode,
         scope,
         &registry,
-        parser_registry,
+        CodegenPipelineExtensions {
+            parser_registry,
+            type_mappings,
+        },
     )
 }
 
@@ -202,6 +214,7 @@ pub fn generate_code_with_registry_scope_and_format(
     format_mode: FormatMode,
     scope: Option<&str>,
     registry: &CodegenRegistry,
+    type_mappings: &TypeMappingRegistry,
 ) -> Result<()> {
     let schema = input.load_schema()?;
     let codegen_options = schema.codegen.clone();
@@ -228,6 +241,7 @@ pub fn generate_code_with_registry_scope_and_format(
             target: canonical_target,
             ir: &ir,
             options,
+            type_mappings,
         },
         out_dir,
     )?;
@@ -239,18 +253,18 @@ pub fn generate_code_with_registry_scope_and_format(
     )
 }
 
-pub fn generate_code_with_registry_scope_format_and_parsers(
+pub fn generate_code_with_registry_scope_format_and_extensions(
     input: &impl SchemaInput,
     target: &str,
     out_dir: &Path,
     format_mode: FormatMode,
     scope: Option<&str>,
     registry: &CodegenRegistry,
-    parser_registry: &SchemaParserRegistry,
+    extensions: CodegenPipelineExtensions<'_>,
 ) -> Result<()> {
     let schema = input.load_schema()?;
     let codegen_options = schema.codegen.clone();
-    let ir = support::validate_schema_ir_with_parsers(schema, parser_registry)?;
+    let ir = support::validate_schema_ir_with_parsers(schema, extensions.parser_registry)?;
     let ir = match scope {
         Some(scope) => sora_ir::scope::filter_config_ir_by_scope(&ir, scope)?,
         None => ir,
@@ -273,6 +287,7 @@ pub fn generate_code_with_registry_scope_format_and_parsers(
             target: canonical_target,
             ir: &ir,
             options,
+            type_mappings: extensions.type_mappings,
         },
         out_dir,
     )?;

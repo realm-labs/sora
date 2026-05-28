@@ -17,6 +17,9 @@ pub struct Cli {
     #[arg(long, global = true, value_name = "PATH")]
     pub parser_script: Vec<PathBuf>,
 
+    #[arg(long, global = true, value_name = "PATH")]
+    pub type_mapping_script: Vec<PathBuf>,
+
     #[command(subcommand)]
     pub command: Command,
 }

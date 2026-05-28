@@ -14,7 +14,7 @@ use crate::{
     },
     options::{LanguageCodegenOptions, RuntimeFormat},
     render::{ensure_dir, render_template, write_file},
-    types::godot_type_name,
+    type_mapping::{TypeMapping, TypeMappingContext, TypeMappingRegistry},
 };
 
 pub struct GodotCodeGenerator;
@@ -32,7 +32,8 @@ impl CodeGenerator for GodotCodeGenerator {
         }
 
         ensure_dir(out_dir)?;
-        let model = GodotModel::from_base_model(ir, build_base_model(ir)?);
+        let mapper = GodotTypeMapper::new(context.target, ir, context.type_mappings);
+        let model = GodotModel::from_base_model(ir, build_base_model(ir)?, &mapper);
 
         for item in &model.enums {
             let rendered = render_template("godot", "enum.gd.j2", context! { enum => item })?;
@@ -85,6 +86,7 @@ struct GodotRecord {
     file_name: String,
     fields: Vec<GodotField>,
     table: Option<GodotTable>,
+    custom_imports: Vec<String>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -95,6 +97,7 @@ struct GodotUnion {
     tag: String,
     fields: Vec<GodotField>,
     variants: Vec<GodotUnionVariant>,
+    custom_imports: Vec<String>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -110,6 +113,7 @@ struct GodotField {
     type_name: String,
     default_value: String,
     value_decode: String,
+    imports: Vec<String>,
     comment: Option<String>,
 }
 
@@ -134,7 +138,7 @@ struct GodotIndex {
 }
 
 impl GodotModel {
-    fn from_base_model(ir: &ConfigIr, model: BaseModel) -> Self {
+    fn from_base_model(ir: &ConfigIr, model: BaseModel, mapper: &GodotTypeMapper<'_>) -> Self {
         let enums = model
             .enums
             .into_iter()
@@ -165,13 +169,13 @@ impl GodotModel {
                     .iter()
                     .find(|table| table.row_type == class_name)
                     .cloned();
-                godot_record(ir, item, table)
+                godot_record(ir, item, table, mapper)
             })
             .collect();
         let unions = model
             .unions
             .into_iter()
-            .map(|item| godot_union(ir, item))
+            .map(|item| godot_union(ir, item, mapper))
             .collect();
 
         Self {
@@ -184,26 +188,35 @@ impl GodotModel {
     }
 }
 
-fn godot_record(ir: &ConfigIr, record: BaseRecord, table: Option<GodotTable>) -> GodotRecord {
+fn godot_record(
+    ir: &ConfigIr,
+    record: BaseRecord,
+    table: Option<GodotTable>,
+    mapper: &GodotTypeMapper<'_>,
+) -> GodotRecord {
+    let fields = record
+        .fields
+        .into_iter()
+        .map(|field| godot_field(ir, field, mapper))
+        .collect::<Vec<_>>();
+    let custom_imports = collect_godot_imports(fields.iter());
     GodotRecord {
         class_name: godot_type_identifier(&record.pascal_name),
         file_name: godot_file_name(&record.snake_name),
-        fields: record
-            .fields
-            .into_iter()
-            .map(|field| godot_field(ir, field))
-            .collect(),
+        fields,
         table,
+        custom_imports,
     }
 }
 
-fn godot_union(ir: &ConfigIr, union: BaseUnion) -> GodotUnion {
+fn godot_union(ir: &ConfigIr, union: BaseUnion, mapper: &GodotTypeMapper<'_>) -> GodotUnion {
     let variants = union
         .variants
         .into_iter()
-        .map(|variant| godot_union_variant(ir, variant))
+        .map(|variant| godot_union_variant(ir, variant, mapper))
         .collect::<Vec<_>>();
     let fields = flattened_union_fields(&variants);
+    let custom_imports = collect_godot_imports(fields.iter());
 
     GodotUnion {
         class_name: godot_type_identifier(&union.pascal_name),
@@ -212,16 +225,21 @@ fn godot_union(ir: &ConfigIr, union: BaseUnion) -> GodotUnion {
         tag: godot_field_identifier(&union.tag),
         fields,
         variants,
+        custom_imports,
     }
 }
 
-fn godot_union_variant(ir: &ConfigIr, variant: BaseUnionVariant) -> GodotUnionVariant {
+fn godot_union_variant(
+    ir: &ConfigIr,
+    variant: BaseUnionVariant,
+    mapper: &GodotTypeMapper<'_>,
+) -> GodotUnionVariant {
     GodotUnionVariant {
         raw_name: variant.name,
         fields: variant
             .fields
             .into_iter()
-            .map(|field| godot_field(ir, field))
+            .map(|field| godot_field(ir, field, mapper))
             .collect(),
     }
 }
@@ -270,18 +288,97 @@ fn godot_index(index: BaseIndex) -> GodotIndex {
     }
 }
 
-fn godot_field(ir: &ConfigIr, field: BaseField) -> GodotField {
+fn godot_field(ir: &ConfigIr, field: BaseField, mapper: &GodotTypeMapper<'_>) -> GodotField {
     GodotField {
         raw_name: field.raw_name,
         name: godot_field_identifier(&field.snake_name),
-        type_name: godot_type_name(ir, &field.ty),
+        type_name: mapper.type_name(&field.ty),
         default_value: godot_default_value(ir, &field.ty),
-        value_decode: godot_value_decode_expr(ir, &field.ty, "__VALUE__"),
+        value_decode: godot_value_decode_expr(ir, &field.ty, "__VALUE__", mapper),
+        imports: mapper.imports(&field.ty),
         comment: field.comment,
     }
 }
 
-fn godot_value_decode_expr(ir: &ConfigIr, ty: &TypeIr, value: &str) -> String {
+fn collect_godot_imports<'a>(fields: impl Iterator<Item = &'a GodotField>) -> Vec<String> {
+    let mut imports = fields
+        .flat_map(|field| field.imports.iter().cloned())
+        .collect::<Vec<_>>();
+    imports.sort();
+    imports.dedup();
+    imports
+}
+
+struct GodotTypeMapper<'a> {
+    target: &'a str,
+    ir: &'a ConfigIr,
+    mappings: &'a TypeMappingRegistry,
+}
+
+impl<'a> GodotTypeMapper<'a> {
+    fn new(target: &'a str, ir: &'a ConfigIr, mappings: &'a TypeMappingRegistry) -> Self {
+        Self {
+            target,
+            ir,
+            mappings,
+        }
+    }
+
+    fn type_name(&self, ty: &TypeIr) -> String {
+        if let Some(mapping) = self.mapping(ty) {
+            return mapping.type_name;
+        }
+
+        match ty {
+            TypeIr::Bool => "bool".to_owned(),
+            TypeIr::I8
+            | TypeIr::U8
+            | TypeIr::I16
+            | TypeIr::U16
+            | TypeIr::I32
+            | TypeIr::U32
+            | TypeIr::I64
+            | TypeIr::Duration
+            | TypeIr::DateTime => "int".to_owned(),
+            TypeIr::F32 | TypeIr::F64 => "float".to_owned(),
+            TypeIr::String | TypeIr::Enum(_) => "String".to_owned(),
+            TypeIr::Text => "SoraRuntime.TextKey".to_owned(),
+            TypeIr::Struct(name) | TypeIr::Union(name) => godot_type_identifier(name),
+            TypeIr::List(_) | TypeIr::Set(_) | TypeIr::Map { .. } | TypeIr::Array { .. } => {
+                "Array".to_owned()
+            }
+            TypeIr::Ref { table, field } => ref_target_type(self.ir, table, field)
+                .map(|ty| self.type_name(ty))
+                .unwrap_or_else(|| "int".to_owned()),
+            TypeIr::Optional(_) => "Variant".to_owned(),
+        }
+    }
+
+    fn imports(&self, ty: &TypeIr) -> Vec<String> {
+        self.mappings.imports_for(self.target, self.ir, ty)
+    }
+
+    fn mapping(&self, ty: &TypeIr) -> Option<TypeMapping> {
+        self.mappings.map_type(TypeMappingContext {
+            target: self.target,
+            ir: self.ir,
+            ty,
+        })
+    }
+
+    fn wrap_value_decode(&self, ty: &TypeIr, base_expr: String) -> String {
+        self.mapping(ty)
+            .map(|mapping| mapping.wrap_value_decode(&base_expr))
+            .unwrap_or(base_expr)
+    }
+}
+
+fn godot_value_decode_expr(
+    ir: &ConfigIr,
+    ty: &TypeIr,
+    value: &str,
+    mapper: &GodotTypeMapper<'_>,
+) -> String {
     match ty {
         TypeIr::Bool => format!("bool({value})"),
         TypeIr::I8
@@ -296,21 +393,25 @@ fn godot_value_decode_expr(ir: &ConfigIr, ty: &TypeIr, value: &str) -> String {
         TypeIr::F32 | TypeIr::F64 => format!("float({value})"),
         TypeIr::String => format!("str({value})"),
         TypeIr::Text => format!("SoraRuntime.TextKey.new(str({value}))"),
-        TypeIr::Enum(name) => format!("{}.decode({value})", godot_type_identifier(name)),
-        TypeIr::Struct(name) | TypeIr::Union(name) => {
-            format!("{}.decode({value})", godot_type_identifier(name))
-        }
+        TypeIr::Enum(name) => mapper.wrap_value_decode(
+            ty,
+            format!("{}.decode({value})", godot_type_identifier(name)),
+        ),
+        TypeIr::Struct(name) | TypeIr::Union(name) => mapper.wrap_value_decode(
+            ty,
+            format!("{}.decode({value})", godot_type_identifier(name)),
+        ),
         TypeIr::List(element) | TypeIr::Set(element) | TypeIr::Array { element, .. } => format!(
             "SoraRuntime.decode_array({value}, func(item): return {})",
-            godot_value_decode_expr(ir, element, "item")
+            godot_value_decode_expr(ir, element, "item", mapper)
         ),
         TypeIr::Map {
             key,
             value: element,
         } => format!(
             "SoraRuntime.decode_map({value}, func(item): return {}, func(item): return {})",
-            godot_value_decode_expr(ir, key, "item"),
-            godot_value_decode_expr(ir, element, "item")
+            godot_value_decode_expr(ir, key, "item", mapper),
+            godot_value_decode_expr(ir, element, "item", mapper)
         ),
         TypeIr::Ref { table, field } => ir
             .tables
@@ -322,12 +423,12 @@ fn godot_value_decode_expr(ir: &ConfigIr, ty: &TypeIr, value: &str) -> String {
                     .iter()
                     .find(|candidate| candidate.name == *field)
             })
-            .map(|field| godot_value_decode_expr(ir, &field.ty, value))
+            .map(|field| godot_value_decode_expr(ir, &field.ty, value, mapper))
             .unwrap_or_else(|| format!("{value}.as_int()")),
         TypeIr::Optional(element) => {
             format!(
                 "null if {value}.is_null() else {}",
-                godot_value_decode_expr(ir, element, value)
+                godot_value_decode_expr(ir, element, value, mapper)
             )
         }
     }
@@ -369,6 +470,19 @@ fn godot_default_value(ir: &ConfigIr, ty: &TypeIr) -> String {
 
 fn godot_file_name(value: &str) -> String {
     sanitize_identifier(&value.to_snake_case(), CaseKind::Snake)
+}
+
+fn ref_target_type<'a>(ir: &'a ConfigIr, table: &str, field: &str) -> Option<&'a TypeIr> {
+    ir.tables
+        .iter()
+        .find(|candidate| candidate.name == table)
+        .and_then(|table| {
+            table
+                .fields
+                .iter()
+                .find(|candidate| candidate.name == field)
+        })
+        .map(|field| &field.ty)
 }
 
 fn godot_type_identifier(value: &str) -> String {

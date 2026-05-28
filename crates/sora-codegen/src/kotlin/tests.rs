@@ -1,11 +1,20 @@
 use super::*;
 use crate::{
     csharp::CSharpCodeGenerator,
+    dart::DartCodeGenerator,
+    erlang::ErlangCodeGenerator,
+    generator::{CodeGenerator, CodegenContext, empty_options},
     go::GoCodeGenerator,
+    godot::GodotCodeGenerator,
     java::JavaCodeGenerator,
+    javascript::JavaScriptCodeGenerator,
+    lua::LuaCodeGenerator,
     options::{LanguageCodegenOptions, RuntimeFormat, RustCodegenOptions, RustMapType},
+    python::PythonCodeGenerator,
     rust::RustCodeGenerator,
     scala::ScalaCodeGenerator,
+    type_mapping::{StaticTypeMappingProvider, StaticTypeMappingRule, TypeMappingRegistry},
+    typescript::TypeScriptCodeGenerator,
 };
 use sora_ir::{model::ConfigIr, normalize::normalize_schema};
 use sora_schema::model::SchemaFile;
@@ -293,6 +302,297 @@ fn csharp_supports_export_runtime_formats() {
 
         let _ = std::fs::remove_dir_all(base);
     }
+}
+
+#[test]
+fn generators_apply_custom_type_mappings() {
+    let ir = type_mapping_ir();
+    let base = temp_dir();
+    let csharp_out = base.join("csharp");
+    let kotlin_out = base.join("kotlin");
+    let java_out = base.join("java");
+    let go_out = base.join("go");
+    let python_out = base.join("python");
+    let typescript_out = base.join("typescript");
+    let javascript_out = base.join("javascript");
+    let scala_out = base.join("scala");
+    let dart_out = base.join("dart");
+    let godot_out = base.join("godot");
+    let erlang_out = base.join("erlang");
+    let lua_out = base.join("lua");
+    let mut mappings = TypeMappingRegistry::new();
+    mappings.register(StaticTypeMappingProvider::new(vec![
+        StaticTypeMappingRule {
+            target: "csharp".to_owned(),
+            schema_type: "Vec3".to_owned(),
+            type_name: "Vector3".to_owned(),
+            decode: Some("GameMappings.ToVector3({value})".to_owned()),
+            value_decode: Some("GameMappings.ToVector3({value})".to_owned()),
+            imports: vec!["UnityEngine".to_owned()],
+        },
+        StaticTypeMappingRule {
+            target: "kotlin".to_owned(),
+            schema_type: "Vec3".to_owned(),
+            type_name: "Vector3".to_owned(),
+            decode: Some("GameMappings.toVector3({value})".to_owned()),
+            value_decode: Some("GameMappings.toVector3({value})".to_owned()),
+            imports: vec!["game.Vector3".to_owned()],
+        },
+        StaticTypeMappingRule {
+            target: "java".to_owned(),
+            schema_type: "Vec3".to_owned(),
+            type_name: "Vector3".to_owned(),
+            decode: Some("GameMappings.toVector3({value})".to_owned()),
+            value_decode: Some("GameMappings.toVector3({value})".to_owned()),
+            imports: vec!["game.Vector3".to_owned()],
+        },
+        StaticTypeMappingRule {
+            target: "go".to_owned(),
+            schema_type: "Vec3".to_owned(),
+            type_name: "vector.Vector3".to_owned(),
+            decode: Some("toVec3({value})".to_owned()),
+            value_decode: Some("toVec3({value})".to_owned()),
+            imports: vec!["\"game/vector\"".to_owned()],
+        },
+        StaticTypeMappingRule {
+            target: "python".to_owned(),
+            schema_type: "Vec3".to_owned(),
+            type_name: "Vector3".to_owned(),
+            decode: Some("to_vec3({value})".to_owned()),
+            value_decode: Some("to_vec3({value})".to_owned()),
+            imports: vec!["from game import Vector3".to_owned()],
+        },
+        StaticTypeMappingRule {
+            target: "typescript".to_owned(),
+            schema_type: "Vec3".to_owned(),
+            type_name: "Vector3".to_owned(),
+            decode: Some("toVec3({value})".to_owned()),
+            value_decode: Some("toVec3({value})".to_owned()),
+            imports: vec!["import { toVec3, type Vector3 } from \"./vector3.js\";".to_owned()],
+        },
+        StaticTypeMappingRule {
+            target: "javascript".to_owned(),
+            schema_type: "Vec3".to_owned(),
+            type_name: "Vector3".to_owned(),
+            decode: Some("toVec3({value})".to_owned()),
+            value_decode: Some("toVec3({value})".to_owned()),
+            imports: Vec::new(),
+        },
+        StaticTypeMappingRule {
+            target: "scala".to_owned(),
+            schema_type: "Vec3".to_owned(),
+            type_name: "Vector3".to_owned(),
+            decode: Some("GameMappings.toVector3({value})".to_owned()),
+            value_decode: Some("GameMappings.toVector3({value})".to_owned()),
+            imports: vec!["game.Vector3".to_owned()],
+        },
+        StaticTypeMappingRule {
+            target: "dart".to_owned(),
+            schema_type: "Vec3".to_owned(),
+            type_name: "Vector3".to_owned(),
+            decode: None,
+            value_decode: Some("toVec3({value})".to_owned()),
+            imports: vec!["import 'vector3.dart';".to_owned()],
+        },
+        StaticTypeMappingRule {
+            target: "godot".to_owned(),
+            schema_type: "Vec3".to_owned(),
+            type_name: "Vector3".to_owned(),
+            decode: None,
+            value_decode: Some("Vector3Codec.decode({value})".to_owned()),
+            imports: vec!["const Vector3Codec = preload(\"res://vector3_codec.gd\")".to_owned()],
+        },
+        StaticTypeMappingRule {
+            target: "erlang".to_owned(),
+            schema_type: "Vec3".to_owned(),
+            type_name: "vector3:t()".to_owned(),
+            decode: Some("fun(Reader) -> vector3:decode_from({value}, Reader) end".to_owned()),
+            value_decode: Some("vector3:decode_value({value})".to_owned()),
+            imports: Vec::new(),
+        },
+        StaticTypeMappingRule {
+            target: "lua".to_owned(),
+            schema_type: "Vec3".to_owned(),
+            type_name: "UnityVector3".to_owned(),
+            decode: Some("to_vec3({value})".to_owned()),
+            value_decode: Some("to_vec3({value})".to_owned()),
+            imports: Vec::new(),
+        },
+    ]));
+
+    let options = empty_options();
+    generate_with_mappings(
+        &CSharpCodeGenerator,
+        "csharp",
+        &ir,
+        &options,
+        &mappings,
+        &csharp_out,
+    );
+    generate_with_mappings(
+        &KotlinCodeGenerator,
+        "kotlin",
+        &ir,
+        &options,
+        &mappings,
+        &kotlin_out,
+    );
+    generate_with_mappings(
+        &JavaCodeGenerator,
+        "java",
+        &ir,
+        &options,
+        &mappings,
+        &java_out,
+    );
+    generate_with_mappings(&GoCodeGenerator, "go", &ir, &options, &mappings, &go_out);
+    generate_with_mappings(
+        &PythonCodeGenerator,
+        "python",
+        &ir,
+        &options,
+        &mappings,
+        &python_out,
+    );
+    generate_with_mappings(
+        &TypeScriptCodeGenerator,
+        "typescript",
+        &ir,
+        &options,
+        &mappings,
+        &typescript_out,
+    );
+    generate_with_mappings(
+        &JavaScriptCodeGenerator,
+        "javascript",
+        &ir,
+        &options,
+        &mappings,
+        &javascript_out,
+    );
+    generate_with_mappings(
+        &ScalaCodeGenerator,
+        "scala",
+        &ir,
+        &options,
+        &mappings,
+        &scala_out,
+    );
+    generate_with_mappings(
+        &DartCodeGenerator,
+        "dart",
+        &ir,
+        &options,
+        &mappings,
+        &dart_out,
+    );
+    let godot_options = serde_json::to_value(LanguageCodegenOptions {
+        runtime_format: RuntimeFormat::Json,
+    })
+    .unwrap();
+    generate_with_mappings(
+        &GodotCodeGenerator,
+        "godot",
+        &ir,
+        &godot_options,
+        &mappings,
+        &godot_out,
+    );
+    generate_with_mappings(
+        &ErlangCodeGenerator,
+        "erlang",
+        &ir,
+        &options,
+        &mappings,
+        &erlang_out,
+    );
+    generate_with_mappings(&LuaCodeGenerator, "lua", &ir, &options, &mappings, &lua_out);
+
+    let csharp_spawn = std::fs::read_to_string(csharp_out.join("Spawn.cs")).unwrap();
+    let kotlin_spawn = std::fs::read_to_string(kotlin_out.join("game_config/Spawn.kt")).unwrap();
+    let java_spawn = std::fs::read_to_string(java_out.join("game_config/Spawn.java")).unwrap();
+    let go_spawn = std::fs::read_to_string(go_out.join("spawn.go")).unwrap();
+    let python_spawn = std::fs::read_to_string(python_out.join("spawn.py")).unwrap();
+    let typescript_spawn = std::fs::read_to_string(typescript_out.join("spawn.ts")).unwrap();
+    let javascript_spawn = std::fs::read_to_string(javascript_out.join("spawn.js")).unwrap();
+    let scala_spawn = std::fs::read_to_string(scala_out.join("game_config/Spawn.scala")).unwrap();
+    let dart_spawn = std::fs::read_to_string(dart_out.join("spawn.dart")).unwrap();
+    let godot_spawn = std::fs::read_to_string(godot_out.join("spawn.gd")).unwrap();
+    let erlang_spawn = std::fs::read_to_string(erlang_out.join("spawn.erl")).unwrap();
+    let lua_spawn = std::fs::read_to_string(lua_out.join("spawn.lua")).unwrap();
+
+    assert!(csharp_spawn.contains("using UnityEngine;"));
+    assert!(csharp_spawn.contains("Vector3 Position"));
+    assert!(csharp_spawn.contains("List<Vector3> Path"));
+    assert!(csharp_spawn.contains("GameMappings.ToVector3(Vec3.Decode(reader))"));
+    assert!(
+        csharp_spawn.contains("reader.ReadList(() => GameMappings.ToVector3(Vec3.Decode(reader)))")
+    );
+    assert!(kotlin_spawn.contains("import game.Vector3"));
+    assert!(kotlin_spawn.contains("val position: Vector3"));
+    assert!(kotlin_spawn.contains("List<Vector3>"));
+    assert!(kotlin_spawn.contains("GameMappings.toVector3(Vec3.decode(reader))"));
+    assert!(java_spawn.contains("import game.Vector3;"));
+    assert!(java_spawn.contains("public final Vector3 position;"));
+    assert!(java_spawn.contains("java.util.List<Vector3> path"));
+    assert!(java_spawn.contains("GameMappings.toVector3(Vec3.decode(reader))"));
+    assert!(go_spawn.contains("\"game/vector\""));
+    assert!(go_spawn.contains("Position vector.Vector3"));
+    assert!(go_spawn.contains("[]vector.Vector3"));
+    assert!(go_spawn.contains("toVec3(decodeVec3(reader))"));
+    assert!(python_spawn.contains("from game import Vector3"));
+    assert!(python_spawn.contains("position: Vector3"));
+    assert!(python_spawn.contains("path: list[Vector3]"));
+    assert!(python_spawn.contains("position = to_vec3(Vec3.decode(reader))"));
+    assert!(typescript_spawn.contains("import { toVec3, type Vector3 } from \"./vector3.js\";"));
+    assert!(typescript_spawn.contains("position: Vector3;"));
+    assert!(typescript_spawn.contains("path: Vector3[];"));
+    assert!(typescript_spawn.contains("position: toVec3(decodeVec3(reader))"));
+    assert!(javascript_spawn.contains("position: toVec3(decodeVec3(reader))"));
+    assert!(scala_spawn.contains("import game.Vector3"));
+    assert!(scala_spawn.contains("position: Vector3"));
+    assert!(scala_spawn.contains("Vector[Vector3]"));
+    assert!(scala_spawn.contains("GameMappings.toVector3(Vec3.decode(reader))"));
+    assert!(dart_spawn.contains("import 'vector3.dart';"));
+    assert!(dart_spawn.contains("final Vector3 position;"));
+    assert!(dart_spawn.contains("List<Vector3> path"));
+    assert!(dart_spawn.contains("position: toVec3(Vec3.decode(obj.get(\"position\")))"));
+    assert!(godot_spawn.contains("const Vector3Codec = preload(\"res://vector3_codec.gd\")"));
+    assert!(godot_spawn.contains("var position: Vector3"));
+    assert!(godot_spawn.contains("Vector3Codec.decode(Vec3.decode(SoraRuntime.read_field"));
+    assert!(erlang_spawn.contains("'position' := vector3:t()"));
+    assert!(erlang_spawn.contains(
+        "vector3:decode_value(vec3:decode_value(sora_runtime:value_get(<<\"position\">>, Obj)))"
+    ));
+    assert!(lua_spawn.contains("---@field position UnityVector3"));
+    assert!(lua_spawn.contains("---@field path UnityVector3[]"));
+    assert!(lua_spawn.contains("position = to_vec3(Vec3.decode(reader))"));
+    assert!(
+        lua_spawn.contains("reader:read_list(function() return to_vec3(Vec3.decode(reader)) end)")
+    );
+
+    let _ = std::fs::remove_dir_all(base);
+}
+
+fn generate_with_mappings(
+    generator: &impl CodeGenerator,
+    target: &'static str,
+    ir: &ConfigIr,
+    options: &serde_json::Value,
+    mappings: &TypeMappingRegistry,
+    out_dir: &std::path::Path,
+) {
+    generator
+        .generate(
+            CodegenContext {
+                target,
+                ir,
+                options,
+                type_mappings: mappings,
+            },
+            out_dir,
+        )
+        .unwrap();
 }
 
 #[test]
@@ -667,6 +967,44 @@ mode = "list"
 [[tables.fields]]
 name = "id"
 type = "i32"
+"#,
+    )
+    .unwrap();
+
+    normalize_schema(schema).unwrap()
+}
+
+fn type_mapping_ir() -> ConfigIr {
+    let schema: SchemaFile = toml::from_str(
+        r#"
+package = "game_config"
+
+[[structs]]
+name = "Vec3"
+
+[[structs.fields]]
+name = "x"
+type = "f32"
+
+[[structs.fields]]
+name = "y"
+type = "f32"
+
+[[structs.fields]]
+name = "z"
+type = "f32"
+
+[[tables]]
+name = "Spawn"
+mode = "list"
+
+[[tables.fields]]
+name = "position"
+type = "struct<Vec3>"
+
+[[tables.fields]]
+name = "path"
+type = "list<struct<Vec3>>"
 "#,
     )
     .unwrap();

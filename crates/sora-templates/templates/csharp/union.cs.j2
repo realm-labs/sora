@@ -3,6 +3,9 @@
 #nullable enable
 
 using System.Collections.Generic;
+{%- for import in union.imports %}
+using {{ import }};
+{%- endfor %}
 
 namespace {{ namespace }};
 

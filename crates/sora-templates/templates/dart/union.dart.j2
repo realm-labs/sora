@@ -4,6 +4,9 @@ import 'runtime.dart';
 {%- for import in union.imports %}
 import '{{ import.module }}.dart';
 {%- endfor %}
+{%- for import in union.custom_imports %}
+{{ import }}
+{%- endfor %}
 
 sealed class {{ union.pascal_name }} {
   const {{ union.pascal_name }}();

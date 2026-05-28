@@ -27,6 +27,7 @@ use crate::{
     python::PythonCodeGenerator,
     rust::RustCodeGenerator,
     scala::ScalaCodeGenerator,
+    type_mapping::TypeMappingRegistry,
     typescript::TypeScriptCodeGenerator,
 };
 
@@ -34,11 +35,12 @@ pub trait CodeGenerator: Send + Sync {
     fn generate(&self, context: CodegenContext<'_>, out_dir: &Path) -> Result<()>;
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Clone, Copy)]
 pub struct CodegenContext<'a> {
     pub target: &'a str,
     pub ir: &'a ConfigIr,
     pub options: &'a Value,
+    pub type_mappings: &'a TypeMappingRegistry,
 }
 
 impl CodegenContext<'_> {
@@ -452,6 +454,7 @@ macro_rules! impl_test_codegen_generate {
                         target: $target,
                         ir,
                         options: &options,
+                        type_mappings: &$crate::type_mapping::TypeMappingRegistry::new(),
                     },
                     out_dir,
                 )
@@ -474,6 +477,7 @@ macro_rules! impl_test_codegen_generate {
                         target: $target,
                         ir,
                         options: &options,
+                        type_mappings: &$crate::type_mapping::TypeMappingRegistry::new(),
                     },
                     out_dir,
                 )

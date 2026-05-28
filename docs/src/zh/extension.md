@@ -28,6 +28,8 @@ pub trait CodeGenerator: Send + Sync {
 
 语言相关配置应该放在 target options 和 generator 代码里。归一化 IR 只描述 schema 语义：package、table、field、type、key、index、union 和 validation metadata。
 
+项目自己的语言类型映射应该通过 codegen type mapping provider 实现，而不是写进 schema 字段。这样数据语义和目标语言表示保持分离，例如把 `struct<Vec3>` 映射到 `UnityEngine.Vector3`。
+
 ## 添加 Exporter
 
 Exporter 和 generator 是分离的。如果需要新的运行时数据包格式，就添加 data exporter。如果需要新的语言目标，就添加 code generator。

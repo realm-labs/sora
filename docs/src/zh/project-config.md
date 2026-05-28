@@ -9,6 +9,9 @@ includes = ["schema/items.toml"]
 [parsers]
 scripts = ["tools/parsers.lua"]
 
+[type_mappings]
+scripts = ["tools/type_mappings.lua"]
+
 [build]
 default_source_format = "xlsx"
 data_root = "data"
@@ -34,6 +37,8 @@ sora build --project project.toml
 `data_root` 和 `excel_templates` 的用途不同。`data_root` 是 export 和 build 读取的输入目录，里面放已经填写过行数据的文件。`excel_templates` 是生成 workbook 模板的输出目录，schema 变更后可以删除并重新生成。不要把 `excel_templates` 指向已经编辑过的数据目录，除非你明确想替换那些 workbook。
 
 `[parsers].scripts` 列出 CLI 读取该 project 时使用的自定义 Lua 单元格 parser 脚本。路径相对 project 文件所在目录。脚本 API 见[单元格 Parser](schema/parsers.md#自定义-lua-parser)。
+
+`[type_mappings].scripts` 列出用于自定义生成语言类型的 Lua 脚本。路径相对 project 文件所在目录。类型映射只影响 codegen：schema 仍然使用 `struct<Vec3>` 这类语言无关的 Sora 类型，映射脚本可以把这个命名类型映射到目标语言自己的类型。
 
 多语言通过 project root 的 `[localization]` 声明。它的 sources 独立于普通 `[[tables]]`；见[多语言](localization.md)。
 
@@ -61,6 +66,27 @@ lua_version = "5.4"
 ```
 
 这些选项由对应生成器消费。归一化 IR 保持语言无关。
+
+类型映射脚本返回带 `type_mappings` 的 table。每条映射对应一个目标语言和一个命名 schema 类型：
+
+```lua
+return {
+  type_mappings = {
+    {
+      target = "csharp",
+      schema_type = "Vec3",
+      type_name = "Vector3",
+      decode = "GameMappings.ToVector3({value})",
+      value_decode = "GameMappings.ToVector3({value})",
+      imports = { "UnityEngine" },
+    },
+  },
+}
+```
+
+`decode` 包裹默认的 binary runtime decode 表达式，`value_decode` 包裹 JSON/CBOR/protobuf 风格的 value decode 表达式。`{value}` 会替换成生成器默认生成的表达式。
+
+`imports` 是目标语言相关的，只由需要它的语言生成器输出。C#、Java、Kotlin、Scala 期望不带关键字的 namespace/path；Go 期望类似 `"example.com/game/vector"` 的 import spec；Python、TypeScript、JavaScript、Dart、Godot 期望完整 import/preload 行。
 
 `runtime_format` 可以是 `sora`、`json`、`cbor` 或 `sora-protobuf`，但不是每个 target 都支持所有 runtime format。支持矩阵见[运行时格式](codegen/runtime-formats.md)。
 

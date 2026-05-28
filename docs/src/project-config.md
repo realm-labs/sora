@@ -9,6 +9,9 @@ includes = ["schema/items.toml"]
 [parsers]
 scripts = ["tools/parsers.lua"]
 
+[type_mappings]
+scripts = ["tools/type_mappings.lua"]
+
 [build]
 default_source_format = "xlsx"
 data_root = "data"
@@ -34,6 +37,8 @@ sora build --project project.toml
 `data_root` and `excel_templates` serve different purposes. `data_root` is the input directory used by export and build, so it contains edited table rows. `excel_templates` is an output directory for generated workbook templates, so it can be deleted and regenerated after schema changes. Do not point `excel_templates` at your edited data directory unless replacing those workbooks is intentional.
 
 `[parsers].scripts` lists custom Lua cell parser scripts used by CLI commands that read the project. Paths are relative to the project file. See [Cell Parsers](schema/parsers.md#custom-lua-parsers) for the script API.
+
+`[type_mappings].scripts` lists Lua scripts that customize generated language types. Paths are relative to the project file. Type mappings are codegen-only: the schema still uses language-neutral Sora types such as `struct<Vec3>`, while the mapping script can map that named type to a target-specific type.
 
 Localization is declared at the project root with `[localization]`. Its sources are independent from normal `[[tables]]`; see [Localization](localization.md).
 
@@ -61,6 +66,27 @@ lua_version = "5.4"
 ```
 
 These options are consumed by the selected generator. The normalized IR stays language-neutral.
+
+Type mapping scripts return a table with `type_mappings`. Each mapping targets one language and one named schema type:
+
+```lua
+return {
+  type_mappings = {
+    {
+      target = "csharp",
+      schema_type = "Vec3",
+      type_name = "Vector3",
+      decode = "GameMappings.ToVector3({value})",
+      value_decode = "GameMappings.ToVector3({value})",
+      imports = { "UnityEngine" },
+    },
+  },
+}
+```
+
+`decode` wraps the normal binary runtime decode expression, and `value_decode` wraps JSON/CBOR/protobuf-style value decode. The `{value}` placeholder is replaced with the generated default expression.
+
+`imports` is target-specific and is only emitted by language generators that need it. C#, Java, Kotlin, and Scala expect an import namespace/path without the leading keyword. Go expects an import spec such as `"example.com/game/vector"`. Python, TypeScript, JavaScript, Dart, and Godot expect a complete import/preload line.
 
 `runtime_format` can be `sora`, `json`, `cbor`, or `sora-protobuf`, but not every target supports every runtime format. See [Runtime Formats](codegen/runtime-formats.md) for the support matrix.
 

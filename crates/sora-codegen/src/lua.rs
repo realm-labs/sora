@@ -14,6 +14,7 @@ use crate::{
     },
     options::{LuaCodegenOptions, LuaEnumRepr, LuaVersion},
     render::{ensure_dir, render_template, write_file},
+    type_mapping::{TypeMapping, TypeMappingContext, TypeMappingRegistry},
 };
 
 pub struct LuaCodeGenerator;
@@ -32,7 +33,8 @@ impl CodeGenerator for LuaCodeGenerator {
             codegen_options.lua_version,
             codegen_options.enum_repr,
         );
-        let model = LuaModel::from_base_model(ir, build_base_model(ir)?, &options);
+        let mapper = LuaTypeMapper::new(context.target, ir, context.type_mappings);
+        let model = LuaModel::from_base_model(ir, build_base_model(ir)?, &options, &mapper);
 
         for item in &model.enums {
             let rendered = render_template(
@@ -190,7 +192,12 @@ struct LuaField {
 }
 
 impl LuaModel {
-    fn from_base_model(ir: &ConfigIr, model: BaseModel, options: &LuaOptionsView) -> Self {
+    fn from_base_model(
+        ir: &ConfigIr,
+        model: BaseModel,
+        options: &LuaOptionsView,
+        mapper: &LuaTypeMapper<'_>,
+    ) -> Self {
         let enums = model
             .enums
             .into_iter()
@@ -202,7 +209,7 @@ impl LuaModel {
         let tables = model
             .tables
             .into_iter()
-            .map(|item| lua_table(ir, item, options))
+            .map(|item| lua_table(ir, item, options, mapper))
             .collect::<Vec<_>>();
         let records = model
             .records
@@ -212,13 +219,13 @@ impl LuaModel {
                     .iter()
                     .find(|table| table.row_type == item.pascal_name)
                     .cloned();
-                lua_record(ir, item, options, table)
+                lua_record(ir, item, options, table, mapper)
             })
             .collect();
         let unions = model
             .unions
             .into_iter()
-            .map(|item| lua_union(ir, item, options))
+            .map(|item| lua_union(ir, item, options, mapper))
             .collect();
 
         Self {
@@ -243,7 +250,12 @@ impl LuaModel {
     }
 }
 
-fn lua_union(ir: &ConfigIr, union: BaseUnion, options: &LuaOptionsView) -> LuaUnion {
+fn lua_union(
+    ir: &ConfigIr,
+    union: BaseUnion,
+    options: &LuaOptionsView,
+    mapper: &LuaTypeMapper<'_>,
+) -> LuaUnion {
     LuaUnion {
         pascal_name: union.pascal_name,
         snake_name: union.snake_name,
@@ -251,7 +263,7 @@ fn lua_union(ir: &ConfigIr, union: BaseUnion, options: &LuaOptionsView) -> LuaUn
         variants: union
             .variants
             .into_iter()
-            .map(|variant| lua_variant(ir, variant, options))
+            .map(|variant| lua_variant(ir, variant, options, mapper))
             .collect(),
         imports: union.imports.into_iter().map(lua_import).collect(),
     }
@@ -261,11 +273,12 @@ fn lua_variant(
     ir: &ConfigIr,
     variant: BaseUnionVariant,
     options: &LuaOptionsView,
+    mapper: &LuaTypeMapper<'_>,
 ) -> LuaUnionVariant {
     let fields = variant
         .fields
         .into_iter()
-        .map(|field| lua_field(ir, field, options))
+        .map(|field| lua_field(ir, field, options, mapper))
         .collect::<Vec<_>>();
     let has_text_keys = fields
         .iter()
@@ -282,6 +295,7 @@ fn lua_record(
     record: BaseRecord,
     options: &LuaOptionsView,
     table: Option<LuaTable>,
+    mapper: &LuaTypeMapper<'_>,
 ) -> LuaRecord {
     LuaRecord {
         pascal_name: record.pascal_name,
@@ -290,18 +304,23 @@ fn lua_record(
         fields: record
             .fields
             .into_iter()
-            .map(|field| lua_field(ir, field, options))
+            .map(|field| lua_field(ir, field, options, mapper))
             .collect(),
         table,
     }
 }
 
-fn lua_table(ir: &ConfigIr, table: BaseTable, options: &LuaOptionsView) -> LuaTable {
+fn lua_table(
+    ir: &ConfigIr,
+    table: BaseTable,
+    options: &LuaOptionsView,
+    mapper: &LuaTypeMapper<'_>,
+) -> LuaTable {
     let row_type = table.pascal_name.clone();
     let key_type = table
         .key_field
         .as_ref()
-        .map(|field| lua_type_name(ir, &field.ty, options));
+        .map(|field| mapper.type_name(&field.ty, options));
     let key_field_name = table
         .key_field
         .as_ref()
@@ -319,34 +338,48 @@ fn lua_table(ir: &ConfigIr, table: BaseTable, options: &LuaOptionsView) -> LuaTa
         unique_indexes: table
             .unique_indexes
             .into_iter()
-            .map(|index| lua_index(ir, index, options))
+            .map(|index| lua_index(ir, index, options, mapper))
             .collect(),
         non_unique_indexes: table
             .non_unique_indexes
             .into_iter()
-            .map(|index| lua_index(ir, index, options))
+            .map(|index| lua_index(ir, index, options, mapper))
             .collect(),
     }
 }
 
-fn lua_index(ir: &ConfigIr, index: BaseIndex, options: &LuaOptionsView) -> LuaIndex {
+fn lua_index(
+    _ir: &ConfigIr,
+    index: BaseIndex,
+    options: &LuaOptionsView,
+    mapper: &LuaTypeMapper<'_>,
+) -> LuaIndex {
     LuaIndex {
         name: index.snake_name,
         field_name: index.field.camel_name.clone(),
         param_camel_name: index.field.camel_name,
-        key_type: lua_type_name(ir, &index.field.ty, options),
+        key_type: mapper.type_name(&index.field.ty, options),
     }
 }
 
-fn lua_field(ir: &ConfigIr, field: BaseField, options: &LuaOptionsView) -> LuaField {
-    let collect_text_keys =
-        lua_collect_text_keys(ir, &field.ty, &format!("value.{}", field.camel_name));
+fn lua_field(
+    ir: &ConfigIr,
+    field: BaseField,
+    options: &LuaOptionsView,
+    mapper: &LuaTypeMapper<'_>,
+) -> LuaField {
+    let collect_text_keys = lua_collect_text_keys(
+        ir,
+        &field.ty,
+        &format!("value.{}", field.camel_name),
+        mapper,
+    );
     LuaField {
         raw_name: field.raw_name,
         name: field.camel_name,
-        type_name: lua_type_name(ir, &field.ty, options),
-        decode: lua_decode_expr(ir, &field.ty, options),
-        value_decode: lua_value_decode_expr(ir, &field.ty, "__VALUE__"),
+        type_name: mapper.type_name(&field.ty, options),
+        decode: lua_decode_expr(ir, &field.ty, mapper),
+        value_decode: lua_value_decode_expr(ir, &field.ty, "__VALUE__", mapper),
         collect_text_keys,
         comment: field.comment,
     }
@@ -359,33 +392,73 @@ fn lua_import(import: BaseImport) -> LuaImport {
     }
 }
 
-fn lua_type_name(ir: &ConfigIr, ty: &TypeIr, options: &LuaOptionsView) -> String {
-    match ty {
-        TypeIr::Bool => "boolean".to_owned(),
-        TypeIr::I8 | TypeIr::U8 | TypeIr::I16 | TypeIr::U16 | TypeIr::I32 | TypeIr::U32 => {
-            "integer".to_owned()
+struct LuaTypeMapper<'a> {
+    target: &'a str,
+    ir: &'a ConfigIr,
+    mappings: &'a TypeMappingRegistry,
+}
+
+impl<'a> LuaTypeMapper<'a> {
+    fn new(target: &'a str, ir: &'a ConfigIr, mappings: &'a TypeMappingRegistry) -> Self {
+        Self {
+            target,
+            ir,
+            mappings,
         }
-        TypeIr::I64 | TypeIr::Duration | TypeIr::DateTime => options.i64_type_name.to_owned(),
-        TypeIr::F32 | TypeIr::F64 => "number".to_owned(),
-        TypeIr::String => "string".to_owned(),
-        TypeIr::Text => "TextKey".to_owned(),
-        TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => name.clone(),
-        TypeIr::List(element) | TypeIr::Set(element) | TypeIr::Array { element, .. } => {
-            format!("{}[]", lua_type_name(ir, element, options))
+    }
+
+    fn type_name(&self, ty: &TypeIr, options: &LuaOptionsView) -> String {
+        if let Some(mapping) = self.mapping(ty) {
+            return mapping.type_name;
         }
-        TypeIr::Map { key, value } => format!(
-            "{{[{}]: {}}}",
-            lua_type_name(ir, key, options),
-            lua_type_name(ir, value, options)
-        ),
-        TypeIr::Ref { table, field } => ref_target_type(ir, table, field)
-            .map(|ty| lua_type_name(ir, ty, options))
-            .unwrap_or_else(|| "integer".to_owned()),
-        TypeIr::Optional(element) => format!("{}?", lua_type_name(ir, element, options)),
+
+        match ty {
+            TypeIr::Bool => "boolean".to_owned(),
+            TypeIr::I8 | TypeIr::U8 | TypeIr::I16 | TypeIr::U16 | TypeIr::I32 | TypeIr::U32 => {
+                "integer".to_owned()
+            }
+            TypeIr::I64 | TypeIr::Duration | TypeIr::DateTime => options.i64_type_name.to_owned(),
+            TypeIr::F32 | TypeIr::F64 => "number".to_owned(),
+            TypeIr::String => "string".to_owned(),
+            TypeIr::Text => "TextKey".to_owned(),
+            TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => name.clone(),
+            TypeIr::List(element) | TypeIr::Set(element) | TypeIr::Array { element, .. } => {
+                format!("{}[]", self.type_name(element, options))
+            }
+            TypeIr::Map { key, value } => format!(
+                "{{[{}]: {}}}",
+                self.type_name(key, options),
+                self.type_name(value, options)
+            ),
+            TypeIr::Ref { table, field } => ref_target_type(self.ir, table, field)
+                .map(|ty| self.type_name(ty, options))
+                .unwrap_or_else(|| "integer".to_owned()),
+            TypeIr::Optional(element) => format!("{}?", self.type_name(element, options)),
+        }
+    }
+
+    fn mapping(&self, ty: &TypeIr) -> Option<TypeMapping> {
+        self.mappings.map_type(TypeMappingContext {
+            target: self.target,
+            ir: self.ir,
+            ty,
+        })
+    }
+
+    fn wrap_decode(&self, ty: &TypeIr, base_expr: String) -> String {
+        self.mapping(ty)
+            .map(|mapping| mapping.wrap_decode(&base_expr))
+            .unwrap_or(base_expr)
+    }
+
+    fn wrap_value_decode(&self, ty: &TypeIr, base_expr: String) -> String {
+        self.mapping(ty)
+            .map(|mapping| mapping.wrap_value_decode(&base_expr))
+            .unwrap_or(base_expr)
     }
 }
 
-fn lua_decode_expr(ir: &ConfigIr, ty: &TypeIr, _options: &LuaOptionsView) -> String {
+fn lua_decode_expr(ir: &ConfigIr, ty: &TypeIr, mapper: &LuaTypeMapper<'_>) -> String {
     match ty {
         TypeIr::Bool => "reader:read_bool()".to_owned(),
         TypeIr::I8 | TypeIr::I16 | TypeIr::I32 => "reader:read_i32()".to_owned(),
@@ -396,32 +469,37 @@ fn lua_decode_expr(ir: &ConfigIr, ty: &TypeIr, _options: &LuaOptionsView) -> Str
         TypeIr::String => "reader:read_string()".to_owned(),
         TypeIr::Text => "Runtime.new_text_key(reader:read_string())".to_owned(),
         TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => {
-            format!("{name}.decode(reader)")
+            mapper.wrap_decode(ty, format!("{name}.decode(reader)"))
         }
         TypeIr::List(element) | TypeIr::Set(element) | TypeIr::Array { element, .. } => {
             format!(
                 "reader:read_list(function() return {} end)",
-                lua_decode_expr(ir, element, _options)
+                lua_decode_expr(ir, element, mapper)
             )
         }
         TypeIr::Map { key, value } => format!(
             "reader:read_map(function() return {} end, function() return {} end)",
-            lua_decode_expr(ir, key, _options),
-            lua_decode_expr(ir, value, _options)
+            lua_decode_expr(ir, key, mapper),
+            lua_decode_expr(ir, value, mapper)
         ),
         TypeIr::Ref { table, field } => ref_target_type(ir, table, field)
-            .map(|ty| lua_decode_expr(ir, ty, _options))
+            .map(|ty| lua_decode_expr(ir, ty, mapper))
             .unwrap_or_else(|| "reader:read_i32()".to_owned()),
         TypeIr::Optional(element) => {
             format!(
                 "reader:read_optional(function() return {} end)",
-                lua_decode_expr(ir, element, _options)
+                lua_decode_expr(ir, element, mapper)
             )
         }
     }
 }
 
-fn lua_value_decode_expr(ir: &ConfigIr, ty: &TypeIr, value: &str) -> String {
+fn lua_value_decode_expr(
+    ir: &ConfigIr,
+    ty: &TypeIr,
+    value: &str,
+    mapper: &LuaTypeMapper<'_>,
+) -> String {
     match ty {
         TypeIr::Bool => format!("Runtime.expect_boolean({value})"),
         TypeIr::I8
@@ -437,12 +515,12 @@ fn lua_value_decode_expr(ir: &ConfigIr, ty: &TypeIr, value: &str) -> String {
         TypeIr::String => format!("Runtime.expect_string({value})"),
         TypeIr::Text => format!("Runtime.new_text_key(Runtime.expect_string({value}))"),
         TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => {
-            format!("{name}.decode_value({value})")
+            mapper.wrap_value_decode(ty, format!("{name}.decode_value({value})"))
         }
         TypeIr::List(element) | TypeIr::Set(element) | TypeIr::Array { element, .. } => {
             format!(
                 "Runtime.decode_value_list({value}, function(item) return {} end)",
-                lua_value_decode_expr(ir, element, "item")
+                lua_value_decode_expr(ir, element, "item", mapper)
             )
         }
         TypeIr::Map {
@@ -450,26 +528,35 @@ fn lua_value_decode_expr(ir: &ConfigIr, ty: &TypeIr, value: &str) -> String {
             value: element,
         } => format!(
             "Runtime.decode_value_map({value}, function(item) return {} end, function(item) return {} end)",
-            lua_value_decode_expr(ir, key, "item"),
-            lua_value_decode_expr(ir, element, "item")
+            lua_value_decode_expr(ir, key, "item", mapper),
+            lua_value_decode_expr(ir, element, "item", mapper)
         ),
         TypeIr::Ref { table, field } => ref_target_type(ir, table, field)
-            .map(|ty| lua_value_decode_expr(ir, ty, value))
+            .map(|ty| lua_value_decode_expr(ir, ty, value, mapper))
             .unwrap_or_else(|| format!("Runtime.expect_integer({value})")),
         TypeIr::Optional(element) => {
             format!(
                 "{value} == nil and nil or {}",
-                lua_value_decode_expr(ir, element, value)
+                lua_value_decode_expr(ir, element, value, mapper)
             )
         }
     }
 }
 
-fn lua_collect_text_keys(ir: &ConfigIr, ty: &TypeIr, value: &str) -> String {
+fn lua_collect_text_keys(
+    ir: &ConfigIr,
+    ty: &TypeIr,
+    value: &str,
+    mapper: &LuaTypeMapper<'_>,
+) -> String {
+    if mapper.mapping(ty).is_some() {
+        return String::new();
+    }
+
     match ty {
         TypeIr::Text => format!("out[#out + 1] = {value}"),
         TypeIr::Optional(element) => {
-            let inner = lua_collect_text_keys(ir, element, "__sora_value");
+            let inner = lua_collect_text_keys(ir, element, "__sora_value", mapper);
             if inner.is_empty() {
                 String::new()
             } else {
@@ -477,7 +564,7 @@ fn lua_collect_text_keys(ir: &ConfigIr, ty: &TypeIr, value: &str) -> String {
             }
         }
         TypeIr::List(element) | TypeIr::Set(element) | TypeIr::Array { element, .. } => {
-            let inner = lua_collect_text_keys(ir, element, "__sora_value");
+            let inner = lua_collect_text_keys(ir, element, "__sora_value", mapper);
             if inner.is_empty() {
                 String::new()
             } else {
@@ -488,8 +575,8 @@ fn lua_collect_text_keys(ir: &ConfigIr, ty: &TypeIr, value: &str) -> String {
             key,
             value: element,
         } => {
-            let key_inner = lua_collect_text_keys(ir, key, "__sora_key");
-            let value_inner = lua_collect_text_keys(ir, element, "__sora_value");
+            let key_inner = lua_collect_text_keys(ir, key, "__sora_key", mapper);
+            let value_inner = lua_collect_text_keys(ir, element, "__sora_value", mapper);
             if key_inner.is_empty() && value_inner.is_empty() {
                 String::new()
             } else {
@@ -502,7 +589,7 @@ fn lua_collect_text_keys(ir: &ConfigIr, ty: &TypeIr, value: &str) -> String {
             format!("{name}.collect_text_keys({value}, out)")
         }
         TypeIr::Ref { table, field } => ref_target_type(ir, table, field)
-            .map(|ty| lua_collect_text_keys(ir, ty, value))
+            .map(|ty| lua_collect_text_keys(ir, ty, value, mapper))
             .unwrap_or_default(),
         TypeIr::Bool
         | TypeIr::I8

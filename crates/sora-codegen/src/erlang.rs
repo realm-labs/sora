@@ -14,6 +14,7 @@ use crate::{
     },
     options::{ErlangCodegenOptions, ErlangEnumRepr},
     render::{ensure_dir, render_template, write_file},
+    type_mapping::{TypeMapping, TypeMappingContext, TypeMappingRegistry},
 };
 
 pub struct ErlangCodeGenerator;
@@ -27,7 +28,8 @@ impl CodeGenerator for ErlangCodeGenerator {
         let runtime_format = runtime_format_name(codegen_options.runtime_format);
 
         let options = ErlangOptionsView::new(codegen_options.enum_repr);
-        let model = ErlangModel::from_base_model(ir, build_base_model(ir)?);
+        let mapper = ErlangTypeMapper::new(context.target, ir, context.type_mappings);
+        let model = ErlangModel::from_base_model(ir, build_base_model(ir)?, &mapper);
 
         for item in &model.enums {
             let rendered = render_template(
@@ -164,7 +166,7 @@ struct ErlangField {
 }
 
 impl ErlangModel {
-    fn from_base_model(ir: &ConfigIr, model: BaseModel) -> Self {
+    fn from_base_model(ir: &ConfigIr, model: BaseModel, mapper: &ErlangTypeMapper<'_>) -> Self {
         let enums = model
             .enums
             .into_iter()
@@ -178,7 +180,7 @@ impl ErlangModel {
         let tables = model
             .tables
             .into_iter()
-            .map(|item| erlang_table(ir, item))
+            .map(|item| erlang_table(ir, item, mapper))
             .collect::<Vec<_>>();
         let records = model
             .records
@@ -188,13 +190,13 @@ impl ErlangModel {
                     .iter()
                     .find(|table| table.snake_name == item.snake_name)
                     .cloned();
-                erlang_record(ir, item, table)
+                erlang_record(ir, item, table, mapper)
             })
             .collect();
         let unions = model
             .unions
             .into_iter()
-            .map(|item| erlang_union(ir, item))
+            .map(|item| erlang_union(ir, item, mapper))
             .collect();
 
         Self {
@@ -208,23 +210,27 @@ impl ErlangModel {
     }
 }
 
-fn erlang_union(ir: &ConfigIr, union: BaseUnion) -> ErlangUnion {
+fn erlang_union(ir: &ConfigIr, union: BaseUnion, mapper: &ErlangTypeMapper<'_>) -> ErlangUnion {
     ErlangUnion {
         snake_name: union.snake_name,
         tag: union.tag,
         variants: union
             .variants
             .into_iter()
-            .map(|variant| erlang_variant(ir, variant))
+            .map(|variant| erlang_variant(ir, variant, mapper))
             .collect(),
     }
 }
 
-fn erlang_variant(ir: &ConfigIr, variant: BaseUnionVariant) -> ErlangUnionVariant {
+fn erlang_variant(
+    ir: &ConfigIr,
+    variant: BaseUnionVariant,
+    mapper: &ErlangTypeMapper<'_>,
+) -> ErlangUnionVariant {
     let fields = variant
         .fields
         .into_iter()
-        .map(|field| erlang_field(ir, field))
+        .map(|field| erlang_field(ir, field, mapper))
         .collect::<Vec<_>>();
     ErlangUnionVariant {
         raw_name: variant.name,
@@ -234,11 +240,16 @@ fn erlang_variant(ir: &ConfigIr, variant: BaseUnionVariant) -> ErlangUnionVarian
     }
 }
 
-fn erlang_record(ir: &ConfigIr, record: BaseRecord, table: Option<ErlangTable>) -> ErlangRecord {
+fn erlang_record(
+    ir: &ConfigIr,
+    record: BaseRecord,
+    table: Option<ErlangTable>,
+    mapper: &ErlangTypeMapper<'_>,
+) -> ErlangRecord {
     let fields = record
         .fields
         .into_iter()
-        .map(|field| erlang_field(ir, field))
+        .map(|field| erlang_field(ir, field, mapper))
         .collect::<Vec<_>>();
     ErlangRecord {
         snake_name: record.snake_name,
@@ -248,12 +259,12 @@ fn erlang_record(ir: &ConfigIr, record: BaseRecord, table: Option<ErlangTable>) 
     }
 }
 
-fn erlang_table(ir: &ConfigIr, table: BaseTable) -> ErlangTable {
+fn erlang_table(ir: &ConfigIr, table: BaseTable, mapper: &ErlangTypeMapper<'_>) -> ErlangTable {
     let row_type = format!("{}:t()", table.snake_name);
     let key_type = table
         .key_field
         .as_ref()
-        .map(|field| erlang_type_name(ir, &field.ty));
+        .map(|field| mapper.type_name(&field.ty));
     let container_type = erlang_container_type(table.mode, &row_type, key_type.as_deref());
     let key_field_name = table
         .key_field
@@ -273,34 +284,34 @@ fn erlang_table(ir: &ConfigIr, table: BaseTable) -> ErlangTable {
         unique_indexes: table
             .unique_indexes
             .into_iter()
-            .map(|index| erlang_index(ir, index))
+            .map(|index| erlang_index(ir, index, mapper))
             .collect(),
         non_unique_indexes: table
             .non_unique_indexes
             .into_iter()
-            .map(|index| erlang_index(ir, index))
+            .map(|index| erlang_index(ir, index, mapper))
             .collect(),
     }
 }
 
-fn erlang_index(ir: &ConfigIr, index: BaseIndex) -> ErlangIndex {
+fn erlang_index(_ir: &ConfigIr, index: BaseIndex, mapper: &ErlangTypeMapper<'_>) -> ErlangIndex {
     ErlangIndex {
         name: index.snake_name,
         pascal_name: index.pascal_name,
         field_name: index.field.snake_name.clone(),
-        param_type: erlang_type_name(ir, &index.field.ty),
+        param_type: mapper.type_name(&index.field.ty),
         param_var_name: index.field.pascal_name,
     }
 }
 
-fn erlang_field(ir: &ConfigIr, field: BaseField) -> ErlangField {
+fn erlang_field(ir: &ConfigIr, field: BaseField, mapper: &ErlangTypeMapper<'_>) -> ErlangField {
     ErlangField {
         raw_name: field.raw_name,
         name: field.snake_name,
         var_name: field.pascal_name,
-        type_name: erlang_type_name(ir, &field.ty),
-        decode: erlang_decode_fun(ir, &field.ty),
-        value_decode: erlang_value_decode_expr(ir, &field.ty, "__VALUE__"),
+        type_name: mapper.type_name(&field.ty),
+        decode: erlang_decode_fun(ir, &field.ty, mapper),
+        value_decode: erlang_value_decode_expr(ir, &field.ty, "__VALUE__", mapper),
     }
 }
 
@@ -315,40 +326,78 @@ fn erlang_container_type(mode: TableModeIr, row_type: &str, key_type: Option<&st
     }
 }
 
-fn erlang_type_name(ir: &ConfigIr, ty: &TypeIr) -> String {
-    match ty {
-        TypeIr::Bool => "boolean()".to_owned(),
-        TypeIr::I8
-        | TypeIr::U8
-        | TypeIr::I16
-        | TypeIr::U16
-        | TypeIr::I32
-        | TypeIr::U32
-        | TypeIr::I64
-        | TypeIr::Duration
-        | TypeIr::DateTime => "integer()".to_owned(),
-        TypeIr::F32 | TypeIr::F64 => "float()".to_owned(),
-        TypeIr::String => "binary()".to_owned(),
-        TypeIr::Text => "sora_runtime:text_key()".to_owned(),
-        TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => {
-            format!("{}:t()", name.to_snake_case())
+struct ErlangTypeMapper<'a> {
+    target: &'a str,
+    ir: &'a ConfigIr,
+    mappings: &'a TypeMappingRegistry,
+}
+
+impl<'a> ErlangTypeMapper<'a> {
+    fn new(target: &'a str, ir: &'a ConfigIr, mappings: &'a TypeMappingRegistry) -> Self {
+        Self {
+            target,
+            ir,
+            mappings,
         }
-        TypeIr::List(element) | TypeIr::Set(element) | TypeIr::Array { element, .. } => {
-            format!("[{}]", erlang_type_name(ir, element))
+    }
+
+    fn type_name(&self, ty: &TypeIr) -> String {
+        if let Some(mapping) = self.mapping(ty) {
+            return mapping.type_name;
         }
-        TypeIr::Map { key, value } => format!(
-            "#{{{} => {}}}",
-            erlang_type_name(ir, key),
-            erlang_type_name(ir, value)
-        ),
-        TypeIr::Ref { table, field } => ref_type(ir, table, field)
-            .map(|ty| erlang_type_name(ir, ty))
-            .unwrap_or_else(|| "integer()".to_owned()),
-        TypeIr::Optional(element) => format!("{} | undefined", erlang_type_name(ir, element)),
+
+        match ty {
+            TypeIr::Bool => "boolean()".to_owned(),
+            TypeIr::I8
+            | TypeIr::U8
+            | TypeIr::I16
+            | TypeIr::U16
+            | TypeIr::I32
+            | TypeIr::U32
+            | TypeIr::I64
+            | TypeIr::Duration
+            | TypeIr::DateTime => "integer()".to_owned(),
+            TypeIr::F32 | TypeIr::F64 => "float()".to_owned(),
+            TypeIr::String => "binary()".to_owned(),
+            TypeIr::Text => "sora_runtime:text_key()".to_owned(),
+            TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => {
+                format!("{}:t()", name.to_snake_case())
+            }
+            TypeIr::List(element) | TypeIr::Set(element) | TypeIr::Array { element, .. } => {
+                format!("[{}]", self.type_name(element))
+            }
+            TypeIr::Map { key, value } => {
+                format!("#{{{} => {}}}", self.type_name(key), self.type_name(value))
+            }
+            TypeIr::Ref { table, field } => ref_type(self.ir, table, field)
+                .map(|ty| self.type_name(ty))
+                .unwrap_or_else(|| "integer()".to_owned()),
+            TypeIr::Optional(element) => format!("{} | undefined", self.type_name(element)),
+        }
+    }
+
+    fn mapping(&self, ty: &TypeIr) -> Option<TypeMapping> {
+        self.mappings.map_type(TypeMappingContext {
+            target: self.target,
+            ir: self.ir,
+            ty,
+        })
+    }
+
+    fn wrap_decode(&self, ty: &TypeIr, base_expr: String) -> String {
+        self.mapping(ty)
+            .map(|mapping| mapping.wrap_decode(&base_expr))
+            .unwrap_or(base_expr)
+    }
+
+    fn wrap_value_decode(&self, ty: &TypeIr, base_expr: String) -> String {
+        self.mapping(ty)
+            .map(|mapping| mapping.wrap_value_decode(&base_expr))
+            .unwrap_or(base_expr)
     }
 }
 
-fn erlang_decode_fun(ir: &ConfigIr, ty: &TypeIr) -> String {
+fn erlang_decode_fun(ir: &ConfigIr, ty: &TypeIr, mapper: &ErlangTypeMapper<'_>) -> String {
     match ty {
         TypeIr::Bool => "fun sora_runtime:read_bool/1".to_owned(),
         TypeIr::I8 | TypeIr::I16 | TypeIr::I32 => "fun sora_runtime:read_i32/1".to_owned(),
@@ -361,32 +410,37 @@ fn erlang_decode_fun(ir: &ConfigIr, ty: &TypeIr) -> String {
         TypeIr::String => "fun sora_runtime:read_string/1".to_owned(),
         TypeIr::Text => "fun sora_runtime:read_text_key/1".to_owned(),
         TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => {
-            format!("fun {}:decode/1", name.to_snake_case())
+            mapper.wrap_decode(ty, format!("fun {}:decode/1", name.to_snake_case()))
         }
         TypeIr::List(element) | TypeIr::Set(element) | TypeIr::Array { element, .. } => {
             format!(
                 "fun(Reader) -> sora_runtime:read_list({}, Reader) end",
-                erlang_decode_fun(ir, element)
+                erlang_decode_fun(ir, element, mapper)
             )
         }
         TypeIr::Map { key, value } => format!(
             "fun(Reader) -> sora_runtime:read_map({}, {}, Reader) end",
-            erlang_decode_fun(ir, key),
-            erlang_decode_fun(ir, value)
+            erlang_decode_fun(ir, key, mapper),
+            erlang_decode_fun(ir, value, mapper)
         ),
         TypeIr::Ref { table, field } => ref_type(ir, table, field)
-            .map(|ty| erlang_decode_fun(ir, ty))
+            .map(|ty| erlang_decode_fun(ir, ty, mapper))
             .unwrap_or_else(|| "fun sora_runtime:read_i32/1".to_owned()),
         TypeIr::Optional(element) => {
             format!(
                 "fun(Reader) -> sora_runtime:read_optional({}, Reader) end",
-                erlang_decode_fun(ir, element)
+                erlang_decode_fun(ir, element, mapper)
             )
         }
     }
 }
 
-fn erlang_value_decode_expr(ir: &ConfigIr, ty: &TypeIr, value: &str) -> String {
+fn erlang_value_decode_expr(
+    ir: &ConfigIr,
+    ty: &TypeIr,
+    value: &str,
+    mapper: &ErlangTypeMapper<'_>,
+) -> String {
     match ty {
         TypeIr::Bool => format!("sora_runtime:expect_boolean({value})"),
         TypeIr::I8
@@ -401,13 +455,15 @@ fn erlang_value_decode_expr(ir: &ConfigIr, ty: &TypeIr, value: &str) -> String {
         TypeIr::F32 | TypeIr::F64 => format!("sora_runtime:expect_float({value})"),
         TypeIr::String => format!("sora_runtime:expect_binary({value})"),
         TypeIr::Text => format!("sora_runtime:expect_text_key({value})"),
-        TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => {
-            format!("{}:decode_value({value})", name.to_snake_case())
-        }
+        TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => mapper
+            .wrap_value_decode(
+                ty,
+                format!("{}:decode_value({value})", name.to_snake_case()),
+            ),
         TypeIr::List(element) | TypeIr::Set(element) | TypeIr::Array { element, .. } => {
             format!(
                 "sora_runtime:decode_value_list(fun(Item) -> {} end, {value})",
-                erlang_value_decode_expr(ir, element, "Item")
+                erlang_value_decode_expr(ir, element, "Item", mapper)
             )
         }
         TypeIr::Map {
@@ -415,16 +471,16 @@ fn erlang_value_decode_expr(ir: &ConfigIr, ty: &TypeIr, value: &str) -> String {
             value: element,
         } => format!(
             "sora_runtime:decode_value_map(fun(Item) -> {} end, fun(Item) -> {} end, {value})",
-            erlang_value_decode_expr(ir, key, "Item"),
-            erlang_value_decode_expr(ir, element, "Item")
+            erlang_value_decode_expr(ir, key, "Item", mapper),
+            erlang_value_decode_expr(ir, element, "Item", mapper)
         ),
         TypeIr::Ref { table, field } => ref_type(ir, table, field)
-            .map(|ty| erlang_value_decode_expr(ir, ty, value))
+            .map(|ty| erlang_value_decode_expr(ir, ty, value, mapper))
             .unwrap_or_else(|| format!("sora_runtime:expect_integer({value})")),
         TypeIr::Optional(element) => {
             format!(
                 "(fun(OptionalValue) -> case OptionalValue of undefined -> undefined; _ -> {} end end)({value})",
-                erlang_value_decode_expr(ir, element, "OptionalValue")
+                erlang_value_decode_expr(ir, element, "OptionalValue", mapper)
             )
         }
     }

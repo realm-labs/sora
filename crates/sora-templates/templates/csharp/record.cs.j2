@@ -4,6 +4,9 @@
 
 using System;
 using System.Collections.Generic;
+{%- for import in record.imports %}
+using {{ import }};
+{%- endfor %}
 
 namespace {{ namespace }};
 

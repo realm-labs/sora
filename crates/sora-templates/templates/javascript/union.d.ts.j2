@@ -4,6 +4,9 @@ import type { SoraReader, SoraValue, TextKey } from "./sora_runtime{{ options.im
 {% for import in union.imports %}
 import type { {{ import.name }} } from "./{{ import.module }}{{ options.import_ext }}";
 {% endfor %}
+{%- for import in union.custom_imports %}
+{{ import }}
+{%- endfor %}
 
 {%- for variant in union.variants %}
 export interface {{ union.pascal_name }}{{ variant.name }} {

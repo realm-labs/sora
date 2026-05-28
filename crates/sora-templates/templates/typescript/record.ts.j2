@@ -16,6 +16,9 @@ import {
 import type { {{ import.name }} } from "./{{ import.module }}{{ options.import_ext }}";
 import { collect{{ import.name }}TextKeys, decode{{ import.name }}, decode{{ import.name }}Value } from "./{{ import.module }}{{ options.import_ext }}";
 {% endfor %}
+{%- for import in record.custom_imports %}
+{{ import }}
+{%- endfor %}
 
 export interface {{ record.pascal_name }} {
 {%- for field in record.fields %}

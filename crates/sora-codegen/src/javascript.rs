@@ -26,7 +26,12 @@ impl CodeGenerator for JavaScriptCodeGenerator {
             codegen_options.enum_repr,
             codegen_options.emit_dts,
         );
-        let model = EcmaScriptModel::from_base_model(ir, build_base_model(ir)?);
+        let model = EcmaScriptModel::from_base_model(
+            context.target,
+            ir,
+            build_base_model(ir)?,
+            context.type_mappings,
+        );
 
         for item in &model.enums {
             let rendered = render_template(

@@ -14,7 +14,7 @@ use crate::{
     },
     options::LanguageCodegenOptions,
     render::{ensure_dir, render_template, write_file},
-    types::go_type_name,
+    type_mapping::{TypeMapping, TypeMappingContext, TypeMappingRegistry},
 };
 
 pub struct GoCodeGenerator;
@@ -25,7 +25,8 @@ impl CodeGenerator for GoCodeGenerator {
         let ir = context.ir;
         let options = context.options::<LanguageCodegenOptions>()?;
         ensure_dir(out_dir)?;
-        let model = GoModel::from_base_model(ir, build_base_model(ir)?);
+        let mapper = GoTypeMapper::new(context.target, ir, context.type_mappings);
+        let model = GoModel::from_base_model(ir, build_base_model(ir)?, &mapper);
         let package = go_package_name(&model.package)?;
         let runtime_format = runtime_format_name(options.runtime_format);
 
@@ -101,6 +102,7 @@ struct GoUnion {
     tag: String,
     variants: Vec<GoUnionVariant>,
     has_time: bool,
+    imports: Vec<String>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -117,6 +119,7 @@ struct GoRecord {
     fields: Vec<GoField>,
     has_time: bool,
     table: Option<GoTable>,
+    imports: Vec<String>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -151,15 +154,16 @@ struct GoField {
     decode: String,
     value_decode: String,
     collect_text_keys: String,
+    imports: Vec<String>,
     comment: Option<String>,
 }
 
 impl GoModel {
-    fn from_base_model(ir: &ConfigIr, model: BaseModel) -> Self {
+    fn from_base_model(ir: &ConfigIr, model: BaseModel, mapper: &GoTypeMapper<'_>) -> Self {
         let tables = model
             .tables
             .into_iter()
-            .map(|table| go_table(ir, table))
+            .map(|table| go_table(ir, table, mapper))
             .collect::<Vec<_>>();
         Self {
             package: model.package,
@@ -176,7 +180,7 @@ impl GoModel {
             unions: model
                 .unions
                 .into_iter()
-                .map(|item| go_union(ir, item))
+                .map(|item| go_union(ir, item, mapper))
                 .collect(),
             records: model
                 .records
@@ -186,7 +190,7 @@ impl GoModel {
                         .iter()
                         .find(|table| table.row_type == item.pascal_name)
                         .cloned();
-                    go_record(ir, item, table)
+                    go_record(ir, item, table, mapper)
                 })
                 .collect(),
             has_unique_indexes: tables.iter().any(|table| !table.unique_indexes.is_empty()),
@@ -209,30 +213,36 @@ impl GoModel {
     }
 }
 
-fn go_union(ir: &ConfigIr, union: BaseUnion) -> GoUnion {
+fn go_union(ir: &ConfigIr, union: BaseUnion, mapper: &GoTypeMapper<'_>) -> GoUnion {
     let variants = union
         .variants
         .into_iter()
-        .map(|variant| go_variant(ir, variant))
+        .map(|variant| go_variant(ir, variant, mapper))
         .collect::<Vec<_>>();
     let has_time = variants
         .iter()
         .flat_map(|variant| variant.fields.iter())
         .any(|field| field.type_name.contains("time."));
+    let imports = collect_go_imports(variants.iter().flat_map(|variant| &variant.fields));
     GoUnion {
         pascal_name: union.pascal_name,
         snake_name: union.snake_name,
         tag: union.tag,
         variants,
         has_time,
+        imports,
     }
 }
 
-fn go_variant(ir: &ConfigIr, variant: BaseUnionVariant) -> GoUnionVariant {
+fn go_variant(
+    ir: &ConfigIr,
+    variant: BaseUnionVariant,
+    mapper: &GoTypeMapper<'_>,
+) -> GoUnionVariant {
     let fields = variant
         .fields
         .into_iter()
-        .map(|field| go_field(ir, field))
+        .map(|field| go_field(ir, field, mapper))
         .collect::<Vec<_>>();
     let has_text_keys = fields
         .iter()
@@ -244,28 +254,35 @@ fn go_variant(ir: &ConfigIr, variant: BaseUnionVariant) -> GoUnionVariant {
     }
 }
 
-fn go_record(ir: &ConfigIr, record: BaseRecord, table: Option<GoTable>) -> GoRecord {
+fn go_record(
+    ir: &ConfigIr,
+    record: BaseRecord,
+    table: Option<GoTable>,
+    mapper: &GoTypeMapper<'_>,
+) -> GoRecord {
     let fields = record
         .fields
         .into_iter()
-        .map(|field| go_field(ir, field))
+        .map(|field| go_field(ir, field, mapper))
         .collect::<Vec<_>>();
     let has_time = fields.iter().any(|field| field.type_name.contains("time."));
+    let imports = collect_go_imports(fields.iter());
     GoRecord {
         pascal_name: record.pascal_name,
         snake_name: record.snake_name,
         fields,
         has_time,
         table,
+        imports,
     }
 }
 
-fn go_table(ir: &ConfigIr, table: BaseTable) -> GoTable {
+fn go_table(ir: &ConfigIr, table: BaseTable, mapper: &GoTypeMapper<'_>) -> GoTable {
     let row_type = table.pascal_name.clone();
     let key_type = table
         .key_field
         .as_ref()
-        .map(|field| go_type_name(ir, &field.ty));
+        .map(|field| mapper.type_name(&field.ty));
     let container_type = go_container_type(table.mode, &row_type, key_type.as_deref());
     let key_field_name = table
         .key_field
@@ -285,39 +302,53 @@ fn go_table(ir: &ConfigIr, table: BaseTable) -> GoTable {
         unique_indexes: table
             .unique_indexes
             .into_iter()
-            .map(|index| go_index(ir, index))
+            .map(|index| go_index(ir, index, mapper))
             .collect(),
         non_unique_indexes: table
             .non_unique_indexes
             .into_iter()
-            .map(|index| go_index(ir, index))
+            .map(|index| go_index(ir, index, mapper))
             .collect(),
     }
 }
 
-fn go_index(ir: &ConfigIr, index: BaseIndex) -> GoIndex {
+fn go_index(_ir: &ConfigIr, index: BaseIndex, mapper: &GoTypeMapper<'_>) -> GoIndex {
     GoIndex {
         pascal_name: index.pascal_name,
         camel_name: index.name.to_lower_camel_case(),
         field_name: index.field.pascal_name.clone(),
         param_camel_name: index.field.camel_name,
-        key_type: go_type_name(ir, &index.field.ty),
+        key_type: mapper.type_name(&index.field.ty),
     }
 }
 
-fn go_field(ir: &ConfigIr, field: BaseField) -> GoField {
-    let value_decode = go_value_decode_expr(ir, &field.ty, "__VALUE__");
-    let collect_text_keys =
-        go_collect_text_keys(ir, &field.ty, &format!("value.{}", field.pascal_name));
+fn go_field(ir: &ConfigIr, field: BaseField, mapper: &GoTypeMapper<'_>) -> GoField {
+    let value_decode = go_value_decode_expr(ir, &field.ty, "__VALUE__", mapper);
+    let collect_text_keys = go_collect_text_keys(
+        ir,
+        &field.ty,
+        &format!("value.{}", field.pascal_name),
+        mapper,
+    );
     GoField {
         raw_name: field.raw_name,
         name: field.pascal_name,
-        type_name: go_type_name(ir, &field.ty),
-        decode: go_decode_expr(ir, &field.ty),
+        type_name: mapper.type_name(&field.ty),
+        decode: go_decode_expr(ir, &field.ty, mapper),
         value_decode,
         collect_text_keys,
+        imports: mapper.imports(&field.ty),
         comment: field.comment,
     }
+}
+
+fn collect_go_imports<'a>(fields: impl Iterator<Item = &'a GoField>) -> Vec<String> {
+    let mut imports = fields
+        .flat_map(|field| field.imports.iter().cloned())
+        .collect::<Vec<_>>();
+    imports.sort();
+    imports.dedup();
+    imports
 }
 
 fn go_container_type(mode: TableModeIr, row_type: &str, key_type: Option<&str>) -> String {
@@ -331,7 +362,81 @@ fn go_container_type(mode: TableModeIr, row_type: &str, key_type: Option<&str>) 
     }
 }
 
-fn go_decode_expr(ir: &ConfigIr, ty: &TypeIr) -> String {
+struct GoTypeMapper<'a> {
+    target: &'a str,
+    ir: &'a ConfigIr,
+    mappings: &'a TypeMappingRegistry,
+}
+
+impl<'a> GoTypeMapper<'a> {
+    fn new(target: &'a str, ir: &'a ConfigIr, mappings: &'a TypeMappingRegistry) -> Self {
+        Self {
+            target,
+            ir,
+            mappings,
+        }
+    }
+
+    fn type_name(&self, ty: &TypeIr) -> String {
+        if let Some(mapping) = self.mapping(ty) {
+            return mapping.type_name;
+        }
+
+        match ty {
+            TypeIr::Bool => "bool".to_owned(),
+            TypeIr::I8 => "int8".to_owned(),
+            TypeIr::U8 => "uint8".to_owned(),
+            TypeIr::I16 => "int16".to_owned(),
+            TypeIr::U16 => "uint16".to_owned(),
+            TypeIr::I32 => "int32".to_owned(),
+            TypeIr::U32 => "uint32".to_owned(),
+            TypeIr::I64 => "int64".to_owned(),
+            TypeIr::Duration => "time.Duration".to_owned(),
+            TypeIr::DateTime => "time.Time".to_owned(),
+            TypeIr::F32 => "float32".to_owned(),
+            TypeIr::F64 => "float64".to_owned(),
+            TypeIr::String => "string".to_owned(),
+            TypeIr::Text => "TextKey".to_owned(),
+            TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => name.clone(),
+            TypeIr::List(element) | TypeIr::Set(element) | TypeIr::Array { element, .. } => {
+                format!("[]{}", self.type_name(element))
+            }
+            TypeIr::Map { key, value } => {
+                format!("map[{}]{}", self.type_name(key), self.type_name(value))
+            }
+            TypeIr::Ref { table, field } => ref_target_type(self.ir, table, field)
+                .map(|ty| self.type_name(ty))
+                .unwrap_or_else(|| "int32".to_owned()),
+            TypeIr::Optional(element) => format!("*{}", self.type_name(element)),
+        }
+    }
+
+    fn imports(&self, ty: &TypeIr) -> Vec<String> {
+        self.mappings.imports_for(self.target, self.ir, ty)
+    }
+
+    fn mapping(&self, ty: &TypeIr) -> Option<TypeMapping> {
+        self.mappings.map_type(TypeMappingContext {
+            target: self.target,
+            ir: self.ir,
+            ty,
+        })
+    }
+
+    fn wrap_decode(&self, ty: &TypeIr, base_expr: String) -> String {
+        self.mapping(ty)
+            .map(|mapping| mapping.wrap_decode(&base_expr))
+            .unwrap_or(base_expr)
+    }
+
+    fn wrap_value_decode(&self, ty: &TypeIr, base_expr: String) -> String {
+        self.mapping(ty)
+            .map(|mapping| mapping.wrap_value_decode(&base_expr))
+            .unwrap_or(base_expr)
+    }
+}
+
+fn go_decode_expr(ir: &ConfigIr, ty: &TypeIr, mapper: &GoTypeMapper<'_>) -> String {
     match ty {
         TypeIr::Bool => "reader.ReadBool()".to_owned(),
         TypeIr::I8 => "reader.ReadInt8()".to_owned(),
@@ -348,21 +453,21 @@ fn go_decode_expr(ir: &ConfigIr, ty: &TypeIr) -> String {
         TypeIr::String => "reader.ReadString()".to_owned(),
         TypeIr::Text => "ReadTextKey(reader)".to_owned(),
         TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => {
-            format!("decode{name}(reader)")
+            mapper.wrap_decode(ty, format!("decode{name}(reader)"))
         }
         TypeIr::List(element) | TypeIr::Set(element) | TypeIr::Array { element, .. } => {
             format!(
                 "ReadList(reader, func(reader *SoraReader) ({}, error) {{ return {} }})",
-                go_type_name(ir, element),
-                go_decode_expr(ir, element)
+                mapper.type_name(element),
+                go_decode_expr(ir, element, mapper)
             )
         }
         TypeIr::Map { key, value } => format!(
             "ReadMap(reader, func(reader *SoraReader) ({}, error) {{ return {} }}, func(reader *SoraReader) ({}, error) {{ return {} }})",
-            go_type_name(ir, key),
-            go_decode_expr(ir, key),
-            go_type_name(ir, value),
-            go_decode_expr(ir, value)
+            mapper.type_name(key),
+            go_decode_expr(ir, key, mapper),
+            mapper.type_name(value),
+            go_decode_expr(ir, value, mapper)
         ),
         TypeIr::Ref { table, field } => ir
             .tables
@@ -374,19 +479,24 @@ fn go_decode_expr(ir: &ConfigIr, ty: &TypeIr) -> String {
                     .iter()
                     .find(|candidate| candidate.name == *field)
             })
-            .map(|field| go_decode_expr(ir, &field.ty))
+            .map(|field| go_decode_expr(ir, &field.ty, mapper))
             .unwrap_or_else(|| "reader.ReadInt32()".to_owned()),
         TypeIr::Optional(element) => {
             format!(
                 "ReadOptional(reader, func(reader *SoraReader) ({}, error) {{ return {} }})",
-                go_type_name(ir, element),
-                go_decode_expr(ir, element)
+                mapper.type_name(element),
+                go_decode_expr(ir, element, mapper)
             )
         }
     }
 }
 
-fn go_value_decode_expr(ir: &ConfigIr, ty: &TypeIr, value: &str) -> String {
+fn go_value_decode_expr(
+    ir: &ConfigIr,
+    ty: &TypeIr,
+    value: &str,
+    mapper: &GoTypeMapper<'_>,
+) -> String {
     match ty {
         TypeIr::Bool => format!("{value}.AsBool()"),
         TypeIr::I8 => format!("{value}.AsInt8()"),
@@ -403,13 +513,13 @@ fn go_value_decode_expr(ir: &ConfigIr, ty: &TypeIr, value: &str) -> String {
         TypeIr::String => format!("{value}.AsString()"),
         TypeIr::Text => format!("DecodeTextKeyValue({value})"),
         TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => {
-            format!("decode{name}Value({value})")
+            mapper.wrap_value_decode(ty, format!("decode{name}Value({value})"))
         }
         TypeIr::List(element) | TypeIr::Set(element) | TypeIr::Array { element, .. } => {
             format!(
                 "DecodeSoraValueList({value}, func(item SoraValue) ({}, error) {{ return {} }})",
-                go_type_name(ir, element),
-                go_value_decode_expr(ir, element, "item")
+                mapper.type_name(element),
+                go_value_decode_expr(ir, element, "item", mapper)
             )
         }
         TypeIr::Map {
@@ -417,10 +527,10 @@ fn go_value_decode_expr(ir: &ConfigIr, ty: &TypeIr, value: &str) -> String {
             value: element,
         } => format!(
             "DecodeSoraValueMap({value}, func(item SoraValue) ({}, error) {{ return {} }}, func(item SoraValue) ({}, error) {{ return {} }})",
-            go_type_name(ir, key),
-            go_value_decode_expr(ir, key, "item"),
-            go_type_name(ir, element),
-            go_value_decode_expr(ir, element, "item")
+            mapper.type_name(key),
+            go_value_decode_expr(ir, key, "item", mapper),
+            mapper.type_name(element),
+            go_value_decode_expr(ir, element, "item", mapper)
         ),
         TypeIr::Ref { table, field } => ir
             .tables
@@ -432,26 +542,34 @@ fn go_value_decode_expr(ir: &ConfigIr, ty: &TypeIr, value: &str) -> String {
                     .iter()
                     .find(|candidate| candidate.name == *field)
             })
-            .map(|field| go_value_decode_expr(ir, &field.ty, value))
+            .map(|field| go_value_decode_expr(ir, &field.ty, value, mapper))
             .unwrap_or_else(|| format!("{value}.AsInt32()")),
         TypeIr::Optional(element) => {
             format!(
                 "DecodeOptionalSoraValue({value}, func(item SoraValue) ({}, error) {{ return {} }})",
-                go_type_name(ir, element),
-                go_value_decode_expr(ir, element, "item")
+                mapper.type_name(element),
+                go_value_decode_expr(ir, element, "item", mapper)
             )
         }
     }
 }
 
-fn go_collect_text_keys(ir: &ConfigIr, ty: &TypeIr, value: &str) -> String {
+fn go_collect_text_keys(
+    ir: &ConfigIr,
+    ty: &TypeIr,
+    value: &str,
+    mapper: &GoTypeMapper<'_>,
+) -> String {
+    if mapper.mapping(ty).is_some() {
+        return String::new();
+    }
     match ty {
         TypeIr::Text => format!("*out = append(*out, {value})"),
         TypeIr::Optional(element) => {
             if matches!(element.as_ref(), TypeIr::Text) {
                 return format!("if {value} != nil {{ *out = append(*out, *{value}) }}");
             }
-            let inner = go_collect_text_keys(ir, element, "item");
+            let inner = go_collect_text_keys(ir, element, "item", mapper);
             if inner.is_empty() {
                 String::new()
             } else {
@@ -459,7 +577,7 @@ fn go_collect_text_keys(ir: &ConfigIr, ty: &TypeIr, value: &str) -> String {
             }
         }
         TypeIr::List(element) | TypeIr::Set(element) | TypeIr::Array { element, .. } => {
-            let inner = go_collect_text_keys(ir, element, "item");
+            let inner = go_collect_text_keys(ir, element, "item", mapper);
             if inner.is_empty() {
                 String::new()
             } else {
@@ -470,8 +588,8 @@ fn go_collect_text_keys(ir: &ConfigIr, ty: &TypeIr, value: &str) -> String {
             key,
             value: element,
         } => {
-            let key_inner = go_collect_text_keys(ir, key, "key");
-            let value_inner = go_collect_text_keys(ir, element, "item");
+            let key_inner = go_collect_text_keys(ir, key, "key", mapper);
+            let value_inner = go_collect_text_keys(ir, element, "item", mapper);
             if key_inner.is_empty() && value_inner.is_empty() {
                 String::new()
             } else {
@@ -490,7 +608,7 @@ fn go_collect_text_keys(ir: &ConfigIr, ty: &TypeIr, value: &str) -> String {
                     .iter()
                     .find(|candidate| candidate.name == *field)
             })
-            .map(|field| go_collect_text_keys(ir, &field.ty, value))
+            .map(|field| go_collect_text_keys(ir, &field.ty, value, mapper))
             .unwrap_or_default(),
         TypeIr::Bool
         | TypeIr::I8
@@ -531,4 +649,17 @@ fn is_go_package_name(package: &str) -> bool {
     };
     (first.is_ascii_alphabetic() || first == '_')
         && chars.all(|value| value.is_ascii_alphanumeric() || value == '_')
+}
+
+fn ref_target_type<'a>(ir: &'a ConfigIr, table: &str, field: &str) -> Option<&'a TypeIr> {
+    ir.tables
+        .iter()
+        .find(|candidate| candidate.name == table)
+        .and_then(|table| {
+            table
+                .fields
+                .iter()
+                .find(|candidate| candidate.name == field)
+        })
+        .map(|field| &field.ty)
 }

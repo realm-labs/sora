@@ -2,6 +2,9 @@
 
 class_name {{ union.class_name }}
 extends RefCounted
+{%- for import in union.custom_imports %}
+{{ import }}
+{%- endfor %}
 
 var {{ union.tag }}: String = ""
 {%- for field in union.fields %}

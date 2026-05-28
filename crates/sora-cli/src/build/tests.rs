@@ -500,5 +500,6 @@ fn test_context() -> crate::commands::CliContext {
         execution: ExecutionContext::default(),
         schema_parsers: Arc::new(sora_ir::parser::ParserRegistry::builtin()),
         cell_parsers: Arc::new(sora_input::parser::ParserRegistry::builtin()),
+        type_mappings: Arc::new(sora_codegen::type_mapping::TypeMappingRegistry::new()),
     }
 }
