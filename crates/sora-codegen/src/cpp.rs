@@ -14,6 +14,7 @@ use crate::{
     },
     options::{CppCodegenOptions, CppStandard},
     render::{ensure_dir, render_template, write_file},
+    type_mapping::{TypeMapping, TypeMappingContext, TypeMappingRegistry},
 };
 
 pub struct CppCodeGenerator;
@@ -27,7 +28,8 @@ impl CodeGenerator for CppCodeGenerator {
         ensure_dir(out_dir)?;
 
         let options = CppOptionsView::new(ir, &codegen_options)?;
-        let model = CppModel::from_base_model(ir, build_base_model(ir)?, &options);
+        let mapper = CppTypeMapper::new(context.target, ir, context.type_mappings, &options);
+        let model = CppModel::from_base_model(ir, build_base_model(ir)?, &mapper);
 
         for item in &model.enums {
             let rendered = render_template(
@@ -133,6 +135,7 @@ struct CppUnion {
     tag: String,
     variants: Vec<CppUnionVariant>,
     imports: Vec<CppImport>,
+    custom_imports: Vec<String>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -147,6 +150,7 @@ struct CppRecord {
     pascal_name: String,
     snake_name: String,
     imports: Vec<CppImport>,
+    custom_imports: Vec<String>,
     fields: Vec<CppField>,
     table: Option<CppTable>,
 }
@@ -186,11 +190,12 @@ struct CppField {
     name: String,
     type_name: String,
     decode: String,
+    imports: Vec<String>,
     comment: Option<String>,
 }
 
 impl CppModel {
-    fn from_base_model(ir: &ConfigIr, model: BaseModel, options: &CppOptionsView) -> Self {
+    fn from_base_model(ir: &ConfigIr, model: BaseModel, mapper: &CppTypeMapper<'_>) -> Self {
         let enums = model
             .enums
             .into_iter()
@@ -203,7 +208,7 @@ impl CppModel {
         let tables = model
             .tables
             .into_iter()
-            .map(|item| cpp_table(ir, item, options))
+            .map(|item| cpp_table(ir, item, mapper))
             .collect::<Vec<_>>();
         let records = model
             .records
@@ -213,13 +218,13 @@ impl CppModel {
                     .iter()
                     .find(|table| table.row_type == item.pascal_name)
                     .cloned();
-                cpp_record(ir, item, options, table)
+                cpp_record(ir, item, table, mapper)
             })
             .collect();
         let unions = model
             .unions
             .into_iter()
-            .map(|item| cpp_union(ir, item, options))
+            .map(|item| cpp_union(ir, item, mapper))
             .collect();
 
         Self {
@@ -233,24 +238,27 @@ impl CppModel {
     }
 }
 
-fn cpp_union(ir: &ConfigIr, union: BaseUnion, options: &CppOptionsView) -> CppUnion {
+fn cpp_union(ir: &ConfigIr, union: BaseUnion, mapper: &CppTypeMapper<'_>) -> CppUnion {
+    let variants = union
+        .variants
+        .into_iter()
+        .map(|variant| cpp_variant(ir, variant, mapper))
+        .collect::<Vec<_>>();
+    let custom_imports = collect_cpp_imports(variants.iter().flat_map(|variant| &variant.fields));
     CppUnion {
         pascal_name: union.pascal_name,
         snake_name: union.snake_name,
         tag: union.tag,
-        variants: union
-            .variants
-            .into_iter()
-            .map(|variant| cpp_variant(ir, variant, options))
-            .collect(),
+        variants,
         imports: union.imports.into_iter().map(cpp_import).collect(),
+        custom_imports,
     }
 }
 
 fn cpp_variant(
     ir: &ConfigIr,
     variant: BaseUnionVariant,
-    options: &CppOptionsView,
+    mapper: &CppTypeMapper<'_>,
 ) -> CppUnionVariant {
     CppUnionVariant {
         name: variant.pascal_name,
@@ -258,7 +266,7 @@ fn cpp_variant(
         fields: variant
             .fields
             .into_iter()
-            .map(|field| cpp_field(ir, field, options))
+            .map(|field| cpp_field(ir, field, mapper))
             .collect(),
     }
 }
@@ -266,28 +274,31 @@ fn cpp_variant(
 fn cpp_record(
     ir: &ConfigIr,
     record: BaseRecord,
-    options: &CppOptionsView,
     table: Option<CppTable>,
+    mapper: &CppTypeMapper<'_>,
 ) -> CppRecord {
+    let fields = record
+        .fields
+        .into_iter()
+        .map(|field| cpp_field(ir, field, mapper))
+        .collect::<Vec<_>>();
+    let custom_imports = collect_cpp_imports(fields.iter());
     CppRecord {
         pascal_name: record.pascal_name,
         snake_name: record.snake_name,
         imports: record.imports.into_iter().map(cpp_import).collect(),
-        fields: record
-            .fields
-            .into_iter()
-            .map(|field| cpp_field(ir, field, options))
-            .collect(),
+        custom_imports,
+        fields,
         table,
     }
 }
 
-fn cpp_table(ir: &ConfigIr, table: BaseTable, options: &CppOptionsView) -> CppTable {
+fn cpp_table(ir: &ConfigIr, table: BaseTable, mapper: &CppTypeMapper<'_>) -> CppTable {
     let row_type = table.pascal_name.clone();
     let key_type = table
         .key_field
         .as_ref()
-        .map(|field| cpp_type_name(ir, &field.ty, options));
+        .map(|field| mapper.type_name(&field.ty));
     let container_type = cpp_container_type(table.mode, &row_type, key_type.as_deref());
     let key_field_name = table
         .key_field
@@ -307,34 +318,44 @@ fn cpp_table(ir: &ConfigIr, table: BaseTable, options: &CppOptionsView) -> CppTa
         unique_indexes: table
             .unique_indexes
             .into_iter()
-            .map(|index| cpp_index(ir, index, options))
+            .map(|index| cpp_index(ir, index, mapper))
             .collect(),
         non_unique_indexes: table
             .non_unique_indexes
             .into_iter()
-            .map(|index| cpp_index(ir, index, options))
+            .map(|index| cpp_index(ir, index, mapper))
             .collect(),
     }
 }
 
-fn cpp_index(ir: &ConfigIr, index: BaseIndex, options: &CppOptionsView) -> CppIndex {
+fn cpp_index(_ir: &ConfigIr, index: BaseIndex, mapper: &CppTypeMapper<'_>) -> CppIndex {
     CppIndex {
         name: index.snake_name,
         method_name: index.method_name,
         field_name: index.field.snake_name.clone(),
         param_name: index.field.snake_name.clone(),
-        key_type: cpp_type_name(ir, &index.field.ty, options),
+        key_type: mapper.type_name(&index.field.ty),
     }
 }
 
-fn cpp_field(ir: &ConfigIr, field: BaseField, options: &CppOptionsView) -> CppField {
+fn cpp_field(ir: &ConfigIr, field: BaseField, mapper: &CppTypeMapper<'_>) -> CppField {
     CppField {
         raw_name: field.raw_name,
         name: field.snake_name,
-        type_name: cpp_type_name(ir, &field.ty, options),
-        decode: cpp_decode_expr(ir, &field.ty, options),
+        type_name: mapper.type_name(&field.ty),
+        decode: cpp_decode_expr(ir, &field.ty, mapper),
+        imports: mapper.imports(&field.ty),
         comment: field.comment,
     }
+}
+
+fn collect_cpp_imports<'a>(fields: impl Iterator<Item = &'a CppField>) -> Vec<String> {
+    let mut imports = fields
+        .flat_map(|field| field.imports.iter().cloned())
+        .collect::<Vec<_>>();
+    imports.sort();
+    imports.dedup();
+    imports
 }
 
 fn cpp_import(import: BaseImport) -> CppImport {
@@ -354,58 +375,94 @@ fn cpp_container_type(mode: TableModeIr, row_type: &str, key_type: Option<&str>)
     }
 }
 
-fn cpp_type_name(ir: &ConfigIr, ty: &TypeIr, options: &CppOptionsView) -> String {
-    match ty {
-        TypeIr::Bool => "bool".to_owned(),
-        TypeIr::I8 => "std::int8_t".to_owned(),
-        TypeIr::U8 => "std::uint8_t".to_owned(),
-        TypeIr::I16 => "std::int16_t".to_owned(),
-        TypeIr::U16 => "std::uint16_t".to_owned(),
-        TypeIr::I32 => "std::int32_t".to_owned(),
-        TypeIr::U32 => "std::uint32_t".to_owned(),
-        TypeIr::I64 => "std::int64_t".to_owned(),
-        TypeIr::Duration => "std::chrono::milliseconds".to_owned(),
-        TypeIr::DateTime => "std::chrono::system_clock::time_point".to_owned(),
-        TypeIr::F32 => "float".to_owned(),
-        TypeIr::F64 => "double".to_owned(),
-        TypeIr::String => "std::string".to_owned(),
-        TypeIr::Text => "TextKey".to_owned(),
-        TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => name.clone(),
-        TypeIr::List(element) | TypeIr::Set(element) => {
-            format!("std::vector<{}>", cpp_type_name(ir, element, options))
+struct CppTypeMapper<'a> {
+    target: &'a str,
+    ir: &'a ConfigIr,
+    mappings: &'a TypeMappingRegistry,
+    options: &'a CppOptionsView,
+}
+
+impl<'a> CppTypeMapper<'a> {
+    fn new(
+        target: &'a str,
+        ir: &'a ConfigIr,
+        mappings: &'a TypeMappingRegistry,
+        options: &'a CppOptionsView,
+    ) -> Self {
+        Self {
+            target,
+            ir,
+            mappings,
+            options,
         }
-        TypeIr::Map { key, value } => format!(
-            "std::unordered_map<{}, {}>",
-            cpp_type_name(ir, key, options),
-            cpp_type_name(ir, value, options)
-        ),
-        TypeIr::Array { element, len } => {
-            format!("std::array<{}, {len}>", cpp_type_name(ir, element, options))
+    }
+
+    fn type_name(&self, ty: &TypeIr) -> String {
+        if let Some(mapping) = self.mapping(ty) {
+            return mapping.type_name;
         }
-        TypeIr::Ref { table, field } => ir
-            .tables
-            .iter()
-            .find(|candidate| candidate.name == *table)
-            .and_then(|table| {
-                table
-                    .fields
-                    .iter()
-                    .find(|candidate| candidate.name == *field)
-            })
-            .map(|field| cpp_type_name(ir, &field.ty, options))
-            .unwrap_or_else(|| "std::int32_t".to_owned()),
-        TypeIr::Optional(element) => {
-            let inner = cpp_type_name(ir, element, options);
-            if options.has_std_optional {
-                format!("std::optional<{inner}>")
-            } else {
-                format!("SoraOptional<{inner}>")
+
+        match ty {
+            TypeIr::Bool => "bool".to_owned(),
+            TypeIr::I8 => "std::int8_t".to_owned(),
+            TypeIr::U8 => "std::uint8_t".to_owned(),
+            TypeIr::I16 => "std::int16_t".to_owned(),
+            TypeIr::U16 => "std::uint16_t".to_owned(),
+            TypeIr::I32 => "std::int32_t".to_owned(),
+            TypeIr::U32 => "std::uint32_t".to_owned(),
+            TypeIr::I64 => "std::int64_t".to_owned(),
+            TypeIr::Duration => "std::chrono::milliseconds".to_owned(),
+            TypeIr::DateTime => "std::chrono::system_clock::time_point".to_owned(),
+            TypeIr::F32 => "float".to_owned(),
+            TypeIr::F64 => "double".to_owned(),
+            TypeIr::String => "std::string".to_owned(),
+            TypeIr::Text => "TextKey".to_owned(),
+            TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => name.clone(),
+            TypeIr::List(element) | TypeIr::Set(element) => {
+                format!("std::vector<{}>", self.type_name(element))
+            }
+            TypeIr::Map { key, value } => format!(
+                "std::unordered_map<{}, {}>",
+                self.type_name(key),
+                self.type_name(value)
+            ),
+            TypeIr::Array { element, len } => {
+                format!("std::array<{}, {len}>", self.type_name(element))
+            }
+            TypeIr::Ref { table, field } => ref_target_type(self.ir, table, field)
+                .map(|ty| self.type_name(ty))
+                .unwrap_or_else(|| "std::int32_t".to_owned()),
+            TypeIr::Optional(element) => {
+                let inner = self.type_name(element);
+                if self.options.has_std_optional {
+                    format!("std::optional<{inner}>")
+                } else {
+                    format!("SoraOptional<{inner}>")
+                }
             }
         }
     }
+
+    fn imports(&self, ty: &TypeIr) -> Vec<String> {
+        self.mappings.imports_for(self.target, self.ir, ty)
+    }
+
+    fn mapping(&self, ty: &TypeIr) -> Option<TypeMapping> {
+        self.mappings.map_type(TypeMappingContext {
+            target: self.target,
+            ir: self.ir,
+            ty,
+        })
+    }
+
+    fn wrap_decode(&self, ty: &TypeIr, base_expr: String) -> String {
+        self.mapping(ty)
+            .map(|mapping| mapping.wrap_decode(&base_expr))
+            .unwrap_or(base_expr)
+    }
 }
 
-fn cpp_decode_expr(ir: &ConfigIr, ty: &TypeIr, options: &CppOptionsView) -> String {
+fn cpp_decode_expr(ir: &ConfigIr, ty: &TypeIr, mapper: &CppTypeMapper<'_>) -> String {
     match ty {
         TypeIr::Bool => "reader.read_bool()".to_owned(),
         TypeIr::I8 | TypeIr::I16 | TypeIr::I32 => "reader.read_i32()".to_owned(),
@@ -417,41 +474,45 @@ fn cpp_decode_expr(ir: &ConfigIr, ty: &TypeIr, options: &CppOptionsView) -> Stri
         TypeIr::F64 => "reader.read_f64()".to_owned(),
         TypeIr::String => "reader.read_string()".to_owned(),
         TypeIr::Text => "reader.read_text_key()".to_owned(),
-        TypeIr::Enum(name) => format!("decode_value<{name}>(reader)"),
-        TypeIr::Struct(name) | TypeIr::Union(name) => format!("{name}::decode(reader)"),
+        TypeIr::Enum(name) => mapper.wrap_decode(ty, format!("decode_value<{name}>(reader)")),
+        TypeIr::Struct(name) | TypeIr::Union(name) => {
+            mapper.wrap_decode(ty, format!("{name}::decode(reader)"))
+        }
         TypeIr::List(element) | TypeIr::Set(element) => {
             format!(
-                "reader.read_vector<{}>()",
-                cpp_type_name(ir, element, options)
+                "([&reader]() {{ std::uint32_t length = reader.read_u32(); std::vector<{}> values; values.reserve(length); for (std::uint32_t index = 0; index < length; ++index) {{ values.push_back({}); }} return values; }})()",
+                mapper.type_name(element),
+                cpp_decode_expr(ir, element, mapper)
             )
         }
         TypeIr::Map { key, value } => format!(
-            "reader.read_map<{}, {}>()",
-            cpp_type_name(ir, key, options),
-            cpp_type_name(ir, value, options)
+            "([&reader]() {{ std::uint32_t length = reader.read_u32(); std::unordered_map<{}, {}> values; values.reserve(length); for (std::uint32_t index = 0; index < length; ++index) {{ {} key = {}; values[key] = {}; }} return values; }})()",
+            mapper.type_name(key),
+            mapper.type_name(value),
+            mapper.type_name(key),
+            cpp_decode_expr(ir, key, mapper),
+            cpp_decode_expr(ir, value, mapper)
         ),
         TypeIr::Array { element, len } => {
             format!(
-                "reader.read_array<{}, {len}>()",
-                cpp_type_name(ir, element, options)
+                "([&reader]() {{ std::uint32_t length = reader.read_u32(); if (length != {len}) {{ throw SoraReadException(\"array length does not match schema\"); }} std::array<{}, {len}> values; for (std::size_t index = 0; index < {len}; ++index) {{ values[index] = {}; }} return values; }})()",
+                mapper.type_name(element),
+                cpp_decode_expr(ir, element, mapper)
             )
         }
-        TypeIr::Ref { table, field } => ir
-            .tables
-            .iter()
-            .find(|candidate| candidate.name == *table)
-            .and_then(|table| {
-                table
-                    .fields
-                    .iter()
-                    .find(|candidate| candidate.name == *field)
-            })
-            .map(|field| cpp_decode_expr(ir, &field.ty, options))
+        TypeIr::Ref { table, field } => ref_target_type(ir, table, field)
+            .map(|ty| cpp_decode_expr(ir, ty, mapper))
             .unwrap_or_else(|| "reader.read_i32()".to_owned()),
         TypeIr::Optional(element) => {
+            let element_type = mapper.type_name(element);
+            let element_decode = cpp_decode_expr(ir, element, mapper);
+            if mapper.options.has_std_optional {
+                return format!(
+                    "([&reader]() {{ std::uint8_t presence = reader.read_u8(); if (presence == 0) {{ return std::optional<{element_type}>(); }} if (presence == 1) {{ return std::optional<{element_type}>({element_decode}); }} throw SoraReadException(\"invalid optional presence\"); }})()"
+                );
+            }
             format!(
-                "reader.read_optional<{}>()",
-                cpp_type_name(ir, element, options)
+                "([&reader]() {{ std::uint8_t presence = reader.read_u8(); if (presence == 0) {{ return SoraOptional<{element_type}>(); }} if (presence == 1) {{ return SoraOptional<{element_type}>({element_decode}); }} throw SoraReadException(\"invalid optional presence\"); }})()"
             )
         }
     }
@@ -512,6 +573,19 @@ fn namespace_close(segments: &[String], standard: CppStandard) -> String {
     };
     let closes = "}".repeat(close_count);
     format!("{closes} // namespace {}", segments.join("::"))
+}
+
+fn ref_target_type<'a>(ir: &'a ConfigIr, table: &str, field: &str) -> Option<&'a TypeIr> {
+    ir.tables
+        .iter()
+        .find(|candidate| candidate.name == table)
+        .and_then(|table| {
+            table
+                .fields
+                .iter()
+                .find(|candidate| candidate.name == field)
+        })
+        .map(|field| &field.ty)
 }
 
 #[cfg(test)]

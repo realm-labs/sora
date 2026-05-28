@@ -6,6 +6,9 @@
 {%- for import in union.imports %}
 #include "{{ import.module }}.hpp"
 {%- endfor %}
+{%- for import in union.custom_imports %}
+{{ import }}
+{%- endfor %}
 
 {%- if options.has_std_variant %}
 #include <variant>

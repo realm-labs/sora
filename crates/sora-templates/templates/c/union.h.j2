@@ -7,6 +7,9 @@
 {%- for import in union.imports %}
 #include "{{ import.module }}.h"
 {%- endfor %}
+{%- for import in union.custom_imports %}
+{{ import }}
+{%- endfor %}
 
 #ifdef __cplusplus
 extern "C" {

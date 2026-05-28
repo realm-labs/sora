@@ -7,6 +7,9 @@
 {%- for import in record.imports %}
 #include "{{ import.module }}.h"
 {%- endfor %}
+{%- for import in record.custom_imports %}
+{{ import }}
+{%- endfor %}
 
 #ifdef __cplusplus
 extern "C" {

@@ -86,7 +86,20 @@ return {
 
 `decode` 包裹默认的 binary runtime decode 表达式，`value_decode` 包裹 JSON/CBOR/protobuf 风格的 value decode 表达式。`{value}` 会替换成生成器默认生成的表达式。
 
-`imports` 是目标语言相关的，只由需要它的语言生成器输出。C#、Java、Kotlin、Scala 期望不带关键字的 namespace/path；Go 期望类似 `"example.com/game/vector"` 的 import spec；Python、TypeScript、JavaScript、Dart、Godot 期望完整 import/preload 行。
+C target 使用写入目标指针的 decode 函数，所以 C 映射应使用 `decode_into`，而不是 `decode`。`{target}` 会替换成输出指针表达式。C 映射也可以提供 `free`，其中 `{target}` 会替换成需要释放的指针：
+
+```lua
+{
+  target = "c",
+  schema_type = "Vec3",
+  type_name = "game_vector3",
+  decode_into = "game_vector3_decode(reader, {target})",
+  free = "game_vector3_free({target});",
+  imports = { "#include \"vector3.h\"" },
+}
+```
+
+`imports` 是目标语言相关的，只由需要它的语言生成器输出。C#、Java、Kotlin、Scala 期望不带关键字的 namespace/path；Go 期望类似 `"example.com/game/vector"` 的 import spec；Python、TypeScript、JavaScript、Dart、Godot、C、C++、Rust 期望完整 import/include/use/preload 行。
 
 `runtime_format` 可以是 `sora`、`json`、`cbor` 或 `sora-protobuf`，但不是每个 target 都支持所有 runtime format。支持矩阵见[运行时格式](codegen/runtime-formats.md)。
 

@@ -14,7 +14,7 @@ use crate::{
     },
     options::{RustCodegenOptions, RustDateTimeType, RustMapType, RustStringStorage},
     render::{ensure_dir, render_template, write_file},
-    types::rust_type_name_with_options,
+    type_mapping::{TypeMapping, TypeMappingContext, TypeMappingRegistry},
 };
 
 pub struct RustCodeGenerator;
@@ -25,7 +25,8 @@ impl CodeGenerator for RustCodeGenerator {
         let ir = context.ir;
         let options = context.options::<RustCodegenOptions>()?;
         ensure_dir(out_dir)?;
-        let model = RustModel::from_base_model(ir, build_base_model(ir)?, &options);
+        let mapper = RustTypeMapper::new(context.target, ir, context.type_mappings, &options);
+        let model = RustModel::from_base_model(ir, build_base_model(ir)?, &mapper);
         let runtime_format = runtime_format_name(options.runtime_format);
 
         for item in &model.enums {
@@ -103,6 +104,7 @@ struct RustUnion {
     tag: String,
     variants: Vec<RustUnionVariant>,
     imports: Vec<RustImport>,
+    custom_imports: Vec<String>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -117,6 +119,7 @@ struct RustRecord {
     pascal_name: String,
     snake_name: String,
     imports: Vec<RustImport>,
+    custom_imports: Vec<String>,
     fields: Vec<RustField>,
     table: Option<RustTable>,
 }
@@ -163,17 +166,19 @@ struct RustField {
     name: String,
     type_name: String,
     serde_with: Option<String>,
+    decode: String,
     collect_text_keys: String,
     text_key_binding: String,
+    imports: Vec<String>,
     comment: Option<String>,
 }
 
 impl RustModel {
-    fn from_base_model(ir: &ConfigIr, model: BaseModel, options: &RustCodegenOptions) -> Self {
+    fn from_base_model(ir: &ConfigIr, model: BaseModel, mapper: &RustTypeMapper<'_>) -> Self {
         let tables = model
             .tables
             .into_iter()
-            .map(|item| rust_table(ir, item, options))
+            .map(|item| rust_table(ir, item, mapper))
             .collect::<Vec<_>>();
         Self {
             package: model.package,
@@ -190,7 +195,7 @@ impl RustModel {
             unions: model
                 .unions
                 .into_iter()
-                .map(|item| rust_union(ir, item, options))
+                .map(|item| rust_union(ir, item, mapper))
                 .collect(),
             records: model
                 .records
@@ -200,7 +205,7 @@ impl RustModel {
                         .iter()
                         .find(|table| table.snake_name == item.snake_name)
                         .cloned();
-                    rust_record(ir, item, table, options)
+                    rust_record(ir, item, table, mapper)
                 })
                 .collect(),
             has_map_tables: tables
@@ -231,29 +236,32 @@ impl RustModel {
     }
 }
 
-fn rust_union(ir: &ConfigIr, union: BaseUnion, options: &RustCodegenOptions) -> RustUnion {
+fn rust_union(ir: &ConfigIr, union: BaseUnion, mapper: &RustTypeMapper<'_>) -> RustUnion {
+    let variants = union
+        .variants
+        .into_iter()
+        .map(|variant| rust_variant(ir, variant, mapper))
+        .collect::<Vec<_>>();
+    let custom_imports = collect_rust_imports(variants.iter().flat_map(|variant| &variant.fields));
     RustUnion {
         pascal_name: union.pascal_name,
         snake_name: union.snake_name,
         tag: union.tag,
-        variants: union
-            .variants
-            .into_iter()
-            .map(|variant| rust_variant(ir, variant, options))
-            .collect(),
+        variants,
         imports: union.imports.into_iter().map(rust_import).collect(),
+        custom_imports,
     }
 }
 
 fn rust_variant(
     ir: &ConfigIr,
     variant: BaseUnionVariant,
-    options: &RustCodegenOptions,
+    mapper: &RustTypeMapper<'_>,
 ) -> RustUnionVariant {
     let mut fields = variant
         .fields
         .into_iter()
-        .map(|field| rust_field(ir, field, options))
+        .map(|field| rust_field(ir, field, mapper))
         .collect::<Vec<_>>();
     for (index, field) in fields.iter_mut().enumerate() {
         field.text_key_binding = format!("__sora_text_field_{index}");
@@ -275,33 +283,36 @@ fn rust_record(
     ir: &ConfigIr,
     record: BaseRecord,
     table: Option<RustTable>,
-    options: &RustCodegenOptions,
+    mapper: &RustTypeMapper<'_>,
 ) -> RustRecord {
+    let fields = record
+        .fields
+        .into_iter()
+        .map(|field| rust_field(ir, field, mapper))
+        .collect::<Vec<_>>();
+    let custom_imports = collect_rust_imports(fields.iter());
     RustRecord {
         pascal_name: record.pascal_name,
         snake_name: record.snake_name,
         imports: record.imports.into_iter().map(rust_import).collect(),
-        fields: record
-            .fields
-            .into_iter()
-            .map(|field| rust_field(ir, field, options))
-            .collect(),
+        custom_imports,
+        fields,
         table,
     }
 }
 
-fn rust_table(ir: &ConfigIr, table: BaseTable, options: &RustCodegenOptions) -> RustTable {
+fn rust_table(ir: &ConfigIr, table: BaseTable, mapper: &RustTypeMapper<'_>) -> RustTable {
     let row_type = table.pascal_name.clone();
     let row_path = format!("{}::{}", table.snake_name, table.pascal_name);
     let table_path = format!("{}::{}Table", table.snake_name, table.pascal_name);
     let key_type = table
         .key_field
         .as_ref()
-        .map(|field| rust_local_table_key_type(ir, &field.ty, options));
+        .map(|field| mapper.local_table_key_type(&field.ty));
     let key_param_type = table
         .key_field
         .as_ref()
-        .map(|field| rust_key_param_type(ir, &field.ty, options));
+        .map(|field| mapper.key_param_type(&field.ty));
     let container_type = rust_container_type(table.mode, &row_type, key_type.as_deref());
     let key_field_name = table
         .key_field
@@ -310,7 +321,7 @@ fn rust_table(ir: &ConfigIr, table: BaseTable, options: &RustCodegenOptions) -> 
     let key_is_copy = table
         .key_field
         .as_ref()
-        .is_some_and(|field| rust_key_type_is_copy(ir, &field.ty));
+        .is_some_and(|field| mapper.key_type_is_copy(&field.ty));
 
     RustTable {
         name: table.name,
@@ -329,47 +340,66 @@ fn rust_table(ir: &ConfigIr, table: BaseTable, options: &RustCodegenOptions) -> 
         unique_indexes: table
             .unique_indexes
             .into_iter()
-            .map(|index| rust_index(ir, index, options))
+            .map(|index| rust_index(ir, index, mapper))
             .collect(),
         non_unique_indexes: table
             .non_unique_indexes
             .into_iter()
-            .map(|index| rust_index(ir, index, options))
+            .map(|index| rust_index(ir, index, mapper))
             .collect(),
     }
 }
 
-fn rust_index(ir: &ConfigIr, index: BaseIndex, options: &RustCodegenOptions) -> RustIndex {
+fn rust_index(_ir: &ConfigIr, index: BaseIndex, mapper: &RustTypeMapper<'_>) -> RustIndex {
     RustIndex {
         name: index.snake_name,
         method_name: index.method_name,
         field_name: index.field.snake_name.clone(),
         param_name: index.field.snake_name.clone(),
-        param_type: rust_key_param_type(ir, &index.field.ty, options),
-        key_type: rust_local_table_key_type(ir, &index.field.ty, options),
-        key_is_copy: rust_key_type_is_copy(ir, &index.field.ty),
+        param_type: mapper.key_param_type(&index.field.ty),
+        key_type: mapper.local_table_key_type(&index.field.ty),
+        key_is_copy: mapper.key_type_is_copy(&index.field.ty),
     }
 }
 
-fn rust_field(ir: &ConfigIr, field: BaseField, options: &RustCodegenOptions) -> RustField {
+fn rust_field(ir: &ConfigIr, field: BaseField, mapper: &RustTypeMapper<'_>) -> RustField {
     let collect_text_keys =
-        rust_collect_text_keys(ir, &field.ty, &format!("self.{}", field.snake_name));
+        rust_collect_text_keys(ir, &field.ty, &format!("self.{}", field.snake_name), mapper);
     RustField {
         raw_name: field.raw_name,
         name: field.snake_name,
-        type_name: rust_type_name_with_options(ir, &field.ty, options),
-        serde_with: rust_serde_with(&field.ty, options),
+        type_name: mapper.type_name(&field.ty),
+        serde_with: rust_serde_with(&field.ty, mapper.options),
+        decode: rust_decode_expr(ir, &field.ty, mapper),
         collect_text_keys,
         text_key_binding: String::new(),
+        imports: mapper.imports(&field.ty),
         comment: field.comment,
     }
 }
 
-fn rust_collect_text_keys(ir: &ConfigIr, ty: &TypeIr, value: &str) -> String {
+fn collect_rust_imports<'a>(fields: impl Iterator<Item = &'a RustField>) -> Vec<String> {
+    let mut imports = fields
+        .flat_map(|field| field.imports.iter().cloned())
+        .collect::<Vec<_>>();
+    imports.sort();
+    imports.dedup();
+    imports
+}
+
+fn rust_collect_text_keys(
+    ir: &ConfigIr,
+    ty: &TypeIr,
+    value: &str,
+    mapper: &RustTypeMapper<'_>,
+) -> String {
+    if mapper.mapping(ty).is_some() {
+        return String::new();
+    }
     match ty {
         TypeIr::Text => format!("out.push(&{value});"),
         TypeIr::Optional(element) => {
-            let inner = rust_collect_text_keys(ir, element, "value");
+            let inner = rust_collect_text_keys(ir, element, "value", mapper);
             if inner.is_empty() {
                 String::new()
             } else {
@@ -377,7 +407,7 @@ fn rust_collect_text_keys(ir: &ConfigIr, ty: &TypeIr, value: &str) -> String {
             }
         }
         TypeIr::List(element) | TypeIr::Set(element) | TypeIr::Array { element, .. } => {
-            let inner = rust_collect_text_keys(ir, element, "value");
+            let inner = rust_collect_text_keys(ir, element, "value", mapper);
             if inner.is_empty() {
                 String::new()
             } else {
@@ -388,8 +418,8 @@ fn rust_collect_text_keys(ir: &ConfigIr, ty: &TypeIr, value: &str) -> String {
             key,
             value: element,
         } => {
-            let key_inner = rust_collect_text_keys(ir, key, "key");
-            let value_inner = rust_collect_text_keys(ir, element, "value");
+            let key_inner = rust_collect_text_keys(ir, key, "key", mapper);
+            let value_inner = rust_collect_text_keys(ir, element, "value", mapper);
             if key_inner.is_empty() && value_inner.is_empty() {
                 String::new()
             } else {
@@ -407,7 +437,7 @@ fn rust_collect_text_keys(ir: &ConfigIr, ty: &TypeIr, value: &str) -> String {
                     .iter()
                     .find(|candidate| candidate.name == *field)
             })
-            .map(|field| rust_collect_text_keys(ir, &field.ty, value))
+            .map(|field| rust_collect_text_keys(ir, &field.ty, value, mapper))
             .unwrap_or_default(),
         TypeIr::Bool
         | TypeIr::I8
@@ -433,6 +463,183 @@ fn rust_import(import: BaseImport) -> RustImport {
     }
 }
 
+struct RustTypeMapper<'a> {
+    target: &'a str,
+    ir: &'a ConfigIr,
+    mappings: &'a TypeMappingRegistry,
+    options: &'a RustCodegenOptions,
+}
+
+impl<'a> RustTypeMapper<'a> {
+    fn new(
+        target: &'a str,
+        ir: &'a ConfigIr,
+        mappings: &'a TypeMappingRegistry,
+        options: &'a RustCodegenOptions,
+    ) -> Self {
+        Self {
+            target,
+            ir,
+            mappings,
+            options,
+        }
+    }
+
+    fn type_name(&self, ty: &TypeIr) -> String {
+        if let Some(mapping) = self.mapping(ty) {
+            return mapping.type_name;
+        }
+
+        match ty {
+            TypeIr::Bool => "bool".to_owned(),
+            TypeIr::I8 => "i8".to_owned(),
+            TypeIr::U8 => "u8".to_owned(),
+            TypeIr::I16 => "i16".to_owned(),
+            TypeIr::U16 => "u16".to_owned(),
+            TypeIr::I32 => "i32".to_owned(),
+            TypeIr::U32 => "u32".to_owned(),
+            TypeIr::I64 => "i64".to_owned(),
+            TypeIr::Duration => "std::time::Duration".to_owned(),
+            TypeIr::DateTime => match self.options.datetime_type {
+                RustDateTimeType::SystemTime => "std::time::SystemTime".to_owned(),
+                RustDateTimeType::Chrono => "chrono::DateTime<chrono::Utc>".to_owned(),
+            },
+            TypeIr::F32 => "f32".to_owned(),
+            TypeIr::F64 => "f64".to_owned(),
+            TypeIr::String => match self.options.string_storage {
+                RustStringStorage::Owned => "String".to_owned(),
+                RustStringStorage::Arc => "std::sync::Arc<str>".to_owned(),
+            },
+            TypeIr::Text => "super::runtime::TextKey".to_owned(),
+            TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => name.clone(),
+            TypeIr::List(element) => format!("Vec<{}>", self.type_name(element)),
+            TypeIr::Set(element) => {
+                format!("std::collections::HashSet<{}>", self.type_name(element))
+            }
+            TypeIr::Map { key, value } => {
+                format!(
+                    "std::collections::HashMap<{}, {}>",
+                    self.type_name(key),
+                    self.type_name(value)
+                )
+            }
+            TypeIr::Array { element, len } => format!("[{}; {len}]", self.type_name(element)),
+            TypeIr::Ref { table, field } => ref_target_type(self.ir, table, field)
+                .map(|ty| self.type_name(ty))
+                .unwrap_or_else(|| "i32".to_owned()),
+            TypeIr::Optional(element) => format!("Option<{}>", self.type_name(element)),
+        }
+    }
+
+    fn key_param_type(&self, ty: &TypeIr) -> String {
+        let type_name = self.local_table_key_type(ty);
+        if type_name == "String" || type_name == "std::sync::Arc<str>" {
+            "str".to_owned()
+        } else {
+            type_name
+        }
+    }
+
+    fn local_table_key_type(&self, ty: &TypeIr) -> String {
+        match ty {
+            TypeIr::Ref { table, field } => ref_target_type(self.ir, table, field)
+                .map(|ty| self.local_table_key_type(ty))
+                .unwrap_or_else(|| self.type_name(ty)),
+            _ => self.type_name(ty),
+        }
+    }
+
+    fn key_type_is_copy(&self, ty: &TypeIr) -> bool {
+        match ty {
+            TypeIr::Bool
+            | TypeIr::I8
+            | TypeIr::U8
+            | TypeIr::I16
+            | TypeIr::U16
+            | TypeIr::I32
+            | TypeIr::U32
+            | TypeIr::I64
+            | TypeIr::Duration
+            | TypeIr::DateTime
+            | TypeIr::F32
+            | TypeIr::F64
+            | TypeIr::Enum(_) => self.mapping(ty).is_none(),
+            TypeIr::Ref { table, field } => {
+                ref_target_type(self.ir, table, field).is_some_and(|ty| self.key_type_is_copy(ty))
+            }
+            TypeIr::Optional(element) => self.key_type_is_copy(element),
+            TypeIr::String
+            | TypeIr::Text
+            | TypeIr::Struct(_)
+            | TypeIr::Union(_)
+            | TypeIr::List(_)
+            | TypeIr::Set(_)
+            | TypeIr::Map { .. }
+            | TypeIr::Array { .. } => false,
+        }
+    }
+
+    fn imports(&self, ty: &TypeIr) -> Vec<String> {
+        self.mappings.imports_for(self.target, self.ir, ty)
+    }
+
+    fn mapping(&self, ty: &TypeIr) -> Option<TypeMapping> {
+        self.mappings.map_type(TypeMappingContext {
+            target: self.target,
+            ir: self.ir,
+            ty,
+        })
+    }
+
+    fn wrap_decode(&self, ty: &TypeIr, base_expr: String) -> String {
+        self.mapping(ty)
+            .map(|mapping| mapping.wrap_decode(&base_expr))
+            .unwrap_or(base_expr)
+    }
+}
+
+fn rust_decode_expr(ir: &ConfigIr, ty: &TypeIr, mapper: &RustTypeMapper<'_>) -> String {
+    match ty {
+        TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => mapper.wrap_decode(
+            ty,
+            format!("<{name} as super::runtime::SoraDecode>::decode(reader)?"),
+        ),
+        TypeIr::List(element) => format!(
+            "{{ let len = reader.read_var_u32()? as usize; let mut values = Vec::with_capacity(len); for _ in 0..len {{ values.push({}); }} values }}",
+            rust_decode_expr(ir, element, mapper)
+        ),
+        TypeIr::Set(element) => format!(
+            "{{ let len = reader.read_var_u32()? as usize; let mut values = std::collections::HashSet::with_capacity(len); for _ in 0..len {{ values.insert({}); }} values }}",
+            rust_decode_expr(ir, element, mapper)
+        ),
+        TypeIr::Map { key, value } => format!(
+            "{{ let len = reader.read_var_u32()? as usize; let mut values = std::collections::HashMap::with_capacity(len); for _ in 0..len {{ values.insert({}, {}); }} values }}",
+            rust_decode_expr(ir, key, mapper),
+            rust_decode_expr(ir, value, mapper)
+        ),
+        TypeIr::Array { element, len } => {
+            let element_type = mapper.type_name(element);
+            format!(
+                "{{ let mut values = Vec::with_capacity({len}); let actual_len = reader.read_var_u32()? as usize; if actual_len != {len} {{ return Err(super::runtime::SoraReadError::new(format!(\"expected array length {len}, got {{}}\", actual_len))); }} for _ in 0..{len} {{ values.push({}); }} values.try_into().map_err(|values: Vec<{element_type}>| super::runtime::SoraReadError::new(format!(\"expected array length {len}, got {{}}\", values.len())))? }}",
+                rust_decode_expr(ir, element, mapper)
+            )
+        }
+        TypeIr::Ref { table, field } => ref_target_type(ir, table, field)
+            .map(|ty| rust_decode_expr(ir, ty, mapper))
+            .unwrap_or_else(|| "<i32 as super::runtime::SoraDecode>::decode(reader)?".to_owned()),
+        TypeIr::Optional(element) => {
+            format!(
+                "match reader.read_u8()? {{ 0 => None, 1 => Some({}), value => return Err(super::runtime::SoraReadError::new(format!(\"invalid option presence {{}}\", value))), }}",
+                rust_decode_expr(ir, element, mapper)
+            )
+        }
+        _ => format!(
+            "<{} as super::runtime::SoraDecode>::decode(reader)?",
+            mapper.type_name(ty)
+        ),
+    }
+}
+
 fn rust_container_type(mode: TableModeIr, row_type: &str, key_type: Option<&str>) -> String {
     match mode {
         TableModeIr::List => format!("Vec<{row_type}>"),
@@ -441,71 +648,6 @@ fn rust_container_type(mode: TableModeIr, row_type: &str, key_type: Option<&str>
             None => format!("Vec<{row_type}>"),
         },
         TableModeIr::Singleton => row_type.to_owned(),
-    }
-}
-
-fn rust_key_param_type(ir: &ConfigIr, ty: &TypeIr, options: &RustCodegenOptions) -> String {
-    let type_name = rust_local_table_key_type(ir, ty, options);
-    if type_name == "String" || type_name == "std::sync::Arc<str>" {
-        "str".to_owned()
-    } else {
-        type_name
-    }
-}
-
-fn rust_local_table_key_type(ir: &ConfigIr, ty: &TypeIr, options: &RustCodegenOptions) -> String {
-    match ty {
-        TypeIr::Ref { table, field } => ir
-            .tables
-            .iter()
-            .find(|candidate| candidate.name == *table)
-            .and_then(|table| {
-                table
-                    .fields
-                    .iter()
-                    .find(|candidate| candidate.name == *field)
-            })
-            .map(|field| rust_local_table_key_type(ir, &field.ty, options))
-            .unwrap_or_else(|| rust_type_name_with_options(ir, ty, options)),
-        _ => rust_type_name_with_options(ir, ty, options),
-    }
-}
-
-fn rust_key_type_is_copy(ir: &ConfigIr, ty: &TypeIr) -> bool {
-    match ty {
-        TypeIr::Bool
-        | TypeIr::I8
-        | TypeIr::U8
-        | TypeIr::I16
-        | TypeIr::U16
-        | TypeIr::I32
-        | TypeIr::U32
-        | TypeIr::I64
-        | TypeIr::Duration
-        | TypeIr::DateTime
-        | TypeIr::F32
-        | TypeIr::F64
-        | TypeIr::Enum(_) => true,
-        TypeIr::Ref { table, field } => ir
-            .tables
-            .iter()
-            .find(|candidate| candidate.name == *table)
-            .and_then(|table| {
-                table
-                    .fields
-                    .iter()
-                    .find(|candidate| candidate.name == *field)
-            })
-            .is_some_and(|field| rust_key_type_is_copy(ir, &field.ty)),
-        TypeIr::Optional(element) => rust_key_type_is_copy(ir, element),
-        TypeIr::String
-        | TypeIr::Text
-        | TypeIr::Struct(_)
-        | TypeIr::Union(_)
-        | TypeIr::List(_)
-        | TypeIr::Set(_)
-        | TypeIr::Map { .. }
-        | TypeIr::Array { .. } => false,
     }
 }
 
@@ -534,4 +676,17 @@ fn rust_serde_with(ty: &TypeIr, options: &RustCodegenOptions) -> Option<String> 
         ),
         _ => None,
     }
+}
+
+fn ref_target_type<'a>(ir: &'a ConfigIr, table: &str, field: &str) -> Option<&'a TypeIr> {
+    ir.tables
+        .iter()
+        .find(|candidate| candidate.name == table)
+        .and_then(|table| {
+            table
+                .fields
+                .iter()
+                .find(|candidate| candidate.name == field)
+        })
+        .map(|field| &field.ty)
 }

@@ -86,7 +86,20 @@ return {
 
 `decode` wraps the normal binary runtime decode expression, and `value_decode` wraps JSON/CBOR/protobuf-style value decode. The `{value}` placeholder is replaced with the generated default expression.
 
-`imports` is target-specific and is only emitted by language generators that need it. C#, Java, Kotlin, and Scala expect an import namespace/path without the leading keyword. Go expects an import spec such as `"example.com/game/vector"`. Python, TypeScript, JavaScript, Dart, and Godot expect a complete import/preload line.
+The C target uses write-into decode functions, so C mappings should use `decode_into` instead of `decode`. The `{target}` placeholder is replaced with the output pointer expression. C mappings can also provide `free`, where `{target}` is replaced with the pointer that should be released:
+
+```lua
+{
+  target = "c",
+  schema_type = "Vec3",
+  type_name = "game_vector3",
+  decode_into = "game_vector3_decode(reader, {target})",
+  free = "game_vector3_free({target});",
+  imports = { "#include \"vector3.h\"" },
+}
+```
+
+`imports` is target-specific and is only emitted by language generators that need it. C#, Java, Kotlin, and Scala expect an import namespace/path without the leading keyword. Go expects an import spec such as `"example.com/game/vector"`. Python, TypeScript, JavaScript, Dart, Godot, C, C++, and Rust expect a complete import/include/use/preload line.
 
 `runtime_format` can be `sora`, `json`, `cbor`, or `sora-protobuf`, but not every target supports every runtime format. See [Runtime Formats](codegen/runtime-formats.md) for the support matrix.
 

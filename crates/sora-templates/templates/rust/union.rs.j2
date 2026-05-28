@@ -3,6 +3,9 @@
 {%- for import in union.imports %}
 use super::{{ import.module }}::{{ import.name }};
 {%- endfor %}
+{%- for import in union.custom_imports %}
+{{ import }}
+{%- endfor %}
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 #[serde(tag = "{{ union.tag }}")]
@@ -26,7 +29,7 @@ impl super::runtime::SoraDecode for {{ union.pascal_name }} {
 {%- for variant in union.variants %}
             {{ loop.index0 }} => Ok(Self::{{ variant.name }} {
 {%- for field in variant.fields %}
-                {{ field.name }}: <{{ field.type_name }} as super::runtime::SoraDecode>::decode(reader)?,
+                {{ field.name }}: {{ field.decode }},
 {%- endfor %}
             }),
 {%- endfor %}

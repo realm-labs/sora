@@ -7,6 +7,8 @@ pub struct TypeMapping {
     pub type_name: String,
     pub decode: Option<String>,
     pub value_decode: Option<String>,
+    pub decode_into: Option<String>,
+    pub free: Option<String>,
     pub imports: Vec<String>,
 }
 
@@ -18,11 +20,31 @@ impl TypeMapping {
     pub fn wrap_value_decode(&self, base_expr: &str) -> String {
         wrap_expr(self.value_decode.as_deref(), base_expr)
     }
+
+    pub fn wrap_decode_into(&self, base_expr: &str, target: &str) -> String {
+        wrap_expr_with_target(self.decode_into.as_deref(), base_expr, target)
+    }
+
+    pub fn wrap_free(&self, target: &str) -> Option<String> {
+        self.free
+            .as_deref()
+            .map(|template| template.replace("{target}", target))
+    }
 }
 
 fn wrap_expr(template: Option<&str>, base_expr: &str) -> String {
     template
         .map(|template| template.replace("{value}", base_expr))
+        .unwrap_or_else(|| base_expr.to_owned())
+}
+
+fn wrap_expr_with_target(template: Option<&str>, base_expr: &str, target: &str) -> String {
+    template
+        .map(|template| {
+            template
+                .replace("{value}", base_expr)
+                .replace("{target}", target)
+        })
         .unwrap_or_else(|| base_expr.to_owned())
 }
 
@@ -130,6 +152,8 @@ pub struct StaticTypeMappingRule {
     pub type_name: String,
     pub decode: Option<String>,
     pub value_decode: Option<String>,
+    pub decode_into: Option<String>,
+    pub free: Option<String>,
     pub imports: Vec<String>,
 }
 
@@ -158,6 +182,8 @@ impl TypeMappingProvider for StaticTypeMappingProvider {
                 type_name: rule.type_name.clone(),
                 decode: rule.decode.clone(),
                 value_decode: rule.value_decode.clone(),
+                decode_into: rule.decode_into.clone(),
+                free: rule.free.clone(),
                 imports: rule.imports.clone(),
             })
     }

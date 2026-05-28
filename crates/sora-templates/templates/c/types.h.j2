@@ -7,6 +7,9 @@
 {%- for enum in model.enums %}
 #include "{{ enum.snake_name }}.h"
 {%- endfor %}
+{%- for import in model.custom_imports %}
+{{ import }}
+{%- endfor %}
 
 #include <stdbool.h>
 #include <stddef.h>

@@ -14,6 +14,7 @@ use crate::{
     },
     options::{CCodegenOptions, CStandard},
     render::{ensure_dir, render_template, write_file},
+    type_mapping::{TypeMapping, TypeMappingContext, TypeMappingRegistry},
 };
 
 pub struct CCodeGenerator;
@@ -28,7 +29,9 @@ impl CodeGenerator for CCodeGenerator {
 
         let options = COptionsView::new(ir, &codegen_options)?;
         let mut helpers = CHelperRegistry::new(options.prefix.clone());
-        let model = CModel::from_base_model(ir, build_base_model(ir)?, &options, &mut helpers);
+        let mapper = CTypeMapper::new(context.target, ir, context.type_mappings, &options);
+        let model =
+            CModel::from_base_model(ir, build_base_model(ir)?, &options, &mapper, &mut helpers);
         let helpers = helpers.into_helpers();
 
         for item in &model.enums {
@@ -143,6 +146,7 @@ struct CModel {
     records: Vec<CRecord>,
     tables: Vec<CTable>,
     modules: Vec<String>,
+    custom_imports: Vec<String>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -168,6 +172,7 @@ struct CRecord {
     decode_fn: String,
     free_fn: String,
     imports: Vec<CImport>,
+    custom_imports: Vec<String>,
     fields: Vec<CField>,
     table: Option<CTable>,
 }
@@ -181,6 +186,7 @@ struct CUnion {
     decode_fn: String,
     free_fn: String,
     imports: Vec<CImport>,
+    custom_imports: Vec<String>,
     variants: Vec<CUnionVariant>,
 }
 
@@ -204,6 +210,7 @@ struct CField {
     type_name: String,
     decode: String,
     free: Option<String>,
+    imports: Vec<String>,
     comment: Option<String>,
 }
 
@@ -251,6 +258,7 @@ impl CModel {
         ir: &ConfigIr,
         model: BaseModel,
         options: &COptionsView,
+        mapper: &CTypeMapper<'_>,
         helpers: &mut CHelperRegistry,
     ) -> Self {
         let enums = model
@@ -280,7 +288,7 @@ impl CModel {
         let tables = model
             .tables
             .into_iter()
-            .map(|item| c_table(ir, item, options, helpers))
+            .map(|item| c_table(ir, item, mapper, helpers))
             .collect::<Vec<_>>();
         let records = model
             .records
@@ -290,14 +298,15 @@ impl CModel {
                     .iter()
                     .find(|table| table.snake_name == item.snake_name)
                     .cloned();
-                c_record(ir, item, options, helpers, table)
+                c_record(ir, item, mapper, helpers, table)
             })
-            .collect();
+            .collect::<Vec<_>>();
         let unions = model
             .unions
             .into_iter()
-            .map(|item| c_union(ir, item, options, helpers))
-            .collect();
+            .map(|item| c_union(ir, item, mapper, helpers))
+            .collect::<Vec<_>>();
+        let custom_imports = collect_c_model_imports(&records, &unions);
 
         Self {
             schema_fingerprint: model.schema_fingerprint,
@@ -306,6 +315,7 @@ impl CModel {
             records,
             tables,
             modules: model.modules,
+            custom_imports,
         }
     }
 }
@@ -313,22 +323,25 @@ impl CModel {
 fn c_record(
     ir: &ConfigIr,
     record: BaseRecord,
-    options: &COptionsView,
+    mapper: &CTypeMapper<'_>,
     helpers: &mut CHelperRegistry,
     table: Option<CTable>,
 ) -> CRecord {
+    let fields = record
+        .fields
+        .into_iter()
+        .map(|field| c_field(ir, field, mapper, helpers))
+        .collect::<Vec<_>>();
+    let custom_imports = collect_c_imports(fields.iter());
     CRecord {
         pascal_name: record.pascal_name,
-        type_name: c_named_type(options, &record.snake_name),
-        decode_fn: c_decode_fn(options, &record.snake_name),
-        free_fn: c_free_fn(options, &record.snake_name),
+        type_name: c_named_type(mapper.options, &record.snake_name),
+        decode_fn: c_decode_fn(mapper.options, &record.snake_name),
+        free_fn: c_free_fn(mapper.options, &record.snake_name),
         snake_name: record.snake_name,
         imports: record.imports.into_iter().map(c_import).collect(),
-        fields: record
-            .fields
-            .into_iter()
-            .map(|field| c_field(ir, field, options, helpers))
-            .collect(),
+        custom_imports,
+        fields,
         table,
     }
 }
@@ -336,23 +349,26 @@ fn c_record(
 fn c_union(
     ir: &ConfigIr,
     union: BaseUnion,
-    options: &COptionsView,
+    mapper: &CTypeMapper<'_>,
     helpers: &mut CHelperRegistry,
 ) -> CUnion {
     let snake_name = union.snake_name;
+    let variants = union
+        .variants
+        .into_iter()
+        .map(|variant| c_variant(ir, &snake_name, variant, mapper, helpers))
+        .collect::<Vec<_>>();
+    let custom_imports = collect_c_imports(variants.iter().flat_map(|variant| &variant.fields));
     CUnion {
         pascal_name: union.pascal_name,
-        type_name: c_named_type(options, &snake_name),
-        tag_type_name: format!("{}_tag", c_named_type(options, &snake_name)),
-        decode_fn: c_decode_fn(options, &snake_name),
-        free_fn: c_free_fn(options, &snake_name),
+        type_name: c_named_type(mapper.options, &snake_name),
+        tag_type_name: format!("{}_tag", c_named_type(mapper.options, &snake_name)),
+        decode_fn: c_decode_fn(mapper.options, &snake_name),
+        free_fn: c_free_fn(mapper.options, &snake_name),
         snake_name: snake_name.clone(),
         imports: union.imports.into_iter().map(c_import).collect(),
-        variants: union
-            .variants
-            .into_iter()
-            .map(|variant| c_variant(ir, &snake_name, variant, options, helpers))
-            .collect(),
+        custom_imports,
+        variants,
     }
 }
 
@@ -360,13 +376,13 @@ fn c_variant(
     ir: &ConfigIr,
     union_name: &str,
     variant: BaseUnionVariant,
-    options: &COptionsView,
+    mapper: &CTypeMapper<'_>,
     helpers: &mut CHelperRegistry,
 ) -> CUnionVariant {
     CUnionVariant {
         tag_name: format!(
             "{}_{}_{}",
-            options.prefix_upper,
+            mapper.options.prefix_upper,
             union_name.to_shouty_snake_case(),
             variant.snake_name.to_shouty_snake_case()
         ),
@@ -376,7 +392,7 @@ fn c_variant(
             .fields
             .into_iter()
             .map(|field| {
-                let mut field = c_field(ir, field, options, helpers);
+                let mut field = c_field(ir, field, mapper, helpers);
                 field.decode = field
                     .decode
                     .replace("&out->", &format!("&out->value.{}.", variant.snake_name));
@@ -392,10 +408,10 @@ fn c_variant(
 fn c_field(
     ir: &ConfigIr,
     field: BaseField,
-    options: &COptionsView,
+    mapper: &CTypeMapper<'_>,
     helpers: &mut CHelperRegistry,
 ) -> CField {
-    let ty = c_type_name(ir, &field.ty, options, helpers);
+    let ty = c_type_name(ir, &field.ty, mapper, helpers);
     CField {
         raw_name: field.raw_name,
         name: field.snake_name.clone(),
@@ -404,18 +420,43 @@ fn c_field(
             ir,
             &field.ty,
             &format!("&out->{}", field.snake_name),
-            options,
+            mapper,
             helpers,
         ),
         free: c_free_into(
             ir,
             &field.ty,
             &format!("&value->{}", field.snake_name),
-            options,
+            mapper,
             helpers,
         ),
+        imports: mapper.imports(&field.ty),
         comment: field.comment,
     }
+}
+
+fn collect_c_imports<'a>(fields: impl Iterator<Item = &'a CField>) -> Vec<String> {
+    let mut imports = fields
+        .flat_map(|field| field.imports.iter().cloned())
+        .collect::<Vec<_>>();
+    imports.sort();
+    imports.dedup();
+    imports
+}
+
+fn collect_c_model_imports(records: &[CRecord], unions: &[CUnion]) -> Vec<String> {
+    let mut imports = records
+        .iter()
+        .flat_map(|record| record.custom_imports.iter().cloned())
+        .chain(
+            unions
+                .iter()
+                .flat_map(|union| union.custom_imports.iter().cloned()),
+        )
+        .collect::<Vec<_>>();
+    imports.sort();
+    imports.dedup();
+    imports
 }
 
 fn c_import(import: BaseImport) -> CImport {
@@ -427,17 +468,17 @@ fn c_import(import: BaseImport) -> CImport {
 fn c_table(
     ir: &ConfigIr,
     table: BaseTable,
-    options: &COptionsView,
+    mapper: &CTypeMapper<'_>,
     helpers: &mut CHelperRegistry,
 ) -> CTable {
     let key_type = table
         .key_field
         .as_ref()
-        .map(|field| c_type_name(ir, &field.ty, options, helpers));
+        .map(|field| c_type_name(ir, &field.ty, mapper, helpers));
     let key_param_decl = table
         .key_field
         .as_ref()
-        .map(|field| c_param_decl(ir, &field.ty, "key", options, helpers));
+        .map(|field| c_param_decl(ir, &field.ty, "key", mapper, helpers));
     let key_match_expr = table
         .key_field
         .as_ref()
@@ -445,10 +486,10 @@ fn c_table(
 
     CTable {
         name: table.name,
-        table_type: format!("{}_{}_table", options.prefix, table.snake_name),
-        table_load_fn: format!("{}_{}_table_load", options.prefix, table.snake_name),
-        table_free_fn: format!("{}_{}_table_free", options.prefix, table.snake_name),
-        row_type: c_named_type(options, &table.snake_name),
+        table_type: format!("{}_{}_table", mapper.options.prefix, table.snake_name),
+        table_load_fn: format!("{}_{}_table_load", mapper.options.prefix, table.snake_name),
+        table_free_fn: format!("{}_{}_table_free", mapper.options.prefix, table.snake_name),
+        row_type: c_named_type(mapper.options, &table.snake_name),
         mode: table.mode_name,
         rows_field: format!("{}_rows", table.snake_name),
         len_field: format!("{}_len", table.snake_name),
@@ -462,12 +503,12 @@ fn c_table(
         unique_indexes: table
             .unique_indexes
             .into_iter()
-            .map(|index| c_index(ir, index, options, helpers))
+            .map(|index| c_index(ir, index, mapper, helpers))
             .collect(),
         non_unique_indexes: table
             .non_unique_indexes
             .into_iter()
-            .map(|index| c_index(ir, index, options, helpers))
+            .map(|index| c_index(ir, index, mapper, helpers))
             .collect(),
         snake_name: table.snake_name,
     }
@@ -476,7 +517,7 @@ fn c_table(
 fn c_index(
     ir: &ConfigIr,
     index: BaseIndex,
-    options: &COptionsView,
+    mapper: &CTypeMapper<'_>,
     helpers: &mut CHelperRegistry,
 ) -> CIndex {
     let param_name = index.field.snake_name.clone();
@@ -484,8 +525,8 @@ fn c_index(
         name: index.snake_name,
         method_name: index.method_name,
         field_name: index.field.snake_name.clone(),
-        key_type: c_type_name(ir, &index.field.ty, options, helpers),
-        param_decl: c_param_decl(ir, &index.field.ty, &param_name, options, helpers),
+        key_type: c_type_name(ir, &index.field.ty, mapper, helpers),
+        param_decl: c_param_decl(ir, &index.field.ty, &param_name, mapper, helpers),
         match_expr: c_key_match_expr(
             ir,
             &index.field.ty,
@@ -519,9 +560,9 @@ impl CHelperRegistry {
         ir: &ConfigIr,
         ty: &TypeIr,
         fixed_len: Option<usize>,
-        options: &COptionsView,
+        mapper: &CTypeMapper<'_>,
     ) -> String {
-        let element_type = c_type_name(ir, ty, options, self);
+        let element_type = c_type_name(ir, ty, mapper, self);
         let suffix = c_type_suffix(ir, ty);
         let name = match fixed_len {
             Some(len) => format!("{}_{}_array_{len}", self.prefix, suffix),
@@ -532,11 +573,11 @@ impl CHelperRegistry {
         }
         let decode_fn = format!("{name}_decode");
         let free_fn = format!("{name}_free");
-        let element_decode = c_decode_into(ir, ty, "&out->data[index]", options, self);
+        let element_decode = c_decode_into(ir, ty, "&out->data[index]", mapper, self);
         let element_free_out =
-            c_free_into(ir, ty, "&out->data[index]", options, self).unwrap_or_default();
+            c_free_into(ir, ty, "&out->data[index]", mapper, self).unwrap_or_default();
         let element_free_value =
-            c_free_into(ir, ty, "&value->data[index]", options, self).unwrap_or_default();
+            c_free_into(ir, ty, "&value->data[index]", mapper, self).unwrap_or_default();
         let len_check = fixed_len
             .map(|len| {
                 format!(
@@ -611,10 +652,10 @@ void {free_fn}({name}* value) {{
         ir: &ConfigIr,
         key: &TypeIr,
         value: &TypeIr,
-        options: &COptionsView,
+        mapper: &CTypeMapper<'_>,
     ) -> String {
-        let key_type = c_type_name(ir, key, options, self);
-        let value_type = c_type_name(ir, value, options, self);
+        let key_type = c_type_name(ir, key, mapper, self);
+        let value_type = c_type_name(ir, value, mapper, self);
         let key_suffix = c_type_suffix(ir, key);
         let value_suffix = c_type_suffix(ir, value);
         let name = format!("{}_{}_{}_map", self.prefix, key_suffix, value_suffix);
@@ -624,20 +665,20 @@ void {free_fn}({name}* value) {{
         let entry_name = format!("{name}_entry");
         let decode_fn = format!("{name}_decode");
         let free_fn = format!("{name}_free");
-        let key_decode = c_decode_into(ir, key, "&out->data[index].key", options, self);
-        let value_decode = c_decode_into(ir, value, "&out->data[index].value", options, self);
+        let key_decode = c_decode_into(ir, key, "&out->data[index].key", mapper, self);
+        let value_decode = c_decode_into(ir, value, "&out->data[index].value", mapper, self);
         let key_free_out =
-            c_free_into(ir, key, "&out->data[index].key", options, self).unwrap_or_default();
+            c_free_into(ir, key, "&out->data[index].key", mapper, self).unwrap_or_default();
         let value_free_out =
-            c_free_into(ir, value, "&out->data[index].value", options, self).unwrap_or_default();
+            c_free_into(ir, value, "&out->data[index].value", mapper, self).unwrap_or_default();
         let key_free_cleanup =
-            c_free_into(ir, key, "&out->data[cleanup].key", options, self).unwrap_or_default();
+            c_free_into(ir, key, "&out->data[cleanup].key", mapper, self).unwrap_or_default();
         let value_free_cleanup =
-            c_free_into(ir, value, "&out->data[cleanup].value", options, self).unwrap_or_default();
+            c_free_into(ir, value, "&out->data[cleanup].value", mapper, self).unwrap_or_default();
         let key_free_value =
-            c_free_into(ir, key, "&value->data[index].key", options, self).unwrap_or_default();
+            c_free_into(ir, key, "&value->data[index].key", mapper, self).unwrap_or_default();
         let value_free_value =
-            c_free_into(ir, value, "&value->data[index].value", options, self).unwrap_or_default();
+            c_free_into(ir, value, "&value->data[index].value", mapper, self).unwrap_or_default();
         let implementation = format!(
             r#"sora_result {decode_fn}(sora_reader* reader, {name}* out) {{
     uint32_t length = 0;
@@ -701,8 +742,8 @@ void {free_fn}({name}* value) {{
         name
     }
 
-    fn ensure_optional(&mut self, ir: &ConfigIr, ty: &TypeIr, options: &COptionsView) -> String {
-        let value_type = c_type_name(ir, ty, options, self);
+    fn ensure_optional(&mut self, ir: &ConfigIr, ty: &TypeIr, mapper: &CTypeMapper<'_>) -> String {
+        let value_type = c_type_name(ir, ty, mapper, self);
         let suffix = c_type_suffix(ir, ty);
         let name = format!("{}_optional_{}", self.prefix, suffix);
         if self.helpers.contains_key(&name) {
@@ -710,10 +751,10 @@ void {free_fn}({name}* value) {{
         }
         let decode_fn = format!("{name}_decode");
         let free_fn = format!("{name}_free");
-        let value_decode = c_decode_into(ir, ty, "out->value", options, self);
-        let value_free_out = c_free_into(ir, ty, "out->value", options, self).unwrap_or_default();
+        let value_decode = c_decode_into(ir, ty, "out->value", mapper, self);
+        let value_free_out = c_free_into(ir, ty, "out->value", mapper, self).unwrap_or_default();
         let value_free_value =
-            c_free_into(ir, ty, "value->value", options, self).unwrap_or_default();
+            c_free_into(ir, ty, "value->value", mapper, self).unwrap_or_default();
         let implementation = format!(
             r#"sora_result {decode_fn}(sora_reader* reader, {name}* out) {{
     uint8_t presence = 0;
@@ -779,12 +820,51 @@ fn indent_optional_statement(statement: &str, spaces: usize) -> String {
         .collect()
 }
 
+struct CTypeMapper<'a> {
+    target: &'a str,
+    ir: &'a ConfigIr,
+    mappings: &'a TypeMappingRegistry,
+    options: &'a COptionsView,
+}
+
+impl<'a> CTypeMapper<'a> {
+    fn new(
+        target: &'a str,
+        ir: &'a ConfigIr,
+        mappings: &'a TypeMappingRegistry,
+        options: &'a COptionsView,
+    ) -> Self {
+        Self {
+            target,
+            ir,
+            mappings,
+            options,
+        }
+    }
+
+    fn imports(&self, ty: &TypeIr) -> Vec<String> {
+        self.mappings.imports_for(self.target, self.ir, ty)
+    }
+
+    fn mapping(&self, ty: &TypeIr) -> Option<TypeMapping> {
+        self.mappings.map_type(TypeMappingContext {
+            target: self.target,
+            ir: self.ir,
+            ty,
+        })
+    }
+}
+
 fn c_type_name(
     ir: &ConfigIr,
     ty: &TypeIr,
-    options: &COptionsView,
+    mapper: &CTypeMapper<'_>,
     helpers: &mut CHelperRegistry,
 ) -> String {
+    if let Some(mapping) = mapper.mapping(ty) {
+        return mapping.type_name;
+    }
+
     match ty {
         TypeIr::Bool => "bool".to_owned(),
         TypeIr::I8 => "int8_t".to_owned(),
@@ -799,19 +879,19 @@ fn c_type_name(
         TypeIr::String => "sora_string".to_owned(),
         TypeIr::Text => "sora_text_key".to_owned(),
         TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => {
-            c_named_type(options, &name.to_snake_case())
+            c_named_type(mapper.options, &name.to_snake_case())
         }
         TypeIr::List(element) | TypeIr::Set(element) => {
-            helpers.ensure_collection(ir, element, None, options)
+            helpers.ensure_collection(ir, element, None, mapper)
         }
-        TypeIr::Map { key, value } => helpers.ensure_map(ir, key, value, options),
+        TypeIr::Map { key, value } => helpers.ensure_map(ir, key, value, mapper),
         TypeIr::Array { element, len } => {
-            helpers.ensure_collection(ir, element, Some(*len), options)
+            helpers.ensure_collection(ir, element, Some(*len), mapper)
         }
         TypeIr::Ref { table, field } => ref_field_type(ir, table, field)
-            .map(|field| c_type_name(ir, &field.ty, options, helpers))
+            .map(|field| c_type_name(ir, &field.ty, mapper, helpers))
             .unwrap_or_else(|| "int32_t".to_owned()),
-        TypeIr::Optional(element) => helpers.ensure_optional(ir, element, options),
+        TypeIr::Optional(element) => helpers.ensure_optional(ir, element, mapper),
     }
 }
 
@@ -852,9 +932,22 @@ fn c_decode_into(
     ir: &ConfigIr,
     ty: &TypeIr,
     target: &str,
-    options: &COptionsView,
+    mapper: &CTypeMapper<'_>,
     helpers: &mut CHelperRegistry,
 ) -> String {
+    if let Some(mapping) = mapper.mapping(ty) {
+        let base_expr = match ty {
+            TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => {
+                format!(
+                    "{}(reader, {target})",
+                    c_decode_fn(mapper.options, &name.to_snake_case())
+                )
+            }
+            _ => String::new(),
+        };
+        return mapping.wrap_decode_into(&base_expr, target);
+    }
+
     match ty {
         TypeIr::Bool => format!("sora_reader_read_bool(reader, {target})"),
         TypeIr::I8 => format!("sora_reader_read_i8(reader, {target})"),
@@ -873,7 +966,7 @@ fn c_decode_into(
         TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => {
             format!(
                 "{}(reader, {target})",
-                c_decode_fn(options, &name.to_snake_case())
+                c_decode_fn(mapper.options, &name.to_snake_case())
             )
         }
         TypeIr::List(_)
@@ -881,11 +974,11 @@ fn c_decode_into(
         | TypeIr::Map { .. }
         | TypeIr::Array { .. }
         | TypeIr::Optional(_) => {
-            let helper = c_type_name(ir, ty, options, helpers);
+            let helper = c_type_name(ir, ty, mapper, helpers);
             format!("{helper}_decode(reader, {target})")
         }
         TypeIr::Ref { table, field } => ref_field_type(ir, table, field)
-            .map(|field| c_decode_into(ir, &field.ty, target, options, helpers))
+            .map(|field| c_decode_into(ir, &field.ty, target, mapper, helpers))
             .unwrap_or_else(|| format!("sora_reader_read_i32(reader, {target})")),
     }
 }
@@ -894,26 +987,30 @@ fn c_free_into(
     ir: &ConfigIr,
     ty: &TypeIr,
     target: &str,
-    options: &COptionsView,
+    mapper: &CTypeMapper<'_>,
     helpers: &mut CHelperRegistry,
 ) -> Option<String> {
+    if let Some(mapping) = mapper.mapping(ty) {
+        return mapping.wrap_free(target);
+    }
+
     match ty {
         TypeIr::String => Some(format!("sora_string_free({target});")),
         TypeIr::Text => Some(format!("sora_text_key_free({target});")),
         TypeIr::Struct(name) | TypeIr::Union(name) => Some(format!(
             "{}({target});",
-            c_free_fn(options, &name.to_snake_case())
+            c_free_fn(mapper.options, &name.to_snake_case())
         )),
         TypeIr::List(_)
         | TypeIr::Set(_)
         | TypeIr::Map { .. }
         | TypeIr::Array { .. }
         | TypeIr::Optional(_) => {
-            let helper = c_type_name(ir, ty, options, helpers);
+            let helper = c_type_name(ir, ty, mapper, helpers);
             Some(format!("{helper}_free({target});"))
         }
         TypeIr::Ref { table, field } => ref_field_type(ir, table, field)
-            .and_then(|field| c_free_into(ir, &field.ty, target, options, helpers)),
+            .and_then(|field| c_free_into(ir, &field.ty, target, mapper, helpers)),
         TypeIr::Bool
         | TypeIr::I8
         | TypeIr::U8
@@ -934,10 +1031,10 @@ fn c_param_decl(
     ir: &ConfigIr,
     ty: &TypeIr,
     name: &str,
-    options: &COptionsView,
+    mapper: &CTypeMapper<'_>,
     helpers: &mut CHelperRegistry,
 ) -> String {
-    let type_name = c_type_name(ir, ty, options, helpers);
+    let type_name = c_type_name(ir, ty, mapper, helpers);
     if c_type_is_pointer_param(ir, ty) {
         format!("const {type_name}* {name}")
     } else {

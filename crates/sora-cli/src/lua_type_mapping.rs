@@ -130,6 +130,8 @@ fn lua_mapping_rule(path: &Path, table: Table) -> Result<StaticTypeMappingRule> 
         type_name,
         decode: optional_string(&table, "decode")?,
         value_decode: optional_string(&table, "value_decode")?,
+        decode_into: optional_string(&table, "decode_into")?,
+        free: optional_string(&table, "free")?,
         imports: optional_string_list(&table, "imports")?,
     })
 }
@@ -200,6 +202,8 @@ return {
       type_name = "Vector3",
       decode = "GameMappings.ToVector3({value})",
       value_decode = "GameMappings.ToVector3({value})",
+      decode_into = "game_vector3_decode(reader, {target})",
+      free = "game_vector3_free({target});",
       imports = { "UnityEngine" },
     },
   },
@@ -212,6 +216,14 @@ return {
         assert_eq!(rules[0].target, "csharp");
         assert_eq!(rules[0].schema_type, "Vec3");
         assert_eq!(rules[0].type_name, "Vector3");
+        assert_eq!(
+            rules[0].decode_into.as_deref(),
+            Some("game_vector3_decode(reader, {target})")
+        );
+        assert_eq!(
+            rules[0].free.as_deref(),
+            Some("game_vector3_free({target});")
+        );
         assert_eq!(rules[0].imports, ["UnityEngine"]);
     }
 }

@@ -6,6 +6,9 @@
 {%- for import in record.imports %}
 #include "{{ import.module }}.hpp"
 {%- endfor %}
+{%- for import in record.custom_imports %}
+{{ import }}
+{%- endfor %}
 {%- if record.table %}
 
 #include <unordered_map>

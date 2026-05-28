@@ -1,5 +1,7 @@
 use super::*;
 use crate::{
+    c::CCodeGenerator,
+    cpp::CppCodeGenerator,
     csharp::CSharpCodeGenerator,
     dart::DartCodeGenerator,
     erlang::ErlangCodeGenerator,
@@ -320,6 +322,9 @@ fn generators_apply_custom_type_mappings() {
     let godot_out = base.join("godot");
     let erlang_out = base.join("erlang");
     let lua_out = base.join("lua");
+    let rust_out = base.join("rust");
+    let cpp_out = base.join("cpp");
+    let c_out = base.join("c");
     let mut mappings = TypeMappingRegistry::new();
     mappings.register(StaticTypeMappingProvider::new(vec![
         StaticTypeMappingRule {
@@ -328,6 +333,8 @@ fn generators_apply_custom_type_mappings() {
             type_name: "Vector3".to_owned(),
             decode: Some("GameMappings.ToVector3({value})".to_owned()),
             value_decode: Some("GameMappings.ToVector3({value})".to_owned()),
+            decode_into: None,
+            free: None,
             imports: vec!["UnityEngine".to_owned()],
         },
         StaticTypeMappingRule {
@@ -336,6 +343,8 @@ fn generators_apply_custom_type_mappings() {
             type_name: "Vector3".to_owned(),
             decode: Some("GameMappings.toVector3({value})".to_owned()),
             value_decode: Some("GameMappings.toVector3({value})".to_owned()),
+            decode_into: None,
+            free: None,
             imports: vec!["game.Vector3".to_owned()],
         },
         StaticTypeMappingRule {
@@ -344,6 +353,8 @@ fn generators_apply_custom_type_mappings() {
             type_name: "Vector3".to_owned(),
             decode: Some("GameMappings.toVector3({value})".to_owned()),
             value_decode: Some("GameMappings.toVector3({value})".to_owned()),
+            decode_into: None,
+            free: None,
             imports: vec!["game.Vector3".to_owned()],
         },
         StaticTypeMappingRule {
@@ -352,6 +363,8 @@ fn generators_apply_custom_type_mappings() {
             type_name: "vector.Vector3".to_owned(),
             decode: Some("toVec3({value})".to_owned()),
             value_decode: Some("toVec3({value})".to_owned()),
+            decode_into: None,
+            free: None,
             imports: vec!["\"game/vector\"".to_owned()],
         },
         StaticTypeMappingRule {
@@ -360,6 +373,8 @@ fn generators_apply_custom_type_mappings() {
             type_name: "Vector3".to_owned(),
             decode: Some("to_vec3({value})".to_owned()),
             value_decode: Some("to_vec3({value})".to_owned()),
+            decode_into: None,
+            free: None,
             imports: vec!["from game import Vector3".to_owned()],
         },
         StaticTypeMappingRule {
@@ -368,6 +383,8 @@ fn generators_apply_custom_type_mappings() {
             type_name: "Vector3".to_owned(),
             decode: Some("toVec3({value})".to_owned()),
             value_decode: Some("toVec3({value})".to_owned()),
+            decode_into: None,
+            free: None,
             imports: vec!["import { toVec3, type Vector3 } from \"./vector3.js\";".to_owned()],
         },
         StaticTypeMappingRule {
@@ -376,6 +393,8 @@ fn generators_apply_custom_type_mappings() {
             type_name: "Vector3".to_owned(),
             decode: Some("toVec3({value})".to_owned()),
             value_decode: Some("toVec3({value})".to_owned()),
+            decode_into: None,
+            free: None,
             imports: Vec::new(),
         },
         StaticTypeMappingRule {
@@ -384,6 +403,8 @@ fn generators_apply_custom_type_mappings() {
             type_name: "Vector3".to_owned(),
             decode: Some("GameMappings.toVector3({value})".to_owned()),
             value_decode: Some("GameMappings.toVector3({value})".to_owned()),
+            decode_into: None,
+            free: None,
             imports: vec!["game.Vector3".to_owned()],
         },
         StaticTypeMappingRule {
@@ -392,6 +413,8 @@ fn generators_apply_custom_type_mappings() {
             type_name: "Vector3".to_owned(),
             decode: None,
             value_decode: Some("toVec3({value})".to_owned()),
+            decode_into: None,
+            free: None,
             imports: vec!["import 'vector3.dart';".to_owned()],
         },
         StaticTypeMappingRule {
@@ -400,6 +423,8 @@ fn generators_apply_custom_type_mappings() {
             type_name: "Vector3".to_owned(),
             decode: None,
             value_decode: Some("Vector3Codec.decode({value})".to_owned()),
+            decode_into: None,
+            free: None,
             imports: vec!["const Vector3Codec = preload(\"res://vector3_codec.gd\")".to_owned()],
         },
         StaticTypeMappingRule {
@@ -408,6 +433,8 @@ fn generators_apply_custom_type_mappings() {
             type_name: "vector3:t()".to_owned(),
             decode: Some("fun(Reader) -> vector3:decode_from({value}, Reader) end".to_owned()),
             value_decode: Some("vector3:decode_value({value})".to_owned()),
+            decode_into: None,
+            free: None,
             imports: Vec::new(),
         },
         StaticTypeMappingRule {
@@ -416,7 +443,39 @@ fn generators_apply_custom_type_mappings() {
             type_name: "UnityVector3".to_owned(),
             decode: Some("to_vec3({value})".to_owned()),
             value_decode: Some("to_vec3({value})".to_owned()),
+            decode_into: None,
+            free: None,
             imports: Vec::new(),
+        },
+        StaticTypeMappingRule {
+            target: "rust".to_owned(),
+            schema_type: "Vec3".to_owned(),
+            type_name: "Vector3".to_owned(),
+            decode: Some("Vector3::from_sora({value})".to_owned()),
+            value_decode: None,
+            decode_into: None,
+            free: None,
+            imports: vec!["use crate::math::Vector3;".to_owned()],
+        },
+        StaticTypeMappingRule {
+            target: "cpp".to_owned(),
+            schema_type: "Vec3".to_owned(),
+            type_name: "Vector3".to_owned(),
+            decode: Some("Vector3::from_sora({value})".to_owned()),
+            value_decode: None,
+            decode_into: None,
+            free: None,
+            imports: vec!["#include \"vector3.hpp\"".to_owned()],
+        },
+        StaticTypeMappingRule {
+            target: "c".to_owned(),
+            schema_type: "Vec3".to_owned(),
+            type_name: "game_vector3".to_owned(),
+            decode: None,
+            value_decode: None,
+            decode_into: Some("game_vector3_decode(reader, {target})".to_owned()),
+            free: Some("game_vector3_free({target});".to_owned()),
+            imports: vec!["#include \"vector3.h\"".to_owned()],
         },
     ]));
 
@@ -507,6 +566,16 @@ fn generators_apply_custom_type_mappings() {
         &erlang_out,
     );
     generate_with_mappings(&LuaCodeGenerator, "lua", &ir, &options, &mappings, &lua_out);
+    generate_with_mappings(
+        &RustCodeGenerator,
+        "rust",
+        &ir,
+        &options,
+        &mappings,
+        &rust_out,
+    );
+    generate_with_mappings(&CppCodeGenerator, "cpp", &ir, &options, &mappings, &cpp_out);
+    generate_with_mappings(&CCodeGenerator, "c", &ir, &options, &mappings, &c_out);
 
     let csharp_spawn = std::fs::read_to_string(csharp_out.join("Spawn.cs")).unwrap();
     let kotlin_spawn = std::fs::read_to_string(kotlin_out.join("game_config/Spawn.kt")).unwrap();
@@ -520,6 +589,11 @@ fn generators_apply_custom_type_mappings() {
     let godot_spawn = std::fs::read_to_string(godot_out.join("spawn.gd")).unwrap();
     let erlang_spawn = std::fs::read_to_string(erlang_out.join("spawn.erl")).unwrap();
     let lua_spawn = std::fs::read_to_string(lua_out.join("spawn.lua")).unwrap();
+    let rust_spawn = std::fs::read_to_string(rust_out.join("spawn.rs")).unwrap();
+    let cpp_spawn = std::fs::read_to_string(cpp_out.join("spawn.hpp")).unwrap();
+    let c_spawn = std::fs::read_to_string(c_out.join("spawn.h")).unwrap();
+    let c_spawn_impl = std::fs::read_to_string(c_out.join("spawn.c")).unwrap();
+    let c_types = std::fs::read_to_string(c_out.join("sora_types.h")).unwrap();
 
     assert!(csharp_spawn.contains("using UnityEngine;"));
     assert!(csharp_spawn.contains("Vector3 Position"));
@@ -570,6 +644,26 @@ fn generators_apply_custom_type_mappings() {
     assert!(
         lua_spawn.contains("reader:read_list(function() return to_vec3(Vec3.decode(reader)) end)")
     );
+    assert!(rust_spawn.contains("use crate::math::Vector3;"));
+    assert!(rust_spawn.contains("pub position: Vector3"));
+    assert!(rust_spawn.contains("pub path: Vec<Vector3>"));
+    assert!(rust_spawn.contains(
+        "position: Vector3::from_sora(<Vec3 as super::runtime::SoraDecode>::decode(reader)?)"
+    ));
+    assert!(rust_spawn.contains(
+        "values.push(Vector3::from_sora(<Vec3 as super::runtime::SoraDecode>::decode(reader)?));"
+    ));
+    assert!(cpp_spawn.contains("#include \"vector3.hpp\""));
+    assert!(cpp_spawn.contains("Vector3 position;"));
+    assert!(cpp_spawn.contains("std::vector<Vector3> path;"));
+    assert!(cpp_spawn.contains("Vector3::from_sora(Vec3::decode(reader))"));
+    assert!(cpp_spawn.contains("values.push_back(Vector3::from_sora(Vec3::decode(reader)));"));
+    assert!(c_spawn.contains("#include \"vector3.h\""));
+    assert!(c_spawn.contains("game_vector3 position;"));
+    assert!(c_spawn.contains("game_config_vec3_array path;"));
+    assert!(c_spawn_impl.contains("game_vector3_decode(reader, &out->position)"));
+    assert!(c_spawn_impl.contains("game_vector3_free(&value->position);"));
+    assert!(c_types.contains("#include \"vector3.h\""));
 
     let _ = std::fs::remove_dir_all(base);
 }
