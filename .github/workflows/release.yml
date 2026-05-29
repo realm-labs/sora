@@ -196,7 +196,7 @@ jobs:
           Set-Content -Path $checksum -Value "$hash  $archiveName"
 
       - name: Upload packaged asset
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: sora-${{ needs.prepare.outputs.tag }}-${{ matrix.package_suffix }}
           path: |
