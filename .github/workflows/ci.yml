@@ -111,7 +111,7 @@ jobs:
         with:
           otp-version: "27.2"
 
-      - uses: leafo/gh-actions-lua@v11
+      - uses: leafo/gh-actions-lua@v13
         with:
           luaVersion: "5.4"
 
@@ -147,7 +147,7 @@ jobs:
         with:
           otp-version: "27.2"
 
-      - uses: leafo/gh-actions-lua@v11
+      - uses: leafo/gh-actions-lua@v13
         with:
           luaVersion: "5.4"
 
