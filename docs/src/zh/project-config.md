@@ -76,6 +76,7 @@ return {
       target = "csharp",
       schema_type = "Vec3",
       type_name = "Vector3",
+      nullable_type_name = "Vector3?",
       decode = "GameMappings.ToVector3({value})",
       value_decode = "GameMappings.ToVector3({value})",
       imports = { "UnityEngine" },
@@ -83,6 +84,8 @@ return {
   },
 }
 ```
+
+`nullable_type_name` 是可选字段。当 `optional<schema_type>` 需要不同于后端默认 nullable wrapper 的目标语言类型表达式时使用它。
 
 `decode` 包裹默认的 binary runtime decode 表达式，`value_decode` 包裹 JSON/CBOR/protobuf 风格的 value decode 表达式。`{value}` 会替换成生成器默认生成的表达式。
 
@@ -110,7 +113,7 @@ C target 使用写入目标指针的 decode 函数，所以 C 映射应使用 `d
 | `rust` | `runtime_format` 默认 `sora`；`map_type = "std"` 或 `"fx_hash_map"`，默认 `std`；`string_storage = "owned"` 或 `"arc"`，默认 `owned`。 |
 | `kotlin` | `runtime_format` 默认 `sora`。 |
 | `csharp` | `runtime_format` 默认 `sora`。 |
-| `java` | `runtime_format` 默认 `sora`。 |
+| `java` | `runtime_format` 默认 `sora`；`nullable_annotation` 默认 `SoraNullable`，也可以设置成 `org.jetbrains.annotations.Nullable` 这类 annotation class，或设置为 `""` 禁用 annotation。 |
 | `scala` | `runtime_format` 默认 `sora`；`scala_version = "2.12"`、`"2.13"` 或 `"3"`，默认 `3`。 |
 | `go` | `runtime_format` 默认 `sora`。 |
 | `dart` | `runtime_format = "json"`、`"cbor"` 或 `"sora-protobuf"`。建议显式设置；Dart 不支持 `sora`。 |

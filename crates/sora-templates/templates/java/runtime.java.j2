@@ -26,7 +26,21 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.function.Supplier;
+{%- if nullable_import %}
+import {{ nullable_import }};
+{%- endif %}
 
+{%- if emit_sora_nullable %}
+@java.lang.annotation.Retention(java.lang.annotation.RetentionPolicy.CLASS)
+@java.lang.annotation.Target({
+    java.lang.annotation.ElementType.FIELD,
+    java.lang.annotation.ElementType.METHOD,
+    java.lang.annotation.ElementType.PARAMETER,
+    java.lang.annotation.ElementType.TYPE_USE
+})
+@interface SoraNullable {}
+
+{%- endif %}
 final class SoraReadException extends RuntimeException {
     SoraReadException(String message) {
         super(message);
@@ -115,6 +129,9 @@ final class LocalePack {
         return locale;
     }
 
+{%- if nullable_annotation %}
+    @{{ nullable_annotation }}
+{%- endif %}
     String get(TextKey key) {
         return translations.get(key.value);
     }

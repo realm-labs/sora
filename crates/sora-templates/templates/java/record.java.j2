@@ -15,12 +15,15 @@ public final class {{ record.pascal_name }} {
 {%- if field.comment %}
     /** {{ field.comment }} */
 {%- endif %}
+{%- if field.nullable_annotation %}
+    @{{ field.nullable_annotation }}
+{%- endif %}
     public final {{ field.type_name }} {{ field.name }};
 {%- endfor %}
 
     public {{ record.pascal_name }}(
 {%- for field in record.fields %}
-        {{ field.type_name }} {{ field.name }}{% if not loop.last %},{% endif %}
+        {% if field.nullable_annotation %}@{{ field.nullable_annotation }} {% endif %}{{ field.type_name }} {{ field.name }}{% if not loop.last %},{% endif %}
 {%- endfor %}
     ) {
 {%- for field in record.fields %}
@@ -155,6 +158,9 @@ final class {{ table.pascal_name }}Table {% if table.mode == "map" and table.key
 
 {%- if table.mode == "map" and table.key_field_name %}
     @Override
+{%- if table.nullable_annotation %}
+    @{{ table.nullable_annotation }}
+{%- endif %}
     public {{ table.row_type }} get(Object key) {
         return rows.get(key);
     }
@@ -187,6 +193,9 @@ final class {{ table.pascal_name }}Table {% if table.mode == "map" and table.key
 
 {%- endif %}
 {%- for index in table.unique_indexes %}
+{%- if table.nullable_annotation %}
+    @{{ table.nullable_annotation }}
+{%- endif %}
     public {{ table.row_type }} get{{ index.pascal_name }}({{ index.key_type }} {{ index.param_camel_name }}) {
         return {{ index.camel_name }}.get({{ index.param_camel_name }});
     }

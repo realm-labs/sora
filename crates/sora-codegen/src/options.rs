@@ -70,6 +70,28 @@ impl HasRuntimeFormat for LanguageCodegenOptions {
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
 #[serde(default)]
+pub struct JavaCodegenOptions {
+    pub runtime_format: RuntimeFormat,
+    pub nullable_annotation: Option<String>,
+}
+
+impl Default for JavaCodegenOptions {
+    fn default() -> Self {
+        Self {
+            runtime_format: RuntimeFormat::Sora,
+            nullable_annotation: Some("SoraNullable".to_owned()),
+        }
+    }
+}
+
+impl HasRuntimeFormat for JavaCodegenOptions {
+    fn runtime_format(&self) -> Option<RuntimeFormat> {
+        Some(self.runtime_format)
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
+#[serde(default)]
 pub struct CCodegenOptions {
     pub runtime_format: RuntimeFormat,
     pub c_standard: CStandard,

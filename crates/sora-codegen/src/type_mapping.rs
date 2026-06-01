@@ -5,6 +5,7 @@ use sora_ir::model::{ConfigIr, TypeIr};
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct TypeMapping {
     pub type_name: String,
+    pub nullable_type_name: Option<String>,
     pub decode: Option<String>,
     pub value_decode: Option<String>,
     pub decode_into: Option<String>,
@@ -150,6 +151,7 @@ pub struct StaticTypeMappingRule {
     pub target: String,
     pub schema_type: String,
     pub type_name: String,
+    pub nullable_type_name: Option<String>,
     pub decode: Option<String>,
     pub value_decode: Option<String>,
     pub decode_into: Option<String>,
@@ -180,6 +182,7 @@ impl TypeMappingProvider for StaticTypeMappingProvider {
             .find(|rule| rule.target == context.target && rule.schema_type == schema_type)
             .map(|rule| TypeMapping {
                 type_name: rule.type_name.clone(),
+                nullable_type_name: rule.nullable_type_name.clone(),
                 decode: rule.decode.clone(),
                 value_decode: rule.value_decode.clone(),
                 decode_into: rule.decode_into.clone(),

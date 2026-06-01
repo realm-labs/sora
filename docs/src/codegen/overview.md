@@ -57,3 +57,5 @@ Generated code generally contains:
 - a top-level config loader for the selected runtime format.
 
 Generated identifiers follow target-language conventions while runtime data lookup keeps using the original schema names. See [Identifier Naming](identifier-naming.md).
+
+Schema `optional<T>` is mapped to the target language's strongest available nullability representation. See [Nullability](nullability.md).

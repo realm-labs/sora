@@ -35,7 +35,7 @@ It should not mutate the IR or rely on language-specific fields being present in
 
 ## Type Mappings
 
-Language generators can consult `context.type_mappings` before falling back to their built-in type mapping. A provider maps a target plus a named schema type, such as `struct<Vec3>`, to a generated type name and optional decode wrappers. Container types should recurse through the same mapper so `list<struct<Vec3>>` automatically becomes a list of the mapped target type.
+Language generators can consult `context.type_mappings` before falling back to their built-in type mapping. A provider maps a target plus a named schema type, such as `struct<Vec3>`, to a generated type name, optional nullable type name, and optional decode wrappers. Container and optional types should recurse through the same mapper so `list<struct<Vec3>>` and `optional<struct<Vec3>>` automatically use the mapped target type.
 
 The schema remains language-neutral. Project-specific mappings belong in library registration code or CLI Lua type mapping scripts, not in field definitions.
 

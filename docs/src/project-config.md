@@ -76,6 +76,7 @@ return {
       target = "csharp",
       schema_type = "Vec3",
       type_name = "Vector3",
+      nullable_type_name = "Vector3?",
       decode = "GameMappings.ToVector3({value})",
       value_decode = "GameMappings.ToVector3({value})",
       imports = { "UnityEngine" },
@@ -83,6 +84,8 @@ return {
   },
 }
 ```
+
+`nullable_type_name` is optional. Use it when `optional<schema_type>` needs a different target-language type expression from the backend's default nullable wrapper.
 
 `decode` wraps the normal binary runtime decode expression, and `value_decode` wraps JSON/CBOR/protobuf-style value decode. The `{value}` placeholder is replaced with the generated default expression.
 
@@ -110,7 +113,7 @@ The C target uses write-into decode functions, so C mappings should use `decode_
 | `rust` | `runtime_format` default `sora`; `map_type = "std"` or `"fx_hash_map"` default `std`; `string_storage = "owned"` or `"arc"` default `owned`. |
 | `kotlin` | `runtime_format` default `sora`. |
 | `csharp` | `runtime_format` default `sora`. |
-| `java` | `runtime_format` default `sora`. |
+| `java` | `runtime_format` default `sora`; `nullable_annotation` defaults to `SoraNullable`, set an annotation class such as `org.jetbrains.annotations.Nullable`, or set `""` to disable annotations. |
 | `scala` | `runtime_format` default `sora`; `scala_version = "2.12"`, `"2.13"`, or `"3"` default `3`. |
 | `go` | `runtime_format` default `sora`. |
 | `dart` | `runtime_format = "json"`, `"cbor"`, or `"sora-protobuf"`. Set this explicitly; `sora` is not supported for Dart. |

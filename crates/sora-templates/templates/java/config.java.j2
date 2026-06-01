@@ -9,6 +9,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
+{%- if model.nullable_import %}
+import {{ model.nullable_import }};
+{%- endif %}
 
 enum SoraTableShape {
     LIST,
@@ -24,6 +27,9 @@ record SoraTableInfo(
     String name,
     String rowType,
     SoraTableShape shape,
+{%- if model.nullable_annotation %}
+    @{{ model.nullable_annotation }}
+{%- endif %}
     SoraKeyInfo primaryKey,
     List<SoraIndexInfo> indexes
 ) {}

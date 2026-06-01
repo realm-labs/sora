@@ -11,7 +11,9 @@ use crate::{
     java::JavaCodeGenerator,
     javascript::JavaScriptCodeGenerator,
     lua::LuaCodeGenerator,
-    options::{LanguageCodegenOptions, RuntimeFormat, RustCodegenOptions, RustMapType},
+    options::{
+        JavaCodegenOptions, LanguageCodegenOptions, RuntimeFormat, RustCodegenOptions, RustMapType,
+    },
     python::PythonCodeGenerator,
     rust::RustCodeGenerator,
     scala::ScalaCodeGenerator,
@@ -331,6 +333,7 @@ fn generators_apply_custom_type_mappings() {
             target: "csharp".to_owned(),
             schema_type: "Vec3".to_owned(),
             type_name: "Vector3".to_owned(),
+            nullable_type_name: None,
             decode: Some("GameMappings.ToVector3({value})".to_owned()),
             value_decode: Some("GameMappings.ToVector3({value})".to_owned()),
             decode_into: None,
@@ -341,6 +344,7 @@ fn generators_apply_custom_type_mappings() {
             target: "kotlin".to_owned(),
             schema_type: "Vec3".to_owned(),
             type_name: "Vector3".to_owned(),
+            nullable_type_name: None,
             decode: Some("GameMappings.toVector3({value})".to_owned()),
             value_decode: Some("GameMappings.toVector3({value})".to_owned()),
             decode_into: None,
@@ -351,6 +355,7 @@ fn generators_apply_custom_type_mappings() {
             target: "java".to_owned(),
             schema_type: "Vec3".to_owned(),
             type_name: "Vector3".to_owned(),
+            nullable_type_name: None,
             decode: Some("GameMappings.toVector3({value})".to_owned()),
             value_decode: Some("GameMappings.toVector3({value})".to_owned()),
             decode_into: None,
@@ -361,6 +366,7 @@ fn generators_apply_custom_type_mappings() {
             target: "go".to_owned(),
             schema_type: "Vec3".to_owned(),
             type_name: "vector.Vector3".to_owned(),
+            nullable_type_name: None,
             decode: Some("toVec3({value})".to_owned()),
             value_decode: Some("toVec3({value})".to_owned()),
             decode_into: None,
@@ -371,6 +377,7 @@ fn generators_apply_custom_type_mappings() {
             target: "python".to_owned(),
             schema_type: "Vec3".to_owned(),
             type_name: "Vector3".to_owned(),
+            nullable_type_name: None,
             decode: Some("to_vec3({value})".to_owned()),
             value_decode: Some("to_vec3({value})".to_owned()),
             decode_into: None,
@@ -381,6 +388,7 @@ fn generators_apply_custom_type_mappings() {
             target: "typescript".to_owned(),
             schema_type: "Vec3".to_owned(),
             type_name: "Vector3".to_owned(),
+            nullable_type_name: None,
             decode: Some("toVec3({value})".to_owned()),
             value_decode: Some("toVec3({value})".to_owned()),
             decode_into: None,
@@ -391,6 +399,7 @@ fn generators_apply_custom_type_mappings() {
             target: "javascript".to_owned(),
             schema_type: "Vec3".to_owned(),
             type_name: "Vector3".to_owned(),
+            nullable_type_name: None,
             decode: Some("toVec3({value})".to_owned()),
             value_decode: Some("toVec3({value})".to_owned()),
             decode_into: None,
@@ -401,6 +410,7 @@ fn generators_apply_custom_type_mappings() {
             target: "scala".to_owned(),
             schema_type: "Vec3".to_owned(),
             type_name: "Vector3".to_owned(),
+            nullable_type_name: None,
             decode: Some("GameMappings.toVector3({value})".to_owned()),
             value_decode: Some("GameMappings.toVector3({value})".to_owned()),
             decode_into: None,
@@ -411,6 +421,7 @@ fn generators_apply_custom_type_mappings() {
             target: "dart".to_owned(),
             schema_type: "Vec3".to_owned(),
             type_name: "Vector3".to_owned(),
+            nullable_type_name: None,
             decode: None,
             value_decode: Some("toVec3({value})".to_owned()),
             decode_into: None,
@@ -421,6 +432,7 @@ fn generators_apply_custom_type_mappings() {
             target: "godot".to_owned(),
             schema_type: "Vec3".to_owned(),
             type_name: "Vector3".to_owned(),
+            nullable_type_name: None,
             decode: None,
             value_decode: Some("Vector3Codec.decode({value})".to_owned()),
             decode_into: None,
@@ -431,6 +443,7 @@ fn generators_apply_custom_type_mappings() {
             target: "erlang".to_owned(),
             schema_type: "Vec3".to_owned(),
             type_name: "vector3:t()".to_owned(),
+            nullable_type_name: None,
             decode: Some("fun(Reader) -> vector3:decode_from({value}, Reader) end".to_owned()),
             value_decode: Some("vector3:decode_value({value})".to_owned()),
             decode_into: None,
@@ -441,6 +454,7 @@ fn generators_apply_custom_type_mappings() {
             target: "lua".to_owned(),
             schema_type: "Vec3".to_owned(),
             type_name: "UnityVector3".to_owned(),
+            nullable_type_name: None,
             decode: Some("to_vec3({value})".to_owned()),
             value_decode: Some("to_vec3({value})".to_owned()),
             decode_into: None,
@@ -451,6 +465,7 @@ fn generators_apply_custom_type_mappings() {
             target: "rust".to_owned(),
             schema_type: "Vec3".to_owned(),
             type_name: "Vector3".to_owned(),
+            nullable_type_name: None,
             decode: Some("Vector3::from_sora({value})".to_owned()),
             value_decode: None,
             decode_into: None,
@@ -461,6 +476,7 @@ fn generators_apply_custom_type_mappings() {
             target: "cpp".to_owned(),
             schema_type: "Vec3".to_owned(),
             type_name: "Vector3".to_owned(),
+            nullable_type_name: None,
             decode: Some("Vector3::from_sora({value})".to_owned()),
             value_decode: None,
             decode_into: None,
@@ -471,6 +487,7 @@ fn generators_apply_custom_type_mappings() {
             target: "c".to_owned(),
             schema_type: "Vec3".to_owned(),
             type_name: "game_vector3".to_owned(),
+            nullable_type_name: None,
             decode: None,
             value_decode: None,
             decode_into: Some("game_vector3_decode(reader, {target})".to_owned()),
@@ -790,6 +807,74 @@ fn java_supports_export_runtime_formats() {
 
         let _ = std::fs::remove_dir_all(base);
     }
+}
+
+#[test]
+fn java_emits_nullable_annotations() {
+    let schema: SchemaFile = toml::from_str(
+        r#"
+package = "game_config"
+
+[[tables]]
+name = "Item"
+mode = "map"
+key = "id"
+
+[[tables.fields]]
+name = "id"
+type = "i32"
+
+[[tables.fields]]
+name = "nickname"
+type = "optional<string>"
+
+[[tables.fields]]
+name = "name"
+type = "string"
+
+[[tables.indexes]]
+name = "by_name"
+fields = ["name"]
+unique = true
+"#,
+    )
+    .unwrap();
+    let ir = normalize_schema(schema).unwrap();
+    let base = temp_dir();
+    let java_out = base.join("java");
+
+    JavaCodeGenerator.generate(&ir, &java_out).unwrap();
+
+    let package_out = java_out.join("game_config");
+    let runtime = std::fs::read_to_string(package_out.join("Runtime.java")).unwrap();
+    let config = std::fs::read_to_string(package_out.join("SoraConfig.java")).unwrap();
+    let item = std::fs::read_to_string(package_out.join("Item.java")).unwrap();
+
+    assert!(runtime.contains("@interface SoraNullable"));
+    assert!(runtime.contains("@SoraNullable\n    String get(TextKey key)"));
+    assert!(config.contains("@SoraNullable\n    SoraKeyInfo primaryKey"));
+    assert!(item.contains("@SoraNullable\n    public final String nickname;"));
+    assert!(item.contains("@SoraNullable String nickname"));
+    assert!(item.contains("@SoraNullable\n    public Item get(Object key)"));
+    assert!(item.contains("@SoraNullable\n    public Item getByName(String name)"));
+
+    let external_out = base.join("java_external");
+    JavaCodeGenerator
+        .generate_with_options(
+            &ir,
+            JavaCodegenOptions {
+                nullable_annotation: Some("org.jetbrains.annotations.Nullable".to_owned()),
+                ..Default::default()
+            },
+            &external_out,
+        )
+        .unwrap();
+    let external_item =
+        std::fs::read_to_string(external_out.join("game_config/Item.java")).unwrap();
+    assert!(external_item.contains("import org.jetbrains.annotations.Nullable;"));
+    assert!(external_item.contains("@Nullable\n    public final String nickname;"));
+
+    let _ = std::fs::remove_dir_all(base);
 }
 
 #[test]

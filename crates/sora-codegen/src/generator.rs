@@ -19,9 +19,10 @@ use crate::{
     kotlin::KotlinCodeGenerator,
     lua::LuaCodeGenerator,
     options::{
-        CCodegenOptions, CppCodegenOptions, ErlangCodegenOptions, JavaScriptCodegenOptions,
-        LanguageCodegenOptions, LuaCodegenOptions, RuntimeFormat, RustCodegenOptions,
-        ScalaCodegenOptions, TypeScriptCodegenOptions, decode_options, runtime_format_from_options,
+        CCodegenOptions, CppCodegenOptions, ErlangCodegenOptions, JavaCodegenOptions,
+        JavaScriptCodegenOptions, LanguageCodegenOptions, LuaCodegenOptions, RuntimeFormat,
+        RustCodegenOptions, ScalaCodegenOptions, TypeScriptCodegenOptions, decode_options,
+        runtime_format_from_options,
     },
     proto::ProtoCodeGenerator,
     python::PythonCodeGenerator,
@@ -199,7 +200,7 @@ impl CodegenRegistry {
                 aliases: &[],
                 display_name: "Java",
                 runtime_capabilities: RUNTIME_MANAGED_EXPORTS,
-                runtime_format: runtime_format_from_options::<LanguageCodegenOptions>,
+                runtime_format: runtime_format_from_options::<JavaCodegenOptions>,
                 formatter: None,
                 generator: Box::new(JavaCodeGenerator),
             })

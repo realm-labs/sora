@@ -12,7 +12,7 @@ use crate::{
         BaseField, BaseIndex, BaseModel, BaseRecord, BaseTable, BaseUnion, BaseUnionVariant,
         build_base_model,
     },
-    options::LanguageCodegenOptions,
+    options::JavaCodegenOptions,
     render::{ensure_dir, render_template, write_file},
     type_mapping::{TypeMapping, TypeMappingContext, TypeMappingRegistry},
 };
@@ -23,12 +23,13 @@ crate::impl_test_codegen_generate!(JavaCodeGenerator, "java");
 impl CodeGenerator for JavaCodeGenerator {
     fn generate(&self, context: CodegenContext<'_>, out_dir: &Path) -> Result<()> {
         let ir = context.ir;
-        let options = context.options::<LanguageCodegenOptions>()?;
+        let options = context.options::<JavaCodegenOptions>()?;
         ensure_dir(out_dir)?;
         let mapper = JavaTypeMapper::new(context.target, ir, context.type_mappings);
-        let model = JavaModel::from_base_model(ir, build_base_model(ir)?, &mapper);
+        let model = JavaModel::from_base_model(ir, build_base_model(ir)?, &options, &mapper);
         let package_dir = java_package_dir(out_dir, &model.package)?;
         let runtime_format = runtime_format_name(options.runtime_format);
+        let nullable_annotation = java_nullable_annotation(&options);
 
         for item in &model.enums {
             let rendered = render_template(
@@ -66,7 +67,15 @@ impl CodeGenerator for JavaCodeGenerator {
         let rendered = render_template(
             "java",
             "runtime.java.j2",
-            context! { package => &model.package, runtime_format => runtime_format },
+            context! {
+                package => &model.package,
+                runtime_format => runtime_format,
+                nullable_import => nullable_annotation.as_ref().and_then(JavaNullableAnnotation::import),
+                nullable_annotation => nullable_annotation.as_ref().map(JavaNullableAnnotation::simple_name),
+                emit_sora_nullable => nullable_annotation
+                    .as_ref()
+                    .is_some_and(|annotation| annotation.simple_name == "SoraNullable" && annotation.import.is_none()),
+            },
         )?;
         write_file(&package_dir.join("Runtime.java"), rendered)?;
 
@@ -92,6 +101,8 @@ struct JavaModel {
     has_localization: bool,
     locales: Vec<String>,
     default_locale: String,
+    nullable_import: Option<String>,
+    nullable_annotation: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -135,6 +146,7 @@ struct JavaTable {
     key_name: Option<String>,
     key_field_name: Option<String>,
     key_type: Option<String>,
+    nullable_annotation: Option<String>,
     unique_indexes: Vec<JavaIndex>,
     non_unique_indexes: Vec<JavaIndex>,
 }
@@ -153,6 +165,7 @@ struct JavaField {
     raw_name: String,
     name: String,
     type_name: String,
+    nullable_annotation: Option<String>,
     decode: String,
     value_decode: String,
     collect_text_keys: String,
@@ -161,12 +174,21 @@ struct JavaField {
 }
 
 impl JavaModel {
-    fn from_base_model(ir: &ConfigIr, model: BaseModel, mapper: &JavaTypeMapper<'_>) -> Self {
+    fn from_base_model(
+        ir: &ConfigIr,
+        model: BaseModel,
+        options: &JavaCodegenOptions,
+        mapper: &JavaTypeMapper<'_>,
+    ) -> Self {
+        let nullable_annotation = java_nullable_annotation(options);
         let tables = model
             .tables
             .into_iter()
-            .map(|table| java_table(ir, table, mapper))
+            .map(|table| java_table(ir, table, nullable_annotation.as_ref(), mapper))
             .collect::<Vec<_>>();
+        let nullable_import = nullable_annotation
+            .as_ref()
+            .and_then(JavaNullableAnnotation::import);
         Self {
             package: model.package,
             schema_fingerprint: model.schema_fingerprint,
@@ -181,7 +203,7 @@ impl JavaModel {
             unions: model
                 .unions
                 .into_iter()
-                .map(|item| java_union(ir, item, mapper))
+                .map(|item| java_union(ir, item, nullable_annotation.as_ref(), mapper))
                 .collect(),
             records: model
                 .records
@@ -191,7 +213,7 @@ impl JavaModel {
                         .iter()
                         .find(|table| table.row_type == item.pascal_name)
                         .cloned();
-                    java_record(ir, item, table, mapper)
+                    java_record(ir, item, table, nullable_annotation.as_ref(), mapper)
                 })
                 .collect(),
             has_unique_indexes: tables.iter().any(|table| !table.unique_indexes.is_empty()),
@@ -209,18 +231,26 @@ impl JavaModel {
                 .as_ref()
                 .map(|item| item.default_locale.clone())
                 .unwrap_or_default(),
+            nullable_import,
+            nullable_annotation: nullable_annotation.map(|annotation| annotation.simple_name),
             tables,
         }
     }
 }
 
-fn java_union(ir: &ConfigIr, union: BaseUnion, mapper: &JavaTypeMapper<'_>) -> JavaUnion {
+fn java_union(
+    ir: &ConfigIr,
+    union: BaseUnion,
+    nullable_annotation: Option<&JavaNullableAnnotation>,
+    mapper: &JavaTypeMapper<'_>,
+) -> JavaUnion {
     let variants = union
         .variants
         .into_iter()
-        .map(|variant| java_variant(ir, variant, mapper))
+        .map(|variant| java_variant(ir, variant, nullable_annotation, mapper))
         .collect::<Vec<_>>();
     let imports = collect_java_imports(variants.iter().flat_map(|variant| &variant.fields));
+    let imports = with_nullable_import(imports, nullable_annotation);
     JavaUnion {
         pascal_name: union.pascal_name,
         tag: union.tag,
@@ -232,12 +262,13 @@ fn java_union(ir: &ConfigIr, union: BaseUnion, mapper: &JavaTypeMapper<'_>) -> J
 fn java_variant(
     ir: &ConfigIr,
     variant: BaseUnionVariant,
+    nullable_annotation: Option<&JavaNullableAnnotation>,
     mapper: &JavaTypeMapper<'_>,
 ) -> JavaUnionVariant {
     let fields = variant
         .fields
         .into_iter()
-        .map(|field| java_field(ir, field, mapper))
+        .map(|field| java_field(ir, field, nullable_annotation, mapper))
         .collect::<Vec<_>>();
     let has_text_keys = fields
         .iter()
@@ -253,17 +284,18 @@ fn java_record(
     ir: &ConfigIr,
     record: BaseRecord,
     table: Option<JavaTable>,
+    nullable_annotation: Option<&JavaNullableAnnotation>,
     mapper: &JavaTypeMapper<'_>,
 ) -> JavaRecord {
     let fields = record
         .fields
         .into_iter()
-        .map(|field| java_field(ir, field, mapper))
+        .map(|field| java_field(ir, field, nullable_annotation, mapper))
         .collect::<Vec<_>>();
     let has_text_keys = fields
         .iter()
         .any(|field| !field.collect_text_keys.is_empty());
-    let imports = collect_java_imports(fields.iter());
+    let imports = with_nullable_import(collect_java_imports(fields.iter()), nullable_annotation);
     JavaRecord {
         pascal_name: record.pascal_name,
         fields,
@@ -273,7 +305,12 @@ fn java_record(
     }
 }
 
-fn java_table(ir: &ConfigIr, table: BaseTable, mapper: &JavaTypeMapper<'_>) -> JavaTable {
+fn java_table(
+    ir: &ConfigIr,
+    table: BaseTable,
+    nullable_annotation: Option<&JavaNullableAnnotation>,
+    mapper: &JavaTypeMapper<'_>,
+) -> JavaTable {
     let row_type = table.pascal_name.clone();
     let key_type = table
         .key_field
@@ -295,6 +332,7 @@ fn java_table(ir: &ConfigIr, table: BaseTable, mapper: &JavaTypeMapper<'_>) -> J
         key_name: table.key_name,
         key_field_name,
         key_type,
+        nullable_annotation: nullable_annotation.map(JavaNullableAnnotation::simple_name),
         unique_indexes: table
             .unique_indexes
             .into_iter()
@@ -318,7 +356,12 @@ fn java_index(_ir: &ConfigIr, index: BaseIndex, mapper: &JavaTypeMapper<'_>) -> 
     }
 }
 
-fn java_field(ir: &ConfigIr, field: BaseField, mapper: &JavaTypeMapper<'_>) -> JavaField {
+fn java_field(
+    ir: &ConfigIr,
+    field: BaseField,
+    nullable_annotation: Option<&JavaNullableAnnotation>,
+    mapper: &JavaTypeMapper<'_>,
+) -> JavaField {
     let value_decode = java_value_decode_expr(ir, &field.ty, "__VALUE__", mapper);
     let collect_text_keys = java_collect_text_keys(
         ir,
@@ -331,6 +374,9 @@ fn java_field(ir: &ConfigIr, field: BaseField, mapper: &JavaTypeMapper<'_>) -> J
         raw_name: field.raw_name,
         name: field.camel_name,
         type_name: mapper.type_name(&field.ty),
+        nullable_annotation: type_allows_null(ir, &field.ty)
+            .then(|| nullable_annotation.map(JavaNullableAnnotation::simple_name))
+            .flatten(),
         decode: java_decode_expr(ir, &field.ty, mapper),
         value_decode,
         collect_text_keys,
@@ -348,6 +394,18 @@ fn collect_java_imports<'a>(fields: impl Iterator<Item = &'a JavaField>) -> Vec<
     imports
 }
 
+fn with_nullable_import(
+    mut imports: Vec<String>,
+    nullable_annotation: Option<&JavaNullableAnnotation>,
+) -> Vec<String> {
+    if let Some(import) = nullable_annotation.and_then(JavaNullableAnnotation::import) {
+        imports.push(import);
+        imports.sort();
+        imports.dedup();
+    }
+    imports
+}
+
 fn java_container_type(mode: TableModeIr, row_type: &str, key_type: Option<&str>) -> String {
     match mode {
         TableModeIr::List => format!("java.util.List<{row_type}>"),
@@ -357,6 +415,46 @@ fn java_container_type(mode: TableModeIr, row_type: &str, key_type: Option<&str>
         },
         TableModeIr::Singleton => row_type.to_owned(),
     }
+}
+
+#[derive(Debug, Clone)]
+struct JavaNullableAnnotation {
+    import: Option<String>,
+    simple_name: String,
+}
+
+impl JavaNullableAnnotation {
+    fn new(annotation: &str) -> Self {
+        if let Some((package, simple_name)) = annotation.rsplit_once('.') {
+            Self {
+                import: Some(format!("{package}.{simple_name}")),
+                simple_name: simple_name.to_owned(),
+            }
+        } else {
+            Self {
+                import: None,
+                simple_name: annotation.to_owned(),
+            }
+        }
+    }
+
+    fn import(&self) -> Option<String> {
+        self.import.clone()
+    }
+
+    fn simple_name(&self) -> String {
+        self.simple_name.clone()
+    }
+}
+
+fn java_nullable_annotation(options: &JavaCodegenOptions) -> Option<JavaNullableAnnotation> {
+    options
+        .nullable_annotation
+        .as_deref()
+        .and_then(|annotation| {
+            let annotation = annotation.trim();
+            (!annotation.is_empty()).then(|| JavaNullableAnnotation::new(annotation))
+        })
 }
 
 struct JavaTypeMapper<'a> {
@@ -404,8 +502,14 @@ impl<'a> JavaTypeMapper<'a> {
             TypeIr::Ref { table, field } => ref_target_type(self.ir, table, field)
                 .map(|ty| self.type_name(ty))
                 .unwrap_or_else(|| "int".to_owned()),
-            TypeIr::Optional(element) => self.boxed_type_name(element),
+            TypeIr::Optional(element) => self.nullable_type_name(element),
         }
+    }
+
+    fn nullable_type_name(&self, ty: &TypeIr) -> String {
+        self.mapping(ty)
+            .and_then(|mapping| mapping.nullable_type_name)
+            .unwrap_or_else(|| self.boxed_type_name(ty))
     }
 
     fn boxed_type_name(&self, ty: &TypeIr) -> String {
@@ -627,6 +731,16 @@ fn java_collect_text_keys(
         | TypeIr::F64
         | TypeIr::String
         | TypeIr::Enum(_) => String::new(),
+    }
+}
+
+fn type_allows_null(ir: &ConfigIr, ty: &TypeIr) -> bool {
+    match ty {
+        TypeIr::Optional(_) => true,
+        TypeIr::Ref { table, field } => {
+            ref_target_type(ir, table, field).is_some_and(|target| type_allows_null(ir, target))
+        }
+        _ => false,
     }
 }
 

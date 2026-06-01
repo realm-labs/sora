@@ -433,6 +433,12 @@ impl<'a> CppTypeMapper<'a> {
                 .map(|ty| self.type_name(ty))
                 .unwrap_or_else(|| "std::int32_t".to_owned()),
             TypeIr::Optional(element) => {
+                if let Some(nullable_type_name) = self
+                    .mapping(element)
+                    .and_then(|mapping| mapping.nullable_type_name)
+                {
+                    return nullable_type_name;
+                }
                 let inner = self.type_name(element);
                 if self.options.has_std_optional {
                     format!("std::optional<{inner}>")

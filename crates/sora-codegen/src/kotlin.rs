@@ -400,7 +400,10 @@ impl<'a> KotlinTypeMapper<'a> {
             TypeIr::Ref { table, field } => ir_ref_target_type(self.ir, table, field)
                 .map(|ty| self.type_name(ty))
                 .unwrap_or_else(|| "Int".to_owned()),
-            TypeIr::Optional(element) => format!("{}?", self.type_name(element)),
+            TypeIr::Optional(element) => self
+                .mapping(element)
+                .and_then(|mapping| mapping.nullable_type_name)
+                .unwrap_or_else(|| format!("{}?", self.type_name(element))),
         }
     }
 

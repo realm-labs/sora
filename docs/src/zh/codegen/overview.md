@@ -57,3 +57,5 @@ runtime format 只控制该目标生成的 loader 代码，不改变 schema 或�
 - 选定 runtime format 的顶层 config loader。
 
 生成标识符遵循目标语言命名习惯，但运行时数据查找仍然使用原始 schema 名称。见[标识符命名](identifier-naming.md)。
+
+Schema `optional<T>` 会映射成目标语言中能表达的最强可空形式。见[空值表达](nullability.md)。

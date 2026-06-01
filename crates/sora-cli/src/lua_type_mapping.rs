@@ -128,6 +128,7 @@ fn lua_mapping_rule(path: &Path, table: Table) -> Result<StaticTypeMappingRule> 
         target,
         schema_type,
         type_name,
+        nullable_type_name: optional_string(&table, "nullable_type_name")?,
         decode: optional_string(&table, "decode")?,
         value_decode: optional_string(&table, "value_decode")?,
         decode_into: optional_string(&table, "decode_into")?,
@@ -200,6 +201,7 @@ return {
       target = "csharp",
       schema_type = "Vec3",
       type_name = "Vector3",
+      nullable_type_name = "Vector3?",
       decode = "GameMappings.ToVector3({value})",
       value_decode = "GameMappings.ToVector3({value})",
       decode_into = "game_vector3_decode(reader, {target})",
@@ -216,6 +218,7 @@ return {
         assert_eq!(rules[0].target, "csharp");
         assert_eq!(rules[0].schema_type, "Vec3");
         assert_eq!(rules[0].type_name, "Vector3");
+        assert_eq!(rules[0].nullable_type_name.as_deref(), Some("Vector3?"));
         assert_eq!(
             rules[0].decode_into.as_deref(),
             Some("game_vector3_decode(reader, {target})")
