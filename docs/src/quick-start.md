@@ -63,7 +63,7 @@ Create `schema/items.toml`:
 ```toml
 [[enums]]
 name = "ItemType"
-values = ["Weapon", "Armor", "Material", "Consumable"]
+values = [{ id = 0, name = "Weapon" }, { id = 1, name = "Armor" }, { id = 2, name = "Material" }, { id = 3, name = "Consumable" }]
 
 [[tables]]
 name = "Item"

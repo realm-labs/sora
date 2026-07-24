@@ -5,6 +5,7 @@ package com.sora.showcase;
 import java.util.List;
 import java.util.Map;
 
+
 public final class Dungeon {
     public final Integer id;
     public final String name;
@@ -77,6 +78,7 @@ final class DungeonTable extends java.util.AbstractMap<Integer, Dungeon> impleme
         return rows;
     }
     @Override
+    @SoraNullable
     public Dungeon get(Object key) {
         return rows.get(key);
     }

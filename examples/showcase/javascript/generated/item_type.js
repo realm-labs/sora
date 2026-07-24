@@ -7,26 +7,26 @@ export const ItemType = {
     Material: "Material",
     Consumable: "Consumable",
 };
-const values = [
-    ItemType.Weapon,
-    ItemType.Armor,
-    ItemType.Currency,
-    ItemType.Material,
-    ItemType.Consumable,
-];
+const values = new Map([
+    [0, ItemType.Weapon],
+    [1, ItemType.Armor],
+    [2, ItemType.Currency],
+    [3, ItemType.Material],
+    [4, ItemType.Consumable],
+]);
 
 export function decodeItemType(reader) {
-    const ordinal = reader.readU32();
-    const value = values[ordinal];
+    const id = reader.readU32();
+    const value = values.get(id);
     if (value === undefined) {
-        throw new Error(`invalid enum ordinal ${ordinal} for ItemType`);
+        throw new Error(`invalid enum id ${id} for ItemType`);
     }
     return value;
 }
 
 export function decodeItemTypeValue(value) {
     const name = value.asString();
-    if (!values.includes(name)) {
+    if (![...values.values()].includes(name)) {
         throw new Error(`invalid enum value ${name} for ItemType`);
     }
     return name;

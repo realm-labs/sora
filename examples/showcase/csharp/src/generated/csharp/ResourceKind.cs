@@ -6,9 +6,9 @@ namespace com.sora.showcase;
 
 public enum ResourceKind
 {
-    Item,
-    Gold,
-    Diamond,
+    Item = 0,
+    Gold = 1,
+    Diamond = 2,
 }
 
 internal static class ResourceKindCodec
@@ -20,7 +20,7 @@ internal static class ResourceKindCodec
             0 => ResourceKind.Item,
             1 => ResourceKind.Gold,
             2 => ResourceKind.Diamond,
-            var value => throw new SoraReadException($"invalid enum ordinal {value} for ResourceKind"),
+            var value => throw new SoraReadException($"invalid enum id {value} for ResourceKind"),
         };
     }
 

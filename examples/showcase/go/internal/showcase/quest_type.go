@@ -13,11 +13,11 @@ const (
 )
 
 func decodeQuestType(reader *SoraReader) (QuestType, error) {
-	ordinal, err := reader.ReadUInt32()
+	id, err := reader.ReadUInt32()
 	if err != nil {
 		return 0, err
 	}
-	switch ordinal {
+	switch id {
 	case 0:
 		return QuestTypeMain, nil
 	case 1:
@@ -25,7 +25,7 @@ func decodeQuestType(reader *SoraReader) (QuestType, error) {
 	case 2:
 		return QuestTypeDaily, nil
 	default:
-		return 0, fmt.Errorf("invalid enum ordinal %d for QuestType", ordinal)
+		return 0, fmt.Errorf("invalid enum id %d for QuestType", id)
 	}
 }
 

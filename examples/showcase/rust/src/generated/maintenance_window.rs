@@ -20,7 +20,18 @@ impl super::runtime::SoraDecode for MaintenanceWindow {
             version: <std::sync::Arc<str> as super::runtime::SoraDecode>::decode(reader)?,
             starts_at: <std::sync::Arc<str> as super::runtime::SoraDecode>::decode(reader)?,
             duration_minutes: <i32 as super::runtime::SoraDecode>::decode(reader)?,
-            reason: <Option<std::sync::Arc<str>> as super::runtime::SoraDecode>::decode(reader)?,
+            reason: match reader.read_u8()? {
+                0 => None,
+                1 => Some(<std::sync::Arc<str> as super::runtime::SoraDecode>::decode(
+                    reader,
+                )?),
+                value => {
+                    return Err(super::runtime::SoraReadError::new(format!(
+                        "invalid option presence {}",
+                        value
+                    )));
+                }
+            },
         })
     }
 }

@@ -11,12 +11,12 @@
 
 -spec decode(sora_runtime:reader()) -> {t(), sora_runtime:reader()}.
 decode(Reader0) ->
-    {Ordinal, Reader1} = sora_runtime:read_u32(Reader0),
-    case Ordinal of
+    {Id, Reader1} = sora_runtime:read_u32(Reader0),
+    case Id of
         0 -> {'system', Reader1};
         1 -> {'event', Reader1};
         2 -> {'compensation', Reader1};
-        _ -> error({invalid_enum_ordinal, mail_type, Ordinal})
+        _ -> error({invalid_enum_id, mail_type, Id})
     end.
 
 -spec decode_value(binary()) -> t().

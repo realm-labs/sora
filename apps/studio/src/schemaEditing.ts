@@ -152,7 +152,7 @@ export function addNode(schema: StudioSchema, kind: NodeKind): { schema: StudioS
     source: schema.sources[0] ?? "",
     scope: "local",
     subtitle: subtitleFor(kind, 0),
-    fields: kind === "enum" ? [{ name: "Value", ty: "enum value", scope: "local", parser: null, comment: null, default: null, range: null, length: null, source: null }] : [],
+    fields: kind === "enum" ? [{ name: "Value", ty: "enum value", enumValueId: 0, scope: "local", parser: null, comment: null, default: null, range: null, length: null, source: null }] : [],
     metadata: defaultMetadata(kind)
   };
   return { schema: rebuildSchema({ ...schema, nodes: [...schema.nodes, node] }), nodeId: node.id };
@@ -200,14 +200,14 @@ export function addField(schema: StudioSchema, ownerId: string, draft: EditableF
   });
 }
 
-export function addEnumValue(schema: StudioSchema, ownerId: string, name: string): StudioSchema {
+export function addEnumValue(schema: StudioSchema, ownerId: string, id: number, name: string): StudioSchema {
   const cleanName = name.trim();
-  if (!cleanName) return schema;
+  if (!cleanName || !Number.isInteger(id) || id < 0 || id > 2_147_483_647) return schema;
   return rebuildSchema({
     ...schema,
     nodes: schema.nodes.map((node) =>
       node.id === ownerId && node.kind === "enum"
-        ? { ...node, fields: [...node.fields, enumValueField(cleanName, node.scope)] }
+        ? { ...node, fields: [...node.fields, enumValueField(id, cleanName, node.scope)] }
         : node
     )
   });
@@ -217,10 +217,11 @@ export function updateEnumValue(
   schema: StudioSchema,
   ownerId: string,
   fieldIndex: number,
+  id: number,
   name: string
 ): StudioSchema {
   const cleanName = name.trim();
-  if (!cleanName) return schema;
+  if (!cleanName || !Number.isInteger(id) || id < 0 || id > 2_147_483_647) return schema;
   return rebuildSchema({
     ...schema,
     nodes: schema.nodes.map((node) => {
@@ -228,7 +229,7 @@ export function updateEnumValue(
       return {
         ...node,
         fields: node.fields.map((field, index) =>
-          index === fieldIndex ? { ...field, name: cleanName, ty: "enum value" } : field
+          index === fieldIndex ? { ...field, name: cleanName, ty: "enum value", enumValueId: id } : field
         )
       };
     })
@@ -435,6 +436,7 @@ export function validateSchema(schema: StudioSchema): StudioValidationIssue[] {
     }
 
     const fieldNames = new Set<string>();
+    const enumValueIds = new Set<number>();
     node.fields.forEach((field, index) => {
       if (!field.name.trim()) {
         issues.push({
@@ -454,6 +456,32 @@ export function validateSchema(schema: StudioSchema): StudioValidationIssue[] {
         });
       }
       fieldNames.add(field.name);
+      if (field.ty === "enum value") {
+        if (
+          field.enumValueId == null ||
+          !Number.isInteger(field.enumValueId) ||
+          field.enumValueId < 0 ||
+          field.enumValueId > 2_147_483_647
+        ) {
+          issues.push({
+            id: `${node.id}:field-${index}:invalid-enum-id`,
+            targetId: node.id,
+            fieldIndex: index,
+            setting: "enumValueId",
+            message: `${node.name}.${field.name || "<unnamed>"} needs a non-negative integer enum ID.`
+          });
+        } else if (enumValueIds.has(field.enumValueId)) {
+          issues.push({
+            id: `${node.id}:field-${index}:duplicate-enum-id`,
+            targetId: node.id,
+            fieldIndex: index,
+            setting: "enumValueId",
+            message: `${node.name} enum ID ${field.enumValueId} is duplicated.`
+          });
+        } else {
+          enumValueIds.add(field.enumValueId);
+        }
+      }
       if (field.ty !== "enum value" && field.ty !== "variant" && !field.ty.trim()) {
         issues.push({
           id: `${node.id}:field-${index}:empty-type`,
@@ -874,10 +902,11 @@ function defaultMetadata(kind: NodeKind): Record<string, string> {
   return { fields: "0" };
 }
 
-function enumValueField(name: string, scope: string): StudioField {
+function enumValueField(id: number, name: string, scope: string): StudioField {
   return {
     name,
     ty: "enum value",
+    enumValueId: id,
     scope: scope || "all",
     parser: null,
     comment: null,

@@ -11,7 +11,7 @@ extern "C" {
 
 typedef enum {{ enum.type_name }} {
 {%- for value in enum.values %}
-    {{ value.name }} = {{ value.ordinal }},
+    {{ value.name }} = {{ value.id }},
 {%- endfor %}
 } {{ enum.type_name }};
 

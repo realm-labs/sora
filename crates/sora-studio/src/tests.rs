@@ -122,6 +122,7 @@ fn renders_editable_table_and_field_settings() {
                     StudioField {
                         name: "id".to_owned(),
                         ty: "i32".to_owned(),
+                        enum_value_id: None,
                         scope: "all".to_owned(),
                         parser: None,
                         comment: None,
@@ -133,6 +134,7 @@ fn renders_editable_table_and_field_settings() {
                     StudioField {
                         name: "price".to_owned(),
                         ty: "struct<ResourceCost>".to_owned(),
+                        enum_value_id: None,
                         scope: "client".to_owned(),
                         parser: Some("columns (prefix=\"\")".to_owned()),
                         comment: Some("Expanded price".to_owned()),
@@ -203,6 +205,7 @@ fn does_not_render_key_for_non_map_table() {
             fields: vec![StudioField {
                 name: "id".to_owned(),
                 ty: "i32".to_owned(),
+                enum_value_id: None,
                 scope: "all".to_owned(),
                 parser: None,
                 comment: None,
@@ -239,6 +242,7 @@ fn renders_comma_parser_separator() {
         &StudioField {
             name: "budget".to_owned(),
             ty: "struct<ComplexBudget>".to_owned(),
+            enum_value_id: None,
             scope: "all".to_owned(),
             parser: Some("tuple (separator=\",\")".to_owned()),
             comment: None,
@@ -260,7 +264,7 @@ fn previews_rendered_schema_without_writing_include() {
         r#"
 [[enums]]
 name = "Rarity"
-values = ["Common"]
+values = [{ id = 0, name = "Common" }]
 "#,
     );
     let mut schema = load_studio_schema(&project).schema.unwrap();
@@ -281,6 +285,32 @@ values = ["Common"]
     );
     assert!(!current.contains("edited_config"));
     assert!(!current_project.contains("edited_config"));
+
+    let _ = fs::remove_dir_all(base);
+}
+
+#[test]
+fn preserves_explicit_enum_value_ids() {
+    let base = temp_dir();
+    let project = write_project(
+        &base,
+        r#"
+[[enums]]
+name = "Rarity"
+values = [{ id = 42, name = "Common" }]
+"#,
+    );
+    let schema = load_studio_schema(&project).schema.unwrap();
+    let enum_node = schema
+        .nodes
+        .iter()
+        .find(|node| node.id == "enum:Rarity")
+        .unwrap();
+
+    assert_eq!(enum_node.fields[0].enum_value_id, Some(42));
+    let rendered = render_schema_module(&schema);
+    assert!(rendered.contains("[[enums.values]]"));
+    assert!(rendered.contains("id = 42"));
 
     let _ = fs::remove_dir_all(base);
 }
@@ -307,7 +337,7 @@ fn project_package_preview_preserves_existing_format_when_unchanged() {
         r#"
 [[enums]]
 name = "Rarity"
-values = ["Common"]
+values = [{ id = 0, name = "Common" }]
 "#,
     );
     let project_text = fs::read_to_string(&project).unwrap();
@@ -426,6 +456,7 @@ type = "i32"
         .push(StudioField {
             name: "name".to_owned(),
             ty: "string".to_owned(),
+            enum_value_id: None,
             scope: "all".to_owned(),
             parser: None,
             comment: None,
@@ -453,7 +484,7 @@ fn save_creates_new_schema_include() {
         r#"
 [[enums]]
 name = "Rarity"
-values = ["Common"]
+values = [{ id = 0, name = "Common" }]
 "#,
     );
     let mut schema = load_studio_schema(&project).schema.unwrap();
@@ -487,7 +518,7 @@ fn save_rejects_removed_schema_include_that_still_owns_nodes() {
         r#"
 [[enums]]
 name = "Rarity"
-values = ["Common"]
+values = [{ id = 0, name = "Common" }]
 "#,
     );
     let mut schema = load_studio_schema(&project).schema.unwrap();
@@ -556,7 +587,7 @@ tables:
         r#"
 {
   "enums": [
-    { "name": "Rarity", "values": ["Common"] }
+    { "name": "Rarity", "values": [{ "id": 0, "name": "Common" }] }
   ]
 }
 "#,
@@ -593,6 +624,7 @@ return {
     quest.fields.push(StudioField {
         name: "title".to_owned(),
         ty: "string".to_owned(),
+        enum_value_id: None,
         scope: "all".to_owned(),
         parser: None,
         comment: Some("Quest title".to_owned()),
@@ -629,7 +661,7 @@ fn save_updates_project_package() {
         r#"
 [[enums]]
 name = "Rarity"
-values = ["Common"]
+values = [{ id = 0, name = "Common" }]
 "#,
     );
     let mut schema = load_studio_schema(&project).schema.unwrap();
@@ -667,7 +699,7 @@ data_root = "data"
         r#"
 [[enums]]
 name = "Rarity"
-values = ["Common"]
+values = [{ id = 0, name = "Common" }]
 "#,
     )
     .unwrap();

@@ -3,15 +3,16 @@
 package com.sora.showcase;
 
 import java.util.List;
+
 public final class SkillEffect {
     public final ElementType element;
     public final Integer power;
-    public final Float radius;
+    public final float radius;
 
     public SkillEffect(
         ElementType element,
         Integer power,
-        Float radius
+        float radius
     ) {
         this.element = element;
         this.power = power;

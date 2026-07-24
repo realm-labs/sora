@@ -5,24 +5,24 @@ export const QuestType = {
     Side: "Side",
     Daily: "Daily",
 };
-const values = [
-    QuestType.Main,
-    QuestType.Side,
-    QuestType.Daily,
-];
+const values = new Map([
+    [0, QuestType.Main],
+    [1, QuestType.Side],
+    [2, QuestType.Daily],
+]);
 
 export function decodeQuestType(reader) {
-    const ordinal = reader.readU32();
-    const value = values[ordinal];
+    const id = reader.readU32();
+    const value = values.get(id);
     if (value === undefined) {
-        throw new Error(`invalid enum ordinal ${ordinal} for QuestType`);
+        throw new Error(`invalid enum id ${id} for QuestType`);
     }
     return value;
 }
 
 export function decodeQuestTypeValue(value) {
     const name = value.asString();
-    if (!values.includes(name)) {
+    if (![...values.values()].includes(name)) {
         throw new Error(`invalid enum value ${name} for QuestType`);
     }
     return name;

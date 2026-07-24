@@ -5,6 +5,7 @@ package com.sora.showcase;
 import java.util.List;
 import java.util.Map;
 
+
 public final class Recipe {
     public final Integer id;
     public final Integer resultItem;
@@ -74,6 +75,7 @@ final class RecipeTable extends java.util.AbstractMap<Integer, Recipe> implement
         return rows;
     }
     @Override
+    @SoraNullable
     public Recipe get(Object key) {
         return rows.get(key);
     }

@@ -3,14 +3,15 @@
 package com.sora.showcase;
 
 import java.util.List;
+
 public final class StatModifier {
     public final StatType stat;
-    public final Float value;
+    public final float value;
     public final Boolean isPercent;
 
     public StatModifier(
         StatType stat,
-        Float value,
+        float value,
         Boolean isPercent
     ) {
         this.stat = stat;

@@ -3,6 +3,7 @@
 package com.sora.showcase;
 
 import java.util.List;
+
 public final class Reward {
     public final Integer itemId;
     public final Integer count;

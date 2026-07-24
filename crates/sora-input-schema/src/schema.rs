@@ -160,7 +160,7 @@ map_type = "fx_hash_map"
             r#"
 [[enums]]
 name = "ItemType"
-values = ["Weapon", "Armor"]
+values = [{ id = 0, name = "Weapon" }, { id = 1, name = "Armor" }]
 
 [[tables]]
 name = "Item"
@@ -207,7 +207,7 @@ codegen:
             r#"
 enums:
   - name: ItemType
-    values: [Weapon, Armor]
+    values: [{ id: 0, name: Weapon }, { id: 1, name: Armor }]
 tables:
   - name: Item
     mode: map
@@ -256,7 +256,7 @@ tables:
             r#"
 {
   "enums": [
-    { "name": "ItemType", "values": ["Weapon", "Armor"] }
+    { "name": "ItemType", "values": [{ "id": 0, "name": "Weapon" }, { "id": 1, "name": "Armor" }] }
   ],
   "tables": [
     { "name": "Item", "mode": "map", "key": "id" }
@@ -306,7 +306,7 @@ return {
             r#"
 return {
   enums = {
-    { name = "ItemType", values = { "Weapon", "Armor" } },
+    { name = "ItemType", values = { { id = 0, name = "Weapon" }, { id = 1, name = "Armor" } } },
   },
   tables = {
     { name = "Item", mode = "map", key = "id" },

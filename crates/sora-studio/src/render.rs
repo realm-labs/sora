@@ -144,14 +144,16 @@ fn push_enum_node(out: &mut String, node: &StudioNode) {
     out.push_str("[[enums]]\n");
     push_string(out, "name", &node.name);
     push_scope(out, &node.scope);
-    let values = node
-        .fields
-        .iter()
-        .filter(|field| field.ty == "enum value")
-        .map(|field| field.name.as_str())
-        .collect::<Vec<_>>();
-    push_string_array(out, "values", &values);
     out.push('\n');
+    for field in node.fields.iter().filter(|field| field.ty == "enum value") {
+        out.push_str("[[enums.values]]\n");
+        out.push_str(&format!(
+            "id = {}\n",
+            field.enum_value_id.unwrap_or_default()
+        ));
+        push_string(out, "name", &field.name);
+        out.push('\n');
+    }
 }
 
 fn push_struct_node(out: &mut String, node: &StudioNode) {
@@ -283,7 +285,15 @@ fn enum_node_value(node: &StudioNode) -> Value {
         .fields
         .iter()
         .filter(|field| field.ty == "enum value")
-        .map(|field| Value::String(field.name.clone()))
+        .map(|field| {
+            Value::Object(Map::from_iter([
+                (
+                    "id".to_owned(),
+                    Value::Number(field.enum_value_id.unwrap_or_default().into()),
+                ),
+                ("name".to_owned(), Value::String(field.name.clone())),
+            ]))
+        })
         .collect::<Vec<_>>();
     object.insert("values".to_owned(), Value::Array(values));
     Value::Object(object)

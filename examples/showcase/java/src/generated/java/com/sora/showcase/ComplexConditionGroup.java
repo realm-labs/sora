@@ -5,6 +5,7 @@ package com.sora.showcase;
 import java.util.List;
 import java.util.Map;
 
+
 public final class ComplexConditionGroup {
     public final Integer id;
     public final String name;
@@ -75,6 +76,7 @@ final class ComplexConditionGroupTable extends java.util.AbstractMap<Integer, Co
         return rows;
     }
     @Override
+    @SoraNullable
     public ComplexConditionGroup get(Object key) {
         return rows.get(key);
     }

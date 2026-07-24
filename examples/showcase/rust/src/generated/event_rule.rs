@@ -23,7 +23,16 @@ impl super::runtime::SoraDecode for EventRule {
             id: <i32 as super::runtime::SoraDecode>::decode(reader)?,
             name: <std::sync::Arc<str> as super::runtime::SoraDecode>::decode(reader)?,
             condition: <EventCondition as super::runtime::SoraDecode>::decode(reader)?,
-            actions: <Vec<RewardAction> as super::runtime::SoraDecode>::decode(reader)?,
+            actions: {
+                let len = reader.read_var_u32()? as usize;
+                let mut values = Vec::with_capacity(len);
+                for _ in 0..len {
+                    values.push(<RewardAction as super::runtime::SoraDecode>::decode(
+                        reader,
+                    )?);
+                }
+                values
+            },
         })
     }
 }

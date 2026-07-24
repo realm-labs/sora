@@ -5,24 +5,24 @@ export const MailType = {
     Event: "Event",
     Compensation: "Compensation",
 };
-const values = [
-    MailType.System,
-    MailType.Event,
-    MailType.Compensation,
-];
+const values = new Map([
+    [0, MailType.System],
+    [1, MailType.Event],
+    [2, MailType.Compensation],
+]);
 
 export function decodeMailType(reader) {
-    const ordinal = reader.readU32();
-    const value = values[ordinal];
+    const id = reader.readU32();
+    const value = values.get(id);
     if (value === undefined) {
-        throw new Error(`invalid enum ordinal ${ordinal} for MailType`);
+        throw new Error(`invalid enum id ${id} for MailType`);
     }
     return value;
 }
 
 export function decodeMailTypeValue(value) {
     const name = value.asString();
-    if (!values.includes(name)) {
+    if (![...values.values()].includes(name)) {
         throw new Error(`invalid enum value ${name} for MailType`);
     }
     return name;

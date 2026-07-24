@@ -503,7 +503,7 @@ package = "game_config"
 
 [[enums]]
 name = "ItemType"
-values = ["Weapon", "Armor", "Material", "Consumable"]
+values = [{ id = 0, name = "Weapon" }, { id = 1, name = "Armor" }, { id = 2, name = "Material" }, { id = 3, name = "Consumable" }]
 
 [[tables]]
 name = "Item"
@@ -546,7 +546,7 @@ package = "game_config"
 
 [[enums]]
 name = "ResourceType"
-values = ["Item"]
+values = [{ id = 0, name = "Item" }]
 
 [[structs]]
 name = "ResourceCost"
@@ -584,7 +584,7 @@ package = "game_config"
 
 [[enums]]
 name = "ResourceType"
-values = ["Item"]
+values = [{ id = 0, name = "Item" }]
 
 [[structs]]
 name = "ResourceCost"
@@ -668,7 +668,7 @@ package = "game_config"
 
 [[enums]]
 name = "ResourceType"
-values = ["Item"]
+values = [{ id = 0, name = "Item" }]
 
 [[structs]]
 name = "ResourceCost"

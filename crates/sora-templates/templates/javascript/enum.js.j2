@@ -3,9 +3,9 @@
 export const {{ enum.name }} = {
 {%- for value in enum.values %}
 {%- if options.enum_is_integer %}
-    {{ value }}: {{ loop.index0 }},
+    {{ value.name }}: {{ value.id }},
 {%- else %}
-    {{ value }}: "{{ value }}",
+    {{ value.name }}: "{{ value.name }}",
 {%- endif %}
 {%- endfor %}
 };
@@ -13,28 +13,28 @@ export const {{ enum.name }} = {
 {%- if options.enum_is_integer %}
 const values = new Set([
 {%- for value in enum.values %}
-    {{ loop.index0 }},
+    {{ value.id }},
 {%- endfor %}
 ]);
 {%- else %}
-const values = [
+const values = new Map([
 {%- for value in enum.values %}
-    {{ enum.name }}.{{ value }},
+    [{{ value.id }}, {{ enum.name }}.{{ value.name }}],
 {%- endfor %}
-];
+]);
 {%- endif %}
 
 export function decode{{ enum.name }}(reader) {
-    const ordinal = reader.readU32();
+    const id = reader.readU32();
 {%- if options.enum_is_integer %}
-    if (!values.has(ordinal)) {
-        throw new Error(`invalid enum ordinal ${ordinal} for {{ enum.name }}`);
+    if (!values.has(id)) {
+        throw new Error(`invalid enum id ${id} for {{ enum.name }}`);
     }
-    return ordinal;
+    return id;
 {%- else %}
-    const value = values[ordinal];
+    const value = values.get(id);
     if (value === undefined) {
-        throw new Error(`invalid enum ordinal ${ordinal} for {{ enum.name }}`);
+        throw new Error(`invalid enum id ${id} for {{ enum.name }}`);
     }
     return value;
 {%- endif %}
@@ -42,14 +42,14 @@ export function decode{{ enum.name }}(reader) {
 
 export function decode{{ enum.name }}Value(value) {
 {%- if options.enum_is_integer %}
-    const ordinal = value.asInt();
-    if (!values.has(ordinal)) {
-        throw new Error(`invalid enum ordinal ${ordinal} for {{ enum.name }}`);
+    const id = value.asInt();
+    if (!values.has(id)) {
+        throw new Error(`invalid enum id ${id} for {{ enum.name }}`);
     }
-    return ordinal;
+    return id;
 {%- else %}
     const name = value.asString();
-    if (!values.includes(name)) {
+    if (![...values.values()].includes(name)) {
         throw new Error(`invalid enum value ${name} for {{ enum.name }}`);
     }
     return name;

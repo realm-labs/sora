@@ -19,11 +19,11 @@ public interface RewardAction {
     }
     final class AddBuff implements RewardAction {
         public final Integer buffId;
-        public final Float duration;
+        public final float duration;
 
         public AddBuff(
             Integer buffId,
-            Float duration
+            float duration
         ) {
             this.buffId = buffId;
             this.duration = duration;

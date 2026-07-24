@@ -5,17 +5,19 @@ package com.sora.showcase;
 import java.util.List;
 import java.util.Map;
 
+
 public final class MaintenanceWindow {
     public final String version;
     public final String startsAt;
     public final Integer durationMinutes;
+    @SoraNullable
     public final String reason;
 
     public MaintenanceWindow(
         String version,
         String startsAt,
         Integer durationMinutes,
-        String reason
+        @SoraNullable String reason
     ) {
         this.version = version;
         this.startsAt = startsAt;

@@ -5,6 +5,7 @@ package com.sora.showcase;
 import java.util.List;
 import java.util.Map;
 
+
 public final class Item {
     /** Item id */
     public final Integer id;
@@ -110,6 +111,7 @@ final class ItemTable extends java.util.AbstractMap<Integer, Item> implements So
         return rows;
     }
     @Override
+    @SoraNullable
     public Item get(Object key) {
         return rows.get(key);
     }
@@ -126,6 +128,7 @@ final class ItemTable extends java.util.AbstractMap<Integer, Item> implements So
     public java.util.Set<Map.Entry<Integer, Item>> entrySet() {
         return rows.entrySet();
     }
+    @SoraNullable
     public Item getByName(String name) {
         return byName.get(name);
     }

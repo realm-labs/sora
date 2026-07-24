@@ -2,11 +2,11 @@
 
 package com.sora.showcase
 
-enum ElementType {
-  case Fire
-  case Ice
-  case Lightning
-  case Physical
+enum ElementType(val id: Int) {
+  case Fire extends ElementType(0)
+  case Ice extends ElementType(1)
+  case Lightning extends ElementType(2)
+  case Physical extends ElementType(3)
 }
 
 object ElementType {
@@ -16,7 +16,7 @@ object ElementType {
       case 1 => ElementType.Ice
       case 2 => ElementType.Lightning
       case 3 => ElementType.Physical
-      case ordinal => throw new SoraReadException(s"invalid enum ordinal $ordinal for ElementType")
+      case id => throw new SoraReadException(s"invalid enum id $id for ElementType")
     }
 
   def decode(value: SoraValue): ElementType =

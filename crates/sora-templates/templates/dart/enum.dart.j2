@@ -4,8 +4,12 @@ import 'runtime.dart';
 
 enum {{ enum.pascal_name }} {
 {%- for value in enum.values %}
-  {{ value.name }}{% if loop.last %};{% else %},{% endif %}
+  {{ value.name }}({{ value.id }}){% if loop.last %};{% else %},{% endif %}
 {%- endfor %}
+
+  const {{ enum.pascal_name }}(this.id);
+
+  final int id;
 
   static {{ enum.pascal_name }} decode(SoraValue value) {
     switch (value.asString()) {

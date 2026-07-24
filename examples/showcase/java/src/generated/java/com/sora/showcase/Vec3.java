@@ -3,15 +3,16 @@
 package com.sora.showcase;
 
 import java.util.List;
+
 public final class Vec3 {
-    public final Float x;
-    public final Float y;
-    public final Float z;
+    public final float x;
+    public final float y;
+    public final float z;
 
     public Vec3(
-        Float x,
-        Float y,
-        Float z
+        float x,
+        float y,
+        float z
     ) {
         this.x = x;
         this.y = y;

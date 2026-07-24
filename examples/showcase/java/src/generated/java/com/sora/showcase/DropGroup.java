@@ -5,6 +5,7 @@ package com.sora.showcase;
 import java.util.List;
 import java.util.Map;
 
+
 public final class DropGroup {
     public final Integer id;
     public final String name;
@@ -66,6 +67,7 @@ final class DropGroupTable extends java.util.AbstractMap<Integer, DropGroup> imp
         return rows;
     }
     @Override
+    @SoraNullable
     public DropGroup get(Object key) {
         return rows.get(key);
     }

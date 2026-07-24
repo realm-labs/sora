@@ -6,11 +6,11 @@ namespace com.sora.showcase;
 
 public enum StatType
 {
-    Hp,
-    Attack,
-    Defense,
-    Speed,
-    CritRate,
+    Hp = 0,
+    Attack = 1,
+    Defense = 2,
+    Speed = 3,
+    CritRate = 4,
 }
 
 internal static class StatTypeCodec
@@ -24,7 +24,7 @@ internal static class StatTypeCodec
             2 => StatType.Defense,
             3 => StatType.Speed,
             4 => StatType.CritRate,
-            var value => throw new SoraReadException($"invalid enum ordinal {value} for StatType"),
+            var value => throw new SoraReadException($"invalid enum id {value} for StatType"),
         };
     }
 

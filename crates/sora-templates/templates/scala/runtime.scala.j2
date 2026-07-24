@@ -157,7 +157,7 @@ final class SoraBundle private (
 }
 
 object SoraBundle {
-  val BundleVersion = 1
+  val BundleVersion = 2
   val HeaderLength = 24
   val SectionKindManifest = 0
   val SectionKindSchema = 1
@@ -499,7 +499,7 @@ final class SoraValueBundle private (
 }
 
 object SoraValueBundle {
-  val FormatVersion = 1
+  val FormatVersion = 2
 
 {%- if runtime_format == "json" %}
   def parseJson(bytes: Array[Byte]): SoraValueBundle = {

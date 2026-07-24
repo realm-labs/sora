@@ -4,7 +4,7 @@ package showcase
 
 import "fmt"
 
-const SoraSchemaFingerprint = "8519b38083babe03"
+const SoraSchemaFingerprint = "4ae91b3892293cc4"
 
 type SoraTableShape int
 

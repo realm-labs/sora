@@ -40,10 +40,10 @@ local values_by_name = {
 ---@param reader SoraReader
 ---@return StatType
 function StatType.decode(reader)
-    local ordinal = reader:read_u32()
-    local value = values[ordinal]
+    local id = reader:read_u32()
+    local value = values[id]
     if value == nil then
-        error("invalid enum ordinal " .. tostring(ordinal) .. " for StatType")
+        error("invalid enum id " .. tostring(id) .. " for StatType")
     end
     return value
 end

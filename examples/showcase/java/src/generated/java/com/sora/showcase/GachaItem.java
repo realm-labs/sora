@@ -5,17 +5,18 @@ package com.sora.showcase;
 import java.util.List;
 import java.util.Map;
 
+
 public final class GachaItem {
     public final Integer poolId;
     public final Integer itemId;
     public final Rarity rarity;
-    public final Float weight;
+    public final float weight;
 
     public GachaItem(
         Integer poolId,
         Integer itemId,
         Rarity rarity,
-        Float weight
+        float weight
     ) {
         this.poolId = poolId;
         this.itemId = itemId;

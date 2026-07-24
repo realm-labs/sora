@@ -5,6 +5,7 @@ package com.sora.showcase;
 import java.util.List;
 import java.util.Map;
 
+
 public final class GameSettings {
     public final String version;
     public final Integer dailyResetHour;
@@ -12,12 +13,13 @@ public final class GameSettings {
     public final Vec3 spawnPos;
     public final java.util.List<Integer> starterItems;
     /** Double precision tuning value */
-    public final Double gravity;
+    public final double gravity;
     /** Fixed-length array parsed from one cell */
     public final java.util.List<Integer> dailyBonusItems;
     /** Fixed-length array of structs */
     public final java.util.List<Vec3> spawnPoints;
     /** Optional derived struct copied from a child row */
+    @SoraNullable
     public final MaintenanceInfo maintenance;
 
     public GameSettings(
@@ -26,10 +28,10 @@ public final class GameSettings {
         Integer startingGold,
         Vec3 spawnPos,
         java.util.List<Integer> starterItems,
-        Double gravity,
+        double gravity,
         java.util.List<Integer> dailyBonusItems,
         java.util.List<Vec3> spawnPoints,
-        MaintenanceInfo maintenance
+        @SoraNullable MaintenanceInfo maintenance
     ) {
         this.version = version;
         this.dailyResetHour = dailyResetHour;

@@ -4,25 +4,35 @@ package {{ package }};
 
 public enum {{ enum.name }} {
 {%- for value in enum.values %}
-    {{ value }}{% if not loop.last %},{% else %};{% endif %}
+    {{ value.name }}({{ value.id }}){% if not loop.last %},{% else %};{% endif %}
 {%- endfor %}
+
+    private final int id;
+
+    {{ enum.name }}(int id) {
+        this.id = id;
+    }
+
+    public int id() {
+        return id;
+    }
 
     static {{ enum.name }} decode(SoraReader reader) {
         switch (reader.readU32()) {
 {%- for value in enum.values %}
-            case {{ loop.index0 }}:
-                return {{ value }};
+            case {{ value.id }}:
+                return {{ value.name }};
 {%- endfor %}
             default:
-                throw new SoraReadException("invalid enum ordinal for {{ enum.name }}");
+                throw new SoraReadException("invalid enum id for {{ enum.name }}");
         }
     }
 
     static {{ enum.name }} decode(SoraValue value) {
         switch (value.asString()) {
 {%- for value in enum.values %}
-            case "{{ value }}":
-                return {{ value }};
+            case "{{ value.name }}":
+                return {{ value.name }};
 {%- endfor %}
             default:
                 throw new SoraReadException("invalid enum value for {{ enum.name }}");

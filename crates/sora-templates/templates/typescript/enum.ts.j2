@@ -5,13 +5,13 @@ import type { SoraReader, SoraValue, TextKey } from "./sora_runtime{{ options.im
 export type {{ enum.name }} =
 {%- if options.enum_is_integer %}
 {%- for value in enum.values %}
-    | {{ loop.index0 }}
+    | {{ value.id }}
 {%- else %}
     never
 {%- endfor %};
 {%- else %}
 {%- for value in enum.values %}
-    | "{{ value }}"
+    | "{{ value.name }}"
 {%- else %}
     never
 {%- endfor %};
@@ -20,9 +20,9 @@ export type {{ enum.name }} =
 export const {{ enum.name }} = {
 {%- for value in enum.values %}
 {%- if options.enum_is_integer %}
-    {{ value }}: {{ loop.index0 }},
+    {{ value.name }}: {{ value.id }},
 {%- else %}
-    {{ value }}: "{{ value }}",
+    {{ value.name }}: "{{ value.name }}",
 {%- endif %}
 {%- endfor %}
 } as const;
@@ -30,28 +30,28 @@ export const {{ enum.name }} = {
 {%- if options.enum_is_integer %}
 const values = new Set<number>([
 {%- for value in enum.values %}
-    {{ loop.index0 }},
+    {{ value.id }},
 {%- endfor %}
 ]);
 {%- else %}
-const values: {{ enum.name }}[] = [
+const values = new Map<number, {{ enum.name }}>([
 {%- for value in enum.values %}
-    {{ enum.name }}.{{ value }},
+    [{{ value.id }}, {{ enum.name }}.{{ value.name }}],
 {%- endfor %}
-];
+]);
 {%- endif %}
 
 export function decode{{ enum.name }}(reader: SoraReader): {{ enum.name }} {
-    const ordinal = reader.readU32();
+    const id = reader.readU32();
 {%- if options.enum_is_integer %}
-    if (!values.has(ordinal)) {
-        throw new Error(`invalid enum ordinal ${ordinal} for {{ enum.name }}`);
+    if (!values.has(id)) {
+        throw new Error(`invalid enum id ${id} for {{ enum.name }}`);
     }
-    return ordinal as {{ enum.name }};
+    return id as {{ enum.name }};
 {%- else %}
-    const value = values[ordinal];
+    const value = values.get(id);
     if (value === undefined) {
-        throw new Error(`invalid enum ordinal ${ordinal} for {{ enum.name }}`);
+        throw new Error(`invalid enum id ${id} for {{ enum.name }}`);
     }
     return value;
 {%- endif %}
@@ -59,14 +59,14 @@ export function decode{{ enum.name }}(reader: SoraReader): {{ enum.name }} {
 
 export function decode{{ enum.name }}Value(value: SoraValue): {{ enum.name }} {
 {%- if options.enum_is_integer %}
-    const ordinal = value.asInt();
-    if (!values.has(ordinal)) {
-        throw new Error(`invalid enum ordinal ${ordinal} for {{ enum.name }}`);
+    const id = value.asInt();
+    if (!values.has(id)) {
+        throw new Error(`invalid enum id ${id} for {{ enum.name }}`);
     }
-    return ordinal as {{ enum.name }};
+    return id as {{ enum.name }};
 {%- else %}
     const name = value.asString();
-    if (!values.includes(name as {{ enum.name }})) {
+    if (![...values.values()].includes(name as {{ enum.name }})) {
         throw new Error(`invalid enum value ${name} for {{ enum.name }}`);
     }
     return name as {{ enum.name }};

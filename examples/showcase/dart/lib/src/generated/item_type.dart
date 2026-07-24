@@ -3,11 +3,15 @@
 import 'runtime.dart';
 
 enum ItemType {
-  weapon,
-  armor,
-  currency,
-  material,
-  consumable;
+  weapon(0),
+  armor(1),
+  currency(2),
+  material(3),
+  consumable(4);
+
+  const ItemType(this.id);
+
+  final int id;
 
   static ItemType decode(SoraValue value) {
     switch (value.asString()) {

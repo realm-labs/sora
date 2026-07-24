@@ -20,7 +20,7 @@ struct ComplexActionGroup {
         return ComplexActionGroup{
             reader.read_i32(),
             reader.read_string(),
-            reader.read_vector<RewardAction>(),
+            ([&reader]() { std::uint32_t length = reader.read_u32(); std::vector<RewardAction> values; values.reserve(length); for (std::uint32_t index = 0; index < length; ++index) { values.push_back(RewardAction::decode(reader)); } return values; })(),
         };
     }
 };

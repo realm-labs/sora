@@ -8,17 +8,17 @@ from .sora_runtime import SoraReadError, SoraReader
 
 
 class ResourceKind(Enum):
-    ITEM = "Item"
-    GOLD = "Gold"
-    DIAMOND = "Diamond"
+    ITEM = 0
+    GOLD = 1
+    DIAMOND = 2
 
     @staticmethod
     def decode(reader: SoraReader) -> ResourceKind:
-        ordinal = reader.read_u32()
-        if ordinal == 0:
+        id = reader.read_u32()
+        if id == 0:
             return ResourceKind.ITEM
-        if ordinal == 1:
+        if id == 1:
             return ResourceKind.GOLD
-        if ordinal == 2:
+        if id == 2:
             return ResourceKind.DIAMOND
-        raise SoraReadError(f"invalid enum ordinal {ordinal} for ResourceKind")
+        raise SoraReadError(f"invalid enum id {id} for ResourceKind")

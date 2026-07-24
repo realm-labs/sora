@@ -5,19 +5,20 @@ package com.sora.showcase;
 import java.util.List;
 import java.util.Map;
 
+
 public final class DropEntry {
     public final Integer groupId;
     public final Integer seq;
     public final Integer itemId;
     public final Integer count;
-    public final Float weight;
+    public final float weight;
 
     public DropEntry(
         Integer groupId,
         Integer seq,
         Integer itemId,
         Integer count,
-        Float weight
+        float weight
     ) {
         this.groupId = groupId;
         this.seq = seq;

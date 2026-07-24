@@ -2,10 +2,10 @@
 
 package com.sora.showcase
 
-enum ResourceKind {
-  case Item
-  case Gold
-  case Diamond
+enum ResourceKind(val id: Int) {
+  case Item extends ResourceKind(0)
+  case Gold extends ResourceKind(1)
+  case Diamond extends ResourceKind(2)
 }
 
 object ResourceKind {
@@ -14,7 +14,7 @@ object ResourceKind {
       case 0 => ResourceKind.Item
       case 1 => ResourceKind.Gold
       case 2 => ResourceKind.Diamond
-      case ordinal => throw new SoraReadException(s"invalid enum ordinal $ordinal for ResourceKind")
+      case id => throw new SoraReadException(s"invalid enum id $id for ResourceKind")
     }
 
   def decode(value: SoraValue): ResourceKind =

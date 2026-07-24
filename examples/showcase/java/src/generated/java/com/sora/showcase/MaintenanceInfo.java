@@ -3,15 +3,17 @@
 package com.sora.showcase;
 
 import java.util.List;
+
 public final class MaintenanceInfo {
     public final String startsAt;
     public final Integer durationMinutes;
+    @SoraNullable
     public final String reason;
 
     public MaintenanceInfo(
         String startsAt,
         Integer durationMinutes,
-        String reason
+        @SoraNullable String reason
     ) {
         this.startsAt = startsAt;
         this.durationMinutes = durationMinutes;

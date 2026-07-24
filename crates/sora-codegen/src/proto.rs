@@ -44,10 +44,19 @@ fn render_proto(ir: &ConfigIr) -> String {
     for item in &ir.enums {
         output.push_str(&format!("enum {} {{\n", item.name));
         let prefix = item.name.to_shouty_snake_case();
-        for (index, value) in item.values.iter().enumerate() {
+        if !item.values.iter().any(|value| value.id == 0) {
+            output.push_str(&format!("  {prefix}_UNSPECIFIED = 0;\n"));
+        }
+        for value in item
+            .values
+            .iter()
+            .filter(|value| value.id == 0)
+            .chain(item.values.iter().filter(|value| value.id != 0))
+        {
             output.push_str(&format!(
-                "  {prefix}_{} = {index};\n",
-                value.to_shouty_snake_case()
+                "  {prefix}_{} = {};\n",
+                value.name.to_shouty_snake_case(),
+                value.id
             ));
         }
         output.push_str("}\n\n");
@@ -176,7 +185,7 @@ package = "com.sora.game"
 
 [[enums]]
 name = "ItemType"
-values = ["Weapon", "Armor"]
+values = [{ id = 10, name = "Weapon" }, { id = 20, name = "Armor" }]
 
 [[structs]]
 name = "Cost"
@@ -227,7 +236,8 @@ type = "union<Action>"
         assert!(proto.contains("message SoraConfigData"));
         assert!(proto.contains("repeated Item item = 1;"));
         assert!(proto.contains("enum ItemType"));
-        assert!(proto.contains("ITEM_TYPE_WEAPON = 0;"));
+        assert!(proto.contains("ITEM_TYPE_UNSPECIFIED = 0;"));
+        assert!(proto.contains("ITEM_TYPE_WEAPON = 10;"));
         assert!(proto.contains("message Action"));
         assert!(proto.contains("oneof kind"));
         assert!(proto.contains("ActionAddItem add_item = 1;"));

@@ -7,7 +7,7 @@ namespace {{ namespace }};
 public enum {{ enum.name }}
 {
 {%- for value in enum.values %}
-    {{ value }},
+    {{ value.name }} = {{ value.id }},
 {%- endfor %}
 }
 
@@ -18,9 +18,9 @@ internal static class {{ enum.name }}Codec
         return reader.ReadUInt32() switch
         {
 {%- for value in enum.values %}
-            {{ loop.index0 }} => {{ enum.name }}.{{ value }},
+            {{ value.id }} => {{ enum.name }}.{{ value.name }},
 {%- endfor %}
-            var value => throw new SoraReadException($"invalid enum ordinal {value} for {{ enum.name }}"),
+            var value => throw new SoraReadException($"invalid enum id {value} for {{ enum.name }}"),
         };
     }
 
@@ -29,7 +29,7 @@ internal static class {{ enum.name }}Codec
         return value.AsString() switch
         {
 {%- for value in enum.values %}
-            "{{ value }}" => {{ enum.name }}.{{ value }},
+            "{{ value.name }}" => {{ enum.name }}.{{ value.name }},
 {%- endfor %}
             var name => throw new SoraReadException($"invalid enum value `{name}` for {{ enum.name }}"),
         };

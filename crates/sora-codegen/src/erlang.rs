@@ -104,8 +104,14 @@ struct ErlangModel {
 struct ErlangEnum {
     name: String,
     snake_name: String,
-    atom_values: Vec<String>,
-    values: Vec<String>,
+    values: Vec<ErlangEnumValue>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+struct ErlangEnumValue {
+    id: u32,
+    name: String,
+    atom_name: String,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -173,8 +179,15 @@ impl ErlangModel {
             .map(|item| ErlangEnum {
                 name: item.pascal_name,
                 snake_name: item.snake_name,
-                atom_values: item.atom_values,
-                values: item.values,
+                values: item
+                    .values
+                    .into_iter()
+                    .map(|value| ErlangEnumValue {
+                        id: value.id,
+                        atom_name: value.name.to_snake_case(),
+                        name: value.name,
+                    })
+                    .collect(),
             })
             .collect();
         let tables = model
@@ -566,7 +579,7 @@ mod tests {
         assert!(item_type.contains("-type t() ::"));
         assert!(item_type.contains("0 |"));
         assert!(item_type.contains("1."));
-        assert!(item_type.contains("0 -> {Ordinal, Reader1};"));
+        assert!(item_type.contains("0 -> {Id, Reader1};"));
 
         let _ = std::fs::remove_dir_all(base);
     }
@@ -628,7 +641,7 @@ package = "game_config"
 
 [[enums]]
 name = "ItemType"
-values = ["Weapon", "Armor"]
+values = [{ id = 0, name = "Weapon" }, { id = 1, name = "Armor" }]
 
 [[unions]]
 name = "Action"

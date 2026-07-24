@@ -249,7 +249,7 @@ fn schema_template(format: SchemaFormatArg) -> &'static str {
         SchemaFormatArg::Toml => {
             r#"[[enums]]
 name = "ItemType"
-values = ["Weapon", "Armor", "Material", "Consumable"]
+values = [{ id = 0, name = "Weapon" }, { id = 1, name = "Armor" }, { id = 2, name = "Material" }, { id = 3, name = "Consumable" }]
 
 [[tables]]
 name = "Item"
@@ -286,7 +286,7 @@ comment = "Stack limit"
         SchemaFormatArg::Yaml => {
             r#"enums:
   - name: ItemType
-    values: [Weapon, Armor, Material, Consumable]
+    values: [{ id: 0, name: Weapon }, { id: 1, name: Armor }, { id: 2, name: Material }, { id: 3, name: Consumable }]
 
 tables:
   - name: Item
@@ -317,7 +317,7 @@ tables:
   "enums": [
     {
       "name": "ItemType",
-      "values": ["Weapon", "Armor", "Material", "Consumable"]
+      "values": [{ "id": 0, "name": "Weapon" }, { "id": 1, "name": "Armor" }, { "id": 2, "name": "Material" }, { "id": 3, "name": "Consumable" }]
     }
   ],
   "tables": [
@@ -349,7 +349,7 @@ tables:
         SchemaFormatArg::Lua => {
             r#"return {
   enums = {
-    { name = "ItemType", values = { "Weapon", "Armor", "Material", "Consumable" } },
+    { name = "ItemType", values = { { id = 0, name = "Weapon" }, { id = 1, name = "Armor" }, { id = 2, name = "Material" }, { id = 3, name = "Consumable" } } },
   },
   tables = {
     {

@@ -33,11 +33,11 @@ struct GameSettings {
             reader.read_i32(),
             reader.read_i32(),
             Vec3::decode(reader),
-            reader.read_vector<std::int32_t>(),
+            ([&reader]() { std::uint32_t length = reader.read_u32(); std::vector<std::int32_t> values; values.reserve(length); for (std::uint32_t index = 0; index < length; ++index) { values.push_back(reader.read_i32()); } return values; })(),
             reader.read_f64(),
-            reader.read_array<std::int32_t, 3>(),
-            reader.read_array<Vec3, 2>(),
-            reader.read_optional<MaintenanceInfo>(),
+            ([&reader]() { std::uint32_t length = reader.read_u32(); if (length != 3) { throw SoraReadException("array length does not match schema"); } std::array<std::int32_t, 3> values; for (std::size_t index = 0; index < 3; ++index) { values[index] = reader.read_i32(); } return values; })(),
+            ([&reader]() { std::uint32_t length = reader.read_u32(); if (length != 2) { throw SoraReadException("array length does not match schema"); } std::array<Vec3, 2> values; for (std::size_t index = 0; index < 2; ++index) { values[index] = Vec3::decode(reader); } return values; })(),
+            ([&reader]() { std::uint8_t presence = reader.read_u8(); if (presence == 0) { return std::optional<MaintenanceInfo>(); } if (presence == 1) { return std::optional<MaintenanceInfo>(MaintenanceInfo::decode(reader)); } throw SoraReadException("invalid optional presence"); })(),
         };
     }
 };

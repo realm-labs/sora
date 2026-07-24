@@ -11,7 +11,7 @@ use crate::{
 };
 
 const MAGIC: &[u8; 4] = b"SORA";
-const VERSION: u32 = 1;
+const VERSION: u32 = 2;
 const HEADER_LEN: u32 = 24;
 const SECTION_ENTRY_LEN: usize = 28;
 const SECTION_KIND_MANIFEST: u32 = 0;
@@ -317,8 +317,8 @@ impl<'a> BinaryEncoder<'a> {
                 let Value::String(value) = value else {
                     return Err(type_error(ty, value));
                 };
-                let ordinal = self.enum_ordinal(enum_name, value)?;
-                write_var_u32(out, ordinal);
+                let id = self.enum_id(enum_name, value)?;
+                write_var_u32(out, id);
             }
             TypeIr::Struct(struct_name) => {
                 let Value::Object(values) = value else {
@@ -446,7 +446,7 @@ impl<'a> BinaryEncoder<'a> {
         Ok(())
     }
 
-    fn enum_ordinal(&self, enum_name: &str, value: &str) -> Result<u32> {
+    fn enum_id(&self, enum_name: &str, value: &str) -> Result<u32> {
         let enum_ir = self
             .ir
             .enums
@@ -458,21 +458,21 @@ impl<'a> BinaryEncoder<'a> {
             .iter()
             .find(|candidate| candidate.name == value || candidate.alias == value)
         {
-            let ordinal = enum_ir
+            let id = enum_ir
                 .values
                 .iter()
-                .position(|candidate| candidate == &entry.name)
+                .find(|candidate| candidate.name == entry.name)
+                .map(|candidate| candidate.id)
                 .ok_or_else(|| binary_error(format!("unknown enum value `{enum_name}.{value}`")))?;
-            return checked_u32(ordinal, "enum ordinal");
+            return Ok(id);
         }
 
-        let ordinal = enum_ir
+        enum_ir
             .values
             .iter()
-            .position(|candidate| candidate == value)
-            .ok_or_else(|| binary_error(format!("unknown enum value `{enum_name}.{value}`")))?;
-
-        checked_u32(ordinal, "enum ordinal")
+            .find(|candidate| candidate.name == value)
+            .map(|candidate| candidate.id)
+            .ok_or_else(|| binary_error(format!("unknown enum value `{enum_name}.{value}`")))
     }
 
     fn struct_ir(&self, struct_name: &str) -> Result<&StructIr> {

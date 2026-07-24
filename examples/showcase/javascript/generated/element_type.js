@@ -6,25 +6,25 @@ export const ElementType = {
     Lightning: "Lightning",
     Physical: "Physical",
 };
-const values = [
-    ElementType.Fire,
-    ElementType.Ice,
-    ElementType.Lightning,
-    ElementType.Physical,
-];
+const values = new Map([
+    [0, ElementType.Fire],
+    [1, ElementType.Ice],
+    [2, ElementType.Lightning],
+    [3, ElementType.Physical],
+]);
 
 export function decodeElementType(reader) {
-    const ordinal = reader.readU32();
-    const value = values[ordinal];
+    const id = reader.readU32();
+    const value = values.get(id);
     if (value === undefined) {
-        throw new Error(`invalid enum ordinal ${ordinal} for ElementType`);
+        throw new Error(`invalid enum id ${id} for ElementType`);
     }
     return value;
 }
 
 export function decodeElementTypeValue(value) {
     const name = value.asString();
-    if (!values.includes(name)) {
+    if (![...values.values()].includes(name)) {
         throw new Error(`invalid enum value ${name} for ElementType`);
     }
     return name;

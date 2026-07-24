@@ -95,8 +95,14 @@ struct PythonModel {
 struct PythonEnum {
     name: String,
     snake_name: String,
-    value_names: Vec<String>,
-    values: Vec<String>,
+    values: Vec<PythonEnumValue>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+struct PythonEnumValue {
+    id: u32,
+    name: String,
+    identifier: String,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -180,12 +186,15 @@ impl PythonModel {
             .map(|item| PythonEnum {
                 name: python_type_identifier(&item.pascal_name),
                 snake_name: python_module_name(&item.snake_name),
-                value_names: item
+                values: item
                     .values
-                    .iter()
-                    .map(|value| python_enum_value_name(value))
+                    .into_iter()
+                    .map(|value| PythonEnumValue {
+                        id: value.id,
+                        identifier: python_enum_value_name(&value.name),
+                        name: value.name,
+                    })
                     .collect(),
-                values: item.values,
             })
             .collect::<Vec<_>>();
 
@@ -405,7 +414,7 @@ fn validate_python_model(model: &PythonModel) -> Result<()> {
     for item in &model.enums {
         reject_duplicates(
             "Python enum value",
-            item.value_names.iter().map(String::as_str),
+            item.values.iter().map(|value| value.identifier.as_str()),
             &format!(
                 "enum `{}` has values that collide after Python identifier normalization",
                 item.name
@@ -883,7 +892,7 @@ package = "game_config"
 
 [[enums]]
 name = "ItemType"
-values = ["Weapon", "Armor"]
+values = [{ id = 0, name = "Weapon" }, { id = 1, name = "Armor" }]
 
 [[unions]]
 name = "Action"

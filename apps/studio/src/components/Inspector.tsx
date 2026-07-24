@@ -49,7 +49,7 @@ export function Inspector({
   node: StudioNode;
   edges: StudioEdge[];
   language: Language;
-  onAddEnumValue: (ownerId: string, name: string) => void;
+  onAddEnumValue: (ownerId: string, id: number, name: string) => void;
   onAddField: (ownerId: string, draft: EditableFieldDraft) => void;
   onAddUnionVariant: (ownerId: string, name: string) => void;
   onAddUnionVariantField: (ownerId: string, variantName: string, draft: EditableFieldDraft) => void;
@@ -65,7 +65,7 @@ export function Inspector({
     direction: -1 | 1
   ) => void;
   onRenameNode: (nodeId: string, name: string) => void;
-  onUpdateEnumValue: (ownerId: string, fieldIndex: number, name: string) => void;
+  onUpdateEnumValue: (ownerId: string, fieldIndex: number, id: number, name: string) => void;
   onUpdateNodeSettings: (nodeId: string, draft: EditableNodeSettingsDraft) => void;
   onUpdateField: (ownerId: string, fieldIndex: number, draft: EditableFieldDraft) => void;
   onUpdateUnionVariant: (ownerId: string, fieldIndex: number, name: string) => void;
@@ -82,7 +82,7 @@ export function Inspector({
   const [addingEnumValue, setAddingEnumValue] = useState(false);
   const [addingVariant, setAddingVariant] = useState(false);
   const [addingVariantField, setAddingVariantField] = useState<string | null>(null);
-  const [editingEnumValue, setEditingEnumValue] = useState<{ index: number; name: string } | null>(null);
+  const [editingEnumValue, setEditingEnumValue] = useState<{ index: number; id: number; name: string } | null>(null);
   const [editingVariant, setEditingVariant] = useState<{ index: number; name: string } | null>(null);
   const [settingsDraft, setSettingsDraft] = useState(makeNodeSettingsDraft(node));
   const [editingField, setEditingField] = useState<{ index: number; draft: EditableFieldDraft } | null>(
@@ -115,13 +115,13 @@ export function Inspector({
     onAddField(node.id, draft);
     setAddingField(false);
   };
-  const submitAddEnumValue = (name: string) => {
-    onAddEnumValue(node.id, name);
+  const submitAddEnumValue = (id: number, name: string) => {
+    onAddEnumValue(node.id, id, name);
     setAddingEnumValue(false);
   };
-  const submitEditEnumValue = (name: string) => {
+  const submitEditEnumValue = (id: number, name: string) => {
     if (!editingEnumValue) return;
-    onUpdateEnumValue(node.id, editingEnumValue.index, name);
+    onUpdateEnumValue(node.id, editingEnumValue.index, id, name);
     setEditingEnumValue(null);
   };
   const submitAddVariant = (name: string) => {
@@ -210,7 +210,8 @@ export function Inspector({
         </h3>
         <div className="field-list">
           {node.kind === "enum" && addingEnumValue && (
-            <NameEditor
+            <EnumValueEditor
+              initialId={nextEnumValueId(node)}
               initialName=""
               language={language}
               onCancel={() => setAddingEnumValue(false)}
@@ -221,8 +222,9 @@ export function Inspector({
           {node.kind === "enum" &&
             node.fields.map((field, index) =>
               editingEnumValue?.index === index ? (
-                <NameEditor
+                <EnumValueEditor
                   key={`${field.name}:${index}:editor`}
+                  initialId={editingEnumValue.id}
                   initialName={editingEnumValue.name}
                   language={language}
                   onCancel={() => setEditingEnumValue(null)}
@@ -237,8 +239,11 @@ export function Inspector({
                   moveDownDisabled={index === node.fields.length - 1}
                   moveUpDisabled={index === 0}
                   name={field.name}
+                  valueLabel={`ID ${field.enumValueId ?? "?"}`}
                   onDelete={() => onDeleteField(node.id, index)}
-                  onEdit={() => setEditingEnumValue({ index, name: field.name })}
+                  onEdit={() =>
+                    setEditingEnumValue({ index, id: field.enumValueId ?? 0, name: field.name })
+                  }
                   onMoveDown={() => onMoveField(node.id, index, 1)}
                   onMoveUp={() => onMoveField(node.id, index, -1)}
                 />
@@ -647,6 +652,7 @@ function ValueCard({
   moveDownDisabled = false,
   moveUpDisabled = false,
   name,
+  valueLabel,
   onDelete,
   onEdit,
   onMoveDown,
@@ -657,6 +663,7 @@ function ValueCard({
   moveDownDisabled?: boolean;
   moveUpDisabled?: boolean;
   name: string;
+  valueLabel?: string;
   onDelete: () => void;
   onEdit: () => void;
   onMoveDown: () => void;
@@ -667,7 +674,7 @@ function ValueCard({
     <article className="field-card value-card">
       <div>
         <strong>{name}</strong>
-        <code>{t.value}</code>
+        <code>{valueLabel ?? t.value}</code>
         <span className="field-actions">
           <button className="mini-action" disabled={moveUpDisabled} onClick={onMoveUp} title={t.moveUp}>
             <ChevronUp size={13} />
@@ -688,6 +695,83 @@ function ValueCard({
           {issue.message}
         </p>
       ))}
+    </article>
+  );
+}
+
+function EnumValueEditor({
+  initialId,
+  initialName,
+  language,
+  onCancel,
+  onSubmit,
+  placeholder
+}: {
+  initialId: number;
+  initialName: string;
+  language: Language;
+  onCancel: () => void;
+  onSubmit: (id: number, name: string) => void;
+  placeholder: string;
+}) {
+  const t = translations[language];
+  const [id, setId] = useState(initialId.toString());
+  const [name, setName] = useState(initialName);
+  const [submitted, setSubmitted] = useState(false);
+  const parsedId = Number(id);
+  const invalidId =
+    submitted &&
+    (!Number.isInteger(parsedId) || parsedId < 0 || parsedId > 2_147_483_647);
+  const invalidName = submitted && !name.trim();
+  const submit = () => {
+    setSubmitted(true);
+    if (invalidName || !name.trim() || !Number.isInteger(parsedId) || parsedId < 0 || parsedId > 2_147_483_647) {
+      return;
+    }
+    onSubmit(parsedId, name);
+  };
+  return (
+    <article className="field-editor">
+      <div className="editor-grid two">
+        <label className={invalidId ? "invalid" : ""}>
+          <FieldLabel required>{t.enumId}</FieldLabel>
+          <input
+            aria-invalid={invalidId}
+            aria-required="true"
+            min="0"
+            max="2147483647"
+            step="1"
+            type="number"
+            value={id}
+            onChange={(event) => setId(event.target.value)}
+          />
+          {invalidId && <em>{t.invalidEnumId}</em>}
+        </label>
+        <label className={invalidName ? "invalid" : ""}>
+          <FieldLabel required>{t.name}</FieldLabel>
+          <input
+            aria-invalid={invalidName}
+            aria-required="true"
+            onChange={(event) => setName(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter") submit();
+            }}
+            placeholder={placeholder}
+            value={name}
+          />
+          {invalidName && <em>{t.required}</em>}
+        </label>
+      </div>
+      <div className="editor-actions">
+        <button className="icon-button" onClick={submit}>
+          <Save size={14} />
+          {t.apply}
+        </button>
+        <button className="icon-button subtle" onClick={onCancel}>
+          <X size={14} />
+          {t.cancel}
+        </button>
+      </div>
     </article>
   );
 }
@@ -744,6 +828,13 @@ function NameEditor({
       </div>
     </article>
   );
+}
+
+function nextEnumValueId(node: StudioNode): number {
+  const ids = node.fields
+    .map((field) => field.enumValueId)
+    .filter((id): id is number => id != null);
+  return ids.length === 0 ? 0 : Math.max(...ids) + 1;
 }
 
 function makeUnionFieldDraft(field: StudioField, displayName: string): EditableFieldDraft {

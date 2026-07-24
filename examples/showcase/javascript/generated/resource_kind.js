@@ -5,24 +5,24 @@ export const ResourceKind = {
     Gold: "Gold",
     Diamond: "Diamond",
 };
-const values = [
-    ResourceKind.Item,
-    ResourceKind.Gold,
-    ResourceKind.Diamond,
-];
+const values = new Map([
+    [0, ResourceKind.Item],
+    [1, ResourceKind.Gold],
+    [2, ResourceKind.Diamond],
+]);
 
 export function decodeResourceKind(reader) {
-    const ordinal = reader.readU32();
-    const value = values[ordinal];
+    const id = reader.readU32();
+    const value = values.get(id);
     if (value === undefined) {
-        throw new Error(`invalid enum ordinal ${ordinal} for ResourceKind`);
+        throw new Error(`invalid enum id ${id} for ResourceKind`);
     }
     return value;
 }
 
 export function decodeResourceKindValue(value) {
     const name = value.asString();
-    if (!values.includes(name)) {
+    if (![...values.values()].includes(name)) {
         throw new Error(`invalid enum value ${name} for ResourceKind`);
     }
     return name;

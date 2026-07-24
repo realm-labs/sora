@@ -7,17 +7,22 @@ These definitions let schemas model more than flat tables.
 ```toml
 [[enums]]
 name = "Rarity"
-values = ["Common", "Uncommon", "Rare", "Epic", "Legendary"]
+values = [{ id = 0, name = "Common" }, { id = 1, name = "Uncommon" }, { id = 2, name = "Rare" }, { id = 3, name = "Epic" }, { id = 4, name = "Legendary" }]
 ```
 
 Enums keep source data readable while generated code receives a constrained type.
+Every enum value has an explicit, stable integer `id`. IDs must be unique within
+the enum and range from `0` to `2147483647`. Reordering values does not change
+their encoded representation; keep the existing ID when renaming a value. The
+binary format, integer enum representations, native enum values where supported,
+and generated Protobuf schemas all use this ID.
 
 Aliases can keep imported or legacy names readable:
 
 ```toml
 [[enums.aliases]]
-name = "Purple"
-alias = "Epic"
+name = "Epic"
+alias = "Purple"
 ```
 
 ## Structs

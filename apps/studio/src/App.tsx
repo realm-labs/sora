@@ -400,15 +400,15 @@ export function App() {
     setDirty(true);
   };
 
-  const createEnumValue = (ownerId: string, name: string) => {
+  const createEnumValue = (ownerId: string, id: number, name: string) => {
     if (!schema) return;
-    setEditableSchema(addEnumValue(schema, ownerId, name));
+    setEditableSchema(addEnumValue(schema, ownerId, id, name));
     setDirty(true);
   };
 
-  const editEnumValue = (ownerId: string, fieldIndex: number, name: string) => {
+  const editEnumValue = (ownerId: string, fieldIndex: number, id: number, name: string) => {
     if (!schema) return;
-    setEditableSchema(updateEnumValue(schema, ownerId, fieldIndex, name));
+    setEditableSchema(updateEnumValue(schema, ownerId, fieldIndex, id, name));
     setDirty(true);
   };
 

@@ -16,26 +16,26 @@ export const Rarity = {
     Epic: "Epic",
     Legendary: "Legendary",
 } as const;
-const values: Rarity[] = [
-    Rarity.Common,
-    Rarity.Uncommon,
-    Rarity.Rare,
-    Rarity.Epic,
-    Rarity.Legendary,
-];
+const values = new Map<number, Rarity>([
+    [0, Rarity.Common],
+    [1, Rarity.Uncommon],
+    [2, Rarity.Rare],
+    [3, Rarity.Epic],
+    [4, Rarity.Legendary],
+]);
 
 export function decodeRarity(reader: SoraReader): Rarity {
-    const ordinal = reader.readU32();
-    const value = values[ordinal];
+    const id = reader.readU32();
+    const value = values.get(id);
     if (value === undefined) {
-        throw new Error(`invalid enum ordinal ${ordinal} for Rarity`);
+        throw new Error(`invalid enum id ${id} for Rarity`);
     }
     return value;
 }
 
 export function decodeRarityValue(value: SoraValue): Rarity {
     const name = value.asString();
-    if (!values.includes(name as Rarity)) {
+    if (![...values.values()].includes(name as Rarity)) {
         throw new Error(`invalid enum value ${name} for Rarity`);
     }
     return name as Rarity;

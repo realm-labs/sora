@@ -32,9 +32,23 @@ impl super::runtime::SoraDecode for Quest {
             quest_type: <QuestType as super::runtime::SoraDecode>::decode(reader)?,
             title: <std::sync::Arc<str> as super::runtime::SoraDecode>::decode(reader)?,
             required_item: <i32 as super::runtime::SoraDecode>::decode(reader)?,
-            unlock_skills: <Vec<i32> as super::runtime::SoraDecode>::decode(reader)?,
+            unlock_skills: {
+                let len = reader.read_var_u32()? as usize;
+                let mut values = Vec::with_capacity(len);
+                for _ in 0..len {
+                    values.push(<i32 as super::runtime::SoraDecode>::decode(reader)?);
+                }
+                values
+            },
             start_pos: <Vec3 as super::runtime::SoraDecode>::decode(reader)?,
-            rewards: <Vec<Reward> as super::runtime::SoraDecode>::decode(reader)?,
+            rewards: {
+                let len = reader.read_var_u32()? as usize;
+                let mut values = Vec::with_capacity(len);
+                for _ in 0..len {
+                    values.push(<Reward as super::runtime::SoraDecode>::decode(reader)?);
+                }
+                values
+            },
         })
     }
 }

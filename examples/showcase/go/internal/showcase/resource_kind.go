@@ -13,11 +13,11 @@ const (
 )
 
 func decodeResourceKind(reader *SoraReader) (ResourceKind, error) {
-	ordinal, err := reader.ReadUInt32()
+	id, err := reader.ReadUInt32()
 	if err != nil {
 		return 0, err
 	}
-	switch ordinal {
+	switch id {
 	case 0:
 		return ResourceKindItem, nil
 	case 1:
@@ -25,7 +25,7 @@ func decodeResourceKind(reader *SoraReader) (ResourceKind, error) {
 	case 2:
 		return ResourceKindDiamond, nil
 	default:
-		return 0, fmt.Errorf("invalid enum ordinal %d for ResourceKind", ordinal)
+		return 0, fmt.Errorf("invalid enum id %d for ResourceKind", id)
 	}
 }
 

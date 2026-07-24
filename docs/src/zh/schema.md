@@ -16,7 +16,7 @@ Schema 是 Sora 的事实来源。它描述稳定的数据契约；Excel 工作�
 ```toml
 [[enums]]
 name = "ItemType"
-values = ["Weapon", "Armor", "Material"]
+values = [{ id = 0, name = "Weapon" }, { id = 1, name = "Armor" }, { id = 2, name = "Material" }]
 ```
 
 枚举在可编辑数据中用符号值表示，在支持的语言中会生成原生或接近原生的枚举结构。

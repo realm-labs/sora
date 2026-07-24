@@ -2,22 +2,22 @@
 
 package com.sora.showcase
 
-enum class Rarity {
-    Common,
-    Uncommon,
-    Rare,
-    Epic,
-    Legendary;
+enum class Rarity(val id: Int) {
+    Common(0),
+    Uncommon(1),
+    Rare(2),
+    Epic(3),
+    Legendary(4);
 
     companion object {
         fun decode(reader: SoraReader): Rarity =
-            when (val ordinal = reader.readU32()) {
+            when (val id = reader.readU32()) {
                 0 -> Common
                 1 -> Uncommon
                 2 -> Rare
                 3 -> Epic
                 4 -> Legendary
-                else -> throw SoraReadException("invalid enum ordinal $ordinal for Rarity")
+                else -> throw SoraReadException("invalid enum id $id for Rarity")
             }
 
         fun decode(value: SoraValue): Rarity =

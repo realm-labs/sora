@@ -24,7 +24,16 @@ impl super::runtime::SoraDecode for ShopItem {
             seq: <i32 as super::runtime::SoraDecode>::decode(reader)?,
             item_id: <i32 as super::runtime::SoraDecode>::decode(reader)?,
             price: <ResourceCost as super::runtime::SoraDecode>::decode(reader)?,
-            daily_limit: <Option<i32> as super::runtime::SoraDecode>::decode(reader)?,
+            daily_limit: match reader.read_u8()? {
+                0 => None,
+                1 => Some(<i32 as super::runtime::SoraDecode>::decode(reader)?),
+                value => {
+                    return Err(super::runtime::SoraReadError::new(format!(
+                        "invalid option presence {}",
+                        value
+                    )));
+                }
+            },
         })
     }
 }

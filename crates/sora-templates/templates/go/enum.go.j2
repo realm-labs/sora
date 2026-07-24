@@ -8,22 +8,22 @@ type {{ enum.name }} int32
 
 const (
 {%- for value in enum.values %}
-    {{ enum.name }}{{ value }} {{ enum.name }} = {{ loop.index0 }}
+    {{ enum.name }}{{ value.name }} {{ enum.name }} = {{ value.id }}
 {%- endfor %}
 )
 
 func decode{{ enum.name }}(reader *SoraReader) ({{ enum.name }}, error) {
-    ordinal, err := reader.ReadUInt32()
+    id, err := reader.ReadUInt32()
     if err != nil {
         return 0, err
     }
-    switch ordinal {
+    switch id {
 {%- for value in enum.values %}
-    case {{ loop.index0 }}:
-        return {{ enum.name }}{{ value }}, nil
+    case {{ value.id }}:
+        return {{ enum.name }}{{ value.name }}, nil
 {%- endfor %}
     default:
-        return 0, fmt.Errorf("invalid enum ordinal %d for {{ enum.name }}", ordinal)
+        return 0, fmt.Errorf("invalid enum id %d for {{ enum.name }}", id)
     }
 }
 
@@ -34,8 +34,8 @@ func decode{{ enum.name }}Value(value SoraValue) ({{ enum.name }}, error) {
     }
     switch name {
 {%- for value in enum.values %}
-    case "{{ value }}":
-        return {{ enum.name }}{{ value }}, nil
+    case "{{ value.name }}":
+        return {{ enum.name }}{{ value.name }}, nil
 {%- endfor %}
     default:
         return 0, fmt.Errorf("invalid enum value %s for {{ enum.name }}", name)

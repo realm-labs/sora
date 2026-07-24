@@ -47,19 +47,40 @@ pub fn validate_config_ir(ir: &ConfigIr) -> Result<()> {
         .collect::<BTreeSet<_>>();
 
     for item in &ir.enums {
-        validate_unique_names("enum value", item.values.iter().map(String::as_str))?;
+        validate_unique_names(
+            "enum value",
+            item.values.iter().map(|value| value.name.as_str()),
+        )?;
+        let mut value_ids = BTreeSet::new();
+        for value in &item.values {
+            if value.id > i32::MAX as u32 {
+                return Err(SoraError::InvalidSchema(format!(
+                    "enum `{}` value `{}` id `{}` exceeds the portable maximum `{}`",
+                    item.name,
+                    value.name,
+                    value.id,
+                    i32::MAX
+                )));
+            }
+            if !value_ids.insert(value.id) {
+                return Err(SoraError::InvalidSchema(format!(
+                    "enum `{}` value id `{}` is duplicated",
+                    item.name, value.id
+                )));
+            }
+        }
         validate_unique_names(
             "enum alias",
             item.aliases.iter().map(|alias| alias.alias.as_str()),
         )?;
         for alias in &item.aliases {
-            if !item.values.iter().any(|value| value == &alias.name) {
+            if !item.values.iter().any(|value| value.name == alias.name) {
                 return Err(SoraError::InvalidSchema(format!(
                     "enum `{}` alias `{}` targets unknown value `{}`",
                     item.name, alias.alias, alias.name
                 )));
             }
-            if item.values.iter().any(|value| value == &alias.alias) {
+            if item.values.iter().any(|value| value.name == alias.alias) {
                 return Err(SoraError::InvalidSchema(format!(
                     "enum `{}` alias `{}` conflicts with an enum value",
                     item.name, alias.alias

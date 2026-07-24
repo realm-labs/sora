@@ -35,7 +35,7 @@ struct Skill {
             ResourceCost::decode(reader),
             SkillEffect::decode(reader),
             reader.read_i32(),
-            reader.read_optional<std::int32_t>(),
+            ([&reader]() { std::uint8_t presence = reader.read_u8(); if (presence == 0) { return std::optional<std::int32_t>(); } if (presence == 1) { return std::optional<std::int32_t>(reader.read_i32()); } throw SoraReadException("invalid optional presence"); })(),
             Vec3::decode(reader),
         };
     }

@@ -3,9 +3,19 @@
 package com.sora.showcase;
 
 public enum ResourceKind {
-    Item,
-    Gold,
-    Diamond;
+    Item(0),
+    Gold(1),
+    Diamond(2);
+
+    private final int id;
+
+    ResourceKind(int id) {
+        this.id = id;
+    }
+
+    public int id() {
+        return id;
+    }
 
     static ResourceKind decode(SoraReader reader) {
         switch (reader.readU32()) {
@@ -16,7 +26,7 @@ public enum ResourceKind {
             case 2:
                 return Diamond;
             default:
-                throw new SoraReadException("invalid enum ordinal for ResourceKind");
+                throw new SoraReadException("invalid enum id for ResourceKind");
         }
     }
 

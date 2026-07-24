@@ -21,7 +21,7 @@ struct ComplexConditionGroup {
         return ComplexConditionGroup{
             reader.read_i32(),
             reader.read_string(),
-            reader.read_vector<EventCondition>(),
+            ([&reader]() { std::uint32_t length = reader.read_u32(); std::vector<EventCondition> values; values.reserve(length); for (std::uint32_t index = 0; index < length; ++index) { values.push_back(EventCondition::decode(reader)); } return values; })(),
         };
     }
 };

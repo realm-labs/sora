@@ -9,8 +9,8 @@ use sora_ir::model::{ConfigIr, TableModeIr, TypeIr};
 use crate::{
     generator::{CodeGenerator, CodegenContext, runtime_format_name},
     model::{
-        BaseField, BaseImport, BaseIndex, BaseModel, BaseRecord, BaseTable, BaseUnion,
-        BaseUnionVariant, build_base_model,
+        BaseEnumValue, BaseField, BaseImport, BaseIndex, BaseModel, BaseRecord, BaseTable,
+        BaseUnion, BaseUnionVariant, build_base_model,
     },
     options::{RustCodegenOptions, RustDateTimeType, RustMapType, RustStringStorage},
     render::{ensure_dir, render_template, write_file},
@@ -94,7 +94,7 @@ struct RustModel {
 struct RustEnum {
     name: String,
     snake_name: String,
-    values: Vec<String>,
+    values: Vec<BaseEnumValue>,
 }
 
 #[derive(Debug, Clone, Serialize)]

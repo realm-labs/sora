@@ -9,19 +9,19 @@ from .sora_runtime import SoraReadError, SoraReader{% if runtime_format != "sora
 
 class {{ enum.name }}(Enum):
 {%- for value in enum.values %}
-    {{ enum.value_names[loop.index0] }} = "{{ value }}"
+    {{ value.identifier }} = {{ value.id }}
 {%- else %}
     pass
 {%- endfor %}
 
     @staticmethod
     def decode(reader: SoraReader) -> {{ enum.name }}:
-        ordinal = reader.read_u32()
+        id = reader.read_u32()
 {%- for value in enum.values %}
-        if ordinal == {{ loop.index0 }}:
-            return {{ enum.name }}.{{ enum.value_names[loop.index0] }}
+        if id == {{ value.id }}:
+            return {{ enum.name }}.{{ value.identifier }}
 {%- endfor %}
-        raise SoraReadError(f"invalid enum ordinal {ordinal} for {{ enum.name }}")
+        raise SoraReadError(f"invalid enum id {id} for {{ enum.name }}")
 
 {%- if runtime_format != "sora" %}
 
@@ -29,8 +29,8 @@ class {{ enum.name }}(Enum):
     def decode_value(value: SoraValue) -> {{ enum.name }}:
         name = value.as_string()
 {%- for value in enum.values %}
-        if name == "{{ value }}":
-            return {{ enum.name }}.{{ enum.value_names[loop.index0] }}
+        if name == "{{ value.name }}":
+            return {{ enum.name }}.{{ value.identifier }}
 {%- endfor %}
         raise SoraReadError(f"invalid enum value {name!r} for {{ enum.name }}")
 {%- endif %}

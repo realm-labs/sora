@@ -3,11 +3,21 @@
 package com.sora.showcase;
 
 public enum Rarity {
-    Common,
-    Uncommon,
-    Rare,
-    Epic,
-    Legendary;
+    Common(0),
+    Uncommon(1),
+    Rare(2),
+    Epic(3),
+    Legendary(4);
+
+    private final int id;
+
+    Rarity(int id) {
+        this.id = id;
+    }
+
+    public int id() {
+        return id;
+    }
 
     static Rarity decode(SoraReader reader) {
         switch (reader.readU32()) {
@@ -22,7 +32,7 @@ public enum Rarity {
             case 4:
                 return Legendary;
             default:
-                throw new SoraReadException("invalid enum ordinal for Rarity");
+                throw new SoraReadException("invalid enum id for Rarity");
         }
     }
 

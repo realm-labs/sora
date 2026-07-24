@@ -5,6 +5,7 @@ package com.sora.showcase;
 import java.util.List;
 import java.util.Map;
 
+
 public final class ComplexActionEntry {
     public final Integer id;
     public final Integer groupId;
@@ -77,6 +78,7 @@ final class ComplexActionEntryTable extends java.util.AbstractMap<Integer, Compl
         return rows;
     }
     @Override
+    @SoraNullable
     public ComplexActionEntry get(Object key) {
         return rows.get(key);
     }

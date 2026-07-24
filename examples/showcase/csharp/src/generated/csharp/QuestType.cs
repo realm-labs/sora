@@ -6,9 +6,9 @@ namespace com.sora.showcase;
 
 public enum QuestType
 {
-    Main,
-    Side,
-    Daily,
+    Main = 0,
+    Side = 1,
+    Daily = 2,
 }
 
 internal static class QuestTypeCodec
@@ -20,7 +20,7 @@ internal static class QuestTypeCodec
             0 => QuestType.Main,
             1 => QuestType.Side,
             2 => QuestType.Daily,
-            var value => throw new SoraReadException($"invalid enum ordinal {value} for QuestType"),
+            var value => throw new SoraReadException($"invalid enum id {value} for QuestType"),
         };
     }
 

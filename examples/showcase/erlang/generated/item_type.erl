@@ -13,14 +13,14 @@
 
 -spec decode(sora_runtime:reader()) -> {t(), sora_runtime:reader()}.
 decode(Reader0) ->
-    {Ordinal, Reader1} = sora_runtime:read_u32(Reader0),
-    case Ordinal of
+    {Id, Reader1} = sora_runtime:read_u32(Reader0),
+    case Id of
         0 -> {'weapon', Reader1};
         1 -> {'armor', Reader1};
         2 -> {'currency', Reader1};
         3 -> {'material', Reader1};
         4 -> {'consumable', Reader1};
-        _ -> error({invalid_enum_ordinal, item_type, Ordinal})
+        _ -> error({invalid_enum_id, item_type, Id})
     end.
 
 -spec decode_value(binary()) -> t().

@@ -144,7 +144,7 @@ final class SoraBundle private (
 }
 
 object SoraBundle {
-  val BundleVersion = 1
+  val BundleVersion = 2
   val HeaderLength = 24
   val SectionKindManifest = 0
   val SectionKindSchema = 1

@@ -3,6 +3,7 @@
 package com.sora.showcase;
 
 import java.util.List;
+
 public final class ComplexBudget {
     public final ResourceCost fixed;
     public final java.util.List<RewardBundle> random;

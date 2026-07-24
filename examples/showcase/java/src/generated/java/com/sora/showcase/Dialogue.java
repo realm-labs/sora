@@ -5,6 +5,7 @@ package com.sora.showcase;
 import java.util.List;
 import java.util.Map;
 
+
 public final class Dialogue {
     public final Integer id;
     public final TextKey speakerKey;
@@ -72,6 +73,7 @@ final class DialogueTable extends java.util.AbstractMap<Integer, Dialogue> imple
         return rows;
     }
     @Override
+    @SoraNullable
     public Dialogue get(Object key) {
         return rows.get(key);
     }

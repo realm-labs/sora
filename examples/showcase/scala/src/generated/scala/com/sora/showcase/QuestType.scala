@@ -2,10 +2,10 @@
 
 package com.sora.showcase
 
-enum QuestType {
-  case Main
-  case Side
-  case Daily
+enum QuestType(val id: Int) {
+  case Main extends QuestType(0)
+  case Side extends QuestType(1)
+  case Daily extends QuestType(2)
 }
 
 object QuestType {
@@ -14,7 +14,7 @@ object QuestType {
       case 0 => QuestType.Main
       case 1 => QuestType.Side
       case 2 => QuestType.Daily
-      case ordinal => throw new SoraReadException(s"invalid enum ordinal $ordinal for QuestType")
+      case id => throw new SoraReadException(s"invalid enum id $id for QuestType")
     }
 
   def decode(value: SoraValue): QuestType =

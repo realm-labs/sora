@@ -39,7 +39,16 @@ impl super::runtime::SoraDecode for Skill {
             cost: <ResourceCost as super::runtime::SoraDecode>::decode(reader)?,
             effect: <SkillEffect as super::runtime::SoraDecode>::decode(reader)?,
             required_level: <i32 as super::runtime::SoraDecode>::decode(reader)?,
-            required_item: <Option<i32> as super::runtime::SoraDecode>::decode(reader)?,
+            required_item: match reader.read_u8()? {
+                0 => None,
+                1 => Some(<i32 as super::runtime::SoraDecode>::decode(reader)?),
+                value => {
+                    return Err(super::runtime::SoraReadError::new(format!(
+                        "invalid option presence {}",
+                        value
+                    )));
+                }
+            },
             cast_origin: <Vec3 as super::runtime::SoraDecode>::decode(reader)?,
         })
     }

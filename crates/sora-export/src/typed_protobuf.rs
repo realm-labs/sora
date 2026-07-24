@@ -173,8 +173,8 @@ fn encode_value(
             let number = enum_ir
                 .values
                 .iter()
-                .position(|candidate| candidate == value)
-                .map(|value| value as i64)
+                .find(|candidate| candidate.name == value)
+                .map(|candidate| i64::from(candidate.id))
                 .ok_or_else(|| SoraError::InvalidEnumValue {
                     table: table.to_owned(),
                     field: field.name.clone(),
@@ -456,7 +456,7 @@ package = "game_config"
 
 [[enums]]
 name = "ItemType"
-values = ["Weapon", "Armor"]
+values = [{ id = 10, name = "Weapon" }, { id = 20, name = "Armor" }]
 
 [[tables]]
 name = "Item"

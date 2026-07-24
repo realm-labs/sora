@@ -17,7 +17,7 @@ enum class StatType : std::int32_t {
     CritRate = 4,
 };
 
-inline StatType decode_stat_type_ordinal(std::uint32_t value) {
+inline StatType decode_stat_type_id(std::uint32_t value) {
     switch (value) {
     case 0:
         return StatType::Hp;
@@ -30,7 +30,7 @@ inline StatType decode_stat_type_ordinal(std::uint32_t value) {
     case 4:
         return StatType::CritRate;
     default:
-        throw SoraReadException("invalid enum ordinal for StatType");
+        throw SoraReadException("invalid enum id for StatType");
     }
 }
 
@@ -49,7 +49,7 @@ namespace sora::showcase {
 
 template <>
 inline StatType decode_value<StatType>(SoraReader& reader) {
-    return decode_stat_type_ordinal(reader.read_u32());
+    return decode_stat_type_id(reader.read_u32());
 }
 
 } // namespace sora::showcase

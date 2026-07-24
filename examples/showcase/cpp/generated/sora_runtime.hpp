@@ -270,6 +270,16 @@ inline std::chrono::milliseconds decode_value<std::chrono::milliseconds>(SoraRea
     return decode_duration(reader);
 }
 
+inline std::chrono::system_clock::time_point decode_datetime(SoraReader& reader) {
+    std::int64_t millis = reader.read_i64();
+    return std::chrono::system_clock::time_point(std::chrono::milliseconds(millis));
+}
+
+template <>
+inline std::chrono::system_clock::time_point decode_value<std::chrono::system_clock::time_point>(SoraReader& reader) {
+    return decode_datetime(reader);
+}
+
 template <>
 inline float decode_value<float>(SoraReader& reader) {
     return reader.read_f32();
@@ -602,7 +612,7 @@ private:
         return value == ' ' || value == '\n' || value == '\r' || value == '\t';
     }
 
-    static const std::uint32_t kBundleVersion = 1;
+    static const std::uint32_t kBundleVersion = 2;
     static const std::size_t kHeaderLength = 24;
     static const std::size_t kSectionEntryLength = 28;
     static const std::uint32_t kSectionKindManifest = 0;

@@ -5,6 +5,7 @@ package com.sora.showcase;
 import java.util.List;
 import java.util.Map;
 
+
 public final class MailReward {
     public final Integer mailId;
     public final Integer seq;

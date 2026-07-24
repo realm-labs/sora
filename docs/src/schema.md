@@ -16,7 +16,7 @@ See [Schema Formats](schema/formats.md) for the supported file formats and equiv
 ```toml
 [[enums]]
 name = "ItemType"
-values = ["Weapon", "Armor", "Material"]
+values = [{ id = 0, name = "Weapon" }, { id = 1, name = "Armor" }, { id = 2, name = "Material" }]
 ```
 
 Enums are stored by symbolic value in editable data and generated as native enum-like constructs when the target language supports them.

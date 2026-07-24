@@ -17,7 +17,7 @@ enum class ItemType : std::int32_t {
     Consumable = 4,
 };
 
-inline ItemType decode_item_type_ordinal(std::uint32_t value) {
+inline ItemType decode_item_type_id(std::uint32_t value) {
     switch (value) {
     case 0:
         return ItemType::Weapon;
@@ -30,7 +30,7 @@ inline ItemType decode_item_type_ordinal(std::uint32_t value) {
     case 4:
         return ItemType::Consumable;
     default:
-        throw SoraReadException("invalid enum ordinal for ItemType");
+        throw SoraReadException("invalid enum id for ItemType");
     }
 }
 
@@ -49,7 +49,7 @@ namespace sora::showcase {
 
 template <>
 inline ItemType decode_value<ItemType>(SoraReader& reader) {
-    return decode_item_type_ordinal(reader.read_u32());
+    return decode_item_type_id(reader.read_u32());
 }
 
 } // namespace sora::showcase

@@ -5,6 +5,7 @@ package com.sora.showcase;
 import java.util.List;
 import java.util.Map;
 
+
 public final class Monster {
     public final Integer id;
     public final String name;
@@ -87,6 +88,7 @@ final class MonsterTable extends java.util.AbstractMap<Integer, Monster> impleme
         return rows;
     }
     @Override
+    @SoraNullable
     public Monster get(Object key) {
         return rows.get(key);
     }

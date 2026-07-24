@@ -12,24 +12,24 @@ export const ResourceKind = {
     Gold: "Gold",
     Diamond: "Diamond",
 } as const;
-const values: ResourceKind[] = [
-    ResourceKind.Item,
-    ResourceKind.Gold,
-    ResourceKind.Diamond,
-];
+const values = new Map<number, ResourceKind>([
+    [0, ResourceKind.Item],
+    [1, ResourceKind.Gold],
+    [2, ResourceKind.Diamond],
+]);
 
 export function decodeResourceKind(reader: SoraReader): ResourceKind {
-    const ordinal = reader.readU32();
-    const value = values[ordinal];
+    const id = reader.readU32();
+    const value = values.get(id);
     if (value === undefined) {
-        throw new Error(`invalid enum ordinal ${ordinal} for ResourceKind`);
+        throw new Error(`invalid enum id ${id} for ResourceKind`);
     }
     return value;
 }
 
 export function decodeResourceKindValue(value: SoraValue): ResourceKind {
     const name = value.asString();
-    if (!values.includes(name as ResourceKind)) {
+    if (![...values.values()].includes(name as ResourceKind)) {
         throw new Error(`invalid enum value ${name} for ResourceKind`);
     }
     return name as ResourceKind;

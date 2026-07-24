@@ -3,9 +3,9 @@
 #include "stat_type.h"
 
 sora_result sora_showcase_stat_type_decode(sora_reader* reader, sora_showcase_stat_type* out) {
-    uint32_t ordinal = 0;
-    SORA_TRY(sora_reader_read_u32(reader, &ordinal));
-    switch (ordinal) {
+    uint32_t id = 0;
+    SORA_TRY(sora_reader_read_u32(reader, &id));
+    switch (id) {
     case 0:
         *out = SORA_SHOWCASE_STAT_TYPE_HP;
         return sora_ok();
@@ -22,6 +22,6 @@ sora_result sora_showcase_stat_type_decode(sora_reader* reader, sora_showcase_st
         *out = SORA_SHOWCASE_STAT_TYPE_CRIT_RATE;
         return sora_ok();
     default:
-        return sora_error(SORA_ERROR_DECODE, "invalid enum ordinal for StatType");
+        return sora_error(SORA_ERROR_DECODE, "invalid enum id for StatType");
     }
 }

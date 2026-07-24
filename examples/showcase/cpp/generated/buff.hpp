@@ -22,7 +22,7 @@ struct Buff {
             reader.read_i32(),
             reader.read_string(),
             decode_duration(reader),
-            reader.read_vector<StatModifier>(),
+            ([&reader]() { std::uint32_t length = reader.read_u32(); std::vector<StatModifier> values; values.reserve(length); for (std::uint32_t index = 0; index < length; ++index) { values.push_back(StatModifier::decode(reader)); } return values; })(),
         };
     }
 };

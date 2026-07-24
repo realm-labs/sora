@@ -5,6 +5,7 @@ package com.sora.showcase;
 import java.util.List;
 import java.util.Map;
 
+
 public final class EquipmentSet {
     public final Integer id;
     public final String name;
@@ -77,6 +78,7 @@ final class EquipmentSetTable extends java.util.AbstractMap<Integer, EquipmentSe
         return rows;
     }
     @Override
+    @SoraNullable
     public EquipmentSet get(Object key) {
         return rows.get(key);
     }

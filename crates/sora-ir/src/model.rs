@@ -42,9 +42,15 @@ pub struct LocalizationSourceIr {
 pub struct EnumIr {
     pub name: String,
     pub scope: ScopeIr,
-    pub values: Vec<String>,
+    pub values: Vec<EnumValueIr>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub aliases: Vec<EnumAliasIr>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct EnumValueIr {
+    pub id: u32,
+    pub name: String,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]

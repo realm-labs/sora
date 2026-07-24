@@ -38,8 +38,27 @@ impl super::runtime::SoraDecode for Item {
             item_type: <ItemType as super::runtime::SoraDecode>::decode(reader)?,
             max_stack: <i32 as super::runtime::SoraDecode>::decode(reader)?,
             price: <ResourceCost as super::runtime::SoraDecode>::decode(reader)?,
-            tags: <std::collections::HashSet<std::sync::Arc<str>> as super::runtime::SoraDecode>::decode(reader)?,
-            attributes: <std::collections::HashMap<std::sync::Arc<str>, i32> as super::runtime::SoraDecode>::decode(reader)?,
+            tags: {
+                let len = reader.read_var_u32()? as usize;
+                let mut values = std::collections::HashSet::with_capacity(len);
+                for _ in 0..len {
+                    values.insert(<std::sync::Arc<str> as super::runtime::SoraDecode>::decode(
+                        reader,
+                    )?);
+                }
+                values
+            },
+            attributes: {
+                let len = reader.read_var_u32()? as usize;
+                let mut values = std::collections::HashMap::with_capacity(len);
+                for _ in 0..len {
+                    values.insert(
+                        <std::sync::Arc<str> as super::runtime::SoraDecode>::decode(reader)?,
+                        <i32 as super::runtime::SoraDecode>::decode(reader)?,
+                    );
+                }
+                values
+            },
         })
     }
 }

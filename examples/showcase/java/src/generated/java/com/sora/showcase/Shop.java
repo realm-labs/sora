@@ -5,6 +5,7 @@ package com.sora.showcase;
 import java.util.List;
 import java.util.Map;
 
+
 public final class Shop {
     public final Integer id;
     public final String name;
@@ -71,6 +72,7 @@ final class ShopTable extends java.util.AbstractMap<Integer, Shop> implements So
         return rows;
     }
     @Override
+    @SoraNullable
     public Shop get(Object key) {
         return rows.get(key);
     }

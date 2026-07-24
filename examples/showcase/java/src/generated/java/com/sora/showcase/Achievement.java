@@ -5,16 +5,17 @@ package com.sora.showcase;
 import java.util.List;
 import java.util.Map;
 
+
 public final class Achievement {
     public final Integer id;
     public final TextKey titleKey;
-    public final Long targetCount;
+    public final long targetCount;
     public final ResourceCost reward;
 
     public Achievement(
         Integer id,
         TextKey titleKey,
-        Long targetCount,
+        long targetCount,
         ResourceCost reward
     ) {
         this.id = id;
@@ -78,6 +79,7 @@ final class AchievementTable extends java.util.AbstractMap<Integer, Achievement>
         return rows;
     }
     @Override
+    @SoraNullable
     public Achievement get(Object key) {
         return rows.get(key);
     }

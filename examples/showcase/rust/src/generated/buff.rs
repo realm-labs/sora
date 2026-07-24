@@ -22,7 +22,16 @@ impl super::runtime::SoraDecode for Buff {
             id: <i32 as super::runtime::SoraDecode>::decode(reader)?,
             name: <std::sync::Arc<str> as super::runtime::SoraDecode>::decode(reader)?,
             duration: <std::time::Duration as super::runtime::SoraDecode>::decode(reader)?,
-            modifiers: <Vec<StatModifier> as super::runtime::SoraDecode>::decode(reader)?,
+            modifiers: {
+                let len = reader.read_var_u32()? as usize;
+                let mut values = Vec::with_capacity(len);
+                for _ in 0..len {
+                    values.push(<StatModifier as super::runtime::SoraDecode>::decode(
+                        reader,
+                    )?);
+                }
+                values
+            },
         })
     }
 }

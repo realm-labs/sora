@@ -15,7 +15,7 @@ enum class MailType : std::int32_t {
     Compensation = 2,
 };
 
-inline MailType decode_mail_type_ordinal(std::uint32_t value) {
+inline MailType decode_mail_type_id(std::uint32_t value) {
     switch (value) {
     case 0:
         return MailType::System;
@@ -24,7 +24,7 @@ inline MailType decode_mail_type_ordinal(std::uint32_t value) {
     case 2:
         return MailType::Compensation;
     default:
-        throw SoraReadException("invalid enum ordinal for MailType");
+        throw SoraReadException("invalid enum id for MailType");
     }
 }
 
@@ -43,7 +43,7 @@ namespace sora::showcase {
 
 template <>
 inline MailType decode_value<MailType>(SoraReader& reader) {
-    return decode_mail_type_ordinal(reader.read_u32());
+    return decode_mail_type_id(reader.read_u32());
 }
 
 } // namespace sora::showcase

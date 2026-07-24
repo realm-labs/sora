@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use sora_diagnostics::{Result, SoraError};
 use sora_ir::model::ConfigIr;
 
-const SCHEMA_LOCK_VERSION: u32 = 1;
+const SCHEMA_LOCK_VERSION: u32 = 2;
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct SchemaLock {

@@ -78,6 +78,12 @@ pub enum StudioNodeKind {
 pub struct StudioField {
     pub name: String,
     pub ty: String,
+    #[serde(
+        default,
+        rename = "enumValueId",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub enum_value_id: Option<u32>,
     pub scope: String,
     pub parser: Option<String>,
     pub comment: Option<String>,

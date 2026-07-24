@@ -25,7 +25,7 @@ struct MailTemplate {
             decode_value<MailType>(reader),
             reader.read_text_key(),
             reader.read_text_key(),
-            reader.read_vector<Reward>(),
+            ([&reader]() { std::uint32_t length = reader.read_u32(); std::vector<Reward> values; values.reserve(length); for (std::uint32_t index = 0; index < length; ++index) { values.push_back(Reward::decode(reader)); } return values; })(),
         };
     }
 };

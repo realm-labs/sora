@@ -91,7 +91,7 @@ runtime_format = "__RUNTIME_FORMAT__"
         r#"
 [[enums]]
 name = "ItemType"
-values = ["Weapon", "Armor", "Material", "Consumable"]
+values = [{ id = 10, name = "Weapon" }, { id = 20, name = "Armor" }, { id = 30, name = "Material" }, { id = 40, name = "Consumable" }]
 
 [[structs]]
 name = "Reward"

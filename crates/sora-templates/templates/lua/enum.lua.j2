@@ -5,22 +5,22 @@
 ---| integer
 {%- else %}
 {%- for value in enum.values %}
----| '"{{ value }}"'
+---| '"{{ value.name }}"'
 {%- endfor %}
 {%- endif %}
 
 ---@class {{ enum.name }}Values
 {%- for value in enum.values %}
----@field {{ value }} {{ enum.name }}
+---@field {{ value.name }} {{ enum.name }}
 {%- endfor %}
 
 ---@type {{ enum.name }}Values
 local {{ enum.name }} = {
 {%- for value in enum.values %}
 {%- if options.enum_is_integer %}
-    {{ value }} = {{ loop.index0 }},
+    {{ value.name }} = {{ value.id }},
 {%- else %}
-    {{ value }} = "{{ value }}",
+    {{ value.name }} = "{{ value.name }}",
 {%- endif %}
 {%- endfor %}
 }
@@ -28,23 +28,23 @@ local {{ enum.name }} = {
 {%- if options.enum_is_integer %}
 local values = {
 {%- for value in enum.values %}
-    [{{ loop.index0 }}] = true,
+    [{{ value.id }}] = true,
 {%- endfor %}
 }
 local values_by_name = {
 {%- for value in enum.values %}
-    ["{{ value }}"] = {{ loop.index0 }},
+    ["{{ value.name }}"] = {{ value.id }},
 {%- endfor %}
 }
 {%- else %}
 local values = {
 {%- for value in enum.values %}
-    [{{ loop.index0 }}] = {{ enum.name }}.{{ value }},
+    [{{ value.id }}] = {{ enum.name }}.{{ value.name }},
 {%- endfor %}
 }
 local values_by_name = {
 {%- for value in enum.values %}
-    ["{{ value }}"] = {{ enum.name }}.{{ value }},
+    ["{{ value.name }}"] = {{ enum.name }}.{{ value.name }},
 {%- endfor %}
 }
 {%- endif %}
@@ -52,16 +52,16 @@ local values_by_name = {
 ---@param reader SoraReader
 ---@return {{ enum.name }}
 function {{ enum.name }}.decode(reader)
-    local ordinal = reader:read_u32()
+    local id = reader:read_u32()
 {%- if options.enum_is_integer %}
-    if not values[ordinal] then
-        error("invalid enum ordinal " .. tostring(ordinal) .. " for {{ enum.name }}")
+    if not values[id] then
+        error("invalid enum id " .. tostring(id) .. " for {{ enum.name }}")
     end
-    return ordinal
+    return id
 {%- else %}
-    local value = values[ordinal]
+    local value = values[id]
     if value == nil then
-        error("invalid enum ordinal " .. tostring(ordinal) .. " for {{ enum.name }}")
+        error("invalid enum id " .. tostring(id) .. " for {{ enum.name }}")
     end
     return value
 {%- endif %}

@@ -9,8 +9,8 @@ use sora_ir::model::{ConfigIr, TableModeIr, TypeIr};
 use crate::{
     generator::{CodeGenerator, CodegenContext, ensure_sora_runtime_format},
     model::{
-        BaseField, BaseImport, BaseIndex, BaseModel, BaseRecord, BaseTable, BaseUnion,
-        BaseUnionVariant, build_base_model,
+        BaseEnumValue, BaseField, BaseImport, BaseIndex, BaseModel, BaseRecord, BaseTable,
+        BaseUnion, BaseUnionVariant, build_base_model,
     },
     options::{CppCodegenOptions, CppStandard},
     render::{ensure_dir, render_template, write_file},
@@ -125,7 +125,7 @@ struct CppModel {
 struct CppEnum {
     name: String,
     snake_name: String,
-    values: Vec<String>,
+    values: Vec<BaseEnumValue>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -675,7 +675,7 @@ namespace = "sora::game_config"
 
 [[enums]]
 name = "ItemType"
-values = ["Weapon", "Armor"]
+values = [{ id = 0, name = "Weapon" }, { id = 1, name = "Armor" }]
 
 [[unions]]
 name = "Action"

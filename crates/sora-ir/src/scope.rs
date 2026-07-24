@@ -253,7 +253,7 @@ package = "game_config"
 
 [[enums]]
 name = "ItemType"
-values = ["Weapon"]
+values = [{ id = 0, name = "Weapon" }]
 
 [[structs]]
 name = "Reward"

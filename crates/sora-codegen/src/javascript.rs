@@ -208,8 +208,8 @@ mod tests {
             .unwrap();
 
         let item_type = std::fs::read_to_string(base.join("item_type.js")).unwrap();
-        assert!(item_type.contains("Weapon: 0"));
-        assert!(item_type.contains("return ordinal;"));
+        assert!(item_type.contains("Weapon: 10"));
+        assert!(item_type.contains("return id;"));
         assert!(!base.join("item_type.d.ts").exists());
 
         let _ = std::fs::remove_dir_all(base);
@@ -275,7 +275,7 @@ package = "game_config"
 
 [[enums]]
 name = "ItemType"
-values = ["Weapon", "Armor"]
+values = [{ id = 10, name = "Weapon" }, { id = 20, name = "Armor" }]
 
 [[tables]]
 name = "Item"

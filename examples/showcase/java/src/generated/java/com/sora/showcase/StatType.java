@@ -3,11 +3,21 @@
 package com.sora.showcase;
 
 public enum StatType {
-    Hp,
-    Attack,
-    Defense,
-    Speed,
-    CritRate;
+    Hp(0),
+    Attack(1),
+    Defense(2),
+    Speed(3),
+    CritRate(4);
+
+    private final int id;
+
+    StatType(int id) {
+        this.id = id;
+    }
+
+    public int id() {
+        return id;
+    }
 
     static StatType decode(SoraReader reader) {
         switch (reader.readU32()) {
@@ -22,7 +32,7 @@ public enum StatType {
             case 4:
                 return CritRate;
             default:
-                throw new SoraReadException("invalid enum ordinal for StatType");
+                throw new SoraReadException("invalid enum id for StatType");
         }
     }
 

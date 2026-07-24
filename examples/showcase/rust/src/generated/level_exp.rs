@@ -18,9 +18,18 @@ impl super::runtime::SoraDecode for LevelExp {
         Ok(Self {
             level: <i32 as super::runtime::SoraDecode>::decode(reader)?,
             exp: <i64 as super::runtime::SoraDecode>::decode(reader)?,
-            unlock_feature: <Option<std::sync::Arc<str>> as super::runtime::SoraDecode>::decode(
-                reader,
-            )?,
+            unlock_feature: match reader.read_u8()? {
+                0 => None,
+                1 => Some(<std::sync::Arc<str> as super::runtime::SoraDecode>::decode(
+                    reader,
+                )?),
+                value => {
+                    return Err(super::runtime::SoraReadError::new(format!(
+                        "invalid option presence {}",
+                        value
+                    )));
+                }
+            },
         })
     }
 }

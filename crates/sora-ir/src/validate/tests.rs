@@ -129,6 +129,24 @@ alias = "Armor"
 }
 
 #[test]
+fn rejects_duplicate_enum_value_ids() {
+    let source = r#"
+package = "game_config"
+
+[[enums]]
+name = "ItemType"
+values = [{ id = 7, name = "Weapon" }, { id = 7, name = "Armor" }]
+"#;
+    let schema: SchemaFile = toml::from_str(source).unwrap();
+    let ir = normalize_schema(schema).unwrap();
+
+    assert!(matches!(
+        validate_config_ir(&ir).unwrap_err(),
+        SoraError::InvalidSchema(message) if message.contains("value id `7` is duplicated")
+    ));
+}
+
+#[test]
 fn rejects_invalid_table_key_index_and_ref() {
     let missing_key = example_ir(
         r#"
@@ -881,7 +899,7 @@ package = "game_config"
 
 [[enums]]
 name = "ItemType"
-values = ["Weapon", "Armor"]
+values = [{{ id = 0, name = "Weapon" }}, {{ id = 1, name = "Armor" }}]
 
 {extra}
 "#

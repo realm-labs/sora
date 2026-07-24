@@ -3,10 +3,14 @@
 import 'runtime.dart';
 
 enum ElementType {
-  fire,
-  ice,
-  lightning,
-  physical;
+  fire(0),
+  ice(1),
+  lightning(2),
+  physical(3);
+
+  const ElementType(this.id);
+
+  final int id;
 
   static ElementType decode(SoraValue value) {
     switch (value.asString()) {

@@ -73,7 +73,7 @@ mod tests {
 
         let bytes = fs::read(&path).unwrap();
         assert_eq!(&bytes[0..4], b"SORA");
-        assert_eq!(u32::from_le_bytes(bytes[4..8].try_into().unwrap()), 1);
+        assert_eq!(u32::from_le_bytes(bytes[4..8].try_into().unwrap()), 2);
         assert_eq!(u32::from_le_bytes(bytes[8..12].try_into().unwrap()), 24);
         assert!(u32::from_le_bytes(bytes[12..16].try_into().unwrap()) > 0);
         assert_eq!(u32::from_le_bytes(bytes[16..20].try_into().unwrap()), 4);
@@ -87,7 +87,7 @@ mod tests {
             &bytes[sections[0].offset..sections[0].offset + sections[0].len],
         )
         .unwrap();
-        assert_eq!(manifest["format_version"], 1);
+        assert_eq!(manifest["format_version"], 2);
         assert_eq!(manifest["package"], "game_config");
         assert_eq!(manifest["tables"][0]["name"], "Item");
         assert_eq!(manifest["tables"][0]["rows"], 1);

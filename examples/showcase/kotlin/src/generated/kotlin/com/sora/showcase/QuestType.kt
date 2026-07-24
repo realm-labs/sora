@@ -2,18 +2,18 @@
 
 package com.sora.showcase
 
-enum class QuestType {
-    Main,
-    Side,
-    Daily;
+enum class QuestType(val id: Int) {
+    Main(0),
+    Side(1),
+    Daily(2);
 
     companion object {
         fun decode(reader: SoraReader): QuestType =
-            when (val ordinal = reader.readU32()) {
+            when (val id = reader.readU32()) {
                 0 -> Main
                 1 -> Side
                 2 -> Daily
-                else -> throw SoraReadException("invalid enum ordinal $ordinal for QuestType")
+                else -> throw SoraReadException("invalid enum id $id for QuestType")
             }
 
         fun decode(value: SoraValue): QuestType =

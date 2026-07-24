@@ -149,8 +149,8 @@ impl GodotModel {
                     .values
                     .into_iter()
                     .map(|value| GodotEnumValue {
-                        const_name: godot_const_identifier(&value),
-                        raw_name: value,
+                        const_name: godot_const_identifier(&value.name),
+                        raw_name: value.name,
                     })
                     .collect(),
             })
@@ -587,7 +587,7 @@ runtime_format = "json"
 
 [[enums]]
 name = "ItemType"
-values = ["Weapon", "Armor"]
+values = [{ id = 0, name = "Weapon" }, { id = 1, name = "Armor" }]
 
 [[structs]]
 name = "Cost"

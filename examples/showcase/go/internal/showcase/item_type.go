@@ -15,11 +15,11 @@ const (
 )
 
 func decodeItemType(reader *SoraReader) (ItemType, error) {
-	ordinal, err := reader.ReadUInt32()
+	id, err := reader.ReadUInt32()
 	if err != nil {
 		return 0, err
 	}
-	switch ordinal {
+	switch id {
 	case 0:
 		return ItemTypeWeapon, nil
 	case 1:
@@ -31,7 +31,7 @@ func decodeItemType(reader *SoraReader) (ItemType, error) {
 	case 4:
 		return ItemTypeConsumable, nil
 	default:
-		return 0, fmt.Errorf("invalid enum ordinal %d for ItemType", ordinal)
+		return 0, fmt.Errorf("invalid enum id %d for ItemType", id)
 	}
 }
 

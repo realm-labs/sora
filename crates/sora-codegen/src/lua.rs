@@ -9,8 +9,8 @@ use sora_ir::model::{ConfigIr, TypeIr};
 use crate::{
     generator::{CodeGenerator, CodegenContext, runtime_format_name},
     model::{
-        BaseField, BaseImport, BaseIndex, BaseModel, BaseRecord, BaseTable, BaseUnion,
-        BaseUnionVariant, build_base_model,
+        BaseEnumValue, BaseField, BaseImport, BaseIndex, BaseModel, BaseRecord, BaseTable,
+        BaseUnion, BaseUnionVariant, build_base_model,
     },
     options::{LuaCodegenOptions, LuaEnumRepr, LuaVersion},
     render::{ensure_dir, render_template, write_file},
@@ -124,7 +124,7 @@ struct LuaModel {
 #[derive(Debug, Clone, Serialize)]
 struct LuaEnum {
     name: String,
-    values: Vec<String>,
+    values: Vec<BaseEnumValue>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -752,7 +752,7 @@ mod tests {
 
         assert!(item_type.contains("---| integer"));
         assert!(item_type.contains("Weapon = 0"));
-        assert!(item_type.contains("return ordinal"));
+        assert!(item_type.contains("return id"));
 
         let _ = std::fs::remove_dir_all(base);
     }
@@ -837,7 +837,7 @@ package = "game_config"
 
 [[enums]]
 name = "ItemType"
-values = ["Weapon", "Armor"]
+values = [{ id = 0, name = "Weapon" }, { id = 1, name = "Armor" }]
 
 [[unions]]
 name = "Action"

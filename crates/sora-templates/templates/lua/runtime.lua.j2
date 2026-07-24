@@ -18,7 +18,7 @@ function TextKey:as_string()
     return self.value
 end
 
-local SORA_BUNDLE_VERSION = 1
+local SORA_BUNDLE_VERSION = 2
 local SORA_HEADER_LENGTH = 24
 local SORA_SECTION_ENTRY_LENGTH = 28
 local SECTION_KIND_MANIFEST = 0

@@ -5,6 +5,7 @@ package com.sora.showcase;
 import java.util.List;
 import java.util.Map;
 
+
 public final class VipLevel {
     public final Integer level;
     public final ResourceCost cost;
@@ -72,6 +73,7 @@ final class VipLevelTable extends java.util.AbstractMap<Integer, VipLevel> imple
         return rows;
     }
     @Override
+    @SoraNullable
     public VipLevel get(Object key) {
         return rows.get(key);
     }

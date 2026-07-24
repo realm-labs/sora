@@ -93,6 +93,7 @@ struct DartEnum {
 
 #[derive(Debug, Clone, Serialize)]
 struct DartEnumValue {
+    id: u32,
     raw_name: String,
     name: String,
 }
@@ -179,8 +180,9 @@ impl DartModel {
                     .values
                     .into_iter()
                     .map(|value| DartEnumValue {
-                        name: dart_enum_value_identifier(&value),
-                        raw_name: value,
+                        id: value.id,
+                        name: dart_enum_value_identifier(&value.name),
+                        raw_name: value.name,
                     })
                     .collect(),
             })
@@ -741,7 +743,7 @@ runtime_format = "json"
 
 [[enums]]
 name = "ItemType"
-values = ["Weapon", "Armor"]
+values = [{ id = 0, name = "Weapon" }, { id = 1, name = "Armor" }]
 
 [[structs]]
 name = "Cost"

@@ -3,9 +3,13 @@
 import 'runtime.dart';
 
 enum ResourceKind {
-  item,
-  gold,
-  diamond;
+  item(0),
+  gold(1),
+  diamond(2);
+
+  const ResourceKind(this.id);
+
+  final int id;
 
   static ResourceKind decode(SoraValue value) {
     switch (value.asString()) {

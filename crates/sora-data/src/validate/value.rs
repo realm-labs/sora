@@ -172,7 +172,7 @@ fn validate_enum(
         .iter()
         .find(|candidate| candidate.name == enum_name)
         .is_some_and(|candidate| {
-            candidate.values.contains(item)
+            candidate.values.iter().any(|value| value.name == *item)
                 || candidate.aliases.iter().any(|entry| entry.alias == *item)
         });
     if is_valid {

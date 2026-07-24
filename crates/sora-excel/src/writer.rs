@@ -672,7 +672,10 @@ fn enum_validation(ir: &ConfigIr, enum_name: &str, path: &Path) -> Result<Option
         return Ok(None);
     }
 
-    let values = enum_values.iter().map(String::as_str).collect::<Vec<_>>();
+    let values = enum_values
+        .iter()
+        .map(|value| value.name.as_str())
+        .collect::<Vec<_>>();
     let data_validation = DataValidation::new()
         .allow_list_strings(&values)
         .map_err(|source| excel_error(path, source))?
@@ -682,7 +685,7 @@ fn enum_validation(ir: &ConfigIr, enum_name: &str, path: &Path) -> Result<Option
         .map_err(|source| excel_error(path, source))?
         .set_error_title("Invalid enum value")
         .map_err(|source| excel_error(path, source))?
-        .set_error_message(format!("Value must be one of: {}", enum_values.join(", ")))
+        .set_error_message(format!("Value must be one of: {}", values.join(", ")))
         .map_err(|source| excel_error(path, source))?;
     Ok(Some(data_validation))
 }
@@ -751,7 +754,7 @@ fn decimal_validation(field: &FieldIr, path: &Path) -> Result<Option<DataValidat
     Ok(Some(data_validation))
 }
 
-fn enum_values<'a>(ir: &'a ConfigIr, enum_name: &str) -> Option<&'a [String]> {
+fn enum_values<'a>(ir: &'a ConfigIr, enum_name: &str) -> Option<&'a [sora_ir::model::EnumValueIr]> {
     ir.enums
         .iter()
         .find(|candidate| candidate.name == enum_name)
@@ -1055,7 +1058,10 @@ mod tests {
             enums: vec![EnumIr {
                 name: "ResourceType".to_owned(),
                 scope: ScopeIr::default(),
-                values: vec!["Item".to_owned()],
+                values: vec![sora_ir::model::EnumValueIr {
+                    id: 0,
+                    name: "Item".to_owned(),
+                }],
                 aliases: Vec::new(),
             }],
             structs: vec![StructIr {

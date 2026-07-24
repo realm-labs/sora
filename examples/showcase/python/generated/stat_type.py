@@ -8,23 +8,23 @@ from .sora_runtime import SoraReadError, SoraReader
 
 
 class StatType(Enum):
-    HP = "Hp"
-    ATTACK = "Attack"
-    DEFENSE = "Defense"
-    SPEED = "Speed"
-    CRIT_RATE = "CritRate"
+    HP = 0
+    ATTACK = 1
+    DEFENSE = 2
+    SPEED = 3
+    CRIT_RATE = 4
 
     @staticmethod
     def decode(reader: SoraReader) -> StatType:
-        ordinal = reader.read_u32()
-        if ordinal == 0:
+        id = reader.read_u32()
+        if id == 0:
             return StatType.HP
-        if ordinal == 1:
+        if id == 1:
             return StatType.ATTACK
-        if ordinal == 2:
+        if id == 2:
             return StatType.DEFENSE
-        if ordinal == 3:
+        if id == 3:
             return StatType.SPEED
-        if ordinal == 4:
+        if id == 4:
             return StatType.CRIT_RATE
-        raise SoraReadError(f"invalid enum ordinal {ordinal} for StatType")
+        raise SoraReadError(f"invalid enum id {id} for StatType")

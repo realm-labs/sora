@@ -3,6 +3,7 @@
 package com.sora.showcase;
 
 import java.util.List;
+
 public final class RewardBundle {
     public final ResourceCost cost;
     public final Integer weight;

@@ -2,10 +2,10 @@
 
 package com.sora.showcase
 
-enum MailType {
-  case System
-  case Event
-  case Compensation
+enum MailType(val id: Int) {
+  case System extends MailType(0)
+  case Event extends MailType(1)
+  case Compensation extends MailType(2)
 }
 
 object MailType {
@@ -14,7 +14,7 @@ object MailType {
       case 0 => MailType.System
       case 1 => MailType.Event
       case 2 => MailType.Compensation
-      case ordinal => throw new SoraReadException(s"invalid enum ordinal $ordinal for MailType")
+      case id => throw new SoraReadException(s"invalid enum id $id for MailType")
     }
 
   def decode(value: SoraValue): MailType =

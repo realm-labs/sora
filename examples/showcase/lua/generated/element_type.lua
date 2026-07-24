@@ -35,10 +35,10 @@ local values_by_name = {
 ---@param reader SoraReader
 ---@return ElementType
 function ElementType.decode(reader)
-    local ordinal = reader:read_u32()
-    local value = values[ordinal]
+    local id = reader:read_u32()
+    local value = values[id]
     if value == nil then
-        error("invalid enum ordinal " .. tostring(ordinal) .. " for ElementType")
+        error("invalid enum id " .. tostring(id) .. " for ElementType")
     end
     return value
 end

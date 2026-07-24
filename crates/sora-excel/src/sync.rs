@@ -720,7 +720,7 @@ package = "game_config"
 
 [[enums]]
 name = "ResourceType"
-values = ["Item"]
+values = [{ id = 0, name = "Item" }]
 
 [[structs]]
 name = "ResourceCost"

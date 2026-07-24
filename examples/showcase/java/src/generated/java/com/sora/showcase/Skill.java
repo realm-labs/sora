@@ -5,6 +5,7 @@ package com.sora.showcase;
 import java.util.List;
 import java.util.Map;
 
+
 public final class Skill {
     public final Integer id;
     public final String name;
@@ -15,6 +16,7 @@ public final class Skill {
     public final SkillEffect effect;
     public final Integer requiredLevel;
     /** Optional item requirement */
+    @SoraNullable
     public final Integer requiredItem;
     public final Vec3 castOrigin;
 
@@ -25,7 +27,7 @@ public final class Skill {
         ResourceCost cost,
         SkillEffect effect,
         Integer requiredLevel,
-        Integer requiredItem,
+        @SoraNullable Integer requiredItem,
         Vec3 castOrigin
     ) {
         this.id = id;
@@ -102,6 +104,7 @@ final class SkillTable extends java.util.AbstractMap<Integer, Skill> implements 
         return rows;
     }
     @Override
+    @SoraNullable
     public Skill get(Object key) {
         return rows.get(key);
     }

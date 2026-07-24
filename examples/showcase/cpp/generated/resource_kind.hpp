@@ -15,7 +15,7 @@ enum class ResourceKind : std::int32_t {
     Diamond = 2,
 };
 
-inline ResourceKind decode_resource_kind_ordinal(std::uint32_t value) {
+inline ResourceKind decode_resource_kind_id(std::uint32_t value) {
     switch (value) {
     case 0:
         return ResourceKind::Item;
@@ -24,7 +24,7 @@ inline ResourceKind decode_resource_kind_ordinal(std::uint32_t value) {
     case 2:
         return ResourceKind::Diamond;
     default:
-        throw SoraReadException("invalid enum ordinal for ResourceKind");
+        throw SoraReadException("invalid enum id for ResourceKind");
     }
 }
 
@@ -43,7 +43,7 @@ namespace sora::showcase {
 
 template <>
 inline ResourceKind decode_value<ResourceKind>(SoraReader& reader) {
-    return decode_resource_kind_ordinal(reader.read_u32());
+    return decode_resource_kind_id(reader.read_u32());
 }
 
 } // namespace sora::showcase

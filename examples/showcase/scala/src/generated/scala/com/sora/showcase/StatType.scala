@@ -2,12 +2,12 @@
 
 package com.sora.showcase
 
-enum StatType {
-  case Hp
-  case Attack
-  case Defense
-  case Speed
-  case CritRate
+enum StatType(val id: Int) {
+  case Hp extends StatType(0)
+  case Attack extends StatType(1)
+  case Defense extends StatType(2)
+  case Speed extends StatType(3)
+  case CritRate extends StatType(4)
 }
 
 object StatType {
@@ -18,7 +18,7 @@ object StatType {
       case 2 => StatType.Defense
       case 3 => StatType.Speed
       case 4 => StatType.CritRate
-      case ordinal => throw new SoraReadException(s"invalid enum ordinal $ordinal for StatType")
+      case id => throw new SoraReadException(s"invalid enum id $id for StatType")
     }
 
   def decode(value: SoraValue): StatType =

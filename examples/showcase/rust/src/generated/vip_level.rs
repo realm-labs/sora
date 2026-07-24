@@ -19,7 +19,16 @@ impl super::runtime::SoraDecode for VipLevel {
         Ok(Self {
             level: <i32 as super::runtime::SoraDecode>::decode(reader)?,
             cost: <ResourceCost as super::runtime::SoraDecode>::decode(reader)?,
-            perks: <Vec<std::sync::Arc<str>> as super::runtime::SoraDecode>::decode(reader)?,
+            perks: {
+                let len = reader.read_var_u32()? as usize;
+                let mut values = Vec::with_capacity(len);
+                for _ in 0..len {
+                    values.push(<std::sync::Arc<str> as super::runtime::SoraDecode>::decode(
+                        reader,
+                    )?);
+                }
+                values
+            },
         })
     }
 }

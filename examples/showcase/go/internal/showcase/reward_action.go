@@ -2,7 +2,9 @@
 
 package showcase
 
-import "fmt"
+import (
+	"fmt"
+)
 
 type RewardAction interface {
 	isRewardAction()

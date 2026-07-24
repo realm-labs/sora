@@ -6,10 +6,10 @@ namespace com.sora.showcase;
 
 public enum ElementType
 {
-    Fire,
-    Ice,
-    Lightning,
-    Physical,
+    Fire = 0,
+    Ice = 1,
+    Lightning = 2,
+    Physical = 3,
 }
 
 internal static class ElementTypeCodec
@@ -22,7 +22,7 @@ internal static class ElementTypeCodec
             1 => ElementType.Ice,
             2 => ElementType.Lightning,
             3 => ElementType.Physical,
-            var value => throw new SoraReadException($"invalid enum ordinal {value} for ElementType"),
+            var value => throw new SoraReadException($"invalid enum id {value} for ElementType"),
         };
     }
 

@@ -19,7 +19,16 @@ impl super::runtime::SoraDecode for Recipe {
         Ok(Self {
             id: <i32 as super::runtime::SoraDecode>::decode(reader)?,
             result_item: <i32 as super::runtime::SoraDecode>::decode(reader)?,
-            materials: <Vec<ResourceCost> as super::runtime::SoraDecode>::decode(reader)?,
+            materials: {
+                let len = reader.read_var_u32()? as usize;
+                let mut values = Vec::with_capacity(len);
+                for _ in 0..len {
+                    values.push(<ResourceCost as super::runtime::SoraDecode>::decode(
+                        reader,
+                    )?);
+                }
+                values
+            },
         })
     }
 }

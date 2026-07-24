@@ -2,18 +2,18 @@
 
 package com.sora.showcase
 
-enum class MailType {
-    System,
-    Event,
-    Compensation;
+enum class MailType(val id: Int) {
+    System(0),
+    Event(1),
+    Compensation(2);
 
     companion object {
         fun decode(reader: SoraReader): MailType =
-            when (val ordinal = reader.readU32()) {
+            when (val id = reader.readU32()) {
                 0 -> System
                 1 -> Event
                 2 -> Compensation
-                else -> throw SoraReadException("invalid enum ordinal $ordinal for MailType")
+                else -> throw SoraReadException("invalid enum id $id for MailType")
             }
 
         fun decode(value: SoraValue): MailType =

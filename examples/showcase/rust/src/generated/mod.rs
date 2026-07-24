@@ -56,7 +56,7 @@ pub mod vec3;
 pub mod vip_level;
 pub type SoraMap<K, V> = rustc_hash::FxHashMap<K, V>;
 
-pub const SCHEMA_FINGERPRINT: &str = "8519b38083babe03";
+pub const SCHEMA_FINGERPRINT: &str = "4ae91b3892293cc4";
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum SoraTableShape {

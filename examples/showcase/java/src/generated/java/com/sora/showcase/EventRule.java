@@ -5,6 +5,7 @@ package com.sora.showcase;
 import java.util.List;
 import java.util.Map;
 
+
 public final class EventRule {
     public final Integer id;
     public final String name;
@@ -80,6 +81,7 @@ final class EventRuleTable extends java.util.AbstractMap<Integer, EventRule> imp
         return rows;
     }
     @Override
+    @SoraNullable
     public EventRule get(Object key) {
         return rows.get(key);
     }

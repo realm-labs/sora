@@ -5,6 +5,7 @@ package com.sora.showcase;
 import java.util.List;
 import java.util.Map;
 
+
 public final class MailTemplate {
     public final Integer id;
     public final MailType mailType;
@@ -86,6 +87,7 @@ final class MailTemplateTable extends java.util.AbstractMap<Integer, MailTemplat
         return rows;
     }
     @Override
+    @SoraNullable
     public MailTemplate get(Object key) {
         return rows.get(key);
     }

@@ -7,6 +7,7 @@ export type Theme = "dark" | "light";
 export type StudioField = {
   name: string;
   ty: string;
+  enumValueId?: number | null;
   scope: string;
   parser?: string | null;
   comment?: string | null;

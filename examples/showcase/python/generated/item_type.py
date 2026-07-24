@@ -8,23 +8,23 @@ from .sora_runtime import SoraReadError, SoraReader
 
 
 class ItemType(Enum):
-    WEAPON = "Weapon"
-    ARMOR = "Armor"
-    CURRENCY = "Currency"
-    MATERIAL = "Material"
-    CONSUMABLE = "Consumable"
+    WEAPON = 0
+    ARMOR = 1
+    CURRENCY = 2
+    MATERIAL = 3
+    CONSUMABLE = 4
 
     @staticmethod
     def decode(reader: SoraReader) -> ItemType:
-        ordinal = reader.read_u32()
-        if ordinal == 0:
+        id = reader.read_u32()
+        if id == 0:
             return ItemType.WEAPON
-        if ordinal == 1:
+        if id == 1:
             return ItemType.ARMOR
-        if ordinal == 2:
+        if id == 2:
             return ItemType.CURRENCY
-        if ordinal == 3:
+        if id == 3:
             return ItemType.MATERIAL
-        if ordinal == 4:
+        if id == 4:
             return ItemType.CONSUMABLE
-        raise SoraReadError(f"invalid enum ordinal {ordinal} for ItemType")
+        raise SoraReadError(f"invalid enum id {id} for ItemType")

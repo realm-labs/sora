@@ -18,7 +18,16 @@ impl super::runtime::SoraDecode for Dialogue {
         Ok(Self {
             id: <i32 as super::runtime::SoraDecode>::decode(reader)?,
             speaker_key: <super::runtime::TextKey as super::runtime::SoraDecode>::decode(reader)?,
-            lines: <Vec<std::sync::Arc<str>> as super::runtime::SoraDecode>::decode(reader)?,
+            lines: {
+                let len = reader.read_var_u32()? as usize;
+                let mut values = Vec::with_capacity(len);
+                for _ in 0..len {
+                    values.push(<std::sync::Arc<str> as super::runtime::SoraDecode>::decode(
+                        reader,
+                    )?);
+                }
+                values
+            },
         })
     }
 }

@@ -5,6 +5,7 @@ package com.sora.showcase;
 import java.util.List;
 import java.util.Map;
 
+
 public final class ComplexRuleCondition {
     public final Integer id;
     public final Integer ruleId;
@@ -72,6 +73,7 @@ final class ComplexRuleConditionTable extends java.util.AbstractMap<Integer, Com
         return rows;
     }
     @Override
+    @SoraNullable
     public ComplexRuleCondition get(Object key) {
         return rows.get(key);
     }

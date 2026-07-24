@@ -161,7 +161,7 @@ struct CEnum {
 #[derive(Debug, Clone, Serialize)]
 struct CEnumValue {
     name: String,
-    ordinal: usize,
+    id: u32,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -272,15 +272,14 @@ impl CModel {
                 values: item
                     .values
                     .into_iter()
-                    .enumerate()
-                    .map(|(ordinal, value)| CEnumValue {
+                    .map(|value| CEnumValue {
                         name: format!(
                             "{}_{}_{}",
                             options.prefix_upper,
                             item.snake_name.to_shouty_snake_case(),
-                            value.to_shouty_snake_case()
+                            value.name.to_shouty_snake_case()
                         ),
-                        ordinal,
+                        id: value.id,
                     })
                     .collect(),
             })
@@ -1186,7 +1185,7 @@ prefix = "game_config"
 
 [[enums]]
 name = "ItemType"
-values = ["Weapon", "Armor"]
+values = [{ id = 0, name = "Weapon" }, { id = 1, name = "Armor" }]
 
 [[unions]]
 name = "Action"

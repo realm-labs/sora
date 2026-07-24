@@ -3,9 +3,13 @@
 import 'runtime.dart';
 
 enum MailType {
-  system,
-  event,
-  compensation;
+  system(0),
+  event(1),
+  compensation(2);
+
+  const MailType(this.id);
+
+  final int id;
 
   static MailType decode(SoraValue value) {
     switch (value.asString()) {

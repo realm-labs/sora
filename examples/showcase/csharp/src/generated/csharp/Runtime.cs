@@ -171,7 +171,7 @@ public static class SoraText
 
 public sealed class SoraBundle : ISoraTableSource
 {
-    private const int BundleVersion = 1;
+    private const int BundleVersion = 2;
     private const int HeaderLength = 24;
     private const int SectionEntryLength = 28;
     private const int SectionKindManifest = 0;

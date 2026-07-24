@@ -13,11 +13,11 @@ const (
 )
 
 func decodeMailType(reader *SoraReader) (MailType, error) {
-	ordinal, err := reader.ReadUInt32()
+	id, err := reader.ReadUInt32()
 	if err != nil {
 		return 0, err
 	}
-	switch ordinal {
+	switch id {
 	case 0:
 		return MailTypeSystem, nil
 	case 1:
@@ -25,7 +25,7 @@ func decodeMailType(reader *SoraReader) (MailType, error) {
 	case 2:
 		return MailTypeCompensation, nil
 	default:
-		return 0, fmt.Errorf("invalid enum ordinal %d for MailType", ordinal)
+		return 0, fmt.Errorf("invalid enum id %d for MailType", id)
 	}
 }
 

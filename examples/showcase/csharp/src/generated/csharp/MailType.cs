@@ -6,9 +6,9 @@ namespace com.sora.showcase;
 
 public enum MailType
 {
-    System,
-    Event,
-    Compensation,
+    System = 0,
+    Event = 1,
+    Compensation = 2,
 }
 
 internal static class MailTypeCodec
@@ -20,7 +20,7 @@ internal static class MailTypeCodec
             0 => MailType.System,
             1 => MailType.Event,
             2 => MailType.Compensation,
-            var value => throw new SoraReadException($"invalid enum ordinal {value} for MailType"),
+            var value => throw new SoraReadException($"invalid enum id {value} for MailType"),
         };
     }
 

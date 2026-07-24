@@ -40,10 +40,10 @@ local values_by_name = {
 ---@param reader SoraReader
 ---@return Rarity
 function Rarity.decode(reader)
-    local ordinal = reader:read_u32()
-    local value = values[ordinal]
+    local id = reader:read_u32()
+    local value = values[id]
     if value == nil then
-        error("invalid enum ordinal " .. tostring(ordinal) .. " for Rarity")
+        error("invalid enum id " .. tostring(id) .. " for Rarity")
     end
     return value
 end

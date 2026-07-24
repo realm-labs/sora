@@ -32,7 +32,16 @@ impl super::runtime::SoraDecode for ComplexRule {
             name: <std::sync::Arc<str> as super::runtime::SoraDecode>::decode(reader)?,
             root_condition: <EventCondition as super::runtime::SoraDecode>::decode(reader)?,
             root_action_group: <i32 as super::runtime::SoraDecode>::decode(reader)?,
-            actions: <Vec<RewardAction> as super::runtime::SoraDecode>::decode(reader)?,
+            actions: {
+                let len = reader.read_var_u32()? as usize;
+                let mut values = Vec::with_capacity(len);
+                for _ in 0..len {
+                    values.push(<RewardAction as super::runtime::SoraDecode>::decode(
+                        reader,
+                    )?);
+                }
+                values
+            },
             budget: <ComplexBudget as super::runtime::SoraDecode>::decode(reader)?,
         })
     }

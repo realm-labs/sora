@@ -9,8 +9,8 @@ use sora_ir::model::{ConfigIr, TableModeIr, TypeIr};
 use crate::{
     generator::{CodeGenerator, CodegenContext, runtime_format_name},
     model::{
-        BaseField, BaseIndex, BaseModel, BaseRecord, BaseTable, BaseUnion, BaseUnionVariant,
-        build_base_model,
+        BaseEnumValue, BaseField, BaseIndex, BaseModel, BaseRecord, BaseTable, BaseUnion,
+        BaseUnionVariant, build_base_model,
     },
     options::LanguageCodegenOptions,
     render::{ensure_dir, render_template, write_file},
@@ -92,7 +92,7 @@ struct GoModel {
 struct GoEnum {
     name: String,
     snake_name: String,
-    values: Vec<String>,
+    values: Vec<BaseEnumValue>,
 }
 
 #[derive(Debug, Clone, Serialize)]

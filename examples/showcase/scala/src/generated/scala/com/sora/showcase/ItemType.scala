@@ -2,12 +2,12 @@
 
 package com.sora.showcase
 
-enum ItemType {
-  case Weapon
-  case Armor
-  case Currency
-  case Material
-  case Consumable
+enum ItemType(val id: Int) {
+  case Weapon extends ItemType(0)
+  case Armor extends ItemType(1)
+  case Currency extends ItemType(2)
+  case Material extends ItemType(3)
+  case Consumable extends ItemType(4)
 }
 
 object ItemType {
@@ -18,7 +18,7 @@ object ItemType {
       case 2 => ItemType.Currency
       case 3 => ItemType.Material
       case 4 => ItemType.Consumable
-      case ordinal => throw new SoraReadException(s"invalid enum ordinal $ordinal for ItemType")
+      case id => throw new SoraReadException(s"invalid enum id $id for ItemType")
     }
 
   def decode(value: SoraValue): ItemType =

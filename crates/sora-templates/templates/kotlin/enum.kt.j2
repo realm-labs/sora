@@ -2,24 +2,24 @@
 
 package {{ package }}
 
-enum class {{ enum.name }} {
+enum class {{ enum.name }}(val id: Int) {
 {%- for value in enum.values %}
-    {{ value }}{% if loop.last %};{% else %},{% endif %}
+    {{ value.name }}({{ value.id }}){% if loop.last %};{% else %},{% endif %}
 {%- endfor %}
 
     companion object {
         fun decode(reader: SoraReader): {{ enum.name }} =
-            when (val ordinal = reader.readU32()) {
+            when (val id = reader.readU32()) {
 {%- for value in enum.values %}
-                {{ loop.index0 }} -> {{ value }}
+                {{ value.id }} -> {{ value.name }}
 {%- endfor %}
-                else -> throw SoraReadException("invalid enum ordinal $ordinal for {{ enum.name }}")
+                else -> throw SoraReadException("invalid enum id $id for {{ enum.name }}")
             }
 
         fun decode(value: SoraValue): {{ enum.name }} =
             when (val name = value.asString()) {
 {%- for value in enum.values %}
-                "{{ value }}" -> {{ value }}
+                "{{ value.name }}" -> {{ value.name }}
 {%- endfor %}
                 else -> throw SoraReadException("invalid enum value $name for {{ enum.name }}")
             }

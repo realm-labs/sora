@@ -16,26 +16,26 @@ export const StatType = {
     Speed: "Speed",
     CritRate: "CritRate",
 } as const;
-const values: StatType[] = [
-    StatType.Hp,
-    StatType.Attack,
-    StatType.Defense,
-    StatType.Speed,
-    StatType.CritRate,
-];
+const values = new Map<number, StatType>([
+    [0, StatType.Hp],
+    [1, StatType.Attack],
+    [2, StatType.Defense],
+    [3, StatType.Speed],
+    [4, StatType.CritRate],
+]);
 
 export function decodeStatType(reader: SoraReader): StatType {
-    const ordinal = reader.readU32();
-    const value = values[ordinal];
+    const id = reader.readU32();
+    const value = values.get(id);
     if (value === undefined) {
-        throw new Error(`invalid enum ordinal ${ordinal} for StatType`);
+        throw new Error(`invalid enum id ${id} for StatType`);
     }
     return value;
 }
 
 export function decodeStatTypeValue(value: SoraValue): StatType {
     const name = value.asString();
-    if (!values.includes(name as StatType)) {
+    if (![...values.values()].includes(name as StatType)) {
         throw new Error(`invalid enum value ${name} for StatType`);
     }
     return name as StatType;

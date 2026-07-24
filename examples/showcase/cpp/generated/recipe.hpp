@@ -20,7 +20,7 @@ struct Recipe {
         return Recipe{
             reader.read_i32(),
             reader.read_i32(),
-            reader.read_vector<ResourceCost>(),
+            ([&reader]() { std::uint32_t length = reader.read_u32(); std::vector<ResourceCost> values; values.reserve(length); for (std::uint32_t index = 0; index < length; ++index) { values.push_back(ResourceCost::decode(reader)); } return values; })(),
         };
     }
 };

@@ -17,7 +17,7 @@ enum class Rarity : std::int32_t {
     Legendary = 4,
 };
 
-inline Rarity decode_rarity_ordinal(std::uint32_t value) {
+inline Rarity decode_rarity_id(std::uint32_t value) {
     switch (value) {
     case 0:
         return Rarity::Common;
@@ -30,7 +30,7 @@ inline Rarity decode_rarity_ordinal(std::uint32_t value) {
     case 4:
         return Rarity::Legendary;
     default:
-        throw SoraReadException("invalid enum ordinal for Rarity");
+        throw SoraReadException("invalid enum id for Rarity");
     }
 }
 
@@ -49,7 +49,7 @@ namespace sora::showcase {
 
 template <>
 inline Rarity decode_value<Rarity>(SoraReader& reader) {
-    return decode_rarity_ordinal(reader.read_u32());
+    return decode_rarity_id(reader.read_u32());
 }
 
 } // namespace sora::showcase

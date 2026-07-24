@@ -8,17 +8,17 @@ from .sora_runtime import SoraReadError, SoraReader
 
 
 class QuestType(Enum):
-    MAIN = "Main"
-    SIDE = "Side"
-    DAILY = "Daily"
+    MAIN = 0
+    SIDE = 1
+    DAILY = 2
 
     @staticmethod
     def decode(reader: SoraReader) -> QuestType:
-        ordinal = reader.read_u32()
-        if ordinal == 0:
+        id = reader.read_u32()
+        if id == 0:
             return QuestType.MAIN
-        if ordinal == 1:
+        if id == 1:
             return QuestType.SIDE
-        if ordinal == 2:
+        if id == 2:
             return QuestType.DAILY
-        raise SoraReadError(f"invalid enum ordinal {ordinal} for QuestType")
+        raise SoraReadError(f"invalid enum id {id} for QuestType")

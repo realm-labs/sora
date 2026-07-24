@@ -2,20 +2,20 @@
 
 package com.sora.showcase
 
-enum class ElementType {
-    Fire,
-    Ice,
-    Lightning,
-    Physical;
+enum class ElementType(val id: Int) {
+    Fire(0),
+    Ice(1),
+    Lightning(2),
+    Physical(3);
 
     companion object {
         fun decode(reader: SoraReader): ElementType =
-            when (val ordinal = reader.readU32()) {
+            when (val id = reader.readU32()) {
                 0 -> Fire
                 1 -> Ice
                 2 -> Lightning
                 3 -> Physical
-                else -> throw SoraReadException("invalid enum ordinal $ordinal for ElementType")
+                else -> throw SoraReadException("invalid enum id $id for ElementType")
             }
 
         fun decode(value: SoraValue): ElementType =

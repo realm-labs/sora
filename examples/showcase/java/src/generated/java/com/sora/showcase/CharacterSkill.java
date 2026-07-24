@@ -5,6 +5,7 @@ package com.sora.showcase;
 import java.util.List;
 import java.util.Map;
 
+
 public final class CharacterSkill {
     public final Integer characterId;
     public final Integer skillId;

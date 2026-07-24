@@ -18,8 +18,27 @@ impl super::runtime::SoraDecode for ComplexBudget {
     ) -> Result<Self, super::runtime::SoraReadError> {
         Ok(Self {
             fixed: <ResourceCost as super::runtime::SoraDecode>::decode(reader)?,
-            random: <Vec<RewardBundle> as super::runtime::SoraDecode>::decode(reader)?,
-            limits: <std::collections::HashMap<std::sync::Arc<str>, i32> as super::runtime::SoraDecode>::decode(reader)?,
+            random: {
+                let len = reader.read_var_u32()? as usize;
+                let mut values = Vec::with_capacity(len);
+                for _ in 0..len {
+                    values.push(<RewardBundle as super::runtime::SoraDecode>::decode(
+                        reader,
+                    )?);
+                }
+                values
+            },
+            limits: {
+                let len = reader.read_var_u32()? as usize;
+                let mut values = std::collections::HashMap::with_capacity(len);
+                for _ in 0..len {
+                    values.insert(
+                        <std::sync::Arc<str> as super::runtime::SoraDecode>::decode(reader)?,
+                        <i32 as super::runtime::SoraDecode>::decode(reader)?,
+                    );
+                }
+                values
+            },
         })
     }
 }

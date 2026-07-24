@@ -7,17 +7,21 @@
 ```toml
 [[enums]]
 name = "Rarity"
-values = ["Common", "Uncommon", "Rare", "Epic", "Legendary"]
+values = [{ id = 0, name = "Common" }, { id = 1, name = "Uncommon" }, { id = 2, name = "Rare" }, { id = 3, name = "Epic" }, { id = 4, name = "Legendary" }]
 ```
 
 枚举让源数据保持可读，同时让生成代码获得受约束的类型。
+每个枚举值都必须声明一个显式、稳定的整数 `id`。同一个枚举内的 ID
+不能重复，取值范围是 `0` 到 `2147483647`。调整枚举值顺序不会改变编码；
+重命名枚举值时应保留原 ID。二进制格式、整数枚举表示、支持显式数值的
+原生枚举以及生成的 Protobuf schema 都会使用这个 ID。
 
 alias 可以保留导入数据或旧数据里的名称：
 
 ```toml
 [[enums.aliases]]
-name = "Purple"
-alias = "Epic"
+name = "Epic"
+alias = "Purple"
 ```
 
 ## Structs

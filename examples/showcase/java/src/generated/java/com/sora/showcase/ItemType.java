@@ -3,11 +3,21 @@
 package com.sora.showcase;
 
 public enum ItemType {
-    Weapon,
-    Armor,
-    Currency,
-    Material,
-    Consumable;
+    Weapon(0),
+    Armor(1),
+    Currency(2),
+    Material(3),
+    Consumable(4);
+
+    private final int id;
+
+    ItemType(int id) {
+        this.id = id;
+    }
+
+    public int id() {
+        return id;
+    }
 
     static ItemType decode(SoraReader reader) {
         switch (reader.readU32()) {
@@ -22,7 +32,7 @@ public enum ItemType {
             case 4:
                 return Consumable;
             default:
-                throw new SoraReadException("invalid enum ordinal for ItemType");
+                throw new SoraReadException("invalid enum id for ItemType");
         }
     }
 

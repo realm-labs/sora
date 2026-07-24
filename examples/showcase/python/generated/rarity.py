@@ -8,23 +8,23 @@ from .sora_runtime import SoraReadError, SoraReader
 
 
 class Rarity(Enum):
-    COMMON = "Common"
-    UNCOMMON = "Uncommon"
-    RARE = "Rare"
-    EPIC = "Epic"
-    LEGENDARY = "Legendary"
+    COMMON = 0
+    UNCOMMON = 1
+    RARE = 2
+    EPIC = 3
+    LEGENDARY = 4
 
     @staticmethod
     def decode(reader: SoraReader) -> Rarity:
-        ordinal = reader.read_u32()
-        if ordinal == 0:
+        id = reader.read_u32()
+        if id == 0:
             return Rarity.COMMON
-        if ordinal == 1:
+        if id == 1:
             return Rarity.UNCOMMON
-        if ordinal == 2:
+        if id == 2:
             return Rarity.RARE
-        if ordinal == 3:
+        if id == 3:
             return Rarity.EPIC
-        if ordinal == 4:
+        if id == 4:
             return Rarity.LEGENDARY
-        raise SoraReadError(f"invalid enum ordinal {ordinal} for Rarity")
+        raise SoraReadError(f"invalid enum id {id} for Rarity")

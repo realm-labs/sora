@@ -6,11 +6,11 @@ namespace com.sora.showcase;
 
 public enum ItemType
 {
-    Weapon,
-    Armor,
-    Currency,
-    Material,
-    Consumable,
+    Weapon = 0,
+    Armor = 1,
+    Currency = 2,
+    Material = 3,
+    Consumable = 4,
 }
 
 internal static class ItemTypeCodec
@@ -24,7 +24,7 @@ internal static class ItemTypeCodec
             2 => ItemType.Currency,
             3 => ItemType.Material,
             4 => ItemType.Consumable,
-            var value => throw new SoraReadException($"invalid enum ordinal {value} for ItemType"),
+            var value => throw new SoraReadException($"invalid enum id {value} for ItemType"),
         };
     }
 

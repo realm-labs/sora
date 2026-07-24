@@ -3,9 +3,19 @@
 package com.sora.showcase;
 
 public enum MailType {
-    System,
-    Event,
-    Compensation;
+    System(0),
+    Event(1),
+    Compensation(2);
+
+    private final int id;
+
+    MailType(int id) {
+        this.id = id;
+    }
+
+    public int id() {
+        return id;
+    }
 
     static MailType decode(SoraReader reader) {
         switch (reader.readU32()) {
@@ -16,7 +26,7 @@ public enum MailType {
             case 2:
                 return Compensation;
             default:
-                throw new SoraReadException("invalid enum ordinal for MailType");
+                throw new SoraReadException("invalid enum id for MailType");
         }
     }
 

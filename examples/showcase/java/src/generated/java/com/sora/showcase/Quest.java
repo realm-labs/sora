@@ -5,6 +5,7 @@ package com.sora.showcase;
 import java.util.List;
 import java.util.Map;
 
+
 public final class Quest {
     public final Integer id;
     public final QuestType questType;
@@ -96,6 +97,7 @@ final class QuestTable extends java.util.AbstractMap<Integer, Quest> implements 
         return rows;
     }
     @Override
+    @SoraNullable
     public Quest get(Object key) {
         return rows.get(key);
     }

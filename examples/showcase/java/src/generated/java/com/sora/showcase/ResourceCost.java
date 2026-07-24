@@ -3,6 +3,7 @@
 package com.sora.showcase;
 
 import java.util.List;
+
 public final class ResourceCost {
     public final ResourceKind kind;
     public final Integer id;

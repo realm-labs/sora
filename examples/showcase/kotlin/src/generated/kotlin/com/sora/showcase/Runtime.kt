@@ -7,7 +7,7 @@ import kotlin.time.Duration.Companion.milliseconds
 
 class SoraReadException(message: String) : RuntimeException(message)
 
-private const val SORA_BUNDLE_VERSION = 1
+private const val SORA_BUNDLE_VERSION = 2
 private const val SORA_HEADER_LENGTH = 24
 private const val SORA_SECTION_ENTRY_LENGTH = 28
 private const val SECTION_KIND_MANIFEST = 0

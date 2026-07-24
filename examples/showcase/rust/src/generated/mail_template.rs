@@ -26,7 +26,14 @@ impl super::runtime::SoraDecode for MailTemplate {
             mail_type: <MailType as super::runtime::SoraDecode>::decode(reader)?,
             title_key: <super::runtime::TextKey as super::runtime::SoraDecode>::decode(reader)?,
             body_key: <super::runtime::TextKey as super::runtime::SoraDecode>::decode(reader)?,
-            rewards: <Vec<Reward> as super::runtime::SoraDecode>::decode(reader)?,
+            rewards: {
+                let len = reader.read_var_u32()? as usize;
+                let mut values = Vec::with_capacity(len);
+                for _ in 0..len {
+                    values.push(<Reward as super::runtime::SoraDecode>::decode(reader)?);
+                }
+                values
+            },
         })
     }
 }

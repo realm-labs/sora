@@ -9,7 +9,7 @@ package = "game_config"
 
 [[enums]]
 name = "ItemType"
-values = ["Weapon"]
+values = [{ id = 42, name = "Weapon" }]
 
 [[enums.aliases]]
 name = "Weapon"
@@ -37,6 +37,8 @@ length = [1, 3]
     let ir = normalize_schema(schema).unwrap();
     assert_eq!(ir.package, "game_config");
     assert_eq!(ir.enums[0].name, "ItemType");
+    assert_eq!(ir.enums[0].values[0].id, 42);
+    assert_eq!(ir.enums[0].values[0].name, "Weapon");
     assert_eq!(ir.enums[0].aliases[0].name, "Weapon");
     assert_eq!(ir.enums[0].aliases[0].alias, "weapon");
     assert_eq!(ir.tables[0].mode, TableModeIr::Map);

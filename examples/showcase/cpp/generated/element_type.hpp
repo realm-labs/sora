@@ -16,7 +16,7 @@ enum class ElementType : std::int32_t {
     Physical = 3,
 };
 
-inline ElementType decode_element_type_ordinal(std::uint32_t value) {
+inline ElementType decode_element_type_id(std::uint32_t value) {
     switch (value) {
     case 0:
         return ElementType::Fire;
@@ -27,7 +27,7 @@ inline ElementType decode_element_type_ordinal(std::uint32_t value) {
     case 3:
         return ElementType::Physical;
     default:
-        throw SoraReadException("invalid enum ordinal for ElementType");
+        throw SoraReadException("invalid enum id for ElementType");
     }
 }
 
@@ -46,7 +46,7 @@ namespace sora::showcase {
 
 template <>
 inline ElementType decode_value<ElementType>(SoraReader& reader) {
-    return decode_element_type_ordinal(reader.read_u32());
+    return decode_element_type_id(reader.read_u32());
 }
 
 } // namespace sora::showcase

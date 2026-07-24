@@ -5,6 +5,7 @@ package com.sora.showcase;
 import java.util.List;
 import java.util.Map;
 
+
 public final class Character {
     public final Integer id;
     public final String name;
@@ -92,6 +93,7 @@ final class CharacterTable extends java.util.AbstractMap<Integer, Character> imp
         return rows;
     }
     @Override
+    @SoraNullable
     public Character get(Object key) {
         return rows.get(key);
     }

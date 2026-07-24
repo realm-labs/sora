@@ -29,9 +29,9 @@ struct Quest {
             decode_value<QuestType>(reader),
             reader.read_string(),
             reader.read_i32(),
-            reader.read_vector<std::int32_t>(),
+            ([&reader]() { std::uint32_t length = reader.read_u32(); std::vector<std::int32_t> values; values.reserve(length); for (std::uint32_t index = 0; index < length; ++index) { values.push_back(reader.read_i32()); } return values; })(),
             Vec3::decode(reader),
-            reader.read_vector<Reward>(),
+            ([&reader]() { std::uint32_t length = reader.read_u32(); std::vector<Reward> values; values.reserve(length); for (std::uint32_t index = 0; index < length; ++index) { values.push_back(Reward::decode(reader)); } return values; })(),
         };
     }
 };

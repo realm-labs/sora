@@ -3,9 +3,13 @@
 import 'runtime.dart';
 
 enum QuestType {
-  main,
-  side,
-  daily;
+  main(0),
+  side(1),
+  daily(2);
+
+  const QuestType(this.id);
+
+  final int id;
 
   static QuestType decode(SoraValue value) {
     switch (value.asString()) {

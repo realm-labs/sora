@@ -21,7 +21,14 @@ impl super::runtime::SoraDecode for Dungeon {
         Ok(Self {
             id: <i32 as super::runtime::SoraDecode>::decode(reader)?,
             name: <std::sync::Arc<str> as super::runtime::SoraDecode>::decode(reader)?,
-            stage_ids: <Vec<i32> as super::runtime::SoraDecode>::decode(reader)?,
+            stage_ids: {
+                let len = reader.read_var_u32()? as usize;
+                let mut values = Vec::with_capacity(len);
+                for _ in 0..len {
+                    values.push(<i32 as super::runtime::SoraDecode>::decode(reader)?);
+                }
+                values
+            },
             entry_cost: <ResourceCost as super::runtime::SoraDecode>::decode(reader)?,
         })
     }

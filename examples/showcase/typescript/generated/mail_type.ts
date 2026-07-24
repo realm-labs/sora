@@ -12,24 +12,24 @@ export const MailType = {
     Event: "Event",
     Compensation: "Compensation",
 } as const;
-const values: MailType[] = [
-    MailType.System,
-    MailType.Event,
-    MailType.Compensation,
-];
+const values = new Map<number, MailType>([
+    [0, MailType.System],
+    [1, MailType.Event],
+    [2, MailType.Compensation],
+]);
 
 export function decodeMailType(reader: SoraReader): MailType {
-    const ordinal = reader.readU32();
-    const value = values[ordinal];
+    const id = reader.readU32();
+    const value = values.get(id);
     if (value === undefined) {
-        throw new Error(`invalid enum ordinal ${ordinal} for MailType`);
+        throw new Error(`invalid enum id ${id} for MailType`);
     }
     return value;
 }
 
 export function decodeMailTypeValue(value: SoraValue): MailType {
     const name = value.asString();
-    if (!values.includes(name as MailType)) {
+    if (![...values.values()].includes(name as MailType)) {
         throw new Error(`invalid enum value ${name} for MailType`);
     }
     return name as MailType;

@@ -3,11 +3,15 @@
 import 'runtime.dart';
 
 enum Rarity {
-  common,
-  uncommon,
-  rare,
-  epic,
-  legendary;
+  common(0),
+  uncommon(1),
+  rare(2),
+  epic(3),
+  legendary(4);
+
+  const Rarity(this.id);
+
+  final int id;
 
   static Rarity decode(SoraValue value) {
     switch (value.asString()) {

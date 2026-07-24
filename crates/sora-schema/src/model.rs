@@ -75,10 +75,17 @@ pub struct EnumSchema {
     pub scope: ScopeSchema,
 
     #[serde(default)]
-    pub values: Vec<String>,
+    pub values: Vec<EnumValueSchema>,
 
     #[serde(default)]
     pub aliases: Vec<EnumAliasSchema>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
+pub struct EnumValueSchema {
+    pub id: u32,
+
+    pub name: String,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
@@ -290,7 +297,7 @@ package = "game_config"
 
 [[enums]]
 name = "ItemType"
-values = ["Weapon", "Armor"]
+values = [{ id = 0, name = "Weapon" }, { id = 1, name = "Armor" }]
 
 [[tables]]
 name = "Item"

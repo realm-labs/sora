@@ -8,20 +8,20 @@ from .sora_runtime import SoraReadError, SoraReader
 
 
 class ElementType(Enum):
-    FIRE = "Fire"
-    ICE = "Ice"
-    LIGHTNING = "Lightning"
-    PHYSICAL = "Physical"
+    FIRE = 0
+    ICE = 1
+    LIGHTNING = 2
+    PHYSICAL = 3
 
     @staticmethod
     def decode(reader: SoraReader) -> ElementType:
-        ordinal = reader.read_u32()
-        if ordinal == 0:
+        id = reader.read_u32()
+        if id == 0:
             return ElementType.FIRE
-        if ordinal == 1:
+        if id == 1:
             return ElementType.ICE
-        if ordinal == 2:
+        if id == 2:
             return ElementType.LIGHTNING
-        if ordinal == 3:
+        if id == 3:
             return ElementType.PHYSICAL
-        raise SoraReadError(f"invalid enum ordinal {ordinal} for ElementType")
+        raise SoraReadError(f"invalid enum id {id} for ElementType")

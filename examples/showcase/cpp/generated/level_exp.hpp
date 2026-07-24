@@ -19,7 +19,7 @@ struct LevelExp {
         return LevelExp{
             reader.read_i32(),
             reader.read_i64(),
-            reader.read_optional<std::string>(),
+            ([&reader]() { std::uint8_t presence = reader.read_u8(); if (presence == 0) { return std::optional<std::string>(); } if (presence == 1) { return std::optional<std::string>(reader.read_string()); } throw SoraReadException("invalid optional presence"); })(),
         };
     }
 };

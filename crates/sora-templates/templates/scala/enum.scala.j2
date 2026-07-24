@@ -4,9 +4,9 @@ package {{ package }}
 
 {%- if enum.is_scala3 %}
 
-enum {{ enum.name }} {
+enum {{ enum.name }}(val id: Int) {
 {%- for value in enum.values %}
-  case {{ value }}
+  case {{ value.name }} extends {{ enum.name }}({{ value.id }})
 {%- endfor %}
 }
 
@@ -14,46 +14,50 @@ object {{ enum.name }} {
   def decode(reader: SoraReader): {{ enum.name }} =
     reader.readU32() match {
 {%- for value in enum.values %}
-      case {{ loop.index0 }} => {{ enum.name }}.{{ value }}
+      case {{ value.id }} => {{ enum.name }}.{{ value.name }}
 {%- endfor %}
-      case ordinal => throw new SoraReadException(s"invalid enum ordinal $ordinal for {{ enum.name }}")
+      case id => throw new SoraReadException(s"invalid enum id $id for {{ enum.name }}")
     }
 
   def decode(value: SoraValue): {{ enum.name }} =
     value.asString match {
 {%- for value in enum.values %}
-      case "{{ value }}" => {{ enum.name }}.{{ value }}
+      case "{{ value.name }}" => {{ enum.name }}.{{ value.name }}
 {%- endfor %}
       case name => throw new SoraReadException(s"invalid enum value $name for {{ enum.name }}")
     }
 }
 {%- else %}
 
-sealed trait {{ enum.name }}
+sealed trait {{ enum.name }} {
+  def id: Int
+}
 
 object {{ enum.name }} {
 {%- for value in enum.values %}
-  case object {{ value }} extends {{ enum.name }}
+  case object {{ value.name }} extends {{ enum.name }} {
+    val id = {{ value.id }}
+  }
 {%- endfor %}
 
   val values: Vector[{{ enum.name }}] = Vector(
 {%- for value in enum.values %}
-    {{ value }}{% if not loop.last %},{% endif %}
+    {{ value.name }}{% if not loop.last %},{% endif %}
 {%- endfor %}
   )
 
   def decode(reader: SoraReader): {{ enum.name }} =
     reader.readU32() match {
 {%- for value in enum.values %}
-      case {{ loop.index0 }} => {{ value }}
+      case {{ value.id }} => {{ value.name }}
 {%- endfor %}
-      case ordinal => throw new SoraReadException(s"invalid enum ordinal $ordinal for {{ enum.name }}")
+      case id => throw new SoraReadException(s"invalid enum id $id for {{ enum.name }}")
     }
 
   def decode(value: SoraValue): {{ enum.name }} =
     value.asString match {
 {%- for value in enum.values %}
-      case "{{ value }}" => {{ value }}
+      case "{{ value.name }}" => {{ value.name }}
 {%- endfor %}
       case name => throw new SoraReadException(s"invalid enum value $name for {{ enum.name }}")
     }

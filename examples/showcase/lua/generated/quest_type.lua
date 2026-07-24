@@ -30,10 +30,10 @@ local values_by_name = {
 ---@param reader SoraReader
 ---@return QuestType
 function QuestType.decode(reader)
-    local ordinal = reader:read_u32()
-    local value = values[ordinal]
+    local id = reader:read_u32()
+    local value = values[id]
     if value == nil then
-        error("invalid enum ordinal " .. tostring(ordinal) .. " for QuestType")
+        error("invalid enum id " .. tostring(id) .. " for QuestType")
     end
     return value
 end

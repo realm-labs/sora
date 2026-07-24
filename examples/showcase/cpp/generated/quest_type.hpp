@@ -15,7 +15,7 @@ enum class QuestType : std::int32_t {
     Daily = 2,
 };
 
-inline QuestType decode_quest_type_ordinal(std::uint32_t value) {
+inline QuestType decode_quest_type_id(std::uint32_t value) {
     switch (value) {
     case 0:
         return QuestType::Main;
@@ -24,7 +24,7 @@ inline QuestType decode_quest_type_ordinal(std::uint32_t value) {
     case 2:
         return QuestType::Daily;
     default:
-        throw SoraReadException("invalid enum ordinal for QuestType");
+        throw SoraReadException("invalid enum id for QuestType");
     }
 }
 
@@ -43,7 +43,7 @@ namespace sora::showcase {
 
 template <>
 inline QuestType decode_value<QuestType>(SoraReader& reader) {
-    return decode_quest_type_ordinal(reader.read_u32());
+    return decode_quest_type_id(reader.read_u32());
 }
 
 } // namespace sora::showcase

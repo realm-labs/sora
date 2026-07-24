@@ -56,7 +56,7 @@ public interface ISoraSingleTable<out TRow> : ISoraTable<TRow>
 
 public sealed class SoraConfig
 {
-    public const string SchemaFingerprint = "8519b38083babe03";
+    public const string SchemaFingerprint = "4ae91b3892293cc4";
 
     private readonly Dictionary<string, ISoraTable> tables;
 

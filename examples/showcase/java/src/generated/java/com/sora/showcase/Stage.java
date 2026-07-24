@@ -5,6 +5,7 @@ package com.sora.showcase;
 import java.util.List;
 import java.util.Map;
 
+
 public final class Stage {
     public final Integer id;
     public final String name;
@@ -84,6 +85,7 @@ final class StageTable extends java.util.AbstractMap<Integer, Stage> implements 
         return rows;
     }
     @Override
+    @SoraNullable
     public Stage get(Object key) {
         return rows.get(key);
     }

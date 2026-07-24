@@ -109,7 +109,7 @@ build:
         r#"
 enums:
   - name: ItemType
-    values: [Weapon, Armor]
+    values: [{ id: 0, name: Weapon }, { id: 1, name: Armor }]
 tables:
   - name: Item
     mode: map
@@ -169,7 +169,7 @@ fn build_command_accepts_json_project_manifest() {
         r#"
 {
   "enums": [
-    { "name": "ItemType", "values": ["Weapon", "Armor"] }
+    { "name": "ItemType", "values": [{ "id": 0, "name": "Weapon" }, { "id": 1, "name": "Armor" }] }
   ],
   "tables": [
     {
@@ -232,7 +232,7 @@ return {
         r#"
 return {
   enums = {
-    { name = "ItemType", values = { "Weapon", "Armor" } },
+    { name = "ItemType", values = { { id = 0, name = "Weapon" }, { id = 1, name = "Armor" } } },
   },
   tables = {
     {
@@ -451,7 +451,7 @@ runtime_format = "json"
         r#"
 [[enums]]
 name = "ItemType"
-values = ["Weapon", "Armor"]
+values = [{ id = 0, name = "Weapon" }, { id = 1, name = "Armor" }]
 
 [[tables]]
 name = "Item"

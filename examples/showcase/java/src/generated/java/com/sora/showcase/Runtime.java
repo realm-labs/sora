@@ -11,7 +11,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.function.Supplier;
-
+@java.lang.annotation.Retention(java.lang.annotation.RetentionPolicy.CLASS)
+@java.lang.annotation.Target({
+    java.lang.annotation.ElementType.FIELD,
+    java.lang.annotation.ElementType.METHOD,
+    java.lang.annotation.ElementType.PARAMETER,
+    java.lang.annotation.ElementType.TYPE_USE
+})
+@interface SoraNullable {}
 final class SoraReadException extends RuntimeException {
     SoraReadException(String message) {
         super(message);
@@ -99,7 +106,7 @@ final class LocalePack {
     String locale() {
         return locale;
     }
-
+    @SoraNullable
     String get(TextKey key) {
         return translations.get(key.value);
     }
@@ -186,7 +193,7 @@ final class SoraText {
 }
 
 final class SoraBundle implements SoraTableSource {
-    private static final int BUNDLE_VERSION = 1;
+    private static final int BUNDLE_VERSION = 2;
     private static final int HEADER_LENGTH = 24;
     private static final int SECTION_ENTRY_LENGTH = 28;
     private static final int SECTION_KIND_MANIFEST = 0;

@@ -4,8 +4,8 @@ use sora_ir::model::{ConfigIr, TypeIr};
 
 use crate::{
     model::{
-        BaseField, BaseImport, BaseIndex, BaseModel, BaseRecord, BaseTable, BaseUnion,
-        BaseUnionVariant,
+        BaseEnumValue, BaseField, BaseImport, BaseIndex, BaseModel, BaseRecord, BaseTable,
+        BaseUnion, BaseUnionVariant,
     },
     options::EnumRepr,
     type_mapping::{TypeMapping, TypeMappingContext, TypeMappingRegistry},
@@ -52,7 +52,7 @@ pub struct EcmaScriptModel {
 pub struct EcmaScriptEnum {
     pub name: String,
     pub snake_name: String,
-    pub values: Vec<String>,
+    pub values: Vec<BaseEnumValue>,
 }
 
 #[derive(Debug, Clone, Serialize)]

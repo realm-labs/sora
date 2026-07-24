@@ -15,11 +15,11 @@ const (
 )
 
 func decodeRarity(reader *SoraReader) (Rarity, error) {
-	ordinal, err := reader.ReadUInt32()
+	id, err := reader.ReadUInt32()
 	if err != nil {
 		return 0, err
 	}
-	switch ordinal {
+	switch id {
 	case 0:
 		return RarityCommon, nil
 	case 1:
@@ -31,7 +31,7 @@ func decodeRarity(reader *SoraReader) (Rarity, error) {
 	case 4:
 		return RarityLegendary, nil
 	default:
-		return 0, fmt.Errorf("invalid enum ordinal %d for Rarity", ordinal)
+		return 0, fmt.Errorf("invalid enum id %d for Rarity", id)
 	}
 }
 

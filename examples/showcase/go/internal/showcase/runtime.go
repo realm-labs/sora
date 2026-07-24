@@ -15,7 +15,7 @@ import (
 )
 
 const (
-	soraBundleVersion      = 1
+	soraBundleVersion      = 2
 	soraHeaderLength       = 24
 	soraSectionEntryLength = 28
 	soraSectionManifest    = 0
@@ -94,6 +94,22 @@ func DecodeDurationValue(value SoraValue) (time.Duration, error) {
 		return 0, fmt.Errorf("duration must be non-negative")
 	}
 	return time.Duration(millis) * time.Millisecond, nil
+}
+
+func ReadDateTime(reader *SoraReader) (time.Time, error) {
+	millis, err := reader.ReadInt64()
+	if err != nil {
+		return time.Time{}, err
+	}
+	return time.Unix(millis/1000, (millis%1000)*int64(time.Millisecond)).UTC(), nil
+}
+
+func DecodeDateTimeValue(value SoraValue) (time.Time, error) {
+	millis, err := value.AsInt64()
+	if err != nil {
+		return time.Time{}, err
+	}
+	return time.Unix(millis/1000, (millis%1000)*int64(time.Millisecond)).UTC(), nil
 }
 
 type LocalePack struct {

@@ -8,17 +8,17 @@ from .sora_runtime import SoraReadError, SoraReader
 
 
 class MailType(Enum):
-    SYSTEM = "System"
-    EVENT = "Event"
-    COMPENSATION = "Compensation"
+    SYSTEM = 0
+    EVENT = 1
+    COMPENSATION = 2
 
     @staticmethod
     def decode(reader: SoraReader) -> MailType:
-        ordinal = reader.read_u32()
-        if ordinal == 0:
+        id = reader.read_u32()
+        if id == 0:
             return MailType.SYSTEM
-        if ordinal == 1:
+        if id == 1:
             return MailType.EVENT
-        if ordinal == 2:
+        if id == 2:
             return MailType.COMPENSATION
-        raise SoraReadError(f"invalid enum ordinal {ordinal} for MailType")
+        raise SoraReadError(f"invalid enum id {id} for MailType")

@@ -16,26 +16,26 @@ export const ItemType = {
     Material: "Material",
     Consumable: "Consumable",
 } as const;
-const values: ItemType[] = [
-    ItemType.Weapon,
-    ItemType.Armor,
-    ItemType.Currency,
-    ItemType.Material,
-    ItemType.Consumable,
-];
+const values = new Map<number, ItemType>([
+    [0, ItemType.Weapon],
+    [1, ItemType.Armor],
+    [2, ItemType.Currency],
+    [3, ItemType.Material],
+    [4, ItemType.Consumable],
+]);
 
 export function decodeItemType(reader: SoraReader): ItemType {
-    const ordinal = reader.readU32();
-    const value = values[ordinal];
+    const id = reader.readU32();
+    const value = values.get(id);
     if (value === undefined) {
-        throw new Error(`invalid enum ordinal ${ordinal} for ItemType`);
+        throw new Error(`invalid enum id ${id} for ItemType`);
     }
     return value;
 }
 
 export function decodeItemTypeValue(value: SoraValue): ItemType {
     const name = value.asString();
-    if (!values.includes(name as ItemType)) {
+    if (![...values.values()].includes(name as ItemType)) {
         throw new Error(`invalid enum value ${name} for ItemType`);
     }
     return name as ItemType;

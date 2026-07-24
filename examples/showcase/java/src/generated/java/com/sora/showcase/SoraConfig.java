@@ -24,6 +24,7 @@ record SoraTableInfo(
     String name,
     String rowType,
     SoraTableShape shape,
+    @SoraNullable
     SoraKeyInfo primaryKey,
     List<SoraIndexInfo> indexes
 ) {}
@@ -45,7 +46,7 @@ interface SoraSingleTable<R> extends SoraTable<R> {
 }
 
 public final class SoraConfig {
-    public static final String SCHEMA_FINGERPRINT = "8519b38083babe03";
+    public static final String SCHEMA_FINGERPRINT = "4ae91b3892293cc4";
 
     private final Map<String, SoraTable<?>> tables;
 

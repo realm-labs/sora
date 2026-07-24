@@ -218,7 +218,7 @@ final class SoraText {
 }
 
 final class SoraBundle implements SoraTableSource {
-    private static final int BUNDLE_VERSION = 1;
+    private static final int BUNDLE_VERSION = 2;
     private static final int HEADER_LENGTH = 24;
     private static final int SECTION_ENTRY_LENGTH = 28;
     private static final int SECTION_KIND_MANIFEST = 0;
@@ -768,7 +768,7 @@ final class SoraValue {
 {%- if runtime_format != "sora" %}
 
 final class SoraValueBundle implements SoraTableSource {
-    private static final int FORMAT_VERSION = 1;
+    private static final int FORMAT_VERSION = 2;
     private final Map<String, List<SoraValue>> tables;
     private final String schemaFingerprint;
 

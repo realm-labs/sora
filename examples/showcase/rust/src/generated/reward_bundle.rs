@@ -18,7 +18,16 @@ impl super::runtime::SoraDecode for RewardBundle {
         Ok(Self {
             cost: <ResourceCost as super::runtime::SoraDecode>::decode(reader)?,
             weight: <i32 as super::runtime::SoraDecode>::decode(reader)?,
-            labels: <Vec<std::sync::Arc<str>> as super::runtime::SoraDecode>::decode(reader)?,
+            labels: {
+                let len = reader.read_var_u32()? as usize;
+                let mut values = Vec::with_capacity(len);
+                for _ in 0..len {
+                    values.push(<std::sync::Arc<str> as super::runtime::SoraDecode>::decode(
+                        reader,
+                    )?);
+                }
+                values
+            },
         })
     }
 }

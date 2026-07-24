@@ -5,11 +5,13 @@ package com.sora.showcase;
 import java.util.List;
 import java.util.Map;
 
+
 public final class ShopItem {
     public final Integer shopId;
     public final Integer seq;
     public final Integer itemId;
     public final ResourceCost price;
+    @SoraNullable
     public final Integer dailyLimit;
 
     public ShopItem(
@@ -17,7 +19,7 @@ public final class ShopItem {
         Integer seq,
         Integer itemId,
         ResourceCost price,
-        Integer dailyLimit
+        @SoraNullable Integer dailyLimit
     ) {
         this.shopId = shopId;
         this.seq = seq;

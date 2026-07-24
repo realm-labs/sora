@@ -1,7 +1,7 @@
 {
-  "version": 1,
+  "version": 2,
   "package": "com.sora.showcase",
-  "fingerprint": "8519b38083babe03",
+  "fingerprint": "4ae91b3892293cc4",
   "schema": {
     "package": "com.sora.showcase",
     "localization": {
@@ -29,11 +29,26 @@
           ]
         },
         "values": [
-          "Weapon",
-          "Armor",
-          "Currency",
-          "Material",
-          "Consumable"
+          {
+            "id": 0,
+            "name": "Weapon"
+          },
+          {
+            "id": 1,
+            "name": "Armor"
+          },
+          {
+            "id": 2,
+            "name": "Currency"
+          },
+          {
+            "id": 3,
+            "name": "Material"
+          },
+          {
+            "id": 4,
+            "name": "Consumable"
+          }
         ]
       },
       {
@@ -44,9 +59,18 @@
           ]
         },
         "values": [
-          "Item",
-          "Gold",
-          "Diamond"
+          {
+            "id": 0,
+            "name": "Item"
+          },
+          {
+            "id": 1,
+            "name": "Gold"
+          },
+          {
+            "id": 2,
+            "name": "Diamond"
+          }
         ]
       },
       {
@@ -57,10 +81,22 @@
           ]
         },
         "values": [
-          "Fire",
-          "Ice",
-          "Lightning",
-          "Physical"
+          {
+            "id": 0,
+            "name": "Fire"
+          },
+          {
+            "id": 1,
+            "name": "Ice"
+          },
+          {
+            "id": 2,
+            "name": "Lightning"
+          },
+          {
+            "id": 3,
+            "name": "Physical"
+          }
         ]
       },
       {
@@ -71,9 +107,18 @@
           ]
         },
         "values": [
-          "Main",
-          "Side",
-          "Daily"
+          {
+            "id": 0,
+            "name": "Main"
+          },
+          {
+            "id": 1,
+            "name": "Side"
+          },
+          {
+            "id": 2,
+            "name": "Daily"
+          }
         ]
       },
       {
@@ -84,11 +129,26 @@
           ]
         },
         "values": [
-          "Common",
-          "Uncommon",
-          "Rare",
-          "Epic",
-          "Legendary"
+          {
+            "id": 0,
+            "name": "Common"
+          },
+          {
+            "id": 1,
+            "name": "Uncommon"
+          },
+          {
+            "id": 2,
+            "name": "Rare"
+          },
+          {
+            "id": 3,
+            "name": "Epic"
+          },
+          {
+            "id": 4,
+            "name": "Legendary"
+          }
         ]
       },
       {
@@ -99,11 +159,26 @@
           ]
         },
         "values": [
-          "Hp",
-          "Attack",
-          "Defense",
-          "Speed",
-          "CritRate"
+          {
+            "id": 0,
+            "name": "Hp"
+          },
+          {
+            "id": 1,
+            "name": "Attack"
+          },
+          {
+            "id": 2,
+            "name": "Defense"
+          },
+          {
+            "id": 3,
+            "name": "Speed"
+          },
+          {
+            "id": 4,
+            "name": "CritRate"
+          }
         ]
       },
       {
@@ -114,9 +189,18 @@
           ]
         },
         "values": [
-          "System",
-          "Event",
-          "Compensation"
+          {
+            "id": 0,
+            "name": "System"
+          },
+          {
+            "id": 1,
+            "name": "Event"
+          },
+          {
+            "id": 2,
+            "name": "Compensation"
+          }
         ]
       }
     ],

@@ -3,10 +3,20 @@
 package com.sora.showcase;
 
 public enum ElementType {
-    Fire,
-    Ice,
-    Lightning,
-    Physical;
+    Fire(0),
+    Ice(1),
+    Lightning(2),
+    Physical(3);
+
+    private final int id;
+
+    ElementType(int id) {
+        this.id = id;
+    }
+
+    public int id() {
+        return id;
+    }
 
     static ElementType decode(SoraReader reader) {
         switch (reader.readU32()) {
@@ -19,7 +29,7 @@ public enum ElementType {
             case 3:
                 return Physical;
             default:
-                throw new SoraReadException("invalid enum ordinal for ElementType");
+                throw new SoraReadException("invalid enum id for ElementType");
         }
     }
 

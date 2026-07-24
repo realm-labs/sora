@@ -5,15 +5,17 @@ package com.sora.showcase;
 import java.util.List;
 import java.util.Map;
 
+
 public final class LevelExp {
     public final Integer level;
-    public final Long exp;
+    public final long exp;
+    @SoraNullable
     public final String unlockFeature;
 
     public LevelExp(
         Integer level,
-        Long exp,
-        String unlockFeature
+        long exp,
+        @SoraNullable String unlockFeature
     ) {
         this.level = level;
         this.exp = exp;
@@ -71,6 +73,7 @@ final class LevelExpTable extends java.util.AbstractMap<Integer, LevelExp> imple
         return rows;
     }
     @Override
+    @SoraNullable
     public LevelExp get(Object key) {
         return rows.get(key);
     }

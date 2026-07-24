@@ -11,18 +11,18 @@
 
 enum class {{ enum.name }} : std::int32_t {
 {%- for value in enum.values %}
-    {{ value }} = {{ loop.index0 }},
+    {{ value.name }} = {{ value.id }},
 {%- endfor %}
 };
 
-inline {{ enum.name }} decode_{{ enum.snake_name }}_ordinal(std::uint32_t value) {
+inline {{ enum.name }} decode_{{ enum.snake_name }}_id(std::uint32_t value) {
     switch (value) {
 {%- for value in enum.values %}
-    case {{ loop.index0 }}:
-        return {{ enum.name }}::{{ value }};
+    case {{ value.id }}:
+        return {{ enum.name }}::{{ value.name }};
 {%- endfor %}
     default:
-        throw SoraReadException("invalid enum ordinal for {{ enum.name }}");
+        throw SoraReadException("invalid enum id for {{ enum.name }}");
     }
 }
 
@@ -41,7 +41,7 @@ struct hash<{{ options.namespace_name }}::{{ enum.name }}> {
 
 template <>
 inline {{ enum.name }} decode_value<{{ enum.name }}>(SoraReader& reader) {
-    return decode_{{ enum.snake_name }}_ordinal(reader.read_u32());
+    return decode_{{ enum.snake_name }}_id(reader.read_u32());
 }
 
 {{ options.namespace_close }}

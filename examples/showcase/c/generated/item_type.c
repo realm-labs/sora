@@ -3,9 +3,9 @@
 #include "item_type.h"
 
 sora_result sora_showcase_item_type_decode(sora_reader* reader, sora_showcase_item_type* out) {
-    uint32_t ordinal = 0;
-    SORA_TRY(sora_reader_read_u32(reader, &ordinal));
-    switch (ordinal) {
+    uint32_t id = 0;
+    SORA_TRY(sora_reader_read_u32(reader, &id));
+    switch (id) {
     case 0:
         *out = SORA_SHOWCASE_ITEM_TYPE_WEAPON;
         return sora_ok();
@@ -22,6 +22,6 @@ sora_result sora_showcase_item_type_decode(sora_reader* reader, sora_showcase_it
         *out = SORA_SHOWCASE_ITEM_TYPE_CONSUMABLE;
         return sora_ok();
     default:
-        return sora_error(SORA_ERROR_DECODE, "invalid enum ordinal for ItemType");
+        return sora_error(SORA_ERROR_DECODE, "invalid enum id for ItemType");
     }
 }

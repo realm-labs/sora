@@ -5,6 +5,7 @@ package com.sora.showcase;
 import java.util.List;
 import java.util.Map;
 
+
 public final class StageReward {
     public final Integer stageId;
     public final Integer seq;

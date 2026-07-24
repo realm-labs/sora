@@ -5,6 +5,7 @@ package com.sora.showcase;
 import java.util.List;
 import java.util.Map;
 
+
 public final class Buff {
     public final Integer id;
     public final String name;
@@ -79,6 +80,7 @@ final class BuffTable extends java.util.AbstractMap<Integer, Buff> implements So
         return rows;
     }
     @Override
+    @SoraNullable
     public Buff get(Object key) {
         return rows.get(key);
     }

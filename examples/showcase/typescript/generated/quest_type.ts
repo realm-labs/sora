@@ -12,24 +12,24 @@ export const QuestType = {
     Side: "Side",
     Daily: "Daily",
 } as const;
-const values: QuestType[] = [
-    QuestType.Main,
-    QuestType.Side,
-    QuestType.Daily,
-];
+const values = new Map<number, QuestType>([
+    [0, QuestType.Main],
+    [1, QuestType.Side],
+    [2, QuestType.Daily],
+]);
 
 export function decodeQuestType(reader: SoraReader): QuestType {
-    const ordinal = reader.readU32();
-    const value = values[ordinal];
+    const id = reader.readU32();
+    const value = values.get(id);
     if (value === undefined) {
-        throw new Error(`invalid enum ordinal ${ordinal} for QuestType`);
+        throw new Error(`invalid enum id ${id} for QuestType`);
     }
     return value;
 }
 
 export function decodeQuestTypeValue(value: SoraValue): QuestType {
     const name = value.asString();
-    if (!values.includes(name as QuestType)) {
+    if (![...values.values()].includes(name as QuestType)) {
         throw new Error(`invalid enum value ${name} for QuestType`);
     }
     return name as QuestType;

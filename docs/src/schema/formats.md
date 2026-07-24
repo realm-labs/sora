@@ -21,7 +21,7 @@ includes = ["schema/items.toml"]
 
 [[enums]]
 name = "ItemType"
-values = ["Weapon", "Armor"]
+values = [{ id = 0, name = "Weapon" }, { id = 1, name = "Armor" }]
 
 [[tables]]
 name = "Item"
@@ -42,7 +42,7 @@ includes:
 
 enums:
   - name: ItemType
-    values: [Weapon, Armor]
+    values: [{ id: 0, name: Weapon }, { id: 1, name: Armor }]
 
 tables:
   - name: Item
@@ -60,7 +60,7 @@ tables:
   "package": "game_config",
   "includes": ["schema/items.json"],
   "enums": [
-    { "name": "ItemType", "values": ["Weapon", "Armor"] }
+    { "name": "ItemType", "values": [{ "id": 0, "name": "Weapon" }, { "id": 1, "name": "Armor" }] }
   ],
   "tables": [
     {
@@ -85,7 +85,7 @@ return {
   includes = { "schema/items.lua" },
 
   enums = {
-    { name = "ItemType", values = { "Weapon", "Armor" } },
+    { name = "ItemType", values = { { id = 0, name = "Weapon" }, { id = 1, name = "Armor" } } },
   },
 
   tables = {

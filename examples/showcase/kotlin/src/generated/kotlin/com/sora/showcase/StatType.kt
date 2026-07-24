@@ -2,22 +2,22 @@
 
 package com.sora.showcase
 
-enum class StatType {
-    Hp,
-    Attack,
-    Defense,
-    Speed,
-    CritRate;
+enum class StatType(val id: Int) {
+    Hp(0),
+    Attack(1),
+    Defense(2),
+    Speed(3),
+    CritRate(4);
 
     companion object {
         fun decode(reader: SoraReader): StatType =
-            when (val ordinal = reader.readU32()) {
+            when (val id = reader.readU32()) {
                 0 -> Hp
                 1 -> Attack
                 2 -> Defense
                 3 -> Speed
                 4 -> CritRate
-                else -> throw SoraReadException("invalid enum ordinal $ordinal for StatType")
+                else -> throw SoraReadException("invalid enum id $id for StatType")
             }
 
         fun decode(value: SoraValue): StatType =

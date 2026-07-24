@@ -2,12 +2,12 @@
 
 package com.sora.showcase
 
-enum Rarity {
-  case Common
-  case Uncommon
-  case Rare
-  case Epic
-  case Legendary
+enum Rarity(val id: Int) {
+  case Common extends Rarity(0)
+  case Uncommon extends Rarity(1)
+  case Rare extends Rarity(2)
+  case Epic extends Rarity(3)
+  case Legendary extends Rarity(4)
 }
 
 object Rarity {
@@ -18,7 +18,7 @@ object Rarity {
       case 2 => Rarity.Rare
       case 3 => Rarity.Epic
       case 4 => Rarity.Legendary
-      case ordinal => throw new SoraReadException(s"invalid enum ordinal $ordinal for Rarity")
+      case id => throw new SoraReadException(s"invalid enum id $id for Rarity")
     }
 
   def decode(value: SoraValue): Rarity =

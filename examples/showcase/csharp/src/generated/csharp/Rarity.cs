@@ -6,11 +6,11 @@ namespace com.sora.showcase;
 
 public enum Rarity
 {
-    Common,
-    Uncommon,
-    Rare,
-    Epic,
-    Legendary,
+    Common = 0,
+    Uncommon = 1,
+    Rare = 2,
+    Epic = 3,
+    Legendary = 4,
 }
 
 internal static class RarityCodec
@@ -24,7 +24,7 @@ internal static class RarityCodec
             2 => Rarity.Rare,
             3 => Rarity.Epic,
             4 => Rarity.Legendary,
-            var value => throw new SoraReadException($"invalid enum ordinal {value} for Rarity"),
+            var value => throw new SoraReadException($"invalid enum id {value} for Rarity"),
         };
     }
 

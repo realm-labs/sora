@@ -31,7 +31,14 @@ impl super::runtime::SoraDecode for Character {
             rarity: <Rarity as super::runtime::SoraDecode>::decode(reader)?,
             base_level: <i32 as super::runtime::SoraDecode>::decode(reader)?,
             base_skill: <i32 as super::runtime::SoraDecode>::decode(reader)?,
-            starter_items: <Vec<i32> as super::runtime::SoraDecode>::decode(reader)?,
+            starter_items: {
+                let len = reader.read_var_u32()? as usize;
+                let mut values = Vec::with_capacity(len);
+                for _ in 0..len {
+                    values.push(<i32 as super::runtime::SoraDecode>::decode(reader)?);
+                }
+                values
+            },
             spawn_pos: <Vec3 as super::runtime::SoraDecode>::decode(reader)?,
         })
     }

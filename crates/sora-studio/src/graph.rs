@@ -34,8 +34,9 @@ pub(crate) fn build_schema(
                 .values
                 .iter()
                 .map(|value| StudioField {
-                    name: value.clone(),
+                    name: value.name.clone(),
                     ty: "enum value".to_owned(),
+                    enum_value_id: Some(value.id),
                     scope: item.scope.display(),
                     parser: None,
                     comment: None,
@@ -83,6 +84,7 @@ pub(crate) fn build_schema(
                 std::iter::once(StudioField {
                     name: variant.name.clone(),
                     ty: "variant".to_owned(),
+                    enum_value_id: None,
                     scope: variant.scope.display(),
                     parser: None,
                     comment: None,
@@ -198,8 +200,9 @@ pub(crate) fn build_schema_from_raw(
                 .values
                 .iter()
                 .map(|value| StudioField {
-                    name: value.clone(),
+                    name: value.name.clone(),
                     ty: "enum value".to_owned(),
+                    enum_value_id: Some(value.id),
                     scope: raw_scope(&item.scope),
                     parser: None,
                     comment: None,
@@ -234,6 +237,7 @@ pub(crate) fn build_schema_from_raw(
                 std::iter::once(StudioField {
                     name: variant.name.clone(),
                     ty: "variant".to_owned(),
+                    enum_value_id: None,
                     scope: raw_scope(&variant.scope),
                     parser: None,
                     comment: None,
@@ -315,6 +319,7 @@ fn raw_field(field: &FieldSchema) -> StudioField {
     StudioField {
         name: field.name.clone(),
         ty: field.ty.clone(),
+        enum_value_id: None,
         scope: raw_scope(&field.scope),
         parser: raw_parser(&field.parser),
         comment: field.comment.clone(),
@@ -329,6 +334,7 @@ fn raw_table_field(field: &TableFieldSchema) -> StudioField {
     StudioField {
         name: field.name.clone(),
         ty: field.ty.clone(),
+        enum_value_id: None,
         scope: raw_scope(&field.scope),
         parser: raw_parser(&field.parser),
         comment: field.comment.clone(),
@@ -388,6 +394,7 @@ fn studio_field(field: &FieldIr) -> StudioField {
     StudioField {
         name: field.name.clone(),
         ty: field.ty.to_string(),
+        enum_value_id: None,
         scope: field.scope.display(),
         parser: field.parser.as_ref().map(|parser| {
             let options = parser

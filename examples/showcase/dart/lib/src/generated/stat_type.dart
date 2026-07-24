@@ -3,11 +3,15 @@
 import 'runtime.dart';
 
 enum StatType {
-  hp,
-  attack,
-  defense,
-  speed,
-  critRate;
+  hp(0),
+  attack(1),
+  defense(2),
+  speed(3),
+  critRate(4);
+
+  const StatType(this.id);
+
+  final int id;
 
   static StatType decode(SoraValue value) {
     switch (value.asString()) {

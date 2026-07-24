@@ -15,11 +15,11 @@ const (
 )
 
 func decodeStatType(reader *SoraReader) (StatType, error) {
-	ordinal, err := reader.ReadUInt32()
+	id, err := reader.ReadUInt32()
 	if err != nil {
 		return 0, err
 	}
-	switch ordinal {
+	switch id {
 	case 0:
 		return StatTypeHp, nil
 	case 1:
@@ -31,7 +31,7 @@ func decodeStatType(reader *SoraReader) (StatType, error) {
 	case 4:
 		return StatTypeCritRate, nil
 	default:
-		return 0, fmt.Errorf("invalid enum ordinal %d for StatType", ordinal)
+		return 0, fmt.Errorf("invalid enum id %d for StatType", id)
 	}
 }
 

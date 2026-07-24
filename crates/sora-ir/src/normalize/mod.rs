@@ -8,8 +8,8 @@ use sora_schema::model::{
 use crate::{
     input_projection::{COLUMNS_PARSER, TAGGED_COLUMNS_PARSER},
     model::{
-        ConfigIr, DerivedFieldIr, EnumAliasIr, EnumIr, FieldIr, IndexIr, ParserIr, ScopeIr,
-        StructIr, TableIr, TableModeIr, TableSourceIr, TypeIr, UnionIr, UnionVariantIr,
+        ConfigIr, DerivedFieldIr, EnumAliasIr, EnumIr, EnumValueIr, FieldIr, IndexIr, ParserIr,
+        ScopeIr, StructIr, TableIr, TableModeIr, TableSourceIr, TypeIr, UnionIr, UnionVariantIr,
     },
     parse::parse_type,
     parser::ParserRegistry,
@@ -32,7 +32,14 @@ pub fn normalize_schema_with_parsers(
                 Ok(EnumIr {
                     name: item.name,
                     scope: ScopeIr::try_from(item.scope)?,
-                    values: item.values,
+                    values: item
+                        .values
+                        .into_iter()
+                        .map(|value| EnumValueIr {
+                            id: value.id,
+                            name: value.name,
+                        })
+                        .collect(),
                     aliases: convert_enum_aliases(item.aliases),
                 })
             })

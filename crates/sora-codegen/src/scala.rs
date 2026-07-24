@@ -8,8 +8,8 @@ use sora_ir::model::{ConfigIr, TableModeIr, TypeIr};
 use crate::{
     generator::{CodeGenerator, CodegenContext, runtime_format_name},
     model::{
-        BaseField, BaseIndex, BaseModel, BaseRecord, BaseTable, BaseUnion, BaseUnionVariant,
-        build_base_model,
+        BaseEnumValue, BaseField, BaseIndex, BaseModel, BaseRecord, BaseTable, BaseUnion,
+        BaseUnionVariant, build_base_model,
     },
     options::{ScalaCodegenOptions, ScalaVersion},
     render::{ensure_dir, render_template, write_file},
@@ -92,7 +92,7 @@ struct ScalaModel {
 #[derive(Debug, Clone, Serialize)]
 struct ScalaEnum {
     name: String,
-    values: Vec<String>,
+    values: Vec<BaseEnumValue>,
     is_scala3: bool,
 }
 

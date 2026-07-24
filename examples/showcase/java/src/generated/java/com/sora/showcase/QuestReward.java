@@ -5,6 +5,7 @@ package com.sora.showcase;
 import java.util.List;
 import java.util.Map;
 
+
 public final class QuestReward {
     public final Integer questId;
     public final Integer seq;

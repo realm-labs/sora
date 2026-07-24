@@ -35,8 +35,8 @@ struct Item {
             decode_value<ItemType>(reader),
             reader.read_i32(),
             ResourceCost::decode(reader),
-            reader.read_vector<std::string>(),
-            reader.read_map<std::string, std::int32_t>(),
+            ([&reader]() { std::uint32_t length = reader.read_u32(); std::vector<std::string> values; values.reserve(length); for (std::uint32_t index = 0; index < length; ++index) { values.push_back(reader.read_string()); } return values; })(),
+            ([&reader]() { std::uint32_t length = reader.read_u32(); std::unordered_map<std::string, std::int32_t> values; values.reserve(length); for (std::uint32_t index = 0; index < length; ++index) { std::string key = reader.read_string(); values[key] = reader.read_i32(); } return values; })(),
         };
     }
 };

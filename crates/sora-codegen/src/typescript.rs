@@ -157,10 +157,10 @@ mod tests {
 
         let item_type = std::fs::read_to_string(base.join("item_type.ts")).unwrap();
         assert!(item_type.contains("export type ItemType ="));
-        assert!(item_type.contains("| 0"));
-        assert!(item_type.contains("| 1"));
-        assert!(item_type.contains("Weapon: 0"));
-        assert!(item_type.contains("return ordinal as ItemType;"));
+        assert!(item_type.contains("| 10"));
+        assert!(item_type.contains("| 20"));
+        assert!(item_type.contains("Weapon: 10"));
+        assert!(item_type.contains("return id as ItemType;"));
 
         let _ = std::fs::remove_dir_all(base);
     }
@@ -222,7 +222,7 @@ package = "game_config"
 
 [[enums]]
 name = "ItemType"
-values = ["Weapon", "Armor"]
+values = [{ id = 10, name = "Weapon" }, { id = 20, name = "Armor" }]
 
 [[unions]]
 name = "Action"
