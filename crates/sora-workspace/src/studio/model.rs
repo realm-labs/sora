@@ -13,7 +13,7 @@ pub struct StudioSchemaResponse {
     pub schema: Option<StudioSchema>,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Clone, Serialize)]
 pub struct StudioPreviewResponse {
     pub ok: bool,
     pub project: String,

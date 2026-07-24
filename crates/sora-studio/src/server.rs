@@ -13,9 +13,9 @@ use axum::{
     routing::{get, put},
 };
 use include_dir::{Dir, include_dir};
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use sora_workspace::{
-    ProjectSession,
+    ProjectId, ProjectRevision, StudioSchemaApplyReport, WorkspaceService,
     studio::{StudioPreviewResponse, StudioSchema, StudioSchemaResponse},
 };
 use tower_http::cors::CorsLayer;
@@ -24,7 +24,8 @@ static STUDIO_DIST: Dir<'_> = include_dir!("$CARGO_MANIFEST_DIR/dist");
 
 #[derive(Clone)]
 pub struct StudioOptions {
-    pub session: Arc<ProjectSession>,
+    pub workspace: Arc<WorkspaceService>,
+    pub project_id: ProjectId,
     pub host: IpAddr,
     pub port: u16,
 }
@@ -36,15 +37,20 @@ pub fn run_blocking(options: StudioOptions) -> Result<()> {
 
 pub async fn run(options: StudioOptions) -> Result<()> {
     let addr = SocketAddr::new(options.host, options.port);
-    let project = options.session.manifest_path().to_path_buf();
+    let session = options
+        .workspace
+        .project(&options.project_id)
+        .context("Studio project is not registered")?;
+    let project = session.manifest_path().to_path_buf();
     let state = StudioState {
-        session: options.session,
+        workspace: options.workspace,
+        project_id: options.project_id,
     };
     let app = Router::new()
         .route("/api/health", get(health))
         .route("/api/schema", get(schema))
-        .route("/api/schema", put(save_schema))
         .route("/api/schema/preview", put(preview_schema))
+        .route("/api/schema/apply", put(apply_schema))
         .route("/", get(studio_index))
         .route("/assets/{*path}", get(studio_asset))
         .fallback(not_found)
@@ -64,29 +70,152 @@ pub async fn run(options: StudioOptions) -> Result<()> {
 
 #[derive(Clone)]
 struct StudioState {
-    session: Arc<ProjectSession>,
+    workspace: Arc<WorkspaceService>,
+    project_id: ProjectId,
 }
 
 async fn health() -> Json<HealthResponse> {
     Json(HealthResponse { ok: true })
 }
 
-async fn schema(State(state): State<StudioState>) -> Json<StudioSchemaResponse> {
-    Json(state.session.load_studio_schema())
-}
-
-async fn save_schema(
-    State(state): State<StudioState>,
-    Json(schema): Json<StudioSchema>,
-) -> Json<StudioSchemaResponse> {
-    Json(state.session.save_studio_schema(&schema))
+async fn schema(State(state): State<StudioState>) -> Json<StudioLoadResponse> {
+    let session = state.workspace.project(&state.project_id);
+    match session {
+        Ok(session) => Json(StudioLoadResponse {
+            document: session.load_studio_schema(),
+            revision: Some(session.revision()),
+        }),
+        Err(error) => Json(StudioLoadResponse {
+            document: studio_error("", error),
+            revision: None,
+        }),
+    }
 }
 
 async fn preview_schema(
     State(state): State<StudioState>,
-    Json(schema): Json<StudioSchema>,
-) -> Json<StudioPreviewResponse> {
-    Json(state.session.preview_studio_schema(&schema))
+    Json(request): Json<StudioPreviewRequest>,
+) -> Json<StudioPlanResponse> {
+    match state.workspace.preview_studio_schema_mutation(
+        &state.project_id,
+        STUDIO_AUTHORIZATION_CONTEXT,
+        &request.expected_schema_revision,
+        &request.expected_manifest_revision,
+        request.schema,
+    ) {
+        Ok(plan) => Json(StudioPlanResponse {
+            preview: plan.preview,
+            plan_id: Some(plan.plan_id),
+            revision: Some(plan.input_revisions),
+        }),
+        Err(error) => Json(StudioPlanResponse {
+            preview: StudioPreviewResponse {
+                ok: false,
+                project: project_name(&state),
+                target: None,
+                content: None,
+                diff: None,
+                diagnostics: vec![sora_workspace::Diagnostic::error(error.to_string())],
+            },
+            plan_id: None,
+            revision: current_revision(&state),
+        }),
+    }
+}
+
+async fn apply_schema(
+    State(state): State<StudioState>,
+    Json(request): Json<StudioApplyRequest>,
+) -> Json<StudioApplyResponse> {
+    match state.workspace.apply_studio_schema_mutation(
+        &state.project_id,
+        STUDIO_AUTHORIZATION_CONTEXT,
+        &request.plan_id,
+        &request.idempotency_key,
+    ) {
+        Ok(report) => {
+            let document = state
+                .workspace
+                .project(&state.project_id)
+                .map(|session| session.load_studio_schema())
+                .unwrap_or_else(|error| studio_error("", error));
+            Json(StudioApplyResponse {
+                document,
+                revision: Some(report.revision.clone()),
+                apply: Some(report),
+            })
+        }
+        Err(error) => Json(StudioApplyResponse {
+            document: studio_error(&project_name(&state), error),
+            revision: current_revision(&state),
+            apply: None,
+        }),
+    }
+}
+
+const STUDIO_AUTHORIZATION_CONTEXT: &str = "studio-local";
+
+#[derive(Debug, Serialize)]
+struct StudioLoadResponse {
+    #[serde(flatten)]
+    document: StudioSchemaResponse,
+    revision: Option<ProjectRevision>,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct StudioPreviewRequest {
+    schema: StudioSchema,
+    expected_schema_revision: String,
+    expected_manifest_revision: String,
+}
+
+#[derive(Debug, Serialize)]
+struct StudioPlanResponse {
+    #[serde(flatten)]
+    preview: StudioPreviewResponse,
+    plan_id: Option<String>,
+    revision: Option<ProjectRevision>,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct StudioApplyRequest {
+    plan_id: String,
+    idempotency_key: String,
+}
+
+#[derive(Debug, Serialize)]
+struct StudioApplyResponse {
+    #[serde(flatten)]
+    document: StudioSchemaResponse,
+    revision: Option<ProjectRevision>,
+    apply: Option<StudioSchemaApplyReport>,
+}
+
+fn current_revision(state: &StudioState) -> Option<ProjectRevision> {
+    state
+        .workspace
+        .project(&state.project_id)
+        .map(|session| session.revision())
+        .ok()
+}
+
+fn project_name(state: &StudioState) -> String {
+    state
+        .workspace
+        .project(&state.project_id)
+        .map(|session| session.manifest_path().display().to_string())
+        .unwrap_or_default()
+}
+
+fn studio_error(project: &str, error: impl ToString) -> StudioSchemaResponse {
+    StudioSchemaResponse {
+        ok: false,
+        project: project.to_owned(),
+        diagnostics: vec![sora_workspace::Diagnostic::error(error.to_string())],
+        schema: None,
+    }
 }
 
 async fn studio_index() -> Response {

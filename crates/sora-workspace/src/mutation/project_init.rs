@@ -17,6 +17,7 @@ use crate::{
 };
 
 const PLAN_TTL_MINUTES: i64 = 10;
+const MAX_ACTIVE_PLANS: usize = 32;
 
 /// One file that will be created by a project initialization plan.
 #[derive(Debug, Clone, Serialize, JsonSchema)]
@@ -163,7 +164,11 @@ impl WorkspaceService {
             Ok(transaction) => transaction,
             Err(error) => {
                 if created_target {
-                    let _ = fs::remove_dir_all(&target);
+                    fs::remove_dir_all(&target).map_err(|cleanup| {
+                        crate::MutationPlanError::Transaction(format!(
+                            "{error}; failed to remove incomplete project directory: {cleanup}"
+                        ))
+                    })?;
                 }
                 return Err(crate::MutationPlanError::Transaction(error.to_string()));
             }
@@ -203,6 +208,19 @@ impl ProjectInitCoordinator {
             .write()
             .map_err(|_| crate::MutationPlanError::StatePoisoned)?;
         plans.retain(|_, stored| stored.plan.expires_at > now);
+        let mut owned = plans
+            .iter()
+            .filter(|(_, stored)| stored.owner == owner && stored.plan.root_id == plan.root_id)
+            .map(|(id, stored)| (id.clone(), stored.plan.created_at))
+            .collect::<Vec<_>>();
+        owned.sort_by_key(|(_, created)| *created);
+        let remove_count = owned
+            .len()
+            .saturating_add(1)
+            .saturating_sub(MAX_ACTIVE_PLANS);
+        for (id, _) in owned.into_iter().take(remove_count) {
+            plans.remove(&id);
+        }
         plans.insert(
             plan.plan_id.clone(),
             StoredPlan {

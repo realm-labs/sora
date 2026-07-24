@@ -34,8 +34,9 @@ pub use mutation::{
     DerivedFieldSource, EnumValueDefinition, FieldDefinition, FieldOwner, FieldOwnerKind,
     IndexDefinition, MutationPlanError, MutationSchemaEntityKind, ProjectInitApplyReport,
     ProjectInitPlan, ProjectInitPlanFile, SchemaApplyReport, SchemaExecution, SchemaMutationError,
-    SchemaMutationPlan, SchemaOperation, SchemaTableMode, TableSourceDefinition, TextFileDiff,
-    TransactionError, TransactionReceipt, UnionVariantDefinition, execute_schema_operations,
+    SchemaMutationPlan, SchemaOperation, SchemaTableMode, StudioSchemaApplyReport,
+    StudioSchemaMutationPlan, TableSourceDefinition, TextFileDiff, TransactionError,
+    TransactionReceipt, UnionVariantDefinition, execute_schema_operations,
 };
 pub use parser::{ParserRegistries, load_parser_registries};
 pub use project::{ProjectId, ProjectRevision, ProjectSession};

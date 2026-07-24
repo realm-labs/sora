@@ -3,7 +3,10 @@ mod project_init;
 mod schema;
 mod transaction;
 
-pub use plan::{MutationPlanError, SchemaApplyReport, SchemaMutationPlan, TextFileDiff};
+pub use plan::{
+    MutationPlanError, SchemaApplyReport, SchemaMutationPlan, StudioSchemaApplyReport,
+    StudioSchemaMutationPlan, TextFileDiff,
+};
 pub use project_init::{ProjectInitApplyReport, ProjectInitPlan, ProjectInitPlanFile};
 pub use schema::{
     DerivedFieldSource, EnumValueDefinition, FieldDefinition, FieldOwner, FieldOwnerKind,

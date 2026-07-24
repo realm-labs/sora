@@ -56,6 +56,7 @@ export type StudioResponse = {
   project: string;
   diagnostics: StudioDiagnostic[];
   schema?: StudioSchema | null;
+  revision?: ProjectRevision | null;
 };
 
 export type StudioSaveResponse = {
@@ -63,6 +64,7 @@ export type StudioSaveResponse = {
   project: string;
   diagnostics: StudioDiagnostic[];
   schema?: StudioSchema | null;
+  revision?: ProjectRevision | null;
 };
 
 export type StudioPreviewResponse = {
@@ -72,6 +74,15 @@ export type StudioPreviewResponse = {
   content?: string | null;
   diff?: string | null;
   diagnostics: StudioDiagnostic[];
+  plan_id?: string | null;
+  revision?: ProjectRevision | null;
+};
+
+export type ProjectRevision = {
+  project: string;
+  manifest: string;
+  schema: string;
+  data: string;
 };
 
 export type StudioDiagnostic = {

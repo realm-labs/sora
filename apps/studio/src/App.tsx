@@ -265,13 +265,29 @@ export function App() {
     setDirty(false);
   };
   const saveLocalChanges = async () => {
-    if (!schema || localValidationIssues.length > 0) return;
+    if (!schema || !response?.revision || localValidationIssues.length > 0) return;
     setSaving(true);
     try {
-      const next: StudioSaveResponse = await fetch("/api/schema", {
+      const plan: StudioPreviewResponse = await fetch("/api/schema/preview", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(schema)
+        body: JSON.stringify({
+          schema,
+          expected_schema_revision: response.revision.schema,
+          expected_manifest_revision: response.revision.manifest
+        })
+      }).then((res) => res.json());
+      if (!plan.ok || !plan.plan_id) {
+        setPreview(plan);
+        return;
+      }
+      const next: StudioSaveResponse = await fetch("/api/schema/apply", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          plan_id: plan.plan_id,
+          idempotency_key: crypto.randomUUID()
+        })
       }).then((res) => res.json());
       setResponse(next);
       if (next.ok && next.schema) {
@@ -296,13 +312,17 @@ export function App() {
   };
 
   const previewLocalChanges = async () => {
-    if (!schema || localValidationIssues.length > 0) return;
+    if (!schema || !response?.revision || localValidationIssues.length > 0) return;
     setPreviewing(true);
     try {
       const next: StudioPreviewResponse = await fetch("/api/schema/preview", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(schema)
+        body: JSON.stringify({
+          schema,
+          expected_schema_revision: response.revision.schema,
+          expected_manifest_revision: response.revision.manifest
+        })
       }).then((res) => res.json());
       setPreview(next);
     } catch (error) {

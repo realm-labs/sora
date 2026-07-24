@@ -106,6 +106,7 @@ pub(crate) fn save_studio_schema(project: &Path, schema: &StudioSchema) -> Studi
     save_studio_schema_with_parsers(project, schema, &SchemaParserRegistry::builtin())
 }
 
+#[cfg(test)]
 pub(super) fn save_studio_schema_with_parsers(
     project: &Path,
     schema: &StudioSchema,
@@ -153,7 +154,7 @@ pub(crate) fn preview_studio_schema(
     preview_studio_schema_with_parsers(project, schema, &SchemaParserRegistry::builtin())
 }
 
-pub(super) fn preview_studio_schema_with_parsers(
+pub(crate) fn preview_studio_schema_with_parsers(
     project: &Path,
     schema: &StudioSchema,
     parser_registry: &SchemaParserRegistry,

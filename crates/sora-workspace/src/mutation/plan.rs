@@ -11,7 +11,7 @@ use super::{
 };
 use crate::{
     Diagnostic, ProjectId, ProjectRevision, ProjectSession, WorkspaceService,
-    studio::{StudioSchema, service::TextFileWrite},
+    studio::{StudioPreviewResponse, StudioSchema, service::TextFileWrite},
 };
 
 const PLAN_TTL_MINUTES: i64 = 10;
@@ -57,6 +57,27 @@ pub struct SchemaApplyReport {
     pub affected_entities: Vec<String>,
     pub affected_tables: Vec<String>,
     pub requires_data_migration: bool,
+    pub transaction: TransactionReceipt,
+}
+
+/// Revision-bound preview of a Studio graph replacement.
+#[derive(Debug, Clone, Serialize)]
+pub struct StudioSchemaMutationPlan {
+    pub plan_id: String,
+    pub project_id: ProjectId,
+    pub input_revisions: ProjectRevision,
+    pub preview: StudioPreviewResponse,
+    pub created_at: DateTime<Utc>,
+    pub expires_at: DateTime<Utc>,
+}
+
+/// Result of applying a Studio schema plan through the shared transaction service.
+#[derive(Debug, Clone, Serialize)]
+pub struct StudioSchemaApplyReport {
+    pub plan_id: String,
+    pub project_id: ProjectId,
+    pub previous_revision: ProjectRevision,
+    pub revision: ProjectRevision,
     pub transaction: TransactionReceipt,
 }
 
@@ -109,10 +130,25 @@ struct IdempotentApply {
     report: SchemaApplyReport,
 }
 
+#[derive(Debug, Clone)]
+struct StoredStudioPlan {
+    owner: String,
+    plan: StudioSchemaMutationPlan,
+    schema: StudioSchema,
+}
+
+#[derive(Debug, Clone)]
+struct IdempotentStudioApply {
+    plan_id: String,
+    report: StudioSchemaApplyReport,
+}
+
 #[derive(Debug, Default)]
 pub(crate) struct MutationCoordinator {
     schema_plans: RwLock<BTreeMap<String, StoredSchemaPlan>>,
     applies: RwLock<BTreeMap<(String, ProjectId, String), IdempotentApply>>,
+    studio_plans: RwLock<BTreeMap<String, StoredStudioPlan>>,
+    studio_applies: RwLock<BTreeMap<(String, ProjectId, String), IdempotentStudioApply>>,
 }
 
 impl WorkspaceService {
@@ -281,6 +317,145 @@ impl WorkspaceService {
         self.mutation.invalidate_project_plans(project_id, None)?;
         Ok(report)
     }
+
+    /// Previews a Studio graph replacement through the shared mutation lifecycle.
+    pub fn preview_studio_schema_mutation(
+        &self,
+        project_id: &ProjectId,
+        authorization_context: &str,
+        expected_schema_revision: &str,
+        expected_manifest_revision: &str,
+        schema: StudioSchema,
+    ) -> Result<StudioSchemaMutationPlan, MutationPlanError> {
+        let session = self
+            .project(project_id)
+            .map_err(|error| MutationPlanError::Project(error.to_string()))?;
+        let revision = session.revision();
+        ensure_expected_revisions(
+            &revision,
+            expected_schema_revision,
+            expected_manifest_revision,
+        )?;
+        let preview = crate::studio::service::preview_studio_schema_with_parsers(
+            session.manifest_path(),
+            &schema,
+            session.runtime().schema_parsers(),
+        );
+        if !preview.ok {
+            return Err(MutationPlanError::Validation(
+                preview
+                    .diagnostics
+                    .iter()
+                    .map(|diagnostic| diagnostic.message.as_str())
+                    .collect::<Vec<_>>()
+                    .join("; "),
+            ));
+        }
+        let created_at = Utc::now();
+        let plan = StudioSchemaMutationPlan {
+            plan_id: format!("plan:{}", Uuid::new_v4()),
+            project_id: project_id.clone(),
+            input_revisions: revision,
+            preview,
+            created_at,
+            expires_at: created_at + Duration::minutes(PLAN_TTL_MINUTES),
+        };
+        self.mutation
+            .insert_studio_plan(authorization_context, plan.clone(), schema)?;
+        Ok(plan)
+    }
+
+    /// Applies an unexpired Studio graph plan under the project write lock.
+    pub fn apply_studio_schema_mutation(
+        &self,
+        project_id: &ProjectId,
+        authorization_context: &str,
+        plan_id: &str,
+        idempotency_key: &str,
+    ) -> Result<StudioSchemaApplyReport, MutationPlanError> {
+        validate_idempotency_key(idempotency_key)?;
+        if let Some(report) = self.mutation.idempotent_studio_result(
+            authorization_context,
+            project_id,
+            plan_id,
+            idempotency_key,
+        )? {
+            return Ok(report);
+        }
+        let stored = self.mutation.studio_plan(plan_id)?;
+        if stored.owner != authorization_context {
+            return Err(MutationPlanError::AuthorizationMismatch);
+        }
+        if &stored.plan.project_id != project_id {
+            return Err(MutationPlanError::ProjectMismatch);
+        }
+        if stored.plan.expires_at <= Utc::now() {
+            self.mutation.remove_studio_plan(plan_id)?;
+            return Err(MutationPlanError::ExpiredPlan);
+        }
+        let session = self
+            .project(project_id)
+            .map_err(|error| MutationPlanError::Project(error.to_string()))?;
+        let _write_guard = session
+            .write_lock
+            .lock()
+            .map_err(|_| MutationPlanError::WriteLockPoisoned)?;
+        let current = session
+            .refresh_revision()
+            .map_err(|error| MutationPlanError::Revision(error.to_string()))?;
+        ensure_expected_revisions(
+            &current,
+            &stored.plan.input_revisions.schema,
+            &stored.plan.input_revisions.manifest,
+        )?;
+        crate::studio::service::validate_studio_schema_with_parsers(
+            &stored.schema,
+            session.runtime().schema_parsers(),
+        )
+        .map_err(|error| MutationPlanError::Validation(error.to_string()))?;
+        let writes = crate::studio::service::render_studio_schema_writes(
+            session.manifest_path(),
+            &stored.schema,
+        )
+        .map_err(|error| MutationPlanError::Rendering(error.to_string()))?;
+        let schema = stored.schema.clone();
+        let parser_registry = session.runtime().schema_parsers();
+        let receipt = commit_text_transaction(project_root(&session), &writes, || {
+            crate::studio::service::validate_studio_schema_with_parsers(&schema, parser_registry)?;
+            let loaded = session.load_studio_schema();
+            if loaded.ok {
+                Ok(())
+            } else {
+                let message = loaded
+                    .diagnostics
+                    .into_iter()
+                    .map(|diagnostic| diagnostic.message)
+                    .collect::<Vec<_>>()
+                    .join("; ");
+                anyhow::bail!("reloaded schema is invalid: {message}")
+            }
+        })
+        .map_err(|error| MutationPlanError::Transaction(error.to_string()))?;
+        let revision = session
+            .refresh_revision()
+            .map_err(|error| MutationPlanError::Revision(error.to_string()))?;
+        let report = StudioSchemaApplyReport {
+            plan_id: plan_id.to_owned(),
+            project_id: project_id.clone(),
+            previous_revision: current,
+            revision,
+            transaction: receipt,
+        };
+        self.mutation.record_studio_apply(
+            authorization_context,
+            project_id,
+            plan_id,
+            idempotency_key,
+            report.clone(),
+        )?;
+        self.mutation.invalidate_project_plans(project_id, None)?;
+        Ok(report)
+    }
 }
 
 impl MutationCoordinator {
@@ -348,6 +523,107 @@ impl MutationCoordinator {
             .retain(|id, stored| {
                 &stored.plan.project_id != project_id || keep == Some(id.as_str())
             });
+        self.studio_plans
+            .write()
+            .map_err(|_| MutationPlanError::StatePoisoned)?
+            .retain(|id, stored| {
+                &stored.plan.project_id != project_id || keep == Some(id.as_str())
+            });
+        Ok(())
+    }
+
+    fn insert_studio_plan(
+        &self,
+        owner: &str,
+        plan: StudioSchemaMutationPlan,
+        schema: StudioSchema,
+    ) -> Result<(), MutationPlanError> {
+        let now = Utc::now();
+        let mut plans = self
+            .studio_plans
+            .write()
+            .map_err(|_| MutationPlanError::StatePoisoned)?;
+        plans.retain(|_, stored| stored.plan.expires_at > now);
+        let mut owned = plans
+            .iter()
+            .filter(|(_, stored)| {
+                stored.owner == owner && stored.plan.project_id == plan.project_id
+            })
+            .map(|(id, stored)| (id.clone(), stored.plan.created_at))
+            .collect::<Vec<_>>();
+        owned.sort_by_key(|(_, created)| *created);
+        let remove_count = owned
+            .len()
+            .saturating_add(1)
+            .saturating_sub(MAX_ACTIVE_PLANS);
+        for (id, _) in owned.into_iter().take(remove_count) {
+            plans.remove(&id);
+        }
+        plans.insert(
+            plan.plan_id.clone(),
+            StoredStudioPlan {
+                owner: owner.to_owned(),
+                plan,
+                schema,
+            },
+        );
+        Ok(())
+    }
+
+    fn studio_plan(&self, plan_id: &str) -> Result<StoredStudioPlan, MutationPlanError> {
+        self.studio_plans
+            .read()
+            .map_err(|_| MutationPlanError::StatePoisoned)?
+            .get(plan_id)
+            .cloned()
+            .ok_or(MutationPlanError::UnknownPlan)
+    }
+
+    fn remove_studio_plan(&self, plan_id: &str) -> Result<(), MutationPlanError> {
+        self.studio_plans
+            .write()
+            .map_err(|_| MutationPlanError::StatePoisoned)?
+            .remove(plan_id);
+        Ok(())
+    }
+
+    fn idempotent_studio_result(
+        &self,
+        owner: &str,
+        project_id: &ProjectId,
+        plan_id: &str,
+        key: &str,
+    ) -> Result<Option<StudioSchemaApplyReport>, MutationPlanError> {
+        let map_key = (owner.to_owned(), project_id.clone(), key.to_owned());
+        let applies = self
+            .studio_applies
+            .read()
+            .map_err(|_| MutationPlanError::StatePoisoned)?;
+        match applies.get(&map_key) {
+            Some(record) if record.plan_id == plan_id => Ok(Some(record.report.clone())),
+            Some(_) => Err(MutationPlanError::IdempotencyConflict),
+            None => Ok(None),
+        }
+    }
+
+    fn record_studio_apply(
+        &self,
+        owner: &str,
+        project_id: &ProjectId,
+        plan_id: &str,
+        key: &str,
+        report: StudioSchemaApplyReport,
+    ) -> Result<(), MutationPlanError> {
+        self.studio_applies
+            .write()
+            .map_err(|_| MutationPlanError::StatePoisoned)?
+            .insert(
+                (owner.to_owned(), project_id.clone(), key.to_owned()),
+                IdempotentStudioApply {
+                    plan_id: plan_id.to_owned(),
+                    report,
+                },
+            );
         Ok(())
     }
 
@@ -606,6 +882,54 @@ mod tests {
             fs::read_to_string(root.join("schema.toml"))
                 .unwrap()
                 .contains("# external change")
+        );
+        let _ = fs::remove_dir_all(root);
+    }
+
+    #[test]
+    fn studio_uses_revision_bound_preview_and_apply() {
+        let root = temp_project();
+        let project = root.join("project.toml");
+        let workspace = WorkspaceService::new();
+        let id = ProjectId::new("demo").unwrap();
+        let session = workspace
+            .open_project(id.clone(), &project, RuntimeOptions::default())
+            .unwrap();
+        let revision = session.revision();
+        let mut schema = session.load_studio_schema().schema.unwrap();
+        schema.package = "edited".to_owned();
+        let before = fs::read_to_string(&project).unwrap();
+
+        let plan = workspace
+            .preview_studio_schema_mutation(
+                &id,
+                "studio",
+                &revision.schema,
+                &revision.manifest,
+                schema,
+            )
+            .unwrap();
+
+        assert_eq!(fs::read_to_string(&project).unwrap(), before);
+        assert!(
+            plan.preview
+                .diff
+                .as_deref()
+                .is_some_and(|diff| diff.contains("+package = \"edited\""))
+        );
+        let report = workspace
+            .apply_studio_schema_mutation(&id, "studio", &plan.plan_id, "studio-save-1")
+            .unwrap();
+        let replay = workspace
+            .apply_studio_schema_mutation(&id, "studio", &plan.plan_id, "studio-save-1")
+            .unwrap();
+
+        assert_eq!(report.revision, replay.revision);
+        assert_ne!(revision.manifest, report.revision.manifest);
+        assert!(
+            fs::read_to_string(&project)
+                .unwrap()
+                .contains("package = \"edited\"")
         );
         let _ = fs::remove_dir_all(root);
     }
