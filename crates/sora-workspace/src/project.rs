@@ -3,6 +3,8 @@ use std::path::{Path, PathBuf};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
+use crate::{ProjectManifest, ProjectRuntime, RuntimeOptions, revision::calculate_revision};
+
 /// Opaque identifier for an opened project within one workspace service.
 #[derive(
     Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize, JsonSchema,
@@ -46,21 +48,36 @@ pub struct ProjectRevision {
 }
 
 /// One opened Sora project.
-#[derive(Debug)]
 pub struct ProjectSession {
     id: ProjectId,
     manifest_path: PathBuf,
+    manifest: ProjectManifest,
+    runtime: ProjectRuntime,
     revision: ProjectRevision,
 }
 
 impl ProjectSession {
-    /// Creates a project session from an already resolved manifest path.
-    pub fn new(id: ProjectId, manifest_path: PathBuf, revision: ProjectRevision) -> Self {
-        Self {
+    /// Opens and snapshots a project manifest and its runtime extensions.
+    pub fn open(
+        id: ProjectId,
+        manifest_path: impl AsRef<Path>,
+        options: RuntimeOptions,
+    ) -> anyhow::Result<Self> {
+        let manifest_path = manifest_path.as_ref().canonicalize()?;
+        let manifest = ProjectManifest::load(&manifest_path)?;
+        let runtime = ProjectRuntime::load_with_manifest(
+            Some(&manifest_path),
+            Some(manifest.clone()),
+            options,
+        )?;
+        let revision = calculate_revision(&manifest_path, &manifest)?;
+        Ok(Self {
             id,
             manifest_path,
+            manifest,
+            runtime,
             revision,
-        }
+        })
     }
 
     pub fn id(&self) -> &ProjectId {
@@ -71,8 +88,27 @@ impl ProjectSession {
         &self.manifest_path
     }
 
+    pub fn manifest(&self) -> &ProjectManifest {
+        &self.manifest
+    }
+
+    pub fn runtime(&self) -> &ProjectRuntime {
+        &self.runtime
+    }
+
     pub fn revision(&self) -> &ProjectRevision {
         &self.revision
+    }
+}
+
+impl std::fmt::Debug for ProjectSession {
+    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        formatter
+            .debug_struct("ProjectSession")
+            .field("id", &self.id)
+            .field("manifest_path", &self.manifest_path)
+            .field("revision", &self.revision)
+            .finish_non_exhaustive()
     }
 }
 

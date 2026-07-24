@@ -7,6 +7,7 @@
 mod build;
 mod parser;
 mod project;
+mod revision;
 mod runtime;
 mod service;
 pub mod source;
@@ -14,7 +15,8 @@ mod type_mapping;
 
 pub use build::{
     BuildArtifact, BuildArtifactKind, BuildCodegen, BuildConfig, BuildExport, BuildReport,
-    BuildRequest, CodeFormatMode, ExportCompression, ProjectManifest, SourceFormat, build_project,
+    BuildRequest, CodeFormatMode, ExportCompression, ProjectManifest, ScriptConfig, SourceFormat,
+    build_project,
 };
 pub use parser::{ParserRegistries, load_parser_registries};
 pub use project::{ProjectId, ProjectRevision, ProjectSession};

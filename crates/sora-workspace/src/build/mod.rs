@@ -21,7 +21,7 @@ mod manifest;
 use crate::{ProjectRuntime, source::MixedProjectInput};
 pub use manifest::{
     BuildCodegen, BuildConfig, BuildExport, CodeFormatMode, ExportCompression, ProjectManifest,
-    SourceFormat,
+    ScriptConfig, SourceFormat,
 };
 
 #[derive(Debug, Clone)]
@@ -65,7 +65,10 @@ impl From<CodeFormatMode> for FormatMode {
 }
 
 pub fn build_project(args: BuildRequest, context: &ProjectRuntime) -> Result<BuildReport> {
-    let manifest = ProjectManifest::load(&args.project)?;
+    let manifest = match context.manifest() {
+        Some(manifest) => manifest.clone(),
+        None => ProjectManifest::load(&args.project)?,
+    };
     let build = manifest.build;
     let project_dir = args.project.parent().unwrap_or_else(|| Path::new("."));
     let schema_input = SchemaFileInput::new(&args.project);

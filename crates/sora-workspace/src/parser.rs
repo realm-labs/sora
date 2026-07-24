@@ -7,7 +7,6 @@ use std::{
 
 use anyhow::{Context, Result, bail};
 use mlua::{Function, Lua, LuaOptions, StdLib, Table, Value as LuaValue};
-use serde::Deserialize;
 use sora_data::model::Value;
 use sora_diagnostics::SoraError;
 use sora_input::{
@@ -25,18 +24,14 @@ pub struct ParserRegistries {
     pub cell: CellParserRegistry,
 }
 
-pub fn load_parser_registries(
-    project: Option<&Path>,
-    cli_paths: &[PathBuf],
-) -> Result<ParserRegistries> {
+pub fn load_parser_registries(paths: &[PathBuf]) -> Result<ParserRegistries> {
     let mut schema = SchemaParserRegistry::builtin();
     let mut cell = CellParserRegistry::builtin();
-    let paths = parser_script_paths(project, cli_paths)?;
     if paths.is_empty() {
         return Ok(ParserRegistries { schema, cell });
     }
 
-    let parsers = Arc::new(LuaParserSet::load(&paths)?);
+    let parsers = Arc::new(LuaParserSet::load(paths)?);
     for kind in parsers.kinds() {
         if schema.contains(kind) || cell.contains(kind) {
             bail!("Lua parser `{kind}` cannot override a built-in parser");
@@ -54,46 +49,6 @@ pub fn load_parser_registries(
     }
 
     Ok(ParserRegistries { schema, cell })
-}
-
-fn parser_script_paths(project: Option<&Path>, cli_paths: &[PathBuf]) -> Result<Vec<PathBuf>> {
-    let mut paths = Vec::new();
-    if let Some(project) = project {
-        let config = ProjectParserDocument::load(project)?;
-        let project_dir = project.parent().unwrap_or_else(|| Path::new("."));
-        paths.extend(config.parsers.scripts.into_iter().map(|path| {
-            if path.is_absolute() {
-                path
-            } else {
-                project_dir.join(path)
-            }
-        }));
-    }
-    paths.extend(cli_paths.iter().cloned());
-    Ok(paths)
-}
-
-#[derive(Debug, Default, Deserialize)]
-struct ProjectParserDocument {
-    #[serde(default)]
-    parsers: ProjectParserConfig,
-}
-
-impl ProjectParserDocument {
-    fn load(path: &Path) -> Result<Self> {
-        sora_config_format::load_document(path).with_context(|| {
-            format!(
-                "failed to load parser config from project `{}`",
-                path.display()
-            )
-        })
-    }
-}
-
-#[derive(Debug, Default, Deserialize)]
-struct ProjectParserConfig {
-    #[serde(default)]
-    scripts: Vec<PathBuf>,
 }
 
 #[derive(Debug)]

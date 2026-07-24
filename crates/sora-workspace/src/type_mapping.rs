@@ -6,16 +6,11 @@ use std::{
 
 use anyhow::{Context, Result, bail};
 use mlua::{Lua, LuaOptions, StdLib, Table};
-use serde::Deserialize;
 use sora_codegen::type_mapping::{
     StaticTypeMappingProvider, StaticTypeMappingRule, TypeMappingRegistry,
 };
 
-pub fn load_type_mapping_registry(
-    project: Option<&Path>,
-    cli_paths: &[PathBuf],
-) -> Result<TypeMappingRegistry> {
-    let paths = type_mapping_script_paths(project, cli_paths)?;
+pub fn load_type_mapping_registry(paths: &[PathBuf]) -> Result<TypeMappingRegistry> {
     if paths.is_empty() {
         return Ok(TypeMappingRegistry::new());
     }
@@ -23,13 +18,13 @@ pub fn load_type_mapping_registry(
     let mut rules = Vec::new();
     let mut seen = BTreeSet::new();
     for path in paths {
-        let source = fs::read_to_string(&path).with_context(|| {
+        let source = fs::read_to_string(path).with_context(|| {
             format!(
                 "failed to read Lua type mapping script `{}`",
                 path.display()
             )
         })?;
-        for rule in discover_type_mappings(&path, &source)? {
+        for rule in discover_type_mappings(path, &source)? {
             let key = (rule.target.clone(), rule.schema_type.clone());
             if !seen.insert(key.clone()) {
                 bail!(
@@ -49,49 +44,6 @@ pub fn load_type_mapping_registry(
     let mut registry = TypeMappingRegistry::new();
     registry.register(StaticTypeMappingProvider::new(rules));
     Ok(registry)
-}
-
-fn type_mapping_script_paths(
-    project: Option<&Path>,
-    cli_paths: &[PathBuf],
-) -> Result<Vec<PathBuf>> {
-    let mut paths = Vec::new();
-    if let Some(project) = project {
-        let config = ProjectTypeMappingDocument::load(project)?;
-        let project_dir = project.parent().unwrap_or_else(|| Path::new("."));
-        paths.extend(config.type_mappings.scripts.into_iter().map(|path| {
-            if path.is_absolute() {
-                path
-            } else {
-                project_dir.join(path)
-            }
-        }));
-    }
-    paths.extend(cli_paths.iter().cloned());
-    Ok(paths)
-}
-
-#[derive(Debug, Default, Deserialize)]
-struct ProjectTypeMappingDocument {
-    #[serde(default)]
-    type_mappings: ProjectTypeMappingConfig,
-}
-
-impl ProjectTypeMappingDocument {
-    fn load(path: &Path) -> Result<Self> {
-        sora_config_format::load_document(path).with_context(|| {
-            format!(
-                "failed to load type mapping config from project `{}`",
-                path.display()
-            )
-        })
-    }
-}
-
-#[derive(Debug, Default, Deserialize)]
-struct ProjectTypeMappingConfig {
-    #[serde(default)]
-    scripts: Vec<PathBuf>,
 }
 
 fn discover_type_mappings(path: &Path, source: &str) -> Result<Vec<StaticTypeMappingRule>> {

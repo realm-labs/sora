@@ -1,9 +1,10 @@
 use std::{
     collections::BTreeMap,
+    path::Path,
     sync::{Arc, RwLock},
 };
 
-use crate::{ProjectId, ProjectSession};
+use crate::{ProjectId, ProjectSession, RuntimeOptions};
 
 /// Registry and coordination point for opened Sora projects.
 #[derive(Debug, Default)]
@@ -15,6 +16,23 @@ impl WorkspaceService {
     /// Creates an empty workspace service.
     pub fn new() -> Self {
         Self::default()
+    }
+
+    /// Opens and registers a project as one atomic workspace operation.
+    pub fn open_project(
+        &self,
+        id: ProjectId,
+        manifest_path: impl AsRef<Path>,
+        options: RuntimeOptions,
+    ) -> Result<Arc<ProjectSession>, WorkspaceError> {
+        let manifest_path = manifest_path.as_ref();
+        let session = ProjectSession::open(id, manifest_path, options).map_err(|source| {
+            WorkspaceError::OpenProject {
+                path: manifest_path.to_path_buf(),
+                source,
+            }
+        })?;
+        self.register(session)
     }
 
     /// Registers a session, rejecting duplicate project identifiers.
@@ -57,6 +75,12 @@ impl WorkspaceService {
 /// Application-level workspace failures.
 #[derive(Debug, thiserror::Error)]
 pub enum WorkspaceError {
+    #[error("failed to open project manifest `{path}`")]
+    OpenProject {
+        path: std::path::PathBuf,
+        #[source]
+        source: anyhow::Error,
+    },
     #[error("project `{0}` is already registered")]
     DuplicateProject(ProjectId),
     #[error("unknown project `{0}`")]
@@ -73,22 +97,28 @@ impl std::fmt::Display for ProjectId {
 
 #[cfg(test)]
 mod tests {
-    use std::path::PathBuf;
+    use std::{
+        fs,
+        path::PathBuf,
+        sync::atomic::{AtomicU64, Ordering},
+    };
 
     use super::*;
-    use crate::ProjectRevision;
+    use crate::RuntimeOptions;
+
+    static TEMP_COUNTER: AtomicU64 = AtomicU64::new(0);
 
     fn session(id: &str) -> ProjectSession {
-        ProjectSession::new(
+        let directory = temp_dir(id);
+        fs::create_dir_all(&directory).unwrap();
+        let project = directory.join("project.toml");
+        fs::write(&project, format!("package = \"{id}\"\n")).unwrap();
+        ProjectSession::open(
             ProjectId::new(id).expect("test project id should be valid"),
-            PathBuf::from(format!("{id}/project.toml")),
-            ProjectRevision {
-                project: format!("sha256:{id}-project"),
-                manifest: format!("sha256:{id}-manifest"),
-                schema: format!("sha256:{id}-schema"),
-                data: format!("sha256:{id}-data"),
-            },
+            project,
+            RuntimeOptions::default(),
         )
+        .unwrap()
     }
 
     #[test]
@@ -121,5 +151,35 @@ mod tests {
             .register(session("game"))
             .expect_err("duplicate project should fail");
         assert!(matches!(error, WorkspaceError::DuplicateProject(_)));
+    }
+
+    #[test]
+    fn open_project_loads_runtime_and_content_revisions() {
+        let directory = temp_dir("open");
+        fs::create_dir_all(&directory).unwrap();
+        let project = directory.join("project.toml");
+        fs::write(&project, "package = \"demo\"\n").unwrap();
+        let workspace = WorkspaceService::new();
+
+        let session = workspace
+            .open_project(
+                ProjectId::new("demo").unwrap(),
+                &project,
+                RuntimeOptions::default(),
+            )
+            .unwrap();
+
+        assert_eq!(session.manifest_path(), project.canonicalize().unwrap());
+        assert!(session.revision().project.starts_with("sha256:"));
+        assert_eq!(session.revision().project.len(), 71);
+        let _ = fs::remove_dir_all(directory);
+    }
+
+    fn temp_dir(label: &str) -> PathBuf {
+        let nonce = TEMP_COUNTER.fetch_add(1, Ordering::Relaxed);
+        std::env::temp_dir().join(format!(
+            "sora-workspace-service-{}-{label}-{nonce}",
+            std::process::id()
+        ))
     }
 }

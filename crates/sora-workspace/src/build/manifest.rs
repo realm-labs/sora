@@ -4,8 +4,14 @@ use anyhow::{Context, Result};
 use serde::Deserialize;
 use sora_config_format::load_document;
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Clone, Deserialize)]
 pub struct ProjectManifest {
+    #[serde(default)]
+    pub includes: Vec<String>,
+    #[serde(default)]
+    pub parsers: ScriptConfig,
+    #[serde(default)]
+    pub type_mappings: ScriptConfig,
     #[serde(default)]
     pub build: BuildConfig,
 }
@@ -17,7 +23,13 @@ impl ProjectManifest {
     }
 }
 
-#[derive(Debug, Default, Deserialize)]
+#[derive(Debug, Clone, Default, Deserialize)]
+pub struct ScriptConfig {
+    #[serde(default)]
+    pub scripts: Vec<PathBuf>,
+}
+
+#[derive(Debug, Clone, Default, Deserialize)]
 pub struct BuildConfig {
     pub default_source_format: Option<SourceFormat>,
     pub data_root: Option<PathBuf>,
@@ -41,7 +53,7 @@ impl BuildConfig {
     }
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Clone, Deserialize)]
 pub struct BuildCodegen {
     pub target: String,
     pub out: PathBuf,
@@ -50,7 +62,7 @@ pub struct BuildCodegen {
     pub format: CodeFormatMode,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Clone, Deserialize)]
 pub struct BuildExport {
     pub format: String,
     pub out: PathBuf,

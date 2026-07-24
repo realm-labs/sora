@@ -15,6 +15,7 @@ anyhow.workspace = true
 mlua.workspace = true
 schemars.workspace = true
 serde.workspace = true
+sha2.workspace = true
 sora-codegen.workspace = true
 sora-config-format.workspace = true
 sora-core.workspace = true
