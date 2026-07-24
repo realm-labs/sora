@@ -4,37 +4,36 @@ use anyhow::{Context, Result};
 use serde::Deserialize;
 use sora_config_format::load_document;
 
-use crate::args::{CodeFormatMode, SourceFormatArg};
 #[derive(Debug, Deserialize)]
-pub(super) struct BuildManifest {
+pub struct ProjectManifest {
     #[serde(default)]
-    pub(super) build: BuildConfig,
+    pub build: BuildConfig,
 }
 
-impl BuildManifest {
-    pub(super) fn load(path: &Path) -> Result<Self> {
+impl ProjectManifest {
+    pub fn load(path: &Path) -> Result<Self> {
         load_document(path)
             .with_context(|| format!("failed to load build config from `{}`", path.display()))
     }
 }
 
 #[derive(Debug, Default, Deserialize)]
-pub(super) struct BuildConfig {
-    pub(super) default_source_format: Option<SourceFormatArg>,
-    pub(super) data_root: Option<PathBuf>,
-    pub(super) scope: Option<String>,
-    pub(super) schema_lock: Option<PathBuf>,
-    pub(super) excel_templates: Option<PathBuf>,
+pub struct BuildConfig {
+    pub default_source_format: Option<SourceFormat>,
+    pub data_root: Option<PathBuf>,
+    pub scope: Option<String>,
+    pub schema_lock: Option<PathBuf>,
+    pub excel_templates: Option<PathBuf>,
 
     #[serde(default)]
-    pub(super) codegen: Vec<BuildCodegen>,
+    pub codegen: Vec<BuildCodegen>,
 
     #[serde(default)]
-    pub(super) exports: Vec<BuildExport>,
+    pub exports: Vec<BuildExport>,
 }
 
 impl BuildConfig {
-    pub(super) fn is_empty(&self) -> bool {
+    pub fn is_empty(&self) -> bool {
         self.schema_lock.is_none()
             && self.excel_templates.is_none()
             && self.codegen.is_empty()
@@ -43,33 +42,62 @@ impl BuildConfig {
 }
 
 #[derive(Debug, Deserialize)]
-pub(super) struct BuildCodegen {
-    pub(super) target: String,
-    pub(super) out: PathBuf,
-    pub(super) scope: Option<String>,
+pub struct BuildCodegen {
+    pub target: String,
+    pub out: PathBuf,
+    pub scope: Option<String>,
     #[serde(default)]
-    pub(super) format: CodeFormatMode,
+    pub format: CodeFormatMode,
 }
 
 #[derive(Debug, Deserialize)]
-pub(super) struct BuildExport {
-    pub(super) format: String,
-    pub(super) out: PathBuf,
-    pub(super) scope: Option<String>,
-    pub(super) locale: Option<String>,
+pub struct BuildExport {
+    pub format: String,
+    pub out: PathBuf,
+    pub scope: Option<String>,
+    pub locale: Option<String>,
     #[serde(default)]
-    pub(super) compression: ExportCompressionArg,
-    pub(super) compression_level: Option<i32>,
+    pub compression: ExportCompression,
+    pub compression_level: Option<i32>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
-pub(super) enum ExportCompressionArg {
+pub enum ExportCompression {
     #[default]
     None,
     Zstd,
 }
 
-impl<'de> Deserialize<'de> for SourceFormatArg {
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum SourceFormat {
+    Csv,
+    Json,
+    Toml,
+    Xlsx,
+    Yaml,
+}
+
+impl SourceFormat {
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Self::Csv => "csv",
+            Self::Json => "json",
+            Self::Toml => "toml",
+            Self::Xlsx => "xlsx",
+            Self::Yaml => "yaml",
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum CodeFormatMode {
+    #[default]
+    Never,
+    Auto,
+    Required,
+}
+
+impl<'de> Deserialize<'de> for SourceFormat {
     fn deserialize<D>(deserializer: D) -> std::result::Result<Self, D::Error>
     where
         D: serde::Deserializer<'de>,
@@ -88,7 +116,7 @@ impl<'de> Deserialize<'de> for SourceFormatArg {
     }
 }
 
-impl<'de> Deserialize<'de> for ExportCompressionArg {
+impl<'de> Deserialize<'de> for ExportCompression {
     fn deserialize<D>(deserializer: D) -> std::result::Result<Self, D::Error>
     where
         D: serde::Deserializer<'de>,

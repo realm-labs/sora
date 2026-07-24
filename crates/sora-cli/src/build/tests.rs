@@ -1,5 +1,9 @@
 use super::*;
-use std::sync::atomic::{AtomicU64, Ordering};
+use std::{
+    fs,
+    path::{Path, PathBuf},
+    sync::atomic::{AtomicU64, Ordering},
+};
 
 static TEMP_COUNTER: AtomicU64 = AtomicU64::new(0);
 
