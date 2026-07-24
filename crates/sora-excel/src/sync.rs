@@ -155,33 +155,57 @@ fn ensure_workbook_path_is_bounded(data_root: &Path, path: &Path) -> Result<()> 
         });
     }
 
-    let canonical_root = fs::canonicalize(data_root).map_err(|source| SoraError::ReadFile {
-        path: data_root.to_path_buf(),
-        source,
-    })?;
-    let existing_boundary = if path.exists() {
-        path
-    } else {
-        path.ancestors()
-            .skip(1)
-            .find(|ancestor| ancestor.exists())
-            .ok_or_else(|| SoraError::ExcelTemplate {
-                path: path.to_path_buf(),
-                message: "workbook path has no existing parent directory".to_owned(),
-            })?
-    };
-    let canonical_boundary =
-        fs::canonicalize(existing_boundary).map_err(|source| SoraError::ReadFile {
-            path: existing_boundary.to_path_buf(),
-            source,
-        })?;
-    if !canonical_boundary.starts_with(&canonical_root) {
+    let resolved_root = resolve_through_existing_ancestor(data_root)?;
+    let resolved_path = resolve_through_existing_ancestor(path)?;
+    if !resolved_path.starts_with(&resolved_root) {
         return Err(SoraError::ExcelTemplate {
             path: path.to_path_buf(),
             message: "workbook path resolves outside the configured data root".to_owned(),
         });
     }
     Ok(())
+}
+
+fn resolve_through_existing_ancestor(path: &Path) -> Result<PathBuf> {
+    let absolute = if path.is_absolute() {
+        path.to_path_buf()
+    } else {
+        std::env::current_dir()
+            .map_err(|source| SoraError::ReadFile {
+                path: path.to_path_buf(),
+                source,
+            })?
+            .join(path)
+    };
+    let existing = absolute
+        .ancestors()
+        .find(|ancestor| ancestor.exists())
+        .ok_or_else(|| SoraError::ExcelTemplate {
+            path: path.to_path_buf(),
+            message: "workbook path has no existing ancestor".to_owned(),
+        })?;
+    let mut resolved = fs::canonicalize(existing).map_err(|source| SoraError::ReadFile {
+        path: existing.to_path_buf(),
+        source,
+    })?;
+    let unresolved = absolute
+        .strip_prefix(existing)
+        .expect("an ancestor must be a path prefix");
+    for component in unresolved.components() {
+        match component {
+            std::path::Component::Normal(segment) => resolved.push(segment),
+            std::path::Component::CurDir => {}
+            std::path::Component::ParentDir
+            | std::path::Component::RootDir
+            | std::path::Component::Prefix(_) => {
+                return Err(SoraError::ExcelTemplate {
+                    path: path.to_path_buf(),
+                    message: "workbook path contains unsafe unresolved traversal".to_owned(),
+                });
+            }
+        }
+    }
+    Ok(resolved)
 }
 
 static WORKBOOK_WRITE_COUNTER: AtomicU64 = AtomicU64::new(0);
@@ -622,6 +646,21 @@ mod tests {
             .preview(&ir, &base)
             .expect_err("traversal must be rejected");
         assert!(error.to_string().contains("unsafe traversal"));
+
+        let _ = fs::remove_dir_all(base);
+    }
+
+    #[test]
+    fn preview_accepts_a_missing_data_root_without_creating_it() {
+        let ir = example_ir();
+        let base = temp_dir();
+        fs::create_dir_all(&base).unwrap();
+        let data_root = base.join("data");
+
+        let report = ExcelTemplateSync.preview(&ir, &data_root).unwrap();
+
+        assert_eq!(report.workbooks.len(), 1);
+        assert!(!data_root.exists());
 
         let _ = fs::remove_dir_all(base);
     }
