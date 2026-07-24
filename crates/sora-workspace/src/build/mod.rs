@@ -1,6 +1,11 @@
 use std::{
+    collections::{BTreeMap, BTreeSet},
     fs,
     path::{Path, PathBuf},
+    sync::{
+        Arc,
+        atomic::{AtomicBool, Ordering},
+    },
 };
 
 use anyhow::{Context, Result, bail};
@@ -15,10 +20,15 @@ use sora_export::exporter::ExportOptions;
 use sora_input::traits::SchemaInput;
 use sora_input_schema::input::SchemaFileInput;
 use sora_schema::model::CodegenSchema;
+use uuid::Uuid;
 
 mod manifest;
 
-use crate::{ProjectRuntime, source::MixedProjectInput};
+use crate::{
+    ProjectRuntime,
+    mutation::{FileWrite, commit_file_transaction},
+    source::MixedProjectInput,
+};
 pub use manifest::{
     BuildCodegen, BuildConfig, BuildExport, CodeFormatMode, ExportCompression, ProjectManifest,
     ScriptConfig, SourceFormat,
@@ -39,6 +49,78 @@ pub struct BuildReport {
     pub artifacts: Vec<BuildArtifact>,
 }
 
+/// Stable build pipeline phases used by progress reporting and cancellation.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum BuildPhase {
+    LoadManifest,
+    LoadSchema,
+    NormalizeSchema,
+    LoadData,
+    ValidateData,
+    PlanOutputs,
+    Generate,
+    Format,
+    Export,
+    Commit,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, JsonSchema)]
+pub struct BuildProgress {
+    pub phase: BuildPhase,
+    pub completed: usize,
+    pub total: usize,
+}
+
+type ProgressCallback = dyn Fn(BuildProgress) + Send + Sync;
+
+/// Cooperative control shared with an in-flight build.
+#[derive(Clone, Default)]
+pub struct BuildControl {
+    cancelled: Arc<AtomicBool>,
+    progress: Option<Arc<ProgressCallback>>,
+}
+
+impl BuildControl {
+    pub fn with_progress(progress: impl Fn(BuildProgress) + Send + Sync + 'static) -> Self {
+        Self::default().on_progress(progress)
+    }
+
+    pub fn on_progress(mut self, progress: impl Fn(BuildProgress) + Send + Sync + 'static) -> Self {
+        self.progress = Some(Arc::new(progress));
+        self
+    }
+
+    pub fn cancel(&self) {
+        self.cancelled.store(true, Ordering::Release);
+    }
+
+    pub fn is_cancelled(&self) -> bool {
+        self.cancelled.load(Ordering::Acquire)
+    }
+
+    fn checkpoint(&self, phase: BuildPhase) -> Result<()> {
+        if self.is_cancelled() {
+            return Err(
+                sora_diagnostics::SoraError::OperationCancelled { operation: "build" }.into(),
+            );
+        }
+        if let Some(progress) = &self.progress {
+            progress(BuildProgress {
+                phase,
+                completed: phase_index(phase),
+                total: 10,
+            });
+        }
+        if self.is_cancelled() {
+            return Err(
+                sora_diagnostics::SoraError::OperationCancelled { operation: "build" }.into(),
+            );
+        }
+        Ok(())
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, JsonSchema)]
 pub struct BuildArtifact {
     pub kind: BuildArtifactKind,
@@ -54,6 +136,12 @@ pub enum BuildArtifactKind {
     Export { format: String },
 }
 
+struct StagedOutput {
+    final_path: PathBuf,
+    staged_path: PathBuf,
+    directory: bool,
+}
+
 impl From<CodeFormatMode> for FormatMode {
     fn from(value: CodeFormatMode) -> Self {
         match value {
@@ -65,28 +153,27 @@ impl From<CodeFormatMode> for FormatMode {
 }
 
 pub fn build_project(args: BuildRequest, context: &ProjectRuntime) -> Result<BuildReport> {
+    build_project_with_control(args, context, &BuildControl::default())
+}
+
+/// Builds through an isolated staging area and commits all outputs together.
+pub fn build_project_with_control(
+    args: BuildRequest,
+    context: &ProjectRuntime,
+    control: &BuildControl,
+) -> Result<BuildReport> {
+    control.checkpoint(BuildPhase::LoadManifest)?;
     let manifest = match context.manifest() {
         Some(manifest) => manifest.clone(),
         None => ProjectManifest::load(&args.project)?,
     };
-    let build = manifest.build;
+    let build = manifest.build.clone();
     let project_dir = args.project.parent().unwrap_or_else(|| Path::new("."));
     let schema_input = SchemaFileInput::new(&args.project);
     let mut artifacts = Vec::new();
 
-    let default_source_format = args.default_source_format.or(build.default_source_format);
-    let data_root = args
-        .data_root
-        .as_ref()
-        .or(build.data_root.as_ref())
-        .cloned()
-        .unwrap_or_else(|| PathBuf::from("data"));
-    let data_root = resolve_project_path(project_dir, &data_root);
-    let scope = args.scope.as_deref().or(build.scope.as_deref());
-
     let registry = CodegenRegistry::with_builtin_generators();
-    let requested_targets = args.targets;
-    let codegen = selected_codegen_targets(&build.codegen, &requested_targets, &registry)?;
+    let codegen = selected_codegen_targets(&build.codegen, &args.targets, &registry)?;
 
     if build.is_empty() {
         bail!(
@@ -96,23 +183,110 @@ pub fn build_project(args: BuildRequest, context: &ProjectRuntime) -> Result<Bui
     }
 
     validate_export_formats(&build.exports)?;
-    if args.clean {
-        clean_build_outputs(project_dir, &build, &codegen)?;
+    validate_declared_outputs(project_dir, &build, &codegen)?;
+    let stage_root = project_dir
+        .join(".sora")
+        .join("build-staging")
+        .join(Uuid::new_v4().to_string());
+    fs::create_dir_all(&stage_root).with_context(|| {
+        format!(
+            "failed to create build staging directory `{}`",
+            stage_root.display()
+        )
+    })?;
+    let result = build_project_staged(
+        &args,
+        context,
+        control,
+        &build,
+        project_dir,
+        &schema_input,
+        &codegen,
+        &stage_root,
+        &mut artifacts,
+    );
+    let cleanup_error = fs::remove_dir_all(&stage_root)
+        .err()
+        .filter(|error| error.kind() != std::io::ErrorKind::NotFound);
+    match (result, cleanup_error) {
+        (Ok(report), None) => Ok(report),
+        (Ok(_), Some(error)) => Err(error).with_context(|| {
+            format!(
+                "failed to remove build staging directory `{}`",
+                stage_root.display()
+            )
+        }),
+        (Err(error), _) => Err(error),
     }
+}
 
+#[allow(clippy::too_many_arguments)]
+fn build_project_staged(
+    args: &BuildRequest,
+    context: &ProjectRuntime,
+    control: &BuildControl,
+    build: &BuildConfig,
+    project_dir: &Path,
+    schema_input: &SchemaFileInput,
+    codegen: &[&BuildCodegen],
+    stage_root: &Path,
+    artifacts: &mut Vec<BuildArtifact>,
+) -> Result<BuildReport> {
+    let default_source_format = args.default_source_format.or(build.default_source_format);
+    let data_root = args
+        .data_root
+        .as_ref()
+        .or(build.data_root.as_ref())
+        .cloned()
+        .unwrap_or_else(|| PathBuf::from("data"));
+    let data_root = resolve_project_path(project_dir, &data_root);
+    let scope = args.scope.as_deref().or(build.scope.as_deref());
+    let registry = CodegenRegistry::with_builtin_generators();
+    let mut staged_outputs = Vec::new();
+    control.checkpoint(BuildPhase::LoadSchema)?;
     let schema = schema_input.load_schema()?;
     let codegen_options = schema.codegen.clone();
+    control.checkpoint(BuildPhase::NormalizeSchema)?;
     let ir = sora_ir::normalize::normalize_schema_with_parsers(schema, context.schema_parsers())
         .with_context(|| format!("failed to check project `{}`", args.project.display()))?;
     sora_ir::validate::validate_config_ir(&ir)
         .with_context(|| format!("failed to check project `{}`", args.project.display()))?;
-    validate_codegen_runtime_exports(&codegen, &build.exports, scope, &registry, &codegen_options)?;
+    validate_codegen_runtime_exports(codegen, &build.exports, scope, &registry, &codegen_options)?;
 
+    control.checkpoint(BuildPhase::LoadData)?;
+    let mut loaded = None;
+    if !build.exports.is_empty() {
+        let project_input = MixedProjectInput::with_parser_registry(
+            SchemaFileInput::new(&args.project),
+            &data_root,
+            default_source_format.map(SourceFormat::as_str),
+            std::sync::Arc::clone(context.cell_parsers()),
+        );
+        let values = sora_core::pipeline::load_project_data_and_catalog_with_context_and_parsers(
+            &project_input,
+            context.execution(),
+            context.schema_parsers(),
+            context.cell_parsers(),
+        )
+        .with_context(|| {
+            format!(
+                "failed to load data from `{}` for project `{}`",
+                data_root.display(),
+                args.project.display()
+            )
+        })?;
+        loaded = Some(values);
+    }
+    control.checkpoint(BuildPhase::ValidateData)?;
+    control.checkpoint(BuildPhase::PlanOutputs)?;
+
+    control.checkpoint(BuildPhase::Generate)?;
     if let Some(path) = build.schema_lock.as_ref() {
-        let path = resolve_project_path(project_dir, path);
+        let path = resolve_declared_output(project_dir, path)?;
+        let staged = staged_output_path(stage_root, staged_outputs.len());
         sora_core::pipeline::generate_schema_lock_with_scope_and_parsers(
-            &schema_input,
-            &path,
+            schema_input,
+            &staged,
             scope,
             context.schema_parsers(),
         )
@@ -123,6 +297,11 @@ pub fn build_project(args: BuildRequest, context: &ProjectRuntime) -> Result<Bui
                 path.display()
             )
         })?;
+        staged_outputs.push(StagedOutput {
+            final_path: path.clone(),
+            staged_path: staged,
+            directory: false,
+        });
         artifacts.push(BuildArtifact {
             kind: BuildArtifactKind::SchemaLock,
             path,
@@ -130,10 +309,11 @@ pub fn build_project(args: BuildRequest, context: &ProjectRuntime) -> Result<Bui
     }
 
     if let Some(path) = build.excel_templates.as_ref() {
-        let path = resolve_project_path(project_dir, path);
+        let path = resolve_declared_output(project_dir, path)?;
+        let staged = staged_output_path(stage_root, staged_outputs.len());
         sora_core::pipeline::generate_excel_template_with_scope_and_parsers(
-            &schema_input,
-            &path,
+            schema_input,
+            &staged,
             scope,
             context.schema_parsers(),
         )
@@ -144,6 +324,11 @@ pub fn build_project(args: BuildRequest, context: &ProjectRuntime) -> Result<Bui
                 path.display()
             )
         })?;
+        staged_outputs.push(StagedOutput {
+            final_path: path.clone(),
+            staged_path: staged,
+            directory: true,
+        });
         artifacts.push(BuildArtifact {
             kind: BuildArtifactKind::ExcelTemplates,
             path,
@@ -151,16 +336,19 @@ pub fn build_project(args: BuildRequest, context: &ProjectRuntime) -> Result<Bui
     }
 
     for item in codegen {
-        let out = resolve_project_path(project_dir, &item.out);
+        control.checkpoint(BuildPhase::Generate)?;
+        let out = resolve_declared_output(project_dir, &item.out)?;
+        let staged = staged_output_path(stage_root, staged_outputs.len());
         let item_scope = item.scope.as_deref().or(scope);
-        sora_core::pipeline::generate_code_with_scope_format_and_parsers(
-            &schema_input,
+        sora_core::pipeline::generate_code_with_scope_format_parsers_and_cancellation(
+            schema_input,
             &item.target,
-            &out,
+            &staged,
             FormatMode::from(item.format),
             item_scope,
             context.schema_parsers(),
             context.type_mappings(),
+            &|| control.is_cancelled(),
         )
         .with_context(|| {
             format!(
@@ -170,6 +358,11 @@ pub fn build_project(args: BuildRequest, context: &ProjectRuntime) -> Result<Bui
                 out.display()
             )
         })?;
+        staged_outputs.push(StagedOutput {
+            final_path: out.clone(),
+            staged_path: staged,
+            directory: true,
+        });
         artifacts.push(BuildArtifact {
             kind: BuildArtifactKind::Code {
                 target: item.target.clone(),
@@ -177,33 +370,16 @@ pub fn build_project(args: BuildRequest, context: &ProjectRuntime) -> Result<Bui
             path: out,
         });
     }
+    control.checkpoint(BuildPhase::Format)?;
 
-    if !build.exports.is_empty() {
-        let project_input = MixedProjectInput::with_parser_registry(
-            SchemaFileInput::new(&args.project),
-            &data_root,
-            default_source_format.map(SourceFormat::as_str),
-            std::sync::Arc::clone(context.cell_parsers()),
-        );
-        let (ir, data, locale_catalog) =
-            sora_core::pipeline::load_project_data_and_catalog_with_context_and_parsers(
-                &project_input,
-                context.execution(),
-                context.schema_parsers(),
-                context.cell_parsers(),
-            )
-            .with_context(|| {
-                format!(
-                    "failed to load data from `{}` for project `{}`",
-                    data_root.display(),
-                    args.project.display()
-                )
-            })?;
-
+    control.checkpoint(BuildPhase::Export)?;
+    if let Some((ir, data, locale_catalog)) = loaded {
         for item in &build.exports {
-            let out = resolve_project_path(project_dir, &item.out);
+            control.checkpoint(BuildPhase::Export)?;
+            let out = resolve_declared_output(project_dir, &item.out)?;
+            let staged = staged_output_path(stage_root, staged_outputs.len());
             let item_scope = item.scope.as_deref().or(scope);
-            let output = export_output(&item.format, out)?;
+            let output = export_output(&item.format, staged.clone())?;
             sora_core::pipeline::export_loaded_data(sora_core::pipeline::LoadedDataExportRequest {
                 ir: &ir,
                 data: &data,
@@ -221,16 +397,33 @@ pub fn build_project(args: BuildRequest, context: &ProjectRuntime) -> Result<Bui
                     data_root.display()
                 )
             })?;
+            let directory = matches!(
+                sora_core::pipeline::export_output_kind(&item.format),
+                Some(sora_export::exporter::OutputKind::Directory)
+            );
+            staged_outputs.push(StagedOutput {
+                final_path: out.clone(),
+                staged_path: staged,
+                directory,
+            });
             artifacts.push(BuildArtifact {
                 kind: BuildArtifactKind::Export {
                     format: item.format.clone(),
                 },
-                path: resolve_project_path(project_dir, &item.out),
+                path: out,
             });
         }
     }
 
-    Ok(BuildReport { artifacts })
+    control.checkpoint(BuildPhase::Commit)?;
+    let writes = collect_output_writes(&staged_outputs, args.clean)?;
+    if !writes.is_empty() {
+        commit_file_transaction(project_dir, &writes, || Ok(()))
+            .map_err(|error| anyhow::anyhow!("build output transaction failed: {error}"))?;
+    }
+    Ok(BuildReport {
+        artifacts: std::mem::take(artifacts),
+    })
 }
 
 fn validate_export_formats(exports: &[BuildExport]) -> Result<()> {
@@ -397,56 +590,179 @@ fn codegen_targets_match(left: &str, right: &str, registry: &CodegenRegistry) ->
     }
 }
 
-fn clean_build_outputs(
+fn validate_declared_outputs(
     project_dir: &Path,
     build: &BuildConfig,
     codegen: &[&BuildCodegen],
 ) -> Result<()> {
+    let mut outputs = Vec::new();
     if let Some(path) = build.schema_lock.as_ref() {
-        clean_output(project_dir, &resolve_project_path(project_dir, path))?;
+        outputs.push(resolve_declared_output(project_dir, path)?);
     }
     if let Some(path) = build.excel_templates.as_ref() {
-        clean_output(project_dir, &resolve_project_path(project_dir, path))?;
+        outputs.push(resolve_declared_output(project_dir, path)?);
     }
     for item in codegen {
-        clean_output(project_dir, &resolve_project_path(project_dir, &item.out))?;
+        outputs.push(resolve_declared_output(project_dir, &item.out)?);
     }
     for item in &build.exports {
-        clean_output(project_dir, &resolve_project_path(project_dir, &item.out))?;
+        outputs.push(resolve_declared_output(project_dir, &item.out)?);
+    }
+    outputs.sort();
+    for pair in outputs.windows(2) {
+        if pair[0] == pair[1] || pair[1].starts_with(&pair[0]) {
+            bail!(
+                "declared build outputs overlap: `{}` and `{}`",
+                pair[0].display(),
+                pair[1].display()
+            );
+        }
     }
     Ok(())
 }
 
-fn clean_output(project_dir: &Path, path: &Path) -> Result<()> {
-    if !path.exists() {
-        return Ok(());
+fn resolve_declared_output(project_dir: &Path, declared: &Path) -> Result<PathBuf> {
+    if declared.as_os_str().is_empty()
+        || declared.is_absolute()
+        || declared
+            .components()
+            .any(|component| !matches!(component, std::path::Component::Normal(_)))
+    {
+        bail!(
+            "build output must be a non-empty project-relative path without traversal: `{}`",
+            declared.display()
+        );
     }
-
-    let project_dir = project_dir.canonicalize().with_context(|| {
+    let root = project_dir.canonicalize().with_context(|| {
         format!(
             "failed to resolve project directory `{}`",
             project_dir.display()
         )
     })?;
-    let path = path
-        .canonicalize()
-        .with_context(|| format!("failed to resolve output path `{}`", path.display()))?;
-    if path == project_dir || !path.starts_with(&project_dir) {
+    let candidate = root.join(declared);
+    let mut existing = candidate.as_path();
+    while !existing.exists() {
+        existing = existing.parent().ok_or_else(|| {
+            anyhow::anyhow!(
+                "build output has no resolvable parent: `{}`",
+                declared.display()
+            )
+        })?;
+    }
+    let resolved_existing = existing.canonicalize().with_context(|| {
+        format!(
+            "failed to resolve build output ancestor `{}`",
+            existing.display()
+        )
+    })?;
+    if !resolved_existing.starts_with(&root) {
         bail!(
-            "refusing to clean output `{}` because it is not safely inside project directory `{}`",
-            path.display(),
-            project_dir.display()
+            "build output resolves outside the project: `{}`",
+            declared.display()
         );
     }
+    let unresolved = candidate
+        .strip_prefix(existing)
+        .map_err(|_| anyhow::anyhow!("failed to bound build output `{}`", declared.display()))?;
+    Ok(resolved_existing.join(unresolved))
+}
 
-    if path.is_dir() {
-        fs::remove_dir_all(&path)
-            .with_context(|| format!("failed to clean directory `{}`", path.display()))?;
-    } else {
-        fs::remove_file(&path)
-            .with_context(|| format!("failed to clean file `{}`", path.display()))?;
+fn staged_output_path(stage_root: &Path, index: usize) -> PathBuf {
+    stage_root.join(format!("output-{index}"))
+}
+
+fn collect_output_writes(outputs: &[StagedOutput], clean: bool) -> Result<Vec<FileWrite>> {
+    let mut writes = BTreeMap::<PathBuf, Option<Vec<u8>>>::new();
+    for output in outputs {
+        if output.directory {
+            let staged_files = regular_files(&output.staged_path)?;
+            let staged_relative = staged_files
+                .iter()
+                .map(|path| {
+                    path.strip_prefix(&output.staged_path)
+                        .map(Path::to_path_buf)
+                        .map_err(|_| {
+                            anyhow::anyhow!("staged output escaped its root: `{}`", path.display())
+                        })
+                })
+                .collect::<Result<BTreeSet<_>>>()?;
+            if clean && output.final_path.exists() {
+                for path in regular_files(&output.final_path)? {
+                    let relative = path.strip_prefix(&output.final_path).map_err(|_| {
+                        anyhow::anyhow!("existing output escaped its root: `{}`", path.display())
+                    })?;
+                    if !staged_relative.contains(relative) {
+                        writes.insert(path, None);
+                    }
+                }
+            }
+            for (path, relative) in staged_files.into_iter().zip(staged_relative) {
+                writes.insert(
+                    output.final_path.join(relative),
+                    Some(fs::read(&path).with_context(|| {
+                        format!("failed to read staged build output `{}`", path.display())
+                    })?),
+                );
+            }
+        } else {
+            writes.insert(
+                output.final_path.clone(),
+                Some(fs::read(&output.staged_path).with_context(|| {
+                    format!(
+                        "failed to read staged build output `{}`",
+                        output.staged_path.display()
+                    )
+                })?),
+            );
+        }
     }
-    Ok(())
+    Ok(writes
+        .into_iter()
+        .map(|(path, content)| FileWrite { path, content })
+        .collect())
+}
+
+fn regular_files(root: &Path) -> Result<Vec<PathBuf>> {
+    if !root.exists() {
+        return Ok(Vec::new());
+    }
+    let metadata = fs::symlink_metadata(root)
+        .with_context(|| format!("failed to inspect build output `{}`", root.display()))?;
+    if metadata.file_type().is_symlink() {
+        bail!(
+            "build output contains a symbolic link: `{}`",
+            root.display()
+        );
+    }
+    if metadata.is_file() {
+        return Ok(vec![root.to_path_buf()]);
+    }
+    let mut files = Vec::new();
+    for entry in fs::read_dir(root)
+        .with_context(|| format!("failed to read build output directory `{}`", root.display()))?
+    {
+        let path = entry
+            .with_context(|| format!("failed to read build output entry in `{}`", root.display()))?
+            .path();
+        files.extend(regular_files(&path)?);
+    }
+    files.sort();
+    Ok(files)
+}
+
+const fn phase_index(phase: BuildPhase) -> usize {
+    match phase {
+        BuildPhase::LoadManifest => 1,
+        BuildPhase::LoadSchema => 2,
+        BuildPhase::NormalizeSchema => 3,
+        BuildPhase::LoadData => 4,
+        BuildPhase::ValidateData => 5,
+        BuildPhase::PlanOutputs => 6,
+        BuildPhase::Generate => 7,
+        BuildPhase::Format => 8,
+        BuildPhase::Export => 9,
+        BuildPhase::Commit => 10,
+    }
 }
 
 fn resolve_project_path(project_dir: &Path, path: &Path) -> PathBuf {
@@ -454,5 +770,135 @@ fn resolve_project_path(project_dir: &Path, path: &Path) -> PathBuf {
         path.to_path_buf()
     } else {
         project_dir.join(path)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn declared_outputs_reject_traversal_and_project_root() {
+        let root =
+            std::env::temp_dir().join(format!("sora-build-output-boundary-{}", Uuid::new_v4()));
+        fs::create_dir_all(&root).unwrap();
+
+        assert!(resolve_declared_output(&root, Path::new("../outside")).is_err());
+        assert!(resolve_declared_output(&root, Path::new(".")).is_err());
+        assert_eq!(
+            resolve_declared_output(&root, Path::new("generated/code")).unwrap(),
+            root.canonicalize().unwrap().join("generated/code")
+        );
+
+        let _ = fs::remove_dir_all(root);
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn declared_outputs_reject_symlink_escape() {
+        use std::os::unix::fs::symlink;
+
+        let root =
+            std::env::temp_dir().join(format!("sora-build-output-symlink-{}", Uuid::new_v4()));
+        let outside =
+            std::env::temp_dir().join(format!("sora-build-output-outside-{}", Uuid::new_v4()));
+        fs::create_dir_all(&root).unwrap();
+        fs::create_dir_all(&outside).unwrap();
+        symlink(&outside, root.join("generated")).unwrap();
+
+        assert!(resolve_declared_output(&root, Path::new("generated/code")).is_err());
+
+        let _ = fs::remove_dir_all(root);
+        let _ = fs::remove_dir_all(outside);
+    }
+
+    #[test]
+    fn progress_cancellation_stops_before_the_observed_phase() {
+        let cancellation = BuildControl::default();
+        let cancel_from_progress = cancellation.clone();
+        let control = cancellation.on_progress(move |progress| {
+            if progress.phase == BuildPhase::Generate {
+                cancel_from_progress.cancel();
+            }
+        });
+
+        assert!(control.checkpoint(BuildPhase::PlanOutputs).is_ok());
+        let error = control.checkpoint(BuildPhase::Generate).unwrap_err();
+        assert!(
+            error
+                .downcast_ref::<sora_diagnostics::SoraError>()
+                .is_some_and(|error| matches!(
+                    error,
+                    sora_diagnostics::SoraError::OperationCancelled { operation: "build" }
+                ))
+        );
+    }
+
+    #[test]
+    fn cancelled_build_leaves_existing_outputs_untouched() {
+        let root =
+            std::env::temp_dir().join(format!("sora-build-cancel-transaction-{}", Uuid::new_v4()));
+        fs::create_dir_all(root.join("schema")).unwrap();
+        fs::create_dir_all(root.join("generated")).unwrap();
+        let project = root.join("project.toml");
+        fs::write(
+            &project,
+            r#"
+package = "test"
+includes = ["schema/items.toml"]
+
+[build]
+schema_lock = "generated/schema.lock"
+"#,
+        )
+        .unwrap();
+        fs::write(
+            root.join("schema/items.toml"),
+            r#"
+[[tables]]
+name = "Settings"
+mode = "singleton"
+
+[[tables.fields]]
+name = "name"
+type = "string"
+"#,
+        )
+        .unwrap();
+        fs::write(root.join("generated/schema.lock"), b"previous").unwrap();
+        let runtime = ProjectRuntime::load(Some(&project), Default::default()).unwrap();
+        let cancellation = BuildControl::default();
+        let cancel_from_progress = cancellation.clone();
+        let control = cancellation.on_progress(move |progress| {
+            if progress.phase == BuildPhase::Generate {
+                cancel_from_progress.cancel();
+            }
+        });
+
+        let error = build_project_with_control(
+            BuildRequest {
+                project,
+                default_source_format: None,
+                data_root: None,
+                scope: None,
+                targets: Vec::new(),
+                clean: true,
+            },
+            &runtime,
+            &control,
+        )
+        .unwrap_err();
+
+        assert!(error.to_string().contains("cancelled"));
+        assert_eq!(
+            fs::read(root.join("generated/schema.lock")).unwrap(),
+            b"previous"
+        );
+        let staging = root.join(".sora/build-staging");
+        assert!(
+            !staging.exists() || fs::read_dir(staging).unwrap().next().is_none(),
+            "cancelled build must remove its staging directory"
+        );
+        let _ = fs::remove_dir_all(root);
     }
 }

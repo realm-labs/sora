@@ -19,9 +19,9 @@ pub mod studio;
 mod type_mapping;
 
 pub use build::{
-    BuildArtifact, BuildArtifactKind, BuildCodegen, BuildConfig, BuildExport, BuildReport,
-    BuildRequest, CodeFormatMode, ExportCompression, ProjectManifest, ScriptConfig, SourceFormat,
-    build_project,
+    BuildArtifact, BuildArtifactKind, BuildCodegen, BuildConfig, BuildControl, BuildExport,
+    BuildPhase, BuildProgress, BuildReport, BuildRequest, CodeFormatMode, ExportCompression,
+    ProjectManifest, ScriptConfig, SourceFormat, build_project, build_project_with_control,
 };
 pub use diagnostics::{
     Diagnostic, DiagnosticCell, DiagnosticEntity, DiagnosticSeverity, DiagnosticSpan,

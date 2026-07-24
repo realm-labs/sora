@@ -234,6 +234,9 @@ pub enum SoraError {
         count: usize,
         errors: Vec<SoraError>,
     },
+
+    #[error("{operation} was cancelled")]
+    OperationCancelled { operation: &'static str },
 }
 
 pub type Result<T> = std::result::Result<T, SoraError>;
@@ -283,6 +286,7 @@ impl SoraError {
             Self::MissingTableSource { .. } => "SORA0033",
             Self::MissingInputData => "SORA0034",
             Self::ValidationErrors { .. } => "SORA0035",
+            Self::OperationCancelled { .. } => "SORA0036",
         }
     }
 

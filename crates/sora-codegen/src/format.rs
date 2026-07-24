@@ -1,7 +1,10 @@
 use std::{
     env, fs,
+    io::Read,
     path::{Path, PathBuf},
-    process::Command,
+    process::{Command, Stdio},
+    thread,
+    time::Duration,
 };
 
 use sora_diagnostics::{Result, SoraError};
@@ -43,6 +46,16 @@ pub fn format_generated_code(
     out_dir: &Path,
     mode: FormatMode,
 ) -> Result<()> {
+    format_generated_code_with_cancellation(language, formatter, out_dir, mode, &|| false)
+}
+
+pub fn format_generated_code_with_cancellation(
+    language: &'static str,
+    formatter: Option<FormatterConfig>,
+    out_dir: &Path,
+    mode: FormatMode,
+    cancelled: &(dyn Fn() -> bool + Sync),
+) -> Result<()> {
     if mode == FormatMode::Never {
         return Ok(());
     }
@@ -74,20 +87,58 @@ pub fn format_generated_code(
         return Ok(());
     }
 
-    let output = Command::new(formatter.command)
+    if cancelled() {
+        return Err(SoraError::OperationCancelled {
+            operation: "code formatting",
+        });
+    }
+    let mut child = Command::new(formatter.command)
         .args(formatter.args)
         .args(&files)
-        .output()
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()
         .map_err(|source| {
             format_error(formatter.language, formatter.command, source.to_string())
         })?;
+    let stdout = drain_pipe(child.stdout.take());
+    let stderr = drain_pipe(child.stderr.take());
+    let status = loop {
+        if cancelled() {
+            let _ = child.kill();
+            let _ = child.wait();
+            let _ = stdout.join();
+            let _ = stderr.join();
+            return Err(SoraError::OperationCancelled {
+                operation: "code formatting",
+            });
+        }
+        match child.try_wait().map_err(|source| {
+            format_error(formatter.language, formatter.command, source.to_string())
+        })? {
+            Some(status) => break status,
+            None => thread::sleep(Duration::from_millis(10)),
+        }
+    };
+    let stdout = stdout.join().unwrap_or_default();
+    let stderr = stderr.join().unwrap_or_default();
 
-    if output.status.success() {
+    if status.success() {
         return Ok(());
     }
 
-    let message = command_output_message(&output.stdout, &output.stderr);
+    let message = command_output_message(&stdout, &stderr);
     Err(format_error(formatter.language, formatter.command, message))
+}
+
+fn drain_pipe(pipe: Option<impl Read + Send + 'static>) -> thread::JoinHandle<Vec<u8>> {
+    thread::spawn(move || {
+        let mut bytes = Vec::new();
+        if let Some(mut pipe) = pipe {
+            let _ = pipe.read_to_end(&mut bytes);
+        }
+        bytes
+    })
 }
 
 fn collect_files(root: &Path, extensions: &[&str]) -> Result<Vec<PathBuf>> {
@@ -164,6 +215,11 @@ fn format_error(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::sync::{
+        Arc,
+        atomic::{AtomicBool, Ordering},
+    };
+    use std::time::Instant;
 
     #[test]
     fn auto_skips_missing_formatter() {
@@ -178,5 +234,45 @@ mod tests {
         let error =
             format_generated_code("Proto schema", None, &base, FormatMode::Required).unwrap_err();
         assert!(error.to_string().contains("no formatter is configured"));
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn cancellation_terminates_formatter_process() {
+        let base =
+            env::temp_dir().join(format!("sora-codegen-format-cancel-{}", std::process::id()));
+        fs::create_dir_all(&base).unwrap();
+        fs::write(base.join("generated.test"), "content").unwrap();
+        let cancelled = Arc::new(AtomicBool::new(false));
+        let cancel_signal = Arc::clone(&cancelled);
+        let cancel_thread = thread::spawn(move || {
+            thread::sleep(Duration::from_millis(30));
+            cancel_signal.store(true, Ordering::Release);
+        });
+        let started = Instant::now();
+
+        let error = format_generated_code_with_cancellation(
+            "test",
+            Some(FormatterConfig::new(
+                "test",
+                "sh",
+                &["-c", "sleep 10"],
+                &["test"],
+            )),
+            &base,
+            FormatMode::Required,
+            &|| cancelled.load(Ordering::Acquire),
+        )
+        .unwrap_err();
+
+        cancel_thread.join().unwrap();
+        assert!(matches!(
+            error,
+            SoraError::OperationCancelled {
+                operation: "code formatting"
+            }
+        ));
+        assert!(started.elapsed() < Duration::from_secs(2));
+        let _ = fs::remove_dir_all(base);
     }
 }

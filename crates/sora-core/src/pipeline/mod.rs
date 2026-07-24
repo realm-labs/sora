@@ -3,7 +3,7 @@ use std::path::Path;
 use crate::diff::{ConfigDiff, diff_config_data};
 use crate::schema_lock::{read_schema_lock_file, verify_schema_lock, write_schema_lock_file};
 use sora_codegen::{
-    format::{FormatMode, format_generated_code},
+    format::{FormatMode, format_generated_code, format_generated_code_with_cancellation},
     generator::{CodegenContext, CodegenRegistry, empty_options},
     type_mapping::TypeMappingRegistry,
 };
@@ -192,8 +192,31 @@ pub fn generate_code_with_scope_format_and_parsers(
     parser_registry: &SchemaParserRegistry,
     type_mappings: &TypeMappingRegistry,
 ) -> Result<()> {
+    generate_code_with_scope_format_parsers_and_cancellation(
+        input,
+        target,
+        out_dir,
+        format_mode,
+        scope,
+        parser_registry,
+        type_mappings,
+        &|| false,
+    )
+}
+
+#[allow(clippy::too_many_arguments)]
+pub fn generate_code_with_scope_format_parsers_and_cancellation(
+    input: &impl SchemaInput,
+    target: &str,
+    out_dir: &Path,
+    format_mode: FormatMode,
+    scope: Option<&str>,
+    parser_registry: &SchemaParserRegistry,
+    type_mappings: &TypeMappingRegistry,
+    cancelled: &(dyn Fn() -> bool + Sync),
+) -> Result<()> {
     let registry = CodegenRegistry::with_builtin_generators();
-    generate_code_with_registry_scope_format_and_extensions(
+    generate_code_with_registry_scope_format_extensions_and_cancellation(
         input,
         target,
         out_dir,
@@ -204,6 +227,7 @@ pub fn generate_code_with_scope_format_and_parsers(
             parser_registry,
             type_mappings,
         },
+        cancelled,
     )
 }
 
@@ -262,6 +286,29 @@ pub fn generate_code_with_registry_scope_format_and_extensions(
     registry: &CodegenRegistry,
     extensions: CodegenPipelineExtensions<'_>,
 ) -> Result<()> {
+    generate_code_with_registry_scope_format_extensions_and_cancellation(
+        input,
+        target,
+        out_dir,
+        format_mode,
+        scope,
+        registry,
+        extensions,
+        &|| false,
+    )
+}
+
+#[allow(clippy::too_many_arguments)]
+pub fn generate_code_with_registry_scope_format_extensions_and_cancellation(
+    input: &impl SchemaInput,
+    target: &str,
+    out_dir: &Path,
+    format_mode: FormatMode,
+    scope: Option<&str>,
+    registry: &CodegenRegistry,
+    extensions: CodegenPipelineExtensions<'_>,
+    cancelled: &(dyn Fn() -> bool + Sync),
+) -> Result<()> {
     let schema = input.load_schema()?;
     let codegen_options = schema.codegen.clone();
     let ir = support::validate_schema_ir_with_parsers(schema, extensions.parser_registry)?;
@@ -291,11 +338,17 @@ pub fn generate_code_with_registry_scope_format_and_extensions(
         },
         out_dir,
     )?;
-    format_generated_code(
+    if cancelled() {
+        return Err(SoraError::OperationCancelled {
+            operation: "code generation",
+        });
+    }
+    format_generated_code_with_cancellation(
         generator.display_name,
         generator.formatter,
         out_dir,
         format_mode,
+        cancelled,
     )
 }
 
