@@ -19,7 +19,7 @@ internal static class Program
         var swordByName = config.Item.GetByName("Iron Sword") ?? throw new InvalidOperationException("Iron Sword");
         var quest = config.Quest.Get(5001) ?? throw new InvalidOperationException("quest 5001");
         var achievement = config.Achievement.Get(14001) ?? throw new InvalidOperationException("achievement 14001");
-        var settings = config.GameSettings.Rows;
+var settings = config.GameSettings.Row;
 
         Check(sword.Name == "Iron Sword");
         Check(swordByName.Id == 1001);

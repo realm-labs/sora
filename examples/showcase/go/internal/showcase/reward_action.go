@@ -10,33 +10,33 @@ type RewardAction interface {
 	isRewardAction()
 }
 type RewardActionAddItem struct {
-	ItemId int32
+	ItemID int32
 	Count  int32
 }
 
 func (RewardActionAddItem) isRewardAction() {}
 
 type RewardActionAddBuff struct {
-	BuffId   int32
+	BuffID   int32
 	Duration float32
 }
 
 func (RewardActionAddBuff) isRewardAction() {}
 
 type RewardActionUnlockStage struct {
-	StageId int32
+	StageID int32
 }
 
 func (RewardActionUnlockStage) isRewardAction() {}
 
 type RewardActionSendMail struct {
-	MailId int32
+	MailID int32
 }
 
 func (RewardActionSendMail) isRewardAction() {}
 
 type RewardActionRunActionGroup struct {
-	ActionGroupId int32
+	ActionGroupID int32
 }
 
 func (RewardActionRunActionGroup) isRewardAction() {}
@@ -48,7 +48,7 @@ func decodeRewardAction(reader *SoraReader) (RewardAction, error) {
 	switch ordinal {
 	case 0:
 		var value RewardActionAddItem
-		value.ItemId, err = reader.ReadInt32()
+		value.ItemID, err = reader.ReadInt32()
 		if err != nil {
 			return nil, err
 		}
@@ -59,7 +59,7 @@ func decodeRewardAction(reader *SoraReader) (RewardAction, error) {
 		return value, nil
 	case 1:
 		var value RewardActionAddBuff
-		value.BuffId, err = reader.ReadInt32()
+		value.BuffID, err = reader.ReadInt32()
 		if err != nil {
 			return nil, err
 		}
@@ -70,21 +70,21 @@ func decodeRewardAction(reader *SoraReader) (RewardAction, error) {
 		return value, nil
 	case 2:
 		var value RewardActionUnlockStage
-		value.StageId, err = reader.ReadInt32()
+		value.StageID, err = reader.ReadInt32()
 		if err != nil {
 			return nil, err
 		}
 		return value, nil
 	case 3:
 		var value RewardActionSendMail
-		value.MailId, err = reader.ReadInt32()
+		value.MailID, err = reader.ReadInt32()
 		if err != nil {
 			return nil, err
 		}
 		return value, nil
 	case 4:
 		var value RewardActionRunActionGroup
-		value.ActionGroupId, err = reader.ReadInt32()
+		value.ActionGroupID, err = reader.ReadInt32()
 		if err != nil {
 			return nil, err
 		}
@@ -106,7 +106,7 @@ func decodeRewardActionValue(input SoraValue) (RewardAction, error) {
 	switch tag {
 	case "AddItem":
 		var value RewardActionAddItem
-		value.ItemId, err = obj.Get("item_id").AsInt32()
+		value.ItemID, err = obj.Get("item_id").AsInt32()
 		if err != nil {
 			return nil, err
 		}
@@ -117,7 +117,7 @@ func decodeRewardActionValue(input SoraValue) (RewardAction, error) {
 		return value, nil
 	case "AddBuff":
 		var value RewardActionAddBuff
-		value.BuffId, err = obj.Get("buff_id").AsInt32()
+		value.BuffID, err = obj.Get("buff_id").AsInt32()
 		if err != nil {
 			return nil, err
 		}
@@ -128,21 +128,21 @@ func decodeRewardActionValue(input SoraValue) (RewardAction, error) {
 		return value, nil
 	case "UnlockStage":
 		var value RewardActionUnlockStage
-		value.StageId, err = obj.Get("stage_id").AsInt32()
+		value.StageID, err = obj.Get("stage_id").AsInt32()
 		if err != nil {
 			return nil, err
 		}
 		return value, nil
 	case "SendMail":
 		var value RewardActionSendMail
-		value.MailId, err = obj.Get("mail_id").AsInt32()
+		value.MailID, err = obj.Get("mail_id").AsInt32()
 		if err != nil {
 			return nil, err
 		}
 		return value, nil
 	case "RunActionGroup":
 		var value RewardActionRunActionGroup
-		value.ActionGroupId, err = obj.Get("action_group_id").AsInt32()
+		value.ActionGroupID, err = obj.Get("action_group_id").AsInt32()
 		if err != nil {
 			return nil, err
 		}

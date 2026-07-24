@@ -12,13 +12,13 @@ public sealed record GameSettings(
     int DailyResetHour,
     int StartingGold,
     Vec3 SpawnPos,
-    List<int> StarterItems,
+    IReadOnlyList<int> StarterItems,
     // Double precision tuning value
     double Gravity,
     // Fixed-length array parsed from one cell
-    List<int> DailyBonusItems,
+    IReadOnlyList<int> DailyBonusItems,
     // Fixed-length array of structs
-    List<Vec3> SpawnPoints,
+    IReadOnlyList<Vec3> SpawnPoints,
     // Optional derived struct copied from a child row
     MaintenanceInfo? Maintenance
 )
@@ -96,8 +96,6 @@ public sealed class GameSettingsTable : ISoraSingleTable<GameSettings>
     {
         return new GameSettingsTable(SoraConfig.RequireSingletonTable(rows, TableName));
     }
-
-    public GameSettings Rows => rows;
     public GameSettings Row => rows;
     public SoraTableInfo Info => TableInfo;
     public int Count => 1;

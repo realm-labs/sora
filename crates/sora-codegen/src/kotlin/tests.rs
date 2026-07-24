@@ -614,7 +614,7 @@ fn generators_apply_custom_type_mappings() {
 
     assert!(csharp_spawn.contains("using UnityEngine;"));
     assert!(csharp_spawn.contains("Vector3 Position"));
-    assert!(csharp_spawn.contains("List<Vector3> Path"));
+    assert!(csharp_spawn.contains("IReadOnlyList<Vector3> Path"));
     assert!(csharp_spawn.contains("GameMappings.ToVector3(Vec3.Decode(reader))"));
     assert!(
         csharp_spawn.contains("reader.ReadList(() => GameMappings.ToVector3(Vec3.Decode(reader)))")
@@ -624,7 +624,7 @@ fn generators_apply_custom_type_mappings() {
     assert!(kotlin_spawn.contains("List<Vector3>"));
     assert!(kotlin_spawn.contains("GameMappings.toVector3(Vec3.decode(reader))"));
     assert!(java_spawn.contains("import game.Vector3;"));
-    assert!(java_spawn.contains("public final Vector3 position;"));
+    assert!(java_spawn.contains("Vector3 position,"));
     assert!(java_spawn.contains("java.util.List<Vector3> path"));
     assert!(java_spawn.contains("GameMappings.toVector3(Vec3.decode(reader))"));
     assert!(go_spawn.contains("\"game/vector\""));
@@ -637,7 +637,7 @@ fn generators_apply_custom_type_mappings() {
     assert!(python_spawn.contains("position = to_vec3(Vec3.decode(reader))"));
     assert!(typescript_spawn.contains("import { toVec3, type Vector3 } from \"./vector3.js\";"));
     assert!(typescript_spawn.contains("position: Vector3;"));
-    assert!(typescript_spawn.contains("path: Vector3[];"));
+    assert!(typescript_spawn.contains("path: readonly Vector3[];"));
     assert!(typescript_spawn.contains("position: toVec3(decodeVec3(reader))"));
     assert!(javascript_spawn.contains("position: toVec3(decodeVec3(reader))"));
     assert!(scala_spawn.contains("import game.Vector3"));
@@ -651,7 +651,7 @@ fn generators_apply_custom_type_mappings() {
     assert!(godot_spawn.contains("const Vector3Codec = preload(\"res://vector3_codec.gd\")"));
     assert!(godot_spawn.contains("var position: Vector3"));
     assert!(godot_spawn.contains("Vector3Codec.decode(Vec3.decode(SoraRuntime.read_field"));
-    assert!(erlang_spawn.contains("'position' := vector3:t()"));
+    assert!(erlang_spawn.contains("position := vector3:t()"));
     assert!(erlang_spawn.contains(
         "vector3:decode_value(vec3:decode_value(sora_runtime:value_get(<<\"position\">>, Obj)))"
     ));
@@ -797,7 +797,7 @@ fn java_supports_export_runtime_formats() {
 
         assert!(runtime.contains("final class SoraValueBundle"));
         assert!(runtime.contains(parse_function));
-        assert!(!config.contains(&format!("SoraValueBundle.{parse_function}(bytes)")));
+        assert!(config.contains(&format!("SoraValueBundle.{parse_function}(bytes)")));
         assert!(runtime.contains("interface SoraTableSource"));
         assert!(config.contains("fromSource(SoraTableSource source)"));
         assert!(item.contains("static Item decode(SoraValue value)"));
@@ -849,14 +849,15 @@ unique = true
     let runtime = std::fs::read_to_string(package_out.join("Runtime.java")).unwrap();
     let config = std::fs::read_to_string(package_out.join("SoraConfig.java")).unwrap();
     let item = std::fs::read_to_string(package_out.join("Item.java")).unwrap();
+    let item_table = std::fs::read_to_string(package_out.join("ItemTable.java")).unwrap();
+    let locale_pack = std::fs::read_to_string(package_out.join("LocalePack.java")).unwrap();
 
     assert!(runtime.contains("@interface SoraNullable"));
-    assert!(runtime.contains("@SoraNullable\n    String get(TextKey key)"));
-    assert!(config.contains("@SoraNullable\n    SoraKeyInfo primaryKey"));
-    assert!(item.contains("@SoraNullable\n    public final String nickname;"));
+    assert!(locale_pack.contains("@SoraNullable\n    public String get(TextKey key)"));
+    assert!(config.contains("@SoraNullable\n        KeyInfo primaryKey"));
     assert!(item.contains("@SoraNullable String nickname"));
-    assert!(item.contains("@SoraNullable\n    public Item get(Object key)"));
-    assert!(item.contains("@SoraNullable\n    public Item getByName(String name)"));
+    assert!(item_table.contains("@SoraNullable\n    public Item get(Object key)"));
+    assert!(item_table.contains("@SoraNullable\n    public Item getByName(String name)"));
 
     let external_out = base.join("java_external");
     JavaCodeGenerator
@@ -872,7 +873,7 @@ unique = true
     let external_item =
         std::fs::read_to_string(external_out.join("game_config/Item.java")).unwrap();
     assert!(external_item.contains("import org.jetbrains.annotations.Nullable;"));
-    assert!(external_item.contains("@Nullable\n    public final String nickname;"));
+    assert!(external_item.contains("@Nullable String nickname"));
 
     let _ = std::fs::remove_dir_all(base);
 }
@@ -937,6 +938,8 @@ fn generates_csharp_java_and_go_files() {
         std::fs::read_to_string(java_out.join("com/sora/game_config/Item.java")).unwrap();
     let java_config =
         std::fs::read_to_string(java_out.join("com/sora/game_config/SoraConfig.java")).unwrap();
+    let java_item_table =
+        std::fs::read_to_string(java_out.join("com/sora/game_config/ItemTable.java")).unwrap();
     let go_item = std::fs::read_to_string(go_out.join("item.go")).unwrap();
     let go_config = std::fs::read_to_string(go_out.join("config.go")).unwrap();
 
@@ -944,9 +947,9 @@ fn generates_csharp_java_and_go_files() {
     assert!(csharp_item.contains("namespace com.sora.game_config;"));
     assert!(csharp_item.contains("public sealed record Item"));
     assert!(csharp_item.contains("// Item id"));
-    assert!(csharp_item.contains("List<string> Tags"));
+    assert!(csharp_item.contains("IReadOnlyList<string> Tags"));
     assert!(csharp_item.contains("global::System.DateTimeOffset StartAt"));
-    assert!(csharp_item.contains("Dictionary<string, int> Weights"));
+    assert!(csharp_item.contains("IReadOnlyDictionary<string, int> Weights"));
     assert!(
         csharp_item.contains("reader.ReadMap(() => reader.ReadString(), () => reader.ReadInt32())")
     );
@@ -979,7 +982,7 @@ fn generates_csharp_java_and_go_files() {
     );
     assert!(java_item.starts_with("// This file was generated by Sora. Do not edit manually."));
     assert!(java_item.contains("package com.sora.game_config;"));
-    assert!(java_item.contains("public final class Item"));
+    assert!(java_item.contains("public record Item("));
     assert!(java_item.contains("/** Item id */"));
     assert!(java_item.contains("java.util.List<String> tags"));
     assert!(java_item.contains("java.time.Instant startAt"));
@@ -991,24 +994,24 @@ fn generates_csharp_java_and_go_files() {
         java_item
             .contains("obj.get(\"weights\").asMap(item -> item.asString(), item -> item.asInt())")
     );
-    assert!(java_item.contains(
-        "final class ItemTable extends java.util.AbstractMap<Integer, Item> implements SoraKeyedTable<Integer, Item>"
+    assert!(java_item_table.contains(
+        "public final class ItemTable extends java.util.AbstractMap<Integer, Item> implements SoraConfig.KeyedTable<Integer, Item>"
     ));
-    assert!(java_item.contains("static final String NAME = \"Item\";"));
-    assert!(java_item.contains("static final SoraTableInfo INFO"));
-    assert!(java_item.contains("java.util.Map<Integer, Item>"));
-    assert!(java_item.contains("private final List<Integer> keys"));
+    assert!(java_item_table.contains("public static final String NAME = \"Item\";"));
+    assert!(java_item_table.contains("public static final SoraConfig.TableInfo INFO"));
+    assert!(java_item_table.contains("java.util.Map<Integer, Item>"));
+    assert!(java_item_table.contains("private final List<Integer> keys"));
     assert_contains_before(
-        &java_item,
+        &java_item_table,
         "private final List<Integer> keys",
         "private final java.util.Map<Integer, Item> rows",
     );
-    assert!(java_item.contains("private final Map<String, Item> byName"));
-    assert!(java_item.contains("private final Map<ItemType, List<Item>> byItemType"));
-    assert!(java_item.contains("public Item getByName(String name)"));
-    assert!(java_item.contains("public List<Integer> orderedKeys()"));
-    assert!(java_item.contains("public java.util.Set<Map.Entry<Integer, Item>> entrySet()"));
-    assert!(java_item.contains("public List<Item> findByItemType(ItemType itemType)"));
+    assert!(java_item_table.contains("private final Map<String, Item> byName"));
+    assert!(java_item_table.contains("private final Map<ItemType, List<Item>> byItemType"));
+    assert!(java_item_table.contains("public Item getByName(String name)"));
+    assert!(java_item_table.contains("public List<Integer> orderedKeys()"));
+    assert!(java_item_table.contains("public Set<Map.Entry<Integer, Item>> entrySet()"));
+    assert!(java_item_table.contains("public List<Item> findByItemType(ItemType itemType)"));
     assert!(java_config.contains("public final class SoraConfig"));
     assert!(!java_config.contains("final class ItemTable extends java.util.AbstractMap"));
     assert!(java_config.contains("public ItemTable item()"));
@@ -1016,7 +1019,7 @@ fn generates_csharp_java_and_go_files() {
     assert!(go_item.starts_with("// This file was generated by Sora. Do not edit manually."));
     assert!(go_item.contains("package game_config"));
     assert!(go_item.contains("type Item struct"));
-    assert!(go_item.contains("// Id: Item id"));
+    assert!(go_item.contains("// ID: Item id"));
     assert!(go_item.contains("Tags []string"));
     assert!(go_item.contains("StartAt time.Time"));
     assert!(go_item.contains("ReadDateTime(reader)"));

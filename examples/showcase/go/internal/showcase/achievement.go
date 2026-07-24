@@ -3,7 +3,7 @@
 package showcase
 
 type Achievement struct {
-	Id          int32
+	ID          int32
 	TitleKey    TextKey
 	TargetCount int64
 	Reward      ResourceCost
@@ -12,7 +12,7 @@ type Achievement struct {
 func decodeAchievement(reader *SoraReader) (Achievement, error) {
 	var value Achievement
 	var err error
-	value.Id, err = reader.ReadInt32()
+	value.ID, err = reader.ReadInt32()
 	if err != nil {
 		return value, err
 	}
@@ -37,7 +37,7 @@ func decodeAchievementValue(input SoraValue) (Achievement, error) {
 	if err != nil {
 		return value, err
 	}
-	value.Id, err = obj.Get("id").AsInt32()
+	value.ID, err = obj.Get("id").AsInt32()
 	if err != nil {
 		return value, err
 	}
@@ -79,9 +79,9 @@ type AchievementTable struct {
 func buildAchievementTable(rows []Achievement) (*AchievementTable, error) {
 	keys := make([]int32, 0, len(rows))
 	for _, row := range rows {
-		keys = append(keys, row.Id)
+		keys = append(keys, row.ID)
 	}
-	return &AchievementTable{keys: keys, rows: DecodeMapTable(rows, func(row Achievement) int32 { return row.Id })}, nil
+	return &AchievementTable{keys: keys, rows: DecodeMapTable(rows, func(row Achievement) int32 { return row.ID })}, nil
 }
 
 func decodeAchievementTable(source SoraTableSource) (*AchievementTable, error) {
@@ -91,9 +91,12 @@ func decodeAchievementTable(source SoraTableSource) (*AchievementTable, error) {
 	}
 	return buildAchievementTable(rows)
 }
-
 func (table *AchievementTable) Rows() map[int32]Achievement {
-	return table.rows
+	rows := make(map[int32]Achievement, len(table.rows))
+	for key, row := range table.rows {
+		rows[key] = row
+	}
+	return rows
 }
 func (table *AchievementTable) Get(key int32) (Achievement, bool) {
 	value, ok := table.rows[key]
@@ -101,7 +104,7 @@ func (table *AchievementTable) Get(key int32) (Achievement, bool) {
 }
 
 func (table *AchievementTable) Keys() []int32 {
-	return table.keys
+	return append([]int32(nil), table.keys...)
 }
 
 func (table *AchievementTable) OrderedRows() []Achievement {

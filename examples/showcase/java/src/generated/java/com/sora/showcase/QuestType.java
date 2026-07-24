@@ -3,9 +3,9 @@
 package com.sora.showcase;
 
 public enum QuestType {
-    Main(0),
-    Side(1),
-    Daily(2);
+    MAIN(0),
+    SIDE(1),
+    DAILY(2);
 
     private final int id;
 
@@ -20,11 +20,11 @@ public enum QuestType {
     static QuestType decode(SoraReader reader) {
         switch (reader.readU32()) {
             case 0:
-                return Main;
+                return MAIN;
             case 1:
-                return Side;
+                return SIDE;
             case 2:
-                return Daily;
+                return DAILY;
             default:
                 throw new SoraReadException("invalid enum id for QuestType");
         }
@@ -33,11 +33,11 @@ public enum QuestType {
     static QuestType decode(SoraValue value) {
         switch (value.asString()) {
             case "Main":
-                return Main;
+                return MAIN;
             case "Side":
-                return Side;
+                return SIDE;
             case "Daily":
-                return Daily;
+                return DAILY;
             default:
                 throw new SoraReadException("invalid enum value for QuestType");
         }

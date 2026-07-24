@@ -5,9 +5,9 @@
 -export_type([t/0]).
 
 -type t() :: #{
-    'cost' := resource_cost:t(),
-    'weight' := integer(),
-    'labels' := [binary()]
+    cost := resource_cost:t(),
+    weight := integer(),
+    labels := [binary()]
 }.
 
 -spec decode(sora_runtime:reader()) -> {t(), sora_runtime:reader()}.
@@ -16,16 +16,16 @@ decode(Reader0) ->
     {Weight, Reader2} = (fun sora_runtime:read_i32/1)(Reader1),
     {Labels, Reader3} = (fun(Reader) -> sora_runtime:read_list(fun sora_runtime:read_string/1, Reader) end)(Reader2),
     {#{
-        'cost' => Cost,
-        'weight' => Weight,
-        'labels' => Labels
+        cost => Cost,
+        weight => Weight,
+        labels => Labels
     }, Reader3}.
 
 -spec decode_value(map()) -> t().
 decode_value(Value) ->
     Obj = sora_runtime:expect_map(Value),
     #{
-        'cost' => resource_cost:decode_value(sora_runtime:value_get(<<"cost">>, Obj)),
-        'weight' => sora_runtime:expect_integer(sora_runtime:value_get(<<"weight">>, Obj)),
-        'labels' => sora_runtime:decode_value_list(fun(Item) -> sora_runtime:expect_binary(Item) end, sora_runtime:value_get(<<"labels">>, Obj))
+        cost => resource_cost:decode_value(sora_runtime:value_get(<<"cost">>, Obj)),
+        weight => sora_runtime:expect_integer(sora_runtime:value_get(<<"weight">>, Obj)),
+        labels => sora_runtime:decode_value_list(fun(Item) -> sora_runtime:expect_binary(Item) end, sora_runtime:value_get(<<"labels">>, Obj))
     }.

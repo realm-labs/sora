@@ -3,7 +3,7 @@
 package showcase
 
 type ComplexRule struct {
-	Id   int32
+	ID   int32
 	Name string
 	// RootCondition: Single union value derived from a tagged_columns child row
 	RootCondition   EventCondition
@@ -17,7 +17,7 @@ type ComplexRule struct {
 func decodeComplexRule(reader *SoraReader) (ComplexRule, error) {
 	var value ComplexRule
 	var err error
-	value.Id, err = reader.ReadInt32()
+	value.ID, err = reader.ReadInt32()
 	if err != nil {
 		return value, err
 	}
@@ -50,7 +50,7 @@ func decodeComplexRuleValue(input SoraValue) (ComplexRule, error) {
 	if err != nil {
 		return value, err
 	}
-	value.Id, err = obj.Get("id").AsInt32()
+	value.ID, err = obj.Get("id").AsInt32()
 	if err != nil {
 		return value, err
 	}
@@ -103,9 +103,9 @@ type ComplexRuleTable struct {
 func buildComplexRuleTable(rows []ComplexRule) (*ComplexRuleTable, error) {
 	keys := make([]int32, 0, len(rows))
 	for _, row := range rows {
-		keys = append(keys, row.Id)
+		keys = append(keys, row.ID)
 	}
-	return &ComplexRuleTable{keys: keys, rows: DecodeMapTable(rows, func(row ComplexRule) int32 { return row.Id })}, nil
+	return &ComplexRuleTable{keys: keys, rows: DecodeMapTable(rows, func(row ComplexRule) int32 { return row.ID })}, nil
 }
 
 func decodeComplexRuleTable(source SoraTableSource) (*ComplexRuleTable, error) {
@@ -115,9 +115,12 @@ func decodeComplexRuleTable(source SoraTableSource) (*ComplexRuleTable, error) {
 	}
 	return buildComplexRuleTable(rows)
 }
-
 func (table *ComplexRuleTable) Rows() map[int32]ComplexRule {
-	return table.rows
+	rows := make(map[int32]ComplexRule, len(table.rows))
+	for key, row := range table.rows {
+		rows[key] = row
+	}
+	return rows
 }
 func (table *ComplexRuleTable) Get(key int32) (ComplexRule, bool) {
 	value, ok := table.rows[key]
@@ -125,7 +128,7 @@ func (table *ComplexRuleTable) Get(key int32) (ComplexRule, bool) {
 }
 
 func (table *ComplexRuleTable) Keys() []int32 {
-	return table.keys
+	return append([]int32(nil), table.keys...)
 }
 
 func (table *ComplexRuleTable) OrderedRows() []ComplexRule {

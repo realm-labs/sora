@@ -7,14 +7,14 @@
 -export_type([t/0, table/0]).
 
 -type t() :: #{
-    'id' := integer(),
-    'name' := binary(),
-    'element' := element_type:t(),
-    'cost' := resource_cost:t(),
-    'effect' := skill_effect:t(),
-    'required_level' := integer(),
-    'required_item' := integer() | undefined,
-    'cast_origin' := vec3:t()
+    id := integer(),
+    name := binary(),
+    element := element_type:t(),
+    cost := resource_cost:t(),
+    effect := skill_effect:t(),
+    required_level := integer(),
+    required_item := integer() | undefined,
+    cast_origin := vec3:t()
 }.
 
 -type table() :: map().
@@ -31,35 +31,35 @@ decode(Reader0) ->
     {RequiredItem, Reader7} = (fun(Reader) -> sora_runtime:read_optional(fun sora_runtime:read_i32/1, Reader) end)(Reader6),
     {CastOrigin, Reader8} = (fun vec3:decode/1)(Reader7),
     {#{
-        'id' => Id,
-        'name' => Name,
-        'element' => Element,
-        'cost' => Cost,
-        'effect' => Effect,
-        'required_level' => RequiredLevel,
-        'required_item' => RequiredItem,
-        'cast_origin' => CastOrigin
+        id => Id,
+        name => Name,
+        element => Element,
+        cost => Cost,
+        effect => Effect,
+        required_level => RequiredLevel,
+        required_item => RequiredItem,
+        cast_origin => CastOrigin
     }, Reader8}.
 
 -spec decode_value(map()) -> t().
 decode_value(Value) ->
     Obj = sora_runtime:expect_map(Value),
     #{
-        'id' => sora_runtime:expect_integer(sora_runtime:value_get(<<"id">>, Obj)),
-        'name' => sora_runtime:expect_binary(sora_runtime:value_get(<<"name">>, Obj)),
-        'element' => element_type:decode_value(sora_runtime:value_get(<<"element">>, Obj)),
-        'cost' => resource_cost:decode_value(sora_runtime:value_get(<<"cost">>, Obj)),
-        'effect' => skill_effect:decode_value(sora_runtime:value_get(<<"effect">>, Obj)),
-        'required_level' => sora_runtime:expect_integer(sora_runtime:value_get(<<"required_level">>, Obj)),
-        'required_item' => (fun(OptionalValue) -> case OptionalValue of undefined -> undefined; _ -> sora_runtime:expect_integer(OptionalValue) end end)(sora_runtime:value_get(<<"required_item">>, Obj)),
-        'cast_origin' => vec3:decode_value(sora_runtime:value_get(<<"cast_origin">>, Obj))
+        id => sora_runtime:expect_integer(sora_runtime:value_get(<<"id">>, Obj)),
+        name => sora_runtime:expect_binary(sora_runtime:value_get(<<"name">>, Obj)),
+        element => element_type:decode_value(sora_runtime:value_get(<<"element">>, Obj)),
+        cost => resource_cost:decode_value(sora_runtime:value_get(<<"cost">>, Obj)),
+        effect => skill_effect:decode_value(sora_runtime:value_get(<<"effect">>, Obj)),
+        required_level => sora_runtime:expect_integer(sora_runtime:value_get(<<"required_level">>, Obj)),
+        required_item => (fun(OptionalValue) -> case OptionalValue of undefined -> undefined; _ -> sora_runtime:expect_integer(OptionalValue) end end)(sora_runtime:value_get(<<"required_item">>, Obj)),
+        cast_origin => vec3:decode_value(sora_runtime:value_get(<<"cast_origin">>, Obj))
     }.
 
 -spec decode_table(map()) -> table().
 decode_table(Bundle) ->
     Rows = sora_runtime:decode_table(Bundle, ?TABLE_NAME, fun ?MODULE:decode/1, fun ?MODULE:decode_value/1),
-    Data = sora_runtime:decode_map_table(Rows, fun(Row) -> maps:get('id', Row) end),
-    Keys = [maps:get('id', Row) || Row <- Rows],
+    Data = sora_runtime:decode_map_table(Rows, fun(Row) -> maps:get(id, Row) end),
+    Keys = [maps:get(id, Row) || Row <- Rows],
     #{
         keys => Keys,
         data => Data

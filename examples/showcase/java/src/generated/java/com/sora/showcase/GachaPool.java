@@ -3,24 +3,12 @@
 package com.sora.showcase;
 
 import java.util.List;
-import java.util.Map;
 
-
-public final class GachaPool {
-    public final Integer id;
-    public final String name;
-    public final ResourceCost cost;
-
-    public GachaPool(
-        Integer id,
-        String name,
-        ResourceCost cost
-    ) {
-        this.id = id;
-        this.name = name;
-        this.cost = cost;
-    }
-
+public record GachaPool(
+    int id,
+    String name,
+    ResourceCost cost
+) {
     static GachaPool decode(SoraReader reader) {
         return new GachaPool(
             reader.readI32(),
@@ -40,63 +28,5 @@ public final class GachaPool {
 
     void collectTextKeys(List<TextKey> out) {
         this.cost.collectTextKeys(out);
-    }
-}
-
-final class GachaPoolTable extends java.util.AbstractMap<Integer, GachaPool> implements SoraKeyedTable<Integer, GachaPool> {
-    static final String NAME = "GachaPool";
-    static final SoraTableInfo INFO = new SoraTableInfo(
-        NAME,
-        "GachaPool",
-        SoraTableShape.KEYED,
-        new SoraKeyInfo("id", "Integer"),
-        List.of(
-        )
-    );
-    private final List<Integer> keys;
-    private final java.util.Map<Integer, GachaPool> rows;
-
-    private GachaPoolTable(List<Integer> keys, java.util.Map<Integer, GachaPool> rows) {
-        this.keys = keys;
-        this.rows = rows;
-    }
-
-    private static GachaPoolTable fromRows(List<GachaPool> rows) {
-        return new GachaPoolTable(rows.stream().map(row -> row.id).toList(), SoraConfig.decodeMapTable(rows, row -> row.id));
-    }
-
-    static GachaPoolTable decode(SoraTableSource source) {
-        return fromRows(source.decodeTable(NAME, GachaPool::decode, GachaPool::decode));
-    }
-
-    public java.util.Map<Integer, GachaPool> rows() {
-        return rows;
-    }
-    @Override
-    @SoraNullable
-    public GachaPool get(Object key) {
-        return rows.get(key);
-    }
-
-    public List<Integer> orderedKeys() {
-        return keys;
-    }
-
-    public List<GachaPool> orderedRows() {
-        return keys.stream().map(rows::get).toList();
-    }
-
-    @Override
-    public java.util.Set<Map.Entry<Integer, GachaPool>> entrySet() {
-        return rows.entrySet();
-    }
-    @Override
-    public SoraTableInfo info() {
-        return INFO;
-    }
-
-    @Override
-    public int size() {
-        return rows.size();
     }
 }

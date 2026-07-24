@@ -6,10 +6,10 @@ import type { Rarity } from "./rarity.js";
 
 
 export interface GachaItem {
-    poolId: number;
-    itemId: number;
-    rarity: Rarity;
-    weight: number;
+    readonly poolId: number;
+    readonly itemId: number;
+    readonly rarity: Rarity;
+    readonly weight: number;
 }
 
 export declare function decodeGachaItem(reader: SoraReader): GachaItem;
@@ -20,6 +20,8 @@ export declare class GachaItemTable implements SoraListTable<GachaItem> {
     static readonly tableInfo: SoraTableInfo;
     static decode(rows: GachaItem[]): GachaItemTable;
     info(): SoraTableInfo;
-    len(): number;
-    rows(): readonly GachaItem[];
+    readonly size: number;
+    readonly rows: readonly GachaItem[];
+    at(index: number): GachaItem | undefined;
+    [Symbol.iterator](): Iterator<GachaItem>;
 }

@@ -4,11 +4,11 @@ import type { SoraListTable, SoraTableInfo, SoraReader, SoraValue, TextKey } fro
 
 
 export interface DropEntry {
-    groupId: number;
-    seq: number;
-    itemId: number;
-    count: number;
-    weight: number;
+    readonly groupId: number;
+    readonly seq: number;
+    readonly itemId: number;
+    readonly count: number;
+    readonly weight: number;
 }
 
 export declare function decodeDropEntry(reader: SoraReader): DropEntry;
@@ -19,6 +19,8 @@ export declare class DropEntryTable implements SoraListTable<DropEntry> {
     static readonly tableInfo: SoraTableInfo;
     static decode(rows: DropEntry[]): DropEntryTable;
     info(): SoraTableInfo;
-    len(): number;
-    rows(): readonly DropEntry[];
+    readonly size: number;
+    readonly rows: readonly DropEntry[];
+    at(index: number): DropEntry | undefined;
+    [Symbol.iterator](): Iterator<DropEntry>;
 }

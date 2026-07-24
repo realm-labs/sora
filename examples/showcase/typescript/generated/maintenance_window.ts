@@ -10,10 +10,10 @@ import {
 
 
 export interface MaintenanceWindow {
-    version: string;
-    startsAt: string;
-    durationMinutes: number;
-    reason: string | undefined;
+    readonly version: string;
+    readonly startsAt: string;
+    readonly durationMinutes: number;
+    readonly reason: string | undefined;
 }
 
 export function decodeMaintenanceWindow(reader: SoraReader): MaintenanceWindow {
@@ -49,7 +49,7 @@ export class MaintenanceWindowTable implements SoraListTable<MaintenanceWindow> 
     };
 
     private constructor(
-        private readonly _rows: MaintenanceWindow[],
+        private readonly _rows: readonly MaintenanceWindow[],
     ) {}
 
     static decode(rows: MaintenanceWindow[]): MaintenanceWindowTable {
@@ -62,10 +62,18 @@ export class MaintenanceWindowTable implements SoraListTable<MaintenanceWindow> 
         return MaintenanceWindowTable.tableInfo;
     }
 
-    len(): number {
+    get size(): number {
         return this._rows.length;
     }
-    rows(): readonly MaintenanceWindow[] {
+    get rows(): readonly MaintenanceWindow[] {
         return this._rows;
+    }
+
+    at(index: number): MaintenanceWindow | undefined {
+        return this._rows.at(index);
+    }
+
+    [Symbol.iterator](): Iterator<MaintenanceWindow> {
+        return this._rows[Symbol.iterator]();
     }
 }

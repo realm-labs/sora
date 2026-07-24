@@ -3,30 +3,14 @@
 package com.sora.showcase;
 
 import java.util.List;
-import java.util.Map;
 
-
-public final class DropEntry {
-    public final Integer groupId;
-    public final Integer seq;
-    public final Integer itemId;
-    public final Integer count;
-    public final float weight;
-
-    public DropEntry(
-        Integer groupId,
-        Integer seq,
-        Integer itemId,
-        Integer count,
-        float weight
-    ) {
-        this.groupId = groupId;
-        this.seq = seq;
-        this.itemId = itemId;
-        this.count = count;
-        this.weight = weight;
-    }
-
+public record DropEntry(
+    int groupId,
+    int seq,
+    int itemId,
+    int count,
+    float weight
+) {
     static DropEntry decode(SoraReader reader) {
         return new DropEntry(
             reader.readI32(),
@@ -49,47 +33,5 @@ public final class DropEntry {
     }
 
     void collectTextKeys(List<TextKey> out) {
-    }
-}
-
-final class DropEntryTable extends java.util.AbstractList<DropEntry> implements SoraListTable<DropEntry> {
-    static final String NAME = "DropEntry";
-    static final SoraTableInfo INFO = new SoraTableInfo(
-        NAME,
-        "DropEntry",
-        SoraTableShape.LIST,
-        null,
-        List.of(
-        )
-    );
-    private final java.util.List<DropEntry> rows;
-
-    private DropEntryTable(java.util.List<DropEntry> rows) {
-        this.rows = rows;
-    }
-
-    private static DropEntryTable fromRows(List<DropEntry> rows) {
-        return new DropEntryTable(rows);
-    }
-
-    static DropEntryTable decode(SoraTableSource source) {
-        return fromRows(source.decodeTable(NAME, DropEntry::decode, DropEntry::decode));
-    }
-
-    public java.util.List<DropEntry> rows() {
-        return rows;
-    }
-    @Override
-    public DropEntry get(int index) {
-        return rows.get(index);
-    }
-    @Override
-    public SoraTableInfo info() {
-        return INFO;
-    }
-
-    @Override
-    public int size() {
-        return rows.size();
     }
 }

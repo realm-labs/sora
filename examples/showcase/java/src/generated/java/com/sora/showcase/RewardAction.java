@@ -4,115 +4,69 @@ package com.sora.showcase;
 
 import java.util.List;
 
-public interface RewardAction {
-    final class AddItem implements RewardAction {
-        public final Integer itemId;
-        public final Integer count;
-
-        public AddItem(
-            Integer itemId,
-            Integer count
-        ) {
-            this.itemId = itemId;
-            this.count = count;
-        }
-    }
-    final class AddBuff implements RewardAction {
-        public final Integer buffId;
-        public final float duration;
-
-        public AddBuff(
-            Integer buffId,
-            float duration
-        ) {
-            this.buffId = buffId;
-            this.duration = duration;
-        }
-    }
-    final class UnlockStage implements RewardAction {
-        public final Integer stageId;
-
-        public UnlockStage(
-            Integer stageId
-        ) {
-            this.stageId = stageId;
-        }
-    }
-    final class SendMail implements RewardAction {
-        public final Integer mailId;
-
-        public SendMail(
-            Integer mailId
-        ) {
-            this.mailId = mailId;
-        }
-    }
-    final class RunActionGroup implements RewardAction {
-        public final Integer actionGroupId;
-
-        public RunActionGroup(
-            Integer actionGroupId
-        ) {
-            this.actionGroupId = actionGroupId;
-        }
-    }
+public sealed interface RewardAction permits RewardAction.AddItem, RewardAction.AddBuff, RewardAction.UnlockStage, RewardAction.SendMail, RewardAction.RunActionGroup {
+    record AddItem(
+        int itemId,
+        int count
+    ) implements RewardAction {}
+    record AddBuff(
+        int buffId,
+        float duration
+    ) implements RewardAction {}
+    record UnlockStage(
+        int stageId
+    ) implements RewardAction {}
+    record SendMail(
+        int mailId
+    ) implements RewardAction {}
+    record RunActionGroup(
+        int actionGroupId
+    ) implements RewardAction {}
     static RewardAction decode(SoraReader reader) {
-        switch (reader.readU32()) {
-            case 0:
-                return new AddItem(
-                    reader.readI32(),
-                    reader.readI32()
-                );
-            case 1:
-                return new AddBuff(
-                    reader.readI32(),
-                    reader.readF32()
-                );
-            case 2:
-                return new UnlockStage(
-                    reader.readI32()
-                );
-            case 3:
-                return new SendMail(
-                    reader.readI32()
-                );
-            case 4:
-                return new RunActionGroup(
-                    reader.readI32()
-                );
-            default:
-                throw new SoraReadException("invalid union ordinal for RewardAction");
-        }
+        return switch (reader.readU32()) {
+            case 0 -> new AddItem(
+                reader.readI32(),
+                reader.readI32()
+            );
+            case 1 -> new AddBuff(
+                reader.readI32(),
+                reader.readF32()
+            );
+            case 2 -> new UnlockStage(
+                reader.readI32()
+            );
+            case 3 -> new SendMail(
+                reader.readI32()
+            );
+            case 4 -> new RunActionGroup(
+                reader.readI32()
+            );
+            default -> throw new SoraReadException("invalid union ordinal for RewardAction");
+        };
     }
 
     static RewardAction decode(SoraValue value) {
         var obj = value.asObject();
-        switch (obj.get("type").asString()) {
-            case "AddItem":
-                return new AddItem(
-                    obj.get("item_id").asInt(),
-                    obj.get("count").asInt()
-                );
-            case "AddBuff":
-                return new AddBuff(
-                    obj.get("buff_id").asInt(),
-                    obj.get("duration").asFloat()
-                );
-            case "UnlockStage":
-                return new UnlockStage(
-                    obj.get("stage_id").asInt()
-                );
-            case "SendMail":
-                return new SendMail(
-                    obj.get("mail_id").asInt()
-                );
-            case "RunActionGroup":
-                return new RunActionGroup(
-                    obj.get("action_group_id").asInt()
-                );
-            default:
-                throw new SoraReadException("invalid union tag for RewardAction");
-        }
+        return switch (obj.get("type").asString()) {
+            case "AddItem" -> new AddItem(
+                obj.get("item_id").asInt(),
+                obj.get("count").asInt()
+            );
+            case "AddBuff" -> new AddBuff(
+                obj.get("buff_id").asInt(),
+                obj.get("duration").asFloat()
+            );
+            case "UnlockStage" -> new UnlockStage(
+                obj.get("stage_id").asInt()
+            );
+            case "SendMail" -> new SendMail(
+                obj.get("mail_id").asInt()
+            );
+            case "RunActionGroup" -> new RunActionGroup(
+                obj.get("action_group_id").asInt()
+            );
+            default -> throw new SoraReadException("invalid union tag for RewardAction");
+        };
     }
 
     static void collectTextKeys(RewardAction value, List<TextKey> out) {

@@ -88,8 +88,7 @@ public sealed class SkillTable : ISoraKeyedTable<int, Skill>
     {
         return new SkillTable(rows.ConvertAll(row => row.Id), SoraConfig.DecodeMapTable(rows, row => row.Id));
     }
-
-    public Dictionary<int, Skill> Rows => rows;
+    public IReadOnlyDictionary<int, Skill> Rows => rows;
     public Skill this[int key] => rows[key];
 
     public Skill? Get(int key)

@@ -5,7 +5,7 @@ local RewardAction = require("generated.reward_action")
 
 ---@class ComplexActionEntry
 ---@field id integer
----@field groupId integer
+---@field group_id integer
 ---@field seq integer
 ---@field value RewardAction
 
@@ -16,7 +16,7 @@ local ComplexActionEntry = {}
 function ComplexActionEntry.decode(reader)
     return {
         id = reader:read_i32(),
-        groupId = reader:read_i32(),
+        group_id = reader:read_i32(),
         seq = reader:read_i32(),
         value = RewardAction.decode(reader),
     }
@@ -28,7 +28,7 @@ function ComplexActionEntry.decode_value(value)
     local obj = Runtime.expect_table(value)
     return {
         id = Runtime.expect_integer(obj["id"]),
-        groupId = Runtime.expect_integer(obj["group_id"]),
+        group_id = Runtime.expect_integer(obj["group_id"]),
         seq = Runtime.expect_integer(obj["seq"]),
         value = RewardAction.decode_value(obj["value"]),
     }

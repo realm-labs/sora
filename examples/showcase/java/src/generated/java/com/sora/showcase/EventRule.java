@@ -3,27 +3,13 @@
 package com.sora.showcase;
 
 import java.util.List;
-import java.util.Map;
 
-
-public final class EventRule {
-    public final Integer id;
-    public final String name;
-    public final EventCondition condition;
-    public final java.util.List<RewardAction> actions;
-
-    public EventRule(
-        Integer id,
-        String name,
-        EventCondition condition,
-        java.util.List<RewardAction> actions
-    ) {
-        this.id = id;
-        this.name = name;
-        this.condition = condition;
-        this.actions = actions;
-    }
-
+public record EventRule(
+    int id,
+    String name,
+    EventCondition condition,
+    java.util.List<RewardAction> actions
+) {
     static EventRule decode(SoraReader reader) {
         return new EventRule(
             reader.readI32(),
@@ -48,63 +34,5 @@ public final class EventRule {
         for (var item : this.actions) {
             RewardAction.collectTextKeys(item, out);
         }
-    }
-}
-
-final class EventRuleTable extends java.util.AbstractMap<Integer, EventRule> implements SoraKeyedTable<Integer, EventRule> {
-    static final String NAME = "EventRule";
-    static final SoraTableInfo INFO = new SoraTableInfo(
-        NAME,
-        "EventRule",
-        SoraTableShape.KEYED,
-        new SoraKeyInfo("id", "Integer"),
-        List.of(
-        )
-    );
-    private final List<Integer> keys;
-    private final java.util.Map<Integer, EventRule> rows;
-
-    private EventRuleTable(List<Integer> keys, java.util.Map<Integer, EventRule> rows) {
-        this.keys = keys;
-        this.rows = rows;
-    }
-
-    private static EventRuleTable fromRows(List<EventRule> rows) {
-        return new EventRuleTable(rows.stream().map(row -> row.id).toList(), SoraConfig.decodeMapTable(rows, row -> row.id));
-    }
-
-    static EventRuleTable decode(SoraTableSource source) {
-        return fromRows(source.decodeTable(NAME, EventRule::decode, EventRule::decode));
-    }
-
-    public java.util.Map<Integer, EventRule> rows() {
-        return rows;
-    }
-    @Override
-    @SoraNullable
-    public EventRule get(Object key) {
-        return rows.get(key);
-    }
-
-    public List<Integer> orderedKeys() {
-        return keys;
-    }
-
-    public List<EventRule> orderedRows() {
-        return keys.stream().map(rows::get).toList();
-    }
-
-    @Override
-    public java.util.Set<Map.Entry<Integer, EventRule>> entrySet() {
-        return rows.entrySet();
-    }
-    @Override
-    public SoraTableInfo info() {
-        return INFO;
-    }
-
-    @Override
-    public int size() {
-        return rows.size();
     }
 }

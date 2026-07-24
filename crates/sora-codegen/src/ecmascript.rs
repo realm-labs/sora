@@ -363,10 +363,10 @@ pub fn ecmascript_type_name(ir: &ConfigIr, ty: &TypeIr) -> String {
         TypeIr::Text => "TextKey".to_owned(),
         TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => name.clone(),
         TypeIr::List(element) | TypeIr::Set(element) | TypeIr::Array { element, .. } => {
-            format!("{}[]", array_element_type(ir, element))
+            format!("readonly {}[]", array_element_type(ir, element))
         }
         TypeIr::Map { key, value } => format!(
-            "Map<{}, {}>",
+            "ReadonlyMap<{}, {}>",
             ecmascript_type_name(ir, key),
             ecmascript_type_name(ir, value)
         ),
@@ -409,10 +409,14 @@ impl<'a> EcmaScriptTypeMapper<'a> {
             TypeIr::Text => "TextKey".to_owned(),
             TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => name.clone(),
             TypeIr::List(element) | TypeIr::Set(element) | TypeIr::Array { element, .. } => {
-                format!("{}[]", self.array_element_type(element))
+                format!("readonly {}[]", self.array_element_type(element))
             }
             TypeIr::Map { key, value } => {
-                format!("Map<{}, {}>", self.type_name(key), self.type_name(value))
+                format!(
+                    "ReadonlyMap<{}, {}>",
+                    self.type_name(key),
+                    self.type_name(value)
+                )
             }
             TypeIr::Ref { table, field } => ref_type(self.ir, table, field)
                 .map(|ty| self.type_name(ty))
@@ -426,7 +430,7 @@ impl<'a> EcmaScriptTypeMapper<'a> {
 
     fn array_element_type(&self, ty: &TypeIr) -> String {
         let name = self.type_name(ty);
-        if name.contains(" | ") {
+        if name.contains(" | ") || name.starts_with("readonly ") {
             format!("({name})")
         } else {
             name
@@ -599,7 +603,7 @@ fn ecmascript_collect_text_keys(
 
 fn array_element_type(ir: &ConfigIr, ty: &TypeIr) -> String {
     let name = ecmascript_type_name(ir, ty);
-    if name.contains(" | ") {
+    if name.contains(" | ") || name.starts_with("readonly ") {
         format!("({name})")
     } else {
         name

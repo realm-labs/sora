@@ -3,9 +3,9 @@
 package showcase
 
 type ShopItem struct {
-	ShopId     int32
+	ShopID     int32
 	Seq        int32
-	ItemId     int32
+	ItemID     int32
 	Price      ResourceCost
 	DailyLimit *int32
 }
@@ -13,7 +13,7 @@ type ShopItem struct {
 func decodeShopItem(reader *SoraReader) (ShopItem, error) {
 	var value ShopItem
 	var err error
-	value.ShopId, err = reader.ReadInt32()
+	value.ShopID, err = reader.ReadInt32()
 	if err != nil {
 		return value, err
 	}
@@ -21,7 +21,7 @@ func decodeShopItem(reader *SoraReader) (ShopItem, error) {
 	if err != nil {
 		return value, err
 	}
-	value.ItemId, err = reader.ReadInt32()
+	value.ItemID, err = reader.ReadInt32()
 	if err != nil {
 		return value, err
 	}
@@ -42,7 +42,7 @@ func decodeShopItemValue(input SoraValue) (ShopItem, error) {
 	if err != nil {
 		return value, err
 	}
-	value.ShopId, err = obj.Get("shop_id").AsInt32()
+	value.ShopID, err = obj.Get("shop_id").AsInt32()
 	if err != nil {
 		return value, err
 	}
@@ -50,7 +50,7 @@ func decodeShopItemValue(input SoraValue) (ShopItem, error) {
 	if err != nil {
 		return value, err
 	}
-	value.ItemId, err = obj.Get("item_id").AsInt32()
+	value.ItemID, err = obj.Get("item_id").AsInt32()
 	if err != nil {
 		return value, err
 	}
@@ -93,9 +93,8 @@ func decodeShopItemTable(source SoraTableSource) (*ShopItemTable, error) {
 	}
 	return buildShopItemTable(rows)
 }
-
 func (table *ShopItemTable) Rows() []ShopItem {
-	return table.rows
+	return append([]ShopItem(nil), table.rows...)
 }
 func (table *ShopItemTable) Info() SoraTableInfo {
 	return shopItemTableInfo

@@ -8,13 +8,13 @@ import type { Vec3 } from "./vec3.js";
 
 
 export interface Character {
-    id: number;
-    name: string;
-    rarity: Rarity;
-    baseLevel: number;
-    baseSkill: number;
-    starterItems: number[];
-    spawnPos: Vec3;
+    readonly id: number;
+    readonly name: string;
+    readonly rarity: Rarity;
+    readonly baseLevel: number;
+    readonly baseSkill: number;
+    readonly starterItems: readonly number[];
+    readonly spawnPos: Vec3;
 }
 
 export declare function decodeCharacter(reader: SoraReader): Character;
@@ -25,9 +25,11 @@ export declare class CharacterTable implements SoraKeyedTable<number, Character>
     static readonly tableInfo: SoraTableInfo;
     static decode(rows: Character[]): CharacterTable;
     info(): SoraTableInfo;
-    len(): number;
+    readonly size: number;
     get(key: number): Character | undefined;
-    rows(): ReadonlyMap<number, Character>;
-    keys(): readonly number[];
-    orderedRows(): Character[];
+    has(key: number): boolean;
+    readonly rows: ReadonlyMap<number, Character>;
+    readonly orderedKeys: readonly number[];
+    readonly orderedRows: readonly Character[];
+    [Symbol.iterator](): Iterator<Character>;
 }

@@ -1,6 +1,6 @@
 use std::path::Path;
 
-use heck::{ToLowerCamelCase, ToSnakeCase};
+use heck::ToSnakeCase;
 use minijinja::context;
 use serde::Serialize;
 use sora_diagnostics::{Result, SoraError};
@@ -172,7 +172,7 @@ impl GoModel {
                 .enums
                 .into_iter()
                 .map(|item| GoEnum {
-                    name: item.pascal_name,
+                    name: go_exported_identifier(&item.name),
                     snake_name: item.snake_name,
                     values: item.values,
                 })
@@ -188,7 +188,7 @@ impl GoModel {
                 .map(|item| {
                     let table = tables
                         .iter()
-                        .find(|table| table.row_type == item.pascal_name)
+                        .find(|table| table.row_type == go_exported_identifier(&item.name))
                         .cloned();
                     go_record(ir, item, table, mapper)
                 })
@@ -225,7 +225,7 @@ fn go_union(ir: &ConfigIr, union: BaseUnion, mapper: &GoTypeMapper<'_>) -> GoUni
         .any(|field| field.type_name.contains("time."));
     let imports = collect_go_imports(variants.iter().flat_map(|variant| &variant.fields));
     GoUnion {
-        pascal_name: union.pascal_name,
+        pascal_name: go_exported_identifier(&union.name),
         snake_name: union.snake_name,
         tag: union.tag,
         variants,
@@ -248,7 +248,7 @@ fn go_variant(
         .iter()
         .any(|field| !field.collect_text_keys.is_empty());
     GoUnionVariant {
-        name: variant.pascal_name,
+        name: go_exported_identifier(&variant.name),
         fields,
         has_text_keys,
     }
@@ -268,7 +268,7 @@ fn go_record(
     let has_time = fields.iter().any(|field| field.type_name.contains("time."));
     let imports = collect_go_imports(fields.iter());
     GoRecord {
-        pascal_name: record.pascal_name,
+        pascal_name: go_exported_identifier(&record.name),
         snake_name: record.snake_name,
         fields,
         has_time,
@@ -278,7 +278,9 @@ fn go_record(
 }
 
 fn go_table(ir: &ConfigIr, table: BaseTable, mapper: &GoTypeMapper<'_>) -> GoTable {
-    let row_type = table.pascal_name.clone();
+    let row_type = go_exported_identifier(&table.name);
+    let pascal_name = row_type.clone();
+    let camel_name = go_unexported_identifier(&table.name);
     let key_type = table
         .key_field
         .as_ref()
@@ -287,12 +289,12 @@ fn go_table(ir: &ConfigIr, table: BaseTable, mapper: &GoTypeMapper<'_>) -> GoTab
     let key_field_name = table
         .key_field
         .as_ref()
-        .map(|field| field.pascal_name.clone());
+        .map(|field| go_exported_identifier(&field.raw_name));
 
     GoTable {
         name: table.name,
-        pascal_name: table.pascal_name,
-        camel_name: table.camel_name,
+        pascal_name,
+        camel_name,
         mode: table.mode_name,
         container_type,
         row_type,
@@ -314,25 +316,21 @@ fn go_table(ir: &ConfigIr, table: BaseTable, mapper: &GoTypeMapper<'_>) -> GoTab
 
 fn go_index(_ir: &ConfigIr, index: BaseIndex, mapper: &GoTypeMapper<'_>) -> GoIndex {
     GoIndex {
-        pascal_name: index.pascal_name,
-        camel_name: index.name.to_lower_camel_case(),
-        field_name: index.field.pascal_name.clone(),
-        param_camel_name: index.field.camel_name,
+        pascal_name: go_exported_identifier(&index.name),
+        camel_name: go_unexported_identifier(&index.name),
+        field_name: go_exported_identifier(&index.field.raw_name),
+        param_camel_name: go_unexported_identifier(&index.field.raw_name),
         key_type: mapper.type_name(&index.field.ty),
     }
 }
 
 fn go_field(ir: &ConfigIr, field: BaseField, mapper: &GoTypeMapper<'_>) -> GoField {
+    let name = go_exported_identifier(&field.raw_name);
     let value_decode = go_value_decode_expr(ir, &field.ty, "__VALUE__", mapper);
-    let collect_text_keys = go_collect_text_keys(
-        ir,
-        &field.ty,
-        &format!("value.{}", field.pascal_name),
-        mapper,
-    );
+    let collect_text_keys = go_collect_text_keys(ir, &field.ty, &format!("value.{name}"), mapper);
     GoField {
         raw_name: field.raw_name,
-        name: field.pascal_name,
+        name,
         type_name: mapper.type_name(&field.ty),
         decode: go_decode_expr(ir, &field.ty, mapper),
         value_decode,
@@ -397,7 +395,9 @@ impl<'a> GoTypeMapper<'a> {
             TypeIr::F64 => "float64".to_owned(),
             TypeIr::String => "string".to_owned(),
             TypeIr::Text => "TextKey".to_owned(),
-            TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => name.clone(),
+            TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => {
+                go_exported_identifier(name)
+            }
             TypeIr::List(element) | TypeIr::Set(element) | TypeIr::Array { element, .. } => {
                 format!("[]{}", self.type_name(element))
             }
@@ -455,9 +455,10 @@ fn go_decode_expr(ir: &ConfigIr, ty: &TypeIr, mapper: &GoTypeMapper<'_>) -> Stri
         TypeIr::F64 => "reader.ReadFloat64()".to_owned(),
         TypeIr::String => "reader.ReadString()".to_owned(),
         TypeIr::Text => "ReadTextKey(reader)".to_owned(),
-        TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => {
-            mapper.wrap_decode(ty, format!("decode{name}(reader)"))
-        }
+        TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => mapper.wrap_decode(
+            ty,
+            format!("decode{}(reader)", go_exported_identifier(name)),
+        ),
         TypeIr::List(element) | TypeIr::Set(element) | TypeIr::Array { element, .. } => {
             format!(
                 "ReadList(reader, func(reader *SoraReader) ({}, error) {{ return {} }})",
@@ -515,9 +516,11 @@ fn go_value_decode_expr(
         TypeIr::F64 => format!("{value}.AsFloat64()"),
         TypeIr::String => format!("{value}.AsString()"),
         TypeIr::Text => format!("DecodeTextKeyValue({value})"),
-        TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => {
-            mapper.wrap_value_decode(ty, format!("decode{name}Value({value})"))
-        }
+        TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => mapper
+            .wrap_value_decode(
+                ty,
+                format!("decode{}Value({value})", go_exported_identifier(name)),
+            ),
         TypeIr::List(element) | TypeIr::Set(element) | TypeIr::Array { element, .. } => {
             format!(
                 "DecodeSoraValueList({value}, func(item SoraValue) ({}, error) {{ return {} }})",
@@ -600,7 +603,10 @@ fn go_collect_text_keys(
             }
         }
         TypeIr::Struct(_) => format!("{value}.collectTextKeys(out)"),
-        TypeIr::Union(name) => format!("collect{name}TextKeys({value}, out)"),
+        TypeIr::Union(name) => format!(
+            "collect{}TextKeys({value}, out)",
+            go_exported_identifier(name)
+        ),
         TypeIr::Ref { table, field } => ir
             .tables
             .iter()
@@ -645,6 +651,88 @@ fn go_package_name(package: &str) -> Result<String> {
     Ok(package)
 }
 
+fn go_exported_identifier(value: &str) -> String {
+    value
+        .to_snake_case()
+        .split('_')
+        .filter(|word| !word.is_empty())
+        .map(|word| {
+            let upper = word.to_ascii_uppercase();
+            if matches!(
+                upper.as_str(),
+                "ACL"
+                    | "API"
+                    | "ASCII"
+                    | "CPU"
+                    | "CSS"
+                    | "DNS"
+                    | "EOF"
+                    | "GUID"
+                    | "HTML"
+                    | "HTTP"
+                    | "HTTPS"
+                    | "ID"
+                    | "IP"
+                    | "JSON"
+                    | "QPS"
+                    | "RAM"
+                    | "RPC"
+                    | "SLA"
+                    | "SMTP"
+                    | "SQL"
+                    | "SSH"
+                    | "TCP"
+                    | "TLS"
+                    | "TTL"
+                    | "UDP"
+                    | "UI"
+                    | "UID"
+                    | "URI"
+                    | "URL"
+                    | "UTF8"
+                    | "UUID"
+                    | "VM"
+                    | "XML"
+                    | "XMPP"
+                    | "XSRF"
+                    | "XSS"
+            ) {
+                upper
+            } else {
+                let mut chars = word.chars();
+                match chars.next() {
+                    Some(first) => first.to_uppercase().chain(chars).collect(),
+                    None => String::new(),
+                }
+            }
+        })
+        .collect()
+}
+
+fn go_unexported_identifier(value: &str) -> String {
+    let exported = go_exported_identifier(value);
+    let leading_uppercase = exported
+        .char_indices()
+        .take_while(|(_, ch)| ch.is_ascii_uppercase())
+        .map(|(index, ch)| index + ch.len_utf8())
+        .last()
+        .unwrap_or(0);
+    let lowercase_end = if leading_uppercase > 1 && leading_uppercase < exported.len() {
+        exported[..leading_uppercase]
+            .char_indices()
+            .last()
+            .map(|(index, _)| index)
+            .unwrap_or(leading_uppercase)
+    } else {
+        leading_uppercase.max(1).min(exported.len())
+    };
+    format!(
+        "{}{}",
+        exported[..lowercase_end].to_ascii_lowercase(),
+        &exported[lowercase_end..]
+    )
+}
+
 fn is_go_package_name(package: &str) -> bool {
     let mut chars = package.chars();
     let Some(first) = chars.next() else {
@@ -665,4 +753,18 @@ fn ref_target_type<'a>(ir: &'a ConfigIr, table: &str, field: &str) -> Option<&'a
                 .find(|candidate| candidate.name == field)
         })
         .map(|field| &field.ty)
+}
+
+#[cfg(test)]
+mod identifier_tests {
+    use super::{go_exported_identifier, go_unexported_identifier};
+
+    #[test]
+    fn preserves_common_go_initialisms() {
+        assert_eq!(go_exported_identifier("id"), "ID");
+        assert_eq!(go_exported_identifier("item_id"), "ItemID");
+        assert_eq!(go_exported_identifier("api_url"), "APIURL");
+        assert_eq!(go_unexported_identifier("item_id"), "itemID");
+        assert_eq!(go_unexported_identifier("api_client"), "apiClient");
+    }
 }

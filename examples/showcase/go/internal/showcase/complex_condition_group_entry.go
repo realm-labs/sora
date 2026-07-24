@@ -3,8 +3,8 @@
 package showcase
 
 type ComplexConditionGroupEntry struct {
-	Id      int32
-	GroupId int32
+	ID      int32
+	GroupID int32
 	Seq     int32
 	Value   EventCondition
 }
@@ -12,11 +12,11 @@ type ComplexConditionGroupEntry struct {
 func decodeComplexConditionGroupEntry(reader *SoraReader) (ComplexConditionGroupEntry, error) {
 	var value ComplexConditionGroupEntry
 	var err error
-	value.Id, err = reader.ReadInt32()
+	value.ID, err = reader.ReadInt32()
 	if err != nil {
 		return value, err
 	}
-	value.GroupId, err = reader.ReadInt32()
+	value.GroupID, err = reader.ReadInt32()
 	if err != nil {
 		return value, err
 	}
@@ -37,11 +37,11 @@ func decodeComplexConditionGroupEntryValue(input SoraValue) (ComplexConditionGro
 	if err != nil {
 		return value, err
 	}
-	value.Id, err = obj.Get("id").AsInt32()
+	value.ID, err = obj.Get("id").AsInt32()
 	if err != nil {
 		return value, err
 	}
-	value.GroupId, err = obj.Get("group_id").AsInt32()
+	value.GroupID, err = obj.Get("group_id").AsInt32()
 	if err != nil {
 		return value, err
 	}
@@ -78,9 +78,9 @@ type ComplexConditionGroupEntryTable struct {
 func buildComplexConditionGroupEntryTable(rows []ComplexConditionGroupEntry) (*ComplexConditionGroupEntryTable, error) {
 	keys := make([]int32, 0, len(rows))
 	for _, row := range rows {
-		keys = append(keys, row.Id)
+		keys = append(keys, row.ID)
 	}
-	return &ComplexConditionGroupEntryTable{keys: keys, rows: DecodeMapTable(rows, func(row ComplexConditionGroupEntry) int32 { return row.Id })}, nil
+	return &ComplexConditionGroupEntryTable{keys: keys, rows: DecodeMapTable(rows, func(row ComplexConditionGroupEntry) int32 { return row.ID })}, nil
 }
 
 func decodeComplexConditionGroupEntryTable(source SoraTableSource) (*ComplexConditionGroupEntryTable, error) {
@@ -90,9 +90,12 @@ func decodeComplexConditionGroupEntryTable(source SoraTableSource) (*ComplexCond
 	}
 	return buildComplexConditionGroupEntryTable(rows)
 }
-
 func (table *ComplexConditionGroupEntryTable) Rows() map[int32]ComplexConditionGroupEntry {
-	return table.rows
+	rows := make(map[int32]ComplexConditionGroupEntry, len(table.rows))
+	for key, row := range table.rows {
+		rows[key] = row
+	}
+	return rows
 }
 func (table *ComplexConditionGroupEntryTable) Get(key int32) (ComplexConditionGroupEntry, bool) {
 	value, ok := table.rows[key]
@@ -100,7 +103,7 @@ func (table *ComplexConditionGroupEntryTable) Get(key int32) (ComplexConditionGr
 }
 
 func (table *ComplexConditionGroupEntryTable) Keys() []int32 {
-	return table.keys
+	return append([]int32(nil), table.keys...)
 }
 
 func (table *ComplexConditionGroupEntryTable) OrderedRows() []ComplexConditionGroupEntry {

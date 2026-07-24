@@ -444,6 +444,7 @@ impl ProtoWriter {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use prost::Message;
     use sora_data::model::TableData;
     use sora_ir::normalize::normalize_schema;
     use sora_schema::model::SchemaFile;
@@ -495,5 +496,53 @@ type = "enum<ItemType>"
 
         assert!(!bytes.is_empty());
         assert_eq!(bytes[0], 0x0a);
+    }
+
+    #[derive(Clone, PartialEq, Message)]
+    struct MapRow {
+        #[prost(map = "string, int32", tag = "1")]
+        attributes: std::collections::HashMap<String, i32>,
+    }
+
+    #[test]
+    fn map_payload_matches_protobuf_map_wire_format() {
+        let schema: SchemaFile = toml::from_str(
+            r#"
+package = "game_config"
+
+[[tables]]
+name = "Settings"
+mode = "singleton"
+
+[[tables.fields]]
+name = "attributes"
+type = "map<string,i32>"
+"#,
+        )
+        .unwrap();
+        let ir = normalize_schema(schema).unwrap();
+        let row = RowData {
+            values: BTreeMap::from([(
+                "attributes".to_owned(),
+                Value::List(vec![
+                    Value::List(vec![Value::String("attack".to_owned()), Value::Integer(12)]),
+                    Value::List(vec![Value::String("defense".to_owned()), Value::Integer(7)]),
+                ]),
+            )]),
+        };
+
+        let mut encoded_row = ProtoWriter::default();
+        encode_row(
+            &ir,
+            &mut encoded_row,
+            "Settings",
+            &ir.tables[0].fields,
+            &row,
+        )
+        .unwrap();
+        let decoded = MapRow::decode(encoded_row.into_bytes().as_slice()).unwrap();
+
+        assert_eq!(decoded.attributes["attack"], 12);
+        assert_eq!(decoded.attributes["defense"], 7);
     }
 }

@@ -46,7 +46,7 @@ from_bundle(Bundle) ->
 {%- endfor %}
     {{ "#{" }}
 {%- for table in model.tables %}
-        '{{ table.snake_name }}' => {{ table.pascal_name }}{% if not loop.last %},{% endif %}
+        {{ table.snake_atom }} => {{ table.pascal_name }}{% if not loop.last %},{% endif %}
 {%- endfor %}
     }.
 
@@ -61,6 +61,6 @@ tables(Config) ->
 {%- for table in model.tables %}
 -spec {{ table.snake_name }}(t()) -> {{ table.snake_name }}:table().
 {{ table.snake_name }}(Config) ->
-    maps:get('{{ table.snake_name }}', Config).
+    maps:get({{ table.snake_atom }}, Config).
 
 {%- endfor %}

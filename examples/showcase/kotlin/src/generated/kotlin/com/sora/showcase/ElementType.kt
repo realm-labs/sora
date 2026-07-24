@@ -3,27 +3,27 @@
 package com.sora.showcase
 
 enum class ElementType(val id: Int) {
-    Fire(0),
-    Ice(1),
-    Lightning(2),
-    Physical(3);
+    FIRE(0),
+    ICE(1),
+    LIGHTNING(2),
+    PHYSICAL(3);
 
     companion object {
         fun decode(reader: SoraReader): ElementType =
             when (val id = reader.readU32()) {
-                0 -> Fire
-                1 -> Ice
-                2 -> Lightning
-                3 -> Physical
+                0 -> FIRE
+                1 -> ICE
+                2 -> LIGHTNING
+                3 -> PHYSICAL
                 else -> throw SoraReadException("invalid enum id $id for ElementType")
             }
 
         fun decode(value: SoraValue): ElementType =
             when (val name = value.asString()) {
-                "Fire" -> Fire
-                "Ice" -> Ice
-                "Lightning" -> Lightning
-                "Physical" -> Physical
+                "Fire" -> FIRE
+                "Ice" -> ICE
+                "Lightning" -> LIGHTNING
+                "Physical" -> PHYSICAL
                 else -> throw SoraReadException("invalid enum value $name for ElementType")
             }
     }

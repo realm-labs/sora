@@ -13,11 +13,11 @@ import { collectResourceCostTextKeys, decodeResourceCost, decodeResourceCostValu
 
 
 export interface ShopItem {
-    shopId: number;
-    seq: number;
-    itemId: number;
-    price: ResourceCost;
-    dailyLimit: number | undefined;
+    readonly shopId: number;
+    readonly seq: number;
+    readonly itemId: number;
+    readonly price: ResourceCost;
+    readonly dailyLimit: number | undefined;
 }
 
 export function decodeShopItem(reader: SoraReader): ShopItem {
@@ -56,7 +56,7 @@ export class ShopItemTable implements SoraListTable<ShopItem> {
     };
 
     private constructor(
-        private readonly _rows: ShopItem[],
+        private readonly _rows: readonly ShopItem[],
     ) {}
 
     static decode(rows: ShopItem[]): ShopItemTable {
@@ -69,10 +69,18 @@ export class ShopItemTable implements SoraListTable<ShopItem> {
         return ShopItemTable.tableInfo;
     }
 
-    len(): number {
+    get size(): number {
         return this._rows.length;
     }
-    rows(): readonly ShopItem[] {
+    get rows(): readonly ShopItem[] {
         return this._rows;
+    }
+
+    at(index: number): ShopItem | undefined {
+        return this._rows.at(index);
+    }
+
+    [Symbol.iterator](): Iterator<ShopItem> {
+        return this._rows[Symbol.iterator]();
     }
 }

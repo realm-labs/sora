@@ -54,10 +54,18 @@ export class StageRewardTable {
         return StageRewardTable.tableInfo;
     }
 
-    len() {
+    get size() {
         return this._rows.length;
     }
-    rows() {
+    get rows() {
         return this._rows;
+    }
+
+    at(index) {
+        return this._rows.at(index);
+    }
+
+    [Symbol.iterator]() {
+        return this._rows[Symbol.iterator]();
     }
 }

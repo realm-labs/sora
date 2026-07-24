@@ -3,11 +3,11 @@
 package com.sora.showcase;
 
 public enum Rarity {
-    Common(0),
-    Uncommon(1),
-    Rare(2),
-    Epic(3),
-    Legendary(4);
+    COMMON(0),
+    UNCOMMON(1),
+    RARE(2),
+    EPIC(3),
+    LEGENDARY(4);
 
     private final int id;
 
@@ -22,15 +22,15 @@ public enum Rarity {
     static Rarity decode(SoraReader reader) {
         switch (reader.readU32()) {
             case 0:
-                return Common;
+                return COMMON;
             case 1:
-                return Uncommon;
+                return UNCOMMON;
             case 2:
-                return Rare;
+                return RARE;
             case 3:
-                return Epic;
+                return EPIC;
             case 4:
-                return Legendary;
+                return LEGENDARY;
             default:
                 throw new SoraReadException("invalid enum id for Rarity");
         }
@@ -39,15 +39,15 @@ public enum Rarity {
     static Rarity decode(SoraValue value) {
         switch (value.asString()) {
             case "Common":
-                return Common;
+                return COMMON;
             case "Uncommon":
-                return Uncommon;
+                return UNCOMMON;
             case "Rare":
-                return Rare;
+                return RARE;
             case "Epic":
-                return Epic;
+                return EPIC;
             case "Legendary":
-                return Legendary;
+                return LEGENDARY;
             default:
                 throw new SoraReadException("invalid enum value for Rarity");
         }

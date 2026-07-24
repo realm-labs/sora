@@ -4,9 +4,9 @@ import type { SoraKeyedTable, SoraTableInfo, SoraReader, SoraValue, TextKey } fr
 
 
 export interface LevelExp {
-    level: number;
-    exp: bigint;
-    unlockFeature: string | undefined;
+    readonly level: number;
+    readonly exp: bigint;
+    readonly unlockFeature: string | undefined;
 }
 
 export declare function decodeLevelExp(reader: SoraReader): LevelExp;
@@ -17,9 +17,11 @@ export declare class LevelExpTable implements SoraKeyedTable<number, LevelExp> {
     static readonly tableInfo: SoraTableInfo;
     static decode(rows: LevelExp[]): LevelExpTable;
     info(): SoraTableInfo;
-    len(): number;
+    readonly size: number;
     get(key: number): LevelExp | undefined;
-    rows(): ReadonlyMap<number, LevelExp>;
-    keys(): readonly number[];
-    orderedRows(): LevelExp[];
+    has(key: number): boolean;
+    readonly rows: ReadonlyMap<number, LevelExp>;
+    readonly orderedKeys: readonly number[];
+    readonly orderedRows: readonly LevelExp[];
+    [Symbol.iterator](): Iterator<LevelExp>;
 }

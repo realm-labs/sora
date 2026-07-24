@@ -37,7 +37,7 @@ public:
         return info;
     }
 
-    CharacterSkillTable() {}
+    CharacterSkillTable() = default;
     CharacterSkillTable(const CharacterSkillTable&) = delete;
     CharacterSkillTable& operator=(const CharacterSkillTable&) = delete;
     CharacterSkillTable(CharacterSkillTable&&) = default;

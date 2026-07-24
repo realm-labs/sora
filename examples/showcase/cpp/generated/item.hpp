@@ -54,7 +54,7 @@ public:
         return info;
     }
 
-    ItemTable() {}
+    ItemTable() = default;
     ItemTable(const ItemTable&) = delete;
     ItemTable& operator=(const ItemTable&) = delete;
     ItemTable(ItemTable&&) = default;
@@ -63,8 +63,7 @@ public:
     static ItemTable decode(const SoraBundle& bundle) {
         std::vector<Item> rows = bundle.decode_table<Item>(NAME);
         ItemTable table;
-        for (std::size_t index = 0; index < rows.size(); ++index) {
-            const Item& row = rows[index];
+        for (const auto& row : rows) {
             table.keys_.push_back(row.id);
             table.rows_.emplace(row.id, row);
         }
@@ -81,7 +80,7 @@ public:
     }
 
     const Item* get(const std::int32_t& key) const {
-        typename std::unordered_map<std::int32_t, Item>::const_iterator it = rows_.find(key);
+        auto it = rows_.find(key);
         if (it == rows_.end()) {
             return nullptr;
         }
@@ -95,10 +94,8 @@ public:
     std::vector<const Item*> ordered_rows() const {
         std::vector<const Item*> rows;
         rows.reserve(keys_.size());
-        for (typename std::vector<std::int32_t>::const_iterator key = keys_.begin();
-             key != keys_.end();
-             ++key) {
-            typename std::unordered_map<std::int32_t, Item>::const_iterator it = rows_.find(*key);
+        for (const auto& key : keys_) {
+            auto it = rows_.find(key);
             if (it != rows_.end()) {
                 rows.push_back(&it->second);
             }
@@ -107,8 +104,7 @@ public:
     }
 
     const Item* get_by_name(const std::string& name) const {
-        typename std::unordered_map<std::string, const Item*>::const_iterator it =
-            by_name_.find(name);
+        auto it = by_name_.find(name);
         if (it == by_name_.end()) {
             return nullptr;
         }
@@ -116,8 +112,7 @@ public:
     }
 
     std::vector<const Item*> find_by_item_type(const ItemType& item_type) const {
-        typename std::unordered_map<ItemType, std::vector<const Item*> >::const_iterator it =
-            by_item_type_.find(item_type);
+        auto it = by_item_type_.find(item_type);
         if (it == by_item_type_.end()) {
             return std::vector<const Item*>();
         }
@@ -126,10 +121,8 @@ public:
 
 private:
     void build_indexes() {
-        for (typename std::unordered_map<std::int32_t, Item>::const_iterator it = rows_.begin();
-             it != rows_.end();
-             ++it) {
-            const Item& row = it->second;
+        for (const auto& entry : rows_) {
+            const Item& row = entry.second;
             by_name_[row.name] = &row;
             by_item_type_[row.item_type].push_back(&row);
         }

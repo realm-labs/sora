@@ -3,25 +3,12 @@
 package com.sora.showcase;
 
 import java.util.List;
-import java.util.Map;
 
-
-public final class LevelExp {
-    public final Integer level;
-    public final long exp;
-    @SoraNullable
-    public final String unlockFeature;
-
-    public LevelExp(
-        Integer level,
-        long exp,
-        @SoraNullable String unlockFeature
-    ) {
-        this.level = level;
-        this.exp = exp;
-        this.unlockFeature = unlockFeature;
-    }
-
+public record LevelExp(
+    int level,
+    long exp,
+    @SoraNullable String unlockFeature
+) {
     static LevelExp decode(SoraReader reader) {
         return new LevelExp(
             reader.readI32(),
@@ -40,63 +27,5 @@ public final class LevelExp {
     }
 
     void collectTextKeys(List<TextKey> out) {
-    }
-}
-
-final class LevelExpTable extends java.util.AbstractMap<Integer, LevelExp> implements SoraKeyedTable<Integer, LevelExp> {
-    static final String NAME = "LevelExp";
-    static final SoraTableInfo INFO = new SoraTableInfo(
-        NAME,
-        "LevelExp",
-        SoraTableShape.KEYED,
-        new SoraKeyInfo("level", "Integer"),
-        List.of(
-        )
-    );
-    private final List<Integer> keys;
-    private final java.util.Map<Integer, LevelExp> rows;
-
-    private LevelExpTable(List<Integer> keys, java.util.Map<Integer, LevelExp> rows) {
-        this.keys = keys;
-        this.rows = rows;
-    }
-
-    private static LevelExpTable fromRows(List<LevelExp> rows) {
-        return new LevelExpTable(rows.stream().map(row -> row.level).toList(), SoraConfig.decodeMapTable(rows, row -> row.level));
-    }
-
-    static LevelExpTable decode(SoraTableSource source) {
-        return fromRows(source.decodeTable(NAME, LevelExp::decode, LevelExp::decode));
-    }
-
-    public java.util.Map<Integer, LevelExp> rows() {
-        return rows;
-    }
-    @Override
-    @SoraNullable
-    public LevelExp get(Object key) {
-        return rows.get(key);
-    }
-
-    public List<Integer> orderedKeys() {
-        return keys;
-    }
-
-    public List<LevelExp> orderedRows() {
-        return keys.stream().map(rows::get).toList();
-    }
-
-    @Override
-    public java.util.Set<Map.Entry<Integer, LevelExp>> entrySet() {
-        return rows.entrySet();
-    }
-    @Override
-    public SoraTableInfo info() {
-        return INFO;
-    }
-
-    @Override
-    public int size() {
-        return rows.size();
     }
 }

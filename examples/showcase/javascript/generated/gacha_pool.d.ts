@@ -6,9 +6,9 @@ import type { ResourceCost } from "./resource_cost.js";
 
 
 export interface GachaPool {
-    id: number;
-    name: string;
-    cost: ResourceCost;
+    readonly id: number;
+    readonly name: string;
+    readonly cost: ResourceCost;
 }
 
 export declare function decodeGachaPool(reader: SoraReader): GachaPool;
@@ -19,9 +19,11 @@ export declare class GachaPoolTable implements SoraKeyedTable<number, GachaPool>
     static readonly tableInfo: SoraTableInfo;
     static decode(rows: GachaPool[]): GachaPoolTable;
     info(): SoraTableInfo;
-    len(): number;
+    readonly size: number;
     get(key: number): GachaPool | undefined;
-    rows(): ReadonlyMap<number, GachaPool>;
-    keys(): readonly number[];
-    orderedRows(): GachaPool[];
+    has(key: number): boolean;
+    readonly rows: ReadonlyMap<number, GachaPool>;
+    readonly orderedKeys: readonly number[];
+    readonly orderedRows: readonly GachaPool[];
+    [Symbol.iterator](): Iterator<GachaPool>;
 }

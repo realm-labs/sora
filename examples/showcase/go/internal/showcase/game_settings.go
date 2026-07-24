@@ -144,10 +144,6 @@ func decodeGameSettingsTable(source SoraTableSource) (*GameSettingsTable, error)
 	}
 	return buildGameSettingsTable(rows)
 }
-
-func (table *GameSettingsTable) Rows() GameSettings {
-	return table.rows
-}
 func (table *GameSettingsTable) Row() GameSettings {
 	return table.rows
 }

@@ -4,21 +4,11 @@ package com.sora.showcase;
 
 import java.util.List;
 
-public final class RewardBundle {
-    public final ResourceCost cost;
-    public final Integer weight;
-    public final java.util.List<String> labels;
-
-    public RewardBundle(
-        ResourceCost cost,
-        Integer weight,
-        java.util.List<String> labels
-    ) {
-        this.cost = cost;
-        this.weight = weight;
-        this.labels = labels;
-    }
-
+public record RewardBundle(
+    ResourceCost cost,
+    int weight,
+    java.util.List<String> labels
+) {
     static RewardBundle decode(SoraReader reader) {
         return new RewardBundle(
             ResourceCost.decode(reader),

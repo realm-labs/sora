@@ -128,7 +128,7 @@ message RewardBundle {
 message ComplexBudget {
   ResourceCost fixed = 1;
   repeated RewardBundle random = 2;
-  repeated int32 limits = 3;
+  map<string, int32> limits = 3;
 }
 
 message MaintenanceInfo {
@@ -207,7 +207,7 @@ message Item {
   int32 max_stack = 4;
   ResourceCost price = 5;
   repeated string tags = 6;
-  repeated int32 attributes = 7;
+  map<string, int32> attributes = 7;
 }
 
 message Shop {

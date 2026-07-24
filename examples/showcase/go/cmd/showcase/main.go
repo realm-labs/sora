@@ -28,12 +28,12 @@ func main() {
 	check(ok)
 	quest, ok := cfg.Quest().Get(5001)
 	check(ok)
-	settings := cfg.GameSettings().Rows()
+	settings := cfg.GameSettings().Row()
 
 	check(sword.Name == "Iron Sword")
-	check(swordByName.Id == 1001)
+	check(swordByName.ID == 1001)
 	check(sword.ItemType == config.ItemTypeWeapon)
-	check(containsItem(cfg.Item().FindByItemType(config.ItemTypeWeapon), sword.Id))
+	check(containsItem(cfg.Item().FindByItemType(config.ItemTypeWeapon), sword.ID))
 	check(quest.Title == "First Trial")
 	check(quest.QuestType == config.QuestTypeMain)
 	check(len(quest.Rewards) == 2)
@@ -51,9 +51,9 @@ func main() {
 	eventRule, ok := cfg.EventRule().Get(17001)
 	check(ok)
 	condition, ok := eventRule.Condition.(config.EventConditionQuestCompleted)
-	check(ok && condition.QuestId == 5002)
+	check(ok && condition.QuestID == 5002)
 	firstAction, ok := eventRule.Actions[0].(config.RewardActionAddItem)
-	check(ok && firstAction.ItemId == 1007)
+	check(ok && firstAction.ItemID == 1007)
 
 	fmt.Printf(
 		"loaded %d items, %d skills, %d quests, %d stages, %d event rules; first quest rewards: %d\n",
@@ -80,7 +80,7 @@ func check(condition bool) {
 
 func containsItem(items []config.Item, id int32) bool {
 	for _, item := range items {
-		if item.Id == id {
+		if item.ID == id {
 			return true
 		}
 	}

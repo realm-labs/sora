@@ -7,13 +7,13 @@
 -export_type([t/0, table/0]).
 
 -type t() :: #{
-    'id' := integer(),
-    'name' := binary(),
-    'rarity' := rarity:t(),
-    'base_level' := integer(),
-    'base_skill' := integer(),
-    'starter_items' := [integer()],
-    'spawn_pos' := vec3:t()
+    id := integer(),
+    name := binary(),
+    rarity := rarity:t(),
+    base_level := integer(),
+    base_skill := integer(),
+    starter_items := [integer()],
+    spawn_pos := vec3:t()
 }.
 
 -type table() :: map().
@@ -29,33 +29,33 @@ decode(Reader0) ->
     {StarterItems, Reader6} = (fun(Reader) -> sora_runtime:read_list(fun sora_runtime:read_i32/1, Reader) end)(Reader5),
     {SpawnPos, Reader7} = (fun vec3:decode/1)(Reader6),
     {#{
-        'id' => Id,
-        'name' => Name,
-        'rarity' => Rarity,
-        'base_level' => BaseLevel,
-        'base_skill' => BaseSkill,
-        'starter_items' => StarterItems,
-        'spawn_pos' => SpawnPos
+        id => Id,
+        name => Name,
+        rarity => Rarity,
+        base_level => BaseLevel,
+        base_skill => BaseSkill,
+        starter_items => StarterItems,
+        spawn_pos => SpawnPos
     }, Reader7}.
 
 -spec decode_value(map()) -> t().
 decode_value(Value) ->
     Obj = sora_runtime:expect_map(Value),
     #{
-        'id' => sora_runtime:expect_integer(sora_runtime:value_get(<<"id">>, Obj)),
-        'name' => sora_runtime:expect_binary(sora_runtime:value_get(<<"name">>, Obj)),
-        'rarity' => rarity:decode_value(sora_runtime:value_get(<<"rarity">>, Obj)),
-        'base_level' => sora_runtime:expect_integer(sora_runtime:value_get(<<"base_level">>, Obj)),
-        'base_skill' => sora_runtime:expect_integer(sora_runtime:value_get(<<"base_skill">>, Obj)),
-        'starter_items' => sora_runtime:decode_value_list(fun(Item) -> sora_runtime:expect_integer(Item) end, sora_runtime:value_get(<<"starter_items">>, Obj)),
-        'spawn_pos' => vec3:decode_value(sora_runtime:value_get(<<"spawn_pos">>, Obj))
+        id => sora_runtime:expect_integer(sora_runtime:value_get(<<"id">>, Obj)),
+        name => sora_runtime:expect_binary(sora_runtime:value_get(<<"name">>, Obj)),
+        rarity => rarity:decode_value(sora_runtime:value_get(<<"rarity">>, Obj)),
+        base_level => sora_runtime:expect_integer(sora_runtime:value_get(<<"base_level">>, Obj)),
+        base_skill => sora_runtime:expect_integer(sora_runtime:value_get(<<"base_skill">>, Obj)),
+        starter_items => sora_runtime:decode_value_list(fun(Item) -> sora_runtime:expect_integer(Item) end, sora_runtime:value_get(<<"starter_items">>, Obj)),
+        spawn_pos => vec3:decode_value(sora_runtime:value_get(<<"spawn_pos">>, Obj))
     }.
 
 -spec decode_table(map()) -> table().
 decode_table(Bundle) ->
     Rows = sora_runtime:decode_table(Bundle, ?TABLE_NAME, fun ?MODULE:decode/1, fun ?MODULE:decode_value/1),
-    Data = sora_runtime:decode_map_table(Rows, fun(Row) -> maps:get('id', Row) end),
-    Keys = [maps:get('id', Row) || Row <- Rows],
+    Data = sora_runtime:decode_map_table(Rows, fun(Row) -> maps:get(id, Row) end),
+    Keys = [maps:get(id, Row) || Row <- Rows],
     #{
         keys => Keys,
         data => Data

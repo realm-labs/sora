@@ -3,21 +3,11 @@
 package com.sora.showcase;
 
 import java.util.List;
-import java.util.Map;
 
-
-public final class DropGroup {
-    public final Integer id;
-    public final String name;
-
-    public DropGroup(
-        Integer id,
-        String name
-    ) {
-        this.id = id;
-        this.name = name;
-    }
-
+public record DropGroup(
+    int id,
+    String name
+) {
     static DropGroup decode(SoraReader reader) {
         return new DropGroup(
             reader.readI32(),
@@ -34,63 +24,5 @@ public final class DropGroup {
     }
 
     void collectTextKeys(List<TextKey> out) {
-    }
-}
-
-final class DropGroupTable extends java.util.AbstractMap<Integer, DropGroup> implements SoraKeyedTable<Integer, DropGroup> {
-    static final String NAME = "DropGroup";
-    static final SoraTableInfo INFO = new SoraTableInfo(
-        NAME,
-        "DropGroup",
-        SoraTableShape.KEYED,
-        new SoraKeyInfo("id", "Integer"),
-        List.of(
-        )
-    );
-    private final List<Integer> keys;
-    private final java.util.Map<Integer, DropGroup> rows;
-
-    private DropGroupTable(List<Integer> keys, java.util.Map<Integer, DropGroup> rows) {
-        this.keys = keys;
-        this.rows = rows;
-    }
-
-    private static DropGroupTable fromRows(List<DropGroup> rows) {
-        return new DropGroupTable(rows.stream().map(row -> row.id).toList(), SoraConfig.decodeMapTable(rows, row -> row.id));
-    }
-
-    static DropGroupTable decode(SoraTableSource source) {
-        return fromRows(source.decodeTable(NAME, DropGroup::decode, DropGroup::decode));
-    }
-
-    public java.util.Map<Integer, DropGroup> rows() {
-        return rows;
-    }
-    @Override
-    @SoraNullable
-    public DropGroup get(Object key) {
-        return rows.get(key);
-    }
-
-    public List<Integer> orderedKeys() {
-        return keys;
-    }
-
-    public List<DropGroup> orderedRows() {
-        return keys.stream().map(rows::get).toList();
-    }
-
-    @Override
-    public java.util.Set<Map.Entry<Integer, DropGroup>> entrySet() {
-        return rows.entrySet();
-    }
-    @Override
-    public SoraTableInfo info() {
-        return INFO;
-    }
-
-    @Override
-    public int size() {
-        return rows.size();
     }
 }

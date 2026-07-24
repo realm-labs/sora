@@ -7,9 +7,9 @@ import { collectStatTypeTextKeys, decodeStatType, decodeStatTypeValue } from "./
 
 
 export interface StatModifier {
-    stat: StatType;
-    value: number;
-    isPercent: boolean;
+    readonly stat: StatType;
+    readonly value: number;
+    readonly isPercent: boolean;
 }
 
 export function decodeStatModifier(reader: SoraReader): StatModifier {

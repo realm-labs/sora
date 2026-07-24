@@ -5,8 +5,8 @@
 -export_type([t/0]).
 
 -type t() :: #{
-    'item_id' := integer(),
-    'count' := integer()
+    item_id := integer(),
+    count := integer()
 }.
 
 -spec decode(sora_runtime:reader()) -> {t(), sora_runtime:reader()}.
@@ -14,14 +14,14 @@ decode(Reader0) ->
     {ItemId, Reader1} = (fun sora_runtime:read_i32/1)(Reader0),
     {Count, Reader2} = (fun sora_runtime:read_i32/1)(Reader1),
     {#{
-        'item_id' => ItemId,
-        'count' => Count
+        item_id => ItemId,
+        count => Count
     }, Reader2}.
 
 -spec decode_value(map()) -> t().
 decode_value(Value) ->
     Obj = sora_runtime:expect_map(Value),
     #{
-        'item_id' => sora_runtime:expect_integer(sora_runtime:value_get(<<"item_id">>, Obj)),
-        'count' => sora_runtime:expect_integer(sora_runtime:value_get(<<"count">>, Obj))
+        item_id => sora_runtime:expect_integer(sora_runtime:value_get(<<"item_id">>, Obj)),
+        count => sora_runtime:expect_integer(sora_runtime:value_get(<<"count">>, Obj))
     }.

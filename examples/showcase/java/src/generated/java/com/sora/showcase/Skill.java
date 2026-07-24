@@ -3,43 +3,20 @@
 package com.sora.showcase;
 
 import java.util.List;
-import java.util.Map;
 
-
-public final class Skill {
-    public final Integer id;
-    public final String name;
-    public final ElementType element;
+public record Skill(
+    int id,
+    String name,
+    ElementType element,
     /** Tuple cost, e.g. Gold,0,150 */
-    public final ResourceCost cost;
+    ResourceCost cost,
     /** JSON object with element/power/radius */
-    public final SkillEffect effect;
-    public final Integer requiredLevel;
+    SkillEffect effect,
+    int requiredLevel,
     /** Optional item requirement */
-    @SoraNullable
-    public final Integer requiredItem;
-    public final Vec3 castOrigin;
-
-    public Skill(
-        Integer id,
-        String name,
-        ElementType element,
-        ResourceCost cost,
-        SkillEffect effect,
-        Integer requiredLevel,
-        @SoraNullable Integer requiredItem,
-        Vec3 castOrigin
-    ) {
-        this.id = id;
-        this.name = name;
-        this.element = element;
-        this.cost = cost;
-        this.effect = effect;
-        this.requiredLevel = requiredLevel;
-        this.requiredItem = requiredItem;
-        this.castOrigin = castOrigin;
-    }
-
+    @SoraNullable Integer requiredItem,
+    Vec3 castOrigin
+) {
     static Skill decode(SoraReader reader) {
         return new Skill(
             reader.readI32(),
@@ -71,63 +48,5 @@ public final class Skill {
         this.cost.collectTextKeys(out);
         this.effect.collectTextKeys(out);
         this.castOrigin.collectTextKeys(out);
-    }
-}
-
-final class SkillTable extends java.util.AbstractMap<Integer, Skill> implements SoraKeyedTable<Integer, Skill> {
-    static final String NAME = "Skill";
-    static final SoraTableInfo INFO = new SoraTableInfo(
-        NAME,
-        "Skill",
-        SoraTableShape.KEYED,
-        new SoraKeyInfo("id", "Integer"),
-        List.of(
-        )
-    );
-    private final List<Integer> keys;
-    private final java.util.Map<Integer, Skill> rows;
-
-    private SkillTable(List<Integer> keys, java.util.Map<Integer, Skill> rows) {
-        this.keys = keys;
-        this.rows = rows;
-    }
-
-    private static SkillTable fromRows(List<Skill> rows) {
-        return new SkillTable(rows.stream().map(row -> row.id).toList(), SoraConfig.decodeMapTable(rows, row -> row.id));
-    }
-
-    static SkillTable decode(SoraTableSource source) {
-        return fromRows(source.decodeTable(NAME, Skill::decode, Skill::decode));
-    }
-
-    public java.util.Map<Integer, Skill> rows() {
-        return rows;
-    }
-    @Override
-    @SoraNullable
-    public Skill get(Object key) {
-        return rows.get(key);
-    }
-
-    public List<Integer> orderedKeys() {
-        return keys;
-    }
-
-    public List<Skill> orderedRows() {
-        return keys.stream().map(rows::get).toList();
-    }
-
-    @Override
-    public java.util.Set<Map.Entry<Integer, Skill>> entrySet() {
-        return rows.entrySet();
-    }
-    @Override
-    public SoraTableInfo info() {
-        return INFO;
-    }
-
-    @Override
-    public int size() {
-        return rows.size();
     }
 }

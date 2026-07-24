@@ -71,8 +71,7 @@ public sealed class DropEntryTable : ISoraListTable<DropEntry>
     {
         return new DropEntryTable(rows);
     }
-
-    public List<DropEntry> Rows => rows;
+    public IReadOnlyList<DropEntry> Rows => rows;
     public DropEntry this[int index] => rows[index];
 
     public IEnumerator<DropEntry> GetEnumerator()

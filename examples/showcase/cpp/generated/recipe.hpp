@@ -38,7 +38,7 @@ public:
         return info;
     }
 
-    RecipeTable() {}
+    RecipeTable() = default;
     RecipeTable(const RecipeTable&) = delete;
     RecipeTable& operator=(const RecipeTable&) = delete;
     RecipeTable(RecipeTable&&) = default;
@@ -47,8 +47,7 @@ public:
     static RecipeTable decode(const SoraBundle& bundle) {
         std::vector<Recipe> rows = bundle.decode_table<Recipe>(NAME);
         RecipeTable table;
-        for (std::size_t index = 0; index < rows.size(); ++index) {
-            const Recipe& row = rows[index];
+        for (const auto& row : rows) {
             table.keys_.push_back(row.id);
             table.rows_.emplace(row.id, row);
         }
@@ -65,7 +64,7 @@ public:
     }
 
     const Recipe* get(const std::int32_t& key) const {
-        typename std::unordered_map<std::int32_t, Recipe>::const_iterator it = rows_.find(key);
+        auto it = rows_.find(key);
         if (it == rows_.end()) {
             return nullptr;
         }
@@ -79,10 +78,8 @@ public:
     std::vector<const Recipe*> ordered_rows() const {
         std::vector<const Recipe*> rows;
         rows.reserve(keys_.size());
-        for (typename std::vector<std::int32_t>::const_iterator key = keys_.begin();
-             key != keys_.end();
-             ++key) {
-            typename std::unordered_map<std::int32_t, Recipe>::const_iterator it = rows_.find(*key);
+        for (const auto& key : keys_) {
+            auto it = rows_.find(key);
             if (it != rows_.end()) {
                 rows.push_back(&it->second);
             }

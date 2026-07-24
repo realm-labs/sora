@@ -10,7 +10,7 @@ namespace com.sora.showcase;
 public sealed record ComplexActionGroup(
     int Id,
     string Name,
-    List<RewardAction> Actions
+    IReadOnlyList<RewardAction> Actions
 )
 {
     internal static ComplexActionGroup Decode(SoraReader reader)
@@ -71,8 +71,7 @@ public sealed class ComplexActionGroupTable : ISoraKeyedTable<int, ComplexAction
     {
         return new ComplexActionGroupTable(rows.ConvertAll(row => row.Id), SoraConfig.DecodeMapTable(rows, row => row.Id));
     }
-
-    public Dictionary<int, ComplexActionGroup> Rows => rows;
+    public IReadOnlyDictionary<int, ComplexActionGroup> Rows => rows;
     public ComplexActionGroup this[int key] => rows[key];
 
     public ComplexActionGroup? Get(int key)

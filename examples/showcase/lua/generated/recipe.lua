@@ -5,7 +5,7 @@ local ResourceCost = require("generated.resource_cost")
 
 ---@class Recipe
 ---@field id integer
----@field resultItem integer
+---@field result_item integer
 ---@field materials ResourceCost[]
 
 local Recipe = {}
@@ -15,7 +15,7 @@ local Recipe = {}
 function Recipe.decode(reader)
     return {
         id = reader:read_i32(),
-        resultItem = reader:read_i32(),
+        result_item = reader:read_i32(),
         materials = reader:read_list(function() return ResourceCost.decode(reader) end),
     }
 end
@@ -26,7 +26,7 @@ function Recipe.decode_value(value)
     local obj = Runtime.expect_table(value)
     return {
         id = Runtime.expect_integer(obj["id"]),
-        resultItem = Runtime.expect_integer(obj["result_item"]),
+        result_item = Runtime.expect_integer(obj["result_item"]),
         materials = Runtime.decode_value_list(obj["materials"], function(item) return ResourceCost.decode_value(item) end),
     }
 end

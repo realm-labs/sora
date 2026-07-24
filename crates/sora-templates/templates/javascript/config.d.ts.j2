@@ -8,7 +8,7 @@ export declare const SORA_SCHEMA_FINGERPRINT: string;
 
 export declare class SoraConfig {
     static fromSource(source: SoraTableSource): SoraConfig;
-    tables(): SoraConfigTable[];
+    tables(): readonly SoraConfigTable[];
 {%- if model.has_localization %}
     validateLocalePack(pack: LocalePack): void;
 {%- endif %}

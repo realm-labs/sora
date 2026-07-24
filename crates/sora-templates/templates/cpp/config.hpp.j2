@@ -32,7 +32,11 @@ public:
 {%- for table in model.tables %}
         config.tables_.emplace(
             {{ table.pascal_name }}Table::NAME,
+{%- if options.has_make_unique %}
+            std::make_unique<{{ table.pascal_name }}Table>({{ table.pascal_name }}Table::decode(bundle))
+{%- else %}
             std::unique_ptr<SoraTable>(new {{ table.pascal_name }}Table({{ table.pascal_name }}Table::decode(bundle)))
+{%- endif %}
         );
 {%- endfor %}
         return config;
@@ -47,8 +51,7 @@ public:
 private:
     template <typename T>
     const T& table_as(const std::string& name) const {
-        typename std::unordered_map<std::string, std::unique_ptr<SoraTable> >::const_iterator it =
-            tables_.find(name);
+        auto it = tables_.find(name);
         if (it == tables_.end()) {
             throw SoraReadException("missing Sora table `" + name + "`");
         }

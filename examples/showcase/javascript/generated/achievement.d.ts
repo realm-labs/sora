@@ -6,10 +6,10 @@ import type { ResourceCost } from "./resource_cost.js";
 
 
 export interface Achievement {
-    id: number;
-    titleKey: TextKey;
-    targetCount: bigint;
-    reward: ResourceCost;
+    readonly id: number;
+    readonly titleKey: TextKey;
+    readonly targetCount: bigint;
+    readonly reward: ResourceCost;
 }
 
 export declare function decodeAchievement(reader: SoraReader): Achievement;
@@ -20,9 +20,11 @@ export declare class AchievementTable implements SoraKeyedTable<number, Achievem
     static readonly tableInfo: SoraTableInfo;
     static decode(rows: Achievement[]): AchievementTable;
     info(): SoraTableInfo;
-    len(): number;
+    readonly size: number;
     get(key: number): Achievement | undefined;
-    rows(): ReadonlyMap<number, Achievement>;
-    keys(): readonly number[];
-    orderedRows(): Achievement[];
+    has(key: number): boolean;
+    readonly rows: ReadonlyMap<number, Achievement>;
+    readonly orderedKeys: readonly number[];
+    readonly orderedRows: readonly Achievement[];
+    [Symbol.iterator](): Iterator<Achievement>;
 }

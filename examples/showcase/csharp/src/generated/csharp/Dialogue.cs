@@ -10,7 +10,7 @@ namespace com.sora.showcase;
 public sealed record Dialogue(
     int Id,
     TextKey SpeakerKey,
-    List<string> Lines
+    IReadOnlyList<string> Lines
 )
 {
     internal static Dialogue Decode(SoraReader reader)
@@ -68,8 +68,7 @@ public sealed class DialogueTable : ISoraKeyedTable<int, Dialogue>
     {
         return new DialogueTable(rows.ConvertAll(row => row.Id), SoraConfig.DecodeMapTable(rows, row => row.Id));
     }
-
-    public Dictionary<int, Dialogue> Rows => rows;
+    public IReadOnlyDictionary<int, Dialogue> Rows => rows;
     public Dialogue this[int key] => rows[key];
 
     public Dialogue? Get(int key)

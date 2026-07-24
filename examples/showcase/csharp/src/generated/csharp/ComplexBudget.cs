@@ -9,8 +9,8 @@ namespace com.sora.showcase;
 
 public sealed record ComplexBudget(
     ResourceCost Fixed,
-    List<RewardBundle> Random,
-    Dictionary<string, int> Limits
+    IReadOnlyList<RewardBundle> Random,
+    IReadOnlyDictionary<string, int> Limits
 )
 {
     internal static ComplexBudget Decode(SoraReader reader)

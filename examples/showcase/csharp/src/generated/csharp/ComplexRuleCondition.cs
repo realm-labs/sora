@@ -68,8 +68,7 @@ public sealed class ComplexRuleConditionTable : ISoraKeyedTable<int, ComplexRule
     {
         return new ComplexRuleConditionTable(rows.ConvertAll(row => row.Id), SoraConfig.DecodeMapTable(rows, row => row.Id));
     }
-
-    public Dictionary<int, ComplexRuleCondition> Rows => rows;
+    public IReadOnlyDictionary<int, ComplexRuleCondition> Rows => rows;
     public ComplexRuleCondition this[int key] => rows[key];
 
     public ComplexRuleCondition? Get(int key)

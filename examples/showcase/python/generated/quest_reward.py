@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from collections.abc import Iterator, Mapping, Sequence
 from typing import TYPE_CHECKING
 
 from .sora_runtime import SoraReader, TextKey
@@ -46,7 +47,7 @@ class QuestReward:
         pass
 
 
-class QuestRewardTable(SoraConfigTable):
+class QuestRewardTable(SoraConfigTable, Sequence[QuestReward]):
     NAME = "QuestReward"
     INFO = SoraTableInfo(
         name=NAME,
@@ -72,9 +73,12 @@ class QuestRewardTable(SoraConfigTable):
     def info(self) -> SoraTableInfo:
         return self.INFO
 
-    def len(self) -> int:
+    def __len__(self) -> int:
         return len(self._rows)
 
 
-    def rows(self) -> list[QuestReward]:
-        return self._rows
+    def __getitem__(self, index: int | slice) -> QuestReward | list[QuestReward]:
+        return self._rows[index]
+
+    def __iter__(self) -> Iterator[QuestReward]:
+        return iter(self._rows)

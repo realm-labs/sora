@@ -4,9 +4,9 @@ import type { SoraReader, SoraValue, TextKey } from "./sora_runtime.js";
 
 
 export interface MaintenanceInfo {
-    startsAt: string;
-    durationMinutes: number;
-    reason: string | undefined;
+    readonly startsAt: string;
+    readonly durationMinutes: number;
+    readonly reason: string | undefined;
 }
 
 export declare function decodeMaintenanceInfo(reader: SoraReader): MaintenanceInfo;

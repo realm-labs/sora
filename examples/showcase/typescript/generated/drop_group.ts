@@ -10,8 +10,8 @@ import {
 
 
 export interface DropGroup {
-    id: number;
-    name: string;
+    readonly id: number;
+    readonly name: string;
 }
 
 export function decodeDropGroup(reader: SoraReader): DropGroup {
@@ -44,8 +44,8 @@ export class DropGroupTable implements SoraKeyedTable<number, DropGroup> {
     };
 
     private constructor(
-        private readonly _keys: number[],
-        private readonly _rows: Map<number, DropGroup>,
+        private readonly _keys: readonly number[],
+        private readonly _rows: ReadonlyMap<number, DropGroup>,
     ) {}
 
     static decode(rows: DropGroup[]): DropGroupTable {
@@ -59,25 +59,33 @@ export class DropGroupTable implements SoraKeyedTable<number, DropGroup> {
         return DropGroupTable.tableInfo;
     }
 
-    len(): number {
+    get size(): number {
         return this._rows.size;
     }
     get(key: number): DropGroup | undefined {
         return this._rows.get(key);
     }
 
-    rows(): ReadonlyMap<number, DropGroup> {
+    has(key: number): boolean {
+        return this._rows.has(key);
+    }
+
+    get rows(): ReadonlyMap<number, DropGroup> {
         return this._rows;
     }
 
-    keys(): readonly number[] {
+    get orderedKeys(): readonly number[] {
         return this._keys;
     }
 
-    orderedRows(): DropGroup[] {
+    get orderedRows(): readonly DropGroup[] {
         return this._keys.flatMap((key) => {
             const row = this._rows.get(key);
             return row === undefined ? [] : [row];
         });
+    }
+
+    [Symbol.iterator](): Iterator<DropGroup> {
+        return this._rows.values();
     }
 }

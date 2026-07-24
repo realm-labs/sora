@@ -1,6 +1,6 @@
 use std::path::{Path, PathBuf};
 
-use heck::ToLowerCamelCase;
+use heck::{ToLowerCamelCase, ToShoutySnakeCase};
 use minijinja::context;
 use serde::Serialize;
 use sora_diagnostics::{Result, SoraError};
@@ -9,8 +9,8 @@ use sora_ir::model::{ConfigIr, TableModeIr, TypeIr};
 use crate::{
     generator::{CodeGenerator, CodegenContext, runtime_format_name},
     model::{
-        BaseEnumValue, BaseField, BaseIndex, BaseModel, BaseRecord, BaseTable, BaseUnion,
-        BaseUnionVariant, build_base_model,
+        BaseField, BaseIndex, BaseModel, BaseRecord, BaseTable, BaseUnion, BaseUnionVariant,
+        build_base_model,
     },
     options::JavaCodegenOptions,
     render::{ensure_dir, render_template, write_file},
@@ -50,6 +50,17 @@ impl CodeGenerator for JavaCodeGenerator {
                 &package_dir.join(format!("{}.java", record.pascal_name)),
                 rendered,
             )?;
+            if let Some(table) = &record.table {
+                let rendered = render_template(
+                    "java",
+                    "table.java.j2",
+                    context! { package => &model.package, table => table },
+                )?;
+                write_file(
+                    &package_dir.join(format!("{}Table.java", table.pascal_name)),
+                    rendered,
+                )?;
+            }
         }
 
         for union in &model.unions {
@@ -78,6 +89,28 @@ impl CodeGenerator for JavaCodeGenerator {
             },
         )?;
         write_file(&package_dir.join("Runtime.java"), rendered)?;
+
+        for (template, file_name) in [
+            ("read_exception.java.j2", "SoraReadException.java"),
+            ("text_key.java.j2", "TextKey.java"),
+            ("text_resolver.java.j2", "SoraTextResolver.java"),
+            ("locale_pack.java.j2", "LocalePack.java"),
+        ] {
+            let rendered = render_template(
+                "java",
+                template,
+                context! {
+                    package => &model.package,
+                    nullable_annotation => nullable_annotation.as_ref().map(JavaNullableAnnotation::simple_name),
+                },
+            )?;
+            write_file(&package_dir.join(file_name), rendered)?;
+        }
+
+        if model.has_localization {
+            let rendered = render_template("java", "i18n.java.j2", context! { model => &model })?;
+            write_file(&package_dir.join("SoraI18n.java"), rendered)?;
+        }
 
         let rendered = render_template(
             "java",
@@ -108,7 +141,14 @@ struct JavaModel {
 #[derive(Debug, Clone, Serialize)]
 struct JavaEnum {
     name: String,
-    values: Vec<BaseEnumValue>,
+    values: Vec<JavaEnumValue>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+struct JavaEnumValue {
+    raw_name: String,
+    const_name: String,
+    id: u32,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -158,6 +198,7 @@ struct JavaIndex {
     field_name: String,
     param_camel_name: String,
     key_type: String,
+    param_type: String,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -197,7 +238,15 @@ impl JavaModel {
                 .into_iter()
                 .map(|item| JavaEnum {
                     name: item.pascal_name,
-                    values: item.values,
+                    values: item
+                        .values
+                        .into_iter()
+                        .map(|value| JavaEnumValue {
+                            const_name: value.name.to_shouty_snake_case(),
+                            raw_name: value.name,
+                            id: value.id,
+                        })
+                        .collect(),
                 })
                 .collect(),
             unions: model
@@ -315,7 +364,7 @@ fn java_table(
     let key_type = table
         .key_field
         .as_ref()
-        .map(|field| mapper.type_name(&field.ty));
+        .map(|field| mapper.boxed_type_name(&field.ty));
     let container_type = java_container_type(table.mode, &row_type, key_type.as_deref());
     let key_field_name = table
         .key_field
@@ -352,7 +401,8 @@ fn java_index(_ir: &ConfigIr, index: BaseIndex, mapper: &JavaTypeMapper<'_>) -> 
         camel_name: index.name.to_lower_camel_case(),
         field_name: index.field.camel_name.clone(),
         param_camel_name: index.field.camel_name,
-        key_type: mapper.type_name(&index.field.ty),
+        key_type: mapper.boxed_type_name(&index.field.ty),
+        param_type: mapper.type_name(&index.field.ty),
     }
 }
 
@@ -478,9 +528,9 @@ impl<'a> JavaTypeMapper<'a> {
         }
 
         match ty {
-            TypeIr::Bool => "Boolean".to_owned(),
-            TypeIr::I8 | TypeIr::I16 | TypeIr::I32 => "Integer".to_owned(),
-            TypeIr::U8 | TypeIr::U16 => "Integer".to_owned(),
+            TypeIr::Bool => "boolean".to_owned(),
+            TypeIr::I8 | TypeIr::I16 | TypeIr::I32 => "int".to_owned(),
+            TypeIr::U8 | TypeIr::U16 => "int".to_owned(),
             TypeIr::U32 | TypeIr::I64 => "long".to_owned(),
             TypeIr::Duration => "java.time.Duration".to_owned(),
             TypeIr::DateTime => "java.time.Instant".to_owned(),
@@ -524,6 +574,9 @@ impl<'a> JavaTypeMapper<'a> {
             TypeIr::U32 | TypeIr::I64 => "Long".to_owned(),
             TypeIr::F32 => "Float".to_owned(),
             TypeIr::F64 => "Double".to_owned(),
+            TypeIr::Ref { table, field } => ref_target_type(self.ir, table, field)
+                .map(|ty| self.boxed_type_name(ty))
+                .unwrap_or_else(|| "Integer".to_owned()),
             _ => self.type_name(ty),
         }
     }

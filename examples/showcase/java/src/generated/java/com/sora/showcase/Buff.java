@@ -3,27 +3,13 @@
 package com.sora.showcase;
 
 import java.util.List;
-import java.util.Map;
 
-
-public final class Buff {
-    public final Integer id;
-    public final String name;
-    public final java.time.Duration duration;
-    public final java.util.List<StatModifier> modifiers;
-
-    public Buff(
-        Integer id,
-        String name,
-        java.time.Duration duration,
-        java.util.List<StatModifier> modifiers
-    ) {
-        this.id = id;
-        this.name = name;
-        this.duration = duration;
-        this.modifiers = modifiers;
-    }
-
+public record Buff(
+    int id,
+    String name,
+    java.time.Duration duration,
+    java.util.List<StatModifier> modifiers
+) {
     static Buff decode(SoraReader reader) {
         return new Buff(
             reader.readI32(),
@@ -47,63 +33,5 @@ public final class Buff {
         for (var item : this.modifiers) {
             item.collectTextKeys(out);
         }
-    }
-}
-
-final class BuffTable extends java.util.AbstractMap<Integer, Buff> implements SoraKeyedTable<Integer, Buff> {
-    static final String NAME = "Buff";
-    static final SoraTableInfo INFO = new SoraTableInfo(
-        NAME,
-        "Buff",
-        SoraTableShape.KEYED,
-        new SoraKeyInfo("id", "Integer"),
-        List.of(
-        )
-    );
-    private final List<Integer> keys;
-    private final java.util.Map<Integer, Buff> rows;
-
-    private BuffTable(List<Integer> keys, java.util.Map<Integer, Buff> rows) {
-        this.keys = keys;
-        this.rows = rows;
-    }
-
-    private static BuffTable fromRows(List<Buff> rows) {
-        return new BuffTable(rows.stream().map(row -> row.id).toList(), SoraConfig.decodeMapTable(rows, row -> row.id));
-    }
-
-    static BuffTable decode(SoraTableSource source) {
-        return fromRows(source.decodeTable(NAME, Buff::decode, Buff::decode));
-    }
-
-    public java.util.Map<Integer, Buff> rows() {
-        return rows;
-    }
-    @Override
-    @SoraNullable
-    public Buff get(Object key) {
-        return rows.get(key);
-    }
-
-    public List<Integer> orderedKeys() {
-        return keys;
-    }
-
-    public List<Buff> orderedRows() {
-        return keys.stream().map(rows::get).toList();
-    }
-
-    @Override
-    public java.util.Set<Map.Entry<Integer, Buff>> entrySet() {
-        return rows.entrySet();
-    }
-    @Override
-    public SoraTableInfo info() {
-        return INFO;
-    }
-
-    @Override
-    public int size() {
-        return rows.size();
     }
 }

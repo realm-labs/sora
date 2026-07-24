@@ -3,24 +3,12 @@
 package com.sora.showcase;
 
 import java.util.List;
-import java.util.Map;
 
-
-public final class Recipe {
-    public final Integer id;
-    public final Integer resultItem;
-    public final java.util.List<ResourceCost> materials;
-
-    public Recipe(
-        Integer id,
-        Integer resultItem,
-        java.util.List<ResourceCost> materials
-    ) {
-        this.id = id;
-        this.resultItem = resultItem;
-        this.materials = materials;
-    }
-
+public record Recipe(
+    int id,
+    int resultItem,
+    java.util.List<ResourceCost> materials
+) {
     static Recipe decode(SoraReader reader) {
         return new Recipe(
             reader.readI32(),
@@ -42,63 +30,5 @@ public final class Recipe {
         for (var item : this.materials) {
             item.collectTextKeys(out);
         }
-    }
-}
-
-final class RecipeTable extends java.util.AbstractMap<Integer, Recipe> implements SoraKeyedTable<Integer, Recipe> {
-    static final String NAME = "Recipe";
-    static final SoraTableInfo INFO = new SoraTableInfo(
-        NAME,
-        "Recipe",
-        SoraTableShape.KEYED,
-        new SoraKeyInfo("id", "Integer"),
-        List.of(
-        )
-    );
-    private final List<Integer> keys;
-    private final java.util.Map<Integer, Recipe> rows;
-
-    private RecipeTable(List<Integer> keys, java.util.Map<Integer, Recipe> rows) {
-        this.keys = keys;
-        this.rows = rows;
-    }
-
-    private static RecipeTable fromRows(List<Recipe> rows) {
-        return new RecipeTable(rows.stream().map(row -> row.id).toList(), SoraConfig.decodeMapTable(rows, row -> row.id));
-    }
-
-    static RecipeTable decode(SoraTableSource source) {
-        return fromRows(source.decodeTable(NAME, Recipe::decode, Recipe::decode));
-    }
-
-    public java.util.Map<Integer, Recipe> rows() {
-        return rows;
-    }
-    @Override
-    @SoraNullable
-    public Recipe get(Object key) {
-        return rows.get(key);
-    }
-
-    public List<Integer> orderedKeys() {
-        return keys;
-    }
-
-    public List<Recipe> orderedRows() {
-        return keys.stream().map(rows::get).toList();
-    }
-
-    @Override
-    public java.util.Set<Map.Entry<Integer, Recipe>> entrySet() {
-        return rows.entrySet();
-    }
-    @Override
-    public SoraTableInfo info() {
-        return INFO;
-    }
-
-    @Override
-    public int size() {
-        return rows.size();
     }
 }

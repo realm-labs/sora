@@ -148,7 +148,11 @@ public sealed class {{ table.pascal_name }}Table : {% if table.mode == "map" and
 {%- endif %}
     }
 
-    public {{ table.container_type }} Rows => rows;
+{%- if table.mode == "map" and table.key_field_name %}
+    public IReadOnlyDictionary<{{ table.key_type }}, {{ table.row_type }}> Rows => rows;
+{%- elif table.mode == "list" %}
+    public IReadOnlyList<{{ table.row_type }}> Rows => rows;
+{%- endif %}
 
 {%- if table.mode == "map" and table.key_field_name %}
     public {{ table.row_type }} this[{{ table.key_type }} key] => rows[key];

@@ -12,17 +12,17 @@ import type { Vec3 } from "./vec3.js";
 
 
 export interface Skill {
-    id: number;
-    name: string;
-    element: ElementType;
+    readonly id: number;
+    readonly name: string;
+    readonly element: ElementType;
     /** Tuple cost, e.g. Gold,0,150 */
-    cost: ResourceCost;
+    readonly cost: ResourceCost;
     /** JSON object with element/power/radius */
-    effect: SkillEffect;
-    requiredLevel: number;
+    readonly effect: SkillEffect;
+    readonly requiredLevel: number;
     /** Optional item requirement */
-    requiredItem: number | undefined;
-    castOrigin: Vec3;
+    readonly requiredItem: number | undefined;
+    readonly castOrigin: Vec3;
 }
 
 export declare function decodeSkill(reader: SoraReader): Skill;
@@ -33,9 +33,11 @@ export declare class SkillTable implements SoraKeyedTable<number, Skill> {
     static readonly tableInfo: SoraTableInfo;
     static decode(rows: Skill[]): SkillTable;
     info(): SoraTableInfo;
-    len(): number;
+    readonly size: number;
     get(key: number): Skill | undefined;
-    rows(): ReadonlyMap<number, Skill>;
-    keys(): readonly number[];
-    orderedRows(): Skill[];
+    has(key: number): boolean;
+    readonly rows: ReadonlyMap<number, Skill>;
+    readonly orderedKeys: readonly number[];
+    readonly orderedRows: readonly Skill[];
+    [Symbol.iterator](): Iterator<Skill>;
 }

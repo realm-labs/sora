@@ -146,10 +146,10 @@ fn csharp_type_name_inner(ir: &ConfigIr, ty: &TypeIr) -> String {
         TypeIr::Text => "TextKey".to_owned(),
         TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => name.clone(),
         TypeIr::List(element) | TypeIr::Set(element) | TypeIr::Array { element, .. } => {
-            format!("List<{}>", csharp_type_name_inner(ir, element))
+            format!("IReadOnlyList<{}>", csharp_type_name_inner(ir, element))
         }
         TypeIr::Map { key, value } => format!(
-            "Dictionary<{}, {}>",
+            "IReadOnlyDictionary<{}, {}>",
             csharp_type_name_inner(ir, key),
             csharp_type_name_inner(ir, value)
         ),
@@ -446,10 +446,10 @@ mod tests {
             ("enum<ItemType>", "ItemType"),
             ("struct<Reward>", "Reward"),
             ("union<Action>", "Action"),
-            ("list<i32>", "List<int>"),
-            ("set<string>", "List<string>"),
-            ("map<string,i32>", "Dictionary<string, int>"),
-            ("array<i32,3>", "List<int>"),
+            ("list<i32>", "IReadOnlyList<int>"),
+            ("set<string>", "IReadOnlyList<string>"),
+            ("map<string,i32>", "IReadOnlyDictionary<string, int>"),
+            ("array<i32,3>", "IReadOnlyList<int>"),
             ("optional<string>", "string?"),
             ("optional<i32>", "int?"),
             ("ref<Item.id>", "int"),

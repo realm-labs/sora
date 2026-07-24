@@ -7,11 +7,11 @@
 -export_type([t/0, table/0]).
 
 -type t() :: #{
-    'id' := integer(),
-    'mail_type' := mail_type:t(),
-    'title_key' := sora_runtime:text_key(),
-    'body_key' := sora_runtime:text_key(),
-    'rewards' := [reward:t()]
+    id := integer(),
+    mail_type := mail_type:t(),
+    title_key := sora_runtime:text_key(),
+    body_key := sora_runtime:text_key(),
+    rewards := [reward:t()]
 }.
 
 -type table() :: map().
@@ -25,29 +25,29 @@ decode(Reader0) ->
     {BodyKey, Reader4} = (fun sora_runtime:read_text_key/1)(Reader3),
     {Rewards, Reader5} = (fun(Reader) -> sora_runtime:read_list(fun reward:decode/1, Reader) end)(Reader4),
     {#{
-        'id' => Id,
-        'mail_type' => MailType,
-        'title_key' => TitleKey,
-        'body_key' => BodyKey,
-        'rewards' => Rewards
+        id => Id,
+        mail_type => MailType,
+        title_key => TitleKey,
+        body_key => BodyKey,
+        rewards => Rewards
     }, Reader5}.
 
 -spec decode_value(map()) -> t().
 decode_value(Value) ->
     Obj = sora_runtime:expect_map(Value),
     #{
-        'id' => sora_runtime:expect_integer(sora_runtime:value_get(<<"id">>, Obj)),
-        'mail_type' => mail_type:decode_value(sora_runtime:value_get(<<"mail_type">>, Obj)),
-        'title_key' => sora_runtime:expect_text_key(sora_runtime:value_get(<<"title_key">>, Obj)),
-        'body_key' => sora_runtime:expect_text_key(sora_runtime:value_get(<<"body_key">>, Obj)),
-        'rewards' => sora_runtime:decode_value_list(fun(Item) -> reward:decode_value(Item) end, sora_runtime:value_get(<<"rewards">>, Obj))
+        id => sora_runtime:expect_integer(sora_runtime:value_get(<<"id">>, Obj)),
+        mail_type => mail_type:decode_value(sora_runtime:value_get(<<"mail_type">>, Obj)),
+        title_key => sora_runtime:expect_text_key(sora_runtime:value_get(<<"title_key">>, Obj)),
+        body_key => sora_runtime:expect_text_key(sora_runtime:value_get(<<"body_key">>, Obj)),
+        rewards => sora_runtime:decode_value_list(fun(Item) -> reward:decode_value(Item) end, sora_runtime:value_get(<<"rewards">>, Obj))
     }.
 
 -spec decode_table(map()) -> table().
 decode_table(Bundle) ->
     Rows = sora_runtime:decode_table(Bundle, ?TABLE_NAME, fun ?MODULE:decode/1, fun ?MODULE:decode_value/1),
-    Data = sora_runtime:decode_map_table(Rows, fun(Row) -> maps:get('id', Row) end),
-    Keys = [maps:get('id', Row) || Row <- Rows],
+    Data = sora_runtime:decode_map_table(Rows, fun(Row) -> maps:get(id, Row) end),
+    Keys = [maps:get(id, Row) || Row <- Rows],
     #{
         keys => Keys,
         data => Data

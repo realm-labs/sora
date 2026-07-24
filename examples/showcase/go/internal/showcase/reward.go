@@ -3,14 +3,14 @@
 package showcase
 
 type Reward struct {
-	ItemId int32
+	ItemID int32
 	Count  int32
 }
 
 func decodeReward(reader *SoraReader) (Reward, error) {
 	var value Reward
 	var err error
-	value.ItemId, err = reader.ReadInt32()
+	value.ItemID, err = reader.ReadInt32()
 	if err != nil {
 		return value, err
 	}
@@ -27,7 +27,7 @@ func decodeRewardValue(input SoraValue) (Reward, error) {
 	if err != nil {
 		return value, err
 	}
-	value.ItemId, err = obj.Get("item_id").AsInt32()
+	value.ItemID, err = obj.Get("item_id").AsInt32()
 	if err != nil {
 		return value, err
 	}

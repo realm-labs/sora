@@ -3,43 +3,23 @@
 package com.sora.showcase;
 
 import java.util.List;
-import java.util.Map;
 
-
-public final class Item {
+public record Item(
     /** Item id */
-    public final Integer id;
+    int id,
     /** Display name */
-    public final String name;
+    String name,
     /** Item category */
-    public final ItemType itemType;
+    ItemType itemType,
     /** Stack limit; blank cells use the default */
-    public final Integer maxStack;
+    int maxStack,
     /** Struct columns: price_kind, price_id, price_count */
-    public final ResourceCost price;
+    ResourceCost price,
     /** JSON string set */
-    public final java.util.List<String> tags;
+    java.util.List<String> tags,
     /** Map pairs: key,value|key,value */
-    public final java.util.Map<String, Integer> attributes;
-
-    public Item(
-        Integer id,
-        String name,
-        ItemType itemType,
-        Integer maxStack,
-        ResourceCost price,
-        java.util.List<String> tags,
-        java.util.Map<String, Integer> attributes
-    ) {
-        this.id = id;
-        this.name = name;
-        this.itemType = itemType;
-        this.maxStack = maxStack;
-        this.price = price;
-        this.tags = tags;
-        this.attributes = attributes;
-    }
-
+    java.util.Map<String, Integer> attributes
+) {
     static Item decode(SoraReader reader) {
         return new Item(
             reader.readI32(),
@@ -67,81 +47,5 @@ public final class Item {
 
     void collectTextKeys(List<TextKey> out) {
         this.price.collectTextKeys(out);
-    }
-}
-
-final class ItemTable extends java.util.AbstractMap<Integer, Item> implements SoraKeyedTable<Integer, Item> {
-    static final String NAME = "Item";
-    static final SoraTableInfo INFO = new SoraTableInfo(
-        NAME,
-        "Item",
-        SoraTableShape.KEYED,
-        new SoraKeyInfo("id", "Integer"),
-        List.of(
-            new SoraIndexInfo("byName", true, List.of("name")),
-            new SoraIndexInfo("byItemType", false, List.of("itemType"))
-        )
-    );
-    private final List<Integer> keys;
-    private final java.util.Map<Integer, Item> rows;
-    private final Map<String, Item> byName;
-    private final Map<ItemType, List<Item>> byItemType;
-
-    private ItemTable(List<Integer> keys, java.util.Map<Integer, Item> rows, Map<String, Item> byName, Map<ItemType, List<Item>> byItemType) {
-        this.keys = keys;
-        this.rows = rows;
-        this.byName = byName;
-        this.byItemType = byItemType;
-    }
-
-    private static ItemTable fromRows(List<Item> rows) {
-        return new ItemTable(
-            rows.stream().map(row -> row.id).toList(),
-            SoraConfig.decodeMapTable(rows, row -> row.id),
-            SoraConfig.decodeUniqueIndex(rows, row -> row.name),
-            SoraConfig.decodeIndex(rows, row -> row.itemType)
-        );
-    }
-
-    static ItemTable decode(SoraTableSource source) {
-        return fromRows(source.decodeTable(NAME, Item::decode, Item::decode));
-    }
-
-    public java.util.Map<Integer, Item> rows() {
-        return rows;
-    }
-    @Override
-    @SoraNullable
-    public Item get(Object key) {
-        return rows.get(key);
-    }
-
-    public List<Integer> orderedKeys() {
-        return keys;
-    }
-
-    public List<Item> orderedRows() {
-        return keys.stream().map(rows::get).toList();
-    }
-
-    @Override
-    public java.util.Set<Map.Entry<Integer, Item>> entrySet() {
-        return rows.entrySet();
-    }
-    @SoraNullable
-    public Item getByName(String name) {
-        return byName.get(name);
-    }
-    public List<Item> findByItemType(ItemType itemType) {
-        return byItemType.getOrDefault(itemType, List.of());
-    }
-    @Override
-    public SoraTableInfo info() {
-        return INFO;
-    }
-
-    @Override
-    public int size() {
-        return rows.size();
     }
 }

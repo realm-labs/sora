@@ -13,7 +13,7 @@ public sealed record Character(
     Rarity Rarity,
     int BaseLevel,
     int BaseSkill,
-    List<int> StarterItems,
+    IReadOnlyList<int> StarterItems,
     Vec3 SpawnPos
 )
 {
@@ -80,8 +80,7 @@ public sealed class CharacterTable : ISoraKeyedTable<int, Character>
     {
         return new CharacterTable(rows.ConvertAll(row => row.Id), SoraConfig.DecodeMapTable(rows, row => row.Id));
     }
-
-    public Dictionary<int, Character> Rows => rows;
+    public IReadOnlyDictionary<int, Character> Rows => rows;
     public Character this[int key] => rows[key];
 
     public Character? Get(int key)

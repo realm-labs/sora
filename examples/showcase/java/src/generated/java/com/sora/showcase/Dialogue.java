@@ -3,24 +3,12 @@
 package com.sora.showcase;
 
 import java.util.List;
-import java.util.Map;
 
-
-public final class Dialogue {
-    public final Integer id;
-    public final TextKey speakerKey;
-    public final java.util.List<String> lines;
-
-    public Dialogue(
-        Integer id,
-        TextKey speakerKey,
-        java.util.List<String> lines
-    ) {
-        this.id = id;
-        this.speakerKey = speakerKey;
-        this.lines = lines;
-    }
-
+public record Dialogue(
+    int id,
+    TextKey speakerKey,
+    java.util.List<String> lines
+) {
     static Dialogue decode(SoraReader reader) {
         return new Dialogue(
             reader.readI32(),
@@ -40,63 +28,5 @@ public final class Dialogue {
 
     void collectTextKeys(List<TextKey> out) {
         out.add(this.speakerKey);
-    }
-}
-
-final class DialogueTable extends java.util.AbstractMap<Integer, Dialogue> implements SoraKeyedTable<Integer, Dialogue> {
-    static final String NAME = "Dialogue";
-    static final SoraTableInfo INFO = new SoraTableInfo(
-        NAME,
-        "Dialogue",
-        SoraTableShape.KEYED,
-        new SoraKeyInfo("id", "Integer"),
-        List.of(
-        )
-    );
-    private final List<Integer> keys;
-    private final java.util.Map<Integer, Dialogue> rows;
-
-    private DialogueTable(List<Integer> keys, java.util.Map<Integer, Dialogue> rows) {
-        this.keys = keys;
-        this.rows = rows;
-    }
-
-    private static DialogueTable fromRows(List<Dialogue> rows) {
-        return new DialogueTable(rows.stream().map(row -> row.id).toList(), SoraConfig.decodeMapTable(rows, row -> row.id));
-    }
-
-    static DialogueTable decode(SoraTableSource source) {
-        return fromRows(source.decodeTable(NAME, Dialogue::decode, Dialogue::decode));
-    }
-
-    public java.util.Map<Integer, Dialogue> rows() {
-        return rows;
-    }
-    @Override
-    @SoraNullable
-    public Dialogue get(Object key) {
-        return rows.get(key);
-    }
-
-    public List<Integer> orderedKeys() {
-        return keys;
-    }
-
-    public List<Dialogue> orderedRows() {
-        return keys.stream().map(rows::get).toList();
-    }
-
-    @Override
-    public java.util.Set<Map.Entry<Integer, Dialogue>> entrySet() {
-        return rows.entrySet();
-    }
-    @Override
-    public SoraTableInfo info() {
-        return INFO;
-    }
-
-    @Override
-    public int size() {
-        return rows.size();
     }
 }

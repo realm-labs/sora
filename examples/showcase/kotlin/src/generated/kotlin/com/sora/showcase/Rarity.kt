@@ -3,30 +3,30 @@
 package com.sora.showcase
 
 enum class Rarity(val id: Int) {
-    Common(0),
-    Uncommon(1),
-    Rare(2),
-    Epic(3),
-    Legendary(4);
+    COMMON(0),
+    UNCOMMON(1),
+    RARE(2),
+    EPIC(3),
+    LEGENDARY(4);
 
     companion object {
         fun decode(reader: SoraReader): Rarity =
             when (val id = reader.readU32()) {
-                0 -> Common
-                1 -> Uncommon
-                2 -> Rare
-                3 -> Epic
-                4 -> Legendary
+                0 -> COMMON
+                1 -> UNCOMMON
+                2 -> RARE
+                3 -> EPIC
+                4 -> LEGENDARY
                 else -> throw SoraReadException("invalid enum id $id for Rarity")
             }
 
         fun decode(value: SoraValue): Rarity =
             when (val name = value.asString()) {
-                "Common" -> Common
-                "Uncommon" -> Uncommon
-                "Rare" -> Rare
-                "Epic" -> Epic
-                "Legendary" -> Legendary
+                "Common" -> COMMON
+                "Uncommon" -> UNCOMMON
+                "Rare" -> RARE
+                "Epic" -> EPIC
+                "Legendary" -> LEGENDARY
                 else -> throw SoraReadException("invalid enum value $name for Rarity")
             }
     }

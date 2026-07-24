@@ -67,8 +67,7 @@ public sealed class ShopTable : ISoraKeyedTable<int, Shop>
     {
         return new ShopTable(rows.ConvertAll(row => row.Id), SoraConfig.DecodeMapTable(rows, row => row.Id));
     }
-
-    public Dictionary<int, Shop> Rows => rows;
+    public IReadOnlyDictionary<int, Shop> Rows => rows;
     public Shop this[int key] => rows[key];
 
     public Shop? Get(int key)

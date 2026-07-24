@@ -242,104 +242,104 @@ export class SoraConfig {
 
     textKeys() {
         const keys = [];
-        for (const row of this.item().rows().values()) {
+        for (const row of this.item()) {
             collectItemTextKeys(row, keys);
         }
-        for (const row of this.shop().rows().values()) {
+        for (const row of this.shop()) {
             collectShopTextKeys(row, keys);
         }
-        for (const row of this.shopItem().rows().values()) {
+        for (const row of this.shopItem()) {
             collectShopItemTextKeys(row, keys);
         }
-        for (const row of this.recipe().rows().values()) {
+        for (const row of this.recipe()) {
             collectRecipeTextKeys(row, keys);
         }
-        for (const row of this.gachaPool().rows().values()) {
+        for (const row of this.gachaPool()) {
             collectGachaPoolTextKeys(row, keys);
         }
-        for (const row of this.gachaItem().rows().values()) {
+        for (const row of this.gachaItem()) {
             collectGachaItemTextKeys(row, keys);
         }
-        for (const row of this.equipmentSet().rows().values()) {
+        for (const row of this.equipmentSet()) {
             collectEquipmentSetTextKeys(row, keys);
         }
-        for (const row of this.skill().rows().values()) {
+        for (const row of this.skill()) {
             collectSkillTextKeys(row, keys);
         }
-        for (const row of this.character().rows().values()) {
+        for (const row of this.character()) {
             collectCharacterTextKeys(row, keys);
         }
-        for (const row of this.characterSkill().rows().values()) {
+        for (const row of this.characterSkill()) {
             collectCharacterSkillTextKeys(row, keys);
         }
-        for (const row of this.buff().rows().values()) {
+        for (const row of this.buff()) {
             collectBuffTextKeys(row, keys);
         }
-        for (const row of this.dropGroup().rows().values()) {
+        for (const row of this.dropGroup()) {
             collectDropGroupTextKeys(row, keys);
         }
-        for (const row of this.dropEntry().rows().values()) {
+        for (const row of this.dropEntry()) {
             collectDropEntryTextKeys(row, keys);
         }
-        for (const row of this.monster().rows().values()) {
+        for (const row of this.monster()) {
             collectMonsterTextKeys(row, keys);
         }
-        for (const row of this.stage().rows().values()) {
+        for (const row of this.stage()) {
             collectStageTextKeys(row, keys);
         }
-        for (const row of this.stageReward().rows().values()) {
+        for (const row of this.stageReward()) {
             collectStageRewardTextKeys(row, keys);
         }
-        for (const row of this.dungeon().rows().values()) {
+        for (const row of this.dungeon()) {
             collectDungeonTextKeys(row, keys);
         }
-        for (const row of this.quest().rows().values()) {
+        for (const row of this.quest()) {
             collectQuestTextKeys(row, keys);
         }
-        for (const row of this.questReward().rows().values()) {
+        for (const row of this.questReward()) {
             collectQuestRewardTextKeys(row, keys);
         }
-        for (const row of this.levelExp().rows().values()) {
+        for (const row of this.levelExp()) {
             collectLevelExpTextKeys(row, keys);
         }
-        for (const row of this.achievement().rows().values()) {
+        for (const row of this.achievement()) {
             collectAchievementTextKeys(row, keys);
         }
-        for (const row of this.vipLevel().rows().values()) {
+        for (const row of this.vipLevel()) {
             collectVipLevelTextKeys(row, keys);
         }
-        collectGameSettingsTextKeys(this.gameSettings().row(), keys);
-        for (const row of this.maintenanceWindow().rows().values()) {
+        collectGameSettingsTextKeys(this.gameSettings().row, keys);
+        for (const row of this.maintenanceWindow()) {
             collectMaintenanceWindowTextKeys(row, keys);
         }
-        for (const row of this.mailTemplate().rows().values()) {
+        for (const row of this.mailTemplate()) {
             collectMailTemplateTextKeys(row, keys);
         }
-        for (const row of this.mailReward().rows().values()) {
+        for (const row of this.mailReward()) {
             collectMailRewardTextKeys(row, keys);
         }
-        for (const row of this.dialogue().rows().values()) {
+        for (const row of this.dialogue()) {
             collectDialogueTextKeys(row, keys);
         }
-        for (const row of this.eventRule().rows().values()) {
+        for (const row of this.eventRule()) {
             collectEventRuleTextKeys(row, keys);
         }
-        for (const row of this.complexRule().rows().values()) {
+        for (const row of this.complexRule()) {
             collectComplexRuleTextKeys(row, keys);
         }
-        for (const row of this.complexConditionGroup().rows().values()) {
+        for (const row of this.complexConditionGroup()) {
             collectComplexConditionGroupTextKeys(row, keys);
         }
-        for (const row of this.complexConditionGroupEntry().rows().values()) {
+        for (const row of this.complexConditionGroupEntry()) {
             collectComplexConditionGroupEntryTextKeys(row, keys);
         }
-        for (const row of this.complexRuleCondition().rows().values()) {
+        for (const row of this.complexRuleCondition()) {
             collectComplexRuleConditionTextKeys(row, keys);
         }
-        for (const row of this.complexActionGroup().rows().values()) {
+        for (const row of this.complexActionGroup()) {
             collectComplexActionGroupTextKeys(row, keys);
         }
-        for (const row of this.complexActionEntry().rows().values()) {
+        for (const row of this.complexActionEntry()) {
             collectComplexActionEntryTextKeys(row, keys);
         }
         return keys;

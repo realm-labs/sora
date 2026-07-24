@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from collections.abc import Iterator, Mapping, Sequence
 from typing import TYPE_CHECKING
 
 from .sora_runtime import SoraReader, TextKey
@@ -51,7 +52,7 @@ class Stage:
             item.collect_text_keys(out)
 
 
-class StageTable(SoraConfigTable):
+class StageTable(SoraConfigTable, Mapping[int, Stage]):
     NAME = "Stage"
     INFO = SoraTableInfo(
         name=NAME,
@@ -80,18 +81,20 @@ class StageTable(SoraConfigTable):
     def info(self) -> SoraTableInfo:
         return self.INFO
 
-    def len(self) -> int:
+    def __len__(self) -> int:
         return len(self._rows)
 
 
-    def get(self, key: int) -> Stage | None:
-        return self._rows.get(key)
+    def __getitem__(self, key: int) -> Stage:
+        return self._rows[key]
 
-    def rows(self) -> dict[int, Stage]:
-        return self._rows
+    def __iter__(self) -> Iterator[int]:
+        return iter(self._keys)
 
-    def keys(self) -> list[int]:
-        return self._keys
+    @property
+    def ordered_keys(self) -> tuple[int, ...]:
+        return tuple(self._keys)
 
-    def ordered_rows(self) -> list[Stage]:
-        return [self._rows[key] for key in self._keys if key in self._rows]
+    @property
+    def ordered_rows(self) -> tuple[Stage, ...]:
+        return tuple(self._rows[key] for key in self._keys)

@@ -4,21 +4,11 @@ package com.sora.showcase;
 
 import java.util.List;
 
-public final class StatModifier {
-    public final StatType stat;
-    public final float value;
-    public final Boolean isPercent;
-
-    public StatModifier(
-        StatType stat,
-        float value,
-        Boolean isPercent
-    ) {
-        this.stat = stat;
-        this.value = value;
-        this.isPercent = isPercent;
-    }
-
+public record StatModifier(
+    StatType stat,
+    float value,
+    boolean isPercent
+) {
     static StatModifier decode(SoraReader reader) {
         return new StatModifier(
             StatType.decode(reader),

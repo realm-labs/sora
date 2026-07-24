@@ -11,7 +11,7 @@ public sealed record Buff(
     int Id,
     string Name,
     global::System.TimeSpan Duration,
-    List<StatModifier> Modifiers
+    IReadOnlyList<StatModifier> Modifiers
 )
 {
     internal static Buff Decode(SoraReader reader)
@@ -74,8 +74,7 @@ public sealed class BuffTable : ISoraKeyedTable<int, Buff>
     {
         return new BuffTable(rows.ConvertAll(row => row.Id), SoraConfig.DecodeMapTable(rows, row => row.Id));
     }
-
-    public Dictionary<int, Buff> Rows => rows;
+    public IReadOnlyDictionary<int, Buff> Rows => rows;
     public Buff this[int key] => rows[key];
 
     public Buff? Get(int key)

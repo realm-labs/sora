@@ -37,7 +37,7 @@ public:
         return info;
     }
 
-    LevelExpTable() {}
+    LevelExpTable() = default;
     LevelExpTable(const LevelExpTable&) = delete;
     LevelExpTable& operator=(const LevelExpTable&) = delete;
     LevelExpTable(LevelExpTable&&) = default;
@@ -46,8 +46,7 @@ public:
     static LevelExpTable decode(const SoraBundle& bundle) {
         std::vector<LevelExp> rows = bundle.decode_table<LevelExp>(NAME);
         LevelExpTable table;
-        for (std::size_t index = 0; index < rows.size(); ++index) {
-            const LevelExp& row = rows[index];
+        for (const auto& row : rows) {
             table.keys_.push_back(row.level);
             table.rows_.emplace(row.level, row);
         }
@@ -64,7 +63,7 @@ public:
     }
 
     const LevelExp* get(const std::int32_t& key) const {
-        typename std::unordered_map<std::int32_t, LevelExp>::const_iterator it = rows_.find(key);
+        auto it = rows_.find(key);
         if (it == rows_.end()) {
             return nullptr;
         }
@@ -78,10 +77,8 @@ public:
     std::vector<const LevelExp*> ordered_rows() const {
         std::vector<const LevelExp*> rows;
         rows.reserve(keys_.size());
-        for (typename std::vector<std::int32_t>::const_iterator key = keys_.begin();
-             key != keys_.end();
-             ++key) {
-            typename std::unordered_map<std::int32_t, LevelExp>::const_iterator it = rows_.find(*key);
+        for (const auto& key : keys_) {
+            auto it = rows_.find(key);
             if (it != rows_.end()) {
                 rows.push_back(&it->second);
             }

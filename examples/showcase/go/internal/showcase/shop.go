@@ -3,7 +3,7 @@
 package showcase
 
 type Shop struct {
-	Id       int32
+	ID       int32
 	Name     string
 	Currency ResourceKind
 }
@@ -11,7 +11,7 @@ type Shop struct {
 func decodeShop(reader *SoraReader) (Shop, error) {
 	var value Shop
 	var err error
-	value.Id, err = reader.ReadInt32()
+	value.ID, err = reader.ReadInt32()
 	if err != nil {
 		return value, err
 	}
@@ -32,7 +32,7 @@ func decodeShopValue(input SoraValue) (Shop, error) {
 	if err != nil {
 		return value, err
 	}
-	value.Id, err = obj.Get("id").AsInt32()
+	value.ID, err = obj.Get("id").AsInt32()
 	if err != nil {
 		return value, err
 	}
@@ -68,9 +68,9 @@ type ShopTable struct {
 func buildShopTable(rows []Shop) (*ShopTable, error) {
 	keys := make([]int32, 0, len(rows))
 	for _, row := range rows {
-		keys = append(keys, row.Id)
+		keys = append(keys, row.ID)
 	}
-	return &ShopTable{keys: keys, rows: DecodeMapTable(rows, func(row Shop) int32 { return row.Id })}, nil
+	return &ShopTable{keys: keys, rows: DecodeMapTable(rows, func(row Shop) int32 { return row.ID })}, nil
 }
 
 func decodeShopTable(source SoraTableSource) (*ShopTable, error) {
@@ -80,9 +80,12 @@ func decodeShopTable(source SoraTableSource) (*ShopTable, error) {
 	}
 	return buildShopTable(rows)
 }
-
 func (table *ShopTable) Rows() map[int32]Shop {
-	return table.rows
+	rows := make(map[int32]Shop, len(table.rows))
+	for key, row := range table.rows {
+		rows[key] = row
+	}
+	return rows
 }
 func (table *ShopTable) Get(key int32) (Shop, bool) {
 	value, ok := table.rows[key]
@@ -90,7 +93,7 @@ func (table *ShopTable) Get(key int32) (Shop, bool) {
 }
 
 func (table *ShopTable) Keys() []int32 {
-	return table.keys
+	return append([]int32(nil), table.keys...)
 }
 
 func (table *ShopTable) OrderedRows() []Shop {

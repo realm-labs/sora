@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from collections.abc import Iterator, Mapping, Sequence
 from typing import TYPE_CHECKING
 
 from .sora_runtime import SoraReader, TextKey
@@ -43,7 +44,7 @@ class CharacterSkill:
         pass
 
 
-class CharacterSkillTable(SoraConfigTable):
+class CharacterSkillTable(SoraConfigTable, Sequence[CharacterSkill]):
     NAME = "CharacterSkill"
     INFO = SoraTableInfo(
         name=NAME,
@@ -69,9 +70,12 @@ class CharacterSkillTable(SoraConfigTable):
     def info(self) -> SoraTableInfo:
         return self.INFO
 
-    def len(self) -> int:
+    def __len__(self) -> int:
         return len(self._rows)
 
 
-    def rows(self) -> list[CharacterSkill]:
-        return self._rows
+    def __getitem__(self, index: int | slice) -> CharacterSkill | list[CharacterSkill]:
+        return self._rows[index]
+
+    def __iter__(self) -> Iterator[CharacterSkill]:
+        return iter(self._rows)

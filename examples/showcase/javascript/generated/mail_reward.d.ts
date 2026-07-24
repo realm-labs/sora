@@ -4,10 +4,10 @@ import type { SoraListTable, SoraTableInfo, SoraReader, SoraValue, TextKey } fro
 
 
 export interface MailReward {
-    mailId: number;
-    seq: number;
-    itemId: number;
-    count: number;
+    readonly mailId: number;
+    readonly seq: number;
+    readonly itemId: number;
+    readonly count: number;
 }
 
 export declare function decodeMailReward(reader: SoraReader): MailReward;
@@ -18,6 +18,8 @@ export declare class MailRewardTable implements SoraListTable<MailReward> {
     static readonly tableInfo: SoraTableInfo;
     static decode(rows: MailReward[]): MailRewardTable;
     info(): SoraTableInfo;
-    len(): number;
-    rows(): readonly MailReward[];
+    readonly size: number;
+    readonly rows: readonly MailReward[];
+    at(index: number): MailReward | undefined;
+    [Symbol.iterator](): Iterator<MailReward>;
 }

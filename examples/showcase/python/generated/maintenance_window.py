@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from collections.abc import Iterator, Mapping, Sequence
 from typing import TYPE_CHECKING
 
 from .sora_runtime import SoraReader, TextKey
@@ -46,7 +47,7 @@ class MaintenanceWindow:
         pass
 
 
-class MaintenanceWindowTable(SoraConfigTable):
+class MaintenanceWindowTable(SoraConfigTable, Sequence[MaintenanceWindow]):
     NAME = "MaintenanceWindow"
     INFO = SoraTableInfo(
         name=NAME,
@@ -72,9 +73,12 @@ class MaintenanceWindowTable(SoraConfigTable):
     def info(self) -> SoraTableInfo:
         return self.INFO
 
-    def len(self) -> int:
+    def __len__(self) -> int:
         return len(self._rows)
 
 
-    def rows(self) -> list[MaintenanceWindow]:
-        return self._rows
+    def __getitem__(self, index: int | slice) -> MaintenanceWindow | list[MaintenanceWindow]:
+        return self._rows[index]
+
+    def __iter__(self) -> Iterator[MaintenanceWindow]:
+        return iter(self._rows)

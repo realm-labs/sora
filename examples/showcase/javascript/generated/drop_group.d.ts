@@ -4,8 +4,8 @@ import type { SoraKeyedTable, SoraTableInfo, SoraReader, SoraValue, TextKey } fr
 
 
 export interface DropGroup {
-    id: number;
-    name: string;
+    readonly id: number;
+    readonly name: string;
 }
 
 export declare function decodeDropGroup(reader: SoraReader): DropGroup;
@@ -16,9 +16,11 @@ export declare class DropGroupTable implements SoraKeyedTable<number, DropGroup>
     static readonly tableInfo: SoraTableInfo;
     static decode(rows: DropGroup[]): DropGroupTable;
     info(): SoraTableInfo;
-    len(): number;
+    readonly size: number;
     get(key: number): DropGroup | undefined;
-    rows(): ReadonlyMap<number, DropGroup>;
-    keys(): readonly number[];
-    orderedRows(): DropGroup[];
+    has(key: number): boolean;
+    readonly rows: ReadonlyMap<number, DropGroup>;
+    readonly orderedKeys: readonly number[];
+    readonly orderedRows: readonly DropGroup[];
+    [Symbol.iterator](): Iterator<DropGroup>;
 }

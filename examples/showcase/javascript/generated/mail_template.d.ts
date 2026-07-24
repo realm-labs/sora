@@ -8,11 +8,11 @@ import type { Reward } from "./reward.js";
 
 
 export interface MailTemplate {
-    id: number;
-    mailType: MailType;
-    titleKey: TextKey;
-    bodyKey: TextKey;
-    rewards: Reward[];
+    readonly id: number;
+    readonly mailType: MailType;
+    readonly titleKey: TextKey;
+    readonly bodyKey: TextKey;
+    readonly rewards: readonly Reward[];
 }
 
 export declare function decodeMailTemplate(reader: SoraReader): MailTemplate;
@@ -23,9 +23,11 @@ export declare class MailTemplateTable implements SoraKeyedTable<number, MailTem
     static readonly tableInfo: SoraTableInfo;
     static decode(rows: MailTemplate[]): MailTemplateTable;
     info(): SoraTableInfo;
-    len(): number;
+    readonly size: number;
     get(key: number): MailTemplate | undefined;
-    rows(): ReadonlyMap<number, MailTemplate>;
-    keys(): readonly number[];
-    orderedRows(): MailTemplate[];
+    has(key: number): boolean;
+    readonly rows: ReadonlyMap<number, MailTemplate>;
+    readonly orderedKeys: readonly number[];
+    readonly orderedRows: readonly MailTemplate[];
+    [Symbol.iterator](): Iterator<MailTemplate>;
 }

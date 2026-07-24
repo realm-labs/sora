@@ -3,36 +3,16 @@
 package com.sora.showcase;
 
 import java.util.List;
-import java.util.Map;
 
-
-public final class Character {
-    public final Integer id;
-    public final String name;
-    public final Rarity rarity;
-    public final Integer baseLevel;
-    public final Integer baseSkill;
-    public final java.util.List<Integer> starterItems;
-    public final Vec3 spawnPos;
-
-    public Character(
-        Integer id,
-        String name,
-        Rarity rarity,
-        Integer baseLevel,
-        Integer baseSkill,
-        java.util.List<Integer> starterItems,
-        Vec3 spawnPos
-    ) {
-        this.id = id;
-        this.name = name;
-        this.rarity = rarity;
-        this.baseLevel = baseLevel;
-        this.baseSkill = baseSkill;
-        this.starterItems = starterItems;
-        this.spawnPos = spawnPos;
-    }
-
+public record Character(
+    int id,
+    String name,
+    Rarity rarity,
+    int baseLevel,
+    int baseSkill,
+    java.util.List<Integer> starterItems,
+    Vec3 spawnPos
+) {
     static Character decode(SoraReader reader) {
         return new Character(
             reader.readI32(),
@@ -60,63 +40,5 @@ public final class Character {
 
     void collectTextKeys(List<TextKey> out) {
         this.spawnPos.collectTextKeys(out);
-    }
-}
-
-final class CharacterTable extends java.util.AbstractMap<Integer, Character> implements SoraKeyedTable<Integer, Character> {
-    static final String NAME = "Character";
-    static final SoraTableInfo INFO = new SoraTableInfo(
-        NAME,
-        "Character",
-        SoraTableShape.KEYED,
-        new SoraKeyInfo("id", "Integer"),
-        List.of(
-        )
-    );
-    private final List<Integer> keys;
-    private final java.util.Map<Integer, Character> rows;
-
-    private CharacterTable(List<Integer> keys, java.util.Map<Integer, Character> rows) {
-        this.keys = keys;
-        this.rows = rows;
-    }
-
-    private static CharacterTable fromRows(List<Character> rows) {
-        return new CharacterTable(rows.stream().map(row -> row.id).toList(), SoraConfig.decodeMapTable(rows, row -> row.id));
-    }
-
-    static CharacterTable decode(SoraTableSource source) {
-        return fromRows(source.decodeTable(NAME, Character::decode, Character::decode));
-    }
-
-    public java.util.Map<Integer, Character> rows() {
-        return rows;
-    }
-    @Override
-    @SoraNullable
-    public Character get(Object key) {
-        return rows.get(key);
-    }
-
-    public List<Integer> orderedKeys() {
-        return keys;
-    }
-
-    public List<Character> orderedRows() {
-        return keys.stream().map(rows::get).toList();
-    }
-
-    @Override
-    public java.util.Set<Map.Entry<Integer, Character>> entrySet() {
-        return rows.entrySet();
-    }
-    @Override
-    public SoraTableInfo info() {
-        return INFO;
-    }
-
-    @Override
-    public int size() {
-        return rows.size();
     }
 }

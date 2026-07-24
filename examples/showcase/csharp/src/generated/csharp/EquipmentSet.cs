@@ -10,7 +10,7 @@ namespace com.sora.showcase;
 public sealed record EquipmentSet(
     int Id,
     string Name,
-    List<int> ItemIds,
+    IReadOnlyList<int> ItemIds,
     SkillEffect BonusEffect
 )
 {
@@ -71,8 +71,7 @@ public sealed class EquipmentSetTable : ISoraKeyedTable<int, EquipmentSet>
     {
         return new EquipmentSetTable(rows.ConvertAll(row => row.Id), SoraConfig.DecodeMapTable(rows, row => row.Id));
     }
-
-    public Dictionary<int, EquipmentSet> Rows => rows;
+    public IReadOnlyDictionary<int, EquipmentSet> Rows => rows;
     public EquipmentSet this[int key] => rows[key];
 
     public EquipmentSet? Get(int key)

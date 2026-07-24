@@ -6,10 +6,10 @@
 -export_type([t/0, table/0]).
 
 -type t() :: #{
-    'version' := binary(),
-    'starts_at' := binary(),
-    'duration_minutes' := integer(),
-    'reason' := binary() | undefined
+    version := binary(),
+    starts_at := binary(),
+    duration_minutes := integer(),
+    reason := binary() | undefined
 }.
 
 -type table() :: map().
@@ -22,20 +22,20 @@ decode(Reader0) ->
     {DurationMinutes, Reader3} = (fun sora_runtime:read_i32/1)(Reader2),
     {Reason, Reader4} = (fun(Reader) -> sora_runtime:read_optional(fun sora_runtime:read_string/1, Reader) end)(Reader3),
     {#{
-        'version' => Version,
-        'starts_at' => StartsAt,
-        'duration_minutes' => DurationMinutes,
-        'reason' => Reason
+        version => Version,
+        starts_at => StartsAt,
+        duration_minutes => DurationMinutes,
+        reason => Reason
     }, Reader4}.
 
 -spec decode_value(map()) -> t().
 decode_value(Value) ->
     Obj = sora_runtime:expect_map(Value),
     #{
-        'version' => sora_runtime:expect_binary(sora_runtime:value_get(<<"version">>, Obj)),
-        'starts_at' => sora_runtime:expect_binary(sora_runtime:value_get(<<"starts_at">>, Obj)),
-        'duration_minutes' => sora_runtime:expect_integer(sora_runtime:value_get(<<"duration_minutes">>, Obj)),
-        'reason' => (fun(OptionalValue) -> case OptionalValue of undefined -> undefined; _ -> sora_runtime:expect_binary(OptionalValue) end end)(sora_runtime:value_get(<<"reason">>, Obj))
+        version => sora_runtime:expect_binary(sora_runtime:value_get(<<"version">>, Obj)),
+        starts_at => sora_runtime:expect_binary(sora_runtime:value_get(<<"starts_at">>, Obj)),
+        duration_minutes => sora_runtime:expect_integer(sora_runtime:value_get(<<"duration_minutes">>, Obj)),
+        reason => (fun(OptionalValue) -> case OptionalValue of undefined -> undefined; _ -> sora_runtime:expect_binary(OptionalValue) end end)(sora_runtime:value_get(<<"reason">>, Obj))
     }.
 
 -spec decode_table(map()) -> table().

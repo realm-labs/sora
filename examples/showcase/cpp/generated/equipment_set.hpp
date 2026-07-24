@@ -40,7 +40,7 @@ public:
         return info;
     }
 
-    EquipmentSetTable() {}
+    EquipmentSetTable() = default;
     EquipmentSetTable(const EquipmentSetTable&) = delete;
     EquipmentSetTable& operator=(const EquipmentSetTable&) = delete;
     EquipmentSetTable(EquipmentSetTable&&) = default;
@@ -49,8 +49,7 @@ public:
     static EquipmentSetTable decode(const SoraBundle& bundle) {
         std::vector<EquipmentSet> rows = bundle.decode_table<EquipmentSet>(NAME);
         EquipmentSetTable table;
-        for (std::size_t index = 0; index < rows.size(); ++index) {
-            const EquipmentSet& row = rows[index];
+        for (const auto& row : rows) {
             table.keys_.push_back(row.id);
             table.rows_.emplace(row.id, row);
         }
@@ -67,7 +66,7 @@ public:
     }
 
     const EquipmentSet* get(const std::int32_t& key) const {
-        typename std::unordered_map<std::int32_t, EquipmentSet>::const_iterator it = rows_.find(key);
+        auto it = rows_.find(key);
         if (it == rows_.end()) {
             return nullptr;
         }
@@ -81,10 +80,8 @@ public:
     std::vector<const EquipmentSet*> ordered_rows() const {
         std::vector<const EquipmentSet*> rows;
         rows.reserve(keys_.size());
-        for (typename std::vector<std::int32_t>::const_iterator key = keys_.begin();
-             key != keys_.end();
-             ++key) {
-            typename std::unordered_map<std::int32_t, EquipmentSet>::const_iterator it = rows_.find(*key);
+        for (const auto& key : keys_) {
+            auto it = rows_.find(key);
             if (it != rows_.end()) {
                 rows.push_back(&it->second);
             }

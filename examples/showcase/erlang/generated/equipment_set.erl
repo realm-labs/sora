@@ -7,10 +7,10 @@
 -export_type([t/0, table/0]).
 
 -type t() :: #{
-    'id' := integer(),
-    'name' := binary(),
-    'item_ids' := [integer()],
-    'bonus_effect' := skill_effect:t()
+    id := integer(),
+    name := binary(),
+    item_ids := [integer()],
+    bonus_effect := skill_effect:t()
 }.
 
 -type table() :: map().
@@ -23,27 +23,27 @@ decode(Reader0) ->
     {ItemIds, Reader3} = (fun(Reader) -> sora_runtime:read_list(fun sora_runtime:read_i32/1, Reader) end)(Reader2),
     {BonusEffect, Reader4} = (fun skill_effect:decode/1)(Reader3),
     {#{
-        'id' => Id,
-        'name' => Name,
-        'item_ids' => ItemIds,
-        'bonus_effect' => BonusEffect
+        id => Id,
+        name => Name,
+        item_ids => ItemIds,
+        bonus_effect => BonusEffect
     }, Reader4}.
 
 -spec decode_value(map()) -> t().
 decode_value(Value) ->
     Obj = sora_runtime:expect_map(Value),
     #{
-        'id' => sora_runtime:expect_integer(sora_runtime:value_get(<<"id">>, Obj)),
-        'name' => sora_runtime:expect_binary(sora_runtime:value_get(<<"name">>, Obj)),
-        'item_ids' => sora_runtime:decode_value_list(fun(Item) -> sora_runtime:expect_integer(Item) end, sora_runtime:value_get(<<"item_ids">>, Obj)),
-        'bonus_effect' => skill_effect:decode_value(sora_runtime:value_get(<<"bonus_effect">>, Obj))
+        id => sora_runtime:expect_integer(sora_runtime:value_get(<<"id">>, Obj)),
+        name => sora_runtime:expect_binary(sora_runtime:value_get(<<"name">>, Obj)),
+        item_ids => sora_runtime:decode_value_list(fun(Item) -> sora_runtime:expect_integer(Item) end, sora_runtime:value_get(<<"item_ids">>, Obj)),
+        bonus_effect => skill_effect:decode_value(sora_runtime:value_get(<<"bonus_effect">>, Obj))
     }.
 
 -spec decode_table(map()) -> table().
 decode_table(Bundle) ->
     Rows = sora_runtime:decode_table(Bundle, ?TABLE_NAME, fun ?MODULE:decode/1, fun ?MODULE:decode_value/1),
-    Data = sora_runtime:decode_map_table(Rows, fun(Row) -> maps:get('id', Row) end),
-    Keys = [maps:get('id', Row) || Row <- Rows],
+    Data = sora_runtime:decode_map_table(Rows, fun(Row) -> maps:get(id, Row) end),
+    Keys = [maps:get(id, Row) || Row <- Rows],
     #{
         keys => Keys,
         data => Data

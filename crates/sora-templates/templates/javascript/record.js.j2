@@ -136,7 +136,7 @@ export class {{ table.pascal_name }}Table {
         return {{ table.pascal_name }}Table.tableInfo;
     }
 
-    len() {
+    get size() {
 {%- if table.mode == "singleton" %}
         return 1;
 {%- elif table.mode == "map" and table.key_field_name %}
@@ -151,27 +151,47 @@ export class {{ table.pascal_name }}Table {
         return this._rows.get(key);
     }
 
-    rows() {
+    has(key) {
+        return this._rows.has(key);
+    }
+
+    get rows() {
         return this._rows;
     }
 
-    keys() {
+    get orderedKeys() {
         return this._keys;
     }
 
-    orderedRows() {
+    get orderedRows() {
         return this._keys.flatMap((key) => {
             const row = this._rows.get(key);
             return row === undefined ? [] : [row];
         });
     }
+
+    [Symbol.iterator]() {
+        return this._rows.values();
+    }
 {%- elif table.mode == "singleton" %}
-    row() {
+    get row() {
         return this._row;
     }
+
+    [Symbol.iterator]() {
+        return [this._row].values();
+    }
 {%- else %}
-    rows() {
+    get rows() {
         return this._rows;
+    }
+
+    at(index) {
+        return this._rows.at(index);
+    }
+
+    [Symbol.iterator]() {
+        return this._rows[Symbol.iterator]();
     }
 {%- endif %}
 

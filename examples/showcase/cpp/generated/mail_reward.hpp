@@ -39,7 +39,7 @@ public:
         return info;
     }
 
-    MailRewardTable() {}
+    MailRewardTable() = default;
     MailRewardTable(const MailRewardTable&) = delete;
     MailRewardTable& operator=(const MailRewardTable&) = delete;
     MailRewardTable(MailRewardTable&&) = default;

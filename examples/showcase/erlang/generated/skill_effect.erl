@@ -5,9 +5,9 @@
 -export_type([t/0]).
 
 -type t() :: #{
-    'element' := element_type:t(),
-    'power' := integer(),
-    'radius' := float()
+    element := element_type:t(),
+    power := integer(),
+    radius := float()
 }.
 
 -spec decode(sora_runtime:reader()) -> {t(), sora_runtime:reader()}.
@@ -16,16 +16,16 @@ decode(Reader0) ->
     {Power, Reader2} = (fun sora_runtime:read_i32/1)(Reader1),
     {Radius, Reader3} = (fun sora_runtime:read_f32/1)(Reader2),
     {#{
-        'element' => Element,
-        'power' => Power,
-        'radius' => Radius
+        element => Element,
+        power => Power,
+        radius => Radius
     }, Reader3}.
 
 -spec decode_value(map()) -> t().
 decode_value(Value) ->
     Obj = sora_runtime:expect_map(Value),
     #{
-        'element' => element_type:decode_value(sora_runtime:value_get(<<"element">>, Obj)),
-        'power' => sora_runtime:expect_integer(sora_runtime:value_get(<<"power">>, Obj)),
-        'radius' => sora_runtime:expect_float(sora_runtime:value_get(<<"radius">>, Obj))
+        element => element_type:decode_value(sora_runtime:value_get(<<"element">>, Obj)),
+        power => sora_runtime:expect_integer(sora_runtime:value_get(<<"power">>, Obj)),
+        radius => sora_runtime:expect_float(sora_runtime:value_get(<<"radius">>, Obj))
     }.

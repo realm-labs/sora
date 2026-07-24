@@ -17,11 +17,11 @@ import { collectRewardTextKeys, decodeReward, decodeRewardValue } from "./reward
 
 
 export interface MailTemplate {
-    id: number;
-    mailType: MailType;
-    titleKey: TextKey;
-    bodyKey: TextKey;
-    rewards: Reward[];
+    readonly id: number;
+    readonly mailType: MailType;
+    readonly titleKey: TextKey;
+    readonly bodyKey: TextKey;
+    readonly rewards: readonly Reward[];
 }
 
 export function decodeMailTemplate(reader: SoraReader): MailTemplate {
@@ -63,8 +63,8 @@ export class MailTemplateTable implements SoraKeyedTable<number, MailTemplate> {
     };
 
     private constructor(
-        private readonly _keys: number[],
-        private readonly _rows: Map<number, MailTemplate>,
+        private readonly _keys: readonly number[],
+        private readonly _rows: ReadonlyMap<number, MailTemplate>,
     ) {}
 
     static decode(rows: MailTemplate[]): MailTemplateTable {
@@ -78,25 +78,33 @@ export class MailTemplateTable implements SoraKeyedTable<number, MailTemplate> {
         return MailTemplateTable.tableInfo;
     }
 
-    len(): number {
+    get size(): number {
         return this._rows.size;
     }
     get(key: number): MailTemplate | undefined {
         return this._rows.get(key);
     }
 
-    rows(): ReadonlyMap<number, MailTemplate> {
+    has(key: number): boolean {
+        return this._rows.has(key);
+    }
+
+    get rows(): ReadonlyMap<number, MailTemplate> {
         return this._rows;
     }
 
-    keys(): readonly number[] {
+    get orderedKeys(): readonly number[] {
         return this._keys;
     }
 
-    orderedRows(): MailTemplate[] {
+    get orderedRows(): readonly MailTemplate[] {
         return this._keys.flatMap((key) => {
             const row = this._rows.get(key);
             return row === undefined ? [] : [row];
         });
+    }
+
+    [Symbol.iterator](): Iterator<MailTemplate> {
+        return this._rows.values();
     }
 }

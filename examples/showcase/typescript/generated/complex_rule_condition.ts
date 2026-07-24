@@ -13,9 +13,9 @@ import { collectEventConditionTextKeys, decodeEventCondition, decodeEventConditi
 
 
 export interface ComplexRuleCondition {
-    id: number;
-    ruleId: number;
-    value: EventCondition;
+    readonly id: number;
+    readonly ruleId: number;
+    readonly value: EventCondition;
 }
 
 export function decodeComplexRuleCondition(reader: SoraReader): ComplexRuleCondition {
@@ -51,8 +51,8 @@ export class ComplexRuleConditionTable implements SoraKeyedTable<number, Complex
     };
 
     private constructor(
-        private readonly _keys: number[],
-        private readonly _rows: Map<number, ComplexRuleCondition>,
+        private readonly _keys: readonly number[],
+        private readonly _rows: ReadonlyMap<number, ComplexRuleCondition>,
     ) {}
 
     static decode(rows: ComplexRuleCondition[]): ComplexRuleConditionTable {
@@ -66,25 +66,33 @@ export class ComplexRuleConditionTable implements SoraKeyedTable<number, Complex
         return ComplexRuleConditionTable.tableInfo;
     }
 
-    len(): number {
+    get size(): number {
         return this._rows.size;
     }
     get(key: number): ComplexRuleCondition | undefined {
         return this._rows.get(key);
     }
 
-    rows(): ReadonlyMap<number, ComplexRuleCondition> {
+    has(key: number): boolean {
+        return this._rows.has(key);
+    }
+
+    get rows(): ReadonlyMap<number, ComplexRuleCondition> {
         return this._rows;
     }
 
-    keys(): readonly number[] {
+    get orderedKeys(): readonly number[] {
         return this._keys;
     }
 
-    orderedRows(): ComplexRuleCondition[] {
+    get orderedRows(): readonly ComplexRuleCondition[] {
         return this._keys.flatMap((key) => {
             const row = this._rows.get(key);
             return row === undefined ? [] : [row];
         });
+    }
+
+    [Symbol.iterator](): Iterator<ComplexRuleCondition> {
+        return this._rows.values();
     }
 }

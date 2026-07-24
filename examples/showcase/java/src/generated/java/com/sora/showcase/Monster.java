@@ -3,33 +3,15 @@
 package com.sora.showcase;
 
 import java.util.List;
-import java.util.Map;
 
-
-public final class Monster {
-    public final Integer id;
-    public final String name;
-    public final Integer level;
-    public final ElementType element;
-    public final Integer dropGroup;
-    public final Vec3 spawnPos;
-
-    public Monster(
-        Integer id,
-        String name,
-        Integer level,
-        ElementType element,
-        Integer dropGroup,
-        Vec3 spawnPos
-    ) {
-        this.id = id;
-        this.name = name;
-        this.level = level;
-        this.element = element;
-        this.dropGroup = dropGroup;
-        this.spawnPos = spawnPos;
-    }
-
+public record Monster(
+    int id,
+    String name,
+    int level,
+    ElementType element,
+    int dropGroup,
+    Vec3 spawnPos
+) {
     static Monster decode(SoraReader reader) {
         return new Monster(
             reader.readI32(),
@@ -55,63 +37,5 @@ public final class Monster {
 
     void collectTextKeys(List<TextKey> out) {
         this.spawnPos.collectTextKeys(out);
-    }
-}
-
-final class MonsterTable extends java.util.AbstractMap<Integer, Monster> implements SoraKeyedTable<Integer, Monster> {
-    static final String NAME = "Monster";
-    static final SoraTableInfo INFO = new SoraTableInfo(
-        NAME,
-        "Monster",
-        SoraTableShape.KEYED,
-        new SoraKeyInfo("id", "Integer"),
-        List.of(
-        )
-    );
-    private final List<Integer> keys;
-    private final java.util.Map<Integer, Monster> rows;
-
-    private MonsterTable(List<Integer> keys, java.util.Map<Integer, Monster> rows) {
-        this.keys = keys;
-        this.rows = rows;
-    }
-
-    private static MonsterTable fromRows(List<Monster> rows) {
-        return new MonsterTable(rows.stream().map(row -> row.id).toList(), SoraConfig.decodeMapTable(rows, row -> row.id));
-    }
-
-    static MonsterTable decode(SoraTableSource source) {
-        return fromRows(source.decodeTable(NAME, Monster::decode, Monster::decode));
-    }
-
-    public java.util.Map<Integer, Monster> rows() {
-        return rows;
-    }
-    @Override
-    @SoraNullable
-    public Monster get(Object key) {
-        return rows.get(key);
-    }
-
-    public List<Integer> orderedKeys() {
-        return keys;
-    }
-
-    public List<Monster> orderedRows() {
-        return keys.stream().map(rows::get).toList();
-    }
-
-    @Override
-    public java.util.Set<Map.Entry<Integer, Monster>> entrySet() {
-        return rows.entrySet();
-    }
-    @Override
-    public SoraTableInfo info() {
-        return INFO;
-    }
-
-    @Override
-    public int size() {
-        return rows.size();
     }
 }

@@ -17,19 +17,19 @@ import { collectResourceCostTextKeys, decodeResourceCost, decodeResourceCostValu
 
 export interface Item {
     /** Item id */
-    id: number;
+    readonly id: number;
     /** Display name */
-    name: string;
+    readonly name: string;
     /** Item category */
-    itemType: ItemType;
+    readonly itemType: ItemType;
     /** Stack limit; blank cells use the default */
-    maxStack: number;
+    readonly maxStack: number;
     /** Struct columns: price_kind, price_id, price_count */
-    price: ResourceCost;
+    readonly price: ResourceCost;
     /** JSON string set */
-    tags: string[];
+    readonly tags: readonly string[];
     /** Map pairs: key,value|key,value */
-    attributes: Map<string, number>;
+    readonly attributes: ReadonlyMap<string, number>;
 }
 
 export function decodeItem(reader: SoraReader): Item {
@@ -75,8 +75,8 @@ export class ItemTable implements SoraKeyedTable<number, Item> {
     };
 
     private constructor(
-        private readonly _keys: number[],
-        private readonly _rows: Map<number, Item>,
+        private readonly _keys: readonly number[],
+        private readonly _rows: ReadonlyMap<number, Item>,
         private readonly _by_name: Map<string, Item>,
         private readonly _by_item_type: Map<ItemType, Item[]>,
     ) {}
@@ -94,26 +94,34 @@ export class ItemTable implements SoraKeyedTable<number, Item> {
         return ItemTable.tableInfo;
     }
 
-    len(): number {
+    get size(): number {
         return this._rows.size;
     }
     get(key: number): Item | undefined {
         return this._rows.get(key);
     }
 
-    rows(): ReadonlyMap<number, Item> {
+    has(key: number): boolean {
+        return this._rows.has(key);
+    }
+
+    get rows(): ReadonlyMap<number, Item> {
         return this._rows;
     }
 
-    keys(): readonly number[] {
+    get orderedKeys(): readonly number[] {
         return this._keys;
     }
 
-    orderedRows(): Item[] {
+    get orderedRows(): readonly Item[] {
         return this._keys.flatMap((key) => {
             const row = this._rows.get(key);
             return row === undefined ? [] : [row];
         });
+    }
+
+    [Symbol.iterator](): Iterator<Item> {
+        return this._rows.values();
     }
     getByName(name: string): Item | undefined {
         return this._by_name.get(name);

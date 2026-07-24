@@ -25,7 +25,7 @@ export interface {{ record.pascal_name }} {
 {%- if field.comment %}
     /** {{ field.comment }} */
 {%- endif %}
-    {{ field.name }}: {{ field.type_name }};
+    readonly {{ field.name }}: {{ field.type_name }};
 {%- endfor %}
 }
 
@@ -84,12 +84,12 @@ export class {{ table.pascal_name }}Table implements {% if table.mode == "map" a
 
     private constructor(
 {%- if table.mode == "map" and table.key_type %}
-        private readonly _keys: {{ table.key_type }}[],
-        private readonly _rows: Map<{{ table.key_type }}, {{ table.row_type }}>,
+        private readonly _keys: readonly {{ table.key_type }}[],
+        private readonly _rows: ReadonlyMap<{{ table.key_type }}, {{ table.row_type }}>,
 {%- elif table.mode == "singleton" %}
         private readonly _row: {{ table.row_type }},
 {%- else %}
-        private readonly _rows: {{ table.row_type }}[],
+        private readonly _rows: readonly {{ table.row_type }}[],
 {%- endif %}
 {%- for index in table.unique_indexes %}
         private readonly _{{ index.name }}: Map<{{ index.key_type }}, {{ table.row_type }}>,
@@ -132,7 +132,7 @@ export class {{ table.pascal_name }}Table implements {% if table.mode == "map" a
         return {{ table.pascal_name }}Table.tableInfo;
     }
 
-    len(): number {
+    get size(): number {
 {%- if table.mode == "singleton" %}
         return 1;
 {%- elif table.mode == "map" and table.key_field_name %}
@@ -147,27 +147,47 @@ export class {{ table.pascal_name }}Table implements {% if table.mode == "map" a
         return this._rows.get(key);
     }
 
-    rows(): ReadonlyMap<{{ table.key_type }}, {{ table.row_type }}> {
+    has(key: {{ table.key_type }}): boolean {
+        return this._rows.has(key);
+    }
+
+    get rows(): ReadonlyMap<{{ table.key_type }}, {{ table.row_type }}> {
         return this._rows;
     }
 
-    keys(): readonly {{ table.key_type }}[] {
+    get orderedKeys(): readonly {{ table.key_type }}[] {
         return this._keys;
     }
 
-    orderedRows(): {{ table.row_type }}[] {
+    get orderedRows(): readonly {{ table.row_type }}[] {
         return this._keys.flatMap((key) => {
             const row = this._rows.get(key);
             return row === undefined ? [] : [row];
         });
     }
+
+    [Symbol.iterator](): Iterator<{{ table.row_type }}> {
+        return this._rows.values();
+    }
 {%- elif table.mode == "singleton" %}
-    row(): {{ table.row_type }} {
+    get row(): {{ table.row_type }} {
         return this._row;
     }
+
+    [Symbol.iterator](): Iterator<{{ table.row_type }}> {
+        return [this._row].values();
+    }
 {%- else %}
-    rows(): readonly {{ table.row_type }}[] {
+    get rows(): readonly {{ table.row_type }}[] {
         return this._rows;
+    }
+
+    at(index: number): {{ table.row_type }} | undefined {
+        return this._rows.at(index);
+    }
+
+    [Symbol.iterator](): Iterator<{{ table.row_type }}> {
+        return this._rows[Symbol.iterator]();
     }
 {%- endif %}
 

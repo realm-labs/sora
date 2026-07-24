@@ -8,10 +8,10 @@ import type { RewardAction } from "./reward_action.js";
 
 
 export interface EventRule {
-    id: number;
-    name: string;
-    condition: EventCondition;
-    actions: RewardAction[];
+    readonly id: number;
+    readonly name: string;
+    readonly condition: EventCondition;
+    readonly actions: readonly RewardAction[];
 }
 
 export declare function decodeEventRule(reader: SoraReader): EventRule;
@@ -22,9 +22,11 @@ export declare class EventRuleTable implements SoraKeyedTable<number, EventRule>
     static readonly tableInfo: SoraTableInfo;
     static decode(rows: EventRule[]): EventRuleTable;
     info(): SoraTableInfo;
-    len(): number;
+    readonly size: number;
     get(key: number): EventRule | undefined;
-    rows(): ReadonlyMap<number, EventRule>;
-    keys(): readonly number[];
-    orderedRows(): EventRule[];
+    has(key: number): boolean;
+    readonly rows: ReadonlyMap<number, EventRule>;
+    readonly orderedKeys: readonly number[];
+    readonly orderedRows: readonly EventRule[];
+    [Symbol.iterator](): Iterator<EventRule>;
 }

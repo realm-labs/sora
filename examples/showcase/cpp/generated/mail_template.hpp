@@ -43,7 +43,7 @@ public:
         return info;
     }
 
-    MailTemplateTable() {}
+    MailTemplateTable() = default;
     MailTemplateTable(const MailTemplateTable&) = delete;
     MailTemplateTable& operator=(const MailTemplateTable&) = delete;
     MailTemplateTable(MailTemplateTable&&) = default;
@@ -52,8 +52,7 @@ public:
     static MailTemplateTable decode(const SoraBundle& bundle) {
         std::vector<MailTemplate> rows = bundle.decode_table<MailTemplate>(NAME);
         MailTemplateTable table;
-        for (std::size_t index = 0; index < rows.size(); ++index) {
-            const MailTemplate& row = rows[index];
+        for (const auto& row : rows) {
             table.keys_.push_back(row.id);
             table.rows_.emplace(row.id, row);
         }
@@ -70,7 +69,7 @@ public:
     }
 
     const MailTemplate* get(const std::int32_t& key) const {
-        typename std::unordered_map<std::int32_t, MailTemplate>::const_iterator it = rows_.find(key);
+        auto it = rows_.find(key);
         if (it == rows_.end()) {
             return nullptr;
         }
@@ -84,10 +83,8 @@ public:
     std::vector<const MailTemplate*> ordered_rows() const {
         std::vector<const MailTemplate*> rows;
         rows.reserve(keys_.size());
-        for (typename std::vector<std::int32_t>::const_iterator key = keys_.begin();
-             key != keys_.end();
-             ++key) {
-            typename std::unordered_map<std::int32_t, MailTemplate>::const_iterator it = rows_.find(*key);
+        for (const auto& key : keys_) {
+            auto it = rows_.find(key);
             if (it != rows_.end()) {
                 rows.push_back(&it->second);
             }

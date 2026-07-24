@@ -6,9 +6,9 @@ import type { ResourceKind } from "./resource_kind.js";
 
 
 export interface Shop {
-    id: number;
-    name: string;
-    currency: ResourceKind;
+    readonly id: number;
+    readonly name: string;
+    readonly currency: ResourceKind;
 }
 
 export declare function decodeShop(reader: SoraReader): Shop;
@@ -19,9 +19,11 @@ export declare class ShopTable implements SoraKeyedTable<number, Shop> {
     static readonly tableInfo: SoraTableInfo;
     static decode(rows: Shop[]): ShopTable;
     info(): SoraTableInfo;
-    len(): number;
+    readonly size: number;
     get(key: number): Shop | undefined;
-    rows(): ReadonlyMap<number, Shop>;
-    keys(): readonly number[];
-    orderedRows(): Shop[];
+    has(key: number): boolean;
+    readonly rows: ReadonlyMap<number, Shop>;
+    readonly orderedKeys: readonly number[];
+    readonly orderedRows: readonly Shop[];
+    [Symbol.iterator](): Iterator<Shop>;
 }

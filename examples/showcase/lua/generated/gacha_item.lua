@@ -4,8 +4,8 @@ local Runtime = require("generated.sora_runtime")
 local Rarity = require("generated.rarity")
 
 ---@class GachaItem
----@field poolId integer
----@field itemId integer
+---@field pool_id integer
+---@field item_id integer
 ---@field rarity Rarity
 ---@field weight number
 
@@ -15,8 +15,8 @@ local GachaItem = {}
 ---@return GachaItem
 function GachaItem.decode(reader)
     return {
-        poolId = reader:read_i32(),
-        itemId = reader:read_i32(),
+        pool_id = reader:read_i32(),
+        item_id = reader:read_i32(),
         rarity = Rarity.decode(reader),
         weight = reader:read_f32(),
     }
@@ -27,8 +27,8 @@ end
 function GachaItem.decode_value(value)
     local obj = Runtime.expect_table(value)
     return {
-        poolId = Runtime.expect_integer(obj["pool_id"]),
-        itemId = Runtime.expect_integer(obj["item_id"]),
+        pool_id = Runtime.expect_integer(obj["pool_id"]),
+        item_id = Runtime.expect_integer(obj["item_id"]),
         rarity = Rarity.decode_value(obj["rarity"]),
         weight = Runtime.expect_number(obj["weight"]),
     }

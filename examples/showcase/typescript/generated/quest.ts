@@ -19,14 +19,14 @@ import { collectVec3TextKeys, decodeVec3, decodeVec3Value } from "./vec3.js";
 
 
 export interface Quest {
-    id: number;
-    questType: QuestType;
-    title: string;
-    requiredItem: number;
-    unlockSkills: number[];
-    startPos: Vec3;
+    readonly id: number;
+    readonly questType: QuestType;
+    readonly title: string;
+    readonly requiredItem: number;
+    readonly unlockSkills: readonly number[];
+    readonly startPos: Vec3;
     /** Materialized from QuestReward child rows */
-    rewards: Reward[];
+    readonly rewards: readonly Reward[];
 }
 
 export function decodeQuest(reader: SoraReader): Quest {
@@ -71,8 +71,8 @@ export class QuestTable implements SoraKeyedTable<number, Quest> {
     };
 
     private constructor(
-        private readonly _keys: number[],
-        private readonly _rows: Map<number, Quest>,
+        private readonly _keys: readonly number[],
+        private readonly _rows: ReadonlyMap<number, Quest>,
     ) {}
 
     static decode(rows: Quest[]): QuestTable {
@@ -86,25 +86,33 @@ export class QuestTable implements SoraKeyedTable<number, Quest> {
         return QuestTable.tableInfo;
     }
 
-    len(): number {
+    get size(): number {
         return this._rows.size;
     }
     get(key: number): Quest | undefined {
         return this._rows.get(key);
     }
 
-    rows(): ReadonlyMap<number, Quest> {
+    has(key: number): boolean {
+        return this._rows.has(key);
+    }
+
+    get rows(): ReadonlyMap<number, Quest> {
         return this._rows;
     }
 
-    keys(): readonly number[] {
+    get orderedKeys(): readonly number[] {
         return this._keys;
     }
 
-    orderedRows(): Quest[] {
+    get orderedRows(): readonly Quest[] {
         return this._keys.flatMap((key) => {
             const row = this._rows.get(key);
             return row === undefined ? [] : [row];
         });
+    }
+
+    [Symbol.iterator](): Iterator<Quest> {
+        return this._rows.values();
     }
 }

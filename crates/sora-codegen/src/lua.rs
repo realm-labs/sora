@@ -324,7 +324,7 @@ fn lua_table(
     let key_field_name = table
         .key_field
         .as_ref()
-        .map(|field| field.camel_name.clone());
+        .map(|field| field.snake_name.clone());
 
     LuaTable {
         name: table.name,
@@ -356,8 +356,8 @@ fn lua_index(
 ) -> LuaIndex {
     LuaIndex {
         name: index.snake_name,
-        field_name: index.field.camel_name.clone(),
-        param_camel_name: index.field.camel_name,
+        field_name: index.field.snake_name.clone(),
+        param_camel_name: index.field.snake_name,
         key_type: mapper.type_name(&index.field.ty, options),
     }
 }
@@ -371,12 +371,12 @@ fn lua_field(
     let collect_text_keys = lua_collect_text_keys(
         ir,
         &field.ty,
-        &format!("value.{}", field.camel_name),
+        &format!("value.{}", field.snake_name),
         mapper,
     );
     LuaField {
         raw_name: field.raw_name,
-        name: field.camel_name,
+        name: field.snake_name,
         type_name: mapper.type_name(&field.ty, options),
         decode: lua_decode_expr(ir, &field.ty, mapper),
         value_decode: lua_value_decode_expr(ir, &field.ty, "__VALUE__", mapper),
@@ -682,12 +682,12 @@ mod tests {
 
         assert!(item.contains("---@class Item"));
         assert!(item.ends_with('\n'));
-        assert!(item.contains("---@field itemType ItemType"));
-        assert!(item.contains("---@field largeId integer"));
+        assert!(item.contains("---@field item_type ItemType"));
+        assert!(item.contains("---@field large_id integer"));
         assert!(item.contains("local ItemType = require(\"generated.lua.item_type\")"));
         assert!(item.contains("function Item.decode(reader)"));
-        assert!(item.contains("itemType = ItemType.decode(reader)"));
-        assert!(item.contains("largeId = reader:read_i64()"));
+        assert!(item.contains("item_type = ItemType.decode(reader)"));
+        assert!(item.contains("large_id = reader:read_i64()"));
         assert!(item_type.contains("---@alias ItemType"));
         assert!(item_type.contains("---| '\"Weapon\"'"));
         assert!(action.contains("---@alias Action"));
@@ -699,7 +699,7 @@ mod tests {
         assert!(item.contains("---@class ItemTable"));
         assert!(item.contains("function ItemTable:get(key)"));
         assert!(item.contains("function ItemTable:get_by_name(name)"));
-        assert!(item.contains("function ItemTable:find_by_item_type(itemType)"));
+        assert!(item.contains("function ItemTable:find_by_item_type(item_type)"));
         assert!(!config.contains("---@class ItemTable"));
         assert!(config.contains("function SoraConfig.from_bytes(bytes, options)"));
         assert!(config.contains("function SoraConfig:item()"));
@@ -726,8 +726,8 @@ mod tests {
 
         let item = std::fs::read_to_string(base.join("item.lua")).unwrap();
 
-        assert!(item.contains("---@field largeId number"));
-        assert!(item.contains("largeId = reader:read_i64()"));
+        assert!(item.contains("---@field large_id number"));
+        assert!(item.contains("large_id = reader:read_i64()"));
 
         let _ = std::fs::remove_dir_all(base);
     }

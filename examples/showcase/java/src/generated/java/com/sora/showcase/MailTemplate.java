@@ -3,30 +3,14 @@
 package com.sora.showcase;
 
 import java.util.List;
-import java.util.Map;
 
-
-public final class MailTemplate {
-    public final Integer id;
-    public final MailType mailType;
-    public final TextKey titleKey;
-    public final TextKey bodyKey;
-    public final java.util.List<Reward> rewards;
-
-    public MailTemplate(
-        Integer id,
-        MailType mailType,
-        TextKey titleKey,
-        TextKey bodyKey,
-        java.util.List<Reward> rewards
-    ) {
-        this.id = id;
-        this.mailType = mailType;
-        this.titleKey = titleKey;
-        this.bodyKey = bodyKey;
-        this.rewards = rewards;
-    }
-
+public record MailTemplate(
+    int id,
+    MailType mailType,
+    TextKey titleKey,
+    TextKey bodyKey,
+    java.util.List<Reward> rewards
+) {
     static MailTemplate decode(SoraReader reader) {
         return new MailTemplate(
             reader.readI32(),
@@ -54,63 +38,5 @@ public final class MailTemplate {
         for (var item : this.rewards) {
             item.collectTextKeys(out);
         }
-    }
-}
-
-final class MailTemplateTable extends java.util.AbstractMap<Integer, MailTemplate> implements SoraKeyedTable<Integer, MailTemplate> {
-    static final String NAME = "MailTemplate";
-    static final SoraTableInfo INFO = new SoraTableInfo(
-        NAME,
-        "MailTemplate",
-        SoraTableShape.KEYED,
-        new SoraKeyInfo("id", "Integer"),
-        List.of(
-        )
-    );
-    private final List<Integer> keys;
-    private final java.util.Map<Integer, MailTemplate> rows;
-
-    private MailTemplateTable(List<Integer> keys, java.util.Map<Integer, MailTemplate> rows) {
-        this.keys = keys;
-        this.rows = rows;
-    }
-
-    private static MailTemplateTable fromRows(List<MailTemplate> rows) {
-        return new MailTemplateTable(rows.stream().map(row -> row.id).toList(), SoraConfig.decodeMapTable(rows, row -> row.id));
-    }
-
-    static MailTemplateTable decode(SoraTableSource source) {
-        return fromRows(source.decodeTable(NAME, MailTemplate::decode, MailTemplate::decode));
-    }
-
-    public java.util.Map<Integer, MailTemplate> rows() {
-        return rows;
-    }
-    @Override
-    @SoraNullable
-    public MailTemplate get(Object key) {
-        return rows.get(key);
-    }
-
-    public List<Integer> orderedKeys() {
-        return keys;
-    }
-
-    public List<MailTemplate> orderedRows() {
-        return keys.stream().map(rows::get).toList();
-    }
-
-    @Override
-    public java.util.Set<Map.Entry<Integer, MailTemplate>> entrySet() {
-        return rows.entrySet();
-    }
-    @Override
-    public SoraTableInfo info() {
-        return INFO;
-    }
-
-    @Override
-    public int size() {
-        return rows.size();
     }
 }

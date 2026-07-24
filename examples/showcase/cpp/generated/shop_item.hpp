@@ -42,7 +42,7 @@ public:
         return info;
     }
 
-    ShopItemTable() {}
+    ShopItemTable() = default;
     ShopItemTable(const ShopItemTable&) = delete;
     ShopItemTable& operator=(const ShopItemTable&) = delete;
     ShopItemTable(ShopItemTable&&) = default;

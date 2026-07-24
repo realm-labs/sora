@@ -10,11 +10,11 @@ import {
 
 
 export interface DropEntry {
-    groupId: number;
-    seq: number;
-    itemId: number;
-    count: number;
-    weight: number;
+    readonly groupId: number;
+    readonly seq: number;
+    readonly itemId: number;
+    readonly count: number;
+    readonly weight: number;
 }
 
 export function decodeDropEntry(reader: SoraReader): DropEntry {
@@ -52,7 +52,7 @@ export class DropEntryTable implements SoraListTable<DropEntry> {
     };
 
     private constructor(
-        private readonly _rows: DropEntry[],
+        private readonly _rows: readonly DropEntry[],
     ) {}
 
     static decode(rows: DropEntry[]): DropEntryTable {
@@ -65,10 +65,18 @@ export class DropEntryTable implements SoraListTable<DropEntry> {
         return DropEntryTable.tableInfo;
     }
 
-    len(): number {
+    get size(): number {
         return this._rows.length;
     }
-    rows(): readonly DropEntry[] {
+    get rows(): readonly DropEntry[] {
         return this._rows;
+    }
+
+    at(index: number): DropEntry | undefined {
+        return this._rows.at(index);
+    }
+
+    [Symbol.iterator](): Iterator<DropEntry> {
+        return this._rows[Symbol.iterator]();
     }
 }

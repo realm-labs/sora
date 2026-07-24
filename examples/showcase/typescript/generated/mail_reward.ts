@@ -10,10 +10,10 @@ import {
 
 
 export interface MailReward {
-    mailId: number;
-    seq: number;
-    itemId: number;
-    count: number;
+    readonly mailId: number;
+    readonly seq: number;
+    readonly itemId: number;
+    readonly count: number;
 }
 
 export function decodeMailReward(reader: SoraReader): MailReward {
@@ -49,7 +49,7 @@ export class MailRewardTable implements SoraListTable<MailReward> {
     };
 
     private constructor(
-        private readonly _rows: MailReward[],
+        private readonly _rows: readonly MailReward[],
     ) {}
 
     static decode(rows: MailReward[]): MailRewardTable {
@@ -62,10 +62,18 @@ export class MailRewardTable implements SoraListTable<MailReward> {
         return MailRewardTable.tableInfo;
     }
 
-    len(): number {
+    get size(): number {
         return this._rows.length;
     }
-    rows(): readonly MailReward[] {
+    get rows(): readonly MailReward[] {
         return this._rows;
+    }
+
+    at(index: number): MailReward | undefined {
+        return this._rows.at(index);
+    }
+
+    [Symbol.iterator](): Iterator<MailReward> {
+        return this._rows[Symbol.iterator]();
     }
 }

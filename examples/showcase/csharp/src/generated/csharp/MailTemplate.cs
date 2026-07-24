@@ -12,7 +12,7 @@ public sealed record MailTemplate(
     MailType MailType,
     TextKey TitleKey,
     TextKey BodyKey,
-    List<Reward> Rewards
+    IReadOnlyList<Reward> Rewards
 )
 {
     internal static MailTemplate Decode(SoraReader reader)
@@ -79,8 +79,7 @@ public sealed class MailTemplateTable : ISoraKeyedTable<int, MailTemplate>
     {
         return new MailTemplateTable(rows.ConvertAll(row => row.Id), SoraConfig.DecodeMapTable(rows, row => row.Id));
     }
-
-    public Dictionary<int, MailTemplate> Rows => rows;
+    public IReadOnlyDictionary<int, MailTemplate> Rows => rows;
     public MailTemplate this[int key] => rows[key];
 
     public MailTemplate? Get(int key)

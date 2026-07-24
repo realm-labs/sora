@@ -13,10 +13,10 @@ import { collectResourceCostTextKeys, decodeResourceCost, decodeResourceCostValu
 
 
 export interface Dungeon {
-    id: number;
-    name: string;
-    stageIds: number[];
-    entryCost: ResourceCost;
+    readonly id: number;
+    readonly name: string;
+    readonly stageIds: readonly number[];
+    readonly entryCost: ResourceCost;
 }
 
 export function decodeDungeon(reader: SoraReader): Dungeon {
@@ -54,8 +54,8 @@ export class DungeonTable implements SoraKeyedTable<number, Dungeon> {
     };
 
     private constructor(
-        private readonly _keys: number[],
-        private readonly _rows: Map<number, Dungeon>,
+        private readonly _keys: readonly number[],
+        private readonly _rows: ReadonlyMap<number, Dungeon>,
     ) {}
 
     static decode(rows: Dungeon[]): DungeonTable {
@@ -69,25 +69,33 @@ export class DungeonTable implements SoraKeyedTable<number, Dungeon> {
         return DungeonTable.tableInfo;
     }
 
-    len(): number {
+    get size(): number {
         return this._rows.size;
     }
     get(key: number): Dungeon | undefined {
         return this._rows.get(key);
     }
 
-    rows(): ReadonlyMap<number, Dungeon> {
+    has(key: number): boolean {
+        return this._rows.has(key);
+    }
+
+    get rows(): ReadonlyMap<number, Dungeon> {
         return this._rows;
     }
 
-    keys(): readonly number[] {
+    get orderedKeys(): readonly number[] {
         return this._keys;
     }
 
-    orderedRows(): Dungeon[] {
+    get orderedRows(): readonly Dungeon[] {
         return this._keys.flatMap((key) => {
             const row = this._rows.get(key);
             return row === undefined ? [] : [row];
         });
+    }
+
+    [Symbol.iterator](): Iterator<Dungeon> {
+        return this._rows.values();
     }
 }

@@ -8,9 +8,9 @@ import type { RewardBundle } from "./reward_bundle.js";
 
 
 export interface ComplexBudget {
-    fixed: ResourceCost;
-    random: RewardBundle[];
-    limits: Map<string, number>;
+    readonly fixed: ResourceCost;
+    readonly random: readonly RewardBundle[];
+    readonly limits: ReadonlyMap<string, number>;
 }
 
 export declare function decodeComplexBudget(reader: SoraReader): ComplexBudget;

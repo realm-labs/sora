@@ -214,6 +214,21 @@ const EMBEDDED_TEMPLATES: &[EmbeddedTemplate] = &[
     },
     EmbeddedTemplate {
         target: "java",
+        file_name: "i18n.java.j2",
+        source: include_str!("../templates/java/i18n.java.j2"),
+    },
+    EmbeddedTemplate {
+        target: "java",
+        file_name: "locale_pack.java.j2",
+        source: include_str!("../templates/java/locale_pack.java.j2"),
+    },
+    EmbeddedTemplate {
+        target: "java",
+        file_name: "read_exception.java.j2",
+        source: include_str!("../templates/java/read_exception.java.j2"),
+    },
+    EmbeddedTemplate {
+        target: "java",
         file_name: "record.java.j2",
         source: include_str!("../templates/java/record.java.j2"),
     },
@@ -221,6 +236,21 @@ const EMBEDDED_TEMPLATES: &[EmbeddedTemplate] = &[
         target: "java",
         file_name: "runtime.java.j2",
         source: include_str!("../templates/java/runtime.java.j2"),
+    },
+    EmbeddedTemplate {
+        target: "java",
+        file_name: "table.java.j2",
+        source: include_str!("../templates/java/table.java.j2"),
+    },
+    EmbeddedTemplate {
+        target: "java",
+        file_name: "text_key.java.j2",
+        source: include_str!("../templates/java/text_key.java.j2"),
+    },
+    EmbeddedTemplate {
+        target: "java",
+        file_name: "text_resolver.java.j2",
+        source: include_str!("../templates/java/text_resolver.java.j2"),
     },
     EmbeddedTemplate {
         target: "java",
@@ -509,7 +539,7 @@ mod tests {
 
     #[test]
     fn embeds_all_templates() {
-        assert_eq!(EMBEDDED_TEMPLATES.len(), 95);
+        assert_eq!(EMBEDDED_TEMPLATES.len(), 101);
         for template in EMBEDDED_TEMPLATES {
             let source = template_source(template.target, template.file_name)
                 .expect("embedded template should be registered");

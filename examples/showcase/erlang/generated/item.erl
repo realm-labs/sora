@@ -9,13 +9,13 @@
 -export_type([t/0, table/0]).
 
 -type t() :: #{
-    'id' := integer(),
-    'name' := binary(),
-    'item_type' := item_type:t(),
-    'max_stack' := integer(),
-    'price' := resource_cost:t(),
-    'tags' := [binary()],
-    'attributes' := #{binary() => integer()}
+    id := integer(),
+    name := binary(),
+    item_type := item_type:t(),
+    max_stack := integer(),
+    price := resource_cost:t(),
+    tags := [binary()],
+    attributes := #{binary() => integer()}
 }.
 
 -type table() :: map().
@@ -31,40 +31,40 @@ decode(Reader0) ->
     {Tags, Reader6} = (fun(Reader) -> sora_runtime:read_list(fun sora_runtime:read_string/1, Reader) end)(Reader5),
     {Attributes, Reader7} = (fun(Reader) -> sora_runtime:read_map(fun sora_runtime:read_string/1, fun sora_runtime:read_i32/1, Reader) end)(Reader6),
     {#{
-        'id' => Id,
-        'name' => Name,
-        'item_type' => ItemType,
-        'max_stack' => MaxStack,
-        'price' => Price,
-        'tags' => Tags,
-        'attributes' => Attributes
+        id => Id,
+        name => Name,
+        item_type => ItemType,
+        max_stack => MaxStack,
+        price => Price,
+        tags => Tags,
+        attributes => Attributes
     }, Reader7}.
 
 -spec decode_value(map()) -> t().
 decode_value(Value) ->
     Obj = sora_runtime:expect_map(Value),
     #{
-        'id' => sora_runtime:expect_integer(sora_runtime:value_get(<<"id">>, Obj)),
-        'name' => sora_runtime:expect_binary(sora_runtime:value_get(<<"name">>, Obj)),
-        'item_type' => item_type:decode_value(sora_runtime:value_get(<<"item_type">>, Obj)),
-        'max_stack' => sora_runtime:expect_integer(sora_runtime:value_get(<<"max_stack">>, Obj)),
-        'price' => resource_cost:decode_value(sora_runtime:value_get(<<"price">>, Obj)),
-        'tags' => sora_runtime:decode_value_list(fun(Item) -> sora_runtime:expect_binary(Item) end, sora_runtime:value_get(<<"tags">>, Obj)),
-        'attributes' => sora_runtime:decode_value_map(fun(Item) -> sora_runtime:expect_binary(Item) end, fun(Item) -> sora_runtime:expect_integer(Item) end, sora_runtime:value_get(<<"attributes">>, Obj))
+        id => sora_runtime:expect_integer(sora_runtime:value_get(<<"id">>, Obj)),
+        name => sora_runtime:expect_binary(sora_runtime:value_get(<<"name">>, Obj)),
+        item_type => item_type:decode_value(sora_runtime:value_get(<<"item_type">>, Obj)),
+        max_stack => sora_runtime:expect_integer(sora_runtime:value_get(<<"max_stack">>, Obj)),
+        price => resource_cost:decode_value(sora_runtime:value_get(<<"price">>, Obj)),
+        tags => sora_runtime:decode_value_list(fun(Item) -> sora_runtime:expect_binary(Item) end, sora_runtime:value_get(<<"tags">>, Obj)),
+        attributes => sora_runtime:decode_value_map(fun(Item) -> sora_runtime:expect_binary(Item) end, fun(Item) -> sora_runtime:expect_integer(Item) end, sora_runtime:value_get(<<"attributes">>, Obj))
     }.
 
 -spec decode_table(map()) -> table().
 decode_table(Bundle) ->
     Rows = sora_runtime:decode_table(Bundle, ?TABLE_NAME, fun ?MODULE:decode/1, fun ?MODULE:decode_value/1),
-    Data = sora_runtime:decode_map_table(Rows, fun(Row) -> maps:get('id', Row) end),
-    Keys = [maps:get('id', Row) || Row <- Rows],
-    ByName = sora_runtime:decode_unique_index(Rows, fun(Row) -> maps:get('name', Row) end),
-    ByItemType = sora_runtime:decode_index(Rows, fun(Row) -> maps:get('item_type', Row) end),
+    Data = sora_runtime:decode_map_table(Rows, fun(Row) -> maps:get(id, Row) end),
+    Keys = [maps:get(id, Row) || Row <- Rows],
+    ByName = sora_runtime:decode_unique_index(Rows, fun(Row) -> maps:get(name, Row) end),
+    ByItemType = sora_runtime:decode_index(Rows, fun(Row) -> maps:get(item_type, Row) end),
     #{
         keys => Keys,
         data => Data
-        , 'by_name' => ByName
-        , 'by_item_type' => ByItemType
+        , by_name => ByName
+        , by_item_type => ByItemType
     }.
 -spec get(integer(), table()) -> t() | undefined.
 get(Key, Table) ->
@@ -85,8 +85,8 @@ ordered_rows(Table) ->
 
 -spec get_by_name(binary(), table()) -> t() | undefined.
 get_by_name(Name, Table) ->
-    maps:get(Name, maps:get('by_name', Table), undefined).
+    maps:get(Name, maps:get(by_name, Table), undefined).
 
 -spec find_by_item_type(item_type:t(), table()) -> [t()].
 find_by_item_type(ItemType, Table) ->
-    maps:get(ItemType, maps:get('by_item_type', Table), []).
+    maps:get(ItemType, maps:get(by_item_type, Table), []).

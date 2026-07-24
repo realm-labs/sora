@@ -6,17 +6,17 @@ local Runtime = require("generated.sora_runtime")
 ---@field level integer
 ---@class EventConditionQuestCompleted
 ---@field type '"QuestCompleted"'
----@field questId integer
+---@field quest_id integer
 ---@class EventConditionHasItem
 ---@field type '"HasItem"'
----@field itemId integer
+---@field item_id integer
 ---@field count integer
 ---@class EventConditionAllConditions
 ---@field type '"AllConditions"'
----@field conditionGroupId integer
+---@field condition_group_id integer
 ---@class EventConditionAnyCondition
 ---@field type '"AnyCondition"'
----@field conditionGroupId integer
+---@field condition_group_id integer
 ---@alias EventCondition
 ---| EventConditionLevelAtLeast
 ---| EventConditionQuestCompleted
@@ -39,26 +39,26 @@ function EventCondition.decode(reader)
     if ordinal == 1 then
         return {
             type = "QuestCompleted",
-            questId = reader:read_i32(),
+            quest_id = reader:read_i32(),
         }
     end
     if ordinal == 2 then
         return {
             type = "HasItem",
-            itemId = reader:read_i32(),
+            item_id = reader:read_i32(),
             count = reader:read_i32(),
         }
     end
     if ordinal == 3 then
         return {
             type = "AllConditions",
-            conditionGroupId = reader:read_i32(),
+            condition_group_id = reader:read_i32(),
         }
     end
     if ordinal == 4 then
         return {
             type = "AnyCondition",
-            conditionGroupId = reader:read_i32(),
+            condition_group_id = reader:read_i32(),
         }
     end
     error("invalid union ordinal " .. tostring(ordinal) .. " for EventCondition")
@@ -78,26 +78,26 @@ function EventCondition.decode_value(value)
     if tag == "QuestCompleted" then
         return {
             type = "QuestCompleted",
-            questId = Runtime.expect_integer(obj["quest_id"]),
+            quest_id = Runtime.expect_integer(obj["quest_id"]),
         }
     end
     if tag == "HasItem" then
         return {
             type = "HasItem",
-            itemId = Runtime.expect_integer(obj["item_id"]),
+            item_id = Runtime.expect_integer(obj["item_id"]),
             count = Runtime.expect_integer(obj["count"]),
         }
     end
     if tag == "AllConditions" then
         return {
             type = "AllConditions",
-            conditionGroupId = Runtime.expect_integer(obj["condition_group_id"]),
+            condition_group_id = Runtime.expect_integer(obj["condition_group_id"]),
         }
     end
     if tag == "AnyCondition" then
         return {
             type = "AnyCondition",
-            conditionGroupId = Runtime.expect_integer(obj["condition_group_id"]),
+            condition_group_id = Runtime.expect_integer(obj["condition_group_id"]),
         }
     end
     error("invalid union tag " .. tostring(tag) .. " for EventCondition")

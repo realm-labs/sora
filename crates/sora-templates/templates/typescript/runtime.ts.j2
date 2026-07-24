@@ -141,23 +141,26 @@ export interface SoraTableInfo {
     indexes: readonly SoraIndexInfo[];
 }
 
-export interface SoraConfigTable<Row = unknown> {
+export interface SoraConfigTable<Row = unknown> extends Iterable<Row> {
     info(): SoraTableInfo;
-    len(): number;
+    readonly size: number;
 }
 
 export interface SoraKeyedTable<Key, Row> extends SoraConfigTable<Row> {
     get(key: Key): Row | undefined;
-    keys(): readonly Key[];
-    orderedRows(): readonly Row[];
+    has(key: Key): boolean;
+    readonly rows: ReadonlyMap<Key, Row>;
+    readonly orderedKeys: readonly Key[];
+    readonly orderedRows: readonly Row[];
 }
 
 export interface SoraListTable<Row> extends SoraConfigTable<Row> {
-    rows(): readonly Row[];
+    readonly rows: readonly Row[];
+    at(index: number): Row | undefined;
 }
 
 export interface SoraSingleTable<Row> extends SoraConfigTable<Row> {
-    row(): Row;
+    readonly row: Row;
 }
 
 export interface SoraTableSource {

@@ -72,8 +72,7 @@ public sealed class ShopItemTable : ISoraListTable<ShopItem>
     {
         return new ShopItemTable(rows);
     }
-
-    public List<ShopItem> Rows => rows;
+    public IReadOnlyList<ShopItem> Rows => rows;
     public ShopItem this[int index] => rows[index];
 
     public IEnumerator<ShopItem> GetEnumerator()

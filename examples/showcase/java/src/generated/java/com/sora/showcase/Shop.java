@@ -3,24 +3,12 @@
 package com.sora.showcase;
 
 import java.util.List;
-import java.util.Map;
 
-
-public final class Shop {
-    public final Integer id;
-    public final String name;
-    public final ResourceKind currency;
-
-    public Shop(
-        Integer id,
-        String name,
-        ResourceKind currency
-    ) {
-        this.id = id;
-        this.name = name;
-        this.currency = currency;
-    }
-
+public record Shop(
+    int id,
+    String name,
+    ResourceKind currency
+) {
     static Shop decode(SoraReader reader) {
         return new Shop(
             reader.readI32(),
@@ -39,63 +27,5 @@ public final class Shop {
     }
 
     void collectTextKeys(List<TextKey> out) {
-    }
-}
-
-final class ShopTable extends java.util.AbstractMap<Integer, Shop> implements SoraKeyedTable<Integer, Shop> {
-    static final String NAME = "Shop";
-    static final SoraTableInfo INFO = new SoraTableInfo(
-        NAME,
-        "Shop",
-        SoraTableShape.KEYED,
-        new SoraKeyInfo("id", "Integer"),
-        List.of(
-        )
-    );
-    private final List<Integer> keys;
-    private final java.util.Map<Integer, Shop> rows;
-
-    private ShopTable(List<Integer> keys, java.util.Map<Integer, Shop> rows) {
-        this.keys = keys;
-        this.rows = rows;
-    }
-
-    private static ShopTable fromRows(List<Shop> rows) {
-        return new ShopTable(rows.stream().map(row -> row.id).toList(), SoraConfig.decodeMapTable(rows, row -> row.id));
-    }
-
-    static ShopTable decode(SoraTableSource source) {
-        return fromRows(source.decodeTable(NAME, Shop::decode, Shop::decode));
-    }
-
-    public java.util.Map<Integer, Shop> rows() {
-        return rows;
-    }
-    @Override
-    @SoraNullable
-    public Shop get(Object key) {
-        return rows.get(key);
-    }
-
-    public List<Integer> orderedKeys() {
-        return keys;
-    }
-
-    public List<Shop> orderedRows() {
-        return keys.stream().map(rows::get).toList();
-    }
-
-    @Override
-    public java.util.Set<Map.Entry<Integer, Shop>> entrySet() {
-        return rows.entrySet();
-    }
-    @Override
-    public SoraTableInfo info() {
-        return INFO;
-    }
-
-    @Override
-    public int size() {
-        return rows.size();
     }
 }

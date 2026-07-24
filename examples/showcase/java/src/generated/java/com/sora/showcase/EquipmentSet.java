@@ -3,27 +3,13 @@
 package com.sora.showcase;
 
 import java.util.List;
-import java.util.Map;
 
-
-public final class EquipmentSet {
-    public final Integer id;
-    public final String name;
-    public final java.util.List<Integer> itemIds;
-    public final SkillEffect bonusEffect;
-
-    public EquipmentSet(
-        Integer id,
-        String name,
-        java.util.List<Integer> itemIds,
-        SkillEffect bonusEffect
-    ) {
-        this.id = id;
-        this.name = name;
-        this.itemIds = itemIds;
-        this.bonusEffect = bonusEffect;
-    }
-
+public record EquipmentSet(
+    int id,
+    String name,
+    java.util.List<Integer> itemIds,
+    SkillEffect bonusEffect
+) {
     static EquipmentSet decode(SoraReader reader) {
         return new EquipmentSet(
             reader.readI32(),
@@ -45,63 +31,5 @@ public final class EquipmentSet {
 
     void collectTextKeys(List<TextKey> out) {
         this.bonusEffect.collectTextKeys(out);
-    }
-}
-
-final class EquipmentSetTable extends java.util.AbstractMap<Integer, EquipmentSet> implements SoraKeyedTable<Integer, EquipmentSet> {
-    static final String NAME = "EquipmentSet";
-    static final SoraTableInfo INFO = new SoraTableInfo(
-        NAME,
-        "EquipmentSet",
-        SoraTableShape.KEYED,
-        new SoraKeyInfo("id", "Integer"),
-        List.of(
-        )
-    );
-    private final List<Integer> keys;
-    private final java.util.Map<Integer, EquipmentSet> rows;
-
-    private EquipmentSetTable(List<Integer> keys, java.util.Map<Integer, EquipmentSet> rows) {
-        this.keys = keys;
-        this.rows = rows;
-    }
-
-    private static EquipmentSetTable fromRows(List<EquipmentSet> rows) {
-        return new EquipmentSetTable(rows.stream().map(row -> row.id).toList(), SoraConfig.decodeMapTable(rows, row -> row.id));
-    }
-
-    static EquipmentSetTable decode(SoraTableSource source) {
-        return fromRows(source.decodeTable(NAME, EquipmentSet::decode, EquipmentSet::decode));
-    }
-
-    public java.util.Map<Integer, EquipmentSet> rows() {
-        return rows;
-    }
-    @Override
-    @SoraNullable
-    public EquipmentSet get(Object key) {
-        return rows.get(key);
-    }
-
-    public List<Integer> orderedKeys() {
-        return keys;
-    }
-
-    public List<EquipmentSet> orderedRows() {
-        return keys.stream().map(rows::get).toList();
-    }
-
-    @Override
-    public java.util.Set<Map.Entry<Integer, EquipmentSet>> entrySet() {
-        return rows.entrySet();
-    }
-    @Override
-    public SoraTableInfo info() {
-        return INFO;
-    }
-
-    @Override
-    public int size() {
-        return rows.size();
     }
 }

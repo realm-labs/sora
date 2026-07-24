@@ -13,10 +13,10 @@ import { collectStatModifierTextKeys, decodeStatModifier, decodeStatModifierValu
 
 
 export interface Buff {
-    id: number;
-    name: string;
-    duration: bigint;
-    modifiers: StatModifier[];
+    readonly id: number;
+    readonly name: string;
+    readonly duration: bigint;
+    readonly modifiers: readonly StatModifier[];
 }
 
 export function decodeBuff(reader: SoraReader): Buff {
@@ -54,8 +54,8 @@ export class BuffTable implements SoraKeyedTable<number, Buff> {
     };
 
     private constructor(
-        private readonly _keys: number[],
-        private readonly _rows: Map<number, Buff>,
+        private readonly _keys: readonly number[],
+        private readonly _rows: ReadonlyMap<number, Buff>,
     ) {}
 
     static decode(rows: Buff[]): BuffTable {
@@ -69,25 +69,33 @@ export class BuffTable implements SoraKeyedTable<number, Buff> {
         return BuffTable.tableInfo;
     }
 
-    len(): number {
+    get size(): number {
         return this._rows.size;
     }
     get(key: number): Buff | undefined {
         return this._rows.get(key);
     }
 
-    rows(): ReadonlyMap<number, Buff> {
+    has(key: number): boolean {
+        return this._rows.has(key);
+    }
+
+    get rows(): ReadonlyMap<number, Buff> {
         return this._rows;
     }
 
-    keys(): readonly number[] {
+    get orderedKeys(): readonly number[] {
         return this._keys;
     }
 
-    orderedRows(): Buff[] {
+    get orderedRows(): readonly Buff[] {
         return this._keys.flatMap((key) => {
             const row = this._rows.get(key);
             return row === undefined ? [] : [row];
         });
+    }
+
+    [Symbol.iterator](): Iterator<Buff> {
+        return this._rows.values();
     }
 }

@@ -3,30 +3,30 @@
 package com.sora.showcase
 
 enum class StatType(val id: Int) {
-    Hp(0),
-    Attack(1),
-    Defense(2),
-    Speed(3),
-    CritRate(4);
+    HP(0),
+    ATTACK(1),
+    DEFENSE(2),
+    SPEED(3),
+    CRIT_RATE(4);
 
     companion object {
         fun decode(reader: SoraReader): StatType =
             when (val id = reader.readU32()) {
-                0 -> Hp
-                1 -> Attack
-                2 -> Defense
-                3 -> Speed
-                4 -> CritRate
+                0 -> HP
+                1 -> ATTACK
+                2 -> DEFENSE
+                3 -> SPEED
+                4 -> CRIT_RATE
                 else -> throw SoraReadException("invalid enum id $id for StatType")
             }
 
         fun decode(value: SoraValue): StatType =
             when (val name = value.asString()) {
-                "Hp" -> Hp
-                "Attack" -> Attack
-                "Defense" -> Defense
-                "Speed" -> Speed
-                "CritRate" -> CritRate
+                "Hp" -> HP
+                "Attack" -> ATTACK
+                "Defense" -> DEFENSE
+                "Speed" -> SPEED
+                "CritRate" -> CRIT_RATE
                 else -> throw SoraReadException("invalid enum value $name for StatType")
             }
     }

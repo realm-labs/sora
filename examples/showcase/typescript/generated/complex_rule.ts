@@ -19,15 +19,15 @@ import { collectRewardActionTextKeys, decodeRewardAction, decodeRewardActionValu
 
 
 export interface ComplexRule {
-    id: number;
-    name: string;
+    readonly id: number;
+    readonly name: string;
     /** Single union value derived from a tagged_columns child row */
-    rootCondition: EventCondition;
-    rootActionGroup: number;
+    readonly rootCondition: EventCondition;
+    readonly rootActionGroup: number;
     /** Non-JSON list<union<RewardAction>> assembled from child rows */
-    actions: RewardAction[];
+    readonly actions: readonly RewardAction[];
     /** Nested tuple, tuple_list, split, and map parsers in one cell */
-    budget: ComplexBudget;
+    readonly budget: ComplexBudget;
 }
 
 export function decodeComplexRule(reader: SoraReader): ComplexRule {
@@ -71,8 +71,8 @@ export class ComplexRuleTable implements SoraKeyedTable<number, ComplexRule> {
     };
 
     private constructor(
-        private readonly _keys: number[],
-        private readonly _rows: Map<number, ComplexRule>,
+        private readonly _keys: readonly number[],
+        private readonly _rows: ReadonlyMap<number, ComplexRule>,
     ) {}
 
     static decode(rows: ComplexRule[]): ComplexRuleTable {
@@ -86,25 +86,33 @@ export class ComplexRuleTable implements SoraKeyedTable<number, ComplexRule> {
         return ComplexRuleTable.tableInfo;
     }
 
-    len(): number {
+    get size(): number {
         return this._rows.size;
     }
     get(key: number): ComplexRule | undefined {
         return this._rows.get(key);
     }
 
-    rows(): ReadonlyMap<number, ComplexRule> {
+    has(key: number): boolean {
+        return this._rows.has(key);
+    }
+
+    get rows(): ReadonlyMap<number, ComplexRule> {
         return this._rows;
     }
 
-    keys(): readonly number[] {
+    get orderedKeys(): readonly number[] {
         return this._keys;
     }
 
-    orderedRows(): ComplexRule[] {
+    get orderedRows(): readonly ComplexRule[] {
         return this._keys.flatMap((key) => {
             const row = this._rows.get(key);
             return row === undefined ? [] : [row];
         });
+    }
+
+    [Symbol.iterator](): Iterator<ComplexRule> {
+        return this._rows.values();
     }
 }

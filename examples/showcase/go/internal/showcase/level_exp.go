@@ -80,9 +80,12 @@ func decodeLevelExpTable(source SoraTableSource) (*LevelExpTable, error) {
 	}
 	return buildLevelExpTable(rows)
 }
-
 func (table *LevelExpTable) Rows() map[int32]LevelExp {
-	return table.rows
+	rows := make(map[int32]LevelExp, len(table.rows))
+	for key, row := range table.rows {
+		rows[key] = row
+	}
+	return rows
 }
 func (table *LevelExpTable) Get(key int32) (LevelExp, bool) {
 	value, ok := table.rows[key]
@@ -90,7 +93,7 @@ func (table *LevelExpTable) Get(key int32) (LevelExp, bool) {
 }
 
 func (table *LevelExpTable) Keys() []int32 {
-	return table.keys
+	return append([]int32(nil), table.keys...)
 }
 
 func (table *LevelExpTable) OrderedRows() []LevelExp {

@@ -5,9 +5,9 @@
 -export_type([t/0]).
 
 -type t() :: #{
-    'x' := float(),
-    'y' := float(),
-    'z' := float()
+    x := float(),
+    y := float(),
+    z := float()
 }.
 
 -spec decode(sora_runtime:reader()) -> {t(), sora_runtime:reader()}.
@@ -16,16 +16,16 @@ decode(Reader0) ->
     {Y, Reader2} = (fun sora_runtime:read_f32/1)(Reader1),
     {Z, Reader3} = (fun sora_runtime:read_f32/1)(Reader2),
     {#{
-        'x' => X,
-        'y' => Y,
-        'z' => Z
+        x => X,
+        y => Y,
+        z => Z
     }, Reader3}.
 
 -spec decode_value(map()) -> t().
 decode_value(Value) ->
     Obj = sora_runtime:expect_map(Value),
     #{
-        'x' => sora_runtime:expect_float(sora_runtime:value_get(<<"x">>, Obj)),
-        'y' => sora_runtime:expect_float(sora_runtime:value_get(<<"y">>, Obj)),
-        'z' => sora_runtime:expect_float(sora_runtime:value_get(<<"z">>, Obj))
+        x => sora_runtime:expect_float(sora_runtime:value_get(<<"x">>, Obj)),
+        y => sora_runtime:expect_float(sora_runtime:value_get(<<"y">>, Obj)),
+        z => sora_runtime:expect_float(sora_runtime:value_get(<<"z">>, Obj))
     }.

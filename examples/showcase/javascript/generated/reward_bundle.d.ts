@@ -6,9 +6,9 @@ import type { ResourceCost } from "./resource_cost.js";
 
 
 export interface RewardBundle {
-    cost: ResourceCost;
-    weight: number;
-    labels: string[];
+    readonly cost: ResourceCost;
+    readonly weight: number;
+    readonly labels: readonly string[];
 }
 
 export declare function decodeRewardBundle(reader: SoraReader): RewardBundle;

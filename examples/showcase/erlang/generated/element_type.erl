@@ -5,28 +5,28 @@
 -export([decode/1, decode_value/1]).
 -export_type([t/0]).
 -type t() ::
-    'fire' |
-    'ice' |
-    'lightning' |
-    'physical'.
+    fire |
+    ice |
+    lightning |
+    physical.
 
 -spec decode(sora_runtime:reader()) -> {t(), sora_runtime:reader()}.
 decode(Reader0) ->
     {Id, Reader1} = sora_runtime:read_u32(Reader0),
     case Id of
-        0 -> {'fire', Reader1};
-        1 -> {'ice', Reader1};
-        2 -> {'lightning', Reader1};
-        3 -> {'physical', Reader1};
+        0 -> {fire, Reader1};
+        1 -> {ice, Reader1};
+        2 -> {lightning, Reader1};
+        3 -> {physical, Reader1};
         _ -> error({invalid_enum_id, element_type, Id})
     end.
 
 -spec decode_value(binary()) -> t().
 decode_value(Value) ->
     case Value of
-        <<"Fire">> -> 'fire';
-        <<"Ice">> -> 'ice';
-        <<"Lightning">> -> 'lightning';
-        <<"Physical">> -> 'physical';
+        <<"Fire">> -> fire;
+        <<"Ice">> -> ice;
+        <<"Lightning">> -> lightning;
+        <<"Physical">> -> physical;
         _ -> error({invalid_enum_value, element_type, Value})
     end.

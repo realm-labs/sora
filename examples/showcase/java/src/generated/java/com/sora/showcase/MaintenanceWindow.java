@@ -3,28 +3,13 @@
 package com.sora.showcase;
 
 import java.util.List;
-import java.util.Map;
 
-
-public final class MaintenanceWindow {
-    public final String version;
-    public final String startsAt;
-    public final Integer durationMinutes;
-    @SoraNullable
-    public final String reason;
-
-    public MaintenanceWindow(
-        String version,
-        String startsAt,
-        Integer durationMinutes,
-        @SoraNullable String reason
-    ) {
-        this.version = version;
-        this.startsAt = startsAt;
-        this.durationMinutes = durationMinutes;
-        this.reason = reason;
-    }
-
+public record MaintenanceWindow(
+    String version,
+    String startsAt,
+    int durationMinutes,
+    @SoraNullable String reason
+) {
     static MaintenanceWindow decode(SoraReader reader) {
         return new MaintenanceWindow(
             reader.readString(),
@@ -45,47 +30,5 @@ public final class MaintenanceWindow {
     }
 
     void collectTextKeys(List<TextKey> out) {
-    }
-}
-
-final class MaintenanceWindowTable extends java.util.AbstractList<MaintenanceWindow> implements SoraListTable<MaintenanceWindow> {
-    static final String NAME = "MaintenanceWindow";
-    static final SoraTableInfo INFO = new SoraTableInfo(
-        NAME,
-        "MaintenanceWindow",
-        SoraTableShape.LIST,
-        null,
-        List.of(
-        )
-    );
-    private final java.util.List<MaintenanceWindow> rows;
-
-    private MaintenanceWindowTable(java.util.List<MaintenanceWindow> rows) {
-        this.rows = rows;
-    }
-
-    private static MaintenanceWindowTable fromRows(List<MaintenanceWindow> rows) {
-        return new MaintenanceWindowTable(rows);
-    }
-
-    static MaintenanceWindowTable decode(SoraTableSource source) {
-        return fromRows(source.decodeTable(NAME, MaintenanceWindow::decode, MaintenanceWindow::decode));
-    }
-
-    public java.util.List<MaintenanceWindow> rows() {
-        return rows;
-    }
-    @Override
-    public MaintenanceWindow get(int index) {
-        return rows.get(index);
-    }
-    @Override
-    public SoraTableInfo info() {
-        return INFO;
-    }
-
-    @Override
-    public int size() {
-        return rows.size();
     }
 }

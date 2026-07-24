@@ -10,9 +10,9 @@ import {
 
 
 export interface LevelExp {
-    level: number;
-    exp: bigint;
-    unlockFeature: string | undefined;
+    readonly level: number;
+    readonly exp: bigint;
+    readonly unlockFeature: string | undefined;
 }
 
 export function decodeLevelExp(reader: SoraReader): LevelExp {
@@ -47,8 +47,8 @@ export class LevelExpTable implements SoraKeyedTable<number, LevelExp> {
     };
 
     private constructor(
-        private readonly _keys: number[],
-        private readonly _rows: Map<number, LevelExp>,
+        private readonly _keys: readonly number[],
+        private readonly _rows: ReadonlyMap<number, LevelExp>,
     ) {}
 
     static decode(rows: LevelExp[]): LevelExpTable {
@@ -62,25 +62,33 @@ export class LevelExpTable implements SoraKeyedTable<number, LevelExp> {
         return LevelExpTable.tableInfo;
     }
 
-    len(): number {
+    get size(): number {
         return this._rows.size;
     }
     get(key: number): LevelExp | undefined {
         return this._rows.get(key);
     }
 
-    rows(): ReadonlyMap<number, LevelExp> {
+    has(key: number): boolean {
+        return this._rows.has(key);
+    }
+
+    get rows(): ReadonlyMap<number, LevelExp> {
         return this._rows;
     }
 
-    keys(): readonly number[] {
+    get orderedKeys(): readonly number[] {
         return this._keys;
     }
 
-    orderedRows(): LevelExp[] {
+    get orderedRows(): readonly LevelExp[] {
         return this._keys.flatMap((key) => {
             const row = this._rows.get(key);
             return row === undefined ? [] : [row];
         });
+    }
+
+    [Symbol.iterator](): Iterator<LevelExp> {
+        return this._rows.values();
     }
 }

@@ -19,9 +19,9 @@ public sealed record Item(
     // Struct columns: price_kind, price_id, price_count
     ResourceCost Price,
     // JSON string set
-    List<string> Tags,
+    IReadOnlyList<string> Tags,
     // Map pairs: key,value|key,value
-    Dictionary<string, int> Attributes
+    IReadOnlyDictionary<string, int> Attributes
 )
 {
     internal static Item Decode(SoraReader reader)
@@ -98,8 +98,7 @@ public sealed class ItemTable : ISoraKeyedTable<int, Item>
             SoraConfig.DecodeIndex(rows, row => row.ItemType)
         );
     }
-
-    public Dictionary<int, Item> Rows => rows;
+    public IReadOnlyDictionary<int, Item> Rows => rows;
     public Item this[int key] => rows[key];
 
     public Item? Get(int key)

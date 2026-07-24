@@ -3,27 +3,13 @@
 package com.sora.showcase;
 
 import java.util.List;
-import java.util.Map;
 
-
-public final class QuestReward {
-    public final Integer questId;
-    public final Integer seq;
-    public final Integer itemId;
-    public final Integer count;
-
-    public QuestReward(
-        Integer questId,
-        Integer seq,
-        Integer itemId,
-        Integer count
-    ) {
-        this.questId = questId;
-        this.seq = seq;
-        this.itemId = itemId;
-        this.count = count;
-    }
-
+public record QuestReward(
+    int questId,
+    int seq,
+    int itemId,
+    int count
+) {
     static QuestReward decode(SoraReader reader) {
         return new QuestReward(
             reader.readI32(),
@@ -44,47 +30,5 @@ public final class QuestReward {
     }
 
     void collectTextKeys(List<TextKey> out) {
-    }
-}
-
-final class QuestRewardTable extends java.util.AbstractList<QuestReward> implements SoraListTable<QuestReward> {
-    static final String NAME = "QuestReward";
-    static final SoraTableInfo INFO = new SoraTableInfo(
-        NAME,
-        "QuestReward",
-        SoraTableShape.LIST,
-        null,
-        List.of(
-        )
-    );
-    private final java.util.List<QuestReward> rows;
-
-    private QuestRewardTable(java.util.List<QuestReward> rows) {
-        this.rows = rows;
-    }
-
-    private static QuestRewardTable fromRows(List<QuestReward> rows) {
-        return new QuestRewardTable(rows);
-    }
-
-    static QuestRewardTable decode(SoraTableSource source) {
-        return fromRows(source.decodeTable(NAME, QuestReward::decode, QuestReward::decode));
-    }
-
-    public java.util.List<QuestReward> rows() {
-        return rows;
-    }
-    @Override
-    public QuestReward get(int index) {
-        return rows.get(index);
-    }
-    @Override
-    public SoraTableInfo info() {
-        return INFO;
-    }
-
-    @Override
-    public int size() {
-        return rows.size();
     }
 }

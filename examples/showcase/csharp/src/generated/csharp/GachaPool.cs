@@ -68,8 +68,7 @@ public sealed class GachaPoolTable : ISoraKeyedTable<int, GachaPool>
     {
         return new GachaPoolTable(rows.ConvertAll(row => row.Id), SoraConfig.DecodeMapTable(rows, row => row.Id));
     }
-
-    public Dictionary<int, GachaPool> Rows => rows;
+    public IReadOnlyDictionary<int, GachaPool> Rows => rows;
     public GachaPool this[int key] => rows[key];
 
     public GachaPool? Get(int key)

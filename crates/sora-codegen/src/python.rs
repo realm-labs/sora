@@ -843,7 +843,9 @@ mod tests {
         assert!(runtime.contains("duplicate map key"));
         assert!(item.contains("class ItemTable"));
         assert!(!config.contains("class ItemTable"));
-        assert!(item.contains("def get(self, key: int) -> Item | None:"));
+        assert!(item.contains("Mapping[int, Item]"));
+        assert!(item.contains("def __getitem__(self, key: int) -> Item:"));
+        assert!(item.contains("def __iter__(self) -> Iterator[int]:"));
         assert!(item.contains(") -> Item | None:"));
         assert!(item.contains(") -> list[Item]:"));
         assert!(config.contains("class SoraConfig:"));

@@ -16,19 +16,19 @@ import { collectVec3TextKeys, decodeVec3, decodeVec3Value } from "./vec3.js";
 
 
 export interface GameSettings {
-    version: string;
-    dailyResetHour: number;
-    startingGold: number;
-    spawnPos: Vec3;
-    starterItems: number[];
+    readonly version: string;
+    readonly dailyResetHour: number;
+    readonly startingGold: number;
+    readonly spawnPos: Vec3;
+    readonly starterItems: readonly number[];
     /** Double precision tuning value */
-    gravity: number;
+    readonly gravity: number;
     /** Fixed-length array parsed from one cell */
-    dailyBonusItems: number[];
+    readonly dailyBonusItems: readonly number[];
     /** Fixed-length array of structs */
-    spawnPoints: Vec3[];
+    readonly spawnPoints: readonly Vec3[];
     /** Optional derived struct copied from a child row */
-    maintenance: MaintenanceInfo | undefined;
+    readonly maintenance: MaintenanceInfo | undefined;
 }
 
 export function decodeGameSettings(reader: SoraReader): GameSettings {
@@ -90,10 +90,14 @@ export class GameSettingsTable implements SoraSingleTable<GameSettings> {
         return GameSettingsTable.tableInfo;
     }
 
-    len(): number {
+    get size(): number {
         return 1;
     }
-    row(): GameSettings {
+    get row(): GameSettings {
         return this._row;
+    }
+
+    [Symbol.iterator](): Iterator<GameSettings> {
+        return [this._row].values();
     }
 }

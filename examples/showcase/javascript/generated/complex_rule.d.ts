@@ -10,15 +10,15 @@ import type { RewardAction } from "./reward_action.js";
 
 
 export interface ComplexRule {
-    id: number;
-    name: string;
+    readonly id: number;
+    readonly name: string;
     /** Single union value derived from a tagged_columns child row */
-    rootCondition: EventCondition;
-    rootActionGroup: number;
+    readonly rootCondition: EventCondition;
+    readonly rootActionGroup: number;
     /** Non-JSON list<union<RewardAction>> assembled from child rows */
-    actions: RewardAction[];
+    readonly actions: readonly RewardAction[];
     /** Nested tuple, tuple_list, split, and map parsers in one cell */
-    budget: ComplexBudget;
+    readonly budget: ComplexBudget;
 }
 
 export declare function decodeComplexRule(reader: SoraReader): ComplexRule;
@@ -29,9 +29,11 @@ export declare class ComplexRuleTable implements SoraKeyedTable<number, ComplexR
     static readonly tableInfo: SoraTableInfo;
     static decode(rows: ComplexRule[]): ComplexRuleTable;
     info(): SoraTableInfo;
-    len(): number;
+    readonly size: number;
     get(key: number): ComplexRule | undefined;
-    rows(): ReadonlyMap<number, ComplexRule>;
-    keys(): readonly number[];
-    orderedRows(): ComplexRule[];
+    has(key: number): boolean;
+    readonly rows: ReadonlyMap<number, ComplexRule>;
+    readonly orderedKeys: readonly number[];
+    readonly orderedRows: readonly ComplexRule[];
+    [Symbol.iterator](): Iterator<ComplexRule>;
 }

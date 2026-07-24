@@ -41,7 +41,7 @@ public:
         return info;
     }
 
-    DropEntryTable() {}
+    DropEntryTable() = default;
     DropEntryTable(const DropEntryTable&) = delete;
     DropEntryTable& operator=(const DropEntryTable&) = delete;
     DropEntryTable(DropEntryTable&&) = default;

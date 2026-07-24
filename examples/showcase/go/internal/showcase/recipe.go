@@ -3,7 +3,7 @@
 package showcase
 
 type Recipe struct {
-	Id         int32
+	ID         int32
 	ResultItem int32
 	Materials  []ResourceCost
 }
@@ -11,7 +11,7 @@ type Recipe struct {
 func decodeRecipe(reader *SoraReader) (Recipe, error) {
 	var value Recipe
 	var err error
-	value.Id, err = reader.ReadInt32()
+	value.ID, err = reader.ReadInt32()
 	if err != nil {
 		return value, err
 	}
@@ -32,7 +32,7 @@ func decodeRecipeValue(input SoraValue) (Recipe, error) {
 	if err != nil {
 		return value, err
 	}
-	value.Id, err = obj.Get("id").AsInt32()
+	value.ID, err = obj.Get("id").AsInt32()
 	if err != nil {
 		return value, err
 	}
@@ -71,9 +71,9 @@ type RecipeTable struct {
 func buildRecipeTable(rows []Recipe) (*RecipeTable, error) {
 	keys := make([]int32, 0, len(rows))
 	for _, row := range rows {
-		keys = append(keys, row.Id)
+		keys = append(keys, row.ID)
 	}
-	return &RecipeTable{keys: keys, rows: DecodeMapTable(rows, func(row Recipe) int32 { return row.Id })}, nil
+	return &RecipeTable{keys: keys, rows: DecodeMapTable(rows, func(row Recipe) int32 { return row.ID })}, nil
 }
 
 func decodeRecipeTable(source SoraTableSource) (*RecipeTable, error) {
@@ -83,9 +83,12 @@ func decodeRecipeTable(source SoraTableSource) (*RecipeTable, error) {
 	}
 	return buildRecipeTable(rows)
 }
-
 func (table *RecipeTable) Rows() map[int32]Recipe {
-	return table.rows
+	rows := make(map[int32]Recipe, len(table.rows))
+	for key, row := range table.rows {
+		rows[key] = row
+	}
+	return rows
 }
 func (table *RecipeTable) Get(key int32) (Recipe, bool) {
 	value, ok := table.rows[key]
@@ -93,7 +96,7 @@ func (table *RecipeTable) Get(key int32) (Recipe, bool) {
 }
 
 func (table *RecipeTable) Keys() []int32 {
-	return table.keys
+	return append([]int32(nil), table.keys...)
 }
 
 func (table *RecipeTable) OrderedRows() []Recipe {

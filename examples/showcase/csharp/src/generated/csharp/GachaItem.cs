@@ -68,8 +68,7 @@ public sealed class GachaItemTable : ISoraListTable<GachaItem>
     {
         return new GachaItemTable(rows);
     }
-
-    public List<GachaItem> Rows => rows;
+    public IReadOnlyList<GachaItem> Rows => rows;
     public GachaItem this[int index] => rows[index];
 
     public IEnumerator<GachaItem> GetEnumerator()

@@ -103,11 +103,8 @@ class SoraConfigTable:
     def info(self) -> SoraTableInfo:
         raise NotImplementedError()
 
-    def len(self) -> int:
-        raise NotImplementedError()
-
     def __len__(self) -> int:
-        return self.len()
+        raise NotImplementedError()
 
 
 @dataclass(frozen=True, slots=True)

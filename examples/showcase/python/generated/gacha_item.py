@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from collections.abc import Iterator, Mapping, Sequence
 from typing import TYPE_CHECKING
 
 from .sora_runtime import SoraReader, TextKey
@@ -47,7 +48,7 @@ class GachaItem:
         pass
 
 
-class GachaItemTable(SoraConfigTable):
+class GachaItemTable(SoraConfigTable, Sequence[GachaItem]):
     NAME = "GachaItem"
     INFO = SoraTableInfo(
         name=NAME,
@@ -73,9 +74,12 @@ class GachaItemTable(SoraConfigTable):
     def info(self) -> SoraTableInfo:
         return self.INFO
 
-    def len(self) -> int:
+    def __len__(self) -> int:
         return len(self._rows)
 
 
-    def rows(self) -> list[GachaItem]:
-        return self._rows
+    def __getitem__(self, index: int | slice) -> GachaItem | list[GachaItem]:
+        return self._rows[index]
+
+    def __iter__(self) -> Iterator[GachaItem]:
+        return iter(self._rows)

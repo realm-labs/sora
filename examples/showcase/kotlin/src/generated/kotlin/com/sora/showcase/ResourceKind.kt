@@ -3,24 +3,24 @@
 package com.sora.showcase
 
 enum class ResourceKind(val id: Int) {
-    Item(0),
-    Gold(1),
-    Diamond(2);
+    ITEM(0),
+    GOLD(1),
+    DIAMOND(2);
 
     companion object {
         fun decode(reader: SoraReader): ResourceKind =
             when (val id = reader.readU32()) {
-                0 -> Item
-                1 -> Gold
-                2 -> Diamond
+                0 -> ITEM
+                1 -> GOLD
+                2 -> DIAMOND
                 else -> throw SoraReadException("invalid enum id $id for ResourceKind")
             }
 
         fun decode(value: SoraValue): ResourceKind =
             when (val name = value.asString()) {
-                "Item" -> Item
-                "Gold" -> Gold
-                "Diamond" -> Diamond
+                "Item" -> ITEM
+                "Gold" -> GOLD
+                "Diamond" -> DIAMOND
                 else -> throw SoraReadException("invalid enum value $name for ResourceKind")
             }
     }

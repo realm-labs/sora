@@ -118,6 +118,7 @@ struct ErlangEnumValue {
 struct ErlangUnion {
     snake_name: String,
     tag: String,
+    tag_atom: String,
     variants: Vec<ErlangUnionVariant>,
 }
 
@@ -125,6 +126,7 @@ struct ErlangUnion {
 struct ErlangUnionVariant {
     raw_name: String,
     snake_name: String,
+    atom_name: String,
     reader_var: String,
     fields: Vec<ErlangField>,
 }
@@ -142,11 +144,13 @@ struct ErlangTable {
     name: String,
     pascal_name: String,
     snake_name: String,
+    snake_atom: String,
     mode: String,
     container_type: String,
     row_type: String,
     key_name: Option<String>,
     key_field_name: Option<String>,
+    key_field_atom: Option<String>,
     key_type: Option<String>,
     unique_indexes: Vec<ErlangIndex>,
     non_unique_indexes: Vec<ErlangIndex>,
@@ -155,8 +159,10 @@ struct ErlangTable {
 #[derive(Debug, Clone, Serialize)]
 struct ErlangIndex {
     name: String,
+    atom_name: String,
     pascal_name: String,
     field_name: String,
+    field_atom: String,
     param_type: String,
     param_var_name: String,
 }
@@ -165,6 +171,7 @@ struct ErlangIndex {
 struct ErlangField {
     raw_name: String,
     name: String,
+    atom_name: String,
     var_name: String,
     type_name: String,
     decode: String,
@@ -184,7 +191,7 @@ impl ErlangModel {
                     .into_iter()
                     .map(|value| ErlangEnumValue {
                         id: value.id,
-                        atom_name: value.name.to_snake_case(),
+                        atom_name: erlang_atom_literal(&value.name.to_snake_case()),
                         name: value.name,
                     })
                     .collect(),
@@ -226,6 +233,7 @@ impl ErlangModel {
 fn erlang_union(ir: &ConfigIr, union: BaseUnion, mapper: &ErlangTypeMapper<'_>) -> ErlangUnion {
     ErlangUnion {
         snake_name: union.snake_name,
+        tag_atom: erlang_atom_literal(&union.tag.to_snake_case()),
         tag: union.tag,
         variants: union
             .variants
@@ -247,6 +255,7 @@ fn erlang_variant(
         .collect::<Vec<_>>();
     ErlangUnionVariant {
         raw_name: variant.name,
+        atom_name: erlang_atom_literal(&variant.snake_name),
         snake_name: variant.snake_name,
         reader_var: format!("Reader{}", fields.len() + 1),
         fields,
@@ -274,6 +283,7 @@ fn erlang_record(
 
 fn erlang_table(ir: &ConfigIr, table: BaseTable, mapper: &ErlangTypeMapper<'_>) -> ErlangTable {
     let row_type = format!("{}:t()", table.snake_name);
+    let snake_atom = erlang_atom_literal(&table.name.to_snake_case());
     let key_type = table
         .key_field
         .as_ref()
@@ -283,16 +293,19 @@ fn erlang_table(ir: &ConfigIr, table: BaseTable, mapper: &ErlangTypeMapper<'_>) 
         .key_field
         .as_ref()
         .map(|field| field.snake_name.clone());
+    let key_field_atom = key_field_name.as_deref().map(erlang_atom_literal);
 
     ErlangTable {
         name: table.name,
         pascal_name: table.pascal_name,
         snake_name: table.snake_name,
+        snake_atom,
         mode: table.mode_name,
         container_type,
         row_type,
         key_name: table.key_name,
         key_field_name,
+        key_field_atom,
         key_type,
         unique_indexes: table
             .unique_indexes
@@ -309,18 +322,22 @@ fn erlang_table(ir: &ConfigIr, table: BaseTable, mapper: &ErlangTypeMapper<'_>) 
 
 fn erlang_index(_ir: &ConfigIr, index: BaseIndex, mapper: &ErlangTypeMapper<'_>) -> ErlangIndex {
     ErlangIndex {
+        atom_name: erlang_atom_literal(&index.snake_name),
         name: index.snake_name,
         pascal_name: index.pascal_name,
         field_name: index.field.snake_name.clone(),
+        field_atom: erlang_atom_literal(&index.field.snake_name),
         param_type: mapper.type_name(&index.field.ty),
         param_var_name: index.field.pascal_name,
     }
 }
 
 fn erlang_field(ir: &ConfigIr, field: BaseField, mapper: &ErlangTypeMapper<'_>) -> ErlangField {
+    let atom_name = erlang_atom_literal(&field.snake_name);
     ErlangField {
         raw_name: field.raw_name,
         name: field.snake_name,
+        atom_name,
         var_name: field.pascal_name,
         type_name: mapper.type_name(&field.ty),
         decode: erlang_decode_fun(ir, &field.ty, mapper),
@@ -336,6 +353,27 @@ fn erlang_container_type(mode: TableModeIr, row_type: &str, key_type: Option<&st
             None => format!("[{row_type}]"),
         },
         TableModeIr::Singleton => row_type.to_owned(),
+    }
+}
+
+fn erlang_atom_literal(value: &str) -> String {
+    const RESERVED: &[&str] = &[
+        "after", "begin", "case", "try", "cond", "catch", "andalso", "orelse", "end", "fun", "if",
+        "let", "of", "receive", "when", "bnot", "not", "div", "rem", "band", "and", "bor", "bxor",
+        "bsl", "bsr", "or", "xor",
+    ];
+    let is_plain = value
+        .chars()
+        .next()
+        .is_some_and(|first| first.is_ascii_lowercase())
+        && value
+            .chars()
+            .all(|ch| ch.is_ascii_lowercase() || ch.is_ascii_digit() || ch == '_')
+        && !RESERVED.contains(&value);
+    if is_plain {
+        value.to_owned()
+    } else {
+        format!("'{}'", value.replace('\'', "\\'"))
     }
 }
 
@@ -538,13 +576,13 @@ mod tests {
 
         assert!(item.contains("-module(item)."));
         assert!(item.contains("-type t() :: #{"));
-        assert!(item.contains("'large_id' := integer()"));
+        assert!(item.contains("large_id := integer()"));
         assert!(item.contains("{LargeId, Reader4} = (fun sora_runtime:read_i64/1)(Reader3)"));
         assert!(item_type.contains("-type t() ::"));
-        assert!(item_type.contains("'weapon' |"));
-        assert!(item_type.contains("'armor'."));
-        assert!(item_type.contains("0 -> {'weapon', Reader1};"));
-        assert!(action.contains("'type' := 'add_item'"));
+        assert!(item_type.contains("weapon |"));
+        assert!(item_type.contains("armor."));
+        assert!(item_type.contains("0 -> {weapon, Reader1};"));
+        assert!(action.contains("type := add_item"));
         assert!(runtime.contains("read_i64(Reader0) ->"));
         assert!(runtime.contains("zigzag_decode(Value)"));
         assert!(!runtime.contains("read_u64_at("));

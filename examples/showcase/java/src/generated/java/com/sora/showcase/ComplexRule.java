@@ -3,36 +3,18 @@
 package com.sora.showcase;
 
 import java.util.List;
-import java.util.Map;
 
-
-public final class ComplexRule {
-    public final Integer id;
-    public final String name;
+public record ComplexRule(
+    int id,
+    String name,
     /** Single union value derived from a tagged_columns child row */
-    public final EventCondition rootCondition;
-    public final Integer rootActionGroup;
+    EventCondition rootCondition,
+    int rootActionGroup,
     /** Non-JSON list<union<RewardAction>> assembled from child rows */
-    public final java.util.List<RewardAction> actions;
+    java.util.List<RewardAction> actions,
     /** Nested tuple, tuple_list, split, and map parsers in one cell */
-    public final ComplexBudget budget;
-
-    public ComplexRule(
-        Integer id,
-        String name,
-        EventCondition rootCondition,
-        Integer rootActionGroup,
-        java.util.List<RewardAction> actions,
-        ComplexBudget budget
-    ) {
-        this.id = id;
-        this.name = name;
-        this.rootCondition = rootCondition;
-        this.rootActionGroup = rootActionGroup;
-        this.actions = actions;
-        this.budget = budget;
-    }
-
+    ComplexBudget budget
+) {
     static ComplexRule decode(SoraReader reader) {
         return new ComplexRule(
             reader.readI32(),
@@ -62,63 +44,5 @@ public final class ComplexRule {
             RewardAction.collectTextKeys(item, out);
         }
         this.budget.collectTextKeys(out);
-    }
-}
-
-final class ComplexRuleTable extends java.util.AbstractMap<Integer, ComplexRule> implements SoraKeyedTable<Integer, ComplexRule> {
-    static final String NAME = "ComplexRule";
-    static final SoraTableInfo INFO = new SoraTableInfo(
-        NAME,
-        "ComplexRule",
-        SoraTableShape.KEYED,
-        new SoraKeyInfo("id", "Integer"),
-        List.of(
-        )
-    );
-    private final List<Integer> keys;
-    private final java.util.Map<Integer, ComplexRule> rows;
-
-    private ComplexRuleTable(List<Integer> keys, java.util.Map<Integer, ComplexRule> rows) {
-        this.keys = keys;
-        this.rows = rows;
-    }
-
-    private static ComplexRuleTable fromRows(List<ComplexRule> rows) {
-        return new ComplexRuleTable(rows.stream().map(row -> row.id).toList(), SoraConfig.decodeMapTable(rows, row -> row.id));
-    }
-
-    static ComplexRuleTable decode(SoraTableSource source) {
-        return fromRows(source.decodeTable(NAME, ComplexRule::decode, ComplexRule::decode));
-    }
-
-    public java.util.Map<Integer, ComplexRule> rows() {
-        return rows;
-    }
-    @Override
-    @SoraNullable
-    public ComplexRule get(Object key) {
-        return rows.get(key);
-    }
-
-    public List<Integer> orderedKeys() {
-        return keys;
-    }
-
-    public List<ComplexRule> orderedRows() {
-        return keys.stream().map(rows::get).toList();
-    }
-
-    @Override
-    public java.util.Set<Map.Entry<Integer, ComplexRule>> entrySet() {
-        return rows.entrySet();
-    }
-    @Override
-    public SoraTableInfo info() {
-        return INFO;
-    }
-
-    @Override
-    public int size() {
-        return rows.size();
     }
 }

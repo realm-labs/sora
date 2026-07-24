@@ -9,19 +9,19 @@ import type { ResourceCost } from "./resource_cost.js";
 
 export interface Item {
     /** Item id */
-    id: number;
+    readonly id: number;
     /** Display name */
-    name: string;
+    readonly name: string;
     /** Item category */
-    itemType: ItemType;
+    readonly itemType: ItemType;
     /** Stack limit; blank cells use the default */
-    maxStack: number;
+    readonly maxStack: number;
     /** Struct columns: price_kind, price_id, price_count */
-    price: ResourceCost;
+    readonly price: ResourceCost;
     /** JSON string set */
-    tags: string[];
+    readonly tags: readonly string[];
     /** Map pairs: key,value|key,value */
-    attributes: Map<string, number>;
+    readonly attributes: ReadonlyMap<string, number>;
 }
 
 export declare function decodeItem(reader: SoraReader): Item;
@@ -32,11 +32,13 @@ export declare class ItemTable implements SoraKeyedTable<number, Item> {
     static readonly tableInfo: SoraTableInfo;
     static decode(rows: Item[]): ItemTable;
     info(): SoraTableInfo;
-    len(): number;
+    readonly size: number;
     get(key: number): Item | undefined;
-    rows(): ReadonlyMap<number, Item>;
-    keys(): readonly number[];
-    orderedRows(): Item[];
+    has(key: number): boolean;
+    readonly rows: ReadonlyMap<number, Item>;
+    readonly orderedKeys: readonly number[];
+    readonly orderedRows: readonly Item[];
+    [Symbol.iterator](): Iterator<Item>;
     getByName(name: string): Item | undefined;
     findByItemType(itemType: ItemType): Item[];
 }

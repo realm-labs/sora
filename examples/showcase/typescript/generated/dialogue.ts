@@ -11,9 +11,9 @@ import {
 
 
 export interface Dialogue {
-    id: number;
-    speakerKey: TextKey;
-    lines: string[];
+    readonly id: number;
+    readonly speakerKey: TextKey;
+    readonly lines: readonly string[];
 }
 
 export function decodeDialogue(reader: SoraReader): Dialogue {
@@ -49,8 +49,8 @@ export class DialogueTable implements SoraKeyedTable<number, Dialogue> {
     };
 
     private constructor(
-        private readonly _keys: number[],
-        private readonly _rows: Map<number, Dialogue>,
+        private readonly _keys: readonly number[],
+        private readonly _rows: ReadonlyMap<number, Dialogue>,
     ) {}
 
     static decode(rows: Dialogue[]): DialogueTable {
@@ -64,25 +64,33 @@ export class DialogueTable implements SoraKeyedTable<number, Dialogue> {
         return DialogueTable.tableInfo;
     }
 
-    len(): number {
+    get size(): number {
         return this._rows.size;
     }
     get(key: number): Dialogue | undefined {
         return this._rows.get(key);
     }
 
-    rows(): ReadonlyMap<number, Dialogue> {
+    has(key: number): boolean {
+        return this._rows.has(key);
+    }
+
+    get rows(): ReadonlyMap<number, Dialogue> {
         return this._rows;
     }
 
-    keys(): readonly number[] {
+    get orderedKeys(): readonly number[] {
         return this._keys;
     }
 
-    orderedRows(): Dialogue[] {
+    get orderedRows(): readonly Dialogue[] {
         return this._keys.flatMap((key) => {
             const row = this._rows.get(key);
             return row === undefined ? [] : [row];
         });
+    }
+
+    [Symbol.iterator](): Iterator<Dialogue> {
+        return this._rows.values();
     }
 }

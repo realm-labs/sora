@@ -6,9 +6,9 @@ import type { ElementType } from "./element_type.js";
 
 
 export interface SkillEffect {
-    element: ElementType;
-    power: number;
-    radius: number;
+    readonly element: ElementType;
+    readonly power: number;
+    readonly radius: number;
 }
 
 export declare function decodeSkillEffect(reader: SoraReader): SkillEffect;

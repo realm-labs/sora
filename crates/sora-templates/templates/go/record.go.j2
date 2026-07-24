@@ -150,9 +150,19 @@ func decode{{ table.pascal_name }}Table(source SoraTableSource) (*{{ table.pasca
     return build{{ table.pascal_name }}Table(rows)
 }
 
+{%- if table.mode == "map" and table.key_field_name %}
 func (table *{{ table.pascal_name }}Table) Rows() {{ table.container_type }} {
-    return table.rows
+    rows := make({{ table.container_type }}, len(table.rows))
+    for key, row := range table.rows {
+        rows[key] = row
+    }
+    return rows
 }
+{%- elif table.mode == "list" %}
+func (table *{{ table.pascal_name }}Table) Rows() {{ table.container_type }} {
+    return append({{ table.container_type }}(nil), table.rows...)
+}
+{%- endif %}
 {%- if table.mode == "singleton" %}
 func (table *{{ table.pascal_name }}Table) Row() {{ table.row_type }} {
     return table.rows
@@ -167,7 +177,7 @@ func (table *{{ table.pascal_name }}Table) Get(key {{ table.key_type }}) ({{ tab
 }
 
 func (table *{{ table.pascal_name }}Table) Keys() []{{ table.key_type }} {
-    return table.keys
+    return append([]{{ table.key_type }}(nil), table.keys...)
 }
 
 func (table *{{ table.pascal_name }}Table) OrderedRows() []{{ table.row_type }} {
@@ -190,7 +200,7 @@ func (table *{{ table.pascal_name }}Table) Get{{ index.pascal_name }}({{ index.p
 {%- endfor %}
 {%- for index in table.non_unique_indexes %}
 func (table *{{ table.pascal_name }}Table) Find{{ index.pascal_name }}({{ index.param_camel_name }} {{ index.key_type }}) []{{ table.row_type }} {
-    return table.{{ index.camel_name }}[{{ index.param_camel_name }}]
+    return append([]{{ table.row_type }}(nil), table.{{ index.camel_name }}[{{ index.param_camel_name }}]...)
 }
 
 {%- endfor %}

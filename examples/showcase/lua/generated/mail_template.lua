@@ -6,9 +6,9 @@ local Reward = require("generated.reward")
 
 ---@class MailTemplate
 ---@field id integer
----@field mailType MailType
----@field titleKey TextKey
----@field bodyKey TextKey
+---@field mail_type MailType
+---@field title_key TextKey
+---@field body_key TextKey
 ---@field rewards Reward[]
 
 local MailTemplate = {}
@@ -18,9 +18,9 @@ local MailTemplate = {}
 function MailTemplate.decode(reader)
     return {
         id = reader:read_i32(),
-        mailType = MailType.decode(reader),
-        titleKey = Runtime.new_text_key(reader:read_string()),
-        bodyKey = Runtime.new_text_key(reader:read_string()),
+        mail_type = MailType.decode(reader),
+        title_key = Runtime.new_text_key(reader:read_string()),
+        body_key = Runtime.new_text_key(reader:read_string()),
         rewards = reader:read_list(function() return Reward.decode(reader) end),
     }
 end
@@ -31,9 +31,9 @@ function MailTemplate.decode_value(value)
     local obj = Runtime.expect_table(value)
     return {
         id = Runtime.expect_integer(obj["id"]),
-        mailType = MailType.decode_value(obj["mail_type"]),
-        titleKey = Runtime.new_text_key(Runtime.expect_string(obj["title_key"])),
-        bodyKey = Runtime.new_text_key(Runtime.expect_string(obj["body_key"])),
+        mail_type = MailType.decode_value(obj["mail_type"]),
+        title_key = Runtime.new_text_key(Runtime.expect_string(obj["title_key"])),
+        body_key = Runtime.new_text_key(Runtime.expect_string(obj["body_key"])),
         rewards = Runtime.decode_value_list(obj["rewards"], function(item) return Reward.decode_value(item) end),
     }
 end
@@ -44,8 +44,8 @@ function MailTemplate.collect_text_keys(value, out)
     if value == nil then
         return
     end
-    out[#out + 1] = value.titleKey
-    out[#out + 1] = value.bodyKey
+    out[#out + 1] = value.title_key
+    out[#out + 1] = value.body_key
     for _, __sora_value in ipairs(value.rewards) do Reward.collect_text_keys(__sora_value, out) end
 end
 

@@ -3,30 +3,30 @@
 package com.sora.showcase
 
 enum class ItemType(val id: Int) {
-    Weapon(0),
-    Armor(1),
-    Currency(2),
-    Material(3),
-    Consumable(4);
+    WEAPON(0),
+    ARMOR(1),
+    CURRENCY(2),
+    MATERIAL(3),
+    CONSUMABLE(4);
 
     companion object {
         fun decode(reader: SoraReader): ItemType =
             when (val id = reader.readU32()) {
-                0 -> Weapon
-                1 -> Armor
-                2 -> Currency
-                3 -> Material
-                4 -> Consumable
+                0 -> WEAPON
+                1 -> ARMOR
+                2 -> CURRENCY
+                3 -> MATERIAL
+                4 -> CONSUMABLE
                 else -> throw SoraReadException("invalid enum id $id for ItemType")
             }
 
         fun decode(value: SoraValue): ItemType =
             when (val name = value.asString()) {
-                "Weapon" -> Weapon
-                "Armor" -> Armor
-                "Currency" -> Currency
-                "Material" -> Material
-                "Consumable" -> Consumable
+                "Weapon" -> WEAPON
+                "Armor" -> ARMOR
+                "Currency" -> CURRENCY
+                "Material" -> MATERIAL
+                "Consumable" -> CONSUMABLE
                 else -> throw SoraReadException("invalid enum value $name for ItemType")
             }
     }

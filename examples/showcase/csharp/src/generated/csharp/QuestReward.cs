@@ -68,8 +68,7 @@ public sealed class QuestRewardTable : ISoraListTable<QuestReward>
     {
         return new QuestRewardTable(rows);
     }
-
-    public List<QuestReward> Rows => rows;
+    public IReadOnlyList<QuestReward> Rows => rows;
     public QuestReward this[int index] => rows[index];
 
     public IEnumerator<QuestReward> GetEnumerator()

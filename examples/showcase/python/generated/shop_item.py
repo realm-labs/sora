@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from collections.abc import Iterator, Mapping, Sequence
 from typing import TYPE_CHECKING
 
 from .sora_runtime import SoraReader, TextKey
@@ -50,7 +51,7 @@ class ShopItem:
         self.price.collect_text_keys(out)
 
 
-class ShopItemTable(SoraConfigTable):
+class ShopItemTable(SoraConfigTable, Sequence[ShopItem]):
     NAME = "ShopItem"
     INFO = SoraTableInfo(
         name=NAME,
@@ -76,9 +77,12 @@ class ShopItemTable(SoraConfigTable):
     def info(self) -> SoraTableInfo:
         return self.INFO
 
-    def len(self) -> int:
+    def __len__(self) -> int:
         return len(self._rows)
 
 
-    def rows(self) -> list[ShopItem]:
-        return self._rows
+    def __getitem__(self, index: int | slice) -> ShopItem | list[ShopItem]:
+        return self._rows[index]
+
+    def __iter__(self) -> Iterator[ShopItem]:
+        return iter(self._rows)

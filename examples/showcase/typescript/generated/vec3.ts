@@ -4,9 +4,9 @@ import type { SoraReader, SoraValue, TextKey } from "./sora_runtime.js";
 
 
 export interface Vec3 {
-    x: number;
-    y: number;
-    z: number;
+    readonly x: number;
+    readonly y: number;
+    readonly z: number;
 }
 
 export function decodeVec3(reader: SoraReader): Vec3 {

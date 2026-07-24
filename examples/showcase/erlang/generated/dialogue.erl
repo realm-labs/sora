@@ -7,9 +7,9 @@
 -export_type([t/0, table/0]).
 
 -type t() :: #{
-    'id' := integer(),
-    'speaker_key' := sora_runtime:text_key(),
-    'lines' := [binary()]
+    id := integer(),
+    speaker_key := sora_runtime:text_key(),
+    lines := [binary()]
 }.
 
 -type table() :: map().
@@ -21,25 +21,25 @@ decode(Reader0) ->
     {SpeakerKey, Reader2} = (fun sora_runtime:read_text_key/1)(Reader1),
     {Lines, Reader3} = (fun(Reader) -> sora_runtime:read_list(fun sora_runtime:read_string/1, Reader) end)(Reader2),
     {#{
-        'id' => Id,
-        'speaker_key' => SpeakerKey,
-        'lines' => Lines
+        id => Id,
+        speaker_key => SpeakerKey,
+        lines => Lines
     }, Reader3}.
 
 -spec decode_value(map()) -> t().
 decode_value(Value) ->
     Obj = sora_runtime:expect_map(Value),
     #{
-        'id' => sora_runtime:expect_integer(sora_runtime:value_get(<<"id">>, Obj)),
-        'speaker_key' => sora_runtime:expect_text_key(sora_runtime:value_get(<<"speaker_key">>, Obj)),
-        'lines' => sora_runtime:decode_value_list(fun(Item) -> sora_runtime:expect_binary(Item) end, sora_runtime:value_get(<<"lines">>, Obj))
+        id => sora_runtime:expect_integer(sora_runtime:value_get(<<"id">>, Obj)),
+        speaker_key => sora_runtime:expect_text_key(sora_runtime:value_get(<<"speaker_key">>, Obj)),
+        lines => sora_runtime:decode_value_list(fun(Item) -> sora_runtime:expect_binary(Item) end, sora_runtime:value_get(<<"lines">>, Obj))
     }.
 
 -spec decode_table(map()) -> table().
 decode_table(Bundle) ->
     Rows = sora_runtime:decode_table(Bundle, ?TABLE_NAME, fun ?MODULE:decode/1, fun ?MODULE:decode_value/1),
-    Data = sora_runtime:decode_map_table(Rows, fun(Row) -> maps:get('id', Row) end),
-    Keys = [maps:get('id', Row) || Row <- Rows],
+    Data = sora_runtime:decode_map_table(Rows, fun(Row) -> maps:get(id, Row) end),
+    Keys = [maps:get(id, Row) || Row <- Rows],
     #{
         keys => Keys,
         data => Data

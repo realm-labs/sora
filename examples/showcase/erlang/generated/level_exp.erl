@@ -7,9 +7,9 @@
 -export_type([t/0, table/0]).
 
 -type t() :: #{
-    'level' := integer(),
-    'exp' := integer(),
-    'unlock_feature' := binary() | undefined
+    level := integer(),
+    exp := integer(),
+    unlock_feature := binary() | undefined
 }.
 
 -type table() :: map().
@@ -21,25 +21,25 @@ decode(Reader0) ->
     {Exp, Reader2} = (fun sora_runtime:read_i64/1)(Reader1),
     {UnlockFeature, Reader3} = (fun(Reader) -> sora_runtime:read_optional(fun sora_runtime:read_string/1, Reader) end)(Reader2),
     {#{
-        'level' => Level,
-        'exp' => Exp,
-        'unlock_feature' => UnlockFeature
+        level => Level,
+        exp => Exp,
+        unlock_feature => UnlockFeature
     }, Reader3}.
 
 -spec decode_value(map()) -> t().
 decode_value(Value) ->
     Obj = sora_runtime:expect_map(Value),
     #{
-        'level' => sora_runtime:expect_integer(sora_runtime:value_get(<<"level">>, Obj)),
-        'exp' => sora_runtime:expect_integer(sora_runtime:value_get(<<"exp">>, Obj)),
-        'unlock_feature' => (fun(OptionalValue) -> case OptionalValue of undefined -> undefined; _ -> sora_runtime:expect_binary(OptionalValue) end end)(sora_runtime:value_get(<<"unlock_feature">>, Obj))
+        level => sora_runtime:expect_integer(sora_runtime:value_get(<<"level">>, Obj)),
+        exp => sora_runtime:expect_integer(sora_runtime:value_get(<<"exp">>, Obj)),
+        unlock_feature => (fun(OptionalValue) -> case OptionalValue of undefined -> undefined; _ -> sora_runtime:expect_binary(OptionalValue) end end)(sora_runtime:value_get(<<"unlock_feature">>, Obj))
     }.
 
 -spec decode_table(map()) -> table().
 decode_table(Bundle) ->
     Rows = sora_runtime:decode_table(Bundle, ?TABLE_NAME, fun ?MODULE:decode/1, fun ?MODULE:decode_value/1),
-    Data = sora_runtime:decode_map_table(Rows, fun(Row) -> maps:get('level', Row) end),
-    Keys = [maps:get('level', Row) || Row <- Rows],
+    Data = sora_runtime:decode_map_table(Rows, fun(Row) -> maps:get(level, Row) end),
+    Keys = [maps:get(level, Row) || Row <- Rows],
     #{
         keys => Keys,
         data => Data

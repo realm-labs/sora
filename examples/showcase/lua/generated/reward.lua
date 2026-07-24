@@ -3,7 +3,7 @@
 local Runtime = require("generated.sora_runtime")
 
 ---@class Reward
----@field itemId integer
+---@field item_id integer
 ---@field count integer
 
 local Reward = {}
@@ -12,7 +12,7 @@ local Reward = {}
 ---@return Reward
 function Reward.decode(reader)
     return {
-        itemId = reader:read_i32(),
+        item_id = reader:read_i32(),
         count = reader:read_i32(),
     }
 end
@@ -22,7 +22,7 @@ end
 function Reward.decode_value(value)
     local obj = Runtime.expect_table(value)
     return {
-        itemId = Runtime.expect_integer(obj["item_id"]),
+        item_id = Runtime.expect_integer(obj["item_id"]),
         count = Runtime.expect_integer(obj["count"]),
     }
 end

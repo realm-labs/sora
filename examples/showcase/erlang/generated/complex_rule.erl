@@ -7,12 +7,12 @@
 -export_type([t/0, table/0]).
 
 -type t() :: #{
-    'id' := integer(),
-    'name' := binary(),
-    'root_condition' := event_condition:t(),
-    'root_action_group' := integer(),
-    'actions' := [reward_action:t()],
-    'budget' := complex_budget:t()
+    id := integer(),
+    name := binary(),
+    root_condition := event_condition:t(),
+    root_action_group := integer(),
+    actions := [reward_action:t()],
+    budget := complex_budget:t()
 }.
 
 -type table() :: map().
@@ -27,31 +27,31 @@ decode(Reader0) ->
     {Actions, Reader5} = (fun(Reader) -> sora_runtime:read_list(fun reward_action:decode/1, Reader) end)(Reader4),
     {Budget, Reader6} = (fun complex_budget:decode/1)(Reader5),
     {#{
-        'id' => Id,
-        'name' => Name,
-        'root_condition' => RootCondition,
-        'root_action_group' => RootActionGroup,
-        'actions' => Actions,
-        'budget' => Budget
+        id => Id,
+        name => Name,
+        root_condition => RootCondition,
+        root_action_group => RootActionGroup,
+        actions => Actions,
+        budget => Budget
     }, Reader6}.
 
 -spec decode_value(map()) -> t().
 decode_value(Value) ->
     Obj = sora_runtime:expect_map(Value),
     #{
-        'id' => sora_runtime:expect_integer(sora_runtime:value_get(<<"id">>, Obj)),
-        'name' => sora_runtime:expect_binary(sora_runtime:value_get(<<"name">>, Obj)),
-        'root_condition' => event_condition:decode_value(sora_runtime:value_get(<<"root_condition">>, Obj)),
-        'root_action_group' => sora_runtime:expect_integer(sora_runtime:value_get(<<"root_action_group">>, Obj)),
-        'actions' => sora_runtime:decode_value_list(fun(Item) -> reward_action:decode_value(Item) end, sora_runtime:value_get(<<"actions">>, Obj)),
-        'budget' => complex_budget:decode_value(sora_runtime:value_get(<<"budget">>, Obj))
+        id => sora_runtime:expect_integer(sora_runtime:value_get(<<"id">>, Obj)),
+        name => sora_runtime:expect_binary(sora_runtime:value_get(<<"name">>, Obj)),
+        root_condition => event_condition:decode_value(sora_runtime:value_get(<<"root_condition">>, Obj)),
+        root_action_group => sora_runtime:expect_integer(sora_runtime:value_get(<<"root_action_group">>, Obj)),
+        actions => sora_runtime:decode_value_list(fun(Item) -> reward_action:decode_value(Item) end, sora_runtime:value_get(<<"actions">>, Obj)),
+        budget => complex_budget:decode_value(sora_runtime:value_get(<<"budget">>, Obj))
     }.
 
 -spec decode_table(map()) -> table().
 decode_table(Bundle) ->
     Rows = sora_runtime:decode_table(Bundle, ?TABLE_NAME, fun ?MODULE:decode/1, fun ?MODULE:decode_value/1),
-    Data = sora_runtime:decode_map_table(Rows, fun(Row) -> maps:get('id', Row) end),
-    Keys = [maps:get('id', Row) || Row <- Rows],
+    Data = sora_runtime:decode_map_table(Rows, fun(Row) -> maps:get(id, Row) end),
+    Keys = [maps:get(id, Row) || Row <- Rows],
     #{
         keys => Keys,
         data => Data

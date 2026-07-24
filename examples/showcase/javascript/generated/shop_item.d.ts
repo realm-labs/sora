@@ -6,11 +6,11 @@ import type { ResourceCost } from "./resource_cost.js";
 
 
 export interface ShopItem {
-    shopId: number;
-    seq: number;
-    itemId: number;
-    price: ResourceCost;
-    dailyLimit: number | undefined;
+    readonly shopId: number;
+    readonly seq: number;
+    readonly itemId: number;
+    readonly price: ResourceCost;
+    readonly dailyLimit: number | undefined;
 }
 
 export declare function decodeShopItem(reader: SoraReader): ShopItem;
@@ -21,6 +21,8 @@ export declare class ShopItemTable implements SoraListTable<ShopItem> {
     static readonly tableInfo: SoraTableInfo;
     static decode(rows: ShopItem[]): ShopItemTable;
     info(): SoraTableInfo;
-    len(): number;
-    rows(): readonly ShopItem[];
+    readonly size: number;
+    readonly rows: readonly ShopItem[];
+    at(index: number): ShopItem | undefined;
+    [Symbol.iterator](): Iterator<ShopItem>;
 }

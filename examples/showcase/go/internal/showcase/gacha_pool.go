@@ -3,7 +3,7 @@
 package showcase
 
 type GachaPool struct {
-	Id   int32
+	ID   int32
 	Name string
 	Cost ResourceCost
 }
@@ -11,7 +11,7 @@ type GachaPool struct {
 func decodeGachaPool(reader *SoraReader) (GachaPool, error) {
 	var value GachaPool
 	var err error
-	value.Id, err = reader.ReadInt32()
+	value.ID, err = reader.ReadInt32()
 	if err != nil {
 		return value, err
 	}
@@ -32,7 +32,7 @@ func decodeGachaPoolValue(input SoraValue) (GachaPool, error) {
 	if err != nil {
 		return value, err
 	}
-	value.Id, err = obj.Get("id").AsInt32()
+	value.ID, err = obj.Get("id").AsInt32()
 	if err != nil {
 		return value, err
 	}
@@ -69,9 +69,9 @@ type GachaPoolTable struct {
 func buildGachaPoolTable(rows []GachaPool) (*GachaPoolTable, error) {
 	keys := make([]int32, 0, len(rows))
 	for _, row := range rows {
-		keys = append(keys, row.Id)
+		keys = append(keys, row.ID)
 	}
-	return &GachaPoolTable{keys: keys, rows: DecodeMapTable(rows, func(row GachaPool) int32 { return row.Id })}, nil
+	return &GachaPoolTable{keys: keys, rows: DecodeMapTable(rows, func(row GachaPool) int32 { return row.ID })}, nil
 }
 
 func decodeGachaPoolTable(source SoraTableSource) (*GachaPoolTable, error) {
@@ -81,9 +81,12 @@ func decodeGachaPoolTable(source SoraTableSource) (*GachaPoolTable, error) {
 	}
 	return buildGachaPoolTable(rows)
 }
-
 func (table *GachaPoolTable) Rows() map[int32]GachaPool {
-	return table.rows
+	rows := make(map[int32]GachaPool, len(table.rows))
+	for key, row := range table.rows {
+		rows[key] = row
+	}
+	return rows
 }
 func (table *GachaPoolTable) Get(key int32) (GachaPool, bool) {
 	value, ok := table.rows[key]
@@ -91,7 +94,7 @@ func (table *GachaPoolTable) Get(key int32) (GachaPool, bool) {
 }
 
 func (table *GachaPoolTable) Keys() []int32 {
-	return table.keys
+	return append([]int32(nil), table.keys...)
 }
 
 func (table *GachaPoolTable) OrderedRows() []GachaPool {

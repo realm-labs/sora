@@ -3,27 +3,13 @@
 package com.sora.showcase;
 
 import java.util.List;
-import java.util.Map;
 
-
-public final class MailReward {
-    public final Integer mailId;
-    public final Integer seq;
-    public final Integer itemId;
-    public final Integer count;
-
-    public MailReward(
-        Integer mailId,
-        Integer seq,
-        Integer itemId,
-        Integer count
-    ) {
-        this.mailId = mailId;
-        this.seq = seq;
-        this.itemId = itemId;
-        this.count = count;
-    }
-
+public record MailReward(
+    int mailId,
+    int seq,
+    int itemId,
+    int count
+) {
     static MailReward decode(SoraReader reader) {
         return new MailReward(
             reader.readI32(),
@@ -44,47 +30,5 @@ public final class MailReward {
     }
 
     void collectTextKeys(List<TextKey> out) {
-    }
-}
-
-final class MailRewardTable extends java.util.AbstractList<MailReward> implements SoraListTable<MailReward> {
-    static final String NAME = "MailReward";
-    static final SoraTableInfo INFO = new SoraTableInfo(
-        NAME,
-        "MailReward",
-        SoraTableShape.LIST,
-        null,
-        List.of(
-        )
-    );
-    private final java.util.List<MailReward> rows;
-
-    private MailRewardTable(java.util.List<MailReward> rows) {
-        this.rows = rows;
-    }
-
-    private static MailRewardTable fromRows(List<MailReward> rows) {
-        return new MailRewardTable(rows);
-    }
-
-    static MailRewardTable decode(SoraTableSource source) {
-        return fromRows(source.decodeTable(NAME, MailReward::decode, MailReward::decode));
-    }
-
-    public java.util.List<MailReward> rows() {
-        return rows;
-    }
-    @Override
-    public MailReward get(int index) {
-        return rows.get(index);
-    }
-    @Override
-    public SoraTableInfo info() {
-        return INFO;
-    }
-
-    @Override
-    public int size() {
-        return rows.size();
     }
 }

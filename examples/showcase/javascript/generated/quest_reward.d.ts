@@ -4,10 +4,10 @@ import type { SoraListTable, SoraTableInfo, SoraReader, SoraValue, TextKey } fro
 
 
 export interface QuestReward {
-    questId: number;
-    seq: number;
-    itemId: number;
-    count: number;
+    readonly questId: number;
+    readonly seq: number;
+    readonly itemId: number;
+    readonly count: number;
 }
 
 export declare function decodeQuestReward(reader: SoraReader): QuestReward;
@@ -18,6 +18,8 @@ export declare class QuestRewardTable implements SoraListTable<QuestReward> {
     static readonly tableInfo: SoraTableInfo;
     static decode(rows: QuestReward[]): QuestRewardTable;
     info(): SoraTableInfo;
-    len(): number;
-    rows(): readonly QuestReward[];
+    readonly size: number;
+    readonly rows: readonly QuestReward[];
+    at(index: number): QuestReward | undefined;
+    [Symbol.iterator](): Iterator<QuestReward>;
 }

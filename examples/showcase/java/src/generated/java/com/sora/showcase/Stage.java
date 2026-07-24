@@ -3,30 +3,14 @@
 package com.sora.showcase;
 
 import java.util.List;
-import java.util.Map;
 
-
-public final class Stage {
-    public final Integer id;
-    public final String name;
-    public final java.util.List<Integer> monsterIds;
-    public final Integer recommendedPower;
-    public final java.util.List<Reward> firstClearRewards;
-
-    public Stage(
-        Integer id,
-        String name,
-        java.util.List<Integer> monsterIds,
-        Integer recommendedPower,
-        java.util.List<Reward> firstClearRewards
-    ) {
-        this.id = id;
-        this.name = name;
-        this.monsterIds = monsterIds;
-        this.recommendedPower = recommendedPower;
-        this.firstClearRewards = firstClearRewards;
-    }
-
+public record Stage(
+    int id,
+    String name,
+    java.util.List<Integer> monsterIds,
+    int recommendedPower,
+    java.util.List<Reward> firstClearRewards
+) {
     static Stage decode(SoraReader reader) {
         return new Stage(
             reader.readI32(),
@@ -52,63 +36,5 @@ public final class Stage {
         for (var item : this.firstClearRewards) {
             item.collectTextKeys(out);
         }
-    }
-}
-
-final class StageTable extends java.util.AbstractMap<Integer, Stage> implements SoraKeyedTable<Integer, Stage> {
-    static final String NAME = "Stage";
-    static final SoraTableInfo INFO = new SoraTableInfo(
-        NAME,
-        "Stage",
-        SoraTableShape.KEYED,
-        new SoraKeyInfo("id", "Integer"),
-        List.of(
-        )
-    );
-    private final List<Integer> keys;
-    private final java.util.Map<Integer, Stage> rows;
-
-    private StageTable(List<Integer> keys, java.util.Map<Integer, Stage> rows) {
-        this.keys = keys;
-        this.rows = rows;
-    }
-
-    private static StageTable fromRows(List<Stage> rows) {
-        return new StageTable(rows.stream().map(row -> row.id).toList(), SoraConfig.decodeMapTable(rows, row -> row.id));
-    }
-
-    static StageTable decode(SoraTableSource source) {
-        return fromRows(source.decodeTable(NAME, Stage::decode, Stage::decode));
-    }
-
-    public java.util.Map<Integer, Stage> rows() {
-        return rows;
-    }
-    @Override
-    @SoraNullable
-    public Stage get(Object key) {
-        return rows.get(key);
-    }
-
-    public List<Integer> orderedKeys() {
-        return keys;
-    }
-
-    public List<Stage> orderedRows() {
-        return keys.stream().map(rows::get).toList();
-    }
-
-    @Override
-    public java.util.Set<Map.Entry<Integer, Stage>> entrySet() {
-        return rows.entrySet();
-    }
-    @Override
-    public SoraTableInfo info() {
-        return INFO;
-    }
-
-    @Override
-    public int size() {
-        return rows.size();
     }
 }

@@ -14,7 +14,7 @@ public sealed record ComplexRule(
     EventCondition RootCondition,
     int RootActionGroup,
     // Non-JSON list<union<RewardAction>> assembled from child rows
-    List<RewardAction> Actions,
+    IReadOnlyList<RewardAction> Actions,
     // Nested tuple, tuple_list, split, and map parsers in one cell
     ComplexBudget Budget
 )
@@ -85,8 +85,7 @@ public sealed class ComplexRuleTable : ISoraKeyedTable<int, ComplexRule>
     {
         return new ComplexRuleTable(rows.ConvertAll(row => row.Id), SoraConfig.DecodeMapTable(rows, row => row.Id));
     }
-
-    public Dictionary<int, ComplexRule> Rows => rows;
+    public IReadOnlyDictionary<int, ComplexRule> Rows => rows;
     public ComplexRule this[int key] => rows[key];
 
     public ComplexRule? Get(int key)

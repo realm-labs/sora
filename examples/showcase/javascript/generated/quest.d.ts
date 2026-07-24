@@ -10,14 +10,14 @@ import type { Vec3 } from "./vec3.js";
 
 
 export interface Quest {
-    id: number;
-    questType: QuestType;
-    title: string;
-    requiredItem: number;
-    unlockSkills: number[];
-    startPos: Vec3;
+    readonly id: number;
+    readonly questType: QuestType;
+    readonly title: string;
+    readonly requiredItem: number;
+    readonly unlockSkills: readonly number[];
+    readonly startPos: Vec3;
     /** Materialized from QuestReward child rows */
-    rewards: Reward[];
+    readonly rewards: readonly Reward[];
 }
 
 export declare function decodeQuest(reader: SoraReader): Quest;
@@ -28,9 +28,11 @@ export declare class QuestTable implements SoraKeyedTable<number, Quest> {
     static readonly tableInfo: SoraTableInfo;
     static decode(rows: Quest[]): QuestTable;
     info(): SoraTableInfo;
-    len(): number;
+    readonly size: number;
     get(key: number): Quest | undefined;
-    rows(): ReadonlyMap<number, Quest>;
-    keys(): readonly number[];
-    orderedRows(): Quest[];
+    has(key: number): boolean;
+    readonly rows: ReadonlyMap<number, Quest>;
+    readonly orderedKeys: readonly number[];
+    readonly orderedRows: readonly Quest[];
+    [Symbol.iterator](): Iterator<Quest>;
 }

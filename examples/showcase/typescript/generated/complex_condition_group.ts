@@ -13,10 +13,10 @@ import { collectEventConditionTextKeys, decodeEventCondition, decodeEventConditi
 
 
 export interface ComplexConditionGroup {
-    id: number;
-    name: string;
+    readonly id: number;
+    readonly name: string;
     /** A derived list of union values; each child row is edited without JSON */
-    conditions: EventCondition[];
+    readonly conditions: readonly EventCondition[];
 }
 
 export function decodeComplexConditionGroup(reader: SoraReader): ComplexConditionGroup {
@@ -52,8 +52,8 @@ export class ComplexConditionGroupTable implements SoraKeyedTable<number, Comple
     };
 
     private constructor(
-        private readonly _keys: number[],
-        private readonly _rows: Map<number, ComplexConditionGroup>,
+        private readonly _keys: readonly number[],
+        private readonly _rows: ReadonlyMap<number, ComplexConditionGroup>,
     ) {}
 
     static decode(rows: ComplexConditionGroup[]): ComplexConditionGroupTable {
@@ -67,25 +67,33 @@ export class ComplexConditionGroupTable implements SoraKeyedTable<number, Comple
         return ComplexConditionGroupTable.tableInfo;
     }
 
-    len(): number {
+    get size(): number {
         return this._rows.size;
     }
     get(key: number): ComplexConditionGroup | undefined {
         return this._rows.get(key);
     }
 
-    rows(): ReadonlyMap<number, ComplexConditionGroup> {
+    has(key: number): boolean {
+        return this._rows.has(key);
+    }
+
+    get rows(): ReadonlyMap<number, ComplexConditionGroup> {
         return this._rows;
     }
 
-    keys(): readonly number[] {
+    get orderedKeys(): readonly number[] {
         return this._keys;
     }
 
-    orderedRows(): ComplexConditionGroup[] {
+    get orderedRows(): readonly ComplexConditionGroup[] {
         return this._keys.flatMap((key) => {
             const row = this._rows.get(key);
             return row === undefined ? [] : [row];
         });
+    }
+
+    [Symbol.iterator](): Iterator<ComplexConditionGroup> {
+        return this._rows.values();
     }
 }

@@ -4,22 +4,11 @@ package com.sora.showcase;
 
 import java.util.List;
 
-public final class MaintenanceInfo {
-    public final String startsAt;
-    public final Integer durationMinutes;
-    @SoraNullable
-    public final String reason;
-
-    public MaintenanceInfo(
-        String startsAt,
-        Integer durationMinutes,
-        @SoraNullable String reason
-    ) {
-        this.startsAt = startsAt;
-        this.durationMinutes = durationMinutes;
-        this.reason = reason;
-    }
-
+public record MaintenanceInfo(
+    String startsAt,
+    int durationMinutes,
+    @SoraNullable String reason
+) {
     static MaintenanceInfo decode(SoraReader reader) {
         return new MaintenanceInfo(
             reader.readString(),

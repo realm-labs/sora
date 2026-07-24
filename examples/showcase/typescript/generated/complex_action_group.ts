@@ -13,9 +13,9 @@ import { collectRewardActionTextKeys, decodeRewardAction, decodeRewardActionValu
 
 
 export interface ComplexActionGroup {
-    id: number;
-    name: string;
-    actions: RewardAction[];
+    readonly id: number;
+    readonly name: string;
+    readonly actions: readonly RewardAction[];
 }
 
 export function decodeComplexActionGroup(reader: SoraReader): ComplexActionGroup {
@@ -51,8 +51,8 @@ export class ComplexActionGroupTable implements SoraKeyedTable<number, ComplexAc
     };
 
     private constructor(
-        private readonly _keys: number[],
-        private readonly _rows: Map<number, ComplexActionGroup>,
+        private readonly _keys: readonly number[],
+        private readonly _rows: ReadonlyMap<number, ComplexActionGroup>,
     ) {}
 
     static decode(rows: ComplexActionGroup[]): ComplexActionGroupTable {
@@ -66,25 +66,33 @@ export class ComplexActionGroupTable implements SoraKeyedTable<number, ComplexAc
         return ComplexActionGroupTable.tableInfo;
     }
 
-    len(): number {
+    get size(): number {
         return this._rows.size;
     }
     get(key: number): ComplexActionGroup | undefined {
         return this._rows.get(key);
     }
 
-    rows(): ReadonlyMap<number, ComplexActionGroup> {
+    has(key: number): boolean {
+        return this._rows.has(key);
+    }
+
+    get rows(): ReadonlyMap<number, ComplexActionGroup> {
         return this._rows;
     }
 
-    keys(): readonly number[] {
+    get orderedKeys(): readonly number[] {
         return this._keys;
     }
 
-    orderedRows(): ComplexActionGroup[] {
+    get orderedRows(): readonly ComplexActionGroup[] {
         return this._keys.flatMap((key) => {
             const row = this._rows.get(key);
             return row === undefined ? [] : [row];
         });
+    }
+
+    [Symbol.iterator](): Iterator<ComplexActionGroup> {
+        return this._rows.values();
     }
 }

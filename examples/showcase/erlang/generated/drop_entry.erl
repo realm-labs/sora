@@ -6,11 +6,11 @@
 -export_type([t/0, table/0]).
 
 -type t() :: #{
-    'group_id' := integer(),
-    'seq' := integer(),
-    'item_id' := integer(),
-    'count' := integer(),
-    'weight' := float()
+    group_id := integer(),
+    seq := integer(),
+    item_id := integer(),
+    count := integer(),
+    weight := float()
 }.
 
 -type table() :: map().
@@ -24,22 +24,22 @@ decode(Reader0) ->
     {Count, Reader4} = (fun sora_runtime:read_i32/1)(Reader3),
     {Weight, Reader5} = (fun sora_runtime:read_f32/1)(Reader4),
     {#{
-        'group_id' => GroupId,
-        'seq' => Seq,
-        'item_id' => ItemId,
-        'count' => Count,
-        'weight' => Weight
+        group_id => GroupId,
+        seq => Seq,
+        item_id => ItemId,
+        count => Count,
+        weight => Weight
     }, Reader5}.
 
 -spec decode_value(map()) -> t().
 decode_value(Value) ->
     Obj = sora_runtime:expect_map(Value),
     #{
-        'group_id' => sora_runtime:expect_integer(sora_runtime:value_get(<<"group_id">>, Obj)),
-        'seq' => sora_runtime:expect_integer(sora_runtime:value_get(<<"seq">>, Obj)),
-        'item_id' => sora_runtime:expect_integer(sora_runtime:value_get(<<"item_id">>, Obj)),
-        'count' => sora_runtime:expect_integer(sora_runtime:value_get(<<"count">>, Obj)),
-        'weight' => sora_runtime:expect_float(sora_runtime:value_get(<<"weight">>, Obj))
+        group_id => sora_runtime:expect_integer(sora_runtime:value_get(<<"group_id">>, Obj)),
+        seq => sora_runtime:expect_integer(sora_runtime:value_get(<<"seq">>, Obj)),
+        item_id => sora_runtime:expect_integer(sora_runtime:value_get(<<"item_id">>, Obj)),
+        count => sora_runtime:expect_integer(sora_runtime:value_get(<<"count">>, Obj)),
+        weight => sora_runtime:expect_float(sora_runtime:value_get(<<"weight">>, Obj))
     }.
 
 -spec decode_table(map()) -> table().

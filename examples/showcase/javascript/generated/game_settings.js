@@ -69,10 +69,14 @@ export class GameSettingsTable {
         return GameSettingsTable.tableInfo;
     }
 
-    len() {
+    get size() {
         return 1;
     }
-    row() {
+    get row() {
         return this._row;
+    }
+
+    [Symbol.iterator]() {
+        return [this._row].values();
     }
 }

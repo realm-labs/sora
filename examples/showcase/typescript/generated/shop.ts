@@ -13,9 +13,9 @@ import { collectResourceKindTextKeys, decodeResourceKind, decodeResourceKindValu
 
 
 export interface Shop {
-    id: number;
-    name: string;
-    currency: ResourceKind;
+    readonly id: number;
+    readonly name: string;
+    readonly currency: ResourceKind;
 }
 
 export function decodeShop(reader: SoraReader): Shop {
@@ -50,8 +50,8 @@ export class ShopTable implements SoraKeyedTable<number, Shop> {
     };
 
     private constructor(
-        private readonly _keys: number[],
-        private readonly _rows: Map<number, Shop>,
+        private readonly _keys: readonly number[],
+        private readonly _rows: ReadonlyMap<number, Shop>,
     ) {}
 
     static decode(rows: Shop[]): ShopTable {
@@ -65,25 +65,33 @@ export class ShopTable implements SoraKeyedTable<number, Shop> {
         return ShopTable.tableInfo;
     }
 
-    len(): number {
+    get size(): number {
         return this._rows.size;
     }
     get(key: number): Shop | undefined {
         return this._rows.get(key);
     }
 
-    rows(): ReadonlyMap<number, Shop> {
+    has(key: number): boolean {
+        return this._rows.has(key);
+    }
+
+    get rows(): ReadonlyMap<number, Shop> {
         return this._rows;
     }
 
-    keys(): readonly number[] {
+    get orderedKeys(): readonly number[] {
         return this._keys;
     }
 
-    orderedRows(): Shop[] {
+    get orderedRows(): readonly Shop[] {
         return this._keys.flatMap((key) => {
             const row = this._rows.get(key);
             return row === undefined ? [] : [row];
         });
+    }
+
+    [Symbol.iterator](): Iterator<Shop> {
+        return this._rows.values();
     }
 }

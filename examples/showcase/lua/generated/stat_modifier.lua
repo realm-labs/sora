@@ -6,7 +6,7 @@ local StatType = require("generated.stat_type")
 ---@class StatModifier
 ---@field stat StatType
 ---@field value number
----@field isPercent boolean
+---@field is_percent boolean
 
 local StatModifier = {}
 
@@ -16,7 +16,7 @@ function StatModifier.decode(reader)
     return {
         stat = StatType.decode(reader),
         value = reader:read_f32(),
-        isPercent = reader:read_bool(),
+        is_percent = reader:read_bool(),
     }
 end
 
@@ -27,7 +27,7 @@ function StatModifier.decode_value(value)
     return {
         stat = StatType.decode_value(obj["stat"]),
         value = Runtime.expect_number(obj["value"]),
-        isPercent = Runtime.expect_boolean(obj["is_percent"]),
+        is_percent = Runtime.expect_boolean(obj["is_percent"]),
     }
 end
 

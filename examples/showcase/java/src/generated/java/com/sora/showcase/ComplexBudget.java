@@ -4,21 +4,11 @@ package com.sora.showcase;
 
 import java.util.List;
 
-public final class ComplexBudget {
-    public final ResourceCost fixed;
-    public final java.util.List<RewardBundle> random;
-    public final java.util.Map<String, Integer> limits;
-
-    public ComplexBudget(
-        ResourceCost fixed,
-        java.util.List<RewardBundle> random,
-        java.util.Map<String, Integer> limits
-    ) {
-        this.fixed = fixed;
-        this.random = random;
-        this.limits = limits;
-    }
-
+public record ComplexBudget(
+    ResourceCost fixed,
+    java.util.List<RewardBundle> random,
+    java.util.Map<String, Integer> limits
+) {
     static ComplexBudget decode(SoraReader reader) {
         return new ComplexBudget(
             ResourceCost.decode(reader),

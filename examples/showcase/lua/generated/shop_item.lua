@@ -4,11 +4,11 @@ local Runtime = require("generated.sora_runtime")
 local ResourceCost = require("generated.resource_cost")
 
 ---@class ShopItem
----@field shopId integer
+---@field shop_id integer
 ---@field seq integer
----@field itemId integer
+---@field item_id integer
 ---@field price ResourceCost
----@field dailyLimit integer?
+---@field daily_limit integer?
 
 local ShopItem = {}
 
@@ -16,11 +16,11 @@ local ShopItem = {}
 ---@return ShopItem
 function ShopItem.decode(reader)
     return {
-        shopId = reader:read_i32(),
+        shop_id = reader:read_i32(),
         seq = reader:read_i32(),
-        itemId = reader:read_i32(),
+        item_id = reader:read_i32(),
         price = ResourceCost.decode(reader),
-        dailyLimit = reader:read_optional(function() return reader:read_i32() end),
+        daily_limit = reader:read_optional(function() return reader:read_i32() end),
     }
 end
 
@@ -29,11 +29,11 @@ end
 function ShopItem.decode_value(value)
     local obj = Runtime.expect_table(value)
     return {
-        shopId = Runtime.expect_integer(obj["shop_id"]),
+        shop_id = Runtime.expect_integer(obj["shop_id"]),
         seq = Runtime.expect_integer(obj["seq"]),
-        itemId = Runtime.expect_integer(obj["item_id"]),
+        item_id = Runtime.expect_integer(obj["item_id"]),
         price = ResourceCost.decode_value(obj["price"]),
-        dailyLimit = obj["daily_limit"] == nil and nil or Runtime.expect_integer(obj["daily_limit"]),
+        daily_limit = obj["daily_limit"] == nil and nil or Runtime.expect_integer(obj["daily_limit"]),
     }
 end
 

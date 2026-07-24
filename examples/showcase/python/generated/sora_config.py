@@ -293,72 +293,72 @@ class SoraConfig:
 
     def _text_keys(self) -> list[TextKey]:
         keys: list[TextKey] = []
-        for row in self.item().rows().values():
+        for row in self.item().values():
             row.collect_text_keys(keys)
-        for row in self.shop().rows().values():
+        for row in self.shop().values():
             row.collect_text_keys(keys)
-        for row in self.shop_item().rows():
+        for row in self.shop_item():
             row.collect_text_keys(keys)
-        for row in self.recipe().rows().values():
+        for row in self.recipe().values():
             row.collect_text_keys(keys)
-        for row in self.gacha_pool().rows().values():
+        for row in self.gacha_pool().values():
             row.collect_text_keys(keys)
-        for row in self.gacha_item().rows():
+        for row in self.gacha_item():
             row.collect_text_keys(keys)
-        for row in self.equipment_set().rows().values():
+        for row in self.equipment_set().values():
             row.collect_text_keys(keys)
-        for row in self.skill().rows().values():
+        for row in self.skill().values():
             row.collect_text_keys(keys)
-        for row in self.character().rows().values():
+        for row in self.character().values():
             row.collect_text_keys(keys)
-        for row in self.character_skill().rows():
+        for row in self.character_skill():
             row.collect_text_keys(keys)
-        for row in self.buff().rows().values():
+        for row in self.buff().values():
             row.collect_text_keys(keys)
-        for row in self.drop_group().rows().values():
+        for row in self.drop_group().values():
             row.collect_text_keys(keys)
-        for row in self.drop_entry().rows():
+        for row in self.drop_entry():
             row.collect_text_keys(keys)
-        for row in self.monster().rows().values():
+        for row in self.monster().values():
             row.collect_text_keys(keys)
-        for row in self.stage().rows().values():
+        for row in self.stage().values():
             row.collect_text_keys(keys)
-        for row in self.stage_reward().rows():
+        for row in self.stage_reward():
             row.collect_text_keys(keys)
-        for row in self.dungeon().rows().values():
+        for row in self.dungeon().values():
             row.collect_text_keys(keys)
-        for row in self.quest().rows().values():
+        for row in self.quest().values():
             row.collect_text_keys(keys)
-        for row in self.quest_reward().rows():
+        for row in self.quest_reward():
             row.collect_text_keys(keys)
-        for row in self.level_exp().rows().values():
+        for row in self.level_exp().values():
             row.collect_text_keys(keys)
-        for row in self.achievement().rows().values():
+        for row in self.achievement().values():
             row.collect_text_keys(keys)
-        for row in self.vip_level().rows().values():
+        for row in self.vip_level().values():
             row.collect_text_keys(keys)
-        self.game_settings().row().collect_text_keys(keys)
-        for row in self.maintenance_window().rows():
+        self.game_settings().row.collect_text_keys(keys)
+        for row in self.maintenance_window():
             row.collect_text_keys(keys)
-        for row in self.mail_template().rows().values():
+        for row in self.mail_template().values():
             row.collect_text_keys(keys)
-        for row in self.mail_reward().rows():
+        for row in self.mail_reward():
             row.collect_text_keys(keys)
-        for row in self.dialogue().rows().values():
+        for row in self.dialogue().values():
             row.collect_text_keys(keys)
-        for row in self.event_rule().rows().values():
+        for row in self.event_rule().values():
             row.collect_text_keys(keys)
-        for row in self.complex_rule().rows().values():
+        for row in self.complex_rule().values():
             row.collect_text_keys(keys)
-        for row in self.complex_condition_group().rows().values():
+        for row in self.complex_condition_group().values():
             row.collect_text_keys(keys)
-        for row in self.complex_condition_group_entry().rows().values():
+        for row in self.complex_condition_group_entry().values():
             row.collect_text_keys(keys)
-        for row in self.complex_rule_condition().rows().values():
+        for row in self.complex_rule_condition().values():
             row.collect_text_keys(keys)
-        for row in self.complex_action_group().rows().values():
+        for row in self.complex_action_group().values():
             row.collect_text_keys(keys)
-        for row in self.complex_action_entry().rows().values():
+        for row in self.complex_action_entry().values():
             row.collect_text_keys(keys)
         return keys
 

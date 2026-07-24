@@ -39,7 +39,7 @@ public:
         return info;
     }
 
-    StageRewardTable() {}
+    StageRewardTable() = default;
     StageRewardTable(const StageRewardTable&) = delete;
     StageRewardTable& operator=(const StageRewardTable&) = delete;
     StageRewardTable(StageRewardTable&&) = default;

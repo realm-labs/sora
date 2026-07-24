@@ -4,10 +4,10 @@ import type { SoraListTable, SoraTableInfo, SoraReader, SoraValue, TextKey } fro
 
 
 export interface StageReward {
-    stageId: number;
-    seq: number;
-    itemId: number;
-    count: number;
+    readonly stageId: number;
+    readonly seq: number;
+    readonly itemId: number;
+    readonly count: number;
 }
 
 export declare function decodeStageReward(reader: SoraReader): StageReward;
@@ -18,6 +18,8 @@ export declare class StageRewardTable implements SoraListTable<StageReward> {
     static readonly tableInfo: SoraTableInfo;
     static decode(rows: StageReward[]): StageRewardTable;
     info(): SoraTableInfo;
-    len(): number;
-    rows(): readonly StageReward[];
+    readonly size: number;
+    readonly rows: readonly StageReward[];
+    at(index: number): StageReward | undefined;
+    [Symbol.iterator](): Iterator<StageReward>;
 }

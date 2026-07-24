@@ -16,26 +16,26 @@ type EventConditionLevelAtLeast struct {
 func (EventConditionLevelAtLeast) isEventCondition() {}
 
 type EventConditionQuestCompleted struct {
-	QuestId int32
+	QuestID int32
 }
 
 func (EventConditionQuestCompleted) isEventCondition() {}
 
 type EventConditionHasItem struct {
-	ItemId int32
+	ItemID int32
 	Count  int32
 }
 
 func (EventConditionHasItem) isEventCondition() {}
 
 type EventConditionAllConditions struct {
-	ConditionGroupId int32
+	ConditionGroupID int32
 }
 
 func (EventConditionAllConditions) isEventCondition() {}
 
 type EventConditionAnyCondition struct {
-	ConditionGroupId int32
+	ConditionGroupID int32
 }
 
 func (EventConditionAnyCondition) isEventCondition() {}
@@ -54,14 +54,14 @@ func decodeEventCondition(reader *SoraReader) (EventCondition, error) {
 		return value, nil
 	case 1:
 		var value EventConditionQuestCompleted
-		value.QuestId, err = reader.ReadInt32()
+		value.QuestID, err = reader.ReadInt32()
 		if err != nil {
 			return nil, err
 		}
 		return value, nil
 	case 2:
 		var value EventConditionHasItem
-		value.ItemId, err = reader.ReadInt32()
+		value.ItemID, err = reader.ReadInt32()
 		if err != nil {
 			return nil, err
 		}
@@ -72,14 +72,14 @@ func decodeEventCondition(reader *SoraReader) (EventCondition, error) {
 		return value, nil
 	case 3:
 		var value EventConditionAllConditions
-		value.ConditionGroupId, err = reader.ReadInt32()
+		value.ConditionGroupID, err = reader.ReadInt32()
 		if err != nil {
 			return nil, err
 		}
 		return value, nil
 	case 4:
 		var value EventConditionAnyCondition
-		value.ConditionGroupId, err = reader.ReadInt32()
+		value.ConditionGroupID, err = reader.ReadInt32()
 		if err != nil {
 			return nil, err
 		}
@@ -108,14 +108,14 @@ func decodeEventConditionValue(input SoraValue) (EventCondition, error) {
 		return value, nil
 	case "QuestCompleted":
 		var value EventConditionQuestCompleted
-		value.QuestId, err = obj.Get("quest_id").AsInt32()
+		value.QuestID, err = obj.Get("quest_id").AsInt32()
 		if err != nil {
 			return nil, err
 		}
 		return value, nil
 	case "HasItem":
 		var value EventConditionHasItem
-		value.ItemId, err = obj.Get("item_id").AsInt32()
+		value.ItemID, err = obj.Get("item_id").AsInt32()
 		if err != nil {
 			return nil, err
 		}
@@ -126,14 +126,14 @@ func decodeEventConditionValue(input SoraValue) (EventCondition, error) {
 		return value, nil
 	case "AllConditions":
 		var value EventConditionAllConditions
-		value.ConditionGroupId, err = obj.Get("condition_group_id").AsInt32()
+		value.ConditionGroupID, err = obj.Get("condition_group_id").AsInt32()
 		if err != nil {
 			return nil, err
 		}
 		return value, nil
 	case "AnyCondition":
 		var value EventConditionAnyCondition
-		value.ConditionGroupId, err = obj.Get("condition_group_id").AsInt32()
+		value.ConditionGroupID, err = obj.Get("condition_group_id").AsInt32()
 		if err != nil {
 			return nil, err
 		}

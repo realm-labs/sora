@@ -7,60 +7,43 @@ import java.util.List;
 import {{ import }};
 {%- endfor %}
 
-public interface {{ union.pascal_name }} {
+public sealed interface {{ union.pascal_name }} permits {% for variant in union.variants %}{{ union.pascal_name }}.{{ variant.name }}{% if not loop.last %}, {% endif %}{% endfor %} {
 {%- for variant in union.variants %}
-    final class {{ variant.name }} implements {{ union.pascal_name }} {
+    record {{ variant.name }}(
 {%- for field in variant.fields %}
 {%- if field.comment %}
         /** {{ field.comment }} */
 {%- endif %}
-{%- if field.nullable_annotation %}
-        @{{ field.nullable_annotation }}
-{%- endif %}
-        public final {{ field.type_name }} {{ field.name }};
+        {% if field.nullable_annotation %}@{{ field.nullable_annotation }} {% endif %}{{ field.type_name }} {{ field.name }}{% if not loop.last %},{% endif %}
 {%- endfor %}
-
-        public {{ variant.name }}(
-{%- for field in variant.fields %}
-            {% if field.nullable_annotation %}@{{ field.nullable_annotation }} {% endif %}{{ field.type_name }} {{ field.name }}{% if not loop.last %},{% endif %}
-{%- endfor %}
-        ) {
-{%- for field in variant.fields %}
-            this.{{ field.name }} = {{ field.name }};
-{%- endfor %}
-        }
-    }
+    ) implements {{ union.pascal_name }} {}
 
 {%- endfor %}
     static {{ union.pascal_name }} decode(SoraReader reader) {
-        switch (reader.readU32()) {
+        return switch (reader.readU32()) {
 {%- for variant in union.variants %}
-            case {{ loop.index0 }}:
-                return new {{ variant.name }}(
+            case {{ loop.index0 }} -> new {{ variant.name }}(
 {%- for field in variant.fields %}
-                    {{ field.decode }}{% if not loop.last %},{% endif %}
+                {{ field.decode }}{% if not loop.last %},{% endif %}
 {%- endfor %}
-                );
+            );
 {%- endfor %}
-            default:
-                throw new SoraReadException("invalid union ordinal for {{ union.pascal_name }}");
-        }
+            default -> throw new SoraReadException("invalid union ordinal for {{ union.pascal_name }}");
+        };
     }
 
     static {{ union.pascal_name }} decode(SoraValue value) {
         var obj = value.asObject();
-        switch (obj.get("{{ union.tag }}").asString()) {
+        return switch (obj.get("{{ union.tag }}").asString()) {
 {%- for variant in union.variants %}
-            case "{{ variant.name }}":
-                return new {{ variant.name }}(
+            case "{{ variant.name }}" -> new {{ variant.name }}(
 {%- for field in variant.fields %}
-                    {{ field.value_decode | replace("__VALUE__", "obj.get(\"" ~ field.raw_name ~ "\")") }}{% if not loop.last %},{% endif %}
+                {{ field.value_decode | replace("__VALUE__", "obj.get(\"" ~ field.raw_name ~ "\")") }}{% if not loop.last %},{% endif %}
 {%- endfor %}
-                );
+            );
 {%- endfor %}
-            default:
-                throw new SoraReadException("invalid union tag for {{ union.pascal_name }}");
-        }
+            default -> throw new SoraReadException("invalid union tag for {{ union.pascal_name }}");
+        };
     }
 
     static void collectTextKeys({{ union.pascal_name }} value, List<TextKey> out) {
@@ -69,7 +52,7 @@ public interface {{ union.pascal_name }} {
         if (value instanceof {{ variant.name }} typed) {
 {%- for field in variant.fields %}
 {%- if field.collect_text_keys %}
-{{ field.collect_text_keys | replace("this." ~ field.name, "typed." ~ field.name) }}
+{{ field.collect_text_keys | replace("this." ~ field.name, "typed." ~ field.name ~ "()") }}
 {%- endif %}
 {%- endfor %}
         }

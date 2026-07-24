@@ -3,7 +3,7 @@
 package showcase
 
 type Character struct {
-	Id           int32
+	ID           int32
 	Name         string
 	Rarity       Rarity
 	BaseLevel    int32
@@ -15,7 +15,7 @@ type Character struct {
 func decodeCharacter(reader *SoraReader) (Character, error) {
 	var value Character
 	var err error
-	value.Id, err = reader.ReadInt32()
+	value.ID, err = reader.ReadInt32()
 	if err != nil {
 		return value, err
 	}
@@ -52,7 +52,7 @@ func decodeCharacterValue(input SoraValue) (Character, error) {
 	if err != nil {
 		return value, err
 	}
-	value.Id, err = obj.Get("id").AsInt32()
+	value.ID, err = obj.Get("id").AsInt32()
 	if err != nil {
 		return value, err
 	}
@@ -105,9 +105,9 @@ type CharacterTable struct {
 func buildCharacterTable(rows []Character) (*CharacterTable, error) {
 	keys := make([]int32, 0, len(rows))
 	for _, row := range rows {
-		keys = append(keys, row.Id)
+		keys = append(keys, row.ID)
 	}
-	return &CharacterTable{keys: keys, rows: DecodeMapTable(rows, func(row Character) int32 { return row.Id })}, nil
+	return &CharacterTable{keys: keys, rows: DecodeMapTable(rows, func(row Character) int32 { return row.ID })}, nil
 }
 
 func decodeCharacterTable(source SoraTableSource) (*CharacterTable, error) {
@@ -117,9 +117,12 @@ func decodeCharacterTable(source SoraTableSource) (*CharacterTable, error) {
 	}
 	return buildCharacterTable(rows)
 }
-
 func (table *CharacterTable) Rows() map[int32]Character {
-	return table.rows
+	rows := make(map[int32]Character, len(table.rows))
+	for key, row := range table.rows {
+		rows[key] = row
+	}
+	return rows
 }
 func (table *CharacterTable) Get(key int32) (Character, bool) {
 	value, ok := table.rows[key]
@@ -127,7 +130,7 @@ func (table *CharacterTable) Get(key int32) (Character, bool) {
 }
 
 func (table *CharacterTable) Keys() []int32 {
-	return table.keys
+	return append([]int32(nil), table.keys...)
 }
 
 func (table *CharacterTable) OrderedRows() []Character {

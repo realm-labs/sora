@@ -8,10 +8,10 @@ local Vec3 = require("generated.vec3")
 ---@field id integer
 ---@field name string
 ---@field rarity Rarity
----@field baseLevel integer
----@field baseSkill integer
----@field starterItems integer[]
----@field spawnPos Vec3
+---@field base_level integer
+---@field base_skill integer
+---@field starter_items integer[]
+---@field spawn_pos Vec3
 
 local Character = {}
 
@@ -22,10 +22,10 @@ function Character.decode(reader)
         id = reader:read_i32(),
         name = reader:read_string(),
         rarity = Rarity.decode(reader),
-        baseLevel = reader:read_i32(),
-        baseSkill = reader:read_i32(),
-        starterItems = reader:read_list(function() return reader:read_i32() end),
-        spawnPos = Vec3.decode(reader),
+        base_level = reader:read_i32(),
+        base_skill = reader:read_i32(),
+        starter_items = reader:read_list(function() return reader:read_i32() end),
+        spawn_pos = Vec3.decode(reader),
     }
 end
 
@@ -37,10 +37,10 @@ function Character.decode_value(value)
         id = Runtime.expect_integer(obj["id"]),
         name = Runtime.expect_string(obj["name"]),
         rarity = Rarity.decode_value(obj["rarity"]),
-        baseLevel = Runtime.expect_integer(obj["base_level"]),
-        baseSkill = Runtime.expect_integer(obj["base_skill"]),
-        starterItems = Runtime.decode_value_list(obj["starter_items"], function(item) return Runtime.expect_integer(item) end),
-        spawnPos = Vec3.decode_value(obj["spawn_pos"]),
+        base_level = Runtime.expect_integer(obj["base_level"]),
+        base_skill = Runtime.expect_integer(obj["base_skill"]),
+        starter_items = Runtime.decode_value_list(obj["starter_items"], function(item) return Runtime.expect_integer(item) end),
+        spawn_pos = Vec3.decode_value(obj["spawn_pos"]),
     }
 end
 
@@ -50,7 +50,7 @@ function Character.collect_text_keys(value, out)
     if value == nil then
         return
     end
-    Vec3.collect_text_keys(value.spawnPos, out)
+    Vec3.collect_text_keys(value.spawn_pos, out)
 end
 
 ---@class CharacterTable

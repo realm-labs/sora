@@ -7,11 +7,11 @@
 -export_type([t/0, table/0]).
 
 -type t() :: #{
-    'id' := integer(),
-    'name' := binary(),
-    'monster_ids' := [integer()],
-    'recommended_power' := integer(),
-    'first_clear_rewards' := [reward:t()]
+    id := integer(),
+    name := binary(),
+    monster_ids := [integer()],
+    recommended_power := integer(),
+    first_clear_rewards := [reward:t()]
 }.
 
 -type table() :: map().
@@ -25,29 +25,29 @@ decode(Reader0) ->
     {RecommendedPower, Reader4} = (fun sora_runtime:read_i32/1)(Reader3),
     {FirstClearRewards, Reader5} = (fun(Reader) -> sora_runtime:read_list(fun reward:decode/1, Reader) end)(Reader4),
     {#{
-        'id' => Id,
-        'name' => Name,
-        'monster_ids' => MonsterIds,
-        'recommended_power' => RecommendedPower,
-        'first_clear_rewards' => FirstClearRewards
+        id => Id,
+        name => Name,
+        monster_ids => MonsterIds,
+        recommended_power => RecommendedPower,
+        first_clear_rewards => FirstClearRewards
     }, Reader5}.
 
 -spec decode_value(map()) -> t().
 decode_value(Value) ->
     Obj = sora_runtime:expect_map(Value),
     #{
-        'id' => sora_runtime:expect_integer(sora_runtime:value_get(<<"id">>, Obj)),
-        'name' => sora_runtime:expect_binary(sora_runtime:value_get(<<"name">>, Obj)),
-        'monster_ids' => sora_runtime:decode_value_list(fun(Item) -> sora_runtime:expect_integer(Item) end, sora_runtime:value_get(<<"monster_ids">>, Obj)),
-        'recommended_power' => sora_runtime:expect_integer(sora_runtime:value_get(<<"recommended_power">>, Obj)),
-        'first_clear_rewards' => sora_runtime:decode_value_list(fun(Item) -> reward:decode_value(Item) end, sora_runtime:value_get(<<"first_clear_rewards">>, Obj))
+        id => sora_runtime:expect_integer(sora_runtime:value_get(<<"id">>, Obj)),
+        name => sora_runtime:expect_binary(sora_runtime:value_get(<<"name">>, Obj)),
+        monster_ids => sora_runtime:decode_value_list(fun(Item) -> sora_runtime:expect_integer(Item) end, sora_runtime:value_get(<<"monster_ids">>, Obj)),
+        recommended_power => sora_runtime:expect_integer(sora_runtime:value_get(<<"recommended_power">>, Obj)),
+        first_clear_rewards => sora_runtime:decode_value_list(fun(Item) -> reward:decode_value(Item) end, sora_runtime:value_get(<<"first_clear_rewards">>, Obj))
     }.
 
 -spec decode_table(map()) -> table().
 decode_table(Bundle) ->
     Rows = sora_runtime:decode_table(Bundle, ?TABLE_NAME, fun ?MODULE:decode/1, fun ?MODULE:decode_value/1),
-    Data = sora_runtime:decode_map_table(Rows, fun(Row) -> maps:get('id', Row) end),
-    Keys = [maps:get('id', Row) || Row <- Rows],
+    Data = sora_runtime:decode_map_table(Rows, fun(Row) -> maps:get(id, Row) end),
+    Keys = [maps:get(id, Row) || Row <- Rows],
     #{
         keys => Keys,
         data => Data

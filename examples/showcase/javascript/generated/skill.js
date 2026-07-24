@@ -73,25 +73,33 @@ export class SkillTable {
         return SkillTable.tableInfo;
     }
 
-    len() {
+    get size() {
         return this._rows.size;
     }
     get(key) {
         return this._rows.get(key);
     }
 
-    rows() {
+    has(key) {
+        return this._rows.has(key);
+    }
+
+    get rows() {
         return this._rows;
     }
 
-    keys() {
+    get orderedKeys() {
         return this._keys;
     }
 
-    orderedRows() {
+    get orderedRows() {
         return this._keys.flatMap((key) => {
             const row = this._rows.get(key);
             return row === undefined ? [] : [row];
         });
+    }
+
+    [Symbol.iterator]() {
+        return this._rows.values();
     }
 }

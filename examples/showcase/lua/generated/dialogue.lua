@@ -4,7 +4,7 @@ local Runtime = require("generated.sora_runtime")
 
 ---@class Dialogue
 ---@field id integer
----@field speakerKey TextKey
+---@field speaker_key TextKey
 ---@field lines string[]
 
 local Dialogue = {}
@@ -14,7 +14,7 @@ local Dialogue = {}
 function Dialogue.decode(reader)
     return {
         id = reader:read_i32(),
-        speakerKey = Runtime.new_text_key(reader:read_string()),
+        speaker_key = Runtime.new_text_key(reader:read_string()),
         lines = reader:read_list(function() return reader:read_string() end),
     }
 end
@@ -25,7 +25,7 @@ function Dialogue.decode_value(value)
     local obj = Runtime.expect_table(value)
     return {
         id = Runtime.expect_integer(obj["id"]),
-        speakerKey = Runtime.new_text_key(Runtime.expect_string(obj["speaker_key"])),
+        speaker_key = Runtime.new_text_key(Runtime.expect_string(obj["speaker_key"])),
         lines = Runtime.decode_value_list(obj["lines"], function(item) return Runtime.expect_string(item) end),
     }
 end
@@ -36,7 +36,7 @@ function Dialogue.collect_text_keys(value, out)
     if value == nil then
         return
     end
-    out[#out + 1] = value.speakerKey
+    out[#out + 1] = value.speaker_key
 end
 
 ---@class DialogueTable

@@ -38,7 +38,7 @@ public:
         return info;
     }
 
-    VipLevelTable() {}
+    VipLevelTable() = default;
     VipLevelTable(const VipLevelTable&) = delete;
     VipLevelTable& operator=(const VipLevelTable&) = delete;
     VipLevelTable(VipLevelTable&&) = default;
@@ -47,8 +47,7 @@ public:
     static VipLevelTable decode(const SoraBundle& bundle) {
         std::vector<VipLevel> rows = bundle.decode_table<VipLevel>(NAME);
         VipLevelTable table;
-        for (std::size_t index = 0; index < rows.size(); ++index) {
-            const VipLevel& row = rows[index];
+        for (const auto& row : rows) {
             table.keys_.push_back(row.level);
             table.rows_.emplace(row.level, row);
         }
@@ -65,7 +64,7 @@ public:
     }
 
     const VipLevel* get(const std::int32_t& key) const {
-        typename std::unordered_map<std::int32_t, VipLevel>::const_iterator it = rows_.find(key);
+        auto it = rows_.find(key);
         if (it == rows_.end()) {
             return nullptr;
         }
@@ -79,10 +78,8 @@ public:
     std::vector<const VipLevel*> ordered_rows() const {
         std::vector<const VipLevel*> rows;
         rows.reserve(keys_.size());
-        for (typename std::vector<std::int32_t>::const_iterator key = keys_.begin();
-             key != keys_.end();
-             ++key) {
-            typename std::unordered_map<std::int32_t, VipLevel>::const_iterator it = rows_.find(*key);
+        for (const auto& key : keys_) {
+            auto it = rows_.find(key);
             if (it != rows_.end()) {
                 rows.push_back(&it->second);
             }

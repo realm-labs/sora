@@ -40,7 +40,7 @@ public:
         return info;
     }
 
-    GachaItemTable() {}
+    GachaItemTable() = default;
     GachaItemTable(const GachaItemTable&) = delete;
     GachaItemTable& operator=(const GachaItemTable&) = delete;
     GachaItemTable(GachaItemTable&&) = default;

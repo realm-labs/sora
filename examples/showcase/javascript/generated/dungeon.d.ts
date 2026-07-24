@@ -6,10 +6,10 @@ import type { ResourceCost } from "./resource_cost.js";
 
 
 export interface Dungeon {
-    id: number;
-    name: string;
-    stageIds: number[];
-    entryCost: ResourceCost;
+    readonly id: number;
+    readonly name: string;
+    readonly stageIds: readonly number[];
+    readonly entryCost: ResourceCost;
 }
 
 export declare function decodeDungeon(reader: SoraReader): Dungeon;
@@ -20,9 +20,11 @@ export declare class DungeonTable implements SoraKeyedTable<number, Dungeon> {
     static readonly tableInfo: SoraTableInfo;
     static decode(rows: Dungeon[]): DungeonTable;
     info(): SoraTableInfo;
-    len(): number;
+    readonly size: number;
     get(key: number): Dungeon | undefined;
-    rows(): ReadonlyMap<number, Dungeon>;
-    keys(): readonly number[];
-    orderedRows(): Dungeon[];
+    has(key: number): boolean;
+    readonly rows: ReadonlyMap<number, Dungeon>;
+    readonly orderedKeys: readonly number[];
+    readonly orderedRows: readonly Dungeon[];
+    [Symbol.iterator](): Iterator<Dungeon>;
 }

@@ -10,9 +10,9 @@ import {
 
 
 export interface CharacterSkill {
-    characterId: number;
-    skillId: number;
-    unlockLevel: number;
+    readonly characterId: number;
+    readonly skillId: number;
+    readonly unlockLevel: number;
 }
 
 export function decodeCharacterSkill(reader: SoraReader): CharacterSkill {
@@ -46,7 +46,7 @@ export class CharacterSkillTable implements SoraListTable<CharacterSkill> {
     };
 
     private constructor(
-        private readonly _rows: CharacterSkill[],
+        private readonly _rows: readonly CharacterSkill[],
     ) {}
 
     static decode(rows: CharacterSkill[]): CharacterSkillTable {
@@ -59,10 +59,18 @@ export class CharacterSkillTable implements SoraListTable<CharacterSkill> {
         return CharacterSkillTable.tableInfo;
     }
 
-    len(): number {
+    get size(): number {
         return this._rows.length;
     }
-    rows(): readonly CharacterSkill[] {
+    get rows(): readonly CharacterSkill[] {
         return this._rows;
+    }
+
+    at(index: number): CharacterSkill | undefined {
+        return this._rows.at(index);
+    }
+
+    [Symbol.iterator](): Iterator<CharacterSkill> {
+        return this._rows[Symbol.iterator]();
     }
 }

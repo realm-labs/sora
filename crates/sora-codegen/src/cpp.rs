@@ -84,6 +84,7 @@ struct CppOptionsView {
     namespace_close: String,
     has_std_optional: bool,
     has_std_variant: bool,
+    has_make_unique: bool,
 }
 
 impl CppOptionsView {
@@ -107,6 +108,7 @@ impl CppOptionsView {
                 standard,
                 CppStandard::Cpp17 | CppStandard::Cpp20 | CppStandard::Cpp23
             ),
+            has_make_unique: !matches!(standard, CppStandard::Cpp11),
         })
     }
 }

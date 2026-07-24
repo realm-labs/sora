@@ -6,9 +6,9 @@ local Reward = require("generated.reward")
 ---@class Stage
 ---@field id integer
 ---@field name string
----@field monsterIds integer[]
----@field recommendedPower integer
----@field firstClearRewards Reward[]
+---@field monster_ids integer[]
+---@field recommended_power integer
+---@field first_clear_rewards Reward[]
 
 local Stage = {}
 
@@ -18,9 +18,9 @@ function Stage.decode(reader)
     return {
         id = reader:read_i32(),
         name = reader:read_string(),
-        monsterIds = reader:read_list(function() return reader:read_i32() end),
-        recommendedPower = reader:read_i32(),
-        firstClearRewards = reader:read_list(function() return Reward.decode(reader) end),
+        monster_ids = reader:read_list(function() return reader:read_i32() end),
+        recommended_power = reader:read_i32(),
+        first_clear_rewards = reader:read_list(function() return Reward.decode(reader) end),
     }
 end
 
@@ -31,9 +31,9 @@ function Stage.decode_value(value)
     return {
         id = Runtime.expect_integer(obj["id"]),
         name = Runtime.expect_string(obj["name"]),
-        monsterIds = Runtime.decode_value_list(obj["monster_ids"], function(item) return Runtime.expect_integer(item) end),
-        recommendedPower = Runtime.expect_integer(obj["recommended_power"]),
-        firstClearRewards = Runtime.decode_value_list(obj["first_clear_rewards"], function(item) return Reward.decode_value(item) end),
+        monster_ids = Runtime.decode_value_list(obj["monster_ids"], function(item) return Runtime.expect_integer(item) end),
+        recommended_power = Runtime.expect_integer(obj["recommended_power"]),
+        first_clear_rewards = Runtime.decode_value_list(obj["first_clear_rewards"], function(item) return Reward.decode_value(item) end),
     }
 end
 
@@ -43,7 +43,7 @@ function Stage.collect_text_keys(value, out)
     if value == nil then
         return
     end
-    for _, __sora_value in ipairs(value.firstClearRewards) do Reward.collect_text_keys(__sora_value, out) end
+    for _, __sora_value in ipairs(value.first_clear_rewards) do Reward.collect_text_keys(__sora_value, out) end
 end
 
 ---@class StageTable

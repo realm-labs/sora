@@ -11,7 +11,7 @@ public sealed record ComplexConditionGroup(
     int Id,
     string Name,
     // A derived list of union values; each child row is edited without JSON
-    List<EventCondition> Conditions
+    IReadOnlyList<EventCondition> Conditions
 )
 {
     internal static ComplexConditionGroup Decode(SoraReader reader)
@@ -72,8 +72,7 @@ public sealed class ComplexConditionGroupTable : ISoraKeyedTable<int, ComplexCon
     {
         return new ComplexConditionGroupTable(rows.ConvertAll(row => row.Id), SoraConfig.DecodeMapTable(rows, row => row.Id));
     }
-
-    public Dictionary<int, ComplexConditionGroup> Rows => rows;
+    public IReadOnlyDictionary<int, ComplexConditionGroup> Rows => rows;
     public ComplexConditionGroup this[int key] => rows[key];
 
     public ComplexConditionGroup? Get(int key)

@@ -1,6 +1,6 @@
 use std::path::Path;
 
-use heck::{ToShoutySnakeCase, ToSnakeCase};
+use heck::{ToShoutySnakeCase, ToSnakeCase, ToUpperCamelCase};
 use sora_diagnostics::Result;
 use sora_ir::model::{ConfigIr, FieldIr, TypeIr};
 
@@ -101,23 +101,82 @@ fn render_message(ir: &ConfigIr, name: &str, fields: &[FieldIr]) -> String {
     let mut output = String::new();
     output.push_str(&format!("message {name} {{\n"));
     for (index, field) in fields.iter().enumerate() {
-        output.push_str(&format!(
-            "  {}{} {} = {};\n",
-            proto_label(ir, &field.ty),
-            proto_type(ir, &field.ty),
-            field.name.to_snake_case(),
-            index + 1
+        output.push_str(&render_field(
+            ir,
+            &field.name.to_snake_case(),
+            &field.ty,
+            index + 1,
+            "  ",
         ));
     }
     output.push_str("}\n\n");
     output
 }
 
+fn render_field(ir: &ConfigIr, name: &str, ty: &TypeIr, tag: usize, indent: &str) -> String {
+    if let TypeIr::Map { key, value } = ty {
+        if supports_native_proto_map(ir, key, value) {
+            return format!(
+                "{indent}map<{}, {}> {name} = {tag};\n",
+                proto_type(ir, key),
+                proto_type(ir, value)
+            );
+        }
+
+        let entry_name = format!("{}Entry", name.to_upper_camel_case());
+        let child_indent = format!("{indent}  ");
+        let mut output = format!("{indent}message {entry_name} {{\n");
+        output.push_str(&render_field(ir, "key", key, 1, &child_indent));
+        output.push_str(&render_field(ir, "value", value, 2, &child_indent));
+        output.push_str(&format!("{indent}}}\n"));
+        output.push_str(&format!("{indent}repeated {entry_name} {name} = {tag};\n"));
+        return output;
+    }
+
+    format!(
+        "{indent}{}{} {name} = {tag};\n",
+        proto_label(ir, ty),
+        proto_type(ir, ty)
+    )
+}
+
 fn proto_label(ir: &ConfigIr, ty: &TypeIr) -> &'static str {
     match ty {
-        TypeIr::List(_) | TypeIr::Set(_) | TypeIr::Map { .. } | TypeIr::Array { .. } => "repeated ",
+        TypeIr::List(_) | TypeIr::Set(_) | TypeIr::Array { .. } => "repeated ",
         TypeIr::Optional(element) if supports_proto_optional(ir, element) => "optional ",
         _ => "",
+    }
+}
+
+fn supports_native_proto_map(ir: &ConfigIr, key: &TypeIr, value: &TypeIr) -> bool {
+    is_proto_map_key(ir, key) && is_proto_map_value(ir, value)
+}
+
+fn is_proto_map_key(ir: &ConfigIr, ty: &TypeIr) -> bool {
+    match ty {
+        TypeIr::Bool
+        | TypeIr::I8
+        | TypeIr::U8
+        | TypeIr::I16
+        | TypeIr::U16
+        | TypeIr::I32
+        | TypeIr::U32
+        | TypeIr::I64
+        | TypeIr::Duration
+        | TypeIr::DateTime
+        | TypeIr::String
+        | TypeIr::Text => true,
+        TypeIr::Ref { table, field } => is_proto_map_key(ir, ref_type(ir, table, field)),
+        _ => false,
+    }
+}
+
+fn is_proto_map_value(ir: &ConfigIr, ty: &TypeIr) -> bool {
+    match ty {
+        TypeIr::List(_) | TypeIr::Set(_) | TypeIr::Map { .. } | TypeIr::Array { .. } => false,
+        TypeIr::Optional(element) => is_proto_map_value(ir, element),
+        TypeIr::Ref { table, field } => is_proto_map_value(ir, ref_type(ir, table, field)),
+        _ => true,
     }
 }
 
@@ -157,7 +216,7 @@ fn proto_type(ir: &ConfigIr, ty: &TypeIr) -> String {
         | TypeIr::Set(element)
         | TypeIr::Array { element, .. }
         | TypeIr::Optional(element) => proto_type(ir, element),
-        TypeIr::Map { value, .. } => proto_type(ir, value),
+        TypeIr::Map { .. } => unreachable!("map fields are rendered by render_field"),
         TypeIr::Ref { table, field } => proto_type(ir, ref_type(ir, table, field)),
     }
 }
@@ -224,6 +283,14 @@ type = "list<string>"
 [[tables.fields]]
 name = "action"
 type = "union<Action>"
+
+[[tables.fields]]
+name = "attributes"
+type = "map<string,i32>"
+
+[[tables.fields]]
+name = "rewards"
+type = "map<enum<ItemType>,list<i32>>"
 "#,
         )
         .unwrap();
@@ -242,5 +309,10 @@ type = "union<Action>"
         assert!(proto.contains("oneof kind"));
         assert!(proto.contains("ActionAddItem add_item = 1;"));
         assert!(proto.contains("repeated string tags = 3;"));
+        assert!(proto.contains("map<string, int32> attributes = 5;"));
+        assert!(proto.contains("message RewardsEntry"));
+        assert!(proto.contains("ItemType key = 1;"));
+        assert!(proto.contains("repeated int32 value = 2;"));
+        assert!(proto.contains("repeated RewardsEntry rewards = 6;"));
     }
 }

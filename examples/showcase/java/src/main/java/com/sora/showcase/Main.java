@@ -6,8 +6,7 @@ import java.nio.file.Paths;
 public final class Main {
     public static void main(String[] args) throws Exception {
         var bytes = Files.readAllBytes(Paths.get("..", "generated", "config.sora"));
-        var bundle = SoraBundle.parse(bytes);
-        var config = SoraConfig.fromSource(bundle);
+        var config = SoraConfig.fromBytes(bytes);
         var localePack = LocalePack.parse(Files.readAllBytes(Paths.get("..", "generated", "i18n", "zh_cn.sora-i18n")));
         var i18n = new SoraI18n();
         i18n.mount(config, localePack);
@@ -15,35 +14,35 @@ public final class Main {
         var swordByName = config.item().getByName("Iron Sword");
         var quest = config.quest().get(5001);
         var achievement = config.achievement().get(14001);
-        var settings = config.gameSettings().rows();
+        var settings = config.gameSettings().row();
 
-        check(sword.name.equals("Iron Sword"));
-        check(swordByName.id == 1001);
-        check(sword.itemType == ItemType.Weapon);
-        check(config.item().findByItemType(ItemType.Weapon).stream().anyMatch(item -> item.id == sword.id));
-        check(quest.title.equals("First Trial"));
-        check(quest.questType == QuestType.Main);
-        check(quest.rewards.size() == 2);
-        check(i18n.text(achievement.titleKey).equals("中文文本 1"));
-        check(settings.startingGold == 100);
+        check(sword.name().equals("Iron Sword"));
+        check(swordByName.id() == 1001);
+        check(sword.itemType() == ItemType.WEAPON);
+        check(config.item().findByItemType(ItemType.WEAPON).stream().anyMatch(item -> item.id() == sword.id()));
+        check(quest.title().equals("First Trial"));
+        check(quest.questType() == QuestType.MAIN);
+        check(quest.rewards().size() == 2);
+        check(i18n.text(achievement.titleKey()).equals("中文文本 1"));
+        check(settings.startingGold() == 100);
         check(config.stage().size() == 40);
         check(config.monster().size() == 80);
         check(config.eventRule().size() == 20);
 
         var eventRule = config.eventRule().get(17001);
-        check(eventRule.condition instanceof EventCondition.QuestCompleted);
-        var condition = (EventCondition.QuestCompleted) eventRule.condition;
-        check(condition.questId == 5002);
-        check(eventRule.actions.get(0) instanceof RewardAction.AddItem);
-        var firstAction = (RewardAction.AddItem) eventRule.actions.get(0);
-        check(firstAction.itemId == 1007);
+        check(eventRule.condition() instanceof EventCondition.QuestCompleted);
+        var condition = (EventCondition.QuestCompleted) eventRule.condition();
+        check(condition.questId() == 5002);
+        check(eventRule.actions().get(0) instanceof RewardAction.AddItem);
+        var firstAction = (RewardAction.AddItem) eventRule.actions().get(0);
+        check(firstAction.itemId() == 1007);
 
         System.out.println(
             "loaded " + config.item().size() + " items, " +
                 config.skill().size() + " skills, " +
                 config.quest().size() + " quests, " +
                 config.stage().size() + " stages, " +
-                config.eventRule().size() + " event rules; first quest rewards: " + quest.rewards.size()
+                config.eventRule().size() + " event rules; first quest rewards: " + quest.rewards().size()
         );
     }
 

@@ -10,7 +10,7 @@ namespace com.sora.showcase;
 public sealed record Dungeon(
     int Id,
     string Name,
-    List<int> StageIds,
+    IReadOnlyList<int> StageIds,
     ResourceCost EntryCost
 )
 {
@@ -71,8 +71,7 @@ public sealed class DungeonTable : ISoraKeyedTable<int, Dungeon>
     {
         return new DungeonTable(rows.ConvertAll(row => row.Id), SoraConfig.DecodeMapTable(rows, row => row.Id));
     }
-
-    public Dictionary<int, Dungeon> Rows => rows;
+    public IReadOnlyDictionary<int, Dungeon> Rows => rows;
     public Dungeon this[int key] => rows[key];
 
     public Dungeon? Get(int key)

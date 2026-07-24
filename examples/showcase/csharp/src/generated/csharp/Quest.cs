@@ -12,10 +12,10 @@ public sealed record Quest(
     QuestType QuestType,
     string Title,
     int RequiredItem,
-    List<int> UnlockSkills,
+    IReadOnlyList<int> UnlockSkills,
     Vec3 StartPos,
     // Materialized from QuestReward child rows
-    List<Reward> Rewards
+    IReadOnlyList<Reward> Rewards
 )
 {
     internal static Quest Decode(SoraReader reader)
@@ -85,8 +85,7 @@ public sealed class QuestTable : ISoraKeyedTable<int, Quest>
     {
         return new QuestTable(rows.ConvertAll(row => row.Id), SoraConfig.DecodeMapTable(rows, row => row.Id));
     }
-
-    public Dictionary<int, Quest> Rows => rows;
+    public IReadOnlyDictionary<int, Quest> Rows => rows;
     public Quest this[int key] => rows[key];
 
     public Quest? Get(int key)

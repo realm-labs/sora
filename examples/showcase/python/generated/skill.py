@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from collections.abc import Iterator, Mapping, Sequence
 from typing import TYPE_CHECKING
 
 from .sora_runtime import SoraReader, TextKey
@@ -70,7 +71,7 @@ class Skill:
         self.cast_origin.collect_text_keys(out)
 
 
-class SkillTable(SoraConfigTable):
+class SkillTable(SoraConfigTable, Mapping[int, Skill]):
     NAME = "Skill"
     INFO = SoraTableInfo(
         name=NAME,
@@ -99,18 +100,20 @@ class SkillTable(SoraConfigTable):
     def info(self) -> SoraTableInfo:
         return self.INFO
 
-    def len(self) -> int:
+    def __len__(self) -> int:
         return len(self._rows)
 
 
-    def get(self, key: int) -> Skill | None:
-        return self._rows.get(key)
+    def __getitem__(self, key: int) -> Skill:
+        return self._rows[key]
 
-    def rows(self) -> dict[int, Skill]:
-        return self._rows
+    def __iter__(self) -> Iterator[int]:
+        return iter(self._keys)
 
-    def keys(self) -> list[int]:
-        return self._keys
+    @property
+    def ordered_keys(self) -> tuple[int, ...]:
+        return tuple(self._keys)
 
-    def ordered_rows(self) -> list[Skill]:
-        return [self._rows[key] for key in self._keys if key in self._rows]
+    @property
+    def ordered_rows(self) -> tuple[Skill, ...]:
+        return tuple(self._rows[key] for key in self._keys)

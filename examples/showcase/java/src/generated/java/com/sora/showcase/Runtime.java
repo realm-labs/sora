@@ -19,12 +19,6 @@ import java.util.function.Supplier;
     java.lang.annotation.ElementType.TYPE_USE
 })
 @interface SoraNullable {}
-final class SoraReadException extends RuntimeException {
-    SoraReadException(String message) {
-        super(message);
-    }
-}
-
 final class SoraSection {
     final int kind;
     final int compression;
@@ -49,34 +43,6 @@ interface SoraTableSource {
     <T> List<T> decodeTable(String name, SoraRowDecoder<T> decodeBinary, Function<SoraValue, T> decodeValue);
 }
 
-interface SoraTextResolver {
-    String text(TextKey key);
-    String format(TextKey key, Map<String, ?> args);
-}
-
-final class TextKey {
-    final String value;
-
-    TextKey(String value) {
-        this.value = value;
-    }
-
-    @Override
-    public String toString() {
-        return value;
-    }
-
-    @Override
-    public boolean equals(Object other) {
-        return other instanceof TextKey key && value.equals(key.value);
-    }
-
-    @Override
-    public int hashCode() {
-        return value.hashCode();
-    }
-}
-
 final class SoraDuration {
     private SoraDuration() {}
 
@@ -85,80 +51,6 @@ final class SoraDuration {
             throw new SoraReadException("duration must be non-negative");
         }
         return java.time.Duration.ofMillis(millis);
-    }
-}
-
-final class LocalePack {
-    private final String schemaFingerprint;
-    private final String locale;
-    private final Map<String, String> translations;
-
-    private LocalePack(String schemaFingerprint, String locale, Map<String, String> translations) {
-        this.schemaFingerprint = schemaFingerprint;
-        this.locale = locale;
-        this.translations = translations;
-    }
-
-    String schemaFingerprint() {
-        return schemaFingerprint;
-    }
-
-    String locale() {
-        return locale;
-    }
-    @SoraNullable
-    String get(TextKey key) {
-        return translations.get(key.value);
-    }
-
-    static LocalePack parse(byte[] bytes) {
-        if (bytes.length < 8 || !new String(bytes, 0, 4, StandardCharsets.US_ASCII).equals("SORI")) {
-            throw new SoraReadException("invalid Sora i18n pack magic");
-        }
-        var version = SoraBundle.readI32At(bytes, 4);
-        if (version != 1) {
-            throw new SoraReadException("unsupported Sora i18n pack version " + version);
-        }
-        var cursor = new int[] { 8 };
-        var schemaFingerprint = readLengthPrefixedString(bytes, cursor);
-        var locale = readLengthPrefixedString(bytes, cursor);
-        var count = readU32At(bytes, cursor);
-        var translations = new HashMap<String, String>(count);
-        for (var i = 0; i < count; i++) {
-            var key = readLengthPrefixedString(bytes, cursor);
-            var value = readLengthPrefixedString(bytes, cursor);
-            if (value.isEmpty()) {
-                throw new SoraReadException("text key `" + key + "` has empty text");
-            }
-            if (translations.containsKey(key)) {
-                throw new SoraReadException("duplicate text key `" + key + "`");
-            }
-            translations.put(key, value);
-        }
-        if (cursor[0] != bytes.length) {
-            throw new SoraReadException("Sora i18n pack has trailing bytes");
-        }
-        return new LocalePack(schemaFingerprint, locale, translations);
-    }
-
-    private static int readU32At(byte[] bytes, int[] cursor) {
-        if (cursor[0] + 4 > bytes.length) {
-            throw new SoraReadException("truncated u32");
-        }
-        var value = SoraBundle.readI32At(bytes, cursor[0]);
-        cursor[0] += 4;
-        return value;
-    }
-
-    private static String readLengthPrefixedString(byte[] bytes, int[] cursor) {
-        var length = readU32At(bytes, cursor);
-        var end = SoraBundle.checkedAdd(cursor[0], length, "Sora i18n string length overflow");
-        if (end > bytes.length) {
-            throw new SoraReadException("truncated string");
-        }
-        var value = new String(bytes, cursor[0], length, StandardCharsets.UTF_8);
-        cursor[0] = end;
-        return value;
     }
 }
 

@@ -6,11 +6,11 @@
 -export_type([t/0, table/0]).
 
 -type t() :: #{
-    'shop_id' := integer(),
-    'seq' := integer(),
-    'item_id' := integer(),
-    'price' := resource_cost:t(),
-    'daily_limit' := integer() | undefined
+    shop_id := integer(),
+    seq := integer(),
+    item_id := integer(),
+    price := resource_cost:t(),
+    daily_limit := integer() | undefined
 }.
 
 -type table() :: map().
@@ -24,22 +24,22 @@ decode(Reader0) ->
     {Price, Reader4} = (fun resource_cost:decode/1)(Reader3),
     {DailyLimit, Reader5} = (fun(Reader) -> sora_runtime:read_optional(fun sora_runtime:read_i32/1, Reader) end)(Reader4),
     {#{
-        'shop_id' => ShopId,
-        'seq' => Seq,
-        'item_id' => ItemId,
-        'price' => Price,
-        'daily_limit' => DailyLimit
+        shop_id => ShopId,
+        seq => Seq,
+        item_id => ItemId,
+        price => Price,
+        daily_limit => DailyLimit
     }, Reader5}.
 
 -spec decode_value(map()) -> t().
 decode_value(Value) ->
     Obj = sora_runtime:expect_map(Value),
     #{
-        'shop_id' => sora_runtime:expect_integer(sora_runtime:value_get(<<"shop_id">>, Obj)),
-        'seq' => sora_runtime:expect_integer(sora_runtime:value_get(<<"seq">>, Obj)),
-        'item_id' => sora_runtime:expect_integer(sora_runtime:value_get(<<"item_id">>, Obj)),
-        'price' => resource_cost:decode_value(sora_runtime:value_get(<<"price">>, Obj)),
-        'daily_limit' => (fun(OptionalValue) -> case OptionalValue of undefined -> undefined; _ -> sora_runtime:expect_integer(OptionalValue) end end)(sora_runtime:value_get(<<"daily_limit">>, Obj))
+        shop_id => sora_runtime:expect_integer(sora_runtime:value_get(<<"shop_id">>, Obj)),
+        seq => sora_runtime:expect_integer(sora_runtime:value_get(<<"seq">>, Obj)),
+        item_id => sora_runtime:expect_integer(sora_runtime:value_get(<<"item_id">>, Obj)),
+        price => resource_cost:decode_value(sora_runtime:value_get(<<"price">>, Obj)),
+        daily_limit => (fun(OptionalValue) -> case OptionalValue of undefined -> undefined; _ -> sora_runtime:expect_integer(OptionalValue) end end)(sora_runtime:value_get(<<"daily_limit">>, Obj))
     }.
 
 -spec decode_table(map()) -> table().

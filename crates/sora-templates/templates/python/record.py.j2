@@ -5,6 +5,7 @@ from __future__ import annotations
 import datetime
 {% endif %}
 from dataclasses import dataclass
+from collections.abc import Iterator, Mapping, Sequence
 from typing import TYPE_CHECKING
 
 from .sora_runtime import SoraReader, TextKey{% if runtime_format != "sora" %}, SoraValue{% endif %}
@@ -94,7 +95,7 @@ class {{ record.pascal_name }}:
 {%- set table = record.table %}
 
 
-class {{ table.pascal_name }}Table(SoraConfigTable):
+class {{ table.pascal_name }}Table(SoraConfigTable{% if table.mode == "map" and table.key_field_name %}, Mapping[{{ table.key_type }}, {{ table.row_type }}]{% elif table.mode == "list" %}, Sequence[{{ table.row_type }}]{% endif %}):
     NAME = "{{ table.name }}"
     INFO = SoraTableInfo(
         name=NAME,
@@ -185,7 +186,7 @@ class {{ table.pascal_name }}Table(SoraConfigTable):
     def info(self) -> SoraTableInfo:
         return self.INFO
 
-    def len(self) -> int:
+    def __len__(self) -> int:
 {%- if table.mode == "singleton" %}
         return 1
 {%- else %}
@@ -193,23 +194,29 @@ class {{ table.pascal_name }}Table(SoraConfigTable):
 {%- endif %}
 
 {% if table.mode == "map" and table.key_field_name %}
-    def get(self, key: {{ table.key_type }}) -> {{ table.row_type }} | None:
-        return self._rows.get(key)
+    def __getitem__(self, key: {{ table.key_type }}) -> {{ table.row_type }}:
+        return self._rows[key]
 
-    def rows(self) -> dict[{{ table.key_type }}, {{ table.row_type }}]:
-        return self._rows
+    def __iter__(self) -> Iterator[{{ table.key_type }}]:
+        return iter(self._keys)
 
-    def keys(self) -> list[{{ table.key_type }}]:
-        return self._keys
+    @property
+    def ordered_keys(self) -> tuple[{{ table.key_type }}, ...]:
+        return tuple(self._keys)
 
-    def ordered_rows(self) -> list[{{ table.row_type }}]:
-        return [self._rows[key] for key in self._keys if key in self._rows]
+    @property
+    def ordered_rows(self) -> tuple[{{ table.row_type }}, ...]:
+        return tuple(self._rows[key] for key in self._keys)
 {%- elif table.mode == "singleton" %}
+    @property
     def row(self) -> {{ table.row_type }}:
         return self._row
 {%- else %}
-    def rows(self) -> list[{{ table.row_type }}]:
-        return self._rows
+    def __getitem__(self, index: int | slice) -> {{ table.row_type }} | list[{{ table.row_type }}]:
+        return self._rows[index]
+
+    def __iter__(self) -> Iterator[{{ table.row_type }}]:
+        return iter(self._rows)
 {%- endif %}
 
 {%- for index in table.unique_indexes %}

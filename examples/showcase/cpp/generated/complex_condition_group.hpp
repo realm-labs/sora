@@ -39,7 +39,7 @@ public:
         return info;
     }
 
-    ComplexConditionGroupTable() {}
+    ComplexConditionGroupTable() = default;
     ComplexConditionGroupTable(const ComplexConditionGroupTable&) = delete;
     ComplexConditionGroupTable& operator=(const ComplexConditionGroupTable&) = delete;
     ComplexConditionGroupTable(ComplexConditionGroupTable&&) = default;
@@ -48,8 +48,7 @@ public:
     static ComplexConditionGroupTable decode(const SoraBundle& bundle) {
         std::vector<ComplexConditionGroup> rows = bundle.decode_table<ComplexConditionGroup>(NAME);
         ComplexConditionGroupTable table;
-        for (std::size_t index = 0; index < rows.size(); ++index) {
-            const ComplexConditionGroup& row = rows[index];
+        for (const auto& row : rows) {
             table.keys_.push_back(row.id);
             table.rows_.emplace(row.id, row);
         }
@@ -66,7 +65,7 @@ public:
     }
 
     const ComplexConditionGroup* get(const std::int32_t& key) const {
-        typename std::unordered_map<std::int32_t, ComplexConditionGroup>::const_iterator it = rows_.find(key);
+        auto it = rows_.find(key);
         if (it == rows_.end()) {
             return nullptr;
         }
@@ -80,10 +79,8 @@ public:
     std::vector<const ComplexConditionGroup*> ordered_rows() const {
         std::vector<const ComplexConditionGroup*> rows;
         rows.reserve(keys_.size());
-        for (typename std::vector<std::int32_t>::const_iterator key = keys_.begin();
-             key != keys_.end();
-             ++key) {
-            typename std::unordered_map<std::int32_t, ComplexConditionGroup>::const_iterator it = rows_.find(*key);
+        for (const auto& key : keys_) {
+            auto it = rows_.find(key);
             if (it != rows_.end()) {
                 rows.push_back(&it->second);
             }

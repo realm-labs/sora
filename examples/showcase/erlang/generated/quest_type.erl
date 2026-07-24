@@ -5,25 +5,25 @@
 -export([decode/1, decode_value/1]).
 -export_type([t/0]).
 -type t() ::
-    'main' |
-    'side' |
-    'daily'.
+    main |
+    side |
+    daily.
 
 -spec decode(sora_runtime:reader()) -> {t(), sora_runtime:reader()}.
 decode(Reader0) ->
     {Id, Reader1} = sora_runtime:read_u32(Reader0),
     case Id of
-        0 -> {'main', Reader1};
-        1 -> {'side', Reader1};
-        2 -> {'daily', Reader1};
+        0 -> {main, Reader1};
+        1 -> {side, Reader1};
+        2 -> {daily, Reader1};
         _ -> error({invalid_enum_id, quest_type, Id})
     end.
 
 -spec decode_value(binary()) -> t().
 decode_value(Value) ->
     case Value of
-        <<"Main">> -> 'main';
-        <<"Side">> -> 'side';
-        <<"Daily">> -> 'daily';
+        <<"Main">> -> main;
+        <<"Side">> -> side;
+        <<"Daily">> -> daily;
         _ -> error({invalid_enum_value, quest_type, Value})
     end.

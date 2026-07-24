@@ -71,8 +71,7 @@ public sealed class ComplexActionEntryTable : ISoraKeyedTable<int, ComplexAction
     {
         return new ComplexActionEntryTable(rows.ConvertAll(row => row.Id), SoraConfig.DecodeMapTable(rows, row => row.Id));
     }
-
-    public Dictionary<int, ComplexActionEntry> Rows => rows;
+    public IReadOnlyDictionary<int, ComplexActionEntry> Rows => rows;
     public ComplexActionEntry this[int key] => rows[key];
 
     public ComplexActionEntry? Get(int key)

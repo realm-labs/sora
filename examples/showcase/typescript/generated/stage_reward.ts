@@ -10,10 +10,10 @@ import {
 
 
 export interface StageReward {
-    stageId: number;
-    seq: number;
-    itemId: number;
-    count: number;
+    readonly stageId: number;
+    readonly seq: number;
+    readonly itemId: number;
+    readonly count: number;
 }
 
 export function decodeStageReward(reader: SoraReader): StageReward {
@@ -49,7 +49,7 @@ export class StageRewardTable implements SoraListTable<StageReward> {
     };
 
     private constructor(
-        private readonly _rows: StageReward[],
+        private readonly _rows: readonly StageReward[],
     ) {}
 
     static decode(rows: StageReward[]): StageRewardTable {
@@ -62,10 +62,18 @@ export class StageRewardTable implements SoraListTable<StageReward> {
         return StageRewardTable.tableInfo;
     }
 
-    len(): number {
+    get size(): number {
         return this._rows.length;
     }
-    rows(): readonly StageReward[] {
+    get rows(): readonly StageReward[] {
         return this._rows;
+    }
+
+    at(index: number): StageReward | undefined {
+        return this._rows.at(index);
+    }
+
+    [Symbol.iterator](): Iterator<StageReward> {
+        return this._rows[Symbol.iterator]();
     }
 }

@@ -7,13 +7,13 @@
 -export_type([t/0, table/0]).
 
 -type t() :: #{
-    'id' := integer(),
-    'quest_type' := quest_type:t(),
-    'title' := binary(),
-    'required_item' := integer(),
-    'unlock_skills' := [integer()],
-    'start_pos' := vec3:t(),
-    'rewards' := [reward:t()]
+    id := integer(),
+    quest_type := quest_type:t(),
+    title := binary(),
+    required_item := integer(),
+    unlock_skills := [integer()],
+    start_pos := vec3:t(),
+    rewards := [reward:t()]
 }.
 
 -type table() :: map().
@@ -29,33 +29,33 @@ decode(Reader0) ->
     {StartPos, Reader6} = (fun vec3:decode/1)(Reader5),
     {Rewards, Reader7} = (fun(Reader) -> sora_runtime:read_list(fun reward:decode/1, Reader) end)(Reader6),
     {#{
-        'id' => Id,
-        'quest_type' => QuestType,
-        'title' => Title,
-        'required_item' => RequiredItem,
-        'unlock_skills' => UnlockSkills,
-        'start_pos' => StartPos,
-        'rewards' => Rewards
+        id => Id,
+        quest_type => QuestType,
+        title => Title,
+        required_item => RequiredItem,
+        unlock_skills => UnlockSkills,
+        start_pos => StartPos,
+        rewards => Rewards
     }, Reader7}.
 
 -spec decode_value(map()) -> t().
 decode_value(Value) ->
     Obj = sora_runtime:expect_map(Value),
     #{
-        'id' => sora_runtime:expect_integer(sora_runtime:value_get(<<"id">>, Obj)),
-        'quest_type' => quest_type:decode_value(sora_runtime:value_get(<<"quest_type">>, Obj)),
-        'title' => sora_runtime:expect_binary(sora_runtime:value_get(<<"title">>, Obj)),
-        'required_item' => sora_runtime:expect_integer(sora_runtime:value_get(<<"required_item">>, Obj)),
-        'unlock_skills' => sora_runtime:decode_value_list(fun(Item) -> sora_runtime:expect_integer(Item) end, sora_runtime:value_get(<<"unlock_skills">>, Obj)),
-        'start_pos' => vec3:decode_value(sora_runtime:value_get(<<"start_pos">>, Obj)),
-        'rewards' => sora_runtime:decode_value_list(fun(Item) -> reward:decode_value(Item) end, sora_runtime:value_get(<<"rewards">>, Obj))
+        id => sora_runtime:expect_integer(sora_runtime:value_get(<<"id">>, Obj)),
+        quest_type => quest_type:decode_value(sora_runtime:value_get(<<"quest_type">>, Obj)),
+        title => sora_runtime:expect_binary(sora_runtime:value_get(<<"title">>, Obj)),
+        required_item => sora_runtime:expect_integer(sora_runtime:value_get(<<"required_item">>, Obj)),
+        unlock_skills => sora_runtime:decode_value_list(fun(Item) -> sora_runtime:expect_integer(Item) end, sora_runtime:value_get(<<"unlock_skills">>, Obj)),
+        start_pos => vec3:decode_value(sora_runtime:value_get(<<"start_pos">>, Obj)),
+        rewards => sora_runtime:decode_value_list(fun(Item) -> reward:decode_value(Item) end, sora_runtime:value_get(<<"rewards">>, Obj))
     }.
 
 -spec decode_table(map()) -> table().
 decode_table(Bundle) ->
     Rows = sora_runtime:decode_table(Bundle, ?TABLE_NAME, fun ?MODULE:decode/1, fun ?MODULE:decode_value/1),
-    Data = sora_runtime:decode_map_table(Rows, fun(Row) -> maps:get('id', Row) end),
-    Keys = [maps:get('id', Row) || Row <- Rows],
+    Data = sora_runtime:decode_map_table(Rows, fun(Row) -> maps:get(id, Row) end),
+    Keys = [maps:get(id, Row) || Row <- Rows],
     #{
         keys => Keys,
         data => Data

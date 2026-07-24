@@ -12,9 +12,9 @@ local Vec3 = require("generated.vec3")
 ---@field element ElementType
 ---@field cost ResourceCost Tuple cost, e.g. Gold,0,150
 ---@field effect SkillEffect JSON object with element/power/radius
----@field requiredLevel integer
----@field requiredItem integer? Optional item requirement
----@field castOrigin Vec3
+---@field required_level integer
+---@field required_item integer? Optional item requirement
+---@field cast_origin Vec3
 
 local Skill = {}
 
@@ -27,9 +27,9 @@ function Skill.decode(reader)
         element = ElementType.decode(reader),
         cost = ResourceCost.decode(reader),
         effect = SkillEffect.decode(reader),
-        requiredLevel = reader:read_i32(),
-        requiredItem = reader:read_optional(function() return reader:read_i32() end),
-        castOrigin = Vec3.decode(reader),
+        required_level = reader:read_i32(),
+        required_item = reader:read_optional(function() return reader:read_i32() end),
+        cast_origin = Vec3.decode(reader),
     }
 end
 
@@ -43,9 +43,9 @@ function Skill.decode_value(value)
         element = ElementType.decode_value(obj["element"]),
         cost = ResourceCost.decode_value(obj["cost"]),
         effect = SkillEffect.decode_value(obj["effect"]),
-        requiredLevel = Runtime.expect_integer(obj["required_level"]),
-        requiredItem = obj["required_item"] == nil and nil or Runtime.expect_integer(obj["required_item"]),
-        castOrigin = Vec3.decode_value(obj["cast_origin"]),
+        required_level = Runtime.expect_integer(obj["required_level"]),
+        required_item = obj["required_item"] == nil and nil or Runtime.expect_integer(obj["required_item"]),
+        cast_origin = Vec3.decode_value(obj["cast_origin"]),
     }
 end
 
@@ -57,7 +57,7 @@ function Skill.collect_text_keys(value, out)
     end
     ResourceCost.collect_text_keys(value.cost, out)
     SkillEffect.collect_text_keys(value.effect, out)
-    Vec3.collect_text_keys(value.castOrigin, out)
+    Vec3.collect_text_keys(value.cast_origin, out)
 end
 
 ---@class SkillTable

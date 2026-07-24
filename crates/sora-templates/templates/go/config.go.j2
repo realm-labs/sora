@@ -79,11 +79,11 @@ func NewSoraConfigFromSource(source SoraTableSource) (*SoraConfig, error) {
 }
 
 func (config *SoraConfig) Tables() []SoraTable {
-    tables := make([]SoraTable, 0, len(config.tables))
-    for _, table := range config.tables {
-        tables = append(tables, table)
+    return []SoraTable{
+{%- for table in model.tables %}
+        config.{{ table.pascal_name }}(),
+{%- endfor %}
     }
-    return tables
 }
 
 {%- if model.has_localization %}

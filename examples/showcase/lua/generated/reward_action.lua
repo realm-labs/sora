@@ -3,21 +3,21 @@
 local Runtime = require("generated.sora_runtime")
 ---@class RewardActionAddItem
 ---@field type '"AddItem"'
----@field itemId integer
+---@field item_id integer
 ---@field count integer
 ---@class RewardActionAddBuff
 ---@field type '"AddBuff"'
----@field buffId integer
+---@field buff_id integer
 ---@field duration number
 ---@class RewardActionUnlockStage
 ---@field type '"UnlockStage"'
----@field stageId integer
+---@field stage_id integer
 ---@class RewardActionSendMail
 ---@field type '"SendMail"'
----@field mailId integer
+---@field mail_id integer
 ---@class RewardActionRunActionGroup
 ---@field type '"RunActionGroup"'
----@field actionGroupId integer
+---@field action_group_id integer
 ---@alias RewardAction
 ---| RewardActionAddItem
 ---| RewardActionAddBuff
@@ -34,33 +34,33 @@ function RewardAction.decode(reader)
     if ordinal == 0 then
         return {
             type = "AddItem",
-            itemId = reader:read_i32(),
+            item_id = reader:read_i32(),
             count = reader:read_i32(),
         }
     end
     if ordinal == 1 then
         return {
             type = "AddBuff",
-            buffId = reader:read_i32(),
+            buff_id = reader:read_i32(),
             duration = reader:read_f32(),
         }
     end
     if ordinal == 2 then
         return {
             type = "UnlockStage",
-            stageId = reader:read_i32(),
+            stage_id = reader:read_i32(),
         }
     end
     if ordinal == 3 then
         return {
             type = "SendMail",
-            mailId = reader:read_i32(),
+            mail_id = reader:read_i32(),
         }
     end
     if ordinal == 4 then
         return {
             type = "RunActionGroup",
-            actionGroupId = reader:read_i32(),
+            action_group_id = reader:read_i32(),
         }
     end
     error("invalid union ordinal " .. tostring(ordinal) .. " for RewardAction")
@@ -74,33 +74,33 @@ function RewardAction.decode_value(value)
     if tag == "AddItem" then
         return {
             type = "AddItem",
-            itemId = Runtime.expect_integer(obj["item_id"]),
+            item_id = Runtime.expect_integer(obj["item_id"]),
             count = Runtime.expect_integer(obj["count"]),
         }
     end
     if tag == "AddBuff" then
         return {
             type = "AddBuff",
-            buffId = Runtime.expect_integer(obj["buff_id"]),
+            buff_id = Runtime.expect_integer(obj["buff_id"]),
             duration = Runtime.expect_number(obj["duration"]),
         }
     end
     if tag == "UnlockStage" then
         return {
             type = "UnlockStage",
-            stageId = Runtime.expect_integer(obj["stage_id"]),
+            stage_id = Runtime.expect_integer(obj["stage_id"]),
         }
     end
     if tag == "SendMail" then
         return {
             type = "SendMail",
-            mailId = Runtime.expect_integer(obj["mail_id"]),
+            mail_id = Runtime.expect_integer(obj["mail_id"]),
         }
     end
     if tag == "RunActionGroup" then
         return {
             type = "RunActionGroup",
-            actionGroupId = Runtime.expect_integer(obj["action_group_id"]),
+            action_group_id = Runtime.expect_integer(obj["action_group_id"]),
         }
     end
     error("invalid union tag " .. tostring(tag) .. " for RewardAction")

@@ -3,25 +3,13 @@
 package com.sora.showcase;
 
 import java.util.List;
-import java.util.Map;
 
-
-public final class ComplexConditionGroup {
-    public final Integer id;
-    public final String name;
+public record ComplexConditionGroup(
+    int id,
+    String name,
     /** A derived list of union values; each child row is edited without JSON */
-    public final java.util.List<EventCondition> conditions;
-
-    public ComplexConditionGroup(
-        Integer id,
-        String name,
-        java.util.List<EventCondition> conditions
-    ) {
-        this.id = id;
-        this.name = name;
-        this.conditions = conditions;
-    }
-
+    java.util.List<EventCondition> conditions
+) {
     static ComplexConditionGroup decode(SoraReader reader) {
         return new ComplexConditionGroup(
             reader.readI32(),
@@ -43,63 +31,5 @@ public final class ComplexConditionGroup {
         for (var item : this.conditions) {
             EventCondition.collectTextKeys(item, out);
         }
-    }
-}
-
-final class ComplexConditionGroupTable extends java.util.AbstractMap<Integer, ComplexConditionGroup> implements SoraKeyedTable<Integer, ComplexConditionGroup> {
-    static final String NAME = "ComplexConditionGroup";
-    static final SoraTableInfo INFO = new SoraTableInfo(
-        NAME,
-        "ComplexConditionGroup",
-        SoraTableShape.KEYED,
-        new SoraKeyInfo("id", "Integer"),
-        List.of(
-        )
-    );
-    private final List<Integer> keys;
-    private final java.util.Map<Integer, ComplexConditionGroup> rows;
-
-    private ComplexConditionGroupTable(List<Integer> keys, java.util.Map<Integer, ComplexConditionGroup> rows) {
-        this.keys = keys;
-        this.rows = rows;
-    }
-
-    private static ComplexConditionGroupTable fromRows(List<ComplexConditionGroup> rows) {
-        return new ComplexConditionGroupTable(rows.stream().map(row -> row.id).toList(), SoraConfig.decodeMapTable(rows, row -> row.id));
-    }
-
-    static ComplexConditionGroupTable decode(SoraTableSource source) {
-        return fromRows(source.decodeTable(NAME, ComplexConditionGroup::decode, ComplexConditionGroup::decode));
-    }
-
-    public java.util.Map<Integer, ComplexConditionGroup> rows() {
-        return rows;
-    }
-    @Override
-    @SoraNullable
-    public ComplexConditionGroup get(Object key) {
-        return rows.get(key);
-    }
-
-    public List<Integer> orderedKeys() {
-        return keys;
-    }
-
-    public List<ComplexConditionGroup> orderedRows() {
-        return keys.stream().map(rows::get).toList();
-    }
-
-    @Override
-    public java.util.Set<Map.Entry<Integer, ComplexConditionGroup>> entrySet() {
-        return rows.entrySet();
-    }
-    @Override
-    public SoraTableInfo info() {
-        return INFO;
-    }
-
-    @Override
-    public int size() {
-        return rows.size();
     }
 }

@@ -4,9 +4,9 @@ import type { SoraListTable, SoraTableInfo, SoraReader, SoraValue, TextKey } fro
 
 
 export interface CharacterSkill {
-    characterId: number;
-    skillId: number;
-    unlockLevel: number;
+    readonly characterId: number;
+    readonly skillId: number;
+    readonly unlockLevel: number;
 }
 
 export declare function decodeCharacterSkill(reader: SoraReader): CharacterSkill;
@@ -17,6 +17,8 @@ export declare class CharacterSkillTable implements SoraListTable<CharacterSkill
     static readonly tableInfo: SoraTableInfo;
     static decode(rows: CharacterSkill[]): CharacterSkillTable;
     info(): SoraTableInfo;
-    len(): number;
-    rows(): readonly CharacterSkill[];
+    readonly size: number;
+    readonly rows: readonly CharacterSkill[];
+    at(index: number): CharacterSkill | undefined;
+    [Symbol.iterator](): Iterator<CharacterSkill>;
 }

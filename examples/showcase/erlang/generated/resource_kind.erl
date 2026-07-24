@@ -5,25 +5,25 @@
 -export([decode/1, decode_value/1]).
 -export_type([t/0]).
 -type t() ::
-    'item' |
-    'gold' |
-    'diamond'.
+    item |
+    gold |
+    diamond.
 
 -spec decode(sora_runtime:reader()) -> {t(), sora_runtime:reader()}.
 decode(Reader0) ->
     {Id, Reader1} = sora_runtime:read_u32(Reader0),
     case Id of
-        0 -> {'item', Reader1};
-        1 -> {'gold', Reader1};
-        2 -> {'diamond', Reader1};
+        0 -> {item, Reader1};
+        1 -> {gold, Reader1};
+        2 -> {diamond, Reader1};
         _ -> error({invalid_enum_id, resource_kind, Id})
     end.
 
 -spec decode_value(binary()) -> t().
 decode_value(Value) ->
     case Value of
-        <<"Item">> -> 'item';
-        <<"Gold">> -> 'gold';
-        <<"Diamond">> -> 'diamond';
+        <<"Item">> -> item;
+        <<"Gold">> -> gold;
+        <<"Diamond">> -> diamond;
         _ -> error({invalid_enum_value, resource_kind, Value})
     end.

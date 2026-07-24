@@ -3,7 +3,7 @@
 package showcase
 
 type ComplexActionGroup struct {
-	Id      int32
+	ID      int32
 	Name    string
 	Actions []RewardAction
 }
@@ -11,7 +11,7 @@ type ComplexActionGroup struct {
 func decodeComplexActionGroup(reader *SoraReader) (ComplexActionGroup, error) {
 	var value ComplexActionGroup
 	var err error
-	value.Id, err = reader.ReadInt32()
+	value.ID, err = reader.ReadInt32()
 	if err != nil {
 		return value, err
 	}
@@ -32,7 +32,7 @@ func decodeComplexActionGroupValue(input SoraValue) (ComplexActionGroup, error) 
 	if err != nil {
 		return value, err
 	}
-	value.Id, err = obj.Get("id").AsInt32()
+	value.ID, err = obj.Get("id").AsInt32()
 	if err != nil {
 		return value, err
 	}
@@ -71,9 +71,9 @@ type ComplexActionGroupTable struct {
 func buildComplexActionGroupTable(rows []ComplexActionGroup) (*ComplexActionGroupTable, error) {
 	keys := make([]int32, 0, len(rows))
 	for _, row := range rows {
-		keys = append(keys, row.Id)
+		keys = append(keys, row.ID)
 	}
-	return &ComplexActionGroupTable{keys: keys, rows: DecodeMapTable(rows, func(row ComplexActionGroup) int32 { return row.Id })}, nil
+	return &ComplexActionGroupTable{keys: keys, rows: DecodeMapTable(rows, func(row ComplexActionGroup) int32 { return row.ID })}, nil
 }
 
 func decodeComplexActionGroupTable(source SoraTableSource) (*ComplexActionGroupTable, error) {
@@ -83,9 +83,12 @@ func decodeComplexActionGroupTable(source SoraTableSource) (*ComplexActionGroupT
 	}
 	return buildComplexActionGroupTable(rows)
 }
-
 func (table *ComplexActionGroupTable) Rows() map[int32]ComplexActionGroup {
-	return table.rows
+	rows := make(map[int32]ComplexActionGroup, len(table.rows))
+	for key, row := range table.rows {
+		rows[key] = row
+	}
+	return rows
 }
 func (table *ComplexActionGroupTable) Get(key int32) (ComplexActionGroup, bool) {
 	value, ok := table.rows[key]
@@ -93,7 +96,7 @@ func (table *ComplexActionGroupTable) Get(key int32) (ComplexActionGroup, bool) 
 }
 
 func (table *ComplexActionGroupTable) Keys() []int32 {
-	return table.keys
+	return append([]int32(nil), table.keys...)
 }
 
 func (table *ComplexActionGroupTable) OrderedRows() []ComplexActionGroup {

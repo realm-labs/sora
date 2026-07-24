@@ -6,9 +6,9 @@ import type { ResourceCost } from "./resource_cost.js";
 
 
 export interface Recipe {
-    id: number;
-    resultItem: number;
-    materials: ResourceCost[];
+    readonly id: number;
+    readonly resultItem: number;
+    readonly materials: readonly ResourceCost[];
 }
 
 export declare function decodeRecipe(reader: SoraReader): Recipe;
@@ -19,9 +19,11 @@ export declare class RecipeTable implements SoraKeyedTable<number, Recipe> {
     static readonly tableInfo: SoraTableInfo;
     static decode(rows: Recipe[]): RecipeTable;
     info(): SoraTableInfo;
-    len(): number;
+    readonly size: number;
     get(key: number): Recipe | undefined;
-    rows(): ReadonlyMap<number, Recipe>;
-    keys(): readonly number[];
-    orderedRows(): Recipe[];
+    has(key: number): boolean;
+    readonly rows: ReadonlyMap<number, Recipe>;
+    readonly orderedKeys: readonly number[];
+    readonly orderedRows: readonly Recipe[];
+    [Symbol.iterator](): Iterator<Recipe>;
 }

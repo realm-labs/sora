@@ -3,27 +3,13 @@
 package com.sora.showcase;
 
 import java.util.List;
-import java.util.Map;
 
-
-public final class Achievement {
-    public final Integer id;
-    public final TextKey titleKey;
-    public final long targetCount;
-    public final ResourceCost reward;
-
-    public Achievement(
-        Integer id,
-        TextKey titleKey,
-        long targetCount,
-        ResourceCost reward
-    ) {
-        this.id = id;
-        this.titleKey = titleKey;
-        this.targetCount = targetCount;
-        this.reward = reward;
-    }
-
+public record Achievement(
+    int id,
+    TextKey titleKey,
+    long targetCount,
+    ResourceCost reward
+) {
     static Achievement decode(SoraReader reader) {
         return new Achievement(
             reader.readI32(),
@@ -46,63 +32,5 @@ public final class Achievement {
     void collectTextKeys(List<TextKey> out) {
         out.add(this.titleKey);
         this.reward.collectTextKeys(out);
-    }
-}
-
-final class AchievementTable extends java.util.AbstractMap<Integer, Achievement> implements SoraKeyedTable<Integer, Achievement> {
-    static final String NAME = "Achievement";
-    static final SoraTableInfo INFO = new SoraTableInfo(
-        NAME,
-        "Achievement",
-        SoraTableShape.KEYED,
-        new SoraKeyInfo("id", "Integer"),
-        List.of(
-        )
-    );
-    private final List<Integer> keys;
-    private final java.util.Map<Integer, Achievement> rows;
-
-    private AchievementTable(List<Integer> keys, java.util.Map<Integer, Achievement> rows) {
-        this.keys = keys;
-        this.rows = rows;
-    }
-
-    private static AchievementTable fromRows(List<Achievement> rows) {
-        return new AchievementTable(rows.stream().map(row -> row.id).toList(), SoraConfig.decodeMapTable(rows, row -> row.id));
-    }
-
-    static AchievementTable decode(SoraTableSource source) {
-        return fromRows(source.decodeTable(NAME, Achievement::decode, Achievement::decode));
-    }
-
-    public java.util.Map<Integer, Achievement> rows() {
-        return rows;
-    }
-    @Override
-    @SoraNullable
-    public Achievement get(Object key) {
-        return rows.get(key);
-    }
-
-    public List<Integer> orderedKeys() {
-        return keys;
-    }
-
-    public List<Achievement> orderedRows() {
-        return keys.stream().map(rows::get).toList();
-    }
-
-    @Override
-    public java.util.Set<Map.Entry<Integer, Achievement>> entrySet() {
-        return rows.entrySet();
-    }
-    @Override
-    public SoraTableInfo info() {
-        return INFO;
-    }
-
-    @Override
-    public int size() {
-        return rows.size();
     }
 }

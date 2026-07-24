@@ -4,14 +4,14 @@ package {{ package }}
 
 enum class {{ enum.name }}(val id: Int) {
 {%- for value in enum.values %}
-    {{ value.name }}({{ value.id }}){% if loop.last %};{% else %},{% endif %}
+    {{ value.const_name }}({{ value.id }}){% if loop.last %};{% else %},{% endif %}
 {%- endfor %}
 
     companion object {
         fun decode(reader: SoraReader): {{ enum.name }} =
             when (val id = reader.readU32()) {
 {%- for value in enum.values %}
-                {{ value.id }} -> {{ value.name }}
+                {{ value.id }} -> {{ value.const_name }}
 {%- endfor %}
                 else -> throw SoraReadException("invalid enum id $id for {{ enum.name }}")
             }
@@ -19,7 +19,7 @@ enum class {{ enum.name }}(val id: Int) {
         fun decode(value: SoraValue): {{ enum.name }} =
             when (val name = value.asString()) {
 {%- for value in enum.values %}
-                "{{ value.name }}" -> {{ value.name }}
+                "{{ value.raw_name }}" -> {{ value.const_name }}
 {%- endfor %}
                 else -> throw SoraReadException("invalid enum value $name for {{ enum.name }}")
             }

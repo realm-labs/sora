@@ -7,9 +7,9 @@
 -export_type([t/0, table/0]).
 
 -type t() :: #{
-    'id' := integer(),
-    'result_item' := integer(),
-    'materials' := [resource_cost:t()]
+    id := integer(),
+    result_item := integer(),
+    materials := [resource_cost:t()]
 }.
 
 -type table() :: map().
@@ -21,25 +21,25 @@ decode(Reader0) ->
     {ResultItem, Reader2} = (fun sora_runtime:read_i32/1)(Reader1),
     {Materials, Reader3} = (fun(Reader) -> sora_runtime:read_list(fun resource_cost:decode/1, Reader) end)(Reader2),
     {#{
-        'id' => Id,
-        'result_item' => ResultItem,
-        'materials' => Materials
+        id => Id,
+        result_item => ResultItem,
+        materials => Materials
     }, Reader3}.
 
 -spec decode_value(map()) -> t().
 decode_value(Value) ->
     Obj = sora_runtime:expect_map(Value),
     #{
-        'id' => sora_runtime:expect_integer(sora_runtime:value_get(<<"id">>, Obj)),
-        'result_item' => sora_runtime:expect_integer(sora_runtime:value_get(<<"result_item">>, Obj)),
-        'materials' => sora_runtime:decode_value_list(fun(Item) -> resource_cost:decode_value(Item) end, sora_runtime:value_get(<<"materials">>, Obj))
+        id => sora_runtime:expect_integer(sora_runtime:value_get(<<"id">>, Obj)),
+        result_item => sora_runtime:expect_integer(sora_runtime:value_get(<<"result_item">>, Obj)),
+        materials => sora_runtime:decode_value_list(fun(Item) -> resource_cost:decode_value(Item) end, sora_runtime:value_get(<<"materials">>, Obj))
     }.
 
 -spec decode_table(map()) -> table().
 decode_table(Bundle) ->
     Rows = sora_runtime:decode_table(Bundle, ?TABLE_NAME, fun ?MODULE:decode/1, fun ?MODULE:decode_value/1),
-    Data = sora_runtime:decode_map_table(Rows, fun(Row) -> maps:get('id', Row) end),
-    Keys = [maps:get('id', Row) || Row <- Rows],
+    Data = sora_runtime:decode_map_table(Rows, fun(Row) -> maps:get(id, Row) end),
+    Keys = [maps:get(id, Row) || Row <- Rows],
     #{
         keys => Keys,
         data => Data

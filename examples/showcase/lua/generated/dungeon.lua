@@ -6,8 +6,8 @@ local ResourceCost = require("generated.resource_cost")
 ---@class Dungeon
 ---@field id integer
 ---@field name string
----@field stageIds integer[]
----@field entryCost ResourceCost
+---@field stage_ids integer[]
+---@field entry_cost ResourceCost
 
 local Dungeon = {}
 
@@ -17,8 +17,8 @@ function Dungeon.decode(reader)
     return {
         id = reader:read_i32(),
         name = reader:read_string(),
-        stageIds = reader:read_list(function() return reader:read_i32() end),
-        entryCost = ResourceCost.decode(reader),
+        stage_ids = reader:read_list(function() return reader:read_i32() end),
+        entry_cost = ResourceCost.decode(reader),
     }
 end
 
@@ -29,8 +29,8 @@ function Dungeon.decode_value(value)
     return {
         id = Runtime.expect_integer(obj["id"]),
         name = Runtime.expect_string(obj["name"]),
-        stageIds = Runtime.decode_value_list(obj["stage_ids"], function(item) return Runtime.expect_integer(item) end),
-        entryCost = ResourceCost.decode_value(obj["entry_cost"]),
+        stage_ids = Runtime.decode_value_list(obj["stage_ids"], function(item) return Runtime.expect_integer(item) end),
+        entry_cost = ResourceCost.decode_value(obj["entry_cost"]),
     }
 end
 
@@ -40,7 +40,7 @@ function Dungeon.collect_text_keys(value, out)
     if value == nil then
         return
     end
-    ResourceCost.collect_text_keys(value.entryCost, out)
+    ResourceCost.collect_text_keys(value.entry_cost, out)
 end
 
 ---@class DungeonTable

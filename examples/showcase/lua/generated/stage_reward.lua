@@ -3,9 +3,9 @@
 local Runtime = require("generated.sora_runtime")
 
 ---@class StageReward
----@field stageId integer
+---@field stage_id integer
 ---@field seq integer
----@field itemId integer
+---@field item_id integer
 ---@field count integer
 
 local StageReward = {}
@@ -14,9 +14,9 @@ local StageReward = {}
 ---@return StageReward
 function StageReward.decode(reader)
     return {
-        stageId = reader:read_i32(),
+        stage_id = reader:read_i32(),
         seq = reader:read_i32(),
-        itemId = reader:read_i32(),
+        item_id = reader:read_i32(),
         count = reader:read_i32(),
     }
 end
@@ -26,9 +26,9 @@ end
 function StageReward.decode_value(value)
     local obj = Runtime.expect_table(value)
     return {
-        stageId = Runtime.expect_integer(obj["stage_id"]),
+        stage_id = Runtime.expect_integer(obj["stage_id"]),
         seq = Runtime.expect_integer(obj["seq"]),
-        itemId = Runtime.expect_integer(obj["item_id"]),
+        item_id = Runtime.expect_integer(obj["item_id"]),
         count = Runtime.expect_integer(obj["count"]),
     }
 end

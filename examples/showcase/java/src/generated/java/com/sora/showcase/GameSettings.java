@@ -3,47 +3,22 @@
 package com.sora.showcase;
 
 import java.util.List;
-import java.util.Map;
 
-
-public final class GameSettings {
-    public final String version;
-    public final Integer dailyResetHour;
-    public final Integer startingGold;
-    public final Vec3 spawnPos;
-    public final java.util.List<Integer> starterItems;
+public record GameSettings(
+    String version,
+    int dailyResetHour,
+    int startingGold,
+    Vec3 spawnPos,
+    java.util.List<Integer> starterItems,
     /** Double precision tuning value */
-    public final double gravity;
+    double gravity,
     /** Fixed-length array parsed from one cell */
-    public final java.util.List<Integer> dailyBonusItems;
+    java.util.List<Integer> dailyBonusItems,
     /** Fixed-length array of structs */
-    public final java.util.List<Vec3> spawnPoints;
+    java.util.List<Vec3> spawnPoints,
     /** Optional derived struct copied from a child row */
-    @SoraNullable
-    public final MaintenanceInfo maintenance;
-
-    public GameSettings(
-        String version,
-        Integer dailyResetHour,
-        Integer startingGold,
-        Vec3 spawnPos,
-        java.util.List<Integer> starterItems,
-        double gravity,
-        java.util.List<Integer> dailyBonusItems,
-        java.util.List<Vec3> spawnPoints,
-        @SoraNullable MaintenanceInfo maintenance
-    ) {
-        this.version = version;
-        this.dailyResetHour = dailyResetHour;
-        this.startingGold = startingGold;
-        this.spawnPos = spawnPos;
-        this.starterItems = starterItems;
-        this.gravity = gravity;
-        this.dailyBonusItems = dailyBonusItems;
-        this.spawnPoints = spawnPoints;
-        this.maintenance = maintenance;
-    }
-
+    @SoraNullable MaintenanceInfo maintenance
+) {
     static GameSettings decode(SoraReader reader) {
         return new GameSettings(
             reader.readString(),
@@ -82,47 +57,5 @@ public final class GameSettings {
             var item = this.maintenance;
             item.collectTextKeys(out);
         }
-    }
-}
-
-final class GameSettingsTable implements SoraSingleTable<GameSettings> {
-    static final String NAME = "GameSettings";
-    static final SoraTableInfo INFO = new SoraTableInfo(
-        NAME,
-        "GameSettings",
-        SoraTableShape.SINGLETON,
-        null,
-        List.of(
-        )
-    );
-    private final GameSettings rows;
-
-    private GameSettingsTable(GameSettings rows) {
-        this.rows = rows;
-    }
-
-    private static GameSettingsTable fromRows(List<GameSettings> rows) {
-        return new GameSettingsTable(SoraConfig.requireSingletonTable(rows, NAME));
-    }
-
-    static GameSettingsTable decode(SoraTableSource source) {
-        return fromRows(source.decodeTable(NAME, GameSettings::decode, GameSettings::decode));
-    }
-
-    public GameSettings rows() {
-        return rows;
-    }
-    @Override
-    public GameSettings row() {
-        return rows;
-    }
-    @Override
-    public SoraTableInfo info() {
-        return INFO;
-    }
-
-    @Override
-    public int size() {
-        return 1;
     }
 }

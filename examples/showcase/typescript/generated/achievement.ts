@@ -14,10 +14,10 @@ import { collectResourceCostTextKeys, decodeResourceCost, decodeResourceCostValu
 
 
 export interface Achievement {
-    id: number;
-    titleKey: TextKey;
-    targetCount: bigint;
-    reward: ResourceCost;
+    readonly id: number;
+    readonly titleKey: TextKey;
+    readonly targetCount: bigint;
+    readonly reward: ResourceCost;
 }
 
 export function decodeAchievement(reader: SoraReader): Achievement {
@@ -56,8 +56,8 @@ export class AchievementTable implements SoraKeyedTable<number, Achievement> {
     };
 
     private constructor(
-        private readonly _keys: number[],
-        private readonly _rows: Map<number, Achievement>,
+        private readonly _keys: readonly number[],
+        private readonly _rows: ReadonlyMap<number, Achievement>,
     ) {}
 
     static decode(rows: Achievement[]): AchievementTable {
@@ -71,25 +71,33 @@ export class AchievementTable implements SoraKeyedTable<number, Achievement> {
         return AchievementTable.tableInfo;
     }
 
-    len(): number {
+    get size(): number {
         return this._rows.size;
     }
     get(key: number): Achievement | undefined {
         return this._rows.get(key);
     }
 
-    rows(): ReadonlyMap<number, Achievement> {
+    has(key: number): boolean {
+        return this._rows.has(key);
+    }
+
+    get rows(): ReadonlyMap<number, Achievement> {
         return this._rows;
     }
 
-    keys(): readonly number[] {
+    get orderedKeys(): readonly number[] {
         return this._keys;
     }
 
-    orderedRows(): Achievement[] {
+    get orderedRows(): readonly Achievement[] {
         return this._keys.flatMap((key) => {
             const row = this._rows.get(key);
             return row === undefined ? [] : [row];
         });
+    }
+
+    [Symbol.iterator](): Iterator<Achievement> {
+        return this._rows.values();
     }
 }

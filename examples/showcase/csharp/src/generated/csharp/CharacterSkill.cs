@@ -65,8 +65,7 @@ public sealed class CharacterSkillTable : ISoraListTable<CharacterSkill>
     {
         return new CharacterSkillTable(rows);
     }
-
-    public List<CharacterSkill> Rows => rows;
+    public IReadOnlyList<CharacterSkill> Rows => rows;
     public CharacterSkill this[int index] => rows[index];
 
     public IEnumerator<CharacterSkill> GetEnumerator()

@@ -4,7 +4,7 @@ package {{ package }};
 
 public enum {{ enum.name }} {
 {%- for value in enum.values %}
-    {{ value.name }}({{ value.id }}){% if not loop.last %},{% else %};{% endif %}
+    {{ value.const_name }}({{ value.id }}){% if not loop.last %},{% else %};{% endif %}
 {%- endfor %}
 
     private final int id;
@@ -21,7 +21,7 @@ public enum {{ enum.name }} {
         switch (reader.readU32()) {
 {%- for value in enum.values %}
             case {{ value.id }}:
-                return {{ value.name }};
+                return {{ value.const_name }};
 {%- endfor %}
             default:
                 throw new SoraReadException("invalid enum id for {{ enum.name }}");
@@ -31,8 +31,8 @@ public enum {{ enum.name }} {
     static {{ enum.name }} decode(SoraValue value) {
         switch (value.asString()) {
 {%- for value in enum.values %}
-            case "{{ value.name }}":
-                return {{ value.name }};
+            case "{{ value.raw_name }}":
+                return {{ value.const_name }};
 {%- endfor %}
             default:
                 throw new SoraReadException("invalid enum value for {{ enum.name }}");

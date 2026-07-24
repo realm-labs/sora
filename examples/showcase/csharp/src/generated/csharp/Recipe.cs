@@ -10,7 +10,7 @@ namespace com.sora.showcase;
 public sealed record Recipe(
     int Id,
     int ResultItem,
-    List<ResourceCost> Materials
+    IReadOnlyList<ResourceCost> Materials
 )
 {
     internal static Recipe Decode(SoraReader reader)
@@ -71,8 +71,7 @@ public sealed class RecipeTable : ISoraKeyedTable<int, Recipe>
     {
         return new RecipeTable(rows.ConvertAll(row => row.Id), SoraConfig.DecodeMapTable(rows, row => row.Id));
     }
-
-    public Dictionary<int, Recipe> Rows => rows;
+    public IReadOnlyDictionary<int, Recipe> Rows => rows;
     public Recipe this[int key] => rows[key];
 
     public Recipe? Get(int key)

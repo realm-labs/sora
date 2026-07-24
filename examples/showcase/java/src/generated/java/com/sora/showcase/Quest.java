@@ -3,37 +3,17 @@
 package com.sora.showcase;
 
 import java.util.List;
-import java.util.Map;
 
-
-public final class Quest {
-    public final Integer id;
-    public final QuestType questType;
-    public final String title;
-    public final Integer requiredItem;
-    public final java.util.List<Integer> unlockSkills;
-    public final Vec3 startPos;
+public record Quest(
+    int id,
+    QuestType questType,
+    String title,
+    int requiredItem,
+    java.util.List<Integer> unlockSkills,
+    Vec3 startPos,
     /** Materialized from QuestReward child rows */
-    public final java.util.List<Reward> rewards;
-
-    public Quest(
-        Integer id,
-        QuestType questType,
-        String title,
-        Integer requiredItem,
-        java.util.List<Integer> unlockSkills,
-        Vec3 startPos,
-        java.util.List<Reward> rewards
-    ) {
-        this.id = id;
-        this.questType = questType;
-        this.title = title;
-        this.requiredItem = requiredItem;
-        this.unlockSkills = unlockSkills;
-        this.startPos = startPos;
-        this.rewards = rewards;
-    }
-
+    java.util.List<Reward> rewards
+) {
     static Quest decode(SoraReader reader) {
         return new Quest(
             reader.readI32(),
@@ -64,63 +44,5 @@ public final class Quest {
         for (var item : this.rewards) {
             item.collectTextKeys(out);
         }
-    }
-}
-
-final class QuestTable extends java.util.AbstractMap<Integer, Quest> implements SoraKeyedTable<Integer, Quest> {
-    static final String NAME = "Quest";
-    static final SoraTableInfo INFO = new SoraTableInfo(
-        NAME,
-        "Quest",
-        SoraTableShape.KEYED,
-        new SoraKeyInfo("id", "Integer"),
-        List.of(
-        )
-    );
-    private final List<Integer> keys;
-    private final java.util.Map<Integer, Quest> rows;
-
-    private QuestTable(List<Integer> keys, java.util.Map<Integer, Quest> rows) {
-        this.keys = keys;
-        this.rows = rows;
-    }
-
-    private static QuestTable fromRows(List<Quest> rows) {
-        return new QuestTable(rows.stream().map(row -> row.id).toList(), SoraConfig.decodeMapTable(rows, row -> row.id));
-    }
-
-    static QuestTable decode(SoraTableSource source) {
-        return fromRows(source.decodeTable(NAME, Quest::decode, Quest::decode));
-    }
-
-    public java.util.Map<Integer, Quest> rows() {
-        return rows;
-    }
-    @Override
-    @SoraNullable
-    public Quest get(Object key) {
-        return rows.get(key);
-    }
-
-    public List<Integer> orderedKeys() {
-        return keys;
-    }
-
-    public List<Quest> orderedRows() {
-        return keys.stream().map(rows::get).toList();
-    }
-
-    @Override
-    public java.util.Set<Map.Entry<Integer, Quest>> entrySet() {
-        return rows.entrySet();
-    }
-    @Override
-    public SoraTableInfo info() {
-        return INFO;
-    }
-
-    @Override
-    public int size() {
-        return rows.size();
     }
 }

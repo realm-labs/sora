@@ -4,110 +4,66 @@ package com.sora.showcase;
 
 import java.util.List;
 
-public interface EventCondition {
-    final class LevelAtLeast implements EventCondition {
-        public final Integer level;
-
-        public LevelAtLeast(
-            Integer level
-        ) {
-            this.level = level;
-        }
-    }
-    final class QuestCompleted implements EventCondition {
-        public final Integer questId;
-
-        public QuestCompleted(
-            Integer questId
-        ) {
-            this.questId = questId;
-        }
-    }
-    final class HasItem implements EventCondition {
-        public final Integer itemId;
-        public final Integer count;
-
-        public HasItem(
-            Integer itemId,
-            Integer count
-        ) {
-            this.itemId = itemId;
-            this.count = count;
-        }
-    }
-    final class AllConditions implements EventCondition {
-        public final Integer conditionGroupId;
-
-        public AllConditions(
-            Integer conditionGroupId
-        ) {
-            this.conditionGroupId = conditionGroupId;
-        }
-    }
-    final class AnyCondition implements EventCondition {
-        public final Integer conditionGroupId;
-
-        public AnyCondition(
-            Integer conditionGroupId
-        ) {
-            this.conditionGroupId = conditionGroupId;
-        }
-    }
+public sealed interface EventCondition permits EventCondition.LevelAtLeast, EventCondition.QuestCompleted, EventCondition.HasItem, EventCondition.AllConditions, EventCondition.AnyCondition {
+    record LevelAtLeast(
+        int level
+    ) implements EventCondition {}
+    record QuestCompleted(
+        int questId
+    ) implements EventCondition {}
+    record HasItem(
+        int itemId,
+        int count
+    ) implements EventCondition {}
+    record AllConditions(
+        int conditionGroupId
+    ) implements EventCondition {}
+    record AnyCondition(
+        int conditionGroupId
+    ) implements EventCondition {}
     static EventCondition decode(SoraReader reader) {
-        switch (reader.readU32()) {
-            case 0:
-                return new LevelAtLeast(
-                    reader.readI32()
-                );
-            case 1:
-                return new QuestCompleted(
-                    reader.readI32()
-                );
-            case 2:
-                return new HasItem(
-                    reader.readI32(),
-                    reader.readI32()
-                );
-            case 3:
-                return new AllConditions(
-                    reader.readI32()
-                );
-            case 4:
-                return new AnyCondition(
-                    reader.readI32()
-                );
-            default:
-                throw new SoraReadException("invalid union ordinal for EventCondition");
-        }
+        return switch (reader.readU32()) {
+            case 0 -> new LevelAtLeast(
+                reader.readI32()
+            );
+            case 1 -> new QuestCompleted(
+                reader.readI32()
+            );
+            case 2 -> new HasItem(
+                reader.readI32(),
+                reader.readI32()
+            );
+            case 3 -> new AllConditions(
+                reader.readI32()
+            );
+            case 4 -> new AnyCondition(
+                reader.readI32()
+            );
+            default -> throw new SoraReadException("invalid union ordinal for EventCondition");
+        };
     }
 
     static EventCondition decode(SoraValue value) {
         var obj = value.asObject();
-        switch (obj.get("type").asString()) {
-            case "LevelAtLeast":
-                return new LevelAtLeast(
-                    obj.get("level").asInt()
-                );
-            case "QuestCompleted":
-                return new QuestCompleted(
-                    obj.get("quest_id").asInt()
-                );
-            case "HasItem":
-                return new HasItem(
-                    obj.get("item_id").asInt(),
-                    obj.get("count").asInt()
-                );
-            case "AllConditions":
-                return new AllConditions(
-                    obj.get("condition_group_id").asInt()
-                );
-            case "AnyCondition":
-                return new AnyCondition(
-                    obj.get("condition_group_id").asInt()
-                );
-            default:
-                throw new SoraReadException("invalid union tag for EventCondition");
-        }
+        return switch (obj.get("type").asString()) {
+            case "LevelAtLeast" -> new LevelAtLeast(
+                obj.get("level").asInt()
+            );
+            case "QuestCompleted" -> new QuestCompleted(
+                obj.get("quest_id").asInt()
+            );
+            case "HasItem" -> new HasItem(
+                obj.get("item_id").asInt(),
+                obj.get("count").asInt()
+            );
+            case "AllConditions" -> new AllConditions(
+                obj.get("condition_group_id").asInt()
+            );
+            case "AnyCondition" -> new AnyCondition(
+                obj.get("condition_group_id").asInt()
+            );
+            default -> throw new SoraReadException("invalid union tag for EventCondition");
+        };
     }
 
     static void collectTextKeys(EventCondition value, List<TextKey> out) {

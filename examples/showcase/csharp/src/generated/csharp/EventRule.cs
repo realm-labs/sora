@@ -11,7 +11,7 @@ public sealed record EventRule(
     int Id,
     string Name,
     EventCondition Condition,
-    List<RewardAction> Actions
+    IReadOnlyList<RewardAction> Actions
 )
 {
     internal static EventRule Decode(SoraReader reader)
@@ -75,8 +75,7 @@ public sealed class EventRuleTable : ISoraKeyedTable<int, EventRule>
     {
         return new EventRuleTable(rows.ConvertAll(row => row.Id), SoraConfig.DecodeMapTable(rows, row => row.Id));
     }
-
-    public Dictionary<int, EventRule> Rows => rows;
+    public IReadOnlyDictionary<int, EventRule> Rows => rows;
     public EventRule this[int key] => rows[key];
 
     public EventRule? Get(int key)

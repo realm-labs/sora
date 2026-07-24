@@ -6,9 +6,9 @@ import type { EventCondition } from "./event_condition.js";
 
 
 export interface ComplexRuleCondition {
-    id: number;
-    ruleId: number;
-    value: EventCondition;
+    readonly id: number;
+    readonly ruleId: number;
+    readonly value: EventCondition;
 }
 
 export declare function decodeComplexRuleCondition(reader: SoraReader): ComplexRuleCondition;
@@ -19,9 +19,11 @@ export declare class ComplexRuleConditionTable implements SoraKeyedTable<number,
     static readonly tableInfo: SoraTableInfo;
     static decode(rows: ComplexRuleCondition[]): ComplexRuleConditionTable;
     info(): SoraTableInfo;
-    len(): number;
+    readonly size: number;
     get(key: number): ComplexRuleCondition | undefined;
-    rows(): ReadonlyMap<number, ComplexRuleCondition>;
-    keys(): readonly number[];
-    orderedRows(): ComplexRuleCondition[];
+    has(key: number): boolean;
+    readonly rows: ReadonlyMap<number, ComplexRuleCondition>;
+    readonly orderedKeys: readonly number[];
+    readonly orderedRows: readonly ComplexRuleCondition[];
+    [Symbol.iterator](): Iterator<ComplexRuleCondition>;
 }

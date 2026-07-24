@@ -3,27 +3,13 @@
 package com.sora.showcase;
 
 import java.util.List;
-import java.util.Map;
 
-
-public final class GachaItem {
-    public final Integer poolId;
-    public final Integer itemId;
-    public final Rarity rarity;
-    public final float weight;
-
-    public GachaItem(
-        Integer poolId,
-        Integer itemId,
-        Rarity rarity,
-        float weight
-    ) {
-        this.poolId = poolId;
-        this.itemId = itemId;
-        this.rarity = rarity;
-        this.weight = weight;
-    }
-
+public record GachaItem(
+    int poolId,
+    int itemId,
+    Rarity rarity,
+    float weight
+) {
     static GachaItem decode(SoraReader reader) {
         return new GachaItem(
             reader.readI32(),
@@ -44,47 +30,5 @@ public final class GachaItem {
     }
 
     void collectTextKeys(List<TextKey> out) {
-    }
-}
-
-final class GachaItemTable extends java.util.AbstractList<GachaItem> implements SoraListTable<GachaItem> {
-    static final String NAME = "GachaItem";
-    static final SoraTableInfo INFO = new SoraTableInfo(
-        NAME,
-        "GachaItem",
-        SoraTableShape.LIST,
-        null,
-        List.of(
-        )
-    );
-    private final java.util.List<GachaItem> rows;
-
-    private GachaItemTable(java.util.List<GachaItem> rows) {
-        this.rows = rows;
-    }
-
-    private static GachaItemTable fromRows(List<GachaItem> rows) {
-        return new GachaItemTable(rows);
-    }
-
-    static GachaItemTable decode(SoraTableSource source) {
-        return fromRows(source.decodeTable(NAME, GachaItem::decode, GachaItem::decode));
-    }
-
-    public java.util.List<GachaItem> rows() {
-        return rows;
-    }
-    @Override
-    public GachaItem get(int index) {
-        return rows.get(index);
-    }
-    @Override
-    public SoraTableInfo info() {
-        return INFO;
-    }
-
-    @Override
-    public int size() {
-        return rows.size();
     }
 }

@@ -5,7 +5,7 @@ local EventCondition = require("generated.event_condition")
 
 ---@class ComplexRuleCondition
 ---@field id integer
----@field ruleId integer
+---@field rule_id integer
 ---@field value EventCondition
 
 local ComplexRuleCondition = {}
@@ -15,7 +15,7 @@ local ComplexRuleCondition = {}
 function ComplexRuleCondition.decode(reader)
     return {
         id = reader:read_i32(),
-        ruleId = reader:read_i32(),
+        rule_id = reader:read_i32(),
         value = EventCondition.decode(reader),
     }
 end
@@ -26,7 +26,7 @@ function ComplexRuleCondition.decode_value(value)
     local obj = Runtime.expect_table(value)
     return {
         id = Runtime.expect_integer(obj["id"]),
-        ruleId = Runtime.expect_integer(obj["rule_id"]),
+        rule_id = Runtime.expect_integer(obj["rule_id"]),
         value = EventCondition.decode_value(obj["value"]),
     }
 end

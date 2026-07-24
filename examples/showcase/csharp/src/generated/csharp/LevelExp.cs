@@ -67,8 +67,7 @@ public sealed class LevelExpTable : ISoraKeyedTable<int, LevelExp>
     {
         return new LevelExpTable(rows.ConvertAll(row => row.Level), SoraConfig.DecodeMapTable(rows, row => row.Level));
     }
-
-    public Dictionary<int, LevelExp> Rows => rows;
+    public IReadOnlyDictionary<int, LevelExp> Rows => rows;
     public LevelExp this[int key] => rows[key];
 
     public LevelExp? Get(int key)

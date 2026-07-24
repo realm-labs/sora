@@ -13,10 +13,10 @@ import { collectEventConditionTextKeys, decodeEventCondition, decodeEventConditi
 
 
 export interface ComplexConditionGroupEntry {
-    id: number;
-    groupId: number;
-    seq: number;
-    value: EventCondition;
+    readonly id: number;
+    readonly groupId: number;
+    readonly seq: number;
+    readonly value: EventCondition;
 }
 
 export function decodeComplexConditionGroupEntry(reader: SoraReader): ComplexConditionGroupEntry {
@@ -54,8 +54,8 @@ export class ComplexConditionGroupEntryTable implements SoraKeyedTable<number, C
     };
 
     private constructor(
-        private readonly _keys: number[],
-        private readonly _rows: Map<number, ComplexConditionGroupEntry>,
+        private readonly _keys: readonly number[],
+        private readonly _rows: ReadonlyMap<number, ComplexConditionGroupEntry>,
     ) {}
 
     static decode(rows: ComplexConditionGroupEntry[]): ComplexConditionGroupEntryTable {
@@ -69,25 +69,33 @@ export class ComplexConditionGroupEntryTable implements SoraKeyedTable<number, C
         return ComplexConditionGroupEntryTable.tableInfo;
     }
 
-    len(): number {
+    get size(): number {
         return this._rows.size;
     }
     get(key: number): ComplexConditionGroupEntry | undefined {
         return this._rows.get(key);
     }
 
-    rows(): ReadonlyMap<number, ComplexConditionGroupEntry> {
+    has(key: number): boolean {
+        return this._rows.has(key);
+    }
+
+    get rows(): ReadonlyMap<number, ComplexConditionGroupEntry> {
         return this._rows;
     }
 
-    keys(): readonly number[] {
+    get orderedKeys(): readonly number[] {
         return this._keys;
     }
 
-    orderedRows(): ComplexConditionGroupEntry[] {
+    get orderedRows(): readonly ComplexConditionGroupEntry[] {
         return this._keys.flatMap((key) => {
             const row = this._rows.get(key);
             return row === undefined ? [] : [row];
         });
+    }
+
+    [Symbol.iterator](): Iterator<ComplexConditionGroupEntry> {
+        return this._rows.values();
     }
 }

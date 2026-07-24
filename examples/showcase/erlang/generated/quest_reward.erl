@@ -6,10 +6,10 @@
 -export_type([t/0, table/0]).
 
 -type t() :: #{
-    'quest_id' := integer(),
-    'seq' := integer(),
-    'item_id' := integer(),
-    'count' := integer()
+    quest_id := integer(),
+    seq := integer(),
+    item_id := integer(),
+    count := integer()
 }.
 
 -type table() :: map().
@@ -22,20 +22,20 @@ decode(Reader0) ->
     {ItemId, Reader3} = (fun sora_runtime:read_i32/1)(Reader2),
     {Count, Reader4} = (fun sora_runtime:read_i32/1)(Reader3),
     {#{
-        'quest_id' => QuestId,
-        'seq' => Seq,
-        'item_id' => ItemId,
-        'count' => Count
+        quest_id => QuestId,
+        seq => Seq,
+        item_id => ItemId,
+        count => Count
     }, Reader4}.
 
 -spec decode_value(map()) -> t().
 decode_value(Value) ->
     Obj = sora_runtime:expect_map(Value),
     #{
-        'quest_id' => sora_runtime:expect_integer(sora_runtime:value_get(<<"quest_id">>, Obj)),
-        'seq' => sora_runtime:expect_integer(sora_runtime:value_get(<<"seq">>, Obj)),
-        'item_id' => sora_runtime:expect_integer(sora_runtime:value_get(<<"item_id">>, Obj)),
-        'count' => sora_runtime:expect_integer(sora_runtime:value_get(<<"count">>, Obj))
+        quest_id => sora_runtime:expect_integer(sora_runtime:value_get(<<"quest_id">>, Obj)),
+        seq => sora_runtime:expect_integer(sora_runtime:value_get(<<"seq">>, Obj)),
+        item_id => sora_runtime:expect_integer(sora_runtime:value_get(<<"item_id">>, Obj)),
+        count => sora_runtime:expect_integer(sora_runtime:value_get(<<"count">>, Obj))
     }.
 
 -spec decode_table(map()) -> table().

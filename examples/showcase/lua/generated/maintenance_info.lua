@@ -3,8 +3,8 @@
 local Runtime = require("generated.sora_runtime")
 
 ---@class MaintenanceInfo
----@field startsAt string
----@field durationMinutes integer
+---@field starts_at string
+---@field duration_minutes integer
 ---@field reason string?
 
 local MaintenanceInfo = {}
@@ -13,8 +13,8 @@ local MaintenanceInfo = {}
 ---@return MaintenanceInfo
 function MaintenanceInfo.decode(reader)
     return {
-        startsAt = reader:read_string(),
-        durationMinutes = reader:read_i32(),
+        starts_at = reader:read_string(),
+        duration_minutes = reader:read_i32(),
         reason = reader:read_optional(function() return reader:read_string() end),
     }
 end
@@ -24,8 +24,8 @@ end
 function MaintenanceInfo.decode_value(value)
     local obj = Runtime.expect_table(value)
     return {
-        startsAt = Runtime.expect_string(obj["starts_at"]),
-        durationMinutes = Runtime.expect_integer(obj["duration_minutes"]),
+        starts_at = Runtime.expect_string(obj["starts_at"]),
+        duration_minutes = Runtime.expect_integer(obj["duration_minutes"]),
         reason = obj["reason"] == nil and nil or Runtime.expect_string(obj["reason"]),
     }
 end

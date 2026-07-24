@@ -5,31 +5,31 @@
 -export([decode/1, decode_value/1]).
 -export_type([t/0]).
 -type t() ::
-    'hp' |
-    'attack' |
-    'defense' |
-    'speed' |
-    'crit_rate'.
+    hp |
+    attack |
+    defense |
+    speed |
+    crit_rate.
 
 -spec decode(sora_runtime:reader()) -> {t(), sora_runtime:reader()}.
 decode(Reader0) ->
     {Id, Reader1} = sora_runtime:read_u32(Reader0),
     case Id of
-        0 -> {'hp', Reader1};
-        1 -> {'attack', Reader1};
-        2 -> {'defense', Reader1};
-        3 -> {'speed', Reader1};
-        4 -> {'crit_rate', Reader1};
+        0 -> {hp, Reader1};
+        1 -> {attack, Reader1};
+        2 -> {defense, Reader1};
+        3 -> {speed, Reader1};
+        4 -> {crit_rate, Reader1};
         _ -> error({invalid_enum_id, stat_type, Id})
     end.
 
 -spec decode_value(binary()) -> t().
 decode_value(Value) ->
     case Value of
-        <<"Hp">> -> 'hp';
-        <<"Attack">> -> 'attack';
-        <<"Defense">> -> 'defense';
-        <<"Speed">> -> 'speed';
-        <<"CritRate">> -> 'crit_rate';
+        <<"Hp">> -> hp;
+        <<"Attack">> -> attack;
+        <<"Defense">> -> defense;
+        <<"Speed">> -> speed;
+        <<"CritRate">> -> crit_rate;
         _ -> error({invalid_enum_value, stat_type, Value})
     end.

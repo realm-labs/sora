@@ -13,10 +13,10 @@ import { collectSkillEffectTextKeys, decodeSkillEffect, decodeSkillEffectValue }
 
 
 export interface EquipmentSet {
-    id: number;
-    name: string;
-    itemIds: number[];
-    bonusEffect: SkillEffect;
+    readonly id: number;
+    readonly name: string;
+    readonly itemIds: readonly number[];
+    readonly bonusEffect: SkillEffect;
 }
 
 export function decodeEquipmentSet(reader: SoraReader): EquipmentSet {
@@ -54,8 +54,8 @@ export class EquipmentSetTable implements SoraKeyedTable<number, EquipmentSet> {
     };
 
     private constructor(
-        private readonly _keys: number[],
-        private readonly _rows: Map<number, EquipmentSet>,
+        private readonly _keys: readonly number[],
+        private readonly _rows: ReadonlyMap<number, EquipmentSet>,
     ) {}
 
     static decode(rows: EquipmentSet[]): EquipmentSetTable {
@@ -69,25 +69,33 @@ export class EquipmentSetTable implements SoraKeyedTable<number, EquipmentSet> {
         return EquipmentSetTable.tableInfo;
     }
 
-    len(): number {
+    get size(): number {
         return this._rows.size;
     }
     get(key: number): EquipmentSet | undefined {
         return this._rows.get(key);
     }
 
-    rows(): ReadonlyMap<number, EquipmentSet> {
+    has(key: number): boolean {
+        return this._rows.has(key);
+    }
+
+    get rows(): ReadonlyMap<number, EquipmentSet> {
         return this._rows;
     }
 
-    keys(): readonly number[] {
+    get orderedKeys(): readonly number[] {
         return this._keys;
     }
 
-    orderedRows(): EquipmentSet[] {
+    get orderedRows(): readonly EquipmentSet[] {
         return this._keys.flatMap((key) => {
             const row = this._rows.get(key);
             return row === undefined ? [] : [row];
         });
+    }
+
+    [Symbol.iterator](): Iterator<EquipmentSet> {
+        return this._rows.values();
     }
 }

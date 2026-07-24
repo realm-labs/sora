@@ -5,9 +5,9 @@
 -export_type([t/0]).
 
 -type t() :: #{
-    'kind' := resource_kind:t(),
-    'id' := integer(),
-    'count' := integer()
+    kind := resource_kind:t(),
+    id := integer(),
+    count := integer()
 }.
 
 -spec decode(sora_runtime:reader()) -> {t(), sora_runtime:reader()}.
@@ -16,16 +16,16 @@ decode(Reader0) ->
     {Id, Reader2} = (fun sora_runtime:read_i32/1)(Reader1),
     {Count, Reader3} = (fun sora_runtime:read_i32/1)(Reader2),
     {#{
-        'kind' => Kind,
-        'id' => Id,
-        'count' => Count
+        kind => Kind,
+        id => Id,
+        count => Count
     }, Reader3}.
 
 -spec decode_value(map()) -> t().
 decode_value(Value) ->
     Obj = sora_runtime:expect_map(Value),
     #{
-        'kind' => resource_kind:decode_value(sora_runtime:value_get(<<"kind">>, Obj)),
-        'id' => sora_runtime:expect_integer(sora_runtime:value_get(<<"id">>, Obj)),
-        'count' => sora_runtime:expect_integer(sora_runtime:value_get(<<"count">>, Obj))
+        kind => resource_kind:decode_value(sora_runtime:value_get(<<"kind">>, Obj)),
+        id => sora_runtime:expect_integer(sora_runtime:value_get(<<"id">>, Obj)),
+        count => sora_runtime:expect_integer(sora_runtime:value_get(<<"count">>, Obj))
     }.

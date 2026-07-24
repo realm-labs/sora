@@ -71,8 +71,7 @@ public sealed class ComplexConditionGroupEntryTable : ISoraKeyedTable<int, Compl
     {
         return new ComplexConditionGroupEntryTable(rows.ConvertAll(row => row.Id), SoraConfig.DecodeMapTable(rows, row => row.Id));
     }
-
-    public Dictionary<int, ComplexConditionGroupEntry> Rows => rows;
+    public IReadOnlyDictionary<int, ComplexConditionGroupEntry> Rows => rows;
     public ComplexConditionGroupEntry this[int key] => rows[key];
 
     public ComplexConditionGroupEntry? Get(int key)

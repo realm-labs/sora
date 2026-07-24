@@ -81,9 +81,12 @@ func decodeVipLevelTable(source SoraTableSource) (*VipLevelTable, error) {
 	}
 	return buildVipLevelTable(rows)
 }
-
 func (table *VipLevelTable) Rows() map[int32]VipLevel {
-	return table.rows
+	rows := make(map[int32]VipLevel, len(table.rows))
+	for key, row := range table.rows {
+		rows[key] = row
+	}
+	return rows
 }
 func (table *VipLevelTable) Get(key int32) (VipLevel, bool) {
 	value, ok := table.rows[key]
@@ -91,7 +94,7 @@ func (table *VipLevelTable) Get(key int32) (VipLevel, bool) {
 }
 
 func (table *VipLevelTable) Keys() []int32 {
-	return table.keys
+	return append([]int32(nil), table.keys...)
 }
 
 func (table *VipLevelTable) OrderedRows() []VipLevel {

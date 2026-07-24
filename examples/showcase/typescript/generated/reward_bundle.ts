@@ -7,9 +7,9 @@ import { collectResourceCostTextKeys, decodeResourceCost, decodeResourceCostValu
 
 
 export interface RewardBundle {
-    cost: ResourceCost;
-    weight: number;
-    labels: string[];
+    readonly cost: ResourceCost;
+    readonly weight: number;
+    readonly labels: readonly string[];
 }
 
 export function decodeRewardBundle(reader: SoraReader): RewardBundle {

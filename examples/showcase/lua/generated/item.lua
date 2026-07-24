@@ -7,8 +7,8 @@ local ResourceCost = require("generated.resource_cost")
 ---@class Item
 ---@field id integer Item id
 ---@field name string Display name
----@field itemType ItemType Item category
----@field maxStack integer Stack limit; blank cells use the default
+---@field item_type ItemType Item category
+---@field max_stack integer Stack limit; blank cells use the default
 ---@field price ResourceCost Struct columns: price_kind, price_id, price_count
 ---@field tags string[] JSON string set
 ---@field attributes {[string]: integer} Map pairs: key,value|key,value
@@ -21,8 +21,8 @@ function Item.decode(reader)
     return {
         id = reader:read_i32(),
         name = reader:read_string(),
-        itemType = ItemType.decode(reader),
-        maxStack = reader:read_i32(),
+        item_type = ItemType.decode(reader),
+        max_stack = reader:read_i32(),
         price = ResourceCost.decode(reader),
         tags = reader:read_list(function() return reader:read_string() end),
         attributes = reader:read_map(function() return reader:read_string() end, function() return reader:read_i32() end),
@@ -36,8 +36,8 @@ function Item.decode_value(value)
     return {
         id = Runtime.expect_integer(obj["id"]),
         name = Runtime.expect_string(obj["name"]),
-        itemType = ItemType.decode_value(obj["item_type"]),
-        maxStack = Runtime.expect_integer(obj["max_stack"]),
+        item_type = ItemType.decode_value(obj["item_type"]),
+        max_stack = Runtime.expect_integer(obj["max_stack"]),
         price = ResourceCost.decode_value(obj["price"]),
         tags = Runtime.decode_value_list(obj["tags"], function(item) return Runtime.expect_string(item) end),
         attributes = Runtime.decode_value_map(obj["attributes"], function(item) return Runtime.expect_string(item) end, function(item) return Runtime.expect_integer(item) end),
@@ -68,7 +68,7 @@ ItemTable.INFO = {
     primary_key = { name = "id", type = "integer" },
     indexes = {
         { name = "by_name", unique = true, fields = { "name" } },
-        { name = "by_item_type", unique = false, fields = { "itemType" } },
+        { name = "by_item_type", unique = false, fields = { "item_type" } },
     },
 }
 
@@ -83,7 +83,7 @@ function ItemTable.decode(rows)
         _keys = keys,
         _rows = Runtime.decode_map_table(rows, function(row) return row.id end),
         _by_name = Runtime.decode_unique_index(rows, function(row) return row.name end),
-        _by_item_type = Runtime.decode_index(rows, function(row) return row.itemType end),
+        _by_item_type = Runtime.decode_index(rows, function(row) return row.item_type end),
     }, ItemTable)
 end
 
@@ -132,10 +132,10 @@ end
 function ItemTable:get_by_name(name)
     return self._by_name[name]
 end
----@param itemType ItemType
+---@param item_type ItemType
 ---@return Item[]
-function ItemTable:find_by_item_type(itemType)
-    return self._by_item_type[itemType] or {}
+function ItemTable:find_by_item_type(item_type)
+    return self._by_item_type[item_type] or {}
 end
 Item.Table = ItemTable
 

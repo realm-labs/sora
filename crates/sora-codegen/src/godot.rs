@@ -344,9 +344,8 @@ impl<'a> GodotTypeMapper<'a> {
             TypeIr::String | TypeIr::Enum(_) => "String".to_owned(),
             TypeIr::Text => "SoraRuntime.TextKey".to_owned(),
             TypeIr::Struct(name) | TypeIr::Union(name) => godot_type_identifier(name),
-            TypeIr::List(_) | TypeIr::Set(_) | TypeIr::Map { .. } | TypeIr::Array { .. } => {
-                "Array".to_owned()
-            }
+            TypeIr::List(_) | TypeIr::Set(_) | TypeIr::Array { .. } => "Array".to_owned(),
+            TypeIr::Map { .. } => "Dictionary".to_owned(),
             TypeIr::Ref { table, field } => ref_target_type(self.ir, table, field)
                 .map(|ty| self.type_name(ty))
                 .unwrap_or_else(|| "int".to_owned()),
@@ -452,9 +451,8 @@ fn godot_default_value(ir: &ConfigIr, ty: &TypeIr) -> String {
         TypeIr::F32 | TypeIr::F64 => "0.0".to_owned(),
         TypeIr::String | TypeIr::Enum(_) => "\"\"".to_owned(),
         TypeIr::Text => "null".to_owned(),
-        TypeIr::List(_) | TypeIr::Set(_) | TypeIr::Map { .. } | TypeIr::Array { .. } => {
-            "[]".to_owned()
-        }
+        TypeIr::List(_) | TypeIr::Set(_) | TypeIr::Array { .. } => "[]".to_owned(),
+        TypeIr::Map { .. } => "{}".to_owned(),
         TypeIr::Optional(_) | TypeIr::Struct(_) | TypeIr::Union(_) => "null".to_owned(),
         TypeIr::Ref { table, field } => ir
             .tables
@@ -619,6 +617,10 @@ type = "i32"
 name = "item_type"
 type = "enum<ItemType>"
 
+[[tables.fields]]
+name = "attributes"
+type = "map<string,i32>"
+
 [[tables.indexes]]
 name = "by_item_type"
 fields = ["item_type"]
@@ -648,7 +650,9 @@ fields = ["item_type"]
         let config = std::fs::read_to_string(out.join("sora_config.gd")).unwrap();
         assert!(item.contains("class ItemTable"));
         assert!(item.contains("func find_by_item_type"));
+        assert!(item.contains("var attributes: Dictionary = {}"));
         assert!(!config.contains("class ItemTable"));
+        assert!(config.contains("return null"));
 
         let _ = std::fs::remove_dir_all(out);
     }

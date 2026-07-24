@@ -3,11 +3,11 @@
 package com.sora.showcase;
 
 public enum ItemType {
-    Weapon(0),
-    Armor(1),
-    Currency(2),
-    Material(3),
-    Consumable(4);
+    WEAPON(0),
+    ARMOR(1),
+    CURRENCY(2),
+    MATERIAL(3),
+    CONSUMABLE(4);
 
     private final int id;
 
@@ -22,15 +22,15 @@ public enum ItemType {
     static ItemType decode(SoraReader reader) {
         switch (reader.readU32()) {
             case 0:
-                return Weapon;
+                return WEAPON;
             case 1:
-                return Armor;
+                return ARMOR;
             case 2:
-                return Currency;
+                return CURRENCY;
             case 3:
-                return Material;
+                return MATERIAL;
             case 4:
-                return Consumable;
+                return CONSUMABLE;
             default:
                 throw new SoraReadException("invalid enum id for ItemType");
         }
@@ -39,15 +39,15 @@ public enum ItemType {
     static ItemType decode(SoraValue value) {
         switch (value.asString()) {
             case "Weapon":
-                return Weapon;
+                return WEAPON;
             case "Armor":
-                return Armor;
+                return ARMOR;
             case "Currency":
-                return Currency;
+                return CURRENCY;
             case "Material":
-                return Material;
+                return MATERIAL;
             case "Consumable":
-                return Consumable;
+                return CONSUMABLE;
             default:
                 throw new SoraReadException("invalid enum value for ItemType");
         }

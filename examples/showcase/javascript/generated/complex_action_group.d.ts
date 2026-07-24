@@ -6,9 +6,9 @@ import type { RewardAction } from "./reward_action.js";
 
 
 export interface ComplexActionGroup {
-    id: number;
-    name: string;
-    actions: RewardAction[];
+    readonly id: number;
+    readonly name: string;
+    readonly actions: readonly RewardAction[];
 }
 
 export declare function decodeComplexActionGroup(reader: SoraReader): ComplexActionGroup;
@@ -19,9 +19,11 @@ export declare class ComplexActionGroupTable implements SoraKeyedTable<number, C
     static readonly tableInfo: SoraTableInfo;
     static decode(rows: ComplexActionGroup[]): ComplexActionGroupTable;
     info(): SoraTableInfo;
-    len(): number;
+    readonly size: number;
     get(key: number): ComplexActionGroup | undefined;
-    rows(): ReadonlyMap<number, ComplexActionGroup>;
-    keys(): readonly number[];
-    orderedRows(): ComplexActionGroup[];
+    has(key: number): boolean;
+    readonly rows: ReadonlyMap<number, ComplexActionGroup>;
+    readonly orderedKeys: readonly number[];
+    readonly orderedRows: readonly ComplexActionGroup[];
+    [Symbol.iterator](): Iterator<ComplexActionGroup>;
 }

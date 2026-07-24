@@ -3,9 +3,9 @@
 local Runtime = require("generated.sora_runtime")
 
 ---@class DropEntry
----@field groupId integer
+---@field group_id integer
 ---@field seq integer
----@field itemId integer
+---@field item_id integer
 ---@field count integer
 ---@field weight number
 
@@ -15,9 +15,9 @@ local DropEntry = {}
 ---@return DropEntry
 function DropEntry.decode(reader)
     return {
-        groupId = reader:read_i32(),
+        group_id = reader:read_i32(),
         seq = reader:read_i32(),
-        itemId = reader:read_i32(),
+        item_id = reader:read_i32(),
         count = reader:read_i32(),
         weight = reader:read_f32(),
     }
@@ -28,9 +28,9 @@ end
 function DropEntry.decode_value(value)
     local obj = Runtime.expect_table(value)
     return {
-        groupId = Runtime.expect_integer(obj["group_id"]),
+        group_id = Runtime.expect_integer(obj["group_id"]),
         seq = Runtime.expect_integer(obj["seq"]),
-        itemId = Runtime.expect_integer(obj["item_id"]),
+        item_id = Runtime.expect_integer(obj["item_id"]),
         count = Runtime.expect_integer(obj["count"]),
         weight = Runtime.expect_number(obj["weight"]),
     }

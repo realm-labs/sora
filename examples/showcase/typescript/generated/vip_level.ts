@@ -13,9 +13,9 @@ import { collectResourceCostTextKeys, decodeResourceCost, decodeResourceCostValu
 
 
 export interface VipLevel {
-    level: number;
-    cost: ResourceCost;
-    perks: string[];
+    readonly level: number;
+    readonly cost: ResourceCost;
+    readonly perks: readonly string[];
 }
 
 export function decodeVipLevel(reader: SoraReader): VipLevel {
@@ -51,8 +51,8 @@ export class VipLevelTable implements SoraKeyedTable<number, VipLevel> {
     };
 
     private constructor(
-        private readonly _keys: number[],
-        private readonly _rows: Map<number, VipLevel>,
+        private readonly _keys: readonly number[],
+        private readonly _rows: ReadonlyMap<number, VipLevel>,
     ) {}
 
     static decode(rows: VipLevel[]): VipLevelTable {
@@ -66,25 +66,33 @@ export class VipLevelTable implements SoraKeyedTable<number, VipLevel> {
         return VipLevelTable.tableInfo;
     }
 
-    len(): number {
+    get size(): number {
         return this._rows.size;
     }
     get(key: number): VipLevel | undefined {
         return this._rows.get(key);
     }
 
-    rows(): ReadonlyMap<number, VipLevel> {
+    has(key: number): boolean {
+        return this._rows.has(key);
+    }
+
+    get rows(): ReadonlyMap<number, VipLevel> {
         return this._rows;
     }
 
-    keys(): readonly number[] {
+    get orderedKeys(): readonly number[] {
         return this._keys;
     }
 
-    orderedRows(): VipLevel[] {
+    get orderedRows(): readonly VipLevel[] {
         return this._keys.flatMap((key) => {
             const row = this._rows.get(key);
             return row === undefined ? [] : [row];
         });
+    }
+
+    [Symbol.iterator](): Iterator<VipLevel> {
+        return this._rows.values();
     }
 }

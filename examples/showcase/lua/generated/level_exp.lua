@@ -5,7 +5,7 @@ local Runtime = require("generated.sora_runtime")
 ---@class LevelExp
 ---@field level integer
 ---@field exp integer
----@field unlockFeature string?
+---@field unlock_feature string?
 
 local LevelExp = {}
 
@@ -15,7 +15,7 @@ function LevelExp.decode(reader)
     return {
         level = reader:read_i32(),
         exp = reader:read_i64(),
-        unlockFeature = reader:read_optional(function() return reader:read_string() end),
+        unlock_feature = reader:read_optional(function() return reader:read_string() end),
     }
 end
 
@@ -26,7 +26,7 @@ function LevelExp.decode_value(value)
     return {
         level = Runtime.expect_integer(obj["level"]),
         exp = Runtime.expect_integer(obj["exp"]),
-        unlockFeature = obj["unlock_feature"] == nil and nil or Runtime.expect_string(obj["unlock_feature"]),
+        unlock_feature = obj["unlock_feature"] == nil and nil or Runtime.expect_string(obj["unlock_feature"]),
     }
 end
 

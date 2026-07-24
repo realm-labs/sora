@@ -6,10 +6,10 @@ import type { RewardAction } from "./reward_action.js";
 
 
 export interface ComplexActionEntry {
-    id: number;
-    groupId: number;
-    seq: number;
-    value: RewardAction;
+    readonly id: number;
+    readonly groupId: number;
+    readonly seq: number;
+    readonly value: RewardAction;
 }
 
 export declare function decodeComplexActionEntry(reader: SoraReader): ComplexActionEntry;
@@ -20,9 +20,11 @@ export declare class ComplexActionEntryTable implements SoraKeyedTable<number, C
     static readonly tableInfo: SoraTableInfo;
     static decode(rows: ComplexActionEntry[]): ComplexActionEntryTable;
     info(): SoraTableInfo;
-    len(): number;
+    readonly size: number;
     get(key: number): ComplexActionEntry | undefined;
-    rows(): ReadonlyMap<number, ComplexActionEntry>;
-    keys(): readonly number[];
-    orderedRows(): ComplexActionEntry[];
+    has(key: number): boolean;
+    readonly rows: ReadonlyMap<number, ComplexActionEntry>;
+    readonly orderedKeys: readonly number[];
+    readonly orderedRows: readonly ComplexActionEntry[];
+    [Symbol.iterator](): Iterator<ComplexActionEntry>;
 }

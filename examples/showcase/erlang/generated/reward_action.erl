@@ -7,26 +7,26 @@
 
 -type t() ::
     #{
-        'type' := 'add_item',
-        'item_id' := integer(),
-        'count' := integer()
+        type := add_item,
+        item_id := integer(),
+        count := integer()
     } |
     #{
-        'type' := 'add_buff',
-        'buff_id' := integer(),
-        'duration' := float()
+        type := add_buff,
+        buff_id := integer(),
+        duration := float()
     } |
     #{
-        'type' := 'unlock_stage',
-        'stage_id' := integer()
+        type := unlock_stage,
+        stage_id := integer()
     } |
     #{
-        'type' := 'send_mail',
-        'mail_id' := integer()
+        type := send_mail,
+        mail_id := integer()
     } |
     #{
-        'type' := 'run_action_group',
-        'action_group_id' := integer()
+        type := run_action_group,
+        action_group_id := integer()
     }.
 
 -spec decode(sora_runtime:reader()) -> {t(), sora_runtime:reader()}.
@@ -37,35 +37,35 @@ decode(Reader0) ->
             {ItemId, Reader2} = (fun sora_runtime:read_i32/1)(Reader1),
             {Count, Reader3} = (fun sora_runtime:read_i32/1)(Reader2),
             {#{
-                'type' => 'add_item',
-                'item_id' => ItemId,
-                'count' => Count
+                type => add_item,
+                item_id => ItemId,
+                count => Count
             }, Reader3};
         1 ->
             {BuffId, Reader2} = (fun sora_runtime:read_i32/1)(Reader1),
             {Duration, Reader3} = (fun sora_runtime:read_f32/1)(Reader2),
             {#{
-                'type' => 'add_buff',
-                'buff_id' => BuffId,
-                'duration' => Duration
+                type => add_buff,
+                buff_id => BuffId,
+                duration => Duration
             }, Reader3};
         2 ->
             {StageId, Reader2} = (fun sora_runtime:read_i32/1)(Reader1),
             {#{
-                'type' => 'unlock_stage',
-                'stage_id' => StageId
+                type => unlock_stage,
+                stage_id => StageId
             }, Reader2};
         3 ->
             {MailId, Reader2} = (fun sora_runtime:read_i32/1)(Reader1),
             {#{
-                'type' => 'send_mail',
-                'mail_id' => MailId
+                type => send_mail,
+                mail_id => MailId
             }, Reader2};
         4 ->
             {ActionGroupId, Reader2} = (fun sora_runtime:read_i32/1)(Reader1),
             {#{
-                'type' => 'run_action_group',
-                'action_group_id' => ActionGroupId
+                type => run_action_group,
+                action_group_id => ActionGroupId
             }, Reader2};
         _ -> error({invalid_union_ordinal, reward_action, Ordinal})
     end.
@@ -77,30 +77,30 @@ decode_value(Value) ->
     case Tag of
         <<"AddItem">> ->
             #{
-                'type' => 'add_item',
-                'item_id' => sora_runtime:expect_integer(sora_runtime:value_get(<<"item_id">>, Obj)),
-                'count' => sora_runtime:expect_integer(sora_runtime:value_get(<<"count">>, Obj))
+                type => add_item,
+                item_id => sora_runtime:expect_integer(sora_runtime:value_get(<<"item_id">>, Obj)),
+                count => sora_runtime:expect_integer(sora_runtime:value_get(<<"count">>, Obj))
             };
         <<"AddBuff">> ->
             #{
-                'type' => 'add_buff',
-                'buff_id' => sora_runtime:expect_integer(sora_runtime:value_get(<<"buff_id">>, Obj)),
-                'duration' => sora_runtime:expect_float(sora_runtime:value_get(<<"duration">>, Obj))
+                type => add_buff,
+                buff_id => sora_runtime:expect_integer(sora_runtime:value_get(<<"buff_id">>, Obj)),
+                duration => sora_runtime:expect_float(sora_runtime:value_get(<<"duration">>, Obj))
             };
         <<"UnlockStage">> ->
             #{
-                'type' => 'unlock_stage',
-                'stage_id' => sora_runtime:expect_integer(sora_runtime:value_get(<<"stage_id">>, Obj))
+                type => unlock_stage,
+                stage_id => sora_runtime:expect_integer(sora_runtime:value_get(<<"stage_id">>, Obj))
             };
         <<"SendMail">> ->
             #{
-                'type' => 'send_mail',
-                'mail_id' => sora_runtime:expect_integer(sora_runtime:value_get(<<"mail_id">>, Obj))
+                type => send_mail,
+                mail_id => sora_runtime:expect_integer(sora_runtime:value_get(<<"mail_id">>, Obj))
             };
         <<"RunActionGroup">> ->
             #{
-                'type' => 'run_action_group',
-                'action_group_id' => sora_runtime:expect_integer(sora_runtime:value_get(<<"action_group_id">>, Obj))
+                type => run_action_group,
+                action_group_id => sora_runtime:expect_integer(sora_runtime:value_get(<<"action_group_id">>, Obj))
             };
         _ -> error({invalid_union_tag, reward_action, Tag})
     end.

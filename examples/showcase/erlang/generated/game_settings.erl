@@ -7,15 +7,15 @@
 -export_type([t/0, table/0]).
 
 -type t() :: #{
-    'version' := binary(),
-    'daily_reset_hour' := integer(),
-    'starting_gold' := integer(),
-    'spawn_pos' := vec3:t(),
-    'starter_items' := [integer()],
-    'gravity' := float(),
-    'daily_bonus_items' := [integer()],
-    'spawn_points' := [vec3:t()],
-    'maintenance' := maintenance_info:t() | undefined
+    version := binary(),
+    daily_reset_hour := integer(),
+    starting_gold := integer(),
+    spawn_pos := vec3:t(),
+    starter_items := [integer()],
+    gravity := float(),
+    daily_bonus_items := [integer()],
+    spawn_points := [vec3:t()],
+    maintenance := maintenance_info:t() | undefined
 }.
 
 -type table() :: map().
@@ -33,30 +33,30 @@ decode(Reader0) ->
     {SpawnPoints, Reader8} = (fun(Reader) -> sora_runtime:read_list(fun vec3:decode/1, Reader) end)(Reader7),
     {Maintenance, Reader9} = (fun(Reader) -> sora_runtime:read_optional(fun maintenance_info:decode/1, Reader) end)(Reader8),
     {#{
-        'version' => Version,
-        'daily_reset_hour' => DailyResetHour,
-        'starting_gold' => StartingGold,
-        'spawn_pos' => SpawnPos,
-        'starter_items' => StarterItems,
-        'gravity' => Gravity,
-        'daily_bonus_items' => DailyBonusItems,
-        'spawn_points' => SpawnPoints,
-        'maintenance' => Maintenance
+        version => Version,
+        daily_reset_hour => DailyResetHour,
+        starting_gold => StartingGold,
+        spawn_pos => SpawnPos,
+        starter_items => StarterItems,
+        gravity => Gravity,
+        daily_bonus_items => DailyBonusItems,
+        spawn_points => SpawnPoints,
+        maintenance => Maintenance
     }, Reader9}.
 
 -spec decode_value(map()) -> t().
 decode_value(Value) ->
     Obj = sora_runtime:expect_map(Value),
     #{
-        'version' => sora_runtime:expect_binary(sora_runtime:value_get(<<"version">>, Obj)),
-        'daily_reset_hour' => sora_runtime:expect_integer(sora_runtime:value_get(<<"daily_reset_hour">>, Obj)),
-        'starting_gold' => sora_runtime:expect_integer(sora_runtime:value_get(<<"starting_gold">>, Obj)),
-        'spawn_pos' => vec3:decode_value(sora_runtime:value_get(<<"spawn_pos">>, Obj)),
-        'starter_items' => sora_runtime:decode_value_list(fun(Item) -> sora_runtime:expect_integer(Item) end, sora_runtime:value_get(<<"starter_items">>, Obj)),
-        'gravity' => sora_runtime:expect_float(sora_runtime:value_get(<<"gravity">>, Obj)),
-        'daily_bonus_items' => sora_runtime:decode_value_list(fun(Item) -> sora_runtime:expect_integer(Item) end, sora_runtime:value_get(<<"daily_bonus_items">>, Obj)),
-        'spawn_points' => sora_runtime:decode_value_list(fun(Item) -> vec3:decode_value(Item) end, sora_runtime:value_get(<<"spawn_points">>, Obj)),
-        'maintenance' => (fun(OptionalValue) -> case OptionalValue of undefined -> undefined; _ -> maintenance_info:decode_value(OptionalValue) end end)(sora_runtime:value_get(<<"maintenance">>, Obj))
+        version => sora_runtime:expect_binary(sora_runtime:value_get(<<"version">>, Obj)),
+        daily_reset_hour => sora_runtime:expect_integer(sora_runtime:value_get(<<"daily_reset_hour">>, Obj)),
+        starting_gold => sora_runtime:expect_integer(sora_runtime:value_get(<<"starting_gold">>, Obj)),
+        spawn_pos => vec3:decode_value(sora_runtime:value_get(<<"spawn_pos">>, Obj)),
+        starter_items => sora_runtime:decode_value_list(fun(Item) -> sora_runtime:expect_integer(Item) end, sora_runtime:value_get(<<"starter_items">>, Obj)),
+        gravity => sora_runtime:expect_float(sora_runtime:value_get(<<"gravity">>, Obj)),
+        daily_bonus_items => sora_runtime:decode_value_list(fun(Item) -> sora_runtime:expect_integer(Item) end, sora_runtime:value_get(<<"daily_bonus_items">>, Obj)),
+        spawn_points => sora_runtime:decode_value_list(fun(Item) -> vec3:decode_value(Item) end, sora_runtime:value_get(<<"spawn_points">>, Obj)),
+        maintenance => (fun(OptionalValue) -> case OptionalValue of undefined -> undefined; _ -> maintenance_info:decode_value(OptionalValue) end end)(sora_runtime:value_get(<<"maintenance">>, Obj))
     }.
 
 -spec decode_table(map()) -> table().

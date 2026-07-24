@@ -16,13 +16,13 @@ import { collectVec3TextKeys, decodeVec3, decodeVec3Value } from "./vec3.js";
 
 
 export interface Character {
-    id: number;
-    name: string;
-    rarity: Rarity;
-    baseLevel: number;
-    baseSkill: number;
-    starterItems: number[];
-    spawnPos: Vec3;
+    readonly id: number;
+    readonly name: string;
+    readonly rarity: Rarity;
+    readonly baseLevel: number;
+    readonly baseSkill: number;
+    readonly starterItems: readonly number[];
+    readonly spawnPos: Vec3;
 }
 
 export function decodeCharacter(reader: SoraReader): Character {
@@ -66,8 +66,8 @@ export class CharacterTable implements SoraKeyedTable<number, Character> {
     };
 
     private constructor(
-        private readonly _keys: number[],
-        private readonly _rows: Map<number, Character>,
+        private readonly _keys: readonly number[],
+        private readonly _rows: ReadonlyMap<number, Character>,
     ) {}
 
     static decode(rows: Character[]): CharacterTable {
@@ -81,25 +81,33 @@ export class CharacterTable implements SoraKeyedTable<number, Character> {
         return CharacterTable.tableInfo;
     }
 
-    len(): number {
+    get size(): number {
         return this._rows.size;
     }
     get(key: number): Character | undefined {
         return this._rows.get(key);
     }
 
-    rows(): ReadonlyMap<number, Character> {
+    has(key: number): boolean {
+        return this._rows.has(key);
+    }
+
+    get rows(): ReadonlyMap<number, Character> {
         return this._rows;
     }
 
-    keys(): readonly number[] {
+    get orderedKeys(): readonly number[] {
         return this._keys;
     }
 
-    orderedRows(): Character[] {
+    get orderedRows(): readonly Character[] {
         return this._keys.flatMap((key) => {
             const row = this._rows.get(key);
             return row === undefined ? [] : [row];
         });
+    }
+
+    [Symbol.iterator](): Iterator<Character> {
+        return this._rows.values();
     }
 }

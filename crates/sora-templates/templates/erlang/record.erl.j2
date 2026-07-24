@@ -25,7 +25,7 @@
 
 -type t() :: {{ "#{" }}
 {%- for field in record.fields %}
-    '{{ field.name }}' := {{ field.type_name }}{% if not loop.last %},{% endif %}
+    {{ field.atom_name }} := {{ field.type_name }}{% if not loop.last %},{% endif %}
 {%- endfor %}
 }.
 {%- if record.table %}
@@ -41,7 +41,7 @@ decode(Reader0) ->
 {%- endfor %}
     {{ "{" }}{{ "#{" }}
 {%- for field in record.fields %}
-        '{{ field.name }}' => {{ field.var_name }}{% if not loop.last %},{% endif %}
+        {{ field.atom_name }} => {{ field.var_name }}{% if not loop.last %},{% endif %}
 {%- endfor %}
     }, {{ record.reader_var }}}.
 
@@ -50,7 +50,7 @@ decode_value(Value) ->
     Obj = sora_runtime:expect_map(Value),
     {{ "#{" }}
 {%- for field in record.fields %}
-        '{{ field.name }}' => {{ field.value_decode | replace("__VALUE__", "sora_runtime:value_get(<<\"" ~ field.raw_name ~ "\">>, Obj)") }}{% if not loop.last %},{% endif %}
+        {{ field.atom_name }} => {{ field.value_decode | replace("__VALUE__", "sora_runtime:value_get(<<\"" ~ field.raw_name ~ "\">>, Obj)") }}{% if not loop.last %},{% endif %}
 {%- endfor %}
     }.
 
@@ -61,18 +61,18 @@ decode_value(Value) ->
 decode_table(Bundle) ->
     Rows = sora_runtime:decode_table(Bundle, ?TABLE_NAME, fun ?MODULE:decode/1, fun ?MODULE:decode_value/1),
 {%- if table.mode == "map" and table.key_field_name %}
-    Data = sora_runtime:decode_map_table(Rows, fun(Row) -> maps:get('{{ table.key_field_name }}', Row) end),
-    Keys = [maps:get('{{ table.key_field_name }}', Row) || Row <- Rows],
+    Data = sora_runtime:decode_map_table(Rows, fun(Row) -> maps:get({{ table.key_field_atom }}, Row) end),
+    Keys = [maps:get({{ table.key_field_atom }}, Row) || Row <- Rows],
 {%- elif table.mode == "singleton" %}
     Data = sora_runtime:require_singleton_table(Rows, ?TABLE_NAME),
 {%- else %}
     Data = Rows,
 {%- endif %}
 {%- for index in table.unique_indexes %}
-    {{ index.pascal_name }} = sora_runtime:decode_unique_index(Rows, fun(Row) -> maps:get('{{ index.field_name }}', Row) end),
+    {{ index.pascal_name }} = sora_runtime:decode_unique_index(Rows, fun(Row) -> maps:get({{ index.field_atom }}, Row) end),
 {%- endfor %}
 {%- for index in table.non_unique_indexes %}
-    {{ index.pascal_name }} = sora_runtime:decode_index(Rows, fun(Row) -> maps:get('{{ index.field_name }}', Row) end),
+    {{ index.pascal_name }} = sora_runtime:decode_index(Rows, fun(Row) -> maps:get({{ index.field_atom }}, Row) end),
 {%- endfor %}
     {{ "#{" }}
 {%- if table.mode == "map" and table.key_field_name %}
@@ -80,10 +80,10 @@ decode_table(Bundle) ->
 {%- endif %}
         data => Data
 {%- for index in table.unique_indexes %}
-        , '{{ index.name }}' => {{ index.pascal_name }}
+        , {{ index.atom_name }} => {{ index.pascal_name }}
 {%- endfor %}
 {%- for index in table.non_unique_indexes %}
-        , '{{ index.name }}' => {{ index.pascal_name }}
+        , {{ index.atom_name }} => {{ index.pascal_name }}
 {%- endfor %}
     }.
 
@@ -121,12 +121,12 @@ rows(Table) ->
 
 -spec get_{{ index.name }}({{ index.param_type }}, table()) -> t() | undefined.
 get_{{ index.name }}({{ index.param_var_name }}, Table) ->
-    maps:get({{ index.param_var_name }}, maps:get('{{ index.name }}', Table), undefined).
+    maps:get({{ index.param_var_name }}, maps:get({{ index.atom_name }}, Table), undefined).
 {%- endfor %}
 {%- for index in table.non_unique_indexes %}
 
 -spec find_{{ index.name }}({{ index.param_type }}, table()) -> [t()].
 find_{{ index.name }}({{ index.param_var_name }}, Table) ->
-    maps:get({{ index.param_var_name }}, maps:get('{{ index.name }}', Table), []).
+    maps:get({{ index.param_var_name }}, maps:get({{ index.atom_name }}, Table), []).
 {%- endfor %}
 {%- endif %}

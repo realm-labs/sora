@@ -68,8 +68,7 @@ public sealed class MaintenanceWindowTable : ISoraListTable<MaintenanceWindow>
     {
         return new MaintenanceWindowTable(rows);
     }
-
-    public List<MaintenanceWindow> Rows => rows;
+    public IReadOnlyList<MaintenanceWindow> Rows => rows;
     public MaintenanceWindow this[int index] => rows[index];
 
     public IEnumerator<MaintenanceWindow> GetEnumerator()

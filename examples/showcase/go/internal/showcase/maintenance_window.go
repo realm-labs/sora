@@ -83,9 +83,8 @@ func decodeMaintenanceWindowTable(source SoraTableSource) (*MaintenanceWindowTab
 	}
 	return buildMaintenanceWindowTable(rows)
 }
-
 func (table *MaintenanceWindowTable) Rows() []MaintenanceWindow {
-	return table.rows
+	return append([]MaintenanceWindow(nil), table.rows...)
 }
 func (table *MaintenanceWindowTable) Info() SoraTableInfo {
 	return maintenanceWindowTableInfo

@@ -3,9 +3,9 @@
 package showcase
 
 type DropEntry struct {
-	GroupId int32
+	GroupID int32
 	Seq     int32
-	ItemId  int32
+	ItemID  int32
 	Count   int32
 	Weight  float32
 }
@@ -13,7 +13,7 @@ type DropEntry struct {
 func decodeDropEntry(reader *SoraReader) (DropEntry, error) {
 	var value DropEntry
 	var err error
-	value.GroupId, err = reader.ReadInt32()
+	value.GroupID, err = reader.ReadInt32()
 	if err != nil {
 		return value, err
 	}
@@ -21,7 +21,7 @@ func decodeDropEntry(reader *SoraReader) (DropEntry, error) {
 	if err != nil {
 		return value, err
 	}
-	value.ItemId, err = reader.ReadInt32()
+	value.ItemID, err = reader.ReadInt32()
 	if err != nil {
 		return value, err
 	}
@@ -42,7 +42,7 @@ func decodeDropEntryValue(input SoraValue) (DropEntry, error) {
 	if err != nil {
 		return value, err
 	}
-	value.GroupId, err = obj.Get("group_id").AsInt32()
+	value.GroupID, err = obj.Get("group_id").AsInt32()
 	if err != nil {
 		return value, err
 	}
@@ -50,7 +50,7 @@ func decodeDropEntryValue(input SoraValue) (DropEntry, error) {
 	if err != nil {
 		return value, err
 	}
-	value.ItemId, err = obj.Get("item_id").AsInt32()
+	value.ItemID, err = obj.Get("item_id").AsInt32()
 	if err != nil {
 		return value, err
 	}
@@ -92,9 +92,8 @@ func decodeDropEntryTable(source SoraTableSource) (*DropEntryTable, error) {
 	}
 	return buildDropEntryTable(rows)
 }
-
 func (table *DropEntryTable) Rows() []DropEntry {
-	return table.rows
+	return append([]DropEntry(nil), table.rows...)
 }
 func (table *DropEntryTable) Info() SoraTableInfo {
 	return dropEntryTableInfo

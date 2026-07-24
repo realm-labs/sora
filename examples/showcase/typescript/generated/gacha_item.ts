@@ -13,10 +13,10 @@ import { collectRarityTextKeys, decodeRarity, decodeRarityValue } from "./rarity
 
 
 export interface GachaItem {
-    poolId: number;
-    itemId: number;
-    rarity: Rarity;
-    weight: number;
+    readonly poolId: number;
+    readonly itemId: number;
+    readonly rarity: Rarity;
+    readonly weight: number;
 }
 
 export function decodeGachaItem(reader: SoraReader): GachaItem {
@@ -52,7 +52,7 @@ export class GachaItemTable implements SoraListTable<GachaItem> {
     };
 
     private constructor(
-        private readonly _rows: GachaItem[],
+        private readonly _rows: readonly GachaItem[],
     ) {}
 
     static decode(rows: GachaItem[]): GachaItemTable {
@@ -65,10 +65,18 @@ export class GachaItemTable implements SoraListTable<GachaItem> {
         return GachaItemTable.tableInfo;
     }
 
-    len(): number {
+    get size(): number {
         return this._rows.length;
     }
-    rows(): readonly GachaItem[] {
+    get rows(): readonly GachaItem[] {
         return this._rows;
+    }
+
+    at(index: number): GachaItem | undefined {
+        return this._rows.at(index);
+    }
+
+    [Symbol.iterator](): Iterator<GachaItem> {
+        return this._rows[Symbol.iterator]();
     }
 }

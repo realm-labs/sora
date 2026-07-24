@@ -7,9 +7,9 @@
 -export_type([t/0, table/0]).
 
 -type t() :: #{
-    'level' := integer(),
-    'cost' := resource_cost:t(),
-    'perks' := [binary()]
+    level := integer(),
+    cost := resource_cost:t(),
+    perks := [binary()]
 }.
 
 -type table() :: map().
@@ -21,25 +21,25 @@ decode(Reader0) ->
     {Cost, Reader2} = (fun resource_cost:decode/1)(Reader1),
     {Perks, Reader3} = (fun(Reader) -> sora_runtime:read_list(fun sora_runtime:read_string/1, Reader) end)(Reader2),
     {#{
-        'level' => Level,
-        'cost' => Cost,
-        'perks' => Perks
+        level => Level,
+        cost => Cost,
+        perks => Perks
     }, Reader3}.
 
 -spec decode_value(map()) -> t().
 decode_value(Value) ->
     Obj = sora_runtime:expect_map(Value),
     #{
-        'level' => sora_runtime:expect_integer(sora_runtime:value_get(<<"level">>, Obj)),
-        'cost' => resource_cost:decode_value(sora_runtime:value_get(<<"cost">>, Obj)),
-        'perks' => sora_runtime:decode_value_list(fun(Item) -> sora_runtime:expect_binary(Item) end, sora_runtime:value_get(<<"perks">>, Obj))
+        level => sora_runtime:expect_integer(sora_runtime:value_get(<<"level">>, Obj)),
+        cost => resource_cost:decode_value(sora_runtime:value_get(<<"cost">>, Obj)),
+        perks => sora_runtime:decode_value_list(fun(Item) -> sora_runtime:expect_binary(Item) end, sora_runtime:value_get(<<"perks">>, Obj))
     }.
 
 -spec decode_table(map()) -> table().
 decode_table(Bundle) ->
     Rows = sora_runtime:decode_table(Bundle, ?TABLE_NAME, fun ?MODULE:decode/1, fun ?MODULE:decode_value/1),
-    Data = sora_runtime:decode_map_table(Rows, fun(Row) -> maps:get('level', Row) end),
-    Keys = [maps:get('level', Row) || Row <- Rows],
+    Data = sora_runtime:decode_map_table(Rows, fun(Row) -> maps:get(level, Row) end),
+    Keys = [maps:get(level, Row) || Row <- Rows],
     #{
         keys => Keys,
         data => Data

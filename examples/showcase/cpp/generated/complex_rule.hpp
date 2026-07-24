@@ -49,7 +49,7 @@ public:
         return info;
     }
 
-    ComplexRuleTable() {}
+    ComplexRuleTable() = default;
     ComplexRuleTable(const ComplexRuleTable&) = delete;
     ComplexRuleTable& operator=(const ComplexRuleTable&) = delete;
     ComplexRuleTable(ComplexRuleTable&&) = default;
@@ -58,8 +58,7 @@ public:
     static ComplexRuleTable decode(const SoraBundle& bundle) {
         std::vector<ComplexRule> rows = bundle.decode_table<ComplexRule>(NAME);
         ComplexRuleTable table;
-        for (std::size_t index = 0; index < rows.size(); ++index) {
-            const ComplexRule& row = rows[index];
+        for (const auto& row : rows) {
             table.keys_.push_back(row.id);
             table.rows_.emplace(row.id, row);
         }
@@ -76,7 +75,7 @@ public:
     }
 
     const ComplexRule* get(const std::int32_t& key) const {
-        typename std::unordered_map<std::int32_t, ComplexRule>::const_iterator it = rows_.find(key);
+        auto it = rows_.find(key);
         if (it == rows_.end()) {
             return nullptr;
         }
@@ -90,10 +89,8 @@ public:
     std::vector<const ComplexRule*> ordered_rows() const {
         std::vector<const ComplexRule*> rows;
         rows.reserve(keys_.size());
-        for (typename std::vector<std::int32_t>::const_iterator key = keys_.begin();
-             key != keys_.end();
-             ++key) {
-            typename std::unordered_map<std::int32_t, ComplexRule>::const_iterator it = rows_.find(*key);
+        for (const auto& key : keys_) {
+            auto it = rows_.find(key);
             if (it != rows_.end()) {
                 rows.push_back(&it->second);
             }

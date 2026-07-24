@@ -39,7 +39,7 @@ public:
         return info;
     }
 
-    MaintenanceWindowTable() {}
+    MaintenanceWindowTable() = default;
     MaintenanceWindowTable(const MaintenanceWindowTable&) = delete;
     MaintenanceWindowTable& operator=(const MaintenanceWindowTable&) = delete;
     MaintenanceWindowTable(MaintenanceWindowTable&&) = default;

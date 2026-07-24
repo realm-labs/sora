@@ -6,9 +6,9 @@
 -export_type([t/0, table/0]).
 
 -type t() :: #{
-    'character_id' := integer(),
-    'skill_id' := integer(),
-    'unlock_level' := integer()
+    character_id := integer(),
+    skill_id := integer(),
+    unlock_level := integer()
 }.
 
 -type table() :: map().
@@ -20,18 +20,18 @@ decode(Reader0) ->
     {SkillId, Reader2} = (fun sora_runtime:read_i32/1)(Reader1),
     {UnlockLevel, Reader3} = (fun sora_runtime:read_i32/1)(Reader2),
     {#{
-        'character_id' => CharacterId,
-        'skill_id' => SkillId,
-        'unlock_level' => UnlockLevel
+        character_id => CharacterId,
+        skill_id => SkillId,
+        unlock_level => UnlockLevel
     }, Reader3}.
 
 -spec decode_value(map()) -> t().
 decode_value(Value) ->
     Obj = sora_runtime:expect_map(Value),
     #{
-        'character_id' => sora_runtime:expect_integer(sora_runtime:value_get(<<"character_id">>, Obj)),
-        'skill_id' => sora_runtime:expect_integer(sora_runtime:value_get(<<"skill_id">>, Obj)),
-        'unlock_level' => sora_runtime:expect_integer(sora_runtime:value_get(<<"unlock_level">>, Obj))
+        character_id => sora_runtime:expect_integer(sora_runtime:value_get(<<"character_id">>, Obj)),
+        skill_id => sora_runtime:expect_integer(sora_runtime:value_get(<<"skill_id">>, Obj)),
+        unlock_level => sora_runtime:expect_integer(sora_runtime:value_get(<<"unlock_level">>, Obj))
     }.
 
 -spec decode_table(map()) -> table().

@@ -74,7 +74,7 @@ export declare const SORA_SCHEMA_FINGERPRINT: string;
 
 export declare class SoraConfig {
     static fromSource(source: SoraTableSource): SoraConfig;
-    tables(): SoraConfigTable[];
+    tables(): readonly SoraConfigTable[];
     validateLocalePack(pack: LocalePack): void;
     item(): ItemTable;
     shop(): ShopTable;

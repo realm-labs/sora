@@ -5,31 +5,31 @@
 -export([decode/1, decode_value/1]).
 -export_type([t/0]).
 -type t() ::
-    'common' |
-    'uncommon' |
-    'rare' |
-    'epic' |
-    'legendary'.
+    common |
+    uncommon |
+    rare |
+    epic |
+    legendary.
 
 -spec decode(sora_runtime:reader()) -> {t(), sora_runtime:reader()}.
 decode(Reader0) ->
     {Id, Reader1} = sora_runtime:read_u32(Reader0),
     case Id of
-        0 -> {'common', Reader1};
-        1 -> {'uncommon', Reader1};
-        2 -> {'rare', Reader1};
-        3 -> {'epic', Reader1};
-        4 -> {'legendary', Reader1};
+        0 -> {common, Reader1};
+        1 -> {uncommon, Reader1};
+        2 -> {rare, Reader1};
+        3 -> {epic, Reader1};
+        4 -> {legendary, Reader1};
         _ -> error({invalid_enum_id, rarity, Id})
     end.
 
 -spec decode_value(binary()) -> t().
 decode_value(Value) ->
     case Value of
-        <<"Common">> -> 'common';
-        <<"Uncommon">> -> 'uncommon';
-        <<"Rare">> -> 'rare';
-        <<"Epic">> -> 'epic';
-        <<"Legendary">> -> 'legendary';
+        <<"Common">> -> common;
+        <<"Uncommon">> -> uncommon;
+        <<"Rare">> -> rare;
+        <<"Epic">> -> epic;
+        <<"Legendary">> -> legendary;
         _ -> error({invalid_enum_value, rarity, Value})
     end.

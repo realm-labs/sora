@@ -10,7 +10,7 @@ namespace com.sora.showcase;
 public sealed record VipLevel(
     int Level,
     ResourceCost Cost,
-    List<string> Perks
+    IReadOnlyList<string> Perks
 )
 {
     internal static VipLevel Decode(SoraReader reader)
@@ -68,8 +68,7 @@ public sealed class VipLevelTable : ISoraKeyedTable<int, VipLevel>
     {
         return new VipLevelTable(rows.ConvertAll(row => row.Level), SoraConfig.DecodeMapTable(rows, row => row.Level));
     }
-
-    public Dictionary<int, VipLevel> Rows => rows;
+    public IReadOnlyDictionary<int, VipLevel> Rows => rows;
     public VipLevel this[int key] => rows[key];
 
     public VipLevel? Get(int key)

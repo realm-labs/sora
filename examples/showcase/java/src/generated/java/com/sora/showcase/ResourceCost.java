@@ -4,21 +4,11 @@ package com.sora.showcase;
 
 import java.util.List;
 
-public final class ResourceCost {
-    public final ResourceKind kind;
-    public final Integer id;
-    public final Integer count;
-
-    public ResourceCost(
-        ResourceKind kind,
-        Integer id,
-        Integer count
-    ) {
-        this.kind = kind;
-        this.id = id;
-        this.count = count;
-    }
-
+public record ResourceCost(
+    ResourceKind kind,
+    int id,
+    int count
+) {
     static ResourceCost decode(SoraReader reader) {
         return new ResourceCost(
             ResourceKind.decode(reader),

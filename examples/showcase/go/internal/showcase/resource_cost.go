@@ -4,7 +4,7 @@ package showcase
 
 type ResourceCost struct {
 	Kind  ResourceKind
-	Id    int32
+	ID    int32
 	Count int32
 }
 
@@ -15,7 +15,7 @@ func decodeResourceCost(reader *SoraReader) (ResourceCost, error) {
 	if err != nil {
 		return value, err
 	}
-	value.Id, err = reader.ReadInt32()
+	value.ID, err = reader.ReadInt32()
 	if err != nil {
 		return value, err
 	}
@@ -36,7 +36,7 @@ func decodeResourceCostValue(input SoraValue) (ResourceCost, error) {
 	if err != nil {
 		return value, err
 	}
-	value.Id, err = obj.Get("id").AsInt32()
+	value.ID, err = obj.Get("id").AsInt32()
 	if err != nil {
 		return value, err
 	}

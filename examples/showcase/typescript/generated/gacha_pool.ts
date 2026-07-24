@@ -13,9 +13,9 @@ import { collectResourceCostTextKeys, decodeResourceCost, decodeResourceCostValu
 
 
 export interface GachaPool {
-    id: number;
-    name: string;
-    cost: ResourceCost;
+    readonly id: number;
+    readonly name: string;
+    readonly cost: ResourceCost;
 }
 
 export function decodeGachaPool(reader: SoraReader): GachaPool {
@@ -51,8 +51,8 @@ export class GachaPoolTable implements SoraKeyedTable<number, GachaPool> {
     };
 
     private constructor(
-        private readonly _keys: number[],
-        private readonly _rows: Map<number, GachaPool>,
+        private readonly _keys: readonly number[],
+        private readonly _rows: ReadonlyMap<number, GachaPool>,
     ) {}
 
     static decode(rows: GachaPool[]): GachaPoolTable {
@@ -66,25 +66,33 @@ export class GachaPoolTable implements SoraKeyedTable<number, GachaPool> {
         return GachaPoolTable.tableInfo;
     }
 
-    len(): number {
+    get size(): number {
         return this._rows.size;
     }
     get(key: number): GachaPool | undefined {
         return this._rows.get(key);
     }
 
-    rows(): ReadonlyMap<number, GachaPool> {
+    has(key: number): boolean {
+        return this._rows.has(key);
+    }
+
+    get rows(): ReadonlyMap<number, GachaPool> {
         return this._rows;
     }
 
-    keys(): readonly number[] {
+    get orderedKeys(): readonly number[] {
         return this._keys;
     }
 
-    orderedRows(): GachaPool[] {
+    get orderedRows(): readonly GachaPool[] {
         return this._keys.flatMap((key) => {
             const row = this._rows.get(key);
             return row === undefined ? [] : [row];
         });
+    }
+
+    [Symbol.iterator](): Iterator<GachaPool> {
+        return this._rows.values();
     }
 }

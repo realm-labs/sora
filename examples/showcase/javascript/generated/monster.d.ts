@@ -8,12 +8,12 @@ import type { Vec3 } from "./vec3.js";
 
 
 export interface Monster {
-    id: number;
-    name: string;
-    level: number;
-    element: ElementType;
-    dropGroup: number;
-    spawnPos: Vec3;
+    readonly id: number;
+    readonly name: string;
+    readonly level: number;
+    readonly element: ElementType;
+    readonly dropGroup: number;
+    readonly spawnPos: Vec3;
 }
 
 export declare function decodeMonster(reader: SoraReader): Monster;
@@ -24,9 +24,11 @@ export declare class MonsterTable implements SoraKeyedTable<number, Monster> {
     static readonly tableInfo: SoraTableInfo;
     static decode(rows: Monster[]): MonsterTable;
     info(): SoraTableInfo;
-    len(): number;
+    readonly size: number;
     get(key: number): Monster | undefined;
-    rows(): ReadonlyMap<number, Monster>;
-    keys(): readonly number[];
-    orderedRows(): Monster[];
+    has(key: number): boolean;
+    readonly rows: ReadonlyMap<number, Monster>;
+    readonly orderedKeys: readonly number[];
+    readonly orderedRows: readonly Monster[];
+    [Symbol.iterator](): Iterator<Monster>;
 }

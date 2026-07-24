@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from collections.abc import Iterator, Mapping, Sequence
 from typing import TYPE_CHECKING
 
 from .sora_runtime import SoraReader, TextKey
@@ -46,7 +47,7 @@ class MailReward:
         pass
 
 
-class MailRewardTable(SoraConfigTable):
+class MailRewardTable(SoraConfigTable, Sequence[MailReward]):
     NAME = "MailReward"
     INFO = SoraTableInfo(
         name=NAME,
@@ -72,9 +73,12 @@ class MailRewardTable(SoraConfigTable):
     def info(self) -> SoraTableInfo:
         return self.INFO
 
-    def len(self) -> int:
+    def __len__(self) -> int:
         return len(self._rows)
 
 
-    def rows(self) -> list[MailReward]:
-        return self._rows
+    def __getitem__(self, index: int | slice) -> MailReward | list[MailReward]:
+        return self._rows[index]
+
+    def __iter__(self) -> Iterator[MailReward]:
+        return iter(self._rows)

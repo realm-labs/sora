@@ -3,9 +3,9 @@
 local Runtime = require("generated.sora_runtime")
 
 ---@class CharacterSkill
----@field characterId integer
----@field skillId integer
----@field unlockLevel integer
+---@field character_id integer
+---@field skill_id integer
+---@field unlock_level integer
 
 local CharacterSkill = {}
 
@@ -13,9 +13,9 @@ local CharacterSkill = {}
 ---@return CharacterSkill
 function CharacterSkill.decode(reader)
     return {
-        characterId = reader:read_i32(),
-        skillId = reader:read_i32(),
-        unlockLevel = reader:read_i32(),
+        character_id = reader:read_i32(),
+        skill_id = reader:read_i32(),
+        unlock_level = reader:read_i32(),
     }
 end
 
@@ -24,9 +24,9 @@ end
 function CharacterSkill.decode_value(value)
     local obj = Runtime.expect_table(value)
     return {
-        characterId = Runtime.expect_integer(obj["character_id"]),
-        skillId = Runtime.expect_integer(obj["skill_id"]),
-        unlockLevel = Runtime.expect_integer(obj["unlock_level"]),
+        character_id = Runtime.expect_integer(obj["character_id"]),
+        skill_id = Runtime.expect_integer(obj["skill_id"]),
+        unlock_level = Runtime.expect_integer(obj["unlock_level"]),
     }
 end
 

@@ -3,31 +3,14 @@
 package com.sora.showcase;
 
 import java.util.List;
-import java.util.Map;
 
-
-public final class ShopItem {
-    public final Integer shopId;
-    public final Integer seq;
-    public final Integer itemId;
-    public final ResourceCost price;
-    @SoraNullable
-    public final Integer dailyLimit;
-
-    public ShopItem(
-        Integer shopId,
-        Integer seq,
-        Integer itemId,
-        ResourceCost price,
-        @SoraNullable Integer dailyLimit
-    ) {
-        this.shopId = shopId;
-        this.seq = seq;
-        this.itemId = itemId;
-        this.price = price;
-        this.dailyLimit = dailyLimit;
-    }
-
+public record ShopItem(
+    int shopId,
+    int seq,
+    int itemId,
+    ResourceCost price,
+    @SoraNullable Integer dailyLimit
+) {
     static ShopItem decode(SoraReader reader) {
         return new ShopItem(
             reader.readI32(),
@@ -51,47 +34,5 @@ public final class ShopItem {
 
     void collectTextKeys(List<TextKey> out) {
         this.price.collectTextKeys(out);
-    }
-}
-
-final class ShopItemTable extends java.util.AbstractList<ShopItem> implements SoraListTable<ShopItem> {
-    static final String NAME = "ShopItem";
-    static final SoraTableInfo INFO = new SoraTableInfo(
-        NAME,
-        "ShopItem",
-        SoraTableShape.LIST,
-        null,
-        List.of(
-        )
-    );
-    private final java.util.List<ShopItem> rows;
-
-    private ShopItemTable(java.util.List<ShopItem> rows) {
-        this.rows = rows;
-    }
-
-    private static ShopItemTable fromRows(List<ShopItem> rows) {
-        return new ShopItemTable(rows);
-    }
-
-    static ShopItemTable decode(SoraTableSource source) {
-        return fromRows(source.decodeTable(NAME, ShopItem::decode, ShopItem::decode));
-    }
-
-    public java.util.List<ShopItem> rows() {
-        return rows;
-    }
-    @Override
-    public ShopItem get(int index) {
-        return rows.get(index);
-    }
-    @Override
-    public SoraTableInfo info() {
-        return INFO;
-    }
-
-    @Override
-    public int size() {
-        return rows.size();
     }
 }

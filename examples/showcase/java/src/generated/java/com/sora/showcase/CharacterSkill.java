@@ -3,24 +3,12 @@
 package com.sora.showcase;
 
 import java.util.List;
-import java.util.Map;
 
-
-public final class CharacterSkill {
-    public final Integer characterId;
-    public final Integer skillId;
-    public final Integer unlockLevel;
-
-    public CharacterSkill(
-        Integer characterId,
-        Integer skillId,
-        Integer unlockLevel
-    ) {
-        this.characterId = characterId;
-        this.skillId = skillId;
-        this.unlockLevel = unlockLevel;
-    }
-
+public record CharacterSkill(
+    int characterId,
+    int skillId,
+    int unlockLevel
+) {
     static CharacterSkill decode(SoraReader reader) {
         return new CharacterSkill(
             reader.readI32(),
@@ -39,47 +27,5 @@ public final class CharacterSkill {
     }
 
     void collectTextKeys(List<TextKey> out) {
-    }
-}
-
-final class CharacterSkillTable extends java.util.AbstractList<CharacterSkill> implements SoraListTable<CharacterSkill> {
-    static final String NAME = "CharacterSkill";
-    static final SoraTableInfo INFO = new SoraTableInfo(
-        NAME,
-        "CharacterSkill",
-        SoraTableShape.LIST,
-        null,
-        List.of(
-        )
-    );
-    private final java.util.List<CharacterSkill> rows;
-
-    private CharacterSkillTable(java.util.List<CharacterSkill> rows) {
-        this.rows = rows;
-    }
-
-    private static CharacterSkillTable fromRows(List<CharacterSkill> rows) {
-        return new CharacterSkillTable(rows);
-    }
-
-    static CharacterSkillTable decode(SoraTableSource source) {
-        return fromRows(source.decodeTable(NAME, CharacterSkill::decode, CharacterSkill::decode));
-    }
-
-    public java.util.List<CharacterSkill> rows() {
-        return rows;
-    }
-    @Override
-    public CharacterSkill get(int index) {
-        return rows.get(index);
-    }
-    @Override
-    public SoraTableInfo info() {
-        return INFO;
-    }
-
-    @Override
-    public int size() {
-        return rows.size();
     }
 }

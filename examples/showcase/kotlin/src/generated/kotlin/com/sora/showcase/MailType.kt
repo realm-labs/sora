@@ -3,24 +3,24 @@
 package com.sora.showcase
 
 enum class MailType(val id: Int) {
-    System(0),
-    Event(1),
-    Compensation(2);
+    SYSTEM(0),
+    EVENT(1),
+    COMPENSATION(2);
 
     companion object {
         fun decode(reader: SoraReader): MailType =
             when (val id = reader.readU32()) {
-                0 -> System
-                1 -> Event
-                2 -> Compensation
+                0 -> SYSTEM
+                1 -> EVENT
+                2 -> COMPENSATION
                 else -> throw SoraReadException("invalid enum id $id for MailType")
             }
 
         fun decode(value: SoraValue): MailType =
             when (val name = value.asString()) {
-                "System" -> System
-                "Event" -> Event
-                "Compensation" -> Compensation
+                "System" -> SYSTEM
+                "Event" -> EVENT
+                "Compensation" -> COMPENSATION
                 else -> throw SoraReadException("invalid enum value $name for MailType")
             }
     }

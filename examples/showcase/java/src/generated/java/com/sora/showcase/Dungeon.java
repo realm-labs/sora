@@ -3,27 +3,13 @@
 package com.sora.showcase;
 
 import java.util.List;
-import java.util.Map;
 
-
-public final class Dungeon {
-    public final Integer id;
-    public final String name;
-    public final java.util.List<Integer> stageIds;
-    public final ResourceCost entryCost;
-
-    public Dungeon(
-        Integer id,
-        String name,
-        java.util.List<Integer> stageIds,
-        ResourceCost entryCost
-    ) {
-        this.id = id;
-        this.name = name;
-        this.stageIds = stageIds;
-        this.entryCost = entryCost;
-    }
-
+public record Dungeon(
+    int id,
+    String name,
+    java.util.List<Integer> stageIds,
+    ResourceCost entryCost
+) {
     static Dungeon decode(SoraReader reader) {
         return new Dungeon(
             reader.readI32(),
@@ -45,63 +31,5 @@ public final class Dungeon {
 
     void collectTextKeys(List<TextKey> out) {
         this.entryCost.collectTextKeys(out);
-    }
-}
-
-final class DungeonTable extends java.util.AbstractMap<Integer, Dungeon> implements SoraKeyedTable<Integer, Dungeon> {
-    static final String NAME = "Dungeon";
-    static final SoraTableInfo INFO = new SoraTableInfo(
-        NAME,
-        "Dungeon",
-        SoraTableShape.KEYED,
-        new SoraKeyInfo("id", "Integer"),
-        List.of(
-        )
-    );
-    private final List<Integer> keys;
-    private final java.util.Map<Integer, Dungeon> rows;
-
-    private DungeonTable(List<Integer> keys, java.util.Map<Integer, Dungeon> rows) {
-        this.keys = keys;
-        this.rows = rows;
-    }
-
-    private static DungeonTable fromRows(List<Dungeon> rows) {
-        return new DungeonTable(rows.stream().map(row -> row.id).toList(), SoraConfig.decodeMapTable(rows, row -> row.id));
-    }
-
-    static DungeonTable decode(SoraTableSource source) {
-        return fromRows(source.decodeTable(NAME, Dungeon::decode, Dungeon::decode));
-    }
-
-    public java.util.Map<Integer, Dungeon> rows() {
-        return rows;
-    }
-    @Override
-    @SoraNullable
-    public Dungeon get(Object key) {
-        return rows.get(key);
-    }
-
-    public List<Integer> orderedKeys() {
-        return keys;
-    }
-
-    public List<Dungeon> orderedRows() {
-        return keys.stream().map(rows::get).toList();
-    }
-
-    @Override
-    public java.util.Set<Map.Entry<Integer, Dungeon>> entrySet() {
-        return rows.entrySet();
-    }
-    @Override
-    public SoraTableInfo info() {
-        return INFO;
-    }
-
-    @Override
-    public int size() {
-        return rows.size();
     }
 }

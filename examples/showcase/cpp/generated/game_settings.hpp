@@ -55,7 +55,7 @@ public:
         return info;
     }
 
-    GameSettingsTable() {}
+    GameSettingsTable() = default;
     GameSettingsTable(const GameSettingsTable&) = delete;
     GameSettingsTable& operator=(const GameSettingsTable&) = delete;
     GameSettingsTable(GameSettingsTable&&) = default;

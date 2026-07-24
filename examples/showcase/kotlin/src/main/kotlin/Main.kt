@@ -18,10 +18,10 @@ fun main() {
 
     check(sword.name == "Iron Sword")
     check(swordByName.id == 1001)
-    check(sword.itemType == ItemType.Weapon)
-    check(config.item.findByItemType(ItemType.Weapon).any { it.id == sword.id })
+    check(sword.itemType == ItemType.WEAPON)
+    check(config.item.findByItemType(ItemType.WEAPON).any { it.id == sword.id })
     check(quest.title == "First Trial")
-    check(quest.questType == QuestType.Main)
+    check(quest.questType == QuestType.MAIN)
     check(quest.rewards.size == 2)
     check(i18n.text(achievement.titleKey) == "中文文本 1")
     check(settings.startingGold == 100)

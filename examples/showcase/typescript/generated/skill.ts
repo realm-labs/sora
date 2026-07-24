@@ -22,17 +22,17 @@ import { collectVec3TextKeys, decodeVec3, decodeVec3Value } from "./vec3.js";
 
 
 export interface Skill {
-    id: number;
-    name: string;
-    element: ElementType;
+    readonly id: number;
+    readonly name: string;
+    readonly element: ElementType;
     /** Tuple cost, e.g. Gold,0,150 */
-    cost: ResourceCost;
+    readonly cost: ResourceCost;
     /** JSON object with element/power/radius */
-    effect: SkillEffect;
-    requiredLevel: number;
+    readonly effect: SkillEffect;
+    readonly requiredLevel: number;
     /** Optional item requirement */
-    requiredItem: number | undefined;
-    castOrigin: Vec3;
+    readonly requiredItem: number | undefined;
+    readonly castOrigin: Vec3;
 }
 
 export function decodeSkill(reader: SoraReader): Skill {
@@ -80,8 +80,8 @@ export class SkillTable implements SoraKeyedTable<number, Skill> {
     };
 
     private constructor(
-        private readonly _keys: number[],
-        private readonly _rows: Map<number, Skill>,
+        private readonly _keys: readonly number[],
+        private readonly _rows: ReadonlyMap<number, Skill>,
     ) {}
 
     static decode(rows: Skill[]): SkillTable {
@@ -95,25 +95,33 @@ export class SkillTable implements SoraKeyedTable<number, Skill> {
         return SkillTable.tableInfo;
     }
 
-    len(): number {
+    get size(): number {
         return this._rows.size;
     }
     get(key: number): Skill | undefined {
         return this._rows.get(key);
     }
 
-    rows(): ReadonlyMap<number, Skill> {
+    has(key: number): boolean {
+        return this._rows.has(key);
+    }
+
+    get rows(): ReadonlyMap<number, Skill> {
         return this._rows;
     }
 
-    keys(): readonly number[] {
+    get orderedKeys(): readonly number[] {
         return this._keys;
     }
 
-    orderedRows(): Skill[] {
+    get orderedRows(): readonly Skill[] {
         return this._keys.flatMap((key) => {
             const row = this._rows.get(key);
             return row === undefined ? [] : [row];
         });
+    }
+
+    [Symbol.iterator](): Iterator<Skill> {
+        return this._rows.values();
     }
 }

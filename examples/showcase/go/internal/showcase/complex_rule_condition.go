@@ -3,19 +3,19 @@
 package showcase
 
 type ComplexRuleCondition struct {
-	Id     int32
-	RuleId int32
+	ID     int32
+	RuleID int32
 	Value  EventCondition
 }
 
 func decodeComplexRuleCondition(reader *SoraReader) (ComplexRuleCondition, error) {
 	var value ComplexRuleCondition
 	var err error
-	value.Id, err = reader.ReadInt32()
+	value.ID, err = reader.ReadInt32()
 	if err != nil {
 		return value, err
 	}
-	value.RuleId, err = reader.ReadInt32()
+	value.RuleID, err = reader.ReadInt32()
 	if err != nil {
 		return value, err
 	}
@@ -32,11 +32,11 @@ func decodeComplexRuleConditionValue(input SoraValue) (ComplexRuleCondition, err
 	if err != nil {
 		return value, err
 	}
-	value.Id, err = obj.Get("id").AsInt32()
+	value.ID, err = obj.Get("id").AsInt32()
 	if err != nil {
 		return value, err
 	}
-	value.RuleId, err = obj.Get("rule_id").AsInt32()
+	value.RuleID, err = obj.Get("rule_id").AsInt32()
 	if err != nil {
 		return value, err
 	}
@@ -69,9 +69,9 @@ type ComplexRuleConditionTable struct {
 func buildComplexRuleConditionTable(rows []ComplexRuleCondition) (*ComplexRuleConditionTable, error) {
 	keys := make([]int32, 0, len(rows))
 	for _, row := range rows {
-		keys = append(keys, row.Id)
+		keys = append(keys, row.ID)
 	}
-	return &ComplexRuleConditionTable{keys: keys, rows: DecodeMapTable(rows, func(row ComplexRuleCondition) int32 { return row.Id })}, nil
+	return &ComplexRuleConditionTable{keys: keys, rows: DecodeMapTable(rows, func(row ComplexRuleCondition) int32 { return row.ID })}, nil
 }
 
 func decodeComplexRuleConditionTable(source SoraTableSource) (*ComplexRuleConditionTable, error) {
@@ -81,9 +81,12 @@ func decodeComplexRuleConditionTable(source SoraTableSource) (*ComplexRuleCondit
 	}
 	return buildComplexRuleConditionTable(rows)
 }
-
 func (table *ComplexRuleConditionTable) Rows() map[int32]ComplexRuleCondition {
-	return table.rows
+	rows := make(map[int32]ComplexRuleCondition, len(table.rows))
+	for key, row := range table.rows {
+		rows[key] = row
+	}
+	return rows
 }
 func (table *ComplexRuleConditionTable) Get(key int32) (ComplexRuleCondition, bool) {
 	value, ok := table.rows[key]
@@ -91,7 +94,7 @@ func (table *ComplexRuleConditionTable) Get(key int32) (ComplexRuleCondition, bo
 }
 
 func (table *ComplexRuleConditionTable) Keys() []int32 {
-	return table.keys
+	return append([]int32(nil), table.keys...)
 }
 
 func (table *ComplexRuleConditionTable) OrderedRows() []ComplexRuleCondition {

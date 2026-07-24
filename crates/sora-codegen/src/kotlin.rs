@@ -1,5 +1,6 @@
 use std::path::{Path, PathBuf};
 
+use heck::ToShoutySnakeCase;
 use minijinja::context;
 use serde::Serialize;
 use sora_diagnostics::Result;
@@ -8,8 +9,8 @@ use sora_ir::model::{ConfigIr, TableModeIr, TypeIr};
 use crate::{
     generator::{CodeGenerator, CodegenContext, runtime_format_name},
     model::{
-        BaseEnumValue, BaseField, BaseIndex, BaseModel, BaseRecord, BaseTable, BaseUnion,
-        BaseUnionVariant, build_base_model,
+        BaseField, BaseIndex, BaseModel, BaseRecord, BaseTable, BaseUnion, BaseUnionVariant,
+        build_base_model,
     },
     options::LanguageCodegenOptions,
     render::{ensure_dir, render_template, write_file},
@@ -97,7 +98,14 @@ struct KotlinModel {
 #[derive(Debug, Clone, Serialize)]
 struct KotlinEnum {
     name: String,
-    values: Vec<BaseEnumValue>,
+    values: Vec<KotlinEnumValue>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+struct KotlinEnumValue {
+    raw_name: String,
+    const_name: String,
+    id: u32,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -175,7 +183,15 @@ impl KotlinModel {
                 .into_iter()
                 .map(|item| KotlinEnum {
                     name: item.pascal_name,
-                    values: item.values,
+                    values: item
+                        .values
+                        .into_iter()
+                        .map(|value| KotlinEnumValue {
+                            const_name: value.name.to_shouty_snake_case(),
+                            raw_name: value.name,
+                            id: value.id,
+                        })
+                        .collect(),
                 })
                 .collect(),
             unions: model

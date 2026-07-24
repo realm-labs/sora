@@ -72,8 +72,7 @@ public sealed class AchievementTable : ISoraKeyedTable<int, Achievement>
     {
         return new AchievementTable(rows.ConvertAll(row => row.Id), SoraConfig.DecodeMapTable(rows, row => row.Id));
     }
-
-    public Dictionary<int, Achievement> Rows => rows;
+    public IReadOnlyDictionary<int, Achievement> Rows => rows;
     public Achievement this[int key] => rows[key];
 
     public Achievement? Get(int key)

@@ -4,9 +4,9 @@ import type { SoraKeyedTable, SoraTableInfo, SoraReader, SoraValue, TextKey } fr
 
 
 export interface Dialogue {
-    id: number;
-    speakerKey: TextKey;
-    lines: string[];
+    readonly id: number;
+    readonly speakerKey: TextKey;
+    readonly lines: readonly string[];
 }
 
 export declare function decodeDialogue(reader: SoraReader): Dialogue;
@@ -17,9 +17,11 @@ export declare class DialogueTable implements SoraKeyedTable<number, Dialogue> {
     static readonly tableInfo: SoraTableInfo;
     static decode(rows: Dialogue[]): DialogueTable;
     info(): SoraTableInfo;
-    len(): number;
+    readonly size: number;
     get(key: number): Dialogue | undefined;
-    rows(): ReadonlyMap<number, Dialogue>;
-    keys(): readonly number[];
-    orderedRows(): Dialogue[];
+    has(key: number): boolean;
+    readonly rows: ReadonlyMap<number, Dialogue>;
+    readonly orderedKeys: readonly number[];
+    readonly orderedRows: readonly Dialogue[];
+    [Symbol.iterator](): Iterator<Dialogue>;
 }

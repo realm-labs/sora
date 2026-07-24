@@ -10,7 +10,7 @@ namespace com.sora.showcase;
 public sealed record RewardBundle(
     ResourceCost Cost,
     int Weight,
-    List<string> Labels
+    IReadOnlyList<string> Labels
 )
 {
     internal static RewardBundle Decode(SoraReader reader)

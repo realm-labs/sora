@@ -68,7 +68,11 @@ public:
 
     {{ union.pascal_name }}()
         : tag_(Tag::{{ union.variants[0].name }}),
+{%- if options.has_make_unique %}
+          value_(std::make_unique<TypedHolder<{{ union.variants[0].name }}>>({{ union.variants[0].name }}{})) {}
+{%- else %}
           value_(new TypedHolder<{{ union.variants[0].name }}>({{ union.variants[0].name }}{})) {}
+{%- endif %}
 
     Tag tag() const { return tag_; }
 
@@ -76,7 +80,11 @@ public:
     static {{ union.pascal_name }} {{ variant.method_name }}({{ variant.name }} value) {
         {{ union.pascal_name }} result;
         result.tag_ = Tag::{{ variant.name }};
+{%- if options.has_make_unique %}
+        result.value_ = std::make_unique<TypedHolder<{{ variant.name }}>>(value);
+{%- else %}
         result.value_.reset(new TypedHolder<{{ variant.name }}>(value));
+{%- endif %}
         return result;
     }
 

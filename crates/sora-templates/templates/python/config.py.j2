@@ -96,12 +96,12 @@ class SoraConfig:
         keys: list[TextKey] = []
 {%- for table in model.tables %}
 {%- if table.mode == "singleton" %}
-        self.{{ table.snake_name }}().row().collect_text_keys(keys)
+        self.{{ table.snake_name }}().row.collect_text_keys(keys)
 {%- elif table.mode == "map" %}
-        for row in self.{{ table.snake_name }}().rows().values():
+        for row in self.{{ table.snake_name }}().values():
             row.collect_text_keys(keys)
 {%- else %}
-        for row in self.{{ table.snake_name }}().rows():
+        for row in self.{{ table.snake_name }}():
             row.collect_text_keys(keys)
 {%- endif %}
 {%- endfor %}

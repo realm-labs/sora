@@ -17,7 +17,7 @@ i18n.setLocale("zh_cn");
 const sword = config.item().get(1001);
 const swordByName = config.item().getByName("Iron Sword");
 const quest = config.quest().get(5001);
-const settings = config.gameSettings().row();
+const settings = config.gameSettings().row;
 const eventRule = config.eventRule().get(17001);
 
 check(sword?.name === "Iron Sword");
@@ -28,19 +28,19 @@ check(quest?.title === "First Trial");
 check(quest?.questType === "Main");
 check(quest?.rewards.length === 2);
 check(settings.startingGold === 100);
-check(config.stage().len() === 40);
-check(config.monster().len() === 80);
+check(config.stage().size === 40);
+check(config.monster().size === 80);
 const achievement = config.achievement().get(14001);
 check(i18n.text(achievement.titleKey) === "中文文本 1");
 check(i18n.format(achievement.titleKey, { count: 100 }) === "中文文本 1");
-check(config.eventRule().len() === 20);
+check(config.eventRule().size === 20);
 check(eventRule?.condition.type === "QuestCompleted");
 check(eventRule.condition.questId === 5002);
 check(eventRule.actions[0]?.type === "AddItem");
 check(eventRule.actions[0].itemId === 1007);
 
 console.log(
-    `loaded ${config.item().len()} items, ${config.skill().len()} skills, ${config.quest().len()} quests, ${config.eventRule().len()} event rules`,
+    `loaded ${config.item().size} items, ${config.skill().size} skills, ${config.quest().size} quests, ${config.eventRule().size} event rules`,
 );
 
 function check(condition) {

@@ -3,7 +3,7 @@
 package showcase
 
 type ComplexConditionGroup struct {
-	Id   int32
+	ID   int32
 	Name string
 	// Conditions: A derived list of union values; each child row is edited without JSON
 	Conditions []EventCondition
@@ -12,7 +12,7 @@ type ComplexConditionGroup struct {
 func decodeComplexConditionGroup(reader *SoraReader) (ComplexConditionGroup, error) {
 	var value ComplexConditionGroup
 	var err error
-	value.Id, err = reader.ReadInt32()
+	value.ID, err = reader.ReadInt32()
 	if err != nil {
 		return value, err
 	}
@@ -33,7 +33,7 @@ func decodeComplexConditionGroupValue(input SoraValue) (ComplexConditionGroup, e
 	if err != nil {
 		return value, err
 	}
-	value.Id, err = obj.Get("id").AsInt32()
+	value.ID, err = obj.Get("id").AsInt32()
 	if err != nil {
 		return value, err
 	}
@@ -72,9 +72,9 @@ type ComplexConditionGroupTable struct {
 func buildComplexConditionGroupTable(rows []ComplexConditionGroup) (*ComplexConditionGroupTable, error) {
 	keys := make([]int32, 0, len(rows))
 	for _, row := range rows {
-		keys = append(keys, row.Id)
+		keys = append(keys, row.ID)
 	}
-	return &ComplexConditionGroupTable{keys: keys, rows: DecodeMapTable(rows, func(row ComplexConditionGroup) int32 { return row.Id })}, nil
+	return &ComplexConditionGroupTable{keys: keys, rows: DecodeMapTable(rows, func(row ComplexConditionGroup) int32 { return row.ID })}, nil
 }
 
 func decodeComplexConditionGroupTable(source SoraTableSource) (*ComplexConditionGroupTable, error) {
@@ -84,9 +84,12 @@ func decodeComplexConditionGroupTable(source SoraTableSource) (*ComplexCondition
 	}
 	return buildComplexConditionGroupTable(rows)
 }
-
 func (table *ComplexConditionGroupTable) Rows() map[int32]ComplexConditionGroup {
-	return table.rows
+	rows := make(map[int32]ComplexConditionGroup, len(table.rows))
+	for key, row := range table.rows {
+		rows[key] = row
+	}
+	return rows
 }
 func (table *ComplexConditionGroupTable) Get(key int32) (ComplexConditionGroup, bool) {
 	value, ok := table.rows[key]
@@ -94,7 +97,7 @@ func (table *ComplexConditionGroupTable) Get(key int32) (ComplexConditionGroup, 
 }
 
 func (table *ComplexConditionGroupTable) Keys() []int32 {
-	return table.keys
+	return append([]int32(nil), table.keys...)
 }
 
 func (table *ComplexConditionGroupTable) OrderedRows() []ComplexConditionGroup {

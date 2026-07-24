@@ -13,11 +13,11 @@ import { collectRewardTextKeys, decodeReward, decodeRewardValue } from "./reward
 
 
 export interface Stage {
-    id: number;
-    name: string;
-    monsterIds: number[];
-    recommendedPower: number;
-    firstClearRewards: Reward[];
+    readonly id: number;
+    readonly name: string;
+    readonly monsterIds: readonly number[];
+    readonly recommendedPower: number;
+    readonly firstClearRewards: readonly Reward[];
 }
 
 export function decodeStage(reader: SoraReader): Stage {
@@ -57,8 +57,8 @@ export class StageTable implements SoraKeyedTable<number, Stage> {
     };
 
     private constructor(
-        private readonly _keys: number[],
-        private readonly _rows: Map<number, Stage>,
+        private readonly _keys: readonly number[],
+        private readonly _rows: ReadonlyMap<number, Stage>,
     ) {}
 
     static decode(rows: Stage[]): StageTable {
@@ -72,25 +72,33 @@ export class StageTable implements SoraKeyedTable<number, Stage> {
         return StageTable.tableInfo;
     }
 
-    len(): number {
+    get size(): number {
         return this._rows.size;
     }
     get(key: number): Stage | undefined {
         return this._rows.get(key);
     }
 
-    rows(): ReadonlyMap<number, Stage> {
+    has(key: number): boolean {
+        return this._rows.has(key);
+    }
+
+    get rows(): ReadonlyMap<number, Stage> {
         return this._rows;
     }
 
-    keys(): readonly number[] {
+    get orderedKeys(): readonly number[] {
         return this._keys;
     }
 
-    orderedRows(): Stage[] {
+    get orderedRows(): readonly Stage[] {
         return this._keys.flatMap((key) => {
             const row = this._rows.get(key);
             return row === undefined ? [] : [row];
         });
+    }
+
+    [Symbol.iterator](): Iterator<Stage> {
+        return this._rows.values();
     }
 }

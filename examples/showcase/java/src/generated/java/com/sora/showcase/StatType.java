@@ -3,11 +3,11 @@
 package com.sora.showcase;
 
 public enum StatType {
-    Hp(0),
-    Attack(1),
-    Defense(2),
-    Speed(3),
-    CritRate(4);
+    HP(0),
+    ATTACK(1),
+    DEFENSE(2),
+    SPEED(3),
+    CRIT_RATE(4);
 
     private final int id;
 
@@ -22,15 +22,15 @@ public enum StatType {
     static StatType decode(SoraReader reader) {
         switch (reader.readU32()) {
             case 0:
-                return Hp;
+                return HP;
             case 1:
-                return Attack;
+                return ATTACK;
             case 2:
-                return Defense;
+                return DEFENSE;
             case 3:
-                return Speed;
+                return SPEED;
             case 4:
-                return CritRate;
+                return CRIT_RATE;
             default:
                 throw new SoraReadException("invalid enum id for StatType");
         }
@@ -39,15 +39,15 @@ public enum StatType {
     static StatType decode(SoraValue value) {
         switch (value.asString()) {
             case "Hp":
-                return Hp;
+                return HP;
             case "Attack":
-                return Attack;
+                return ATTACK;
             case "Defense":
-                return Defense;
+                return DEFENSE;
             case "Speed":
-                return Speed;
+                return SPEED;
             case "CritRate":
-                return CritRate;
+                return CRIT_RATE;
             default:
                 throw new SoraReadException("invalid enum value for StatType");
         }

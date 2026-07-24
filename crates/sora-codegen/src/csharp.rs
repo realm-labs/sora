@@ -395,11 +395,11 @@ impl<'a> CSharpTypeMapper<'a> {
             TypeIr::Text => "TextKey".to_owned(),
             TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => name.clone(),
             TypeIr::List(element) | TypeIr::Set(element) | TypeIr::Array { element, .. } => {
-                format!("List<{}>", self.type_name(element))
+                format!("IReadOnlyList<{}>", self.type_name(element))
             }
             TypeIr::Map { key, value } => {
                 format!(
-                    "Dictionary<{}, {}>",
+                    "IReadOnlyDictionary<{}, {}>",
                     self.type_name(key),
                     self.type_name(value)
                 )

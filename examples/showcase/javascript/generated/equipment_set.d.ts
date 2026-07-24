@@ -6,10 +6,10 @@ import type { SkillEffect } from "./skill_effect.js";
 
 
 export interface EquipmentSet {
-    id: number;
-    name: string;
-    itemIds: number[];
-    bonusEffect: SkillEffect;
+    readonly id: number;
+    readonly name: string;
+    readonly itemIds: readonly number[];
+    readonly bonusEffect: SkillEffect;
 }
 
 export declare function decodeEquipmentSet(reader: SoraReader): EquipmentSet;
@@ -20,9 +20,11 @@ export declare class EquipmentSetTable implements SoraKeyedTable<number, Equipme
     static readonly tableInfo: SoraTableInfo;
     static decode(rows: EquipmentSet[]): EquipmentSetTable;
     info(): SoraTableInfo;
-    len(): number;
+    readonly size: number;
     get(key: number): EquipmentSet | undefined;
-    rows(): ReadonlyMap<number, EquipmentSet>;
-    keys(): readonly number[];
-    orderedRows(): EquipmentSet[];
+    has(key: number): boolean;
+    readonly rows: ReadonlyMap<number, EquipmentSet>;
+    readonly orderedKeys: readonly number[];
+    readonly orderedRows: readonly EquipmentSet[];
+    [Symbol.iterator](): Iterator<EquipmentSet>;
 }

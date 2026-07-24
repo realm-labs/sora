@@ -6,10 +6,10 @@ import type { StatModifier } from "./stat_modifier.js";
 
 
 export interface Buff {
-    id: number;
-    name: string;
-    duration: bigint;
-    modifiers: StatModifier[];
+    readonly id: number;
+    readonly name: string;
+    readonly duration: bigint;
+    readonly modifiers: readonly StatModifier[];
 }
 
 export declare function decodeBuff(reader: SoraReader): Buff;
@@ -20,9 +20,11 @@ export declare class BuffTable implements SoraKeyedTable<number, Buff> {
     static readonly tableInfo: SoraTableInfo;
     static decode(rows: Buff[]): BuffTable;
     info(): SoraTableInfo;
-    len(): number;
+    readonly size: number;
     get(key: number): Buff | undefined;
-    rows(): ReadonlyMap<number, Buff>;
-    keys(): readonly number[];
-    orderedRows(): Buff[];
+    has(key: number): boolean;
+    readonly rows: ReadonlyMap<number, Buff>;
+    readonly orderedKeys: readonly number[];
+    readonly orderedRows: readonly Buff[];
+    [Symbol.iterator](): Iterator<Buff>;
 }

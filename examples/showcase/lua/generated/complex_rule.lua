@@ -8,8 +8,8 @@ local RewardAction = require("generated.reward_action")
 ---@class ComplexRule
 ---@field id integer
 ---@field name string
----@field rootCondition EventCondition Single union value derived from a tagged_columns child row
----@field rootActionGroup integer
+---@field root_condition EventCondition Single union value derived from a tagged_columns child row
+---@field root_action_group integer
 ---@field actions RewardAction[] Non-JSON list<union<RewardAction>> assembled from child rows
 ---@field budget ComplexBudget Nested tuple, tuple_list, split, and map parsers in one cell
 
@@ -21,8 +21,8 @@ function ComplexRule.decode(reader)
     return {
         id = reader:read_i32(),
         name = reader:read_string(),
-        rootCondition = EventCondition.decode(reader),
-        rootActionGroup = reader:read_i32(),
+        root_condition = EventCondition.decode(reader),
+        root_action_group = reader:read_i32(),
         actions = reader:read_list(function() return RewardAction.decode(reader) end),
         budget = ComplexBudget.decode(reader),
     }
@@ -35,8 +35,8 @@ function ComplexRule.decode_value(value)
     return {
         id = Runtime.expect_integer(obj["id"]),
         name = Runtime.expect_string(obj["name"]),
-        rootCondition = EventCondition.decode_value(obj["root_condition"]),
-        rootActionGroup = Runtime.expect_integer(obj["root_action_group"]),
+        root_condition = EventCondition.decode_value(obj["root_condition"]),
+        root_action_group = Runtime.expect_integer(obj["root_action_group"]),
         actions = Runtime.decode_value_list(obj["actions"], function(item) return RewardAction.decode_value(item) end),
         budget = ComplexBudget.decode_value(obj["budget"]),
     }
@@ -48,7 +48,7 @@ function ComplexRule.collect_text_keys(value, out)
     if value == nil then
         return
     end
-    EventCondition.collect_text_keys(value.rootCondition, out)
+    EventCondition.collect_text_keys(value.root_condition, out)
     for _, __sora_value in ipairs(value.actions) do RewardAction.collect_text_keys(__sora_value, out) end
     ComplexBudget.collect_text_keys(value.budget, out)
 end

@@ -6,9 +6,9 @@ import type { ResourceCost } from "./resource_cost.js";
 
 
 export interface VipLevel {
-    level: number;
-    cost: ResourceCost;
-    perks: string[];
+    readonly level: number;
+    readonly cost: ResourceCost;
+    readonly perks: readonly string[];
 }
 
 export declare function decodeVipLevel(reader: SoraReader): VipLevel;
@@ -19,9 +19,11 @@ export declare class VipLevelTable implements SoraKeyedTable<number, VipLevel> {
     static readonly tableInfo: SoraTableInfo;
     static decode(rows: VipLevel[]): VipLevelTable;
     info(): SoraTableInfo;
-    len(): number;
+    readonly size: number;
     get(key: number): VipLevel | undefined;
-    rows(): ReadonlyMap<number, VipLevel>;
-    keys(): readonly number[];
-    orderedRows(): VipLevel[];
+    has(key: number): boolean;
+    readonly rows: ReadonlyMap<number, VipLevel>;
+    readonly orderedKeys: readonly number[];
+    readonly orderedRows: readonly VipLevel[];
+    [Symbol.iterator](): Iterator<VipLevel>;
 }

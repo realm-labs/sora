@@ -3,10 +3,10 @@
 package com.sora.showcase;
 
 public enum ElementType {
-    Fire(0),
-    Ice(1),
-    Lightning(2),
-    Physical(3);
+    FIRE(0),
+    ICE(1),
+    LIGHTNING(2),
+    PHYSICAL(3);
 
     private final int id;
 
@@ -21,13 +21,13 @@ public enum ElementType {
     static ElementType decode(SoraReader reader) {
         switch (reader.readU32()) {
             case 0:
-                return Fire;
+                return FIRE;
             case 1:
-                return Ice;
+                return ICE;
             case 2:
-                return Lightning;
+                return LIGHTNING;
             case 3:
-                return Physical;
+                return PHYSICAL;
             default:
                 throw new SoraReadException("invalid enum id for ElementType");
         }
@@ -36,13 +36,13 @@ public enum ElementType {
     static ElementType decode(SoraValue value) {
         switch (value.asString()) {
             case "Fire":
-                return Fire;
+                return FIRE;
             case "Ice":
-                return Ice;
+                return ICE;
             case "Lightning":
-                return Lightning;
+                return LIGHTNING;
             case "Physical":
-                return Physical;
+                return PHYSICAL;
             default:
                 throw new SoraReadException("invalid enum value for ElementType");
         }

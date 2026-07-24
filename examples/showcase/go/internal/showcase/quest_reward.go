@@ -3,16 +3,16 @@
 package showcase
 
 type QuestReward struct {
-	QuestId int32
+	QuestID int32
 	Seq     int32
-	ItemId  int32
+	ItemID  int32
 	Count   int32
 }
 
 func decodeQuestReward(reader *SoraReader) (QuestReward, error) {
 	var value QuestReward
 	var err error
-	value.QuestId, err = reader.ReadInt32()
+	value.QuestID, err = reader.ReadInt32()
 	if err != nil {
 		return value, err
 	}
@@ -20,7 +20,7 @@ func decodeQuestReward(reader *SoraReader) (QuestReward, error) {
 	if err != nil {
 		return value, err
 	}
-	value.ItemId, err = reader.ReadInt32()
+	value.ItemID, err = reader.ReadInt32()
 	if err != nil {
 		return value, err
 	}
@@ -37,7 +37,7 @@ func decodeQuestRewardValue(input SoraValue) (QuestReward, error) {
 	if err != nil {
 		return value, err
 	}
-	value.QuestId, err = obj.Get("quest_id").AsInt32()
+	value.QuestID, err = obj.Get("quest_id").AsInt32()
 	if err != nil {
 		return value, err
 	}
@@ -45,7 +45,7 @@ func decodeQuestRewardValue(input SoraValue) (QuestReward, error) {
 	if err != nil {
 		return value, err
 	}
-	value.ItemId, err = obj.Get("item_id").AsInt32()
+	value.ItemID, err = obj.Get("item_id").AsInt32()
 	if err != nil {
 		return value, err
 	}
@@ -83,9 +83,8 @@ func decodeQuestRewardTable(source SoraTableSource) (*QuestRewardTable, error) {
 	}
 	return buildQuestRewardTable(rows)
 }
-
 func (table *QuestRewardTable) Rows() []QuestReward {
-	return table.rows
+	return append([]QuestReward(nil), table.rows...)
 }
 func (table *QuestRewardTable) Info() SoraTableInfo {
 	return questRewardTableInfo

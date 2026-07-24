@@ -6,8 +6,8 @@ local SkillEffect = require("generated.skill_effect")
 ---@class EquipmentSet
 ---@field id integer
 ---@field name string
----@field itemIds integer[]
----@field bonusEffect SkillEffect
+---@field item_ids integer[]
+---@field bonus_effect SkillEffect
 
 local EquipmentSet = {}
 
@@ -17,8 +17,8 @@ function EquipmentSet.decode(reader)
     return {
         id = reader:read_i32(),
         name = reader:read_string(),
-        itemIds = reader:read_list(function() return reader:read_i32() end),
-        bonusEffect = SkillEffect.decode(reader),
+        item_ids = reader:read_list(function() return reader:read_i32() end),
+        bonus_effect = SkillEffect.decode(reader),
     }
 end
 
@@ -29,8 +29,8 @@ function EquipmentSet.decode_value(value)
     return {
         id = Runtime.expect_integer(obj["id"]),
         name = Runtime.expect_string(obj["name"]),
-        itemIds = Runtime.decode_value_list(obj["item_ids"], function(item) return Runtime.expect_integer(item) end),
-        bonusEffect = SkillEffect.decode_value(obj["bonus_effect"]),
+        item_ids = Runtime.decode_value_list(obj["item_ids"], function(item) return Runtime.expect_integer(item) end),
+        bonus_effect = SkillEffect.decode_value(obj["bonus_effect"]),
     }
 end
 
@@ -40,7 +40,7 @@ function EquipmentSet.collect_text_keys(value, out)
     if value == nil then
         return
     end
-    SkillEffect.collect_text_keys(value.bonusEffect, out)
+    SkillEffect.collect_text_keys(value.bonus_effect, out)
 end
 
 ---@class EquipmentSetTable

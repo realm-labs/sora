@@ -6,9 +6,9 @@ import type { StatType } from "./stat_type.js";
 
 
 export interface StatModifier {
-    stat: StatType;
-    value: number;
-    isPercent: boolean;
+    readonly stat: StatType;
+    readonly value: number;
+    readonly isPercent: boolean;
 }
 
 export declare function decodeStatModifier(reader: SoraReader): StatModifier;

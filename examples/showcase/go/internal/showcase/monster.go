@@ -3,7 +3,7 @@
 package showcase
 
 type Monster struct {
-	Id        int32
+	ID        int32
 	Name      string
 	Level     int32
 	Element   ElementType
@@ -14,7 +14,7 @@ type Monster struct {
 func decodeMonster(reader *SoraReader) (Monster, error) {
 	var value Monster
 	var err error
-	value.Id, err = reader.ReadInt32()
+	value.ID, err = reader.ReadInt32()
 	if err != nil {
 		return value, err
 	}
@@ -47,7 +47,7 @@ func decodeMonsterValue(input SoraValue) (Monster, error) {
 	if err != nil {
 		return value, err
 	}
-	value.Id, err = obj.Get("id").AsInt32()
+	value.ID, err = obj.Get("id").AsInt32()
 	if err != nil {
 		return value, err
 	}
@@ -96,9 +96,9 @@ type MonsterTable struct {
 func buildMonsterTable(rows []Monster) (*MonsterTable, error) {
 	keys := make([]int32, 0, len(rows))
 	for _, row := range rows {
-		keys = append(keys, row.Id)
+		keys = append(keys, row.ID)
 	}
-	return &MonsterTable{keys: keys, rows: DecodeMapTable(rows, func(row Monster) int32 { return row.Id })}, nil
+	return &MonsterTable{keys: keys, rows: DecodeMapTable(rows, func(row Monster) int32 { return row.ID })}, nil
 }
 
 func decodeMonsterTable(source SoraTableSource) (*MonsterTable, error) {
@@ -108,9 +108,12 @@ func decodeMonsterTable(source SoraTableSource) (*MonsterTable, error) {
 	}
 	return buildMonsterTable(rows)
 }
-
 func (table *MonsterTable) Rows() map[int32]Monster {
-	return table.rows
+	rows := make(map[int32]Monster, len(table.rows))
+	for key, row := range table.rows {
+		rows[key] = row
+	}
+	return rows
 }
 func (table *MonsterTable) Get(key int32) (Monster, bool) {
 	value, ok := table.rows[key]
@@ -118,7 +121,7 @@ func (table *MonsterTable) Get(key int32) (Monster, bool) {
 }
 
 func (table *MonsterTable) Keys() []int32 {
-	return table.keys
+	return append([]int32(nil), table.keys...)
 }
 
 func (table *MonsterTable) OrderedRows() []Monster {

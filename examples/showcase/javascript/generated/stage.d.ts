@@ -6,11 +6,11 @@ import type { Reward } from "./reward.js";
 
 
 export interface Stage {
-    id: number;
-    name: string;
-    monsterIds: number[];
-    recommendedPower: number;
-    firstClearRewards: Reward[];
+    readonly id: number;
+    readonly name: string;
+    readonly monsterIds: readonly number[];
+    readonly recommendedPower: number;
+    readonly firstClearRewards: readonly Reward[];
 }
 
 export declare function decodeStage(reader: SoraReader): Stage;
@@ -21,9 +21,11 @@ export declare class StageTable implements SoraKeyedTable<number, Stage> {
     static readonly tableInfo: SoraTableInfo;
     static decode(rows: Stage[]): StageTable;
     info(): SoraTableInfo;
-    len(): number;
+    readonly size: number;
     get(key: number): Stage | undefined;
-    rows(): ReadonlyMap<number, Stage>;
-    keys(): readonly number[];
-    orderedRows(): Stage[];
+    has(key: number): boolean;
+    readonly rows: ReadonlyMap<number, Stage>;
+    readonly orderedKeys: readonly number[];
+    readonly orderedRows: readonly Stage[];
+    [Symbol.iterator](): Iterator<Stage>;
 }

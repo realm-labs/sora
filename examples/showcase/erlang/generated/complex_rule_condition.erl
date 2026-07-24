@@ -7,9 +7,9 @@
 -export_type([t/0, table/0]).
 
 -type t() :: #{
-    'id' := integer(),
-    'rule_id' := integer(),
-    'value' := event_condition:t()
+    id := integer(),
+    rule_id := integer(),
+    value := event_condition:t()
 }.
 
 -type table() :: map().
@@ -21,25 +21,25 @@ decode(Reader0) ->
     {RuleId, Reader2} = (fun sora_runtime:read_i32/1)(Reader1),
     {Value, Reader3} = (fun event_condition:decode/1)(Reader2),
     {#{
-        'id' => Id,
-        'rule_id' => RuleId,
-        'value' => Value
+        id => Id,
+        rule_id => RuleId,
+        value => Value
     }, Reader3}.
 
 -spec decode_value(map()) -> t().
 decode_value(Value) ->
     Obj = sora_runtime:expect_map(Value),
     #{
-        'id' => sora_runtime:expect_integer(sora_runtime:value_get(<<"id">>, Obj)),
-        'rule_id' => sora_runtime:expect_integer(sora_runtime:value_get(<<"rule_id">>, Obj)),
-        'value' => event_condition:decode_value(sora_runtime:value_get(<<"value">>, Obj))
+        id => sora_runtime:expect_integer(sora_runtime:value_get(<<"id">>, Obj)),
+        rule_id => sora_runtime:expect_integer(sora_runtime:value_get(<<"rule_id">>, Obj)),
+        value => event_condition:decode_value(sora_runtime:value_get(<<"value">>, Obj))
     }.
 
 -spec decode_table(map()) -> table().
 decode_table(Bundle) ->
     Rows = sora_runtime:decode_table(Bundle, ?TABLE_NAME, fun ?MODULE:decode/1, fun ?MODULE:decode_value/1),
-    Data = sora_runtime:decode_map_table(Rows, fun(Row) -> maps:get('id', Row) end),
-    Keys = [maps:get('id', Row) || Row <- Rows],
+    Data = sora_runtime:decode_map_table(Rows, fun(Row) -> maps:get(id, Row) end),
+    Keys = [maps:get(id, Row) || Row <- Rows],
     #{
         keys => Keys,
         data => Data

@@ -27,7 +27,7 @@ export class SoraConfig {
         );
     }
 
-    tables(): SoraConfigTable[] {
+    tables(): readonly SoraConfigTable[] {
         return [
 {%- for table in model.tables %}
             this._{{ table.camel_name }},
@@ -52,9 +52,9 @@ export class SoraConfig {
         const keys: TextKey[] = [];
 {%- for table in model.tables %}
 {%- if table.mode == "singleton" %}
-        collect{{ table.row_type }}TextKeys(this.{{ table.camel_name }}().row(), keys);
+        collect{{ table.row_type }}TextKeys(this.{{ table.camel_name }}().row, keys);
 {%- else %}
-        for (const row of this.{{ table.camel_name }}().rows().values()) {
+        for (const row of this.{{ table.camel_name }}()) {
             collect{{ table.row_type }}TextKeys(row, keys);
         }
 {%- endif %}

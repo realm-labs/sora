@@ -10,9 +10,9 @@ import { collectRewardBundleTextKeys, decodeRewardBundle, decodeRewardBundleValu
 
 
 export interface ComplexBudget {
-    fixed: ResourceCost;
-    random: RewardBundle[];
-    limits: Map<string, number>;
+    readonly fixed: ResourceCost;
+    readonly random: readonly RewardBundle[];
+    readonly limits: ReadonlyMap<string, number>;
 }
 
 export function decodeComplexBudget(reader: SoraReader): ComplexBudget {

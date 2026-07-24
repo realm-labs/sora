@@ -10,9 +10,9 @@ namespace com.sora.showcase;
 public sealed record Stage(
     int Id,
     string Name,
-    List<int> MonsterIds,
+    IReadOnlyList<int> MonsterIds,
     int RecommendedPower,
-    List<Reward> FirstClearRewards
+    IReadOnlyList<Reward> FirstClearRewards
 )
 {
     internal static Stage Decode(SoraReader reader)
@@ -77,8 +77,7 @@ public sealed class StageTable : ISoraKeyedTable<int, Stage>
     {
         return new StageTable(rows.ConvertAll(row => row.Id), SoraConfig.DecodeMapTable(rows, row => row.Id));
     }
-
-    public Dictionary<int, Stage> Rows => rows;
+    public IReadOnlyDictionary<int, Stage> Rows => rows;
     public Stage this[int key] => rows[key];
 
     public Stage? Get(int key)

@@ -9,8 +9,8 @@ local Vec3 = require("generated.vec3")
 ---@field name string
 ---@field level integer
 ---@field element ElementType
----@field dropGroup integer
----@field spawnPos Vec3
+---@field drop_group integer
+---@field spawn_pos Vec3
 
 local Monster = {}
 
@@ -22,8 +22,8 @@ function Monster.decode(reader)
         name = reader:read_string(),
         level = reader:read_i32(),
         element = ElementType.decode(reader),
-        dropGroup = reader:read_i32(),
-        spawnPos = Vec3.decode(reader),
+        drop_group = reader:read_i32(),
+        spawn_pos = Vec3.decode(reader),
     }
 end
 
@@ -36,8 +36,8 @@ function Monster.decode_value(value)
         name = Runtime.expect_string(obj["name"]),
         level = Runtime.expect_integer(obj["level"]),
         element = ElementType.decode_value(obj["element"]),
-        dropGroup = Runtime.expect_integer(obj["drop_group"]),
-        spawnPos = Vec3.decode_value(obj["spawn_pos"]),
+        drop_group = Runtime.expect_integer(obj["drop_group"]),
+        spawn_pos = Vec3.decode_value(obj["spawn_pos"]),
     }
 end
 
@@ -47,7 +47,7 @@ function Monster.collect_text_keys(value, out)
     if value == nil then
         return
     end
-    Vec3.collect_text_keys(value.spawnPos, out)
+    Vec3.collect_text_keys(value.spawn_pos, out)
 end
 
 ---@class MonsterTable

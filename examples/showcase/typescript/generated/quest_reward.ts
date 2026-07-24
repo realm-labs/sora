@@ -10,10 +10,10 @@ import {
 
 
 export interface QuestReward {
-    questId: number;
-    seq: number;
-    itemId: number;
-    count: number;
+    readonly questId: number;
+    readonly seq: number;
+    readonly itemId: number;
+    readonly count: number;
 }
 
 export function decodeQuestReward(reader: SoraReader): QuestReward {
@@ -49,7 +49,7 @@ export class QuestRewardTable implements SoraListTable<QuestReward> {
     };
 
     private constructor(
-        private readonly _rows: QuestReward[],
+        private readonly _rows: readonly QuestReward[],
     ) {}
 
     static decode(rows: QuestReward[]): QuestRewardTable {
@@ -62,10 +62,18 @@ export class QuestRewardTable implements SoraListTable<QuestReward> {
         return QuestRewardTable.tableInfo;
     }
 
-    len(): number {
+    get size(): number {
         return this._rows.length;
     }
-    rows(): readonly QuestReward[] {
+    get rows(): readonly QuestReward[] {
         return this._rows;
+    }
+
+    at(index: number): QuestReward | undefined {
+        return this._rows.at(index);
+    }
+
+    [Symbol.iterator](): Iterator<QuestReward> {
+        return this._rows[Symbol.iterator]();
     }
 }

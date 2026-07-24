@@ -7,11 +7,11 @@ local Vec3 = require("generated.vec3")
 
 ---@class Quest
 ---@field id integer
----@field questType QuestType
+---@field quest_type QuestType
 ---@field title string
----@field requiredItem integer
----@field unlockSkills integer[]
----@field startPos Vec3
+---@field required_item integer
+---@field unlock_skills integer[]
+---@field start_pos Vec3
 ---@field rewards Reward[] Materialized from QuestReward child rows
 
 local Quest = {}
@@ -21,11 +21,11 @@ local Quest = {}
 function Quest.decode(reader)
     return {
         id = reader:read_i32(),
-        questType = QuestType.decode(reader),
+        quest_type = QuestType.decode(reader),
         title = reader:read_string(),
-        requiredItem = reader:read_i32(),
-        unlockSkills = reader:read_list(function() return reader:read_i32() end),
-        startPos = Vec3.decode(reader),
+        required_item = reader:read_i32(),
+        unlock_skills = reader:read_list(function() return reader:read_i32() end),
+        start_pos = Vec3.decode(reader),
         rewards = reader:read_list(function() return Reward.decode(reader) end),
     }
 end
@@ -36,11 +36,11 @@ function Quest.decode_value(value)
     local obj = Runtime.expect_table(value)
     return {
         id = Runtime.expect_integer(obj["id"]),
-        questType = QuestType.decode_value(obj["quest_type"]),
+        quest_type = QuestType.decode_value(obj["quest_type"]),
         title = Runtime.expect_string(obj["title"]),
-        requiredItem = Runtime.expect_integer(obj["required_item"]),
-        unlockSkills = Runtime.decode_value_list(obj["unlock_skills"], function(item) return Runtime.expect_integer(item) end),
-        startPos = Vec3.decode_value(obj["start_pos"]),
+        required_item = Runtime.expect_integer(obj["required_item"]),
+        unlock_skills = Runtime.decode_value_list(obj["unlock_skills"], function(item) return Runtime.expect_integer(item) end),
+        start_pos = Vec3.decode_value(obj["start_pos"]),
         rewards = Runtime.decode_value_list(obj["rewards"], function(item) return Reward.decode_value(item) end),
     }
 end
@@ -51,7 +51,7 @@ function Quest.collect_text_keys(value, out)
     if value == nil then
         return
     end
-    Vec3.collect_text_keys(value.startPos, out)
+    Vec3.collect_text_keys(value.start_pos, out)
     for _, __sora_value in ipairs(value.rewards) do Reward.collect_text_keys(__sora_value, out) end
 end
 

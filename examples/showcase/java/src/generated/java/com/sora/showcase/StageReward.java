@@ -3,27 +3,13 @@
 package com.sora.showcase;
 
 import java.util.List;
-import java.util.Map;
 
-
-public final class StageReward {
-    public final Integer stageId;
-    public final Integer seq;
-    public final Integer itemId;
-    public final Integer count;
-
-    public StageReward(
-        Integer stageId,
-        Integer seq,
-        Integer itemId,
-        Integer count
-    ) {
-        this.stageId = stageId;
-        this.seq = seq;
-        this.itemId = itemId;
-        this.count = count;
-    }
-
+public record StageReward(
+    int stageId,
+    int seq,
+    int itemId,
+    int count
+) {
     static StageReward decode(SoraReader reader) {
         return new StageReward(
             reader.readI32(),
@@ -44,47 +30,5 @@ public final class StageReward {
     }
 
     void collectTextKeys(List<TextKey> out) {
-    }
-}
-
-final class StageRewardTable extends java.util.AbstractList<StageReward> implements SoraListTable<StageReward> {
-    static final String NAME = "StageReward";
-    static final SoraTableInfo INFO = new SoraTableInfo(
-        NAME,
-        "StageReward",
-        SoraTableShape.LIST,
-        null,
-        List.of(
-        )
-    );
-    private final java.util.List<StageReward> rows;
-
-    private StageRewardTable(java.util.List<StageReward> rows) {
-        this.rows = rows;
-    }
-
-    private static StageRewardTable fromRows(List<StageReward> rows) {
-        return new StageRewardTable(rows);
-    }
-
-    static StageRewardTable decode(SoraTableSource source) {
-        return fromRows(source.decodeTable(NAME, StageReward::decode, StageReward::decode));
-    }
-
-    public java.util.List<StageReward> rows() {
-        return rows;
-    }
-    @Override
-    public StageReward get(int index) {
-        return rows.get(index);
-    }
-    @Override
-    public SoraTableInfo info() {
-        return INFO;
-    }
-
-    @Override
-    public int size() {
-        return rows.size();
     }
 }

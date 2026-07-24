@@ -77,8 +77,7 @@ public sealed class MonsterTable : ISoraKeyedTable<int, Monster>
     {
         return new MonsterTable(rows.ConvertAll(row => row.Id), SoraConfig.DecodeMapTable(rows, row => row.Id));
     }
-
-    public Dictionary<int, Monster> Rows => rows;
+    public IReadOnlyDictionary<int, Monster> Rows => rows;
     public Monster this[int key] => rows[key];
 
     public Monster? Get(int key)

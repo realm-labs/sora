@@ -3,7 +3,7 @@
 package showcase
 
 type Dialogue struct {
-	Id         int32
+	ID         int32
 	SpeakerKey TextKey
 	Lines      []string
 }
@@ -11,7 +11,7 @@ type Dialogue struct {
 func decodeDialogue(reader *SoraReader) (Dialogue, error) {
 	var value Dialogue
 	var err error
-	value.Id, err = reader.ReadInt32()
+	value.ID, err = reader.ReadInt32()
 	if err != nil {
 		return value, err
 	}
@@ -32,7 +32,7 @@ func decodeDialogueValue(input SoraValue) (Dialogue, error) {
 	if err != nil {
 		return value, err
 	}
-	value.Id, err = obj.Get("id").AsInt32()
+	value.ID, err = obj.Get("id").AsInt32()
 	if err != nil {
 		return value, err
 	}
@@ -69,9 +69,9 @@ type DialogueTable struct {
 func buildDialogueTable(rows []Dialogue) (*DialogueTable, error) {
 	keys := make([]int32, 0, len(rows))
 	for _, row := range rows {
-		keys = append(keys, row.Id)
+		keys = append(keys, row.ID)
 	}
-	return &DialogueTable{keys: keys, rows: DecodeMapTable(rows, func(row Dialogue) int32 { return row.Id })}, nil
+	return &DialogueTable{keys: keys, rows: DecodeMapTable(rows, func(row Dialogue) int32 { return row.ID })}, nil
 }
 
 func decodeDialogueTable(source SoraTableSource) (*DialogueTable, error) {
@@ -81,9 +81,12 @@ func decodeDialogueTable(source SoraTableSource) (*DialogueTable, error) {
 	}
 	return buildDialogueTable(rows)
 }
-
 func (table *DialogueTable) Rows() map[int32]Dialogue {
-	return table.rows
+	rows := make(map[int32]Dialogue, len(table.rows))
+	for key, row := range table.rows {
+		rows[key] = row
+	}
+	return rows
 }
 func (table *DialogueTable) Get(key int32) (Dialogue, bool) {
 	value, ok := table.rows[key]
@@ -91,7 +94,7 @@ func (table *DialogueTable) Get(key int32) (Dialogue, bool) {
 }
 
 func (table *DialogueTable) Keys() []int32 {
-	return table.keys
+	return append([]int32(nil), table.keys...)
 }
 
 func (table *DialogueTable) OrderedRows() []Dialogue {

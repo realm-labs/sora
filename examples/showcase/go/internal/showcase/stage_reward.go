@@ -3,16 +3,16 @@
 package showcase
 
 type StageReward struct {
-	StageId int32
+	StageID int32
 	Seq     int32
-	ItemId  int32
+	ItemID  int32
 	Count   int32
 }
 
 func decodeStageReward(reader *SoraReader) (StageReward, error) {
 	var value StageReward
 	var err error
-	value.StageId, err = reader.ReadInt32()
+	value.StageID, err = reader.ReadInt32()
 	if err != nil {
 		return value, err
 	}
@@ -20,7 +20,7 @@ func decodeStageReward(reader *SoraReader) (StageReward, error) {
 	if err != nil {
 		return value, err
 	}
-	value.ItemId, err = reader.ReadInt32()
+	value.ItemID, err = reader.ReadInt32()
 	if err != nil {
 		return value, err
 	}
@@ -37,7 +37,7 @@ func decodeStageRewardValue(input SoraValue) (StageReward, error) {
 	if err != nil {
 		return value, err
 	}
-	value.StageId, err = obj.Get("stage_id").AsInt32()
+	value.StageID, err = obj.Get("stage_id").AsInt32()
 	if err != nil {
 		return value, err
 	}
@@ -45,7 +45,7 @@ func decodeStageRewardValue(input SoraValue) (StageReward, error) {
 	if err != nil {
 		return value, err
 	}
-	value.ItemId, err = obj.Get("item_id").AsInt32()
+	value.ItemID, err = obj.Get("item_id").AsInt32()
 	if err != nil {
 		return value, err
 	}
@@ -83,9 +83,8 @@ func decodeStageRewardTable(source SoraTableSource) (*StageRewardTable, error) {
 	}
 	return buildStageRewardTable(rows)
 }
-
 func (table *StageRewardTable) Rows() []StageReward {
-	return table.rows
+	return append([]StageReward(nil), table.rows...)
 }
 func (table *StageRewardTable) Info() SoraTableInfo {
 	return stageRewardTableInfo

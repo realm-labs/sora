@@ -79,139 +79,139 @@ public:
         SoraConfig config;
         config.tables_.emplace(
             ItemTable::NAME,
-            std::unique_ptr<SoraTable>(new ItemTable(ItemTable::decode(bundle)))
+            std::make_unique<ItemTable>(ItemTable::decode(bundle))
         );
         config.tables_.emplace(
             ShopTable::NAME,
-            std::unique_ptr<SoraTable>(new ShopTable(ShopTable::decode(bundle)))
+            std::make_unique<ShopTable>(ShopTable::decode(bundle))
         );
         config.tables_.emplace(
             ShopItemTable::NAME,
-            std::unique_ptr<SoraTable>(new ShopItemTable(ShopItemTable::decode(bundle)))
+            std::make_unique<ShopItemTable>(ShopItemTable::decode(bundle))
         );
         config.tables_.emplace(
             RecipeTable::NAME,
-            std::unique_ptr<SoraTable>(new RecipeTable(RecipeTable::decode(bundle)))
+            std::make_unique<RecipeTable>(RecipeTable::decode(bundle))
         );
         config.tables_.emplace(
             GachaPoolTable::NAME,
-            std::unique_ptr<SoraTable>(new GachaPoolTable(GachaPoolTable::decode(bundle)))
+            std::make_unique<GachaPoolTable>(GachaPoolTable::decode(bundle))
         );
         config.tables_.emplace(
             GachaItemTable::NAME,
-            std::unique_ptr<SoraTable>(new GachaItemTable(GachaItemTable::decode(bundle)))
+            std::make_unique<GachaItemTable>(GachaItemTable::decode(bundle))
         );
         config.tables_.emplace(
             EquipmentSetTable::NAME,
-            std::unique_ptr<SoraTable>(new EquipmentSetTable(EquipmentSetTable::decode(bundle)))
+            std::make_unique<EquipmentSetTable>(EquipmentSetTable::decode(bundle))
         );
         config.tables_.emplace(
             SkillTable::NAME,
-            std::unique_ptr<SoraTable>(new SkillTable(SkillTable::decode(bundle)))
+            std::make_unique<SkillTable>(SkillTable::decode(bundle))
         );
         config.tables_.emplace(
             CharacterTable::NAME,
-            std::unique_ptr<SoraTable>(new CharacterTable(CharacterTable::decode(bundle)))
+            std::make_unique<CharacterTable>(CharacterTable::decode(bundle))
         );
         config.tables_.emplace(
             CharacterSkillTable::NAME,
-            std::unique_ptr<SoraTable>(new CharacterSkillTable(CharacterSkillTable::decode(bundle)))
+            std::make_unique<CharacterSkillTable>(CharacterSkillTable::decode(bundle))
         );
         config.tables_.emplace(
             BuffTable::NAME,
-            std::unique_ptr<SoraTable>(new BuffTable(BuffTable::decode(bundle)))
+            std::make_unique<BuffTable>(BuffTable::decode(bundle))
         );
         config.tables_.emplace(
             DropGroupTable::NAME,
-            std::unique_ptr<SoraTable>(new DropGroupTable(DropGroupTable::decode(bundle)))
+            std::make_unique<DropGroupTable>(DropGroupTable::decode(bundle))
         );
         config.tables_.emplace(
             DropEntryTable::NAME,
-            std::unique_ptr<SoraTable>(new DropEntryTable(DropEntryTable::decode(bundle)))
+            std::make_unique<DropEntryTable>(DropEntryTable::decode(bundle))
         );
         config.tables_.emplace(
             MonsterTable::NAME,
-            std::unique_ptr<SoraTable>(new MonsterTable(MonsterTable::decode(bundle)))
+            std::make_unique<MonsterTable>(MonsterTable::decode(bundle))
         );
         config.tables_.emplace(
             StageTable::NAME,
-            std::unique_ptr<SoraTable>(new StageTable(StageTable::decode(bundle)))
+            std::make_unique<StageTable>(StageTable::decode(bundle))
         );
         config.tables_.emplace(
             StageRewardTable::NAME,
-            std::unique_ptr<SoraTable>(new StageRewardTable(StageRewardTable::decode(bundle)))
+            std::make_unique<StageRewardTable>(StageRewardTable::decode(bundle))
         );
         config.tables_.emplace(
             DungeonTable::NAME,
-            std::unique_ptr<SoraTable>(new DungeonTable(DungeonTable::decode(bundle)))
+            std::make_unique<DungeonTable>(DungeonTable::decode(bundle))
         );
         config.tables_.emplace(
             QuestTable::NAME,
-            std::unique_ptr<SoraTable>(new QuestTable(QuestTable::decode(bundle)))
+            std::make_unique<QuestTable>(QuestTable::decode(bundle))
         );
         config.tables_.emplace(
             QuestRewardTable::NAME,
-            std::unique_ptr<SoraTable>(new QuestRewardTable(QuestRewardTable::decode(bundle)))
+            std::make_unique<QuestRewardTable>(QuestRewardTable::decode(bundle))
         );
         config.tables_.emplace(
             LevelExpTable::NAME,
-            std::unique_ptr<SoraTable>(new LevelExpTable(LevelExpTable::decode(bundle)))
+            std::make_unique<LevelExpTable>(LevelExpTable::decode(bundle))
         );
         config.tables_.emplace(
             AchievementTable::NAME,
-            std::unique_ptr<SoraTable>(new AchievementTable(AchievementTable::decode(bundle)))
+            std::make_unique<AchievementTable>(AchievementTable::decode(bundle))
         );
         config.tables_.emplace(
             VipLevelTable::NAME,
-            std::unique_ptr<SoraTable>(new VipLevelTable(VipLevelTable::decode(bundle)))
+            std::make_unique<VipLevelTable>(VipLevelTable::decode(bundle))
         );
         config.tables_.emplace(
             GameSettingsTable::NAME,
-            std::unique_ptr<SoraTable>(new GameSettingsTable(GameSettingsTable::decode(bundle)))
+            std::make_unique<GameSettingsTable>(GameSettingsTable::decode(bundle))
         );
         config.tables_.emplace(
             MaintenanceWindowTable::NAME,
-            std::unique_ptr<SoraTable>(new MaintenanceWindowTable(MaintenanceWindowTable::decode(bundle)))
+            std::make_unique<MaintenanceWindowTable>(MaintenanceWindowTable::decode(bundle))
         );
         config.tables_.emplace(
             MailTemplateTable::NAME,
-            std::unique_ptr<SoraTable>(new MailTemplateTable(MailTemplateTable::decode(bundle)))
+            std::make_unique<MailTemplateTable>(MailTemplateTable::decode(bundle))
         );
         config.tables_.emplace(
             MailRewardTable::NAME,
-            std::unique_ptr<SoraTable>(new MailRewardTable(MailRewardTable::decode(bundle)))
+            std::make_unique<MailRewardTable>(MailRewardTable::decode(bundle))
         );
         config.tables_.emplace(
             DialogueTable::NAME,
-            std::unique_ptr<SoraTable>(new DialogueTable(DialogueTable::decode(bundle)))
+            std::make_unique<DialogueTable>(DialogueTable::decode(bundle))
         );
         config.tables_.emplace(
             EventRuleTable::NAME,
-            std::unique_ptr<SoraTable>(new EventRuleTable(EventRuleTable::decode(bundle)))
+            std::make_unique<EventRuleTable>(EventRuleTable::decode(bundle))
         );
         config.tables_.emplace(
             ComplexRuleTable::NAME,
-            std::unique_ptr<SoraTable>(new ComplexRuleTable(ComplexRuleTable::decode(bundle)))
+            std::make_unique<ComplexRuleTable>(ComplexRuleTable::decode(bundle))
         );
         config.tables_.emplace(
             ComplexConditionGroupTable::NAME,
-            std::unique_ptr<SoraTable>(new ComplexConditionGroupTable(ComplexConditionGroupTable::decode(bundle)))
+            std::make_unique<ComplexConditionGroupTable>(ComplexConditionGroupTable::decode(bundle))
         );
         config.tables_.emplace(
             ComplexConditionGroupEntryTable::NAME,
-            std::unique_ptr<SoraTable>(new ComplexConditionGroupEntryTable(ComplexConditionGroupEntryTable::decode(bundle)))
+            std::make_unique<ComplexConditionGroupEntryTable>(ComplexConditionGroupEntryTable::decode(bundle))
         );
         config.tables_.emplace(
             ComplexRuleConditionTable::NAME,
-            std::unique_ptr<SoraTable>(new ComplexRuleConditionTable(ComplexRuleConditionTable::decode(bundle)))
+            std::make_unique<ComplexRuleConditionTable>(ComplexRuleConditionTable::decode(bundle))
         );
         config.tables_.emplace(
             ComplexActionGroupTable::NAME,
-            std::unique_ptr<SoraTable>(new ComplexActionGroupTable(ComplexActionGroupTable::decode(bundle)))
+            std::make_unique<ComplexActionGroupTable>(ComplexActionGroupTable::decode(bundle))
         );
         config.tables_.emplace(
             ComplexActionEntryTable::NAME,
-            std::unique_ptr<SoraTable>(new ComplexActionEntryTable(ComplexActionEntryTable::decode(bundle)))
+            std::make_unique<ComplexActionEntryTable>(ComplexActionEntryTable::decode(bundle))
         );
         return config;
     }
@@ -320,8 +320,7 @@ public:
 private:
     template <typename T>
     const T& table_as(const std::string& name) const {
-        typename std::unordered_map<std::string, std::unique_ptr<SoraTable> >::const_iterator it =
-            tables_.find(name);
+        auto it = tables_.find(name);
         if (it == tables_.end()) {
             throw SoraReadException("missing Sora table `" + name + "`");
         }

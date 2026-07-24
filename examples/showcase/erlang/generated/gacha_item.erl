@@ -6,10 +6,10 @@
 -export_type([t/0, table/0]).
 
 -type t() :: #{
-    'pool_id' := integer(),
-    'item_id' := integer(),
-    'rarity' := rarity:t(),
-    'weight' := float()
+    pool_id := integer(),
+    item_id := integer(),
+    rarity := rarity:t(),
+    weight := float()
 }.
 
 -type table() :: map().
@@ -22,20 +22,20 @@ decode(Reader0) ->
     {Rarity, Reader3} = (fun rarity:decode/1)(Reader2),
     {Weight, Reader4} = (fun sora_runtime:read_f32/1)(Reader3),
     {#{
-        'pool_id' => PoolId,
-        'item_id' => ItemId,
-        'rarity' => Rarity,
-        'weight' => Weight
+        pool_id => PoolId,
+        item_id => ItemId,
+        rarity => Rarity,
+        weight => Weight
     }, Reader4}.
 
 -spec decode_value(map()) -> t().
 decode_value(Value) ->
     Obj = sora_runtime:expect_map(Value),
     #{
-        'pool_id' => sora_runtime:expect_integer(sora_runtime:value_get(<<"pool_id">>, Obj)),
-        'item_id' => sora_runtime:expect_integer(sora_runtime:value_get(<<"item_id">>, Obj)),
-        'rarity' => rarity:decode_value(sora_runtime:value_get(<<"rarity">>, Obj)),
-        'weight' => sora_runtime:expect_float(sora_runtime:value_get(<<"weight">>, Obj))
+        pool_id => sora_runtime:expect_integer(sora_runtime:value_get(<<"pool_id">>, Obj)),
+        item_id => sora_runtime:expect_integer(sora_runtime:value_get(<<"item_id">>, Obj)),
+        rarity => rarity:decode_value(sora_runtime:value_get(<<"rarity">>, Obj)),
+        weight => sora_runtime:expect_float(sora_runtime:value_get(<<"weight">>, Obj))
     }.
 
 -spec decode_table(map()) -> table().

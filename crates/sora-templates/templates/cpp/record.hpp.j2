@@ -61,7 +61,7 @@ public:
         return info;
     }
 
-    {{ table.pascal_name }}Table() {}
+    {{ table.pascal_name }}Table() = default;
     {{ table.pascal_name }}Table(const {{ table.pascal_name }}Table&) = delete;
     {{ table.pascal_name }}Table& operator=(const {{ table.pascal_name }}Table&) = delete;
     {{ table.pascal_name }}Table({{ table.pascal_name }}Table&&) = default;
@@ -71,8 +71,7 @@ public:
         std::vector<{{ table.row_type }}> rows = bundle.decode_table<{{ table.row_type }}>(NAME);
         {{ table.pascal_name }}Table table;
 {%- if table.mode == "map" and table.key_field_name %}
-        for (std::size_t index = 0; index < rows.size(); ++index) {
-            const {{ table.row_type }}& row = rows[index];
+        for (const auto& row : rows) {
             table.keys_.push_back(row.{{ table.key_field_name }});
             table.rows_.emplace(row.{{ table.key_field_name }}, row);
         }
@@ -103,7 +102,7 @@ public:
     }
 
     const {{ table.row_type }}* get(const {{ table.key_type }}& key) const {
-        typename {{ table.container_type }}::const_iterator it = rows_.find(key);
+        auto it = rows_.find(key);
         if (it == rows_.end()) {
             return nullptr;
         }
@@ -117,10 +116,8 @@ public:
     std::vector<const {{ table.row_type }}*> ordered_rows() const {
         std::vector<const {{ table.row_type }}*> rows;
         rows.reserve(keys_.size());
-        for (typename std::vector<{{ table.key_type }}>::const_iterator key = keys_.begin();
-             key != keys_.end();
-             ++key) {
-            typename {{ table.container_type }}::const_iterator it = rows_.find(*key);
+        for (const auto& key : keys_) {
+            auto it = rows_.find(key);
             if (it != rows_.end()) {
                 rows.push_back(&it->second);
             }
@@ -139,8 +136,7 @@ public:
 {%- for index in table.unique_indexes %}
 
     const {{ table.row_type }}* {{ index.method_name }}(const {{ index.key_type }}& {{ index.param_name }}) const {
-        typename std::unordered_map<{{ index.key_type }}, const {{ table.row_type }}*>::const_iterator it =
-            {{ index.name }}_.find({{ index.param_name }});
+        auto it = {{ index.name }}_.find({{ index.param_name }});
         if (it == {{ index.name }}_.end()) {
             return nullptr;
         }
@@ -150,8 +146,7 @@ public:
 {%- for index in table.non_unique_indexes %}
 
     std::vector<const {{ table.row_type }}*> find_{{ index.name }}(const {{ index.key_type }}& {{ index.param_name }}) const {
-        typename std::unordered_map<{{ index.key_type }}, std::vector<const {{ table.row_type }}*> >::const_iterator it =
-            {{ index.name }}_.find({{ index.param_name }});
+        auto it = {{ index.name }}_.find({{ index.param_name }});
         if (it == {{ index.name }}_.end()) {
             return std::vector<const {{ table.row_type }}*>();
         }
@@ -163,13 +158,10 @@ private:
     void build_indexes() {
 {%- if table.unique_indexes or table.non_unique_indexes %}
 {%- if table.mode == "map" %}
-        for (typename {{ table.container_type }}::const_iterator it = rows_.begin();
-             it != rows_.end();
-             ++it) {
-            const {{ table.row_type }}& row = it->second;
+        for (const auto& entry : rows_) {
+            const {{ table.row_type }}& row = entry.second;
 {%- elif table.mode == "list" %}
-        for (std::size_t index = 0; index < rows_.size(); ++index) {
-            const {{ table.row_type }}& row = rows_[index];
+        for (const auto& row : rows_) {
 {%- else %}
         {
             const {{ table.row_type }}& row = row_;

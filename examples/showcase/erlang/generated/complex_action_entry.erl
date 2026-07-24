@@ -7,10 +7,10 @@
 -export_type([t/0, table/0]).
 
 -type t() :: #{
-    'id' := integer(),
-    'group_id' := integer(),
-    'seq' := integer(),
-    'value' := reward_action:t()
+    id := integer(),
+    group_id := integer(),
+    seq := integer(),
+    value := reward_action:t()
 }.
 
 -type table() :: map().
@@ -23,27 +23,27 @@ decode(Reader0) ->
     {Seq, Reader3} = (fun sora_runtime:read_i32/1)(Reader2),
     {Value, Reader4} = (fun reward_action:decode/1)(Reader3),
     {#{
-        'id' => Id,
-        'group_id' => GroupId,
-        'seq' => Seq,
-        'value' => Value
+        id => Id,
+        group_id => GroupId,
+        seq => Seq,
+        value => Value
     }, Reader4}.
 
 -spec decode_value(map()) -> t().
 decode_value(Value) ->
     Obj = sora_runtime:expect_map(Value),
     #{
-        'id' => sora_runtime:expect_integer(sora_runtime:value_get(<<"id">>, Obj)),
-        'group_id' => sora_runtime:expect_integer(sora_runtime:value_get(<<"group_id">>, Obj)),
-        'seq' => sora_runtime:expect_integer(sora_runtime:value_get(<<"seq">>, Obj)),
-        'value' => reward_action:decode_value(sora_runtime:value_get(<<"value">>, Obj))
+        id => sora_runtime:expect_integer(sora_runtime:value_get(<<"id">>, Obj)),
+        group_id => sora_runtime:expect_integer(sora_runtime:value_get(<<"group_id">>, Obj)),
+        seq => sora_runtime:expect_integer(sora_runtime:value_get(<<"seq">>, Obj)),
+        value => reward_action:decode_value(sora_runtime:value_get(<<"value">>, Obj))
     }.
 
 -spec decode_table(map()) -> table().
 decode_table(Bundle) ->
     Rows = sora_runtime:decode_table(Bundle, ?TABLE_NAME, fun ?MODULE:decode/1, fun ?MODULE:decode_value/1),
-    Data = sora_runtime:decode_map_table(Rows, fun(Row) -> maps:get('id', Row) end),
-    Keys = [maps:get('id', Row) || Row <- Rows],
+    Data = sora_runtime:decode_map_table(Rows, fun(Row) -> maps:get(id, Row) end),
+    Keys = [maps:get(id, Row) || Row <- Rows],
     #{
         keys => Keys,
         data => Data

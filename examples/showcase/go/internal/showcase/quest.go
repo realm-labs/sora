@@ -3,7 +3,7 @@
 package showcase
 
 type Quest struct {
-	Id           int32
+	ID           int32
 	QuestType    QuestType
 	Title        string
 	RequiredItem int32
@@ -16,7 +16,7 @@ type Quest struct {
 func decodeQuest(reader *SoraReader) (Quest, error) {
 	var value Quest
 	var err error
-	value.Id, err = reader.ReadInt32()
+	value.ID, err = reader.ReadInt32()
 	if err != nil {
 		return value, err
 	}
@@ -53,7 +53,7 @@ func decodeQuestValue(input SoraValue) (Quest, error) {
 	if err != nil {
 		return value, err
 	}
-	value.Id, err = obj.Get("id").AsInt32()
+	value.ID, err = obj.Get("id").AsInt32()
 	if err != nil {
 		return value, err
 	}
@@ -109,9 +109,9 @@ type QuestTable struct {
 func buildQuestTable(rows []Quest) (*QuestTable, error) {
 	keys := make([]int32, 0, len(rows))
 	for _, row := range rows {
-		keys = append(keys, row.Id)
+		keys = append(keys, row.ID)
 	}
-	return &QuestTable{keys: keys, rows: DecodeMapTable(rows, func(row Quest) int32 { return row.Id })}, nil
+	return &QuestTable{keys: keys, rows: DecodeMapTable(rows, func(row Quest) int32 { return row.ID })}, nil
 }
 
 func decodeQuestTable(source SoraTableSource) (*QuestTable, error) {
@@ -121,9 +121,12 @@ func decodeQuestTable(source SoraTableSource) (*QuestTable, error) {
 	}
 	return buildQuestTable(rows)
 }
-
 func (table *QuestTable) Rows() map[int32]Quest {
-	return table.rows
+	rows := make(map[int32]Quest, len(table.rows))
+	for key, row := range table.rows {
+		rows[key] = row
+	}
+	return rows
 }
 func (table *QuestTable) Get(key int32) (Quest, bool) {
 	value, ok := table.rows[key]
@@ -131,7 +134,7 @@ func (table *QuestTable) Get(key int32) (Quest, bool) {
 }
 
 func (table *QuestTable) Keys() []int32 {
-	return table.keys
+	return append([]int32(nil), table.keys...)
 }
 
 func (table *QuestTable) OrderedRows() []Quest {

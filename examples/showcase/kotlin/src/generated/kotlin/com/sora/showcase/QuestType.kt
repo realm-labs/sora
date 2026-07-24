@@ -3,24 +3,24 @@
 package com.sora.showcase
 
 enum class QuestType(val id: Int) {
-    Main(0),
-    Side(1),
-    Daily(2);
+    MAIN(0),
+    SIDE(1),
+    DAILY(2);
 
     companion object {
         fun decode(reader: SoraReader): QuestType =
             when (val id = reader.readU32()) {
-                0 -> Main
-                1 -> Side
-                2 -> Daily
+                0 -> MAIN
+                1 -> SIDE
+                2 -> DAILY
                 else -> throw SoraReadException("invalid enum id $id for QuestType")
             }
 
         fun decode(value: SoraValue): QuestType =
             when (val name = value.asString()) {
-                "Main" -> Main
-                "Side" -> Side
-                "Daily" -> Daily
+                "Main" -> MAIN
+                "Side" -> SIDE
+                "Daily" -> DAILY
                 else -> throw SoraReadException("invalid enum value $name for QuestType")
             }
     }

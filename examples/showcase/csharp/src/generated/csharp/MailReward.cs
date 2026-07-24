@@ -68,8 +68,7 @@ public sealed class MailRewardTable : ISoraListTable<MailReward>
     {
         return new MailRewardTable(rows);
     }
-
-    public List<MailReward> Rows => rows;
+    public IReadOnlyList<MailReward> Rows => rows;
     public MailReward this[int index] => rows[index];
 
     public IEnumerator<MailReward> GetEnumerator()

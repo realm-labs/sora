@@ -39,7 +39,7 @@ public:
         return info;
     }
 
-    QuestRewardTable() {}
+    QuestRewardTable() = default;
     QuestRewardTable(const QuestRewardTable&) = delete;
     QuestRewardTable& operator=(const QuestRewardTable&) = delete;
     QuestRewardTable(QuestRewardTable&&) = default;

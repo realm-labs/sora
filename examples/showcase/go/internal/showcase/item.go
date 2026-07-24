@@ -3,8 +3,8 @@
 package showcase
 
 type Item struct {
-	// Id: Item id
-	Id int32
+	// ID: Item id
+	ID int32
 	// Name: Display name
 	Name string
 	// ItemType: Item category
@@ -22,7 +22,7 @@ type Item struct {
 func decodeItem(reader *SoraReader) (Item, error) {
 	var value Item
 	var err error
-	value.Id, err = reader.ReadInt32()
+	value.ID, err = reader.ReadInt32()
 	if err != nil {
 		return value, err
 	}
@@ -59,7 +59,7 @@ func decodeItemValue(input SoraValue) (Item, error) {
 	if err != nil {
 		return value, err
 	}
-	value.Id, err = obj.Get("id").AsInt32()
+	value.ID, err = obj.Get("id").AsInt32()
 	if err != nil {
 		return value, err
 	}
@@ -117,11 +117,11 @@ type ItemTable struct {
 func buildItemTable(rows []Item) (*ItemTable, error) {
 	keys := make([]int32, 0, len(rows))
 	for _, row := range rows {
-		keys = append(keys, row.Id)
+		keys = append(keys, row.ID)
 	}
 	return &ItemTable{
 		keys:       keys,
-		rows:       DecodeMapTable(rows, func(row Item) int32 { return row.Id }),
+		rows:       DecodeMapTable(rows, func(row Item) int32 { return row.ID }),
 		byName:     DecodeUniqueIndex(rows, func(row Item) string { return row.Name }),
 		byItemType: DecodeIndex(rows, func(row Item) ItemType { return row.ItemType }),
 	}, nil
@@ -134,9 +134,12 @@ func decodeItemTable(source SoraTableSource) (*ItemTable, error) {
 	}
 	return buildItemTable(rows)
 }
-
 func (table *ItemTable) Rows() map[int32]Item {
-	return table.rows
+	rows := make(map[int32]Item, len(table.rows))
+	for key, row := range table.rows {
+		rows[key] = row
+	}
+	return rows
 }
 func (table *ItemTable) Get(key int32) (Item, bool) {
 	value, ok := table.rows[key]
@@ -144,7 +147,7 @@ func (table *ItemTable) Get(key int32) (Item, bool) {
 }
 
 func (table *ItemTable) Keys() []int32 {
-	return table.keys
+	return append([]int32(nil), table.keys...)
 }
 
 func (table *ItemTable) OrderedRows() []Item {
@@ -161,7 +164,7 @@ func (table *ItemTable) GetByName(name string) (Item, bool) {
 	return value, ok
 }
 func (table *ItemTable) FindByItemType(itemType ItemType) []Item {
-	return table.byItemType[itemType]
+	return append([]Item(nil), table.byItemType[itemType]...)
 }
 func (table *ItemTable) Info() SoraTableInfo {
 	return itemTableInfo

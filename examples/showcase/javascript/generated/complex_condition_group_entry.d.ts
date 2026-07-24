@@ -6,10 +6,10 @@ import type { EventCondition } from "./event_condition.js";
 
 
 export interface ComplexConditionGroupEntry {
-    id: number;
-    groupId: number;
-    seq: number;
-    value: EventCondition;
+    readonly id: number;
+    readonly groupId: number;
+    readonly seq: number;
+    readonly value: EventCondition;
 }
 
 export declare function decodeComplexConditionGroupEntry(reader: SoraReader): ComplexConditionGroupEntry;
@@ -20,9 +20,11 @@ export declare class ComplexConditionGroupEntryTable implements SoraKeyedTable<n
     static readonly tableInfo: SoraTableInfo;
     static decode(rows: ComplexConditionGroupEntry[]): ComplexConditionGroupEntryTable;
     info(): SoraTableInfo;
-    len(): number;
+    readonly size: number;
     get(key: number): ComplexConditionGroupEntry | undefined;
-    rows(): ReadonlyMap<number, ComplexConditionGroupEntry>;
-    keys(): readonly number[];
-    orderedRows(): ComplexConditionGroupEntry[];
+    has(key: number): boolean;
+    readonly rows: ReadonlyMap<number, ComplexConditionGroupEntry>;
+    readonly orderedKeys: readonly number[];
+    readonly orderedRows: readonly ComplexConditionGroupEntry[];
+    [Symbol.iterator](): Iterator<ComplexConditionGroupEntry>;
 }

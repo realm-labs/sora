@@ -63,14 +63,14 @@ def main():
     assert any(item.id == sword.id for item in weapons), "sword id not in weapon list"
 
     # Settings singleton
-    settings = config.game_settings().row()
+    settings = config.game_settings().row
     assert settings.starting_gold == 100
 
     # Sizes check
-    assert config.quest_reward().len() == 49
-    assert config.stage().len() == 40
-    assert config.monster().len() == 80
-    assert config.event_rule().len() == 20
+    assert len(config.quest_reward()) == 49
+    assert len(config.stage()) == 40
+    assert len(config.monster()) == 80
+    assert len(config.event_rule()) == 20
 
     # Event rule checking
     event_rule = config.event_rule().get(17001)
@@ -85,9 +85,9 @@ def main():
     assert first_action.count == 3
 
     print(
-        f"Python showcase successfully verified! Loaded {len(config.item().rows())} items, "
-        f"{len(config.skill().rows())} skills, {len(config.quest().rows())} quests, "
-        f"{len(config.stage().rows())} stages, {len(config.event_rule().rows())} event rules."
+        f"Python showcase successfully verified! Loaded {len(config.item())} items, "
+        f"{len(config.skill())} skills, {len(config.quest())} quests, "
+        f"{len(config.stage())} stages, {len(config.event_rule())} event rules."
     )
 
 

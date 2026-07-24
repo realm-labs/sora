@@ -3,7 +3,7 @@
 package showcase
 
 type MailTemplate struct {
-	Id       int32
+	ID       int32
 	MailType MailType
 	TitleKey TextKey
 	BodyKey  TextKey
@@ -13,7 +13,7 @@ type MailTemplate struct {
 func decodeMailTemplate(reader *SoraReader) (MailTemplate, error) {
 	var value MailTemplate
 	var err error
-	value.Id, err = reader.ReadInt32()
+	value.ID, err = reader.ReadInt32()
 	if err != nil {
 		return value, err
 	}
@@ -42,7 +42,7 @@ func decodeMailTemplateValue(input SoraValue) (MailTemplate, error) {
 	if err != nil {
 		return value, err
 	}
-	value.Id, err = obj.Get("id").AsInt32()
+	value.ID, err = obj.Get("id").AsInt32()
 	if err != nil {
 		return value, err
 	}
@@ -91,9 +91,9 @@ type MailTemplateTable struct {
 func buildMailTemplateTable(rows []MailTemplate) (*MailTemplateTable, error) {
 	keys := make([]int32, 0, len(rows))
 	for _, row := range rows {
-		keys = append(keys, row.Id)
+		keys = append(keys, row.ID)
 	}
-	return &MailTemplateTable{keys: keys, rows: DecodeMapTable(rows, func(row MailTemplate) int32 { return row.Id })}, nil
+	return &MailTemplateTable{keys: keys, rows: DecodeMapTable(rows, func(row MailTemplate) int32 { return row.ID })}, nil
 }
 
 func decodeMailTemplateTable(source SoraTableSource) (*MailTemplateTable, error) {
@@ -103,9 +103,12 @@ func decodeMailTemplateTable(source SoraTableSource) (*MailTemplateTable, error)
 	}
 	return buildMailTemplateTable(rows)
 }
-
 func (table *MailTemplateTable) Rows() map[int32]MailTemplate {
-	return table.rows
+	rows := make(map[int32]MailTemplate, len(table.rows))
+	for key, row := range table.rows {
+		rows[key] = row
+	}
+	return rows
 }
 func (table *MailTemplateTable) Get(key int32) (MailTemplate, bool) {
 	value, ok := table.rows[key]
@@ -113,7 +116,7 @@ func (table *MailTemplateTable) Get(key int32) (MailTemplate, bool) {
 }
 
 func (table *MailTemplateTable) Keys() []int32 {
-	return table.keys
+	return append([]int32(nil), table.keys...)
 }
 
 func (table *MailTemplateTable) OrderedRows() []MailTemplate {

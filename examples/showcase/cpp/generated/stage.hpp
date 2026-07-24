@@ -42,7 +42,7 @@ public:
         return info;
     }
 
-    StageTable() {}
+    StageTable() = default;
     StageTable(const StageTable&) = delete;
     StageTable& operator=(const StageTable&) = delete;
     StageTable(StageTable&&) = default;
@@ -51,8 +51,7 @@ public:
     static StageTable decode(const SoraBundle& bundle) {
         std::vector<Stage> rows = bundle.decode_table<Stage>(NAME);
         StageTable table;
-        for (std::size_t index = 0; index < rows.size(); ++index) {
-            const Stage& row = rows[index];
+        for (const auto& row : rows) {
             table.keys_.push_back(row.id);
             table.rows_.emplace(row.id, row);
         }
@@ -69,7 +68,7 @@ public:
     }
 
     const Stage* get(const std::int32_t& key) const {
-        typename std::unordered_map<std::int32_t, Stage>::const_iterator it = rows_.find(key);
+        auto it = rows_.find(key);
         if (it == rows_.end()) {
             return nullptr;
         }
@@ -83,10 +82,8 @@ public:
     std::vector<const Stage*> ordered_rows() const {
         std::vector<const Stage*> rows;
         rows.reserve(keys_.size());
-        for (typename std::vector<std::int32_t>::const_iterator key = keys_.begin();
-             key != keys_.end();
-             ++key) {
-            typename std::unordered_map<std::int32_t, Stage>::const_iterator it = rows_.find(*key);
+        for (const auto& key : keys_) {
+            auto it = rows_.find(key);
             if (it != rows_.end()) {
                 rows.push_back(&it->second);
             }

@@ -7,9 +7,9 @@ import { collectResourceKindTextKeys, decodeResourceKind, decodeResourceKindValu
 
 
 export interface ResourceCost {
-    kind: ResourceKind;
-    id: number;
-    count: number;
+    readonly kind: ResourceKind;
+    readonly id: number;
+    readonly count: number;
 }
 
 export function decodeResourceCost(reader: SoraReader): ResourceCost {

@@ -10,58 +10,70 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 
-enum SoraTableShape {
-    LIST,
-    KEYED,
-    SINGLETON,
-}
-
-record SoraKeyInfo(String name, String type) {}
-
-record SoraIndexInfo(String name, boolean unique, List<String> fields) {}
-
-record SoraTableInfo(
-    String name,
-    String rowType,
-    SoraTableShape shape,
-    @SoraNullable
-    SoraKeyInfo primaryKey,
-    List<SoraIndexInfo> indexes
-) {}
-
-interface SoraTable<R> {
-    SoraTableInfo info();
-    int size();
-}
-
-interface SoraKeyedTable<K, R> extends SoraTable<R>, Map<K, R> {
-    List<K> orderedKeys();
-    List<R> orderedRows();
-}
-
-interface SoraListTable<R> extends SoraTable<R>, List<R> {}
-
-interface SoraSingleTable<R> extends SoraTable<R> {
-    R row();
-}
-
 public final class SoraConfig {
     public static final String SCHEMA_FINGERPRINT = "4ae91b3892293cc4";
 
-    private final Map<String, SoraTable<?>> tables;
-
-    private SoraConfig(Map<String, SoraTable<?>> tables) {
-        this.tables = tables;
+    public enum TableShape {
+        LIST,
+        KEYED,
+        SINGLETON,
     }
 
-    public static SoraConfig fromSource(SoraTableSource source) {
+    public record KeyInfo(String name, String type) {}
+
+    public record IndexInfo(String name, boolean unique, List<String> fields) {
+        public IndexInfo {
+            fields = List.copyOf(fields);
+        }
+    }
+
+    public record TableInfo(
+        String name,
+        String rowType,
+        TableShape shape,
+        @SoraNullable
+        KeyInfo primaryKey,
+        List<IndexInfo> indexes
+    ) {
+        public TableInfo {
+            indexes = List.copyOf(indexes);
+        }
+    }
+
+    public interface Table<R> {
+        TableInfo info();
+        int size();
+    }
+
+    public interface KeyedTable<K, R> extends Table<R>, Map<K, R> {
+        List<K> orderedKeys();
+        List<R> orderedRows();
+    }
+
+    public interface ListTable<R> extends Table<R>, List<R> {}
+
+    public interface SingleTable<R> extends Table<R> {
+        R row();
+    }
+
+    private final Map<String, Table<?>> tables;
+
+    private SoraConfig(Map<String, Table<?>> tables) {
+        this.tables = Map.copyOf(tables);
+    }
+
+    public static SoraConfig fromBytes(byte[] bytes) {
+        return fromSource(SoraBundle.parse(bytes));
+    }
+
+    static SoraConfig fromSource(SoraTableSource source) {
         if (!source.schemaFingerprint().equals(SCHEMA_FINGERPRINT)) {
             throw new SoraReadException(
                 "schema fingerprint mismatch: generated code expects " + SCHEMA_FINGERPRINT
                     + ", bundle contains " + source.schemaFingerprint()
             );
         }
-        var tables = new HashMap<String, SoraTable<?>>(34);
+        var tables = new HashMap<String, Table<?>>(34);
         tables.put(ItemTable.NAME, ItemTable.decode(source));
         tables.put(ShopTable.NAME, ShopTable.decode(source));
         tables.put(ShopItemTable.NAME, ShopItemTable.decode(source));
@@ -99,17 +111,17 @@ public final class SoraConfig {
         return new SoraConfig(tables);
     }
 
-    public Collection<SoraTable<?>> tables() {
+    public Collection<Table<?>> tables() {
         return tables.values();
     }
     void validateLocalePack(LocalePack pack) {
         for (var key : textKeys()) {
             var value = pack.get(key);
             if (value == null) {
-                throw new SoraReadException("text key `" + key.value + "` is missing for locale `" + pack.locale() + "`");
+                throw new SoraReadException("text key `" + key.value() + "` is missing for locale `" + pack.locale() + "`");
             }
             if (value.isEmpty()) {
-                throw new SoraReadException("text key `" + key.value + "` has empty text for locale `" + pack.locale() + "`");
+                throw new SoraReadException("text key `" + key.value() + "` has empty text for locale `" + pack.locale() + "`");
             }
         }
     }
@@ -219,7 +231,7 @@ public final class SoraConfig {
         return keys;
     }
 
-    private <T extends SoraTable<?>> T table(String name, Class<T> type) {
+    private <T extends Table<?>> T table(String name, Class<T> type) {
         var table = tables.get(name);
         if (type.isInstance(table)) {
             return type.cast(table);
@@ -354,57 +366,5 @@ public final class SoraConfig {
             throw new SoraReadException("expected singleton table `" + name + "` to contain exactly 1 row, got " + rows.size());
         }
         return rows.get(0);
-    }
-}
-final class SoraI18n implements SoraTextResolver {
-    static final Set<String> LOCALES = Set.of(
-        "zh_cn",
-        "en_us"
-    );
-    static final String DEFAULT_LOCALE = "zh_cn";
-
-    private String activeLocale = DEFAULT_LOCALE;
-    private final Map<String, LocalePack> packs = new HashMap<>();
-
-    void mount(SoraConfig config, LocalePack pack) {
-        if (!pack.schemaFingerprint().equals(SoraConfig.SCHEMA_FINGERPRINT)) {
-            throw new SoraReadException(
-                "locale pack schema fingerprint mismatch: generated code expects "
-                    + SoraConfig.SCHEMA_FINGERPRINT + ", pack contains " + pack.schemaFingerprint()
-            );
-        }
-        if (!LOCALES.contains(pack.locale())) {
-            throw new SoraReadException("locale pack `" + pack.locale() + "` is not declared by generated code");
-        }
-        config.validateLocalePack(pack);
-        packs.put(pack.locale(), pack);
-    }
-
-    void setLocale(String locale) {
-        if (!LOCALES.contains(locale)) {
-            throw new SoraReadException("unknown locale `" + locale + "`");
-        }
-        if (!packs.containsKey(locale)) {
-            throw new SoraReadException("locale `" + locale + "` is not mounted");
-        }
-        activeLocale = locale;
-    }
-
-    @Override
-    public String text(TextKey key) {
-        var pack = packs.get(activeLocale);
-        if (pack == null) {
-            throw new SoraReadException("locale `" + activeLocale + "` is not mounted");
-        }
-        var value = pack.get(key);
-        if (value == null) {
-            throw new SoraReadException("active locale pack failed locale validation");
-        }
-        return value;
-    }
-
-    @Override
-    public String format(TextKey key, Map<String, ?> args) {
-        return SoraText.format(text(key), args);
     }
 }

@@ -3,7 +3,7 @@
 package showcase
 
 type Stage struct {
-	Id                int32
+	ID                int32
 	Name              string
 	MonsterIds        []int32
 	RecommendedPower  int32
@@ -13,7 +13,7 @@ type Stage struct {
 func decodeStage(reader *SoraReader) (Stage, error) {
 	var value Stage
 	var err error
-	value.Id, err = reader.ReadInt32()
+	value.ID, err = reader.ReadInt32()
 	if err != nil {
 		return value, err
 	}
@@ -42,7 +42,7 @@ func decodeStageValue(input SoraValue) (Stage, error) {
 	if err != nil {
 		return value, err
 	}
-	value.Id, err = obj.Get("id").AsInt32()
+	value.ID, err = obj.Get("id").AsInt32()
 	if err != nil {
 		return value, err
 	}
@@ -89,9 +89,9 @@ type StageTable struct {
 func buildStageTable(rows []Stage) (*StageTable, error) {
 	keys := make([]int32, 0, len(rows))
 	for _, row := range rows {
-		keys = append(keys, row.Id)
+		keys = append(keys, row.ID)
 	}
-	return &StageTable{keys: keys, rows: DecodeMapTable(rows, func(row Stage) int32 { return row.Id })}, nil
+	return &StageTable{keys: keys, rows: DecodeMapTable(rows, func(row Stage) int32 { return row.ID })}, nil
 }
 
 func decodeStageTable(source SoraTableSource) (*StageTable, error) {
@@ -101,9 +101,12 @@ func decodeStageTable(source SoraTableSource) (*StageTable, error) {
 	}
 	return buildStageTable(rows)
 }
-
 func (table *StageTable) Rows() map[int32]Stage {
-	return table.rows
+	rows := make(map[int32]Stage, len(table.rows))
+	for key, row := range table.rows {
+		rows[key] = row
+	}
+	return rows
 }
 func (table *StageTable) Get(key int32) (Stage, bool) {
 	value, ok := table.rows[key]
@@ -111,7 +114,7 @@ func (table *StageTable) Get(key int32) (Stage, bool) {
 }
 
 func (table *StageTable) Keys() []int32 {
-	return table.keys
+	return append([]int32(nil), table.keys...)
 }
 
 func (table *StageTable) OrderedRows() []Stage {

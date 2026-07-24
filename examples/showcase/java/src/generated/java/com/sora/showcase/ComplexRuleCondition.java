@@ -3,24 +3,12 @@
 package com.sora.showcase;
 
 import java.util.List;
-import java.util.Map;
 
-
-public final class ComplexRuleCondition {
-    public final Integer id;
-    public final Integer ruleId;
-    public final EventCondition value;
-
-    public ComplexRuleCondition(
-        Integer id,
-        Integer ruleId,
-        EventCondition value
-    ) {
-        this.id = id;
-        this.ruleId = ruleId;
-        this.value = value;
-    }
-
+public record ComplexRuleCondition(
+    int id,
+    int ruleId,
+    EventCondition value
+) {
     static ComplexRuleCondition decode(SoraReader reader) {
         return new ComplexRuleCondition(
             reader.readI32(),
@@ -40,63 +28,5 @@ public final class ComplexRuleCondition {
 
     void collectTextKeys(List<TextKey> out) {
         EventCondition.collectTextKeys(this.value, out);
-    }
-}
-
-final class ComplexRuleConditionTable extends java.util.AbstractMap<Integer, ComplexRuleCondition> implements SoraKeyedTable<Integer, ComplexRuleCondition> {
-    static final String NAME = "ComplexRuleCondition";
-    static final SoraTableInfo INFO = new SoraTableInfo(
-        NAME,
-        "ComplexRuleCondition",
-        SoraTableShape.KEYED,
-        new SoraKeyInfo("id", "Integer"),
-        List.of(
-        )
-    );
-    private final List<Integer> keys;
-    private final java.util.Map<Integer, ComplexRuleCondition> rows;
-
-    private ComplexRuleConditionTable(List<Integer> keys, java.util.Map<Integer, ComplexRuleCondition> rows) {
-        this.keys = keys;
-        this.rows = rows;
-    }
-
-    private static ComplexRuleConditionTable fromRows(List<ComplexRuleCondition> rows) {
-        return new ComplexRuleConditionTable(rows.stream().map(row -> row.id).toList(), SoraConfig.decodeMapTable(rows, row -> row.id));
-    }
-
-    static ComplexRuleConditionTable decode(SoraTableSource source) {
-        return fromRows(source.decodeTable(NAME, ComplexRuleCondition::decode, ComplexRuleCondition::decode));
-    }
-
-    public java.util.Map<Integer, ComplexRuleCondition> rows() {
-        return rows;
-    }
-    @Override
-    @SoraNullable
-    public ComplexRuleCondition get(Object key) {
-        return rows.get(key);
-    }
-
-    public List<Integer> orderedKeys() {
-        return keys;
-    }
-
-    public List<ComplexRuleCondition> orderedRows() {
-        return keys.stream().map(rows::get).toList();
-    }
-
-    @Override
-    public java.util.Set<Map.Entry<Integer, ComplexRuleCondition>> entrySet() {
-        return rows.entrySet();
-    }
-    @Override
-    public SoraTableInfo info() {
-        return INFO;
-    }
-
-    @Override
-    public int size() {
-        return rows.size();
     }
 }

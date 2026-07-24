@@ -3,9 +3,9 @@
 package com.sora.showcase;
 
 public enum MailType {
-    System(0),
-    Event(1),
-    Compensation(2);
+    SYSTEM(0),
+    EVENT(1),
+    COMPENSATION(2);
 
     private final int id;
 
@@ -20,11 +20,11 @@ public enum MailType {
     static MailType decode(SoraReader reader) {
         switch (reader.readU32()) {
             case 0:
-                return System;
+                return SYSTEM;
             case 1:
-                return Event;
+                return EVENT;
             case 2:
-                return Compensation;
+                return COMPENSATION;
             default:
                 throw new SoraReadException("invalid enum id for MailType");
         }
@@ -33,11 +33,11 @@ public enum MailType {
     static MailType decode(SoraValue value) {
         switch (value.asString()) {
             case "System":
-                return System;
+                return SYSTEM;
             case "Event":
-                return Event;
+                return EVENT;
             case "Compensation":
-                return Compensation;
+                return COMPENSATION;
             default:
                 throw new SoraReadException("invalid enum value for MailType");
         }

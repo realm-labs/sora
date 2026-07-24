@@ -64,8 +64,7 @@ public sealed class DropGroupTable : ISoraKeyedTable<int, DropGroup>
     {
         return new DropGroupTable(rows.ConvertAll(row => row.Id), SoraConfig.DecodeMapTable(rows, row => row.Id));
     }
-
-    public Dictionary<int, DropGroup> Rows => rows;
+    public IReadOnlyDictionary<int, DropGroup> Rows => rows;
     public DropGroup this[int key] => rows[key];
 
     public DropGroup? Get(int key)

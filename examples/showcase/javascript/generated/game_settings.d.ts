@@ -8,19 +8,19 @@ import type { Vec3 } from "./vec3.js";
 
 
 export interface GameSettings {
-    version: string;
-    dailyResetHour: number;
-    startingGold: number;
-    spawnPos: Vec3;
-    starterItems: number[];
+    readonly version: string;
+    readonly dailyResetHour: number;
+    readonly startingGold: number;
+    readonly spawnPos: Vec3;
+    readonly starterItems: readonly number[];
     /** Double precision tuning value */
-    gravity: number;
+    readonly gravity: number;
     /** Fixed-length array parsed from one cell */
-    dailyBonusItems: number[];
+    readonly dailyBonusItems: readonly number[];
     /** Fixed-length array of structs */
-    spawnPoints: Vec3[];
+    readonly spawnPoints: readonly Vec3[];
     /** Optional derived struct copied from a child row */
-    maintenance: MaintenanceInfo | undefined;
+    readonly maintenance: MaintenanceInfo | undefined;
 }
 
 export declare function decodeGameSettings(reader: SoraReader): GameSettings;
@@ -31,6 +31,7 @@ export declare class GameSettingsTable implements SoraSingleTable<GameSettings> 
     static readonly tableInfo: SoraTableInfo;
     static decode(rows: GameSettings[]): GameSettingsTable;
     info(): SoraTableInfo;
-    len(): number;
-    row(): GameSettings;
+    readonly size: number;
+    readonly row: GameSettings;
+    [Symbol.iterator](): Iterator<GameSettings>;
 }

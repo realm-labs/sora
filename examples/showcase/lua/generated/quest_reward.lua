@@ -3,9 +3,9 @@
 local Runtime = require("generated.sora_runtime")
 
 ---@class QuestReward
----@field questId integer
+---@field quest_id integer
 ---@field seq integer
----@field itemId integer
+---@field item_id integer
 ---@field count integer
 
 local QuestReward = {}
@@ -14,9 +14,9 @@ local QuestReward = {}
 ---@return QuestReward
 function QuestReward.decode(reader)
     return {
-        questId = reader:read_i32(),
+        quest_id = reader:read_i32(),
         seq = reader:read_i32(),
-        itemId = reader:read_i32(),
+        item_id = reader:read_i32(),
         count = reader:read_i32(),
     }
 end
@@ -26,9 +26,9 @@ end
 function QuestReward.decode_value(value)
     local obj = Runtime.expect_table(value)
     return {
-        questId = Runtime.expect_integer(obj["quest_id"]),
+        quest_id = Runtime.expect_integer(obj["quest_id"]),
         seq = Runtime.expect_integer(obj["seq"]),
-        itemId = Runtime.expect_integer(obj["item_id"]),
+        item_id = Runtime.expect_integer(obj["item_id"]),
         count = Runtime.expect_integer(obj["count"]),
     }
 end

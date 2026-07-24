@@ -38,7 +38,7 @@ public:
         return info;
     }
 
-    ShopTable() {}
+    ShopTable() = default;
     ShopTable(const ShopTable&) = delete;
     ShopTable& operator=(const ShopTable&) = delete;
     ShopTable(ShopTable&&) = default;
@@ -47,8 +47,7 @@ public:
     static ShopTable decode(const SoraBundle& bundle) {
         std::vector<Shop> rows = bundle.decode_table<Shop>(NAME);
         ShopTable table;
-        for (std::size_t index = 0; index < rows.size(); ++index) {
-            const Shop& row = rows[index];
+        for (const auto& row : rows) {
             table.keys_.push_back(row.id);
             table.rows_.emplace(row.id, row);
         }
@@ -65,7 +64,7 @@ public:
     }
 
     const Shop* get(const std::int32_t& key) const {
-        typename std::unordered_map<std::int32_t, Shop>::const_iterator it = rows_.find(key);
+        auto it = rows_.find(key);
         if (it == rows_.end()) {
             return nullptr;
         }
@@ -79,10 +78,8 @@ public:
     std::vector<const Shop*> ordered_rows() const {
         std::vector<const Shop*> rows;
         rows.reserve(keys_.size());
-        for (typename std::vector<std::int32_t>::const_iterator key = keys_.begin();
-             key != keys_.end();
-             ++key) {
-            typename std::unordered_map<std::int32_t, Shop>::const_iterator it = rows_.find(*key);
+        for (const auto& key : keys_) {
+            auto it = rows_.find(key);
             if (it != rows_.end()) {
                 rows.push_back(&it->second);
             }

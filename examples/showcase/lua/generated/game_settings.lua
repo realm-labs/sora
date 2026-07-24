@@ -6,13 +6,13 @@ local Vec3 = require("generated.vec3")
 
 ---@class GameSettings
 ---@field version string
----@field dailyResetHour integer
----@field startingGold integer
----@field spawnPos Vec3
----@field starterItems integer[]
+---@field daily_reset_hour integer
+---@field starting_gold integer
+---@field spawn_pos Vec3
+---@field starter_items integer[]
 ---@field gravity number Double precision tuning value
----@field dailyBonusItems integer[] Fixed-length array parsed from one cell
----@field spawnPoints Vec3[] Fixed-length array of structs
+---@field daily_bonus_items integer[] Fixed-length array parsed from one cell
+---@field spawn_points Vec3[] Fixed-length array of structs
 ---@field maintenance MaintenanceInfo? Optional derived struct copied from a child row
 
 local GameSettings = {}
@@ -22,13 +22,13 @@ local GameSettings = {}
 function GameSettings.decode(reader)
     return {
         version = reader:read_string(),
-        dailyResetHour = reader:read_i32(),
-        startingGold = reader:read_i32(),
-        spawnPos = Vec3.decode(reader),
-        starterItems = reader:read_list(function() return reader:read_i32() end),
+        daily_reset_hour = reader:read_i32(),
+        starting_gold = reader:read_i32(),
+        spawn_pos = Vec3.decode(reader),
+        starter_items = reader:read_list(function() return reader:read_i32() end),
         gravity = reader:read_f64(),
-        dailyBonusItems = reader:read_list(function() return reader:read_i32() end),
-        spawnPoints = reader:read_list(function() return Vec3.decode(reader) end),
+        daily_bonus_items = reader:read_list(function() return reader:read_i32() end),
+        spawn_points = reader:read_list(function() return Vec3.decode(reader) end),
         maintenance = reader:read_optional(function() return MaintenanceInfo.decode(reader) end),
     }
 end
@@ -39,13 +39,13 @@ function GameSettings.decode_value(value)
     local obj = Runtime.expect_table(value)
     return {
         version = Runtime.expect_string(obj["version"]),
-        dailyResetHour = Runtime.expect_integer(obj["daily_reset_hour"]),
-        startingGold = Runtime.expect_integer(obj["starting_gold"]),
-        spawnPos = Vec3.decode_value(obj["spawn_pos"]),
-        starterItems = Runtime.decode_value_list(obj["starter_items"], function(item) return Runtime.expect_integer(item) end),
+        daily_reset_hour = Runtime.expect_integer(obj["daily_reset_hour"]),
+        starting_gold = Runtime.expect_integer(obj["starting_gold"]),
+        spawn_pos = Vec3.decode_value(obj["spawn_pos"]),
+        starter_items = Runtime.decode_value_list(obj["starter_items"], function(item) return Runtime.expect_integer(item) end),
         gravity = Runtime.expect_number(obj["gravity"]),
-        dailyBonusItems = Runtime.decode_value_list(obj["daily_bonus_items"], function(item) return Runtime.expect_integer(item) end),
-        spawnPoints = Runtime.decode_value_list(obj["spawn_points"], function(item) return Vec3.decode_value(item) end),
+        daily_bonus_items = Runtime.decode_value_list(obj["daily_bonus_items"], function(item) return Runtime.expect_integer(item) end),
+        spawn_points = Runtime.decode_value_list(obj["spawn_points"], function(item) return Vec3.decode_value(item) end),
         maintenance = obj["maintenance"] == nil and nil or MaintenanceInfo.decode_value(obj["maintenance"]),
     }
 end
@@ -56,8 +56,8 @@ function GameSettings.collect_text_keys(value, out)
     if value == nil then
         return
     end
-    Vec3.collect_text_keys(value.spawnPos, out)
-    for _, __sora_value in ipairs(value.spawnPoints) do Vec3.collect_text_keys(__sora_value, out) end
+    Vec3.collect_text_keys(value.spawn_pos, out)
+    for _, __sora_value in ipairs(value.spawn_points) do Vec3.collect_text_keys(__sora_value, out) end
     if value.maintenance ~= nil then local __sora_value = value.maintenance; MaintenanceInfo.collect_text_keys(__sora_value, out) end
 end
 

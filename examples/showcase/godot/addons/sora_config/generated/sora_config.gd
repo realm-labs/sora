@@ -21,7 +21,7 @@ static func from_json_root(root: Dictionary) -> SoraConfig:
 			% [SORA_SCHEMA_FINGERPRINT, schema_fingerprint]
 		)
 		SoraRuntime.report_error(message)
-		return SoraConfig.new()
+		return null
 	var bundle := SoraRuntime.decode_bundle(root, "json")
 	var config := SoraConfig.new()
 	config._tables[Item.ItemTable.TABLE_NAME] = Item.ItemTable.decode(

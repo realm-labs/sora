@@ -3,27 +3,13 @@
 package com.sora.showcase;
 
 import java.util.List;
-import java.util.Map;
 
-
-public final class ComplexActionEntry {
-    public final Integer id;
-    public final Integer groupId;
-    public final Integer seq;
-    public final RewardAction value;
-
-    public ComplexActionEntry(
-        Integer id,
-        Integer groupId,
-        Integer seq,
-        RewardAction value
-    ) {
-        this.id = id;
-        this.groupId = groupId;
-        this.seq = seq;
-        this.value = value;
-    }
-
+public record ComplexActionEntry(
+    int id,
+    int groupId,
+    int seq,
+    RewardAction value
+) {
     static ComplexActionEntry decode(SoraReader reader) {
         return new ComplexActionEntry(
             reader.readI32(),
@@ -45,63 +31,5 @@ public final class ComplexActionEntry {
 
     void collectTextKeys(List<TextKey> out) {
         RewardAction.collectTextKeys(this.value, out);
-    }
-}
-
-final class ComplexActionEntryTable extends java.util.AbstractMap<Integer, ComplexActionEntry> implements SoraKeyedTable<Integer, ComplexActionEntry> {
-    static final String NAME = "ComplexActionEntry";
-    static final SoraTableInfo INFO = new SoraTableInfo(
-        NAME,
-        "ComplexActionEntry",
-        SoraTableShape.KEYED,
-        new SoraKeyInfo("id", "Integer"),
-        List.of(
-        )
-    );
-    private final List<Integer> keys;
-    private final java.util.Map<Integer, ComplexActionEntry> rows;
-
-    private ComplexActionEntryTable(List<Integer> keys, java.util.Map<Integer, ComplexActionEntry> rows) {
-        this.keys = keys;
-        this.rows = rows;
-    }
-
-    private static ComplexActionEntryTable fromRows(List<ComplexActionEntry> rows) {
-        return new ComplexActionEntryTable(rows.stream().map(row -> row.id).toList(), SoraConfig.decodeMapTable(rows, row -> row.id));
-    }
-
-    static ComplexActionEntryTable decode(SoraTableSource source) {
-        return fromRows(source.decodeTable(NAME, ComplexActionEntry::decode, ComplexActionEntry::decode));
-    }
-
-    public java.util.Map<Integer, ComplexActionEntry> rows() {
-        return rows;
-    }
-    @Override
-    @SoraNullable
-    public ComplexActionEntry get(Object key) {
-        return rows.get(key);
-    }
-
-    public List<Integer> orderedKeys() {
-        return keys;
-    }
-
-    public List<ComplexActionEntry> orderedRows() {
-        return keys.stream().map(rows::get).toList();
-    }
-
-    @Override
-    public java.util.Set<Map.Entry<Integer, ComplexActionEntry>> entrySet() {
-        return rows.entrySet();
-    }
-    @Override
-    public SoraTableInfo info() {
-        return INFO;
-    }
-
-    @Override
-    public int size() {
-        return rows.size();
     }
 }

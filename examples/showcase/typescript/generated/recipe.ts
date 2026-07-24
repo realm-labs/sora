@@ -13,9 +13,9 @@ import { collectResourceCostTextKeys, decodeResourceCost, decodeResourceCostValu
 
 
 export interface Recipe {
-    id: number;
-    resultItem: number;
-    materials: ResourceCost[];
+    readonly id: number;
+    readonly resultItem: number;
+    readonly materials: readonly ResourceCost[];
 }
 
 export function decodeRecipe(reader: SoraReader): Recipe {
@@ -51,8 +51,8 @@ export class RecipeTable implements SoraKeyedTable<number, Recipe> {
     };
 
     private constructor(
-        private readonly _keys: number[],
-        private readonly _rows: Map<number, Recipe>,
+        private readonly _keys: readonly number[],
+        private readonly _rows: ReadonlyMap<number, Recipe>,
     ) {}
 
     static decode(rows: Recipe[]): RecipeTable {
@@ -66,25 +66,33 @@ export class RecipeTable implements SoraKeyedTable<number, Recipe> {
         return RecipeTable.tableInfo;
     }
 
-    len(): number {
+    get size(): number {
         return this._rows.size;
     }
     get(key: number): Recipe | undefined {
         return this._rows.get(key);
     }
 
-    rows(): ReadonlyMap<number, Recipe> {
+    has(key: number): boolean {
+        return this._rows.has(key);
+    }
+
+    get rows(): ReadonlyMap<number, Recipe> {
         return this._rows;
     }
 
-    keys(): readonly number[] {
+    get orderedKeys(): readonly number[] {
         return this._keys;
     }
 
-    orderedRows(): Recipe[] {
+    get orderedRows(): readonly Recipe[] {
         return this._keys.flatMap((key) => {
             const row = this._rows.get(key);
             return row === undefined ? [] : [row];
         });
+    }
+
+    [Symbol.iterator](): Iterator<Recipe> {
+        return this._rows.values();
     }
 }

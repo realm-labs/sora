@@ -68,8 +68,7 @@ public sealed class StageRewardTable : ISoraListTable<StageReward>
     {
         return new StageRewardTable(rows);
     }
-
-    public List<StageReward> Rows => rows;
+    public IReadOnlyList<StageReward> Rows => rows;
     public StageReward this[int index] => rows[index];
 
     public IEnumerator<StageReward> GetEnumerator()

@@ -16,12 +16,12 @@ import { collectVec3TextKeys, decodeVec3, decodeVec3Value } from "./vec3.js";
 
 
 export interface Monster {
-    id: number;
-    name: string;
-    level: number;
-    element: ElementType;
-    dropGroup: number;
-    spawnPos: Vec3;
+    readonly id: number;
+    readonly name: string;
+    readonly level: number;
+    readonly element: ElementType;
+    readonly dropGroup: number;
+    readonly spawnPos: Vec3;
 }
 
 export function decodeMonster(reader: SoraReader): Monster {
@@ -63,8 +63,8 @@ export class MonsterTable implements SoraKeyedTable<number, Monster> {
     };
 
     private constructor(
-        private readonly _keys: number[],
-        private readonly _rows: Map<number, Monster>,
+        private readonly _keys: readonly number[],
+        private readonly _rows: ReadonlyMap<number, Monster>,
     ) {}
 
     static decode(rows: Monster[]): MonsterTable {
@@ -78,25 +78,33 @@ export class MonsterTable implements SoraKeyedTable<number, Monster> {
         return MonsterTable.tableInfo;
     }
 
-    len(): number {
+    get size(): number {
         return this._rows.size;
     }
     get(key: number): Monster | undefined {
         return this._rows.get(key);
     }
 
-    rows(): ReadonlyMap<number, Monster> {
+    has(key: number): boolean {
+        return this._rows.has(key);
+    }
+
+    get rows(): ReadonlyMap<number, Monster> {
         return this._rows;
     }
 
-    keys(): readonly number[] {
+    get orderedKeys(): readonly number[] {
         return this._keys;
     }
 
-    orderedRows(): Monster[] {
+    get orderedRows(): readonly Monster[] {
         return this._keys.flatMap((key) => {
             const row = this._rows.get(key);
             return row === undefined ? [] : [row];
         });
+    }
+
+    [Symbol.iterator](): Iterator<Monster> {
+        return this._rows.values();
     }
 }

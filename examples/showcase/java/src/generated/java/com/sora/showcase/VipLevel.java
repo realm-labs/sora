@@ -3,24 +3,12 @@
 package com.sora.showcase;
 
 import java.util.List;
-import java.util.Map;
 
-
-public final class VipLevel {
-    public final Integer level;
-    public final ResourceCost cost;
-    public final java.util.List<String> perks;
-
-    public VipLevel(
-        Integer level,
-        ResourceCost cost,
-        java.util.List<String> perks
-    ) {
-        this.level = level;
-        this.cost = cost;
-        this.perks = perks;
-    }
-
+public record VipLevel(
+    int level,
+    ResourceCost cost,
+    java.util.List<String> perks
+) {
     static VipLevel decode(SoraReader reader) {
         return new VipLevel(
             reader.readI32(),
@@ -40,63 +28,5 @@ public final class VipLevel {
 
     void collectTextKeys(List<TextKey> out) {
         this.cost.collectTextKeys(out);
-    }
-}
-
-final class VipLevelTable extends java.util.AbstractMap<Integer, VipLevel> implements SoraKeyedTable<Integer, VipLevel> {
-    static final String NAME = "VipLevel";
-    static final SoraTableInfo INFO = new SoraTableInfo(
-        NAME,
-        "VipLevel",
-        SoraTableShape.KEYED,
-        new SoraKeyInfo("level", "Integer"),
-        List.of(
-        )
-    );
-    private final List<Integer> keys;
-    private final java.util.Map<Integer, VipLevel> rows;
-
-    private VipLevelTable(List<Integer> keys, java.util.Map<Integer, VipLevel> rows) {
-        this.keys = keys;
-        this.rows = rows;
-    }
-
-    private static VipLevelTable fromRows(List<VipLevel> rows) {
-        return new VipLevelTable(rows.stream().map(row -> row.level).toList(), SoraConfig.decodeMapTable(rows, row -> row.level));
-    }
-
-    static VipLevelTable decode(SoraTableSource source) {
-        return fromRows(source.decodeTable(NAME, VipLevel::decode, VipLevel::decode));
-    }
-
-    public java.util.Map<Integer, VipLevel> rows() {
-        return rows;
-    }
-    @Override
-    @SoraNullable
-    public VipLevel get(Object key) {
-        return rows.get(key);
-    }
-
-    public List<Integer> orderedKeys() {
-        return keys;
-    }
-
-    public List<VipLevel> orderedRows() {
-        return keys.stream().map(rows::get).toList();
-    }
-
-    @Override
-    public java.util.Set<Map.Entry<Integer, VipLevel>> entrySet() {
-        return rows.entrySet();
-    }
-    @Override
-    public SoraTableInfo info() {
-        return INFO;
-    }
-
-    @Override
-    public int size() {
-        return rows.size();
     }
 }

@@ -4,10 +4,10 @@ import type { SoraListTable, SoraTableInfo, SoraReader, SoraValue, TextKey } fro
 
 
 export interface MaintenanceWindow {
-    version: string;
-    startsAt: string;
-    durationMinutes: number;
-    reason: string | undefined;
+    readonly version: string;
+    readonly startsAt: string;
+    readonly durationMinutes: number;
+    readonly reason: string | undefined;
 }
 
 export declare function decodeMaintenanceWindow(reader: SoraReader): MaintenanceWindow;
@@ -18,6 +18,8 @@ export declare class MaintenanceWindowTable implements SoraListTable<Maintenance
     static readonly tableInfo: SoraTableInfo;
     static decode(rows: MaintenanceWindow[]): MaintenanceWindowTable;
     info(): SoraTableInfo;
-    len(): number;
-    rows(): readonly MaintenanceWindow[];
+    readonly size: number;
+    readonly rows: readonly MaintenanceWindow[];
+    at(index: number): MaintenanceWindow | undefined;
+    [Symbol.iterator](): Iterator<MaintenanceWindow>;
 }

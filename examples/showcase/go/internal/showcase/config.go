@@ -242,11 +242,42 @@ func NewSoraConfigFromSource(source SoraTableSource) (*SoraConfig, error) {
 }
 
 func (config *SoraConfig) Tables() []SoraTable {
-	tables := make([]SoraTable, 0, len(config.tables))
-	for _, table := range config.tables {
-		tables = append(tables, table)
+	return []SoraTable{
+		config.Item(),
+		config.Shop(),
+		config.ShopItem(),
+		config.Recipe(),
+		config.GachaPool(),
+		config.GachaItem(),
+		config.EquipmentSet(),
+		config.Skill(),
+		config.Character(),
+		config.CharacterSkill(),
+		config.Buff(),
+		config.DropGroup(),
+		config.DropEntry(),
+		config.Monster(),
+		config.Stage(),
+		config.StageReward(),
+		config.Dungeon(),
+		config.Quest(),
+		config.QuestReward(),
+		config.LevelExp(),
+		config.Achievement(),
+		config.VipLevel(),
+		config.GameSettings(),
+		config.MaintenanceWindow(),
+		config.MailTemplate(),
+		config.MailReward(),
+		config.Dialogue(),
+		config.EventRule(),
+		config.ComplexRule(),
+		config.ComplexConditionGroup(),
+		config.ComplexConditionGroupEntry(),
+		config.ComplexRuleCondition(),
+		config.ComplexActionGroup(),
+		config.ComplexActionEntry(),
 	}
-	return tables
 }
 
 type SoraI18n struct {

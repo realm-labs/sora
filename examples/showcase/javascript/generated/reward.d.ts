@@ -4,8 +4,8 @@ import type { SoraReader, SoraValue, TextKey } from "./sora_runtime.js";
 
 
 export interface Reward {
-    itemId: number;
-    count: number;
+    readonly itemId: number;
+    readonly count: number;
 }
 
 export declare function decodeReward(reader: SoraReader): Reward;

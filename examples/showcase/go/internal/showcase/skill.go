@@ -3,7 +3,7 @@
 package showcase
 
 type Skill struct {
-	Id      int32
+	ID      int32
 	Name    string
 	Element ElementType
 	// Cost: Tuple cost, e.g. Gold,0,150
@@ -19,7 +19,7 @@ type Skill struct {
 func decodeSkill(reader *SoraReader) (Skill, error) {
 	var value Skill
 	var err error
-	value.Id, err = reader.ReadInt32()
+	value.ID, err = reader.ReadInt32()
 	if err != nil {
 		return value, err
 	}
@@ -60,7 +60,7 @@ func decodeSkillValue(input SoraValue) (Skill, error) {
 	if err != nil {
 		return value, err
 	}
-	value.Id, err = obj.Get("id").AsInt32()
+	value.ID, err = obj.Get("id").AsInt32()
 	if err != nil {
 		return value, err
 	}
@@ -119,9 +119,9 @@ type SkillTable struct {
 func buildSkillTable(rows []Skill) (*SkillTable, error) {
 	keys := make([]int32, 0, len(rows))
 	for _, row := range rows {
-		keys = append(keys, row.Id)
+		keys = append(keys, row.ID)
 	}
-	return &SkillTable{keys: keys, rows: DecodeMapTable(rows, func(row Skill) int32 { return row.Id })}, nil
+	return &SkillTable{keys: keys, rows: DecodeMapTable(rows, func(row Skill) int32 { return row.ID })}, nil
 }
 
 func decodeSkillTable(source SoraTableSource) (*SkillTable, error) {
@@ -131,9 +131,12 @@ func decodeSkillTable(source SoraTableSource) (*SkillTable, error) {
 	}
 	return buildSkillTable(rows)
 }
-
 func (table *SkillTable) Rows() map[int32]Skill {
-	return table.rows
+	rows := make(map[int32]Skill, len(table.rows))
+	for key, row := range table.rows {
+		rows[key] = row
+	}
+	return rows
 }
 func (table *SkillTable) Get(key int32) (Skill, bool) {
 	value, ok := table.rows[key]
@@ -141,7 +144,7 @@ func (table *SkillTable) Get(key int32) (Skill, bool) {
 }
 
 func (table *SkillTable) Keys() []int32 {
-	return table.keys
+	return append([]int32(nil), table.keys...)
 }
 
 func (table *SkillTable) OrderedRows() []Skill {

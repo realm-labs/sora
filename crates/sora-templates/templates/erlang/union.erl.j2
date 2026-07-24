@@ -8,9 +8,9 @@
 -type t() ::
 {%- for variant in union.variants %}
     {{ "#{" }}
-        '{{ union.tag }}' := '{{ variant.snake_name }}'{% if variant.fields %},{% endif %}
+        {{ union.tag_atom }} := {{ variant.atom_name }}{% if variant.fields %},{% endif %}
 {%- for field in variant.fields %}
-        '{{ field.name }}' := {{ field.type_name }}{% if not loop.last %},{% endif %}
+        {{ field.atom_name }} := {{ field.type_name }}{% if not loop.last %},{% endif %}
 {%- endfor %}
     }{% if not loop.last %} |{% else %}.{% endif %}
 {%- else %}
@@ -27,9 +27,9 @@ decode(Reader0) ->
             { {{- field.var_name -}}, Reader{{ loop.index + 1 }}} = ({{ field.decode }})(Reader{{ loop.index }}),
 {%- endfor %}
             {{ "{" }}{{ "#{" }}
-                '{{ union.tag }}' => '{{ variant.snake_name }}'{% if variant.fields %},{% endif %}
+                {{ union.tag_atom }} => {{ variant.atom_name }}{% if variant.fields %},{% endif %}
 {%- for field in variant.fields %}
-                '{{ field.name }}' => {{ field.var_name }}{% if not loop.last %},{% endif %}
+                {{ field.atom_name }} => {{ field.var_name }}{% if not loop.last %},{% endif %}
 {%- endfor %}
             }, {{ variant.reader_var }}}{% if not loop.last %};{% else %};{% endif %}
 {%- endfor %}
@@ -44,9 +44,9 @@ decode_value(Value) ->
 {%- for variant in union.variants %}
         <<"{{ variant.raw_name }}">> ->
             {{ "#{" }}
-                '{{ union.tag }}' => '{{ variant.snake_name }}'{% if variant.fields %},{% endif %}
+                {{ union.tag_atom }} => {{ variant.atom_name }}{% if variant.fields %},{% endif %}
 {%- for field in variant.fields %}
-                '{{ field.name }}' => {{ field.value_decode | replace("__VALUE__", "sora_runtime:value_get(<<\"" ~ field.raw_name ~ "\">>, Obj)") }}{% if not loop.last %},{% endif %}
+                {{ field.atom_name }} => {{ field.value_decode | replace("__VALUE__", "sora_runtime:value_get(<<\"" ~ field.raw_name ~ "\">>, Obj)") }}{% if not loop.last %},{% endif %}
 {%- endfor %}
             }{% if not loop.last %};{% else %};{% endif %}
 {%- endfor %}

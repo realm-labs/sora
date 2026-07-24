@@ -4,21 +4,11 @@ package com.sora.showcase;
 
 import java.util.List;
 
-public final class Vec3 {
-    public final float x;
-    public final float y;
-    public final float z;
-
-    public Vec3(
-        float x,
-        float y,
-        float z
-    ) {
-        this.x = x;
-        this.y = y;
-        this.z = z;
-    }
-
+public record Vec3(
+    float x,
+    float y,
+    float z
+) {
     static Vec3 decode(SoraReader reader) {
         return new Vec3(
             reader.readF32(),
