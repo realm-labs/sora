@@ -1828,8 +1828,22 @@ version = "0.1.0"
 name = "sora-workspace"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
+ "mlua",
  "schemars",
  "serde",
+ "sora-codegen",
+ "sora-config-format",
+ "sora-data",
+ "sora-diagnostics",
+ "sora-execution",
+ "sora-input",
+ "sora-input-csv",
+ "sora-input-structured",
+ "sora-input-toml",
+ "sora-input-xlsx",
+ "sora-ir",
+ "sora-schema",
  "thiserror",
 ]
 

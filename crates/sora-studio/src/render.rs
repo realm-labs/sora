@@ -111,11 +111,11 @@ pub(crate) fn schema_node_order(content: &str) -> Vec<String> {
             "[[tables]]" => Some(StudioNodeKind::Table),
             _ => pending_kind,
         };
-        if let Some(kind) = pending_kind {
-            if let Some(name) = toml_name_assignment(trimmed) {
-                order.push(node_id(kind, &name));
-                pending_kind = None;
-            }
+        if let Some(kind) = pending_kind
+            && let Some(name) = toml_name_assignment(trimmed)
+        {
+            order.push(node_id(kind, &name));
+            pending_kind = None;
         }
     }
     order

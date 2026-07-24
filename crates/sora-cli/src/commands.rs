@@ -1,38 +1,32 @@
 use anyhow::{Context, Result, bail};
-use sora_codegen::type_mapping::TypeMappingRegistry;
 use sora_excel::sync::ExcelSyncReport;
-use sora_execution::{ExecutionContext, ExecutionOptions};
+use sora_execution::ExecutionOptions;
 use sora_export::exporter::{ExportCompression, ExportOptions, ExportOutput, OutputKind};
-use sora_input::parser::ParserRegistry as CellParserRegistry;
 use sora_input_schema::input::SchemaFileInput;
-use sora_ir::parser::ParserRegistry as SchemaParserRegistry;
+use sora_workspace::{ProjectRuntime, RuntimeOptions, source::MixedProjectInput};
 use std::sync::Arc;
 
 use crate::args::{
     CheckArgs, Cli, Command, DiffArgs, ExcelSyncArgs, ExcelTemplateArgs, ExportArgs,
     ExportCompressionArg, GenArgs, SchemaLockArgs, SourceFormatArg,
 };
-use crate::source::MixedProjectInput;
-
 pub fn run(cli: Cli) -> Result<()> {
     if cli.jobs == Some(0) {
         bail!("--jobs must be greater than 0");
     }
 
     let project = command_project_path(&cli.command);
-    let execution = ExecutionContext::new(ExecutionOptions {
-        parallel: !cli.serial,
-        jobs: cli.jobs,
-    })?;
-    let parsers = crate::lua_parser::load_parser_registries(project, &cli.parser_script)?;
-    let type_mappings =
-        crate::lua_type_mapping::load_type_mapping_registry(project, &cli.type_mapping_script)?;
-    let context = CliContext {
-        execution,
-        schema_parsers: Arc::new(parsers.schema),
-        cell_parsers: Arc::new(parsers.cell),
-        type_mappings: Arc::new(type_mappings),
-    };
+    let context = ProjectRuntime::load(
+        project,
+        RuntimeOptions {
+            execution: ExecutionOptions {
+                parallel: !cli.serial,
+                jobs: cli.jobs,
+            },
+            parser_scripts: cli.parser_script,
+            type_mapping_scripts: cli.type_mapping_script,
+        },
+    )?;
 
     match cli.command {
         Command::Build(args) => crate::build::run(args, &context),
@@ -65,20 +59,13 @@ fn command_project_path(command: &Command) -> Option<&std::path::Path> {
     }
 }
 
-pub struct CliContext {
-    pub execution: ExecutionContext,
-    pub schema_parsers: Arc<SchemaParserRegistry>,
-    pub cell_parsers: Arc<CellParserRegistry>,
-    pub type_mappings: Arc<TypeMappingRegistry>,
-}
-
-fn check(args: CheckArgs, context: &CliContext) -> Result<()> {
+fn check(args: CheckArgs, context: &ProjectRuntime) -> Result<()> {
     let input = SchemaFileInput::new(&args.project);
     match &args.lock {
         Some(lock) => sora_core::pipeline::check_schema_with_lock_and_parsers(
             &input,
             lock,
-            &context.schema_parsers,
+            context.schema_parsers(),
         )
         .with_context(|| {
             format!(
@@ -87,12 +74,12 @@ fn check(args: CheckArgs, context: &CliContext) -> Result<()> {
                 lock.display()
             )
         }),
-        None => sora_core::pipeline::check_schema_with_parsers(&input, &context.schema_parsers)
+        None => sora_core::pipeline::check_schema_with_parsers(&input, context.schema_parsers())
             .with_context(|| format!("failed to check project `{}`", args.project.display())),
     }
 }
 
-fn generate(args: GenArgs, target: &str, context: &CliContext) -> Result<()> {
+fn generate(args: GenArgs, target: &str, context: &ProjectRuntime) -> Result<()> {
     let input = SchemaFileInput::new(&args.project);
     sora_core::pipeline::generate_code_with_scope_format_and_parsers(
         &input,
@@ -100,8 +87,8 @@ fn generate(args: GenArgs, target: &str, context: &CliContext) -> Result<()> {
         &args.out,
         args.format_code.into(),
         args.scope.as_deref(),
-        &context.schema_parsers,
-        &context.type_mappings,
+        context.schema_parsers(),
+        context.type_mappings(),
     )
     .with_context(|| {
         format!(
@@ -112,13 +99,13 @@ fn generate(args: GenArgs, target: &str, context: &CliContext) -> Result<()> {
     })
 }
 
-fn excel_template(args: ExcelTemplateArgs, context: &CliContext) -> Result<()> {
+fn excel_template(args: ExcelTemplateArgs, context: &ProjectRuntime) -> Result<()> {
     let input = SchemaFileInput::new(&args.project);
     sora_core::pipeline::generate_excel_template_with_scope_and_parsers(
         &input,
         &args.out,
         args.scope.as_deref(),
-        &context.schema_parsers,
+        context.schema_parsers(),
     )
     .with_context(|| {
         format!(
@@ -128,21 +115,21 @@ fn excel_template(args: ExcelTemplateArgs, context: &CliContext) -> Result<()> {
     })
 }
 
-fn excel_sync(args: ExcelSyncArgs, context: &CliContext) -> Result<()> {
+fn excel_sync(args: ExcelSyncArgs, context: &ProjectRuntime) -> Result<()> {
     let input = SchemaFileInput::new(&args.project);
     let report = if args.write {
         sora_core::pipeline::write_excel_sync_with_parsers(
             &input,
             &args.data_root,
             args.scope.as_deref(),
-            &context.schema_parsers,
+            context.schema_parsers(),
         )
     } else {
         sora_core::pipeline::preview_excel_sync_with_parsers(
             &input,
             &args.data_root,
             args.scope.as_deref(),
-            &context.schema_parsers,
+            context.schema_parsers(),
         )
     }
     .with_context(|| {
@@ -210,13 +197,13 @@ fn print_excel_sync_report(report: &ExcelSyncReport, write: bool) {
     }
 }
 
-fn schema_lock(args: SchemaLockArgs, context: &CliContext) -> Result<()> {
+fn schema_lock(args: SchemaLockArgs, context: &ProjectRuntime) -> Result<()> {
     let input = SchemaFileInput::new(&args.project);
     sora_core::pipeline::generate_schema_lock_with_scope_and_parsers(
         &input,
         &args.out,
         args.scope.as_deref(),
-        &context.schema_parsers,
+        context.schema_parsers(),
     )
     .with_context(|| {
         format!(
@@ -227,7 +214,7 @@ fn schema_lock(args: SchemaLockArgs, context: &CliContext) -> Result<()> {
     })
 }
 
-fn export(args: ExportArgs, context: &CliContext) -> Result<()> {
+fn export(args: ExportArgs, context: &ProjectRuntime) -> Result<()> {
     let options = export_options(args.compression, args.compression_level)?;
     let format = args.format.as_str();
     if matches!(options.compression, ExportCompression::Zstd { .. }) && format != "binary" {
@@ -251,13 +238,13 @@ fn export(args: ExportArgs, context: &CliContext) -> Result<()> {
         schema_input,
         &args.data_root,
         args.default_source_format.map(SourceFormatArg::as_str),
-        Arc::clone(&context.cell_parsers),
+        Arc::clone(context.cell_parsers()),
     );
     let (ir, data) = sora_core::pipeline::load_project_data_with_context_and_parsers(
         &input,
-        &context.execution,
-        &context.schema_parsers,
-        &context.cell_parsers,
+        context.execution(),
+        context.schema_parsers(),
+        context.cell_parsers(),
     )?;
     sora_core::pipeline::export_loaded_data_with_scope_context_and_options(
         &ir,
@@ -265,7 +252,7 @@ fn export(args: ExportArgs, context: &CliContext) -> Result<()> {
         format,
         output,
         args.scope.as_deref(),
-        &context.execution,
+        context.execution(),
         options,
     )
     .with_context(|| {
@@ -293,11 +280,11 @@ fn export_options(
     })
 }
 
-fn diff(args: DiffArgs, context: &CliContext) -> Result<()> {
+fn diff(args: DiffArgs, context: &ProjectRuntime) -> Result<()> {
     let default_source_format = args.default_source_format.map(SourceFormatArg::as_str);
     let left_schema = SchemaFileInput::new(&args.project);
     let right_schema = SchemaFileInput::new(&args.project);
-    let parser_registry = Arc::clone(&context.cell_parsers);
+    let parser_registry = Arc::clone(context.cell_parsers());
     let left = MixedProjectInput::with_parser_registry(
         left_schema,
         &args.left_root,
@@ -315,9 +302,9 @@ fn diff(args: DiffArgs, context: &CliContext) -> Result<()> {
         &right,
         &args.out,
         args.scope.as_deref(),
-        &context.execution,
-        &context.schema_parsers,
-        &context.cell_parsers,
+        context.execution(),
+        context.schema_parsers(),
+        context.cell_parsers(),
     )
     .with_context(|| {
         format!(
@@ -336,10 +323,7 @@ mod tests {
     use std::{
         fs,
         path::{Path, PathBuf},
-        sync::{
-            Arc,
-            atomic::{AtomicU64, Ordering},
-        },
+        sync::atomic::{AtomicU64, Ordering},
     };
 
     use super::*;
@@ -613,33 +597,22 @@ return {
         ))
     }
 
-    fn test_context() -> CliContext {
-        CliContext {
-            execution: ExecutionContext::default(),
-            schema_parsers: Arc::new(sora_ir::parser::ParserRegistry::builtin()),
-            cell_parsers: Arc::new(sora_input::parser::ParserRegistry::builtin()),
-            type_mappings: Arc::new(TypeMappingRegistry::new()),
-        }
+    fn test_context() -> ProjectRuntime {
+        ProjectRuntime::load(None, RuntimeOptions::default()).unwrap()
     }
 
-    fn context_with_parser_script(path: &Path) -> CliContext {
-        let parsers =
-            crate::lua_parser::load_parser_registries(None, &[path.to_path_buf()]).unwrap();
-        CliContext {
-            execution: ExecutionContext::default(),
-            schema_parsers: Arc::new(parsers.schema),
-            cell_parsers: Arc::new(parsers.cell),
-            type_mappings: Arc::new(TypeMappingRegistry::new()),
-        }
+    fn context_with_parser_script(path: &Path) -> ProjectRuntime {
+        ProjectRuntime::load(
+            None,
+            RuntimeOptions {
+                parser_scripts: vec![path.to_path_buf()],
+                ..RuntimeOptions::default()
+            },
+        )
+        .unwrap()
     }
 
-    fn context_for_project(project: &Path) -> CliContext {
-        let parsers = crate::lua_parser::load_parser_registries(Some(project), &[]).unwrap();
-        CliContext {
-            execution: ExecutionContext::default(),
-            schema_parsers: Arc::new(parsers.schema),
-            cell_parsers: Arc::new(parsers.cell),
-            type_mappings: Arc::new(TypeMappingRegistry::new()),
-        }
+    fn context_for_project(project: &Path) -> ProjectRuntime {
+        ProjectRuntime::load(Some(project), RuntimeOptions::default()).unwrap()
     }
 }

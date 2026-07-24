@@ -13,15 +13,15 @@ use sora_export::exporter::{ExportCompression, ExportOptions};
 use sora_input::traits::SchemaInput;
 use sora_input_schema::input::SchemaFileInput;
 use sora_schema::model::CodegenSchema;
+use sora_workspace::{ProjectRuntime, source::MixedProjectInput};
 
 use crate::args::BuildArgs;
-use crate::commands::CliContext;
 
 mod manifest;
 
 use manifest::{BuildCodegen, BuildConfig, BuildExport, BuildManifest, ExportCompressionArg};
 
-pub fn run(args: BuildArgs, context: &CliContext) -> Result<()> {
+pub fn run(args: BuildArgs, context: &ProjectRuntime) -> Result<()> {
     let manifest = BuildManifest::load(&args.project)?;
     let build = manifest.build;
     let project_dir = args.project.parent().unwrap_or_else(|| Path::new("."));
@@ -55,7 +55,7 @@ pub fn run(args: BuildArgs, context: &CliContext) -> Result<()> {
 
     let schema = schema_input.load_schema()?;
     let codegen_options = schema.codegen.clone();
-    let ir = sora_ir::normalize::normalize_schema_with_parsers(schema, &context.schema_parsers)
+    let ir = sora_ir::normalize::normalize_schema_with_parsers(schema, context.schema_parsers())
         .with_context(|| format!("failed to check project `{}`", args.project.display()))?;
     sora_ir::validate::validate_config_ir(&ir)
         .with_context(|| format!("failed to check project `{}`", args.project.display()))?;
@@ -67,7 +67,7 @@ pub fn run(args: BuildArgs, context: &CliContext) -> Result<()> {
             &schema_input,
             &path,
             scope,
-            &context.schema_parsers,
+            context.schema_parsers(),
         )
         .with_context(|| {
             format!(
@@ -84,7 +84,7 @@ pub fn run(args: BuildArgs, context: &CliContext) -> Result<()> {
             &schema_input,
             &path,
             scope,
-            &context.schema_parsers,
+            context.schema_parsers(),
         )
         .with_context(|| {
             format!(
@@ -104,8 +104,8 @@ pub fn run(args: BuildArgs, context: &CliContext) -> Result<()> {
             &out,
             FormatMode::from(item.format),
             item_scope,
-            &context.schema_parsers,
-            &context.type_mappings,
+            context.schema_parsers(),
+            context.type_mappings(),
         )
         .with_context(|| {
             format!(
@@ -118,18 +118,18 @@ pub fn run(args: BuildArgs, context: &CliContext) -> Result<()> {
     }
 
     if !build.exports.is_empty() {
-        let project_input = crate::source::MixedProjectInput::with_parser_registry(
+        let project_input = MixedProjectInput::with_parser_registry(
             SchemaFileInput::new(&args.project),
             &data_root,
             default_source_format.map(crate::args::SourceFormatArg::as_str),
-            std::sync::Arc::clone(&context.cell_parsers),
+            std::sync::Arc::clone(context.cell_parsers()),
         );
         let (ir, data, locale_catalog) =
             sora_core::pipeline::load_project_data_and_catalog_with_context_and_parsers(
                 &project_input,
-                &context.execution,
-                &context.schema_parsers,
-                &context.cell_parsers,
+                context.execution(),
+                context.schema_parsers(),
+                context.cell_parsers(),
             )
             .with_context(|| {
                 format!(
@@ -150,7 +150,7 @@ pub fn run(args: BuildArgs, context: &CliContext) -> Result<()> {
                 format: &item.format,
                 output,
                 scope: item_scope,
-                execution: &context.execution,
+                execution: context.execution(),
                 options: export_options(item)?,
             })
             .with_context(|| {

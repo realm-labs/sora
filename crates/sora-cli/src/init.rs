@@ -384,11 +384,7 @@ tables:
 mod tests {
     use super::*;
     use crate::{args::BuildArgs, build};
-    use sora_execution::ExecutionContext;
-    use std::sync::{
-        Arc,
-        atomic::{AtomicU64, Ordering},
-    };
+    use std::sync::atomic::{AtomicU64, Ordering};
 
     static TEMP_COUNTER: AtomicU64 = AtomicU64::new(0);
 
@@ -481,12 +477,8 @@ mod tests {
         std::env::temp_dir().join(format!("sora-init-test-{}-{unique}", std::process::id()))
     }
 
-    fn test_context() -> crate::commands::CliContext {
-        crate::commands::CliContext {
-            execution: ExecutionContext::default(),
-            schema_parsers: Arc::new(sora_ir::parser::ParserRegistry::builtin()),
-            cell_parsers: Arc::new(sora_input::parser::ParserRegistry::builtin()),
-            type_mappings: Arc::new(sora_codegen::type_mapping::TypeMappingRegistry::new()),
-        }
+    fn test_context() -> sora_workspace::ProjectRuntime {
+        sora_workspace::ProjectRuntime::load(None, sora_workspace::RuntimeOptions::default())
+            .unwrap()
     }
 }

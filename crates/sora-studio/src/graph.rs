@@ -480,20 +480,19 @@ fn build_studio_edges(nodes: &[StudioNode]) -> Vec<StudioEdge> {
                 }
             }
 
-            if let Some(source) = parse_source(&field.source) {
-                if let Some(target) = nodes
+            if let Some(source) = parse_source(&field.source)
+                && let Some(target) = nodes
                     .iter()
                     .find(|item| item.kind == StudioNodeKind::Table && item.name == source.table)
-                {
-                    edges.insert(StudioEdge {
-                        id: edge_id(&node.id, &target.id, StudioEdgeKind::Derived, &field.name),
-                        source: node.id.clone(),
-                        target: target.id.clone(),
-                        kind: StudioEdgeKind::Derived,
-                        label: field.name.clone(),
-                        target_label: Some(source.child_key),
-                    });
-                }
+            {
+                edges.insert(StudioEdge {
+                    id: edge_id(&node.id, &target.id, StudioEdgeKind::Derived, &field.name),
+                    source: node.id.clone(),
+                    target: target.id.clone(),
+                    kind: StudioEdgeKind::Derived,
+                    label: field.name.clone(),
+                    target_label: Some(source.child_key),
+                });
             }
         }
     }
