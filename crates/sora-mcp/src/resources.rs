@@ -10,7 +10,7 @@ use rmcp::{
 use serde::Serialize;
 use sora_workspace::{ProjectId, TableQuery, WorkspaceService};
 
-use crate::artifact_store::ArtifactStore;
+use crate::{artifact_store::ArtifactStore, task_store::TaskStore};
 
 pub fn list(workspace: &WorkspaceService) -> Result<ListResourcesResult, McpError> {
     let mut resources = vec![
@@ -120,6 +120,7 @@ pub fn templates() -> ListResourceTemplatesResult {
 pub fn read(
     workspace: &Arc<WorkspaceService>,
     artifacts: &Arc<ArtifactStore>,
+    tasks: &Arc<TaskStore>,
     authorization_context: &str,
     uri: &str,
 ) -> Result<ReadResourceResult, McpError> {
@@ -138,7 +139,7 @@ pub fn read(
             return read_docs(uri);
         }
         _ => {
-            return read_project_resource(workspace, artifacts, authorization_context, uri);
+            return read_project_resource(workspace, artifacts, tasks, authorization_context, uri);
         }
     };
     json_result(uri, &value)
@@ -147,15 +148,17 @@ pub fn read(
 pub fn exists(
     workspace: &Arc<WorkspaceService>,
     artifacts: &Arc<ArtifactStore>,
+    tasks: &Arc<TaskStore>,
     authorization_context: &str,
     uri: &str,
 ) -> bool {
-    read(workspace, artifacts, authorization_context, uri).is_ok()
+    read(workspace, artifacts, tasks, authorization_context, uri).is_ok()
 }
 
 fn read_project_resource(
     workspace: &Arc<WorkspaceService>,
     artifacts: &Arc<ArtifactStore>,
+    tasks: &Arc<TaskStore>,
     authorization_context: &str,
     uri: &str,
 ) -> Result<ReadResourceResult, McpError> {
@@ -170,6 +173,12 @@ fn read_project_resource(
         return artifacts
             .read(authorization_context, &id, artifact_id, uri)
             .map_err(|_| not_found(uri));
+    }
+    if let [_, "task", task_id] = parts.as_slice() {
+        let task = tasks
+            .get_for_project(authorization_context, id.as_str(), task_id)
+            .map_err(|_| not_found(uri))?;
+        return json_result(uri, &serialize_json(task)?);
     }
     let session = workspace.project(&id).map_err(|_| not_found(uri))?;
     let value = match parts.as_slice() {

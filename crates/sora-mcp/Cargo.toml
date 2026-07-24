@@ -20,6 +20,7 @@ serde_json.workspace = true
 sora-workspace.workspace = true
 sora-ir.workspace = true
 tokio.workspace = true
+tokio-util.workspace = true
 thiserror.workspace = true
 url.workspace = true
 uuid.workspace = true

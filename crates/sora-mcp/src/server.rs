@@ -9,15 +9,21 @@ use rmcp::{
     ServerHandler,
     handler::server::router::tool::ToolRouter,
     model::{
-        CompleteRequestParams, CompleteResult, Implementation, ListResourceTemplatesResult,
-        ListResourcesResult, PaginatedRequestParams, ReadResourceRequestParams, ReadResourceResult,
-        ServerCapabilities, ServerInfo, SubscribeRequestParams, UnsubscribeRequestParams,
+        CallToolRequestParams, CancelTaskParams, CancelTaskResult, CompleteRequestParams,
+        CompleteResult, CreateTaskResult, GetTaskParams, GetTaskPayloadParams,
+        GetTaskPayloadResult, GetTaskResult, Implementation, ListResourceTemplatesResult,
+        ListResourcesResult, ListTasksResult, PaginatedRequestParams, ReadResourceRequestParams,
+        ReadResourceResult, ServerCapabilities, ServerInfo, SubscribeRequestParams,
+        TaskStatusNotification, TaskStatusNotificationParam, TasksCapability,
+        UnsubscribeRequestParams,
     },
     tool_handler,
 };
 use sora_workspace::WorkspaceService;
 
-use crate::{SERVER_NAME, TARGET_PROTOCOL_VERSION, artifact_store::ArtifactStore};
+use crate::{
+    SERVER_NAME, TARGET_PROTOCOL_VERSION, artifact_store::ArtifactStore, task_store::TaskStore,
+};
 
 /// MCP protocol adapter backed by the shared Sora workspace service.
 #[derive(Debug, Clone)]
@@ -27,6 +33,7 @@ pub struct SoraMcpServer {
     tool_router: ToolRouter<Self>,
     pub(crate) subscriptions: Arc<RwLock<BTreeSet<String>>>,
     pub(crate) artifacts: Arc<ArtifactStore>,
+    pub(crate) tasks: Arc<TaskStore>,
     logging_level: Arc<AtomicU8>,
 }
 
@@ -51,6 +58,7 @@ impl SoraMcpServer {
                 + Self::excel_tool_router(),
             subscriptions: Arc::new(RwLock::new(BTreeSet::new())),
             artifacts: Arc::new(ArtifactStore::default()),
+            tasks: Arc::new(TaskStore::default()),
             logging_level: Arc::new(AtomicU8::new(1)),
         }
     }
@@ -89,6 +97,7 @@ impl SoraMcpServer {
         if let Some(tools) = capabilities.tools.as_mut() {
             tools.list_changed = Some(false);
         }
+        capabilities.tasks = Some(TasksCapability::server_default());
         capabilities
     }
 
@@ -127,6 +136,110 @@ impl SoraMcpServer {
 
 #[tool_handler(router = self.tool_router)]
 impl ServerHandler for SoraMcpServer {
+    async fn enqueue_task(
+        &self,
+        mut request: CallToolRequestParams,
+        context: rmcp::service::RequestContext<rmcp::RoleServer>,
+    ) -> Result<CreateTaskResult, rmcp::ErrorData> {
+        let ttl = request.task.take().and_then(|metadata| metadata.ttl);
+        let project_id = request
+            .arguments
+            .as_ref()
+            .and_then(|arguments| arguments.get("project_id"))
+            .and_then(serde_json::Value::as_str)
+            .map(str::to_owned);
+        let created = self
+            .tasks
+            .create(&self.authorization_context, project_id, ttl)?;
+        let mut task_context = context.clone();
+        task_context.ct = created.cancellation;
+        let task_id = created.task.task_id.clone();
+        let owner = self.authorization_context.clone();
+        let server = self.clone();
+        tokio::spawn(async move {
+            let peer = task_context.peer.clone();
+            let result = server.call_tool(request, task_context).await;
+            let serialized = result.and_then(|result| {
+                serde_json::to_value(result).map_err(|error| {
+                    rmcp::ErrorData::internal_error(
+                        format!("failed to serialize task result: {error}"),
+                        None,
+                    )
+                })
+            });
+            if let Ok(task) = server.tasks.finish(&owner, &task_id, serialized) {
+                let _ = peer
+                    .send_notification(rmcp::model::ServerNotification::TaskStatusNotification(
+                        TaskStatusNotification::new(TaskStatusNotificationParam::new(task)),
+                    ))
+                    .await;
+            }
+        });
+        Ok(CreateTaskResult::new(created.task))
+    }
+
+    fn list_tasks(
+        &self,
+        request: Option<PaginatedRequestParams>,
+        _context: rmcp::service::RequestContext<rmcp::RoleServer>,
+    ) -> impl Future<Output = Result<ListTasksResult, rmcp::ErrorData>>
+    + rmcp::service::MaybeSendFuture
+    + '_ {
+        ready(
+            self.tasks.list(
+                &self.authorization_context,
+                request
+                    .as_ref()
+                    .and_then(|request| request.cursor.as_deref()),
+            ),
+        )
+    }
+
+    fn get_task_info(
+        &self,
+        request: GetTaskParams,
+        _context: rmcp::service::RequestContext<rmcp::RoleServer>,
+    ) -> impl Future<Output = Result<GetTaskResult, rmcp::ErrorData>> + rmcp::service::MaybeSendFuture + '_
+    {
+        ready(
+            self.tasks
+                .get(&self.authorization_context, &request.task_id)
+                .map(GetTaskResult::new),
+        )
+    }
+
+    fn get_task_result(
+        &self,
+        request: GetTaskPayloadParams,
+        _context: rmcp::service::RequestContext<rmcp::RoleServer>,
+    ) -> impl Future<Output = Result<GetTaskPayloadResult, rmcp::ErrorData>>
+    + rmcp::service::MaybeSendFuture
+    + '_ {
+        ready(
+            self.tasks
+                .result(&self.authorization_context, &request.task_id)
+                .and_then(|result| result)
+                .map(GetTaskPayloadResult::new),
+        )
+    }
+
+    async fn cancel_task(
+        &self,
+        request: CancelTaskParams,
+        context: rmcp::service::RequestContext<rmcp::RoleServer>,
+    ) -> Result<CancelTaskResult, rmcp::ErrorData> {
+        let task = self
+            .tasks
+            .cancel(&self.authorization_context, &request.task_id)?;
+        let _ = context
+            .peer
+            .send_notification(rmcp::model::ServerNotification::TaskStatusNotification(
+                TaskStatusNotification::new(TaskStatusNotificationParam::new(task.clone())),
+            ))
+            .await;
+        Ok(CancelTaskResult::new(task))
+    }
+
     #[allow(deprecated)]
     async fn on_initialized(&self, context: rmcp::service::NotificationContext<rmcp::RoleServer>) {
         self.sync_client_roots(context.peer.clone()).await;
@@ -214,6 +327,7 @@ impl ServerHandler for SoraMcpServer {
         ready(crate::resources::read(
             &self.workspace,
             &self.artifacts,
+            &self.tasks,
             &self.authorization_context,
             &request.uri,
         ))
@@ -228,6 +342,7 @@ impl ServerHandler for SoraMcpServer {
         let result = if crate::resources::exists(
             &self.workspace,
             &self.artifacts,
+            &self.tasks,
             &self.authorization_context,
             &request.uri,
         ) {
@@ -311,7 +426,10 @@ mod tests {
         );
         assert!(info.capabilities.prompts.is_none());
         assert!(info.capabilities.completions.is_some());
-        assert!(info.capabilities.tasks.is_none());
+        let tasks = info.capabilities.tasks.expect("tasks capability");
+        assert!(tasks.supports_list());
+        assert!(tasks.supports_cancel());
+        assert!(tasks.supports_tools_call());
     }
 
     #[test]

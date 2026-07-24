@@ -9,6 +9,7 @@ mod dto;
 mod protocol;
 mod resources;
 mod server;
+mod task_store;
 mod tools;
 mod transport;
 

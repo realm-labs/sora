@@ -20,7 +20,8 @@ use crate::{
 impl SoraMcpServer {
     #[tool(
         name = "sora_build",
-        description = "Run selected outputs from the manifest build graph through an isolated staging area and atomic commit"
+        description = "Run selected outputs from the manifest build graph through an isolated staging area and atomic commit",
+        execution(task_support = "optional")
     )]
     async fn build(
         &self,
@@ -57,7 +58,8 @@ impl SoraMcpServer {
 
     #[tool(
         name = "sora_codegen",
-        description = "Generate one manifest-declared language target using its configured output, runtime format, and formatter mode"
+        description = "Generate one manifest-declared language target using its configured output, runtime format, and formatter mode",
+        execution(task_support = "optional")
     )]
     async fn codegen(
         &self,
@@ -84,7 +86,8 @@ impl SoraMcpServer {
 
     #[tool(
         name = "sora_export",
-        description = "Export validated data through one manifest-declared exporter format and its declared output kind"
+        description = "Export validated data through one manifest-declared exporter format and its declared output kind",
+        execution(task_support = "optional")
     )]
     async fn export(
         &self,
@@ -111,7 +114,8 @@ impl SoraMcpServer {
 
     #[tool(
         name = "sora_schema_lock",
-        description = "Generate the manifest-declared schema lock through the build transaction"
+        description = "Generate the manifest-declared schema lock through the build transaction",
+        execution(task_support = "optional")
     )]
     async fn schema_lock(
         &self,
@@ -138,7 +142,8 @@ impl SoraMcpServer {
 
     #[tool(
         name = "sora_excel_template",
-        description = "Generate manifest-declared Excel templates through the build transaction"
+        description = "Generate manifest-declared Excel templates through the build transaction",
+        execution(task_support = "optional")
     )]
     async fn excel_template(
         &self,

@@ -90,6 +90,7 @@ sora-templates = { path = "crates/sora-templates", version = "0.1.0" }
 sora-workspace = { path = "crates/sora-workspace", version = "0.1.0" }
 thiserror = "2"
 tokio = { version = "1", features = ["macros", "rt-multi-thread", "signal"] }
+tokio-util = "0.7"
 toml = "0.8"
 tower-http = { version = "0.6", features = ["cors"] }
 url = "2"
