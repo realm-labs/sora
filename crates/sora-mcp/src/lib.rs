@@ -3,6 +3,7 @@
 //! The MCP adapter contains protocol and transport concerns only. Project
 //! behavior is delegated to [`sora_workspace`].
 
+mod artifact_store;
 mod completion;
 mod dto;
 mod protocol;

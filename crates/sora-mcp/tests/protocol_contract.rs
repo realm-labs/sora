@@ -37,7 +37,7 @@ async fn lifecycle_negotiates_the_pinned_protocol_and_lists_strict_tools() -> an
     assert_eq!(peer_info.server_info.name, SERVER_NAME);
 
     let tools = client.list_tools(Default::default()).await?;
-    assert_eq!(tools.tools.len(), 15);
+    assert_eq!(tools.tools.len(), 20);
     assert!(
         tools
             .tools

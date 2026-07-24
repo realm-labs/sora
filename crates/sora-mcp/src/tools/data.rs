@@ -131,6 +131,8 @@ impl SoraMcpServer {
                                 report.project_id, report.transaction.backup_id
                             ),
                             mime_type: "application/x-sora-backup".to_owned(),
+                            name: None,
+                            size: None,
                         }]
                     })
                     .unwrap_or_default();

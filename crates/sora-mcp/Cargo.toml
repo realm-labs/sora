@@ -12,6 +12,7 @@ rust-version.workspace = true
 
 [dependencies]
 anyhow.workspace = true
+base64.workspace = true
 rmcp.workspace = true
 schemars.workspace = true
 serde.workspace = true
@@ -19,7 +20,9 @@ serde_json.workspace = true
 sora-workspace.workspace = true
 sora-ir.workspace = true
 tokio.workspace = true
+thiserror.workspace = true
 url.workspace = true
+uuid.workspace = true
 
 [dev-dependencies]
 rmcp = { workspace = true, features = ["client"] }

@@ -2105,14 +2105,17 @@ name = "sora-mcp"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "base64",
  "rmcp",
  "schemars",
  "serde",
  "serde_json",
  "sora-ir",
  "sora-workspace",
+ "thiserror 2.0.18",
  "tokio",
  "url",
+ "uuid",
 ]
 
 [[package]]

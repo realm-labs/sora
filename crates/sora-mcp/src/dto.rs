@@ -60,6 +60,8 @@ pub struct ArtifactLink {
     pub artifact_id: String,
     pub uri: String,
     pub mime_type: String,
+    pub name: Option<String>,
+    pub size: Option<usize>,
 }
 
 pub fn tool_error<T>(envelope: ToolEnvelope<T>) -> rmcp::model::CallToolResult

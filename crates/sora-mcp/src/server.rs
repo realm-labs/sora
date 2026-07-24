@@ -17,7 +17,7 @@ use rmcp::{
 };
 use sora_workspace::WorkspaceService;
 
-use crate::{SERVER_NAME, TARGET_PROTOCOL_VERSION};
+use crate::{SERVER_NAME, TARGET_PROTOCOL_VERSION, artifact_store::ArtifactStore};
 
 /// MCP protocol adapter backed by the shared Sora workspace service.
 #[derive(Debug, Clone)]
@@ -26,6 +26,7 @@ pub struct SoraMcpServer {
     pub(crate) authorization_context: Arc<str>,
     tool_router: ToolRouter<Self>,
     pub(crate) subscriptions: Arc<RwLock<BTreeSet<String>>>,
+    pub(crate) artifacts: Arc<ArtifactStore>,
     logging_level: Arc<AtomicU8>,
 }
 
@@ -45,8 +46,10 @@ impl SoraMcpServer {
             tool_router: Self::server_tool_router()
                 + Self::project_tool_router()
                 + Self::schema_tool_router()
-                + Self::data_tool_router(),
+                + Self::data_tool_router()
+                + Self::build_tool_router(),
             subscriptions: Arc::new(RwLock::new(BTreeSet::new())),
+            artifacts: Arc::new(ArtifactStore::default()),
             logging_level: Arc::new(AtomicU8::new(1)),
         }
     }
@@ -207,7 +210,12 @@ impl ServerHandler for SoraMcpServer {
     ) -> impl Future<Output = Result<ReadResourceResult, rmcp::ErrorData>>
     + rmcp::service::MaybeSendFuture
     + '_ {
-        ready(crate::resources::read(&self.workspace, &request.uri))
+        ready(crate::resources::read(
+            &self.workspace,
+            &self.artifacts,
+            &self.authorization_context,
+            &request.uri,
+        ))
     }
 
     fn subscribe(
@@ -216,7 +224,12 @@ impl ServerHandler for SoraMcpServer {
         _context: rmcp::service::RequestContext<rmcp::RoleServer>,
     ) -> impl Future<Output = Result<(), rmcp::ErrorData>> + rmcp::service::MaybeSendFuture + '_
     {
-        let result = if crate::resources::exists(&self.workspace, &request.uri) {
+        let result = if crate::resources::exists(
+            &self.workspace,
+            &self.artifacts,
+            &self.authorization_context,
+            &request.uri,
+        ) {
             self.subscriptions
                 .write()
                 .map_err(|_| rmcp::ErrorData::internal_error("subscription lock poisoned", None))
@@ -305,7 +318,7 @@ mod tests {
         let server = SoraMcpServer::new(Arc::new(WorkspaceService::new()));
         let tools = server.tool_router.list_all();
 
-        assert_eq!(tools.len(), 15);
+        assert_eq!(tools.len(), 20);
         let mut names = tools
             .iter()
             .map(|tool| tool.name.as_ref())
@@ -314,16 +327,21 @@ mod tests {
         assert_eq!(
             names,
             [
+                "sora_build",
+                "sora_codegen",
                 "sora_data_apply",
                 "sora_data_diff",
                 "sora_data_preview",
                 "sora_data_validate",
+                "sora_excel_template",
+                "sora_export",
                 "sora_project_init",
                 "sora_project_init_apply",
                 "sora_project_inspect",
                 "sora_project_list",
                 "sora_project_open",
                 "sora_schema_apply",
+                "sora_schema_lock",
                 "sora_schema_preview",
                 "sora_schema_search",
                 "sora_schema_validate",

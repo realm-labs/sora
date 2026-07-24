@@ -10,6 +10,8 @@ use rmcp::{
 use serde::Serialize;
 use sora_workspace::{ProjectId, TableQuery, WorkspaceService};
 
+use crate::artifact_store::ArtifactStore;
+
 pub fn list(workspace: &WorkspaceService) -> Result<ListResourcesResult, McpError> {
     let mut resources = vec![
         json_resource(
@@ -115,7 +117,12 @@ pub fn templates() -> ListResourceTemplatesResult {
     ListResourceTemplatesResult::with_all_items(templates)
 }
 
-pub fn read(workspace: &Arc<WorkspaceService>, uri: &str) -> Result<ReadResourceResult, McpError> {
+pub fn read(
+    workspace: &Arc<WorkspaceService>,
+    artifacts: &Arc<ArtifactStore>,
+    authorization_context: &str,
+    uri: &str,
+) -> Result<ReadResourceResult, McpError> {
     let value = match uri {
         "sora://server/info" => serde_json::json!({
             "name": crate::SERVER_NAME,
@@ -130,17 +137,26 @@ pub fn read(workspace: &Arc<WorkspaceService>, uri: &str) -> Result<ReadResource
         uri if uri.starts_with("sora://docs/") => {
             return read_docs(uri);
         }
-        _ => return read_project_resource(workspace, uri),
+        _ => {
+            return read_project_resource(workspace, artifacts, authorization_context, uri);
+        }
     };
     json_result(uri, &value)
 }
 
-pub fn exists(workspace: &Arc<WorkspaceService>, uri: &str) -> bool {
-    read(workspace, uri).is_ok()
+pub fn exists(
+    workspace: &Arc<WorkspaceService>,
+    artifacts: &Arc<ArtifactStore>,
+    authorization_context: &str,
+    uri: &str,
+) -> bool {
+    read(workspace, artifacts, authorization_context, uri).is_ok()
 }
 
 fn read_project_resource(
     workspace: &Arc<WorkspaceService>,
+    artifacts: &Arc<ArtifactStore>,
+    authorization_context: &str,
     uri: &str,
 ) -> Result<ReadResourceResult, McpError> {
     let (base_uri, query_string) = uri.split_once('?').unwrap_or((uri, ""));
@@ -150,6 +166,11 @@ fn read_project_resource(
     let parts = path.split('/').collect::<Vec<_>>();
     let id = parts.first().copied().ok_or_else(|| not_found(uri))?;
     let id = ProjectId::new(id).map_err(|_| not_found(uri))?;
+    if let [_, "artifact", artifact_id] = parts.as_slice() {
+        return artifacts
+            .read(authorization_context, &id, artifact_id, uri)
+            .map_err(|_| not_found(uri));
+    }
     let session = workspace.project(&id).map_err(|_| not_found(uri))?;
     let value = match parts.as_slice() {
         [_, "summary"] => serialize_json(
