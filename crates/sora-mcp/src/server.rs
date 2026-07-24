@@ -3,6 +3,7 @@ use std::{
     future::{Future, ready},
     sync::atomic::{AtomicU8, Ordering},
     sync::{Arc, RwLock},
+    time::Instant,
 };
 
 use rmcp::{
@@ -19,7 +20,7 @@ use rmcp::{
     },
     tool_handler,
 };
-use sora_workspace::WorkspaceService;
+use sora_workspace::{ProjectId, WorkspaceService};
 
 use crate::{
     SERVER_NAME, TARGET_PROTOCOL_VERSION, artifact_store::ArtifactStore, task_store::TaskStore,
@@ -140,6 +141,57 @@ impl SoraMcpServer {
 
 #[tool_handler(router = self.tool_router)]
 impl ServerHandler for SoraMcpServer {
+    async fn call_tool(
+        &self,
+        request: CallToolRequestParams,
+        context: rmcp::service::RequestContext<rmcp::RoleServer>,
+    ) -> Result<rmcp::model::CallToolResult, rmcp::ErrorData> {
+        let started = Instant::now();
+        let tool = request.name.to_string();
+        let project_id = request
+            .arguments
+            .as_ref()
+            .and_then(|arguments| arguments.get("project_id"))
+            .and_then(serde_json::Value::as_str)
+            .map(str::to_owned);
+        let revision_before = project_id
+            .as_deref()
+            .and_then(|project_id| ProjectId::new(project_id).ok())
+            .and_then(|project_id| self.workspace.project(&project_id).ok())
+            .map(|project| project.revision().project);
+        let result = self
+            .tool_router
+            .call(rmcp::handler::server::tool::ToolCallContext::new(
+                self, request, context,
+            ))
+            .await;
+        let revision_after = project_id
+            .as_deref()
+            .and_then(|project_id| ProjectId::new(project_id).ok())
+            .and_then(|project_id| self.workspace.project(&project_id).ok())
+            .map(|project| project.revision().project);
+        let (outcome, change_summary) = match &result {
+            Ok(result) if result.is_error == Some(true) => {
+                ("business_error", audit_change_summary(result))
+            }
+            Ok(result) => ("success", audit_change_summary(result)),
+            Err(_) => ("protocol_error", "none".to_owned()),
+        };
+        tracing::info!(
+            audit_event = "tool_call",
+            tool,
+            project = project_id.as_deref().unwrap_or("none"),
+            authorization_context = self.authorization_context.as_ref(),
+            revision_before = revision_before.as_deref().unwrap_or("none"),
+            revision_after = revision_after.as_deref().unwrap_or("none"),
+            outcome,
+            duration_ms = started.elapsed().as_millis(),
+            change_summary,
+            "Sora MCP tool call completed"
+        );
+        result
+    }
+
     async fn enqueue_task(
         &self,
         mut request: CallToolRequestParams,
@@ -418,6 +470,38 @@ impl ServerHandler for SoraMcpServer {
                 "Use Sora resources and domain tools to inspect, validate, modify, and build \
                  configuration projects. Never edit generated outputs as source files.",
             )
+    }
+}
+
+fn audit_change_summary(result: &rmcp::model::CallToolResult) -> String {
+    const COUNTED_FIELDS: [&str; 7] = [
+        "affected_files",
+        "affected_entities",
+        "changes",
+        "created",
+        "deleted",
+        "updated",
+        "warnings",
+    ];
+    let Some(structured) = result.structured_content.as_ref() else {
+        return format!("content_blocks={}", result.content.len());
+    };
+    let Some(object) = structured.as_object() else {
+        return "structured_result=non_object".to_owned();
+    };
+    let counts = COUNTED_FIELDS
+        .iter()
+        .filter_map(|field| {
+            object
+                .get(*field)
+                .and_then(serde_json::Value::as_array)
+                .map(|values| format!("{field}={}", values.len()))
+        })
+        .collect::<Vec<_>>();
+    if counts.is_empty() {
+        "structured_result=object".to_owned()
+    } else {
+        counts.join(",")
     }
 }
 

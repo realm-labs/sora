@@ -26,7 +26,7 @@ pub fn run(cli: Cli) -> Result<()> {
 
     let command = match cli.command {
         Command::Init(args) => return crate::init::run(args),
-        Command::Mcp(args) => return crate::mcp::run(args, runtime_options),
+        Command::Mcp(args) => return crate::mcp::run(*args, runtime_options),
         Command::Studio(args) => return crate::studio::run(args, runtime_options),
         command => command,
     };

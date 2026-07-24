@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::{net::IpAddr, path::PathBuf};
 
 use clap::{Args, Parser, Subcommand};
 use sora_codegen::format::FormatMode;
@@ -52,7 +52,7 @@ pub enum Command {
     SchemaLock(SchemaLockArgs),
     #[command(visible_alias = "st")]
     Studio(StudioArgs),
-    Mcp(McpArgs),
+    Mcp(Box<McpArgs>),
 }
 
 #[derive(Debug, Args)]
@@ -64,6 +64,49 @@ pub struct McpArgs {
     /// Trust and execute Lua scripts declared by the startup project.
     #[arg(long, requires = "project")]
     pub trust_project_scripts: bool,
+
+    /// MCP transport to run.
+    #[arg(long, value_enum, default_value_t = McpTransportArg::Stdio)]
+    pub transport: McpTransportArg,
+
+    /// Explicit address for the Streamable HTTP listener.
+    #[arg(long, default_value = "127.0.0.1")]
+    pub host: IpAddr,
+
+    /// Port for the Streamable HTTP listener.
+    #[arg(long, default_value_t = 8000)]
+    pub port: u16,
+
+    /// Externally visible Streamable HTTP resource URL.
+    #[arg(long, value_name = "URL")]
+    pub public_url: Option<url::Url>,
+
+    /// Browser Origin allowed to call the HTTP MCP endpoint.
+    #[arg(long, value_name = "ORIGIN")]
+    pub allowed_origin: Vec<String>,
+
+    /// OAuth authorization server issuer identifier.
+    #[arg(long, value_name = "URL", requires = "oauth_audience")]
+    pub oauth_issuer: Option<url::Url>,
+
+    /// Audience required in OAuth JWT access tokens.
+    #[arg(long, value_name = "AUDIENCE", requires = "oauth_issuer")]
+    pub oauth_audience: Option<String>,
+
+    /// Explicit JWKS endpoint; otherwise RFC 8414 discovery is used.
+    #[arg(long, value_name = "URL", requires = "oauth_issuer")]
+    pub oauth_jwks_uri: Option<url::Url>,
+
+    /// Required OAuth scope. Repeat to require multiple scopes.
+    #[arg(long, value_name = "SCOPE", requires = "oauth_issuer")]
+    pub oauth_scope: Vec<String>,
+}
+
+#[derive(Clone, Copy, Debug, Default, Eq, PartialEq, clap::ValueEnum)]
+pub enum McpTransportArg {
+    #[default]
+    Stdio,
+    Http,
 }
 
 #[derive(Debug, Args)]
@@ -383,5 +426,36 @@ mod tests {
             panic!("expected mcp command");
         };
         assert!(args.trust_project_scripts);
+    }
+
+    #[test]
+    fn parses_streamable_http_and_oauth_options() {
+        let cli = Cli::parse_from([
+            "sora",
+            "mcp",
+            "--transport",
+            "http",
+            "--host",
+            "0.0.0.0",
+            "--port",
+            "8443",
+            "--public-url",
+            "https://sora.example.com/mcp",
+            "--allowed-origin",
+            "https://client.example.com",
+            "--oauth-issuer",
+            "https://id.example.com",
+            "--oauth-audience",
+            "https://sora.example.com/mcp",
+            "--oauth-scope",
+            "sora:mcp",
+        ]);
+        let Command::Mcp(args) = cli.command else {
+            panic!("expected mcp command");
+        };
+        assert_eq!(args.transport, McpTransportArg::Http);
+        assert_eq!(args.port, 8443);
+        assert_eq!(args.allowed_origin, ["https://client.example.com"]);
+        assert_eq!(args.oauth_scope, ["sora:mcp"]);
     }
 }

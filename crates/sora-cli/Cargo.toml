@@ -38,3 +38,5 @@ sora-mcp.workspace = true
 sora-schema.workspace = true
 sora-studio.workspace = true
 sora-workspace.workspace = true
+tracing-subscriber.workspace = true
+url.workspace = true
