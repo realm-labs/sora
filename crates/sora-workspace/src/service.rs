@@ -11,7 +11,10 @@ use std::{
 use schemars::JsonSchema;
 use serde::Serialize;
 
-use crate::{ProjectId, ProjectSession, RuntimeOptions};
+use crate::{
+    ProjectId, ProjectSession, RuntimeOptions,
+    mutation::{MutationCoordinator, ProjectInitCoordinator},
+};
 
 /// Registry and coordination point for opened Sora projects.
 #[derive(Debug, Default)]
@@ -19,6 +22,8 @@ pub struct WorkspaceService {
     sessions: RwLock<BTreeMap<ProjectId, Arc<ProjectSession>>>,
     roots: RwLock<BTreeMap<String, WorkspaceRoot>>,
     next_project_id: AtomicU64,
+    pub(crate) mutation: MutationCoordinator,
+    pub(crate) project_init: ProjectInitCoordinator,
 }
 
 impl WorkspaceService {
@@ -66,6 +71,15 @@ impl WorkspaceService {
             .map_err(|_| WorkspaceError::StatePoisoned)?
             .retain(|_, root| !root.name.starts_with(prefix));
         Ok(())
+    }
+
+    pub(crate) fn root(&self, id: &str) -> Result<WorkspaceRoot, WorkspaceError> {
+        self.roots
+            .read()
+            .map_err(|_| WorkspaceError::StatePoisoned)?
+            .get(id)
+            .cloned()
+            .ok_or_else(|| WorkspaceError::UnknownRoot(id.to_owned()))
     }
 
     /// Discovers `project.toml` at each root and one non-hidden directory below it.
@@ -150,8 +164,7 @@ impl WorkspaceService {
             return Ok(existing);
         }
         let sequence = self.next_project_id.fetch_add(1, Ordering::Relaxed) + 1;
-        let id = ProjectId::new(format!("project-{sequence}"))
-            .expect("generated project ids are protocol-safe");
+        let id = ProjectId::generated(sequence);
         self.open_project(id, canonical, options)
     }
 
@@ -270,6 +283,10 @@ impl WorkspaceRoot {
 
     pub fn name(&self) -> &str {
         &self.name
+    }
+
+    pub(crate) fn path(&self) -> &Path {
+        &self.path
     }
 }
 

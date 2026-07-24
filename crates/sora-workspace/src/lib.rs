@@ -7,6 +7,7 @@
 mod build;
 mod diagnostics;
 mod inspect;
+mod mutation;
 mod parser;
 mod project;
 mod query;
@@ -28,6 +29,13 @@ pub use diagnostics::{
 };
 pub use inspect::{
     ProjectBuildOutput, ProjectDataSource, ProjectInspection, ProjectLocalization, ValidationReport,
+};
+pub use mutation::{
+    DerivedFieldSource, EnumValueDefinition, FieldDefinition, FieldOwner, FieldOwnerKind,
+    IndexDefinition, MutationPlanError, MutationSchemaEntityKind, ProjectInitApplyReport,
+    ProjectInitPlan, ProjectInitPlanFile, SchemaApplyReport, SchemaExecution, SchemaMutationError,
+    SchemaMutationPlan, SchemaOperation, SchemaTableMode, TableSourceDefinition, TextFileDiff,
+    TransactionError, TransactionReceipt, UnionVariantDefinition, execute_schema_operations,
 };
 pub use parser::{ParserRegistries, load_parser_registries};
 pub use project::{ProjectId, ProjectRevision, ProjectSession};

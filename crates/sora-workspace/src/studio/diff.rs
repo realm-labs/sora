@@ -1,4 +1,4 @@
-pub(super) fn simple_diff(current: &str, next: &str) -> String {
+pub(crate) fn simple_diff(current: &str, next: &str) -> String {
     if current == next {
         return "No changes.".to_owned();
     }

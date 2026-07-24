@@ -50,7 +50,24 @@ pub struct StudioNode {
     pub scope: String,
     pub subtitle: String,
     pub fields: Vec<StudioField>,
+    #[serde(default)]
+    pub aliases: Vec<StudioEnumAlias>,
+    #[serde(default)]
+    pub indexes: Vec<StudioIndex>,
     pub metadata: BTreeMap<String, String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct StudioEnumAlias {
+    pub name: String,
+    pub alias: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct StudioIndex {
+    pub name: String,
+    pub fields: Vec<String>,
+    pub unique: bool,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]

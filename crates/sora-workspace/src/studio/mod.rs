@@ -1,12 +1,13 @@
-mod diff;
-mod graph;
+pub(crate) mod diff;
+pub(crate) mod graph;
 mod model;
 mod render;
-mod service;
+pub(crate) mod service;
 
 pub use model::{
-    DiagnosticLevel, StudioDiagnostic, StudioEdge, StudioEdgeKind, StudioField, StudioNode,
-    StudioNodeKind, StudioPreviewResponse, StudioSchema, StudioSchemaResponse, StudioSummary,
+    DiagnosticLevel, StudioDiagnostic, StudioEdge, StudioEdgeKind, StudioEnumAlias, StudioField,
+    StudioIndex, StudioNode, StudioNodeKind, StudioPreviewResponse, StudioSchema,
+    StudioSchemaResponse, StudioSummary,
 };
 
 use crate::ProjectSession;
@@ -28,6 +29,17 @@ impl ProjectSession {
     }
 
     pub fn save_studio_schema(&self, schema: &StudioSchema) -> StudioSchemaResponse {
+        let _write_guard = match self.write_lock.lock() {
+            Ok(guard) => guard,
+            Err(_) => {
+                return StudioSchemaResponse {
+                    ok: false,
+                    project: self.manifest_path().display().to_string(),
+                    diagnostics: vec![StudioDiagnostic::error("project write lock is poisoned")],
+                    schema: Some(schema.clone()),
+                };
+            }
+        };
         let mut response = service::save_studio_schema_with_parsers(
             self.manifest_path(),
             schema,

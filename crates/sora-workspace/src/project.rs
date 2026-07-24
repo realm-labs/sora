@@ -1,6 +1,6 @@
 use std::{
     path::{Path, PathBuf},
-    sync::RwLock,
+    sync::{Mutex, RwLock},
 };
 
 use schemars::JsonSchema;
@@ -34,6 +34,10 @@ impl ProjectId {
     pub fn as_str(&self) -> &str {
         &self.0
     }
+
+    pub(crate) fn generated(sequence: u64) -> Self {
+        Self(format!("project-{sequence}"))
+    }
 }
 
 /// Error returned when a project identifier is not protocol-safe.
@@ -57,6 +61,7 @@ pub struct ProjectSession {
     manifest: ProjectManifest,
     runtime: ProjectRuntime,
     revision: RwLock<ProjectRevision>,
+    pub(crate) write_lock: Mutex<()>,
 }
 
 impl ProjectSession {
@@ -67,6 +72,9 @@ impl ProjectSession {
         options: RuntimeOptions,
     ) -> anyhow::Result<Self> {
         let manifest_path = manifest_path.as_ref().canonicalize()?;
+        if let Some(project_root) = manifest_path.parent() {
+            crate::mutation::recover_transactions(project_root)?;
+        }
         let manifest = ProjectManifest::load(&manifest_path)?;
         let runtime = ProjectRuntime::load_with_manifest(
             Some(&manifest_path),
@@ -80,6 +88,7 @@ impl ProjectSession {
             manifest,
             runtime,
             revision: RwLock::new(revision),
+            write_lock: Mutex::new(()),
         })
     }
 
@@ -100,10 +109,10 @@ impl ProjectSession {
     }
 
     pub fn revision(&self) -> ProjectRevision {
-        self.revision
-            .read()
-            .expect("project revision lock should not be poisoned")
-            .clone()
+        match self.revision.read() {
+            Ok(revision) => revision.clone(),
+            Err(poisoned) => poisoned.into_inner().clone(),
+        }
     }
 
     pub(crate) fn refresh_revision(&self) -> anyhow::Result<ProjectRevision> {

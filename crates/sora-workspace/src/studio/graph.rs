@@ -8,8 +8,8 @@ use sora_schema::model::{
 
 use super::{
     model::{
-        StudioEdge, StudioEdgeKind, StudioField, StudioNode, StudioNodeKind, StudioSchema,
-        StudioSummary,
+        StudioEdge, StudioEdgeKind, StudioEnumAlias, StudioField, StudioIndex, StudioNode,
+        StudioNodeKind, StudioSchema, StudioSummary,
     },
     render::parse_source,
 };
@@ -46,6 +46,15 @@ pub(crate) fn build_schema(
                     source: None,
                 })
                 .collect(),
+            aliases: item
+                .aliases
+                .iter()
+                .map(|alias| StudioEnumAlias {
+                    name: alias.name.clone(),
+                    alias: alias.alias.clone(),
+                })
+                .collect(),
+            indexes: Vec::new(),
             metadata: BTreeMap::from([("values".to_owned(), item.values.len().to_string())]),
         });
     }
@@ -61,6 +70,8 @@ pub(crate) fn build_schema(
             scope: item.scope.display(),
             subtitle: format!("{} fields", item.fields.len()),
             fields: item.fields.iter().map(studio_field).collect(),
+            aliases: Vec::new(),
+            indexes: Vec::new(),
             metadata: BTreeMap::from([("fields".to_owned(), item.fields.len().to_string())]),
         });
     }
@@ -108,6 +119,8 @@ pub(crate) fn build_schema(
             scope: item.scope.display(),
             subtitle: format!("{} variants", item.variants.len()),
             fields,
+            aliases: Vec::new(),
+            indexes: Vec::new(),
             metadata: BTreeMap::from([
                 ("tag".to_owned(), item.tag.clone()),
                 ("variants".to_owned(), item.variants.len().to_string()),
@@ -145,6 +158,9 @@ pub(crate) fn build_schema(
         ]);
         if let Some(source) = &item.source {
             metadata.insert("source".to_owned(), source.file.clone());
+            if let Some(format) = &source.format {
+                metadata.insert("format".to_owned(), format.clone());
+            }
             if let Some(sheet) = &source.sheet {
                 metadata.insert("sheet".to_owned(), sheet.clone());
             }
@@ -161,6 +177,16 @@ pub(crate) fn build_schema(
                 item.fields.len()
             ),
             fields: item.fields.iter().map(studio_field).collect(),
+            aliases: Vec::new(),
+            indexes: item
+                .indexes
+                .iter()
+                .map(|index| StudioIndex {
+                    name: index.name.clone(),
+                    fields: index.fields.clone(),
+                    unique: index.unique,
+                })
+                .collect(),
             metadata,
         });
     }
@@ -212,6 +238,15 @@ pub(crate) fn build_schema_from_raw(
                     source: None,
                 })
                 .collect(),
+            aliases: item
+                .aliases
+                .iter()
+                .map(|alias| StudioEnumAlias {
+                    name: alias.name.clone(),
+                    alias: alias.alias.clone(),
+                })
+                .collect(),
+            indexes: Vec::new(),
             metadata: BTreeMap::from([("values".to_owned(), item.values.len().to_string())]),
         });
     }
@@ -225,6 +260,8 @@ pub(crate) fn build_schema_from_raw(
             scope: raw_scope(&item.scope),
             subtitle: format!("{} fields", item.fields.len()),
             fields: item.fields.iter().map(raw_field).collect(),
+            aliases: Vec::new(),
+            indexes: Vec::new(),
             metadata: BTreeMap::from([("fields".to_owned(), item.fields.len().to_string())]),
         });
     }
@@ -261,6 +298,8 @@ pub(crate) fn build_schema_from_raw(
             scope: raw_scope(&item.scope),
             subtitle: format!("{} variants", item.variants.len()),
             fields,
+            aliases: Vec::new(),
+            indexes: Vec::new(),
             metadata: BTreeMap::from([
                 ("tag".to_owned(), item.tag.clone()),
                 ("variants".to_owned(), item.variants.len().to_string()),
@@ -279,6 +318,9 @@ pub(crate) fn build_schema_from_raw(
         ]);
         if let Some(source) = &item.source {
             metadata.insert("source".to_owned(), source.file.clone());
+            if let Some(format) = &source.format {
+                metadata.insert("format".to_owned(), format.clone());
+            }
             if let Some(sheet) = &source.sheet {
                 metadata.insert("sheet".to_owned(), sheet.clone());
             }
@@ -295,6 +337,16 @@ pub(crate) fn build_schema_from_raw(
                 item.fields.len()
             ),
             fields: item.fields.iter().map(raw_table_field).collect(),
+            aliases: Vec::new(),
+            indexes: item
+                .indexes
+                .iter()
+                .map(|index| StudioIndex {
+                    name: index.name.clone(),
+                    fields: index.fields.clone(),
+                    unique: index.unique,
+                })
+                .collect(),
             metadata,
         });
     }
@@ -312,6 +364,51 @@ pub(crate) fn build_schema_from_raw(
         },
         nodes,
         edges,
+    }
+}
+
+pub(crate) fn refresh_schema_graph(schema: &mut StudioSchema) {
+    schema.edges = build_studio_edges(&schema.nodes);
+    schema.summary = StudioSummary {
+        enums: schema
+            .nodes
+            .iter()
+            .filter(|node| node.kind == StudioNodeKind::Enum)
+            .count(),
+        structs: schema
+            .nodes
+            .iter()
+            .filter(|node| node.kind == StudioNodeKind::Struct)
+            .count(),
+        unions: schema
+            .nodes
+            .iter()
+            .filter(|node| node.kind == StudioNodeKind::Union)
+            .count(),
+        tables: schema
+            .nodes
+            .iter()
+            .filter(|node| node.kind == StudioNodeKind::Table)
+            .count(),
+        edges: schema.edges.len(),
+    };
+    for node in &mut schema.nodes {
+        let item_name = match node.kind {
+            StudioNodeKind::Enum => "values",
+            StudioNodeKind::Struct | StudioNodeKind::Table => "fields",
+            StudioNodeKind::Union => "variants",
+        };
+        let count = if node.kind == StudioNodeKind::Union {
+            node.fields
+                .iter()
+                .filter(|field| field.ty == "variant")
+                .count()
+        } else {
+            node.fields.len()
+        };
+        node.metadata
+            .insert(item_name.to_owned(), count.to_string());
+        node.subtitle = format!("{count} {item_name}");
     }
 }
 

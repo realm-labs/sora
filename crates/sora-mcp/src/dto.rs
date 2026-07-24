@@ -61,3 +61,25 @@ pub struct ArtifactLink {
     pub uri: String,
     pub mime_type: String,
 }
+
+pub fn tool_error<T>(envelope: ToolEnvelope<T>) -> rmcp::model::CallToolResult
+where
+    T: JsonSchema + Serialize,
+{
+    match serde_json::to_value(envelope) {
+        Ok(value) => rmcp::model::CallToolResult::structured_error(value),
+        Err(error) => rmcp::model::CallToolResult::structured_error(serde_json::json!({
+            "ok": false,
+            "summary": "failed to encode structured tool error",
+            "diagnostics": [{
+                "level": "error",
+                "code": null,
+                "message": error.to_string()
+            }],
+            "changes": [],
+            "artifacts": [],
+            "next_cursor": null,
+            "data": null
+        })),
+    }
+}

@@ -23,22 +23,52 @@ use crate::{SERVER_NAME, TARGET_PROTOCOL_VERSION};
 #[derive(Debug, Clone)]
 pub struct SoraMcpServer {
     pub(crate) workspace: Arc<WorkspaceService>,
+    pub(crate) authorization_context: Arc<str>,
     tool_router: ToolRouter<Self>,
-    subscriptions: Arc<RwLock<BTreeSet<String>>>,
+    pub(crate) subscriptions: Arc<RwLock<BTreeSet<String>>>,
     logging_level: Arc<AtomicU8>,
 }
 
 impl SoraMcpServer {
     /// Creates an MCP server for a workspace service.
     pub fn new(workspace: Arc<WorkspaceService>) -> Self {
+        Self::new_with_authorization_context(workspace, "local")
+    }
+
+    pub(crate) fn new_with_authorization_context(
+        workspace: Arc<WorkspaceService>,
+        authorization_context: impl Into<Arc<str>>,
+    ) -> Self {
         Self {
             workspace,
+            authorization_context: authorization_context.into(),
             tool_router: Self::server_tool_router()
                 + Self::project_tool_router()
                 + Self::schema_tool_router()
                 + Self::data_tool_router(),
             subscriptions: Arc::new(RwLock::new(BTreeSet::new())),
             logging_level: Arc::new(AtomicU8::new(1)),
+        }
+    }
+
+    pub(crate) async fn notify_project_resources_updated(
+        &self,
+        peer: &rmcp::service::Peer<rmcp::RoleServer>,
+        project_id: &str,
+    ) {
+        let prefix = format!("sora://project/{project_id}/");
+        let subscriptions = match self.subscriptions.read() {
+            Ok(subscriptions) => subscriptions
+                .iter()
+                .filter(|uri| uri.starts_with(&prefix))
+                .cloned()
+                .collect::<Vec<_>>(),
+            Err(_) => return,
+        };
+        for uri in subscriptions {
+            let _ = peer
+                .notify_resource_updated(rmcp::model::ResourceUpdatedNotificationParam::new(uri))
+                .await;
         }
     }
 
@@ -275,7 +305,7 @@ mod tests {
         let server = SoraMcpServer::new(Arc::new(WorkspaceService::new()));
         let tools = server.tool_router.list_all();
 
-        assert_eq!(tools.len(), 9);
+        assert_eq!(tools.len(), 13);
         let mut names = tools
             .iter()
             .map(|tool| tool.name.as_ref())
@@ -286,9 +316,13 @@ mod tests {
             [
                 "sora_data_diff",
                 "sora_data_validate",
+                "sora_project_init",
+                "sora_project_init_apply",
                 "sora_project_inspect",
                 "sora_project_list",
                 "sora_project_open",
+                "sora_schema_apply",
+                "sora_schema_preview",
                 "sora_schema_search",
                 "sora_schema_validate",
                 "sora_server_info",

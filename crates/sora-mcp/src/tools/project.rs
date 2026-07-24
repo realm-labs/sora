@@ -4,9 +4,15 @@ use rmcp::{
 };
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use sora_workspace::{ProjectCandidate, ProjectId, ProjectInspection, RuntimeOptions};
+use sora_workspace::{
+    ProjectCandidate, ProjectId, ProjectInitApplyReport, ProjectInitPlan, ProjectInspection,
+    RuntimeOptions,
+};
 
-use crate::{SoraMcpServer, dto::ToolEnvelope};
+use crate::{
+    SoraMcpServer,
+    dto::{ToolEnvelope, tool_error},
+};
 
 #[tool_router(router = project_tool_router, vis = "pub(crate)")]
 impl SoraMcpServer {
@@ -116,6 +122,67 @@ impl SoraMcpServer {
             )),
         }
     }
+
+    #[tool(
+        name = "sora_project_init",
+        description = "Preview a new project scaffold inside an allowed root; this operation never writes files"
+    )]
+    fn project_init(
+        &self,
+        Parameters(input): Parameters<ProjectInitInput>,
+    ) -> Result<Json<ToolEnvelope<ProjectInitPlan>>, rmcp::model::CallToolResult> {
+        match self.workspace.preview_project_init(
+            &self.authorization_context,
+            &input.root_id,
+            &input.relative_directory,
+            &input.package,
+        ) {
+            Ok(plan) => Ok(Json(ToolEnvelope::success(
+                None,
+                None,
+                format!("planned {} new project file(s)", plan.files.len()),
+                plan,
+            ))),
+            Err(error) => Err(tool_error(ToolEnvelope::<ProjectInitPlan>::failure(
+                None,
+                None,
+                "project initialization preview failed",
+                error,
+            ))),
+        }
+    }
+
+    #[tool(
+        name = "sora_project_init_apply",
+        description = "Atomically create and open a project from an unexpired initialization plan"
+    )]
+    async fn project_init_apply(
+        &self,
+        Parameters(input): Parameters<ProjectInitApplyInput>,
+        context: rmcp::service::RequestContext<rmcp::RoleServer>,
+    ) -> Result<Json<ToolEnvelope<ProjectInitApplyReport>>, rmcp::model::CallToolResult> {
+        match self.workspace.apply_project_init(
+            &self.authorization_context,
+            &input.plan_id,
+            &input.idempotency_key,
+        ) {
+            Ok(report) => {
+                let _ = context.peer.notify_resource_list_changed().await;
+                Ok(Json(ToolEnvelope::success(
+                    Some(report.project_id.clone()),
+                    Some(report.revision.clone()),
+                    format!("created Sora project `{}`", report.project_id),
+                    report,
+                )))
+            }
+            Err(error) => Err(tool_error(ToolEnvelope::<ProjectInitApplyReport>::failure(
+                None,
+                None,
+                "project initialization apply failed",
+                error,
+            ))),
+        }
+    }
 }
 
 #[derive(Debug, Deserialize, JsonSchema)]
@@ -148,4 +215,19 @@ struct ProjectInput {
 #[derive(Debug, Serialize, JsonSchema)]
 struct ProjectInspectOutput {
     project: ProjectInspection,
+}
+
+#[derive(Debug, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+struct ProjectInitInput {
+    root_id: String,
+    relative_directory: String,
+    package: String,
+}
+
+#[derive(Debug, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+struct ProjectInitApplyInput {
+    plan_id: String,
+    idempotency_key: String,
 }

@@ -154,6 +154,12 @@ fn push_enum_node(out: &mut String, node: &StudioNode) {
         push_string(out, "name", &field.name);
         out.push('\n');
     }
+    for alias in &node.aliases {
+        out.push_str("[[enums.aliases]]\n");
+        push_string(out, "name", &alias.name);
+        push_string(out, "alias", &alias.alias);
+        out.push('\n');
+    }
 }
 
 fn push_struct_node(out: &mut String, node: &StudioNode) {
@@ -180,6 +186,14 @@ fn push_union_node(out: &mut String, node: &StudioNode) {
     for (variant, fields) in union_variants(node) {
         out.push_str("[[unions.variants]]\n");
         push_string(out, "name", &variant);
+        if let Some(scope) = node
+            .fields
+            .iter()
+            .find(|field| field.ty == "variant" && field.name == variant)
+            .map(|field| field.scope.as_str())
+        {
+            push_scope(out, scope);
+        }
         out.push('\n');
         for field in fields {
             out.push_str("[[unions.variants.fields]]\n");
@@ -207,6 +221,10 @@ fn push_table_node(out: &mut String, node: &StudioNode) {
     if let Some(source) = node.metadata.get("source") {
         out.push_str("source = { ");
         push_inline_pair(out, "file", source);
+        if let Some(format) = node.metadata.get("format") {
+            out.push_str(", ");
+            push_inline_pair(out, "format", format);
+        }
         if let Some(sheet) = node.metadata.get("sheet") {
             out.push_str(", ");
             push_inline_pair(out, "sheet", sheet);
@@ -236,9 +254,19 @@ fn push_table_node(out: &mut String, node: &StudioNode) {
         }
         out.push('\n');
     }
+    for index in &node.indexes {
+        out.push_str("[[tables.indexes]]\n");
+        push_string(out, "name", &index.name);
+        let fields = index.fields.iter().map(String::as_str).collect::<Vec<_>>();
+        push_string_array(out, "fields", &fields);
+        if index.unique {
+            out.push_str("unique = true\n");
+        }
+        out.push('\n');
+    }
 }
 
-fn schema_module_value(schema: &StudioSchema) -> Value {
+pub(super) fn schema_module_value(schema: &StudioSchema) -> Value {
     let mut root = Map::new();
     let enums = schema
         .nodes
@@ -296,6 +324,22 @@ fn enum_node_value(node: &StudioNode) -> Value {
         })
         .collect::<Vec<_>>();
     object.insert("values".to_owned(), Value::Array(values));
+    if !node.aliases.is_empty() {
+        object.insert(
+            "aliases".to_owned(),
+            Value::Array(
+                node.aliases
+                    .iter()
+                    .map(|alias| {
+                        serde_json::json!({
+                            "name": alias.name,
+                            "alias": alias.alias,
+                        })
+                    })
+                    .collect(),
+            ),
+        );
+    }
     Value::Object(object)
 }
 
@@ -317,7 +361,15 @@ fn union_node_value(node: &StudioNode) -> Value {
         .into_iter()
         .map(|(name, fields)| {
             let mut variant = Map::new();
-            variant.insert("name".to_owned(), Value::String(name));
+            variant.insert("name".to_owned(), Value::String(name.clone()));
+            if let Some(scope) = node
+                .fields
+                .iter()
+                .find(|field| field.ty == "variant" && field.name == name)
+                .map(|field| field.scope.as_str())
+            {
+                push_scope_value(&mut variant, scope);
+            }
             let fields = fields.iter().map(field_value).collect::<Vec<_>>();
             if !fields.is_empty() {
                 variant.insert("fields".to_owned(), Value::Array(fields));
@@ -347,6 +399,9 @@ fn table_node_value(node: &StudioNode) -> Value {
     if let Some(source) = node.metadata.get("source") {
         let mut source_object = Map::new();
         source_object.insert("file".to_owned(), Value::String(source.clone()));
+        if let Some(format) = node.metadata.get("format") {
+            source_object.insert("format".to_owned(), Value::String(format.clone()));
+        }
         if let Some(sheet) = node.metadata.get("sheet") {
             source_object.insert("sheet".to_owned(), Value::String(sheet.clone()));
         }
@@ -359,6 +414,23 @@ fn table_node_value(node: &StudioNode) -> Value {
         .collect::<Vec<_>>();
     if !fields.is_empty() {
         object.insert("fields".to_owned(), Value::Array(fields));
+    }
+    if !node.indexes.is_empty() {
+        object.insert(
+            "indexes".to_owned(),
+            Value::Array(
+                node.indexes
+                    .iter()
+                    .map(|index| {
+                        serde_json::json!({
+                            "name": index.name,
+                            "fields": index.fields,
+                            "unique": index.unique,
+                        })
+                    })
+                    .collect(),
+            ),
+        );
     }
     Value::Object(object)
 }

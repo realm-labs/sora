@@ -98,6 +98,9 @@ fn collect_files(root: &Path) -> Result<Vec<PathBuf>> {
         paths.sort();
         for path in paths.into_iter().rev() {
             if path.is_dir() {
+                if path.file_name().and_then(|name| name.to_str()) == Some(".sora") {
+                    continue;
+                }
                 pending.push(path);
             } else if path.is_file() {
                 files.push(path);
@@ -134,13 +137,14 @@ fn digest_parts<'a>(parts: impl IntoIterator<Item = &'a [u8]>) -> String {
 }
 
 fn format_digest(digest: impl AsRef<[u8]>) -> String {
-    let mut value = String::with_capacity(71);
-    value.push_str("sha256:");
-    for byte in digest.as_ref() {
-        use std::fmt::Write as _;
-        write!(value, "{byte:02x}").expect("writing to a string cannot fail");
-    }
-    value
+    format!(
+        "sha256:{}",
+        digest
+            .as_ref()
+            .iter()
+            .map(|byte| format!("{byte:02x}"))
+            .collect::<String>()
+    )
 }
 
 fn normalized_path(path: &Path) -> String {

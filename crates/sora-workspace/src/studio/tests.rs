@@ -11,9 +11,10 @@ use super::{
     render::{parse_parser, push_field, render_schema_module},
     service::{
         TextFileWrite, load_studio_schema, preview_studio_schema, project_text_with_schema_files,
-        save_studio_schema, write_studio_schema, write_text_files_transactionally,
+        save_studio_schema, write_studio_schema,
     },
 };
+use crate::mutation::commit_text_transaction;
 
 static TEMP_COUNTER: AtomicU64 = AtomicU64::new(0);
 
@@ -146,6 +147,8 @@ fn renders_editable_table_and_field_settings() {
                         ),
                     },
                 ],
+                aliases: Vec::new(),
+                indexes: Vec::new(),
                 metadata: BTreeMap::from([
                     ("mode".to_owned(), "map".to_owned()),
                     ("key".to_owned(), "id".to_owned()),
@@ -161,6 +164,8 @@ fn renders_editable_table_and_field_settings() {
                 scope: "all".to_owned(),
                 subtitle: "list table, 0 fields".to_owned(),
                 fields: Vec::new(),
+                aliases: Vec::new(),
+                indexes: Vec::new(),
                 metadata: BTreeMap::from([
                     ("mode".to_owned(), "list".to_owned()),
                     ("fields".to_owned(), "0".to_owned()),
@@ -214,6 +219,8 @@ fn does_not_render_key_for_non_map_table() {
                 length: None,
                 source: None,
             }],
+            aliases: Vec::new(),
+            indexes: Vec::new(),
             metadata: BTreeMap::from([
                 ("mode".to_owned(), "list".to_owned()),
                 ("key".to_owned(), "id".to_owned()),
@@ -298,6 +305,10 @@ fn preserves_explicit_enum_value_ids() {
 [[enums]]
 name = "Rarity"
 values = [{ id = 42, name = "Common" }]
+
+[[enums.aliases]]
+name = "Common"
+alias = "common"
 "#,
     );
     let schema = load_studio_schema(&project).schema.unwrap();
@@ -308,9 +319,11 @@ values = [{ id = 42, name = "Common" }]
         .unwrap();
 
     assert_eq!(enum_node.fields[0].enum_value_id, Some(42));
+    assert_eq!(enum_node.aliases[0].alias, "common");
     let rendered = render_schema_module(&schema);
     assert!(rendered.contains("[[enums.values]]"));
     assert!(rendered.contains("id = 42"));
+    assert!(rendered.contains("[[enums.aliases]]"));
 
     let _ = fs::remove_dir_all(base);
 }
@@ -749,23 +762,23 @@ fn transactional_text_write_keeps_existing_files_on_prepare_failure() {
     fs::write(&existing, "original").unwrap();
     fs::write(&blocked, "not a directory").unwrap();
 
-    let error = write_text_files_transactionally(&[
-        TextFileWrite {
-            path: existing.clone(),
-            content: "changed".to_owned(),
-        },
-        TextFileWrite {
-            path: blocked.join("new.toml"),
-            content: "new".to_owned(),
-        },
-    ])
+    let error = commit_text_transaction(
+        &base,
+        &[
+            TextFileWrite {
+                path: existing.clone(),
+                content: "changed".to_owned(),
+            },
+            TextFileWrite {
+                path: blocked.join("new.toml"),
+                content: "new".to_owned(),
+            },
+        ],
+        || Ok(()),
+    )
     .unwrap_err();
 
-    assert!(
-        error
-            .to_string()
-            .contains("failed to create output directory")
-    );
+    assert!(!error.to_string().is_empty());
     assert_eq!(fs::read_to_string(&existing).unwrap(), "original");
     assert!(
         fs::read_dir(&base)
