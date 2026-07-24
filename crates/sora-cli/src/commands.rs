@@ -45,6 +45,7 @@ pub fn run(cli: Cli) -> Result<()> {
         Command::ExcelSync(args) => excel_sync(args, &context),
         Command::SchemaLock(args) => schema_lock(args, &context),
         Command::Studio(args) => crate::studio::run(args, &context),
+        Command::Mcp => crate::mcp::run(),
     }
 }
 
@@ -60,6 +61,7 @@ fn command_project_path(command: &Command) -> Option<&std::path::Path> {
         Command::ExcelSync(args) => Some(&args.project),
         Command::SchemaLock(args) => Some(&args.project),
         Command::Studio(args) => Some(&args.project),
+        Command::Mcp => None,
     }
 }
 

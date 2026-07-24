@@ -4,6 +4,7 @@ mod commands;
 mod init;
 mod lua_parser;
 mod lua_type_mapping;
+mod mcp;
 mod report;
 mod source;
 mod studio;

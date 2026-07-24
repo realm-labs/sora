@@ -52,6 +52,7 @@ pub enum Command {
     SchemaLock(SchemaLockArgs),
     #[command(visible_alias = "st")]
     Studio(StudioArgs),
+    Mcp,
 }
 
 #[derive(Debug, Args)]
