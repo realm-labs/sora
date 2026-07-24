@@ -52,7 +52,14 @@ pub enum Command {
     SchemaLock(SchemaLockArgs),
     #[command(visible_alias = "st")]
     Studio(StudioArgs),
-    Mcp,
+    Mcp(McpArgs),
+}
+
+#[derive(Debug, Args)]
+pub struct McpArgs {
+    /// Open this project when the MCP server starts.
+    #[arg(short, long)]
+    pub project: Option<PathBuf>,
 }
 
 #[derive(Debug, Args)]
@@ -347,5 +354,14 @@ mod tests {
             Cli::parse_from(["sora", "st", "-p", "project.toml"]).command,
             Command::Studio(_)
         ));
+    }
+
+    #[test]
+    fn parses_mcp_project() {
+        let cli = Cli::parse_from(["sora", "mcp", "--project", "project.toml"]);
+        let Command::Mcp(args) = cli.command else {
+            panic!("expected mcp command");
+        };
+        assert_eq!(args.project, Some(PathBuf::from("project.toml")));
     }
 }

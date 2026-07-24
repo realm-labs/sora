@@ -6,8 +6,10 @@
 
 mod build;
 mod diagnostics;
+mod inspect;
 mod parser;
 mod project;
+mod query;
 mod revision;
 mod runtime;
 mod service;
@@ -24,8 +26,15 @@ pub use diagnostics::{
     Diagnostic, DiagnosticEntity, DiagnosticLevel, DiagnosticSpan, diagnostics_from_anyhow,
     diagnostics_from_sora_error,
 };
+pub use inspect::{
+    ProjectBuildOutput, ProjectDataSource, ProjectInspection, ProjectLocalization, ValidationReport,
+};
 pub use parser::{ParserRegistries, load_parser_registries};
 pub use project::{ProjectId, ProjectRevision, ProjectSession};
+pub use query::{
+    DataValidationQuery, DataValidationReport, IndexLookup, SchemaEntityKind, SchemaSearchQuery,
+    SchemaSearchReport, SchemaSearchResult, TableFilter, TableQuery, TableQueryReport,
+};
 pub use runtime::{ProjectRuntime, RuntimeOptions};
-pub use service::{WorkspaceError, WorkspaceService};
+pub use service::{ProjectCandidate, WorkspaceError, WorkspaceRoot, WorkspaceService};
 pub use type_mapping::load_type_mapping_registry;

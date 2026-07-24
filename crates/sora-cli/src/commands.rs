@@ -26,7 +26,7 @@ pub fn run(cli: Cli) -> Result<()> {
 
     let command = match cli.command {
         Command::Init(args) => return crate::init::run(args),
-        Command::Mcp => return crate::mcp::run(),
+        Command::Mcp(args) => return crate::mcp::run(args, runtime_options),
         Command::Studio(args) => return crate::studio::run(args, runtime_options),
         command => command,
     };
@@ -44,7 +44,7 @@ pub fn run(cli: Cli) -> Result<()> {
         Command::ExcelTemplate(args) => excel_template(args, &context),
         Command::ExcelSync(args) => excel_sync(args, &context),
         Command::SchemaLock(args) => schema_lock(args, &context),
-        Command::Init(_) | Command::Studio(_) | Command::Mcp => {
+        Command::Init(_) | Command::Studio(_) | Command::Mcp(_) => {
             unreachable!("commands without project runtimes were dispatched earlier")
         }
     }
@@ -62,7 +62,7 @@ fn command_project_path(command: &Command) -> Option<&std::path::Path> {
         Command::ExcelSync(args) => Some(&args.project),
         Command::SchemaLock(args) => Some(&args.project),
         Command::Studio(args) => Some(&args.project),
-        Command::Mcp => None,
+        Command::Mcp(_) => None,
     }
 }
 

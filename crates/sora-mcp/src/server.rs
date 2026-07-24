@@ -1,16 +1,20 @@
-use std::sync::Arc;
+use std::{
+    collections::BTreeSet,
+    future::{Future, ready},
+    sync::atomic::{AtomicU8, Ordering},
+    sync::{Arc, RwLock},
+};
 
 use rmcp::{
     ServerHandler,
-    handler::server::{
-        router::tool::ToolRouter,
-        wrapper::{Json, Parameters},
+    handler::server::router::tool::ToolRouter,
+    model::{
+        CompleteRequestParams, CompleteResult, Implementation, ListResourceTemplatesResult,
+        ListResourcesResult, PaginatedRequestParams, ReadResourceRequestParams, ReadResourceResult,
+        ServerCapabilities, ServerInfo, SubscribeRequestParams, UnsubscribeRequestParams,
     },
-    model::{Implementation, ServerCapabilities, ServerInfo},
-    tool, tool_handler, tool_router,
+    tool_handler,
 };
-use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
 use sora_workspace::WorkspaceService;
 
 use crate::{SERVER_NAME, TARGET_PROTOCOL_VERSION};
@@ -18,8 +22,10 @@ use crate::{SERVER_NAME, TARGET_PROTOCOL_VERSION};
 /// MCP protocol adapter backed by the shared Sora workspace service.
 #[derive(Debug, Clone)]
 pub struct SoraMcpServer {
-    workspace: Arc<WorkspaceService>,
+    pub(crate) workspace: Arc<WorkspaceService>,
     tool_router: ToolRouter<Self>,
+    subscriptions: Arc<RwLock<BTreeSet<String>>>,
+    logging_level: Arc<AtomicU8>,
 }
 
 impl SoraMcpServer {
@@ -27,45 +33,191 @@ impl SoraMcpServer {
     pub fn new(workspace: Arc<WorkspaceService>) -> Self {
         Self {
             workspace,
-            tool_router: Self::tool_router(),
+            tool_router: Self::server_tool_router()
+                + Self::project_tool_router()
+                + Self::schema_tool_router()
+                + Self::data_tool_router(),
+            subscriptions: Arc::new(RwLock::new(BTreeSet::new())),
+            logging_level: Arc::new(AtomicU8::new(1)),
         }
     }
 
+    #[allow(deprecated)]
     fn capabilities() -> ServerCapabilities {
-        let mut capabilities = ServerCapabilities::builder().enable_tools().build();
+        let mut capabilities = ServerCapabilities::builder()
+            .enable_logging()
+            .enable_completions()
+            .enable_resources()
+            .enable_resources_list_changed()
+            .enable_resources_subscribe()
+            .enable_tools()
+            .build();
         if let Some(tools) = capabilities.tools.as_mut() {
             tools.list_changed = Some(false);
         }
         capabilities
     }
-}
 
-#[tool_router]
-impl SoraMcpServer {
-    #[tool(
-        name = "sora_server_info",
-        description = "Return the Sora MCP protocol revision and current workspace project count"
-    )]
-    fn server_info(
-        &self,
-        Parameters(_input): Parameters<ServerInfoInput>,
-    ) -> Result<Json<ServerInfoOutput>, String> {
-        let project_count = self
+    #[allow(deprecated)]
+    async fn sync_client_roots(&self, peer: rmcp::service::Peer<rmcp::RoleServer>) {
+        let supports_roots = peer
+            .peer_info()
+            .and_then(|info| info.capabilities.roots.as_ref().cloned())
+            .is_some();
+        if !supports_roots {
+            return;
+        }
+        let Ok(result) = peer.list_roots().await else {
+            return;
+        };
+        if self
             .workspace
-            .project_ids()
-            .map_err(|error| error.to_string())?
-            .len();
-        Ok(Json(ServerInfoOutput {
-            protocol_version: TARGET_PROTOCOL_VERSION.as_str(),
-            server_name: SERVER_NAME,
-            server_version: env!("CARGO_PKG_VERSION"),
-            project_count,
-        }))
+            .remove_roots_with_name_prefix("mcp:")
+            .is_err()
+        {
+            return;
+        }
+        for (index, root) in result.roots.into_iter().enumerate() {
+            let Ok(url) = url::Url::parse(&root.uri) else {
+                continue;
+            };
+            let Ok(path) = url.to_file_path() else {
+                continue;
+            };
+            let name = root.name.unwrap_or_else(|| format!("root-{}", index + 1));
+            let _ = self.workspace.add_root(format!("mcp:{name}"), path);
+        }
+        let _ = peer.notify_resource_list_changed().await;
     }
 }
 
 #[tool_handler(router = self.tool_router)]
 impl ServerHandler for SoraMcpServer {
+    #[allow(deprecated)]
+    async fn on_initialized(&self, context: rmcp::service::NotificationContext<rmcp::RoleServer>) {
+        self.sync_client_roots(context.peer.clone()).await;
+        if self.logging_level.load(Ordering::Relaxed) <= 1 {
+            let _ = context
+                .peer
+                .notify_logging_message(
+                    rmcp::model::LoggingMessageNotificationParam::new(
+                        rmcp::model::LoggingLevel::Info,
+                        serde_json::json!({
+                            "event": "server_initialized",
+                            "protocol_version": TARGET_PROTOCOL_VERSION.as_str(),
+                        }),
+                    )
+                    .with_logger(SERVER_NAME),
+                )
+                .await;
+        }
+    }
+
+    async fn on_roots_list_changed(
+        &self,
+        context: rmcp::service::NotificationContext<rmcp::RoleServer>,
+    ) {
+        self.sync_client_roots(context.peer).await;
+    }
+
+    fn complete(
+        &self,
+        request: CompleteRequestParams,
+        _context: rmcp::service::RequestContext<rmcp::RoleServer>,
+    ) -> impl Future<Output = Result<CompleteResult, rmcp::ErrorData>>
+    + rmcp::service::MaybeSendFuture
+    + '_ {
+        ready(crate::completion::complete(&self.workspace, &request))
+    }
+
+    #[allow(deprecated)]
+    fn set_level(
+        &self,
+        request: rmcp::model::SetLevelRequestParams,
+        _context: rmcp::service::RequestContext<rmcp::RoleServer>,
+    ) -> impl Future<Output = Result<(), rmcp::ErrorData>> + rmcp::service::MaybeSendFuture + '_
+    {
+        let level = match request.level {
+            rmcp::model::LoggingLevel::Debug => 0,
+            rmcp::model::LoggingLevel::Info | rmcp::model::LoggingLevel::Notice => 1,
+            rmcp::model::LoggingLevel::Warning => 2,
+            rmcp::model::LoggingLevel::Error => 3,
+            rmcp::model::LoggingLevel::Critical
+            | rmcp::model::LoggingLevel::Alert
+            | rmcp::model::LoggingLevel::Emergency => 4,
+        };
+        self.logging_level.store(level, Ordering::Relaxed);
+        ready(Ok(()))
+    }
+
+    fn list_resources(
+        &self,
+        _request: Option<PaginatedRequestParams>,
+        _context: rmcp::service::RequestContext<rmcp::RoleServer>,
+    ) -> impl Future<Output = Result<ListResourcesResult, rmcp::ErrorData>>
+    + rmcp::service::MaybeSendFuture
+    + '_ {
+        ready(crate::resources::list(&self.workspace))
+    }
+
+    fn list_resource_templates(
+        &self,
+        _request: Option<PaginatedRequestParams>,
+        _context: rmcp::service::RequestContext<rmcp::RoleServer>,
+    ) -> impl Future<Output = Result<ListResourceTemplatesResult, rmcp::ErrorData>>
+    + rmcp::service::MaybeSendFuture
+    + '_ {
+        ready(Ok(crate::resources::templates()))
+    }
+
+    fn read_resource(
+        &self,
+        request: ReadResourceRequestParams,
+        _context: rmcp::service::RequestContext<rmcp::RoleServer>,
+    ) -> impl Future<Output = Result<ReadResourceResult, rmcp::ErrorData>>
+    + rmcp::service::MaybeSendFuture
+    + '_ {
+        ready(crate::resources::read(&self.workspace, &request.uri))
+    }
+
+    fn subscribe(
+        &self,
+        request: SubscribeRequestParams,
+        _context: rmcp::service::RequestContext<rmcp::RoleServer>,
+    ) -> impl Future<Output = Result<(), rmcp::ErrorData>> + rmcp::service::MaybeSendFuture + '_
+    {
+        let result = if crate::resources::exists(&self.workspace, &request.uri) {
+            self.subscriptions
+                .write()
+                .map_err(|_| rmcp::ErrorData::internal_error("subscription lock poisoned", None))
+                .map(|mut subscriptions| {
+                    subscriptions.insert(request.uri);
+                })
+        } else {
+            Err(rmcp::ErrorData::resource_not_found(
+                "resource is not available for subscription",
+                None,
+            ))
+        };
+        ready(result)
+    }
+
+    fn unsubscribe(
+        &self,
+        request: UnsubscribeRequestParams,
+        _context: rmcp::service::RequestContext<rmcp::RoleServer>,
+    ) -> impl Future<Output = Result<(), rmcp::ErrorData>> + rmcp::service::MaybeSendFuture + '_
+    {
+        let result = self
+            .subscriptions
+            .write()
+            .map_err(|_| rmcp::ErrorData::internal_error("subscription lock poisoned", None))
+            .map(|mut subscriptions| {
+                subscriptions.remove(&request.uri);
+            });
+        ready(result)
+    }
+
     fn get_info(&self) -> ServerInfo {
         ServerInfo::new(Self::capabilities())
             .with_protocol_version(TARGET_PROTOCOL_VERSION)
@@ -79,18 +231,6 @@ impl ServerHandler for SoraMcpServer {
                  configuration projects. Never edit generated outputs as source files.",
             )
     }
-}
-
-#[derive(Debug, Deserialize, JsonSchema)]
-#[serde(deny_unknown_fields)]
-struct ServerInfoInput {}
-
-#[derive(Debug, Serialize, JsonSchema)]
-struct ServerInfoOutput {
-    protocol_version: &'static str,
-    server_name: &'static str,
-    server_version: &'static str,
-    project_count: usize,
 }
 
 #[cfg(test)]
@@ -111,9 +251,22 @@ mod tests {
                 .and_then(|tools| tools.list_changed),
             Some(false)
         );
-        assert!(info.capabilities.resources.is_none());
+        assert_eq!(
+            info.capabilities
+                .resources
+                .as_ref()
+                .and_then(|resources| resources.list_changed),
+            Some(true)
+        );
+        assert_eq!(
+            info.capabilities
+                .resources
+                .as_ref()
+                .and_then(|resources| resources.subscribe),
+            Some(true)
+        );
         assert!(info.capabilities.prompts.is_none());
-        assert!(info.capabilities.completions.is_none());
+        assert!(info.capabilities.completions.is_some());
         assert!(info.capabilities.tasks.is_none());
     }
 
@@ -122,24 +275,32 @@ mod tests {
         let server = SoraMcpServer::new(Arc::new(WorkspaceService::new()));
         let tools = server.tool_router.list_all();
 
-        assert_eq!(tools.len(), 1);
-        assert_eq!(tools[0].name, "sora_server_info");
-        assert!(tools[0].output_schema.is_some());
-        let input_schema = serde_json::to_value(&tools[0].input_schema)
-            .expect("tool input schema should serialize");
-        assert_eq!(input_schema["type"], "object");
-        assert_eq!(input_schema["additionalProperties"], false);
-    }
-
-    #[test]
-    fn server_info_reports_workspace_state() {
-        let server = SoraMcpServer::new(Arc::new(WorkspaceService::new()));
-        let Json(output) = server
-            .server_info(Parameters(ServerInfoInput {}))
-            .expect("empty workspace should be readable");
-
-        assert_eq!(output.protocol_version, "2025-11-25");
-        assert_eq!(output.server_name, "sora");
-        assert_eq!(output.project_count, 0);
+        assert_eq!(tools.len(), 9);
+        let mut names = tools
+            .iter()
+            .map(|tool| tool.name.as_ref())
+            .collect::<Vec<_>>();
+        names.sort_unstable();
+        assert_eq!(
+            names,
+            [
+                "sora_data_diff",
+                "sora_data_validate",
+                "sora_project_inspect",
+                "sora_project_list",
+                "sora_project_open",
+                "sora_schema_search",
+                "sora_schema_validate",
+                "sora_server_info",
+                "sora_table_query",
+            ]
+        );
+        for tool in tools {
+            assert!(tool.output_schema.is_some());
+            let input_schema = serde_json::to_value(&tool.input_schema)
+                .expect("tool input schema should serialize");
+            assert_eq!(input_schema["type"], "object");
+            assert_eq!(input_schema["additionalProperties"], false);
+        }
     }
 }

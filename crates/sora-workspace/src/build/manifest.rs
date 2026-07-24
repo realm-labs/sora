@@ -1,11 +1,12 @@
 use std::path::{Path, PathBuf};
 
 use anyhow::{Context, Result};
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use sora_config_format::load_document;
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ProjectManifest {
+    pub package: String,
     #[serde(default)]
     pub includes: Vec<String>,
     #[serde(default)]
@@ -23,13 +24,13 @@ impl ProjectManifest {
     }
 }
 
-#[derive(Debug, Clone, Default, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct ScriptConfig {
     #[serde(default)]
     pub scripts: Vec<PathBuf>,
 }
 
-#[derive(Debug, Clone, Default, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct BuildConfig {
     pub default_source_format: Option<SourceFormat>,
     pub data_root: Option<PathBuf>,
@@ -53,7 +54,7 @@ impl BuildConfig {
     }
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct BuildCodegen {
     pub target: String,
     pub out: PathBuf,
@@ -62,7 +63,7 @@ pub struct BuildCodegen {
     pub format: CodeFormatMode,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct BuildExport {
     pub format: String,
     pub out: PathBuf,
@@ -73,14 +74,16 @@ pub struct BuildExport {
     pub compression_level: Option<i32>,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize)]
+#[serde(rename_all = "snake_case")]
 pub enum ExportCompression {
     #[default]
     None,
     Zstd,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "snake_case")]
 pub enum SourceFormat {
     Csv,
     Json,
@@ -101,7 +104,8 @@ impl SourceFormat {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize)]
+#[serde(rename_all = "snake_case")]
 pub enum CodeFormatMode {
     #[default]
     Never,

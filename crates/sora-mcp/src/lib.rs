@@ -3,8 +3,12 @@
 //! The MCP adapter contains protocol and transport concerns only. Project
 //! behavior is delegated to [`sora_workspace`].
 
+mod completion;
+mod dto;
 mod protocol;
+mod resources;
 mod server;
+mod tools;
 mod transport;
 
 pub use protocol::{SERVER_NAME, TARGET_PROTOCOL_VERSION};
