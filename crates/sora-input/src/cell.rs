@@ -1,7 +1,7 @@
 use std::{borrow::Cow, path::Path};
 
 use sora_data::model::Value;
-use sora_diagnostics::{Result, SoraError};
+use sora_diagnostics::{DataLocation, Result, SoraError};
 use sora_ir::model::{ConfigIr, ParserIr, TypeIr};
 
 use crate::parser::{ParserRegistry, builtin_registry};
@@ -65,16 +65,20 @@ pub struct CellContext<'a> {
 impl CellContext<'_> {
     pub fn error(&self, message: impl Into<String>) -> SoraError {
         let location = match self.location {
-            CellLocation::Default => "schema default".to_owned(),
-            CellLocation::Csv { row, column } => format!("CSV row {row}, column {column}"),
-            CellLocation::Worksheet { sheet, row, column } => {
-                format!("worksheet `{sheet}` row {row}, column {column}")
-            }
+            CellLocation::Default => DataLocation::SchemaDefault,
+            CellLocation::Csv { row, column } => DataLocation::Csv { row, column },
+            CellLocation::Worksheet { sheet, row, column } => DataLocation::Worksheet {
+                sheet: sheet.to_owned(),
+                row,
+                column,
+            },
         };
 
-        SoraError::ParseData {
+        SoraError::ParseDataAt {
             path: self.path.to_path_buf(),
-            message: format!("{location}, field `{}`: {}", self.field, message.into()),
+            field: self.field.to_owned(),
+            location,
+            message: message.into(),
         }
     }
 }

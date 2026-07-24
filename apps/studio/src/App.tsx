@@ -101,7 +101,7 @@ export function App() {
         project: "",
         diagnostics: [
           {
-            level: "error",
+            severity: "error",
             message: error instanceof Error ? error.message : String(error)
           }
         ],
@@ -300,7 +300,7 @@ export function App() {
         project: response?.project ?? "",
         diagnostics: [
           {
-            level: "error",
+            severity: "error",
             message: error instanceof Error ? error.message : String(error)
           }
         ],
@@ -334,7 +334,7 @@ export function App() {
         diff: null,
         diagnostics: [
           {
-            level: "error",
+            severity: "error",
             message: error instanceof Error ? error.message : String(error)
           }
         ]
@@ -747,7 +747,7 @@ function clamp(value: number, min: number, max: number) {
 
 function diagnosticsToValidationIssues(diagnostics: StudioDiagnostic[]): StudioValidationIssue[] {
   return diagnostics
-    .filter((diagnostic) => diagnostic.level === "error")
+    .filter((diagnostic) => diagnostic.severity === "error")
     .map((diagnostic, index) => ({
       id: `backend:${index}:${diagnostic.targetId ?? "global"}`,
       message: diagnostic.message,

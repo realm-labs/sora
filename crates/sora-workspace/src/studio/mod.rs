@@ -5,7 +5,7 @@ mod render;
 pub(crate) mod service;
 
 pub use model::{
-    DiagnosticLevel, StudioDiagnostic, StudioEdge, StudioEdgeKind, StudioEnumAlias, StudioField,
+    DiagnosticSeverity, StudioDiagnostic, StudioEdge, StudioEdgeKind, StudioEnumAlias, StudioField,
     StudioIndex, StudioNode, StudioNodeKind, StudioPreviewResponse, StudioSchema,
     StudioSchemaResponse, StudioSummary,
 };

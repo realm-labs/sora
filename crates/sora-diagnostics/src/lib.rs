@@ -1,5 +1,32 @@
 use std::path::{Path, PathBuf};
 
+/// Structured source position for data parsing failures.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum DataLocation {
+    SchemaDefault,
+    Csv {
+        row: usize,
+        column: usize,
+    },
+    Worksheet {
+        sheet: String,
+        row: usize,
+        column: usize,
+    },
+}
+
+impl std::fmt::Display for DataLocation {
+    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::SchemaDefault => formatter.write_str("schema default"),
+            Self::Csv { row, column } => write!(formatter, "CSV row {row}, column {column}"),
+            Self::Worksheet { sheet, row, column } => {
+                write!(formatter, "worksheet `{sheet}` row {row}, column {column}")
+            }
+        }
+    }
+}
+
 #[derive(Debug, thiserror::Error)]
 pub enum SoraError {
     #[error("failed to read file `{path}`: {source}")]
@@ -25,6 +52,14 @@ pub enum SoraError {
 
     #[error("failed to parse data `{path}`: {message}")]
     ParseData { path: PathBuf, message: String },
+
+    #[error("failed to parse data `{path}`: {location}, field `{field}`: {message}")]
+    ParseDataAt {
+        path: PathBuf,
+        field: String,
+        location: DataLocation,
+        message: String,
+    },
 
     #[error("failed to serialize data: {0}")]
     SerializeData(serde_json::Error),
@@ -217,7 +252,7 @@ impl SoraError {
             Self::WriteFile { .. } => "SORA0002",
             Self::CreateDir { .. } => "SORA0003",
             Self::ParseSchema { .. } => "SORA0004",
-            Self::ParseData { .. } => "SORA0005",
+            Self::ParseData { .. } | Self::ParseDataAt { .. } => "SORA0005",
             Self::SerializeData(_) => "SORA0006",
             Self::SerializeDataFormat { .. } => "SORA0007",
             Self::UnknownType(_) => "SORA0008",
@@ -258,6 +293,7 @@ impl SoraError {
             | Self::CreateDir { path, .. }
             | Self::ParseSchema { path, .. }
             | Self::ParseData { path, .. }
+            | Self::ParseDataAt { path, .. }
             | Self::ExcelTemplate { path, .. } => Some(path),
             _ => None,
         }

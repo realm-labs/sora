@@ -86,7 +86,7 @@ export type ProjectRevision = {
 };
 
 export type StudioDiagnostic = {
-  level: "error" | "info";
+  severity: "error" | "warning" | "info";
   message: string;
   targetId?: string | null;
 };

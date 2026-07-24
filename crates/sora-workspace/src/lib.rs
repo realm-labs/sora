@@ -24,8 +24,8 @@ pub use build::{
     build_project,
 };
 pub use diagnostics::{
-    Diagnostic, DiagnosticEntity, DiagnosticLevel, DiagnosticSpan, diagnostics_from_anyhow,
-    diagnostics_from_sora_error,
+    Diagnostic, DiagnosticCell, DiagnosticEntity, DiagnosticSeverity, DiagnosticSpan,
+    diagnostics_from_anyhow, diagnostics_from_sora_error,
 };
 pub use inspect::{
     ProjectBuildOutput, ProjectDataSource, ProjectInspection, ProjectLocalization, ValidationReport,

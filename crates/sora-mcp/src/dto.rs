@@ -72,7 +72,7 @@ where
             "ok": false,
             "summary": "failed to encode structured tool error",
             "diagnostics": [{
-                "level": "error",
+                "severity": "error",
                 "code": null,
                 "message": error.to_string()
             }],

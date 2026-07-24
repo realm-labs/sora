@@ -2,7 +2,7 @@
 
 use std::collections::BTreeMap;
 
-pub use crate::{Diagnostic as StudioDiagnostic, DiagnosticLevel};
+pub use crate::{Diagnostic as StudioDiagnostic, DiagnosticSeverity};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize)]

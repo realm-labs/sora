@@ -30,7 +30,7 @@ impl fmt::Display for ErrorReport<'_> {
                 writeln!(f, "error[{code}]: {}", self.error)?;
                 if let Some(path) = diagnostics
                     .iter()
-                    .find_map(|diagnostic| diagnostic.path.as_ref())
+                    .find_map(|diagnostic| diagnostic.file.as_ref())
                 {
                     writeln!(f, "  --> {}", path.display())?;
                 }
