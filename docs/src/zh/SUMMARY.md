@@ -17,6 +17,7 @@
 - [项目配置](project-config.md)
 - [多语言](localization.md)
 - [Sora Studio](studio.md)
+- [模型上下文协议（MCP）](mcp.md)
 - [CLI 参考](cli.md)
 - [数据导出](exports.md)
   - [导出格式](export/formats.md)

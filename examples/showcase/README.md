@@ -56,6 +56,21 @@ Run the Rust smoke example:
 cargo run -p sora-showcase-rust
 ```
 
+Inspect the same project through Sora MCP:
+
+```powershell
+cargo build -p sora-cli
+npx @modelcontextprotocol/inspector target/debug/sora mcp --project examples/showcase/project.toml
+```
+
+The MCP end-to-end tests cover read-only inspection and queries plus a
+transactional build with progress and immutable artifact reads:
+
+```powershell
+cargo test -p sora-mcp --test read_only_workflow
+cargo test -p sora-mcp --test build_workflow
+```
+
 Run the Kotlin smoke example with the checked-in Gradle wrapper:
 
 ```powershell

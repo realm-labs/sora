@@ -17,6 +17,7 @@
 - [Project Config](project-config.md)
 - [Localization](localization.md)
 - [Sora Studio](studio.md)
+- [Model Context Protocol](mcp.md)
 - [CLI Reference](cli.md)
 - [Data Export](exports.md)
   - [Export Formats](export/formats.md)

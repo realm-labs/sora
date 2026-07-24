@@ -37,6 +37,12 @@ jobs:
       - name: Run tests
         run: cargo test
 
+      - name: Run MCP security integration suite
+        run: cargo test -p sora-mcp http::
+
+      - name: Run MCP showcase end-to-end
+        run: cargo test -p sora-mcp --test read_only_workflow --test build_workflow
+
       - name: Smoke test CLI
         run: cargo run -p sora-cli -- --version
 
