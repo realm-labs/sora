@@ -5,7 +5,7 @@ use std::{
     sync::atomic::{AtomicU64, Ordering},
 };
 
-use crate::{
+use super::{
     diff::simple_diff,
     model::{StudioField, StudioNode, StudioNodeKind, StudioSchema, StudioSummary},
     render::{parse_parser, push_field, render_schema_module},

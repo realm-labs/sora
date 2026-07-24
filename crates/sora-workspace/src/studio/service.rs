@@ -18,12 +18,11 @@ use sora_ir::{
 };
 use sora_schema::model::{CodegenSchema, EnumSchema, StructSchema, TableSchema, UnionSchema};
 
-use crate::{
+use super::{
     diff::simple_diff,
     graph::{build_schema, build_schema_from_raw, node_id},
     model::{
-        DiagnosticLevel, StudioDiagnostic, StudioNodeKind, StudioPreviewResponse, StudioSchema,
-        StudioSchemaResponse,
+        StudioDiagnostic, StudioNodeKind, StudioPreviewResponse, StudioSchema, StudioSchemaResponse,
     },
     render::{
         StudioDocumentFormat, document_format, render_lua_document, render_schema_module,
@@ -36,7 +35,7 @@ pub(crate) fn load_studio_schema(project: &Path) -> StudioSchemaResponse {
     load_studio_schema_with_parsers(project, &SchemaParserRegistry::builtin())
 }
 
-pub(crate) fn load_studio_schema_with_parsers(
+pub(super) fn load_studio_schema_with_parsers(
     project: &Path,
     parser_registry: &SchemaParserRegistry,
 ) -> StudioSchemaResponse {
@@ -46,11 +45,7 @@ pub(crate) fn load_studio_schema_with_parsers(
             return StudioSchemaResponse {
                 ok: false,
                 project: project.display().to_string(),
-                diagnostics: vec![StudioDiagnostic {
-                    level: DiagnosticLevel::Error,
-                    message: error.to_string(),
-                    target_id: None,
-                }],
+                diagnostics: vec![StudioDiagnostic::error(error.to_string())],
                 schema: None,
             };
         }
@@ -79,11 +74,7 @@ pub(crate) fn load_studio_schema_with_parsers(
             Ok(()) => StudioSchemaResponse {
                 ok: true,
                 project: project.display().to_string(),
-                diagnostics: vec![StudioDiagnostic {
-                    level: DiagnosticLevel::Info,
-                    message: "schema loaded successfully".to_owned(),
-                    target_id: None,
-                }],
+                diagnostics: vec![StudioDiagnostic::info("schema loaded successfully")],
                 schema: Some(build_schema(
                     &ir,
                     &source_index.sources,
@@ -115,7 +106,7 @@ pub(crate) fn save_studio_schema(project: &Path, schema: &StudioSchema) -> Studi
     save_studio_schema_with_parsers(project, schema, &SchemaParserRegistry::builtin())
 }
 
-pub(crate) fn save_studio_schema_with_parsers(
+pub(super) fn save_studio_schema_with_parsers(
     project: &Path,
     schema: &StudioSchema,
     parser_registry: &SchemaParserRegistry,
@@ -129,22 +120,15 @@ pub(crate) fn save_studio_schema_with_parsers(
                     .map(|path| path.display().to_string())
                     .collect::<Vec<_>>()
                     .join(", ");
-                response.diagnostics = vec![StudioDiagnostic {
-                    level: DiagnosticLevel::Info,
-                    message: format!("schema saved to {targets}"),
-                    target_id: None,
-                }];
+                response.diagnostics =
+                    vec![StudioDiagnostic::info(format!("schema saved to {targets}"))];
             }
             response
         }
         Err(error) => StudioSchemaResponse {
             ok: false,
             project: project.display().to_string(),
-            diagnostics: vec![StudioDiagnostic {
-                level: DiagnosticLevel::Error,
-                message: error.to_string(),
-                target_id: None,
-            }],
+            diagnostics: vec![StudioDiagnostic::error(error.to_string())],
             schema: Some(schema.clone()),
         },
     }
@@ -158,7 +142,7 @@ pub(crate) fn preview_studio_schema(
     preview_studio_schema_with_parsers(project, schema, &SchemaParserRegistry::builtin())
 }
 
-pub(crate) fn preview_studio_schema_with_parsers(
+pub(super) fn preview_studio_schema_with_parsers(
     project: &Path,
     schema: &StudioSchema,
     parser_registry: &SchemaParserRegistry,
@@ -172,11 +156,7 @@ pub(crate) fn preview_studio_schema_with_parsers(
                     target: None,
                     content: Some(render_schema_module(schema)),
                     diff: None,
-                    diagnostics: vec![StudioDiagnostic {
-                        level: DiagnosticLevel::Error,
-                        message: error.to_string(),
-                        target_id: None,
-                    }],
+                    diagnostics: vec![StudioDiagnostic::error(error.to_string())],
                 };
             }
             let current_project = fs::read_to_string(project).unwrap_or_default();
@@ -206,11 +186,7 @@ pub(crate) fn preview_studio_schema_with_parsers(
                             target: None,
                             content: Some(render_schema_module(schema)),
                             diff: None,
-                            diagnostics: vec![StudioDiagnostic {
-                                level: DiagnosticLevel::Error,
-                                message: error.to_string(),
-                                target_id: None,
-                            }],
+                            diagnostics: vec![StudioDiagnostic::error(error.to_string())],
                         };
                     }
                 };
@@ -255,11 +231,7 @@ pub(crate) fn preview_studio_schema_with_parsers(
             target: None,
             content: Some(render_schema_module(schema)),
             diff: None,
-            diagnostics: vec![StudioDiagnostic {
-                level: DiagnosticLevel::Error,
-                message: error.to_string(),
-                target_id: None,
-            }],
+            diagnostics: vec![StudioDiagnostic::error(error.to_string())],
         },
     }
 }
@@ -272,11 +244,7 @@ fn studio_diagnostics(error: &SoraError) -> Vec<StudioDiagnostic> {
             .collect::<Vec<_>>();
     }
 
-    vec![StudioDiagnostic {
-        level: DiagnosticLevel::Error,
-        message: error.to_string(),
-        target_id: diagnostic_target_id(error),
-    }]
+    vec![StudioDiagnostic::from_sora_error(error).with_target_id(diagnostic_target_id(error))]
 }
 
 fn diagnostic_target_id(error: &SoraError) -> Option<String> {
@@ -515,7 +483,7 @@ fn schema_for_source(schema: &StudioSchema, source: &str) -> StudioSchema {
     StudioSchema {
         package: schema.package.clone(),
         sources: vec![source.to_owned()],
-        summary: crate::model::StudioSummary {
+        summary: super::model::StudioSummary {
             enums: nodes
                 .iter()
                 .filter(|node| node.kind == StudioNodeKind::Enum)

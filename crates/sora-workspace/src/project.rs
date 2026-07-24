@@ -1,4 +1,7 @@
-use std::path::{Path, PathBuf};
+use std::{
+    path::{Path, PathBuf},
+    sync::RwLock,
+};
 
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -53,7 +56,7 @@ pub struct ProjectSession {
     manifest_path: PathBuf,
     manifest: ProjectManifest,
     runtime: ProjectRuntime,
-    revision: ProjectRevision,
+    revision: RwLock<ProjectRevision>,
 }
 
 impl ProjectSession {
@@ -76,7 +79,7 @@ impl ProjectSession {
             manifest_path,
             manifest,
             runtime,
-            revision,
+            revision: RwLock::new(revision),
         })
     }
 
@@ -96,8 +99,21 @@ impl ProjectSession {
         &self.runtime
     }
 
-    pub fn revision(&self) -> &ProjectRevision {
-        &self.revision
+    pub fn revision(&self) -> ProjectRevision {
+        self.revision
+            .read()
+            .expect("project revision lock should not be poisoned")
+            .clone()
+    }
+
+    pub(crate) fn refresh_revision(&self) -> anyhow::Result<ProjectRevision> {
+        let manifest = ProjectManifest::load(&self.manifest_path)?;
+        let revision = calculate_revision(&self.manifest_path, &manifest)?;
+        *self
+            .revision
+            .write()
+            .map_err(|_| anyhow::anyhow!("project revision lock is poisoned"))? = revision.clone();
+        Ok(revision)
     }
 }
 
@@ -107,7 +123,7 @@ impl std::fmt::Debug for ProjectSession {
             .debug_struct("ProjectSession")
             .field("id", &self.id)
             .field("manifest_path", &self.manifest_path)
-            .field("revision", &self.revision)
+            .field("revision", &self.revision())
             .finish_non_exhaustive()
     }
 }

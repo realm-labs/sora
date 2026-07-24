@@ -1867,15 +1867,9 @@ dependencies = [
  "axum",
  "include_dir",
  "serde",
- "serde_json",
- "serde_yaml",
- "sora-config-format",
- "sora-diagnostics",
- "sora-input-schema",
  "sora-ir",
- "sora-schema",
+ "sora-workspace",
  "tokio",
- "toml",
  "tower-http",
 ]
 
@@ -1891,6 +1885,8 @@ dependencies = [
  "mlua",
  "schemars",
  "serde",
+ "serde_json",
+ "serde_yaml",
  "sha2",
  "sora-codegen",
  "sora-config-format",
@@ -1908,6 +1904,7 @@ dependencies = [
  "sora-ir",
  "sora-schema",
  "thiserror",
+ "toml",
 ]
 
 [[package]]

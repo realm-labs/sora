@@ -1,6 +1,7 @@
 use std::fmt;
 
 use sora_diagnostics::SoraError;
+use sora_workspace::diagnostics_from_anyhow;
 
 pub struct ErrorReport<'a> {
     error: &'a anyhow::Error,
@@ -14,21 +15,45 @@ impl<'a> ErrorReport<'a> {
 
 impl fmt::Display for ErrorReport<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let sora_error = self
+        let diagnostics = diagnostics_from_anyhow(self.error);
+        let root_code = self
             .error
             .chain()
-            .find_map(|cause| cause.downcast_ref::<SoraError>());
-
-        match sora_error {
-            Some(error) => {
-                writeln!(f, "error[{}]: {}", error.code(), self.error)?;
-                if let Some(path) = error.path() {
+            .find_map(|cause| cause.downcast_ref::<SoraError>())
+            .map(SoraError::code);
+        match root_code.or_else(|| {
+            diagnostics
+                .first()
+                .and_then(|diagnostic| diagnostic.code.as_deref())
+        }) {
+            Some(code) => {
+                writeln!(f, "error[{code}]: {}", self.error)?;
+                if let Some(path) = diagnostics
+                    .iter()
+                    .find_map(|diagnostic| diagnostic.path.as_ref())
+                {
                     writeln!(f, "  --> {}", path.display())?;
                 }
-                if let Some(errors) = error.errors() {
+                if let Some(entity) = diagnostics
+                    .iter()
+                    .find_map(|diagnostic| diagnostic.entity.as_ref())
+                {
+                    write!(f, "  entity: {} `{}`", entity.kind, entity.name)?;
+                    if let Some(field) = &entity.field {
+                        write!(f, ".{field}")?;
+                    }
+                    writeln!(f)?;
+                }
+                if diagnostics.len() > 1 {
                     writeln!(f, "validation errors:")?;
-                    for (index, error) in errors.iter().enumerate() {
-                        writeln!(f, "  {}. [{}] {}", index + 1, error.code(), error)?;
+                    for (index, diagnostic) in diagnostics.iter().enumerate() {
+                        writeln!(
+                            f,
+                            "  {}. [{}] {}",
+                            index + 1,
+                            diagnostic.code.as_deref().unwrap_or("SORA"),
+                            diagnostic.message
+                        )?;
                     }
                 }
             }

@@ -6,7 +6,7 @@ use sora_schema::model::{
     TableModeSchema,
 };
 
-use crate::{
+use super::{
     model::{
         StudioEdge, StudioEdgeKind, StudioField, StudioNode, StudioNodeKind, StudioSchema,
         StudioSummary,

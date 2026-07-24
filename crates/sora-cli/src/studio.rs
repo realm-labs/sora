@@ -1,13 +1,17 @@
 use anyhow::Result;
-use sora_workspace::ProjectRuntime;
+use sora_workspace::{ProjectId, ProjectSession, RuntimeOptions};
 
 use crate::args::StudioArgs;
 
-pub fn run(args: StudioArgs, context: &ProjectRuntime) -> Result<()> {
+pub fn run(args: StudioArgs, runtime_options: RuntimeOptions) -> Result<()> {
+    let session = std::sync::Arc::new(ProjectSession::open(
+        ProjectId::new("studio")?,
+        &args.project,
+        runtime_options,
+    )?);
     sora_studio::run_blocking(sora_studio::StudioOptions {
-        project: args.project,
+        session,
         host: args.host,
         port: args.port,
-        schema_parser_registry: std::sync::Arc::clone(context.schema_parsers()),
     })
 }

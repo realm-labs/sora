@@ -1,6 +1,5 @@
 use std::{
-    net::{IpAddr, Ipv4Addr, SocketAddr},
-    path::PathBuf,
+    net::{IpAddr, SocketAddr},
     sync::Arc,
 };
 
@@ -15,36 +14,19 @@ use axum::{
 };
 use include_dir::{Dir, include_dir};
 use serde::Serialize;
-use sora_ir::parser::ParserRegistry as SchemaParserRegistry;
-use tower_http::cors::CorsLayer;
-
-use crate::{
-    model::{StudioPreviewResponse, StudioSchema, StudioSchemaResponse},
-    service::{
-        load_studio_schema_with_parsers, preview_studio_schema_with_parsers,
-        save_studio_schema_with_parsers,
-    },
+use sora_workspace::{
+    ProjectSession,
+    studio::{StudioPreviewResponse, StudioSchema, StudioSchemaResponse},
 };
+use tower_http::cors::CorsLayer;
 
 static STUDIO_DIST: Dir<'_> = include_dir!("$CARGO_MANIFEST_DIR/dist");
 
 #[derive(Clone)]
 pub struct StudioOptions {
-    pub project: PathBuf,
+    pub session: Arc<ProjectSession>,
     pub host: IpAddr,
     pub port: u16,
-    pub schema_parser_registry: Arc<SchemaParserRegistry>,
-}
-
-impl StudioOptions {
-    pub fn local(project: PathBuf, port: u16) -> Self {
-        Self {
-            project,
-            host: IpAddr::V4(Ipv4Addr::LOCALHOST),
-            port,
-            schema_parser_registry: Arc::new(SchemaParserRegistry::builtin()),
-        }
-    }
 }
 
 pub fn run_blocking(options: StudioOptions) -> Result<()> {
@@ -54,10 +36,9 @@ pub fn run_blocking(options: StudioOptions) -> Result<()> {
 
 pub async fn run(options: StudioOptions) -> Result<()> {
     let addr = SocketAddr::new(options.host, options.port);
-    let project = options.project.clone();
+    let project = options.session.manifest_path().to_path_buf();
     let state = StudioState {
-        project: Arc::new(project.clone()),
-        schema_parser_registry: options.schema_parser_registry,
+        session: options.session,
     };
     let app = Router::new()
         .route("/api/health", get(health))
@@ -83,8 +64,7 @@ pub async fn run(options: StudioOptions) -> Result<()> {
 
 #[derive(Clone)]
 struct StudioState {
-    project: Arc<PathBuf>,
-    schema_parser_registry: Arc<SchemaParserRegistry>,
+    session: Arc<ProjectSession>,
 }
 
 async fn health() -> Json<HealthResponse> {
@@ -92,32 +72,21 @@ async fn health() -> Json<HealthResponse> {
 }
 
 async fn schema(State(state): State<StudioState>) -> Json<StudioSchemaResponse> {
-    Json(load_studio_schema_with_parsers(
-        &state.project,
-        &state.schema_parser_registry,
-    ))
+    Json(state.session.load_studio_schema())
 }
 
 async fn save_schema(
     State(state): State<StudioState>,
     Json(schema): Json<StudioSchema>,
 ) -> Json<StudioSchemaResponse> {
-    Json(save_studio_schema_with_parsers(
-        &state.project,
-        &schema,
-        &state.schema_parser_registry,
-    ))
+    Json(state.session.save_studio_schema(&schema))
 }
 
 async fn preview_schema(
     State(state): State<StudioState>,
     Json(schema): Json<StudioSchema>,
 ) -> Json<StudioPreviewResponse> {
-    Json(preview_studio_schema_with_parsers(
-        &state.project,
-        &schema,
-        &state.schema_parser_registry,
-    ))
+    Json(state.session.preview_studio_schema(&schema))
 }
 
 async fn studio_index() -> Response {

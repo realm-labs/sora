@@ -6,7 +6,7 @@ use std::{
 use anyhow::{Context, Result};
 use serde_json::{Map, Value};
 
-use crate::{
+use super::{
     graph::node_id,
     model::{StudioField, StudioNode, StudioNodeKind, StudioSchema},
 };

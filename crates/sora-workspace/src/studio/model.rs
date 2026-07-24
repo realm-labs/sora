@@ -1,5 +1,8 @@
+//! Serializable schema graph and response types shared with Studio adapters.
+
 use std::collections::BTreeMap;
 
+pub use crate::{Diagnostic as StudioDiagnostic, DiagnosticLevel};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize)]
@@ -18,21 +21,6 @@ pub struct StudioPreviewResponse {
     pub content: Option<String>,
     pub diff: Option<String>,
     pub diagnostics: Vec<StudioDiagnostic>,
-}
-
-#[derive(Debug, Serialize)]
-pub struct StudioDiagnostic {
-    pub level: DiagnosticLevel,
-    pub message: String,
-    #[serde(rename = "targetId", skip_serializing_if = "Option::is_none")]
-    pub target_id: Option<String>,
-}
-
-#[derive(Debug, Serialize)]
-#[serde(rename_all = "snake_case")]
-pub enum DiagnosticLevel {
-    Error,
-    Info,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

@@ -15,31 +15,38 @@ pub fn run(cli: Cli) -> Result<()> {
         bail!("--jobs must be greater than 0");
     }
 
-    let project = command_project_path(&cli.command);
-    let context = ProjectRuntime::load(
-        project,
-        RuntimeOptions {
-            execution: ExecutionOptions {
-                parallel: !cli.serial,
-                jobs: cli.jobs,
-            },
-            parser_scripts: cli.parser_script,
-            type_mapping_scripts: cli.type_mapping_script,
+    let runtime_options = RuntimeOptions {
+        execution: ExecutionOptions {
+            parallel: !cli.serial,
+            jobs: cli.jobs,
         },
-    )?;
+        parser_scripts: cli.parser_script,
+        type_mapping_scripts: cli.type_mapping_script,
+    };
 
-    match cli.command {
+    let command = match cli.command {
+        Command::Init(args) => return crate::init::run(args),
+        Command::Mcp => return crate::mcp::run(),
+        Command::Studio(args) => return crate::studio::run(args, runtime_options),
+        command => command,
+    };
+    let project = command_project_path(&command)
+        .expect("project commands must declare a manifest path")
+        .to_path_buf();
+    let context = ProjectRuntime::load(Some(&project), runtime_options)?;
+
+    match command {
         Command::Build(args) => crate::build::run(args, &context),
         Command::Check(args) => check(args, &context),
-        Command::Init(args) => crate::init::run(args),
         Command::Gen { target, args } => generate(args, &target, &context),
         Command::Export(args) => export(args, &context),
         Command::Diff(args) => diff(args, &context),
         Command::ExcelTemplate(args) => excel_template(args, &context),
         Command::ExcelSync(args) => excel_sync(args, &context),
         Command::SchemaLock(args) => schema_lock(args, &context),
-        Command::Studio(args) => crate::studio::run(args, &context),
-        Command::Mcp => crate::mcp::run(),
+        Command::Init(_) | Command::Studio(_) | Command::Mcp => {
+            unreachable!("commands without project runtimes were dispatched earlier")
+        }
     }
 }
 
