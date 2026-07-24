@@ -305,7 +305,7 @@ mod tests {
         let server = SoraMcpServer::new(Arc::new(WorkspaceService::new()));
         let tools = server.tool_router.list_all();
 
-        assert_eq!(tools.len(), 13);
+        assert_eq!(tools.len(), 15);
         let mut names = tools
             .iter()
             .map(|tool| tool.name.as_ref())
@@ -314,7 +314,9 @@ mod tests {
         assert_eq!(
             names,
             [
+                "sora_data_apply",
                 "sora_data_diff",
+                "sora_data_preview",
                 "sora_data_validate",
                 "sora_project_init",
                 "sora_project_init_apply",

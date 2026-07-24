@@ -14,6 +14,12 @@ const STATE_DIRECTORY: &str = ".sora";
 const TRANSACTION_DIRECTORY: &str = "transactions";
 const BACKUP_DIRECTORY: &str = "backups";
 
+#[derive(Debug, Clone)]
+pub(crate) struct FileWrite {
+    pub path: PathBuf,
+    pub content: Vec<u8>,
+}
+
 /// Information retained after a committed filesystem transaction.
 #[derive(Debug, Clone, Serialize, JsonSchema)]
 pub struct TransactionReceipt {
@@ -83,6 +89,24 @@ pub(crate) fn commit_text_transaction<F>(
 where
     F: FnOnce() -> anyhow::Result<()>,
 {
+    let writes = writes
+        .iter()
+        .map(|write| FileWrite {
+            path: write.path.clone(),
+            content: write.content.as_bytes().to_vec(),
+        })
+        .collect::<Vec<_>>();
+    commit_file_transaction(project_root, &writes, validate)
+}
+
+pub(crate) fn commit_file_transaction<F>(
+    project_root: &Path,
+    writes: &[FileWrite],
+    validate: F,
+) -> Result<TransactionReceipt, TransactionError>
+where
+    F: FnOnce() -> anyhow::Result<()>,
+{
     let root = canonical_directory(project_root)?;
     let id = Uuid::new_v4().to_string();
     let state_root = root.join(STATE_DIRECTORY);
@@ -110,7 +134,7 @@ where
             return Err(TransactionError::InternalStateTarget);
         }
         let staged = transaction_root.join(format!("{index}.stage"));
-        write_durable(&staged, write.content.as_bytes())?;
+        write_durable(&staged, &write.content)?;
         let backup = if target.exists() {
             let backup = backup_root.join(format!("{index}.backup"));
             copy_file(&target, &backup)?;

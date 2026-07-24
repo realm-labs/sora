@@ -13,7 +13,7 @@ use serde::Serialize;
 
 use crate::{
     ProjectId, ProjectSession, RuntimeOptions,
-    mutation::{MutationCoordinator, ProjectInitCoordinator},
+    mutation::{DataMutationCoordinator, MutationCoordinator, ProjectInitCoordinator},
 };
 
 /// Registry and coordination point for opened Sora projects.
@@ -23,6 +23,7 @@ pub struct WorkspaceService {
     roots: RwLock<BTreeMap<String, WorkspaceRoot>>,
     next_project_id: AtomicU64,
     pub(crate) mutation: MutationCoordinator,
+    pub(crate) data_mutation: DataMutationCoordinator,
     pub(crate) project_init: ProjectInitCoordinator,
 }
 

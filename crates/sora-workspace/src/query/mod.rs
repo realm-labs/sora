@@ -3,6 +3,6 @@ mod schema;
 
 pub use data::{
     DataValidationQuery, DataValidationReport, IndexLookup, TableFilter, TableQuery,
-    TableQueryReport,
+    TableQueryReport, TableQueryRow,
 };
 pub use schema::{SchemaEntityKind, SchemaSearchQuery, SchemaSearchReport, SchemaSearchResult};

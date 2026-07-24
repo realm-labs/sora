@@ -69,9 +69,16 @@ pub struct TableQuery {
 pub struct TableQueryReport {
     pub revision: ProjectRevision,
     pub table: String,
-    pub rows: Vec<BTreeMap<String, serde_json::Value>>,
+    pub rows: Vec<TableQueryRow>,
     pub next_cursor: Option<String>,
     pub total_matched: usize,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, JsonSchema)]
+pub struct TableQueryRow {
+    pub index: usize,
+    pub row_hash: String,
+    pub values: BTreeMap<String, serde_json::Value>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -137,6 +144,12 @@ impl ProjectSession {
             .iter()
             .find(|table| table.name == query.table)
             .ok_or_else(|| anyhow::anyhow!("validated data omitted table `{}`", query.table))?;
+        let (_, raw_data) = crate::mutation::load_raw_project_data(self)?;
+        let raw_table = raw_data
+            .tables
+            .iter()
+            .find(|table| table.name == query.table)
+            .ok_or_else(|| anyhow::anyhow!("raw data omitted table `{}`", query.table))?;
         let revision = self.revision();
         let query_hash = query_hash(query)?;
         let offset = match query.cursor.as_deref() {
@@ -153,26 +166,31 @@ impl ProjectSession {
         let mut rows = table_data
             .rows
             .iter()
-            .map(|row| {
-                row.values
-                    .iter()
-                    .filter(|(field, _)| include_derived || !derived.contains(field.as_str()))
-                    .map(|(field, value)| (field.clone(), natural_value(value)))
-                    .collect::<BTreeMap<_, _>>()
+            .enumerate()
+            .map(|(index, row)| {
+                (
+                    index,
+                    crate::mutation::data_row_hash(raw_table.rows.get(index).unwrap_or(row)),
+                    row.values
+                        .iter()
+                        .filter(|(field, _)| include_derived || !derived.contains(field.as_str()))
+                        .map(|(field, value)| (field.clone(), natural_value(value)))
+                        .collect::<BTreeMap<_, _>>(),
+                )
             })
-            .filter(|row| row_matches(row, table_ir, query))
+            .filter(|(_, _, row)| row_matches(row, table_ir, query))
             .collect::<Vec<_>>();
         if !query.order_by.is_empty() {
             rows.sort_by(|left, right| {
                 query
                     .order_by
                     .iter()
-                    .map(|field| stable_json(left.get(field)))
+                    .map(|field| stable_json(left.2.get(field)))
                     .cmp(
                         query
                             .order_by
                             .iter()
-                            .map(|field| stable_json(right.get(field))),
+                            .map(|field| stable_json(right.2.get(field))),
                     )
             });
         }
@@ -183,7 +201,11 @@ impl ProjectSession {
             .get(offset..end)
             .unwrap_or(&[])
             .iter()
-            .map(|row| project_row(row, table_ir, &query.select))
+            .map(|(index, row_hash, row)| TableQueryRow {
+                index: *index,
+                row_hash: row_hash.clone(),
+                values: project_row(row, table_ir, &query.select),
+            })
             .collect();
         let next_cursor = (end < total_matched)
             .then(|| encode_cursor(&revision.project, &query.table, &query_hash, end))
@@ -224,7 +246,7 @@ impl ProjectSession {
         Ok(serde_json::to_value(diff)?)
     }
 
-    fn data_root(&self) -> PathBuf {
+    pub(crate) fn data_root(&self) -> PathBuf {
         let project_root = self
             .manifest_path()
             .parent()
@@ -462,7 +484,8 @@ mod tests {
             })
             .unwrap();
         assert_eq!(first.rows.len(), 1);
-        assert_eq!(first.rows[0].len(), 2);
+        assert_eq!(first.rows[0].values.len(), 2);
+        assert!(first.rows[0].row_hash.starts_with("row:"));
         let second = session
             .query_table(&TableQuery {
                 table: "Item".to_owned(),

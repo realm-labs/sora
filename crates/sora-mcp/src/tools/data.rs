@@ -5,13 +5,146 @@ use rmcp::{
 use schemars::JsonSchema;
 use serde::Deserialize;
 use sora_workspace::{
-    DataValidationQuery, DataValidationReport, ProjectId, TableQuery, TableQueryReport,
+    DataApplyReport, DataMutationPlan, DataOperation, DataValidationQuery, DataValidationReport,
+    ProjectId, TableQuery, TableQueryReport,
 };
 
-use crate::{SoraMcpServer, dto::ToolEnvelope};
+use crate::{
+    SoraMcpServer,
+    dto::{ToolEnvelope, tool_error},
+};
 
 #[tool_router(router = data_tool_router, vis = "pub(crate)")]
 impl SoraMcpServer {
+    #[tool(
+        name = "sora_data_preview",
+        description = "Validate an ordered typed row mutation batch and return a revision-bound plan without writing data sources"
+    )]
+    fn data_preview(
+        &self,
+        Parameters(input): Parameters<DataPreviewInput>,
+    ) -> Result<Json<ToolEnvelope<DataMutationPlan>>, rmcp::model::CallToolResult> {
+        let id = ProjectId::new(input.project_id).map_err(|error| {
+            tool_error(ToolEnvelope::<DataMutationPlan>::failure(
+                None,
+                None,
+                "invalid project id",
+                error,
+            ))
+        })?;
+        match self.workspace.preview_data_mutation(
+            &id,
+            &self.authorization_context,
+            &input.expected_schema_revision,
+            &input.expected_data_revision,
+            input.operations,
+        ) {
+            Ok(plan) => {
+                let changes = serde_json::to_value(&plan.row_changes).map_err(|error| {
+                    tool_error(ToolEnvelope::<DataMutationPlan>::failure(
+                        Some(id.clone()),
+                        Some(plan.input_revisions.clone()),
+                        "failed to encode data changes",
+                        error,
+                    ))
+                })?;
+                let mut envelope = ToolEnvelope::success(
+                    Some(id),
+                    Some(plan.input_revisions.clone()),
+                    format!(
+                        "planned {} data operation(s) across {} source file(s)",
+                        plan.normalized_operations.len(),
+                        plan.file_changes.len()
+                    ),
+                    plan,
+                );
+                envelope.changes = changes.as_array().cloned().unwrap_or_default();
+                Ok(Json(envelope))
+            }
+            Err(error) => Err(tool_error(ToolEnvelope::<DataMutationPlan>::failure(
+                Some(id.clone()),
+                self.workspace
+                    .project(&id)
+                    .ok()
+                    .map(|session| session.revision()),
+                "data preview failed",
+                error,
+            ))),
+        }
+    }
+
+    #[tool(
+        name = "sora_data_apply",
+        description = "Atomically apply an unexpired data plan after authorization, schema/data revision, and idempotency checks"
+    )]
+    async fn data_apply(
+        &self,
+        Parameters(input): Parameters<DataApplyInput>,
+        context: rmcp::service::RequestContext<rmcp::RoleServer>,
+    ) -> Result<Json<ToolEnvelope<DataApplyReport>>, rmcp::model::CallToolResult> {
+        let id = ProjectId::new(input.project_id).map_err(|error| {
+            tool_error(ToolEnvelope::<DataApplyReport>::failure(
+                None,
+                None,
+                "invalid project id",
+                error,
+            ))
+        })?;
+        match self.workspace.apply_data_mutation(
+            &id,
+            &self.authorization_context,
+            &input.plan_id,
+            &input.idempotency_key,
+        ) {
+            Ok(report) => {
+                self.notify_project_resources_updated(&context.peer, id.as_str())
+                    .await;
+                let changes = serde_json::to_value(&report.row_changes).map_err(|error| {
+                    tool_error(ToolEnvelope::<DataApplyReport>::failure(
+                        Some(id.clone()),
+                        Some(report.revision.clone()),
+                        "failed to encode applied data changes",
+                        error,
+                    ))
+                })?;
+                let mut envelope = ToolEnvelope::success(
+                    Some(id),
+                    Some(report.revision.clone()),
+                    format!(
+                        "applied data plan to {} source file(s)",
+                        report.transaction.affected_files.len()
+                    ),
+                    report,
+                );
+                envelope.changes = changes.as_array().cloned().unwrap_or_default();
+                envelope.artifacts = envelope
+                    .data
+                    .as_ref()
+                    .map(|report| {
+                        vec![crate::dto::ArtifactLink {
+                            artifact_id: report.transaction.backup_id.clone(),
+                            uri: format!(
+                                "sora://project/{}/artifact/{}",
+                                report.project_id, report.transaction.backup_id
+                            ),
+                            mime_type: "application/x-sora-backup".to_owned(),
+                        }]
+                    })
+                    .unwrap_or_default();
+                Ok(Json(envelope))
+            }
+            Err(error) => Err(tool_error(ToolEnvelope::<DataApplyReport>::failure(
+                Some(id.clone()),
+                self.workspace
+                    .project(&id)
+                    .ok()
+                    .map(|session| session.revision()),
+                "data apply failed",
+                error,
+            ))),
+        }
+    }
+
     #[tool(
         name = "sora_data_validate",
         description = "Load and fully validate project data, optionally selecting a scope or table subset"
@@ -177,4 +310,21 @@ struct TableQueryInput {
 struct DataDiffInput {
     project_id: String,
     other_data_root: String,
+}
+
+#[derive(Debug, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+struct DataPreviewInput {
+    project_id: String,
+    expected_schema_revision: String,
+    expected_data_revision: String,
+    operations: Vec<DataOperation>,
+}
+
+#[derive(Debug, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+struct DataApplyInput {
+    project_id: String,
+    plan_id: String,
+    idempotency_key: String,
 }

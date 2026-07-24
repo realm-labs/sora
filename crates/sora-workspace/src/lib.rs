@@ -31,18 +31,22 @@ pub use inspect::{
     ProjectBuildOutput, ProjectDataSource, ProjectInspection, ProjectLocalization, ValidationReport,
 };
 pub use mutation::{
-    DerivedFieldSource, EnumValueDefinition, FieldDefinition, FieldOwner, FieldOwnerKind,
-    IndexDefinition, MutationPlanError, MutationSchemaEntityKind, ProjectInitApplyReport,
-    ProjectInitPlan, ProjectInitPlanFile, SchemaApplyReport, SchemaExecution, SchemaMutationError,
-    SchemaMutationPlan, SchemaOperation, SchemaTableMode, StudioSchemaApplyReport,
-    StudioSchemaMutationPlan, TableSourceDefinition, TextFileDiff, TransactionError,
-    TransactionReceipt, UnionVariantDefinition, execute_schema_operations,
+    DataApplyReport, DataExecution, DataFileChange, DataMutationError, DataMutationPlan,
+    DataOperation, DataPlanError, DataSourceImpact, DerivedFieldSource, EnumValueDefinition,
+    FieldDefinition, FieldOwner, FieldOwnerKind, IndexDefinition, MutableTableSource,
+    MutationPlanError, MutationSchemaEntityKind, ProjectInitApplyReport, ProjectInitPlan,
+    ProjectInitPlanFile, RowChange, RowSelector, SchemaApplyReport, SchemaExecution,
+    SchemaMutationError, SchemaMutationPlan, SchemaOperation, SchemaTableMode,
+    StudioSchemaApplyReport, StudioSchemaMutationPlan, TableSourceDefinition, TextFileDiff,
+    TransactionError, TransactionReceipt, UnionVariantDefinition, execute_data_operations,
+    execute_schema_operations,
 };
 pub use parser::{ParserRegistries, load_parser_registries};
 pub use project::{ProjectId, ProjectRevision, ProjectSession};
 pub use query::{
     DataValidationQuery, DataValidationReport, IndexLookup, SchemaEntityKind, SchemaSearchQuery,
     SchemaSearchReport, SchemaSearchResult, TableFilter, TableQuery, TableQueryReport,
+    TableQueryRow,
 };
 pub use runtime::{ProjectRuntime, RuntimeOptions};
 pub use service::{ProjectCandidate, WorkspaceError, WorkspaceRoot, WorkspaceService};
