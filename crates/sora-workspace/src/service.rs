@@ -10,6 +10,7 @@ use std::{
 
 use schemars::JsonSchema;
 use serde::Serialize;
+use sha2::{Digest, Sha256};
 
 use crate::{
     ProjectId, ProjectSession, RuntimeOptions,
@@ -127,6 +128,64 @@ impl WorkspaceService {
         options: RuntimeOptions,
         trust_project_scripts: bool,
     ) -> Result<Arc<ProjectSession>, WorkspaceError> {
+        let (root, canonical) = self.resolve_discovered_manifest(root_id, relative_manifest)?;
+        let manifest = crate::ProjectManifest::load(&canonical).map_err(|source| {
+            WorkspaceError::OpenProject {
+                path: canonical.clone(),
+                source,
+            }
+        })?;
+        if let Some(existing) = self
+            .sessions
+            .read()
+            .map_err(|_| WorkspaceError::StatePoisoned)?
+            .values()
+            .find(|session| session.manifest_path() == canonical)
+            .cloned()
+        {
+            return Ok(existing);
+        }
+        if !trust_project_scripts
+            && (!manifest.parsers.scripts.is_empty() || !manifest.type_mappings.scripts.is_empty())
+        {
+            return Err(WorkspaceError::UntrustedProjectScripts);
+        }
+        inspect_project_scripts(&root.path, &canonical, &manifest)?;
+        let sequence = self.next_project_id.fetch_add(1, Ordering::Relaxed) + 1;
+        let id = ProjectId::generated(sequence);
+        self.open_project(id, canonical, options)
+    }
+
+    /// Inspects a discovered manifest without loading or executing project scripts.
+    pub fn inspect_discovered_project(
+        &self,
+        root_id: &str,
+        relative_manifest: &str,
+    ) -> Result<DiscoveredProjectInspection, WorkspaceError> {
+        let (root, canonical) = self.resolve_discovered_manifest(root_id, relative_manifest)?;
+        let manifest = crate::ProjectManifest::load(&canonical).map_err(|source| {
+            WorkspaceError::OpenProject {
+                path: canonical.clone(),
+                source,
+            }
+        })?;
+        let scripts = inspect_project_scripts(&root.path, &canonical, &manifest)?;
+        Ok(DiscoveredProjectInspection {
+            root_id: root.id,
+            relative_manifest: normalized_relative_path(&validate_relative_manifest(
+                relative_manifest,
+            )?),
+            package: manifest.package,
+            requires_trust: !scripts.is_empty(),
+            scripts,
+        })
+    }
+
+    fn resolve_discovered_manifest(
+        &self,
+        root_id: &str,
+        relative_manifest: &str,
+    ) -> Result<(WorkspaceRoot, PathBuf), WorkspaceError> {
         let root = self
             .roots
             .read()
@@ -146,30 +205,7 @@ impl WorkspaceService {
         if !canonical.starts_with(&root.path) {
             return Err(WorkspaceError::ManifestOutsideRoot);
         }
-        let manifest = crate::ProjectManifest::load(&canonical).map_err(|source| {
-            WorkspaceError::OpenProject {
-                path: canonical.clone(),
-                source,
-            }
-        })?;
-        if !trust_project_scripts
-            && (!manifest.parsers.scripts.is_empty() || !manifest.type_mappings.scripts.is_empty())
-        {
-            return Err(WorkspaceError::UntrustedProjectScripts);
-        }
-        if let Some(existing) = self
-            .sessions
-            .read()
-            .map_err(|_| WorkspaceError::StatePoisoned)?
-            .values()
-            .find(|session| session.manifest_path() == canonical)
-            .cloned()
-        {
-            return Ok(existing);
-        }
-        let sequence = self.next_project_id.fetch_add(1, Ordering::Relaxed) + 1;
-        let id = ProjectId::generated(sequence);
-        self.open_project(id, canonical, options)
+        Ok((root, canonical))
     }
 
     /// Opens and registers a project as one atomic workspace operation.
@@ -259,6 +295,14 @@ pub enum WorkspaceError {
     ManifestOutsideRoot,
     #[error("project declares Lua scripts that have not been explicitly trusted")]
     UntrustedProjectScripts,
+    #[error("project script `{path}` resolves outside its allowed root")]
+    ProjectScriptOutsideRoot { path: PathBuf },
+    #[error("failed to read project script `{path}`")]
+    ReadProjectScript {
+        path: PathBuf,
+        #[source]
+        source: std::io::Error,
+    },
     #[error("failed to open project manifest `{path}`")]
     OpenProject {
         path: std::path::PathBuf,
@@ -300,6 +344,91 @@ pub struct ProjectCandidate {
     pub root_name: String,
     pub relative_manifest: String,
     pub project_id: Option<ProjectId>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, JsonSchema)]
+pub struct DiscoveredProjectInspection {
+    pub root_id: String,
+    pub relative_manifest: String,
+    pub package: String,
+    pub requires_trust: bool,
+    pub scripts: Vec<ProjectScript>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, JsonSchema)]
+pub struct ProjectScript {
+    pub kind: ProjectScriptKind,
+    pub path: String,
+    pub digest: String,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum ProjectScriptKind {
+    Parser,
+    TypeMapping,
+}
+
+fn inspect_project_scripts(
+    allowed_root: &Path,
+    manifest_path: &Path,
+    manifest: &crate::ProjectManifest,
+) -> Result<Vec<ProjectScript>, WorkspaceError> {
+    let project_root = manifest_path.parent().unwrap_or_else(|| Path::new("."));
+    let mut scripts = manifest
+        .parsers
+        .scripts
+        .iter()
+        .map(|path| (ProjectScriptKind::Parser, path))
+        .chain(
+            manifest
+                .type_mappings
+                .scripts
+                .iter()
+                .map(|path| (ProjectScriptKind::TypeMapping, path)),
+        )
+        .map(|(kind, declared)| {
+            let path = project_root.join(declared);
+            let canonical =
+                path.canonicalize()
+                    .map_err(|source| WorkspaceError::ReadProjectScript {
+                        path: path.clone(),
+                        source,
+                    })?;
+            if !canonical.starts_with(allowed_root) {
+                return Err(WorkspaceError::ProjectScriptOutsideRoot { path });
+            }
+            let bytes =
+                fs::read(&canonical).map_err(|source| WorkspaceError::ReadProjectScript {
+                    path: canonical.clone(),
+                    source,
+                })?;
+            let relative = canonical.strip_prefix(allowed_root).map_err(|_| {
+                WorkspaceError::ProjectScriptOutsideRoot {
+                    path: canonical.clone(),
+                }
+            })?;
+            Ok(ProjectScript {
+                kind,
+                path: normalized_relative_path(relative),
+                digest: format!("sha256:{:x}", Sha256::digest(bytes)),
+            })
+        })
+        .collect::<Result<Vec<_>, WorkspaceError>>()?;
+    scripts.sort_by(|left, right| {
+        script_kind_rank(left.kind)
+            .cmp(&script_kind_rank(right.kind))
+            .then_with(|| left.path.cmp(&right.path))
+    });
+    scripts.dedup();
+    Ok(scripts)
+}
+
+fn script_kind_rank(kind: ProjectScriptKind) -> u8 {
+    match kind {
+        ProjectScriptKind::Parser => 0,
+        ProjectScriptKind::TypeMapping => 1,
+    }
 }
 
 fn discover_root_manifests(root: &Path) -> Result<Vec<PathBuf>, WorkspaceError> {
@@ -480,6 +609,21 @@ mod tests {
             "package = \"game\"\n[parsers]\nscripts = [\"parser.lua\"]\n",
         )
         .unwrap();
+        fs::write(
+            directory.join("game/parser.lua"),
+            r#"
+return {
+  parsers = {
+    identity = {
+      parse = function(cell)
+        return cell.text
+      end,
+    },
+  },
+}
+"#,
+        )
+        .unwrap();
         let workspace = WorkspaceService::new();
         let root = workspace.add_root("workspace", &directory).unwrap();
 
@@ -501,6 +645,21 @@ mod tests {
             ),
             Err(WorkspaceError::UntrustedProjectScripts)
         ));
+        let inspection = workspace
+            .inspect_discovered_project(root.id(), "game/project.toml")
+            .unwrap();
+        assert!(inspection.requires_trust);
+        assert_eq!(inspection.scripts.len(), 1);
+        assert_eq!(inspection.scripts[0].path, "game/parser.lua");
+        assert!(inspection.scripts[0].digest.starts_with("sha256:"));
+        workspace
+            .open_discovered_project(
+                root.id(),
+                "game/project.toml",
+                RuntimeOptions::default(),
+                true,
+            )
+            .unwrap();
         let _ = fs::remove_dir_all(directory);
     }
 

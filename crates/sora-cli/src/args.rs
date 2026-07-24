@@ -60,6 +60,10 @@ pub struct McpArgs {
     /// Open this project when the MCP server starts.
     #[arg(short, long)]
     pub project: Option<PathBuf>,
+
+    /// Trust and execute Lua scripts declared by the startup project.
+    #[arg(long, requires = "project")]
+    pub trust_project_scripts: bool,
 }
 
 #[derive(Debug, Args)]
@@ -363,5 +367,21 @@ mod tests {
             panic!("expected mcp command");
         };
         assert_eq!(args.project, Some(PathBuf::from("project.toml")));
+        assert!(!args.trust_project_scripts);
+    }
+
+    #[test]
+    fn parses_explicit_mcp_script_trust() {
+        let cli = Cli::parse_from([
+            "sora",
+            "mcp",
+            "--project",
+            "project.toml",
+            "--trust-project-scripts",
+        ]);
+        let Command::Mcp(args) = cli.command else {
+            panic!("expected mcp command");
+        };
+        assert!(args.trust_project_scripts);
     }
 }

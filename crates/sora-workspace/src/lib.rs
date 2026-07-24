@@ -5,6 +5,7 @@
 //! duplicating project orchestration.
 
 mod build;
+mod capabilities;
 mod diagnostics;
 mod inspect;
 mod mutation;
@@ -50,5 +51,8 @@ pub use query::{
     TableQueryRow,
 };
 pub use runtime::{ProjectRuntime, RuntimeOptions};
-pub use service::{ProjectCandidate, WorkspaceError, WorkspaceRoot, WorkspaceService};
+pub use service::{
+    DiscoveredProjectInspection, ProjectCandidate, ProjectScript, ProjectScriptKind,
+    WorkspaceError, WorkspaceRoot, WorkspaceService,
+};
 pub use type_mapping::load_type_mapping_registry;
