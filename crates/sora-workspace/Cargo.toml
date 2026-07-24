@@ -26,6 +26,7 @@ sora-config-format.workspace = true
 sora-core.workspace = true
 sora-data.workspace = true
 sora-diagnostics.workspace = true
+sora-excel.workspace = true
 sora-execution.workspace = true
 sora-export.workspace = true
 sora-input.workspace = true
@@ -40,6 +41,3 @@ thiserror.workspace = true
 toml.workspace = true
 umya-spreadsheet.workspace = true
 uuid.workspace = true
-
-[dev-dependencies]
-sora-excel.workspace = true

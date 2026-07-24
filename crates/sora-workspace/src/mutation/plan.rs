@@ -315,6 +315,12 @@ impl WorkspaceService {
             report.clone(),
         )?;
         self.mutation.invalidate_project_plans(project_id, None)?;
+        self.data_mutation
+            .invalidate_project(project_id)
+            .map_err(|error| MutationPlanError::Project(error.to_string()))?;
+        self.excel_sync
+            .invalidate_project(project_id)
+            .map_err(|error| MutationPlanError::Project(error.to_string()))?;
         Ok(report)
     }
 
@@ -454,6 +460,12 @@ impl WorkspaceService {
             report.clone(),
         )?;
         self.mutation.invalidate_project_plans(project_id, None)?;
+        self.data_mutation
+            .invalidate_project(project_id)
+            .map_err(|error| MutationPlanError::Project(error.to_string()))?;
+        self.excel_sync
+            .invalidate_project(project_id)
+            .map_err(|error| MutationPlanError::Project(error.to_string()))?;
         Ok(report)
     }
 }

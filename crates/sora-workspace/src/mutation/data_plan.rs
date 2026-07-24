@@ -259,6 +259,9 @@ impl WorkspaceService {
             report.clone(),
         )?;
         self.data_mutation.invalidate_project(project_id)?;
+        self.excel_sync
+            .invalidate_project(project_id)
+            .map_err(|error| DataPlanError::Project(error.to_string()))?;
         Ok(report)
     }
 }
@@ -313,7 +316,7 @@ impl DataMutationCoordinator {
         Ok(())
     }
 
-    fn invalidate_project(&self, project_id: &ProjectId) -> Result<(), DataPlanError> {
+    pub(crate) fn invalidate_project(&self, project_id: &ProjectId) -> Result<(), DataPlanError> {
         self.plans
             .write()
             .map_err(|_| DataPlanError::StatePoisoned)?

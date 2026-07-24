@@ -47,7 +47,8 @@ impl SoraMcpServer {
                 + Self::project_tool_router()
                 + Self::schema_tool_router()
                 + Self::data_tool_router()
-                + Self::build_tool_router(),
+                + Self::build_tool_router()
+                + Self::excel_tool_router(),
             subscriptions: Arc::new(RwLock::new(BTreeSet::new())),
             artifacts: Arc::new(ArtifactStore::default()),
             logging_level: Arc::new(AtomicU8::new(1)),
@@ -318,7 +319,7 @@ mod tests {
         let server = SoraMcpServer::new(Arc::new(WorkspaceService::new()));
         let tools = server.tool_router.list_all();
 
-        assert_eq!(tools.len(), 20);
+        assert_eq!(tools.len(), 22);
         let mut names = tools
             .iter()
             .map(|tool| tool.name.as_ref())
@@ -333,6 +334,8 @@ mod tests {
                 "sora_data_diff",
                 "sora_data_preview",
                 "sora_data_validate",
+                "sora_excel_sync_apply",
+                "sora_excel_sync_preview",
                 "sora_excel_template",
                 "sora_export",
                 "sora_project_init",
