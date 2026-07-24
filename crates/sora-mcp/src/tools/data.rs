@@ -40,14 +40,15 @@ impl SoraMcpServer {
             input.operations,
         ) {
             Ok(plan) => {
-                let changes = serde_json::to_value(&plan.row_changes).map_err(|error| {
-                    tool_error(ToolEnvelope::<DataMutationPlan>::failure(
-                        Some(id.clone()),
-                        Some(plan.input_revisions.clone()),
-                        "failed to encode data changes",
-                        error,
-                    ))
-                })?;
+                let changes = encode_data_changes(&plan.row_changes, &plan.localization_changes)
+                    .map_err(|error| {
+                        tool_error(ToolEnvelope::<DataMutationPlan>::failure(
+                            Some(id.clone()),
+                            Some(plan.input_revisions.clone()),
+                            "failed to encode data changes",
+                            error,
+                        ))
+                    })?;
                 let mut envelope = ToolEnvelope::success(
                     Some(id),
                     Some(plan.input_revisions.clone()),
@@ -58,7 +59,7 @@ impl SoraMcpServer {
                     ),
                     plan,
                 );
-                envelope.changes = changes.as_array().cloned().unwrap_or_default();
+                envelope.changes = changes;
                 Ok(Json(envelope))
             }
             Err(error) => Err(tool_error(ToolEnvelope::<DataMutationPlan>::failure(
@@ -99,14 +100,16 @@ impl SoraMcpServer {
             Ok(report) => {
                 self.notify_project_resources_updated(&context.peer, id.as_str())
                     .await;
-                let changes = serde_json::to_value(&report.row_changes).map_err(|error| {
-                    tool_error(ToolEnvelope::<DataApplyReport>::failure(
-                        Some(id.clone()),
-                        Some(report.revision.clone()),
-                        "failed to encode applied data changes",
-                        error,
-                    ))
-                })?;
+                let changes =
+                    encode_data_changes(&report.row_changes, &report.localization_changes)
+                        .map_err(|error| {
+                            tool_error(ToolEnvelope::<DataApplyReport>::failure(
+                                Some(id.clone()),
+                                Some(report.revision.clone()),
+                                "failed to encode applied data changes",
+                                error,
+                            ))
+                        })?;
                 let mut envelope = ToolEnvelope::success(
                     Some(id),
                     Some(report.revision.clone()),
@@ -116,7 +119,7 @@ impl SoraMcpServer {
                     ),
                     report,
                 );
-                envelope.changes = changes.as_array().cloned().unwrap_or_default();
+                envelope.changes = changes;
                 envelope.artifacts = envelope
                     .data
                     .as_ref()
@@ -327,4 +330,21 @@ struct DataApplyInput {
     project_id: String,
     plan_id: String,
     idempotency_key: String,
+}
+
+fn encode_data_changes(
+    rows: &[sora_workspace::RowChange],
+    localization: &[sora_workspace::LocalizationChange],
+) -> Result<Vec<serde_json::Value>, serde_json::Error> {
+    let mut changes = rows
+        .iter()
+        .map(serde_json::to_value)
+        .collect::<Result<Vec<_>, _>>()?;
+    changes.extend(
+        localization
+            .iter()
+            .map(serde_json::to_value)
+            .collect::<Result<Vec<_>, _>>()?,
+    );
+    Ok(changes)
 }

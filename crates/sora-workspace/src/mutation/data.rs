@@ -7,9 +7,13 @@ use std::{
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
-use sora_data::model::{ConfigData, RowData, TableData, Value};
+use sora_data::model::{
+    ConfigData, LocalizationData, LocalizationRowData, RowData, TableData, Value,
+};
 use sora_input::{
-    source::{SourceFormat, resolve_table_source_format},
+    source::{
+        SourceFormat, resolve_localization_source_format_with_registry, resolve_table_source_format,
+    },
     traits::DataInput,
 };
 use sora_input_schema::input::SchemaFileInput;
@@ -63,6 +67,21 @@ pub enum DataOperation {
         selector: RowSelector,
         to_index: usize,
     },
+    UpsertLocalization {
+        source: String,
+        key: String,
+        values: BTreeMap<String, String>,
+    },
+    UpdateLocalization {
+        source: String,
+        key: String,
+        locale: String,
+        value: String,
+    },
+    DeleteLocalization {
+        source: String,
+        key: String,
+    },
 }
 
 /// One logical row change produced by the pure data executor.
@@ -74,6 +93,16 @@ pub struct RowChange {
     pub after_index: Option<usize>,
     pub before: Option<BTreeMap<String, serde_json::Value>>,
     pub after: Option<BTreeMap<String, serde_json::Value>>,
+}
+
+/// One logical localization entry change.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, JsonSchema)]
+pub struct LocalizationChange {
+    pub source: String,
+    pub key: String,
+    pub locale: Option<String>,
+    pub before: Option<String>,
+    pub after: Option<String>,
 }
 
 /// Physical source coordinates affected by a logical row change.
@@ -89,8 +118,11 @@ pub struct DataSourceImpact {
 #[derive(Debug, Clone)]
 pub struct DataExecution {
     pub data: ConfigData,
+    pub localization: LocalizationData,
     pub changes: Vec<RowChange>,
+    pub localization_changes: Vec<LocalizationChange>,
     pub affected_tables: BTreeSet<String>,
+    pub affected_localization_sources: BTreeSet<String>,
 }
 
 /// Data mutation execution or source-rendering failure.
@@ -124,6 +156,15 @@ pub enum DataMutationError {
     },
     #[error("table `{0}` does not declare a mutable source")]
     MissingSource(String),
+    #[error("unknown localization source `{0}`")]
+    UnknownLocalizationSource(String),
+    #[error("unknown localization locale `{0}`")]
+    UnknownLocale(String),
+    #[error("localization key `{key}` was not found in source `{localization_source}`")]
+    LocalizationKeyNotFound {
+        localization_source: String,
+        key: String,
+    },
     #[error("data source format `{0}` is not mutable")]
     UnsupportedFormat(String),
     #[error("directory data sources are not mutable yet: `{0}`")]
@@ -148,36 +189,53 @@ pub trait MutableTableSource {
 pub fn execute_data_operations(
     ir: &ConfigIr,
     base: &ConfigData,
+    base_localization: &LocalizationData,
     operations: &[DataOperation],
 ) -> Result<DataExecution, DataMutationError> {
     let mut data = strip_materialized_fields(ir, base);
+    let mut localization = base_localization.clone();
     let mut changes = Vec::with_capacity(operations.len());
+    let mut localization_changes = Vec::new();
     let mut affected_tables = BTreeSet::new();
+    let mut affected_localization_sources = BTreeSet::new();
     for operation in operations {
-        let table_name = operation_table(operation);
-        let table = ir
-            .tables
-            .iter()
-            .find(|candidate| candidate.name == table_name)
-            .ok_or_else(|| DataMutationError::UnknownTable(table_name.to_owned()))?;
-        let table_data = data
-            .tables
-            .iter_mut()
-            .find(|candidate| candidate.name == table_name)
-            .ok_or_else(|| DataMutationError::UnknownTable(table_name.to_owned()))?;
-        changes.push(execute_operation(table, table_data, operation)?);
-        affected_tables.insert(table_name.to_owned());
+        if let Some(table_name) = operation_table(operation) {
+            let table = ir
+                .tables
+                .iter()
+                .find(|candidate| candidate.name == table_name)
+                .ok_or_else(|| DataMutationError::UnknownTable(table_name.to_owned()))?;
+            let table_data = data
+                .tables
+                .iter_mut()
+                .find(|candidate| candidate.name == table_name)
+                .ok_or_else(|| DataMutationError::UnknownTable(table_name.to_owned()))?;
+            changes.push(execute_operation(table, table_data, operation)?);
+            affected_tables.insert(table_name.to_owned());
+        } else {
+            localization_changes.extend(execute_localization_operation(
+                ir,
+                &mut localization,
+                operation,
+            )?);
+            if let Some(source) = operation_localization_source(operation) {
+                affected_localization_sources.insert(source.to_owned());
+            }
+        }
     }
     Ok(DataExecution {
         data,
+        localization,
         changes,
+        localization_changes,
         affected_tables,
+        affected_localization_sources,
     })
 }
 
 pub(crate) fn load_raw_project_data(
     session: &ProjectSession,
-) -> anyhow::Result<(ConfigIr, ConfigData)> {
+) -> anyhow::Result<(ConfigIr, ConfigData, LocalizationData)> {
     let schema_input = SchemaFileInput::new(session.manifest_path());
     let ir = sora_core::pipeline::load_schema_ir_with_parsers(
         &schema_input,
@@ -194,13 +252,16 @@ pub(crate) fn load_raw_project_data(
         Arc::clone(session.runtime().cell_parsers()),
     );
     let data = input.load_data_with_context(&ir, session.runtime().execution())?;
-    Ok((ir, data))
+    let localization =
+        input.load_localization_data_with_context(&ir, session.runtime().execution())?;
+    Ok((ir, data, localization))
 }
 
 pub(crate) fn validate_mutated_data(
     session: &ProjectSession,
     ir: &ConfigIr,
     data: &ConfigData,
+    localization: &LocalizationData,
 ) -> anyhow::Result<ConfigData> {
     let materialized = sora_input::defaults::materialize_defaults_with_parsers(
         ir,
@@ -209,6 +270,7 @@ pub(crate) fn validate_mutated_data(
     )?;
     let materialized = sora_data::derived::materialize_derived_fields(ir, &materialized)?;
     sora_data::validate::validate_config_data(ir, &materialized)?;
+    sora_data::localization::build_locale_catalog(ir, &materialized, localization)?;
     Ok(materialized)
 }
 
@@ -216,12 +278,21 @@ pub(crate) fn render_data_writes(
     session: &ProjectSession,
     ir: &ConfigIr,
     data: &ConfigData,
+    localization: &LocalizationData,
     affected_tables: &BTreeSet<String>,
+    affected_localization_sources: &BTreeSet<String>,
 ) -> Result<(Vec<FileWrite>, Vec<DataSourceImpact>), DataMutationError> {
     let mut writes = Vec::new();
     let mut impacts = Vec::new();
     let data_root = session.data_root();
-    let mut xlsx = BTreeMap::<PathBuf, Vec<(&TableIr, &[RowData])>>::new();
+    let mut xlsx_tables = BTreeMap::<PathBuf, Vec<(&TableIr, &[RowData])>>::new();
+    let mut xlsx_localization = BTreeMap::<
+        PathBuf,
+        Vec<(
+            &sora_ir::model::LocalizationSourceIr,
+            &[LocalizationRowData],
+        )>,
+    >::new();
     for table in &ir.tables {
         if !affected_tables.contains(&table.name) {
             continue;
@@ -236,9 +307,6 @@ pub(crate) fn render_data_writes(
             .as_ref()
             .ok_or_else(|| DataMutationError::MissingSource(table.name.clone()))?;
         let path = data_root.join(&source.file);
-        if path.is_dir() {
-            return Err(DataMutationError::DirectorySource(path));
-        }
         let format = resolve_table_source_format(
             table,
             session
@@ -248,15 +316,18 @@ pub(crate) fn render_data_writes(
                 .map(crate::SourceFormat::as_str),
         )
         .map_err(|error| DataMutationError::Render(error.to_string()))?;
-        if format == SourceFormat::Xlsx {
-            xlsx.entry(path.clone())
+        if path.is_dir() {
+            writes.extend(render_directory_source(format, &path, &table_data.rows)?);
+        } else if format == SourceFormat::Xlsx {
+            xlsx_tables
+                .entry(path.clone())
                 .or_default()
                 .push((table, &table_data.rows));
         } else {
             let writer = BuiltinTableWriter { format };
             writes.push(FileWrite {
                 path: path.clone(),
-                content: writer.render(ir, table, &table_data.rows, &path)?,
+                content: Some(writer.render(ir, table, &table_data.rows, &path)?),
             });
         }
         impacts.push(DataSourceImpact {
@@ -271,15 +342,140 @@ pub(crate) fn render_data_writes(
                 .collect(),
         });
     }
-    for (path, tables) in xlsx {
+    if let Some(localization_ir) = &ir.localization {
+        for source in &localization_ir.sources {
+            if !affected_localization_sources.contains(&source.name) {
+                continue;
+            }
+            let source_data = localization
+                .sources
+                .iter()
+                .find(|candidate| candidate.name == source.name)
+                .ok_or_else(|| {
+                    DataMutationError::Render(format!(
+                        "missing localization source data `{}`",
+                        source.name
+                    ))
+                })?;
+            let path = data_root.join(&source.file);
+            let source_registry = crate::source::builtin_source_registry();
+            let format = resolve_localization_source_format_with_registry(
+                source,
+                session
+                    .manifest()
+                    .build
+                    .default_source_format
+                    .map(crate::SourceFormat::as_str),
+                &source_registry,
+            )
+            .map_err(|error| DataMutationError::Render(error.to_string()))?;
+            let format = SourceFormat::parse(format)
+                .map_err(|error| DataMutationError::Render(error.to_string()))?;
+            if format == SourceFormat::Xlsx {
+                xlsx_localization
+                    .entry(path.clone())
+                    .or_default()
+                    .push((source, &source_data.rows));
+            } else {
+                writes.push(FileWrite {
+                    path: path.clone(),
+                    content: Some(render_localization_text(
+                        format,
+                        &source_data.columns,
+                        &source_data.rows,
+                    )?),
+                });
+            }
+            impacts.push(DataSourceImpact {
+                path: relative_source_path(&data_root, &path),
+                sheet: source.sheet.clone(),
+                first_row: Some(source_data_start_row(format)),
+                fields: source_data.columns.clone(),
+            });
+        }
+    }
+    let xlsx_paths = xlsx_tables
+        .keys()
+        .chain(xlsx_localization.keys())
+        .cloned()
+        .collect::<BTreeSet<_>>();
+    for path in xlsx_paths {
+        let tables = xlsx_tables.remove(&path).unwrap_or_default();
+        let localization = xlsx_localization.remove(&path).unwrap_or_default();
         writes.push(FileWrite {
-            content: render_xlsx(&path, ir, &tables)?,
+            content: Some(render_xlsx(&path, ir, &tables, &localization)?),
             path,
         });
     }
     writes.sort_by(|left, right| left.path.cmp(&right.path));
     impacts.sort_by(|left, right| (&left.path, &left.sheet).cmp(&(&right.path, &right.sheet)));
     Ok((writes, impacts))
+}
+
+fn render_directory_source(
+    format: SourceFormat,
+    directory: &Path,
+    rows: &[RowData],
+) -> Result<Vec<FileWrite>, DataMutationError> {
+    let extension = match format {
+        SourceFormat::Json => "json",
+        SourceFormat::Yaml => "yaml",
+        _ => {
+            return Err(DataMutationError::DirectorySource(directory.to_path_buf()));
+        }
+    };
+    let mut files = Vec::new();
+    collect_directory_files(directory, extension, &mut files)?;
+    files.sort();
+    let mut writes = Vec::new();
+    for (index, row) in rows.iter().enumerate() {
+        let path = files
+            .get(index)
+            .cloned()
+            .unwrap_or_else(|| directory.join(format!("sora-{index:06}.{extension}")));
+        let content = match format {
+            SourceFormat::Json => {
+                let mut content = serde_json::to_vec_pretty(&natural_row(row))
+                    .map_err(|error| DataMutationError::Render(error.to_string()))?;
+                content.push(b'\n');
+                content
+            }
+            SourceFormat::Yaml => serde_yaml::to_string(&natural_row(row))
+                .map(String::into_bytes)
+                .map_err(|error| DataMutationError::Render(error.to_string()))?,
+            _ => {
+                return Err(DataMutationError::DirectorySource(directory.to_path_buf()));
+            }
+        };
+        writes.push(FileWrite {
+            path,
+            content: Some(content),
+        });
+    }
+    writes.extend(files.into_iter().skip(rows.len()).map(|path| FileWrite {
+        path,
+        content: None,
+    }));
+    Ok(writes)
+}
+
+fn collect_directory_files(
+    directory: &Path,
+    extension: &str,
+    files: &mut Vec<PathBuf>,
+) -> Result<(), DataMutationError> {
+    for entry in std::fs::read_dir(directory)
+        .map_err(|error| DataMutationError::Render(error.to_string()))?
+    {
+        let entry = entry.map_err(|error| DataMutationError::Render(error.to_string()))?;
+        let path = entry.path();
+        if path.is_dir() {
+            collect_directory_files(&path, extension, files)?;
+        } else if path.extension().and_then(|value| value.to_str()) == Some(extension) {
+            files.push(path);
+        }
+    }
+    Ok(())
 }
 
 struct BuiltinTableWriter {
@@ -458,7 +654,130 @@ fn execute_operation(
                 Some(&row),
             ))
         }
+        DataOperation::UpsertLocalization { .. }
+        | DataOperation::UpdateLocalization { .. }
+        | DataOperation::DeleteLocalization { .. } => Err(DataMutationError::Render(
+            "localization operation reached the table executor".to_owned(),
+        )),
     }
+}
+
+fn execute_localization_operation(
+    ir: &ConfigIr,
+    data: &mut LocalizationData,
+    operation: &DataOperation,
+) -> Result<Vec<LocalizationChange>, DataMutationError> {
+    let source_name = operation_localization_source(operation).ok_or_else(|| {
+        DataMutationError::Render("row operation reached localization executor".to_owned())
+    })?;
+    let localization = ir
+        .localization
+        .as_ref()
+        .ok_or_else(|| DataMutationError::UnknownLocalizationSource(source_name.to_owned()))?;
+    let source_ir = localization
+        .sources
+        .iter()
+        .find(|source| source.name == source_name)
+        .ok_or_else(|| DataMutationError::UnknownLocalizationSource(source_name.to_owned()))?;
+    let source = data
+        .sources
+        .iter_mut()
+        .find(|source| source.name == source_name)
+        .ok_or_else(|| DataMutationError::UnknownLocalizationSource(source_name.to_owned()))?;
+    let changes = match operation {
+        DataOperation::UpsertLocalization { key, values, .. } => {
+            let before = source
+                .rows
+                .iter()
+                .find(|row| row.values.get(&source_ir.key) == Some(key))
+                .map(|row| row.values.clone());
+            for locale in values.keys() {
+                if !localization.locales.contains(locale) {
+                    return Err(DataMutationError::UnknownLocale(locale.clone()));
+                }
+            }
+            if let Some(row) = source
+                .rows
+                .iter_mut()
+                .find(|row| row.values.get(&source_ir.key) == Some(key))
+            {
+                row.values.extend(values.clone());
+            } else {
+                let mut row = values.clone();
+                row.insert(source_ir.key.clone(), key.clone());
+                source.rows.push(LocalizationRowData { values: row });
+            }
+            values
+                .iter()
+                .map(|(locale, value)| LocalizationChange {
+                    source: source_name.to_owned(),
+                    key: key.clone(),
+                    locale: Some(locale.clone()),
+                    before: before.as_ref().and_then(|row| row.get(locale)).cloned(),
+                    after: Some(value.clone()),
+                })
+                .collect()
+        }
+        DataOperation::UpdateLocalization {
+            key, locale, value, ..
+        } => {
+            if !localization.locales.contains(locale) {
+                return Err(DataMutationError::UnknownLocale(locale.clone()));
+            }
+            let row = source
+                .rows
+                .iter_mut()
+                .find(|row| row.values.get(&source_ir.key) == Some(key))
+                .ok_or_else(|| DataMutationError::LocalizationKeyNotFound {
+                    localization_source: source_name.to_owned(),
+                    key: key.clone(),
+                })?;
+            let before = row.values.insert(locale.clone(), value.clone());
+            vec![LocalizationChange {
+                source: source_name.to_owned(),
+                key: key.clone(),
+                locale: Some(locale.clone()),
+                before,
+                after: Some(value.clone()),
+            }]
+        }
+        DataOperation::DeleteLocalization { key, .. } => {
+            let before = source
+                .rows
+                .iter()
+                .find(|row| row.values.get(&source_ir.key) == Some(key))
+                .map(|row| row.values.clone());
+            source
+                .rows
+                .retain(|row| row.values.get(&source_ir.key) != Some(key));
+            let Some(before) = before else {
+                return Err(DataMutationError::LocalizationKeyNotFound {
+                    localization_source: source_name.to_owned(),
+                    key: key.clone(),
+                });
+            };
+            vec![LocalizationChange {
+                source: source_name.to_owned(),
+                key: key.clone(),
+                locale: None,
+                before: Some(
+                    serde_json::to_string(&before)
+                        .map_err(|error| DataMutationError::Render(error.to_string()))?,
+                ),
+                after: None,
+            }]
+        }
+        DataOperation::InsertRow { .. }
+        | DataOperation::UpsertRow { .. }
+        | DataOperation::UpdateFields { .. }
+        | DataOperation::DeleteRow { .. }
+        | DataOperation::MoveListRow { .. } => {
+            return Err(DataMutationError::Render(
+                "row operation reached localization executor".to_owned(),
+            ));
+        }
+    };
+    Ok(changes)
 }
 
 fn resolve_selector(
@@ -648,6 +967,55 @@ fn render_csv(
     writer
         .into_inner()
         .map_err(|error| DataMutationError::Render(error.to_string()))
+}
+
+fn render_localization_text(
+    format: SourceFormat,
+    source_columns: &[String],
+    rows: &[LocalizationRowData],
+) -> Result<Vec<u8>, DataMutationError> {
+    match format {
+        SourceFormat::Json => {
+            let mut bytes =
+                serde_json::to_vec_pretty(&rows.iter().map(|row| &row.values).collect::<Vec<_>>())
+                    .map_err(|error| DataMutationError::Render(error.to_string()))?;
+            bytes.push(b'\n');
+            Ok(bytes)
+        }
+        SourceFormat::Yaml => {
+            serde_yaml::to_string(&rows.iter().map(|row| &row.values).collect::<Vec<_>>())
+                .map(String::into_bytes)
+                .map_err(|error| DataMutationError::Render(error.to_string()))
+        }
+        SourceFormat::Toml => toml::to_string_pretty(&BTreeMap::from([(
+            "rows",
+            rows.iter().map(|row| &row.values).collect::<Vec<_>>(),
+        )]))
+        .map(String::into_bytes)
+        .map_err(|error| DataMutationError::Render(error.to_string())),
+        SourceFormat::Csv => {
+            let columns = source_columns;
+            let mut writer = csv::WriterBuilder::new().from_writer(Vec::new());
+            writer
+                .write_record(columns)
+                .map_err(|error| DataMutationError::Render(error.to_string()))?;
+            for row in rows {
+                writer
+                    .write_record(
+                        columns
+                            .iter()
+                            .map(|column| row.values.get(column).map(String::as_str).unwrap_or("")),
+                    )
+                    .map_err(|error| DataMutationError::Render(error.to_string()))?;
+            }
+            writer
+                .into_inner()
+                .map_err(|error| DataMutationError::Render(error.to_string()))
+        }
+        SourceFormat::Xlsx => Err(DataMutationError::Render(
+            "XLSX localization must be rendered as a workbook group".to_owned(),
+        )),
+    }
 }
 
 #[derive(Clone, Copy)]
@@ -856,6 +1224,10 @@ fn render_xlsx(
     path: &Path,
     ir: &ConfigIr,
     tables: &[(&TableIr, &[RowData])],
+    localization_sources: &[(
+        &sora_ir::model::LocalizationSourceIr,
+        &[LocalizationRowData],
+    )],
 ) -> Result<Vec<u8>, DataMutationError> {
     let mut workbook = umya_spreadsheet::reader::xlsx::read(path)
         .map_err(|error| DataMutationError::Render(error.to_string()))?;
@@ -898,6 +1270,44 @@ fn render_xlsx(
                 sheet
                     .get_cell_mut((column_number, row_number))
                     .set_value(value);
+            }
+        }
+    }
+    for (source, rows) in localization_sources {
+        let sheet_name = source.sheet.as_deref().unwrap_or(&source.name);
+        let sheet = workbook.get_sheet_by_name_mut(sheet_name).ok_or_else(|| {
+            DataMutationError::Render(format!("missing worksheet `{sheet_name}`"))
+        })?;
+        let highest_column = sheet.get_highest_column();
+        let mut columns = BTreeMap::new();
+        for column in 2..=highest_column {
+            let name = sheet.get_value((column, 3));
+            if !name.trim().is_empty() {
+                columns.insert(name.trim().to_owned(), column);
+            }
+        }
+        let required = rows
+            .iter()
+            .flat_map(|row| row.values.keys())
+            .collect::<BTreeSet<_>>();
+        for field in required {
+            if !columns.contains_key(field) {
+                return Err(DataMutationError::Render(format!(
+                    "worksheet `{sheet_name}` is missing localization column `{field}`"
+                )));
+            }
+        }
+        let data_start = 8_u32;
+        let old_last = sheet.get_highest_row();
+        let last = old_last.max(data_start.saturating_add(rows.len() as u32));
+        for row_number in data_start..=last {
+            let row = rows.get((row_number - data_start) as usize);
+            for (field, column) in &columns {
+                let value = row
+                    .and_then(|row| row.values.get(field))
+                    .cloned()
+                    .unwrap_or_default();
+                sheet.get_cell_mut((*column, row_number)).set_value(value);
             }
         }
     }
@@ -981,13 +1391,29 @@ fn row_change(
     }
 }
 
-fn operation_table(operation: &DataOperation) -> &str {
+fn operation_table(operation: &DataOperation) -> Option<&str> {
     match operation {
         DataOperation::InsertRow { table, .. }
         | DataOperation::UpsertRow { table, .. }
         | DataOperation::UpdateFields { table, .. }
         | DataOperation::DeleteRow { table, .. }
-        | DataOperation::MoveListRow { table, .. } => table,
+        | DataOperation::MoveListRow { table, .. } => Some(table),
+        DataOperation::UpsertLocalization { .. }
+        | DataOperation::UpdateLocalization { .. }
+        | DataOperation::DeleteLocalization { .. } => None,
+    }
+}
+
+fn operation_localization_source(operation: &DataOperation) -> Option<&str> {
+    match operation {
+        DataOperation::UpsertLocalization { source, .. }
+        | DataOperation::UpdateLocalization { source, .. }
+        | DataOperation::DeleteLocalization { source, .. } => Some(source),
+        DataOperation::InsertRow { .. }
+        | DataOperation::UpsertRow { .. }
+        | DataOperation::UpdateFields { .. }
+        | DataOperation::DeleteRow { .. }
+        | DataOperation::MoveListRow { .. } => None,
     }
 }
 

@@ -19,8 +19,8 @@ pub use schema::{
 pub use transaction::{TransactionError, TransactionReceipt};
 
 pub use data::{
-    DataExecution, DataMutationError, DataOperation, DataSourceImpact, MutableTableSource,
-    RowChange, RowSelector, execute_data_operations,
+    DataExecution, DataMutationError, DataOperation, DataSourceImpact, LocalizationChange,
+    MutableTableSource, RowChange, RowSelector, execute_data_operations,
 };
 pub(crate) use data::{data_row_hash, load_raw_project_data};
 pub(crate) use data_plan::DataMutationCoordinator;

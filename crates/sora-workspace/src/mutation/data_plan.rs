@@ -7,7 +7,7 @@ use sha2::{Digest, Sha256};
 use uuid::Uuid;
 
 use super::{
-    DataOperation, DataSourceImpact, FileWrite, RowChange, TransactionReceipt,
+    DataOperation, DataSourceImpact, FileWrite, LocalizationChange, RowChange, TransactionReceipt,
     commit_file_transaction, execute_data_operations,
 };
 use crate::{
@@ -38,6 +38,7 @@ pub struct DataMutationPlan {
     pub normalized_operations: Vec<DataOperation>,
     pub input_revisions: ProjectRevision,
     pub row_changes: Vec<RowChange>,
+    pub localization_changes: Vec<LocalizationChange>,
     pub source_impacts: Vec<DataSourceImpact>,
     pub file_changes: Vec<DataFileChange>,
     pub diagnostics: Vec<Diagnostic>,
@@ -53,6 +54,7 @@ pub struct DataApplyReport {
     pub previous_revision: ProjectRevision,
     pub revision: ProjectRevision,
     pub row_changes: Vec<RowChange>,
+    pub localization_changes: Vec<LocalizationChange>,
     pub source_impacts: Vec<DataSourceImpact>,
     pub transaction: TransactionReceipt,
 }
@@ -132,15 +134,21 @@ impl WorkspaceService {
             .map_err(|error| DataPlanError::Project(error.to_string()))?;
         let revision = session.revision();
         ensure_expected_revisions(&revision, expected_schema_revision, expected_data_revision)?;
-        let (ir, base) = load_raw_project_data(&session)
+        let (ir, base, base_localization) = load_raw_project_data(&session)
             .map_err(|error| DataPlanError::Validation(error.to_string()))?;
-        let execution = execute_data_operations(&ir, &base, &operations)
+        let execution = execute_data_operations(&ir, &base, &base_localization, &operations)
             .map_err(|error| DataPlanError::Operation(error.to_string()))?;
-        validate_mutated_data(&session, &ir, &execution.data)
+        validate_mutated_data(&session, &ir, &execution.data, &execution.localization)
             .map_err(|error| DataPlanError::Validation(error.to_string()))?;
-        let (writes, source_impacts) =
-            render_data_writes(&session, &ir, &execution.data, &execution.affected_tables)
-                .map_err(|error| DataPlanError::Rendering(error.to_string()))?;
+        let (writes, source_impacts) = render_data_writes(
+            &session,
+            &ir,
+            &execution.data,
+            &execution.localization,
+            &execution.affected_tables,
+            &execution.affected_localization_sources,
+        )
+        .map_err(|error| DataPlanError::Rendering(error.to_string()))?;
         let file_changes = file_changes(project_root(&session), &writes)?;
         let created_at = Utc::now();
         let plan = DataMutationPlan {
@@ -151,6 +159,7 @@ impl WorkspaceService {
             normalized_operations: operations,
             input_revisions: revision,
             row_changes: execution.changes,
+            localization_changes: execution.localization_changes,
             source_impacts,
             file_changes,
             diagnostics: Vec::new(),
@@ -205,15 +214,26 @@ impl WorkspaceService {
             &stored.plan.input_revisions.schema,
             &stored.plan.input_revisions.data,
         )?;
-        let (ir, base) = load_raw_project_data(&session)
+        let (ir, base, base_localization) = load_raw_project_data(&session)
             .map_err(|error| DataPlanError::Validation(error.to_string()))?;
-        let execution = execute_data_operations(&ir, &base, &stored.plan.normalized_operations)
-            .map_err(|error| DataPlanError::Operation(error.to_string()))?;
-        validate_mutated_data(&session, &ir, &execution.data)
+        let execution = execute_data_operations(
+            &ir,
+            &base,
+            &base_localization,
+            &stored.plan.normalized_operations,
+        )
+        .map_err(|error| DataPlanError::Operation(error.to_string()))?;
+        validate_mutated_data(&session, &ir, &execution.data, &execution.localization)
             .map_err(|error| DataPlanError::Validation(error.to_string()))?;
-        let (writes, source_impacts) =
-            render_data_writes(&session, &ir, &execution.data, &execution.affected_tables)
-                .map_err(|error| DataPlanError::Rendering(error.to_string()))?;
+        let (writes, source_impacts) = render_data_writes(
+            &session,
+            &ir,
+            &execution.data,
+            &execution.localization,
+            &execution.affected_tables,
+            &execution.affected_localization_sources,
+        )
+        .map_err(|error| DataPlanError::Rendering(error.to_string()))?;
         let receipt = commit_file_transaction(project_root(&session), &writes, || {
             session.validated_data().map(|_| ())
         })
@@ -227,6 +247,7 @@ impl WorkspaceService {
             previous_revision: current,
             revision,
             row_changes: execution.changes,
+            localization_changes: execution.localization_changes,
             source_impacts,
             transaction: receipt,
         };
@@ -378,9 +399,9 @@ fn file_changes(root: &Path, writes: &[FileWrite]) -> Result<Vec<DataFileChange>
             Ok(DataFileChange {
                 path,
                 previous_size: current.len(),
-                next_size: write.content.len(),
+                next_size: write.content.as_ref().map_or(0, Vec::len),
                 previous_digest: digest(&current),
-                next_digest: digest(&write.content),
+                next_digest: digest(write.content.as_deref().unwrap_or_default()),
             })
         })
         .collect()

@@ -87,7 +87,13 @@ type = "string"
         },
     ];
 
-    let execution = execute_data_operations(&ir, &data, &operations).unwrap();
+    let execution = execute_data_operations(
+        &ir,
+        &data,
+        &sora_data::model::LocalizationData::default(),
+        &operations,
+    )
+    .unwrap();
 
     assert_eq!(execution.data.tables[0].rows[0].values["name"], text("map"));
     assert_eq!(
@@ -216,6 +222,151 @@ fn xlsx_mutation_preserves_styles_legacy_columns_and_other_sheets() {
         workbook.get_sheet_by_name("Notes").unwrap().get_value("A1"),
         "untouched"
     );
+    fs::remove_dir_all(root).unwrap();
+}
+
+#[test]
+fn localization_mutation_uses_the_same_preview_apply_contract() {
+    let root = temp_dir("localization");
+    fs::create_dir_all(root.join("data")).unwrap();
+    fs::write(
+        root.join("project.toml"),
+        r#"package = "localization"
+
+[localization]
+locales = ["en", "zh"]
+default_locale = "en"
+
+[[localization.sources]]
+name = "Text"
+format = "csv"
+file = "localization.csv"
+key = "key"
+
+[build]
+data_root = "data"
+"#,
+    )
+    .unwrap();
+    let source = root.join("data/localization.csv");
+    fs::write(&source, "key,en,zh\nhello,Hello,你好\n").unwrap();
+    let workspace = WorkspaceService::new();
+    let id = ProjectId::new("localization").unwrap();
+    let session = workspace
+        .open_project(
+            id.clone(),
+            root.join("project.toml"),
+            RuntimeOptions::default(),
+        )
+        .unwrap();
+    let revision = session.revision();
+    let original = fs::read_to_string(&source).unwrap();
+
+    let plan = workspace
+        .preview_data_mutation(
+            &id,
+            "test",
+            &revision.schema,
+            &revision.data,
+            vec![DataOperation::UpdateLocalization {
+                source: "Text".to_owned(),
+                key: "hello".to_owned(),
+                locale: "en".to_owned(),
+                value: "Hi".to_owned(),
+            }],
+        )
+        .unwrap();
+
+    assert_eq!(fs::read_to_string(&source).unwrap(), original);
+    assert_eq!(plan.localization_changes.len(), 1);
+    workspace
+        .apply_data_mutation(&id, "test", &plan.plan_id, "localization-apply")
+        .unwrap();
+    assert!(
+        fs::read_to_string(&source)
+            .unwrap()
+            .contains("hello,Hi,你好")
+    );
+    fs::remove_dir_all(root).unwrap();
+}
+
+#[test]
+fn structured_directory_sources_update_and_delete_transactionally() {
+    let root = temp_dir("directory");
+    fs::create_dir_all(root.join("data/items")).unwrap();
+    fs::write(
+        root.join("project.toml"),
+        "package = \"directory\"\nincludes = [\"schema.toml\"]\n\n[build]\ndata_root = \"data\"\n",
+    )
+    .unwrap();
+    fs::write(
+        root.join("schema.toml"),
+        r#"[[tables]]
+name = "Item"
+mode = "map"
+key = "id"
+source = { file = "items", format = "json" }
+[[tables.fields]]
+name = "id"
+type = "i32"
+[[tables.fields]]
+name = "name"
+type = "string"
+"#,
+    )
+    .unwrap();
+    fs::write(
+        root.join("data/items/one.json"),
+        "{\"id\":1,\"name\":\"one\"}\n",
+    )
+    .unwrap();
+    fs::write(
+        root.join("data/items/two.json"),
+        "{\"id\":2,\"name\":\"two\"}\n",
+    )
+    .unwrap();
+    let workspace = WorkspaceService::new();
+    let id = ProjectId::new("directory").unwrap();
+    let session = workspace
+        .open_project(
+            id.clone(),
+            root.join("project.toml"),
+            RuntimeOptions::default(),
+        )
+        .unwrap();
+    let revision = session.revision();
+    let plan = workspace
+        .preview_data_mutation(
+            &id,
+            "test",
+            &revision.schema,
+            &revision.data,
+            vec![
+                DataOperation::UpdateFields {
+                    table: "Item".to_owned(),
+                    selector: RowSelector::Map {
+                        key: serde_json::json!(1),
+                    },
+                    fields: BTreeMap::from([("name".to_owned(), serde_json::json!("updated"))]),
+                },
+                DataOperation::DeleteRow {
+                    table: "Item".to_owned(),
+                    selector: RowSelector::Map {
+                        key: serde_json::json!(2),
+                    },
+                },
+            ],
+        )
+        .unwrap();
+    assert!(root.join("data/items/two.json").exists());
+    workspace
+        .apply_data_mutation(&id, "test", &plan.plan_id, "directory-apply")
+        .unwrap();
+
+    assert!(!root.join("data/items/two.json").exists());
+    let (_, data) = session.validated_data().unwrap();
+    assert_eq!(data.tables[0].rows.len(), 1);
+    assert_eq!(data.tables[0].rows[0].values["name"], text("updated"));
     fs::remove_dir_all(root).unwrap();
 }
 

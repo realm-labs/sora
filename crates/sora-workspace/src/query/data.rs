@@ -144,7 +144,7 @@ impl ProjectSession {
             .iter()
             .find(|table| table.name == query.table)
             .ok_or_else(|| anyhow::anyhow!("validated data omitted table `{}`", query.table))?;
-        let (_, raw_data) = crate::mutation::load_raw_project_data(self)?;
+        let (_, raw_data, _) = crate::mutation::load_raw_project_data(self)?;
         let raw_table = raw_data
             .tables
             .iter()

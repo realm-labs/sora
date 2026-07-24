@@ -17,7 +17,7 @@ const BACKUP_DIRECTORY: &str = "backups";
 #[derive(Debug, Clone)]
 pub(crate) struct FileWrite {
     pub path: PathBuf,
-    pub content: Vec<u8>,
+    pub content: Option<Vec<u8>>,
 }
 
 /// Information retained after a committed filesystem transaction.
@@ -75,7 +75,7 @@ struct TransactionJournal {
 #[derive(Debug, Serialize, Deserialize)]
 struct JournalEntry {
     target: String,
-    staged: String,
+    staged: Option<String>,
     backup: Option<String>,
 }
 
@@ -93,7 +93,7 @@ where
         .iter()
         .map(|write| FileWrite {
             path: write.path.clone(),
-            content: write.content.as_bytes().to_vec(),
+            content: Some(write.content.as_bytes().to_vec()),
         })
         .collect::<Vec<_>>();
     commit_file_transaction(project_root, &writes, validate)
@@ -133,8 +133,15 @@ where
         {
             return Err(TransactionError::InternalStateTarget);
         }
-        let staged = transaction_root.join(format!("{index}.stage"));
-        write_durable(&staged, &write.content)?;
+        let staged = write
+            .content
+            .as_ref()
+            .map(|content| {
+                let staged = transaction_root.join(format!("{index}.stage"));
+                write_durable(&staged, content)?;
+                Ok(staged)
+            })
+            .transpose()?;
         let backup = if target.exists() {
             let backup = backup_root.join(format!("{index}.backup"));
             copy_file(&target, &backup)?;
@@ -146,11 +153,15 @@ where
         };
         journal.entries.push(JournalEntry {
             target: relative_string(relative),
-            staged: relative_string(
-                staged
-                    .strip_prefix(&root)
-                    .map_err(|_| TransactionError::TargetOutsideProject(staged.clone()))?,
-            ),
+            staged: staged
+                .as_ref()
+                .map(|staged| {
+                    staged
+                        .strip_prefix(&root)
+                        .map(relative_string)
+                        .map_err(|_| TransactionError::TargetOutsideProject(staged.clone()))
+                })
+                .transpose()?,
             backup,
         });
     }
@@ -164,12 +175,15 @@ where
 
     for entry in &journal.entries {
         let target = root.join(&entry.target);
-        let staged = root.join(&entry.staged);
         let result = (|| {
-            if let Some(parent) = target.parent() {
-                create_dir_all(parent)?;
+            if let Some(staged) = &entry.staged {
+                if let Some(parent) = target.parent() {
+                    create_dir_all(parent)?;
+                }
+                replace_file(&root.join(staged), &target)
+            } else {
+                remove_file_if_exists(&target)
             }
-            replace_file(&staged, &target)
         })();
         if let Err(error) = result {
             return rollback_failure(&root, &journal_path, &journal, error.to_string());
@@ -526,7 +540,7 @@ mod tests {
             phase: JournalPhase::Committing,
             entries: vec![JournalEntry {
                 target: "schema.toml".to_owned(),
-                staged: ".sora/transactions/interrupted/0.stage".to_owned(),
+                staged: Some(".sora/transactions/interrupted/0.stage".to_owned()),
                 backup: Some(".sora/backups/interrupted/0.backup".to_owned()),
             }],
         };
