@@ -40,7 +40,12 @@ pub struct BuildRequest {
     pub default_source_format: Option<SourceFormat>,
     pub data_root: Option<PathBuf>,
     pub scope: Option<String>,
+    pub include_schema_lock: bool,
+    pub include_excel_templates: bool,
+    pub include_codegen: bool,
+    pub include_exports: bool,
     pub targets: Vec<String>,
+    pub export_formats: Vec<String>,
     pub clean: bool,
 }
 
@@ -142,6 +147,13 @@ struct StagedOutput {
     directory: bool,
 }
 
+struct SelectedBuild<'a> {
+    schema_lock: Option<&'a PathBuf>,
+    excel_templates: Option<&'a PathBuf>,
+    codegen: Vec<&'a BuildCodegen>,
+    exports: Vec<&'a BuildExport>,
+}
+
 impl From<CodeFormatMode> for FormatMode {
     fn from(value: CodeFormatMode) -> Self {
         match value {
@@ -173,17 +185,21 @@ pub fn build_project_with_control(
     let mut artifacts = Vec::new();
 
     let registry = CodegenRegistry::with_builtin_generators();
-    let codegen = selected_codegen_targets(&build.codegen, &args.targets, &registry)?;
+    let selected = select_build_outputs(&args, &build, &registry)?;
 
-    if build.is_empty() {
+    if selected.schema_lock.is_none()
+        && selected.excel_templates.is_none()
+        && selected.codegen.is_empty()
+        && selected.exports.is_empty()
+    {
         bail!(
-            "project `{}` does not declare any build outputs; add [build], [[build.codegen]], or [[build.exports]]",
+            "project `{}` does not select any declared build outputs",
             args.project.display()
         );
     }
 
-    validate_export_formats(&build.exports)?;
-    validate_declared_outputs(project_dir, &build, &codegen)?;
+    validate_export_formats(&selected.exports)?;
+    validate_declared_outputs(project_dir, &selected)?;
     let stage_root = project_dir
         .join(".sora")
         .join("build-staging")
@@ -199,9 +215,9 @@ pub fn build_project_with_control(
         context,
         control,
         &build,
+        &selected,
         project_dir,
         &schema_input,
-        &codegen,
         &stage_root,
         &mut artifacts,
     );
@@ -226,9 +242,9 @@ fn build_project_staged(
     context: &ProjectRuntime,
     control: &BuildControl,
     build: &BuildConfig,
+    selected: &SelectedBuild<'_>,
     project_dir: &Path,
     schema_input: &SchemaFileInput,
-    codegen: &[&BuildCodegen],
     stage_root: &Path,
     artifacts: &mut Vec<BuildArtifact>,
 ) -> Result<BuildReport> {
@@ -251,11 +267,17 @@ fn build_project_staged(
         .with_context(|| format!("failed to check project `{}`", args.project.display()))?;
     sora_ir::validate::validate_config_ir(&ir)
         .with_context(|| format!("failed to check project `{}`", args.project.display()))?;
-    validate_codegen_runtime_exports(codegen, &build.exports, scope, &registry, &codegen_options)?;
+    validate_codegen_runtime_exports(
+        &selected.codegen,
+        &build.exports,
+        scope,
+        &registry,
+        &codegen_options,
+    )?;
 
     control.checkpoint(BuildPhase::LoadData)?;
     let mut loaded = None;
-    if !build.exports.is_empty() {
+    if !selected.exports.is_empty() {
         let project_input = MixedProjectInput::with_parser_registry(
             SchemaFileInput::new(&args.project),
             &data_root,
@@ -281,7 +303,7 @@ fn build_project_staged(
     control.checkpoint(BuildPhase::PlanOutputs)?;
 
     control.checkpoint(BuildPhase::Generate)?;
-    if let Some(path) = build.schema_lock.as_ref() {
+    if let Some(path) = selected.schema_lock {
         let path = resolve_declared_output(project_dir, path)?;
         let staged = staged_output_path(stage_root, staged_outputs.len());
         sora_core::pipeline::generate_schema_lock_with_scope_and_parsers(
@@ -308,7 +330,7 @@ fn build_project_staged(
         });
     }
 
-    if let Some(path) = build.excel_templates.as_ref() {
+    if let Some(path) = selected.excel_templates {
         let path = resolve_declared_output(project_dir, path)?;
         let staged = staged_output_path(stage_root, staged_outputs.len());
         sora_core::pipeline::generate_excel_template_with_scope_and_parsers(
@@ -335,7 +357,7 @@ fn build_project_staged(
         });
     }
 
-    for item in codegen {
+    for item in &selected.codegen {
         control.checkpoint(BuildPhase::Generate)?;
         let out = resolve_declared_output(project_dir, &item.out)?;
         let staged = staged_output_path(stage_root, staged_outputs.len());
@@ -374,7 +396,7 @@ fn build_project_staged(
 
     control.checkpoint(BuildPhase::Export)?;
     if let Some((ir, data, locale_catalog)) = loaded {
-        for item in &build.exports {
+        for item in &selected.exports {
             control.checkpoint(BuildPhase::Export)?;
             let out = resolve_declared_output(project_dir, &item.out)?;
             let staged = staged_output_path(stage_root, staged_outputs.len());
@@ -426,7 +448,7 @@ fn build_project_staged(
     })
 }
 
-fn validate_export_formats(exports: &[BuildExport]) -> Result<()> {
+fn validate_export_formats(exports: &[&BuildExport]) -> Result<()> {
     for item in exports {
         if sora_core::pipeline::export_output_kind(&item.format).is_none() {
             bail!(
@@ -437,6 +459,63 @@ fn validate_export_formats(exports: &[BuildExport]) -> Result<()> {
         }
     }
     Ok(())
+}
+
+fn select_build_outputs<'a>(
+    args: &BuildRequest,
+    build: &'a BuildConfig,
+    registry: &CodegenRegistry,
+) -> Result<SelectedBuild<'a>> {
+    let codegen = if args.include_codegen {
+        selected_codegen_targets(&build.codegen, &args.targets, registry)?
+    } else {
+        if !args.targets.is_empty() {
+            bail!("codegen targets were provided while codegen output is disabled");
+        }
+        Vec::new()
+    };
+    let exports = if args.include_exports {
+        selected_exports(&build.exports, &args.export_formats)?
+    } else {
+        if !args.export_formats.is_empty() {
+            bail!("export formats were provided while export output is disabled");
+        }
+        Vec::new()
+    };
+    Ok(SelectedBuild {
+        schema_lock: args
+            .include_schema_lock
+            .then_some(build.schema_lock.as_ref())
+            .flatten(),
+        excel_templates: args
+            .include_excel_templates
+            .then_some(build.excel_templates.as_ref())
+            .flatten(),
+        codegen,
+        exports,
+    })
+}
+
+fn selected_exports<'a>(
+    configured: &'a [BuildExport],
+    requested: &[String],
+) -> Result<Vec<&'a BuildExport>> {
+    if requested.is_empty() {
+        return Ok(configured.iter().collect());
+    }
+    let requested = requested
+        .iter()
+        .map(String::as_str)
+        .collect::<BTreeSet<_>>();
+    for format in &requested {
+        if !configured.iter().any(|item| item.format == *format) {
+            bail!("export format `{format}` is not declared in [[build.exports]]");
+        }
+    }
+    Ok(configured
+        .iter()
+        .filter(|item| requested.contains(item.format.as_str()))
+        .collect())
 }
 
 fn validate_codegen_runtime_exports(
@@ -590,22 +669,18 @@ fn codegen_targets_match(left: &str, right: &str, registry: &CodegenRegistry) ->
     }
 }
 
-fn validate_declared_outputs(
-    project_dir: &Path,
-    build: &BuildConfig,
-    codegen: &[&BuildCodegen],
-) -> Result<()> {
+fn validate_declared_outputs(project_dir: &Path, selected: &SelectedBuild<'_>) -> Result<()> {
     let mut outputs = Vec::new();
-    if let Some(path) = build.schema_lock.as_ref() {
+    if let Some(path) = selected.schema_lock {
         outputs.push(resolve_declared_output(project_dir, path)?);
     }
-    if let Some(path) = build.excel_templates.as_ref() {
+    if let Some(path) = selected.excel_templates {
         outputs.push(resolve_declared_output(project_dir, path)?);
     }
-    for item in codegen {
+    for item in &selected.codegen {
         outputs.push(resolve_declared_output(project_dir, &item.out)?);
     }
-    for item in &build.exports {
+    for item in &selected.exports {
         outputs.push(resolve_declared_output(project_dir, &item.out)?);
     }
     outputs.sort();
@@ -881,7 +956,12 @@ type = "string"
                 default_source_format: None,
                 data_root: None,
                 scope: None,
+                include_schema_lock: true,
+                include_excel_templates: true,
+                include_codegen: true,
+                include_exports: true,
                 targets: Vec::new(),
+                export_formats: Vec::new(),
                 clean: true,
             },
             &runtime,
