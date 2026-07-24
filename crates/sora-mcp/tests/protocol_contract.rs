@@ -51,6 +51,8 @@ async fn lifecycle_negotiates_the_pinned_protocol_and_lists_strict_tools() -> an
         );
         assert!(tool.output_schema.is_some());
     }
+    let prompts = client.list_prompts(None).await?;
+    assert_eq!(prompts.prompts.len(), 7);
 
     let resources = client.list_resources(None).await?;
     assert_eq!(resources.resources.len(), 2);

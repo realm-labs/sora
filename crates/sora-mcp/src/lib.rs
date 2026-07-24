@@ -6,6 +6,7 @@
 mod artifact_store;
 mod completion;
 mod dto;
+mod prompts;
 mod protocol;
 mod resources;
 mod server;

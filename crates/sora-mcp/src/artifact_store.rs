@@ -188,6 +188,24 @@ impl ArtifactStore {
         };
         Ok(ReadResourceResult::new(vec![contents]))
     }
+
+    pub fn list_ids(
+        &self,
+        owner: &str,
+        project_id: &ProjectId,
+    ) -> Result<Vec<String>, ArtifactError> {
+        let mut state = self
+            .state
+            .write()
+            .map_err(|_| ArtifactError::StatePoisoned)?;
+        prune(&mut state);
+        Ok(state
+            .artifacts
+            .iter()
+            .filter(|(_, artifact)| artifact.owner == owner && &artifact.project_id == project_id)
+            .map(|(id, _)| id.clone())
+            .collect())
+    }
 }
 
 fn collect_files(root: &Path, path: &Path, files: &mut Vec<PathBuf>) -> Result<(), ArtifactError> {

@@ -10,12 +10,12 @@ use rmcp::{
     handler::server::router::tool::ToolRouter,
     model::{
         CallToolRequestParams, CancelTaskParams, CancelTaskResult, CompleteRequestParams,
-        CompleteResult, CreateTaskResult, GetTaskParams, GetTaskPayloadParams,
-        GetTaskPayloadResult, GetTaskResult, Implementation, ListResourceTemplatesResult,
-        ListResourcesResult, ListTasksResult, PaginatedRequestParams, ReadResourceRequestParams,
-        ReadResourceResult, ServerCapabilities, ServerInfo, SubscribeRequestParams,
-        TaskStatusNotification, TaskStatusNotificationParam, TasksCapability,
-        UnsubscribeRequestParams,
+        CompleteResult, CreateTaskResult, GetPromptRequestParams, GetPromptResult, GetTaskParams,
+        GetTaskPayloadParams, GetTaskPayloadResult, GetTaskResult, Implementation,
+        ListPromptsResult, ListResourceTemplatesResult, ListResourcesResult, ListTasksResult,
+        PaginatedRequestParams, ReadResourceRequestParams, ReadResourceResult, ServerCapabilities,
+        ServerInfo, SubscribeRequestParams, TaskStatusNotification, TaskStatusNotificationParam,
+        TasksCapability, UnsubscribeRequestParams,
     },
     tool_handler,
 };
@@ -89,6 +89,7 @@ impl SoraMcpServer {
         let mut capabilities = ServerCapabilities::builder()
             .enable_logging()
             .enable_completions()
+            .enable_prompts()
             .enable_resources()
             .enable_resources_list_changed()
             .enable_resources_subscribe()
@@ -96,6 +97,9 @@ impl SoraMcpServer {
             .build();
         if let Some(tools) = capabilities.tools.as_mut() {
             tools.list_changed = Some(false);
+        }
+        if let Some(prompts) = capabilities.prompts.as_mut() {
+            prompts.list_changed = Some(false);
         }
         capabilities.tasks = Some(TasksCapability::server_default());
         capabilities
@@ -274,7 +278,32 @@ impl ServerHandler for SoraMcpServer {
     ) -> impl Future<Output = Result<CompleteResult, rmcp::ErrorData>>
     + rmcp::service::MaybeSendFuture
     + '_ {
-        ready(crate::completion::complete(&self.workspace, &request))
+        ready(crate::completion::complete(
+            &self.workspace,
+            &self.artifacts,
+            &self.authorization_context,
+            &request,
+        ))
+    }
+
+    fn list_prompts(
+        &self,
+        _request: Option<PaginatedRequestParams>,
+        _context: rmcp::service::RequestContext<rmcp::RoleServer>,
+    ) -> impl Future<Output = Result<ListPromptsResult, rmcp::ErrorData>>
+    + rmcp::service::MaybeSendFuture
+    + '_ {
+        ready(Ok(crate::prompts::list()))
+    }
+
+    fn get_prompt(
+        &self,
+        request: GetPromptRequestParams,
+        _context: rmcp::service::RequestContext<rmcp::RoleServer>,
+    ) -> impl Future<Output = Result<GetPromptResult, rmcp::ErrorData>>
+    + rmcp::service::MaybeSendFuture
+    + '_ {
+        ready(crate::prompts::get(&self.workspace, request))
     }
 
     #[allow(deprecated)]
@@ -424,7 +453,13 @@ mod tests {
                 .and_then(|resources| resources.subscribe),
             Some(true)
         );
-        assert!(info.capabilities.prompts.is_none());
+        assert_eq!(
+            info.capabilities
+                .prompts
+                .as_ref()
+                .and_then(|prompts| prompts.list_changed),
+            Some(false)
+        );
         assert!(info.capabilities.completions.is_some());
         let tasks = info.capabilities.tasks.expect("tasks capability");
         assert!(tasks.supports_list());
