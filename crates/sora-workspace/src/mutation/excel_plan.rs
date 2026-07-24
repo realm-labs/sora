@@ -2,7 +2,10 @@ use std::{
     collections::BTreeMap,
     fs,
     path::{Path, PathBuf},
-    sync::RwLock,
+    sync::{
+        Arc, RwLock,
+        atomic::{AtomicBool, Ordering},
+    },
 };
 
 use chrono::{DateTime, Duration, Utc};
@@ -17,6 +20,77 @@ use crate::{Diagnostic, ProjectId, ProjectRevision, ProjectSession, WorkspaceSer
 
 const PLAN_TTL_MINUTES: i64 = 10;
 const MAX_ACTIVE_PLANS: usize = 32;
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum ExcelSyncPhase {
+    ResolveProject,
+    ValidateRevision,
+    LoadSchema,
+    InspectWorkbooks,
+    StageWorkbooks,
+    RenderWorkbooks,
+    Diff,
+    Commit,
+    ValidateData,
+    RefreshRevision,
+    Complete,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, JsonSchema)]
+pub struct ExcelSyncProgress {
+    pub phase: ExcelSyncPhase,
+    pub completed: usize,
+    pub total: usize,
+}
+
+type ProgressCallback = dyn Fn(ExcelSyncProgress) + Send + Sync;
+
+/// Cooperative cancellation and progress reporting for an Excel synchronization.
+#[derive(Clone, Default)]
+pub struct ExcelSyncControl {
+    cancelled: Arc<AtomicBool>,
+    progress: Option<Arc<ProgressCallback>>,
+}
+
+impl ExcelSyncControl {
+    pub fn on_progress(
+        mut self,
+        progress: impl Fn(ExcelSyncProgress) + Send + Sync + 'static,
+    ) -> Self {
+        self.progress = Some(Arc::new(progress));
+        self
+    }
+
+    pub fn cancel(&self) {
+        self.cancelled.store(true, Ordering::Release);
+    }
+
+    pub fn is_cancelled(&self) -> bool {
+        self.cancelled.load(Ordering::Acquire)
+    }
+
+    fn checkpoint(&self, phase: ExcelSyncPhase) -> Result<(), ExcelSyncPlanError> {
+        if self.is_cancelled() {
+            return Err(ExcelSyncPlanError::OperationCancelled);
+        }
+        self.report(phase);
+        if self.is_cancelled() {
+            return Err(ExcelSyncPlanError::OperationCancelled);
+        }
+        Ok(())
+    }
+
+    fn report(&self, phase: ExcelSyncPhase) {
+        if let Some(progress) = &self.progress {
+            progress(ExcelSyncProgress {
+                phase,
+                completed: excel_phase_index(phase),
+                total: 11,
+            });
+        }
+    }
+}
 
 #[derive(Debug, Clone, Serialize, JsonSchema)]
 pub struct ExcelSyncPlan {
@@ -90,6 +164,8 @@ pub enum ExcelSyncPlanError {
     Transaction(String),
     #[error("project revision refresh failed: {0}")]
     Revision(String),
+    #[error("Excel synchronization was cancelled")]
+    OperationCancelled,
 }
 
 #[derive(Debug, Clone)]
@@ -123,13 +199,33 @@ impl WorkspaceService {
         expected_schema_revision: &str,
         expected_data_revision: &str,
     ) -> Result<ExcelSyncPlan, ExcelSyncPlanError> {
+        self.preview_excel_sync_with_control(
+            project_id,
+            authorization_context,
+            expected_schema_revision,
+            expected_data_revision,
+            &ExcelSyncControl::default(),
+        )
+    }
+
+    pub fn preview_excel_sync_with_control(
+        &self,
+        project_id: &ProjectId,
+        authorization_context: &str,
+        expected_schema_revision: &str,
+        expected_data_revision: &str,
+        control: &ExcelSyncControl,
+    ) -> Result<ExcelSyncPlan, ExcelSyncPlanError> {
+        control.checkpoint(ExcelSyncPhase::ResolveProject)?;
         let session = self
             .project(project_id)
             .map_err(|error| ExcelSyncPlanError::Project(error.to_string()))?;
+        control.checkpoint(ExcelSyncPhase::ValidateRevision)?;
         let revision = session.revision();
         ensure_expected_revisions(&revision, expected_schema_revision, expected_data_revision)?;
-        let rendered = render_sync(&session)?;
+        let rendered = render_sync(&session, control)?;
         let file_changes = file_changes(project_root(&session), &rendered.writes)?;
+        control.checkpoint(ExcelSyncPhase::Diff)?;
         let created_at = Utc::now();
         let plan = ExcelSyncPlan {
             plan_id: format!("plan:{}", Uuid::new_v4()),
@@ -145,6 +241,7 @@ impl WorkspaceService {
         };
         self.excel_sync
             .insert(authorization_context, plan.clone())?;
+        control.report(ExcelSyncPhase::Complete);
         Ok(plan)
     }
 
@@ -155,6 +252,24 @@ impl WorkspaceService {
         plan_id: &str,
         idempotency_key: &str,
     ) -> Result<ExcelSyncApplyReport, ExcelSyncPlanError> {
+        self.apply_excel_sync_with_control(
+            project_id,
+            authorization_context,
+            plan_id,
+            idempotency_key,
+            &ExcelSyncControl::default(),
+        )
+    }
+
+    pub fn apply_excel_sync_with_control(
+        &self,
+        project_id: &ProjectId,
+        authorization_context: &str,
+        plan_id: &str,
+        idempotency_key: &str,
+        control: &ExcelSyncControl,
+    ) -> Result<ExcelSyncApplyReport, ExcelSyncPlanError> {
+        control.checkpoint(ExcelSyncPhase::ResolveProject)?;
         validate_idempotency_key(idempotency_key)?;
         if let Some(report) = self.excel_sync.idempotent(
             authorization_context,
@@ -185,16 +300,20 @@ impl WorkspaceService {
         let current = session
             .refresh_revision()
             .map_err(|error| ExcelSyncPlanError::Revision(error.to_string()))?;
+        control.checkpoint(ExcelSyncPhase::ValidateRevision)?;
         ensure_expected_revisions(
             &current,
             &stored.plan.input_revisions.schema,
             &stored.plan.input_revisions.data,
         )?;
-        let rendered = render_sync(&session)?;
+        let rendered = render_sync(&session, control)?;
+        control.checkpoint(ExcelSyncPhase::Commit)?;
         let receipt = commit_file_transaction(project_root(&session), &rendered.writes, || {
+            control.report(ExcelSyncPhase::ValidateData);
             session.validated_data().map(|_| ())
         })
         .map_err(|error| ExcelSyncPlanError::Transaction(error.to_string()))?;
+        control.report(ExcelSyncPhase::RefreshRevision);
         let revision = session
             .refresh_revision()
             .map_err(|error| ExcelSyncPlanError::Revision(error.to_string()))?;
@@ -217,6 +336,7 @@ impl WorkspaceService {
         self.data_mutation
             .invalidate_project(project_id)
             .map_err(|error| ExcelSyncPlanError::Project(error.to_string()))?;
+        control.report(ExcelSyncPhase::Complete);
         Ok(report)
     }
 }
@@ -322,12 +442,17 @@ impl ExcelSyncCoordinator {
     }
 }
 
-fn render_sync(session: &ProjectSession) -> Result<RenderedSync, ExcelSyncPlanError> {
+fn render_sync(
+    session: &ProjectSession,
+    control: &ExcelSyncControl,
+) -> Result<RenderedSync, ExcelSyncPlanError> {
     let project_root = project_root(session);
     let data_root = session.data_root();
+    control.checkpoint(ExcelSyncPhase::LoadSchema)?;
     let ir = session
         .normalized_schema()
         .map_err(|error| ExcelSyncPlanError::Rendering(error.to_string()))?;
+    control.checkpoint(ExcelSyncPhase::InspectWorkbooks)?;
     let preview = ExcelTemplateSync
         .preview(&ir, &data_root)
         .map_err(|error| ExcelSyncPlanError::Rendering(error.to_string()))?;
@@ -335,7 +460,7 @@ fn render_sync(session: &ProjectSession) -> Result<RenderedSync, ExcelSyncPlanEr
         .join(".sora")
         .join("excel-staging")
         .join(Uuid::new_v4().to_string());
-    let result = render_sync_in_stage(&ir, &data_root, &stage_root, preview);
+    let result = render_sync_in_stage(&ir, &data_root, &stage_root, preview, control);
     let cleanup_error = fs::remove_dir_all(&stage_root)
         .err()
         .filter(|error| error.kind() != std::io::ErrorKind::NotFound);
@@ -353,10 +478,13 @@ fn render_sync_in_stage(
     data_root: &Path,
     stage_root: &Path,
     preview: ExcelSyncReport,
+    control: &ExcelSyncControl,
 ) -> Result<RenderedSync, ExcelSyncPlanError> {
+    control.checkpoint(ExcelSyncPhase::StageWorkbooks)?;
     fs::create_dir_all(stage_root)
         .map_err(|error| ExcelSyncPlanError::Rendering(error.to_string()))?;
     for workbook in preview.workbooks {
+        control.checkpoint(ExcelSyncPhase::StageWorkbooks)?;
         if !workbook.path.exists() {
             continue;
         }
@@ -369,12 +497,14 @@ fn render_sync_in_stage(
         fs::copy(&workbook.path, staged)
             .map_err(|error| ExcelSyncPlanError::Rendering(error.to_string()))?;
     }
+    control.checkpoint(ExcelSyncPhase::RenderWorkbooks)?;
     let report = ExcelTemplateSync
         .write(ir, stage_root)
         .map_err(|error| ExcelSyncPlanError::Rendering(error.to_string()))?;
     let mut writes = Vec::new();
     let mut workbook_changes = Vec::new();
     for workbook in report.workbooks {
+        control.checkpoint(ExcelSyncPhase::Diff)?;
         let relative = bounded_relative(stage_root, &workbook.path)?;
         let target = data_root.join(&relative);
         if workbook.written {
@@ -492,4 +622,20 @@ fn project_root(session: &ProjectSession) -> &Path {
         .manifest_path()
         .parent()
         .unwrap_or_else(|| Path::new("."))
+}
+
+fn excel_phase_index(phase: ExcelSyncPhase) -> usize {
+    match phase {
+        ExcelSyncPhase::ResolveProject => 1,
+        ExcelSyncPhase::ValidateRevision => 2,
+        ExcelSyncPhase::LoadSchema => 3,
+        ExcelSyncPhase::InspectWorkbooks => 4,
+        ExcelSyncPhase::StageWorkbooks => 5,
+        ExcelSyncPhase::RenderWorkbooks => 6,
+        ExcelSyncPhase::Diff => 7,
+        ExcelSyncPhase::Commit => 8,
+        ExcelSyncPhase::ValidateData => 9,
+        ExcelSyncPhase::RefreshRevision => 10,
+        ExcelSyncPhase::Complete => 11,
+    }
 }

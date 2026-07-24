@@ -28,8 +28,8 @@ pub(crate) use data_plan::DataMutationCoordinator;
 pub use data_plan::{DataApplyReport, DataFileChange, DataMutationPlan, DataPlanError};
 pub(crate) use excel_plan::ExcelSyncCoordinator;
 pub use excel_plan::{
-    ExcelSyncApplyReport, ExcelSyncPlan, ExcelSyncPlanError, ExcelSyncSheetChange,
-    ExcelSyncWorkbookChange,
+    ExcelSyncApplyReport, ExcelSyncControl, ExcelSyncPhase, ExcelSyncPlan, ExcelSyncPlanError,
+    ExcelSyncProgress, ExcelSyncSheetChange, ExcelSyncWorkbookChange,
 };
 pub(crate) use plan::MutationCoordinator;
 pub(crate) use project_init::ProjectInitCoordinator;

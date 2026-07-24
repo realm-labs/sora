@@ -1,10 +1,16 @@
 use std::{
     fs,
-    sync::atomic::{AtomicU64, Ordering},
+    sync::{
+        Arc, Mutex,
+        atomic::{AtomicU64, Ordering},
+    },
 };
 
 use sora_excel::generator::ExcelTemplateGenerator;
-use sora_workspace::{ProjectId, RuntimeOptions, WorkspaceService};
+use sora_workspace::{
+    ExcelSyncControl, ExcelSyncPhase, ExcelSyncPlanError, ProjectId, RuntimeOptions,
+    WorkspaceService,
+};
 
 static TEMP_COUNTER: AtomicU64 = AtomicU64::new(0);
 
@@ -57,13 +63,47 @@ data_root = "data"
     let workbook = root.join("data/items.xlsx");
     let original = fs::read(&workbook).unwrap();
 
+    let cancelled_control = ExcelSyncControl::default();
+    let canceller = cancelled_control.clone();
+    let cancelled_control = cancelled_control.on_progress(move |progress| {
+        if progress.phase == ExcelSyncPhase::StageWorkbooks {
+            canceller.cancel();
+        }
+    });
+    let error = workspace
+        .preview_excel_sync_with_control(
+            &project,
+            "owner",
+            &revision.schema,
+            &revision.data,
+            &cancelled_control,
+        )
+        .unwrap_err();
+    assert!(matches!(error, ExcelSyncPlanError::OperationCancelled));
+    assert_eq!(fs::read(&workbook).unwrap(), original);
+
+    let phases = Arc::new(Mutex::new(Vec::new()));
+    let captured_phases = Arc::clone(&phases);
+    let control = ExcelSyncControl::default().on_progress(move |progress| {
+        captured_phases.lock().unwrap().push(progress.phase);
+    });
     let plan = workspace
-        .preview_excel_sync(&project, "owner", &revision.schema, &revision.data)
+        .preview_excel_sync_with_control(
+            &project,
+            "owner",
+            &revision.schema,
+            &revision.data,
+            &control,
+        )
         .unwrap();
 
     assert_eq!(fs::read(&workbook).unwrap(), original);
     assert_eq!(plan.file_changes.len(), 1);
     assert_eq!(plan.workbook_changes[0].sheets[0].added_columns, ["name"]);
+    assert_eq!(
+        phases.lock().unwrap().last(),
+        Some(&ExcelSyncPhase::Complete)
+    );
 
     let report = workspace
         .apply_excel_sync(&project, "owner", &plan.plan_id, "excel-sync-1")

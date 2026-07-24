@@ -33,14 +33,14 @@ pub use inspect::{
 pub use mutation::{
     DataApplyReport, DataExecution, DataFileChange, DataMutationError, DataMutationPlan,
     DataOperation, DataPlanError, DataSourceImpact, DerivedFieldSource, EnumValueDefinition,
-    ExcelSyncApplyReport, ExcelSyncPlan, ExcelSyncPlanError, ExcelSyncSheetChange,
-    ExcelSyncWorkbookChange, FieldDefinition, FieldOwner, FieldOwnerKind, IndexDefinition,
-    LocalizationChange, MutableTableSource, MutationPlanError, MutationSchemaEntityKind,
-    ProjectInitApplyReport, ProjectInitPlan, ProjectInitPlanFile, RowChange, RowSelector,
-    SchemaApplyReport, SchemaExecution, SchemaMutationError, SchemaMutationPlan, SchemaOperation,
-    SchemaTableMode, StudioSchemaApplyReport, StudioSchemaMutationPlan, TableSourceDefinition,
-    TextFileDiff, TransactionError, TransactionReceipt, UnionVariantDefinition,
-    execute_data_operations, execute_schema_operations,
+    ExcelSyncApplyReport, ExcelSyncControl, ExcelSyncPhase, ExcelSyncPlan, ExcelSyncPlanError,
+    ExcelSyncProgress, ExcelSyncSheetChange, ExcelSyncWorkbookChange, FieldDefinition, FieldOwner,
+    FieldOwnerKind, IndexDefinition, LocalizationChange, MutableTableSource, MutationPlanError,
+    MutationSchemaEntityKind, ProjectInitApplyReport, ProjectInitPlan, ProjectInitPlanFile,
+    RowChange, RowSelector, SchemaApplyReport, SchemaExecution, SchemaMutationError,
+    SchemaMutationPlan, SchemaOperation, SchemaTableMode, StudioSchemaApplyReport,
+    StudioSchemaMutationPlan, TableSourceDefinition, TextFileDiff, TransactionError,
+    TransactionReceipt, UnionVariantDefinition, execute_data_operations, execute_schema_operations,
 };
 pub use parser::{ParserRegistries, load_parser_registries};
 pub use project::{ProjectId, ProjectRevision, ProjectSession};
