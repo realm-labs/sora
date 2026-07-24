@@ -21,6 +21,12 @@ impl SoraMcpServer {
     #[tool(
         name = "sora_build",
         description = "Run selected outputs from the manifest build graph through an isolated staging area and atomic commit",
+        annotations(
+            read_only_hint = false,
+            destructive_hint = true,
+            idempotent_hint = true,
+            open_world_hint = false
+        ),
         execution(task_support = "optional")
     )]
     async fn build(
@@ -59,6 +65,12 @@ impl SoraMcpServer {
     #[tool(
         name = "sora_codegen",
         description = "Generate one manifest-declared language target using its configured output, runtime format, and formatter mode",
+        annotations(
+            read_only_hint = false,
+            destructive_hint = true,
+            idempotent_hint = true,
+            open_world_hint = false
+        ),
         execution(task_support = "optional")
     )]
     async fn codegen(
@@ -87,6 +99,12 @@ impl SoraMcpServer {
     #[tool(
         name = "sora_export",
         description = "Export validated data through one manifest-declared exporter format and its declared output kind",
+        annotations(
+            read_only_hint = false,
+            destructive_hint = true,
+            idempotent_hint = true,
+            open_world_hint = false
+        ),
         execution(task_support = "optional")
     )]
     async fn export(
@@ -115,6 +133,12 @@ impl SoraMcpServer {
     #[tool(
         name = "sora_schema_lock",
         description = "Generate the manifest-declared schema lock through the build transaction",
+        annotations(
+            read_only_hint = false,
+            destructive_hint = true,
+            idempotent_hint = true,
+            open_world_hint = false
+        ),
         execution(task_support = "optional")
     )]
     async fn schema_lock(
@@ -143,6 +167,12 @@ impl SoraMcpServer {
     #[tool(
         name = "sora_excel_template",
         description = "Generate manifest-declared Excel templates through the build transaction",
+        annotations(
+            read_only_hint = false,
+            destructive_hint = true,
+            idempotent_hint = true,
+            open_world_hint = false
+        ),
         execution(task_support = "optional")
     )]
     async fn excel_template(

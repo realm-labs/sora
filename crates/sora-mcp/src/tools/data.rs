@@ -18,9 +18,15 @@ use crate::{
 impl SoraMcpServer {
     #[tool(
         name = "sora_data_preview",
-        description = "Validate an ordered typed row mutation batch and return a revision-bound plan without writing data sources"
+        description = "Validate an ordered typed row mutation batch and return a revision-bound plan without writing data sources",
+        annotations(
+            read_only_hint = true,
+            destructive_hint = false,
+            idempotent_hint = true,
+            open_world_hint = false
+        )
     )]
-    fn data_preview(
+    async fn data_preview(
         &self,
         Parameters(input): Parameters<DataPreviewInput>,
     ) -> Result<Json<ToolEnvelope<DataMutationPlan>>, rmcp::model::CallToolResult> {
@@ -32,14 +38,21 @@ impl SoraMcpServer {
                 error,
             ))
         })?;
-        match self.workspace.preview_data_mutation(
-            &id,
-            &self.authorization_context,
-            &input.expected_schema_revision,
-            &input.expected_data_revision,
-            input.operations,
-        ) {
-            Ok(plan) => {
+        let workspace = self.workspace.clone();
+        let owner = self.authorization_context.clone();
+        let operation_id = id.clone();
+        let result = tokio::task::spawn_blocking(move || {
+            workspace.preview_data_mutation(
+                &operation_id,
+                &owner,
+                &input.expected_schema_revision,
+                &input.expected_data_revision,
+                input.operations,
+            )
+        })
+        .await;
+        match result {
+            Ok(Ok(plan)) => {
                 let changes = encode_data_changes(&plan.row_changes, &plan.localization_changes)
                     .map_err(|error| {
                         tool_error(ToolEnvelope::<DataMutationPlan>::failure(
@@ -62,7 +75,7 @@ impl SoraMcpServer {
                 envelope.changes = changes;
                 Ok(Json(envelope))
             }
-            Err(error) => Err(tool_error(ToolEnvelope::<DataMutationPlan>::failure(
+            Ok(Err(error)) => Err(tool_error(ToolEnvelope::<DataMutationPlan>::failure(
                 Some(id.clone()),
                 self.workspace
                     .project(&id)
@@ -71,12 +84,27 @@ impl SoraMcpServer {
                 "data preview failed",
                 error,
             ))),
+            Err(error) => Err(tool_error(ToolEnvelope::<DataMutationPlan>::failure(
+                Some(id.clone()),
+                self.workspace
+                    .project(&id)
+                    .ok()
+                    .map(|session| session.revision()),
+                "data preview worker failed",
+                error,
+            ))),
         }
     }
 
     #[tool(
         name = "sora_data_apply",
-        description = "Atomically apply an unexpired data plan after authorization, schema/data revision, and idempotency checks"
+        description = "Atomically apply an unexpired data plan after authorization, schema/data revision, and idempotency checks",
+        annotations(
+            read_only_hint = false,
+            destructive_hint = true,
+            idempotent_hint = true,
+            open_world_hint = false
+        )
     )]
     async fn data_apply(
         &self,
@@ -91,13 +119,20 @@ impl SoraMcpServer {
                 error,
             ))
         })?;
-        match self.workspace.apply_data_mutation(
-            &id,
-            &self.authorization_context,
-            &input.plan_id,
-            &input.idempotency_key,
-        ) {
-            Ok(report) => {
+        let workspace = self.workspace.clone();
+        let owner = self.authorization_context.clone();
+        let operation_id = id.clone();
+        let result = tokio::task::spawn_blocking(move || {
+            workspace.apply_data_mutation(
+                &operation_id,
+                &owner,
+                &input.plan_id,
+                &input.idempotency_key,
+            )
+        })
+        .await;
+        match result {
+            Ok(Ok(report)) => {
                 self.notify_project_resources_updated(&context.peer, id.as_str())
                     .await;
                 let changes =
@@ -120,25 +155,9 @@ impl SoraMcpServer {
                     report,
                 );
                 envelope.changes = changes;
-                envelope.artifacts = envelope
-                    .data
-                    .as_ref()
-                    .map(|report| {
-                        vec![crate::dto::ArtifactLink {
-                            artifact_id: report.transaction.backup_id.clone(),
-                            uri: format!(
-                                "sora://project/{}/artifact/{}",
-                                report.project_id, report.transaction.backup_id
-                            ),
-                            mime_type: "application/x-sora-backup".to_owned(),
-                            name: None,
-                            size: None,
-                        }]
-                    })
-                    .unwrap_or_default();
                 Ok(Json(envelope))
             }
-            Err(error) => Err(tool_error(ToolEnvelope::<DataApplyReport>::failure(
+            Ok(Err(error)) => Err(tool_error(ToolEnvelope::<DataApplyReport>::failure(
                 Some(id.clone()),
                 self.workspace
                     .project(&id)
@@ -147,31 +166,53 @@ impl SoraMcpServer {
                 "data apply failed",
                 error,
             ))),
+            Err(error) => Err(tool_error(ToolEnvelope::<DataApplyReport>::failure(
+                Some(id.clone()),
+                self.workspace
+                    .project(&id)
+                    .ok()
+                    .map(|session| session.revision()),
+                "data apply worker failed",
+                error,
+            ))),
         }
     }
 
     #[tool(
         name = "sora_data_validate",
-        description = "Load and fully validate project data, optionally selecting a scope or table subset"
+        description = "Load and fully validate project data, optionally selecting a scope or table subset",
+        annotations(
+            read_only_hint = true,
+            destructive_hint = false,
+            idempotent_hint = true,
+            open_world_hint = false
+        )
     )]
-    fn data_validate(
+    async fn data_validate(
         &self,
         Parameters(input): Parameters<DataValidateInput>,
-    ) -> Json<ToolEnvelope<DataValidationReport>> {
-        let id = match ProjectId::new(input.project_id) {
-            Ok(id) => id,
-            Err(error) => {
-                return Json(ToolEnvelope::failure(
-                    None,
-                    None,
-                    "invalid project id",
-                    error,
-                ));
-            }
-        };
+    ) -> Result<Json<ToolEnvelope<DataValidationReport>>, rmcp::model::CallToolResult> {
+        let id = ProjectId::new(input.project_id).map_err(|error| {
+            tool_error(ToolEnvelope::<DataValidationReport>::failure(
+                None,
+                None,
+                "invalid project id",
+                error,
+            ))
+        })?;
         match self.workspace.project(&id) {
             Ok(session) => {
-                let report = session.validate_data(&input.query);
+                let report =
+                    tokio::task::spawn_blocking(move || session.validate_data(&input.query))
+                        .await
+                        .map_err(|error| {
+                            tool_error(ToolEnvelope::<DataValidationReport>::failure(
+                                Some(id.clone()),
+                                None,
+                                "data validation worker failed",
+                                error,
+                            ))
+                        })?;
                 let mut envelope = ToolEnvelope::success(
                     Some(id),
                     Some(report.revision.clone()),
@@ -188,108 +229,140 @@ impl SoraMcpServer {
                     envelope.ok = false;
                     envelope.diagnostics = report.diagnostics.clone();
                 }
-                Json(envelope)
+                if envelope.ok {
+                    Ok(Json(envelope))
+                } else {
+                    Err(tool_error(envelope))
+                }
             }
-            Err(error) => Json(ToolEnvelope::failure(
+            Err(error) => Err(tool_error(ToolEnvelope::<DataValidationReport>::failure(
                 Some(id),
                 None,
                 "unknown Sora project",
                 error,
-            )),
+            ))),
         }
     }
 
     #[tool(
         name = "sora_table_query",
-        description = "Query validated table rows with typed equality, key or index lookup, projection, ordering, and revision-bound pagination"
+        description = "Query validated table rows with typed equality, key or index lookup, projection, ordering, and revision-bound pagination",
+        annotations(
+            read_only_hint = true,
+            destructive_hint = false,
+            idempotent_hint = true,
+            open_world_hint = false
+        )
     )]
-    fn table_query(
+    async fn table_query(
         &self,
         Parameters(input): Parameters<TableQueryInput>,
-    ) -> Json<ToolEnvelope<TableQueryReport>> {
-        let id = match ProjectId::new(input.project_id) {
-            Ok(id) => id,
-            Err(error) => {
-                return Json(ToolEnvelope::failure(
-                    None,
-                    None,
-                    "invalid project id",
-                    error,
-                ));
-            }
-        };
+    ) -> Result<Json<ToolEnvelope<TableQueryReport>>, rmcp::model::CallToolResult> {
+        let id = ProjectId::new(input.project_id).map_err(|error| {
+            tool_error(ToolEnvelope::<TableQueryReport>::failure(
+                None,
+                None,
+                "invalid project id",
+                error,
+            ))
+        })?;
         match self.workspace.project(&id) {
-            Ok(session) => match session.query_table(&input.query) {
-                Ok(report) => {
-                    let count = report.rows.len();
-                    let mut envelope = ToolEnvelope::success(
+            Ok(session) => {
+                let revision = session.revision();
+                match tokio::task::spawn_blocking(move || session.query_table(&input.query)).await {
+                    Ok(Ok(report)) => {
+                        let count = report.rows.len();
+                        let mut envelope = ToolEnvelope::success(
+                            Some(id),
+                            Some(report.revision.clone()),
+                            format!("returned {count} validated row(s)"),
+                            report,
+                        );
+                        envelope.next_cursor = envelope
+                            .data
+                            .as_ref()
+                            .and_then(|report| report.next_cursor.clone());
+                        Ok(Json(envelope))
+                    }
+                    Ok(Err(error)) => Err(tool_error(ToolEnvelope::<TableQueryReport>::failure(
                         Some(id),
-                        Some(report.revision.clone()),
-                        format!("returned {count} validated row(s)"),
-                        report,
-                    );
-                    envelope.next_cursor = envelope
-                        .data
-                        .as_ref()
-                        .and_then(|report| report.next_cursor.clone());
-                    Json(envelope)
+                        Some(revision),
+                        "table query failed",
+                        error,
+                    ))),
+                    Err(error) => Err(tool_error(ToolEnvelope::<TableQueryReport>::failure(
+                        Some(id),
+                        Some(revision),
+                        "table query worker failed",
+                        error,
+                    ))),
                 }
-                Err(error) => Json(ToolEnvelope::failure(
-                    Some(id),
-                    Some(session.revision()),
-                    "table query failed",
-                    error,
-                )),
-            },
-            Err(error) => Json(ToolEnvelope::failure(
+            }
+            Err(error) => Err(tool_error(ToolEnvelope::<TableQueryReport>::failure(
                 Some(id),
                 None,
                 "unknown Sora project",
                 error,
-            )),
+            ))),
         }
     }
 
     #[tool(
         name = "sora_data_diff",
-        description = "Compare a project-relative baseline data root with the project's current validated data"
+        description = "Compare a project-relative baseline data root with the project's current validated data",
+        annotations(
+            read_only_hint = true,
+            destructive_hint = false,
+            idempotent_hint = true,
+            open_world_hint = false
+        )
     )]
-    fn data_diff(
+    async fn data_diff(
         &self,
         Parameters(input): Parameters<DataDiffInput>,
-    ) -> Json<ToolEnvelope<serde_json::Value>> {
-        let id = match ProjectId::new(input.project_id) {
-            Ok(id) => id,
-            Err(error) => {
-                return Json(ToolEnvelope::failure(
-                    None,
-                    None,
-                    "invalid project id",
-                    error,
-                ));
-            }
-        };
+    ) -> Result<Json<ToolEnvelope<serde_json::Value>>, rmcp::model::CallToolResult> {
+        let id = ProjectId::new(input.project_id).map_err(|error| {
+            tool_error(ToolEnvelope::<serde_json::Value>::failure(
+                None,
+                None,
+                "invalid project id",
+                error,
+            ))
+        })?;
         match self.workspace.project(&id) {
-            Ok(session) => match session.diff_data_root(&input.other_data_root) {
-                Ok(diff) => Json(ToolEnvelope::success(
-                    Some(id),
-                    Some(session.revision()),
-                    "compared validated data roots",
-                    diff,
-                )),
-                Err(error) => Json(ToolEnvelope::failure(
-                    Some(id),
-                    Some(session.revision()),
-                    "data diff failed",
-                    error,
-                )),
-            },
-            Err(error) => Json(ToolEnvelope::failure(
+            Ok(session) => {
+                let revision = session.revision();
+                match tokio::task::spawn_blocking(move || {
+                    session.diff_data_root(&input.other_data_root)
+                })
+                .await
+                {
+                    Ok(Ok(diff)) => Ok(Json(ToolEnvelope::success(
+                        Some(id),
+                        Some(revision),
+                        "compared validated data roots",
+                        diff,
+                    ))),
+                    Ok(Err(error)) => Err(tool_error(ToolEnvelope::<serde_json::Value>::failure(
+                        Some(id),
+                        Some(revision),
+                        "data diff failed",
+                        error,
+                    ))),
+                    Err(error) => Err(tool_error(ToolEnvelope::<serde_json::Value>::failure(
+                        Some(id),
+                        Some(revision),
+                        "data diff worker failed",
+                        error,
+                    ))),
+                }
+            }
+            Err(error) => Err(tool_error(ToolEnvelope::<serde_json::Value>::failure(
                 Some(id),
                 None,
                 "unknown Sora project",
                 error,
-            )),
+            ))),
         }
     }
 }

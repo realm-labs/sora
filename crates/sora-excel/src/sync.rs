@@ -64,6 +64,7 @@ impl ExcelTemplateSync {
         let mut report = ExcelSyncReport::default();
         for (file_name, tables) in group_xlsx_tables(ir)? {
             let path = data_root.join(file_name);
+            ensure_workbook_path_is_bounded(data_root, &path)?;
             let existing = ExistingWorkbook::load(&path)?;
             let mut table_sheets = Vec::new();
             let mut sheet_reports = Vec::new();
@@ -129,6 +130,58 @@ impl ExcelTemplateSync {
 
         Ok(report)
     }
+}
+
+fn ensure_workbook_path_is_bounded(data_root: &Path, path: &Path) -> Result<()> {
+    let relative = path
+        .strip_prefix(data_root)
+        .map_err(|_| SoraError::ExcelTemplate {
+            path: path.to_path_buf(),
+            message: "workbook path is outside the configured data root".to_owned(),
+        })?;
+    if relative.as_os_str().is_empty()
+        || relative.components().any(|component| {
+            matches!(
+                component,
+                std::path::Component::ParentDir
+                    | std::path::Component::RootDir
+                    | std::path::Component::Prefix(_)
+            )
+        })
+    {
+        return Err(SoraError::ExcelTemplate {
+            path: path.to_path_buf(),
+            message: "workbook path contains unsafe traversal".to_owned(),
+        });
+    }
+
+    let canonical_root = fs::canonicalize(data_root).map_err(|source| SoraError::ReadFile {
+        path: data_root.to_path_buf(),
+        source,
+    })?;
+    let existing_boundary = if path.exists() {
+        path
+    } else {
+        path.ancestors()
+            .skip(1)
+            .find(|ancestor| ancestor.exists())
+            .ok_or_else(|| SoraError::ExcelTemplate {
+                path: path.to_path_buf(),
+                message: "workbook path has no existing parent directory".to_owned(),
+            })?
+    };
+    let canonical_boundary =
+        fs::canonicalize(existing_boundary).map_err(|source| SoraError::ReadFile {
+            path: existing_boundary.to_path_buf(),
+            source,
+        })?;
+    if !canonical_boundary.starts_with(&canonical_root) {
+        return Err(SoraError::ExcelTemplate {
+            path: path.to_path_buf(),
+            message: "workbook path resolves outside the configured data root".to_owned(),
+        });
+    }
+    Ok(())
 }
 
 static WORKBOOK_WRITE_COUNTER: AtomicU64 = AtomicU64::new(0);
@@ -556,6 +609,46 @@ mod tests {
         assert_eq!(cell_to_string(&data_row[4]), "deprecated");
 
         let _ = fs::remove_dir_all(base);
+    }
+
+    #[test]
+    fn sync_rejects_parent_directory_traversal() {
+        let mut ir = example_ir();
+        ir.tables[0].source.as_mut().expect("table source").file = "../outside.xlsx".to_owned();
+        let base = temp_dir();
+        fs::create_dir_all(&base).unwrap();
+
+        let error = ExcelTemplateSync
+            .preview(&ir, &base)
+            .expect_err("traversal must be rejected");
+        assert!(error.to_string().contains("unsafe traversal"));
+
+        let _ = fs::remove_dir_all(base);
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn sync_rejects_workbook_symlink_outside_data_root() {
+        let ir = example_ir();
+        let base = temp_dir();
+        let outside = temp_dir();
+        fs::create_dir_all(&base).unwrap();
+        fs::create_dir_all(&outside).unwrap();
+        write_existing_workbook(
+            &outside.join("Item.xlsx"),
+            "Item",
+            &["id", "name"],
+            &["1001", "Iron Sword"],
+        );
+        std::os::unix::fs::symlink(outside.join("Item.xlsx"), base.join("Item.xlsx")).unwrap();
+
+        let error = ExcelTemplateSync
+            .preview(&ir, &base)
+            .expect_err("external symlink must be rejected");
+        assert!(error.to_string().contains("resolves outside"));
+
+        let _ = fs::remove_dir_all(base);
+        let _ = fs::remove_dir_all(outside);
     }
 
     #[test]

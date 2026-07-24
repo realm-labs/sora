@@ -19,6 +19,12 @@ impl SoraMcpServer {
     #[tool(
         name = "sora_excel_sync_preview",
         description = "Preview schema-to-workbook synchronization without modifying any data source",
+        annotations(
+            read_only_hint = true,
+            destructive_hint = false,
+            idempotent_hint = true,
+            open_world_hint = false
+        ),
         execution(task_support = "optional")
     )]
     async fn excel_sync_preview(
@@ -78,6 +84,12 @@ impl SoraMcpServer {
     #[tool(
         name = "sora_excel_sync_apply",
         description = "Atomically apply an unexpired Excel synchronization plan after authorization and revision checks",
+        annotations(
+            read_only_hint = false,
+            destructive_hint = true,
+            idempotent_hint = true,
+            open_world_hint = false
+        ),
         execution(task_support = "optional")
     )]
     async fn excel_sync_apply(

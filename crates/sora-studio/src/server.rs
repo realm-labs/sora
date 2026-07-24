@@ -79,11 +79,22 @@ async fn health() -> Json<HealthResponse> {
 }
 
 async fn schema(State(state): State<StudioState>) -> Json<StudioLoadResponse> {
-    let session = state.workspace.project(&state.project_id);
-    match session {
-        Ok(session) => Json(StudioLoadResponse {
-            document: session.load_studio_schema(),
-            revision: Some(session.revision()),
+    let worker_state = state.clone();
+    match tokio::task::spawn_blocking(move || {
+        worker_state
+            .workspace
+            .project(&worker_state.project_id)
+            .map(|session| (session.load_studio_schema(), session.revision()))
+    })
+    .await
+    {
+        Ok(Ok((document, revision))) => Json(StudioLoadResponse {
+            document,
+            revision: Some(revision),
+        }),
+        Ok(Err(error)) => Json(StudioLoadResponse {
+            document: studio_error("", error),
+            revision: None,
         }),
         Err(error) => Json(StudioLoadResponse {
             document: studio_error("", error),
@@ -96,17 +107,34 @@ async fn preview_schema(
     State(state): State<StudioState>,
     Json(request): Json<StudioPreviewRequest>,
 ) -> Json<StudioPlanResponse> {
-    match state.workspace.preview_studio_schema_mutation(
-        &state.project_id,
-        STUDIO_AUTHORIZATION_CONTEXT,
-        &request.expected_schema_revision,
-        &request.expected_manifest_revision,
-        request.schema,
-    ) {
-        Ok(plan) => Json(StudioPlanResponse {
+    let worker_state = state.clone();
+    let result = tokio::task::spawn_blocking(move || {
+        worker_state.workspace.preview_studio_schema_mutation(
+            &worker_state.project_id,
+            STUDIO_AUTHORIZATION_CONTEXT,
+            &request.expected_schema_revision,
+            &request.expected_manifest_revision,
+            request.schema,
+        )
+    })
+    .await;
+    match result {
+        Ok(Ok(plan)) => Json(StudioPlanResponse {
             preview: plan.preview,
             plan_id: Some(plan.plan_id),
             revision: Some(plan.input_revisions),
+        }),
+        Ok(Err(error)) => Json(StudioPlanResponse {
+            preview: StudioPreviewResponse {
+                ok: false,
+                project: project_name(&state),
+                target: None,
+                content: None,
+                diff: None,
+                diagnostics: vec![sora_workspace::Diagnostic::error(error.to_string())],
+            },
+            plan_id: None,
+            revision: current_revision(&state),
         }),
         Err(error) => Json(StudioPlanResponse {
             preview: StudioPreviewResponse {
@@ -127,24 +155,33 @@ async fn apply_schema(
     State(state): State<StudioState>,
     Json(request): Json<StudioApplyRequest>,
 ) -> Json<StudioApplyResponse> {
-    match state.workspace.apply_studio_schema_mutation(
-        &state.project_id,
-        STUDIO_AUTHORIZATION_CONTEXT,
-        &request.plan_id,
-        &request.idempotency_key,
-    ) {
-        Ok(report) => {
-            let document = state
-                .workspace
-                .project(&state.project_id)
-                .map(|session| session.load_studio_schema())
-                .unwrap_or_else(|error| studio_error("", error));
-            Json(StudioApplyResponse {
-                document,
-                revision: Some(report.revision.clone()),
-                apply: Some(report),
-            })
-        }
+    let worker_state = state.clone();
+    let result = tokio::task::spawn_blocking(move || {
+        let report = worker_state.workspace.apply_studio_schema_mutation(
+            &worker_state.project_id,
+            STUDIO_AUTHORIZATION_CONTEXT,
+            &request.plan_id,
+            &request.idempotency_key,
+        )?;
+        let document = worker_state
+            .workspace
+            .project(&worker_state.project_id)
+            .map(|session| session.load_studio_schema())
+            .unwrap_or_else(|error| studio_error("", error));
+        Ok::<_, sora_workspace::MutationPlanError>((report, document))
+    })
+    .await;
+    match result {
+        Ok(Ok((report, document))) => Json(StudioApplyResponse {
+            document,
+            revision: Some(report.revision.clone()),
+            apply: Some(report),
+        }),
+        Ok(Err(error)) => Json(StudioApplyResponse {
+            document: studio_error(&project_name(&state), error),
+            revision: current_revision(&state),
+            apply: None,
+        }),
         Err(error) => Json(StudioApplyResponse {
             document: studio_error(&project_name(&state), error),
             revision: current_revision(&state),

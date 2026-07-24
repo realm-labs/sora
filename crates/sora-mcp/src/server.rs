@@ -35,6 +35,7 @@ pub struct SoraMcpServer {
     pub(crate) subscriptions: Arc<RwLock<BTreeSet<String>>>,
     pub(crate) artifacts: Arc<ArtifactStore>,
     pub(crate) tasks: Arc<TaskStore>,
+    pub(crate) trusted_project_scripts: Arc<RwLock<BTreeSet<String>>>,
     logging_level: Arc<AtomicU8>,
 }
 
@@ -60,6 +61,7 @@ impl SoraMcpServer {
             subscriptions: Arc::new(RwLock::new(BTreeSet::new())),
             artifacts: Arc::new(ArtifactStore::default()),
             tasks: Arc::new(TaskStore::default()),
+            trusted_project_scripts: Arc::new(RwLock::new(BTreeSet::new())),
             logging_level: Arc::new(AtomicU8::new(1)),
         }
     }
@@ -591,10 +593,58 @@ mod tests {
         );
         for tool in tools {
             assert!(tool.output_schema.is_some());
+            let annotations = tool.annotations.as_ref().expect("tool safety annotations");
+            assert_eq!(annotations.open_world_hint, Some(false));
+            assert!(annotations.read_only_hint.is_some());
+            assert!(annotations.destructive_hint.is_some());
+            assert!(annotations.idempotent_hint.is_some());
+            if matches!(
+                tool.name.as_ref(),
+                "sora_schema_apply"
+                    | "sora_data_apply"
+                    | "sora_excel_sync_apply"
+                    | "sora_build"
+                    | "sora_codegen"
+                    | "sora_export"
+                    | "sora_schema_lock"
+                    | "sora_excel_template"
+            ) {
+                assert_eq!(annotations.destructive_hint, Some(true));
+                assert_eq!(annotations.read_only_hint, Some(false));
+            }
             let input_schema = serde_json::to_value(&tool.input_schema)
                 .expect("tool input schema should serialize");
             assert_eq!(input_schema["type"], "object");
             assert_eq!(input_schema["additionalProperties"], false);
         }
+    }
+
+    #[test]
+    fn project_script_trust_is_shared_within_one_authorization_server_only() {
+        let workspace = Arc::new(WorkspaceService::new());
+        let server_a =
+            SoraMcpServer::new_with_authorization_context(workspace.clone(), "subject-a");
+        server_a
+            .trusted_project_scripts
+            .write()
+            .expect("trust state")
+            .insert("project:digest".to_owned());
+        let same_authorization_session = server_a.clone();
+        let server_b = SoraMcpServer::new_with_authorization_context(workspace, "subject-b");
+
+        assert!(
+            same_authorization_session
+                .trusted_project_scripts
+                .read()
+                .expect("trust state")
+                .contains("project:digest")
+        );
+        assert!(
+            !server_b
+                .trusted_project_scripts
+                .read()
+                .expect("trust state")
+                .contains("project:digest")
+        );
     }
 }

@@ -6,7 +6,7 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use sora_workspace::{
     ProjectCandidate, ProjectId, ProjectInitApplyReport, ProjectInitPlan, ProjectInspection,
-    RuntimeOptions, WorkspaceError,
+    RuntimeOptions,
 };
 
 use crate::{
@@ -18,34 +18,53 @@ use crate::{
 impl SoraMcpServer {
     #[tool(
         name = "sora_project_list",
-        description = "List Sora project manifests discovered inside the server's allowed roots"
+        description = "List Sora project manifests discovered inside the server's allowed roots",
+        annotations(
+            read_only_hint = true,
+            destructive_hint = false,
+            idempotent_hint = true,
+            open_world_hint = false
+        )
     )]
-    fn project_list(
+    async fn project_list(
         &self,
         Parameters(_input): Parameters<ProjectListInput>,
-    ) -> Json<ToolEnvelope<ProjectListOutput>> {
-        match self.workspace.discover_projects() {
-            Ok(projects) => {
+    ) -> Result<Json<ToolEnvelope<ProjectListOutput>>, rmcp::model::CallToolResult> {
+        let workspace = self.workspace.clone();
+        match tokio::task::spawn_blocking(move || workspace.discover_projects()).await {
+            Ok(Ok(projects)) => {
                 let count = projects.len();
-                Json(ToolEnvelope::success(
+                Ok(Json(ToolEnvelope::success(
                     None,
                     None,
                     format!("found {count} Sora project manifest(s)"),
                     ProjectListOutput { projects },
-                ))
+                )))
             }
-            Err(error) => Json(ToolEnvelope::failure(
+            Ok(Err(error)) => Err(tool_error(ToolEnvelope::<ProjectListOutput>::failure(
                 None,
                 None,
                 "failed to discover Sora projects",
                 error,
-            )),
+            ))),
+            Err(error) => Err(tool_error(ToolEnvelope::<ProjectListOutput>::failure(
+                None,
+                None,
+                "project discovery worker failed",
+                error,
+            ))),
         }
     }
 
     #[tool(
         name = "sora_project_open",
-        description = "Open one discovered Sora project by root id and root-relative manifest path"
+        description = "Open one discovered Sora project by root id and root-relative manifest path",
+        annotations(
+            read_only_hint = false,
+            destructive_hint = false,
+            idempotent_hint = true,
+            open_world_hint = false
+        )
     )]
     async fn project_open(
         &self,
@@ -54,43 +73,66 @@ impl SoraMcpServer {
     ) -> Result<Json<ToolEnvelope<ProjectOpenOutput>>, rmcp::model::CallToolResult> {
         let (root_id, relative_manifest) =
             self.resolve_project_selection(input, &context.peer).await?;
-        let inspection = self
-            .workspace
-            .inspect_discovered_project(&root_id, &relative_manifest)
-            .map_err(|error| project_open_error("failed to inspect Sora project", error))?;
-        let opened = self.workspace.open_discovered_project(
-            &root_id,
-            &relative_manifest,
-            RuntimeOptions::default(),
-            false,
-        );
-        let opened = match opened {
-            Ok(session) => Ok(session),
-            Err(WorkspaceError::UntrustedProjectScripts) => {
-                self.request_project_script_trust(&inspection, &context.peer)
-                    .await?;
-                self.workspace.open_discovered_project(
-                    &root_id,
-                    &relative_manifest,
-                    RuntimeOptions::default(),
-                    true,
-                )
+        let workspace = self.workspace.clone();
+        let inspect_root = root_id.clone();
+        let inspect_manifest = relative_manifest.clone();
+        let inspection = tokio::task::spawn_blocking(move || {
+            workspace.inspect_discovered_project(&inspect_root, &inspect_manifest)
+        })
+        .await
+        .map_err(|error| project_open_error("project inspection worker failed", error))?
+        .map_err(|error| project_open_error("failed to inspect Sora project", error))?;
+        let trust_key = project_script_trust_key(&root_id, &relative_manifest, &inspection);
+        let scripts_trusted = inspection.scripts.is_empty() || self.has_script_trust(&trust_key);
+        if !scripts_trusted {
+            self.request_project_script_trust(&inspection, &context.peer)
+                .await?;
+            self.remember_script_trust(trust_key)?;
+            for script in &inspection.scripts {
+                tracing::info!(
+                    audit_event = "project_script_trust",
+                    authorization_context = self.authorization_context.as_ref(),
+                    project = inspection.package,
+                    script_kind = ?script.kind,
+                    script_path = %script.path,
+                    script_digest = script.digest,
+                    "Sora project script trusted"
+                );
             }
-            Err(error) => Err(error),
-        };
+        }
+        let workspace = self.workspace.clone();
+        let open_root = root_id.clone();
+        let open_manifest = relative_manifest.clone();
+        let opened = tokio::task::spawn_blocking(move || {
+            workspace.open_discovered_project(
+                &open_root,
+                &open_manifest,
+                RuntimeOptions::default(),
+                true,
+            )
+        })
+        .await
+        .map_err(|error| project_open_error("project open worker failed", error))?;
         match opened {
-            Ok(session) => match session.inspect() {
-                Ok(project) => Ok(Json(ToolEnvelope::success(
-                    Some(session.id().clone()),
-                    Some(session.revision()),
-                    format!("opened Sora project `{}`", project.package),
-                    ProjectOpenOutput { project },
-                ))),
-                Err(error) => Err(project_open_error(
-                    "project opened but inspection failed",
-                    error,
-                )),
-            },
+            Ok(session) => {
+                let inspected_session = session.clone();
+                match tokio::task::spawn_blocking(move || inspected_session.inspect()).await {
+                    Ok(Ok(project)) => Ok(Json(ToolEnvelope::success(
+                        Some(session.id().clone()),
+                        Some(session.revision()),
+                        format!("opened Sora project `{}`", project.package),
+                        ProjectOpenOutput { project },
+                    ))),
+                    Ok(Err(error)) => Err(project_open_error(
+                        "project opened but inspection failed",
+                        error,
+                    )),
+                    Err(error) => Err(project_open_error(
+                        "opened project inspection worker failed",
+                        error,
+                    )),
+                }
+            }
             Err(error) => Err(project_open_error("failed to open Sora project", error)),
         }
     }
@@ -114,9 +156,10 @@ impl SoraMcpServer {
                 "provide both `root_id` and `relative_manifest`, or use a client that supports form elicitation",
             ));
         }
-        let candidates = self
-            .workspace
-            .discover_projects()
+        let workspace = self.workspace.clone();
+        let candidates = tokio::task::spawn_blocking(move || workspace.discover_projects())
+            .await
+            .map_err(|error| project_open_error("project discovery worker failed", error))?
             .map_err(|error| project_open_error("failed to discover Sora projects", error))?;
         if candidates.is_empty() {
             return Err(project_open_error(
@@ -182,73 +225,124 @@ impl SoraMcpServer {
         Ok(())
     }
 
+    fn has_script_trust(&self, trust_key: &str) -> bool {
+        self.trusted_project_scripts
+            .read()
+            .is_ok_and(|trusted| trusted.contains(trust_key))
+    }
+
+    fn remember_script_trust(&self, trust_key: String) -> Result<(), rmcp::model::CallToolResult> {
+        self.trusted_project_scripts
+            .write()
+            .map_err(|_| {
+                project_open_error(
+                    "failed to record project script trust",
+                    "script trust state lock is poisoned",
+                )
+            })?
+            .insert(trust_key);
+        Ok(())
+    }
+
     #[tool(
         name = "sora_project_inspect",
-        description = "Inspect a registered project's schema sources, data sources, scopes, and build capabilities"
+        description = "Inspect a registered project's schema sources, data sources, scopes, and build capabilities",
+        annotations(
+            read_only_hint = true,
+            destructive_hint = false,
+            idempotent_hint = true,
+            open_world_hint = false
+        )
     )]
-    fn project_inspect(
+    async fn project_inspect(
         &self,
         Parameters(input): Parameters<ProjectInput>,
-    ) -> Json<ToolEnvelope<ProjectInspectOutput>> {
-        let id = match ProjectId::new(input.project_id) {
-            Ok(id) => id,
-            Err(error) => {
-                return Json(ToolEnvelope::failure(
-                    None,
-                    None,
-                    "invalid project id",
-                    error,
-                ));
-            }
-        };
+    ) -> Result<Json<ToolEnvelope<ProjectInspectOutput>>, rmcp::model::CallToolResult> {
+        let id = ProjectId::new(input.project_id).map_err(|error| {
+            tool_error(ToolEnvelope::<ProjectInspectOutput>::failure(
+                None,
+                None,
+                "invalid project id",
+                error,
+            ))
+        })?;
         match self.workspace.project(&id) {
-            Ok(session) => match session.inspect() {
-                Ok(project) => Json(ToolEnvelope::success(
-                    Some(id),
-                    Some(session.revision()),
-                    format!("inspected Sora project `{}`", project.package),
-                    ProjectInspectOutput { project },
-                )),
-                Err(error) => Json(ToolEnvelope::failure(
-                    Some(id),
-                    Some(session.revision()),
-                    "failed to inspect Sora project",
-                    error,
-                )),
-            },
-            Err(error) => Json(ToolEnvelope::failure(
+            Ok(session) => {
+                let revision = session.revision();
+                match tokio::task::spawn_blocking(move || session.inspect()).await {
+                    Ok(Ok(project)) => Ok(Json(ToolEnvelope::success(
+                        Some(id),
+                        Some(revision),
+                        format!("inspected Sora project `{}`", project.package),
+                        ProjectInspectOutput { project },
+                    ))),
+                    Ok(Err(error)) => {
+                        Err(tool_error(ToolEnvelope::<ProjectInspectOutput>::failure(
+                            Some(id),
+                            Some(revision),
+                            "failed to inspect Sora project",
+                            error,
+                        )))
+                    }
+                    Err(error) => Err(tool_error(ToolEnvelope::<ProjectInspectOutput>::failure(
+                        Some(id),
+                        Some(revision),
+                        "project inspection worker failed",
+                        error,
+                    ))),
+                }
+            }
+            Err(error) => Err(tool_error(ToolEnvelope::<ProjectInspectOutput>::failure(
                 Some(id),
                 None,
                 "unknown Sora project",
                 error,
-            )),
+            ))),
         }
     }
 
     #[tool(
         name = "sora_project_init",
-        description = "Preview a new project scaffold inside an allowed root; this operation never writes files"
+        description = "Preview a new project scaffold inside an allowed root; this operation never writes files",
+        annotations(
+            read_only_hint = true,
+            destructive_hint = false,
+            idempotent_hint = true,
+            open_world_hint = false
+        )
     )]
-    fn project_init(
+    async fn project_init(
         &self,
         Parameters(input): Parameters<ProjectInitInput>,
     ) -> Result<Json<ToolEnvelope<ProjectInitPlan>>, rmcp::model::CallToolResult> {
-        match self.workspace.preview_project_init(
-            &self.authorization_context,
-            &input.root_id,
-            &input.relative_directory,
-            &input.package,
-        ) {
-            Ok(plan) => Ok(Json(ToolEnvelope::success(
+        let workspace = self.workspace.clone();
+        let owner = self.authorization_context.clone();
+        match tokio::task::spawn_blocking(move || {
+            workspace.preview_project_init(
+                &owner,
+                &input.root_id,
+                &input.relative_directory,
+                &input.package,
+            )
+        })
+        .await
+        {
+            Ok(Ok(plan)) => Ok(Json(ToolEnvelope::success(
                 None,
                 None,
                 format!("planned {} new project file(s)", plan.files.len()),
                 plan,
             ))),
-            Err(error) => Err(tool_error(ToolEnvelope::<ProjectInitPlan>::failure(
+            Ok(Err(error)) => Err(tool_error(ToolEnvelope::<ProjectInitPlan>::failure(
                 None,
                 None,
                 "project initialization preview failed",
+                error,
+            ))),
+            Err(error) => Err(tool_error(ToolEnvelope::<ProjectInitPlan>::failure(
+                None,
+                None,
+                "project initialization preview worker failed",
                 error,
             ))),
         }
@@ -256,19 +350,27 @@ impl SoraMcpServer {
 
     #[tool(
         name = "sora_project_init_apply",
-        description = "Atomically create and open a project from an unexpired initialization plan"
+        description = "Atomically create and open a project from an unexpired initialization plan",
+        annotations(
+            read_only_hint = false,
+            destructive_hint = false,
+            idempotent_hint = true,
+            open_world_hint = false
+        )
     )]
     async fn project_init_apply(
         &self,
         Parameters(input): Parameters<ProjectInitApplyInput>,
         context: rmcp::service::RequestContext<rmcp::RoleServer>,
     ) -> Result<Json<ToolEnvelope<ProjectInitApplyReport>>, rmcp::model::CallToolResult> {
-        match self.workspace.apply_project_init(
-            &self.authorization_context,
-            &input.plan_id,
-            &input.idempotency_key,
-        ) {
-            Ok(report) => {
+        let workspace = self.workspace.clone();
+        let owner = self.authorization_context.clone();
+        match tokio::task::spawn_blocking(move || {
+            workspace.apply_project_init(&owner, &input.plan_id, &input.idempotency_key)
+        })
+        .await
+        {
+            Ok(Ok(report)) => {
                 let _ = context.peer.notify_resource_list_changed().await;
                 Ok(Json(ToolEnvelope::success(
                     Some(report.project_id.clone()),
@@ -277,10 +379,16 @@ impl SoraMcpServer {
                     report,
                 )))
             }
-            Err(error) => Err(tool_error(ToolEnvelope::<ProjectInitApplyReport>::failure(
+            Ok(Err(error)) => Err(tool_error(ToolEnvelope::<ProjectInitApplyReport>::failure(
                 None,
                 None,
                 "project initialization apply failed",
+                error,
+            ))),
+            Err(error) => Err(tool_error(ToolEnvelope::<ProjectInitApplyReport>::failure(
+                None,
+                None,
+                "project initialization apply worker failed",
                 error,
             ))),
         }
@@ -359,4 +467,18 @@ fn project_open_error(
     tool_error(ToolEnvelope::<ProjectOpenOutput>::failure(
         None, None, summary, error,
     ))
+}
+
+fn project_script_trust_key(
+    root_id: &str,
+    relative_manifest: &str,
+    inspection: &sora_workspace::DiscoveredProjectInspection,
+) -> String {
+    let scripts = inspection
+        .scripts
+        .iter()
+        .map(|script| format!("{:?}:{}:{}", script.kind, script.path, script.digest))
+        .collect::<Vec<_>>()
+        .join("|");
+    format!("{root_id}:{relative_manifest}:{scripts}")
 }

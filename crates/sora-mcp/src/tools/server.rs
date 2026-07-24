@@ -11,7 +11,13 @@ use crate::{SERVER_NAME, SoraMcpServer, TARGET_PROTOCOL_VERSION};
 impl SoraMcpServer {
     #[tool(
         name = "sora_server_info",
-        description = "Return the Sora MCP protocol revision and current workspace project count"
+        description = "Return the Sora MCP protocol revision and current workspace project count",
+        annotations(
+            read_only_hint = true,
+            destructive_hint = false,
+            idempotent_hint = true,
+            open_world_hint = false
+        )
     )]
     fn server_info(
         &self,

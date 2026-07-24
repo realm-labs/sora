@@ -160,6 +160,8 @@ pub enum ExcelSyncPlanError {
     Project(String),
     #[error("failed to render Excel sync: {0}")]
     Rendering(String),
+    #[error("Excel workbook path resolves outside the project data root: {0}")]
+    UnsafePath(PathBuf),
     #[error("Excel sync transaction failed: {0}")]
     Transaction(String),
     #[error("project revision refresh failed: {0}")]
@@ -489,6 +491,7 @@ fn render_sync_in_stage(
             continue;
         }
         let relative = bounded_relative(data_root, &workbook.path)?;
+        ensure_existing_path_within_root(data_root, &workbook.path)?;
         let staged = stage_root.join(relative);
         if let Some(parent) = staged.parent() {
             fs::create_dir_all(parent)
@@ -538,6 +541,17 @@ fn render_sync_in_stage(
         writes,
         workbook_changes,
     })
+}
+
+fn ensure_existing_path_within_root(root: &Path, path: &Path) -> Result<(), ExcelSyncPlanError> {
+    let canonical_root =
+        fs::canonicalize(root).map_err(|error| ExcelSyncPlanError::Rendering(error.to_string()))?;
+    let canonical_path =
+        fs::canonicalize(path).map_err(|error| ExcelSyncPlanError::Rendering(error.to_string()))?;
+    if !canonical_path.starts_with(&canonical_root) {
+        return Err(ExcelSyncPlanError::UnsafePath(path.to_path_buf()));
+    }
+    Ok(())
 }
 
 fn bounded_relative<'a>(root: &'a Path, path: &'a Path) -> Result<PathBuf, ExcelSyncPlanError> {
