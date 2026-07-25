@@ -4,6 +4,7 @@ import {
   ChevronRight,
   Eye,
   Languages,
+  Layers3,
   Moon,
   MoreHorizontal,
   Network,
@@ -17,6 +18,7 @@ import type { Translation } from "../i18n";
 import type { Language, StudioSchema, Theme } from "../types";
 
 export function Topbar({
+  activeView,
   canGoBack,
   canGoForward,
   dirty,
@@ -37,8 +39,10 @@ export function Topbar({
   t,
   theme,
   toggleTheme,
-  updateProjectId
+  updateProjectId,
+  onSelectView
 }: {
+  activeView: string | null;
   canGoBack: boolean;
   canGoForward: boolean;
   dirty: boolean;
@@ -47,6 +51,7 @@ export function Topbar({
   goForward: () => void;
   language: Language;
   loading: boolean;
+  onSelectView: (view: string | null) => void;
   project: string;
   previewLocalChanges: () => void;
   previewing: boolean;
@@ -109,6 +114,25 @@ export function Topbar({
         <strong>{schema?.project_id ?? t.schemaUnavailable}</strong>
       </div>
 
+      {schema ? (
+        <label className="view-selector">
+          <Layers3 size={14} aria-hidden="true" />
+          <span>{t.view}</span>
+          <select
+            aria-label={t.view}
+            onChange={(event) => onSelectView(event.target.value || null)}
+            value={activeView ?? ""}
+          >
+            <option value="">{t.canonical}</option>
+            {Object.keys(schema.views).map((view) => (
+              <option key={view} value={view}>
+                {view}
+              </option>
+            ))}
+          </select>
+        </label>
+      ) : null}
+
       <div className="header-spacer" />
 
       {dirty ? (
@@ -153,6 +177,7 @@ export function Topbar({
               <span>{t.projectId}</span>
               <input
                 aria-label={t.projectId}
+                disabled={activeView !== null}
                 value={projectIdDraft}
                 onBlur={commitProjectId}
                 onChange={(event) => setProjectIdDraft(event.target.value)}

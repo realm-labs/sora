@@ -2172,6 +2172,37 @@ summary:focus-visible {
   white-space: nowrap;
 }
 
+.view-selector {
+  display: flex;
+  align-items: center;
+  flex: 0 0 auto;
+  gap: 6px;
+  height: 30px;
+  margin-left: 16px;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-control);
+  color: var(--text-muted);
+  background: var(--surface-input);
+  padding: 0 7px;
+}
+
+.view-selector span {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.view-selector select {
+  min-width: 90px;
+  height: 26px;
+  border: 0;
+  outline: 0;
+  color: var(--text-primary);
+  background: transparent;
+  font-size: 12px;
+  font-weight: 650;
+}
+
 .header-spacer,
 .statusbar-spacer {
   flex: 1 1 auto;
@@ -2367,6 +2398,47 @@ summary:focus-visible {
   font-size: 10px;
 }
 
+.navigator-tabs {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 2px;
+  padding: 2px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-control);
+  background: var(--surface-input);
+}
+
+.navigator-tabs button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  height: 28px;
+  gap: 5px;
+  border: 0;
+  border-radius: 3px;
+  color: var(--text-muted);
+  background: transparent;
+  cursor: pointer;
+  font-size: 10px;
+}
+
+.navigator-tabs button:hover {
+  color: var(--text-primary);
+  background: var(--surface-hover);
+}
+
+.navigator-tabs button.active {
+  color: var(--text-primary);
+  background: var(--surface-selected);
+}
+
+.navigator-tabs span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .search {
   height: 30px;
   gap: 7px;
@@ -2475,6 +2547,56 @@ summary:focus-visible {
   box-shadow: none;
 }
 
+.group-list {
+  display: grid;
+  align-content: start;
+  gap: 2px;
+  overflow: auto;
+}
+
+.group-row {
+  display: grid;
+  grid-template-columns: 8px minmax(0, 1fr);
+  align-items: center;
+  min-height: 38px;
+  column-gap: 8px;
+  border-radius: 3px;
+  padding: 4px 6px;
+}
+
+.group-row:hover {
+  background: var(--surface-hover);
+}
+
+.group-row strong {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--text-primary);
+  font-size: 12px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.group-row small {
+  grid-column: 2;
+  color: var(--text-muted);
+  font-size: 10px;
+}
+
+.group-state {
+  grid-row: 1 / span 2;
+  width: 6px;
+  height: 6px;
+  border: 1px solid var(--border-strong);
+  border-radius: 50%;
+}
+
+.group-state.enabled {
+  border-color: var(--status-success);
+  background: var(--status-success);
+}
+
 .panel-resizer {
   grid-row: 2;
 }
@@ -2558,6 +2680,55 @@ body.resizing-panel .panel-resizer::after {
   background: var(--surface-panel);
 }
 
+.inspector.read-only {
+  position: relative;
+}
+
+.read-only-banner {
+  position: sticky;
+  z-index: 12;
+  top: 0;
+  display: flex;
+  align-items: center;
+  min-height: 28px;
+  gap: 6px;
+  border-bottom: 1px solid var(--border-default);
+  color: var(--accent-hover);
+  background: var(--surface-raised);
+  padding: 0 12px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.inspector-fieldset {
+  min-width: 0;
+  margin: 0;
+  border: 0;
+  padding: 0;
+}
+
+.inspector.read-only .inspector-content input,
+.inspector.read-only .inspector-content select,
+.inspector.read-only .inspector-content textarea,
+.inspector.read-only .inspector-content button {
+  pointer-events: none;
+}
+
+.inspector.read-only .inspector-content input,
+.inspector.read-only .inspector-content select,
+.inspector.read-only .inspector-content textarea {
+  opacity: 0.72;
+}
+
+.inspector.read-only .inspector-content button:disabled,
+.inspector.read-only .inspector-content input:disabled,
+.inspector.read-only .inspector-content select:disabled,
+.inspector.read-only .inspector-content textarea:disabled {
+  cursor: default;
+}
+
 .inspector-content {
   padding: 14px 12px 20px;
 }
@@ -2603,6 +2774,12 @@ body.resizing-panel .panel-resizer::after {
   color: var(--status-warning);
 }
 
+.status-view {
+  color: var(--accent-hover);
+  font-size: 10px;
+  font-weight: 700;
+}
+
 @media (max-width: 1180px) {
   .app-identity {
     width: auto;
@@ -2615,6 +2792,10 @@ body.resizing-panel .panel-resizer::after {
 
   .header-dirty > span,
   .project-breadcrumb span {
+    display: none;
+  }
+
+  .view-selector span {
     display: none;
   }
 

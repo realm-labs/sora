@@ -150,6 +150,7 @@ pub(crate) fn build_schema(
         }
         let mut metadata = BTreeMap::from([
             ("id".to_owned(), item.id.clone()),
+            ("canonical_name".to_owned(), item.canonical_name.clone()),
             ("mode".to_owned(), table_mode(item.mode).to_owned()),
             (
                 "key".to_owned(),
@@ -170,7 +171,12 @@ pub(crate) fn build_schema(
             id: owner,
             name: item.name.clone(),
             kind: StudioNodeKind::Table,
-            source: node_source(source_by_node, sources, StudioNodeKind::Table, &item.name),
+            source: node_source(
+                source_by_node,
+                sources,
+                StudioNodeKind::Table,
+                &item.canonical_name,
+            ),
             groups: item.groups.values.clone(),
             subtitle: format!(
                 "{} table, {} fields",

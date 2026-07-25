@@ -7,7 +7,7 @@ use anyhow::{Context, Result};
 use axum::{
     Json, Router,
     body::Body,
-    extract::{Path as AxumPath, State},
+    extract::{Path as AxumPath, Query, State},
     http::{StatusCode, Uri, header},
     response::{IntoResponse, Response},
     routing::{get, put},
@@ -78,13 +78,21 @@ async fn health() -> Json<HealthResponse> {
     Json(HealthResponse { ok: true })
 }
 
-async fn schema(State(state): State<StudioState>) -> Json<StudioLoadResponse> {
+async fn schema(
+    State(state): State<StudioState>,
+    Query(query): Query<StudioSchemaQuery>,
+) -> Json<StudioLoadResponse> {
     let worker_state = state.clone();
     match tokio::task::spawn_blocking(move || {
         worker_state
             .workspace
             .project(&worker_state.project_id)
-            .map(|session| (session.load_studio_schema(), session.revision()))
+            .map(|session| {
+                (
+                    session.load_studio_schema_view(query.view.as_deref()),
+                    session.revision(),
+                )
+            })
     })
     .await
     {
@@ -101,6 +109,12 @@ async fn schema(State(state): State<StudioState>) -> Json<StudioLoadResponse> {
             revision: None,
         }),
     }
+}
+
+#[derive(Debug, Default, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct StudioSchemaQuery {
+    view: Option<String>,
 }
 
 async fn preview_schema(

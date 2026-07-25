@@ -12,7 +12,7 @@ use sora_diagnostics::SoraError;
 use sora_input_schema::schema::load_project_schema_file;
 use sora_ir::{
     normalize::normalize_schema_with_parsers, parser::ParserRegistry as SchemaParserRegistry,
-    validate::validate_config_ir,
+    projection::project_config_ir, validate::validate_config_ir,
 };
 use sora_schema::model::{
     CodegenSchema, EnumSchema, SchemaFile, StructSchema, TableSchema, UnionSchema, ViewSchema,
@@ -32,12 +32,18 @@ use super::{
 
 #[cfg(test)]
 pub(crate) fn load_studio_schema(project: &Path) -> StudioSchemaResponse {
-    load_studio_schema_with_parsers(project, &SchemaParserRegistry::builtin())
+    load_studio_schema_with_parsers(project, &SchemaParserRegistry::builtin(), None)
+}
+
+#[cfg(test)]
+pub(crate) fn load_studio_schema_view(project: &Path, view: &str) -> StudioSchemaResponse {
+    load_studio_schema_with_parsers(project, &SchemaParserRegistry::builtin(), Some(view))
 }
 
 pub(super) fn load_studio_schema_with_parsers(
     project: &Path,
     parser_registry: &SchemaParserRegistry,
+    view: Option<&str>,
 ) -> StudioSchemaResponse {
     let source_index = match schema_source_index(project) {
         Ok(index) => index,
@@ -70,28 +76,34 @@ pub(super) fn load_studio_schema_with_parsers(
         )
     };
     match normalize_schema_with_parsers(raw_schema.clone(), parser_registry) {
-        Ok(ir) => match validate_config_ir(&ir) {
-            Ok(()) => StudioSchemaResponse {
-                ok: true,
-                project: project.display().to_string(),
-                diagnostics: vec![StudioDiagnostic::info("schema loaded successfully")],
-                schema: Some(build_schema(
-                    &ir,
-                    &source_index.sources,
-                    &source_index.source_by_node,
-                )),
-            },
-            Err(error) => StudioSchemaResponse {
-                ok: false,
-                project: project.display().to_string(),
-                diagnostics: studio_diagnostics(&error),
-                schema: Some(build_schema(
-                    &ir,
-                    &source_index.sources,
-                    &source_index.source_by_node,
-                )),
-            },
-        },
+        Ok(ir) => {
+            let projected = validate_config_ir(&ir).and_then(|()| match view {
+                Some(view) => project_config_ir(&ir, view),
+                None => Ok(ir.clone()),
+            });
+            match projected {
+                Ok(displayed_ir) => StudioSchemaResponse {
+                    ok: true,
+                    project: project.display().to_string(),
+                    diagnostics: vec![StudioDiagnostic::info("schema loaded successfully")],
+                    schema: Some(build_schema(
+                        &displayed_ir,
+                        &source_index.sources,
+                        &source_index.source_by_node,
+                    )),
+                },
+                Err(error) => StudioSchemaResponse {
+                    ok: false,
+                    project: project.display().to_string(),
+                    diagnostics: studio_diagnostics(&error),
+                    schema: Some(build_schema(
+                        &ir,
+                        &source_index.sources,
+                        &source_index.source_by_node,
+                    )),
+                },
+            }
+        }
         Err(error) => StudioSchemaResponse {
             ok: false,
             project: project.display().to_string(),
@@ -125,7 +137,7 @@ pub(super) fn save_studio_schema_with_parsers(
     })();
     match result {
         Ok(paths) => {
-            let mut response = load_studio_schema_with_parsers(project, parser_registry);
+            let mut response = load_studio_schema_with_parsers(project, parser_registry, None);
             if response.ok {
                 let targets = paths
                     .iter()
@@ -185,7 +197,8 @@ pub(crate) fn preview_studio_schema_with_parsers(
             let next_project =
                 project_text_with_schema_files(project, &schema.project_id, &schema.sources)
                     .unwrap_or(current_project.clone());
-            let base_schema = load_studio_schema_with_parsers(project, parser_registry).schema;
+            let base_schema =
+                load_studio_schema_with_parsers(project, parser_registry, None).schema;
             let mut diff = format!(
                 "project: {}\n{}",
                 project.display(),

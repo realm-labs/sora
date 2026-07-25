@@ -3,6 +3,20 @@ export type EdgeKind = "type" | "ref" | "derived";
 export type Language = "en" | "zh";
 export type GraphMode = "fields" | "usedBy" | "all";
 export type Theme = "dark" | "light";
+export type NavigatorMode = "entities" | "files" | "groups";
+
+export type StudioView = {
+  contract: string;
+  groups: string[];
+  tables: {
+    include: string[];
+    exclude: string[];
+  };
+  names: {
+    tables: Record<string, string>;
+  };
+  bindings: Record<string, unknown>;
+};
 
 export type StudioField = {
   name: string;
@@ -40,7 +54,7 @@ export type StudioEdge = {
 export type StudioSchema = {
   project_id: string;
   groups: Record<string, boolean>;
-  views: Record<string, unknown>;
+  views: Record<string, StudioView>;
   sources: string[];
   summary: {
     enums: number;

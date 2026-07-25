@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState, type PointerEvent as ReactPointerEvent } from "react";
 import { type NodeChange, type NodeMouseHandler } from "@xyflow/react";
-import { AlertTriangle, CircleDot, X } from "lucide-react";
+import { AlertTriangle, CircleDot, Eye, X } from "lucide-react";
 
 import { GraphCanvas } from "./components/GraphCanvas";
 import { Inspector } from "./components/Inspector";
@@ -66,6 +66,7 @@ export function App() {
   const [saving, setSaving] = useState(false);
   const [previewing, setPreviewing] = useState(false);
   const [preview, setPreview] = useState<StudioPreviewResponse | null>(null);
+  const [activeView, setActiveView] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [selectionHistory, setSelectionHistory] = useState<{ items: string[]; index: number }>({
@@ -85,16 +86,22 @@ export function App() {
   const [layoutRevision, setLayoutRevision] = useState(0);
   const t = translations[language];
 
-  const load = async () => {
+  const load = async (view = activeView) => {
     setLoading(true);
     try {
-      const next: StudioResponse = await fetch("/api/schema").then((res) => res.json());
+      const queryString = view ? `?view=${encodeURIComponent(view)}` : "";
+      const next: StudioResponse = await fetch(`/api/schema${queryString}`).then((res) => res.json());
       setResponse(next);
       setEditableSchema(next.schema ? structuredClone(next.schema) : null);
       setDirty(false);
-      if (!selectedId && next.schema?.nodes?.length) {
-        selectInitialNode(next.schema.nodes[0].id);
-      }
+      const nextSelection =
+        next.schema?.nodes.find((node) => node.id === selectedId)?.id ??
+        next.schema?.nodes[0]?.id ??
+        null;
+      setSelectedId(nextSelection);
+      setSelectionHistory(
+        nextSelection ? { items: [nextSelection], index: 0 } : { items: [], index: -1 }
+      );
     } catch (error) {
       setResponse({
         ok: false,
@@ -139,6 +146,10 @@ export function App() {
   }, [manualSizes]);
 
   const schema = editableSchema ?? response?.schema ?? null;
+  const readOnly = activeView !== null;
+  const contractId = activeView
+    ? schema?.views[activeView]?.contract ?? schema?.project_id ?? ""
+    : schema?.project_id ?? "";
   const localValidationIssues = useMemo(() => (schema ? validateSchema(schema) : []), [schema]);
   const backendValidationIssues = useMemo(
     () => (dirty ? [] : diagnosticsToValidationIssues(response?.diagnostics ?? [])),
@@ -244,6 +255,12 @@ export function App() {
     setLayoutRevision((value) => value + 1);
   };
   const toggleTheme = () => setTheme((value) => (value === "dark" ? "light" : "dark"));
+  const switchView = (view: string | null) => {
+    if (view === activeView) return;
+    if (dirty && !window.confirm(t.switchViewDiscard)) return;
+    setActiveView(view);
+    void load(view);
+  };
   const startPanelResize = (side: "left" | "right", event: ReactPointerEvent) => {
     event.preventDefault();
     document.body.classList.add("resizing-panel");
@@ -522,8 +539,10 @@ export function App() {
         previewLocalChanges={() => void previewLocalChanges()}
         previewing={previewing}
         project={response?.project ?? ""}
-        refresh={() => void load()}
+        refresh={() => void load(activeView)}
         schema={schema}
+        activeView={activeView}
+        onSelectView={switchView}
         setLanguage={setLanguage}
         updateProjectId={editProjectId}
         saveDisabled={localValidationIssues.length > 0}
@@ -546,6 +565,7 @@ export function App() {
         setQuery={setQuery}
         t={t}
         visibleNodes={visibleNodes}
+        readOnly={readOnly}
       />
 
       <div
@@ -596,30 +616,38 @@ export function App() {
         title={t.resizeRightPanel}
       />
 
-      <aside className="inspector">
+      <aside className={readOnly ? "inspector read-only" : "inspector"}>
+        {readOnly ? (
+          <div className="read-only-banner">
+            <Eye size={13} />
+            <span>{t.readOnlyView}</span>
+          </div>
+        ) : null}
         {selected && schema ? (
-          <Inspector
-            edges={schema?.edges ?? []}
-            language={language}
-            node={selected}
-            onAddEnumValue={createEnumValue}
-            onAddField={createField}
-            onAddUnionVariant={createUnionVariant}
-            onAddUnionVariantField={createUnionVariantField}
-            onDeleteField={removeField}
-            onDeleteNode={deleteSelectedNode}
-            onDeleteUnionVariant={removeUnionVariant}
-            onMoveField={reorderField}
-            onMoveUnionVariant={reorderUnionVariant}
-            onMoveUnionVariantField={reorderUnionVariantField}
-            onRenameNode={renameSelectedNode}
-            onUpdateEnumValue={editEnumValue}
-            onUpdateNodeSettings={editNodeSettings}
-            onUpdateField={editField}
-            onUpdateUnionVariant={editUnionVariant}
-            schema={schema}
-            validationIssues={validationIssues.filter((issue) => issue.targetId === selected.id)}
-          />
+          <fieldset className="inspector-fieldset" disabled={readOnly}>
+            <Inspector
+              edges={schema?.edges ?? []}
+              language={language}
+              node={selected}
+              onAddEnumValue={createEnumValue}
+              onAddField={createField}
+              onAddUnionVariant={createUnionVariant}
+              onAddUnionVariantField={createUnionVariantField}
+              onDeleteField={removeField}
+              onDeleteNode={deleteSelectedNode}
+              onDeleteUnionVariant={removeUnionVariant}
+              onMoveField={reorderField}
+              onMoveUnionVariant={reorderUnionVariant}
+              onMoveUnionVariantField={reorderUnionVariantField}
+              onRenameNode={renameSelectedNode}
+              onUpdateEnumValue={editEnumValue}
+              onUpdateNodeSettings={editNodeSettings}
+              onUpdateField={editField}
+              onUpdateUnionVariant={editUnionVariant}
+              schema={schema}
+              validationIssues={validationIssues.filter((issue) => issue.targetId === selected.id)}
+            />
+          </fieldset>
         ) : (
           <div className="empty-state">{t.selectSchemaItem}</div>
         )}
@@ -632,6 +660,8 @@ export function App() {
             ? `${validationIssues.length} ${t.issues}`
             : t.valid}
         </span>
+        <strong className="status-view">{activeView ?? t.canonical}</strong>
+        {contractId ? <code title={contractId}>{contractId}</code> : null}
         <span>
           {schema?.summary.tables ?? 0} {t.kindPlural.table.toLowerCase()}
         </span>

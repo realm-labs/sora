@@ -1,18 +1,21 @@
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import {
+  Boxes,
   Check,
   ChevronDown,
   ChevronRight,
   FileText,
+  Files,
   Plus,
   Search,
+  Tags,
   Trash2,
   X
 } from "lucide-react";
 
 import { kindMeta, kindOrder } from "../constants";
 import type { Translation } from "../i18n";
-import type { NodeKind, StudioNode, StudioSchema } from "../types";
+import type { NavigatorMode, NodeKind, StudioNode, StudioSchema } from "../types";
 
 export function Sidebar({
   issueCounts,
@@ -25,7 +28,8 @@ export function Sidebar({
   selectedId,
   setQuery,
   t,
-  visibleNodes
+  visibleNodes,
+  readOnly
 }: {
   issueCounts: Record<string, number>;
   onAddSchemaSource: (source: string) => void;
@@ -33,6 +37,7 @@ export function Sidebar({
   onAddNode: (kind: NodeKind) => void;
   onDeleteSchemaSource: (source: string) => void;
   query: string;
+  readOnly: boolean;
   schema: StudioSchema | null;
   selectedId: string | null;
   setQuery: (query: string) => void;
@@ -41,6 +46,7 @@ export function Sidebar({
 }) {
   const [sourceDraft, setSourceDraft] = useState<string | null>(null);
   const [schemaFilesOpen, setSchemaFilesOpen] = useState(false);
+  const [mode, setMode] = useState<NavigatorMode>("entities");
   const startAddingSource = () => setSourceDraft(nextSchemaSource(schema?.sources ?? []));
   const applySourceDraft = () => {
     if (!sourceDraft) return;
@@ -56,16 +62,39 @@ export function Sidebar({
         <span>{schema?.nodes.length ?? 0}</span>
       </div>
 
-      <label className="search">
-        <Search size={16} />
-        <input
-          value={query}
-          onChange={(event) => setQuery(event.target.value)}
-          placeholder={t.searchSchema}
+      <div className="navigator-tabs" aria-label={t.navigatorMode}>
+        <NavigatorTab
+          active={mode === "entities"}
+          icon={<Boxes size={14} />}
+          label={t.entitiesMode}
+          onClick={() => setMode("entities")}
         />
-      </label>
+        <NavigatorTab
+          active={mode === "files"}
+          icon={<Files size={14} />}
+          label={t.filesMode}
+          onClick={() => setMode("files")}
+        />
+        <NavigatorTab
+          active={mode === "groups"}
+          icon={<Tags size={14} />}
+          label={t.groupsMode}
+          onClick={() => setMode("groups")}
+        />
+      </div>
 
-      {schema && (
+      {mode === "entities" ? (
+        <label className="search">
+          <Search size={16} />
+          <input
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder={t.searchSchema}
+          />
+        </label>
+      ) : null}
+
+      {schema && mode === "files" ? (
         <section className={schemaFilesOpen ? "schema-files open" : "schema-files"}>
           <h2>
             <button
@@ -80,17 +109,19 @@ export function Sidebar({
               <span>{schema.sources.length}</span>
               <small>{schemaFileNodeCount}</small>
             </button>
-            <button
-              className="section-action"
-              onClick={() => {
-                setSchemaFilesOpen(true);
-                startAddingSource();
-              }}
-              title={t.addSchemaFile}
-              type="button"
-            >
-              <Plus size={14} />
-            </button>
+            {!readOnly ? (
+              <button
+                className="section-action"
+                onClick={() => {
+                  setSchemaFilesOpen(true);
+                  startAddingSource();
+                }}
+                title={t.addSchemaFile}
+                type="button"
+              >
+                <Plus size={14} />
+              </button>
+            ) : null}
           </h2>
           <div className="schema-file-list" hidden={!schemaFilesOpen}>
             {sourceDraft !== null && (
@@ -131,23 +162,45 @@ export function Sidebar({
                 <div className="schema-file-item" key={source}>
                   <span title={source}>{source}</span>
                   <small>{nodeCount}</small>
-                  <button
-                    className="mini-action danger"
-                    disabled={blocked}
-                    onClick={() => onDeleteSchemaSource(source)}
-                    title={blocked ? t.deleteSchemaFileBlocked : t.deleteSchemaFile}
-                    type="button"
-                  >
-                    <Trash2 size={14} />
-                  </button>
+                  {!readOnly ? (
+                    <button
+                      className="mini-action danger"
+                      disabled={blocked}
+                      onClick={() => onDeleteSchemaSource(source)}
+                      title={blocked ? t.deleteSchemaFileBlocked : t.deleteSchemaFile}
+                      type="button"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  ) : null}
                 </div>
               );
             })}
           </div>
         </section>
-      )}
+      ) : null}
 
-      <nav className="schema-list">
+      {schema && mode === "groups" ? (
+        <div className="group-list">
+          {Object.entries(schema.groups).map(([group, enabled]) => {
+            const viewCount = Object.values(schema.views).filter((view) =>
+              view.groups.includes(group)
+            ).length;
+            return (
+              <div className="group-row" key={group}>
+                <span className={enabled ? "group-state enabled" : "group-state"} />
+                <strong>{group}</strong>
+                <small>
+                  {enabled ? t.defaultEnabled : t.defaultDisabled} · {viewCount} {t.views}
+                </small>
+              </div>
+            );
+          })}
+        </div>
+      ) : null}
+
+      {mode === "entities" ? (
+        <nav className="schema-list">
         {kindOrder.map((kind) => {
           const items = visibleNodes
             .filter((node) => node.kind === kind)
@@ -160,10 +213,12 @@ export function Sidebar({
                 {t.kindPlural[kind]}
                 <span>{items.length}</span>
               </h2>
-              <button className="list-item add-item" onClick={() => onAddNode(kind)} type="button">
-                <Plus size={14} />
-                <span>{t.addKind[kind]}</span>
-              </button>
+              {!readOnly ? (
+                <button className="list-item add-item" onClick={() => onAddNode(kind)} type="button">
+                  <Plus size={14} />
+                  <span>{t.addKind[kind]}</span>
+                </button>
+              ) : null}
               {items.map((node) => (
                 <button
                   key={node.id}
@@ -178,8 +233,28 @@ export function Sidebar({
             </section>
           );
         })}
-      </nav>
+        </nav>
+      ) : null}
     </aside>
+  );
+}
+
+function NavigatorTab({
+  active,
+  icon,
+  label,
+  onClick
+}: {
+  active: boolean;
+  icon: ReactNode;
+  label: string;
+  onClick: () => void;
+}) {
+  return (
+    <button className={active ? "active" : ""} onClick={onClick} title={label} type="button">
+      {icon}
+      <span>{label}</span>
+    </button>
   );
 }
 

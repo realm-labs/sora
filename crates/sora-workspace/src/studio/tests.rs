@@ -10,8 +10,8 @@ use super::{
     model::{StudioField, StudioNode, StudioNodeKind, StudioSchema, StudioSummary},
     render::{parse_parser, push_field, render_schema_module},
     service::{
-        TextFileWrite, load_studio_schema, preview_studio_schema, project_text_with_schema_files,
-        save_studio_schema, write_studio_schema,
+        TextFileWrite, load_studio_schema, load_studio_schema_view, preview_studio_schema,
+        project_text_with_schema_files, save_studio_schema, write_studio_schema,
     },
 };
 use crate::mutation::commit_text_transaction;
@@ -811,6 +811,36 @@ fn showcase_project_roundtrips_through_studio_save() {
         fs::read_to_string(&project)
             .unwrap()
             .contains("id = \"com.sora.showcase.edited\"")
+    );
+
+    let _ = fs::remove_dir_all(base);
+}
+
+#[test]
+fn showcase_views_use_the_shared_schema_projection() {
+    let base = temp_dir();
+    let project = copy_showcase_project(&base);
+
+    let client = load_studio_schema_view(&project, "client");
+    let server = load_studio_schema_view(&project, "server");
+
+    assert!(client.ok, "{:?}", client.diagnostics);
+    assert!(server.ok, "{:?}", server.diagnostics);
+    let client = client.schema.unwrap();
+    let server = server.schema.unwrap();
+    assert_eq!(client.summary.tables, 33);
+    assert_eq!(server.summary.tables, 34);
+    assert!(
+        !client
+            .nodes
+            .iter()
+            .any(|node| node.name == "MaintenanceWindow")
+    );
+    assert!(
+        server
+            .nodes
+            .iter()
+            .any(|node| node.name == "MaintenanceWindow")
     );
 
     let _ = fs::remove_dir_all(base);
