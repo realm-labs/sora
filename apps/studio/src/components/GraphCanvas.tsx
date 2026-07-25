@@ -65,11 +65,6 @@ export function GraphCanvas({
             {t.allMode}
           </button>
         </div>
-        <span>
-          {nodes.length}
-          {t.nodesAbbr} / {edges.length}
-          {t.edgesAbbr}
-        </span>
         <button className="toolbar-button" onClick={resetLayout}>
           <RotateCcw size={14} />
           {t.reset}

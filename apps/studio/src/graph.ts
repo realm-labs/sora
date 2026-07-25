@@ -258,9 +258,9 @@ function naturalCardHeight(node: StudioNode) {
   if (node.kind === "union") {
     const variants = unionVariants(node);
     const fieldCount = variants.reduce((count, variant) => count + variant.fields.length, 0);
-    return 96 + variants.length * 34 + Math.max(fieldCount, 1) * 34;
+    return 66 + variants.length * 28 + Math.max(fieldCount, 1) * 28;
   }
-  return 70 + Math.max(node.fields.length, 1) * 34;
+  return 48 + Math.max(node.fields.length, 1) * 28;
 }
 
 function columnGap(nodes: StudioNode[], manualSizes: Record<string, { width: number; height: number }>) {

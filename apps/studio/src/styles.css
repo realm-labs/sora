@@ -2737,6 +2737,221 @@ body.resizing-panel .panel-resizer::after {
   border-top-color: var(--border-subtle);
 }
 
+.graph-toolbar {
+  top: 12px;
+  left: 12px;
+  right: 12px;
+}
+
+.segment-control,
+.studio-shell[data-theme="light"] .segment-control {
+  border-color: var(--border-default);
+  border-radius: var(--radius-control);
+  background: var(--surface-raised);
+  box-shadow: none;
+  backdrop-filter: none;
+}
+
+.segment-control button {
+  height: 30px;
+  min-width: 62px;
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 650;
+}
+
+.segment-control button + button {
+  border-left-color: var(--border-subtle);
+}
+
+.segment-control button:hover {
+  color: var(--text-primary);
+  background: var(--surface-hover);
+}
+
+.segment-control button.active,
+.studio-shell[data-theme="light"] .segment-control button.active {
+  color: var(--text-primary);
+  background: var(--accent-muted);
+}
+
+.toolbar-button,
+.studio-shell[data-theme="light"] .toolbar-button {
+  height: 30px;
+  border-color: var(--border-default);
+  border-radius: var(--radius-control);
+  color: var(--text-secondary);
+  background: var(--surface-raised);
+  box-shadow: none;
+  backdrop-filter: none;
+}
+
+.react-flow__controls,
+.studio-shell[data-theme="light"] .react-flow__controls,
+.react-flow__minimap,
+.studio-shell[data-theme="light"] .react-flow__minimap {
+  border-color: var(--border-default);
+  border-radius: var(--radius-control);
+  background: var(--surface-raised);
+  box-shadow: none;
+}
+
+.schema-card,
+.studio-shell[data-theme="light"] .schema-card {
+  border: 1px solid var(--border-default);
+  border-left: 3px solid var(--node-color);
+  border-radius: var(--radius-node);
+  color: var(--text-primary);
+  background: var(--surface-raised);
+  box-shadow: none;
+}
+
+.schema-card.selected,
+.studio-shell[data-theme="light"] .schema-card.selected {
+  border-color: var(--accent);
+  border-left-color: var(--node-color);
+  box-shadow: 0 0 0 1px var(--accent);
+}
+
+.schema-card.has-issue {
+  border-color: var(--status-danger);
+}
+
+.schema-card-header,
+.studio-shell[data-theme="light"] .schema-card-header {
+  grid-template-columns: 24px minmax(0, 1fr) auto;
+  min-height: 42px;
+  gap: 8px;
+  border-bottom-color: var(--border-subtle);
+  border-radius: 3px 3px 0 0;
+  background: var(--surface-raised);
+  padding: 6px 9px;
+}
+
+.schema-card-icon,
+.studio-shell[data-theme="light"] .schema-card-icon {
+  width: 24px;
+  height: 24px;
+  border-radius: 3px;
+  color: var(--node-color);
+  background: color-mix(in srgb, var(--node-color) 10%, transparent);
+  box-shadow: none;
+}
+
+.schema-card-header p,
+.studio-shell[data-theme="light"] .schema-card-header p {
+  color: var(--text-muted);
+  font-size: 9px;
+  font-weight: 700;
+}
+
+.schema-card-header strong,
+.studio-shell[data-theme="light"] .schema-card-header strong {
+  margin-top: 0;
+  color: var(--text-primary);
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.schema-card-header div > code {
+  display: block;
+  overflow: hidden;
+  margin-top: 2px;
+  color: var(--text-muted);
+  font-size: 9px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.schema-card-count,
+.studio-shell[data-theme="light"] .schema-card-count {
+  min-width: 22px;
+  border-radius: 3px;
+  color: var(--text-secondary);
+  background: var(--surface-hover);
+  padding: 3px 6px;
+  font-family: "SFMono-Regular", "Cascadia Code", Consolas, monospace;
+  font-size: 9px;
+}
+
+.node-field,
+.studio-shell[data-theme="light"] .node-field {
+  grid-template-columns: minmax(72px, 0.85fr) minmax(100px, 1.15fr);
+  min-height: 28px;
+  gap: 8px;
+  border-top-color: var(--border-subtle);
+  background: transparent;
+  padding: 4px 18px;
+}
+
+.node-field.linked,
+.studio-shell[data-theme="light"] .node-field.linked {
+  background: color-mix(in srgb, var(--node-color) 7%, transparent);
+}
+
+.field-name,
+.studio-shell[data-theme="light"] .field-name {
+  color: var(--text-primary);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.field-type {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  min-width: 0;
+  gap: 6px;
+}
+
+.field-type code,
+.node-field code,
+.studio-shell[data-theme="light"] .node-field code {
+  color: var(--text-secondary);
+  font-size: 10px;
+}
+
+.field-type small {
+  border: 1px solid var(--border-default);
+  border-radius: 3px;
+  color: var(--status-warning);
+  padding: 1px 3px;
+  font-family: "SFMono-Regular", "Cascadia Code", Consolas, monospace;
+  font-size: 8px;
+  text-transform: uppercase;
+}
+
+.node-port,
+.studio-shell[data-theme="light"] .node-port {
+  width: 8px;
+  height: 8px;
+  border: 1px solid var(--border-strong);
+  background: var(--surface-raised);
+  box-shadow: none;
+  opacity: 0.55;
+}
+
+.node-port.linked,
+.studio-shell[data-theme="light"] .node-port.linked {
+  border-color: var(--node-color);
+  background: var(--node-color);
+  box-shadow: none;
+  opacity: 1;
+}
+
+.node-port.target {
+  left: 5px;
+}
+
+.node-port.source {
+  right: 5px;
+}
+
+.node-port.node-target {
+  left: 6px;
+  top: 21px;
+}
+
 .statusbar {
   z-index: 25;
   grid-column: 1 / -1;

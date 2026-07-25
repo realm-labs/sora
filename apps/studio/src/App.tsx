@@ -51,7 +51,7 @@ const leftPanelMaxWidth = 420;
 const rightPanelMaxWidth = 520;
 const canvasMinWidth = 360;
 const panelWidthStorageKey = "sora-studio-panel-widths";
-const nodeSizeStorageKey = "sora-studio-node-sizes-v2";
+const nodeSizeStorageKey = "sora-studio-node-sizes-v3";
 
 type PanelWidths = {
   left: number;

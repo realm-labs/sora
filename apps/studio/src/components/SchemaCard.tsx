@@ -1,4 +1,4 @@
-import type { PointerEvent as ReactPointerEvent } from "react";
+import type { CSSProperties, PointerEvent as ReactPointerEvent } from "react";
 import { Handle, Position, useViewport, type Node, type NodeProps } from "@xyflow/react";
 
 import { fieldHandleId, kindMeta } from "../constants";
@@ -35,6 +35,7 @@ export function SchemaCard({
   const Icon = kindMeta[node.kind].icon;
   const variants = unionVariants(node);
   const count = node.kind === "union" ? unionVariantCount(node) : node.fields.length;
+  const canonicalName = node.metadata.canonical_name;
   const currentWidth = width ?? 310;
   const currentHeight = height ?? naturalCardHeight(node);
 
@@ -67,7 +68,7 @@ export function SchemaCard({
   return (
     <article
       className={`schema-card ${node.kind}${selected ? " selected" : ""}${issueCount ? " has-issue" : ""}`}
-      style={{ borderColor: issueCount ? "#ef4444" : kindMeta[node.kind].color }}
+      style={{ "--node-color": kindMeta[node.kind].color } as CSSProperties}
     >
       {resizeDirections.map((direction) => (
         <div
@@ -89,6 +90,7 @@ export function SchemaCard({
         <div>
           <p>{t.kindSingular[node.kind]}</p>
           <strong>{node.name}</strong>
+          {canonicalName && canonicalName !== node.name ? <code>{canonicalName}</code> : null}
         </div>
         <span className={issueCount ? "schema-card-count issue" : "schema-card-count"}>
           {issueCount || count}
@@ -156,7 +158,10 @@ export function SchemaCard({
                     }
                   />
                   <span className="field-name">{field.name}</span>
-                  <code>{field.ty}</code>
+                  <span className="field-type">
+                    <code>{field.ty}</code>
+                    {node.metadata.key === field.name ? <small>key</small> : null}
+                  </span>
                   <Handle
                     id={fieldHandleId(field.name)}
                     type="source"
@@ -213,10 +218,10 @@ function resizeRect(
 }
 
 function naturalCardHeight(node: SchemaCardData["node"]) {
-  if (node.kind !== "union") return 70 + Math.max(node.fields.length, 1) * 34;
+  if (node.kind !== "union") return 48 + Math.max(node.fields.length, 1) * 28;
   const variants = unionVariants(node);
   const fieldCount = variants.reduce((count, variant) => count + variant.fields.length, 0);
-  return 96 + variants.length * 34 + Math.max(fieldCount, 1) * 34;
+  return 66 + variants.length * 28 + Math.max(fieldCount, 1) * 28;
 }
 
 function clamp(value: number, min: number, max: number) {
