@@ -77,8 +77,8 @@ export function App() {
     index: -1
   });
   const [graphMode, setGraphMode] = useState<GraphMode>("fields");
-  const [theme, setTheme] = useState<Theme>("dark");
-  const [language, setLanguage] = useState<Language>("en");
+  const [theme, setTheme] = useState<Theme>("light");
+  const [language, setLanguage] = useState<Language>("zh");
   const [panelWidths, setPanelWidths] = useState<PanelWidths>(loadPanelWidths);
   const [manualPositions, setManualPositions] = useState<Record<string, { x: number; y: number }>>(
     {}
