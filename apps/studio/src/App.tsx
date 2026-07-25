@@ -45,11 +45,11 @@ import type {
   Theme
 } from "./types";
 
-const leftPanelMinWidth = 260;
-const rightPanelMinWidth = 320;
-const leftPanelMaxWidth = 620;
-const rightPanelMaxWidth = 760;
-const canvasMinWidth = 420;
+const leftPanelMinWidth = 220;
+const rightPanelMinWidth = 300;
+const leftPanelMaxWidth = 420;
+const rightPanelMaxWidth = 520;
+const canvasMinWidth = 360;
 const panelWidthStorageKey = "sora-studio-panel-widths";
 const nodeSizeStorageKey = "sora-studio-node-sizes-v2";
 
@@ -73,7 +73,7 @@ export function App() {
     index: -1
   });
   const [graphMode, setGraphMode] = useState<GraphMode>("fields");
-  const [theme, setTheme] = useState<Theme>("light");
+  const [theme, setTheme] = useState<Theme>("dark");
   const [language, setLanguage] = useState<Language>("en");
   const [panelWidths, setPanelWidths] = useState<PanelWidths>(loadPanelWidths);
   const [manualPositions, setManualPositions] = useState<Record<string, { x: number; y: number }>>(
@@ -510,6 +510,30 @@ export function App() {
         gridTemplateColumns: `${panelWidths.left}px 8px minmax(${canvasMinWidth}px, 1fr) 8px ${panelWidths.right}px`
       }}
     >
+      <Topbar
+        canGoBack={canGoBack}
+        canGoForward={canGoForward}
+        dirty={dirty}
+        discardLocalChanges={discardLocalChanges}
+        goBack={goBack}
+        goForward={goForward}
+        language={language}
+        loading={loading}
+        previewLocalChanges={() => void previewLocalChanges()}
+        previewing={previewing}
+        project={response?.project ?? ""}
+        refresh={() => void load()}
+        schema={schema}
+        setLanguage={setLanguage}
+        updateProjectId={editProjectId}
+        saveDisabled={localValidationIssues.length > 0}
+        saveLocalChanges={() => void saveLocalChanges()}
+        saving={saving}
+        t={t}
+        theme={theme}
+        toggleTheme={toggleTheme}
+      />
+
       <Sidebar
         issueCounts={nodeIssueCounts}
         navigateToNode={navigateToNode}
@@ -534,32 +558,8 @@ export function App() {
       />
 
       <section className="canvas-panel">
-        <Topbar
-          canGoBack={canGoBack}
-          canGoForward={canGoForward}
-          dirty={dirty}
-          discardLocalChanges={discardLocalChanges}
-          goBack={goBack}
-          goForward={goForward}
-          language={language}
-          loading={loading}
-          previewLocalChanges={() => void previewLocalChanges()}
-          previewing={previewing}
-          project={response?.project ?? ""}
-          refresh={() => void load()}
-          schema={schema}
-          setLanguage={setLanguage}
-          updateProjectId={editProjectId}
-          saveDisabled={localValidationIssues.length > 0}
-          saveLocalChanges={() => void saveLocalChanges()}
-          saving={saving}
-          t={t}
-          theme={theme}
-          toggleTheme={toggleTheme}
-        />
-
         {response?.diagnostics?.length ? (
-          <div className={response.ok ? "diagnostics ok" : "diagnostics error"}>
+          <div className={response.ok ? "workspace-notice ok" : "workspace-notice error"}>
             {response.ok ? <CircleDot size={16} /> : <AlertTriangle size={16} />}
             <span>{response.ok ? t.schemaLoaded : response.diagnostics[0].message}</span>
           </div>
@@ -624,6 +624,31 @@ export function App() {
           <div className="empty-state">{t.selectSchemaItem}</div>
         )}
       </aside>
+
+      <footer className="statusbar">
+        <span className={validationIssues.length > 0 ? "status-health issue" : "status-health valid"}>
+          <CircleDot size={11} />
+          {validationIssues.length > 0
+            ? `${validationIssues.length} ${t.issues}`
+            : t.valid}
+        </span>
+        <span>
+          {schema?.summary.tables ?? 0} {t.kindPlural.table.toLowerCase()}
+        </span>
+        <span>
+          {schema?.nodes.length ?? 0} {t.entities}
+        </span>
+        <span>
+          {schema?.summary.edges ?? 0} {t.edges.toLowerCase()}
+        </span>
+        <span className="statusbar-spacer" />
+        <span>{response?.project ? fileName(response.project) : t.noProjectLoaded}</span>
+        {response?.revision?.schema ? (
+          <code title={response.revision.schema}>
+            {t.revision} {shortRevision(response.revision.schema)}
+          </code>
+        ) : null}
+      </footer>
 
       {preview && (
         <div className="modal-backdrop" role="presentation">
@@ -690,8 +715,16 @@ function loadPanelWidths(): PanelWidths {
       right: clamp(Number(parsed.right), rightPanelMinWidth, rightPanelMaxWidth)
     });
   } catch {
-    return fitPanelWidths({ left: 320, right: 390 });
+    return fitPanelWidths({ left: 256, right: 340 });
   }
+}
+
+function fileName(path: string) {
+  return path.split(/[\\/]/).pop() ?? path;
+}
+
+function shortRevision(revision: string) {
+  return revision.startsWith("sha256:") ? revision.slice(7, 15) : revision.slice(0, 8);
 }
 
 function loadNodeSizes(): Record<string, { width: number; height: number }> {

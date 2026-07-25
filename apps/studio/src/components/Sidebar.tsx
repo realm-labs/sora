@@ -4,14 +4,12 @@ import {
   ChevronDown,
   ChevronRight,
   FileText,
-  Network,
   Plus,
   Search,
   Trash2,
   X
 } from "lucide-react";
 
-import { Metric } from "./Metric";
 import { kindMeta, kindOrder } from "../constants";
 import type { Translation } from "../i18n";
 import type { NodeKind, StudioNode, StudioSchema } from "../types";
@@ -53,14 +51,9 @@ export function Sidebar({
   const schemaFileNodeCount = schema?.nodes.length ?? 0;
   return (
     <aside className="sidebar">
-      <div className="brand">
-        <div className="brand-mark">
-          <Network size={20} />
-        </div>
-        <div>
-          <h1>Sora Studio</h1>
-          <p>{t.schemaVisualizer}</p>
-        </div>
+      <div className="navigator-title">
+        <strong>{t.explorer}</strong>
+        <span>{schema?.nodes.length ?? 0}</span>
       </div>
 
       <label className="search">
@@ -71,15 +64,6 @@ export function Sidebar({
           placeholder={t.searchSchema}
         />
       </label>
-
-      {schema && (
-        <div className="summary-grid">
-          <Metric label={t.kindPlural.table} value={schema.summary.tables} />
-          <Metric label={t.kindPlural.struct} value={schema.summary.structs} />
-          <Metric label={t.kindPlural.union} value={schema.summary.unions} />
-          <Metric label={t.edges} value={schema.summary.edges} />
-        </div>
-      )}
 
       {schema && (
         <section className={schemaFilesOpen ? "schema-files open" : "schema-files"}>

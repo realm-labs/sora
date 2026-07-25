@@ -1,5 +1,17 @@
 import { useEffect, useState } from "react";
-import { ChevronLeft, ChevronRight, Eye, Moon, RefreshCw, RotateCcw, Save, Sun } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  Eye,
+  Languages,
+  Moon,
+  MoreHorizontal,
+  Network,
+  RefreshCw,
+  RotateCcw,
+  Save,
+  Sun
+} from "lucide-react";
 
 import type { Translation } from "../i18n";
 import type { Language, StudioSchema, Theme } from "../types";
@@ -60,79 +72,112 @@ export function Topbar({
     if (clean && clean !== schema?.project_id) updateProjectId(clean);
     else setProjectIdDraft(schema?.project_id ?? "");
   };
+  const projectFile = project.split(/[\\/]/).pop() || t.noProjectLoaded;
 
   return (
-    <header className="topbar">
-      <div>
-        <p>{project || t.noProjectLoaded}</p>
-        {schema ? (
-          <label className="project-id-editor">
-            <span>{t.projectId}</span>
-            <input
-              aria-label={t.projectId}
-              value={projectIdDraft}
-              onBlur={commitProjectId}
-              onChange={(event) => setProjectIdDraft(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === "Enter") commitProjectId();
-              }}
-            />
-          </label>
-        ) : (
-          <h2>{t.schemaUnavailable}</h2>
-        )}
+    <header className="app-header">
+      <div className="app-identity">
+        <span className="app-mark" aria-hidden="true">
+          <Network size={16} />
+        </span>
+        <strong>Sora Studio</strong>
       </div>
-      <div className="topbar-actions">
-        {dirty && (
-          <div className="dirty-state">
-            <span>{t.unsaved}</span>
-            <button
-              className="icon-button"
-              disabled={saving || previewing || saveDisabled}
-              onClick={previewLocalChanges}
-              title={saveDisabled ? t.saveDisabled : t.preview}
-            >
-              <Eye size={14} />
-              {previewing ? t.previewing : t.preview}
-            </button>
-            <button
-              className="icon-button"
-              disabled={saving || saveDisabled}
-              onClick={saveLocalChanges}
-              title={saveDisabled ? t.saveDisabled : t.save}
-            >
-              <Save size={14} />
-              {saving ? t.saving : t.save}
-            </button>
-            <button className="icon-button" onClick={discardLocalChanges}>
-              <RotateCcw size={14} />
-              {t.discard}
-            </button>
-          </div>
-        )}
-        <button className="icon-button icon-only" onClick={goBack} disabled={!canGoBack}>
+
+      <div className="header-history">
+        <button
+          aria-label={t.goBack}
+          className="icon-button icon-only"
+          onClick={goBack}
+          disabled={!canGoBack}
+          title={t.goBack}
+        >
           <ChevronLeft size={17} />
         </button>
-        <button className="icon-button icon-only" onClick={goForward} disabled={!canGoForward}>
+        <button
+          aria-label={t.goForward}
+          className="icon-button icon-only"
+          onClick={goForward}
+          disabled={!canGoForward}
+          title={t.goForward}
+        >
           <ChevronRight size={17} />
         </button>
-        <div className="language-switch" aria-label={t.language}>
-          <button className={language === "en" ? "active" : ""} onClick={() => setLanguage("en")}>
-            EN
+      </div>
+
+      <div className="project-breadcrumb">
+        <span>{projectFile}</span>
+        <strong>{schema?.project_id ?? t.schemaUnavailable}</strong>
+      </div>
+
+      <div className="header-spacer" />
+
+      {dirty ? (
+        <div className="header-dirty">
+          <span>{t.unsaved}</span>
+          <button
+            className="text-button"
+            disabled={saving || previewing || saveDisabled}
+            onClick={previewLocalChanges}
+            title={saveDisabled ? t.saveDisabled : t.preview}
+          >
+            <Eye size={14} />
+            {previewing ? t.previewing : t.preview}
           </button>
-          <button className={language === "zh" ? "active" : ""} onClick={() => setLanguage("zh")}>
-            中文
+          <button
+            className="text-button primary"
+            disabled={saving || saveDisabled}
+            onClick={saveLocalChanges}
+            title={saveDisabled ? t.saveDisabled : t.save}
+          >
+            <Save size={14} />
+            {saving ? t.saving : t.save}
+          </button>
+          <button
+            aria-label={t.discard}
+            className="icon-button icon-only"
+            onClick={discardLocalChanges}
+            title={t.discard}
+          >
+            <RotateCcw size={14} />
           </button>
         </div>
-        <button className="icon-button" onClick={toggleTheme}>
-          {theme === "dark" ? <Sun size={16} /> : <Moon size={16} />}
-          {theme === "dark" ? t.light : t.dark}
-        </button>
-        <button className="icon-button" onClick={refresh} disabled={loading}>
-          <RefreshCw size={16} />
-          {t.refresh}
-        </button>
-      </div>
+      ) : null}
+
+      <details className="app-menu">
+        <summary aria-label={t.moreActions} title={t.moreActions}>
+          <MoreHorizontal size={17} />
+        </summary>
+        <div className="app-menu-popover">
+          {schema ? (
+            <label className="menu-field">
+              <span>{t.projectId}</span>
+              <input
+                aria-label={t.projectId}
+                value={projectIdDraft}
+                onBlur={commitProjectId}
+                onChange={(event) => setProjectIdDraft(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") commitProjectId();
+                }}
+              />
+            </label>
+          ) : null}
+          <div className="menu-separator" />
+          <button onClick={() => setLanguage(language === "en" ? "zh" : "en")}>
+            <Languages size={15} />
+            {language === "en" ? "中文" : "English"}
+          </button>
+          <button onClick={toggleTheme}>
+            {theme === "dark" ? <Sun size={15} /> : <Moon size={15} />}
+            {theme === "dark" ? t.light : t.dark}
+          </button>
+          <button onClick={refresh} disabled={loading}>
+            <RefreshCw size={15} />
+            {t.refresh}
+          </button>
+          {project ? <code title={project}>{project}</code> : null}
+        </div>
+      </details>
     </header>
   );
 }
