@@ -25,7 +25,9 @@ fn excel_sync_preview_is_read_only_and_apply_is_revision_bound_and_idempotent() 
     fs::write(
         root.join("project.toml"),
         r#"
-package = "demo"
+project = { id = "demo" }
+groups = { common = { default = true } }
+views = { default = { contract = "demo/default", groups = ["common"] } }
 includes = ["schema.toml"]
 
 [build]
@@ -122,6 +124,7 @@ fn schema(include_name: bool) -> String {
     format!(
         r#"
 [[tables]]
+id = "item"
 name = "Item"
 mode = "map"
 key = "id"

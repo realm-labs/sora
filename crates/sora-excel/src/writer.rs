@@ -9,6 +9,7 @@ use sora_ir::{
     model::{ConfigIr, FieldIr, TableIr, TypeIr},
 };
 
+use crate::generator::ExcelAdditionalSheet;
 use crate::projection::{
     DATA_START_ROW, DESC_ROW, FIELD_ROW, FIELD_START_COLUMN, NAME_ROW, TYPE_ROW, TemplateColumn,
     TemplateColumnGroupRole, table_template_columns, table_template_rows, tuple_shape,
@@ -19,6 +20,7 @@ const DATA_VALIDATION_ROWS: u32 = 1000;
 pub(crate) fn write_workbook_with_rows(
     ir: &ConfigIr,
     tables: &[&TableIr],
+    additional_sheets: &[&ExcelAdditionalSheet],
     path: &Path,
     rows_for_table: impl Fn(&TableIr) -> Vec<Vec<String>>,
 ) -> Result<()> {
@@ -70,6 +72,20 @@ pub(crate) fn write_workbook_with_rows(
         worksheet
             .set_freeze_panes(DATA_START_ROW, 1)
             .map_err(|source| excel_error(path, source))?;
+    }
+
+    for sheet in additional_sheets {
+        let worksheet = workbook.add_worksheet();
+        worksheet
+            .set_name(&sheet.sheet)
+            .map_err(|source| excel_error(path, source))?;
+        for (row_index, row) in sheet.rows.iter().enumerate() {
+            for (column_index, value) in row.iter().enumerate() {
+                worksheet
+                    .write_string(row_index as u32, column_index as u16, value)
+                    .map_err(|source| excel_error(path, source))?;
+            }
+        }
     }
 
     workbook
@@ -571,7 +587,7 @@ fn field_note_text(ir: &ConfigIr, field: &FieldIr) -> Option<String> {
     }
     lines.push(format!("Field: {}", field.name));
     lines.push(format!("Type: {}", field.ty));
-    lines.push(format!("Scope: {}", field.scope.display()));
+    lines.push(format!("Groups: {}", field.groups.display()));
     if let Some(tuple_shape) = tuple_shape {
         lines.push(format!("Tuple fields: {tuple_shape}"));
     }
@@ -994,14 +1010,16 @@ mod tests {
     use std::collections::BTreeMap;
 
     use super::*;
-    use sora_ir::model::{ConfigIr, DerivedFieldIr, EnumIr, ScopeIr, StructIr, TypeIr};
+    use sora_ir::model::{ConfigIr, DerivedFieldIr, EnumIr, GroupSetIr, StructIr, TypeIr};
 
     #[test]
     fn field_note_text_includes_comment_and_metadata() {
         let field = FieldIr {
             name: "rewards".to_owned(),
             ty: TypeIr::List(Box::new(TypeIr::Struct("Reward".to_owned()))),
-            scope: ScopeIr::default(),
+            groups: GroupSetIr {
+                values: vec!["common".to_owned()],
+            },
             key: false,
             comment: Some("Reward rows".to_owned()),
             default: Some("[]".to_owned()),
@@ -1023,7 +1041,7 @@ mod tests {
         assert!(note_text.contains("Reward rows"));
         assert!(note_text.contains("Field: rewards"));
         assert!(note_text.contains("Type: list<struct<Reward>>"));
-        assert!(note_text.contains("Scope: all"));
+        assert!(note_text.contains("Groups: common"));
         assert!(note_text.contains("Default: []"));
         assert!(note_text.contains("Range: 1..99"));
         assert!(note_text.contains("Length: 1..3"));
@@ -1036,7 +1054,7 @@ mod tests {
         let field = FieldIr {
             name: "name".to_owned(),
             ty: TypeIr::String,
-            scope: ScopeIr::default(),
+            groups: GroupSetIr::default(),
             key: false,
             comment: Some("   ".to_owned()),
             default: None,
@@ -1053,11 +1071,15 @@ mod tests {
     #[test]
     fn field_note_text_includes_tuple_shape_without_comment() {
         let ir = ConfigIr {
-            package: "game_config".to_owned(),
+            project_id: "game_config".to_owned(),
+            contract_id: "game_config/default".to_owned(),
+            view: None,
+            group_defaults: Default::default(),
+            views: Default::default(),
             localization: None,
             enums: vec![EnumIr {
                 name: "ResourceType".to_owned(),
-                scope: ScopeIr::default(),
+                groups: GroupSetIr::default(),
                 values: vec![sora_ir::model::EnumValueIr {
                     id: 0,
                     name: "Item".to_owned(),
@@ -1066,12 +1088,12 @@ mod tests {
             }],
             structs: vec![StructIr {
                 name: "ResourceCost".to_owned(),
-                scope: ScopeIr::default(),
+                groups: GroupSetIr::default(),
                 fields: vec![
                     FieldIr {
                         name: "kind".to_owned(),
                         ty: TypeIr::Enum("ResourceType".to_owned()),
-                        scope: ScopeIr::default(),
+                        groups: GroupSetIr::default(),
                         key: false,
                         comment: None,
                         default: None,
@@ -1083,7 +1105,7 @@ mod tests {
                     FieldIr {
                         name: "id".to_owned(),
                         ty: TypeIr::I32,
-                        scope: ScopeIr::default(),
+                        groups: GroupSetIr::default(),
                         key: false,
                         comment: None,
                         default: None,
@@ -1095,7 +1117,7 @@ mod tests {
                     FieldIr {
                         name: "count".to_owned(),
                         ty: TypeIr::I32,
-                        scope: ScopeIr::default(),
+                        groups: GroupSetIr::default(),
                         key: false,
                         comment: None,
                         default: None,
@@ -1112,7 +1134,7 @@ mod tests {
         let field = FieldIr {
             name: "cost".to_owned(),
             ty: TypeIr::Struct("ResourceCost".to_owned()),
-            scope: ScopeIr::default(),
+            groups: GroupSetIr::default(),
             key: false,
             comment: None,
             default: None,
@@ -1135,7 +1157,7 @@ mod tests {
         let root_field = FieldIr {
             name: "cost".to_owned(),
             ty: TypeIr::Struct("ResourceCost".to_owned()),
-            scope: ScopeIr::default(),
+            groups: GroupSetIr::default(),
             key: false,
             comment: None,
             default: None,
@@ -1150,7 +1172,7 @@ mod tests {
         let struct_field = FieldIr {
             name: "kind".to_owned(),
             ty: TypeIr::Enum("ResourceType".to_owned()),
-            scope: ScopeIr::default(),
+            groups: GroupSetIr::default(),
             key: false,
             comment: Some("Resource kind".to_owned()),
             default: None,
@@ -1176,7 +1198,7 @@ mod tests {
         let root_field = FieldIr {
             name: "value".to_owned(),
             ty: TypeIr::Union("EventCondition".to_owned()),
-            scope: ScopeIr::default(),
+            groups: GroupSetIr::default(),
             key: false,
             comment: None,
             default: None,
@@ -1191,7 +1213,7 @@ mod tests {
         let variant_field = FieldIr {
             name: "quest_id".to_owned(),
             ty: TypeIr::I32,
-            scope: ScopeIr::default(),
+            groups: GroupSetIr::default(),
             key: false,
             comment: None,
             default: None,
@@ -1219,7 +1241,7 @@ mod tests {
         let field = FieldIr {
             name: "cost".to_owned(),
             ty: TypeIr::Struct("ResourceCost".to_owned()),
-            scope: ScopeIr::default(),
+            groups: GroupSetIr::default(),
             key: false,
             comment: None,
             default: None,
@@ -1237,7 +1259,11 @@ mod tests {
 
     fn empty_ir() -> ConfigIr {
         ConfigIr {
-            package: "game_config".to_owned(),
+            project_id: "game_config".to_owned(),
+            contract_id: "game_config/default".to_owned(),
+            view: None,
+            group_defaults: Default::default(),
+            views: Default::default(),
             localization: None,
             enums: Vec::new(),
             structs: Vec::new(),

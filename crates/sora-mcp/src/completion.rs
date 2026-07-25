@@ -116,10 +116,12 @@ fn project_values(
                 .chain(schema.tables.iter().map(|item| item.name.clone()))
                 .collect(),
         },
-        "scope" => inspection.scopes,
+        "view" => inspection.views,
+        "group" => inspection.groups,
         "source" => inspection
             .schema_sources
             .into_iter()
+            .chain(inspection.view_sources)
             .chain(
                 inspection
                     .data_sources

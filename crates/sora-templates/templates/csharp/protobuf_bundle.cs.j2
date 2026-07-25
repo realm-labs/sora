@@ -24,26 +24,26 @@ namespace Sora.Runtime {
     static SoraRuntimeBundleReflection() {
       byte[] descriptorData = global::System.Convert.FromBase64String(
           string.Concat(
-            "Chlzb3JhX3J1bnRpbWVfYnVuZGxlLnByb3RvEgxzb3JhLnJ1bnRpbWUiewoG",
+            "Chlzb3JhX3J1bnRpbWVfYnVuZGxlLnByb3RvEgxzb3JhLnJ1bnRpbWUifwoG",
             "QnVuZGxlEhYKDmZvcm1hdF92ZXJzaW9uGAEgASgNEg4KBmZvcm1hdBgCIAEo",
-            "CRIPCgdwYWNrYWdlGAMgASgJEhMKC3NjaGVtYV9qc29uGAQgASgMEiMKBnRh",
-            "YmxlcxgFIAMoCzITLnNvcmEucnVudGltZS5UYWJsZSI2CgVUYWJsZRIMCgRu",
-            "YW1lGAEgASgJEh8KBHJvd3MYAiADKAsyES5zb3JhLnJ1bnRpbWUuUm93IioK",
-            "A1JvdxIjCgZmaWVsZHMYASADKAsyEy5zb3JhLnJ1bnRpbWUuRmllbGQiOQoF",
-            "RmllbGQSDAoEbmFtZRgBIAEoCRIiCgV2YWx1ZRgCIAEoCzITLnNvcmEucnVu",
-            "dGltZS5WYWx1ZSLlAQoFVmFsdWUSFAoKYm9vbF92YWx1ZRgBIAEoCEgAEhcK",
-            "DWludGVnZXJfdmFsdWUYAiABKANIABIVCgtmbG9hdF92YWx1ZRgDIAEoAUgA",
-            "EhYKDHN0cmluZ192YWx1ZRgEIAEoCUgAEi0KCmxpc3RfdmFsdWUYBSABKAsy",
-            "Fy5zb3JhLnJ1bnRpbWUuTGlzdFZhbHVlSAASMQoMb2JqZWN0X3ZhbHVlGAYg",
-            "ASgLMhkuc29yYS5ydW50aW1lLk9iamVjdFZhbHVlSAASFAoKbnVsbF92YWx1",
-            "ZRgHIAEoCEgAQgYKBGtpbmQiMAoJTGlzdFZhbHVlEiMKBnZhbHVlcxgBIAMo",
-            "CzITLnNvcmEucnVudGltZS5WYWx1ZSIyCgtPYmplY3RWYWx1ZRIjCgZmaWVs",
-            "ZHMYASADKAsyEy5zb3JhLnJ1bnRpbWUuRmllbGRCD6oCDFNvcmEuUnVudGlt",
-            "ZWIGcHJvdG8z"));
+            "CRITCgtjb250cmFjdF9pZBgDIAEoCRITCgtzY2hlbWFfanNvbhgEIAEoDBIj",
+            "CgZ0YWJsZXMYBSADKAsyEy5zb3JhLnJ1bnRpbWUuVGFibGUiNgoFVGFibGUS",
+            "DAoEbmFtZRgBIAEoCRIfCgRyb3dzGAIgAygLMhEuc29yYS5ydW50aW1lLlJv",
+            "dyIqCgNSb3cSIwoGZmllbGRzGAEgAygLMhMuc29yYS5ydW50aW1lLkZpZWxk",
+            "IjkKBUZpZWxkEgwKBG5hbWUYASABKAkSIgoFdmFsdWUYAiABKAsyEy5zb3Jh",
+            "LnJ1bnRpbWUuVmFsdWUi5QEKBVZhbHVlEhQKCmJvb2xfdmFsdWUYASABKAhI",
+            "ABIXCg1pbnRlZ2VyX3ZhbHVlGAIgASgDSAASFQoLZmxvYXRfdmFsdWUYAyAB",
+            "KAFIABIWCgxzdHJpbmdfdmFsdWUYBCABKAlIABItCgpsaXN0X3ZhbHVlGAUg",
+            "ASgLMhcuc29yYS5ydW50aW1lLkxpc3RWYWx1ZUgAEjEKDG9iamVjdF92YWx1",
+            "ZRgGIAEoCzIZLnNvcmEucnVudGltZS5PYmplY3RWYWx1ZUgAEhQKCm51bGxf",
+            "dmFsdWUYByABKAhIAEIGCgRraW5kIjAKCUxpc3RWYWx1ZRIjCgZ2YWx1ZXMY",
+            "ASADKAsyEy5zb3JhLnJ1bnRpbWUuVmFsdWUiMgoLT2JqZWN0VmFsdWUSIwoG",
+            "ZmllbGRzGAEgAygLMhMuc29yYS5ydW50aW1lLkZpZWxkQg+qAgxTb3JhLlJ1",
+            "bnRpbWViBnByb3RvMw=="));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { },
           new pbr::GeneratedClrTypeInfo(null, null, new pbr::GeneratedClrTypeInfo[] {
-            new pbr::GeneratedClrTypeInfo(typeof(global::Sora.Runtime.Bundle), global::Sora.Runtime.Bundle.Parser, new[]{ "FormatVersion", "Format", "Package", "SchemaJson", "Tables" }, null, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Sora.Runtime.Bundle), global::Sora.Runtime.Bundle.Parser, new[]{ "FormatVersion", "Format", "ContractId", "SchemaJson", "Tables" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Sora.Runtime.Table), global::Sora.Runtime.Table.Parser, new[]{ "Name", "Rows" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Sora.Runtime.Row), global::Sora.Runtime.Row.Parser, new[]{ "Fields" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Sora.Runtime.Field), global::Sora.Runtime.Field.Parser, new[]{ "Name", "Value" }, null, null, null, null),
@@ -93,7 +93,7 @@ namespace Sora.Runtime {
     public Bundle(Bundle other) : this() {
       formatVersion_ = other.formatVersion_;
       format_ = other.format_;
-      package_ = other.package_;
+      contractId_ = other.contractId_;
       schemaJson_ = other.schemaJson_;
       tables_ = other.tables_.Clone();
       _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
@@ -129,15 +129,15 @@ namespace Sora.Runtime {
       }
     }
 
-    /// <summary>Field number for the "package" field.</summary>
-    public const int PackageFieldNumber = 3;
-    private string package_ = "";
+    /// <summary>Field number for the "contract_id" field.</summary>
+    public const int ContractIdFieldNumber = 3;
+    private string contractId_ = "";
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public string Package {
-      get { return package_; }
+    public string ContractId {
+      get { return contractId_; }
       set {
-        package_ = pb::ProtoPreconditions.CheckNotNull(value, "value");
+        contractId_ = pb::ProtoPreconditions.CheckNotNull(value, "value");
       }
     }
 
@@ -181,7 +181,7 @@ namespace Sora.Runtime {
       }
       if (FormatVersion != other.FormatVersion) return false;
       if (Format != other.Format) return false;
-      if (Package != other.Package) return false;
+      if (ContractId != other.ContractId) return false;
       if (SchemaJson != other.SchemaJson) return false;
       if(!tables_.Equals(other.tables_)) return false;
       return Equals(_unknownFields, other._unknownFields);
@@ -193,7 +193,7 @@ namespace Sora.Runtime {
       int hash = 1;
       if (FormatVersion != 0) hash ^= FormatVersion.GetHashCode();
       if (Format.Length != 0) hash ^= Format.GetHashCode();
-      if (Package.Length != 0) hash ^= Package.GetHashCode();
+      if (ContractId.Length != 0) hash ^= ContractId.GetHashCode();
       if (SchemaJson.Length != 0) hash ^= SchemaJson.GetHashCode();
       hash ^= tables_.GetHashCode();
       if (_unknownFields != null) {
@@ -222,9 +222,9 @@ namespace Sora.Runtime {
         output.WriteRawTag(18);
         output.WriteString(Format);
       }
-      if (Package.Length != 0) {
+      if (ContractId.Length != 0) {
         output.WriteRawTag(26);
-        output.WriteString(Package);
+        output.WriteString(ContractId);
       }
       if (SchemaJson.Length != 0) {
         output.WriteRawTag(34);
@@ -249,9 +249,9 @@ namespace Sora.Runtime {
         output.WriteRawTag(18);
         output.WriteString(Format);
       }
-      if (Package.Length != 0) {
+      if (ContractId.Length != 0) {
         output.WriteRawTag(26);
-        output.WriteString(Package);
+        output.WriteString(ContractId);
       }
       if (SchemaJson.Length != 0) {
         output.WriteRawTag(34);
@@ -274,8 +274,8 @@ namespace Sora.Runtime {
       if (Format.Length != 0) {
         size += 1 + pb::CodedOutputStream.ComputeStringSize(Format);
       }
-      if (Package.Length != 0) {
-        size += 1 + pb::CodedOutputStream.ComputeStringSize(Package);
+      if (ContractId.Length != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeStringSize(ContractId);
       }
       if (SchemaJson.Length != 0) {
         size += 1 + pb::CodedOutputStream.ComputeBytesSize(SchemaJson);
@@ -299,8 +299,8 @@ namespace Sora.Runtime {
       if (other.Format.Length != 0) {
         Format = other.Format;
       }
-      if (other.Package.Length != 0) {
-        Package = other.Package;
+      if (other.ContractId.Length != 0) {
+        ContractId = other.ContractId;
       }
       if (other.SchemaJson.Length != 0) {
         SchemaJson = other.SchemaJson;
@@ -334,7 +334,7 @@ namespace Sora.Runtime {
             break;
           }
           case 26: {
-            Package = input.ReadString();
+            ContractId = input.ReadString();
             break;
           }
           case 34: {
@@ -373,7 +373,7 @@ namespace Sora.Runtime {
             break;
           }
           case 26: {
-            Package = input.ReadString();
+            ContractId = input.ReadString();
             break;
           }
           case 34: {

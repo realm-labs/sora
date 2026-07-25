@@ -12,7 +12,7 @@ use crate::{
         BaseEnumValue, BaseField, BaseIndex, BaseModel, BaseRecord, BaseTable, BaseUnion,
         BaseUnionVariant, build_base_model,
     },
-    options::LanguageCodegenOptions,
+    options::{PackageCodegenOptions, required_binding},
     render::{ensure_dir, render_template, write_file},
     type_mapping::{TypeMapping, TypeMappingContext, TypeMappingRegistry},
 };
@@ -23,10 +23,11 @@ crate::impl_test_codegen_generate!(GoCodeGenerator, "go");
 impl CodeGenerator for GoCodeGenerator {
     fn generate(&self, context: CodegenContext<'_>, out_dir: &Path) -> Result<()> {
         let ir = context.ir;
-        let options = context.options::<LanguageCodegenOptions>()?;
+        let options = context.options::<PackageCodegenOptions>()?;
         ensure_dir(out_dir)?;
         let mapper = GoTypeMapper::new(context.target, ir, context.type_mappings);
-        let model = GoModel::from_base_model(ir, build_base_model(ir)?, &mapper);
+        let mut model = GoModel::from_base_model(ir, build_base_model(ir)?, &mapper);
+        model.package = required_binding("go", "package", options.package)?;
         let package = go_package_name(&model.package)?;
         let runtime_format = runtime_format_name(options.runtime_format);
 

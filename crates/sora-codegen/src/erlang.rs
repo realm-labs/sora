@@ -675,7 +675,9 @@ mod tests {
     fn example_ir() -> ConfigIr {
         let schema: SchemaFile = toml::from_str(
             r#"
-package = "game_config"
+project = { id = "game_config" }
+groups = { common = { default = true } }
+views = { default = { contract = "game_config/default", groups = ["common"] } }
 
 [[enums]]
 name = "ItemType"
@@ -692,6 +694,7 @@ name = "item_id"
 type = "i32"
 
 [[tables]]
+id = "item"
 name = "Item"
 mode = "map"
 key = "id"

@@ -8,7 +8,7 @@ export type StudioField = {
   name: string;
   ty: string;
   enumValueId?: number | null;
-  scope: string;
+  groups: string[];
   parser?: string | null;
   comment?: string | null;
   default?: string | null;
@@ -22,7 +22,7 @@ export type StudioNode = {
   name: string;
   kind: NodeKind;
   source: string;
-  scope: string;
+  groups: string[];
   subtitle: string;
   fields: StudioField[];
   metadata: Record<string, string>;
@@ -38,7 +38,9 @@ export type StudioEdge = {
 };
 
 export type StudioSchema = {
-  package: string;
+  project_id: string;
+  groups: Record<string, boolean>;
+  views: Record<string, unknown>;
   sources: string[];
   summary: {
     enums: number;

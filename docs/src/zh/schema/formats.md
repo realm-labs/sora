@@ -16,14 +16,17 @@ include 文件按自己的扩展名解析，所以 YAML 项目可以 include TOM
 ## TOML
 
 ```toml
-package = "game_config"
 includes = ["schema/items.toml"]
+project = { id = "game_config" }
+groups = { common = { default = true } }
+views = { default = { contract = "game_config/default", groups = ["common"] } }
 
 [[enums]]
 name = "ItemType"
 values = [{ id = 0, name = "Weapon" }, { id = 1, name = "Armor" }]
 
 [[tables]]
+id = "item"
 name = "Item"
 mode = "map"
 key = "id"
@@ -36,7 +39,9 @@ type = "i32"
 ## YAML
 
 ```yaml
-package: game_config
+project: { id: game_config }
+groups: { common: { default: true } }
+views: { default: { contract: game_config/default, groups: [common] } }
 includes:
   - schema/items.yaml
 
@@ -45,7 +50,8 @@ enums:
     values: [{ id: 0, name: Weapon }, { id: 1, name: Armor }]
 
 tables:
-  - name: Item
+  - id: item
+    name: Item
     mode: map
     key: id
     fields:
@@ -57,13 +63,16 @@ tables:
 
 ```json
 {
-  "package": "game_config",
+  "project": { "id": "game_config" },
+  "groups": { "common": { "default": true } },
+  "views": { "default": { "contract": "game_config/default", "groups": ["common"] } },
   "includes": ["schema/items.json"],
   "enums": [
     { "name": "ItemType", "values": [{ "id": 0, "name": "Weapon" }, { "id": 1, "name": "Armor" }] }
   ],
   "tables": [
     {
+      "id": "item",
       "name": "Item",
       "mode": "map",
       "key": "id",
@@ -77,11 +86,13 @@ tables:
 
 ## Lua
 
-Lua schema 文件必须 `return` 一个 table。这个 table 使用和 TOML/YAML/JSON 形状一致的字段名。Lua schema loader 面向数据配置；`package`、`io`、`os` 和 `debug` 不可用。
+Lua schema 文件必须 `return` 一个 table。这个 table 使用和 TOML/YAML/JSON 形状一致的字段名。Lua schema loader 面向数据配置；`io`、`os` 和 `debug` 不可用。
 
 ```lua
 return {
-  package = "game_config",
+  project = { id = "game_config" },
+  groups = { common = { default = true } },
+  views = { default = { contract = "game_config/default", groups = { "common" } } },
   includes = { "schema/items.lua" },
 
   enums = {
@@ -90,6 +101,7 @@ return {
 
   tables = {
     {
+      id = "item",
       name = "Item",
       mode = "map",
       key = "id",
@@ -106,7 +118,9 @@ return {
 项目文件里的 `build` 也可以使用 YAML、JSON 或 Lua：
 
 ```yaml
-package: game_config
+project: { id: game_config }
+groups: { common: { default: true } }
+views: { default: { contract: game_config/default, groups: [common] } }
 includes:
   - schema/items.yaml
 
@@ -126,7 +140,9 @@ build:
 
 ```json
 {
-  "package": "game_config",
+  "project": { "id": "game_config" },
+  "groups": { "common": { "default": true } },
+  "views": { "default": { "contract": "game_config/default", "groups": ["common"] } },
   "includes": ["schema/items.json"],
   "build": {
     "default_source_format": "xlsx",
@@ -145,7 +161,9 @@ build:
 
 ```lua
 return {
-  package = "game_config",
+  project = { id = "game_config" },
+  groups = { common = { default = true } },
+  views = { default = { contract = "game_config/default", groups = { "common" } } },
   includes = { "schema/items.lua" },
   build = {
     default_source_format = "xlsx",

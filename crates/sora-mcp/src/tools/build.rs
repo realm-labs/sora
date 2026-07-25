@@ -48,7 +48,7 @@ impl SoraMcpServer {
             BuildInvocation {
                 project_id: input.project_id,
                 expected_project_revision: input.expected_project_revision,
-                scope: input.scope,
+                view: input.view,
                 clean: input.clean,
                 include_schema_lock: groups.contains(&BuildOutputGroup::SchemaLock),
                 include_excel_templates: groups.contains(&BuildOutputGroup::ExcelTemplates),
@@ -82,7 +82,7 @@ impl SoraMcpServer {
             BuildInvocation {
                 project_id: input.project_id,
                 expected_project_revision: input.expected_project_revision,
-                scope: input.scope,
+                view: input.view,
                 clean: input.clean,
                 include_schema_lock: false,
                 include_excel_templates: false,
@@ -116,7 +116,7 @@ impl SoraMcpServer {
             BuildInvocation {
                 project_id: input.project_id,
                 expected_project_revision: input.expected_project_revision,
-                scope: input.scope,
+                view: input.view,
                 clean: input.clean,
                 include_schema_lock: false,
                 include_excel_templates: false,
@@ -150,7 +150,7 @@ impl SoraMcpServer {
             BuildInvocation {
                 project_id: input.project_id,
                 expected_project_revision: input.expected_project_revision,
-                scope: input.scope,
+                view: input.view,
                 clean: input.clean,
                 include_schema_lock: true,
                 include_excel_templates: false,
@@ -184,7 +184,7 @@ impl SoraMcpServer {
             BuildInvocation {
                 project_id: input.project_id,
                 expected_project_revision: input.expected_project_revision,
-                scope: input.scope,
+                view: input.view,
                 clean: input.clean,
                 include_schema_lock: false,
                 include_excel_templates: true,
@@ -276,7 +276,7 @@ impl SoraMcpServer {
                     project: project_path,
                     default_source_format: None,
                     data_root: None,
-                    scope: input.scope,
+                    view: input.view,
                     include_schema_lock: input.include_schema_lock,
                     include_excel_templates: input.include_excel_templates,
                     include_codegen: input.include_codegen,
@@ -344,7 +344,7 @@ enum BuildOutputGroup {
 struct BuildInput {
     project_id: String,
     expected_project_revision: String,
-    scope: Option<String>,
+    view: Option<String>,
     #[serde(default)]
     outputs: Vec<BuildOutputGroup>,
     #[serde(default)]
@@ -361,7 +361,7 @@ struct CodegenInput {
     project_id: String,
     expected_project_revision: String,
     target: String,
-    scope: Option<String>,
+    view: Option<String>,
     #[serde(default)]
     clean: bool,
 }
@@ -372,7 +372,7 @@ struct ExportInput {
     project_id: String,
     expected_project_revision: String,
     format: String,
-    scope: Option<String>,
+    view: Option<String>,
     #[serde(default)]
     clean: bool,
 }
@@ -382,7 +382,7 @@ struct ExportInput {
 struct GeneratedOutputInput {
     project_id: String,
     expected_project_revision: String,
-    scope: Option<String>,
+    view: Option<String>,
     #[serde(default)]
     clean: bool,
 }
@@ -390,7 +390,7 @@ struct GeneratedOutputInput {
 struct BuildInvocation {
     project_id: String,
     expected_project_revision: String,
-    scope: Option<String>,
+    view: Option<String>,
     clean: bool,
     include_schema_lock: bool,
     include_excel_templates: bool,

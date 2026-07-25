@@ -60,7 +60,7 @@ sora excel-sync --project project.toml --data-root data --write
 
 - 仍然存在于 schema 中的字段会保留原数据；
 - schema 新增字段会插入为空列；
-- 类型、parser、scope、range、length、注释和表 metadata 变化会刷新生成表头；
+- 类型、parser、groups、range、length、注释和表 metadata 变化会刷新生成表头；
 - 从 schema 中删除的字段不会从 Excel 中删除，而是保留为 Sora 忽略的 legacy 列，由策划在合适的时候手动删除；
 - 同一个 workbook 中不属于 schema 的 sheet 会作为 value-only sheet 保留下来。
 
@@ -68,6 +68,7 @@ sora excel-sync --project project.toml --data-root data --write
 
 ```toml
 [[tables]]
+id = "item"
 name = "Item"
 
 [tables.source]
@@ -76,6 +77,7 @@ file = "Core.xlsx"
 sheet = "Item"
 
 [[tables]]
+id = "quest"
 name = "Quest"
 
 [tables.source]
@@ -103,11 +105,11 @@ sheet = "Skill"
 
 | Row | Purpose |
 | --- | --- |
-| `@table` metadata | 表名、mode、key、scope 和 schema hash。 |
+| `@table` metadata | 表名、mode、key、groups 和 schema hash。 |
 | `#name` | 面向表格编辑的显示名行。 |
 | `#field` | Sora 读取的稳定 schema 字段名。 |
 | `#type` | 类型提示，例如 `i32`、`enum<ItemType>` 或 `struct<Cost>(kind: enum<ResourceKind>, id: i32, count: i32)`。 |
-| `#scope` | 每个字段的 scope 信息。 |
+| `#groups` | 每个字段所属的已声明 group。 |
 | `#input` | key、parser、range、length 或派生字段来源等输入提示。 |
 | `#desc` | 给编辑者和 reviewer 看的字段注释。 |
 

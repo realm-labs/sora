@@ -10,7 +10,7 @@
 - source metadata；
 - field type、default、parser、range、length 和 comment；
 - reference 和派生子表字段 metadata；
-- scope。
+- group 与 view 投影。
 
 ## 不属于 IR 的内容
 

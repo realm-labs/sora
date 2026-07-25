@@ -12,6 +12,7 @@
 
 ```toml
 [[tables]]
+id = "item"
 name = "Item"
 mode = "map"
 key = "id"
@@ -22,6 +23,10 @@ type = "i32"
 ```
 
 对于 map 表，`key` 指定表的主键字段。Sora 会用它做行唯一性校验、生成 lookup API、生成 Excel 模板提示，并校验 `ref<Table.key>`。
+
+表的 `id` 是 view 选择和表别名使用的稳定 schema 身份；修改 `name` 时不能跟着改变。
+`name` 是数据文件和 schema 引用使用的 canonical source name。View 可以暴露不同的
+消费方表名，而不改变稳定 ID 或源数据。
 
 ## Source
 
@@ -58,6 +63,7 @@ sheet = "Item"
 
 ```toml
 [[tables]]
+id = "item"
 name = "Item"
 mode = "map"
 key = "id"

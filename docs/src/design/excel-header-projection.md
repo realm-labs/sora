@@ -17,10 +17,10 @@ Sora avoids this by generating the workbook structure from schema.
 
 Generated rows include:
 
-- table metadata: table name, mode, key, scope, and schema hash;
+- table metadata: table name, mode, key, groups, and schema hash;
 - stable field names;
 - type hints;
-- scope hints;
+- group hints;
 - validation and parser rules;
 - comments for editors.
 

@@ -9,7 +9,7 @@ pub fn run(args: BuildArgs, context: &ProjectRuntime) -> Result<()> {
             project: args.project,
             default_source_format: args.default_source_format.map(SourceFormat::from),
             data_root: args.data_root,
-            scope: args.scope,
+            view: args.view,
             include_schema_lock: true,
             include_excel_templates: true,
             include_codegen: true,

@@ -22,7 +22,7 @@ pub struct SchemaSearchQuery {
     pub kind: Option<SchemaEntityKind>,
     pub field: Option<String>,
     pub type_name: Option<String>,
-    pub scope: Option<String>,
+    pub group: Option<String>,
     pub source: Option<String>,
     pub references: Option<String>,
     pub limit: Option<usize>,
@@ -40,7 +40,7 @@ pub struct SchemaSearchResult {
     pub kind: String,
     pub name: String,
     pub source: String,
-    pub scope: String,
+    pub groups: Vec<String>,
     pub matching_fields: Vec<String>,
     pub resource_uri: String,
 }
@@ -90,9 +90,9 @@ fn match_node(
         return None;
     }
     if query
-        .scope
+        .group
         .as_deref()
-        .is_some_and(|scope| !scope_matches(&node.scope, scope))
+        .is_some_and(|group| !node.groups.iter().any(|value| value == group))
     {
         return None;
     }
@@ -137,7 +137,7 @@ fn match_node(
         kind: kind.to_owned(),
         name: node.name.clone(),
         source: node.source.clone(),
-        scope: node.scope.clone(),
+        groups: node.groups.clone(),
         matching_fields,
         resource_uri: format!("sora://project/{project_id}/schema/{kind}/{}", node.name),
     })
@@ -145,13 +145,6 @@ fn match_node(
 
 fn contains_case_insensitive(value: &str, query: &str) -> bool {
     value.to_lowercase().contains(&query.to_lowercase())
-}
-
-fn scope_matches(value: &str, query: &str) -> bool {
-    value
-        .split(',')
-        .map(str::trim)
-        .any(|scope| scope == "all" || scope == query)
 }
 
 fn kind_name(kind: StudioNodeKind) -> &'static str {

@@ -32,4 +32,6 @@ An exporter writes validated data into a runtime bundle. The exporter registry i
 
 ## Scope
 
-Schemas, fields, and tables can declare a `scope`. A build can select a scope to generate or export only the pieces needed by one runtime environment.
+Schema entities and fields belong to declared `groups`. Named views select groups,
+stable table IDs, aliases, and target-language bindings to form an external
+contract for code generation and export.

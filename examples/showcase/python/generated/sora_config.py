@@ -53,7 +53,7 @@ from .stat_type import StatType
 from .mail_type import MailType
 
 
-SCHEMA_FINGERPRINT = "4ae91b3892293cc4"
+SCHEMA_FINGERPRINT = "9552056f96151363"
 
 
 class SoraConfig:

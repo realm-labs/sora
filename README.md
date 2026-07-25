@@ -183,11 +183,13 @@ sora export \
 
 ## Schema Format
 
-Projects use a root manifest plus included schema modules. Schema and project files can be written as TOML, YAML, JSON, or Lua; examples here use TOML. The root manifest declares the package and module list:
+Projects use a root manifest plus included schema modules. Schema and project files can be written as TOML, YAML, JSON, or Lua; examples here use TOML. The root manifest declares the stable project identity, groups, views, and module list:
 
 ```toml
-package = "game_config"
 includes = ["schema/items.toml", "schema/skills.toml"]
+project = { id = "game_config" }
+groups = { common = { default = true } }
+views = { default = { contract = "game_config/default", groups = ["common"] } }
 ```
 
 The same root manifest can declare build outputs. Relative paths are resolved from the project file directory:

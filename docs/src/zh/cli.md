@@ -36,7 +36,7 @@
 | --- | --- | --- |
 | `-p` | `--project` | 读取 project 的命令。 |
 | `-o` | `--out` | `init`、`gen`、`export`、`diff`、`excel-template`、`schema-lock`。 |
-| `-s` | `--scope` | `build`、`gen`、`export`、`diff`、`excel-template`、`excel-sync`、`schema-lock`。 |
+| `-v` | `--view` | `build`、`gen`、`export`、`diff`、`excel-template`、`excel-sync`、`schema-lock`。 |
 | `-t` | `--target` | `build`、`gen`。 |
 | `-f` | `--format` | `export`。 |
 | `-d` | `--data-root` | `build`、`export`、`excel-sync`。 |
@@ -90,7 +90,7 @@ sora b -p project.toml -t rust -c
 | `-p, --project <PATH>` | 项目清单路径。 |
 | `--default-source-format <csv|json|toml|xlsx|yaml>` | 表 source 未声明 `format` 时使用的 source 格式。 |
 | `-d, --data-root <DIR>` | 数据输入根目录。覆盖 `[build].data_root`。 |
-| `-s, --scope <NAME>` | 只构建包含在某个 scope 中的 schema item。 |
+| `-v, --view <NAME>` | 只构建 view 声明的 schema 投影。 |
 | `-t, --target <NAME>` | 要运行的 codegen target。可以重复传。 |
 | `-c, --clean` | 重建前删除选中的生成输出。 |
 
@@ -109,7 +109,7 @@ sora g -t typescript -p project.toml -o generated/typescript
 | `-p, --project <PATH>` | 项目清单路径。 |
 | `-o, --out <DIR>` | 输出目录。 |
 | `--format-code <never|auto|required>` | 代码生成后运行 formatter。默认 `never`。 |
-| `-s, --scope <NAME>` | 只生成包含在某个 scope 中的 schema item。 |
+| `-v, --view <NAME>` | 只生成 view 声明的 schema 投影。 |
 
 ### `export`
 
@@ -127,7 +127,7 @@ sora e -p project.toml -d data -f binary -o generated/config.sora
 | `-p, --project <PATH>` | 项目清单路径。 |
 | `-d, --data-root <DIR>` | 数据输入根目录。 |
 | `-o, --out <PATH>` | 输出文件或目录，取决于导出格式。 |
-| `-s, --scope <NAME>` | 只导出包含在某个 scope 中的 schema item。 |
+| `-v, --view <NAME>` | 只导出 view 声明的 schema 投影。 |
 | `--compression <none|zstd>` | 导出压缩。`zstd` 只支持 binary export。 |
 | `--compression-level <N>` | 压缩导出的压缩等级。 |
 
@@ -147,7 +147,7 @@ sora d -p project.toml -l old-data -r data -o generated/diff.json
 | `-l, --left-root <DIR>` | 基准数据根目录。 |
 | `-r, --right-root <DIR>` | 变更后的数据根目录。 |
 | `-o, --out <PATH>` | Diff 输出路径。 |
-| `-s, --scope <NAME>` | 只比较包含在某个 scope 中的 schema item。 |
+| `-v, --view <NAME>` | 只比较 view 声明的 schema 投影。 |
 
 ### `excel-template`
 
@@ -162,7 +162,7 @@ sora et -p project.toml -o generated/excel
 | --- | --- |
 | `-p, --project <PATH>` | 项目清单路径。 |
 | `-o, --out <DIR>` | 生成 workbook 的输出目录。 |
-| `-s, --scope <NAME>` | 只为包含在某个 scope 中的 schema item 生成模板。 |
+| `-v, --view <NAME>` | 只为 view 声明的 schema 投影生成模板。 |
 
 ### `excel-sync`
 
@@ -177,7 +177,7 @@ sora es -p project.toml -d data -w
 | --- | --- |
 | `-p, --project <PATH>` | 项目清单路径。 |
 | `-d, --data-root <DIR>` | 数据 workbook 根目录。 |
-| `-s, --scope <NAME>` | 只同步包含在某个 scope 中的 schema item。 |
+| `-v, --view <NAME>` | 只同步 view 声明的 schema 投影。 |
 | `-w, --write` | 写入 workbook 变更。不带这个参数时只预览变化。 |
 
 ### `schema-lock`
@@ -193,7 +193,7 @@ sora sl -p project.toml -o generated/schema.lock
 | --- | --- |
 | `-p, --project <PATH>` | 项目清单路径。 |
 | `-o, --out <PATH>` | Schema lock 输出路径。 |
-| `-s, --scope <NAME>` | 只锁定包含在某个 scope 中的 schema item。 |
+| `-v, --view <NAME>` | 只锁定 view 声明的 schema 投影。 |
 
 ### `studio`
 

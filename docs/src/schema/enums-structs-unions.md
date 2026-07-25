@@ -47,7 +47,7 @@ range = [1, 999999]
 
 Use structs for nested values that appear in many places. A field can reference a struct with `type = "struct<ResourceCost>"`.
 
-Struct fields use the same field properties as table fields, including `name`, `type`, `default`, `comment`, `range`, `length`, `parser`, and `scope`. Table-specific properties such as `key` and `from` are not meaningful for normal struct fields. See [Types](types.md#field-rules) for the full field reference.
+Struct fields use the same field properties as table fields, including `name`, `type`, `default`, `comment`, `range`, `length`, `parser`, and `groups`. Table-specific properties such as `key` and `from` are not meaningful for normal struct fields. See [Types](types.md#field-rules) for the full field reference.
 
 In cell-based inputs, a struct field can be written as JSON object text by default:
 
@@ -153,6 +153,7 @@ type = "list<union<RewardAction>>"
 from = { table = "EventActionEntry", parent_key = "id", child_key = "event_id", field = "value", order_by = "seq" }
 
 [[tables]]
+id = "eventactionentry"
 name = "EventActionEntry"
 mode = "list"
 

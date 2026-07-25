@@ -25,6 +25,7 @@ fn returns_partial_graph_for_validation_error() {
         &base,
         r#"
 [[tables]]
+id = "item"
 name = "Item"
 mode = "map"
 key = "missing_id"
@@ -68,6 +69,7 @@ fn returns_raw_graph_for_normalization_error() {
         &base,
         r#"
 [[tables]]
+id = "item"
 name = "Item"
 mode = "list"
 
@@ -102,7 +104,18 @@ parser = { kind = "unknown_parser" }
 #[test]
 fn renders_editable_table_and_field_settings() {
     let schema = StudioSchema {
-        package: "game_config".to_owned(),
+        project_id: "game_config".to_owned(),
+        groups: std::collections::BTreeMap::from([
+            ("client".to_owned(), false),
+            ("common".to_owned(), true),
+        ]),
+        views: std::collections::BTreeMap::from([(
+            "default".to_owned(),
+            serde_json::json!({
+                "contract": "game_config/default",
+                "groups": ["common", "client"],
+            }),
+        )]),
         sources: vec!["schema/items.toml".to_owned()],
         summary: StudioSummary {
             enums: 0,
@@ -117,14 +130,14 @@ fn renders_editable_table_and_field_settings() {
                 name: "Item".to_owned(),
                 kind: StudioNodeKind::Table,
                 source: "schema/items.toml".to_owned(),
-                scope: "client".to_owned(),
+                groups: vec!["client".to_owned()],
                 subtitle: "map table, 2 fields".to_owned(),
                 fields: vec![
                     StudioField {
                         name: "id".to_owned(),
                         ty: "i32".to_owned(),
                         enum_value_id: None,
-                        scope: "all".to_owned(),
+                        groups: Vec::new(),
                         parser: None,
                         comment: None,
                         default: None,
@@ -136,7 +149,7 @@ fn renders_editable_table_and_field_settings() {
                         name: "price".to_owned(),
                         ty: "struct<ResourceCost>".to_owned(),
                         enum_value_id: None,
-                        scope: "client".to_owned(),
+                        groups: vec!["client".to_owned()],
                         parser: Some("columns (prefix=\"\")".to_owned()),
                         comment: Some("Expanded price".to_owned()),
                         default: Some("0".to_owned()),
@@ -161,7 +174,7 @@ fn renders_editable_table_and_field_settings() {
                 name: "PriceRow".to_owned(),
                 kind: StudioNodeKind::Table,
                 source: "schema/items.toml".to_owned(),
-                scope: "all".to_owned(),
+                groups: Vec::new(),
                 subtitle: "list table, 0 fields".to_owned(),
                 fields: Vec::new(),
                 aliases: Vec::new(),
@@ -177,7 +190,7 @@ fn renders_editable_table_and_field_settings() {
 
     let rendered = render_schema_module(&schema);
 
-    assert!(rendered.contains("scope = \"client\""));
+    assert!(rendered.contains("groups = \"client\""));
     assert!(rendered.contains("source = { file = \"Core.xlsx\", sheet = \"Item\" }"));
     assert!(rendered.contains("parser = { kind = \"columns\", prefix = \"\" }"));
     assert!(rendered.contains("default = \"0\""));
@@ -191,7 +204,15 @@ fn renders_editable_table_and_field_settings() {
 #[test]
 fn does_not_render_key_for_non_map_table() {
     let schema = StudioSchema {
-        package: "game_config".to_owned(),
+        project_id: "game_config".to_owned(),
+        groups: std::collections::BTreeMap::from([("common".to_owned(), true)]),
+        views: std::collections::BTreeMap::from([(
+            "default".to_owned(),
+            serde_json::json!({
+                "contract": "game_config/default",
+                "groups": ["common"],
+            }),
+        )]),
         sources: vec!["schema/items.toml".to_owned()],
         summary: StudioSummary {
             enums: 0,
@@ -205,13 +226,13 @@ fn does_not_render_key_for_non_map_table() {
             name: "Drop".to_owned(),
             kind: StudioNodeKind::Table,
             source: "schema/items.toml".to_owned(),
-            scope: "all".to_owned(),
+            groups: Vec::new(),
             subtitle: "list table, 1 field".to_owned(),
             fields: vec![StudioField {
                 name: "id".to_owned(),
                 ty: "i32".to_owned(),
                 enum_value_id: None,
-                scope: "all".to_owned(),
+                groups: Vec::new(),
                 parser: None,
                 comment: None,
                 default: None,
@@ -250,7 +271,7 @@ fn renders_comma_parser_separator() {
             name: "budget".to_owned(),
             ty: "struct<ComplexBudget>".to_owned(),
             enum_value_id: None,
-            scope: "all".to_owned(),
+            groups: Vec::new(),
             parser: Some("tuple (separator=\",\")".to_owned()),
             comment: None,
             default: None,
@@ -275,7 +296,7 @@ values = [{ id = 0, name = "Common" }]
 "#,
     );
     let mut schema = load_studio_schema(&project).schema.unwrap();
-    schema.package = "edited_config".to_owned();
+    schema.project_id = "edited_config".to_owned();
 
     let preview = preview_studio_schema(&project, &schema);
     let current = fs::read_to_string(base.join("schema/items.toml")).unwrap();
@@ -284,12 +305,7 @@ values = [{ id = 0, name = "Common" }]
 
     assert!(preview.ok);
     assert_eq!(preview.target.as_deref(), Some(target.as_str()));
-    assert!(
-        preview
-            .diff
-            .unwrap()
-            .contains("+package = \"edited_config\"")
-    );
+    assert!(preview.diff.unwrap().contains("+id = \"edited_config\""));
     assert!(!current.contains("edited_config"));
     assert!(!current_project.contains("edited_config"));
 
@@ -343,7 +359,7 @@ fn simple_diff_keeps_insertions_tight() {
 }
 
 #[test]
-fn project_package_preview_preserves_existing_format_when_unchanged() {
+fn project_identity_preview_preserves_existing_format_when_unchanged() {
     let base = temp_dir();
     let project = write_project(
         &base,
@@ -417,7 +433,9 @@ fn save_writes_nodes_to_their_schema_sources() {
     fs::write(
         &project,
         r#"
-package = "game_config"
+project = { id = "game_config" }
+groups = { common = { default = true } }
+views = { default = { contract = "game_config/default", groups = ["common"] } }
 includes = ["schema/items.toml", "schema/quests.toml"]
 "#,
     )
@@ -426,6 +444,7 @@ includes = ["schema/items.toml", "schema/quests.toml"]
         schema_dir.join("items.toml"),
         r#"
 [[tables]]
+id = "item"
 name = "Item"
 mode = "map"
 key = "id"
@@ -440,6 +459,7 @@ type = "i32"
         schema_dir.join("quests.toml"),
         r#"
 [[tables]]
+id = "quest"
 name = "Quest"
 mode = "map"
 key = "id"
@@ -470,7 +490,7 @@ type = "i32"
             name: "name".to_owned(),
             ty: "string".to_owned(),
             enum_value_id: None,
-            scope: "all".to_owned(),
+            groups: Vec::new(),
             parser: None,
             comment: None,
             default: None,
@@ -485,6 +505,43 @@ type = "i32"
     let quests = fs::read_to_string(schema_dir.join("quests.toml")).unwrap();
     assert!(!items.contains("name = \"name\""));
     assert!(quests.contains("name = \"name\""));
+
+    let _ = fs::remove_dir_all(base);
+}
+
+#[test]
+fn save_rejects_project_declarations_that_studio_cannot_persist() {
+    let base = temp_dir();
+    let project = write_project(
+        &base,
+        r#"
+[[tables]]
+id = "item"
+name = "Item"
+mode = "list"
+"#,
+    );
+    let original = fs::read_to_string(&project).unwrap();
+
+    let mut schema = load_studio_schema(&project).schema.unwrap();
+    schema.groups.insert("server".to_owned(), false);
+    let error = write_studio_schema(&project, &schema).unwrap_err();
+    assert!(
+        error
+            .to_string()
+            .contains("does not edit project group declarations")
+    );
+    assert_eq!(fs::read_to_string(&project).unwrap(), original);
+
+    let mut schema = load_studio_schema(&project).schema.unwrap();
+    schema.views.remove("default");
+    let error = write_studio_schema(&project, &schema).unwrap_err();
+    assert!(
+        error
+            .to_string()
+            .contains("does not edit project view declarations")
+    );
+    assert_eq!(fs::read_to_string(&project).unwrap(), original);
 
     let _ = fs::remove_dir_all(base);
 }
@@ -557,7 +614,9 @@ fn save_edits_mixed_schema_include_formats() {
     fs::write(
         &project,
         r#"
-package: game_config
+project: { id: game_config }
+groups: { common: { default: true } }
+views: { default: { contract: game_config/default, groups: [common] } }
 includes:
   - schema/items.toml
   - schema/quests.yaml
@@ -572,6 +631,7 @@ build:
         schema_dir.join("items.toml"),
         r#"
 [[tables]]
+id = "item"
 name = "Item"
 mode = "map"
 key = "id"
@@ -586,7 +646,8 @@ type = "i32"
         schema_dir.join("quests.yaml"),
         r#"
 tables:
-  - name: Quest
+  - id: quest
+    name: Quest
     mode: map
     key: id
     fields:
@@ -638,7 +699,7 @@ return {
         name: "title".to_owned(),
         ty: "string".to_owned(),
         enum_value_id: None,
-        scope: "all".to_owned(),
+        groups: Vec::new(),
         parser: None,
         comment: Some("Quest title".to_owned()),
         default: None,
@@ -667,7 +728,7 @@ return {
 }
 
 #[test]
-fn save_updates_project_package() {
+fn save_updates_project_identity() {
     let base = temp_dir();
     let project = write_project(
         &base,
@@ -678,18 +739,18 @@ values = [{ id = 0, name = "Common" }]
 "#,
     );
     let mut schema = load_studio_schema(&project).schema.unwrap();
-    schema.package = "edited_config".to_owned();
+    schema.project_id = "edited_config".to_owned();
 
     write_studio_schema(&project, &schema).unwrap();
 
     let project_text = fs::read_to_string(&project).unwrap();
-    assert!(project_text.contains("package = \"edited_config\""));
+    assert!(project_text.contains("id = \"edited_config\""));
 
     let _ = fs::remove_dir_all(base);
 }
 
 #[test]
-fn save_updates_project_package_with_multiline_includes() {
+fn save_updates_project_identity_with_multiline_includes() {
     let base = temp_dir();
     let schema_dir = base.join("schema");
     fs::create_dir_all(&schema_dir).unwrap();
@@ -697,7 +758,9 @@ fn save_updates_project_package_with_multiline_includes() {
     fs::write(
         &project,
         r#"
-package = "game_config"
+project = { id = "game_config" }
+groups = { common = { default = true } }
+views = { default = { contract = "game_config/default", groups = ["common"] } }
 includes = [
     "schema/items.toml",
 ]
@@ -717,13 +780,13 @@ values = [{ id = 0, name = "Common" }]
     )
     .unwrap();
     let mut schema = load_studio_schema(&project).schema.unwrap();
-    schema.package = "edited_config".to_owned();
+    schema.project_id = "edited_config".to_owned();
 
     let response = save_studio_schema(&project, &schema);
     let project_text = fs::read_to_string(&project).unwrap();
 
     assert!(response.ok, "{:?}", response.diagnostics);
-    assert!(project_text.contains("package = \"edited_config\""));
+    assert!(project_text.contains("id = \"edited_config\""));
     assert!(project_text.contains("[build]"));
     assert!(load_studio_schema(&project).ok);
 
@@ -737,7 +800,7 @@ fn showcase_project_roundtrips_through_studio_save() {
     let mut schema = load_studio_schema(&project).schema.unwrap();
     let node_count = schema.nodes.len();
 
-    schema.package = "com.sora.showcase.edited".to_owned();
+    schema.project_id = "com.sora.showcase.edited".to_owned();
     let response = save_studio_schema(&project, &schema);
     let reloaded = load_studio_schema(&project);
 
@@ -747,7 +810,7 @@ fn showcase_project_roundtrips_through_studio_save() {
     assert!(
         fs::read_to_string(&project)
             .unwrap()
-            .contains("package = \"com.sora.showcase.edited\"")
+            .contains("id = \"com.sora.showcase.edited\"")
     );
 
     let _ = fs::remove_dir_all(base);
@@ -797,7 +860,9 @@ fn write_project(base: &Path, schema_text: &str) -> PathBuf {
     fs::write(
         &project,
         r#"
-package = "game_config"
+project = { id = "game_config" }
+groups = { common = { default = true } }
+views = { default = { contract = "game_config/default", groups = ["common"] } }
 includes = ["schema/items.toml"]
 "#,
     )
@@ -811,7 +876,9 @@ fn copy_showcase_project(base: &Path) -> PathBuf {
         .join("../..")
         .join("examples/showcase");
     let schema_dir = base.join("schema");
+    let views_dir = base.join("views");
     fs::create_dir_all(&schema_dir).unwrap();
+    fs::create_dir_all(&views_dir).unwrap();
     fs::copy(showcase.join("project.toml"), base.join("project.toml")).unwrap();
     for file in [
         "core.toml",
@@ -822,6 +889,9 @@ fn copy_showcase_project(base: &Path) -> PathBuf {
         "events.toml",
     ] {
         fs::copy(showcase.join("schema").join(file), schema_dir.join(file)).unwrap();
+    }
+    for file in ["full.toml", "client.toml", "server.toml"] {
+        fs::copy(showcase.join("views").join(file), views_dir.join(file)).unwrap();
     }
     base.join("project.toml")
 }

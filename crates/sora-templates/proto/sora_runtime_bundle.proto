@@ -1,0 +1,47 @@
+syntax = "proto3";
+
+package sora.runtime;
+
+option csharp_namespace = "Sora.Runtime";
+
+message Bundle {
+  uint32 format_version = 1;
+  string format = 2;
+  string contract_id = 3;
+  bytes schema_json = 4;
+  repeated Table tables = 5;
+}
+
+message Table {
+  string name = 1;
+  repeated Row rows = 2;
+}
+
+message Row {
+  repeated Field fields = 1;
+}
+
+message Field {
+  string name = 1;
+  Value value = 2;
+}
+
+message Value {
+  oneof kind {
+    bool bool_value = 1;
+    int64 integer_value = 2;
+    double float_value = 3;
+    string string_value = 4;
+    ListValue list_value = 5;
+    ObjectValue object_value = 6;
+    bool null_value = 7;
+  }
+}
+
+message ListValue {
+  repeated Value values = 1;
+}
+
+message ObjectValue {
+  repeated Field fields = 1;
+}

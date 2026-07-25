@@ -1,4 +1,3 @@
-package = "com.sora.showcase"
 includes = [
     "schema/core.toml",
     "schema/items.toml",
@@ -7,6 +6,16 @@ includes = [
     "schema/system.toml",
     "schema/events.toml",
 ]
+
+[project]
+id = "com.sora.showcase"
+views = ["views/full.toml", "views/client.toml", "views/server.toml"]
+
+[groups.common]
+default = true
+
+[groups.server]
+default = false
 
 [localization]
 locales = ["zh_cn", "en_us"]
@@ -21,6 +30,7 @@ sheet = "Localization"
 [build]
 default_source_format = "xlsx"
 data_root = "data"
+view = "full"
 schema_lock = "generated/schema.lock"
 excel_templates = "generated/excel"
 
@@ -53,12 +63,12 @@ format = "auto"
 [[build.codegen]]
 target = "dart"
 out = "dart/lib/src/generated"
-scope = "client"
+view = "client"
 
 [[build.codegen]]
 target = "godot"
 out = "godot/addons/sora_config/generated"
-scope = "client"
+view = "client"
 
 [[build.codegen]]
 target = "c"
@@ -129,17 +139,17 @@ locale = "en_us"
 [[build.exports]]
 format = "json"
 out = "generated/client/config.json"
-scope = "client"
+view = "client"
 
 [[build.exports]]
 format = "json"
 out = "godot/config/config.json"
-scope = "client"
+view = "client"
 
 [[build.exports]]
 format = "json"
 out = "generated/server/config.json"
-scope = "server"
+view = "server"
 
 [[build.exports]]
 format = "sora-protobuf"
@@ -187,12 +197,10 @@ runtime_format = "json"
 [codegen.c]
 runtime_format = "sora"
 c_standard = "c11"
-prefix = "sora_showcase"
 
 [codegen.cpp]
 runtime_format = "sora"
 cpp_standard = "c++17"
-namespace = "sora::showcase"
 
 [codegen.typescript]
 runtime_format = "sora"
@@ -209,7 +217,6 @@ enum_repr = "atom"
 
 [codegen.lua]
 runtime_format = "sora"
-module = "generated"
 lua_version = "5.4"
 enum_repr = "string"
 

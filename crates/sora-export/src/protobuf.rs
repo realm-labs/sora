@@ -41,7 +41,7 @@ struct ProtoBundle {
     #[prost(string, tag = "2")]
     format: String,
     #[prost(string, tag = "3")]
-    package: String,
+    contract_id: String,
     #[prost(bytes = "vec", tag = "4")]
     schema_json: Vec<u8>,
     #[prost(message, repeated, tag = "5")]
@@ -119,7 +119,7 @@ impl ProtoBundle {
         Ok(Self {
             format_version: FORMAT_VERSION,
             format: "sora-protobuf".to_owned(),
-            package: schema.package.clone(),
+            contract_id: schema.contract_id.clone(),
             schema_json,
             schema_fingerprint: schema_fingerprint(ir)?,
             data_fingerprint: data_fingerprint(data)?,
@@ -209,7 +209,7 @@ mod tests {
         let bundle = ProtoBundle::decode(fs::read(&path).unwrap().as_slice()).unwrap();
         assert_eq!(bundle.format_version, 2);
         assert_eq!(bundle.format, "sora-protobuf");
-        assert_eq!(bundle.package, "game_config");
+        assert_eq!(bundle.contract_id, "game_config/default");
         assert!(bundle.schema_fingerprint.len() > 8);
         assert!(bundle.data_fingerprint.len() > 8);
         assert_eq!(bundle.tables[0].name, "Item");
@@ -221,9 +221,12 @@ mod tests {
     fn example_ir() -> ConfigIr {
         let schema: SchemaFile = toml::from_str(
             r#"
-package = "game_config"
+project = { id = "game_config" }
+groups = { common = { default = true } }
+views = { default = { contract = "game_config/default", groups = ["common"] } }
 
 [[tables]]
+id = "item"
 name = "Item"
 mode = "map"
 key = "id"
@@ -234,7 +237,8 @@ type = "i32"
 "#,
         )
         .unwrap();
-        normalize_schema(schema).unwrap()
+        let ir = normalize_schema(schema).unwrap();
+        sora_ir::projection::project_config_ir(&ir, "default").unwrap()
     }
 
     fn example_data() -> ConfigData {

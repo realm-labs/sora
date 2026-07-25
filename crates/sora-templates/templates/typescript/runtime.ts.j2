@@ -719,7 +719,7 @@ class SoraProtobufBundle {
         const bundle = new protobuf.Type("Bundle")
             .add(new protobuf.Field("formatVersion", 1, "uint32"))
             .add(new protobuf.Field("format", 2, "string"))
-            .add(new protobuf.Field("package", 3, "string"))
+            .add(new protobuf.Field("contract_id", 3, "string"))
             .add(new protobuf.Field("schemaJson", 4, "bytes"))
             .add(new protobuf.Field("tables", 5, "Table", "repeated"))
             .add(new protobuf.Field("schemaFingerprint", 6, "string"))

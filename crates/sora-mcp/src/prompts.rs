@@ -138,7 +138,7 @@ fn prompt_definition(name: &str) -> Prompt {
                 argument("project_id", "Opened Sora project ID", true),
                 argument("codegen_target", "Language or schema target", true),
                 argument("runtime_format", "Runtime data format", false),
-                argument("scope", "Optional generation scope", false),
+                argument("view", "Optional generation view", false),
             ]),
         )
         .with_title("Add codegen target"),
@@ -147,7 +147,7 @@ fn prompt_definition(name: &str) -> Prompt {
             Some("Validate, build, and review release artifacts without skipping checks"),
             Some(vec![
                 argument("project_id", "Opened Sora project ID", true),
-                argument("scope", "Optional release scope", false),
+                argument("view", "Optional release view", false),
                 argument("export_format", "Optional export format", false),
             ]),
         )
@@ -267,16 +267,16 @@ fn workflow_instruction(name: &str, arguments: &Map<String, Value>) -> Result<St
             optional_argument(arguments, "runtime_format")
                 .map(|format| format!(" using runtime format `{format}`"))
                 .unwrap_or_default(),
-            optional_argument(arguments, "scope")
-                .map(|scope| format!(" for scope `{scope}`"))
+            optional_argument(arguments, "view")
+                .map(|view| format!(" for view `{view}`"))
                 .unwrap_or_default(),
         ),
         "sora_prepare_config_release" => format!(
             "Prepare project `{project_id}` for release{}{}. Validate schema and all relevant data, \
              inspect diagnostics, run the manifest build without unsafe clean paths, then review \
              immutable artifact resources.",
-            optional_argument(arguments, "scope")
-                .map(|scope| format!(" for scope `{scope}`"))
+            optional_argument(arguments, "view")
+                .map(|view| format!(" for view `{view}`"))
                 .unwrap_or_default(),
             optional_argument(arguments, "export_format")
                 .map(|format| format!(" with export `{format}`"))
@@ -284,7 +284,7 @@ fn workflow_instruction(name: &str, arguments: &Map<String, Value>) -> Result<St
         ),
         "sora_review_schema" => format!(
             "Review project `{project_id}` schema{} for naming, type modeling, references, indexes, \
-             source boundaries, scopes, localization, and generated API impact. Report findings \
+             source boundaries, groups, views, localization, and generated API impact. Report findings \
              before suggesting any mutation.",
             optional_argument(arguments, "entity_name")
                 .map(|entity| format!(

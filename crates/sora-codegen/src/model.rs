@@ -150,7 +150,9 @@ pub fn build_base_model(ir: &ConfigIr) -> Result<BaseModel> {
         .collect();
 
     Ok(BaseModel {
-        package: ir.package.clone(),
+        // Language-specific generators must fill this from their target
+        // binding. Contract identity is deliberately not a namespace fallback.
+        package: String::new(),
         schema_fingerprint: sora_ir::fingerprint::schema_fingerprint(ir)?,
         enums,
         unions,

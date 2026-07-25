@@ -462,7 +462,9 @@ mod tests {
     fn derived_field_ir() -> ConfigIr {
         let schema: SchemaFile = toml::from_str(
             r#"
-package = "game_config"
+project = { id = "game_config" }
+groups = { common = { default = true } }
+views = { default = { contract = "game_config/default", groups = ["common"] } }
 
 [[structs]]
 name = "Reward"
@@ -476,6 +478,7 @@ name = "count"
 type = "i32"
 
 [[tables]]
+id = "item"
 name = "Item"
 mode = "map"
 key = "id"
@@ -494,6 +497,7 @@ type = "list<Reward>"
 from = { table = "ItemReward", parent_key = "id", child_key = "item_id", order_by = "seq" }
 
 [[tables]]
+id = "item_reward"
 name = "ItemReward"
 mode = "list"
 
@@ -523,9 +527,12 @@ type = "i32"
     fn single_value_derived_field_ir(field_type: &str) -> ConfigIr {
         let schema: SchemaFile = toml::from_str(&format!(
             r#"
-package = "game_config"
+project = {{ id = "game_config" }}
+groups = {{ common = {{ default = true }} }}
+views = {{ default = {{ contract = "game_config/default", groups = ["common"] }} }}
 
 [[tables]]
+id = "item"
 name = "Item"
 mode = "map"
 key = "id"
@@ -540,6 +547,7 @@ type = "{field_type}"
 from = {{ table = "ItemProfile", parent_key = "id", child_key = "item_id", field = "name" }}
 
 [[tables]]
+id = "item_profile"
 name = "ItemProfile"
 mode = "list"
 

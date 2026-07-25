@@ -1,4 +1,5 @@
 [[tables]]
+id = "item"
 name = "Item"
 mode = "map"
 key = "id"
@@ -59,6 +60,7 @@ unique = true
 name = "by_item_type"
 fields = ["item_type"]
 [[tables]]
+id = "shop"
 name = "Shop"
 mode = "map"
 key = "id"
@@ -79,6 +81,7 @@ type = "string"
 name = "currency"
 type = "enum<ResourceKind>"
 [[tables]]
+id = "shop_item"
 name = "ShopItem"
 mode = "list"
 
@@ -107,6 +110,7 @@ parser = { kind = "tuple" }
 name = "daily_limit"
 type = "optional<i32>"
 [[tables]]
+id = "recipe"
 name = "Recipe"
 mode = "map"
 key = "id"
@@ -129,6 +133,7 @@ type = "list<ResourceCost>"
 parser = { kind = "tuple_list" }
 length = [1, 4]
 [[tables]]
+id = "gacha_pool"
 name = "GachaPool"
 mode = "map"
 key = "id"
@@ -150,6 +155,7 @@ name = "cost"
 type = "struct<ResourceCost>"
 parser = { kind = "tuple" }
 [[tables]]
+id = "gacha_item"
 name = "GachaItem"
 mode = "list"
 
@@ -173,6 +179,7 @@ type = "enum<Rarity>"
 name = "weight"
 type = "f32"
 [[tables]]
+id = "equipment_set"
 name = "EquipmentSet"
 mode = "map"
 key = "id"

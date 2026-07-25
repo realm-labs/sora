@@ -60,7 +60,7 @@ Sync matches columns by the `#field` row, not by column position:
 
 - existing schema fields keep their data;
 - new schema fields are added as empty columns;
-- changed type, parser, scope, range, length, comments, and table metadata refresh the generated header rows;
+- changed type, parser, groups, range, length, comments, and table metadata refresh the generated header rows;
 - fields removed from schema are not deleted from Excel. They are kept as legacy columns ignored by Sora, so designers can delete them manually when they are ready;
 - non-schema sheets in the same workbook are preserved as value-only sheets.
 
@@ -68,6 +68,7 @@ The workbook and sheet for each table come from that table's source:
 
 ```toml
 [[tables]]
+id = "item"
 name = "Item"
 
 [tables.source]
@@ -76,6 +77,7 @@ file = "Core.xlsx"
 sheet = "Item"
 
 [[tables]]
+id = "quest"
 name = "Quest"
 
 [tables.source]
@@ -103,11 +105,11 @@ Generated sheets include several header rows:
 
 | Row | Purpose |
 | --- | --- |
-| `@table` metadata | Table name, mode, key, scope, and schema hash. |
+| `@table` metadata | Table name, mode, key, groups, and schema hash. |
 | `#name` | Display name row for the spreadsheet. |
 | `#field` | Stable schema field names read by Sora. |
 | `#type` | Type hints such as `i32`, `enum<ItemType>`, or `struct<Cost>(kind: enum<ResourceKind>, id: i32, count: i32)`. |
-| `#scope` | Scope information for each field. |
+| `#groups` | Declared group membership for each field. |
 | `#input` | Input hints such as key, parser, range, length, or derived-field source. |
 | `#desc` | Field comments for designers and reviewers. |
 

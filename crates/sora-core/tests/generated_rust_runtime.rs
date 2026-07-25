@@ -77,7 +77,9 @@ fn write_project(base: &Path, runtime_format: &str) -> PathBuf {
     fs::write(
         &project_path,
         r#"
-package = "game_config"
+project = { id = "game_config" }
+groups = { common = { default = true } }
+views = { default = { contract = "game_config/default", groups = ["common"] } }
 includes = ["schema/items.toml"]
 
 [codegen.rust]
@@ -105,6 +107,7 @@ name = "count"
 type = "i32"
 
 [[tables]]
+id = "item"
 name = "Item"
 mode = "map"
 key = "id"
@@ -135,6 +138,7 @@ type = "list<Reward>"
 from = { table = "ItemReward", parent_key = "id", child_key = "item_id", order_by = "seq" }
 
 [[tables]]
+id = "item_reward"
 name = "ItemReward"
 mode = "list"
 

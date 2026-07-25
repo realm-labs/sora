@@ -19,10 +19,10 @@ use crate::{
     kotlin::KotlinCodeGenerator,
     lua::LuaCodeGenerator,
     options::{
-        CCodegenOptions, CppCodegenOptions, ErlangCodegenOptions, JavaCodegenOptions,
-        JavaScriptCodegenOptions, LanguageCodegenOptions, LuaCodegenOptions, RuntimeFormat,
-        RustCodegenOptions, ScalaCodegenOptions, TypeScriptCodegenOptions, decode_options,
-        runtime_format_from_options,
+        CCodegenOptions, CSharpCodegenOptions, CppCodegenOptions, ErlangCodegenOptions,
+        JavaCodegenOptions, JavaScriptCodegenOptions, LanguageCodegenOptions, LuaCodegenOptions,
+        PackageCodegenOptions, RuntimeFormat, RustCodegenOptions, ScalaCodegenOptions,
+        TypeScriptCodegenOptions, decode_options, runtime_format_from_options,
     },
     proto::ProtoCodeGenerator,
     python::PythonCodeGenerator,
@@ -178,7 +178,7 @@ impl CodegenRegistry {
                 aliases: &["kt"],
                 display_name: "Kotlin",
                 runtime_capabilities: RUNTIME_MANAGED_EXPORTS,
-                runtime_format: runtime_format_from_options::<LanguageCodegenOptions>,
+                runtime_format: runtime_format_from_options::<PackageCodegenOptions>,
                 formatter: None,
                 generator: Box::new(KotlinCodeGenerator),
             })
@@ -189,7 +189,7 @@ impl CodegenRegistry {
                 aliases: &["cs"],
                 display_name: "C#",
                 runtime_capabilities: RUNTIME_MANAGED_EXPORTS,
-                runtime_format: runtime_format_from_options::<LanguageCodegenOptions>,
+                runtime_format: runtime_format_from_options::<CSharpCodegenOptions>,
                 formatter: None,
                 generator: Box::new(CSharpCodeGenerator),
             })
@@ -222,7 +222,7 @@ impl CodegenRegistry {
                 aliases: &[],
                 display_name: "Go",
                 runtime_capabilities: RUNTIME_MANAGED_EXPORTS,
-                runtime_format: runtime_format_from_options::<LanguageCodegenOptions>,
+                runtime_format: runtime_format_from_options::<PackageCodegenOptions>,
                 formatter: Some(FormatterConfig::new("Go", "gofmt", &["-w"], &["go"])),
                 generator: Box::new(GoCodeGenerator),
             })
@@ -436,6 +436,20 @@ pub fn empty_options() -> Value {
     Value::Object(Map::new())
 }
 
+#[cfg(test)]
+pub fn default_test_options(target: &str) -> Value {
+    match target {
+        "c" => serde_json::json!({ "prefix": "game_config" }),
+        "cpp" => serde_json::json!({ "namespace": "sora" }),
+        "csharp" => serde_json::json!({ "namespace": "game_config" }),
+        "go" | "java" | "kotlin" | "scala" => {
+            serde_json::json!({ "package": "game_config" })
+        }
+        "proto-schema" => serde_json::json!({ "package": "game_config" }),
+        _ => empty_options(),
+    }
+}
+
 #[doc(hidden)]
 #[macro_export]
 macro_rules! impl_test_codegen_generate {
@@ -448,7 +462,7 @@ macro_rules! impl_test_codegen_generate {
                 ir: &sora_ir::model::ConfigIr,
                 out_dir: &std::path::Path,
             ) -> sora_diagnostics::Result<()> {
-                let options = $crate::generator::empty_options();
+                let options = $crate::generator::default_test_options($target);
                 <$generator as $crate::generator::CodeGenerator>::generate(
                     self,
                     $crate::generator::CodegenContext {
@@ -470,8 +484,14 @@ macro_rules! impl_test_codegen_generate {
             where
                 T: serde::Serialize,
             {
-                let options = serde_json::to_value(options)
+                let provided = serde_json::to_value(options)
                     .map_err(sora_diagnostics::SoraError::SerializeData)?;
+                let mut options = $crate::generator::default_test_options($target);
+                if let (serde_json::Value::Object(defaults), serde_json::Value::Object(provided)) =
+                    (&mut options, provided)
+                {
+                    defaults.extend(provided.into_iter().filter(|(_, value)| !value.is_null()));
+                }
                 <$generator as $crate::generator::CodeGenerator>::generate(
                     self,
                     $crate::generator::CodegenContext {

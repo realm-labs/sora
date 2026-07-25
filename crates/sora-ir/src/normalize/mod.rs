@@ -1,15 +1,16 @@
 use sora_diagnostics::{Result, SoraError};
 use sora_schema::model::{
-    EnumAliasSchema, FieldSchema, IndexSchema, LocalizationSchema, ParserSchema, SchemaFile,
-    ScopeSchema, TableFieldSchema, TableModeSchema, TableSchema, TableSourceSchema, UnionSchema,
+    EnumAliasSchema, FieldSchema, GroupSetSchema, IndexSchema, LocalizationSchema, ParserSchema,
+    SchemaFile, TableFieldSchema, TableModeSchema, TableSchema, TableSourceSchema, UnionSchema,
     UnionVariantSchema,
 };
 
 use crate::{
     input_projection::{COLUMNS_PARSER, TAGGED_COLUMNS_PARSER},
     model::{
-        ConfigIr, DerivedFieldIr, EnumAliasIr, EnumIr, EnumValueIr, FieldIr, IndexIr, ParserIr,
-        ScopeIr, StructIr, TableIr, TableModeIr, TableSourceIr, TypeIr, UnionIr, UnionVariantIr,
+        ConfigIr, DerivedFieldIr, EnumAliasIr, EnumIr, EnumValueIr, FieldIr, GroupSetIr, IndexIr,
+        ParserIr, StructIr, TableIr, TableModeIr, TableSourceIr, TypeIr, UnionIr, UnionVariantIr,
+        ViewIr, ViewTableSelectionIr,
     },
     parse::parse_type,
     parser::ParserRegistry,
@@ -23,15 +24,23 @@ pub fn normalize_schema_with_parsers(
     schema: SchemaFile,
     parser_registry: &ParserRegistry,
 ) -> Result<ConfigIr> {
-    Ok(ConfigIr {
-        package: schema.package,
+    validate_project_id(&schema.project.id)?;
+    let group_defaults = normalize_group_definitions(&schema.groups)?;
+    let views = normalize_views(schema.views, &group_defaults)?;
+    let project_id = schema.project.id;
+    let mut ir = ConfigIr {
+        contract_id: project_id.clone(),
+        project_id,
+        view: None,
+        group_defaults,
+        views,
         enums: schema
             .enums
             .into_iter()
             .map(|item| {
                 Ok(EnumIr {
                     name: item.name,
-                    scope: ScopeIr::try_from(item.scope)?,
+                    groups: GroupSetIr::try_from(item.groups)?,
                     values: item
                         .values
                         .into_iter()
@@ -50,7 +59,7 @@ pub fn normalize_schema_with_parsers(
             .map(|item| {
                 Ok(StructIr {
                     name: item.name,
-                    scope: ScopeIr::try_from(item.scope)?,
+                    groups: GroupSetIr::try_from(item.groups)?,
                     fields: convert_fields_with_parsers(item.fields, parser_registry)?,
                 })
             })
@@ -66,7 +75,207 @@ pub fn normalize_schema_with_parsers(
             .into_iter()
             .map(|table| convert_table_with_parsers(table, parser_registry))
             .collect::<Result<Vec<_>>>()?,
-    })
+    };
+    apply_and_validate_groups(&mut ir)?;
+    Ok(ir)
+}
+
+fn validate_project_id(project_id: &str) -> Result<()> {
+    if project_id.is_empty()
+        || !project_id
+            .chars()
+            .all(|ch| ch.is_ascii_alphanumeric() || matches!(ch, '.' | '_' | '-' | '/'))
+    {
+        return Err(SoraError::InvalidSchema(format!(
+            "project id `{project_id}` must contain only ASCII letters, digits, `.`, `_`, `-`, or `/`"
+        )));
+    }
+    Ok(())
+}
+
+fn normalize_group_definitions(
+    groups: &std::collections::BTreeMap<String, sora_schema::model::GroupSchema>,
+) -> Result<std::collections::BTreeMap<String, bool>> {
+    if groups.is_empty() {
+        return Err(SoraError::InvalidSchema(
+            "project must declare at least one group".to_owned(),
+        ));
+    }
+    let mut normalized = std::collections::BTreeMap::new();
+    for (name, group) in groups {
+        validate_group_name(name)?;
+        normalized.insert(name.clone(), group.default);
+    }
+    if !normalized.values().any(|is_default| *is_default) {
+        return Err(SoraError::InvalidSchema(
+            "project must declare at least one default group".to_owned(),
+        ));
+    }
+    Ok(normalized)
+}
+
+fn normalize_views(
+    views: std::collections::BTreeMap<String, sora_schema::model::ViewSchema>,
+    groups: &std::collections::BTreeMap<String, bool>,
+) -> Result<std::collections::BTreeMap<String, ViewIr>> {
+    if views.is_empty() {
+        return Err(SoraError::InvalidSchema(
+            "project must declare at least one view".to_owned(),
+        ));
+    }
+    views
+        .into_iter()
+        .map(|(name, view)| {
+            validate_group_name(&name)?;
+            validate_project_id(&view.contract)?;
+            if view.groups.is_empty() {
+                return Err(SoraError::InvalidSchema(format!(
+                    "view `{name}` must select at least one group"
+                )));
+            }
+            let selected_groups = normalize_group_names(view.groups, groups, "view", &name)?;
+            Ok((
+                name,
+                ViewIr {
+                    contract: view.contract,
+                    groups: selected_groups,
+                    tables: ViewTableSelectionIr {
+                        include: view.tables.include,
+                        exclude: view.tables.exclude,
+                    },
+                    table_names: view.names.tables,
+                    bindings: view.bindings,
+                },
+            ))
+        })
+        .collect()
+}
+
+fn apply_and_validate_groups(ir: &mut ConfigIr) -> Result<()> {
+    let defaults = ir
+        .group_defaults
+        .iter()
+        .filter_map(|(name, is_default)| is_default.then_some(name.clone()))
+        .collect::<Vec<_>>();
+    let definitions = &ir.group_defaults;
+    for item in &mut ir.enums {
+        resolve_groups(&mut item.groups, &defaults, definitions, "enum", &item.name)?;
+    }
+    for item in &mut ir.structs {
+        resolve_groups(
+            &mut item.groups,
+            &defaults,
+            definitions,
+            "struct",
+            &item.name,
+        )?;
+        for field in &mut item.fields {
+            resolve_groups(
+                &mut field.groups,
+                &defaults,
+                definitions,
+                "field",
+                &format!("{}.{}", item.name, field.name),
+            )?;
+        }
+    }
+    for item in &mut ir.unions {
+        resolve_groups(
+            &mut item.groups,
+            &defaults,
+            definitions,
+            "union",
+            &item.name,
+        )?;
+        for variant in &mut item.variants {
+            resolve_groups(
+                &mut variant.groups,
+                &defaults,
+                definitions,
+                "union variant",
+                &format!("{}.{}", item.name, variant.name),
+            )?;
+            for field in &mut variant.fields {
+                resolve_groups(
+                    &mut field.groups,
+                    &defaults,
+                    definitions,
+                    "field",
+                    &format!("{}.{}.{}", item.name, variant.name, field.name),
+                )?;
+            }
+        }
+    }
+    for table in &mut ir.tables {
+        resolve_groups(
+            &mut table.groups,
+            &defaults,
+            definitions,
+            "table",
+            &table.name,
+        )?;
+        for field in &mut table.fields {
+            resolve_groups(
+                &mut field.groups,
+                &defaults,
+                definitions,
+                "field",
+                &format!("{}.{}", table.name, field.name),
+            )?;
+        }
+    }
+    Ok(())
+}
+
+fn resolve_groups(
+    groups: &mut GroupSetIr,
+    defaults: &[String],
+    definitions: &std::collections::BTreeMap<String, bool>,
+    kind: &str,
+    name: &str,
+) -> Result<()> {
+    if groups.values.is_empty() {
+        groups.values = defaults.to_vec();
+        return Ok(());
+    }
+    groups.values =
+        normalize_group_names(std::mem::take(&mut groups.values), definitions, kind, name)?;
+    Ok(())
+}
+
+fn normalize_group_names(
+    values: Vec<String>,
+    definitions: &std::collections::BTreeMap<String, bool>,
+    kind: &str,
+    name: &str,
+) -> Result<Vec<String>> {
+    let mut normalized = Vec::with_capacity(values.len());
+    for value in values {
+        let value = value.trim();
+        validate_group_name(value)?;
+        if !definitions.contains_key(value) {
+            return Err(SoraError::InvalidSchema(format!(
+                "{kind} `{name}` references undeclared group `{value}`"
+            )));
+        }
+        if !normalized.iter().any(|item| item == value) {
+            normalized.push(value.to_owned());
+        }
+    }
+    Ok(normalized)
+}
+
+fn validate_group_name(value: &str) -> Result<()> {
+    if value.is_empty()
+        || !value
+            .chars()
+            .all(|ch| ch.is_ascii_alphanumeric() || ch == '_' || ch == '-')
+    {
+        return Err(SoraError::InvalidSchema(format!(
+            "group or view name `{value}` must contain only ASCII letters, digits, `_`, or `-`"
+        )));
+    }
+    Ok(())
 }
 
 fn convert_localization(
@@ -145,7 +354,7 @@ impl TryFrom<UnionSchema> for UnionIr {
 
         Ok(Self {
             name: union.name,
-            scope: ScopeIr::try_from(union.scope)?,
+            groups: GroupSetIr::try_from(union.groups)?,
             tag: union.tag,
             variants: union
                 .variants
@@ -162,7 +371,7 @@ impl TryFrom<UnionVariantSchema> for UnionVariantIr {
     fn try_from(variant: UnionVariantSchema) -> Result<Self> {
         Ok(Self {
             name: variant.name,
-            scope: ScopeIr::try_from(variant.scope)?,
+            groups: GroupSetIr::try_from(variant.groups)?,
             fields: convert_fields(variant.fields)?,
         })
     }
@@ -193,22 +402,16 @@ impl From<ParserSchema> for ParserIr {
     }
 }
 
-impl TryFrom<ScopeSchema> for ScopeIr {
+impl TryFrom<GroupSetSchema> for GroupSetIr {
     type Error = SoraError;
 
-    fn try_from(scope: ScopeSchema) -> Result<Self> {
-        if scope.values.is_empty() {
-            return Err(SoraError::InvalidSchema(
-                "scope must contain at least one value".to_owned(),
-            ));
-        }
-
-        let mut values = Vec::with_capacity(scope.values.len());
-        for value in scope.values {
+    fn try_from(groups: GroupSetSchema) -> Result<Self> {
+        let mut values = Vec::with_capacity(groups.values.len());
+        for value in groups.values {
             let value = value.trim();
             if value.is_empty() {
                 return Err(SoraError::InvalidSchema(
-                    "scope values must not be empty".to_owned(),
+                    "group values must not be empty".to_owned(),
                 ));
             }
             if !value
@@ -216,7 +419,7 @@ impl TryFrom<ScopeSchema> for ScopeIr {
                 .all(|ch| ch.is_ascii_alphanumeric() || ch == '_' || ch == '-')
             {
                 return Err(SoraError::InvalidSchema(format!(
-                    "scope `{value}` must contain only ASCII letters, digits, `_`, or `-`"
+                    "group `{value}` must contain only ASCII letters, digits, `_`, or `-`"
                 )));
             }
             if !values.iter().any(|item| item == value) {
@@ -309,7 +512,7 @@ fn convert_field_with_parsers(
     Ok(FieldIr {
         name: field.name,
         ty,
-        scope: ScopeIr::try_from(field.scope)?,
+        groups: GroupSetIr::try_from(field.groups)?,
         key: false,
         comment: field.comment,
         default: field.default,
@@ -393,7 +596,7 @@ fn convert_table_field_with_parsers(
     Ok(FieldIr {
         name: field.name,
         ty,
-        scope: ScopeIr::try_from(field.scope)?,
+        groups: GroupSetIr::try_from(field.groups)?,
         key: is_key,
         comment: field.comment,
         default: field.default,
@@ -417,7 +620,7 @@ fn convert_union_with_parsers(
 
     Ok(UnionIr {
         name: union.name,
-        scope: ScopeIr::try_from(union.scope)?,
+        groups: GroupSetIr::try_from(union.groups)?,
         tag: union.tag,
         variants: union
             .variants
@@ -433,7 +636,7 @@ fn convert_union_variant_with_parsers(
 ) -> Result<UnionVariantIr> {
     Ok(UnionVariantIr {
         name: variant.name,
-        scope: ScopeIr::try_from(variant.scope)?,
+        groups: GroupSetIr::try_from(variant.groups)?,
         fields: convert_fields_with_parsers(variant.fields, parser_registry)?,
     })
 }
@@ -445,8 +648,10 @@ fn convert_table_with_parsers(
     let key = table.key;
     let fields = convert_table_fields_with_parsers(table.fields, key.as_deref(), parser_registry)?;
     Ok(TableIr {
+        id: table.id,
+        canonical_name: table.name.clone(),
         name: table.name,
-        scope: ScopeIr::try_from(table.scope)?,
+        groups: GroupSetIr::try_from(table.groups)?,
         mode: table.mode.into(),
         key,
         source: table.source.map(Into::into),

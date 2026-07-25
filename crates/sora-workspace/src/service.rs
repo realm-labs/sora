@@ -175,7 +175,7 @@ impl WorkspaceService {
             relative_manifest: normalized_relative_path(&validate_relative_manifest(
                 relative_manifest,
             )?),
-            package: manifest.package,
+            schema_id: manifest.project.id,
             requires_trust: !scripts.is_empty(),
             scripts,
         })
@@ -350,7 +350,7 @@ pub struct ProjectCandidate {
 pub struct DiscoveredProjectInspection {
     pub root_id: String,
     pub relative_manifest: String,
-    pub package: String,
+    pub schema_id: String,
     pub requires_trust: bool,
     pub scripts: Vec<ProjectScript>,
 }
@@ -510,7 +510,7 @@ mod tests {
         let directory = temp_dir(id);
         fs::create_dir_all(&directory).unwrap();
         let project = directory.join("project.toml");
-        fs::write(&project, format!("package = \"{id}\"\n")).unwrap();
+        fs::write(&project, project_manifest(id)).unwrap();
         ProjectSession::open(
             ProjectId::new(id).expect("test project id should be valid"),
             project,
@@ -556,7 +556,7 @@ mod tests {
         let directory = temp_dir("open");
         fs::create_dir_all(&directory).unwrap();
         let project = directory.join("project.toml");
-        fs::write(&project, "package = \"demo\"\n").unwrap();
+        fs::write(&project, project_manifest("demo")).unwrap();
         let workspace = WorkspaceService::new();
 
         let session = workspace
@@ -579,15 +579,19 @@ mod tests {
         fs::create_dir_all(directory.join("game")).unwrap();
         fs::create_dir_all(directory.join(".cache")).unwrap();
         fs::create_dir_all(directory.join("nested/deeper")).unwrap();
-        fs::write(directory.join("game/project.toml"), "package = \"game\"\n").unwrap();
+        fs::write(
+            directory.join("game/project.toml"),
+            project_manifest("game"),
+        )
+        .unwrap();
         fs::write(
             directory.join(".cache/project.toml"),
-            "package = \"cache\"\n",
+            project_manifest("cache"),
         )
         .unwrap();
         fs::write(
             directory.join("nested/deeper/project.toml"),
-            "package = \"deep\"\n",
+            project_manifest("deep"),
         )
         .unwrap();
         let workspace = WorkspaceService::new();
@@ -606,7 +610,10 @@ mod tests {
         fs::create_dir_all(directory.join("game")).unwrap();
         fs::write(
             directory.join("game/project.toml"),
-            "package = \"game\"\n[parsers]\nscripts = [\"parser.lua\"]\n",
+            format!(
+                "{}\n[parsers]\nscripts = [\"parser.lua\"]\n",
+                project_manifest("game")
+            ),
         )
         .unwrap();
         fs::write(
@@ -661,6 +668,14 @@ return {
             )
             .unwrap();
         let _ = fs::remove_dir_all(directory);
+    }
+
+    fn project_manifest(id: &str) -> String {
+        format!(
+            "project = {{ id = \"{id}\" }}\n\
+             groups = {{ common = {{ default = true }} }}\n\
+             views = {{ default = {{ contract = \"{id}/default\", groups = [\"common\"] }} }}\n"
+        )
     }
 
     fn temp_dir(label: &str) -> PathBuf {

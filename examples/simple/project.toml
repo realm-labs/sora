@@ -1,2 +1,13 @@
-package = "game_config"
+project = { id = "game_config" }
+groups = { common = { default = true } }
 includes = ["schema/items.toml"]
+
+[views.default]
+contract = "game_config/default"
+groups = ["common"]
+
+[views.default.bindings.kotlin]
+package = "game_config"
+
+[views.default.bindings.proto-schema]
+package = "game_config"

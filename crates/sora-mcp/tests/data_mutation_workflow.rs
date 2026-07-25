@@ -126,12 +126,18 @@ fn temp_project() -> PathBuf {
     fs::create_dir_all(root.join("data")).unwrap();
     fs::write(
         root.join("project.toml"),
-        "package = \"demo\"\nincludes = [\"schema.toml\"]\n\n[build]\ndata_root = \"data\"\n",
+        "project = { id = \"demo\" }\n\
+         groups = { common = { default = true } }\n\
+         views = { default = { contract = \"demo/default\", groups = [\"common\"] } }\n\
+         includes = [\"schema.toml\"]\n\n\
+         [build]\n\
+         data_root = \"data\"\n",
     )
     .unwrap();
     fs::write(
         root.join("schema.toml"),
         r#"[[tables]]
+id = "item"
 name = "Item"
 mode = "map"
 key = "id"

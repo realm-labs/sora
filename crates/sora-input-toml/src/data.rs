@@ -135,9 +135,12 @@ name = "Iron Sword"
         fs::create_dir_all(&data_dir).unwrap();
         let schema = toml::from_str::<SchemaFile>(
             r#"
-package = "game_config"
+project = { id = "game_config" }
+groups = { common = { default = true } }
+views = { default = { contract = "game_config/default", groups = ["common"] } }
 
 [[tables]]
+id = "item"
 name = "Item"
 mode = "map"
 key = "id"

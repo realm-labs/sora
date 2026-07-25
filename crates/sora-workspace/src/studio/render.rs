@@ -143,7 +143,7 @@ fn push_node(out: &mut String, node: &StudioNode) {
 fn push_enum_node(out: &mut String, node: &StudioNode) {
     out.push_str("[[enums]]\n");
     push_string(out, "name", &node.name);
-    push_scope(out, &node.scope);
+    push_groups(out, &node.groups);
     out.push('\n');
     for field in node.fields.iter().filter(|field| field.ty == "enum value") {
         out.push_str("[[enums.values]]\n");
@@ -165,7 +165,7 @@ fn push_enum_node(out: &mut String, node: &StudioNode) {
 fn push_struct_node(out: &mut String, node: &StudioNode) {
     out.push_str("[[structs]]\n");
     push_string(out, "name", &node.name);
-    push_scope(out, &node.scope);
+    push_groups(out, &node.groups);
     out.push('\n');
     for field in &node.fields {
         out.push_str("[[structs.fields]]\n");
@@ -177,7 +177,7 @@ fn push_struct_node(out: &mut String, node: &StudioNode) {
 fn push_union_node(out: &mut String, node: &StudioNode) {
     out.push_str("[[unions]]\n");
     push_string(out, "name", &node.name);
-    push_scope(out, &node.scope);
+    push_groups(out, &node.groups);
     if let Some(tag) = node.metadata.get("tag") {
         push_string(out, "tag", tag);
     }
@@ -186,13 +186,13 @@ fn push_union_node(out: &mut String, node: &StudioNode) {
     for (variant, fields) in union_variants(node) {
         out.push_str("[[unions.variants]]\n");
         push_string(out, "name", &variant);
-        if let Some(scope) = node
+        if let Some(groups) = node
             .fields
             .iter()
             .find(|field| field.ty == "variant" && field.name == variant)
-            .map(|field| field.scope.as_str())
+            .map(|field| field.groups.as_slice())
         {
-            push_scope(out, scope);
+            push_groups(out, groups);
         }
         out.push('\n');
         for field in fields {
@@ -205,8 +205,11 @@ fn push_union_node(out: &mut String, node: &StudioNode) {
 
 fn push_table_node(out: &mut String, node: &StudioNode) {
     out.push_str("[[tables]]\n");
+    if let Some(id) = node.metadata.get("id") {
+        push_string(out, "id", id);
+    }
     push_string(out, "name", &node.name);
-    push_scope(out, &node.scope);
+    push_groups(out, &node.groups);
     if let Some(mode) = node.metadata.get("mode") {
         push_string(out, "mode", mode);
     }
@@ -362,13 +365,13 @@ fn union_node_value(node: &StudioNode) -> Value {
         .map(|(name, fields)| {
             let mut variant = Map::new();
             variant.insert("name".to_owned(), Value::String(name.clone()));
-            if let Some(scope) = node
+            if let Some(groups) = node
                 .fields
                 .iter()
                 .find(|field| field.ty == "variant" && field.name == name)
-                .map(|field| field.scope.as_str())
+                .map(|field| field.groups.as_slice())
             {
-                push_scope_value(&mut variant, scope);
+                push_groups_value(&mut variant, groups);
             }
             let fields = fields.iter().map(field_value).collect::<Vec<_>>();
             if !fields.is_empty() {
@@ -385,6 +388,9 @@ fn union_node_value(node: &StudioNode) -> Value {
 
 fn table_node_value(node: &StudioNode) -> Value {
     let mut object = node_object(node);
+    if let Some(id) = node.metadata.get("id") {
+        object.insert("id".to_owned(), Value::String(id.clone()));
+    }
     if let Some(mode) = node.metadata.get("mode") {
         object.insert("mode".to_owned(), Value::String(mode.clone()));
     }
@@ -438,7 +444,7 @@ fn table_node_value(node: &StudioNode) -> Value {
 fn node_object(node: &StudioNode) -> Map<String, Value> {
     let mut object = Map::new();
     object.insert("name".to_owned(), Value::String(node.name.clone()));
-    push_scope_value(&mut object, &node.scope);
+    push_groups_value(&mut object, &node.groups);
     object
 }
 
@@ -468,7 +474,7 @@ fn field_object(field: &StudioField) -> Map<String, Value> {
     let mut object = Map::new();
     object.insert("name".to_owned(), Value::String(field.name.clone()));
     object.insert("type".to_owned(), Value::String(field.ty.clone()));
-    push_scope_value(&mut object, &field.scope);
+    push_groups_value(&mut object, &field.groups);
     if let Some(comment) = &field.comment {
         object.insert("comment".to_owned(), Value::String(comment.clone()));
     }
@@ -498,26 +504,16 @@ fn field_object(field: &StudioField) -> Map<String, Value> {
     object
 }
 
-fn push_scope_value(object: &mut Map<String, Value>, scope: &str) {
-    if scope == "all" || scope.trim().is_empty() {
+fn push_groups_value(object: &mut Map<String, Value>, groups: &[String]) {
+    if groups.is_empty() {
         return;
     }
-    let values = scope
-        .split(',')
-        .map(str::trim)
-        .filter(|value| !value.is_empty())
-        .collect::<Vec<_>>();
-    if values.len() == 1 {
-        object.insert("scope".to_owned(), Value::String(values[0].to_owned()));
-    } else if !values.is_empty() {
+    if groups.len() == 1 {
+        object.insert("groups".to_owned(), Value::String(groups[0].clone()));
+    } else {
         object.insert(
-            "scope".to_owned(),
-            Value::Array(
-                values
-                    .into_iter()
-                    .map(|value| Value::String(value.to_owned()))
-                    .collect(),
-            ),
+            "groups".to_owned(),
+            Value::Array(groups.iter().cloned().map(Value::String).collect()),
         );
     }
 }
@@ -553,7 +549,7 @@ fn union_variants(node: &StudioNode) -> Vec<(String, Vec<StudioField>)> {
 pub(crate) fn push_field(out: &mut String, field: &StudioField) {
     push_string(out, "name", &field.name);
     push_string(out, "type", &field.ty);
-    push_scope(out, &field.scope);
+    push_groups(out, &field.groups);
     if let Some(comment) = &field.comment {
         push_string(out, "comment", comment);
     }
@@ -577,15 +573,15 @@ pub(crate) fn push_field(out: &mut String, field: &StudioField) {
     }
 }
 
-fn push_scope(out: &mut String, scope: &str) {
-    if scope == "all" || scope.trim().is_empty() {
+fn push_groups(out: &mut String, groups: &[String]) {
+    if groups.is_empty() {
         return;
     }
-    let values = scope.split(',').map(str::trim).collect::<Vec<_>>();
-    if values.len() == 1 {
-        push_string(out, "scope", values[0]);
+    if groups.len() == 1 {
+        push_string(out, "groups", &groups[0]);
     } else {
-        push_string_array(out, "scope", &values);
+        let values = groups.iter().map(String::as_str).collect::<Vec<_>>();
+        push_string_array(out, "groups", &values);
     }
 }
 

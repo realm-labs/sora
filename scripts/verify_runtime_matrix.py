@@ -164,15 +164,41 @@ def write_project(base: Path, case: RuntimeCase) -> Path:
         options.append('c_standard = "c11"')
     if case.target == "cpp":
         options.append('cpp_standard = "c++17"')
+    binding_options: dict[str, tuple[str, str]] = {
+        "kotlin": ("package", "game_config"),
+        "csharp": ("namespace", "GameConfig"),
+        "java": ("package", "game_config"),
+        "scala": ("package", "game_config"),
+        "go": ("package", "game_config"),
+        "c": ("prefix", "game_config"),
+        "cpp": ("namespace", "game_config"),
+    }
+    binding = binding_options.get(case.target)
+    binding_lines = (
+        [
+            "",
+            f"[views.default.bindings.{case.target}]",
+            f'{binding[0]} = "{binding[1]}"',
+        ]
+        if binding
+        else []
+    )
 
     project.write_text(
         "\n".join(
             [
-                'package = "game_config"',
                 f'includes = ["{SCHEMA.as_posix()}"]',
+                "",
+                'project = { id = "game_config" }',
+                'groups = { common = { default = true } }',
+                "",
+                "[views.default]",
+                'contract = "game_config/default"',
+                'groups = ["common"]',
                 "",
                 f"[codegen.{case.target}]",
                 *options,
+                *binding_lines,
                 "",
             ]
         ),

@@ -3,7 +3,9 @@
 A schema module is a TOML, YAML, JSON, or Lua file included by a project manifest.
 
 ```toml
-package = "game_config"
+project = { id = "game_config" }
+groups = { common = { default = true } }
+views = { default = { contract = "game_config/default", groups = ["common"] } }
 includes = ["schema/items.toml", "schema/skills.toml"]
 ```
 
@@ -55,6 +57,7 @@ Unions model tagged variants. The `tag` field is the discriminator name used in 
 
 ```toml
 [[tables]]
+id = "item"
 name = "Item"
 mode = "map"
 key = "id"

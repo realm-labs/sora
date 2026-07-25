@@ -7,7 +7,9 @@ use sora_ir::model::{ConfigIr, TableIr, TableModeIr};
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct ConfigDiff {
-    pub package: String,
+    pub project_id: String,
+    pub contract_id: String,
+    pub view: Option<String>,
     pub tables: Vec<TableDiff>,
 }
 
@@ -78,7 +80,9 @@ pub fn diff_config_data(
     }
 
     Ok(ConfigDiff {
-        package: ir.package.clone(),
+        project_id: ir.project_id.clone(),
+        contract_id: ir.contract_id.clone(),
+        view: ir.view.clone(),
         tables,
     })
 }
@@ -204,19 +208,25 @@ fn diff_row_fields(table: &TableIr, left: &RowData, right: &RowData) -> Vec<Fiel
 #[cfg(test)]
 mod tests {
     use super::*;
-    use sora_ir::model::{FieldIr, ScopeIr, TableIr, TypeIr};
+    use sora_ir::model::{FieldIr, GroupSetIr, TableIr, TypeIr};
 
     #[test]
     fn diffs_added_removed_and_changed_map_rows() {
         let ir = ConfigIr {
-            package: "game_config".to_owned(),
+            project_id: "game_config".to_owned(),
+            contract_id: "game_config/default".to_owned(),
+            view: None,
+            group_defaults: Default::default(),
+            views: Default::default(),
             localization: None,
             enums: Vec::new(),
             structs: Vec::new(),
             unions: Vec::new(),
             tables: vec![TableIr {
+                id: "item".to_owned(),
                 name: "Item".to_owned(),
-                scope: ScopeIr::default(),
+                canonical_name: "Item".to_owned(),
+                groups: GroupSetIr::default(),
                 mode: TableModeIr::Map,
                 key: Some("id".to_owned()),
                 source: None,
@@ -260,7 +270,7 @@ mod tests {
         FieldIr {
             name: name.to_owned(),
             ty,
-            scope: ScopeIr::default(),
+            groups: GroupSetIr::default(),
             key: name == "id",
             comment: None,
             default: None,

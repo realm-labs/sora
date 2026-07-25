@@ -11,7 +11,7 @@ use crate::{
         BaseEnumValue, BaseField, BaseIndex, BaseModel, BaseRecord, BaseTable, BaseUnion,
         BaseUnionVariant, build_base_model,
     },
-    options::{ScalaCodegenOptions, ScalaVersion},
+    options::{ScalaCodegenOptions, ScalaVersion, required_binding},
     render::{ensure_dir, render_template, write_file},
     type_mapping::{TypeMapping, TypeMappingContext, TypeMappingRegistry},
 };
@@ -27,8 +27,9 @@ impl CodeGenerator for ScalaCodeGenerator {
         let runtime_format = runtime_format_name(codegen_options.runtime_format);
 
         let mapper = ScalaTypeMapper::new(context.target, ir, context.type_mappings);
-        let model =
+        let mut model =
             ScalaModel::from_base_model(ir, build_base_model(ir)?, &codegen_options, &mapper);
+        model.package = required_binding("scala", "package", codegen_options.package.clone())?;
         let package_dir = scala_package_dir(out_dir, &model.package)?;
 
         for item in &model.enums {

@@ -25,7 +25,9 @@ pub struct StudioPreviewResponse {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct StudioSchema {
-    pub package: String,
+    pub project_id: String,
+    pub groups: BTreeMap<String, bool>,
+    pub views: BTreeMap<String, serde_json::Value>,
     pub sources: Vec<String>,
     pub summary: StudioSummary,
     pub nodes: Vec<StudioNode>,
@@ -47,7 +49,7 @@ pub struct StudioNode {
     pub name: String,
     pub kind: StudioNodeKind,
     pub source: String,
-    pub scope: String,
+    pub groups: Vec<String>,
     pub subtitle: String,
     pub fields: Vec<StudioField>,
     #[serde(default)]
@@ -89,7 +91,7 @@ pub struct StudioField {
         skip_serializing_if = "Option::is_none"
     )]
     pub enum_value_id: Option<u32>,
-    pub scope: String,
+    pub groups: Vec<String>,
     pub parser: Option<String>,
     pub comment: Option<String>,
     pub default: Option<String>,

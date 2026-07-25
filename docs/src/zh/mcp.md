@@ -98,25 +98,25 @@ open-world hints。
 | `sora_server_info` | `{}` | 协议与 workspace 摘要。 |
 | `sora_project_list` | `{}` | 在允许的 Roots 内发现项目。 |
 | `sora_project_open` | `root_id?`, `relative_manifest?` | 打开项目；缺失选择时可 Elicit。 |
-| `sora_project_inspect` | `project_id` | 查看 source、scope、target、format 与 package。 |
-| `sora_project_init` | `root_id`, `relative_directory`, `package` | 预览新项目 scaffold。 |
+| `sora_project_inspect` | `project_id` | 查看 schema identity、group、view、source、target 与 format。 |
+| `sora_project_init` | `root_id`, `relative_directory`, `schema_id` | 预览新项目 scaffold。 |
 | `sora_project_init_apply` | `plan_id`, `idempotency_key` | 原子创建 scaffold。 |
 | `sora_schema_validate` | `project_id` | normalize 并校验 schema。 |
 | `sora_schema_search` | `project_id` 加 kind/name/field/type/reference 过滤 | 搜索规范化实体。 |
 | `sora_schema_preview` | `project_id`、期望 schema/manifest revision、`operations` | 生成 schema plan 与 text diff。 |
 | `sora_schema_apply` | `project_id`, `plan_id`, `idempotency_key` | 原子应用 schema plan。 |
-| `sora_data_validate` | `project_id`、可选 `scope` 与 `tables` | 校验项目数据。 |
+| `sora_data_validate` | `project_id`、可选 `view` 与 `tables` | 校验项目数据。 |
 | `sora_table_query` | `project_id`, `table` 及可选 filter/key/index/select/order/cursor/limit/locale | 查询类型化数据；limit 为 1–500。 |
 | `sora_data_diff` | `project_id`, `other_data_root` | 比较项目内 baseline。 |
 | `sora_data_preview` | `project_id`、期望 schema/data revision、`operations` | 预览 row 与 localization 变更。 |
 | `sora_data_apply` | `project_id`, `plan_id`, `idempotency_key` | 原子应用 data plan。 |
 | `sora_excel_sync_preview` | `project_id`、期望 schema/data revision | 预览 workbook 同步。 |
 | `sora_excel_sync_apply` | `project_id`, `plan_id`, `idempotency_key` | 原子同步 XLSX。 |
-| `sora_build` | `project_id`、project revision、可选 scope/output/target/format/clean | 执行声明的 build graph。 |
-| `sora_codegen` | `project_id`, revision, `target`、可选 scope/clean | 执行一个 generator。 |
-| `sora_export` | `project_id`, revision, `format`、可选 scope/clean | 执行一个 exporter。 |
-| `sora_schema_lock` | `project_id`, revision、可选 scope/clean | 构建 schema lock。 |
-| `sora_excel_template` | `project_id`, revision、可选 scope/clean | 构建 Excel template。 |
+| `sora_build` | `project_id`、project revision、可选 view/output/target/format/clean | 执行声明的 build graph。 |
+| `sora_codegen` | `project_id`, revision, `target`、可选 view/clean | 执行一个 generator。 |
+| `sora_export` | `project_id`, revision, `format`、可选 view/clean | 执行一个 exporter。 |
+| `sora_schema_lock` | `project_id`, revision、可选 view/clean | 构建 schema lock。 |
+| `sora_excel_template` | `project_id`, revision、可选 view/clean | 构建 Excel template。 |
 
 build、codegen、export、schema-lock、Excel-template 与 Excel sync 支持可选 MCP Tasks。
 客户端不支持 Tasks 时仍可通过普通 tool call、progress 与 cancellation 完成。
@@ -158,7 +158,7 @@ row cursor 绑定 revision；artifact 与 task 有 TTL，并绑定授权主体�
 - `sora_review_schema`
 
 每个 Prompt 都要求 `project_id`，嵌入有界 project summary，并链接 schema 与 diagnostics。
-Completion 覆盖 project、entity kind/name、table、field、enum、scope、source、codegen
+Completion 覆盖 project、entity kind/name、table、field、enum、group、view、source、codegen
 target、runtime format、export format、locale、artifact 和 mode。
 
 ## 安全与 trust

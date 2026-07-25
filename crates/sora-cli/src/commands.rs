@@ -88,12 +88,12 @@ fn check(args: CheckArgs, context: &ProjectRuntime) -> Result<()> {
 
 fn generate(args: GenArgs, target: &str, context: &ProjectRuntime) -> Result<()> {
     let input = SchemaFileInput::new(&args.project);
-    sora_core::pipeline::generate_code_with_scope_format_and_parsers(
+    sora_core::pipeline::generate_code_with_view_format_and_parsers(
         &input,
         target,
         &args.out,
         args.format_code.into(),
-        args.scope.as_deref(),
+        args.view.as_deref(),
         context.schema_parsers(),
         context.type_mappings(),
     )
@@ -108,10 +108,10 @@ fn generate(args: GenArgs, target: &str, context: &ProjectRuntime) -> Result<()>
 
 fn excel_template(args: ExcelTemplateArgs, context: &ProjectRuntime) -> Result<()> {
     let input = SchemaFileInput::new(&args.project);
-    sora_core::pipeline::generate_excel_template_with_scope_and_parsers(
+    sora_core::pipeline::generate_excel_template_with_view_and_parsers(
         &input,
         &args.out,
-        args.scope.as_deref(),
+        args.view.as_deref(),
         context.schema_parsers(),
     )
     .with_context(|| {
@@ -128,14 +128,14 @@ fn excel_sync(args: ExcelSyncArgs, context: &ProjectRuntime) -> Result<()> {
         sora_core::pipeline::write_excel_sync_with_parsers(
             &input,
             &args.data_root,
-            args.scope.as_deref(),
+            args.view.as_deref(),
             context.schema_parsers(),
         )
     } else {
         sora_core::pipeline::preview_excel_sync_with_parsers(
             &input,
             &args.data_root,
-            args.scope.as_deref(),
+            args.view.as_deref(),
             context.schema_parsers(),
         )
     }
@@ -206,10 +206,10 @@ fn print_excel_sync_report(report: &ExcelSyncReport, write: bool) {
 
 fn schema_lock(args: SchemaLockArgs, context: &ProjectRuntime) -> Result<()> {
     let input = SchemaFileInput::new(&args.project);
-    sora_core::pipeline::generate_schema_lock_with_scope_and_parsers(
+    sora_core::pipeline::generate_schema_lock_with_view_and_parsers(
         &input,
         &args.out,
-        args.scope.as_deref(),
+        args.view.as_deref(),
         context.schema_parsers(),
     )
     .with_context(|| {
@@ -253,12 +253,12 @@ fn export(args: ExportArgs, context: &ProjectRuntime) -> Result<()> {
         context.schema_parsers(),
         context.cell_parsers(),
     )?;
-    sora_core::pipeline::export_loaded_data_with_scope_context_and_options(
+    sora_core::pipeline::export_loaded_data_with_view_context_and_options(
         &ir,
         &data,
         format,
         output,
-        args.scope.as_deref(),
+        args.view.as_deref(),
         context.execution(),
         options,
     )
@@ -304,11 +304,11 @@ fn diff(args: DiffArgs, context: &ProjectRuntime) -> Result<()> {
         default_source_format,
         parser_registry,
     );
-    sora_core::pipeline::diff_data_with_scope_context_and_parsers(
+    sora_core::pipeline::diff_data_with_view_context_and_parsers(
         &left,
         &right,
         &args.out,
-        args.scope.as_deref(),
+        args.view.as_deref(),
         context.execution(),
         context.schema_parsers(),
         context.cell_parsers(),
@@ -348,7 +348,7 @@ mod tests {
             ExcelSyncArgs {
                 project: project.clone(),
                 data_root: data_root.clone(),
-                scope: None,
+                view: None,
                 write: false,
             },
             &context,
@@ -360,7 +360,7 @@ mod tests {
             ExcelSyncArgs {
                 project: project.clone(),
                 data_root: data_root.clone(),
-                scope: None,
+                view: None,
                 write: true,
             },
             &context,
@@ -373,7 +373,7 @@ mod tests {
             ExcelSyncArgs {
                 project: project.clone(),
                 data_root: data_root.clone(),
-                scope: None,
+                view: None,
                 write: true,
             },
             &context,
@@ -418,7 +418,7 @@ mod tests {
                 project: project.clone(),
                 data_root: base.join("data"),
                 out: out.clone(),
-                scope: None,
+                view: None,
                 compression: ExportCompressionArg::None,
                 compression_level: None,
             },
@@ -455,7 +455,7 @@ mod tests {
                 project: project.clone(),
                 data_root: base.join("data"),
                 out: out.clone(),
-                scope: None,
+                view: None,
                 compression: ExportCompressionArg::None,
                 compression_level: None,
             },
@@ -476,7 +476,9 @@ mod tests {
         fs::write(
             &project,
             r#"
-package = "game_config"
+project = { id = "game_config" }
+groups = { common = { default = true } }
+views = { default = { contract = "game_config/default", groups = ["common"] } }
 includes = ["schema/items.toml"]
 "#,
         )
@@ -495,6 +497,7 @@ type = "string"
             format!(
                 r#"
 [[tables]]
+id = "item"
 name = "Item"
 mode = "map"
 key = "id"
@@ -531,7 +534,9 @@ scripts = ["tools/parsers.lua"]
             &project,
             format!(
                 r#"
-package = "game_config"
+project = {{ id = "game_config" }}
+groups = {{ common = {{ default = true }} }}
+views = {{ default = {{ contract = "game_config/default", groups = ["common"] }} }}
 includes = ["schema/items.toml"]
 {parser_config}
 "#,
@@ -542,6 +547,7 @@ includes = ["schema/items.toml"]
             schema_dir.join("items.toml"),
             r#"
 [[tables]]
+id = "item"
 name = "Item"
 mode = "map"
 key = "id"

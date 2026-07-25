@@ -99,7 +99,7 @@ export function Inspector({
     setEditingEnumValue(null);
     setEditingVariant(null);
     setEditingField(null);
-  }, [node.id, node.name, node.scope, node.metadata]);
+  }, [node.id, node.name, node.groups, node.metadata]);
 
   const rename = () => {
     if (nameDraft.trim() && nameDraft.trim() !== node.name) {
@@ -436,11 +436,11 @@ function NodeSettingsEditor({
         </select>
       </label>
       <label>
-        <span>{t.scope}</span>
+        <span>{t.groups}</span>
         <input
-          value={draft.scope}
-          onChange={(event) => onChange({ ...draft, scope: event.target.value })}
-          placeholder="all"
+          value={draft.groups}
+          onChange={(event) => onChange({ ...draft, groups: event.target.value })}
+          placeholder="common, server"
         />
       </label>
       {node.kind === "table" && (
@@ -611,9 +611,9 @@ function FieldCard({
           {t.parser} {field.parser}
         </span>
       )}
-      {field.scope && field.scope !== "all" && (
+      {field.groups.length > 0 && (
         <span className="pill">
-          {t.scope} {field.scope}
+          {t.groups} {field.groups.join(", ")}
         </span>
       )}
       {field.default && (
@@ -927,11 +927,11 @@ function FieldEditor({
           </p>
         ))}
       <label>
-        <span>{t.scope}</span>
+        <span>{t.groups}</span>
         <input
-          value={value.scope}
-          onChange={(event) => setValue({ ...value, scope: event.target.value })}
-          placeholder="all"
+          value={value.groups}
+          onChange={(event) => setValue({ ...value, groups: event.target.value })}
+          placeholder="common, server"
         />
       </label>
       <ParserEditor

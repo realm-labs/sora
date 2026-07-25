@@ -24,6 +24,24 @@ pub fn validate_config_ir(ir: &ConfigIr) -> Result<()> {
     validate_unique_names("struct", ir.structs.iter().map(|item| item.name.as_str()))?;
     validate_unique_names("union", ir.unions.iter().map(|item| item.name.as_str()))?;
     validate_unique_names("table", ir.tables.iter().map(|item| item.name.as_str()))?;
+    validate_unique_names("table id", ir.tables.iter().map(|item| item.id.as_str()))?;
+    validate_unique_names(
+        "canonical table",
+        ir.tables.iter().map(|item| item.canonical_name.as_str()),
+    )?;
+    for table in &ir.tables {
+        if table.id.is_empty()
+            || !table
+                .id
+                .chars()
+                .all(|ch| ch.is_ascii_alphanumeric() || matches!(ch, '.' | '_' | '-' | '/'))
+        {
+            return Err(SoraError::InvalidSchema(format!(
+                "table `{}` id `{}` must contain only ASCII letters, digits, `.`, `_`, `-`, or `/`",
+                table.canonical_name, table.id
+            )));
+        }
+    }
 
     let enum_names = ir
         .enums

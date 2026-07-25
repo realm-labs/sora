@@ -76,85 +76,111 @@ fn main() -> Result<()> {
     clean_file(&generated_root.join("config.cbor"))?;
 
     sora_core::pipeline::check_schema(&schema_input)?;
-    sora_core::pipeline::generate_schema_lock(&schema_input, &generated_root.join("schema.lock"))?;
-    sora_core::pipeline::generate_code(&schema_input, "rust", &rust_generated)?;
-    sora_core::pipeline::generate_code(&schema_input, "kotlin", &kotlin_generated)?;
-    sora_core::pipeline::generate_code(&schema_input, "csharp", &csharp_generated)?;
-    sora_core::pipeline::generate_code(&schema_input, "java", &java_generated)?;
-    sora_core::pipeline::generate_code(&schema_input, "scala", &scala_generated)?;
-    sora_core::pipeline::generate_code(&schema_input, "go", &go_generated)?;
-    sora_core::pipeline::generate_code_with_scope_and_format(
+    sora_core::pipeline::generate_schema_lock_with_view(
+        &schema_input,
+        &generated_root.join("schema.lock"),
+        Some("full"),
+    )?;
+    generate_code(&schema_input, "rust", &rust_generated, "full")?;
+    generate_code(&schema_input, "kotlin", &kotlin_generated, "full")?;
+    generate_code(&schema_input, "csharp", &csharp_generated, "full")?;
+    generate_code(&schema_input, "java", &java_generated, "full")?;
+    generate_code(&schema_input, "scala", &scala_generated, "full")?;
+    generate_code(&schema_input, "go", &go_generated, "full")?;
+    sora_core::pipeline::generate_code_with_view_and_format(
         &schema_input,
         "dart",
         &dart_generated,
         sora_codegen::format::FormatMode::Never,
         Some("client"),
     )?;
-    sora_core::pipeline::generate_code_with_scope_and_format(
+    sora_core::pipeline::generate_code_with_view_and_format(
         &schema_input,
         "godot",
         &godot_generated,
         sora_codegen::format::FormatMode::Never,
         Some("client"),
     )?;
-    sora_core::pipeline::generate_code(&schema_input, "c", &c_generated)?;
-    sora_core::pipeline::generate_code(&schema_input, "cpp", &cpp_generated)?;
-    sora_core::pipeline::generate_code(&schema_input, "typescript", &typescript_generated)?;
-    sora_core::pipeline::generate_code(&schema_input, "javascript", &javascript_generated)?;
-    sora_core::pipeline::generate_code(&schema_input, "erlang", &erlang_generated)?;
-    sora_core::pipeline::generate_code(&schema_input, "lua", &lua_generated)?;
-    sora_core::pipeline::generate_code(&schema_input, "python", &python_generated)?;
-    sora_core::pipeline::generate_code(&schema_input, "proto-schema", &proto_generated)?;
-    sora_core::pipeline::export_data(
+    generate_code(&schema_input, "c", &c_generated, "full")?;
+    generate_code(&schema_input, "cpp", &cpp_generated, "full")?;
+    generate_code(&schema_input, "typescript", &typescript_generated, "full")?;
+    generate_code(&schema_input, "javascript", &javascript_generated, "full")?;
+    generate_code(&schema_input, "erlang", &erlang_generated, "full")?;
+    generate_code(&schema_input, "lua", &lua_generated, "full")?;
+    generate_code(&schema_input, "python", &python_generated, "full")?;
+    generate_code(&schema_input, "proto-schema", &proto_generated, "full")?;
+    sora_core::pipeline::export_data_with_view(
         &project_input,
         "binary",
         ExportOutput::File(generated_root.join("config.sora")),
+        Some("full"),
     )?;
-    sora_core::pipeline::export_data(
+    sora_core::pipeline::export_data_with_view(
         &project_input,
         "json",
         ExportOutput::File(generated_root.join("config.json")),
+        Some("full"),
     )?;
-    sora_core::pipeline::export_data_with_scope(
+    sora_core::pipeline::export_data_with_view(
         &project_input,
         "json",
         ExportOutput::File(generated_root.join("client/config.json")),
         Some("client"),
     )?;
-    sora_core::pipeline::export_data_with_scope(
+    sora_core::pipeline::export_data_with_view(
         &project_input,
         "json",
         ExportOutput::File(root.join("godot/config/config.json")),
         Some("client"),
     )?;
-    sora_core::pipeline::export_data_with_scope(
+    sora_core::pipeline::export_data_with_view(
         &project_input,
         "json",
         ExportOutput::File(generated_root.join("server/config.json")),
         Some("server"),
     )?;
-    sora_core::pipeline::export_data(
+    sora_core::pipeline::export_data_with_view(
         &project_input,
         "sora-protobuf",
         ExportOutput::File(generated_root.join("config.sora.pb")),
+        Some("full"),
     )?;
-    sora_core::pipeline::export_data(
+    sora_core::pipeline::export_data_with_view(
         &project_input,
         "proto",
         ExportOutput::File(generated_root.join("config.pb")),
+        Some("full"),
     )?;
-    sora_core::pipeline::export_data(
+    sora_core::pipeline::export_data_with_view(
         &project_input,
         "cbor",
         ExportOutput::File(generated_root.join("config.cbor")),
+        Some("full"),
     )?;
-    sora_core::pipeline::export_data(
+    sora_core::pipeline::export_data_with_view(
         &project_input,
         "json-debug",
         ExportOutput::Directory(generated_root.join("debug-json")),
+        Some("full"),
     )?;
 
     println!("showcase generated under `{}`", root.display());
+    Ok(())
+}
+
+fn generate_code(input: &SchemaFileInput, target: &str, out: &Path, view: &str) -> Result<()> {
+    let format = if matches!(target, "rust" | "go") {
+        sora_codegen::format::FormatMode::Auto
+    } else {
+        sora_codegen::format::FormatMode::Never
+    };
+    sora_core::pipeline::generate_code_with_view_and_format(
+        input,
+        target,
+        out,
+        format,
+        Some(view),
+    )?;
     Ok(())
 }
 

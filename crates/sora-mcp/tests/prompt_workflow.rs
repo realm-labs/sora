@@ -119,7 +119,9 @@ fn temp_project() -> PathBuf {
     fs::write(
         root.join("project.toml"),
         r#"
-package = "demo"
+project = { id = "demo" }
+groups = { common = { default = true } }
+views = { default = { contract = "demo/default", groups = ["common"] } }
 includes = ["schema/settings.toml"]
 "#,
     )
@@ -128,6 +130,7 @@ includes = ["schema/settings.toml"]
         root.join("schema/settings.toml"),
         r#"
 [[tables]]
+id = "settings"
 name = "Settings"
 mode = "singleton"
 

@@ -116,7 +116,7 @@ parser = { kind = "map" }
 | `range` | 数值字段、`duration`，以及这些类型的集合元素 | 数值闭区间，写作 `[min, max]`。`duration` 的范围单位是毫秒。 |
 | `length` | `string`、`list`、`set`、`array`、`map` | 长度闭区间，写作 `[min, max]`。 |
 | `parser` | 单元格输入和 default | 单元格 parser 提示。见[单元格 Parser](parsers.md)。 |
-| `scope` | 所有字段 | 仅在选定 generation/export scope 下包含该字段。默认是 `all`。 |
+| `groups` | 所有字段 | 字段所属的已声明 group。省略时继承项目的默认 group。 |
 | `from` | 仅表字段 | 可选的子表来源，用来声明派生字段。 |
 
 default 写成字符串，因为它会走和源数据相同的类型感知转换路径。

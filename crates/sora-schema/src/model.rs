@@ -7,7 +7,13 @@ use serde::{
 
 #[derive(Debug, Clone, PartialEq, Deserialize)]
 pub struct SchemaFile {
-    pub package: String,
+    pub project: ProjectSchema,
+
+    #[serde(default)]
+    pub groups: BTreeMap<String, GroupSchema>,
+
+    #[serde(default)]
+    pub views: BTreeMap<String, ViewSchema>,
 
     #[serde(default)]
     pub codegen: CodegenSchema,
@@ -29,6 +35,57 @@ pub struct SchemaFile {
 
     #[serde(default)]
     pub tables: Vec<TableSchema>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct ProjectSchema {
+    pub id: String,
+
+    #[serde(default)]
+    pub views: Vec<String>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct GroupSchema {
+    #[serde(default)]
+    pub default: bool,
+}
+
+#[derive(Debug, Clone, PartialEq, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct ViewSchema {
+    pub contract: String,
+
+    #[serde(default)]
+    pub groups: Vec<String>,
+
+    #[serde(default)]
+    pub tables: ViewTableSelectionSchema,
+
+    #[serde(default)]
+    pub names: ViewNamesSchema,
+
+    #[serde(default)]
+    pub bindings: BTreeMap<String, serde_json::Value>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Default, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct ViewTableSelectionSchema {
+    #[serde(default)]
+    pub include: Vec<String>,
+
+    #[serde(default)]
+    pub exclude: Vec<String>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Default, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct ViewNamesSchema {
+    #[serde(default)]
+    pub tables: BTreeMap<String, String>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
@@ -72,7 +129,7 @@ pub struct EnumSchema {
     pub name: String,
 
     #[serde(default)]
-    pub scope: ScopeSchema,
+    pub groups: GroupSetSchema,
 
     #[serde(default)]
     pub values: Vec<EnumValueSchema>,
@@ -100,7 +157,7 @@ pub struct StructSchema {
     pub name: String,
 
     #[serde(default)]
-    pub scope: ScopeSchema,
+    pub groups: GroupSetSchema,
 
     #[serde(default)]
     pub fields: Vec<FieldSchema>,
@@ -111,7 +168,7 @@ pub struct UnionSchema {
     pub name: String,
 
     #[serde(default)]
-    pub scope: ScopeSchema,
+    pub groups: GroupSetSchema,
 
     #[serde(default = "default_union_tag")]
     pub tag: String,
@@ -125,7 +182,7 @@ pub struct UnionVariantSchema {
     pub name: String,
 
     #[serde(default)]
-    pub scope: ScopeSchema,
+    pub groups: GroupSetSchema,
 
     #[serde(default)]
     pub fields: Vec<FieldSchema>,
@@ -137,9 +194,10 @@ fn default_union_tag() -> String {
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 pub struct TableSchema {
+    pub id: String,
     pub name: String,
     #[serde(default)]
-    pub scope: ScopeSchema,
+    pub groups: GroupSetSchema,
     pub mode: TableModeSchema,
     pub key: Option<String>,
     pub source: Option<TableSourceSchema>,
@@ -186,7 +244,7 @@ pub struct FieldSchema {
     pub ty: String,
 
     #[serde(default)]
-    pub scope: ScopeSchema,
+    pub groups: GroupSetSchema,
 
     pub comment: Option<String>,
     pub default: Option<String>,
@@ -204,7 +262,7 @@ pub struct TableFieldSchema {
     pub ty: String,
 
     #[serde(default)]
-    pub scope: ScopeSchema,
+    pub groups: GroupSetSchema,
 
     pub comment: Option<String>,
     pub default: Option<String>,
@@ -233,38 +291,30 @@ pub struct ParserSchema {
     pub options: BTreeMap<String, String>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct ScopeSchema {
+#[derive(Debug, Clone, PartialEq, Eq, Default)]
+pub struct GroupSetSchema {
     pub values: Vec<String>,
 }
 
-impl Default for ScopeSchema {
-    fn default() -> Self {
-        Self {
-            values: vec!["all".to_owned()],
-        }
-    }
-}
-
-impl<'de> Deserialize<'de> for ScopeSchema {
+impl<'de> Deserialize<'de> for GroupSetSchema {
     fn deserialize<D>(deserializer: D) -> std::result::Result<Self, D::Error>
     where
         D: Deserializer<'de>,
     {
-        struct ScopeVisitor;
+        struct GroupSetVisitor;
 
-        impl<'de> Visitor<'de> for ScopeVisitor {
-            type Value = ScopeSchema;
+        impl<'de> Visitor<'de> for GroupSetVisitor {
+            type Value = GroupSetSchema;
 
             fn expecting(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
-                formatter.write_str("a scope string or list of scope strings")
+                formatter.write_str("a group string or list of group strings")
             }
 
             fn visit_str<E>(self, value: &str) -> std::result::Result<Self::Value, E>
             where
                 E: serde::de::Error,
             {
-                Ok(ScopeSchema {
+                Ok(GroupSetSchema {
                     values: vec![value.to_owned()],
                 })
             }
@@ -277,11 +327,11 @@ impl<'de> Deserialize<'de> for ScopeSchema {
                 while let Some(value) = seq.next_element::<String>()? {
                     values.push(value);
                 }
-                Ok(ScopeSchema { values })
+                Ok(GroupSetSchema { values })
             }
         }
 
-        deserializer.deserialize_any(ScopeVisitor)
+        deserializer.deserialize_any(GroupSetVisitor)
     }
 }
 
@@ -293,13 +343,16 @@ mod tests {
     fn loads_toml_schema() {
         let schema: SchemaFile = toml::from_str(
             r#"
-package = "game_config"
+project = { id = "game_config" }
+groups = { common = { default = true } }
+views = { default = { contract = "game_config/default", groups = ["common"] } }
 
 [[enums]]
 name = "ItemType"
 values = [{ id = 0, name = "Weapon" }, { id = 1, name = "Armor" }]
 
 [[tables]]
+id = "item"
 name = "Item"
 mode = "map"
 key = "id"
@@ -320,7 +373,7 @@ parser = { kind = "split", separator = "|" }
         )
         .expect("schema should parse");
 
-        assert_eq!(schema.package, "game_config");
+        assert_eq!(schema.project.id, "game_config");
         assert!(schema.codegen.targets.is_empty());
         assert!(schema.includes.is_empty());
         assert_eq!(schema.enums[0].name, "ItemType");
@@ -336,10 +389,13 @@ parser = { kind = "split", separator = "|" }
     fn defaults_optional_collections_and_field_flags() {
         let schema: SchemaFile = toml::from_str(
             r#"
-package = "game_config"
+project = { id = "game_config" }
+groups = { common = { default = true } }
+views = { default = { contract = "game_config/default", groups = ["common"] } }
 includes = ["items.toml"]
 
 [[tables]]
+id = "item"
 name = "Item"
 mode = "list"
 
@@ -360,7 +416,9 @@ type = "string"
     fn rejects_table_only_properties_on_struct_fields() {
         let error = toml::from_str::<SchemaFile>(
             r#"
-package = "game_config"
+project = { id = "game_config" }
+groups = { common = { default = true } }
+views = { default = { contract = "game_config/default", groups = ["common"] } }
 
 [[structs]]
 name = "Reward"
@@ -380,7 +438,9 @@ from = { table = "RewardRow", parent_key = "id", child_key = "reward_id" }
     fn loads_codegen_options() {
         let schema: SchemaFile = toml::from_str(
             r#"
-package = "game_config"
+project = { id = "game_config" }
+groups = { common = { default = true } }
+views = { default = { contract = "game_config/default", groups = ["common"] } }
 
 [codegen.rust]
 runtime_format = "sora"

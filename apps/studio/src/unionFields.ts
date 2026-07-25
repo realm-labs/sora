@@ -33,7 +33,7 @@ export function unionVariants(node: StudioNode): UnionVariantView[] {
           marker: {
             name: variantName,
             ty: "variant",
-            scope: field.scope,
+            groups: [...field.groups],
             parser: null,
             comment: null,
             default: null,

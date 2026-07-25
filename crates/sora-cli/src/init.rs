@@ -165,12 +165,15 @@ impl SchemaFormatArg {
 fn project_template(format: SchemaFormatArg) -> &'static str {
     match format {
         SchemaFormatArg::Toml => {
-            r#"package = "game_config"
+            r#"project = { id = "game_config" }
+groups = { common = { default = true } }
+views = { default = { contract = "game_config/default", groups = ["common"] } }
 includes = ["schema/items.toml"]
 
 [build]
 default_source_format = "xlsx"
 data_root = "data"
+view = "default"
 schema_lock = "generated/schema.lock"
 excel_templates = "generated/excel"
 
@@ -185,13 +188,16 @@ out = "generated/config.sora"
 "#
         }
         SchemaFormatArg::Yaml => {
-            r#"package: game_config
+            r#"project: { id: game_config }
+groups: { common: { default: true } }
+views: { default: { contract: game_config/default, groups: [common] } }
 includes:
   - schema/items.yaml
 
 build:
   default_source_format: xlsx
   data_root: data
+  view: default
   schema_lock: generated/schema.lock
   excel_templates: generated/excel
   codegen:
@@ -205,11 +211,16 @@ build:
         }
         SchemaFormatArg::Json => {
             r#"{
-  "package": "game_config",
+  "project": { "id": "game_config" },
+  "groups": { "common": { "default": true } },
+  "views": {
+    "default": { "contract": "game_config/default", "groups": ["common"] }
+  },
   "includes": ["schema/items.json"],
   "build": {
     "default_source_format": "xlsx",
     "data_root": "data",
+    "view": "default",
     "schema_lock": "generated/schema.lock",
     "excel_templates": "generated/excel",
     "codegen": [
@@ -224,11 +235,16 @@ build:
         }
         SchemaFormatArg::Lua => {
             r#"return {
-  package = "game_config",
+  project = { id = "game_config" },
+  groups = { common = { default = true } },
+  views = {
+    default = { contract = "game_config/default", groups = { "common" } },
+  },
   includes = { "schema/items.lua" },
   build = {
     default_source_format = "xlsx",
     data_root = "data",
+    view = "default",
     schema_lock = "generated/schema.lock",
     excel_templates = "generated/excel",
     codegen = {
@@ -252,6 +268,7 @@ name = "ItemType"
 values = [{ id = 0, name = "Weapon" }, { id = 1, name = "Armor" }, { id = 2, name = "Material" }, { id = 3, name = "Consumable" }]
 
 [[tables]]
+id = "item"
 name = "Item"
 mode = "map"
 key = "id"
@@ -289,7 +306,8 @@ comment = "Stack limit"
     values: [{ id: 0, name: Weapon }, { id: 1, name: Armor }, { id: 2, name: Material }, { id: 3, name: Consumable }]
 
 tables:
-  - name: Item
+  - id: item
+    name: Item
     mode: map
     key: id
     source:
@@ -322,6 +340,7 @@ tables:
   ],
   "tables": [
     {
+      "id": "item",
       "name": "Item",
       "mode": "map",
       "key": "id",
@@ -353,6 +372,7 @@ tables:
   },
   tables = {
     {
+      id = "item",
       name = "Item",
       mode = "map",
       key = "id",
@@ -408,7 +428,7 @@ mod tests {
                 project: base.join("project.toml"),
                 default_source_format: None,
                 data_root: None,
-                scope: None,
+                view: None,
                 target: Vec::new(),
                 clean: false,
             },

@@ -1,4 +1,5 @@
 [[tables]]
+id = "skill"
 name = "Skill"
 mode = "map"
 key = "id"
@@ -47,6 +48,7 @@ name = "cast_origin"
 type = "struct<Vec3>"
 parser = { kind = "tuple" }
 [[tables]]
+id = "character"
 name = "Character"
 mode = "map"
 key = "id"
@@ -87,6 +89,7 @@ name = "spawn_pos"
 type = "struct<Vec3>"
 parser = { kind = "tuple" }
 [[tables]]
+id = "character_skill"
 name = "CharacterSkill"
 mode = "list"
 
@@ -106,6 +109,7 @@ type = "ref<Skill.id>"
 name = "unlock_level"
 type = "ref<LevelExp.level>"
 [[tables]]
+id = "buff"
 name = "Buff"
 mode = "map"
 key = "id"
@@ -132,6 +136,7 @@ type = "list<StatModifier>"
 parser = { kind = "json" }
 length = [1, 3]
 [[tables]]
+id = "drop_group"
 name = "DropGroup"
 mode = "map"
 key = "id"
@@ -148,6 +153,7 @@ type = "i32"
 name = "name"
 type = "string"
 [[tables]]
+id = "drop_entry"
 name = "DropEntry"
 mode = "list"
 
@@ -175,8 +181,9 @@ range = [1, 9999]
 [[tables.fields]]
 name = "weight"
 type = "f32"
-scope = "server"
+groups = "server"
 [[tables]]
+id = "monster"
 name = "Monster"
 mode = "map"
 key = "id"
@@ -210,6 +217,7 @@ name = "spawn_pos"
 type = "struct<Vec3>"
 parser = { kind = "tuple" }
 [[tables]]
+id = "stage"
 name = "Stage"
 mode = "map"
 key = "id"
@@ -241,6 +249,7 @@ name = "first_clear_rewards"
 type = "list<Reward>"
 from = { table = "StageReward", parent_key = "id", child_key = "stage_id", order_by = "seq" }
 [[tables]]
+id = "stage_reward"
 name = "StageReward"
 mode = "list"
 
@@ -264,6 +273,7 @@ type = "ref<Item.id>"
 name = "count"
 type = "i32"
 [[tables]]
+id = "dungeon"
 name = "Dungeon"
 mode = "map"
 key = "id"

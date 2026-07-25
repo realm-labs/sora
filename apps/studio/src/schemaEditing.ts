@@ -20,7 +20,7 @@ export type StudioValidationIssue = {
 export type EditableFieldDraft = {
   name: string;
   ty: string;
-  scope: string;
+  groups: string;
   parser: string;
   comment: string;
   defaultValue: string;
@@ -37,7 +37,7 @@ export type EditableFieldDraft = {
 
 export type EditableNodeSettingsDraft = {
   schemaSource: string;
-  scope: string;
+  groups: string;
   mode: string;
   key: string;
   source: string;
@@ -50,7 +50,7 @@ export function makeFieldDraft(field?: StudioField): EditableFieldDraft {
   return {
     name: field?.name ?? "",
     ty: field?.ty ?? "",
-    scope: field?.scope ?? "",
+    groups: formatGroups(field?.groups ?? []),
     parser: field?.parser ?? "",
     comment: field?.comment ?? "",
     defaultValue: field?.default ?? "",
@@ -70,7 +70,7 @@ export function commitFieldDraft(field: StudioField | undefined, draft: Editable
   return {
     name: draft.name.trim(),
     ty: draft.ty.trim(),
-    scope: draft.scope.trim(),
+    groups: parseGroups(draft.groups),
     parser: cleanOptional(draft.parser),
     comment: cleanOptional(draft.comment),
     default: cleanOptional(draft.defaultValue),
@@ -83,7 +83,7 @@ export function commitFieldDraft(field: StudioField | undefined, draft: Editable
 export function makeNodeSettingsDraft(node: StudioNode): EditableNodeSettingsDraft {
   return {
     schemaSource: node.source,
-    scope: node.scope,
+    groups: formatGroups(node.groups),
     mode: node.metadata.mode ?? "map",
     key: node.metadata.key === "<none>" ? "" : (node.metadata.key ?? ""),
     source: node.metadata.source ?? "",
@@ -115,17 +115,17 @@ export function updateNodeSettings(
       return {
         ...node,
         source: draft.schemaSource.trim() || node.source,
-        scope: draft.scope.trim(),
+        groups: parseGroups(draft.groups),
         metadata
       };
     })
   });
 }
 
-export function updatePackage(schema: StudioSchema, packageName: string): StudioSchema {
-  const cleanName = packageName.trim();
-  if (!cleanName || cleanName === schema.package) return schema;
-  return { ...schema, package: cleanName };
+export function updateProjectId(schema: StudioSchema, projectId: string): StudioSchema {
+  const cleanId = projectId.trim();
+  if (!cleanId || cleanId === schema.project_id) return schema;
+  return { ...schema, project_id: cleanId };
 }
 
 export function addSchemaSource(schema: StudioSchema, source: string): StudioSchema {
@@ -150,10 +150,10 @@ export function addNode(schema: StudioSchema, kind: NodeKind): { schema: StudioS
     name,
     kind,
     source: schema.sources[0] ?? "",
-    scope: "local",
+    groups: [],
     subtitle: subtitleFor(kind, 0),
-    fields: kind === "enum" ? [{ name: "Value", ty: "enum value", enumValueId: 0, scope: "local", parser: null, comment: null, default: null, range: null, length: null, source: null }] : [],
-    metadata: defaultMetadata(kind)
+    fields: kind === "enum" ? [{ name: "Value", ty: "enum value", enumValueId: 0, groups: [], parser: null, comment: null, default: null, range: null, length: null, source: null }] : [],
+    metadata: defaultMetadata(kind, name)
   };
   return { schema: rebuildSchema({ ...schema, nodes: [...schema.nodes, node] }), nodeId: node.id };
 }
@@ -207,7 +207,7 @@ export function addEnumValue(schema: StudioSchema, ownerId: string, id: number, 
     ...schema,
     nodes: schema.nodes.map((node) =>
       node.id === ownerId && node.kind === "enum"
-        ? { ...node, fields: [...node.fields, enumValueField(id, cleanName, node.scope)] }
+        ? { ...node, fields: [...node.fields, enumValueField(id, cleanName, node.groups)] }
         : node
     )
   });
@@ -243,7 +243,7 @@ export function addUnionVariant(schema: StudioSchema, ownerId: string, name: str
     ...schema,
     nodes: schema.nodes.map((node) =>
       node.id === ownerId && node.kind === "union"
-        ? { ...node, fields: [...node.fields, unionVariantMarker(cleanName, node.scope)] }
+        ? { ...node, fields: [...node.fields, unionVariantMarker(cleanName, node.groups)] }
         : node
     )
   });
@@ -407,8 +407,8 @@ export function validateSchema(schema: StudioSchema): StudioValidationIssue[] {
   const namesByKind = new Map<NodeKind, Set<string>>();
   const tableNames = new Set(schema.nodes.filter((node) => node.kind === "table").map((node) => node.name));
 
-  if (!schema.package.trim()) {
-    issues.push({ id: "schema:package", message: "Schema package is required.", setting: "package" });
+  if (!schema.project_id.trim()) {
+    issues.push({ id: "schema:project-id", message: "Project ID is required.", setting: "project_id" });
   }
   for (const issue of validateSchemaSources(schema)) {
     issues.push(issue);
@@ -895,19 +895,19 @@ function renameTypeReference(ty: string, node: StudioNode, nextName: string) {
   );
 }
 
-function defaultMetadata(kind: NodeKind): Record<string, string> {
-  if (kind === "table") return { mode: "map", key: "id", fields: "0" };
+function defaultMetadata(kind: NodeKind, name: string): Record<string, string> {
+  if (kind === "table") return { id: stableTableId(name), mode: "map", key: "id", fields: "0" };
   if (kind === "union") return { tag: "type", variants: "0" };
   if (kind === "enum") return { values: "1" };
   return { fields: "0" };
 }
 
-function enumValueField(id: number, name: string, scope: string): StudioField {
+function enumValueField(id: number, name: string, groups: string[]): StudioField {
   return {
     name,
     ty: "enum value",
     enumValueId: id,
-    scope: scope || "all",
+    groups: [...groups],
     parser: null,
     comment: null,
     default: null,
@@ -917,11 +917,11 @@ function enumValueField(id: number, name: string, scope: string): StudioField {
   };
 }
 
-function unionVariantMarker(name: string, scope: string): StudioField {
+function unionVariantMarker(name: string, groups: string[]): StudioField {
   return {
     name,
     ty: "variant",
-    scope: scope || "all",
+    groups: [...groups],
     parser: null,
     comment: null,
     default: null,
@@ -940,15 +940,15 @@ function updateUnionVariants(
     ...schema,
     nodes: schema.nodes.map((node) => {
       if (node.id !== ownerId || node.kind !== "union") return node;
-      return { ...node, fields: flattenUnionVariants(update(unionVariants(node)), node.scope) };
+      return { ...node, fields: flattenUnionVariants(update(unionVariants(node)), node.groups) };
     })
   });
 }
 
-function flattenUnionVariants(variants: UnionVariantView[], scope: string): StudioField[] {
+function flattenUnionVariants(variants: UnionVariantView[], groups: string[]): StudioField[] {
   return variants.flatMap((variant) => [
     {
-      ...unionVariantMarker(variant.name, variant.marker.scope || scope),
+      ...unionVariantMarker(variant.name, variant.marker.groups.length ? variant.marker.groups : groups),
       comment: variant.marker.comment
     },
     ...variant.fields.map(({ field, displayName }) => ({
@@ -987,6 +987,22 @@ function nextAvailableName(existingNames: string[], prefix: string) {
 function cleanOptional(value: string) {
   const clean = value.trim();
   return clean ? clean : null;
+}
+
+function formatGroups(groups: string[]) {
+  return groups.join(", ");
+}
+
+function parseGroups(value: string) {
+  return [...new Set(value.split(",").map((group) => group.trim()).filter(Boolean))].sort();
+}
+
+function stableTableId(name: string) {
+  return name
+    .replace(/([a-z0-9])([A-Z])/g, "$1_$2")
+    .replace(/[^A-Za-z0-9_.-]+/g, "_")
+    .replace(/^_+|_+$/g, "")
+    .toLowerCase();
 }
 
 function numberPair(min: string, max: string): [number, number] | null {

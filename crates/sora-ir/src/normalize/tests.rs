@@ -5,7 +5,9 @@ use crate::model::{TableModeIr, TypeIr};
 fn normalizes_schema() {
     let schema: SchemaFile = toml::from_str(
         r#"
-package = "game_config"
+project = { id = "game_config" }
+groups = { common = { default = true } }
+views = { default = { contract = "game_config/default", groups = ["common"] } }
 
 [[enums]]
 name = "ItemType"
@@ -16,6 +18,7 @@ name = "Weapon"
 alias = "weapon"
 
 [[tables]]
+id = "item"
 name = "Item"
 mode = "map"
 key = "id"
@@ -35,7 +38,7 @@ length = [1, 3]
     .unwrap();
 
     let ir = normalize_schema(schema).unwrap();
-    assert_eq!(ir.package, "game_config");
+    assert_eq!(ir.project_id, "game_config");
     assert_eq!(ir.enums[0].name, "ItemType");
     assert_eq!(ir.enums[0].values[0].id, 42);
     assert_eq!(ir.enums[0].values[0].name, "Weapon");
@@ -56,7 +59,9 @@ length = [1, 3]
 fn normalizes_localization_sources_and_text_type() {
     let schema: SchemaFile = toml::from_str(
         r#"
-package = "game_config"
+project = { id = "game_config" }
+groups = { common = { default = true } }
+views = { default = { contract = "game_config/default", groups = ["common"] } }
 
 [localization]
 locales = ["zh_cn", "en_us"]
@@ -69,6 +74,7 @@ file = "Quest.xlsx"
 sheet = "Localization"
 
 [[tables]]
+id = "quest"
 name = "Quest"
 mode = "map"
 key = "id"
@@ -97,7 +103,9 @@ type = "text"
 fn rejects_invalid_localization_source_name() {
     let schema: SchemaFile = toml::from_str(
         r#"
-package = "game_config"
+project = { id = "game_config" }
+groups = { common = { default = true } }
+views = { default = { contract = "game_config/default", groups = ["common"] } }
 
 [localization]
 locales = ["zh_cn"]
@@ -116,7 +124,9 @@ file = "Core.xlsx"
 fn normalizes_tuple_struct_parser() {
     let schema: SchemaFile = toml::from_str(
         r#"
-package = "game_config"
+project = { id = "game_config" }
+groups = { common = { default = true } }
+views = { default = { contract = "game_config/default", groups = ["common"] } }
 
 [[structs]]
 name = "Vec3"
@@ -134,6 +144,7 @@ name = "z"
 type = "f32"
 
 [[tables]]
+id = "spawn"
 name = "Spawn"
 mode = "list"
 
@@ -159,7 +170,9 @@ parser = { kind = "tuple" }
 fn normalizes_tuple_list_parser() {
     let schema: SchemaFile = toml::from_str(
         r#"
-package = "game_config"
+project = { id = "game_config" }
+groups = { common = { default = true } }
+views = { default = { contract = "game_config/default", groups = ["common"] } }
 
 [[structs]]
 name = "ResourceCost"
@@ -177,6 +190,7 @@ name = "count"
 type = "i32"
 
 [[tables]]
+id = "recipe"
 name = "Recipe"
 mode = "list"
 
@@ -199,9 +213,12 @@ parser = { kind = "tuple_list", item_separator = ";", separator = "," }
 fn normalizes_map_parser() {
     let schema: SchemaFile = toml::from_str(
         r#"
-package = "game_config"
+project = { id = "game_config" }
+groups = { common = { default = true } }
+views = { default = { contract = "game_config/default", groups = ["common"] } }
 
 [[tables]]
+id = "item"
 name = "Item"
 mode = "list"
 
@@ -224,7 +241,9 @@ parser = { kind = "map", item_separator = ";", separator = ":" }
 fn normalizes_tagged_columns_parser() {
     let schema: SchemaFile = toml::from_str(
         r#"
-package = "game_config"
+project = { id = "game_config" }
+groups = { common = { default = true } }
+views = { default = { contract = "game_config/default", groups = ["common"] } }
 
 [[unions]]
 name = "Action"
@@ -238,6 +257,7 @@ name = "item_id"
 type = "i32"
 
 [[tables]]
+id = "event"
 name = "Event"
 mode = "list"
 
@@ -259,9 +279,12 @@ parser = { kind = "tagged_columns", prefix = "" }
 fn default_collections_do_not_need_parser_metadata() {
     let schema: SchemaFile = toml::from_str(
         r#"
-package = "game_config"
+project = { id = "game_config" }
+groups = { common = { default = true } }
+views = { default = { contract = "game_config/default", groups = ["common"] } }
 
 [[tables]]
+id = "item"
 name = "Item"
 mode = "list"
 
@@ -280,9 +303,12 @@ type = "list<string>"
 fn rejects_invalid_parser_metadata() {
     let scalar_split: SchemaFile = toml::from_str(
         r#"
-package = "game_config"
+project = { id = "game_config" }
+groups = { common = { default = true } }
+views = { default = { contract = "game_config/default", groups = ["common"] } }
 
 [[tables]]
+id = "item"
 name = "Item"
 mode = "list"
 
@@ -300,9 +326,12 @@ parser = { kind = "split", separator = "|" }
 
     let scalar_tuple_list: SchemaFile = toml::from_str(
         r#"
-package = "game_config"
+project = { id = "game_config" }
+groups = { common = { default = true } }
+views = { default = { contract = "game_config/default", groups = ["common"] } }
 
 [[tables]]
+id = "recipe"
 name = "Recipe"
 mode = "list"
 
@@ -320,9 +349,12 @@ parser = { kind = "tuple_list" }
 
     let scalar_map: SchemaFile = toml::from_str(
         r#"
-package = "game_config"
+project = { id = "game_config" }
+groups = { common = { default = true } }
+views = { default = { contract = "game_config/default", groups = ["common"] } }
 
 [[tables]]
+id = "item"
 name = "Item"
 mode = "list"
 
@@ -340,9 +372,12 @@ parser = { kind = "map" }
 
     let split_map: SchemaFile = toml::from_str(
         r#"
-package = "game_config"
+project = { id = "game_config" }
+groups = { common = { default = true } }
+views = { default = { contract = "game_config/default", groups = ["common"] } }
 
 [[tables]]
+id = "item"
 name = "Item"
 mode = "list"
 
@@ -360,9 +395,12 @@ parser = { kind = "split" }
 
     let unknown_parser: SchemaFile = toml::from_str(
         r#"
-package = "game_config"
+project = { id = "game_config" }
+groups = { common = { default = true } }
+views = { default = { contract = "game_config/default", groups = ["common"] } }
 
 [[tables]]
+id = "item"
 name = "Item"
 mode = "list"
 
@@ -380,7 +418,9 @@ parser = { kind = "lua" }
 
     let list_union_tagged_columns: SchemaFile = toml::from_str(
         r#"
-package = "game_config"
+project = { id = "game_config" }
+groups = { common = { default = true } }
+views = { default = { contract = "game_config/default", groups = ["common"] } }
 
 [[unions]]
 name = "Action"
@@ -390,6 +430,7 @@ tag = "type"
 name = "AddItem"
 
 [[tables]]
+id = "event"
 name = "Event"
 mode = "list"
 
@@ -407,7 +448,9 @@ parser = { kind = "tagged_columns" }
 
     let tagged_columns_bad_option: SchemaFile = toml::from_str(
         r#"
-package = "game_config"
+project = { id = "game_config" }
+groups = { common = { default = true } }
+views = { default = { contract = "game_config/default", groups = ["common"] } }
 
 [[unions]]
 name = "Action"
@@ -417,6 +460,7 @@ tag = "type"
 name = "AddItem"
 
 [[tables]]
+id = "event"
 name = "Event"
 mode = "list"
 
@@ -437,9 +481,12 @@ parser = { kind = "tagged_columns", separator = "," }
 fn validates_length_constraints() {
     let invalid_type: SchemaFile = toml::from_str(
         r#"
-package = "game_config"
+project = { id = "game_config" }
+groups = { common = { default = true } }
+views = { default = { contract = "game_config/default", groups = ["common"] } }
 
 [[tables]]
+id = "item"
 name = "Item"
 mode = "list"
 
@@ -457,9 +504,12 @@ length = [1, 4]
 
     let invalid_range: SchemaFile = toml::from_str(
         r#"
-package = "game_config"
+project = { id = "game_config" }
+groups = { common = { default = true } }
+views = { default = { contract = "game_config/default", groups = ["common"] } }
 
 [[tables]]
+id = "item"
 name = "Item"
 mode = "list"
 
@@ -480,9 +530,12 @@ length = [4, 1]
 fn rejects_invalid_tuple_parser_metadata() {
     let scalar_parser: SchemaFile = toml::from_str(
         r#"
-package = "game_config"
+project = { id = "game_config" }
+groups = { common = { default = true } }
+views = { default = { contract = "game_config/default", groups = ["common"] } }
 
 [[tables]]
+id = "spawn"
 name = "Spawn"
 mode = "list"
 
@@ -503,7 +556,9 @@ parser = { kind = "tuple" }
 fn derived_list_fields_do_not_need_separator_metadata() {
     let schema: SchemaFile = toml::from_str(
         r#"
-package = "game_config"
+project = { id = "game_config" }
+groups = { common = { default = true } }
+views = { default = { contract = "game_config/default", groups = ["common"] } }
 
 [[structs]]
 name = "Reward"
@@ -513,6 +568,7 @@ name = "count"
 type = "i32"
 
 [[tables]]
+id = "item"
 name = "Item"
 mode = "map"
 key = "id"
@@ -527,6 +583,7 @@ type = "list<Reward>"
 from = { table = "ItemReward", parent_key = "id", child_key = "item_id" }
 
 [[tables]]
+id = "item_reward"
 name = "ItemReward"
 mode = "list"
 "#,
@@ -542,9 +599,12 @@ mode = "list"
 fn normalizes_derived_from_field() {
     let schema: SchemaFile = toml::from_str(
         r#"
-package = "game_config"
+project = { id = "game_config" }
+groups = { common = { default = true } }
+views = { default = { contract = "game_config/default", groups = ["common"] } }
 
 [[tables]]
+id = "item"
 name = "Item"
 mode = "map"
 key = "id"
@@ -559,6 +619,7 @@ type = "string"
 from = { table = "ItemProfile", parent_key = "id", child_key = "item_id", field = "name" }
 
 [[tables]]
+id = "item_profile"
 name = "ItemProfile"
 mode = "list"
 "#,
@@ -574,9 +635,12 @@ mode = "list"
 fn rejects_incomplete_from_metadata() {
     let schema: SchemaFile = toml::from_str(
         r#"
-package = "game_config"
+project = { id = "game_config" }
+groups = { common = { default = true } }
+views = { default = { contract = "game_config/default", groups = ["common"] } }
 
 [[tables]]
+id = "item"
 name = "Item"
 mode = "list"
 
@@ -599,12 +663,15 @@ from = { table = "ItemProfile", field = "name" }
 fn rejects_default_on_derived_fields() {
     let schema: SchemaFile = toml::from_str(
         r#"
-package = "game_config"
+project = { id = "game_config" }
+groups = { common = { default = true } }
+views = { default = { contract = "game_config/default", groups = ["common"] } }
 
 [[structs]]
 name = "Reward"
 
 [[tables]]
+id = "item"
 name = "Item"
 mode = "map"
 key = "id"
@@ -620,6 +687,7 @@ from = { table = "ItemReward", parent_key = "id", child_key = "item_id" }
 default = "[]"
 
 [[tables]]
+id = "item_reward"
 name = "ItemReward"
 mode = "list"
 "#,
@@ -637,7 +705,9 @@ mode = "list"
 fn rejects_default_on_tagged_columns_fields() {
     let schema: SchemaFile = toml::from_str(
         r#"
-package = "game_config"
+project = { id = "game_config" }
+groups = { common = { default = true } }
+views = { default = { contract = "game_config/default", groups = ["common"] } }
 
 [[unions]]
 name = "Action"
@@ -647,6 +717,7 @@ tag = "type"
 name = "AddItem"
 
 [[tables]]
+id = "event"
 name = "Event"
 mode = "list"
 

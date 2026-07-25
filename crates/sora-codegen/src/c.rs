@@ -120,11 +120,9 @@ struct COptionsView {
 }
 
 impl COptionsView {
-    fn new(ir: &ConfigIr, codegen_options: &CCodegenOptions) -> Result<Self> {
-        let prefix = codegen_options
-            .prefix
-            .clone()
-            .unwrap_or_else(|| ir.package.replace('.', "_").to_snake_case());
+    fn new(_ir: &ConfigIr, codegen_options: &CCodegenOptions) -> Result<Self> {
+        let prefix =
+            crate::options::required_binding("c", "prefix", codegen_options.prefix.clone())?;
         if !is_c_identifier(&prefix) {
             return Err(SoraError::InvalidSchema(format!(
                 "c prefix `{prefix}` must be a valid C identifier"
@@ -1178,7 +1176,9 @@ mod tests {
     fn example_ir() -> ConfigIr {
         let schema: SchemaFile = toml::from_str(
             r#"
-package = "game_config"
+project = { id = "game_config" }
+groups = { common = { default = true } }
+views = { default = { contract = "game_config/default", groups = ["common"] } }
 
 [codegen.c]
 prefix = "game_config"
@@ -1199,6 +1199,7 @@ name = "item_id"
 type = "i32"
 
 [[tables]]
+id = "item"
 name = "Item"
 mode = "map"
 key = "id"

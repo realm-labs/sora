@@ -7,7 +7,7 @@ pub const METADATA_ROW: u32 = 0;
 pub const NAME_ROW: u32 = 1;
 pub const FIELD_ROW: u32 = 2;
 pub const TYPE_ROW: u32 = 3;
-pub const SCOPE_ROW: u32 = 4;
+pub const GROUPS_ROW: u32 = 4;
 pub const INPUT_ROW: u32 = 5;
 pub const DESC_ROW: u32 = 6;
 pub const DATA_START_ROW: u32 = 7;
@@ -23,8 +23,8 @@ pub fn table_template_rows(ir: &ConfigIr, table: &TableIr) -> Vec<Vec<String>> {
             table_mode_name(table.mode).to_owned(),
             "@key".to_owned(),
             table.key.as_deref().unwrap_or("").to_owned(),
-            "@scope".to_owned(),
-            table.scope.display(),
+            "@groups".to_owned(),
+            table.groups.display(),
             "@schema".to_owned(),
             schema_hash(ir, table),
         ],
@@ -37,8 +37,8 @@ pub fn table_template_rows(ir: &ConfigIr, table: &TableIr) -> Vec<Vec<String>> {
         std::iter::once("#type".to_owned())
             .chain(columns.iter().map(|column| column.type_hint.clone()))
             .collect(),
-        std::iter::once("#scope".to_owned())
-            .chain(columns.iter().map(|column| column.scope.clone()))
+        std::iter::once("#groups".to_owned())
+            .chain(columns.iter().map(|column| column.groups.clone()))
             .collect(),
         std::iter::once("#input".to_owned())
             .chain(columns.iter().map(|column| column.input.clone()))
@@ -53,7 +53,7 @@ pub fn table_template_rows(ir: &ConfigIr, table: &TableIr) -> Vec<Vec<String>> {
 pub struct TemplateColumn {
     pub name: String,
     pub type_hint: String,
-    pub scope: String,
+    pub groups: String,
     pub input: String,
     pub comment: String,
     pub derived: bool,
@@ -87,7 +87,7 @@ pub fn table_template_columns(ir: &ConfigIr, table: &TableIr) -> Vec<TemplateCol
                         TaggedColumnKind::Tag => TemplateColumn {
                             name: column.name,
                             type_hint: format!("{} tag", field.ty),
-                            scope: field.scope.display(),
+                            groups: field.groups.display(),
                             input: "parser=tagged_columns;tag".to_owned(),
                             comment: format!("Tag for union field `{}`.", field.name),
                             derived: false,
@@ -99,7 +99,7 @@ pub fn table_template_columns(ir: &ConfigIr, table: &TableIr) -> Vec<TemplateCol
                         TaggedColumnKind::VariantField(variant_field) => TemplateColumn {
                             name: column.name,
                             type_hint: field_type_hint(ir, variant_field),
-                            scope: field.scope.display(),
+                            groups: field.groups.display(),
                             input: field_input(variant_field),
                             comment: variant_field.comment.clone().unwrap_or_default(),
                             derived: false,
@@ -118,7 +118,7 @@ pub fn table_template_columns(ir: &ConfigIr, table: &TableIr) -> Vec<TemplateCol
                     .map(|column| TemplateColumn {
                         name: column.name,
                         type_hint: field_type_hint(ir, column.field),
-                        scope: field.scope.display(),
+                        groups: field.groups.display(),
                         input: field_input(column.field),
                         comment: column.field.comment.clone().unwrap_or_default(),
                         derived: false,
@@ -132,7 +132,7 @@ pub fn table_template_columns(ir: &ConfigIr, table: &TableIr) -> Vec<TemplateCol
                 vec![TemplateColumn {
                     name: field.name.clone(),
                     type_hint: field_type_hint(ir, field),
-                    scope: field.scope.display(),
+                    groups: field.groups.display(),
                     input: field_input(field),
                     comment: field_comment(field),
                     derived: field.derived_from.is_some(),
@@ -157,11 +157,11 @@ pub fn schema_hash(ir: &ConfigIr, table: &TableIr) -> String {
     update(&mut hash, &table.name);
     update(&mut hash, table_mode_name(table.mode));
     update(&mut hash, table.key.as_deref().unwrap_or(""));
-    update(&mut hash, &table.scope.display());
+    update(&mut hash, &table.groups.display());
     for field in &table.fields {
         update(&mut hash, &field.name);
         update(&mut hash, &field.ty.to_string());
-        update(&mut hash, &field.scope.display());
+        update(&mut hash, &field.groups.display());
         if let Some(parser) = &field.parser {
             update(&mut hash, &parser.kind);
             for (key, value) in &parser.options {
@@ -352,7 +352,7 @@ mod tests {
         assert_eq!(
             rows[METADATA_ROW as usize][..9],
             [
-                "@table", "Item", "@mode", "map", "@key", "id", "@scope", "all", "@schema"
+                "@table", "Item", "@mode", "map", "@key", "id", "@groups", "common", "@schema"
             ]
         );
         assert_eq!(
@@ -368,8 +368,8 @@ mod tests {
             ["#type", "i32", "string", "enum<ItemType>", "i32"]
         );
         assert_eq!(
-            rows[SCOPE_ROW as usize],
-            ["#scope", "all", "all", "all", "all"]
+            rows[GROUPS_ROW as usize],
+            ["#groups", "common", "common", "common", "common"]
         );
         assert_eq!(rows[INPUT_ROW as usize], ["#input", "key", "", "", ""]);
         assert_eq!(
@@ -499,13 +499,16 @@ mod tests {
     fn example_ir() -> ConfigIr {
         let schema: SchemaFile = toml::from_str(
             r#"
-package = "game_config"
+project = { id = "game_config" }
+groups = { common = { default = true } }
+views = { default = { contract = "game_config/default", groups = ["common"] } }
 
 [[enums]]
 name = "ItemType"
 values = [{ id = 0, name = "Weapon" }, { id = 1, name = "Armor" }, { id = 2, name = "Material" }, { id = 3, name = "Consumable" }]
 
 [[tables]]
+id = "item"
 name = "Item"
 mode = "map"
 key = "id"
@@ -542,7 +545,9 @@ comment = "Max stack count"
     fn tuple_ir() -> ConfigIr {
         let schema: SchemaFile = toml::from_str(
             r#"
-package = "game_config"
+project = { id = "game_config" }
+groups = { common = { default = true } }
+views = { default = { contract = "game_config/default", groups = ["common"] } }
 
 [[enums]]
 name = "ResourceType"
@@ -564,6 +569,7 @@ name = "count"
 type = "i32"
 
 [[tables]]
+id = "reward"
 name = "Reward"
 mode = "list"
 
@@ -580,7 +586,9 @@ parser = { kind = "tuple" }
     fn tuple_list_ir() -> ConfigIr {
         let schema: SchemaFile = toml::from_str(
             r#"
-package = "game_config"
+project = { id = "game_config" }
+groups = { common = { default = true } }
+views = { default = { contract = "game_config/default", groups = ["common"] } }
 
 [[enums]]
 name = "ResourceType"
@@ -602,6 +610,7 @@ name = "count"
 type = "i32"
 
 [[tables]]
+id = "recipe"
 name = "Recipe"
 mode = "list"
 
@@ -618,7 +627,9 @@ parser = { kind = "tuple_list" }
     fn tagged_union_ir() -> ConfigIr {
         let schema: SchemaFile = toml::from_str(
             r#"
-package = "game_config"
+project = { id = "game_config" }
+groups = { common = { default = true } }
+views = { default = { contract = "game_config/default", groups = ["common"] } }
 
 [[unions]]
 name = "EventCondition"
@@ -643,6 +654,7 @@ name = "count"
 type = "i32"
 
 [[tables]]
+id = "event_condition_entry"
 name = "EventConditionEntry"
 mode = "map"
 key = "id"
@@ -664,7 +676,9 @@ parser = { kind = "tagged_columns", prefix = "" }
     fn struct_columns_ir() -> ConfigIr {
         let schema: SchemaFile = toml::from_str(
             r#"
-package = "game_config"
+project = { id = "game_config" }
+groups = { common = { default = true } }
+views = { default = { contract = "game_config/default", groups = ["common"] } }
 
 [[enums]]
 name = "ResourceType"
@@ -686,6 +700,7 @@ name = "count"
 type = "i32"
 
 [[tables]]
+id = "reward"
 name = "Reward"
 mode = "map"
 key = "id"

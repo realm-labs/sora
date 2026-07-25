@@ -83,7 +83,7 @@ fn accepts_registered_codegen_target() {
         })
         .unwrap();
 
-    generate_code_with_registry_scope_and_format(
+    generate_code_with_registry_view_and_format(
         &input,
         "marker",
         &base.join("marker"),
@@ -149,7 +149,7 @@ fn scoped_export_filters_schema_and_data() {
     let input = LoadedInput::with_data(scoped_schema(), scoped_data());
     let output = base.join("client.json");
 
-    export_data_with_scope(
+    export_data_with_view(
         &input,
         "json",
         ExportOutput::File(output.clone()),
@@ -236,8 +236,25 @@ fn write_example(base: &Path) -> std::path::PathBuf {
     fs::write(
         &project_path,
         r#"
-package = "game_config"
+project = { id = "game_config" }
+groups = { common = { default = true } }
 includes = ["schema/items.toml"]
+
+[views.default]
+contract = "game_config/default"
+groups = ["common"]
+
+[views.default.bindings.kotlin]
+package = "game_config"
+
+[views.default.bindings.c]
+prefix = "game_config"
+
+[views.default.bindings.cpp]
+namespace = "game_config"
+
+[views.default.bindings.proto-schema]
+package = "game_config"
 "#,
     )
     .unwrap();
@@ -250,6 +267,7 @@ name = "ItemType"
 values = [{ id = 0, name = "Weapon" }, { id = 1, name = "Armor" }, { id = 2, name = "Material" }, { id = 3, name = "Consumable" }]
 
 [[tables]]
+id = "item"
 name = "Item"
 mode = "map"
 key = "id"
@@ -301,13 +319,16 @@ fn temp_dir() -> std::path::PathBuf {
 fn example_schema() -> SchemaFile {
     toml::from_str(
         r#"
-package = "game_config"
+project = { id = "game_config" }
+groups = { common = { default = true } }
+views = { default = { contract = "game_config/default", groups = ["common"] } }
 
 [[enums]]
 name = "ItemType"
 values = [{ id = 0, name = "Weapon" }, { id = 1, name = "Armor" }, { id = 2, name = "Material" }, { id = 3, name = "Consumable" }]
 
 [[tables]]
+id = "item"
 name = "Item"
 mode = "map"
 key = "id"
@@ -342,9 +363,12 @@ comment = "Max stack count"
 fn scoped_schema() -> SchemaFile {
     toml::from_str(
         r#"
-package = "game_config"
+project = { id = "game_config" }
+groups = { common = { default = true }, server = { default = false } }
+views = { client = { contract = "game_config/client", groups = ["common"] } }
 
 [[tables]]
+id = "item"
 name = "Item"
 mode = "map"
 key = "id"
@@ -360,7 +384,7 @@ type = "string"
 [[tables.fields]]
 name = "server_formula"
 type = "string"
-scope = "server"
+groups = "server"
 "#,
     )
     .unwrap()

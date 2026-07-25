@@ -36,7 +36,7 @@ Global options can be placed before or after the subcommand.
 | --- | --- | --- |
 | `-p` | `--project` | Project-reading commands. |
 | `-o` | `--out` | `init`, `gen`, `export`, `diff`, `excel-template`, `schema-lock`. |
-| `-s` | `--scope` | `build`, `gen`, `export`, `diff`, `excel-template`, `excel-sync`, `schema-lock`. |
+| `-v` | `--view` | `build`, `gen`, `export`, `diff`, `excel-template`, `excel-sync`, `schema-lock`. |
 | `-t` | `--target` | `build`, `gen`. |
 | `-f` | `--format` | `export`. |
 | `-d` | `--data-root` | `build`, `export`, `excel-sync`. |
@@ -90,7 +90,7 @@ sora b -p project.toml -t rust -c
 | `-p, --project <PATH>` | Project manifest path. |
 | `--default-source-format <csv|json|toml|xlsx|yaml>` | Source format used when a table source omits `format`. |
 | `-d, --data-root <DIR>` | Data input root. Overrides `[build].data_root`. |
-| `-s, --scope <NAME>` | Build only schema items included in a scope. |
+| `-v, --view <NAME>` | Build only the schema projection declared by a view. |
 | `-t, --target <NAME>` | Codegen target to run. Can be repeated. |
 | `-c, --clean` | Delete selected generated outputs before rebuilding. |
 
@@ -109,7 +109,7 @@ sora g -t typescript -p project.toml -o generated/typescript
 | `-p, --project <PATH>` | Project manifest path. |
 | `-o, --out <DIR>` | Output directory. |
 | `--format-code <never|auto|required>` | Run formatter after codegen. Defaults to `never`. |
-| `-s, --scope <NAME>` | Generate only schema items included in a scope. |
+| `-v, --view <NAME>` | Generate only the schema projection declared by a view. |
 
 ### `export`
 
@@ -127,7 +127,7 @@ sora e -p project.toml -d data -f binary -o generated/config.sora
 | `-p, --project <PATH>` | Project manifest path. |
 | `-d, --data-root <DIR>` | Data input root. |
 | `-o, --out <PATH>` | Output file or directory, depending on export format. |
-| `-s, --scope <NAME>` | Export only schema items included in a scope. |
+| `-v, --view <NAME>` | Export only the schema projection declared by a view. |
 | `--compression <none|zstd>` | Export compression. `zstd` is only supported by binary exports. |
 | `--compression-level <N>` | Compression level for compressed exports. |
 
@@ -147,7 +147,7 @@ sora d -p project.toml -l old-data -r data -o generated/diff.json
 | `-l, --left-root <DIR>` | Baseline data root. |
 | `-r, --right-root <DIR>` | Changed data root. |
 | `-o, --out <PATH>` | Diff output path. |
-| `-s, --scope <NAME>` | Diff only schema items included in a scope. |
+| `-v, --view <NAME>` | Diff only the schema projection declared by a view. |
 
 ### `excel-template`
 
@@ -162,7 +162,7 @@ sora et -p project.toml -o generated/excel
 | --- | --- |
 | `-p, --project <PATH>` | Project manifest path. |
 | `-o, --out <DIR>` | Output directory for generated workbooks. |
-| `-s, --scope <NAME>` | Generate templates only for schema items included in a scope. |
+| `-v, --view <NAME>` | Generate templates only for the schema projection declared by a view. |
 
 ### `excel-sync`
 
@@ -177,7 +177,7 @@ sora es -p project.toml -d data -w
 | --- | --- |
 | `-p, --project <PATH>` | Project manifest path. |
 | `-d, --data-root <DIR>` | Data workbook root. |
-| `-s, --scope <NAME>` | Sync only schema items included in a scope. |
+| `-v, --view <NAME>` | Sync only the schema projection declared by a view. |
 | `-w, --write` | Write workbook changes. Without this flag, the command previews changes only. |
 
 ### `schema-lock`
@@ -193,7 +193,7 @@ sora sl -p project.toml -o generated/schema.lock
 | --- | --- |
 | `-p, --project <PATH>` | Project manifest path. |
 | `-o, --out <PATH>` | Schema lock output path. |
-| `-s, --scope <NAME>` | Lock only schema items included in a scope. |
+| `-v, --view <NAME>` | Lock only the schema projection declared by a view. |
 
 ### `studio`
 

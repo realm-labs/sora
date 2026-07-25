@@ -88,11 +88,12 @@ struct CppOptionsView {
 }
 
 impl CppOptionsView {
-    fn new(ir: &ConfigIr, codegen_options: &CppCodegenOptions) -> Result<Self> {
-        let namespace = codegen_options
-            .namespace
-            .clone()
-            .unwrap_or_else(|| ir.package.replace('.', "::"));
+    fn new(_ir: &ConfigIr, codegen_options: &CppCodegenOptions) -> Result<Self> {
+        let namespace = crate::options::required_binding(
+            "cpp",
+            "namespace",
+            codegen_options.namespace.clone(),
+        )?;
         let namespace_segments = parse_cpp_namespace(&namespace)?;
         let standard = codegen_options.cpp_standard;
         Ok(Self {
@@ -670,7 +671,9 @@ mod tests {
     fn example_ir() -> ConfigIr {
         let schema: SchemaFile = toml::from_str(
             r#"
-package = "game.config"
+project = { id = "game.config" }
+groups = { common = { default = true } }
+views = { default = { contract = "game.config/default", groups = ["common"] } }
 
 [codegen.cpp]
 namespace = "sora::game_config"
@@ -691,6 +694,7 @@ name = "item_id"
 type = "i32"
 
 [[tables]]
+id = "item"
 name = "Item"
 mode = "map"
 key = "id"

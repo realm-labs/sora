@@ -14,7 +14,9 @@ generated/
 ## Project Manifest
 
 ```toml
-package = "game_config"
+project = { id = "game_config" }
+groups = { common = { default = true } }
+views = { default = { contract = "game_config/default", groups = ["common"] } }
 includes = ["schema/items.toml"]
 
 [build]
@@ -43,6 +45,7 @@ name = "ItemType"
 values = [{ id = 0, name = "Weapon" }, { id = 1, name = "Armor" }, { id = 2, name = "Material" }, { id = 3, name = "Consumable" }]
 
 [[tables]]
+id = "item"
 name = "Item"
 mode = "map"
 key = "id"

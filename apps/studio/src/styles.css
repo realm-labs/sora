@@ -454,19 +454,19 @@ body.resizing-panel {
   white-space: nowrap;
 }
 
-.package-editor {
+.project-id-editor {
   display: grid;
   gap: 2px;
 }
 
-.package-editor span {
+.project-id-editor span {
   color: #94a3b8;
   font-size: 11px;
   font-weight: 900;
   text-transform: uppercase;
 }
 
-.package-editor input {
+.project-id-editor input {
   width: min(520px, 100%);
   border: 1px solid transparent;
   border-radius: 7px;
@@ -478,8 +478,8 @@ body.resizing-panel {
   padding: 2px 7px;
 }
 
-.package-editor input:hover,
-.package-editor input:focus {
+.project-id-editor input:hover,
+.project-id-editor input:focus {
   border-color: rgba(56, 189, 248, 0.42);
   background: rgba(56, 189, 248, 0.10);
 }
@@ -2031,11 +2031,11 @@ code {
   color: #0f172a;
 }
 
-.studio-shell[data-theme="light"] .package-editor input {
+.studio-shell[data-theme="light"] .project-id-editor input {
   color: #0f172a;
 }
 
-.studio-shell[data-theme="light"] .package-editor span {
+.studio-shell[data-theme="light"] .project-id-editor span {
   color: #64748b;
 }
 

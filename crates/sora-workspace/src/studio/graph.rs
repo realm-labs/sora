@@ -2,7 +2,7 @@ use std::collections::{BTreeMap, BTreeSet};
 
 use sora_ir::model::{ConfigIr, FieldIr, TableModeIr, TypeIr};
 use sora_schema::model::{
-    FieldSchema, ParserSchema, SchemaFile, ScopeSchema, TableFieldFromSchema, TableFieldSchema,
+    FieldSchema, GroupSetSchema, ParserSchema, SchemaFile, TableFieldFromSchema, TableFieldSchema,
     TableModeSchema,
 };
 
@@ -28,7 +28,7 @@ pub(crate) fn build_schema(
             name: item.name.clone(),
             kind: StudioNodeKind::Enum,
             source: node_source(source_by_node, sources, StudioNodeKind::Enum, &item.name),
-            scope: item.scope.display(),
+            groups: item.groups.values.clone(),
             subtitle: format!("{} values", item.values.len()),
             fields: item
                 .values
@@ -37,7 +37,7 @@ pub(crate) fn build_schema(
                     name: value.name.clone(),
                     ty: "enum value".to_owned(),
                     enum_value_id: Some(value.id),
-                    scope: item.scope.display(),
+                    groups: item.groups.values.clone(),
                     parser: None,
                     comment: None,
                     default: None,
@@ -67,7 +67,7 @@ pub(crate) fn build_schema(
             name: item.name.clone(),
             kind: StudioNodeKind::Struct,
             source: node_source(source_by_node, sources, StudioNodeKind::Struct, &item.name),
-            scope: item.scope.display(),
+            groups: item.groups.values.clone(),
             subtitle: format!("{} fields", item.fields.len()),
             fields: item.fields.iter().map(studio_field).collect(),
             aliases: Vec::new(),
@@ -96,7 +96,7 @@ pub(crate) fn build_schema(
                     name: variant.name.clone(),
                     ty: "variant".to_owned(),
                     enum_value_id: None,
-                    scope: variant.scope.display(),
+                    groups: variant.groups.values.clone(),
                     parser: None,
                     comment: None,
                     default: None,
@@ -116,7 +116,7 @@ pub(crate) fn build_schema(
             name: item.name.clone(),
             kind: StudioNodeKind::Union,
             source: node_source(source_by_node, sources, StudioNodeKind::Union, &item.name),
-            scope: item.scope.display(),
+            groups: item.groups.values.clone(),
             subtitle: format!("{} variants", item.variants.len()),
             fields,
             aliases: Vec::new(),
@@ -149,6 +149,7 @@ pub(crate) fn build_schema(
             }
         }
         let mut metadata = BTreeMap::from([
+            ("id".to_owned(), item.id.clone()),
             ("mode".to_owned(), table_mode(item.mode).to_owned()),
             (
                 "key".to_owned(),
@@ -170,7 +171,7 @@ pub(crate) fn build_schema(
             name: item.name.clone(),
             kind: StudioNodeKind::Table,
             source: node_source(source_by_node, sources, StudioNodeKind::Table, &item.name),
-            scope: item.scope.display(),
+            groups: item.groups.values.clone(),
             subtitle: format!(
                 "{} table, {} fields",
                 table_mode(item.mode),
@@ -193,7 +194,27 @@ pub(crate) fn build_schema(
 
     let edges = edges.into_iter().collect::<Vec<_>>();
     StudioSchema {
-        package: ir.package.clone(),
+        project_id: ir.project_id.clone(),
+        groups: ir.group_defaults.clone(),
+        views: ir
+            .views
+            .iter()
+            .map(|(name, view)| {
+                (
+                    name.clone(),
+                    serde_json::json!({
+                        "contract": view.contract,
+                        "groups": view.groups,
+                        "tables": {
+                            "include": view.tables.include,
+                            "exclude": view.tables.exclude,
+                        },
+                        "names": { "tables": view.table_names },
+                        "bindings": view.bindings,
+                    }),
+                )
+            })
+            .collect(),
         sources: sources.to_vec(),
         summary: StudioSummary {
             enums: ir.enums.len(),
@@ -220,7 +241,7 @@ pub(crate) fn build_schema_from_raw(
             name: item.name.clone(),
             kind: StudioNodeKind::Enum,
             source: node_source(source_by_node, sources, StudioNodeKind::Enum, &item.name),
-            scope: raw_scope(&item.scope),
+            groups: raw_groups(&item.groups),
             subtitle: format!("{} values", item.values.len()),
             fields: item
                 .values
@@ -229,7 +250,7 @@ pub(crate) fn build_schema_from_raw(
                     name: value.name.clone(),
                     ty: "enum value".to_owned(),
                     enum_value_id: Some(value.id),
-                    scope: raw_scope(&item.scope),
+                    groups: raw_groups(&item.groups),
                     parser: None,
                     comment: None,
                     default: None,
@@ -257,7 +278,7 @@ pub(crate) fn build_schema_from_raw(
             name: item.name.clone(),
             kind: StudioNodeKind::Struct,
             source: node_source(source_by_node, sources, StudioNodeKind::Struct, &item.name),
-            scope: raw_scope(&item.scope),
+            groups: raw_groups(&item.groups),
             subtitle: format!("{} fields", item.fields.len()),
             fields: item.fields.iter().map(raw_field).collect(),
             aliases: Vec::new(),
@@ -275,7 +296,7 @@ pub(crate) fn build_schema_from_raw(
                     name: variant.name.clone(),
                     ty: "variant".to_owned(),
                     enum_value_id: None,
-                    scope: raw_scope(&variant.scope),
+                    groups: raw_groups(&variant.groups),
                     parser: None,
                     comment: None,
                     default: None,
@@ -295,7 +316,7 @@ pub(crate) fn build_schema_from_raw(
             name: item.name.clone(),
             kind: StudioNodeKind::Union,
             source: node_source(source_by_node, sources, StudioNodeKind::Union, &item.name),
-            scope: raw_scope(&item.scope),
+            groups: raw_groups(&item.groups),
             subtitle: format!("{} variants", item.variants.len()),
             fields,
             aliases: Vec::new(),
@@ -309,6 +330,7 @@ pub(crate) fn build_schema_from_raw(
 
     for item in &schema.tables {
         let mut metadata = BTreeMap::from([
+            ("id".to_owned(), item.id.clone()),
             ("mode".to_owned(), raw_table_mode(item.mode).to_owned()),
             (
                 "key".to_owned(),
@@ -330,7 +352,7 @@ pub(crate) fn build_schema_from_raw(
             name: item.name.clone(),
             kind: StudioNodeKind::Table,
             source: node_source(source_by_node, sources, StudioNodeKind::Table, &item.name),
-            scope: raw_scope(&item.scope),
+            groups: raw_groups(&item.groups),
             subtitle: format!(
                 "{} table, {} fields",
                 raw_table_mode(item.mode),
@@ -353,7 +375,31 @@ pub(crate) fn build_schema_from_raw(
 
     let edges = build_studio_edges(&nodes);
     StudioSchema {
-        package: schema.package.clone(),
+        project_id: schema.project.id.clone(),
+        groups: schema
+            .groups
+            .iter()
+            .map(|(name, group)| (name.clone(), group.default))
+            .collect(),
+        views: schema
+            .views
+            .iter()
+            .map(|(name, view)| {
+                (
+                    name.clone(),
+                    serde_json::json!({
+                        "contract": view.contract,
+                        "groups": view.groups,
+                        "tables": {
+                            "include": view.tables.include,
+                            "exclude": view.tables.exclude,
+                        },
+                        "names": { "tables": view.names.tables },
+                        "bindings": view.bindings,
+                    }),
+                )
+            })
+            .collect(),
         sources: sources.to_vec(),
         summary: StudioSummary {
             enums: schema.enums.len(),
@@ -417,7 +463,7 @@ fn raw_field(field: &FieldSchema) -> StudioField {
         name: field.name.clone(),
         ty: field.ty.clone(),
         enum_value_id: None,
-        scope: raw_scope(&field.scope),
+        groups: raw_groups(&field.groups),
         parser: raw_parser(&field.parser),
         comment: field.comment.clone(),
         default: field.default.clone(),
@@ -432,7 +478,7 @@ fn raw_table_field(field: &TableFieldSchema) -> StudioField {
         name: field.name.clone(),
         ty: field.ty.clone(),
         enum_value_id: None,
-        scope: raw_scope(&field.scope),
+        groups: raw_groups(&field.groups),
         parser: raw_parser(&field.parser),
         comment: field.comment.clone(),
         default: field.default.clone(),
@@ -475,8 +521,8 @@ fn raw_from(from: &Option<TableFieldFromSchema>) -> Option<String> {
     })
 }
 
-fn raw_scope(scope: &ScopeSchema) -> String {
-    scope.values.join(",")
+fn raw_groups(groups: &GroupSetSchema) -> Vec<String> {
+    groups.values.clone()
 }
 
 fn raw_table_mode(mode: TableModeSchema) -> &'static str {
@@ -492,7 +538,7 @@ fn studio_field(field: &FieldIr) -> StudioField {
         name: field.name.clone(),
         ty: field.ty.to_string(),
         enum_value_id: None,
-        scope: field.scope.display(),
+        groups: field.groups.values.clone(),
         parser: field.parser.as_ref().map(|parser| {
             let options = parser
                 .options

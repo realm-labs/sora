@@ -13,7 +13,7 @@ use schemars::JsonSchema;
 use serde::Serialize;
 use sora_codegen::{
     format::FormatMode,
-    generator::{CodegenRegistry, empty_options, runtime_format_name},
+    generator::{CodegenRegistry, runtime_format_name},
     options::RuntimeFormat,
 };
 use sora_export::exporter::ExportOptions;
@@ -39,7 +39,7 @@ pub struct BuildRequest {
     pub project: PathBuf,
     pub default_source_format: Option<SourceFormat>,
     pub data_root: Option<PathBuf>,
-    pub scope: Option<String>,
+    pub view: Option<String>,
     pub include_schema_lock: bool,
     pub include_excel_templates: bool,
     pub include_codegen: bool,
@@ -256,7 +256,7 @@ fn build_project_staged(
         .cloned()
         .unwrap_or_else(|| PathBuf::from("data"));
     let data_root = resolve_project_path(project_dir, &data_root);
-    let scope = args.scope.as_deref().or(build.scope.as_deref());
+    let view = args.view.as_deref().or(build.view.as_deref());
     let registry = CodegenRegistry::with_builtin_generators();
     let mut staged_outputs = Vec::new();
     control.checkpoint(BuildPhase::LoadSchema)?;
@@ -270,9 +270,11 @@ fn build_project_staged(
     validate_codegen_runtime_exports(
         &selected.codegen,
         &build.exports,
-        scope,
+        args.view.as_deref(),
+        build.view.as_deref(),
         &registry,
         &codegen_options,
+        &ir,
     )?;
 
     control.checkpoint(BuildPhase::LoadData)?;
@@ -306,10 +308,10 @@ fn build_project_staged(
     if let Some(path) = selected.schema_lock {
         let path = resolve_declared_output(project_dir, path)?;
         let staged = staged_output_path(stage_root, staged_outputs.len());
-        sora_core::pipeline::generate_schema_lock_with_scope_and_parsers(
+        sora_core::pipeline::generate_schema_lock_with_view_and_parsers(
             schema_input,
             &staged,
-            scope,
+            view,
             context.schema_parsers(),
         )
         .with_context(|| {
@@ -333,10 +335,10 @@ fn build_project_staged(
     if let Some(path) = selected.excel_templates {
         let path = resolve_declared_output(project_dir, path)?;
         let staged = staged_output_path(stage_root, staged_outputs.len());
-        sora_core::pipeline::generate_excel_template_with_scope_and_parsers(
+        sora_core::pipeline::generate_excel_template_with_view_and_parsers(
             schema_input,
             &staged,
-            scope,
+            view,
             context.schema_parsers(),
         )
         .with_context(|| {
@@ -361,13 +363,17 @@ fn build_project_staged(
         control.checkpoint(BuildPhase::Generate)?;
         let out = resolve_declared_output(project_dir, &item.out)?;
         let staged = staged_output_path(stage_root, staged_outputs.len());
-        let item_scope = item.scope.as_deref().or(scope);
-        sora_core::pipeline::generate_code_with_scope_format_parsers_and_cancellation(
+        let item_view = args
+            .view
+            .as_deref()
+            .or(item.view.as_deref())
+            .or(build.view.as_deref());
+        sora_core::pipeline::generate_code_with_view_format_parsers_and_cancellation(
             schema_input,
             &item.target,
             &staged,
             FormatMode::from(item.format),
-            item_scope,
+            item_view,
             context.schema_parsers(),
             context.type_mappings(),
             &|| control.is_cancelled(),
@@ -400,7 +406,11 @@ fn build_project_staged(
             control.checkpoint(BuildPhase::Export)?;
             let out = resolve_declared_output(project_dir, &item.out)?;
             let staged = staged_output_path(stage_root, staged_outputs.len());
-            let item_scope = item.scope.as_deref().or(scope);
+            let item_view = args
+                .view
+                .as_deref()
+                .or(item.view.as_deref())
+                .or(build.view.as_deref());
             let output = export_output(&item.format, staged.clone())?;
             sora_core::pipeline::export_loaded_data(sora_core::pipeline::LoadedDataExportRequest {
                 ir: &ir,
@@ -408,7 +418,7 @@ fn build_project_staged(
                 locale_catalog: locale_catalog.as_ref(),
                 format: &item.format,
                 output,
-                scope: item_scope,
+                view: item_view,
                 execution: context.execution(),
                 options: export_options(item)?,
             })
@@ -521,9 +531,11 @@ fn selected_exports<'a>(
 fn validate_codegen_runtime_exports(
     codegen: &[&BuildCodegen],
     exports: &[BuildExport],
-    build_scope: Option<&str>,
+    requested_view: Option<&str>,
+    build_view: Option<&str>,
     registry: &CodegenRegistry,
     codegen_options: &CodegenSchema,
+    ir: &sora_ir::model::ConfigIr,
 ) -> Result<()> {
     for item in codegen {
         let generator = registry.get(&item.target).ok_or_else(|| {
@@ -534,12 +546,19 @@ fn validate_codegen_runtime_exports(
             )
         })?;
         let canonical_target = registry.canonical_id(&item.target).unwrap_or(&item.target);
-        let empty = empty_options();
-        let options = codegen_options
+        let global_options = codegen_options
             .target_options(canonical_target)
-            .or_else(|| codegen_options.target_options(&item.target))
-            .unwrap_or(&empty);
-        let Some(runtime_format) = (generator.runtime_format)(canonical_target, options)? else {
+            .or_else(|| codegen_options.target_options(&item.target));
+        let item_view = resolved_output_view(ir, requested_view, item.view.as_deref(), build_view);
+        let binding = item_view
+            .and_then(|view| ir.views.get(view))
+            .and_then(|view| {
+                view.bindings
+                    .get(canonical_target)
+                    .or_else(|| view.bindings.get(&item.target))
+            });
+        let options = merge_codegen_options(canonical_target, global_options, binding)?;
+        let Some(runtime_format) = (generator.runtime_format)(canonical_target, &options)? else {
             continue;
         };
         if !generator.supports_runtime_format(runtime_format) {
@@ -562,25 +581,57 @@ fn validate_codegen_runtime_exports(
         }
 
         let required_format = export_format_for_runtime(runtime_format);
-        let item_scope = item.scope.as_deref().or(build_scope);
         let has_matching_export = exports.iter().any(|export| {
             export.format == required_format
-                && export.scope.as_deref().or(build_scope) == item_scope
+                && resolved_output_view(ir, requested_view, export.view.as_deref(), build_view)
+                    == item_view
         });
         if !has_matching_export {
-            let scope_message = item_scope
-                .map(|scope| format!(" with scope `{scope}`"))
-                .unwrap_or_else(|| " without scope".to_owned());
+            let view_message = item_view
+                .map(|view| format!(" with view `{view}`"))
+                .unwrap_or_else(|| " without view".to_owned());
             bail!(
                 "{} codegen uses runtime_format `{}` and requires a `{}` export{}",
                 item.target,
                 runtime_format_name(runtime_format),
                 required_format,
-                scope_message
+                view_message
             );
         }
     }
     Ok(())
+}
+
+fn resolved_output_view<'a>(
+    ir: &'a sora_ir::model::ConfigIr,
+    requested: Option<&'a str>,
+    output: Option<&'a str>,
+    build: Option<&'a str>,
+) -> Option<&'a str> {
+    requested.or(output).or(build).or_else(|| {
+        (ir.views.len() == 1)
+            .then(|| ir.views.keys().next())
+            .flatten()
+            .map(String::as_str)
+    })
+}
+
+fn merge_codegen_options(
+    target: &str,
+    global: Option<&serde_json::Value>,
+    binding: Option<&serde_json::Value>,
+) -> Result<serde_json::Value> {
+    let mut values = match global {
+        Some(serde_json::Value::Object(values)) => values.clone(),
+        Some(_) => bail!("`{target}` codegen options must be an object"),
+        None => serde_json::Map::new(),
+    };
+    match binding {
+        Some(serde_json::Value::Object(binding)) => values.extend(binding.clone()),
+        Some(_) => bail!("`{target}` view binding must be an object"),
+        None => {}
+    }
+    Ok(serde_json::Value::Object(values))
 }
 
 fn export_format_for_runtime(runtime_format: RuntimeFormat) -> &'static str {
@@ -919,7 +970,9 @@ mod tests {
         fs::write(
             &project,
             r#"
-package = "test"
+project = { id = "test" }
+groups = { common = { default = true } }
+views = { default = { contract = "test/default", groups = ["common"] } }
 includes = ["schema/items.toml"]
 
 [build]
@@ -931,6 +984,7 @@ schema_lock = "generated/schema.lock"
             root.join("schema/items.toml"),
             r#"
 [[tables]]
+id = "settings"
 name = "Settings"
 mode = "singleton"
 
@@ -955,7 +1009,7 @@ type = "string"
                 project,
                 default_source_format: None,
                 data_root: None,
-                scope: None,
+                view: None,
                 include_schema_lock: true,
                 include_excel_templates: true,
                 include_codegen: true,

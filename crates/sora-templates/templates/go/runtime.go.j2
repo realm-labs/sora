@@ -1537,7 +1537,7 @@ func soraBundleDescriptor() (protoreflect.MessageDescriptor, error) {
             messageDescriptor("Bundle",
                 fieldDescriptor("format_version", 1, descriptorpb.FieldDescriptorProto_TYPE_UINT32),
                 fieldDescriptor("format", 2, descriptorpb.FieldDescriptorProto_TYPE_STRING),
-                fieldDescriptor("package", 3, descriptorpb.FieldDescriptorProto_TYPE_STRING),
+                fieldDescriptor("contract_id", 3, descriptorpb.FieldDescriptorProto_TYPE_STRING),
                 fieldDescriptor("schema_json", 4, descriptorpb.FieldDescriptorProto_TYPE_BYTES),
                 repeatedMessageField("tables", 5, ".sora.runtime.Table"),
                 fieldDescriptor("schema_fingerprint", 6, descriptorpb.FieldDescriptorProto_TYPE_STRING),

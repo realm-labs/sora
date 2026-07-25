@@ -34,7 +34,7 @@ pub fn list(workspace: &WorkspaceService) -> Result<ListResourcesResult, McpErro
             (
                 "summary",
                 "project_summary",
-                "Project package and capability summary",
+                "Project identity and capability summary",
             ),
             (
                 "manifest",
@@ -196,7 +196,8 @@ fn read_project_resource(
                 "build_outputs": inspection.build_outputs,
                 "codegen_targets": inspection.codegen_targets,
                 "export_formats": inspection.export_formats,
-                "scopes": inspection.scopes,
+                "groups": inspection.groups,
+                "views": inspection.views,
             })
         }
         [_, "schema"] => serialize_json(

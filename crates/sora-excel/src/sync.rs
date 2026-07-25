@@ -792,7 +792,7 @@ mod tests {
         worksheet.write_string(1, 0, "#name").unwrap();
         worksheet.write_string(FIELD_ROW, 0, "#field").unwrap();
         worksheet.write_string(3, 0, "#type").unwrap();
-        worksheet.write_string(4, 0, "#scope").unwrap();
+        worksheet.write_string(4, 0, "#groups").unwrap();
         worksheet.write_string(5, 0, "#input").unwrap();
         worksheet.write_string(6, 0, "#desc").unwrap();
         for (index, field) in fields.iter().enumerate() {
@@ -816,9 +816,12 @@ mod tests {
     fn example_ir() -> ConfigIr {
         let schema: SchemaFile = toml::from_str(
             r#"
-package = "game_config"
+project = { id = "game_config" }
+groups = { common = { default = true } }
+views = { default = { contract = "game_config/default", groups = ["common"] } }
 
 [[tables]]
+id = "item"
 name = "Item"
 mode = "map"
 key = "id"
@@ -848,7 +851,9 @@ type = "string"
     fn struct_columns_ir() -> ConfigIr {
         let schema: SchemaFile = toml::from_str(
             r#"
-package = "game_config"
+project = { id = "game_config" }
+groups = { common = { default = true } }
+views = { default = { contract = "game_config/default", groups = ["common"] } }
 
 [[enums]]
 name = "ResourceType"
@@ -866,6 +871,7 @@ name = "id"
 type = "i32"
 
 [[tables]]
+id = "reward"
 name = "Reward"
 mode = "map"
 key = "id"
@@ -892,7 +898,9 @@ parser = { kind = "columns", prefix = "cost_" }
     fn tagged_columns_ir() -> ConfigIr {
         let schema: SchemaFile = toml::from_str(
             r#"
-package = "game_config"
+project = { id = "game_config" }
+groups = { common = { default = true } }
+views = { default = { contract = "game_config/default", groups = ["common"] } }
 
 [[unions]]
 name = "EventCondition"
@@ -912,6 +920,7 @@ name = "item_id"
 type = "i32"
 
 [[tables]]
+id = "event_condition_entry"
 name = "EventConditionEntry"
 mode = "map"
 key = "id"

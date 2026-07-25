@@ -87,7 +87,7 @@ async fn preview_and_apply_preserve_the_plan_transaction_contract() -> anyhow::R
                         "field": {
                             "name": "name",
                             "type": "string",
-                            "scope": "all",
+                            "groups": [],
                             "parser": null,
                             "comment": null,
                             "default": null,
@@ -166,12 +166,16 @@ fn temp_project() -> PathBuf {
     fs::create_dir_all(&root).unwrap();
     fs::write(
         root.join("project.toml"),
-        "package = \"demo\"\nincludes = [\"schema.toml\"]\n",
+        "project = { id = \"demo\" }\n\
+         groups = { common = { default = true } }\n\
+         views = { default = { contract = \"demo/default\", groups = [\"common\"] } }\n\
+         includes = [\"schema.toml\"]\n",
     )
     .unwrap();
     fs::write(
         root.join("schema.toml"),
         r#"[[tables]]
+id = "item"
 name = "Item"
 mode = "map"
 key = "id"

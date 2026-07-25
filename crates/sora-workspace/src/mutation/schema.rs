@@ -49,8 +49,8 @@ pub struct FieldDefinition {
     pub name: String,
     #[serde(rename = "type")]
     pub ty: String,
-    #[serde(default = "default_scope")]
-    pub scope: String,
+    #[serde(default)]
+    pub groups: Vec<String>,
     pub parser: Option<String>,
     pub comment: Option<String>,
     pub default: Option<String>,
@@ -82,8 +82,8 @@ pub struct IndexDefinition {
 #[serde(deny_unknown_fields)]
 pub struct UnionVariantDefinition {
     pub name: String,
-    #[serde(default = "default_scope")]
-    pub scope: String,
+    #[serde(default)]
+    pub groups: Vec<String>,
     #[serde(default)]
     pub fields: Vec<FieldDefinition>,
 }
@@ -104,13 +104,14 @@ pub struct DerivedFieldSource {
 #[serde(tag = "op", rename_all = "snake_case", deny_unknown_fields)]
 pub enum SchemaOperation {
     AddTable {
+        id: String,
         name: String,
         source: String,
         mode: SchemaTableMode,
         key: Option<String>,
         table_source: Option<TableSourceDefinition>,
-        #[serde(default = "default_scope")]
-        scope: String,
+        #[serde(default)]
+        groups: Vec<String>,
         #[serde(default)]
         fields: Vec<FieldDefinition>,
         #[serde(default)]
@@ -135,9 +136,9 @@ pub enum SchemaOperation {
         table: String,
         source: Option<TableSourceDefinition>,
     },
-    SetTableScope {
+    SetTableGroups {
         table: String,
-        scope: String,
+        groups: Vec<String>,
     },
     AddField {
         owner: FieldOwner,
@@ -178,10 +179,10 @@ pub enum SchemaOperation {
         field: String,
         parser: Option<String>,
     },
-    SetFieldScope {
+    SetFieldGroups {
         owner: FieldOwner,
         field: String,
-        scope: String,
+        groups: Vec<String>,
     },
     SetFieldReference {
         owner: FieldOwner,
@@ -207,8 +208,8 @@ pub enum SchemaOperation {
     AddEnum {
         name: String,
         source: String,
-        #[serde(default = "default_scope")]
-        scope: String,
+        #[serde(default)]
+        groups: Vec<String>,
         #[serde(default)]
         values: Vec<EnumValueDefinition>,
     },
@@ -236,8 +237,8 @@ pub enum SchemaOperation {
     AddStruct {
         name: String,
         source: String,
-        #[serde(default = "default_scope")]
-        scope: String,
+        #[serde(default)]
+        groups: Vec<String>,
         #[serde(default)]
         fields: Vec<FieldDefinition>,
     },
@@ -251,8 +252,8 @@ pub enum SchemaOperation {
     AddUnion {
         name: String,
         source: String,
-        #[serde(default = "default_scope")]
-        scope: String,
+        #[serde(default)]
+        groups: Vec<String>,
         #[serde(default = "default_union_tag")]
         tag: String,
         #[serde(default)]
@@ -347,6 +348,8 @@ pub enum SchemaMutationError {
     UnexpectedVariant,
     #[error("schema name `{0}` is empty or not an ASCII identifier")]
     InvalidName(String),
+    #[error("group `{0}` is not declared by the project")]
+    UnknownGroup(String),
     #[error("table `{0}` must declare a key when mode is `map`")]
     MissingMapKey(String),
     #[error("field range lower bound exceeds its upper bound")]
@@ -372,6 +375,7 @@ pub fn execute_schema_operations(
     for operation in operations {
         apply_operation(&mut execution, operation)?;
     }
+    validate_declared_groups(&execution.schema)?;
     crate::studio::graph::refresh_schema_graph(&mut execution.schema);
     let related = execution
         .schema
@@ -387,18 +391,32 @@ pub fn execute_schema_operations(
     Ok(execution)
 }
 
+fn validate_declared_groups(schema: &StudioSchema) -> Result<(), SchemaMutationError> {
+    for group in schema.nodes.iter().flat_map(|node| {
+        node.groups
+            .iter()
+            .chain(node.fields.iter().flat_map(|field| field.groups.iter()))
+    }) {
+        if !schema.groups.contains_key(group) {
+            return Err(SchemaMutationError::UnknownGroup(group.clone()));
+        }
+    }
+    Ok(())
+}
+
 fn apply_operation(
     execution: &mut SchemaExecution,
     operation: &SchemaOperation,
 ) -> Result<(), SchemaMutationError> {
     match operation {
         SchemaOperation::AddTable {
+            id,
             name,
             source,
             mode,
             key,
             table_source,
-            scope,
+            groups,
             fields,
             indexes,
         } => {
@@ -407,6 +425,7 @@ fn apply_operation(
                 return Err(SchemaMutationError::MissingMapKey(name.clone()));
             }
             let mut metadata = BTreeMap::from([
+                ("id".to_owned(), id.clone()),
                 ("mode".to_owned(), mode.as_str().to_owned()),
                 (
                     "key".to_owned(),
@@ -419,7 +438,7 @@ fn apply_operation(
                 name: name.clone(),
                 kind: StudioNodeKind::Table,
                 source: source.clone(),
-                scope: normalize_scope(scope),
+                groups: normalize_groups(groups),
                 subtitle: String::new(),
                 fields: fields.iter().map(studio_field).collect::<Result<_, _>>()?,
                 aliases: Vec::new(),
@@ -460,9 +479,9 @@ fn apply_operation(
             set_table_source_metadata(&mut node.metadata, source.as_ref());
             affect_table(execution, table, true);
         }
-        SchemaOperation::SetTableScope { table, scope } => {
-            node_mut(&mut execution.schema, StudioNodeKind::Table, table)?.scope =
-                normalize_scope(scope);
+        SchemaOperation::SetTableGroups { table, groups } => {
+            node_mut(&mut execution.schema, StudioNodeKind::Table, table)?.groups =
+                normalize_groups(groups);
             affect_table(execution, table, false);
         }
         SchemaOperation::AddField { owner, field } => {
@@ -539,12 +558,12 @@ fn apply_operation(
             field_mut(&mut execution.schema, owner, field)?.parser = parser.clone();
             affect_owner(execution, owner, true);
         }
-        SchemaOperation::SetFieldScope {
+        SchemaOperation::SetFieldGroups {
             owner,
             field,
-            scope,
+            groups,
         } => {
-            field_mut(&mut execution.schema, owner, field)?.scope = normalize_scope(scope);
+            field_mut(&mut execution.schema, owner, field)?.groups = normalize_groups(groups);
             affect_owner(execution, owner, false);
         }
         SchemaOperation::SetFieldReference {
@@ -610,7 +629,7 @@ fn apply_operation(
         SchemaOperation::AddEnum {
             name,
             source,
-            scope,
+            groups,
             values,
         } => {
             validate_new_entity(&execution.schema, StudioNodeKind::Enum, name, source)?;
@@ -620,7 +639,7 @@ fn apply_operation(
                 name: name.clone(),
                 kind: StudioNodeKind::Enum,
                 source: source.clone(),
-                scope: normalize_scope(scope),
+                groups: normalize_groups(groups),
                 subtitle: String::new(),
                 fields: values
                     .iter()
@@ -628,7 +647,7 @@ fn apply_operation(
                         name: value.name.clone(),
                         ty: "enum value".to_owned(),
                         enum_value_id: Some(value.id),
-                        scope: normalize_scope(scope),
+                        groups: normalize_groups(groups),
                         parser: None,
                         comment: None,
                         default: None,
@@ -677,7 +696,7 @@ fn apply_operation(
                 name: name.clone(),
                 ty: "enum value".to_owned(),
                 enum_value_id: Some(*id),
-                scope: node.scope.clone(),
+                groups: node.groups.clone(),
                 parser: None,
                 comment: None,
                 default: None,
@@ -745,7 +764,7 @@ fn apply_operation(
         SchemaOperation::AddStruct {
             name,
             source,
-            scope,
+            groups,
             fields,
         } => {
             add_field_entity(
@@ -753,7 +772,7 @@ fn apply_operation(
                 StudioNodeKind::Struct,
                 name,
                 source,
-                scope,
+                groups,
                 fields,
                 None,
             )?;
@@ -768,7 +787,7 @@ fn apply_operation(
         SchemaOperation::AddUnion {
             name,
             source,
-            scope,
+            groups,
             tag,
             variants,
         } => {
@@ -782,7 +801,7 @@ fn apply_operation(
                 name: name.clone(),
                 kind: StudioNodeKind::Union,
                 source: source.clone(),
-                scope: normalize_scope(scope),
+                groups: normalize_groups(groups),
                 subtitle: String::new(),
                 fields,
                 aliases: Vec::new(),
@@ -873,7 +892,7 @@ fn add_field_entity(
     kind: StudioNodeKind,
     name: &str,
     source: &str,
-    scope: &str,
+    groups: &[String],
     fields: &[FieldDefinition],
     metadata: Option<BTreeMap<String, String>>,
 ) -> Result<(), SchemaMutationError> {
@@ -883,7 +902,7 @@ fn add_field_entity(
         name: name.to_owned(),
         kind,
         source: source.to_owned(),
-        scope: normalize_scope(scope),
+        groups: normalize_groups(groups),
         subtitle: String::new(),
         fields: fields.iter().map(studio_field).collect::<Result<_, _>>()?,
         aliases: Vec::new(),
@@ -1192,7 +1211,7 @@ fn studio_field(field: &FieldDefinition) -> Result<StudioField, SchemaMutationEr
         name: field.name.clone(),
         ty: field.ty.clone(),
         enum_value_id: None,
-        scope: normalize_scope(&field.scope),
+        groups: normalize_groups(&field.groups),
         parser: field.parser.clone(),
         comment: field.comment.clone(),
         default: field.default.clone(),
@@ -1271,7 +1290,7 @@ fn append_union_variant(
         name: variant.name.clone(),
         ty: "variant".to_owned(),
         enum_value_id: None,
-        scope: normalize_scope(&variant.scope),
+        groups: normalize_groups(&variant.groups),
         parser: None,
         comment: None,
         default: None,
@@ -1351,22 +1370,15 @@ fn is_identifier_byte(byte: u8) -> bool {
     byte.is_ascii_alphanumeric() || byte == b'_'
 }
 
-fn normalize_scope(scope: &str) -> String {
-    let value = scope.trim();
-    if value.is_empty() {
-        "all".to_owned()
-    } else {
-        value
-            .split(',')
-            .map(str::trim)
-            .filter(|item| !item.is_empty())
-            .collect::<Vec<_>>()
-            .join(",")
-    }
-}
-
-fn default_scope() -> String {
-    "all".to_owned()
+fn normalize_groups(groups: &[String]) -> Vec<String> {
+    groups
+        .iter()
+        .map(|value| value.trim())
+        .filter(|value| !value.is_empty())
+        .map(str::to_owned)
+        .collect::<BTreeSet<_>>()
+        .into_iter()
+        .collect()
 }
 
 fn default_union_tag() -> String {
@@ -1433,7 +1445,9 @@ mod tests {
 
     fn schema() -> StudioSchema {
         StudioSchema {
-            package: "demo".to_owned(),
+            project_id: "demo".to_owned(),
+            groups: std::collections::BTreeMap::from([("common".to_owned(), true)]),
+            views: std::collections::BTreeMap::new(),
             sources: vec!["schema.toml".to_owned()],
             summary: StudioSummary {
                 enums: 0,
@@ -1447,13 +1461,13 @@ mod tests {
                 name: "Item".to_owned(),
                 kind: StudioNodeKind::Table,
                 source: "schema.toml".to_owned(),
-                scope: "all".to_owned(),
+                groups: Vec::new(),
                 subtitle: String::new(),
                 fields: vec![StudioField {
                     name: "id".to_owned(),
                     ty: "i32".to_owned(),
                     enum_value_id: None,
-                    scope: "all".to_owned(),
+                    groups: Vec::new(),
                     parser: None,
                     comment: None,
                     default: None,
@@ -1484,13 +1498,13 @@ mod tests {
             name: "Drop".to_owned(),
             kind: StudioNodeKind::Table,
             source: "schema.toml".to_owned(),
-            scope: "all".to_owned(),
+            groups: Vec::new(),
             subtitle: String::new(),
             fields: vec![StudioField {
                 name: "item".to_owned(),
                 ty: "ref<Item.id>".to_owned(),
                 enum_value_id: None,
-                scope: "all".to_owned(),
+                groups: Vec::new(),
                 parser: None,
                 comment: None,
                 default: None,
@@ -1539,7 +1553,7 @@ mod tests {
             &[SchemaOperation::AddEnum {
                 name: "Kind".to_owned(),
                 source: "schema.toml".to_owned(),
-                scope: "all".to_owned(),
+                groups: Vec::new(),
                 values: vec![EnumValueDefinition {
                     id: 7,
                     name: "Old".to_owned(),
@@ -1580,7 +1594,7 @@ mod tests {
         let field = |name: &str, ty: &str| FieldDefinition {
             name: name.to_owned(),
             ty: ty.to_owned(),
-            scope: "all".to_owned(),
+            groups: Vec::new(),
             parser: None,
             comment: None,
             default: None,
@@ -1589,12 +1603,13 @@ mod tests {
         };
         let operations = vec![
             SchemaOperation::AddTable {
+                id: "temp".to_owned(),
                 name: "Temp".to_owned(),
                 source: "schema.toml".to_owned(),
                 mode: SchemaTableMode::List,
                 key: None,
                 table_source: None,
-                scope: "all".to_owned(),
+                groups: Vec::new(),
                 fields: vec![field("id", "i32")],
                 indexes: Vec::new(),
             },
@@ -1614,9 +1629,9 @@ mod tests {
                     sheet: None,
                 }),
             },
-            SchemaOperation::SetTableScope {
+            SchemaOperation::SetTableGroups {
                 table: "Temp".to_owned(),
-                scope: "client".to_owned(),
+                groups: vec!["client".to_owned()],
             },
             SchemaOperation::AddField {
                 owner: table_owner("Temp"),
@@ -1652,10 +1667,10 @@ mod tests {
                 field: "title".to_owned(),
                 parser: Some("split (separator=\",\")".to_owned()),
             },
-            SchemaOperation::SetFieldScope {
+            SchemaOperation::SetFieldGroups {
                 owner: table_owner("Temp"),
                 field: "title".to_owned(),
-                scope: "client".to_owned(),
+                groups: vec!["client".to_owned()],
             },
             SchemaOperation::SetFieldReference {
                 owner: table_owner("Temp"),
@@ -1701,7 +1716,7 @@ mod tests {
             SchemaOperation::AddEnum {
                 name: "Kind".to_owned(),
                 source: "schema.toml".to_owned(),
-                scope: "all".to_owned(),
+                groups: Vec::new(),
                 values: vec![EnumValueDefinition {
                     id: 1,
                     name: "One".to_owned(),
@@ -1731,7 +1746,7 @@ mod tests {
             SchemaOperation::AddStruct {
                 name: "Cost".to_owned(),
                 source: "schema.toml".to_owned(),
-                scope: "all".to_owned(),
+                groups: Vec::new(),
                 fields: vec![field("amount", "i32")],
             },
             SchemaOperation::RenameStruct {
@@ -1744,11 +1759,11 @@ mod tests {
             SchemaOperation::AddUnion {
                 name: "Reward".to_owned(),
                 source: "schema.toml".to_owned(),
-                scope: "all".to_owned(),
+                groups: Vec::new(),
                 tag: "kind".to_owned(),
                 variants: vec![UnionVariantDefinition {
                     name: "None".to_owned(),
-                    scope: "all".to_owned(),
+                    groups: Vec::new(),
                     fields: Vec::new(),
                 }],
             },
@@ -1756,7 +1771,7 @@ mod tests {
                 union_name: "Reward".to_owned(),
                 variant: UnionVariantDefinition {
                     name: "Item".to_owned(),
-                    scope: "all".to_owned(),
+                    groups: Vec::new(),
                     fields: vec![field("id", "i32")],
                 },
             },

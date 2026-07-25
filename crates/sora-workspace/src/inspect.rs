@@ -1,5 +1,3 @@
-use std::collections::BTreeSet;
-
 use anyhow::{Context, Result};
 use schemars::JsonSchema;
 use serde::Serialize;
@@ -12,10 +10,12 @@ use crate::{Diagnostic, ProjectRevision, ProjectSession, diagnostics_from_anyhow
 #[derive(Debug, Clone, Serialize, JsonSchema)]
 pub struct ProjectInspection {
     pub project_id: crate::ProjectId,
-    pub package: String,
+    pub schema_id: String,
     pub schema_sources: Vec<String>,
+    pub view_sources: Vec<String>,
     pub data_sources: Vec<ProjectDataSource>,
-    pub scopes: Vec<String>,
+    pub groups: Vec<String>,
+    pub views: Vec<String>,
     pub build_outputs: Vec<ProjectBuildOutput>,
     pub codegen_targets: Vec<String>,
     pub export_formats: Vec<String>,
@@ -36,7 +36,7 @@ pub struct ProjectBuildOutput {
     pub kind: String,
     pub name: String,
     pub path: String,
-    pub scope: Option<String>,
+    pub view: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, JsonSchema)]
@@ -74,6 +74,12 @@ impl ProjectSession {
                 self.manifest_path().display()
             )
         })?;
+        sora_ir::projection::validate_config_views(&ir).with_context(|| {
+            format!(
+                "failed to validate project views in `{}`",
+                self.manifest_path().display()
+            )
+        })?;
         Ok(ir)
     }
 
@@ -94,17 +100,8 @@ impl ProjectSession {
 
     pub fn inspect(&self) -> Result<ProjectInspection> {
         let ir = self.normalized_schema()?;
-        let mut scopes = BTreeSet::new();
-        for scope in ir
-            .enums
-            .iter()
-            .map(|item| item.scope.display())
-            .chain(ir.structs.iter().map(|item| item.scope.display()))
-            .chain(ir.unions.iter().map(|item| item.scope.display()))
-            .chain(ir.tables.iter().map(|item| item.scope.display()))
-        {
-            scopes.insert(scope);
-        }
+        let groups = ir.group_defaults.keys().cloned().collect();
+        let views = ir.views.keys().cloned().collect();
         let data_sources = ir
             .tables
             .iter()
@@ -124,7 +121,7 @@ impl ProjectSession {
                 kind: "schema_lock".to_owned(),
                 name: "schema_lock".to_owned(),
                 path: path.to_string_lossy().into_owned(),
-                scope: build.scope.clone(),
+                view: build.view.clone(),
             });
         }
         if let Some(path) = &build.excel_templates {
@@ -132,7 +129,7 @@ impl ProjectSession {
                 kind: "excel_templates".to_owned(),
                 name: "excel_templates".to_owned(),
                 path: path.to_string_lossy().into_owned(),
-                scope: build.scope.clone(),
+                view: build.view.clone(),
             });
         }
         for item in &build.codegen {
@@ -140,7 +137,7 @@ impl ProjectSession {
                 kind: "codegen".to_owned(),
                 name: item.target.clone(),
                 path: item.out.to_string_lossy().into_owned(),
-                scope: item.scope.clone().or_else(|| build.scope.clone()),
+                view: item.view.clone().or_else(|| build.view.clone()),
             });
         }
         for item in &build.exports {
@@ -148,7 +145,7 @@ impl ProjectSession {
                 kind: "export".to_owned(),
                 name: item.format.clone(),
                 path: item.out.to_string_lossy().into_owned(),
-                scope: item.scope.clone().or_else(|| build.scope.clone()),
+                view: item.view.clone().or_else(|| build.view.clone()),
             });
         }
         let codegen_targets = build
@@ -176,10 +173,12 @@ impl ProjectSession {
             });
         Ok(ProjectInspection {
             project_id: self.id().clone(),
-            package: ir.package,
+            schema_id: ir.project_id,
             schema_sources: self.manifest().includes.clone(),
+            view_sources: self.manifest().project.views.clone(),
             data_sources,
-            scopes: scopes.into_iter().collect(),
+            groups,
+            views,
             build_outputs,
             codegen_targets,
             export_formats,

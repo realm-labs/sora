@@ -25,7 +25,7 @@ export function Topbar({
   t,
   theme,
   toggleTheme,
-  updatePackage
+  updateProjectId
 }: {
   canGoBack: boolean;
   canGoForward: boolean;
@@ -47,18 +47,18 @@ export function Topbar({
   t: Translation;
   theme: Theme;
   toggleTheme: () => void;
-  updatePackage: (packageName: string) => void;
+  updateProjectId: (projectId: string) => void;
 }) {
-  const [packageDraft, setPackageDraft] = useState(schema?.package ?? "");
+  const [projectIdDraft, setProjectIdDraft] = useState(schema?.project_id ?? "");
 
   useEffect(() => {
-    setPackageDraft(schema?.package ?? "");
-  }, [schema?.package]);
+    setProjectIdDraft(schema?.project_id ?? "");
+  }, [schema?.project_id]);
 
-  const commitPackage = () => {
-    const clean = packageDraft.trim();
-    if (clean && clean !== schema?.package) updatePackage(clean);
-    else setPackageDraft(schema?.package ?? "");
+  const commitProjectId = () => {
+    const clean = projectIdDraft.trim();
+    if (clean && clean !== schema?.project_id) updateProjectId(clean);
+    else setProjectIdDraft(schema?.project_id ?? "");
   };
 
   return (
@@ -66,15 +66,15 @@ export function Topbar({
       <div>
         <p>{project || t.noProjectLoaded}</p>
         {schema ? (
-          <label className="package-editor">
-            <span>{t.package}</span>
+          <label className="project-id-editor">
+            <span>{t.projectId}</span>
             <input
-              aria-label={t.package}
-              value={packageDraft}
-              onBlur={commitPackage}
-              onChange={(event) => setPackageDraft(event.target.value)}
+              aria-label={t.projectId}
+              value={projectIdDraft}
+              onBlur={commitProjectId}
+              onChange={(event) => setProjectIdDraft(event.target.value)}
               onKeyDown={(event) => {
-                if (event.key === "Enter") commitPackage();
+                if (event.key === "Enter") commitProjectId();
               }}
             />
           </label>

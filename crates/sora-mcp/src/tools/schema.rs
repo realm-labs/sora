@@ -80,7 +80,7 @@ impl SoraMcpServer {
 
     #[tool(
         name = "sora_schema_search",
-        description = "Search normalized schema entities by kind, name, field, type, scope, source, or references",
+        description = "Search normalized schema entities by kind, name, field, type, group, source, or references",
         annotations(
             read_only_hint = true,
             destructive_hint = false,

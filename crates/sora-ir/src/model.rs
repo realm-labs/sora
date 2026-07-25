@@ -4,7 +4,14 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ConfigIr {
-    pub package: String,
+    pub project_id: String,
+    pub contract_id: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub view: Option<String>,
+    #[serde(default, skip_serializing)]
+    pub group_defaults: BTreeMap<String, bool>,
+    #[serde(default, skip_serializing)]
+    pub views: BTreeMap<String, ViewIr>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub localization: Option<LocalizationIr>,
     pub enums: Vec<EnumIr>,
@@ -15,7 +22,10 @@ pub struct ConfigIr {
 
 impl ConfigIr {
     pub fn data_schema(&self) -> Self {
-        self.clone()
+        let mut schema = self.clone();
+        schema.group_defaults.clear();
+        schema.views.clear();
+        schema
     }
 }
 
@@ -41,7 +51,7 @@ pub struct LocalizationSourceIr {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct EnumIr {
     pub name: String,
-    pub scope: ScopeIr,
+    pub groups: GroupSetIr,
     pub values: Vec<EnumValueIr>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub aliases: Vec<EnumAliasIr>,
@@ -62,14 +72,14 @@ pub struct EnumAliasIr {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct StructIr {
     pub name: String,
-    pub scope: ScopeIr,
+    pub groups: GroupSetIr,
     pub fields: Vec<FieldIr>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct UnionIr {
     pub name: String,
-    pub scope: ScopeIr,
+    pub groups: GroupSetIr,
     pub tag: String,
     pub variants: Vec<UnionVariantIr>,
 }
@@ -77,14 +87,16 @@ pub struct UnionIr {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct UnionVariantIr {
     pub name: String,
-    pub scope: ScopeIr,
+    pub groups: GroupSetIr,
     pub fields: Vec<FieldIr>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct TableIr {
+    pub id: String,
     pub name: String,
-    pub scope: ScopeIr,
+    pub canonical_name: String,
+    pub groups: GroupSetIr,
     pub mode: TableModeIr,
     pub key: Option<String>,
     pub source: Option<TableSourceIr>,
@@ -119,7 +131,7 @@ pub struct IndexIr {
 pub struct FieldIr {
     pub name: String,
     pub ty: TypeIr,
-    pub scope: ScopeIr,
+    pub groups: GroupSetIr,
     pub key: bool,
     pub comment: Option<String>,
     pub default: Option<String>,
@@ -150,29 +162,36 @@ pub struct DerivedFieldIr {
     pub order_by: Option<String>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-pub struct ScopeIr {
+#[derive(Debug, Clone, PartialEq, Eq, Default, Serialize, Deserialize)]
+pub struct GroupSetIr {
     pub values: Vec<String>,
 }
 
-impl Default for ScopeIr {
-    fn default() -> Self {
-        Self {
-            values: vec!["all".to_owned()],
-        }
-    }
-}
-
-impl ScopeIr {
-    pub fn includes(&self, target: &str) -> bool {
-        target == "all"
-            || self.values.iter().any(|value| value == "all")
-            || self.values.iter().any(|value| value == target)
+impl GroupSetIr {
+    pub fn intersects(&self, selected: &[String]) -> bool {
+        self.values
+            .iter()
+            .any(|value| selected.iter().any(|candidate| candidate == value))
     }
 
     pub fn display(&self) -> String {
         self.values.join(",")
     }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct ViewIr {
+    pub contract: String,
+    pub groups: Vec<String>,
+    pub tables: ViewTableSelectionIr,
+    pub table_names: BTreeMap<String, String>,
+    pub bindings: BTreeMap<String, serde_json::Value>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Default, Serialize, Deserialize)]
+pub struct ViewTableSelectionIr {
+    pub include: Vec<String>,
+    pub exclude: Vec<String>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]

@@ -11,7 +11,7 @@ import java.util.Set;
 import java.util.function.Function;
 
 public final class SoraConfig {
-    public static final String SCHEMA_FINGERPRINT = "4ae91b3892293cc4";
+    public static final String SCHEMA_FINGERPRINT = "9552056f96151363";
 
     public enum TableShape {
         LIST,

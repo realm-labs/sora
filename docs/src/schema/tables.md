@@ -12,6 +12,7 @@ Tables are source-backed row collections. A table schema declares the table mode
 
 ```toml
 [[tables]]
+id = "item"
 name = "Item"
 mode = "map"
 key = "id"
@@ -22,6 +23,11 @@ type = "i32"
 ```
 
 For map tables, `key` names the table's primary key field. Sora uses it for row uniqueness, generated lookup APIs, Excel template hints, and `ref<Table.key>` validation.
+
+The table `id` is the stable schema identity used by view selection and table
+aliases. It must remain unchanged when `name` changes. `name` is the canonical
+source name used by data files and schema references; a view may expose a
+different consumer-facing name without changing either the ID or source data.
 
 ## Source
 
@@ -58,6 +64,7 @@ For example, an `Item` table can use `id` as its primary key:
 
 ```toml
 [[tables]]
+id = "item"
 name = "Item"
 mode = "map"
 key = "id"

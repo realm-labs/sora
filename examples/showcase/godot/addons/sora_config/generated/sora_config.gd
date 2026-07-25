@@ -3,7 +3,7 @@
 class_name SoraConfig
 extends RefCounted
 
-const SORA_SCHEMA_FINGERPRINT := "5cc7aef41dc78916"
+const SORA_SCHEMA_FINGERPRINT := "89c4dd879f839a58"
 
 var _tables: Dictionary = {}
 
@@ -93,9 +93,6 @@ static func from_json_root(root: Dictionary) -> SoraConfig:
 	config._tables[GameSettings.GameSettingsTable.TABLE_NAME] = GameSettings.GameSettingsTable.decode(
 		SoraRuntime.decode_table(bundle, GameSettings.GameSettingsTable.TABLE_NAME, GameSettings.decode)
 	)
-	config._tables[MaintenanceWindow.MaintenanceWindowTable.TABLE_NAME] = MaintenanceWindow.MaintenanceWindowTable.decode(
-		SoraRuntime.decode_table(bundle, MaintenanceWindow.MaintenanceWindowTable.TABLE_NAME, MaintenanceWindow.decode)
-	)
 	config._tables[MailTemplate.MailTemplateTable.TABLE_NAME] = MailTemplate.MailTemplateTable.decode(
 		SoraRuntime.decode_table(bundle, MailTemplate.MailTemplateTable.TABLE_NAME, MailTemplate.decode)
 	)
@@ -179,8 +176,6 @@ func vip_level() -> VipLevel.VipLevelTable:
 	return _tables[VipLevel.VipLevelTable.TABLE_NAME]
 func game_settings() -> GameSettings.GameSettingsTable:
 	return _tables[GameSettings.GameSettingsTable.TABLE_NAME]
-func maintenance_window() -> MaintenanceWindow.MaintenanceWindowTable:
-	return _tables[MaintenanceWindow.MaintenanceWindowTable.TABLE_NAME]
 func mail_template() -> MailTemplate.MailTemplateTable:
 	return _tables[MailTemplate.MailTemplateTable.TABLE_NAME]
 func mail_reward() -> MailReward.MailRewardTable:

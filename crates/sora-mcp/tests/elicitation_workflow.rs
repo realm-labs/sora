@@ -169,7 +169,9 @@ fn scripted_project() -> PathBuf {
     fs::write(
         root.join("project.toml"),
         r#"
-package = "demo"
+project = { id = "demo" }
+groups = { common = { default = true } }
+views = { default = { contract = "demo/default", groups = ["common"] } }
 includes = ["schema.toml"]
 
 [parsers]
@@ -201,13 +203,17 @@ fn plain_project() -> PathBuf {
     fs::create_dir_all(&root).unwrap();
     fs::write(
         root.join("project.toml"),
-        "package = \"demo\"\nincludes = [\"schema.toml\"]\n",
+        "project = { id = \"demo\" }\n\
+         groups = { common = { default = true } }\n\
+         views = { default = { contract = \"demo/default\", groups = [\"common\"] } }\n\
+         includes = [\"schema.toml\"]\n",
     )
     .unwrap();
     fs::write(
         root.join("schema.toml"),
         r#"
 [[tables]]
+id = "settings"
 name = "Settings"
 mode = "singleton"
 "#,

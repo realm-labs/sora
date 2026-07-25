@@ -26,7 +26,7 @@ import {
   updateEnumValue,
   updateNodeSettings,
   updateField,
-  updatePackage,
+  updateProjectId,
   updateUnionVariant,
   validateSchema,
   type EditableNodeSettingsDraft,
@@ -391,9 +391,9 @@ export function App() {
     setDirty(true);
   };
 
-  const editPackage = (packageName: string) => {
+  const editProjectId = (projectId: string) => {
     if (!schema) return;
-    setEditableSchema(updatePackage(schema, packageName));
+    setEditableSchema(updateProjectId(schema, projectId));
     setDirty(true);
   };
 
@@ -549,7 +549,7 @@ export function App() {
           refresh={() => void load()}
           schema={schema}
           setLanguage={setLanguage}
-          updatePackage={editPackage}
+          updateProjectId={editProjectId}
           saveDisabled={localValidationIssues.length > 0}
           saveLocalChanges={() => void saveLocalChanges()}
           saving={saving}

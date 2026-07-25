@@ -1,0 +1,30 @@
+name = "server"
+contract = "com.sora.showcase/server"
+groups = ["common", "server"]
+
+[bindings.kotlin]
+package = "com.sora.showcase"
+
+[bindings.csharp]
+namespace = "com.sora.showcase"
+
+[bindings.java]
+package = "com.sora.showcase"
+
+[bindings.scala]
+package = "com.sora.showcase"
+
+[bindings.go]
+package = "showcase"
+
+[bindings.c]
+prefix = "sora_showcase"
+
+[bindings.cpp]
+namespace = "sora::showcase"
+
+[bindings.proto-schema]
+package = "com.sora.showcase"
+
+[bindings.lua]
+module = "generated"

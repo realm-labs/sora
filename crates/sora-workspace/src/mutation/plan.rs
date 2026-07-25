@@ -805,7 +805,7 @@ mod tests {
             field: FieldDefinition {
                 name: "name".to_owned(),
                 ty: "string".to_owned(),
-                scope: "all".to_owned(),
+                groups: Vec::new(),
                 parser: None,
                 comment: None,
                 default: None,
@@ -870,9 +870,9 @@ mod tests {
                 "test-owner",
                 &revision.schema,
                 &revision.manifest,
-                vec![SchemaOperation::SetTableScope {
+                vec![SchemaOperation::SetTableGroups {
                     table: "Item".to_owned(),
-                    scope: "client".to_owned(),
+                    groups: vec!["client".to_owned()],
                 }],
             )
             .unwrap();
@@ -909,7 +909,7 @@ mod tests {
             .unwrap();
         let revision = session.revision();
         let mut schema = session.load_studio_schema().schema.unwrap();
-        schema.package = "edited".to_owned();
+        schema.project_id = "edited".to_owned();
         let before = fs::read_to_string(&project).unwrap();
 
         let plan = workspace
@@ -927,7 +927,7 @@ mod tests {
             plan.preview
                 .diff
                 .as_deref()
-                .is_some_and(|diff| diff.contains("+package = \"edited\""))
+                .is_some_and(|diff| diff.contains("+id = \"edited\""))
         );
         let report = workspace
             .apply_studio_schema_mutation(&id, "studio", &plan.plan_id, "studio-save-1")
@@ -941,7 +941,7 @@ mod tests {
         assert!(
             fs::read_to_string(&project)
                 .unwrap()
-                .contains("package = \"edited\"")
+                .contains("id = \"edited\"")
         );
         let _ = fs::remove_dir_all(root);
     }
@@ -959,12 +959,16 @@ mod tests {
         fs::create_dir_all(&root).unwrap();
         fs::write(
             root.join("project.toml"),
-            "package = \"demo\"\nincludes = [\"schema.toml\"]\n",
+            "project = { id = \"demo\" }\n\
+             groups = { common = { default = true }, client = {} }\n\
+             views = { default = { contract = \"demo/default\", groups = [\"common\", \"client\"] } }\n\
+             includes = [\"schema.toml\"]\n",
         )
         .unwrap();
         fs::write(
             root.join("schema.toml"),
             r#"[[tables]]
+id = "item"
 name = "Item"
 mode = "map"
 key = "id"

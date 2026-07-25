@@ -61,6 +61,7 @@ name = "count"
 type = "i32"
 
 [[tables]]
+id = "quest"
 name = "Quest"
 mode = "map"
 key = "id"
@@ -79,6 +80,7 @@ type = "list<struct<Reward>>"
 from = { table = "QuestReward", parent_key = "id", child_key = "quest_id", order_by = "sort_order" }
 
 [[tables]]
+id = "questreward"
 name = "QuestReward"
 mode = "list"
 
@@ -166,6 +168,7 @@ type = "union<EventCondition>"
 from = { table = "EventConditionEntry", parent_key = "id", child_key = "event_id", field = "value" }
 
 [[tables]]
+id = "eventconditionentry"
 name = "EventConditionEntry"
 mode = "list"
 
@@ -234,6 +237,7 @@ For example, both `Quest` and `QuestPreview` can receive rewards from `QuestRewa
 
 ```toml
 [[tables]]
+id = "quest"
 name = "Quest"
 mode = "map"
 key = "id"
@@ -244,6 +248,7 @@ type = "list<struct<Reward>>"
 from = { table = "QuestReward", parent_key = "id", child_key = "quest_id", order_by = "sort_order" }
 
 [[tables]]
+id = "questpreview"
 name = "QuestPreview"
 mode = "map"
 key = "id"

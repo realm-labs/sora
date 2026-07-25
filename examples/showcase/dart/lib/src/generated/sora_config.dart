@@ -39,7 +39,6 @@ import 'level_exp.dart';
 import 'achievement.dart';
 import 'vip_level.dart';
 import 'game_settings.dart';
-import 'maintenance_window.dart';
 import 'mail_template.dart';
 import 'mail_reward.dart';
 import 'dialogue.dart';
@@ -53,7 +52,7 @@ import 'complex_action_entry.dart';
 import 'event_condition.dart';
 import 'reward_action.dart';
 
-const soraSchemaFingerprint = '5cc7aef41dc78916';
+const soraSchemaFingerprint = '89c4dd879f839a58';
 
 final class SoraConfig {
   final Map<Type, Object> _tables;
@@ -142,9 +141,6 @@ final class SoraConfig {
       ),
       GameSettingsTable: GameSettingsTable.decode(
         bundle.decodeTable(GameSettingsTable.tableName, GameSettings.decode),
-      ),
-      MaintenanceWindowTable: MaintenanceWindowTable.decode(
-        bundle.decodeTable(MaintenanceWindowTable.tableName, MaintenanceWindow.decode),
       ),
       MailTemplateTable: MailTemplateTable.decode(
         bundle.decodeTable(MailTemplateTable.tableName, MailTemplate.decode),
@@ -261,9 +257,6 @@ final class SoraConfig {
       row.collectTextKeys(keys);
     }
     gameSettings.row.collectTextKeys(keys);
-    for (final row in maintenanceWindow.rows) {
-      row.collectTextKeys(keys);
-    }
     for (final row in mailTemplate.rows.values) {
       row.collectTextKeys(keys);
     }
@@ -327,7 +320,6 @@ final class SoraConfig {
   AchievementTable get achievement => _table<AchievementTable>();
   VipLevelTable get vipLevel => _table<VipLevelTable>();
   GameSettingsTable get gameSettings => _table<GameSettingsTable>();
-  MaintenanceWindowTable get maintenanceWindow => _table<MaintenanceWindowTable>();
   MailTemplateTable get mailTemplate => _table<MailTemplateTable>();
   MailRewardTable get mailReward => _table<MailRewardTable>();
   DialogueTable get dialogue => _table<DialogueTable>();

@@ -1,4 +1,5 @@
 [[tables]]
+id = "game_settings"
 name = "GameSettings"
 mode = "singleton"
 
@@ -55,7 +56,9 @@ type = "optional<MaintenanceInfo>"
 from = { table = "MaintenanceWindow", parent_key = "version", child_key = "version" }
 comment = "Optional derived struct copied from a child row"
 [[tables]]
+id = "maintenance_window"
 name = "MaintenanceWindow"
+groups = "server"
 mode = "list"
 
 [tables.source]
@@ -79,6 +82,7 @@ range = [1, 1440]
 name = "reason"
 type = "optional<string>"
 [[tables]]
+id = "mail_template"
 name = "MailTemplate"
 mode = "map"
 key = "id"
@@ -108,6 +112,7 @@ name = "rewards"
 type = "list<Reward>"
 from = { table = "MailReward", parent_key = "id", child_key = "mail_id", order_by = "seq" }
 [[tables]]
+id = "mail_reward"
 name = "MailReward"
 mode = "list"
 
@@ -131,6 +136,7 @@ type = "ref<Item.id>"
 name = "count"
 type = "i32"
 [[tables]]
+id = "dialogue"
 name = "Dialogue"
 mode = "map"
 key = "id"

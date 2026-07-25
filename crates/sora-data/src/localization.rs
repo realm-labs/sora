@@ -372,7 +372,9 @@ mod tests {
     fn example_ir() -> ConfigIr {
         let schema: SchemaFile = toml::from_str(
             r#"
-package = "game_config"
+project = { id = "game_config" }
+groups = { common = { default = true } }
+views = { default = { contract = "game_config/default", groups = ["common"] } }
 
 [localization]
 locales = ["zh_cn", "en_us"]
@@ -388,6 +390,7 @@ name = "QuestText"
 file = "Quest.xlsx"
 
 [[tables]]
+id = "quest"
 name = "Quest"
 mode = "map"
 key = "id"

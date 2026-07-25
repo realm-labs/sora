@@ -7,21 +7,24 @@ use serde::Deserialize;
 use sora_config_format::{DocumentError, load_document};
 use sora_diagnostics::{Result, SoraError};
 use sora_schema::model::{
-    CodegenSchema, EnumSchema, LocalizationSchema, SchemaFile, StructSchema, TableSchema,
-    UnionSchema,
+    CodegenSchema, EnumSchema, GroupSchema, LocalizationSchema, ProjectSchema, SchemaFile,
+    StructSchema, TableSchema, UnionSchema, ViewSchema,
 };
 
 pub fn load_project_schema_file(path: &Path) -> Result<SchemaFile> {
     let mut visited = BTreeSet::new();
     let root = load_schema_document(path)?;
-    let package = root.package.clone().ok_or_else(|| {
+    let project = root.project.clone().ok_or_else(|| {
         SoraError::InvalidSchema(format!(
-            "project schema `{}` must declare `package`",
+            "project schema `{}` must declare `[project]`",
             path.display()
         ))
     })?;
+    let views = load_views(path, &project, root.views)?;
     let mut merged = SchemaFile {
-        package,
+        project,
+        groups: root.groups,
+        views,
         codegen: root.codegen.unwrap_or_default(),
         localization: root.localization,
         includes: root.includes.clone(),
@@ -56,9 +59,15 @@ fn merge_includes(
         }
 
         let module = load_schema_document(&include_path)?;
-        if module.package.is_some() {
+        if module.project.is_some() {
             return Err(SoraError::InvalidSchema(format!(
-                "included schema module `{}` must not declare `package`",
+                "included schema module `{}` must not declare `[project]`",
+                include_path.display()
+            )));
+        }
+        if !module.groups.is_empty() || !module.views.is_empty() {
+            return Err(SoraError::InvalidSchema(format!(
+                "included schema module `{}` must not declare groups or views",
                 include_path.display()
             )));
         }
@@ -85,6 +94,25 @@ fn merge_includes(
     Ok(())
 }
 
+fn load_views(
+    project_path: &Path,
+    project: &ProjectSchema,
+    mut views: std::collections::BTreeMap<String, ViewSchema>,
+) -> Result<std::collections::BTreeMap<String, ViewSchema>> {
+    let base_dir = project_path.parent().unwrap_or_else(|| Path::new("."));
+    for relative in &project.views {
+        let path = base_dir.join(relative);
+        let document: ViewDocument = load_document(&path).map_err(schema_document_error)?;
+        if views.insert(document.name.clone(), document.view).is_some() {
+            return Err(SoraError::InvalidSchema(format!(
+                "view `{}` is declared more than once",
+                document.name
+            )));
+        }
+    }
+    Ok(views)
+}
+
 fn load_schema_document(path: &Path) -> Result<SchemaDocument> {
     load_document(path).map_err(schema_document_error)
 }
@@ -108,7 +136,14 @@ fn schema_document_error(error: DocumentError) -> SoraError {
 
 #[derive(Debug, Deserialize)]
 struct SchemaDocument {
-    pub package: Option<String>,
+    pub project: Option<ProjectSchema>,
+
+    #[serde(default)]
+    pub groups: std::collections::BTreeMap<String, GroupSchema>,
+
+    #[serde(default)]
+    pub views: std::collections::BTreeMap<String, ViewSchema>,
+
     pub codegen: Option<CodegenSchema>,
     pub localization: Option<LocalizationSchema>,
 
@@ -126,6 +161,15 @@ struct SchemaDocument {
 
     #[serde(default)]
     pub tables: Vec<TableSchema>,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct ViewDocument {
+    pub name: String,
+
+    #[serde(flatten)]
+    pub view: ViewSchema,
 }
 
 #[cfg(test)]
@@ -147,7 +191,9 @@ mod tests {
         fs::write(
             &project_path,
             r#"
-package = "game_config"
+project = { id = "game_config" }
+groups = { common = { default = true } }
+views = { default = { contract = "game_config/default", groups = ["common"] } }
 includes = ["schema/items.toml"]
 
 [codegen.rust]
@@ -163,6 +209,7 @@ name = "ItemType"
 values = [{ id = 0, name = "Weapon" }, { id = 1, name = "Armor" }]
 
 [[tables]]
+id = "item"
 name = "Item"
 mode = "map"
 key = "id"
@@ -172,7 +219,7 @@ key = "id"
 
         let schema = load_project_schema_file(&project_path).unwrap();
 
-        assert_eq!(schema.package, "game_config");
+        assert_eq!(schema.project.id, "game_config");
         assert_eq!(
             schema.codegen.targets["rust"]["map_type"].as_str(),
             Some("fx_hash_map")
@@ -193,7 +240,9 @@ key = "id"
         fs::write(
             &project_path,
             r#"
-package: game_config
+project: { id: game_config }
+groups: { common: { default: true } }
+views: { default: { contract: game_config/default, groups: [common] } }
 includes:
   - schema/items.yml
 codegen:
@@ -209,7 +258,8 @@ enums:
   - name: ItemType
     values: [{ id: 0, name: Weapon }, { id: 1, name: Armor }]
 tables:
-  - name: Item
+  - id: item
+    name: Item
     mode: map
     key: id
 "#,
@@ -218,7 +268,7 @@ tables:
 
         let schema = load_project_schema_file(&project_path).unwrap();
 
-        assert_eq!(schema.package, "game_config");
+        assert_eq!(schema.project.id, "game_config");
         assert_eq!(
             schema.codegen.targets["rust"]["map_type"].as_str(),
             Some("fx_hash_map")
@@ -240,7 +290,11 @@ tables:
             &project_path,
             r#"
 {
-  "package": "game_config",
+  "project": { "id": "game_config" },
+  "groups": { "common": { "default": true } },
+  "views": {
+    "default": { "contract": "game_config/default", "groups": ["common"] }
+  },
   "includes": ["schema/items.json"],
   "codegen": {
     "rust": {
@@ -259,7 +313,7 @@ tables:
     { "name": "ItemType", "values": [{ "id": 0, "name": "Weapon" }, { "id": 1, "name": "Armor" }] }
   ],
   "tables": [
-    { "name": "Item", "mode": "map", "key": "id" }
+    { "id": "item", "name": "Item", "mode": "map", "key": "id" }
   ]
 }
 "#,
@@ -268,7 +322,7 @@ tables:
 
         let schema = load_project_schema_file(&project_path).unwrap();
 
-        assert_eq!(schema.package, "game_config");
+        assert_eq!(schema.project.id, "game_config");
         assert_eq!(
             schema.codegen.targets["rust"]["map_type"].as_str(),
             Some("fx_hash_map")
@@ -290,7 +344,11 @@ tables:
             &project_path,
             r#"
 return {
-  package = "game_config",
+  project = { id = "game_config" },
+  groups = { common = { default = true } },
+  views = {
+    default = { contract = "game_config/default", groups = { "common" } },
+  },
   includes = { "schema/items.lua" },
   codegen = {
     rust = {
@@ -309,7 +367,7 @@ return {
     { name = "ItemType", values = { { id = 0, name = "Weapon" }, { id = 1, name = "Armor" } } },
   },
   tables = {
-    { name = "Item", mode = "map", key = "id" },
+    { id = "item", name = "Item", mode = "map", key = "id" },
   },
 }
 "#,
@@ -318,7 +376,7 @@ return {
 
         let schema = load_project_schema_file(&project_path).unwrap();
 
-        assert_eq!(schema.package, "game_config");
+        assert_eq!(schema.project.id, "game_config");
         assert_eq!(
             schema.codegen.targets["rust"]["map_type"].as_str(),
             Some("fx_hash_map")
@@ -326,6 +384,47 @@ return {
         assert_eq!(schema.includes, ["schema/items.lua"]);
         assert_eq!(schema.enums[0].name, "ItemType");
         assert_eq!(schema.tables[0].name, "Item");
+
+        let _ = fs::remove_dir_all(base);
+    }
+
+    #[test]
+    fn loads_external_view_documents() {
+        let base = temp_dir();
+        fs::create_dir_all(base.join("views")).unwrap();
+        let project_path = base.join("project.toml");
+        fs::write(
+            &project_path,
+            r#"
+project = { id = "game", views = ["views/client.toml"] }
+groups = { common = { default = true }, server = { default = false } }
+"#,
+        )
+        .unwrap();
+        fs::write(
+            base.join("views/client.toml"),
+            r#"
+name = "client"
+contract = "game/client"
+groups = ["common"]
+tables = { include = ["item"] }
+names = { tables = { item = "Items" } }
+
+[bindings.csharp]
+namespace = "Game.Client"
+"#,
+        )
+        .unwrap();
+
+        let schema = load_project_schema_file(&project_path).unwrap();
+        let view = &schema.views["client"];
+        assert_eq!(view.contract, "game/client");
+        assert_eq!(view.tables.include, ["item"]);
+        assert_eq!(view.names.tables["item"], "Items");
+        assert_eq!(
+            view.bindings["csharp"]["namespace"].as_str(),
+            Some("Game.Client")
+        );
 
         let _ = fs::remove_dir_all(base);
     }
@@ -339,7 +438,9 @@ return {
         fs::write(
             &project_path,
             r#"
-package: game_config
+project: { id: game_config }
+groups: { common: { default: true } }
+views: { default: { contract: game_config/default, groups: [common] } }
 includes:
   - schema/items.toml
 "#,
@@ -349,6 +450,7 @@ includes:
             schema_dir.join("items.toml"),
             r#"
 [[tables]]
+id = "item"
 name = "Item"
 mode = "map"
 key = "id"

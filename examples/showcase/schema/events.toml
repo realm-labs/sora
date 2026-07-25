@@ -90,6 +90,7 @@ name = "RunActionGroup"
 name = "action_group_id"
 type = "ref<ComplexActionGroup.id>"
 [[tables]]
+id = "event_rule"
 name = "EventRule"
 mode = "map"
 key = "id"
@@ -116,6 +117,7 @@ type = "list<union<RewardAction>>"
 parser = { kind = "json" }
 length = [1, 4]
 [[tables]]
+id = "complex_rule"
 name = "ComplexRule"
 mode = "map"
 key = "id"
@@ -154,6 +156,7 @@ type = "struct<ComplexBudget>"
 parser = { kind = "tuple", separator = "," }
 comment = "Nested tuple, tuple_list, split, and map parsers in one cell"
 [[tables]]
+id = "complex_condition_group"
 name = "ComplexConditionGroup"
 mode = "map"
 key = "id"
@@ -176,6 +179,7 @@ type = "list<union<EventCondition>>"
 from = { table = "ComplexConditionGroupEntry", parent_key = "id", child_key = "group_id", field = "value", order_by = "seq" }
 comment = "A derived list of union values; each child row is edited without JSON"
 [[tables]]
+id = "complex_condition_group_entry"
 name = "ComplexConditionGroupEntry"
 mode = "map"
 key = "id"
@@ -201,6 +205,7 @@ name = "value"
 type = "union<EventCondition>"
 parser = { kind = "tagged_columns", prefix = "" }
 [[tables]]
+id = "complex_rule_condition"
 name = "ComplexRuleCondition"
 mode = "map"
 key = "id"
@@ -222,6 +227,7 @@ name = "value"
 type = "union<EventCondition>"
 parser = { kind = "tagged_columns", prefix = "" }
 [[tables]]
+id = "complex_action_group"
 name = "ComplexActionGroup"
 mode = "map"
 key = "id"
@@ -243,6 +249,7 @@ name = "actions"
 type = "list<union<RewardAction>>"
 from = { table = "ComplexActionEntry", parent_key = "id", child_key = "group_id", field = "value", order_by = "seq" }
 [[tables]]
+id = "complex_action_entry"
 name = "ComplexActionEntry"
 mode = "map"
 key = "id"

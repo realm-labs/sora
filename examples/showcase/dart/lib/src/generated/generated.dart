@@ -40,7 +40,6 @@ export 'level_exp.dart';
 export 'achievement.dart';
 export 'vip_level.dart';
 export 'game_settings.dart';
-export 'maintenance_window.dart';
 export 'mail_template.dart';
 export 'mail_reward.dart';
 export 'dialogue.dart';

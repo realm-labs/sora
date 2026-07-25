@@ -35,7 +35,7 @@ pub struct ProjectInitPlan {
     pub operation_kind: String,
     pub root_id: String,
     pub relative_directory: String,
-    pub package: String,
+    pub schema_id: String,
     pub files: Vec<ProjectInitPlanFile>,
     pub created_at: DateTime<Utc>,
     pub expires_at: DateTime<Utc>,
@@ -77,15 +77,15 @@ impl WorkspaceService {
         authorization_context: &str,
         root_id: &str,
         relative_directory: &str,
-        package: &str,
+        schema_id: &str,
     ) -> Result<ProjectInitPlan, crate::MutationPlanError> {
-        validate_package(package)?;
+        validate_schema_id(schema_id)?;
         let root = self
             .root(root_id)
             .map_err(|error| crate::MutationPlanError::Project(error.to_string()))?;
         let relative = validate_relative_directory(relative_directory)?;
         ensure_empty_target(root.path(), &root.path().join(&relative))?;
-        let files = scaffold_files(package);
+        let files = scaffold_files(schema_id);
         let created_at = Utc::now();
         let plan = ProjectInitPlan {
             plan_id: format!("plan:{}", Uuid::new_v4()),
@@ -93,7 +93,7 @@ impl WorkspaceService {
             operation_kind: "project_init".to_owned(),
             root_id: root_id.to_owned(),
             relative_directory: relative_string(&relative),
-            package: package.to_owned(),
+            schema_id: schema_id.to_owned(),
             files: files
                 .iter()
                 .map(|(path, content)| ProjectInitPlanFile {
@@ -286,17 +286,24 @@ impl ProjectInitCoordinator {
     }
 }
 
-fn scaffold_files(package: &str) -> Vec<(PathBuf, String)> {
+fn scaffold_files(schema_id: &str) -> Vec<(PathBuf, String)> {
     vec![
         (
             PathBuf::from("project.toml"),
             format!(
-                r#"package = "{package}"
-includes = ["schema/items.toml"]
+                r#"includes = ["schema/items.toml"]
+
+[project]
+id = "{schema_id}"
+views = ["views/default.toml"]
+
+[groups.common]
+default = true
 
 [build]
 default_source_format = "json"
 data_root = "data"
+view = "default"
 schema_lock = "generated/schema.lock"
 
 [[build.codegen]]
@@ -311,8 +318,18 @@ out = "generated/config.sora"
             ),
         ),
         (
+            PathBuf::from("views/default.toml"),
+            format!(
+                r#"name = "default"
+contract = "{schema_id}/default"
+groups = ["common"]
+"#
+            ),
+        ),
+        (
             PathBuf::from("schema/items.toml"),
             r#"[[tables]]
+id = "item"
 name = "Item"
 mode = "map"
 key = "id"
@@ -387,17 +404,17 @@ fn nearest_existing_ancestor(path: &Path) -> &Path {
     current
 }
 
-fn validate_package(package: &str) -> Result<(), crate::MutationPlanError> {
-    if !package.is_empty()
-        && package.len() <= 128
-        && package
+fn validate_schema_id(schema_id: &str) -> Result<(), crate::MutationPlanError> {
+    if !schema_id.is_empty()
+        && schema_id.len() <= 128
+        && schema_id
             .bytes()
-            .all(|byte| byte.is_ascii_alphanumeric() || matches!(byte, b'_' | b'-' | b'.'))
+            .all(|byte| byte.is_ascii_alphanumeric() || matches!(byte, b'_' | b'-' | b'.' | b'/'))
     {
         Ok(())
     } else {
         Err(crate::MutationPlanError::Project(
-            "package must contain 1-128 ASCII letters, digits, '.', '-' or '_'".to_owned(),
+            "schema id must contain 1-128 ASCII letters, digits, '.', '-', '_', or '/'".to_owned(),
         ))
     }
 }
@@ -451,7 +468,7 @@ mod tests {
             .unwrap();
 
         assert!(!root.join("new-game").exists());
-        assert_eq!(plan.files.len(), 3);
+        assert_eq!(plan.files.len(), 4);
         let report = workspace
             .apply_project_init("test", &plan.plan_id, "init-1")
             .unwrap();

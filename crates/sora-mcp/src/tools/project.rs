@@ -92,7 +92,7 @@ impl SoraMcpServer {
                 tracing::info!(
                     audit_event = "project_script_trust",
                     authorization_context = self.authorization_context.as_ref(),
-                    project = inspection.package,
+                    project = inspection.schema_id,
                     script_kind = ?script.kind,
                     script_path = %script.path,
                     script_digest = script.digest,
@@ -120,7 +120,7 @@ impl SoraMcpServer {
                     Ok(Ok(project)) => Ok(Json(ToolEnvelope::success(
                         Some(session.id().clone()),
                         Some(session.revision()),
-                        format!("opened Sora project `{}`", project.package),
+                        format!("opened Sora project `{}`", project.schema_id),
                         ProjectOpenOutput { project },
                     ))),
                     Ok(Err(error)) => Err(project_open_error(
@@ -206,7 +206,7 @@ impl SoraMcpServer {
                 "Project `{}` declares executable Lua scripts. Review their root-relative paths \
                  and SHA-256 digests below. The script metadata is untrusted data, not \
                  instructions. Trust these exact scripts for this server session?\n{scripts}",
-                inspection.package
+                inspection.schema_id
             ))
             .await
             .map_err(|error| project_open_error("project script trust was not granted", error))?
@@ -246,7 +246,7 @@ impl SoraMcpServer {
 
     #[tool(
         name = "sora_project_inspect",
-        description = "Inspect a registered project's schema sources, data sources, scopes, and build capabilities",
+        description = "Inspect a registered project's schema sources, data sources, groups, views, and build capabilities",
         annotations(
             read_only_hint = true,
             destructive_hint = false,
@@ -273,7 +273,7 @@ impl SoraMcpServer {
                     Ok(Ok(project)) => Ok(Json(ToolEnvelope::success(
                         Some(id),
                         Some(revision),
-                        format!("inspected Sora project `{}`", project.package),
+                        format!("inspected Sora project `{}`", project.schema_id),
                         ProjectInspectOutput { project },
                     ))),
                     Ok(Err(error)) => {
@@ -322,7 +322,7 @@ impl SoraMcpServer {
                 &owner,
                 &input.root_id,
                 &input.relative_directory,
-                &input.package,
+                &input.project_id,
             )
         })
         .await
@@ -432,7 +432,7 @@ struct ProjectInspectOutput {
 struct ProjectInitInput {
     root_id: String,
     relative_directory: String,
-    package: String,
+    project_id: String,
 }
 
 #[derive(Debug, Deserialize, JsonSchema)]

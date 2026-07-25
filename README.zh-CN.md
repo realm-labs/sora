@@ -183,11 +183,13 @@ sora export \
 
 ## Schema 格式
 
-项目使用一个根 manifest 加上若干被 include 的 schema module。Schema 和项目文件可以写成 TOML、YAML、JSON 或 Lua；这里的示例使用 TOML。根 manifest 声明 package 和 module 列表：
+项目使用一个根 manifest 加上若干被 include 的 schema module。Schema 和项目文件可以写成 TOML、YAML、JSON 或 Lua；这里的示例使用 TOML。根 manifest 声明稳定项目身份、group、view 和 module 列表：
 
 ```toml
-package = "game_config"
 includes = ["schema/items.toml", "schema/skills.toml"]
+project = { id = "game_config" }
+groups = { common = { default = true } }
+views = { default = { contract = "game_config/default", groups = ["common"] } }
 ```
 
 同一个根 manifest 也可以声明构建输出。相对路径从项目文件所在目录解析：

@@ -20,7 +20,7 @@ use crate::{
 #[derive(Debug, Clone, Default, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
 pub struct DataValidationQuery {
-    pub scope: Option<String>,
+    pub view: Option<String>,
     #[serde(default)]
     pub tables: Vec<String>,
 }
@@ -293,10 +293,28 @@ fn selected_tables<'a>(
     ir: &'a sora_ir::model::ConfigIr,
     query: &DataValidationQuery,
 ) -> Result<Vec<&'a sora_ir::model::TableIr>> {
-    let mut tables = ir.tables.iter().collect::<Vec<_>>();
-    if let Some(scope) = &query.scope {
-        tables.retain(|table| table.scope.includes(scope));
-    }
+    let visible_ids = query
+        .view
+        .as_deref()
+        .map(|view| {
+            sora_ir::projection::project_config_ir(ir, view).map(|projected| {
+                projected
+                    .tables
+                    .into_iter()
+                    .map(|table| table.id)
+                    .collect::<BTreeSet<_>>()
+            })
+        })
+        .transpose()?;
+    let mut tables = ir
+        .tables
+        .iter()
+        .filter(|table| {
+            visible_ids
+                .as_ref()
+                .is_none_or(|ids| ids.contains(&table.id))
+        })
+        .collect::<Vec<_>>();
     if !query.tables.is_empty() {
         for name in &query.tables {
             if !ir.tables.iter().any(|table| &table.name == name) {

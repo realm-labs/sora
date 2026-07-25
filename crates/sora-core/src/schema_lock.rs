@@ -4,12 +4,14 @@ use serde::{Deserialize, Serialize};
 use sora_diagnostics::{Result, SoraError};
 use sora_ir::model::ConfigIr;
 
-const SCHEMA_LOCK_VERSION: u32 = 2;
+const SCHEMA_LOCK_VERSION: u32 = 3;
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct SchemaLock {
     pub version: u32,
-    pub package: String,
+    pub project_id: String,
+    pub contract_id: String,
+    pub view: Option<String>,
     pub fingerprint: String,
     pub schema: ConfigIr,
 }
@@ -19,7 +21,9 @@ impl SchemaLock {
         let schema = ir.data_schema();
         Ok(Self {
             version: SCHEMA_LOCK_VERSION,
-            package: ir.package.clone(),
+            project_id: ir.project_id.clone(),
+            contract_id: ir.contract_id.clone(),
+            view: ir.view.clone(),
             fingerprint: schema_fingerprint(&schema)?,
             schema,
         })
@@ -105,9 +109,12 @@ mod tests {
     fn example_ir(id_type: &str) -> ConfigIr {
         let schema: SchemaFile = toml::from_str(&format!(
             r#"
-package = "game_config"
+project = {{ id = "game_config" }}
+groups = {{ common = {{ default = true }} }}
+views = {{ default = {{ contract = "game_config/default", groups = ["common"] }} }}
 
 [[tables]]
+id = "item"
 name = "Item"
 mode = "map"
 key = "id"

@@ -86,7 +86,7 @@ impl<'a> BinaryEncoder<'a> {
 
         Ok(BundleManifest {
             format_version: VERSION,
-            package: self.ir.package.clone(),
+            contract_id: self.ir.contract_id.clone(),
             schema_fingerprint: schema_fingerprint(self.ir)?,
             data_fingerprint: data_fingerprint(self.data)?,
             tables,
@@ -542,7 +542,7 @@ impl StringTable {
 #[derive(serde::Serialize)]
 struct BundleManifest {
     format_version: u32,
-    package: String,
+    contract_id: String,
     schema_fingerprint: String,
     data_fingerprint: String,
     tables: Vec<ManifestTable>,

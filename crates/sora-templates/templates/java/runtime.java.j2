@@ -856,7 +856,7 @@ final class SoraProtobufBundle {
                     .setName("Bundle")
                     .addField(field("format_version", 1, FieldDescriptorProto.Type.TYPE_UINT32))
                     .addField(field("format", 2, FieldDescriptorProto.Type.TYPE_STRING))
-                    .addField(field("package", 3, FieldDescriptorProto.Type.TYPE_STRING))
+                    .addField(field("contract_id", 3, FieldDescriptorProto.Type.TYPE_STRING))
                     .addField(field("schema_json", 4, FieldDescriptorProto.Type.TYPE_BYTES))
                     .addField(repeatedField("tables", 5, ".sora.runtime.Table"))
                     .addField(field("schema_fingerprint", 6, FieldDescriptorProto.Type.TYPE_STRING))

@@ -88,7 +88,7 @@ mod tests {
         )
         .unwrap();
         assert_eq!(manifest["format_version"], 2);
-        assert_eq!(manifest["package"], "game_config");
+        assert_eq!(manifest["contract_id"], "game_config/default");
         assert_eq!(manifest["tables"][0]["name"], "Item");
         assert_eq!(manifest["tables"][0]["rows"], 1);
         assert!(manifest["schema_fingerprint"].as_str().unwrap().len() > 8);
@@ -166,9 +166,12 @@ mod tests {
     fn example_ir() -> ConfigIr {
         let schema: SchemaFile = toml::from_str(
             r#"
-package = "game_config"
+project = { id = "game_config" }
+groups = { common = { default = true } }
+views = { default = { contract = "game_config/default", groups = ["common"] } }
 
 [[tables]]
+id = "item"
 name = "Item"
 mode = "map"
 key = "id"
@@ -183,7 +186,8 @@ type = "string"
 "#,
         )
         .unwrap();
-        normalize_schema(schema).unwrap()
+        let ir = normalize_schema(schema).unwrap();
+        sora_ir::projection::project_config_ir(&ir, "default").unwrap()
     }
 
     fn example_data() -> ConfigData {

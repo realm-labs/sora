@@ -11,6 +11,16 @@ where
     })
 }
 
+pub fn required_binding(target: &str, name: &str, value: Option<String>) -> Result<String> {
+    value
+        .filter(|value| !value.trim().is_empty())
+        .ok_or_else(|| {
+            SoraError::InvalidSchema(format!(
+                "`{target}` codegen requires a non-empty `{name}` binding"
+            ))
+        })
+}
+
 pub trait HasRuntimeFormat {
     fn runtime_format(&self) -> Option<RuntimeFormat>;
 }
@@ -70,8 +80,53 @@ impl HasRuntimeFormat for LanguageCodegenOptions {
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
 #[serde(default)]
+pub struct PackageCodegenOptions {
+    pub runtime_format: RuntimeFormat,
+    pub package: Option<String>,
+}
+
+impl Default for PackageCodegenOptions {
+    fn default() -> Self {
+        Self {
+            runtime_format: RuntimeFormat::Sora,
+            package: None,
+        }
+    }
+}
+
+impl HasRuntimeFormat for PackageCodegenOptions {
+    fn runtime_format(&self) -> Option<RuntimeFormat> {
+        Some(self.runtime_format)
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
+#[serde(default)]
+pub struct CSharpCodegenOptions {
+    pub runtime_format: RuntimeFormat,
+    pub namespace: Option<String>,
+}
+
+impl Default for CSharpCodegenOptions {
+    fn default() -> Self {
+        Self {
+            runtime_format: RuntimeFormat::Sora,
+            namespace: None,
+        }
+    }
+}
+
+impl HasRuntimeFormat for CSharpCodegenOptions {
+    fn runtime_format(&self) -> Option<RuntimeFormat> {
+        Some(self.runtime_format)
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
+#[serde(default)]
 pub struct JavaCodegenOptions {
     pub runtime_format: RuntimeFormat,
+    pub package: Option<String>,
     pub nullable_annotation: Option<String>,
 }
 
@@ -79,6 +134,7 @@ impl Default for JavaCodegenOptions {
     fn default() -> Self {
         Self {
             runtime_format: RuntimeFormat::Sora,
+            package: None,
             nullable_annotation: Some("SoraNullable".to_owned()),
         }
     }
@@ -142,6 +198,7 @@ impl HasRuntimeFormat for CppCodegenOptions {
 #[serde(default)]
 pub struct ScalaCodegenOptions {
     pub runtime_format: RuntimeFormat,
+    pub package: Option<String>,
     pub scala_version: ScalaVersion,
 }
 
@@ -149,9 +206,16 @@ impl Default for ScalaCodegenOptions {
     fn default() -> Self {
         Self {
             runtime_format: RuntimeFormat::Sora,
+            package: None,
             scala_version: ScalaVersion::Scala3,
         }
     }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize, Default)]
+#[serde(default)]
+pub struct ProtoCodegenOptions {
+    pub package: Option<String>,
 }
 
 impl HasRuntimeFormat for ScalaCodegenOptions {

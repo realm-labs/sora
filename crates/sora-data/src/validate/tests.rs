@@ -514,7 +514,9 @@ fn singleton_table(id: i64) -> TableData {
 fn example_ir() -> ConfigIr {
     let schema: SchemaFile = toml::from_str(
         r#"
-package = "game_config"
+project = { id = "game_config" }
+groups = { common = { default = true } }
+views = { default = { contract = "game_config/default", groups = ["common"] } }
 
 [[enums]]
 name = "ItemType"
@@ -525,6 +527,7 @@ name = "Weapon"
 alias = "weapon"
 
 [[tables]]
+id = "item"
 name = "Item"
 mode = "map"
 key = "id"
@@ -557,7 +560,9 @@ type = "i32"
 fn complex_ir() -> ConfigIr {
     let schema: SchemaFile = toml::from_str(
         r#"
-package = "game_config"
+project = { id = "game_config" }
+groups = { common = { default = true } }
+views = { default = { contract = "game_config/default", groups = ["common"] } }
 
 [[structs]]
 name = "Reward"
@@ -572,6 +577,7 @@ type = "i32"
 range = [1, 10]
 
 [[tables]]
+id = "reward_source"
 name = "RewardSource"
 mode = "map"
 key = "id"
@@ -581,6 +587,7 @@ name = "id"
 type = "i32"
 
 [[tables]]
+id = "item"
 name = "Item"
 mode = "map"
 key = "id"
@@ -599,6 +606,7 @@ type = "array<i32,2>"
 range = [1, 6]
 
 [[tables]]
+id = "settings"
 name = "Settings"
 mode = "singleton"
 
@@ -615,13 +623,16 @@ type = "i32"
 fn index_ir() -> ConfigIr {
     let schema: SchemaFile = toml::from_str(
         r#"
-package = "game_config"
+project = { id = "game_config" }
+groups = { common = { default = true } }
+views = { default = { contract = "game_config/default", groups = ["common"] } }
 
 [[enums]]
 name = "ItemType"
 values = [{ id = 0, name = "Weapon" }, { id = 1, name = "Armor" }, { id = 2, name = "Material" }, { id = 3, name = "Consumable" }]
 
 [[tables]]
+id = "item"
 name = "Item"
 mode = "map"
 key = "id"
@@ -652,9 +663,12 @@ unique = true
 fn length_ir() -> ConfigIr {
     let schema: SchemaFile = toml::from_str(
         r#"
-package = "game_config"
+project = { id = "game_config" }
+groups = { common = { default = true } }
+views = { default = { contract = "game_config/default", groups = ["common"] } }
 
 [[tables]]
+id = "item"
 name = "Item"
 mode = "map"
 key = "id"
@@ -682,9 +696,12 @@ length = [1, 2]
 fn integer_width_ir() -> ConfigIr {
     let schema: SchemaFile = toml::from_str(
         r#"
-package = "game_config"
+project = { id = "game_config" }
+groups = { common = { default = true } }
+views = { default = { contract = "game_config/default", groups = ["common"] } }
 
 [[tables]]
+id = "stats"
 name = "Stats"
 mode = "list"
 

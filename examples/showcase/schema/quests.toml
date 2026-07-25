@@ -1,4 +1,5 @@
 [[tables]]
+id = "quest"
 name = "Quest"
 mode = "map"
 key = "id"
@@ -41,6 +42,7 @@ type = "list<Reward>"
 from = { table = "QuestReward", parent_key = "id", child_key = "quest_id", order_by = "seq" }
 comment = "Materialized from QuestReward child rows"
 [[tables]]
+id = "quest_reward"
 name = "QuestReward"
 mode = "list"
 
@@ -65,6 +67,7 @@ name = "count"
 type = "i32"
 range = [1, 9999]
 [[tables]]
+id = "level_exp"
 name = "LevelExp"
 mode = "map"
 key = "level"
@@ -87,6 +90,7 @@ range = [0, 999999999]
 name = "unlock_feature"
 type = "optional<string>"
 [[tables]]
+id = "achievement"
 name = "Achievement"
 mode = "map"
 key = "id"
@@ -112,6 +116,7 @@ name = "reward"
 type = "struct<ResourceCost>"
 parser = { kind = "tuple" }
 [[tables]]
+id = "vip_level"
 name = "VipLevel"
 mode = "map"
 key = "level"

@@ -32,4 +32,5 @@ Exporter 负责把校验后的数据写成运行时数据包。导出器 registr
 
 ## Scope
 
-Schema、字段和表可以声明 `scope`。构建时可以选择 scope，只生成或导出某个运行环境需要的部分。
+Schema 实体和字段归属于预先声明的 `groups`。具名 view 通过选择 group、稳定表 ID、
+别名和目标语言 binding，形成 codegen 与 export 使用的外部契约。

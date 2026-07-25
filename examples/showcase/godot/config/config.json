@@ -1,10 +1,12 @@
 {
   "format": "json",
   "format_version": 2,
-  "schema_fingerprint": "5cc7aef41dc78916",
-  "data_fingerprint": "8e07087214097ddc",
+  "schema_fingerprint": "89c4dd879f839a58",
+  "data_fingerprint": "c46f36d5260b6f82",
   "schema": {
-    "package": "com.sora.showcase",
+    "project_id": "com.sora.showcase",
+    "contract_id": "com.sora.showcase/client",
+    "view": "client",
     "localization": {
       "locales": [
         "zh_cn",
@@ -24,9 +26,9 @@
     "enums": [
       {
         "name": "ItemType",
-        "scope": {
+        "groups": {
           "values": [
-            "all"
+            "common"
           ]
         },
         "values": [
@@ -54,9 +56,9 @@
       },
       {
         "name": "ResourceKind",
-        "scope": {
+        "groups": {
           "values": [
-            "all"
+            "common"
           ]
         },
         "values": [
@@ -76,9 +78,9 @@
       },
       {
         "name": "ElementType",
-        "scope": {
+        "groups": {
           "values": [
-            "all"
+            "common"
           ]
         },
         "values": [
@@ -102,9 +104,9 @@
       },
       {
         "name": "QuestType",
-        "scope": {
+        "groups": {
           "values": [
-            "all"
+            "common"
           ]
         },
         "values": [
@@ -124,9 +126,9 @@
       },
       {
         "name": "Rarity",
-        "scope": {
+        "groups": {
           "values": [
-            "all"
+            "common"
           ]
         },
         "values": [
@@ -154,9 +156,9 @@
       },
       {
         "name": "StatType",
-        "scope": {
+        "groups": {
           "values": [
-            "all"
+            "common"
           ]
         },
         "values": [
@@ -184,9 +186,9 @@
       },
       {
         "name": "MailType",
-        "scope": {
+        "groups": {
           "values": [
-            "all"
+            "common"
           ]
         },
         "values": [
@@ -208,9 +210,9 @@
     "structs": [
       {
         "name": "ResourceCost",
-        "scope": {
+        "groups": {
           "values": [
-            "all"
+            "common"
           ]
         },
         "fields": [
@@ -219,9 +221,9 @@
             "ty": {
               "Enum": "ResourceKind"
             },
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": false,
@@ -235,9 +237,9 @@
           {
             "name": "id",
             "ty": "I32",
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": false,
@@ -251,9 +253,9 @@
           {
             "name": "count",
             "ty": "I32",
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": false,
@@ -271,18 +273,18 @@
       },
       {
         "name": "Vec3",
-        "scope": {
+        "groups": {
           "values": [
-            "all"
+            "common"
           ]
         },
         "fields": [
           {
             "name": "x",
             "ty": "F32",
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": false,
@@ -296,9 +298,9 @@
           {
             "name": "y",
             "ty": "F32",
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": false,
@@ -312,9 +314,9 @@
           {
             "name": "z",
             "ty": "F32",
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": false,
@@ -329,9 +331,9 @@
       },
       {
         "name": "SkillEffect",
-        "scope": {
+        "groups": {
           "values": [
-            "all"
+            "common"
           ]
         },
         "fields": [
@@ -340,9 +342,9 @@
             "ty": {
               "Enum": "ElementType"
             },
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": false,
@@ -356,9 +358,9 @@
           {
             "name": "power",
             "ty": "I32",
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": false,
@@ -375,9 +377,9 @@
           {
             "name": "radius",
             "ty": "F32",
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": false,
@@ -392,9 +394,9 @@
       },
       {
         "name": "Reward",
-        "scope": {
+        "groups": {
           "values": [
-            "all"
+            "common"
           ]
         },
         "fields": [
@@ -406,9 +408,9 @@
                 "field": "id"
               }
             },
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": false,
@@ -422,9 +424,9 @@
           {
             "name": "count",
             "ty": "I32",
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": false,
@@ -442,9 +444,9 @@
       },
       {
         "name": "StatModifier",
-        "scope": {
+        "groups": {
           "values": [
-            "all"
+            "common"
           ]
         },
         "fields": [
@@ -453,9 +455,9 @@
             "ty": {
               "Enum": "StatType"
             },
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": false,
@@ -469,9 +471,9 @@
           {
             "name": "value",
             "ty": "F32",
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": false,
@@ -485,9 +487,9 @@
           {
             "name": "is_percent",
             "ty": "Bool",
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": false,
@@ -502,9 +504,9 @@
       },
       {
         "name": "RewardBundle",
-        "scope": {
+        "groups": {
           "values": [
-            "all"
+            "common"
           ]
         },
         "fields": [
@@ -513,9 +515,9 @@
             "ty": {
               "Struct": "ResourceCost"
             },
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": false,
@@ -534,9 +536,9 @@
           {
             "name": "weight",
             "ty": "I32",
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": false,
@@ -555,9 +557,9 @@
             "ty": {
               "List": "String"
             },
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": false,
@@ -577,9 +579,9 @@
       },
       {
         "name": "ComplexBudget",
-        "scope": {
+        "groups": {
           "values": [
-            "all"
+            "common"
           ]
         },
         "fields": [
@@ -588,9 +590,9 @@
             "ty": {
               "Struct": "ResourceCost"
             },
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": false,
@@ -613,9 +615,9 @@
                 "Struct": "RewardBundle"
               }
             },
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": false,
@@ -640,9 +642,9 @@
                 "value": "I32"
               }
             },
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": false,
@@ -663,18 +665,18 @@
       },
       {
         "name": "MaintenanceInfo",
-        "scope": {
+        "groups": {
           "values": [
-            "all"
+            "common"
           ]
         },
         "fields": [
           {
             "name": "starts_at",
             "ty": "String",
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": false,
@@ -688,9 +690,9 @@
           {
             "name": "duration_minutes",
             "ty": "I32",
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": false,
@@ -709,9 +711,9 @@
             "ty": {
               "Optional": "String"
             },
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": false,
@@ -728,18 +730,18 @@
     "unions": [
       {
         "name": "EventCondition",
-        "scope": {
+        "groups": {
           "values": [
-            "all"
+            "common"
           ]
         },
         "tag": "type",
         "variants": [
           {
             "name": "LevelAtLeast",
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "fields": [
@@ -751,9 +753,9 @@
                     "field": "level"
                   }
                 },
-                "scope": {
+                "groups": {
                   "values": [
-                    "all"
+                    "common"
                   ]
                 },
                 "key": false,
@@ -768,9 +770,9 @@
           },
           {
             "name": "QuestCompleted",
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "fields": [
@@ -782,9 +784,9 @@
                     "field": "id"
                   }
                 },
-                "scope": {
+                "groups": {
                   "values": [
-                    "all"
+                    "common"
                   ]
                 },
                 "key": false,
@@ -799,9 +801,9 @@
           },
           {
             "name": "HasItem",
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "fields": [
@@ -813,9 +815,9 @@
                     "field": "id"
                   }
                 },
-                "scope": {
+                "groups": {
                   "values": [
-                    "all"
+                    "common"
                   ]
                 },
                 "key": false,
@@ -829,9 +831,9 @@
               {
                 "name": "count",
                 "ty": "I32",
-                "scope": {
+                "groups": {
                   "values": [
-                    "all"
+                    "common"
                   ]
                 },
                 "key": false,
@@ -849,9 +851,9 @@
           },
           {
             "name": "AllConditions",
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "fields": [
@@ -863,9 +865,9 @@
                     "field": "id"
                   }
                 },
-                "scope": {
+                "groups": {
                   "values": [
-                    "all"
+                    "common"
                   ]
                 },
                 "key": false,
@@ -880,9 +882,9 @@
           },
           {
             "name": "AnyCondition",
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "fields": [
@@ -894,9 +896,9 @@
                     "field": "id"
                   }
                 },
-                "scope": {
+                "groups": {
                   "values": [
-                    "all"
+                    "common"
                   ]
                 },
                 "key": false,
@@ -913,18 +915,18 @@
       },
       {
         "name": "RewardAction",
-        "scope": {
+        "groups": {
           "values": [
-            "all"
+            "common"
           ]
         },
         "tag": "type",
         "variants": [
           {
             "name": "AddItem",
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "fields": [
@@ -936,9 +938,9 @@
                     "field": "id"
                   }
                 },
-                "scope": {
+                "groups": {
                   "values": [
-                    "all"
+                    "common"
                   ]
                 },
                 "key": false,
@@ -952,9 +954,9 @@
               {
                 "name": "count",
                 "ty": "I32",
-                "scope": {
+                "groups": {
                   "values": [
-                    "all"
+                    "common"
                   ]
                 },
                 "key": false,
@@ -972,9 +974,9 @@
           },
           {
             "name": "AddBuff",
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "fields": [
@@ -986,9 +988,9 @@
                     "field": "id"
                   }
                 },
-                "scope": {
+                "groups": {
                   "values": [
-                    "all"
+                    "common"
                   ]
                 },
                 "key": false,
@@ -1002,9 +1004,9 @@
               {
                 "name": "duration",
                 "ty": "F32",
-                "scope": {
+                "groups": {
                   "values": [
-                    "all"
+                    "common"
                   ]
                 },
                 "key": false,
@@ -1019,9 +1021,9 @@
           },
           {
             "name": "UnlockStage",
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "fields": [
@@ -1033,9 +1035,9 @@
                     "field": "id"
                   }
                 },
-                "scope": {
+                "groups": {
                   "values": [
-                    "all"
+                    "common"
                   ]
                 },
                 "key": false,
@@ -1050,9 +1052,9 @@
           },
           {
             "name": "SendMail",
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "fields": [
@@ -1064,9 +1066,9 @@
                     "field": "id"
                   }
                 },
-                "scope": {
+                "groups": {
                   "values": [
-                    "all"
+                    "common"
                   ]
                 },
                 "key": false,
@@ -1081,9 +1083,9 @@
           },
           {
             "name": "RunActionGroup",
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "fields": [
@@ -1095,9 +1097,9 @@
                     "field": "id"
                   }
                 },
-                "scope": {
+                "groups": {
                   "values": [
-                    "all"
+                    "common"
                   ]
                 },
                 "key": false,
@@ -1115,10 +1117,12 @@
     ],
     "tables": [
       {
+        "id": "item",
         "name": "Item",
-        "scope": {
+        "canonical_name": "Item",
+        "groups": {
           "values": [
-            "all"
+            "common"
           ]
         },
         "mode": "Map",
@@ -1131,9 +1135,9 @@
           {
             "name": "id",
             "ty": "I32",
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": true,
@@ -1147,9 +1151,9 @@
           {
             "name": "name",
             "ty": "String",
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": false,
@@ -1168,9 +1172,9 @@
             "ty": {
               "Enum": "ItemType"
             },
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": false,
@@ -1184,9 +1188,9 @@
           {
             "name": "max_stack",
             "ty": "I32",
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": false,
@@ -1205,9 +1209,9 @@
             "ty": {
               "Struct": "ResourceCost"
             },
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": false,
@@ -1228,9 +1232,9 @@
             "ty": {
               "Set": "String"
             },
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": false,
@@ -1255,9 +1259,9 @@
                 "value": "I32"
               }
             },
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": false,
@@ -1290,10 +1294,12 @@
         ]
       },
       {
+        "id": "shop",
         "name": "Shop",
-        "scope": {
+        "canonical_name": "Shop",
+        "groups": {
           "values": [
-            "all"
+            "common"
           ]
         },
         "mode": "Map",
@@ -1306,9 +1312,9 @@
           {
             "name": "id",
             "ty": "I32",
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": true,
@@ -1322,9 +1328,9 @@
           {
             "name": "name",
             "ty": "String",
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": false,
@@ -1340,9 +1346,9 @@
             "ty": {
               "Enum": "ResourceKind"
             },
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": false,
@@ -1357,10 +1363,12 @@
         "indexes": []
       },
       {
+        "id": "shop_item",
         "name": "ShopItem",
-        "scope": {
+        "canonical_name": "ShopItem",
+        "groups": {
           "values": [
-            "all"
+            "common"
           ]
         },
         "mode": "List",
@@ -1378,9 +1386,9 @@
                 "field": "id"
               }
             },
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": false,
@@ -1394,9 +1402,9 @@
           {
             "name": "seq",
             "ty": "I32",
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": false,
@@ -1415,9 +1423,9 @@
                 "field": "id"
               }
             },
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": false,
@@ -1433,9 +1441,9 @@
             "ty": {
               "Struct": "ResourceCost"
             },
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": false,
@@ -1454,9 +1462,9 @@
             "ty": {
               "Optional": "I32"
             },
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": false,
@@ -1471,10 +1479,12 @@
         "indexes": []
       },
       {
+        "id": "recipe",
         "name": "Recipe",
-        "scope": {
+        "canonical_name": "Recipe",
+        "groups": {
           "values": [
-            "all"
+            "common"
           ]
         },
         "mode": "Map",
@@ -1487,9 +1497,9 @@
           {
             "name": "id",
             "ty": "I32",
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": true,
@@ -1508,9 +1518,9 @@
                 "field": "id"
               }
             },
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": false,
@@ -1528,9 +1538,9 @@
                 "Struct": "ResourceCost"
               }
             },
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": false,
@@ -1551,10 +1561,12 @@
         "indexes": []
       },
       {
+        "id": "gacha_pool",
         "name": "GachaPool",
-        "scope": {
+        "canonical_name": "GachaPool",
+        "groups": {
           "values": [
-            "all"
+            "common"
           ]
         },
         "mode": "Map",
@@ -1567,9 +1579,9 @@
           {
             "name": "id",
             "ty": "I32",
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": true,
@@ -1583,9 +1595,9 @@
           {
             "name": "name",
             "ty": "String",
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": false,
@@ -1601,9 +1613,9 @@
             "ty": {
               "Struct": "ResourceCost"
             },
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": false,
@@ -1621,10 +1633,12 @@
         "indexes": []
       },
       {
+        "id": "gacha_item",
         "name": "GachaItem",
-        "scope": {
+        "canonical_name": "GachaItem",
+        "groups": {
           "values": [
-            "all"
+            "common"
           ]
         },
         "mode": "List",
@@ -1642,9 +1656,9 @@
                 "field": "id"
               }
             },
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": false,
@@ -1663,9 +1677,9 @@
                 "field": "id"
               }
             },
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": false,
@@ -1681,9 +1695,9 @@
             "ty": {
               "Enum": "Rarity"
             },
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": false,
@@ -1697,9 +1711,9 @@
           {
             "name": "weight",
             "ty": "F32",
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": false,
@@ -1714,10 +1728,12 @@
         "indexes": []
       },
       {
+        "id": "equipment_set",
         "name": "EquipmentSet",
-        "scope": {
+        "canonical_name": "EquipmentSet",
+        "groups": {
           "values": [
-            "all"
+            "common"
           ]
         },
         "mode": "Map",
@@ -1730,9 +1746,9 @@
           {
             "name": "id",
             "ty": "I32",
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": true,
@@ -1746,9 +1762,9 @@
           {
             "name": "name",
             "ty": "String",
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": false,
@@ -1769,9 +1785,9 @@
                 }
               }
             },
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": false,
@@ -1793,9 +1809,9 @@
             "ty": {
               "Struct": "SkillEffect"
             },
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": false,
@@ -1810,10 +1826,12 @@
         "indexes": []
       },
       {
+        "id": "skill",
         "name": "Skill",
-        "scope": {
+        "canonical_name": "Skill",
+        "groups": {
           "values": [
-            "all"
+            "common"
           ]
         },
         "mode": "Map",
@@ -1826,9 +1844,9 @@
           {
             "name": "id",
             "ty": "I32",
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": true,
@@ -1842,9 +1860,9 @@
           {
             "name": "name",
             "ty": "String",
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": false,
@@ -1863,9 +1881,9 @@
             "ty": {
               "Enum": "ElementType"
             },
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": false,
@@ -1881,9 +1899,9 @@
             "ty": {
               "Struct": "ResourceCost"
             },
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": false,
@@ -1902,9 +1920,9 @@
             "ty": {
               "Struct": "SkillEffect"
             },
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": false,
@@ -1918,9 +1936,9 @@
           {
             "name": "required_level",
             "ty": "I32",
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": false,
@@ -1944,9 +1962,9 @@
                 }
               }
             },
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": false,
@@ -1962,9 +1980,9 @@
             "ty": {
               "Struct": "Vec3"
             },
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": false,
@@ -1982,10 +2000,12 @@
         "indexes": []
       },
       {
+        "id": "character",
         "name": "Character",
-        "scope": {
+        "canonical_name": "Character",
+        "groups": {
           "values": [
-            "all"
+            "common"
           ]
         },
         "mode": "Map",
@@ -1998,9 +2018,9 @@
           {
             "name": "id",
             "ty": "I32",
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": true,
@@ -2014,9 +2034,9 @@
           {
             "name": "name",
             "ty": "String",
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": false,
@@ -2035,9 +2055,9 @@
             "ty": {
               "Enum": "Rarity"
             },
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": false,
@@ -2056,9 +2076,9 @@
                 "field": "level"
               }
             },
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": false,
@@ -2077,9 +2097,9 @@
                 "field": "id"
               }
             },
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": false,
@@ -2100,9 +2120,9 @@
                 }
               }
             },
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": false,
@@ -2124,9 +2144,9 @@
             "ty": {
               "Struct": "Vec3"
             },
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": false,
@@ -2144,10 +2164,12 @@
         "indexes": []
       },
       {
+        "id": "character_skill",
         "name": "CharacterSkill",
-        "scope": {
+        "canonical_name": "CharacterSkill",
+        "groups": {
           "values": [
-            "all"
+            "common"
           ]
         },
         "mode": "List",
@@ -2165,9 +2187,9 @@
                 "field": "id"
               }
             },
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": false,
@@ -2186,9 +2208,9 @@
                 "field": "id"
               }
             },
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": false,
@@ -2207,9 +2229,9 @@
                 "field": "level"
               }
             },
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": false,
@@ -2224,10 +2246,12 @@
         "indexes": []
       },
       {
+        "id": "buff",
         "name": "Buff",
-        "scope": {
+        "canonical_name": "Buff",
+        "groups": {
           "values": [
-            "all"
+            "common"
           ]
         },
         "mode": "Map",
@@ -2240,9 +2264,9 @@
           {
             "name": "id",
             "ty": "I32",
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": true,
@@ -2256,9 +2280,9 @@
           {
             "name": "name",
             "ty": "String",
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": false,
@@ -2272,9 +2296,9 @@
           {
             "name": "duration",
             "ty": "Duration",
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": false,
@@ -2292,9 +2316,9 @@
                 "Struct": "StatModifier"
               }
             },
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": false,
@@ -2315,10 +2339,12 @@
         "indexes": []
       },
       {
+        "id": "drop_group",
         "name": "DropGroup",
-        "scope": {
+        "canonical_name": "DropGroup",
+        "groups": {
           "values": [
-            "all"
+            "common"
           ]
         },
         "mode": "Map",
@@ -2331,9 +2357,9 @@
           {
             "name": "id",
             "ty": "I32",
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": true,
@@ -2347,9 +2373,9 @@
           {
             "name": "name",
             "ty": "String",
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": false,
@@ -2364,10 +2390,12 @@
         "indexes": []
       },
       {
+        "id": "drop_entry",
         "name": "DropEntry",
-        "scope": {
+        "canonical_name": "DropEntry",
+        "groups": {
           "values": [
-            "all"
+            "common"
           ]
         },
         "mode": "List",
@@ -2385,9 +2413,9 @@
                 "field": "id"
               }
             },
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": false,
@@ -2401,9 +2429,9 @@
           {
             "name": "seq",
             "ty": "I32",
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": false,
@@ -2422,9 +2450,9 @@
                 "field": "id"
               }
             },
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": false,
@@ -2438,9 +2466,9 @@
           {
             "name": "count",
             "ty": "I32",
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": false,
@@ -2458,10 +2486,12 @@
         "indexes": []
       },
       {
+        "id": "monster",
         "name": "Monster",
-        "scope": {
+        "canonical_name": "Monster",
+        "groups": {
           "values": [
-            "all"
+            "common"
           ]
         },
         "mode": "Map",
@@ -2474,9 +2504,9 @@
           {
             "name": "id",
             "ty": "I32",
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": true,
@@ -2490,9 +2520,9 @@
           {
             "name": "name",
             "ty": "String",
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": false,
@@ -2511,9 +2541,9 @@
                 "field": "level"
               }
             },
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": false,
@@ -2529,9 +2559,9 @@
             "ty": {
               "Enum": "ElementType"
             },
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": false,
@@ -2550,9 +2580,9 @@
                 "field": "id"
               }
             },
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": false,
@@ -2568,9 +2598,9 @@
             "ty": {
               "Struct": "Vec3"
             },
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": false,
@@ -2588,10 +2618,12 @@
         "indexes": []
       },
       {
+        "id": "stage",
         "name": "Stage",
-        "scope": {
+        "canonical_name": "Stage",
+        "groups": {
           "values": [
-            "all"
+            "common"
           ]
         },
         "mode": "Map",
@@ -2604,9 +2636,9 @@
           {
             "name": "id",
             "ty": "I32",
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": true,
@@ -2620,9 +2652,9 @@
           {
             "name": "name",
             "ty": "String",
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": false,
@@ -2643,9 +2675,9 @@
                 }
               }
             },
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": false,
@@ -2665,9 +2697,9 @@
           {
             "name": "recommended_power",
             "ty": "I32",
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": false,
@@ -2685,9 +2717,9 @@
                 "Struct": "Reward"
               }
             },
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": false,
@@ -2696,22 +2728,18 @@
             "range": null,
             "length": null,
             "parser": null,
-            "derived_from": {
-              "source_table": "StageReward",
-              "parent_key": "id",
-              "child_key": "stage_id",
-              "value_field": null,
-              "order_by": "seq"
-            }
+            "derived_from": null
           }
         ],
         "indexes": []
       },
       {
+        "id": "stage_reward",
         "name": "StageReward",
-        "scope": {
+        "canonical_name": "StageReward",
+        "groups": {
           "values": [
-            "all"
+            "common"
           ]
         },
         "mode": "List",
@@ -2729,9 +2757,9 @@
                 "field": "id"
               }
             },
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": false,
@@ -2745,9 +2773,9 @@
           {
             "name": "seq",
             "ty": "I32",
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": false,
@@ -2766,9 +2794,9 @@
                 "field": "id"
               }
             },
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": false,
@@ -2782,9 +2810,9 @@
           {
             "name": "count",
             "ty": "I32",
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": false,
@@ -2799,10 +2827,12 @@
         "indexes": []
       },
       {
+        "id": "dungeon",
         "name": "Dungeon",
-        "scope": {
+        "canonical_name": "Dungeon",
+        "groups": {
           "values": [
-            "all"
+            "common"
           ]
         },
         "mode": "Map",
@@ -2815,9 +2845,9 @@
           {
             "name": "id",
             "ty": "I32",
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": true,
@@ -2831,9 +2861,9 @@
           {
             "name": "name",
             "ty": "String",
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": false,
@@ -2854,9 +2884,9 @@
                 }
               }
             },
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": false,
@@ -2878,9 +2908,9 @@
             "ty": {
               "Struct": "ResourceCost"
             },
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": false,
@@ -2898,10 +2928,12 @@
         "indexes": []
       },
       {
+        "id": "quest",
         "name": "Quest",
-        "scope": {
+        "canonical_name": "Quest",
+        "groups": {
           "values": [
-            "all"
+            "common"
           ]
         },
         "mode": "Map",
@@ -2914,9 +2946,9 @@
           {
             "name": "id",
             "ty": "I32",
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": true,
@@ -2932,9 +2964,9 @@
             "ty": {
               "Enum": "QuestType"
             },
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": false,
@@ -2948,9 +2980,9 @@
           {
             "name": "title",
             "ty": "String",
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": false,
@@ -2972,9 +3004,9 @@
                 "field": "id"
               }
             },
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": false,
@@ -2995,9 +3027,9 @@
                 }
               }
             },
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": false,
@@ -3019,9 +3051,9 @@
             "ty": {
               "Struct": "Vec3"
             },
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": false,
@@ -3042,9 +3074,9 @@
                 "Struct": "Reward"
               }
             },
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": false,
@@ -3053,22 +3085,18 @@
             "range": null,
             "length": null,
             "parser": null,
-            "derived_from": {
-              "source_table": "QuestReward",
-              "parent_key": "id",
-              "child_key": "quest_id",
-              "value_field": null,
-              "order_by": "seq"
-            }
+            "derived_from": null
           }
         ],
         "indexes": []
       },
       {
+        "id": "quest_reward",
         "name": "QuestReward",
-        "scope": {
+        "canonical_name": "QuestReward",
+        "groups": {
           "values": [
-            "all"
+            "common"
           ]
         },
         "mode": "List",
@@ -3086,9 +3114,9 @@
                 "field": "id"
               }
             },
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": false,
@@ -3102,9 +3130,9 @@
           {
             "name": "seq",
             "ty": "I32",
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": false,
@@ -3123,9 +3151,9 @@
                 "field": "id"
               }
             },
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": false,
@@ -3139,9 +3167,9 @@
           {
             "name": "count",
             "ty": "I32",
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": false,
@@ -3159,10 +3187,12 @@
         "indexes": []
       },
       {
+        "id": "level_exp",
         "name": "LevelExp",
-        "scope": {
+        "canonical_name": "LevelExp",
+        "groups": {
           "values": [
-            "all"
+            "common"
           ]
         },
         "mode": "Map",
@@ -3175,9 +3205,9 @@
           {
             "name": "level",
             "ty": "I32",
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": true,
@@ -3194,9 +3224,9 @@
           {
             "name": "exp",
             "ty": "I64",
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": false,
@@ -3215,9 +3245,9 @@
             "ty": {
               "Optional": "String"
             },
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": false,
@@ -3232,10 +3262,12 @@
         "indexes": []
       },
       {
+        "id": "achievement",
         "name": "Achievement",
-        "scope": {
+        "canonical_name": "Achievement",
+        "groups": {
           "values": [
-            "all"
+            "common"
           ]
         },
         "mode": "Map",
@@ -3248,9 +3280,9 @@
           {
             "name": "id",
             "ty": "I32",
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": true,
@@ -3264,9 +3296,9 @@
           {
             "name": "title_key",
             "ty": "Text",
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": false,
@@ -3280,9 +3312,9 @@
           {
             "name": "target_count",
             "ty": "I64",
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": false,
@@ -3298,9 +3330,9 @@
             "ty": {
               "Struct": "ResourceCost"
             },
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": false,
@@ -3318,10 +3350,12 @@
         "indexes": []
       },
       {
+        "id": "vip_level",
         "name": "VipLevel",
-        "scope": {
+        "canonical_name": "VipLevel",
+        "groups": {
           "values": [
-            "all"
+            "common"
           ]
         },
         "mode": "Map",
@@ -3334,9 +3368,9 @@
           {
             "name": "level",
             "ty": "I32",
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": true,
@@ -3352,9 +3386,9 @@
             "ty": {
               "Struct": "ResourceCost"
             },
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": false,
@@ -3373,9 +3407,9 @@
             "ty": {
               "List": "String"
             },
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": false,
@@ -3396,10 +3430,12 @@
         "indexes": []
       },
       {
+        "id": "game_settings",
         "name": "GameSettings",
-        "scope": {
+        "canonical_name": "GameSettings",
+        "groups": {
           "values": [
-            "all"
+            "common"
           ]
         },
         "mode": "Singleton",
@@ -3412,9 +3448,9 @@
           {
             "name": "version",
             "ty": "String",
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": false,
@@ -3428,9 +3464,9 @@
           {
             "name": "daily_reset_hour",
             "ty": "I32",
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": false,
@@ -3447,9 +3483,9 @@
           {
             "name": "starting_gold",
             "ty": "I32",
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": false,
@@ -3468,9 +3504,9 @@
             "ty": {
               "Struct": "Vec3"
             },
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": false,
@@ -3494,9 +3530,9 @@
                 }
               }
             },
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": false,
@@ -3516,9 +3552,9 @@
           {
             "name": "gravity",
             "ty": "F64",
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": false,
@@ -3542,9 +3578,9 @@
                 "len": 3
               }
             },
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": false,
@@ -3568,9 +3604,9 @@
                 "len": 2
               }
             },
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": false,
@@ -3591,9 +3627,9 @@
                 "Struct": "MaintenanceInfo"
               }
             },
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": false,
@@ -3602,108 +3638,18 @@
             "range": null,
             "length": null,
             "parser": null,
-            "derived_from": {
-              "source_table": "MaintenanceWindow",
-              "parent_key": "version",
-              "child_key": "version",
-              "value_field": null,
-              "order_by": null
-            }
-          }
-        ],
-        "indexes": []
-      },
-      {
-        "name": "MaintenanceWindow",
-        "scope": {
-          "values": [
-            "all"
-          ]
-        },
-        "mode": "List",
-        "key": null,
-        "source": {
-          "file": "Core.xlsx",
-          "sheet": "MaintenanceWindow"
-        },
-        "fields": [
-          {
-            "name": "version",
-            "ty": "String",
-            "scope": {
-              "values": [
-                "all"
-              ]
-            },
-            "key": false,
-            "comment": null,
-            "default": null,
-            "range": null,
-            "length": null,
-            "parser": null,
-            "derived_from": null
-          },
-          {
-            "name": "starts_at",
-            "ty": "String",
-            "scope": {
-              "values": [
-                "all"
-              ]
-            },
-            "key": false,
-            "comment": null,
-            "default": null,
-            "range": null,
-            "length": null,
-            "parser": null,
-            "derived_from": null
-          },
-          {
-            "name": "duration_minutes",
-            "ty": "I32",
-            "scope": {
-              "values": [
-                "all"
-              ]
-            },
-            "key": false,
-            "comment": null,
-            "default": null,
-            "range": [
-              1,
-              1440
-            ],
-            "length": null,
-            "parser": null,
-            "derived_from": null
-          },
-          {
-            "name": "reason",
-            "ty": {
-              "Optional": "String"
-            },
-            "scope": {
-              "values": [
-                "all"
-              ]
-            },
-            "key": false,
-            "comment": null,
-            "default": null,
-            "range": null,
-            "length": null,
-            "parser": null,
             "derived_from": null
           }
         ],
         "indexes": []
       },
       {
+        "id": "mail_template",
         "name": "MailTemplate",
-        "scope": {
+        "canonical_name": "MailTemplate",
+        "groups": {
           "values": [
-            "all"
+            "common"
           ]
         },
         "mode": "Map",
@@ -3716,9 +3662,9 @@
           {
             "name": "id",
             "ty": "I32",
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": true,
@@ -3734,9 +3680,9 @@
             "ty": {
               "Enum": "MailType"
             },
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": false,
@@ -3750,9 +3696,9 @@
           {
             "name": "title_key",
             "ty": "Text",
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": false,
@@ -3766,9 +3712,9 @@
           {
             "name": "body_key",
             "ty": "Text",
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": false,
@@ -3786,9 +3732,9 @@
                 "Struct": "Reward"
               }
             },
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": false,
@@ -3797,22 +3743,18 @@
             "range": null,
             "length": null,
             "parser": null,
-            "derived_from": {
-              "source_table": "MailReward",
-              "parent_key": "id",
-              "child_key": "mail_id",
-              "value_field": null,
-              "order_by": "seq"
-            }
+            "derived_from": null
           }
         ],
         "indexes": []
       },
       {
+        "id": "mail_reward",
         "name": "MailReward",
-        "scope": {
+        "canonical_name": "MailReward",
+        "groups": {
           "values": [
-            "all"
+            "common"
           ]
         },
         "mode": "List",
@@ -3830,9 +3772,9 @@
                 "field": "id"
               }
             },
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": false,
@@ -3846,9 +3788,9 @@
           {
             "name": "seq",
             "ty": "I32",
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": false,
@@ -3867,9 +3809,9 @@
                 "field": "id"
               }
             },
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": false,
@@ -3883,9 +3825,9 @@
           {
             "name": "count",
             "ty": "I32",
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": false,
@@ -3900,10 +3842,12 @@
         "indexes": []
       },
       {
+        "id": "dialogue",
         "name": "Dialogue",
-        "scope": {
+        "canonical_name": "Dialogue",
+        "groups": {
           "values": [
-            "all"
+            "common"
           ]
         },
         "mode": "Map",
@@ -3916,9 +3860,9 @@
           {
             "name": "id",
             "ty": "I32",
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": true,
@@ -3932,9 +3876,9 @@
           {
             "name": "speaker_key",
             "ty": "Text",
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": false,
@@ -3950,9 +3894,9 @@
             "ty": {
               "List": "String"
             },
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": false,
@@ -3973,10 +3917,12 @@
         "indexes": []
       },
       {
+        "id": "event_rule",
         "name": "EventRule",
-        "scope": {
+        "canonical_name": "EventRule",
+        "groups": {
           "values": [
-            "all"
+            "common"
           ]
         },
         "mode": "Map",
@@ -3989,9 +3935,9 @@
           {
             "name": "id",
             "ty": "I32",
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": true,
@@ -4005,9 +3951,9 @@
           {
             "name": "name",
             "ty": "String",
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": false,
@@ -4023,9 +3969,9 @@
             "ty": {
               "Union": "EventCondition"
             },
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": false,
@@ -4043,9 +3989,9 @@
                 "Union": "RewardAction"
               }
             },
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": false,
@@ -4066,10 +4012,12 @@
         "indexes": []
       },
       {
+        "id": "complex_rule",
         "name": "ComplexRule",
-        "scope": {
+        "canonical_name": "ComplexRule",
+        "groups": {
           "values": [
-            "all"
+            "common"
           ]
         },
         "mode": "Map",
@@ -4082,9 +4030,9 @@
           {
             "name": "id",
             "ty": "I32",
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": true,
@@ -4098,9 +4046,9 @@
           {
             "name": "name",
             "ty": "String",
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": false,
@@ -4116,9 +4064,9 @@
             "ty": {
               "Union": "EventCondition"
             },
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": false,
@@ -4127,13 +4075,7 @@
             "range": null,
             "length": null,
             "parser": null,
-            "derived_from": {
-              "source_table": "ComplexRuleCondition",
-              "parent_key": "id",
-              "child_key": "rule_id",
-              "value_field": "value",
-              "order_by": null
-            }
+            "derived_from": null
           },
           {
             "name": "root_action_group",
@@ -4143,9 +4085,9 @@
                 "field": "id"
               }
             },
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": false,
@@ -4163,9 +4105,9 @@
                 "Union": "RewardAction"
               }
             },
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": false,
@@ -4174,22 +4116,16 @@
             "range": null,
             "length": null,
             "parser": null,
-            "derived_from": {
-              "source_table": "ComplexActionEntry",
-              "parent_key": "root_action_group",
-              "child_key": "group_id",
-              "value_field": "value",
-              "order_by": "seq"
-            }
+            "derived_from": null
           },
           {
             "name": "budget",
             "ty": {
               "Struct": "ComplexBudget"
             },
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": false,
@@ -4209,10 +4145,12 @@
         "indexes": []
       },
       {
+        "id": "complex_condition_group",
         "name": "ComplexConditionGroup",
-        "scope": {
+        "canonical_name": "ComplexConditionGroup",
+        "groups": {
           "values": [
-            "all"
+            "common"
           ]
         },
         "mode": "Map",
@@ -4225,9 +4163,9 @@
           {
             "name": "id",
             "ty": "I32",
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": true,
@@ -4241,9 +4179,9 @@
           {
             "name": "name",
             "ty": "String",
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": false,
@@ -4261,9 +4199,9 @@
                 "Union": "EventCondition"
               }
             },
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": false,
@@ -4272,22 +4210,18 @@
             "range": null,
             "length": null,
             "parser": null,
-            "derived_from": {
-              "source_table": "ComplexConditionGroupEntry",
-              "parent_key": "id",
-              "child_key": "group_id",
-              "value_field": "value",
-              "order_by": "seq"
-            }
+            "derived_from": null
           }
         ],
         "indexes": []
       },
       {
+        "id": "complex_condition_group_entry",
         "name": "ComplexConditionGroupEntry",
-        "scope": {
+        "canonical_name": "ComplexConditionGroupEntry",
+        "groups": {
           "values": [
-            "all"
+            "common"
           ]
         },
         "mode": "Map",
@@ -4300,9 +4234,9 @@
           {
             "name": "id",
             "ty": "I32",
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": true,
@@ -4321,9 +4255,9 @@
                 "field": "id"
               }
             },
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": false,
@@ -4337,9 +4271,9 @@
           {
             "name": "seq",
             "ty": "I32",
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": false,
@@ -4355,9 +4289,9 @@
             "ty": {
               "Union": "EventCondition"
             },
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": false,
@@ -4377,10 +4311,12 @@
         "indexes": []
       },
       {
+        "id": "complex_rule_condition",
         "name": "ComplexRuleCondition",
-        "scope": {
+        "canonical_name": "ComplexRuleCondition",
+        "groups": {
           "values": [
-            "all"
+            "common"
           ]
         },
         "mode": "Map",
@@ -4393,9 +4329,9 @@
           {
             "name": "id",
             "ty": "I32",
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": true,
@@ -4414,9 +4350,9 @@
                 "field": "id"
               }
             },
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": false,
@@ -4432,9 +4368,9 @@
             "ty": {
               "Union": "EventCondition"
             },
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": false,
@@ -4454,10 +4390,12 @@
         "indexes": []
       },
       {
+        "id": "complex_action_group",
         "name": "ComplexActionGroup",
-        "scope": {
+        "canonical_name": "ComplexActionGroup",
+        "groups": {
           "values": [
-            "all"
+            "common"
           ]
         },
         "mode": "Map",
@@ -4470,9 +4408,9 @@
           {
             "name": "id",
             "ty": "I32",
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": true,
@@ -4486,9 +4424,9 @@
           {
             "name": "name",
             "ty": "String",
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": false,
@@ -4506,9 +4444,9 @@
                 "Union": "RewardAction"
               }
             },
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": false,
@@ -4517,22 +4455,18 @@
             "range": null,
             "length": null,
             "parser": null,
-            "derived_from": {
-              "source_table": "ComplexActionEntry",
-              "parent_key": "id",
-              "child_key": "group_id",
-              "value_field": "value",
-              "order_by": "seq"
-            }
+            "derived_from": null
           }
         ],
         "indexes": []
       },
       {
+        "id": "complex_action_entry",
         "name": "ComplexActionEntry",
-        "scope": {
+        "canonical_name": "ComplexActionEntry",
+        "groups": {
           "values": [
-            "all"
+            "common"
           ]
         },
         "mode": "Map",
@@ -4545,9 +4479,9 @@
           {
             "name": "id",
             "ty": "I32",
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": true,
@@ -4566,9 +4500,9 @@
                 "field": "id"
               }
             },
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": false,
@@ -4582,9 +4516,9 @@
           {
             "name": "seq",
             "ty": "I32",
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": false,
@@ -4600,9 +4534,9 @@
             "ty": {
               "Union": "RewardAction"
             },
-            "scope": {
+            "groups": {
               "values": [
-                "all"
+                "common"
               ]
             },
             "key": false,
@@ -15609,17 +15543,6 @@
               2001
             ],
             "starting_gold": 100,
-            "version": "2026.05"
-          }
-        ]
-      },
-      {
-        "name": "MaintenanceWindow",
-        "rows": [
-          {
-            "duration_minutes": 90,
-            "reason": "Season rollout",
-            "starts_at": "2026-06-01T03:00:00Z",
             "version": "2026.05"
           }
         ]

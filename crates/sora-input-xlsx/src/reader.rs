@@ -80,7 +80,11 @@ pub fn load_xlsx_table_data_with_parsers(
 ) -> Result<TableData> {
     load_xlsx_table_data_with_ir_and_parsers(
         &ConfigIr {
-            package: String::new(),
+            project_id: String::new(),
+            contract_id: String::new(),
+            view: None,
+            group_defaults: Default::default(),
+            views: Default::default(),
             localization: None,
             enums: Vec::new(),
             structs: Vec::new(),
@@ -915,13 +919,16 @@ mod tests {
     fn example_ir() -> ConfigIr {
         let schema = toml::from_str(
             r#"
-package = "game_config"
+project = { id = "game_config" }
+groups = { common = { default = true } }
+views = { default = { contract = "game_config/default", groups = ["common"] } }
 
 [[enums]]
 name = "ItemType"
 values = [{ id = 0, name = "Weapon" }, { id = 1, name = "Armor" }, { id = 2, name = "Material" }, { id = 3, name = "Consumable" }]
 
 [[tables]]
+id = "item"
 name = "Item"
 mode = "map"
 key = "id"
@@ -957,7 +964,9 @@ type = "i32"
     fn complex_ir() -> ConfigIr {
         let schema = toml::from_str(
             r#"
-package = "game_config"
+project = { id = "game_config" }
+groups = { common = { default = true } }
+views = { default = { contract = "game_config/default", groups = ["common"] } }
 
 [[structs]]
 name = "Reward"
@@ -971,6 +980,7 @@ name = "count"
 type = "i32"
 
 [[tables]]
+id = "item"
 name = "Item"
 mode = "map"
 key = "id"
@@ -1010,7 +1020,9 @@ type = "struct<Reward>"
     fn tuple_ir() -> ConfigIr {
         let schema = toml::from_str(
             r#"
-package = "game_config"
+project = { id = "game_config" }
+groups = { common = { default = true } }
+views = { default = { contract = "game_config/default", groups = ["common"] } }
 
 [[enums]]
 name = "ResourceType"
@@ -1032,6 +1044,7 @@ name = "count"
 type = "i32"
 
 [[tables]]
+id = "reward"
 name = "Reward"
 mode = "list"
 
@@ -1055,7 +1068,9 @@ parser = { kind = "tuple" }
     fn tuple_list_ir() -> ConfigIr {
         let schema = toml::from_str(
             r#"
-package = "game_config"
+project = { id = "game_config" }
+groups = { common = { default = true } }
+views = { default = { contract = "game_config/default", groups = ["common"] } }
 
 [[enums]]
 name = "ResourceType"
@@ -1077,6 +1092,7 @@ name = "count"
 type = "i32"
 
 [[tables]]
+id = "recipe"
 name = "Recipe"
 mode = "map"
 key = "id"
@@ -1105,7 +1121,9 @@ parser = { kind = "tuple_list" }
     fn tagged_union_ir() -> ConfigIr {
         let schema = toml::from_str(
             r#"
-package = "game_config"
+project = { id = "game_config" }
+groups = { common = { default = true } }
+views = { default = { contract = "game_config/default", groups = ["common"] } }
 
 [[unions]]
 name = "EventCondition"
@@ -1130,6 +1148,7 @@ name = "count"
 type = "i32"
 
 [[tables]]
+id = "event_condition_entry"
 name = "EventConditionEntry"
 mode = "map"
 key = "id"
@@ -1158,7 +1177,9 @@ parser = { kind = "tagged_columns", prefix = "" }
     fn struct_columns_ir() -> ConfigIr {
         let schema = toml::from_str(
             r#"
-package = "game_config"
+project = { id = "game_config" }
+groups = { common = { default = true } }
+views = { default = { contract = "game_config/default", groups = ["common"] } }
 
 [[enums]]
 name = "ResourceType"
@@ -1180,6 +1201,7 @@ name = "count"
 type = "i32"
 
 [[tables]]
+id = "reward"
 name = "Reward"
 mode = "map"
 key = "id"

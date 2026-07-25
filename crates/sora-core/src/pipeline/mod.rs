@@ -4,7 +4,7 @@ use crate::diff::{ConfigDiff, diff_config_data};
 use crate::schema_lock::{read_schema_lock_file, verify_schema_lock, write_schema_lock_file};
 use sora_codegen::{
     format::{FormatMode, format_generated_code, format_generated_code_with_cancellation},
-    generator::{CodegenContext, CodegenRegistry, empty_options},
+    generator::{CodegenContext, CodegenRegistry},
     type_mapping::TypeMappingRegistry,
 };
 use sora_diagnostics::{Result, SoraError};
@@ -22,7 +22,7 @@ use sora_ir::parser::ParserRegistry as SchemaParserRegistry;
 mod support;
 
 use support::{
-    filter_ir_and_data_by_scope, load_ir, load_ir_with_scope, load_validated_data,
+    load_ir, load_ir_with_view, load_validated_data, project_ir_and_data_by_view,
     validate_schema_ir, write_json_file,
 };
 
@@ -42,19 +42,19 @@ pub fn load_schema_ir_with_parsers(
     support::load_ir_with_parsers(input, parser_registry)
 }
 
-pub fn load_schema_ir_with_scope(
+pub fn load_schema_ir_with_view(
     input: &impl SchemaInput,
-    scope: Option<&str>,
+    view: Option<&str>,
 ) -> Result<sora_ir::model::ConfigIr> {
-    load_ir_with_scope(input, scope)
+    load_ir_with_view(input, view)
 }
 
-pub fn load_schema_ir_with_scope_and_parsers(
+pub fn load_schema_ir_with_view_and_parsers(
     input: &impl SchemaInput,
-    scope: Option<&str>,
+    view: Option<&str>,
     parser_registry: &SchemaParserRegistry,
 ) -> Result<sora_ir::model::ConfigIr> {
-    support::load_ir_with_scope_and_parsers(input, scope, parser_registry)
+    support::load_ir_with_view_and_parsers(input, view, parser_registry)
 }
 
 pub fn load_project_data_with_context(
@@ -114,6 +114,10 @@ pub fn check_schema_with_parsers(
 pub fn check_schema_with_lock(input: &impl SchemaInput, lock_path: &Path) -> Result<()> {
     let ir = load_ir(input)?;
     let lock = read_schema_lock_file(lock_path)?;
+    let ir = match lock.view.as_deref() {
+        Some(view) => sora_ir::projection::project_config_ir(&ir, view)?,
+        None => ir,
+    };
     verify_schema_lock(&ir, &lock)
 }
 
@@ -124,29 +128,33 @@ pub fn check_schema_with_lock_and_parsers(
 ) -> Result<()> {
     let ir = support::load_ir_with_parsers(input, parser_registry)?;
     let lock = read_schema_lock_file(lock_path)?;
+    let ir = match lock.view.as_deref() {
+        Some(view) => sora_ir::projection::project_config_ir(&ir, view)?,
+        None => ir,
+    };
     verify_schema_lock(&ir, &lock)
 }
 
 pub fn generate_schema_lock(input: &impl SchemaInput, path: &Path) -> Result<()> {
-    generate_schema_lock_with_scope(input, path, None)
+    generate_schema_lock_with_view(input, path, None)
 }
 
-pub fn generate_schema_lock_with_scope(
+pub fn generate_schema_lock_with_view(
     input: &impl SchemaInput,
     path: &Path,
-    scope: Option<&str>,
+    view: Option<&str>,
 ) -> Result<()> {
-    let ir = load_ir_with_scope(input, scope)?;
+    let ir = load_ir_with_view(input, view)?;
     write_schema_lock_file(&ir, path)
 }
 
-pub fn generate_schema_lock_with_scope_and_parsers(
+pub fn generate_schema_lock_with_view_and_parsers(
     input: &impl SchemaInput,
     path: &Path,
-    scope: Option<&str>,
+    view: Option<&str>,
     parser_registry: &SchemaParserRegistry,
 ) -> Result<()> {
-    let ir = support::load_ir_with_scope_and_parsers(input, scope, parser_registry)?;
+    let ir = support::load_ir_with_view_and_parsers(input, view, parser_registry)?;
     write_schema_lock_file(&ir, path)
 }
 
@@ -160,44 +168,44 @@ pub fn generate_code_with_format(
     out_dir: &Path,
     format_mode: FormatMode,
 ) -> Result<()> {
-    generate_code_with_scope_and_format(input, target, out_dir, format_mode, None)
+    generate_code_with_view_and_format(input, target, out_dir, format_mode, None)
 }
 
-pub fn generate_code_with_scope_and_format(
+pub fn generate_code_with_view_and_format(
     input: &impl SchemaInput,
     target: &str,
     out_dir: &Path,
     format_mode: FormatMode,
-    scope: Option<&str>,
+    view: Option<&str>,
 ) -> Result<()> {
     let registry = CodegenRegistry::with_builtin_generators();
     let type_mappings = TypeMappingRegistry::new();
-    generate_code_with_registry_scope_and_format(
+    generate_code_with_registry_view_and_format(
         input,
         target,
         out_dir,
         format_mode,
-        scope,
+        view,
         &registry,
         &type_mappings,
     )
 }
 
-pub fn generate_code_with_scope_format_and_parsers(
+pub fn generate_code_with_view_format_and_parsers(
     input: &impl SchemaInput,
     target: &str,
     out_dir: &Path,
     format_mode: FormatMode,
-    scope: Option<&str>,
+    view: Option<&str>,
     parser_registry: &SchemaParserRegistry,
     type_mappings: &TypeMappingRegistry,
 ) -> Result<()> {
-    generate_code_with_scope_format_parsers_and_cancellation(
+    generate_code_with_view_format_parsers_and_cancellation(
         input,
         target,
         out_dir,
         format_mode,
-        scope,
+        view,
         parser_registry,
         type_mappings,
         &|| false,
@@ -205,23 +213,23 @@ pub fn generate_code_with_scope_format_and_parsers(
 }
 
 #[allow(clippy::too_many_arguments)]
-pub fn generate_code_with_scope_format_parsers_and_cancellation(
+pub fn generate_code_with_view_format_parsers_and_cancellation(
     input: &impl SchemaInput,
     target: &str,
     out_dir: &Path,
     format_mode: FormatMode,
-    scope: Option<&str>,
+    view: Option<&str>,
     parser_registry: &SchemaParserRegistry,
     type_mappings: &TypeMappingRegistry,
     cancelled: &(dyn Fn() -> bool + Sync),
 ) -> Result<()> {
     let registry = CodegenRegistry::with_builtin_generators();
-    generate_code_with_registry_scope_format_extensions_and_cancellation(
+    generate_code_with_registry_view_format_extensions_and_cancellation(
         input,
         target,
         out_dir,
         format_mode,
-        scope,
+        view,
         &registry,
         CodegenPipelineExtensions {
             parser_registry,
@@ -231,22 +239,18 @@ pub fn generate_code_with_scope_format_parsers_and_cancellation(
     )
 }
 
-pub fn generate_code_with_registry_scope_and_format(
+pub fn generate_code_with_registry_view_and_format(
     input: &impl SchemaInput,
     target: &str,
     out_dir: &Path,
     format_mode: FormatMode,
-    scope: Option<&str>,
+    view: Option<&str>,
     registry: &CodegenRegistry,
     type_mappings: &TypeMappingRegistry,
 ) -> Result<()> {
     let schema = input.load_schema()?;
     let codegen_options = schema.codegen.clone();
     let ir = validate_schema_ir(schema)?;
-    let ir = match scope {
-        Some(scope) => sora_ir::scope::filter_config_ir_by_scope(&ir, scope)?,
-        None => ir,
-    };
     let generator = registry.get(target).ok_or_else(|| {
         SoraError::InvalidSchema(format!(
             "unknown codegen target `{}`; supported targets: {}",
@@ -255,16 +259,22 @@ pub fn generate_code_with_registry_scope_and_format(
         ))
     })?;
     let canonical_target = registry.canonical_id(target).unwrap_or(target);
-    let empty = empty_options();
-    let options = codegen_options
+    let view_name = support::resolve_view_name(&ir, view)?.to_owned();
+    let global_options = codegen_options
         .target_options(canonical_target)
-        .or_else(|| codegen_options.target_options(target))
-        .unwrap_or(&empty);
+        .or_else(|| codegen_options.target_options(target));
+    let binding = ir.views.get(&view_name).and_then(|view| {
+        view.bindings
+            .get(canonical_target)
+            .or_else(|| view.bindings.get(target))
+    });
+    let options = support::merge_codegen_options(canonical_target, global_options, binding)?;
+    let ir = sora_ir::projection::project_config_ir(&ir, &view_name)?;
     generator.generator.generate(
         CodegenContext {
             target: canonical_target,
             ir: &ir,
-            options,
+            options: &options,
             type_mappings,
         },
         out_dir,
@@ -277,21 +287,21 @@ pub fn generate_code_with_registry_scope_and_format(
     )
 }
 
-pub fn generate_code_with_registry_scope_format_and_extensions(
+pub fn generate_code_with_registry_view_format_and_extensions(
     input: &impl SchemaInput,
     target: &str,
     out_dir: &Path,
     format_mode: FormatMode,
-    scope: Option<&str>,
+    view: Option<&str>,
     registry: &CodegenRegistry,
     extensions: CodegenPipelineExtensions<'_>,
 ) -> Result<()> {
-    generate_code_with_registry_scope_format_extensions_and_cancellation(
+    generate_code_with_registry_view_format_extensions_and_cancellation(
         input,
         target,
         out_dir,
         format_mode,
-        scope,
+        view,
         registry,
         extensions,
         &|| false,
@@ -299,12 +309,12 @@ pub fn generate_code_with_registry_scope_format_and_extensions(
 }
 
 #[allow(clippy::too_many_arguments)]
-pub fn generate_code_with_registry_scope_format_extensions_and_cancellation(
+pub fn generate_code_with_registry_view_format_extensions_and_cancellation(
     input: &impl SchemaInput,
     target: &str,
     out_dir: &Path,
     format_mode: FormatMode,
-    scope: Option<&str>,
+    view: Option<&str>,
     registry: &CodegenRegistry,
     extensions: CodegenPipelineExtensions<'_>,
     cancelled: &(dyn Fn() -> bool + Sync),
@@ -312,10 +322,6 @@ pub fn generate_code_with_registry_scope_format_extensions_and_cancellation(
     let schema = input.load_schema()?;
     let codegen_options = schema.codegen.clone();
     let ir = support::validate_schema_ir_with_parsers(schema, extensions.parser_registry)?;
-    let ir = match scope {
-        Some(scope) => sora_ir::scope::filter_config_ir_by_scope(&ir, scope)?,
-        None => ir,
-    };
     let generator = registry.get(target).ok_or_else(|| {
         SoraError::InvalidSchema(format!(
             "unknown codegen target `{}`; supported targets: {}",
@@ -324,16 +330,22 @@ pub fn generate_code_with_registry_scope_format_extensions_and_cancellation(
         ))
     })?;
     let canonical_target = registry.canonical_id(target).unwrap_or(target);
-    let empty = empty_options();
-    let options = codegen_options
+    let view_name = support::resolve_view_name(&ir, view)?.to_owned();
+    let global_options = codegen_options
         .target_options(canonical_target)
-        .or_else(|| codegen_options.target_options(target))
-        .unwrap_or(&empty);
+        .or_else(|| codegen_options.target_options(target));
+    let binding = ir.views.get(&view_name).and_then(|view| {
+        view.bindings
+            .get(canonical_target)
+            .or_else(|| view.bindings.get(target))
+    });
+    let options = support::merge_codegen_options(canonical_target, global_options, binding)?;
+    let ir = sora_ir::projection::project_config_ir(&ir, &view_name)?;
     generator.generator.generate(
         CodegenContext {
             target: canonical_target,
             ir: &ir,
-            options,
+            options: &options,
             type_mappings: extensions.type_mappings,
         },
         out_dir,
@@ -353,16 +365,16 @@ pub fn generate_code_with_registry_scope_format_extensions_and_cancellation(
 }
 
 pub fn export_data(input: &impl ProjectInput, format: &str, output: ExportOutput) -> Result<()> {
-    export_data_with_scope_and_context(input, format, output, None, &ExecutionContext::default())
+    export_data_with_view_and_context(input, format, output, None, &ExecutionContext::default())
 }
 
-pub fn export_data_with_scope(
+pub fn export_data_with_view(
     input: &impl ProjectInput,
     format: &str,
     output: ExportOutput,
-    scope: Option<&str>,
+    view: Option<&str>,
 ) -> Result<()> {
-    export_data_with_scope_and_context(input, format, output, scope, &ExecutionContext::default())
+    export_data_with_view_and_context(input, format, output, view, &ExecutionContext::default())
 }
 
 pub fn export_data_with_context(
@@ -371,14 +383,14 @@ pub fn export_data_with_context(
     output: ExportOutput,
     execution: &ExecutionContext,
 ) -> Result<()> {
-    export_data_with_scope_and_context(input, format, output, None, execution)
+    export_data_with_view_and_context(input, format, output, None, execution)
 }
 
-pub fn export_data_with_scope_and_context(
+pub fn export_data_with_view_and_context(
     input: &impl ProjectInput,
     format: &str,
     output: ExportOutput,
-    scope: Option<&str>,
+    view: Option<&str>,
     execution: &ExecutionContext,
 ) -> Result<()> {
     let ir = load_ir(input)?;
@@ -394,37 +406,37 @@ pub fn export_data_with_scope_and_context(
         locale_catalog: project_data.locale_catalog.as_ref(),
         format,
         output,
-        scope,
+        view,
         execution,
         options: ExportOptions::default(),
     })
 }
 
-pub fn export_loaded_data_with_scope_and_context(
+pub fn export_loaded_data_with_view_and_context(
     ir: &sora_ir::model::ConfigIr,
     data: &sora_data::model::ConfigData,
     format: &str,
     output: ExportOutput,
-    scope: Option<&str>,
+    view: Option<&str>,
     execution: &ExecutionContext,
 ) -> Result<()> {
-    export_loaded_data_with_scope_context_and_options(
+    export_loaded_data_with_view_context_and_options(
         ir,
         data,
         format,
         output,
-        scope,
+        view,
         execution,
         ExportOptions::default(),
     )
 }
 
-pub fn export_loaded_data_with_scope_context_and_options(
+pub fn export_loaded_data_with_view_context_and_options(
     ir: &sora_ir::model::ConfigIr,
     data: &sora_data::model::ConfigData,
     format: &str,
     output: ExportOutput,
-    scope: Option<&str>,
+    view: Option<&str>,
     execution: &ExecutionContext,
     options: ExportOptions,
 ) -> Result<()> {
@@ -434,7 +446,7 @@ pub fn export_loaded_data_with_scope_context_and_options(
         locale_catalog: None,
         format,
         output,
-        scope,
+        view,
         execution,
         options,
     })
@@ -446,13 +458,13 @@ pub struct LoadedDataExportRequest<'a> {
     pub locale_catalog: Option<&'a sora_data::localization::LocaleCatalog>,
     pub format: &'a str,
     pub output: ExportOutput,
-    pub scope: Option<&'a str>,
+    pub view: Option<&'a str>,
     pub execution: &'a ExecutionContext,
     pub options: ExportOptions,
 }
 
 pub fn export_loaded_data(request: LoadedDataExportRequest<'_>) -> Result<()> {
-    let (ir, data) = filter_ir_and_data_by_scope(request.ir, request.data, request.scope)?;
+    let (ir, data) = project_ir_and_data_by_view(request.ir, request.data, request.view)?;
     let locale_catalog = if request.format.starts_with("i18n-") {
         request.locale_catalog
     } else {
@@ -481,7 +493,7 @@ pub fn diff_data(
     right: &impl ProjectInput,
     output_path: &Path,
 ) -> Result<ConfigDiff> {
-    diff_data_with_scope(left, right, output_path, None)
+    diff_data_with_view(left, right, output_path, None)
 }
 
 pub fn diff_data_with_context(
@@ -490,38 +502,32 @@ pub fn diff_data_with_context(
     output_path: &Path,
     execution: &ExecutionContext,
 ) -> Result<ConfigDiff> {
-    diff_data_with_scope_and_context(left, right, output_path, None, execution)
+    diff_data_with_view_and_context(left, right, output_path, None, execution)
 }
 
-pub fn diff_data_with_scope(
+pub fn diff_data_with_view(
     left: &impl ProjectInput,
     right: &impl ProjectInput,
     output_path: &Path,
-    scope: Option<&str>,
+    view: Option<&str>,
 ) -> Result<ConfigDiff> {
-    diff_data_with_scope_and_context(
-        left,
-        right,
-        output_path,
-        scope,
-        &ExecutionContext::default(),
-    )
+    diff_data_with_view_and_context(left, right, output_path, view, &ExecutionContext::default())
 }
 
-pub fn diff_data_with_scope_and_context(
+pub fn diff_data_with_view_and_context(
     left: &impl ProjectInput,
     right: &impl ProjectInput,
     output_path: &Path,
-    scope: Option<&str>,
+    view: Option<&str>,
     execution: &ExecutionContext,
 ) -> Result<ConfigDiff> {
     let ir = load_ir(left)?;
     let left_data = load_validated_data(left, &ir, execution)?;
     let right_data = load_validated_data(right, &ir, execution)?;
-    let (ir, left_data) = filter_ir_and_data_by_scope(&ir, &left_data, scope)?;
-    let right_data = match scope {
+    let (ir, left_data) = project_ir_and_data_by_view(&ir, &left_data, view)?;
+    let right_data = match view {
         Some(_) => {
-            let scoped = sora_data::scope::filter_config_data_by_ir(&ir, &right_data);
+            let scoped = sora_data::projection::project_config_data_by_ir(&ir, &right_data);
             sora_data::validate::validate_config_data(&ir, &scoped)?;
             scoped
         }
@@ -532,11 +538,11 @@ pub fn diff_data_with_scope_and_context(
     Ok(diff)
 }
 
-pub fn diff_data_with_scope_context_and_parsers(
+pub fn diff_data_with_view_context_and_parsers(
     left: &impl ProjectInput,
     right: &impl ProjectInput,
     output_path: &Path,
-    scope: Option<&str>,
+    view: Option<&str>,
     execution: &ExecutionContext,
     schema_parser_registry: &SchemaParserRegistry,
     cell_parser_registry: &CellParserRegistry,
@@ -546,10 +552,10 @@ pub fn diff_data_with_scope_context_and_parsers(
         support::load_validated_data_with_parsers(left, &ir, execution, cell_parser_registry)?;
     let right_data =
         support::load_validated_data_with_parsers(right, &ir, execution, cell_parser_registry)?;
-    let (ir, left_data) = filter_ir_and_data_by_scope(&ir, &left_data, scope)?;
-    let right_data = match scope {
+    let (ir, left_data) = project_ir_and_data_by_view(&ir, &left_data, view)?;
+    let right_data = match view {
         Some(_) => {
-            let scoped = sora_data::scope::filter_config_data_by_ir(&ir, &right_data);
+            let scoped = sora_data::projection::project_config_data_by_ir(&ir, &right_data);
             sora_data::validate::validate_config_data(&ir, &scoped)?;
             scoped
         }
@@ -561,63 +567,63 @@ pub fn diff_data_with_scope_context_and_parsers(
 }
 
 pub fn generate_excel_template(input: &impl SchemaInput, out_dir: &Path) -> Result<()> {
-    generate_excel_template_with_scope(input, out_dir, None)
+    generate_excel_template_with_view(input, out_dir, None)
 }
 
-pub fn generate_excel_template_with_scope(
+pub fn generate_excel_template_with_view(
     input: &impl SchemaInput,
     out_dir: &Path,
-    scope: Option<&str>,
+    view: Option<&str>,
 ) -> Result<()> {
-    let ir = load_ir_with_scope(input, scope)?;
+    let ir = load_ir_with_view(input, view)?;
     ExcelTemplateGenerator.generate(&ir, out_dir)
 }
 
-pub fn generate_excel_template_with_scope_and_parsers(
+pub fn generate_excel_template_with_view_and_parsers(
     input: &impl SchemaInput,
     out_dir: &Path,
-    scope: Option<&str>,
+    view: Option<&str>,
     parser_registry: &SchemaParserRegistry,
 ) -> Result<()> {
-    let ir = support::load_ir_with_scope_and_parsers(input, scope, parser_registry)?;
+    let ir = support::load_ir_with_view_and_parsers(input, view, parser_registry)?;
     ExcelTemplateGenerator.generate(&ir, out_dir)
 }
 
 pub fn preview_excel_sync(
     input: &impl SchemaInput,
     data_root: &Path,
-    scope: Option<&str>,
+    view: Option<&str>,
 ) -> Result<ExcelSyncReport> {
-    let ir = load_ir_with_scope(input, scope)?;
+    let ir = load_ir_with_view(input, view)?;
     ExcelTemplateSync.preview(&ir, data_root)
 }
 
 pub fn preview_excel_sync_with_parsers(
     input: &impl SchemaInput,
     data_root: &Path,
-    scope: Option<&str>,
+    view: Option<&str>,
     parser_registry: &SchemaParserRegistry,
 ) -> Result<ExcelSyncReport> {
-    let ir = support::load_ir_with_scope_and_parsers(input, scope, parser_registry)?;
+    let ir = support::load_ir_with_view_and_parsers(input, view, parser_registry)?;
     ExcelTemplateSync.preview(&ir, data_root)
 }
 
 pub fn write_excel_sync(
     input: &impl SchemaInput,
     data_root: &Path,
-    scope: Option<&str>,
+    view: Option<&str>,
 ) -> Result<ExcelSyncReport> {
-    let ir = load_ir_with_scope(input, scope)?;
+    let ir = load_ir_with_view(input, view)?;
     ExcelTemplateSync.write(&ir, data_root)
 }
 
 pub fn write_excel_sync_with_parsers(
     input: &impl SchemaInput,
     data_root: &Path,
-    scope: Option<&str>,
+    view: Option<&str>,
     parser_registry: &SchemaParserRegistry,
 ) -> Result<ExcelSyncReport> {
-    let ir = support::load_ir_with_scope_and_parsers(input, scope, parser_registry)?;
+    let ir = support::load_ir_with_view_and_parsers(input, view, parser_registry)?;
     ExcelTemplateSync.write(&ir, data_root)
 }
 

@@ -180,7 +180,7 @@ impl SoraMcpServer {
 
     #[tool(
         name = "sora_data_validate",
-        description = "Load and fully validate project data, optionally selecting a scope or table subset",
+        description = "Load and fully validate project data, optionally selecting a view or table subset",
         annotations(
             read_only_hint = true,
             destructive_hint = false,

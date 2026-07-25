@@ -12,7 +12,7 @@ use crate::{
         BaseField, BaseIndex, BaseModel, BaseRecord, BaseTable, BaseUnion, BaseUnionVariant,
         build_base_model,
     },
-    options::JavaCodegenOptions,
+    options::{JavaCodegenOptions, required_binding},
     render::{ensure_dir, render_template, write_file},
     type_mapping::{TypeMapping, TypeMappingContext, TypeMappingRegistry},
 };
@@ -26,7 +26,8 @@ impl CodeGenerator for JavaCodeGenerator {
         let options = context.options::<JavaCodegenOptions>()?;
         ensure_dir(out_dir)?;
         let mapper = JavaTypeMapper::new(context.target, ir, context.type_mappings);
-        let model = JavaModel::from_base_model(ir, build_base_model(ir)?, &options, &mapper);
+        let mut model = JavaModel::from_base_model(ir, build_base_model(ir)?, &options, &mapper);
+        model.package = required_binding("java", "package", options.package.clone())?;
         let package_dir = java_package_dir(out_dir, &model.package)?;
         let runtime_format = runtime_format_name(options.runtime_format);
         let nullable_annotation = java_nullable_annotation(&options);

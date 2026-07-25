@@ -130,7 +130,7 @@ pub struct GenArgs {
     pub format_code: CodeFormatMode,
 
     #[arg(short, long)]
-    pub scope: Option<String>,
+    pub view: Option<String>,
 }
 
 #[derive(Debug, Args)]
@@ -145,7 +145,7 @@ pub struct BuildArgs {
     pub data_root: Option<PathBuf>,
 
     #[arg(short, long)]
-    pub scope: Option<String>,
+    pub view: Option<String>,
 
     #[arg(short, long)]
     pub target: Vec<String>,
@@ -172,7 +172,7 @@ pub struct ExportArgs {
     pub out: PathBuf,
 
     #[arg(short, long)]
-    pub scope: Option<String>,
+    pub view: Option<String>,
 
     #[arg(long, value_enum, default_value = "none")]
     pub compression: ExportCompressionArg,
@@ -199,7 +199,7 @@ pub struct DiffArgs {
     pub out: PathBuf,
 
     #[arg(short, long)]
-    pub scope: Option<String>,
+    pub view: Option<String>,
 }
 
 #[derive(Debug, Args)]
@@ -276,7 +276,7 @@ pub struct ExcelTemplateArgs {
     pub out: PathBuf,
 
     #[arg(short, long)]
-    pub scope: Option<String>,
+    pub view: Option<String>,
 }
 
 #[derive(Debug, Args)]
@@ -288,7 +288,7 @@ pub struct ExcelSyncArgs {
     pub data_root: PathBuf,
 
     #[arg(short, long)]
-    pub scope: Option<String>,
+    pub view: Option<String>,
 
     #[arg(short, long)]
     pub write: bool,
@@ -303,7 +303,7 @@ pub struct SchemaLockArgs {
     pub out: PathBuf,
 
     #[arg(short, long)]
-    pub scope: Option<String>,
+    pub view: Option<String>,
 }
 
 #[derive(Debug, Args)]
@@ -331,7 +331,7 @@ mod tests {
             "project.toml",
             "-d",
             "data",
-            "-s",
+            "--view",
             "client",
             "-t",
             "rust",
@@ -343,7 +343,7 @@ mod tests {
         };
         assert_eq!(args.project, PathBuf::from("project.toml"));
         assert_eq!(args.data_root, Some(PathBuf::from("data")));
-        assert_eq!(args.scope.as_deref(), Some("client"));
+        assert_eq!(args.view.as_deref(), Some("client"));
         assert_eq!(args.target, ["rust"]);
         assert!(args.clean);
     }
@@ -361,7 +361,7 @@ mod tests {
             "json",
             "-o",
             "generated/config.json",
-            "-s",
+            "--view",
             "server",
         ]);
 
@@ -372,7 +372,7 @@ mod tests {
         assert_eq!(args.data_root, PathBuf::from("data"));
         assert_eq!(args.format, "json");
         assert_eq!(args.out, PathBuf::from("generated/config.json"));
-        assert_eq!(args.scope.as_deref(), Some("server"));
+        assert_eq!(args.view.as_deref(), Some("server"));
     }
 
     #[test]

@@ -1,11 +1,12 @@
 use std::{fs, path::Path};
 
+use serde_json::{Map, Value};
 use sora_diagnostics::{Result, SoraError};
 use sora_execution::ExecutionContext;
 use sora_input::traits::{ProjectInput, SchemaInput};
 use sora_ir::{
     model::ConfigIr, normalize::normalize_schema_with_parsers,
-    parser::ParserRegistry as SchemaParserRegistry, scope::filter_config_ir_by_scope,
+    parser::ParserRegistry as SchemaParserRegistry, projection::project_config_ir,
     validate::validate_config_ir,
 };
 use sora_schema::model::SchemaFile;
@@ -25,6 +26,7 @@ pub(super) fn validate_schema_ir_with_parsers(
 ) -> Result<ConfigIr> {
     let ir = normalize_schema_with_parsers(schema, parser_registry)?;
     validate_config_ir(&ir)?;
+    sora_ir::projection::validate_config_views(&ir)?;
     Ok(ir)
 }
 
@@ -39,37 +41,78 @@ pub(super) fn load_ir_with_parsers(
     validate_schema_ir_with_parsers(input.load_schema()?, parser_registry)
 }
 
-pub(super) fn load_ir_with_scope(
-    input: &impl SchemaInput,
-    scope: Option<&str>,
-) -> Result<ConfigIr> {
-    load_ir_with_scope_and_parsers(input, scope, &SchemaParserRegistry::builtin())
+pub(super) fn load_ir_with_view(input: &impl SchemaInput, view: Option<&str>) -> Result<ConfigIr> {
+    load_ir_with_view_and_parsers(input, view, &SchemaParserRegistry::builtin())
 }
 
-pub(super) fn load_ir_with_scope_and_parsers(
+pub(super) fn load_ir_with_view_and_parsers(
     input: &impl SchemaInput,
-    scope: Option<&str>,
+    view: Option<&str>,
     parser_registry: &SchemaParserRegistry,
 ) -> Result<ConfigIr> {
     let ir = load_ir_with_parsers(input, parser_registry)?;
-    match scope {
-        Some(scope) => filter_config_ir_by_scope(&ir, scope),
-        None => Ok(ir),
-    }
+    let view = resolve_view_name(&ir, view)?;
+    project_config_ir(&ir, view)
 }
 
-pub(super) fn filter_ir_and_data_by_scope(
+pub(super) fn project_ir_and_data_by_view(
     ir: &ConfigIr,
     data: &sora_data::model::ConfigData,
-    scope: Option<&str>,
+    view: Option<&str>,
 ) -> Result<(ConfigIr, sora_data::model::ConfigData)> {
-    let Some(scope) = scope else {
-        return Ok((ir.clone(), data.clone()));
-    };
-    let scoped_ir = filter_config_ir_by_scope(ir, scope)?;
-    let scoped_data = sora_data::scope::filter_config_data_by_ir(&scoped_ir, data);
+    let view = resolve_view_name(ir, view)?;
+    let scoped_ir = project_config_ir(ir, view)?;
+    let scoped_data = sora_data::projection::project_config_data_by_ir(&scoped_ir, data);
     sora_data::validate::validate_config_data(&scoped_ir, &scoped_data)?;
     Ok((scoped_ir, scoped_data))
+}
+
+pub(super) fn resolve_view_name<'a>(
+    ir: &'a ConfigIr,
+    requested: Option<&'a str>,
+) -> Result<&'a str> {
+    if let Some(view) = requested {
+        if ir.views.contains_key(view) {
+            return Ok(view);
+        }
+        return Err(SoraError::InvalidSchema(format!(
+            "unknown view `{view}`; declared views: {}",
+            ir.views.keys().cloned().collect::<Vec<_>>().join(", ")
+        )));
+    }
+    if ir.views.len() == 1 {
+        return Ok(ir.views.keys().next().expect("one declared view"));
+    }
+    Err(SoraError::InvalidSchema(format!(
+        "an explicit view is required; declared views: {}",
+        ir.views.keys().cloned().collect::<Vec<_>>().join(", ")
+    )))
+}
+
+pub(super) fn merge_codegen_options(
+    target: &str,
+    global: Option<&Value>,
+    binding: Option<&Value>,
+) -> Result<Value> {
+    let mut merged = match global {
+        Some(Value::Object(values)) => values.clone(),
+        Some(_) => {
+            return Err(SoraError::InvalidSchema(format!(
+                "`{target}` codegen options must be an object"
+            )));
+        }
+        None => Map::new(),
+    };
+    match binding {
+        Some(Value::Object(values)) => merged.extend(values.clone()),
+        Some(_) => {
+            return Err(SoraError::InvalidSchema(format!(
+                "`{target}` view binding must be an object"
+            )));
+        }
+        None => {}
+    }
+    Ok(Value::Object(merged))
 }
 
 pub(super) fn load_validated_data(

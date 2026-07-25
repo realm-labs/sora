@@ -21,7 +21,7 @@ pub(crate) fn verify_projection(
     expect_cell(path, sheet, range, metadata_row, 1, &table.name)?;
     expect_cell(path, sheet, range, metadata_row, 2, "@mode")?;
     expect_cell(path, sheet, range, metadata_row, 4, "@key")?;
-    expect_cell(path, sheet, range, metadata_row, 6, "@scope")?;
+    expect_cell(path, sheet, range, metadata_row, 6, "@groups")?;
     expect_cell(path, sheet, range, metadata_row, 8, "@schema")?;
     expect_cell(path, sheet, range, metadata_row, 9, &schema_hash(ir, table))?;
     expect_cell(path, sheet, range, field_row, 0, "#field")?;

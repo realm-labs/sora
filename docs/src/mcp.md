@@ -107,25 +107,25 @@ All tools declare read-only, destructive, idempotent, and open-world hints.
 | `sora_server_info` | `{}` | Protocol and workspace summary; read-only. |
 | `sora_project_list` | `{}` | Discover manifests inside allowed Roots. |
 | `sora_project_open` | `root_id?`, `relative_manifest?` | Open a project; missing selection may use Elicitation. |
-| `sora_project_inspect` | `project_id` | Sources, scopes, targets, formats, and package summary. |
-| `sora_project_init` | `root_id`, `relative_directory`, `package` | Preview a new scaffold. |
+| `sora_project_inspect` | `project_id` | Schema identity, groups, views, sources, targets, and formats. |
+| `sora_project_init` | `root_id`, `relative_directory`, `schema_id` | Preview a new scaffold. |
 | `sora_project_init_apply` | `plan_id`, `idempotency_key` | Atomically create the previewed scaffold. |
 | `sora_schema_validate` | `project_id` | Normalize and validate schema. |
 | `sora_schema_search` | `project_id` plus kind/name/field/type/reference filters | Search normalized entities. |
 | `sora_schema_preview` | `project_id`, expected schema/manifest revisions, ordered `operations` | Produce an immutable schema plan and text diffs. |
 | `sora_schema_apply` | `project_id`, `plan_id`, `idempotency_key` | Atomically apply a schema plan. |
-| `sora_data_validate` | `project_id`, optional `scope`, `tables` | Validate selected or all project data. |
+| `sora_data_validate` | `project_id`, optional `view`, `tables` | Validate selected or all project data. |
 | `sora_table_query` | `project_id`, `table`, optional filters/key/index/select/order/cursor/limit/locale | Query validated typed rows; limit is 1–500. |
 | `sora_data_diff` | `project_id`, `other_data_root` | Compare a project-relative baseline root. |
 | `sora_data_preview` | `project_id`, expected schema/data revisions, ordered `operations` | Preview typed row and localization changes. |
 | `sora_data_apply` | `project_id`, `plan_id`, `idempotency_key` | Atomically apply a data plan. |
 | `sora_excel_sync_preview` | `project_id`, expected schema/data revisions | Preview workbook synchronization. |
 | `sora_excel_sync_apply` | `project_id`, `plan_id`, `idempotency_key` | Atomically synchronize XLSX workbooks. |
-| `sora_build` | `project_id`, expected project revision, optional scope/output groups/targets/formats/clean | Run the declared build graph. |
-| `sora_codegen` | `project_id`, revision, `target`, optional scope/clean | Run one declared generator target. |
-| `sora_export` | `project_id`, revision, `format`, optional scope/clean | Run one declared exporter. |
-| `sora_schema_lock` | `project_id`, revision, optional scope/clean | Build the declared schema lock. |
-| `sora_excel_template` | `project_id`, revision, optional scope/clean | Build declared Excel templates. |
+| `sora_build` | `project_id`, expected project revision, optional view/output groups/targets/formats/clean | Run the declared build graph. |
+| `sora_codegen` | `project_id`, revision, `target`, optional view/clean | Run one declared generator target. |
+| `sora_export` | `project_id`, revision, `format`, optional view/clean | Run one declared exporter. |
+| `sora_schema_lock` | `project_id`, revision, optional view/clean | Build the declared schema lock. |
+| `sora_excel_template` | `project_id`, revision, optional view/clean | Build declared Excel templates. |
 
 Build, codegen, export, schema-lock, Excel-template, and Excel synchronization
 advertise optional MCP Tasks. Clients without Tasks receive the same operation
@@ -170,7 +170,7 @@ The seven guided prompts are:
 
 Every prompt requires `project_id`, embeds a bounded project summary, links the
 schema and diagnostics resources, and preserves preview/apply safety. Completion
-supports project, entity kind/name, table, field, enum, scope, source, codegen
+supports project, entity kind/name, table, field, enum, group, view, source, codegen
 target, runtime format, export format, locale, artifact, and mode arguments.
 
 ## Security and trust

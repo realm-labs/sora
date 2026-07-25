@@ -855,7 +855,11 @@ mod tests {
     fn parses_duration_literals_as_milliseconds() {
         let registry = ParserRegistry::builtin();
         let ir = ConfigIr {
-            package: "test".to_owned(),
+            project_id: "test".to_owned(),
+            contract_id: "test/default".to_owned(),
+            view: None,
+            group_defaults: Default::default(),
+            views: Default::default(),
             localization: None,
             enums: Vec::new(),
             structs: Vec::new(),
@@ -885,7 +889,11 @@ mod tests {
     fn rejects_out_of_order_duration_units() {
         let registry = ParserRegistry::builtin();
         let ir = ConfigIr {
-            package: "test".to_owned(),
+            project_id: "test".to_owned(),
+            contract_id: "test/default".to_owned(),
+            view: None,
+            group_defaults: Default::default(),
+            views: Default::default(),
             localization: None,
             enums: Vec::new(),
             structs: Vec::new(),
@@ -915,7 +923,11 @@ mod tests {
     fn rejects_numeric_duration_cells() {
         let registry = ParserRegistry::builtin();
         let ir = ConfigIr {
-            package: "test".to_owned(),
+            project_id: "test".to_owned(),
+            contract_id: "test/default".to_owned(),
+            view: None,
+            group_defaults: Default::default(),
+            views: Default::default(),
             localization: None,
             enums: Vec::new(),
             structs: Vec::new(),
@@ -945,7 +957,11 @@ mod tests {
     fn parses_datetime_literals_as_utc_epoch_milliseconds() {
         let registry = ParserRegistry::builtin();
         let ir = ConfigIr {
-            package: "test".to_owned(),
+            project_id: "test".to_owned(),
+            contract_id: "test/default".to_owned(),
+            view: None,
+            group_defaults: Default::default(),
+            views: Default::default(),
             localization: None,
             enums: Vec::new(),
             structs: Vec::new(),
@@ -975,7 +991,11 @@ mod tests {
     fn rejects_datetime_without_timezone() {
         let registry = ParserRegistry::builtin();
         let ir = ConfigIr {
-            package: "test".to_owned(),
+            project_id: "test".to_owned(),
+            contract_id: "test/default".to_owned(),
+            view: None,
+            group_defaults: Default::default(),
+            views: Default::default(),
             localization: None,
             enums: Vec::new(),
             structs: Vec::new(),
@@ -1005,7 +1025,11 @@ mod tests {
     fn parses_map_cells_as_pairs() {
         let registry = ParserRegistry::builtin();
         let ir = ConfigIr {
-            package: "test".to_owned(),
+            project_id: "test".to_owned(),
+            contract_id: "test/default".to_owned(),
+            view: None,
+            group_defaults: Default::default(),
+            views: Default::default(),
             localization: None,
             enums: Vec::new(),
             structs: Vec::new(),
@@ -1045,7 +1069,11 @@ mod tests {
     fn parses_map_cells_with_custom_separators() {
         let registry = ParserRegistry::builtin();
         let ir = ConfigIr {
-            package: "test".to_owned(),
+            project_id: "test".to_owned(),
+            contract_id: "test/default".to_owned(),
+            view: None,
+            group_defaults: Default::default(),
+            views: Default::default(),
             localization: None,
             enums: Vec::new(),
             structs: Vec::new(),
@@ -1088,7 +1116,11 @@ mod tests {
     fn separated_parsers_reject_json_array_shape() {
         let registry = ParserRegistry::builtin();
         let ir = ConfigIr {
-            package: "test".to_owned(),
+            project_id: "test".to_owned(),
+            contract_id: "test/default".to_owned(),
+            view: None,
+            group_defaults: Default::default(),
+            views: Default::default(),
             localization: None,
             enums: Vec::new(),
             structs: Vec::new(),
@@ -1123,7 +1155,11 @@ mod tests {
         let mut registry = ParserRegistry::builtin();
         registry.register(UpperParser);
         let ir = ConfigIr {
-            package: "test".to_owned(),
+            project_id: "test".to_owned(),
+            contract_id: "test/default".to_owned(),
+            view: None,
+            group_defaults: Default::default(),
+            views: Default::default(),
             localization: None,
             enums: Vec::new(),
             structs: Vec::new(),
@@ -1158,7 +1194,11 @@ mod tests {
         let mut registry = ParserRegistry::builtin();
         registry.register(UpperParser);
         let ir = ConfigIr {
-            package: "test".to_owned(),
+            project_id: "test".to_owned(),
+            contract_id: "test/default".to_owned(),
+            view: None,
+            group_defaults: Default::default(),
+            views: Default::default(),
             localization: None,
             enums: Vec::new(),
             structs: Vec::new(),

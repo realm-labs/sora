@@ -71,7 +71,7 @@ async fn task_augmented_build_can_be_polled_and_read_as_a_resource() -> anyhow::
             serde_json::json!({
                 "project_id": "demo",
                 "expected_project_revision": revision.project,
-                "scope": null,
+                "view": null,
                 "clean": true
             })
             .as_object()
@@ -144,7 +144,7 @@ async fn task_augmented_build_can_be_polled_and_read_as_a_resource() -> anyhow::
             serde_json::json!({
                 "project_id": "demo",
                 "expected_project_revision": revision.project,
-                "scope": null,
+                "view": null,
                 "clean": true
             })
             .as_object()
@@ -205,7 +205,9 @@ fn temp_project() -> PathBuf {
     fs::write(
         root.join("project.toml"),
         r#"
-package = "demo"
+project = { id = "demo" }
+groups = { common = { default = true } }
+views = { default = { contract = "demo/default", groups = ["common"] } }
 includes = ["schema/settings.toml"]
 
 [build]
@@ -217,6 +219,7 @@ schema_lock = "generated/schema.lock"
         root.join("schema/settings.toml"),
         r#"
 [[tables]]
+id = "settings"
 name = "Settings"
 mode = "singleton"
 

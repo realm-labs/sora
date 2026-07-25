@@ -3,8 +3,16 @@
 The project manifest can be used as a simple schema root or as a full build description. It can be written as TOML, YAML, JSON, or Lua; examples on this page use TOML.
 
 ```toml
-package = "game_config"
 includes = ["schema/items.toml"]
+
+[project]
+id = "game_config"
+views = ["views/client.toml", "views/server.toml"]
+
+[groups.common]
+default = true
+
+[groups.server]
 
 [parsers]
 scripts = ["tools/parsers.lua"]
@@ -15,6 +23,7 @@ scripts = ["tools/type_mappings.lua"]
 [build]
 default_source_format = "xlsx"
 data_root = "data"
+view = "client"
 schema_lock = "generated/schema.lock"
 excel_templates = "generated/excel"
 
@@ -27,6 +36,51 @@ format = "auto"
 format = "binary"
 out = "generated/config.sora"
 ```
+
+`project.id` is the stable identity of the canonical schema. It is not reused as
+a language package or namespace. Every table also declares a stable `id`;
+renaming a table does not change that identity.
+
+Groups are declared once in the project. Schema entities and fields use
+`groups = [...]`; omitted groups inherit all groups marked `default = true`.
+
+Views are named external contracts. A view selects groups and tables, may rename
+exported tables by stable table ID, and owns target-language bindings:
+
+```toml
+# views/client.toml
+name = "client"
+contract = "game/client-v1"
+groups = ["common"]
+
+[tables]
+include = ["item", "settings"]
+
+[names.tables]
+item = "ClientItem"
+
+[bindings.kotlin]
+package = "com.example.game.config"
+
+[bindings.csharp]
+namespace = "Example.Game.Config"
+
+[bindings.go]
+package = "gameconfig"
+
+[bindings.c]
+prefix = "game_config"
+
+[bindings.cpp]
+namespace = "game::config"
+
+[bindings.proto-schema]
+package = "game.config"
+```
+
+Table selection and aliases always use stable table IDs, not display names.
+Different manifests can reference different view documents, giving each consumer
+an independently versioned contract without cloning the canonical schema.
 
 Run every configured output:
 
@@ -50,7 +104,8 @@ sora build --project project.toml --target rust
 
 ## Target Options
 
-Language-specific options live under `[codegen.<target>]`:
+Language-specific runtime options live under `[codegen.<target>]`. Package,
+namespace, module, and symbol-prefix bindings belong to each view:
 
 ```toml
 [codegen.rust]
@@ -111,21 +166,21 @@ The C target uses write-into decode functions, so C mappings should use `decode_
 | Target | Options |
 | --- | --- |
 | `rust` | `runtime_format` default `sora`; `map_type = "std"` or `"fx_hash_map"` default `std`; `string_storage = "owned"` or `"arc"` default `owned`. |
-| `kotlin` | `runtime_format` default `sora`. |
-| `csharp` | `runtime_format` default `sora`. |
-| `java` | `runtime_format` default `sora`; `nullable_annotation` defaults to `SoraNullable`, set an annotation class such as `org.jetbrains.annotations.Nullable`, or set `""` to disable annotations. |
-| `scala` | `runtime_format` default `sora`; `scala_version = "2.12"`, `"2.13"`, or `"3"` default `3`. |
-| `go` | `runtime_format` default `sora`. |
+| `kotlin` | `runtime_format` default `sora`; view binding requires `package`. |
+| `csharp` | `runtime_format` default `sora`; view binding requires `namespace`. |
+| `java` | `runtime_format` default `sora`; view binding requires `package`; `nullable_annotation` defaults to `SoraNullable`, set an annotation class such as `org.jetbrains.annotations.Nullable`, or set `""` to disable annotations. |
+| `scala` | `runtime_format` default `sora`; view binding requires `package`; `scala_version = "2.12"`, `"2.13"`, or `"3"` default `3`. |
+| `go` | `runtime_format` default `sora`; view binding requires `package`. |
 | `dart` | `runtime_format = "json"`, `"cbor"`, or `"sora-protobuf"`. Set this explicitly; `sora` is not supported for Dart. |
 | `godot` | `runtime_format = "json"`. Set this explicitly; it is the only supported Godot runtime format. |
-| `c` | `runtime_format = "sora"`; `c_standard = "c99"`, `"c11"`, `"c17"`, or `"c23"` default `c11`; `prefix` optional symbol prefix. |
-| `cpp` | `runtime_format = "sora"`; `cpp_standard = "c++11"`, `"c++14"`, `"c++17"`, `"c++20"`, or `"c++23"` default `c++17`; `namespace` optional C++ namespace. |
+| `c` | `runtime_format = "sora"`; `c_standard = "c99"`, `"c11"`, `"c17"`, or `"c23"` default `c11`; view binding requires `prefix`. |
+| `cpp` | `runtime_format = "sora"`; `cpp_standard = "c++11"`, `"c++14"`, `"c++17"`, `"c++20"`, or `"c++23"` default `c++17`; view binding requires `namespace`. |
 | `typescript` | `runtime_format` default `sora`; `enum_repr = "string"` or `"integer"` default `string`. |
 | `javascript` | `runtime_format` default `sora`; `enum_repr = "string"` or `"integer"` default `string`; `emit_dts` boolean default `true`. |
 | `erlang` | `runtime_format` default `sora`; `enum_repr = "atom"` or `"integer"` default `atom`. |
 | `lua` | `runtime_format` default `sora`; `module` optional require/import prefix; `lua_version = "5.1"`, `"5.2"`, `"5.3"`, `"5.4"`, or `"luajit"` default `5.4`; `enum_repr = "string"` or `"integer"` default `string`. |
 | `python` | `runtime_format` default `sora`. |
-| `proto-schema` | No target options. Generates `.proto` schema files instead of a runtime loader. |
+| `proto-schema` | View binding requires `package`. Generates `.proto` schema files instead of a runtime loader. |
 
 Example with several language-specific options:
 
@@ -138,7 +193,6 @@ string_storage = "arc"
 [codegen.cpp]
 runtime_format = "sora"
 cpp_standard = "c++20"
-namespace = "game::config"
 
 [codegen.javascript]
 runtime_format = "json"

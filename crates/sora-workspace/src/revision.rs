@@ -68,9 +68,32 @@ fn collect_schema_files(
         .with_context(|| format!("failed to inspect schema includes in `{}`", path.display()))?;
     files.push(key.clone());
     let parent = key.parent().unwrap_or_else(|| Path::new("."));
+    if let Some(project) = document.project {
+        for view in project.views {
+            collect_schema_dependency(&parent.join(view), visited, files)?;
+        }
+    }
     for include in document.includes {
         collect_schema_files(&parent.join(include), visited, files)?;
     }
+    Ok(())
+}
+
+fn collect_schema_dependency(
+    path: &Path,
+    visited: &mut BTreeSet<PathBuf>,
+    files: &mut Vec<PathBuf>,
+) -> Result<()> {
+    let key = path.canonicalize().with_context(|| {
+        format!(
+            "failed to resolve schema dependency while calculating revision `{}`",
+            path.display()
+        )
+    })?;
+    if !visited.insert(key.clone()) {
+        bail!("duplicate schema dependency `{}`", path.display());
+    }
+    files.push(key);
     Ok(())
 }
 
@@ -164,8 +187,15 @@ fn resolve_path(base: &Path, path: &Path) -> PathBuf {
 
 #[derive(Debug, Deserialize)]
 struct IncludeDocument {
+    project: Option<RevisionProject>,
     #[serde(default)]
     includes: Vec<String>,
+}
+
+#[derive(Debug, Deserialize)]
+struct RevisionProject {
+    #[serde(default)]
+    views: Vec<String>,
 }
 
 #[cfg(test)]
@@ -183,11 +213,17 @@ mod tests {
     fn revisions_change_only_for_the_affected_content_group() {
         let base = temp_dir();
         fs::create_dir_all(base.join("schema")).unwrap();
+        fs::create_dir_all(base.join("views")).unwrap();
         fs::create_dir_all(base.join("data")).unwrap();
         let project = base.join("project.toml");
         fs::write(
             &project,
-            "package = \"demo\"\nincludes = [\"schema/items.toml\"]\n",
+            "project = { id = \"demo\", views = [\"views/default.toml\"] }\ngroups = { common = { default = true } }\nviews = { default = { contract = \"demo/default\", groups = [\"common\"] } }\nincludes = [\"schema/items.toml\"]\n",
+        )
+        .unwrap();
+        fs::write(
+            base.join("views/default.toml"),
+            "name = \"external\"\ncontract = \"demo/external\"\ngroups = [\"common\"]\n",
         )
         .unwrap();
         fs::write(base.join("schema/items.toml"), "enums = []\n").unwrap();

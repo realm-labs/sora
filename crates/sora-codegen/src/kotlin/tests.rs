@@ -173,12 +173,20 @@ fn generates_rust_and_kotlin_files() {
 
 #[test]
 fn kotlin_files_are_written_under_package_path() {
-    let mut ir = example_ir();
-    ir.package = "com.sora.game_config".to_owned();
+    let ir = example_ir();
     let base = temp_dir();
     let kotlin_out = base.join("kotlin");
 
-    KotlinCodeGenerator.generate(&ir, &kotlin_out).unwrap();
+    KotlinCodeGenerator
+        .generate_with_options(
+            &ir,
+            crate::options::PackageCodegenOptions {
+                package: Some("com.sora.game_config".to_owned()),
+                ..Default::default()
+            },
+            &kotlin_out,
+        )
+        .unwrap();
 
     let item = std::fs::read_to_string(kotlin_out.join("com/sora/game_config/Item.kt")).unwrap();
     assert!(item.contains("package com.sora.game_config"));
@@ -189,12 +197,18 @@ fn kotlin_files_are_written_under_package_path() {
 
 #[test]
 fn kotlin_package_path_rejects_invalid_segments() {
-    let mut ir = example_ir();
-    ir.package = "com.sora-game".to_owned();
+    let ir = example_ir();
     let base = temp_dir();
 
     let error = KotlinCodeGenerator
-        .generate(&ir, &base.join("kotlin"))
+        .generate_with_options(
+            &ir,
+            crate::options::PackageCodegenOptions {
+                package: Some("com.sora-game".to_owned()),
+                ..Default::default()
+            },
+            &base.join("kotlin"),
+        )
         .unwrap_err();
 
     assert!(
@@ -693,12 +707,18 @@ fn generate_with_mappings(
     mappings: &TypeMappingRegistry,
     out_dir: &std::path::Path,
 ) {
+    let mut merged = crate::generator::default_test_options(target);
+    if let (serde_json::Value::Object(defaults), serde_json::Value::Object(options)) =
+        (&mut merged, options)
+    {
+        defaults.extend(options.clone());
+    }
     generator
         .generate(
             CodegenContext {
                 target,
                 ir,
-                options,
+                options: &merged,
                 type_mappings: mappings,
             },
             out_dir,
@@ -813,9 +833,12 @@ fn java_supports_export_runtime_formats() {
 fn java_emits_nullable_annotations() {
     let schema: SchemaFile = toml::from_str(
         r#"
-package = "game_config"
+project = { id = "game_config" }
+groups = { common = { default = true } }
+views = { default = { contract = "game_config/default", groups = ["common"] } }
 
 [[tables]]
+id = "item"
 name = "Item"
 mode = "map"
 key = "id"
@@ -921,16 +944,42 @@ fn scala_supports_export_runtime_formats() {
 
 #[test]
 fn generates_csharp_java_and_go_files() {
-    let mut ir = example_ir();
-    ir.package = "com.sora.game_config".to_owned();
+    let ir = example_ir();
     let base = temp_dir();
     let csharp_out = base.join("csharp");
     let java_out = base.join("java");
     let go_out = base.join("go");
 
-    CSharpCodeGenerator.generate(&ir, &csharp_out).unwrap();
-    JavaCodeGenerator.generate(&ir, &java_out).unwrap();
-    GoCodeGenerator.generate(&ir, &go_out).unwrap();
+    CSharpCodeGenerator
+        .generate_with_options(
+            &ir,
+            crate::options::CSharpCodegenOptions {
+                namespace: Some("com.sora.game_config".to_owned()),
+                ..Default::default()
+            },
+            &csharp_out,
+        )
+        .unwrap();
+    JavaCodeGenerator
+        .generate_with_options(
+            &ir,
+            crate::options::JavaCodegenOptions {
+                package: Some("com.sora.game_config".to_owned()),
+                ..Default::default()
+            },
+            &java_out,
+        )
+        .unwrap();
+    GoCodeGenerator
+        .generate_with_options(
+            &ir,
+            crate::options::PackageCodegenOptions {
+                package: Some("com.sora.game_config".to_owned()),
+                ..Default::default()
+            },
+            &go_out,
+        )
+        .unwrap();
 
     let csharp_item = std::fs::read_to_string(csharp_out.join("Item.cs")).unwrap();
     let csharp_config = std::fs::read_to_string(csharp_out.join("SoraConfig.cs")).unwrap();
@@ -1049,7 +1098,9 @@ fn generates_csharp_java_and_go_files() {
 fn example_ir() -> ConfigIr {
     let schema: SchemaFile = toml::from_str(
         r#"
-package = "game_config"
+project = { id = "game_config" }
+groups = { common = { default = true } }
+views = { default = { contract = "game_config/default", groups = ["common"] } }
 
 [[enums]]
 name = "ItemType"
@@ -1066,6 +1117,7 @@ name = "item_id"
 type = "i32"
 
 [[tables]]
+id = "item"
 name = "Item"
 mode = "map"
 key = "id"
@@ -1123,9 +1175,12 @@ fields = ["item_type"]
 fn table_mode_ir() -> ConfigIr {
     let schema: SchemaFile = toml::from_str(
         r#"
-package = "game_config"
+project = { id = "game_config" }
+groups = { common = { default = true } }
+views = { default = { contract = "game_config/default", groups = ["common"] } }
 
 [[tables]]
+id = "item"
 name = "Item"
 mode = "map"
 key = "id"
@@ -1135,6 +1190,7 @@ name = "id"
 type = "i32"
 
 [[tables]]
+id = "settings"
 name = "Settings"
 mode = "singleton"
 
@@ -1143,6 +1199,7 @@ name = "version"
 type = "string"
 
 [[tables]]
+id = "reward"
 name = "Reward"
 mode = "list"
 
@@ -1159,7 +1216,9 @@ type = "i32"
 fn type_mapping_ir() -> ConfigIr {
     let schema: SchemaFile = toml::from_str(
         r#"
-package = "game_config"
+project = { id = "game_config" }
+groups = { common = { default = true } }
+views = { default = { contract = "game_config/default", groups = ["common"] } }
 
 [[structs]]
 name = "Vec3"
@@ -1177,6 +1236,7 @@ name = "z"
 type = "f32"
 
 [[tables]]
+id = "spawn"
 name = "Spawn"
 mode = "list"
 

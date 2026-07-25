@@ -8,6 +8,13 @@ use crate::writer::write_workbook_with_rows;
 
 pub struct ExcelTemplateGenerator;
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ExcelAdditionalSheet {
+    pub file: String,
+    pub sheet: String,
+    pub rows: Vec<Vec<String>>,
+}
+
 impl ExcelTemplateGenerator {
     pub fn generate(&self, ir: &ConfigIr, out_dir: &Path) -> Result<()> {
         self.generate_with_rows(ir, out_dir, |_| Vec::new())
@@ -18,6 +25,16 @@ impl ExcelTemplateGenerator {
         ir: &ConfigIr,
         out_dir: &Path,
         rows_for_table: impl Fn(&TableIr) -> Vec<Vec<String>>,
+    ) -> Result<()> {
+        self.generate_with_rows_and_sheets(ir, out_dir, rows_for_table, &[])
+    }
+
+    pub fn generate_with_rows_and_sheets(
+        &self,
+        ir: &ConfigIr,
+        out_dir: &Path,
+        rows_for_table: impl Fn(&TableIr) -> Vec<Vec<String>>,
+        additional_sheets: &[ExcelAdditionalSheet],
     ) -> Result<()> {
         fs::create_dir_all(out_dir).map_err(|source| SoraError::CreateDir {
             path: out_dir.to_path_buf(),
@@ -39,10 +56,17 @@ impl ExcelTemplateGenerator {
                 .unwrap_or_else(|| format!("{}.xlsx", table.name));
             workbooks.entry(file_name).or_default().push(table);
         }
+        for sheet in additional_sheets {
+            workbooks.entry(sheet.file.clone()).or_default();
+        }
 
         for (file_name, tables) in workbooks {
             let path = out_dir.join(file_name);
-            write_workbook_with_rows(ir, &tables, &path, &rows_for_table)?;
+            let sheets = additional_sheets
+                .iter()
+                .filter(|sheet| path.ends_with(&sheet.file))
+                .collect::<Vec<_>>();
+            write_workbook_with_rows(ir, &tables, &sheets, &path, &rows_for_table)?;
         }
 
         Ok(())
@@ -113,13 +137,16 @@ mod tests {
     fn example_ir() -> ConfigIr {
         let schema: SchemaFile = toml::from_str(
             r#"
-package = "game_config"
+project = { id = "game_config" }
+groups = { common = { default = true } }
+views = { default = { contract = "game_config/default", groups = ["common"] } }
 
 [[enums]]
 name = "ItemType"
 values = [{ id = 0, name = "Weapon" }, { id = 1, name = "Armor" }, { id = 2, name = "Material" }, { id = 3, name = "Consumable" }]
 
 [[tables]]
+id = "item"
 name = "Item"
 mode = "map"
 key = "id"

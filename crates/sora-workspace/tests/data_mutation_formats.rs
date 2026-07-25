@@ -20,9 +20,12 @@ static TEMP_COUNTER: AtomicU64 = AtomicU64::new(0);
 fn map_singleton_and_list_selectors_enforce_identity() {
     let schema: sora_schema::model::SchemaFile = toml::from_str(
         r#"
-package = "selectors"
+project = { id = "selectors" }
+groups = { common = { default = true } }
+views = { default = { contract = "selectors/default", groups = ["common"] } }
 
 [[tables]]
+id = "map_table"
 name = "MapTable"
 mode = "map"
 key = "id"
@@ -35,6 +38,7 @@ name = "name"
 type = "string"
 
 [[tables]]
+id = "singleton_table"
 name = "SingletonTable"
 mode = "singleton"
 source = { file = "singleton.json", format = "json" }
@@ -43,6 +47,7 @@ name = "value"
 type = "string"
 
 [[tables]]
+id = "list_table"
 name = "ListTable"
 mode = "list"
 source = { file = "list.json", format = "json" }
@@ -231,7 +236,9 @@ fn localization_mutation_uses_the_same_preview_apply_contract() {
     fs::create_dir_all(root.join("data")).unwrap();
     fs::write(
         root.join("project.toml"),
-        r#"package = "localization"
+        r#"project = { id = "localization" }
+groups = { common = { default = true } }
+views = { default = { contract = "localization/default", groups = ["common"] } }
 
 [localization]
 locales = ["en", "zh"]
@@ -296,12 +303,18 @@ fn structured_directory_sources_update_and_delete_transactionally() {
     fs::create_dir_all(root.join("data/items")).unwrap();
     fs::write(
         root.join("project.toml"),
-        "package = \"directory\"\nincludes = [\"schema.toml\"]\n\n[build]\ndata_root = \"data\"\n",
+        "project = { id = \"directory\" }\n\
+         groups = { common = { default = true } }\n\
+         views = { default = { contract = \"directory/default\", groups = [\"common\"] } }\n\
+         includes = [\"schema.toml\"]\n\n\
+         [build]\n\
+         data_root = \"data\"\n",
     )
     .unwrap();
     fs::write(
         root.join("schema.toml"),
         r#"[[tables]]
+id = "item"
 name = "Item"
 mode = "map"
 key = "id"
@@ -375,7 +388,12 @@ fn project(format: &str) -> PathBuf {
     fs::create_dir_all(root.join("data")).unwrap();
     fs::write(
         root.join("project.toml"),
-        "package = \"formats\"\nincludes = [\"schema.toml\"]\n\n[build]\ndata_root = \"data\"\n",
+        "project = { id = \"formats\" }\n\
+         groups = { common = { default = true } }\n\
+         views = { default = { contract = \"formats/default\", groups = [\"common\"] } }\n\
+         includes = [\"schema.toml\"]\n\n\
+         [build]\n\
+         data_root = \"data\"\n",
     )
     .unwrap();
     let file = match format {
@@ -392,6 +410,7 @@ fn project(format: &str) -> PathBuf {
         root.join("schema.toml"),
         format!(
             r#"[[tables]]
+id = "item"
 name = "Item"
 mode = "map"
 key = "id"

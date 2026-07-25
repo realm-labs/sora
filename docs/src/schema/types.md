@@ -116,7 +116,7 @@ For TOML/JSON/YAML-style object inputs, a field can be absent from the object. F
 | `range` | numeric fields, `duration`, and collection elements of those types | Inclusive numeric range, written as `[min, max]`. Duration ranges are milliseconds. |
 | `length` | `string`, `list`, `set`, `array`, `map` | Inclusive length range, written as `[min, max]`. |
 | `parser` | cell-based inputs and defaults | Cell parser hint. See [Cell Parsers](parsers.md). |
-| `scope` | all fields | Includes the field only for selected generation/export scopes. Defaults to `all`. |
+| `groups` | all fields | Declared groups that contain the field. Omitted fields inherit the project's default groups. |
 | `from` | table fields only | Optional child-table source for a derived field. |
 
 Defaults are written as strings because they are parsed through the same type-aware conversion path as source data.

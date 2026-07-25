@@ -14,6 +14,7 @@ name = "item_id"
 type = "ref<Item.id>"
 
 [[tables]]
+id = "item"
 name = "Item"
 mode = "map"
 key = "id"
@@ -44,10 +45,12 @@ fn rejects_duplicate_names_and_fields() {
     let duplicate_table = example_ir(
         r#"
 [[tables]]
+id = "item"
 name = "Item"
 mode = "list"
 
 [[tables]]
+id = "item"
 name = "Item"
 mode = "list"
 "#,
@@ -60,6 +63,7 @@ mode = "list"
     let duplicate_field = example_ir(
         r#"
 [[tables]]
+id = "item"
 name = "Item"
 mode = "list"
 
@@ -84,6 +88,7 @@ fn rejects_unknown_type_references() {
     let ir = example_ir(
         r#"
 [[tables]]
+id = "item"
 name = "Item"
 mode = "list"
 
@@ -131,7 +136,9 @@ alias = "Armor"
 #[test]
 fn rejects_duplicate_enum_value_ids() {
     let source = r#"
-package = "game_config"
+project = { id = "game_config" }
+groups = { common = { default = true } }
+views = { default = { contract = "game_config/default", groups = ["common"] } }
 
 [[enums]]
 name = "ItemType"
@@ -151,6 +158,7 @@ fn rejects_invalid_table_key_index_and_ref() {
     let missing_key = example_ir(
         r#"
 [[tables]]
+id = "item"
 name = "Item"
 mode = "map"
 key = "id"
@@ -164,6 +172,7 @@ key = "id"
     let map_without_key = example_ir(
         r#"
 [[tables]]
+id = "item"
 name = "Item"
 mode = "map"
 
@@ -180,6 +189,7 @@ type = "i32"
     let invalid_map_key_type = example_ir(
         r#"
 [[tables]]
+id = "item"
 name = "Item"
 mode = "map"
 key = "weight"
@@ -197,6 +207,7 @@ type = "f32"
     let bad_index = example_ir(
         r#"
 [[tables]]
+id = "item"
 name = "Item"
 mode = "list"
 
@@ -225,6 +236,7 @@ name = "name"
 type = "string"
 
 [[tables]]
+id = "item"
 name = "Item"
 mode = "map"
 key = "id"
@@ -259,6 +271,7 @@ name = "name"
 type = "string"
 
 [[tables]]
+id = "item"
 name = "Item"
 mode = "map"
 key = "id"
@@ -285,6 +298,7 @@ fields = ["tag"]
     let bad_ref = example_ir(
         r#"
 [[tables]]
+id = "item"
 name = "Item"
 mode = "list"
 
@@ -301,6 +315,7 @@ type = "ref<Missing.id>"
     let non_key_ref = example_ir(
         r#"
 [[tables]]
+id = "item"
 name = "Item"
 mode = "map"
 key = "id"
@@ -314,6 +329,7 @@ name = "name"
 type = "string"
 
 [[tables]]
+id = "reward"
 name = "Reward"
 mode = "list"
 
@@ -332,6 +348,7 @@ type = "ref<Item.name>"
     let list_ref_to_primary_key = example_ir(
         r#"
 [[tables]]
+id = "item"
 name = "Item"
 mode = "map"
 key = "id"
@@ -341,6 +358,7 @@ name = "id"
 type = "i32"
 
 [[tables]]
+id = "reward"
 name = "Reward"
 mode = "list"
 
@@ -354,6 +372,7 @@ type = "list<ref<Item.id>>"
     let ref_to_list_table_field = example_ir(
         r#"
 [[tables]]
+id = "reward_source"
 name = "RewardSource"
 mode = "list"
 
@@ -362,6 +381,7 @@ name = "id"
 type = "i32"
 
 [[tables]]
+id = "reward"
 name = "Reward"
 mode = "list"
 
@@ -394,6 +414,7 @@ name = "count"
 type = "i32"
 
 [[tables]]
+id = "item"
 name = "Item"
 mode = "map"
 key = "id"
@@ -403,6 +424,7 @@ name = "id"
 type = "i32"
 
 [[tables]]
+id = "quest"
 name = "Quest"
 mode = "map"
 key = "id"
@@ -417,6 +439,7 @@ type = "list<Reward>"
 from = { table = "QuestReward", parent_key = "id", child_key = "quest_id" }
 
 [[tables]]
+id = "quest_reward"
 name = "QuestReward"
 mode = "list"
 
@@ -453,6 +476,7 @@ name = "quest_id"
 type = "i32"
 
 [[tables]]
+id = "event"
 name = "Event"
 mode = "map"
 key = "id"
@@ -467,6 +491,7 @@ type = "union<EventCondition>"
 from = { table = "EventConditionEntry", parent_key = "id", child_key = "event_id", field = "value" }
 
 [[tables]]
+id = "event_condition_entry"
 name = "EventConditionEntry"
 mode = "list"
 
@@ -488,6 +513,7 @@ fn validates_optional_value_derived_field() {
     let ir = example_ir(
         r#"
 [[tables]]
+id = "item"
 name = "Item"
 mode = "map"
 key = "id"
@@ -502,6 +528,7 @@ type = "optional<string>"
 from = { table = "ItemProfile", parent_key = "id", child_key = "item_id", field = "name" }
 
 [[tables]]
+id = "item_profile"
 name = "ItemProfile"
 mode = "list"
 
@@ -523,6 +550,7 @@ fn rejects_scalar_derived_field_without_from_field() {
     let ir = example_ir(
         r#"
 [[tables]]
+id = "item"
 name = "Item"
 mode = "map"
 key = "id"
@@ -537,6 +565,7 @@ type = "string"
 from = { table = "ItemProfile", parent_key = "id", child_key = "item_id" }
 
 [[tables]]
+id = "item_profile"
 name = "ItemProfile"
 mode = "list"
 
@@ -558,6 +587,7 @@ fn rejects_unknown_derived_source_field() {
     let ir = example_ir(
         r#"
 [[tables]]
+id = "item"
 name = "Item"
 mode = "map"
 key = "id"
@@ -572,6 +602,7 @@ type = "string"
 from = { table = "ItemProfile", parent_key = "id", child_key = "item_id", field = "missing" }
 
 [[tables]]
+id = "item_profile"
 name = "ItemProfile"
 mode = "list"
 
@@ -592,6 +623,7 @@ fn rejects_incompatible_derived_source_field_type() {
     let ir = example_ir(
         r#"
 [[tables]]
+id = "item"
 name = "Item"
 mode = "map"
 key = "id"
@@ -606,6 +638,7 @@ type = "string"
 from = { table = "ItemProfile", parent_key = "id", child_key = "item_id", field = "level" }
 
 [[tables]]
+id = "item_profile"
 name = "ItemProfile"
 mode = "list"
 
@@ -631,6 +664,7 @@ fn rejects_optional_source_for_required_derived_field() {
     let ir = example_ir(
         r#"
 [[tables]]
+id = "item"
 name = "Item"
 mode = "map"
 key = "id"
@@ -645,6 +679,7 @@ type = "string"
 from = { table = "ItemProfile", parent_key = "id", child_key = "item_id", field = "name" }
 
 [[tables]]
+id = "item_profile"
 name = "ItemProfile"
 mode = "list"
 
@@ -688,6 +723,7 @@ name = "buff_id"
 type = "i32"
 
 [[tables]]
+id = "event"
 name = "Event"
 mode = "list"
 
@@ -717,6 +753,7 @@ name = "item_id"
 type = "i32"
 
 [[tables]]
+id = "event"
 name = "Event"
 mode = "list"
 
@@ -787,6 +824,7 @@ name = "value"
 type = "string"
 
 [[tables]]
+id = "event"
 name = "Event"
 mode = "list"
 
@@ -820,6 +858,7 @@ name = "power"
 type = "i32"
 
 [[tables]]
+id = "equipment_set"
 name = "EquipmentSet"
 mode = "list"
 
@@ -845,6 +884,7 @@ name = "power"
 type = "i32"
 
 [[tables]]
+id = "equipment_set"
 name = "EquipmentSet"
 mode = "list"
 
@@ -895,7 +935,9 @@ parser = { kind = "columns" }
 fn example_ir(extra: &str) -> ConfigIr {
     let source = format!(
         r#"
-package = "game_config"
+project = {{ id = "game_config" }}
+groups = {{ common = {{ default = true }} }}
+views = {{ default = {{ contract = "game_config/default", groups = ["common"] }} }}
 
 [[enums]]
 name = "ItemType"

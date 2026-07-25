@@ -6,7 +6,7 @@ use sora_config_format::load_document;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ProjectManifest {
-    pub package: String,
+    pub project: ManifestProject,
     #[serde(default)]
     pub includes: Vec<String>,
     #[serde(default)]
@@ -15,6 +15,13 @@ pub struct ProjectManifest {
     pub type_mappings: ScriptConfig,
     #[serde(default)]
     pub build: BuildConfig,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ManifestProject {
+    pub id: String,
+    #[serde(default)]
+    pub views: Vec<String>,
 }
 
 impl ProjectManifest {
@@ -34,7 +41,7 @@ pub struct ScriptConfig {
 pub struct BuildConfig {
     pub default_source_format: Option<SourceFormat>,
     pub data_root: Option<PathBuf>,
-    pub scope: Option<String>,
+    pub view: Option<String>,
     pub schema_lock: Option<PathBuf>,
     pub excel_templates: Option<PathBuf>,
 
@@ -58,7 +65,7 @@ impl BuildConfig {
 pub struct BuildCodegen {
     pub target: String,
     pub out: PathBuf,
-    pub scope: Option<String>,
+    pub view: Option<String>,
     #[serde(default)]
     pub format: CodeFormatMode,
 }
@@ -67,7 +74,7 @@ pub struct BuildCodegen {
 pub struct BuildExport {
     pub format: String,
     pub out: PathBuf,
-    pub scope: Option<String>,
+    pub view: Option<String>,
     pub locale: Option<String>,
     #[serde(default)]
     pub compression: ExportCompression,

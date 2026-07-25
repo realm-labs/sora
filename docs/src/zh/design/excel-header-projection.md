@@ -17,10 +17,10 @@ Sora 通过从 schema 生成工作簿结构来避免这些问题。
 
 生成行包含：
 
-- 表元数据：表名、mode、key、scope 和 schema hash；
+- 表元数据：表名、mode、key、groups 和 schema hash；
 - 稳定字段名；
 - 类型提示；
-- scope 提示；
+- group 提示；
 - validation 和 parser rule；
 - 给编辑者看的注释。
 

@@ -16,14 +16,17 @@ Includes are parsed by their own file extension, so a YAML project can include T
 ## TOML
 
 ```toml
-package = "game_config"
 includes = ["schema/items.toml"]
+project = { id = "game_config" }
+groups = { common = { default = true } }
+views = { default = { contract = "game_config/default", groups = ["common"] } }
 
 [[enums]]
 name = "ItemType"
 values = [{ id = 0, name = "Weapon" }, { id = 1, name = "Armor" }]
 
 [[tables]]
+id = "item"
 name = "Item"
 mode = "map"
 key = "id"
@@ -36,7 +39,9 @@ type = "i32"
 ## YAML
 
 ```yaml
-package: game_config
+project: { id: game_config }
+groups: { common: { default: true } }
+views: { default: { contract: game_config/default, groups: [common] } }
 includes:
   - schema/items.yaml
 
@@ -45,7 +50,8 @@ enums:
     values: [{ id: 0, name: Weapon }, { id: 1, name: Armor }]
 
 tables:
-  - name: Item
+  - id: item
+    name: Item
     mode: map
     key: id
     fields:
@@ -57,13 +63,16 @@ tables:
 
 ```json
 {
-  "package": "game_config",
+  "project": { "id": "game_config" },
+  "groups": { "common": { "default": true } },
+  "views": { "default": { "contract": "game_config/default", "groups": ["common"] } },
   "includes": ["schema/items.json"],
   "enums": [
     { "name": "ItemType", "values": [{ "id": 0, "name": "Weapon" }, { "id": 1, "name": "Armor" }] }
   ],
   "tables": [
     {
+      "id": "item",
       "name": "Item",
       "mode": "map",
       "key": "id",
@@ -77,11 +86,13 @@ tables:
 
 ## Lua
 
-Lua schema files must return one table. The returned table uses the same field names as the TOML/YAML/JSON shapes. Lua schema loading is data-oriented; `package`, `io`, `os`, and `debug` are not available.
+Lua schema files must return one table. The returned table uses the same field names as the TOML/YAML/JSON shapes. Lua schema loading is data-oriented; `io`, `os`, and `debug` are not available.
 
 ```lua
 return {
-  package = "game_config",
+  project = { id = "game_config" },
+  groups = { common = { default = true } },
+  views = { default = { contract = "game_config/default", groups = { "common" } } },
   includes = { "schema/items.lua" },
 
   enums = {
@@ -90,6 +101,7 @@ return {
 
   tables = {
     {
+      id = "item",
       name = "Item",
       mode = "map",
       key = "id",
@@ -106,7 +118,9 @@ return {
 The project file can also use YAML, JSON, or Lua for `build`:
 
 ```yaml
-package: game_config
+project: { id: game_config }
+groups: { common: { default: true } }
+views: { default: { contract: game_config/default, groups: [common] } }
 includes:
   - schema/items.yaml
 
@@ -126,7 +140,9 @@ build:
 
 ```json
 {
-  "package": "game_config",
+  "project": { "id": "game_config" },
+  "groups": { "common": { "default": true } },
+  "views": { "default": { "contract": "game_config/default", "groups": ["common"] } },
   "includes": ["schema/items.json"],
   "build": {
     "default_source_format": "xlsx",
@@ -145,7 +161,9 @@ build:
 
 ```lua
 return {
-  package = "game_config",
+  project = { id = "game_config" },
+  groups = { common = { default = true } },
+  views = { default = { contract = "game_config/default", groups = { "common" } } },
   includes = { "schema/items.lua" },
   build = {
     default_source_format = "xlsx",

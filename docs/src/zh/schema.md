@@ -3,7 +3,9 @@
 schema module 是被项目清单 include 的 TOML、YAML、JSON 或 Lua 文件。
 
 ```toml
-package = "game_config"
+project = { id = "game_config" }
+groups = { common = { default = true } }
+views = { default = { contract = "game_config/default", groups = ["common"] } }
 includes = ["schema/items.toml", "schema/skills.toml"]
 ```
 
@@ -55,6 +57,7 @@ type = "ref<Item.id>"
 
 ```toml
 [[tables]]
+id = "item"
 name = "Item"
 mode = "map"
 key = "id"

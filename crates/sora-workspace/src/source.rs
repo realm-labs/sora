@@ -463,7 +463,7 @@ mod tests {
     };
 
     use sora_data::model::{RowData, Value};
-    use sora_ir::model::{FieldIr, ScopeIr, TableModeIr, TableSourceIr, TypeIr};
+    use sora_ir::model::{FieldIr, GroupSetIr, TableModeIr, TableSourceIr, TypeIr};
 
     use super::*;
 
@@ -474,14 +474,20 @@ mod tests {
         let mut registry = DataSourceRegistry::new();
         registry.register(FakeSourceLoader);
         let ir = ConfigIr {
-            package: "game".to_owned(),
+            project_id: "game".to_owned(),
+            contract_id: "game/default".to_owned(),
+            view: None,
+            group_defaults: Default::default(),
+            views: Default::default(),
             localization: None,
             enums: Vec::new(),
             structs: Vec::new(),
             unions: Vec::new(),
             tables: vec![TableIr {
+                id: "item".to_owned(),
                 name: "Item".to_owned(),
-                scope: ScopeIr::default(),
+                canonical_name: "Item".to_owned(),
+                groups: GroupSetIr::default(),
                 mode: TableModeIr::Map,
                 key: Some("id".to_owned()),
                 source: Some(TableSourceIr {
@@ -492,7 +498,7 @@ mod tests {
                 fields: vec![FieldIr {
                     name: "id".to_owned(),
                     ty: TypeIr::I32,
-                    scope: ScopeIr::default(),
+                    groups: GroupSetIr::default(),
                     key: true,
                     comment: None,
                     default: None,
@@ -579,14 +585,20 @@ mod tests {
 
     fn item_ir(file: &str, format: Option<&str>) -> ConfigIr {
         ConfigIr {
-            package: "game".to_owned(),
+            project_id: "game".to_owned(),
+            contract_id: "game/default".to_owned(),
+            view: None,
+            group_defaults: Default::default(),
+            views: Default::default(),
             localization: None,
             enums: Vec::new(),
             structs: Vec::new(),
             unions: Vec::new(),
             tables: vec![TableIr {
+                id: "item".to_owned(),
                 name: "Item".to_owned(),
-                scope: ScopeIr::default(),
+                canonical_name: "Item".to_owned(),
+                groups: GroupSetIr::default(),
                 mode: TableModeIr::Map,
                 key: Some("id".to_owned()),
                 source: Some(TableSourceIr {
@@ -598,7 +610,7 @@ mod tests {
                     FieldIr {
                         name: "id".to_owned(),
                         ty: TypeIr::I32,
-                        scope: ScopeIr::default(),
+                        groups: GroupSetIr::default(),
                         key: true,
                         comment: None,
                         default: None,
@@ -610,7 +622,7 @@ mod tests {
                     FieldIr {
                         name: "name".to_owned(),
                         ty: TypeIr::String,
-                        scope: ScopeIr::default(),
+                        groups: GroupSetIr::default(),
                         key: false,
                         comment: None,
                         default: None,

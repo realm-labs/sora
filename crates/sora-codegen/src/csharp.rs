@@ -12,7 +12,7 @@ use crate::{
         BaseEnumValue, BaseField, BaseIndex, BaseModel, BaseRecord, BaseTable, BaseUnion,
         BaseUnionVariant, build_base_model,
     },
-    options::{LanguageCodegenOptions, RuntimeFormat},
+    options::{CSharpCodegenOptions, RuntimeFormat, required_binding},
     render::{ensure_dir, render_template, write_file},
     type_mapping::{TypeMapping, TypeMappingContext, TypeMappingRegistry},
 };
@@ -23,10 +23,11 @@ crate::impl_test_codegen_generate!(CSharpCodeGenerator, "csharp");
 impl CodeGenerator for CSharpCodeGenerator {
     fn generate(&self, context: CodegenContext<'_>, out_dir: &Path) -> Result<()> {
         let ir = context.ir;
-        let options = context.options::<LanguageCodegenOptions>()?;
+        let options = context.options::<CSharpCodegenOptions>()?;
         ensure_dir(out_dir)?;
         let mapper = CSharpTypeMapper::new(context.target, ir, context.type_mappings);
-        let model = CSharpModel::from_base_model(ir, build_base_model(ir)?, &mapper);
+        let mut model = CSharpModel::from_base_model(ir, build_base_model(ir)?, &mapper);
+        model.package = required_binding("csharp", "namespace", options.namespace)?;
         let runtime_format = runtime_format_name(options.runtime_format);
 
         for item in &model.enums {

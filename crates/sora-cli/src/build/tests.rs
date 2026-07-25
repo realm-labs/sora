@@ -17,7 +17,7 @@ fn build_command_generates_configured_outputs() {
             project: project.clone(),
             default_source_format: None,
             data_root: None,
-            scope: None,
+            view: None,
             target: Vec::new(),
             clean: false,
         },
@@ -70,7 +70,7 @@ fn build_command_can_filter_codegen_targets() {
             project: project.clone(),
             default_source_format: None,
             data_root: None,
-            scope: None,
+            view: None,
             target: vec!["rs".to_owned()],
             clean: true,
         },
@@ -95,7 +95,9 @@ fn build_command_accepts_yaml_project_manifest() {
     fs::write(
         &project,
         r#"
-package: game_config
+project: { id: game_config }
+groups: { common: { default: true } }
+views: { default: { contract: game_config/default, groups: [common] } }
 includes:
   - schema/items.yaml
 build:
@@ -111,7 +113,8 @@ enums:
   - name: ItemType
     values: [{ id: 0, name: Weapon }, { id: 1, name: Armor }]
 tables:
-  - name: Item
+  - id: item
+    name: Item
     mode: map
     key: id
     source:
@@ -130,7 +133,7 @@ tables:
             project: project.clone(),
             default_source_format: None,
             data_root: None,
-            scope: None,
+            view: None,
             target: Vec::new(),
             clean: false,
         },
@@ -154,7 +157,11 @@ fn build_command_accepts_json_project_manifest() {
         &project,
         r#"
 {
-  "package": "game_config",
+  "project": { "id": "game_config" },
+  "groups": { "common": { "default": true } },
+  "views": {
+    "default": { "contract": "game_config/default", "groups": ["common"] }
+  },
   "includes": ["schema/items.json"],
   "build": {
     "schema_lock": "generated/schema.lock",
@@ -173,6 +180,7 @@ fn build_command_accepts_json_project_manifest() {
   ],
   "tables": [
     {
+      "id": "item",
       "name": "Item",
       "mode": "map",
       "key": "id",
@@ -193,7 +201,7 @@ fn build_command_accepts_json_project_manifest() {
             project: project.clone(),
             default_source_format: None,
             data_root: None,
-            scope: None,
+            view: None,
             target: Vec::new(),
             clean: false,
         },
@@ -217,7 +225,11 @@ fn build_command_accepts_lua_project_manifest() {
         &project,
         r#"
 return {
-  package = "game_config",
+  project = { id = "game_config" },
+  groups = { common = { default = true } },
+  views = {
+    default = { contract = "game_config/default", groups = { "common" } },
+  },
   includes = { "schema/items.lua" },
   build = {
     schema_lock = "generated/schema.lock",
@@ -236,6 +248,7 @@ return {
   },
   tables = {
     {
+      id = "item",
       name = "Item",
       mode = "map",
       key = "id",
@@ -256,7 +269,7 @@ return {
             project: project.clone(),
             default_source_format: None,
             data_root: None,
-            scope: None,
+            view: None,
             target: Vec::new(),
             clean: false,
         },
@@ -289,7 +302,7 @@ out = "generated/config.sora"
             project: project.clone(),
             default_source_format: None,
             data_root: None,
-            scope: None,
+            view: None,
             target: vec!["rust".to_owned()],
             clean: false,
         },
@@ -323,7 +336,7 @@ runtime_format = "sora""#,
             project: project.clone(),
             default_source_format: None,
             data_root: None,
-            scope: None,
+            view: None,
             target: vec!["dart".to_owned()],
             clean: false,
         },
@@ -350,8 +363,28 @@ fn write_project(base: &Path) -> PathBuf {
     fs::write(
         &project,
         r#"
-package = "game_config"
+project = { id = "game_config" }
+groups = { common = { default = true } }
 includes = ["schema/items.toml"]
+
+[views.default]
+contract = "game_config/default"
+groups = ["common"]
+
+[views.default.bindings.kotlin]
+package = "game_config"
+
+[views.default.bindings.scala]
+package = "game_config"
+
+[views.default.bindings.c]
+prefix = "sora"
+
+[views.default.bindings.cpp]
+namespace = "sora"
+
+[views.default.bindings.proto-schema]
+package = "game_config"
 
 [build]
 default_source_format = "toml"
@@ -454,6 +487,7 @@ name = "ItemType"
 values = [{ id = 0, name = "Weapon" }, { id = 1, name = "Armor" }]
 
 [[tables]]
+id = "item"
 name = "Item"
 mode = "map"
 key = "id"
