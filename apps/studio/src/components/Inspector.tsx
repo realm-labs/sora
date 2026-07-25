@@ -187,8 +187,32 @@ export function Inspector({
         </section>
       )}
 
-      <section className="detail-section">
-        <h3>{t.metadata}</h3>
+      <section className="detail-section identity-section">
+        <h3>{t.identity}</h3>
+        <dl className="property-grid">
+          <div>
+            <dt>{t.stableId}</dt>
+            <dd>
+              <code>{node.metadata.id ?? node.id}</code>
+            </dd>
+          </div>
+          <div>
+            <dt>{t.canonicalName}</dt>
+            <dd>
+              <code>{node.metadata.canonical_name ?? node.name}</code>
+            </dd>
+          </div>
+          <div>
+            <dt>{t.schemaFile}</dt>
+            <dd>
+              <code>{node.source}</code>
+            </dd>
+          </div>
+        </dl>
+      </section>
+
+      <section className="detail-section configuration-section">
+        <h3>{t.configuration}</h3>
         <NodeSettingsEditor
           draft={settingsDraft}
           language={language}

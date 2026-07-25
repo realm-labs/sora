@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState, type PointerEvent as ReactPointerEvent } from "react";
 import { type NodeChange, type NodeMouseHandler } from "@xyflow/react";
-import { AlertTriangle, CircleDot, Eye, X } from "lucide-react";
+import { AlertTriangle, CircleDot, Eye, PanelRight, X } from "lucide-react";
 
 import { GraphCanvas } from "./components/GraphCanvas";
 import { Inspector } from "./components/Inspector";
@@ -67,6 +67,9 @@ export function App() {
   const [previewing, setPreviewing] = useState(false);
   const [preview, setPreview] = useState<StudioPreviewResponse | null>(null);
   const [activeView, setActiveView] = useState<string | null>(null);
+  const [noticeVisible, setNoticeVisible] = useState(false);
+  const [inspectorOpen, setInspectorOpen] = useState(true);
+  const [diagnosticsOpen, setDiagnosticsOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [selectionHistory, setSelectionHistory] = useState<{ items: string[]; index: number }>({
@@ -92,6 +95,7 @@ export function App() {
       const queryString = view ? `?view=${encodeURIComponent(view)}` : "";
       const next: StudioResponse = await fetch(`/api/schema${queryString}`).then((res) => res.json());
       setResponse(next);
+      setNoticeVisible(true);
       setEditableSchema(next.schema ? structuredClone(next.schema) : null);
       setDirty(false);
       const nextSelection =
@@ -122,6 +126,12 @@ export function App() {
   useEffect(() => {
     void load();
   }, []);
+
+  useEffect(() => {
+    if (!response?.ok || !noticeVisible) return;
+    const timeout = window.setTimeout(() => setNoticeVisible(false), 2400);
+    return () => window.clearTimeout(timeout);
+  }, [noticeVisible, response?.ok]);
 
   useEffect(() => {
     try {
@@ -160,6 +170,11 @@ export function App() {
     [backendValidationIssues, localValidationIssues]
   );
   const nodeIssueCounts = useMemo(() => issueCountsByNode(validationIssues), [validationIssues]);
+
+  useEffect(() => {
+    if (validationIssues.length === 0) setDiagnosticsOpen(false);
+  }, [validationIssues.length]);
+
   const visibleNodes = useMemo(() => filterVisibleNodes(schema, query), [query, schema]);
   const selected = useMemo(() => {
     if (!schema) return null;
@@ -519,6 +534,35 @@ export function App() {
     setSelectedId(selectionHistory.items[index]);
   }
 
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement | null;
+      const editing =
+        target?.matches("input, textarea, select, [contenteditable='true']") ?? false;
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
+        event.preventDefault();
+        document.querySelector<HTMLInputElement>("[data-studio-search]")?.focus();
+        return;
+      }
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "s") {
+        event.preventDefault();
+        if (dirty && !saving && !previewing && localValidationIssues.length === 0) {
+          void previewLocalChanges();
+        }
+        return;
+      }
+      if (event.key === "Escape" && preview) {
+        setPreview(null);
+        return;
+      }
+      if (!editing && event.key.toLowerCase() === "f") {
+        setLayoutRevision((value) => value + 1);
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [dirty, localValidationIssues.length, preview, previewing, saving, schema, response?.revision]);
+
   return (
     <main
       className="studio-shell"
@@ -578,12 +622,14 @@ export function App() {
       />
 
       <section className="canvas-panel">
-        {response?.diagnostics?.length ? (
+        {noticeVisible && response?.diagnostics?.length ? (
           <div className={response.ok ? "workspace-notice ok" : "workspace-notice error"}>
             {response.ok ? <CircleDot size={16} /> : <AlertTriangle size={16} />}
             <span>{response.ok ? t.schemaLoaded : response.diagnostics[0].message}</span>
           </div>
         ) : null}
+
+        {loading ? <div className="workspace-loading">{t.loading}</div> : null}
 
         {schema ? (
           <GraphCanvas
@@ -616,7 +662,15 @@ export function App() {
         title={t.resizeRightPanel}
       />
 
-      <aside className={readOnly ? "inspector read-only" : "inspector"}>
+      <aside
+        className={[
+          "inspector",
+          readOnly ? "read-only" : "",
+          inspectorOpen ? "" : "collapsed"
+        ]
+          .filter(Boolean)
+          .join(" ")}
+      >
         {readOnly ? (
           <div className="read-only-banner">
             <Eye size={13} />
@@ -653,13 +707,30 @@ export function App() {
         )}
       </aside>
 
+      <button
+        aria-label={t.toggleInspector}
+        className="inspector-toggle icon-button icon-only"
+        onClick={() => setInspectorOpen((open) => !open)}
+        title={t.toggleInspector}
+        type="button"
+      >
+        <PanelRight size={15} />
+      </button>
+
       <footer className="statusbar">
-        <span className={validationIssues.length > 0 ? "status-health issue" : "status-health valid"}>
+        <button
+          aria-expanded={diagnosticsOpen}
+          className={validationIssues.length > 0 ? "status-health issue" : "status-health valid"}
+          disabled={validationIssues.length === 0}
+          onClick={() => setDiagnosticsOpen((open) => !open)}
+          title={t.diagnostics}
+          type="button"
+        >
           <CircleDot size={11} />
           {validationIssues.length > 0
             ? `${validationIssues.length} ${t.issues}`
             : t.valid}
-        </span>
+        </button>
         <strong className="status-view">{activeView ?? t.canonical}</strong>
         {contractId ? <code title={contractId}>{contractId}</code> : null}
         <span>
@@ -679,6 +750,46 @@ export function App() {
           </code>
         ) : null}
       </footer>
+
+      {diagnosticsOpen && validationIssues.length > 0 ? (
+        <section aria-label={t.diagnostics} className="diagnostics-drawer">
+          <header>
+            <h3>
+              <AlertTriangle size={14} />
+              {t.diagnostics}
+              <span>{validationIssues.length}</span>
+            </h3>
+            <button
+              aria-label={t.close}
+              className="icon-button icon-only"
+              onClick={() => setDiagnosticsOpen(false)}
+              title={t.close}
+              type="button"
+            >
+              <X size={14} />
+            </button>
+          </header>
+          <ol>
+            {validationIssues.map((issue) => (
+              <li key={issue.id}>
+                <button
+                  onClick={() => {
+                    if (issue.targetId) {
+                      navigateToNode(issue.targetId);
+                      setInspectorOpen(true);
+                    }
+                    setDiagnosticsOpen(false);
+                  }}
+                  type="button"
+                >
+                  <span>{issue.message}</span>
+                  {issue.targetId ? <code>{issue.targetId}</code> : null}
+                </button>
+              </li>
+            ))}
+          </ol>
+        </section>
+      ) : null}
 
       {preview && (
         <div className="modal-backdrop" role="presentation">

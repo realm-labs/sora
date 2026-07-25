@@ -87,6 +87,7 @@ export function Sidebar({
         <label className="search">
           <Search size={16} />
           <input
+            data-studio-search
             value={query}
             onChange={(event) => setQuery(event.target.value)}
             placeholder={t.searchSchema}

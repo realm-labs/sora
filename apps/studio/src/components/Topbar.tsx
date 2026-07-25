@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type MouseEvent } from "react";
 import {
   ChevronLeft,
   ChevronRight,
@@ -76,6 +76,10 @@ export function Topbar({
     const clean = projectIdDraft.trim();
     if (clean && clean !== schema?.project_id) updateProjectId(clean);
     else setProjectIdDraft(schema?.project_id ?? "");
+  };
+  const runMenuAction = (event: MouseEvent<HTMLButtonElement>, action: () => void) => {
+    action();
+    event.currentTarget.closest("details")?.removeAttribute("open");
   };
   const projectFile = project.split(/[\\/]/).pop() || t.noProjectLoaded;
 
@@ -188,15 +192,19 @@ export function Topbar({
             </label>
           ) : null}
           <div className="menu-separator" />
-          <button onClick={() => setLanguage(language === "en" ? "zh" : "en")}>
+          <button
+            onClick={(event) =>
+              runMenuAction(event, () => setLanguage(language === "en" ? "zh" : "en"))
+            }
+          >
             <Languages size={15} />
             {language === "en" ? "中文" : "English"}
           </button>
-          <button onClick={toggleTheme}>
+          <button onClick={(event) => runMenuAction(event, toggleTheme)}>
             {theme === "dark" ? <Sun size={15} /> : <Moon size={15} />}
             {theme === "dark" ? t.light : t.dark}
           </button>
-          <button onClick={refresh} disabled={loading}>
+          <button onClick={(event) => runMenuAction(event, refresh)} disabled={loading}>
             <RefreshCw size={15} />
             {t.refresh}
           </button>
