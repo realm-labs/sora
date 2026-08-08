@@ -84,6 +84,7 @@ type CancellationProbe = dyn Fn() -> bool + Send + Sync;
 #[derive(Clone, Default)]
 pub struct BuildControl {
     cancelled: Arc<AtomicBool>,
+    cancellation_observed: Arc<AtomicBool>,
     cancellation_probe: Option<Arc<CancellationProbe>>,
     progress: Option<Arc<ProgressCallback>>,
 }
@@ -93,6 +94,10 @@ impl std::fmt::Debug for BuildControl {
         formatter
             .debug_struct("BuildControl")
             .field("cancelled", &self.cancelled.load(Ordering::Acquire))
+            .field(
+                "cancellation_observed",
+                &self.cancellation_observed.load(Ordering::Acquire),
+            )
             .field("has_cancellation_probe", &self.cancellation_probe.is_some())
             .field("has_progress_callback", &self.progress.is_some())
             .finish()
@@ -129,8 +134,14 @@ impl BuildControl {
                 .is_some_and(|probe| probe())
     }
 
+    /// Returns whether the build stopped at a cooperative cancellation checkpoint.
+    pub fn cancellation_observed(&self) -> bool {
+        self.cancellation_observed.load(Ordering::Acquire)
+    }
+
     fn checkpoint(&self, phase: BuildPhase) -> Result<()> {
         if self.is_cancelled() {
+            self.cancellation_observed.store(true, Ordering::Release);
             return Err(
                 sora_diagnostics::SoraError::OperationCancelled { operation: "build" }.into(),
             );
@@ -143,6 +154,7 @@ impl BuildControl {
             });
         }
         if self.is_cancelled() {
+            self.cancellation_observed.store(true, Ordering::Release);
             return Err(
                 sora_diagnostics::SoraError::OperationCancelled { operation: "build" }.into(),
             );
@@ -977,6 +989,7 @@ mod tests {
 
         assert!(control.checkpoint(BuildPhase::PlanOutputs).is_ok());
         let error = control.checkpoint(BuildPhase::Generate).unwrap_err();
+        assert!(control.cancellation_observed());
         assert!(
             error
                 .downcast_ref::<sora_diagnostics::SoraError>()

@@ -14,6 +14,7 @@ use crate::{
     SoraMcpServer,
     artifact_store::ArtifactDescriptor,
     dto::{ArtifactLink, ToolEnvelope, tool_error},
+    task_store::TaskExecutionState,
 };
 
 #[tool_router(router = build_tool_router, vis = "pub(crate)")]
@@ -236,6 +237,7 @@ impl SoraMcpServer {
             .on_progress(move |progress| {
                 let _ = progress_tx.send(progress);
             });
+        let worker_control = control.clone();
         let progress_token = context.meta.get_progress_token();
         let progress_peer = context.peer.clone();
         let progress_task = tokio::spawn(async move {
@@ -282,7 +284,7 @@ impl SoraMcpServer {
                     clean: input.clean,
                 },
                 &runtime,
-                &control,
+                &worker_control,
             )?;
             let descriptors =
                 artifact_store.register_build(&owner, &worker_id, &project_root, &report)?;
@@ -290,7 +292,14 @@ impl SoraMcpServer {
             Ok::<_, anyhow::Error>((output, descriptors))
         })
         .await;
+        let cancellation_observed = control.cancellation_observed();
+        drop(control);
         let _ = progress_task.await;
+        if cancellation_observed
+            && let Some(execution) = context.extensions.get::<TaskExecutionState>()
+        {
+            execution.mark_cancellation_observed();
+        }
 
         match build_result {
             Ok(Ok((report, descriptors))) => {

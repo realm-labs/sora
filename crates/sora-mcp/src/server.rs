@@ -23,7 +23,9 @@ use rmcp::{
 use sora_workspace::{ProjectId, WorkspaceService};
 
 use crate::{
-    SERVER_NAME, TARGET_PROTOCOL_VERSION, artifact_store::ArtifactStore, task_store::TaskStore,
+    SERVER_NAME, TARGET_PROTOCOL_VERSION,
+    artifact_store::ArtifactStore,
+    task_store::{TaskExecutionState, TaskStore},
 };
 
 /// MCP protocol adapter backed by the shared Sora workspace service.
@@ -211,6 +213,8 @@ impl ServerHandler for SoraMcpServer {
             .create(&self.authorization_context, project_id, ttl)?;
         let mut task_context = context.clone();
         task_context.ct = created.cancellation;
+        let execution = TaskExecutionState::default();
+        task_context.extensions.insert(execution.clone());
         let task_id = created.task.task_id.clone();
         let owner = self.authorization_context.clone();
         let server = self.clone();
@@ -225,7 +229,10 @@ impl ServerHandler for SoraMcpServer {
                     )
                 })
             });
-            if let Ok(task) = server.tasks.finish(&owner, &task_id, serialized) {
+            if let Ok(task) = server
+                .tasks
+                .finish(&owner, &task_id, serialized, &execution)
+            {
                 let _ = peer
                     .send_notification(rmcp::model::ServerNotification::TaskStatusNotification(
                         TaskStatusNotification::new(TaskStatusNotificationParam::new(task)),

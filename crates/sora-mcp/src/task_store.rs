@@ -1,6 +1,9 @@
 use std::{
     collections::BTreeMap,
-    sync::Mutex,
+    sync::{
+        Arc, Mutex,
+        atomic::{AtomicBool, Ordering},
+    },
     time::{Duration, Instant},
 };
 
@@ -45,6 +48,26 @@ struct TaskRecord {
 pub(crate) struct CreatedTask {
     pub task: Task,
     pub cancellation: CancellationToken,
+}
+
+/// Records whether a task worker actually stopped at a cancellation checkpoint.
+///
+/// A cancelled token only means that cancellation was requested. The worker may
+/// already have passed its commit point, so task finalization must not infer a
+/// cancelled outcome from the token alone.
+#[derive(Debug, Clone, Default)]
+pub(crate) struct TaskExecutionState {
+    cancellation_observed: Arc<AtomicBool>,
+}
+
+impl TaskExecutionState {
+    pub(crate) fn mark_cancellation_observed(&self) {
+        self.cancellation_observed.store(true, Ordering::Release);
+    }
+
+    fn cancellation_observed(&self) -> bool {
+        self.cancellation_observed.load(Ordering::Acquire)
+    }
 }
 
 impl Default for TaskStore {
@@ -120,6 +143,7 @@ impl TaskStore {
         owner: &str,
         task_id: &str,
         result: Result<Value, McpError>,
+        execution: &TaskExecutionState,
     ) -> Result<Task, McpError> {
         let mut state = self.lock()?;
         let record = owned_record_mut(&mut state, owner, task_id)?;
@@ -131,7 +155,7 @@ impl TaskStore {
             Err(_) => true,
         };
         record.result = Some(result);
-        record.task.status = if record.cancellation.is_cancelled() && result_is_error {
+        record.task.status = if execution.cancellation_observed() && result_is_error {
             TaskStatus::Cancelled
         } else if result_is_error {
             TaskStatus::Failed
@@ -356,7 +380,7 @@ mod tests {
     }
 
     #[test]
-    fn cancellation_becomes_terminal_after_failed_work_stops() {
+    fn cancellation_request_does_not_mask_an_unrelated_failure() {
         let store = TaskStore::default();
         let created = store.create("owner", None, None).expect("create task");
         let cancelling = store
@@ -375,6 +399,29 @@ mod tests {
                 "owner",
                 &created.task.task_id,
                 Ok(serde_json::json!({"isError": true})),
+                &TaskExecutionState::default(),
+            )
+            .expect("finish task");
+
+        assert_eq!(task.status, TaskStatus::Failed);
+    }
+
+    #[test]
+    fn observed_cancellation_becomes_cancelled_after_work_stops() {
+        let store = TaskStore::default();
+        let created = store.create("owner", None, None).expect("create task");
+        store
+            .cancel("owner", &created.task.task_id)
+            .expect("cancel task");
+        let execution = TaskExecutionState::default();
+        execution.mark_cancellation_observed();
+
+        let task = store
+            .finish(
+                "owner",
+                &created.task.task_id,
+                Ok(serde_json::json!({"isError": true})),
+                &execution,
             )
             .expect("finish task");
 
@@ -394,6 +441,7 @@ mod tests {
                 "owner",
                 &created.task.task_id,
                 Ok(serde_json::json!({"isError": false})),
+                &TaskExecutionState::default(),
             )
             .expect("finish task");
 
