@@ -15,24 +15,24 @@ static func decode(value: Variant) -> DropEntry:
 		return null
 	var data: Dictionary = value
 	var out := DropEntry.new()
-	out.group_id = int(SoraRuntime.read_field(data, "group_id", 0))
-	out.seq = int(SoraRuntime.read_field(data, "seq", 0))
-	out.item_id = int(SoraRuntime.read_field(data, "item_id", 0))
-	out.count = int(SoraRuntime.read_field(data, "count", 0))
+	out.group_id = SoraRuntime.decode_int(SoraRuntime.read_field(data, "group_id", 0))
+	out.seq = SoraRuntime.decode_int(SoraRuntime.read_field(data, "seq", 0))
+	out.item_id = SoraRuntime.decode_int(SoraRuntime.read_field(data, "item_id", 0))
+	out.count = SoraRuntime.decode_int(SoraRuntime.read_field(data, "count", 0))
 	return out
 
 class DropEntryTable:
 	extends SoraRuntime.SoraConfigTable
 
 	const TABLE_NAME := "DropEntry"
-	var rows: Array = []
+	var rows: Array[DropEntry] = []
 
 	static func decode(rows: Array) -> DropEntryTable:
 		var table := DropEntryTable.new()
 		table.name = TABLE_NAME
 		table.mode = "list"
 		table.key = null
-		table.rows = rows
+		table.rows.assign(rows)
 		return table
 
 	func length() -> int:

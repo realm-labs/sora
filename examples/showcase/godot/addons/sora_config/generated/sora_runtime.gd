@@ -3,6 +3,8 @@
 class_name SoraRuntime
 extends RefCounted
 
+const MAX_SAFE_JSON_INTEGER := "9007199254740991"
+
 class SoraConfigTable:
 	var name: String = ""
 	var mode: String = ""
@@ -26,11 +28,84 @@ static func report_error(message: String) -> void:
 	push_error("Sora: " + message)
 
 static func parse_json_text(text: String) -> Dictionary:
-	var value := JSON.parse_string(text)
+	var json := JSON.new()
+	var normalized_text := _quote_unsafe_json_integers(text)
+	var error := json.parse(normalized_text)
+	if error != OK:
+		report_error(
+			"failed to parse JSON at line %d: %s" % [json.get_error_line(), json.get_error_message()]
+		)
+		return {}
+	var value: Variant = json.data
 	if typeof(value) != TYPE_DICTIONARY:
 		report_error("expected JSON root object")
 		return {}
 	return value
+
+static func _quote_unsafe_json_integers(text: String) -> String:
+	var parts := PackedStringArray()
+	var segment_start := 0
+	var cursor := 0
+	var in_string := false
+	var escaped := false
+	while cursor < text.length():
+		var character := text.substr(cursor, 1)
+		if in_string:
+			if escaped:
+				escaped = false
+			elif character == "\\":
+				escaped = true
+			elif character == "\"":
+				in_string = false
+			cursor += 1
+			continue
+		if character == "\"":
+			in_string = true
+			cursor += 1
+			continue
+		if not _is_json_digit(character) and not (
+			character == "-"
+			and cursor + 1 < text.length()
+			and _is_json_digit(text.substr(cursor + 1, 1))
+		):
+			cursor += 1
+			continue
+		var number_start := cursor
+		if character == "-":
+			cursor += 1
+		while cursor < text.length() and _is_json_digit(text.substr(cursor, 1)):
+			cursor += 1
+		var is_integer := true
+		if cursor < text.length() and text.substr(cursor, 1) == ".":
+			is_integer = false
+			cursor += 1
+			while cursor < text.length() and _is_json_digit(text.substr(cursor, 1)):
+				cursor += 1
+		if cursor < text.length() and text.substr(cursor, 1).to_lower() == "e":
+			is_integer = false
+			cursor += 1
+			if cursor < text.length() and text.substr(cursor, 1) in ["+", "-"]:
+				cursor += 1
+			while cursor < text.length() and _is_json_digit(text.substr(cursor, 1)):
+				cursor += 1
+		var token := text.substr(number_start, cursor - number_start)
+		if is_integer and _is_unsafe_json_integer(token):
+			parts.append(text.substr(segment_start, number_start - segment_start))
+			parts.append("\"%s\"" % token)
+			segment_start = cursor
+	parts.append(text.substr(segment_start))
+	return "".join(parts)
+
+static func _is_json_digit(character: String) -> bool:
+	return character >= "0" and character <= "9"
+
+static func _is_unsafe_json_integer(token: String) -> bool:
+	var digits := token.trim_prefix("-")
+	while digits.length() > 1 and digits.begins_with("0"):
+		digits = digits.substr(1)
+	if digits.length() != MAX_SAFE_JSON_INTEGER.length():
+		return digits.length() > MAX_SAFE_JSON_INTEGER.length()
+	return digits > MAX_SAFE_JSON_INTEGER
 
 static func parse_json_file(path: String) -> Dictionary:
 	var text := FileAccess.get_file_as_string(path)
@@ -86,11 +161,31 @@ static func read_field(data: Dictionary, name: String, default_value: Variant) -
 		return default_value
 	return value
 
+static func decode_int(value: Variant) -> int:
+	if typeof(value) == TYPE_INT:
+		return value
+	if typeof(value) == TYPE_FLOAT:
+		if value != floor(value):
+			report_error("expected integer, got `%s`" % str(value))
+			return 0
+		return int(value)
+	if typeof(value) == TYPE_STRING:
+		var text := str(value)
+		if not text.is_valid_int():
+			report_error("expected integer string, got `%s`" % text)
+			return 0
+		return text.to_int()
+	bad_integer(value)
+	return 0
+
+static func bad_integer(value: Variant) -> void:
+	report_error("expected integer, got Variant type %d" % typeof(value))
+
 static func decode_array(value: Variant, decode: Callable) -> Array:
-    if value == null:
-        return []
-    if typeof(value) != TYPE_ARRAY:
-        report_error("expected array")
+	if value == null:
+		return []
+	if typeof(value) != TYPE_ARRAY:
+		report_error("expected array")
 		return []
 	var out := []
 	for item in value:

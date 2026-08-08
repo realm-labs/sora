@@ -4,7 +4,7 @@ class_name EquipmentSet
 extends RefCounted
 var id: int = 0
 var name: String = ""
-var item_ids: Array = []
+var item_ids: Array[int] = []
 var bonus_effect: SkillEffect = null
 
 static func decode(value: Variant) -> EquipmentSet:
@@ -15,9 +15,9 @@ static func decode(value: Variant) -> EquipmentSet:
 		return null
 	var data: Dictionary = value
 	var out := EquipmentSet.new()
-	out.id = int(SoraRuntime.read_field(data, "id", 0))
+	out.id = SoraRuntime.decode_int(SoraRuntime.read_field(data, "id", 0))
 	out.name = str(SoraRuntime.read_field(data, "name", ""))
-	out.item_ids = SoraRuntime.decode_array(SoraRuntime.read_field(data, "item_ids", []), func(item): return int(item))
+	out.item_ids.assign(SoraRuntime.decode_array(SoraRuntime.read_field(data, "item_ids", []), func(item): return SoraRuntime.decode_int(item)))
 	out.bonus_effect = SkillEffect.decode(SoraRuntime.read_field(data, "bonus_effect", null))
 	return out
 
@@ -25,7 +25,7 @@ class EquipmentSetTable:
 	extends SoraRuntime.SoraConfigTable
 
 	const TABLE_NAME := "EquipmentSet"
-	var keys: Array = []
+	var keys: Array[int] = []
 	var _rows: Dictionary = {}
 
 	static func decode(rows: Array) -> EquipmentSetTable:
@@ -33,26 +33,28 @@ class EquipmentSetTable:
 		table.name = TABLE_NAME
 		table.mode = "map"
 		table.key = "id"
-		table.keys = rows.map(func(row): return row.id)
+		table.keys.assign(rows.map(func(row): return row.id))
 		table._rows = SoraRuntime.decode_map_table(rows, func(row): return row.id)
 		return table
 
 	func length() -> int:
 		return _rows.size()
-	func get_row(key_value: Variant) -> EquipmentSet:
+	func get_row(key_value: int) -> EquipmentSet:
 		var value = _rows.get(key_value)
 		if value == null:
 			SoraRuntime.report_error("missing row in table `%s` for key `%s`" % [TABLE_NAME, str(key_value)])
 		return value
 
-	func try_get(key_value: Variant) -> EquipmentSet:
+	func try_get(key_value: int) -> EquipmentSet:
 		return _rows.get(key_value)
 
-	func rows() -> Array:
-		return _rows.values()
+	func rows() -> Array[EquipmentSet]:
+		var out: Array[EquipmentSet] = []
+		out.assign(_rows.values())
+		return out
 
-	func ordered_rows() -> Array:
-		var out: Array = []
+	func ordered_rows() -> Array[EquipmentSet]:
+		var out: Array[EquipmentSet] = []
 		for key_value in keys:
 			if _rows.has(key_value):
 				out.append(_rows[key_value])

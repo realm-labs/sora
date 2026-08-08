@@ -4,7 +4,7 @@ class_name VipLevel
 extends RefCounted
 var level: int = 0
 var cost: ResourceCost = null
-var perks: Array = []
+var perks: Array[String] = []
 
 static func decode(value: Variant) -> VipLevel:
 	if value == null:
@@ -14,16 +14,16 @@ static func decode(value: Variant) -> VipLevel:
 		return null
 	var data: Dictionary = value
 	var out := VipLevel.new()
-	out.level = int(SoraRuntime.read_field(data, "level", 0))
+	out.level = SoraRuntime.decode_int(SoraRuntime.read_field(data, "level", 0))
 	out.cost = ResourceCost.decode(SoraRuntime.read_field(data, "cost", null))
-	out.perks = SoraRuntime.decode_array(SoraRuntime.read_field(data, "perks", []), func(item): return str(item))
+	out.perks.assign(SoraRuntime.decode_array(SoraRuntime.read_field(data, "perks", []), func(item): return str(item)))
 	return out
 
 class VipLevelTable:
 	extends SoraRuntime.SoraConfigTable
 
 	const TABLE_NAME := "VipLevel"
-	var keys: Array = []
+	var keys: Array[int] = []
 	var _rows: Dictionary = {}
 
 	static func decode(rows: Array) -> VipLevelTable:
@@ -31,26 +31,28 @@ class VipLevelTable:
 		table.name = TABLE_NAME
 		table.mode = "map"
 		table.key = "level"
-		table.keys = rows.map(func(row): return row.level)
+		table.keys.assign(rows.map(func(row): return row.level))
 		table._rows = SoraRuntime.decode_map_table(rows, func(row): return row.level)
 		return table
 
 	func length() -> int:
 		return _rows.size()
-	func get_row(key_value: Variant) -> VipLevel:
+	func get_row(key_value: int) -> VipLevel:
 		var value = _rows.get(key_value)
 		if value == null:
 			SoraRuntime.report_error("missing row in table `%s` for key `%s`" % [TABLE_NAME, str(key_value)])
 		return value
 
-	func try_get(key_value: Variant) -> VipLevel:
+	func try_get(key_value: int) -> VipLevel:
 		return _rows.get(key_value)
 
-	func rows() -> Array:
-		return _rows.values()
+	func rows() -> Array[VipLevel]:
+		var out: Array[VipLevel] = []
+		out.assign(_rows.values())
+		return out
 
-	func ordered_rows() -> Array:
-		var out: Array = []
+	func ordered_rows() -> Array[VipLevel]:
+		var out: Array[VipLevel] = []
 		for key_value in keys:
 			if _rows.has(key_value):
 				out.append(_rows[key_value])

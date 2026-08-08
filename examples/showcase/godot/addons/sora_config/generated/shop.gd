@@ -14,7 +14,7 @@ static func decode(value: Variant) -> Shop:
 		return null
 	var data: Dictionary = value
 	var out := Shop.new()
-	out.id = int(SoraRuntime.read_field(data, "id", 0))
+	out.id = SoraRuntime.decode_int(SoraRuntime.read_field(data, "id", 0))
 	out.name = str(SoraRuntime.read_field(data, "name", ""))
 	out.currency = ResourceKind.decode(SoraRuntime.read_field(data, "currency", ""))
 	return out
@@ -23,7 +23,7 @@ class ShopTable:
 	extends SoraRuntime.SoraConfigTable
 
 	const TABLE_NAME := "Shop"
-	var keys: Array = []
+	var keys: Array[int] = []
 	var _rows: Dictionary = {}
 
 	static func decode(rows: Array) -> ShopTable:
@@ -31,26 +31,28 @@ class ShopTable:
 		table.name = TABLE_NAME
 		table.mode = "map"
 		table.key = "id"
-		table.keys = rows.map(func(row): return row.id)
+		table.keys.assign(rows.map(func(row): return row.id))
 		table._rows = SoraRuntime.decode_map_table(rows, func(row): return row.id)
 		return table
 
 	func length() -> int:
 		return _rows.size()
-	func get_row(key_value: Variant) -> Shop:
+	func get_row(key_value: int) -> Shop:
 		var value = _rows.get(key_value)
 		if value == null:
 			SoraRuntime.report_error("missing row in table `%s` for key `%s`" % [TABLE_NAME, str(key_value)])
 		return value
 
-	func try_get(key_value: Variant) -> Shop:
+	func try_get(key_value: int) -> Shop:
 		return _rows.get(key_value)
 
-	func rows() -> Array:
-		return _rows.values()
+	func rows() -> Array[Shop]:
+		var out: Array[Shop] = []
+		out.assign(_rows.values())
+		return out
 
-	func ordered_rows() -> Array:
-		var out: Array = []
+	func ordered_rows() -> Array[Shop]:
+		var out: Array[Shop] = []
 		for key_value in keys:
 			if _rows.has(key_value):
 				out.append(_rows[key_value])

@@ -58,3 +58,19 @@ Use `cbor` when you want a compact general-purpose binary value format and your 
 Use `sora-protobuf` when your environment prefers Protobuf transport but you still want Sora's schema-driven value model.
 
 The CI runtime matrix generates every supported combination in this table and syntax-checks languages where the check is lightweight.
+
+## Godot JSON and Generated Types
+
+Godot codegen targets Godot 4.3 by default. Set the target version when the generated project uses a newer Godot release:
+
+```toml
+[codegen.godot]
+runtime_format = "json"
+godot_version = "4.4"
+```
+
+Generated GDScript uses concrete table key and index parameter types, typed row arrays, and one class per discriminated-union variant. Godot 4.4 and newer additionally use typed dictionaries; Godot 4.3 keeps dictionaries untyped because that syntax is unavailable there. Nested typed collections fall back to `Array` or `Dictionary` where GDScript does not allow a typed collection as another typed collection's element type.
+
+The generated JSON loader preserves `i64`, duration, and datetime integer values outside JSON's interoperable safe-integer range. It quotes those number tokens internally before calling Godot's JSON parser, then decodes their decimal strings back to exact 64-bit integers. The exported JSON format itself does not change.
+
+Optional primitive values remain `Variant` because GDScript has no nullable primitive type. Optional generated records, unions, and text keys retain their concrete object type and use `null` as the empty value.

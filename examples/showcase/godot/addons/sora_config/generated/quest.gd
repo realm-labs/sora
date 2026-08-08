@@ -6,10 +6,10 @@ var id: int = 0
 var quest_type: String = ""
 var title: String = ""
 var required_item: int = 0
-var unlock_skills: Array = []
+var unlock_skills: Array[int] = []
 var start_pos: Vec3 = null
 # Materialized from QuestReward child rows
-var rewards: Array = []
+var rewards: Array[Reward] = []
 
 static func decode(value: Variant) -> Quest:
 	if value == null:
@@ -19,20 +19,20 @@ static func decode(value: Variant) -> Quest:
 		return null
 	var data: Dictionary = value
 	var out := Quest.new()
-	out.id = int(SoraRuntime.read_field(data, "id", 0))
+	out.id = SoraRuntime.decode_int(SoraRuntime.read_field(data, "id", 0))
 	out.quest_type = QuestType.decode(SoraRuntime.read_field(data, "quest_type", ""))
 	out.title = str(SoraRuntime.read_field(data, "title", ""))
-	out.required_item = int(SoraRuntime.read_field(data, "required_item", 0))
-	out.unlock_skills = SoraRuntime.decode_array(SoraRuntime.read_field(data, "unlock_skills", []), func(item): return int(item))
+	out.required_item = SoraRuntime.decode_int(SoraRuntime.read_field(data, "required_item", 0))
+	out.unlock_skills.assign(SoraRuntime.decode_array(SoraRuntime.read_field(data, "unlock_skills", []), func(item): return SoraRuntime.decode_int(item)))
 	out.start_pos = Vec3.decode(SoraRuntime.read_field(data, "start_pos", null))
-	out.rewards = SoraRuntime.decode_array(SoraRuntime.read_field(data, "rewards", []), func(item): return Reward.decode(item))
+	out.rewards.assign(SoraRuntime.decode_array(SoraRuntime.read_field(data, "rewards", []), func(item): return Reward.decode(item)))
 	return out
 
 class QuestTable:
 	extends SoraRuntime.SoraConfigTable
 
 	const TABLE_NAME := "Quest"
-	var keys: Array = []
+	var keys: Array[int] = []
 	var _rows: Dictionary = {}
 
 	static func decode(rows: Array) -> QuestTable:
@@ -40,26 +40,28 @@ class QuestTable:
 		table.name = TABLE_NAME
 		table.mode = "map"
 		table.key = "id"
-		table.keys = rows.map(func(row): return row.id)
+		table.keys.assign(rows.map(func(row): return row.id))
 		table._rows = SoraRuntime.decode_map_table(rows, func(row): return row.id)
 		return table
 
 	func length() -> int:
 		return _rows.size()
-	func get_row(key_value: Variant) -> Quest:
+	func get_row(key_value: int) -> Quest:
 		var value = _rows.get(key_value)
 		if value == null:
 			SoraRuntime.report_error("missing row in table `%s` for key `%s`" % [TABLE_NAME, str(key_value)])
 		return value
 
-	func try_get(key_value: Variant) -> Quest:
+	func try_get(key_value: int) -> Quest:
 		return _rows.get(key_value)
 
-	func rows() -> Array:
-		return _rows.values()
+	func rows() -> Array[Quest]:
+		var out: Array[Quest] = []
+		out.assign(_rows.values())
+		return out
 
-	func ordered_rows() -> Array:
-		var out: Array = []
+	func ordered_rows() -> Array[Quest]:
+		var out: Array[Quest] = []
 		for key_value in keys:
 			if _rows.has(key_value):
 				out.append(_rows[key_value])

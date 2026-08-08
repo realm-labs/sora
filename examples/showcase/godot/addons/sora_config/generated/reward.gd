@@ -13,6 +13,6 @@ static func decode(value: Variant) -> Reward:
 		return null
 	var data: Dictionary = value
 	var out := Reward.new()
-	out.item_id = int(SoraRuntime.read_field(data, "item_id", 0))
-	out.count = int(SoraRuntime.read_field(data, "count", 0))
+	out.item_id = SoraRuntime.decode_int(SoraRuntime.read_field(data, "item_id", 0))
+	out.count = SoraRuntime.decode_int(SoraRuntime.read_field(data, "count", 0))
 	return out

@@ -4,7 +4,7 @@ class_name Dialogue
 extends RefCounted
 var id: int = 0
 var speaker_key: SoraRuntime.TextKey = null
-var lines: Array = []
+var lines: Array[String] = []
 
 static func decode(value: Variant) -> Dialogue:
 	if value == null:
@@ -14,16 +14,16 @@ static func decode(value: Variant) -> Dialogue:
 		return null
 	var data: Dictionary = value
 	var out := Dialogue.new()
-	out.id = int(SoraRuntime.read_field(data, "id", 0))
+	out.id = SoraRuntime.decode_int(SoraRuntime.read_field(data, "id", 0))
 	out.speaker_key = SoraRuntime.TextKey.new(str(SoraRuntime.read_field(data, "speaker_key", null)))
-	out.lines = SoraRuntime.decode_array(SoraRuntime.read_field(data, "lines", []), func(item): return str(item))
+	out.lines.assign(SoraRuntime.decode_array(SoraRuntime.read_field(data, "lines", []), func(item): return str(item)))
 	return out
 
 class DialogueTable:
 	extends SoraRuntime.SoraConfigTable
 
 	const TABLE_NAME := "Dialogue"
-	var keys: Array = []
+	var keys: Array[int] = []
 	var _rows: Dictionary = {}
 
 	static func decode(rows: Array) -> DialogueTable:
@@ -31,26 +31,28 @@ class DialogueTable:
 		table.name = TABLE_NAME
 		table.mode = "map"
 		table.key = "id"
-		table.keys = rows.map(func(row): return row.id)
+		table.keys.assign(rows.map(func(row): return row.id))
 		table._rows = SoraRuntime.decode_map_table(rows, func(row): return row.id)
 		return table
 
 	func length() -> int:
 		return _rows.size()
-	func get_row(key_value: Variant) -> Dialogue:
+	func get_row(key_value: int) -> Dialogue:
 		var value = _rows.get(key_value)
 		if value == null:
 			SoraRuntime.report_error("missing row in table `%s` for key `%s`" % [TABLE_NAME, str(key_value)])
 		return value
 
-	func try_get(key_value: Variant) -> Dialogue:
+	func try_get(key_value: int) -> Dialogue:
 		return _rows.get(key_value)
 
-	func rows() -> Array:
-		return _rows.values()
+	func rows() -> Array[Dialogue]:
+		var out: Array[Dialogue] = []
+		out.assign(_rows.values())
+		return out
 
-	func ordered_rows() -> Array:
-		var out: Array = []
+	func ordered_rows() -> Array[Dialogue]:
+		var out: Array[Dialogue] = []
 		for key_value in keys:
 			if _rows.has(key_value):
 				out.append(_rows[key_value])

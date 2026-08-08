@@ -20,9 +20,9 @@ use crate::{
     lua::LuaCodeGenerator,
     options::{
         CCodegenOptions, CSharpCodegenOptions, CppCodegenOptions, ErlangCodegenOptions,
-        JavaCodegenOptions, JavaScriptCodegenOptions, LanguageCodegenOptions, LuaCodegenOptions,
-        PackageCodegenOptions, RuntimeFormat, RustCodegenOptions, ScalaCodegenOptions,
-        TypeScriptCodegenOptions, decode_options, runtime_format_from_options,
+        GodotCodegenOptions, JavaCodegenOptions, JavaScriptCodegenOptions, LanguageCodegenOptions,
+        LuaCodegenOptions, PackageCodegenOptions, RuntimeFormat, RustCodegenOptions,
+        ScalaCodegenOptions, TypeScriptCodegenOptions, decode_options, runtime_format_from_options,
     },
     proto::ProtoCodeGenerator,
     python::PythonCodeGenerator,
@@ -244,7 +244,7 @@ impl CodegenRegistry {
                 aliases: &["gdscript"],
                 display_name: "Godot",
                 runtime_capabilities: RUNTIME_JSON_ONLY,
-                runtime_format: runtime_format_from_options::<LanguageCodegenOptions>,
+                runtime_format: runtime_format_from_options::<GodotCodegenOptions>,
                 formatter: None,
                 generator: Box::new(GodotCodeGenerator),
             })

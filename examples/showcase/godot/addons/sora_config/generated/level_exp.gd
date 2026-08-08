@@ -14,16 +14,16 @@ static func decode(value: Variant) -> LevelExp:
 		return null
 	var data: Dictionary = value
 	var out := LevelExp.new()
-	out.level = int(SoraRuntime.read_field(data, "level", 0))
-	out.exp = int(SoraRuntime.read_field(data, "exp", 0))
-	out.unlock_feature = null if SoraRuntime.read_field(data, "unlock_feature", null).is_null() else str(SoraRuntime.read_field(data, "unlock_feature", null))
+	out.level = SoraRuntime.decode_int(SoraRuntime.read_field(data, "level", 0))
+	out.exp = SoraRuntime.decode_int(SoraRuntime.read_field(data, "exp", 0))
+	out.unlock_feature = null if SoraRuntime.read_field(data, "unlock_feature", null) == null else str(SoraRuntime.read_field(data, "unlock_feature", null))
 	return out
 
 class LevelExpTable:
 	extends SoraRuntime.SoraConfigTable
 
 	const TABLE_NAME := "LevelExp"
-	var keys: Array = []
+	var keys: Array[int] = []
 	var _rows: Dictionary = {}
 
 	static func decode(rows: Array) -> LevelExpTable:
@@ -31,26 +31,28 @@ class LevelExpTable:
 		table.name = TABLE_NAME
 		table.mode = "map"
 		table.key = "level"
-		table.keys = rows.map(func(row): return row.level)
+		table.keys.assign(rows.map(func(row): return row.level))
 		table._rows = SoraRuntime.decode_map_table(rows, func(row): return row.level)
 		return table
 
 	func length() -> int:
 		return _rows.size()
-	func get_row(key_value: Variant) -> LevelExp:
+	func get_row(key_value: int) -> LevelExp:
 		var value = _rows.get(key_value)
 		if value == null:
 			SoraRuntime.report_error("missing row in table `%s` for key `%s`" % [TABLE_NAME, str(key_value)])
 		return value
 
-	func try_get(key_value: Variant) -> LevelExp:
+	func try_get(key_value: int) -> LevelExp:
 		return _rows.get(key_value)
 
-	func rows() -> Array:
-		return _rows.values()
+	func rows() -> Array[LevelExp]:
+		var out: Array[LevelExp] = []
+		out.assign(_rows.values())
+		return out
 
-	func ordered_rows() -> Array:
-		var out: Array = []
+	func ordered_rows() -> Array[LevelExp]:
+		var out: Array[LevelExp] = []
 		for key_value in keys:
 			if _rows.has(key_value):
 				out.append(_rows[key_value])

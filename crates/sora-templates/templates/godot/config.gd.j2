@@ -5,7 +5,11 @@ extends RefCounted
 
 const SORA_SCHEMA_FINGERPRINT := "{{ model.schema_fingerprint }}"
 
+{%- if model.typed_dictionaries %}
+var _tables: Dictionary[String, SoraRuntime.SoraConfigTable] = {}
+{%- else %}
 var _tables: Dictionary = {}
+{%- endif %}
 
 static func load_json_file(path: String) -> SoraConfig:
 	return from_json_root(SoraRuntime.parse_json_file(path))
@@ -31,8 +35,10 @@ static func from_json_root(root: Dictionary) -> SoraConfig:
 {%- endfor %}
 	return config
 
-func tables() -> Array:
-	return _tables.values()
+func tables() -> Array[SoraRuntime.SoraConfigTable]:
+	var out: Array[SoraRuntime.SoraConfigTable] = []
+	out.assign(_tables.values())
+	return out
 
 func table(name: String) -> SoraRuntime.SoraConfigTable:
 	return _tables.get(name)

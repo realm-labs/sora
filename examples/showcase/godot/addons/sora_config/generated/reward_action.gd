@@ -4,36 +4,3 @@ class_name RewardAction
 extends RefCounted
 
 var type: String = ""
-var action_group_id: int = 0
-var buff_id: int = 0
-var count: int = 0
-var duration: float = 0.0
-var item_id: int = 0
-var mail_id: int = 0
-var stage_id: int = 0
-
-static func decode(value: Variant) -> RewardAction:
-	if value == null:
-		return null
-	if typeof(value) != TYPE_DICTIONARY:
-		SoraRuntime.report_error("expected object for RewardAction")
-		return null
-	var data: Dictionary = value
-	var out := RewardAction.new()
-	out.type = str(SoraRuntime.read_field(data, "type", ""))
-	match out.type:
-		"AddItem":
-			out.item_id = int(SoraRuntime.read_field(data, "item_id", 0))
-			out.count = int(SoraRuntime.read_field(data, "count", 0))
-		"AddBuff":
-			out.buff_id = int(SoraRuntime.read_field(data, "buff_id", 0))
-			out.duration = float(SoraRuntime.read_field(data, "duration", 0.0))
-		"UnlockStage":
-			out.stage_id = int(SoraRuntime.read_field(data, "stage_id", 0))
-		"SendMail":
-			out.mail_id = int(SoraRuntime.read_field(data, "mail_id", 0))
-		"RunActionGroup":
-			out.action_group_id = int(SoraRuntime.read_field(data, "action_group_id", 0))
-		_:
-			SoraRuntime.report_error("unknown RewardAction variant `%s`" % out.type)
-	return out

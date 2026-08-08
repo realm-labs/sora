@@ -4,7 +4,7 @@ class_name RewardBundle
 extends RefCounted
 var cost: ResourceCost = null
 var weight: int = 0
-var labels: Array = []
+var labels: Array[String] = []
 
 static func decode(value: Variant) -> RewardBundle:
 	if value == null:
@@ -15,6 +15,6 @@ static func decode(value: Variant) -> RewardBundle:
 	var data: Dictionary = value
 	var out := RewardBundle.new()
 	out.cost = ResourceCost.decode(SoraRuntime.read_field(data, "cost", null))
-	out.weight = int(SoraRuntime.read_field(data, "weight", 0))
-	out.labels = SoraRuntime.decode_array(SoraRuntime.read_field(data, "labels", []), func(item): return str(item))
+	out.weight = SoraRuntime.decode_int(SoraRuntime.read_field(data, "weight", 0))
+	out.labels.assign(SoraRuntime.decode_array(SoraRuntime.read_field(data, "labels", []), func(item): return str(item)))
 	return out

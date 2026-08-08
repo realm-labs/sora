@@ -93,6 +93,16 @@ const EMBEDDED_TEMPLATES: &[EmbeddedTemplate] = &[
         source: include_str!("../templates/godot/union.gd.j2"),
     },
     EmbeddedTemplate {
+        target: "godot",
+        file_name: "union_codec.gd.j2",
+        source: include_str!("../templates/godot/union_codec.gd.j2"),
+    },
+    EmbeddedTemplate {
+        target: "godot",
+        file_name: "union_variant.gd.j2",
+        source: include_str!("../templates/godot/union_variant.gd.j2"),
+    },
+    EmbeddedTemplate {
         target: "c",
         file_name: "config.c.j2",
         source: include_str!("../templates/c/config.c.j2"),
@@ -539,7 +549,7 @@ mod tests {
 
     #[test]
     fn embeds_all_templates() {
-        assert_eq!(EMBEDDED_TEMPLATES.len(), 101);
+        assert_eq!(EMBEDDED_TEMPLATES.len(), 103);
         for template in EMBEDDED_TEMPLATES {
             let source = template_source(template.target, template.file_name)
                 .expect("embedded template should be registered");

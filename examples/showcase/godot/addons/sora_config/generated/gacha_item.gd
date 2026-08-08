@@ -15,8 +15,8 @@ static func decode(value: Variant) -> GachaItem:
 		return null
 	var data: Dictionary = value
 	var out := GachaItem.new()
-	out.pool_id = int(SoraRuntime.read_field(data, "pool_id", 0))
-	out.item_id = int(SoraRuntime.read_field(data, "item_id", 0))
+	out.pool_id = SoraRuntime.decode_int(SoraRuntime.read_field(data, "pool_id", 0))
+	out.item_id = SoraRuntime.decode_int(SoraRuntime.read_field(data, "item_id", 0))
 	out.rarity = Rarity.decode(SoraRuntime.read_field(data, "rarity", ""))
 	out.weight = float(SoraRuntime.read_field(data, "weight", 0.0))
 	return out
@@ -25,14 +25,14 @@ class GachaItemTable:
 	extends SoraRuntime.SoraConfigTable
 
 	const TABLE_NAME := "GachaItem"
-	var rows: Array = []
+	var rows: Array[GachaItem] = []
 
 	static func decode(rows: Array) -> GachaItemTable:
 		var table := GachaItemTable.new()
 		table.name = TABLE_NAME
 		table.mode = "list"
 		table.key = null
-		table.rows = rows
+		table.rows.assign(rows)
 		return table
 
 	func length() -> int:

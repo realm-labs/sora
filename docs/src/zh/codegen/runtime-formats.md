@@ -58,3 +58,19 @@ Runtime format 是生成代码能加载的数据格式。它们对应导出格�
 运行环境偏好 Protobuf transport，但仍想保留 Sora 的 schema-driven value model 时，用 `sora-protobuf`。
 
 CI runtime matrix 会生成此表中每个支持组合，并对轻量可检查的语言做语法检查。
+
+## Godot JSON 与生成类型
+
+Godot codegen 默认以 Godot 4.3 为目标。如果生成代码所在项目使用更新版本，可以在项目清单中指定：
+
+```toml
+[codegen.godot]
+runtime_format = "json"
+godot_version = "4.4"
+```
+
+生成的 GDScript 会为表主键和索引参数使用具体类型，为行集合使用强类型 Array，并为 discriminated union 的每个 variant 生成独立 class。Godot 4.4 及以上还会使用强类型 Dictionary；Godot 4.3 因为不支持该语法，仍生成普通 Dictionary。GDScript 不允许 typed collection 嵌套 typed collection 时，内层类型会退化为 `Array` 或 `Dictionary`。
+
+生成的 JSON loader 能保留超出 JSON 通用安全整数范围的 `i64`、duration 和 datetime 值。它会在调用 Godot JSON parser 前，仅在内部把这些数字 token 转成字符串，再从十进制字符串精确解码成 64 位整数；导出的 JSON 格式本身不变。
+
+GDScript 没有 nullable primitive type，因此可选 primitive 仍使用 `Variant`。可选的生成 record、union 和 text key 会保留具体对象类型，并用 `null` 表示空值。

@@ -17,11 +17,11 @@ static func decode(value: Variant) -> Monster:
 		return null
 	var data: Dictionary = value
 	var out := Monster.new()
-	out.id = int(SoraRuntime.read_field(data, "id", 0))
+	out.id = SoraRuntime.decode_int(SoraRuntime.read_field(data, "id", 0))
 	out.name = str(SoraRuntime.read_field(data, "name", ""))
-	out.level = int(SoraRuntime.read_field(data, "level", 0))
+	out.level = SoraRuntime.decode_int(SoraRuntime.read_field(data, "level", 0))
 	out.element = ElementType.decode(SoraRuntime.read_field(data, "element", ""))
-	out.drop_group = int(SoraRuntime.read_field(data, "drop_group", 0))
+	out.drop_group = SoraRuntime.decode_int(SoraRuntime.read_field(data, "drop_group", 0))
 	out.spawn_pos = Vec3.decode(SoraRuntime.read_field(data, "spawn_pos", null))
 	return out
 
@@ -29,7 +29,7 @@ class MonsterTable:
 	extends SoraRuntime.SoraConfigTable
 
 	const TABLE_NAME := "Monster"
-	var keys: Array = []
+	var keys: Array[int] = []
 	var _rows: Dictionary = {}
 
 	static func decode(rows: Array) -> MonsterTable:
@@ -37,26 +37,28 @@ class MonsterTable:
 		table.name = TABLE_NAME
 		table.mode = "map"
 		table.key = "id"
-		table.keys = rows.map(func(row): return row.id)
+		table.keys.assign(rows.map(func(row): return row.id))
 		table._rows = SoraRuntime.decode_map_table(rows, func(row): return row.id)
 		return table
 
 	func length() -> int:
 		return _rows.size()
-	func get_row(key_value: Variant) -> Monster:
+	func get_row(key_value: int) -> Monster:
 		var value = _rows.get(key_value)
 		if value == null:
 			SoraRuntime.report_error("missing row in table `%s` for key `%s`" % [TABLE_NAME, str(key_value)])
 		return value
 
-	func try_get(key_value: Variant) -> Monster:
+	func try_get(key_value: int) -> Monster:
 		return _rows.get(key_value)
 
-	func rows() -> Array:
-		return _rows.values()
+	func rows() -> Array[Monster]:
+		var out: Array[Monster] = []
+		out.assign(_rows.values())
+		return out
 
-	func ordered_rows() -> Array:
-		var out: Array = []
+	func ordered_rows() -> Array[Monster]:
+		var out: Array[Monster] = []
 		for key_value in keys:
 			if _rows.has(key_value):
 				out.append(_rows[key_value])

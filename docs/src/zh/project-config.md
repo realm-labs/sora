@@ -170,7 +170,7 @@ C target 使用写入目标指针的 decode 函数，所以 C 映射应使用 `d
 | `scala` | `runtime_format` 默认 `sora`；view binding 必须提供 `package`；`scala_version = "2.12"`、`"2.13"` 或 `"3"`，默认 `3`。 |
 | `go` | `runtime_format` 默认 `sora`；view binding 必须提供 `package`。 |
 | `dart` | `runtime_format = "json"`、`"cbor"` 或 `"sora-protobuf"`。建议显式设置；Dart 不支持 `sora`。 |
-| `godot` | `runtime_format = "json"`。建议显式设置；这是 Godot 唯一支持的 runtime format。 |
+| `godot` | `runtime_format = "json"`，这是 Godot 唯一支持的 runtime format；`godot_version` 默认 `"4.3"`。Godot 4.4+ 输出还会使用强类型 Dictionary。 |
 | `c` | `runtime_format = "sora"`；`c_standard = "c99"`、`"c11"`、`"c17"` 或 `"c23"`，默认 `c11`；view binding 必须提供 `prefix`。 |
 | `cpp` | `runtime_format = "sora"`；`cpp_standard = "c++11"`、`"c++14"`、`"c++17"`、`"c++20"` 或 `"c++23"`，默认 `c++17`；view binding 必须提供 `namespace`。 |
 | `typescript` | `runtime_format` 默认 `sora`；`enum_repr = "string"` 或 `"integer"`，默认 `string`。 |
@@ -196,4 +196,8 @@ cpp_standard = "c++20"
 runtime_format = "json"
 enum_repr = "integer"
 emit_dts = true
+
+[codegen.godot]
+runtime_format = "json"
+godot_version = "4.3"
 ```

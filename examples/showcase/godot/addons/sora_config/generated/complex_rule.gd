@@ -8,7 +8,7 @@ var name: String = ""
 var root_condition: EventCondition = null
 var root_action_group: int = 0
 # Non-JSON list<union<RewardAction>> assembled from child rows
-var actions: Array = []
+var actions: Array[RewardAction] = []
 # Nested tuple, tuple_list, split, and map parsers in one cell
 var budget: ComplexBudget = null
 
@@ -20,11 +20,11 @@ static func decode(value: Variant) -> ComplexRule:
 		return null
 	var data: Dictionary = value
 	var out := ComplexRule.new()
-	out.id = int(SoraRuntime.read_field(data, "id", 0))
+	out.id = SoraRuntime.decode_int(SoraRuntime.read_field(data, "id", 0))
 	out.name = str(SoraRuntime.read_field(data, "name", ""))
-	out.root_condition = EventCondition.decode(SoraRuntime.read_field(data, "root_condition", null))
-	out.root_action_group = int(SoraRuntime.read_field(data, "root_action_group", 0))
-	out.actions = SoraRuntime.decode_array(SoraRuntime.read_field(data, "actions", []), func(item): return RewardAction.decode(item))
+	out.root_condition = EventConditionCodec.decode(SoraRuntime.read_field(data, "root_condition", null))
+	out.root_action_group = SoraRuntime.decode_int(SoraRuntime.read_field(data, "root_action_group", 0))
+	out.actions.assign(SoraRuntime.decode_array(SoraRuntime.read_field(data, "actions", []), func(item): return RewardActionCodec.decode(item)))
 	out.budget = ComplexBudget.decode(SoraRuntime.read_field(data, "budget", null))
 	return out
 
@@ -32,7 +32,7 @@ class ComplexRuleTable:
 	extends SoraRuntime.SoraConfigTable
 
 	const TABLE_NAME := "ComplexRule"
-	var keys: Array = []
+	var keys: Array[int] = []
 	var _rows: Dictionary = {}
 
 	static func decode(rows: Array) -> ComplexRuleTable:
@@ -40,26 +40,28 @@ class ComplexRuleTable:
 		table.name = TABLE_NAME
 		table.mode = "map"
 		table.key = "id"
-		table.keys = rows.map(func(row): return row.id)
+		table.keys.assign(rows.map(func(row): return row.id))
 		table._rows = SoraRuntime.decode_map_table(rows, func(row): return row.id)
 		return table
 
 	func length() -> int:
 		return _rows.size()
-	func get_row(key_value: Variant) -> ComplexRule:
+	func get_row(key_value: int) -> ComplexRule:
 		var value = _rows.get(key_value)
 		if value == null:
 			SoraRuntime.report_error("missing row in table `%s` for key `%s`" % [TABLE_NAME, str(key_value)])
 		return value
 
-	func try_get(key_value: Variant) -> ComplexRule:
+	func try_get(key_value: int) -> ComplexRule:
 		return _rows.get(key_value)
 
-	func rows() -> Array:
-		return _rows.values()
+	func rows() -> Array[ComplexRule]:
+		var out: Array[ComplexRule] = []
+		out.assign(_rows.values())
+		return out
 
-	func ordered_rows() -> Array:
-		var out: Array = []
+	func ordered_rows() -> Array[ComplexRule]:
+		var out: Array[ComplexRule] = []
 		for key_value in keys:
 			if _rows.has(key_value):
 				out.append(_rows[key_value])

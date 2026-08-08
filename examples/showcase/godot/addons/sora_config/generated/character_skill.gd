@@ -14,23 +14,23 @@ static func decode(value: Variant) -> CharacterSkill:
 		return null
 	var data: Dictionary = value
 	var out := CharacterSkill.new()
-	out.character_id = int(SoraRuntime.read_field(data, "character_id", 0))
-	out.skill_id = int(SoraRuntime.read_field(data, "skill_id", 0))
-	out.unlock_level = int(SoraRuntime.read_field(data, "unlock_level", 0))
+	out.character_id = SoraRuntime.decode_int(SoraRuntime.read_field(data, "character_id", 0))
+	out.skill_id = SoraRuntime.decode_int(SoraRuntime.read_field(data, "skill_id", 0))
+	out.unlock_level = SoraRuntime.decode_int(SoraRuntime.read_field(data, "unlock_level", 0))
 	return out
 
 class CharacterSkillTable:
 	extends SoraRuntime.SoraConfigTable
 
 	const TABLE_NAME := "CharacterSkill"
-	var rows: Array = []
+	var rows: Array[CharacterSkill] = []
 
 	static func decode(rows: Array) -> CharacterSkillTable:
 		var table := CharacterSkillTable.new()
 		table.name = TABLE_NAME
 		table.mode = "list"
 		table.key = null
-		table.rows = rows
+		table.rows.assign(rows)
 		return table
 
 	func length() -> int:

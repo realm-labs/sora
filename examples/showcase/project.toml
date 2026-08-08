@@ -193,6 +193,7 @@ runtime_format = "json"
 
 [codegen.godot]
 runtime_format = "json"
+godot_version = "4.3"
 
 [codegen.c]
 runtime_format = "sora"

@@ -4,7 +4,7 @@ class_name Recipe
 extends RefCounted
 var id: int = 0
 var result_item: int = 0
-var materials: Array = []
+var materials: Array[ResourceCost] = []
 
 static func decode(value: Variant) -> Recipe:
 	if value == null:
@@ -14,16 +14,16 @@ static func decode(value: Variant) -> Recipe:
 		return null
 	var data: Dictionary = value
 	var out := Recipe.new()
-	out.id = int(SoraRuntime.read_field(data, "id", 0))
-	out.result_item = int(SoraRuntime.read_field(data, "result_item", 0))
-	out.materials = SoraRuntime.decode_array(SoraRuntime.read_field(data, "materials", []), func(item): return ResourceCost.decode(item))
+	out.id = SoraRuntime.decode_int(SoraRuntime.read_field(data, "id", 0))
+	out.result_item = SoraRuntime.decode_int(SoraRuntime.read_field(data, "result_item", 0))
+	out.materials.assign(SoraRuntime.decode_array(SoraRuntime.read_field(data, "materials", []), func(item): return ResourceCost.decode(item)))
 	return out
 
 class RecipeTable:
 	extends SoraRuntime.SoraConfigTable
 
 	const TABLE_NAME := "Recipe"
-	var keys: Array = []
+	var keys: Array[int] = []
 	var _rows: Dictionary = {}
 
 	static func decode(rows: Array) -> RecipeTable:
@@ -31,26 +31,28 @@ class RecipeTable:
 		table.name = TABLE_NAME
 		table.mode = "map"
 		table.key = "id"
-		table.keys = rows.map(func(row): return row.id)
+		table.keys.assign(rows.map(func(row): return row.id))
 		table._rows = SoraRuntime.decode_map_table(rows, func(row): return row.id)
 		return table
 
 	func length() -> int:
 		return _rows.size()
-	func get_row(key_value: Variant) -> Recipe:
+	func get_row(key_value: int) -> Recipe:
 		var value = _rows.get(key_value)
 		if value == null:
 			SoraRuntime.report_error("missing row in table `%s` for key `%s`" % [TABLE_NAME, str(key_value)])
 		return value
 
-	func try_get(key_value: Variant) -> Recipe:
+	func try_get(key_value: int) -> Recipe:
 		return _rows.get(key_value)
 
-	func rows() -> Array:
-		return _rows.values()
+	func rows() -> Array[Recipe]:
+		var out: Array[Recipe] = []
+		out.assign(_rows.values())
+		return out
 
-	func ordered_rows() -> Array:
-		var out: Array = []
+	func ordered_rows() -> Array[Recipe]:
+		var out: Array[Recipe] = []
 		for key_value in keys:
 			if _rows.has(key_value):
 				out.append(_rows[key_value])

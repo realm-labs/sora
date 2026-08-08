@@ -452,6 +452,7 @@ runtime_format = "sora"
 
 [codegen.godot]
 runtime_format = "json"
+godot_version = "4.4"
 
 [codegen.c]
 runtime_format = "sora"
@@ -496,6 +497,10 @@ enum_repr = "string"
         assert_eq!(
             schema.codegen.targets["godot"]["runtime_format"],
             serde_json::Value::String("json".to_owned())
+        );
+        assert_eq!(
+            schema.codegen.targets["godot"]["godot_version"],
+            serde_json::Value::String("4.4".to_owned())
         );
         assert_eq!(
             schema.codegen.targets["cpp"]["namespace"],

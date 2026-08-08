@@ -172,7 +172,7 @@ The C target uses write-into decode functions, so C mappings should use `decode_
 | `scala` | `runtime_format` default `sora`; view binding requires `package`; `scala_version = "2.12"`, `"2.13"`, or `"3"` default `3`. |
 | `go` | `runtime_format` default `sora`; view binding requires `package`. |
 | `dart` | `runtime_format = "json"`, `"cbor"`, or `"sora-protobuf"`. Set this explicitly; `sora` is not supported for Dart. |
-| `godot` | `runtime_format = "json"`. Set this explicitly; it is the only supported Godot runtime format. |
+| `godot` | `runtime_format = "json"`, the only supported Godot runtime format; `godot_version` defaults to `"4.3"`. Godot 4.4+ output also uses typed dictionaries. |
 | `c` | `runtime_format = "sora"`; `c_standard = "c99"`, `"c11"`, `"c17"`, or `"c23"` default `c11`; view binding requires `prefix`. |
 | `cpp` | `runtime_format = "sora"`; `cpp_standard = "c++11"`, `"c++14"`, `"c++17"`, `"c++20"`, or `"c++23"` default `c++17`; view binding requires `namespace`. |
 | `typescript` | `runtime_format` default `sora`; `enum_repr = "string"` or `"integer"` default `string`. |
@@ -198,4 +198,8 @@ cpp_standard = "c++20"
 runtime_format = "json"
 enum_repr = "integer"
 emit_dts = true
+
+[codegen.godot]
+runtime_format = "json"
+godot_version = "4.3"
 ```
