@@ -12,6 +12,7 @@ use sora_workspace::{
 use crate::{
     SoraMcpServer,
     dto::{ToolEnvelope, tool_error},
+    task_store::TaskExecutionState,
 };
 
 #[tool_router(router = excel_tool_router, vis = "pub(crate)")]
@@ -188,6 +189,11 @@ where
     let result = tokio::task::spawn_blocking(move || worker(control)).await;
     cancellation_task.abort();
     let _ = progress_task.await;
+    if matches!(&result, Ok(Err(ExcelSyncPlanError::OperationCancelled)))
+        && let Some(execution) = context.extensions.get::<TaskExecutionState>()
+    {
+        execution.mark_cancellation_observed();
+    }
     result
 }
 
