@@ -1,6 +1,6 @@
 use std::{
     borrow::Cow,
-    collections::{BTreeMap, HashMap},
+    collections::{BTreeMap, BTreeSet, HashMap},
     sync::OnceLock,
 };
 
@@ -205,8 +205,10 @@ fn default_cell_value(
         | TypeIr::U16
         | TypeIr::I32
         | TypeIr::U32
-        | TypeIr::I64
-        | TypeIr::Ref { .. } => integer_cell(cell, context)?,
+        | TypeIr::I64 => integer_cell(cell, context)?,
+        TypeIr::Ref { table, field } => {
+            default_cell_value(cell, ref_target_type(table, field, context)?, context)?
+        }
         TypeIr::Duration => duration_cell(cell, context)?,
         TypeIr::DateTime => datetime_cell(cell, context)?,
         TypeIr::F32 | TypeIr::F64 => float_cell(cell, context)?,
@@ -591,11 +593,13 @@ fn json_to_cell_value(
         | TypeIr::U16
         | TypeIr::I32
         | TypeIr::U32
-        | TypeIr::I64
-        | TypeIr::Ref { .. } => value
+        | TypeIr::I64 => value
             .as_i64()
             .map(Value::Integer)
             .ok_or_else(|| context.error("expected JSON integer"))?,
+        TypeIr::Ref { table, field } => {
+            json_to_cell_value(value, ref_target_type(table, field, context)?, context)?
+        }
         TypeIr::Duration => value
             .as_str()
             .ok_or_else(|| context.error("expected JSON duration string"))
@@ -687,11 +691,13 @@ fn separated_item_to_value(
         | TypeIr::U16
         | TypeIr::I32
         | TypeIr::U32
-        | TypeIr::I64
-        | TypeIr::Ref { .. } => item
+        | TypeIr::I64 => item
             .parse::<i64>()
             .map(Value::Integer)
             .map_err(|_| context.error(format!("expected integer list item, got `{item}`"))),
+        TypeIr::Ref { table, field } => {
+            separated_item_to_value(item, ref_target_type(table, field, context)?, context)
+        }
         TypeIr::Duration => parse_duration_millis(item)
             .map(Value::Integer)
             .map_err(|message| context.error(message)),
@@ -792,6 +798,45 @@ fn source_to_default_value(source: &str, ty: &TypeIr, context: &CellContext<'_>)
     default_cell_value(&cell, ty, context)
 }
 
+fn ref_target_type<'a>(table: &str, field: &str, context: &CellContext<'a>) -> Result<&'a TypeIr> {
+    let mut current_table = table.to_owned();
+    let mut current_field = field.to_owned();
+    let mut visited = BTreeSet::new();
+
+    loop {
+        if !visited.insert((current_table.clone(), current_field.clone())) {
+            return Err(context.error(format!(
+                "cyclic reference type while resolving `{current_table}.{current_field}`"
+            )));
+        }
+
+        let target = context
+            .ir
+            .tables
+            .iter()
+            .find(|candidate| candidate.name == current_table)
+            .and_then(|table| {
+                table
+                    .fields
+                    .iter()
+                    .find(|candidate| candidate.name == current_field)
+            })
+            .ok_or_else(|| {
+                context.error(format!(
+                    "reference targets unknown field `{current_table}.{current_field}`"
+                ))
+            })?;
+
+        match &target.ty {
+            TypeIr::Ref { table, field } => {
+                current_table.clone_from(table);
+                current_field.clone_from(field);
+            }
+            ty => return Ok(ty),
+        }
+    }
+}
+
 fn json_to_untyped_value(value: &JsonValue, context: &CellContext<'_>) -> Result<Value> {
     Ok(match value {
         JsonValue::Null => Value::Null,
@@ -827,8 +872,11 @@ mod tests {
 
     use sora_ir::{
         model::{ConfigIr, ParserIr},
+        normalize::normalize_schema,
         parse::parse_type,
+        validate::validate_config_ir,
     };
+    use sora_schema::model::SchemaFile;
 
     use super::*;
     use crate::cell::CellLocation;
@@ -849,6 +897,91 @@ mod tests {
         ) -> Result<Value> {
             Ok(Value::String(cell.display_text().to_uppercase()))
         }
+    }
+
+    #[test]
+    fn parses_reference_cells_using_the_target_key_type() {
+        let registry = ParserRegistry::builtin();
+        let ir = string_ref_ir();
+        let context = CellContext {
+            path: Path::new("<test>"),
+            ir: &ir,
+            location: CellLocation::Default,
+            field: "terrain_id",
+            parser: None,
+        };
+
+        let value = registry
+            .parse_cell(
+                &CellValue::Text("terrain.grass".into()),
+                &parse_type("ref<Terrain.id>").unwrap(),
+                &context,
+            )
+            .unwrap();
+
+        assert_eq!(value, Value::String("terrain.grass".to_owned()));
+    }
+
+    #[test]
+    fn parses_reference_collections_using_the_target_key_type() {
+        let registry = ParserRegistry::builtin();
+        let ir = string_ref_ir();
+        let context = CellContext {
+            path: Path::new("<test>"),
+            ir: &ir,
+            location: CellLocation::Default,
+            field: "terrain_ids",
+            parser: None,
+        };
+
+        let value = registry
+            .parse_cell(
+                &CellValue::Text("terrain.grass,terrain.water".into()),
+                &parse_type("list<ref<Terrain.id>>").unwrap(),
+                &context,
+            )
+            .unwrap();
+
+        assert_eq!(
+            value,
+            Value::List(vec![
+                Value::String("terrain.grass".to_owned()),
+                Value::String("terrain.water".to_owned()),
+            ])
+        );
+    }
+
+    #[test]
+    fn parses_json_reference_collections_using_the_target_key_type() {
+        let registry = ParserRegistry::builtin();
+        let ir = string_ref_ir();
+        let parser = ParserIr {
+            kind: "json".to_owned(),
+            options: BTreeMap::new(),
+        };
+        let context = CellContext {
+            path: Path::new("<test>"),
+            ir: &ir,
+            location: CellLocation::Default,
+            field: "terrain_ids",
+            parser: Some(&parser),
+        };
+
+        let value = registry
+            .parse_cell(
+                &CellValue::Text(r#"["terrain.grass","terrain.water"]"#.into()),
+                &parse_type("list<ref<Terrain.id>>").unwrap(),
+                &context,
+            )
+            .unwrap();
+
+        assert_eq!(
+            value,
+            Value::List(vec![
+                Value::String("terrain.grass".to_owned()),
+                Value::String("terrain.water".to_owned()),
+            ])
+        );
     }
 
     #[test]
@@ -1226,5 +1359,43 @@ mod tests {
             .unwrap();
 
         assert_eq!(value, Value::Null);
+    }
+
+    fn string_ref_ir() -> ConfigIr {
+        let schema: SchemaFile = toml::from_str(
+            r#"
+project = { id = "test" }
+groups = { common = { default = true } }
+views = { default = { contract = "test/default", groups = ["common"] } }
+
+[[tables]]
+id = "terrain"
+name = "Terrain"
+mode = "map"
+key = "id"
+
+[[tables.fields]]
+name = "id"
+type = "string"
+
+[[tables]]
+id = "scenario"
+name = "Scenario"
+mode = "map"
+key = "id"
+
+[[tables.fields]]
+name = "id"
+type = "string"
+
+[[tables.fields]]
+name = "terrain_id"
+type = "ref<Terrain.id>"
+"#,
+        )
+        .unwrap();
+        let ir = normalize_schema(schema).unwrap();
+        validate_config_ir(&ir).unwrap();
+        ir
     }
 }

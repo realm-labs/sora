@@ -133,6 +133,26 @@ name = "max_stack"
 type = "i32"
 
 [[tables.fields]]
+name = "signed_byte"
+type = "i8"
+
+[[tables.fields]]
+name = "unsigned_byte"
+type = "u8"
+
+[[tables.fields]]
+name = "signed_short"
+type = "i16"
+
+[[tables.fields]]
+name = "unsigned_short"
+type = "u16"
+
+[[tables.fields]]
+name = "unsigned_int"
+type = "u32"
+
+[[tables.fields]]
 name = "rewards"
 type = "list<Reward>"
 from = { table = "ItemReward", parent_key = "id", child_key = "item_id", order_by = "seq" }
@@ -172,12 +192,22 @@ id = 1001
 name = "Iron Sword"
 item_type = "Weapon"
 max_stack = 1
+signed_byte = -128
+unsigned_byte = 255
+signed_short = -32768
+unsigned_short = 65535
+unsigned_int = 4294967295
 
 [[rows]]
 id = 1002
 name = "Magic Stone"
 item_type = "Material"
 max_stack = 999
+signed_byte = 127
+unsigned_byte = 0
+signed_short = 32767
+unsigned_short = 0
+unsigned_int = 0
 "#,
     )
     .unwrap();
@@ -249,12 +279,24 @@ mod tests {
         assert_eq!(item.name, "Magic Stone");
         assert_eq!(item.item_type, ItemType::Material);
         assert_eq!(item.max_stack, 999);
+        assert_eq!(item.signed_byte, 127);
+        assert_eq!(item.unsigned_byte, 0);
+        assert_eq!(item.signed_short, 32767);
+        assert_eq!(item.unsigned_short, 0);
+        assert_eq!(item.unsigned_int, 0);
         assert_eq!(item.rewards.len(), 2);
         assert_eq!(item.rewards[0].reward_item_id, 3001);
         assert_eq!(item.rewards[0].count, 2);
         assert_eq!(item.rewards[1].reward_item_id, 3002);
         assert_eq!(config.item().values().count(), 2);
         assert_eq!(config.item_reward().len(), 2);
+
+        let boundary_item = config.item().get(&1001).unwrap();
+        assert_eq!(boundary_item.signed_byte, -128);
+        assert_eq!(boundary_item.unsigned_byte, 255);
+        assert_eq!(boundary_item.signed_short, -32768);
+        assert_eq!(boundary_item.unsigned_short, 65535);
+        assert_eq!(boundary_item.unsigned_int, 4294967295);
     }
 
     #[test]

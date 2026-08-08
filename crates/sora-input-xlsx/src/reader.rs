@@ -674,6 +674,38 @@ mod tests {
     }
 
     #[test]
+    fn loads_xlsx_string_key_references() {
+        let ir = string_ref_ir();
+        let base = temp_dir();
+        write_workbook_rows(
+            &ir,
+            &ir.tables[0],
+            &base.join("Terrain.xlsx"),
+            &[vec!["terrain.grass"]],
+        );
+        write_workbook_rows(
+            &ir,
+            &ir.tables[1],
+            &base.join("Scenario.xlsx"),
+            &[vec!["scenario.start", "terrain.grass"]],
+        );
+
+        let data = load_xlsx_config_data(&ir, &base).unwrap();
+        let scenario = data
+            .tables
+            .iter()
+            .find(|table| table.name == "Scenario")
+            .unwrap();
+
+        assert_eq!(
+            scenario.rows[0].values["terrain_id"],
+            Value::String("terrain.grass".to_owned())
+        );
+
+        let _ = std::fs::remove_dir_all(base);
+    }
+
+    #[test]
     fn loads_xlsx_rows_by_field_names_and_ignores_unmapped_cells() {
         let ir = example_ir();
         let base = temp_dir();
@@ -914,6 +946,54 @@ mod tests {
         assert!(message.contains("is not part of union variant `QuestCompleted`"));
 
         let _ = std::fs::remove_dir_all(base);
+    }
+
+    fn string_ref_ir() -> ConfigIr {
+        let schema = toml::from_str(
+            r#"
+project = { id = "game_config" }
+groups = { common = { default = true } }
+views = { default = { contract = "game_config/default", groups = ["common"] } }
+
+[[tables]]
+id = "terrain"
+name = "Terrain"
+mode = "map"
+key = "id"
+
+[tables.source]
+format = "xlsx"
+file = "Terrain.xlsx"
+sheet = "Terrain"
+
+[[tables.fields]]
+name = "id"
+type = "string"
+
+[[tables]]
+id = "scenario"
+name = "Scenario"
+mode = "map"
+key = "id"
+
+[tables.source]
+format = "xlsx"
+file = "Scenario.xlsx"
+sheet = "Scenario"
+
+[[tables.fields]]
+name = "id"
+type = "string"
+
+[[tables.fields]]
+name = "terrain_id"
+type = "ref<Terrain.id>"
+"#,
+        )
+        .unwrap();
+        let ir = normalize_schema(schema).unwrap();
+        validate_config_ir(&ir).unwrap();
+        ir
     }
 
     fn example_ir() -> ConfigIr {
