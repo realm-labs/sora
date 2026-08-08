@@ -215,10 +215,12 @@ fn format_error(
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[cfg(unix)]
     use std::sync::{
         Arc,
         atomic::{AtomicBool, Ordering},
     };
+    #[cfg(unix)]
     use std::time::Instant;
 
     #[test]
