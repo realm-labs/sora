@@ -171,26 +171,44 @@ async fn task_augmented_build_can_be_polled_and_read_as_a_resource() -> anyhow::
         ServerResult::GetTaskResult(result) => result.task,
         result => anyhow::bail!("expected cancellation result, got {result:?}"),
     };
-    assert_eq!(cancellation.status, TaskStatus::Cancelled);
-    let deadline = Instant::now() + Duration::from_secs(10);
-    while client.service().status_count.load(Ordering::Relaxed) < notifications_before_cancel + 2
-        && Instant::now() < deadline
-    {
-        tokio::task::yield_now().await;
+    assert!(matches!(
+        cancellation.status,
+        TaskStatus::Working | TaskStatus::Completed
+    ));
+    if cancellation.status == TaskStatus::Working {
+        assert_eq!(
+            cancellation.status_message.as_deref(),
+            Some("Cancellation requested")
+        );
     }
-    let cancelled = client
-        .send_request(ClientRequest::GetTaskRequest(GetTaskRequest::new(
-            GetTaskParams::new(&cancelled_task.task_id),
-        )))
-        .await?;
-    let ServerResult::GetTaskResult(cancelled) = cancelled else {
-        anyhow::bail!("expected cancelled task info");
+    let deadline = Instant::now() + Duration::from_secs(10);
+    let cancelled = loop {
+        let result = client
+            .send_request(ClientRequest::GetTaskRequest(GetTaskRequest::new(
+                GetTaskParams::new(&cancelled_task.task_id),
+            )))
+            .await?;
+        let ServerResult::GetTaskResult(result) = result else {
+            anyhow::bail!("expected cancelled task info");
+        };
+        if !matches!(
+            result.task.status,
+            TaskStatus::Working | TaskStatus::InputRequired
+        ) {
+            break result.task;
+        }
+        if Instant::now() >= deadline {
+            anyhow::bail!("cancelled task did not reach a terminal state");
+        }
+        tokio::task::yield_now().await;
     };
-    assert_eq!(cancelled.task.status, TaskStatus::Cancelled);
-    assert_eq!(
-        fs::read_to_string(root.join("generated/schema.lock"))?,
-        "sentinel"
-    );
+    assert!(client.service().status_count.load(Ordering::Relaxed) > notifications_before_cancel);
+    let schema_lock = fs::read_to_string(root.join("generated/schema.lock"))?;
+    match cancelled.status {
+        TaskStatus::Cancelled => assert_eq!(schema_lock, "sentinel"),
+        TaskStatus::Completed => assert_ne!(schema_lock, "sentinel"),
+        status => anyhow::bail!("expected terminal cancellation result, got {status:?}"),
+    }
 
     client.cancel().await?;
     server_handle.await??;

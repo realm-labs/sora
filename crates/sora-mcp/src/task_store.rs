@@ -131,7 +131,7 @@ impl TaskStore {
             Err(_) => true,
         };
         record.result = Some(result);
-        record.task.status = if record.task.status == TaskStatus::Cancelled && result_is_error {
+        record.task.status = if record.cancellation.is_cancelled() && result_is_error {
             TaskStatus::Cancelled
         } else if result_is_error {
             TaskStatus::Failed
@@ -237,13 +237,9 @@ impl TaskStore {
         match record.task.status {
             TaskStatus::Working | TaskStatus::InputRequired => {
                 record.cancellation.cancel();
-                record.task.status = TaskStatus::Cancelled;
+                record.task.status = TaskStatus::Working;
                 record.task.status_message = Some("Cancellation requested".to_owned());
                 record.task.last_updated_at = rmcp::task_manager::current_timestamp();
-                record.expires_at = Some(
-                    Instant::now()
-                        + Duration::from_millis(record.task.ttl.unwrap_or(DEFAULT_TTL_MS)),
-                );
             }
             TaskStatus::Completed | TaskStatus::Failed | TaskStatus::Cancelled => {}
             _ => {}
@@ -360,12 +356,20 @@ mod tests {
     }
 
     #[test]
-    fn cancellation_is_terminal_for_failed_work() {
+    fn cancellation_becomes_terminal_after_failed_work_stops() {
         let store = TaskStore::default();
         let created = store.create("owner", None, None).expect("create task");
-        store
+        let cancelling = store
             .cancel("owner", &created.task.task_id)
             .expect("cancel task");
+
+        assert_eq!(cancelling.status, TaskStatus::Working);
+        assert_eq!(
+            cancelling.status_message.as_deref(),
+            Some("Cancellation requested")
+        );
+        assert!(created.cancellation.is_cancelled());
+
         let task = store
             .finish(
                 "owner",
@@ -375,7 +379,25 @@ mod tests {
             .expect("finish task");
 
         assert_eq!(task.status, TaskStatus::Cancelled);
-        assert!(created.cancellation.is_cancelled());
+    }
+
+    #[test]
+    fn successful_work_that_passed_the_commit_point_remains_completed() {
+        let store = TaskStore::default();
+        let created = store.create("owner", None, None).expect("create task");
+        store
+            .cancel("owner", &created.task.task_id)
+            .expect("cancel task");
+
+        let task = store
+            .finish(
+                "owner",
+                &created.task.task_id,
+                Ok(serde_json::json!({"isError": false})),
+            )
+            .expect("finish task");
+
+        assert_eq!(task.status, TaskStatus::Completed);
     }
 
     #[test]
