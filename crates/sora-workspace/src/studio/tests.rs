@@ -564,7 +564,7 @@ values = [{ id = 0, name = "Common" }]
 
     let project_text = fs::read_to_string(&project).unwrap();
     let new_schema = fs::read_to_string(base.join("schema/new_items.toml")).unwrap();
-    let project_value: toml::Value = project_text.parse().unwrap();
+    let project_value: toml::Table = project_text.parse().unwrap();
     assert_eq!(
         project_value
             .get("includes")

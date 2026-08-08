@@ -650,31 +650,28 @@ fn project_toml_text_with_schema_files(
     let project_text = fs::read_to_string(project)
         .with_context(|| format!("failed to read project file `{}`", project.display()))?;
     let mut project_doc = project_text
-        .parse::<toml::Value>()
+        .parse::<toml::Table>()
         .with_context(|| format!("failed to parse project TOML `{}`", project.display()))?;
-    let table = project_doc
-        .as_table_mut()
-        .context("project TOML root must be a table")?;
-    if table
+    if project_doc
         .get("project")
         .and_then(toml::Value::as_table)
         .and_then(|project| project.get("id"))
         .and_then(toml::Value::as_str)
         == Some(project_id)
-        && table
+        && project_doc
             .get("includes")
             .and_then(toml_array_strings)
             .is_some_and(|current| current == sources)
     {
         return Ok(project_text);
     }
-    let project_table = table
+    let project_table = project_doc
         .entry("project".to_owned())
         .or_insert_with(|| toml::Value::Table(Default::default()))
         .as_table_mut()
         .context("project TOML `project` must be a table")?;
     project_table.insert("id".to_owned(), toml::Value::String(project_id.to_owned()));
-    table.insert(
+    project_doc.insert(
         "includes".to_owned(),
         toml::Value::Array(
             sources
