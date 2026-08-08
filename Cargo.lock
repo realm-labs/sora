@@ -2749,6 +2749,7 @@ name = "sora-codegen"
 version = "0.1.0"
 dependencies = [
  "heck",
+ "libc",
  "minijinja",
  "serde",
  "serde_json",
