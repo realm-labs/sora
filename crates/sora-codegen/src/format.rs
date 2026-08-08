@@ -2,7 +2,7 @@ use std::{
     env, fs,
     io::Read,
     path::{Path, PathBuf},
-    process::{Command, Stdio},
+    process::{Child, Command, Stdio},
     thread,
     time::Duration,
 };
@@ -92,20 +92,21 @@ pub fn format_generated_code_with_cancellation(
             operation: "code formatting",
         });
     }
-    let mut child = Command::new(formatter.command)
+    let mut command = Command::new(formatter.command);
+    command
         .args(formatter.args)
         .args(&files)
         .stdout(Stdio::piped())
-        .stderr(Stdio::piped())
-        .spawn()
-        .map_err(|source| {
-            format_error(formatter.language, formatter.command, source.to_string())
-        })?;
+        .stderr(Stdio::piped());
+    configure_formatter_process(&mut command);
+    let mut child = command.spawn().map_err(|source| {
+        format_error(formatter.language, formatter.command, source.to_string())
+    })?;
     let stdout = drain_pipe(child.stdout.take());
     let stderr = drain_pipe(child.stderr.take());
     let status = loop {
         if cancelled() {
-            let _ = child.kill();
+            terminate_formatter_process(&mut child);
             let _ = child.wait();
             let _ = stdout.join();
             let _ = stderr.join();
@@ -129,6 +130,31 @@ pub fn format_generated_code_with_cancellation(
 
     let message = command_output_message(&stdout, &stderr);
     Err(format_error(formatter.language, formatter.command, message))
+}
+
+#[cfg(unix)]
+fn configure_formatter_process(command: &mut Command) {
+    use std::os::unix::process::CommandExt;
+
+    command.process_group(0);
+}
+
+#[cfg(not(unix))]
+fn configure_formatter_process(_command: &mut Command) {}
+
+#[cfg(unix)]
+fn terminate_formatter_process(child: &mut Child) {
+    let process_group = -(child.id() as libc::pid_t);
+    // SAFETY: the child is started in its own process group, so this targets
+    // only the formatter and descendants created by it.
+    if unsafe { libc::kill(process_group, libc::SIGKILL) } != 0 {
+        let _ = child.kill();
+    }
+}
+
+#[cfg(not(unix))]
+fn terminate_formatter_process(child: &mut Child) {
+    let _ = child.kill();
 }
 
 fn drain_pipe(pipe: Option<impl Read + Send + 'static>) -> thread::JoinHandle<Vec<u8>> {
@@ -215,10 +241,12 @@ fn format_error(
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[cfg(unix)]
     use std::sync::{
         Arc,
         atomic::{AtomicBool, Ordering},
     };
+    #[cfg(unix)]
     use std::time::Instant;
 
     #[test]

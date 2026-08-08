@@ -500,7 +500,7 @@ fn validate_ref(
             field: path.to_owned(),
             ref_table: ref_table.to_owned(),
             ref_field: ref_field.to_owned(),
-            value: key,
+            value: key.into_boxed_str(),
         })
     }
 }

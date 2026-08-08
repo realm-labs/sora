@@ -212,7 +212,7 @@ pub enum SoraError {
         field: String,
         ref_table: String,
         ref_field: String,
-        value: String,
+        value: Box<str>,
     },
 
     #[error("invalid row count for `{mode}` table `{table}`: expected {expected}, got {actual}")]
@@ -330,5 +330,10 @@ mod tests {
         };
 
         assert_eq!(error.path(), Some(Path::new("data/items.csv")));
+    }
+
+    #[test]
+    fn stays_below_clippys_large_error_threshold() {
+        assert!(std::mem::size_of::<SoraError>() < 128);
     }
 }

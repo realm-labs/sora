@@ -29,12 +29,21 @@ pub(crate) fn render_template(
             template: template_name.clone(),
             message: source.to_string(),
         })?;
-    template
+    let rendered = template
         .render(ctx)
         .map_err(|source| SoraError::RenderTemplate {
             template: template_name,
             message: source.to_string(),
-        })
+        })?;
+    Ok(normalize_line_endings(rendered))
+}
+
+fn normalize_line_endings(content: String) -> String {
+    if content.contains("\r\n") {
+        content.replace("\r\n", "\n")
+    } else {
+        content
+    }
 }
 
 pub(crate) fn ensure_dir(path: &Path) -> Result<()> {
@@ -52,4 +61,21 @@ pub(crate) fn write_file(path: &Path, content: String) -> Result<()> {
         path: path.to_path_buf(),
         source,
     })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::normalize_line_endings;
+
+    #[test]
+    fn rendered_templates_use_lf_line_endings() {
+        assert_eq!(
+            normalize_line_endings("first\r\nsecond\r\n".to_owned()),
+            "first\nsecond\n"
+        );
+        assert_eq!(
+            normalize_line_endings("first\nsecond\n".to_owned()),
+            "first\nsecond\n"
+        );
+    }
 }
