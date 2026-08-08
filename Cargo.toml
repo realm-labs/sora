@@ -41,7 +41,7 @@ readme = "README.md"
 anyhow = "1"
 axum = "0.8"
 base64 = "0.22"
-calamine = "0.35"
+calamine = "0.36"
 chrono = { version = "0.4", default-features = false, features = ["clock", "serde", "std"] }
 clap = { version = "4", features = ["derive"] }
 csv = "1"
