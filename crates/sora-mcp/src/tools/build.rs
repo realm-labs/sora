@@ -230,16 +230,12 @@ impl SoraMcpServer {
         }
 
         let (progress_tx, mut progress_rx) = tokio::sync::mpsc::unbounded_channel();
-        let cancellation = BuildControl::default();
-        let cancel_from_request = cancellation.clone();
         let request_cancellation = context.ct.clone();
-        let cancellation_task = tokio::spawn(async move {
-            request_cancellation.cancelled().await;
-            cancel_from_request.cancel();
-        });
-        let control = cancellation.on_progress(move |progress| {
-            let _ = progress_tx.send(progress);
-        });
+        let control = BuildControl::default()
+            .cancel_when(move || request_cancellation.is_cancelled())
+            .on_progress(move |progress| {
+                let _ = progress_tx.send(progress);
+            });
         let progress_token = context.meta.get_progress_token();
         let progress_peer = context.peer.clone();
         let progress_task = tokio::spawn(async move {
@@ -294,7 +290,6 @@ impl SoraMcpServer {
             Ok::<_, anyhow::Error>((output, descriptors))
         })
         .await;
-        cancellation_task.abort();
         let _ = progress_task.await;
 
         match build_result {
