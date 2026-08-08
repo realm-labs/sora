@@ -423,7 +423,8 @@ fn rejects_range_struct_ref_and_singleton_errors() {
     .unwrap_err();
     assert!(matches!(
         ref_error,
-        SoraError::MissingReference { field, value, .. } if field == "reward.item_id" && value == "404"
+        SoraError::MissingReference { field, value, .. }
+            if field == "reward.item_id" && value.as_ref() == "404"
     ));
 
     let singleton_error = validate_config_data(
