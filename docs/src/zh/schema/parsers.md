@@ -88,7 +88,8 @@ parser = { kind = "slug", prefix = "item-" }
 | 类型 | Cell 写法 |
 | --- | --- |
 | `bool` | 布尔 cell、`true`、`false`，或数字 cell：0 为 false，非 0 为 true。 |
-| `i32`、`i64`、`ref<Table.key>` | 整数 cell、整数字符串，或无小数部分的 float cell。 |
+| `i32`、`i64` | 整数 cell、整数字符串，或无小数部分的 float cell。 |
+| `ref<Table.key>` | 按被引用主键的实际类型解析。例如，引用 `string` 主键时接受文本 cell。 |
 | `duration` | 带 `d`、`h`、`m`、`s` 或 `ms` 单位的时长文本，例如 `500ms`、`30s` 或 `1h 30m`。单位必须按从大到小排列。 |
 | `f32`、`f64` | 数字 cell 或数字字符串。 |
 | `string`、`enum<Name>` | cell 展示文本。 |
