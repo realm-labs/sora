@@ -4,7 +4,6 @@ class_name SoraConfig
 extends RefCounted
 
 const SORA_SCHEMA_FINGERPRINT := "89c4dd879f839a58"
-
 var _tables: Dictionary = {}
 
 static func load_json_file(path: String) -> SoraConfig:
@@ -125,8 +124,10 @@ static func from_json_root(root: Dictionary) -> SoraConfig:
 	)
 	return config
 
-func tables() -> Array:
-	return _tables.values()
+func tables() -> Array[SoraRuntime.SoraConfigTable]:
+	var out: Array[SoraRuntime.SoraConfigTable] = []
+	out.assign(_tables.values())
+	return out
 
 func table(name: String) -> SoraRuntime.SoraConfigTable:
 	return _tables.get(name)

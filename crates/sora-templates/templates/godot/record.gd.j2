@@ -22,7 +22,12 @@ static func decode(value: Variant) -> {{ record.class_name }}:
 	var data: Dictionary = value
 	var out := {{ record.class_name }}.new()
 {%- for field in record.fields %}
-	out.{{ field.name }} = {{ field.value_decode | replace("__VALUE__", "SoraRuntime.read_field(data, \"" ~ field.raw_name ~ "\", " ~ field.default_value ~ ")") }}
+{%- set decode_value = field.value_decode | replace("__VALUE__", "SoraRuntime.read_field(data, \"" ~ field.raw_name ~ "\", " ~ field.default_value ~ ")") %}
+{%- if field.decode_assign %}
+	out.{{ field.name }}.assign({{ decode_value }})
+{%- else %}
+	out.{{ field.name }} = {{ decode_value }}
+{%- endif %}
 {%- endfor %}
 	return out
 
@@ -35,18 +40,18 @@ class {{ table.class_name }}:
 	const TABLE_NAME := "{{ table.name }}"
 
 {%- if table.mode == "map" and table.key_field_name %}
-	var keys: Array = []
-	var _rows: Dictionary = {}
+	var keys: {{ table.key_array_type }} = []
+	var _rows: {{ table.rows_dictionary_type }} = {}
 {%- elif table.mode == "singleton" %}
 	var row: {{ table.row_type }} = null
 {%- else %}
-	var rows: Array = []
+	var rows: {{ table.row_array_type }} = []
 {%- endif %}
 {%- for index in table.unique_indexes %}
-	var _{{ index.field_name }}: Dictionary = {}
+	var _{{ index.field_name }}: {{ index.dictionary_type }} = {}
 {%- endfor %}
 {%- for index in table.non_unique_indexes %}
-	var _{{ index.field_name }}: Dictionary = {}
+	var _{{ index.field_name }}: {{ index.dictionary_type }} = {}
 {%- endfor %}
 
 	static func decode(rows: Array) -> {{ table.class_name }}:
@@ -55,18 +60,30 @@ class {{ table.class_name }}:
 		table.mode = "{{ table.mode }}"
 		table.key = {% if table.key_name %}"{{ table.key_name }}"{% else %}null{% endif %}
 {%- if table.mode == "map" and table.key_field_name %}
-		table.keys = rows.map(func(row): return row.{{ table.key_field_name }})
+		table.keys.assign(rows.map(func(row): return row.{{ table.key_field_name }}))
+{%- if table.typed_rows_dictionary %}
+		table._rows.assign(SoraRuntime.decode_map_table(rows, func(row): return row.{{ table.key_field_name }}))
+{%- else %}
 		table._rows = SoraRuntime.decode_map_table(rows, func(row): return row.{{ table.key_field_name }})
+{%- endif %}
 {%- elif table.mode == "singleton" %}
 		table.row = SoraRuntime.require_singleton_table(rows, TABLE_NAME)
 {%- else %}
-		table.rows = rows
+		table.rows.assign(rows)
 {%- endif %}
 {%- for index in table.unique_indexes %}
+{%- if index.typed_dictionary %}
+		table._{{ index.field_name }}.assign(SoraRuntime.decode_unique_index(rows, func(row): return row.{{ index.field_name }}))
+{%- else %}
 		table._{{ index.field_name }} = SoraRuntime.decode_unique_index(rows, func(row): return row.{{ index.field_name }})
+{%- endif %}
 {%- endfor %}
 {%- for index in table.non_unique_indexes %}
+{%- if index.typed_dictionary %}
+		table._{{ index.field_name }}.assign(SoraRuntime.decode_index(rows, func(row): return row.{{ index.field_name }}))
+{%- else %}
 		table._{{ index.field_name }} = SoraRuntime.decode_index(rows, func(row): return row.{{ index.field_name }})
+{%- endif %}
 {%- endfor %}
 		return table
 
@@ -80,20 +97,22 @@ class {{ table.class_name }}:
 {%- endif %}
 
 {%- if table.mode == "map" and table.key_field_name %}
-	func get_row(key_value: Variant) -> {{ table.row_type }}:
+	func get_row(key_value: {{ table.key_type }}) -> {{ table.row_type }}:
 		var value = _rows.get(key_value)
 		if value == null:
 			SoraRuntime.report_error("missing row in table `%s` for key `%s`" % [TABLE_NAME, str(key_value)])
 		return value
 
-	func try_get(key_value: Variant) -> {{ table.row_type }}:
+	func try_get(key_value: {{ table.key_type }}) -> {{ table.row_type }}:
 		return _rows.get(key_value)
 
-	func rows() -> Array:
-		return _rows.values()
+	func rows() -> {{ table.row_array_type }}:
+		var out: {{ table.row_array_type }} = []
+		out.assign(_rows.values())
+		return out
 
-	func ordered_rows() -> Array:
-		var out: Array = []
+	func ordered_rows() -> {{ table.row_array_type }}:
+		var out: {{ table.row_array_type }} = []
 		for key_value in keys:
 			if _rows.has(key_value):
 				out.append(_rows[key_value])
@@ -101,12 +120,14 @@ class {{ table.class_name }}:
 {%- endif %}
 {%- for index in table.unique_indexes %}
 
-	func get_{{ index.method_name }}({{ index.param_name }}: Variant) -> {{ table.row_type }}:
+	func get_{{ index.method_name }}({{ index.param_name }}: {{ index.param_type }}) -> {{ table.row_type }}:
 		return _{{ index.field_name }}.get({{ index.param_name }})
 {%- endfor %}
 {%- for index in table.non_unique_indexes %}
 
-	func find_{{ index.method_name }}({{ index.param_name }}: Variant) -> Array:
-		return _{{ index.field_name }}.get({{ index.param_name }}, [])
+	func find_{{ index.method_name }}({{ index.param_name }}: {{ index.param_type }}) -> {{ index.result_array_type }}:
+		var out: {{ index.result_array_type }} = []
+		out.assign(_{{ index.field_name }}.get({{ index.param_name }}, []))
+		return out
 {%- endfor %}
 {%- endif %}

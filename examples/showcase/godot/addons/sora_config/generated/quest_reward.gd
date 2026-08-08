@@ -15,24 +15,24 @@ static func decode(value: Variant) -> QuestReward:
 		return null
 	var data: Dictionary = value
 	var out := QuestReward.new()
-	out.quest_id = int(SoraRuntime.read_field(data, "quest_id", 0))
-	out.seq = int(SoraRuntime.read_field(data, "seq", 0))
-	out.item_id = int(SoraRuntime.read_field(data, "item_id", 0))
-	out.count = int(SoraRuntime.read_field(data, "count", 0))
+	out.quest_id = SoraRuntime.decode_int(SoraRuntime.read_field(data, "quest_id", 0))
+	out.seq = SoraRuntime.decode_int(SoraRuntime.read_field(data, "seq", 0))
+	out.item_id = SoraRuntime.decode_int(SoraRuntime.read_field(data, "item_id", 0))
+	out.count = SoraRuntime.decode_int(SoraRuntime.read_field(data, "count", 0))
 	return out
 
 class QuestRewardTable:
 	extends SoraRuntime.SoraConfigTable
 
 	const TABLE_NAME := "QuestReward"
-	var rows: Array = []
+	var rows: Array[QuestReward] = []
 
 	static func decode(rows: Array) -> QuestRewardTable:
 		var table := QuestRewardTable.new()
 		table.name = TABLE_NAME
 		table.mode = "list"
 		table.key = null
-		table.rows = rows
+		table.rows.assign(rows)
 		return table
 
 	func length() -> int:

@@ -4,7 +4,7 @@ class_name Dungeon
 extends RefCounted
 var id: int = 0
 var name: String = ""
-var stage_ids: Array = []
+var stage_ids: Array[int] = []
 var entry_cost: ResourceCost = null
 
 static func decode(value: Variant) -> Dungeon:
@@ -15,9 +15,9 @@ static func decode(value: Variant) -> Dungeon:
 		return null
 	var data: Dictionary = value
 	var out := Dungeon.new()
-	out.id = int(SoraRuntime.read_field(data, "id", 0))
+	out.id = SoraRuntime.decode_int(SoraRuntime.read_field(data, "id", 0))
 	out.name = str(SoraRuntime.read_field(data, "name", ""))
-	out.stage_ids = SoraRuntime.decode_array(SoraRuntime.read_field(data, "stage_ids", []), func(item): return int(item))
+	out.stage_ids.assign(SoraRuntime.decode_array(SoraRuntime.read_field(data, "stage_ids", []), func(item): return SoraRuntime.decode_int(item)))
 	out.entry_cost = ResourceCost.decode(SoraRuntime.read_field(data, "entry_cost", null))
 	return out
 
@@ -25,7 +25,7 @@ class DungeonTable:
 	extends SoraRuntime.SoraConfigTable
 
 	const TABLE_NAME := "Dungeon"
-	var keys: Array = []
+	var keys: Array[int] = []
 	var _rows: Dictionary = {}
 
 	static func decode(rows: Array) -> DungeonTable:
@@ -33,26 +33,28 @@ class DungeonTable:
 		table.name = TABLE_NAME
 		table.mode = "map"
 		table.key = "id"
-		table.keys = rows.map(func(row): return row.id)
+		table.keys.assign(rows.map(func(row): return row.id))
 		table._rows = SoraRuntime.decode_map_table(rows, func(row): return row.id)
 		return table
 
 	func length() -> int:
 		return _rows.size()
-	func get_row(key_value: Variant) -> Dungeon:
+	func get_row(key_value: int) -> Dungeon:
 		var value = _rows.get(key_value)
 		if value == null:
 			SoraRuntime.report_error("missing row in table `%s` for key `%s`" % [TABLE_NAME, str(key_value)])
 		return value
 
-	func try_get(key_value: Variant) -> Dungeon:
+	func try_get(key_value: int) -> Dungeon:
 		return _rows.get(key_value)
 
-	func rows() -> Array:
-		return _rows.values()
+	func rows() -> Array[Dungeon]:
+		var out: Array[Dungeon] = []
+		out.assign(_rows.values())
+		return out
 
-	func ordered_rows() -> Array:
-		var out: Array = []
+	func ordered_rows() -> Array[Dungeon]:
+		var out: Array[Dungeon] = []
 		for key_value in keys:
 			if _rows.has(key_value):
 				out.append(_rows[key_value])

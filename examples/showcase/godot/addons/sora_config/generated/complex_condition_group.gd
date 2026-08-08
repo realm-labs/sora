@@ -5,7 +5,7 @@ extends RefCounted
 var id: int = 0
 var name: String = ""
 # A derived list of union values; each child row is edited without JSON
-var conditions: Array = []
+var conditions: Array[EventCondition] = []
 
 static func decode(value: Variant) -> ComplexConditionGroup:
 	if value == null:
@@ -15,16 +15,16 @@ static func decode(value: Variant) -> ComplexConditionGroup:
 		return null
 	var data: Dictionary = value
 	var out := ComplexConditionGroup.new()
-	out.id = int(SoraRuntime.read_field(data, "id", 0))
+	out.id = SoraRuntime.decode_int(SoraRuntime.read_field(data, "id", 0))
 	out.name = str(SoraRuntime.read_field(data, "name", ""))
-	out.conditions = SoraRuntime.decode_array(SoraRuntime.read_field(data, "conditions", []), func(item): return EventCondition.decode(item))
+	out.conditions.assign(SoraRuntime.decode_array(SoraRuntime.read_field(data, "conditions", []), func(item): return EventConditionCodec.decode(item)))
 	return out
 
 class ComplexConditionGroupTable:
 	extends SoraRuntime.SoraConfigTable
 
 	const TABLE_NAME := "ComplexConditionGroup"
-	var keys: Array = []
+	var keys: Array[int] = []
 	var _rows: Dictionary = {}
 
 	static func decode(rows: Array) -> ComplexConditionGroupTable:
@@ -32,26 +32,28 @@ class ComplexConditionGroupTable:
 		table.name = TABLE_NAME
 		table.mode = "map"
 		table.key = "id"
-		table.keys = rows.map(func(row): return row.id)
+		table.keys.assign(rows.map(func(row): return row.id))
 		table._rows = SoraRuntime.decode_map_table(rows, func(row): return row.id)
 		return table
 
 	func length() -> int:
 		return _rows.size()
-	func get_row(key_value: Variant) -> ComplexConditionGroup:
+	func get_row(key_value: int) -> ComplexConditionGroup:
 		var value = _rows.get(key_value)
 		if value == null:
 			SoraRuntime.report_error("missing row in table `%s` for key `%s`" % [TABLE_NAME, str(key_value)])
 		return value
 
-	func try_get(key_value: Variant) -> ComplexConditionGroup:
+	func try_get(key_value: int) -> ComplexConditionGroup:
 		return _rows.get(key_value)
 
-	func rows() -> Array:
-		return _rows.values()
+	func rows() -> Array[ComplexConditionGroup]:
+		var out: Array[ComplexConditionGroup] = []
+		out.assign(_rows.values())
+		return out
 
-	func ordered_rows() -> Array:
-		var out: Array = []
+	func ordered_rows() -> Array[ComplexConditionGroup]:
+		var out: Array[ComplexConditionGroup] = []
 		for key_value in keys:
 			if _rows.has(key_value):
 				out.append(_rows[key_value])

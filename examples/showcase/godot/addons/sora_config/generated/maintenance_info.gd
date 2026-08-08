@@ -15,6 +15,6 @@ static func decode(value: Variant) -> MaintenanceInfo:
 	var data: Dictionary = value
 	var out := MaintenanceInfo.new()
 	out.starts_at = str(SoraRuntime.read_field(data, "starts_at", ""))
-	out.duration_minutes = int(SoraRuntime.read_field(data, "duration_minutes", 0))
-	out.reason = null if SoraRuntime.read_field(data, "reason", null).is_null() else str(SoraRuntime.read_field(data, "reason", null))
+	out.duration_minutes = SoraRuntime.decode_int(SoraRuntime.read_field(data, "duration_minutes", 0))
+	out.reason = null if SoraRuntime.read_field(data, "reason", null) == null else str(SoraRuntime.read_field(data, "reason", null))
 	return out

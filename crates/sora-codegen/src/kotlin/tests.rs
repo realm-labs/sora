@@ -12,7 +12,8 @@ use crate::{
     javascript::JavaScriptCodeGenerator,
     lua::LuaCodeGenerator,
     options::{
-        JavaCodegenOptions, LanguageCodegenOptions, RuntimeFormat, RustCodegenOptions, RustMapType,
+        GodotCodegenOptions, JavaCodegenOptions, LanguageCodegenOptions, RuntimeFormat,
+        RustCodegenOptions, RustMapType,
     },
     python::PythonCodeGenerator,
     rust::RustCodeGenerator,
@@ -576,8 +577,9 @@ fn generators_apply_custom_type_mappings() {
         &mappings,
         &dart_out,
     );
-    let godot_options = serde_json::to_value(LanguageCodegenOptions {
+    let godot_options = serde_json::to_value(GodotCodegenOptions {
         runtime_format: RuntimeFormat::Json,
+        godot_version: "4.3".to_owned(),
     })
     .unwrap();
     generate_with_mappings(

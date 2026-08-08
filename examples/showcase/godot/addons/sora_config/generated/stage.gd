@@ -4,9 +4,9 @@ class_name Stage
 extends RefCounted
 var id: int = 0
 var name: String = ""
-var monster_ids: Array = []
+var monster_ids: Array[int] = []
 var recommended_power: int = 0
-var first_clear_rewards: Array = []
+var first_clear_rewards: Array[Reward] = []
 
 static func decode(value: Variant) -> Stage:
 	if value == null:
@@ -16,18 +16,18 @@ static func decode(value: Variant) -> Stage:
 		return null
 	var data: Dictionary = value
 	var out := Stage.new()
-	out.id = int(SoraRuntime.read_field(data, "id", 0))
+	out.id = SoraRuntime.decode_int(SoraRuntime.read_field(data, "id", 0))
 	out.name = str(SoraRuntime.read_field(data, "name", ""))
-	out.monster_ids = SoraRuntime.decode_array(SoraRuntime.read_field(data, "monster_ids", []), func(item): return int(item))
-	out.recommended_power = int(SoraRuntime.read_field(data, "recommended_power", 0))
-	out.first_clear_rewards = SoraRuntime.decode_array(SoraRuntime.read_field(data, "first_clear_rewards", []), func(item): return Reward.decode(item))
+	out.monster_ids.assign(SoraRuntime.decode_array(SoraRuntime.read_field(data, "monster_ids", []), func(item): return SoraRuntime.decode_int(item)))
+	out.recommended_power = SoraRuntime.decode_int(SoraRuntime.read_field(data, "recommended_power", 0))
+	out.first_clear_rewards.assign(SoraRuntime.decode_array(SoraRuntime.read_field(data, "first_clear_rewards", []), func(item): return Reward.decode(item)))
 	return out
 
 class StageTable:
 	extends SoraRuntime.SoraConfigTable
 
 	const TABLE_NAME := "Stage"
-	var keys: Array = []
+	var keys: Array[int] = []
 	var _rows: Dictionary = {}
 
 	static func decode(rows: Array) -> StageTable:
@@ -35,26 +35,28 @@ class StageTable:
 		table.name = TABLE_NAME
 		table.mode = "map"
 		table.key = "id"
-		table.keys = rows.map(func(row): return row.id)
+		table.keys.assign(rows.map(func(row): return row.id))
 		table._rows = SoraRuntime.decode_map_table(rows, func(row): return row.id)
 		return table
 
 	func length() -> int:
 		return _rows.size()
-	func get_row(key_value: Variant) -> Stage:
+	func get_row(key_value: int) -> Stage:
 		var value = _rows.get(key_value)
 		if value == null:
 			SoraRuntime.report_error("missing row in table `%s` for key `%s`" % [TABLE_NAME, str(key_value)])
 		return value
 
-	func try_get(key_value: Variant) -> Stage:
+	func try_get(key_value: int) -> Stage:
 		return _rows.get(key_value)
 
-	func rows() -> Array:
-		return _rows.values()
+	func rows() -> Array[Stage]:
+		var out: Array[Stage] = []
+		out.assign(_rows.values())
+		return out
 
-	func ordered_rows() -> Array:
-		var out: Array = []
+	func ordered_rows() -> Array[Stage]:
+		var out: Array[Stage] = []
 		for key_value in keys:
 			if _rows.has(key_value):
 				out.append(_rows[key_value])

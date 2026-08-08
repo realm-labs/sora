@@ -4,33 +4,3 @@ class_name EventCondition
 extends RefCounted
 
 var type: String = ""
-var condition_group_id: int = 0
-var count: int = 0
-var item_id: int = 0
-var level: int = 0
-var quest_id: int = 0
-
-static func decode(value: Variant) -> EventCondition:
-	if value == null:
-		return null
-	if typeof(value) != TYPE_DICTIONARY:
-		SoraRuntime.report_error("expected object for EventCondition")
-		return null
-	var data: Dictionary = value
-	var out := EventCondition.new()
-	out.type = str(SoraRuntime.read_field(data, "type", ""))
-	match out.type:
-		"LevelAtLeast":
-			out.level = int(SoraRuntime.read_field(data, "level", 0))
-		"QuestCompleted":
-			out.quest_id = int(SoraRuntime.read_field(data, "quest_id", 0))
-		"HasItem":
-			out.item_id = int(SoraRuntime.read_field(data, "item_id", 0))
-			out.count = int(SoraRuntime.read_field(data, "count", 0))
-		"AllConditions":
-			out.condition_group_id = int(SoraRuntime.read_field(data, "condition_group_id", 0))
-		"AnyCondition":
-			out.condition_group_id = int(SoraRuntime.read_field(data, "condition_group_id", 0))
-		_:
-			SoraRuntime.report_error("unknown EventCondition variant `%s`" % out.type)
-	return out

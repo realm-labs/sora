@@ -7,7 +7,7 @@ var name: String = ""
 var rarity: String = ""
 var base_level: int = 0
 var base_skill: int = 0
-var starter_items: Array = []
+var starter_items: Array[int] = []
 var spawn_pos: Vec3 = null
 
 static func decode(value: Variant) -> Character:
@@ -18,12 +18,12 @@ static func decode(value: Variant) -> Character:
 		return null
 	var data: Dictionary = value
 	var out := Character.new()
-	out.id = int(SoraRuntime.read_field(data, "id", 0))
+	out.id = SoraRuntime.decode_int(SoraRuntime.read_field(data, "id", 0))
 	out.name = str(SoraRuntime.read_field(data, "name", ""))
 	out.rarity = Rarity.decode(SoraRuntime.read_field(data, "rarity", ""))
-	out.base_level = int(SoraRuntime.read_field(data, "base_level", 0))
-	out.base_skill = int(SoraRuntime.read_field(data, "base_skill", 0))
-	out.starter_items = SoraRuntime.decode_array(SoraRuntime.read_field(data, "starter_items", []), func(item): return int(item))
+	out.base_level = SoraRuntime.decode_int(SoraRuntime.read_field(data, "base_level", 0))
+	out.base_skill = SoraRuntime.decode_int(SoraRuntime.read_field(data, "base_skill", 0))
+	out.starter_items.assign(SoraRuntime.decode_array(SoraRuntime.read_field(data, "starter_items", []), func(item): return SoraRuntime.decode_int(item)))
 	out.spawn_pos = Vec3.decode(SoraRuntime.read_field(data, "spawn_pos", null))
 	return out
 
@@ -31,7 +31,7 @@ class CharacterTable:
 	extends SoraRuntime.SoraConfigTable
 
 	const TABLE_NAME := "Character"
-	var keys: Array = []
+	var keys: Array[int] = []
 	var _rows: Dictionary = {}
 
 	static func decode(rows: Array) -> CharacterTable:
@@ -39,26 +39,28 @@ class CharacterTable:
 		table.name = TABLE_NAME
 		table.mode = "map"
 		table.key = "id"
-		table.keys = rows.map(func(row): return row.id)
+		table.keys.assign(rows.map(func(row): return row.id))
 		table._rows = SoraRuntime.decode_map_table(rows, func(row): return row.id)
 		return table
 
 	func length() -> int:
 		return _rows.size()
-	func get_row(key_value: Variant) -> Character:
+	func get_row(key_value: int) -> Character:
 		var value = _rows.get(key_value)
 		if value == null:
 			SoraRuntime.report_error("missing row in table `%s` for key `%s`" % [TABLE_NAME, str(key_value)])
 		return value
 
-	func try_get(key_value: Variant) -> Character:
+	func try_get(key_value: int) -> Character:
 		return _rows.get(key_value)
 
-	func rows() -> Array:
-		return _rows.values()
+	func rows() -> Array[Character]:
+		var out: Array[Character] = []
+		out.assign(_rows.values())
+		return out
 
-	func ordered_rows() -> Array:
-		var out: Array = []
+	func ordered_rows() -> Array[Character]:
+		var out: Array[Character] = []
 		for key_value in keys:
 			if _rows.has(key_value):
 				out.append(_rows[key_value])

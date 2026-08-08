@@ -15,6 +15,6 @@ static func decode(value: Variant) -> ResourceCost:
 	var data: Dictionary = value
 	var out := ResourceCost.new()
 	out.kind = ResourceKind.decode(SoraRuntime.read_field(data, "kind", ""))
-	out.id = int(SoraRuntime.read_field(data, "id", 0))
-	out.count = int(SoraRuntime.read_field(data, "count", 0))
+	out.id = SoraRuntime.decode_int(SoraRuntime.read_field(data, "id", 0))
+	out.count = SoraRuntime.decode_int(SoraRuntime.read_field(data, "count", 0))
 	return out

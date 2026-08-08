@@ -5,7 +5,7 @@ extends RefCounted
 var id: int = 0
 var name: String = ""
 var condition: EventCondition = null
-var actions: Array = []
+var actions: Array[RewardAction] = []
 
 static func decode(value: Variant) -> EventRule:
 	if value == null:
@@ -15,17 +15,17 @@ static func decode(value: Variant) -> EventRule:
 		return null
 	var data: Dictionary = value
 	var out := EventRule.new()
-	out.id = int(SoraRuntime.read_field(data, "id", 0))
+	out.id = SoraRuntime.decode_int(SoraRuntime.read_field(data, "id", 0))
 	out.name = str(SoraRuntime.read_field(data, "name", ""))
-	out.condition = EventCondition.decode(SoraRuntime.read_field(data, "condition", null))
-	out.actions = SoraRuntime.decode_array(SoraRuntime.read_field(data, "actions", []), func(item): return RewardAction.decode(item))
+	out.condition = EventConditionCodec.decode(SoraRuntime.read_field(data, "condition", null))
+	out.actions.assign(SoraRuntime.decode_array(SoraRuntime.read_field(data, "actions", []), func(item): return RewardActionCodec.decode(item)))
 	return out
 
 class EventRuleTable:
 	extends SoraRuntime.SoraConfigTable
 
 	const TABLE_NAME := "EventRule"
-	var keys: Array = []
+	var keys: Array[int] = []
 	var _rows: Dictionary = {}
 
 	static func decode(rows: Array) -> EventRuleTable:
@@ -33,26 +33,28 @@ class EventRuleTable:
 		table.name = TABLE_NAME
 		table.mode = "map"
 		table.key = "id"
-		table.keys = rows.map(func(row): return row.id)
+		table.keys.assign(rows.map(func(row): return row.id))
 		table._rows = SoraRuntime.decode_map_table(rows, func(row): return row.id)
 		return table
 
 	func length() -> int:
 		return _rows.size()
-	func get_row(key_value: Variant) -> EventRule:
+	func get_row(key_value: int) -> EventRule:
 		var value = _rows.get(key_value)
 		if value == null:
 			SoraRuntime.report_error("missing row in table `%s` for key `%s`" % [TABLE_NAME, str(key_value)])
 		return value
 
-	func try_get(key_value: Variant) -> EventRule:
+	func try_get(key_value: int) -> EventRule:
 		return _rows.get(key_value)
 
-	func rows() -> Array:
-		return _rows.values()
+	func rows() -> Array[EventRule]:
+		var out: Array[EventRule] = []
+		out.assign(_rows.values())
+		return out
 
-	func ordered_rows() -> Array:
-		var out: Array = []
+	func ordered_rows() -> Array[EventRule]:
+		var out: Array[EventRule] = []
 		for key_value in keys:
 			if _rows.has(key_value):
 				out.append(_rows[key_value])

@@ -16,25 +16,25 @@ static func decode(value: Variant) -> ShopItem:
 		return null
 	var data: Dictionary = value
 	var out := ShopItem.new()
-	out.shop_id = int(SoraRuntime.read_field(data, "shop_id", 0))
-	out.seq = int(SoraRuntime.read_field(data, "seq", 0))
-	out.item_id = int(SoraRuntime.read_field(data, "item_id", 0))
+	out.shop_id = SoraRuntime.decode_int(SoraRuntime.read_field(data, "shop_id", 0))
+	out.seq = SoraRuntime.decode_int(SoraRuntime.read_field(data, "seq", 0))
+	out.item_id = SoraRuntime.decode_int(SoraRuntime.read_field(data, "item_id", 0))
 	out.price = ResourceCost.decode(SoraRuntime.read_field(data, "price", null))
-	out.daily_limit = null if SoraRuntime.read_field(data, "daily_limit", null).is_null() else int(SoraRuntime.read_field(data, "daily_limit", null))
+	out.daily_limit = null if SoraRuntime.read_field(data, "daily_limit", null) == null else SoraRuntime.decode_int(SoraRuntime.read_field(data, "daily_limit", null))
 	return out
 
 class ShopItemTable:
 	extends SoraRuntime.SoraConfigTable
 
 	const TABLE_NAME := "ShopItem"
-	var rows: Array = []
+	var rows: Array[ShopItem] = []
 
 	static func decode(rows: Array) -> ShopItemTable:
 		var table := ShopItemTable.new()
 		table.name = TABLE_NAME
 		table.mode = "list"
 		table.key = null
-		table.rows = rows
+		table.rows.assign(rows)
 		return table
 
 	func length() -> int:

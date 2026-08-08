@@ -5,7 +5,7 @@ extends RefCounted
 var id: int = 0
 var name: String = ""
 var duration: int = 0
-var modifiers: Array = []
+var modifiers: Array[StatModifier] = []
 
 static func decode(value: Variant) -> Buff:
 	if value == null:
@@ -15,17 +15,17 @@ static func decode(value: Variant) -> Buff:
 		return null
 	var data: Dictionary = value
 	var out := Buff.new()
-	out.id = int(SoraRuntime.read_field(data, "id", 0))
+	out.id = SoraRuntime.decode_int(SoraRuntime.read_field(data, "id", 0))
 	out.name = str(SoraRuntime.read_field(data, "name", ""))
-	out.duration = int(SoraRuntime.read_field(data, "duration", 0))
-	out.modifiers = SoraRuntime.decode_array(SoraRuntime.read_field(data, "modifiers", []), func(item): return StatModifier.decode(item))
+	out.duration = SoraRuntime.decode_int(SoraRuntime.read_field(data, "duration", 0))
+	out.modifiers.assign(SoraRuntime.decode_array(SoraRuntime.read_field(data, "modifiers", []), func(item): return StatModifier.decode(item)))
 	return out
 
 class BuffTable:
 	extends SoraRuntime.SoraConfigTable
 
 	const TABLE_NAME := "Buff"
-	var keys: Array = []
+	var keys: Array[int] = []
 	var _rows: Dictionary = {}
 
 	static func decode(rows: Array) -> BuffTable:
@@ -33,26 +33,28 @@ class BuffTable:
 		table.name = TABLE_NAME
 		table.mode = "map"
 		table.key = "id"
-		table.keys = rows.map(func(row): return row.id)
+		table.keys.assign(rows.map(func(row): return row.id))
 		table._rows = SoraRuntime.decode_map_table(rows, func(row): return row.id)
 		return table
 
 	func length() -> int:
 		return _rows.size()
-	func get_row(key_value: Variant) -> Buff:
+	func get_row(key_value: int) -> Buff:
 		var value = _rows.get(key_value)
 		if value == null:
 			SoraRuntime.report_error("missing row in table `%s` for key `%s`" % [TABLE_NAME, str(key_value)])
 		return value
 
-	func try_get(key_value: Variant) -> Buff:
+	func try_get(key_value: int) -> Buff:
 		return _rows.get(key_value)
 
-	func rows() -> Array:
-		return _rows.values()
+	func rows() -> Array[Buff]:
+		var out: Array[Buff] = []
+		out.assign(_rows.values())
+		return out
 
-	func ordered_rows() -> Array:
-		var out: Array = []
+	func ordered_rows() -> Array[Buff]:
+		var out: Array[Buff] = []
 		for key_value in keys:
 			if _rows.has(key_value):
 				out.append(_rows[key_value])

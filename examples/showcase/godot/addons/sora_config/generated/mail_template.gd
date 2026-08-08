@@ -6,7 +6,7 @@ var id: int = 0
 var mail_type: String = ""
 var title_key: SoraRuntime.TextKey = null
 var body_key: SoraRuntime.TextKey = null
-var rewards: Array = []
+var rewards: Array[Reward] = []
 
 static func decode(value: Variant) -> MailTemplate:
 	if value == null:
@@ -16,18 +16,18 @@ static func decode(value: Variant) -> MailTemplate:
 		return null
 	var data: Dictionary = value
 	var out := MailTemplate.new()
-	out.id = int(SoraRuntime.read_field(data, "id", 0))
+	out.id = SoraRuntime.decode_int(SoraRuntime.read_field(data, "id", 0))
 	out.mail_type = MailType.decode(SoraRuntime.read_field(data, "mail_type", ""))
 	out.title_key = SoraRuntime.TextKey.new(str(SoraRuntime.read_field(data, "title_key", null)))
 	out.body_key = SoraRuntime.TextKey.new(str(SoraRuntime.read_field(data, "body_key", null)))
-	out.rewards = SoraRuntime.decode_array(SoraRuntime.read_field(data, "rewards", []), func(item): return Reward.decode(item))
+	out.rewards.assign(SoraRuntime.decode_array(SoraRuntime.read_field(data, "rewards", []), func(item): return Reward.decode(item)))
 	return out
 
 class MailTemplateTable:
 	extends SoraRuntime.SoraConfigTable
 
 	const TABLE_NAME := "MailTemplate"
-	var keys: Array = []
+	var keys: Array[int] = []
 	var _rows: Dictionary = {}
 
 	static func decode(rows: Array) -> MailTemplateTable:
@@ -35,26 +35,28 @@ class MailTemplateTable:
 		table.name = TABLE_NAME
 		table.mode = "map"
 		table.key = "id"
-		table.keys = rows.map(func(row): return row.id)
+		table.keys.assign(rows.map(func(row): return row.id))
 		table._rows = SoraRuntime.decode_map_table(rows, func(row): return row.id)
 		return table
 
 	func length() -> int:
 		return _rows.size()
-	func get_row(key_value: Variant) -> MailTemplate:
+	func get_row(key_value: int) -> MailTemplate:
 		var value = _rows.get(key_value)
 		if value == null:
 			SoraRuntime.report_error("missing row in table `%s` for key `%s`" % [TABLE_NAME, str(key_value)])
 		return value
 
-	func try_get(key_value: Variant) -> MailTemplate:
+	func try_get(key_value: int) -> MailTemplate:
 		return _rows.get(key_value)
 
-	func rows() -> Array:
-		return _rows.values()
+	func rows() -> Array[MailTemplate]:
+		var out: Array[MailTemplate] = []
+		out.assign(_rows.values())
+		return out
 
-	func ordered_rows() -> Array:
-		var out: Array = []
+	func ordered_rows() -> Array[MailTemplate]:
+		var out: Array[MailTemplate] = []
 		for key_value in keys:
 			if _rows.has(key_value):
 				out.append(_rows[key_value])

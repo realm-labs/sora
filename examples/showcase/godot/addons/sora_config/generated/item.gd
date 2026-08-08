@@ -13,7 +13,7 @@ var max_stack: int = 0
 # Struct columns: price_kind, price_id, price_count
 var price: ResourceCost = null
 # JSON string set
-var tags: Array = []
+var tags: Array[String] = []
 # Map pairs: key,value|key,value
 var attributes: Dictionary = {}
 
@@ -25,20 +25,20 @@ static func decode(value: Variant) -> Item:
 		return null
 	var data: Dictionary = value
 	var out := Item.new()
-	out.id = int(SoraRuntime.read_field(data, "id", 0))
+	out.id = SoraRuntime.decode_int(SoraRuntime.read_field(data, "id", 0))
 	out.name = str(SoraRuntime.read_field(data, "name", ""))
 	out.item_type = ItemType.decode(SoraRuntime.read_field(data, "item_type", ""))
-	out.max_stack = int(SoraRuntime.read_field(data, "max_stack", 0))
+	out.max_stack = SoraRuntime.decode_int(SoraRuntime.read_field(data, "max_stack", 0))
 	out.price = ResourceCost.decode(SoraRuntime.read_field(data, "price", null))
-	out.tags = SoraRuntime.decode_array(SoraRuntime.read_field(data, "tags", []), func(item): return str(item))
-	out.attributes = SoraRuntime.decode_map(SoraRuntime.read_field(data, "attributes", {}), func(item): return str(item), func(item): return int(item))
+	out.tags.assign(SoraRuntime.decode_array(SoraRuntime.read_field(data, "tags", []), func(item): return str(item)))
+	out.attributes = SoraRuntime.decode_map(SoraRuntime.read_field(data, "attributes", {}), func(item): return str(item), func(item): return SoraRuntime.decode_int(item))
 	return out
 
 class ItemTable:
 	extends SoraRuntime.SoraConfigTable
 
 	const TABLE_NAME := "Item"
-	var keys: Array = []
+	var keys: Array[int] = []
 	var _rows: Dictionary = {}
 	var _name: Dictionary = {}
 	var _item_type: Dictionary = {}
@@ -48,7 +48,7 @@ class ItemTable:
 		table.name = TABLE_NAME
 		table.mode = "map"
 		table.key = "id"
-		table.keys = rows.map(func(row): return row.id)
+		table.keys.assign(rows.map(func(row): return row.id))
 		table._rows = SoraRuntime.decode_map_table(rows, func(row): return row.id)
 		table._name = SoraRuntime.decode_unique_index(rows, func(row): return row.name)
 		table._item_type = SoraRuntime.decode_index(rows, func(row): return row.item_type)
@@ -56,27 +56,31 @@ class ItemTable:
 
 	func length() -> int:
 		return _rows.size()
-	func get_row(key_value: Variant) -> Item:
+	func get_row(key_value: int) -> Item:
 		var value = _rows.get(key_value)
 		if value == null:
 			SoraRuntime.report_error("missing row in table `%s` for key `%s`" % [TABLE_NAME, str(key_value)])
 		return value
 
-	func try_get(key_value: Variant) -> Item:
+	func try_get(key_value: int) -> Item:
 		return _rows.get(key_value)
 
-	func rows() -> Array:
-		return _rows.values()
+	func rows() -> Array[Item]:
+		var out: Array[Item] = []
+		out.assign(_rows.values())
+		return out
 
-	func ordered_rows() -> Array:
-		var out: Array = []
+	func ordered_rows() -> Array[Item]:
+		var out: Array[Item] = []
 		for key_value in keys:
 			if _rows.has(key_value):
 				out.append(_rows[key_value])
 		return out
 
-	func get_by_name(name: Variant) -> Item:
+	func get_by_name(name: String) -> Item:
 		return _name.get(name)
 
-	func find_by_item_type(item_type: Variant) -> Array:
-		return _item_type.get(item_type, [])
+	func find_by_item_type(item_type: String) -> Array[Item]:
+		var out: Array[Item] = []
+		out.assign(_item_type.get(item_type, []))
+		return out

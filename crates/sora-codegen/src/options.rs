@@ -80,6 +80,28 @@ impl HasRuntimeFormat for LanguageCodegenOptions {
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
 #[serde(default)]
+pub struct GodotCodegenOptions {
+    pub runtime_format: RuntimeFormat,
+    pub godot_version: String,
+}
+
+impl Default for GodotCodegenOptions {
+    fn default() -> Self {
+        Self {
+            runtime_format: RuntimeFormat::Json,
+            godot_version: "4.3".to_owned(),
+        }
+    }
+}
+
+impl HasRuntimeFormat for GodotCodegenOptions {
+    fn runtime_format(&self) -> Option<RuntimeFormat> {
+        Some(self.runtime_format)
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
+#[serde(default)]
 pub struct PackageCodegenOptions {
     pub runtime_format: RuntimeFormat,
     pub package: Option<String>,

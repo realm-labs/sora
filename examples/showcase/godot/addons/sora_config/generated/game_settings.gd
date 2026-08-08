@@ -6,15 +6,15 @@ var version: String = ""
 var daily_reset_hour: int = 0
 var starting_gold: int = 0
 var spawn_pos: Vec3 = null
-var starter_items: Array = []
+var starter_items: Array[int] = []
 # Double precision tuning value
 var gravity: float = 0.0
 # Fixed-length array parsed from one cell
-var daily_bonus_items: Array = []
+var daily_bonus_items: Array[int] = []
 # Fixed-length array of structs
-var spawn_points: Array = []
+var spawn_points: Array[Vec3] = []
 # Optional derived struct copied from a child row
-var maintenance: Variant = null
+var maintenance: MaintenanceInfo = null
 
 static func decode(value: Variant) -> GameSettings:
 	if value == null:
@@ -25,14 +25,14 @@ static func decode(value: Variant) -> GameSettings:
 	var data: Dictionary = value
 	var out := GameSettings.new()
 	out.version = str(SoraRuntime.read_field(data, "version", ""))
-	out.daily_reset_hour = int(SoraRuntime.read_field(data, "daily_reset_hour", 0))
-	out.starting_gold = int(SoraRuntime.read_field(data, "starting_gold", 0))
+	out.daily_reset_hour = SoraRuntime.decode_int(SoraRuntime.read_field(data, "daily_reset_hour", 0))
+	out.starting_gold = SoraRuntime.decode_int(SoraRuntime.read_field(data, "starting_gold", 0))
 	out.spawn_pos = Vec3.decode(SoraRuntime.read_field(data, "spawn_pos", null))
-	out.starter_items = SoraRuntime.decode_array(SoraRuntime.read_field(data, "starter_items", []), func(item): return int(item))
+	out.starter_items.assign(SoraRuntime.decode_array(SoraRuntime.read_field(data, "starter_items", []), func(item): return SoraRuntime.decode_int(item)))
 	out.gravity = float(SoraRuntime.read_field(data, "gravity", 0.0))
-	out.daily_bonus_items = SoraRuntime.decode_array(SoraRuntime.read_field(data, "daily_bonus_items", []), func(item): return int(item))
-	out.spawn_points = SoraRuntime.decode_array(SoraRuntime.read_field(data, "spawn_points", []), func(item): return Vec3.decode(item))
-	out.maintenance = null if SoraRuntime.read_field(data, "maintenance", null).is_null() else MaintenanceInfo.decode(SoraRuntime.read_field(data, "maintenance", null))
+	out.daily_bonus_items.assign(SoraRuntime.decode_array(SoraRuntime.read_field(data, "daily_bonus_items", []), func(item): return SoraRuntime.decode_int(item)))
+	out.spawn_points.assign(SoraRuntime.decode_array(SoraRuntime.read_field(data, "spawn_points", []), func(item): return Vec3.decode(item)))
+	out.maintenance = null if SoraRuntime.read_field(data, "maintenance", null) == null else MaintenanceInfo.decode(SoraRuntime.read_field(data, "maintenance", null))
 	return out
 
 class GameSettingsTable:

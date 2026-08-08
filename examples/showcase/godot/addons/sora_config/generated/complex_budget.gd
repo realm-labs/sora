@@ -3,7 +3,7 @@
 class_name ComplexBudget
 extends RefCounted
 var fixed: ResourceCost = null
-var random: Array = []
+var random: Array[RewardBundle] = []
 var limits: Dictionary = {}
 
 static func decode(value: Variant) -> ComplexBudget:
@@ -15,6 +15,6 @@ static func decode(value: Variant) -> ComplexBudget:
 	var data: Dictionary = value
 	var out := ComplexBudget.new()
 	out.fixed = ResourceCost.decode(SoraRuntime.read_field(data, "fixed", null))
-	out.random = SoraRuntime.decode_array(SoraRuntime.read_field(data, "random", []), func(item): return RewardBundle.decode(item))
-	out.limits = SoraRuntime.decode_map(SoraRuntime.read_field(data, "limits", {}), func(item): return str(item), func(item): return int(item))
+	out.random.assign(SoraRuntime.decode_array(SoraRuntime.read_field(data, "random", []), func(item): return RewardBundle.decode(item)))
+	out.limits = SoraRuntime.decode_map(SoraRuntime.read_field(data, "limits", {}), func(item): return str(item), func(item): return SoraRuntime.decode_int(item))
 	return out

@@ -15,6 +15,6 @@ static func decode(value: Variant) -> SkillEffect:
 	var data: Dictionary = value
 	var out := SkillEffect.new()
 	out.element = ElementType.decode(SoraRuntime.read_field(data, "element", ""))
-	out.power = int(SoraRuntime.read_field(data, "power", 0))
+	out.power = SoraRuntime.decode_int(SoraRuntime.read_field(data, "power", 0))
 	out.radius = float(SoraRuntime.read_field(data, "radius", 0.0))
 	return out

@@ -22,13 +22,13 @@ static func decode(value: Variant) -> Skill:
 		return null
 	var data: Dictionary = value
 	var out := Skill.new()
-	out.id = int(SoraRuntime.read_field(data, "id", 0))
+	out.id = SoraRuntime.decode_int(SoraRuntime.read_field(data, "id", 0))
 	out.name = str(SoraRuntime.read_field(data, "name", ""))
 	out.element = ElementType.decode(SoraRuntime.read_field(data, "element", ""))
 	out.cost = ResourceCost.decode(SoraRuntime.read_field(data, "cost", null))
 	out.effect = SkillEffect.decode(SoraRuntime.read_field(data, "effect", null))
-	out.required_level = int(SoraRuntime.read_field(data, "required_level", 0))
-	out.required_item = null if SoraRuntime.read_field(data, "required_item", null).is_null() else int(SoraRuntime.read_field(data, "required_item", null))
+	out.required_level = SoraRuntime.decode_int(SoraRuntime.read_field(data, "required_level", 0))
+	out.required_item = null if SoraRuntime.read_field(data, "required_item", null) == null else SoraRuntime.decode_int(SoraRuntime.read_field(data, "required_item", null))
 	out.cast_origin = Vec3.decode(SoraRuntime.read_field(data, "cast_origin", null))
 	return out
 
@@ -36,7 +36,7 @@ class SkillTable:
 	extends SoraRuntime.SoraConfigTable
 
 	const TABLE_NAME := "Skill"
-	var keys: Array = []
+	var keys: Array[int] = []
 	var _rows: Dictionary = {}
 
 	static func decode(rows: Array) -> SkillTable:
@@ -44,26 +44,28 @@ class SkillTable:
 		table.name = TABLE_NAME
 		table.mode = "map"
 		table.key = "id"
-		table.keys = rows.map(func(row): return row.id)
+		table.keys.assign(rows.map(func(row): return row.id))
 		table._rows = SoraRuntime.decode_map_table(rows, func(row): return row.id)
 		return table
 
 	func length() -> int:
 		return _rows.size()
-	func get_row(key_value: Variant) -> Skill:
+	func get_row(key_value: int) -> Skill:
 		var value = _rows.get(key_value)
 		if value == null:
 			SoraRuntime.report_error("missing row in table `%s` for key `%s`" % [TABLE_NAME, str(key_value)])
 		return value
 
-	func try_get(key_value: Variant) -> Skill:
+	func try_get(key_value: int) -> Skill:
 		return _rows.get(key_value)
 
-	func rows() -> Array:
-		return _rows.values()
+	func rows() -> Array[Skill]:
+		var out: Array[Skill] = []
+		out.assign(_rows.values())
+		return out
 
-	func ordered_rows() -> Array:
-		var out: Array = []
+	func ordered_rows() -> Array[Skill]:
+		var out: Array[Skill] = []
 		for key_value in keys:
 			if _rows.has(key_value):
 				out.append(_rows[key_value])
