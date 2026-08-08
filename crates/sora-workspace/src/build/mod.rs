@@ -78,12 +78,25 @@ pub struct BuildProgress {
 }
 
 type ProgressCallback = dyn Fn(BuildProgress) + Send + Sync;
+type CancellationProbe = dyn Fn() -> bool + Send + Sync;
 
 /// Cooperative control shared with an in-flight build.
 #[derive(Clone, Default)]
 pub struct BuildControl {
     cancelled: Arc<AtomicBool>,
+    cancellation_probe: Option<Arc<CancellationProbe>>,
     progress: Option<Arc<ProgressCallback>>,
+}
+
+impl std::fmt::Debug for BuildControl {
+    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        formatter
+            .debug_struct("BuildControl")
+            .field("cancelled", &self.cancelled.load(Ordering::Acquire))
+            .field("has_cancellation_probe", &self.cancellation_probe.is_some())
+            .field("has_progress_callback", &self.progress.is_some())
+            .finish()
+    }
 }
 
 impl BuildControl {
@@ -96,12 +109,24 @@ impl BuildControl {
         self
     }
 
+    pub fn cancel_when(
+        mut self,
+        cancellation_probe: impl Fn() -> bool + Send + Sync + 'static,
+    ) -> Self {
+        self.cancellation_probe = Some(Arc::new(cancellation_probe));
+        self
+    }
+
     pub fn cancel(&self) {
         self.cancelled.store(true, Ordering::Release);
     }
 
     pub fn is_cancelled(&self) -> bool {
         self.cancelled.load(Ordering::Acquire)
+            || self
+                .cancellation_probe
+                .as_ref()
+                .is_some_and(|probe| probe())
     }
 
     fn checkpoint(&self, phase: BuildPhase) -> Result<()> {
@@ -450,8 +475,10 @@ fn build_project_staged(
     control.checkpoint(BuildPhase::Commit)?;
     let writes = collect_output_writes(&staged_outputs, args.clean)?;
     if !writes.is_empty() {
-        commit_file_transaction(project_dir, &writes, || Ok(()))
-            .map_err(|error| anyhow::anyhow!("build output transaction failed: {error}"))?;
+        commit_file_transaction(project_dir, &writes, || {
+            control.checkpoint(BuildPhase::Commit)
+        })
+        .map_err(|error| anyhow::anyhow!("build output transaction failed: {error}"))?;
     }
     Ok(BuildReport {
         artifacts: std::mem::take(artifacts),
@@ -994,14 +1021,12 @@ type = "string"
 "#,
         )
         .unwrap();
-        fs::write(root.join("generated/schema.lock"), b"previous").unwrap();
+        let output = root.join("generated/schema.lock");
+        fs::write(&output, b"previous").unwrap();
         let runtime = ProjectRuntime::load(Some(&project), Default::default()).unwrap();
-        let cancellation = BuildControl::default();
-        let cancel_from_progress = cancellation.clone();
-        let control = cancellation.on_progress(move |progress| {
-            if progress.phase == BuildPhase::Generate {
-                cancel_from_progress.cancel();
-            }
+        let observed_output = output.clone();
+        let control = BuildControl::default().cancel_when(move || {
+            fs::read(&observed_output).is_ok_and(|content| content != b"previous")
         });
 
         let error = build_project_with_control(
@@ -1024,10 +1049,7 @@ type = "string"
         .unwrap_err();
 
         assert!(error.to_string().contains("cancelled"));
-        assert_eq!(
-            fs::read(root.join("generated/schema.lock")).unwrap(),
-            b"previous"
-        );
+        assert_eq!(fs::read(output).unwrap(), b"previous");
         let staging = root.join(".sora/build-staging");
         assert!(
             !staging.exists() || fs::read_dir(staging).unwrap().next().is_none(),
