@@ -317,15 +317,21 @@ fn build_project_staged(
     control.checkpoint(BuildPhase::LoadData)?;
     let mut loaded = None;
     if !selected.exports.is_empty() {
-        let project_input = MixedProjectInput::with_parser_registry(
+        let source_control = control.clone();
+        let source_execution = context
+            .execution()
+            .clone()
+            .with_cancellation_probe(move || source_control.is_cancelled());
+        let project_input = MixedProjectInput::with_source_registry(
             SchemaFileInput::new(&args.project),
             &data_root,
             default_source_format.map(SourceFormat::as_str),
+            Arc::clone(context.source_registry()),
             std::sync::Arc::clone(context.cell_parsers()),
         );
         let values = sora_core::pipeline::load_project_data_and_catalog_with_context_and_parsers(
             &project_input,
-            context.execution(),
+            &source_execution,
             context.schema_parsers(),
             context.cell_parsers(),
         )

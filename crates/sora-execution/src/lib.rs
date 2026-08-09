@@ -1,4 +1,7 @@
-use std::sync::Arc;
+use std::sync::{
+    Arc,
+    atomic::{AtomicBool, Ordering},
+};
 
 use rayon::{ThreadPool, ThreadPoolBuildError, ThreadPoolBuilder, prelude::*};
 
@@ -21,6 +24,8 @@ impl Default for ExecutionOptions {
 pub struct ExecutionContext {
     options: ExecutionOptions,
     pool: Option<Arc<ThreadPool>>,
+    cancelled: Arc<AtomicBool>,
+    cancellation_probe: Option<Arc<dyn Fn() -> bool + Send + Sync>>,
 }
 
 impl ExecutionContext {
@@ -32,7 +37,12 @@ impl ExecutionContext {
             _ => None,
         };
 
-        Ok(Self { options, pool })
+        Ok(Self {
+            options,
+            pool,
+            cancelled: Arc::new(AtomicBool::new(false)),
+            cancellation_probe: None,
+        })
     }
 
     pub fn serial() -> Self {
@@ -42,11 +52,36 @@ impl ExecutionContext {
                 jobs: Some(1),
             },
             pool: None,
+            cancelled: Arc::new(AtomicBool::new(false)),
+            cancellation_probe: None,
         }
     }
 
     pub fn options(&self) -> ExecutionOptions {
         self.options
+    }
+
+    /// Requests cooperative cancellation for work using this context.
+    pub fn cancel(&self) {
+        self.cancelled.store(true, Ordering::Release);
+    }
+
+    /// Returns whether cooperative cancellation has been requested.
+    pub fn is_cancelled(&self) -> bool {
+        self.cancelled.load(Ordering::Acquire)
+            || self
+                .cancellation_probe
+                .as_ref()
+                .is_some_and(|probe| probe())
+    }
+
+    /// Returns a derived context that also observes an adapter cancellation source.
+    pub fn with_cancellation_probe(
+        mut self,
+        probe: impl Fn() -> bool + Send + Sync + 'static,
+    ) -> Self {
+        self.cancellation_probe = Some(Arc::new(probe));
+        self
     }
 
     pub fn map<T, R, E, F>(&self, items: Vec<T>, map_item: F) -> Result<Vec<R>, E>

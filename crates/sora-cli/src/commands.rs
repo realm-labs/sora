@@ -241,10 +241,11 @@ fn export(args: ExportArgs, context: &ProjectRuntime) -> Result<()> {
     };
 
     let schema_input = SchemaFileInput::new(&args.project);
-    let input = MixedProjectInput::with_parser_registry(
+    let input = MixedProjectInput::with_source_registry(
         schema_input,
         &args.data_root,
         args.default_source_format.map(SourceFormatArg::as_str),
+        Arc::clone(context.source_registry()),
         Arc::clone(context.cell_parsers()),
     );
     let (ir, data) = sora_core::pipeline::load_project_data_with_context_and_parsers(
@@ -292,16 +293,18 @@ fn diff(args: DiffArgs, context: &ProjectRuntime) -> Result<()> {
     let left_schema = SchemaFileInput::new(&args.project);
     let right_schema = SchemaFileInput::new(&args.project);
     let parser_registry = Arc::clone(context.cell_parsers());
-    let left = MixedProjectInput::with_parser_registry(
+    let left = MixedProjectInput::with_source_registry(
         left_schema,
         &args.left_root,
         default_source_format,
+        Arc::clone(context.source_registry()),
         Arc::clone(&parser_registry),
     );
-    let right = MixedProjectInput::with_parser_registry(
+    let right = MixedProjectInput::with_source_registry(
         right_schema,
         &args.right_root,
         default_source_format,
+        Arc::clone(context.source_registry()),
         parser_registry,
     );
     sora_core::pipeline::diff_data_with_view_context_and_parsers(

@@ -24,6 +24,10 @@ Register it with an id, aliases, runtime capabilities, and optional formatter co
 
 See [Generators](extension/generators.md) for a longer walkthrough.
 
+## Add a Project Source Format
+
+For project-owned, read-only table formats, register a [Lua Source Loader](extension/source-loaders.md). The host provides source-root-scoped file and JSON capabilities; rows then enter the normal Sora validation pipeline.
+
 ## Keep the IR Neutral
 
 Language-specific settings belong in target options and generator code. The normalized IR should describe schema semantics only: packages, tables, fields, types, keys, indexes, unions, and validation metadata.

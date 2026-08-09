@@ -25,7 +25,22 @@ pub(crate) fn calculate_revision(
         .unwrap_or_else(|| Path::new("data"));
     let data_root = resolve_path(project_dir, data_root);
     let data_files = collect_files(&data_root)?;
-    let data_digest = digest_files(Some(&data_root), &data_files)?;
+    let data_content_digest = digest_files(Some(&data_root), &data_files)?;
+    let source_loader_files = manifest
+        .source_loaders
+        .scripts
+        .iter()
+        .map(|path| resolve_path(project_dir, path))
+        .collect::<Vec<_>>();
+    let data_digest = if source_loader_files.is_empty() {
+        data_content_digest
+    } else {
+        let source_loader_digest = digest_files(Some(project_dir), &source_loader_files)?;
+        digest_parts([
+            data_content_digest.as_bytes(),
+            source_loader_digest.as_bytes(),
+        ])
+    };
     let project_digest = digest_parts([
         manifest_digest.as_bytes(),
         schema_digest.as_bytes(),

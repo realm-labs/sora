@@ -146,7 +146,9 @@ impl WorkspaceService {
             return Ok(existing);
         }
         if !trust_project_scripts
-            && (!manifest.parsers.scripts.is_empty() || !manifest.type_mappings.scripts.is_empty())
+            && (!manifest.parsers.scripts.is_empty()
+                || !manifest.type_mappings.scripts.is_empty()
+                || !manifest.source_loaders.scripts.is_empty())
         {
             return Err(WorkspaceError::UntrustedProjectScripts);
         }
@@ -366,6 +368,7 @@ pub struct ProjectScript {
 #[serde(rename_all = "snake_case")]
 pub enum ProjectScriptKind {
     Parser,
+    SourceLoader,
     TypeMapping,
 }
 
@@ -380,6 +383,13 @@ fn inspect_project_scripts(
         .scripts
         .iter()
         .map(|path| (ProjectScriptKind::Parser, path))
+        .chain(
+            manifest
+                .source_loaders
+                .scripts
+                .iter()
+                .map(|path| (ProjectScriptKind::SourceLoader, path)),
+        )
         .chain(
             manifest
                 .type_mappings
@@ -427,7 +437,8 @@ fn inspect_project_scripts(
 fn script_kind_rank(kind: ProjectScriptKind) -> u8 {
     match kind {
         ProjectScriptKind::Parser => 0,
-        ProjectScriptKind::TypeMapping => 1,
+        ProjectScriptKind::SourceLoader => 1,
+        ProjectScriptKind::TypeMapping => 2,
     }
 }
 
@@ -611,9 +622,24 @@ mod tests {
         fs::write(
             directory.join("game/project.toml"),
             format!(
-                "{}\n[parsers]\nscripts = [\"parser.lua\"]\n",
+                "{}\n[parsers]\nscripts = [\"parser.lua\"]\n[source_loaders]\nscripts = [\"source_loader.lua\"]\n",
                 project_manifest("game")
             ),
+        )
+        .unwrap();
+        fs::write(
+            directory.join("game/source_loader.lua"),
+            r#"
+return {
+  source_loaders = {
+    custom_format = {
+      load = function()
+        return { rows = {} }
+      end,
+    },
+  },
+}
+"#,
         )
         .unwrap();
         fs::write(
@@ -656,9 +682,11 @@ return {
             .inspect_discovered_project(root.id(), "game/project.toml")
             .unwrap();
         assert!(inspection.requires_trust);
-        assert_eq!(inspection.scripts.len(), 1);
+        assert_eq!(inspection.scripts.len(), 2);
         assert_eq!(inspection.scripts[0].path, "game/parser.lua");
         assert!(inspection.scripts[0].digest.starts_with("sha256:"));
+        assert_eq!(inspection.scripts[1].kind, ProjectScriptKind::SourceLoader);
+        assert_eq!(inspection.scripts[1].path, "game/source_loader.lua");
         workspace
             .open_discovered_project(
                 root.id(),

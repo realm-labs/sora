@@ -12,7 +12,8 @@ use sora_data::model::{
 };
 use sora_input::{
     source::{
-        SourceFormat, resolve_localization_source_format_with_registry, resolve_table_source_format,
+        SourceFormat, resolve_localization_source_format_with_registry,
+        resolve_table_source_format_with_registry,
     },
     traits::DataInput,
 };
@@ -241,7 +242,7 @@ pub(crate) fn load_raw_project_data(
         &schema_input,
         session.runtime().schema_parsers(),
     )?;
-    let input = MixedProjectInput::with_parser_registry(
+    let input = MixedProjectInput::with_source_registry(
         schema_input,
         session.data_root(),
         session
@@ -249,6 +250,7 @@ pub(crate) fn load_raw_project_data(
             .build
             .default_source_format
             .map(crate::SourceFormat::as_str),
+        Arc::clone(session.runtime().source_registry()),
         Arc::clone(session.runtime().cell_parsers()),
     );
     let data = input.load_data_with_context(&ir, session.runtime().execution())?;
@@ -307,15 +309,18 @@ pub(crate) fn render_data_writes(
             .as_ref()
             .ok_or_else(|| DataMutationError::MissingSource(table.name.clone()))?;
         let path = data_root.join(&source.file);
-        let format = resolve_table_source_format(
+        let format = resolve_table_source_format_with_registry(
             table,
             session
                 .manifest()
                 .build
                 .default_source_format
                 .map(crate::SourceFormat::as_str),
+            session.runtime().source_registry(),
         )
         .map_err(|error| DataMutationError::Render(error.to_string()))?;
+        let format = SourceFormat::parse(format)
+            .map_err(|_| DataMutationError::UnsupportedFormat(format.to_owned()))?;
         if path.is_dir() {
             writes.extend(render_directory_source(format, &path, &table_data.rows)?);
         } else if format == SourceFormat::Xlsx {
@@ -358,7 +363,6 @@ pub(crate) fn render_data_writes(
                     ))
                 })?;
             let path = data_root.join(&source.file);
-            let source_registry = crate::source::builtin_source_registry();
             let format = resolve_localization_source_format_with_registry(
                 source,
                 session
@@ -366,11 +370,11 @@ pub(crate) fn render_data_writes(
                     .build
                     .default_source_format
                     .map(crate::SourceFormat::as_str),
-                &source_registry,
+                session.runtime().source_registry(),
             )
             .map_err(|error| DataMutationError::Render(error.to_string()))?;
             let format = SourceFormat::parse(format)
-                .map_err(|error| DataMutationError::Render(error.to_string()))?;
+                .map_err(|_| DataMutationError::UnsupportedFormat(format.to_owned()))?;
             if format == SourceFormat::Xlsx {
                 xlsx_localization
                     .entry(path.clone())

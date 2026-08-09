@@ -237,6 +237,15 @@ pub enum SoraError {
 
     #[error("{operation} was cancelled")]
     OperationCancelled { operation: &'static str },
+
+    #[error("source loader diagnostic for `{path}`: {message}")]
+    SourceLoaderDiagnostic {
+        path: PathBuf,
+        line: Option<usize>,
+        column: Option<usize>,
+        field: Option<String>,
+        message: String,
+    },
 }
 
 pub type Result<T> = std::result::Result<T, SoraError>;
@@ -287,6 +296,7 @@ impl SoraError {
             Self::MissingInputData => "SORA0034",
             Self::ValidationErrors { .. } => "SORA0035",
             Self::OperationCancelled { .. } => "SORA0036",
+            Self::SourceLoaderDiagnostic { .. } => "SORA0037",
         }
     }
 
@@ -298,7 +308,8 @@ impl SoraError {
             | Self::ParseSchema { path, .. }
             | Self::ParseData { path, .. }
             | Self::ParseDataAt { path, .. }
-            | Self::ExcelTemplate { path, .. } => Some(path),
+            | Self::ExcelTemplate { path, .. }
+            | Self::SourceLoaderDiagnostic { path, .. } => Some(path),
             _ => None,
         }
     }

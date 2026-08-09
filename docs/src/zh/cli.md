@@ -15,6 +15,8 @@
 | `-h, --help` | 打印帮助。 |
 | `-V, --version` | 打印 CLI 版本。 |
 
+Lua Source Loader 刻意只允许项目级配置。请在 `[source_loaders].scripts` 中声明；所有会加载表数据的 project 命令都会从 manifest 发现它们。CLI 不提供把任意脚本临时变成 Source Loader 的参数。
+
 ## 命令 Alias
 
 | 命令 | Alias |

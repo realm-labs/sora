@@ -8,6 +8,7 @@ mod build;
 mod capabilities;
 mod diagnostics;
 mod inspect;
+mod lua_source_loader;
 mod mutation;
 mod parser;
 mod project;

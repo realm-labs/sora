@@ -139,6 +139,12 @@ fn diagnostic_entity(error: &SoraError) -> Option<DiagnosticEntity> {
             Some(field.clone()),
             None,
         ),
+        SoraError::SourceLoaderDiagnostic { path, field, .. } => (
+            "source_loader".to_owned(),
+            path.to_string_lossy().into_owned(),
+            field.clone(),
+            None,
+        ),
         SoraError::DuplicateSchemaName { kind, name } => {
             ((*kind).to_owned(), name.clone(), None, None)
         }
@@ -200,6 +206,16 @@ fn diagnostic_entity(error: &SoraError) -> Option<DiagnosticEntity> {
 }
 
 fn diagnostic_location(error: &SoraError) -> (Option<DiagnosticSpan>, Option<DiagnosticCell>) {
+    if let SoraError::SourceLoaderDiagnostic { line, column, .. } = error {
+        return match (line, column) {
+            (None, None) => (None, None),
+            (line, column) => {
+                let line = line.unwrap_or(1);
+                let column = column.unwrap_or(1);
+                (Some(single_position_span(line, column)), None)
+            }
+        };
+    }
     let SoraError::ParseDataAt { location, .. } = error else {
         return (None, None);
     };

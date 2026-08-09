@@ -1,4 +1,7 @@
-use std::{collections::BTreeMap, path::Path};
+use std::{
+    collections::BTreeMap,
+    path::{Path, PathBuf},
+};
 
 use sora_data::model::{LocalizationSourceData, TableData};
 use sora_diagnostics::{Result, SoraError};
@@ -70,11 +73,25 @@ pub struct LocalizationSourceRequest<'a> {
     pub parser_registry: &'a ParserRegistry,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct DataSourceDependency {
+    pub path: PathBuf,
+    pub digest: String,
+}
+
 pub trait DataSourceLoader: Send + Sync {
-    fn format_name(&self) -> &'static str;
+    fn format_name(&self) -> &str;
 
     fn file_extensions(&self) -> &'static [&'static str] {
         &[]
+    }
+
+    fn extensions(&self) -> Vec<&str> {
+        self.file_extensions().to_vec()
+    }
+
+    fn dependencies(&self) -> Vec<DataSourceDependency> {
+        Vec::new()
     }
 
     fn load_table(&self, request: DataSourceRequest<'_>) -> Result<TableData>;
@@ -105,6 +122,29 @@ impl DataSourceRegistry {
             .insert(loader.format_name().to_owned(), Box::new(loader));
     }
 
+    pub fn try_register<L: DataSourceLoader + 'static>(&mut self, loader: L) -> Result<()> {
+        let format = loader.format_name().to_owned();
+        if self.loaders.contains_key(&format) {
+            return Err(SoraError::InvalidSchema(format!(
+                "source format `{format}` is already registered"
+            )));
+        }
+        for extension in loader.extensions() {
+            if let Some(existing) = self
+                .loaders
+                .values()
+                .find(|existing| existing.extensions().contains(&extension))
+            {
+                return Err(SoraError::InvalidSchema(format!(
+                    "source extension `{extension}` is already registered by format `{}`",
+                    existing.format_name()
+                )));
+            }
+        }
+        self.loaders.insert(format, Box::new(loader));
+        Ok(())
+    }
+
     pub fn get(&self, format_name: &str) -> Option<&dyn DataSourceLoader> {
         self.loaders.get(format_name).map(Box::as_ref)
     }
@@ -113,11 +153,22 @@ impl DataSourceRegistry {
         self.loaders.keys().map(String::as_str).collect()
     }
 
+    pub fn dependencies(&self) -> Vec<DataSourceDependency> {
+        let mut dependencies = self
+            .loaders
+            .values()
+            .flat_map(|loader| loader.dependencies())
+            .collect::<Vec<_>>();
+        dependencies.sort_by(|left, right| left.path.cmp(&right.path));
+        dependencies.dedup();
+        dependencies
+    }
+
     fn infer_from_file(&self, file: &str) -> Option<&str> {
         let extension = Path::new(file).extension()?.to_str()?;
         self.loaders
             .values()
-            .find(|loader| loader.file_extensions().contains(&extension))
+            .find(|loader| loader.extensions().contains(&extension))
             .map(|loader| loader.format_name())
     }
 }

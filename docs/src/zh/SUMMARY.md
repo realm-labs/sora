@@ -28,6 +28,7 @@
   - [运行时适配器](codegen/adapters.md)
 - [版本与兼容性](versioning.md)
 - [扩展 Sora](extension.md)
+  - [Lua Source Loader](extension/source-loaders.md)
   - [生成器](extension/generators.md)
   - [导出器](extension/exporters.md)
 - [设计说明](design/overview.md)

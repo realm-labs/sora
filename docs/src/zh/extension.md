@@ -24,6 +24,10 @@ pub trait CodeGenerator: Send + Sync {
 
 更完整的说明见[生成器](extension/generators.md)。
 
+## 添加项目 Source 格式
+
+对于项目自己维护的只读表格式，可以注册 [Lua Source Loader](extension/source-loaders.md)。Host 提供限定在 source root 内的文件和 JSON capability；Loader 返回的行随后进入普通 Sora 校验管线。
+
 ## 保持 IR 中立
 
 语言相关配置应该放在 target options 和 generator 代码里。归一化 IR 只描述 schema 语义：package、table、field、type、key、index、union 和 validation metadata。

@@ -32,6 +32,7 @@ Current support includes:
 - schema files in TOML, YAML, JSON, or Lua;
 - table data from Excel `.xlsx`, CSV, TOML, JSON, or YAML;
 - custom Lua cell parsers configured in `project.toml` or loaded by the CLI;
+- project-level, read-only Lua source loaders for custom multi-file table formats;
 - Sora Studio, an embedded browser UI for visual schema editing;
 - generated Excel `.xlsx` templates;
 - normalized IR, recursive validation, defaults, references, derived child-table fields, polymorphic unions, and secondary unique indexes;

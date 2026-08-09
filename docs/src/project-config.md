@@ -20,6 +20,9 @@ scripts = ["tools/parsers.lua"]
 [type_mappings]
 scripts = ["tools/type_mappings.lua"]
 
+[source_loaders]
+scripts = ["tools/source_loaders.lua"]
+
 [build]
 default_source_format = "xlsx"
 data_root = "data"
@@ -93,6 +96,8 @@ sora build --project project.toml
 `[parsers].scripts` lists custom Lua cell parser scripts used by CLI commands that read the project. Paths are relative to the project file. See [Cell Parsers](schema/parsers.md#custom-lua-parsers) for the script API.
 
 `[type_mappings].scripts` lists Lua scripts that customize generated language types. Paths are relative to the project file. Type mappings are codegen-only: the schema still uses language-neutral Sora types such as `struct<Vec3>`, while the mapping script can map that named type to a target-specific type.
+
+`[source_loaders].scripts` lists project-level, read-only Lua table source loaders. Paths are relative to the project file. The runtime registers these loaders together with the built-in formats, so build exports, direct exports, queries, validation, Studio, and MCP use the same loader set. See [Lua Source Loaders](extension/source-loaders.md) for the API and security model.
 
 Localization is declared at the project root with `[localization]`. Its sources are independent from normal `[[tables]]`; see [Localization](localization.md).
 

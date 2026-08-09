@@ -28,6 +28,7 @@
   - [Runtime Adapters](codegen/adapters.md)
 - [Versioning and Compatibility](versioning.md)
 - [Extending Sora](extension.md)
+  - [Lua Source Loaders](extension/source-loaders.md)
   - [Generators](extension/generators.md)
   - [Exporters](extension/exporters.md)
 - [Design Notes](design/overview.md)

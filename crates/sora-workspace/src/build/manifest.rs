@@ -14,6 +14,8 @@ pub struct ProjectManifest {
     #[serde(default)]
     pub type_mappings: ScriptConfig,
     #[serde(default)]
+    pub source_loaders: ScriptConfig,
+    #[serde(default)]
     pub build: BuildConfig,
 }
 

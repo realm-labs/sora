@@ -15,6 +15,8 @@ Global options can be placed before or after the subcommand.
 | `-h, --help` | Print help. |
 | `-V, --version` | Print the CLI version. |
 
+Lua source loaders are intentionally project-level only. Declare them in `[source_loaders].scripts`; every project-reading command that loads table data discovers them from the manifest. There is no command-line flag that turns an arbitrary script into a source loader.
+
 ## Command Aliases
 
 | Command | Aliases |

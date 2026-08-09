@@ -273,10 +273,11 @@ impl ProjectSession {
             .build
             .default_source_format
             .map(SourceFormat::as_str);
-        let input = MixedProjectInput::with_parser_registry(
+        let input = MixedProjectInput::with_source_registry(
             SchemaFileInput::new(self.manifest_path()),
             data_root,
             default_format,
+            Arc::clone(self.runtime().source_registry()),
             Arc::clone(self.runtime().cell_parsers()),
         );
         sora_core::pipeline::load_project_data_with_context_and_parsers(

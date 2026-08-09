@@ -20,6 +20,9 @@ scripts = ["tools/parsers.lua"]
 [type_mappings]
 scripts = ["tools/type_mappings.lua"]
 
+[source_loaders]
+scripts = ["tools/source_loaders.lua"]
+
 [build]
 default_source_format = "xlsx"
 data_root = "data"
@@ -91,6 +94,8 @@ sora build --project project.toml
 `[parsers].scripts` 列出 CLI 读取该 project 时使用的自定义 Lua 单元格 parser 脚本。路径相对 project 文件所在目录。脚本 API 见[单元格 Parser](schema/parsers.md#自定义-lua-parser)。
 
 `[type_mappings].scripts` 列出用于自定义生成语言类型的 Lua 脚本。路径相对 project 文件所在目录。类型映射只影响 codegen：schema 仍然使用 `struct<Vec3>` 这类语言无关的 Sora 类型，映射脚本可以把这个命名类型映射到目标语言自己的类型。
+
+`[source_loaders].scripts` 列出项目级、只读的 Lua 表数据源 Loader。路径相对 project 文件所在目录。运行时会把这些 Loader 与内置格式注册到同一个 Registry，因此 build export、直接 export、查询、校验、Studio 和 MCP 使用同一组 Loader。API 与安全模型见 [Lua Source Loader](extension/source-loaders.md)。
 
 多语言通过 project root 的 `[localization]` 声明。它的 sources 独立于普通 `[[tables]]`；见[多语言](localization.md)。
 
