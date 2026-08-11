@@ -1,7 +1,8 @@
 use std::path::Path;
 
 use rust_xlsxwriter::{
-    Color, DataValidation, DataValidationRule, Format, FormatAlign, FormatBorder, Note, Workbook,
+    Color, DataValidation, DataValidationRule, DocProperties, ExcelDateTime, Format, FormatAlign,
+    FormatBorder, Note, Workbook,
 };
 use sora_diagnostics::{Result, SoraError};
 use sora_ir::{
@@ -24,7 +25,7 @@ pub(crate) fn write_workbook_with_rows(
     path: &Path,
     rows_for_table: impl Fn(&TableIr) -> Vec<Vec<String>>,
 ) -> Result<()> {
-    let mut workbook = Workbook::new();
+    let mut workbook = deterministic_workbook(path)?;
     let formats = TemplateFormats::new();
 
     for table in tables {
@@ -116,7 +117,7 @@ pub(crate) fn write_synced_workbook(
     preserved_sheets: &[PreservedSheet],
     path: &Path,
 ) -> Result<()> {
-    let mut workbook = Workbook::new();
+    let mut workbook = deterministic_workbook(path)?;
     let formats = TemplateFormats::new();
 
     for sheet in table_sheets {
@@ -996,6 +997,15 @@ fn field_width(name: &str, comment: Option<&str>, ty: &str) -> f64 {
         .max()
         .unwrap_or(12) as f64;
     content_width.clamp(12.0, 32.0)
+}
+
+fn deterministic_workbook(path: &Path) -> Result<Workbook> {
+    let creation_time =
+        ExcelDateTime::from_ymd(2000, 1, 1).map_err(|source| excel_error(path, source))?;
+    let properties = DocProperties::new().set_creation_datetime(&creation_time);
+    let mut workbook = Workbook::new();
+    workbook.set_properties(&properties);
+    Ok(workbook)
 }
 
 fn excel_error(path: &Path, source: impl std::fmt::Display) -> SoraError {

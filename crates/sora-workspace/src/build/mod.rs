@@ -491,12 +491,18 @@ fn build_project_staged(
     }
 
     control.checkpoint(BuildPhase::Commit)?;
-    let writes = collect_output_writes(&staged_outputs, args.clean)?;
+    let writes = reconcile_output_writes(&staged_outputs, args.clean)?;
     if !writes.is_empty() {
         commit_file_transaction(project_dir, &writes, || {
-            control.checkpoint(BuildPhase::Commit)
+            control.checkpoint(BuildPhase::Commit)?;
+            if args.clean {
+                prune_empty_output_directories(&staged_outputs)?;
+            }
+            Ok(())
         })
         .map_err(|error| anyhow::anyhow!("build output transaction failed: {error}"))?;
+    } else if args.clean {
+        prune_empty_output_directories(&staged_outputs)?;
     }
     Ok(BuildReport {
         artifacts: std::mem::take(artifacts),
@@ -835,14 +841,24 @@ fn resolve_declared_output(project_dir: &Path, declared: &Path) -> Result<PathBu
     let unresolved = candidate
         .strip_prefix(existing)
         .map_err(|_| anyhow::anyhow!("failed to bound build output `{}`", declared.display()))?;
-    Ok(resolved_existing.join(unresolved))
+    if unresolved.as_os_str().is_empty() {
+        Ok(resolved_existing)
+    } else {
+        Ok(resolved_existing.join(unresolved))
+    }
 }
 
 fn staged_output_path(stage_root: &Path, index: usize) -> PathBuf {
     stage_root.join(format!("output-{index}"))
 }
 
-fn collect_output_writes(outputs: &[StagedOutput], clean: bool) -> Result<Vec<FileWrite>> {
+/// Reconciles fully generated staging outputs with their final destinations.
+///
+/// Identical files are deliberately omitted from the transaction so their
+/// inode, modification time, and permissions remain untouched. Changed and
+/// missing files, plus stale files selected by `--clean`, are committed by one
+/// recoverable transaction after all generation and formatting has succeeded.
+fn reconcile_output_writes(outputs: &[StagedOutput], clean: bool) -> Result<Vec<FileWrite>> {
     let mut writes = BTreeMap::<PathBuf, Option<Vec<u8>>>::new();
     for output in outputs {
         if output.directory {
@@ -868,29 +884,100 @@ fn collect_output_writes(outputs: &[StagedOutput], clean: bool) -> Result<Vec<Fi
                 }
             }
             for (path, relative) in staged_files.into_iter().zip(staged_relative) {
-                writes.insert(
-                    output.final_path.join(relative),
-                    Some(fs::read(&path).with_context(|| {
-                        format!("failed to read staged build output `{}`", path.display())
-                    })?),
-                );
+                queue_changed_output(&mut writes, output.final_path.join(relative), &path)?;
             }
         } else {
-            writes.insert(
-                output.final_path.clone(),
-                Some(fs::read(&output.staged_path).with_context(|| {
-                    format!(
-                        "failed to read staged build output `{}`",
-                        output.staged_path.display()
-                    )
-                })?),
-            );
+            queue_changed_output(&mut writes, output.final_path.clone(), &output.staged_path)?;
         }
     }
     Ok(writes
         .into_iter()
         .map(|(path, content)| FileWrite { path, content })
         .collect())
+}
+
+fn queue_changed_output(
+    writes: &mut BTreeMap<PathBuf, Option<Vec<u8>>>,
+    final_path: PathBuf,
+    staged_path: &Path,
+) -> Result<()> {
+    let content = fs::read(staged_path).with_context(|| {
+        format!(
+            "failed to read staged build output `{}`",
+            staged_path.display()
+        )
+    })?;
+    if file_bytes_equal(&final_path, &content)? {
+        return Ok(());
+    }
+    writes.insert(final_path, Some(content));
+    Ok(())
+}
+
+fn file_bytes_equal(path: &Path, expected: &[u8]) -> Result<bool> {
+    let metadata = match fs::metadata(path) {
+        Ok(metadata) => metadata,
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(false),
+        Err(error) => {
+            return Err(error)
+                .with_context(|| format!("failed to inspect build output `{}`", path.display()));
+        }
+    };
+    if !metadata.is_file() || metadata.len() != expected.len() as u64 {
+        return Ok(false);
+    }
+    let current = fs::read(path)
+        .with_context(|| format!("failed to read build output `{}`", path.display()))?;
+    Ok(current == expected)
+}
+
+fn prune_empty_output_directories(outputs: &[StagedOutput]) -> Result<()> {
+    for output in outputs {
+        if output.directory && output.final_path.is_dir() {
+            prune_empty_descendants(&output.final_path)?;
+        }
+    }
+    Ok(())
+}
+
+fn prune_empty_descendants(root: &Path) -> Result<()> {
+    let mut entries = fs::read_dir(root)
+        .with_context(|| format!("failed to read build output directory `{}`", root.display()))?
+        .map(|entry| {
+            entry.map(|entry| entry.path()).with_context(|| {
+                format!("failed to read build output entry in `{}`", root.display())
+            })
+        })
+        .collect::<Result<Vec<_>>>()?;
+    entries.sort();
+    for path in entries {
+        let metadata = fs::symlink_metadata(&path)
+            .with_context(|| format!("failed to inspect build output `{}`", path.display()))?;
+        if metadata.file_type().is_symlink() {
+            bail!(
+                "build output contains a symbolic link: `{}`",
+                path.display()
+            );
+        }
+        if metadata.is_dir() {
+            prune_empty_descendants(&path)?;
+            if fs::read_dir(&path)
+                .with_context(|| {
+                    format!("failed to read build output directory `{}`", path.display())
+                })?
+                .next()
+                .is_none()
+            {
+                fs::remove_dir(&path).with_context(|| {
+                    format!(
+                        "failed to remove empty build output directory `{}`",
+                        path.display()
+                    )
+                })?;
+            }
+        }
+    }
+    Ok(())
 }
 
 fn regular_files(root: &Path) -> Result<Vec<PathBuf>> {
@@ -959,6 +1046,12 @@ mod tests {
         assert_eq!(
             resolve_declared_output(&root, Path::new("generated/code")).unwrap(),
             root.canonicalize().unwrap().join("generated/code")
+        );
+        let existing = root.join("schema.lock");
+        fs::write(&existing, "lock").unwrap();
+        assert_eq!(
+            resolve_declared_output(&root, Path::new("schema.lock")).unwrap(),
+            existing.canonicalize().unwrap()
         );
 
         let _ = fs::remove_dir_all(root);
