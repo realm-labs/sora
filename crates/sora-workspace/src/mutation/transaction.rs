@@ -371,29 +371,59 @@ fn write_durable(path: &Path, bytes: &[u8]) -> Result<(), TransactionError> {
     })
 }
 
+#[cfg(not(windows))]
 fn replace_file(source: &Path, target: &Path) -> Result<(), TransactionError> {
-    match fs::rename(source, target) {
-        Ok(()) => Ok(()),
-        Err(first) if target.exists() => {
-            fs::remove_file(target).map_err(|source| TransactionError::Io {
-                action: "remove replaced file",
-                path: target.to_path_buf(),
-                source,
-            })?;
-            fs::rename(source, target).map_err(|source| TransactionError::Io {
-                action: "replace file",
-                path: target.to_path_buf(),
-                source: std::io::Error::new(
-                    source.kind(),
-                    format!("initial rename failed with `{first}`; retry failed with `{source}`"),
-                ),
-            })
-        }
-        Err(source) => Err(TransactionError::Io {
-            action: "replace file",
+    fs::rename(source, target).map_err(|source| TransactionError::Io {
+        action: "atomically replace file",
+        path: target.to_path_buf(),
+        source,
+    })
+}
+
+#[cfg(windows)]
+fn replace_file(source: &Path, target: &Path) -> Result<(), TransactionError> {
+    use std::{os::windows::ffi::OsStrExt, ptr};
+
+    use windows_sys::Win32::Storage::FileSystem::ReplaceFileW;
+
+    if !target.exists() {
+        return fs::rename(source, target).map_err(|source| TransactionError::Io {
+            action: "move file into place",
             path: target.to_path_buf(),
             source,
-        }),
+        });
+    }
+
+    let target_wide = target
+        .as_os_str()
+        .encode_wide()
+        .chain(std::iter::once(0))
+        .collect::<Vec<_>>();
+    let source_wide = source
+        .as_os_str()
+        .encode_wide()
+        .chain(std::iter::once(0))
+        .collect::<Vec<_>>();
+    // SAFETY: both path buffers are NUL-terminated and remain alive for the
+    // duration of the call. The optional backup and reserved pointers are null.
+    let replaced = unsafe {
+        ReplaceFileW(
+            target_wide.as_ptr(),
+            source_wide.as_ptr(),
+            ptr::null(),
+            0,
+            ptr::null(),
+            ptr::null(),
+        )
+    };
+    if replaced != 0 {
+        Ok(())
+    } else {
+        Err(TransactionError::Io {
+            action: "atomically replace file",
+            path: target.to_path_buf(),
+            source: std::io::Error::last_os_error(),
+        })
     }
 }
 

@@ -41,3 +41,6 @@ thiserror.workspace = true
 toml.workspace = true
 umya-spreadsheet.workspace = true
 uuid.workspace = true
+
+[target.'cfg(windows)'.dependencies]
+windows-sys = { workspace = true, features = ["Win32_Storage_FileSystem"] }
