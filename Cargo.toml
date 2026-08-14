@@ -74,7 +74,7 @@ serde_cbor = "0.11"
 serde_json = "1"
 sha2 = "0.10"
 serde_yaml = "0.9"
-scon = { package = "scon-core", git = "https://github.com/realm-labs/scon.git", rev = "ed4e03fc4e9ef54233a788eef406056f4466afd4" }
+scon = { package = "scon-core", version = "0.1" }
 sora-cli = { path = "crates/sora-cli", version = "0.1.0" }
 sora-codegen = { path = "crates/sora-codegen", version = "0.1.0" }
 sora-config-format = { path = "crates/sora-config-format", version = "0.1.0" }

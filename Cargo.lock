@@ -2461,7 +2461,8 @@ dependencies = [
 [[package]]
 name = "scon-core"
 version = "0.1.0"
-source = "git+https://github.com/realm-labs/scon.git?rev=ed4e03fc4e9ef54233a788eef406056f4466afd4#ed4e03fc4e9ef54233a788eef406056f4466afd4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1728ea51222fe0a130bb686db42e855f3272f2314613a0e8c1b6e3fe97d33c8f"
 dependencies = [
  "indexmap",
  "rustc-hash",
